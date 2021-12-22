@@ -24,7 +24,6 @@
 namespace inciter {
 
 //! Rusanov approximate Riemann solver
-//! \details This class can be used polymorphically with inciter::RiemannSolver
 struct Rusanov {
 
   using real = tk::real;

@@ -5,159 +5,87 @@ project(Control CXX)
 include(charm)
 
 #### Inciter control ###########################################################
-add_library(InciterControl
-            FileParser.cpp
-            StringParser.cpp
-            Inciter/InputDeck/Parser.cpp
-            Inciter/CmdLine/Parser.cpp)
+if (ENABLE_INCITER)
+  add_library(InciterControl
+              FileParser.cpp
+              StringParser.cpp
+              Inciter/InputDeck/Parser.cpp
+              Inciter/CmdLine/Parser.cpp)
 
-target_include_directories(InciterControl PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${QUINOA_SOURCE_DIR}/Control
-                           ${QUINOA_SOURCE_DIR}/Mesh
-                           ${QUINOA_SOURCE_DIR}/PDE
-                           ${QUINOA_SOURCE_DIR}/Inciter
-                           ${PEGTL_INCLUDE_DIRS}
-                           ${CHARM_INCLUDE_DIRS}
-                           ${BRIGAND_INCLUDE_DIRS}
-                           ${LUA_INCLUDE_DIR}
-                           ${SOL2_INCLUDE_DIRS}
-                           ${PROJECT_BINARY_DIR}/../Main)
+  target_include_directories(InciterControl PUBLIC
+                             ${QUINOA_SOURCE_DIR}
+                             ${QUINOA_SOURCE_DIR}/Base
+                             ${QUINOA_SOURCE_DIR}/Control
+                             ${QUINOA_SOURCE_DIR}/Mesh
+                             ${QUINOA_SOURCE_DIR}/PDE
+                             ${QUINOA_SOURCE_DIR}/Inciter
+                             ${PEGTL_INCLUDE_DIRS}
+                             ${CHARM_INCLUDE_DIRS}
+                             ${BRIGAND_INCLUDE_DIRS}
+                             ${LUA_INCLUDE_DIR}
+                             ${SOL2_INCLUDE_DIRS}
+                             ${PROJECT_BINARY_DIR}/../Main)
 
-set_target_properties(InciterControl PROPERTIES
-                      LIBRARY_OUTPUT_NAME quinoa_incitercontrol)
+  set_target_properties(InciterControl PROPERTIES
+                        LIBRARY_OUTPUT_NAME quinoa_incitercontrol)
 
-INSTALL(TARGETS InciterControl
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
-
-#### RNGTest control ###########################################################
-project(RNGTestControl CXX)
-
-add_library(RNGTestControl
-            FileParser.cpp
-            StringParser.cpp
-            RNGTest/InputDeck/Parser.cpp
-            RNGTest/CmdLine/Parser.cpp)
-
-target_include_directories(RNGTestControl PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${QUINOA_SOURCE_DIR}/Control
-                           ${PEGTL_INCLUDE_DIRS}
-                           ${CHARM_INCLUDE_DIRS}
-                           ${BRIGAND_INCLUDE_DIRS}
-                           ${MKL_INCLUDE_DIRS}
-                           ${PROJECT_BINARY_DIR}/../Main)
-
-set_target_properties(RNGTestControl PROPERTIES
-                      LIBRARY_OUTPUT_NAME quinoa_rngtestcontrol)
-
-INSTALL(TARGETS RNGTestControl
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+  INSTALL(TARGETS InciterControl
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+endif()
 
 #### UnitTest control ##########################################################
-project(UnitTestControl CXX)
+if (ENABLE_UNITTEST)
+  project(UnitTestControl CXX)
 
-add_library(UnitTestControl
-            StringParser.cpp
-            FileParser.cpp
-            UnitTest/CmdLine/Parser.cpp)
-
-target_include_directories(UnitTestControl PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${QUINOA_SOURCE_DIR}/Control
-                           ${PROJECT_BINARY_DIR}/../Main
-                           ${PEGTL_INCLUDE_DIRS}
-                           ${CHARM_INCLUDE_DIRS}
-                           ${BRIGAND_INCLUDE_DIRS}
-                           ${OMEGA_H_INCLUDE_DIRS})
-
-set_target_properties(UnitTestControl PROPERTIES
-                      LIBRARY_OUTPUT_NAME quinoa_unittestcontrol)
-
-INSTALL(TARGETS UnitTestControl
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
-
-#### MeshConv control ##########################################################
-project(MeshConvControl CXX)
-
-add_library(MeshConvControl
-            StringParser.cpp
-            MeshConv/CmdLine/Parser.cpp)
-
-target_include_directories(MeshConvControl PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${QUINOA_SOURCE_DIR}/IO
-                           ${QUINOA_SOURCE_DIR}/Control
-                           ${PROJECT_BINARY_DIR}/../Main
-                           ${PEGTL_INCLUDE_DIRS}
-                           ${CHARM_INCLUDE_DIRS}
-                           ${BRIGAND_INCLUDE_DIRS})
-
-set_target_properties(MeshConvControl PROPERTIES
-                      LIBRARY_OUTPUT_NAME quinoa_meshconvcontrol)
-
-INSTALL(TARGETS MeshConvControl
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
-
-#### FileConv control ##########################################################
-if (ENABLE_FILECONV)
-  project(FileConvControl CXX)
-
-  add_library(FileConvControl
+  add_library(UnitTestControl
               StringParser.cpp
-              FileConv/CmdLine/Parser.cpp)
+              FileParser.cpp
+              UnitTest/CmdLine/Parser.cpp)
 
-  target_include_directories(FileConvControl PUBLIC
+  target_include_directories(UnitTestControl PUBLIC
                              ${QUINOA_SOURCE_DIR}
                              ${QUINOA_SOURCE_DIR}/Base
                              ${QUINOA_SOURCE_DIR}/Control
                              ${PROJECT_BINARY_DIR}/../Main
                              ${PEGTL_INCLUDE_DIRS}
                              ${CHARM_INCLUDE_DIRS}
-                             ${BRIGAND_INCLUDE_DIRS})
+                             ${BRIGAND_INCLUDE_DIRS}
+                             ${OMEGA_H_INCLUDE_DIRS})
 
-  set_target_properties(FileConvControl PROPERTIES
-                        LIBRARY_OUTPUT_NAME quinoa_fileconvcontrol)
+  set_target_properties(UnitTestControl PROPERTIES
+                        LIBRARY_OUTPUT_NAME quinoa_unittestcontrol)
 
-  INSTALL(TARGETS FileConvControl
+  INSTALL(TARGETS UnitTestControl
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 endif()
 
-#### Walker control ############################################################
-add_library(WalkerControl
-            FileParser.cpp
-            StringParser.cpp
-            Walker/InputDeck/Parser.cpp
-            Walker/CmdLine/Parser.cpp)
+#### MeshConv control ##########################################################
+if (ENABLE_MESHCONV)
+  project(MeshConvControl CXX)
 
-target_include_directories(WalkerControl PUBLIC
-                           ${QUINOA_SOURCE_DIR}
-                           ${QUINOA_SOURCE_DIR}/Base
-                           ${QUINOA_SOURCE_DIR}/Control
-                           ${PROJECT_BINARY_DIR}/../Main
-                           ${PEGTL_INCLUDE_DIRS}
-                           ${MKL_INCLUDE_DIRS}
-                           ${CHARM_INCLUDE_DIRS}
-                           ${BRIGAND_INCLUDE_DIRS})
+  add_library(MeshConvControl
+              StringParser.cpp
+              MeshConv/CmdLine/Parser.cpp)
 
-set_target_properties(WalkerControl PROPERTIES
-                      LIBRARY_OUTPUT_NAME quinoa_walkercontrol)
+  target_include_directories(MeshConvControl PUBLIC
+                             ${QUINOA_SOURCE_DIR}
+                             ${QUINOA_SOURCE_DIR}/Base
+                             ${QUINOA_SOURCE_DIR}/IO
+                             ${QUINOA_SOURCE_DIR}/Control
+                             ${PROJECT_BINARY_DIR}/../Main
+                             ${PEGTL_INCLUDE_DIRS}
+                             ${CHARM_INCLUDE_DIRS}
+                             ${BRIGAND_INCLUDE_DIRS})
 
-INSTALL(TARGETS WalkerControl
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+  set_target_properties(MeshConvControl PROPERTIES
+                        LIBRARY_OUTPUT_NAME quinoa_meshconvcontrol)
+
+  INSTALL(TARGETS MeshConvControl
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+endif()

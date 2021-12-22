@@ -171,14 +171,7 @@ that there can be multiple PDE blocks specified with the same or different
 types, but their `depvar` must be unique. This `depvar` then may be used
 downstream of its specification to configure a scalar component of a given PDE
 to be used as a _refinement variable_ as error indicator for adaptive
-refinement. Another way depvars are used is to specify coupling among PDEs. An
-example in @ref walker_main, which uses the same coupling mechanism in its
-input files and where systems of _stochastic_ differential equations (SDE) are
-specified analogously as PDEs in @ref inciter_main, is given in
-[glm_homogeneous_shear.q](https://github.com/quinoacomputing/quinoa/blob/master/regression/walker/Velocity/glm_homogeneous_shear.q),
-which couples three systems of SDEs to integrate a joint Fokker-Planck equation
-of particle positions, velocities, and turbulent kinetic energy dissipation
-rate in a homogeneous shear-driven turbulent flow.
+refinement.
 
 @section inciter_newpde_keyword 2. Add new keywords
 

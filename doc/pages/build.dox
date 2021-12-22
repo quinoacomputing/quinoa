@@ -35,7 +35,6 @@ See section @ref mainpage_build on the main page.
  - Debian Linux
  - Alpine Linux
  - RedHat Enterprise Linux
- - MacOS
 
 @section build_stages Two-stage build
 
@@ -212,17 +211,9 @@ in the section starting with the comment line
 Here are the `git submodule update` commands that pull in _only_ the TPLs
 required for the given tool for each executable:
 
-@ref walker_main
-
-       git -c submodule."src/pugixml".update=none -c submodule."src/rngsse2".update=none -c submodule."src/aec".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/root".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
-
 @ref inciter_main
 
        git -c submodule."src/pugixml".update=none -c submodule."src/rngsse2".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/root".update=none -c submodule."src/aec".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
-
-@ref rngtest_main
-
-       git -c submodule."src/hdf5".update=none -c submodule."src/netcdf".update=none -c submodule."src/pugixml".update=none -c submodule."src/h5part".update=none -c submodule."src/trilinos".update=none -c submodule."src/tut".update=none -c submodule."src/numdiff".update=none -c submodule."src/root".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/highwayhash".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/aec".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
 
 @ref unittest_main
 
@@ -231,10 +222,6 @@ required for the given tool for each executable:
 @ref meshconv_main
 
        git -c submodule."src/random123".update=none -c submodule."src/rngsse2".update=none -c submodule."src/lapack".update=none -c submodule."src/aec".update=none -c submodule."src/h5part".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/root".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
-
-@ref fileconv_main
-
-       git -c submodule."src/random123".update=none -c submodule."src/rngsse2".update=none -c submodule."src/lapack".update=none -c submodule."src/aec".update=none -c submodule."src/h5part".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/numdiff".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
 
 @section build_systemlibs Using system-wide packages
 

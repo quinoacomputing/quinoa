@@ -62,9 +62,6 @@ VertexBasedTransport_P1(
   std::size_t offset,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   tk::Fields& U );
 
 //! Kuzmin's vertex-based limiter for single-material DGP1
@@ -77,9 +74,6 @@ VertexBasedCompflow_P1(
   std::size_t offset,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   tk::Fields& U );
 
 //! Kuzmin's vertex-based limiter for single-material DGP2
@@ -106,15 +100,14 @@ VertexBasedMultiMat_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  const std::vector< std::vector<tk::real> >& pNodalExtrm,
   tk::Fields& U,
   tk::Fields& P,
-  std::size_t nmat );
+  std::size_t nmat,
+  std::vector< std::size_t >& shockmarker );
 
 //! Kuzmin's vertex-based limiter for multi-material DGP2
 void
@@ -131,6 +124,20 @@ VertexBasedMultiMat_P2(
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
+  tk::Fields& U,
+  tk::Fields& P,
+  std::size_t nmat );
+
+//! Kuzmin's vertex-based limiter for multi-material FV
+void
+VertexBasedMultiMat_FV(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::Fields& geoElem,
+  const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat );
@@ -161,7 +168,7 @@ SuperbeeLimiting( const tk::Fields& U,
                   tk::real beta_lim );
 
 //! Kuzmin's vertex-based limiter function calculation for P1 dofs
-std::vector< tk::real >
+void
 VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
@@ -173,9 +180,8 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   std::size_t ,
   std::size_t offset,
   std::size_t ncomp,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& NodalExtrm );
+  std::vector< tk::real >& phi,
+  const std::array< std::size_t, 2 >& VarRange );
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 std::vector< tk::real >
@@ -246,6 +252,46 @@ bool
 interfaceIndicator( std::size_t nmat,
   const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt );
+
+//! Mark the cells that contain discontinuity according to the interface
+void MarkShockCells ( const std::size_t nelem,
+                      const std::size_t nmat,
+                      const std::size_t system,
+                      const std::size_t offset,
+                      const std::size_t ndof,
+                      const std::size_t rdof,
+                      const std::vector< std::size_t >& ndofel,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      const inciter::FaceData& fd,
+                      const tk::Fields& geoFace,
+                      const tk::Fields& geoElem,
+                      const tk::Fields& U,
+                      const tk::Fields& P,
+                      std::vector< std::size_t >& shockmarker );
+
+//! Clean up the state of trace materials for multi-material PDE system
+bool
+cleanTraceMultiMat(
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::Fields& geoElem,
+  std::size_t nmat,
+  tk::Fields& U,
+  tk::Fields& P );
+
+//! Time step restriction for multi material cell-centered schemes
+tk::real
+timeStepSizeMultiMat(
+  const std::vector< int >& esuf,
+  const tk::Fields& geoFace,
+  const tk::Fields& geoElem,
+  const std::size_t nelem,
+  std::size_t offset,
+  std::size_t nmat,
+  const tk::Fields& U,
+  const tk::Fields& P );
 
 } // inciter::
 

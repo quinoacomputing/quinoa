@@ -38,6 +38,20 @@ Both of the above git repositories are setup to pull in the cmake code from the
 https://github.com/quinoacomputing/cmake-modules repository, in quinoa as a
 subtree, in the TPL repository as a submodule.
 
+@subsection git_subtree_add Set up the cmake subtree
+
+This has to be done only the first time you intend to make changes to the cmake
+directory in `quinoa\`. To set up the git subtree from the cmake repository
+(branch _master_), first remove the `cmake` directory under `quinoa\` and commit
+the change. Then do
+
+@code{.bash}
+git remote add -f cmake https://github.com/quinoacomputing/cmake-modules.git
+git subtree add --prefix=cmake --squash https://github.com/quinoacomputing/cmake-modules.git master
+@endcode
+
+This sets up the cmake subtree in your local Quinoa directory.
+
 @subsection git_subtree_pull Pull changes from the cmake repository
 
 To pull in the latest updates from the cmake repository (from its branch _master_)

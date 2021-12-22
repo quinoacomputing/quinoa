@@ -35,6 +35,7 @@
 #include "Riemann/Upwind.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
+#include "PrefIndicator.hpp"
 
 namespace inciter {
 
@@ -257,13 +258,11 @@ class Transport {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
-    //! \param[in] gid Local->global node id map
-    //! \param[in] bid Local chare-boundary node ids (value) associated to
-    //!   global node ids (key)
-    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-    //!   variables
-    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-    //!   variables
+//    //! \param[in] gid Local->global node id map
+//    //! \param[in] bid Local chare-boundary node ids (value) associated to
+//    //!   global node ids (key)
+//    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
+//    //!   variables
     //! \param[in,out] U Solution vector at recent time step
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
@@ -273,13 +272,13 @@ class Transport {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
-                const std::vector< std::size_t >& gid,
-                const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                [[maybe_unused]] const std::vector< std::vector<tk::real> >&
-                  pNodalExtrm,
+                const std::vector< std::size_t >&,
+                const std::unordered_map< std::size_t, std::size_t >&,
+                const std::vector< std::vector<tk::real> >&,
+                const std::vector< std::vector<tk::real> >&,
                 tk::Fields& U,
-                tk::Fields& ) const
+                tk::Fields&,
+                std::vector< std::size_t >& ) const
     {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
@@ -289,7 +288,7 @@ class Transport {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm, U );
+          m_system, m_offset, geoElem, coord, U );
     }
 
     //! Compute right hand side
@@ -362,6 +361,36 @@ class Transport {
           geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
           riemannLoc, riemannDeriv, intsharp );
+    }
+
+    //! Evaluate the adaptive indicator and mark the ndof for each element
+    //! \param[in] nunk Number of unknowns
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] unk Array of unknowns
+    //! \param[in] indicator p-refinement indicator type
+    //! \param[in] ndof Number of degrees of freedom in the solution
+    //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
+    //! \param[in] tolref Tolerance for p-refinement
+    //! \param[in,out] ndofel Vector of local number of degrees of freedome
+    void eval_ndof( std::size_t nunk,
+                    [[maybe_unused]] const tk::UnsMesh::Coords& coord,
+                    [[maybe_unused]] const std::vector< std::size_t >& inpoel,
+                    const inciter::FaceData& fd,
+                    const tk::Fields& unk,
+                    inciter::ctr::PrefIndicatorType indicator,
+                    std::size_t ndof,
+                    std::size_t ndofmax,
+                    tk::real tolref,
+                    std::vector< std::size_t >& ndofel ) const
+    {
+      const auto& esuel = fd.Esuel();
+
+      if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
+        spectral_decay( 1, nunk, esuel, unk, ndof, ndofmax, tolref, ndofel );
+      else
+        Throw( "No such adaptive indicator type" );
     }
 
     //! Compute the minimum time step size

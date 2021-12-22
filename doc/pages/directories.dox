@@ -38,8 +38,7 @@ Grammars are thus written purely in C++ and the compiler generates the parsers
 using PEGTL.
 
 Files `src/Control/<executable>/Components.h` store the number of scalar
-components for systems of equations integrated, by e.g., @ref walker_main or
-@ref inciter_main.
+components for systems of equations integrated, by e.g., @ref inciter_main.
 
 CommonGrammar.h defines the smallest building blocks of all grammars. It
 contains generic functions that are reused among multiple command line and
@@ -95,94 +94,17 @@ unittest_main.
 @dir src/Control/Options
 @brief Options for multiple executables
 
-@dir src/Control/RNGTest
-@brief Types, options, command line parsing, and grammar for _RNGTest_
-
-@dir src/Control/RNGTest/CmdLine
-@brief Command line parsing and grammar for _RNGTest_
-
-@dir src/Control/RNGTest/InputDeck
-@brief Input file parsing and grammar for _RNGTest_
-
-@dir src/Control/RNGTest/Options
-@brief Options for _RNGTest_
-
 @dir src/Control/UnitTest
 @brief Types, command line parsing, and grammar for _UnitTest_
 
 @dir src/Control/UnitTest/CmdLine
 @brief Command line parsing and grammar for _UnitTest_
 
-@dir src/Control/Walker
-@brief Types, options, command line parsing, and grammar for _Walker_
-
-@dir src/Control/Walker/CmdLine
-@brief Command line parsing and grammar for _Walker_
-
-@dir src/Control/Walker/InputDeck
-@brief Input file parsing and grammar for _Walker_
-
-@dir src/Control/Walker/Options
-@brief Options for _Walker_
-
-@dir src/DiffEq
-@brief Stochastic and deterministic (ordinary) differential equations
-
-@details This directory contains implementations of discrete time integrators
-for deterministic and stochastic _ordinary_ differential equations. (_Ordinary_
-as opposed to _partial_ differential equations in `src/PDE`). At this time, all
-of these ordinary differential equations are used exclusively by @ref
-walker_main.
-
-`Configure<eq>.[Ch]` contain functionality related to registration and querying
-user-configuration information on specific equation types.
-
-All specific equation types "inherit" from the common "base", tk::DiffEq, so
-that user-configured instances of multiple specific equations (as a potentially
-coupled system) can be integrated in a generic fashion. This is done using
-[concept-based runtime polymorphism](http://sean-parent.stlab.cc/papers-and-presentations/#value-semantics-and-concept-based-polymorphism).
-
-The specific equation types are registered into a
-[factory](http://www.boost.org/doc/libs/release/libs/functional/factory),
-walker::DiffEqFactory, which leads to generic code for configuring and using
-existing equation types and adding new ones.
-
-@see @ref diffeq
-
-@dir src/DiffEq/Beta
-@brief Time integrators for stochastic differential equations based on the beta PDF
-
-@dir src/DiffEq/Dirichlet
-@brief Time integrators for stochastic differential equations based on the Dirichlet PDF
-
-@dir src/DiffEq/Dissipation
-@brief Time integrators for stochastic differential equations modeling the dissipation rate of turbulent kinetic energy in turbulent flows
-
-@dir src/DiffEq/Gamma
-@brief Time integrators for stochastic differential equations based on the gamma PDF
-
-@dir src/DiffEq/OrnsteinUhlenbeck
-@brief Time integrators for stochastic differential equations based on the Ornstein-Uhlenbeck process
-
-@dir src/DiffEq/Position
-@brief Time integrators for stochastic differential equations modeling the stochastic particle positions in turbulent flows
-
-@dir src/DiffEq/SkewNormal
-@brief Time integrators for stochastic differential equations based on the skew-normal PDF
-
-@dir src/DiffEq/Velocity
-@brief Time integrators for stochastic differential equations modeling the stochastic particle velocities in turbulent flows
-
-@dir src/DiffEq/WrightFisher
-@brief Time integrators for stochastic differential equations based on the Wright-Fisher process
-
 @dir src/PDE
 @brief Partial differential equations
 
-@details This directory contains implementations of spatial discretizations
-for _partial_ differential equations (PDE). (_Partial_ as opposed to _ordinary_
-differential equations in `src/DiffEq`). At this time, all of these PDEs are
-used exclusively by @ref inciter_main.
+@details This directory contains implementations of spatial discretizations for
+_partial_ differential equations (PDE).
 
 `Configure<eq>.[Ch]` contain functionality related to registration and querying
 user-configuration information on specific equation types.
@@ -201,8 +123,7 @@ adding new ones.
 Currently, there are two families of spatial discretizations (or _schemes_)
 implemented: _continuous_ and _discontinuous_ Galerkin (CG, DG) finite element
 methods (FEM). Correspondingly, there are two factories into which PDEs are
-registered, inciter::CGFactory and inciter::DGFactory. (These are analogous to
-tk::DiffEqFactory in @ref walker_main.)
+registered, inciter::CGFactory and inciter::DGFactory.
 
 CG discretization in space is combined with a time stepping scheme that is
 equivalent to the [Lax-Wendroff (LW)](https://en.wikipedia.org/wiki/Lax%E2%80%93Wendroff_method)
@@ -275,46 +196,6 @@ inciter::dg::CompFlow.
 implementations as well as a Riemann solver factory and the "base class",
 RiemannSolver, used to access various Riemann solvers in a polymorphic fashion.
 
-@dir src/RNG
-@brief Interoperation with random number generator libraries
-
-@details This directory contains code used to interface with random number
-generator (RNG) third-party libraries. It also defines a
-[factory](http://www.boost.org/doc/libs/release/libs/functional/factory),
-tk::RNGFactory, which leads to generic code for configuring and using supported
-RNGs and adding new ones.
-
-@dir src/RNGTest
-@brief Functionality specific to _RNGTest_
-
-@details This directory contains code specific to @ref rngtest_main.
-
-@see @ref rngs_input
-@see @ref rngtest_design
-@see @ref rngtest_examples
-
-@dir src/Statistics
-@brief Estimating statistical moments and probablity distributions from ensembles
-
-@details This directory contains code to estimate arbitrary statistical moments
-and discrete probability distributions from fluctuating ensembles. It also
-contains code used to aggregate distributions across a large problem
-distributed across many processing elements (PEs) in parallel, using custom
-reducers of the Charm++ runtime system.
-
-@see @ref statistics_output
-@see @ref walker_examples
-
-@dir src/Walker
-@brief Functionality specific to _Walker_
-
-@details This directory contains code specific to @ref walker_main.
-
-@see @ref diffeq
-@see @ref inhomogeneity
-@see @ref io
-@see @ref walker_examples
-
 @dir src/UnitTest
 @brief Functionality specific to _UnitTest_
 
@@ -355,15 +236,6 @@ subdirectories mirrored.
 
 @dir tests/unit/RNG
 @brief Unit tests for subdirectory _RNG_
-
-@dir src/Particles
-@brief Functionality related _spatial transport_ of Lagrangian particles
-
-@details This directory contains functionality specific to _spatial_ transport
-of Lagrangian particles. (_Spatial_ transport as opposed to transport in sample
-(or state) space which is in `src/DiffEq`.) This is also the place for particle
-transport across processing elements (PEs or CPUs) of a distributed problem
-running in parallel.
 
 @dir src/NoWarning
 @brief Include files turning on/off specific compiler warnings for third-party library includes
@@ -415,12 +287,9 @@ has code
 @details This directory contains functionality for reading from and writing to
 files. It has
  - native readers and writers of specialized (usually small) data, e.g.,
-   ensemble statistics from @ref walker_main or error norms from @ref
-   inciter_main,
+   error norms from @ref inciter_main,
  - mesh readers in various standard formats via third-party libraries, see @ref
    meshconv_main, and
- - a particle data writer via the [H5Part](http://vis.lbl.gov/Research/H5Part)
-   library.
 
 @dir src/Inciter
 @brief Functionality specific to _Inciter_

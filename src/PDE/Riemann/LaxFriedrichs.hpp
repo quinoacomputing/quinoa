@@ -23,7 +23,6 @@
 namespace inciter {
 
 //! Lax-Friedrichs approximate Riemann solver
-//! \details This class can be used polymorphically with inciter::RiemannSolver
 struct LaxFriedrichs {
 
   //! Lax-Friedrichs approximate Riemann solver flux function

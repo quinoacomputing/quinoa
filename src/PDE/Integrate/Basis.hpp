@@ -72,7 +72,8 @@ eval_state ( ncomp_t ncomp,
              const std::size_t ndof_el,
              const std::size_t e,
              const Fields& U,
-             const std::vector< tk::real >& B );
+             const std::vector< tk::real >& B,
+             const std::array< std::size_t, 2 >& VarRange );
 
 //! Transform the solution with Dubiner basis to the solution with Taylor basis
 std::vector< std::vector< tk::real > >

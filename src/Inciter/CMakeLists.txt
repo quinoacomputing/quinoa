@@ -12,13 +12,15 @@ add_library(Inciter
             Sorter.cpp
             DiagCG.cpp
             ALECG.cpp
+            ALE.cpp
+            Ghosts.cpp
             DG.cpp
+            FV.cpp
             FluxCorrector.cpp
             DistFCT.cpp
             DiagReducer.cpp
             NodeDiagnostics.cpp
             ElemDiagnostics.cpp
-            PrefIndicator.cpp
             FieldOutput.cpp
             NodeBC.cpp)
 
@@ -82,6 +84,9 @@ addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "alecg" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
+addCharmModule( "fv" "Inciter" )
+addCharmModule( "ale" "Inciter" )
+addCharmModule( "ghosts" "Inciter" )
 
 # Add extra dependency of Inciter on inciterCharmModule. This is required as
 # Inciter refers to the main Charm++ proxy defined in the Charm++ module

@@ -20,11 +20,11 @@
 FROM alpine:3.10
 
 # Install system-wide prerequisites
-RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev libexecinfo-static ninja graphviz binutils-dev flex bison vim lua5.3-dev
+RUN apk update && apk add patch libtool autoconf automake gfortran gcc g++ make boost-dev bash m4 file git cmake perl grep zlib-dev libexecinfo-dev libexecinfo-static graphviz binutils-dev flex bison vim
 
 # Install OpenMPI
-ADD http://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.1.tar.gz /openmpi/
-RUN cd /openmpi/ && tar xzf openmpi-3.1.1.tar.gz && cd openmpi-3.1.1 && ./configure --disable-shared --enable-static --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
+ADD https://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.4.tar.gz /openmpi/
+RUN cd /openmpi/ && tar xzf openmpi-3.1.4.tar.gz && cd openmpi-3.1.4 && ./configure --disable-shared --enable-static --prefix=/opt/openmpi && make -sj$(grep -c processor /proc/cpuinfo) install
 ENV PATH /opt/openmpi/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/openmpi/lib:$LD_LIBRARY_PATH
 ENV OMPI_MCA_plm isolated
@@ -44,16 +44,18 @@ WORKDIR /home/quinoa
 CMD ["/bin/sh"]
 
 # Clone quinoa
-RUN git clone --recursive http://github.com/quinoacomputing/quinoa.git
+RUN git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git
 # Checkout commit to be tested
 ARG COMMIT
 RUN cd quinoa && git checkout $COMMIT
 # Update submodules
 RUN cd quinoa && git submodule init && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
 # Build TPLs
-RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DBUILD_SHARED_LIBS=off .. && make -sj$(grep -c processor /proc/cpuinfo)
-# Build quinoa
-RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DBUILD_SHARED_LIBS=off -DCMAKE_CXX_FLAGS=-Werror -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src && make -sj$(grep -c processor /proc/cpuinfo) && npe=$(expr $(grep -c processor /proc/cpuinfo) / 2) && ./charmrun +p $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
+RUN cd quinoa && mkdir -p external/build && cd external/build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DENABLE_OMEGA_H=true -DBUILD_SHARED_LIBS=off -DCXXFLAGS=-w .. && make -sj$(grep -c processor /proc/cpuinfo)
+# Build code
+RUN cd quinoa && mkdir -p build && cd build && cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DBUILD_SHARED_LIBS=off -DRUNNER_ARGS="--bind-to none -oversubscribe" ../src
+#Run tests
+RUN cd quinoa/build && npe=$(grep -c processor /proc/cpuinfo) && make -sj$npe && ./charmrun +p $npe Main/unittest -v -q && ctest -j $npe --output-on-failure -LE extreme
 
 # Ensure all executables are statically linked
 RUN cd quinoa/build && \

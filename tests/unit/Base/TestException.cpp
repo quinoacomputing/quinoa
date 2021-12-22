@@ -14,7 +14,6 @@
 
 #include "TUTConfig.hpp"
 #include "Exception.hpp"
-#include "ProcessControl.hpp"
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 

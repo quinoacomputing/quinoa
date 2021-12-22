@@ -24,6 +24,7 @@
 #include "Exception.hpp"
 #include "CGPDE.hpp"
 #include "DGPDE.hpp"
+#include "FVPDE.hpp"
 #include "PDEStack.hpp"
 #include "ProcessException.hpp"
 #include "InciterPrint.hpp"
@@ -98,6 +99,11 @@ std::vector< CGPDE > g_cgpde;
 //!   objects, and thus must be distributed to all PEs during initialization.
 //!   Once distributed by the runtime system, the objects do not change.
 std::vector< DGPDE > g_dgpde;
+//! Partial differential equations using finite volume selected by user
+//! \details This vector is in global scope, because it holds polymorphic
+//!   objects, and thus must be distributed to all PEs during initialization.
+//!   Once distributed by the runtime system, the objects do not change.
+std::vector< FVPDE > g_fvpde;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -144,6 +150,28 @@ inline
 void operator|( PUP::er& p, std::vector< DGPDE >& eqs ) {
   try {
     if (!p.isSizing()) eqs = PDEStack().selectedDG();
+  } catch (...) { tk::processExceptionCharm(); }
+}
+
+//! \brief Pack/Unpack selected partial differential equations using
+//!   finite volume discretization.
+//! \details This Pack/Unpack method (re-)creates the PDE factory since it needs
+//!   to (re-)bind function pointers on different processing elements. Therefore
+//!   we circumvent Charm's usual pack/unpack for this type, and thus sizing
+//!   does not make sense: sizing is a no-op. We could initialize the factory in
+//!   InciterDriver's constructor and let this function re-create the stack only
+//!   when unpacking, but that leads to repeating the same code twice: once in
+//!   InciterDriver's constructor, once here. Another option is to use this
+//!   pack/unpack routine to both initially create (when packing) and to
+//!   re-create (when unpacking) the factory, which eliminates the need for
+//!   pre-creating the object in InciterDriver's constructor and therefore
+//!   eliminates the repeated code. This explains the guard for sizing: the code
+//!   below is called for packing only (in serial) and packing and unpacking (in
+//!   parallel).
+inline
+void operator|( PUP::er& p, std::vector< FVPDE >& eqs ) {
+  try {
+    if (!p.isSizing()) eqs = PDEStack().selectedFV();
   } catch (...) { tk::processExceptionCharm(); }
 }
 

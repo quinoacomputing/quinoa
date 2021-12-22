@@ -16,6 +16,7 @@ module discretization {
   extern module transporter;
   extern module meshwriter;
   extern module distfct;
+  extern module ale;
   extern module conjugategradients;
 
   include "UnsMesh.hpp";
@@ -28,19 +29,21 @@ module discretization {
         std::size_t meshid,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_DistFCT& fctproxy,
+        const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const tk::UnsMesh::CoordMap& coordmap,
         const tk::UnsMesh::Chunk& el,
         const tk::CommMaps& msum,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::vector< std::size_t >& triinpoel,
         int nchare );
       initnode void registerReducers();
       entry void vol();
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
-      entry void meshvelSolve( CkCallback c );
       entry void transferInit();
       entry void comcb( std::size_t srcmeshid, CkCallback c );
 

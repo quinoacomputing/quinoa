@@ -389,7 +389,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # 10120: overriding '-O3' with '-O2'
   # 10397: optimization reports are generated in *.optrpt files in the output location
   # 15518: Structure assignment was serialized
-  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,688,869,981,1011,1292,1418,1419,1572,1599,2259,2407,2415,2547,2557,3180,3280,3346,3656,10120,10397,15518,2282")
+  add_compiler_flag("-diag-disable 7,68,82,111,177,186,193,280,304,327,383,411,444,593,688,869,981,1011,1292,1418,1419,1572,1599,2259,2407,2415,2547,2557,3180,3280,3346,3656,10120,10397,11074,11076,15518,2282")
 
   # default: no openmp simd
   add_compiler_flag("-qno-openmp-simd")
@@ -406,7 +406,11 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
     #add_compiler_flag("-no-inline-max-size")
     #add_compiler_flag("-no-inline-max-total-size")
     #add_compiler_flag("-no-inline-max-per-routine")
-    add_compiler_flag("-diag-disable 11074,11076")
+    # As upgrading to newer version of the intel compiler, this -O level could
+    # be revisited to see if higher optimization levels are okay or not.
+    set(CMAKE_CXX_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING
+    "CMAKE_CXX_FLAGS_RELEASE: Flags used by the compiler during release builds."
+    FORCE)
   endif()
 
   # Linker flags for intel
@@ -542,21 +546,14 @@ message(STATUS "Executable linker flags: '${CMAKE_EXE_LINKER_FLAGS}'")
 include(ConfigureDataLayout)
 
 # Create set of all executables tested. These are the executables that do
-# "interesting things", i.e., excluding unittest but keeping rngtest as that is
-# (to be) regression tested
+# "interesting things", i.e., excluding unittest
 set(NONTEST_EXECUTABLES ${INCITER_EXECUTABLE}
-                        ${RNGTEST_EXECUTABLE}
-                        ${MESHCONV_EXECUTABLE}
-                        ${WALKER_EXECUTABLE}
-                        ${FILECONV_EXECUTABLE})
+                        ${MESHCONV_EXECUTABLE})
 
 # Create set of all executables.
 set(EXECUTABLES ${INCITER_EXECUTABLE}
-                ${RNGTEST_EXECUTABLE}
                 ${MESHCONV_EXECUTABLE}
-                ${WALKER_EXECUTABLE}
-                ${UNITTEST_EXECUTABLE}
-                ${FILECONV_EXECUTABLE})
+                ${UNITTEST_EXECUTABLE})
 
 
 # Decide if the Exception class will write to std::cerr. This may not always be
@@ -609,10 +606,10 @@ if (BUILD_SHARED_LIBS)
 endif(BUILD_SHARED_LIBS)
 
 # Components
-if (CHARM_FOUND AND PSTREAMS_FOUND)
+if (CHARM_FOUND)
   add_subdirectory(Base)
 else()
-  PrintMissing(Base "CHARM_FOUND;PSTREAMS_FOUND")
+  PrintMissing(Base "CHARM_FOUND")
 endif()
 
 if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
@@ -627,19 +624,13 @@ else()
   PrintMissing(LoadBalance "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND;Zoltan2_FOUND")
 endif()
 
-if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND AND RANDOM123_FOUND)
-  add_subdirectory(RNG)
-else()
-  PrintMissing(RNG "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
-endif()
-
 if (CHARM_FOUND AND PEGTL_FOUND AND BRIGAND_FOUND)
   add_subdirectory(Statistics)
 else()
   PrintMissing(Statistics "CHARM_FOUND;PEGTL_FOUND;BRIGAND_FOUND")
 endif()
 
-if ((ENABLE_MESHCONV OR ENABLE_INCITER OR ENABLE_FILECONV) AND
+if ((ENABLE_MESHCONV OR ENABLE_INCITER) AND
     BRIGAND_FOUND AND HIGHWAYHASH_FOUND)
   add_subdirectory(Mesh)
   add_subdirectory(IO)
@@ -648,20 +639,14 @@ endif()
 if (ENABLE_INCITER AND HIGHWAYHASH_FOUND)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
+endif()
+
+if (ENABLE_INCITER OR ENABLE_UNITTEST)
   add_subdirectory(LinearSolver)
 endif()
 
 if (ENABLE_UNITTEST AND ENABLE_TESTS)
   add_subdirectory(UnitTest)
-endif()
-
-if (ENABLE_WALKER)
-  add_subdirectory(DiffEq)
-  add_subdirectory(Walker)
-endif()
-
-if (ENABLE_RNGTEST)
-  add_subdirectory(RNGTest)
 endif()
 
 add_subdirectory(Main)
@@ -779,7 +764,8 @@ if(CODE_COVERAGE AND ENABLE_TESTS)
   setup_target_for_coverage(regression doc/html regression_coverage
                             ${CMAKE_CTEST_COMMAND}
                             TESTRUNNER_ARGS -j${PROCESSOR_COUNT}
-                                            ${REGRESSION_COVERAGE_ARGS} #-LE insane
+                                            ${REGRESSION_COVERAGE_ARGS}
+                                            --output-on-failure
                             DEPENDS ${NONTEST_EXECUTABLES})
   if (REGRESSION_COVERAGE_ARGS)
     message(STATUS "Regression coverage test-runner arguments: '${REGRESSION_COVERAGE_ARGS}'")

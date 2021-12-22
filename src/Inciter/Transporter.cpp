@@ -52,6 +52,7 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
+extern std::vector< FVPDE > g_fvpde;
 
 }
 
@@ -159,12 +160,12 @@ Transporter::input()
   // Extract mesh filenames specified in the control file (assigned to solvers)
   auto ctrinput = g_inputdeck.mesh();
 
-  ErrChk( !cmdinput.empty() || !ctrinput.empty(),
+  ErrChk( not cmdinput.empty() or not ctrinput.empty(),
     "Either a single input mesh must be given on the command line or multiple "
     "meshes must be configured in the control file." );
 
    // Prepend control file path to mesh filenames in given in control file
-  if (!ctrinput.empty()) {
+  if (not ctrinput.empty()) {
      const auto& ctr = g_inputdeck.get< tag::cmd, tag::io, tag::control >();
      auto path = ctr.substr( 0, ctr.find_last_of("/")+1 );
      for (auto& f : ctrinput) f = path + f;
@@ -190,11 +191,12 @@ Transporter::info( const InciterPrint& print )
   PDEStack stack;
 
   // Print out information on PDE factories
-  print.eqlegend();
   print.eqlist( "Registered PDEs using continuous Galerkin (CG) methods",
                 stack.cgfactory(), stack.cgntypes() );
   print.eqlist( "Registered PDEs using discontinuous Galerkin (DG) methods",
                 stack.dgfactory(), stack.dgntypes() );
+  print.eqlist( "Registered PDEs using finite volume (DG) methods",
+                stack.fvfactory(), stack.fvntypes() );
   print.endpart();
 
   // Print out information on problem
@@ -226,9 +228,7 @@ Transporter::info( const InciterPrint& print )
       print.item( "Clipping FCT",
                   g_inputdeck.get< tag::discr, tag::fctclip >() );
     }
-  } else if (scheme == ctr::SchemeType::DG ||
-             scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
-             scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
+  } else if (g_inputdeck.centering() == tk::Centering::ELEM)
   {
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
   }
@@ -288,8 +288,6 @@ Transporter::info( const InciterPrint& print )
     if (t0ref) {
       const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
       print.item( "Initial refinement steps", initref.size() );
-      print.ItemVec< ctr::AMRInitial >( initref );
-      print.ItemVecLegend< ctr::AMRInitial >();
       print.edgeref( g_inputdeck.get< tag::amr, tag::edge >() );
 
       auto eps =
@@ -476,9 +474,14 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
   std::unordered_set< int > usedsets;
   brigand::for_each< PDEsBCs >( UserBC( g_inputdeck, usedsets ) );
 
-  // Add side sets of the time dependent BCs (since tag::bctimedep is not a
-  // part of tag::bc)
+  // Query side sets of time dependent BCs (since tag::bctimedep is not a part
+  // of tag::bc)
   brigand::for_each< PDETypes >( UserTimedepBC(g_inputdeck, usedsets) );
+
+  // Query side sets of boundaries prescribed as moving with ALE
+  for (const auto& move : g_inputdeck.get< tag::ale, tag::move >())
+    for (auto i : move.get< tag::sideset >())
+      usedsets.insert( std::stoi(i) );
 
   // Add sidesets requested for field output
   const auto& ss = g_inputdeck.get< tag::cmd, tag::io, tag::surface >();
@@ -554,7 +557,9 @@ Transporter::createPartitioner()
   // Create (discretization) Scheme chare worker arrays for all meshes
   for ([[maybe_unused]] const auto& filename : m_input)
     m_scheme.emplace_back( g_inputdeck.get< tag::discr, tag::scheme >(),
-                           need_linearsolver() );
+                           g_inputdeck.get< tag::ale, tag::ale >(),
+                           need_linearsolver(),
+                           centering );
 
   ErrChk( !m_input.empty(), "No input mesh" );
 
@@ -585,8 +590,9 @@ Transporter::createPartitioner()
       // Read node lists on side sets
       bnode = mr.readSidesetNodes();
       // Verify boundarty condition (BC) side sets used exist in mesh file
-      bcs_set = matchBCs( bnode );
-      bcs_set = bcs_set || matchBCs( bface );
+      bool bcnode_set = matchBCs( bnode );
+      bool bcface_set = matchBCs( bface );
+      bcs_set = bcface_set or bcnode_set;
     }
 
     // Warn on no BCs
@@ -812,12 +818,11 @@ Transporter::matched( std::size_t summeshid,
     if (refmode == Refiner::RefMode::T0REF) {
 
       if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
-        const auto& initref = g_inputdeck.get< tag::amr, tag::init >();
         ctr::AMRInitial opt;
         print.diag( { "meshid", "t0ref", "type", "nref", "nderef", "ncorr" },
                     { std::to_string(meshid),
                       std::to_string(m_nt0refit[meshid]),
-                      opt.code(initref[m_nt0refit[meshid]]),
+                      "initial",
                       std::to_string(nref),
                       std::to_string(nderef),
                       std::to_string(m_ncit[meshid]) } );
@@ -902,7 +907,7 @@ Transporter::bndint( tk::real sx, tk::real sy, tk::real sz, tk::real cb,
     Throw( err.str() );
   }
 
-  if (cb > 0.0) m_scheme[meshid].bcast< Scheme::resizeComm >();
+  if (cb > 0.0) m_scheme[meshid].ghosts().resizeComm();
 }
 
 void
@@ -970,7 +975,7 @@ Transporter::startEsup( std::size_t meshid )
 //! \note Only used for cell-centered schemes
 // *****************************************************************************
 {
-  m_scheme[meshid].bcast< Scheme::nodeNeighSetup >();
+  m_scheme[meshid].ghosts().nodeNeighSetup();
 }
 
 void
@@ -1017,17 +1022,16 @@ Transporter::need_linearsolver() const
 //! \return True if ALE will neeed a linear solver
 // *****************************************************************************
 {
-  auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-  bool need = false;
 
-  if (ale && (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
-              smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ))
+  if ( g_inputdeck.get< tag::ale, tag::ale >() and
+       (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
+        smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) )
   {
-     need = true;
+     return true;
+  } else {
+     return false;
   }
-
-  return need;
 }
 
 void
@@ -1057,6 +1061,9 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 
   if (g_inputdeck.get< tag::discr, tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[meshid].fct().doneInserting();
+
+  if (g_inputdeck.get< tag::ale, tag::ale >())
+    m_scheme[meshid].ale().doneInserting();
 
   if (need_linearsolver())
     m_scheme[meshid].conjugategradients().doneInserting();
@@ -1095,6 +1102,8 @@ Transporter::diagHeader()
            scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
            scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
     for (const auto& eq : g_dgpde) varnames( eq, var );
+  else if (scheme == ctr::SchemeType::FV)
+    for (const auto& eq : g_fvpde) varnames( eq, var );
   else Throw( "Diagnostics header not handled for discretization scheme" );
 
   const tk::ctr::Error opt;
@@ -1123,6 +1132,17 @@ Transporter::diagHeader()
 
   // Write diagnostics header
   dw.header( d );
+}
+
+void
+Transporter::doneInsertingGhosts(std::size_t meshid)
+// *****************************************************************************
+// Reduction target indicating all "ghosts" insertions are done
+//! \param[in] meshid Mesh id
+// *****************************************************************************
+{
+  m_scheme[meshid].ghosts().doneInserting();
+  m_scheme[meshid].ghosts().startCommSetup();
 }
 
 void
@@ -1467,8 +1487,7 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
   if (++m_nchk == m_nelem.size()) { // all worker arrays have checkpointed
     m_nchk = 0;
     #ifndef HAS_EXAM2M
-    const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
-    if (!benchmark) {
+    if (not g_inputdeck.get< tag::cmd, tag::benchmark >()) {
       const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
       CkCallback res( CkIndex_Transporter::resume(), thisProxy );
       CkStartCheckpoint( restart.c_str(), res );
@@ -1476,6 +1495,7 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
       resume();
     }
     #else
+      printer() << ">>> WARNING: Checkpointing with ExaM2M not yet implemented\n";
       resume();
     #endif
   }

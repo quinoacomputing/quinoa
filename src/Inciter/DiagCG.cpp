@@ -45,6 +45,7 @@ extern std::vector< CGPDE > g_cgpde;
 using inciter::DiagCG;
 
 DiagCG::DiagCG( const CProxy_Discretization& disc,
+                const CProxy_Ghosts&,
                 const std::map< int, std::vector< std::size_t > >& bface,
                 const std::map< int, std::vector< std::size_t > >& bnode,
                 const std::vector< std::size_t >& triinpoel ) :
@@ -946,7 +947,7 @@ DiagCG::evalRestart()
   const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
   const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
 
-  if ( !benchmark && d->It() % rsfreq == 0 ) {
+  if (not benchmark and not (d->It() % rsfreq)) {
 
     std::vector< std::size_t > meshdata{ /* finished = */ 0, d->MeshId() };
     contribute( meshdata, CkReduction::nop,

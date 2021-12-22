@@ -18,6 +18,7 @@ module alecg {
   //! [External modules and includes]
   extern module transporter;
   extern module discretization;
+  extern module ghosts;
 
   include "UnsMesh.hpp";
   include "PUPUtil.hpp";
@@ -30,6 +31,7 @@ module alecg {
     //! [1D Charm++ chare array]
       //! [Entry methods]
       entry ALECG( const CProxy_Discretization& disc,
+                   const CProxy_Ghosts& ghostsproxy,
                    const std::map< int, std::vector< std::size_t > >& bface,
                    const std::map< int, std::vector< std::size_t > >& bnode,
                    const std::vector< std::size_t >& triinpoel );
@@ -41,7 +43,6 @@ module alecg {
       entry void start();
       entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void advance( tk::real newdt );
-      entry [reductiontarget] void meshvelbc( tk::real maxv );
       entry void comdfnorm(
               const std::unordered_map< tk::UnsMesh::Edge,
               std::array< tk::real, 3 >,
@@ -52,18 +53,8 @@ module alecg {
                                const std::vector< std::vector< tk::real > >& G );
       entry void comrhs( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& R );
-      entry void comvort( const std::vector< std::size_t >& gid,
-                          const std::vector< std::array< tk::real, 3 > >& v );
-      entry void comdiv( const std::vector< std::size_t >& gid,
-                         const std::vector< tk::real >& v );
-      entry void compot( const std::vector< std::size_t >& gid,
-                         const std::vector< std::array< tk::real, 3 > >& v );
-      entry void comfor( const std::vector< std::size_t >& gid,
-                         const std::vector< std::array< tk::real, 3 > >& w );
       entry void resized();
-      entry void applied( CkDataMsg* msg );
-      entry void meshvelsolved( CkDataMsg* msg );
-      entry void helmholtz( CkDataMsg* msg );
+      entry void meshveldone();
       entry void lhs();
       entry void step();
       entry void next();
@@ -90,16 +81,6 @@ module alecg {
         when norm_complete(), resize_complete() serial "trans" {
           if (m_newmesh == 0) meshvelstart(); else transfer(); } }
 
-      entry void wait4vel() {
-        when ownvort_complete(), comvort_complete(),
-             owndiv_complete(), comdiv_complete() serial "vel" { mergevel(); }}
-
-      entry void wait4pot() {
-        when ownpot_complete(), compot_complete() serial "pot" { gradpot(); } }
-
-      entry void wait4for() {
-        when ownfor_complete(), comfor_complete() serial "for" { meshforce(); }}
-
       entry void ownnorm_complete();
       entry void comnorm_complete();
       entry void owndfnorm_complete();
@@ -111,14 +92,6 @@ module alecg {
       entry void comgrad_complete();
       entry void norm_complete();
       entry void resize_complete();
-      entry void ownvort_complete();
-      entry void comvort_complete();
-      entry void owndiv_complete();
-      entry void comdiv_complete();
-      entry void ownpot_complete();
-      entry void compot_complete();
-      entry void ownfor_complete();
-      entry void comfor_complete();
       //! [DAG]
     }
 

@@ -143,24 +143,3 @@ void InciterPrint::edgeref( const std::vector< std::size_t >& edgenodes ) const
    name[0] = static_cast< char >( std::toupper( name[0] ) );
    item( name, c );
 }
-
-void InciterPrint::eqlegend() const
-// *****************************************************************************
-// Print PDE factory legend
-// *****************************************************************************
-{
-  section( "PDE factory legend, policy codes" );
-
-  static_assert( tk::HasTypedef_code_v< kw::physics::info >,
-                 "Policy code undefined for keyword" );
-  static_assert( tk::HasTypedef_code_v< kw::problem::info >,
-                 "Policy code undefined for keyword" );
-
-  raw( m_item_indent + kw::physics::name() +
-       " (policy code: " + *kw::physics::code() + ")\n" );
-  brigand::for_each< ctr::Physics::keywords >( echoPolicies( this ) );
-
-  raw( m_item_indent + kw::problem::name() +
-       " (policy code: " + *kw::problem::code() + ")\n" );
-  brigand::for_each< ctr::Problem::keywords >( echoPolicies( this ) );
-}

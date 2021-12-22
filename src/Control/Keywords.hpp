@@ -1226,7 +1226,6 @@ struct centering_info {
 using pdf_centering = keyword< centering_info, TAOCPP_PEGTL_STRING("centering") >;
 
 struct raw_info {
-  using code = Code< R >;
   static std::string name() { return "raw"; }
   static std::string shortDescription() { return
     "Select the raw initialization policy"; }
@@ -1242,7 +1241,6 @@ struct raw_info {
 using raw = keyword< raw_info, TAOCPP_PEGTL_STRING("raw") >;
 
 struct zero_info {
-  using code = Code< Z >;
   static std::string name() { return "zero"; }
   static std::string shortDescription() { return
     "Select the zero initialization policy"; }
@@ -1258,7 +1256,6 @@ struct zero_info {
 using zero = keyword< zero_info, TAOCPP_PEGTL_STRING("zero") >;
 
 struct jointdelta_info {
-  using code = Code< D >;
   static std::string name() { return "delta"; }
   static std::string shortDescription() { return
     "Select the joint delta initialization policy"; }
@@ -1280,7 +1277,6 @@ struct jointdelta_info {
 using jointdelta = keyword< jointdelta_info, TAOCPP_PEGTL_STRING("jointdelta") >;
 
 struct jointgaussian_info {
-  using code = Code< G >;
   static std::string name() { return "Gaussian"; }
   static std::string shortDescription() { return
     "Select the joint Gaussian initialization policy"; }
@@ -1304,7 +1300,6 @@ using jointgaussian =
   keyword< jointgaussian_info, TAOCPP_PEGTL_STRING("jointgaussian") >;
 
 struct jointcorrgaussian_info {
-  using code = Code< C >;
   static std::string name() { return "correlated Gaussian"; }
   static std::string shortDescription() { return
     "Select the joint correlated Gaussian initialization policy"; }
@@ -1333,7 +1328,6 @@ using jointcorrgaussian =
   keyword< jointcorrgaussian_info, TAOCPP_PEGTL_STRING("jointcorrgaussian") >;
 
 struct jointbeta_info {
-  using code = Code< B >;
   static std::string name() { return "beta"; }
   static std::string shortDescription() { return
     "Select the joint beta initialization policy"; }
@@ -1353,7 +1347,6 @@ struct jointbeta_info {
 using jointbeta = keyword< jointbeta_info, TAOCPP_PEGTL_STRING("jointbeta") >;
 
 struct jointgamma_info {
-  using code = Code< A >;
   static std::string name() { return "gamma"; }
   static std::string shortDescription() { return
     "Select the joint gamma initialization policy"; }
@@ -1379,7 +1372,6 @@ using jointgamma =
   keyword< jointgamma_info, TAOCPP_PEGTL_STRING("jointgamma") >;
 
 struct jointdirichlet_info {
-  using code = Code< I >;
   static std::string name() { return "Dirichlet"; }
   static std::string shortDescription() { return
     "Select the Dirichlet initialization policy"; }
@@ -1401,7 +1393,6 @@ using jointdirichlet =
   keyword< jointdirichlet_info, TAOCPP_PEGTL_STRING("jointdirichlet") >;
 
 struct init_info {
-  using code = Code< i >;
   static std::string name() { return "initialization policy"; }
   static std::string shortDescription() { return
     "Select initialization policy"; }
@@ -1429,7 +1420,6 @@ struct init_info {
 using init = keyword< init_info, TAOCPP_PEGTL_STRING("init") >;
 
 struct constcoeff_info {
-  using code = Code< C >;
   static std::string name() { return "constant coefficients"; }
   static std::string shortDescription() { return
     "Select constant coefficients policy"; }
@@ -1446,7 +1436,6 @@ using constcoeff =
   keyword< constcoeff_info, TAOCPP_PEGTL_STRING("const_coeff") >;
 
 struct decay_info {
-  using code = Code< D >;
   static std::string name() { return "decay"; }
   static std::string shortDescription() { return
     "Select decay coefficients policy"; }
@@ -1464,7 +1453,6 @@ struct decay_info {
 using decay = keyword< decay_info, TAOCPP_PEGTL_STRING("decay") >;
 
 struct homogeneous_info {
-  using code = Code< H >;
   static std::string name() { return "homogeneous"; }
   static std::string shortDescription() { return
     "Select homogeneous coefficients policy"; }
@@ -1483,7 +1471,6 @@ using homogeneous =
   keyword< homogeneous_info, TAOCPP_PEGTL_STRING("homogeneous") >;
 
 struct homdecay_info {
-  using code = Code< Y >;
   static std::string name() { return "homogeneous decay"; }
   static std::string shortDescription() { return
     "Select homogeneous decay coefficients policy"; }
@@ -1506,7 +1493,6 @@ struct homdecay_info {
 using homdecay = keyword< homdecay_info, TAOCPP_PEGTL_STRING("homdecay") >;
 
 struct montecarlo_homdecay_info {
-  using code = Code< M >;
   static std::string name() { return "Monte Carlo homogeneous decay"; }
   static std::string shortDescription() { return
     "Select Monte Carlo homogeneous decay coefficients policy"; }
@@ -1531,7 +1517,6 @@ using montecarlo_homdecay =
   keyword< montecarlo_homdecay_info, TAOCPP_PEGTL_STRING("montecarlo_homdecay") >;
 
 struct hydrotimescale_info {
-  using code = Code< T >;
   static std::string name() { return "hydro-timescale"; }
   static std::string shortDescription() { return
     "Select hydro-timescale coefficients policy"; }
@@ -1558,7 +1543,6 @@ using hydrotimescale =
   keyword< hydrotimescale_info, TAOCPP_PEGTL_STRING("hydrotimescale") >;
 
 struct const_shear_info {
-  using code = Code< S >;
   static std::string name() { return "prescribed constant shear"; }
   static std::string shortDescription() { return
     "Select constant shear coefficients policy"; }
@@ -1577,7 +1561,6 @@ using const_shear =
   keyword< const_shear_info, TAOCPP_PEGTL_STRING("const_shear") >;
 
 struct stationary_info {
-  using code = Code< B >;
   static std::string name() { return "stationary"; }
   static std::string shortDescription() { return
      "Select the stationary coefficients policy"; }
@@ -1591,7 +1574,6 @@ using stationary =
   keyword< stationary_info, TAOCPP_PEGTL_STRING("stationary") >;
 
 struct inst_velocity_info {
-  using code = Code< V >;
   static std::string name() { return "instantaneous velocity"; }
   static std::string shortDescription() { return
     "Select the instantaneous velocity coefficients policy"; }
@@ -1605,7 +1587,6 @@ using inst_velocity =
   keyword< inst_velocity_info, TAOCPP_PEGTL_STRING("inst_velocity") >;
 
 struct coeff_info {
-  using code = Code< c >;
   static std::string name() { return "coefficients policy"; }
   static std::string shortDescription() { return
     "Select the coefficients policy"; }
@@ -4667,7 +4648,6 @@ struct inciter_info {
 using inciter = keyword< inciter_info, TAOCPP_PEGTL_STRING("inciter") >;
 
 struct user_defined_info {
-  using code = Code< U >;
   static std::string name() { return "User-defined"; }
   static std::string shortDescription() { return
     "Select user-defined specification for a problem"; }
@@ -4685,7 +4665,6 @@ using user_defined =
   keyword< user_defined_info, TAOCPP_PEGTL_STRING("user_defined") >;
 
 struct shear_diff_info {
-  using code = Code< S >;
   static std::string name() { return "Shear-diffusion"; }
   static std::string shortDescription() { return
     "Select the shear + diffusion test problem "; }
@@ -4701,7 +4680,6 @@ struct shear_diff_info {
 using shear_diff = keyword< shear_diff_info, TAOCPP_PEGTL_STRING("shear_diff") >;
 
 struct slot_cyl_info {
-  using code = Code< Z >;
   static std::string name() { return "Zalesak's slotted cylinder"; }
   static std::string shortDescription() { return
     "Select Zalesak's slotted cylinder test problem"; }
@@ -4717,7 +4695,6 @@ struct slot_cyl_info {
 using slot_cyl = keyword< slot_cyl_info, TAOCPP_PEGTL_STRING("slot_cyl") >;
 
 struct gauss_hump_info {
-  using code = Code< G >;
   static std::string name() { return "Advection of 2D Gaussian hump"; }
   static std::string shortDescription() { return
     "Select advection of 2D Gaussian hump test problem"; }
@@ -4733,7 +4710,6 @@ struct gauss_hump_info {
 using gauss_hump = keyword< gauss_hump_info, TAOCPP_PEGTL_STRING("gauss_hump") >;
 
 struct cyl_advect_info {
-  using code = Code< C >;
   static std::string name() { return "Advection of cylinder"; }
   static std::string shortDescription() { return
     "Select advection of cylinder test problem"; }
@@ -4749,7 +4725,6 @@ struct cyl_advect_info {
 using cyl_advect = keyword< cyl_advect_info, TAOCPP_PEGTL_STRING("cyl_advect") >;
 
 struct cyl_vortex_info {
-  using code = Code< X >;
   static std::string name() { return "Deformation of cylinder in a vortex"; }
   static std::string shortDescription() { return
     "Select deformation of cylinder in a vortex test problem"; }
@@ -4766,7 +4741,6 @@ struct cyl_vortex_info {
 using cyl_vortex = keyword< cyl_vortex_info, TAOCPP_PEGTL_STRING("cyl_vortex") >;
 
 struct vortical_flow_info {
-  using code = Code< V >;
   static std::string name() { return "Vortical flow"; }
   static std::string shortDescription() { return
     "Select the vortical flow test problem "; }
@@ -4787,7 +4761,6 @@ using vortical_flow =
   keyword< vortical_flow_info, TAOCPP_PEGTL_STRING("vortical_flow") >;
 
 struct nl_energy_growth_info {
-  using code = Code< N >;
   static std::string name() { return "Nonlinear energy growth"; }
   static std::string shortDescription() { return
     "Select the nonlinear energy growth test problem ";}
@@ -4808,7 +4781,6 @@ using nl_energy_growth =
   keyword< nl_energy_growth_info, TAOCPP_PEGTL_STRING("nl_energy_growth") >;
 
 struct rayleigh_taylor_info {
-  using code = Code< R >;
   static std::string name() { return "Rayleigh-Taylor"; }
   static std::string shortDescription() { return
     "Select the Rayleigh-Taylor test problem "; }
@@ -4828,7 +4800,6 @@ using rayleigh_taylor =
   keyword< rayleigh_taylor_info, TAOCPP_PEGTL_STRING("rayleigh_taylor") >;
 
 struct taylor_green_info {
-  using code = Code< T >;
   static std::string name() { return "Taylor-Green"; }
   static std::string shortDescription() { return
     "Select the Taylor-Green test problem "; }
@@ -4848,7 +4819,6 @@ using taylor_green =
   keyword< taylor_green_info, TAOCPP_PEGTL_STRING("taylor_green") >;
 
 struct shedding_flow_info {
-  using code = Code< F >;
   static std::string name() { return "Shedding flow over triangular wedge"; }
   static std::string shortDescription() { return
     "Select the Shedding flow test problem "; }
@@ -4867,7 +4837,6 @@ using shedding_flow =
   keyword< shedding_flow_info, TAOCPP_PEGTL_STRING("shedding_flow") >;
 
 struct sod_shocktube_info {
-  using code = Code< H >;
   static std::string name() { return "Sod shock-tube"; }
   static std::string shortDescription() { return
     "Select the Sod shock-tube test problem "; }
@@ -4887,7 +4856,6 @@ using sod_shocktube =
   keyword< sod_shocktube_info, TAOCPP_PEGTL_STRING("sod_shocktube") >;
 
 struct sod_rotated_shocktube_info {
-  using code = Code< O >;
   static std::string name() { return "Rotated Sod shock-tube"; }
   static std::string shortDescription() { return
     "Select the rotated Sod shock-tube test problem "; }
@@ -4911,7 +4879,6 @@ using rotated_sod_shocktube =
            TAOCPP_PEGTL_STRING("rotated_sod_shocktube") >;
 
 struct sedov_blastwave_info {
-  using code = Code< B >;
   static std::string name() { return "Sedov blast-wave"; }
   static std::string shortDescription() { return
     "Select the Sedov blast-wave test problem "; }
@@ -4928,7 +4895,6 @@ using sedov_blastwave =
   keyword< sedov_blastwave_info, TAOCPP_PEGTL_STRING("sedov_blastwave") >;
 
 struct interface_advection_info {
-  using code = Code< I >;
   static std::string name() { return "Interface advection"; }
   static std::string shortDescription() { return
     "Select the interface advection test problem "; }
@@ -4946,7 +4912,6 @@ using interface_advection =
            TAOCPP_PEGTL_STRING("interface_advection") >;
 
 struct gauss_hump_compflow_info {
-  using code = Code< A >;
   static std::string name()
   { return "Advection of 2D Gaussian hump for Euler equations"; }
   static std::string shortDescription()
@@ -4967,7 +4932,6 @@ using gauss_hump_compflow = keyword< gauss_hump_compflow_info,
                             TAOCPP_PEGTL_STRING("gauss_hump_compflow") >;
 
 struct waterair_shocktube_info {
-  using code = Code< W >;
   static std::string name() { return "Water-air shock-tube"; }
   static std::string shortDescription() { return
     "Select the water-air shock-tube test problem "; }
@@ -4987,7 +4951,6 @@ using waterair_shocktube =
   keyword< waterair_shocktube_info, TAOCPP_PEGTL_STRING("waterair_shocktube") >;
 
 struct shock_hebubble_info {
-  using code = Code< E >;
   static std::string name() { return "Shock He-bubble problem"; }
   static std::string shortDescription() { return
     "Select the shock He-bubble test problem "; }
@@ -5006,7 +4969,6 @@ using shock_hebubble =
   keyword< shock_hebubble_info, TAOCPP_PEGTL_STRING("shock_hebubble") >;
 
 struct underwater_ex_info {
-  using code = Code< D >;
   static std::string name() { return "Underwater explosion problem"; }
   static std::string shortDescription() { return
     "Select the underwater explosion test problem "; }
@@ -5027,7 +4989,6 @@ using underwater_ex =
   keyword< underwater_ex_info, TAOCPP_PEGTL_STRING("underwater_ex") >;
 
 struct problem_info {
-  using code = Code< t >;
   static std::string name() { return "Test problem"; }
   static std::string shortDescription() { return
     "Specify problem configuration for a partial differential equation solver";
@@ -5059,7 +5020,6 @@ struct problem_info {
 using problem = keyword< problem_info, TAOCPP_PEGTL_STRING("problem") >;
 
 struct navierstokes_info {
-  using code = Code< N >;
   static std::string name() { return "Navier-Stokes"; }
   static std::string shortDescription() { return "Specify the Navier-Stokes "
     "(viscous) compressible flow physics configuration"; }
@@ -5075,7 +5035,6 @@ using navierstokes =
   keyword< navierstokes_info, TAOCPP_PEGTL_STRING("navierstokes") >;
 
 struct euler_info {
-  using code = Code< E >;
   static std::string name() { return "Euler"; }
   static std::string shortDescription() { return "Specify the Euler (inviscid) "
     "compressible flow physics configuration"; }
@@ -5090,7 +5049,6 @@ struct euler_info {
 using euler = keyword< euler_info, TAOCPP_PEGTL_STRING("euler") >;
 
 struct veleq_info {
-  using code = Code< V >;
   static std::string name() { return "Velocity equilibrium"; }
   static std::string shortDescription() { return "Specify the multi-material "
     " compressible flow with velocity equilibrium as physics configuration"; }
@@ -5106,7 +5064,6 @@ struct veleq_info {
 using veleq = keyword< veleq_info, TAOCPP_PEGTL_STRING("veleq") >;
 
 struct advection_info {
-  using code = Code< A >;
   static std::string name() { return "Advection"; }
   static std::string shortDescription() { return
     "Specify the advection physics configuration for a PDE "; }
@@ -5121,7 +5078,6 @@ struct advection_info {
 using advection = keyword< advection_info, TAOCPP_PEGTL_STRING("advection") >;
 
 struct advdiff_info {
-  using code = Code< D >;
   static std::string name() { return "Advection + diffusion"; }
   static std::string shortDescription() { return
     "Specify the advection + diffusion physics configuration for a PDE "; }
@@ -5136,7 +5092,6 @@ struct advdiff_info {
 using advdiff = keyword< advdiff_info, TAOCPP_PEGTL_STRING("advdiff") >;
 
 struct physics_info {
-  using code = Code< p >;
   static std::string name() { return "Physics configuration"; }
   static std::string shortDescription() { return
     "Specify the physics configuration for a system of PDEs"; }
@@ -6083,7 +6038,6 @@ struct move_info {
 using move = keyword< move_info, TAOCPP_PEGTL_STRING("move") >;
 
 struct amr_uniform_info {
-  using code = Code< u >;
   static std::string name() { return "uniform refine"; }
   static std::string shortDescription() { return
     "Select uniform initial mesh refinement"; }
@@ -6093,7 +6047,6 @@ struct amr_uniform_info {
 using amr_uniform = keyword< amr_uniform_info, TAOCPP_PEGTL_STRING("uniform") >;
 
 struct amr_uniform_derefine_info {
-  using code = Code< d >;
   static std::string name() { return "uniform derefine"; }
   static std::string shortDescription() { return
     "Select uniform initial mesh de-refinement"; }
@@ -6104,7 +6057,6 @@ using amr_uniform_derefine =
   keyword< amr_uniform_derefine_info, TAOCPP_PEGTL_STRING("uniform_derefine") >;
 
 struct amr_initial_conditions_info {
-  using code = Code< i >;
   static std::string name() { return "initial conditions"; }
   static std::string shortDescription() { return
     "Select initial-conditions-based initial mesh refinement"; }
@@ -6116,7 +6068,6 @@ using amr_initial_conditions =
   keyword< amr_initial_conditions_info, TAOCPP_PEGTL_STRING("ic") >;
 
 struct amr_edgelist_info {
-  using code = Code< e >;
   static std::string name() { return "edge list"; }
   static std::string shortDescription() { return
     "Configure edge-node pairs for initial refinement"; }
@@ -6137,7 +6088,6 @@ using amr_edgelist =
   keyword< amr_edgelist_info, TAOCPP_PEGTL_STRING("edgelist") >;
 
 struct amr_coords_info {
-  using code = Code< c >;
   static std::string name() { return "coordinates"; }
   static std::string shortDescription() { return
     "Configure initial refinement using coordinate planes"; }
@@ -6695,6 +6645,19 @@ struct pdg_info {
     options.)"; }
 };
 using pdg = keyword< pdg_info, TAOCPP_PEGTL_STRING("pdg") >;
+
+struct fv_info {
+  static std::string name() { return "FV"; }
+  static std::string shortDescription() { return
+    "Select 2nd-order finite volume discretization"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the second-order accurate finite volume,
+    P0P1, spatial discretiztaion used in Inciter. This method uses a
+    least-squares procedure to reconstruct the second-order solution from the
+    first-order one. See Control/Inciter/Options/Scheme.hpp for other valid
+    options.)"; }
+};
+using fv = keyword< fv_info, TAOCPP_PEGTL_STRING("fv") >;
 
 struct scheme_info {
   static std::string name() { return "Discretization scheme"; }

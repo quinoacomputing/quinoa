@@ -3,15 +3,15 @@ project(PDE CXX)
 add_library(PDE
             PDEStack.cpp
             Limiter.cpp
+            PrefIndicator.cpp
             Reconstruction.cpp
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
             ConfigureMultiMat.cpp
             ConfigureOutVar.cpp
             CGPDE.cpp
-            DGPDE.cpp
-            CompFlow/RiemannFactory.cpp
-            MultiMat/RiemannFactory.cpp)
+            FVPDE.cpp
+            DGPDE.cpp)
 
 target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}

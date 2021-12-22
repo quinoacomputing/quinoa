@@ -569,8 +569,9 @@ Sorter::createDiscWorkers()
   // "Dynamic Insertion".
 
   m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, disc,
-    m_scheme[m_meshid].fct(), m_scheme[m_meshid].conjugategradients(), m_host,
-    m_meshwriter, m_coordmap, m_el, m_msum, m_nchare );
+    m_scheme[m_meshid].fct(), m_scheme[m_meshid].ale(),
+    m_scheme[m_meshid].conjugategradients(), m_host, m_meshwriter, m_coordmap,
+    m_el, m_msum, m_bface, m_triinpoel, m_nchare );
 
   contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
               m_cbs.get< tag::discinserted >() );
@@ -590,8 +591,8 @@ Sorter::createWorkers()
   // insertion: 1st arg: chare id, other args: Discretization's child ctor args.
   // See also Charm++ manual, Sec. "Dynamic Insertion".
 
-  m_scheme[m_meshid].insert( thisIndex, m_scheme[m_meshid].disc(), m_bface,
-                             m_bnode, m_triinpoel );
+  m_scheme[m_meshid].insert( thisIndex, m_scheme[m_meshid].disc(),
+    m_scheme[m_meshid].ghosts(), m_bface, m_bnode, m_triinpoel );
 
   if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
 

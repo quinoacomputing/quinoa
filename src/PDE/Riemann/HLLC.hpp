@@ -25,7 +25,6 @@
 namespace inciter {
 
 //! HLLC approximate Riemann solver
-//! \details This class can be used polymorphically with inciter::RiemannSolver
 struct HLLC {
 
   //! HLLC approximate Riemann solver flux function

@@ -17,26 +17,12 @@ updated.
 
 @section coverage_gcov Gcov
 
-- <a href="Debug/test_coverage/index.html"
-target="_blank">Full test coverage report (Debug)</a>
-- <a href="Debug/unittest_coverage/index.html"
-target="_blank">Unit test coverage report (Debug)</a>
-- <a href="Debug/regression_coverage/index.html"
-target="_blank">Regression test coverage report (Debug)</a>
-
-- <a href="Release/unittest_coverage/index.html"
-target="_blank">Unit test coverage report (Release)</a>
-- <a href="Release/regression_coverage/index.html"
-target="_blank">Regression test coverage report (Release)</a>
-- <a href="Release/test_coverage/index.html"
-target="_blank">Full test coverage report (Release)</a>
+- <a href="Debug/test_coverage/index.html" target="_blank">Combined (unit-, and regression) test coverage report (Debug)</a>
+- <a href="Release/test_coverage/index.html" target="_blank">Combined (unit-, and regression) test coverage report (Release)</a>
 
 @section coverage_cppcheck CppCheck
 
-- <a href="Debug/cppcheck/index.html"
-target="_blank">Cppcheck static analysis report (Debug)</a>
-
-- <a href="Release/cppcheck/index.html"
-target="_blank">Cppcheck static analysis report (Release)</a>
+- <a href="Debug/cppcheck/index.html" target="_blank">Cppcheck static analysis report (Debug)</a>
+- <a href="Release/cppcheck/index.html" target="_blank">Cppcheck static analysis report (Release)</a>
 
 */
