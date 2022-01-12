@@ -202,7 +202,8 @@ void BoundPreservingLimiting( std::size_t nmat,
                               std::vector< tk::real >& phic );
 
 //! Positivity preserving limiter for multi-material solver
-void PositivityPreservingLimiting( std::size_t nmat,
+void PositivityPreservingLimiting( const std::size_t system,
+                                   std::size_t nmat,
                                    ncomp_t offset,
                                    std::size_t ndof,
                                    std::size_t e,

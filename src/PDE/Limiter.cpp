@@ -550,6 +550,7 @@ VertexBasedMultiMat_P1(
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for multi-material DGP1
+//! \param[in] system Equation system index
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
@@ -663,8 +664,8 @@ VertexBasedMultiMat_P1(
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
 
       if(intsharp == 0)
-        PositivityPreservingLimiting(nmat, offset, rdof, e, inpoel, coord, U, P,
-          phic, phip);
+        PositivityPreservingLimiting(system, nmat, offset, rdof, e, inpoel,
+          coord, U, P, phic, phip);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -1594,7 +1595,8 @@ void BoundPreservingLimiting( std::size_t nmat,
     phic[imat] = phi_bound[imat] * phic[imat];
 }
 
-void PositivityPreservingLimiting( std::size_t nmat,
+void PositivityPreservingLimiting( std::size_t system,
+                                   std::size_t nmat,
                                    ncomp_t offset,
                                    std::size_t ndof,
                                    std::size_t e,
@@ -1606,6 +1608,7 @@ void PositivityPreservingLimiting( std::size_t nmat,
                                    std::vector< tk::real >& phip )
 // *****************************************************************************
 //  Positivity preserving limiter for multi-material solver
+//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Index for equation system
 //! \param[in] ndof Total number of reconstructed dofs
@@ -1694,9 +1697,10 @@ void PositivityPreservingLimiting( std::size_t nmat,
           std::min(phi_bound[energyIdx(nmat, imat)], phi_rhoe);
 
         // Evaluate the limiting coefficient for material pressure
+        auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, ndof, 0), offset);
-        phi_pre = PositivityPreservingLimitingFunction(min, pre, pre_avg);
+        phi_pre = PositivityPreservingLimitingFunction(min_pre, pre, pre_avg);
         phi_bound[ncomp+pressureIdx(nmat, imat)] =
           std::min(phi_bound[ncomp+pressureIdx(nmat, imat)], phi_pre);
       }
