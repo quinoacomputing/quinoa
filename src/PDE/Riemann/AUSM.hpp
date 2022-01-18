@@ -164,7 +164,7 @@ struct AUSM {
       flx.push_back( l_plus* pml[k] + l_minus * pmr[k] );
 
     // Store Riemann velocity
-    flx.push_back( l_plus * vriem + l_minus * vriem );
+    flx.push_back( vriem );
 
     Assert( flx.size() == (3*nmat+3+nmat+1), "Size of multi-material flux "
             "vector incorrect" );
