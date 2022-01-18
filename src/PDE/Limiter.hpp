@@ -202,23 +202,23 @@ void BoundPreservingLimiting( std::size_t nmat,
                               std::vector< tk::real >& phic );
 
 //! Positivity preserving limiter for multi-material solver
-void PositivityPreservingLimiting( const std::size_t system,
-                                   std::size_t nmat,
-                                   ncomp_t offset,
-                                   std::size_t ndof,
-                                   std::size_t e,
-                                   const std::vector< std::size_t >& inpoel,
-                                   const tk::UnsMesh::Coords& coord,
-                                   const tk::Fields& U,
-                                   const tk::Fields& P,
-                                   std::vector< tk::real >& phic,
-                                   std::vector< tk::real >& phip );
+void PositivityLimitingMultiMat( const std::size_t system,
+                                 std::size_t nmat,
+                                 ncomp_t offset,
+                                 std::size_t ndof,
+                                 std::size_t e,
+                                 const std::vector< std::size_t >& inpoel,
+                                 const tk::UnsMesh::Coords& coord,
+                                 const tk::Fields& U,
+                                 const tk::Fields& P,
+                                 std::vector< tk::real >& phic,
+                                 std::vector< tk::real >& phip );
 
 //! Positivity-preserving limiter function
 tk::real
-PositivityPreservingLimitingFunction( const tk::real min,
-                                      const tk::real u_gp,
-                                      const tk::real u_avg );
+PositivityLimiting( const tk::real min,
+                    const tk::real u_gp,
+                    const tk::real u_avg );
 
 //! Interface indicator function, which checks element for material interface
 bool
