@@ -308,6 +308,26 @@ tk::real constrain_pressure( ncomp_t system,
   return std::max(apr, alpha*(-p_c+1e-12));
 }
 
+//! Compute the minimum effective pressure used for positivity preserving
+//!   limiting
+//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
+//! \param[in] apr Material partial pressure
+//! \param[in] min Minimum threshold in positivity preserving limiting
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Minimum effective pressure
+template< class Eq >
+tk::real min_eff_pressure( ncomp_t system,
+  tk::real min,
+  std::size_t imat=0 )
+{
+  // query input deck to get p_c
+  auto p_c = pstiff< Eq >(system, imat);
+
+  return (min - p_c);
+}
+
 } //inciter::
 
 #endif // EoS_h
