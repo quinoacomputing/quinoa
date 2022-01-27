@@ -1929,7 +1929,11 @@ namespace deck {
                              pegtl::alpha >,
                            tk::grm::process< use< kw::amr_dtfreq >,
                              tk::grm::Store< tag::amr, tag::dtfreq >,
-                             pegtl::digit > >,
+                             pegtl::digit >,
+                           tk::grm::process< use< kw::amr_maxlevels >,
+                             tk::grm::Store< tag::amr, tag::maxlevels >,
+                             pegtl::digit >
+                         >,
            tk::grm::check_amr_errors > {};
 
 

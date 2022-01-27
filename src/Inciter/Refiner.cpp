@@ -72,7 +72,7 @@ Refiner::Refiner( std::size_t meshid,
   m_mode( RefMode::T0REF ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
-  m_refiner( m_inpoel ),
+  m_refiner( g_inputdeck.get< tag::amr, tag::maxlevels >(), m_inpoel ),
   m_nref( 0 ),
   m_nbnd( 0 ),
   m_extra( 0 ),
@@ -230,7 +230,8 @@ Refiner::reorder()
   // ultimately want, beacuse this deletes its history recorded during initial
   // (t<0) refinement. However, this appears to correctly update the local mesh
   // based on the reordered one (from Sorter) at least when t0ref is off.
-  m_refiner = AMR::mesh_adapter_t( m_inpoel );
+  m_refiner = AMR::mesh_adapter_t(
+    g_inputdeck.get< tag::amr, tag::maxlevels >(), m_inpoel );
 }
 
 tk::UnsMesh::Coords

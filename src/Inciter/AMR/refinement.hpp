@@ -27,7 +27,14 @@ namespace AMR {
 
         public:
 
-            size_t MAX_REFINEMENT_LEVEL = 2;
+            //! Default constructor for migration
+            refinement_t() {}
+
+            //! Constructor taking a user-specified max refinement level
+            refinement_t( size_t u_mrl ) :
+              MAX_REFINEMENT_LEVEL( u_mrl ) {}
+
+            size_t MAX_REFINEMENT_LEVEL;
 
             // TODO: Document this
             child_id_list_t generate_child_ids( tet_store_t& tet_store, size_t parent_id, size_t count = MAX_CHILDREN)

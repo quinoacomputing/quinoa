@@ -282,6 +282,8 @@ Transporter::info( const InciterPrint& print )
     print.section( "Mesh refinement (h-ref)" );
     print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
                   g_inputdeck.get< tag::amr, tag::id >() );
+    auto maxlevels = g_inputdeck.get< tag::amr, tag::maxlevels >();
+    print.item( "Maximum mesh refinement levels", maxlevels );
     print.Item< ctr::AMRError, tag::amr, tag::error >();
     auto t0ref = g_inputdeck.get< tag::amr, tag::t0ref >();
     print.item( "Refinement at t<0 (t0ref)", t0ref );

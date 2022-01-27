@@ -215,6 +215,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::amr_dtref
                                  , kw::amr_dtref_uniform
                                  , kw::amr_dtfreq
+                                 , kw::amr_maxlevels
                                  , kw::amr_initial
                                  , kw::amr_uniform
                                  , kw::amr_uniform_derefine
@@ -330,6 +331,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::dtref >() = false;
       get< tag::amr, tag::dtref_uniform >() = false;
       get< tag::amr, tag::dtfreq >() = 3;
+      get< tag::amr, tag::maxlevels >() = 2;
       get< tag::amr, tag::error >() = AMRErrorType::JUMP;
       get< tag::amr, tag::tolref >() = 0.2;
       get< tag::amr, tag::tolderef >() = 0.05;

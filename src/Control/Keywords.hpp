@@ -6387,6 +6387,28 @@ struct amr_dtfreq_info {
 };
 using amr_dtfreq = keyword< amr_dtfreq_info, TAOCPP_PEGTL_STRING("dtfreq") >;
 
+struct amr_maxlevels_info {
+  static std::string name() { return "Maximum mesh refinement levels"; }
+  static std::string shortDescription() { return
+    "Set maximum allowed mesh refinement levels"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure the maximum allowed mesh refinement
+    levels. The default is 2.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 1;
+    static constexpr type upper = std::numeric_limits< type >::max();
+    static std::string description() { return "uint"; }
+    static std::string choices() {
+      return "integer between [" + std::to_string(lower) + "..." +
+             std::to_string(upper) + "] (both inclusive)";
+    }
+  };
+};
+using amr_maxlevels = keyword< amr_maxlevels_info,
+  TAOCPP_PEGTL_STRING("maxlevels") >;
+
 struct amr_tolref_info {
   static std::string name() { return "refine tolerance"; }
   static std::string shortDescription() { return "Configure refine tolerance"; }
@@ -6440,6 +6462,7 @@ struct amr_info {
     + amr_dtref::string() + "\' | \'"
     + amr_dtref_uniform::string() + "\' | \'"
     + amr_dtfreq::string() + "\' | \'"
+    + amr_maxlevels::string() + "\' | \'"
     + amr_initial::string() + "\' | \'"
     + amr_refvar::string() + "\' | \'"
     + amr_tolref::string() + "\' | \'"
