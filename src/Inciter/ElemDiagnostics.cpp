@@ -79,7 +79,7 @@ ElemDiagnostics::compute( Discretization& d,
   // Query after how many time steps user wants to dump diagnostics
   auto diagfreq = g_inputdeck.get< tag::output, tag::iter, tag::diag >();
 
-  if ( !((d.It()+1) % diagfreq) ) {  // if remainder, don't compute diagnostics
+  if ( !((d.It()+1) % diagfreq) || d.finished() ) {  // if remainder, don't compute diagnostics
 
     // Query number of degrees of freedom from user's setting
     const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
