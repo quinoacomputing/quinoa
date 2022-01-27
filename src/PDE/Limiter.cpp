@@ -662,6 +662,10 @@ VertexBasedMultiMat_P1(
       if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
 
+      if(intsharp == 0)
+        PositivityLimitingMultiMat(system, nmat, offset, rdof, e, inpoel, coord,
+          U, P, phic, phip);
+
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
       std::vector< tk::real > alAvg(nmat, 0.0);
@@ -1588,6 +1592,144 @@ void BoundPreservingLimiting( std::size_t nmat,
 
   for(std::size_t imat = 0; imat < nmat; imat++)
     phic[imat] = phi_bound[imat] * phic[imat];
+}
+
+void PositivityLimitingMultiMat( std::size_t system,
+                                 std::size_t nmat,
+                                 ncomp_t offset,
+                                 std::size_t ndof,
+                                 std::size_t e,
+                                 const std::vector< std::size_t >& inpoel,
+                                 const tk::UnsMesh::Coords& coord,
+                                 const tk::Fields& U,
+                                 const tk::Fields& P,
+                                 std::vector< tk::real >& phic,
+                                 std::vector< tk::real >& phip )
+// *****************************************************************************
+//  Positivity preserving limiter for multi-material solver
+//! \param[in] system Equation system index
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Index for equation system
+//! \param[in] ndof Total number of reconstructed dofs
+//! \param[in] e Element being checked for consistency
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] U Vector of conservative variables
+//! \param[in] P Vector of primitive variables
+//! \param[in,out] phic Vector of limiter functions for P1 dofs of the
+//!   conserved quantities
+//! \param[in,out] phip Vector of limiter functions for P1 dofs of the
+//!   primitive quantities
+// *****************************************************************************
+{
+  const auto ncomp = U.nprop() / ndof;
+  const auto nprim = P.nprop() / ndof;
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Extract the element coordinates
+  std::array< std::array< tk::real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+  // Compute the determinant of Jacobian matrix
+  auto detT =
+    tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+  std::vector< tk::real > phic_bound(ncomp, 1.0);
+  std::vector< tk::real > phip_bound(nprim, 1.0);
+
+  const tk::real min = 1e-15;
+
+  for (std::size_t lf=0; lf<4; ++lf)
+  {
+    std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
+                                             inpoel[4*e+tk::lpofa[lf][1]],
+                                             inpoel[4*e+tk::lpofa[lf][2]] }};
+
+    std::array< std::array< tk::real, 3>, 3 > coordfa {{
+      {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
+      {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
+      {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
+
+    auto ng = tk::NGfa(ndof);
+
+    std::array< std::vector< tk::real >, 2 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      auto gp = tk::eval_gp( igp, coordfa, coordgp );
+      auto B = tk::eval_basis( ndof,
+            tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+
+      auto state = eval_state(ncomp, offset, ndof, ndof, e, U, B, {0, ncomp-1});
+      auto sprim = eval_state(nprim, offset, ndof, ndof, e, P, B, {0, nprim-1});
+
+      for(std::size_t imat = 0; imat < nmat; imat++)
+      {
+        tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
+
+        // Evaluate the limiting coefficient for material density
+        auto rho = state[densityIdx(nmat, imat)];
+        auto rho_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
+        phi_rho = PositivityLimiting(min, rho, rho_avg);
+        phic_bound[densityIdx(nmat, imat)] =
+          std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
+
+        // Evaluate the limiting coefficient for material energy
+        auto rhoe = state[energyIdx(nmat, imat)];
+        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, ndof, 0), offset);
+        phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
+        phic_bound[energyIdx(nmat, imat)] =
+          std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
+
+        // Evaluate the limiting coefficient for material pressure
+        auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
+        auto pre = sprim[pressureIdx(nmat, imat)];
+        auto pre_avg = P(e, pressureDofIdx(nmat, imat, ndof, 0), offset);
+        phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
+        phip_bound[pressureIdx(nmat, imat)] =
+          std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
+      }
+    }
+  }
+
+  for(std::size_t icomp = nmat; icomp < ncomp; icomp++)
+    phic[icomp] = std::min( phic_bound[icomp], phic[icomp] );
+  for(std::size_t icomp = 0; icomp < nmat; icomp++)
+    phip[icomp] = std::min( phip_bound[icomp], phip[icomp] );
+}
+
+tk::real
+PositivityLimiting( const tk::real min,
+                    const tk::real u_gp,
+                    const tk::real u_avg )
+// *****************************************************************************
+//  Positivity-preserving limiter function
+//! \param[in] min Minimum bound for volume fraction
+//! \param[in] u_gp Variable quantity at the quadrature point
+//! \param[in] u_avg Cell-average variable quantitiy
+//! \return The limiting coefficient from the positivity-preserving limiter
+//!   function
+// *****************************************************************************
+{
+  tk::real phi(1.0);
+  if(u_gp < min)
+    phi = std::fabs( (min - u_avg) / (u_gp - u_avg) );
+  return phi;
 }
 
 bool
