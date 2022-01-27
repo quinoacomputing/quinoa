@@ -231,7 +231,7 @@ class Refiner : public CBase_Refiner {
   private:
     //! Mesh ID
     std::size_t m_meshid;
-    //! Number of mesh ref correction iterations
+    //! Number of parallel-compatibility (mesh ref correction) iterations
     std::size_t m_ncit;
     //! Host proxy
     CProxy_Transporter m_host;

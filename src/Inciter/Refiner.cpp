@@ -590,6 +590,7 @@ Refiner::addRefBndEdges(
   }
 
   // Add intermediates to mesh refiner lib
+  // needs to be done only when mesh has been actually updated, i.e. first iter
   if (m_ncit == 0) {
     for (const auto g : intermediates) {
       auto l = m_lid.find( g ); // convert to local node ids
