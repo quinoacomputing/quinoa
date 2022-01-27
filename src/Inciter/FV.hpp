@@ -134,7 +134,7 @@ class FV : public CBase_FV {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /* addedNodes */,
       const std::unordered_map< std::size_t, std::size_t >& addedTets,
-      const std::set< std::size_t >& /*removedNodes*/,
+      const std::set< std::size_t >& removedNodes,
       const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
       const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,

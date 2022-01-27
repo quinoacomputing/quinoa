@@ -759,13 +759,11 @@ Transporter::respondedRef( std::size_t meshid )
 }
 
 void
-Transporter::compatibility( std::size_t meshid, std::size_t modified )
+Transporter::compatibility( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all Refiner chares have received a round of edges,
 // and have run their compatibility algorithm
 //! \param[in] meshid Mesh id (aggregated across all chares using operator max)
-//! \param[in] modified Modified flag, aggregated across all chares using
-//!   operator max), if nonzero, mesh is modified
 //! \details This is called iteratively, until convergence by Refiner. At this
 //!   point all Refiner chares have received a round of edge data (tags whether
 //!   an edge needs to be refined, etc.), and applied the compatibility
@@ -774,10 +772,7 @@ Transporter::compatibility( std::size_t meshid, std::size_t modified )
 //!   round of edge data communication started in Refiner::comExtra().
 // *****************************************************************************
 {
-  if (modified)
-    m_refiner[meshid].comExtra();
-  else
-    m_refiner[meshid].correctref();
+  m_refiner[meshid].correctref();
 }
 
 void

@@ -822,7 +822,7 @@ DiagCG::resizePostAMR(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
-//! \param[in] removedNodes Newly removed mesh nodes (local ids)
+//! \param[in] removedNodes Newly removed mesh node local ids
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bnode Boundary-node lists mapped to side set ids
@@ -840,7 +840,7 @@ DiagCG::resizePostAMR(
   ++d->Itr();
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes );
 
   Assert(coord[0].size() == m_u.nunk()-removedNodes.size()+addedNodes.size(),
     "Incorrect vector length post-AMR: expected length after resizing = " +

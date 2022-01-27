@@ -132,7 +132,8 @@ class Discretization : public CBase_Discretization {
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
-      const tk::NodeCommMap& nodeCommMap );
+      const tk::NodeCommMap& nodeCommMap,
+      const std::set< std::size_t >& removedNodes );
 
     //! Get ready for (re-)computing/communicating nodal volumes
     void startvol();

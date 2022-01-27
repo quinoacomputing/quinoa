@@ -857,7 +857,7 @@ FV::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< std::size_t, std::size_t >& addedTets,
-  const std::set< std::size_t >& /*removedNodes*/,
+  const std::set< std::size_t >& removedNodes,
   const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
@@ -868,6 +868,7 @@ FV::resizePostAMR(
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
+//! \param[in] removedNodes Newly removed mesh node local ids
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
@@ -890,7 +891,7 @@ FV::resizePostAMR(
   [[maybe_unused]] auto old_nelem = myGhosts()->m_inpoel.size()/4;
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes );
 
   // Update state
   myGhosts()->m_inpoel = d->Inpoel();

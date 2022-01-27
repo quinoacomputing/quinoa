@@ -164,6 +164,7 @@ class Refiner : public CBase_Refiner {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_meshid;
+      p | m_ncit;
       p | m_host;
       p | m_sorter;
       p | m_meshwriter;
@@ -230,6 +231,8 @@ class Refiner : public CBase_Refiner {
   private:
     //! Mesh ID
     std::size_t m_meshid;
+    //! Number of mesh ref correction iterations
+    std::size_t m_ncit;
     //! Host proxy
     CProxy_Transporter m_host;
     //! Mesh sorter proxy
@@ -288,9 +291,10 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< Edge, std::vector< int >, Hash<2>, Eq<2> > m_edgech;
     //! Chare->edge map used to build shared boundary edges
     std::unordered_map< int, EdgeSet > m_chedge;
-    //! Refinement data associated to edges
+    //! Refinement data associated to edges (edges stored with node-gids)
     AMR::EdgeData m_localEdgeData;
-    //! Refinement data associated to edges shared with other chares
+    //! \brief Refinement data associated to edges shared with other chares
+    //!   (edges stored with node-gids)
     std::unordered_map< int, std::vector< std::tuple<
       Edge, int, int, AMR::Edge_Lock_Case > > > m_remoteEdgeData;
     //! Edges received from other chares
@@ -306,7 +310,7 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< std::size_t, Edge > m_addedNodes;
     //! Newly added mesh cells (local id) and their parent (local id)
     std::unordered_map< std::size_t, std::size_t > m_addedTets;
-    //! Newly removed mesh nodes (local id) and their ...? (local ids)
+    //! Newly removed mesh node local ids
     std::set< std::size_t > m_removedNodes;
     //! Node id maps from old mesh to new refined mesh
     std::unordered_map< std::size_t, std::size_t > m_amrNodeMap;

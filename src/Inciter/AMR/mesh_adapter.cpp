@@ -1245,10 +1245,12 @@ namespace AMR {
                 }
                 // deactivate from deref if marked for ref
                 if (is_child_ref) {
+                  trace_out << tet_id << " Looping cancelled since child marked for refinement." << std::endl;
                   for (auto child_id : children) {
                     deactivate_deref_tet_edges(child_id);
                   }
                   deactivate_deref_tet_edges(tet_id);
+                  tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                   continue;
                 }
 
@@ -1564,6 +1566,8 @@ namespace AMR {
         refiner.delete_intermediates_of_children(tet_store);
         tet_store.process_delete_list();
         tet_store.print_node_types();
+
+        lock_intermediates();
 
         for (auto& kv : tet_store.edge_store.edges) {
            auto& local = kv.second;

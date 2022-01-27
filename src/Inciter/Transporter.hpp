@@ -109,7 +109,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target: all Refiner chares have received a round
     //!   of edges, and have run their compatibility algorithm
-    void compatibility( std::size_t meshid, std::size_t modified );
+    void compatibility( std::size_t meshid );
 
     //! \brief Reduction target: all Refiner chares have matched/corrected
     //!   the tagging of chare-boundary edges, all chares are ready to perform

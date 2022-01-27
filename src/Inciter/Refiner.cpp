@@ -54,6 +54,7 @@ Refiner::Refiner( std::size_t meshid,
                   const std::map< int, std::vector< std::size_t > >& bnode,
                   int nchare ) :
   m_meshid( meshid ),
+  m_ncit(0),
   m_host( transporter ),
   m_sorter( sorter ),
   m_meshwriter( meshwriter ),
@@ -588,10 +589,12 @@ Refiner::addRefBndEdges(
   }
 
   // Add intermediates to mesh refiner lib
-  for (const auto g : intermediates) {
-    auto l = m_lid.find( g ); // convert to local node ids
-    if (l != end(m_lid)) {
-      m_refiner.tet_store.intermediate_list.insert( m_rid[l->second] );
+  if (m_ncit == 0) {
+    for (const auto g : intermediates) {
+      auto l = m_lid.find( g ); // convert to local node ids
+      if (l != end(m_lid)) {
+        m_refiner.tet_store.intermediate_list.insert( m_rid[l->second] );
+      }
     }
   }
 
@@ -599,19 +602,9 @@ Refiner::addRefBndEdges(
   if (++m_nref == m_ch.size()) {
     m_nref = 0;
     // Add intermediates to refiner lib
-    auto localedges_orig = m_localEdgeData;
-    //auto intermediates_orig = m_intermediates;
-    m_refiner.lock_intermediates();
-    // Run compatibility algorithm
-    m_refiner.mark_refinement();
-    // Update edge data from mesh refiner
-    updateEdgeData();
-    // If refiner lib modified our edges, need to recommunicate
-    auto modified = static_cast< std::size_t >(
-                      localedges_orig != m_localEdgeData ? 1 : 0 );
-    //int modified = ( (localedges_orig != m_localEdgeData ||
-    //                  intermediates_orig != m_intermediates) ? 1 : 0 );
-    std::vector< std::size_t > meshdata{ m_meshid, modified };
+    if (m_ncit == 0) m_refiner.lock_intermediates();
+
+    std::vector< std::size_t > meshdata{ m_meshid };
     contribute( meshdata, CkReduction::max_ulong,
                 m_cbr.get< tag::compatibility >() );
   }
@@ -630,6 +623,11 @@ Refiner::correctref()
 
   // Storage for edge data that need correction to yield a conforming mesh
   AMR::EdgeData extra;
+  std::size_t neigh_extra(0);
+
+  // Vars for debugging purposes
+  std::size_t nlocked(0);
+  std::array< std::size_t, 4 > ncorrcase{{0,0,0,0}};
 
   // loop through all edges shared with other chares
   for (const auto& [ neighborchare, edgedata ] : m_remoteEdgeData) {
@@ -654,20 +652,21 @@ Refiner::correctref()
         Assert( !(local_needs_derefining == 1 && local_needs_refining > 0),
                 "Invalid local edge: needs refining and derefining" );
 
+        // The parallel compatibility (par-compat) algorithm
+
         // compute lock from local and remote locks as most restrictive
         local_lock_case = std::max( local_lock_case, remote_lock_case );
 
-        if (local_lock_case > unlocked)
+        if (local_lock_case > unlocked) {
           local_needs_refining = 0;
-
-        if ((local_lock_case == unlocked && remote_needs_refining == 1) ||
-          (remote_needs_refining == 2)) {
-          local_needs_refining = remote_needs_refining;
-          local_needs_derefining = 0;
+          if (local_needs_refining != local_needs_refining_orig ||
+            local_lock_case != local_lock_case_orig)
+            ++ncorrcase[0];
         }
 
         // Possible combinations of remote-local ref-deref decisions
-        // rows 1, 4, 5 are dealt with automatically.
+        // rows 1, 5, 9: no action needed.
+        // rows 4, 7, 8: no action on local-side; comm needed.
         //
         //    LOCAL          |        REMOTE    |  Result
         // 1  d              |        d         |  d
@@ -680,32 +679,53 @@ Refiner::correctref()
         // 8  r              |        -         |  r
         // 9  r              |        r         |  r
 
-        // this test handles rows 2, 3
-        if (local_needs_derefining == 1) {
-          Assert(local_needs_refining_orig == 0, "Inconsistent ref-deref marks");
-          if (remote_needs_derefining == 0 || remote_needs_refining > 0) {
-            local_needs_derefining = 0;
+        // Rows 3, 6
+        // If remote wants to refine
+        if (remote_needs_refining == 1) {
+          if (local_lock_case == unlocked) {
+            local_needs_refining = 1;
+            local_needs_derefining = false;
+            if (local_needs_refining != local_needs_refining_orig ||
+              local_needs_derefining != local_needs_derefining_orig)
+              ++ncorrcase[1];
+          }
+          else {
+           ++nlocked;
           }
         }
+
+        // Row 2
+        // If remote neither wants to refine nor derefine
+        if (remote_needs_refining == 0 && remote_needs_derefining == false) {
+          local_needs_derefining = false;
+          if (local_needs_derefining != local_needs_derefining_orig)
+            ++ncorrcase[2];
+        }
+
+        // Row 1: special case
+        // If remote wants to deref-ref (either of 8:4, 8:2, 4:2)
+        // and local does not want to refine (neither pure ref nor deref-ref)
+        if (remote_needs_refining == 2 && local_needs_refining == 0) {
+          if (local_lock_case == unlocked) {
+            local_needs_refining = 1;
+            local_needs_derefining = false;
+            if (local_needs_refining != local_needs_refining_orig ||
+              local_needs_derefining != local_needs_derefining_orig)
+              ++ncorrcase[3];
+          }
+          else {
+            ++nlocked;
+          }
+        }
+
+        // Rows 4, 7, 8
 
         // if the remote sent us data that makes us change our local state,
         // e.g., local{-,0} + remote{r,0} -> local{r,0}, i.e., I changed my
         // state I need to tell the world about it
-        if ( (local_lock_case != local_lock_case_orig ||
-              local_needs_refining != local_needs_refining_orig ||
-              local_needs_derefining != local_needs_derefining_orig) ||
-        // or if the remote data is inconsistent with what I think, e.g.,
-        // local{r,0} + remote{-,0} -> local{r,0}, i.e., the remote does not
-        // yet agree, I need to tell the world about it
-             (local_lock_case != remote_lock_case ||
-              local_needs_refining != remote_needs_refining ||
-              local_needs_derefining != remote_needs_derefining) ||
-        // or if the remote data is remote{d,.}, while the local{r,.}, i.e.
-        // the remote does not yet agree, I need to tell the world about it.
-        // (row 7 in the table above)
-        // (note: the dot '.' in the above brackets indicate that it does not
-        // matter what the value there is.)
-             (local_needs_refining > 0 && remote_needs_derefining == 1) )
+        if (local_lock_case != local_lock_case_orig ||
+            local_needs_refining != local_needs_refining_orig ||
+            local_needs_derefining != local_needs_derefining_orig)
         {
           auto l1 = tk::cref_find( m_lid, edge[0] );
           auto l2 = tk::cref_find( m_lid, edge[1] );
@@ -713,8 +733,19 @@ Refiner::correctref()
           auto r1 = m_rid[ l1 ];
           auto r2 = m_rid[ l2 ];
           Assert( r1 != r2, "Edge end-points refiner ids are the same" );
+          //std::cout << thisIndex << ": " << r1 << ", " << r2 << std::endl;
            extra[ {{ std::min(r1,r2), std::max(r1,r2) }} ] =
              { local_needs_refining, local_needs_derefining, local_lock_case };
+        }
+        // or if the remote data is inconsistent with what I think, e.g.,
+        // local{r,0} + remote{-,0} -> local{r,0}, i.e., the remote does not
+        // yet agree, so another par-compat iteration will be pursued. but
+        // I do not have to locally run ref-compat.
+        else if (local_lock_case != remote_lock_case ||
+          local_needs_refining != remote_needs_refining ||
+          local_needs_derefining != remote_needs_derefining)
+        {
+          ++neigh_extra;
         }
       }
     }
@@ -722,13 +753,22 @@ Refiner::correctref()
 
   m_remoteEdgeData.clear();
   m_extra = extra.size();
-  //std::cout << "amr correction reqd for nedge: " << m_extra << std::endl;
+  //std::cout << thisIndex << ": amr correction reqd for nedge: " << m_extra << std::endl;
+  //std::cout << thisIndex << ": amr correction reqd for neighbor edges: " << neigh_extra << std::endl;
+  //std::cout << thisIndex << ": edge counts by correction case: " << ncorrcase[0]
+  //  << ", " << ncorrcase[1] << ", " << ncorrcase[2] << ", " << ncorrcase[3] << std::endl;
+  //std::cout << thisIndex << ": locked edges that req corr: " << nlocked << std::endl;
 
   if (!extra.empty()) {
-    // Do refinement including edges that need to be corrected
+    //std::cout << thisIndex << ": redoing markings" << std::endl;
+    // Do refinement compatibility (ref-compat) for edges that need correction
     m_refiner.mark_error_refinement_corr( extra );
+    ++m_ncit;
     // Update our extra-edge store based on refiner
     updateEdgeData();
+  }
+  else if (neigh_extra == 0) {
+    m_ncit = 0;
   }
 
   // Aggregate number of extra edges that still need correction and some
@@ -1503,7 +1543,8 @@ Refiner::updateMesh()
           "Refined mesh cell Jacobian non-positive" );
 
   Assert( tk::conforming( m_inpoel, m_coord, true, m_rid ),
-          "Mesh not conforming after updating mesh after mesh refinement" );
+          "Chare-"+std::to_string(thisIndex)+
+          " mesh not conforming after updating mesh after mesh refinement" );
 
   // Perform leak test on new mesh
   Assert( !tk::leakyPartition(
@@ -1577,7 +1618,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
     if (ref.find(o) == end(ref)) {   // if node is no longer in new mesh
       auto l = tk::cref_find( m_lref, o );
       auto g = m_gid[l];
-      // store global-id to local-id map of removed nodes
+      // store local-ids of removed nodes
       m_removedNodes.insert(l);
       // remove derefined nodes from node comm map
       for (auto& [neighborchare, sharednodes] : m_nodeCommMap) {
