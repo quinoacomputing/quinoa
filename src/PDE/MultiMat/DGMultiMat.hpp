@@ -38,6 +38,8 @@
 #include "Integrate/Source.hpp"
 #include "RiemannFactory.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
+#include "EoS/StiffenedGas.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -144,6 +146,8 @@ class MultiMat {
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
+    //
+    //TBN : create object here
     void initialize( const tk::Fields& L,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
@@ -158,6 +162,9 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
+
+      // TBN
+      StiffenedGas SG_eos;
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);

@@ -10,8 +10,8 @@
     compressible flow equations.
 */
 // *****************************************************************************
-#ifndef EoS_h
-#define EoS_h
+#ifndef EoS_Base_h
+#define EoS_Base_h
 
 #include <cmath>
 #include "Data.hpp"
@@ -30,9 +30,9 @@ using ncomp_t = kw::ncomp::info::expect::type;
                                      tk::real,
                                      tk::real,
                                      tk::real,
-                                     std::size_t )
+                                     std::size_t );
  
-}
+};
 } //inciter::
 
-#endif // EoS_h
+#endif // EoS_Base_h

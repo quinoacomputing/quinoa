@@ -12,7 +12,8 @@ add_library(PDE
             CGPDE.cpp
             DGPDE.cpp
             CompFlow/RiemannFactory.cpp
-            MultiMat/RiemannFactory.cpp)
+            MultiMat/RiemannFactory.cpp
+            EoS/StiffenedGas.hpp)
 
 target_include_directories(PDE PUBLIC
                            ${QUINOA_SOURCE_DIR}
