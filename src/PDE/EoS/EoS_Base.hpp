@@ -20,18 +20,17 @@ namespace inciter {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
+class EoS_Base {
+  public:
+    virtual tk::real eos_pressure( ncomp_t,
+                                   tk::real,
+                                   tk::real,
+                                   tk::real,
+                                   tk::real,
+                                   tk::real,
+                                   tk::real,
+                                   std::size_t )=0;
 
-  class EoS_Base {
-    public:
-      virtual tk::real eos_pressure (ncomp_t, 
-                                     tk::real,
-                                     tk::real,
-                                     tk::real,
-                                     tk::real,
-                                     tk::real,
-                                     tk::real,
-                                     std::size_t );
- 
 };
 } //inciter::
 

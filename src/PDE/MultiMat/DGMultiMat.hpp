@@ -38,7 +38,7 @@
 #include "Integrate/Source.hpp"
 #include "RiemannFactory.hpp"
 #include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
+//#include "EoS/EoS_Base.hpp"
 #include "EoS/StiffenedGas.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
