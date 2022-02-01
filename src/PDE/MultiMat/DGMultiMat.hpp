@@ -167,8 +167,18 @@ class MultiMat {
       std::vector< EoS_Base* > mat_blk;
       auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+// This doesn't compile
+//      auto g = gamma< tag::multimat >(system, imat);
+//      auto ps = pstiff< tag::multimat >(system, imat);
+
+//  This doesn't compile either
+      auto g =
+        g_inputdeck.get< tag::param, tag::multimat, tag::gamma >()[m_system];
+      auto ps =
+        g_inputdeck.get< tag::param, tag::multimat, tag::pstiff >()[m_system];
       for (std::size_t k=0; k<nmat; ++k) {
-        mat_blk.push_back(new StiffenedGas(gamma, pstiff));
+        mat_blk.push_back(new StiffenedGas(g, ps));
         }
 
       // Set initial conditions inside user-defined IC box
