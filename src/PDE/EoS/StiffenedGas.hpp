@@ -27,6 +27,11 @@ class StiffenedGas: public EoS_Base {
     tk::real gamma, pstiff;
 
   public:
+    // Constructor
+    StiffenedGas(tk::real x, tk::real y) : gamma(x), pstiff(y) {
+    std::cout << "Stiffened Gas Initialization: gamma= " << gamma << ", pstiff= " << pstiff << std::endl;
+    }
+
     tk::real eos_pressure( ncomp_t system,
                            tk::real arho,
                            tk::real u,
@@ -36,9 +41,7 @@ class StiffenedGas: public EoS_Base {
                            tk::real alpha=1.0,
                            std::size_t imat=0 )
   {
-    gamma = 1.4;
     tk::real g = gamma;
-    pstiff = 1.0;
     tk::real p_c = pstiff;
 
     tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c)

@@ -164,7 +164,12 @@ class MultiMat {
       const auto& icbox = ic.get< tag::box >();
 
       // TBN
-      StiffenedGas SG_eos;
+      std::vector< EoS_Base* > mat_blk;
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      for (std::size_t k=0; k<nmat; ++k) {
+        mat_blk.push_back(new StiffenedGas(gamma, pstiff));
+        }
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
