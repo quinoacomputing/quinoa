@@ -28,8 +28,8 @@ class StiffenedGas: public EoS_Base {
 
   public:
     // Constructor
-    StiffenedGas(tk::real x, tk::real y) : gamma(x), pstiff(y) {
-    std::cout << "Stiffened Gas Initialization: gamma= " << gamma << ", pstiff= " << pstiff << std::endl;
+    StiffenedGas(tk::real x, tk::real y, std::size_t imat) : gamma(x), pstiff(y) {
+    std::cout << "EOS - Stiffened Gas Initialization: material= " << imat << ", gamma= " << gamma << ", pstiff= " << pstiff << std::endl;
     }
 
     tk::real eos_pressure( ncomp_t system,

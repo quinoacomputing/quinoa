@@ -168,17 +168,10 @@ class MultiMat {
       auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-// This doesn't compile
-      auto g = gamma< eq >(m_system, 0);
-      auto ps = pstiff< eq >(m_system, 0);
-
-//  This doesn't compile either
-//      auto g =
-//        g_inputdeck.get< tag::param, tag::multimat, tag::gamma >()[m_system];
-//      auto ps =
-//        g_inputdeck.get< tag::param, tag::multimat, tag::pstiff >()[m_system];
       for (std::size_t k=0; k<nmat; ++k) {
-        mat_blk.push_back(new StiffenedGas(g, ps));
+        auto g = gamma< eq >(m_system, k);
+        auto ps = pstiff< eq >(m_system, k);
+        mat_blk.push_back(new StiffenedGas(g, ps, k));
         }
 
       // Set initial conditions inside user-defined IC box
