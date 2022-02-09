@@ -67,6 +67,8 @@ class MultiMat {
     using eq = tag::multimat;
 
   public:
+    static std::vector< EoS_Base* > m_mat_blk; // EOS material block
+
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit MultiMat( ncomp_t c ) :
@@ -84,6 +86,18 @@ class MultiMat {
         , invalidBC         // Outlet BC not implemented
         , subsonicOutlet
         , extrapolate } ) );
+
+      // EoS object initialization
+//      std::vector< EoS_Base* > m_mat_blk;
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      for (std::size_t k=0; k<nmat; ++k) {
+        auto g = gamma< eq >(m_system, k);
+        auto ps = pstiff< eq >(m_system, k);
+        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
+        }
+
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -137,6 +151,8 @@ class MultiMat {
       tk::BoxElems< eq >(m_system, geoElem, nielem, inbox);
     }
 
+//    std::vector< EoS_Base* > m_mat_blk;
+
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
@@ -146,8 +162,6 @@ class MultiMat {
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
-    //
-    //TBN : create object here
     void initialize( const tk::Fields& L,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
@@ -163,16 +177,16 @@ class MultiMat {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      // TBN
-      std::vector< EoS_Base* > mat_blk;
-      auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-
-      for (std::size_t k=0; k<nmat; ++k) {
-        auto g = gamma< eq >(m_system, k);
-        auto ps = pstiff< eq >(m_system, k);
-        mat_blk.push_back(new StiffenedGas(g, ps, k));
-        }
+      // EoS object initialization
+//      std::vector< EoS_Base* > m_mat_blk;
+//      auto nmat =
+//        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+//
+//      for (std::size_t k=0; k<nmat; ++k) {
+//        auto g = gamma< eq >(m_system, k);
+//        auto ps = pstiff< eq >(m_system, k);
+//        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
+//        }
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -189,7 +203,7 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, 1.0, t, b, s );
+              initializeBox( m_system, m_mat_blk, 1.0, t, b, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -333,9 +347,13 @@ class MultiMat {
             auto alphamat = state[volfracIdx(nmat, imat)];
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
-            pri[pressureIdx(nmat,imat)] = eos_pressure< tag::multimat >(
+//            pri[pressureIdx(nmat,imat)] = eos_pressure< tag::multimat >(
+//              m_system, arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat,
+//              imat);
+            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat]->eos_pressure(
               m_system, arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat,
               imat);
+
             pri[pressureIdx(nmat,imat)] = constrain_pressure< tag::multimat >(
               m_system, pri[pressureIdx(nmat,imat)], alphamat, imat);
           }
@@ -558,11 +576,17 @@ class MultiMat {
 
         // 2. Flux energy change into majority material
         unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset) += d_arE;
+//        prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset) =
+//          eos_pressure< eq >(m_system,
+//          unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
+//          unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset),
+//          unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset), kmax);
         prim(e, pressureDofIdx(nmat, kmax, rdof, 0), m_offset) =
-          eos_pressure< eq >(m_system,
+          m_mat_blk[kmax]->eos_pressure(m_system,
           unk(e, densityDofIdx(nmat, kmax, rdof, 0), m_offset), u, v, w,
           unk(e, energyDofIdx(nmat, kmax, rdof, 0), m_offset),
           unk(e, volfracDofIdx(nmat, kmax, rdof, 0), m_offset), kmax);
+
 
         // enforce unit sum of volume fractions
         auto alsum = 0.0;
@@ -1385,7 +1409,11 @@ class MultiMat {
           tk::real arhomat = ur[densityIdx(nmat, k)];
           tk::real arhoemat = ur[energyIdx(nmat, k)];
           tk::real alphamat = ur[volfracIdx(nmat, k)];
-          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+//          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+//            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
+//            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
+//            arhoemat, alphamat, k );
+          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
             arhomat, ur[ncomp+velocityIdx(nmat, 0)],
             ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
             arhoemat, alphamat, k );
