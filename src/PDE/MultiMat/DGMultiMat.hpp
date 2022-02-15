@@ -68,8 +68,6 @@ class MultiMat {
     using eq = tag::multimat;
 
   public:
-//    static std::vector< EoS_Base* > m_mat_blk; // EOS material block
-
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit MultiMat( ncomp_t c ) :
@@ -87,18 +85,6 @@ class MultiMat {
         , invalidBC         // Outlet BC not implemented
         , subsonicOutlet
         , extrapolate } ) );
-
-      // EoS object initialization
-//      std::vector< EoS_Base* > m_mat_blk;
-//      auto nmat =
-//        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-//
-//      for (std::size_t k=0; k<nmat; ++k) {
-//        auto g = gamma< eq >(m_system, k);
-//        auto ps = pstiff< eq >(m_system, k);
-//        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
-//        }
-
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -152,8 +138,6 @@ class MultiMat {
       tk::BoxElems< eq >(m_system, geoElem, nielem, inbox);
     }
 
-//    std::vector< EoS_Base* > m_mat_blk;
-
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
@@ -179,18 +163,13 @@ class MultiMat {
       const auto& icbox = ic.get< tag::box >();
 
       // EoS object initialization
-//      std::vector< EoS_Base* > m_mat_blk;
       auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-
       for (std::size_t k=0; k<nmat; ++k) {
         auto g = gamma< eq >(m_system, k);
         auto ps = pstiff< eq >(m_system, k);
         initialize_material_blk(g, ps, k);
-//        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
         }
-
-//      initialize_material_blk();
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);

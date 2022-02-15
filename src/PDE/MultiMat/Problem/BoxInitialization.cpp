@@ -25,7 +25,6 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 
 void initializeBox( std::size_t system,
-//                    std::vector< EoS_Base* > mat_blk,
                     tk::real VRatio,
                     tk::real,
                     const inciter::ctr::box& b,
