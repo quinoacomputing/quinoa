@@ -40,6 +40,7 @@
 #include "EoS/EoS.hpp"
 //#include "EoS/EoS_Base.hpp"
 #include "EoS/StiffenedGas.hpp"
+#include "EoS/MatBlock.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -67,7 +68,7 @@ class MultiMat {
     using eq = tag::multimat;
 
   public:
-    static std::vector< EoS_Base* > m_mat_blk; // EOS material block
+//    static std::vector< EoS_Base* > m_mat_blk; // EOS material block
 
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
@@ -89,14 +90,14 @@ class MultiMat {
 
       // EoS object initialization
 //      std::vector< EoS_Base* > m_mat_blk;
-      auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-
-      for (std::size_t k=0; k<nmat; ++k) {
-        auto g = gamma< eq >(m_system, k);
-        auto ps = pstiff< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
-        }
+//      auto nmat =
+//        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+//
+//      for (std::size_t k=0; k<nmat; ++k) {
+//        auto g = gamma< eq >(m_system, k);
+//        auto ps = pstiff< eq >(m_system, k);
+//        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
+//        }
 
     }
 
@@ -179,14 +180,17 @@ class MultiMat {
 
       // EoS object initialization
 //      std::vector< EoS_Base* > m_mat_blk;
-//      auto nmat =
-//        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-//
-//      for (std::size_t k=0; k<nmat; ++k) {
-//        auto g = gamma< eq >(m_system, k);
-//        auto ps = pstiff< eq >(m_system, k);
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      for (std::size_t k=0; k<nmat; ++k) {
+        auto g = gamma< eq >(m_system, k);
+        auto ps = pstiff< eq >(m_system, k);
+        initialize_material_blk(g, ps, k);
 //        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
-//        }
+        }
+
+//      initialize_material_blk();
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -203,7 +207,7 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, m_mat_blk, 1.0, t, b, s );
+              initializeBox( m_system, 1.0, t, b, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -1409,14 +1413,14 @@ class MultiMat {
           tk::real arhomat = ur[densityIdx(nmat, k)];
           tk::real arhoemat = ur[energyIdx(nmat, k)];
           tk::real alphamat = ur[volfracIdx(nmat, k)];
-//          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
-//            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
-//            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-//            arhoemat, alphamat, k );
-          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
+          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
             arhomat, ur[ncomp+velocityIdx(nmat, 0)],
             ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
             arhoemat, alphamat, k );
+//          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
+//            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
+//            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
+//            arhoemat, alphamat, k );
         }
       }
       else

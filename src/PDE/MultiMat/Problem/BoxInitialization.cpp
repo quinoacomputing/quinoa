@@ -15,6 +15,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "BoxInitialization.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/MatBlock.hpp"
 #include "EoS/StiffenedGas.hpp"
 #include "ContainerUtil.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
@@ -24,7 +25,7 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 
 void initializeBox( std::size_t system,
-                    std::vector< EoS_Base* > mat_blk,
+//                    std::vector< EoS_Base* > mat_blk,
                     tk::real VRatio,
                     tk::real,
                     const inciter::ctr::box& b,
@@ -99,7 +100,7 @@ void initializeBox( std::size_t system,
 //      auto pr_box = eos_pressure< tag::multimat >(system,
 //        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
 //        boxmat_vf, boxmatid-1);
-      auto pr_box = mat_blk[boxmatid-1]->eos_pressure(system,
+      auto pr_box = m_mat_blk[boxmatid-1]->eos_pressure(system,
         boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
         boxmat_vf, boxmatid-1);
       auto t_box = eos_temperature< tag::multimat >(system,
