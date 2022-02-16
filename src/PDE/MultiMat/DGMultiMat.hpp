@@ -38,7 +38,6 @@
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "EoS/EoS.hpp"
-//#include "EoS/EoS_Base.hpp"
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/MatBlock.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
@@ -162,7 +161,7 @@ class MultiMat {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      // EoS object initialization
+      // EoS initialization
       auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
       for (std::size_t k=0; k<nmat; ++k) {
@@ -1000,14 +999,14 @@ class MultiMat {
           tk::real arhomat = ur[densityIdx(nmat, k)];
           tk::real arhoemat = ur[energyIdx(nmat, k)];
           tk::real alphamat = ur[volfracIdx(nmat, k)];
-          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
-            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
-            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-            arhoemat, alphamat, k );
-//          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
+//          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
 //            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
 //            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
 //            arhoemat, alphamat, k );
+          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
+            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
+            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
+            arhoemat, alphamat, k );
         }
       }
       else
