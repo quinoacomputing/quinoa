@@ -215,6 +215,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::amr_dtref
                                  , kw::amr_dtref_uniform
                                  , kw::amr_dtfreq
+                                 , kw::amr_maxlevels
                                  , kw::amr_initial
                                  , kw::amr_uniform
                                  , kw::amr_uniform_derefine
@@ -247,6 +248,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::dgp1
                                  , kw::dgp2
                                  , kw::pdg
+                                 , kw::fv
                                  , kw::flux
                                  , kw::laxfriedrichs
                                  , kw::hllc
@@ -329,6 +331,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::amr, tag::dtref >() = false;
       get< tag::amr, tag::dtref_uniform >() = false;
       get< tag::amr, tag::dtfreq >() = 3;
+      get< tag::amr, tag::maxlevels >() = 2;
       get< tag::amr, tag::error >() = AMRErrorType::JUMP;
       get< tag::amr, tag::tolref >() = 0.2;
       get< tag::amr, tag::tolderef >() = 0.05;
@@ -457,6 +460,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       Assert( pnt.size() == 3*rad.size(), "Size mismatch" );
       return { std::move(pnt), std::move(rad) };
     }
+
+    //! Query scheme centering
+    //! \return Scheme centering
+    tk::Centering centering() const
+    { return ctr::Scheme().centering( get< tag::discr, tag::scheme >() ); }
 
   private:
     //! Function object to extract the mesh filenames assigned to solvers

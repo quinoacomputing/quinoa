@@ -19,6 +19,8 @@ target_include_directories(UnitTest PUBLIC
                            ${QUINOA_SOURCE_DIR}/Inciter
                            ${QUINOA_SOURCE_DIR}/Mesh
                            ${QUINOA_SOURCE_DIR}/LinearSolver
+                           ${QUINOA_SOURCE_DIR}/PDE
+                           ${QUINOA_SOURCE_DIR}/Statistics
                            ${TUT_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
@@ -32,6 +34,7 @@ target_include_directories(UnitTest PUBLIC
                            ${PROJECT_BINARY_DIR}/../LinSys
                            ${PROJECT_BINARY_DIR}/../LoadBalance
                            ${PROJECT_BINARY_DIR}/../LinearSolver
+                           ${PROJECT_BINARY_DIR}/../Inciter
                            ${PROJECT_BINARY_DIR}/../UnitTest)
 
 addCharmModule( "charmchild" "UnitTest" )
@@ -70,7 +73,9 @@ if (ENABLE_INCITER)
                               "alecgCharmModule"
                               "distfctCharmModule"
                               "dgCharmModule"
+                              "fvCharmModule"
                               "aleCharmModule"
+                              "ghostsCharmModule"
                               "conjugategradientsCharmModule"
                               "discretizationCharmModule"
                               "transporterCharmModule")

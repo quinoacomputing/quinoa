@@ -28,7 +28,6 @@
 namespace inciter {
 
 //! AUSM+up approximate Riemann solver
-//! \details This class can be used polymorphically with inciter::RiemannSolver
 struct AUSM {
 
   //! AUSM+up approximate Riemann solver flux function
@@ -156,8 +155,8 @@ struct AUSM {
                                  + p12*fn[idir];
     }
 
-    l_plus = l_plus/( std::fabs(vriem) + 1.0e-16 );
-    l_minus = l_minus/( std::fabs(vriem) + 1.0e-16 );
+    l_plus = l_plus/( std::fabs(vriem) + 1.0e-12 );
+    l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
 
     // Store Riemann-advected partial pressures
     if (std::fabs(l_plus) > 1.0e-10)

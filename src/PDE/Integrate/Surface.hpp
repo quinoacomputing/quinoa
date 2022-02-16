@@ -70,6 +70,26 @@ update_rhs_fa ( ncomp_t ncomp,
                 Fields& R,
                 std::vector< std::vector< tk::real > >& riemannDeriv );
 
+// Compute internal surface flux integrals for second order FV
+void
+surfIntFV( ncomp_t system,
+  std::size_t nmat,
+  ncomp_t offset,
+  real t,
+  const std::size_t rdof,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const RiemannFluxFn& flux,
+  const VelFn& vel,
+  const Fields& U,
+  const Fields& P,
+  Fields& R,
+  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp );
+
 } // tk::
 
 #endif // Surface_h

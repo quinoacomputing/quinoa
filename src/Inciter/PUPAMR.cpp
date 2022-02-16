@@ -160,10 +160,12 @@ void PUP::pup( PUP::er &p, AMR::node_connectivity_t& n )
   p | n.empty_node_count;
 }
 
-void PUP::pup( PUP::er &, AMR::refinement_t& )
+void PUP::pup( PUP::er &p, AMR::refinement_t& r )
 // *****************************************************************************
 //  Pack/Unpack refinement_t
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in,out] r refinement_t object reference
 // *****************************************************************************
 {
-  // no non-const state in refinement_t currently
+  p | r.MAX_REFINEMENT_LEVEL;
 }

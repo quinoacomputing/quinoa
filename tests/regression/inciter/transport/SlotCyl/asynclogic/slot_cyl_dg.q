@@ -17,7 +17,7 @@ inciter
     physics advection
     problem slot_cyl
     bc_dirichlet
-      sideset 1 end
+      sideset 1 2 3 4 5 6 end
     end
   end
 

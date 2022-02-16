@@ -1,0 +1,80 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/fv.ci
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019-2021 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Charm++ module interface file for the discontinuous Galerkin scheme
+  \details   Charm++ module interface file for the discontinuous Galerking
+             scheme.
+  \see       FV.hpp and FV.cpp for more info.
+*/
+// *****************************************************************************
+
+module fv {
+
+  extern module transporter;
+  extern module discretization;
+  extern module ghosts;
+
+  include "UnsMesh.hpp";
+  include "PUPUtil.hpp";
+  include "FaceData.hpp";
+
+  namespace inciter {
+
+    array [1D] FV {
+      entry FV( const CProxy_Discretization& disc,
+                const CProxy_Ghosts& ghostsproxy,
+                const std::map< int, std::vector< std::size_t > >& bface,
+                const std::map< int, std::vector< std::size_t > >& /* bnode */,
+                const std::vector< std::size_t >& triinpoel );
+      initnode void registerReducers();      
+      entry void resizeSolVectors();
+      entry void setup();
+      entry void box( tk::real v );
+      entry void comlim( int fromch,
+                         const std::vector< std::size_t >& tetid,
+                         const std::vector< std::vector< tk::real > >& u,
+                         const std::vector< std::vector< tk::real > >& prim );
+      entry void comnodeout( const std::vector< std::size_t >& gid,
+                             const std::vector< std::size_t >& nesup,
+                             const std::vector< std::vector< tk::real > >& L );
+      entry void comsol( int fromch,
+                         const std::vector< std::size_t >& tetid,
+                         const std::vector< std::vector< tk::real > >& u,
+                         const std::vector< std::vector< tk::real > >& prim );
+      entry void refine( const std::vector< tk::real >& l2ref );
+      entry [reductiontarget] void solve( tk::real newdt );
+      entry void resized();
+      entry void lhs();
+      entry void step();
+      entry void start();
+      entry void next();
+      entry void evalLB( int nrestart );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      entry void wait4sol() {
+        when ownsol_complete(), comsol_complete() serial "sol" { reco(); } }
+
+      entry void wait4lim() {
+        when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
+
+      entry void wait4nod() {
+        when ownnod_complete( CkCallback c ), comnodeout_complete()
+        serial "nod" { writeFields( c ); } }
+
+      entry void ownsol_complete();
+      entry void comsol_complete();
+      entry void ownlim_complete();
+      entry void comlim_complete();
+      entry void ownnod_complete( CkCallback c );
+      entry void comnodeout_complete();
+    }
+
+  } // inciter::
+
+}

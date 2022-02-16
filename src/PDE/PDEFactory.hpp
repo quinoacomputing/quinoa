@@ -17,6 +17,7 @@
 
 #include "CGPDE.hpp"
 #include "DGPDE.hpp"
+#include "FVPDE.hpp"
 #include "Factory.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/PDE.hpp"
@@ -32,6 +33,11 @@ using CGFactory =
 //!   keys associated to their constructors
 using DGFactory =
   std::map< ctr::PDEKey, std::function< DGPDE(const tk::ctr::ncomp_t&) > >;
+
+//! \brief Factory for PDEs using finite volume discretization storing
+//!   keys associated to their constructors
+using FVFactory =
+  std::map< ctr::PDEKey, std::function< FVPDE(const tk::ctr::ncomp_t&) > >;
 
 //! \brief Function object for registering a partial differential equation
 //!   into the partial differential equation factory
@@ -103,6 +109,21 @@ struct registerDG : registerPDE< Eq, DGFactory, DGPDE > {
                        std::set< ctr::PDEType >& eqtypes,
                        ctr::PDEType t ) :
     registerPDE< Eq, DGFactory, DGPDE >( f, t, eqtypes ) {}
+};
+
+//! Wrapper of registerPDE specialized for registering FV PDEs
+//! \details The sole reason for this functor is to simplify client-code
+//!   calling registerPDE specialized to FV PDEs
+template< template< class, class > class Eq >
+struct registerFV : registerPDE< Eq, FVFactory, FVPDE > {
+  //! Delegate constructor to base and specialize to FV
+  //! \param[in] f Factory to register to
+  //! \param[in] eqtypes Counters for equation types in factory
+  //! \param[in] t Enum selecting PDE type, Control/Inciter/Options/PDE.h
+  explicit registerFV( FVFactory& f,
+                       std::set< ctr::PDEType >& eqtypes,
+                       ctr::PDEType t ) :
+    registerPDE< Eq, FVFactory, FVPDE >( f, t, eqtypes ) {}
 };
 
 } // inciter::

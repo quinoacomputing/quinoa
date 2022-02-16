@@ -222,7 +222,9 @@ namespace AMR {
                   // value of 2 for needs_refining indicates part of derefine
                   get(key).needs_refining = 2;
 
-                  trace_out << get(key).needs_refining << std::endl;
+                  trace_out << "edge: " << key.get_data()[0] << "-"
+                    << key.get_data()[1] << " deref-ref: "
+                    << get(key).needs_refining << std::endl;
                 }
             }
 

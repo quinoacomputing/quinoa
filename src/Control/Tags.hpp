@@ -139,6 +139,7 @@ struct tolderef { static std::string name() { return "tolderef"; } };
 struct t0ref { static std::string name() { return "t0ref"; } };
 struct dtref { static std::string name() { return "dtref"; } };
 struct dtref_uniform { static std::string name() { return "dtref_uniform"; } };
+struct maxlevels { static std::string name() { return "maxlevels"; } };
 struct partitioner { static std::string name() { return "partitioner"; } };
 struct partitioned { static std::string name() { return "partitioned"; } };
 struct scheme { static std::string name() { return "scheme"; } };

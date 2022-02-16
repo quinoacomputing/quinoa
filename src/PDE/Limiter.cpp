@@ -22,6 +22,7 @@
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Basis.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS.hpp"
 #include "PrefIndicator.hpp"
 #include "Reconstruction.hpp"
 
@@ -661,6 +662,10 @@ VertexBasedMultiMat_P1(
       if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
 
+      if(intsharp == 0)
+        PositivityLimitingMultiMat(system, nmat, offset, rdof, e, inpoel, coord,
+          U, P, phic, phip);
+
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
       std::vector< tk::real > alAvg(nmat, 0.0);
@@ -695,6 +700,91 @@ VertexBasedMultiMat_P1(
         P(e, mark+2, offset) = phip[c] * P(e, mark+2, offset);
         P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
       }
+    }
+  }
+}
+
+void
+VertexBasedMultiMat_FV(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::Fields& geoElem,
+  const tk::UnsMesh::Coords& coord,
+  tk::Fields& U,
+  tk::Fields& P,
+  std::size_t nmat )
+// *****************************************************************************
+//  Kuzmin's vertex-based limiter for multi-material FV
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element connectivity
+//! \param[in] nelem Number of elements
+//! \param[in] system Index for equation systems
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] geoElem Element geometry array
+//! \param[in] coord Array of nodal coordinates
+//! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] P High-order vector of primitives which gets limited
+//! \param[in] nmat Number of materials in this PDE system
+//! \details This vertex-based limiter function should be called for multimat.
+//!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
+//!   limiter for p-adaptive discontinuous Galerkin methods. Journal of
+//!   computational and applied mathematics, 233(12), 3077-3085.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::intsharp >()[system];
+  std::size_t ncomp = U.nprop()/rdof;
+  std::size_t nprim = P.nprop()/rdof;
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    std::vector< std::vector< tk::real > > unk;
+    std::vector< tk::real > phic(ncomp, 1.0);
+    std::vector< tk::real > phip(nprim, 1.0);
+    // limit conserved quantities
+    VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+      rdof, offset, ncomp, phic, {0, ncomp-1});
+    // limit primitive quantities
+    VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
+      rdof, offset, nprim, phip, {0, nprim-1});
+
+    // limits under which compression is to be performed
+    std::vector< std::size_t > matInt(nmat, 0);
+    std::vector< tk::real > alAvg(nmat, 0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+    auto intInd = interfaceIndicator(nmat, alAvg, matInt);
+    if ((intsharp > 0) && intInd)
+    {
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        if (matInt[k])
+          phic[volfracIdx(nmat,k)] = 1.0;
+      }
+    }
+    else
+    {
+      consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+    }
+
+    // apply limiter function
+    for (std::size_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*rdof;
+      U(e, mark+1, offset) = phic[c] * U(e, mark+1, offset);
+      U(e, mark+2, offset) = phic[c] * U(e, mark+2, offset);
+      U(e, mark+3, offset) = phic[c] * U(e, mark+3, offset);
+    }
+    for (std::size_t c=0; c<nprim; ++c)
+    {
+      auto mark = c*rdof;
+      P(e, mark+1, offset) = phip[c] * P(e, mark+1, offset);
+      P(e, mark+2, offset) = phip[c] * P(e, mark+2, offset);
+      P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
     }
   }
 }
@@ -1287,8 +1377,6 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   return phi;
 }
 
-
-
 void consistentMultiMatLimiting_P1(
   std::size_t nmat,
   ncomp_t offset,
@@ -1506,6 +1594,144 @@ void BoundPreservingLimiting( std::size_t nmat,
     phic[imat] = phi_bound[imat] * phic[imat];
 }
 
+void PositivityLimitingMultiMat( std::size_t system,
+                                 std::size_t nmat,
+                                 ncomp_t offset,
+                                 std::size_t ndof,
+                                 std::size_t e,
+                                 const std::vector< std::size_t >& inpoel,
+                                 const tk::UnsMesh::Coords& coord,
+                                 const tk::Fields& U,
+                                 const tk::Fields& P,
+                                 std::vector< tk::real >& phic,
+                                 std::vector< tk::real >& phip )
+// *****************************************************************************
+//  Positivity preserving limiter for multi-material solver
+//! \param[in] system Equation system index
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] offset Index for equation system
+//! \param[in] ndof Total number of reconstructed dofs
+//! \param[in] e Element being checked for consistency
+//! \param[in] inpoel Element connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] U Vector of conservative variables
+//! \param[in] P Vector of primitive variables
+//! \param[in,out] phic Vector of limiter functions for P1 dofs of the
+//!   conserved quantities
+//! \param[in,out] phip Vector of limiter functions for P1 dofs of the
+//!   primitive quantities
+// *****************************************************************************
+{
+  const auto ncomp = U.nprop() / ndof;
+  const auto nprim = P.nprop() / ndof;
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Extract the element coordinates
+  std::array< std::array< tk::real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+  // Compute the determinant of Jacobian matrix
+  auto detT =
+    tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+  std::vector< tk::real > phic_bound(ncomp, 1.0);
+  std::vector< tk::real > phip_bound(nprim, 1.0);
+
+  const tk::real min = 1e-15;
+
+  for (std::size_t lf=0; lf<4; ++lf)
+  {
+    std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
+                                             inpoel[4*e+tk::lpofa[lf][1]],
+                                             inpoel[4*e+tk::lpofa[lf][2]] }};
+
+    std::array< std::array< tk::real, 3>, 3 > coordfa {{
+      {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
+      {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
+      {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
+
+    auto ng = tk::NGfa(ndof);
+
+    std::array< std::vector< tk::real >, 2 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      auto gp = tk::eval_gp( igp, coordfa, coordgp );
+      auto B = tk::eval_basis( ndof,
+            tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+
+      auto state = eval_state(ncomp, offset, ndof, ndof, e, U, B, {0, ncomp-1});
+      auto sprim = eval_state(nprim, offset, ndof, ndof, e, P, B, {0, nprim-1});
+
+      for(std::size_t imat = 0; imat < nmat; imat++)
+      {
+        tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
+
+        // Evaluate the limiting coefficient for material density
+        auto rho = state[densityIdx(nmat, imat)];
+        auto rho_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
+        phi_rho = PositivityLimiting(min, rho, rho_avg);
+        phic_bound[densityIdx(nmat, imat)] =
+          std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
+
+        // Evaluate the limiting coefficient for material energy
+        auto rhoe = state[energyIdx(nmat, imat)];
+        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, ndof, 0), offset);
+        phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
+        phic_bound[energyIdx(nmat, imat)] =
+          std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
+
+        // Evaluate the limiting coefficient for material pressure
+        auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
+        auto pre = sprim[pressureIdx(nmat, imat)];
+        auto pre_avg = P(e, pressureDofIdx(nmat, imat, ndof, 0), offset);
+        phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
+        phip_bound[pressureIdx(nmat, imat)] =
+          std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
+      }
+    }
+  }
+
+  for(std::size_t icomp = nmat; icomp < ncomp; icomp++)
+    phic[icomp] = std::min( phic_bound[icomp], phic[icomp] );
+  for(std::size_t icomp = 0; icomp < nmat; icomp++)
+    phip[icomp] = std::min( phip_bound[icomp], phip[icomp] );
+}
+
+tk::real
+PositivityLimiting( const tk::real min,
+                    const tk::real u_gp,
+                    const tk::real u_avg )
+// *****************************************************************************
+//  Positivity-preserving limiter function
+//! \param[in] min Minimum bound for volume fraction
+//! \param[in] u_gp Variable quantity at the quadrature point
+//! \param[in] u_avg Cell-average variable quantitiy
+//! \return The limiting coefficient from the positivity-preserving limiter
+//!   function
+// *****************************************************************************
+{
+  tk::real phi(1.0);
+  if(u_gp < min)
+    phi = std::fabs( (min - u_avg) / (u_gp - u_avg) );
+  return phi;
+}
+
 bool
 interfaceIndicator( std::size_t nmat,
   const std::vector< tk::real >& al,
@@ -1704,6 +1930,396 @@ void MarkShockCells ( const std::size_t nelem,
     else
       shockmarker[e] = 0;
   }
+}
+
+bool
+cleanTraceMultiMat(
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  const tk::Fields& geoElem,
+  std::size_t nmat,
+  tk::Fields& U,
+  tk::Fields& P )
+// *****************************************************************************
+//  Clean up the state of trace materials for multi-material PDE system
+//! \param[in] nelem Number of elements
+//! \param[in] offset Offset for equation systems
+//! \param[in] system Index for equation systems
+//! \param[in] geoElem Element geometry array
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in/out] U High-order solution vector which gets modified
+//! \param[in/out] P High-order vector of primitives which gets modified
+//! \return Boolean indicating if an unphysical material state was found
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  auto al_eps = 1.0e-02;
+  auto neg_density = false;
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // find material in largest quantity, and determine if pressure
+    // relaxation is needed. If it is, determine materials that need
+    // relaxation, and the total volume of these materials.
+    std::vector< int > relaxInd(nmat, 0);
+    auto almax(0.0), relaxVol(0.0);
+    std::size_t kmax = 0;
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto al = U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
+      if (al > almax)
+      {
+        almax = al;
+        kmax = k;
+      }
+      else if (al < al_eps)
+      {
+        relaxInd[k] = 1;
+        relaxVol += al;
+      }
+    }
+    relaxInd[kmax] = 1;
+    relaxVol += almax;
+
+    auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0), offset);
+    auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0), offset);
+    auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0), offset);
+    auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset)/almax;
+    auto tmax = eos_temperature< tag::multimat >(system,
+      U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
+      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset), almax, kmax);
+
+    tk::real p_target(0.0), d_al(0.0), d_arE(0.0);
+    //// get equilibrium pressure
+    //std::vector< tk::real > kmat(nmat, 0.0);
+    //tk::real ratio(0.0);
+    //for (std::size_t k=0; k<nmat; ++k)
+    //{
+    //  auto arhok = U(e, densityDofIdx(nmat,k,rdof,0), offset);
+    //  auto alk = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+    //  auto apk = P(e, pressureDofIdx(nmat,k,rdof,0), offset);
+    //  auto ak = eos_soundspeed< tag::multimat >(system, arhok, apk, alk, k );
+    //  kmat[k] = arhok * ak * ak;
+
+    //  p_target += alk * apk / kmat[k];
+    //  ratio += alk * alk / kmat[k];
+    //}
+    //p_target /= ratio;
+    //p_target = std::max(p_target, 1e-14);
+    p_target = std::max(pmax, 1e-14);
+
+    // 1. Correct minority materials and store volume/energy changes
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
+      auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0), offset) / alk;
+      auto Pck = pstiff< tag::multimat >(system, k);
+      // for positive volume fractions
+      if (matExists(alk))
+      {
+        // check if volume fraction is lesser than threshold (al_eps) and
+        // if the material (effective) pressure is negative. If either of
+        // these conditions is true, perform pressure relaxation.
+        if ((alk < al_eps) || (pk+Pck < 0.0)/*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
+        {
+          //auto gk = gamma< tag::multimat >(system, k);
+
+          tk::real alk_new(0.0);
+          //// volume change based on polytropic expansion/isentropic compression
+          //if (pk > p_target)
+          //{
+          //  alk_new = std::pow((pk/p_target), (1.0/gk)) * alk;
+          //}
+          //else
+          //{
+          //  auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0), offset);
+          //  auto ck = eos_soundspeed< tag::multimat >(system, arhok, alk*pk,
+          //    alk, k);
+          //  auto kk = arhok * ck * ck;
+          //  alk_new = alk - (alk*alk/kk) * (p_target-pk);
+          //}
+          alk_new = alk;
+
+          // energy change
+          auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0), offset)
+            / alk_new;
+          auto rhoEmat = eos_totalenergy< tag::multimat >(system, rhomat, u, v,
+            w, p_target, k);
+
+          // volume-fraction and total energy flux into majority material
+          d_al += (alk - alk_new);
+          d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0), offset)
+            - alk_new * rhoEmat);
+
+          // update state of trace material
+          U(e, volfracDofIdx(nmat, k, rdof, 0), offset) = alk_new;
+          U(e, energyDofIdx(nmat, k, rdof, 0), offset) = alk_new*rhoEmat;
+          P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk_new*p_target;
+        }
+      }
+      // check for unbounded volume fractions
+      else if (alk < 0.0)
+      {
+        auto rhok = eos_density< tag::multimat >(system, p_target, tmax, k);
+        d_al += (alk - 1e-14);
+        // update state of trace material
+        U(e, volfracDofIdx(nmat, k, rdof, 0), offset) = 1e-14;
+        U(e, densityDofIdx(nmat, k, rdof, 0), offset) = 1e-14 * rhok;
+        U(e, energyDofIdx(nmat, k, rdof, 0), offset) = 1e-14
+          * eos_totalenergy< tag::multimat >(system, rhok, u, v, w, p_target,
+          k);
+        P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = 1e-14 *
+          p_target;
+        for (std::size_t i=1; i<rdof; ++i) {
+          U(e, volfracDofIdx(nmat, k, rdof, i), offset) = 0.0;
+          U(e, densityDofIdx(nmat, k, rdof, i), offset) = 0.0;
+          U(e, energyDofIdx(nmat, k, rdof, i), offset) = 0.0;
+          P(e, pressureDofIdx(nmat, k, rdof, i), offset) = 0.0;
+        }
+      }
+      else {
+        auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0), offset) / alk;
+        // update state of trace material
+        U(e, energyDofIdx(nmat, k, rdof, 0), offset) = alk
+          * eos_totalenergy< tag::multimat >(system, rhok, u, v, w, p_target,
+          k);
+        P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk *
+          p_target;
+        for (std::size_t i=1; i<rdof; ++i) {
+          U(e, energyDofIdx(nmat, k, rdof, i), offset) = 0.0;
+          P(e, pressureDofIdx(nmat, k, rdof, i), offset) = 0.0;
+        }
+      }
+    }
+
+    // 2. Based on volume change in majority material, compute energy change
+    //auto gmax = gamma< tag::multimat >(system, kmax);
+    //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
+    //auto rhomax_new = U(e, densityDofIdx(nmat, kmax, rdof, 0), offset)
+    //  / (almax+d_al);
+    //auto rhoEmax_new = eos_totalenergy< tag::multimat >(system, rhomax_new, u,
+    //  v, w, pmax_new, kmax);
+    //auto d_arEmax_new = (almax+d_al) * rhoEmax_new
+    //  - U(e, energyDofIdx(nmat, kmax, rdof, 0), offset);
+
+    U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset) += d_al;
+    //U(e, energyDofIdx(nmat, kmax, rdof, 0), offset) += d_arEmax_new;
+
+    // 2. Flux energy change into majority material
+    U(e, energyDofIdx(nmat, kmax, rdof, 0), offset) += d_arE;
+    P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) =
+      eos_pressure< tag::multimat >(system,
+      U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
+      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset),
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset), kmax);
+
+    // enforce unit sum of volume fractions
+    auto alsum = 0.0;
+    for (std::size_t k=0; k<nmat; ++k)
+      alsum += U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
+
+    for (std::size_t k=0; k<nmat; ++k) {
+      U(e, volfracDofIdx(nmat, k, rdof, 0), offset) /= alsum;
+      U(e, densityDofIdx(nmat, k, rdof, 0), offset) /= alsum;
+      U(e, energyDofIdx(nmat, k, rdof, 0), offset) /= alsum;
+      P(e, pressureDofIdx(nmat, k, rdof, 0), offset) /= alsum;
+    }
+
+    //// bulk quantities
+    //auto rhoEb(0.0), rhob(0.0), volb(0.0);
+    //for (std::size_t k=0; k<nmat; ++k)
+    //{
+    //  if (relaxInd[k] > 0.0)
+    //  {
+    //    rhoEb += U(e, energyDofIdx(nmat,k,rdof,0), offset);
+    //    volb += U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+    //    rhob += U(e, densityDofIdx(nmat,k,rdof,0), offset);
+    //  }
+    //}
+
+    //// 2. find mixture-pressure
+    //tk::real pmix(0.0), den(0.0);
+    //pmix = rhoEb - 0.5*rhob*(u*u+v*v+w*w);
+    //for (std::size_t k=0; k<nmat; ++k)
+    //{
+    //  auto gk = gamma< tag::multimat >(system, k);
+    //  auto Pck = pstiff< tag::multimat >(system, k);
+
+    //  pmix -= U(e, volfracDofIdx(nmat,k,rdof,0), offset) * gk * Pck *
+    //    relaxInd[k] / (gk-1.0);
+    //  den += U(e, volfracDofIdx(nmat,k,rdof,0), offset) * relaxInd[k]
+    //    / (gk-1.0);
+    //}
+    //pmix /= den;
+
+    //// 3. correct energies
+    //for (std::size_t k=0; k<nmat; ++k)
+    //{
+    //  if (relaxInd[k] > 0.0)
+    //  {
+    //    auto alk_new = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+    //    U(e, energyDofIdx(nmat,k,rdof,0), offset) = alk_new *
+    //      eos_totalenergy< tag::multimat >(system, rhomat[k], u, v, w, pmix,
+    //      k);
+    //    P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk_new * pmix;
+    //  }
+    //}
+
+    pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) /
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset);
+
+    // check for unphysical state
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto alpha = U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
+      auto arho = U(e, densityDofIdx(nmat, k, rdof, 0), offset);
+      auto apr = P(e, pressureDofIdx(nmat, k, rdof, 0), offset);
+
+      // lambda for screen outputs
+      auto screenout = [&]()
+      {
+        std::cout << "Element centroid: " << geoElem(e,1,0) << ", "
+          << geoElem(e,2,0) << ", " << geoElem(e,3,0) << std::endl;
+        std::cout << "Material-id:      " << k << std::endl;
+        std::cout << "Volume-fraction:  " << alpha << std::endl;
+        std::cout << "Partial density:  " << arho << std::endl;
+        std::cout << "Partial pressure: " << apr << std::endl;
+        std::cout << "Major pressure:   " << pmax << std::endl;
+        std::cout << "Major temperature:" << tmax << std::endl;
+        std::cout << "Velocity:         " << u << ", " << v << ", " << w
+          << std::endl;
+      };
+
+      if (arho < 0.0)
+      {
+        neg_density = true;
+        screenout();
+      }
+    }
+  }
+  return neg_density;
+}
+
+tk::real
+timeStepSizeMultiMat(
+  const std::vector< int >& esuf,
+  const tk::Fields& geoFace,
+  const tk::Fields& geoElem,
+  const std::size_t nelem,
+  std::size_t offset,
+  std::size_t nmat,
+  const tk::Fields& U,
+  const tk::Fields& P )
+// *****************************************************************************
+//  Time step restriction for multi material cell-centered schemes
+//! \param[in] esuf Elements surrounding elements array
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] nelem Number of elements
+//! \param[in] offset Index for equation systems
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] U High-order solution vector
+//! \param[in] P High-order vector of primitives
+//! \return Maximum allowable time step based on cfl criterion
+// *****************************************************************************
+{
+  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  std::size_t ncomp = U.nprop()/rdof;
+  std::size_t nprim = P.nprop()/rdof;
+
+  tk::real u, v, w, a, vn, dSV_l, dSV_r;
+  std::vector< tk::real > delt(U.nunk(), 0.0);
+  std::vector< tk::real > ugp(ncomp, 0.0), pgp(nprim, 0.0);
+
+  // compute maximum characteristic speed at all internal element faces
+  for (std::size_t f=0; f<esuf.size()/2; ++f)
+  {
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    auto er = esuf[2*f+1];
+
+    // left element
+
+    // Compute the basis function for the left element
+    std::vector< tk::real > B_l(rdof, 0.0);
+    B_l[0] = 1.0;
+
+    // get conserved quantities
+    ugp = eval_state(ncomp, offset, rdof, ndof, el, U, B_l, {0, ncomp-1});
+    // get primitive quantities
+    pgp = eval_state(nprim, offset, rdof, ndof, el, P, B_l, {0, nprim-1});
+
+    // advection velocity
+    u = pgp[velocityIdx(nmat, 0)];
+    v = pgp[velocityIdx(nmat, 1)];
+    w = pgp[velocityIdx(nmat, 2)];
+
+    vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+
+    // acoustic speed
+    a = 0.0;
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+        a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+          ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+          ugp[volfracIdx(nmat, k)], k ) );
+      }
+    }
+
+    dSV_l = geoFace(f,0,0) * (std::fabs(vn) + a);
+
+    // right element
+    if (er > -1) {
+      std::size_t eR = static_cast< std::size_t >( er );
+
+      // Compute the basis function for the right element
+      std::vector< tk::real > B_r(rdof, 0.0);
+      B_r[0] = 1.0;
+
+      // get conserved quantities
+      ugp = eval_state( ncomp, offset, rdof, ndof, eR, U, B_r, {0, ncomp-1});
+      // get primitive quantities
+      pgp = eval_state( nprim, offset, rdof, ndof, eR, P, B_r, {0, nprim-1});
+
+      // advection velocity
+      u = pgp[velocityIdx(nmat, 0)];
+      v = pgp[velocityIdx(nmat, 1)];
+      w = pgp[velocityIdx(nmat, 2)];
+
+      vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+
+      // acoustic speed
+      a = 0.0;
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+          a = std::max( a, eos_soundspeed< tag::multimat >( 0,
+            ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+            ugp[volfracIdx(nmat, k)], k ) );
+        }
+      }
+
+      dSV_r = geoFace(f,0,0) * (std::fabs(vn) + a);
+
+      delt[eR] += std::max( dSV_l, dSV_r );
+    } else {
+      dSV_r = dSV_l;
+    }
+
+    delt[el] += std::max( dSV_l, dSV_r );
+  }
+
+  tk::real mindt = std::numeric_limits< tk::real >::max();
+
+  // compute allowable dt
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+  }
+
+  return mindt;
 }
 
 } // inciter::

@@ -36,6 +36,8 @@ module discretization {
         const tk::UnsMesh::CoordMap& coordmap,
         const tk::UnsMesh::Chunk& el,
         const tk::CommMaps& msum,
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::vector< std::size_t >& triinpoel,
         int nchare );
       initnode void registerReducers();
       entry void vol();

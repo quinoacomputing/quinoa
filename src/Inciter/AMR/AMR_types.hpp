@@ -102,7 +102,7 @@ using coord_type = std::vector< tk::real >;
 //!    parent IDs
 using EdgeData =
    std::unordered_map< tk::UnsMesh::Edge,
-                       std::pair< int, Edge_Lock_Case >,
+                       std::tuple< int, int, Edge_Lock_Case >,
                        tk::UnsMesh::Hash<2>,
                        tk::UnsMesh::Eq<2> >;
 

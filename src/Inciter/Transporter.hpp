@@ -109,7 +109,7 @@ class Transporter : public CBase_Transporter {
 
     //! \brief Reduction target: all Refiner chares have received a round
     //!   of edges, and have run their compatibility algorithm
-    void compatibility( std::size_t meshid, std::size_t modified );
+    void compatibility( std::size_t meshid );
 
     //! \brief Reduction target: all Refiner chares have matched/corrected
     //!   the tagging of chare-boundary edges, all chares are ready to perform
@@ -159,6 +159,9 @@ class Transporter : public CBase_Transporter {
     void chghost() { m_progWork.inc< GHOST >( printer() ); }
     //! Non-reduction target for receiving progress report on face adjacency
     void chadj() { m_progWork.inc< ADJ >( printer() ); }
+
+    // Reduction target indicating all "ghosts" insertions are done
+    void doneInsertingGhosts(std::size_t meshid);
 
     //! Reduction target indicating that the communication maps have been setup
     void comfinal( std::size_t initial, std::size_t summeshid );
