@@ -227,8 +227,11 @@ class MultiMat {
           tk::real arhomat = unk(e, densityDofIdx(nmat, k, rdof, 0), m_offset);
           tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset);
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
+//          prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
+//            eos_pressure< tag::multimat >(m_system, arhomat, vel[0], vel[1],
+//              vel[2], arhoemat, alphamat, k);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
-            eos_pressure< tag::multimat >(m_system, arhomat, vel[0], vel[1],
+            m_mat_blk[imat]->eos_pressure(m_system, arhomat, vel[0], vel[1],
               vel[2], arhoemat, alphamat, k);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
             constrain_pressure< tag::multimat >(m_system,
@@ -740,7 +743,11 @@ class MultiMat {
           tk::real arhomat = ur[densityIdx(nmat, k)];
           tk::real arhoemat = ur[energyIdx(nmat, k)];
           tk::real alphamat = ur[volfracIdx(nmat, k)];
-          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+//          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+//            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
+//            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
+//            arhoemat, alphamat, k );
+          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[imat]->eos_pressure( system,
             arhomat, ur[ncomp+velocityIdx(nmat, 0)],
             ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
             arhoemat, alphamat, k );

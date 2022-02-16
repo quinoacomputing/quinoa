@@ -2108,8 +2108,13 @@ cleanTraceMultiMat(
 
     // 2. Flux energy change into majority material
     U(e, energyDofIdx(nmat, kmax, rdof, 0), offset) += d_arE;
+//    P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) =
+//      eos_pressure< tag::multimat >(system,
+//      U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
+//      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset),
+//      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset), kmax);
     P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) =
-      eos_pressure< tag::multimat >(system,
+      m_mat_blk[k]->eos_pressure(system,
       U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0), offset),
       U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset), kmax);
