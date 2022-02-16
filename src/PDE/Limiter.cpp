@@ -23,6 +23,8 @@
 #include "Integrate/Basis.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/StiffenedGas.hpp"
+#include "EoS/MatBlock.hpp"
 #include "PrefIndicator.hpp"
 #include "Reconstruction.hpp"
 
@@ -2114,7 +2116,7 @@ cleanTraceMultiMat(
 //      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset),
 //      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset), kmax);
     P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) =
-      m_mat_blk[k]->eos_pressure(system,
+      m_mat_blk[kmax]->eos_pressure(system,
       U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0), offset),
       U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset), kmax);

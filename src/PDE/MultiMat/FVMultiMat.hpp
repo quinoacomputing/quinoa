@@ -36,6 +36,8 @@
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/StiffenedGas.hpp"
+#include "EoS/MatBlock.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -231,7 +233,7 @@ class MultiMat {
 //            eos_pressure< tag::multimat >(m_system, arhomat, vel[0], vel[1],
 //              vel[2], arhoemat, alphamat, k);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
-            m_mat_blk[imat]->eos_pressure(m_system, arhomat, vel[0], vel[1],
+            m_mat_blk[k]->eos_pressure(m_system, arhomat, vel[0], vel[1],
               vel[2], arhoemat, alphamat, k);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
             constrain_pressure< tag::multimat >(m_system,
@@ -747,7 +749,7 @@ class MultiMat {
 //            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
 //            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
 //            arhoemat, alphamat, k );
-          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[imat]->eos_pressure( system,
+          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
             arhomat, ur[ncomp+velocityIdx(nmat, 0)],
             ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
             arhoemat, alphamat, k );
