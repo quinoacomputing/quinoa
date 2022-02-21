@@ -4988,6 +4988,25 @@ struct underwater_ex_info {
 using underwater_ex =
   keyword< underwater_ex_info, TAOCPP_PEGTL_STRING("underwater_ex") >;
 
+struct shockdensity_wave_info {
+  static std::string name() { return "Shock-density wave problem"; }
+  static std::string shortDescription() { return
+    "Select the shock-density wave test problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the shock-density wave test problem. The
+    purpose of this test problem is to assess the accuracy of high order method
+    in predicting the interaction of a density wave with a shock front.
+    Example: "problem shockdensity_wave". For more details, see Yu, L., Matthias
+    I. (2014). Discontinuous Galerkin method for multicomponent chemically
+    reacting flows and combustion. Journal of Computational Physics, 270,
+    105-137.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using shockdensity_wave =
+  keyword< shockdensity_wave_info, TAOCPP_PEGTL_STRING("shockdensity_wave") >;
+
 struct problem_info {
   static std::string name() { return "Test problem"; }
   static std::string shortDescription() { return

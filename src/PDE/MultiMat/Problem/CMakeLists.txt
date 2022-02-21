@@ -6,7 +6,8 @@ add_library(MultiMatProblem
             InterfaceAdvection.cpp
             WaterAirShocktube.cpp
             ShockHeBubble.cpp
-            UnderwaterEx.cpp)
+            UnderwaterEx.cpp
+            ShockDensityWave.cpp)
 
 target_include_directories(MultiMatProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}

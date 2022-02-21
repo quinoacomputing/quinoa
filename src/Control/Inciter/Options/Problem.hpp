@@ -41,7 +41,8 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    GAUSS_HUMP_COMPFLOW,
                                    WATERAIR_SHOCKTUBE,
                                    SHOCK_HEBUBBLE,
-                                   UNDERWATER_EX };
+                                   UNDERWATER_EX,
+                                   SHOCKDENSITY_WAVE };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -70,6 +71,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::waterair_shocktube
                                   , kw::shock_hebubble
                                   , kw::underwater_ex
+                                  , kw::shockdensity_wave
                                   >;
 
     //! \brief Options constructor
@@ -101,7 +103,8 @@ class Problem : public tk::Toggle< ProblemType > {
             kw::gauss_hump_compflow::name() },
           { ProblemType::WATERAIR_SHOCKTUBE, kw::waterair_shocktube::name() },
           { ProblemType::SHOCK_HEBUBBLE, kw::shock_hebubble::name() },
-          { ProblemType::UNDERWATER_EX, kw::underwater_ex::name() }
+          { ProblemType::UNDERWATER_EX, kw::underwater_ex::name() },
+          { ProblemType::SHOCKDENSITY_WAVE, kw::shockdensity_wave::name() }
         },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
@@ -129,7 +132,9 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::shock_hebubble::string(),
             ProblemType::SHOCK_HEBUBBLE },
           { kw::underwater_ex::string(),
-            ProblemType::UNDERWATER_EX }
+            ProblemType::UNDERWATER_EX },
+          { kw::shockdensity_wave::string(),
+            ProblemType::SHOCKDENSITY_WAVE }
         } )
     {}
 };
