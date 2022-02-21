@@ -452,17 +452,23 @@ Discretization::bndel() const
 }
 
 void
-Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
-                               const tk::UnsMesh::Coords& coord,
-                               const tk::NodeCommMap& nodeCommMap )
+Discretization::resizePostAMR(
+  const tk::UnsMesh::Chunk& chunk,
+  const tk::UnsMesh::Coords& coord,
+  const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
+  const tk::NodeCommMap& nodeCommMap,
+  const std::set< std::size_t >& removedNodes )
 // *****************************************************************************
 //  Resize mesh data structures after mesh refinement
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
+//! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
+//! \param[in] removedNodes Newly removed mesh node local ids
 // *****************************************************************************
 {
   m_el = chunk;         // updates m_inpoel, m_gid, m_lid
+  m_nodeCommMap.clear();
   m_nodeCommMap = nodeCommMap;        // update node communication map
 
   // Update mesh volume container size
@@ -474,6 +480,20 @@ Discretization::resizePostAMR( const tk::UnsMesh::Chunk& chunk,
     for (auto g : sharednodes)
       if (m_bid.find(g) == end(m_bid))
         m_bid[g] = bid++;
+
+  // Remove ids of derefined boundary nodes from bid
+  // since bid collects ALL the chare-boundary nodes (and not for a specific
+  // neighbor-chare), this has to use removedNodes (and not nodeCommMap)
+  for (auto& [g, l] : m_bid) {
+    if (removedNodes.count(l)) m_bid.erase(g);
+  }
+
+  // Remap local ids in bid
+  for (auto& [g, l] : m_bid) {
+    Assert(amrNodeMap.find(l) != end(amrNodeMap), "Local id in bid not found "
+      "in amr node map.");
+    l = amrNodeMap.at(l);
+  }
 
   // update mesh node coordinates
   m_coord = coord;

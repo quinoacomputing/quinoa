@@ -58,6 +58,7 @@ using amr = tk::TaggedTuple< brigand::list<
   , tag::dtref,   bool                            //!< AMR during t>0 on/off
   , tag::dtref_uniform, bool                      //!< Force dtref uniform-only
   , tag::dtfreq,  kw::amr_dtfreq::info::expect::type //!< Refinement frequency
+  , tag::maxlevels, kw::amr_maxlevels::info::expect::type //!< Max refine levels
   , tag::init,    std::vector< AMRInitialType >   //!< List of initial AMR types
   , tag::refvar,  std::vector< std::string >      //!< List of refinement vars
   , tag::id,      std::vector< std::size_t >      //!< List of refvar indices

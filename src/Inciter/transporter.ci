@@ -32,8 +32,7 @@ module transporter {
       entry [reductiontarget] void workinserted( std::size_t meshid );
       entry [reductiontarget] void queriedRef( std::size_t meshid );
       entry [reductiontarget] void respondedRef( std::size_t meshid );
-      entry [reductiontarget] void compatibility( std::size_t meshid,
-                                                  std::size_t modified );
+      entry [reductiontarget] void compatibility( std::size_t meshid );
       entry [reductiontarget] void matched( std::size_t summeshid,
                                             std::size_t nextra,
                                             std::size_t nref,

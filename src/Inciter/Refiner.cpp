@@ -54,6 +54,7 @@ Refiner::Refiner( std::size_t meshid,
                   const std::map< int, std::vector< std::size_t > >& bnode,
                   int nchare ) :
   m_meshid( meshid ),
+  m_ncit(0),
   m_host( transporter ),
   m_sorter( sorter ),
   m_meshwriter( meshwriter ),
@@ -71,7 +72,7 @@ Refiner::Refiner( std::size_t meshid,
   m_mode( RefMode::T0REF ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
   m_ninitref( g_inputdeck.get< tag::amr, tag::init >().size() ),
-  m_refiner( m_inpoel ),
+  m_refiner( g_inputdeck.get< tag::amr, tag::maxlevels >(), m_inpoel ),
   m_nref( 0 ),
   m_nbnd( 0 ),
   m_extra( 0 ),
@@ -85,6 +86,7 @@ Refiner::Refiner( std::size_t meshid,
   m_addedNodes(),
   m_addedTets(),
   m_removedNodes(),
+  m_amrNodeMap(),
   m_oldntets( 0 ),
   m_coarseBndFaces(),
   m_coarseBndNodes(),
@@ -228,7 +230,8 @@ Refiner::reorder()
   // ultimately want, beacuse this deletes its history recorded during initial
   // (t<0) refinement. However, this appears to correctly update the local mesh
   // based on the reordered one (from Sorter) at least when t0ref is off.
-  m_refiner = AMR::mesh_adapter_t( m_inpoel );
+  m_refiner = AMR::mesh_adapter_t(
+    g_inputdeck.get< tag::amr, tag::maxlevels >(), m_inpoel );
 }
 
 tk::UnsMesh::Coords
@@ -579,17 +582,21 @@ Refiner::addRefBndEdges(
   // Save/augment buffers of edge data for each sender chare
   auto& red = m_remoteEdgeData[ fromch ];
   auto& re = m_remoteEdges[ fromch ];
-  using edge_data_t = std::tuple< Edge, int, AMR::Edge_Lock_Case >;
+  using edge_data_t = std::tuple< Edge, int, int, AMR::Edge_Lock_Case >;
   for (const auto& [ edge, data ] : ed) {
-    red.push_back( edge_data_t{ edge, data.first, data.second } );
+    red.push_back( edge_data_t{ edge, std::get<0>(data), std::get<1>(data),
+      std::get<2>(data) } );
     re.push_back( edge );
   }
 
   // Add intermediates to mesh refiner lib
-  for (const auto g : intermediates) {
-    auto l = m_lid.find( g ); // convert to local node ids
-    if (l != end(m_lid)) {
-      m_refiner.tet_store.intermediate_list.insert( m_rid[l->second] );
+  // needs to be done only when mesh has been actually updated, i.e. first iter
+  if (m_ncit == 0) {
+    for (const auto g : intermediates) {
+      auto l = m_lid.find( g ); // convert to local node ids
+      if (l != end(m_lid)) {
+        m_refiner.tet_store.intermediate_list.insert( m_rid[l->second] );
+      }
     }
   }
 
@@ -597,19 +604,9 @@ Refiner::addRefBndEdges(
   if (++m_nref == m_ch.size()) {
     m_nref = 0;
     // Add intermediates to refiner lib
-    auto localedges_orig = m_localEdgeData;
-    //auto intermediates_orig = m_intermediates;
-    m_refiner.lock_intermediates();
-    // Run compatibility algorithm
-    m_refiner.mark_refinement();
-    // Update edge data from mesh refiner
-    updateEdgeData();
-    // If refiner lib modified our edges, need to recommunicate
-    auto modified = static_cast< std::size_t >(
-                      localedges_orig != m_localEdgeData ? 1 : 0 );
-    //int modified = ( (localedges_orig != m_localEdgeData ||
-    //                  intermediates_orig != m_intermediates) ? 1 : 0 );
-    std::vector< std::size_t > meshdata{ m_meshid, modified };
+    if (m_ncit == 0) m_refiner.lock_intermediates();
+
+    std::vector< std::size_t > meshdata{ m_meshid };
     contribute( meshdata, CkReduction::max_ulong,
                 m_cbr.get< tag::compatibility >() );
   }
@@ -628,44 +625,109 @@ Refiner::correctref()
 
   // Storage for edge data that need correction to yield a conforming mesh
   AMR::EdgeData extra;
+  std::size_t neigh_extra(0);
+
+  // Vars for debugging purposes
+  std::size_t nlocked(0);
+  std::array< std::size_t, 4 > ncorrcase{{0,0,0,0}};
 
   // loop through all edges shared with other chares
   for (const auto& [ neighborchare, edgedata ] : m_remoteEdgeData) {
-    for (const auto& [edge,remote_needs_refining,remote_lock_case] : edgedata) {
+    for (const auto& [edge,remote_needs_refining,remote_needs_derefining,
+      remote_lock_case] : edgedata) {
       // find local data of remote edge
       auto it = m_localEdgeData.find( edge );
       if (it != end(m_localEdgeData)) {
         auto& local = it->second;
-        auto& local_needs_refining = local.first;
-        auto& local_lock_case = local.second;
+        auto& local_needs_refining = std::get<0>(local);
+        auto& local_needs_derefining = std::get<1>(local);
+        auto& local_lock_case = std::get<2>(local);
 
         auto local_needs_refining_orig = local_needs_refining;
+        auto local_needs_derefining_orig = local_needs_derefining;
         auto local_lock_case_orig = local_lock_case;
 
         Assert( !(local_lock_case > unlocked && local_needs_refining),
                 "Invalid local edge: locked & needs refining" );
         Assert( !(remote_lock_case > unlocked && remote_needs_refining),
                 "Invalid remote edge: locked & needs refining" );
+        Assert( !(local_needs_derefining == 1 && local_needs_refining > 0),
+                "Invalid local edge: needs refining and derefining" );
+
+        // The parallel compatibility (par-compat) algorithm
 
         // compute lock from local and remote locks as most restrictive
         local_lock_case = std::max( local_lock_case, remote_lock_case );
 
-        if (local_lock_case > unlocked)
+        if (local_lock_case > unlocked) {
           local_needs_refining = 0;
+          if (local_needs_refining != local_needs_refining_orig ||
+            local_lock_case != local_lock_case_orig)
+            ++ncorrcase[0];
+        }
 
-        if (local_lock_case == unlocked && remote_needs_refining)
-          local_needs_refining = 1;
+        // Possible combinations of remote-local ref-deref decisions
+        // rows 1, 5, 9: no action needed.
+        // rows 4, 7, 8: no action on local-side; comm needed.
+        //
+        //    LOCAL          |        REMOTE    |  Result
+        // 1  d              |        d         |  d
+        // 2  d              |        -         |  -
+        // 3  d              |        r         |  r
+        // 4  -              |        d         |  -
+        // 5  -              |        -         |  -
+        // 6  -              |        r         |  r
+        // 7  r              |        d         |  r
+        // 8  r              |        -         |  r
+        // 9  r              |        r         |  r
+
+        // Rows 3, 6
+        // If remote wants to refine
+        if (remote_needs_refining == 1) {
+          if (local_lock_case == unlocked) {
+            local_needs_refining = 1;
+            local_needs_derefining = false;
+            if (local_needs_refining != local_needs_refining_orig ||
+              local_needs_derefining != local_needs_derefining_orig)
+              ++ncorrcase[1];
+          }
+          else {
+           ++nlocked;
+          }
+        }
+
+        // Row 2
+        // If remote neither wants to refine nor derefine
+        if (remote_needs_refining == 0 && remote_needs_derefining == false) {
+          local_needs_derefining = false;
+          if (local_needs_derefining != local_needs_derefining_orig)
+            ++ncorrcase[2];
+        }
+
+        // Row 1: special case
+        // If remote wants to deref-ref (either of 8:4, 8:2, 4:2)
+        // and local does not want to refine (neither pure ref nor deref-ref)
+        if (remote_needs_refining == 2 && local_needs_refining == 0) {
+          if (local_lock_case == unlocked) {
+            local_needs_refining = 1;
+            local_needs_derefining = false;
+            if (local_needs_refining != local_needs_refining_orig ||
+              local_needs_derefining != local_needs_derefining_orig)
+              ++ncorrcase[3];
+          }
+          else {
+            ++nlocked;
+          }
+        }
+
+        // Rows 4, 7, 8
 
         // if the remote sent us data that makes us change our local state,
-        // e.g., local{0,0} + remote(1,0} -> local{1,0}, i.e., I changed my
+        // e.g., local{-,0} + remote{r,0} -> local{r,0}, i.e., I changed my
         // state I need to tell the world about it
-        if ( (local_lock_case != local_lock_case_orig ||
-              local_needs_refining != local_needs_refining_orig) ||
-        // or if the remote data is inconsistent with what I think, e.g.,
-        // local{1,0} + remote(0,0} -> local{1,0}, i.e., the remote does not
-        // yet agree, I need to tell the world about it
-             (local_lock_case != remote_lock_case ||
-              local_needs_refining != remote_needs_refining) )
+        if (local_lock_case != local_lock_case_orig ||
+            local_needs_refining != local_needs_refining_orig ||
+            local_needs_derefining != local_needs_derefining_orig)
         {
           auto l1 = tk::cref_find( m_lid, edge[0] );
           auto l2 = tk::cref_find( m_lid, edge[1] );
@@ -673,8 +735,19 @@ Refiner::correctref()
           auto r1 = m_rid[ l1 ];
           auto r2 = m_rid[ l2 ];
           Assert( r1 != r2, "Edge end-points refiner ids are the same" );
+          //std::cout << thisIndex << ": " << r1 << ", " << r2 << std::endl;
            extra[ {{ std::min(r1,r2), std::max(r1,r2) }} ] =
-             { local_needs_refining, local_lock_case };
+             { local_needs_refining, local_needs_derefining, local_lock_case };
+        }
+        // or if the remote data is inconsistent with what I think, e.g.,
+        // local{r,0} + remote{-,0} -> local{r,0}, i.e., the remote does not
+        // yet agree, so another par-compat iteration will be pursued. but
+        // I do not have to locally run ref-compat.
+        else if (local_lock_case != remote_lock_case ||
+          local_needs_refining != remote_needs_refining ||
+          local_needs_derefining != remote_needs_derefining)
+        {
+          ++neigh_extra;
         }
       }
     }
@@ -682,12 +755,22 @@ Refiner::correctref()
 
   m_remoteEdgeData.clear();
   m_extra = extra.size();
+  //std::cout << thisIndex << ": amr correction reqd for nedge: " << m_extra << std::endl;
+  //std::cout << thisIndex << ": amr correction reqd for neighbor edges: " << neigh_extra << std::endl;
+  //std::cout << thisIndex << ": edge counts by correction case: " << ncorrcase[0]
+  //  << ", " << ncorrcase[1] << ", " << ncorrcase[2] << ", " << ncorrcase[3] << std::endl;
+  //std::cout << thisIndex << ": locked edges that req corr: " << nlocked << std::endl;
 
   if (!extra.empty()) {
-    // Do refinement including edges that need to be corrected
+    //std::cout << thisIndex << ": redoing markings" << std::endl;
+    // Do refinement compatibility (ref-compat) for edges that need correction
     m_refiner.mark_error_refinement_corr( extra );
+    ++m_ncit;
     // Update our extra-edge store based on refiner
     updateEdgeData();
+  }
+  else if (neigh_extra == 0) {
+    m_ncit = 0;
   }
 
   // Aggregate number of extra edges that still need correction and some
@@ -729,7 +812,8 @@ Refiner::updateEdgeData()
       auto r = tk::cref_find( ref_edges, ae );
       const auto ged = Edge{{ m_gid[ tk::cref_find( m_lref, ed[0] ) ],
                               m_gid[ tk::cref_find( m_lref, ed[1] ) ] }};
-      m_localEdgeData[ ged ] = { r.needs_refining, r.lock_case };
+      m_localEdgeData[ ged ] = { r.needs_refining, r.needs_derefining,
+        r.lock_case };
     }
   }
 
@@ -737,7 +821,7 @@ Refiner::updateEdgeData()
   // the AMR lib, i.e., on the whole domain. We should eventually only collect
   // edges here that are shared with other chares.
   for (const auto& r : m_refiner.tet_store.intermediate_list) {
-     m_intermediates.insert( m_gid[ tk::cref_find( m_lref, r ) ] );
+    m_intermediates.insert( m_gid[ tk::cref_find( m_lref, r ) ] );
   }
 }
 
@@ -960,38 +1044,12 @@ Refiner::next()
 
   } else if (m_mode == RefMode::DTREF) {
 
-    // Augment node communication map with newly added nodes on chare-boundary
-    for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
-      auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
-      for (const auto& e : edges) {
-        // If parent nodes were part of the node communication map for chare
-        if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
-          // Add new node if local id was generated for it
-          auto n = Hash<2>()( e );
-          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
-        }
-      }
-    }
-
     // Send new mesh, solution, and communication data back to PDE worker
     m_scheme[m_meshid].ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel,
-      m_el, m_coord, m_addedNodes, m_addedTets, m_removedNodes, m_nodeCommMap,
-      m_bface, m_bnode, m_triinpoel );
+      m_el, m_coord, m_addedNodes, m_addedTets, m_removedNodes, m_amrNodeMap,
+      m_nodeCommMap, m_bface, m_bnode, m_triinpoel );
 
   } else if (m_mode == RefMode::OUTREF) {
-
-    // Augment node communication map with newly added nodes on chare-boundary
-    for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
-      auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
-      for (const auto& e : edges) {
-        // If parent nodes were part of the node communication map for chare
-        if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
-          // Add new node if local id was generated for it
-          auto n = Hash<2>()( e );
-          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
-        }
-      }
-    }
 
     // Store field output mesh
     m_outref_ginpoel = m_ginpoel;
@@ -1467,12 +1525,28 @@ Refiner::updateMesh()
           "Size mismatch" );
   tk::remap( m_ginpoel, m_gid );
 
+  // Augment node communication map with newly added nodes on chare-boundary
+  if (m_mode == RefMode::DTREF || m_mode == RefMode::OUTREF) {
+    for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
+      auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
+      for (const auto& e : edges) {
+        // If parent nodes were part of the node communication map for chare
+        if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
+          // Add new node if local id was generated for it
+          auto n = Hash<2>()( e );
+          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
+        }
+      }
+    }
+  }
+
   // Ensure valid mesh after refinement
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Refined mesh cell Jacobian non-positive" );
 
   Assert( tk::conforming( m_inpoel, m_coord, true, m_rid ),
-          "Mesh not conforming after updating mesh after mesh refinement" );
+          "Chare-"+std::to_string(thisIndex)+
+          " mesh not conforming after updating mesh after mesh refinement" );
 
   // Perform leak test on new mesh
   Assert( !tk::leakyPartition(
@@ -1498,6 +1572,7 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   std::unordered_map< std::size_t, std::size_t > gid_add;
   tk::destroy( m_addedNodes );
   tk::destroy( m_removedNodes );
+  tk::destroy( m_amrNodeMap );
   for (auto r : ref) {               // for all unique nodes of the refined mesh
     if (old.find(r) == end(old)) {   // if node is newly added
       // get (local) parent ids of newly added node
@@ -1505,7 +1580,6 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       Assert(p[0] != p[1], "Node without parent edge in newVolMesh");
       Assert( old.find(p[0]) != end(old) && old.find(p[1]) != end(old),
               "Parent(s) not in old mesh" );
-      Assert( r >= old.size(), "Attempting to overwrite node with added one" );
       // local parent ids
       decltype(p) lp{{tk::cref_find(m_lref,p[0]), tk::cref_find(m_lref,p[1])}};
       // global parent ids
@@ -1534,18 +1608,72 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
   }
   tk::destroy( m_coord );
 
+  // generate a node map based on oldnodes+addednodes
+  std::vector< size_t > nodeVec(m_coordmap.size());
+  for (size_t j=0; j<nodeVec.size(); ++j) {
+    nodeVec[j] = j;
+  }
+
   // Remove coordinates and ids of removed nodes due to derefinement
   std::unordered_map< std::size_t, std::size_t > gid_rem;
   for (auto o : old) {               // for all unique nodes of the old mesh
     if (ref.find(o) == end(ref)) {   // if node is no longer in new mesh
       auto l = tk::cref_find( m_lref, o );
       auto g = m_gid[l];
-      // store global-id to local-id map of removed nodes
+      // store local-ids of removed nodes
       m_removedNodes.insert(l);
+      // remove derefined nodes from node comm map
+      for (auto& [neighborchare, sharednodes] : m_nodeCommMap) {
+        if (sharednodes.find(g) != sharednodes.end()) {
+          sharednodes.erase(g);
+        }
+      }
       gid_rem[l] = g;
       m_lid.erase( g );
       m_coordmap.erase( g );
     }
+  }
+
+  // update the node map by removing the derefined nodes
+  if (m_mode == RefMode::DTREF && m_removedNodes.size() > 0) {
+    // remove derefined nodes
+    size_t remCount = 0;
+    size_t origSize = nodeVec.size();
+    for (size_t j=0; j<origSize; ++j) {
+      auto nd = nodeVec[j-remCount];
+
+      bool no_change = false;
+      size_t nodeidx = 0;
+      for (const auto& rn : m_removedNodes) {
+        if (nd < *m_removedNodes.cbegin()) {
+          no_change = true;
+          break;
+        }
+        else if (nd <= rn) {
+          nodeidx = rn;
+          break;
+        }
+      }
+
+      // if node is out-or-range of removed nodes list, continue with next entry
+      if (no_change)
+        continue;
+      // if not is within range of removed nodes list, erase node appropriately
+      else if (nodeidx == nd) {
+        //! Difference type for iterator/pointer arithmetics
+        using diff_type = std::vector< std::size_t >::difference_type;
+        nodeVec.erase(nodeVec.begin()+static_cast< diff_type >(j-remCount));
+        ++remCount;
+      }
+    }
+
+    Assert(remCount == m_removedNodes.size(), "Incorrect number of nodes removed "
+      "from node map.");
+  }
+
+  // invert node vector to get node map
+  for (size_t i=0; i<nodeVec.size(); ++i) {
+    m_amrNodeMap[nodeVec[i]] = i;
   }
 
   // Save previous states of refiner-local node id maps before update
@@ -1577,6 +1705,8 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
     auto it = m_addedNodes.find( r );
     Assert( it != end(m_addedNodes), "Cannot find added node" );
     addedNodes[l] = std::move(it->second);
+    addedNodes.at(l)[0] = m_amrNodeMap[addedNodes.at(l)[0]];
+    addedNodes.at(l)[1] = m_amrNodeMap[addedNodes.at(l)[1]];
     ++l;
   }
   Assert( m_lref.size() == ref.size(), "Size mismatch" );
