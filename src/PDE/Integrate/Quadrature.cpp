@@ -308,8 +308,8 @@ tk::GaussQuadratureTri( const std::size_t NG,
       const tk::real c4 = 0.108103018168070;
       const tk::real c5 = 0.445948490915965;
       const tk::real c6 = 0.445948490915965;
-      const tk::real w1 = 0.054975870996713638 * 2.0;
-      const tk::real w2 = 0.1116907969117165 * 2.0;
+      const tk::real w1 = 0.109951743655322;
+      const tk::real w2 = 0.223381589678011;
 
       coordgp[0][0] = c1;
       coordgp[1][0] = c2;

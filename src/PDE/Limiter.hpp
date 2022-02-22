@@ -228,28 +228,9 @@ BoundPreservingLimitingFunction( const tk::real min,
                                  const tk::real al_gp,
                                  const tk::real al_avg );
 
-//! Positivity preserving limiter for the density
-void PositivityPreservingLimiting( std::size_t nmat,
-                                   ncomp_t offset,
-                                   std::size_t ndof,
-                                   std::size_t e,
-                                   const std::vector< std::size_t >& inpoel,
-                                   const tk::UnsMesh::Coords& coord,
-                                   const tk::Fields& U,
-                                   const tk::Fields& P,
-                                   std::vector< tk::real >& phic_p1,
-                                   std::vector< tk::real >& phic_p2,
-                                   std::vector< tk::real >& phip_p1,
-                                   std::vector< tk::real >& phip_p2 );
-//! Positivity preserving limiter function
-tk::real
-PositivityPreservingLimitingFunction( const tk::real min,
-                                      const tk::real u_gp,
-                                      const tk::real u_avg );
-
 //! Positivity preserving limiter for multi-material solver
-void PositivityLimitingMultiMat( const std::size_t system,
-                                 std::size_t nmat,
+void PositivityLimitingMultiMat( std::size_t nmat,
+                                 std::size_t system,
                                  ncomp_t offset,
                                  std::size_t ndof,
                                  std::size_t e,
@@ -257,10 +238,12 @@ void PositivityLimitingMultiMat( const std::size_t system,
                                  const tk::UnsMesh::Coords& coord,
                                  const tk::Fields& U,
                                  const tk::Fields& P,
-                                 std::vector< tk::real >& phic,
-                                 std::vector< tk::real >& phip );
+                                 std::vector< tk::real >& phic_p1,
+                                 std::vector< tk::real >& phic_p2,
+                                 std::vector< tk::real >& phip_p1,
+                                 std::vector< tk::real >& phip_p2 );
 
-//! Positivity-preserving limiter function
+//! Positivity preserving limiter function
 tk::real
 PositivityLimiting( const tk::real min,
                     const tk::real u_gp,
