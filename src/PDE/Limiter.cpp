@@ -663,11 +663,15 @@ VertexBasedMultiMat_P1(
         }
       }
 
-      std::vector< tk::real > phic_p2;
+      std::vector< tk::real > phic_p2, phip_p2;
 
       if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic,
           phic_p2);
+
+      if(intsharp == 0)
+        PositivityLimitingMultiMat(nmat, system, offset, rdof, e, inpoel, coord,
+          U, P, phic, phic_p2, phip, phip_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -869,12 +873,12 @@ VertexBasedMultiMat_P2(
       phip_p1.resize(nprim, 1.0);
       phip_p2.resize(nprim, 1.0);
 
-      //if(ndof > 1 && intsharp == 0)
+      if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U_lim,
           phic_p1, phic_p2);
 
-      PositivityPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U_lim,
-          P_lim, phic_p1, phic_p2, phip_p1, phip_p2);
+      PositivityLimitingMultiMat(nmat, system, offset, ndof, e, inpoel, coord,
+          U_lim, P_lim, phic_p1, phic_p2, phip_p1, phip_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -1892,22 +1896,23 @@ BoundPreservingLimitingFunction( const tk::real min,
   return phi;
 }
 
-void PositivityPreservingLimiting( std::size_t nmat,
-                                   ncomp_t offset,
-                                   std::size_t ndof,
-                                   std::size_t e,
-                                   const std::vector< std::size_t >& inpoel,
-                                   const tk::UnsMesh::Coords& coord,
-                                   const tk::Fields& U,
-                                   const tk::Fields& P,
-                                   std::vector< tk::real >& phic_p1,
-                                   std::vector< tk::real >& phic_p2,
-                                   std::vector< tk::real >& phip_p1,
-                                   std::vector< tk::real >& phip_p2 )
+void PositivityLimitingMultiMat( std::size_t nmat,
+                                 std::size_t system,
+                                 ncomp_t offset,
+                                 std::size_t ndof,
+                                 std::size_t e,
+                                 const std::vector< std::size_t >& inpoel,
+                                 const tk::UnsMesh::Coords& coord,
+                                 const tk::Fields& U,
+                                 const tk::Fields& P,
+                                 std::vector< tk::real >& phic_p1,
+                                 std::vector< tk::real >& phic_p2,
+                                 std::vector< tk::real >& phip_p1,
+                                 std::vector< tk::real >& phip_p2 )
 // *****************************************************************************
-//  Positivity preserving limiter for density when MulMat DG(P2) scheme is
-//    selected
+//  Positivity preserving limiter for multi-material solver
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] system Equation system index
 //! \param[in] offset Index for equation system
 //! \param[in] ndof Total number of reconstructed dofs
 //! \param[in] e Element being checked for consistency
@@ -1943,7 +1948,8 @@ void PositivityPreservingLimiting( std::size_t nmat,
   auto detT =
     tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-  std::vector< tk::real > phi_bound(ncomp+nprim, 1.0);
+  std::vector< tk::real > phic_bound(ncomp, 1.0);
+  std::vector< tk::real > phip_bound(nprim, 1.0);
 
   const tk::real min = 1e-15;
 
@@ -1986,21 +1992,22 @@ void PositivityPreservingLimiting( std::size_t nmat,
         // Evaluate the limiting coefficient for material density
         auto rho = state[densityIdx(nmat, imat)];
         auto rho_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
-        phi_rho = PositivityPreservingLimitingFunction(min, rho, rho_avg);
-        phi_bound[densityIdx(nmat, imat)] =
-          std::min(phi_bound[densityIdx(nmat, imat)], phi_rho);
-        // Evaluate the limiting coefficient for material density
+        phi_rho = PositivityLimiting(min, rho, rho_avg);
+        phic_bound[densityIdx(nmat, imat)] =
+          std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
+        // Evaluate the limiting coefficient for material energy
         auto rhoe = state[energyIdx(nmat, imat)];
         auto rhoe_avg = U(e, energyDofIdx(nmat, imat, ndof, 0), offset);
-        phi_rhoe = PositivityPreservingLimitingFunction(min, rhoe, rhoe_avg);
-        phi_bound[energyIdx(nmat, imat)] =
-          std::min(phi_bound[energyIdx(nmat, imat)], phi_rhoe);
-        // Evaluate the limiting coefficient for material density
+        phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
+        phic_bound[energyIdx(nmat, imat)] =
+          std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
+        // Evaluate the limiting coefficient for material pressure
+        auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, ndof, 0), offset);
-        phi_pre = PositivityPreservingLimitingFunction(min, pre, pre_avg);
-        phi_bound[ncomp+pressureIdx(nmat, imat)] =
-          std::min(phi_bound[ncomp+pressureIdx(nmat, imat)], phi_pre);
+        phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
+        phip_bound[pressureIdx(nmat, imat)] =
+          std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
       }
     }
   }
@@ -2032,42 +2039,43 @@ void PositivityPreservingLimiting( std::size_t nmat,
         // Evaluate the limiting coefficient for material density
         auto rho = state[densityIdx(nmat, imat)];
         auto rho_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
-        phi_rho = PositivityPreservingLimitingFunction(min, rho, rho_avg);
-        phi_bound[densityIdx(nmat, imat)] =
-          std::min(phi_bound[densityIdx(nmat, imat)], phi_rho);
-        // Evaluate the limiting coefficient for material density
+        phi_rho = PositivityLimiting(min, rho, rho_avg);
+        phic_bound[densityIdx(nmat, imat)] =
+          std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
+        // Evaluate the limiting coefficient for material energy
         auto rhoe = state[energyIdx(nmat, imat)];
         auto rhoe_avg = U(e, energyDofIdx(nmat, imat, ndof, 0), offset);
-        phi_rhoe = PositivityPreservingLimitingFunction(min, rhoe, rhoe_avg);
-        phi_bound[energyIdx(nmat, imat)] =
-          std::min(phi_bound[energyIdx(nmat, imat)], phi_rhoe);
-        // Evaluate the limiting coefficient for material density
+        phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
+        phic_bound[energyIdx(nmat, imat)] =
+          std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
+        // Evaluate the limiting coefficient for material pressure
+        auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, ndof, 0), offset);
-        phi_pre = PositivityPreservingLimitingFunction(min, pre, pre_avg);
-        phi_bound[ncomp+pressureIdx(nmat, imat)] =
-          std::min(phi_bound[ncomp+pressureIdx(nmat, imat)], phi_pre);
+        phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
+        phip_bound[pressureIdx(nmat, imat)] =
+          std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
       }
     }
   }
   for(std::size_t icomp = nmat; icomp < ncomp; icomp++)
-    phic_p1[icomp] = phi_bound[icomp];
+    phic_p1[icomp] = std::min( phic_bound[icomp], phic_p1[icomp] );
   for(std::size_t icomp = 0; icomp < nmat; icomp++)
-    phip_p1[icomp] = phi_bound[icomp+ncomp];
+    phip_p1[icomp] = std::min( phip_bound[icomp], phip_p1[icomp] );
   if(ndof > 4) {
     for(std::size_t icomp = nmat; icomp < ncomp; icomp++)
-      phic_p2[icomp] = phi_bound[icomp];
+      phic_p2[icomp] = std::min( phic_bound[icomp], phic_p2[icomp] );
     for(std::size_t icomp = 0; icomp < nmat; icomp++)
-      phip_p2[icomp] = phi_bound[icomp+ncomp];
+      phip_p2[icomp] = std::min( phip_bound[icomp], phip_p2[icomp] );
   }
 }
 
 tk::real
-PositivityPreservingLimitingFunction( const tk::real min,
-                                      const tk::real u_gp,
-                                      const tk::real u_avg )
+PositivityLimiting( const tk::real min,
+                    const tk::real u_gp,
+                    const tk::real u_avg )
 // *****************************************************************************
-//  Positivity-preserving limiter function for the volume fractions
+//  Positivity-preserving limiter function
 //! \param[in] min Minimum bound for volume fraction
 //! \param[in] u_gp Variable quantity at the quadrature point
 //! \param[in] u_avg Cell-average variable quantitiy
@@ -2080,7 +2088,6 @@ PositivityPreservingLimitingFunction( const tk::real min,
     phi = std::fabs( (min - u_avg) / (u_gp - u_avg) );
   return phi;
 }
-
 
 bool
 interfaceIndicator( std::size_t nmat,

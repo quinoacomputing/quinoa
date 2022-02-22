@@ -247,6 +247,25 @@ PositivityPreservingLimitingFunction( const tk::real min,
                                       const tk::real u_gp,
                                       const tk::real u_avg );
 
+//! Positivity preserving limiter for multi-material solver
+void PositivityLimitingMultiMat( const std::size_t system,
+                                 std::size_t nmat,
+                                 ncomp_t offset,
+                                 std::size_t ndof,
+                                 std::size_t e,
+                                 const std::vector< std::size_t >& inpoel,
+                                 const tk::UnsMesh::Coords& coord,
+                                 const tk::Fields& U,
+                                 const tk::Fields& P,
+                                 std::vector< tk::real >& phic,
+                                 std::vector< tk::real >& phip );
+
+//! Positivity-preserving limiter function
+tk::real
+PositivityLimiting( const tk::real min,
+                    const tk::real u_gp,
+                    const tk::real u_avg );
+
 //! Interface indicator function, which checks element for material interface
 bool
 interfaceIndicator( std::size_t nmat,

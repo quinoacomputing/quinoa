@@ -282,6 +282,8 @@ Transporter::info( const InciterPrint& print )
     print.section( "Mesh refinement (h-ref)" );
     print.refvar( g_inputdeck.get< tag::amr, tag::refvar >(),
                   g_inputdeck.get< tag::amr, tag::id >() );
+    auto maxlevels = g_inputdeck.get< tag::amr, tag::maxlevels >();
+    print.item( "Maximum mesh refinement levels", maxlevels );
     print.Item< ctr::AMRError, tag::amr, tag::error >();
     auto t0ref = g_inputdeck.get< tag::amr, tag::t0ref >();
     print.item( "Refinement at t<0 (t0ref)", t0ref );
@@ -759,13 +761,11 @@ Transporter::respondedRef( std::size_t meshid )
 }
 
 void
-Transporter::compatibility( std::size_t meshid, std::size_t modified )
+Transporter::compatibility( std::size_t meshid )
 // *****************************************************************************
 // Reduction target: all Refiner chares have received a round of edges,
 // and have run their compatibility algorithm
 //! \param[in] meshid Mesh id (aggregated across all chares using operator max)
-//! \param[in] modified Modified flag, aggregated across all chares using
-//!   operator max), if nonzero, mesh is modified
 //! \details This is called iteratively, until convergence by Refiner. At this
 //!   point all Refiner chares have received a round of edge data (tags whether
 //!   an edge needs to be refined, etc.), and applied the compatibility
@@ -774,10 +774,7 @@ Transporter::compatibility( std::size_t meshid, std::size_t modified )
 //!   round of edge data communication started in Refiner::comExtra().
 // *****************************************************************************
 {
-  if (modified)
-    m_refiner[meshid].comExtra();
-  else
-    m_refiner[meshid].correctref();
+  m_refiner[meshid].correctref();
 }
 
 void

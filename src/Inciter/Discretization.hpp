@@ -128,9 +128,12 @@ class Discretization : public CBase_Discretization {
     void transfer( const tk::Fields& u );
 
     //! Resize mesh data structures after mesh refinement
-    void resizePostAMR( const tk::UnsMesh::Chunk& chunk,
-                        const tk::UnsMesh::Coords& coord,
-                        const tk::NodeCommMap& nodeCommMap );
+    void resizePostAMR(
+      const tk::UnsMesh::Chunk& chunk,
+      const tk::UnsMesh::Coords& coord,
+      const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
+      const tk::NodeCommMap& nodeCommMap,
+      const std::set< std::size_t >& removedNodes );
 
     //! Get ready for (re-)computing/communicating nodal volumes
     void startvol();

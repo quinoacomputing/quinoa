@@ -200,11 +200,7 @@ namespace AMR {
           auto e = edge_store.edges.find(tetedge);
           if (e != end(edge_store.edges)) {
             auto& local = e->second;
-            //if (local.lock_case == Edge_Lock_Case::unlocked) {
-              local.needs_derefining = 1;
-            //  trace_out << "edge marked for deref: " << local.A << " - "
-            //    << local.B << std::endl;
-            //}
+            local.needs_derefining = 1;
           }
         }
       }
@@ -231,11 +227,7 @@ namespace AMR {
              local.needs_derefining = 0;
            }
          } else if (r.second == edge_tag::DEREFINE) {
-           if (local.lock_case > Edge_Lock_Case::unlocked) {
-             local.needs_derefining = 0;
-           } else {
-             local.needs_derefining = 1;
-           }
+           local.needs_derefining = 1;
          }
        }
 
@@ -248,11 +240,13 @@ namespace AMR {
        for (const auto& r : edges)
        {
            auto& edgeref = tet_store.edge_store.get( edge_t(r.first) );
-           edgeref.needs_refining = r.second.first;
-           assert(edgeref.lock_case <= r.second.second);
-           edgeref.lock_case = r.second.second;
+           edgeref.needs_refining = std::get<0>(r.second);
+           edgeref.needs_derefining = std::get<1>(r.second);
+           assert(edgeref.lock_case <= std::get<2>(r.second));
+           edgeref.lock_case = std::get<2>(r.second);
        }
        mark_refinement();
+       mark_derefinement();
     }
 
     /**
@@ -630,7 +624,7 @@ namespace AMR {
 
         for (auto& kv : tet_store.edge_store.edges) {
            auto& local = kv.second;
-           local.needs_refining = 0;
+           if (local.needs_refining == 1) local.needs_refining = 0;
         }
     }
 
@@ -1251,11 +1245,31 @@ namespace AMR {
                 }
                 // deactivate from deref if marked for ref
                 if (is_child_ref) {
+                  trace_out << tet_id << " Looping cancelled since child marked for refinement." << std::endl;
                   for (auto child_id : children) {
                     deactivate_deref_tet_edges(child_id);
                   }
                   deactivate_deref_tet_edges(tet_id);
+                  tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
                   continue;
+                }
+
+                // check if tet_id has been marked for deref-ref
+                edge_list_t pedge_list = tet_store.generate_edge_keys(tet_id);
+                // Check each edge, see if it is marked for refinement
+                for (size_t k=0; k<NUM_TET_EDGES; k++) {
+                  edge_t edge = pedge_list[k];
+
+                  // deactivate child-edges from deref if marked '2'
+                  if (tet_store.edge_store.get(edge).needs_refining == 2) {
+                    auto edge_nodes = edge.get_data();
+                    auto ch_node = node_connectivity.data().at(edge_nodes);
+                    std::array< edge_t, 2> ch_edge;
+                    ch_edge[0] = {edge_nodes[0], ch_node};
+                    ch_edge[1] = {edge_nodes[1], ch_node};
+                    tet_store.edge_store.get(ch_edge[0]).needs_derefining = 0;
+                    tet_store.edge_store.get(ch_edge[1]).needs_derefining = 0;
+                  }
                 }
 
                 // This is useful for later inspection
@@ -1367,9 +1381,12 @@ namespace AMR {
                             // create a vector of node-array-pairs to mark edges
                             // for refinement 1:4
                             std::vector< std::array< std::size_t, 2 > > ref_edges;
+                            trace_out << "inactive nodes on same face: ";
                             for (auto n:inactive_node_set) {
+                              trace_out << n << ", ";
                               ref_edges.push_back(node_connectivity.get(n));
                             }
+                            trace_out << std::endl;
 
                             tet_store.edge_store.mark_edges_for_deref_ref(ref_edges);
                             //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
@@ -1550,9 +1567,12 @@ namespace AMR {
         tet_store.process_delete_list();
         tet_store.print_node_types();
 
+        lock_intermediates();
+
         for (auto& kv : tet_store.edge_store.edges) {
            auto& local = kv.second;
            local.needs_derefining = 0;
+           if (local.needs_refining == 2) local.needs_refining = 0;
         }
     }
 

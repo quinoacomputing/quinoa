@@ -79,7 +79,7 @@ ElemDiagnostics::compute( Discretization& d,
   // Query after how many time steps user wants to dump diagnostics
   auto diagfreq = g_inputdeck.get< tag::output, tag::iter, tag::diag >();
 
-  if ( !((d.It()+1) % diagfreq) ) {  // if remainder, don't compute diagnostics
+  if ( !((d.It()+1) % diagfreq) || d.finished() ) {  // if remainder, don't compute diagnostics
 
     // Query number of degrees of freedom from user's setting
     const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -96,8 +96,8 @@ ElemDiagnostics::compute( Discretization& d,
     // ITER: Current iteration count (only the first entry is used)
     // TIME: Current physical time (only the first entry is used)
     // DT: Current physical time step size (only the first entry is used)
-    diag[ITER][0] = static_cast< tk::real >( d.It()+1 );
-    diag[TIME][0] = d.T() + d.Dt();
+    diag[ITER][0] = static_cast< tk::real >( d.It() );
+    diag[TIME][0] = d.T();
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
@@ -177,7 +177,7 @@ const
 
       for (const auto& eq : g_dgpde)
         // cppcheck-suppress useStlAlgorithm
-        s = eq.solution( gp[0], gp[1], gp[2], d.T()+d.Dt() );
+        s = eq.solution( gp[0], gp[1], gp[2], d.T() );
 
       for (std::size_t c=0; c<u.nprop()/rdof; ++c)
       {
