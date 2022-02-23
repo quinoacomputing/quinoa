@@ -85,11 +85,20 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
   }
   s[densityIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*r;
   s[densityIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*r;
+
+  // bulk density
+  auto rb = s[densityIdx(nmat, 0)] + s[densityIdx(nmat, 1)];
+
   // total specific energy
   s[energyIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*
                             eos_totalenergy< eq >( system, r, u, v, w, p, 0 );
   s[energyIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*
                             eos_totalenergy< eq >( system, r, u, v, w, p, 1 );
+
+  // momentum
+  s[momentumIdx(nmat, 0)] = rb * u;
+  s[momentumIdx(nmat, 1)] = rb * v;
+  s[momentumIdx(nmat, 2)] = rb * w;
 
   return s;
 }
