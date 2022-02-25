@@ -808,12 +808,12 @@ FV::solve( tk::real newdt )
 
   } else {
 
+    // Increase number of iterations and physical time
+    d->next();
+
     //// Compute diagnostics, e.g., residuals
     //auto diag_computed = m_diag.compute( *d, m_u.nunk()-myGhosts()->m_fd.Esuel().size()/4,
     //                                     myGhosts()->m_geoElem, m_ndof, m_u );
-
-    // Increase number of iterations and physical time
-    d->next();
 
     // Continue to mesh refinement (if configured)
     /*if (!diag_computed)*/ refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
