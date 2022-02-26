@@ -42,9 +42,8 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::InitializeFn
 //! \details This function only initializes the Shock-density wave problem, but
-//!   does not actually give the analytical solution at time greater than 0. The
-//!   analytical solution would require an exact Riemann solver, which has not
-//!   been implemented yet.
+//!   does not actually give the analytical solution at time greater than 0.
+//!   This problem does not have an analytical solution.
 // *****************************************************************************
 {
   // see also Control/Inciter/InputDeck/Grammar.hpp

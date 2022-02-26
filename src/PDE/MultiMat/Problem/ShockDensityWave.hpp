@@ -28,6 +28,8 @@ namespace inciter {
 //! MultiMat system of PDEs problem: Shock-density Wave
 //! \see Y. Lv, M. Ihme. Discontinuous Galerkin method for multicomponent
 //!   chemically reacting flows and combustion. J. Comput. Phys., 2014.
+//!   And C. Shu, S. Osher. Efficient implementation of essentially
+//!   non-oscillatory shock-capturing schemes, II. J. Comput. Phys., 1989.
 class MultiMatProblemShockDensityWave {
 
   protected:
