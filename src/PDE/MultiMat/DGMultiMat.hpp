@@ -587,7 +587,7 @@ class MultiMat {
 
       // allocate space for Riemann derivatives used in non-conservative terms
       std::vector< std::vector< tk::real > >
-        riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
+        riemannDeriv( 3*nmat+ndof, std::vector<tk::real>(U.nunk(),0.0) );
 
       // vectors to store the data of riemann velocity used for reconstruction
       // in volume fraction equation
@@ -628,18 +628,10 @@ class MultiMat {
           riemannDeriv[k][e] /= geoElem(e, 0, 0);
       }
 
-      std::vector< std::vector< tk::real > >
-        vriempoly( U.nunk(), std::vector<tk::real>(12,0.0) );
-      // get the polynomial solution of Riemann velocity at the interface.
-      // not required if interface reconstruction is used, since then volfrac
-      // equation is discretized using p0p1.
-      if (ndof > 1 && intsharp == 0)
-        vriempoly = tk::solvevriem(nelem, vriem, riemannLoc);
-
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
-                              vriempoly, ndofel, R, intsharp );
+                              ndofel, R, intsharp );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
