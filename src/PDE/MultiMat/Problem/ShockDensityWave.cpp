@@ -42,9 +42,8 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::InitializeFn
 //! \details This function only initializes the Shock-density wave problem, but
-//!   does not actually give the analytical solution at time greater than 0. The
-//!   analytical solution would require an exact Riemann solver, which has not
-//!   been implemented yet.
+//!   does not actually give the analytical solution at time greater than 0.
+//!   This problem does not have an analytical solution.
 // *****************************************************************************
 {
   // see also Control/Inciter/InputDeck/Grammar.hpp
@@ -85,11 +84,20 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
   }
   s[densityIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*r;
   s[densityIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*r;
+
+  // bulk density
+  auto rb = s[densityIdx(nmat, 0)] + s[densityIdx(nmat, 1)];
+
   // total specific energy
   s[energyIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*
                             eos_totalenergy< eq >( system, r, u, v, w, p, 0 );
   s[energyIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*
                             eos_totalenergy< eq >( system, r, u, v, w, p, 1 );
+
+  // momentum
+  s[momentumIdx(nmat, 0)] = rb * u;
+  s[momentumIdx(nmat, 1)] = rb * v;
+  s[momentumIdx(nmat, 2)] = rb * w;
 
   return s;
 }
