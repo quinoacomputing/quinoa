@@ -868,10 +868,14 @@ VertexBasedMultiMat_P2(
       }
 
       // After Vertex-based limiter is applied, reset the limiting coefficients
-      phic_p1.resize(ncomp, 1.0);
-      phic_p2.resize(ncomp, 1.0);
-      phip_p1.resize(nprim, 1.0);
-      phip_p2.resize(nprim, 1.0);
+      for(std::size_t c=0; c<ncomp; ++c) {
+        phic_p1[c] = 1.0;
+        phic_p2[c] = 1.0;
+      }
+      for(std::size_t c=0; c<nprim; ++c) {
+        phip_p1[c] = 1.0;
+        phip_p2[c] = 1.0;
+      }
 
       if(ndof > 1 && intsharp == 0)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U_lim,
@@ -1868,10 +1872,10 @@ void BoundPreservingLimiting( std::size_t nmat,
   }
 
   for(std::size_t imat = 0; imat < nmat; imat++)
-    phic_p1[imat] = phi_bound[imat] * phic_p1[imat];
+    phic_p1[imat] = std::min(phi_bound[imat], phic_p1[imat]);
   if(ndof > 4)
     for(std::size_t imat = 0; imat < nmat; imat++)
-      phic_p2[imat] = phi_bound[imat] * phic_p2[imat];
+      phic_p2[imat] = std::min(phi_bound[imat], phic_p2[imat]);
 }
 
 tk::real
