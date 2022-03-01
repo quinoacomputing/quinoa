@@ -39,7 +39,6 @@
 #include "RiemannChoice.hpp"
 #include "EoS/EoS.hpp"
 #include "EoS/StiffenedGas.hpp"
-#include "EoS/MatBlock.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -329,12 +328,12 @@ class MultiMat {
             auto alphamat = state[volfracIdx(nmat, imat)];
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
-//            pri[pressureIdx(nmat,imat)] = eos_pressure< tag::multimat >(
-//              m_system, arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat,
-//              imat);
-            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat]->eos_pressure(
+            pri[pressureIdx(nmat,imat)] = eos_pressure< tag::multimat >(
               m_system, arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat,
               imat);
+//            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat]->eos_pressure(
+//              m_system, arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat,
+//              imat);
 
             pri[pressureIdx(nmat,imat)] = constrain_pressure< tag::multimat >(
               m_system, pri[pressureIdx(nmat,imat)], alphamat, imat);
@@ -952,7 +951,8 @@ class MultiMat {
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >& fn )
+               const std::array< tk::real, 3 >& fn, 
+               const std::vector< EoS_Base* >& m_mat_blk )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -999,14 +999,14 @@ class MultiMat {
           tk::real arhomat = ur[densityIdx(nmat, k)];
           tk::real arhoemat = ur[energyIdx(nmat, k)];
           tk::real alphamat = ur[volfracIdx(nmat, k)];
-//          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
-//            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
-//            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-//            arhoemat, alphamat, k );
-          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
+          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
             arhomat, ur[ncomp+velocityIdx(nmat, 0)],
             ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
             arhoemat, alphamat, k );
+//          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
+//            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
+//            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
+//            arhoemat, alphamat, k );
         }
       }
       else
@@ -1044,7 +1044,8 @@ class MultiMat {
     static tk::StateFn::result_type
     symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& fn )
+              const std::array< tk::real, 3 >& fn, 
+              const std::vector< EoS_Base* >& m_mat_blk )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -1115,7 +1116,8 @@ class MultiMat {
                     ncomp_t ncomp,
                     const std::vector< tk::real >& ul,
                     tk::real, tk::real, tk::real, tk::real,
-                    const std::array< tk::real, 3 >& )
+                    const std::array< tk::real, 3 >&,
+                    const std::vector< EoS_Base* >& m_mat_blk  )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -1169,7 +1171,8 @@ class MultiMat {
     static tk::StateFn::result_type
     extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
-                 const std::array< tk::real, 3 >& )
+                 const std::array< tk::real, 3 >&,
+                 const std::vector< EoS_Base* >& m_mat_blk )
     {
       return {{ ul, ul }};
     }

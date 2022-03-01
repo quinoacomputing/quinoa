@@ -878,7 +878,8 @@ class CompFlow {
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >& )
+               const std::array< tk::real, 3 >&,
+               const std::vector< EoS_Base* >& m_mat_blk )
     {
       return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
     }
@@ -893,7 +894,8 @@ class CompFlow {
     static tk::StateFn::result_type
     symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& fn )
+              const std::array< tk::real, 3 >& fn,
+              const std::vector< EoS_Base* >& m_mat_blk )
     {
       std::vector< tk::real > ur(5);
       // Internal cell velocity components
@@ -926,7 +928,8 @@ class CompFlow {
     static tk::StateFn::result_type
     farfield( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& fn )
+              const std::array< tk::real, 3 >& fn,
+              const std::vector< EoS_Base* >& m_mat_blk )
     {
       using tag::param; using tag::bc;
 
@@ -1004,7 +1007,8 @@ class CompFlow {
     static tk::StateFn::result_type
     extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
-                 const std::array< tk::real, 3 >& )
+                 const std::array< tk::real, 3 >&,
+                 const std::vector< EoS_Base* >& m_mat_blk )
     {
       return {{ ul, ul }};
     }

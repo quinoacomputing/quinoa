@@ -526,7 +526,8 @@ class Transport {
     static tk::StateFn::result_type
     extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
-                 const std::array< tk::real, 3 >& )
+                 const std::array< tk::real, 3 >&,
+                 const std::vector< EoS_Base* >& m_mat_blk )
     {
       return {{ ul, ul }};
     }
@@ -540,7 +541,8 @@ class Transport {
     static tk::StateFn::result_type
     inlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
            tk::real, tk::real, tk::real, tk::real,
-           const std::array< tk::real, 3 >& )
+           const std::array< tk::real, 3 >&,
+           const std::vector< EoS_Base* >& m_mat_blk )
     {
       auto ur = ul;
       std::fill( begin(ur), end(ur), 0.0 );
@@ -556,7 +558,8 @@ class Transport {
     static tk::StateFn::result_type
     outlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
-            const std::array< tk::real, 3 >& )
+            const std::array< tk::real, 3 >&,
+            const std::vector< EoS_Base* >& m_mat_blk )
     {
       return {{ ul, ul }};
     }
@@ -576,7 +579,8 @@ class Transport {
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >& )
+               const std::array< tk::real, 3 >&,
+               const std::vector< EoS_Base* >& m_mat_blk )
     {
       return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
     }
