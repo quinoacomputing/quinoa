@@ -550,11 +550,13 @@ DG::evalSolution(
 
   // Assign values to element-fields
   for (std::size_t e=0; e<m_u.nunk(); ++e) {
-    for (std::size_t i=0; i<uncomp; ++i) {
-      m_uElemfields(e,i,0) = m_u(e,rdof*i,0);
-    }
-    for (std::size_t i=0; i<pncomp; ++i) {
-      m_pElemfields(e,i,0) = m_p(e,rdof*i,0);
+    if (e < nelem) {
+      for (std::size_t i=0; i<uncomp; ++i) {
+        m_uElemfields(e,i,0) = m_u(e,rdof*i,0);
+      }
+      for (std::size_t i=0; i<pncomp; ++i) {
+        m_pElemfields(e,i,0) = m_p(e,rdof*i,0);
+      }
     }
   }
 
