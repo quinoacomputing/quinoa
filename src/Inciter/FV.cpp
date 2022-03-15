@@ -477,7 +477,7 @@ FV::evalSolution(
   const auto& z = coord[2];
 
   // Assign values to element-fields
-  for (std::size_t e=0; e<nelem; ++e) {
+  for (std::size_t e=0; e<m_u.nunk(); ++e) {
     for (std::size_t i=0; i<uncomp; ++i) {
       m_uElemfields(e,i,0) = m_u(e,rdof*i,0);
     }
