@@ -1573,6 +1573,7 @@ DG::writeFields(
 // *****************************************************************************
 // Output mesh field data
 //! \param[in] c Function to continue with after the write
+//! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 // *****************************************************************************
 {
   auto d = Disc();
