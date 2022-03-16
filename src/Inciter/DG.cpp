@@ -509,16 +509,17 @@ DG::evalSolution(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, std::size_t >& addedTets )
 // *****************************************************************************
-// Evaluate solution on incomping (a potentially refined) mesh
+// Evaluate solution on incoming (a potentially refined) mesh
 //! \param[in] inpoel Incoming (potentially refined field-output) mesh
 //!   connectivity
 //! \param[in] coord Incoming (potentially refined Field-output) mesh node
 //!   coordinates
 //! \param[in] addedTets Field-output mesh cells and their parents (local ids)
-//! \details This function evaluates the solution on the incoming mesh. The
-//!   incoming mesh can be refined but can also be just the mesh the numerical
-//!   solution is computed on.
-//! \note If the incoming mesh is refined (for field putput) compared to the
+//! \details This function evaluates the solution on the incoming mesh, and
+//!   stores it in uElemfields, pElemfields, uNodefields, and pNodefields
+//!   appropriately. The incoming mesh can be refined but can also be just the
+//!   mesh the numerical solution is computed on.
+//! \note If the incoming mesh is refined (for field output) compared to the
 //!   mesh the numerical solution is computed on, the solution is evaluated in
 //!   cells as wells as in nodes. If the solution is not refined, the solution
 //!   is evaluated in nodes.
