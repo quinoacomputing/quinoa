@@ -22,6 +22,7 @@
 #include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace tk {
 
@@ -180,7 +181,8 @@ bndSurfInt( ncomp_t system,
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
 
-          auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn );
+          std::vector< inciter::EoS_Base* > mat_blk;
+          auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn, mat_blk );
 
           // Compute the numerical flux
           auto fl = flux( fn, var, vel( system, ncomp, gp[0], gp[1], gp[2], t ) );
@@ -381,7 +383,8 @@ bndSurfIntFV( ncomp_t system,
         Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                 "appended boundary state vector" );
 
-        auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn );
+        std::vector< inciter::EoS_Base* > mat_blk;
+        auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn, mat_blk );
 
         // Compute the numerical flux
         auto fl = flux( fn, var, vel( system, ncomp, gp[0], gp[1], gp[2], t ) );

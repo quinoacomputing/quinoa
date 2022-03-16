@@ -21,6 +21,7 @@
 #include "Types.hpp"
 #include "Keywords.hpp"
 #include "Fields.hpp"
+#include "EoS/StiffenedGas.hpp"
 
 namespace tk {
 
@@ -67,7 +68,7 @@ using VelFn = std::function<
 using StateFn = std::function<
   std::array< std::vector< real >, 2 >
   ( ncomp_t, ncomp_t, const std::vector< real >&, real, real, real, real,
-    const std::array< tk::real, 3 >&, const std::vector< EoS_Base* >& ) >;
+    const std::array< tk::real, 3 >&, const std::vector< inciter::EoS_Base* >& ) >;
 
 //! Function prototype for evaluating a source term for CompFlow
 //! \details Functions of this type are used to evaluate an arbitrary source

@@ -14,6 +14,7 @@
 #define StiffenedGas_h
 
 #include <cmath>
+#include <iostream>
 #include "Data.hpp"
 #include "EoS_Base.hpp"
 
