@@ -768,6 +768,7 @@ Refiner::correctref()
     ++m_ncit;
     // Update our extra-edge store based on refiner
     updateEdgeData();
+    m_remoteEdges.clear();
   }
   else if (neigh_extra == 0) {
     m_ncit = 0;

@@ -139,13 +139,8 @@ Discretization::Discretization(
   // Get ready for computing/communicating nodal volumes
   startvol();
 
-  // Count the number of mesh nodes at which we receive data from other chares
-  // and compute map associating boundary-chare node ID to global node ID
-  std::vector< std::size_t > c( tk::sumvalsize( m_nodeCommMap ) );
-  std::size_t j = 0;
-  for (const auto& [ch,n] : m_nodeCommMap) for (auto i : n) c[j++] = i;
-  tk::unique( c );
-  m_bid = tk::assignLid( c );
+  // Get chare-boundary node-id map
+  m_bid = genBid();
 
   // Find host elements of user-specified points where time histories are
   // saved, and save the shape functions evaluated at the point locations
@@ -195,6 +190,21 @@ Discretization::Discretization(
     transferInit();
     #endif
   }
+}
+
+std::unordered_map< std::size_t, std::size_t >
+Discretization::genBid()
+// *****************************************************************************
+// Generate the Bid data-structure based on the node communication-map
+// *****************************************************************************
+{
+  // Count the number of mesh nodes at which we receive data from other chares
+  // and compute map associating boundary-chare node ID to global node ID
+  std::vector< std::size_t > c( tk::sumvalsize( m_nodeCommMap ) );
+  std::size_t j = 0;
+  for (const auto& [ch,n] : m_nodeCommMap) for (auto i : n) c[j++] = i;
+  tk::unique( c );
+  return tk::assignLid( c );
 }
 
 void
@@ -455,9 +465,9 @@ void
 Discretization::resizePostAMR(
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
-  const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
+  const std::unordered_map< std::size_t, std::size_t >& /*amrNodeMap*/,
   const tk::NodeCommMap& nodeCommMap,
-  const std::set< std::size_t >& removedNodes )
+  const std::set< std::size_t >& /*removedNodes*/ )
 // *****************************************************************************
 //  Resize mesh data structures after mesh refinement
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
@@ -474,26 +484,9 @@ Discretization::resizePostAMR(
   // Update mesh volume container size
   m_vol.resize( m_gid.size(), 0.0 );
 
-  // Generate local ids for new chare boundary global ids
-  std::size_t bid = m_bid.size();
-  for (const auto& [ neighborchare, sharednodes ] : m_nodeCommMap)
-    for (auto g : sharednodes)
-      if (m_bid.find(g) == end(m_bid))
-        m_bid[g] = bid++;
-
-  // Remove ids of derefined boundary nodes from bid
-  // since bid collects ALL the chare-boundary nodes (and not for a specific
-  // neighbor-chare), this has to use removedNodes (and not nodeCommMap)
-  for (auto& [g, l] : m_bid) {
-    if (removedNodes.count(l)) m_bid.erase(g);
-  }
-
-  // Remap local ids in bid
-  for (auto& [g, l] : m_bid) {
-    Assert(amrNodeMap.find(l) != end(amrNodeMap), "Local id in bid not found "
-      "in amr node map.");
-    l = amrNodeMap.at(l);
-  }
+  // Regenerate bid data
+  tk::destroy(m_bid);
+  m_bid = genBid();
 
   // update mesh node coordinates
   m_coord = coord;
