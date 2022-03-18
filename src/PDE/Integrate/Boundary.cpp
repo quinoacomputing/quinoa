@@ -96,8 +96,8 @@ bndSurfInt( ncomp_t system,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
-  Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
-          "derivative vector for single material compflow" );
+  //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+  //        "derivative vector for single material compflow" );
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
