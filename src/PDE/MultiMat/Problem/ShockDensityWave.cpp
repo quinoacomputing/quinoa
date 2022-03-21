@@ -46,11 +46,11 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
 //!   This problem does not have an analytical solution.
 // *****************************************************************************
 {
-  // see also Control/Inciter/InputDeck/Grammar.hpp
-  //Assert( ncomp == 9, "Number of scalar components must be 9" );
-
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
+
+  // see also Control/Inciter/InputDeck/Grammar.hpp
+  Assert( ncomp == 3*nmat+3, "Number of scalar components must be 6 or 9" );
 
   std::vector< tk::real > s( ncomp, 0.0 );
   tk::real r, p, u, v, w;
@@ -66,6 +66,8 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
     }
   } else if(nmat == 1){           // If this is a single-material test
       s[volfracIdx(nmat, 0)] = 1.0;
+  } else {
+    Throw("The test is not configured for nmat > 2");
   }
 
   if (x > -4.0) {
