@@ -1069,7 +1069,7 @@ evalPolynomialSol( std::size_t system,
   }
 
   // physical constraints
-  if (nmat > nmat) {
+  if (state.size() > ncomp) {
     using inciter::pressureIdx;
     using inciter::volfracIdx;
 
