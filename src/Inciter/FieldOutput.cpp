@@ -54,8 +54,9 @@ numericFieldOutput( const tk::Fields& U,
   // will not use P if empty
   const auto& p = P.empty() ? U : P;
 
-  auto rdof =
-    c == tk::Centering::NODE ? 1 : g_inputdeck.get< tag::discr, tag::rdof >();
+  //auto rdof =
+  //  c == tk::Centering::NODE ? 1 : g_inputdeck.get< tag::discr, tag::rdof >();
+  auto rdof = 1;
 
   std::vector< std::vector< tk::real > > f;
   for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {

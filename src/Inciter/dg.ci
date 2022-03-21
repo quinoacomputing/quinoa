@@ -41,7 +41,8 @@ module dg {
                          const std::vector< std::size_t >& ndof );
       entry void comnodeout( const std::vector< std::size_t >& gid,
                              const std::vector< std::size_t >& nesup,
-                             const std::vector< std::vector< tk::real > >& L );
+                             const std::vector< std::vector< tk::real > >& Lu,
+                             const std::vector< std::vector< tk::real > >& Lp );
       entry void comreco( int fromch,
                           const std::vector< std::size_t >& tetid,
                           const std::vector< std::vector< tk::real > >& u,
@@ -83,8 +84,10 @@ module dg {
         when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
 
       entry void wait4nod() {
-        when ownnod_complete( CkCallback c ), comnodeout_complete()
-        serial "nod" { writeFields( c ); } }
+        when ownnod_complete( CkCallback c,
+                              const std::unordered_map< std::size_t, std::size_t >& addedTets ),
+          comnodeout_complete()
+        serial "nod" { writeFields( c, addedTets ); } }
 
       entry void ownsol_complete();
       entry void comsol_complete();
@@ -94,7 +97,7 @@ module dg {
       entry void comnodalExtrema_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
-      entry void ownnod_complete( CkCallback c );
+      entry void ownnod_complete( CkCallback c, const std::unordered_map< std::size_t, std::size_t >& addedTets );
       entry void comnodeout_complete();
     }
 
