@@ -47,7 +47,7 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
 // *****************************************************************************
 {
   // see also Control/Inciter/InputDeck/Grammar.hpp
-  Assert( ncomp == 9, "Number of scalar components must be 9" );
+  //Assert( ncomp == 9, "Number of scalar components must be 9" );
 
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
@@ -56,10 +56,19 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
   tk::real r, p, u, v, w;
   auto alphamin = 1.0e-12;
 
+  if(nmat > 1) {                  // If this is multi-material test
+    if(x > -4.0) {
+      s[volfracIdx(nmat, 0)] = 1.0-alphamin;
+      s[volfracIdx(nmat, 1)] = alphamin;
+    } else {
+      s[volfracIdx(nmat, 0)] = alphamin;
+      s[volfracIdx(nmat, 1)] = 1.0-alphamin;
+    }
+  } else if(nmat == 1){           // If this is a single-material test
+      s[volfracIdx(nmat, 0)] = 1.0;
+  }
+
   if (x > -4.0) {
-    // volume-fraction
-    s[volfracIdx(nmat, 0)] = 1.0-alphamin;
-    s[volfracIdx(nmat, 1)] = alphamin;
     // density
     r = 1.0 + 0.2 * sin(5.0 * x);
     // pressure
@@ -70,9 +79,6 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
     w = 0.0;
   }
   else {
-    // volume-fraction
-    s[volfracIdx(nmat, 0)] = alphamin;
-    s[volfracIdx(nmat, 1)] = 1.0-alphamin;
     // density
     r = 3.8571;
     // pressure
@@ -82,17 +88,20 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
     v = 0.0;
     w = 0.0;
   }
-  s[densityIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*r;
-  s[densityIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*r;
 
   // bulk density
-  auto rb = s[densityIdx(nmat, 0)] + s[densityIdx(nmat, 1)];
+  tk::real rb(0.0);
 
-  // total specific energy
-  s[energyIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*
-                            eos_totalenergy< eq >( system, r, u, v, w, p, 0 );
-  s[energyIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*
-                            eos_totalenergy< eq >( system, r, u, v, w, p, 1 );
+  for(std::size_t imat = 0; imat < nmat; imat++) {
+    // partial density
+    s[densityIdx(nmat, imat)] = s[volfracIdx(nmat, imat)]*r;
+
+    // total specific energy
+    s[energyIdx(nmat, imat)] = s[volfracIdx(nmat, imat)]*
+                            eos_totalenergy< eq >( system, r, u, v, w, p, imat );
+
+    rb += s[densityIdx(nmat, imat)];
+  }
 
   // momentum
   s[momentumIdx(nmat, 0)] = rb * u;

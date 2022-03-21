@@ -659,7 +659,7 @@ VertexBasedMultiMat_P1(
         }
       }
 
-      if(ndof > 1 && intsharp == 0)
+      if(ndof > 1 && intsharp == 0 && nmat > 1)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic);
 
       if(intsharp == 0)
