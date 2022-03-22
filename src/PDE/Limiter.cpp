@@ -665,7 +665,7 @@ VertexBasedMultiMat_P1(
 
       std::vector< tk::real > phic_p2, phip_p2;
 
-      if(ndof > 1 && intsharp == 0)
+      if(ndof > 1 && intsharp == 0 && nmat > 1)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic,
           phic_p2);
 

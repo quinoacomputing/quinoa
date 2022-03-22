@@ -88,9 +88,14 @@ DG::DG( const CProxy_Discretization& disc,
   m_pc(),
   m_ndofc(),
   m_initial( 1 ),
-  m_elemfields(),
-  m_nodefields(),
-  m_nodefieldsc(),
+  m_uElemfields(m_u.nunk(), g_inputdeck.get< tag::component >().nprop()),
+  m_pElemfields(m_u.nunk(),
+    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
+  m_uNodefields(m_npoin, g_inputdeck.get< tag::component >().nprop()),
+  m_pNodefields(m_npoin,
+    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
+  m_uNodefieldsc(),
+  m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
   m_shockmarker(m_u.nunk())
@@ -457,47 +462,9 @@ DG::extractFieldOutput(
   m_outmesh.nodeCommMap = nodeCommMap;
 
   const auto& inpoel = std::get< 0 >( chunk );
-  auto nelem = inpoel.size() / 4;
 
   // Evaluate element solution on incoming mesh
-  auto [ue,pe,un,pn] = evalSolution( inpoel, coord, addedTets );
-
-  // Collect field output from numerical solution requested by user
-  m_elemfields = numericFieldOutput( ue, tk::Centering::ELEM, pe );
-  m_nodefields = numericFieldOutput( un, tk::Centering::NODE, pn );
-
-  // Collect field output from analytical solutions (if exist)
-  auto geoElem = tk::genGeoElemTet( inpoel, coord );
-  auto t = Disc()->T();
-  for (const auto& eq : g_dgpde) {
-    analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract(1,0),
-      geoElem.extract(2,0), geoElem.extract(3,0), t, m_elemfields );
-    analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1], coord[2],
-      t, m_nodefields );
-  }
-
-  // Add adaptive indicator array to element-centered field output
-  if (g_inputdeck.get< tag::pref, tag::pref >()) {
-    std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
-    ndof.resize( nelem );
-    for (const auto& [child,parent] : addedTets)
-      ndof[child] = static_cast< tk::real >( m_ndof[parent] );
-    m_elemfields.push_back( ndof );
-  }
-
-  // Add shock detection marker array to element-centered field output
-  std::vector< tk::real > shockmarker( begin(m_shockmarker), end(m_shockmarker) );
-  // Here m_shockmarker has a size of m_u.nunk() which is the number of the
-  // elements within this partition (nelem) plus the ghost partition cells. In
-  // terms of output purpose, we only need the solution data within this
-  // partition. Therefore, resizing it to nelem removes the extra partition
-  // boundary allocations in the shockmarker vector. Since the code assumes that
-  // the boundary elements are on the top, the resize operation keeps the lower
-  // portion.
-  shockmarker.resize( nelem );
-  for (const auto& [child,parent] : addedTets)
-    shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
-  m_elemfields.push_back( shockmarker );
+  evalSolution( inpoel, coord, addedTets );
 
   // Send node fields contributions to neighbor chares
   if (nodeCommMap.empty())
@@ -508,11 +475,18 @@ DG::extractFieldOutput(
     for(const auto& [ch,nodes] : nodeCommMap) {
       // Pack node field data in chare boundary nodes
       std::vector< std::vector< tk::real > >
-        l( m_nodefields.size(), std::vector< tk::real >( nodes.size() ) );
-      for (std::size_t f=0; f<m_nodefields.size(); ++f) {
+        lu( m_uNodefields.nprop(), std::vector< tk::real >( nodes.size() ) );
+      std::vector< std::vector< tk::real > >
+        lp( m_pNodefields.nprop(), std::vector< tk::real >( nodes.size() ) );
+      for (std::size_t f=0; f<m_uNodefields.nprop(); ++f) {
         std::size_t j = 0;
         for (auto g : nodes)
-          l[f][j++] = m_nodefields[f][ tk::cref_find(lid,g) ];
+          lu[f][j++] = m_uNodefields(tk::cref_find(lid,g),f,0);
+      }
+      for (std::size_t f=0; f<m_pNodefields.nprop(); ++f) {
+        std::size_t j = 0;
+        for (auto g : nodes)
+          lp[f][j++] = m_pNodefields(tk::cref_find(lid,g),f,0);
       }
       // Pack (partial) number of elements surrounding chare boundary nodes
       std::vector< std::size_t > nesup( nodes.size() );
@@ -522,34 +496,33 @@ DG::extractFieldOutput(
         nesup[j++] = esup.second[i+1] - esup.second[i];
       }
       thisProxy[ch].comnodeout(
-        std::vector<std::size_t>(begin(nodes),end(nodes)), nesup, l );
+        std::vector<std::size_t>(begin(nodes),end(nodes)), nesup, lu, lp );
     }
   }
 
-  ownnod_complete( c );
+  ownnod_complete( c, addedTets );
 }
 
-std::tuple< tk::Fields, tk::Fields, tk::Fields, tk::Fields >
+void
 DG::evalSolution(
   const std::vector< std::size_t >& inpoel,
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, std::size_t >& addedTets )
 // *****************************************************************************
-// Evaluate solution on incomping (a potentially refined) mesh
+// Evaluate solution on incoming (a potentially refined) mesh
 //! \param[in] inpoel Incoming (potentially refined field-output) mesh
 //!   connectivity
 //! \param[in] coord Incoming (potentially refined Field-output) mesh node
 //!   coordinates
 //! \param[in] addedTets Field-output mesh cells and their parents (local ids)
-//! \details This function evaluates the solution on the incoming mesh. The
-//!   incoming mesh can be refined but can also be just the mesh the numerical
-//!   solution is computed on.
-//! \note If the incoming mesh is refined (for field putput) compared to the
+//! \details This function evaluates the solution on the incoming mesh, and
+//!   stores it in uElemfields, pElemfields, uNodefields, and pNodefields
+//!   appropriately. The incoming mesh can be refined but can also be just the
+//!   mesh the numerical solution is computed on.
+//! \note If the incoming mesh is refined (for field output) compared to the
 //!   mesh the numerical solution is computed on, the solution is evaluated in
 //!   cells as wells as in nodes. If the solution is not refined, the solution
 //!   is evaluated in nodes.
-//! \return Solution in cells, primitive variables in cells, solution in nodes,
-//!   primitive variables in nodes of incoming mesh.
 // *****************************************************************************
 {
   using tk::dot;
@@ -559,24 +532,34 @@ DG::evalSolution(
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   const auto uncomp = m_u.nprop() / rdof;
   const auto pncomp = m_p.nprop() / rdof;
-  auto ue = m_u;
-  auto pe = m_p;
 
   // If mesh is not refined for field output, cut off ghosts from element
   // solution. (No need to output ghosts and writer would error.) If mesh is
   // refined for field output, resize element solution fields to refined mesh.
-  ue.resize( nelem );
-  pe.resize( nelem );
+  m_uElemfields.resize( nelem );
+  m_pElemfields.resize( nelem );
 
   auto npoin = coord[0].size();
-  tk::Fields un( npoin, m_u.nprop()/rdof );
-  tk::Fields pn( npoin, m_p.nprop()/rdof );
-  un.fill(0.0);
-  pn.fill(0.0);
+  m_uNodefields.resize( npoin );
+  m_pNodefields.resize( npoin );
+  m_uNodefields.fill(0.0);
+  m_pNodefields.fill(0.0);
 
   const auto& x = coord[0];
   const auto& y = coord[1];
   const auto& z = coord[2];
+
+  // Assign values to element-fields
+  for (std::size_t e=0; e<m_u.nunk(); ++e) {
+    if (e < nelem) {
+      for (std::size_t i=0; i<uncomp; ++i) {
+        m_uElemfields(e,i,0) = m_u(e,rdof*i,0);
+      }
+      for (std::size_t i=0; i<pncomp; ++i) {
+        m_pElemfields(e,i,0) = m_p(e,rdof*i,0);
+      }
+    }
+  }
 
   // If mesh is not refined for output, evaluate solution in nodes
   if (addedTets.empty()) {
@@ -600,8 +583,8 @@ DG::evalSolution(
         auto u = eval_state( uncomp, 0, rdof, m_ndof[e], e, m_u, Bn, {0, uncomp-1} );
         auto p = eval_state( pncomp, 0, rdof, m_ndof[e], e, m_p, Bn, {0, pncomp-1} );
         // Assign child node solution
-        for (std::size_t i=0; i<uncomp; ++i) un(inpoel[e4+j],i,0) += u[i];
-        for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[e4+j],i,0) += p[i];
+        for (std::size_t i=0; i<uncomp; ++i) m_uNodefields(inpoel[e4+j],i,0) += u[i];
+        for (std::size_t i=0; i<pncomp; ++i) m_pNodefields(inpoel[e4+j],i,0) += p[i];
       }
     }
 
@@ -642,8 +625,8 @@ DG::evalSolution(
       auto u = eval_state( uncomp, 0, rdof, m_ndof[parent], parent, m_u, B, {0, uncomp-1} );
       auto p = eval_state( pncomp, 0, rdof, m_ndof[parent], parent, m_p, B, {0, pncomp-1} );
       // Assign cell center solution from parent to child
-      for (std::size_t i=0; i<uncomp; ++i) ue(child,i*rdof,0) = u[i];
-      for (std::size_t i=0; i<pncomp; ++i) pe(child,i*rdof,0) = p[i];
+      for (std::size_t i=0; i<uncomp; ++i) m_uElemfields(child,i,0) = u[i];
+      for (std::size_t i=0; i<pncomp; ++i) m_pElemfields(child,i,0) = p[i];
       // Extract child element's node coordinates
       std::array< std::array< real, 3>, 4 > cc{{
         {{ x[inpoel[c4  ]], y[inpoel[c4  ]], z[inpoel[c4  ]] }},
@@ -659,13 +642,11 @@ DG::evalSolution(
         auto cnu = eval_state(uncomp, 0, rdof, m_ndof[parent], parent, m_u, Bn, {0, uncomp-1});
         auto cnp = eval_state(pncomp, 0, rdof, m_ndof[parent], parent, m_p, Bn, {0, pncomp-1});
         // Assign child node solution
-        for (std::size_t i=0; i<uncomp; ++i) un(inpoel[c4+j],i,0) += cnu[i];
-        for (std::size_t i=0; i<pncomp; ++i) pn(inpoel[c4+j],i,0) += cnp[i];
+        for (std::size_t i=0; i<uncomp; ++i) m_uNodefields(inpoel[c4+j],i,0) += cnu[i];
+        for (std::size_t i=0; i<pncomp; ++i) m_pNodefields(inpoel[c4+j],i,0) += cnp[i];
       }
     }
   }
-
-  return { ue, pe, un, pn };
 }
 
 void
@@ -1589,10 +1570,13 @@ DG::refinedOutput() const
 }
 
 void
-DG::writeFields( CkCallback c )
+DG::writeFields(
+  CkCallback c,
+  const std::unordered_map< std::size_t, std::size_t >& addedTets )
 // *****************************************************************************
 // Output mesh field data
 //! \param[in] c Function to continue with after the write
+//! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1610,20 +1594,31 @@ DG::writeFields( CkCallback c )
 
   const auto& inpoel = std::get< 0 >( m_outmesh.chunk );
   auto esup = tk::genEsup( inpoel, 4 );
+  auto nelem = inpoel.size() / 4;
 
   // Combine own and communicated contributions and finish averaging of node
   // field output in chare boundary nodes
   const auto& lid = std::get< 2 >( m_outmesh.chunk );
-  for (const auto& [g,f] : m_nodefieldsc) {
-    Assert( m_nodefields.size() == f.first.size(), "Size mismatch" );
+  for (const auto& [g,f] : m_uNodefieldsc) {
+    Assert( m_uNodefields.nprop() == f.first.size(), "Size mismatch" );
     auto p = tk::cref_find( lid, g );
     for (std::size_t i=0; i<f.first.size(); ++i) {
-      m_nodefields[i][p] += f.first[i];
-      m_nodefields[i][p] /= static_cast< tk::real >(
-                             esup.second[p+1] - esup.second[p] + f.second );
+      m_uNodefields(p,i,0) += f.first[i];
+      m_uNodefields(p,i,0) /= static_cast< tk::real >(
+                              esup.second[p+1] - esup.second[p] + f.second );
     }
   }
-  tk::destroy( m_nodefieldsc );
+  tk::destroy( m_uNodefieldsc );
+  for (const auto& [g,f] : m_pNodefieldsc) {
+    Assert( m_pNodefields.nprop() == f.first.size(), "Size mismatch" );
+    auto p = tk::cref_find( lid, g );
+    for (std::size_t i=0; i<f.first.size(); ++i) {
+      m_pNodefields(p,i,0) += f.first[i];
+      m_pNodefields(p,i,0) /= static_cast< tk::real >(
+                              esup.second[p+1] - esup.second[p] + f.second );
+    }
+  }
+  tk::destroy( m_pNodefieldsc );
 
   // Lambda to decide if a node (global id) is on a chare boundary of the field
   // output mesh. p - global node id, return true if node is on the chare
@@ -1640,9 +1635,52 @@ DG::writeFields( CkCallback c )
   for (std::size_t p=0; p<npoin; ++p) {
     if (!chbnd(gid[p])) {
       auto n = static_cast< tk::real >( esup.second[p+1] - esup.second[p] );
-      for (auto& f : m_nodefields) f[p] /= n;
+      for (std::size_t i=0; i<m_uNodefields.nprop(); ++i)
+        m_uNodefields(p,i,0) /= n;
+      for (std::size_t i=0; i<m_pNodefields.nprop(); ++i)
+        m_pNodefields(p,i,0) /= n;
     }
   }
+
+  // Collect field output from numerical solution requested by user
+  auto elemfields = numericFieldOutput( m_uElemfields, tk::Centering::ELEM,
+    m_pElemfields );
+  auto nodefields = numericFieldOutput( m_uNodefields, tk::Centering::NODE,
+    m_pNodefields );
+
+  // Collect field output from analytical solutions (if exist)
+  const auto& coord = m_outmesh.coord;
+  auto geoElem = tk::genGeoElemTet( inpoel, coord );
+  auto t = Disc()->T();
+  for (const auto& eq : g_dgpde) {
+    analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract(1,0),
+      geoElem.extract(2,0), geoElem.extract(3,0), t, elemfields );
+    analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1], coord[2],
+      t, nodefields );
+  }
+
+  // Add adaptive indicator array to element-centered field output
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
+    ndof.resize( nelem );
+    for (const auto& [child,parent] : addedTets)
+      ndof[child] = static_cast< tk::real >( m_ndof[parent] );
+    elemfields.push_back( ndof );
+  }
+
+  // Add shock detection marker array to element-centered field output
+  std::vector< tk::real > shockmarker( begin(m_shockmarker), end(m_shockmarker) );
+  // Here m_shockmarker has a size of m_u.nunk() which is the number of the
+  // elements within this partition (nelem) plus the ghost partition cells. In
+  // terms of output purpose, we only need the solution data within this
+  // partition. Therefore, resizing it to nelem removes the extra partition
+  // boundary allocations in the shockmarker vector. Since the code assumes that
+  // the boundary elements are on the top, the resize operation keeps the lower
+  // portion.
+  shockmarker.resize( nelem );
+  for (const auto& [child,parent] : addedTets)
+    shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
+  elemfields.push_back( shockmarker );
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
@@ -1659,37 +1697,49 @@ DG::writeFields( CkCallback c )
 
   elemfieldnames.push_back( "shock_marker" );
 
-  Assert( elemfieldnames.size() == m_elemfields.size(), "Size mismatch" );
-  Assert( nodefieldnames.size() == m_nodefields.size(), "Size mismatch" );
+  Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
+  Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
   // Output chare mesh and fields metadata to file
   const auto& triinpoel = m_outmesh.triinpoel;
   d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            {}, m_elemfields, m_nodefields, {}, c );
+            {}, elemfields, nodefields, {}, c );
 }
 
 void
 DG::comnodeout( const std::vector< std::size_t >& gid,
                 const std::vector< std::size_t >& nesup,
-                const std::vector< std::vector< tk::real > >& L )
+                const std::vector< std::vector< tk::real > >& Lu,
+                const std::vector< std::vector< tk::real > >& Lp )
 // *****************************************************************************
 //  Receive chare-boundary nodal solution (for field output) contributions from
 //  neighboring chares
 //! \param[in] gid Global mesh node IDs at which we receive contributions
 //! \param[in] nesup Number of elements surrounding points
-//! \param[in] L Partial contributions of node fields to chare-boundary nodes
+//! \param[in] Lu Partial contributions of solution nodal fields to
+//!   chare-boundary nodes
+//! \param[in] Lp Partial contributions of primitive quantity nodal fields to
+//!   chare-boundary nodes
 // *****************************************************************************
 {
   Assert( gid.size() == nesup.size(), "Size mismatch" );
-  for (std::size_t f=0; f<L.size(); ++f)
-    Assert( gid.size() == L[f].size(), "Size mismatch" );
+  Assert(Lu.size() == m_uNodefields.nprop(), "Fields size mismatch");
+  Assert(Lp.size() == m_pNodefields.nprop(), "Fields size mismatch");
+  for (std::size_t f=0; f<Lu.size(); ++f)
+    Assert( gid.size() == Lu[f].size(), "Size mismatch" );
+  for (std::size_t f=0; f<Lp.size(); ++f)
+    Assert( gid.size() == Lp[f].size(), "Size mismatch" );
 
   for (std::size_t i=0; i<gid.size(); ++i) {
-    auto& nf = m_nodefieldsc[ gid[i] ];
-    nf.first.resize( L.size() );
-    for (std::size_t f=0; f<L.size(); ++f) nf.first[f] += L[f][i];
-    nf.second += nesup[i];
+    auto& nfu = m_uNodefieldsc[ gid[i] ];
+    nfu.first.resize( Lu.size() );
+    for (std::size_t f=0; f<Lu.size(); ++f) nfu.first[f] += Lu[f][i];
+    nfu.second += nesup[i];
+    auto& nfp = m_pNodefieldsc[ gid[i] ];
+    nfp.first.resize( Lp.size() );
+    for (std::size_t f=0; f<Lp.size(); ++f) nfp.first[f] += Lp[f][i];
+    nfp.second += nesup[i];
   }
 
   // When we have heard from all chares we communicate with, this chare is done
