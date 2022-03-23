@@ -334,8 +334,8 @@ class MultiMat {
             R[mark] += w * pri[k];
             if(ndof > 1)
             {
-              for(std::size_t idir = 0; idir < 3; idir++)
-                R[mark+idir+1] += w * pri[k] * B[idir+1];
+              for(std::size_t idof = 1; idof < ndof; idof++)
+                R[mark+idof] += w * pri[k] * B[idof];
             }
           }
         }
@@ -348,7 +348,7 @@ class MultiMat {
           prim(e, rmark, 0) = R[mark] / L(e, mark, 0);
           if(ndof > 1)
           {
-            for(std::size_t idof = 1; idof < rdof; idof++)
+            for(std::size_t idof = 1; idof < ndof; idof++)
             {
               prim(e, rmark+idof, 0) = R[mark+idof] / L(e, mark+idof, 0);
               if(fabs(prim(e, rmark+idof, 0)) < 1e-16)
