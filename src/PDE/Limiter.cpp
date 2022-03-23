@@ -2093,8 +2093,11 @@ PositivityLimiting( const tk::real min,
 // *****************************************************************************
 {
   tk::real phi(1.0);
-  if(u_gp < min)
-    phi = std::fabs( (min - u_avg) / (u_gp - u_avg) );
+  tk::real diff = u_gp - u_avg;
+  // Only when u_gp is less than minimum threshold and the high order
+  // contribution is not zero, the limiting function will be applied
+  if(u_gp < min && fabs(diff) > 1e-13 )
+    phi = std::fabs( (min - u_avg) / diff );
   return phi;
 }
 
