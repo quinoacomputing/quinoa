@@ -529,7 +529,7 @@ class MultiMat {
       {
         VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
-          pNodalExtrm, U, P, nmat );
+          pNodalExtrm, U, P, nmat, shockmarker );
       }
       else
       {

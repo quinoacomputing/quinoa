@@ -126,7 +126,8 @@ VertexBasedMultiMat_P2(
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
   tk::Fields& U,
   tk::Fields& P,
-  std::size_t nmat );
+  std::size_t nmat,
+  std::vector< std::size_t >& shockmarker );
 
 //! Kuzmin's vertex-based limiter for multi-material FV
 void
@@ -184,7 +185,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const std::array< std::size_t, 2 >& VarRange );
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
-std::vector< tk::real >
+void
 VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
@@ -198,7 +199,9 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   std::size_t ncomp,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& NodalExtrm );
+  const std::vector< std::vector<tk::real> >& NodalExtrm,
+  const std::array< std::size_t, 2 >& VarRange,
+  std::vector< tk::real >& phi );
 
 //! Consistent limiter modifications for P1 dofs
 void consistentMultiMatLimiting_P1( const std::size_t nmat,
