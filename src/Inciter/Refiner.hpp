@@ -412,6 +412,9 @@ class Refiner : public CBase_Refiner {
     //! Query AMR lib and update our local store of edge data
     void updateEdgeData();
 
+    //! Query AMR lib and update our local store of boundary edge data
+    void updateBndEdgeData();
+
     //! Aggregate number of extra edges across all chares
     void matched();
 

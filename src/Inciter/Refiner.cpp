@@ -577,6 +577,9 @@ Refiner::addRefBndEdges(
 //! \param[in] fromch Chare call coming from
 //! \param[in] ed Edges on chare boundary
 //! \param[in] intermediates Intermediate nodes
+//! \details Other than update remoteEdge data, this function also updates
+//!   locking information for such edges whos nodes are marked as intermediate
+//!   by neighboring chares.
 // *****************************************************************************
 {
   // Save/augment buffers of edge data for each sender chare
@@ -592,10 +595,21 @@ Refiner::addRefBndEdges(
   // Add intermediates to mesh refiner lib
   // needs to be done only when mesh has been actually updated, i.e. first iter
   if (m_ncit == 0) {
+    auto esup = tk::genEsup( m_inpoel, 4 );
+    auto psup = tk::genPsup( m_inpoel, 4, esup );
     for (const auto g : intermediates) {
       auto l = m_lid.find( g ); // convert to local node ids
       if (l != end(m_lid)) {
-        m_refiner.tet_store.intermediate_list.insert( m_rid[l->second] );
+        // lock all edges connected to intermediate node
+        auto p = l->second;
+        for (auto q : tk::Around(psup,p)) {
+          AMR::edge_t e(m_rid[p], m_rid[q]);
+          auto& refedge = m_refiner.tet_store.edge_store.get(e);
+          if (refedge.lock_case == AMR::Edge_Lock_Case::unlocked) {
+            refedge.lock_case = AMR::Edge_Lock_Case::temporary; //intermediate;
+            refedge.needs_refining = 0;
+          }
+        }
       }
     }
   }
@@ -603,8 +617,8 @@ Refiner::addRefBndEdges(
   // Heard from every worker we share at least a single edge with
   if (++m_nref == m_ch.size()) {
     m_nref = 0;
-    // Add intermediates to refiner lib
-    if (m_ncit == 0) m_refiner.lock_intermediates();
+
+    updateBndEdgeData();
 
     std::vector< std::size_t > meshdata{ m_meshid };
     contribute( meshdata, CkReduction::max_ulong,
@@ -736,6 +750,13 @@ Refiner::correctref()
           auto r2 = m_rid[ l2 ];
           Assert( r1 != r2, "Edge end-points refiner ids are the same" );
           //std::cout << thisIndex << ": " << r1 << ", " << r2 << std::endl;
+          //if (m_refiner.tet_store.edge_store.get(AMR::edge_t(r1,r2)).lock_case > local_lock_case) {
+          //  std::cout << thisIndex << ": edge " << r1 << "-" << r2 <<
+          //    "; prev=" << local_lock_case_orig <<
+          //    "; new=" << local_lock_case <<
+          //    "; amr-lib=" << m_refiner.tet_store.edge_store.get(AMR::edge_t(r1,r2)).lock_case <<
+          //    " | parcompatiter " << m_ncit << std::endl;
+          //}
            extra[ {{ std::min(r1,r2), std::max(r1,r2) }} ] =
              { local_needs_refining, local_needs_derefining, local_lock_case };
         }
@@ -823,6 +844,40 @@ Refiner::updateEdgeData()
   // edges here that are shared with other chares.
   for (const auto& r : m_refiner.tet_store.intermediate_list) {
     m_intermediates.insert( m_gid[ tk::cref_find( m_lref, r ) ] );
+  }
+}
+
+void
+Refiner::updateBndEdgeData()
+// *****************************************************************************
+// Query AMR lib and update our local store of boundary edge data
+// *****************************************************************************
+{
+  // This currently takes ALL edges from the AMR lib, i.e., on the whole
+  // domain. We should eventually only collect edges here that are shared with
+  // other chares.
+  const auto& ref_edges = m_refiner.tet_store.edge_store.edges;
+  const auto& refinpoel = m_refiner.tet_store.get_active_inpoel();
+
+  for (std::size_t e=0; e<refinpoel.size()/4; ++e) {
+    auto A = refinpoel[e*4+0];
+    auto B = refinpoel[e*4+1];
+    auto C = refinpoel[e*4+2];
+    auto D = refinpoel[e*4+3];
+    std::array<Edge,6> edges{{ {{A,B}}, {{B,C}}, {{A,C}},
+                               {{A,D}}, {{B,D}}, {{C,D}} }};
+    for (const auto& ed : edges) {
+      auto ae = AMR::edge_t{{{ std::min(ed[0],ed[1]), std::max(ed[0],ed[1]) }}};
+      auto r = tk::cref_find( ref_edges, ae );
+      const auto ged = Edge{{ m_gid[ tk::cref_find( m_lref, ed[0] ) ],
+                              m_gid[ tk::cref_find( m_lref, ed[1] ) ] }};
+      // only update edges that are on chare boundary OR unlocked
+      if (m_localEdgeData.find(ged) == m_localEdgeData.end() ||
+        std::get<2>(m_localEdgeData[ged]) == AMR::Edge_Lock_Case::unlocked) {
+        m_localEdgeData[ ged ] = { r.needs_refining, r.needs_derefining,
+          r.lock_case };
+      }
+    }
   }
 }
 
@@ -1000,6 +1055,10 @@ Refiner::perform()
     m_refiner.perform_refinement();
     m_refiner.perform_derefinement();
   }
+
+  // Remove temporary edge-locks resulting from the parallel compatibility
+  m_refiner.remove_edge_locks(1);
+  m_refiner.remove_edge_temp_locks();
 
   //auto& tet_store = m_refiner.tet_store;
   //std::cout << "before ref: " << tet_store.marked_refinements.size() << ", " << tet_store.marked_derefinements.size() << ", " << tet_store.size() << ", " << tet_store.get_active_inpoel().size() << '\n';
@@ -1711,6 +1770,14 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
     ++l;
   }
   Assert( m_lref.size() == ref.size(), "Size mismatch" );
+  //for (auto r : ref) {
+  //  Assert(m_lref.find(r) != m_lref.end(), "Node missing in lref");
+  //}
+  //const auto& int_list = m_refiner.tet_store.intermediate_list;
+  //for (auto in : int_list) {
+  //  Assert(m_lref.find(in) != m_lref.end(), "Interm node missing in lref: "
+  //    + std::to_string(in));
+  //}
   m_rid = std::move( rid );
   Assert( m_rid.size() == ref.size(), "Size mismatch" );
   m_addedNodes = std::move( addedNodes );
