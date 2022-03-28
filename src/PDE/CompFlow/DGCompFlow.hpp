@@ -384,7 +384,7 @@ class CompFlow {
                    fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel, R,
                    vriem, riemannLoc, riemannDeriv );
 
-      // compute ptional source term
+      // compute optional source term
       tk::srcInt( m_system, m_offset, t, ndof, fd.Esuel().size()/4,
                   inpoel, coord, geoElem, Problem::src, ndofel, R );
 
@@ -1126,7 +1126,7 @@ class CompFlow {
                                            coordgp[1][igp], coordgp[2][igp] );
 
                   // Compute the source term variable
-                  std::array< tk::real, 5 > s{{0.0, 0.0, 0.0, 0.0, 0.0}};
+                  std::vector< tk::real > s(5, 0.0);
                   s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
 
                   auto wt = wgp[igp] * geoElem(e, 0, 0);

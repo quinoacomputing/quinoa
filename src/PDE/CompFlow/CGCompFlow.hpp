@@ -325,9 +325,8 @@ class CompFlow {
 
         // add (optional) source to all equations
         for (std::size_t a=0; a<4; ++a) {
-          real s[m_ncomp];
-          Problem::src( m_system, x[N[a]], y[N[a]], z[N[a]], t,
-                        s[0], s[1], s[2], s[3], s[4] );
+          std::vector< real > s(m_ncomp);
+          Problem::src( m_system, 1, x[N[a]], y[N[a]], z[N[a]], t, s );
           for (std::size_t c=0; c<m_ncomp; ++c)
             Ue.var(ue[c],e) += d/4.0 * s[c];
         }
@@ -385,9 +384,8 @@ class CompFlow {
         auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
         auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
         auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
-        real s[m_ncomp];
-        Problem::src( m_system, xc, yc, zc, t+deltat/2,
-                      s[0], s[1], s[2], s[3], s[4] );
+        std::vector< real > s(m_ncomp);
+        Problem::src( m_system, 1, xc, yc, zc, t+deltat/2, s );
         for (std::size_t c=0; c<m_ncomp; ++c)
           for (std::size_t a=0; a<4; ++a)
             R.var(r[c],N[a]) += d/4.0 * s[c];
@@ -1549,10 +1547,9 @@ class CompFlow {
           x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] ) / 24.0;
         // sum source contributions to nodes
         for (std::size_t a=0; a<4; ++a) {
-          real s[m_ncomp];
+          std::vector< real > s(m_ncomp);
           if (g_inputdeck.get< tag::discr, tag::steady_state >()) t = tp[N[a]];
-          Problem::src( m_system, x[N[a]], y[N[a]], z[N[a]], t,
-                        s[0], s[1], s[2], s[3], s[4] );
+          Problem::src( m_system, 1, x[N[a]], y[N[a]], z[N[a]], t, s );
           for (std::size_t c=0; c<m_ncomp; ++c)
             R.var(r[c],N[a]) += J24 * s[c];
         }

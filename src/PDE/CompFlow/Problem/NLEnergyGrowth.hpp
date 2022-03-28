@@ -65,17 +65,13 @@ class CompFlowProblemNLEnergyGrowth {
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \param[in] t Physical time at which to evaluate the source
-    //! \param[in,out] r Density source
-    //! \param[in,out] ru X momentum source
-    //! \param[in,out] rv Y momentum source
-    //! \param[in,out] rw Z momentum source
-    //! \param[in,out] re Specific total energy source
+    //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
-    static tk::CompFlowSrcFn::result_type
-    src( ncomp_t system, tk::real x, tk::real y, tk::real z,
-         tk::real t, tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw,
-         tk::real& re )
+    static tk::SrcFn::result_type
+    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z,
+         tk::real t, std::vector< tk::real >& sv )
     {
+      Assert(sv.size() == 5, "Incorrect source vector size");
       using tag::param; using std::sin; using std::cos;
       // manufactured solution parameters
       const auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
@@ -113,13 +109,13 @@ class CompFlowProblemNLEnergyGrowth {
         2.0*std::pow(ie,4.0)*kappa*h*dh[2]*t }};
       const auto dedt = kappa*h*h*std::pow(ie,4.0);
       // density source
-      r = drdt;
+      sv[0] = drdt;
       // momentum source
-      ru = (g-1.0)*(rho*dedx[0] + ie*drdx[0]);
-      rv = (g-1.0)*(rho*dedx[1] + ie*drdx[1]);
-      rw = (g-1.0)*(rho*dedx[2] + ie*drdx[2]);
+      sv[1] = (g-1.0)*(rho*dedx[0] + ie*drdx[0]);
+      sv[2] = (g-1.0)*(rho*dedx[1] + ie*drdx[1]);
+      sv[3] = (g-1.0)*(rho*dedx[2] + ie*drdx[2]);
       // energy source
-      re = rho*dedt + ie*drdt;
+      sv[4] = rho*dedt + ie*drdt;
     }
 
     //! Return analytic field names to be output to file

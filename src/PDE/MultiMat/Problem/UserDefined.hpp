@@ -49,9 +49,15 @@ class MultiMatProblemUserDefined {
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \details No-op for user-deefined problems.
-    static tk::MultiMatSrcFn::result_type
-    src( ncomp_t, ncomp_t ncomp, tk::real, tk::real, tk::real, tk::real )
-    { std::vector< tk::real > s( ncomp, 0.0 ); }
+    static tk::SrcFn::result_type
+    src( ncomp_t, ncomp_t nmat, tk::real, tk::real, tk::real, tk::real,
+      std::vector< tk::real >& sv )
+    {
+      Assert(sv.size() == 3*nmat+3, "Incorrect source vector size");
+      for (std::size_t i=0; i<sv.size(); ++i) {
+        sv[i] = 0.0;
+      }
+    }
 
     //! Return names of integral variables to be output to diagnostics file
     static std::vector< std::string > names( ncomp_t );

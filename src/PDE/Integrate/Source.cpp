@@ -28,9 +28,10 @@ tk::srcInt( ncomp_t system,
             const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
             const Fields& geoElem,
-            const CompFlowSrcFn& src,
+            const SrcFn& src,
             const std::vector< std::size_t >& ndofel,
-            Fields& R )
+            Fields& R,
+            std::size_t nmat )
 // *****************************************************************************
 //  Compute source term integrals for DG
 //! \param[in] system Equation system index
@@ -44,8 +45,12 @@ tk::srcInt( ncomp_t system,
 //! \param[in] src Source function to use
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector computed
+//! \param[in] nmat Number of materials. A default is set to 1, so that calling
+//!   code for single material systems primitive quantities does not need to
+//!   specify this argument.
 // *****************************************************************************
 {
+  auto ncomp = R.nprop()/ndof;
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -82,8 +87,8 @@ tk::srcInt( ncomp_t system,
         eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
       // Compute the source term variable
-      std::array< real, 5 > s;
-      src( system, gp[0], gp[1], gp[2], t, s[0], s[1], s[2], s[3], s[4] );
+      std::vector< real > s(ncomp, 0.0);
+      src( system, nmat, gp[0], gp[1], gp[2], t, s );
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
@@ -99,7 +104,7 @@ tk::update_rhs( ncomp_t offset,
                 const tk::real wt,
                 const std::size_t e,
                 const std::vector< tk::real >& B,
-                const std::array< tk::real, 5 >& s,
+                const std::vector< tk::real >& s,
                 Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the source term integrals
@@ -109,13 +114,13 @@ tk::update_rhs( ncomp_t offset,
 //! \param[in] wt Weight of gauss quadrature point
 //! \param[in] e Element index
 //! \param[in] B Vector of basis functions
-//! \param[in] s Source terms for each of the 5 components
+//! \param[in] s Source term vector
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
   Assert( B.size() == ndof_el, "Size mismatch for basis function" );
 
-  for (ncomp_t c=0; c<5; ++c)
+  for (ncomp_t c=0; c<s.size(); ++c)
   {
     auto mark = c*ndof;
     R(e, mark, offset)   += wt * s[c];

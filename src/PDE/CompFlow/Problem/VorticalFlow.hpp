@@ -58,16 +58,13 @@ class CompFlowProblemVorticalFlow {
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
-    //! \param[in,out] r Density source
-    //! \param[in,out] ru X momentum source
-    //! \param[in,out] rv Y momentum source
-    //! \param[in,out] rw Z momentum source
-    //! \param[in,out] re Specific total energy source
+    //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
-    static tk::CompFlowSrcFn::result_type
-    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real,
-         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    static tk::SrcFn::result_type
+    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z, tk::real,
+         std::vector< tk::real >& sv )
     {
+      Assert(sv.size() == 5, "Incorrect source vector size");
       using tag::param; using tag::compflow;
 
       // manufactured solution parameters
@@ -80,13 +77,13 @@ class CompFlowProblemVorticalFlow {
       auto s = initialize( system, 5, x, y, z, 0.0 );
 
       // density source
-      r = 0.0;
+      sv[0] = 0.0;
       // momentum source
-      ru = a*s[1]/s[0] - b*s[2]/s[0];
-      rv = b*s[1]/s[0] + a*s[2]/s[0];
-      rw = 0.0;
+      sv[1] = a*s[1]/s[0] - b*s[2]/s[0];
+      sv[2] = b*s[1]/s[0] + a*s[2]/s[0];
+      sv[3] = 0.0;
       // energy source
-      re = (ru*s[1] + rv*s[2])/s[0] + 8.0*a*a*a*z*z/(g-1.0);
+      sv[4] = (sv[1]*s[1] + sv[2]*s[2])/s[0] + 8.0*a*a*a*z*z/(g-1.0);
     }
 
     //! Return analytic field names to be output to file

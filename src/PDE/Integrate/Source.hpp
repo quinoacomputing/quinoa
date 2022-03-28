@@ -36,9 +36,10 @@ srcInt( ncomp_t system,
         const std::vector< std::size_t >& inpoel,
         const UnsMesh::Coords& coord,
         const Fields& geoElem,
-        const CompFlowSrcFn& src,
+        const SrcFn& src,
         const std::vector< std::size_t >& ndofel,
-        Fields& R );
+        Fields& R,
+        std::size_t nmat=1 );
 
 //! Update the rhs by adding the source term integrals
 void
@@ -48,7 +49,7 @@ update_rhs( ncomp_t offset,
             const tk::real wt,
             const std::size_t e,
             const std::vector< tk::real >& B,
-            const std::array< tk::real, 5 >& s,
+            const std::vector< tk::real >& s,
             Fields& R );
 
 } // tk::
