@@ -450,6 +450,9 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::ic,            ic
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
+  , tag::farfield_density,  std::vector< kw::density::info::expect::type >
+  , tag::farfield_velocity, std::vector< std::vector<
+                              kw::velocity::info::expect::type > >
   , tag::sponge,        SpongeParameters
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >

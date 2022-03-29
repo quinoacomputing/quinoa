@@ -528,7 +528,7 @@ class MultiMat {
           m_system, m_offset, fd, geoFace, geoElem, coord, U, P, nmat,
           shockmarker );
       }
-      else
+      else if (limiter != ctr::LimiterType::NOLIMITER)
       {
         Throw("Limiter type not configured for multimat.");
       }
