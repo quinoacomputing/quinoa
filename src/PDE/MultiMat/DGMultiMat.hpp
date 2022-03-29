@@ -616,7 +616,7 @@ class MultiMat {
                         b.second, U, P, ndofel, R, vriem, riemannLoc,
                         riemannDeriv, intsharp );
 
-      Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
+      Assert( riemannDeriv.size() == 3*nmat+ndof, "Size of Riemann derivative "
               "vector incorrect" );
 
       // get derivatives from riemannDeriv
