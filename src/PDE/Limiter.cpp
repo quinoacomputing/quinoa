@@ -889,11 +889,11 @@ VertexBasedMultiMat_P2(
       // The coefficients for volume fractions of all materials should be
       // identical to maintain the conservation law
       tk::real phi_al_p1(1.0), phi_al_p2(1.0);
-      for(std::size_t k=0; k<nmat; ++k) {
+      for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k) {
         phi_al_p1 = std::min(phic_p1[k], phi_al_p1);
         phi_al_p2 = std::min(phic_p2[k], phi_al_p2);
       }
-      for(std::size_t k=0; k<nmat; ++k) {
+      for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k) {
         phic_p1[k] =  phi_al_p1;
         phic_p2[k] =  phi_al_p2;
       }
@@ -1696,7 +1696,7 @@ void consistentMultiMatLimiting_P1(
   const std::size_t e,
   tk::Fields& U,
   [[maybe_unused]] tk::Fields& P,
-  std::vector< tk::real >& phic_p1, 
+  std::vector< tk::real >& phic_p1,
   std::vector< tk::real >& phic_p2 )
 // *****************************************************************************
 //  Consistent limiter modifications for conservative variables
@@ -1799,10 +1799,10 @@ void consistentMultiMatLimiting_P1(
   else
   {
     // same limiter for all volume-fractions
-    for (std::size_t k=0; k<nmat; ++k)
+    for (std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k)
       phic_p1[volfracIdx(nmat, k)] = phi_al_p1;
     if(rdof > 4)
-      for (std::size_t k=0; k<nmat; ++k)
+      for (std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k)
         phic_p2[volfracIdx(nmat, k)] = phi_al_p2;
   }
 }
@@ -1946,11 +1946,11 @@ void BoundPreservingLimiting( std::size_t nmat,
     }
   }
 
-  for(std::size_t imat = 0; imat < nmat; imat++)
-    phic_p1[imat] = std::min(phi_bound[imat], phic_p1[imat]);
+  for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); k++)
+    phic_p1[k] = std::min(phi_bound[k], phic_p1[k]);
   if(ndof > 4)
-    for(std::size_t imat = 0; imat < nmat; imat++)
-      phic_p2[imat] = std::min(phi_bound[imat], phic_p2[imat]);
+    for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); k++)
+      phic_p2[k] = std::min(phi_bound[k], phic_p2[k]);
 }
 
 tk::real
@@ -2137,14 +2137,16 @@ void PositivityLimitingMultiMat( std::size_t nmat,
       }
     }
   }
-  for(std::size_t icomp = nmat; icomp < ncomp; icomp++)
+  for(std::size_t icomp = volfracIdx(nmat, nmat); icomp < ncomp; icomp++)
     phic_p1[icomp] = std::min( phic_bound[icomp], phic_p1[icomp] );
-  for(std::size_t icomp = 0; icomp < nmat; icomp++)
+  for(std::size_t icomp = pressureIdx(nmat, 0); icomp < pressureIdx(nmat, nmat);
+      icomp++)
     phip_p1[icomp] = std::min( phip_bound[icomp], phip_p1[icomp] );
   if(ndof > 4) {
-    for(std::size_t icomp = nmat; icomp < ncomp; icomp++)
+    for(std::size_t icomp = volfracIdx(nmat, nmat); icomp < ncomp; icomp++)
       phic_p2[icomp] = std::min( phic_bound[icomp], phic_p2[icomp] );
-    for(std::size_t icomp = 0; icomp < nmat; icomp++)
+    for(std::size_t icomp = pressureIdx(nmat, 0); icomp < pressureIdx(nmat, nmat);
+        icomp++)
       phip_p2[icomp] = std::min( phip_bound[icomp], phip_p2[icomp] );
   }
 }

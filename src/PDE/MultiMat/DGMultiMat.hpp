@@ -331,12 +331,8 @@ class MultiMat {
           for(std::size_t k = 0; k < nprim(); k++)
           {
             auto mark = k * ndof;
-            R[mark] += w * pri[k];
-            if(ndof > 1)
-            {
-              for(std::size_t idof = 1; idof < ndof; idof++)
-                R[mark+idof] += w * pri[k] * B[idof];
-            }
+            for(std::size_t idof = 0; idof < ndof; idof++)
+              R[mark+idof] += w * pri[k] * B[idof];
           }
         }
 
@@ -345,15 +341,11 @@ class MultiMat {
         {
           auto mark = k * ndof;
           auto rmark = k * rdof;
-          prim(e, rmark, 0) = R[mark] / L(e, mark, 0);
-          if(ndof > 1)
+          for(std::size_t idof = 0; idof < ndof; idof++)
           {
-            for(std::size_t idof = 1; idof < ndof; idof++)
-            {
-              prim(e, rmark+idof, 0) = R[mark+idof] / L(e, mark+idof, 0);
-              if(fabs(prim(e, rmark+idof, 0)) < 1e-16)
-                prim(e, rmark+idof, 0) = 0;
-            }
+            prim(e, rmark+idof, 0) = R[mark+idof] / L(e, mark+idof, 0);
+            if(fabs(prim(e, rmark+idof, 0)) < 1e-16)
+              prim(e, rmark+idof, 0) = 0;
           }
         }
       }
@@ -480,13 +472,13 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
-//    //! \param[in] gid Local->global node id map
-//    //! \param[in] bid Local chare-boundary node ids (value) associated to
-//    //!   global node ids (key)
-//    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-//    //!   variables
-//    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-//    //!   variables
+    //! \param[in] gid Local->global node id map
+    //! \param[in] bid Local chare-boundary node ids (value) associated to
+    //!   global node ids (key)
+    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
+    //!   variables
+    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
+    //!   variables
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
     void limit( [[maybe_unused]] tk::real t,
