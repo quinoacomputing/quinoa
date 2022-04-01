@@ -186,7 +186,17 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                                                   - riemannDeriv[3*k+idir][e] );
         }
 
-        // evaluate non-conservative term for volume fraction equation
+        // Evaluate non-conservative term for volume fraction equation. Here we
+        // make an assumption that the derivatives of Riemann velocity times the
+        // basis function are constant. Therefore, when it is DGP1 with constant
+        // velocity, the discretization will be consistent. While for DGP2 with
+        // constant velocity, there will be errors since the derivative of P2
+        // basis is not constant. This does not affect high-order accuracy in
+        // single material regions for problems with sharp interfaces. Because
+        // high-order in volume fractions does not show any benefits over THINC
+        // for sharp interface problems. Therefore, for such problems, FV is
+        // used for volume fractions, and high-order terms do not need to be
+        // computed.
         for(std::size_t idof=0; idof<ndof; ++idof)
           ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
                                          * riemannDeriv[3*nmat+idof][e] * B[idof];
