@@ -39,6 +39,9 @@ module dg {
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
                          const std::vector< std::size_t >& ndof );
+      entry void comcorrect( int fromch,
+                             const std::vector< std::size_t >& tetid,
+                             const std::vector< std::vector< tk::real > >& u );
       entry void comnodeout( const std::vector< std::size_t >& gid,
                              const std::vector< std::size_t >& nesup,
                              const std::vector< std::vector< tk::real > >& Lu,
@@ -81,7 +84,10 @@ module dg {
         serial "nodalExtrema" { lim(); } }
 
       entry void wait4lim() {
-        when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
+        when ownlim_complete(), comlim_complete() serial "lim" { correct(); } }
+
+      entry void wait4correct() {
+        when owncorrect_complete(), comcorrect_complete() serial "correct" { dt(); } }
 
       entry void wait4nod() {
         when ownnod_complete( CkCallback c,
@@ -97,6 +103,8 @@ module dg {
       entry void comnodalExtrema_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
+      entry void owncorrect_complete();
+      entry void comcorrect_complete();
       entry void ownnod_complete( CkCallback c, const std::unordered_map< std::size_t, std::size_t >& addedTets );
       entry void comnodeout_complete();
     }

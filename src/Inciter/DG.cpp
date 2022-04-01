@@ -60,6 +60,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
+  m_ncorrect( 0 ),
   m_nnod( 0 ),
   m_nreco( 0 ),
   m_nnodalExtrema( 0 ),
@@ -131,6 +132,7 @@ DG::DG( const CProxy_Discretization& disc,
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
     thisProxy[ thisIndex ].wait4lim();
+    thisProxy[ thisIndex ].wait4correct();
     thisProxy[ thisIndex ].wait4nod();
     thisProxy[ thisIndex ].wait4reco();
     thisProxy[ thisIndex ].wait4nodalExtrema();
@@ -1155,6 +1157,94 @@ DG::lim()
 }
 
 void
+DG::correct()
+// *****************************************************************************
+// Reconstruct energy and momentum solution based on the limited primitive
+//  variables
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  // Combine own and communicated contributions of limited solution and degrees
+  // of freedom in cells (if p-adaptive)
+  for (const auto& b : myGhosts()->m_bid) {
+    Assert( m_uc[2][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[2][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_u(b.first,c,0) = m_uc[2][b.second][c];
+    }
+    for (std::size_t c=0; c<m_p.nprop(); ++c) {
+      m_p(b.first,c,0) = m_pc[2][b.second][c];
+    }
+    if (pref && m_stage == 0) {
+      m_ndof[ b.first ] = m_ndofc[2][ b.second ];
+    }
+  }
+
+  if(rdof > 1)
+    for (const auto& eq : g_dgpde)
+      eq.Correct_Conserv(m_u, m_lhs, myGhosts()->m_geoElem, m_p,
+        myGhosts()->m_fd.Esuel().size()/4);
+
+  // Send conservative solution to neighboring chares
+  if (myGhosts()->m_sendGhost.empty())
+    comcorrect_complete();
+  else
+    for(const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > u( ghostdata.size() );
+      std::size_t j = 0;
+      for(const auto& i : ghostdata) {
+        Assert( i < myGhosts()->m_fd.Esuel().size()/4,
+          "Sending limiter ghost data" );
+        tetid[j] = i;
+        u[j] = m_u[i];
+        ++j;
+      }
+      thisProxy[ cid ].comcorrect( thisIndex, tetid, u );
+    }
+
+  owncorrect_complete();
+}
+
+void
+DG::comcorrect( int fromch,
+                const std::vector< std::size_t >& tetid,
+                const std::vector< std::vector< tk::real > >& u )
+// *****************************************************************************
+//  Receive chare-boundary conservative ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive solution data for
+//! \param[in] u Limited high-order solution
+//! \details This function receives contributions to the corrected conservative
+//!   solution from fellow chares.
+// *****************************************************************************
+{
+  Assert( u.size() == tetid.size(), "Size mismatch in DG::comlim()" );
+
+  // Find local-to-ghost tet id map for sender chare
+  const auto& n = tk::cref_find( myGhosts()->m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= myGhosts()->m_fd.Esuel().size()/4,
+      "Receiving solution non-ghost data" );
+    auto b = tk::cref_find( myGhosts()->m_bid, j );
+    Assert( b < m_uc[3].size(), "Indexing out of bounds" );
+    m_uc[3][b] = u[i];
+  }
+
+  // if we have received all solution ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed to dt function
+  if (++m_ncorrect == myGhosts()->m_sendGhost.size()) {
+    m_ncorrect = 0;
+    comcorrect_complete();
+  }
+}
+
+void
 DG::propagate_ndof()
 // *****************************************************************************
 //  p-refine all elements that are adjacent to p-refined elements
@@ -1243,23 +1333,13 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   auto d = Disc();
 
-
-  // Combine own and communicated contributions of limited solution and degrees
-  // of freedom in cells (if p-adaptive)
+  // Combine own and communicated contributions of conservative solution
   for (const auto& b : myGhosts()->m_bid) {
-    Assert( m_uc[2][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[2][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    Assert( m_uc[3][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c,0) = m_uc[2][b.second][c];
-    }
-    for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c,0) = m_pc[2][b.second][c];
-    }
-    if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[2][ b.second ];
+      m_u(b.first,c,0) = m_uc[3][b.second][c];
     }
   }
 
@@ -1315,6 +1395,7 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4nodalExtrema();
   thisProxy[ thisIndex ].wait4lim();
+  thisProxy[ thisIndex ].wait4correct();
   thisProxy[ thisIndex ].wait4nod();
 
   auto d = Disc();

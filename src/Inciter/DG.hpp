@@ -114,6 +114,11 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& prim,
                  const std::vector< std::size_t >& ndof );
 
+    //! Receive chare-boundary conservative ghost data from neighboring chares
+    void comcorrect( int fromch,
+                     const std::vector< std::size_t >& tetid,
+                     const std::vector< std::vector< tk::real > >& u );
+
     //! Receive chare-boundary reconstructed data from neighboring chares
     void comreco( int fromch,
                   const std::vector< std::size_t >& tetid,
@@ -217,6 +222,7 @@ class DG : public CBase_DG {
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
+      p | m_ncorrect;
       p | m_nnod;
       p | m_nreco;
       p | m_nnodalExtrema;
@@ -273,6 +279,9 @@ class DG : public CBase_DG {
     //! \brief Counter signaling that we have received all our limiter function
     //!   ghost data
     std::size_t m_nlim;
+    //! \brief Counter signaling that we have received all our updated
+    //!   conservative ghost data
+    std::size_t m_ncorrect;
     //! \brief Counter signaling that we have received all our node solution
     //!   contributions
     std::size_t m_nnod;
@@ -312,7 +321,7 @@ class DG : public CBase_DG {
     //! Vector of number of degrees of freedom for each PDE equation/component
     std::vector< std::size_t > m_numEqDof;
     //! Solution receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
+    std::array< std::vector< std::vector< tk::real > >, 4 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
@@ -370,6 +379,9 @@ class DG : public CBase_DG {
 
     //! Compute limiter function
     void lim();
+
+    //! Reconstruct energy and momentum solution based on the limited primitive
+    void correct();
 
     //! Compute time step size
     void dt();

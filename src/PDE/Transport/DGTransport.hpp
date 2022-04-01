@@ -291,6 +291,15 @@ class Transport {
           m_system, m_offset, geoElem, coord, U );
     }
 
+    //! Update the conservative variable solution for this PDE system
+    //! \details This function computes the updated dofs for conservative
+    //!   quantities based on the limited solution and is currently not used in
+    //!   transport.
+    void Correct_Conserv( const tk::Fields&,
+                          const tk::Fields&,
+                          tk::Fields&,
+                          std::size_t ) const {}
+
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
