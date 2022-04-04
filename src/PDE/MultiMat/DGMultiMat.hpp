@@ -268,8 +268,6 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-      Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) <= 4, "High-order "
-              "discretizations not set up for multimat updatePrimitives()" );
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -333,12 +331,8 @@ class MultiMat {
           for(std::size_t k = 0; k < nprim(); k++)
           {
             auto mark = k * ndof;
-            R[mark] += w * pri[k];
-            if(ndof > 1)
-            {
-              for(std::size_t idir = 0; idir < 3; idir++)
-                R[mark+idir+1] += w * pri[k] * B[idir+1];
-            }
+            for(std::size_t idof = 0; idof < ndof; idof++)
+              R[mark+idof] += w * pri[k] * B[idof];
           }
         }
 
@@ -347,15 +341,11 @@ class MultiMat {
         {
           auto mark = k * ndof;
           auto rmark = k * rdof;
-          prim(e, rmark, 0) = R[mark] / L(e, mark, 0);
-          if(ndof > 1)
+          for(std::size_t idof = 0; idof < ndof; idof++)
           {
-            for(std::size_t idir = 0; idir < 3; idir++)
-            {
-              prim(e, rmark+idir+1, 0) = R[mark+idir+1] / L(e, mark+idir+1, 0);
-              if(fabs(prim(e, rmark+idir+1, 0)) < 1e-16)
-                prim(e, rmark+idir+1, 0) = 0;
-            }
+            prim(e, rmark+idof, 0) = R[mark+idof] / L(e, mark+idof, 0);
+            if(fabs(prim(e, rmark+idof, 0)) < 1e-16)
+              prim(e, rmark+idof, 0) = 0;
           }
         }
       }
@@ -390,8 +380,6 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-      Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) <= 4, "High-order "
-              "discretizations not set up for multimat cleanTraceMaterial()" );
 
       auto neg_density = cleanTraceMultiMat(nielem, m_system, m_offset, geoElem,
         nmat, unk, prim);
@@ -484,13 +472,13 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
-//    //! \param[in] gid Local->global node id map
-//    //! \param[in] bid Local chare-boundary node ids (value) associated to
-//    //!   global node ids (key)
-//    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-//    //!   variables
-//    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-//    //!   variables
+    //! \param[in] gid Local->global node id map
+    //! \param[in] bid Local chare-boundary node ids (value) associated to
+    //!   global node ids (key)
+    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
+    //!   variables
+    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
+    //!   variables
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
     void limit( [[maybe_unused]] tk::real t,
@@ -501,10 +489,10 @@ class MultiMat {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
-                const std::vector< std::size_t >&,
-                const std::unordered_map< std::size_t, std::size_t >&,
-                const std::vector< std::vector<tk::real> >&,
-                const std::vector< std::vector<tk::real> >&,
+                const std::vector< std::size_t >& gid,
+                const std::unordered_map< std::size_t, std::size_t >& bid,
+                const std::vector< std::vector<tk::real> >& uNodalExtrm,
+                const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
@@ -515,6 +503,7 @@ class MultiMat {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::SUPERBEEP1)
@@ -522,11 +511,17 @@ class MultiMat {
         SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_system, m_offset,
           coord, U, P, nmat );
       }
-      else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_offset, fd, geoFace, geoElem, coord, U, P, nmat,
           shockmarker );
+      }
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
+      {
+        VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
+          pNodalExtrm, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
@@ -578,14 +573,17 @@ class MultiMat {
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
               "Mismatch in inpofa size" );
-      Assert( ndof <= 4, "DGP2 not set up for multi-material" );
 
       // set rhs to zero
       R.fill(0.0);
 
-      // allocate space for Riemann derivatives used in non-conservative terms
+      // Allocate space for Riemann derivatives used in non-conservative terms.
+      // The first 3*nmat terms represents the non-conservative term of partial
+      // pressure derivatives in the energy equations. The rest ndof terms refer
+      // to derivatives of Riemann velocity times basis function in the volume
+      // fraction equation.
       std::vector< std::vector< tk::real > >
-        riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
+        riemannDeriv( 3*nmat+ndof, std::vector<tk::real>(U.nunk(),0.0) );
 
       // vectors to store the data of riemann velocity used for reconstruction
       // in volume fraction equation
@@ -618,7 +616,7 @@ class MultiMat {
                         b.second, U, P, ndofel, R, vriem, riemannLoc,
                         riemannDeriv, intsharp );
 
-      Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
+      Assert( riemannDeriv.size() == 3*nmat+ndof, "Size of Riemann derivative "
               "vector incorrect" );
 
       // get derivatives from riemannDeriv
@@ -630,18 +628,10 @@ class MultiMat {
           riemannDeriv[k][e] /= geoElem(e, 0, 0);
       }
 
-      std::vector< std::vector< tk::real > >
-        vriempoly( U.nunk(), std::vector<tk::real>(12,0.0) );
-      // get the polynomial solution of Riemann velocity at the interface.
-      // not required if interface reconstruction is used, since then volfrac
-      // equation is discretized using p0p1.
-      if (ndof > 1 && intsharp == 0)
-        vriempoly = tk::solvevriem(nelem, vriem, riemannLoc);
-
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
-                              vriempoly, ndofel, R, intsharp );
+                              ndofel, R, intsharp );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])

@@ -211,13 +211,6 @@ surfInt( ncomp_t system,
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, offset, ndof, ndofel[el], ndofel[er], wt, fn,
                      el, er, fl, B_l, B_r, R, riemannDeriv );
-
-      // Store the riemann velocity and coordinates data of quadrature point
-      // used for velocity reconstruction if MulMat scheme is selected
-      if (nmat > 1 && ndof > 1)
-        tk::evaluRiemann( ncomp, esuf[2*f], esuf[2*f+1], nmat, fl, fn, gp,
-                          state, vriem, riemannLoc );
-
     }
   }
 }
@@ -318,9 +311,11 @@ update_rhs_fa( ncomp_t ncomp,
       }
     }
 
-    // Divergence of velocity
-    riemannDeriv[3*nmat][el] += wt * fl[ncomp+nmat];
-    riemannDeriv[3*nmat][er] -= wt * fl[ncomp+nmat];
+    // Divergence of velocity multiples basis fucntion( d(uB) / dx )
+    for(std::size_t idof = 0; idof < ndof; idof++) {
+      riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
+      riemannDeriv[3*nmat+idof][er] -= wt * fl[ncomp+nmat] * B_r[idof];
+    }
   }
 }
 

@@ -39,7 +39,6 @@ nonConservativeInt( ncomp_t system,
                     const Fields& U,
                     const Fields& P,
                     const std::vector< std::vector< tk::real > >& riemannDeriv,
-                    const std::vector< std::vector< tk::real > >& vriempoly,
                     const std::vector< std::size_t >& ndofel,
                     Fields& R,
                     int intsharp );

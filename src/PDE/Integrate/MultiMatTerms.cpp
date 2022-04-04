@@ -44,7 +44,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                     const Fields& U,
                     const Fields& P,
                     const std::vector< std::vector< tk::real > >& riemannDeriv,
-                    const std::vector< std::vector< tk::real > >& vriempoly,
                     const std::vector< std::size_t >& ndofel,
                     Fields& R,
                     int intsharp )
@@ -69,7 +68,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //! \param[in] P Vector of primitive quantities at recent time step
 //! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms
-//! \param[in] vriempoly Vector of Riemann velocity polynomial
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface reconstruction indicator
@@ -169,21 +167,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
           dap[idir] += riemannDeriv[3*k+idir][e];
       }
 
-      // Evaluate the velocity used for the multi-material term integration for
-      // volume fraction equation
-      std::vector< tk::real> vriem(3, 0.0);
-      if(ndofel[e] > 1)
-      {
-        auto gp = eval_gp( igp, coordel, coordgp );
-        for(std::size_t idir = 0; idir < 3; idir++)
-        {
-          auto mark = idir * 4;
-          vriem[idir] = vriempoly[e][mark];
-          for(std::size_t k = 1; k < 4; k++)
-            vriem[idir] += vriempoly[e][mark+k] * gp[k-1];
-        }
-      }
-
       // compute non-conservative terms
       std::vector< std::vector< tk::real > > ncf
         (ncomp, std::vector<tk::real>(ndof,0.0));
@@ -203,20 +186,40 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                                                   - riemannDeriv[3*k+idir][e] );
         }
 
-        // evaluate non-conservative term for volume fraction equation
-        for(std::size_t idof=0; idof<ndof; ++idof)
+        // Evaluate non-conservative term for volume fraction equation:
+        // Here we make an assumption that the derivative of Riemann velocity
+        // times the basis function is constant. Therefore, when P0P1/DGP1/DGP2
+        // are used for constant velocity problems, the discretization is
+        // consistent. However, for a general problem with varying velocity,
+        // there will be errors since the said derivative is not constant.
+        // A discretization that solves this issue has not been implemented yet.
+        // Nevertheless, this does not affect high-order accuracy in
+        // single material regions for problems with sharp interfaces. Since
+        // volume fractions are nearly constant in such regions, using
+        // high-order for volume fractions does not show any benefits over
+        // THINC. Therefore, for such problems, we only use FV for the volume
+        // fractions, and these non-conservative high-order terms do not need
+        // to be computed.
+        // In summary, high-order discretization for non-conservative terms in
+        // volume fraction equations is avoided for sharp interface problems.
+        if (ndof <= 4) {
+          for(std::size_t idof=0; idof<ndof; ++idof)
+            ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
+                                           * riemannDeriv[3*nmat+idof][e];
+        } else if (intsharp == 0) {     // If DGP2 without THINC
+          // DGP2 is discretized differently than DGP1/FV to guarantee 3rd order
+          // convergence for the testcases with uniform and constant velocity.
+
+          // P0 contributions for all equations
+          for(std::size_t idof=0; idof<ndof; ++idof)
           ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
                                          * riemannDeriv[3*nmat][e] * B[idof];
-
-        // evaluate the non-conservative term for volume fraction equation in
-        // high order discretization. The following code compuetes the
-        // non-conservative term:
-        //      alpha * (d(u*B)/dx) = alpha * (u*dBdx + B*dudx)
-        if (ndof > 1 && intsharp == 0)
-         for(std::size_t idof=1; idof<ndof; ++idof)
-          for(std::size_t idir=0; idir<3; ++idir)
-            ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)] *
-              vriem[idir] * dBdx[idir][idof];
+          // High order contributions
+          for(std::size_t idof=1; idof<ndof; ++idof)
+            for(std::size_t idir=0; idir<3; ++idir)
+            ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)]
+                                            * vel[idir] * dBdx[idir][idof];
+        }
       }
 
       updateRhsNonCons( ncomp, offset, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
