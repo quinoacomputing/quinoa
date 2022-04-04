@@ -197,9 +197,25 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
         // for sharp interface problems. Therefore, for such problems, FV is
         // used for volume fractions, and high-order terms do not need to be
         // computed.
-        for(std::size_t idof=0; idof<ndof; ++idof)
+        if (ndof <= 4) {
+          for(std::size_t idof=0; idof<ndof; ++idof)
+            ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
+                                           * riemannDeriv[3*nmat+idof][e];
+        } else if (intsharp == 0) {     // If DGP2 without THINC
+          // The reason here DGP2 is different than DGP1 and FV is to guarantee
+          // 3rd order convergence for the testcases with constant velocity
+          // distribution.
+
+          // P0 contributions for all equations
+          for(std::size_t idof=0; idof<ndof; ++idof)
           ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
-                                         * riemannDeriv[3*nmat+idof][e] * B[idof];
+                                         * riemannDeriv[3*nmat][e] * B[idof];
+          // High order contributions
+          for(std::size_t idof=1; idof<ndof; ++idof)
+            for(std::size_t idir=0; idir<3; ++idir)
+            ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)]
+                                            * vel[idir] * dBdx[idir][idof];
+        }
       }
 
       updateRhsNonCons( ncomp, offset, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
