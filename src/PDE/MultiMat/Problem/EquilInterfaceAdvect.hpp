@@ -19,6 +19,7 @@
 
 #include "Types.hpp"
 #include "Fields.hpp"
+#include "Vector.hpp"
 #include "FunctionPrototypes.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
@@ -55,7 +56,13 @@ class MultiMatProblemEquilInterfaceAdvect {
 
       // solution at given location and time
       auto s = initialize(system, ncomp, x, y, z, t);
-      tk::real umag = 1.0;
+      tk::real rhob(0.0);
+      for (std::size_t k=0; k<nmat; ++k) {
+        rhob += s[densityIdx(nmat,k)];
+      }
+      std::array< tk::real, 3 > u0 {{s[momentumIdx(nmat,0)]/rhob,
+        s[momentumIdx(nmat,1)]/rhob, s[momentumIdx(nmat,2)]/rhob}};
+      tk::real umag2 = tk::dot(u0, u0);
 
       // source terms
       for (std::size_t i=0; i<3; ++i) {
@@ -63,9 +70,11 @@ class MultiMatProblemEquilInterfaceAdvect {
       }
       for (std::size_t k=0; k<nmat; ++k) {
         sv[volfracIdx(nmat,k)] = 0.0;
-        sv[densityIdx(nmat,k)] = umag * s[volfracIdx(nmat,k)];
-        sv[momentumIdx(nmat,0)] += umag * sv[densityIdx(nmat,k)];
-        sv[energyIdx(nmat,k)] = 0.5 * umag * umag * sv[densityIdx(nmat,k)];
+        sv[densityIdx(nmat,k)] = (u0[0]+u0[1]+u0[2]) * s[volfracIdx(nmat,k)];
+        for (std::size_t i=0; i<3; ++i) {
+          sv[momentumIdx(nmat,i)] += u0[i] * sv[densityIdx(nmat,k)];
+        }
+        sv[energyIdx(nmat,k)] = 0.5 * umag2 * sv[densityIdx(nmat,k)];
       }
     }
 

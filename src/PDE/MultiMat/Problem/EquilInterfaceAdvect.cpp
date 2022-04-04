@@ -30,8 +30,8 @@ tk::InitializeFn::result_type
 MultiMatProblemEquilInterfaceAdvect::initialize( ncomp_t system,
                                                  ncomp_t ncomp,
                                                  tk::real x,
-                                                 tk::real,
-                                                 tk::real,
+                                                 tk::real y,
+                                                 tk::real z,
                                                  tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
@@ -39,8 +39,10 @@ MultiMatProblemEquilInterfaceAdvect::initialize( ncomp_t system,
 //!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
+//! \param[in] y Y coordinate where to evaluate the solution
+//! \param[in] z Z coordinate where to evaluate the solution
 //! \param[in] t Time at which to evaluate the solution
-//! \return Values of all components evaluated at (x,y,t)
+//! \return Values of all components evaluated at (x,y,z,t)
 //! \note The function signature must follow tk::InitializeFn
 //! \details This function initializes the equilibrium interface advection
 //!   problem, and gives the analytical solution at time greater than 0.
@@ -58,17 +60,19 @@ MultiMatProblemEquilInterfaceAdvect::initialize( ncomp_t system,
   // pressure
   p = 0.4;
   // velocity
-  u = 1.0;
-  v = 0.0;
-  w = 0.0;
+  u = 3.0;
+  v = 2.0;
+  w = 1.0;
   // location of interface
-  auto xc = 0.45 + 1.0*t;
+  auto xc = 0.45 + u*t;
+  auto yc = 0.45 + v*t;
+  auto zc = 0.45 + w*t;
   // volume-fraction
   s[volfracIdx(nmat, 0)] = (1.0-2.0*alphamin) * 0.5 *
-    (1.0-std::tanh(10.0*(x-xc))) + alphamin;
+    (1.0-std::tanh(5.0*((x-xc)+(y-yc)+(z-zc)))) + alphamin;
   s[volfracIdx(nmat, 1)] = 1.0 - s[volfracIdx(nmat, 0)];
   // density
-  r = 5.0 + x;
+  r = 5.0 + x + y + z;
   s[densityIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*r;
   s[densityIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*r;
   // total specific energy
