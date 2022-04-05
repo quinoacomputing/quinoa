@@ -1184,7 +1184,7 @@ DG::correct()
 
   if(rdof > 1)
     for (const auto& eq : g_dgpde)
-      eq.Correct_Conserv(m_u, m_lhs, myGhosts()->m_geoElem, m_p,
+      eq.Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
         myGhosts()->m_fd.Esuel().size()/4);
 
   // Send conservative solution to neighboring chares

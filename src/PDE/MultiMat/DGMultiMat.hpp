@@ -533,16 +533,16 @@ class MultiMat {
     }
 
     //! Update the conservative variable solution for this PDE system
-    //! \param[in] unk Array of unknowns
+    //! \param[in] prim Array of primitive variables
     //! \param[in] L The left hand side block-diagonal mass matrix
     //! \param[in] geoElem Element geometry array
-    //! \param[in,out] prim Array of primitives
+    //! \param[in,out] unk Array of conservative variables
     //! \param[in] nielem Number of internal elements
     //! \details This function computes the updated dofs for conservative
     //!   quantities based on the limited solution
-    void Correct_Conserv( const tk::Fields& unk,
+    void Correct_Conserv( const tk::Fields& prim,
                           const tk::Fields& geoElem,
-                          tk::Fields& prim,
+                          tk::Fields& unk,
                           std::size_t nielem ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -646,7 +646,7 @@ class MultiMat {
         for(std::size_t imat = 0; imat < nmat; imat++) {
           auto mark = imat * rdof;
           for(std::size_t idof = 1; idof < ndof; idof++)
-            prim(e, energyDofIdx(nmat, imat, rdof, idof), 0) =
+            unk(e, energyDofIdx(nmat, imat, rdof, idof), 0) =
               R[mark+idof] / L[idof];
         }
 
@@ -654,7 +654,7 @@ class MultiMat {
         for(std::size_t idir = 0; idir < 3; idir++) {
           auto mark = (nmat + idir) * rdof;
           for(std::size_t idof = 1; idof < ndof; idof++)
-            prim(e, momentumDofIdx(nmat, idir, rdof, idof), 0) =
+            unk(e, momentumDofIdx(nmat, idir, rdof, idof), 0) =
               R[mark+idof] / L[idof];
         }
       }

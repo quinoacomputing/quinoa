@@ -212,12 +212,12 @@ class DGPDE {
     }
 
     //! Public interface to update the conservative variable solution
-    void Correct_Conserv( const tk::Fields& unk,
+    void Correct_Conserv( const tk::Fields& prim,
                           const tk::Fields& geoElem,
-                          tk::Fields& prim,
+                          tk::Fields& unk,
                           std::size_t nielem ) const
     {
-      self->Correct_Conserv( unk, geoElem, prim, nielem );
+      self->Correct_Conserv( prim, geoElem, unk, nielem );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -371,9 +371,9 @@ class DGPDE {
                           tk::Fields&,
                           tk::Fields&,
                           std::vector< std::size_t >& ) const = 0;
-      virtual void Correct_Conserv( const tk::Fields& unk,
+      virtual void Correct_Conserv( const tk::Fields& prim,
                                     const tk::Fields& geoElem,
-                                    tk::Fields& prim,
+                                    tk::Fields& unk,
                                     std::size_t nielem ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
@@ -499,12 +499,12 @@ class DGPDE {
         data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
                     bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
       }
-      void Correct_Conserv( const tk::Fields& unk,
+      void Correct_Conserv( const tk::Fields& prim,
                           const tk::Fields& geoElem,
-                          tk::Fields& prim,
+                          tk::Fields& unk,
                           std::size_t nielem ) const override
       {
-        data.Correct_Conserv( unk, geoElem, prim, nielem );
+        data.Correct_Conserv( prim, geoElem, unk, nielem );
       }
       void rhs(
         tk::real t,

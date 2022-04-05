@@ -771,7 +771,7 @@ VertexBasedMultiMat_P2(
   auto P_lim = P;
 
   // Threshold used for shock indicator
-  tk::real threshold = std::pow(10, -5);
+  tk::real threshold = std::pow(10, -5.7);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
