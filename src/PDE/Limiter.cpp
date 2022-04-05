@@ -1690,10 +1690,10 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
 }
 
 void consistentMultiMatLimiting_P1(
-  const std::size_t nmat,
-  const ncomp_t offset,
-  const std::size_t rdof,
-  const std::size_t e,
+  std::size_t nmat,
+  ncomp_t offset,
+  std::size_t rdof,
+  std::size_t e,
   tk::Fields& U,
   [[maybe_unused]] tk::Fields& P,
   std::vector< tk::real >& phic_p1,

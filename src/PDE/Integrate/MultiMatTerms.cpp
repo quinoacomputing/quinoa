@@ -186,10 +186,40 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                                                   - riemannDeriv[3*k+idir][e] );
         }
 
-        // evaluate non-conservative term for volume fraction equation
-        for(std::size_t idof=0; idof<ndof; ++idof)
+        // Evaluate non-conservative term for volume fraction equation:
+        // Here we make an assumption that the derivative of Riemann velocity
+        // times the basis function is constant. Therefore, when P0P1/DGP1/DGP2
+        // are used for constant velocity problems, the discretization is
+        // consistent. However, for a general problem with varying velocity,
+        // there will be errors since the said derivative is not constant.
+        // A discretization that solves this issue has not been implemented yet.
+        // Nevertheless, this does not affect high-order accuracy in
+        // single material regions for problems with sharp interfaces. Since
+        // volume fractions are nearly constant in such regions, using
+        // high-order for volume fractions does not show any benefits over
+        // THINC. Therefore, for such problems, we only use FV for the volume
+        // fractions, and these non-conservative high-order terms do not need
+        // to be computed.
+        // In summary, high-order discretization for non-conservative terms in
+        // volume fraction equations is avoided for sharp interface problems.
+        if (ndof <= 4) {
+          for(std::size_t idof=0; idof<ndof; ++idof)
+            ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
+                                           * riemannDeriv[3*nmat+idof][e];
+        } else if (intsharp == 0) {     // If DGP2 without THINC
+          // DGP2 is discretized differently than DGP1/FV to guarantee 3rd order
+          // convergence for the testcases with uniform and constant velocity.
+
+          // P0 contributions for all equations
+          for(std::size_t idof=0; idof<ndof; ++idof)
           ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
-                                         * riemannDeriv[3*nmat+idof][e] * B[idof];
+                                         * riemannDeriv[3*nmat][e] * B[idof];
+          // High order contributions
+          for(std::size_t idof=1; idof<ndof; ++idof)
+            for(std::size_t idir=0; idir<3; ++idir)
+            ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)]
+                                            * vel[idir] * dBdx[idir][idof];
+        }
       }
 
       updateRhsNonCons( ncomp, offset, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
