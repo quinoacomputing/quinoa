@@ -578,7 +578,7 @@ class MultiMat {
           }
         }
 
-        std::vector< tk::real > R((nmat+1)*rdof, 0.0);
+        std::vector< tk::real > R((nmat+3)*rdof, 0.0);
 
         auto ng = tk::NGvol(ndof);
 
