@@ -29,11 +29,13 @@ class StiffenedGas: public EoS_Base {
 
   public:
     // Constructor
-    StiffenedGas(tk::real x, tk::real y, std::size_t imat) : gamma(x), pstiff(y) {
-    std::cout << "EOS - Stiffened Gas Initialization: material= " << imat << ", gamma= " << gamma << ", pstiff= " << pstiff << std::endl;
+    StiffenedGas(tk::real x, tk::real y, std::size_t imat) : gamma(x), pstiff(y)
+    {
+    std::cout << "EOS - Stiffened Gas Initialization: material= " << imat << 
+                 ", gamma= " << gamma << ", pstiff= " << pstiff << std::endl;
     }
 
-    tk::real eos_pressure( ncomp_t system,
+    tk::real eos_pressure( ncomp_t,
                            tk::real arho,
                            tk::real u,
                            tk::real v,
@@ -49,17 +51,17 @@ class StiffenedGas: public EoS_Base {
                             * (g-1.0) - alpha*p_c;
 
     // check partial pressure divergence
-//    if (!std::isfinite(partpressure)) {
-//      std::cout << "Material-id:      " << imat << std::endl;
-//      std::cout << "Volume-fraction:  " << alpha << std::endl;
-//      std::cout << "Partial density:  " << arho << std::endl;
-//      std::cout << "Total energy:     " << arhoE << std::endl;
-//      std::cout << "Velocity:         " << u << ", " << v << ", " << w
-//        << std::endl;
-//      Throw("Material-" + std::to_string(imat) + " has nan/inf partial pressure: "
-//        + std::to_string(partpressure) + ", material volume fraction: " +
-//        std::to_string(alpha));
-//    }
+    if (!std::isfinite(partpressure)) {
+      std::cout << "Material-id:      " << imat << std::endl;
+      std::cout << "Volume-fraction:  " << alpha << std::endl;
+      std::cout << "Partial density:  " << arho << std::endl;
+      std::cout << "Total energy:     " << arhoE << std::endl;
+      std::cout << "Velocity:         " << u << ", " << v << ", " << w
+        << std::endl;
+      Throw("Material-" + std::to_string(imat) + " has nan/inf partial pressure: "
+        + std::to_string(partpressure) + ", material volume fraction: " +
+        std::to_string(alpha));
+    }
 
     return partpressure;
   }

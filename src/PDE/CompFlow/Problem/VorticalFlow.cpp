@@ -63,6 +63,7 @@ CompFlowProblemVorticalFlow::initialize( ncomp_t system,
 tk::InitializeFn::result_type
 CompFlowProblemVorticalFlow::analyticSolution( ncomp_t system,
                                                ncomp_t,
+                                               std::vector< EoS_Base* >,
                                                tk::real x,
                                                tk::real y,
                                                tk::real z,

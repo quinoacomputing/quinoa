@@ -22,6 +22,7 @@
 #include "FunctionPrototypes.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -41,7 +42,8 @@ class CompFlowProblemUserDefined {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real )
+    analyticSolution( ncomp_t, ncomp_t, std::vector< EoS_Base* >, tk::real, 
+                      tk::real, tk::real, tk::real )
     { return {}; }
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution

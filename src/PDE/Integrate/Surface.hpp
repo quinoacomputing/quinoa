@@ -22,6 +22,7 @@
 #include "UnsMesh.hpp"
 #include "MultiMatTerms.hpp"
 #include "FunctionPrototypes.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace tk {
 
@@ -33,6 +34,7 @@ void
 surfInt( ncomp_t system,
          std::size_t nmat,
          ncomp_t offset,
+         const std::vector< inciter::EoS_Base* >& mat_blk,
          real t,
          const std::size_t ndof,
          const std::size_t rdof,
@@ -75,6 +77,7 @@ void
 surfIntFV( ncomp_t system,
   std::size_t nmat,
   ncomp_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   real t,
   const std::size_t rdof,
   const std::vector< std::size_t >& inpoel,

@@ -28,8 +28,8 @@ class EoS_Base {
                                    tk::real,
                                    tk::real,
                                    tk::real,
-                                   tk::real,
-                                   std::size_t )=0;
+                                   tk::real=1.0,
+                                   std::size_t=0 )=0;
 
 };
 } //inciter::

@@ -103,6 +103,7 @@ CompFlowProblemNLEnergyGrowth::initialize( ncomp_t system,
 tk::InitializeFn::result_type
 CompFlowProblemNLEnergyGrowth::analyticSolution( ncomp_t system,
                                                  ncomp_t,
+                                              std::vector< EoS_Base* > mat_blk,
                                                  tk::real x,
                                                  tk::real y,
                                                  tk::real z,
@@ -140,7 +141,7 @@ CompFlowProblemNLEnergyGrowth::analyticSolution( ncomp_t system,
   // energy
   auto re = r*ec(ce,k,t,h,-1.0/3.0);
   // pressure
-  auto p = eos_pressure< eq >( system, r, 0.0, 0.0, 0.0, re );
+  auto p = mat_blk[0]->eos_pressure( system, r, 0.0, 0.0, 0.0, re );
 
   return {{ r, 0.0, 0.0, 0.0, re/r, p }};
 }

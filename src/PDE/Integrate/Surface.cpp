@@ -26,6 +26,7 @@ void
 surfInt( ncomp_t system,
          std::size_t nmat,
          ncomp_t offset,
+         const std::vector< inciter::EoS_Base* >& mat_blk,
          real t,
          const std::size_t ndof,
          const std::size_t rdof,
@@ -206,7 +207,7 @@ surfInt( ncomp_t system,
       auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
 
       // compute flux
-      auto fl = flux( fn, state, v );
+      auto fl = flux( mat_blk, fn, state, v );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, offset, ndof, ndofel[el], ndofel[er], wt, fn,
@@ -328,6 +329,7 @@ void
 surfIntFV( ncomp_t system,
   std::size_t nmat,
   ncomp_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   real t,
   const std::size_t rdof,
   const std::vector< std::size_t >& inpoel,
@@ -452,7 +454,7 @@ surfIntFV( ncomp_t system,
     auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
 
     // compute flux
-    auto fl = flux( fn, state, v );
+    auto fl = flux( mat_blk, fn, state, v );
 
     // Add the surface integration term to the rhs
     for (ncomp_t c=0; c<ncomp; ++c)

@@ -21,7 +21,7 @@
 #include "Types.hpp"
 #include "Keywords.hpp"
 #include "Fields.hpp"
-#include "EoS/StiffenedGas.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace tk {
 
@@ -39,7 +39,8 @@ using InitializeFn = std::function<
 //!    surface using a Riemann solver
 //! \see e.g., inciter::Upwind, inciter::LaxFriedrichs, inciter::HLLC
 using RiemannFluxFn = std::function<
-  std::vector< real >( const std::array< real, 3 >&,
+  std::vector< real >( const std::vector< inciter::EoS_Base* >& ,
+                       const std::array< real, 3 >&,
                        const std::array< std::vector< real >, 2 >&,
                        const std::vector< std::array< real, 3 > >& ) >;
 
@@ -51,8 +52,8 @@ using RiemannFluxFn = std::function<
 //! \see e.g., inciter::dg::Transport::flux, inciter::dg::CompFlow::flux
 using FluxFn = std::function<
   std::vector< std::array< real, 3 > >
-  ( ncomp_t, ncomp_t, const std::vector< real >&,
-    const std::vector< std::array< real, 3 > >& ) >;
+  ( ncomp_t, ncomp_t, const std::vector< inciter::EoS_Base* >&, 
+    const std::vector< real >&, const std::vector< std::array< real, 3 > >& ) >;
 
 //! Function prototype for evaluating a prescribed velocity field
 //! \details Functions of this type are used to prescribe known velocity fields

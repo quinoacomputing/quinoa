@@ -30,6 +30,7 @@ void
 bndSurfInt( ncomp_t system,
             std::size_t nmat,
             ncomp_t offset,
+            const std::vector< inciter::EoS_Base* >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
             const std::vector< bcconf_t >& bcconfig,
@@ -50,6 +51,7 @@ bndSurfInt( ncomp_t system,
             std::vector< std::vector< tk::real > >& riemannLoc,
             std::vector< std::vector< tk::real > >& riemannDeriv,
             int intsharp )
+
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
 //! \details This function computes contributions from surface integrals along
@@ -181,11 +183,13 @@ bndSurfInt( ncomp_t system,
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
 
-          std::vector< inciter::EoS_Base* > mat_blk;
-          auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn, mat_blk );
+//          std::vector< inciter::EoS_Base* > mat_blk;
+          auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn, 
+                            mat_blk );
 
           // Compute the numerical flux
-          auto fl = flux( fn, var, vel( system, ncomp, gp[0], gp[1], gp[2], t ) );
+          auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1], 
+                          gp[2], t ) );
 
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,
@@ -279,6 +283,7 @@ void
 bndSurfIntFV( ncomp_t system,
   std::size_t nmat,
   ncomp_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
   const inciter::FaceData& fd,
@@ -295,6 +300,7 @@ bndSurfIntFV( ncomp_t system,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp )
+
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for FV
 //! \details This function computes contributions from surface integrals along
@@ -383,11 +389,13 @@ bndSurfIntFV( ncomp_t system,
         Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                 "appended boundary state vector" );
 
-        std::vector< inciter::EoS_Base* > mat_blk;
-        auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn, mat_blk );
+//        std::vector< inciter::EoS_Base* > mat_blk;
+        auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn, 
+                          mat_blk );
 
         // Compute the numerical flux
-        auto fl = flux( fn, var, vel( system, ncomp, gp[0], gp[1], gp[2], t ) );
+        auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1],
+                        gp[2], t ) );
 
         // Add the surface integration term to the rhs
         for (ncomp_t c=0; c<ncomp; ++c)

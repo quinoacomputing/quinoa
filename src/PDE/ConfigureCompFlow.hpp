@@ -22,6 +22,7 @@
 #include "FunctionPrototypes.hpp"
 #include "ContainerUtil.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -151,7 +152,11 @@ pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
   auto p = r;
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
   for (std::size_t i=0; i<U.nunk(); ++i)
+    // This uses the old eos_pressure call for now, because we didn't want to 
+    // change the GetVarFn function signature right now. It's only in the single
+    // material CompFlow class, so it shouldn't need multi-material EOSs anyway.
     p[i] = eos_pressure<tag::compflow>( sys, r[i], u[i], v[i], w[i], re[i] );
+//    p[i] = m_mat_blk[0]->eos_pressure( sys, r[i], u[i], v[i], w[i], re[i] );
   return p;
 }
 

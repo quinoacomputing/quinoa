@@ -24,6 +24,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
@@ -179,6 +180,7 @@ bndLeastSqConservedVar_P0P1(
   ncomp_t system,
   ncomp_t ncomp,
   ncomp_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
   const inciter::FaceData& fd,
@@ -250,7 +252,8 @@ bndLeastSqConservedVar_P0P1(
                 "appended state vector" );
 
         // Compute the state at the face-center using BC
-        auto ustate = state( system, ncomp, ul, fc[0], fc[1], fc[2], t, fn );
+//        std::vector< inciter::EoS_Base* > mat_blk;
+        auto ustate = state( system, ncomp, ul, fc[0], fc[1], fc[2], t, fn, mat_blk);
 
         std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1,0),
                                         fc[1]-geoElem(el,2,0),

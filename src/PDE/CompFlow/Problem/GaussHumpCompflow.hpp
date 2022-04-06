@@ -22,6 +22,7 @@
 #include "FunctionPrototypes.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -40,7 +41,8 @@ class CompFlowProblemGaussHump {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real y,
+    analyticSolution( ncomp_t system, ncomp_t ncomp,
+                      std::vector< EoS_Base* >, tk::real x, tk::real y,
                       tk::real, tk::real t );
 
     //! Compute and return source term for manufactured solution

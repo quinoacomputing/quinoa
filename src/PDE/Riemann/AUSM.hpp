@@ -23,6 +23,7 @@
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
@@ -37,7 +38,8 @@ struct AUSM {
   //!   velocities and volume-fractions.
   //! \note The function signature must follow tk::RiemannFluxFn
   static tk::RiemannFluxFn::result_type
-  flux( const std::array< tk::real, 3 >& fn,
+  flux( const std::vector< EoS_Base* >,
+        const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {} )
   {

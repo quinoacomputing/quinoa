@@ -18,6 +18,7 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -248,6 +249,7 @@ bool
 cleanTraceMultiMat(
   std::size_t nelem,
   std::size_t system,
+  const std::vector< EoS_Base* >& mat_blk,
   std::size_t offset,
   const tk::Fields& geoElem,
   std::size_t nmat,

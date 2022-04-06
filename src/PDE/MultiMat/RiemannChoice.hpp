@@ -18,6 +18,7 @@
 #include "Inciter/Options/Flux.hpp"
 #include "Riemann/HLL.hpp"
 #include "Riemann/AUSM.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
