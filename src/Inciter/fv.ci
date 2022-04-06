@@ -40,7 +40,8 @@ module fv {
                          const std::vector< std::vector< tk::real > >& prim );
       entry void comnodeout( const std::vector< std::size_t >& gid,
                              const std::vector< std::size_t >& nesup,
-                             const std::vector< std::vector< tk::real > >& L );
+                             const std::vector< std::vector< tk::real > >& Lu,
+                             const std::vector< std::vector< tk::real > >& Lp );
       entry void comsol( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,

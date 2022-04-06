@@ -10,7 +10,8 @@ add_library(CompFlowProblem
             TaylorGreen.cpp
             UserDefined.cpp
             VorticalFlow.cpp
-            GaussHumpCompflow.cpp)
+            GaussHumpCompflow.cpp
+            ShockDensityWave.cpp)
 
 target_include_directories(CompFlowProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}

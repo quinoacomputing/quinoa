@@ -157,7 +157,8 @@ class DG : public CBase_DG {
     //!   neighboring chares
     void comnodeout( const std::vector< std::size_t >& gid,
                      const std::vector< std::size_t >& nesup,
-                     const std::vector< std::vector< tk::real > >& L );
+                     const std::vector< std::vector< tk::real > >& Lu,
+                     const std::vector< std::vector< tk::real > >& Lp );
 
     //! Optionally refine/derefine mesh
     void refine( const std::vector< tk::real >& l2res );
@@ -238,9 +239,12 @@ class DG : public CBase_DG {
       p | m_pc;
       p | m_ndofc;
       p | m_initial;
-      p | m_elemfields;
-      p | m_nodefields;
-      p | m_nodefieldsc;
+      p | m_uElemfields;
+      p | m_pElemfields;
+      p | m_uNodefields;
+      p | m_pNodefields;
+      p | m_uNodefieldsc;
+      p | m_pNodefieldsc;
       p | m_outmesh;
       p | m_boxelems;
       p | m_shockmarker;
@@ -316,15 +320,24 @@ class DG : public CBase_DG {
     std::array< std::vector< std::size_t >, 3 > m_ndofc;
     //! 1 if starting time stepping, 0 if during time stepping
     std::size_t m_initial;
-    //! Elem output fields
-    std::vector< std::vector< tk::real > > m_elemfields;
-    //! Node output fields
-    std::vector< std::vector< tk::real > > m_nodefields;
-    //! Receive buffer for communication of node output fields
+    //! Solution elem output fields
+    tk::Fields m_uElemfields;
+    //! Primitive elem output fields
+    tk::Fields m_pElemfields;
+    //! Solution nodal output fields
+    tk::Fields m_uNodefields;
+    //! Primitive nodal output fields
+    tk::Fields m_pNodefields;
+    //! Receive buffer for communication of solution node fields
     //! \details Key: global node id, value: output fields and number of
     //!   elements surrounding the node
     std::unordered_map< std::size_t, std::pair< std::vector< tk::real >,
-                                                std::size_t > > m_nodefieldsc;
+                                                std::size_t > > m_uNodefieldsc;
+    //! Receive buffer for communication of primitive quantity node fields
+    //! \details Key: global node id, value: output fields and number of
+    //!   elements surrounding the node
+    std::unordered_map< std::size_t, std::pair< std::vector< tk::real >,
+                                                std::size_t > > m_pNodefieldsc;
     //! Storage for refined mesh used for field output
     Ghosts::OutMesh m_outmesh;
     //! Element ids at which box ICs are defined by user (multiple boxes)
@@ -345,7 +358,9 @@ class DG : public CBase_DG {
     }
 
     //! Output mesh field data
-    void writeFields( CkCallback c );
+    void writeFields(
+      CkCallback c,
+      const std::unordered_map< std::size_t, std::size_t >& addedTets );
 
     //! Compute solution reconstructions
     void reco();
@@ -369,8 +384,7 @@ class DG : public CBase_DG {
     void propagate_ndof();
 
     //! Evaluate solution on incomping (a potentially refined) mesh
-    std::tuple< tk::Fields, tk::Fields, tk::Fields, tk::Fields >
-    evalSolution(
+    void evalSolution(
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, std::size_t >& addedTets );

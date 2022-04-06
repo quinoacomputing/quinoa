@@ -99,8 +99,8 @@ bndSurfInt( ncomp_t system,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
-  Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
-          "derivative vector for single material compflow" );
+  //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+  //        "derivative vector for single material compflow" );
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
@@ -194,12 +194,6 @@ bndSurfInt( ncomp_t system,
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,
                          B_l, R, riemannDeriv );
-
-          // Store the riemann velocity and coordinates data of quadrature point
-          // used for velocity reconstruction if MulMat scheme is selected
-          if (nmat > 1 && ndof > 1)
-            tk::evaluRiemann( ncomp, esuf[2*f], esuf[2*f+1], nmat, fl, fn, gp,
-                              var, vriem, riemannLoc );
         }
       }
     }
@@ -274,8 +268,9 @@ update_rhs_bc ( ncomp_t ncomp,
         riemannDeriv[3*k+idir][el] += wt * fl[ncomp+k] * fn[idir];
     }
 
-    // Divergence of velocity
-    riemannDeriv[3*nmat][el] += wt * fl[ncomp+nmat];
+    // Divergence of velocity multiples basis fucntion( d(uB) / dx )
+    for(std::size_t idof = 0; idof < ndof; idof++)
+      riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
   }
 }
 
