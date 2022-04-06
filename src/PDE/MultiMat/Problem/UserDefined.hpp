@@ -50,10 +50,9 @@ class MultiMatProblemUserDefined {
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
     //! \details No-op for user-deefined problems.
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t nmat, tk::real, tk::real, tk::real, tk::real,
+    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
       std::vector< tk::real >& sv )
     {
-      Assert(sv.size() == 3*nmat+3, "Incorrect source vector size");
       for (std::size_t i=0; i<sv.size(); ++i) {
         sv[i] = 0.0;
       }
