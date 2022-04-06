@@ -952,7 +952,7 @@ class MultiMat {
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
                const std::array< tk::real, 3 >&, 
-               const std::vector< EoS_Base* >& m_mat_blk )
+               const std::vector< EoS_Base* >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];

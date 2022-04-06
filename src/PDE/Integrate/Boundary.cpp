@@ -47,8 +47,8 @@ bndSurfInt( ncomp_t system,
             const Fields& P,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
-            std::vector< std::vector< tk::real > >& vriem,
-            std::vector< std::vector< tk::real > >& riemannLoc,
+            std::vector< std::vector< tk::real > >&,
+            std::vector< std::vector< tk::real > >&,
             std::vector< std::vector< tk::real > >& riemannDeriv,
             int intsharp )
 
