@@ -1352,7 +1352,10 @@ namespace deck {
                                      tag::scheme >,
                                    tk::grm::configure_scheme >,
            discroption< use, kw::limiter, inciter::ctr::Limiter, tag::limiter >,
-           tk::grm::discrparam< use, kw::cweight, tag::cweight >
+           tk::grm::discrparam< use, kw::cweight, tag::cweight >,
+           tk::grm::process< use< kw::accuracy_test >,
+                             tk::grm::Store< tag::discr, tag::accuracy_test >,
+                             pegtl::alpha >
          > {};
 
   //! PDE parameter vector

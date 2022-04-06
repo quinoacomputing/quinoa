@@ -211,8 +211,9 @@ SuperbeeMultiMat_P1(
       }
       else
       {
-        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic,
-          phic_p2);
+        if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
+          consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic,
+            phic_p2);
       }
 
       // apply limiter function
@@ -689,8 +690,9 @@ VertexBasedMultiMat_P1(
       }
       else
       {
-        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic,
-          phic_p2);
+        if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
+          consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic,
+            phic_p2);
       }
 
       // apply limiter function
@@ -967,8 +969,9 @@ VertexBasedMultiMat_P2(
       }
       else
       {
-        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U_lim, P_lim,
-          phic_p1, phic_p2);
+        if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
+          consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U_lim, P_lim,
+            phic_p1, phic_p2);
       }
 
       // apply limiing coefficient
@@ -1073,7 +1076,8 @@ VertexBasedMultiMat_FV(
     }
     else
     {
-      consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+      if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
+        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
     }
 
     // apply limiter function

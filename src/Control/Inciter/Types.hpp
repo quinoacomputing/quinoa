@@ -155,7 +155,8 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::limiter,inciter::ctr::LimiterType      //!< Limiter type
   , tag::cweight,kw::cweight::info::expect::type//!< WENO central stencil weight
   , tag::rdof,   std::size_t          //!< Number of reconstructed solution DOFs
-  , tag::ndof,   std::size_t                   //!< Number of solution DOFs
+  , tag::ndof,   std::size_t                    //!< Number of solution DOFs
+  , tag::accuracy_test, bool                    //!< Accuracy test on/off
 > >;
 
 //! ASCII output floating-point precision in digits
