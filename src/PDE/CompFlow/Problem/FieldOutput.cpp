@@ -91,7 +91,7 @@ CompFlowFieldOutput( ncomp_t system,
 
   std::vector< tk::real > P( nunk, 0.0 );
   for (std::size_t i=0; i<nunk; ++i) {
-    P[i] = mat_blk[0]->eos_pressure( system, r[i], u[i], v[i], w[i], 
+    P[i] = mat_blk[0]->eos_pressure( system, r[i], u[i], v[i], w[i],
                                      r[i]*E[i] );
   }
   out.push_back( P );
@@ -152,7 +152,7 @@ CompFlowSurfOutput( ncomp_t system,
       out[i+2][j] = u[2]/u[0];
       out[i+3][j] = u[3]/u[0];
       out[i+4][j] = u[4]/u[0];
-      out[i+5][j] = mat_blk[0]->eos_pressure( system, u[0], u[1]/u[0], 
+      out[i+5][j] = mat_blk[0]->eos_pressure( system, u[0], u[1]/u[0],
                                                 u[2]/u[0], u[3]/u[0], u[4] );
       ++j;
     }

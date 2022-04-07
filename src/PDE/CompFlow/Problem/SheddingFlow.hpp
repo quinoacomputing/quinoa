@@ -41,7 +41,7 @@ class CompFlowProblemSheddingFlow {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t, ncomp_t, std::vector< EoS_Base* >, tk::real, 
+    analyticSolution( ncomp_t, ncomp_t, std::vector< EoS_Base* >, tk::real,
                       tk::real,  tk::real, tk::real ) { return {}; }
 
     //! Compute and return source term for this problem

@@ -493,8 +493,8 @@ class Transport {
     const ncomp_t m_offset;             //!< Offset this PDE operates from
     //! BC configuration
     BCStateFn m_bc;
-    //! EOS material block - This PDE does not require an EOS block, thus this
-    //! variable has not been intialized
+    //! \brief EOS material block - This PDE does not require an EOS block,
+    //! thus this variable has not been intialized.
     std::vector< EoS_Base* > m_mat_blk;
 
     //! Evaluate physical flux function for this PDE system

@@ -38,7 +38,6 @@
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "EoS/EoS.hpp"
-//#include "EoS/EoS_Base.hpp"
 #include "EoS/StiffenedGas.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -71,7 +70,7 @@ class CompFlow {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( compflowRiemannSolver( 
+      m_riemann( compflowRiemannSolver(
         g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) )
     {
       // associate boundary condition configurations with state functions, the
@@ -173,7 +172,7 @@ class CompFlow {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, m_mat_blk, 1.0, t, b, 
+              initializeBox( m_system, m_mat_blk, 1.0, t, b,
                 bgpreic[m_system][0], c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
@@ -271,8 +270,8 @@ class CompFlow {
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, 
-            m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second, 
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset,
+            m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second,
             P, U, rhs_ls, {0, m_ncomp-1} );
 
         // 3. solve 3x3 least-squares system
@@ -388,7 +387,7 @@ class CompFlow {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, m_mat_blk, t, ndof, rdof, inpoel, 
+      tk::surfInt( m_system, 1, m_offset, m_mat_blk, t, ndof, rdof, inpoel,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    R, vriem, riemannLoc, riemannDeriv );
 
@@ -398,8 +397,8 @@ class CompFlow {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, 1, m_offset, t, m_mat_blk, ndof, rdof, 
-                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn, 
+        tk::volInt( m_system, 1, m_offset, t, m_mat_blk, ndof, rdof,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
                     U, P, ndofel, R );
 
       // compute boundary surface flux integrals
@@ -800,7 +799,7 @@ class CompFlow {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi, 
+    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
                                         zi, t ); }
 
     //! Return analytic solution for conserved variables
@@ -967,7 +966,7 @@ class CompFlow {
         eos_totalenergy< eq >( system, frho, fu[0], fu[1], fu[2], fp );
 
       // Pressure from internal cell
-      auto p = m_mat_blk[0]->eos_pressure( system, ul[0], ul[1]/ul[0], 
+      auto p = m_mat_blk[0]->eos_pressure( system, ul[0], ul[1]/ul[0],
                                    ul[2]/ul[0], ul[3]/ul[0], ul[4] );
 
       auto ur = ul;

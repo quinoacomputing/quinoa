@@ -48,7 +48,7 @@ class CompFlowProblemTaylorGreen {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t, 
+    analyticSolution( ncomp_t system, ncomp_t,
                       std::vector< EoS_Base* >, tk::real x, tk::real y,
                       tk::real, tk::real );
 

@@ -15,7 +15,6 @@
 
 #include "Fields.hpp"
 #include "EoS/EoS.hpp"
-#include "EoS/StiffenedGas.hpp"
 #include "Control/Inciter/Types.hpp"
 
 namespace inciter {

@@ -69,7 +69,7 @@ class MultiMat {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( multimatRiemannSolver( 
+      m_riemann( multimatRiemannSolver(
         g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) )
     {
       // associate boundary condition configurations with state functions
@@ -282,7 +282,7 @@ class MultiMat {
       Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) <= 4, "High-order "
               "discretizations not set up for multimat cleanTraceMaterial()" );
 
-      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk, 
+      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk,
         m_offset, geoElem, nmat, unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
@@ -433,13 +433,13 @@ class MultiMat {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfIntFV( m_system, nmat, m_offset, m_mat_blk, t, rdof, inpoel, 
+      tk::surfIntFV( m_system, nmat, m_offset, m_mat_blk, t, rdof, inpoel,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, R,
                      riemannDeriv, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfIntFV( m_system, nmat, m_offset, m_mat_blk, rdof, b.first, 
+        tk::bndSurfIntFV( m_system, nmat, m_offset, m_mat_blk, rdof, b.first,
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                           velfn, b.second, U, P, R, riemannDeriv, intsharp );
 

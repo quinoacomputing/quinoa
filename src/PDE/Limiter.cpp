@@ -23,8 +23,6 @@
 #include "Integrate/Basis.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
-#include "EoS/StiffenedGas.hpp"
-#include "EoS/MatBlock.hpp"
 #include "PrefIndicator.hpp"
 #include "Reconstruction.hpp"
 

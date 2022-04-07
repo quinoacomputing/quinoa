@@ -184,11 +184,11 @@ bndSurfInt( ncomp_t system,
                   "appended boundary state vector" );
 
 //          std::vector< inciter::EoS_Base* > mat_blk;
-          auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn, 
+          auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn,
                             mat_blk );
 
           // Compute the numerical flux
-          auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1], 
+          auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1],
                           gp[2], t ) );
 
           // Add the surface integration term to the rhs
@@ -384,8 +384,7 @@ bndSurfIntFV( ncomp_t system,
         Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                 "appended boundary state vector" );
 
-//        std::vector< inciter::EoS_Base* > mat_blk;
-        auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn, 
+        auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn,
                           mat_blk );
 
         // Compute the numerical flux

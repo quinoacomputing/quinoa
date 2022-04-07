@@ -103,7 +103,7 @@ CompFlowProblemNLEnergyGrowth::initialize( ncomp_t system,
 tk::InitializeFn::result_type
 CompFlowProblemNLEnergyGrowth::analyticSolution( ncomp_t system,
                                                  ncomp_t,
-                                              std::vector< EoS_Base* > mat_blk,
+                                                 std::vector< EoS_Base* > mat_blk,
                                                  tk::real x,
                                                  tk::real y,
                                                  tk::real z,

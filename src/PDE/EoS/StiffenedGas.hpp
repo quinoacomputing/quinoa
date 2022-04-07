@@ -6,8 +6,8 @@
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Stiffened-gas equation of state
-  \details   This file defines virtual functions for equations of state for the
-    compressible flow equations.
+  \details   This file defines functions for the stiffened gas equation of
+             state for the compressible flow equations.
 */
 // *****************************************************************************
 #ifndef StiffenedGas_h
@@ -28,13 +28,31 @@ class StiffenedGas: public EoS_Base {
     tk::real gamma, pstiff;
 
   public:
-    // Constructor
-    StiffenedGas(tk::real x, tk::real y, std::size_t imat) : gamma(x), pstiff(y)
-    {
-    std::cout << "EOS - Stiffened Gas Initialization: material= " << imat << 
-                 ", gamma= " << gamma << ", pstiff= " << pstiff << std::endl;
-    }
+    // *****************************************************************************
+    //  Constructor
+    //! \param[in] gamma Ratio of specific heats
+    //! \param[in] pstiff Stiffened pressure term
+    //! \param[in] size_t Material index
+    // *****************************************************************************
+    StiffenedGas(tk::real x, tk::real y, std::size_t ) : gamma(x), pstiff(y)
+    { }
 
+    //! \brief Calculate pressure from the material density, momentum and total
+    //!   energy using the stiffened-gas equation of state
+    //! \param[in] system Equation system index
+    //! \param[in] arho Material partial density (alpha_k * rho_k)
+    //! \param[in] u X-velocity
+    //! \param[in] v Y-velocity
+    //! \param[in] w Z-velocity
+    //! \param[in] arhoE Material total energy (alpha_k * rho_k * E_k)
+    //! \param[in] alpha Material volume fraction. Default is 1.0, so that for the
+    //!   single-material system, this argument can be left unspecified by the
+    //!   calling code
+    //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+    //!   for the single-material system, this argument can be left unspecified by
+    //!   the calling code
+    //! \return Material partial pressure (alpha_k * p_k) calculated using the
+    //!   stiffened-gas EoS
     tk::real eos_pressure( ncomp_t,
                            tk::real arho,
                            tk::real u,

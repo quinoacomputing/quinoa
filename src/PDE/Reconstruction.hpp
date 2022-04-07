@@ -54,7 +54,7 @@ bndLeastSqConservedVar_P0P1(
   ncomp_t system,
   ncomp_t ncomp,
   ncomp_t offset,
-  const std::vector< inciter::EoS_Base* >& m_mat_blk,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
   const inciter::FaceData& fd,
@@ -67,6 +67,7 @@ bndLeastSqConservedVar_P0P1(
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
   const std::array< std::size_t, 2 >& varRange,
   std::size_t nprim=0 );
+
 //! Solve 3x3 system for least-squares reconstruction
 void
 solveLeastSq_P0P1(

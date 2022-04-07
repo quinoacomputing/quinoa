@@ -38,7 +38,7 @@
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/StiffenedGas.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -72,7 +72,7 @@ class MultiMat {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( multimatRiemannSolver( 
+      m_riemann( multimatRiemannSolver(
         g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) )
     {
       // associate boundary condition configurations with state functions
@@ -169,15 +169,6 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
-
-//      // EoS initialization
-//      auto nmat =
-//        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-//      for (std::size_t k=0; k<nmat; ++k) {
-//        auto g = gamma< eq >(m_system, k);
-//        auto ps = pstiff< eq >(m_system, k);
-//        initialize_material_blk(g, ps, k);
-//        }
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -402,7 +393,7 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk, 
+      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk,
         m_offset, geoElem, nmat, unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
@@ -623,14 +614,14 @@ class MultiMat {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, nmat, m_offset, t, m_mat_blk, ndof, rdof, nelem, 
-                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R, 
+        tk::volInt( m_system, nmat, m_offset, t, m_mat_blk, ndof, rdof, nelem,
+                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
                     intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, nmat, m_offset, m_mat_blk, ndof, rdof, 
-                        b.first, fd, geoFace, geoElem, inpoel, coord, t, 
+        tk::bndSurfInt( m_system, nmat, m_offset, m_mat_blk, ndof, rdof,
+                        b.first, fd, geoFace, geoElem, inpoel, coord, t,
                         m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
 
@@ -951,7 +942,7 @@ class MultiMat {
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >&, 
+               const std::array< tk::real, 3 >&,
                const std::vector< EoS_Base* >& )
     {
       const auto nmat =
@@ -1002,7 +993,7 @@ class MultiMat {
     static tk::StateFn::result_type
     symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& fn, 
+              const std::array< tk::real, 3 >& fn,
               const std::vector< EoS_Base* >& )
     {
       const auto nmat =
