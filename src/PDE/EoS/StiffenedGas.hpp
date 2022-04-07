@@ -32,7 +32,6 @@ class StiffenedGas: public EoS_Base {
     //  Constructor
     //! \param[in] gamma Ratio of specific heats
     //! \param[in] pstiff Stiffened pressure term
-    //! \param[in] size_t Material index
     // *****************************************************************************
     StiffenedGas(tk::real x, tk::real y, std::size_t ) : gamma(x), pstiff(y)
     { }
