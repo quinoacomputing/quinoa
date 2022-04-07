@@ -19,6 +19,7 @@
 namespace inciter {
 
 void initializeBox( std::size_t system,
+                    const std::vector< EoS_Base* > ,
                     tk::real VRatio,
                     tk::real t,
                     const inciter::ctr::box& b,

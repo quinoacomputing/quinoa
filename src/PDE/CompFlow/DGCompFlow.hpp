@@ -38,6 +38,7 @@
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/StiffenedGas.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "PrefIndicator.hpp"
@@ -69,8 +70,8 @@ class CompFlow {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( compflowRiemannSolver(g_inputdeck.get< tag::param,
-        tag::compflow, tag::flux >().at(m_system)) )
+      m_riemann( compflowRiemannSolver(
+        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
@@ -81,6 +82,12 @@ class CompFlow {
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate } ) );
+
+      // EoS initialization
+      auto g = gamma< eq >(m_system, 0);
+      auto ps = pstiff< eq >(m_system, 0);
+      m_mat_blk.push_back(new StiffenedGas(g, ps, 0));
+
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -165,8 +172,8 @@ class CompFlow {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, 1.0, t, b, bgpreic[m_system][0], c_v,
-                s );
+              initializeBox( m_system, m_mat_blk, 1.0, t, b,
+                bgpreic[m_system][0], c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -263,9 +270,9 @@ class CompFlow {
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-            b.first, fd, geoFace, geoElem, t, b.second, P, U, rhs_ls,
-            {0, m_ncomp-1} );
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset,
+            m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second,
+            P, U, rhs_ls, {0, m_ncomp-1} );
 
         // 3. solve 3x3 least-squares system
         tk::solveLeastSq_P0P1( m_offset, rdof, lhs_ls, rhs_ls, U,
@@ -380,9 +387,9 @@ class CompFlow {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, t, ndof, rdof, inpoel, coord,
-                   fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel, R,
-                   vriem, riemannLoc, riemannDeriv );
+      tk::surfInt( m_system, 1, m_offset, m_mat_blk, t, ndof, rdof, inpoel,
+                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
+                   R, vriem, riemannLoc, riemannDeriv );
 
       // compute optional source term
       tk::srcInt( m_system, m_offset, t, ndof, fd.Esuel().size()/4,
@@ -390,14 +397,15 @@ class CompFlow {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, 1, m_offset, t, ndof, rdof, fd.Esuel().size()/4,
-                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R );
+        tk::volInt( m_system, 1, m_offset, t, m_mat_blk, ndof, rdof,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
+                    U, P, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, 1, m_offset, ndof, rdof, b.first, fd,
-                        geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
-                        b.second, U, P, ndofel, R, vriem, riemannLoc,
+        tk::bndSurfInt( m_system, 1, m_offset, m_mat_blk, ndof, rdof, b.first,
+                        fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
+                        velfn, b.second, U, P, ndofel, R, vriem, riemannLoc,
                         riemannDeriv );
 
      // compute external (energy) sources
@@ -585,7 +593,7 @@ class CompFlow {
           v = ugp[0][2]/rho;
           w = ugp[0][3]/rho;
           rhoE = ugp[0][4];
-          p = eos_pressure< tag::compflow >( m_system, rho, u, v, w, rhoE );
+          p = m_mat_blk[0]->eos_pressure( m_system, rho, u, v, w, rhoE );
 
           a = eos_soundspeed< tag::compflow >( m_system, rho, p );
 
@@ -644,7 +652,7 @@ class CompFlow {
             v = ugp[1][2]/rho;
             w = ugp[1][3]/rho;
             rhoE = ugp[1][4];
-            p = eos_pressure< tag::compflow >( m_system, rho, u, v, w, rhoE );
+            p = m_mat_blk[0]->eos_pressure( m_system, rho, u, v, w, rhoE );
             a = eos_soundspeed< tag::compflow >( m_system, rho, p );
 
             vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
@@ -770,7 +778,7 @@ class CompFlow {
         Up[j][2] = uhp[2]/uhp[0];
         Up[j][3] = uhp[3]/uhp[0];
         Up[j][4] = uhp[4]/uhp[0];
-        Up[j][5] = eos_pressure< tag::compflow > (m_system, uhp[0],
+        Up[j][5] = m_mat_blk[0]->eos_pressure(m_system, uhp[0],
           uhp[1]/uhp[0], uhp[2]/uhp[0], uhp[3]/uhp[0], uhp[4] );
         ++j;
       }
@@ -791,7 +799,8 @@ class CompFlow {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
+                                        zi, t ); }
 
     //! Return analytic solution for conserved variables
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -818,6 +827,8 @@ class CompFlow {
     tk::RiemannFluxFn m_riemann;
     //! BC configuration
     BCStateFn m_bc;
+    //! EOS material block
+    std::vector< EoS_Base* > m_mat_blk;
 
     //! Evaluate physical flux function for this PDE system
     //! \param[in] system Equation system index
@@ -829,6 +840,7 @@ class CompFlow {
     static tk::FluxFn::result_type
     flux( ncomp_t system,
           [[maybe_unused]] ncomp_t ncomp,
+          const std::vector< EoS_Base* >& mat_blk,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
@@ -837,8 +849,7 @@ class CompFlow {
       auto u = ugp[1] / ugp[0];
       auto v = ugp[2] / ugp[0];
       auto w = ugp[3] / ugp[0];
-      auto p =
-        eos_pressure< tag::compflow >( system, ugp[0], u, v, w, ugp[4] );
+      auto p = mat_blk[0]->eos_pressure( system, ugp[0], u, v, w, ugp[4] );
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
@@ -878,7 +889,8 @@ class CompFlow {
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >& )
+               const std::array< tk::real, 3 >&,
+               const std::vector< EoS_Base* >& )
     {
       return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
     }
@@ -893,7 +905,8 @@ class CompFlow {
     static tk::StateFn::result_type
     symmetry( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& fn )
+              const std::array< tk::real, 3 >& fn,
+              const std::vector< EoS_Base* >& )
     {
       std::vector< tk::real > ur(5);
       // Internal cell velocity components
@@ -926,7 +939,8 @@ class CompFlow {
     static tk::StateFn::result_type
     farfield( ncomp_t system, ncomp_t, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& fn )
+              const std::array< tk::real, 3 >& fn,
+              const std::vector< EoS_Base* >& m_mat_blk )
     {
       using tag::param; using tag::bc;
 
@@ -952,8 +966,8 @@ class CompFlow {
         eos_totalenergy< eq >( system, frho, fu[0], fu[1], fu[2], fp );
 
       // Pressure from internal cell
-      auto p = eos_pressure< eq >( system, ul[0], ul[1]/ul[0], ul[2]/ul[0],
-                                   ul[3]/ul[0], ul[4] );
+      auto p = m_mat_blk[0]->eos_pressure( system, ul[0], ul[1]/ul[0],
+                                   ul[2]/ul[0], ul[3]/ul[0], ul[4] );
 
       auto ur = ul;
 
@@ -1004,7 +1018,8 @@ class CompFlow {
     static tk::StateFn::result_type
     extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
-                 const std::array< tk::real, 3 >& )
+                 const std::array< tk::real, 3 >&,
+                 const std::vector< EoS_Base* >& )
     {
       return {{ ul, ul }};
     }

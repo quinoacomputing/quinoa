@@ -24,6 +24,7 @@
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -47,7 +48,8 @@ class CompFlowProblemRayleighTaylor {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t, tk::real x, tk::real y,
+    analyticSolution( ncomp_t system, ncomp_t,
+                      std::vector< EoS_Base* >, tk::real x, tk::real y,
                       tk::real z, tk::real t );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution

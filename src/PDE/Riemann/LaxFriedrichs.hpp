@@ -19,6 +19,7 @@
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -31,7 +32,8 @@ struct LaxFriedrichs {
   //! \return Riemann solution according Lax and Friedrichs
   //! \note The function signature must follow tk::RiemannFluxFn
   static tk::RiemannFluxFn::result_type
-  flux( const std::array< tk::real, 3 >& fn,
+  flux( const std::vector< EoS_Base* > mat_blk,
+        const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {} )
   {
@@ -51,8 +53,8 @@ struct LaxFriedrichs {
     auto vr = u[1][2]/rhor;
     auto wr = u[1][3]/rhor;
 
-    auto pl = eos_pressure< tag::compflow >( 0, rhol, ul, vl, wl, u[0][4] );
-    auto pr = eos_pressure< tag::compflow >( 0, rhor, ur, vr, wr, u[1][4] );
+    auto pl = mat_blk[0]->eos_pressure( 0, rhol, ul, vl, wl, u[0][4] );
+    auto pr = mat_blk[0]->eos_pressure( 0, rhor, ur, vr, wr, u[1][4] );
 
     auto al = eos_soundspeed< tag::compflow >( 0, rhol, pl );
     auto ar = eos_soundspeed< tag::compflow >( 0, rhor, pr );

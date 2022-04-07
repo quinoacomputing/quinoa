@@ -22,6 +22,7 @@
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace tk {
 
@@ -33,6 +34,7 @@ void
 bndSurfInt( ncomp_t system,
             std::size_t nmat,
             ncomp_t offset,
+            const std::vector< inciter::EoS_Base* >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
             const std::vector< bcconf_t >& bcconfig,
@@ -74,6 +76,7 @@ void
 bndSurfIntFV( ncomp_t system,
   std::size_t nmat,
   ncomp_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
   const inciter::FaceData& fd,
