@@ -371,10 +371,10 @@ class DGPDE {
                           tk::Fields&,
                           tk::Fields&,
                           std::vector< std::size_t >& ) const = 0;
-      virtual void Correct_Conserv( const tk::Fields& prim,
-                                    const tk::Fields& geoElem,
-                                    tk::Fields& unk,
-                                    std::size_t nielem ) const = 0;
+      virtual void Correct_Conserv( const tk::Fields&,
+                                    const tk::Fields&,
+                                    tk::Fields&,
+                                    std::size_t ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,

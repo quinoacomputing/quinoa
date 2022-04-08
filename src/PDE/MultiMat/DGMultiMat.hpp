@@ -534,7 +534,6 @@ class MultiMat {
 
     //! Update the conservative variable solution for this PDE system
     //! \param[in] prim Array of primitive variables
-    //! \param[in] L The left hand side block-diagonal mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] unk Array of conservative variables
     //! \param[in] nielem Number of internal elements
