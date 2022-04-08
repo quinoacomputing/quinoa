@@ -841,23 +841,13 @@ VertexBasedMultiMat_P2(
           dof_el, offset, ncomp, phic_p1,
           {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
+        // Vector to store the range of limited variables
+        std::array< std::size_t, 2 > VarRange;
+
         for(std::size_t k=0; k<nmat; ++k) {
           if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-4) {
-            // Vector to store the range of limited variables
-            std::array< std::size_t, 2 > VarRange;
-
             // limit the density of minor materials
             VarRange[0] = densityIdx(nmat, k);
-            VarRange[1] = VarRange[0];
-            if(dof_el > 4)
-              VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem, e,
-                rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm, VarRange,
-                phic_p2);
-            VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-              dof_el, offset, ncomp, phic_p1, VarRange);
-
-            // limit the energy of minor materials
-            VarRange[0] = energyIdx(nmat, k);
             VarRange[1] = VarRange[0];
             if(dof_el > 4)
               VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem, e,
@@ -877,6 +867,15 @@ VertexBasedMultiMat_P2(
               dof_el, offset, nprim, phip_p1, VarRange);
           }
         }
+        // limit the velocity
+        VarRange[0] = velocityIdx(nmat, 0);
+        VarRange[1] = velocityIdx(nmat, 2);
+        if(dof_el > 4)
+          VertexBasedLimiting_P2(prim, P, esup, inpoel, coord, geoElem, e,
+            rdof, dof_el, offset, nprim, gid, bid, uNodalExtrm, VarRange,
+            phip_p2);
+        VertexBasedLimiting(prim, P, esup, inpoel, coord, geoElem, e, rdof,
+          dof_el, offset, nprim, phip_p1, VarRange);
       }
 
       if(dof_el > 4) {
