@@ -28,6 +28,7 @@ void spectral_decay( std::size_t nmat,
                      std::size_t nunk,
                      const std::vector< int >& esuel,
                      const tk::Fields& unk,
+                     const tk::Fields& prim,
                      std::size_t ndof,
                      std::size_t ndofmax,
                      tk::real tolref,
@@ -38,6 +39,7 @@ void spectral_decay( std::size_t nmat,
 //! \param[in] nunk Number of unknowns
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] unk Array of unknowns
+//! \param[in] prim Array of primitive quantities
 //! \param[in] ndof Number of degrees of freedom in the solution
 //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
 //! \param[in] tolref Tolerance for p-refinement
@@ -53,6 +55,7 @@ void spectral_decay( std::size_t nmat,
 // *****************************************************************************
 {
   const auto ncomp = unk.nprop() / ndof;
+  const auto nprim = prim.nprop() / ndof;
 
   // The array storing the adaptive indicator for each elements
   std::vector< tk::real > Ind(nunk, 0);
@@ -63,8 +66,8 @@ void spectral_decay( std::size_t nmat,
         Ind[e] =
           evalDiscIndicator_CompFlow(e, ncomp, ndof, ndofel[e], unk);
       else
-        Ind[e] =
-          evalDiscIndicator_MultiMat(e, nmat, ncomp, ndof, ndofel[e], unk);
+        Ind[e] = evalDiscIndicator_MultiMat(e, nmat, ncomp, nprim, ndof,
+          ndofel[e], unk, prim);
     }
 
   // As for spectral-decay indicator, rho_p - rho_(p-1) actually is the leading
@@ -336,17 +339,21 @@ tk::real evalDiscIndicator_CompFlow( std::size_t e,
 tk::real evalDiscIndicator_MultiMat( std::size_t e,
                                      std::size_t nmat,
                                      ncomp_t ncomp,
+                                     ncomp_t nprim,
                                      const std::size_t ndof,
                                      const std::size_t ndofel,
-                                     const tk::Fields& unk )
+                                     const tk::Fields& unk,
+                                     const tk::Fields& prim )
 // *****************************************************************************
 //! Evaluate the spectral decay indicator
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nprim Number of primitive quantities stored for this PDE system
 //! \param[in] ndof Number of degrees of freedom in the solution
 //! \param[in] ndofel Local number of degrees of freedom
 //! \param[in] unk Array of unknowns
+//! \param[in] prim Array of primitive quantities
 //! \return The value of spectral indicator for the element
 // *****************************************************************************
 {
@@ -365,6 +372,7 @@ tk::real evalDiscIndicator_MultiMat( std::size_t e,
   std::vector<tk::real> dU(nmat,0.0);
   std::vector<tk::real> U(nmat,0.0);
   std::vector<std::size_t> marker(nmat,0);
+  std::array<tk::real, 3> V{0, 0, 0}, dV{0, 0, 0};
 
   // Gaussian quadrature
   for (std::size_t igp=0; igp<ng; ++igp)
@@ -374,7 +382,10 @@ tk::real evalDiscIndicator_MultiMat( std::size_t e,
                              coordgp[2][igp] );
 
     auto state = tk::eval_state( ncomp, 0, ndof, ndofel, e, unk, B, {0, ncomp-1} );
+    auto pstate = tk::eval_state( nprim, 0, ndof, ndofel, e, unk, B,
+      {0, nprim-1} );
 
+    // indicator based on material density
     for(std::size_t k = 0; k < nmat; k++) {
       if(unk(e, volfracDofIdx(nmat, k, ndof, 0), 0) > 1e-2) {
         marker[k] = 1;
@@ -402,12 +413,50 @@ tk::real evalDiscIndicator_MultiMat( std::size_t e,
         }
       }
     }
+
+    // indicator based on velocity
+    for (std::size_t i=0; i<3; ++i) {
+      V[i] += wgp[igp] * pstate[velocityIdx(nmat,i)] *
+        pstate[velocityIdx(nmat,i)];
+
+      if(ndofel > 4)
+      {
+         auto dV_p2 = prim(e, velocityDofIdx(nmat, i, ndof, 4), 0) * B[4]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 5), 0) * B[5]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 6), 0) * B[6]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 7), 0) * B[7]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 8), 0) * B[8]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 9), 0) * B[9];
+
+         dV[i] += wgp[igp] * dV_p2 * dV_p2;
+      }
+      else
+      {
+         auto dV_p1 = prim(e, velocityDofIdx(nmat, i, ndof, 1), 0) * B[1]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 2), 0) * B[2]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 3), 0) * B[3];
+
+         dV[i] += wgp[igp] * dV_p1 * dV_p1;
+      }
+    }
   }
 
-  // Return the max indicator value among all the materials
+  // The max indicator value among all the materials
   tk::real Indmax = 0.0;
   for(std::size_t k = 0; k < nmat; k++)
     if(marker[k]) Indmax = std::max(dU[k]/U[k], Indmax);
+
+  std::array<tk::real, 3> vavg{prim(e, velocityDofIdx(nmat,0,ndof,0), 0),
+    prim(e, velocityDofIdx(nmat,1,ndof,0), 0),
+    prim(e, velocityDofIdx(nmat,2,ndof,0), 0)};
+  auto vmag = std::sqrt(tk::dot(vavg, vavg));
+
+  // The max indicator value among all the velocity components
+  for (std::size_t i=0; i<3; ++i) {
+    if (std::abs(V[i]) > 1e-4*std::max(1.0,vmag))
+      Indmax = std::max((dV[i])/(V[i]), Indmax);
+  }
+
   return Indmax;
 }
 

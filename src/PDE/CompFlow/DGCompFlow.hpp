@@ -445,6 +445,7 @@ class CompFlow {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] unk Array of unknowns
+    //! \param[in] prim Array of primitive quantities
     //! \param[in] indicator p-refinement indicator type
     //! \param[in] ndof Number of degrees of freedom in the solution
     //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
@@ -455,6 +456,7 @@ class CompFlow {
                     const std::vector< std::size_t >& inpoel,
                     const inciter::FaceData& fd,
                     const tk::Fields& unk,
+                    const tk::Fields& prim,
                     inciter::ctr::PrefIndicatorType indicator,
                     std::size_t ndof,
                     std::size_t ndofmax,
@@ -464,7 +466,8 @@ class CompFlow {
       const auto& esuel = fd.Esuel();
 
       if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
-        spectral_decay( 1, nunk, esuel, unk, ndof, ndofmax, tolref, ndofel );
+        spectral_decay( 1, nunk, esuel, unk, prim, ndof, ndofmax, tolref,
+          ndofel );
       else if(indicator == inciter::ctr::PrefIndicatorType::NON_CONFORMITY)
         non_conformity( nunk, fd.Nbfac(), inpoel, coord, esuel, fd.Esuf(),
           fd.Inpofa(), unk, ndof, ndofmax, ndofel );

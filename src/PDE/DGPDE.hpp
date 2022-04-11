@@ -244,14 +244,15 @@ class DGPDE {
                     const std::vector< std::size_t >& inpoel,
                     const inciter::FaceData& fd,
                     const tk::Fields& unk,
+                    const tk::Fields& prim,
                     inciter::ctr::PrefIndicatorType indicator,
                     std::size_t ndof,
                     std::size_t ndofmax,
                     tk::real tolref,
                     std::vector< std::size_t >& ndofel ) const
     {
-      self->eval_ndof( nunk, coord, inpoel, fd, unk, indicator, ndof, ndofmax,
-        tolref, ndofel );
+      self->eval_ndof( nunk, coord, inpoel, fd, unk, prim, indicator, ndof,
+        ndofmax, tolref, ndofel );
     }
 
     //! Public interface for computing the minimum time step size
@@ -392,6 +393,7 @@ class DGPDE {
                               const std::vector< std::size_t >&,
                               const inciter::FaceData&,
                               const tk::Fields&,
+                              const tk::Fields&,
                               inciter::ctr::PrefIndicatorType,
                               std::size_t,
                               std::size_t,
@@ -528,13 +530,14 @@ class DGPDE {
                       const std::vector< std::size_t >& inpoel,
                       const inciter::FaceData& fd,
                       const tk::Fields& unk,
+                      const tk::Fields& prim,
                       inciter::ctr::PrefIndicatorType indicator,
                       std::size_t ndof,
                       std::size_t ndofmax,
                       tk::real tolref,
                       std::vector< std::size_t >& ndofel ) const override
-      { data.eval_ndof( nunk, coord, inpoel, fd, unk, indicator, ndof, ndofmax,
-                        tolref, ndofel ); }
+      { data.eval_ndof( nunk, coord, inpoel, fd, unk, prim, indicator, ndof,
+                        ndofmax, tolref, ndofel ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const inciter::FaceData& fd,

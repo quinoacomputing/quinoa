@@ -31,6 +31,7 @@ void spectral_decay( std::size_t nmat,
                      std::size_t nunk,
                      const std::vector< int >& esuel,
                      const tk::Fields& unk,
+                     const tk::Fields& prim,
                      std::size_t ndof,
                      std::size_t ndofmax,
                      tk::real tolref,
@@ -60,9 +61,11 @@ tk::real evalDiscIndicator_CompFlow( std::size_t e,
 tk::real evalDiscIndicator_MultiMat( std::size_t e,
                                      std::size_t nmat,
                                      ncomp_t ncomp,
+                                     ncomp_t nprim,
                                      const std::size_t ndof,
                                      const std::size_t ndofel,
-                                     const tk::Fields& unk );
+                                     const tk::Fields& unk,
+                                     const tk::Fields& prim );
 } // inciter::
 
 #endif // Indicator_h

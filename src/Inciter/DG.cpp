@@ -346,7 +346,7 @@ DG::next()
   if (pref && m_stage == 0 && d->T() > 0)
     for (const auto& eq : g_dgpde)
       eq.eval_ndof( myGhosts()->m_nunk, myGhosts()->m_coord, myGhosts()->m_inpoel,
-                    myGhosts()->m_fd, m_u,
+                    myGhosts()->m_fd, m_u, m_p,
                     g_inputdeck.get< tag::pref, tag::indicator >(),
                     g_inputdeck.get< tag::discr, tag::ndof >(),
                     g_inputdeck.get< tag::pref, tag::ndofmax >(),

@@ -607,7 +607,8 @@ VertexBasedMultiMat_P1(
     if(ndofel[e] > 1) {
       // Evaluate the shock detection indicator to determine whether the limiter
       // is applied or not
-      auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
+      auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, nprim, dof_el,
+        ndofel[e], U, P);
       if(Ind > threshold)
         shockmarker[e] = 1;
       else
@@ -794,7 +795,8 @@ VertexBasedMultiMat_P2(
 
     // Evaluate the shock detection indicator to determine whether the limiter
     // is applied or not
-    auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, nprim, dof_el,
+      ndofel[e], U, P);
     // If P0P1, the limiter will always applied
     if(Ind > threshold || rdof > ndof)
       shockmarker[e] = 1;
@@ -843,11 +845,11 @@ VertexBasedMultiMat_P2(
           dof_el, offset, ncomp, phic_p1,
           {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
-        // Vector to store the range of limited variables
-        std::array< std::size_t, 2 > VarRange;
-
         for(std::size_t k=0; k<nmat; ++k) {
           if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-4) {
+            // Vector to store the range of limited variables
+            std::array< std::size_t, 2 > VarRange;
+
             // limit the density of minor materials
             VarRange[0] = densityIdx(nmat, k);
             VarRange[1] = VarRange[0];
@@ -869,15 +871,6 @@ VertexBasedMultiMat_P2(
               dof_el, offset, nprim, phip_p1, VarRange);
           }
         }
-        // limit the velocity
-        VarRange[0] = velocityIdx(nmat, 0);
-        VarRange[1] = velocityIdx(nmat, 2);
-        if(dof_el > 4)
-          VertexBasedLimiting_P2(prim, P, esup, inpoel, coord, geoElem, e,
-            rdof, dof_el, offset, nprim, gid, bid, uNodalExtrm, VarRange,
-            phip_p2);
-        VertexBasedLimiting(prim, P, esup, inpoel, coord, geoElem, e, rdof,
-          dof_el, offset, nprim, phip_p1, VarRange);
       }
 
       if(dof_el > 4) {
