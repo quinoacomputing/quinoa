@@ -22,6 +22,7 @@
 #include "FunctionPrototypes.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -41,20 +42,20 @@ class CompFlowProblemUserDefined {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real )
+    analyticSolution( ncomp_t, ncomp_t, std::vector< EoS_Base* >, tk::real,
+                      tk::real, tk::real, tk::real )
     { return {}; }
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
-    //! \param[in,out] r Density source
-    //! \param[in,out] ru X momentum source
-    //! \param[in,out] rv Y momentum source
-    //! \param[in,out] rw Z momentum source
-    //! \param[in,out] re Specific total energy source
+    //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
-    static tk::CompFlowSrcFn::result_type
-    src( ncomp_t, tk::real, tk::real, tk::real, tk::real, tk::real& r,
-         tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
-    { r = ru = rv = rw = re = 0.0; }
+    static tk::SrcFn::result_type
+    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
+         std::vector< tk::real >& sv )
+    {
+      Assert(sv.size() == 5, "Incorrect source vector size");
+      sv[0] = sv[1] = sv[2] = sv[3] = sv[4] = 0.0;
+    }
 
     //! Return field names to be output to file
     std::vector< std::string > analyticFieldNames( ncomp_t ) const

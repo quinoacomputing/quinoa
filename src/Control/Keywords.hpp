@@ -5007,6 +5007,23 @@ struct shockdensity_wave_info {
 using shockdensity_wave =
   keyword< shockdensity_wave_info, TAOCPP_PEGTL_STRING("shockdensity_wave") >;
 
+struct equilinterface_advect_info {
+  static std::string name() { return "Advection of equilibrium interface"; }
+  static std::string shortDescription() { return
+    "Select the advection of equilibrium interface problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the advection of equilibrium interface
+    problem. This is a manufactured problem with source terms with nonlinear
+    solutions near the material interface. Source terms are used to ensure that
+    the conservation laws are satisfied by the manufactured solution.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using equilinterface_advect =
+  keyword< equilinterface_advect_info,
+  TAOCPP_PEGTL_STRING("equilinterface_advect") >;
+
 struct problem_info {
   static std::string name() { return "Test problem"; }
   static std::string shortDescription() { return
@@ -7112,6 +7129,24 @@ struct limiter_info {
   };
 };
 using limiter = keyword< limiter_info, TAOCPP_PEGTL_STRING("limiter") >;
+
+struct accuracy_test_info {
+  static std::string name() { return "Accuracy test setup"; }
+  static std::string shortDescription() { return
+    "Toggle accuracy test setup"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify if the current setup is for an
+    order-of-accuracy testing, used for discontinuous Galerkin (DG) spatial
+    discretization in inciter. This deactivates certain robustness corrections
+    which might impact order-of-accuracy. Only intended for simple test problems
+    and not for real problems. Set true or false.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using accuracy_test = keyword< accuracy_test_info,
+  TAOCPP_PEGTL_STRING("accuracy_test") >;
 
 struct fct_info {
   static std::string name() { return "Flux-corrected transport"; }

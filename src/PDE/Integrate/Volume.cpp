@@ -23,6 +23,7 @@ tk::volInt( ncomp_t system,
             std::size_t nmat,
             ncomp_t offset,
             real t,
+            const std::vector< inciter::EoS_Base* >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
             const std::size_t nelem,
@@ -120,7 +121,7 @@ tk::volInt( ncomp_t system,
         auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
 
         // comput flux
-        auto fl = flux( system, ncomp, state, v );
+        auto fl = flux( system, ncomp, mat_blk, state, v );
 
         update_rhs( ncomp, offset, ndof, ndofel[e], wt, e, dBdx, fl, R );
       }

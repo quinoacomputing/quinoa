@@ -15,6 +15,7 @@
 
 #include "Fields.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 #include "History.hpp"
 
 namespace inciter {
@@ -28,6 +29,7 @@ std::vector< std::string > CompFlowFieldNames();
 std::vector< std::vector< tk::real > > 
 CompFlowFieldOutput( ncomp_t system,
                      ncomp_t offset,
+                     std::vector< EoS_Base* > mat_blk,
                      std::size_t nunk,
                      std::size_t rdof,
                      const tk::Fields& U );
@@ -38,6 +40,7 @@ std::vector< std::string > CompFlowSurfNames();
 //! Return surface field output going to file
 std::vector< std::vector< tk::real > >
 CompFlowSurfOutput( ncomp_t system,
+                    std::vector< EoS_Base* > mat_blk,
                     const std::map< int, std::vector< std::size_t > >& bnd,
                     const tk::Fields& U );
 
@@ -47,6 +50,7 @@ std::vector< std::string > CompFlowHistNames();
 //! Return time history field output evaluated at time history points
 std::vector< std::vector< tk::real > >
 CompFlowHistOutput( ncomp_t system,
+                    std::vector< EoS_Base* > mat_blk,
                     const std::vector< HistData >& h,
                     const std::vector< std::size_t >& inpoel,
                     const tk::Fields& U );

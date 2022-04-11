@@ -15,7 +15,8 @@
 [[noreturn]] tk::StateFn::result_type
 inciter::invalidBC( ncomp_t, ncomp_t, const std::vector< tk::real >&,
            tk::real, tk::real, tk::real, tk::real,
-           const std::array< tk::real, 3> & )
+           const std::array< tk::real, 3> &,
+           const std::vector< EoS_Base* >& )
 // *****************************************************************************
 //! State function for invalid/un-configured boundary conditions
 //! \note The function signature must follow tk::StateFn

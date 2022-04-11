@@ -231,6 +231,12 @@ Transporter::info( const InciterPrint& print )
   } else if (g_inputdeck.centering() == tk::Centering::ELEM)
   {
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
+
+    if (g_inputdeck.get< tag::discr, tag::accuracy_test >())
+    {
+      print.item("Warning: order-of-accuracy testing enabled, ",
+        "robustness corrections inactive");
+    }
   }
   print.item( "PE-locality mesh reordering",
               g_inputdeck.get< tag::discr, tag::pelocal_reorder >() );

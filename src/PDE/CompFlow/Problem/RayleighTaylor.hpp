@@ -24,6 +24,7 @@
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -47,7 +48,8 @@ class CompFlowProblemRayleighTaylor {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t, tk::real x, tk::real y,
+    analyticSolution( ncomp_t system, ncomp_t,
+                      std::vector< EoS_Base* >, tk::real x, tk::real y,
                       tk::real z, tk::real t );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
@@ -57,16 +59,13 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \param[in] t Physical time at which to evaluate the source
-    //! \param[in,out] r Density source
-    //! \param[in,out] ru X momentum source
-    //! \param[in,out] rv Y momentum source
-    //! \param[in,out] rw Z momentum source
-    //! \param[in,out] re Specific total energy source
+    //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
-    static tk::CompFlowSrcFn::result_type
-    src( ncomp_t system, tk::real x, tk::real y, tk::real z, tk::real t,
-         tk::real& r, tk::real& ru, tk::real& rv, tk::real& rw, tk::real& re )
+    static tk::SrcFn::result_type
+    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z, tk::real t,
+         std::vector< tk::real >& sv )
     {
+      Assert(sv.size() == 5, "Incorrect source vector size");
       using tag::param; using std::sin; using std::cos;
 
       // manufactured solution parameters
@@ -118,13 +117,13 @@ class CompFlowProblemRayleighTaylor {
       auto dedt = u*dudt + v*dvdt + w*dwdt;
 
       // density source
-      r = u*drdx[0] + v*drdx[1] + w*drdx[2];
+      sv[0] = u*drdx[0] + v*drdx[1] + w*drdx[2];
       // momentum source
-      ru = rho*dudt+u*r+dpdx[0] + s[1]*dudx[0]+s[2]*dudx[1]+s[3]*dudx[2];
-      rv = rho*dvdt+v*r+dpdx[1] + s[1]*dvdx[0]+s[2]*dvdx[1]+s[3]*dvdx[2];
-      rw = rho*dwdt+w*r+dpdx[2] + s[1]*dwdx[0]+s[2]*dwdx[1]+s[3]*dwdx[2];
+      sv[1] = rho*dudt+u*sv[0]+dpdx[0] + s[1]*dudx[0]+s[2]*dudx[1]+s[3]*dudx[2];
+      sv[2] = rho*dvdt+v*sv[0]+dpdx[1] + s[1]*dvdx[0]+s[2]*dvdx[1]+s[3]*dvdx[2];
+      sv[3] = rho*dwdt+w*sv[0]+dpdx[2] + s[1]*dwdx[0]+s[2]*dwdx[1]+s[3]*dwdx[2];
       // energy source
-      re = rho*dedt + E*r + s[1]*dedx[0]+s[2]*dedx[1]+s[3]*dedx[2]
+      sv[4] = rho*dedt + E*sv[0] + s[1]*dedx[0]+s[2]*dedx[1]+s[3]*dedx[2]
            + u*dpdx[0]+v*dpdx[1]+w*dpdx[2];
     }
 

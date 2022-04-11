@@ -21,6 +21,7 @@
 #include "Types.hpp"
 #include "Keywords.hpp"
 #include "Fields.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace tk {
 
@@ -38,7 +39,8 @@ using InitializeFn = std::function<
 //!    surface using a Riemann solver
 //! \see e.g., inciter::Upwind, inciter::LaxFriedrichs, inciter::HLLC
 using RiemannFluxFn = std::function<
-  std::vector< real >( const std::array< real, 3 >&,
+  std::vector< real >( const std::vector< inciter::EoS_Base* >& ,
+                       const std::array< real, 3 >&,
                        const std::array< std::vector< real >, 2 >&,
                        const std::vector< std::array< real, 3 > >& ) >;
 
@@ -50,8 +52,8 @@ using RiemannFluxFn = std::function<
 //! \see e.g., inciter::dg::Transport::flux, inciter::dg::CompFlow::flux
 using FluxFn = std::function<
   std::vector< std::array< real, 3 > >
-  ( ncomp_t, ncomp_t, const std::vector< real >&,
-    const std::vector< std::array< real, 3 > >& ) >;
+  ( ncomp_t, ncomp_t, const std::vector< inciter::EoS_Base* >&,
+    const std::vector< real >&, const std::vector< std::array< real, 3 > >& ) >;
 
 //! Function prototype for evaluating a prescribed velocity field
 //! \details Functions of this type are used to prescribe known velocity fields
@@ -67,25 +69,16 @@ using VelFn = std::function<
 using StateFn = std::function<
   std::array< std::vector< real >, 2 >
   ( ncomp_t, ncomp_t, const std::vector< real >&, real, real, real, real,
-    const std::array< tk::real, 3 >& ) >;
+    const std::array< tk::real, 3 >&, const std::vector< inciter::EoS_Base* >& ) >;
 
-//! Function prototype for evaluating a source term for CompFlow
+//! Function prototype for evaluating a source term
 //! \details Functions of this type are used to evaluate an arbitrary source
-//!   term specialized to a particular CompFlow problem, e.g., derived using the
+//!   term specialized to a particular problem, e.g., derived using the
 //!   method of manufactured solutions
 //! \see e.g., CompFlowProblemRayleighTaylor::src
-using CompFlowSrcFn = std::function<
-  void( ncomp_t, tk::real, tk::real, tk::real, tk::real,
-        tk::real&, tk::real&, tk::real&, tk::real&, tk::real& ) >;
-
-//! Function prototype for evaluating a source term for MultiMat
-//! \details Functions of this type are used to evaluate an arbitrary source
-//!   term specialized to a particular MultiMat problem, e.g., derived using the
-//!   method of manufactured solutions
-//! \warning The number of in/out variables are almsot certainly wrong here.
-using MultiMatSrcFn = std::function<
+using SrcFn = std::function<
   void( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
-        tk::real&, tk::real&, tk::real&, tk::real&, tk::real& ) >;
+        std::vector< tk::real >& ) >;
 
 //! \brief Function prototype for computing the element gradient contribution to a
 //!    nodal gradient in ALECG

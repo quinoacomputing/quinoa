@@ -155,7 +155,8 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::limiter,inciter::ctr::LimiterType      //!< Limiter type
   , tag::cweight,kw::cweight::info::expect::type//!< WENO central stencil weight
   , tag::rdof,   std::size_t          //!< Number of reconstructed solution DOFs
-  , tag::ndof,   std::size_t                   //!< Number of solution DOFs
+  , tag::ndof,   std::size_t                    //!< Number of solution DOFs
+  , tag::accuracy_test, bool                    //!< Accuracy test on/off
 > >;
 
 //! ASCII output floating-point precision in digits
@@ -450,6 +451,9 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::ic,            ic
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
+  , tag::farfield_density,  std::vector< kw::density::info::expect::type >
+  , tag::farfield_velocity, std::vector< std::vector<
+                              kw::velocity::info::expect::type > >
   , tag::sponge,        SpongeParameters
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >

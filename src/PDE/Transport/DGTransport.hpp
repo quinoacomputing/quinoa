@@ -36,6 +36,7 @@
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "PrefIndicator.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -222,8 +223,9 @@ class Transport {
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, rdof,
-            b.first, fd, geoFace, geoElem, t, b.second, P, U, rhs_ls, varRange );
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, 
+            m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second, 
+            P, U, rhs_ls, varRange );
 
         // 3. solve 3x3 least-squares system
         tk::solveLeastSq_P0P1( m_offset, rdof, lhs_ls, rhs_ls, U, varRange );
@@ -353,21 +355,21 @@ class Transport {
       std::vector< std::vector< tk::real > > riemannLoc;
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, t, ndof, rdof, inpoel, coord,
-                   fd, geoFace, geoElem, Upwind::flux,
+      tk::surfInt( m_system, m_ncomp, m_offset, m_mat_blk, t, ndof, rdof,
+                   inpoel, coord, fd, geoFace, geoElem, Upwind::flux,
                    Problem::prescribedVelocity, U, P, ndofel, R, vriem,
                    riemannLoc, riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, t, ndof, rdof,
+        tk::volInt( m_system, m_ncomp, m_offset, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
                     Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, ndof, rdof, b.first, fd,
-          geoFace, geoElem, inpoel, coord, t, Upwind::flux,
+        tk::bndSurfInt( m_system, m_ncomp, m_offset, m_mat_blk, ndof, rdof, 
+          b.first, fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
           riemannLoc, riemannDeriv, intsharp );
     }
@@ -500,6 +502,9 @@ class Transport {
     const ncomp_t m_offset;             //!< Offset this PDE operates from
     //! BC configuration
     BCStateFn m_bc;
+    //! \brief EOS material block - This PDE does not require an EOS block,
+    //! thus this variable has not been intialized.
+    std::vector< EoS_Base* > m_mat_blk;
 
     //! Evaluate physical flux function for this PDE system
     //! \param[in] ncomp Number of scalar components in this PDE system
@@ -512,8 +517,10 @@ class Transport {
     static tk::FluxFn::result_type
     flux( ncomp_t,
           ncomp_t ncomp,
+          const std::vector< EoS_Base* >&,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& v )
+
     {
       Assert( ugp.size() == ncomp, "Size mismatch" );
       Assert( v.size() == ncomp, "Size mismatch" );
@@ -535,7 +542,8 @@ class Transport {
     static tk::StateFn::result_type
     extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
-                 const std::array< tk::real, 3 >& )
+                 const std::array< tk::real, 3 >&,
+                 const std::vector< EoS_Base* >& )
     {
       return {{ ul, ul }};
     }
@@ -549,7 +557,8 @@ class Transport {
     static tk::StateFn::result_type
     inlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
            tk::real, tk::real, tk::real, tk::real,
-           const std::array< tk::real, 3 >& )
+           const std::array< tk::real, 3 >&,
+           const std::vector< EoS_Base* >& )
     {
       auto ur = ul;
       std::fill( begin(ur), end(ur), 0.0 );
@@ -565,7 +574,8 @@ class Transport {
     static tk::StateFn::result_type
     outlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
-            const std::array< tk::real, 3 >& )
+            const std::array< tk::real, 3 >&,
+            const std::vector< EoS_Base* >& )
     {
       return {{ ul, ul }};
     }
@@ -585,7 +595,8 @@ class Transport {
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >& )
+               const std::array< tk::real, 3 >&,
+               const std::vector< EoS_Base* >& )
     {
       return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
     }

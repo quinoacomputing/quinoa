@@ -1,35 +1,34 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/Problem/WaterAirShocktube.hpp
+  \file      src/PDE/MultiMat/Problem/EquilInterfaceAdvect.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Problem configuration for Water-Air shock-tube
+  \brief     Problem configuration for equilibrium interface advection
   \details   This file defines a policy class for the multi-material
     compressible flow equations, defined in PDE/MultiMat/MultiMat.hpp.
     See PDE/MultiMat/Problem.hpp for general requirements on Problem policy
     classes for MultiMat.
 */
 // *****************************************************************************
-#ifndef MultiMatProblemWaterAirShocktube_h
-#define MultiMatProblemWaterAirShocktube_h
+#ifndef MultiMatProblemEquilInterfaceAdvect_h
+#define MultiMatProblemEquilInterfaceAdvect_h
 
 #include <string>
 
 #include "Types.hpp"
 #include "Fields.hpp"
+#include "Vector.hpp"
 #include "FunctionPrototypes.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
-//! MultiMat system of PDEs problem: Water-Air shock-tube
-//! \see Chiapolino, A., Saurel, R., & Nkonga, B. (2017). Sharpening diffuse
-//!   interfaces with compressible fluids on unstructured meshes. Journal of
-//!   Computational Physics, 340, 389-417.
-class MultiMatProblemWaterAirShocktube {
+//! MultiMat system of PDEs problem: equilibrium interface advection
+class MultiMatProblemEquilInterfaceAdvect {
 
   protected:
     using ncomp_t = tk::ctr::ncomp_t;
@@ -41,6 +40,7 @@ class MultiMatProblemWaterAirShocktube {
     initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
                 tk::real );
 
+    //! Evaluate analytical solution at (x,y,z,t) for all components
     static std::vector< tk::real >
     analyticSolution( ncomp_t system, ncomp_t ncomp,  tk::real x, tk::real y,
                       tk::real z, tk::real t )
@@ -48,11 +48,33 @@ class MultiMatProblemWaterAirShocktube {
 
     //! Compute and return source term for this problem
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
-      std::vector< tk::real >& sv )
+    src( ncomp_t system, ncomp_t nmat, tk::real x, tk::real y, tk::real z,
+      tk::real t, std::vector< tk::real >& sv )
     {
-      for (std::size_t i=0; i<sv.size(); ++i) {
-        sv[i] = 0.0;
+      auto ncomp = 3*nmat+3;
+      Assert(sv.size() == ncomp, "Incorrect source vector size");
+
+      // solution at given location and time
+      auto s = initialize(system, ncomp, x, y, z, t);
+      tk::real rhob(0.0);
+      for (std::size_t k=0; k<nmat; ++k) {
+        rhob += s[densityIdx(nmat,k)];
+      }
+      std::array< tk::real, 3 > u0 {{s[momentumIdx(nmat,0)]/rhob,
+        s[momentumIdx(nmat,1)]/rhob, s[momentumIdx(nmat,2)]/rhob}};
+      tk::real umag2 = tk::dot(u0, u0);
+
+      // source terms
+      for (std::size_t i=0; i<3; ++i) {
+        sv[momentumIdx(nmat,i)] = 0.0;
+      }
+      for (std::size_t k=0; k<nmat; ++k) {
+        sv[volfracIdx(nmat,k)] = 0.0;
+        sv[densityIdx(nmat,k)] = (u0[0]+u0[1]+u0[2]) * s[volfracIdx(nmat,k)];
+        for (std::size_t i=0; i<3; ++i) {
+          sv[momentumIdx(nmat,i)] += u0[i] * sv[densityIdx(nmat,k)];
+        }
+        sv[energyIdx(nmat,k)] = 0.5 * umag2 * sv[densityIdx(nmat,k)];
       }
     }
 
@@ -61,9 +83,9 @@ class MultiMatProblemWaterAirShocktube {
 
     //! Return problem type
     static ctr::ProblemType type() noexcept
-    { return ctr::ProblemType::WATERAIR_SHOCKTUBE; }
+    { return ctr::ProblemType::EQUILINTERFACE_ADVECT; }
 };
 
 } // inciter::
 
-#endif // MultiMatProblemWaterAirShocktube_h
+#endif // MultiMatProblemEquilInterfaceAdvect_h

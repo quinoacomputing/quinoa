@@ -1400,8 +1400,10 @@ DG::solve( tk::real newdt )
     eq.updateInterfaceCells( m_u, myGhosts()->m_fd.Esuel().size()/4, m_ndof );
     eq.updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
       myGhosts()->m_fd.Esuel().size()/4 );
-    eq.cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
-      myGhosts()->m_fd.Esuel().size()/4 );
+    if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
+      eq.cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
+        myGhosts()->m_fd.Esuel().size()/4 );
+    }
   }
 
   if (m_stage < 2) {

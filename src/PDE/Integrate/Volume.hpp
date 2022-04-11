@@ -20,6 +20,7 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace tk {
 
@@ -31,6 +32,7 @@ volInt( ncomp_t system,
         std::size_t nmat,
         ncomp_t offset,
         real t,
+        const std::vector< inciter::EoS_Base* >& mat_blk,
         const std::size_t ndof,
         const std::size_t rdof,
         const std::size_t nelem,

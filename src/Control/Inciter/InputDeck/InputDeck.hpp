@@ -261,6 +261,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::wenop1
                                  , kw::superbeep1
                                  , kw::vertexbasedp1
+                                 , kw::accuracy_test
                                  , kw::prelax
                                  , kw::prelax_timescale
                                  , kw::intsharp
@@ -288,7 +289,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::waterair_shocktube
                                  , kw::shock_hebubble
                                  , kw::underwater_ex
-                                 , kw::shockdensity_wave >;
+                                 , kw::shockdensity_wave
+                                 , kw::equilinterface_advect >;
 
     //! Set of tags to ignore when printing this InputDeck
     using ignore = CmdLine::ignore;
@@ -324,6 +326,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::cweight >() = 1.0;
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::rdof >() = 1;
+      get< tag::discr, tag::accuracy_test >() = false;
       // Default field output file type
       get< tag::selected, tag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
       // Default AMR settings
