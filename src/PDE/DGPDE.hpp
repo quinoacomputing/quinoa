@@ -72,7 +72,8 @@ template< class Eq > struct ConfigBC {
 [[noreturn]] tk::StateFn::result_type
 invalidBC( ncomp_t, ncomp_t, const std::vector< tk::real >&,
            tk::real, tk::real, tk::real, tk::real,
-           const std::array< tk::real, 3> & );
+           const std::array< tk::real, 3> &,
+           const std::vector< EoS_Base* >& );
 
 //! \brief Partial differential equation base for discontinuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side

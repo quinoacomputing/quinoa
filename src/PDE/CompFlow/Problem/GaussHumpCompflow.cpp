@@ -73,6 +73,7 @@ CompFlowProblemGaussHump::initialize( ncomp_t system,
 tk::InitializeFn::result_type
 CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
                                             ncomp_t ncomp,
+                                            std::vector< EoS_Base* >,
                                             tk::real x,
                                             tk::real y,
                                             tk::real,

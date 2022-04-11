@@ -2381,6 +2381,7 @@ bool
 cleanTraceMultiMat(
   std::size_t nelem,
   std::size_t system,
+  const std::vector< EoS_Base* >& mat_blk,
   std::size_t offset,
   const tk::Fields& geoElem,
   std::size_t nmat,
@@ -2554,7 +2555,7 @@ cleanTraceMultiMat(
     // 2. Flux energy change into majority material
     U(e, energyDofIdx(nmat, kmax, rdof, 0), offset) += d_arE;
     P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) =
-      eos_pressure< tag::multimat >(system,
+      mat_blk[kmax]->eos_pressure(system,
       U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0), offset),
       U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset), kmax);

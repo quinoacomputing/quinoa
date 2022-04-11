@@ -26,6 +26,7 @@
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -49,8 +50,8 @@ class CompFlowProblemVorticalFlow {
 
     //! Evaluate analytical solution at (x,y,z) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t, tk::real x, tk::real y,
-                      tk::real z, tk::real );
+    analyticSolution( ncomp_t system, ncomp_t, std::vector< EoS_Base* >,
+                      tk::real x, tk::real y, tk::real z, tk::real );
 
     //! Compute and return source term for vortical flow manufactured solution
     //! \param[in] system Equation system index, i.e., which compressible

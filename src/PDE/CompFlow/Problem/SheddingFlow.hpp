@@ -22,6 +22,7 @@
 #include "FunctionPrototypes.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -40,8 +41,8 @@ class CompFlowProblemSheddingFlow {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t, ncomp_t, tk::real, tk::real,  tk::real,
-                      tk::real ) { return {}; }
+    analyticSolution( ncomp_t, ncomp_t, std::vector< EoS_Base* >, tk::real,
+                      tk::real,  tk::real, tk::real ) { return {}; }
 
     //! Compute and return source term for this problem
     //! \param[in,out] sv Source term vector

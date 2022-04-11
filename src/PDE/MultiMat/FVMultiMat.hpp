@@ -36,6 +36,7 @@
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -68,8 +69,8 @@ class MultiMat {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
-      m_riemann( multimatRiemannSolver(g_inputdeck.get< tag::param,
-        tag::multimat, tag::flux >().at(m_system)) )
+      m_riemann( multimatRiemannSolver(
+        g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) )
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
@@ -79,6 +80,16 @@ class MultiMat {
         , invalidBC         // Outlet BC not implemented
         , subsonicOutlet
         , extrapolate } ) );
+
+      // EoS initialization
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      for (std::size_t k=0; k<nmat; ++k) {
+        auto g = gamma< eq >(m_system, k);
+        auto ps = pstiff< eq >(m_system, k);
+        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
+        }
+
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -152,7 +163,7 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, 1.0, t, b, s );
+              initializeBox( m_system, m_mat_blk, 1.0, t, b, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -228,7 +239,7 @@ class MultiMat {
           tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset);
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
-            eos_pressure< tag::multimat >(m_system, arhomat, vel[0], vel[1],
+            m_mat_blk[k]->eos_pressure(m_system, arhomat, vel[0], vel[1],
               vel[2], arhoemat, alphamat, k);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
             constrain_pressure< tag::multimat >(m_system,
@@ -271,8 +282,8 @@ class MultiMat {
       Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) <= 4, "High-order "
               "discretizations not set up for multimat cleanTraceMaterial()" );
 
-      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_offset, geoElem,
-        nmat, unk, prim);
+      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk,
+        m_offset, geoElem, nmat, unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
     }
@@ -422,15 +433,15 @@ class MultiMat {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfIntFV( m_system, nmat, m_offset, t, rdof, inpoel, coord, fd,
-                     geoFace, geoElem, m_riemann, velfn, U, P, R, riemannDeriv,
-                     intsharp );
+      tk::surfIntFV( m_system, nmat, m_offset, m_mat_blk, t, rdof, inpoel,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, R,
+                     riemannDeriv, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfIntFV( m_system, nmat, m_offset, rdof, b.first, fd, geoFace,
-                          geoElem, inpoel, coord, t, m_riemann, velfn, b.second,
-                          U, P, R, riemannDeriv, intsharp );
+        tk::bndSurfIntFV( m_system, nmat, m_offset, m_mat_blk, rdof, b.first,
+                          fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
+                          velfn, b.second, U, P, R, riemannDeriv, intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
@@ -655,6 +666,8 @@ class MultiMat {
     tk::RiemannFluxFn m_riemann;
     //! BC configuration
     BCStateFn m_bc;
+    //! EOS material block
+    std::vector< EoS_Base* > m_mat_blk;
 
     //! Evaluate conservative part of physical flux function for this PDE system
     //! \param[in] system Equation system index
@@ -666,8 +679,10 @@ class MultiMat {
     static tk::FluxFn::result_type
     flux( ncomp_t system,
           [[maybe_unused]] ncomp_t ncomp,
+          const std::vector< EoS_Base* >&,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
+
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -693,7 +708,8 @@ class MultiMat {
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >& fn )
+               const std::array< tk::real, 3 >& fn,
+               const std::vector< EoS_Base* >& m_mat_blk )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -740,7 +756,7 @@ class MultiMat {
           tk::real arhomat = ur[densityIdx(nmat, k)];
           tk::real arhoemat = ur[energyIdx(nmat, k)];
           tk::real alphamat = ur[volfracIdx(nmat, k)];
-          ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
             arhomat, ur[ncomp+velocityIdx(nmat, 0)],
             ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
             arhoemat, alphamat, k );
@@ -781,7 +797,8 @@ class MultiMat {
     static tk::StateFn::result_type
     symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& fn )
+              const std::array< tk::real, 3 >& fn,
+              const std::vector< EoS_Base* >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -852,7 +869,8 @@ class MultiMat {
                     ncomp_t ncomp,
                     const std::vector< tk::real >& ul,
                     tk::real, tk::real, tk::real, tk::real,
-                    const std::array< tk::real, 3 >& )
+                    const std::array< tk::real, 3 >&,
+                    const std::vector< EoS_Base* >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -906,7 +924,8 @@ class MultiMat {
     static tk::StateFn::result_type
     extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
-                 const std::array< tk::real, 3 >& )
+                 const std::array< tk::real, 3 >&,
+                 const std::vector< EoS_Base* >& )
     {
       return {{ ul, ul }};
     }
