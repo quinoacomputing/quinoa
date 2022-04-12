@@ -639,10 +639,10 @@ class MultiMat {
           // Compute and store material energy at quadrature point
           for(std::size_t imat = 0; imat < nmat; imat++) {
             auto alphamat = U[volfracIdx(nmat, imat)];
-            auto arhomat = U[densityIdx(nmat, imat)];
-            auto apremat = P[pressureIdx(nmat, imat)];
+            auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
+            auto premat = P[pressureIdx(nmat, imat)]/alphamat;
             s[imat] = alphamat * eos_totalenergy< tag::multimat >( m_system,
-              arhomat, vel[0], vel[1], vel[2], apremat, imat );
+              rhomat, vel[0], vel[1], vel[2], premat, imat );
           }
 
           // Evaluate the righ-hand-side vector
