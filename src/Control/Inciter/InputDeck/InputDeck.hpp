@@ -262,6 +262,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::superbeep1
                                  , kw::vertexbasedp1
                                  , kw::accuracy_test
+                                 , kw::limsol_projection
                                  , kw::prelax
                                  , kw::prelax_timescale
                                  , kw::intsharp
@@ -327,6 +328,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::rdof >() = 1;
       get< tag::discr, tag::accuracy_test >() = false;
+      get< tag::discr, tag::limsol_projection >() = false;
       // Default field output file type
       get< tag::selected, tag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
       // Default AMR settings

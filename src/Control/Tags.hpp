@@ -315,6 +315,7 @@ struct ndof{ static std::string name() { return "ndof"; } };
 struct rdof{ static std::string name() { return "rdof"; } };
 struct limiter { static std::string name() { return "limiter"; } };
 struct accuracy_test { static std::string name() { return "accuracy_test"; } };
+struct limsol_projection { static std::string name() { return "limsol_projection"; } };
 struct cweight { static std::string name() { return "cweight"; } };
 struct update {};
 struct ch {};

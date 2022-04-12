@@ -237,6 +237,9 @@ Transporter::info( const InciterPrint& print )
       print.item("Warning: order-of-accuracy testing enabled, ",
         "robustness corrections inactive");
     }
+
+    print.item("Limited solution projection",
+      g_inputdeck.get< tag::discr, tag::limsol_projection >());
   }
   print.item( "PE-locality mesh reordering",
               g_inputdeck.get< tag::discr, tag::pelocal_reorder >() );

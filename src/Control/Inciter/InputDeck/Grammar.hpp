@@ -1355,7 +1355,10 @@ namespace deck {
            tk::grm::discrparam< use, kw::cweight, tag::cweight >,
            tk::grm::process< use< kw::accuracy_test >,
                              tk::grm::Store< tag::discr, tag::accuracy_test >,
-                             pegtl::alpha >
+                             pegtl::alpha >,
+           tk::grm::process< use< kw::limsol_projection >,
+             tk::grm::Store< tag::discr, tag::limsol_projection >,
+             pegtl::alpha >
          > {};
 
   //! PDE parameter vector

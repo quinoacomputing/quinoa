@@ -1129,8 +1129,9 @@ DG::lim()
                 myGhosts()->m_coord, m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm,
                 m_pNodalExtrm, m_u, m_p, m_shockmarker );
 
-      eq.Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
-                         myGhosts()->m_fd.Esuel().size()/4);
+      if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
+        eq.Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
+          myGhosts()->m_fd.Esuel().size()/4);
     }
 
   // Send limited solution to neighboring chares

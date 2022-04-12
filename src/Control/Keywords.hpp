@@ -7148,6 +7148,25 @@ struct accuracy_test_info {
 using accuracy_test = keyword< accuracy_test_info,
   TAOCPP_PEGTL_STRING("accuracy_test") >;
 
+struct limsol_projection_info {
+  static std::string name() { return "Limited solution projection"; }
+  static std::string shortDescription() { return
+    "Toggle limited solution projection"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify limited solution projection.
+    This is used for discontinuous Galerkin (DG) spatial discretization in
+    inciter, for multi-material hydrodynamics. This uses a projection to obtain
+    bulk momentum and material energies from the limited primitive quantities.
+    This step is essential to obtain closure-law obeying limited quantities.
+    Set true or false.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using limsol_projection = keyword< limsol_projection_info,
+  TAOCPP_PEGTL_STRING("limsol_projection") >;
+
 struct fct_info {
   static std::string name() { return "Flux-corrected transport"; }
   static std::string shortDescription() { return
