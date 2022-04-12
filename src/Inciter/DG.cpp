@@ -346,7 +346,7 @@ DG::next()
   if (pref && m_stage == 0 && d->T() > 0)
     for (const auto& eq : g_dgpde)
       eq.eval_ndof( myGhosts()->m_nunk, myGhosts()->m_coord, myGhosts()->m_inpoel,
-                    myGhosts()->m_fd, m_u,
+                    myGhosts()->m_fd, m_u, m_p,
                     g_inputdeck.get< tag::pref, tag::indicator >(),
                     g_inputdeck.get< tag::discr, tag::ndof >(),
                     g_inputdeck.get< tag::pref, tag::ndofmax >(),
@@ -1123,11 +1123,16 @@ DG::lim()
   tk::destroy(m_pNodalExtrmc);
 
   if (rdof > 1)
-    for (const auto& eq : g_dgpde)
+    for (const auto& eq : g_dgpde) {
       eq.limit( d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem,
                 myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
                 myGhosts()->m_coord, m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm,
                 m_pNodalExtrm, m_u, m_p, m_shockmarker );
+
+      if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
+        eq.Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
+          myGhosts()->m_fd.Esuel().size()/4);
+    }
 
   // Send limited solution to neighboring chares
   if (myGhosts()->m_sendGhost.empty())

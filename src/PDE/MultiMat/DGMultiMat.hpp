@@ -203,6 +203,9 @@ class MultiMat {
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      // Unlike Compflow and Transport, there is a weak reconstruction about
+      // conservative variable after limiting function which will require the
+      // size of left hand side vector to be rdof
       tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
     }
 
@@ -541,6 +544,134 @@ class MultiMat {
       }
     }
 
+    //! Update the conservative variable solution for this PDE system
+    //! \param[in] prim Array of primitive variables
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] unk Array of conservative variables
+    //! \param[in] nielem Number of internal elements
+    //! \details This function computes the updated dofs for conservative
+    //!   quantities based on the limited solution
+    void Correct_Conserv( const tk::Fields& prim,
+                          const tk::Fields& geoElem,
+                          tk::Fields& unk,
+                          std::size_t nielem ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
+
+      for (std::size_t e=0; e<nielem; ++e) {
+        // Here we pre-compute the right-hand-side vector. The reason that the
+        // lhs in DG.cpp is not used is that the size of this vector in this
+        // projection procedure should be rdof instead of ndof.
+        std::vector<tk::real> L(rdof, 0.0);
+        L[0] = geoElem(e,0,0);
+        if(rdof > 1) {
+          L[1] = geoElem(e,0,0) / 10.0;
+          L[2] = geoElem(e,0,0) * 3.0/10.0;
+          L[3] = geoElem(e,0,0) * 3.0/5.0;
+
+          if(rdof > 4) {
+            L[4] = geoElem(e,0,0) / 35.0;
+            L[5] = geoElem(e,0,0) / 21.0;
+            L[6] = geoElem(e,0,0) / 14.0;
+            L[7] = geoElem(e,0,0) / 7.0;
+            L[8] = geoElem(e,0,0) * 3.0/14.0;
+            L[9] = geoElem(e,0,0) * 3.0/7.0;
+          }
+        }
+
+        std::vector< tk::real > R((nmat+3)*rdof, 0.0);
+
+        auto ng = tk::NGvol(ndof);
+
+        // Arrays for quadrature points
+        std::array< std::vector< tk::real >, 3 > coordgp;
+        std::vector< tk::real > wgp;
+
+        coordgp[0].resize( ng );
+        coordgp[1].resize( ng );
+        coordgp[2].resize( ng );
+        wgp.resize( ng );
+
+        tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+        // Loop over quadrature points in element e
+        for (std::size_t igp=0; igp<ng; ++igp) {
+          // Compute the basis function
+          auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
+                                   coordgp[2][igp] );
+
+          auto w = wgp[igp] * geoElem(e, 0, 0);
+
+          // Evaluate the solution at quadrature point
+          auto U = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk,  B,
+                                   {0, m_ncomp-1} );
+          auto P = tk::eval_state( nprim(), 0, rdof, ndof, e, prim, B,
+                                   {0, nprim()-1} );
+
+          // Solution vector that stores the material energy and bulk momentum
+          std::vector< tk::real > s(nmat+3, 0.0);
+
+          // Bulk density at quadrature point
+          tk::real rhob(0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+            rhob += U[densityIdx(nmat, k)];
+
+          // Velocity vector at quadrature point
+          std::array< tk::real, 3 >
+            vel{ P[velocityIdx(nmat, 0)],
+                 P[velocityIdx(nmat, 1)],
+                 P[velocityIdx(nmat, 2)] };
+
+          // Compute and store the bulk momentum
+          for(std::size_t idir = 0; idir < 3; idir++)
+            s[nmat+idir] = rhob * vel[idir];
+
+          // Compute and store material energy at quadrature point
+          for(std::size_t imat = 0; imat < nmat; imat++) {
+            auto alphamat = U[volfracIdx(nmat, imat)];
+            auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
+            auto premat = P[pressureIdx(nmat, imat)]/alphamat;
+            s[imat] = alphamat * eos_totalenergy< tag::multimat >( m_system,
+              rhomat, vel[0], vel[1], vel[2], premat, imat );
+          }
+
+          // Evaluate the righ-hand-side vector
+          for(std::size_t k = 0; k < nmat+3; k++) {
+            auto mark = k * rdof;
+            for(std::size_t idof = 0; idof < rdof; idof++)
+              R[mark+idof] += w * s[k] * B[idof];
+          }
+        }
+
+        // Update the high order dofs of the material energy
+        for(std::size_t imat = 0; imat < nmat; imat++) {
+          auto mark = imat * rdof;
+          for(std::size_t idof = 1; idof < ndof; idof++)
+            unk(e, energyDofIdx(nmat, imat, rdof, idof), 0) =
+              R[mark+idof] / L[idof];
+        }
+
+        // Update the high order dofs of the bulk momentum
+        for(std::size_t idir = 0; idir < 3; idir++) {
+          auto mark = (nmat + idir) * rdof;
+          for(std::size_t idof = 1; idof < ndof; idof++)
+            unk(e, momentumDofIdx(nmat, idir, rdof, idof), 0) =
+              R[mark+idof] / L[idof];
+        }
+      }
+    }
+
+
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -663,6 +794,7 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] unk Array of unknowns
+    //! \param[in] prim Array of primitive quantities
     //! \param[in] indicator p-refinement indicator type
     //! \param[in] ndof Number of degrees of freedom in the solution
     //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
@@ -673,6 +805,7 @@ class MultiMat {
                     [[maybe_unused]] const std::vector< std::size_t >& inpoel,
                     const inciter::FaceData& fd,
                     const tk::Fields& unk,
+                    const tk::Fields& prim,
                     inciter::ctr::PrefIndicatorType indicator,
                     std::size_t ndof,
                     std::size_t ndofmax,
@@ -684,7 +817,8 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
-        spectral_decay(nmat, nunk, esuel, unk, ndof, ndofmax, tolref, ndofel);
+        spectral_decay(nmat, nunk, esuel, unk, prim, ndof, ndofmax, tolref,
+          ndofel);
       else
         Throw( "No such adaptive indicator type" );
     }

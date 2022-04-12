@@ -607,7 +607,8 @@ VertexBasedMultiMat_P1(
     if(ndofel[e] > 1) {
       // Evaluate the shock detection indicator to determine whether the limiter
       // is applied or not
-      auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
+      auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, nprim, dof_el,
+        ndofel[e], U, P);
       if(Ind > threshold)
         shockmarker[e] = 1;
       else
@@ -773,7 +774,7 @@ VertexBasedMultiMat_P2(
   auto P_lim = P;
 
   // Threshold used for shock indicator
-  tk::real threshold = std::pow(10, -5);
+  tk::real threshold = std::pow(10, -5.7);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -794,7 +795,8 @@ VertexBasedMultiMat_P2(
 
     // Evaluate the shock detection indicator to determine whether the limiter
     // is applied or not
-    auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, dof_el, ndofel[e], U);
+    auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, nprim, dof_el,
+      ndofel[e], U, P);
     // If P0P1, the limiter will always applied
     if(Ind > threshold || rdof > ndof)
       shockmarker[e] = 1;
@@ -850,16 +852,6 @@ VertexBasedMultiMat_P2(
 
             // limit the density of minor materials
             VarRange[0] = densityIdx(nmat, k);
-            VarRange[1] = VarRange[0];
-            if(dof_el > 4)
-              VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem, e,
-                rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm, VarRange,
-                phic_p2);
-            VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
-              dof_el, offset, ncomp, phic_p1, VarRange);
-
-            // limit the energy of minor materials
-            VarRange[0] = energyIdx(nmat, k);
             VarRange[1] = VarRange[0];
             if(dof_el > 4)
               VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem, e,

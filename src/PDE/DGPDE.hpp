@@ -212,6 +212,15 @@ class DGPDE {
                    bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
     }
 
+    //! Public interface to update the conservative variable solution
+    void Correct_Conserv( const tk::Fields& prim,
+                          const tk::Fields& geoElem,
+                          tk::Fields& unk,
+                          std::size_t nielem ) const
+    {
+      self->Correct_Conserv( prim, geoElem, unk, nielem );
+    }
+
     //! Public interface to computing the P1 right-hand side vector
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -235,14 +244,15 @@ class DGPDE {
                     const std::vector< std::size_t >& inpoel,
                     const inciter::FaceData& fd,
                     const tk::Fields& unk,
+                    const tk::Fields& prim,
                     inciter::ctr::PrefIndicatorType indicator,
                     std::size_t ndof,
                     std::size_t ndofmax,
                     tk::real tolref,
                     std::vector< std::size_t >& ndofel ) const
     {
-      self->eval_ndof( nunk, coord, inpoel, fd, unk, indicator, ndof, ndofmax,
-        tolref, ndofel );
+      self->eval_ndof( nunk, coord, inpoel, fd, unk, prim, indicator, ndof,
+        ndofmax, tolref, ndofel );
     }
 
     //! Public interface for computing the minimum time step size
@@ -363,6 +373,10 @@ class DGPDE {
                           tk::Fields&,
                           tk::Fields&,
                           std::vector< std::size_t >& ) const = 0;
+      virtual void Correct_Conserv( const tk::Fields&,
+                                    const tk::Fields&,
+                                    tk::Fields&,
+                                    std::size_t ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -378,6 +392,7 @@ class DGPDE {
                               const tk::UnsMesh::Coords&,
                               const std::vector< std::size_t >&,
                               const inciter::FaceData&,
+                              const tk::Fields&,
                               const tk::Fields&,
                               inciter::ctr::PrefIndicatorType,
                               std::size_t,
@@ -487,6 +502,13 @@ class DGPDE {
         data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
                     bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
       }
+      void Correct_Conserv( const tk::Fields& prim,
+                          const tk::Fields& geoElem,
+                          tk::Fields& unk,
+                          std::size_t nielem ) const override
+      {
+        data.Correct_Conserv( prim, geoElem, unk, nielem );
+      }
       void rhs(
         tk::real t,
         const tk::Fields& geoFace,
@@ -508,13 +530,14 @@ class DGPDE {
                       const std::vector< std::size_t >& inpoel,
                       const inciter::FaceData& fd,
                       const tk::Fields& unk,
+                      const tk::Fields& prim,
                       inciter::ctr::PrefIndicatorType indicator,
                       std::size_t ndof,
                       std::size_t ndofmax,
                       tk::real tolref,
                       std::vector< std::size_t >& ndofel ) const override
-      { data.eval_ndof( nunk, coord, inpoel, fd, unk, indicator, ndof, ndofmax,
-                        tolref, ndofel ); }
+      { data.eval_ndof( nunk, coord, inpoel, fd, unk, prim, indicator, ndof,
+                        ndofmax, tolref, ndofel ); }
       tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                    const std::vector< std::size_t >& inpoel,
                    const inciter::FaceData& fd,
