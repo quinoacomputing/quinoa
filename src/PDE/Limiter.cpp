@@ -449,9 +449,13 @@ VertexBasedCompflow_P2(
 
     bool shock_detec(false);
 
-    // Evaluate the shock detection indicator
-    auto Ind = evalDiscIndicator_CompFlow(e, ncomp, dof_el, ndofel[e], U);
-    if(Ind > 1e-6)
+    if (inciter::g_inputdeck.get< tag::discr, tag::shock_detection >()) {;
+      // Evaluate the shock detection indicator
+      auto Ind = evalDiscIndicator_CompFlow(e, ncomp, dof_el, ndofel[e], U);
+      if(Ind > 1e-6)
+        shock_detec = true;
+    }
+    else
       shock_detec = true;
 
     if (dof_el > 1 && shock_detec)
@@ -604,7 +608,8 @@ VertexBasedMultiMat_P1(
       dof_el = ndofel[e];
     }
 
-    if(ndofel[e] > 1) {
+    if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >() &&
+      ndofel[e] > 1) {
       // Evaluate the shock detection indicator to determine whether the limiter
       // is applied or not
       auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, nprim, dof_el,
@@ -613,7 +618,8 @@ VertexBasedMultiMat_P1(
         shockmarker[e] = 1;
       else
         shockmarker[e] = 0;
-    } else {    // If P0P1, the limiter is always applied
+    } else {
+      // If P0P1 or if shock-detection is off, the limiter is always applied
       shockmarker[e] = 1;
     }
 
@@ -793,15 +799,20 @@ VertexBasedMultiMat_P2(
       dof_el = ndofel[e];
     }
 
-    // Evaluate the shock detection indicator to determine whether the limiter
-    // is applied or not
-    auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, nprim, dof_el,
-      ndofel[e], U, P);
-    // If P0P1, the limiter will always applied
-    if(Ind > threshold || rdof > ndof)
+    if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >() &&
+      ndofel[e] > 1) {
+      // Evaluate the shock detection indicator to determine whether the limiter
+      // is applied or not
+      auto Ind = evalDiscIndicator_MultiMat(e, nmat, ncomp, nprim, dof_el,
+        ndofel[e], U, P);
+      if(Ind > threshold)
+        shockmarker[e] = 1;
+      else
+        shockmarker[e] = 0;
+    } else {
+      // If P0P1 or if shock-detection is off, the limiter is always applied
       shockmarker[e] = 1;
-    else
-      shockmarker[e] = 0;
+    }
 
     if (dof_el > 1)
     {

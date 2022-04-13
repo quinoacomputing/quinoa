@@ -7167,6 +7167,24 @@ struct limsol_projection_info {
 using limsol_projection = keyword< limsol_projection_info,
   TAOCPP_PEGTL_STRING("limsol_projection") >;
 
+struct shock_detection_info {
+  static std::string name() { return "Shock detection"; }
+  static std::string shortDescription() { return
+    "Toggle shock detection for limiting"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify if shock detection is to be used for
+    limiting the discontinuous Galerkin (DG) spatial discretization in inciter.
+    If set false, limiting is applied to all cells; if true, each element is
+    evaluated for a shock/discontinuity and only if one is present, limiting is
+    applied. Set true or false.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() { return "true | false"; }
+  };
+};
+using shock_detection = keyword< shock_detection_info,
+  TAOCPP_PEGTL_STRING("shock_detection") >;
+
 struct fct_info {
   static std::string name() { return "Flux-corrected transport"; }
   static std::string shortDescription() { return

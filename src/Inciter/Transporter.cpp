@@ -232,9 +232,12 @@ Transporter::info( const InciterPrint& print )
   {
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
 
+    print.item("Shock detection based limiting",
+      g_inputdeck.get< tag::discr, tag::shock_detection >());
+
     if (g_inputdeck.get< tag::discr, tag::accuracy_test >())
     {
-      print.item("Warning: order-of-accuracy testing enabled, ",
+      print.item("WARNING: order-of-accuracy testing enabled",
         "robustness corrections inactive");
     }
 

@@ -158,6 +158,7 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::ndof,   std::size_t                    //!< Number of solution DOFs
   , tag::accuracy_test, bool                    //!< Accuracy test on/off
   , tag::limsol_projection, bool         //!< Limited solution projection on/off
+  , tag::shock_detection, bool          //!< Shock detection for limiting on/off
 > >;
 
 //! ASCII output floating-point precision in digits
