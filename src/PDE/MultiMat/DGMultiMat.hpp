@@ -572,22 +572,7 @@ class MultiMat {
         // Here we pre-compute the right-hand-side vector. The reason that the
         // lhs in DG.cpp is not used is that the size of this vector in this
         // projection procedure should be rdof instead of ndof.
-        std::vector<tk::real> L(rdof, 0.0);
-        L[0] = geoElem(e,0,0);
-        if(rdof > 1) {
-          L[1] = geoElem(e,0,0) / 10.0;
-          L[2] = geoElem(e,0,0) * 3.0/10.0;
-          L[3] = geoElem(e,0,0) * 3.0/5.0;
-
-          if(rdof > 4) {
-            L[4] = geoElem(e,0,0) / 35.0;
-            L[5] = geoElem(e,0,0) / 21.0;
-            L[6] = geoElem(e,0,0) / 14.0;
-            L[7] = geoElem(e,0,0) / 7.0;
-            L[8] = geoElem(e,0,0) * 3.0/14.0;
-            L[9] = geoElem(e,0,0) * 3.0/7.0;
-          }
-        }
+        auto L = tk::massMatrixDubiner(rdof, geoElem(e,0,0));
 
         std::vector< tk::real > R((nmat+3)*rdof, 0.0);
 

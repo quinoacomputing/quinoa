@@ -34,34 +34,13 @@ tk::mass( ncomp_t ncomp,
   const auto nelem = geoElem.nunk();
   Assert( l.nprop() == ndof*ncomp, "lhs mass matrix size incorrect" );
 
-  // Compute LHS for DG(P0)
-  for (std::size_t e=0; e<nelem; ++e)
-    for (ncomp_t c=0; c<ncomp; ++c)
-      l(e, c*ndof, offset) = geoElem(e,0,0);
-
-  // Augment LHS for DG(P1)
-  if (ndof > 1) {
-    for (std::size_t e=0; e<nelem; ++e) {
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        const auto mark = c * ndof;
-        l(e, mark+1, offset) = geoElem(e,0,0) / 10.0;
-        l(e, mark+2, offset) = geoElem(e,0,0) * 3.0/10.0;
-        l(e, mark+3, offset) = geoElem(e,0,0) * 3.0/5.0;
-      }
-    }
-  }
-
-  // Augment LHS for DG(P2)
-  if (ndof > 4){
-    for (std::size_t e=0; e<nelem; ++e) {
-      for (ncomp_t c=0; c<ncomp; ++c) {
-        const auto mark = c * ndof;
-        l(e, mark+4, offset) = geoElem(e,0,0) / 35.0;
-        l(e, mark+5, offset) = geoElem(e,0,0) / 21.0;
-        l(e, mark+6, offset) = geoElem(e,0,0) / 14.0;
-        l(e, mark+7, offset) = geoElem(e,0,0) / 7.0;
-        l(e, mark+8, offset) = geoElem(e,0,0) * 3.0/14.0;
-        l(e, mark+9, offset) = geoElem(e,0,0) * 3.0/7.0;
+  // Compute LHS
+  for (std::size_t e=0; e<nelem; ++e) {
+    auto M = massMatrixDubiner(ndof, geoElem(e,0,0));
+    for (ncomp_t c=0; c<ncomp; ++c) {
+      const auto mark = c * ndof;
+      for (std::size_t i=0; i<ndof; ++i) {
+        l(e, mark+i, offset) = M[i];
       }
     }
   }
@@ -108,4 +87,39 @@ tk::lump( ncomp_t ncomp,
   }
 
   return L;
+}
+
+std::vector< tk::real >
+tk::massMatrixDubiner( std::size_t dof,
+  tk::real vol )
+// *****************************************************************************
+//  Compute the diagonal mass matrix for DG with Dubiner basis functions
+//! \param[in] dof Number of degrees of freedom
+//! \param[in] vol Volume of element whose mass matrix is desired
+//! \return Diagonal of the mass matrix
+// *****************************************************************************
+{
+  std::vector<tk::real> M(dof, 0.0);
+
+  // Mass matrix for DG(P0)
+  M[0] = vol;
+
+  // Augment mass matrix for DG(P1)
+  if(dof > 1) {
+    M[1] = vol / 10.0;
+    M[2] = vol * 3.0/10.0;
+    M[3] = vol * 3.0/5.0;
+  }
+
+  // Augment mass matrix for DG(P2)
+  if(dof > 4) {
+    M[4] = vol / 35.0;
+    M[5] = vol / 21.0;
+    M[6] = vol / 14.0;
+    M[7] = vol / 7.0;
+    M[8] = vol * 3.0/14.0;
+    M[9] = vol * 3.0/7.0;
+  }
+
+  return M;
 }
