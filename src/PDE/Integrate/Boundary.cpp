@@ -183,7 +183,6 @@ bndSurfInt( ncomp_t system,
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
 
-//          std::vector< inciter::EoS_Base* > mat_blk;
           auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn,
                             mat_blk );
 
@@ -295,7 +294,6 @@ bndSurfIntFV( ncomp_t system,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp )
-
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for FV
 //! \details This function computes contributions from surface integrals along
@@ -337,8 +335,8 @@ bndSurfIntFV( ncomp_t system,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
-  Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
-          "derivative vector for single material compflow" );
+  //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+  //        "derivative vector for single material compflow" );
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
