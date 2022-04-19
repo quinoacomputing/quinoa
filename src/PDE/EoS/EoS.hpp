@@ -311,7 +311,7 @@ tk::real constrain_pressure( ncomp_t system,
 //! Compute the minimum effective pressure used for positivity preserving
 //!   limiting
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
-//! \param[in] apr Material partial pressure
+//! \param[in] system Equation system index
 //! \param[in] min Minimum threshold in positivity preserving limiting
 //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
 //!   for the single-material system, this argument can be left unspecified by
