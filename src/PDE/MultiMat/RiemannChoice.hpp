@@ -25,7 +25,7 @@ namespace inciter {
   //! \param[in] flux Riemann solver from input deck
   //! \return Function pointer to the Riemann solver, must be of type
   //!   tk::RiemannFluxFn
-  const tk::RiemannFluxFn multimatRiemannSolver(ctr::FluxType flux)
+  const static tk::RiemannFluxFn multimatRiemannSolver(ctr::FluxType flux)
   {
     tk::RiemannFluxFn fluxfn;
 
