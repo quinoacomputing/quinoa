@@ -449,7 +449,7 @@ VertexBasedCompflow_P2(
 
     bool shock_detec(false);
 
-    if (inciter::g_inputdeck.get< tag::discr, tag::shock_detection >()) {;
+    if (inciter::g_inputdeck.get< tag::discr, tag::shock_detection >()) {
       // Evaluate the shock detection indicator
       auto Ind = evalDiscIndicator_CompFlow(e, ncomp, dof_el, ndofel[e], U);
       if(Ind > 1e-6)
