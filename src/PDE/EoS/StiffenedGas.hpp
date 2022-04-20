@@ -25,7 +25,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 class StiffenedGas: public EoS_Base {
 
   private:
-    tk::real gamma, pstiff;
+    tk::real m_gamma, m_pstiff;
 
   public:
     // *****************************************************************************
@@ -33,7 +33,8 @@ class StiffenedGas: public EoS_Base {
     //! \param[in] gamma Ratio of specific heats
     //! \param[in] pstiff Stiffened pressure term
     // *****************************************************************************
-    StiffenedGas(tk::real x, tk::real y, std::size_t ) : gamma(x), pstiff(y)
+    StiffenedGas(tk::real gamma, tk::real pstiff, std::size_t ) :
+      m_gamma(gamma), m_pstiff(pstiff)
     { }
 
     tk::real eos_pressure( ncomp_t,
@@ -43,7 +44,7 @@ class StiffenedGas: public EoS_Base {
                            tk::real w,
                            tk::real arhoE,
                            tk::real alpha=1.0,
-                           std::size_t imat=0 )
+                           std::size_t imat=0 ) override
     // *************************************************************************
     //! \brief Calculate pressure from the material density, momentum and total
     //!   energy using the stiffened-gas equation of state
@@ -63,8 +64,8 @@ class StiffenedGas: public EoS_Base {
     //!   stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real g = gamma;
-      tk::real p_c = pstiff;
+      tk::real g = m_gamma;
+      tk::real p_c = m_pstiff;
 
       tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) -
         alpha*p_c) * (g-1.0) - alpha*p_c;
@@ -86,7 +87,7 @@ class StiffenedGas: public EoS_Base {
     }
 
     // Destructor
-    ~StiffenedGas(){};
+    ~StiffenedGas() override {}
 };
 
 } //inciter::
