@@ -1637,7 +1637,7 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
         {
           auto max_mark = 2*c*ndof_NodalExtrm + 2*idir;
           auto min_mark = max_mark + 1;
-          auto& ex = NodalExtrm[gip->second];
+          const auto& ex = NodalExtrm[gip->second];
           uMax[cmark][idir] = std::max(ex[max_mark], uMax[cmark][idir]);
           uMin[cmark][idir] = std::min(ex[min_mark], uMin[cmark][idir]);
         }
@@ -1650,8 +1650,8 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
       centroid_physical{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
 
     // find high-order solution
-    std::vector< std::vector< tk::real > > state;
-    state.resize(VarRange[1]-VarRange[0]+1, std::vector<tk::real>(3, 0.0));
+    std::vector< std::array< tk::real, 3 > > state;
+    state.resize(VarRange[1]-VarRange[0]+1);
 
     for (std::size_t c=VarRange[0]; c<=VarRange[1]; ++c)
     {
@@ -1670,7 +1670,7 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
     {
       tk::real phi_dir(1.0);
       auto cmark = c-VarRange[0];
-      for (std::size_t idir = 1; idir < 3; ++idir)
+      for (std::size_t idir = 1; idir <= 3; ++idir)
       {
         phi_dir = 1.0;
         auto uNeg = state[cmark][idir-1] - unk[c][idir];
