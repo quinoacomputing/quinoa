@@ -373,8 +373,8 @@ surfIntFV( ncomp_t system,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
-  Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
-          "derivative vector for single material compflow" );
+  //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+  //        "derivative vector for single material compflow" );
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)

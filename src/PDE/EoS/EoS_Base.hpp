@@ -31,7 +31,10 @@ class EoS_Base {
                                    tk::real=1.0,
                                    std::size_t=0 )=0;
 
+    // Virtual destructor
+    virtual ~EoS_Base(){}
 };
+
 } //inciter::
 
 #endif // EoS_Base_h

@@ -775,8 +775,17 @@ FV::solve( tk::real newdt )
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
+  // physical time at time-stage for computing exact source terms
+  tk::real physT(d->T());
+  if (m_stage == 1) {
+    physT += d->Dt();
+  }
+  else if (m_stage == 2) {
+    physT += 0.5*d->Dt();
+  }
+
   for (const auto& eq : g_fvpde)
-    eq.rhs( d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem,
+    eq.rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
       myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p,
       m_rhs );
 
