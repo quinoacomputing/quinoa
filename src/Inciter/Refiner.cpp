@@ -93,7 +93,7 @@ Refiner::Refiner( std::size_t meshid,
   m_rid( m_coord[0].size() ),
   m_oldrid(),
   m_lref( m_rid.size() ),
-  m_parent(),
+  m_oldparent(),
   m_writeCallback(),
   m_outref_ginpoel(),
   m_outref_el(),
@@ -1183,7 +1183,7 @@ Refiner::endt0ref()
   //   tk::destroy( m_rid );
   //   tk::destroy( m_oldrid );
   //   tk::destroy( m_lref );
-  //   tk::destroy( m_parent );
+  //   tk::destroy( m_oldparent );
   // }
 }
 
@@ -1620,8 +1620,9 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
                      const std::unordered_set< std::size_t >& ref )
 // *****************************************************************************
 //  Compute new volume mesh after mesh refinement
-//! \param[in] old Unique nodes of the old (unrefined) mesh using local ids
-//! \param[in] ref Unique nodes of the refined mesh using local ids
+//! \param[in] old Unique nodes of the old (unrefined) mesh using
+//!   refiner-lib ids
+//! \param[in] ref Unique nodes of the refined mesh using refiner-lib ids
 // *****************************************************************************
 {
   const auto& x = m_coord[0];
@@ -1877,8 +1878,12 @@ Refiner::boundary()
         if (i != end(invtets)) {
           pcReFaceTets[ b ] = i->second;
         } else {
+          Assert(m_lref.find(t[0]) == m_lref.end() ||
+            m_lref.find(t[1]) == m_lref.end() ||
+            m_lref.find(t[2]) == m_lref.end() ||
+            m_lref.find(t[3]) == m_lref.end(), "Derefined tet found in lref");
           // find parent tet
-          auto p = tk::cref_find( m_parent, t );
+          auto p = tk::cref_find( m_oldparent, t );
           // form all 4 faces of parent
           //auto A = p[0];
           //auto B = p[1];
@@ -1896,7 +1901,7 @@ Refiner::boundary()
   }
 
   // Generate child->parent tet and id maps after refinement/derefinement step
-  tk::destroy( m_parent );
+  tk::destroy( m_oldparent );
   m_addedTets.clear();
   std::size_t p = 0;
   std::size_t c = 0;
@@ -1918,8 +1923,8 @@ Refiner::boundary()
       //auto pC = tk::cref_find( m_lref, t.second[2] );
       //auto pD = tk::cref_find( m_lref, t.second[3] );
       // assign parent tet to child tet
-      //m_parent[ {{cA,cB,cC,cD}} ] = {{pA,pB,pC,pD}};
-      m_parent[ ct->second ] = t.second; //{{pA,pB,pC,pD}};
+      //m_oldparent[ {{cA,cB,cC,cD}} ] = {{pA,pB,pC,pD}};
+      m_oldparent[ ct->second ] = t.second; //{{pA,pB,pC,pD}};
       if (m_oldTets.find(ct->second) == end(m_oldTets)) {
         m_addedTets[ c++ ] = p - m_oldntets;
       }
@@ -1928,7 +1933,7 @@ Refiner::boundary()
   }
 
   //std::cout << thisIndex << " added: " << m_addedTets.size() << '\n';
-  //std::cout << thisIndex << " parent: " << m_parent.size() << '\n';
+  //std::cout << thisIndex << " parent: " << m_oldparent.size() << '\n';
   //std::cout << thisIndex << " pcret: " << pcReFaceTets.size() << '\n';
   //std::cout << thisIndex << " pcdet: " << pcDeFaceTets.size() << '\n';
 
@@ -1949,7 +1954,7 @@ void
 Refiner::newBndMesh( const std::unordered_set< std::size_t >& ref )
 // *****************************************************************************
 // Update boundary data structures after mesh refinement
-//! \param[in] ref Unique nodes of the refined mesh using local ids
+//! \param[in] ref Unique nodes of the refined mesh using refiner-lib ids
 // *****************************************************************************
 {
   // Generate boundary face data structures used to regenerate boundary face
@@ -1967,7 +1972,7 @@ Refiner::updateBndFaces(
   const BndFaceData& bnd )
 // *****************************************************************************
 // Regenerate boundary faces after mesh refinement step
-//! \param[in] ref Unique nodes of the refined mesh using local ids
+//! \param[in] ref Unique nodes of the refined mesh using refiner-lib ids
 //! \param[in] bnd Boundary face data bundle
 // *****************************************************************************
 {
@@ -2037,6 +2042,9 @@ Refiner::updateBndFaces(
             auto c = ancestors( rf[2] );
             a.insert( begin(b), end(b) );
             a.insert( begin(c), end(c) );
+            // check for match only if 3 ancestor-nodes are found; because if
+            // more/less ancestor-nodes are found, the child-face does not lie
+            // on the original-mesh-face
             if (a.size() == 3) {
               std::vector< std::size_t > p( begin(a), end(a) );
               Face par{{ m_gid[p[0]], m_gid[p[1]], m_gid[p[2]] }};
@@ -2072,6 +2080,9 @@ Refiner::updateBndFaces(
         auto c = ancestors( pf[2] );
         a.insert( begin(b), end(b) );
         a.insert( begin(c), end(c) );
+        // check for match only if 3 ancestor-nodes are found; because if
+        // more/less ancestor-nodes are found, this face does not lie on the
+        // original-mesh-face
         if (a.size() == 3) {
           std::vector< std::size_t > p( begin(a), end(a) );
           Face par{{ m_gid[p[0]], m_gid[p[1]], m_gid[p[2]] }};
@@ -2139,7 +2150,7 @@ Refiner::updateBndNodes(
   const BndFaceData& bnd )
 // *****************************************************************************
 // Update boundary nodes after mesh refinement
-//! \param[in] ref Unique nodes of the refined mesh using local ids
+//! \param[in] ref Unique nodes of the refined mesh using refiner-lib ids
 //! \param[in] bnd Boundary face data bundle
 // *****************************************************************************
 {
@@ -2150,10 +2161,11 @@ Refiner::updateBndNodes(
   // found, add its global id to boundary node lists associated to the side
   // set(s) of its parents. Argument 'n' is the local id of the mesh node id
   // whose parents to search.
-  auto search = [&]( std::size_t n ){
+  auto addBndNodes = [&]( std::size_t n ){
     auto a = ancestors( n );  // find parents of n in coarse mesh
     if (a.size() == 1) {
       // node was part of the coarse mesh
+      Assert(*a.cbegin() == n, "Single ancestor not self");
       auto ss = keys( m_coarseBndNodes, m_gid[*a.cbegin()] );
       for (auto s : ss)
         m_bnode[ s ].push_back( m_gid[n] );
@@ -2162,10 +2174,9 @@ Refiner::updateBndNodes(
       std::vector< std::size_t > p( begin(a), end(a) );
       auto ss1 = keys( m_coarseBndNodes, m_gid[p[0]] );
       auto ss2 = keys( m_coarseBndNodes, m_gid[p[1]] );
+      ss1.insert(ss2.begin(), ss2.end());
       for (auto s : ss1) {
-        if (ss2.find(s) != end(ss2)) {
-          m_bnode[ s ].push_back( m_gid[n] );
-        }
+        m_bnode[ s ].push_back( m_gid[n] );
       }
     } else if (a.size() == 3) {
       // node was added inside of a coarse face
@@ -2173,10 +2184,10 @@ Refiner::updateBndNodes(
       auto ss1 = keys( m_coarseBndNodes, m_gid[p[0]] );
       auto ss2 = keys( m_coarseBndNodes, m_gid[p[1]] );
       auto ss3 = keys( m_coarseBndNodes, m_gid[p[2]] );
+      ss1.insert(ss2.begin(), ss2.end());
+      ss1.insert(ss3.begin(), ss3.end());
       for (auto s : ss1) {
-        if (ss2.find(s) != end(ss2) && ss3.find(s) != end(ss3)) {
-          m_bnode[ s ].push_back( m_gid[n] );
-        }
+        m_bnode[ s ].push_back( m_gid[n] );
       }
     }
   };
@@ -2196,7 +2207,7 @@ Refiner::updateBndNodes(
       // set(s) of their parent (in coarse mesh) nodes
       auto t = face;
       for (auto& n : t) n = tk::cref_find( m_lid, n );
-      addBndNodes( t, search );
+      for (auto n : t) addBndNodes(n);
     } else {        // if boundary tet is refined
       const auto& tets = tet_store.tets;
       for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
@@ -2214,7 +2225,8 @@ Refiner::updateBndNodes(
         auto B = tk::cref_find( m_lref, ct->second[1] );
         auto C = tk::cref_find( m_lref, ct->second[2] );
         auto D = tk::cref_find( m_lref, ct->second[3] );
-        addBndNodes( Tet{{A,B,C,D}}, search );
+        Tet t{{A, B, C, D}};
+        for (auto n : t) addBndNodes(n);
       }
     }
   }
@@ -2225,7 +2237,9 @@ Refiner::updateBndNodes(
   // refined faces associated to side sets, we find the ancestors (parents of
   // nodes in the original/coarsest mesh) of the nodes comprising the nodes of
   // the parent tetrahedron (previously) associated to the derefined face.
-  for (const auto& f : pcDeFaceTets) addBndNodes( f.second, search );
+  for (const auto& f : pcDeFaceTets) {
+    for (auto n : f.second) addBndNodes(n);
+  }
 
   // Make boundary node IDs unique for each physical boundary (side set)
   for (auto& s : m_bnode) tk::unique( s.second );

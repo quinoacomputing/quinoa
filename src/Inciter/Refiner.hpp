@@ -210,7 +210,7 @@ class Refiner : public CBase_Refiner {
       p | m_oldrid;
       p | m_lref;
       //p | m_oldlref;
-      p | m_parent;
+      p | m_oldparent;
       p | m_writeCallback;
       p | m_outref_ginpoel;
       p | m_outref_el;
@@ -328,8 +328,8 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< std::size_t, std::size_t > m_lref;
     //! Refiner lib -> local node id map for previous mesh
     //std::unordered_map< std::size_t, std::size_t > m_oldlref;
-    //! Child -> parent tet map
-    std::unordered_map< Tet, Tet, Hash<4>, Eq<4> > m_parent;
+    //! Child -> parent tet map for previous mesh
+    std::unordered_map< Tet, Tet, Hash<4>, Eq<4> > m_oldparent;
     //! Function to continue with after writing field output
     CkCallback m_writeCallback;
     //! \brief Tetrahedron element connectivity of our chunk of the mesh
@@ -481,16 +481,6 @@ class Refiner : public CBase_Refiner {
         if (s.second.find(p) != end(s.second))
           ss.insert( s.first );
       return ss;
-    }
-
-    //! Call a function on each item of an array
-    //! \tparam N Number of nodes in array
-    //! \tparam F Function to pass each item to
-    //! \param[in] array Array whose items to pass to function
-    //! \param[in] f Function to pass each item of array to
-    template< std::size_t N, class F >
-    void addBndNodes( const std::array< std::size_t, N >& array, F f ) {
-      for (auto n : array) f( n );
     }
 };
 
