@@ -1054,8 +1054,8 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
             auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
             auto min_mark = max_mark + 1;
             auto& ex = uNodalExtrm[i->second];
-            ex[max_mark] = std::max(ex[max_mark], gradc[c][idof-1]);
-            ex[min_mark] = std::min(ex[min_mark], gradc[c][idof-1]);
+            ex[max_mark] = std::max(ex[max_mark], gradc[c][idof]);
+            ex[min_mark] = std::min(ex[min_mark], gradc[c][idof]);
           }
         }
         for (std::size_t c=0; c<nprim; ++c)
@@ -1065,8 +1065,8 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
             auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
             auto min_mark = max_mark + 1;
             auto& ex = pNodalExtrm[i->second];
-            ex[max_mark] = std::max(ex[max_mark], gradp[c][idof-1]);
-            ex[min_mark] = std::min(ex[min_mark], gradp[c][idof-1]);
+            ex[max_mark] = std::max(ex[max_mark], gradp[c][idof]);
+            ex[min_mark] = std::min(ex[min_mark], gradp[c][idof]);
           }
         }
       }
