@@ -1256,11 +1256,19 @@ ALECG::resizePostAMR(
   m_un.resize( npoin );
   m_rhs.resize( npoin );
   m_chBndGrad.resize( d->Bid().size() );
+  tk::destroy(m_esup);
+  tk::destroy(m_psup);
+  m_esup = tk::genEsup( d->Inpoel(), 4 );
+  m_psup = tk::genPsup( d->Inpoel(), 4, m_esup );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
-    for (std::size_t c=0; c<nprop; ++c)
+    for (std::size_t c=0; c<nprop; ++c) {
+      Assert(n.first < m_u.nunk(), "Added node index out of bounds post-AMR");
+      Assert(n.second[0] < m_u.nunk() && n.second[1] < m_u.nunk(),
+        "Indices of parent-edge nodes out of bounds post-AMR");
       m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
+    }
 
   // Update physical-boundary node-, face-, and element lists
   m_bnode = bnode;
@@ -1301,6 +1309,8 @@ ALECG::stage()
 // Evaluate whether to continue with next time step stage
 // *****************************************************************************
 {
+  transfer_complete();
+
   // Increment Runge-Kutta stage counter
   ++m_stage;
 

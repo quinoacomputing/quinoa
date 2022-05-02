@@ -483,6 +483,7 @@ Discretization::resizePostAMR(
 
   // Update mesh volume container size
   m_vol.resize( m_gid.size(), 0.0 );
+  if (!m_voln.empty()) m_voln.resize( m_gid.size(), 0.0 );
 
   // Regenerate bid data
   tk::destroy(m_bid);
