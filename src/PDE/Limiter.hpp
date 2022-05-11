@@ -90,7 +90,8 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  tk::Fields& U );
+  tk::Fields& U,
+  std::vector< std::size_t >& shockmarker );
 
 //! Kuzmin's vertex-based limiter for multi-material DGP1
 void

@@ -399,7 +399,8 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  tk::Fields& U )
+  tk::Fields& U,
+  std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for single-material DGP2
 //! \param[in] esup Elements surrounding points
@@ -415,6 +416,7 @@ VertexBasedCompflow_P2(
 //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
 //!   variables
 //! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for compflow.
 //!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
 //!   limiter for p-adaptive discontinuous Galerkin methods. Journal of
@@ -452,11 +454,19 @@ VertexBasedCompflow_P2(
     if (inciter::g_inputdeck.get< tag::discr, tag::shock_detection >()) {
       // Evaluate the shock detection indicator
       auto Ind = evalDiscIndicator_CompFlow(e, ncomp, dof_el, ndofel[e], U);
-      if(Ind > 1e-6)
+      if(Ind > 1e-6) {
         shock_detec = true;
+        shockmarker[e] = 1;
+      }
+      else {
+        shock_detec = false;
+        shockmarker[e] = 0;
+      }
     }
-    else
+    else {
       shock_detec = true;
+      shockmarker[e] = 1;
+    }
 
     if (dof_el > 1 && shock_detec)
     {

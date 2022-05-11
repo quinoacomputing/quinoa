@@ -496,6 +496,7 @@ class MultiMat {
     //!   variables
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
+    //! \param[in,out] shockmarker Vector of shock-marker values
     void limit( [[maybe_unused]] tk::real t,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
