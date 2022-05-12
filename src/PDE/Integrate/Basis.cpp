@@ -539,35 +539,6 @@ tk::TaylorToDubiner( ncomp_t ncomp,
 // *****************************************************************************
 {
   Assert( ncomp > 0, "Number of scalar components is incorrect" );
-
-  // The diagonal of mass matrix
-  std::vector< tk::real > L(ndof, 0.0);
-
-  tk::real vol = 1.0 / 6.0;
-
-  L[0] = vol;
-
-  if(ndof > 1) {
-    Assert( (ndof == 4)||(ndof == 10),
-      "Mismatch in number of degrees of freedom" );
-    L[1] = vol / 10.0;
-    L[2] = vol * 3.0/10.0;
-    L[3] = vol * 3.0/5.0;
-  }
-
-  if(ndof > 4) {
-    Assert( ndof == 10, "Mismatch in number of degrees of freedom" );
-    L[4] = vol / 35.0;
-    L[5] = vol / 21.0;
-    L[6] = vol / 14.0;
-    L[7] = vol / 7.0;
-    L[8] = vol * 3.0/14.0;
-    L[9] = vol * 3.0/7.0;
-  }
-
-  // Coordinates of the centroid in physical domain
-  std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
-
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -576,84 +547,219 @@ tk::TaylorToDubiner( ncomp_t ncomp,
     {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
     {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
     {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-  }};
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
 
-  // Number of quadrature points for volume integration
-  auto ng = tk::NGvol(ndof);
+  std::array< tk::real, 3 > dx;
+  std::array< tk::real, 3 > dy;
+  std::array< tk::real, 3 > dz;
 
-  // arrays for quadrature points
-  std::array< std::vector< tk::real >, 3 > coordgp;
-  std::vector< tk::real > wgp;
+  dx[0] = coordel[1][0] - coordel[0][0];
+  dx[1] = coordel[2][0] - coordel[0][0];
+  dx[2] = coordel[3][0] - coordel[0][0];
 
-  coordgp[0].resize( ng );
-  coordgp[1].resize( ng );
-  coordgp[2].resize( ng );
-  wgp.resize( ng );
+  dy[0] = coordel[1][1] - coordel[0][1];
+  dy[1] = coordel[2][1] - coordel[0][1];
+  dy[2] = coordel[3][1] - coordel[0][1];
 
-  // get quadrature point weights and coordinates for triangle
-  tk::GaussQuadratureTet( ng, coordgp, wgp );
+  dz[0] = coordel[1][2] - coordel[0][2];
+  dz[1] = coordel[2][2] - coordel[0][2];
+  dz[2] = coordel[3][2] - coordel[0][2];
 
-  // right hand side vector
-  std::vector< tk::real > R( ncomp*ndof, 0.0 );
+  std::array< tk::real, 3 > x0{coordel[0][0], coordel[0][1], coordel[0][2]};
 
-  // Gaussian quadrature
-  for (std::size_t igp=0; igp<ng; ++igp)
-  {
-    auto wt = wgp[igp] * vol;
+  for (ncomp_t c=0; c<ncomp; ++c) {
+    // Step 1: Rewritten the solution in (x,y,z) coordinate
+    // Vector stores the coefficients for x^2 etc and the constant term is not
+    // needed here.
+    std::vector< tk::real > A(ndof-1, 0);
+    A[0] = unk[c][4] / 2.0;     // Coefficient for x^2
+    A[1] = unk[c][5] / 2.0;     // Coefficient for y^2
+    A[2] = unk[c][6] / 2.0;     // Coefficient for z^2
+    A[3] = unk[c][7];           // Coefficient for xy
+    A[4] = unk[c][8];           // Coefficient for xz
+    A[5] = unk[c][9];           // Coefficient for yz
+    // Coefficient for x
+    A[6] = unk[c][1] - unk[c][4]*geoElem(e, 1, 0) - unk[c][7]*geoElem(e, 2, 0)
+         - unk[c][8]*geoElem(e, 3, 0);
+    // Coefficient for y
+    A[7] = unk[c][2] - unk[c][5]*geoElem(e, 2, 0) - unk[c][7]*geoElem(e, 1, 0)
+         - unk[c][9]*geoElem(e, 3, 0);
+    // Coefficient for z
+    A[8] = unk[c][3] - unk[c][6]*geoElem(e, 3, 0) - unk[c][8]*geoElem(e, 1, 0)
+         - unk[c][9]*geoElem(e, 2, 0);
 
-    auto gp = tk::eval_gp( igp, coordel, coordgp );
+    // Step 2: Transform the solution in (xi, eta, zeta) coordinate
+    // Vector stores the coefficients for xi^2 etc and the constant term is not
+    // needed here.
+    std::vector< tk::real > T(ndof-1, 0);
+    // Coefficient for xi^2
+    T[0] = A[0]*dx[0]*dx[0] + A[1]*dy[0]*dy[0] + A[2]*dz[0]*dz[0]
+         + A[3]*dx[0]*dy[0] + A[4]*dx[0]*dz[0] + A[5]*dy[0]*dz[0];
+    // Coefficient for eta^2
+    T[1] = A[0]*dx[1]*dx[1] + A[1]*dy[1]*dy[1] + A[2]*dz[1]*dz[1]
+         + A[3]*dx[1]*dy[1] + A[4]*dx[1]*dz[1] + A[5]*dy[1]*dz[1];
+    // Coefficient for zeta^2
+    T[2] = A[0]*dx[2]*dx[2] + A[1]*dy[2]*dy[2] + A[2]*dz[2]*dz[2]
+         + A[3]*dx[2]*dy[2] + A[4]*dx[2]*dz[2] + A[5]*dy[2]*dz[2];
+    // Coefficient for xi*eta
+    T[3] = 2.0 * (A[0]*dx[0]*dx[1] + A[1]*dy[0]*dy[1] + A[2]*dz[0]*dz[1])
+         + A[3]*(dx[0]*dy[1] + dx[1]*dy[0]) + A[4]*(dx[0]*dz[1] + dx[1]*dz[0])
+         + A[5]*(dy[0]*dz[1] + dy[1]*dz[0]);
+    // Coefficient for xi*zeta
+    T[4] = 2.0 * (A[0]*dx[0]*dx[2] + A[1]*dy[0]*dy[2] + A[2]*dz[0]*dz[2])
+         + A[3]*(dx[0]*dy[2] + dx[2]*dy[0]) + A[4]*(dx[0]*dz[2] + dx[2]*dz[0])
+         + A[5]*(dy[0]*dz[2] + dy[2]*dz[0]);
+    // Coefficient for eta*zeta
+    T[5] = 2.0 * (A[0]*dx[1]*dx[2] + A[1]*dy[1]*dy[2] + A[2]*dz[1]*dz[2])
+         + A[3]*(dx[1]*dy[2] + dx[2]*dy[1]) + A[4]*(dx[1]*dz[2] + dx[2]*dz[1])
+         + A[5]*(dy[1]*dz[2] + dy[2]*dz[1]);
+    // Coefficient for xi
+    T[6] = 2.0 * (A[0]*dx[0]*x0[0] + A[1]*dy[0]*x0[1] + A[2]*dz[0]*x0[2])
+         + A[3]*(dx[0]*x0[1] + dy[0]*x0[0]) + A[4]*(dx[0]*x0[2] + dz[0]*x0[0])
+         + A[5]*(dy[0]*x0[2] + dz[0]*x0[1]) + A[6]*dx[0] + A[7]*dy[0] + A[8]*dz[0];
+    // Coefficient for eta
+    T[7] = 2.0 * (A[0]*dx[1]*x0[0] + A[1]*dy[1]*x0[1] + A[2]*dz[1]*x0[2])
+         + A[3]*(dx[1]*x0[1] + dy[1]*x0[0]) + A[4]*(dx[1]*x0[2] + dz[1]*x0[0])
+         + A[5]*(dy[1]*x0[2] + dz[1]*x0[1]) + A[6]*dx[1] + A[7]*dy[1] + A[8]*dz[1];
+    // Coefficient for zeta
+    T[8] = 2.0 * (A[0]*dx[2]*x0[0] + A[1]*dy[2]*x0[1] + A[2]*dz[2]*x0[2])
+         + A[3]*(dx[2]*x0[1] + dy[2]*x0[0]) + A[4]*(dx[2]*x0[2] + dz[2]*x0[0])
+         + A[5]*(dy[2]*x0[2] + dz[2]*x0[1]) + A[6]*dx[2] + A[7]*dy[2] + A[8]*dz[2];
 
-    auto B_taylor = eval_TaylorBasis( ndof, gp, x_c, coordel);
-
-    // Compute high order solution at gauss point
-    std::vector< tk::real > state( ncomp, 0.0 );
-    for (ncomp_t c=0; c<ncomp; ++c)
-    {
-      state[c] = unk[c][0];
-      state[c] += unk[c][1] * B_taylor[1]
-                + unk[c][2] * B_taylor[2]
-                + unk[c][3] * B_taylor[3];
-
-      if(ndof > 4)
-        state[c] += unk[c][4] * B_taylor[4] + unk[c][5] * B_taylor[5]
-                  + unk[c][6] * B_taylor[6] + unk[c][7] * B_taylor[7]
-                  + unk[c][8] * B_taylor[8] + unk[c][9] * B_taylor[9];
-    }
-
-    auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
-
-    for (ncomp_t c=0; c<ncomp; ++c)
-    {
-      auto mark = c*ndof;
-      R[mark] += wt * state[c];
-
-      if(ndof > 1)
-      {
-        R[mark+1] += wt * state[c] * B[1];
-        R[mark+2] += wt * state[c] * B[2];
-        R[mark+3] += wt * state[c] * B[3];
-
-        if(ndof > 4)
-        {
-          R[mark+4] += wt * state[c] * B[4];
-          R[mark+5] += wt * state[c] * B[5];
-          R[mark+6] += wt * state[c] * B[6];
-          R[mark+7] += wt * state[c] * B[7];
-          R[mark+8] += wt * state[c] * B[8];
-          R[mark+9] += wt * state[c] * B[9];
-        }
-      }
-    }
-  }
-
-  for (ncomp_t c=0; c<ncomp; ++c)
-  {
-    auto mark = c*ndof;
-    for(std::size_t idof = 0; idof < ndof; idof++)
-      unk[c][idof] = R[mark+idof] / L[idof];
+    // Step 3: Solve the linear system when coefficents are identical
+    unk[c][4] = T[0] / 6.0;
+    unk[c][5] = (T[3] - 6.0*unk[c][4]) / 10.0;
+    unk[c][6] = (T[4] - 6.0*unk[c][4] - 2.0*unk[c][5]) / 12.0;
+    unk[c][7] = (T[1] - unk[c][4] - 5.0*unk[c][5]) / 10.0;
+    unk[c][8] = (T[5] - 2.0*unk[c][4] - 6.0*unk[c][5] - 6.0*unk[c][6]
+              - 8.0*unk[c][7]) / 18.0;
+    unk[c][9] = (T[2] - unk[c][4] - unk[c][5] - 6.0*unk[c][6] - unk[c][7]
+              - 6.0*unk[c][8]) / 15.0;
+    unk[c][1] = (T[6] + 6.0*unk[c][4] + 2.0*unk[c][5] + 2.0*unk[c][6]) / 2.0;
+    unk[c][2] = (T[7] - unk[c][1] + 2.0*unk[c][4] + 6.0*unk[c][5] + unk[c][6]
+              + 8.0*unk[c][7] + 3.0*unk[c][8]) / 3.0;
+    unk[c][3] = (T[8] - unk[c][1] - unk[c][2] + 2.0*unk[c][4] + 2.0*unk[c][5]
+              + 7.0*unk[c][6] + 2.0*unk[c][7] + 7.0*unk[c][8] + 10.0*unk[c][9])
+              / 4.0;
   }
 }
+//{
+//  Assert( ncomp > 0, "Number of scalar components is incorrect" );
+//
+//  // The diagonal of mass matrix
+//  std::vector< tk::real > L(ndof, 0.0);
+//
+//  tk::real vol = 1.0 / 6.0;
+//
+//  L[0] = vol;
+//
+//  if(ndof > 1) {
+//    Assert( (ndof == 4)||(ndof == 10),
+//      "Mismatch in number of degrees of freedom" );
+//    L[1] = vol / 10.0;
+//    L[2] = vol * 3.0/10.0;
+//    L[3] = vol * 3.0/5.0;
+//  }
+//
+//  if(ndof > 4) {
+//    Assert( ndof == 10, "Mismatch in number of degrees of freedom" );
+//    L[4] = vol / 35.0;
+//    L[5] = vol / 21.0;
+//    L[6] = vol / 14.0;
+//    L[7] = vol / 7.0;
+//    L[8] = vol * 3.0/14.0;
+//    L[9] = vol * 3.0/7.0;
+//  }
+//
+//  // Coordinates of the centroid in physical domain
+//  std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
+//
+//  const auto& cx = coord[0];
+//  const auto& cy = coord[1];
+//  const auto& cz = coord[2];
+//
+//  std::array< std::array< tk::real, 3>, 4 > coordel {{
+//    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+//    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+//    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+//    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+//  }};
+//
+//  // Number of quadrature points for volume integration
+//  auto ng = tk::NGvol(ndof);
+//
+//  // arrays for quadrature points
+//  std::array< std::vector< tk::real >, 3 > coordgp;
+//  std::vector< tk::real > wgp;
+//
+//  coordgp[0].resize( ng );
+//  coordgp[1].resize( ng );
+//  coordgp[2].resize( ng );
+//  wgp.resize( ng );
+//
+//  // get quadrature point weights and coordinates for triangle
+//  tk::GaussQuadratureTet( ng, coordgp, wgp );
+//
+//  // right hand side vector
+//  std::vector< tk::real > R( ncomp*ndof, 0.0 );
+//
+//  // Gaussian quadrature
+//  for (std::size_t igp=0; igp<ng; ++igp)
+//  {
+//    auto wt = wgp[igp] * vol;
+//
+//    auto gp = tk::eval_gp( igp, coordel, coordgp );
+//
+//    auto B_taylor = eval_TaylorBasis( ndof, gp, x_c, coordel);
+//
+//    // Compute high order solution at gauss point
+//    std::vector< tk::real > state( ncomp, 0.0 );
+//    for (ncomp_t c=0; c<ncomp; ++c)
+//    {
+//      state[c] = unk[c][0];
+//      state[c] += unk[c][1] * B_taylor[1]
+//                + unk[c][2] * B_taylor[2]
+//                + unk[c][3] * B_taylor[3];
+//
+//      if(ndof > 4)
+//        state[c] += unk[c][4] * B_taylor[4] + unk[c][5] * B_taylor[5]
+//                  + unk[c][6] * B_taylor[6] + unk[c][7] * B_taylor[7]
+//                  + unk[c][8] * B_taylor[8] + unk[c][9] * B_taylor[9];
+//    }
+//
+//    auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+//
+//    for (ncomp_t c=0; c<ncomp; ++c)
+//    {
+//      auto mark = c*ndof;
+//      R[mark] += wt * state[c];
+//
+//      if(ndof > 1)
+//      {
+//        R[mark+1] += wt * state[c] * B[1];
+//        R[mark+2] += wt * state[c] * B[2];
+//        R[mark+3] += wt * state[c] * B[3];
+//
+//        if(ndof > 4)
+//        {
+//          R[mark+4] += wt * state[c] * B[4];
+//          R[mark+5] += wt * state[c] * B[5];
+//          R[mark+6] += wt * state[c] * B[6];
+//          R[mark+7] += wt * state[c] * B[7];
+//          R[mark+8] += wt * state[c] * B[8];
+//          R[mark+9] += wt * state[c] * B[9];
+//        }
+//      }
+//    }
+//  }
+//
+//  for (ncomp_t c=0; c<ncomp; ++c)
+//  {
+//    auto mark = c*ndof;
+//    for(std::size_t idof = 0; idof < ndof; idof++)
+//      unk[c][idof] = R[mark+idof] / L[idof];
+//  }
+//}
 
 std::vector< tk::real >
 tk::eval_TaylorBasis( const std::size_t ndof,
