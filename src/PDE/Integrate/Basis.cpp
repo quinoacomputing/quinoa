@@ -18,6 +18,7 @@
 // *****************************************************************************
 
 #include <array>
+#include "QuinoaConfig.hpp"
 
 #ifdef HAS_MKL
   #include <mkl_lapacke.h>
@@ -1003,13 +1004,12 @@ tk::invMassMatTaylorRefEl( std::size_t dof )
         mtInv[idx] = Mt[i][j];
       }
     }
-    lapack_int n = dof;
     lapack_int ipiv[10];
     // LU-factorization for inversion
-    lapack_int info1 = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, n, n, mtInv, n, ipiv);
+    lapack_int info1 = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 10, 10, mtInv, 10, ipiv);
     if (info1 != 0) Throw("Taylor mass matrix is singular");
     // Inversion
-    lapack_int info2 = LAPACKE_dgetri(LAPACK_ROW_MAJOR, n, mtInv, n, ipiv);
+    lapack_int info2 = LAPACKE_dgetri(LAPACK_ROW_MAJOR, 10, mtInv, 10, ipiv);
     if (info2 != 0) Throw("Error while inverting Taylor mass matrix");
 
     // Get 2D vector from 1D array mass matrix inverse
