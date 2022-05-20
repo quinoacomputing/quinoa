@@ -298,6 +298,7 @@ class CompFlow {
     //!   global node ids (key)
     //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
     //!   variables
+    //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] shockmarker Vector of shock-marker values
     void limit( [[maybe_unused]] tk::real t,
@@ -312,6 +313,7 @@ class CompFlow {
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& uNodalExtrm,
                 const std::vector< std::vector<tk::real> >&,
+                const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields&,
                 std::vector< std::size_t >& shockmarker) const
@@ -328,7 +330,8 @@ class CompFlow {
           m_offset, geoElem, coord, U);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_offset, geoElem, coord, gid, bid, uNodalExtrm, U, shockmarker);
+          m_offset, geoElem, coord, gid, bid, uNodalExtrm, mtInv, U,
+          shockmarker);
     }
 
     //! Update the conservative variable solution for this PDE system

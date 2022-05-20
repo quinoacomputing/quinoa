@@ -19,7 +19,14 @@
 
 #include <array>
 
+#ifdef HAS_MKL
+  #include <mkl_lapacke.h>
+#else
+  #include <lapacke.h>
+#endif
+
 #include "Basis.hpp"
+#include "Mass.hpp"
 
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
@@ -72,6 +79,76 @@ tk::eval_gp ( const std::size_t igp,
    coord[0][0]*shp1 + coord[1][0]*shp2 + coord[2][0]*shp3 + coord[3][0]*shp4,
    coord[0][1]*shp1 + coord[1][1]*shp2 + coord[2][1]*shp3 + coord[3][1]*shp4,
    coord[0][2]*shp1 + coord[1][2]*shp2 + coord[2][2]*shp3 + coord[3][2]*shp4 }};
+}
+
+std::array< std::vector<tk::real>, 3 >
+tk::eval_dBdxi( const std::size_t ndof,
+  const std::array< tk::real, 3 >& coordgp )
+// *****************************************************************************
+//  Compute the derivatives of Dubiner basis wrt. reference coordinates
+//! \param[in] ndof Number of degrees of freedom
+//! \param[in] coordgp Coordinates in ref element where derivatives are needed
+//! \return Array of the derivatives of basis functions
+// *****************************************************************************
+{
+  // Initialize array
+  std::array< std::vector< tk::real >, 3 > dBdxi;
+  for (std::size_t idir=0; idir<3; ++idir) {
+    dBdxi[idir].resize(ndof, 0.0);
+  }
+
+  // high-order basis
+  if (ndof > 1) {
+    dBdxi[0][0] = 0.0;
+    dBdxi[1][0] = 0.0;
+    dBdxi[2][0] = 0.0;
+
+    dBdxi[0][1] = 2.0;
+    dBdxi[1][1] = 1.0;
+    dBdxi[2][1] = 1.0;
+
+    dBdxi[0][2] = 0.0;
+    dBdxi[1][2] = 3.0;
+    dBdxi[2][2] = 1.0;
+
+    dBdxi[0][3] = 0.0;
+    dBdxi[1][3] = 0.0;
+    dBdxi[2][3] = 4.0;
+
+    if (ndof > 4) {
+      dBdxi[0][4] = 12.0 * coordgp[0] + 6.0 * coordgp[1]
+                  +  6.0 * coordgp[2] - 6.0;
+      dBdxi[1][4] =  6.0 * coordgp[0] + 2.0 * coordgp[1]
+                  +  2.0 * coordgp[2] - 2.0;
+      dBdxi[2][4] =  6.0 * coordgp[0] + 2.0 * coordgp[1]
+                  +  2.0 * coordgp[2] - 2.0;
+
+      dBdxi[0][5] = 10.0 * coordgp[1] +  2.0 * coordgp[2] - 2.0;
+      dBdxi[1][5] = 10.0 * coordgp[0] + 10.0 * coordgp[1]
+                  +  6.0 * coordgp[2] - 6.0;
+      dBdxi[2][5] =  2.0 * coordgp[0] +  6.0 * coordgp[1]
+                  +  2.0 * coordgp[2] - 2.0;
+
+      dBdxi[0][6] = 12.0 * coordgp[2] - 2.0;
+      dBdxi[1][6] =  6.0 * coordgp[2] - 1.0;
+      dBdxi[2][6] = 12.0 * coordgp[0] + 6.0 * coordgp[1]
+                  + 12.0 * coordgp[2] - 7.0;
+
+      dBdxi[0][7] = 0.0;
+      dBdxi[1][7] = 20.0 * coordgp[1] + 8.0 * coordgp[2] - 8.0;
+      dBdxi[2][7] =  8.0 * coordgp[1] + 2.0 * coordgp[2] - 2.0;
+
+      dBdxi[0][8] = 0.0;
+      dBdxi[1][8] = 18.0 * coordgp[2] -  3.0;
+      dBdxi[2][8] = 18.0 * coordgp[1] + 12.0 * coordgp[2] - 7.0;
+
+      dBdxi[0][9] = 0.0;
+      dBdxi[1][9] = 0.0;
+      dBdxi[2][9] = 30.0 * coordgp[2] - 10.0;
+    }
+  }
+
+  return dBdxi;
 }
 
 std::array< std::vector<tk::real>, 3 >
@@ -718,4 +795,273 @@ tk::eval_TaylorBasis( const std::size_t ndof,
   }
 
   return B;
+}
+
+// -----------------------------------------------------------------------------
+// Functions for reference element Taylor basis and related Xforms
+// -----------------------------------------------------------------------------
+
+std::vector< std::vector< tk::real > >
+tk::DubinerToTaylorRefEl( ncomp_t ncomp,
+  ncomp_t offset,
+  const std::size_t e,
+  const std::size_t ndof,
+  const std::size_t ndof_el,
+  const std::vector< std::vector< tk::real > >& mtInv,
+  const tk::Fields& U )
+// *****************************************************************************
+//  Transform the solution from Dubiner basis to Taylor basis
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] offset Index for equation systems
+//! \param[in] e Id of element whose solution is to be limited
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] ndof_el Local number of degrees of freedom for the element
+//! \param[in] mtInv Inverse of Taylor mass matrix
+//! \param[in] U High-order solution vector with Dubiner basis
+//! \return High-order solution vector with Taylor basis (ref element)
+// *****************************************************************************
+{
+  auto vol = 1.0/6.0;
+
+  // 1. Get rhs for L2-projection
+  // Quadrature setup
+  auto ng = tk::NGvol(ndof_el);
+  std::array< std::vector< real >, 3 > coordgp;
+  std::vector< real > wgp;
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  coordgp[2].resize( ng );
+  wgp.resize( ng );
+  GaussQuadratureTet( ng, coordgp, wgp );
+
+  // Gaussian quadrature
+  std::vector< std::vector< tk::real > >
+    R(ncomp, std::vector<tk::real>(ndof_el, 0.0));
+  for (std::size_t igp=0; igp<ng; ++igp)
+  {
+    // Dubiner basis functions
+    auto B = eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp],
+                         coordgp[2][igp] );
+    // Taylor basis functions
+    auto Bt = eval_TaylorBasisRefEl(ndof_el, coordgp[0][igp], coordgp[1][igp],
+      coordgp[2][igp]);
+
+    auto state = tk::eval_state(ncomp, offset, ndof, ndof_el, e, U, B,
+      {0,ncomp-1});
+
+    for (std::size_t c=0; c<ncomp; ++c) {
+      for (std::size_t id=0; id<ndof_el; ++id) {
+        R[c][id] += wgp[igp] * vol * state[c] * Bt[id];
+      }
+    }
+  }
+
+
+  // 2. Get Taylor solution by premultiplying by mass matrix inverse
+  std::vector< std::vector< tk::real > >
+    unk(ncomp, std::vector<tk::real>(ndof_el, 0.0));
+  for (std::size_t c=0; c<ncomp; ++c) {
+    for (std::size_t id=0; id<ndof_el; ++id) {
+      for (std::size_t jd=0; jd<ndof_el; ++jd) {
+        unk[c][id] += mtInv[id][jd] * R[c][jd];
+      }
+    }
+  }
+
+  return unk;
+}
+
+void
+tk::TaylorToDubinerRefEl( ncomp_t ncomp,
+  const std::size_t ndof,
+  std::vector< std::vector< tk::real > >& unk )
+// *****************************************************************************
+//  Transform the solution from Taylor to Dubiner basis
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] ndof Number of degrees of freedom
+//! \param[in,out] unk High-order solution vector with Taylor basis that gets
+//!   transformed to solution with Dubiner basis
+// *****************************************************************************
+{
+  auto vol = 1.0/6.0;
+
+  auto M = massMatrixDubiner(ndof, vol);
+
+  // 1. Get rhs for L2-projection
+  // Quadrature setup
+  auto ng = tk::NGvol(ndof);
+  std::array< std::vector< real >, 3 > coordgp;
+  std::vector< real > wgp;
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  coordgp[2].resize( ng );
+  wgp.resize( ng );
+  GaussQuadratureTet( ng, coordgp, wgp );
+
+  // Gaussian quadrature
+  std::vector< std::vector< tk::real > >
+    R(ncomp, std::vector<tk::real>(ndof, 0.0));
+  for (std::size_t igp=0; igp<ng; ++igp)
+  {
+    // Dubiner basis functions
+    auto B = eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
+                         coordgp[2][igp] );
+    // Taylor basis functions
+    auto Bt = eval_TaylorBasisRefEl(ndof, coordgp[0][igp], coordgp[1][igp],
+      coordgp[2][igp]);
+
+    for (std::size_t c=0; c<ncomp; ++c) {
+      real state(0.0);
+      for (std::size_t id=0; id<ndof; ++id) {
+        state += unk[c][id] * Bt[id];
+      }
+      for (std::size_t id=0; id<ndof; ++id) {
+        R[c][id] += wgp[igp] * vol * state * B[id];
+      }
+    }
+  }
+
+  // 2. Get Dubiner solution by premultiplying by mass matrix inverse
+  for (std::size_t c=0; c<ncomp; ++c) {
+    for (std::size_t id=0; id<ndof; ++id) {
+      unk[c][id] = R[c][id] / M[id];
+    }
+  }
+}
+
+std::vector< tk::real >
+tk::eval_TaylorBasisRefEl( std::size_t ndof, tk::real x, tk::real y,
+  tk::real z )
+// *****************************************************************************
+//  Evaluate the Taylor basis at a point in the reference element
+//! \param[in] ndof Number of degrees of freedom
+//! \param[in] x Xi coordinate of point in reference element
+//! \param[in] y Eta coordinate of point in reference element
+//! \param[in] z Zeta coordinate of point in reference element
+// *****************************************************************************
+{
+  // Get averages required for P2 basis functions
+  std::vector< tk::real > avg( 6, 0.0 );
+  if(ndof > 4)
+  {
+    auto ng = tk::NGvol(ndof);
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      avg[0] += wgp[igp] * (coordgp[0][igp] - 0.25) * (coordgp[0][igp] - 0.25) * 0.5;
+      avg[1] += wgp[igp] * (coordgp[1][igp] - 0.25) * (coordgp[1][igp] - 0.25) * 0.5;
+      avg[2] += wgp[igp] * (coordgp[2][igp] - 0.25) * (coordgp[2][igp] - 0.25) * 0.5;
+      avg[3] += wgp[igp] * (coordgp[0][igp] - 0.25) * (coordgp[1][igp] - 0.25);
+      avg[4] += wgp[igp] * (coordgp[0][igp] - 0.25) * (coordgp[2][igp] - 0.25);
+      avg[5] += wgp[igp] * (coordgp[1][igp] - 0.25) * (coordgp[2][igp] - 0.25);
+    }
+  }
+
+  // Get Taylor basis functions
+  std::vector< tk::real > B( ndof, 1.0 );
+  if(ndof > 1) {
+    B[1] = x - 0.25;
+    B[2] = y - 0.25;
+    B[3] = z - 0.25;
+    if(ndof > 4) {
+      B[4] = B[1] * B[1] * 0.5 - avg[0];
+      B[5] = B[2] * B[2] * 0.5 - avg[1];
+      B[6] = B[3] * B[3] * 0.5 - avg[2];
+      B[7] = B[1] * B[2] - avg[3];
+      B[8] = B[1] * B[3] - avg[4];
+      B[9] = B[2] * B[3] - avg[5];
+    }
+  }
+
+  return B;
+}
+
+std::vector< std::vector< tk::real > >
+tk::invMassMatTaylorRefEl( std::size_t dof )
+// *****************************************************************************
+//  Obtain inverse mass matrix for Taylor basis in reference element
+//! \param[in] dof Number of degrees of freedom
+//! \return Inverse mass matrix
+// *****************************************************************************
+{
+  // Get Taylor mass matrix
+  auto Mt = massMatrixTaylorRefEl(dof);
+
+  // Only invert if DGP2
+  if (dof > 4) {
+    double mtInv[10*10];
+    for (std::size_t i=0; i<Mt.size(); ++i) {
+      for (std::size_t j=0; j<Mt[i].size(); ++j) {
+        std::size_t idx = 10*i+j;
+        mtInv[idx] = Mt[i][j];
+      }
+    }
+    lapack_int n = dof;
+    lapack_int ipiv[10];
+    // LU-factorization for inversion
+    lapack_int info1 = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, n, n, mtInv, n, ipiv);
+    if (info1 != 0) Throw("Taylor mass matrix is singular");
+    // Inversion
+    lapack_int info2 = LAPACKE_dgetri(LAPACK_ROW_MAJOR, n, mtInv, n, ipiv);
+    if (info2 != 0) Throw("Error while inverting Taylor mass matrix");
+
+    // Get 2D vector from 1D array mass matrix inverse
+    for (std::size_t i=0; i<Mt.size(); ++i) {
+      for (std::size_t j=0; j<Mt[i].size(); ++j) {
+        std::size_t idx = 10*i+j;
+        Mt[i][j] = mtInv[idx];
+      }
+    }
+  }
+
+  return Mt;
+}
+
+std::vector< std::vector< tk::real > >
+tk::massMatrixTaylorRefEl(std::size_t dof)
+// *****************************************************************************
+//  Obtain mass matrix for Taylor basis in reference element
+//! \param[in] dof Number of degrees of freedom
+//! \return Mass matrix
+// *****************************************************************************
+{
+  std::vector< std::vector< tk::real > >
+    Mt(dof, std::vector<tk::real>(dof,0.0));
+
+  // Mt(1,1)
+  tk::real vol = 1.0/6.0;
+  Mt[0][0] = vol;
+
+  // Mt(i,j) for i,j > 1
+  if (dof > 1) {
+    // Quadrature information
+    auto ng = tk::NGvol(dof);
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      auto Bt = eval_TaylorBasisRefEl(dof, coordgp[0][igp], coordgp[1][igp],
+        coordgp[2][igp]);
+      for (std::size_t id=1; id<dof; ++id) {
+        for (std::size_t jd=1; jd<dof; ++jd) {
+          Mt[id][jd] += vol*wgp[igp]*Bt[id]*Bt[jd];
+        }
+      }
+    }
+  }
+
+  return Mt;
 }

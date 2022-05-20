@@ -494,6 +494,7 @@ class MultiMat {
     //!   variables
     //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
     //!   variables
+    //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
     //! \param[in,out] shockmarker Vector of shock-marker values
@@ -509,6 +510,7 @@ class MultiMat {
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& uNodalExtrm,
                 const std::vector< std::vector<tk::real> >& pNodalExtrm,
+                const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
@@ -537,7 +539,7 @@ class MultiMat {
       {
         VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
-          pNodalExtrm, U, P, nmat, shockmarker );
+          pNodalExtrm, mtInv, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {

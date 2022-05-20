@@ -75,6 +75,8 @@ DG::DG( const CProxy_Discretization& disc,
          g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
+  m_mtInv(
+    tk::invMassMatTaylorRefEl(g_inputdeck.get< tag::discr, tag::rdof >()) ),
   m_uNodalExtrm(),
   m_pNodalExtrm(),
   m_uNodalExtrmc(),
@@ -833,9 +835,8 @@ DG::nodalExtrema()
 
   // Evaluate the max/min value for the chare-boundary nodes
   if(rdof > 4) {
-      evalNodalExtrm(ncomp, nprim, m_ndof_NodalExtrm, d->bndel(),
-        myGhosts()->m_inpoel, myGhosts()->m_coord, gid, bid, m_u, m_p,
-        m_uNodalExtrm, m_pNodalExtrm);
+      evalNodalExtrmRefEl(ncomp, nprim, m_ndof_NodalExtrm, d->bndel(),
+        myGhosts()->m_inpoel, gid, bid, m_u, m_p, m_uNodalExtrm, m_pNodalExtrm);
   }
 
   // Communicate extrema at nodes to other chares on chare-boundary
@@ -947,27 +948,25 @@ void DG::resizeNodalExtremac()
   }
 }
 
-void DG::evalNodalExtrm( const std::size_t ncomp,
-                         const std::size_t nprim,
-                         const std::size_t ndof_NodalExtrm,
-                         const std::vector< std::size_t >& bndel,
-                         const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
-                         const std::vector< std::size_t >& gid,
-                         const std::unordered_map< std::size_t, std::size_t >&
-                           bid,
-                         const tk::Fields& U,
-                         const tk::Fields& P,
-                         std::vector< std::vector<tk::real> >& uNodalExtrm,
-                         std::vector< std::vector<tk::real> >& pNodalExtrm )
+void DG::evalNodalExtrmRefEl(
+  const std::size_t ncomp,
+  const std::size_t nprim,
+  const std::size_t ndof_NodalExtrm,
+  const std::vector< std::size_t >& bndel,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& gid,
+  const std::unordered_map< std::size_t, std::size_t >& bid,
+  const tk::Fields& U,
+  const tk::Fields& P,
+  std::vector< std::vector<tk::real> >& uNodalExtrm,
+  std::vector< std::vector<tk::real> >& pNodalExtrm )
 // *****************************************************************************
-//  Compute the nodal extrema for chare-boundary nodes
+//  Compute the nodal extrema of ref el derivatives for chare-boundary nodes
 //! \param[in] ncomp Number of conservative variables
 //! \param[in] nprim Number of primitive variables
 //! \param[in] ndof_NodalExtrm Degree of freedom for nodal extrema
 //! \param[in] bndel List of elements contributing to chare-boundary nodes
 //! \param[in] inpoel Element-node connectivity for element e
-//! \param[in] coord Array of nodal coordinates
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!   global node ids (key)
@@ -994,37 +993,18 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
       if (i != end(bid))      // If ip is the chare boundary point
       {
         // If DG(P2) is applied, find the nodal extrema of the gradients of
-        // conservative/primitive variables in the physical domain
+        // conservative/primitive variables in the reference element
 
         // Vector used to store the first order derivatives for both
         // conservative and primitive variables
         std::vector< std::array< tk::real, 3 > > gradc(ncomp, {0.0, 0.0, 0.0});
         std::vector< std::array< tk::real, 3 > > gradp(ncomp, {0.0, 0.0, 0.0});
 
-        const auto& cx = coord[0];
-        const auto& cy = coord[1];
-        const auto& cz = coord[2];
+        // Derivatives of the Dubiner basis
+        std::array< tk::real, 3 > center {{0.25, 0.25, 0.25}};
+        auto dBdxi = tk::eval_dBdxi(rdof, center);
 
-        std::array< std::array< tk::real, 3>, 4 > coordel {{
-          {{ cx[ N[0] ], cy[ N[0] ], cz[ N[0] ] }},
-          {{ cx[ N[1] ], cy[ N[1] ], cz[ N[1] ] }},
-          {{ cx[ N[2] ], cy[ N[2] ], cz[ N[2] ] }},
-          {{ cx[ N[3] ], cy[ N[3] ], cz[ N[3] ] }}
-        }};
-
-        auto jacInv = tk::inverseJacobian( coordel[0], coordel[1],
-          coordel[2], coordel[3] );
-
-        // Compute the derivatives of basis functions
-        auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
-
-        std::array< std::vector< tk::real >, 3 > center;
-        center[0].resize(1, 0.25);
-        center[1].resize(1, 0.25);
-        center[2].resize(1, 0.25);
-        tk::eval_dBdx_p2(0, center, jacInv, dBdx);
-
-        // Evaluate the first order derivative in physical domain
+        // Evaluate the first order derivative
         for(std::size_t icomp = 0; icomp < ncomp; icomp++)
         {
           auto mark = icomp * rdof;
@@ -1032,7 +1012,7 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
           {
             gradc[icomp][idir] = 0;
             for(std::size_t idof = 1; idof < rdof; idof++)
-              gradc[icomp][idir] += U(e, mark+idof, 0) * dBdx[idir][idof];
+              gradc[icomp][idir] += U(e, mark+idof, 0) * dBdxi[idir][idof];
           }
         }
         for(std::size_t icomp = 0; icomp < nprim; icomp++)
@@ -1042,7 +1022,7 @@ void DG::evalNodalExtrm( const std::size_t ncomp,
           {
             gradp[icomp][idir] = 0;
             for(std::size_t idof = 1; idof < rdof; idof++)
-              gradp[icomp][idir] += P(e, mark+idof, 0) * dBdx[idir][idof];
+              gradp[icomp][idir] += P(e, mark+idof, 0) * dBdxi[idir][idof];
           }
         }
 
@@ -1127,7 +1107,7 @@ DG::lim()
       eq.limit( d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem,
                 myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
                 myGhosts()->m_coord, m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm,
-                m_pNodalExtrm, m_u, m_p, m_shockmarker );
+                m_pNodalExtrm, m_mtInv, m_u, m_p, m_shockmarker );
 
       if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
         eq.Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,

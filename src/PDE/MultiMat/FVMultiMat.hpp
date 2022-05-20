@@ -347,14 +347,14 @@ class MultiMat {
     }
 
     //! Limit second-order solution, and primitive quantities separately
-    //! \param[in] geoElem Element geometry array
+//    //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
-    void limit( const tk::Fields& geoElem,
+    void limit( const tk::Fields& /*geoElem*/,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -373,7 +373,7 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          m_system, m_offset, geoElem, coord, U, P, nmat );
+          m_system, m_offset, coord, U, P, nmat );
       }
       else
       {
