@@ -277,7 +277,7 @@ Refiner::dtref( const std::map< int, std::vector< std::size_t > >& bface,
   // Update boundary node lists
   m_bface = bface;
   m_bnode = bnode;
-  m_triinpoel = triinpoel;
+  m_triinpoel = tk::remap(triinpoel, m_gid);
 
   start();
 }
@@ -897,7 +897,7 @@ Refiner::refinementFields() const
   auto esup = tk::genEsup( m_inpoel, 4 );
 
   // Update solution on current mesh
-  auto u = solution( npoin, esup );
+  const auto& u = solution( npoin, esup );
   Assert( u.nunk() == npoin, "Solution uninitialized or wrong size" );
 
   // Compute error in edges on current mesh
@@ -1291,6 +1291,7 @@ Refiner::solution( std::size_t npoin,
     if (centering == tk::Centering::ELEM) {
 
       // ...
+      Throw("Element-based solution handling not implemented in Refiner");
 
     }
 
@@ -1319,7 +1320,7 @@ Refiner::errorRefine()
   auto esup = tk::genEsup( m_inpoel, 4 );
 
   // Update solution on current mesh
-  auto u = solution( npoin, esup );
+  const auto& u = solution( npoin, esup );
   Assert( u.nunk() == npoin, "Solution uninitialized or wrong size" );
 
   using AMR::edge_t;
@@ -2174,9 +2175,12 @@ Refiner::updateBndNodes(
       std::vector< std::size_t > p( begin(a), end(a) );
       auto ss1 = keys( m_coarseBndNodes, m_gid[p[0]] );
       auto ss2 = keys( m_coarseBndNodes, m_gid[p[1]] );
-      ss1.insert(ss2.begin(), ss2.end());
       for (auto s : ss1) {
-        m_bnode[ s ].push_back( m_gid[n] );
+        // only add 'n' to bnode if all parent nodes are in same side set, else
+        // 'n' is not a boundary node
+        if (ss2.find(s) != end(ss2)) {
+          m_bnode[ s ].push_back( m_gid[n] );
+        }
       }
     } else if (a.size() == 3) {
       // node was added inside of a coarse face
@@ -2184,10 +2188,12 @@ Refiner::updateBndNodes(
       auto ss1 = keys( m_coarseBndNodes, m_gid[p[0]] );
       auto ss2 = keys( m_coarseBndNodes, m_gid[p[1]] );
       auto ss3 = keys( m_coarseBndNodes, m_gid[p[2]] );
-      ss1.insert(ss2.begin(), ss2.end());
-      ss1.insert(ss3.begin(), ss3.end());
       for (auto s : ss1) {
-        m_bnode[ s ].push_back( m_gid[n] );
+        // only add 'n' to bnode if all parent nodes are in same side set, else
+        // 'n' is not a boundary node
+        if (ss2.find(s) != end(ss2) && ss3.find(s) != end(ss3)) {
+          m_bnode[ s ].push_back( m_gid[n] );
+        }
       }
     }
   };
