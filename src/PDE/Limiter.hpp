@@ -61,7 +61,6 @@ VertexBasedTransport_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
-  const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U );
 
@@ -90,7 +89,9 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  tk::Fields& U );
+  const std::vector< std::vector<tk::real> >& mtInv,
+  tk::Fields& U,
+  std::vector< std::size_t >& shockmarker );
 
 //! Kuzmin's vertex-based limiter for multi-material DGP1
 void
@@ -125,6 +126,7 @@ VertexBasedMultiMat_P2(
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
+  const std::vector< std::vector<tk::real> >& mtInv,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -138,7 +140,6 @@ VertexBasedMultiMat_FV(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
-  const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -176,7 +177,6 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   const tk::UnsMesh::Coords& coord,
-  const tk::Fields& geoElem,
   std::size_t e,
   std::size_t rdof,
   std::size_t ,
@@ -191,8 +191,6 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
-  const tk::UnsMesh::Coords& coord,
-  const tk::Fields& geoElem,
   std::size_t e,
   std::size_t rdof,
   std::size_t dof_el,

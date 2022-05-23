@@ -45,6 +45,11 @@ eval_gp ( const std::size_t igp,
           const std::array< std::array< tk::real, 3>, 4 >& coord,
           const std::array< std::vector< tk::real >, 3 >& coordgp );
 
+//! Compute the derivatives of Dubiner basis wrt. reference coordinates
+std::array< std::vector< tk::real >, 3 >
+eval_dBdxi( const std::size_t ndof,
+            const std::array< tk::real, 3 >& coordgp );
+
 //! Compute the derivatives of basis function for DG(P1)
 std::array< std::vector<tk::real>, 3 >
 eval_dBdx_p1( const std::size_t ndof,
@@ -101,6 +106,39 @@ eval_TaylorBasis( const std::size_t ndof,
                   const std::array< tk::real, 3 >& x,
                   const std::array< tk::real, 3 >& x_c,
                   const std::array< std::array< tk::real, 3>, 4 >& coordel );
+
+// Reference element Taylor basis functions
+// ----------------------------------------
+
+//! Transform the solution from Dubiner basis to Taylor basis
+std::vector< std::vector< tk::real > >
+DubinerToTaylorRefEl( ncomp_t ncomp,
+  ncomp_t offset,
+  const std::size_t e,
+  const std::size_t ndof,
+  const std::size_t ndof_el,
+  const std::vector< std::vector< tk::real > >& mtInv,
+  const tk::Fields& U );
+
+//! Transform the solution from Taylor to Dubiner basis
+void
+TaylorToDubinerRefEl( ncomp_t ncomp,
+  const std::size_t ndof,
+  std::vector< std::vector< tk::real > >& unk );
+
+//! Evaluate the Taylor basis at a point in the reference element
+std::vector< tk::real >
+eval_TaylorBasisRefEl( std::size_t ndof, tk::real x, tk::real y,
+  tk::real z );
+
+//! Obtain inverse mass matrix for Taylor basis in reference element
+std::vector< std::vector< tk::real > >
+invMassMatTaylorRefEl( std::size_t dof );
+
+//! Obtain mass matrix for Taylor basis in reference element
+std::vector< std::vector< tk::real > >
+massMatrixTaylorRefEl(std::size_t dof);
+
 } // tk::
 
 #endif // Basis_h

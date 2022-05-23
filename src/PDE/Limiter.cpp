@@ -243,7 +243,6 @@ VertexBasedTransport_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
-  const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U )
 // *****************************************************************************
@@ -254,7 +253,6 @@ VertexBasedTransport_P1(
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
 //! \param[in] offset Index for equation systems
-//! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This vertex-based limiter function should be called for transport.
@@ -291,7 +289,7 @@ VertexBasedTransport_P1(
       std::vector< std::vector< tk::real > > unk;
       std::vector< tk::real > phi(ncomp, 1.0);
       // limit conserved quantities
-      VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+      VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
         dof_el, offset, ncomp, phi, {0, ncomp-1});
 
       // limits under which compression is to be performed
@@ -327,7 +325,7 @@ VertexBasedCompflow_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t offset,
-  const tk::Fields& geoElem,
+  const tk::Fields& /*geoElem*/,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U )
 // *****************************************************************************
@@ -337,7 +335,7 @@ VertexBasedCompflow_P1(
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
 //! \param[in] offset Index for equation systems
-//! \param[in] geoElem Element geometry array
+// //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This vertex-based limiter function should be called for compflow.
@@ -372,7 +370,7 @@ VertexBasedCompflow_P1(
       std::vector< std::vector< tk::real > > unk;
       std::vector< tk::real > phi(ncomp, 1.0);
       // limit conserved quantities
-      VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+      VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
         dof_el, offset, ncomp, phi, {0, ncomp-1});
 
       // apply limiter function
@@ -394,27 +392,31 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t offset,
-  const tk::Fields& geoElem,
+  const tk::Fields& /*geoElem*/,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  tk::Fields& U )
+  const std::vector< std::vector<tk::real> >& mtInv,
+  tk::Fields& U,
+  std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
-//  Kuzmin's vertex-based limiter for single-material DGP2
+//  Kuzmin's vertex-based limiter on reference element for single-material DGP2
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
 //! \param[in] offset Index for equation systems
-//! \param[in] geoElem Element geometry array
+// //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!   global node ids (key)
 //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
 //!   variables
+//! \param[in] mtInv Inverse of Taylor mass matrix
 //! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for compflow.
 //!   For details see: Kuzmin, D. (2010). A vertex-based hierarchical slope
 //!   limiter for p-adaptive discontinuous Galerkin methods. Journal of
@@ -452,19 +454,26 @@ VertexBasedCompflow_P2(
     if (inciter::g_inputdeck.get< tag::discr, tag::shock_detection >()) {
       // Evaluate the shock detection indicator
       auto Ind = evalDiscIndicator_CompFlow(e, ncomp, dof_el, ndofel[e], U);
-      if(Ind > 1e-6)
+      if(Ind > 1e-6) {
         shock_detec = true;
+        shockmarker[e] = 1;
+      }
+      else {
+        shock_detec = false;
+        shockmarker[e] = 0;
+      }
     }
-    else
+    else {
       shock_detec = true;
+      shockmarker[e] = 1;
+    }
 
     if (dof_el > 1 && shock_detec)
     {
-      // Transform the solution with Dubiner basis to Taylor basis so that the
-      // limiting function could be applied to physical derivatives in a
-      // hierarchical manner
-      auto unk =
-        tk::DubinerToTaylor(ncomp, offset, e, dof_el, U, inpoel, coord);
+      // Transform the solution from Dubiner basis to Taylor basis to apply
+      // limiting on derivatives in the reference element hierarchically
+      auto unk = tk::DubinerToTaylorRefEl(ncomp, offset, e, rdof, dof_el, mtInv,
+        U);
 
       // The vector of limiting coefficients for P1 and P2 coefficients
       std::vector< tk::real > phic_p1(ncomp, 1.0);
@@ -473,11 +482,11 @@ VertexBasedCompflow_P2(
       // If DGP2 is applied, apply the limiter function to the first derivative
       // to obtain the limiting coefficient for P2 coefficients
       if(dof_el > 4)
-        VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+        VertexBasedLimiting_P2(unk, U, esup, inpoel, e, rdof,
           dof_el, offset, ncomp, gid, bid, uNodalExtrm, {0, ncomp-1}, phic_p2);
 
-      // limit conserved quantities
-      VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+      // Obtain limiting coefficient for P1 coefficients
+      VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
         dof_el, offset, ncomp, phic_p1, {0, ncomp-1});
 
       if(dof_el > 4)
@@ -506,7 +515,7 @@ VertexBasedCompflow_P2(
 
       // Convert the solution with Taylor basis to the solution with Dubiner
       // basis
-      tk::TaylorToDubiner( ncomp, e, dof_el, inpoel, coord, geoElem, unk );
+      tk::TaylorToDubinerRefEl(ncomp, dof_el, unk);
 
       // Store the limited solution in U_lim
       for(std::size_t c=0; c<ncomp; ++c)
@@ -551,7 +560,7 @@ VertexBasedMultiMat_P1(
   std::size_t offset,
   [[maybe_unused]] const inciter::FaceData& fd,
   [[maybe_unused]] const tk::Fields& geoFace,
-  const tk::Fields& geoElem,
+  const tk::Fields& /*geoElem*/,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -565,7 +574,7 @@ VertexBasedMultiMat_P1(
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] geoElem Element geometry array
+// //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -633,15 +642,15 @@ VertexBasedMultiMat_P1(
         // Hence, the vertex-based limiter will be applied.
 
         // limit conserved quantities
-        VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+        VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
           dof_el, offset, ncomp, phic, {0, ncomp-1});
         // limit primitive quantities
-        VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
+        VertexBasedLimiting(unk, P, esup, inpoel, coord, e, rdof,
           dof_el, offset, nprim, phip, {0, nprim-1});
       } else {
         // When shockmarker is 0, the volume fraction, density and energy
         // of minor material will still be limited to ensure a stable solution.
-        VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+        VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
           dof_el, offset, ncomp, phic,
           {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
@@ -653,19 +662,19 @@ VertexBasedMultiMat_P1(
             // limit the density of minor materials
             VarRange[0] = densityIdx(nmat, k);
             VarRange[1] = VarRange[0];
-            VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+            VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
               dof_el, offset, ncomp, phic, VarRange);
 
             // limit the energy of minor materials
             VarRange[0] = energyIdx(nmat, k);
             VarRange[1] = VarRange[0];
-            VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+            VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
               dof_el, offset, ncomp, phic, VarRange);
 
             // limit the pressure of minor materials
             VarRange[0] = pressureIdx(nmat, k);
             VarRange[1] = VarRange[0];
-            VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
+            VertexBasedLimiting(unk, P, esup, inpoel, coord, e, rdof,
               dof_el, offset, nprim, phip, VarRange);
           }
         }
@@ -729,12 +738,13 @@ VertexBasedMultiMat_P2(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
-  const tk::Fields& geoElem,
+  const tk::Fields& /*geoElem*/,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
+  const std::vector< std::vector<tk::real> >& mtInv,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -747,7 +757,7 @@ VertexBasedMultiMat_P2(
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] geoElem Element geometry array
+// //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
@@ -756,6 +766,7 @@ VertexBasedMultiMat_P2(
 //!   variables
 //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
 //!   variables
+//! \param[in] mtInv Inverse of Taylor mass matrix
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -816,13 +827,12 @@ VertexBasedMultiMat_P2(
 
     if (dof_el > 1)
     {
-      // Transform the solution with Dubiner basis to Taylor basis so that the
-      // limiting function could be applied to physical derivatives in a
-      // hierarchical manner
+      // Transform the solution from Dubiner to Taylor basis to apply
+      // limiting on derivatives in the reference element hierarchically
       auto unk =
-        tk::DubinerToTaylor(ncomp, offset, e, dof_el, U, inpoel, coord);
+        tk::DubinerToTaylorRefEl(ncomp, offset, e, rdof, dof_el, mtInv, U);
       auto prim =
-        tk::DubinerToTaylor(nprim, offset, e, dof_el, P, inpoel, coord);
+        tk::DubinerToTaylorRefEl(nprim, offset, e, rdof, dof_el, mtInv, P);
 
       // The vector of limiting coefficients for P1 and P2 coefficients
       std::vector< tk::real > phic_p1(ncomp, 1.0), phic_p2(ncomp, 1.0);
@@ -833,26 +843,26 @@ VertexBasedMultiMat_P2(
         // to obtain the limiting coefficient for P2 coefficients
         if(dof_el > 4)
         {
-          VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+          VertexBasedLimiting_P2(unk, U, esup, inpoel, e, rdof,
            dof_el, offset, ncomp, gid, bid, uNodalExtrm, {0, ncomp-1}, phic_p2);
-          VertexBasedLimiting_P2(prim, P, esup, inpoel, coord, geoElem, e, rdof,
+          VertexBasedLimiting_P2(prim, P, esup, inpoel, e, rdof,
            dof_el, offset, nprim, gid, bid, pNodalExtrm, {0, nprim-1}, phip_p2);
         }
 
-        // limit conserved quantities
-        VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+        // Obtain limiter coefficient for P1 conserved quantities
+        VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
             dof_el, offset, ncomp, phic_p1, {0, ncomp-1});
-        // limit primitive quantities
-        VertexBasedLimiting(prim, P, esup, inpoel, coord, geoElem, e, rdof,
+        // Obtain limiter coefficient for P1 primitive quantities
+        VertexBasedLimiting(prim, P, esup, inpoel, coord, e, rdof,
             dof_el, offset, nprim, phip_p1, {0, nprim-1});
       } else {
         // When shockmarker is 0, the volume fraction, density and energy
         // of minor material will still be limited to ensure a stable solution.
         if(dof_el > 4)
-          VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+          VertexBasedLimiting_P2(unk, U, esup, inpoel, e, rdof,
             dof_el, offset, ncomp, gid, bid, uNodalExtrm,
             {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)}, phic_p2);
-        VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+        VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
           dof_el, offset, ncomp, phic_p1,
           {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
@@ -865,20 +875,20 @@ VertexBasedMultiMat_P2(
             VarRange[0] = densityIdx(nmat, k);
             VarRange[1] = VarRange[0];
             if(dof_el > 4)
-              VertexBasedLimiting_P2(unk, U, esup, inpoel, coord, geoElem, e,
+              VertexBasedLimiting_P2(unk, U, esup, inpoel, e,
                 rdof, dof_el, offset, ncomp, gid, bid, uNodalExtrm, VarRange,
                 phic_p2);
-            VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+            VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
               dof_el, offset, ncomp, phic_p1, VarRange);
 
             // limit the pressure of minor materials
             VarRange[0] = pressureIdx(nmat, k);
             VarRange[1] = VarRange[0];
             if(dof_el > 4)
-              VertexBasedLimiting_P2(prim, P, esup, inpoel, coord, geoElem, e,
+              VertexBasedLimiting_P2(prim, P, esup, inpoel, e,
                 rdof, dof_el, offset, nprim, gid, bid, uNodalExtrm, VarRange,
                 phip_p2);
-            VertexBasedLimiting(prim, P, esup, inpoel, coord, geoElem, e, rdof,
+            VertexBasedLimiting(prim, P, esup, inpoel, coord, e, rdof,
               dof_el, offset, nprim, phip_p1, VarRange);
           }
         }
@@ -920,8 +930,8 @@ VertexBasedMultiMat_P2(
       }
 
       // Convert the solution with Taylor basis to the solution with Dubiner basis
-      tk::TaylorToDubiner( ncomp, e, dof_el, inpoel, coord, geoElem, unk );
-      tk::TaylorToDubiner( nprim, e, dof_el, inpoel, coord, geoElem, prim );
+      tk::TaylorToDubinerRefEl( ncomp, dof_el, unk );
+      tk::TaylorToDubinerRefEl( nprim, dof_el, prim );
 
       // Store the limited solution in U_lim and P_lim
       for(std::size_t c=0; c<ncomp; ++c)
@@ -1022,7 +1032,6 @@ VertexBasedMultiMat_FV(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
-  const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -1034,7 +1043,6 @@ VertexBasedMultiMat_FV(
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
 //! \param[in] offset Offset this PDE system operates from
-//! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -1057,10 +1065,10 @@ VertexBasedMultiMat_FV(
     std::vector< tk::real > phic(ncomp, 1.0);
     std::vector< tk::real > phip(nprim, 1.0);
     // limit conserved quantities
-    VertexBasedLimiting(unk, U, esup, inpoel, coord, geoElem, e, rdof,
+    VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof,
       rdof, offset, ncomp, phic, {0, ncomp-1});
     // limit primitive quantities
-    VertexBasedLimiting(unk, P, esup, inpoel, coord, geoElem, e, rdof,
+    VertexBasedLimiting(unk, P, esup, inpoel, coord, e, rdof,
       rdof, offset, nprim, phip, {0, nprim-1});
 
     // limits under which compression is to be performed
@@ -1378,7 +1386,6 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   const tk::UnsMesh::Coords& coord,
-  const tk::Fields& geoElem,
   std::size_t e,
   std::size_t rdof,
   std::size_t dof_el,
@@ -1392,7 +1399,6 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element connectivity
 //! \param[in] coord Array of nodal coordinates
-//! \param[in] geoElem Element geometry array
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] dof_el Local number of degrees of freedom
@@ -1412,6 +1418,12 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
+
+  // The coordinates of the reference element vertices
+  std::array< std::array< tk::real, 4 >, 3 > cnodes{{
+    {{0, 1, 0, 0}},
+    {{0, 0, 1, 0}},
+    {{0, 0, 0, 1}} }};
 
   // Extract the element coordinates
   std::array< std::array< tk::real, 3>, 4 > coordel {{
@@ -1468,11 +1480,8 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
       state = tk::eval_state(ncomp, offset, rdof, dof_el, e, U, B_p, VarRange);
     }
     else {  // If DG(P2), evaluate high order solution based on Taylor basis
-      // The nodal and central coordinates
-      std::array< tk::real, 3 > node{cx[p], cy[p], cz[p]};
-      std::array< tk::real, 3 > x_center
-        { geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0) };
-      auto B_p = tk::eval_TaylorBasis( rdof, node, x_center, coordel );
+      std::array< tk::real, 3 > node{cnodes[0][lp], cnodes[1][lp], cnodes[2][lp]};
+      auto B_p = tk::eval_TaylorBasisRefEl(rdof, node[0], node[1], node[2]);
 
       state.resize( ncomp, 0.0 );
       for (ncomp_t c=0; c<ncomp; ++c)
@@ -1514,8 +1523,6 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
-  const tk::UnsMesh::Coords& coord,
-  const tk::Fields& geoElem,
   std::size_t e,
   std::size_t rdof,
   [[maybe_unused]] std::size_t dof_el,
@@ -1531,8 +1538,6 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
 //! \param[in] U High-order solution vector which is to be limited
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element connectivity
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] geoElem Element geometry array
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] dof_el Local number of degrees of freedom
@@ -1552,11 +1557,6 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
 {
   const auto nelem = inpoel.size() / 4;
 
-  // Prepare for calculating Basis functions
-  const auto& cx = coord[0];
-  const auto& cy = coord[1];
-  const auto& cz = coord[2];
-
   std::vector< std::vector< tk::real > > uMin, uMax;
   uMin.resize( VarRange[1]-VarRange[0]+1, std::vector<tk::real>(3, 0.0) );
   uMax.resize( VarRange[1]-VarRange[0]+1, std::vector<tk::real>(3, 0.0) );
@@ -1566,6 +1566,11 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   center[0].resize(1, 0.25);
   center[1].resize(1, 0.25);
   center[2].resize(1, 0.25);
+
+  std::array< std::array< tk::real, 4 >, 3 > cnodes{{
+    {{0, 1, 0, 0}},
+    {{0, 0, 1, 0}},
+    {{0, 0, 0, 1}} }};
 
   // loop over all nodes of the element e
   for (std::size_t lp=0; lp<4; ++lp)
@@ -1590,21 +1595,9 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
     {
       if(er < nelem)      // If this is internal element
       {
-        // Coordinates of the neighboring element
-        std::array< std::array< tk::real, 3>, 4 > coorder {{
-         {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
-         {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
-         {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
-         {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
-
-        auto jacInv_er = 
-          tk::inverseJacobian( coorder[0], coorder[1], coorder[2], coorder[3] );
-
-        // Compute the derivatives of basis function in the physical domain
-        auto dBdx_er = tk::eval_dBdx_p1( rdof, jacInv_er );
-
-        if(rdof > 4)
-          tk::eval_dBdx_p2(0, center, jacInv_er, dBdx_er);
+        // Compute the derivatives of basis function in the reference domain
+        auto dBdxi_er = tk::eval_dBdxi(rdof,
+          {{center[0][0], center[1][0], center[2][0]}});
 
         for (std::size_t c=VarRange[0]; c<=VarRange[1]; ++c)
         {
@@ -1615,7 +1608,7 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
             // The first order derivative at the centroid of element er
             tk::real slope_er(0.0);
             for(std::size_t idof = 1; idof < rdof; idof++)
-              slope_er += U(er, mark+idof, offset) * dBdx_er[idir][idof];
+              slope_er += U(er, mark+idof, offset) * dBdxi_er[idir][idof];
 
             uMin[cmark][idir] = std::min(uMin[cmark][idir], slope_er);
             uMax[cmark][idir] = std::max(uMax[cmark][idir], slope_er);
@@ -1645,9 +1638,7 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
     }
 
     //Step-2: compute the limiter function at this node
-    std::array< tk::real, 3 > node{cx[p], cy[p], cz[p]};
-    std::array< tk::real, 3 >
-      centroid_physical{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
+    std::array< tk::real, 3 > node{cnodes[0][lp], cnodes[1][lp], cnodes[2][lp]};
 
     // find high-order solution
     std::vector< std::array< tk::real, 3 > > state;
@@ -1656,9 +1647,9 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
     for (std::size_t c=VarRange[0]; c<=VarRange[1]; ++c)
     {
       auto cmark = c-VarRange[0];
-      auto dx = node[0] - centroid_physical[0];
-      auto dy = node[1] - centroid_physical[1];
-      auto dz = node[2] - centroid_physical[2];
+      auto dx = node[0] - center[0][0];
+      auto dy = node[1] - center[1][0];
+      auto dz = node[2] - center[2][0];
 
       state[cmark][0] = unk[c][1] + unk[c][4]*dx + unk[c][7]*dy + unk[c][8]*dz;
       state[cmark][1] = unk[c][2] + unk[c][5]*dy + unk[c][7]*dx + unk[c][9]*dz;
