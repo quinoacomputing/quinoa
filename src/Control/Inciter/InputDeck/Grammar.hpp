@@ -374,6 +374,18 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
         }
 
+        // Error check for ic box
+        auto& box = ic.template get< tag::box >();
+        if (!box.empty()) {
+          for (auto& b : box.back()) {   // for all boxes
+            auto& boxorient = b.template get< tag::orientation >();
+            if (boxorient.size() == 0)
+              boxorient.resize(3, 0.0);
+            else if (boxorient.size() != 3)
+              Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
+          }
+        }
+
         // Error check Dirichlet boundary condition block for all compflow
         // configurations
         const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
@@ -1597,6 +1609,7 @@ namespace deck {
              , box_parameter< eq, kw::ymax, tag::ymax >
              , box_parameter< eq, kw::zmin, tag::zmin >
              , box_parameter< eq, kw::zmax, tag::zmax >
+             , box_vector< eq, kw::orientation, tag::orientation >
              , box_parameter< eq, kw::materialid, tag::materialid >
              , box_parameter< eq, kw::density, tag::density >
              , box_parameter< eq, kw::pressure, tag::pressure >

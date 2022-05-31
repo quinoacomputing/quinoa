@@ -262,6 +262,7 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::ymax,          kw::ymax::info::expect::type
   , tag::zmin,          kw::zmin::info::expect::type
   , tag::zmax,          kw::zmax::info::expect::type
+  , tag::orientation,   std::vector< kw::orientation::info::expect::type >
   , tag::materialid,    kw::materialid::info::expect::type
   , tag::mass,          kw::mass::info::expect::type
   , tag::density,       kw::density::info::expect::type

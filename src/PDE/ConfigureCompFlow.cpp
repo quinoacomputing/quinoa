@@ -200,6 +200,9 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
       std::string boxname = "IC box " + parameter(bcnt);
       nfo.emplace_back( boxname, parameters( box ) );
 
+      nfo.emplace_back( boxname + " orientation",
+        parameters(b.get< tag::orientation >()) );
+
       nfo.emplace_back( boxname + " density",
                         parameter( b.get< tag::density >() ) );
       nfo.emplace_back( boxname + " velocity",
