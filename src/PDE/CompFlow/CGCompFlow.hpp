@@ -1655,9 +1655,22 @@ class CompFlow {
             // negative, the initial position is the maximum z-coordinate of the
             // box.
 
+            // Orientation of box
+            std::array< tk::real, 3 > b_orientn{{
+              b.template get< tag::orientation >()[0],
+              b.template get< tag::orientation >()[1],
+              b.template get< tag::orientation >()[2] }};
+            std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
+              0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
+            // Transform box to reference space
+            std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
+            std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
+            tk::movePoint(b_centroid, b_min);
+            tk::movePoint(b_centroid, b_max);
+
             // initial center of front
-            tk::real zInit(box[4]);
-            if (iv < 0.0) zInit = box[5];
+            tk::real zInit(b_min[2]);
+            if (iv < 0.0) zInit = b_max[2];
             // current location of front
             auto z0 = zInit + iv*t;
             auto z1 = z0 + std::copysign(wFront, iv);
@@ -1678,8 +1691,14 @@ class CompFlow {
 
             // add source
             for (auto p : boxnodes) {
-              if (z[p] >= s0 && z[p] <= s1) {
-                auto S = amplE * std::sin(pi*(z[p]-s0)/wFront);
+              std::array< tk::real, 3 > node{{ x[p], y[p], z[p] }};
+              // Transform node to reference space of box
+              tk::movePoint(b_centroid, node);
+              tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+                node);
+
+              if (node[2] >= s0 && node[2] <= s1) {
+                auto S = amplE * std::sin(pi*(node[2]-s0)/wFront);
                 for (auto e : tk::Around(esup,p)) {
                   // access node IDs
                   std::size_t N[4] =
