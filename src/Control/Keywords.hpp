@@ -7011,8 +7011,8 @@ struct orientation_info {
   static std::string name() { return "orientation"; }
   static std::string shortDescription() { return "Configure orientation"; }
   static std::string longDescription() { return
-    R"(Configure orientation of a mesh relative to another, e.g., for solver
-       coupling.)";
+    R"(Configure orientation of: i) a mesh relative to another, e.g., for solver
+       coupling, or ii) an IC box for rotation about centroid of box.)";
   }
   struct expect {
     using type = tk::real;

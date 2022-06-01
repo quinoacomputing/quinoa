@@ -150,6 +150,7 @@ namespace grm {
     BGMATIDMISSING,     //!< Background material id unspecified
     BOXMATIDMISSING,    //!< Box material id unspecified
     BOXMATIDWRONG,      //!< Box material id incorrect
+    BOXORIENTWRONG,     //!< Box orientation incorrect
     STAGBCWRONG,        //!< Stagnation BC incorrectly configured
     SKIPBCWRONG,        //!< Skip BC incorrectly configured
     SPONGEBCWRONG,      //!< Sponge BC incorrectly configured
@@ -421,6 +422,8 @@ namespace grm {
       "Each IC box must specify material id in the box." },
     { MsgKey::BOXMATIDWRONG, "Error in the preceding block. "
       "Material id in IC box larger than number of materials." },
+    { MsgKey::BOXORIENTWRONG, "Error in the preceding block. "
+      "Orientation of IC box must have 3 components." },
     { MsgKey::STAGBCWRONG, "Stagnation boundary conditions incorrectly "
       "configured. Within a bc_stag ... end block there must be a point ... "
       "end block and a radius ... end block. Both point and radius blocks must "

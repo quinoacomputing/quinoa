@@ -1102,9 +1102,22 @@ class CompFlow {
             // negative, the initial position is the maximum z-coordinate of the
             // box.
 
+            // Orientation of box
+            std::array< tk::real, 3 > b_orientn{{
+              b.template get< tag::orientation >()[0],
+              b.template get< tag::orientation >()[1],
+              b.template get< tag::orientation >()[2] }};
+            std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
+              0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
+            // Transform box to reference space
+            std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
+            std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
+            tk::movePoint(b_centroid, b_min);
+            tk::movePoint(b_centroid, b_max);
+
             // initial center of front
-            tk::real zInit(box[4]);
-            if (iv < 0.0) zInit = box[5];
+            tk::real zInit(b_min[2]);
+            if (iv < 0.0) zInit = b_max[2];
             // current location of front
             auto z0 = zInit + iv*t;
             auto z1 = z0 + std::copysign(wFront, iv);
@@ -1124,9 +1137,14 @@ class CompFlow {
 
             // add source
             for (auto e : boxelems) {
-              auto zc = geoElem(e,3,0);
+              std::array< tk::real, 3 > node{{ geoElem(e,1,0), geoElem(e,2,0),
+                geoElem(e,3,0) }};
+              // Transform node to reference space of box
+              tk::movePoint(b_centroid, node);
+              tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+                node);
 
-              if (zc >= s0 && zc <= s1) {
+              if (node[2] >= s0 && node[2] <= s1) {
                 auto ng = tk::NGvol(ndofel[e]);
 
                 // arrays for quadrature points
@@ -1151,6 +1169,11 @@ class CompFlow {
                   // Compute the coordinates of quadrature point at physical
                   // domain
                   auto gp = tk::eval_gp( igp, coordel, coordgp );
+
+                  // Transform quadrature point to reference space of box
+                  tk::movePoint(b_centroid, gp);
+                  tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+                    gp);
 
                   // Compute the basis function
                   auto B = tk::eval_basis( ndofel[e], coordgp[0][igp],
