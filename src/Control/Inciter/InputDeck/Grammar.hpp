@@ -656,7 +656,7 @@ namespace grm {
         auto& icbox = ic.template get< tag::box >();
 
         if (!icbox.empty()) {
-          for (const auto& b : icbox.back()) {   // for all boxes
+          for (auto& b : icbox.back()) {   // for all boxes
             auto boxmatid = b.template get< tag::materialid >();
             if (boxmatid == 0) {
               Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
@@ -664,6 +664,11 @@ namespace grm {
             else if (boxmatid > nmat.back()) {
               Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
             }
+            auto& boxorient = b.template get< tag::orientation >();
+            if (boxorient.size() == 0)
+              boxorient.resize(3, 0.0);
+            else if (boxorient.size() != 3)
+              Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
           }
         }
       }

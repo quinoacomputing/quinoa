@@ -100,7 +100,7 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // Detect if user has configured a IC boxes
+      // Detect if user has configured IC boxes
       const auto& icbox = g_inputdeck.get<tag::param, eq, tag::ic, tag::box>();
       if (icbox.size() > m_system) {
         std::size_t bcnt = 0;
@@ -111,14 +111,34 @@ class CompFlow {
               b.template get< tag::ymin >(), b.template get< tag::ymax >(),
               b.template get< tag::zmin >(), b.template get< tag::zmax >() };
 
+          // Determine orientation of box
+          std::array< tk::real, 3 > b_orientn{{
+            b.template get< tag::orientation >()[0],
+            b.template get< tag::orientation >()[1],
+            b.template get< tag::orientation >()[2] }};
+          std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
+            0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
+
           const auto eps = std::numeric_limits< tk::real >::epsilon();
           // Determine which nodes lie in the IC box
           if ( std::any_of( begin(box), end(box), [=](auto p)
                             { return abs(p) > eps; } ) )
           {
+            // Transform box to reference space
+            std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
+            std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
+            tk::movePoint(b_centroid, b_min);
+            tk::movePoint(b_centroid, b_max);
+
             for (ncomp_t i=0; i<x.size(); ++i) {
-              if ( x[i]>box[0] && x[i]<box[1] && y[i]>box[2] && y[i]<box[3] &&
-                z[i]>box[4] && z[i]<box[5] )
+              std::array< tk::real, 3 > node{{ x[i], y[i], z[i] }};
+              // Transform node to reference space of box
+              tk::movePoint(b_centroid, node);
+              tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+                node);
+              if ( node[0]>b_min[0] && node[0]<b_max[0] &&
+                node[1]>b_min[1] && node[1]<b_max[1] &&
+                node[2]>b_min[2] && node[2]<b_max[2] )
               {
                 inbox[bcnt].insert( i );
               }
