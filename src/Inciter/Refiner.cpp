@@ -1032,10 +1032,11 @@ Refiner::perform()
   // followed by outderef, so to the outside world, the mesh is uchanged, thus
   // no update.
   if (m_mode != RefMode::OUTREF && m_mode != RefMode::OUTDEREF) {
-    m_oldntets = m_oldTets.size();
     m_oldTets.clear();
-    for (const auto& [ id, tet ] : m_refiner.tet_store.tets)
+    for (const auto& [ id, tet ] : m_refiner.tet_store.tets) {
       m_oldTets.insert( tet );
+    }
+    m_oldntets = m_oldTets.size();
   }
 
   if (m_mode == RefMode::T0REF) {
@@ -1840,7 +1841,9 @@ Refiner::boundary()
 //!   updateBndNodes().
 // *****************************************************************************
 {
-  // Generate the inverse of AMR's tet store
+  // Generate the inverse of AMR's tet store.
+  // The entire 'tet' structure is used, since we are going to compare with the
+  // previous 'active' mesh, not the current 'active' mesh.
   std::unordered_map< Tet, std::size_t, Hash<4>, Eq<4> > invtets;
   for (const auto& [key, tet] : m_refiner.tet_store.tets)
     invtets[ tet ] = key;
@@ -1914,6 +1917,7 @@ Refiner::boundary()
       // get child tet id
       auto childtet = tet_store.get_child_id( t.first, i );
       auto ct = tet_store.tets.find( childtet );
+      Assert(ct != tet_store.tets.end(), "Child not found in tet store");
       //auto cA = tk::cref_find( m_lref, ct->second[0] );
       //auto cB = tk::cref_find( m_lref, ct->second[1] );
       //auto cC = tk::cref_find( m_lref, ct->second[2] );
@@ -1927,6 +1931,9 @@ Refiner::boundary()
       //m_oldparent[ {{cA,cB,cC,cD}} ] = {{pA,pB,pC,pD}};
       m_oldparent[ ct->second ] = t.second; //{{pA,pB,pC,pD}};
       if (m_oldTets.find(ct->second) == end(m_oldTets)) {
+        // TODO: the following code can assign negative ids to newly added tets.
+        // This needs to be corrected before applying to cell-based schemes.
+        //Assert((p-m_oldntets) > 0, "Negative id assigned to added tet");
         m_addedTets[ c++ ] = p - m_oldntets;
       }
     }
@@ -1943,6 +1950,7 @@ Refiner::boundary()
   for (const auto& [ setid, faceids ] : m_bface) {
     auto& faces = bndFaces[ setid ];
     for (auto f : faceids) {
+      Assert(f<m_triinpoel.size()/3, "Out of bounds access into triinpoel");
       faces.insert(
         {{{ m_triinpoel[f*3+0], m_triinpoel[f*3+1], m_triinpoel[f*3+2] }}} );
     }
@@ -1997,6 +2005,7 @@ Refiner::updateBndFaces(
     if (bf[ ss ].insert( f ).second) {
       s.push_back( facecnt++ );
       m_triinpoel.insert( end(m_triinpoel), begin(f), end(f) );
+      Assert(m_triinpoel.size()/3 == facecnt, "Incorrect size of triinpoel");
     }
   };
 
@@ -2011,12 +2020,11 @@ Refiner::updateBndFaces(
     // for all side sets of the face, match children's faces to side sets
     for (const auto& ss : keys(bndFaces,face)) {
       // will associate to side set id of old (unrefined) mesh boundary face
-      auto& faces = m_bface[ ss ];
       const auto& coarsefaces = tk::cref_find( m_coarseBndFaces, ss );
       // query number of children of boundary tet adjacent to boundary face
       auto nc = tet_store.data( tetid ).children.size();
       if (nc == 0) {    // if boundary tet is not refined, add its boundary face
-        addBndFace( faces, ss, face );
+        addBndFace( m_bface[ss], ss, face );
       } else {          // if boundary tet is refined
         const auto& tets = tet_store.tets;
         for (decltype(nc) i=0; i<nc; ++i ) {      // for all child tets
@@ -2051,7 +2059,8 @@ Refiner::updateBndFaces(
               Face par{{ m_gid[p[0]], m_gid[p[1]], m_gid[p[2]] }};
               auto it = coarsefaces.find( par );
               if (it != end(coarsefaces))
-                addBndFace(faces,ss,{{m_gid[rf[0]],m_gid[rf[1]],m_gid[rf[2]]}});
+                addBndFace(m_bface[ss],ss,
+                  {{m_gid[rf[0]],m_gid[rf[1]],m_gid[rf[2]]}});
             }
           }
         }
@@ -2067,7 +2076,6 @@ Refiner::updateBndFaces(
   for (const auto& f : pcDeFaceTets) {
     for (const auto& ss : keys(bndFaces,f.first)) {
       // will associate to side set id of old (refined) mesh boundary face
-      auto& faces = m_bface[ ss ];
       const auto& coarsefaces = tk::cref_find( m_coarseBndFaces, ss );
       // form all 4 faces of parent tet
       auto A = f.second[0];
@@ -2089,7 +2097,8 @@ Refiner::updateBndFaces(
           Face par{{ m_gid[p[0]], m_gid[p[1]], m_gid[p[2]] }};
           auto it = coarsefaces.find( par );
           if (it != end(coarsefaces))
-            addBndFace(faces,ss,{{m_gid[pf[0]],m_gid[pf[1]],m_gid[pf[2]]}});
+            addBndFace(m_bface[ss],ss,
+              {{m_gid[pf[0]],m_gid[pf[1]],m_gid[pf[2]]}});
         }
       }
     }
