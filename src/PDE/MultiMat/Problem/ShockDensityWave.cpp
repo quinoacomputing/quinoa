@@ -16,6 +16,7 @@
 #include "ShockDensityWave.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
@@ -29,6 +30,7 @@ using inciter::MultiMatProblemShockDensityWave;
 tk::InitializeFn::result_type
 MultiMatProblemShockDensityWave::initialize( ncomp_t system,
                                              ncomp_t ncomp,
+                                        const std::vector< EoS_Base* >& mat_blk,
                                              tk::real x,
                                              tk::real,
                                              tk::real,
@@ -100,7 +102,7 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
 
     // total specific energy
     s[energyIdx(nmat, imat)] = s[volfracIdx(nmat, imat)]*
-                            eos_totalenergy< eq >( system, r, u, v, w, p, imat );
+                            mat_blk[imat]->eos_totalenergy( r, u, v, w, p );
 
     rb += s[densityIdx(nmat, imat)];
   }

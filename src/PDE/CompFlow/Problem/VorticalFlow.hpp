@@ -45,12 +45,12 @@ class CompFlowProblemVorticalFlow {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t, tk::real x, tk::real y,
-                tk::real z, tk::real );
+    initialize( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >&,
+                tk::real x, tk::real y, tk::real z, tk::real );
 
     //! Evaluate analytical solution at (x,y,z) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t, std::vector< EoS_Base* >,
+    analyticSolution( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >&,
                       tk::real x, tk::real y, tk::real z, tk::real );
 
     //! Compute and return source term for vortical flow manufactured solution
@@ -62,7 +62,8 @@ class CompFlowProblemVorticalFlow {
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z, tk::real,
+    src( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >& mat_blk,
+         tk::real x, tk::real y, tk::real z, tk::real,
          std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");
@@ -75,7 +76,7 @@ class CompFlowProblemVorticalFlow {
       // ratio of specific heats
       tk::real g = gamma< tag::compflow >(system);
       // evaluate solution at x,y,z
-      auto s = initialize( system, 5, x, y, z, 0.0 );
+      auto s = initialize( system, 5, mat_blk, x, y, z, 0.0 );
 
       // density source
       sv[0] = 0.0;

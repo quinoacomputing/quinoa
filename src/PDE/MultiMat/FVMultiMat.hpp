@@ -85,9 +85,11 @@ class MultiMat {
       auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
       for (std::size_t k=0; k<nmat; ++k) {
+        // query input deck to get gamma, p_c, cv
         auto g = gamma< eq >(m_system, k);
         auto ps = pstiff< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
+        auto c_v = cv< eq >(m_system, k);
+        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v, k));
         }
 
     }
@@ -141,7 +143,7 @@ class MultiMat {
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -239,8 +241,8 @@ class MultiMat {
           tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset);
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
-            m_mat_blk[k]->eos_pressure(m_system, arhomat, vel[0], vel[1],
-              vel[2], arhoemat, alphamat, k);
+            m_mat_blk[k]->eos_pressure( arhomat, vel[0], vel[1], vel[2],
+                                        arhoemat, alphamat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
             constrain_pressure< tag::multimat >(m_system,
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset), alphamat, k);
@@ -464,8 +466,9 @@ class MultiMat {
       {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
-        tk::pressureRelaxationIntFV( m_system, nmat, m_offset, rdof, nelem,
-                                     inpoel, coord, geoElem, U, P, ct, R );
+        tk::pressureRelaxationIntFV( m_system, nmat, m_offset, m_mat_blk, rdof,
+                                     nelem, inpoel, coord, geoElem, U, P, ct,
+                                     R );
       }
     }
 
@@ -492,8 +495,8 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-      return timeStepSizeMultiMat(fd.Esuf(), geoFace, geoElem, nielem, m_offset,
-        nmat, U, P);
+      return timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem, nielem,
+        m_offset, nmat, U, P);
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.
@@ -643,7 +646,8 @@ class MultiMat {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
+                                        zi, t ); }
 
     //! Return analytic solution for conserved variables
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -653,7 +657,7 @@ class MultiMat {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
 
   private:
     //! Equation system index
@@ -706,15 +710,15 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
-               tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >& fn,
-               const std::vector< EoS_Base* >& m_mat_blk )
+    dirichlet( ncomp_t system, ncomp_t ncomp,
+               const std::vector< EoS_Base* >& mat_blk,
+               const std::vector< tk::real >& ul, tk::real x, tk::real y,
+               tk::real z, tk::real t, const std::array< tk::real, 3 >& fn )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      auto ur = Problem::initialize( system, ncomp, x, y, z, t );
+      auto ur = Problem::initialize( system, ncomp, mat_blk, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
 
       ur.resize(ul.size());
@@ -744,9 +748,8 @@ class MultiMat {
 
       auto vn = tk::dot({{ul[ncomp+velocityIdx(nmat, 0)],
         ul[ncomp+velocityIdx(nmat, 1)], ul[ncomp+velocityIdx(nmat, 2)]}}, fn);
-      auto Ml = vn/eos_soundspeed< tag::multimat >(system,
-        ul[densityIdx(nmat,kmax)], ul[ncomp+pressureIdx(nmat,kmax)],
-        almax, kmax);
+      auto Ml = vn/mat_blk[kmax]->eos_soundspeed( ul[densityIdx(nmat,kmax)],
+        ul[ncomp+pressureIdx(nmat,kmax)], almax);
 
       // material pressures
       if (Ml > 1.0)
@@ -756,10 +759,10 @@ class MultiMat {
           tk::real arhomat = ur[densityIdx(nmat, k)];
           tk::real arhoemat = ur[energyIdx(nmat, k)];
           tk::real alphamat = ur[volfracIdx(nmat, k)];
-          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
+          ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k]->eos_pressure(
             arhomat, ur[ncomp+velocityIdx(nmat, 0)],
             ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-            arhoemat, alphamat, k );
+            arhoemat, alphamat );
         }
       }
       else
@@ -768,12 +771,12 @@ class MultiMat {
         {
           ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
           ur[energyIdx(nmat, k)] = ur[volfracIdx(nmat, k)] *
-            eos_totalenergy< tag::multimat >(system,
+            mat_blk[k]->eos_totalenergy(
             ur[densityIdx(nmat, k)]/ur[volfracIdx(nmat, k)],
             ur[ncomp+velocityIdx(nmat, 0)],
             ur[ncomp+velocityIdx(nmat, 1)],
             ur[ncomp+velocityIdx(nmat, 2)],
-            ul[ncomp+pressureIdx(nmat, k)]/ul[volfracIdx(nmat, k)], k);
+            ul[ncomp+pressureIdx(nmat, k)]/ul[volfracIdx(nmat, k)] );
         }
       }
 
@@ -795,10 +798,9 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
-              tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& fn,
-              const std::vector< EoS_Base* >& )
+    symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< EoS_Base* >&,
+              const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
+              tk::real, const std::array< tk::real, 3 >& fn )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -867,10 +869,10 @@ class MultiMat {
     static tk::StateFn::result_type
     subsonicOutlet( ncomp_t system,
                     ncomp_t ncomp,
+                    const std::vector< EoS_Base* >& mat_blk,
                     const std::vector< tk::real >& ul,
                     tk::real, tk::real, tk::real, tk::real,
-                    const std::array< tk::real, 3 >&,
-                    const std::vector< EoS_Base* >& )
+                    const std::array< tk::real, 3 >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -890,9 +892,9 @@ class MultiMat {
       // Boundary condition
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * eos_totalenergy< eq >
-          (system, ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l,
-          v3l, fp, k);
+        ur[energyIdx(nmat, k)] =
+          ul[volfracIdx(nmat, k)] * mat_blk[k]->eos_totalenergy(
+            ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
       }
 
       // Internal cell primitive quantities using the separately reconstructed
@@ -922,10 +924,9 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
-                 tk::real, tk::real, tk::real, tk::real,
-                 const std::array< tk::real, 3 >&,
-                 const std::vector< EoS_Base* >& )
+    extrapolate( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
+                 const std::vector< tk::real >& ul, tk::real, tk::real,
+                 tk::real, tk::real, const std::array< tk::real, 3 >& )
     {
       return {{ ul, ul }};
     }

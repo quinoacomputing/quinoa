@@ -22,6 +22,7 @@
 void
 tk::srcInt( ncomp_t system,
             ncomp_t offset,
+            const std::vector< inciter::EoS_Base* >& mat_blk,
             real t,
             const std::size_t ndof,
             const std::size_t nelem,
@@ -88,7 +89,7 @@ tk::srcInt( ncomp_t system,
 
       // Compute the source term variable
       std::vector< real > s(ncomp, 0.0);
-      src( system, nmat, gp[0], gp[1], gp[2], t, s );
+      src( system, nmat, mat_blk, gp[0], gp[1], gp[2], t, s );
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 

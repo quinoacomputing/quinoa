@@ -29,6 +29,7 @@ using inciter::CompFlowProblemUserDefined;
 tk::InitializeFn::result_type
 CompFlowProblemUserDefined::initialize( ncomp_t system,
                                         ncomp_t ncomp,
+                                        const std::vector< EoS_Base* >& mat_blk,
                                         tk::real,
                                         tk::real,
                                         tk::real,
@@ -61,8 +62,8 @@ CompFlowProblemUserDefined::initialize( ncomp_t system,
   u[3] = u[0] * bgvelic.at(system).at(2);
 
   if (bgpreic.size() > system && !bgpreic[system].empty()) {
-    u[4] = eos_totalenergy< eq >( system, u[0], u[1]/u[0], u[2]/u[0], u[3]/u[0],
-                                  bgpreic.at(system).at(0) );
+    u[4] = mat_blk[0]->eos_totalenergy( u[0], u[1]/u[0], u[2]/u[0], u[3]/u[0],
+                                        bgpreic.at(system).at(0) );
   } else if (bgenic.size() > system && !bgenic[system].empty()) {
     u[4] = u[0] * bgenic[system][0];
   } else if (bgtempic.size() > system && !bgtempic[system].empty()) {

@@ -32,7 +32,9 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! \see e.g., inciter::CompFlowProblemVorticalFlow::initialize
 //! \note Used for both continuous and discontinuous Galerkin discretizations
 using InitializeFn = std::function<
-  std::vector< real >( ncomp_t, ncomp_t, real, real, real, real ) >;
+  std::vector< real >( ncomp_t, ncomp_t, 
+                       const std::vector< inciter::EoS_Base* >&, real, real,
+                       real, real ) >;
 
 //! Function prototype for Riemann flux functions
 //! \details Functions of this type are used to compute numerical fluxes across a
@@ -68,8 +70,9 @@ using VelFn = std::function<
 //!    states of boundary faces along physical boundaries
 using StateFn = std::function<
   std::array< std::vector< real >, 2 >
-  ( ncomp_t, ncomp_t, const std::vector< real >&, real, real, real, real,
-    const std::array< tk::real, 3 >&, const std::vector< inciter::EoS_Base* >& ) >;
+  ( ncomp_t, ncomp_t, const std::vector< inciter::EoS_Base* >&,
+    const std::vector< real >&, real, real, real, real,
+    const std::array< tk::real, 3 >& ) >;
 
 //! Function prototype for evaluating a source term
 //! \details Functions of this type are used to evaluate an arbitrary source
@@ -77,8 +80,8 @@ using StateFn = std::function<
 //!   method of manufactured solutions
 //! \see e.g., CompFlowProblemRayleighTaylor::src
 using SrcFn = std::function<
-  void( ncomp_t, ncomp_t, tk::real, tk::real, tk::real, tk::real,
-        std::vector< tk::real >& ) >;
+  void( ncomp_t, ncomp_t, const std::vector< inciter::EoS_Base* >&, tk::real,
+        tk::real, tk::real, tk::real, std::vector< tk::real >& ) >;
 
 //! \brief Function prototype for computing the element gradient contribution to a
 //!    nodal gradient in ALECG

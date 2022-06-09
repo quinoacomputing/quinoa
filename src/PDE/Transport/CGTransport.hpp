@@ -91,7 +91,8 @@ class Transport {
       const auto& y = coord[1];
       const auto& z = coord[2];
       for (ncomp_t i=0; i<x.size(); ++i) {
-        auto s = Problem::initialize( m_system, m_ncomp, x[i], y[i], z[i], t );
+        auto s = Problem::initialize( m_system, m_ncomp, m_mat_blk, x[i], y[i],
+                                      z[i], t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           unk( i, c, m_offset ) = s[c];
       }
@@ -115,7 +116,8 @@ class Transport {
     //! \return Vector of analytic solution at given location and time
     std::vector< real >
     analyticSolution( real xi, real yi, real zi, real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
+                                        zi, t ); }
 
     //! Return analytic solution for conserved variables
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -125,7 +127,7 @@ class Transport {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
 
     //! Compute nodal gradients of primitive variables for ALECG
     //! \param[in] coord Mesh node coordinates
@@ -495,10 +497,10 @@ class Transport {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
               const auto s = increment ?
-                solinc( m_system, m_ncomp, x[n], y[n], z[n],
+                solinc( m_system, m_ncomp, m_mat_blk, x[n], y[n], z[n],
                         t, deltat, Problem::initialize ) :
-                Problem::initialize( m_system, m_ncomp, x[n], y[n], z[n],
-                                     t+deltat );
+                Problem::initialize( m_system, m_ncomp, m_mat_blk, x[n], y[n],
+                                     z[n], t+deltat );
               auto& nbc = bc[n] = NodeBC( m_ncomp );
               for (ncomp_t c=0; c<m_ncomp; ++c)
                 nbc[c] = { true, s[c] };
@@ -587,7 +589,9 @@ class Transport {
     const Problem m_problem;            //!< Problem policy
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
-    const ncomp_t m_offset;             //!< Offset this PDE operates from
+    const ncomp_t m_offset;             //!< Offset this PDE operates from 
+    //! EOS material block
+    const std::vector< EoS_Base* > m_mat_blk;
 
     //! \brief Compute/assemble nodal gradients of primitive variables for
     //!   ALECG in all points

@@ -30,6 +30,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 void
 srcInt( ncomp_t system,
         ncomp_t offset,
+        const std::vector< inciter::EoS_Base* >& mat_blk,
         real t,
         const std::size_t ndof,
         const std::size_t nelem,

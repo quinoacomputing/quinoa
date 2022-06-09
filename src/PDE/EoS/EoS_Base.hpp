@@ -22,8 +22,10 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 class EoS_Base {
   public:
-    virtual tk::real eos_pressure( ncomp_t,
-                                   tk::real,
+    virtual tk::real eos_density( tk::real,
+                                  tk::real )=0;
+
+    virtual tk::real eos_pressure( tk::real,
                                    tk::real,
                                    tk::real,
                                    tk::real,
@@ -31,6 +33,23 @@ class EoS_Base {
                                    tk::real=1.0,
                                    std::size_t=0 )=0;
 
+    virtual tk::real eos_soundspeed( tk::real,
+                                     tk::real,
+                                     tk::real=1.0,
+                                     std::size_t=0 )=0;
+
+    virtual tk::real eos_totalenergy( tk::real,
+                                      tk::real,
+                                      tk::real,
+                                      tk::real,
+                                      tk::real )=0;
+
+    virtual tk::real eos_temperature( tk::real,
+                                      tk::real,
+                                      tk::real,
+                                      tk::real,
+                                      tk::real,
+                                      tk::real=1.0 )=0;
     // Virtual destructor
     virtual ~EoS_Base(){}
 };

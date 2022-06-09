@@ -52,6 +52,7 @@ MultiMatFieldOutput(
   ncomp_t,
   std::size_t nmat,
   ncomp_t offset,
+  const std::vector< EoS_Base* >& mat_blk,
   std::size_t nunk,
   std::size_t rdof,
   const std::vector< tk::real >&,
@@ -136,10 +137,10 @@ MultiMatFieldOutput(
   for (std::size_t k=0; k<nmat; ++k) {
     for (std::size_t i=0; i<nunk; ++i) {
       out[3*nmat+5+k][i] =
-      eos_soundspeed< tag::multimat >( 0,
+      mat_blk[k]->eos_soundspeed(
         std::max(1e-16, U(i, densityDofIdx(nmat,k,rdof,0), offset)),
         P(i, pressureDofIdx(nmat,k,rdof,0), offset),
-        U(i, volfracDofIdx(nmat,k,rdof,0), offset), k );
+        U(i, volfracDofIdx(nmat,k,rdof,0), offset) );
     }
   }
 

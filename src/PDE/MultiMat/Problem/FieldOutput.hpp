@@ -14,6 +14,7 @@
 #define FieldOutput_h
 
 #include "Fields.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -29,6 +30,7 @@ MultiMatFieldOutput(
   ncomp_t system,
   std::size_t nmat,
   ncomp_t offset,
+  const std::vector< EoS_Base* >& mat_blk,
   std::size_t nunk,
   std::size_t rdof,
   const std::vector< tk::real >& vol,

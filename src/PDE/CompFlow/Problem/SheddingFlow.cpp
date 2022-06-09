@@ -27,6 +27,7 @@ using inciter::CompFlowProblemSheddingFlow;
 tk::InitializeFn::result_type
 CompFlowProblemSheddingFlow::initialize( ncomp_t system,
                                          ncomp_t,
+                                        const std::vector< EoS_Base* >& mat_blk,
                                          tk::real,
                                          tk::real,
                                          tk::real,
@@ -49,7 +50,7 @@ CompFlowProblemSheddingFlow::initialize( ncomp_t system,
                             tag::farfield_pressure >()[ system ];
   auto u = g_inputdeck.get< tag::param, eq,
                             tag::farfield_velocity >()[ system ];
-  auto rE = eos_totalenergy< eq >( system, r, u[0], u[1], u[2], p );
+  auto rE = mat_blk[0]->eos_totalenergy( r, u[0], u[1], u[2], p );
 
   return {{ r, r*u[0], r*u[1], r*u[2], rE }};
 }

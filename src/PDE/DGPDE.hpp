@@ -70,10 +70,9 @@ template< class Eq > struct ConfigBC {
 
 //! State function for invalid/un-configured boundary conditions
 [[noreturn]] tk::StateFn::result_type
-invalidBC( ncomp_t, ncomp_t, const std::vector< tk::real >&,
-           tk::real, tk::real, tk::real, tk::real,
-           const std::array< tk::real, 3> &,
-           const std::vector< EoS_Base* >& );
+invalidBC( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
+           const std::vector< tk::real >&, tk::real, tk::real, tk::real,
+           tk::real, const std::array< tk::real, 3> & );
 
 //! \brief Partial differential equation base for discontinuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
@@ -265,7 +264,8 @@ class DGPDE {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem ) const
-    { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P, nielem ); }
+    { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U,
+                       P, nielem ); }
 
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
@@ -547,8 +547,8 @@ class DGPDE {
                    const tk::Fields& U,
                    const tk::Fields& P,
                    const std::size_t nielem ) const override
-      { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U, P,
-                        nielem ); }
+      { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
+                        U, P, nielem ); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > histNames() const override

@@ -291,6 +291,7 @@ cleanTraceMultiMat(
 //! Time step restriction for multi material cell-centered schemes
 tk::real
 timeStepSizeMultiMat(
+  const std::vector< EoS_Base* >& mat_blk,
   const std::vector< int >& esuf,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
