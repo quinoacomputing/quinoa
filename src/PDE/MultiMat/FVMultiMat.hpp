@@ -381,6 +381,33 @@ class MultiMat {
       }
     }
 
+    //! Update the conservative variable solution based on limited primitives
+    //! \param[in] prim Array of primitive variables
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] unk Array of conservative variables
+    //! \param[in] nielem Number of internal elements
+    //! \details This function computes the updated dofs for conservative
+    //!   quantities based on the limited primitive quantities
+    void Correct_Conserv( const tk::Fields& prim,
+                          const tk::Fields& geoElem,
+                          tk::Fields& unk,
+                          std::size_t nielem ) const
+    {
+      [[maybe_unused]] const auto rdof =
+        g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
+
+      correctLimConservMultiMat(nielem, m_offset, nmat, geoElem, prim, unk);
+    }
+
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array

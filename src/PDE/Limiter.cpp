@@ -25,6 +25,7 @@
 #include "EoS/EoS.hpp"
 #include "PrefIndicator.hpp"
 #include "Reconstruction.hpp"
+#include "Integrate/Mass.hpp"
 
 namespace inciter {
 
@@ -2760,6 +2761,119 @@ timeStepSizeMultiMat(
   }
 
   return mindt;
+}
+
+void
+correctLimConservMultiMat(
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t nmat,
+  const tk::Fields& geoElem,
+  const tk::Fields& prim,
+  tk::Fields& unk )
+// *****************************************************************************
+//  Update the conservative quantities after limiting for multi-material systems
+//! \param[in] nelem Number of internal elements
+//! \param[in] system Index for equation systems
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] geoElem Element geometry array
+//! \param[in] prim Array of primitive variables
+//! \param[in,out] unk Array of conservative variables
+//! \details This function computes the updated dofs for conservative
+//!   quantities based on the limited primitive quantities
+// *****************************************************************************
+{
+  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  std::size_t ncomp = unk.nprop()/rdof;
+  std::size_t nprim = prim.nprop()/rdof;
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    // Here we pre-compute the right-hand-side vector. The reason that the
+    // lhs in DG.cpp is not used is that the size of this vector in this
+    // projection procedure should be rdof instead of ndof.
+    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0,0));
+
+    std::vector< tk::real > R((nmat+3)*rdof, 0.0);
+
+    auto ng = tk::NGvol(rdof);
+
+    // Arrays for quadrature points
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+    // Loop over quadrature points in element e
+    for (std::size_t igp=0; igp<ng; ++igp) {
+      // Compute the basis function
+      auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+                               coordgp[2][igp] );
+
+      auto w = wgp[igp] * geoElem(e, 0, 0);
+
+      // Evaluate the solution at quadrature point
+      auto U = tk::eval_state( ncomp, 0, rdof, ndof, e, unk,  B,
+                               {0, ncomp-1} );
+      auto P = tk::eval_state( nprim, 0, rdof, ndof, e, prim, B,
+                               {0, nprim-1} );
+
+      // Solution vector that stores the material energy and bulk momentum
+      std::vector< tk::real > s(nmat+3, 0.0);
+
+      // Bulk density at quadrature point
+      tk::real rhob(0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+        rhob += U[densityIdx(nmat, k)];
+
+      // Velocity vector at quadrature point
+      std::array< tk::real, 3 >
+        vel{ P[velocityIdx(nmat, 0)],
+             P[velocityIdx(nmat, 1)],
+             P[velocityIdx(nmat, 2)] };
+
+      // Compute and store the bulk momentum
+      for(std::size_t idir = 0; idir < 3; idir++)
+        s[nmat+idir] = rhob * vel[idir];
+
+      // Compute and store material energy at quadrature point
+      for(std::size_t imat = 0; imat < nmat; imat++) {
+        auto alphamat = U[volfracIdx(nmat, imat)];
+        auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
+        auto premat = P[pressureIdx(nmat, imat)]/alphamat;
+        s[imat] = alphamat * eos_totalenergy< tag::multimat >( system, rhomat,
+          vel[0], vel[1], vel[2], premat, imat );
+      }
+
+      // Evaluate the righ-hand-side vector
+      for(std::size_t k = 0; k < nmat+3; k++) {
+        auto mark = k * rdof;
+        for(std::size_t idof = 0; idof < rdof; idof++)
+          R[mark+idof] += w * s[k] * B[idof];
+      }
+    }
+
+    // Update the high order dofs of the material energy
+    for(std::size_t imat = 0; imat < nmat; imat++) {
+      auto mark = imat * rdof;
+      for(std::size_t idof = 1; idof < rdof; idof++)
+        unk(e, energyDofIdx(nmat, imat, rdof, idof), 0) =
+          R[mark+idof] / L[idof];
+    }
+
+    // Update the high order dofs of the bulk momentum
+    for(std::size_t idir = 0; idir < 3; idir++) {
+      auto mark = (nmat + idir) * rdof;
+      for(std::size_t idof = 1; idof < rdof; idof++)
+        unk(e, momentumDofIdx(nmat, idir, rdof, idof), 0) =
+          R[mark+idof] / L[idof];
+    }
+  }
 }
 
 } // inciter::

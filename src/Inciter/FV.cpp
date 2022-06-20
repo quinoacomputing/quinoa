@@ -628,9 +628,14 @@ FV::lim()
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
   if (rdof > 1)
-    for (const auto& eq : g_fvpde)
+    for (const auto& eq : g_fvpde) {
       eq.limit( myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_esup,
         myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
+
+      if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
+        eq.Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
+          myGhosts()->m_fd.Esuel().size()/4);
+    }
 
   // Send limited solution to neighboring chares
   if (myGhosts()->m_sendGhost.empty())
