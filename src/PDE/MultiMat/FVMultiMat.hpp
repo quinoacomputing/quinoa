@@ -349,14 +349,14 @@ class MultiMat {
     }
 
     //! Limit second-order solution, and primitive quantities separately
-    //! \param[in] geoElem Element geometry array
+//    //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
-    void limit( const tk::Fields& geoElem,
+    void limit( const tk::Fields& /*geoElem*/,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -375,12 +375,39 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          m_system, m_offset, geoElem, coord, U, P, nmat );
+          m_system, m_offset, coord, U, P, nmat );
       }
       else
       {
         Throw("Limiter type not configured for multimat.");
       }
+    }
+
+    //! Update the conservative variable solution based on limited primitives
+    //! \param[in] prim Array of primitive variables
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] unk Array of conservative variables
+    //! \param[in] nielem Number of internal elements
+    //! \details This function computes the updated dofs for conservative
+    //!   quantities based on the limited primitive quantities
+    void Correct_Conserv( const tk::Fields& prim,
+                          const tk::Fields& geoElem,
+                          tk::Fields& unk,
+                          std::size_t nielem ) const
+    {
+      [[maybe_unused]] const auto rdof =
+        g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
+
+      correctLimConservMultiMat(nielem, m_offset, nmat, geoElem, prim, unk);
     }
 
     //! Compute right hand side

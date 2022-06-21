@@ -495,8 +495,10 @@ class MultiMat {
     //!   variables
     //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
     //!   variables
+    //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
+    //! \param[in,out] shockmarker Vector of shock-marker values
     void limit( [[maybe_unused]] tk::real t,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
@@ -509,6 +511,7 @@ class MultiMat {
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& uNodalExtrm,
                 const std::vector< std::vector<tk::real> >& pNodalExtrm,
+                const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
@@ -537,7 +540,7 @@ class MultiMat {
       {
         VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
-          pNodalExtrm, U, P, nmat, shockmarker );
+          pNodalExtrm, mtInv, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
@@ -557,8 +560,8 @@ class MultiMat {
                           tk::Fields& unk,
                           std::size_t nielem ) const
     {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      [[maybe_unused]] const auto rdof =
+        g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
@@ -569,92 +572,7 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      for (std::size_t e=0; e<nielem; ++e) {
-        // Here we pre-compute the right-hand-side vector. The reason that the
-        // lhs in DG.cpp is not used is that the size of this vector in this
-        // projection procedure should be rdof instead of ndof.
-        auto L = tk::massMatrixDubiner(rdof, geoElem(e,0,0));
-
-        std::vector< tk::real > R((nmat+3)*rdof, 0.0);
-
-        auto ng = tk::NGvol(ndof);
-
-        // Arrays for quadrature points
-        std::array< std::vector< tk::real >, 3 > coordgp;
-        std::vector< tk::real > wgp;
-
-        coordgp[0].resize( ng );
-        coordgp[1].resize( ng );
-        coordgp[2].resize( ng );
-        wgp.resize( ng );
-
-        tk::GaussQuadratureTet( ng, coordgp, wgp );
-
-        // Loop over quadrature points in element e
-        for (std::size_t igp=0; igp<ng; ++igp) {
-          // Compute the basis function
-          auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
-                                   coordgp[2][igp] );
-
-          auto w = wgp[igp] * geoElem(e, 0, 0);
-
-          // Evaluate the solution at quadrature point
-          auto U = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk,  B,
-                                   {0, m_ncomp-1} );
-          auto P = tk::eval_state( nprim(), 0, rdof, ndof, e, prim, B,
-                                   {0, nprim()-1} );
-
-          // Solution vector that stores the material energy and bulk momentum
-          std::vector< tk::real > s(nmat+3, 0.0);
-
-          // Bulk density at quadrature point
-          tk::real rhob(0.0);
-          for (std::size_t k=0; k<nmat; ++k)
-            rhob += U[densityIdx(nmat, k)];
-
-          // Velocity vector at quadrature point
-          std::array< tk::real, 3 >
-            vel{ P[velocityIdx(nmat, 0)],
-                 P[velocityIdx(nmat, 1)],
-                 P[velocityIdx(nmat, 2)] };
-
-          // Compute and store the bulk momentum
-          for(std::size_t idir = 0; idir < 3; idir++)
-            s[nmat+idir] = rhob * vel[idir];
-
-          // Compute and store material energy at quadrature point
-          for(std::size_t imat = 0; imat < nmat; imat++) {
-            auto alphamat = U[volfracIdx(nmat, imat)];
-            auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
-            auto premat = P[pressureIdx(nmat, imat)]/alphamat;
-            s[imat] = alphamat * m_mat_blk[imat]->eos_totalenergy( rhomat,
-              vel[0], vel[1], vel[2], premat );
-          }
-
-          // Evaluate the righ-hand-side vector
-          for(std::size_t k = 0; k < nmat+3; k++) {
-            auto mark = k * rdof;
-            for(std::size_t idof = 0; idof < rdof; idof++)
-              R[mark+idof] += w * s[k] * B[idof];
-          }
-        }
-
-        // Update the high order dofs of the material energy
-        for(std::size_t imat = 0; imat < nmat; imat++) {
-          auto mark = imat * rdof;
-          for(std::size_t idof = 1; idof < ndof; idof++)
-            unk(e, energyDofIdx(nmat, imat, rdof, idof), 0) =
-              R[mark+idof] / L[idof];
-        }
-
-        // Update the high order dofs of the bulk momentum
-        for(std::size_t idir = 0; idir < 3; idir++) {
-          auto mark = (nmat + idir) * rdof;
-          for(std::size_t idof = 1; idof < ndof; idof++)
-            unk(e, momentumDofIdx(nmat, idir, rdof, idof), 0) =
-              R[mark+idof] / L[idof];
-        }
-      }
+      correctLimConservMultiMat(nielem, m_system, nmat, geoElem, prim, unk);
     }
 
 

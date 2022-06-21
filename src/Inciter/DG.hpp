@@ -138,20 +138,19 @@ class DG : public CBase_DG {
     //! Initialize the vector of nodal extrema
     void resizeNodalExtremac();
 
-    //! Compute the nodal extrema for chare-boundary nodes
-    void evalNodalExtrm( const std::size_t ncomp,
-                         const std::size_t nprim,
-                         const std::size_t ndof_NodalExtrm,
-                         const std::vector< std::size_t >& bndel,
-                         const std::vector< std::size_t >& inpoel,
-                         const tk::UnsMesh::Coords& coord,
-                         const std::vector< std::size_t >& gid,
-                         const std::unordered_map< std::size_t, std::size_t >&
-                           bid,
-                         const tk::Fields& U,
-                         const tk::Fields& P,
-                         std::vector< std::vector<tk::real> >& uNodalExtrm,
-                         std::vector< std::vector<tk::real> >& pNodalExtrm );
+    //! Compute the nodal extrema of ref el derivatives for chare-boundary nodes
+    void evalNodalExtrmRefEl(
+      const std::size_t ncomp,
+      const std::size_t nprim,
+      const std::size_t ndof_NodalExtrm,
+      const std::vector< std::size_t >& bndel,
+      const std::vector< std::size_t >& inpoel,
+      const std::vector< std::size_t >& gid,
+      const std::unordered_map< std::size_t, std::size_t >& bid,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      std::vector< std::vector<tk::real> >& uNodalExtrm,
+      std::vector< std::vector<tk::real> >& pNodalExtrm );
 
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
@@ -225,6 +224,7 @@ class DG : public CBase_DG {
       p | m_p;
       p | m_geoElem;
       p | m_lhs;
+      p | m_mtInv;
       p | m_uNodalExtrm;
       p | m_pNodalExtrm;
       p | m_uNodalExtrmc;
@@ -293,6 +293,8 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
+    //! Inverse of Taylor mass-matrix
+    std::vector< std::vector< tk::real > > m_mtInv;
     //! Vector of nodal extrema for conservative variables
     std::vector< std::vector<tk::real> > m_uNodalExtrm;
     //! Vector of nodal extrema for primitive variables

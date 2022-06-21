@@ -300,7 +300,9 @@ class CompFlow {
     //!   global node ids (key)
     //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
     //!   variables
+    //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
+    //! \param[in,out] shockmarker Vector of shock-marker values
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
@@ -313,9 +315,10 @@ class CompFlow {
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& uNodalExtrm,
                 const std::vector< std::vector<tk::real> >&,
+                const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields&,
-                std::vector< std::size_t >& ) const
+                std::vector< std::size_t >& shockmarker) const
     {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -329,7 +332,8 @@ class CompFlow {
           m_offset, geoElem, coord, U);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_offset, geoElem, coord, gid, bid, uNodalExtrm, U);
+          m_offset, geoElem, coord, gid, bid, uNodalExtrm, mtInv, U,
+          shockmarker);
     }
 
     //! Update the conservative variable solution for this PDE system
@@ -1095,9 +1099,22 @@ class CompFlow {
             // negative, the initial position is the maximum z-coordinate of the
             // box.
 
+            // Orientation of box
+            std::array< tk::real, 3 > b_orientn{{
+              b.template get< tag::orientation >()[0],
+              b.template get< tag::orientation >()[1],
+              b.template get< tag::orientation >()[2] }};
+            std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
+              0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
+            // Transform box to reference space
+            std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
+            std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
+            tk::movePoint(b_centroid, b_min);
+            tk::movePoint(b_centroid, b_max);
+
             // initial center of front
-            tk::real zInit(box[4]);
-            if (iv < 0.0) zInit = box[5];
+            tk::real zInit(b_min[2]);
+            if (iv < 0.0) zInit = b_max[2];
             // current location of front
             auto z0 = zInit + iv*t;
             auto z1 = z0 + std::copysign(wFront, iv);
@@ -1117,9 +1134,14 @@ class CompFlow {
 
             // add source
             for (auto e : boxelems) {
-              auto zc = geoElem(e,3,0);
+              std::array< tk::real, 3 > node{{ geoElem(e,1,0), geoElem(e,2,0),
+                geoElem(e,3,0) }};
+              // Transform node to reference space of box
+              tk::movePoint(b_centroid, node);
+              tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+                node);
 
-              if (zc >= s0 && zc <= s1) {
+              if (node[2] >= s0 && node[2] <= s1) {
                 auto ng = tk::NGvol(ndofel[e]);
 
                 // arrays for quadrature points
@@ -1144,6 +1166,11 @@ class CompFlow {
                   // Compute the coordinates of quadrature point at physical
                   // domain
                   auto gp = tk::eval_gp( igp, coordel, coordgp );
+
+                  // Transform quadrature point to reference space of box
+                  tk::movePoint(b_centroid, gp);
+                  tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+                    gp);
 
                   // Compute the basis function
                   auto B = tk::eval_basis( ndofel[e], coordgp[0][igp],

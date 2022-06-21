@@ -254,7 +254,6 @@ class Transport {
     //! Limit second-order solution
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
-    //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements surrounding points
     //! \param[in] inpoel Element-node connectivity
@@ -268,7 +267,7 @@ class Transport {
     //! \param[in,out] U Solution vector at recent time step
     void limit( [[maybe_unused]] tk::real t,
                 [[maybe_unused]] const tk::Fields& geoFace,
-                const tk::Fields& geoElem,
+                const tk::Fields&,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -276,6 +275,7 @@ class Transport {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >&,
                 const std::unordered_map< std::size_t, std::size_t >&,
+                const std::vector< std::vector<tk::real> >&,
                 const std::vector< std::vector<tk::real> >&,
                 const std::vector< std::vector<tk::real> >&,
                 tk::Fields& U,
@@ -290,7 +290,7 @@ class Transport {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, geoElem, coord, U );
+          m_system, m_offset, coord, U );
     }
 
     //! Update the conservative variable solution for this PDE system

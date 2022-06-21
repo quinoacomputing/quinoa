@@ -203,12 +203,13 @@ class DGPDE {
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& uNodalExtrm,
                 const std::vector< std::vector<tk::real> >& pNodalExtrm,
+                const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
     {
       self->limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                   bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
+                   bid, uNodalExtrm, pNodalExtrm, mtInv, U, P, shockmarker );
     }
 
     //! Public interface to update the conservative variable solution
@@ -370,6 +371,7 @@ class DGPDE {
                           const std::unordered_map< std::size_t, std::size_t >&,
                           const std::vector< std::vector<tk::real> >&,
                           const std::vector< std::vector<tk::real> >&,
+                          const std::vector< std::vector<tk::real> >&,
                           tk::Fields&,
                           tk::Fields&,
                           std::vector< std::size_t >& ) const = 0;
@@ -495,12 +497,13 @@ class DGPDE {
                   const std::unordered_map< std::size_t, std::size_t >& bid,
                   const std::vector< std::vector<tk::real> >& uNodalExtrm,
                   const std::vector< std::vector<tk::real> >& pNodalExtrm,
+                  const std::vector< std::vector<tk::real> >& mtInv,
                   tk::Fields& U,
                   tk::Fields& P,
                   std::vector< std::size_t >& shockmarker ) const override
       {
         data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                    bid, uNodalExtrm, pNodalExtrm, U, P, shockmarker );
+                    bid, uNodalExtrm, pNodalExtrm, mtInv, U, P, shockmarker );
       }
       void Correct_Conserv( const tk::Fields& prim,
                           const tk::Fields& geoElem,

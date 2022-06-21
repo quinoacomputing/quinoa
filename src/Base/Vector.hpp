@@ -336,6 +336,57 @@ cramer( const std::array< std::array< tk::real, 3 >, 3>& a,
   return x;
 }
 
+//! Move a point to a reference space given coordinates of origin of that space
+//!  \param[in] origin Origin of reference frame to which point is to be moved
+//!  \param[in,out] point Point that needs to be moved to reference frame
+inline void
+movePoint( const std::array< tk::real, 3 >& origin,
+  std::array< tk::real, 3 >& point )
+{
+  for (std::size_t i=0; i<3; ++i)
+    point[i] -= origin[i];
+}
+
+//! Rotate a point in 3D space by specifying rotation angles in degrees
+//!  \param[in] angles Angles in 3D space by which point is to be rotated
+//!  \param[in,out] point Point that needs to be rotated
+inline void
+rotatePoint( const std::array< tk::real, 3 >& angles,
+  std::array< tk::real, 3 >& point )
+{
+  // Convert angles to radian
+  tk::real pi = 4.0*std::atan(1.0);
+  auto a = angles[0] * pi/180.0;
+  auto b = angles[1] * pi/180.0;
+  auto c = angles[2] * pi/180.0;
+
+  // Rotation matrix
+  std::array< std::array< tk::real, 3 >, 3 > rotMat;
+  {
+    using namespace std;
+    rotMat[0][0] = cos(b)*cos(c);
+    rotMat[0][1] = - cos(b)*sin(c);
+    rotMat[0][2] = sin(b);
+
+    rotMat[1][0] = sin(a)*sin(b)*cos(c) + cos(a)*sin(c);
+    rotMat[1][1] = - sin(a)*sin(b)*sin(c) + cos(a)*cos(c);
+    rotMat[1][2] = - sin(a)*cos(b);
+
+    rotMat[2][0] = - cos(a)*sin(b)*cos(c) + sin(a)*sin(c);
+    rotMat[2][1] = cos(a)*sin(b)*sin(c) + sin(a)*cos(c);
+    rotMat[2][2] = cos(a)*cos(b);
+  }
+
+  // Apply rotation
+  std::array< tk::real, 3 > x{{0.0, 0.0, 0.0}};
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      x[i] += rotMat[i][j]*point[j];
+    }
+  }
+  point = x;
+}
+
 } // tk::
 
 #endif // Vector_h
