@@ -2783,7 +2783,6 @@ correctLimConservMultiMat(
 //!   quantities based on the limited primitive quantities
 // *****************************************************************************
 {
-  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   std::size_t ncomp = unk.nprop()/rdof;
   std::size_t nprim = prim.nprop()/rdof;
@@ -2818,9 +2817,9 @@ correctLimConservMultiMat(
       auto w = wgp[igp] * geoElem(e, 0, 0);
 
       // Evaluate the solution at quadrature point
-      auto U = tk::eval_state( ncomp, 0, rdof, ndof, e, unk,  B,
+      auto U = tk::eval_state( ncomp, 0, rdof, rdof, e, unk,  B,
                                {0, ncomp-1} );
-      auto P = tk::eval_state( nprim, 0, rdof, ndof, e, prim, B,
+      auto P = tk::eval_state( nprim, 0, rdof, rdof, e, prim, B,
                                {0, nprim-1} );
 
       // Solution vector that stores the material energy and bulk momentum
