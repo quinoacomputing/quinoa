@@ -381,6 +381,33 @@ class MultiMat {
       }
     }
 
+    //! Update the conservative variable solution based on limited primitives
+    //! \param[in] prim Array of primitive variables
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] unk Array of conservative variables
+    //! \param[in] nielem Number of internal elements
+    //! \details This function computes the updated dofs for conservative
+    //!   quantities based on the limited primitive quantities
+    void Correct_Conserv( const tk::Fields& prim,
+                          const tk::Fields& geoElem,
+                          tk::Fields& unk,
+                          std::size_t nielem ) const
+    {
+      [[maybe_unused]] const auto rdof =
+        g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
+
+      correctLimConservMultiMat(nielem, m_offset, nmat, geoElem, prim, unk);
+    }
+
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -682,7 +709,6 @@ class MultiMat {
           const std::vector< EoS_Base* >&,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
-
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -699,7 +725,6 @@ class MultiMat {
     //! \param[in] y Y-coordinate at which to compute the states
     //! \param[in] z Z-coordinate at which to compute the states
     //! \param[in] t Physical time
-    //! \param[in] fn Unit face normal
     //! \return Left and right states for all scalar components in this PDE
     //!   system
     //! \note The function signature must follow tk::StateFn. For multimat, the
@@ -708,8 +733,8 @@ class MultiMat {
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
                tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >& fn,
-               const std::vector< EoS_Base* >& m_mat_blk )
+               const std::array< tk::real, 3 >&,
+               const std::vector< EoS_Base* >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -730,51 +755,13 @@ class MultiMat {
       ur[ncomp+velocityIdx(nmat, 1)] = ur[momentumIdx(nmat, 1)] / rho;
       ur[ncomp+velocityIdx(nmat, 2)] = ur[momentumIdx(nmat, 2)] / rho;
 
-      // determine the speed of sound of the majority material
-      auto almax(0.0);
-      std::size_t kmax(0);
+      // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        if (ul[volfracIdx(nmat, k)] > almax)
-        {
-          almax = ul[volfracIdx(nmat, k)];
-          kmax = k;
-        }
-      }
-
-      auto vn = tk::dot({{ul[ncomp+velocityIdx(nmat, 0)],
-        ul[ncomp+velocityIdx(nmat, 1)], ul[ncomp+velocityIdx(nmat, 2)]}}, fn);
-      auto Ml = vn/eos_soundspeed< tag::multimat >(system,
-        ul[densityIdx(nmat,kmax)], ul[ncomp+pressureIdx(nmat,kmax)],
-        almax, kmax);
-
-      // material pressures
-      if (Ml > 1.0)
-      {
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          tk::real arhomat = ur[densityIdx(nmat, k)];
-          tk::real arhoemat = ur[energyIdx(nmat, k)];
-          tk::real alphamat = ur[volfracIdx(nmat, k)];
-          ur[ncomp+pressureIdx(nmat, k)] = m_mat_blk[k]->eos_pressure( system,
-            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
-            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-            arhoemat, alphamat, k );
-        }
-      }
-      else
-      {
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
-          ur[energyIdx(nmat, k)] = ur[volfracIdx(nmat, k)] *
-            eos_totalenergy< tag::multimat >(system,
-            ur[densityIdx(nmat, k)]/ur[volfracIdx(nmat, k)],
-            ur[ncomp+velocityIdx(nmat, 0)],
-            ur[ncomp+velocityIdx(nmat, 1)],
-            ur[ncomp+velocityIdx(nmat, 2)],
-            ul[ncomp+pressureIdx(nmat, k)]/ul[volfracIdx(nmat, k)], k);
-        }
+        ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+          ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
+          ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

@@ -298,6 +298,16 @@ timeStepSizeMultiMat(
   const tk::Fields& U,
   const tk::Fields& P );
 
+//! Update the conservative quantities after limiting for multi-material systems
+void
+correctLimConservMultiMat(
+  std::size_t nelem,
+  std::size_t system,
+  std::size_t nmat,
+  const tk::Fields& geoElem,
+  const tk::Fields& prim,
+  tk::Fields& unk );
+
 } // inciter::
 
 #endif // Limiter_h

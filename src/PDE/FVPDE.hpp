@@ -154,6 +154,15 @@ class FVPDE {
       self->limit( geoElem, fd, esup, inpoel, coord, U, P );
     }
 
+    //! Public interface to update the conservative variable solution
+    void Correct_Conserv( const tk::Fields& prim,
+                          const tk::Fields& geoElem,
+                          tk::Fields& unk,
+                          std::size_t nielem ) const
+    {
+      self->Correct_Conserv( prim, geoElem, unk, nielem );
+    }
+
     //! Public interface to computing the P1 right-hand side vector
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -267,6 +276,10 @@ class FVPDE {
                           const tk::UnsMesh::Coords&,
                           tk::Fields&,
                           tk::Fields& ) const = 0;
+      virtual void Correct_Conserv( const tk::Fields&,
+                                    const tk::Fields&,
+                                    tk::Fields&,
+                                    std::size_t ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -356,6 +369,13 @@ class FVPDE {
                   tk::Fields& P ) const override
       {
         data.limit( geoElem, fd, esup, inpoel, coord, U, P );
+      }
+      void Correct_Conserv( const tk::Fields& prim,
+                          const tk::Fields& geoElem,
+                          tk::Fields& unk,
+                          std::size_t nielem ) const override
+      {
+        data.Correct_Conserv( prim, geoElem, unk, nielem );
       }
       void rhs(
         tk::real t,
