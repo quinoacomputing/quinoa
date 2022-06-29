@@ -375,7 +375,7 @@ class MultiMat {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
           m_system, m_offset, coord, U, P, nmat );
       }
-      else
+      else if (limiter != ctr::LimiterType::NOLIMITER)
       {
         Throw("Limiter type not configured for multimat.");
       }
