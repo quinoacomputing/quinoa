@@ -973,6 +973,7 @@ class MultiMat {
     //!   face at Dirichlet boundaries
     //! \param[in] system Equation system index
     //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] mat_blk EOS material block
     //! \param[in] ul Left (domain-internal) state
     //! \param[in] x X-coordinate at which to compute the states
     //! \param[in] y Y-coordinate at which to compute the states
@@ -1094,6 +1095,7 @@ class MultiMat {
     //!   face at subsonic outlet boundaries
     //! \param[in] system Equation system index
     //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] mat_blk EOS material block
     //! \param[in] ul Left (domain-internal) state
     //! \return Left and right states for all scalar components in this PDE
     //!   system
