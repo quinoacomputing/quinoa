@@ -141,7 +141,7 @@ const
 
   for (std::size_t e=0; e<u.nunk()-nchGhost; ++e)
   {
-    std::size_t dofe(rdof);
+    std::size_t dofe(1);
     if (!ndofel.empty()) {
       dofe = ndofel[e];
     }

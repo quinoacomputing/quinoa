@@ -470,6 +470,10 @@ class MultiMat {
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                           velfn, b.second, U, P, R, riemannDeriv, intsharp );
 
+      // compute optional source term
+      tk::srcIntFV( m_system, m_offset, t, fd.Esuel().size()/4, geoElem,
+                    Problem::src, R, nmat );
+
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
 
