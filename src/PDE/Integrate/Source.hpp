@@ -52,6 +52,17 @@ update_rhs( ncomp_t offset,
             const std::vector< tk::real >& s,
             Fields& R );
 
+//! Compute source term integrals for FV
+void
+srcIntFV( ncomp_t system,
+          ncomp_t offset,
+          real t,
+          const std::size_t nelem,
+          const Fields& geoElem,
+          const SrcFn& src,
+          Fields& R,
+          std::size_t nmat );
+
 } // tk::
 
 #endif // Source_h

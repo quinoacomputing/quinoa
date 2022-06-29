@@ -816,8 +816,10 @@ FV::solve( tk::real newdt )
   for (const auto& eq : g_fvpde)
   {
     eq.updatePrimitives( m_u, m_p, myGhosts()->m_fd.Esuel().size()/4 );
-    eq.cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
-      myGhosts()->m_fd.Esuel().size()/4 );
+    if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
+      eq.cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
+        myGhosts()->m_fd.Esuel().size()/4 );
+    }
   }
 
   if (m_stage < 2) {
@@ -830,9 +832,10 @@ FV::solve( tk::real newdt )
     // Increase number of iterations and physical time
     d->next();
 
-    //// Compute diagnostics, e.g., residuals
-    //auto diag_computed = m_diag.compute( *d, m_u.nunk()-myGhosts()->m_fd.Esuel().size()/4,
-    //                                     myGhosts()->m_geoElem, m_ndof, m_u );
+    // Compute diagnostics, e.g., residuals
+    [[maybe_unused]] auto diag_computed = m_diag.compute( *d,
+      m_u.nunk()-myGhosts()->m_fd.Esuel().size()/4, myGhosts()->m_geoElem,
+      std::vector< std::size_t>{}, m_u );
 
     // Continue to mesh refinement (if configured)
     /*if (!diag_computed)*/ refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
