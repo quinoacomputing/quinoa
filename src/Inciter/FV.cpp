@@ -833,12 +833,12 @@ FV::solve( tk::real newdt )
     d->next();
 
     // Compute diagnostics, e.g., residuals
-    [[maybe_unused]] auto diag_computed = m_diag.compute( *d,
+    auto diag_computed = m_diag.compute( *d,
       m_u.nunk()-myGhosts()->m_fd.Esuel().size()/4, myGhosts()->m_geoElem,
       std::vector< std::size_t>{}, m_u );
 
     // Continue to mesh refinement (if configured)
-    /*if (!diag_computed)*/ refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
+    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
 
   }
 }
