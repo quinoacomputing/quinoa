@@ -816,8 +816,10 @@ FV::solve( tk::real newdt )
   for (const auto& eq : g_fvpde)
   {
     eq.updatePrimitives( m_u, m_p, myGhosts()->m_fd.Esuel().size()/4 );
-    eq.cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
-      myGhosts()->m_fd.Esuel().size()/4 );
+    if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
+      eq.cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
+        myGhosts()->m_fd.Esuel().size()/4 );
+    }
   }
 
   if (m_stage < 2) {
