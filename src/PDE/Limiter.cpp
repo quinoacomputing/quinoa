@@ -327,6 +327,7 @@ VertexBasedCompflow_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -354,8 +355,8 @@ VertexBasedCompflow_P1(
   std::size_t ncomp = U.nprop()/rdof;
 
   if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >())
-    MarkShockCells(nelem, 1, system, offset, ndof, rdof, ndofel, inpoel, coord,
-      fd, geoFace, geoElem, U, U, shockmarker);
+    MarkShockCells(nelem, 1, system, offset, ndof, rdof, mat_blk, ndofel,
+      inpoel, coord, fd, geoFace, geoElem, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -402,6 +403,7 @@ VertexBasedCompflow_P2(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -440,8 +442,8 @@ VertexBasedCompflow_P2(
   std::size_t ncomp = U.nprop()/rdof;
 
   if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >())
-    MarkShockCells(nelem, 1, system, offset, ndof, rdof, ndofel, inpoel, coord,
-      fd, geoFace, geoElem, U, U, shockmarker);
+    MarkShockCells(nelem, 1, system, offset, ndof, rdof, mat_blk, ndofel,
+      inpoel, coord, fd, geoFace, geoElem, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -497,6 +499,7 @@ VertexBasedMultiMat_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -534,8 +537,8 @@ VertexBasedMultiMat_P1(
 
   // Evaluate the interface condition and mark the shock cells
   if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >())
-    MarkShockCells(nelem, nmat, system, offset, ndof, rdof, ndofel, inpoel,
-      coord, fd, geoFace, geoElem, U, P, shockmarker);
+    MarkShockCells(nelem, nmat, system, offset, ndof, rdof, mat_blk, ndofel,
+      inpoel, coord, fd, geoFace, geoElem, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -682,6 +685,7 @@ VertexBasedMultiMat_P2(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -732,8 +736,8 @@ VertexBasedMultiMat_P2(
 
   // Evaluate the interface condition and mark the shock cells
   if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >())
-    MarkShockCells(nelem, nmat, system, offset, ndof, rdof, ndofel, inpoel, coord,
-      fd, geoFace, geoElem, U, P, shockmarker);
+    MarkShockCells(nelem, nmat, system, offset, ndof, rdof, mat_blk, ndofel,
+      inpoel, coord, fd, geoFace, geoElem, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -2047,11 +2051,12 @@ void MarkShockCells ( const std::size_t nelem,
                       const std::size_t offset,
                       const std::size_t ndof,
                       const std::size_t rdof,
+                      const std::vector< inciter::EoS_Base* >& mat_blk,
                       const std::vector< std::size_t >& ndofel,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       const inciter::FaceData& fd,
-                      const tk::Fields& geoFace,
+                      [[maybe_unused]] const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const tk::Fields& U,
                       const tk::Fields& P,
@@ -2138,8 +2143,8 @@ void MarkShockCells ( const std::size_t nelem,
       {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
       {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
 
-    std::array< tk::real, 3 >
-      fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+    // Numerator and denominator of the shock indicator
+    tk::real numer(0.0), denom(0.0);
 
     for (std::size_t igp=0; igp<ng; ++igp) {
       auto gp = tk::eval_gp( igp, coordfa, coordgp );
@@ -2165,8 +2170,6 @@ void MarkShockCells ( const std::size_t nelem,
       auto B_l = tk::eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
       auto B_r = tk::eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
 
-      auto wt = wgp[igp] * geoFace(f,0,0);
-
       std::array< std::vector< tk::real >, 2 > state;
 
       // Evaluate the high order solution at the qudrature point
@@ -2180,33 +2183,74 @@ void MarkShockCells ( const std::size_t nelem,
       Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
 
-      // Evaluate the bulk density
-      tk::real rhol(0.0), rhor(0.0);
-      for(std::size_t k = 0; k < nmat; k++) {
-        rhol += state[0][densityIdx(nmat,k)];
-        rhor += state[1][densityIdx(nmat,k)];
-      }
+      // Evaluate the flux
+      auto fl = flux( nmat, system, ncomp, mat_blk, state[0], {} );
+      auto fr = flux( nmat, system, ncomp, mat_blk, state[1], {} );
 
-      // Evaluate the flux for the density
-      tk::real fl(0.0), fr(0.0);
-      for(std::size_t i = 0; i < 3; i++) {
-        fl += rhol * state[0][ncomp+velocityIdx(nmat,i)] * fn[i];
-        fr += rhor * state[1][ncomp+velocityIdx(nmat,i)] * fn[i];
+      for(std::size_t icomp = 0; icomp < ncomp; icomp++) {
+        for(std::size_t idir = 0; idir < 3; idir++) {
+          numer += wgp[igp] *(fl[icomp][idir] - fr[icomp][idir])
+                 * (fl[icomp][idir] - fr[icomp][idir]);
+          denom += wgp[igp] * (fl[icomp][idir] + fr[icomp][idir])
+                 * (fl[icomp][idir] + fr[icomp][idir]) * 0.25;
+        }
       }
-
-      tk::real rhs =  wt * fabs(fl - fr);
-      IC[el] += rhs;
-      IC[er] += rhs;
     }
+    tk::real Ind(0.0);
+    if(denom > 1e-8)
+      Ind = std::sqrt(numer / denom);
+    IC[el] = std::max(IC[el], Ind);
+    IC[er] = std::max(IC[er], Ind);
   }
 
   // Loop over element to mark shock cell
   for (std::size_t e=0; e<nelem; ++e) {
-    if(fabs(IC[e]) > 1e-6)
+    if(fabs(IC[e]) > 0.2)
       shockmarker[e] = 1;
     else
       shockmarker[e] = 0;
   }
+}
+
+std::vector< std::array< tk::real, 3 > >
+flux( const std::size_t nmat,
+      ncomp_t system,
+      ncomp_t ncomp,
+      const std::vector< EoS_Base* >& mat_blk,
+      const std::vector< tk::real >& ugp,
+      const std::vector< std::array< tk::real, 3 > >& )
+{
+  std::vector< std::array< tk::real, 3 > > fl( ncomp );
+
+  tk::real rho(0.0), p(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    rho += ugp[densityIdx(nmat, k)];
+
+  auto u = ugp[momentumIdx(nmat, 0)] / rho;
+  auto v = ugp[momentumIdx(nmat, 1)] / rho;
+  auto w = ugp[momentumIdx(nmat, 2)] / rho;
+
+  std::vector< tk::real > apk( nmat, 0.0 );
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    apk[k] = mat_blk[k]->eos_pressure( system, ugp[densityIdx(nmat, k)], u, v,
+              w, ugp[energyIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k);
+    p += apk[k];
+  }
+
+  fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
+  fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
+  fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
+
+  fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
+  fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
+  fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
+
+  fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
+  fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
+  fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
+
+  return fl;
 }
 
 bool

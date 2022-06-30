@@ -73,6 +73,7 @@ VertexBasedCompflow_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -89,6 +90,7 @@ VertexBasedCompflow_P2(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -109,6 +111,7 @@ VertexBasedMultiMat_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -127,6 +130,7 @@ VertexBasedMultiMat_P2(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -273,6 +277,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const std::size_t offset,
                       const std::size_t ndof,
                       const std::size_t rdof,
+                      const std::vector< inciter::EoS_Base* >& mat_blk,
                       const std::vector< std::size_t >& ndofel,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
@@ -282,6 +287,15 @@ void MarkShockCells ( const std::size_t nelem,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker );
+
+//! Function to evaluate the flux
+std::vector< std::array< tk::real, 3 > >
+flux( const std::size_t nmat,
+      ncomp_t system,
+      ncomp_t ncomp,
+      const std::vector< EoS_Base* >& mat_blk,
+      const std::vector< tk::real >& ugp,
+      const std::vector< std::array< tk::real, 3 > >& );
 
 //! Clean up the state of trace materials for multi-material PDE system
 bool
