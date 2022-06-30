@@ -125,13 +125,12 @@ class MultiMat {
         numEqDof.push_back(g_inputdeck.get< tag::discr, tag::ndof >());
       }
 
-      // volume fractions are P0Pm (ndof = 1) if interface reconstruction is used
+      // volume fractions are P0Pm (ndof = 1) for multi-material simulations
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >
-          ()[m_system] > 0) numEqDof[volfracIdx(nmat, k)] = 1;
-      }
+      if(nmat > 1)
+        for (std::size_t k=0; k<nmat; ++k)
+          numEqDof[volfracIdx(nmat, k)] = 1;
     }
 
     //! Determine elements that lie inside the user-defined IC box
@@ -422,59 +421,55 @@ class MultiMat {
                       tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto intsharp =
-        g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
 
       bool is_p0p1(false);
       if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
         is_p0p1 = true;
 
       // do reconstruction only if P0P1 or if interface reconstruction is active
-      if (is_p0p1 || (intsharp > 0)) {
-        const auto nelem = fd.Esuel().size()/4;
-        const auto nmat =
-          g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto nelem = fd.Esuel().size()/4;
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-        Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
-                "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
 
-        //----- reconstruction of conserved quantities -----
-        //--------------------------------------------------
-        // specify how many variables need to be reconstructed
-        std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
-        if (!is_p0p1)
-          varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
+      //----- reconstruction of conserved quantities -----
+      //--------------------------------------------------
+      // specify how many variables need to be reconstructed
+      std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+      if (!is_p0p1)
+        varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
 
-        // 1. solve 3x3 least-squares system
+      // 1. solve 3x3 least-squares system
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        // Reconstruct second-order dofs of volume-fractions in Taylor space
+        // using nodal-stencils, for a good interface-normal estimate
+        tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+          U, varRange );
+      }
+
+      // 2. transform reconstructed derivatives to Dubiner dofs
+      tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, U, varRange);
+
+      //----- reconstruction of primitive quantities -----
+      //--------------------------------------------------
+      // For multimat, conserved and primitive quantities are reconstructed
+      // separately.
+      if (is_p0p1) {
+        // 1.
         for (std::size_t e=0; e<nelem; ++e)
         {
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
           tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
-            U, varRange );
+            P, {0, nprim()-1} );
         }
 
-        // 2. transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, U, varRange);
-
-        //----- reconstruction of primitive quantities -----
-        //--------------------------------------------------
-        // For multimat, conserved and primitive quantities are reconstructed
-        // separately.
-        if (is_p0p1) {
-          // 1.
-          for (std::size_t e=0; e<nelem; ++e)
-          {
-            // Reconstruct second-order dofs of volume-fractions in Taylor space
-            // using nodal-stencils, for a good interface-normal estimate
-            tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
-              P, {0, nprim()-1} );
-          }
-
-          // 2.
-          tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, P,
-            {0, nprim()-1});
-        }
+        // 2.
+        tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, P,
+          {0, nprim()-1});
       }
     }
 
