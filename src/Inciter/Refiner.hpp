@@ -54,12 +54,8 @@ class Refiner : public CBase_Refiner {
     template< std::size_t N > using Hash = tk::UnsMesh::Hash< N >;
     template< std::size_t N > using Eq = tk::UnsMesh::Eq< N >;
 
-    //! Boundary face data bundle, see boundary()
-    using BndFaceData = std::tuple<
-      std::unordered_map< Face, std::size_t, Hash<3>, Eq<3> >,
-      std::unordered_map< Face, Tet, Hash<3>, Eq<3> >,
-      std::unordered_map< int, FaceSet >
-    >;
+    //! Boundary face data, see boundary()
+    using BndFaceData = std::unordered_map< Face, std::size_t, Hash<3>, Eq<3> >;
 
     //! Used to associate error to edges
     using EdgeError = std::unordered_map< Edge, tk::real, Hash<2>, Eq<2> >;
@@ -207,10 +203,10 @@ class Refiner : public CBase_Refiner {
       p | m_coarseBndFaces;
       p | m_coarseBndNodes;
       p | m_rid;
-      p | m_oldrid;
+      //p | m_oldrid;
       p | m_lref;
       //p | m_oldlref;
-      p | m_oldparent;
+      //p | m_oldparent;
       p | m_writeCallback;
       p | m_outref_ginpoel;
       p | m_outref_el;
@@ -323,13 +319,13 @@ class Refiner : public CBase_Refiner {
     //! Local -> refiner lib node id map
     std::vector< std::size_t > m_rid;
     //! Local -> refiner lib node id map for previous mesh
-    std::vector< std::size_t > m_oldrid;
+    //std::vector< std::size_t > m_oldrid;
     //! Refiner lib -> local node id map
     std::unordered_map< std::size_t, std::size_t > m_lref;
     //! Refiner lib -> local node id map for previous mesh
     //std::unordered_map< std::size_t, std::size_t > m_oldlref;
     //! Child -> parent tet map for previous mesh
-    std::unordered_map< Tet, Tet, Hash<4>, Eq<4> > m_oldparent;
+    //std::unordered_map< Tet, Tet, Hash<4>, Eq<4> > m_oldparent;
     //! Function to continue with after writing field output
     CkCallback m_writeCallback;
     //! \brief Tetrahedron element connectivity of our chunk of the mesh
@@ -432,13 +428,9 @@ class Refiner : public CBase_Refiner {
     //!   refined/derefined boundary faces and nodes of side sets
     BndFaceData boundary();
 
-    //! Regenerate boundary faces after mesh refinement/derefinement step
-    void updateBndFaces( const std::unordered_set< std::size_t >& ref,
-                         const BndFaceData& bnd );
-
-    //! Regenerate boundary nodes after mesh refinement/derefinement step
-    void updateBndNodes( const std::unordered_set< std::size_t >& ref,
-                         const BndFaceData& bnd );
+    //! Regenerate boundary faces and nodes after AMR step
+    void updateBndData( const std::unordered_set< std::size_t >& ref,
+                        const BndFaceData& bnd );
 
     //! Evaluate initial conditions (IC) at mesh nodes
     tk::Fields
