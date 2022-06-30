@@ -71,10 +71,14 @@ VertexBasedCompflow_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
+  std::size_t system,
   std::size_t offset,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  tk::Fields& U );
+  tk::Fields& U,
+  std::vector< std::size_t >& shockmarker );
 
 //! Kuzmin's vertex-based limiter for single-material DGP2
 void
@@ -83,7 +87,10 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
+  std::size_t system,
   std::size_t offset,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
@@ -120,6 +127,8 @@ VertexBasedMultiMat_P2(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
