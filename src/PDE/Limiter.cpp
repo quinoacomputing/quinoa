@@ -2093,6 +2093,9 @@ void MarkShockCells ( const std::size_t nelem,
       {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
       {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
 
+    std::array< tk::real, 3 >
+      fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+
     // Numerator and denominator of the shock indicator
     tk::real numer(0.0), denom(0.0);
 
@@ -2137,13 +2140,24 @@ void MarkShockCells ( const std::size_t nelem,
       auto fl = flux( nmat, system, ncomp, mat_blk, state[0], {} );
       auto fr = flux( nmat, system, ncomp, mat_blk, state[1], {} );
 
-      for(std::size_t icomp = 0; icomp < ncomp; icomp++) {
+      std::array< std::size_t, 2 > VarRange;
+      // If multi-material, evaluate the shock indicator based on momentum flux
+      if(nmat > 1) {
+        VarRange[0] = momentumIdx(nmat, 0);
+        VarRange[1] = momentumIdx(nmat, 2);
+      } else {
+        VarRange[0] = 0;
+        VarRange[1] = ncomp - 1;
+      }
+
+      for(std::size_t icomp = VarRange[0]; icomp <= VarRange[1]; icomp++) {
+        tk::real fn_l(0.0), fn_r(0.0);
         for(std::size_t idir = 0; idir < 3; idir++) {
-          numer += wgp[igp] *(fl[icomp][idir] - fr[icomp][idir])
-                 * (fl[icomp][idir] - fr[icomp][idir]);
-          denom += wgp[igp] * (fl[icomp][idir] + fr[icomp][idir])
-                 * (fl[icomp][idir] + fr[icomp][idir]) * 0.25;
+          fn_l += fl[icomp][idir] * fn[idir];
+          fn_r += fr[icomp][idir] * fn[idir];
         }
+        numer += wgp[igp] * (fn_l - fn_r) * (fn_l - fn_r);
+        denom += wgp[igp] * (fn_l + fn_r) * (fn_l + fn_r) * 0.25;
       }
     }
     tk::real Ind(0.0);
