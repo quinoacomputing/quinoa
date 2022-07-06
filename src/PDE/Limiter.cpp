@@ -605,45 +605,7 @@ VertexBasedMultiMat_P1(
         }
       }
 
-      //// The coefficients for volume fractions of all materials should be
-      //// identical to maintain the conservation law
-      //tk::real phi_al(1.0);
-      //for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k)
-      //  phi_al = std::min(phic[k], phi_al);
-      //for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k)
-      //  phic[k] =  phi_al;
-
-      //// limits under which compression is to be performed
-      //std::vector< std::size_t > matInt(nmat, 0);
-      //std::vector< tk::real > alAvg(nmat, 0.0);
-      //for (std::size_t k=0; k<nmat; ++k)
-      //  alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-      //auto intInd = interfaceIndicator(nmat, alAvg, matInt);
-      //if ((intsharp > 0) && intInd) {
-      //  for (std::size_t k=0; k<nmat; ++k) {
-      //    if (matInt[k]) {
-      //      phic[volfracIdx(nmat,k)] = 1.0;
-      //    }
-      //  }
-      //}
-
-      //// apply limiter function
-      //for (std::size_t c=0; c<ncomp; ++c) {
-      //  auto mark = c * ncomp;
-      //  for(std::size_t idof=1; idof<4; idof++)
-      //    U(e, mark+idof, offset) = phic[c] * U(e, mark+idof, offset);
-      //}
-      //for (std::size_t c=0; c<nprim; ++c) {
-      //  auto mark = c * ncomp;
-      //  for(std::size_t idof=1; idof<4; idof++)
-      //    P(e, mark+idof, offset) = phip[c] * P(e, mark+idof, offset);
-      //}
-
       std::vector< tk::real > phic_p2, phip_p2;
-      //for(std::size_t c=0; c<ncomp; ++c)
-      //  phic[c] = 1.0;
-      //for(std::size_t c=0; c<nprim; ++c)
-      //  phip[c] = 1.0;
 
       if(ndof > 1 && intsharp == 0 && nmat > 1)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic,
@@ -653,7 +615,6 @@ VertexBasedMultiMat_P1(
         PositivityLimitingMultiMat(nmat, system, offset, rdof, e, inpoel, coord,
           U, P, phic, phic_p2, phip, phip_p2);
 
-      //if(!((intsharp > 0) && intInd) && nmat > 1)
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
       std::vector< tk::real > alAvg(nmat, 0.0);
@@ -827,13 +788,12 @@ VertexBasedMultiMat_P2(
         }
       }
 
-      // The coefficients for volume fractions of all materials should be
-      // identical to maintain the conservation law
-      tk::real phi_al_p1(1.0);
-      for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k)
-        phi_al_p1 = std::min(phic_p1[k], phi_al_p1);
-      for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k)
-        phic_p1[k] =  phi_al_p1;
+      if(ndof > 1 && intsharp == 0)
+        BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U,
+          phic_p1, phic_p2);
+
+      PositivityLimitingMultiMat(nmat, system, offset, ndof, e, inpoel, coord,
+          U, P, phic_p1, phic_p2, phip_p1, phic_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -848,36 +808,11 @@ VertexBasedMultiMat_P2(
           }
         }
       }
-
-      // apply limiter function
-      for (std::size_t c=0; c<ncomp; ++c) {
-        auto mark = c * ncomp;
-        for(std::size_t idof=1; idof<4; idof++)
-          U(e, mark+idof, offset) = phic_p1[c] * U(e, mark+idof, offset);
-      }
-      for (std::size_t c=0; c<nprim; ++c) {
-        auto mark = c * ncomp;
-        for(std::size_t idof=1; idof<4; idof++)
-          P(e, mark+idof, offset) = phip_p1[c] * P(e, mark+idof, offset);
-      }
-
-      // After Vertex-based limiter is applied, reset the limiting coefficients
-      for(std::size_t c=0; c<ncomp; ++c)
-        phic_p1[c] = 1.0;
-      for(std::size_t c=0; c<nprim; ++c)
-        phip_p1[c] = 1.0;
-
-      if(ndof > 1 && intsharp == 0)
-        BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U,
-          phic_p1, phic_p2);
-
-      PositivityLimitingMultiMat(nmat, system, offset, ndof, e, inpoel, coord,
-          U, P, phic_p1, phic_p2, phip_p1, phic_p2);
-
-      if(!((intsharp > 0) && intInd) && nmat > 1)
+      else {
         if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
           consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic_p1,
             phic_p2);
+      }
 
       // apply limiing coefficient
       for (std::size_t c=0; c<ncomp; ++c)
