@@ -421,9 +421,10 @@ class MultiMat {
                       tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       bool is_p0p1(false);
-      if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
+      if (rdof == 4 && ndof == 1)
         is_p0p1 = true;
 
       // do reconstruction only if P0P1 or if interface reconstruction is active
@@ -438,7 +439,8 @@ class MultiMat {
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
       std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
-      if (!is_p0p1)
+      // If DG is applied
+      if (!is_p0p1 && ndof > 1)
         varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
 
       // 1. solve 3x3 least-squares system

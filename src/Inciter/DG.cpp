@@ -100,7 +100,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
-  m_shockmarker(m_u.nunk())
+  m_shockmarker(m_u.nunk(), 1)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
