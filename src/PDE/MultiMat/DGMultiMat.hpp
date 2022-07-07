@@ -572,7 +572,7 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      correctLimConservMultiMat(nielem, m_system, nmat, geoElem, prim, unk);
+      correctLimConservMultiMat(nielem, m_mat_blk, nmat, geoElem, prim, unk);
     }
 
 

@@ -116,21 +116,21 @@ tk::real mu( ncomp_t system, std::size_t imat=0 )
 //!   for the single-material system, this argument can be left unspecified by
 //!   the calling code
 //! \return Material density calculated using the stiffened-gas EoS
-template< class Eq >
-tk::real eos_density( ncomp_t system,
-                      tk::real pr,
-                      tk::real temp,
-                      std::size_t imat=0 )
-{
-  // query input deck to get gamma, p_c, cv
-  auto g = gamma< Eq >(system, imat);
-  auto p_c = pstiff< Eq >(system, imat);
-  auto c_v = cv< Eq >(system, imat);
-
-  tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
-  return rho;
-}
-
+//template< class Eq >
+//tk::real eos_density( ncomp_t system,
+//                      tk::real pr,
+//                      tk::real temp,
+//                      std::size_t imat=0 )
+//{
+//  // query input deck to get gamma, p_c, cv
+//  auto g = gamma< Eq >(system, imat);
+//  auto p_c = pstiff< Eq >(system, imat);
+//  auto c_v = cv< Eq >(system, imat);
+//
+//  tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
+//  return rho;
+//}
+//
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the stiffened-gas equation of state
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
@@ -194,32 +194,32 @@ tk::real eos_pressure( ncomp_t system,
 //!   for the single-material system, this argument can be left unspecified by
 //!   the calling code
 //! \return Material speed of sound using the stiffened-gas EoS
-template< class Eq >
-tk::real eos_soundspeed( ncomp_t system,
-                         tk::real arho, tk::real apr,
-                         tk::real alpha=1.0, std::size_t imat=0 )
-{
-  // query input deck to get gamma, p_c
-  auto g = gamma< Eq >(system, imat);
-  auto p_c = pstiff< Eq >(system, imat);
-
-  auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
-
-  tk::real a = std::sqrt( g * p_eff / arho );
-
-  // check sound speed divergence
-  if (!std::isfinite(a)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Partial pressure: " << apr << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
-      + std::to_string(a) + ", material volume fraction: " +
-      std::to_string(alpha));
-  }
-
-  return a;
-}
+//template< class Eq >
+//tk::real eos_soundspeed( ncomp_t system,
+//                         tk::real arho, tk::real apr,
+//                         tk::real alpha=1.0, std::size_t imat=0 )
+//{
+//  // query input deck to get gamma, p_c
+//  auto g = gamma< Eq >(system, imat);
+//  auto p_c = pstiff< Eq >(system, imat);
+//
+//  auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
+//
+//  tk::real a = std::sqrt( g * p_eff / arho );
+//
+//  // check sound speed divergence
+//  if (!std::isfinite(a)) {
+//    std::cout << "Material-id:      " << imat << std::endl;
+//    std::cout << "Volume-fraction:  " << alpha << std::endl;
+//    std::cout << "Partial density:  " << arho << std::endl;
+//    std::cout << "Partial pressure: " << apr << std::endl;
+//    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
+//      + std::to_string(a) + ", material volume fraction: " +
+//      std::to_string(alpha));
+//  }
+//
+//  return a;
+//}
 
 //! \brief Calculate material specific total energy from the material density,
 //!   momentum and material pressure
@@ -234,22 +234,22 @@ tk::real eos_soundspeed( ncomp_t system,
 //!   for the single-material system, this argument can be left unspecified by
 //!   the calling code
 //! \return Material specific total energy using the stiffened-gas EoS
-template< class Eq >
-tk::real eos_totalenergy( ncomp_t system,
-                          tk::real rho,
-                          tk::real u,
-                          tk::real v,
-                          tk::real w,
-                          tk::real pr,
-                          std::size_t imat=0 )
-{
-  // query input deck to get gamma, p_c
-  auto g = gamma< Eq >(system, imat);
-  auto p_c = pstiff< Eq >(system, imat);
-
-  tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * rho * (u*u + v*v + w*w) + p_c;
-  return rhoE;
-}
+//template< class Eq >
+//tk::real eos_totalenergy( ncomp_t system,
+//                          tk::real rho,
+//                          tk::real u,
+//                          tk::real v,
+//                          tk::real w,
+//                          tk::real pr,
+//                          std::size_t imat=0 )
+//{
+//  // query input deck to get gamma, p_c
+//  auto g = gamma< Eq >(system, imat);
+//  auto p_c = pstiff< Eq >(system, imat);
+//
+//  tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * rho * (u*u + v*v + w*w) + p_c;
+//  return rhoE;
+//}
 
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy
@@ -267,23 +267,23 @@ tk::real eos_totalenergy( ncomp_t system,
 //!   for the single-material system, this argument can be left unspecified by
 //!   the calling code
 //! \return Material temperature using the stiffened-gas EoS
-template< class Eq >
-tk::real eos_temperature( ncomp_t system,
-                          tk::real arho,
-                          tk::real u,
-                          tk::real v,
-                          tk::real w,
-                          tk::real arhoE,
-                          tk::real alpha=1.0,
-                          std::size_t imat=0 )
-{
-  // query input deck to get p_c, cv
-  auto c_v = cv< Eq >(system, imat);
-  auto p_c = pstiff< Eq >(system, imat);
-
-  tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) / (arho*c_v);
-  return t;
-}
+//template< class Eq >
+//tk::real eos_temperature( ncomp_t system,
+//                          tk::real arho,
+//                          tk::real u,
+//                          tk::real v,
+//                          tk::real w,
+//                          tk::real arhoE,
+//                          tk::real alpha=1.0,
+//                          std::size_t imat=0 )
+//{
+//  // query input deck to get p_c, cv
+//  auto c_v = cv< Eq >(system, imat);
+//  auto p_c = pstiff< Eq >(system, imat);
+//
+//  tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) / (arho*c_v);
+//  return t;
+//}
 
 //! Constrain material partial pressure (alpha_k * p_k)
 //! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat

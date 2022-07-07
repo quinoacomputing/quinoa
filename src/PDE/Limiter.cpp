@@ -2763,7 +2763,7 @@ timeStepSizeMultiMat(
 void
 correctLimConservMultiMat(
   std::size_t nelem,
-  std::size_t system,
+  const std::vector< EoS_Base* >& mat_blk,
   std::size_t nmat,
   const tk::Fields& geoElem,
   const tk::Fields& prim,
@@ -2771,7 +2771,7 @@ correctLimConservMultiMat(
 // *****************************************************************************
 //  Update the conservative quantities after limiting for multi-material systems
 //! \param[in] nelem Number of internal elements
-//! \param[in] system Index for equation systems
+//! \param[in] mat_blk EOS material block
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] geoElem Element geometry array
 //! \param[in] prim Array of primitive variables
@@ -2842,8 +2842,8 @@ correctLimConservMultiMat(
         auto alphamat = U[volfracIdx(nmat, imat)];
         auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
         auto premat = P[pressureIdx(nmat, imat)]/alphamat;
-        s[imat] = alphamat * eos_totalenergy< tag::multimat >( system, rhomat,
-          vel[0], vel[1], vel[2], premat, imat );
+        s[imat] = alphamat * mat_blk[imat]->eos_totalenergy( rhomat,
+          vel[0], vel[1], vel[2], premat );
       }
 
       // Evaluate the righ-hand-side vector

@@ -303,7 +303,7 @@ timeStepSizeMultiMat(
 void
 correctLimConservMultiMat(
   std::size_t nelem,
-  std::size_t system,
+  const std::vector< EoS_Base* >& mat_blk,
   std::size_t nmat,
   const tk::Fields& geoElem,
   const tk::Fields& prim,
