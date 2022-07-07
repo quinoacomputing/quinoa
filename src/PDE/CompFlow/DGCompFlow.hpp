@@ -88,7 +88,7 @@ class CompFlow {
       auto g = gamma< eq >(m_system, 0);
       auto ps = pstiff< eq >(m_system, 0);
       auto c_v = cv< eq >(m_system, 0);
-      m_mat_blk.push_back(new StiffenedGas(g, ps, c_v, 0));
+      m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
 
     }
 

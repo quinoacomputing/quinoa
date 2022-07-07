@@ -92,7 +92,7 @@ class MultiMat {
         auto g = gamma< eq >(m_system, k);
         auto ps = pstiff< eq >(m_system, k);
         auto c_v = cv< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v, k));
+        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
         }
 
     }

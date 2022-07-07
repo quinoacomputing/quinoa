@@ -34,7 +34,7 @@ class StiffenedGas: public EoS_Base {
     //! \param[in] pstiff Stiffened pressure term
     //! \param[in] cv Specific heat at constant volume
     // *************************************************************************
-    StiffenedGas(tk::real gamma, tk::real pstiff, tk::real cv, std::size_t ) :
+    StiffenedGas(tk::real gamma, tk::real pstiff, tk::real cv ) :
       m_gamma(gamma), m_pstiff(pstiff), m_cv(cv)
     { }
 
