@@ -54,12 +54,8 @@ class Refiner : public CBase_Refiner {
     template< std::size_t N > using Hash = tk::UnsMesh::Hash< N >;
     template< std::size_t N > using Eq = tk::UnsMesh::Eq< N >;
 
-    //! Boundary face data bundle, see boundary()
-    using BndFaceData = std::tuple<
-      std::unordered_map< Face, std::size_t, Hash<3>, Eq<3> >,
-      std::unordered_map< Face, Tet, Hash<3>, Eq<3> >,
-      std::unordered_map< int, FaceSet >
-    >;
+    //! Boundary face data, see boundary()
+    using BndFaceData = std::unordered_map< Face, std::size_t, Hash<3>, Eq<3> >;
 
     //! Used to associate error to edges
     using EdgeError = std::unordered_map< Edge, tk::real, Hash<2>, Eq<2> >;
@@ -209,10 +205,10 @@ class Refiner : public CBase_Refiner {
       p | m_coarseBndFaces;
       p | m_coarseBndNodes;
       p | m_rid;
-      p | m_oldrid;
+      //p | m_oldrid;
       p | m_lref;
       //p | m_oldlref;
-      p | m_parent;
+      //p | m_oldparent;
       p | m_writeCallback;
       p | m_outref_ginpoel;
       p | m_outref_el;
@@ -327,13 +323,13 @@ class Refiner : public CBase_Refiner {
     //! Local -> refiner lib node id map
     std::vector< std::size_t > m_rid;
     //! Local -> refiner lib node id map for previous mesh
-    std::vector< std::size_t > m_oldrid;
+    //std::vector< std::size_t > m_oldrid;
     //! Refiner lib -> local node id map
     std::unordered_map< std::size_t, std::size_t > m_lref;
     //! Refiner lib -> local node id map for previous mesh
     //std::unordered_map< std::size_t, std::size_t > m_oldlref;
-    //! Child -> parent tet map
-    std::unordered_map< Tet, Tet, Hash<4>, Eq<4> > m_parent;
+    //! Child -> parent tet map for previous mesh
+    //std::unordered_map< Tet, Tet, Hash<4>, Eq<4> > m_oldparent;
     //! Function to continue with after writing field output
     CkCallback m_writeCallback;
     //! \brief Tetrahedron element connectivity of our chunk of the mesh
@@ -416,6 +412,9 @@ class Refiner : public CBase_Refiner {
     //! Query AMR lib and update our local store of edge data
     void updateEdgeData();
 
+    //! Query AMR lib and update our local store of boundary edge data
+    void updateBndEdgeData();
+
     //! Aggregate number of extra edges across all chares
     void matched();
 
@@ -433,13 +432,9 @@ class Refiner : public CBase_Refiner {
     //!   refined/derefined boundary faces and nodes of side sets
     BndFaceData boundary();
 
-    //! Regenerate boundary faces after mesh refinement/derefinement step
-    void updateBndFaces( const std::unordered_set< std::size_t >& ref,
-                         const BndFaceData& bnd );
-
-    //! Regenerate boundary nodes after mesh refinement/derefinement step
-    void updateBndNodes( const std::unordered_set< std::size_t >& ref,
-                         const BndFaceData& bnd );
+    //! Regenerate boundary faces and nodes after AMR step
+    void updateBndData( const std::unordered_set< std::size_t >& ref,
+                        const BndFaceData& bnd );
 
     //! Evaluate initial conditions (IC) at mesh nodes
     tk::Fields
@@ -482,16 +477,6 @@ class Refiner : public CBase_Refiner {
         if (s.second.find(p) != end(s.second))
           ss.insert( s.first );
       return ss;
-    }
-
-    //! Call a function on each item of an array
-    //! \tparam N Number of nodes in array
-    //! \tparam F Function to pass each item to
-    //! \param[in] array Array whose items to pass to function
-    //! \param[in] f Function to pass each item of array to
-    template< std::size_t N, class F >
-    void addBndNodes( const std::array< std::size_t, N >& array, F f ) {
-      for (auto n : array) f( n );
     }
 };
 

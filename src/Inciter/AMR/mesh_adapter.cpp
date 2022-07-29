@@ -242,7 +242,13 @@ namespace AMR {
            auto& edgeref = tet_store.edge_store.get( edge_t(r.first) );
            edgeref.needs_refining = std::get<0>(r.second);
            edgeref.needs_derefining = std::get<1>(r.second);
-           assert(edgeref.lock_case <= std::get<2>(r.second));
+           Assert(edgeref.lock_case == Edge_Lock_Case::unlocked ?
+             edgeref.lock_case <= std::get<2>(r.second) : true,
+             "Edge " + std::to_string(r.first[0]) +
+             "-" + std::to_string(r.first[1]) +
+             " : current edge-lock " + std::to_string(edgeref.lock_case) +
+             " stricter than received edge-lock " +
+             std::to_string(std::get<2>(r.second)));
            edgeref.lock_case = std::get<2>(r.second);
        }
        mark_refinement();
@@ -411,7 +417,8 @@ namespace AMR {
                             trace_out << "Locked :" << tet_store.edge_store.get(key).lock_case << std::endl;
                             num_locked_edges++;
                         }
-                        else if(tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate)
+                        else if(tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate
+                          || tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::temporary)
                         {
                             trace_out << "Found intermediate edge " << key << std::endl;
                             num_intermediate_edges++;
@@ -944,7 +951,8 @@ namespace AMR {
             trace_out << "Key " << key << std::endl;
 
             // Count intermediate edges
-            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate)
+            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate
+              || tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::temporary)
             {
                 trace_out << "found intermediate" << std::endl;
                 num_intermediate++;
@@ -1182,6 +1190,27 @@ namespace AMR {
                 tet_store.edge_store.get(key).lock_case = new_case;
             }
         }
+    }
+
+    /**
+     * @brief This unlocks edges that were previously locked with a `temporary'
+     * lock, indicating a parallel compatibility induced locking
+     */
+    void mesh_adapter_t::remove_edge_temp_locks()
+    {
+      for (const auto& kv : tet_store.tets)
+      {
+        size_t tet_id = kv.first;
+
+        trace_out << "Process tet remove temp lock " << tet_id << std::endl;
+
+        // Only apply checks to tets on the active list
+        if (tet_store.is_active(tet_id)) {
+          // change it from temporary to unlocked
+          update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::temporary,
+            AMR::Edge_Lock_Case::unlocked);
+        }
+      }
     }
 
     void mesh_adapter_t::mark_derefinement()
