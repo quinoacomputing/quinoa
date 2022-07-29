@@ -48,7 +48,8 @@ module partitioner {
                   std::vector< std::size_t >,
                   tk::UnsMesh::CoordMap,
                   std::unordered_map< int, std::vector< std::size_t > >,
-                  std::unordered_map< int, std::vector< std::size_t > >
+                  std::unordered_map< int, std::vector< std::size_t > >,
+                  std::vector< int >
                 > >& chmesh );
       entry [exclusive] void recvMesh();
       entry void refine();

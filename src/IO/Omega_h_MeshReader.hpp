@@ -45,6 +45,7 @@ class Omega_h_MeshReader {
                        std::vector< std::size_t >& triinp,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord,
+                       std::unordered_map< int, std::set< std::size_t > >&,
                        int numpes=1, int mype=0 );
 
     //! Read face list of all side sets from Omega h file
@@ -53,7 +54,7 @@ class Omega_h_MeshReader {
                       std::map< int, std::vector< std::size_t > >& faces );
 
     //! Read face connectivity of a number boundary faces from Omega h file
-    void readFaces( std::vector< std::size_t >& conn ) const;
+    void readFaces( std::vector< std::size_t >& conn );
 
     //! Read node list of all side sets from Omega h file
     std::map< int, std::vector< std::size_t > > readSidesetNodes();

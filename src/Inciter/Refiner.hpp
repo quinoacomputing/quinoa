@@ -85,6 +85,7 @@ class Refiner : public CBase_Refiner {
                       const std::map< int, std::vector< std::size_t > >& bface,
                       const std::vector< std::size_t >& triinpoel,
                       const std::map< int, std::vector< std::size_t > >& bnode,
+                      const std::vector< int >& elemblockid,
                       int nchare );
 
     #if defined(__clang__)
@@ -183,6 +184,7 @@ class Refiner : public CBase_Refiner {
       p | m_bface;
       p | m_bnode;
       p | m_triinpoel;
+      p | m_elemblockid;
       p | m_nchare;
       p | m_mode;
       p | m_initref;
@@ -269,6 +271,8 @@ class Refiner : public CBase_Refiner {
     std::map< int, std::vector< std::size_t > > m_bnode;
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
+    //! Mesh block ids associated with local tet ids
+    std::vector< int > m_elemblockid;
     //! Total number of refiner chares
     int m_nchare;
     //! True if initial AMR, false if during time stepping

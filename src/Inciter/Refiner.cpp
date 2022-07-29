@@ -52,6 +52,7 @@ Refiner::Refiner( std::size_t meshid,
                   const std::map< int, std::vector< std::size_t > >& bface,
                   const std::vector< std::size_t >& triinpoel,
                   const std::map< int, std::vector< std::size_t > >& bnode,
+                  const std::vector< int >& elemblockid,
                   int nchare ) :
   m_meshid( meshid ),
   m_ncit(0),
@@ -68,6 +69,7 @@ Refiner::Refiner( std::size_t meshid,
   m_bface( bface ),
   m_bnode( bnode ),
   m_triinpoel( triinpoel ),
+  m_elemblockid( elemblockid ),
   m_nchare( nchare ),
   m_mode( RefMode::T0REF ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
@@ -116,8 +118,9 @@ Refiner::Refiner( std::size_t meshid,
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
 //! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
 //! \param[in] bface File-internal elem ids of side sets
-//! \param[in] bnode Node lists of side sets
 //! \param[in] triinpoel Triangle face connectivity with global IDs
+//! \param[in] bnode Node lists of side sets
+//! \param[in] elemblockid Mesh block ids associated to local tet ids
 //! \param[in] nchare Total number of refiner chares (chare array elements)
 // *****************************************************************************
 {

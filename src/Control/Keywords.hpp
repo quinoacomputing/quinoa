@@ -2771,6 +2771,22 @@ struct materialid_info {
 using materialid = keyword< materialid_info,
   TAOCPP_PEGTL_STRING("materialid") >;
 
+struct blockid_info {
+  static std::string name() { return "blockid"; }
+  static std::string shortDescription() { return "Specify block id"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure the mesh block id as a part
+    of the initialization.)";
+  }
+  struct expect {
+    using type = std::size_t;
+    static constexpr type lower = 1;
+    static std::string description() { return "uint"; }
+  };
+};
+using blockid = keyword< blockid_info,
+  TAOCPP_PEGTL_STRING("blockid") >;
+
 struct mass_info {
   static std::string name() { return "mass"; }
   static std::string shortDescription() { return "Specify mass"; }
@@ -3016,6 +3032,27 @@ struct box_info {
     + pressure::string() + "\'."; }
 };
 using box = keyword< box_info, TAOCPP_PEGTL_STRING("box") >;
+
+struct meshblock_info {
+  static std::string name() { return "meshblock"; }
+  static std::string shortDescription() { return
+    R"(Introduce a meshblock ... end block used to assign initial conditions)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce a meshblock ... end block used to
+    assign initial conditions within a mesh block specified in the mesh file.
+    The following keywords are allowed in a meshblock ... end block:)"
+    + std::string("\'")
+    + blockid::string()+ "\', \'"
+    + materialid::string()+ "\', \'"
+    + mass::string()+ "\', \'"
+    + density::string()+ "\', \'"
+    + velocity::string() + "\', \'"
+    + energy::string() + "\', \'"
+    + energy_content::string() + "\', \'"
+    + temperature::string() + "\', \'"
+    + pressure::string() + "\'."; }
+};
+using meshblock = keyword< meshblock_info, TAOCPP_PEGTL_STRING("meshblock") >;
 
 struct ic_info {
   static std::string name() { return "ic"; }

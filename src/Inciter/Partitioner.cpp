@@ -62,6 +62,7 @@ Partitioner::Partitioner(
   m_coord(),
   m_inpoel(),
   m_lid(),
+  m_elemBlockId(),
   m_ndist( 0 ),
   m_nchare( 0 ),
   m_nface(),
@@ -70,6 +71,7 @@ Partitioner::Partitioner(
   m_chbface(),
   m_chtriinpoel(),
   m_chbnode(),
+  m_chelemblockid(),
   m_bface( bface ),
   m_bnode( bnode )
 // *****************************************************************************
@@ -95,7 +97,7 @@ Partitioner::Partitioner(
   // Read this compute node's chunk of the mesh (graph and coords) from file
   std::vector< std::size_t > triinpoel;
   mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_lid, m_coord,
-                   CkNumNodes(), CkMyNode() );
+                   m_elemBlockId, CkNumNodes(), CkMyNode() );
 
   // Compute triangle connectivity for side sets, reduce boundary face for side
   // sets to this compute node only and to compute-node-local face ids
@@ -183,7 +185,8 @@ Partitioner::addMesh(
             std::vector< std::size_t >, // tet connectivity
             tk::UnsMesh::CoordMap,      // node coords
             std::unordered_map< int, std::vector< std::size_t > >, // bface conn
-            std::unordered_map< int, std::vector< std::size_t > >  // bnodes
+            std::unordered_map< int, std::vector< std::size_t > >, // bnodes
+            std::vector< int >          // elem-blocks
           > >& chmesh )
 // *****************************************************************************
 //  Receive mesh associated to chares we own after refinement
@@ -202,6 +205,10 @@ Partitioner::addMesh(
     const auto& inpoel = std::get< 0 >( chunk );
     auto& inp = m_chinpoel[ chareid ];  // will store tetrahedron connectivity
     inp.insert( end(inp), begin(inpoel), end(inpoel) );
+    // Store own mesh block id and associated tet ids
+    const auto& elblock = std::get<4>( chunk );
+    auto& cheb = m_chelemblockid[ chareid ];
+    cheb.insert( end(cheb), begin(elblock), end(elblock) );
     // Store mesh node coordinates associated to global node IDs
     const auto& coord = std::get< 1 >( chunk );
     Assert( tk::uniquecopy(inpoel).size() == coord.size(), "Size mismatch" );
@@ -281,6 +288,10 @@ Partitioner::refine()
     for (int c=0; c<dist[1]; ++c) {
       // compute chare ID
       auto cid = CkMyNode() * dist[0] + c;
+
+      Assert(tk::cref_find(m_chinpoel,cid).size()/4 ==
+        tk::cref_find(m_chelemblockid,cid).size(),
+        "incorrect number of elements in elem-block id vector");
       // create refiner Charm++ chare array element using dynamic insertion
       m_refiner[ cid ].insert( m_meshid,
                                m_host,
@@ -294,6 +305,7 @@ Partitioner::refine()
                                tk::cref_find(m_chbface,cid),
                                tk::cref_find(m_chtriinpoel,cid),
                                tk::cref_find(m_chbnode,cid),
+                               tk::cref_find(m_chelemblockid,cid),
                                m_nchare );
     }
 
@@ -303,6 +315,7 @@ Partitioner::refine()
   tk::destroy( m_coord );
   tk::destroy( m_inpoel );
   tk::destroy( m_lid );
+  tk::destroy( m_elemBlockId );
   tk::destroy( m_nface );
   tk::destroy( m_nodech );
   tk::destroy( m_linnodes );
@@ -400,6 +413,17 @@ Partitioner::categorize( const std::vector< std::size_t >& target ) const
     auto& mesh = chmesh[ static_cast<int>(target[e]) ];
     auto& inpoel = std::get< 0 >( mesh );
     inpoel.insert( end(inpoel), begin(t), end(t) );
+    // Categorize mesh block ids and associated local tet ids (local tet ids
+    // basically correspond to the inpoel entries updated in line above).
+    bool added(false);
+    auto& elblock = std::get< 3 >( mesh );
+    for (const auto& [blid, elset] : m_elemBlockId) {
+      if (elset.find(e) != elset.end()) {
+        elblock.push_back(blid);
+        added = true;
+      }
+    }
+    Assert(added, "Tet element not found in any block after partitioning");
     // Categorize boundary face connectivity
     auto& bconn = std::get< 1 >( mesh );
     std::array<Face,4> face{{ {{t[0],t[2],t[1]}}, {{t[0],t[1],t[3]}},
@@ -494,6 +518,10 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
       const auto& inpoel = std::get<0>( it->second );
       auto& inp = m_chinpoel[ chid ];     // will store own mesh connectivity
       inp.insert( end(inp), begin(inpoel), end(inpoel) );
+      // Store own mesh block id and associated tet ids
+      const auto& elblock = std::get<3>( it->second );
+      auto& cheb = m_chelemblockid[ chid ];
+      cheb.insert( end(cheb), begin(elblock), end(elblock) );
       // Store own node coordinates
       auto& chcm = m_chcoordmap[ chid ];  // will store own node coordinates
       auto cm = coordmap( inpoel );       // extract node coordinates 
@@ -525,8 +553,8 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
     Assert( mesh.find(chid) == end(mesh), "Not all owned mesh data stored" );
   }
 
-  // Construct export map associating mesh connectivities with global node
-  // indices and node coordinates for mesh chunks associated to chare IDs
+  // Construct export map (associating mesh connectivities with global node
+  // indices and node coordinates) for mesh chunks associated to chare IDs
   // owned by chares we do not own.
   std::unordered_map< int,                     // target compute node
     std::unordered_map< int,                   // chare ID
@@ -538,7 +566,9 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
         // boundary side set + face connectivity
         std::unordered_map< int, std::vector< std::size_t > >,
         // boundary side set + node list
-        std::unordered_map< int, std::vector< std::size_t > >
+        std::unordered_map< int, std::vector< std::size_t > >,
+        // Mesh block ids + local tet ids
+        std::vector< int >
       > > > exp;
 
   for (const auto& c : mesh)
@@ -546,7 +576,8 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
       std::make_tuple( std::get<0>(c.second),
                        coordmap(std::get<0>(c.second)),
                        std::get<1>(c.second),
-                       std::get<2>(c.second) );
+                       std::get<2>(c.second),
+                       std::get<3>(c.second) );
 
   // Export chare IDs and mesh we do not own to fellow compute nodes
   if (exp.empty()) {
@@ -555,8 +586,8 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
                 m_cbp.get< tag::distributed >() );
   } else {
      m_ndist += exp.size();
-     for (const auto& [ targetchare, chunk ] : exp)
-       thisProxy[ targetchare ].addMesh( CkMyNode(), chunk );
+     for (const auto& [ targetnode, chunk ] : exp)
+       thisProxy[ targetnode ].addMesh( CkMyNode(), chunk );
   }
 }
 

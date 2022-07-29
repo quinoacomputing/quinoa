@@ -274,6 +274,28 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::initiate,      InitiateParameters
 > >;
 
+//! Initiation configuration for box IC
+using InitiateBlkParameters = tk::TaggedTuple< brigand::list<
+    tag::init,          InitiateType
+  , tag::point,         std::vector< kw::point::info::expect::type >
+  , tag::radius,        kw::radius::info::expect::type
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
+> >;
+
+//! Mesh block from mesh file specifying physics variables
+using meshblock = tk::TaggedTuple< brigand::list<
+    tag::blockid,       kw::blockid::info::expect::type
+  , tag::materialid,    kw::materialid::info::expect::type
+  , tag::mass,          kw::mass::info::expect::type
+  , tag::density,       kw::density::info::expect::type
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
+  , tag::pressure,      kw::pressure::info::expect::type
+  , tag::energy,        kw::energy::info::expect::type
+  , tag::energy_content,kw::energy_content::info::expect::type
+  , tag::temperature,   kw::temperature::info::expect::type
+  , tag::initiate,      InitiateBlkParameters
+> >;
+
 //! Initial condition configuration
 using ic = tk::TaggedTuple< brigand::list<
     tag::density,       std::vector<
@@ -289,6 +311,7 @@ using ic = tk::TaggedTuple< brigand::list<
   , tag::temperature,   std::vector<
                           std::vector< kw::temperature::info::expect::type > >
   , tag::box,           std::vector< std::vector< box > >
+  , tag::meshblock,     std::vector< std::vector< meshblock > >
 > >;
 
 //! Boundary conditions configuration (list of side sets for each eq system)

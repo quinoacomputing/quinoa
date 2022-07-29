@@ -94,8 +94,10 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::multimat
                                  , kw::ic
                                  , kw::box
+                                 , kw::meshblock
                                  , kw::lua
                                  , kw::materialid
+                                 , kw::blockid
                                  , kw::mass
                                  , kw::density
                                  , kw::velocity
