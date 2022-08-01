@@ -81,7 +81,7 @@ class Refiner : public CBase_Refiner {
                       const std::map< int, std::vector< std::size_t > >& bface,
                       const std::vector< std::size_t >& triinpoel,
                       const std::map< int, std::vector< std::size_t > >& bnode,
-                      const std::vector< int >& elemblockid,
+                      const std::vector< int >& elemblid,
                       int nchare );
 
     #if defined(__clang__)
@@ -204,6 +204,7 @@ class Refiner : public CBase_Refiner {
       p | m_oldntets;
       p | m_coarseBndFaces;
       p | m_coarseBndNodes;
+      p | m_coarseBlkElems;
       p | m_rid;
       //p | m_oldrid;
       p | m_lref;
@@ -268,7 +269,7 @@ class Refiner : public CBase_Refiner {
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
     //! Mesh block ids associated with local tet ids
-    std::vector< int > m_elemblockid;
+    std::unordered_map< int, std::set< std::size_t > > m_elemblockid;
     //! Total number of refiner chares
     int m_nchare;
     //! True if initial AMR, false if during time stepping
@@ -320,6 +321,8 @@ class Refiner : public CBase_Refiner {
     std::unordered_map< int, FaceSet > m_coarseBndFaces;
     //! A unique set of nodes associated to side sets of the coarsest mesh
     std::unordered_map< int, std::unordered_set<std::size_t> > m_coarseBndNodes;
+    //! Set of elements associated to mesh block ids of the coarsest mesh
+    std::unordered_map< int, TetSet > m_coarseBlkElems;
     //! Local -> refiner lib node id map
     std::vector< std::size_t > m_rid;
     //! Local -> refiner lib node id map for previous mesh
@@ -366,8 +369,8 @@ class Refiner : public CBase_Refiner {
     //! (Re-)generate local -> refiner lib node id map and its inverse
     void libmap();
 
-    //! (Re-)generate boundary data structures for coarse mesh
-    void coarseBnd();
+    //! (Re-)generate side set and block data structures for coarse mesh
+    void coarseMesh();
 
     //! Generate flat coordinate data from coordinate map
     tk::UnsMesh::Coords flatcoord( const tk::UnsMesh::CoordMap& coordmap );

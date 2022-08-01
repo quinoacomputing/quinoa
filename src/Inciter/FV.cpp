@@ -740,7 +740,8 @@ FV::resizePostAMR(
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
-  const std::vector< std::size_t >& triinpoel )
+  const std::vector< std::size_t >& triinpoel,
+  const std::unordered_map< int, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
@@ -751,6 +752,7 @@ FV::resizePostAMR(
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] elemblockid Local tet ids associated with mesh block ids
 // *****************************************************************************
 {
   auto d = Disc();
@@ -769,7 +771,8 @@ FV::resizePostAMR(
   [[maybe_unused]] auto old_nelem = myGhosts()->m_inpoel.size()/4;
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
+    elemblockid );
 
   // Update state
   myGhosts()->m_inpoel = d->Inpoel();

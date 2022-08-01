@@ -33,6 +33,8 @@ module sorter {
                     const std::map< int, std::vector< std::size_t > >& bface,
                     const std::vector< std::size_t >& triinpoel,
                     const std::map< int, std::vector< std::size_t > >& bnode,
+                    const std::unordered_map< int, std::set< std::size_t > >&
+                      elemblockid,
                     int nchare );
       entry void setup( std::size_t npoin );
       entry void query( int fromch, const tk::AllCommMaps& bnd );

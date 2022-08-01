@@ -52,6 +52,7 @@ Discretization::Discretization(
   const tk::CommMaps& msum,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
+  const std::unordered_map< int, std::set< std::size_t > >& elemblockid,
   int nc ) :
   m_meshid( meshid ),
   m_transfer_complete(),
@@ -99,7 +100,8 @@ Discretization::Discretization(
   m_meshvel( 0, 3 ),
   m_meshvel_converged( true ),
   m_bface( bface ),
-  m_triinpoel( triinpoel )
+  m_triinpoel( triinpoel ),
+  m_elemblockid( elemblockid )
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
@@ -111,8 +113,12 @@ Discretization::Discretization(
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy
 //! \param[in] coordmap Coordinates of mesh nodes and their global IDs
+//! \param[in] el Elements of the mesh chunk we operate on
 //! \param[in] msum Communication maps associated to chare IDs bordering the
 //!   mesh chunk we operate on
+//! \param[in] bface Face lists mapped to side set ids
+//! \param[in] triinpoel Interconnectivity of points and boundary-faces
+//! \param[in] elemblockid Local tet ids associated with mesh block ids
 //! \param[in] nc Total number of Discretization chares
 // *****************************************************************************
 {
@@ -467,7 +473,8 @@ Discretization::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, std::size_t >& /*amrNodeMap*/,
   const tk::NodeCommMap& nodeCommMap,
-  const std::set< std::size_t >& /*removedNodes*/ )
+  const std::set< std::size_t >& /*removedNodes*/,
+  const std::unordered_map< int, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Resize mesh data structures after mesh refinement
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
@@ -475,11 +482,14 @@ Discretization::resizePostAMR(
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] removedNodes Newly removed mesh node local ids
+//! \param[in] elemblockid New local tet ids associated with mesh block ids
 // *****************************************************************************
 {
   m_el = chunk;         // updates m_inpoel, m_gid, m_lid
   m_nodeCommMap.clear();
   m_nodeCommMap = nodeCommMap;        // update node communication map
+  m_elemblockid.clear();
+  m_elemblockid = elemblockid;
 
   // Update mesh volume container size
   m_vol.resize( m_gid.size(), 0.0 );

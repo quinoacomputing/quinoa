@@ -814,7 +814,8 @@ DiagCG::resizePostAMR(
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& /*bface*/,
   const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::vector< std::size_t >& /*triinpoel*/ )
+  const std::vector< std::size_t >& /*triinpoel*/,
+  const std::unordered_map< int, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] ginpoel Mesh connectivity with global node ids
@@ -826,6 +827,7 @@ DiagCG::resizePostAMR(
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bnode Boundary-node lists mapped to side set ids
+//! \param[in] elemblockid Local tet ids associated with mesh block ids
 // *****************************************************************************
 {
   auto d = Disc();
@@ -840,7 +842,8 @@ DiagCG::resizePostAMR(
   ++d->Itr();
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
+    elemblockid );
 
   Assert(coord[0].size() == m_u.nunk()-removedNodes.size()+addedNodes.size(),
     "Incorrect vector length post-AMR: expected length after resizing = " +

@@ -76,6 +76,7 @@ class Discretization : public CBase_Discretization {
         const tk::CommMaps& msum,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel,
+        const std::unordered_map< int, std::set< std::size_t > >& elemblockid,
         int nc );
 
     #if defined(__clang__)
@@ -133,7 +134,8 @@ class Discretization : public CBase_Discretization {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
       const tk::NodeCommMap& nodeCommMap,
-      const std::set< std::size_t >& removedNodes );
+      const std::set< std::size_t >& removedNodes,
+      const std::unordered_map< int, std::set< std::size_t > >& elemblockid );
 
     //! Get ready for (re-)computing/communicating nodal volumes
     void startvol();
@@ -179,6 +181,10 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh chunk accessor as const-ref
     const tk::UnsMesh::Chunk& Chunk() const { return m_el; }
+
+    //! Mesh block id accessor as const-ref
+    const std::unordered_map< int, std::set< std::size_t > >& ElemBlockId()
+      const { return m_elemblockid; }
 
     //! Total mesh volume accessor
     tk::real meshvol() const { return m_meshvol; }
@@ -459,6 +465,7 @@ class Discretization : public CBase_Discretization {
       p | m_meshvel_converged;
       p | m_bface;
       p | m_triinpoel;
+      p | m_elemblockid;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -605,6 +612,8 @@ class Discretization : public CBase_Discretization {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Triangle face connecitivity
     std::vector< std::size_t > m_triinpoel;
+    //! Local tet ids associated with mesh block ids
+    std::unordered_map< int, std::set< std::size_t > > m_elemblockid;
 
     //! Generate the Bid data-structure based on the node communication-map
     std::unordered_map< std::size_t, std::size_t > genBid();

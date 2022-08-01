@@ -324,6 +324,7 @@ Partitioner::refine()
   tk::destroy( m_chbface );
   tk::destroy( m_chtriinpoel );
   tk::destroy( m_chbnode );
+  tk::destroy( m_chelemblockid );
   tk::destroy( m_bnodechares );
   tk::destroy( m_bface );
   tk::destroy( m_triinpoel );

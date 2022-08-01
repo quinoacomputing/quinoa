@@ -1227,7 +1227,8 @@ ALECG::resizePostAMR(
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::vector< std::size_t >& triinpoel )
+  const std::vector< std::size_t >& triinpoel,
+  const std::unordered_map< int, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] ginpoel Mesh connectivity with global node ids
@@ -1241,6 +1242,7 @@ ALECG::resizePostAMR(
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] elemblockid Local tet ids associated with mesh block ids
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1249,7 +1251,8 @@ ALECG::resizePostAMR(
   ++d->Itr();    // Increase number of iterations with a change in the mesh
 
   // Resize mesh data structures after mesh refinement
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
+    elemblockid );
 
   // Remove newly removed nodes from solution vectors
   m_u.rm(removedNodes);

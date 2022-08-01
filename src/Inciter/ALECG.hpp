@@ -156,7 +156,8 @@ class ALECG : public CBase_ALECG {
       const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& bnode,
-      const std::vector< std::size_t >& triinpoel );
+      const std::vector< std::size_t >& triinpoel,
+      const std::unordered_map< int, std::set< std::size_t > >& elemblockid );
 
     //! Extract field output to file
     void extractFieldOutput(
