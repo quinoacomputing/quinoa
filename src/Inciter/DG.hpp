@@ -385,12 +385,6 @@ class DG : public CBase_DG {
     //! p-refine all elements that are adjacent to p-refined elements
     void propagate_ndof();
 
-    //! Evaluate solution on incomping (a potentially refined) mesh
-    void evalSolution(
-      const std::vector< std::size_t >& inpoel,
-      const tk::UnsMesh::Coords& coord,
-      const std::unordered_map< std::size_t, std::size_t >& addedTets );
-
     //! Decide wether to output field data
     bool fieldOutput() const;
 

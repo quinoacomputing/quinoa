@@ -42,6 +42,7 @@
 #include "Limiter.hpp"
 #include "Problem/FieldOutput.hpp"
 #include "Problem/BoxInitialization.hpp"
+#include "MultiMat/BCFunctions.hpp"
 
 namespace inciter {
 
@@ -377,7 +378,7 @@ class MultiMat {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
           m_system, m_offset, coord, U, P, nmat );
       }
-      else
+      else if (limiter != ctr::LimiterType::NOLIMITER)
       {
         Throw("Limiter type not configured for multimat.");
       }
@@ -471,6 +472,10 @@ class MultiMat {
         tk::bndSurfIntFV( m_system, nmat, m_offset, m_mat_blk, rdof, b.first,
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                           velfn, b.second, U, P, R, riemannDeriv, intsharp );
+
+      // compute optional source term
+      tk::srcIntFV( m_system, m_offset, m_mat_blk, t, fd.Esuel().size()/4,
+                    geoElem, Problem::src, R, nmat );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
@@ -713,7 +718,6 @@ class MultiMat {
           const std::vector< EoS_Base* >&,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
-
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -730,7 +734,6 @@ class MultiMat {
     //! \param[in] y Y-coordinate at which to compute the states
     //! \param[in] z Z-coordinate at which to compute the states
     //! \param[in] t Physical time
-    //! \param[in] fn Unit face normal
     //! \return Left and right states for all scalar components in this PDE
     //!   system
     //! \note The function signature must follow tk::StateFn. For multimat, the
@@ -740,7 +743,7 @@ class MultiMat {
     dirichlet( ncomp_t system, ncomp_t ncomp,
                const std::vector< EoS_Base* >& mat_blk,
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
-               tk::real z, tk::real t, const std::array< tk::real, 3 >& fn )
+               tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -761,50 +764,13 @@ class MultiMat {
       ur[ncomp+velocityIdx(nmat, 1)] = ur[momentumIdx(nmat, 1)] / rho;
       ur[ncomp+velocityIdx(nmat, 2)] = ur[momentumIdx(nmat, 2)] / rho;
 
-      // determine the speed of sound of the majority material
-      auto almax(0.0);
-      std::size_t kmax(0);
+      // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        if (ul[volfracIdx(nmat, k)] > almax)
-        {
-          almax = ul[volfracIdx(nmat, k)];
-          kmax = k;
-        }
-      }
-
-      auto vn = tk::dot({{ul[ncomp+velocityIdx(nmat, 0)],
-        ul[ncomp+velocityIdx(nmat, 1)], ul[ncomp+velocityIdx(nmat, 2)]}}, fn);
-      auto Ml = vn/mat_blk[kmax]->eos_soundspeed( ul[densityIdx(nmat,kmax)],
-        ul[ncomp+pressureIdx(nmat,kmax)], almax);
-
-      // material pressures
-      if (Ml > 1.0)
-      {
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          tk::real arhomat = ur[densityIdx(nmat, k)];
-          tk::real arhoemat = ur[energyIdx(nmat, k)];
-          tk::real alphamat = ur[volfracIdx(nmat, k)];
-          ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k]->eos_pressure(
-            arhomat, ur[ncomp+velocityIdx(nmat, 0)],
-            ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-            arhoemat, alphamat );
-        }
-      }
-      else
-      {
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
-          ur[energyIdx(nmat, k)] = ur[volfracIdx(nmat, k)] *
-            mat_blk[k]->eos_totalenergy(
-            ur[densityIdx(nmat, k)]/ur[volfracIdx(nmat, k)],
-            ur[ncomp+velocityIdx(nmat, 0)],
-            ur[ncomp+velocityIdx(nmat, 1)],
-            ur[ncomp+velocityIdx(nmat, 2)],
-            ul[ncomp+pressureIdx(nmat, k)]/ul[volfracIdx(nmat, k)] );
-        }
+        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k]->eos_pressure(
+          ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
+          ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "
@@ -813,150 +779,8 @@ class MultiMat {
       return {{ std::move(ul), std::move(ur) }};
     }
 
-    //! \brief Boundary state function providing the left and right state of a
-    //!   face at symmetry boundaries
-    //! \param[in] system Equation system index
-    //! \param[in] ncomp Number of scalar components in this PDE system
-    //! \param[in] ul Left (domain-internal) state
-    //! \param[in] fn Unit face normal
-    //! \return Left and right states for all scalar components in this PDE
-    //!   system
-    //! \note The function signature must follow tk::StateFn. For multimat, the
-    //!   left or right state is the vector of conserved quantities, followed by
-    //!   the vector of primitive quantities appended to it.
-    static tk::StateFn::result_type
-    symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< EoS_Base* >&,
-              const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
-              tk::real, const std::array< tk::real, 3 >& fn )
-    {
-      const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
-
-      Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
-              "state vector" );
-
-      tk::real rho(0.0);
-      for (std::size_t k=0; k<nmat; ++k)
-        rho += ul[densityIdx(nmat, k)];
-
-      auto ur = ul;
-
-      // Internal cell velocity components
-      auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
-      auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
-      auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
-      // Normal component of velocity
-      auto vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
-      // Ghost state velocity components
-      auto v1r = v1l - 2.0*vnl*fn[0];
-      auto v2r = v2l - 2.0*vnl*fn[1];
-      auto v3r = v3l - 2.0*vnl*fn[2];
-      // Boundary condition
-      for (std::size_t k=0; k<nmat; ++k)
-      {
-        ur[volfracIdx(nmat, k)] = ul[volfracIdx(nmat, k)];
-        ur[densityIdx(nmat, k)] = ul[densityIdx(nmat, k)];
-        ur[energyIdx(nmat, k)] = ul[energyIdx(nmat, k)];
-      }
-      ur[momentumIdx(nmat, 0)] = rho * v1r;
-      ur[momentumIdx(nmat, 1)] = rho * v2r;
-      ur[momentumIdx(nmat, 2)] = rho * v3r;
-
-      // Internal cell primitive quantities using the separately reconstructed
-      // primitive quantities. This is used to get ghost state for primitive
-      // quantities
-
-      // velocity
-      ur[ncomp+velocityIdx(nmat, 0)] = v1r;
-      ur[ncomp+velocityIdx(nmat, 1)] = v2r;
-      ur[ncomp+velocityIdx(nmat, 2)] = v3r;
-      // material pressures
-      for (std::size_t k=0; k<nmat; ++k)
-        ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
-
-      Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended boundary "
-              "state vector" );
-
-      return {{ std::move(ul), std::move(ur) }};
-    }
-
-    //! \brief Boundary state function providing the left and right state of a
-    //!   face at subsonic outlet boundaries
-    //! \param[in] system Equation system index
-    //! \param[in] ncomp Number of scalar components in this PDE system
-    //! \param[in] ul Left (domain-internal) state
-    //! \return Left and right states for all scalar components in this PDE
-    //!   system
-    //! \details The subsonic outlet boudary calculation, implemented here, is
-    //!   based on the characteristic theory of hyperbolic systems. For subsonic
-    //!   outlet flow, there is 1 incoming characteristic per material.
-    //!   Therefore, we calculate the ghost cell state by taking material
-    //!   pressure from the outside and other quantities from the internal cell.
-    //! \note The function signature must follow tk::StateFn
-    static tk::StateFn::result_type
-    subsonicOutlet( ncomp_t system,
-                    ncomp_t ncomp,
-                    const std::vector< EoS_Base* >& mat_blk,
-                    const std::vector< tk::real >& ul,
-                    tk::real, tk::real, tk::real, tk::real,
-                    const std::array< tk::real, 3 >& )
-    {
-      const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
-
-      auto fp =
-        g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ system ];
-
-      Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
-              "state vector" );
-
-      auto ur = ul;
-
-      // Internal cell velocity components
-      auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
-      auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
-      auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
-      // Boundary condition
-      for (std::size_t k=0; k<nmat; ++k)
-      {
-        ur[energyIdx(nmat, k)] =
-          ul[volfracIdx(nmat, k)] * mat_blk[k]->eos_totalenergy(
-            ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
-      }
-
-      // Internal cell primitive quantities using the separately reconstructed
-      // primitive quantities. This is used to get ghost state for primitive
-      // quantities
-
-      // velocity
-      ur[ncomp+velocityIdx(nmat, 0)] = v1l;
-      ur[ncomp+velocityIdx(nmat, 1)] = v2l;
-      ur[ncomp+velocityIdx(nmat, 2)] = v3l;
-      // material pressures
-      for (std::size_t k=0; k<nmat; ++k)
-        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
-
-      Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended boundary "
-              "state vector" );
-
-      return {{ std::move(ul), std::move(ur) }};
-    }
-
-    //! \brief Boundary state function providing the left and right state of a
-    //!   face at extrapolation boundaries
-    //! \param[in] ul Left (domain-internal) state
-    //! \return Left and right states for all scalar components in this PDE
-    //!   system
-    //! \note The function signature must follow tk::StateFn. For multimat, the
-    //!   left or right state is the vector of conserved quantities, followed by
-    //!   the vector of primitive quantities appended to it.
-    static tk::StateFn::result_type
-    extrapolate( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
-                 const std::vector< tk::real >& ul, tk::real, tk::real,
-                 tk::real, tk::real, const std::array< tk::real, 3 >& )
-    {
-      return {{ ul, ul }};
-    }
+    // Other boundary condition types that do not depend on "Problem" should be
+    // added in BCFunctions.hpp
 };
 
 } // fv::

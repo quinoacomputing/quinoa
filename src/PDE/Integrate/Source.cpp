@@ -37,6 +37,7 @@ tk::srcInt( ncomp_t system,
 //  Compute source term integrals for DG
 //! \param[in] system Equation system index
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] mat_blk Material block EOS
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] nelem Maximum number of elements
@@ -141,6 +142,47 @@ tk::update_rhs( ncomp_t offset,
         R(e, mark+8, offset) += wt * s[c] * B[8];
         R(e, mark+9, offset) += wt * s[c] * B[9];
       }
+    }
+  }
+}
+
+void
+tk::srcIntFV( ncomp_t system,
+              ncomp_t offset,
+              const std::vector< inciter::EoS_Base* >& mat_blk,
+              real t,
+              const std::size_t nelem,
+              const Fields& geoElem,
+              const SrcFn& src,
+              Fields& R,
+              std::size_t nmat )
+// *****************************************************************************
+//  Compute source term integrals for DG
+//! \param[in] system Equation system index
+//! \param[in] offset Offset this PDE system operates from
+//! \param[in] mat_blk Material block EOS
+//! \param[in] t Physical time
+//! \param[in] nelem Maximum number of elements
+//! \param[in] geoElem Element geometry array
+//! \param[in] src Source function to use
+//! \param[in,out] R Right-hand side vector computed
+//! \param[in] nmat Number of materials. A default is set to 1, so that calling
+//!   code for single material systems primitive quantities does not need to
+//!   specify this argument.
+// *****************************************************************************
+{
+  auto ncomp = R.nprop();
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // Compute the source term variable
+    std::vector< real > s(ncomp, 0.0);
+    src( system, nmat, mat_blk, geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0), t, s );
+
+    // Add the source term to the rhs
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      R(e, c, offset) += geoElem(e,0,0) * s[c];
     }
   }
 }

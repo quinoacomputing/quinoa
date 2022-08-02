@@ -141,8 +141,12 @@ const
 
   for (std::size_t e=0; e<u.nunk()-nchGhost; ++e)
   {
+    std::size_t dofe(1);
+    if (!ndofel.empty()) {
+      dofe = ndofel[e];
+    }
     // Number of quadrature points for volume integration
-    auto ng = tk::NGdiag(ndofel[e]);
+    auto ng = tk::NGdiag(dofe);
 
     // arrays for quadrature points
     std::array< std::vector< tk::real >, 3 > coordgp;
@@ -168,7 +172,7 @@ const
       auto gp = tk::eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+      auto B = tk::eval_basis( dofe, coordgp[0][igp], coordgp[1][igp],
                                coordgp[2][igp]);
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
@@ -184,13 +188,13 @@ const
         auto mark = c*rdof;
         auto ugp = u(e, mark, 0);
 
-        if(ndofel[e] > 1)
+        if(dofe > 1)
         {
           ugp +=  u(e, mark+1, 0) * B[1]
                 + u(e, mark+2, 0) * B[2]
                 + u(e, mark+3, 0) * B[3];
 
-          if(ndofel[e] > 4)
+          if(dofe > 4)
           {
             ugp +=  u(e, mark+4, 0) * B[4]
                   + u(e, mark+5, 0) * B[5]
