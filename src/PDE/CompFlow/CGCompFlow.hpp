@@ -89,12 +89,23 @@ class CompFlow {
 
     }
 
-    //! Determine nodes that lie inside the user-defined IC box
+    //! Determine nodes that lie inside the user-defined IC box and mesh blocks
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Element node connectivity
     //! \param[in,out] inbox List of nodes at which box user ICs are set for
     //!    each IC box
+    //! \param[in] elemblkid Element ids associated with mesh block ids where
+    //!   user ICs are set
+    //! \param[in,out] nodeblkid Node ids associated to mesh block ids, where
+    //!   user ICs are set
+    //! \param[in,out] blockvols Vector of volumes of each block where
+    //!   user ICs are set
     void IcBoxNodes( const tk::UnsMesh::Coords& coord,
-      std::vector< std::unordered_set< std::size_t > >& inbox ) const
+      const std::vector< std::size_t >& inpoel,
+      const std::unordered_map< int, std::set< std::size_t > >& elemblkid,
+      std::vector< std::unordered_set< std::size_t > >& inbox,
+      std::unordered_map< int, std::set< std::size_t > >& nodeblkid,
+      std::vector< tk::real >& blockvols ) const
     {
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -145,6 +156,26 @@ class CompFlow {
             }
           }
           ++bcnt;
+        }
+      }
+
+      // size IC mesh blocks volume vector
+      const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
+        tag::meshblock >();
+      if (mblks.size() > m_system) {
+        std::size_t idMax(-1);
+        for (const auto& imb : mblks[m_system]) {
+          idMax = std::max(idMax, imb.get< tag::blockid >());
+        }
+        blockvols.resize(blockvols.size()+idMax,0.0);
+      }
+      // determine node set for IC mesh blocks
+      for (const auto& [blid, elset] : elemblkid) {
+        if (!elset.empty()) {
+          auto& ndset = nodeblkid[blid];
+          for (auto ie : elset) {
+            for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
+          }
         }
       }
     }

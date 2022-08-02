@@ -824,17 +824,34 @@ Discretization::stat( tk::real mesh_volume )
 
 void
 Discretization::boxvol(
-  const std::vector< std::unordered_set< std::size_t > >& nodes )
+  const std::vector< std::unordered_set< std::size_t > >& nodes,
+  const std::unordered_map< int, std::set< std::size_t > >& nodeblk,
+  std::vector< tk::real >& blockvols )
 // *****************************************************************************
 // Compute total box IC volume
 //! \param[in] nodes Node list contributing to box IC volume (for each IC box)
+//! \param[in] nodeblk Node list associated to mesh blocks contributing to block
+//!   volumes (for each IC box)
+//! \param[in,out] blockvols Volumes of all mesh blocks (for each IC mesh block)
 // *****************************************************************************
 {
   // Compute partial box IC volume (just add up all boxes)
   tk::real boxvol = 0.0;
   for (const auto& b : nodes) for (auto i : b) boxvol += m_v[i];
 
+  // Compute partial IC mesh block volume
+  for (const auto& [blid, ndset] : nodeblk) {
+    Assert(blid < blockvols.size(), "Block id not found in volume vector");
+    for (const auto& n : ndset) {
+      blockvols[blid] += m_v[n];
+    }
+  }
+
   // Sum up box IC volume across all chares
+  //std::vector< tk::real > meshdata;
+  //meshdata.push_back(boxvol);
+  //meshdata.insert(meshdata.end(), blkvol.begin(), blkvol.end());
+  //meshdata.push_back(static_cast<tk::real>(m_meshid));
   std::vector< tk::real > meshdata{ boxvol, static_cast<tk::real>(m_meshid) };
   contribute( meshdata, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,boxvol), m_transporter) );

@@ -193,13 +193,14 @@ FV::setup()
   // Compute left-hand side of discrete PDEs
   lhs();
 
+  std::vector< tk::real > blvols;
   // Determine elements inside user-defined IC box
   for (auto& eq : g_fvpde)
     eq.IcBoxElems( myGhosts()->m_geoElem, myGhosts()->m_fd.Esuel().size()/4,
       m_boxelems );
 
   // Compute volume of user-defined box IC
-  d->boxvol( {} );      // punt for now
+  d->boxvol( {}, {}, blvols );      // punt for now
 
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();

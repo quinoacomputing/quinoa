@@ -109,8 +109,13 @@ class CGPDE {
 
     //! Public interface to determining which nodes are in IC box
     void IcBoxNodes( const tk::UnsMesh::Coords& coord,
-      std::vector< std::unordered_set< std::size_t > >& inbox )
-    { self->IcBoxNodes( coord, inbox ); }
+      const std::vector< std::size_t >& inpoel,
+      const std::unordered_map< int, std::set< std::size_t > >& elemblkid,
+      std::vector< std::unordered_set< std::size_t > >& inbox,
+      std::unordered_map< int, std::set< std::size_t > >& nodeblkid,
+      std::vector< tk::real >& blockvols )
+    { self->IcBoxNodes( coord, inpoel, elemblkid, inbox, nodeblkid, blockvols );
+    }
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize(
@@ -298,7 +303,11 @@ class CGPDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void IcBoxNodes( const tk::UnsMesh::Coords&,
-        std::vector< std::unordered_set< std::size_t > >& inbox ) = 0;
+        const std::vector< std::size_t >&,
+        const std::unordered_map< int, std::set< std::size_t > >&,
+        std::vector< std::unordered_set< std::size_t > >&,
+        std::unordered_map< int, std::set< std::size_t > >&,
+        std::vector< tk::real >& ) = 0;
       virtual void initialize(
         const std::array< std::vector< real >, 3 >&,
         tk::Fields&,
@@ -414,8 +423,13 @@ class CGPDE {
       explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void IcBoxNodes( const tk::UnsMesh::Coords& coord,
-        std::vector< std::unordered_set< std::size_t > >& inbox )
-      override { data.IcBoxNodes( coord, inbox ); }
+        const std::vector< std::size_t >& inpoel,
+        const std::unordered_map< int, std::set< std::size_t > >& elemblkid,
+        std::vector< std::unordered_set< std::size_t > >& inbox,
+        std::unordered_map< int, std::set< std::size_t > >& nodeblkid,
+        std::vector< tk::real >& blockvols )
+      override { data.IcBoxNodes( coord, inpoel, elemblkid, inbox, nodeblkid,
+        blockvols ); }
       void initialize(
         const std::array< std::vector< real >, 3 >& coord,
         tk::Fields& unk,

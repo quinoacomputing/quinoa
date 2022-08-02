@@ -215,6 +215,7 @@ class DiagCG : public CBase_DiagCG {
       p | m_boxnodes;
       p | m_dtp;
       p | m_tp;
+      p | m_nodeblockid;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -296,6 +297,8 @@ class DiagCG : public CBase_DiagCG {
     std::vector< tk::real > m_tp;
     //! True in the last time step
     int m_finished;
+    //! Local node ids associated with mesh block ids
+    std::unordered_map< int, std::set< std::size_t > > m_nodeblockid;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

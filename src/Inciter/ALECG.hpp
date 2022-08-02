@@ -242,6 +242,7 @@ class ALECG : public CBase_ALECG {
       p | m_finished;
       p | m_newmesh;
       p | m_refinedmesh;
+      p | m_nodeblockid;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -356,6 +357,8 @@ class ALECG : public CBase_ALECG {
     int m_newmesh;
     //! State indicating if the mesh has been refined by dtref
     int m_refinedmesh;
+    //! Local node ids associated with mesh block ids
+    std::unordered_map< int, std::set< std::size_t > > m_nodeblockid;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

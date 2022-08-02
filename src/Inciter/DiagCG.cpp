@@ -77,7 +77,8 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_boxnodes(),
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
-  m_finished( 0 )
+  m_finished( 0 ),
+  m_nodeblockid()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -294,11 +295,13 @@ DiagCG::setup()
 {
   auto d = Disc();
 
+  std::vector< tk::real > blvols;
   // Determine nodes inside user-defined IC box
-  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), m_boxnodes );
+  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), d->Inpoel(),
+    d->ElemBlockId(), m_boxnodes, m_nodeblockid, blvols );
 
   // Compute volume of user-defined box IC
-  d->boxvol( m_boxnodes );
+  d->boxvol( m_boxnodes, m_nodeblockid, blvols );
 
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
