@@ -22,7 +22,6 @@
 
 #include "Types.hpp"
 #include "SystemComponents.hpp"
-//#include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "EoS/EoS_Base.hpp"
 
@@ -36,14 +35,12 @@ class TransportProblemCylVortex {
 
   public:
     //! Evaluate analytical solution at (x,y,t) for all components
-//    static tk::InitializeFn::result_type
     static std::vector< tk::real >
     initialize( ncomp_t system, ncomp_t ncomp,
                 const std::vector< EoS_Base* >& mat_blk, tk::real x, tk::real y,
                 tk::real, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
-//    static tk::InitializeFn::result_type
     static std::vector< tk::real >
     analyticSolution( ncomp_t system, ncomp_t ncomp,
                       const std::vector< EoS_Base* >& mat_blk, tk::real x,
