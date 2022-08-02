@@ -532,7 +532,7 @@ class CompFlow {
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
     //! \param[in] boxnodes Mesh node ids within user-defined IC boxes
-    //! \param[in] G Nodal gradients
+    //! \param[in] G Nodal gradients for chare-boundary nodes
     //! \param[in] U Solution vector at recent time step
     //! \param[in] W Mesh velocity
     //! \param[in] tp Physical time for each mesh node

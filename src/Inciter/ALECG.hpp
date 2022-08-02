@@ -240,6 +240,7 @@ class ALECG : public CBase_ALECG {
       p | m_tp;
       p | m_finished;
       p | m_newmesh;
+      p | m_refinedmesh;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -349,8 +350,11 @@ class ALECG : public CBase_ALECG {
     std::vector< tk::real > m_tp;
     //! True in the last time step
     int m_finished;
-    //! State indicating the reason we are recomputing the normals
+    //! \brief State indicating the reason we are recomputing the normals.
+    //    0: after ALE; 1: after AMR
     int m_newmesh;
+    //! State indicating if the mesh has been refined by dtref
+    int m_refinedmesh;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

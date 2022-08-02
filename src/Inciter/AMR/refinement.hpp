@@ -734,7 +734,7 @@ namespace AMR {
 
             void lock_intermediates(
                     tet_store_t& tet_store,
-                    std::unordered_set<size_t> intermediate_list,
+                    const std::unordered_set<size_t>& intermediate_list,
                     Edge_Lock_Case lock_case
                 )
             {

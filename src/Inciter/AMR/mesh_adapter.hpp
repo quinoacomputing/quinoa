@@ -94,6 +94,7 @@ namespace AMR {
             void reset_intermediate_edges();
             void update_tet_edges_lock_type(size_t tet_id, AMR::Edge_Lock_Case check, AMR::Edge_Lock_Case new_case);
             void remove_edge_locks(int intermediate = 0);
+            void remove_edge_temp_locks();
             void remove_normals();
 
             size_t convert_derefine_edges_to_points(

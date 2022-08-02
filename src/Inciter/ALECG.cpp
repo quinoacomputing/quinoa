@@ -95,7 +95,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 ),
-  m_newmesh( 0 )
+  m_newmesh( 0 ),
+  m_refinedmesh( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -1085,6 +1086,7 @@ ALECG::solve()
   }
 
   m_newmesh = 0;  // recompute normals after ALE (if enabled)
+  m_refinedmesh = 0;  // mesh has not been refined by ALE
   // Activate SDAG waits
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4mesh();
@@ -1193,12 +1195,17 @@ ALECG::refine( const std::vector< tk::real >& l2res )
   // if t>0 refinement enabled and we hit the frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
 
+    // Convert to conserved unknowns, since the next step changes volumes
+    conserved(m_u, d->Vol());
+
+    m_refinedmesh = 1;
     d->startvol();
-    d->Ref()->dtref( {}, m_bnode, {} );
+    d->Ref()->dtref( m_bface, m_bnode, m_triinpoel );
     d->refined() = 1;
 
   } else {      // do not refine
 
+    m_refinedmesh = 0;
     d->refined() = 0;
     norm_complete();
     resized();
@@ -1256,11 +1263,19 @@ ALECG::resizePostAMR(
   m_un.resize( npoin );
   m_rhs.resize( npoin );
   m_chBndGrad.resize( d->Bid().size() );
+  tk::destroy(m_esup);
+  tk::destroy(m_psup);
+  m_esup = tk::genEsup( d->Inpoel(), 4 );
+  m_psup = tk::genPsup( d->Inpoel(), 4, m_esup );
 
   // Update solution on new mesh
   for (const auto& n : addedNodes)
-    for (std::size_t c=0; c<nprop; ++c)
+    for (std::size_t c=0; c<nprop; ++c) {
+      Assert(n.first < m_u.nunk(), "Added node index out of bounds post-AMR");
+      Assert(n.second[0] < m_u.nunk() && n.second[1] < m_u.nunk(),
+        "Indices of parent-edge nodes out of bounds post-AMR");
       m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
+    }
 
   // Update physical-boundary node-, face-, and element lists
   m_bnode = bnode;
@@ -1279,6 +1294,17 @@ ALECG::resized()
 // Resizing data sutrctures after mesh refinement has been completed
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  // Revert to volumetric unknowns, if soln was converted in ALECG::refine()
+  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+  if (dtref && !(d->It() % dtfreq) && m_refinedmesh==1) {
+    volumetric(m_u, d->Vol());
+    // Update previous volumes after refinement
+    d->Voln() = d->Vol();
+  }
+
   resize_complete();
 }
 
@@ -1301,6 +1327,8 @@ ALECG::stage()
 // Evaluate whether to continue with next time step stage
 // *****************************************************************************
 {
+  transfer_complete();
+
   // Increment Runge-Kutta stage counter
   ++m_stage;
 
@@ -1373,14 +1401,37 @@ ALECG::writeFields( CkCallback c )
       auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), m_u );
       nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
     }
+
+    // Query refinement data
+    auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+
+    std::tuple< std::vector< std::string >,
+                std::vector< std::vector< tk::real > >,
+                std::vector< std::string >,
+                std::vector< std::vector< tk::real > > > r;
+    if (dtref) r = d->Ref()->refinementFields();
     volumetric( m_u, Disc()->Vol() );
 
+    auto& refinement_elemfieldnames = std::get< 0 >( r );
+    auto& refinement_elemfields = std::get< 1 >( r );
+    auto& refinement_nodefieldnames = std::get< 2 >( r );
+    auto& refinement_nodefields = std::get< 3 >( r );
+
+    nodefieldnames.insert( end(nodefieldnames),
+      begin(refinement_nodefieldnames), end(refinement_nodefieldnames) );
+    nodefields.insert( end(nodefields),
+      begin(refinement_nodefields), end(refinement_nodefields) );
+
+    auto elemfieldnames = std::move(refinement_elemfieldnames);
+    auto elemfields = std::move(refinement_elemfields);
+
+    Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), coord, m_bface, tk::remap(m_bnode,d->Lid()),
-              m_triinpoel, {}, nodefieldnames, nodesurfnames, {}, nodefields,
-              nodesurfs, c );
+              m_triinpoel, elemfieldnames, nodefieldnames, nodesurfnames,
+              elemfields, nodefields, nodesurfs, c );
 
   }
 }
