@@ -89,9 +89,11 @@ class MultiMat {
       auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
       for (std::size_t k=0; k<nmat; ++k) {
+        // query input deck to get gamma, p_c, cv
         auto g = gamma< eq >(m_system, k);
         auto ps = pstiff< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
+        auto c_v = cv< eq >(m_system, k);
+        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
         }
 
     }
@@ -164,7 +166,7 @@ class MultiMat {
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -332,8 +334,7 @@ class MultiMat {
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
             pri[pressureIdx(nmat,imat)] = m_mat_blk[imat]->eos_pressure(
-              m_system, arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat,
-              imat);
+              arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat );
 
             pri[pressureIdx(nmat,imat)] = constrain_pressure< tag::multimat >(
               m_system, pri[pressureIdx(nmat,imat)], alphamat, imat);
@@ -572,7 +573,7 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      correctLimConservMultiMat(nielem, m_system, nmat, geoElem, prim, unk);
+      correctLimConservMultiMat(nielem, m_mat_blk, nmat, geoElem, prim, unk);
     }
 
 
@@ -648,7 +649,7 @@ class MultiMat {
                    R, vriem, riemannLoc, riemannDeriv, intsharp );
 
       // compute optional source term
-      tk::srcInt( m_system, m_offset, t, ndof, fd.Esuel().size()/4,
+      tk::srcInt( m_system, m_offset, m_mat_blk, t, ndof, fd.Esuel().size()/4,
                   inpoel, coord, geoElem, Problem::src, ndofel, R, nmat );
 
       if(ndof > 1)
@@ -686,9 +687,9 @@ class MultiMat {
       {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
-        tk::pressureRelaxationInt( m_system, nmat, m_offset, ndof, rdof, nelem,
-                                   inpoel, coord, geoElem, U, P, ndofel, ct, R,
-                                   intsharp );
+        tk::pressureRelaxationInt( m_system, nmat, m_offset, m_mat_blk, ndof,
+                                   rdof, nelem, inpoel, coord, geoElem, U, P,
+                                   ndofel, ct, R, intsharp );
       }
     }
 
@@ -755,8 +756,8 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-      auto mindt = timeStepSizeMultiMat(fd.Esuf(), geoFace, geoElem, nielem,
-        m_offset, nmat, U, P);
+      auto mindt = timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem,
+        nielem, m_offset, nmat, U, P);
 
       tk::real dgp = 0.0;
       if (ndof == 4)
@@ -921,7 +922,8 @@ class MultiMat {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
+                                        zi, t ); }
 
     //! Return analytic solution for conserved variables
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -931,7 +933,8 @@ class MultiMat {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi,
+                                  t ); }
 
   private:
     //! Equation system index
@@ -971,6 +974,7 @@ class MultiMat {
     //!   face at Dirichlet boundaries
     //! \param[in] system Equation system index
     //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] mat_blk EOS material block
     //! \param[in] ul Left (domain-internal) state
     //! \param[in] x X-coordinate at which to compute the states
     //! \param[in] y Y-coordinate at which to compute the states
@@ -982,15 +986,15 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
-               tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >&,
-               const std::vector< EoS_Base* >& )
+    dirichlet( ncomp_t system, ncomp_t ncomp,
+               const std::vector< EoS_Base* >& mat_blk,
+               const std::vector< tk::real >& ul, tk::real x, tk::real y,
+               tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      auto ur = Problem::initialize( system, ncomp, x, y, z, t );
+      auto ur = Problem::initialize( system, ncomp, mat_blk, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
 
       ur.resize(ul.size());
@@ -1009,10 +1013,10 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k]->eos_pressure(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

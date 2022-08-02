@@ -22,6 +22,7 @@
 void
 tk::srcInt( ncomp_t system,
             ncomp_t offset,
+            const std::vector< inciter::EoS_Base* >& mat_blk,
             real t,
             const std::size_t ndof,
             const std::size_t nelem,
@@ -36,6 +37,7 @@ tk::srcInt( ncomp_t system,
 //  Compute source term integrals for DG
 //! \param[in] system Equation system index
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] mat_blk Material block EOS
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] nelem Maximum number of elements
@@ -88,7 +90,7 @@ tk::srcInt( ncomp_t system,
 
       // Compute the source term variable
       std::vector< real > s(ncomp, 0.0);
-      src( system, nmat, gp[0], gp[1], gp[2], t, s );
+      src( system, nmat, mat_blk, gp[0], gp[1], gp[2], t, s );
 
       auto wt = wgp[igp] * geoElem(e, 0, 0);
 
@@ -147,6 +149,7 @@ tk::update_rhs( ncomp_t offset,
 void
 tk::srcIntFV( ncomp_t system,
               ncomp_t offset,
+              const std::vector< inciter::EoS_Base* >& mat_blk,
               real t,
               const std::size_t nelem,
               const Fields& geoElem,
@@ -157,6 +160,7 @@ tk::srcIntFV( ncomp_t system,
 //  Compute source term integrals for DG
 //! \param[in] system Equation system index
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] mat_blk Material block EOS
 //! \param[in] t Physical time
 //! \param[in] nelem Maximum number of elements
 //! \param[in] geoElem Element geometry array
@@ -173,7 +177,7 @@ tk::srcIntFV( ncomp_t system,
   {
     // Compute the source term variable
     std::vector< real > s(ncomp, 0.0);
-    src( system, nmat, geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0), t, s );
+    src( system, nmat, mat_blk, geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0), t, s );
 
     // Add the source term to the rhs
     for (ncomp_t c=0; c<ncomp; ++c)

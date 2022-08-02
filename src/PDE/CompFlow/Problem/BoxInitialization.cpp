@@ -18,8 +18,8 @@
 
 namespace inciter {
 
-void initializeBox( std::size_t system,
-                    const std::vector< EoS_Base* > ,
+void initializeBox( std::size_t,
+                    const std::vector< EoS_Base* >& mat_blk,
                     tk::real VRatio,
                     tk::real t,
                     const inciter::ctr::box& b,
@@ -80,8 +80,7 @@ void initializeBox( std::size_t system,
       rw = rho * boxvel[2];
     }
     if (boxpre > 0.0) {
-      re = eos_totalenergy< tag::compflow >
-             ( system, rho, ru/rho, rv/rho, rw/rho, boxpre );
+      re = mat_blk[0]->eos_totalenergy( rho, ru/rho, rv/rho, rw/rho, boxpre );
     }
     if (boxene > 0.0) {
       auto ux = ru/rho, uy = rv/rho, uz = rw/rho;
@@ -134,8 +133,7 @@ void initializeBox( std::size_t system,
     // separately. This is not currently supported.
     if (bgpreic > 0.0) {
       // energy based on box density and background pressure
-      spi = eos_totalenergy< tag::compflow >
-              ( system, rho, u, v, w, bgpreic ) / rho;
+      spi = mat_blk[0]->eos_totalenergy( rho, u, v, w, bgpreic ) / rho;
     } else Throw( "Background pressure must be specified for box-IC "
                   "with linear propagating source");
 

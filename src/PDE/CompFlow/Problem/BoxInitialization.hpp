@@ -24,7 +24,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Set the solution in the user-defined IC box
 void initializeBox( std::size_t system,
-                    const std::vector< EoS_Base* > mat_blk,
+                    const std::vector< EoS_Base* >& mat_blk,
                     tk::real VRatio,
                     tk::real t,
                     const inciter::ctr::box& icbox,

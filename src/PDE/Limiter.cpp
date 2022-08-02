@@ -2427,9 +2427,9 @@ cleanTraceMultiMat(
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0), offset);
     auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0), offset);
     auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset)/almax;
-    auto tmax = eos_temperature< tag::multimat >(system,
+    auto tmax = mat_blk[kmax]->eos_temperature(
       U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
-      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset), almax, kmax);
+      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset), almax );
 
     tk::real p_target(0.0), d_al(0.0), d_arE(0.0);
     //// get equilibrium pressure
@@ -2485,8 +2485,8 @@ cleanTraceMultiMat(
           // energy change
           auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0), offset)
             / alk_new;
-          auto rhoEmat = eos_totalenergy< tag::multimat >(system, rhomat, u, v,
-            w, p_target, k);
+          auto rhoEmat = mat_blk[k]->eos_totalenergy( rhomat, u, v, w,
+                                                      p_target);
 
           // volume-fraction and total energy flux into majority material
           d_al += (alk - alk_new);
@@ -2502,14 +2502,13 @@ cleanTraceMultiMat(
       // check for unbounded volume fractions
       else if (alk < 0.0)
       {
-        auto rhok = eos_density< tag::multimat >(system, p_target, tmax, k);
+        auto rhok = mat_blk[k]->eos_density(p_target, tmax);
         d_al += (alk - 1e-14);
         // update state of trace material
         U(e, volfracDofIdx(nmat, k, rdof, 0), offset) = 1e-14;
         U(e, densityDofIdx(nmat, k, rdof, 0), offset) = 1e-14 * rhok;
         U(e, energyDofIdx(nmat, k, rdof, 0), offset) = 1e-14
-          * eos_totalenergy< tag::multimat >(system, rhok, u, v, w, p_target,
-          k);
+          * mat_blk[k]->eos_totalenergy(rhok, u, v, w, p_target );
         P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = 1e-14 *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
@@ -2523,8 +2522,7 @@ cleanTraceMultiMat(
         auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0), offset) / alk;
         // update state of trace material
         U(e, energyDofIdx(nmat, k, rdof, 0), offset) = alk
-          * eos_totalenergy< tag::multimat >(system, rhok, u, v, w, p_target,
-          k);
+          * mat_blk[k]->eos_totalenergy( rhok, u, v, w, p_target );
         P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
@@ -2550,10 +2548,10 @@ cleanTraceMultiMat(
     // 2. Flux energy change into majority material
     U(e, energyDofIdx(nmat, kmax, rdof, 0), offset) += d_arE;
     P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) =
-      mat_blk[kmax]->eos_pressure(system,
+      mat_blk[kmax]->eos_pressure(
       U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0), offset),
-      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset), kmax);
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset) );
 
     // enforce unit sum of volume fractions
     auto alsum = 0.0;
@@ -2644,6 +2642,7 @@ cleanTraceMultiMat(
 
 tk::real
 timeStepSizeMultiMat(
+  const std::vector< EoS_Base* >& mat_blk,
   const std::vector< int >& esuf,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -2703,9 +2702,8 @@ timeStepSizeMultiMat(
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-        a = std::max( a, eos_soundspeed< tag::multimat >( 0,
-          ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-          ugp[volfracIdx(nmat, k)], k ) );
+        a = std::max( a, mat_blk[k]->eos_soundspeed( ugp[densityIdx(nmat, k)],
+          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)] ) );
       }
     }
 
@@ -2736,9 +2734,8 @@ timeStepSizeMultiMat(
       for (std::size_t k=0; k<nmat; ++k)
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-          a = std::max( a, eos_soundspeed< tag::multimat >( 0,
-            ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-            ugp[volfracIdx(nmat, k)], k ) );
+          a = std::max( a, mat_blk[k]->eos_soundspeed( ugp[densityIdx(nmat, k)],
+            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)] ) );
         }
       }
 
@@ -2766,7 +2763,7 @@ timeStepSizeMultiMat(
 void
 correctLimConservMultiMat(
   std::size_t nelem,
-  std::size_t system,
+  const std::vector< EoS_Base* >& mat_blk,
   std::size_t nmat,
   const tk::Fields& geoElem,
   const tk::Fields& prim,
@@ -2774,7 +2771,7 @@ correctLimConservMultiMat(
 // *****************************************************************************
 //  Update the conservative quantities after limiting for multi-material systems
 //! \param[in] nelem Number of internal elements
-//! \param[in] system Index for equation systems
+//! \param[in] mat_blk EOS material block
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] geoElem Element geometry array
 //! \param[in] prim Array of primitive variables
@@ -2845,8 +2842,8 @@ correctLimConservMultiMat(
         auto alphamat = U[volfracIdx(nmat, imat)];
         auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
         auto premat = P[pressureIdx(nmat, imat)]/alphamat;
-        s[imat] = alphamat * eos_totalenergy< tag::multimat >( system, rhomat,
-          vel[0], vel[1], vel[2], premat, imat );
+        s[imat] = alphamat * mat_blk[imat]->eos_totalenergy( rhomat,
+          vel[0], vel[1], vel[2], premat );
       }
 
       // Evaluate the righ-hand-side vector

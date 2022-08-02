@@ -86,9 +86,11 @@ class MultiMat {
       auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
       for (std::size_t k=0; k<nmat; ++k) {
+        // query input deck to get gamma, p_c, cv
         auto g = gamma< eq >(m_system, k);
         auto ps = pstiff< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, k));
+        auto c_v = cv< eq >(m_system, k);
+        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
         }
 
     }
@@ -142,7 +144,7 @@ class MultiMat {
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -240,8 +242,8 @@ class MultiMat {
           tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0), m_offset);
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0), m_offset);
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
-            m_mat_blk[k]->eos_pressure(m_system, arhomat, vel[0], vel[1],
-              vel[2], arhoemat, alphamat, k);
+            m_mat_blk[k]->eos_pressure( arhomat, vel[0], vel[1], vel[2],
+                                        arhoemat, alphamat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
             constrain_pressure< tag::multimat >(m_system,
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset), alphamat, k);
@@ -406,7 +408,7 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      correctLimConservMultiMat(nielem, m_offset, nmat, geoElem, prim, unk);
+      correctLimConservMultiMat(nielem, m_mat_blk, nmat, geoElem, prim, unk);
     }
 
     //! Compute right hand side
@@ -472,8 +474,8 @@ class MultiMat {
                           velfn, b.second, U, P, R, riemannDeriv, intsharp );
 
       // compute optional source term
-      tk::srcIntFV( m_system, m_offset, t, fd.Esuel().size()/4, geoElem,
-                    Problem::src, R, nmat );
+      tk::srcIntFV( m_system, m_offset, m_mat_blk, t, fd.Esuel().size()/4,
+                    geoElem, Problem::src, R, nmat );
 
       Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
               "vector incorrect" );
@@ -496,8 +498,9 @@ class MultiMat {
       {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
-        tk::pressureRelaxationIntFV( m_system, nmat, m_offset, rdof, nelem,
-                                     inpoel, coord, geoElem, U, P, ct, R );
+        tk::pressureRelaxationIntFV( m_system, nmat, m_offset, m_mat_blk, rdof,
+                                     nelem, inpoel, coord, geoElem, U, P, ct,
+                                     R );
       }
     }
 
@@ -524,8 +527,8 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-      return timeStepSizeMultiMat(fd.Esuf(), geoFace, geoElem, nielem, m_offset,
-        nmat, U, P);
+      return timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem, nielem,
+        m_offset, nmat, U, P);
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.
@@ -675,7 +678,8 @@ class MultiMat {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
+                                        zi, t ); }
 
     //! Return analytic solution for conserved variables
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -685,7 +689,7 @@ class MultiMat {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
 
   private:
     //! Equation system index
@@ -736,15 +740,15 @@ class MultiMat {
     //!   left or right state is the vector of conserved quantities, followed by
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
-    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
-               tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >&,
-               const std::vector< EoS_Base* >& )
+    dirichlet( ncomp_t system, ncomp_t ncomp,
+               const std::vector< EoS_Base* >& mat_blk,
+               const std::vector< tk::real >& ul, tk::real x, tk::real y,
+               tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      auto ur = Problem::initialize( system, ncomp, x, y, z, t );
+      auto ur = Problem::initialize( system, ncomp, mat_blk, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
 
       ur.resize(ul.size());
@@ -763,10 +767,10 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ur[ncomp+pressureIdx(nmat, k)] = eos_pressure< tag::multimat >( system,
+        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k]->eos_pressure(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

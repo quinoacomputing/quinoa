@@ -28,7 +28,8 @@ using inciter::TransportProblemGaussHump;
 
 std::vector< tk::real >
 TransportProblemGaussHump::initialize( ncomp_t system, ncomp_t ncomp,
-          tk::real x, tk::real y, tk::real, tk::real t )
+  const std::vector< EoS_Base* >&, tk::real x, tk::real y, tk::real,
+  tk::real t )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,t) for all components
 //! \param[in] system Equation system index

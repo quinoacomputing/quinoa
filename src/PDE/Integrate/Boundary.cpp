@@ -183,8 +183,8 @@ bndSurfInt( ncomp_t system,
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
 
-          auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn,
-                            mat_blk );
+          auto var = state( system, ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t,
+                            fn );
 
           // Compute the numerical flux
           auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1],
@@ -382,8 +382,8 @@ bndSurfIntFV( ncomp_t system,
         Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                 "appended boundary state vector" );
 
-        auto var = state( system, ncomp, ugp, gp[0], gp[1], gp[2], t, fn,
-                          mat_blk );
+        auto var = state( system, ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t,
+                          fn );
 
         // Compute the numerical flux
         auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1],

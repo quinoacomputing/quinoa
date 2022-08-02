@@ -16,6 +16,7 @@
 #include "ShockHeBubble.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
@@ -29,6 +30,7 @@ using inciter::MultiMatProblemShockHeBubble;
 tk::InitializeFn::result_type
 MultiMatProblemShockHeBubble::initialize( ncomp_t system,
                                           ncomp_t ncomp,
+                                       const std::vector< EoS_Base* >& mat_blk,
                                           tk::real x,
                                           tk::real y,
                                           tk::real z,
@@ -92,12 +94,12 @@ MultiMatProblemShockHeBubble::initialize( ncomp_t system,
   for (std::size_t k=0; k<nmat; ++k)
   {
     // densities
-    r[k] = eos_density< eq >( system, p, temp, k );
+    r[k] = mat_blk[k]->eos_density( p, temp );
     // partial density
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r[k];
     // total specific energy
     s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
-      eos_totalenergy< eq >( system, r[k], u, v, w, p, k );
+      mat_blk[k]->eos_totalenergy( r[k], u, v, w, p );
     rb += s[densityIdx(nmat, k)];
   }
 

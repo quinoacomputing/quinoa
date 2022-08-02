@@ -29,10 +29,11 @@ namespace inciter {
   //!   left or right state is the vector of conserved quantities, followed by
   //!   the vector of primitive quantities appended to it.
   static tk::StateFn::result_type
-  symmetry( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
+  symmetry( ncomp_t system, ncomp_t ncomp,
+            const std::vector< EoS_Base* >&,
+            const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
-            const std::array< tk::real, 3 >& fn,
-            const std::vector< EoS_Base* >& )
+            const std::array< tk::real, 3 >& fn )
   {
     const auto nmat =
       g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -101,10 +102,10 @@ namespace inciter {
   static tk::StateFn::result_type
   subsonicOutlet( ncomp_t system,
                   ncomp_t ncomp,
+                  const std::vector< EoS_Base* >& mat_blk,
                   const std::vector< tk::real >& ul,
                   tk::real, tk::real, tk::real, tk::real,
-                  const std::array< tk::real, 3 >&,
-                  const std::vector< EoS_Base* >& )
+                  const std::array< tk::real, 3 >& )
   {
     const auto nmat =
       g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -124,9 +125,9 @@ namespace inciter {
     // Boundary condition
     for (std::size_t k=0; k<nmat; ++k)
     {
-      ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * eos_totalenergy< tag::multimat >
-        (system, ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l,
-        v3l, fp, k);
+      ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * 
+      mat_blk[k]->eos_totalenergy(
+        ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
     }
 
     // Internal cell primitive quantities using the separately reconstructed
@@ -156,10 +157,11 @@ namespace inciter {
   //!   left or right state is the vector of conserved quantities, followed by
   //!   the vector of primitive quantities appended to it.
   static tk::StateFn::result_type
-  extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
+  extrapolate( ncomp_t, ncomp_t,
+               const std::vector< EoS_Base* >&,
+               const std::vector< tk::real >& ul,
                tk::real, tk::real, tk::real, tk::real,
-               const std::array< tk::real, 3 >&,
-               const std::vector< EoS_Base* >& )
+               const std::array< tk::real, 3 >& )
   {
     return {{ ul, ul }};
   }

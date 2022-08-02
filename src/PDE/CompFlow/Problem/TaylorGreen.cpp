@@ -25,8 +25,9 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::CompFlowProblemTaylorGreen;
 
 tk::InitializeFn::result_type
-CompFlowProblemTaylorGreen::initialize( ncomp_t system,
+CompFlowProblemTaylorGreen::initialize( ncomp_t,
                                         ncomp_t,
+                                        const std::vector< EoS_Base* >& mat_blk,
                                         tk::real x,
                                         tk::real y,
                                         tk::real,
@@ -52,15 +53,15 @@ CompFlowProblemTaylorGreen::initialize( ncomp_t system,
   auto v = -cos(M_PI*x) * sin(M_PI*y);
   auto w = 0.0;
   // total specific energy
-  auto rE = eos_totalenergy< eq >( system, r, u, v, w, p );
+  auto rE = mat_blk[0]->eos_totalenergy( r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
 
 tk::InitializeFn::result_type
-CompFlowProblemTaylorGreen::analyticSolution( ncomp_t system,
+CompFlowProblemTaylorGreen::analyticSolution( ncomp_t,
                                               ncomp_t,
-                                              std::vector< EoS_Base* >,
+                                        const std::vector< EoS_Base* >& mat_blk,
                                               tk::real x,
                                               tk::real y,
                                               tk::real,
@@ -86,7 +87,7 @@ CompFlowProblemTaylorGreen::analyticSolution( ncomp_t system,
   auto v = -cos(M_PI*x) * sin(M_PI*y);
   auto w = 0.0;
   // total specific energy
-  auto E = eos_totalenergy< eq >( system, r, u, v, w, p );
+  auto E = mat_blk[0]->eos_totalenergy( r, u, v, w, p );
 
   return {{ r, u, v, w, E, p }};
 }

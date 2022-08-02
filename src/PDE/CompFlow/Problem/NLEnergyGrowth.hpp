@@ -51,13 +51,13 @@ class CompFlowProblemNLEnergyGrowth {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t, tk::real x, tk::real y,
-                tk::real z, tk::real t );
+    initialize( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >&,
+                tk::real x, tk::real y, tk::real z, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
     analyticSolution( ncomp_t system, ncomp_t,
-                      std::vector< EoS_Base* >, tk::real x, tk::real y,
+                      const std::vector< EoS_Base* >&, tk::real x, tk::real y,
                       tk::real z, tk::real t );
 
     //! Compute and return source term for NLEG manufactured solution
@@ -70,8 +70,8 @@ class CompFlowProblemNLEnergyGrowth {
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z,
-         tk::real t, std::vector< tk::real >& sv )
+    src( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >&, tk::real x,
+         tk::real y, tk::real z, tk::real t, std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");
       using tag::param; using std::sin; using std::cos;

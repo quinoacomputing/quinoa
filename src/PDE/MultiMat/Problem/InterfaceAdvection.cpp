@@ -15,6 +15,7 @@
 #include "InterfaceAdvection.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
+#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 using inciter::MultiMatProblemInterfaceAdvection;
@@ -22,6 +23,7 @@ using inciter::MultiMatProblemInterfaceAdvection;
 tk::InitializeFn::result_type
 MultiMatProblemInterfaceAdvection::initialize( ncomp_t system,
                                                ncomp_t ncomp,
+                                        const std::vector< EoS_Base* >& mat_blk,
                                                tk::real x,
                                                tk::real y,
                                                tk::real /*z*/,
@@ -86,10 +88,10 @@ MultiMatProblemInterfaceAdvection::initialize( ncomp_t system,
   auto rhob = 0.0;
   for (std::size_t k=0; k<nmat; ++k)
   {
-    auto rhok = eos_density< eq >( system, 1.0e5, 300.0, k );
+    auto rhok = mat_blk[k]->eos_density( 1.0e5, 300.0 );
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)] * rhok;
     s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]
-      * eos_totalenergy< eq >( system, rhok, u, v, w, 1.0e5, k );
+      * mat_blk[k]->eos_totalenergy( rhok, u, v, w, 1.0e5 );
     rhob += s[densityIdx(nmat, k)];
   }
   s[momentumIdx(nmat, 0)] = rhob * u;

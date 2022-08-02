@@ -26,7 +26,8 @@ namespace inciter {
 namespace cg {
 
 std::vector< tk::real >
-solinc( tk::ncomp_t system, tk::ncomp_t ncomp, tk::real x, tk::real y,
+solinc( tk::ncomp_t system, tk::ncomp_t ncomp,
+        const std::vector< EoS_Base* >& mat_blk, tk::real x, tk::real y,
         tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution )
 // *****************************************************************************
 // Evaluate the increment from t to t+dt of the analytical solution at (x,y,z)
@@ -43,8 +44,8 @@ solinc( tk::ncomp_t system, tk::ncomp_t ncomp, tk::real x, tk::real y,
 //! \return Increment in values of all components evaluated at (x,y,z,t+dt)
 // *****************************************************************************
 {
-  auto st1 = solution( system, ncomp, x, y, z, t );
-  auto st2 = solution( system, ncomp, x, y, z, t+dt );
+  auto st1 = solution( system, ncomp, mat_blk, x, y, z, t );
+  auto st2 = solution( system, ncomp, mat_blk, x, y, z, t+dt );
 
   std::transform( begin(st1), end(st1), begin(st2), begin(st2),
                   []( tk::real s, tk::real& d ){ return d -= s; } );
