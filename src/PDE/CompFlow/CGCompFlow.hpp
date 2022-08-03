@@ -165,7 +165,7 @@ class CompFlow {
       const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
         tag::meshblock >();
       if (mblks.size() > m_system) {
-        std::size_t idMax(-1);
+        std::size_t idMax(0);
         for (const auto& imb : mblks[m_system]) {
           idMax = std::max(idMax, imb.get< tag::blockid >());
         }
