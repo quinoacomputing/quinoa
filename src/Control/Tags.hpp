@@ -120,6 +120,12 @@ struct mixmassfracbeta {
 struct alpha { static std::string name() { return "alpha"; } };
 struct gamma { static std::string name() { return "gamma"; } };
 struct pstiff { static std::string name() { return "pstiff"; } };
+struct A_jwl { static std::string name() { return "A_jwl"; } };
+struct B_jwl { static std::string name() { return "B_jwl"; } };
+struct C_jwl { static std::string name() { return "C_jwl"; } };
+struct R1_jwl { static std::string name() { return "R1_jwl"; } };
+struct R2_jwl { static std::string name() { return "R2_jwl"; } };
+struct rho0_jwl { static std::string name() { return "rho0_jwl"; } };
 struct spike { static std::string name() { return "spike"; } };
 struct betapdf { static std::string name() { return "betapdf"; } };
 struct hydrotimescales {

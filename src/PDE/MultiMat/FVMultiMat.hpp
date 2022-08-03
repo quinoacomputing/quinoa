@@ -35,14 +35,13 @@
 #include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "Problem/FieldOutput.hpp"
 #include "Problem/BoxInitialization.hpp"
 #include "MultiMat/BCFunctions.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
 
@@ -83,16 +82,7 @@ class MultiMat {
         , extrapolate } ) );
 
       // EoS initialization
-      auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      for (std::size_t k=0; k<nmat; ++k) {
-        // query input deck to get gamma, p_c, cv
-        auto g = gamma< eq >(m_system, k);
-        auto ps = pstiff< eq >(m_system, k);
-        auto c_v = cv< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
-        }
-
+      initializeMaterialEoS( m_system, m_mat_blk );
     }
 
     //! Find the number of primitive quantities required for this PDE system
