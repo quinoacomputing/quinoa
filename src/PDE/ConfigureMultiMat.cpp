@@ -131,15 +131,30 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     const auto& m_id = mtype.get< tag::id >();
     ctr::Material opt;
     nfo.emplace_back( opt.name( mtype.get< tag::eos >() ),
-      std::to_string(m_id.size()) );
+      std::to_string(m_id.size())+" materials" );
 
     nfo.emplace_back( "material id", parameters( m_id ) );
     nfo.emplace_back( "ratio of specific heats",
       parameters(mtype.get< tag::gamma >()) );
     nfo.emplace_back( "specific heat at constant volume",
       parameters(mtype.get< tag::cv >()) );
-    nfo.emplace_back( "material stiffness",
-      parameters(mtype.get< tag::pstiff >()) );
+    if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::STIFFENEDGAS)
+      nfo.emplace_back( "material stiffness",
+        parameters(mtype.get< tag::pstiff >()) );
+    else if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::JWL) {
+      nfo.emplace_back( "JWL parameter A",
+        parameters(mtype.get< tag::A_jwl >()) );
+      nfo.emplace_back( "JWL parameter B",
+        parameters(mtype.get< tag::B_jwl >()) );
+      nfo.emplace_back( "JWL parameter C",
+        parameters(mtype.get< tag::C_jwl >()) );
+      nfo.emplace_back( "JWL parameter R1",
+        parameters(mtype.get< tag::R1_jwl >()) );
+      nfo.emplace_back( "JWL parameter R2",
+        parameters(mtype.get< tag::R2_jwl >()) );
+      nfo.emplace_back( "JWL parameter rho0",
+        parameters(mtype.get< tag::rho0_jwl >()) );
+    }
 
     // Viscosity is optional: vector may be empty
     const auto& mu = mtype.get< tag::mu >();

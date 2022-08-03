@@ -5809,6 +5809,94 @@ struct mat_k_info {
 };
 using mat_k = keyword< mat_k_info, TAOCPP_PEGTL_STRING("k") >;
 
+struct A_jwl_info {
+  static std::string name() { return "A_jwl"; }
+  static std::string shortDescription() { return "JWL EoS A parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property A (units: Pa) for
+      the Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using A_jwl = keyword< A_jwl_info, TAOCPP_PEGTL_STRING("A_jwl") >;
+
+struct B_jwl_info {
+  static std::string name() { return "B_jwl"; }
+  static std::string shortDescription() { return "JWL EoS B parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property B (units: Pa) for
+      the Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using B_jwl = keyword< B_jwl_info, TAOCPP_PEGTL_STRING("B_jwl") >;
+
+struct C_jwl_info {
+  static std::string name() { return "C_jwl"; }
+  static std::string shortDescription() { return "JWL EoS C parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property C (units: Pa) for
+      the Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using C_jwl = keyword< C_jwl_info, TAOCPP_PEGTL_STRING("C_jwl") >;
+
+struct R1_jwl_info {
+  static std::string name() { return "R1_jwl"; }
+  static std::string shortDescription() { return "JWL EoS R1 parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property R1 for the
+      Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using R1_jwl = keyword< R1_jwl_info, TAOCPP_PEGTL_STRING("R1_jwl") >;
+
+struct R2_jwl_info {
+  static std::string name() { return "R2_jwl"; }
+  static std::string shortDescription() { return "JWL EoS R2 parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property R2 for the
+      Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using R2_jwl = keyword< R2_jwl_info, TAOCPP_PEGTL_STRING("R2_jwl") >;
+
+struct rho0_jwl_info {
+  static std::string name() { return "rho0_jwl"; }
+  static std::string shortDescription() { return "JWL EoS rho0 parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property rho0, which is the
+      density of reference state (units: kg/m3) for the Jones-Wilkins-Lee
+      equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using rho0_jwl = keyword< rho0_jwl_info, TAOCPP_PEGTL_STRING("rho0_jwl") >;
+
 struct stiffenedgas_info {
   static std::string name() { return "Stiffened gas"; }
   static std::string shortDescription() { return
@@ -5857,6 +5945,12 @@ struct material_info {
     + eos::string()+ "\', \'"
     + mat_gamma::string()+ "\', \'"
     + mat_pstiff::string()+ "\', \'"
+    + A_jwl::string()+ "\', \'"
+    + B_jwl::string()+ "\', \'"
+    + C_jwl::string()+ "\', \'"
+    + R1_jwl::string()+ "\', \'"
+    + R2_jwl::string()+ "\', \'"
+    + rho0_jwl::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"
     + mat_k::string() + "\'. "

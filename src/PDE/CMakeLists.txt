@@ -3,6 +3,7 @@ project(PDE CXX)
 add_library(PDE
             PDEStack.cpp
             Limiter.cpp
+            MultiMat/MiscMultiMatFns.cpp
             PrefIndicator.cpp
             Reconstruction.cpp
             ConfigureTransport.cpp

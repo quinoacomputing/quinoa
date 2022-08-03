@@ -553,6 +553,35 @@ namespace grm {
           if (pstiff.size() != mat_id.size())
             Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
         }
+        else if (meos == inciter::ctr::MaterialType::JWL) {
+          const auto& gamma = mtype.template get< tag::gamma >();
+          // If gamma vector is wrong size, error out
+          if (gamma.empty() || gamma.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
+
+          auto& cv = mtype.template get< tag::cv >();
+          // As a default, the specific heat of air (717.5 J/Kg-K) is used
+          if (cv.empty()) {
+            for (std::size_t k=0; k<mat_id.size(); ++k) {
+              cv.push_back(717.5);
+            }
+          }
+          // If specific heat vector is wrong size, error out
+          if (cv.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+          // If JWL parameter vectors are wrong size, error out
+          const auto& a_jwl = mtype.template get< tag::A_jwl >();
+          const auto& b_jwl = mtype.template get< tag::B_jwl >();
+          const auto& c_jwl = mtype.template get< tag::C_jwl >();
+          const auto& r1_jwl = mtype.template get< tag::R1_jwl >();
+          const auto& r2_jwl = mtype.template get< tag::R2_jwl >();
+          const auto& rho0_jwl = mtype.template get< tag::rho0_jwl >();
+          if (a_jwl.size() != mat_id.size() || b_jwl.size() != mat_id.size() ||
+            c_jwl.size() != mat_id.size() || r1_jwl.size() != mat_id.size() ||
+            r2_jwl.size() != mat_id.size() || rho0_jwl.size() != mat_id.size() )
+            Message< Stack, ERROR, MsgKey::EOSJWLPARAM >( stack, in );
+        }
 
         // Track total number of materials in multiple material blocks
         tmat += mat_id.size();
@@ -1673,6 +1702,12 @@ namespace deck {
               , material_vector< eq, kw::mat_gamma, tag::gamma >
               , material_vector< eq, kw::mat_mu, tag::mu >
               , material_vector< eq, kw::mat_pstiff, tag::pstiff >
+              , material_vector< eq, kw::A_jwl, tag::A_jwl >
+              , material_vector< eq, kw::B_jwl, tag::B_jwl >
+              , material_vector< eq, kw::C_jwl, tag::C_jwl >
+              , material_vector< eq, kw::R1_jwl, tag::R1_jwl >
+              , material_vector< eq, kw::R2_jwl, tag::R2_jwl >
+              , material_vector< eq, kw::rho0_jwl, tag::rho0_jwl >
               , material_vector< eq, kw::mat_cv, tag::cv >
               , material_vector< eq, kw::mat_k, tag::k >
               , material_option< eq, ctr::Material, kw::eos, tag::eos >
