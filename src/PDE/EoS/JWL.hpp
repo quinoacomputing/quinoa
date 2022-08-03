@@ -83,11 +83,18 @@ class JWL: public EoS_Base {
     //!   stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real g = m_gamma;
-      tk::real p_c = m_pstiff;
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w = m_w;
+      tk::real e0 = m_e0;  // figure this out
+      tk::real ae = arhoE - 0.5*arho*(u*u + v*v + w*w);  // internal energy
 
-      tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) -
-        alpha*p_c) * (g-1.0) - alpha*p_c;
+      tk::real partpressure = a*(alpha*1.0 - w*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
+                            + b*(alpha*1.0 - w*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
+                            + w*(ae - e0)*arho/rho0;
 
       // check partial pressure divergence
       if (!std::isfinite(partpressure)) {
@@ -161,10 +168,19 @@ class JWL: public EoS_Base {
     //! \return Material specific total energy using the stiffened-gas EoS
     // *************************************************************************
     {
-      auto g = m_gamma;
-      auto p_c = m_pstiff;
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w = m_w;
+      tk::real e0 = m_e0;  // figure this out
     
-      tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * rho * (u*u + v*v + w*w) + p_c;
+      // does this need to be scaled by alpha?, add kinetic energy?
+      tk::real rhoE = e0 + rho0/rho/w*( pr
+                    - a*(1.0 - w*rho/r1/rho0)*exp(-r1*rho0/rho)
+                    - b*(1.0 - w*rho/r2/rho0)*exp(-r2*rho0/rho) );
+
       return rhoE;
     }
 
