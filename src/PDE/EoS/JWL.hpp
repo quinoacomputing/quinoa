@@ -27,6 +27,23 @@ class JWL: public EoS_Base {
   private:
     tk::real m_gamma, m_pstiff, m_cv;
 
+    tk::real intEnergy( tk::real rho, tk::real pr )
+    {
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w = m_w;
+      tk::real e0 = m_e0
+
+      tk::real e = e0 + 1.0/w/rho*( pr
+                    - a*(1.0 - w*rho/r1/rho0)*exp(-r1*rho0/rho)
+                    - b*(1.0 - w*rho/r2/rho0)*exp(-r2*rho0/rho) );
+
+      return e;
+    }
+
   public:
     // *************************************************************************
     //  Constructor
@@ -89,8 +106,12 @@ class JWL: public EoS_Base {
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
       tk::real w = m_w;
-      tk::real e0 = m_e0;  // figure this out
-      tk::real rhoe = (arhoE - 0.5*arho*(u*u + v*v + w*w))/alpha;  // internal energy
+      tk::real e0 = m_e0
+
+      // reference energy (input quantity, might need for calculation)
+//      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
+      // internal energy
+      tk::real rhoe = (arhoE - 0.5*arho*(u*u + v*v + w*w))/alpha;
 
       tk::real partpressure = a*(alpha*1.0 - w*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
                             + b*(alpha*1.0 - w*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
@@ -186,12 +207,13 @@ class JWL: public EoS_Base {
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
       tk::real w = m_w;
-      tk::real e0 = m_e0;  // figure this out
+      tk::real e0 = m_e0
+
+      // reference energy (input quantity, might need for calculation)
+//      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
     
-      // does this need to be scaled by alpha?, add kinetic energy?
-      tk::real rhoE = e0 + rho0/rho/w*( pr
-                    - a*(1.0 - w*rho/r1/rho0)*exp(-r1*rho0/rho)
-                    - b*(1.0 - w*rho/r2/rho0)*exp(-r2*rho0/rho) );
+      tk::real rhoE = intEnergy( rho, pr )
+                    + 0.5*arho*(u*u + v*v + w*w);
 
       return rhoE;
     }
@@ -217,13 +239,29 @@ class JWL: public EoS_Base {
     //! \return Material temperature using the stiffened-gas EoS
     // *************************************************************************
     {
-      auto c_v = m_cv;
-      auto p_c = m_pstiff;
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w = m_w;
+      tk::real c_v = m_cv;      // constant specific heat
+      tk::real t_r = m_tr;      // reference temperature
+      tk::real rho_r = m_rhor;  // reference density
+
+      // reference energy (input quantity, might need for calculation)
+//      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
     
-      tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) 
-                   / (arho*c_v);
+      tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho - 1.0/rho0*(
+                   a/r1*exp(-r1*rho0*alpha/arho)
+                 + b/r2*exp(-r2*rho0*alpha/arho) ))/c_v
+                 + ( t_r*std::pow(rho0/rho_r, w) )/(rho0/arho/alpha)
+
+//      tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) 
+//                   / (arho*c_v);
       return t;
     }
+
 
     // Destructor
     ~JWL() override {}
