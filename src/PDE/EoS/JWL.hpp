@@ -90,11 +90,11 @@ class JWL: public EoS_Base {
       tk::real r2 = m_r2;
       tk::real w = m_w;
       tk::real e0 = m_e0;  // figure this out
-      tk::real ae = arhoE - 0.5*arho*(u*u + v*v + w*w);  // internal energy
+      tk::real rhoe = (arhoE - 0.5*arho*(u*u + v*v + w*w))/alpha;  // internal energy
 
       tk::real partpressure = a*(alpha*1.0 - w*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
                             + b*(alpha*1.0 - w*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
-                            + w*(ae - e0)*arho;
+                            + w*(rhoe - e0)*arho/rho0;
 
       // check partial pressure divergence
       if (!std::isfinite(partpressure)) {
@@ -136,8 +136,6 @@ class JWL: public EoS_Base {
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
       tk::real w = m_w;
-      tk::real e0 = m_e0;  // figure this out
-      tk::real ae = arhoE - 0.5*arho*(u*u + v*v + w*w);  // internal energy
 
       // limiting pressure to near-zero
       auto apr_eff = std::max( 1.0e-15, apr );
