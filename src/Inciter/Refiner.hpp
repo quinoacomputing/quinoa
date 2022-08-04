@@ -81,7 +81,7 @@ class Refiner : public CBase_Refiner {
                       const std::map< int, std::vector< std::size_t > >& bface,
                       const std::vector< std::size_t >& triinpoel,
                       const std::map< int, std::vector< std::size_t > >& bnode,
-                      const std::vector< int >& elemblid,
+                      const std::vector< std::size_t >& elemblid,
                       int nchare );
 
     #if defined(__clang__)
@@ -269,7 +269,7 @@ class Refiner : public CBase_Refiner {
     //! Boundary face-node connectivity
     std::vector< std::size_t > m_triinpoel;
     //! Mesh block ids associated with local tet ids
-    std::unordered_map< int, std::set< std::size_t > > m_elemblockid;
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_elemblockid;
     //! Total number of refiner chares
     int m_nchare;
     //! True if initial AMR, false if during time stepping
@@ -322,7 +322,7 @@ class Refiner : public CBase_Refiner {
     //! A unique set of nodes associated to side sets of the coarsest mesh
     std::unordered_map< int, std::unordered_set<std::size_t> > m_coarseBndNodes;
     //! Set of elements associated to mesh block ids of the coarsest mesh
-    std::unordered_map< int, TetSet > m_coarseBlkElems;
+    std::unordered_map< std::size_t, TetSet > m_coarseBlkElems;
     //! Local -> refiner lib node id map
     std::vector< std::size_t > m_rid;
     //! Local -> refiner lib node id map for previous mesh

@@ -72,7 +72,7 @@ class Sorter : public CBase_Sorter {
                      const std::map< int, std::vector< std::size_t > >& bface,
                      const std::vector< std::size_t >& triinpoel,
                      const std::map< int, std::vector< std::size_t > >& bnode,
-                     const std::unordered_map< int, std::set< std::size_t > >&
+                     const std::unordered_map< std::size_t, std::set< std::size_t > >&
                        elemblockid,
                      int nchare );
 
@@ -199,7 +199,7 @@ class Sorter : public CBase_Sorter {
     //! List of boundary nodes associated to side-set IDs
     std::map< int, std::vector< std::size_t > > m_bnode;
     //! Local tet ids associated with mesh block ids
-    std::unordered_map< int, std::set< std::size_t > > m_elemblockid;
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_elemblockid;
     //! Total number of sorter chares
     int m_nchare;
     //! Unique global node IDs chares on our PE will contribute to

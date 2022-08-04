@@ -52,7 +52,7 @@ Discretization::Discretization(
   const tk::CommMaps& msum,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
-  const std::unordered_map< int, std::set< std::size_t > >& elemblockid,
+  const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid,
   int nc ) :
   m_meshid( meshid ),
   m_transfer_complete(),
@@ -474,7 +474,7 @@ Discretization::resizePostAMR(
   const std::unordered_map< std::size_t, std::size_t >& /*amrNodeMap*/,
   const tk::NodeCommMap& nodeCommMap,
   const std::set< std::size_t >& /*removedNodes*/,
-  const std::unordered_map< int, std::set< std::size_t > >& elemblockid )
+  const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Resize mesh data structures after mesh refinement
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
@@ -825,7 +825,7 @@ Discretization::stat( tk::real mesh_volume )
 void
 Discretization::boxvol(
   const std::vector< std::unordered_set< std::size_t > >& nodes,
-  const std::unordered_map< int, std::set< std::size_t > >& nodeblk,
+  const std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblk,
   std::vector< tk::real >& blockvols )
 // *****************************************************************************
 // Compute total box IC volume
@@ -848,11 +848,11 @@ Discretization::boxvol(
   }
 
   // Sum up box IC volume across all chares
-  //std::vector< tk::real > meshdata;
-  //meshdata.push_back(boxvol);
-  //meshdata.insert(meshdata.end(), blkvol.begin(), blkvol.end());
-  //meshdata.push_back(static_cast<tk::real>(m_meshid));
-  std::vector< tk::real > meshdata{ boxvol, static_cast<tk::real>(m_meshid) };
+  std::vector< tk::real > meshdata(blockvols);
+  meshdata.push_back(boxvol);
+  meshdata.push_back(static_cast<tk::real>(m_meshid));
+  //std::vector< tk::real > meshdata{ boxvol, static_cast<tk::real>(m_meshid) };
+  std::cout << "size in discrn " << meshdata.size() << std::endl;
   contribute( meshdata, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,boxvol), m_transporter) );
 }

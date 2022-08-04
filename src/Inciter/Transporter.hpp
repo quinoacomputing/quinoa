@@ -189,7 +189,7 @@ class Transporter : public CBase_Transporter {
     void pdfstat( CkReductionMsg* msg );
 
     //! Reduction target computing total volume of IC box
-    void boxvol( tk::real v, tk::real summeshid );
+    void boxvol( std::vector< tk::real > meshdata );
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares

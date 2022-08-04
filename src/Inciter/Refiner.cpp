@@ -52,7 +52,7 @@ Refiner::Refiner( std::size_t meshid,
                   const std::map< int, std::vector< std::size_t > >& bface,
                   const std::vector< std::size_t >& triinpoel,
                   const std::map< int, std::vector< std::size_t > >& bnode,
-                  const std::vector< int >& elemblid,
+                  const std::vector< std::size_t >& elemblid,
                   int nchare ) :
   m_meshid( meshid ),
   m_ncit(0),

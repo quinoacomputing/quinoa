@@ -68,7 +68,7 @@ class MeshReader {
                        std::vector< std::size_t >& triinp,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord, 
-                       std::unordered_map< int, std::set< std::size_t > >&
+                       std::unordered_map< std::size_t, std::set< std::size_t > >&
                          elemBlockId,
                        int numpes=1, int mype=0 )
     { self->readMeshPart( ginpoel, inpoel, triinp, lid, coord, elemBlockId,
@@ -120,7 +120,7 @@ class MeshReader {
                      std::vector< std::size_t >&,
                      std::unordered_map< std::size_t, std::size_t >&,
                      tk::UnsMesh::Coords&,
-                     std::unordered_map< int, std::set< std::size_t > >&,
+                     std::unordered_map< std::size_t, std::set< std::size_t > >&,
                      int, int ) = 0;
       virtual void
         readSidesetFaces( std::map< int, std::vector< std::size_t > >&,
@@ -147,7 +147,7 @@ class MeshReader {
                          std::vector< std::size_t >& triinp,
                          std::unordered_map< std::size_t, std::size_t >& lid,
                          tk::UnsMesh::Coords& coord, 
-                         std::unordered_map< int, std::set< std::size_t > >&
+                         std::unordered_map< std::size_t, std::set< std::size_t > >&
                            elemBlockId,
                          int numpes, int mype ) override
         { data.readMeshPart( ginpoel, inpoel, triinp, lid, coord, elemBlockId,

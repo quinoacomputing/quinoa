@@ -73,7 +73,7 @@ class ExodusIIMeshReader {
                        std::vector< std::size_t >& triinp,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord,
-                       std::unordered_map< int, std::set< std::size_t > >&
+                       std::unordered_map< std::size_t, std::set< std::size_t > >&
                          elemBlockId,
                        int numpes=1, int mype=0 );
 
@@ -250,7 +250,7 @@ class ExodusIIMeshReader {
     std::unordered_map< std::size_t, std::size_t > m_tri;
     //! \brief List of elements for each block-id.
     // key: block id; value: set of elements in corresponding block
-    std::unordered_map< int, std::set< std::size_t > > m_elemInBlockId;
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_elemInBlockId;
 
     //! Read ExodusII header without setting mesh size
     std::size_t readHeader();

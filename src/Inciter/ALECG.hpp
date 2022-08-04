@@ -157,7 +157,8 @@ class ALECG : public CBase_ALECG {
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel,
-      const std::unordered_map< int, std::set< std::size_t > >& elemblockid );
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblockid );
 
     //! Extract field output to file
     void extractFieldOutput(
@@ -358,7 +359,7 @@ class ALECG : public CBase_ALECG {
     //! State indicating if the mesh has been refined by dtref
     int m_refinedmesh;
     //! Local node ids associated with mesh block ids
-    std::unordered_map< int, std::set< std::size_t > > m_nodeblockid;
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockid;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

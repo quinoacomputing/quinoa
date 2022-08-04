@@ -38,7 +38,8 @@ module discretization {
         const tk::CommMaps& msum,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel,
-        const std::unordered_map< int, std::set< std::size_t > >& elemblockid,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          elemblockid,
         int nchare );
       initnode void registerReducers();
       entry void vol();

@@ -105,7 +105,7 @@ ExodusIIMeshReader::readMeshPart(
   std::vector< std::size_t >& triinp,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
-  std::unordered_map< int, std::set< std::size_t > >& elemBlockId,
+  std::unordered_map< std::size_t, std::set< std::size_t > >& elemBlockId,
   int numpes, int mype )
 // *****************************************************************************
 //  Read a part of the mesh (graph and coordinates) from ExodusII file

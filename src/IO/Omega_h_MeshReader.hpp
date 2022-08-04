@@ -45,7 +45,7 @@ class Omega_h_MeshReader {
                        std::vector< std::size_t >& triinp,
                        std::unordered_map< std::size_t, std::size_t >& lid,
                        tk::UnsMesh::Coords& coord,
-                       std::unordered_map< int, std::set< std::size_t > >&,
+                       std::unordered_map< std::size_t, std::set< std::size_t > >&,
                        int numpes=1, int mype=0 );
 
     //! Read face list of all side sets from Omega h file

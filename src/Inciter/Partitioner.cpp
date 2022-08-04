@@ -186,7 +186,7 @@ Partitioner::addMesh(
             tk::UnsMesh::CoordMap,      // node coords
             std::unordered_map< int, std::vector< std::size_t > >, // bface conn
             std::unordered_map< int, std::vector< std::size_t > >, // bnodes
-            std::vector< int >          // elem-blocks
+            std::vector< std::size_t >          // elem-blocks
           > >& chmesh )
 // *****************************************************************************
 //  Receive mesh associated to chares we own after refinement
@@ -569,7 +569,7 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
         // boundary side set + node list
         std::unordered_map< int, std::vector< std::size_t > >,
         // Mesh block ids + local tet ids
-        std::vector< int >
+        std::vector< std::size_t >
       > > > exp;
 
   for (const auto& c : mesh)

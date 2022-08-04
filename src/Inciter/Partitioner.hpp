@@ -53,7 +53,7 @@ class Partitioner : public CBase_Partitioner {
         // Boundary node lists for each side set
         std::unordered_map< int, std::vector< std::size_t > >,
         // Mesh block ids (value) associated to local tet ids (index)
-        std::vector< int > >;
+        std::vector< std::size_t > >;
 
   public:
     //! Constructor
@@ -92,7 +92,7 @@ class Partitioner : public CBase_Partitioner {
                       tk::UnsMesh::CoordMap,
                       std::unordered_map< int, std::vector< std::size_t > >,
                       std::unordered_map< int, std::vector< std::size_t > >,
-                      std::vector< int >
+                      std::vector< std::size_t >
                     > >& chmesh );
 
     //! Acknowledge received mesh after initial mesh refinement
@@ -175,7 +175,7 @@ class Partitioner : public CBase_Partitioner {
     std::unordered_map< std::size_t, std::size_t > m_lid;
     //! List of elements for each block-id.
     //! \details key: block id, value: set of elements in corresponding block
-    std::unordered_map< int, std::set< std::size_t > > m_elemBlockId;
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_elemBlockId;
     //! Counter during mesh distribution
     std::size_t m_ndist;
     //! Total number of chares across all compute nodes
@@ -205,7 +205,7 @@ class Partitioner : public CBase_Partitioner {
     //! Mesh block ids associated to local tet ids for each chare
     //! \details outer key: chare id, vector index: tet id, value: block id of
     //!   corresponding tet.
-    std::unordered_map< int, std::vector< int > > m_chelemblockid;
+    std::unordered_map< int, std::vector< std::size_t > > m_chelemblockid;
     //! \brief Map associating a list of chare IDs to old (as in file) global
     //!   mesh node IDs on the chare boundaries
     //! \details Note that a single global mesh node ID can be associated to

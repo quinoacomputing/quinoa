@@ -1315,7 +1315,7 @@ DG::resizePostAMR(
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
   const std::vector< std::size_t >& triinpoel,
-  const std::unordered_map< int, std::set< std::size_t > >& elemblockid )
+  const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)

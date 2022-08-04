@@ -76,7 +76,8 @@ class Discretization : public CBase_Discretization {
         const tk::CommMaps& msum,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel,
-        const std::unordered_map< int, std::set< std::size_t > >& elemblockid,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          elemblockid,
         int nc );
 
     #if defined(__clang__)
@@ -135,7 +136,8 @@ class Discretization : public CBase_Discretization {
       const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
       const tk::NodeCommMap& nodeCommMap,
       const std::set< std::size_t >& removedNodes,
-      const std::unordered_map< int, std::set< std::size_t > >& elemblockid );
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblockid );
 
     //! Get ready for (re-)computing/communicating nodal volumes
     void startvol();
@@ -159,7 +161,7 @@ class Discretization : public CBase_Discretization {
     //! Compute total box IC volume
     void
     boxvol( const std::vector< std::unordered_set< std::size_t > >& nodes,
-      const std::unordered_map< int, std::set< std::size_t > >& nodeblk,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblk,
       std::vector< tk::real >& blockvols );
 
     /** @name Accessors */
@@ -185,8 +187,8 @@ class Discretization : public CBase_Discretization {
     const tk::UnsMesh::Chunk& Chunk() const { return m_el; }
 
     //! Mesh block id accessor as const-ref
-    const std::unordered_map< int, std::set< std::size_t > >& ElemBlockId()
-      const { return m_elemblockid; }
+    const std::unordered_map< std::size_t, std::set< std::size_t > >&
+      ElemBlockId() const { return m_elemblockid; }
 
     //! Total mesh volume accessor
     tk::real meshvol() const { return m_meshvol; }
@@ -615,7 +617,7 @@ class Discretization : public CBase_Discretization {
     //! Triangle face connecitivity
     std::vector< std::size_t > m_triinpoel;
     //! Local tet ids associated with mesh block ids
-    std::unordered_map< int, std::set< std::size_t > > m_elemblockid;
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_elemblockid;
 
     //! Generate the Bid data-structure based on the node communication-map
     std::unordered_map< std::size_t, std::size_t > genBid();

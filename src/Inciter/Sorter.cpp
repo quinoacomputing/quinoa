@@ -38,7 +38,7 @@ Sorter::Sorter( std::size_t meshid,
                 const std::map< int, std::vector< std::size_t > >& bface,
                 const std::vector< std::size_t >& triinpoel,
                 const std::map< int, std::vector< std::size_t > >& bnode,
-                const std::unordered_map< int, std::set< std::size_t > >&
+                const std::unordered_map< std::size_t, std::set< std::size_t > >&
                   elemblockid,
                 int nchare ) :
   m_meshid( meshid ),

@@ -104,9 +104,9 @@ class CompFlow {
     //!   user ICs are set
     void IcBoxNodes( const tk::UnsMesh::Coords& coord,
       const std::vector< std::size_t >& inpoel,
-      const std::unordered_map< int, std::set< std::size_t > >& elemblkid,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblkid,
       std::vector< std::unordered_set< std::size_t > >& inbox,
-      std::unordered_map< int, std::set< std::size_t > >& nodeblkid,
+      std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblkid,
       std::vector< tk::real >& blockvols ) const
     {
       const auto& x = coord[0];
@@ -169,7 +169,8 @@ class CompFlow {
         for (const auto& imb : mblks[m_system]) {
           idMax = std::max(idMax, imb.get< tag::blockid >());
         }
-        blockvols.resize(blockvols.size()+idMax,0.0);
+        // size is idMax+1 since block ids are usually 1-based
+        blockvols.resize(blockvols.size()+idMax+1,0.0);
       }
       // determine node set for IC mesh blocks
       for (const auto& [blid, elset] : elemblkid) {

@@ -74,9 +74,9 @@ class Transport {
     void
     IcBoxNodes( const tk::UnsMesh::Coords&,
                 const std::vector< std::size_t >&,
-                const std::unordered_map< int, std::set< std::size_t > >&,
+                const std::unordered_map< std::size_t, std::set< std::size_t > >&,
                 std::vector< std::unordered_set< std::size_t > >&,
-                std::unordered_map< int, std::set< std::size_t > >&,
+                std::unordered_map< std::size_t, std::set< std::size_t > >&,
                 std::vector< tk::real >& ) const {}
 
     //! Initalize the transport equations using problem policy
