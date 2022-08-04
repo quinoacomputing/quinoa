@@ -94,7 +94,7 @@ class JWL: public EoS_Base {
 
       tk::real partpressure = a*(alpha*1.0 - w*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
                             + b*(alpha*1.0 - w*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
-                            + w*(ae - e0)*arho/rho0;
+                            + w*(ae - e0)*arho;
 
       // check partial pressure divergence
       if (!std::isfinite(partpressure)) {
@@ -130,25 +130,39 @@ class JWL: public EoS_Base {
     //! \return Material speed of sound using the stiffened-gas EoS
     // *************************************************************************
     {
-      auto g = m_gamma;
-      auto p_c = m_pstiff;
-    
-      auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
-    
-      tk::real a = std::sqrt( g * p_eff / arho );
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w = m_w;
+      tk::real e0 = m_e0;  // figure this out
+      tk::real ae = arhoE - 0.5*arho*(u*u + v*v + w*w);  // internal energy
+
+      // limiting pressure to near-zero
+      auto apr_eff = std::max( 1.0e-15, apr );
+
+      auto co1 = rho0*alpha*alpha/(arho*arho);
+      auto co2 = alpha*(1.0+w)/arho;
+
+      tk::real ss = a*(r1*co1 - co2) * exp(-r1*alpha*rho0/arho)
+                  + b*(r2*co1 - co2) * exp(-r2*alpha*rho0/arho)
+                  + (1.0+w)*apr_eff/arho;
+
+      ss = std::sqrt(ss);
     
       // check sound speed divergence
-      if (!std::isfinite(a)) {
+      if (!std::isfinite(ss)) {
         std::cout << "Material-id:      " << imat << std::endl;
         std::cout << "Volume-fraction:  " << alpha << std::endl;
         std::cout << "Partial density:  " << arho << std::endl;
         std::cout << "Partial pressure: " << apr << std::endl;
         Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
-          + std::to_string(a) + ", material volume fraction: " +
+          + std::to_string(ss) + ", material volume fraction: " +
           std::to_string(alpha));
       }
     
-      return a;
+      return ss;
     }
 
 
