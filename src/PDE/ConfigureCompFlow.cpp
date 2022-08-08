@@ -234,6 +234,35 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     }
   }
 
+  const auto& icblock = ic.get< tag::meshblock >();
+  if (icblock.size() > c) {
+    for (const auto& b : icblock[c]) {   // for all blocks configured for eq
+      std::string blockname = "IC mesh block " +
+        parameter(b.get< tag::blockid >());
+
+      nfo.emplace_back( blockname + " volume",
+                        parameter( b.get< tag::volume >() ) );
+      nfo.emplace_back( blockname + " density",
+                        parameter( b.get< tag::density >() ) );
+      nfo.emplace_back( blockname + " velocity",
+                        parameters( b.get< tag::velocity >() ) );
+      nfo.emplace_back( blockname + " pressure",
+                        parameter( b.get< tag::pressure >() ) );
+      nfo.emplace_back( blockname + " internal energy per unit mass",
+                        parameter( b.get< tag::energy >() ) );
+      nfo.emplace_back( blockname + " mass",
+                        parameter( b.get< tag::mass >() ) );
+      nfo.emplace_back( blockname + " internal energy per unit volume",
+                        parameter( b.get< tag::energy_content >() ) );
+      nfo.emplace_back( blockname + " temperature",
+                        parameter( b.get< tag::temperature >() ) );
+      const auto& initiate = b.get< tag::initiate >();
+      const auto& inittype = initiate.get< tag::init >();
+      auto opt = ctr::Initiate();
+      nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(inittype) );
+    }
+  }
+
   // BCs
 
   const auto& stag = g_inputdeck.get< tag::param, eq, tag::stag >();

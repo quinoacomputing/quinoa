@@ -1363,8 +1363,8 @@ Transporter::boxvol( tk::real* meshdata, int n )
   for (std::size_t blid=0; blid<n-2; ++blid) {
     blockvols.push_back(meshdata[blid]);
     if (blockvols[blid] > 0.0)
-      printer().diag( "Mesh block " + std::to_string(blid) + " volume: " +
-        std::to_string(blockvols[blid]) );
+      printer().diag( "Mesh block " + std::to_string(blid) +
+        " discrete volume: " + std::to_string(blockvols[blid]) );
   }
 
   m_scheme[meshid].bcast< Scheme::box >( v );

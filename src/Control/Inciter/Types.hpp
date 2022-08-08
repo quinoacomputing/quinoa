@@ -286,6 +286,7 @@ using InitiateBlkParameters = tk::TaggedTuple< brigand::list<
 using meshblock = tk::TaggedTuple< brigand::list<
     tag::blockid,       kw::blockid::info::expect::type
   , tag::materialid,    kw::materialid::info::expect::type
+  , tag::volume,        kw::volume::info::expect::type
   , tag::mass,          kw::mass::info::expect::type
   , tag::density,       kw::density::info::expect::type
   , tag::velocity,      std::vector< kw::velocity::info::expect::type >

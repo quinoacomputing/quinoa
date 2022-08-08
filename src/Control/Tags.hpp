@@ -326,6 +326,7 @@ struct fn { static std::string name() { return "fn"; } };
 struct fntype { static std::string name() { return "fntype"; } };
 struct node {};
 struct ic { static std::string name() { return "ic"; } };
+struct volume { static std::string name() { return "volume"; } };
 struct velocity { static std::string name() { return "velocity"; } };
 struct density { static std::string name() { return "density"; } };
 struct pressure { static std::string name() { return "pressure"; } };

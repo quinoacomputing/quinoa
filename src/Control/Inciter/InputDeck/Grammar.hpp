@@ -393,6 +393,13 @@ namespace grm {
             const auto& blkid = b.template get< tag::blockid >();
             if (blkid == 0)
               Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
+
+            // if energy content is used to initialize block, then volume must
+            // be specified
+            const auto& blkenc = b.template get< tag::energy_content >();
+            const auto& blkvol = b.template get< tag::volume >();
+            if (blkenc > 0.0 && blkvol < 1e-12)
+              Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
           }
         }
 
@@ -697,6 +704,13 @@ namespace grm {
             else if (blkmatid > nmat.back()) {
               Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
             }
+
+            // if energy content is used to initialize block, then volume must
+            // be specified
+            const auto& blkenc = b.template get< tag::energy_content >();
+            const auto& blkvol = b.template get< tag::volume >();
+            if (blkenc > 0.0 && blkvol < 1e-12)
+              Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
           }
         }
       }
@@ -1676,6 +1690,7 @@ namespace deck {
              , box_parameter< eq, kw::blockid, tag::blockid, tag::meshblock >
              , box_parameter< eq, kw::materialid, tag::materialid,
                 tag::meshblock >
+             , box_parameter< eq, kw::volume, tag::volume, tag::meshblock >
              , box_parameter< eq, kw::density, tag::density, tag::meshblock >
              , box_parameter< eq, kw::pressure, tag::pressure, tag::meshblock >
              , box_parameter< eq, kw::temperature, tag::temperature,

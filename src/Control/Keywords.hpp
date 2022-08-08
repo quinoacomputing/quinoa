@@ -2801,6 +2801,20 @@ struct mass_info {
 };
 using mass = keyword< mass_info, TAOCPP_PEGTL_STRING("mass") >;
 
+struct volume_info {
+  static std::string name() { return "volume"; }
+  static std::string shortDescription() { return "Specify volume"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to configure the volume
+       of a mesh block.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using volume = keyword< volume_info, TAOCPP_PEGTL_STRING("volume") >;
+
 struct density_info {
   static std::string name() { return "density"; }
   static std::string shortDescription() { return "Specify density"; }
@@ -3044,6 +3058,7 @@ struct meshblock_info {
     + std::string("\'")
     + blockid::string()+ "\', \'"
     + materialid::string()+ "\', \'"
+    + volume::string()+ "\', \'"
     + mass::string()+ "\', \'"
     + density::string()+ "\', \'"
     + velocity::string() + "\', \'"
