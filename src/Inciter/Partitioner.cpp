@@ -416,7 +416,7 @@ Partitioner::categorize( const std::vector< std::size_t >& target ) const
     inpoel.insert( end(inpoel), begin(t), end(t) );
     // Categorize mesh block ids and associated local tet ids (local tet ids
     // basically correspond to the inpoel entries updated in line above).
-    bool added(false);
+    [[maybe_unused]] bool added(false);
     auto& elblock = std::get< 3 >( mesh );
     for (const auto& [blid, elset] : m_elemBlockId) {
       if (elset.find(e) != elset.end()) {

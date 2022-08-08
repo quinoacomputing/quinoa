@@ -852,7 +852,6 @@ Discretization::boxvol(
   meshdata.push_back(boxvol);
   meshdata.push_back(static_cast<tk::real>(m_meshid));
   //std::vector< tk::real > meshdata{ boxvol, static_cast<tk::real>(m_meshid) };
-  std::cout << "size in discrn " << meshdata.size() << std::endl;
   contribute( meshdata, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,boxvol), m_transporter) );
 }

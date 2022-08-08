@@ -1342,26 +1342,26 @@ Transporter::stat()
 }
 
 void
-Transporter::boxvol( std::vector< tk::real > meshdata )
+Transporter::boxvol( tk::real* meshdata, int n )
 // *****************************************************************************
 // Reduction target computing total volume of IC mesh blocks and box
 //! \param[in] meshdata Vector containing volumes of all IC mesh blocks,
 //!   volume of IC box, and mesh id as a real summed across the distributed mesh
+//! \param[in] n Size of vector, automatically computed by Charm
 // *****************************************************************************
 {
-  std::cout << "size in transporter " << meshdata.size() << std::endl;
   // extract summed mesh id from vector
-  tk::real summeshid = meshdata[meshdata.size()-1];
+  tk::real summeshid = meshdata[n-1];
   auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
 
   // extract summed box volume from vector
-  tk::real v = meshdata[meshdata.size()-2];
+  tk::real v = meshdata[n-2];
   if (v > 0.0) printer().diag( "Box IC volume: " + std::to_string(v) );
 
   // extract summed mesh block volumes from the vector
-  auto blockvols = meshdata;
-  blockvols.resize(meshdata.size()-2);
-  for (std::size_t blid=0; blid<blockvols.size(); ++blid) {
+  std::vector< tk::real > blockvols;
+  for (std::size_t blid=0; blid<n-2; ++blid) {
+    blockvols.push_back(meshdata[blid]);
     if (blockvols[blid] > 0.0)
       printer().diag( "Mesh block " + std::to_string(blid) + " volume: " +
         std::to_string(blockvols[blid]) );
