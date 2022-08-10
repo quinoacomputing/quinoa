@@ -826,13 +826,13 @@ void
 Discretization::boxvol(
   const std::vector< std::unordered_set< std::size_t > >& nodes,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblk,
-  std::vector< tk::real >& blockvols )
+  std::size_t nuserblk )
 // *****************************************************************************
 // Compute total box IC volume
 //! \param[in] nodes Node list contributing to box IC volume (for each IC box)
 //! \param[in] nodeblk Node list associated to mesh blocks contributing to block
 //!   volumes (for each IC box)
-//! \param[in,out] blockvols Volumes of all mesh blocks (for each IC mesh block)
+//! \param[in] nuserblk Number of user IC mesh blocks
 // *****************************************************************************
 {
   // Compute partial box IC volume (just add up all boxes)
@@ -840,6 +840,7 @@ Discretization::boxvol(
   for (const auto& b : nodes) for (auto i : b) boxvol += m_v[i];
 
   // Compute partial IC mesh block volume
+  std::vector< tk::real > blockvols(nuserblk,0.0);
   for (const auto& [blid, ndset] : nodeblk) {
     Assert(blid < blockvols.size(), "Block id not found in volume vector");
     for (const auto& n : ndset) {

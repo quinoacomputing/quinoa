@@ -1367,7 +1367,7 @@ Transporter::boxvol( tk::real* meshdata, int n )
         " discrete volume: " + std::to_string(blockvols[blid]) );
   }
 
-  m_scheme[meshid].bcast< Scheme::box >( v );
+  m_scheme[meshid].bcast< Scheme::box >( v, blockvols );
 }
 
 void

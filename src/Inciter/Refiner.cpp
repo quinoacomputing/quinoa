@@ -133,6 +133,7 @@ Refiner::Refiner( std::size_t meshid,
             m_inpoel, m_coord ),
           "Input mesh to Refiner leaky" );
 
+  // Construct data structure assigning sets of element ids to mesh blocks
   for (std::size_t ie=0; ie<elemblid.size(); ++ie) {
     m_elemblockid[elemblid[ie]].insert(ie);
   }
@@ -982,6 +983,8 @@ Refiner::writeMesh( const std::string& basefilename,
   // list of nodes/elements at which box ICs are defined
   std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
+  std::vector< tk::real > blkvols;
+  std::unordered_map< std::size_t, std::set< std::size_t > > nodeblockid;
 
   // Prepare node or element fields for output to file
   if (centering == tk::Centering::NODE) {
@@ -992,7 +995,8 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Evaluate initial conditions on current mesh at t0
     tk::Fields u( m_coord[0].size(), nprop );
-    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox );
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox, blkvols,
+      nodeblockid );
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -1516,11 +1520,14 @@ Refiner::nodeinit( std::size_t npoin,
   // list of nodes/elements at which box ICs are defined
   std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
+  std::vector< tk::real > blkvols;
+  std::unordered_map< std::size_t, std::set< std::size_t > > nodeblockid;
 
   if (centering == tk::Centering::NODE) {
 
     // Evaluate ICs for all scalar components integrated
-    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox );
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox, blkvols,
+      nodeblockid );
 
   } else if (centering == tk::Centering::ELEM) {
 

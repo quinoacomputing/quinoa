@@ -33,7 +33,7 @@ module fv {
       initnode void registerReducers();      
       entry void resizeSolVectors();
       entry void setup();
-      entry void box( tk::real v );
+      entry void box( tk::real v, const std::vector< tk::real >& blkvol );
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,

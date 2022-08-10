@@ -95,7 +95,7 @@ class FV : public CBase_FV {
     void setup();
 
     //! Receive total box IC volume and set conditions in box
-    void box( tk::real v );
+    void box( tk::real v, const std::vector< tk::real >& blkvols );
 
     // Evaluate whether to do load balancing
     void evalLB( int nrestart );

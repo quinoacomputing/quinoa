@@ -2776,7 +2776,8 @@ struct blockid_info {
   static std::string shortDescription() { return "Specify block id"; }
   static std::string longDescription() { return
     R"(This keyword is used to configure the mesh block id as a part
-    of the initialization.)";
+    of the initialization. It is strongly recommended to use contiguous block
+    ids in mesh file starting from 1.)";
   }
   struct expect {
     using type = std::size_t;

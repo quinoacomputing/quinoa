@@ -162,7 +162,7 @@ class Discretization : public CBase_Discretization {
     void
     boxvol( const std::vector< std::unordered_set< std::size_t > >& nodes,
       const std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblk,
-      std::vector< tk::real >& blockvols );
+      std::size_t nuserblk );
 
     /** @name Accessors */
     ///@{
@@ -220,6 +220,9 @@ class Discretization : public CBase_Discretization {
 
     //! Box volume accessor
     tk::real& Boxvol() { return m_boxvol; }
+
+    //! Block volume accessor
+    std::vector< tk::real >& MeshBlkVol() { return m_meshblkvol; }
 
     //! Mesh ID accessor
     std::size_t MeshId() const { return m_meshid; }
@@ -457,6 +460,7 @@ class Discretization : public CBase_Discretization {
       p | m_voln;
       p | m_vol0;
       p | m_boxvol;
+      p | m_meshblkvol;
       p | m_bid;
       p | m_timer;
       p | m_refined;
@@ -589,6 +593,8 @@ class Discretization : public CBase_Discretization {
     std::vector< tk::real > m_vol0;
     //! Volume of user-defined box IC
     tk::real m_boxvol;
+    //! Volumes of mesh-blocks with user-defined ICs
+    std::vector< tk::real > m_meshblkvol;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of elements we
     //!   contribute to

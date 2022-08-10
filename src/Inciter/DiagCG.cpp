@@ -295,13 +295,12 @@ DiagCG::setup()
 {
   auto d = Disc();
 
-  std::vector< tk::real > blvols;
   // Determine nodes inside user-defined IC box
   for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), d->Inpoel(),
-    d->ElemBlockId(), m_boxnodes, m_nodeblockid, blvols );
+    d->ElemBlockId(), m_boxnodes, m_nodeblockid, m_nusermeshblk );
 
   // Compute volume of user-defined box IC
-  d->boxvol( m_boxnodes, m_nodeblockid, blvols );
+  d->boxvol( m_boxnodes, m_nodeblockid, m_nusermeshblk );
 
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
@@ -316,21 +315,26 @@ DiagCG::setup()
 }
 
 void
-DiagCG::box( tk::real v )
+DiagCG::box( tk::real v, const std::vector< tk::real >& blkvols )
 // *****************************************************************************
 // Receive total box IC volume and set conditions in box
 //! \param[in] v Total volume within user-specified box
+//! \param[in] blkvols Vector of mesh block discrete volumes with user ICs
 // *****************************************************************************
 {
+  Assert(blkvols.size() == m_nusermeshblk,
+    "Incorrect size of block volume vector");
   auto d = Disc();
   const auto& coord = d->Coord();
 
   // Store user-defined box IC volume
   d->Boxvol() = v;
+  d->MeshBlkVol() = blkvols;
 
   // Set initial conditions for all PDEs
   for (auto& eq : g_cgpde)
-    eq.initialize( coord, m_u, d->T(), d->Boxvol(), m_boxnodes );
+    eq.initialize( coord, m_u, d->T(), d->Boxvol(), m_boxnodes, d->MeshBlkVol(),
+      m_nodeblockid );
 
   // Apply symmetry BCs on initial conditions
   for (const auto& eq : g_cgpde)

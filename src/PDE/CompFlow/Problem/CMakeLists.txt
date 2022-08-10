@@ -1,5 +1,4 @@
 add_library(CompFlowProblem
-            BoxInitialization.cpp
             FieldOutput.cpp
             NLEnergyGrowth.cpp
             RayleighTaylor.cpp

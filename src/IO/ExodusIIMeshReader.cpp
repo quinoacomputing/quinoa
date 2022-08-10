@@ -536,7 +536,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
     // Store tet-elements under their respective mesh block ids
     if (elemtype == ExoElemType::TET) {
       for (std::size_t i=0; i<c.size()/ExoNnpe[e]; ++i) {
-        auto& tetblk = m_elemInBlockId[bid[b]];
+        auto& tetblk = m_elemInBlockId[static_cast<std::size_t>(bid[b])];
         tetblk.insert((inpoel.size()/ExoNnpe[e]) + i);
       }
     }
