@@ -2045,6 +2045,17 @@ void MarkShockCells ( const std::size_t nelem,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  // The interface-conservation based indicator will only evaluate the flux jump
+  // for the momentum equations
+  std::array< std::size_t, 2 > VarRange;
+  if(nmat > 1) {          // multi-material flow
+    VarRange[0] = momentumIdx(nmat, 0);
+    VarRange[1] = momentumIdx(nmat, 2);
+  } else {                // single-material flow
+    VarRange[0] = 1;
+    VarRange[1] = 3;
+  }
+
   // Loop over faces
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f) {
     Assert( esuf[2*f] > -1 && esuf[2*f+1] > -1, "Interior element detected "
@@ -2095,6 +2106,9 @@ void MarkShockCells ( const std::size_t nelem,
 
     // Numerator and denominator of the shock indicator
     tk::real numer(0.0), denom(0.0);
+    std::vector< tk::real > fl_jump, fl_avg;
+    fl_jump.resize(3, 0.0);
+    fl_avg.resize(3, 0.0);
 
     for (std::size_t igp=0; igp<ng; ++igp) {
       auto gp = tk::eval_gp( igp, coordfa, coordgp );
@@ -2137,36 +2151,40 @@ void MarkShockCells ( const std::size_t nelem,
       auto fl = flux( nmat, system, ncomp, mat_blk, state[0], {} );
       auto fr = flux( nmat, system, ncomp, mat_blk, state[1], {} );
 
-      std::array< std::size_t, 2 > VarRange;
-      // If multi-material, evaluate the shock indicator based on momentum flux
-      if(nmat > 1) {
-        VarRange[0] = momentumIdx(nmat, 0);
-        VarRange[1] = momentumIdx(nmat, 2);
-      } else {
-        VarRange[0] = 0;
-        VarRange[1] = ncomp - 1;
-      }
-
       for(std::size_t icomp = VarRange[0]; icomp <= VarRange[1]; icomp++) {
         tk::real fn_l(0.0), fn_r(0.0);
         for(std::size_t idir = 0; idir < 3; idir++) {
           fn_l += fl[icomp][idir] * fn[idir];
           fn_r += fr[icomp][idir] * fn[idir];
         }
-        numer += wgp[igp] * (fn_l - fn_r) * (fn_l - fn_r);
-        denom += wgp[igp] * (fn_l + fn_r) * (fn_l + fn_r) * 0.25;
+        auto mark = icomp - VarRange[0];
+        fl_jump[mark] += wgp[igp] * (fn_l - fn_r) * (fn_l - fn_r);
+        fl_avg[mark]  += wgp[igp] * (fn_l + fn_r) * (fn_l + fn_r) * 0.25;
       }
     }
+
+    // Evaluate the numerator and denominator
+    for(std::size_t idir = 0; idir < 3; idir++) {
+      numer += std::sqrt(fl_jump[idir]);
+      denom += std::sqrt(fl_avg[idir]);
+    }
+
     tk::real Ind(0.0);
     if(denom > 1e-8)
-      Ind = std::sqrt(numer / denom);
+      Ind = numer / denom;
     IC[el] = std::max(IC[el], Ind);
     IC[er] = std::max(IC[er], Ind);
   }
 
+  // Evaluate the threshold
+  tk::real coeff(5.0), power(0.0);
+  if(rdof == 10)  power = 1.5;
+  else            power = 1.0;
+  auto thres = coeffstd::pow( 0.001790, power);
+
   // Loop over element to mark shock cell
   for (std::size_t e=0; e<nelem; ++e) {
-    if(fabs(IC[e]) > 0.2)
+    if(IC[e] > thres)
       shockmarker[e] = 1;
     else
       shockmarker[e] = 0;
