@@ -2198,7 +2198,7 @@ flux( const std::size_t nmat,
   for (std::size_t k=0; k<nmat; ++k)
   {
     apk[k] = mat_blk[k]->eos_pressure( system, ugp[densityIdx(nmat, k)], u, v,
-              w, ugp[energyIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k);
+              w, ugp[energyIdx(nmat, k)], ugp[volfracIdx(nmat, k)] );
     p += apk[k];
   }
 
