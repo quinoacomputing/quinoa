@@ -516,7 +516,8 @@ ALECG::setup()
           if (ndset.find(tk::cref_find(d->Lid(),i)) != ndset.end())
             mb[j].insert(blid);
         }
-        Assert(mb[j].size() > 0, "Sending no block data for node");
+        if (m_nusermeshblk > 0)
+          Assert(mb[j].size() > 0, "Sending no block data for node");
         ++j;
       }
       thisProxy[c].comblk( std::vector<std::size_t>(begin(n),end(n)), mb );
@@ -540,8 +541,6 @@ ALECG::comblk( const std::vector< std::size_t >& gid,
 // *****************************************************************************
 {
   Assert( mb.size() == gid.size(), "Size mismatch" );
-
-  using tk::operator+=;
 
   for (std::size_t i=0; i<gid.size(); ++i) {
     for (const auto& blid : mb[i]) {

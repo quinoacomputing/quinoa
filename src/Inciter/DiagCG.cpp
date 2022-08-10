@@ -78,6 +78,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 ),
+  m_nusermeshblk( 0 ),
   m_nodeblockid()
 // *****************************************************************************
 //  Constructor

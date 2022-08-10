@@ -164,12 +164,14 @@ class CompFlow {
       const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
         tag::meshblock >();
       if (mblks.size() > m_system) {
-        std::size_t idMax(0);
-        for (const auto& imb : mblks[m_system]) {
-          idMax = std::max(idMax, imb.get< tag::blockid >());
+        if (!mblks[m_system].empty()) {
+          std::size_t idMax(0);
+          for (const auto& imb : mblks[m_system]) {
+            idMax = std::max(idMax, imb.get< tag::blockid >());
+          }
+          // size is idMax+1 since block ids are usually 1-based
+          nuserblk = nuserblk+idMax+1;
         }
-        // size is idMax+1 since block ids are usually 1-based
-        nuserblk = nuserblk+idMax+1;
       }
       // determine node set for IC mesh blocks
       for (const auto& [blid, elset] : elemblkid) {
@@ -191,7 +193,7 @@ class CompFlow {
     //!    box IC)
     //! \param[in] nodeblkid Node ids associated to mesh block ids, where
     //!   user ICs are set
-    //! \param[in] blockvols Vector of discrete volumes of each block where user
+    //! \param[in] blkvols Vector of discrete volumes of each block where user
     //!   ICs are set
     void initialize(
       const std::array< std::vector< real >, 3 >& coord,

@@ -840,11 +840,14 @@ Discretization::boxvol(
   for (const auto& b : nodes) for (auto i : b) boxvol += m_v[i];
 
   // Compute partial IC mesh block volume
-  std::vector< tk::real > blockvols(nuserblk,0.0);
-  for (const auto& [blid, ndset] : nodeblk) {
-    Assert(blid < blockvols.size(), "Block id not found in volume vector");
-    for (const auto& n : ndset) {
-      blockvols[blid] += m_v[n];
+  std::vector< tk::real > blockvols;
+  if (nuserblk > 0) {
+    blockvols.resize(nuserblk,0.0);
+    for (const auto& [blid, ndset] : nodeblk) {
+      Assert(blid < blockvols.size(), "Block id not found in volume vector");
+      for (const auto& n : ndset) {
+        blockvols[blid] += m_v[n];
+      }
     }
   }
 
