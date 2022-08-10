@@ -43,13 +43,13 @@ class CompFlowProblemTaylorGreen {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t,
+    initialize( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >&,
                 tk::real x, tk::real y, tk::real, tk::real );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
     analyticSolution( ncomp_t system, ncomp_t,
-                      std::vector< EoS_Base* >, tk::real x, tk::real y,
+                      const std::vector< EoS_Base* >&, tk::real x, tk::real y,
                       tk::real, tk::real );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
@@ -58,8 +58,8 @@ class CompFlowProblemTaylorGreen {
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, tk::real x, tk::real y, tk::real, tk::real,
-         std::vector< tk::real >& sv )
+    src( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&, tk::real x,
+         tk::real y, tk::real, tk::real, std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");
       sv[0] = sv[1] = sv[2] = sv[3] = 0.0;

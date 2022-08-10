@@ -19,6 +19,7 @@
 #include "Initialize.hpp"
 #include "Quadrature.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -30,6 +31,7 @@ void
 tk::initialize( ncomp_t system,
                 ncomp_t ncomp,
                 ncomp_t offset,
+                const std::vector< inciter::EoS_Base* >& mat_blk,
                 const Fields& L,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
@@ -100,7 +102,7 @@ tk::initialize( ncomp_t system,
       auto B =
         eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
-      const auto s = solution( system, ncomp, gp[0], gp[1], gp[2], t );
+      const auto s = solution( system, ncomp, mat_blk, gp[0], gp[1], gp[2], t );
 
       auto wt = wgp[igp] * vole;
 

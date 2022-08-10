@@ -131,7 +131,7 @@ class Transport {
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
     }
 
@@ -472,7 +472,8 @@ class Transport {
     //! \return Vector of analytic solution at given spatial location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
+                                        zi, t ); }
 
     //! Return analytic solution for conserved variables
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -482,7 +483,7 @@ class Transport {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::initialize( m_system, m_ncomp, xi, yi, zi, t ); }
+    { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
 
     //! Return time history field output evaluated at time history points
     //! \param[in] h History point data
@@ -543,10 +544,9 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    extrapolate( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
-                 tk::real, tk::real, tk::real, tk::real,
-                 const std::array< tk::real, 3 >&,
-                 const std::vector< EoS_Base* >& )
+    extrapolate( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
+                 const std::vector< tk::real >& ul, tk::real, tk::real,
+                 tk::real, tk::real, const std::array< tk::real, 3 >& )
     {
       return {{ ul, ul }};
     }
@@ -558,10 +558,9 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    inlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
-           tk::real, tk::real, tk::real, tk::real,
-           const std::array< tk::real, 3 >&,
-           const std::vector< EoS_Base* >& )
+    inlet( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&, 
+           const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
+           tk::real, const std::array< tk::real, 3 >& )
     {
       auto ur = ul;
       std::fill( begin(ur), end(ur), 0.0 );
@@ -575,10 +574,9 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    outlet( ncomp_t, ncomp_t, const std::vector< tk::real >& ul,
-            tk::real, tk::real, tk::real, tk::real,
-            const std::array< tk::real, 3 >&,
-            const std::vector< EoS_Base* >& )
+    outlet( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
+            const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
+            tk::real, const std::array< tk::real, 3 >& )
     {
       return {{ ul, ul }};
     }
@@ -596,12 +594,12 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    dirichlet( ncomp_t system, ncomp_t ncomp, const std::vector< tk::real >& ul,
-               tk::real x, tk::real y, tk::real z, tk::real t,
-               const std::array< tk::real, 3 >&,
-               const std::vector< EoS_Base* >& )
+    dirichlet( ncomp_t system, ncomp_t ncomp, 
+               const std::vector< EoS_Base* >& mat_blk,
+               const std::vector< tk::real >& ul, tk::real x, tk::real y,
+               tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::initialize( system, ncomp, x, y, z, t ) }};
+      return {{ ul, Problem::initialize( system, ncomp, mat_blk, x, y, z, t ) }};
     }
 };
 

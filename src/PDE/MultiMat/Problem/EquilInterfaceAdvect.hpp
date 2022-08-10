@@ -24,6 +24,7 @@
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 
@@ -37,25 +38,27 @@ class MultiMatProblemEquilInterfaceAdvect {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t ncomp, tk::real x, tk::real, tk::real,
-                tk::real );
+    initialize( ncomp_t system, ncomp_t ncomp, const std::vector< EoS_Base* >&,
+                tk::real x, tk::real, tk::real, tk::real );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static std::vector< tk::real >
-    analyticSolution( ncomp_t system, ncomp_t ncomp,  tk::real x, tk::real y,
-                      tk::real z, tk::real t )
-    { return initialize( system, ncomp, x, y, z, t ); }
+    analyticSolution( ncomp_t system, ncomp_t ncomp,
+                      const std::vector< EoS_Base* >& mat_blk, tk::real x,
+                      tk::real y, tk::real z, tk::real t )
+    { return initialize( system, ncomp, mat_blk, x, y, z, t ); }
 
     //! Compute and return source term for this problem
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t nmat, tk::real x, tk::real y, tk::real z,
-      tk::real t, std::vector< tk::real >& sv )
+    src( ncomp_t system, ncomp_t nmat, const std::vector< EoS_Base* >& mat_blk,
+         tk::real x, tk::real y, tk::real z, tk::real t,
+         std::vector< tk::real >& sv )
     {
       auto ncomp = 3*nmat+3;
       Assert(sv.size() == ncomp, "Incorrect source vector size");
 
       // solution at given location and time
-      auto s = initialize(system, ncomp, x, y, z, t);
+      auto s = initialize(system, ncomp, mat_blk, x, y, z, t);
       tk::real rhob(0.0);
       for (std::size_t k=0; k<nmat; ++k) {
         rhob += s[densityIdx(nmat,k)];

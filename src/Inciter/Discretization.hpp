@@ -606,6 +606,9 @@ class Discretization : public CBase_Discretization {
     //! Triangle face connecitivity
     std::vector< std::size_t > m_triinpoel;
 
+    //! Generate the Bid data-structure based on the node communication-map
+    std::unordered_map< std::size_t, std::size_t > genBid();
+
     //! Generate {A,x,b} for Laplacian mesh velocity smoother
     std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
     Laplacian( std::size_t ncomp ) const;

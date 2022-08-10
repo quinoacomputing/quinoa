@@ -790,7 +790,7 @@ DiagCG::refine( [[maybe_unused]] const std::vector< tk::real >& l2res )
     thisProxy[ thisIndex ].wait4lhs();
 
     d->startvol();
-    d->Ref()->dtref( {}, m_bnode, {} );
+    d->Ref()->dtref( m_bface, m_bnode, m_triinpoel );
     d->refined() = 1;
 
   } else {      // do not h-refine

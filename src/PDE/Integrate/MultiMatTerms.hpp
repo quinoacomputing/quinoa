@@ -20,6 +20,7 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
+#include "EoS/EoS_Base.hpp"
 
 namespace tk {
 
@@ -78,6 +79,7 @@ void
 pressureRelaxationInt( ncomp_t system,
                        std::size_t nmat,
                        ncomp_t offset,
+                       const std::vector< inciter::EoS_Base* >& mat_blk,
                        const std::size_t ndof,
                        const std::size_t rdof,
                        const std::size_t nelem,
@@ -110,6 +112,7 @@ pressureRelaxationIntFV(
   ncomp_t system,
   std::size_t nmat,
   ncomp_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,
   const std::vector< std::size_t >& inpoel,

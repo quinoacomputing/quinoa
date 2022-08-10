@@ -252,7 +252,8 @@ bndLeastSqConservedVar_P0P1(
                 "appended state vector" );
 
         // Compute the state at the face-center using BC
-        auto ustate = state( system, ncomp, ul, fc[0], fc[1], fc[2], t, fn, mat_blk);
+        auto ustate = state( system, ncomp, mat_blk, ul, fc[0], fc[1], fc[2], t,
+                             fn );
 
         std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1,0),
                                         fc[1]-geoElem(el,2,0),

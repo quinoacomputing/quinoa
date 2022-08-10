@@ -43,13 +43,13 @@ class CompFlowProblemRayleighTaylor {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t, tk::real x, tk::real y,
-                tk::real z, tk::real t );
+    initialize( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >&,
+                tk::real x, tk::real y, tk::real z, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
     analyticSolution( ncomp_t system, ncomp_t,
-                      std::vector< EoS_Base* >, tk::real x, tk::real y,
+                      const std::vector< EoS_Base* >&, tk::real x, tk::real y,
                       tk::real z, tk::real t );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
@@ -62,7 +62,8 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, tk::real x, tk::real y, tk::real z, tk::real t,
+    src( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >& mat_blk,
+         tk::real x, tk::real y, tk::real z, tk::real t,
          std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");
@@ -79,7 +80,7 @@ class CompFlowProblemRayleighTaylor {
       auto g = gamma< tag::compflow >(system);
 
       // evaluate solution at x,y,z,t
-      auto s = initialize( system, 5, x, y, z, t );
+      auto s = initialize( system, 5, mat_blk, x, y, z, t );
 
       // density, velocity, energy, pressure
       auto rho = s[0];

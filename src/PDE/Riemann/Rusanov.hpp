@@ -29,7 +29,7 @@ struct Rusanov {
   using real = tk::real;
 
   //! Rusanov approximate Riemann solver flux function
-  //! \param[in] system Equation system index
+  //! \param[in] mat_blk EOS material block
   //! \param[in] nx X component of the surface normal
   //! \param[in] ny Y component of the surface normal
   //! \param[in] nz Z component of the surface normal
@@ -65,7 +65,7 @@ struct Rusanov {
   //!   to Rusanov
   #pragma omp declare simd
   static void
-  flux( std::size_t system,
+  flux( const std::vector< EoS_Base* >& mat_blk,
         real nx, real ny, real nz,
         real mx, real my, real mz,
         real rL, real ruL, real rvL, real rwL, real reL,
@@ -82,8 +82,8 @@ struct Rusanov {
     auto vr = rvR/rR - w2R;
     auto wr = rwR/rR - w3R;
 
-    auto al = eos_soundspeed< tag::compflow >( system, rL, pL );
-    auto ar = eos_soundspeed< tag::compflow >( system, rR, pR );
+    auto al = mat_blk[0]->eos_soundspeed( rL, pL );
+    auto ar = mat_blk[0]->eos_soundspeed( rR, pR );
 
     // dissipation
     real len = tk::length( {mx,my,mz} );

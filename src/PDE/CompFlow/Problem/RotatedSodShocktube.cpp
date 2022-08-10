@@ -13,12 +13,14 @@
 
 #include "Vector.hpp"
 #include "RotatedSodShocktube.hpp"
+#include "EoS/EoS_Base.hpp"
 
 using inciter::CompFlowProblemRotatedSodShocktube;
 
 tk::InitializeFn::result_type
 CompFlowProblemRotatedSodShocktube::initialize( ncomp_t system,
                                                 ncomp_t ncomp,
+                                        const std::vector< EoS_Base* >& mat_blk,
                                                 tk::real x,
                                                 tk::real y,
                                                 tk::real z,
@@ -41,5 +43,5 @@ CompFlowProblemRotatedSodShocktube::initialize( ncomp_t system,
   tk::real a = -45.0*M_PI/180.0;
   auto c = tk::rotateX( tk::rotateY( tk::rotateZ( {{ x, y, z }}, a ), a ), a );
   return CompFlowProblemSodShocktube::
-           initialize( system, ncomp, c[0], c[1], c[2], t );
+           initialize( system, ncomp, mat_blk, c[0], c[1], c[2], t );
 }

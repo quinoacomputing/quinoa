@@ -12,6 +12,8 @@
 
 #include "FieldOutput.hpp"
 #include "ContainerUtil.hpp"
+#include "Vector.hpp"
+#include "Integrate/Basis.hpp"
 
 namespace inciter {
 
@@ -73,6 +75,175 @@ numericFieldOutput( const tk::Fields& U,
   }
 
   return f;
+}
+
+void
+evalSolution(
+  const Discretization& D,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const std::unordered_map< std::size_t, std::size_t >& addedTets,
+  const std::vector< std::size_t >& ndofel,
+  const tk::Fields& U,
+  const tk::Fields& P,
+  tk::Fields& uElemfields,
+  tk::Fields& pElemfields,
+  tk::Fields& uNodefields,
+  tk::Fields& pNodefields )
+// *****************************************************************************
+// Evaluate solution on incoming (a potentially refined) mesh
+//! \param[in] D Discretization base class to read from
+//! \param[in] inpoel Incoming (potentially refined field-output) mesh
+//!   connectivity
+//! \param[in] coord Incoming (potentially refined Field-output) mesh node
+//!   coordinates
+//! \param[in] addedTets Field-output mesh cells and their parents (local ids)
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \param[in,out] uElemfields Solution elem output fields
+//! \param[in,out] pElemfields Primitive elem output fields
+//! \param[in,out] uNodefields Solution nodal output fields
+//! \param[in,out] pNodefields Primitive nodal output fields
+//! \details This function evaluates the solution on the incoming mesh, and
+//!   stores it in uElemfields, pElemfields, uNodefields, and pNodefields
+//!   appropriately. The incoming mesh can be refined but can also be just the
+//!   mesh the numerical solution is computed on.
+//! \note If the incoming mesh is refined (for field output) compared to the
+//!   mesh the numerical solution is computed on, the solution is evaluated in
+//!   cells as wells as in nodes. If the solution is not refined, the solution
+//!   is evaluated in nodes.
+// *****************************************************************************
+{
+  using tk::dot;
+  using tk::real;
+
+  const auto nelem = inpoel.size()/4;
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto uncomp = U.nprop() / rdof;
+  const auto pncomp = P.nprop() / rdof;
+
+  // If mesh is not refined for field output, cut off ghosts from element
+  // solution. (No need to output ghosts and writer would error.) If mesh is
+  // refined for field output, resize element solution fields to refined mesh.
+  uElemfields.resize( nelem );
+  pElemfields.resize( nelem );
+
+  auto npoin = coord[0].size();
+  uNodefields.resize( npoin );
+  pNodefields.resize( npoin );
+  uNodefields.fill(0.0);
+  pNodefields.fill(0.0);
+
+  const auto& x = coord[0];
+  const auto& y = coord[1];
+  const auto& z = coord[2];
+
+  // Assign values to element-fields
+  for (std::size_t e=0; e<U.nunk(); ++e) {
+    if (e < nelem) {
+      for (std::size_t i=0; i<uncomp; ++i) {
+        uElemfields(e,i,0) = U(e,rdof*i,0);
+      }
+      for (std::size_t i=0; i<pncomp; ++i) {
+        pElemfields(e,i,0) = P(e,rdof*i,0);
+      }
+    }
+  }
+
+  // If mesh is not refined for output, evaluate solution in nodes
+  if (addedTets.empty()) {
+
+    for (std::size_t e=0; e<nelem; ++e) {
+      std::size_t dofe(1);
+      if (!ndofel.empty()) {
+        dofe = ndofel[e];
+      }
+      auto e4 = e*4;
+      // Extract element node coordinates
+      std::array< std::array< real, 3>, 4 > ce{{
+        {{ x[inpoel[e4  ]], y[inpoel[e4  ]], z[inpoel[e4  ]] }},
+        {{ x[inpoel[e4+1]], y[inpoel[e4+1]], z[inpoel[e4+1]] }},
+        {{ x[inpoel[e4+2]], y[inpoel[e4+2]], z[inpoel[e4+2]] }},
+        {{ x[inpoel[e4+3]], y[inpoel[e4+3]], z[inpoel[e4+3]] }} }};
+      // Compute inverse Jacobian
+      auto J = tk::inverseJacobian( ce[0], ce[1], ce[2], ce[3] );
+      // Evaluate solution in child nodes
+      for (std::size_t j=0; j<4; ++j) {
+        std::array< real, 3 >
+           h{{ce[j][0]-ce[0][0], ce[j][1]-ce[0][1], ce[j][2]-ce[0][2] }};
+        auto Bn = tk::eval_basis( dofe,
+                                  dot(J[0],h), dot(J[1],h), dot(J[2],h) );
+        auto u = eval_state( uncomp, 0, rdof, dofe, e, U, Bn, {0, uncomp-1} );
+        auto p = eval_state( pncomp, 0, rdof, dofe, e, P, Bn, {0, pncomp-1} );
+        // Assign child node solution
+        for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[e4+j],i,0) += u[i];
+        for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[e4+j],i,0) += p[i];
+      }
+    }
+
+  // If mesh is refed for output, evaluate solution in elements and nodes of
+  // refined mesh
+  } else {
+
+    const auto& pinpoel = D.Inpoel();  // unrefined (parent) mesh
+
+    for ([[maybe_unused]] const auto& [child,parent] : addedTets) {
+      Assert( child < nelem, "Indexing out of new solution vector" );
+      Assert( parent < pinpoel.size()/4,
+              "Indexing out of old solution vector" );
+    }
+
+    for (const auto& [child,parent] : addedTets) {
+      std::size_t dofe(1);
+      if (!ndofel.empty()) {
+        dofe = ndofel[parent];
+      }
+      // Extract parent element's node coordinates
+      auto p4 = 4*parent;
+      std::array< std::array< real, 3>, 4 > cp{{
+        {{ x[pinpoel[p4  ]], y[pinpoel[p4  ]], z[pinpoel[p4  ]] }},
+        {{ x[pinpoel[p4+1]], y[pinpoel[p4+1]], z[pinpoel[p4+1]] }},
+        {{ x[pinpoel[p4+2]], y[pinpoel[p4+2]], z[pinpoel[p4+2]] }},
+        {{ x[pinpoel[p4+3]], y[pinpoel[p4+3]], z[pinpoel[p4+3]] }} }};
+      // Evaluate inverse Jacobian of the parent
+      auto Jp = tk::inverseJacobian( cp[0], cp[1], cp[2], cp[3] );
+      // Compute child cell centroid
+      auto c4 = 4*child;
+      auto cx = (x[inpoel[c4  ]] + x[inpoel[c4+1]] +
+                 x[inpoel[c4+2]] + x[inpoel[c4+3]]) / 4.0;
+      auto cy = (y[inpoel[c4  ]] + y[inpoel[c4+1]] +
+                 y[inpoel[c4+2]] + y[inpoel[c4+3]]) / 4.0;
+      auto cz = (z[inpoel[c4  ]] + z[inpoel[c4+1]] +
+                 z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
+      // Compute solution in child centroid
+      std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
+      auto B = tk::eval_basis( dofe, dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
+      auto u = eval_state( uncomp, 0, rdof, dofe, parent, U, B, {0, uncomp-1} );
+      auto p = eval_state( pncomp, 0, rdof, dofe, parent, P, B, {0, pncomp-1} );
+      // Assign cell center solution from parent to child
+      for (std::size_t i=0; i<uncomp; ++i) uElemfields(child,i,0) = u[i];
+      for (std::size_t i=0; i<pncomp; ++i) pElemfields(child,i,0) = p[i];
+      // Extract child element's node coordinates
+      std::array< std::array< real, 3>, 4 > cc{{
+        {{ x[inpoel[c4  ]], y[inpoel[c4  ]], z[inpoel[c4  ]] }},
+        {{ x[inpoel[c4+1]], y[inpoel[c4+1]], z[inpoel[c4+1]] }},
+        {{ x[inpoel[c4+2]], y[inpoel[c4+2]], z[inpoel[c4+2]] }},
+        {{ x[inpoel[c4+3]], y[inpoel[c4+3]], z[inpoel[c4+3]] }} }};
+      // Evaluate solution in child nodes
+      for (std::size_t j=0; j<4; ++j) {
+        std::array< real, 3 >
+           hn{{cc[j][0]-cp[0][0], cc[j][1]-cp[0][1], cc[j][2]-cp[0][2] }};
+        auto Bn = tk::eval_basis( dofe,
+                                  dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
+        auto cnu = eval_state(uncomp, 0, rdof, dofe, parent, U, Bn, {0, uncomp-1});
+        auto cnp = eval_state(pncomp, 0, rdof, dofe, parent, P, Bn, {0, pncomp-1});
+        // Assign child node solution
+        for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[c4+j],i,0) += cnu[i];
+        for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[c4+j],i,0) += cnp[i];
+      }
+    }
+  }
 }
 
 } // inciter::

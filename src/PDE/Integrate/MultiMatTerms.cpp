@@ -401,6 +401,7 @@ void
 pressureRelaxationInt( ncomp_t system,
                        std::size_t nmat,
                        ncomp_t offset,
+                       const std::vector< inciter::EoS_Base* >& mat_blk,
                        const std::size_t ndof,
                        const std::size_t rdof,
                        const std::size_t nelem,
@@ -508,8 +509,7 @@ pressureRelaxationInt( ncomp_t system,
         real arhomat = state[densityIdx(nmat, k)];
         real alphamat = state[volfracIdx(nmat, k)];
         apmat[k] = state[ncomp+pressureIdx(nmat, k)];
-        real amat = inciter::eos_soundspeed< tag::multimat >( system, arhomat,
-          apmat[k], alphamat, k );
+        real amat = mat_blk[k]->eos_soundspeed( arhomat, apmat[k], alphamat );
         kmat[k] = arhomat * amat * amat;
         pb += apmat[k];
 
@@ -582,6 +582,7 @@ pressureRelaxationIntFV(
   ncomp_t system,
   std::size_t nmat,
   ncomp_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,
   const std::vector< std::size_t >& inpoel,
@@ -647,8 +648,7 @@ pressureRelaxationIntFV(
       real arhomat = state[densityIdx(nmat, k)];
       real alphamat = state[volfracIdx(nmat, k)];
       apmat[k] = state[ncomp+pressureIdx(nmat, k)];
-      real amat = inciter::eos_soundspeed< tag::multimat >( system, arhomat,
-        apmat[k], alphamat, k );
+      real amat = mat_blk[k]->eos_soundspeed( arhomat, apmat[k], alphamat );
       kmat[k] = arhomat * amat * amat;
       pb += apmat[k];
 

@@ -25,8 +25,9 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::CompFlowProblemShockDensityWave;
 
 tk::InitializeFn::result_type
-CompFlowProblemShockDensityWave::initialize( ncomp_t system,
+CompFlowProblemShockDensityWave::initialize( ncomp_t,
                                              ncomp_t,
+                                        const std::vector< EoS_Base* >& mat_blk,
                                              tk::real x,
                                              tk::real,
                                              tk::real,
@@ -67,7 +68,7 @@ CompFlowProblemShockDensityWave::initialize( ncomp_t system,
     w = 0.0;
   }
   // total specific energy
-  rE = eos_totalenergy< eq >( system, r, u, v, w, p );
+  rE = mat_blk[0]->eos_totalenergy( r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -75,7 +76,7 @@ CompFlowProblemShockDensityWave::initialize( ncomp_t system,
 tk::InitializeFn::result_type
 CompFlowProblemShockDensityWave::analyticSolution( ncomp_t system,
                                                    ncomp_t,
-                                                   std::vector< EoS_Base* >,
+                                        const std::vector< EoS_Base* >& mat_blk,
                                                    tk::real x,
                                                    tk::real,
                                                    tk::real,
@@ -90,7 +91,7 @@ CompFlowProblemShockDensityWave::analyticSolution( ncomp_t system,
 //! \warning This is NOT the analytic solution at all times, only at t=0
 // *****************************************************************************
 {
-  return initialize( system, 0, x, 0, 0, 0 );
+  return initialize( system, 0, mat_blk, x, 0, 0, 0 );
 }
 
 std::vector< std::string >
