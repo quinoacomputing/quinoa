@@ -202,7 +202,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
         // to be computed.
         // In summary, high-order discretization for non-conservative terms in
         // volume fraction equations is avoided for sharp interface problems.
-        if (ndof <= 4) {
+        if (ndof <= 4 || intsharp == 1) {
           for(std::size_t idof=0; idof<ndof; ++idof)
             ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
                                            * riemannDeriv[3*nmat+idof][e];
