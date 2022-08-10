@@ -611,9 +611,8 @@ VertexBasedMultiMat_P1(
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic,
           phic_p2);
 
-      if(intsharp == 0)
-        PositivityLimitingMultiMat(nmat, system, offset, rdof, e, inpoel, coord,
-          U, P, phic, phic_p2, phip, phip_p2);
+      PositivityLimitingMultiMat(nmat, system, offset, rdof, e, inpoel, coord,
+        U, P, phic, phic_p2, phip, phip_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -743,16 +742,14 @@ VertexBasedMultiMat_P2(
         // If DG(P2), first project the P2-polynomial solution to P1 solution
         // space and then apply the limiting function
         for (std::size_t c=0; c<ncomp; ++c) {
-          for(std::size_t idof = 4; idof < rdof; idof++) {
-            auto mark = c * rdof + idof;
-            U(e, mark, offset) = 0.0;
-          }
+          auto mark = c * rdof;
+          for(std::size_t idof = 4; idof < rdof; idof++)
+            U(e, mark+idof, offset) = 0.0;
         }
         for (std::size_t c=0; c<nprim; ++c) {
           auto mark = c * rdof;
-          for(std::size_t idof = 4; idof < rdof; idof++) {
+          for(std::size_t idof = 4; idof < rdof; idof++)
             P(e, mark+idof, offset) = 0.0;
-          }
         }
 
         // Obtain limiter coefficient for P1 conserved quantities
@@ -761,7 +758,7 @@ VertexBasedMultiMat_P2(
         // Obtain limiter coefficient for P1 primitive quantities
         VertexBasedLimiting(prim, P, esup, inpoel, coord, e, rdof, dof_el,
           offset, nprim, phip_p1, {0, nprim-1});
-      } else {
+      } /* else {
         // When shockmarker is 0, the volume fraction, density and energy
         // of minor material will still be limited to ensure a stable solution.
         VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof, dof_el,
@@ -786,9 +783,9 @@ VertexBasedMultiMat_P2(
               offset, nprim, phip_p1, VarRange);
           }
         }
-      }
+      }*/
 
-      if(ndof > 1 && intsharp == 0)
+      if(ndof > 1 && intsharp == 0 && nmat > 1)
         BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U,
           phic_p1, phic_p2);
 
