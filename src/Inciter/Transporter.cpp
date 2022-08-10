@@ -1350,6 +1350,8 @@ Transporter::boxvol( tk::real* meshdata, int n )
 //! \param[in] n Size of vector, automatically computed by Charm
 // *****************************************************************************
 {
+  Assert(n>=2, "mesh data size incorrect");
+
   // extract summed mesh id from vector
   tk::real summeshid = meshdata[n-1];
   auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
@@ -1360,7 +1362,7 @@ Transporter::boxvol( tk::real* meshdata, int n )
 
   // extract summed mesh block volumes from the vector
   std::vector< tk::real > blockvols;
-  for (std::size_t blid=0; blid<n-2; ++blid) {
+  for (std::size_t blid=0; blid<(static_cast<std::size_t>(n)-2); ++blid) {
     blockvols.push_back(meshdata[blid]);
     if (blockvols[blid] > 0.0)
       printer().diag( "Mesh block " + std::to_string(blid) +

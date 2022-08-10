@@ -852,10 +852,9 @@ Discretization::boxvol(
   }
 
   // Sum up box IC volume across all chares
-  std::vector< tk::real > meshdata(blockvols);
+  auto meshdata = blockvols;
   meshdata.push_back(boxvol);
   meshdata.push_back(static_cast<tk::real>(m_meshid));
-  //std::vector< tk::real > meshdata{ boxvol, static_cast<tk::real>(m_meshid) };
   contribute( meshdata, CkReduction::sum_double,
     CkCallback(CkReductionTarget(Transporter,boxvol), m_transporter) );
 }
