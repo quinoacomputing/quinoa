@@ -80,7 +80,7 @@ VertexBasedCompflow_P1(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const FluxFn& flux,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker );
 
@@ -102,7 +102,7 @@ VertexBasedCompflow_P2(
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
-  const FluxFn& flux,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker );
 
@@ -120,7 +120,7 @@ VertexBasedMultiMat_P1(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const FluxFn& flux,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -145,7 +145,7 @@ VertexBasedMultiMat_P2(
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
-  const FluxFn& flux,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -290,19 +290,10 @@ void MarkShockCells ( const std::size_t nelem,
                       const inciter::FaceData& fd,
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
-                      const FluxFn& flux,
+                      const tk::FluxFn& flux,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker );
-
-//! Function to evaluate the flux
-//std::vector< std::array< tk::real, 3 > >
-//flux( const std::size_t nmat,
-//      ncomp_t system,
-//      ncomp_t ncomp,
-//      const std::vector< EoS_Base* >& mat_blk,
-//      const std::vector< tk::real >& ugp,
-//      const std::vector< std::array< tk::real, 3 > >& );
 
 //! Clean up the state of trace materials for multi-material PDE system
 bool

@@ -332,7 +332,7 @@ VertexBasedCompflow_P1(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const FluxFn& flux,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -413,7 +413,7 @@ VertexBasedCompflow_P2(
   [[maybe_unused]] const std::unordered_map< std::size_t, std::size_t >& bid,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& uNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& mtInv,
-  const FluxFn& flux,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -506,7 +506,7 @@ VertexBasedMultiMat_P1(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const FluxFn& flux,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -673,7 +673,7 @@ VertexBasedMultiMat_P2(
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& uNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& pNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& mtInv,
-  const FluxFn& flux,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -2009,7 +2009,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const inciter::FaceData& fd,
                       [[maybe_unused]] const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
-                      const FluxFn& flux,
+                      const tk::FluxFn& flux,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker )
@@ -2157,8 +2157,8 @@ void MarkShockCells ( const std::size_t nelem,
               "appended boundary state vector" );
 
       // Evaluate the flux
-      auto fl = flux( nmat, system, ncomp, mat_blk, state[0], {} );
-      auto fr = flux( nmat, system, ncomp, mat_blk, state[1], {} );
+      auto fl = flux( system, ncomp, mat_blk, state[0], {} );
+      auto fr = flux( system, ncomp, mat_blk, state[1], {} );
 
       for(std::size_t icomp = VarRange[0]; icomp <= VarRange[1]; icomp++) {
         tk::real fn_l(0.0), fn_r(0.0);
@@ -2199,47 +2199,6 @@ void MarkShockCells ( const std::size_t nelem,
       shockmarker[e] = 0;
   }
 }
-
-//std::vector< std::array< tk::real, 3 > >
-//flux( const std::size_t nmat,
-//      ncomp_t system,
-//      ncomp_t ncomp,
-//      const std::vector< EoS_Base* >& mat_blk,
-//      const std::vector< tk::real >& ugp,
-//      const std::vector< std::array< tk::real, 3 > >& )
-//{
-//  std::vector< std::array< tk::real, 3 > > fl( ncomp );
-//
-//  tk::real rho(0.0), p(0.0);
-//  for (std::size_t k=0; k<nmat; ++k)
-//    rho += ugp[densityIdx(nmat, k)];
-//
-//  auto u = ugp[momentumIdx(nmat, 0)] / rho;
-//  auto v = ugp[momentumIdx(nmat, 1)] / rho;
-//  auto w = ugp[momentumIdx(nmat, 2)] / rho;
-//
-//  std::vector< tk::real > apk( nmat, 0.0 );
-//  for (std::size_t k=0; k<nmat; ++k)
-//  {
-//    apk[k] = mat_blk[k]->eos_pressure( system, ugp[densityIdx(nmat, k)], u, v,
-//              w, ugp[energyIdx(nmat, k)], ugp[volfracIdx(nmat, k)] );
-//    p += apk[k];
-//  }
-//
-//  fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
-//  fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
-//  fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
-//
-//  fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
-//  fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
-//  fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
-//
-//  fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
-//  fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
-//  fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
-//
-//  return fl;
-//}
 
 bool
 cleanTraceMultiMat(
