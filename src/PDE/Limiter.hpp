@@ -290,6 +290,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const inciter::FaceData& fd,
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
+                      const FluxFn& flux,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker );
