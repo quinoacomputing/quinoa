@@ -1036,6 +1036,20 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  struct check_shock_indicator_errors : pegtl::success {};
+  //! Do error checking for the shock_indicator...end block
+  template<>
+  struct action< check_shock_indicator_errors > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      auto& mesh_size =
+        stack.template get< tag::shock_indicator, tag::mesh_size >();
+      if (std::fabs(mesh_size) < 1e-15)
+        Message< Stack, ERROR, MsgKey::PREFTOL >( stack, in );
+    }
+  };
+
+  //! Rule used to trigger action
   struct match_pointname : pegtl::success {};
   //! \brief Match PDF name to the registered ones
   //! \details This is used to check the set of PDF names dependent previously
@@ -2081,6 +2095,24 @@ namespace deck {
                          >,
            tk::grm::check_pref_errors > {};
 
+  //! shock indicator (shock_indicator) ...end block
+  struct shock_indicator :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::shock_indicator >::pegtl_string >,
+           tk::grm::block< use< kw::end >,
+                         tk::grm::control< use< kw::shock_indicator_mesh_size >,
+                                           pegtl::digit,
+                                           tk::grm::Store,
+                                           tag::shock_indicator,
+                                           tag::mesh_size  >,
+                         tk::grm::control< use< kw::shock_indicator_coeff >,
+                                           pegtl::digit,
+                                           tk::grm::Store,
+                                           tag::shock_indicator,
+                                           tag::coeff >
+                       >,
+           tk::grm::check_shock_indicator_errors > {};
+
   //! Match output variable alias
   struct outvar_alias :
          tk::grm::quoted< tk::grm::set_outvar_alias > {};
@@ -2196,6 +2228,7 @@ namespace deck {
                            amr,
                            ale,
                            pref,
+                           shock_indicator,
                            partitioning,
                            couple,
                            field_output,

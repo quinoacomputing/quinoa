@@ -135,6 +135,13 @@ using pref = tk::TaggedTuple< brigand::list<
   , tag::tolref,      tk::real            //!< Threshold of p-refinement
 > >;
 
+//! shock indicator options
+using shock_indicator = tk::TaggedTuple< brigand::list<
+    tag::shock_indicator,     bool                //!< Shock indicator on/off
+  , tag::mesh_size,           tk::real            //!< Mesh size
+  , tag::coeff,               tk::real            //!< Coefficient
+> >;
+
 //! Discretization parameters storage
 using discretization = tk::TaggedTuple< brigand::list<
     tag::nstep,  kw::nstep::info::expect::type  //!< Number of time steps

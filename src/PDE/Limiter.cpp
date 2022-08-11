@@ -2034,6 +2034,10 @@ void MarkShockCells ( const std::size_t nelem,
 //!   doi: https://doi.org/10.1016/j.jcp.2021.110618
 // *****************************************************************************
 {
+  const auto mesh_size = g_inputdeck.get< tag::shock_indicator, tag::mesh_size >();
+  const auto coeff = g_inputdeck.get< tag::shock_indicator, tag::coeff >();
+  std::cout << "shock = "<< coeff << "\t" << mesh_size << "\n";
+
   std::vector< tk::real > IC(U.nunk(), 0.0);
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
@@ -2177,10 +2181,10 @@ void MarkShockCells ( const std::size_t nelem,
   }
 
   // Evaluate the threshold
-  tk::real coeff(5.0), power(0.0);
+  tk::real power = 0.0;
   if(rdof == 10)  power = 1.5;
   else            power = 1.0;
-  auto thres = coeffstd::pow( 0.001790, power);
+  auto thres = coeff * std::pow( mesh_size, power);
 
   // Loop over element to mark shock cell
   for (std::size_t e=0; e<nelem; ++e) {
