@@ -531,14 +531,14 @@ class MultiMat {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, U, P,
+          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, flux,U, P,
           nmat, shockmarker );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
       {
         VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, pNodalExtrm, mtInv, U, P, nmat, shockmarker );
+          uNodalExtrm, pNodalExtrm, mtInv, flux, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {

@@ -332,6 +332,7 @@ VertexBasedCompflow_P1(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
+  const FluxFn& flux,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -356,7 +357,7 @@ VertexBasedCompflow_P1(
 
   if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >())
     MarkShockCells(nelem, 1, system, offset, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, U, U, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -412,6 +413,7 @@ VertexBasedCompflow_P2(
   [[maybe_unused]] const std::unordered_map< std::size_t, std::size_t >& bid,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& uNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& mtInv,
+  const FluxFn& flux,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -443,7 +445,7 @@ VertexBasedCompflow_P2(
 
   if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >())
     MarkShockCells(nelem, 1, system, offset, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, U, U, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -504,6 +506,7 @@ VertexBasedMultiMat_P1(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
+  const FluxFn& flux,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -538,7 +541,7 @@ VertexBasedMultiMat_P1(
   // Evaluate the interface condition and mark the shock cells
   if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >())
     MarkShockCells(nelem, nmat, system, offset, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, U, P, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -670,6 +673,7 @@ VertexBasedMultiMat_P2(
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& uNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& pNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& mtInv,
+  const FluxFn& flux,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -712,7 +716,7 @@ VertexBasedMultiMat_P2(
   // Evaluate the interface condition and mark the shock cells
   if(inciter::g_inputdeck.get< tag::discr, tag::shock_detection >())
     MarkShockCells(nelem, nmat, system, offset, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, U, P, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -2005,6 +2009,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const inciter::FaceData& fd,
                       [[maybe_unused]] const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
+                      const FluxFn& flux,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker )
@@ -2023,6 +2028,7 @@ void MarkShockCells ( const std::size_t nelem,
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
+//! \param[in] flux Flux function to use
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in, out] shockmarker Vector of the shock indicator
@@ -2195,46 +2201,46 @@ void MarkShockCells ( const std::size_t nelem,
   }
 }
 
-std::vector< std::array< tk::real, 3 > >
-flux( const std::size_t nmat,
-      ncomp_t system,
-      ncomp_t ncomp,
-      const std::vector< EoS_Base* >& mat_blk,
-      const std::vector< tk::real >& ugp,
-      const std::vector< std::array< tk::real, 3 > >& )
-{
-  std::vector< std::array< tk::real, 3 > > fl( ncomp );
-
-  tk::real rho(0.0), p(0.0);
-  for (std::size_t k=0; k<nmat; ++k)
-    rho += ugp[densityIdx(nmat, k)];
-
-  auto u = ugp[momentumIdx(nmat, 0)] / rho;
-  auto v = ugp[momentumIdx(nmat, 1)] / rho;
-  auto w = ugp[momentumIdx(nmat, 2)] / rho;
-
-  std::vector< tk::real > apk( nmat, 0.0 );
-  for (std::size_t k=0; k<nmat; ++k)
-  {
-    apk[k] = mat_blk[k]->eos_pressure( system, ugp[densityIdx(nmat, k)], u, v,
-              w, ugp[energyIdx(nmat, k)], ugp[volfracIdx(nmat, k)] );
-    p += apk[k];
-  }
-
-  fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
-  fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
-  fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
-
-  fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
-  fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
-  fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
-
-  fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
-  fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
-  fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
-
-  return fl;
-}
+//std::vector< std::array< tk::real, 3 > >
+//flux( const std::size_t nmat,
+//      ncomp_t system,
+//      ncomp_t ncomp,
+//      const std::vector< EoS_Base* >& mat_blk,
+//      const std::vector< tk::real >& ugp,
+//      const std::vector< std::array< tk::real, 3 > >& )
+//{
+//  std::vector< std::array< tk::real, 3 > > fl( ncomp );
+//
+//  tk::real rho(0.0), p(0.0);
+//  for (std::size_t k=0; k<nmat; ++k)
+//    rho += ugp[densityIdx(nmat, k)];
+//
+//  auto u = ugp[momentumIdx(nmat, 0)] / rho;
+//  auto v = ugp[momentumIdx(nmat, 1)] / rho;
+//  auto w = ugp[momentumIdx(nmat, 2)] / rho;
+//
+//  std::vector< tk::real > apk( nmat, 0.0 );
+//  for (std::size_t k=0; k<nmat; ++k)
+//  {
+//    apk[k] = mat_blk[k]->eos_pressure( system, ugp[densityIdx(nmat, k)], u, v,
+//              w, ugp[energyIdx(nmat, k)], ugp[volfracIdx(nmat, k)] );
+//    p += apk[k];
+//  }
+//
+//  fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
+//  fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
+//  fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
+//
+//  fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
+//  fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
+//  fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
+//
+//  fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
+//  fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
+//  fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
+//
+//  return fl;
+//}
 
 bool
 cleanTraceMultiMat(

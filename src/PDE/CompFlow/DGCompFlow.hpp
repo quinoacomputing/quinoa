@@ -329,12 +329,12 @@ class CompFlow {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
         VertexBasedCompflow_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, U,
+          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
           shockmarker);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, mtInv, U, shockmarker);
+          uNodalExtrm, mtInv, flux, U, shockmarker);
     }
 
     //! Update the conservative variable solution for this PDE system
