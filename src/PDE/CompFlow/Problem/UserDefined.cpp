@@ -70,7 +70,7 @@ CompFlowProblemUserDefined::initialize( ncomp_t system,
     const auto& c_v = cv< tag::compflow >(system);
     u[4] = u[0] * bgtempic[system][0] * c_v;
   } else Throw( "IC background energy cannot be computed. User must specify "
-                "one of background pressure, energy, or velocity." );
+                "one of background pressure, energy, or temperature." );
 
   return u;
 }

@@ -163,6 +163,7 @@ class CompFlow {
       // size IC mesh blocks volume vector
       const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
         tag::meshblock >();
+      // if mesh blocks have been specified for this system
       if (mblks.size() > m_system) {
         if (!mblks[m_system].empty()) {
           std::size_t idMax(0);
@@ -171,14 +172,15 @@ class CompFlow {
           }
           // size is idMax+1 since block ids are usually 1-based
           nuserblk = nuserblk+idMax+1;
-        }
-      }
-      // determine node set for IC mesh blocks
-      for (const auto& [blid, elset] : elemblkid) {
-        if (!elset.empty()) {
-          auto& ndset = nodeblkid[blid];
-          for (auto ie : elset) {
-            for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
+
+          // determine node set for IC mesh blocks
+          for (const auto& [blid, elset] : elemblkid) {
+            if (!elset.empty()) {
+              auto& ndset = nodeblkid[blid];
+              for (auto ie : elset) {
+                for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
+              }
+            }
           }
         }
       }
@@ -252,7 +254,6 @@ class CompFlow {
 
         // initialize user-defined mesh block ICs
         if (mblks.size() > m_system) {
-          std::size_t bcnt = 0;
           for (const auto& b : mblks[m_system]) { // for all blocks
             auto blid = b.get< tag::blockid >();
             auto V_ex = b.get< tag::volume >();
@@ -264,7 +265,6 @@ class CompFlow {
                   V_ex/blkvols[blid], V_ex, t, b, bgpre, c_v, s);
               }
             }
-            ++bcnt;
           }
         }
 

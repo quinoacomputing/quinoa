@@ -844,9 +844,10 @@ Discretization::boxvol(
   if (nuserblk > 0) {
     blockvols.resize(nuserblk,0.0);
     for (const auto& [blid, ndset] : nodeblk) {
-      Assert(blid < blockvols.size(), "Block id not found in volume vector");
-      for (const auto& n : ndset) {
-        blockvols[blid] += m_v[n];
+      // The following if-test makes sure we access volumes only of mesh blocks
+      // with user-specified ICs
+      if (blid < nuserblk) {
+        for (const auto& n : ndset) blockvols[blid] += m_v[n];
       }
     }
   }
