@@ -82,7 +82,7 @@ class MultiMat {
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
-        , subsonicOutlet
+        , farfieldOutlet
         , extrapolate } ) );
 
       // EoS initialization
