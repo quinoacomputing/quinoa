@@ -132,7 +132,9 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] inbox List of elements at which box user ICs are set for
-    //!    each IC box
+    //!   each IC box
+    //! \param[in] elemblkid Element ids associated with mesh block ids where
+    //!   user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
@@ -140,6 +142,8 @@ class MultiMat {
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblkid,
       tk::Fields& unk,
       tk::real t,
       const std::size_t nielem ) const
@@ -150,15 +154,22 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
+      const auto& icmbk = ic.get< tag::meshblock >();
 
-      // Set initial conditions inside user-defined IC box
+      // Set initial conditions inside user-defined IC boxes and mesh blocks
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
+        // inside user-defined box
         if (icbox.size() > m_system) {
           std::size_t bcnt = 0;
           for (const auto& b : icbox[m_system]) {   // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
+              std::vector< tk::real > box
+                { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+                  b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+                  b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+              auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
                 s[c] = unk(e,mark,m_offset);
@@ -166,7 +177,7 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, m_mat_blk, 1.0, t, b, s );
+              initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -174,6 +185,26 @@ class MultiMat {
               }
             }
             ++bcnt;
+          }
+        }
+
+        // inside user-specified mesh blocks
+        if (icmbk.size() > m_system) {
+          for (const auto& b : icmbk[m_system]) { // for all blocks
+            auto blid = b.get< tag::blockid >();
+            auto V_ex = b.get< tag::volume >();
+            if (elemblkid.find(blid) != elemblkid.end()) {
+              const auto& elset = tk::cref_find(elemblkid, blid);
+              if (elset.find(e) != elset.end()) {
+                initializeBox<ctr::meshblock>( m_system, m_mat_blk, V_ex, t, b,
+                  s );
+                // store initialization in solution vector
+                for (std::size_t c=0; c<m_ncomp; ++c) {
+                  auto mark = c*rdof;
+                  unk(e,mark,m_offset) = s[c];
+                }
+              }
+            }
           }
         }
       }

@@ -229,7 +229,7 @@ FV::box( tk::real v, const std::vector< tk::real >& )
   for (const auto& eq : g_fvpde)
   {
     eq.initialize( m_lhs, myGhosts()->m_inpoel, myGhosts()->m_coord, m_boxelems,
-      m_u, d->T(), myGhosts()->m_fd.Esuel().size()/4 );
+      d->ElemBlockId(), m_u, d->T(), myGhosts()->m_fd.Esuel().size()/4 );
     eq.updatePrimitives( m_u, m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
 

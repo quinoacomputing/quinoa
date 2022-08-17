@@ -984,7 +984,8 @@ Refiner::writeMesh( const std::string& basefilename,
   std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
   std::vector< tk::real > blkvols;
-  std::unordered_map< std::size_t, std::set< std::size_t > > nodeblockid;
+  std::unordered_map< std::size_t, std::set< std::size_t > > nodeblockid,
+    elemblockid;
 
   // Prepare node or element fields for output to file
   if (centering == tk::Centering::NODE) {
@@ -1021,7 +1022,8 @@ Refiner::writeMesh( const std::string& basefilename,
     for (const auto& eq : g_dgpde)
       eq.initialize( lhs, m_inpoel, m_coord, inbox, u, t0, m_inpoel.size()/4 );
     for (const auto& eq : g_fvpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, u, t0, m_inpoel.size()/4 );
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, elemblockid, u, t0,
+        m_inpoel.size()/4 );
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -1521,7 +1523,8 @@ Refiner::nodeinit( std::size_t npoin,
   std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
   std::vector< tk::real > blkvols;
-  std::unordered_map< std::size_t, std::set< std::size_t > > nodeblockid;
+  std::unordered_map< std::size_t, std::set< std::size_t > > nodeblockid,
+    elemblockid;
 
   if (centering == tk::Centering::NODE) {
 
@@ -1544,7 +1547,8 @@ Refiner::nodeinit( std::size_t npoin,
     for (const auto& eq : g_fvpde)
       eq.lhs( geoElem, lhs );
     for (const auto& eq : g_fvpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, ue, t0, esuel.size()/4 );
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, elemblockid, ue, t0,
+        esuel.size()/4 );
 
     // Transfer initial conditions from cells to nodes
     for (std::size_t p=0; p<npoin; ++p) {    // for all mesh nodes on this chare
