@@ -25,7 +25,9 @@ using ncomp_t = kw::ncomp::info::expect::type;
 class JWL: public EoS_Base {
 
   private:
-    tk::real m_gamma, m_pstiff, m_cv;
+    tk::real m_gamma, m_pstiff, m_cv, m_rho0, m_a, m_b, m_r1, m_r2, m_w, m_e0,
+             m_tr, m_rhor;
+
 
     tk::real intEnergy( tk::real rho, tk::real pr )
     {
@@ -34,14 +36,70 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w = m_w;
-      tk::real e0 = m_e0
+      tk::real w_jwl = m_w;
+      tk::real e0 = m_e0;
 
-      tk::real e = e0 + 1.0/w/rho*( pr
-                    - a*(1.0 - w*rho/r1/rho0)*exp(-r1*rho0/rho)
-                    - b*(1.0 - w*rho/r2/rho0)*exp(-r2*rho0/rho) );
+      tk::real e = e0 + 1.0/w_jwl/rho*( pr
+                    - a*(1.0 - w_jwl*rho/r1/rho0)*exp(-r1*rho0/rho)
+                    - b*(1.0 - w_jwl*rho/r2/rho0)*exp(-r2*rho0/rho) );
 
       return e;
+    }
+
+
+    tk::real bisection( tk::real a, tk::real b, tk::real p_known, tk::real t_known )
+    {
+      tk::real tol = 1e-10;
+      std::size_t maxiter = 1000;
+      std::size_t i;
+      tk::real c;
+      tk::real root(0);
+
+      // function to minimize = p_known - PfromRT
+      // bounds b > a
+
+      while (i < maxiter)
+      {
+        c = (a + b)/2.0;
+        if ( p_known - PfromRT( c, t_known) <= 1e-16 or (b - a)/2.0 < tol )
+        {
+          root = c;
+          break;
+        }
+
+        i++;
+        if ( std::copysign( 1.0, p_known - PfromRT( c, t_known) ) ==
+             std::copysign( 1.0, p_known - PfromRT( a, t_known) ) )
+        {
+          a = c;
+        }
+        else
+        {
+          b = c;
+        }
+
+      }
+      return root;
+    }
+
+
+    tk::real PfromRT( tk::real rho, tk::real T)
+    {
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w_jwl = m_w;
+      tk::real c_v = m_cv;
+      tk::real t_r = m_tr;      // reference temperature
+      tk::real rho_r = m_rhor;  // reference density
+      tk::real pr;
+
+      pr = a*exp(-r1*rho0/rho) + b*exp(-r2*rho0/rho) + w_jwl*(c_v*T*rho
+         - c_v*t_r*std::pow(rho0/rho_r, w_jwl)*rho0/std::pow(rho0/rho, w_jwl+1));
+
+      return pr;
     }
 
   public:
@@ -66,11 +124,13 @@ class JWL: public EoS_Base {
     //! \return Material density calculated using the stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real g = m_gamma;
-      tk::real p_c = m_pstiff;
-      tk::real c_v = m_cv;
+      tk::real rho_r = m_rhor;  // reference density
+      tk::real r_guessL = 1e-2*rho_r;  // left density bound
+      tk::real r_guessR = 1e2*rho_r;   // right density bound
+      tk::real rho;
+
+      rho = bisection( r_guessL, r_guessR, pr, temp );
     
-      tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
       return rho;
     }
 
@@ -105,17 +165,17 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w = m_w;
-      tk::real e0 = m_e0
+      tk::real w_jwl = m_w;
+      tk::real e0 = m_e0;
 
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
       // internal energy
       tk::real rhoe = (arhoE - 0.5*arho*(u*u + v*v + w*w))/alpha;
 
-      tk::real partpressure = a*(alpha*1.0 - w*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
-                            + b*(alpha*1.0 - w*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
-                            + w*(rhoe - e0)*arho/rho0;
+      tk::real partpressure = a*(alpha*1.0 - w_jwl*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
+                            + b*(alpha*1.0 - w_jwl*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
+                            + w_jwl*(rhoe - e0)*arho/rho0;
 
       // check partial pressure divergence
       if (!std::isfinite(partpressure)) {
@@ -156,17 +216,17 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w = m_w;
+      tk::real w_jwl = m_w;
 
       // limiting pressure to near-zero
       auto apr_eff = std::max( 1.0e-15, apr );
 
       auto co1 = rho0*alpha*alpha/(arho*arho);
-      auto co2 = alpha*(1.0+w)/arho;
+      auto co2 = alpha*(1.0+w_jwl)/arho;
 
       tk::real ss = a*(r1*co1 - co2) * exp(-r1*alpha*rho0/arho)
                   + b*(r2*co1 - co2) * exp(-r2*alpha*rho0/arho)
-                  + (1.0+w)*apr_eff/arho;
+                  + (1.0+w_jwl)*apr_eff/arho;
 
       ss = std::sqrt(ss);
     
@@ -201,19 +261,12 @@ class JWL: public EoS_Base {
     //! \return Material specific total energy using the stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real rho0 = m_rho0;
-      tk::real a = m_a;
-      tk::real b = m_b;
-      tk::real r1 = m_r1;
-      tk::real r2 = m_r2;
-      tk::real w = m_w;
-      tk::real e0 = m_e0
 
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
     
       tk::real rhoE = intEnergy( rho, pr )
-                    + 0.5*arho*(u*u + v*v + w*w);
+                    + 0.5*rho*(u*u + v*v + w*w);
 
       return rhoE;
     }
@@ -244,21 +297,21 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w = m_w;
+      tk::real w_jwl = m_w;
       tk::real c_v = m_cv;      // constant specific heat
       tk::real t_r = m_tr;      // reference temperature
       tk::real rho_r = m_rhor;  // reference density
+
+      tk::real rho = arho/alpha;
 
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
     
       tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho - 1.0/rho0*(
-                   a/r1*exp(-r1*rho0*alpha/arho)
-                 + b/r2*exp(-r2*rho0*alpha/arho) ))/c_v
-                 + ( t_r*std::pow(rho0/rho_r, w) )/(rho0/arho/alpha)
+                   a/r1*exp(-r1*rho0/rho)
+                 + b/r2*exp(-r2*rho0/rho) ))/c_v
+                 + ( t_r*std::pow(rho0/rho_r, w_jwl) )/std::pow(rho0/rho, w_jwl);
 
-//      tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) 
-//                   / (arho*c_v);
       return t;
     }
 
