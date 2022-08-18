@@ -63,7 +63,7 @@ void initializeMaterialEoS( std::size_t system,
       [[maybe_unused]] auto rho0_jwl =
         getmatprop< tag::multimat, tag::rho0_jwl >(system, k);
       // TODO: update eos-ctor call when the JWL class is updated
-      mat_blk.push_back(new JWL(g, 0.0, c_v));
+      mat_blk.push_back(new JWL(g, c_v, rho0_jwl, A_jwl, B_jwl, R1_jwl, R2_jwl));
     }
   }
 }
