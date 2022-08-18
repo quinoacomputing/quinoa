@@ -1982,7 +1982,7 @@ BoundPreservingLimitingFunction( const tk::real min,
 void PositivityLimitingMultiMat( std::size_t nmat,
                                  std::size_t system,
                                  ncomp_t offset,
-                                 std::size_t ndof,
+                                 std::size_t rdof,
                                  std::size_t ndof_el,
                                  std::size_t e,
                                  const std::vector< std::size_t >& inpoel,
@@ -1998,7 +1998,7 @@ void PositivityLimitingMultiMat( std::size_t nmat,
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] system Equation system index
 //! \param[in] offset Index for equation system
-//! \param[in] ndof Total number of reconstructed dofs
+//! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] ndof_el Number of dofs for element e
 //! \param[in] e Element being checked for consistency
 //! \param[in] inpoel Element connectivity
@@ -2015,8 +2015,8 @@ void PositivityLimitingMultiMat( std::size_t nmat,
 //!   primitive quantities
 // *****************************************************************************
 {
-  const auto ncomp = U.nprop() / ndof;
-  const auto nprim = P.nprop() / ndof;
+  const auto ncomp = U.nprop() / rdof;
+  const auto nprim = P.nprop() / rdof;
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -2068,9 +2068,9 @@ void PositivityLimitingMultiMat( std::size_t nmat,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-      auto state = eval_state(ncomp, offset, ndof, ndof_el, e, U, B,
+      auto state = eval_state(ncomp, offset, rdof, ndof_el, e, U, B,
         {0, ncomp-1});
-      auto sprim = eval_state(nprim, offset, ndof, ndof_el, e, P, B,
+      auto sprim = eval_state(nprim, offset, rdof, ndof_el, e, P, B,
         {0, nprim-1});
 
       for(std::size_t imat = 0; imat < nmat; imat++)
@@ -2078,20 +2078,20 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
         // Evaluate the limiting coefficient for material density
         auto rho = state[densityIdx(nmat, imat)];
-        auto rho_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
+        auto rho_avg = U(e, densityDofIdx(nmat, imat, rdof, 0), offset);
         phi_rho = PositivityLimiting(min, rho, rho_avg);
         phic_bound[densityIdx(nmat, imat)] =
           std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
         // Evaluate the limiting coefficient for material energy
         auto rhoe = state[energyIdx(nmat, imat)];
-        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, ndof, 0), offset);
+        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, rdof, 0), offset);
         phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
         auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
         auto pre = sprim[pressureIdx(nmat, imat)];
-        auto pre_avg = P(e, pressureDofIdx(nmat, imat, ndof, 0), offset);
+        auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0), offset);
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
         phip_bound[pressureIdx(nmat, imat)] =
           std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
@@ -2117,9 +2117,9 @@ void PositivityLimitingMultiMat( std::size_t nmat,
       auto B = tk::eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp],
         coordgp[2][igp] );
 
-      auto state = eval_state(ncomp, offset, ndof, ndof_el, e, U, B,
+      auto state = eval_state(ncomp, offset, rdof, ndof_el, e, U, B,
         {0, ncomp-1});
-      auto sprim = eval_state(nprim, offset, ndof, ndof_el, e, P, B,
+      auto sprim = eval_state(nprim, offset, rdof, ndof_el, e, P, B,
         {0, nprim-1});
 
       for(std::size_t imat = 0; imat < nmat; imat++)
@@ -2127,20 +2127,20 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
         // Evaluate the limiting coefficient for material density
         auto rho = state[densityIdx(nmat, imat)];
-        auto rho_avg = U(e, densityDofIdx(nmat, imat, ndof, 0), offset);
+        auto rho_avg = U(e, densityDofIdx(nmat, imat, rdof, 0), offset);
         phi_rho = PositivityLimiting(min, rho, rho_avg);
         phic_bound[densityIdx(nmat, imat)] =
           std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
         // Evaluate the limiting coefficient for material energy
         auto rhoe = state[energyIdx(nmat, imat)];
-        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, ndof, 0), offset);
+        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, rdof, 0), offset);
         phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
         auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
         auto pre = sprim[pressureIdx(nmat, imat)];
-        auto pre_avg = P(e, pressureDofIdx(nmat, imat, ndof, 0), offset);
+        auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0), offset);
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
         phip_bound[pressureIdx(nmat, imat)] =
           std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
