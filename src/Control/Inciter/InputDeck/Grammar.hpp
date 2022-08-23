@@ -390,16 +390,22 @@ namespace grm {
         const auto& mblock = ic.template get< tag::meshblock >();
         if (!mblock.empty()) {
           for (const auto& b : mblock.back()) {   // for all blocks
-            const auto& blkid = b.template get< tag::blockid >();
-            if (blkid == 0)
-              Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
+            if (stack.template get< tag::discr, tag::scheme >() ==
+              inciter::ctr::SchemeType::ALECG) {
+              Message< Stack, ERROR, MsgKey::MESHBLOCKSUPPORT >(stack, in);
+            }
+            else {
+              const auto& blkid = b.template get< tag::blockid >();
+              if (blkid == 0)
+                Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
 
-            // if energy content is used to initialize block, then volume must
-            // be specified
-            const auto& blkenc = b.template get< tag::energy_content >();
-            const auto& blkvol = b.template get< tag::volume >();
-            if (blkenc > 0.0 && blkvol < 1e-12)
-              Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
+              // if energy content is used to initialize block, then volume must
+              // be specified
+              const auto& blkenc = b.template get< tag::energy_content >();
+              const auto& blkvol = b.template get< tag::volume >();
+              if (blkenc > 0.0 && blkvol < 1e-12)
+                Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
+            }
           }
         }
 
