@@ -762,32 +762,34 @@ VertexBasedMultiMat_P2(
         // Obtain limiter coefficient for P1 primitive quantities
         VertexBasedLimiting(prim, P, esup, inpoel, coord, e, rdof, dof_el,
           offset, nprim, phip_p1, {0, nprim-1});
-      } /* else {
-        // When shockmarker is 0, the volume fraction, density and energy
-        // of minor material will still be limited to ensure a stable solution.
+      } else {
+        // When shockmarker is 0, the volume fraction will still be limited to
+        // ensure a stable solution. Since the limiting strategy for third order
+        // solution will downgrade the accuracy to second order, the density,
+        // energy and pressure of minor material will not be limited.
         VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof, dof_el,
           offset, ncomp, phic_p1,
           {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
-        for(std::size_t k=0; k<nmat; ++k) {
-          if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-4) {
-            // Vector to store the range of limited variables
-            std::array< std::size_t, 2 > VarRange;
+        //for(std::size_t k=0; k<nmat; ++k) {
+        //  if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-4) {
+        //    // Vector to store the range of limited variables
+        //    std::array< std::size_t, 2 > VarRange;
 
-            // limit the density of minor materials
-            VarRange[0] = densityIdx(nmat, k);
-            VarRange[1] = VarRange[0];
-            VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof, dof_el,
-              offset, ncomp, phic_p1, VarRange);
+        //    // limit the density of minor materials
+        //    VarRange[0] = densityIdx(nmat, k);
+        //    VarRange[1] = VarRange[0];
+        //    VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof, dof_el,
+        //      offset, ncomp, phic_p1, VarRange);
 
-            // limit the pressure of minor materials
-            VarRange[0] = pressureIdx(nmat, k);
-            VarRange[1] = VarRange[0];
-            VertexBasedLimiting(prim, P, esup, inpoel, coord, e, rdof, dof_el,
-              offset, nprim, phip_p1, VarRange);
-          }
-        }
-      }*/
+        //    // limit the pressure of minor materials
+        //    VarRange[0] = pressureIdx(nmat, k);
+        //    VarRange[1] = VarRange[0];
+        //    VertexBasedLimiting(prim, P, esup, inpoel, coord, e, rdof, dof_el,
+        //      offset, nprim, phip_p1, VarRange);
+        //  }
+        //}
+      }
 
       PositivityLimitingMultiMat(nmat, system, offset, ndof, e, inpoel, coord,
           U, P, phic_p1, phic_p2, phip_p1, phic_p2);
