@@ -610,10 +610,6 @@ VertexBasedMultiMat_P1(
 
       std::vector< tk::real > phic_p2, phip_p2;
 
-      if(ndof > 1 && intsharp == 0 && nmat > 1)
-        BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic,
-          phic_p2);
-
       PositivityLimitingMultiMat(nmat, system, offset, rdof, e, inpoel, coord,
         U, P, phic, phic_p2, phip, phip_p2);
 
@@ -631,6 +627,10 @@ VertexBasedMultiMat_P1(
         }
       }
       else {
+        if(nmat > 1)
+          BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic,
+            phic_p2);
+
         if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
           consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic,
             phic_p2);
@@ -789,10 +789,6 @@ VertexBasedMultiMat_P2(
         }
       }*/
 
-      if(ndof > 1 && intsharp == 0 && nmat > 1)
-        BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U,
-          phic_p1, phic_p2);
-
       PositivityLimitingMultiMat(nmat, system, offset, ndof, e, inpoel, coord,
           U, P, phic_p1, phic_p2, phip_p1, phic_p2);
 
@@ -810,6 +806,10 @@ VertexBasedMultiMat_P2(
         }
       }
       else {
+        if(nmat > 1)
+          BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U,
+            phic_p1, phic_p2);
+
         if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
           consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic_p1,
             phic_p2);
@@ -1758,11 +1758,12 @@ BoundPreservingLimitingFunction( const tk::real min,
 //! \return The limiting coefficient from the bound-preserving limiter function
 // *****************************************************************************
 {
-  tk::real phi(1.0);
-  if(al_gp > max)
-    phi = std::fabs( (max - al_avg) / (al_gp - al_avg) );
-  else if(al_gp < min)
-    phi = std::fabs( (min - al_avg) / (al_gp - al_avg) );
+  tk::real phi(1.0), al_diff(0.0);
+  al_diff = al_gp - al_avg;
+  if(al_gp > max && fabs(al_diff) > 1e-15)
+    phi = std::fabs( (max - al_avg) / al_diff );
+  else if(al_gp < min && fabs(al_diff) > 1e-15)
+    phi = std::fabs( (min - al_avg) / al_diff );
   return phi;
 }
 
@@ -1959,7 +1960,7 @@ PositivityLimiting( const tk::real min,
   tk::real diff = u_gp - u_avg;
   // Only when u_gp is less than minimum threshold and the high order
   // contribution is not zero, the limiting function will be applied
-  if(u_gp < min && fabs(diff) > 1e-13 )
+  if(u_gp < min && fabs(diff) > 1e-15 )
     phi = std::fabs( (min - u_avg) / diff );
   return phi;
 }
