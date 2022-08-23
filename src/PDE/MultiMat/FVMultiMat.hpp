@@ -536,8 +536,8 @@ class MultiMat {
     }
 
     //! Compute the minimum time step size
-    //! \param[in] fd Face connectivity and boundary conditions object
-    //! \param[in] geoFace Face geometry array
+//    //! \param[in] fd Face connectivity and boundary conditions object
+//    //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
@@ -548,8 +548,8 @@ class MultiMat {
     //!   face. Once the maximum of this quantity over the mesh is determined,
     //!   the volume of each cell is divided by this quantity. A minimum of this
     //!   ratio is found over the entire mesh, which gives the allowable dt.
-    tk::real dt( const inciter::FaceData& fd,
-                 const tk::Fields& geoFace,
+    tk::real dt( const inciter::FaceData& /*fd*/,
+                 const tk::Fields& /*geoFace*/,
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& P,
@@ -558,8 +558,8 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-      return timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem, nielem,
-        m_offset, nmat, U, P);
+      return timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, m_offset, nmat,
+        U, P);
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.

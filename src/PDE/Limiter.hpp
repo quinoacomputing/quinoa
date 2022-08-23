@@ -300,6 +300,17 @@ timeStepSizeMultiMat(
   const tk::Fields& U,
   const tk::Fields& P );
 
+//! Time step restriction for multi material cell-centered FV scheme
+tk::real
+timeStepSizeMultiMatFV(
+  const std::vector< EoS_Base* >& mat_blk,
+  const tk::Fields& geoElem,
+  const std::size_t nelem,
+  std::size_t offset,
+  std::size_t nmat,
+  const tk::Fields& U,
+  const tk::Fields& P );
+
 //! Update the conservative quantities after limiting for multi-material systems
 void
 correctLimConservMultiMat(

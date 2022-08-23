@@ -601,7 +601,10 @@ FV::dt()
         if (eqdt < mindt) mindt = eqdt;
       }
 
-      mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+      tk::real coeff(1.0);
+      if (d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It());
+
+      mindt *= coeff * g_inputdeck.get< tag::discr, tag::cfl >();
     }
   }
   else
