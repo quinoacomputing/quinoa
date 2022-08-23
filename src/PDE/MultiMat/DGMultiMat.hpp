@@ -429,7 +429,6 @@ class MultiMat {
       if (rdof == 4 && ndof == 1)
         is_p0p1 = true;
 
-      // do reconstruction only if P0P1 or if interface reconstruction is active
       const auto nelem = fd.Esuel().size()/4;
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
@@ -441,7 +440,7 @@ class MultiMat {
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
       std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
-      // If DG is applied
+      // If DG is applied, reconstruct only volume fractions
       if (!is_p0p1 && ndof > 1)
         varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
 

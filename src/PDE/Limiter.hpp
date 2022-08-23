@@ -191,7 +191,7 @@ SuperbeeLimiting( const tk::Fields& U,
 
 //! Kuzmin's vertex-based limiter function calculation for P1 dofs
 void
-VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting(
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -206,7 +206,7 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 void
-VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting_P2(
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
