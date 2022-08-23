@@ -2043,7 +2043,6 @@ void MarkShockCells ( const std::size_t nelem,
 //!   doi: https://doi.org/10.1016/j.jcp.2021.110618
 // *****************************************************************************
 {
-  const auto mesh_size = g_inputdeck.get< tag::shock_indicator, tag::mesh_size >();
   const auto coeff = g_inputdeck.get< tag::shock_indicator, tag::coeff >();
 
   std::vector< tk::real > IC(U.nunk(), 0.0);
@@ -2188,14 +2187,14 @@ void MarkShockCells ( const std::size_t nelem,
     IC[er] = std::max(IC[er], Ind);
   }
 
-  // Evaluate the threshold
   tk::real power = 0.0;
   if(rdof == 10)  power = 1.5;
   else            power = 1.0;
-  auto thres = coeff * std::pow( mesh_size, power);
 
   // Loop over element to mark shock cell
   for (std::size_t e=0; e<nelem; ++e) {
+    // Evaluate the threshold
+    auto thres = coeff * std::pow(geoElem(e, 4, 0), power);
     if(IC[e] > thres)
       shockmarker[e] = 1;
     else
