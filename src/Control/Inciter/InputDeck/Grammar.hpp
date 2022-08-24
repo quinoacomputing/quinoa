@@ -1715,8 +1715,8 @@ namespace deck {
                       tag::meshblock >
                    , box_deep_parameter< eq, kw::radius, tag::initiate,
                                          tag::radius, tag::meshblock >
-                   , box_deep_vector< eq, kw::velocity, tag::initiate,
-                                      tag::velocity, tag::meshblock > > >
+                   , box_deep_parameter< eq, kw::velocity, tag::initiate,
+                                         tag::velocity, tag::meshblock > > >
              > > {};
 
   //! initial conditions block for compressible flow

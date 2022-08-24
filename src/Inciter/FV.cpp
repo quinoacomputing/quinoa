@@ -86,7 +86,8 @@ FV::FV( const CProxy_Discretization& disc,
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_outmesh(),
-  m_boxelems()
+  m_boxelems(),
+  m_propFrontEngSrc(1)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -597,7 +598,7 @@ FV::dt()
       for (const auto& eq : g_fvpde) {
         auto eqdt =
           eq.dt( myGhosts()->m_fd, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-            m_u, m_p, myGhosts()->m_fd.Esuel().size()/4 );
+            m_u, m_p, myGhosts()->m_fd.Esuel().size()/4, m_propFrontEngSrc );
         if (eqdt < mindt) mindt = eqdt;
       }
 
@@ -648,10 +649,12 @@ FV::solve( tk::real newdt )
     physT += 0.5*d->Dt();
   }
 
+  // initialize energy source as not added (modified in eq.rhs appropriately)
+  m_propFrontEngSrc = 0;
   for (const auto& eq : g_fvpde)
     eq.rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-      myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p,
-      m_rhs );
+      myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
+      d->ElemBlockId(), m_u, m_p, m_rhs, m_propFrontEngSrc );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)

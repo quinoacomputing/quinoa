@@ -172,11 +172,15 @@ class FVPDE {
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&
+                elemblkid,
               const tk::Fields& U,
               const tk::Fields& P,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              int& engSrcAd ) const
     {
-      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, R );
+      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, elemblkid, U, P, R,
+        engSrcAd );
     }
 
     //! Public interface for computing the minimum time step size
@@ -185,8 +189,9 @@ class FVPDE {
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& P,
-                 const std::size_t nielem ) const
-    { return self->dt( fd, geoFace, geoElem, U, P, nielem ); }
+                 const std::size_t nielem,
+                 const int engSrcAd ) const
+    { return self->dt( fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
 
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
@@ -284,20 +289,23 @@ class FVPDE {
                                     tk::Fields&,
                                     std::size_t ) const = 0;
       virtual void rhs( tk::real,
-                        const tk::Fields&,
-                        const tk::Fields&,
-                        const inciter::FaceData&,
-                        const std::vector< std::size_t >&,
-                        const tk::UnsMesh::Coords&,
-                        const tk::Fields&,
-                        const tk::Fields&,
-                        tk::Fields& ) const = 0;
+        const tk::Fields&,
+        const tk::Fields&,
+        const inciter::FaceData&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&,
+        const tk::Fields&,
+        const tk::Fields&,
+        tk::Fields&,
+        int& ) const = 0;
       virtual tk::real dt( const inciter::FaceData&,
                            const tk::Fields&,
                            const tk::Fields&,
                            const tk::Fields&,
                            const tk::Fields&,
-                           const std::size_t ) const = 0;
+                           const std::size_t,
+                           const int ) const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
@@ -389,19 +397,24 @@ class FVPDE {
         const inciter::FaceData& fd,
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          elemblkid,
         const tk::Fields& U,
         const tk::Fields& P,
-        tk::Fields& R ) const override
+        tk::Fields& R,
+        int& engSrcAd ) const override
       {
-        data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, R );
+        data.rhs( t, geoFace, geoElem, fd, inpoel, coord, elemblkid, U, P, R,
+          engSrcAd );
       }
       tk::real dt( const inciter::FaceData& fd,
                    const tk::Fields& geoFace,
                    const tk::Fields& geoElem,
                    const tk::Fields& U,
                    const tk::Fields& P,
-                   const std::size_t nielem ) const override
-      { return data.dt( fd, geoFace, geoElem, U, P, nielem ); }
+                   const std::size_t nielem,
+                   const int engSrcAd ) const override
+      { return data.dt( fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > histNames() const override

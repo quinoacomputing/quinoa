@@ -306,8 +306,10 @@ timeStepSizeMultiMatFV(
   const std::vector< EoS_Base* >& mat_blk,
   const tk::Fields& geoElem,
   const std::size_t nelem,
+  std::size_t system,
   std::size_t offset,
   std::size_t nmat,
+  const int engSrcAd,
   const tk::Fields& U,
   const tk::Fields& P );
 

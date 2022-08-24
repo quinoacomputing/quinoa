@@ -156,6 +156,11 @@ class MultiMat {
       const auto& icbox = ic.get< tag::box >();
       const auto& icmbk = ic.get< tag::meshblock >();
 
+      const auto& bgpreic = ic.get< tag::pressure >();
+      tk::real bgpre =
+        (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
+        bgpreic[m_system][0] : 0.0;
+
       // Set initial conditions inside user-defined IC boxes and mesh blocks
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
@@ -177,7 +182,8 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, s );
+              initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, bgpre,
+                s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -197,7 +203,7 @@ class MultiMat {
               const auto& elset = tk::cref_find(elemblkid, blid);
               if (elset.find(e) != elset.end()) {
                 initializeBox<ctr::meshblock>( m_system, m_mat_blk, V_ex, t, b,
-                  s );
+                  bgpre, s );
                 // store initialization in solution vector
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   auto mark = c*rdof;
@@ -449,18 +455,24 @@ class MultiMat {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+    //! \param[in] elemblkid Element ids associated with mesh block ids where
+    //!   user ICs are set
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
+    //! \param[in,out] engSrcAdded Whether the energy source was added
     void rhs( tk::real t,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&
+                elemblkid,
               const tk::Fields& U,
               const tk::Fields& P,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              int& engSrcAdded ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
@@ -533,6 +545,89 @@ class MultiMat {
                                      nelem, inpoel, coord, geoElem, U, P, ct,
                                      R );
       }
+
+      // compute external (energy) sources
+      const auto& icmbk = g_inputdeck.get< tag::param, eq, tag::ic,
+        tag::meshblock >();
+      if (icmbk.size() > m_system) {
+        for (const auto& b : icmbk[m_system]) { // for all blocks
+          auto blid = b.get< tag::blockid >();
+          if (elemblkid.find(blid) != elemblkid.end()) {
+            const auto& initiate = b.template get< tag::initiate >();
+            auto inittype = initiate.template get< tag::init >();
+            if (inittype == ctr::InitiateType::LINEAR) {
+              blockSrc( nmat, t, geoElem, b, tk::cref_find(elemblkid,blid), R,
+                engSrcAdded );
+            }
+          }
+        }
+      }
+    }
+
+    //! Compute sources corresponding to a propagating front in user-defined box
+    //! \param[in] nmat Number of materials
+    //! \param[in] t Physical time
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] mb Mesh block for which sources are being added
+    //! \param[in] blkelems Element set in the mesh block being considered
+    //! \param[in,out] R Right-hand side vector
+    //! \param[in,out] engSrcAdded Whether the energy source was added
+    //! \details This function adds the energy source corresponding to a
+    //!   spherically growing wave-front propagating with a user-specified
+    //!   velocity, within a user-configured mesh block initial condition.
+    //!   Example (SI) units of the quantities involved:
+    //!    * internal energy content (energy per unit volume): J/m^3
+    //!    * specific energy (internal energy per unit mass): J/kg
+    void blockSrc( std::size_t nmat,
+      tk::real t,
+      const tk::Fields& geoElem,
+      const ctr::meshblock& mb,
+      const std::set< std::size_t >& blkelems,
+      tk::Fields& R,
+      int& engSrcAdded ) const
+    {
+      auto enc = mb.template get< tag::energy_content >();
+      Assert( enc > 0.0, "Box energy content must be nonzero" );
+      const auto& x0_front = mb.template get< tag::initiate, tag::point >();
+      Assert(x0_front.size()==3, "Incorrectly sized front initial location");
+      auto blkmatid = mb.template get< tag::materialid >();
+
+      // determine times at which sourcing is initialized and terminated
+      auto v_front = mb.template get< tag::initiate, tag::velocity >();
+      // The energy front is assumed to have a width w_front.
+      auto w_front = 0.2;
+      auto tInit = 0.0;
+
+      if (t >= tInit) {
+        // current radius of front
+        tk::real r_front = v_front * t;
+        // arbitrary shape form
+        auto amplE = enc * v_front / w_front;
+
+        for (auto e : blkelems) {
+          std::array< tk::real, 3 > node{{ geoElem(e,1,0), geoElem(e,2,0),
+            geoElem(e,3,0) }};
+
+          auto r_e2 = (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
+            (node[1]-x0_front[1])*(node[1]-x0_front[1]) +
+            (node[2]-x0_front[2])*(node[2]-x0_front[2]);
+
+          // if element centroid lies within spherical shell add sources
+          if (r_e2 >= r_front && r_e2 <= r_front+w_front) {
+            engSrcAdded = 1;
+            // Compute the source term variable
+            std::vector< tk::real > s(m_ncomp, 0.0);
+            // arbitrary shape form
+            s[energyIdx(nmat,blkmatid-1)] = amplE;
+
+            // Add the source term to the rhs
+            for (ncomp_t c=0; c<m_ncomp; ++c)
+            {
+              R(e, c, m_offset) += geoElem(e,0,0) * s[c];
+            }
+          }
+        }
+      }
     }
 
     //! Compute the minimum time step size
@@ -542,6 +637,7 @@ class MultiMat {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
+    //! \param[in] engSrcAd Whether the energy source was added
     //! \return Minimum time step size
     //! \details The allowable dt is calculated by looking at the maximum
     //!   wave-speed in elements surrounding each face, times the area of that
@@ -553,13 +649,14 @@ class MultiMat {
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& P,
-                 const std::size_t nielem ) const
+                 const std::size_t nielem,
+                 const int engSrcAd ) const
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-      return timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, m_offset, nmat,
-        U, P);
+      return timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, m_system,
+        m_offset, nmat, engSrcAd, U, P);
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.

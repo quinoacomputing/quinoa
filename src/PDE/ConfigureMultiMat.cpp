@@ -245,6 +245,12 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
       const auto& inittype = initiate.get< tag::init >();
       auto opt = ctr::Initiate();
       nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(inittype) );
+      if (inittype == ctr::InitiateType::LINEAR) {
+        nfo.emplace_back( blockname + " initiate linear point",
+                          parameters( initiate.get< tag::point >() ) );
+        nfo.emplace_back( blockname + " initiate linear velocity",
+                          parameter( initiate.get< tag::velocity >() ) );
+      }
     }
   }
 

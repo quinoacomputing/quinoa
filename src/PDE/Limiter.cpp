@@ -2776,16 +2776,21 @@ timeStepSizeMultiMatFV(
   const std::vector< EoS_Base* >& mat_blk,
   const tk::Fields& geoElem,
   const std::size_t nelem,
+  std::size_t system,
   std::size_t offset,
   std::size_t nmat,
+  const int engSrcAd,
   const tk::Fields& U,
   const tk::Fields& P )
 // *****************************************************************************
 //  Time step restriction for multi material cell-centered FV scheme
+//! \param[in] mat_blk Material EOS block
 //! \param[in] geoElem Element geometry array
 //! \param[in] nelem Number of elements
+//! \param[in] system Index for equation systems
 //! \param[in] offset Index for equation systems
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] engSrcAd Whether the energy source was added
 //! \param[in] U High-order solution vector
 //! \param[in] P High-order vector of primitives
 //! \return Maximum allowable time step based on cfl criterion
@@ -2798,6 +2803,22 @@ timeStepSizeMultiMatFV(
 
   std::vector< tk::real > ugp(ncomp, 0.0), pgp(nprim, 0.0);
   tk::real mindt = std::numeric_limits< tk::real >::max();
+
+  // determine front propagation speed if relevant energy sources were added
+  tk::real v_front(0.0);
+  if (engSrcAd == 1) {
+    const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
+      tag::meshblock >();
+    if (icmbk.size() > system) {
+      for (const auto& b : icmbk[system]) { // for all blocks
+        auto inittype = b.template get< tag::initiate, tag::init >();
+        if (inittype == ctr::InitiateType::LINEAR) {
+          v_front = std::max(v_front,
+            b.template get< tag::initiate, tag::velocity >());
+        }
+      }
+    }
+  }
 
   // loop over all elements
   for (std::size_t e=0; e<nelem; ++e)
@@ -2828,11 +2849,11 @@ timeStepSizeMultiMatFV(
     }
 
     // characteristic wave speed
-    auto v_char = vmag + a;
+    auto v_char = vmag + a + v_front;
 
     // characteristic length (radius of insphere)
     auto dx = std::min(std::cbrt(geoElem(e,0,0)), geoElem(e,4,0))
-      /std::sqrt(24.0);
+      /(2.0*std::sqrt(24.0));
 
     // element dt
     mindt = std::min(mindt, dx/v_char);

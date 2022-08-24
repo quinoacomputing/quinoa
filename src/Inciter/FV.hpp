@@ -203,6 +203,7 @@ class FV : public CBase_FV {
       p | m_pNodefieldsc;
       p | m_outmesh;
       p | m_boxelems;
+      p | m_propFrontEngSrc;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -270,6 +271,8 @@ class FV : public CBase_FV {
     Ghosts::OutMesh m_outmesh;
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
+    //! Integer indicating if energy source due to propagating front was added
+    int m_propFrontEngSrc;
 
     //! Access bound Discretization class pointer
     Ghosts* myGhosts() const {
