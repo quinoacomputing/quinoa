@@ -41,6 +41,9 @@ MultiMatFieldOutput(
 //! Return time history field names to be output to file
 std::vector< std::string > MultiMatHistNames();
 
+//! Return diagnostic var names to be output to file
+std::vector< std::string > MultiMatDiagNames(std::size_t nmat);
+
 } //inciter::
 
 #endif // FieldOutput_h

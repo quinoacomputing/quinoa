@@ -60,9 +60,6 @@ class MultiMatProblemUserDefined {
       }
     }
 
-    //! Return names of integral variables to be output to diagnostics file
-    static std::vector< std::string > names( ncomp_t );
-
    static ctr::ProblemType type() noexcept
    { return ctr::ProblemType::USER_DEFINED; }
 };

@@ -923,7 +923,11 @@ class MultiMat {
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
-    { return Problem::names( m_ncomp ); }
+    {
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      return MultiMatDiagNames(nmat);
+    }
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution

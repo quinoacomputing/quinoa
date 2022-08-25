@@ -59,9 +59,6 @@ class MultiMatProblemSodShocktube {
       }
     }
 
-    //! Return names of integral variables to be output to diagnostics file
-    static std::vector< std::string > names( ncomp_t );
-
     //! Return problem type
     static ctr::ProblemType type() noexcept
     { return ctr::ProblemType::SOD_SHOCKTUBE; }
