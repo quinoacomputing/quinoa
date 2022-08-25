@@ -228,6 +228,11 @@ class FVPDE {
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return self->solution( xi, yi, zi, t ); }
 
+    //! Public interface to returning the specific total energy
+    tk::real
+    sp_totalenergy( std::size_t e, const tk::Fields& unk ) const
+    { return self->sp_totalenergy( e, unk ); }
+
     //! Copy assignment
     FVPDE& operator=( const FVPDE& x )
     { FVPDE tmp(x); *this = std::move(tmp); return *this; }
@@ -322,6 +327,8 @@ class FVPDE {
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
       virtual tk::InitializeFn::result_type solution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
+      virtual tk::real sp_totalenergy(
+        std::size_t, const tk::Fields& ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -438,6 +445,8 @@ class FVPDE {
       tk::InitializeFn::result_type
       solution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.solution( xi, yi, zi, t ); }
+      tk::real sp_totalenergy( std::size_t e, const tk::Fields& unk )
+       const override { return data.sp_totalenergy( e, unk ); }
       T data;
     };
 

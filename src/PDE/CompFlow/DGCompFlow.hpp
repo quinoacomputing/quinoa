@@ -835,6 +835,17 @@ class CompFlow {
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
 
+    //! Return cell-averaged specific total energy for an element
+    //! \param[in] e Element id for which total energy is required
+    //! \param[in] unk Vector of conserved quantities
+    //! \return Cell-averaged specific total energy for given element
+    tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+      return unk(e,4*rdof,m_offset);
+    }
+
   private:
     //! Physics policy
     const Physics m_physics;

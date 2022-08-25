@@ -951,6 +951,24 @@ class MultiMat {
     { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi,
                                   t ); }
 
+    //! Return cell-averaged specific total energy for an element
+    //! \param[in] e Element id for which total energy is required
+    //! \param[in] unk Vector of conserved quantities
+    //! \return Cell-averaged specific total energy for given element
+    tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      tk::real sp_te(0.0);
+      // sum each material total energy
+      for (std::size_t k=0; k<nmat; ++k) {
+        sp_te += unk(e, energyDofIdx(nmat,k,rdof,0), m_offset);
+      }
+      return sp_te;
+    }
+
   private:
     //! Equation system index
     const ncomp_t m_system;
