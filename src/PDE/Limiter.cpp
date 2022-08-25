@@ -2853,7 +2853,7 @@ timeStepSizeMultiMatFV(
 
     // characteristic length (radius of insphere)
     auto dx = std::min(std::cbrt(geoElem(e,0,0)), geoElem(e,4,0))
-      /(2.0*std::sqrt(24.0));
+      /std::sqrt(24.0);
 
     // element dt
     mindt = std::min(mindt, dx/v_char);
