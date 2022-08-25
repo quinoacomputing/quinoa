@@ -248,6 +248,8 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
       if (inittype == ctr::InitiateType::LINEAR) {
         nfo.emplace_back( blockname + " initiate linear point",
                           parameters( initiate.get< tag::point >() ) );
+        nfo.emplace_back( blockname + " initiate linear front width",
+                          parameter( initiate.get< tag::front_width >() ) );
         nfo.emplace_back( blockname + " initiate linear velocity",
                           parameter( initiate.get< tag::velocity >() ) );
       }

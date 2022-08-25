@@ -594,8 +594,7 @@ class MultiMat {
 
       // determine times at which sourcing is initialized and terminated
       auto v_front = mb.template get< tag::initiate, tag::velocity >();
-      // The energy front is assumed to have a width w_front.
-      auto w_front = 0.2;
+      auto w_front = mb.template get< tag::initiate, tag::front_width >();
       auto tInit = 0.0;
 
       if (t >= tInit) {
@@ -608,12 +607,13 @@ class MultiMat {
           std::array< tk::real, 3 > node{{ geoElem(e,1,0), geoElem(e,2,0),
             geoElem(e,3,0) }};
 
-          auto r_e2 = (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
+          auto r_e = std::sqrt(
+            (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
             (node[1]-x0_front[1])*(node[1]-x0_front[1]) +
-            (node[2]-x0_front[2])*(node[2]-x0_front[2]);
+            (node[2]-x0_front[2])*(node[2]-x0_front[2]) );
 
           // if element centroid lies within spherical shell add sources
-          if (r_e2 >= r_front && r_e2 <= r_front+w_front) {
+          if (r_e >= r_front && r_e <= r_front+w_front) {
             engSrcAdded = 1;
             // Compute the source term variable
             std::vector< tk::real > s(m_ncomp, 0.0);

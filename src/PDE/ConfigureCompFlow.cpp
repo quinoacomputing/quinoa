@@ -130,10 +130,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   if (!k.empty())
     nfo.emplace_back( "heat conductivity", parameters( k ) );
 
-  const auto& npar = g_inputdeck.get< tag::param, eq, tag::npar >();
-  if (!npar.empty())
-    nfo.emplace_back( "number of tracker particles", parameters( npar ) );
-
   const auto& alpha = g_inputdeck.get< tag::param, eq, tag::alpha >();
   if (!alpha.empty()) nfo.emplace_back( "coeff alpha", parameters( alpha ) );
 
@@ -225,8 +221,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
       if (inittype == ctr::InitiateType::LINEAR) {
         nfo.emplace_back( boxname + " initiate linear point(s)",
                           parameters( initiate.get< tag::point >() ) );
-        nfo.emplace_back( boxname + " initiate linear radius",
-                          parameter( initiate.get< tag::radius >() ) );
+        nfo.emplace_back( boxname + " initiate linear front width",
+                          parameter( initiate.get< tag::front_width >() ) );
         nfo.emplace_back( boxname + " initiate linear velocity",
                           parameter( initiate.get< tag::velocity >() ) );
       }

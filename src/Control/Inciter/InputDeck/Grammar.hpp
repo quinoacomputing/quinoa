@@ -1680,8 +1680,8 @@ namespace deck {
                  tk::grm::block< use< kw::end >
                    , box_deep_vector< eq, kw::point, tag::initiate, tag::point,
                       tag::box >
-                   , box_deep_parameter< eq, kw::radius, tag::initiate,
-                                         tag::radius, tag::box >
+                   , box_deep_parameter< eq, kw::front_width, tag::initiate,
+                                         tag::front_width, tag::box >
                    , box_deep_parameter< eq, kw::velocity, tag::initiate,
                                          tag::velocity, tag::box > > >
              > > {};
@@ -1713,8 +1713,8 @@ namespace deck {
                  tk::grm::block< use< kw::end >
                    , box_deep_vector< eq, kw::point, tag::initiate, tag::point,
                       tag::meshblock >
-                   , box_deep_parameter< eq, kw::radius, tag::initiate,
-                                         tag::radius, tag::meshblock >
+                   , box_deep_parameter< eq, kw::front_width, tag::initiate,
+                                         tag::front_width, tag::meshblock >
                    , box_deep_parameter< eq, kw::velocity, tag::initiate,
                                          tag::velocity, tag::meshblock > > >
              > > {};
@@ -1865,8 +1865,6 @@ namespace deck {
                            parameter_bool< tag::compflow,
                                            kw::sysfct,
                                            tag::sysfct >,
-                           parameter< tag::compflow, kw::npar,
-                                      tag::npar, pegtl::digit >,
                            parameter< tag::compflow, kw::pde_alpha,
                                       tag::alpha >,
                            parameter< tag::compflow, kw::pde_p0,
