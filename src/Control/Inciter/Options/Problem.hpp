@@ -43,7 +43,8 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    SHOCK_HEBUBBLE,
                                    UNDERWATER_EX,
                                    SHOCKDENSITY_WAVE,
-                                   EQUILINTERFACE_ADVECT };
+                                   EQUILINTERFACE_ADVECT,
+                                   RICHTMYER_MESHKOV };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -74,6 +75,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::underwater_ex
                                   , kw::shockdensity_wave
                                   , kw::equilinterface_advect
+                                  , kw::richtmyer_meshkov
                                   >;
 
     //! \brief Options constructor
@@ -107,7 +109,8 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::SHOCK_HEBUBBLE, kw::shock_hebubble::name() },
           { ProblemType::UNDERWATER_EX, kw::underwater_ex::name() },
           { ProblemType::SHOCKDENSITY_WAVE, kw::shockdensity_wave::name() },
-          { ProblemType::EQUILINTERFACE_ADVECT, kw::equilinterface_advect::name() }
+          { ProblemType::EQUILINTERFACE_ADVECT, kw::equilinterface_advect::name() },
+          { ProblemType::RICHTMYER_MESHKOV, kw::richtmyer_meshkov::name() }
         },
         //! keywords -> Enums
         { { kw::user_defined::string(), ProblemType::USER_DEFINED },
@@ -139,7 +142,9 @@ class Problem : public tk::Toggle< ProblemType > {
           { kw::shockdensity_wave::string(),
             ProblemType::SHOCKDENSITY_WAVE },
           { kw::equilinterface_advect::string(),
-            ProblemType::EQUILINTERFACE_ADVECT }
+            ProblemType::EQUILINTERFACE_ADVECT },
+          { kw::richtmyer_meshkov::string(),
+            ProblemType::RICHTMYER_MESHKOV }
         } )
     {}
 };

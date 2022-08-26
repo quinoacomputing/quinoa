@@ -51,6 +51,7 @@
 #include "Problem/UnderwaterEx.hpp"
 #include "Problem/ShockDensityWave.hpp"
 #include "Problem/EquilInterfaceAdvect.hpp"
+#include "Problem/RichtmyerMeshkov.hpp"
 
 namespace inciter {
 
@@ -63,7 +64,8 @@ using MultiMatProblems =
                , MultiMatProblemShockHeBubble
                , MultiMatProblemUnderwaterEx
                , MultiMatProblemShockDensityWave
-               , MultiMatProblemEquilInterfaceAdvect >;
+               , MultiMatProblemEquilInterfaceAdvect
+               , MultiMatProblemRichtmyerMeshkov >;
 
 } // inciter::
 
