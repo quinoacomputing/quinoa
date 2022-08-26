@@ -167,6 +167,11 @@ class CompFlow {
           for (const auto& b : icbox[m_system]) {   // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
+              std::vector< tk::real > box
+              { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+                b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+                b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+              auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
                 s[c] = unk(e,mark,m_offset);
@@ -174,8 +179,8 @@ class CompFlow {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, m_mat_blk, 1.0, t, b,
-                bgpreic[m_system][0], c_v, s );
+              initializeBox<inciter::ctr::box>( m_system, m_mat_blk, 1.0, V_ex,
+                t, b, bgpreic[m_system][0], c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;

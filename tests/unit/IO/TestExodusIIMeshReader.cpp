@@ -1636,12 +1636,13 @@ void ExodusIIMeshReader_object::test< 7 >() {
   std::vector< std::size_t > ginpoel, inpoel, triinpoel;
   std::unordered_map< std::size_t, std::size_t > lid;
   tk::UnsMesh::Coords coord;
+  std::unordered_map< std::size_t, std::set< std::size_t > > elemBlockId;
 
   // Test error checking emulating serial read
 
   try {
     // Attempt to read mesh passing larger PE id than the number of PEs
-    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, 1, 2 );
+    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, elemBlockId, 1, 2 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -1653,7 +1654,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
 
   try {
     // Attempt to read mesh passing PE id equal to the number of PEs
-    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, 1, 1 );
+    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, elemBlockId, 1, 1 );
 
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -1668,7 +1669,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
 
   try {
     // Attempt to read mesh passing larger PE id than the number of PEs
-    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, 2, 3 );
+    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, elemBlockId, 2, 3 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -1680,7 +1681,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
 
   try {
     // Attempt to read mesh passing PE id equal to the number of PEs
-    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, 2, 2 );
+    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, elemBlockId, 2, 2 );
 
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -1695,7 +1696,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
     // Attempt to read mesh passing non-empty container
     // cppcheck-suppress constStatement
     decltype(ginpoel) i{ 0 };
-    er.readMeshPart( i, inpoel, triinpoel, lid, coord );
+    er.readMeshPart( i, inpoel, triinpoel, lid, coord, elemBlockId );
 
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -1710,7 +1711,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
     // Attempt to read mesh passing non-empty container
     // cppcheck-suppress constStatement
     decltype(inpoel) i{ 0 };
-    er.readMeshPart( ginpoel, i, triinpoel, lid, coord );
+    er.readMeshPart( ginpoel, i, triinpoel, lid, coord, elemBlockId );
 
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -1724,7 +1725,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
   try {
     // Attempt to read mesh passing non-empty container
     decltype(lid) l{{ 0, 1 }};
-    er.readMeshPart( ginpoel, inpoel, triinpoel, l, coord );
+    er.readMeshPart( ginpoel, inpoel, triinpoel, l, coord, elemBlockId );
 
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -1739,7 +1740,7 @@ void ExodusIIMeshReader_object::test< 7 >() {
     // Attempt to read mesh passing non-empty container
     // cppcheck-suppress constStatement
     decltype(coord) c{{ {0.0}, {0.0}, {0.0} }};
-    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, c );
+    er.readMeshPart( ginpoel, inpoel, triinpoel, lid, c, elemBlockId );
 
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
@@ -1765,7 +1766,8 @@ void ExodusIIMeshReader_object::test< 8 >() {
   std::vector< std::size_t > ginpoel, inpoel, triinpoel;
   std::unordered_map< std::size_t, std::size_t > lid;
   tk::UnsMesh::Coords coord;
-  er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord );
+  std::unordered_map< std::size_t, std::set< std::size_t > > elemBlockId;
+  er.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, elemBlockId );
 
   // Test if the number of elements is correct
   ensure_equals( "number of elements incorrect",

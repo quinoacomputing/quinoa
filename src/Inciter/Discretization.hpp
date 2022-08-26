@@ -76,6 +76,8 @@ class Discretization : public CBase_Discretization {
         const tk::CommMaps& msum,
         const std::map< int, std::vector< std::size_t > >& bface,
         const std::vector< std::size_t >& triinpoel,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          elemblockid,
         int nc );
 
     #if defined(__clang__)
@@ -133,7 +135,9 @@ class Discretization : public CBase_Discretization {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
       const tk::NodeCommMap& nodeCommMap,
-      const std::set< std::size_t >& removedNodes );
+      const std::set< std::size_t >& removedNodes,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblockid );
 
     //! Get ready for (re-)computing/communicating nodal volumes
     void startvol();
@@ -156,7 +160,9 @@ class Discretization : public CBase_Discretization {
 
     //! Compute total box IC volume
     void
-    boxvol( const std::vector< std::unordered_set< std::size_t > >& nodes );
+    boxvol( const std::vector< std::unordered_set< std::size_t > >& nodes,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblk,
+      std::size_t nuserblk );
 
     /** @name Accessors */
     ///@{
@@ -179,6 +185,10 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh chunk accessor as const-ref
     const tk::UnsMesh::Chunk& Chunk() const { return m_el; }
+
+    //! Mesh block id accessor as const-ref
+    const std::unordered_map< std::size_t, std::set< std::size_t > >&
+      ElemBlockId() const { return m_elemblockid; }
 
     //! Total mesh volume accessor
     tk::real meshvol() const { return m_meshvol; }
@@ -210,6 +220,9 @@ class Discretization : public CBase_Discretization {
 
     //! Box volume accessor
     tk::real& Boxvol() { return m_boxvol; }
+
+    //! Block volume accessor
+    std::vector< tk::real >& MeshBlkVol() { return m_meshblkvol; }
 
     //! Mesh ID accessor
     std::size_t MeshId() const { return m_meshid; }
@@ -447,6 +460,7 @@ class Discretization : public CBase_Discretization {
       p | m_voln;
       p | m_vol0;
       p | m_boxvol;
+      p | m_meshblkvol;
       p | m_bid;
       p | m_timer;
       p | m_refined;
@@ -459,6 +473,7 @@ class Discretization : public CBase_Discretization {
       p | m_meshvel_converged;
       p | m_bface;
       p | m_triinpoel;
+      p | m_elemblockid;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -578,6 +593,8 @@ class Discretization : public CBase_Discretization {
     std::vector< tk::real > m_vol0;
     //! Volume of user-defined box IC
     tk::real m_boxvol;
+    //! Volumes of mesh-blocks with user-defined ICs
+    std::vector< tk::real > m_meshblkvol;
     //! \brief Local chare-boundary mesh node IDs at which we receive
     //!   contributions associated to global mesh node IDs of elements we
     //!   contribute to
@@ -605,6 +622,8 @@ class Discretization : public CBase_Discretization {
     std::map< int, std::vector< std::size_t > > m_bface;
     //! Triangle face connecitivity
     std::vector< std::size_t > m_triinpoel;
+    //! Local tet ids associated with mesh block ids
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_elemblockid;
 
     //! Generate the Bid data-structure based on the node communication-map
     std::unordered_map< std::size_t, std::size_t > genBid();

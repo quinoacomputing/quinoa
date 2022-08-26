@@ -86,7 +86,8 @@ FV::FV( const CProxy_Discretization& disc,
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_outmesh(),
-  m_boxelems()
+  m_boxelems(),
+  m_propFrontEngSrc(1)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -199,7 +200,7 @@ FV::setup()
       m_boxelems );
 
   // Compute volume of user-defined box IC
-  d->boxvol( {} );      // punt for now
+  d->boxvol( {}, {}, 0 );      // punt for now
 
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
@@ -214,7 +215,7 @@ FV::setup()
 }
 
 void
-FV::box( tk::real v )
+FV::box( tk::real v, const std::vector< tk::real >& )
 // *****************************************************************************
 // Receive total box IC volume and set conditions in box
 //! \param[in] v Total volume within user-specified box
@@ -229,7 +230,7 @@ FV::box( tk::real v )
   for (const auto& eq : g_fvpde)
   {
     eq.initialize( m_lhs, myGhosts()->m_inpoel, myGhosts()->m_coord, m_boxelems,
-      m_u, d->T(), myGhosts()->m_fd.Esuel().size()/4 );
+      d->ElemBlockId(), m_u, d->T(), myGhosts()->m_fd.Esuel().size()/4 );
     eq.updatePrimitives( m_u, m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
 
@@ -597,11 +598,14 @@ FV::dt()
       for (const auto& eq : g_fvpde) {
         auto eqdt =
           eq.dt( myGhosts()->m_fd, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-            m_u, m_p, myGhosts()->m_fd.Esuel().size()/4 );
+            m_u, m_p, myGhosts()->m_fd.Esuel().size()/4, m_propFrontEngSrc );
         if (eqdt < mindt) mindt = eqdt;
       }
 
-      mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+      tk::real coeff(1.0);
+      if (d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It());
+
+      mindt *= coeff * g_inputdeck.get< tag::discr, tag::cfl >();
     }
   }
   else
@@ -645,10 +649,12 @@ FV::solve( tk::real newdt )
     physT += 0.5*d->Dt();
   }
 
+  // initialize energy source as not added (modified in eq.rhs appropriately)
+  m_propFrontEngSrc = 0;
   for (const auto& eq : g_fvpde)
     eq.rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-      myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p,
-      m_rhs );
+      myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
+      d->ElemBlockId(), m_u, m_p, m_rhs, m_propFrontEngSrc );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
@@ -740,7 +746,8 @@ FV::resizePostAMR(
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
-  const std::vector< std::size_t >& triinpoel )
+  const std::vector< std::size_t >& triinpoel,
+  const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
@@ -751,6 +758,7 @@ FV::resizePostAMR(
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] elemblockid Local tet ids associated with mesh block ids
 // *****************************************************************************
 {
   auto d = Disc();
@@ -769,7 +777,8 @@ FV::resizePostAMR(
   [[maybe_unused]] auto old_nelem = myGhosts()->m_inpoel.size()/4;
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
+    elemblockid );
 
   // Update state
   myGhosts()->m_inpoel = d->Inpoel();

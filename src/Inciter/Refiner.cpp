@@ -52,6 +52,7 @@ Refiner::Refiner( std::size_t meshid,
                   const std::map< int, std::vector< std::size_t > >& bface,
                   const std::vector< std::size_t >& triinpoel,
                   const std::map< int, std::vector< std::size_t > >& bnode,
+                  const std::vector< std::size_t >& elemblid,
                   int nchare ) :
   m_meshid( meshid ),
   m_ncit(0),
@@ -68,6 +69,7 @@ Refiner::Refiner( std::size_t meshid,
   m_bface( bface ),
   m_bnode( bnode ),
   m_triinpoel( triinpoel ),
+  m_elemblockid(),
   m_nchare( nchare ),
   m_mode( RefMode::T0REF ),
   m_initref( g_inputdeck.get< tag::amr, tag::init >() ),
@@ -90,6 +92,7 @@ Refiner::Refiner( std::size_t meshid,
   m_oldntets( 0 ),
   m_coarseBndFaces(),
   m_coarseBndNodes(),
+  m_coarseBlkElems(),
   m_rid( m_coord[0].size() ),
 //  m_oldrid(),
   m_lref( m_rid.size() ),
@@ -116,8 +119,9 @@ Refiner::Refiner( std::size_t meshid,
 //! \param[in] ginpoel Mesh connectivity (this chare) using global node IDs
 //! \param[in] coordmap Mesh node coordinates (this chare) for global node IDs
 //! \param[in] bface File-internal elem ids of side sets
-//! \param[in] bnode Node lists of side sets
 //! \param[in] triinpoel Triangle face connectivity with global IDs
+//! \param[in] bnode Node lists of side sets
+//! \param[in] elemblid Mesh block ids associated to local tet ids
 //! \param[in] nchare Total number of refiner chares (chare array elements)
 // *****************************************************************************
 {
@@ -128,6 +132,11 @@ Refiner::Refiner( std::size_t meshid,
             tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
             m_inpoel, m_coord ),
           "Input mesh to Refiner leaky" );
+
+  // Construct data structure assigning sets of element ids to mesh blocks
+  for (std::size_t ie=0; ie<elemblid.size(); ++ie) {
+    m_elemblockid[elemblid[ie]].insert(ie);
+  }
 
   #if not defined(__INTEL_COMPILER) || defined(NDEBUG)
   // The above ifdef skips running the conformity test with the intel compiler
@@ -147,7 +156,7 @@ Refiner::Refiner( std::size_t meshid,
   std::reverse( begin(m_initref), end(m_initref) );
 
   // Generate boundary data structures for coarse mesh
-  coarseBnd();
+  coarseMesh();
 
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
@@ -172,9 +181,9 @@ Refiner::libmap()
 }
 
 void
-Refiner::coarseBnd()
+Refiner::coarseMesh()
 // *****************************************************************************
-// (Re-)generate boundary data structures for coarse mesh
+// (Re-)generate side set and block data structures for coarse mesh
 // *****************************************************************************
 {
   // Generate unique set of faces for each side set of the input (coarsest) mesh
@@ -191,6 +200,15 @@ Refiner::coarseBnd()
   m_coarseBndNodes.clear();
   for (const auto& [ setid, nodes ] : m_bnode) {
     m_coarseBndNodes[ setid ].insert( begin(nodes), end(nodes) );
+  }
+
+  // Generate set of elements for each mesh block of the input (coarsest) mesh
+  m_coarseBlkElems.clear();
+  for (const auto& [blid, elids] : m_elemblockid) {
+    for (auto ie : elids) {
+      m_coarseBlkElems[blid].insert( {{{m_inpoel[ie*4+0], m_inpoel[ie*4+1],
+        m_inpoel[ie*4+2], m_inpoel[ie*4+3]}}} );
+    }
   }
 }
 
@@ -224,7 +242,7 @@ Refiner::reorder()
   m_coord = flatcoord( m_coordmap );
 
   // Re-generate boundary data structures for coarse mesh
-  coarseBnd();
+  coarseMesh();
 
   // WARNING: This re-creates the AMR lib which is probably not what we
   // ultimately want, beacuse this deletes its history recorded during initial
@@ -965,6 +983,9 @@ Refiner::writeMesh( const std::string& basefilename,
   // list of nodes/elements at which box ICs are defined
   std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
+  std::vector< tk::real > blkvols;
+  std::unordered_map< std::size_t, std::set< std::size_t > > nodeblockid,
+    elemblockid;
 
   // Prepare node or element fields for output to file
   if (centering == tk::Centering::NODE) {
@@ -975,7 +996,8 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Evaluate initial conditions on current mesh at t0
     tk::Fields u( m_coord[0].size(), nprop );
-    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox );
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox, blkvols,
+      nodeblockid );
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -1000,7 +1022,8 @@ Refiner::writeMesh( const std::string& basefilename,
     for (const auto& eq : g_dgpde)
       eq.initialize( lhs, m_inpoel, m_coord, inbox, u, t0, m_inpoel.size()/4 );
     for (const auto& eq : g_fvpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, u, t0, m_inpoel.size()/4 );
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, elemblockid, u, t0,
+        m_inpoel.size()/4 );
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -1108,7 +1131,7 @@ Refiner::next()
     // Send new mesh, solution, and communication data back to PDE worker
     m_scheme[m_meshid].ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel,
       m_el, m_coord, m_addedNodes, m_addedTets, m_removedNodes, m_amrNodeMap,
-      m_nodeCommMap, m_bface, m_bnode, m_triinpoel );
+      m_nodeCommMap, m_bface, m_bnode, m_triinpoel, m_elemblockid );
 
   } else if (m_mode == RefMode::OUTREF) {
 
@@ -1151,7 +1174,7 @@ Refiner::endt0ref()
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_meshid, m_host, m_meshwriter, m_cbs, m_scheme,
     CkCallback(CkIndex_Refiner::reorder(), thisProxy[thisIndex]), m_ginpoel,
-    m_coordmap, m_el, m_bface, m_triinpoel, m_bnode, m_nchare );
+    m_coordmap, m_el, m_bface, m_triinpoel, m_bnode, m_elemblockid, m_nchare );
 
   // Compute final number of cells across whole problem
   std::vector< std::size_t >
@@ -1499,11 +1522,15 @@ Refiner::nodeinit( std::size_t npoin,
   // list of nodes/elements at which box ICs are defined
   std::vector< std::unordered_set< std::size_t > > inbox;
   tk::real V = 1.0;
+  std::vector< tk::real > blkvols;
+  std::unordered_map< std::size_t, std::set< std::size_t > > nodeblockid,
+    elemblockid;
 
   if (centering == tk::Centering::NODE) {
 
     // Evaluate ICs for all scalar components integrated
-    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox );
+    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox, blkvols,
+      nodeblockid );
 
   } else if (centering == tk::Centering::ELEM) {
 
@@ -1520,7 +1547,8 @@ Refiner::nodeinit( std::size_t npoin,
     for (const auto& eq : g_fvpde)
       eq.lhs( geoElem, lhs );
     for (const auto& eq : g_fvpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, ue, t0, esuel.size()/4 );
+      eq.initialize( lhs, m_inpoel, m_coord, inbox, elemblockid, ue, t0,
+        esuel.size()/4 );
 
     // Transfer initial conditions from cells to nodes
     for (std::size_t p=0; p<npoin; ++p) {    // for all mesh nodes on this chare

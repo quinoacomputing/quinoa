@@ -73,7 +73,11 @@ class Transport {
     //! Determine nodes that lie inside the user-defined IC box
     void
     IcBoxNodes( const tk::UnsMesh::Coords&,
-                std::vector< std::unordered_set< std::size_t > >& ) const {}
+                const std::vector< std::size_t >&,
+                const std::unordered_map< std::size_t, std::set< std::size_t > >&,
+                std::vector< std::unordered_set< std::size_t > >&,
+                std::unordered_map< std::size_t, std::set< std::size_t > >&,
+                std::size_t& ) const {}
 
     //! Initalize the transport equations using problem policy
     //! \param[in] coord Mesh node coordinates
@@ -84,7 +88,10 @@ class Transport {
                 tk::Fields& unk,
                 real t,
                 real,
-                const std::vector< std::unordered_set< std::size_t > >& ) const
+                const std::vector< std::unordered_set< std::size_t > >&,
+                const std::vector< tk::real >&,
+                const std::unordered_map< std::size_t, std::set< std::size_t > >&
+              ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
       const auto& x = coord[0];

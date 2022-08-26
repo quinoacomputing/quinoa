@@ -253,7 +253,8 @@ BoundPreservingLimitingFunction( const tk::real min,
 void PositivityLimitingMultiMat( std::size_t nmat,
                                  std::size_t system,
                                  ncomp_t offset,
-                                 std::size_t ndof,
+                                 std::size_t rdof,
+                                 std::size_t ndof_el,
                                  std::size_t e,
                                  const std::vector< std::size_t >& inpoel,
                                  const tk::UnsMesh::Coords& coord,
@@ -317,6 +318,19 @@ timeStepSizeMultiMat(
   const std::size_t nelem,
   std::size_t offset,
   std::size_t nmat,
+  const tk::Fields& U,
+  const tk::Fields& P );
+
+//! Time step restriction for multi material cell-centered FV scheme
+tk::real
+timeStepSizeMultiMatFV(
+  const std::vector< EoS_Base* >& mat_blk,
+  const tk::Fields& geoElem,
+  const std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  std::size_t nmat,
+  const int engSrcAd,
   const tk::Fields& U,
   const tk::Fields& P );
 

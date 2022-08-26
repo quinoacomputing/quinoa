@@ -109,7 +109,7 @@ class ALECG : public CBase_ALECG {
     void setup();
 
     //! Receive total box IC volume and set conditions in box
-    void box( tk::real v );
+    void box( tk::real v, const std::vector< tk::real >& blkvols );
 
     // Start time stepping
     void start();
@@ -129,6 +129,10 @@ class ALECG : public CBase_ALECG {
     //! Receive boundary point normals on chare-boundaries
     void comnorm( const std::unordered_map< int,
       std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
+
+    //! Receive mesh block information for nodes on chare-boundaries
+    void comblk( const std::vector< std::size_t >& gid,
+      const std::vector< std::set< std::size_t > >& mb );
 
     //! Receive contributions to gradients on chare-boundaries
     void comChBndGrad( const std::vector< std::size_t >& gid,
@@ -156,7 +160,9 @@ class ALECG : public CBase_ALECG {
       const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& bnode,
-      const std::vector< std::size_t >& triinpoel );
+      const std::vector< std::size_t >& triinpoel,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblockid );
 
     //! Extract field output to file
     void extractFieldOutput(
@@ -207,6 +213,7 @@ class ALECG : public CBase_ALECG {
       p | m_nrhs;
       p | m_nbnorm;
       p | m_ndfnorm;
+      p | m_nmblk;
       p | m_bnode;
       p | m_bface;
       p | m_triinpoel;
@@ -241,6 +248,9 @@ class ALECG : public CBase_ALECG {
       p | m_finished;
       p | m_newmesh;
       p | m_refinedmesh;
+      p | m_nusermeshblk;
+      p | m_nodeblockid;
+      p | m_nodeblockidc;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -263,6 +273,8 @@ class ALECG : public CBase_ALECG {
     std::size_t m_nbnorm;
     //! Counter for receiving dual-face normals on chare-boundary edges
     std::size_t m_ndfnorm;
+    //! Counter for mesh block nodes updated
+    std::size_t m_nmblk;
     //! Boundary node lists mapped to side set ids used in the input file
     std::map< int, std::vector< std::size_t > > m_bnode;
     //! Boundary face lists mapped to side set ids used in the input file
@@ -355,6 +367,14 @@ class ALECG : public CBase_ALECG {
     int m_newmesh;
     //! State indicating if the mesh has been refined by dtref
     int m_refinedmesh;
+    //! Number of mesh-blocks with user-defined ICs
+    std::size_t m_nusermeshblk;
+    //! Local node ids associated with mesh block ids
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockid;
+    //! Receive buffer for communication of the mesh block ids
+    //! \details Key: mesh block id, value: set of global node ids for nodes
+    //!   in this mesh block.
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockidc;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -386,6 +406,9 @@ class ALECG : public CBase_ALECG {
     //! \brief Finish computing dual-face and boundary point normals and apply
     //!   boundary conditions on the initial conditions
     void normfinal();
+
+    //! Continue setup for solution, after communication for mesh blocks
+    void continueSetup();
 
     //! Output mesh and particle fields to files
     void out();

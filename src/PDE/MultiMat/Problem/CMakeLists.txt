@@ -1,6 +1,5 @@
 add_library(MultiMatProblem
             UserDefined.cpp
-            BoxInitialization.cpp
             FieldOutput.cpp
             SodShocktube.cpp
             InterfaceAdvection.cpp

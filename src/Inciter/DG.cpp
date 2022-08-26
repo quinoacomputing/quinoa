@@ -243,7 +243,7 @@ DG::setup()
       m_boxelems );
 
   // Compute volume of user-defined box IC
-  d->boxvol( {} );      // punt for now
+  d->boxvol( {}, {}, 0 );      // punt for now
 
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
@@ -258,7 +258,7 @@ DG::setup()
 }
 
 void
-DG::box( tk::real v )
+DG::box( tk::real v, const std::vector< tk::real >& )
 // *****************************************************************************
 // Receive total box IC volume and set conditions in box
 //! \param[in] v Total volume within user-specified box
@@ -1313,7 +1313,8 @@ DG::resizePostAMR(
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
-  const std::vector< std::size_t >& triinpoel )
+  const std::vector< std::size_t >& triinpoel,
+  const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
@@ -1324,6 +1325,7 @@ DG::resizePostAMR(
 //! \param[in] nodeCommMap New node communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] elemblockid Local tet ids associated with mesh block ids
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1342,7 +1344,8 @@ DG::resizePostAMR(
   [[maybe_unused]] auto old_nelem = myGhosts()->m_inpoel.size()/4;
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
+    elemblockid );
 
   // Update state
   myGhosts()->m_inpoel = d->Inpoel();

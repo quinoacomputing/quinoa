@@ -148,6 +148,9 @@ namespace grm {
     SYSFCTVAR,          //!< System-FCT variable index incorrect
     BGICMISSING,        //!< Background IC unspecified
     BGMATIDMISSING,     //!< Background material id unspecified
+    MESHBLOCKSUPPORT,   //!< Mesh block not supported
+    MESHBLOCKIDMISSING, //!< Mesh block id unspecified
+    MESHBLOCKVOL,       //!< Mesh block volume unspecified
     BOXMATIDMISSING,    //!< Box material id unspecified
     BOXMATIDWRONG,      //!< Box material id incorrect
     BOXORIENTWRONG,     //!< Box orientation incorrect
@@ -418,6 +421,13 @@ namespace grm {
       "The block must list integers between 1 and 5 both inclusive." },
     { MsgKey::BGMATIDMISSING, "Error in the preceding block. "
       "The block must contain background material id." },
+    { MsgKey::MESHBLOCKSUPPORT, "Error in the preceding block. "
+      "Mesh block based IC not supported by discretization scheme." },
+    { MsgKey::MESHBLOCKIDMISSING, "Error in the preceding block. "
+      "Each IC mesh block must specify the mesh block id." },
+    { MsgKey::MESHBLOCKVOL, "Error in the preceding block. "
+      "Mesh block volume must be specified, if energy content is used to "
+      "initialize block" },
     { MsgKey::BOXMATIDMISSING, "Error in the preceding block. "
       "Each IC box must specify material id in the box." },
     { MsgKey::BOXMATIDWRONG, "Error in the preceding block. "

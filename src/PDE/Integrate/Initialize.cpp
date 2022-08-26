@@ -19,7 +19,6 @@
 #include "Initialize.hpp"
 #include "Quadrature.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 

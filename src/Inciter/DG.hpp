@@ -96,7 +96,7 @@ class DG : public CBase_DG {
     void setup();
 
     //! Receive total box IC volume and set conditions in box
-    void box( tk::real v );
+    void box( tk::real v, const std::vector< tk::real >& blkvols );
 
     // Evaluate whether to do load balancing
     void evalLB( int nrestart );
@@ -174,7 +174,9 @@ class DG : public CBase_DG {
       const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& /* bnode */,
-      const std::vector< std::size_t >& triinpoel );
+      const std::vector< std::size_t >& triinpoel,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblockid );
 
     //! Extract field output going to file
     void extractFieldOutput(

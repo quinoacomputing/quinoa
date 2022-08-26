@@ -172,6 +172,11 @@ class MultiMat {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
+      const auto& bgpreic = ic.get< tag::pressure >();
+      tk::real bgpre =
+        (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
+        bgpreic[m_system][0] : 0.0;
+
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
@@ -180,6 +185,11 @@ class MultiMat {
           for (const auto& b : icbox[m_system]) {   // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
+              std::vector< tk::real > box
+                { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+                  b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+                  b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+              auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
                 s[c] = unk(e,mark,m_offset);
@@ -187,7 +197,8 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, m_mat_blk, 1.0, t, b, s );
+              initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, bgpre,
+                s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;

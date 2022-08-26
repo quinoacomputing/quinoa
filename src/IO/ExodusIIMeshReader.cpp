@@ -105,6 +105,7 @@ ExodusIIMeshReader::readMeshPart(
   std::vector< std::size_t >& triinp,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
+  std::unordered_map< std::size_t, std::set< std::size_t > >& elemBlockId,
   int numpes, int mype )
 // *****************************************************************************
 //  Read a part of the mesh (graph and coordinates) from ExodusII file
@@ -118,6 +119,7 @@ ExodusIIMeshReader::readMeshPart(
 //!   this PE's mesh chunk
 //! \param[in,out] coord Container to store coordinates of mesh nodes of this
 //!   PE's mesh chunk
+//! \param[in,out] elemBlockId List of elements for each block-id.
 //! \param[in] numpes Total number of PEs (default n = 1, for a single-CPU read)
 //! \param[in] mype This PE (default m = 0, for a single-CPU read)
 // *****************************************************************************
@@ -142,6 +144,7 @@ ExodusIIMeshReader::readMeshPart(
 
   // Read tetrahedron connectivity between from and till
   readElements( {{m_from, m_till-1}}, tk::ExoElemType::TET, ginpoel );
+  elemBlockId = m_elemInBlockId;
 
   // Compute local data from global mesh connectivity
   std::vector< std::size_t > gid;
@@ -431,7 +434,7 @@ ExodusIIMeshReader::readAllElements( UnsMesh& mesh )
 void
 ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
                                   tk::ExoElemType elemtype,
-                                  std::vector< std::size_t >& conn ) const
+                                  std::vector< std::size_t >& conn )
 // *****************************************************************************
 //  Read element connectivity of a number of mesh cells from ExodusII file
 //! \param[in] ext Extents of element IDs whose connectivity to read:
@@ -445,6 +448,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 //! \details This function takes the extents of element IDs in a zero-based
 //!   fashion. These input extents can be thought of "absolute" extents that
 //!   denote lowest and the largest-1 element IDs to be read from file.
+//!   The mesh block-wise element set is also updated.
 // *****************************************************************************
 {
   Assert( tk::sumsize(m_blockid_by_type) > 0,
@@ -528,6 +532,15 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
             std::to_string(r[0]) + "..." + std::to_string(r[1]) +
             "] from element block " + std::to_string(bid[b]) + " in ExodusII "
             "file: " + m_filename );
+
+    // Store tet-elements under their respective mesh block ids
+    if (elemtype == ExoElemType::TET) {
+      for (std::size_t i=0; i<c.size()/ExoNnpe[e]; ++i) {
+        auto& tetblk = m_elemInBlockId[static_cast<std::size_t>(bid[b])];
+        tetblk.insert((inpoel.size()/ExoNnpe[e]) + i);
+      }
+    }
+
     inpoel.reserve( inpoel.size() + c.size() );
     std::move( begin(c), end(c), std::back_inserter(inpoel) );
   }
@@ -544,7 +557,7 @@ ExodusIIMeshReader::readElements( const std::array< std::size_t, 2 >& ext,
 }
 
 void
-ExodusIIMeshReader::readFaces( std::vector< std::size_t >& conn ) const
+ExodusIIMeshReader::readFaces( std::vector< std::size_t >& conn )
 // *****************************************************************************
 //  Read face connectivity of a number of boundary faces from ExodusII file
 //! \param[inout] conn Connectivity vector to push to
