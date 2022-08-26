@@ -257,7 +257,7 @@ using diagnostics = tk::TaggedTuple< brigand::list<
 using InitiateParameters = tk::TaggedTuple< brigand::list<
     tag::init,          InitiateType
   , tag::point,         std::vector< kw::point::info::expect::type >
-  , tag::radius,        kw::radius::info::expect::type
+  , tag::front_width,   kw::front_width::info::expect::type
   , tag::velocity,      kw::velocity::info::expect::type
 > >;
 
@@ -459,8 +459,6 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::matidxmap,     tk::TaggedTuple< brigand::list<
       tag::eosidx,      std::vector< std::size_t >,
       tag::matidx,      std::vector< std::size_t > > >
-    //! total number of optional passive tracker particles for visualization
-  , tag::npar,          std::vector< kw::npar::info::expect::type >
     //! Flux function type
   , tag::flux,          std::vector< FluxType >
     //! Lua code (multiple blocks)

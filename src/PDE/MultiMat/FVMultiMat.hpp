@@ -594,8 +594,7 @@ class MultiMat {
 
       // determine times at which sourcing is initialized and terminated
       auto v_front = mb.template get< tag::initiate, tag::velocity >();
-      // The energy front is assumed to have a width w_front.
-      auto w_front = 0.2;
+      auto w_front = mb.template get< tag::initiate, tag::front_width >();
       auto tInit = 0.0;
 
       if (t >= tInit) {
@@ -608,12 +607,13 @@ class MultiMat {
           std::array< tk::real, 3 > node{{ geoElem(e,1,0), geoElem(e,2,0),
             geoElem(e,3,0) }};
 
-          auto r_e2 = (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
+          auto r_e = std::sqrt(
+            (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
             (node[1]-x0_front[1])*(node[1]-x0_front[1]) +
-            (node[2]-x0_front[2])*(node[2]-x0_front[2]);
+            (node[2]-x0_front[2])*(node[2]-x0_front[2]) );
 
           // if element centroid lies within spherical shell add sources
-          if (r_e2 >= r_front && r_e2 <= r_front+w_front) {
+          if (r_e >= r_front && r_e <= r_front+w_front) {
             engSrcAdded = 1;
             // Compute the source term variable
             std::vector< tk::real > s(m_ncomp, 0.0);
@@ -796,7 +796,11 @@ class MultiMat {
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
-    { return Problem::names( m_ncomp ); }
+    {
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      return MultiMatDiagNames(nmat);
+    }
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -818,6 +822,24 @@ class MultiMat {
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
+
+    //! Return cell-averaged specific total energy for an element
+    //! \param[in] e Element id for which total energy is required
+    //! \param[in] unk Vector of conserved quantities
+    //! \return Cell-averaged specific total energy for given element
+    tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      tk::real sp_te(0.0);
+      // sum each material total energy
+      for (std::size_t k=0; k<nmat; ++k) {
+        sp_te += unk(e, energyDofIdx(nmat,k,rdof,0), m_offset);
+      }
+      return sp_te;
+    }
 
   private:
     //! Equation system index

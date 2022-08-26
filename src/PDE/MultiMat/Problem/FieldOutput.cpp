@@ -205,4 +205,26 @@ std::vector< std::string > MultiMatHistNames()
   return n;
 }
 
+std::vector< std::string > MultiMatDiagNames(std::size_t nmat)
+// *****************************************************************************
+// Return diagnostic var names to be output to file
+//! \param[in] nmat Number of materials in systen
+//! \return Vector of strings labelling diagnostic fields output in file
+// *****************************************************************************
+{
+  std::vector< std::string > n;
+
+  for (std::size_t k=0; k<nmat; ++k)
+    n.push_back( "f"+std::to_string(k+1) );
+  for (std::size_t k=0; k<nmat; ++k)
+    n.push_back( "fr"+std::to_string(k+1) );
+  n.push_back( "fru" );
+  n.push_back( "frv" );
+  n.push_back( "frw" );
+  for (std::size_t k=0; k<nmat; ++k)
+    n.push_back( "fre"+std::to_string(k+1) );
+
+  return n;
+}
+
 } //inciter::

@@ -144,7 +144,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::mat_mu
                                  , kw::mat_cv
                                  , kw::mat_k
-                                 , kw::npar
                                  , kw::physics
                                  , kw::advection
                                  , kw::advdiff
@@ -285,6 +284,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::bc_skip
                                  , kw::sponge
                                  , kw::point
+                                 , kw::front_width
                                  , kw::radius
                                  , kw::gauss_hump
                                  , kw::rotated_sod_shocktube

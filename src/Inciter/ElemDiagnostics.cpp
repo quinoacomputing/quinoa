@@ -214,11 +214,15 @@ const
         // Compute max for Linf norm of the numerical-analytic solution
         auto err = std::abs( ugp - s[c] );
         if (err > diag[LINFERR][c]) diag[LINFERR][c] = err;
-
-        // Compute sum of the total energy over the entire domain (only the
-        // first entry is used)
-        if (c == u.nprop()/rdof-1) diag[TOTALSOL][0] += wt * ugp;
       }
     }
+    tk::real sp_te(0.0);
+    for (const auto& eq : g_dgpde) {
+      // cppcheck-suppress useStlAlgorithm
+      sp_te += eq.sp_totalenergy(e, u);
+    }
+    // Compute sum of the total energy over the entire domain (only the
+    // first entry is used)
+    diag[TOTALSOL][0] += geoElem(e,0,0) * sp_te;
   }
 }
