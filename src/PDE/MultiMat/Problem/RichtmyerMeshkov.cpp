@@ -26,13 +26,10 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::MultiMatProblemRichtmyerMeshkov;
 
 tk::InitializeFn::result_type
-MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t system,
-                                                 ncomp_t ncomp,
-                                       const std::vector< EoS_Base* >& mat_blk,
-                                                 tk::real x,
-                                                 tk::real y,
-                                                 tk::real z,
-                                                 tk::real t )
+MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t system, ncomp_t ncomp,
+  const std::vector< EoS_Base* >& mat_blk,
+  tk::real x, tk::real y, tk::real,
+  tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] system Equation system index, i.e., which compressible
@@ -40,12 +37,11 @@ MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t system,
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
-//! \param[in] z Z coordinate where to evaluate the solution
-//! \param[in] t Time at which to evaluate the solution
 //! \return Values of all components evaluated at (x,y,z,t)
 //! \note The function signature must follow tk::InitializeFn
-//! \details This function initializes the equilibrium interface advection
-//!   problem, and gives the analytical solution at time greater than 0.
+//! \details This function only initializes the Richtmyer-Meshkov instability
+//!   problem, but does not actually give the analytical solution at time
+//!   greater than 0.
 // *****************************************************************************
 {
   // see also Control/Inciter/InputDeck/Grammar.hpp
@@ -54,36 +50,49 @@ MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t system,
   auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
 
   std::vector< tk::real > s( ncomp, 0.0 );
-  tk::real r, p, u, v, w;
+  tk::real p, T, u, v, w;
   auto alphamin = 1.0e-12;
 
-  // pressure
-  p = 0.4;
-  // velocity
-  u = 3.0;
-  v = 2.0;
-  w = 1.0;
+  // unshocked state
+  p = 95600.0;
+  T = 296.0;
+  u = 0.0;
+  v = 0.0;
+  w = 0.0;
+  s[volfracIdx(nmat,0)] = 1.0-alphamin;
+
+  // shocked state
+  if (x < 0.01) {
+    p = 145347.8785;
+    T = 324.6772971;
+    u = 101.2761625;
+  }
+
   // location of interface
-  auto xc = 0.45 + u*t;
-  auto yc = 0.45 + v*t;
-  auto zc = 0.45 + w*t;
-  // volume-fraction
-  s[volfracIdx(nmat, 0)] = (1.0-2.0*alphamin) * 0.5 *
-    (1.0-std::tanh(5.0*((x-xc)+(y-yc)+(z-zc)))) + alphamin;
+  auto pi = 4.0 * std::atan(1.0);
+  auto wvln = 0.059333;
+  auto ampl = 0.002;
+  if (x>0.03+ampl*std::sin(2.0*pi*y/wvln + pi/2.0)) {
+    s[volfracIdx(nmat,0)] = alphamin;
+  }
+
+  // volume-fraction of 2nd material
   s[volfracIdx(nmat, 1)] = 1.0 - s[volfracIdx(nmat, 0)];
-  // density
-  r = 5.0 + x + y + z;
-  s[densityIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*r;
-  s[densityIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*r;
-  // total specific energy
-  s[energyIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*
-                            mat_blk[0]->eos_totalenergy( r, u, v, w, p );
-  s[energyIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*
-                            mat_blk[1]->eos_totalenergy( r, u, v, w, p );
+
+  auto rb = 0.0;
+  for (std::size_t k=0; k<nmat; ++k) {
+    // density
+    auto r = mat_blk[k]->eos_density(p, T);
+    s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r;
+    rb += s[densityIdx(nmat, k)];
+    // total specific energy
+    s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
+                            mat_blk[k]->eos_totalenergy( r, u, v, w, p );
+  }
   // momentum
-  s[momentumIdx(nmat, 0)] = r*u;
-  s[momentumIdx(nmat, 1)] = r*v;
-  s[momentumIdx(nmat, 2)] = r*w;
+  s[momentumIdx(nmat, 0)] = rb*u;
+  s[momentumIdx(nmat, 1)] = rb*v;
+  s[momentumIdx(nmat, 2)] = rb*w;
 
   return s;
 }
