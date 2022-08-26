@@ -12,6 +12,10 @@ inciter
   scheme dgp1
   limiter vertexbasedp1
 
+  shock_indicator
+    coeff 1.0
+  end
+
   partitioning
     algorithm mj
   end
