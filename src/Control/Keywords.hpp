@@ -4206,21 +4206,21 @@ struct pref_info {
 };
 using pref = keyword< pref_info, TAOCPP_PEGTL_STRING("pref") >;
 
-struct shock_indicator_coeff_info {
-  static std::string name() { return "shock indicator coefficient"; }
+struct shock_detector_coeff_info {
+  static std::string name() { return "shock detector coefficient"; }
   static std::string shortDescription() { return "Configure the coefficient "
     "used in shock indicator"; }
   static std::string longDescription() { return
     R"(This keyword can be used to configure the coefficient used in the
     threshold calculation for the shock indicator. Example specification:
-    'shock_indicator_coeff 1.0'.)"; }
+    'shock_detector_coeff 1.0'.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
-using shock_indicator_coeff = keyword< shock_indicator_coeff_info,
-  TAOCPP_PEGTL_STRING("shock_indicator_coeff") >;
+using shock_detector_coeff = keyword< shock_detector_coeff_info,
+  TAOCPP_PEGTL_STRING("shock_detector_coeff") >;
 
 struct diagcg_info {
   static std::string name() { return "CG+LW"; }
@@ -4777,24 +4777,6 @@ struct limsol_projection_info {
 };
 using limsol_projection = keyword< limsol_projection_info,
   TAOCPP_PEGTL_STRING("limsol_projection") >;
-
-struct shock_detection_info {
-  static std::string name() { return "Shock detection"; }
-  static std::string shortDescription() { return
-    "Toggle shock detection for limiting"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to specify if shock detection is to be used for
-    limiting the discontinuous Galerkin (DG) spatial discretization in inciter.
-    If set false, limiting is applied to all cells; if true, each element is
-    evaluated for a shock/discontinuity and only if one is present, limiting is
-    applied. Set true or false.)"; }
-  struct expect {
-    static std::string description() { return "string"; }
-    static std::string choices() { return "true | false"; }
-  };
-};
-using shock_detection = keyword< shock_detection_info,
-  TAOCPP_PEGTL_STRING("shock_detection") >;
 
 struct fct_info {
   static std::string name() { return "Flux-corrected transport"; }

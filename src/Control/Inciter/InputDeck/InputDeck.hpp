@@ -242,7 +242,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::pref_non_conformity
                                  , kw::pref_ndofmax
                                  , kw::pref_tolref
-                                 , kw::shock_indicator_coeff
+                                 , kw::shock_detector_coeff
                                  , kw::scheme
                                  , kw::diagcg
                                  , kw::alecg
@@ -266,7 +266,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::vertexbasedp1
                                  , kw::accuracy_test
                                  , kw::limsol_projection
-                                 , kw::shock_detection
                                  , kw::prelax
                                  , kw::prelax_timescale
                                  , kw::intsharp
@@ -334,8 +333,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::rdof >() = 1;
       get< tag::discr, tag::accuracy_test >() = false;
       get< tag::discr, tag::limsol_projection >() = false;
-      get< tag::discr, tag::shock_detection >() = true;
-      get< tag::discr, tag::shock_indicator_coeff >() = 1.0;
+      get< tag::discr, tag::shock_detector_coeff >() = 1.0;
       // Default field output file type
       get< tag::selected, tag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
       // Default AMR settings

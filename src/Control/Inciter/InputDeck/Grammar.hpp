@@ -1424,11 +1424,8 @@ namespace deck {
            tk::grm::process< use< kw::limsol_projection >,
              tk::grm::Store< tag::discr, tag::limsol_projection >,
              pegtl::alpha >,
-           tk::grm::process< use< kw::shock_detection >,
-             tk::grm::Store< tag::discr, tag::shock_detection >,
-             pegtl::alpha >,
-           tk::grm::discrparam< use, kw::shock_indicator_coeff,
-             tag::shock_indicator_coeff >
+           tk::grm::discrparam< use, kw::shock_detector_coeff,
+             tag::shock_detector_coeff >
          > {};
 
   //! PDE parameter vector

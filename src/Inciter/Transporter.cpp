@@ -233,7 +233,7 @@ Transporter::info( const InciterPrint& print )
     print.Item< ctr::Limiter, tag::discr, tag::limiter >();
 
     print.item("Shock detection based limiting",
-      g_inputdeck.get< tag::discr, tag::shock_detection >());
+      g_inputdeck.get< tag::discr, tag::shock_detector_coeff >());
 
     if (g_inputdeck.get< tag::discr, tag::accuracy_test >())
     {

@@ -360,7 +360,7 @@ VertexBasedCompflow_P1(
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
-  if (inciter::g_inputdeck.get< tag::discr, tag::shock_indicator_coeff >()
+  if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, 1, system, offset, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
@@ -453,7 +453,7 @@ VertexBasedCompflow_P2(
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
-  if (inciter::g_inputdeck.get< tag::discr, tag::shock_indicator_coeff >()
+  if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, 1, system, offset, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
@@ -553,7 +553,7 @@ VertexBasedMultiMat_P1(
   std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
-  if (inciter::g_inputdeck.get< tag::discr, tag::shock_indicator_coeff >()
+  if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, nmat, system, offset, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
@@ -731,7 +731,7 @@ VertexBasedMultiMat_P2(
   std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
-  if (inciter::g_inputdeck.get< tag::discr, tag::shock_indicator_coeff >()
+  if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, nmat, system, offset, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
@@ -2069,7 +2069,7 @@ void MarkShockCells ( const std::size_t nelem,
 //!   doi: https://doi.org/10.1016/j.jcp.2021.110618
 // *****************************************************************************
 {
-  const auto coeff = g_inputdeck.get< tag::discr, tag::shock_indicator_coeff >();
+  const auto coeff = g_inputdeck.get< tag::discr, tag::shock_detector_coeff >();
 
   std::vector< tk::real > IC(U.nunk(), 0.0);
   const auto& esuf = fd.Esuf();

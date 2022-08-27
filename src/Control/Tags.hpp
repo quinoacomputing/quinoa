@@ -108,9 +108,8 @@ struct pref { static std::string name() { return "pref"; } };
 struct tolref { static std::string name() { return "tolref"; } };
 struct ndofmax { static std::string name() { return "ndofmax"; } };
 struct indicator{ static std::string name() { return "indicator"; } };
-struct shock_indicator {static std::string name() {return "shock_indicator";}};
-struct shock_indicator_coeff { static std::string name()
-  { return "shock_indicator_coeff"; } };
+struct shock_detector_coeff { static std::string name()
+  { return "shock_detector_coeff"; } };
 struct amr { static std::string name() { return "amr"; } };
 struct ale { static std::string name() { return "ale"; } };
 struct move { static std::string name() { return "move"; } };
@@ -283,7 +282,6 @@ struct rdof{ static std::string name() { return "rdof"; } };
 struct limiter { static std::string name() { return "limiter"; } };
 struct accuracy_test { static std::string name() { return "accuracy_test"; } };
 struct limsol_projection { static std::string name() { return "limsol_projection"; } };
-struct shock_detection { static std::string name() { return "shock_detection"; } };
 struct cweight { static std::string name() { return "cweight"; } };
 struct update {};
 struct ch {};
