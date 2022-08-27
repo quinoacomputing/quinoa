@@ -109,7 +109,6 @@ struct tolref { static std::string name() { return "tolref"; } };
 struct ndofmax { static std::string name() { return "ndofmax"; } };
 struct indicator{ static std::string name() { return "indicator"; } };
 struct shock_indicator {static std::string name() {return "shock_indicator";}};
-struct mesh_size { static std::string name() { return "mesh_size"; } };
 struct coeff { static std::string name() { return "coeff"; } };
 struct amr { static std::string name() { return "amr"; } };
 struct ale { static std::string name() { return "ale"; } };

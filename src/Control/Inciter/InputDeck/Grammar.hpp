@@ -1090,10 +1090,6 @@ namespace grm {
   struct action< check_shock_indicator_errors > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      auto& mesh_size =
-        stack.template get< tag::shock_indicator, tag::mesh_size >();
-      if (std::fabs(mesh_size) < 1e-15)
-        Message< Stack, ERROR, MsgKey::PREFTOL >( stack, in );
     }
   };
 
@@ -2188,11 +2184,6 @@ namespace deck {
          pegtl::if_must<
            tk::grm::readkw< use< kw::shock_indicator >::pegtl_string >,
            tk::grm::block< use< kw::end >,
-                         tk::grm::control< use< kw::shock_indicator_mesh_size >,
-                                           pegtl::digit,
-                                           tk::grm::Store,
-                                           tag::shock_indicator,
-                                           tag::mesh_size  >,
                          tk::grm::control< use< kw::shock_indicator_coeff >,
                                            pegtl::digit,
                                            tk::grm::Store,

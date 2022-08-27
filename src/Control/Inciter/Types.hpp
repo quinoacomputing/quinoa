@@ -138,7 +138,6 @@ using pref = tk::TaggedTuple< brigand::list<
 //! shock indicator options
 using shock_indicator = tk::TaggedTuple< brigand::list<
     tag::shock_indicator,     bool                //!< Shock indicator on/off
-  , tag::mesh_size,           tk::real            //!< Mesh size
   , tag::coeff,               tk::real            //!< Coefficient
 > >;
 
