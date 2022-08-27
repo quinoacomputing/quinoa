@@ -37,7 +37,6 @@ using InputDeckMembers = brigand::list<
   , tag::amr,             amr
   , tag::ale,             ale
   , tag::pref,            pref
-  , tag::shock_indicator, shock_indicator
   , tag::discr,           discretization
   , tag::prec,            precision
   , tag::flformat,        floatformat
@@ -243,7 +242,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::pref_non_conformity
                                  , kw::pref_ndofmax
                                  , kw::pref_tolref
-                                 , kw::shock_indicator
                                  , kw::shock_indicator_coeff
                                  , kw::scheme
                                  , kw::diagcg
@@ -337,6 +335,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::accuracy_test >() = false;
       get< tag::discr, tag::limsol_projection >() = false;
       get< tag::discr, tag::shock_detection >() = true;
+      get< tag::discr, tag::shock_indicator_coeff >() = 1.0;
       // Default field output file type
       get< tag::selected, tag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
       // Default AMR settings
@@ -369,9 +368,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::pref, tag::indicator >() = PrefIndicatorType::SPECTRAL_DECAY;
       get< tag::pref, tag::ndofmax >() = 10;
       get< tag::pref, tag::tolref >() = 0.5;
-      // Default shock indicator settings
-      get< tag::shock_indicator, tag::shock_indicator >() = false;
-      get< tag::shock_indicator, tag::coeff >() = 1.0;
       // Default txt floating-point output precision in digits
       get< tag::prec, tag::diag >() = std::cout.precision();
       get< tag::prec, tag::history >() = std::cout.precision();

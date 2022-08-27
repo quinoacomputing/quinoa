@@ -4207,34 +4207,20 @@ struct pref_info {
 using pref = keyword< pref_info, TAOCPP_PEGTL_STRING("pref") >;
 
 struct shock_indicator_coeff_info {
-  static std::string name() { return "coefficient"; }
+  static std::string name() { return "shock indicator coefficient"; }
   static std::string shortDescription() { return "Configure the coefficient "
     "used in shock indicator"; }
   static std::string longDescription() { return
     R"(This keyword can be used to configure the coefficient used in the
-    threshold calculation for the shock indicator. The keyword must be used in
-    shock_indicator ... end block. Example specification: 'coeff 1.0'.)"; }
+    threshold calculation for the shock indicator. Example specification:
+    'shock_indicator_coeff 1.0'.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real"; }
   };
 };
 using shock_indicator_coeff = keyword< shock_indicator_coeff_info,
-                                       TAOCPP_PEGTL_STRING("coeff") >;
-
-struct shock_indicator_info {
-  static std::string name() { return "shock_indicator"; }
-  static std::string shortDescription() { return
-    "Start configuration block configuring shock indicator"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the shock_indicator ... end block, used to
-    configure shock indicator. Keywords allowed in this block: )"
-    + std::string("\'")
-    + shock_indicator_coeff::string() + "\' | \'";
-  }
-};
-using shock_indicator = keyword< shock_indicator_info,
-                                 TAOCPP_PEGTL_STRING("shock_indicator") >;
+  TAOCPP_PEGTL_STRING("shock_indicator_coeff") >;
 
 struct diagcg_info {
   static std::string name() { return "CG+LW"; }
