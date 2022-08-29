@@ -207,6 +207,7 @@ VertexBasedLimiting(
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 void
 VertexBasedLimiting_P2(
+  const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
