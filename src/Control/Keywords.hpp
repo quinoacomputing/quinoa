@@ -2604,6 +2604,21 @@ using equilinterface_advect =
   keyword< equilinterface_advect_info,
   TAOCPP_PEGTL_STRING("equilinterface_advect") >;
 
+struct richtmyer_meshkov_info {
+  static std::string name() { return "Richtmyer-Meshkov instability"; }
+  static std::string shortDescription() { return
+    "Select the Richtmyer-Meshkov instability problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the Richtmyer-Meshkov instability
+    problem. In this problem, a shock hits a perturbed material interface.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using richtmyer_meshkov =
+  keyword< richtmyer_meshkov_info,
+  TAOCPP_PEGTL_STRING("richtmyer_meshkov") >;
+
 struct problem_info {
   static std::string name() { return "Test problem"; }
   static std::string shortDescription() { return
@@ -2629,6 +2644,11 @@ struct problem_info {
                   + sod_shocktube::string() + "\' | \'"
                   + rotated_sod_shocktube::string() + "\' | \'"
                   + interface_advection::string() + "\' | \'"
+                  + waterair_shocktube::string() + "\' | \'"
+                  + shock_hebubble::string() + "\' | \'"
+                  + shockdensity_wave::string() + "\' | \'"
+                  + equilinterface_advect::string() + "\' | \'"
+                  + richtmyer_meshkov::string() + "\' | \'"
                   + gauss_hump_compflow::string() + '\'';
     }
   };
