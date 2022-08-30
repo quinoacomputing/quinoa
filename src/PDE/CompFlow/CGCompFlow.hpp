@@ -91,12 +91,22 @@ class CompFlow {
 
     }
 
-    //! Determine nodes that lie inside the user-defined IC box
+    //! Determine nodes that lie inside the user-defined IC box and mesh blocks
     //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Element node connectivity
     //! \param[in,out] inbox List of nodes at which box user ICs are set for
     //!    each IC box
+    //! \param[in] elemblkid Element ids associated with mesh block ids where
+    //!   user ICs are set
+    //! \param[in,out] nodeblkid Node ids associated to mesh block ids, where
+    //!   user ICs are set
+    //! \param[in,out] nuserblk number of mesh blocks where user ICs are set
     void IcBoxNodes( const tk::UnsMesh::Coords& coord,
-      std::vector< std::unordered_set< std::size_t > >& inbox ) const
+      const std::vector< std::size_t >& inpoel,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblkid,
+      std::vector< std::unordered_set< std::size_t > >& inbox,
+      std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblkid,
+      std::size_t& nuserblk ) const
     {
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -149,6 +159,31 @@ class CompFlow {
           ++bcnt;
         }
       }
+
+      // size IC mesh blocks volume vector
+      const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
+        tag::meshblock >();
+      // if mesh blocks have been specified for this system
+      if (mblks.size() > m_system) {
+        if (!mblks[m_system].empty()) {
+          std::size_t idMax(0);
+          for (const auto& imb : mblks[m_system]) {
+            idMax = std::max(idMax, imb.get< tag::blockid >());
+          }
+          // size is idMax+1 since block ids are usually 1-based
+          nuserblk = nuserblk+idMax+1;
+
+          // determine node set for IC mesh blocks
+          for (const auto& [blid, elset] : elemblkid) {
+            if (!elset.empty()) {
+              auto& ndset = nodeblkid[blid];
+              for (auto ie : elset) {
+                for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
+              }
+            }
+          }
+        }
+      }
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -158,12 +193,19 @@ class CompFlow {
     //! \param[in] V Discrete volume of user-defined IC box
     //! \param[in] inbox List of nodes at which box user ICs are set (for each
     //!    box IC)
+    //! \param[in] nodeblkid Node ids associated to mesh block ids, where
+    //!   user ICs are set
+    //! \param[in] blkvols Vector of discrete volumes of each block where user
+    //!   ICs are set
     void initialize(
       const std::array< std::vector< real >, 3 >& coord,
       tk::Fields& unk,
       real t,
       real V,
-      const std::vector< std::unordered_set< std::size_t > >& inbox ) const
+      const std::vector< std::unordered_set< std::size_t > >& inbox,
+      const std::vector< tk::real >& blkvols,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        nodeblkid ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
 
@@ -173,6 +215,9 @@ class CompFlow {
 
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
+
+      const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
+        tag::meshblock >();
 
       const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
 
@@ -200,9 +245,26 @@ class CompFlow {
                 b.template get< tag::zmin >(), b.template get< tag::zmax >() };
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               if (V_ex < eps) V = 1.0;
-              initializeBox( m_system, m_mat_blk, V_ex/V, t, b, bgpre, c_v, s );
+              initializeBox<ctr::box>( m_system, m_mat_blk, V_ex/V,
+                V_ex, t, b, bgpre, c_v, s );
             }
             ++bcnt;
+          }
+        }
+
+        // initialize user-defined mesh block ICs
+        if (mblks.size() > m_system) {
+          for (const auto& b : mblks[m_system]) { // for all blocks
+            auto blid = b.get< tag::blockid >();
+            auto V_ex = b.get< tag::volume >();
+            if (blid >= blkvols.size()) Throw("Block volume not found");
+            if (nodeblkid.find(blid) != nodeblkid.end()) {
+              const auto& ndset = tk::cref_find(nodeblkid, blid);
+              if (ndset.find(i) != ndset.end()) {
+                initializeBox<ctr::meshblock>(m_system, m_mat_blk,
+                  V_ex/blkvols[blid], V_ex, t, b, bgpre, c_v, s);
+              }
+            }
           }
         }
 
@@ -1632,7 +1694,7 @@ class CompFlow {
           auto iv = b.template get< tag::initiate, tag::velocity >();
           auto wFront = 0.08;
           auto tInit = 0.0;
-          auto tFinal = tInit + (box[5] - box[4] - 2.0*wFront) / std::fabs(iv);
+          auto tFinal = tInit + (box[5] - box[4] - wFront) / std::fabs(iv);
           auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
           const auto& x = coord[0];
@@ -1683,6 +1745,8 @@ class CompFlow {
             //// Square wave (constant) source term amplitude
             //auto amplE = boxenc * V_ex
             //  / (aBox * wFront * (tFinal-tInit));
+            //// arbitrary shape form
+            //auto amplE = boxenc * std::abs(iv) / wFront;
             amplE *= V_ex / V;
 
             // add source
@@ -1695,6 +1759,8 @@ class CompFlow {
 
               if (node[2] >= s0 && node[2] <= s1) {
                 auto S = amplE * std::sin(pi*(node[2]-s0)/wFront);
+                //// arbitrary shape form
+                //auto S = amplE;
                 for (auto e : tk::Around(esup,p)) {
                   // access node IDs
                   std::size_t N[4] =

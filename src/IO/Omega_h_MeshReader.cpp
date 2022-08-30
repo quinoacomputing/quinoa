@@ -26,6 +26,7 @@ Omega_h_MeshReader::readMeshPart(
   [[maybe_unused]] std::vector< std::size_t >& triinp,
   std::unordered_map< std::size_t, std::size_t >& lid,
   tk::UnsMesh::Coords& coord,
+  std::unordered_map< std::size_t, std::set< std::size_t > >&,
   int numpes,
   [[maybe_unused]] int mype )
 // *****************************************************************************
@@ -157,7 +158,7 @@ Omega_h_MeshReader::readSidesetFaces(
 
 void
 Omega_h_MeshReader::readFaces(
-  [[maybe_unused]] std::vector< std::size_t >& conn ) const
+  [[maybe_unused]] std::vector< std::size_t >& conn )
 // *****************************************************************************
 //  Read face connectivity of a number of boundary faces from Omega_h file
 //! \param[in,out] conn Connectivity vector to push to

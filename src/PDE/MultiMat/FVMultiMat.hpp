@@ -78,7 +78,7 @@ class MultiMat {
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
-        , subsonicOutlet
+        , farfieldOutlet
         , extrapolate } ) );
 
       // EoS initialization
@@ -122,7 +122,9 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] inbox List of elements at which box user ICs are set for
-    //!    each IC box
+    //!   each IC box
+    //! \param[in] elemblkid Element ids associated with mesh block ids where
+    //!   user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
@@ -130,6 +132,8 @@ class MultiMat {
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblkid,
       tk::Fields& unk,
       tk::real t,
       const std::size_t nielem ) const
@@ -140,15 +144,27 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
+      const auto& icmbk = ic.get< tag::meshblock >();
 
-      // Set initial conditions inside user-defined IC box
+      const auto& bgpreic = ic.get< tag::pressure >();
+      tk::real bgpre =
+        (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
+        bgpreic[m_system][0] : 0.0;
+
+      // Set initial conditions inside user-defined IC boxes and mesh blocks
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
+        // inside user-defined box
         if (icbox.size() > m_system) {
           std::size_t bcnt = 0;
           for (const auto& b : icbox[m_system]) {   // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
+              std::vector< tk::real > box
+                { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+                  b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+                  b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+              auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
                 s[c] = unk(e,mark,m_offset);
@@ -156,7 +172,8 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, m_mat_blk, 1.0, t, b, s );
+              initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, bgpre,
+                s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -164,6 +181,26 @@ class MultiMat {
               }
             }
             ++bcnt;
+          }
+        }
+
+        // inside user-specified mesh blocks
+        if (icmbk.size() > m_system) {
+          for (const auto& b : icmbk[m_system]) { // for all blocks
+            auto blid = b.get< tag::blockid >();
+            auto V_ex = b.get< tag::volume >();
+            if (elemblkid.find(blid) != elemblkid.end()) {
+              const auto& elset = tk::cref_find(elemblkid, blid);
+              if (elset.find(e) != elset.end()) {
+                initializeBox<ctr::meshblock>( m_system, m_mat_blk, V_ex, t, b,
+                  bgpre, s );
+                // store initialization in solution vector
+                for (std::size_t c=0; c<m_ncomp; ++c) {
+                  auto mark = c*rdof;
+                  unk(e,mark,m_offset) = s[c];
+                }
+              }
+            }
           }
         }
       }
@@ -408,18 +445,24 @@ class MultiMat {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+    //! \param[in] elemblkid Element ids associated with mesh block ids where
+    //!   user ICs are set
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
+    //! \param[in,out] engSrcAdded Whether the energy source was added
     void rhs( tk::real t,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&
+                elemblkid,
               const tk::Fields& U,
               const tk::Fields& P,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              int& engSrcAdded ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
@@ -492,33 +535,118 @@ class MultiMat {
                                      nelem, inpoel, coord, geoElem, U, P, ct,
                                      R );
       }
+
+      // compute external (energy) sources
+      const auto& icmbk = g_inputdeck.get< tag::param, eq, tag::ic,
+        tag::meshblock >();
+      if (icmbk.size() > m_system) {
+        for (const auto& b : icmbk[m_system]) { // for all blocks
+          auto blid = b.get< tag::blockid >();
+          if (elemblkid.find(blid) != elemblkid.end()) {
+            const auto& initiate = b.template get< tag::initiate >();
+            auto inittype = initiate.template get< tag::init >();
+            if (inittype == ctr::InitiateType::LINEAR) {
+              blockSrc( nmat, t, geoElem, b, tk::cref_find(elemblkid,blid), R,
+                engSrcAdded );
+            }
+          }
+        }
+      }
+    }
+
+    //! Compute sources corresponding to a propagating front in user-defined box
+    //! \param[in] nmat Number of materials
+    //! \param[in] t Physical time
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] mb Mesh block for which sources are being added
+    //! \param[in] blkelems Element set in the mesh block being considered
+    //! \param[in,out] R Right-hand side vector
+    //! \param[in,out] engSrcAdded Whether the energy source was added
+    //! \details This function adds the energy source corresponding to a
+    //!   spherically growing wave-front propagating with a user-specified
+    //!   velocity, within a user-configured mesh block initial condition.
+    //!   Example (SI) units of the quantities involved:
+    //!    * internal energy content (energy per unit volume): J/m^3
+    //!    * specific energy (internal energy per unit mass): J/kg
+    void blockSrc( std::size_t nmat,
+      tk::real t,
+      const tk::Fields& geoElem,
+      const ctr::meshblock& mb,
+      const std::set< std::size_t >& blkelems,
+      tk::Fields& R,
+      int& engSrcAdded ) const
+    {
+      auto enc = mb.template get< tag::energy_content >();
+      Assert( enc > 0.0, "Box energy content must be nonzero" );
+      const auto& x0_front = mb.template get< tag::initiate, tag::point >();
+      Assert(x0_front.size()==3, "Incorrectly sized front initial location");
+      auto blkmatid = mb.template get< tag::materialid >();
+
+      // determine times at which sourcing is initialized and terminated
+      auto v_front = mb.template get< tag::initiate, tag::velocity >();
+      auto w_front = mb.template get< tag::initiate, tag::front_width >();
+      auto tInit = 0.0;
+
+      if (t >= tInit) {
+        // current radius of front
+        tk::real r_front = v_front * t;
+        // arbitrary shape form
+        auto amplE = enc * v_front / w_front;
+
+        for (auto e : blkelems) {
+          std::array< tk::real, 3 > node{{ geoElem(e,1,0), geoElem(e,2,0),
+            geoElem(e,3,0) }};
+
+          auto r_e = std::sqrt(
+            (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
+            (node[1]-x0_front[1])*(node[1]-x0_front[1]) +
+            (node[2]-x0_front[2])*(node[2]-x0_front[2]) );
+
+          // if element centroid lies within spherical shell add sources
+          if (r_e >= r_front && r_e <= r_front+w_front) {
+            engSrcAdded = 1;
+            // Compute the source term variable
+            std::vector< tk::real > s(m_ncomp, 0.0);
+            // arbitrary shape form
+            s[energyIdx(nmat,blkmatid-1)] = amplE;
+
+            // Add the source term to the rhs
+            for (ncomp_t c=0; c<m_ncomp; ++c)
+            {
+              R(e, c, m_offset) += geoElem(e,0,0) * s[c];
+            }
+          }
+        }
+      }
     }
 
     //! Compute the minimum time step size
-    //! \param[in] fd Face connectivity and boundary conditions object
-    //! \param[in] geoFace Face geometry array
+//    //! \param[in] fd Face connectivity and boundary conditions object
+//    //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
+    //! \param[in] engSrcAd Whether the energy source was added
     //! \return Minimum time step size
     //! \details The allowable dt is calculated by looking at the maximum
     //!   wave-speed in elements surrounding each face, times the area of that
     //!   face. Once the maximum of this quantity over the mesh is determined,
     //!   the volume of each cell is divided by this quantity. A minimum of this
     //!   ratio is found over the entire mesh, which gives the allowable dt.
-    tk::real dt( const inciter::FaceData& fd,
-                 const tk::Fields& geoFace,
+    tk::real dt( const inciter::FaceData& /*fd*/,
+                 const tk::Fields& /*geoFace*/,
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& P,
-                 const std::size_t nielem ) const
+                 const std::size_t nielem,
+                 const int engSrcAd ) const
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-      return timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem, nielem,
-        m_offset, nmat, U, P);
+      return timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, m_system,
+        m_offset, nmat, engSrcAd, U, P);
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.
@@ -658,7 +786,11 @@ class MultiMat {
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
-    { return Problem::names( m_ncomp ); }
+    {
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      return MultiMatDiagNames(nmat);
+    }
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -680,6 +812,24 @@ class MultiMat {
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
+
+    //! Return cell-averaged specific total energy for an element
+    //! \param[in] e Element id for which total energy is required
+    //! \param[in] unk Vector of conserved quantities
+    //! \return Cell-averaged specific total energy for given element
+    tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      tk::real sp_te(0.0);
+      // sum each material total energy
+      for (std::size_t k=0; k<nmat; ++k) {
+        sp_te += unk(e, energyDofIdx(nmat,k,rdof,0), m_offset);
+      }
+      return sp_te;
+    }
 
   private:
     //! Equation system index

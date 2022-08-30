@@ -31,23 +31,23 @@ namespace ctr {
 
 //! Member data for tagged tuple
 using InputDeckMembers = brigand::list<
-    tag::cmd,           CmdLine
-  , tag::title,         kw::title::info::expect::type
-  , tag::selected,      selects
-  , tag::amr,           amr
-  , tag::ale,           ale
-  , tag::pref,          pref
-  , tag::discr,         discretization
-  , tag::prec,          precision
-  , tag::flformat,      floatformat
-  , tag::component,     ncomps
-  , tag::sys,           std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
-  , tag::output,        output_parameters
-  , tag::param,         parameters
-  , tag::couple,        couple
-  , tag::diag,          diagnostics
-  , tag::error,         std::vector< std::string >
-  , tag::history,       history
+    tag::cmd,             CmdLine
+  , tag::title,           kw::title::info::expect::type
+  , tag::selected,        selects
+  , tag::amr,             amr
+  , tag::ale,             ale
+  , tag::pref,            pref
+  , tag::discr,           discretization
+  , tag::prec,            precision
+  , tag::flformat,        floatformat
+  , tag::component,       ncomps
+  , tag::sys,             std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
+  , tag::output,          output_parameters
+  , tag::param,           parameters
+  , tag::couple,          couple
+  , tag::diag,            diagnostics
+  , tag::error,           std::vector< std::string >
+  , tag::history,         history
 >;
 
 //! \brief InputDeck : Control< specialized to Inciter >, see Types.h,
@@ -94,8 +94,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::multimat
                                  , kw::ic
                                  , kw::box
+                                 , kw::meshblock
                                  , kw::lua
                                  , kw::materialid
+                                 , kw::blockid
+                                 , kw::volume
                                  , kw::mass
                                  , kw::density
                                  , kw::velocity
@@ -146,7 +149,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::mat_mu
                                  , kw::mat_cv
                                  , kw::mat_k
-                                 , kw::npar
                                  , kw::physics
                                  , kw::advection
                                  , kw::advdiff
@@ -246,6 +248,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::pref_non_conformity
                                  , kw::pref_ndofmax
                                  , kw::pref_tolref
+                                 , kw::shock_detector_coeff
                                  , kw::scheme
                                  , kw::diagcg
                                  , kw::alecg
@@ -269,7 +272,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::vertexbasedp1
                                  , kw::accuracy_test
                                  , kw::limsol_projection
-                                 , kw::shock_detection
                                  , kw::prelax
                                  , kw::prelax_timescale
                                  , kw::intsharp
@@ -284,6 +286,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::bc_skip
                                  , kw::sponge
                                  , kw::point
+                                 , kw::front_width
                                  , kw::radius
                                  , kw::gauss_hump
                                  , kw::rotated_sod_shocktube
@@ -298,7 +301,8 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::shock_hebubble
                                  , kw::underwater_ex
                                  , kw::shockdensity_wave
-                                 , kw::equilinterface_advect >;
+                                 , kw::equilinterface_advect
+                                 , kw::richtmyer_meshkov >;
 
     //! Set of tags to ignore when printing this InputDeck
     using ignore = CmdLine::ignore;
@@ -336,7 +340,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::rdof >() = 1;
       get< tag::discr, tag::accuracy_test >() = false;
       get< tag::discr, tag::limsol_projection >() = false;
-      get< tag::discr, tag::shock_detection >() = true;
+      get< tag::discr, tag::shock_detector_coeff >() = 1.0;
       // Default field output file type
       get< tag::selected, tag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
       // Default AMR settings

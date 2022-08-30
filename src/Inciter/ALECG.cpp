@@ -63,6 +63,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_nrhs( 0 ),
   m_nbnorm( 0 ),
   m_ndfnorm( 0 ),
+  m_nmblk( 0 ),
   m_bnode( bnode ),
   m_bface( bface ),
   m_triinpoel( tk::remap( triinpoel, Disc()->Lid() ) ),
@@ -96,7 +97,10 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 ),
   m_newmesh( 0 ),
-  m_refinedmesh( 0 )
+  m_refinedmesh( 0 ),
+  m_nusermeshblk( 0 ),
+  m_nodeblockid(),
+  m_nodeblockidc()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -139,8 +143,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   // Query/update boundary-conditions-related data structures from user input
   queryBnd();
 
-  // Activate SDAG wait for initially computing normals
+  // Activate SDAG wait for initially computing normals, and mesh blocks
   thisProxy[ thisIndex ].wait4norm();
+  thisProxy[ thisIndex ].wait4meshblk();
 
   // Generate callbacks for solution transfers we are involved in
 
@@ -491,10 +496,86 @@ ALECG::setup()
   auto d = Disc();
 
   // Determine nodes inside user-defined IC box
-  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), m_boxnodes );
+  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), d->Inpoel(),
+    d->ElemBlockId(), m_boxnodes, m_nodeblockid, m_nusermeshblk );
+
+  // Communicate mesh block nodes to other chares on chare-boundary
+  if (d->NodeCommMap().empty())        // in serial we are done
+    comblk_complete();
+  else // send mesh block information to chare-boundary nodes to fellow chares
+    for (const auto& [c,n] : d->NodeCommMap()) {
+      // data structure assigning block ids (set of values) to nodes (index).
+      // although nodeblockid is a map with key-blockid and value-nodeid, the
+      // sending data structure has to be inverted, because of how communication
+      // data is handled.
+      std::vector< std::set< std::size_t > > mb( n.size() );
+      std::size_t j = 0;
+      for (auto i : n) {
+        for (const auto& [blid, ndset] : m_nodeblockid) {
+          // if node was found in a block, add to send-data
+          if (ndset.find(tk::cref_find(d->Lid(),i)) != ndset.end())
+            mb[j].insert(blid);
+        }
+        if (m_nusermeshblk > 0)
+          Assert(mb[j].size() > 0, "Sending no block data for node");
+        ++j;
+      }
+      thisProxy[c].comblk( std::vector<std::size_t>(begin(n),end(n)), mb );
+    }
+
+  ownblk_complete();
+}
+
+void
+ALECG::comblk( const std::vector< std::size_t >& gid,
+               const std::vector< std::set< std::size_t > >& mb )
+// *****************************************************************************
+//  Receive mesh block information for nodes on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive RHS contributions
+//! \param[in] mb Block ids for each node on chare-boundaries
+//! \details This function receives mesh block information for nodes on chare
+//!   boundaries. While m_nodeblockid stores block information for own nodes,
+//!   m_nodeblockidc collects the neighbor chare information during
+//!   communication. This way work on m_nodeblockid and m_nodeblockidc is
+//!   overlapped. The two are combined in continueSetup().
+// *****************************************************************************
+{
+  Assert( mb.size() == gid.size(), "Size mismatch" );
+
+  for (std::size_t i=0; i<gid.size(); ++i) {
+    for (const auto& blid : mb[i]) {
+      m_nodeblockidc[blid].insert(gid[i]);
+    }
+  }
+
+  // When we have heard from all chares we communicate with, this chare is done
+  if (++m_nmblk == Disc()->NodeCommMap().size()) {
+    m_nmblk = 0;
+    comblk_complete();
+  }
+}
+
+void
+ALECG::continueSetup()
+// *****************************************************************************
+// Continue setup for solution, after communication for mesh blocks
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Combine own and communicated mesh block information
+  for (const auto& [blid, ndset] : m_nodeblockidc) {
+    for (const auto& i : ndset) {
+      auto lid = tk::cref_find(d->Lid(), i);
+      m_nodeblockid[blid].insert(lid);
+    }
+  }
+
+  // clear receive buffer
+  tk::destroy(m_nodeblockidc);
 
   // Compute volume of user-defined box IC
-  d->boxvol( m_boxnodes );
+  d->boxvol( m_boxnodes, m_nodeblockid, m_nusermeshblk );
 
   // Query time history field output labels from all PDEs integrated
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
@@ -541,20 +622,25 @@ ALECG::conserved( tk::Fields& u, const std::vector< tk::real >& v )
 }
 
 void
-ALECG::box( tk::real v )
+ALECG::box( tk::real v, const std::vector< tk::real >& blkvols )
 // *****************************************************************************
 // Receive total box IC volume and set conditions in box
 //! \param[in] v Total volume within user-specified box
+//! \param[in] blkvols Vector of mesh block discrete volumes with user ICs
 // *****************************************************************************
 {
+  Assert(blkvols.size() == m_nusermeshblk,
+    "Incorrect size of block volume vector");
   auto d = Disc();
 
-  // Store user-defined box IC volume
+  // Store user-defined box/block IC volume
   d->Boxvol() = v;
+  d->MeshBlkVol() = blkvols;
 
   // Set initial conditions for all PDEs
   for (auto& eq : g_cgpde)
-    eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes );
+    eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes,
+      d->MeshBlkVol(), m_nodeblockid );
 
   // Multiply conserved variables with mesh volume
   volumetric( m_u, Disc()->Vol() );
@@ -1227,7 +1313,8 @@ ALECG::resizePostAMR(
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::vector< std::size_t >& triinpoel )
+  const std::vector< std::size_t >& triinpoel,
+  const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Receive new mesh from Refiner
 //! \param[in] ginpoel Mesh connectivity with global node ids
@@ -1241,6 +1328,7 @@ ALECG::resizePostAMR(
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
+//! \param[in] elemblockid Local tet ids associated with mesh block ids
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1249,7 +1337,8 @@ ALECG::resizePostAMR(
   ++d->Itr();    // Increase number of iterations with a change in the mesh
 
   // Resize mesh data structures after mesh refinement
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
+    elemblockid );
 
   // Remove newly removed nodes from solution vectors
   m_u.rm(removedNodes);

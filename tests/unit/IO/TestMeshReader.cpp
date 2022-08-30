@@ -76,7 +76,8 @@ struct MeshReader_common {
     std::vector< std::size_t > ginpoel, inpoel, triinpoel;
     std::unordered_map< std::size_t, std::size_t > lid;
     tk::UnsMesh::Coords coord;
-    mr.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord );
+    std::unordered_map< std::size_t, std::set< std::size_t > > elemBlockId;
+    mr.readMeshPart( ginpoel, inpoel, triinpoel, lid, coord, elemBlockId );
 
     // Test if the number of elements is correct
     ensure_equals( "number of elements incorrect",

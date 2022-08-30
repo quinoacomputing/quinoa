@@ -167,6 +167,11 @@ class CompFlow {
           for (const auto& b : icbox[m_system]) {   // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
+              std::vector< tk::real > box
+              { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+                b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+                b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+              auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
                 s[c] = unk(e,mark,m_offset);
@@ -174,8 +179,8 @@ class CompFlow {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, m_mat_blk, 1.0, t, b,
-                bgpreic[m_system][0], c_v, s );
+              initializeBox<inciter::ctr::box>( m_system, m_mat_blk, 1.0, V_ex,
+                t, b, bgpreic[m_system][0], c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -329,11 +334,12 @@ class CompFlow {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
         VertexBasedCompflow_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_offset, geoElem, coord, U);
+          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
+          shockmarker);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_offset, geoElem, coord, gid, bid, uNodalExtrm, mtInv, U,
-          shockmarker);
+          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
+          uNodalExtrm, mtInv, flux, U, shockmarker);
     }
 
     //! Update the conservative variable solution for this PDE system
@@ -829,6 +835,17 @@ class CompFlow {
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
+
+    //! Return cell-averaged specific total energy for an element
+    //! \param[in] e Element id for which total energy is required
+    //! \param[in] unk Vector of conserved quantities
+    //! \return Cell-averaged specific total energy for given element
+    tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+      return unk(e,4*rdof,m_offset);
+    }
 
   private:
     //! Physics policy

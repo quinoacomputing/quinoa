@@ -386,6 +386,29 @@ namespace grm {
           }
         }
 
+        // Error check for ic mesh block
+        const auto& mblock = ic.template get< tag::meshblock >();
+        if (!mblock.empty()) {
+          for (const auto& b : mblock.back()) {   // for all blocks
+            if (stack.template get< tag::discr, tag::scheme >() ==
+              inciter::ctr::SchemeType::ALECG) {
+              Message< Stack, ERROR, MsgKey::MESHBLOCKSUPPORT >(stack, in);
+            }
+            else {
+              const auto& blkid = b.template get< tag::blockid >();
+              if (blkid == 0)
+                Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
+
+              // if energy content is used to initialize block, then volume must
+              // be specified
+              const auto& blkenc = b.template get< tag::energy_content >();
+              const auto& blkvol = b.template get< tag::volume >();
+              if (blkenc > 0.0 && blkvol < 1e-12)
+                Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
+            }
+          }
+        }
+
         // Error check Dirichlet boundary condition block for all compflow
         // configurations
         const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
@@ -573,13 +596,12 @@ namespace grm {
           // If JWL parameter vectors are wrong size, error out
           const auto& a_jwl = mtype.template get< tag::A_jwl >();
           const auto& b_jwl = mtype.template get< tag::B_jwl >();
-          const auto& c_jwl = mtype.template get< tag::C_jwl >();
           const auto& r1_jwl = mtype.template get< tag::R1_jwl >();
           const auto& r2_jwl = mtype.template get< tag::R2_jwl >();
           const auto& rho0_jwl = mtype.template get< tag::rho0_jwl >();
           if (a_jwl.size() != mat_id.size() || b_jwl.size() != mat_id.size() ||
-            c_jwl.size() != mat_id.size() || r1_jwl.size() != mat_id.size() ||
-            r2_jwl.size() != mat_id.size() || rho0_jwl.size() != mat_id.size() )
+            r1_jwl.size() != mat_id.size() || r2_jwl.size() != mat_id.size() ||
+            rho0_jwl.size() != mat_id.size() )
             Message< Stack, ERROR, MsgKey::EOSJWLPARAM >( stack, in );
         }
 
@@ -698,6 +720,31 @@ namespace grm {
               boxorient.resize(3, 0.0);
             else if (boxorient.size() != 3)
               Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
+          }
+        }
+
+        // each IC mesh block should have block id and material id specified,
+        // and the material id should be within nmat
+        const auto& mblock = ic.template get< tag::meshblock >();
+        if (!mblock.empty()) {
+          for (const auto& b : mblock.back()) {   // for all blocks
+            const auto& blkid = b.template get< tag::blockid >();
+            if (blkid == 0)
+              Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
+            const auto& blkmatid = b.template get< tag::materialid >();
+            if (blkmatid == 0) {
+              Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
+            }
+            else if (blkmatid > nmat.back()) {
+              Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
+            }
+
+            // if energy content is used to initialize block, then volume must
+            // be specified
+            const auto& blkenc = b.template get< tag::energy_content >();
+            const auto& blkvol = b.template get< tag::volume >();
+            if (blkenc > 0.0 && blkvol < 1e-12)
+              Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
           }
         }
       }
@@ -1405,9 +1452,8 @@ namespace deck {
            tk::grm::process< use< kw::limsol_projection >,
              tk::grm::Store< tag::discr, tag::limsol_projection >,
              pegtl::alpha >,
-           tk::grm::process< use< kw::shock_detection >,
-             tk::grm::Store< tag::discr, tag::shock_detection >,
-             pegtl::alpha >
+           tk::grm::discrparam< use, kw::shock_detector_coeff,
+             tag::shock_detector_coeff >
          > {};
 
   //! PDE parameter vector
@@ -1421,7 +1467,7 @@ namespace deck {
                                     eq, param, xparams... > {};
 
    //! Match box parameter
-  template< class eq, typename keyword, typename target >
+  template< class eq, typename keyword, typename target, typename icunit >
   struct box_parameter :
            pegtl::if_must<
              tk::grm::readkw< typename use<keyword>::pegtl_string >,
@@ -1430,10 +1476,11 @@ namespace deck {
                            tk::grm::msg< tk::grm::ERROR,
                                          tk::grm::MsgKey::MISSING > >,
                tk::grm::Back_back_store< target,
-                 tag::param, eq, tag::ic, tag::box > > > {};
+                 tag::param, eq, tag::ic, icunit > > > {};
 
    //! Match box parameter and store deep
-  template< class eq, typename keyword, typename target, typename subtarget >
+  template< class eq, typename keyword, typename target, typename subtarget,
+    typename icunit >
   struct box_deep_parameter :
            pegtl::if_must<
              tk::grm::readkw< typename use<keyword>::pegtl_string >,
@@ -1442,33 +1489,34 @@ namespace deck {
                            tk::grm::msg< tk::grm::ERROR,
                                          tk::grm::MsgKey::MISSING > >,
                tk::grm::Back_back_deep_store< target, subtarget,
-                 tag::param, eq, tag::ic, tag::box > > > {};
+                 tag::param, eq, tag::ic, icunit > > > {};
 
    //! Match box parameter vector
-  template< class eq, typename keyword, typename target >
+  template< class eq, typename keyword, typename target, typename icunit >
   struct box_vector :
          tk::grm::vector< use< keyword >,
                           tk::grm::Back_back_store_back< target,
-                            tag::param, eq, tag::ic, tag::box >,
+                            tag::param, eq, tag::ic, icunit >,
                           use< kw::end > > {};
 
    //! Match box parameter vector and store deep
-  template< class eq, typename keyword, typename target, typename subtarget >
+  template< class eq, typename keyword, typename target, typename subtarget,
+    typename icunit >
   struct box_deep_vector :
          tk::grm::vector< use< keyword >,
                           tk::grm::Back_back_deep_store_back< target, subtarget,
-                            tag::param, eq, tag::ic, tag::box >,
+                            tag::param, eq, tag::ic, icunit >,
                           use< kw::end > > {};
 
 
    //! Match box option
   template< class eq, typename Option, typename keyword, typename target,
-            typename subtarget >
+            typename subtarget, typename icunit >
   struct box_option :
          tk::grm::process<
            use< keyword >,
            tk::grm::back_back_deep_store_option< target, subtarget, use,
-             Option, tag::param, eq, tag::ic, tag::box >,
+             Option, tag::param, eq, tag::ic, icunit >,
            pegtl::alpha > {};
 
    //! Match material option
@@ -1637,31 +1685,65 @@ namespace deck {
            tk::grm::readkw< use< kw::box >::pegtl_string >,
            tk::grm::start_vector_back< tag::param, eq, tag::ic, tag::box >,
            tk::grm::block< use< kw::end >
-             , box_parameter< eq, kw::xmin, tag::xmin >
-             , box_parameter< eq, kw::xmax, tag::xmax >
-             , box_parameter< eq, kw::ymin, tag::ymin >
-             , box_parameter< eq, kw::ymax, tag::ymax >
-             , box_parameter< eq, kw::zmin, tag::zmin >
-             , box_parameter< eq, kw::zmax, tag::zmax >
-             , box_vector< eq, kw::orientation, tag::orientation >
-             , box_parameter< eq, kw::materialid, tag::materialid >
-             , box_parameter< eq, kw::density, tag::density >
-             , box_parameter< eq, kw::pressure, tag::pressure >
-             , box_parameter< eq, kw::temperature, tag::temperature >
-             , box_parameter< eq, kw::energy_content, tag::energy_content >
-             , box_parameter< eq, kw::energy, tag::energy >
-             , box_parameter< eq, kw::mass, tag::mass >
-             , box_vector< eq, kw::velocity, tag::velocity >
+             , box_parameter< eq, kw::xmin, tag::xmin, tag::box >
+             , box_parameter< eq, kw::xmax, tag::xmax, tag::box >
+             , box_parameter< eq, kw::ymin, tag::ymin, tag::box >
+             , box_parameter< eq, kw::ymax, tag::ymax, tag::box >
+             , box_parameter< eq, kw::zmin, tag::zmin, tag::box >
+             , box_parameter< eq, kw::zmax, tag::zmax, tag::box >
+             , box_vector< eq, kw::orientation, tag::orientation, tag::box >
+             , box_parameter< eq, kw::materialid, tag::materialid, tag::box >
+             , box_parameter< eq, kw::density, tag::density, tag::box >
+             , box_parameter< eq, kw::pressure, tag::pressure, tag::box >
+             , box_parameter< eq, kw::temperature, tag::temperature, tag::box >
+             , box_parameter< eq, kw::energy_content, tag::energy_content, tag::box >
+             , box_parameter< eq, kw::energy, tag::energy, tag::box >
+             , box_parameter< eq, kw::mass, tag::mass, tag::box >
+             , box_vector< eq, kw::velocity, tag::velocity, tag::box >
              , box_option< eq, ctr::Initiate, kw::initiate, tag::initiate,
-                           tag::init >
+                           tag::init, tag::box >
              , pegtl::if_must<
                  tk::grm::readkw< use< kw::linear >::pegtl_string >,
                  tk::grm::block< use< kw::end >
-                   , box_deep_vector< eq, kw::point, tag::initiate, tag::point >
-                   , box_deep_parameter< eq, kw::radius, tag::initiate,
-                                         tag::radius >
+                   , box_deep_vector< eq, kw::point, tag::initiate, tag::point,
+                      tag::box >
+                   , box_deep_parameter< eq, kw::front_width, tag::initiate,
+                                         tag::front_width, tag::box >
                    , box_deep_parameter< eq, kw::velocity, tag::initiate,
-                                         tag::velocity > > >
+                                         tag::velocity, tag::box > > >
+             > > {};
+
+  //! initial conditins meshblock block
+  template< class eq >
+  struct meshblock :
+         pegtl::if_must<
+           tk::grm::readkw< use< kw::meshblock >::pegtl_string >,
+           tk::grm::start_vector_back< tag::param, eq, tag::ic, tag::meshblock >,
+           tk::grm::block< use< kw::end >
+             , box_parameter< eq, kw::blockid, tag::blockid, tag::meshblock >
+             , box_parameter< eq, kw::materialid, tag::materialid,
+                tag::meshblock >
+             , box_parameter< eq, kw::volume, tag::volume, tag::meshblock >
+             , box_parameter< eq, kw::density, tag::density, tag::meshblock >
+             , box_parameter< eq, kw::pressure, tag::pressure, tag::meshblock >
+             , box_parameter< eq, kw::temperature, tag::temperature,
+                tag::meshblock >
+             , box_parameter< eq, kw::energy_content, tag::energy_content,
+                tag::meshblock >
+             , box_parameter< eq, kw::energy, tag::energy, tag::meshblock >
+             , box_parameter< eq, kw::mass, tag::mass, tag::meshblock >
+             , box_vector< eq, kw::velocity, tag::velocity, tag::meshblock >
+             , box_option< eq, ctr::Initiate, kw::initiate, tag::initiate,
+                           tag::init, tag::meshblock >
+             , pegtl::if_must<
+                 tk::grm::readkw< use< kw::linear >::pegtl_string >,
+                 tk::grm::block< use< kw::end >
+                   , box_deep_vector< eq, kw::point, tag::initiate, tag::point,
+                      tag::meshblock >
+                   , box_deep_parameter< eq, kw::front_width, tag::initiate,
+                                         tag::front_width, tag::meshblock >
+                   , box_deep_parameter< eq, kw::velocity, tag::initiate,
+                                         tag::velocity, tag::meshblock > > >
              > > {};
 
   //! initial conditions block for compressible flow
@@ -1683,7 +1765,9 @@ namespace deck {
                                      tag::ic, tag::temperature >,
                pde_parameter_vector< kw::energy, eq,
                                      tag::ic, tag::energy > >,
-               pegtl::seq< box< eq > > > > {};
+               pegtl::seq< box< eq > >,
+               pegtl::seq< meshblock< eq > >
+           > > {};
 
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
@@ -1778,6 +1862,8 @@ namespace deck {
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::ic, tag::box >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
+            tag::meshblock >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
@@ -1812,8 +1898,6 @@ namespace deck {
                            parameter_bool< tag::compflow,
                                            kw::sysfct,
                                            tag::sysfct >,
-                           parameter< tag::compflow, kw::npar,
-                                      tag::npar, pegtl::digit >,
                            parameter< tag::compflow, kw::pde_alpha,
                                       tag::alpha >,
                            parameter< tag::compflow, kw::pde_p0,
@@ -1852,6 +1936,8 @@ namespace deck {
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::ic, tag::box >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
+            tag::meshblock >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::material >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,

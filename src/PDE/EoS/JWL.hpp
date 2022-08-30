@@ -68,8 +68,8 @@ class JWL: public EoS_Base {
         }
 
         i++;
-        if ( std::copysign( 1.0, p_known - PfromRT( c, t_known) ) ==
-             std::copysign( 1.0, p_known - PfromRT( a, t_known) ) )
+        if ( static_cast< int > (std::copysign( 1.0, p_known - PfromRT( c, t_known) )) ==
+             static_cast< int > (std::copysign( 1.0, p_known - PfromRT( a, t_known) )) )
         {
           a = c;
         }

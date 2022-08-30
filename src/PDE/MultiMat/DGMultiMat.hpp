@@ -81,7 +81,7 @@ class MultiMat {
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
-        , subsonicOutlet
+        , farfieldOutlet
         , extrapolate } ) );
 
       // EoS initialization
@@ -118,13 +118,12 @@ class MultiMat {
         numEqDof.push_back(g_inputdeck.get< tag::discr, tag::ndof >());
       }
 
-      // volume fractions are P0Pm (ndof = 1) if interface reconstruction is used
+      // volume fractions are P0Pm (ndof = 1) for multi-material simulations
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >
-          ()[m_system] > 0) numEqDof[volfracIdx(nmat, k)] = 1;
-      }
+      if(nmat > 1)
+        for (std::size_t k=0; k<nmat; ++k)
+          numEqDof[volfracIdx(nmat, k)] = 1;
     }
 
     //! Determine elements that lie inside the user-defined IC box
@@ -163,6 +162,11 @@ class MultiMat {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
+      const auto& bgpreic = ic.get< tag::pressure >();
+      tk::real bgpre =
+        (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
+        bgpreic[m_system][0] : 0.0;
+
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
@@ -171,6 +175,11 @@ class MultiMat {
           for (const auto& b : icbox[m_system]) {   // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
+              std::vector< tk::real > box
+                { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+                  b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+                  b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+              auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
                 s[c] = unk(e,mark,m_offset);
@@ -178,7 +187,8 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i,m_offset) = 0.0;
               }
-              initializeBox( m_system, m_mat_blk, 1.0, t, b, s );
+              initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, bgpre,
+                s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -414,59 +424,56 @@ class MultiMat {
                       tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto intsharp =
-        g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
 
       bool is_p0p1(false);
-      if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1)
+      if (rdof == 4 && ndof == 1)
         is_p0p1 = true;
 
-      // do reconstruction only if P0P1 or if interface reconstruction is active
-      if (is_p0p1 || (intsharp > 0)) {
-        const auto nelem = fd.Esuel().size()/4;
-        const auto nmat =
-          g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto nelem = fd.Esuel().size()/4;
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-        Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
-                "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
 
-        //----- reconstruction of conserved quantities -----
-        //--------------------------------------------------
-        // specify how many variables need to be reconstructed
-        std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
-        if (!is_p0p1)
-          varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
+      //----- reconstruction of conserved quantities -----
+      //--------------------------------------------------
+      // specify how many variables need to be reconstructed
+      std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+      // If DG is applied, reconstruct only volume fractions
+      if (!is_p0p1 && ndof > 1)
+        varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
 
-        // 1. solve 3x3 least-squares system
+      // 1. solve 3x3 least-squares system
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        // Reconstruct second-order dofs of volume-fractions in Taylor space
+        // using nodal-stencils, for a good interface-normal estimate
+        tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+          U, varRange );
+      }
+
+      // 2. transform reconstructed derivatives to Dubiner dofs
+      tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, U, varRange);
+
+      //----- reconstruction of primitive quantities -----
+      //--------------------------------------------------
+      // For multimat, conserved and primitive quantities are reconstructed
+      // separately.
+      if (is_p0p1) {
+        // 1.
         for (std::size_t e=0; e<nelem; ++e)
         {
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
           tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
-            U, varRange );
+            P, {0, nprim()-1} );
         }
 
-        // 2. transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, U, varRange);
-
-        //----- reconstruction of primitive quantities -----
-        //--------------------------------------------------
-        // For multimat, conserved and primitive quantities are reconstructed
-        // separately.
-        if (is_p0p1) {
-          // 1.
-          for (std::size_t e=0; e<nelem; ++e)
-          {
-            // Reconstruct second-order dofs of volume-fractions in Taylor space
-            // using nodal-stencils, for a good interface-normal estimate
-            tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
-              P, {0, nprim()-1} );
-          }
-
-          // 2.
-          tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, P,
-            {0, nprim()-1});
-        }
+        // 2.
+        tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, P,
+          {0, nprim()-1});
       }
     }
 
@@ -524,14 +531,14 @@ class MultiMat {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, fd, geoFace, geoElem, coord, U, P, nmat,
-          shockmarker );
+          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, flux,U, P,
+          nmat, shockmarker );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
       {
         VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, geoElem, coord, gid, bid, uNodalExtrm,
-          pNodalExtrm, mtInv, U, P, nmat, shockmarker );
+          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
+          uNodalExtrm, pNodalExtrm, mtInv, flux, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
@@ -902,7 +909,11 @@ class MultiMat {
     //! Return names of integral variables to be output to diagnostics file
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
-    { return Problem::names( m_ncomp ); }
+    {
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      return MultiMatDiagNames(nmat);
+    }
 
     //! Return analytic solution (if defined by Problem) at xi, yi, zi, t
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -925,6 +936,24 @@ class MultiMat {
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi,
                                   t ); }
+
+    //! Return cell-averaged specific total energy for an element
+    //! \param[in] e Element id for which total energy is required
+    //! \param[in] unk Vector of conserved quantities
+    //! \return Cell-averaged specific total energy for given element
+    tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      tk::real sp_te(0.0);
+      // sum each material total energy
+      for (std::size_t k=0; k<nmat; ++k) {
+        sp_te += unk(e, energyDofIdx(nmat,k,rdof,0), m_offset);
+      }
+      return sp_te;
+    }
 
   private:
     //! Equation system index

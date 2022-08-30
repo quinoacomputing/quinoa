@@ -11,6 +11,7 @@ inciter
   ttyi 10     # TTY output interval
   scheme dgp1
   limiter vertexbasedp1
+  shock_detector_coeff 1.0
 
   partitioning
     algorithm mj

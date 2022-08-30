@@ -158,7 +158,8 @@ using discretization = tk::TaggedTuple< brigand::list<
   , tag::ndof,   std::size_t                    //!< Number of solution DOFs
   , tag::accuracy_test, bool                    //!< Accuracy test on/off
   , tag::limsol_projection, bool         //!< Limited solution projection on/off
-  , tag::shock_detection, bool          //!< Shock detection for limiting on/off
+  , tag::shock_detector_coeff, kw::shock_detector_coeff::info::expect::type
+      //!< Shock detector coefficient for limiting on/off
 > >;
 
 //! ASCII output floating-point precision in digits
@@ -250,7 +251,7 @@ using diagnostics = tk::TaggedTuple< brigand::list<
 using InitiateParameters = tk::TaggedTuple< brigand::list<
     tag::init,          InitiateType
   , tag::point,         std::vector< kw::point::info::expect::type >
-  , tag::radius,        kw::radius::info::expect::type
+  , tag::front_width,   kw::front_width::info::expect::type
   , tag::velocity,      kw::velocity::info::expect::type
 > >;
 
@@ -264,6 +265,21 @@ using box = tk::TaggedTuple< brigand::list<
   , tag::zmax,          kw::zmax::info::expect::type
   , tag::orientation,   std::vector< kw::orientation::info::expect::type >
   , tag::materialid,    kw::materialid::info::expect::type
+  , tag::mass,          kw::mass::info::expect::type
+  , tag::density,       kw::density::info::expect::type
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
+  , tag::pressure,      kw::pressure::info::expect::type
+  , tag::energy,        kw::energy::info::expect::type
+  , tag::energy_content,kw::energy_content::info::expect::type
+  , tag::temperature,   kw::temperature::info::expect::type
+  , tag::initiate,      InitiateParameters
+> >;
+
+//! Mesh block from mesh file specifying physics variables
+using meshblock = tk::TaggedTuple< brigand::list<
+    tag::blockid,       kw::blockid::info::expect::type
+  , tag::materialid,    kw::materialid::info::expect::type
+  , tag::volume,        kw::volume::info::expect::type
   , tag::mass,          kw::mass::info::expect::type
   , tag::density,       kw::density::info::expect::type
   , tag::velocity,      std::vector< kw::velocity::info::expect::type >
@@ -289,6 +305,7 @@ using ic = tk::TaggedTuple< brigand::list<
   , tag::temperature,   std::vector<
                           std::vector< kw::temperature::info::expect::type > >
   , tag::box,           std::vector< std::vector< box > >
+  , tag::meshblock,     std::vector< std::vector< meshblock > >
 > >;
 
 //! Boundary conditions configuration (list of side sets for each eq system)
@@ -448,8 +465,6 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::matidxmap,     tk::TaggedTuple< brigand::list<
       tag::eosidx,      std::vector< std::size_t >,
       tag::matidx,      std::vector< std::size_t > > >
-    //! total number of optional passive tracker particles for visualization
-  , tag::npar,          std::vector< kw::npar::info::expect::type >
     //! Flux function type
   , tag::flux,          std::vector< FluxType >
     //! Lua code (multiple blocks)

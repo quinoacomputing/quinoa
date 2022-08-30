@@ -108,7 +108,7 @@ class DiagCG : public CBase_DiagCG {
     void setup();
 
     //! Receive total box IC volume and set conditions in box
-    void box( tk::real v );
+    void box( tk::real v, const std::vector< tk::real >& blkvols );
 
     // Initially compute left hand side diagonal matrix
     void init();
@@ -150,7 +150,9 @@ class DiagCG : public CBase_DiagCG {
       const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& /* bface */,
       const std::map< int, std::vector< std::size_t > >& bnode,
-      const std::vector< std::size_t >& /* triinpoel */ );
+      const std::vector< std::size_t >& /* triinpoel */,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblockid );
 
     //! Extract field output to file
     void extractFieldOutput(
@@ -214,6 +216,8 @@ class DiagCG : public CBase_DiagCG {
       p | m_boxnodes;
       p | m_dtp;
       p | m_tp;
+      p | m_nusermeshblk;
+      p | m_nodeblockid;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -295,6 +299,10 @@ class DiagCG : public CBase_DiagCG {
     std::vector< tk::real > m_tp;
     //! True in the last time step
     int m_finished;
+    //! Number of mesh-blocks with user-defined ICs
+    std::size_t m_nusermeshblk;
+    //! Local node ids associated with mesh block ids
+    std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockid;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

@@ -232,6 +232,45 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     }
   }
 
+  const auto& icblock = ic.get< tag::meshblock >();
+  if (icblock.size() > c) {
+    for (const auto& b : icblock[c]) {   // for all blocks configured for eq
+      std::string blockname = "IC mesh block " +
+        parameter(b.get< tag::blockid >());
+
+      nfo.emplace_back( blockname + " material id",
+                        parameter( b.get< tag::materialid >() ) );
+      nfo.emplace_back( blockname + " volume",
+                        parameter( b.get< tag::volume >() ) );
+      nfo.emplace_back( blockname + " density",
+                        parameter( b.get< tag::density >() ) );
+      nfo.emplace_back( blockname + " velocity",
+                        parameters( b.get< tag::velocity >() ) );
+      nfo.emplace_back( blockname + " pressure",
+                        parameter( b.get< tag::pressure >() ) );
+      nfo.emplace_back( blockname + " internal energy per unit mass",
+                        parameter( b.get< tag::energy >() ) );
+      nfo.emplace_back( blockname + " mass",
+                        parameter( b.get< tag::mass >() ) );
+      nfo.emplace_back( blockname + " internal energy per unit volume",
+                        parameter( b.get< tag::energy_content >() ) );
+      nfo.emplace_back( blockname + " temperature",
+                        parameter( b.get< tag::temperature >() ) );
+      const auto& initiate = b.get< tag::initiate >();
+      const auto& inittype = initiate.get< tag::init >();
+      auto opt = ctr::Initiate();
+      nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(inittype) );
+      if (inittype == ctr::InitiateType::LINEAR) {
+        nfo.emplace_back( blockname + " initiate linear point",
+                          parameters( initiate.get< tag::point >() ) );
+        nfo.emplace_back( blockname + " initiate linear front width",
+                          parameter( initiate.get< tag::front_width >() ) );
+        nfo.emplace_back( blockname + " initiate linear velocity",
+                          parameter( initiate.get< tag::velocity >() ) );
+      }
+    }
+  }
+
   return nfo;
 }
 

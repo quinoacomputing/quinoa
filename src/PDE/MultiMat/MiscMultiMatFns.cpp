@@ -81,8 +81,9 @@ cleanTraceMultiMat(
 // *****************************************************************************
 //  Clean up the state of trace materials for multi-material PDE system
 //! \param[in] nelem Number of elements
-//! \param[in] offset Offset for equation systems
 //! \param[in] system Index for equation systems
+//! \param[in] mat_blk EOS material block
+//! \param[in] offset Offset for equation systems
 //! \param[in] geoElem Element geometry array
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in/out] U High-order solution vector which gets modified
@@ -349,6 +350,7 @@ timeStepSizeMultiMat(
   const tk::Fields& P )
 // *****************************************************************************
 //  Time step restriction for multi material cell-centered schemes
+//! \param[in] mat_blk EOS material block
 //! \param[in] esuf Elements surrounding elements array
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
@@ -451,6 +453,97 @@ timeStepSizeMultiMat(
   for (std::size_t e=0; e<nelem; ++e)
   {
     mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+  }
+
+  return mindt;
+}
+
+tk::real
+timeStepSizeMultiMatFV(
+  const std::vector< EoS_Base* >& mat_blk,
+  const tk::Fields& geoElem,
+  const std::size_t nelem,
+  std::size_t system,
+  std::size_t offset,
+  std::size_t nmat,
+  const int engSrcAd,
+  const tk::Fields& U,
+  const tk::Fields& P )
+// *****************************************************************************
+//  Time step restriction for multi material cell-centered FV scheme
+//! \param[in] mat_blk Material EOS block
+//! \param[in] geoElem Element geometry array
+//! \param[in] nelem Number of elements
+//! \param[in] system Index for equation systems
+//! \param[in] offset Index for equation systems
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] engSrcAd Whether the energy source was added
+//! \param[in] U High-order solution vector
+//! \param[in] P High-order vector of primitives
+//! \return Maximum allowable time step based on cfl criterion
+// *****************************************************************************
+{
+  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  std::size_t ncomp = U.nprop()/rdof;
+  std::size_t nprim = P.nprop()/rdof;
+
+  std::vector< tk::real > ugp(ncomp, 0.0), pgp(nprim, 0.0);
+  tk::real mindt = std::numeric_limits< tk::real >::max();
+
+  // determine front propagation speed if relevant energy sources were added
+  tk::real v_front(0.0);
+  if (engSrcAd == 1) {
+    const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
+      tag::meshblock >();
+    if (icmbk.size() > system) {
+      for (const auto& b : icmbk[system]) { // for all blocks
+        auto inittype = b.template get< tag::initiate, tag::init >();
+        if (inittype == ctr::InitiateType::LINEAR) {
+          v_front = std::max(v_front,
+            b.template get< tag::initiate, tag::velocity >());
+        }
+      }
+    }
+  }
+
+  // loop over all elements
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // basis function at centroid
+    std::vector< tk::real > B(rdof, 0.0);
+    B[0] = 1.0;
+
+    // get conserved quantities
+    ugp = eval_state(ncomp, offset, rdof, ndof, e, U, B, {0, ncomp-1});
+    // get primitive quantities
+    pgp = eval_state(nprim, offset, rdof, ndof, e, P, B, {0, nprim-1});
+
+    // magnitude of advection velocity
+    auto u = pgp[velocityIdx(nmat, 0)];
+    auto v = pgp[velocityIdx(nmat, 1)];
+    auto w = pgp[velocityIdx(nmat, 2)];
+    auto vmag = std::sqrt(tk::dot({u, v, w}, {u, v, w}));
+
+    // acoustic speed
+    tk::real a = 0.0;
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+        a = std::max( a, mat_blk[k]->eos_soundspeed( ugp[densityIdx(nmat, k)],
+          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)] ) );
+      }
+    }
+
+    // characteristic wave speed
+    auto v_char = vmag + a + v_front;
+
+    // characteristic length (radius of insphere)
+    auto dx = std::min(std::cbrt(geoElem(e,0,0)), geoElem(e,4,0))
+      /std::sqrt(24.0);
+
+    // element dt
+    mindt = std::min(mindt, dx/v_char);
   }
 
   return mindt;

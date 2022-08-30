@@ -87,25 +87,28 @@ namespace inciter {
   }
 
   //! \brief Boundary state function providing the left and right state of a
-  //!   face at subsonic outlet boundaries
+  //!   face at farfield outlet boundaries
   //! \param[in] system Equation system index
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
+  //! \param[in] fn Unit face normal
   //! \return Left and right states for all scalar components in this PDE
   //!   system
-  //! \details The subsonic outlet boudary calculation, implemented here, is
+  //! \details The farfield outlet boudary calculation, implemented here, is
   //!   based on the characteristic theory of hyperbolic systems. For subsonic
   //!   outlet flow, there is 1 incoming characteristic per material.
   //!   Therefore, we calculate the ghost cell state by taking material
   //!   pressure from the outside and other quantities from the internal cell.
+  //!   For supersonic outlet flow, all the characteristics are from internal
+  //!   cell and we obtain the ghost cell state from the internal cell.
   //! \note The function signature must follow tk::StateFn
   static tk::StateFn::result_type
-  subsonicOutlet( ncomp_t system,
+  farfieldOutlet( ncomp_t system,
                   ncomp_t ncomp,
                   const std::vector< EoS_Base* >& mat_blk,
                   const std::vector< tk::real >& ul,
                   tk::real, tk::real, tk::real, tk::real,
-                  const std::array< tk::real, 3 >& )
+                  const std::array< tk::real, 3 >& fn )
   {
     const auto nmat =
       g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -122,25 +125,34 @@ namespace inciter {
     auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
     auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
     auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
-    // Boundary condition
+
+    // Normal velocity
+    auto vn = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
+
+    // Acoustic speed
+    tk::real a(0.0);
     for (std::size_t k=0; k<nmat; ++k)
-    {
-      ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * 
-      mat_blk[k]->eos_totalenergy(
-        ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
+      if (ul[volfracIdx(nmat, k)] > 1.0e-04)
+        a = std::max( a, mat_blk[k]->eos_soundspeed( ul[densityIdx(nmat, k)],
+          ul[ncomp+pressureIdx(nmat, k)], ul[volfracIdx(nmat, k)] ) );
+
+    // Mach number
+    auto Ma = vn / a;
+
+    if(Ma >= 0 && Ma < 1) {         // Subsonic outflow
+      for (std::size_t k=0; k<nmat; ++k)
+        ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
+        mat_blk[k]->eos_totalenergy(
+          ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
+
+      // Internal cell primitive quantities using the separately reconstructed
+      // primitive quantities. This is used to get ghost state for primitive
+      // quantities
+
+      // material pressures
+      for (std::size_t k=0; k<nmat; ++k)
+        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
     }
-
-    // Internal cell primitive quantities using the separately reconstructed
-    // primitive quantities. This is used to get ghost state for primitive
-    // quantities
-
-    // velocity
-    ur[ncomp+velocityIdx(nmat, 0)] = v1l;
-    ur[ncomp+velocityIdx(nmat, 1)] = v2l;
-    ur[ncomp+velocityIdx(nmat, 2)] = v3l;
-    // material pressures
-    for (std::size_t k=0; k<nmat; ++k)
-      ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
 
     Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended boundary "
             "state vector" );

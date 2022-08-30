@@ -109,8 +109,13 @@ class CGPDE {
 
     //! Public interface to determining which nodes are in IC box
     void IcBoxNodes( const tk::UnsMesh::Coords& coord,
-      std::vector< std::unordered_set< std::size_t > >& inbox )
-    { self->IcBoxNodes( coord, inbox ); }
+      const std::vector< std::size_t >& inpoel,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblkid,
+      std::vector< std::unordered_set< std::size_t > >& inbox,
+      std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblkid,
+      std::size_t& nuserblk )
+    { self->IcBoxNodes( coord, inpoel, elemblkid, inbox, nodeblkid, nuserblk );
+    }
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize(
@@ -118,8 +123,11 @@ class CGPDE {
       tk::Fields& unk,
       real t,
       real V,
-      const std::vector< std::unordered_set< std::size_t > >& inbox )
-    { self->initialize( coord, unk, t, V, inbox ); }
+      const std::vector< std::unordered_set< std::size_t > >& inbox,
+      const std::vector< tk::real >& blkvols,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        nodeblkid )
+    { self->initialize( coord, unk, t, V, inbox, blkvols, nodeblkid ); }
 
     //! Public interface to querying a velocity
     void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
@@ -298,13 +306,19 @@ class CGPDE {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void IcBoxNodes( const tk::UnsMesh::Coords&,
-        std::vector< std::unordered_set< std::size_t > >& inbox ) = 0;
+        const std::vector< std::size_t >&,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&,
+        std::vector< std::unordered_set< std::size_t > >&,
+        std::unordered_map< std::size_t, std::set< std::size_t > >&,
+        std::size_t& ) = 0;
       virtual void initialize(
         const std::array< std::vector< real >, 3 >&,
         tk::Fields&,
         real,
         real,
-        const std::vector< std::unordered_set< std::size_t > >& ) = 0;
+        const std::vector< std::unordered_set< std::size_t > >&,
+        const std::vector< tk::real >&,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >& ) = 0;
       virtual void velocity( const tk::Fields&, tk::UnsMesh::Coords& )
         const = 0;
       virtual void soundspeed( const tk::Fields&, std::vector< tk::real >& )
@@ -414,15 +428,23 @@ class CGPDE {
       explicit Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
       void IcBoxNodes( const tk::UnsMesh::Coords& coord,
-        std::vector< std::unordered_set< std::size_t > >& inbox )
-      override { data.IcBoxNodes( coord, inbox ); }
+        const std::vector< std::size_t >& inpoel,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblkid,
+        std::vector< std::unordered_set< std::size_t > >& inbox,
+        std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblkid,
+        std::size_t& nuserblk )
+      override { data.IcBoxNodes( coord, inpoel, elemblkid, inbox, nodeblkid,
+        nuserblk ); }
       void initialize(
         const std::array< std::vector< real >, 3 >& coord,
         tk::Fields& unk,
         real t,
         real V,
-        const std::vector< std::unordered_set< std::size_t > >& inbox )
-      override { data.initialize( coord, unk, t, V, inbox ); }
+        const std::vector< std::unordered_set< std::size_t > >& inbox,
+        const std::vector< tk::real >& blkvols,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          nodeblkid)
+      override { data.initialize( coord, unk, t, V, inbox, blkvols, nodeblkid ); }
       void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
       override { data.velocity(u,v); }
       void soundspeed( const tk::Fields& u, std::vector< tk::real >& s ) const

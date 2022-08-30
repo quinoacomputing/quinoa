@@ -1110,7 +1110,9 @@ safeReco( std::size_t offset,
 // *****************************************************************************
 {
   using inciter::densityIdx;
+  using inciter::energyIdx;
   using inciter::densityDofIdx;
+  using inciter::energyDofIdx;
 
   if (er < 0) Throw("safe limiting cannot be called for boundary cells");
 
@@ -1122,41 +1124,33 @@ safeReco( std::size_t offset,
     // find min/max at the face
     auto uMin = std::min(ul, ur);
     auto uMax = std::max(ul, ur);
-    auto uNeg(0.0);
 
     // left-state limiting
-    uNeg = state[0][c] - ul;
-    if ((state[0][c] < ul) && (state[0][c] < ur) && (uNeg < -1e-2*ul))
-    {
-      state[0][c] = uMin;
-    }
-    else if ((state[0][c] > ul) && (state[0][c] > ur) && (uNeg > 1e-2*ul))
-    {
-      state[0][c] = uMax;
-    }
+    state[0][c] = std::min(uMax, std::max(uMin, state[0][c]));
 
     // right-state limiting
-    uNeg = state[0][c] - ur;
-    if ((state[1][c] < ul) && (state[1][c] < ur) && (uNeg < -1e-2*ur))
-    {
-      state[1][c] = uMin;
-    }
-    else if ((state[1][c] > ul) && (state[1][c] > ur) && (uNeg > 1e-2*ur))
-    {
-      state[1][c] = uMax;
-    }
+    state[1][c] = std::min(uMax, std::max(uMin, state[1][c]));
   };
 
   for (std::size_t k=0; k<nmat; ++k)
   {
     real ul(0.0), ur(0.0);
 
+    // Density
     // establish left- and right-hand states
     ul = U(el, densityDofIdx(nmat, k, rdof, 0), offset);
     ur = U(eR, densityDofIdx(nmat, k, rdof, 0), offset);
 
     // limit reconstructed density
     safeLimit(densityIdx(nmat,k), ul, ur);
+
+    // Energy
+    // establish left- and right-hand states
+    ul = U(el, energyDofIdx(nmat, k, rdof, 0), offset);
+    ur = U(eR, energyDofIdx(nmat, k, rdof, 0), offset);
+
+    // limit reconstructed energy
+    safeLimit(energyIdx(nmat,k), ul, ur);
   }
 }
 

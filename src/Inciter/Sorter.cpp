@@ -38,6 +38,8 @@ Sorter::Sorter( std::size_t meshid,
                 const std::map< int, std::vector< std::size_t > >& bface,
                 const std::vector< std::size_t >& triinpoel,
                 const std::map< int, std::vector< std::size_t > >& bnode,
+                const std::unordered_map< std::size_t, std::set< std::size_t > >&
+                  elemblockid,
                 int nchare ) :
   m_meshid( meshid ),
   m_host( transporter ),
@@ -52,6 +54,7 @@ Sorter::Sorter( std::size_t meshid,
   m_bface( bface ),
   m_triinpoel( triinpoel ),
   m_bnode( bnode ),
+  m_elemblockid( elemblockid ),
   m_nchare( nchare ),
   m_nodeset( begin(ginpoel), end(ginpoel) ),
   m_noffset( 0 ),
@@ -80,6 +83,7 @@ Sorter::Sorter( std::size_t meshid,
 //! \param[in] bface Face lists mapped to side set ids
 //! \param[in] triinpoel Interconnectivity of points and boundary-faces
 //! \param[in] bnode Node ids mapped to side set ids
+//! \param[in] elemblockid Local tet ids associated to mesh block ids
 //! \param[in] nchare Total number of Charm++ worker chares
 // *****************************************************************************
 {
@@ -571,7 +575,7 @@ Sorter::createDiscWorkers()
   m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, disc,
     m_scheme[m_meshid].fct(), m_scheme[m_meshid].ale(),
     m_scheme[m_meshid].conjugategradients(), m_host, m_meshwriter, m_coordmap,
-    m_el, m_msum, m_bface, m_triinpoel, m_nchare );
+    m_el, m_msum, m_bface, m_triinpoel, m_elemblockid, m_nchare );
 
   contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
               m_cbs.get< tag::discinserted >() );
@@ -604,6 +608,7 @@ Sorter::createWorkers()
   tk::destroy( m_coordmap );
   tk::destroy( m_bface );
   tk::destroy( m_triinpoel );
+  tk::destroy( m_elemblockid );
   tk::destroy( m_bnode );
   tk::destroy( m_nodeset );
   tk::destroy( m_nodech );

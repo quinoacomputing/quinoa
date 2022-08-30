@@ -107,10 +107,12 @@ class FVPDE {
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblkid,
       tk::Fields& unk,
       tk::real t,
       const std::size_t nielem ) const
-    { self->initialize( L, inpoel, coord, inbox, unk, t, nielem ); }
+    { self->initialize( L, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -170,11 +172,15 @@ class FVPDE {
               const inciter::FaceData& fd,
               const std::vector< std::size_t >& inpoel,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&
+                elemblkid,
               const tk::Fields& U,
               const tk::Fields& P,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              int& engSrcAd ) const
     {
-      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, R );
+      self->rhs( t, geoFace, geoElem, fd, inpoel, coord, elemblkid, U, P, R,
+        engSrcAd );
     }
 
     //! Public interface for computing the minimum time step size
@@ -183,8 +189,9 @@ class FVPDE {
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& P,
-                 const std::size_t nielem ) const
-    { return self->dt( fd, geoFace, geoElem, U, P, nielem ); }
+                 const std::size_t nielem,
+                 const int engSrcAd ) const
+    { return self->dt( fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
 
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
@@ -221,6 +228,11 @@ class FVPDE {
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
     { return self->solution( xi, yi, zi, t ); }
 
+    //! Public interface to returning the specific total energy
+    tk::real
+    sp_totalenergy( std::size_t e, const tk::Fields& unk ) const
+    { return self->sp_totalenergy( e, unk ); }
+
     //! Copy assignment
     FVPDE& operator=( const FVPDE& x )
     { FVPDE tmp(x); *this = std::move(tmp); return *this; }
@@ -249,6 +261,7 @@ class FVPDE {
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
         const std::vector< std::unordered_set< std::size_t > >&,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&,
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
@@ -281,20 +294,23 @@ class FVPDE {
                                     tk::Fields&,
                                     std::size_t ) const = 0;
       virtual void rhs( tk::real,
-                        const tk::Fields&,
-                        const tk::Fields&,
-                        const inciter::FaceData&,
-                        const std::vector< std::size_t >&,
-                        const tk::UnsMesh::Coords&,
-                        const tk::Fields&,
-                        const tk::Fields&,
-                        tk::Fields& ) const = 0;
+        const tk::Fields&,
+        const tk::Fields&,
+        const inciter::FaceData&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&,
+        const tk::Fields&,
+        const tk::Fields&,
+        tk::Fields&,
+        int& ) const = 0;
       virtual tk::real dt( const inciter::FaceData&,
                            const tk::Fields&,
                            const tk::Fields&,
                            const tk::Fields&,
                            const tk::Fields&,
-                           const std::size_t ) const = 0;
+                           const std::size_t,
+                           const int ) const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
@@ -311,6 +327,8 @@ class FVPDE {
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
       virtual tk::InitializeFn::result_type solution(
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
+      virtual tk::real sp_totalenergy(
+        std::size_t, const tk::Fields& ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -332,11 +350,13 @@ class FVPDE {
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
         const std::vector< std::unordered_set< std::size_t > >& inbox,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          elemblkid,
         tk::Fields& unk,
         tk::real t,
         const std::size_t nielem )
-      const override { data.initialize( L, inpoel, coord, inbox, unk, t,
-        nielem ); }
+      const override { data.initialize( L, inpoel, coord, inbox, elemblkid, unk,
+        t, nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updatePrimitives( const tk::Fields& unk,
@@ -384,19 +404,24 @@ class FVPDE {
         const inciter::FaceData& fd,
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          elemblkid,
         const tk::Fields& U,
         const tk::Fields& P,
-        tk::Fields& R ) const override
+        tk::Fields& R,
+        int& engSrcAd ) const override
       {
-        data.rhs( t, geoFace, geoElem, fd, inpoel, coord, U, P, R );
+        data.rhs( t, geoFace, geoElem, fd, inpoel, coord, elemblkid, U, P, R,
+          engSrcAd );
       }
       tk::real dt( const inciter::FaceData& fd,
                    const tk::Fields& geoFace,
                    const tk::Fields& geoElem,
                    const tk::Fields& U,
                    const tk::Fields& P,
-                   const std::size_t nielem ) const override
-      { return data.dt( fd, geoFace, geoElem, U, P, nielem ); }
+                   const std::size_t nielem,
+                   const int engSrcAd ) const override
+      { return data.dt( fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > histNames() const override
@@ -420,6 +445,8 @@ class FVPDE {
       tk::InitializeFn::result_type
       solution( tk::real xi, tk::real yi, tk::real zi, tk::real t )
        const override { return data.solution( xi, yi, zi, t ); }
+      tk::real sp_totalenergy( std::size_t e, const tk::Fields& unk )
+       const override { return data.sp_totalenergy( e, unk ); }
       T data;
     };
 

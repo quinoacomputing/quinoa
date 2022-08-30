@@ -100,13 +100,3 @@ MultiMatProblemInterfaceAdvection::initialize( ncomp_t system,
 
   return s;
 }
-
-std::vector< std::string >
-MultiMatProblemInterfaceAdvection::names( ncomp_t )
-// *****************************************************************************
-//  Return names of integral variables to be output to diagnostics file
-//! \return Vector of strings labelling integral variables output
-// *****************************************************************************
-{
-  return { "r", "ru", "rv", "rw", "re" };
-}

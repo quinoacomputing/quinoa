@@ -14,10 +14,12 @@
 #ifndef Limiter_h
 #define Limiter_h
 
+#include "Integrate/Basis.hpp"
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "FunctionPrototypes.hpp"
 #include "EoS/EoS_Base.hpp"
 
 namespace inciter {
@@ -71,10 +73,16 @@ VertexBasedCompflow_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
+  std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  tk::Fields& U );
+  const tk::FluxFn& flux,
+  tk::Fields& U,
+  std::vector< std::size_t >& shockmarker );
 
 //! Kuzmin's vertex-based limiter for single-material DGP2
 void
@@ -83,13 +91,18 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
+  std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker );
 
@@ -102,10 +115,12 @@ VertexBasedMultiMat_P1(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -120,6 +135,9 @@ VertexBasedMultiMat_P2(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
@@ -127,6 +145,7 @@ VertexBasedMultiMat_P2(
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
+  const tk::FluxFn& flux,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -172,7 +191,7 @@ SuperbeeLimiting( const tk::Fields& U,
 
 //! Kuzmin's vertex-based limiter function calculation for P1 dofs
 void
-VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting(
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -187,7 +206,8 @@ VertexBasedLimiting( const std::vector< std::vector< tk::real > >& unk,
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 void
-VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
+VertexBasedLimiting_P2(
+  const std::vector< std::vector< tk::real > >& unk,
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -234,7 +254,8 @@ BoundPreservingLimitingFunction( const tk::real min,
 void PositivityLimitingMultiMat( std::size_t nmat,
                                  std::size_t system,
                                  ncomp_t offset,
-                                 std::size_t ndof,
+                                 std::size_t rdof,
+                                 std::size_t ndof_el,
                                  std::size_t e,
                                  const std::vector< std::size_t >& inpoel,
                                  const tk::UnsMesh::Coords& coord,
@@ -264,15 +285,18 @@ void MarkShockCells ( const std::size_t nelem,
                       const std::size_t offset,
                       const std::size_t ndof,
                       const std::size_t rdof,
+                      const std::vector< inciter::EoS_Base* >& mat_blk,
                       const std::vector< std::size_t >& ndofel,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       const inciter::FaceData& fd,
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
+                      const tk::FluxFn& flux,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker );
+
 
 //! Update the conservative quantities after limiting for multi-material systems
 void

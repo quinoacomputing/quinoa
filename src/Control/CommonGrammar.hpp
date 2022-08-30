@@ -102,7 +102,6 @@ namespace grm {
     NOGAMMA,            //!< No icgamma...end block when initpolicy = jointgamma
     NOMEAN,             //!< No mean when initpolicy = jointcorrgaussian
     NOCOV,              //!< No cov when initpolicy = jointcorrgaussian
-    NOMKLRNG,           //!< No MKL RNG configured
     WRONGBETAPDF,       //!< Wrong number of parameters for a beta pdf
     WRONGGAMMAPDF,      //!< Wrong number of parameters for a gamma pdf
     WRONGGAUSSIAN,      //!< Wrong number of parameters for a Gaussian PDF
@@ -120,7 +119,6 @@ namespace grm {
     EOSCV,              //!< Wrong number of EOS cv parameters
     EOSPSTIFF,          //!< Wrong number of EOS pstiff parameters
     EOSJWLPARAM,        //!< Wrong number of JWL EOS parameters
-    NORNG,              //!< No RNG selected
     NODT,               //!< No time-step-size policy selected
     MULDT,              //!< Multiple time-step-size policies selected
     NOSAMPLES,          //!< PDF need a variable
@@ -149,6 +147,9 @@ namespace grm {
     SYSFCTVAR,          //!< System-FCT variable index incorrect
     BGICMISSING,        //!< Background IC unspecified
     BGMATIDMISSING,     //!< Background material id unspecified
+    MESHBLOCKSUPPORT,   //!< Mesh block not supported
+    MESHBLOCKIDMISSING, //!< Mesh block id unspecified
+    MESHBLOCKVOL,       //!< Mesh block volume unspecified
     BOXMATIDMISSING,    //!< Box material id unspecified
     BOXMATIDWRONG,      //!< Box material id incorrect
     BOXORIENTWRONG,     //!< Box orientation incorrect
@@ -292,9 +293,6 @@ namespace grm {
       "sub-block. The number of components between 'param ... end' "
       "is incorrect, whose size must equal the number of material-ids set by "
       "keyword 'id' in that 'material ... end' sub-block." },
-    { MsgKey::NORNG, "The random number generator has not been specified in "
-      "the block preceding this position. This is mandatory for the preceding "
-      "block. Use the keyword 'rng' to specify the random number generator." },
     { MsgKey::NODT, "No time step calculation policy has been selected in the "
       "preceeding block. Use keyword 'dt' to set a constant or 'cfl' to set an "
        "adaptive time step size calculation policy." },
@@ -336,10 +334,6 @@ namespace grm {
     { MsgKey::NOCOV, "No covariance matrix has been specified within "
       "icjointgaussian...end block for jointcorrgaussian initialization "
       "policy." },
-    { MsgKey::NOMKLRNG, "No MKL random number generator has been configured "
-      "for the equation integrated. If the initialization policy is "
-      "configured to be as the joint correlated Gaussian, a RNG provided by "
-      "Intel's Math Kernel Library is required." },
     { MsgKey::ODDSPIKES, "Incomplete spike...end block has been specified "
       "within the  block preceding this position. A spike...end block "
       "must contain an even number of real numbers, where every odd one is the "
@@ -424,6 +418,13 @@ namespace grm {
       "The block must list integers between 1 and 5 both inclusive." },
     { MsgKey::BGMATIDMISSING, "Error in the preceding block. "
       "The block must contain background material id." },
+    { MsgKey::MESHBLOCKSUPPORT, "Error in the preceding block. "
+      "Mesh block based IC not supported by discretization scheme." },
+    { MsgKey::MESHBLOCKIDMISSING, "Error in the preceding block. "
+      "Each IC mesh block must specify the mesh block id." },
+    { MsgKey::MESHBLOCKVOL, "Error in the preceding block. "
+      "Mesh block volume must be specified, if energy content is used to "
+      "initialize block" },
     { MsgKey::BOXMATIDMISSING, "Error in the preceding block. "
       "Each IC box must specify material id in the box." },
     { MsgKey::BOXMATIDWRONG, "Error in the preceding block. "
@@ -1061,34 +1062,6 @@ namespace grm {
       // trigger error at compile-time if any of the expected option values
       // is not in the keywords pool of the grammar
       brigand::for_each< typename Option::keywords >( is_keyword< use >() );
-    }
-  };
-
-  //! Rule used to trigger action
-  template< typename sel, typename vec, typename Tag, typename... Tags >
-  struct insert_seed : pegtl::success {};
-  //! \brief Convert and insert value to map at position given by tags
-  //! \details This struct and its apply function are used as a functor-like
-  //!   wrapper for inserting a value into a std::map behind a key in the
-  //!   underlying grammar stack via the member function tk::Control::insert.
-  //!   We detect a recently inserted key from the companion tuple field,
-  //!   "selected vector", given by types, sel and vec, and use that key to
-  //!   insert an associated value in a std::map addressed by tag and tags...,
-  //!   requiring at least one tag to address the map. As an example, this is
-  //!   used in parsing parameters associated to a particular random number
-  //!   generator, such as seed. Example input file: "mkl_mcg59 seed 2134
-  //!   uniform_method accurate end". The selected vector here is the
-  //!   std::vector< tk::ctr::RNGType > under tag::sel.
-  //! \see Example client-code: tk::rngsse::seed.
-  template< typename sel, typename vec, typename Tag, typename...Tags >
-  struct action< insert_seed< sel, vec, Tag, Tags... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      // get recently inserted key from < sel, vec >
-      const auto& key = stack.template get< sel, vec >().back();
-      stack.template
-        insert_field< tag::seed, kw::seed::info::expect::type, Tag, Tags... >
-                    ( key, in.string() );
     }
   };
 
@@ -1893,19 +1866,6 @@ namespace grm {
                          charmarg,
                          unknown< ERROR, MsgKey::KEYWORD > > > {};
 
-  //! Insert RNG parameter
-  //! \details A parameter here is always an option. An option is an object
-  //!   deriving from tk::Toggle. See, e.g., walker::ctr::DiffEq for an example
-  //!   specialization of tk::Toggle to see how an option is created from
-  //!   tk::Toggle.
-  template< template< class > class use, typename keyword,
-            typename option, typename field, typename sel, typename vec,
-            typename... tags >
-  struct rng_option :
-         process< keyword,
-                  insert_option< use, option, field, sel, vec, tags... >,
-                  pegtl::alpha > {};
-
   //! \brief Match fieldvar: a character, denoting a variable, optionally
   //!   followed by a digit
   template< typename var >
@@ -2095,24 +2055,6 @@ namespace grm {
   template< typename keyword, typename kw_type, typename model, typename Tag >
   struct parameter :
          control< keyword, kw_type, Store, tag::param, model, Tag > {};
-
-  //! Match rng parameter
-  template< template< class > class use, typename keyword,
-            typename option, typename model, typename... tags >
-  struct rng :
-         process< keyword,
-                  check_store_option< use,
-                                      option,
-                                      tag::selected,
-                                      tag::rng,
-                                      tag::param, model, tags... >,
-                  pegtl::alpha > {};
-
-  //! Match rngs ... end block
-  template< template< class > class use, class rngs >
-  struct rngblock :
-         pegtl::if_must< readkw< typename use< kw::rngs >::pegtl_string >,
-                         block< use< kw::end >, rngs > > {};
 
   //! Match equation/model parameter vector
   //! \details This structure is used to match a keyword ... end block that

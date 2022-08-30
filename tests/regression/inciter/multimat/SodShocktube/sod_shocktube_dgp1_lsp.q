@@ -12,7 +12,7 @@ inciter
   scheme dgp1
   limiter vertexbasedp1
   limsol_projection true
-  shock_detection false
+  shock_detector_coeff 0.0
 
   partitioning
     algorithm mj

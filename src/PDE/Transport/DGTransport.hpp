@@ -498,6 +498,23 @@ class Transport {
       return Up;
     }
 
+    //! Return cell-averaged total component mass per unit volume for an element
+    //! \param[in] e Element id for which total energy is required
+    //! \param[in] unk Vector of conserved quantities
+    //! \return Cell-averaged total component mass per unit volume for given
+    //!   element. Since transport does not have an associated total energy,
+    //!   return total mass.
+    tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+      tk::real sp_m(0.0);
+      for (std::size_t c=0; c<m_ncomp; ++c) {
+        sp_m += unk(e,c*rdof,m_offset);
+      }
+      return sp_m;
+    }
+
   private:
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy
