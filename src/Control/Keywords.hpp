@@ -3425,6 +3425,21 @@ struct mat_k_info {
 };
 using mat_k = keyword< mat_k_info, TAOCPP_PEGTL_STRING("k") >;
 
+struct w_gru_info {
+  static std::string name() { return "w_gru"; }
+  static std::string shortDescription() { return "Grueneisen coefficient"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property, Gruneisen
+       coefficient for the Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using w_gru = keyword< w_gru_info, TAOCPP_PEGTL_STRING("w_gru") >;
+
 struct A_jwl_info {
   static std::string name() { return "A_jwl"; }
   static std::string shortDescription() { return "JWL EoS A parameter"; }
@@ -3463,7 +3478,6 @@ struct C_jwl_info {
   }
   struct expect {
     using type = tk::real;
-    static constexpr type lower = 0.0;
     static std::string description() { return "real"; }
   };
 };
@@ -3513,6 +3527,22 @@ struct rho0_jwl_info {
 };
 using rho0_jwl = keyword< rho0_jwl_info, TAOCPP_PEGTL_STRING("rho0_jwl") >;
 
+struct e0_jwl_info {
+  static std::string name() { return "e0_jwl"; }
+  static std::string shortDescription() { return "JWL EoS e0 parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property e0, which is the
+      internal energy of reference state (units: J/kg) for the
+      Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using e0_jwl = keyword< e0_jwl_info, TAOCPP_PEGTL_STRING("e0_jwl") >;
+
 struct stiffenedgas_info {
   static std::string name() { return "Stiffened gas"; }
   static std::string shortDescription() { return
@@ -3561,12 +3591,14 @@ struct material_info {
     + eos::string()+ "\', \'"
     + mat_gamma::string()+ "\', \'"
     + mat_pstiff::string()+ "\', \'"
+    + w_gru::string()+ "\', \'"
     + A_jwl::string()+ "\', \'"
     + B_jwl::string()+ "\', \'"
     + C_jwl::string()+ "\', \'"
     + R1_jwl::string()+ "\', \'"
     + R2_jwl::string()+ "\', \'"
     + rho0_jwl::string()+ "\', \'"
+    + e0_jwl::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"
     + mat_k::string() + "\'. "

@@ -301,6 +301,9 @@ namespace grm {
         if (pstiff.size() != 1)
           Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
       }
+      else {
+        Message< Stack, ERROR, MsgKey::NOEOS >( stack, in );
+      }
 
       // Generate mapping between material index and eos parameter index
       auto& eosmap = matidxmap.template get< tag::eosidx >();
@@ -541,7 +544,7 @@ namespace grm {
       auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
       matidxmap.template get< tag::eosidx >().resize(nmat.back());
       matidxmap.template get< tag::matidx >().resize(nmat.back());
-      std::size_t tmat(0), i(0);
+      std::size_t tmat(0), i(0), mtypei(0);
       std::set< std::size_t > matidset;
 
       for (auto& mtype : matprop.back()) {
@@ -577,11 +580,6 @@ namespace grm {
             Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
         }
         else if (meos == inciter::ctr::MaterialType::JWL) {
-          const auto& gamma = mtype.template get< tag::gamma >();
-          // If gamma vector is wrong size, error out
-          if (gamma.empty() || gamma.size() != mat_id.size())
-            Message< Stack, ERROR, MsgKey::EOSGAMMA >( stack, in );
-
           auto& cv = mtype.template get< tag::cv >();
           // As a default, the specific heat of air (717.5 J/Kg-K) is used
           if (cv.empty()) {
@@ -594,14 +592,17 @@ namespace grm {
             Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
 
           // If JWL parameter vectors are wrong size, error out
+          const auto& w_gru = mtype.template get< tag::w_gru >();
           const auto& a_jwl = mtype.template get< tag::A_jwl >();
           const auto& b_jwl = mtype.template get< tag::B_jwl >();
           const auto& r1_jwl = mtype.template get< tag::R1_jwl >();
           const auto& r2_jwl = mtype.template get< tag::R2_jwl >();
           const auto& rho0_jwl = mtype.template get< tag::rho0_jwl >();
-          if (a_jwl.size() != mat_id.size() || b_jwl.size() != mat_id.size() ||
-            r1_jwl.size() != mat_id.size() || r2_jwl.size() != mat_id.size() ||
-            rho0_jwl.size() != mat_id.size() )
+          const auto& e0_jwl = mtype.template get< tag::e0_jwl >();
+          if (w_gru.size() != mat_id.size() || a_jwl.size() != mat_id.size() ||
+            b_jwl.size() != mat_id.size() || r1_jwl.size() != mat_id.size() ||
+            r2_jwl.size() != mat_id.size() || rho0_jwl.size() != mat_id.size()
+            || e0_jwl.size() != mat_id.size())
             Message< Stack, ERROR, MsgKey::EOSJWLPARAM >( stack, in );
         }
 
@@ -621,13 +622,16 @@ namespace grm {
         auto& idxmap = matidxmap.template get< tag::matidx >();
         for (auto midx : mat_id) {
           midx -= 1;
-          eosmap[midx] = static_cast< std::size_t >(mtype.template get<
-            tag::eos >());
+          //eosmap[midx] = static_cast< std::size_t >(mtype.template get<
+          //  tag::eos >());
+          eosmap[midx] = mtypei;
           idxmap[midx] = i;
           ++i;
         }
         // end of materials for this eos, thus reset index counter
         i = 0;
+        // increment material-type/eos-type index counter
+        ++mtypei;
       }
 
       // If total number of materials is incorrect, error out
@@ -1786,12 +1790,14 @@ namespace deck {
               , material_vector< eq, kw::mat_gamma, tag::gamma >
               , material_vector< eq, kw::mat_mu, tag::mu >
               , material_vector< eq, kw::mat_pstiff, tag::pstiff >
+              , material_vector< eq, kw::w_gru, tag::w_gru >
               , material_vector< eq, kw::A_jwl, tag::A_jwl >
               , material_vector< eq, kw::B_jwl, tag::B_jwl >
               , material_vector< eq, kw::C_jwl, tag::C_jwl >
               , material_vector< eq, kw::R1_jwl, tag::R1_jwl >
               , material_vector< eq, kw::R2_jwl, tag::R2_jwl >
               , material_vector< eq, kw::rho0_jwl, tag::rho0_jwl >
+              , material_vector< eq, kw::e0_jwl, tag::e0_jwl >
               , material_vector< eq, kw::mat_cv, tag::cv >
               , material_vector< eq, kw::mat_k, tag::k >
               , material_option< eq, ctr::Material, kw::eos, tag::eos >

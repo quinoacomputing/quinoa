@@ -25,8 +25,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 class JWL: public EoS_Base {
 
   private:
-    tk::real m_gamma, m_pstiff, m_cv, m_rho0, m_a, m_b, m_r1, m_r2, m_w, m_e0,
-             m_tr, m_rhor;
+    tk::real m_w, m_cv, m_rho0, m_e0, m_a, m_b, m_r1, m_r2, m_tr, m_rhor;
 
 
     tk::real intEnergy( tk::real rho, tk::real pr )
@@ -36,7 +35,7 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w_jwl = m_gamma;
+      tk::real w_jwl = m_w;
       tk::real e0 = m_e0;
 
       tk::real e = e0 + 1.0/w_jwl/rho*( pr
@@ -90,7 +89,7 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w_jwl = m_gamma;
+      tk::real w_jwl = m_w;
       tk::real c_v = m_cv;
 //      tk::real t_r = m_tr;      // reference temperature
 //      tk::real rho_r = m_rhor;  // reference density
@@ -108,14 +107,25 @@ class JWL: public EoS_Base {
   public:
     // *************************************************************************
     //  Constructor
-    //! \param[in] gamma Ratio of specific heats
-    //! \param[in] pstiff Stiffened pressure term
+    //! \param[in] w Grueneisen coefficient
     //! \param[in] cv Specific heat at constant volume
+    //! \param[in] rho0 Density of reference state
+    //! \param[in] e0 Internal energy of reference state
+    //! \param[in] A Parameter A
+    //! \param[in] B Parameter B
+    //! \param[in] R1 Parameter R1
+    //! \param[in] R2 Parameter R2
     // *************************************************************************
-    JWL(tk::real gamma, tk::real cv, tk::real rho0_jwl, tk::real A_jwl,
-        tk::real B_jwl, tk::real R1_jwl, tk::real R2_jwl ) :
-      m_gamma(gamma), m_cv(cv), m_rho0(rho0_jwl), m_a(A_jwl), m_b(B_jwl),
-      m_r1(R1_jwl), m_r2(R2_jwl)
+    JWL( tk::real w, tk::real cv, tk::real rho0, tk::real e0, tk::real A,
+         tk::real B, tk::real R1, tk::real R2 ) :
+      m_w(w),
+      m_cv(cv),
+      m_rho0(rho0),
+      m_e0(e0),
+      m_a(A),
+      m_b(B),
+      m_r1(R1),
+      m_r2(R2)
     { }
 
 
@@ -170,7 +180,7 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w_jwl = m_gamma;
+      tk::real w_jwl = m_w;
       tk::real e0 = m_e0;
 
       // reference energy (input quantity, might need for calculation)
@@ -221,7 +231,7 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w_jwl = m_gamma;
+      tk::real w_jwl = m_w;
 
       // limiting pressure to near-zero
       auto apr_eff = std::max( 1.0e-15, apr );
@@ -302,7 +312,7 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w_jwl = m_gamma;
+      tk::real w_jwl = m_w;
       tk::real c_v = m_cv;      // constant specific heat
 //      tk::real t_r = m_tr;      // reference temperature
 //      tk::real rho_r = m_rhor;  // reference density

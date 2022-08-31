@@ -115,6 +115,7 @@ namespace grm {
     REPMATID,           //!< Repeating material id
     ONEMATID,           //!< Material id not one-based
     GAPMATID,           //!< Material id not contiguous
+    NOEOS,              //!< EOS not supported
     EOSGAMMA,           //!< Wrong number of EOS gamma parameters
     EOSCV,              //!< Wrong number of EOS cv parameters
     EOSPSTIFF,          //!< Wrong number of EOS pstiff parameters
@@ -273,6 +274,8 @@ namespace grm {
       "not one-based. Material ids must begin with one." },
     { MsgKey::GAPMATID, "Material ids specified in 'material ... end' blocks "
       "have a gap. Material ids must be contiguous." },
+    { MsgKey::NOEOS, "Unsupported equation of state (EOS) specified in "
+      "preceding block's 'material ... end' sub-block." },
     { MsgKey::EOSGAMMA, "Incorrect number of equation of state (EOS) 'gamma' "
       "parameters configured in the preceding block's 'material ... end' "
       "sub-block. The number of components between 'gamma ... end' is "

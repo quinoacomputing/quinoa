@@ -34,36 +34,33 @@ void initializeMaterialEoS( std::size_t system,
   // EoS initialization
   auto nmat =
     g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+  const auto& matprop = g_inputdeck.get< tag::param, tag::multimat,
+    tag::material >()[system];
   const auto& matidxmap = g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >();
   for (std::size_t k=0; k<nmat; ++k) {
-    if (matidxmap.get< tag::eosidx >()[k] ==
-      static_cast<std::size_t>(inciter::ctr::MaterialType::STIFFENEDGAS)) {
+    auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get<tag::eos>();
+    if (mateos == inciter::ctr::MaterialType::STIFFENEDGAS) {
       // query input deck to get gamma, p_c, cv
       auto g = gamma< tag::multimat >(system, k);
       auto ps = pstiff< tag::multimat >(system, k);
       auto c_v = cv< tag::multimat >(system, k);
       mat_blk.push_back(new StiffenedGas(g, ps, c_v));
     }
-    else if (matidxmap.get< tag::eosidx >()[k] ==
-      static_cast<std::size_t>(inciter::ctr::MaterialType::JWL)) {
+    else if (mateos == inciter::ctr::MaterialType::JWL) {
       // query input deck to get jwl parameters
-      auto g = gamma< tag::multimat >(system, k);
+      auto w = getmatprop< tag::multimat, tag::w_gru >(system, k);
       auto c_v = cv< tag::multimat >(system, k);
-      [[maybe_unused]] auto A_jwl =
-        getmatprop< tag::multimat, tag::A_jwl >(system, k);
-      [[maybe_unused]] auto B_jwl =
-        getmatprop< tag::multimat, tag::B_jwl >(system, k);
-      [[maybe_unused]] auto e0_jwl =
-        getmatprop< tag::multimat, tag::C_jwl >(system, k);
-      [[maybe_unused]] auto R1_jwl =
-        getmatprop< tag::multimat, tag::R1_jwl >(system, k);
-      [[maybe_unused]] auto R2_jwl =
-        getmatprop< tag::multimat, tag::R2_jwl >(system, k);
-      [[maybe_unused]] auto rho0_jwl =
-        getmatprop< tag::multimat, tag::rho0_jwl >(system, k);
-      // TODO: update eos-ctor call when the JWL class is updated
-      mat_blk.push_back(new JWL(g, c_v, rho0_jwl, A_jwl, B_jwl, R1_jwl, R2_jwl));
+      auto A_jwl = getmatprop< tag::multimat, tag::A_jwl >(system, k);
+      auto B_jwl = getmatprop< tag::multimat, tag::B_jwl >(system, k);
+      //[[maybe_unused]] auto C_jwl =
+      //  getmatprop< tag::multimat, tag::C_jwl >(system, k);
+      auto R1_jwl = getmatprop< tag::multimat, tag::R1_jwl >(system, k);
+      auto R2_jwl = getmatprop< tag::multimat, tag::R2_jwl >(system, k);
+      auto rho0_jwl = getmatprop< tag::multimat, tag::rho0_jwl >(system, k);
+      auto e0_jwl = getmatprop< tag::multimat, tag::e0_jwl >(system, k);
+      mat_blk.push_back(new JWL(w, c_v, rho0_jwl, e0_jwl, A_jwl, B_jwl, R1_jwl,
+        R2_jwl));
     }
   }
 }
