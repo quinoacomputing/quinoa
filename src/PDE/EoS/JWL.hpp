@@ -50,7 +50,7 @@ class JWL: public EoS_Base {
     {
       tk::real tol = 1e-10;
       std::size_t maxiter = 1000;
-      std::size_t i;
+      std::size_t i(0);
       tk::real c;
       tk::real root(0);
 
