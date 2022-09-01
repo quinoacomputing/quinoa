@@ -139,7 +139,7 @@ class JWL: public EoS_Base {
     //! \return Material density calculated using the stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real rho_r = m_rhor;  // reference density
+      tk::real rho_r = m_rho0;  // reference density
       tk::real r_guessL = 1e-2*rho_r;  // left density bound
       tk::real r_guessR = 1e2*rho_r;   // right density bound
       tk::real rho;
