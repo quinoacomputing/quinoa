@@ -38,9 +38,6 @@ getmatprop( ncomp_t system, std::size_t imat=0 ) {
   const auto& map = g_inputdeck.get< tag::param, Eq, tag::matidxmap >();
   auto meos = map.template get< tag::eosidx >()[ imat ];
   auto midx = map.template get< tag::matidx >()[ imat ];
-  std::cout << "matprop size " << matprop.size() << std::endl;
-  std::cout << "meos " << meos << std::endl;
-  std::cout << "mati " << midx << std::endl;
   return matprop[ meos ].template get< Prop >()[ midx ];
 }
 
