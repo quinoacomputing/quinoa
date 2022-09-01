@@ -25,7 +25,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 class JWL: public EoS_Base {
 
   private:
-    tk::real m_w, m_cv, m_rho0, m_e0, m_a, m_b, m_r1, m_r2, m_tr, m_rhor;
+    tk::real m_w, m_cv, m_rho0, m_e0, m_a, m_b, m_r1, m_r2; //, m_tr, m_rhor;
 
 
     tk::real intEnergy( tk::real rho, tk::real pr )
