@@ -51,7 +51,6 @@ std::vector< std::vector< tk::real > >
 MultiMatFieldOutput(
   ncomp_t,
   std::size_t nmat,
-  ncomp_t offset,
   const std::vector< EoS_Base* >& mat_blk,
   std::size_t nunk,
   std::size_t rdof,
@@ -62,8 +61,6 @@ MultiMatFieldOutput(
 // *****************************************************************************
 //  Return field output going to file
 //! \param[in] nmat Number of materials in systen
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
 //! \param[in] nunk Number of unknowns to extract
 //! \param[in] rdof Number of reconstructed degrees of freedom
 //! \param[in] U Solution vector at recent time step

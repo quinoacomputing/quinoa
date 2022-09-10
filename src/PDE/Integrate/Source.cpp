@@ -21,7 +21,6 @@
 
 void
 tk::srcInt( ncomp_t system,
-            ncomp_t offset,
             const std::vector< inciter::EoS_Base* >& mat_blk,
             real t,
             const std::size_t ndof,
@@ -36,7 +35,6 @@ tk::srcInt( ncomp_t system,
 // *****************************************************************************
 //  Compute source term integrals for DG
 //! \param[in] system Equation system index
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] mat_blk Material block EOS
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -94,14 +92,13 @@ tk::srcInt( ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      update_rhs( offset, ndof, ndofel[e], wt, e, B, s, R );
+      update_rhs( ndof, ndofel[e], wt, e, B, s, R );
     }
   }
 }
 
 void
-tk::update_rhs( ncomp_t offset,
-                const std::size_t ndof,
+tk::update_rhs( const std::size_t ndof,
                 const std::size_t ndof_el,
                 const tk::real wt,
                 const std::size_t e,
@@ -110,7 +107,6 @@ tk::update_rhs( ncomp_t offset,
                 Fields& R )
 // *****************************************************************************
 //  Update the rhs by adding the source term integrals
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
@@ -148,7 +144,6 @@ tk::update_rhs( ncomp_t offset,
 
 void
 tk::srcIntFV( ncomp_t system,
-              ncomp_t offset,
               const std::vector< inciter::EoS_Base* >& mat_blk,
               real t,
               const std::size_t nelem,
@@ -159,7 +154,6 @@ tk::srcIntFV( ncomp_t system,
 // *****************************************************************************
 //  Compute source term integrals for DG
 //! \param[in] system Equation system index
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] mat_blk Material block EOS
 //! \param[in] t Physical time
 //! \param[in] nelem Maximum number of elements

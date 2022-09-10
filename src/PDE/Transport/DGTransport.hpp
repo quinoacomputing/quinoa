@@ -131,7 +131,7 @@ class Transport {
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
     }
 
@@ -140,7 +140,7 @@ class Transport {
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
+      tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
     //! Update the interface cells to first order dofs
@@ -219,16 +219,16 @@ class Transport {
         tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
         // 1. internal face contributions
-        tk::intLeastSq_P0P1( m_offset, rdof, fd, geoElem, U, rhs_ls, varRange );
+        tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls, varRange );
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, 
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, 
             m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second, 
             P, U, rhs_ls, varRange );
 
         // 3. solve 3x3 least-squares system
-        tk::solveLeastSq_P0P1( m_offset, rdof, lhs_ls, rhs_ls, U, varRange );
+        tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U, varRange );
 
         for (std::size_t e=0; e<nelem; ++e)
         {
@@ -241,13 +241,13 @@ class Transport {
           {
             // Reconstruct second-order dofs of volume-fractions in Taylor space
             // using nodal-stencils, for a good interface-normal estimate
-            tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+            tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
               U, varRange );
           }
         }
 
         // 4. transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1( m_offset, rdof, nelem, inpoel, coord, U, varRange );
+        tk::transform_P0P1( rdof, nelem, inpoel, coord, U, varRange );
       }
     }
 
@@ -285,12 +285,12 @@ class Transport {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       if (limiter == ctr::LimiterType::WENOP1)
-        WENO_P1( fd.Esuel(), m_offset, U );
+        WENO_P1( fd.Esuel(), U );
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
-        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+        Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, coord, U );
+          m_system, coord, U );
     }
 
     //! Update the conservative variable solution for this PDE system
@@ -355,20 +355,20 @@ class Transport {
       std::vector< std::vector< tk::real > > riemannLoc;
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, m_mat_blk, t, ndof, rdof,
+      tk::surfInt( m_system, m_ncomp, m_mat_blk, t, ndof, rdof,
                    inpoel, coord, fd, geoFace, geoElem, Upwind::flux,
                    Problem::prescribedVelocity, U, P, ndofel, R, vriem,
                    riemannLoc, riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, t, m_mat_blk, ndof, rdof,
+        tk::volInt( m_system, m_ncomp, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
                     Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, m_mat_blk, ndof, rdof, 
+        tk::bndSurfInt( m_system, m_ncomp, m_mat_blk, ndof, rdof, 
           b.first, fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
           riemannLoc, riemannDeriv, intsharp );

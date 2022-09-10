@@ -29,7 +29,6 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1
 void
 WENO_P1( const std::vector< int >& esuel,
-         inciter::ncomp_t offset,
          tk::Fields& U );
 
 //! Superbee limiter for DGP1
@@ -37,7 +36,6 @@ void
 Superbee_P1( const std::vector< int >& esuel,
              const std::vector< std::size_t >& inpoel,
              const std::vector< std::size_t >& ndofel,
-             inciter::ncomp_t offset,
              const tk::UnsMesh::Coords& coord,
              tk::Fields& U );
 
@@ -48,7 +46,6 @@ SuperbeeMultiMat_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t system,
-  inciter::ncomp_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -62,7 +59,6 @@ VertexBasedTransport_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U );
 
@@ -74,7 +70,6 @@ VertexBasedCompflow_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -92,7 +87,6 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -114,7 +108,6 @@ VertexBasedMultiMat_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -134,7 +127,6 @@ VertexBasedMultiMat_P2(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -158,7 +150,6 @@ VertexBasedMultiMat_FV(
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -171,7 +162,6 @@ WENOLimiting( const tk::Fields& U,
               std::size_t e,
               inciter::ncomp_t c,
               std::size_t rdof,
-              inciter::ncomp_t offset,
               tk::real cweight,
               std::array< std::vector< tk::real >, 3 >& limU );
 
@@ -185,7 +175,6 @@ SuperbeeLimiting( const tk::Fields& U,
                   std::size_t ndof,
                   std::size_t rdof,
                   std::size_t dof_el,
-                  inciter::ncomp_t offset,
                   inciter:: ncomp_t ncomp,
                   tk::real beta_lim );
 
@@ -199,7 +188,6 @@ VertexBasedLimiting(
   std::size_t e,
   std::size_t rdof,
   std::size_t ,
-  std::size_t offset,
   std::size_t ncomp,
   std::vector< tk::real >& phi,
   const std::array< std::size_t, 2 >& VarRange );
@@ -214,7 +202,6 @@ VertexBasedLimiting_P2(
   std::size_t e,
   std::size_t rdof,
   std::size_t dof_el,
-  std::size_t offset,
   std::size_t ncomp,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
@@ -224,7 +211,6 @@ VertexBasedLimiting_P2(
 
 //! Consistent limiter modifications for P1 dofs
 void consistentMultiMatLimiting_P1( const std::size_t nmat,
-  const ncomp_t offset,
   const std::size_t rdof,
   const std::size_t e,
   tk::Fields& U,
@@ -234,7 +220,6 @@ void consistentMultiMatLimiting_P1( const std::size_t nmat,
 
 //! Bound preserving limiter for the volume fractions
 void BoundPreservingLimiting( std::size_t nmat,
-                              ncomp_t offset,
                               std::size_t ndof,
                               std::size_t e,
                               const std::vector< std::size_t >& inpoel,
@@ -253,7 +238,6 @@ BoundPreservingLimitingFunction( const tk::real min,
 //! Positivity preserving limiter for multi-material solver
 void PositivityLimitingMultiMat( std::size_t nmat,
                                  std::size_t system,
-                                 ncomp_t offset,
                                  std::size_t rdof,
                                  std::size_t ndof_el,
                                  std::size_t e,
@@ -282,7 +266,6 @@ interfaceIndicator( std::size_t nmat,
 void MarkShockCells ( const std::size_t nelem,
                       const std::size_t nmat,
                       const std::size_t system,
-                      const std::size_t offset,
                       const std::size_t ndof,
                       const std::size_t rdof,
                       const std::vector< inciter::EoS_Base* >& mat_blk,
@@ -303,7 +286,6 @@ cleanTraceMultiMat(
   std::size_t nelem,
   std::size_t system,
   const std::vector< EoS_Base* >& mat_blk,
-  std::size_t offset,
   const tk::Fields& geoElem,
   std::size_t nmat,
   tk::Fields& U,
@@ -317,7 +299,6 @@ timeStepSizeMultiMat(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const std::size_t nelem,
-  std::size_t offset,
   std::size_t nmat,
   const tk::Fields& U,
   const tk::Fields& P );
@@ -329,7 +310,6 @@ timeStepSizeMultiMatFV(
   const tk::Fields& geoElem,
   const std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   std::size_t nmat,
   const int engSrcAd,
   const tk::Fields& U,

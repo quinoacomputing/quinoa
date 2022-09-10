@@ -21,7 +21,6 @@
 void
 tk::volInt( ncomp_t system,
             std::size_t nmat,
-            ncomp_t offset,
             real t,
             const std::vector< inciter::EoS_Base* >& mat_blk,
             const std::size_t ndof,
@@ -41,7 +40,6 @@ tk::volInt( ncomp_t system,
 //  Compute volume integrals for DG
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Total number of degrees of freedom included reconstructed ones
@@ -113,7 +111,7 @@ tk::volInt( ncomp_t system,
 
         auto wt = wgp[igp] * geoElem(e, 0);
 
-        auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+        auto state = evalPolynomialSol(system, intsharp, ncomp, nprim,
           rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
           {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
@@ -123,7 +121,7 @@ tk::volInt( ncomp_t system,
         // comput flux
         auto fl = flux( system, ncomp, mat_blk, state, v );
 
-        update_rhs( ncomp, offset, ndof, ndofel[e], wt, e, dBdx, fl, R );
+        update_rhs( ncomp, ndof, ndofel[e], wt, e, dBdx, fl, R );
       }
     }
   }
@@ -131,7 +129,6 @@ tk::volInt( ncomp_t system,
 
 void
 tk::update_rhs( ncomp_t ncomp,
-                ncomp_t offset,
                 const std::size_t ndof,
                 const std::size_t ndof_el,
                 const tk::real wt,
@@ -142,7 +139,6 @@ tk::update_rhs( ncomp_t ncomp,
 // *****************************************************************************
 //  Update the rhs by adding the source term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point

@@ -34,7 +34,6 @@ namespace tk {
 void
 nonConservativeInt( [[maybe_unused]] ncomp_t system,
                     std::size_t nmat,
-                    ncomp_t offset,
                     const std::size_t ndof,
                     const std::size_t rdof,
                     const std::size_t nelem,
@@ -57,7 +56,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //!   International Journal of Multiphase Flow, 113, 208-230.
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] nelem Total number of elements
@@ -143,7 +141,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+      auto state = evalPolynomialSol(system, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
@@ -222,7 +220,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
         }
       }
 
-      updateRhsNonCons( ncomp, offset, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
+      updateRhsNonCons( ncomp, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
     }
   }
 }
@@ -230,7 +228,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 void
 updateRhsNonCons(
   ncomp_t ncomp,
-  ncomp_t offset,
   const std::size_t nmat,
   const std::size_t ndof,
   [[maybe_unused]] const std::size_t ndof_el,
@@ -243,7 +240,6 @@ updateRhsNonCons(
 // *****************************************************************************
 //  Update the rhs by adding the non-conservative term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] nmat Number of materials
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for local element
@@ -298,7 +294,6 @@ void
 nonConservativeIntFV(
   ncomp_t system,
   std::size_t nmat,
-  ncomp_t offset,
   const std::size_t rdof,
   const std::size_t nelem,
   const std::vector< std::size_t >& inpoel,
@@ -318,7 +313,6 @@ nonConservativeIntFV(
 //!   International Journal of Multiphase Flow, 113, 208-230.
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] nelem Total number of elements
 //! \param[in] inpoel Element-node connectivity
@@ -347,7 +341,7 @@ nonConservativeIntFV(
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
 
-    auto state = evalPolynomialSol(system, offset, 0, ncomp, nprim,
+    auto state = evalPolynomialSol(system, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
       {{0.25, 0.25, 0.25}}, B, U, P);
 
@@ -400,7 +394,6 @@ nonConservativeIntFV(
 void
 pressureRelaxationInt( ncomp_t system,
                        std::size_t nmat,
-                       ncomp_t offset,
                        const std::vector< inciter::EoS_Base* >& mat_blk,
                        const std::size_t ndof,
                        const std::size_t rdof,
@@ -425,7 +418,6 @@ pressureRelaxationInt( ncomp_t system,
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] nelem Total number of elements
@@ -492,7 +484,7 @@ pressureRelaxationInt( ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+      auto state = evalPolynomialSol(system, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
@@ -530,7 +522,7 @@ pressureRelaxationInt( ncomp_t system,
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
       }
 
-      updateRhsPre( ncomp, offset, ndof, dof_el, wt, e, B, s_prelax, R );
+      updateRhsPre( ncomp, ndof, dof_el, wt, e, B, s_prelax, R );
     }
   }
 }
@@ -538,7 +530,6 @@ pressureRelaxationInt( ncomp_t system,
 void
 updateRhsPre(
   ncomp_t ncomp,
-  ncomp_t offset,
   const std::size_t ndof,
   [[maybe_unused]] const std::size_t ndof_el,
   const tk::real wt,
@@ -549,7 +540,6 @@ updateRhsPre(
 // *****************************************************************************
 //  Update the rhs by adding the pressure relaxation integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
@@ -581,7 +571,6 @@ void
 pressureRelaxationIntFV(
   ncomp_t system,
   std::size_t nmat,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,
@@ -603,7 +592,6 @@ pressureRelaxationIntFV(
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] nelem Total number of elements
 //! \param[in] geoElem Element geometry array
@@ -631,7 +619,7 @@ pressureRelaxationIntFV(
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
 
-    auto state = evalPolynomialSol(system, offset, 0, ncomp, nprim,
+    auto state = evalPolynomialSol(system, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
       {{0.25, 0.25, 0.25}}, B, U, P);
 

@@ -114,8 +114,7 @@ lhsLeastSq_P0P1( const inciter::FaceData& fd,
 }
 
 void
-intLeastSq_P0P1( ncomp_t offset,
-                 const std::size_t rdof,
+intLeastSq_P0P1( const std::size_t rdof,
                  const inciter::FaceData& fd,
                  const Fields& geoElem,
                  const Fields& W,
@@ -124,7 +123,6 @@ intLeastSq_P0P1( ncomp_t offset,
 // *****************************************************************************
 //  \brief Compute internal surface contributions to rhs vector of the
 //    least-squares reconstruction
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoElem Element geometry array
@@ -179,7 +177,6 @@ void
 bndLeastSqConservedVar_P0P1(
   ncomp_t system,
   ncomp_t ncomp,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
@@ -198,7 +195,6 @@ bndLeastSqConservedVar_P0P1(
 //    least-squares reconstruction of conserved quantities of the PDE system
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
 //! \param[in] fd Face connectivity and boundary conditions object
@@ -242,8 +238,8 @@ bndLeastSqConservedVar_P0P1(
 
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
-        auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B, {0, ncomp-1} );
-        auto uprim = eval_state( nprim, offset, rdof, 1, el, P, B, {0, nprim-1} );
+        auto ul = eval_state( ncomp, rdof, 1, el, U, B, {0, ncomp-1} );
+        auto uprim = eval_state( nprim, rdof, 1, el, P, B, {0, nprim-1} );
 
         // consolidate primitives into state vector
         ul.insert(ul.end(), uprim.begin(), uprim.end());
@@ -273,7 +269,6 @@ bndLeastSqConservedVar_P0P1(
 
 void
 solveLeastSq_P0P1(
-  ncomp_t offset,
   const std::size_t rdof,
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
@@ -281,7 +276,6 @@ solveLeastSq_P0P1(
   const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  Solve the 3x3 linear system for least-squares reconstruction
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] lhs LHS reconstruction matrix
 //! \param[in] rhs RHS reconstruction vector
@@ -314,7 +308,6 @@ solveLeastSq_P0P1(
 void
 recoLeastSqExtStencil(
   std::size_t rdof,
-  std::size_t offset,
   std::size_t e,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -325,7 +318,6 @@ recoLeastSqExtStencil(
 //  \brief Reconstruct the second-order solution using least-squares approach
 //    from an extended stencil involving the node-neighbors
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] e Element whoes solution is being reconstructed
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element-node connectivity
@@ -399,8 +391,7 @@ recoLeastSqExtStencil(
 }
 
 void
-transform_P0P1( ncomp_t offset,
-                std::size_t rdof,
+transform_P0P1( std::size_t rdof,
                 std::size_t nelem,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
@@ -408,7 +399,6 @@ transform_P0P1( ncomp_t offset,
                 const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
-//! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nelem Total number of elements
 //! \param[in] inpoel Element-node connectivity
@@ -463,7 +453,6 @@ transform_P0P1( ncomp_t offset,
 
 void
 THINCReco( std::size_t system,
-           std::size_t offset,
            std::size_t rdof,
            std::size_t nmat,
            std::size_t e,
@@ -479,7 +468,6 @@ THINCReco( std::size_t system,
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for multi-material flows
 //! \param[in] system Equation system index
-//! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of materials
 //! \param[in] e Element for which interface reconstruction is being calculated
@@ -596,7 +584,6 @@ THINCReco( std::size_t system,
 
 void
 THINCRecoTransport( std::size_t system,
-                    std::size_t offset,
                     std::size_t rdof,
                     std::size_t,
                     std::size_t e,
@@ -612,7 +599,6 @@ THINCRecoTransport( std::size_t system,
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for transport
 //! \param[in] system Equation system index
-//! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] e Element for which interface reconstruction is being calculated
 //! \param[in] inpoel Element-node connectivity
@@ -1004,7 +990,6 @@ THINCFunction_new( std::size_t rdof,
 
 std::vector< tk::real >
 evalPolynomialSol( std::size_t system,
-                   std::size_t offset,
                    int intsharp,
                    std::size_t ncomp,
                    std::size_t nprim,
@@ -1022,7 +1007,6 @@ evalPolynomialSol( std::size_t system,
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] system Equation system index
-//! \param[in] offset Index for equation systems
 //! \param[in] intsharp Interface reconstruction indicator
 //! \param[in] ncomp Number of components in the PDE system
 //! \param[in] nprim Number of primitive quantities
@@ -1044,8 +1028,8 @@ evalPolynomialSol( std::size_t system,
   std::vector< real > state;
   std::vector< real > sprim;
 
-  state = eval_state( ncomp, offset, rdof, dof_e, e, U, B, {0, ncomp-1} );
-  sprim = eval_state( nprim, offset, rdof, dof_e, e, P, B, {0, nprim-1} );
+  state = eval_state( ncomp, rdof, dof_e, e, U, B, {0, ncomp-1} );
+  sprim = eval_state( nprim, rdof, dof_e, e, P, B, {0, nprim-1} );
 
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());
@@ -1061,13 +1045,13 @@ evalPolynomialSol( std::size_t system,
     //  vfmin[k] = VolFracMax(el, 2*k, 0);
     //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
     //}
-    tk::THINCReco(system, offset, rdof, nmat, e, inpoel, coord, geoElem,
+    tk::THINCReco(system, rdof, nmat, e, inpoel, coord, geoElem,
       ref_gp, U, P, vfmin, vfmax, state);
 
     // Until the appropriate setup for activating THINC with Transport
     // is ready, the following lines will need to be uncommented for
     // using THINC with Transport
-    //tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel, coord,
+    //tk::THINCRecoTransport(system, rdof, nmat, el, inpoel, coord,
     //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
   }
 
@@ -1087,8 +1071,7 @@ evalPolynomialSol( std::size_t system,
 }
 
 void
-safeReco( std::size_t offset,
-          std::size_t rdof,
+safeReco( std::size_t rdof,
           std::size_t nmat,
           std::size_t el,
           int er,
@@ -1096,7 +1079,6 @@ safeReco( std::size_t offset,
           std::array< std::vector< real >, 2 >& state )
 // *****************************************************************************
 //  Compute safe reconstructions near material interfaces
-//! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of material is PDE system
 //! \param[in] el Element on the left-side of face

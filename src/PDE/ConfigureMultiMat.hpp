@@ -53,15 +53,13 @@ namespace multimat {
 //! Compute bulk density for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the MultiMat
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk density ready to be output to file
 static tk::GetVarFn::result_type
-bulkDensityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
+bulkDensityOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator+=;
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
+  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
   auto r = U.extract_comp( densityDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
@@ -72,16 +70,13 @@ bulkDensityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdo
 //! Compute bulk pressure for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the MultiMat
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk pressure ready to be output to file
 static tk::GetVarFn::result_type
-bulkPressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
-                    std::size_t rdof )
+bulkPressureOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator+=;
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
+  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
   auto p = U.extract_comp( pressureDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
@@ -92,16 +87,13 @@ bulkPressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
 //! Compute bulk specific total energy (energy per unit mass) for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the MultiMat
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk specific total energy ready to be output to file
 static tk::GetVarFn::result_type
-bulkSpecificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
-                               std::size_t rdof )
+bulkSpecificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator+=;
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
+  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
   auto e = U.extract_comp( energyDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
@@ -113,15 +105,13 @@ bulkSpecificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
 //! \note Must follow the signature in tk::GetVarFn
 //! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the MultiMat
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Velocity component ready to be output to file
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
-velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
+velocityOutVar( const tk::Fields& U, std::size_t rdof )
 {
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
+  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
   return U.extract_comp( velocityDofIdx(nmat,dir,rdof,0) );
 }
@@ -129,15 +119,12 @@ velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 //! Compute material indicator function for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the MultiMat
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Material indicator function ready to be output to file
 static tk::GetVarFn::result_type
-matIndicatorOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
-                    std::size_t rdof )
+matIndicatorOutVar( const tk::Fields& U, std::size_t rdof )
 {
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
+  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
   std::vector< tk::real > m(U.nunk(), 0.0);
   for (std::size_t i=0; i<U.nunk(); ++i) {

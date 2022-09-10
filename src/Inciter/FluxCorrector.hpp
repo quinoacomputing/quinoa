@@ -61,10 +61,9 @@ class FluxCorrector {
         // Assign variable indices for system FCT for each Eq system
         for (std::size_t e=0; e<ncompv.size(); ++e) {
           if (g_inputdeck.get< tag::param, Eq, tag::sysfct >().at(e)) {
-            auto offset = g_inputdeck.get< tag::component >().offset< Eq >( e );
             sys.push_back( std::vector< ncomp_t >() );
             for (auto c : sv.at(e)) {
-              sys.back().push_back( offset + c );
+              sys.back().push_back( c );
             }
           }
         } }() );
@@ -91,8 +90,7 @@ class FluxCorrector {
         const auto& ncompv = g_inputdeck.get< tag::component >().get< Eq >();
         // Assign variable indices for system FCT for each Eq system
         for (std::size_t e=0; e<ncompv.size(); ++e) {
-          auto offset = g_inputdeck.get< tag::component >().offset< Eq >( e );
-          vel.push_back( { offset+1, offset+2, offset+3 } );
+          vel.push_back( { 1, 2, 3 } );
         } }() );
       for ([[maybe_unused]] const auto& v : vel) {
         Assert( std::all_of( begin(v), end(v), [&]( std::size_t i ){

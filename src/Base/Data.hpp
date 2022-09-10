@@ -699,7 +699,7 @@ bool operator!= ( const Data< Layout >& lhs, const Data< Layout >& rhs )
 //! \return The index, i.e., the raw position, of and the largest absolute value
 //!   of the difference between all corresponding elements of _lhs_ and _rhs_.
 //! \details The position returned is the position in the underlying raw data
-//!   structure, independent of components, offsets, etc. If lhs == rhs with
+//!   structure, independent of components, etc. If lhs == rhs with
 //!   precision  std::numeric_limits< tk::real >::epsilon(), a pair of (0,0.0)
 //!   is returned.
 //! \note The Data objects _lhs_ and _rhs_ must have the same number of

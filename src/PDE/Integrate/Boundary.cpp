@@ -29,7 +29,6 @@ namespace tk {
 void
 bndSurfInt( ncomp_t system,
             std::size_t nmat,
-            ncomp_t offset,
             const std::vector< inciter::EoS_Base* >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
@@ -51,7 +50,6 @@ bndSurfInt( ncomp_t system,
             std::vector< std::vector< tk::real > >&,
             std::vector< std::vector< tk::real > >& riemannDeriv,
             int intsharp )
-
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
 //! \details This function computes contributions from surface integrals along
@@ -59,7 +57,6 @@ bndSurfInt( ncomp_t system,
 //!   function
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
@@ -177,7 +174,7 @@ bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0);
 
           // Compute the state variables at the left element
-          auto ugp = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+          auto ugp = evalPolynomialSol(system, intsharp, ncomp, nprim,
             rdof, nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
 
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
@@ -191,7 +188,7 @@ bndSurfInt( ncomp_t system,
                           gp[2], t ) );
 
           // Add the surface integration term to the rhs
-          update_rhs_bc( ncomp, nmat, offset, ndof, ndofel[el], wt, fn, el, fl,
+          update_rhs_bc( ncomp, nmat, ndof, ndofel[el], wt, fn, el, fl,
                          B_l, R, riemannDeriv );
         }
       }
@@ -202,7 +199,6 @@ bndSurfInt( ncomp_t system,
 void
 update_rhs_bc ( ncomp_t ncomp,
                 std::size_t nmat,
-                ncomp_t offset,
                 const std::size_t ndof,
                 const std::size_t ndof_l,
                 const tk::real wt,
@@ -216,7 +212,6 @@ update_rhs_bc ( ncomp_t ncomp,
 //  Update the rhs by adding the boundary surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_l Number of degrees of freedom for the left element
 //! \param[in] wt Weight of gauss quadrature point
@@ -276,7 +271,6 @@ update_rhs_bc ( ncomp_t ncomp,
 void
 bndSurfIntFV( ncomp_t system,
   std::size_t nmat,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
@@ -301,7 +295,6 @@ bndSurfIntFV( ncomp_t system,
 //!   function
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
 //! \param[in] fd Face connectivity and boundary conditions object
@@ -376,7 +369,7 @@ bndSurfIntFV( ncomp_t system,
         auto B_l = eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
 
         // Compute the state variables at the left element
-        auto ugp = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
+        auto ugp = evalPolynomialSol(system, intsharp, ncomp, nprim,
           rdof, nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
 
         Assert( ugp.size() == ncomp+nprim, "Incorrect size for "

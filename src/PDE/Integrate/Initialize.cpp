@@ -29,7 +29,6 @@ extern ctr::InputDeck g_inputdeck;
 void
 tk::initialize( ncomp_t system,
                 ncomp_t ncomp,
-                ncomp_t offset,
                 const std::vector< inciter::EoS_Base* >& mat_blk,
                 const Fields& L,
                 const std::vector< std::size_t >& inpoel,
@@ -44,7 +43,6 @@ tk::initialize( ncomp_t system,
 //! \details This is the public interface exposed to client code.
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] L Block diagonal mass matrix
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of node coordinates
@@ -109,7 +107,7 @@ tk::initialize( ncomp_t system,
     }
 
     // Compute the initial conditions
-    eval_init(ncomp, offset, ndof, rdof, e, R, L, unk);
+    eval_init(ncomp, ndof, rdof, e, R, L, unk);
   }
 }
 
@@ -160,7 +158,6 @@ tk::update_rhs( ncomp_t ncomp,
 
 void
 tk::eval_init( ncomp_t ncomp,
-               ncomp_t offset,
                const std::size_t ndof,
                const std::size_t rdof,
                const std::size_t e,
@@ -170,7 +167,6 @@ tk::eval_init( ncomp_t ncomp,
 // *****************************************************************************
 //  Compute the initial conditions
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Number of degrees of freedom
 //! \param[in] rdof Total number of reconstructed degrees of freedom
 //! \param[in] e Element index

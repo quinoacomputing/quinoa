@@ -39,7 +39,6 @@ std::vector< std::string > CompFlowFieldNames()
 
 std::vector< std::vector< tk::real > > 
 CompFlowFieldOutput( ncomp_t,
-                     ncomp_t offset,
                      const std::vector< EoS_Base* >& mat_blk,
                      std::size_t nunk,
                      std::size_t rdof,
@@ -48,8 +47,6 @@ CompFlowFieldOutput( ncomp_t,
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
 //! \param[in] nunk Number of unknowns to extract
 //! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
 //!   the number of scalar components to shift when extracting scalar

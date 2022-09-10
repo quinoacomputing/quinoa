@@ -35,7 +35,6 @@ namespace tk {
 void
 initialize( ncomp_t system,
             ncomp_t ncomp,
-            ncomp_t offset,
             const std::vector< inciter::EoS_Base* >& mat_blk,
             const Fields& L,
             const std::vector< std::size_t >& inpoel,
@@ -58,7 +57,6 @@ update_rhs( ncomp_t ncomp,
 //! Compute the initial conditions
 void
 eval_init( ncomp_t ncomp,
-           ncomp_t offset,
            const std::size_t ndof,
            const std::size_t rdof,
            const std::size_t e,

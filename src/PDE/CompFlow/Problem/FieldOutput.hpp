@@ -28,7 +28,6 @@ std::vector< std::string > CompFlowFieldNames();
 //! Return field output going to file
 std::vector< std::vector< tk::real > > 
 CompFlowFieldOutput( ncomp_t system,
-                     ncomp_t offset,
                      const std::vector< EoS_Base* >& mat_blk,
                      std::size_t nunk,
                      std::size_t rdof,

@@ -33,7 +33,6 @@ using bcconf_t = kw::sideset::info::expect::type;
 void
 bndSurfInt( ncomp_t system,
             std::size_t nmat,
-            ncomp_t offset,
             const std::vector< inciter::EoS_Base* >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
@@ -60,7 +59,6 @@ bndSurfInt( ncomp_t system,
 void
 update_rhs_bc ( ncomp_t ncomp,
                 std::size_t nmat,
-                ncomp_t offset,
                 const std::size_t ndof,
                 const std::size_t ndof_l,
                 const tk::real wt,
@@ -75,7 +73,6 @@ update_rhs_bc ( ncomp_t ncomp,
 void
 bndSurfIntFV( ncomp_t system,
   std::size_t nmat,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,

@@ -33,12 +33,10 @@ extern ctr::InputDeck g_inputdeck;
 
 void
 WENO_P1( const std::vector< int >& esuel,
-         inciter::ncomp_t offset,
          tk::Fields& U )
 // *****************************************************************************
 //  Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1
 //! \param[in] esuel Elements surrounding elements
-//! \param[in] offset Index for equation systems
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This WENO function should be called for transport and compflow
 //! \note This limiter function is experimental and untested. Use with caution.
@@ -58,7 +56,7 @@ WENO_P1( const std::vector< int >& esuel,
   {
     for (std::size_t e=0; e<nelem; ++e)
     {
-      WENOLimiting(U, esuel, e, c, rdof, offset, cweight, limU);
+      WENOLimiting(U, esuel, e, c, rdof, cweight, limU);
     }
 
     auto mark = c*rdof;
@@ -76,7 +74,6 @@ void
 Superbee_P1( const std::vector< int >& esuel,
              const std::vector< std::size_t >& inpoel,
              const std::vector< std::size_t >& ndofel,
-             inciter::ncomp_t offset,
              const tk::UnsMesh::Coords& coord,
              tk::Fields& U )
 // *****************************************************************************
@@ -84,7 +81,6 @@ Superbee_P1( const std::vector< int >& esuel,
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
-//! \param[in] offset Index for equation systems
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This Superbee function should be called for transport and compflow
@@ -116,7 +112,7 @@ Superbee_P1( const std::vector< int >& esuel,
     if (dof_el > 1)
     {
       auto phi = SuperbeeLimiting(U, esuel, inpoel, coord, e, ndof, rdof,
-                   dof_el, offset, ncomp, beta_lim);
+                   dof_el, ncomp, beta_lim);
 
       // apply limiter function
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
@@ -136,7 +132,6 @@ SuperbeeMultiMat_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t system,
-  inciter::ncomp_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -147,7 +142,6 @@ SuperbeeMultiMat_P1(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] system Index for equation systems
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -185,15 +179,15 @@ SuperbeeMultiMat_P1(
     {
       // limit conserved quantities
       auto phic = SuperbeeLimiting(U, esuel, inpoel, coord, e, ndof, rdof,
-                    dof_el, offset, ncomp, beta_lim);
+                    dof_el, ncomp, beta_lim);
       // limit primitive quantities
       auto phip = SuperbeeLimiting(P, esuel, inpoel, coord, e, ndof, rdof,
-                    dof_el, offset, nprim, beta_lim);
+                    dof_el, nprim, beta_lim);
 
       std::vector< tk::real > phic_p2;
       std::vector< std::vector< tk::real > > unk, prim;
       if(ndof > 1)
-        BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic,
+        BoundPreservingLimiting(nmat, ndof, e, inpoel, coord, U, phic,
           phic_p2);
 
       // limits under which compression is to be performed
@@ -213,7 +207,7 @@ SuperbeeMultiMat_P1(
       else
       {
         if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
-          consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic,
+          consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic,
             phic_p2);
       }
 
@@ -243,7 +237,6 @@ VertexBasedTransport_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U )
 // *****************************************************************************
@@ -253,7 +246,6 @@ VertexBasedTransport_P1(
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
-//! \param[in] offset Index for equation systems
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This vertex-based limiter function should be called for transport.
@@ -289,7 +281,7 @@ VertexBasedTransport_P1(
     {
       std::vector< tk::real > phi(ncomp, 1.0);
       // limit conserved quantities
-      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el, offset,
+      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
         ncomp, phi, {0, ncomp-1});
 
       // limits under which compression is to be performed
@@ -325,7 +317,6 @@ VertexBasedCompflow_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -341,7 +332,6 @@ VertexBasedCompflow_P1(
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
-//! \param[in] offset Index for equation systems
 //! \param[in] mat_blk EOS material block
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -362,7 +352,7 @@ VertexBasedCompflow_P1(
 
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, 1, system, offset, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(nelem, 1, system, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -386,7 +376,7 @@ VertexBasedCompflow_P1(
     {
       std::vector< tk::real > phi(ncomp, 1.0);
       // limit conserved quantities
-      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el, offset,
+      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
         ncomp, phi, {0, ncomp-1});
 
       // apply limiter function
@@ -408,7 +398,6 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -428,7 +417,6 @@ VertexBasedCompflow_P2(
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
-//! \param[in] offset Index for equation systems
 //! \param[in] mat_blk EOS material block
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -455,7 +443,7 @@ VertexBasedCompflow_P2(
 
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, 1, system, offset, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(nelem, 1, system, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -490,7 +478,7 @@ VertexBasedCompflow_P2(
       }
 
       // Obtain limiting coefficient for P1 coefficients
-      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el, offset,
+      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
         ncomp, phic_p1, {0, ncomp-1});
 
       // apply limiter function to the solution with Taylor basis
@@ -510,7 +498,6 @@ VertexBasedMultiMat_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -528,7 +515,6 @@ VertexBasedMultiMat_P1(
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] mat_blk EOS material block
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -555,7 +541,7 @@ VertexBasedMultiMat_P1(
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, nmat, system, offset, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(nelem, nmat, system, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -584,15 +570,15 @@ VertexBasedMultiMat_P1(
         // Hence, the vertex-based limiter will be applied.
 
         // limit conserved quantities
-        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el, offset,
+        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
           ncomp, phic, {0, ncomp-1});
         // limit primitive quantities
-        VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el, offset,
+        VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el,
           nprim, phip, {0, nprim-1});
       } else {
         // When shockmarker is 0, the volume fraction, density and energy
         // of minor material will still be limited to ensure a stable solution.
-        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el, offset,
+        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
           ncomp, phic, {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
         for(std::size_t k=0; k<nmat; ++k) {
@@ -603,19 +589,19 @@ VertexBasedMultiMat_P1(
             // limit the density of minor materials
             VarRange[0] = densityIdx(nmat, k);
             VarRange[1] = VarRange[0];
-            VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el, offset,
+            VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
               ncomp, phic, VarRange);
 
             // limit the energy of minor materials
             VarRange[0] = energyIdx(nmat, k);
             VarRange[1] = VarRange[0];
-            VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el, offset,
+            VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
               ncomp, phic, VarRange);
 
             // limit the pressure of minor materials
             VarRange[0] = pressureIdx(nmat, k);
             VarRange[1] = VarRange[0];
-            VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el, offset,
+            VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el,
               nprim, phip, VarRange);
           }
         }
@@ -623,7 +609,7 @@ VertexBasedMultiMat_P1(
 
       std::vector< tk::real > phic_p2, phip_p2;
 
-      PositivityLimitingMultiMat(nmat, system, offset, rdof, dof_el, e, inpoel,
+      PositivityLimitingMultiMat(nmat, system, rdof, dof_el, e, inpoel,
         coord, U, P, phic, phic_p2, phip, phip_p2);
 
       // limits under which compression is to be performed
@@ -641,11 +627,11 @@ VertexBasedMultiMat_P1(
       }
       else {
         if(nmat > 1)
-          BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U, phic,
+          BoundPreservingLimiting(nmat, ndof, e, inpoel, coord, U, phic,
             phic_p2);
 
         if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
-          consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic,
+          consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic,
             phic_p2);
       }
 
@@ -675,7 +661,6 @@ VertexBasedMultiMat_P2(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -698,7 +683,6 @@ VertexBasedMultiMat_P2(
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] mat_blk EOS material block
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -733,7 +717,7 @@ VertexBasedMultiMat_P2(
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, nmat, system, offset, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(nelem, nmat, system, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -774,17 +758,17 @@ VertexBasedMultiMat_P2(
         }
 
         // Obtain limiter coefficient for P1 conserved quantities
-        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el, offset,
+        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
           ncomp, phic_p1, {0, ncomp-1});
         // Obtain limiter coefficient for P1 primitive quantities
-        VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el, offset,
+        VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el,
           nprim, phip_p1, {0, nprim-1});
       } else {
         // When shockmarker is 0, the volume fraction will still be limited to
         // ensure a stable solution. Since the limiting strategy for third order
         // solution will downgrade the accuracy to second order, the density,
         // energy and pressure of minor material will not be limited.
-        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el, offset,
+        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
           ncomp, phic_p1, {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
         //for(std::size_t k=0; k<nmat; ++k) {
@@ -796,18 +780,18 @@ VertexBasedMultiMat_P2(
         //    VarRange[0] = densityIdx(nmat, k);
         //    VarRange[1] = VarRange[0];
         //    VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof, dof_el,
-        //      offset, ncomp, phic_p1, VarRange);
+        //      ncomp, phic_p1, VarRange);
 
         //    // limit the pressure of minor materials
         //    VarRange[0] = pressureIdx(nmat, k);
         //    VarRange[1] = VarRange[0];
         //    VertexBasedLimiting(prim, P, esup, inpoel, coord, e, rdof, dof_el,
-        //      offset, nprim, phip_p1, VarRange);
+        //      nprim, phip_p1, VarRange);
         //  }
         //}
       }
 
-      PositivityLimitingMultiMat(nmat, system, offset, ndof, dof_el, e, inpoel,
+      PositivityLimitingMultiMat(nmat, system, ndof, dof_el, e, inpoel,
           coord, U, P, phic_p1, phic_p2, phip_p1, phic_p2);
 
       // limits under which compression is to be performed
@@ -825,11 +809,11 @@ VertexBasedMultiMat_P2(
       }
       else {
         if(nmat > 1)
-          BoundPreservingLimiting(nmat, offset, ndof, e, inpoel, coord, U,
+          BoundPreservingLimiting(nmat, ndof, e, inpoel, coord, U,
             phic_p1, phic_p2);
 
         if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
-          consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic_p1,
+          consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic_p1,
             phic_p2);
       }
 
@@ -860,7 +844,6 @@ VertexBasedMultiMat_FV(
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -871,7 +854,6 @@ VertexBasedMultiMat_FV(
 //! \param[in] inpoel Element connectivity
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -893,10 +875,10 @@ VertexBasedMultiMat_FV(
     std::vector< tk::real > phic(ncomp, 1.0);
     std::vector< tk::real > phip(nprim, 1.0);
     // limit conserved quantities
-    VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, rdof, offset, ncomp,
+    VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, rdof, ncomp,
       phic, {0, ncomp-1});
     // limit primitive quantities
-    VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, rdof, offset, nprim,
+    VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, rdof, nprim,
       phip, {0, nprim-1});
 
     // limits under which compression is to be performed
@@ -916,12 +898,12 @@ VertexBasedMultiMat_FV(
     else
     {
       if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
-        consistentMultiMatLimiting_P1(nmat, offset, rdof, e, U, P, phic, phip);
+        consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic, phip);
     }
 
     // apply positivity preserving limiter
     std::vector< tk::real > phic_p2, phip_p2;
-    PositivityLimitingMultiMat(nmat, system, offset, rdof, rdof, e, inpoel,
+    PositivityLimitingMultiMat(nmat, system, rdof, rdof, e, inpoel,
       coord, U, P, phic, phic_p2, phip, phip_p2);
 
     // apply limiter function
@@ -948,7 +930,6 @@ WENOLimiting( const tk::Fields& U,
               std::size_t e,
               inciter::ncomp_t c,
               std::size_t rdof,
-              inciter::ncomp_t offset,
               tk::real cweight,
               std::array< std::vector< tk::real >, 3 >& limU )
 // *****************************************************************************
@@ -958,7 +939,6 @@ WENOLimiting( const tk::Fields& U,
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in] c Index of component which is to be limited
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] offset Index for equation systems
 //! \param[in] cweight Weight of the central stencil
 //! \param[in,out] limU Limited gradients of component c
 // *****************************************************************************
@@ -1064,7 +1044,6 @@ SuperbeeLimiting( const tk::Fields& U,
                   std::size_t ndof,
                   std::size_t rdof,
                   std::size_t dof_el,
-                  inciter::ncomp_t offset,
                   inciter:: ncomp_t ncomp,
                   tk::real beta_lim )
 // *****************************************************************************
@@ -1077,7 +1056,6 @@ SuperbeeLimiting( const tk::Fields& U,
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] dof_el Local number of degrees of freedom
-//! \param[in] offset Index for equation systems
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] beta_lim Parameter which is equal to 2 for Superbee and 1 for
 //!   minmod limiter
@@ -1178,7 +1156,7 @@ SuperbeeLimiting( const tk::Fields& U,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
       auto state =
-        tk::eval_state(ncomp, offset, rdof, dof_el, e, U, B_l, {0, ncomp-1});
+        tk::eval_state(ncomp, rdof, dof_el, e, U, B_l, {0, ncomp-1});
 
       Assert( state.size() == ncomp, "Size mismatch" );
 
@@ -1222,7 +1200,6 @@ VertexBasedLimiting(
   std::size_t e,
   std::size_t rdof,
   std::size_t dof_el,
-  std::size_t offset,
   std::size_t ncomp,
   std::vector< tk::real >& phi,
   const std::array< std::size_t, 2 >& VarRange )
@@ -1235,7 +1212,6 @@ VertexBasedLimiting(
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] dof_el Local number of degrees of freedom
-//! \param[in] offset Index for equation systems
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \return phi Limiter function for solution in element e
 // *****************************************************************************
@@ -1301,7 +1277,7 @@ VertexBasedLimiting(
           tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
           tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
           tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
-    state = tk::eval_state(ncomp, offset, rdof, dof_el, e, U, B_p, VarRange);
+    state = tk::eval_state(ncomp, rdof, dof_el, e, U, B_p, VarRange);
 
     Assert( state.size() == ncomp, "Size mismatch" );
 
@@ -1340,7 +1316,6 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
   std::size_t e,
   std::size_t rdof,
   [[maybe_unused]] std::size_t dof_el,
-  std::size_t offset,
   std::size_t ncomp,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
@@ -1355,7 +1330,6 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] dof_el Local number of degrees of freedom
-//! \param[in] offset Index for equation systems
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
@@ -1503,7 +1477,6 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
 
 void consistentMultiMatLimiting_P1(
   std::size_t nmat,
-  ncomp_t offset,
   std::size_t rdof,
   std::size_t e,
   tk::Fields& U,
@@ -1513,7 +1486,6 @@ void consistentMultiMatLimiting_P1(
 // *****************************************************************************
 //  Consistent limiter modifications for conservative variables
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Index for equation system
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] e Element being checked for consistency
 //! \param[in] U Vector of conservative variables
@@ -1620,7 +1592,6 @@ void consistentMultiMatLimiting_P1(
 }
 
 void BoundPreservingLimiting( std::size_t nmat,
-                              ncomp_t offset,
                               std::size_t ndof,
                               std::size_t e,
                               const std::vector< std::size_t >& inpoel,
@@ -1631,7 +1602,6 @@ void BoundPreservingLimiting( std::size_t nmat,
 // *****************************************************************************
 //  Bound preserving limiter for volume fractions when MulMat scheme is selected
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Index for equation system
 //! \param[in] ndof Total number of reconstructed dofs
 //! \param[in] e Element being checked for consistency
 //! \param[in] inpoel Element connectivity
@@ -1709,7 +1679,7 @@ void BoundPreservingLimiting( std::size_t nmat,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-      auto state = eval_state( U.nprop()/ndof, offset, ndof, ndof, e, U, B,
+      auto state = eval_state( U.nprop()/ndof, ndof, ndof, e, U, B,
         {0, U.nprop()/ndof-1} );
 
       for(std::size_t imat = 0; imat < nmat; imat++)
@@ -1745,7 +1715,7 @@ void BoundPreservingLimiting( std::size_t nmat,
       auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
         coordgp[2][igp] );
 
-      auto state = tk::eval_state(U.nprop()/ndof, offset, ndof, ndof, e, U, B,
+      auto state = tk::eval_state(U.nprop()/ndof, ndof, ndof, e, U, B,
         {0, U.nprop()/ndof-1} );
 
       for(std::size_t imat = 0; imat < nmat; imat++)
@@ -1790,7 +1760,6 @@ BoundPreservingLimitingFunction( const tk::real min,
 
 void PositivityLimitingMultiMat( std::size_t nmat,
                                  std::size_t system,
-                                 ncomp_t offset,
                                  std::size_t rdof,
                                  std::size_t ndof_el,
                                  std::size_t e,
@@ -1806,7 +1775,6 @@ void PositivityLimitingMultiMat( std::size_t nmat,
 //  Positivity preserving limiter for multi-material solver
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] system Equation system index
-//! \param[in] offset Index for equation system
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] ndof_el Number of dofs for element e
 //! \param[in] e Element being checked for consistency
@@ -1877,9 +1845,9 @@ void PositivityLimitingMultiMat( std::size_t nmat,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-      auto state = eval_state(ncomp, offset, rdof, ndof_el, e, U, B,
+      auto state = eval_state(ncomp, rdof, ndof_el, e, U, B,
         {0, ncomp-1});
-      auto sprim = eval_state(nprim, offset, rdof, ndof_el, e, P, B,
+      auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B,
         {0, nprim-1});
 
       for(std::size_t imat = 0; imat < nmat; imat++)
@@ -1926,9 +1894,9 @@ void PositivityLimitingMultiMat( std::size_t nmat,
       auto B = tk::eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp],
         coordgp[2][igp] );
 
-      auto state = eval_state(ncomp, offset, rdof, ndof_el, e, U, B,
+      auto state = eval_state(ncomp, rdof, ndof_el, e, U, B,
         {0, ncomp-1});
-      auto sprim = eval_state(nprim, offset, rdof, ndof_el, e, P, B,
+      auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B,
         {0, nprim-1});
 
       for(std::size_t imat = 0; imat < nmat; imat++)
@@ -2027,7 +1995,6 @@ interfaceIndicator( std::size_t nmat,
 void MarkShockCells ( const std::size_t nelem,
                       const std::size_t nmat,
                       const std::size_t system,
-                      const std::size_t offset,
                       const std::size_t ndof,
                       const std::size_t rdof,
                       const std::vector< inciter::EoS_Base* >& mat_blk,
@@ -2047,7 +2014,6 @@ void MarkShockCells ( const std::size_t nelem,
 //! \param[in] nelem Number of elements
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] system Equation system index
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] mat_blk EOS material block
@@ -2174,9 +2140,9 @@ void MarkShockCells ( const std::size_t nelem,
       std::array< std::vector< tk::real >, 2 > state;
 
       // Evaluate the high order solution at the qudrature point
-      state[0] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
+      state[0] = tk::evalPolynomialSol(system, 0, ncomp, nprim, rdof,
         nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
+      state[1] = tk::evalPolynomialSol(system, 0, ncomp, nprim, rdof,
         nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
@@ -2233,7 +2199,6 @@ cleanTraceMultiMat(
   std::size_t nelem,
   std::size_t system,
   const std::vector< EoS_Base* >& mat_blk,
-  std::size_t offset,
   const tk::Fields& geoElem,
   std::size_t nmat,
   tk::Fields& U,
@@ -2243,7 +2208,6 @@ cleanTraceMultiMat(
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
 //! \param[in] mat_blk EOS material block
-//! \param[in] offset Offset for equation systems
 //! \param[in] geoElem Element geometry array
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in/out] U High-order solution vector which gets modified
@@ -2504,7 +2468,6 @@ timeStepSizeMultiMat(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const std::size_t nelem,
-  std::size_t offset,
   std::size_t nmat,
   const tk::Fields& U,
   const tk::Fields& P )
@@ -2515,7 +2478,6 @@ timeStepSizeMultiMat(
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
 //! \param[in] nelem Number of elements
-//! \param[in] offset Index for equation systems
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] U High-order solution vector
 //! \param[in] P High-order vector of primitives
@@ -2544,9 +2506,9 @@ timeStepSizeMultiMat(
     B_l[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, offset, rdof, ndof, el, U, B_l, {0, ncomp-1});
+    ugp = eval_state(ncomp, rdof, ndof, el, U, B_l, {0, ncomp-1});
     // get primitive quantities
-    pgp = eval_state(nprim, offset, rdof, ndof, el, P, B_l, {0, nprim-1});
+    pgp = eval_state(nprim, rdof, ndof, el, P, B_l, {0, nprim-1});
 
     // advection velocity
     u = pgp[velocityIdx(nmat, 0)];
@@ -2576,9 +2538,9 @@ timeStepSizeMultiMat(
       B_r[0] = 1.0;
 
       // get conserved quantities
-      ugp = eval_state( ncomp, offset, rdof, ndof, eR, U, B_r, {0, ncomp-1});
+      ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r, {0, ncomp-1});
       // get primitive quantities
-      pgp = eval_state( nprim, offset, rdof, ndof, eR, P, B_r, {0, nprim-1});
+      pgp = eval_state( nprim, rdof, ndof, eR, P, B_r, {0, nprim-1});
 
       // advection velocity
       u = pgp[velocityIdx(nmat, 0)];
@@ -2624,7 +2586,6 @@ timeStepSizeMultiMatFV(
   const tk::Fields& geoElem,
   const std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   std::size_t nmat,
   const int engSrcAd,
   const tk::Fields& U,
@@ -2635,7 +2596,6 @@ timeStepSizeMultiMatFV(
 //! \param[in] geoElem Element geometry array
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
-//! \param[in] offset Index for equation systems
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] engSrcAd Whether the energy source was added
 //! \param[in] U High-order solution vector
@@ -2675,9 +2635,9 @@ timeStepSizeMultiMatFV(
     B[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, offset, rdof, ndof, e, U, B, {0, ncomp-1});
+    ugp = eval_state(ncomp, rdof, ndof, e, U, B, {0, ncomp-1});
     // get primitive quantities
-    pgp = eval_state(nprim, offset, rdof, ndof, e, P, B, {0, nprim-1});
+    pgp = eval_state(nprim, rdof, ndof, e, P, B, {0, nprim-1});
 
     // magnitude of advection velocity
     auto u = pgp[velocityIdx(nmat, 0)];
@@ -2763,9 +2723,9 @@ correctLimConservMultiMat(
       auto w = wgp[igp] * geoElem(e, 0);
 
       // Evaluate the solution at quadrature point
-      auto U = tk::eval_state( ncomp, 0, rdof, rdof, e, unk,  B,
+      auto U = tk::eval_state( ncomp, rdof, rdof, e, unk,  B,
                                {0, ncomp-1} );
-      auto P = tk::eval_state( nprim, 0, rdof, rdof, e, prim, B,
+      auto P = tk::eval_state( nprim, rdof, rdof, e, prim, B,
                                {0, nprim-1} );
 
       // Solution vector that stores the material energy and bulk momentum

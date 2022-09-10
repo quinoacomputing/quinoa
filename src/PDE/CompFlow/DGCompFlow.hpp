@@ -150,7 +150,7 @@ class CompFlow {
                 tk::real t,
                 const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -198,7 +198,7 @@ class CompFlow {
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
+      tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
     //! Update the interface cells to first order dofs
@@ -272,21 +272,21 @@ class CompFlow {
         tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
         // 1. internal face contributions
-        tk::intLeastSq_P0P1( m_offset, rdof, fd, geoElem, U, rhs_ls,
+        tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls,
           {0, m_ncomp-1} );
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset,
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp,
             m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second,
             P, U, rhs_ls, {0, m_ncomp-1} );
 
         // 3. solve 3x3 least-squares system
-        tk::solveLeastSq_P0P1( m_offset, rdof, lhs_ls, rhs_ls, U,
+        tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U,
           {0, m_ncomp-1} );
 
         // 4. transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1( m_offset, rdof, nelem, inpoel, coord, U,
+        tk::transform_P0P1( rdof, nelem, inpoel, coord, U,
           {0, m_ncomp-1} );
       }
     }
@@ -329,16 +329,16 @@ class CompFlow {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       if (limiter == ctr::LimiterType::WENOP1)
-        WENO_P1( fd.Esuel(), m_offset, U );
+        WENO_P1( fd.Esuel(), U );
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
-        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+        Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
         VertexBasedCompflow_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
+          m_system, m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
           shockmarker);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
+          m_system, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
           uNodalExtrm, mtInv, flux, U, shockmarker);
     }
 
@@ -408,23 +408,23 @@ class CompFlow {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, m_mat_blk, t, ndof, rdof, inpoel,
+      tk::surfInt( m_system, 1, m_mat_blk, t, ndof, rdof, inpoel,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    R, vriem, riemannLoc, riemannDeriv );
 
       // compute optional source term
-      tk::srcInt( m_system, m_offset, m_mat_blk, t, ndof, fd.Esuel().size()/4,
+      tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4,
                   inpoel, coord, geoElem, Problem::src, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, 1, m_offset, t, m_mat_blk, ndof, rdof,
+        tk::volInt( m_system, 1, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
                     U, P, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, 1, m_offset, m_mat_blk, ndof, rdof, b.first,
+        tk::bndSurfInt( m_system, 1, m_mat_blk, ndof, rdof, b.first,
                         fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                         velfn, b.second, U, P, ndofel, R, vriem, riemannLoc,
                         riemannDeriv );
@@ -793,7 +793,7 @@ class CompFlow {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, 0, rdof, rdof, e, U, B, {0, m_ncomp-1});
+        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B, {0, m_ncomp-1});
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
@@ -1201,7 +1201,7 @@ class CompFlow {
 
                   auto wt = wgp[igp] * geoElem(e, 0);
 
-                  tk::update_rhs( m_offset, ndof, ndofel[e], wt, e, B, s, R );
+                  tk::update_rhs( ndof, ndofel[e], wt, e, B, s, R );
                 }
               }
             }

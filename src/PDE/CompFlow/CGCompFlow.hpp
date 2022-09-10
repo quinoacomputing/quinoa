@@ -451,7 +451,7 @@ class CompFlow {
         // access solution at elements
         std::array< real, m_ncomp > ue;
         for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c );
-        // access pointer to right hand side at component and offset
+        // access pointer to right hand side at component
         std::array< const real*, m_ncomp > r;
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
@@ -1324,7 +1324,7 @@ class CompFlow {
         for (std::size_t c=0; c<m_ncomp; ++c) dflux[e*m_ncomp+c] = f[c];
       }
 
-      // access pointer to right hand side at component and offset
+      // access pointer to right hand side at component
       std::array< const real*, m_ncomp > r;
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
@@ -1595,7 +1595,7 @@ class CompFlow {
         }
       }
 
-      // access pointer to right hand side at component and offset
+      // access pointer to right hand side at component
       std::array< const real*, m_ncomp > r;
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
@@ -1628,7 +1628,7 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // access pointer to right hand side at component and offset
+      // access pointer to right hand side at component
       std::array< const real*, m_ncomp > r;
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 

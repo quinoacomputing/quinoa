@@ -43,7 +43,7 @@ CompFlowPhysicsNavierStokes::viscousRhs(
 //! \param[in] N Element node indices
 //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
 //! \param[in] u Solution at element nodes at recent time step
-//! \param[in] r Pointers to right hand side at component and offset
+//! \param[in] r Pointers to right hand side at component
 //! \param[in,out] R Right-hand side vector contributing to
 // *****************************************************************************
 {
@@ -148,7 +148,7 @@ CompFlowPhysicsNavierStokes::conductRhs(
 //! \param[in] N Element node indices
 //! \param[in] grad Shape function derivatives, nnode*ndim [4][3]
 //! \param[in] u Solution at element nodes at recent time step
-//! \param[in] r Pointers to right hand side at component and offset
+//! \param[in] r Pointers to right hand side at component
 //! \param[in,out] R Right-hand side vector contributing to
 // *****************************************************************************
 {

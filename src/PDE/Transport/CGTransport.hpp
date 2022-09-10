@@ -365,7 +365,7 @@ class Transport {
         // access solution at elements
         std::vector< real > ue( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c );
-        // access pointer to right hand side at component and offset
+        // access pointer to right hand side at component
         std::vector< const real* > r( m_ncomp );
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
         // access solution at nodes of element
@@ -768,7 +768,7 @@ class Transport {
       // compute derived data structures
       auto esued = tk::genEsued( inpoel, 4, tk::genEsup( inpoel, 4 ) );
 
-      // access pointer to right hand side at component and offset
+      // access pointer to right hand side at component
       std::vector< const real* > r( m_ncomp );
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
@@ -886,7 +886,7 @@ class Transport {
         }
       }
 
-      // access pointer to right hand side at component and offset
+      // access pointer to right hand side at component
       std::vector< const real* > r( m_ncomp );
       for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 

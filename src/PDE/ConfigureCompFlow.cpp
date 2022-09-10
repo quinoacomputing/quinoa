@@ -99,9 +99,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     nfo.emplace_back( "flux", ctr::Flux().name(
       g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
 
-  nfo.emplace_back( "start offset in unknowns array", parameter(
-    g_inputdeck.get< tag::component >().offset< eq >(c) ) );
-
   // Material property output
   const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c][0];
   const auto& m_id = matprop.get< tag::id >();

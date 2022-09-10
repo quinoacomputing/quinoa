@@ -72,7 +72,6 @@ eval_basis( const std::size_t ndof,
 //! Compute the state variables for the tetrahedron element
 std::vector< tk::real >
 eval_state ( ncomp_t ncomp,
-             ncomp_t offset,
              const std::size_t ndof,
              const std::size_t ndof_el,
              const std::size_t e,
@@ -83,7 +82,6 @@ eval_state ( ncomp_t ncomp,
 //! Transform the solution with Dubiner basis to the solution with Taylor basis
 std::vector< std::vector< tk::real > >
 DubinerToTaylor( ncomp_t ncomp,
-                 ncomp_t offset,
                  const std::size_t e,
                  const std::size_t ndof,
                  const tk::Fields& U,
@@ -113,7 +111,6 @@ eval_TaylorBasis( const std::size_t ndof,
 //! Transform the solution from Dubiner basis to Taylor basis
 std::vector< std::vector< tk::real > >
 DubinerToTaylorRefEl( ncomp_t ncomp,
-  ncomp_t offset,
   const std::size_t e,
   const std::size_t ndof,
   const std::size_t ndof_el,

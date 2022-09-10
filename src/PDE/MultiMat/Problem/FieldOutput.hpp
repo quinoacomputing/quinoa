@@ -29,7 +29,6 @@ std::vector< std::vector< tk::real > >
 MultiMatFieldOutput(
   ncomp_t system,
   std::size_t nmat,
-  ncomp_t offset,
   const std::vector< EoS_Base* >& mat_blk,
   std::size_t nunk,
   std::size_t rdof,

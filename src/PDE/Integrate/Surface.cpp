@@ -25,7 +25,6 @@ namespace tk {
 void
 surfInt( ncomp_t system,
          std::size_t nmat,
-         ncomp_t offset,
          const std::vector< inciter::EoS_Base* >& mat_blk,
          real t,
          const std::size_t ndof,
@@ -49,7 +48,6 @@ surfInt( ncomp_t system,
 //  Compute internal surface flux integrals
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -193,9 +191,9 @@ surfInt( ncomp_t system,
 
       std::array< std::vector< real >, 2 > state;
 
-      state[0] = evalPolynomialSol(system, offset, intsharp, ncomp, nprim, rdof,
+      state[0] = evalPolynomialSol(system, intsharp, ncomp, nprim, rdof,
         nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = evalPolynomialSol(system, offset, intsharp, ncomp, nprim, rdof,
+      state[1] = evalPolynomialSol(system, intsharp, ncomp, nprim, rdof,
         nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
@@ -210,7 +208,7 @@ surfInt( ncomp_t system,
       auto fl = flux( mat_blk, fn, state, v );
 
       // Add the surface integration term to the rhs
-      update_rhs_fa( ncomp, nmat, offset, ndof, ndofel[el], ndofel[er], wt, fn,
+      update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,
                      el, er, fl, B_l, B_r, R, riemannDeriv );
     }
   }
@@ -219,7 +217,6 @@ surfInt( ncomp_t system,
 void
 update_rhs_fa( ncomp_t ncomp,
                std::size_t nmat,
-               ncomp_t offset,
                const std::size_t ndof,
                const std::size_t ndof_l,
                const std::size_t ndof_r,
@@ -236,7 +233,6 @@ update_rhs_fa( ncomp_t ncomp,
 //  Update the rhs by adding the surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_l Number of degrees of freedom for left element
 //! \param[in] ndof_r Number of degrees of freedom for right element
@@ -323,7 +319,6 @@ update_rhs_fa( ncomp_t ncomp,
 void
 surfIntFV( ncomp_t system,
   std::size_t nmat,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   real t,
   const std::size_t rdof,
@@ -343,7 +338,6 @@ surfIntFV( ncomp_t system,
 //  Compute internal surface flux integrals for second order FV
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] t Physical time
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] inpoel Element-node connectivity
@@ -435,12 +429,12 @@ surfIntFV( ncomp_t system,
 
     std::array< std::vector< real >, 2 > state;
 
-    state[0] = evalPolynomialSol(system, offset, intsharp, ncomp, nprim, rdof,
+    state[0] = evalPolynomialSol(system, intsharp, ncomp, nprim, rdof,
       nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-    state[1] = evalPolynomialSol(system, offset, intsharp, ncomp, nprim, rdof,
+    state[1] = evalPolynomialSol(system, intsharp, ncomp, nprim, rdof,
       nmat, er, rdof, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
-    //safeReco(offset, rdof, nmat, el, er, U, state);
+    //safeReco(rdof, nmat, el, er, U, state);
 
     Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
             "appended boundary state vector" );

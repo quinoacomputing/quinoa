@@ -165,7 +165,7 @@ class MultiMat {
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -219,7 +219,7 @@ class MultiMat {
       // Unlike Compflow and Transport, there is a weak reconstruction about
       // conservative variable after limiting function which will require the
       // size of left hand side vector to be rdof
-      tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
+      tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
     //! Update the interface cells to first order dofs
@@ -322,7 +322,7 @@ class MultiMat {
 
           auto w = wgp[igp] * geoElem(e, 0);
 
-          auto state = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk, B, {0, m_ncomp-1} );
+          auto state = tk::eval_state( m_ncomp, rdof, ndof, e, unk, B, {0, m_ncomp-1} );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -409,7 +409,7 @@ class MultiMat {
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
       auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk,
-        m_offset, geoElem, nmat, unk, prim);
+        geoElem, nmat, unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
     }
@@ -460,12 +460,12 @@ class MultiMat {
       {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
-        tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
           U, varRange );
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, U, varRange);
+      tk::transform_P0P1(rdof, nelem, inpoel, coord, U, varRange);
 
       //----- reconstruction of primitive quantities -----
       //--------------------------------------------------
@@ -477,12 +477,12 @@ class MultiMat {
         {
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
-          tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+          tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
             P, {0, nprim()-1} );
         }
 
         // 2.
-        tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, P,
+        tk::transform_P0P1(rdof, nelem, inpoel, coord, P,
           {0, nprim()-1});
       }
     }
@@ -535,19 +535,19 @@ class MultiMat {
       // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::SUPERBEEP1)
       {
-        SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_system, m_offset,
+        SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_system,
           coord, U, P, nmat );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, flux,U, P,
+          m_system, m_mat_blk, fd, geoFace, geoElem, coord, flux,U, P,
           nmat, shockmarker );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
       {
         VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
+          m_system, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
           uNodalExtrm, pNodalExtrm, mtInv, flux, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
@@ -651,23 +651,23 @@ class MultiMat {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, nmat, m_offset, m_mat_blk, t, ndof, rdof, inpoel,
+      tk::surfInt( m_system, nmat, m_mat_blk, t, ndof, rdof, inpoel,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    R, vriem, riemannLoc, riemannDeriv, intsharp );
 
       // compute optional source term
-      tk::srcInt( m_system, m_offset, m_mat_blk, t, ndof, fd.Esuel().size()/4,
+      tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4,
                   inpoel, coord, geoElem, Problem::src, ndofel, R, nmat );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, nmat, m_offset, t, m_mat_blk, ndof, rdof, nelem,
+        tk::volInt( m_system, nmat, t, m_mat_blk, ndof, rdof, nelem,
                     inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
                     intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, nmat, m_offset, m_mat_blk, ndof, rdof,
+        tk::bndSurfInt( m_system, nmat, m_mat_blk, ndof, rdof,
                         b.first, fd, geoFace, geoElem, inpoel, coord, t,
                         m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
@@ -685,7 +685,7 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
+      tk::nonConservativeInt( m_system, nmat, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
@@ -694,7 +694,7 @@ class MultiMat {
       {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
-        tk::pressureRelaxationInt( m_system, nmat, m_offset, m_mat_blk, ndof,
+        tk::pressureRelaxationInt( m_system, nmat, m_mat_blk, ndof,
                                    rdof, nelem, inpoel, coord, geoElem, U, P,
                                    ndofel, ct, R, intsharp );
       }
@@ -764,7 +764,7 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       auto mindt = timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem,
-        nielem, m_offset, nmat, U, P);
+        nielem, nmat, U, P);
 
       tk::real dgp = 0.0;
       if (ndof == 4)
@@ -897,8 +897,8 @@ class MultiMat {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, m_offset, rdof, rdof, e, U, B, {0, m_ncomp-1});
-        auto php = eval_state(nprim(), m_offset, rdof, rdof, e, P, B, {0, nprim()-1});
+        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B, {0, m_ncomp-1});
+        auto php = eval_state(nprim(), rdof, rdof, e, P, B, {0, nprim()-1});
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
