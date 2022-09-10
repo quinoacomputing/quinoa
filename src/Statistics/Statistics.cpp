@@ -35,7 +35,6 @@
 using tk::Statistics;
 
 Statistics::Statistics( const tk::Particles& particles,
-                        const ctr::OffsetMap& offset,
                         const std::vector< ctr::Product >& stat,
                         const std::vector< ctr::Probability >& pdf,
                         const std::vector< std::vector< tk::real > >& binsize )
@@ -66,24 +65,21 @@ Statistics::Statistics( const tk::Particles& particles,
 // *****************************************************************************
 //  Constructor
 //! \param[in] particles Particles data to estimate from
-//! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] stat List of requested statistical moments
 //! \param[in] pdf List of requested probability density functions (PDF)
 //! \param[in] binsize List of binsize vectors configuring the PDF estimators
 // *****************************************************************************
 {
   // Prepare for computing ordinary and central moments, PDFs
-  setupOrdinary( offset, stat );
-  setupCentral( offset, stat );
-  setupPDF( offset, pdf, binsize );
+  setupOrdinary( stat );
+  setupCentral( stat );
+  setupPDF( pdf, binsize );
 }
 
 void
-Statistics::setupOrdinary( const ctr::OffsetMap& offset,
-                           const std::vector< ctr::Product >& stat )
+Statistics::setupOrdinary( const std::vector< ctr::Product >& stat )
 // *****************************************************************************
 //  Prepare for computing ordinary moments
-//! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] stat List of requested statistical moments
 // *****************************************************************************
 {
@@ -94,8 +90,6 @@ Statistics::setupOrdinary( const ctr::OffsetMap& offset,
 
       int i = 0;
       for (const auto& term : product) {
-        auto o = offset.find( term.var );
-        Assert( o != end( offset ), "No such depvar" );
         // Put in starting address of instantaneous variable
         m_instOrd.back().push_back( m_particles.cptr( term.field ) );
         // Collect all means of estimated statistics in a linear vector; this
@@ -125,11 +119,9 @@ Statistics::setupOrdinary( const ctr::OffsetMap& offset,
 }
 
 void
-Statistics::setupCentral( const ctr::OffsetMap& offset,
-                          const std::vector< ctr::Product >& stat )
+Statistics::setupCentral( const std::vector< ctr::Product >& stat )
 // *****************************************************************************
 //  Prepare for computing central moments
-//! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] stat List of requested statistical moments
 // *****************************************************************************
 {
@@ -142,8 +134,6 @@ Statistics::setupCentral( const ctr::OffsetMap& offset,
         m_ctr.emplace_back( std::vector< const tk::real* >() );
 
         for (const auto& term : product) {
-          auto o = offset.find( term.var );
-          Assert( o != end( offset ), "No such depvar" );
           // Put in starting address of instantaneous variable
           m_instCen.back().push_back( m_particles.cptr(term.field) );
           // Put in index of center for central, m_nord for ordinary moment
@@ -160,12 +150,10 @@ Statistics::setupCentral( const ctr::OffsetMap& offset,
 }
 
 void
-Statistics::setupPDF( const ctr::OffsetMap& offset,
-                      const std::vector< ctr::Probability >& pdf,
+Statistics::setupPDF( const std::vector< ctr::Probability >& pdf,
                       const std::vector< std::vector< tk::real > >& binsize )
 // *****************************************************************************
 //  Prepare for computing PDFs
-//! \param[in] offset Map of offsets in memory to address variable fields
 //! \param[in] pdf List of requested probability density functions (PDF)
 //! \param[in] binsize List of binsize vectors configuring the PDF estimators
 // *****************************************************************************
@@ -189,8 +177,6 @@ Statistics::setupPDF( const ctr::OffsetMap& offset,
 
       // Put in starting addresses of instantaneous variables
       for (const auto& term : probability) {
-        auto o = offset.find( term.var );
-        Assert( o != end( offset ), "No such depvar" );
         const tk::real* iptr = m_particles.cptr( term.field );
         if (bs.size() == 1) m_instOrdUniPDF.back().push_back( iptr );
         else if (bs.size() == 2) m_instOrdBiPDF.back().push_back( iptr );
@@ -219,8 +205,6 @@ Statistics::setupPDF( const ctr::OffsetMap& offset,
 
       // Put in starting address of instantaneous variables
       for (const auto& term : probability) {
-        auto o = offset.find( term.var );
-        Assert( o != end( offset ), "No such depvar" );
         // Put in starting address of instantaneous variable as well as index
         // of center for central, m_nord for ordinary moment
         const tk::real* iptr = m_particles.cptr( term.field );

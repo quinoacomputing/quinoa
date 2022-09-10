@@ -82,7 +82,6 @@ class Statistics {
   public:
     //! Constructor
     explicit Statistics( const tk::Particles& particles,
-                         const ctr::OffsetMap& offset,
                          const std::vector< ctr::Product >& stat,
                          const std::vector< ctr::Probability >& pdf,
                          const std::vector< std::vector< tk::real > >& binsize );
@@ -127,16 +126,13 @@ class Statistics {
     /** @name Setup functions, called from the constructor */
     ///@{
     //! Setup ordinary moments
-    void setupOrdinary( const ctr::OffsetMap& offset,
-                        const std::vector< ctr::Product >& stat );
+    void setupOrdinary( const std::vector< ctr::Product >& stat );
 
     //! Setup central moments
-    void setupCentral( const ctr::OffsetMap& offset,
-                       const std::vector< ctr::Product >& stat );
+    void setupCentral( const std::vector< ctr::Product >& stat );
 
     //! Setup PDFs
-    void setupPDF( const ctr::OffsetMap& offset,
-                   const std::vector< ctr::Probability >& pdf,
+    void setupPDF( const std::vector< ctr::Probability >& pdf,
                    const std::vector< std::vector< tk::real > >& binsize  );
     ///@}
 
