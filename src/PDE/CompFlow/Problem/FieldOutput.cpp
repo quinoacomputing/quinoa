@@ -59,11 +59,11 @@ CompFlowFieldOutput( ncomp_t,
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > out;
-  const auto r  = U.extract( 0*rdof );
-  const auto ru = U.extract( 1*rdof );
-  const auto rv = U.extract( 2*rdof );
-  const auto rw = U.extract( 3*rdof );
-  const auto re = U.extract( 4*rdof );
+  const auto r  = U.extract_comp( 0*rdof );
+  const auto ru = U.extract_comp( 1*rdof );
+  const auto rv = U.extract_comp( 2*rdof );
+  const auto rw = U.extract_comp( 3*rdof );
+  const auto re = U.extract_comp( 4*rdof );
 
   Assert( r.size() >= nunk, "Size mismatch" );
   Assert( ru.size() >= nunk, "Size mismatch" );

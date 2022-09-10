@@ -929,8 +929,8 @@ FV::writeFields( CkCallback c )
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
   auto t = Disc()->T();
   for (const auto& eq : g_fvpde) {
-    analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract(1),
-      geoElem.extract(2), geoElem.extract(3), t, elemfields );
+    analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract_comp(1),
+      geoElem.extract_comp(2), geoElem.extract_comp(3), t, elemfields );
     analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1], coord[2],
       t, nodefields );
   }

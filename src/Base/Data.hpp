@@ -220,7 +220,7 @@ class Data {
     //! \return A vector of unknowns given by component (length:
     //!   nunk(), i.e., the first constructor argument)
     std::vector< tk::real >
-    extract( ncomp_t component, ncomp_t ) const {
+    extract_comp( ncomp_t component ) const {
       std::vector< tk::real > w( m_nunk );
       for (ncomp_t i=0; i<m_nunk; ++i)
         w[i] = operator()( i, component );

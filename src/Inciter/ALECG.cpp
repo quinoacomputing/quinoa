@@ -1461,9 +1461,9 @@ ALECG::writeFields( CkCallback c )
     // Output mesh velocity if ALE is enabled
     if (g_inputdeck.get< tag::ale, tag::ale >()) {
       const auto& w = d->meshvel();
-      add_node_field( "x-mesh-velocity", w.extract(0) );
-      add_node_field( "y-mesh-velocity", w.extract(1) );
-      add_node_field( "z-mesh-velocity", w.extract(2) );
+      add_node_field( "x-mesh-velocity", w.extract_comp(0) );
+      add_node_field( "y-mesh-velocity", w.extract_comp(1) );
+      add_node_field( "z-mesh-velocity", w.extract_comp(2) );
       add_node_field( "volume", d->Vol() );
     }
 

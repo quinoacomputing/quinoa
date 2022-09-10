@@ -3140,25 +3140,25 @@ void DerivedData_object::test< 60 >() {
   for(std::size_t f=0 ; f<nipfac; ++f)
   {
     ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-area",
-                    geoFace(f,0,0), correct_farea[f], prec);
+                    geoFace(f,0), correct_farea[f], prec);
 
     ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-nx",
-                    geoFace(f,1,0), correct_fnorm[0][f], prec);
+                    geoFace(f,1), correct_fnorm[0][f], prec);
 
     ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-ny",
-                    geoFace(f,2,0), correct_fnorm[1][f], prec);
+                    geoFace(f,2), correct_fnorm[1][f], prec);
 
     ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-nz",
-                    geoFace(f,3,0), correct_fnorm[2][f], prec);
+                    geoFace(f,3), correct_fnorm[2][f], prec);
 
     ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cx",
-                    geoFace(f,4,0), correct_fcent[0][f], prec);
+                    geoFace(f,4), correct_fcent[0][f], prec);
 
     ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cy",
-                    geoFace(f,5,0), correct_fcent[1][f], prec);
+                    geoFace(f,5), correct_fcent[1][f], prec);
 
     ensure_equals("incorrect entry " + std::to_string(f) + " in geoFace-cz",
-                    geoFace(f,6,0), correct_fcent[2][f], prec);
+                    geoFace(f,6), correct_fcent[2][f], prec);
   }
 }
 
@@ -3189,16 +3189,16 @@ void DerivedData_object::test< 61 >() {
   tk::real prec = std::numeric_limits< tk::real >::epsilon();
 
   ensure_equals("incorrect entry in geoElem-vol",
-                  geoElem(0,0,0), correct_vole, prec);
+                  geoElem(0,0), correct_vole, prec);
 
   ensure_equals("incorrect entry in geoElem-cx",
-                  geoElem(0,1,0), correct_ecent[0][0], prec);
+                  geoElem(0,1), correct_ecent[0][0], prec);
 
   ensure_equals("incorrect entry in geoElem-cy",
-                  geoElem(0,2,0), correct_ecent[1][0], prec);
+                  geoElem(0,2), correct_ecent[1][0], prec);
 
   ensure_equals("incorrect entry in geoElem-cz",
-                  geoElem(0,3,0), correct_ecent[2][0], prec);
+                  geoElem(0,3), correct_ecent[2][0], prec);
 }
 
 // Test conform() repeatedly on meshes refining an edge

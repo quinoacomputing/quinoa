@@ -153,7 +153,7 @@ void Gradients_object::test< 1 >() {
 
   // generate a linear scalar field with a slope in only x direction
   tk::Fields ux( npoin, 1 );
-  for (std::size_t p=0; p<npoin; ++p) ux(p,0,0) = coord[0][p];
+  for (std::size_t p=0; p<npoin; ++p) ux(p,0) = coord[0][p];
   // test gradients
   for (std::size_t p=0; p<npoin; ++p) {
     auto g = nodegrad( p, coord, inpoel, esup, ux, 0 );
@@ -164,7 +164,7 @@ void Gradients_object::test< 1 >() {
 
   // generate a linear scalar field with a slope in only y direction
   tk::Fields uy( npoin, 1 );
-  for (std::size_t p=0; p<npoin; ++p) uy(p,0,0) = coord[1][p];
+  for (std::size_t p=0; p<npoin; ++p) uy(p,0) = coord[1][p];
   // test gradients
   for (std::size_t p=0; p<npoin; ++p) {
     auto g = nodegrad( p, coord, inpoel, esup, uy, 0 );
@@ -175,7 +175,7 @@ void Gradients_object::test< 1 >() {
 
   // generate a linear scalar field with a slope in only z direction
   tk::Fields uz( npoin, 1 );
-  for (std::size_t p=0; p<npoin; ++p) uz(p,0,0) = coord[2][p];
+  for (std::size_t p=0; p<npoin; ++p) uz(p,0) = coord[2][p];
   // test gradients
   for (std::size_t p=0; p<npoin; ++p) {
     auto g = nodegrad( p, coord, inpoel, esup, uz, 0 );
@@ -187,9 +187,9 @@ void Gradients_object::test< 1 >() {
   // generate linear vector field with different slopes for different components
   tk::Fields u3( npoin, 3 );
   for (std::size_t p=0; p<npoin; ++p) {
-     u3(p,0,0) = 2.0*coord[0][p];
-     u3(p,1,0) = 1.5*coord[1][p];
-     u3(p,2,0) = -0.5*coord[2][p];
+     u3(p,0) = 2.0*coord[0][p];
+     u3(p,1) = 1.5*coord[1][p];
+     u3(p,2) = -0.5*coord[2][p];
   }
   // test gradients
   for (std::size_t p=0; p<npoin; ++p) {
@@ -239,7 +239,7 @@ void Gradients_object::test< 2 >() {
 
   // generate a linear scalar field with a slope in only x direction
   tk::Fields ux( npoin, 1 );
-  for (std::size_t p=0; p<npoin; ++p) ux(p,0,0) = coord[0][p];
+  for (std::size_t p=0; p<npoin; ++p) ux(p,0) = coord[0][p];
   // test gradients
   for (const auto& [edge,surr_elems] : esued) {
     auto g = edgegrad( coord, inpoel, surr_elems, ux, 0 );
@@ -250,7 +250,7 @@ void Gradients_object::test< 2 >() {
 
   // generate a linear scalar field with a slope in only y direction
   tk::Fields uy( npoin, 1 );
-  for (std::size_t p=0; p<npoin; ++p) uy(p,0,0) = coord[1][p];
+  for (std::size_t p=0; p<npoin; ++p) uy(p,0) = coord[1][p];
   // test gradients
   for (const auto& [edge,surr_elems] : esued) {
     auto g = edgegrad( coord, inpoel, surr_elems, uy, 0 );
@@ -261,7 +261,7 @@ void Gradients_object::test< 2 >() {
 
   // generate a linear scalar field with a slope in only z direction
   tk::Fields uz( npoin, 1 );
-  for (std::size_t p=0; p<npoin; ++p) uz(p,0,0) = coord[2][p];
+  for (std::size_t p=0; p<npoin; ++p) uz(p,0) = coord[2][p];
   // test gradients
   for (const auto& [edge,surr_elems] : esued) {
     auto g = edgegrad( coord, inpoel, surr_elems, uz, 0 );
@@ -273,9 +273,9 @@ void Gradients_object::test< 2 >() {
   // generate linear vector field with different slopes for different components
   tk::Fields u3( npoin, 3 );
   for (std::size_t p=0; p<npoin; ++p) {
-     u3(p,0,0) = 2.0*coord[0][p];
-     u3(p,1,0) = 1.5*coord[1][p];
-     u3(p,2,0) = -0.5*coord[2][p];
+     u3(p,0) = 2.0*coord[0][p];
+     u3(p,1) = 1.5*coord[1][p];
+     u3(p,2) = -0.5*coord[2][p];
   }
   // test gradients
   for (const auto& [edge,surr_elems] : esued) {

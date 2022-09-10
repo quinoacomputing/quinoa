@@ -286,7 +286,7 @@ class CompFlow {
     void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const {
       for (std::size_t j=0; j<3; ++j) {
         // extract momentum
-        v[j] = u.extract( 1+j );
+        v[j] = u.extract_comp( 1+j );
         Assert( v[j].size() == u.nunk(), "Size mismatch" );
         // divide by density
         for (std::size_t i=0; i<u.nunk(); ++i) v[j][i] /= u(i,0);

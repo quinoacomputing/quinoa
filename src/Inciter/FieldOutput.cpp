@@ -66,7 +66,7 @@ numericFieldOutput( const tk::Fields& U,
       auto o = tk::cref_find( offset, v.var );
       const auto& F = v.primitive() ? p : U;
       if (v.name.empty()) {        // depvar-based direct access
-        f.push_back( F.extract( v.field*rdof ) );
+        f.push_back( F.extract_comp( v.field*rdof ) );
       } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
         Assert( v.getvar, "getvar() not configured for " + v.name );
         f.push_back( v.getvar( F, o, rdof ) );

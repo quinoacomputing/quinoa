@@ -55,30 +55,30 @@ void Data_object::test< 1 >() {
                  tk::Data< tk::EqCompUnk >( 2, 3 ).nprop(), 3 );
 }
 
-//! Test that tk::Data's operator() returns the correct value
-template<> template<>
-void Data_object::test< 2 >() {
-  set_test_name( "operator() returns correct value" );
-
-  tk::Data< tk::UnkEqComp > pp( 2, 5 );
-  tk::Data< tk::EqCompUnk > pe( 2, 5 );
-
-  pp( 1, 2, 2 ) = 0.23;
-  pe( 1, 2, 2 ) = 0.32;
-
-  const tk::real& cu = pp( 1, 2, 2 );
-  const tk::real& ce = pe( 1, 2, 2 );
-
-  tk::real& u = pp( 1, 2, 2 );
-  tk::real& e = pe( 1, 2, 2 );
-
-  // Test all template specializations const-ref access
-  ensure_equals( "<UnkEqComp>::() cref incorrect", cu, 0.23 );
-  ensure_equals( "<EqCompUnk>::() cref incorrect", ce, 0.32 );
-  // Test all template specializations ref access
-  ensure_equals( "<UnkEqComp>::() ref incorrect", u, 0.23 );
-  ensure_equals( "<EqCompUnk>::() ref incorrect", e, 0.32 );
-}
+////! Test that tk::Data's operator() returns the correct value
+//template<> template<>
+//void Data_object::test< 2 >() {
+//  set_test_name( "operator() returns correct value" );
+//
+//  tk::Data< tk::UnkEqComp > pp( 2, 5 );
+//  tk::Data< tk::EqCompUnk > pe( 2, 5 );
+//
+//  pp( 1, 2, 2 ) = 0.23;
+//  pe( 1, 2, 2 ) = 0.32;
+//
+//  const tk::real& cu = pp( 1, 2, 2 );
+//  const tk::real& ce = pe( 1, 2, 2 );
+//
+//  tk::real& u = pp( 1, 2, 2 );
+//  tk::real& e = pe( 1, 2, 2 );
+//
+//  // Test all template specializations const-ref access
+//  ensure_equals( "<UnkEqComp>::() cref incorrect", cu, 0.23 );
+//  ensure_equals( "<EqCompUnk>::() cref incorrect", ce, 0.32 );
+//  // Test all template specializations ref access
+//  ensure_equals( "<UnkEqComp>::() ref incorrect", u, 0.23 );
+//  ensure_equals( "<EqCompUnk>::() ref incorrect", e, 0.32 );
+//}
 
 //! Test that tk::Data's operator() throws for out-of-bounds indices
 template<> template<>
@@ -88,13 +88,13 @@ void Data_object::test< 3 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 5 );
   tk::Data< tk::EqCompUnk > pe( 2, 5 );
 
-  pp( 1, 2, 2 ) = 0.23;
-  pe( 1, 2, 2 ) = 0.32;
+  pp( 1, 2 ) = 0.23;
+  pe( 1, 2 ) = 0.32;
 
   // Test all template specializations const-ref access
 
   try {
-    pp( 2, 2, 2 );   // unknown out of bounds
+    pp( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -105,51 +105,7 @@ void Data_object::test< 3 >() {
   }
 
   try {
-    pp( 1, 3, 2 );   // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pp( 1, 2, 3 );   // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 2, 2, 2 );   // unknown out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 1, 3, 2 );   // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 1, 2, 3 );   // offset+component out of bounds
+    pp( 1, 5 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -162,7 +118,7 @@ void Data_object::test< 3 >() {
   // Test all template specializations non-const-ref access
 
   try {
-    pp( 2, 2, 2 );  // unknown out of bounds
+    pp( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -173,51 +129,7 @@ void Data_object::test< 3 >() {
   }
 
   try {
-    pp( 1, 3, 2 );  // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pp( 1, 2, 3 );  // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 2, 2, 2 );  // unknown out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 1, 3, 2 );  // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 1, 2, 3 );  // offset+component out of bounds
+    pp( 1, 5 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -228,190 +140,190 @@ void Data_object::test< 3 >() {
   }
 }
 
-//! Test that tk::Data's var( cptr() ) returns the correct value
-template<> template<>
-void Data_object::test< 4 >() {
-  set_test_name( "var(cptr()) returns correct value" );
-
-  tk::Data< tk::UnkEqComp > pp( 2, 5 );
-  tk::Data< tk::EqCompUnk > pe( 2, 5 );
-
-  pp( 1, 2, 2 ) = 0.23;
-  pe( 1, 2, 2 ) = 0.32;
-
-  const tk::real& cu = pp.var( pp.cptr(2), 1 );
-  const tk::real& ce = pe.var( pe.cptr(2), 1 );
-
-  tk::real& u = pp.var( pp.cptr(2), 1 );
-  tk::real& e = pe.var( pe.cptr(2), 1 );
-
-  // Test all template specializations const-ref access
-  ensure_equals( "<UnkEqComp>::var(cptr) cref incorrect", cu, 0.23 );
-  ensure_equals( "<EqCompUnk>::var(cptr) cref incorrect", ce, 0.32 );
-  // Test all template specializations non-const-ref access
-  ensure_equals( "<UnkEqComp>::var(cptr) ref incorrect", u, 0.23 );
-  ensure_equals( "<EqCompUnk>::var(cptr) ref incorrect", e, 0.32 );
-}
-
-//! Test that tk::Data's var() throws for out-of-bounds indices
-template<> template<>
-void Data_object::test< 5 >() {
-  set_test_name( "var(cptr()) throws for out-of-bounds indices" );
-
-  tk::Data< tk::UnkEqComp > pp( 2, 5 );
-  tk::Data< tk::EqCompUnk > pe( 2, 5 );
-
-  pp( 1, 2, 2 ) = 0.23;
-  pe( 1, 2, 2 ) = 0.32;
-
-  // Test all template specializations const-ref access
-
-  try {
-    // unknown out of bounds
-    pp.var( pp.cptr(2), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pp.var( pp.cptr(1), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pp.var( pp.cptr(1), 3 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // unknown out of bounds
-    pe.var( pe.cptr(2), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pe.var( pe.cptr(1), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pe.var( pe.cptr(1), 3 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  // Test all template specializations non-const-ref access
-
-  try {
-   // unknown out of bounds
-   pp.var( pp.cptr(2), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pp.var( pp.cptr(1), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pp.var( pp.cptr(1), 3 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // unknown out of bounds
-    pe.var( pe.cptr(2), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pe.var( pe.cptr(1), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pe.var( pe.cptr(1), 3 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-}
+////! Test that tk::Data's var( cptr() ) returns the correct value
+//template<> template<>
+//void Data_object::test< 4 >() {
+//  set_test_name( "var(cptr()) returns correct value" );
+//
+//  tk::Data< tk::UnkEqComp > pp( 2, 5 );
+//  tk::Data< tk::EqCompUnk > pe( 2, 5 );
+//
+//  pp( 1, 2, 2 ) = 0.23;
+//  pe( 1, 2, 2 ) = 0.32;
+//
+//  const tk::real& cu = pp.var( pp.cptr(2), 1 );
+//  const tk::real& ce = pe.var( pe.cptr(2), 1 );
+//
+//  tk::real& u = pp.var( pp.cptr(2), 1 );
+//  tk::real& e = pe.var( pe.cptr(2), 1 );
+//
+//  // Test all template specializations const-ref access
+//  ensure_equals( "<UnkEqComp>::var(cptr) cref incorrect", cu, 0.23 );
+//  ensure_equals( "<EqCompUnk>::var(cptr) cref incorrect", ce, 0.32 );
+//  // Test all template specializations non-const-ref access
+//  ensure_equals( "<UnkEqComp>::var(cptr) ref incorrect", u, 0.23 );
+//  ensure_equals( "<EqCompUnk>::var(cptr) ref incorrect", e, 0.32 );
+//}
+//
+////! Test that tk::Data's var() throws for out-of-bounds indices
+//template<> template<>
+//void Data_object::test< 5 >() {
+//  set_test_name( "var(cptr()) throws for out-of-bounds indices" );
+//
+//  tk::Data< tk::UnkEqComp > pp( 2, 5 );
+//  tk::Data< tk::EqCompUnk > pe( 2, 5 );
+//
+//  pp( 1, 2, 2 ) = 0.23;
+//  pe( 1, 2, 2 ) = 0.32;
+//
+//  // Test all template specializations const-ref access
+//
+//  try {
+//    // unknown out of bounds
+//    pp.var( pp.cptr(2), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pp.var( pp.cptr(1), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pp.var( pp.cptr(1), 3 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // unknown out of bounds
+//    pe.var( pe.cptr(2), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pe.var( pe.cptr(1), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pe.var( pe.cptr(1), 3 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  // Test all template specializations non-const-ref access
+//
+//  try {
+//   // unknown out of bounds
+//   pp.var( pp.cptr(2), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pp.var( pp.cptr(1), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pp.var( pp.cptr(1), 3 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // unknown out of bounds
+//    pe.var( pe.cptr(2), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pe.var( pe.cptr(1), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pe.var( pe.cptr(1), 3 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//}
 
 //! Test that tk::Data's var( cptr() ) is equivalent to operator()
 template<> template<>
@@ -421,14 +333,14 @@ void Data_object::test< 6 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 6 );
   tk::Data< tk::EqCompUnk > pe( 2, 6 );
 
-  pp( 1, 2, 3 ) = 0.23;
-  pe( 1, 2, 3 ) = 0.32;
+  pp( 1, 2 ) = 0.23;
+  pe( 1, 2 ) = 0.32;
 
   // Test all template specializations
   ensure_equals( "<UnkEqComp>::var(cptr) value incorrect",
-                 pp.var( pp.cptr(2), 1 ), pp(1,2,3), prec );
+                 pp.var( pp.cptr(2), 1 ), pp(1,2), prec );
   ensure_equals( "<EqCompUnk>::var(cptr) value incorrect",
-                 pe.var( pe.cptr(2), 1 ), pe(1,2,3), prec );
+                 pe.var( pe.cptr(2), 1 ), pe(1,2), prec );
 }
 
 //! Test that tk::Data's layou() returns correct string
@@ -452,19 +364,19 @@ void Data_object::test< 8 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 3 );
   tk::Data< tk::EqCompUnk > pe( 2, 3 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 0, 1, 0 ) = 0.2;
-  pp( 0, 2, 0 ) = 0.3;
-  pp( 1, 0, 0 ) = 0.4;
-  pp( 1, 1, 0 ) = 0.5;
-  pp( 1, 2, 0 ) = 0.6;
+  pp( 0, 0 ) = 0.1;
+  pp( 0, 1 ) = 0.2;
+  pp( 0, 2 ) = 0.3;
+  pp( 1, 0 ) = 0.4;
+  pp( 1, 1 ) = 0.5;
+  pp( 1, 2 ) = 0.6;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 0, 1, 0 ) = 0.2;
-  pe( 0, 2, 0 ) = 0.3;
-  pe( 1, 0, 0 ) = 0.4;
-  pe( 1, 1, 0 ) = 0.5;
-  pe( 1, 2, 0 ) = 0.6;
+  pe( 0, 0 ) = 0.1;
+  pe( 0, 1 ) = 0.2;
+  pe( 0, 2 ) = 0.3;
+  pe( 1, 0 ) = 0.4;
+  pe( 1, 1 ) = 0.5;
+  pe( 1, 2 ) = 0.6;
 
   using unittest::veceq;
 
@@ -504,19 +416,19 @@ void Data_object::test< 9 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 3 );
   tk::Data< tk::EqCompUnk > pe( 2, 3 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 0, 1, 0 ) = 0.2;
-  pp( 0, 2, 0 ) = 0.3;
-  pp( 1, 0, 0 ) = 0.4;
-  pp( 1, 1, 0 ) = 0.5;
-  pp( 1, 2, 0 ) = 0.6;
+  pp( 0, 0 ) = 0.1;
+  pp( 0, 1 ) = 0.2;
+  pp( 0, 2 ) = 0.3;
+  pp( 1, 0 ) = 0.4;
+  pp( 1, 1 ) = 0.5;
+  pp( 1, 2 ) = 0.6;
 
-  pe( 0, 0, 0 ) = 0.3;
-  pe( 0, 1, 0 ) = 0.2;
-  pe( 0, 2, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.6;
-  pe( 1, 1, 0 ) = 0.5;
-  pe( 1, 2, 0 ) = 0.4;
+  pe( 0, 0 ) = 0.3;
+  pe( 0, 1 ) = 0.2;
+  pe( 0, 2 ) = 0.1;
+  pe( 1, 0 ) = 0.6;
+  pe( 1, 1 ) = 0.5;
+  pe( 1, 2 ) = 0.4;
 
   using unittest::veceq;
 
@@ -540,19 +452,19 @@ void Data_object::test< 10 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 3 );
   tk::Data< tk::EqCompUnk > pe( 2, 3 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 0, 1, 0 ) = 0.2;
-  pp( 0, 2, 0 ) = 0.3;
-  pp( 1, 0, 0 ) = 0.4;
-  pp( 1, 1, 0 ) = 0.5;
-  pp( 1, 2, 0 ) = 0.6;
+  pp( 0, 0 ) = 0.1;
+  pp( 0, 1 ) = 0.2;
+  pp( 0, 2 ) = 0.3;
+  pp( 1, 0 ) = 0.4;
+  pp( 1, 1 ) = 0.5;
+  pp( 1, 2 ) = 0.6;
 
-  pe( 0, 0, 0 ) = 0.3;
-  pe( 0, 1, 0 ) = 0.2;
-  pe( 0, 2, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.6;
-  pe( 1, 1, 0 ) = 0.5;
-  pe( 1, 2, 0 ) = 0.4;
+  pe( 0, 0 ) = 0.3;
+  pe( 0, 1 ) = 0.2;
+  pe( 0, 2 ) = 0.1;
+  pe( 1, 0 ) = 0.6;
+  pe( 1, 1 ) = 0.5;
+  pe( 1, 2 ) = 0.4;
 
   using unittest::veceq;
 
@@ -576,41 +488,41 @@ void Data_object::test< 11 >() {
   tk::Data< tk::UnkEqComp > pp( 8, 2 );
   tk::Data< tk::EqCompUnk > pe( 8, 2 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 1, 0, 0 ) = 0.2;
-  pp( 2, 0, 0 ) = 0.3;
-  pp( 3, 0, 0 ) = 0.4;
-  pp( 4, 0, 0 ) = 0.5;
-  pp( 5, 0, 0 ) = 0.6;
-  pp( 6, 0, 0 ) = 0.7;
-  pp( 7, 0, 0 ) = 0.8;
+  pp( 0, 0 ) = 0.1;
+  pp( 1, 0 ) = 0.2;
+  pp( 2, 0 ) = 0.3;
+  pp( 3, 0 ) = 0.4;
+  pp( 4, 0 ) = 0.5;
+  pp( 5, 0 ) = 0.6;
+  pp( 6, 0 ) = 0.7;
+  pp( 7, 0 ) = 0.8;
 
-  pp( 0, 1, 0 ) = 1.1;
-  pp( 1, 1, 0 ) = 1.2;
-  pp( 2, 1, 0 ) = 1.3;
-  pp( 3, 1, 0 ) = 1.4;
-  pp( 4, 1, 0 ) = 1.5;
-  pp( 5, 1, 0 ) = 1.6;
-  pp( 6, 1, 0 ) = 1.7;
-  pp( 7, 1, 0 ) = 1.8;
+  pp( 0, 1 ) = 1.1;
+  pp( 1, 1 ) = 1.2;
+  pp( 2, 1 ) = 1.3;
+  pp( 3, 1 ) = 1.4;
+  pp( 4, 1 ) = 1.5;
+  pp( 5, 1 ) = 1.6;
+  pp( 6, 1 ) = 1.7;
+  pp( 7, 1 ) = 1.8;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.2;
-  pe( 2, 0, 0 ) = 0.3;
-  pe( 3, 0, 0 ) = 0.4;
-  pe( 4, 0, 0 ) = 0.5;
-  pe( 5, 0, 0 ) = 0.6;
-  pe( 6, 0, 0 ) = 0.7;
-  pe( 7, 0, 0 ) = 0.8;
+  pe( 0, 0 ) = 0.1;
+  pe( 1, 0 ) = 0.2;
+  pe( 2, 0 ) = 0.3;
+  pe( 3, 0 ) = 0.4;
+  pe( 4, 0 ) = 0.5;
+  pe( 5, 0 ) = 0.6;
+  pe( 6, 0 ) = 0.7;
+  pe( 7, 0 ) = 0.8;
 
-  pe( 0, 1, 0 ) = 1.1;
-  pe( 1, 1, 0 ) = 1.2;
-  pe( 2, 1, 0 ) = 1.3;
-  pe( 3, 1, 0 ) = 1.4;
-  pe( 4, 1, 0 ) = 1.5;
-  pe( 5, 1, 0 ) = 1.6;
-  pe( 6, 1, 0 ) = 1.7;
-  pe( 7, 1, 0 ) = 1.8;
+  pe( 0, 1 ) = 1.1;
+  pe( 1, 1 ) = 1.2;
+  pe( 2, 1 ) = 1.3;
+  pe( 3, 1 ) = 1.4;
+  pe( 4, 1 ) = 1.5;
+  pe( 5, 1 ) = 1.6;
+  pe( 6, 1 ) = 1.7;
+  pe( 7, 1 ) = 1.8;
 
   using unittest::veceq;
 
@@ -650,41 +562,41 @@ void Data_object::test< 12 >() {
   tk::Data< tk::UnkEqComp > pp( 8, 2 );
   tk::Data< tk::EqCompUnk > pe( 8, 2 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 1, 0, 0 ) = 0.2;
-  pp( 2, 0, 0 ) = 0.3;
-  pp( 3, 0, 0 ) = 0.4;
-  pp( 4, 0, 0 ) = 0.5;
-  pp( 5, 0, 0 ) = 0.6;
-  pp( 6, 0, 0 ) = 0.7;
-  pp( 7, 0, 0 ) = 0.8;
+  pp( 0, 0 ) = 0.1;
+  pp( 1, 0 ) = 0.2;
+  pp( 2, 0 ) = 0.3;
+  pp( 3, 0 ) = 0.4;
+  pp( 4, 0 ) = 0.5;
+  pp( 5, 0 ) = 0.6;
+  pp( 6, 0 ) = 0.7;
+  pp( 7, 0 ) = 0.8;
 
-  pp( 0, 1, 0 ) = 1.1;
-  pp( 1, 1, 0 ) = 1.2;
-  pp( 2, 1, 0 ) = 1.3;
-  pp( 3, 1, 0 ) = 1.4;
-  pp( 4, 1, 0 ) = 1.5;
-  pp( 5, 1, 0 ) = 1.6;
-  pp( 6, 1, 0 ) = 1.7;
-  pp( 7, 1, 0 ) = 1.8;
+  pp( 0, 1 ) = 1.1;
+  pp( 1, 1 ) = 1.2;
+  pp( 2, 1 ) = 1.3;
+  pp( 3, 1 ) = 1.4;
+  pp( 4, 1 ) = 1.5;
+  pp( 5, 1 ) = 1.6;
+  pp( 6, 1 ) = 1.7;
+  pp( 7, 1 ) = 1.8;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.2;
-  pe( 2, 0, 0 ) = 0.3;
-  pe( 3, 0, 0 ) = 0.4;
-  pe( 4, 0, 0 ) = 0.5;
-  pe( 5, 0, 0 ) = 0.6;
-  pe( 6, 0, 0 ) = 0.7;
-  pe( 7, 0, 0 ) = 0.8;
+  pe( 0, 0 ) = 0.1;
+  pe( 1, 0 ) = 0.2;
+  pe( 2, 0 ) = 0.3;
+  pe( 3, 0 ) = 0.4;
+  pe( 4, 0 ) = 0.5;
+  pe( 5, 0 ) = 0.6;
+  pe( 6, 0 ) = 0.7;
+  pe( 7, 0 ) = 0.8;
 
-  pe( 0, 1, 0 ) = 1.1;
-  pe( 1, 1, 0 ) = 1.2;
-  pe( 2, 1, 0 ) = 1.3;
-  pe( 3, 1, 0 ) = 1.4;
-  pe( 4, 1, 0 ) = 1.5;
-  pe( 5, 1, 0 ) = 1.6;
-  pe( 6, 1, 0 ) = 1.7;
-  pe( 7, 1, 0 ) = 1.8;
+  pe( 0, 1 ) = 1.1;
+  pe( 1, 1 ) = 1.2;
+  pe( 2, 1 ) = 1.3;
+  pe( 3, 1 ) = 1.4;
+  pe( 4, 1 ) = 1.5;
+  pe( 5, 1 ) = 1.6;
+  pe( 6, 1 ) = 1.7;
+  pe( 7, 1 ) = 1.8;
 
   using unittest::veceq;
 
@@ -1713,7 +1625,7 @@ void Data_object::test< 37 >() {
   // Test unequal objects with UnkEqComp data layout
   tk::Data< tk::UnkEqComp > q1( 3, 2 ), q2( 3, 2 );
   q1.fill( 0.1 );
-  q2.fill( 0.0 );  q2(2,0,0) = 1.0;
+  q2.fill( 0.0 );  q2(2,0) = 1.0;
   m = tk::maxdiff(q1,q2);
   ensure_equals( "<UnkEqComp>::maxdiff neq pos incorrect",
                  static_cast<tk::real>(m.first), 4.0, prec );
@@ -1722,7 +1634,7 @@ void Data_object::test< 37 >() {
   // Test unequal objects with EqCompUnk data layout
   tk::Data< tk::UnkEqComp > f1( 3, 2 ), f2( 3, 2 );
   f1.fill( 0.1 );
-  f2.fill( 0.0 );  f2(2,1,0) = -1.0;
+  f2.fill( 0.0 );  f2(2,1) = -1.0;
   m = tk::maxdiff(f1,f2);
   ensure_equals( "<EqCompUnk>::maxdiff neq pos incorrect",
                  static_cast<tk::real>(m.first), 5.0, prec );
@@ -1736,9 +1648,9 @@ void Data_object::test< 38 >() {
 
   // Test with UnkEqComp data layout
   tk::Data< tk::UnkEqComp > p( 3, 2 );
-  p(0,0,0) = 1.0;  p(0,1,0) = 2.0;
-  p(1,0,0) = 3.0;  p(1,1,0) = 4.0;
-  p(2,0,0) = 5.0;  p(2,1,0) = 6.0;
+  p(0,0) = 1.0;  p(0,1) = 2.0;
+  p(1,0) = 3.0;  p(1,1) = 4.0;
+  p(2,0) = 5.0;  p(2,1) = 6.0;
 
   p.push_back( {0.2, 0.3} );
 
@@ -1766,9 +1678,9 @@ void Data_object::test< 39 >() {
 
   // Test with UnkEqComp data layout
   tk::Data< tk::UnkEqComp > p( 3, 2 );
-  p(0,0,0) = 1.0;  p(0,1,0) = 2.0;
-  p(1,0,0) = 3.0;  p(1,1,0) = 4.0;
-  p(2,0,0) = 5.0;  p(2,1,0) = 6.0;
+  p(0,0) = 1.0;  p(0,1) = 2.0;
+  p(1,0) = 3.0;  p(1,1) = 4.0;
+  p(2,0) = 5.0;  p(2,1) = 6.0;
 
   // Enlarge by 4*2 (nprop=2 stays constant)
   p.resize( p.nunk()+4 );
@@ -1804,9 +1716,9 @@ void Data_object::test< 40 >() {
 
   // Test with UnkEqComp data layout
   tk::Data< tk::UnkEqComp > p( 3, 2 );
-  p(0,0,0) = 1.0;  p(0,1,0) = 2.0;
-  p(1,0,0) = 3.0;  p(1,1,0) = 4.0;
-  p(2,0,0) = 5.0;  p(2,1,0) = 6.0;
+  p(0,0) = 1.0;  p(0,1) = 2.0;
+  p(1,0) = 3.0;  p(1,1) = 4.0;
+  p(2,0) = 5.0;  p(2,1) = 6.0;
 
   // Enlarge by 4*2 (nprop=2 stays constant)
   p.resize( p.nunk()+4, -2.13 );
@@ -1842,9 +1754,9 @@ void Data_object::test< 41 >() {
 
   // Test with UnkEqComp data layout with a single component
   tk::Data< tk::UnkEqComp > p( 3, 1 );
-  p(0,0,0) = 1.0;
-  p(1,0,0) = 3.0;
-  p(2,0,0) = 5.0;
+  p(0,0) = 1.0;
+  p(1,0) = 3.0;
+  p(2,0) = 5.0;
 
   p.rm( { 0, 2 } );
 
@@ -1857,9 +1769,9 @@ void Data_object::test< 41 >() {
   // Test with UnkEqComp data layout with a multiple components removing a
   // single unknown
   tk::Data< tk::UnkEqComp > q( 3, 2 );
-  q(0,0,0) = 1.0;  q(0,1,0) = 2.0;
-  q(1,0,0) = 3.0;  q(1,1,0) = 4.0;
-  q(2,0,0) = 5.0;  q(2,1,0) = 6.0;
+  q(0,0) = 1.0;  q(0,1) = 2.0;
+  q(1,0) = 3.0;  q(1,1) = 4.0;
+  q(2,0) = 5.0;  q(2,1) = 6.0;
 
   q.rm( { 1 } );
 
@@ -1875,9 +1787,9 @@ void Data_object::test< 41 >() {
   // Test with UnkEqComp data layout with a multiple components removing
   // multiple unknowns
   tk::Data< tk::UnkEqComp > r( 3, 2 );
-  r(0,0,0) = 1.0;  r(0,1,0) = 2.0;
-  r(1,0,0) = 3.0;  r(1,1,0) = 4.0;
-  r(2,0,0) = 5.0;  r(2,1,0) = 6.0;
+  r(0,0) = 1.0;  r(0,1) = 2.0;
+  r(1,0) = 3.0;  r(1,1) = 4.0;
+  r(2,0) = 5.0;  r(2,1) = 6.0;
 
   r.rm( { 0, 2 } );
 
@@ -1897,41 +1809,41 @@ void Data_object::test< 42 >() {
   tk::Data< tk::UnkEqComp > pp( 8, 2 );
   tk::Data< tk::EqCompUnk > pe( 8, 2 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 1, 0, 0 ) = 0.2;
-  pp( 2, 0, 0 ) = 0.3;
-  pp( 3, 0, 0 ) = 0.4;
-  pp( 4, 0, 0 ) = 0.5;
-  pp( 5, 0, 0 ) = 0.6;
-  pp( 6, 0, 0 ) = 0.7;
-  pp( 7, 0, 0 ) = 0.8;
+  pp( 0, 0 ) = 0.1;
+  pp( 1, 0 ) = 0.2;
+  pp( 2, 0 ) = 0.3;
+  pp( 3, 0 ) = 0.4;
+  pp( 4, 0 ) = 0.5;
+  pp( 5, 0 ) = 0.6;
+  pp( 6, 0 ) = 0.7;
+  pp( 7, 0 ) = 0.8;
 
-  pp( 0, 1, 0 ) = 1.1;
-  pp( 1, 1, 0 ) = 1.2;
-  pp( 2, 1, 0 ) = 1.3;
-  pp( 3, 1, 0 ) = 1.4;
-  pp( 4, 1, 0 ) = 1.5;
-  pp( 5, 1, 0 ) = 1.6;
-  pp( 6, 1, 0 ) = 1.7;
-  pp( 7, 1, 0 ) = 1.8;
+  pp( 0, 1 ) = 1.1;
+  pp( 1, 1 ) = 1.2;
+  pp( 2, 1 ) = 1.3;
+  pp( 3, 1 ) = 1.4;
+  pp( 4, 1 ) = 1.5;
+  pp( 5, 1 ) = 1.6;
+  pp( 6, 1 ) = 1.7;
+  pp( 7, 1 ) = 1.8;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.2;
-  pe( 2, 0, 0 ) = 0.3;
-  pe( 3, 0, 0 ) = 0.4;
-  pe( 4, 0, 0 ) = 0.5;
-  pe( 5, 0, 0 ) = 0.6;
-  pe( 6, 0, 0 ) = 0.7;
-  pe( 7, 0, 0 ) = 0.8;
+  pe( 0, 0 ) = 0.1;
+  pe( 1, 0 ) = 0.2;
+  pe( 2, 0 ) = 0.3;
+  pe( 3, 0 ) = 0.4;
+  pe( 4, 0 ) = 0.5;
+  pe( 5, 0 ) = 0.6;
+  pe( 6, 0 ) = 0.7;
+  pe( 7, 0 ) = 0.8;
 
-  pe( 0, 1, 0 ) = 1.1;
-  pe( 1, 1, 0 ) = 1.2;
-  pe( 2, 1, 0 ) = 1.3;
-  pe( 3, 1, 0 ) = 1.4;
-  pe( 4, 1, 0 ) = 1.5;
-  pe( 5, 1, 0 ) = 1.6;
-  pe( 6, 1, 0 ) = 1.7;
-  pe( 7, 1, 0 ) = 1.8;
+  pe( 0, 1 ) = 1.1;
+  pe( 1, 1 ) = 1.2;
+  pe( 2, 1 ) = 1.3;
+  pe( 3, 1 ) = 1.4;
+  pe( 4, 1 ) = 1.5;
+  pe( 5, 1 ) = 1.6;
+  pe( 6, 1 ) = 1.7;
+  pe( 7, 1 ) = 1.8;
 
   using unittest::veceq;
 
@@ -1971,41 +1883,41 @@ void Data_object::test< 43 >() {
   tk::Data< tk::UnkEqComp > pp( 8, 2 );
   tk::Data< tk::EqCompUnk > pe( 8, 2 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 1, 0, 0 ) = 0.2;
-  pp( 2, 0, 0 ) = 0.3;
-  pp( 3, 0, 0 ) = 0.4;
-  pp( 4, 0, 0 ) = 0.5;
-  pp( 5, 0, 0 ) = 0.6;
-  pp( 6, 0, 0 ) = 0.7;
-  pp( 7, 0, 0 ) = 0.8;
+  pp( 0, 0 ) = 0.1;
+  pp( 1, 0 ) = 0.2;
+  pp( 2, 0 ) = 0.3;
+  pp( 3, 0 ) = 0.4;
+  pp( 4, 0 ) = 0.5;
+  pp( 5, 0 ) = 0.6;
+  pp( 6, 0 ) = 0.7;
+  pp( 7, 0 ) = 0.8;
 
-  pp( 0, 1, 0 ) = 1.1;
-  pp( 1, 1, 0 ) = 1.2;
-  pp( 2, 1, 0 ) = 1.3;
-  pp( 3, 1, 0 ) = 1.4;
-  pp( 4, 1, 0 ) = 1.5;
-  pp( 5, 1, 0 ) = 1.6;
-  pp( 6, 1, 0 ) = 1.7;
-  pp( 7, 1, 0 ) = 1.8;
+  pp( 0, 1 ) = 1.1;
+  pp( 1, 1 ) = 1.2;
+  pp( 2, 1 ) = 1.3;
+  pp( 3, 1 ) = 1.4;
+  pp( 4, 1 ) = 1.5;
+  pp( 5, 1 ) = 1.6;
+  pp( 6, 1 ) = 1.7;
+  pp( 7, 1 ) = 1.8;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.2;
-  pe( 2, 0, 0 ) = 0.3;
-  pe( 3, 0, 0 ) = 0.4;
-  pe( 4, 0, 0 ) = 0.5;
-  pe( 5, 0, 0 ) = 0.6;
-  pe( 6, 0, 0 ) = 0.7;
-  pe( 7, 0, 0 ) = 0.8;
+  pe( 0, 0 ) = 0.1;
+  pe( 1, 0 ) = 0.2;
+  pe( 2, 0 ) = 0.3;
+  pe( 3, 0 ) = 0.4;
+  pe( 4, 0 ) = 0.5;
+  pe( 5, 0 ) = 0.6;
+  pe( 6, 0 ) = 0.7;
+  pe( 7, 0 ) = 0.8;
 
-  pe( 0, 1, 0 ) = 1.1;
-  pe( 1, 1, 0 ) = 1.2;
-  pe( 2, 1, 0 ) = 1.3;
-  pe( 3, 1, 0 ) = 1.4;
-  pe( 4, 1, 0 ) = 1.5;
-  pe( 5, 1, 0 ) = 1.6;
-  pe( 6, 1, 0 ) = 1.7;
-  pe( 7, 1, 0 ) = 1.8;
+  pe( 0, 1 ) = 1.1;
+  pe( 1, 1 ) = 1.2;
+  pe( 2, 1 ) = 1.3;
+  pe( 3, 1 ) = 1.4;
+  pe( 4, 1 ) = 1.5;
+  pe( 5, 1 ) = 1.6;
+  pe( 6, 1 ) = 1.7;
+  pe( 7, 1 ) = 1.8;
 
   using unittest::veceq;
 
@@ -2078,7 +1990,7 @@ void Data_object::test< 45 >() {
   // Test all template specializations const-ref access
 
   try {
-    pp( 2, 2, 2 );   // unknown out of bounds
+    pp( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2089,7 +2001,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pp( 1, 3, 2 );   // offset+component out of bounds
+    pp( 1, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2100,7 +2012,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pp( 1, 2, 3 );   // offset+component out of bounds
+    pp( 1, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2111,7 +2023,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 2, 2, 2 );   // unknown out of bounds
+    pe( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2122,7 +2034,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 1, 3, 2 );   // offset+component out of bounds
+    pe( 1, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2133,7 +2045,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 1, 2, 3 );   // offset+component out of bounds
+    pe( 1, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2146,7 +2058,7 @@ void Data_object::test< 45 >() {
   // Test all template specializations non-const-ref access
 
   try {
-    pp( 2, 2, 2 );  // unknown out of bounds
+    pp( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2157,7 +2069,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pp( 1, 3, 2 );  // offset+component out of bounds
+    pp( 1, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2168,7 +2080,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pp( 1, 2, 3 );  // offset+component out of bounds
+    pp( 1, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2179,7 +2091,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 2, 2, 2 );  // unknown out of bounds
+    pe( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2190,7 +2102,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 1, 3, 2 );  // offset+component out of bounds
+    pe( 1, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2201,7 +2113,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 1, 2, 3 );  // offset+component out of bounds
+    pe( 1, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2223,7 +2135,7 @@ void Data_object::test< 46 >() {
   // Test all template specializations const-ref access
 
   try {
-    pp( 2, 2, 2 );   // unknown out of bounds
+    pp( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2234,7 +2146,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pp( 1, 3, 2 );   // offset+component out of bounds
+    pp( 1, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2245,7 +2157,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pp( 1, 2, 3 );   // offset+component out of bounds
+    pp( 1, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2256,7 +2168,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 2, 2, 2 );   // unknown out of bounds
+    pe( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2267,7 +2179,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 1, 3, 2 );   // offset+component out of bounds
+    pe( 1, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2278,7 +2190,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 1, 2, 3 );   // offset+component out of bounds
+    pe( 1, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2291,7 +2203,7 @@ void Data_object::test< 46 >() {
   // Test all template specializations non-const-ref access
 
   try {
-    pp( 2, 2, 2 );  // unknown out of bounds
+    pp( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2302,7 +2214,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pp( 1, 3, 2 );  // offset+component out of bounds
+    pp( 1, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2313,7 +2225,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pp( 1, 2, 3 );  // offset+component out of bounds
+    pp( 1, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2324,7 +2236,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 2, 2, 2 );  // unknown out of bounds
+    pe( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2335,7 +2247,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 1, 3, 2 );  // offset+component out of bounds
+    pe( 1, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2346,7 +2258,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 1, 2, 3 );  // offset+component out of bounds
+    pe( 1, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2365,19 +2277,19 @@ void Data_object::test< 47 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 3 );
   tk::Data< tk::EqCompUnk > pe( 2, 3 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 0, 1, 0 ) = 0.2;
-  pp( 0, 2, 0 ) = 0.3;
-  pp( 1, 0, 0 ) = 0.4;
-  pp( 1, 1, 0 ) = 0.5;
-  pp( 1, 2, 0 ) = 0.6;
+  pp( 0, 0 ) = 0.1;
+  pp( 0, 1 ) = 0.2;
+  pp( 0, 2 ) = 0.3;
+  pp( 1, 0 ) = 0.4;
+  pp( 1, 1 ) = 0.5;
+  pp( 1, 2 ) = 0.6;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 0, 1, 0 ) = 0.2;
-  pe( 0, 2, 0 ) = 0.3;
-  pe( 1, 0, 0 ) = 0.4;
-  pe( 1, 1, 0 ) = 0.5;
-  pe( 1, 2, 0 ) = 0.6;
+  pe( 0, 0 ) = 0.1;
+  pe( 0, 1 ) = 0.2;
+  pe( 0, 2 ) = 0.3;
+  pe( 1, 0 ) = 0.4;
+  pe( 1, 1 ) = 0.5;
+  pe( 1, 2 ) = 0.6;
 
   using unittest::veceq;
 

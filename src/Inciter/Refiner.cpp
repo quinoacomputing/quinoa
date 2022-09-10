@@ -1001,7 +1001,7 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
-      nodefields.push_back( u.extract( i ) );
+      nodefields.push_back( u.extract_comp( i ) );
 
   } else if (centering == tk::Centering::ELEM) {
 
@@ -1027,7 +1027,7 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
-      elemfields.push_back( u.extract( i ) );
+      elemfields.push_back( u.extract_comp( i ) );
   }
 
   // Output mesh

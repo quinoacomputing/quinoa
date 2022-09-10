@@ -62,7 +62,7 @@ namespace compflow {
 static tk::GetVarFn::result_type
 densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t )
 {
-  return U.extract( 0 );
+  return U.extract_comp( 0 );
 }
 
 //! Compute velocity component for output to file
@@ -78,7 +78,7 @@ tk::GetVarFn::result_type
 velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 {
   using tk::operator/=;
-  auto r = U.extract( 0 ), u = U.extract( (dir+1)*rdof );
+  auto r = U.extract_comp( 0 ), u = U.extract_comp( (dir+1)*rdof );
   u /= r;
   return u;
 }
@@ -94,7 +94,7 @@ static tk::GetVarFn::result_type
 volumetricTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
                              std::size_t rdof )
 {
-  return U.extract( 4*rdof );
+  return U.extract_comp( 4*rdof );
 }
 
 //! Compute specific total energy (energy per unit mass) for output to file
@@ -109,7 +109,7 @@ specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
                            std::size_t rdof )
 {
   using tk::operator/=;
-  auto r = U.extract( 0 ), e = U.extract( 4*rdof );
+  auto r = U.extract_comp( 0 ), e = U.extract_comp( 4*rdof );
   e /= r;
   return e;
 }
@@ -126,7 +126,7 @@ template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
 momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 {
-  return U.extract( (dir+1)*rdof );
+  return U.extract_comp( (dir+1)*rdof );
 }
 
 //! Compute pressure for output to file
@@ -140,11 +140,11 @@ static tk::GetVarFn::result_type
 pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 {
   using tk::operator/=;
-  auto r = U.extract( 0 ),
-       u = U.extract( 1*rdof ),
-       v = U.extract( 2*rdof ),
-       w = U.extract( 3*rdof ),
-       re = U.extract( 4*rdof );
+  auto r = U.extract_comp( 0 ),
+       u = U.extract_comp( 1*rdof ),
+       v = U.extract_comp( 2*rdof ),
+       w = U.extract_comp( 3*rdof ),
+       re = U.extract_comp( 4*rdof );
   u /= r;
   v /= r;
   w /= r;
