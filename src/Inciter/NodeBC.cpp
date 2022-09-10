@@ -189,7 +189,7 @@ correctBC( const tk::Fields& a,
     Assert( bc.size() == dul.nprop(), "Size mismatch" );
     for (std::size_t c=0; c<bc.size(); ++c) {
       if ( bc[c].first &&
-           std::abs( dul(i,c,0) + a(i,c,0) - bc[c].second ) >
+           std::abs( dul(i,c) + a(i,c) - bc[c].second ) >
              std::numeric_limits< tk::real >::epsilon() )
       {
          return false;

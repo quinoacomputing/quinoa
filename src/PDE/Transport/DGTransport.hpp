@@ -235,7 +235,7 @@ class Transport {
           std::vector< std::size_t > matInt(m_ncomp, 0);
           std::vector< tk::real > alAvg(m_ncomp, 0.0);
           for (std::size_t k=0; k<m_ncomp; ++k)
-            alAvg[k] = U(e, k*rdof, m_offset);
+            alAvg[k] = U(e, k*rdof);
           auto intInd = interfaceIndicator(m_ncomp, alAvg, matInt);
           if ((intsharp > 0) && intInd)
           {
@@ -510,7 +510,7 @@ class Transport {
 
       tk::real sp_m(0.0);
       for (std::size_t c=0; c<m_ncomp; ++c) {
-        sp_m += unk(e,c*rdof,m_offset);
+        sp_m += unk(e,c*rdof);
       }
       return sp_m;
     }

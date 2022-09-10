@@ -174,17 +174,17 @@ class CompFlow {
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
-                s[c] = unk(e,mark,m_offset);
+                s[c] = unk(e,mark);
                 // set high-order DOFs to zero
                 for (std::size_t i=1; i<rdof; ++i)
-                  unk(e,mark+i,m_offset) = 0.0;
+                  unk(e,mark+i) = 0.0;
               }
               initializeBox<inciter::ctr::box>( m_system, m_mat_blk, 1.0, V_ex,
                 t, b, bgpreic[m_system][0], c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
-                unk(e,mark,m_offset) = s[c];
+                unk(e,mark) = s[c];
               }
             }
             ++bcnt;
@@ -588,7 +588,7 @@ class CompFlow {
             tk::Jacobian(coordel_l[0], coordel_l[1], gp, coordel_l[3])/detT_l,
             tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], gp)/detT_l );
 
-          auto wt = wgp[igp] * geoFace(f,0,0);
+          auto wt = wgp[igp] * geoFace(f,0);
 
           std::array< std::vector< tk::real >, 2 > ugp;
 
@@ -596,20 +596,20 @@ class CompFlow {
           for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*rdof;
-            ugp[0].push_back( U(el, mark, m_offset) );
+            ugp[0].push_back( U(el, mark) );
 
             if(ndofel[el] > 1)          //DG(P1)
-              ugp[0][c] +=  U(el, mark+1, m_offset) * B_l[1]
-                          + U(el, mark+2, m_offset) * B_l[2]
-                          + U(el, mark+3, m_offset) * B_l[3];
+              ugp[0][c] +=  U(el, mark+1) * B_l[1]
+                          + U(el, mark+2) * B_l[2]
+                          + U(el, mark+3) * B_l[3];
 
             if(ndofel[el] > 4)          //DG(P2)
-              ugp[0][c] +=  U(el, mark+4, m_offset) * B_l[4]
-                          + U(el, mark+5, m_offset) * B_l[5]
-                          + U(el, mark+6, m_offset) * B_l[6]
-                          + U(el, mark+7, m_offset) * B_l[7]
-                          + U(el, mark+8, m_offset) * B_l[8]
-                          + U(el, mark+9, m_offset) * B_l[9];
+              ugp[0][c] +=  U(el, mark+4) * B_l[4]
+                          + U(el, mark+5) * B_l[5]
+                          + U(el, mark+6) * B_l[6]
+                          + U(el, mark+7) * B_l[7]
+                          + U(el, mark+8) * B_l[8]
+                          + U(el, mark+9) * B_l[9];
           }
 
           rho = ugp[0][0];
@@ -621,7 +621,7 @@ class CompFlow {
 
           a = m_mat_blk[0]->eos_soundspeed( rho, p );
 
-          vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+          vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
           dSV_l = wt * (std::fabs(vn) + a);
 
@@ -655,20 +655,20 @@ class CompFlow {
             for (ncomp_t c=0; c<5; ++c)
             {
               auto mark = c*rdof;
-              ugp[1].push_back( U(eR, mark, m_offset) );
+              ugp[1].push_back( U(eR, mark) );
 
               if(ndofel[eR] > 1)          //DG(P1)
-                ugp[1][c] +=  U(eR, mark+1, m_offset) * B_r[1]
-                            + U(eR, mark+2, m_offset) * B_r[2]
-                            + U(eR, mark+3, m_offset) * B_r[3];
+                ugp[1][c] +=  U(eR, mark+1) * B_r[1]
+                            + U(eR, mark+2) * B_r[2]
+                            + U(eR, mark+3) * B_r[3];
 
               if(ndofel[eR] > 4)         //DG(P2)
-                ugp[1][c] +=  U(eR, mark+4, m_offset) * B_r[4]
-                            + U(eR, mark+5, m_offset) * B_r[5]
-                            + U(eR, mark+6, m_offset) * B_r[6]
-                            + U(eR, mark+7, m_offset) * B_r[7]
-                            + U(eR, mark+8, m_offset) * B_r[8]
-                            + U(eR, mark+9, m_offset) * B_r[9];
+                ugp[1][c] +=  U(eR, mark+4) * B_r[4]
+                            + U(eR, mark+5) * B_r[5]
+                            + U(eR, mark+6) * B_r[6]
+                            + U(eR, mark+7) * B_r[7]
+                            + U(eR, mark+8) * B_r[8]
+                            + U(eR, mark+9) * B_r[9];
             }
 
             rho = ugp[1][0];
@@ -679,7 +679,7 @@ class CompFlow {
             p = m_mat_blk[0]->eos_pressure( rho, u, v, w, rhoE );
             a = m_mat_blk[0]->eos_soundspeed( rho, p );
 
-            vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+            vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
             dSV_r = wt * (std::fabs(vn) + a);
             delt[eR] += std::max( dSV_l, dSV_r );
@@ -707,7 +707,7 @@ class CompFlow {
 
         // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
         // where p is the order of the DG polynomial by linear stability theory.
-        mindt = std::min( mindt, geoElem(e,0,0)/ (delt[e] * (2.0*dgp + 1.0)) );
+        mindt = std::min( mindt, geoElem(e,0)/ (delt[e] * (2.0*dgp + 1.0)) );
       }
 
       return mindt;
@@ -723,10 +723,10 @@ class CompFlow {
               const std::array< std::size_t, 4 >& N ) const
     {
       std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( 1, m_offset, N );
-      v[1] = U.extract( 2, m_offset, N );
-      v[2] = U.extract( 3, m_offset, N );
-      auto r = U.extract( 0, m_offset, N );
+      v[0] = U.extract( 1, N );
+      v[1] = U.extract( 2, N );
+      v[2] = U.extract( 3, N );
+      auto r = U.extract( 0, N );
       std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
@@ -844,7 +844,7 @@ class CompFlow {
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-      return unk(e,4*rdof,m_offset);
+      return unk(e,4*rdof);
     }
 
   private:
@@ -1153,8 +1153,8 @@ class CompFlow {
 
             // add source
             for (auto e : boxelems) {
-              std::array< tk::real, 3 > node{{ geoElem(e,1,0), geoElem(e,2,0),
-                geoElem(e,3,0) }};
+              std::array< tk::real, 3 > node{{ geoElem(e,1), geoElem(e,2),
+                geoElem(e,3) }};
               // Transform node to reference space of box
               tk::movePoint(b_centroid, node);
               tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
@@ -1199,7 +1199,7 @@ class CompFlow {
                   std::vector< tk::real > s(5, 0.0);
                   s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
 
-                  auto wt = wgp[igp] * geoElem(e, 0, 0);
+                  auto wt = wgp[igp] * geoElem(e, 0);
 
                   tk::update_rhs( m_offset, ndof, ndofel[e], wt, e, B, s, R );
                 }

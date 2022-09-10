@@ -65,9 +65,9 @@ WENO_P1( const std::vector< int >& esuel,
 
     for (std::size_t e=0; e<nelem; ++e)
     {
-      U(e, mark+1, offset) = limU[0][e];
-      U(e, mark+2, offset) = limU[1][e];
-      U(e, mark+3, offset) = limU[2][e];
+      U(e, mark+1) = limU[0][e];
+      U(e, mark+2) = limU[1][e];
+      U(e, mark+3) = limU[2][e];
     }
   }
 }
@@ -122,9 +122,9 @@ Superbee_P1( const std::vector< int >& esuel,
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
       {
         auto mark = c*rdof;
-        U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
-        U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
-        U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
+        U(e, mark+1) = phi[c] * U(e, mark+1);
+        U(e, mark+2) = phi[c] * U(e, mark+2);
+        U(e, mark+3) = phi[c] * U(e, mark+3);
       }
     }
   }
@@ -200,7 +200,7 @@ SuperbeeMultiMat_P1(
       std::vector< std::size_t > matInt(nmat, 0);
       std::vector< tk::real > alAvg(nmat, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
-        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
       auto intInd = interfaceIndicator(nmat, alAvg, matInt);
       if ((intsharp > 0) && intInd)
       {
@@ -221,16 +221,16 @@ SuperbeeMultiMat_P1(
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
       {
         auto mark = c*rdof;
-        U(e, mark+1, offset) = phic[c] * U(e, mark+1, offset);
-        U(e, mark+2, offset) = phic[c] * U(e, mark+2, offset);
-        U(e, mark+3, offset) = phic[c] * U(e, mark+3, offset);
+        U(e, mark+1) = phic[c] * U(e, mark+1);
+        U(e, mark+2) = phic[c] * U(e, mark+2);
+        U(e, mark+3) = phic[c] * U(e, mark+3);
       }
       for (inciter::ncomp_t c=0; c<nprim; ++c)
       {
         auto mark = c*rdof;
-        P(e, mark+1, offset) = phip[c] * P(e, mark+1, offset);
-        P(e, mark+2, offset) = phip[c] * P(e, mark+2, offset);
-        P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
+        P(e, mark+1) = phip[c] * P(e, mark+1);
+        P(e, mark+2) = phip[c] * P(e, mark+2);
+        P(e, mark+3) = phip[c] * P(e, mark+3);
       }
     }
   }
@@ -296,7 +296,7 @@ VertexBasedTransport_P1(
       std::vector< std::size_t > matInt(ncomp, 0);
       std::vector< tk::real > alAvg(ncomp, 0.0);
       for (std::size_t k=0; k<ncomp; ++k)
-        alAvg[k] = U(e,k*rdof,offset);
+        alAvg[k] = U(e,k*rdof);
       auto intInd = interfaceIndicator(ncomp, alAvg, matInt);
       if ((intsharp > 0) && intInd)
       {
@@ -310,9 +310,9 @@ VertexBasedTransport_P1(
       for (std::size_t c=0; c<ncomp; ++c)
       {
         auto mark = c*rdof;
-        U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
-        U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
-        U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
+        U(e, mark+1) = phi[c] * U(e, mark+1);
+        U(e, mark+2) = phi[c] * U(e, mark+2);
+        U(e, mark+3) = phi[c] * U(e, mark+3);
       }
     }
   }
@@ -393,9 +393,9 @@ VertexBasedCompflow_P1(
       for (std::size_t c=0; c<ncomp; ++c)
       {
         auto mark = c*rdof;
-        U(e, mark+1, offset) = phi[c] * U(e, mark+1, offset);
-        U(e, mark+2, offset) = phi[c] * U(e, mark+2, offset);
-        U(e, mark+3, offset) = phi[c] * U(e, mark+3, offset);
+        U(e, mark+1) = phi[c] * U(e, mark+1);
+        U(e, mark+2) = phi[c] * U(e, mark+2);
+        U(e, mark+3) = phi[c] * U(e, mark+3);
       }
     }
   }
@@ -485,7 +485,7 @@ VertexBasedCompflow_P2(
       for (std::size_t c=0; c<ncomp; ++c) {
         for(std::size_t idof = 4; idof < rdof; idof++) {
           auto mark = c * rdof + idof;
-          U(e, mark, offset) = 0.0;
+          U(e, mark) = 0.0;
         }
       }
 
@@ -497,7 +497,7 @@ VertexBasedCompflow_P2(
       for (std::size_t c=0; c<ncomp; ++c) {
         auto mark = c * rdof;
         for(std::size_t idof=1; idof<4; idof++)
-          U(e, mark+idof, offset) = phic_p1[c] * U(e, mark+idof, offset);
+          U(e, mark+idof) = phic_p1[c] * U(e, mark+idof);
       }
     }
   }
@@ -596,7 +596,7 @@ VertexBasedMultiMat_P1(
           ncomp, phic, {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
         for(std::size_t k=0; k<nmat; ++k) {
-          if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-4) {
+          if(U(e, volfracDofIdx(nmat,k,rdof,0)) < 1e-4) {
             // Vector to store the range of limited variables
             std::array< std::size_t, 2 > VarRange;
 
@@ -630,7 +630,7 @@ VertexBasedMultiMat_P1(
       std::vector< std::size_t > matInt(nmat, 0);
       std::vector< tk::real > alAvg(nmat, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
-        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
       auto intInd = interfaceIndicator(nmat, alAvg, matInt);
       if ((intsharp > 0) && intInd) {
         for (std::size_t k=0; k<nmat; ++k) {
@@ -653,16 +653,16 @@ VertexBasedMultiMat_P1(
       for (std::size_t c=0; c<ncomp; ++c)
       {
         auto mark = c*rdof;
-        U(e, mark+1, offset) = phic[c] * U(e, mark+1, offset);
-        U(e, mark+2, offset) = phic[c] * U(e, mark+2, offset);
-        U(e, mark+3, offset) = phic[c] * U(e, mark+3, offset);
+        U(e, mark+1) = phic[c] * U(e, mark+1);
+        U(e, mark+2) = phic[c] * U(e, mark+2);
+        U(e, mark+3) = phic[c] * U(e, mark+3);
       }
       for (std::size_t c=0; c<nprim; ++c)
       {
         auto mark = c*rdof;
-        P(e, mark+1, offset) = phip[c] * P(e, mark+1, offset);
-        P(e, mark+2, offset) = phip[c] * P(e, mark+2, offset);
-        P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
+        P(e, mark+1) = phip[c] * P(e, mark+1);
+        P(e, mark+2) = phip[c] * P(e, mark+2);
+        P(e, mark+3) = phip[c] * P(e, mark+3);
       }
     }
   }
@@ -765,12 +765,12 @@ VertexBasedMultiMat_P2(
         for (std::size_t c=0; c<ncomp; ++c) {
           auto mark = c * rdof;
           for(std::size_t idof = 4; idof < rdof; idof++)
-            U(e, mark+idof, offset) = 0.0;
+            U(e, mark+idof) = 0.0;
         }
         for (std::size_t c=0; c<nprim; ++c) {
           auto mark = c * rdof;
           for(std::size_t idof = 4; idof < rdof; idof++)
-            P(e, mark+idof, offset) = 0.0;
+            P(e, mark+idof) = 0.0;
         }
 
         // Obtain limiter coefficient for P1 conserved quantities
@@ -788,7 +788,7 @@ VertexBasedMultiMat_P2(
           ncomp, phic_p1, {volfracIdx(nmat,0), volfracIdx(nmat,nmat-1)});
 
         //for(std::size_t k=0; k<nmat; ++k) {
-        //  if(U(e, volfracDofIdx(nmat,k,rdof,0), offset) < 1e-4) {
+        //  if(U(e, volfracDofIdx(nmat,k,rdof,0)) < 1e-4) {
         //    // Vector to store the range of limited variables
         //    std::array< std::size_t, 2 > VarRange;
 
@@ -814,7 +814,7 @@ VertexBasedMultiMat_P2(
       std::vector< std::size_t > matInt(nmat, 0);
       std::vector< tk::real > alAvg(nmat, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
-        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+        alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
       auto intInd = interfaceIndicator(nmat, alAvg, matInt);
       if ((intsharp > 0) && intInd) {
         for (std::size_t k=0; k<nmat; ++k) {
@@ -838,17 +838,17 @@ VertexBasedMultiMat_P2(
       {
         auto mark = c * rdof;
         for(std::size_t idof=1; idof<4; idof++)
-          U(e, mark+idof, offset) = phic_p1[c] * U(e, mark+idof, offset);
+          U(e, mark+idof) = phic_p1[c] * U(e, mark+idof);
         for(std::size_t idof=4; idof<rdof; idof++)
-          U(e, mark+idof, offset) = phic_p2[c] * U(e, mark+idof, offset);
+          U(e, mark+idof) = phic_p2[c] * U(e, mark+idof);
       }
       for (std::size_t c=0; c<nprim; ++c)
       {
         auto mark = c * rdof;
         for(std::size_t idof=1; idof<4; idof++)
-          P(e, mark+idof, offset) = phip_p1[c] * P(e, mark+idof, offset);
+          P(e, mark+idof) = phip_p1[c] * P(e, mark+idof);
         for(std::size_t idof=4; idof<rdof; idof++)
-          P(e, mark+idof, offset) = phip_p2[c] * P(e, mark+idof, offset);
+          P(e, mark+idof) = phip_p2[c] * P(e, mark+idof);
       }
     }
   }
@@ -903,7 +903,7 @@ VertexBasedMultiMat_FV(
     std::vector< std::size_t > matInt(nmat, 0);
     std::vector< tk::real > alAvg(nmat, 0.0);
     for (std::size_t k=0; k<nmat; ++k)
-      alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+      alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
     auto intInd = interfaceIndicator(nmat, alAvg, matInt);
     if ((intsharp > 0) && intInd)
     {
@@ -928,16 +928,16 @@ VertexBasedMultiMat_FV(
     for (std::size_t c=0; c<ncomp; ++c)
     {
       auto mark = c*rdof;
-      U(e, mark+1, offset) = phic[c] * U(e, mark+1, offset);
-      U(e, mark+2, offset) = phic[c] * U(e, mark+2, offset);
-      U(e, mark+3, offset) = phic[c] * U(e, mark+3, offset);
+      U(e, mark+1) = phic[c] * U(e, mark+1);
+      U(e, mark+2) = phic[c] * U(e, mark+2);
+      U(e, mark+3) = phic[c] * U(e, mark+3);
     }
     for (std::size_t c=0; c<nprim; ++c)
     {
       auto mark = c*rdof;
-      P(e, mark+1, offset) = phip[c] * P(e, mark+1, offset);
-      P(e, mark+2, offset) = phip[c] * P(e, mark+2, offset);
-      P(e, mark+3, offset) = phip[c] * P(e, mark+3, offset);
+      P(e, mark+1) = phip[c] * P(e, mark+1);
+      P(e, mark+2) = phip[c] * P(e, mark+2);
+      P(e, mark+3) = phip[c] * P(e, mark+3);
     }
   }
 }
@@ -986,9 +986,9 @@ WENOLimiting( const tk::Fields& U,
   // lower for stronger discontinuities.
 
   // primary stencil
-  gradu[0][0] = U(e, mark+1, offset);
-  gradu[0][1] = U(e, mark+2, offset);
-  gradu[0][2] = U(e, mark+3, offset);
+  gradu[0][0] = U(e, mark+1);
+  gradu[0][1] = U(e, mark+2);
+  gradu[0][2] = U(e, mark+3);
   wtStencil[0] = cweight;
 
   // stencils from the neighborhood
@@ -1005,9 +1005,9 @@ WENOLimiting( const tk::Fields& U,
     }
 
     std::size_t n = static_cast< std::size_t >( nel );
-    gradu[is][0] = U(n, mark+1, offset);
-    gradu[is][1] = U(n, mark+2, offset);
-    gradu[is][2] = U(n, mark+3, offset);
+    gradu[is][0] = U(n, mark+1);
+    gradu[is][1] = U(n, mark+2);
+    gradu[is][2] = U(n, mark+3);
     wtStencil[is] = 1.0;
   }
 
@@ -1097,8 +1097,8 @@ SuperbeeLimiting( const tk::Fields& U,
   for (inciter::ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*rdof;
-    uMin[c] = U(e, mark, offset);
-    uMax[c] = U(e, mark, offset);
+    uMin[c] = U(e, mark);
+    uMax[c] = U(e, mark);
   }
 
   // ----- Step-1: find min/max in the neighborhood
@@ -1113,8 +1113,8 @@ SuperbeeLimiting( const tk::Fields& U,
     for (inciter::ncomp_t c=0; c<ncomp; ++c)
     {
       auto mark = c*rdof;
-      uMin[c] = std::min(uMin[c], U(n, mark, offset));
-      uMax[c] = std::max(uMax[c], U(n, mark, offset));
+      uMin[c] = std::min(uMin[c], U(n, mark));
+      uMax[c] = std::max(uMax[c], U(n, mark));
     }
   }
 
@@ -1187,16 +1187,16 @@ SuperbeeLimiting( const tk::Fields& U,
       {
         auto phi_gp = 1.0;
         auto mark = c*rdof;
-        auto uNeg = state[c] - U(e, mark, offset);
+        auto uNeg = state[c] - U(e, mark);
         if (uNeg > 1.0e-14)
         {
           uNeg = std::max(uNeg, 1.0e-08);
-          phi_gp = std::min( 1.0, (uMax[c]-U(e, mark, offset))/(2.0*uNeg) );
+          phi_gp = std::min( 1.0, (uMax[c]-U(e, mark))/(2.0*uNeg) );
         }
         else if (uNeg < -1.0e-14)
         {
           uNeg = std::min(uNeg, -1.0e-08);
-          phi_gp = std::min( 1.0, (uMin[c]-U(e, mark, offset))/(2.0*uNeg) );
+          phi_gp = std::min( 1.0, (uMin[c]-U(e, mark))/(2.0*uNeg) );
         }
         else
         {
@@ -1274,8 +1274,8 @@ VertexBasedLimiting(
     {
       auto mark = c*rdof;
       auto cmark = c-VarRange[0];
-      uMin[cmark] = U(e, mark, offset);
-      uMax[cmark] = U(e, mark, offset);
+      uMin[cmark] = U(e, mark);
+      uMax[cmark] = U(e, mark);
     }
     auto p = inpoel[4*e+lp];
     const auto& pesup = tk::cref_find(esup, p);
@@ -1288,8 +1288,8 @@ VertexBasedLimiting(
       {
         auto mark = c*rdof;
         auto cmark = c-VarRange[0];
-        uMin[cmark] = std::min(uMin[cmark], U(er, mark, offset));
-        uMax[cmark] = std::max(uMax[cmark], U(er, mark, offset));
+        uMin[cmark] = std::min(uMin[cmark], U(er, mark));
+        uMax[cmark] = std::max(uMax[cmark], U(er, mark));
       }
     }
 
@@ -1310,16 +1310,16 @@ VertexBasedLimiting(
     {
       auto phi_gp = 1.0;
       auto mark = c*rdof;
-      auto uNeg = state[c] - U(e, mark, offset);
-      auto uref = std::max(std::fabs(U(e,mark,offset)), 1e-14);
+      auto uNeg = state[c] - U(e, mark);
+      auto uref = std::max(std::fabs(U(e,mark)), 1e-14);
       auto cmark = c - VarRange[0];
       if (uNeg > 1.0e-06*uref)
       {
-        phi_gp = std::min( 1.0, (uMax[cmark]-U(e, mark, offset))/uNeg );
+        phi_gp = std::min( 1.0, (uMax[cmark]-U(e, mark))/uNeg );
       }
       else if (uNeg < -1.0e-06*uref)
       {
-        phi_gp = std::min( 1.0, (uMin[cmark]-U(e, mark, offset))/uNeg );
+        phi_gp = std::min( 1.0, (uMin[cmark]-U(e, mark))/uNeg );
       }
       else
       {
@@ -1422,7 +1422,7 @@ VertexBasedLimiting_P2( const std::vector< std::vector< tk::real > >& unk,
             // The first order derivative at the centroid of element er
             tk::real slope_er(0.0);
             for(std::size_t idof = 1; idof < rdof; idof++)
-              slope_er += U(er, mark+idof, offset) * dBdxi_er[idir][idof];
+              slope_er += U(er, mark+idof) * dBdxi_er[idir][idof];
 
             uMin[cmark][idir] = std::min(uMin[cmark][idir], slope_er);
             uMax[cmark][idir] = std::max(uMax[cmark][idir], slope_er);
@@ -1532,17 +1532,17 @@ void consistentMultiMatLimiting_P1(
     phi_al_p1 = std::min( phi_al_p1, phic_p1[volfracIdx(nmat, k)] );
     if(rdof > 4)
       phi_al_p2 = std::min( phi_al_p2, phic_p2[volfracIdx(nmat, k)] );
-    if (almax < U(e,volfracDofIdx(nmat, k, rdof, 0),offset))
+    if (almax < U(e,volfracDofIdx(nmat, k, rdof, 0)))
     {
       //nmax = k;
-      almax = U(e,volfracDofIdx(nmat, k, rdof, 0),offset);
+      almax = U(e,volfracDofIdx(nmat, k, rdof, 0));
     }
     tk::real dmax(0.0);
     dmax = std::max(
              std::max(
-               std::abs(U(e,volfracDofIdx(nmat, k, rdof, 1),offset)),
-               std::abs(U(e,volfracDofIdx(nmat, k, rdof, 2),offset)) ),
-               std::abs(U(e,volfracDofIdx(nmat, k, rdof, 3),offset)) );
+               std::abs(U(e,volfracDofIdx(nmat, k, rdof, 1))),
+               std::abs(U(e,volfracDofIdx(nmat, k, rdof, 2))) ),
+               std::abs(U(e,volfracDofIdx(nmat, k, rdof, 3))) );
     dalmax = std::max( dalmax, dmax );
   }
 
@@ -1579,15 +1579,15 @@ void consistentMultiMatLimiting_P1(
     for (std::size_t k=0; k<nmat; ++k)
     {
       auto alk =
-        std::max( 1.0e-14, U(e,volfracDofIdx(nmat, k, rdof, 0),offset) );
-      auto rhok = U(e,densityDofIdx(nmat, k, rdof, 0),offset) / alk;
-      auto rhoE = U(e,energyDofIdx(nmat, k, rdof, 0),offset) / alk;
+        std::max( 1.0e-14, U(e,volfracDofIdx(nmat, k, rdof, 0)) );
+      auto rhok = U(e,densityDofIdx(nmat, k, rdof, 0)) / alk;
+      auto rhoE = U(e,energyDofIdx(nmat, k, rdof, 0)) / alk;
       for (std::size_t idof=1; idof<rdof; ++idof)
       {
-          U(e,densityDofIdx(nmat, k, rdof, idof),offset) = rhok *
-            U(e,volfracDofIdx(nmat, k, rdof, idof),offset);
-          U(e,energyDofIdx(nmat, k, rdof, idof),offset) = rhoE *
-            U(e,volfracDofIdx(nmat, k, rdof, idof),offset);
+          U(e,densityDofIdx(nmat, k, rdof, idof)) = rhok *
+            U(e,volfracDofIdx(nmat, k, rdof, idof));
+          U(e,energyDofIdx(nmat, k, rdof, idof)) = rhoE *
+            U(e,volfracDofIdx(nmat, k, rdof, idof));
       }
     }
 
@@ -1716,7 +1716,7 @@ void BoundPreservingLimiting( std::size_t nmat,
       {
         auto phi = BoundPreservingLimitingFunction( min, max,
           state[volfracIdx(nmat, imat)],
-          U(e,volfracDofIdx(nmat, imat, ndof, 0),offset) );
+          U(e,volfracDofIdx(nmat, imat, ndof, 0)) );
         phi_bound[imat] = std::min( phi_bound[imat], phi );
       }
     }
@@ -1752,7 +1752,7 @@ void BoundPreservingLimiting( std::size_t nmat,
       {
         auto phi = BoundPreservingLimitingFunction(min, max,
           state[volfracIdx(nmat, imat)],
-          U(e,volfracDofIdx(nmat, imat, ndof, 0),offset) );
+          U(e,volfracDofIdx(nmat, imat, ndof, 0)) );
         phi_bound[imat] = std::min( phi_bound[imat], phi );
       }
     }
@@ -1887,20 +1887,20 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
         // Evaluate the limiting coefficient for material density
         auto rho = state[densityIdx(nmat, imat)];
-        auto rho_avg = U(e, densityDofIdx(nmat, imat, rdof, 0), offset);
+        auto rho_avg = U(e, densityDofIdx(nmat, imat, rdof, 0));
         phi_rho = PositivityLimiting(min, rho, rho_avg);
         phic_bound[densityIdx(nmat, imat)] =
           std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
         // Evaluate the limiting coefficient for material energy
         auto rhoe = state[energyIdx(nmat, imat)];
-        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, rdof, 0), offset);
+        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, rdof, 0));
         phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
         auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
         auto pre = sprim[pressureIdx(nmat, imat)];
-        auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0), offset);
+        auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
         phip_bound[pressureIdx(nmat, imat)] =
           std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
@@ -1936,20 +1936,20 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
         // Evaluate the limiting coefficient for material density
         auto rho = state[densityIdx(nmat, imat)];
-        auto rho_avg = U(e, densityDofIdx(nmat, imat, rdof, 0), offset);
+        auto rho_avg = U(e, densityDofIdx(nmat, imat, rdof, 0));
         phi_rho = PositivityLimiting(min, rho, rho_avg);
         phic_bound[densityIdx(nmat, imat)] =
           std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
         // Evaluate the limiting coefficient for material energy
         auto rhoe = state[energyIdx(nmat, imat)];
-        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, rdof, 0), offset);
+        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, rdof, 0));
         phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
         auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
         auto pre = sprim[pressureIdx(nmat, imat)];
-        auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0), offset);
+        auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
         phip_bound[pressureIdx(nmat, imat)] =
           std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
@@ -2139,7 +2139,7 @@ void MarkShockCells ( const std::size_t nelem,
       {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
 
     std::array< tk::real, 3 >
-      fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+      fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
 
     // Numerator and denominator of the shock indicator
     tk::real numer(0.0), denom(0.0);
@@ -2220,7 +2220,7 @@ void MarkShockCells ( const std::size_t nelem,
   // Loop over element to mark shock cell
   for (std::size_t e=0; e<nelem; ++e) {
     // Evaluate the threshold
-    auto thres = coeff * std::pow(geoElem(e, 4, 0), power);
+    auto thres = coeff * std::pow(geoElem(e, 4), power);
     if(IC[e] > thres)
       shockmarker[e] = 1;
     else
@@ -2265,7 +2265,7 @@ cleanTraceMultiMat(
     std::size_t kmax = 0;
     for (std::size_t k=0; k<nmat; ++k)
     {
-      auto al = U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
+      auto al = U(e, volfracDofIdx(nmat, k, rdof, 0));
       if (al > almax)
       {
         almax = al;
@@ -2280,13 +2280,13 @@ cleanTraceMultiMat(
     relaxInd[kmax] = 1;
     relaxVol += almax;
 
-    auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0), offset);
-    auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0), offset);
-    auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0), offset);
-    auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset)/almax;
+    auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
+    auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
+    auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
+    auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0))/almax;
     auto tmax = mat_blk[kmax]->eos_temperature(
-      U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
-      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset), almax );
+      U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
+      U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax );
 
     tk::real p_target(0.0), d_al(0.0), d_arE(0.0);
     //// get equilibrium pressure
@@ -2294,9 +2294,9 @@ cleanTraceMultiMat(
     //tk::real ratio(0.0);
     //for (std::size_t k=0; k<nmat; ++k)
     //{
-    //  auto arhok = U(e, densityDofIdx(nmat,k,rdof,0), offset);
-    //  auto alk = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-    //  auto apk = P(e, pressureDofIdx(nmat,k,rdof,0), offset);
+    //  auto arhok = U(e, densityDofIdx(nmat,k,rdof,0));
+    //  auto alk = U(e, volfracDofIdx(nmat,k,rdof,0));
+    //  auto apk = P(e, pressureDofIdx(nmat,k,rdof,0));
     //  auto ak = eos_soundspeed< tag::multimat >(system, arhok, apk, alk, k );
     //  kmat[k] = arhok * ak * ak;
 
@@ -2310,8 +2310,8 @@ cleanTraceMultiMat(
     // 1. Correct minority materials and store volume/energy changes
     for (std::size_t k=0; k<nmat; ++k)
     {
-      auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
-      auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0), offset) / alk;
+      auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
+      auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
       auto Pck = pstiff< tag::multimat >(system, k);
       // for positive volume fractions
       if (matExists(alk))
@@ -2331,7 +2331,7 @@ cleanTraceMultiMat(
           //}
           //else
           //{
-          //  auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0), offset);
+          //  auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
           //  auto ck = eos_soundspeed< tag::multimat >(system, arhok, alk*pk,
           //    alk, k);
           //  auto kk = arhok * ck * ck;
@@ -2340,20 +2340,20 @@ cleanTraceMultiMat(
           alk_new = alk;
 
           // energy change
-          auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0), offset)
+          auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0))
             / alk_new;
           auto rhoEmat = mat_blk[k]->eos_totalenergy( rhomat, u, v, w,
                                                       p_target);
 
           // volume-fraction and total energy flux into majority material
           d_al += (alk - alk_new);
-          d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0), offset)
+          d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
             - alk_new * rhoEmat);
 
           // update state of trace material
-          U(e, volfracDofIdx(nmat, k, rdof, 0), offset) = alk_new;
-          U(e, energyDofIdx(nmat, k, rdof, 0), offset) = alk_new*rhoEmat;
-          P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk_new*p_target;
+          U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk_new;
+          U(e, energyDofIdx(nmat, k, rdof, 0)) = alk_new*rhoEmat;
+          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new*p_target;
         }
       }
       // check for unbounded volume fractions
@@ -2362,29 +2362,29 @@ cleanTraceMultiMat(
         auto rhok = mat_blk[k]->eos_density(p_target, tmax);
         d_al += (alk - 1e-14);
         // update state of trace material
-        U(e, volfracDofIdx(nmat, k, rdof, 0), offset) = 1e-14;
-        U(e, densityDofIdx(nmat, k, rdof, 0), offset) = 1e-14 * rhok;
-        U(e, energyDofIdx(nmat, k, rdof, 0), offset) = 1e-14
+        U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
+        U(e, densityDofIdx(nmat, k, rdof, 0)) = 1e-14 * rhok;
+        U(e, energyDofIdx(nmat, k, rdof, 0)) = 1e-14
           * mat_blk[k]->eos_totalenergy(rhok, u, v, w, p_target );
-        P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = 1e-14 *
+        P(e, pressureDofIdx(nmat, k, rdof, 0)) = 1e-14 *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
-          U(e, volfracDofIdx(nmat, k, rdof, i), offset) = 0.0;
-          U(e, densityDofIdx(nmat, k, rdof, i), offset) = 0.0;
-          U(e, energyDofIdx(nmat, k, rdof, i), offset) = 0.0;
-          P(e, pressureDofIdx(nmat, k, rdof, i), offset) = 0.0;
+          U(e, volfracDofIdx(nmat, k, rdof, i)) = 0.0;
+          U(e, densityDofIdx(nmat, k, rdof, i)) = 0.0;
+          U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
+          P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
       else {
-        auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0), offset) / alk;
+        auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0)) / alk;
         // update state of trace material
-        U(e, energyDofIdx(nmat, k, rdof, 0), offset) = alk
+        U(e, energyDofIdx(nmat, k, rdof, 0)) = alk
           * mat_blk[k]->eos_totalenergy( rhok, u, v, w, p_target );
-        P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk *
+        P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
-          U(e, energyDofIdx(nmat, k, rdof, i), offset) = 0.0;
-          P(e, pressureDofIdx(nmat, k, rdof, i), offset) = 0.0;
+          U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
+          P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
     }
@@ -2392,34 +2392,34 @@ cleanTraceMultiMat(
     // 2. Based on volume change in majority material, compute energy change
     //auto gmax = gamma< tag::multimat >(system, kmax);
     //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
-    //auto rhomax_new = U(e, densityDofIdx(nmat, kmax, rdof, 0), offset)
+    //auto rhomax_new = U(e, densityDofIdx(nmat, kmax, rdof, 0))
     //  / (almax+d_al);
     //auto rhoEmax_new = eos_totalenergy< tag::multimat >(system, rhomax_new, u,
     //  v, w, pmax_new, kmax);
     //auto d_arEmax_new = (almax+d_al) * rhoEmax_new
-    //  - U(e, energyDofIdx(nmat, kmax, rdof, 0), offset);
+    //  - U(e, energyDofIdx(nmat, kmax, rdof, 0));
 
-    U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset) += d_al;
-    //U(e, energyDofIdx(nmat, kmax, rdof, 0), offset) += d_arEmax_new;
+    U(e, volfracDofIdx(nmat, kmax, rdof, 0)) += d_al;
+    //U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arEmax_new;
 
     // 2. Flux energy change into majority material
-    U(e, energyDofIdx(nmat, kmax, rdof, 0), offset) += d_arE;
-    P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) =
+    U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arE;
+    P(e, pressureDofIdx(nmat, kmax, rdof, 0)) =
       mat_blk[kmax]->eos_pressure(
-      U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
-      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset),
-      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset) );
+      U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
+      U(e, energyDofIdx(nmat, kmax, rdof, 0)),
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0)) );
 
     // enforce unit sum of volume fractions
     auto alsum = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
-      alsum += U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
+      alsum += U(e, volfracDofIdx(nmat, k, rdof, 0));
 
     for (std::size_t k=0; k<nmat; ++k) {
-      U(e, volfracDofIdx(nmat, k, rdof, 0), offset) /= alsum;
-      U(e, densityDofIdx(nmat, k, rdof, 0), offset) /= alsum;
-      U(e, energyDofIdx(nmat, k, rdof, 0), offset) /= alsum;
-      P(e, pressureDofIdx(nmat, k, rdof, 0), offset) /= alsum;
+      U(e, volfracDofIdx(nmat, k, rdof, 0)) /= alsum;
+      U(e, densityDofIdx(nmat, k, rdof, 0)) /= alsum;
+      U(e, energyDofIdx(nmat, k, rdof, 0)) /= alsum;
+      P(e, pressureDofIdx(nmat, k, rdof, 0)) /= alsum;
     }
 
     //// bulk quantities
@@ -2428,9 +2428,9 @@ cleanTraceMultiMat(
     //{
     //  if (relaxInd[k] > 0.0)
     //  {
-    //    rhoEb += U(e, energyDofIdx(nmat,k,rdof,0), offset);
-    //    volb += U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-    //    rhob += U(e, densityDofIdx(nmat,k,rdof,0), offset);
+    //    rhoEb += U(e, energyDofIdx(nmat,k,rdof,0));
+    //    volb += U(e, volfracDofIdx(nmat,k,rdof,0));
+    //    rhob += U(e, densityDofIdx(nmat,k,rdof,0));
     //  }
     //}
 
@@ -2442,9 +2442,9 @@ cleanTraceMultiMat(
     //  auto gk = gamma< tag::multimat >(system, k);
     //  auto Pck = pstiff< tag::multimat >(system, k);
 
-    //  pmix -= U(e, volfracDofIdx(nmat,k,rdof,0), offset) * gk * Pck *
+    //  pmix -= U(e, volfracDofIdx(nmat,k,rdof,0)) * gk * Pck *
     //    relaxInd[k] / (gk-1.0);
-    //  den += U(e, volfracDofIdx(nmat,k,rdof,0), offset) * relaxInd[k]
+    //  den += U(e, volfracDofIdx(nmat,k,rdof,0)) * relaxInd[k]
     //    / (gk-1.0);
     //}
     //pmix /= den;
@@ -2454,29 +2454,29 @@ cleanTraceMultiMat(
     //{
     //  if (relaxInd[k] > 0.0)
     //  {
-    //    auto alk_new = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-    //    U(e, energyDofIdx(nmat,k,rdof,0), offset) = alk_new *
+    //    auto alk_new = U(e, volfracDofIdx(nmat,k,rdof,0));
+    //    U(e, energyDofIdx(nmat,k,rdof,0)) = alk_new *
     //      eos_totalenergy< tag::multimat >(system, rhomat[k], u, v, w, pmix,
     //      k);
-    //    P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk_new * pmix;
+    //    P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new * pmix;
     //  }
     //}
 
-    pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) /
-      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset);
+    pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0)) /
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0));
 
     // check for unphysical state
     for (std::size_t k=0; k<nmat; ++k)
     {
-      auto alpha = U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
-      auto arho = U(e, densityDofIdx(nmat, k, rdof, 0), offset);
-      auto apr = P(e, pressureDofIdx(nmat, k, rdof, 0), offset);
+      auto alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
+      auto arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+      auto apr = P(e, pressureDofIdx(nmat, k, rdof, 0));
 
       // lambda for screen outputs
       auto screenout = [&]()
       {
-        std::cout << "Element centroid: " << geoElem(e,1,0) << ", "
-          << geoElem(e,2,0) << ", " << geoElem(e,3,0) << std::endl;
+        std::cout << "Element centroid: " << geoElem(e,1) << ", "
+          << geoElem(e,2) << ", " << geoElem(e,3) << std::endl;
         std::cout << "Material-id:      " << k << std::endl;
         std::cout << "Volume-fraction:  " << alpha << std::endl;
         std::cout << "Partial density:  " << arho << std::endl;
@@ -2553,7 +2553,7 @@ timeStepSizeMultiMat(
     v = pgp[velocityIdx(nmat, 1)];
     w = pgp[velocityIdx(nmat, 2)];
 
-    vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+    vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
     // acoustic speed
     a = 0.0;
@@ -2565,7 +2565,7 @@ timeStepSizeMultiMat(
       }
     }
 
-    dSV_l = geoFace(f,0,0) * (std::fabs(vn) + a);
+    dSV_l = geoFace(f,0) * (std::fabs(vn) + a);
 
     // right element
     if (er > -1) {
@@ -2585,7 +2585,7 @@ timeStepSizeMultiMat(
       v = pgp[velocityIdx(nmat, 1)];
       w = pgp[velocityIdx(nmat, 2)];
 
-      vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+      vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
       // acoustic speed
       a = 0.0;
@@ -2597,7 +2597,7 @@ timeStepSizeMultiMat(
         }
       }
 
-      dSV_r = geoFace(f,0,0) * (std::fabs(vn) + a);
+      dSV_r = geoFace(f,0) * (std::fabs(vn) + a);
 
       delt[eR] += std::max( dSV_l, dSV_r );
     } else {
@@ -2612,7 +2612,7 @@ timeStepSizeMultiMat(
   // compute allowable dt
   for (std::size_t e=0; e<nelem; ++e)
   {
-    mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+    mindt = std::min( mindt, geoElem(e,0)/delt[e] );
   }
 
   return mindt;
@@ -2699,7 +2699,7 @@ timeStepSizeMultiMatFV(
     auto v_char = vmag + a + v_front;
 
     // characteristic length (radius of insphere)
-    auto dx = std::min(std::cbrt(geoElem(e,0,0)), geoElem(e,4,0))
+    auto dx = std::min(std::cbrt(geoElem(e,0)), geoElem(e,4))
       /std::sqrt(24.0);
 
     // element dt
@@ -2737,7 +2737,7 @@ correctLimConservMultiMat(
     // Here we pre-compute the right-hand-side vector. The reason that the
     // lhs in DG.cpp is not used is that the size of this vector in this
     // projection procedure should be rdof instead of ndof.
-    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0,0));
+    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
 
     std::vector< tk::real > R((nmat+3)*rdof, 0.0);
 
@@ -2760,7 +2760,7 @@ correctLimConservMultiMat(
       auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
                                coordgp[2][igp] );
 
-      auto w = wgp[igp] * geoElem(e, 0, 0);
+      auto w = wgp[igp] * geoElem(e, 0);
 
       // Evaluate the solution at quadrature point
       auto U = tk::eval_state( ncomp, 0, rdof, rdof, e, unk,  B,
@@ -2807,7 +2807,7 @@ correctLimConservMultiMat(
     for(std::size_t imat = 0; imat < nmat; imat++) {
       auto mark = imat * rdof;
       for(std::size_t idof = 1; idof < rdof; idof++)
-        unk(e, energyDofIdx(nmat, imat, rdof, idof), 0) =
+        unk(e, energyDofIdx(nmat, imat, rdof, idof)) =
           R[mark+idof] / L[idof];
     }
 
@@ -2815,7 +2815,7 @@ correctLimConservMultiMat(
     for(std::size_t idir = 0; idir < 3; idir++) {
       auto mark = (nmat + idir) * rdof;
       for(std::size_t idof = 1; idof < rdof; idof++)
-        unk(e, momentumDofIdx(nmat, idir, rdof, idof), 0) =
+        unk(e, momentumDofIdx(nmat, idir, rdof, idof)) =
           R[mark+idof] / L[idof];
     }
   }

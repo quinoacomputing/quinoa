@@ -427,7 +427,7 @@ DiagCG::lhsmerge()
   for (const auto& b : m_lhsc) {
     auto lid = tk::cref_find( Disc()->Lid(), b.first );
     for (ncomp_t c=0; c<m_lhs.nprop(); ++c)
-      m_lhs(lid,c,0) += b.second[c];
+      m_lhs(lid,c) += b.second[c];
   }
 
   // Clear receive buffer
@@ -519,7 +519,7 @@ DiagCG::rhs()
   for (std::size_t e=0; e<inpoel.size()/4; ++e)
     for (ncomp_t c=0; c<m_u.nprop(); ++c)
       for (std::size_t a=0; a<4; ++a)
-        m_ue(e,c,0) += m_u(inpoel[e*4+a],c,0)/4.0;
+        m_ue(e,c) += m_u(inpoel[e*4+a],c)/4.0;
 
   // Scatter the right-hand side for chare-boundary cells only
   m_rhs.fill( 0.0 );
@@ -600,13 +600,13 @@ DiagCG::solve( tk::Fields& dif )
   // Combine own and communicated contributions to rhs
   for (const auto& b : m_rhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
+    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c) += b.second[c];
   }
 
   // Combine own and communicated contributions to mass diffusion
   for (const auto& b : m_difc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<ncomp; ++c) dif(lid,c,0) += b.second[c];
+    for (ncomp_t c=0; c<ncomp; ++c) dif(lid,c) += b.second[c];
   }
 
   // Clear receive buffers
@@ -623,9 +623,9 @@ DiagCG::solve( tk::Fields& dif )
   for (const auto& [b,bc] : m_bcdir) {
     for (ncomp_t c=0; c<ncomp; ++c) {
       if (bc[c].first) {
-        m_lhs( b, c, 0 ) = 1.0;
-        m_rhs( b, c, 0 ) = bc[c].second;
-        dif( b, c, 0 ) = 0.0;
+        m_lhs( b, c ) = 1.0;
+        m_rhs( b, c ) = bc[c].second;
+        dif( b, c ) = 0.0;
       }
     }
   }
@@ -882,7 +882,7 @@ DiagCG::resizePostAMR(
       Assert(n.first < m_u.nunk(), "Added node index out of bounds post-AMR");
       Assert(n.second[0] < m_u.nunk() && n.second[1] < m_u.nunk(),
         "Indices of parent-edge nodes out of bounds post-AMR");
-      m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
+      m_u(n.first,c) = (m_u(n.second[0],c) + m_u(n.second[1],c))/2.0;
     }
 
   // Update physical-boundary node lists

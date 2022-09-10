@@ -141,7 +141,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
       auto B =
         eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
-      auto wt = wgp[igp] * geoElem(e, 0, 0);
+      auto wt = wgp[igp] * geoElem(e, 0);
 
       auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
@@ -271,7 +271,7 @@ updateRhsNonCons(
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    R(e, mark, offset) += wt * ncf[c][0];
+    R(e, mark) += wt * ncf[c][0];
   }
 
   if( ndof_el > 1)
@@ -281,7 +281,7 @@ updateRhsNonCons(
     {
       auto mark = k*ndof;
       for(std::size_t idof = 1; idof < ndof; idof++)
-        R(e, mark+idof, offset) += wt * ncf[k][idof];
+        R(e, mark+idof) += wt * ncf[k][idof];
     }
 
     // Update rhs with distributions from the rest of the equatons
@@ -289,7 +289,7 @@ updateRhsNonCons(
     {
       auto mark = c*ndof;
       for(std::size_t idof = 1; idof < ndof; idof++)
-        R(e, mark+idof, offset) += wt * ncf[c][idof] * B[idof];
+        R(e, mark+idof) += wt * ncf[c][idof] * B[idof];
     }
   }
 }
@@ -392,7 +392,7 @@ nonConservativeIntFV(
 
     for (ncomp_t c=0; c<ncomp; ++c)
     {
-      R(e, c, offset) += geoElem(e,0,0) * ncf[c];
+      R(e, c) += geoElem(e,0) * ncf[c];
     }
   }
 }
@@ -453,7 +453,7 @@ pressureRelaxationInt( ncomp_t system,
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
   {
-    auto dx = geoElem(e,4,0)/2.0;
+    auto dx = geoElem(e,4)/2.0;
     auto ng = NGvol(ndofel[e]);
 
     // arrays for quadrature points
@@ -490,7 +490,7 @@ pressureRelaxationInt( ncomp_t system,
       auto B =
         eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
-      auto wt = wgp[igp] * geoElem(e, 0, 0);
+      auto wt = wgp[igp] * geoElem(e, 0);
 
       auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
@@ -573,7 +573,7 @@ updateRhsPre(
   {
     auto mark = c*ndof;
     for(std::size_t idof = 0; idof < ndof; idof++)
-      R(e, mark+idof, offset) += wt * ncf[c] * B[idof];
+      R(e, mark+idof) += wt * ncf[c] * B[idof];
   }
 }
 
@@ -625,7 +625,7 @@ pressureRelaxationIntFV(
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
   {
-    auto dx = geoElem(e,4,0)/2.0;
+    auto dx = geoElem(e,4)/2.0;
 
     // Compute the basis function
     std::vector< tk::real > B(rdof, 0.0);
@@ -671,7 +671,7 @@ pressureRelaxationIntFV(
 
     for (ncomp_t c=0; c<ncomp; ++c)
     {
-      R(e, c, offset) += geoElem(e,0,0) * s_prelax[c];
+      R(e, c) += geoElem(e,0) * s_prelax[c];
     }
   }
 }

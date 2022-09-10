@@ -192,17 +192,17 @@ class MultiMat {
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
-                s[c] = unk(e,mark,m_offset);
+                s[c] = unk(e,mark);
                 // set high-order DOFs to zero
                 for (std::size_t i=1; i<rdof; ++i)
-                  unk(e,mark+i,m_offset) = 0.0;
+                  unk(e,mark+i) = 0.0;
               }
               initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, bgpre,
                 s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
-                unk(e,mark,m_offset) = s[c];
+                unk(e,mark) = s[c];
               }
             }
             ++bcnt;
@@ -244,7 +244,7 @@ class MultiMat {
         std::vector< std::size_t > matInt(nmat, 0);
         std::vector< tk::real > alAvg(nmat, 0.0);
         for (std::size_t k=0; k<nmat; ++k)
-          alAvg[k] = unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+          alAvg[k] = unk(e, volfracDofIdx(nmat,k,rdof,0));
         auto intInd = interfaceIndicator(nmat, alAvg, matInt);
 
         // interface cells cannot be high-order
@@ -253,14 +253,14 @@ class MultiMat {
           for (std::size_t k=0; k<nmat; ++k) {
             if (matInt[k]) {
               for (std::size_t i=1; i<rdof; ++i) {
-                unk(e, densityDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
-                unk(e, energyDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
+                unk(e, densityDofIdx(nmat,k,rdof,i)) = 0.0;
+                unk(e, energyDofIdx(nmat,k,rdof,i)) = 0.0;
               }
             }
           }
           for (std::size_t idir=0; idir<3; ++idir) {
             for (std::size_t i=1; i<rdof; ++i) {
-              unk(e, momentumDofIdx(nmat,idir,rdof,i), m_offset) = 0.0;
+              unk(e, momentumDofIdx(nmat,idir,rdof,i)) = 0.0;
             }
           }
         }
@@ -320,7 +320,7 @@ class MultiMat {
           auto B =
             tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
-          auto w = wgp[igp] * geoElem(e, 0, 0);
+          auto w = wgp[igp] * geoElem(e, 0);
 
           auto state = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk, B, {0, m_ncomp-1} );
 
@@ -370,9 +370,9 @@ class MultiMat {
           auto rmark = k * rdof;
           for(std::size_t idof = 0; idof < ndof; idof++)
           {
-            prim(e, rmark+idof, 0) = R[mark+idof] / L(e, mark+idof, 0);
-            if(fabs(prim(e, rmark+idof, 0)) < 1e-16)
-              prim(e, rmark+idof, 0) = 0;
+            prim(e, rmark+idof) = R[mark+idof] / L(e, mark+idof);
+            if(fabs(prim(e, rmark+idof)) < 1e-16)
+              prim(e, rmark+idof) = 0;
           }
         }
       }
@@ -681,7 +681,7 @@ class MultiMat {
         Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
                 "for non-conservative terms has incorrect size" );
         for (std::size_t e=0; e<U.nunk(); ++e)
-          riemannDeriv[k][e] /= geoElem(e, 0, 0);
+          riemannDeriv[k][e] /= geoElem(e, 0);
       }
 
       // compute volume integrals of non-conservative terms
@@ -796,14 +796,14 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
 
       std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( momentumDofIdx(nmat, 0, rdof, 0), m_offset, N );
-      v[1] = U.extract( momentumDofIdx(nmat, 1, rdof, 0), m_offset, N );
-      v[2] = U.extract( momentumDofIdx(nmat, 2, rdof, 0), m_offset, N );
+      v[0] = U.extract( momentumDofIdx(nmat, 0, rdof, 0), N );
+      v[1] = U.extract( momentumDofIdx(nmat, 1, rdof, 0), N );
+      v[2] = U.extract( momentumDofIdx(nmat, 2, rdof, 0), N );
 
       std::vector< std::array< tk::real, 4 > > ar;
       ar.resize(nmat);
       for (std::size_t k=0; k<nmat; ++k)
-        ar[k] = U.extract( densityDofIdx(nmat, k, rdof, 0), m_offset, N );
+        ar[k] = U.extract( densityDofIdx(nmat, k, rdof, 0), N );
 
       std::array< tk::real, 4 > r{{ 0.0, 0.0, 0.0, 0.0 }};
       for (std::size_t i=0; i<r.size(); ++i) {
@@ -960,7 +960,7 @@ class MultiMat {
       tk::real sp_te(0.0);
       // sum each material total energy
       for (std::size_t k=0; k<nmat; ++k) {
-        sp_te += unk(e, energyDofIdx(nmat,k,rdof,0), m_offset);
+        sp_te += unk(e, energyDofIdx(nmat,k,rdof,0));
       }
       return sp_te;
     }

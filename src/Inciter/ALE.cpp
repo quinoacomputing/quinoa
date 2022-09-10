@@ -320,14 +320,14 @@ ALE::start(
     // prescribe mesh velocity with a sine function during setup
     if (initial)
       for (std::size_t i=0; i<m_w.nunk(); ++i)
-        m_w(i,0,0) = std::pow( std::sin(coord[0][i]*M_PI), 2.0 );
+        m_w(i,0) = std::pow( std::sin(coord[0][i]*M_PI), 2.0 );
 
   } else if (meshveltype == ctr::MeshVelocityType::FLUID) {
 
     // equate mesh velocity with fluid velocity
     for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
       for (std::size_t i=0; i<vel[j].size(); ++i)
-        m_w(i,j,0) = vel[j][i];
+        m_w(i,j) = vel[j][i];
 
   } else if (meshveltype == ctr::MeshVelocityType::USER_DEFINED) {
 
@@ -337,14 +337,14 @@ ALE::start(
         auto meshvel = tk::sample<3>( t, std::get<1>(m) );
         for (auto i : std::get<2>(m))
           for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
-            m_w(i,j,0) = meshvel[j];
+            m_w(i,j) = meshvel[j];
       } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
         auto eps = std::numeric_limits< tk::real >::epsilon();
         if (adt > eps) {      // dt == 0 during setup
           auto pos = tk::sample<3>( t+adt, std::get<1>(m) );
           for (auto i : std::get<2>(m))
             for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
-              m_w(i,j,0) = (m_coord0[j][i] + pos[j] - coordn[j][i]) / adt;
+              m_w(i,j) = (m_coord0[j][i] + pos[j] - coordn[j][i]) / adt;
         }
       }
 
@@ -495,7 +495,7 @@ ALE::meshvelbc( tk::real maxv )
       auto mult = g_inputdeck.get< tag::ale, tag::vortmult >();
       for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
         for (std::size_t p=0; p<m_vorticity[0].size(); ++p)
-          m_w(p,j,0) *= std::max( 0.0, 1.0 - mult*m_vorticity[0][p]/maxv );
+          m_w(p,j) *= std::max( 0.0, 1.0 - mult*m_vorticity[0][p]/maxv );
     }
 
     // Set mesh velocity smoother linear solve boundary conditions
@@ -508,7 +508,7 @@ ALE::meshvelbc( tk::real maxv )
         auto meshvel = tk::sample<3>( m_t, std::get<1>(m) );
         for (auto i : std::get<2>(m))
           for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
-            m_w(i,j,0) = meshvel[j];
+            m_w(i,j) = meshvel[j];
       } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
         auto eps = std::numeric_limits< tk::real >::epsilon();
         if (m_adt > eps) {
@@ -688,14 +688,14 @@ ALE::solved( [[maybe_unused]] CkDataMsg* msg )
     // not allowed to move
     for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
       for (std::size_t i=0; i<m_w.nunk(); ++i)
-        m_w(i,j,0) = w[i*m_w.nprop()+j];
+        m_w(i,j) = w[i*m_w.nprop()+j];
 
   } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
     auto a1 = g_inputdeck.get< tag::ale, tag::vortmult >();
     for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
       for (std::size_t p=0; p<m_w.nunk(); ++p)
-        m_w(p,j,0) += a1 * (m_gradpot[j][p] - m_w(p,j,0));
+        m_w(p,j) += a1 * (m_gradpot[j][p] - m_w(p,j));
 
   }
 
@@ -759,7 +759,7 @@ ALE::startforce()
     for (std::size_t a=0; a<4; ++a)
       for (std::size_t b=0; b<4; ++b)
         for (std::size_t i=0; i<3; ++i)
-          m_wf(N[a],i,0) += J24 * grad[b][i] * q[b];
+          m_wf(N[a],i) += J24 * grad[b][i] * q[b];
   }
 
   // communicate mesh force sums to other chares on chare-boundary
@@ -771,9 +771,9 @@ ALE::startforce()
       std::size_t j = 0;
       for (auto i : n) {
         auto lid = tk::cref_find( m_lid, i );
-        w[j][0] = m_wf(lid,0,0);
-        w[j][1] = m_wf(lid,1,0);
-        w[j][2] = m_wf(lid,2,0);
+        w[j][0] = m_wf(lid,0);
+        w[j][1] = m_wf(lid,1);
+        w[j][2] = m_wf(lid,2);
         ++j;
       }
       thisProxy[c].comfor(std::vector<std::size_t>(begin(n),end(n)), w);
@@ -811,9 +811,9 @@ ALE::meshforce()
   // combine own and communicated contributions to mesh force
   for (const auto& [g,w] : m_wfc) {
     auto lid = tk::cref_find( m_lid, g );
-    m_wf(lid,0,0) += w[0];
-    m_wf(lid,1,0) += w[1];
-    m_wf(lid,2,0) += w[2];
+    m_wf(lid,0) += w[0];
+    m_wf(lid,1) += w[1];
+    m_wf(lid,2) += w[2];
   }
   // clear receive buffer
   tk::destroy(m_wfc);
@@ -821,18 +821,18 @@ ALE::meshforce()
   // finish computing the mesh force by dviding weak sum by the nodal volumes
   for (std::size_t j=0; j<3; ++j)
     for (std::size_t p=0; p<m_wf.nunk(); ++p)
-      m_wf(p,j,0) /= m_vol[p];
+      m_wf(p,j) /= m_vol[p];
 
   // advance mesh velocity in time due to pseudo-pressure gradient mesh force
   for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
     for (std::size_t i=0; i<m_w.nunk(); ++i)
        // This is likely incorrect. It should be m_w = m_w0 + ...
-       m_w(i,j,0) += m_adt * m_wf(i,j,0);
+       m_w(i,j) += m_adt * m_wf(i,j);
 
   // Enforce mesh velocity Dirichlet BCs where user specfied but did not
   // prescribe a move
   for (auto i : m_meshveldirbcnodes)
-    if (not move(i)) m_w(i,0,0) = m_w(i,1,0) = m_w(i,2,0) = 0.0;
+    if (not move(i)) m_w(i,0) = m_w(i,1) = m_w(i,2) = 0.0;
 
   // On meshvel symmetry BCs remove normal component of mesh velocity
   const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();
@@ -844,12 +844,12 @@ ALE::meshforce()
         if (i != end(j->second)) {
           std::array< tk::real, 3 >
             n{ i->second[0], i->second[1], i->second[2] },
-            v{ m_w(p,0,0), m_w(p,1,0), m_w(p,2,0) };
+            v{ m_w(p,0), m_w(p,1), m_w(p,2) };
           auto v_dot_n = tk::dot( v, n );
           // symbc: remove normal component of mesh velocity
-          m_w(p,0,0) -= v_dot_n * n[0];
-          m_w(p,1,0) -= v_dot_n * n[1];
-          m_w(p,2,0) -= v_dot_n * n[2];
+          m_w(p,0) -= v_dot_n * n[0];
+          m_w(p,1) -= v_dot_n * n[1];
+          m_w(p,2) -= v_dot_n * n[2];
         }
       }
     }

@@ -67,10 +67,10 @@ Error::error_jump( const tk::Fields& u,
   auto b = edge.second();
 
   // Normalization factor with a noise filter
-  auto norm = std::abs(u(a,c,0)) + std::abs(u(b,c,0)) + 1e-3;
+  auto norm = std::abs(u(a,c)) + std::abs(u(b,c)) + 1e-3;
 
   // Normalized error
-  return std::abs( u(a,c,0) - u(b,c,0) ) / norm;
+  return std::abs( u(a,c) - u(b,c) ) / norm;
 }
 
 tk::real

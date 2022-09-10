@@ -63,7 +63,7 @@ matIndicatorOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
   std::vector< tk::real > m(U.nunk(), 0.0);
   for (std::size_t i=0; i<U.nunk(); ++i) {
     for (std::size_t k=0; k<ncomp; ++k)
-      m[i] += U(i, rdof*k, offset) * static_cast< tk::real >(k+1);
+      m[i] += U(i, rdof*k) * static_cast< tk::real >(k+1);
   }
   return m;
 }

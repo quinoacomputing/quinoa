@@ -175,7 +175,7 @@ const
       auto B = tk::eval_basis( dofe, coordgp[0][igp], coordgp[1][igp],
                                coordgp[2][igp]);
 
-      auto wt = wgp[igp] * geoElem(e, 0, 0);
+      auto wt = wgp[igp] * geoElem(e, 0);
 
       std::vector< tk::real > s;
 
@@ -186,22 +186,22 @@ const
       for (std::size_t c=0; c<u.nprop()/rdof; ++c)
       {
         auto mark = c*rdof;
-        auto ugp = u(e, mark, 0);
+        auto ugp = u(e, mark);
 
         if(dofe > 1)
         {
-          ugp +=  u(e, mark+1, 0) * B[1]
-                + u(e, mark+2, 0) * B[2]
-                + u(e, mark+3, 0) * B[3];
+          ugp +=  u(e, mark+1) * B[1]
+                + u(e, mark+2) * B[2]
+                + u(e, mark+3) * B[3];
 
           if(dofe > 4)
           {
-            ugp +=  u(e, mark+4, 0) * B[4]
-                  + u(e, mark+5, 0) * B[5]
-                  + u(e, mark+6, 0) * B[6]
-                  + u(e, mark+7, 0) * B[7]
-                  + u(e, mark+8, 0) * B[8]
-                  + u(e, mark+9, 0) * B[9];
+            ugp +=  u(e, mark+4) * B[4]
+                  + u(e, mark+5) * B[5]
+                  + u(e, mark+6) * B[6]
+                  + u(e, mark+7) * B[7]
+                  + u(e, mark+8) * B[8]
+                  + u(e, mark+9) * B[9];
           }
         }
 
@@ -223,6 +223,6 @@ const
     }
     // Compute sum of the total energy over the entire domain (only the
     // first entry is used)
-    diag[TOTALSOL][0] += geoElem(e,0,0) * sp_te;
+    diag[TOTALSOL][0] += geoElem(e,0) * sp_te;
   }
 }

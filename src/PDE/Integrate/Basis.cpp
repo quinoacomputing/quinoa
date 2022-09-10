@@ -419,23 +419,23 @@ tk::eval_state ( ncomp_t ncomp,
   for (ncomp_t c=VarRange[0]; c<=VarRange[1]; ++c)
   {
     auto mark = c*ndof;
-    state[c] = U( e, mark, offset );
+    state[c] = U( e, mark );
 
     if(ndof_el > 1)        //DG(P1)
     {
-      state[c] += U( e, mark+1, offset ) * B[1]
-                + U( e, mark+2, offset ) * B[2]
-                + U( e, mark+3, offset ) * B[3];
+      state[c] += U( e, mark+1 ) * B[1]
+                + U( e, mark+2 ) * B[2]
+                + U( e, mark+3 ) * B[3];
     }
 
     if(ndof_el > 4)        //DG(P2)
     {
-      state[c] += U( e, mark+4, offset ) * B[4]
-                + U( e, mark+5, offset ) * B[5]
-                + U( e, mark+6, offset ) * B[6]
-                + U( e, mark+7, offset ) * B[7]
-                + U( e, mark+8, offset ) * B[8]
-                + U( e, mark+9, offset ) * B[9];
+      state[c] += U( e, mark+4 ) * B[4]
+                + U( e, mark+5 ) * B[5]
+                + U( e, mark+6 ) * B[6]
+                + U( e, mark+7 ) * B[7]
+                + U( e, mark+8 ) * B[8]
+                + U( e, mark+9 ) * B[9];
     }
   }
 
@@ -478,7 +478,7 @@ tk::DubinerToTaylor( ncomp_t ncomp,
   for(ncomp_t icomp = 0; icomp < ncomp; icomp++)
   {
     auto mark = icomp * ndof;
-    unk[icomp][0] = U(e, mark, offset);
+    unk[icomp][0] = U(e, mark);
   }
 
   // Evaluate the first order derivative
@@ -506,7 +506,7 @@ tk::DubinerToTaylor( ncomp_t ncomp,
     {
       unk[icomp][idir+1] = 0;
       for(std::size_t idof = 1; idof < ndof; idof++)
-        unk[icomp][idir+1] += U(e, mark+idof, offset) * dBdx[idir][idof];
+        unk[icomp][idir+1] += U(e, mark+idof) * dBdx[idir][idof];
     }
   }
 
@@ -590,7 +590,7 @@ tk::DubinerToTaylor( ncomp_t ncomp,
       {
         unk[icomp][idir+4] = 0;
         for(std::size_t ibasis = 0; ibasis < 6; ibasis++)
-          unk[icomp][idir+4] += U(e, mark+4+ibasis, offset) * d2Bdx2[idir][ibasis];
+          unk[icomp][idir+4] += U(e, mark+4+ibasis) * d2Bdx2[idir][ibasis];
       }
     }
   }
@@ -644,7 +644,7 @@ tk::TaylorToDubiner( ncomp_t ncomp,
   }
 
   // Coordinates of the centroid in physical domain
-  std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
+  std::array< tk::real, 3 > x_c{geoElem(e,1), geoElem(e,2), geoElem(e,3)};
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];

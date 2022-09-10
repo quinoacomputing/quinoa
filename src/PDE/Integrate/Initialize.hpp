@@ -114,9 +114,9 @@ BoxElems( std::size_t system,
         tk::movePoint(b_centroid, b_max);
 
         for (ncomp_t e=0; e<nielem; ++e) {
-          auto x = geoElem(e,1,0);
-          auto y = geoElem(e,2,0);
-          auto z = geoElem(e,3,0);
+          auto x = geoElem(e,1);
+          auto y = geoElem(e,2);
+          auto z = geoElem(e,3);
           std::array< tk::real, 3 > node{{ x, y, z }};
           // Transform node to reference space of box
           tk::movePoint(b_centroid, node);

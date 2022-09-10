@@ -312,20 +312,20 @@ tk::real evalDiscIndicator_CompFlow( std::size_t e,
 
     if(ndofel > 4)
     {
-       auto dU_p2 = unk(e, 4, 0) * B[4]
-                  + unk(e, 5, 0) * B[5]
-                  + unk(e, 6, 0) * B[6]
-                  + unk(e, 7, 0) * B[7]
-                  + unk(e, 8, 0) * B[8]
-                  + unk(e, 9, 0) * B[9];
+       auto dU_p2 = unk(e, 4) * B[4]
+                  + unk(e, 5) * B[5]
+                  + unk(e, 6) * B[6]
+                  + unk(e, 7) * B[7]
+                  + unk(e, 8) * B[8]
+                  + unk(e, 9) * B[9];
 
        dU += wgp[igp] * dU_p2 * dU_p2;
     }
     else
     {
-       auto dU_p1 = unk(e, 1, 0) * B[1]
-                  + unk(e, 2, 0) * B[2]
-                  + unk(e, 3, 0) * B[3];
+       auto dU_p1 = unk(e, 1) * B[1]
+                  + unk(e, 2) * B[2]
+                  + unk(e, 3) * B[3];
 
        dU += wgp[igp] * dU_p1 * dU_p1;
     }
@@ -387,27 +387,27 @@ tk::real evalDiscIndicator_MultiMat( std::size_t e,
 
     // indicator based on material density
     for(std::size_t k = 0; k < nmat; k++) {
-      if(unk(e, volfracDofIdx(nmat, k, ndof, 0), 0) > 1e-2) {
+      if(unk(e, volfracDofIdx(nmat, k, ndof, 0)) > 1e-2) {
         marker[k] = 1;
         U[k] += wgp[igp] *
           state[densityIdx(nmat, k)] * state[densityIdx(nmat, k)];
 
         if(ndofel > 4)
         {
-           auto dU_p2 = unk(e, densityDofIdx(nmat, k, ndof, 4), 0) * B[4]
-                      + unk(e, densityDofIdx(nmat, k, ndof, 5), 0) * B[5]
-                      + unk(e, densityDofIdx(nmat, k, ndof, 6), 0) * B[6]
-                      + unk(e, densityDofIdx(nmat, k, ndof, 7), 0) * B[7]
-                      + unk(e, densityDofIdx(nmat, k, ndof, 8), 0) * B[8]
-                      + unk(e, densityDofIdx(nmat, k, ndof, 9), 0) * B[9];
+           auto dU_p2 = unk(e, densityDofIdx(nmat, k, ndof, 4)) * B[4]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 5)) * B[5]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 6)) * B[6]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 7)) * B[7]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 8)) * B[8]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 9)) * B[9];
 
            dU[k] += wgp[igp] * dU_p2 * dU_p2;
         }
         else
         {
-           auto dU_p1 = unk(e, densityDofIdx(nmat, k, ndof, 1), 0) * B[1]
-                      + unk(e, densityDofIdx(nmat, k, ndof, 2), 0) * B[2]
-                      + unk(e, densityDofIdx(nmat, k, ndof, 3), 0) * B[3];
+           auto dU_p1 = unk(e, densityDofIdx(nmat, k, ndof, 1)) * B[1]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 2)) * B[2]
+                      + unk(e, densityDofIdx(nmat, k, ndof, 3)) * B[3];
 
            dU[k] += wgp[igp] * dU_p1 * dU_p1;
         }
@@ -421,20 +421,20 @@ tk::real evalDiscIndicator_MultiMat( std::size_t e,
 
       if(ndofel > 4)
       {
-         auto dV_p2 = prim(e, velocityDofIdx(nmat, i, ndof, 4), 0) * B[4]
-                    + prim(e, velocityDofIdx(nmat, i, ndof, 5), 0) * B[5]
-                    + prim(e, velocityDofIdx(nmat, i, ndof, 6), 0) * B[6]
-                    + prim(e, velocityDofIdx(nmat, i, ndof, 7), 0) * B[7]
-                    + prim(e, velocityDofIdx(nmat, i, ndof, 8), 0) * B[8]
-                    + prim(e, velocityDofIdx(nmat, i, ndof, 9), 0) * B[9];
+         auto dV_p2 = prim(e, velocityDofIdx(nmat, i, ndof, 4)) * B[4]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 5)) * B[5]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 6)) * B[6]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 7)) * B[7]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 8)) * B[8]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 9)) * B[9];
 
          dV[i] += wgp[igp] * dV_p2 * dV_p2;
       }
       else
       {
-         auto dV_p1 = prim(e, velocityDofIdx(nmat, i, ndof, 1), 0) * B[1]
-                    + prim(e, velocityDofIdx(nmat, i, ndof, 2), 0) * B[2]
-                    + prim(e, velocityDofIdx(nmat, i, ndof, 3), 0) * B[3];
+         auto dV_p1 = prim(e, velocityDofIdx(nmat, i, ndof, 1)) * B[1]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 2)) * B[2]
+                    + prim(e, velocityDofIdx(nmat, i, ndof, 3)) * B[3];
 
          dV[i] += wgp[igp] * dV_p1 * dV_p1;
       }
@@ -446,9 +446,9 @@ tk::real evalDiscIndicator_MultiMat( std::size_t e,
   for(std::size_t k = 0; k < nmat; k++)
     if(marker[k]) Indmax = std::max(dU[k]/U[k], Indmax);
 
-  std::array<tk::real, 3> vavg{prim(e, velocityDofIdx(nmat,0,ndof,0), 0),
-    prim(e, velocityDofIdx(nmat,1,ndof,0), 0),
-    prim(e, velocityDofIdx(nmat,2,ndof,0), 0)};
+  std::array<tk::real, 3> vavg{prim(e, velocityDofIdx(nmat,0,ndof,0)),
+    prim(e, velocityDofIdx(nmat,1,ndof,0)),
+    prim(e, velocityDofIdx(nmat,2,ndof,0))};
   auto vmag = std::sqrt(tk::dot(vavg, vavg));
 
   // The max indicator value among all the velocity components

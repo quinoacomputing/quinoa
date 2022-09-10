@@ -66,7 +66,7 @@ numericFieldOutput( const tk::Fields& U,
       auto o = tk::cref_find( offset, v.var );
       const auto& F = v.primitive() ? p : U;
       if (v.name.empty()) {        // depvar-based direct access
-        f.push_back( F.extract( v.field*rdof, o ) );
+        f.push_back( F.extract( v.field*rdof ) );
       } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
         Assert( v.getvar, "getvar() not configured for " + v.name );
         f.push_back( v.getvar( F, o, rdof ) );
@@ -143,10 +143,10 @@ evalSolution(
   for (std::size_t e=0; e<U.nunk(); ++e) {
     if (e < nelem) {
       for (std::size_t i=0; i<uncomp; ++i) {
-        uElemfields(e,i,0) = U(e,rdof*i,0);
+        uElemfields(e,i) = U(e,rdof*i);
       }
       for (std::size_t i=0; i<pncomp; ++i) {
-        pElemfields(e,i,0) = P(e,rdof*i,0);
+        pElemfields(e,i) = P(e,rdof*i);
       }
     }
   }
@@ -177,8 +177,8 @@ evalSolution(
         auto u = eval_state( uncomp, 0, rdof, dofe, e, U, Bn, {0, uncomp-1} );
         auto p = eval_state( pncomp, 0, rdof, dofe, e, P, Bn, {0, pncomp-1} );
         // Assign child node solution
-        for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[e4+j],i,0) += u[i];
-        for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[e4+j],i,0) += p[i];
+        for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[e4+j],i) += u[i];
+        for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[e4+j],i) += p[i];
       }
     }
 
@@ -222,8 +222,8 @@ evalSolution(
       auto u = eval_state( uncomp, 0, rdof, dofe, parent, U, B, {0, uncomp-1} );
       auto p = eval_state( pncomp, 0, rdof, dofe, parent, P, B, {0, pncomp-1} );
       // Assign cell center solution from parent to child
-      for (std::size_t i=0; i<uncomp; ++i) uElemfields(child,i,0) = u[i];
-      for (std::size_t i=0; i<pncomp; ++i) pElemfields(child,i,0) = p[i];
+      for (std::size_t i=0; i<uncomp; ++i) uElemfields(child,i) = u[i];
+      for (std::size_t i=0; i<pncomp; ++i) pElemfields(child,i) = p[i];
       // Extract child element's node coordinates
       std::array< std::array< real, 3>, 4 > cc{{
         {{ x[inpoel[c4  ]], y[inpoel[c4  ]], z[inpoel[c4  ]] }},
@@ -239,8 +239,8 @@ evalSolution(
         auto cnu = eval_state(uncomp, 0, rdof, dofe, parent, U, Bn, {0, uncomp-1});
         auto cnp = eval_state(pncomp, 0, rdof, dofe, parent, P, Bn, {0, pncomp-1});
         // Assign child node solution
-        for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[c4+j],i,0) += cnu[i];
-        for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[c4+j],i,0) += cnp[i];
+        for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[c4+j],i) += cnu[i];
+        for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[c4+j],i) += cnp[i];
       }
     }
   }

@@ -115,7 +115,7 @@ FluxCorrector::aec(
 
     // access solution at element nodes at time n
     std::vector< std::array< tk::real, 4 > > un( ncomp );
-    for (ncomp_t c=0; c<ncomp; ++c) un[c] = Un.extract( c, 0, N );
+    for (ncomp_t c=0; c<ncomp; ++c) un[c] = Un.extract( c, N );
 
     // Compute antidiffusive element contributions (AEC). The high order system
     // is M_c * dUh = r, where M_c is the consistent mass matrix and r is the
@@ -133,7 +133,7 @@ FluxCorrector::aec(
     for (std::size_t j=0; j<4; ++j)
       for (ncomp_t c=0; c<ncomp; ++c)
         for (std::size_t k=0; k<4; ++k)
-          m_aec(e*4+j,c,0) += m[j][k] * ctau*un[c][k] / vol[N[j]];
+          m_aec(e*4+j,c) += m[j][k] * ctau*un[c][k] / vol[N[j]];
   }
 
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
@@ -149,7 +149,7 @@ FluxCorrector::aec(
       if (b != end(bcdir)) {
         for (ncomp_t c=0; c<ncomp; ++c) {
           if (b->second[c].first) {
-            m_aec(e*4+j,c,0) = 0.0;
+            m_aec(e*4+j,c) = 0.0;
           }
         }
       }
@@ -162,14 +162,14 @@ FluxCorrector::aec(
             auto k = l->second.find(N[j]);
             for (const auto& vel : m_vel) {
               std::array< tk::real, 3 >
-                v{ m_aec(e*4+j,vel[0],0),
-                   m_aec(e*4+j,vel[1],0),
-                   m_aec(e*4+j,vel[2],0) },
+                v{ m_aec(e*4+j,vel[0]),
+                   m_aec(e*4+j,vel[1]),
+                   m_aec(e*4+j,vel[2]) },
                 n{ k->second[0], k->second[1], k->second[2] };
               auto vn = tk::dot( v, n );
-              m_aec(e*4+j,vel[0],0) -= vn * n[0];
-              m_aec(e*4+j,vel[1],0) -= vn * n[1];
-              m_aec(e*4+j,vel[2],0) -= vn * n[2];
+              m_aec(e*4+j,vel[0]) -= vn * n[0];
+              m_aec(e*4+j,vel[1]) -= vn * n[1];
+              m_aec(e*4+j,vel[2]) -= vn * n[2];
             }
           }
         }
@@ -184,8 +184,8 @@ FluxCorrector::aec(
                                            inpoel[e*4+2], inpoel[e*4+3] }};
     for (std::size_t j=0; j<4; ++j) {
       for (ncomp_t c=0; c<ncomp; ++c) {
-        P(N[j],c*2+0,0) += std::max( 0.0, m_aec(e*4+j,c,0) );
-        P(N[j],c*2+1,0) += std::min( 0.0, m_aec(e*4+j,c,0) );
+        P(N[j],c*2+0) += std::max( 0.0, m_aec(e*4+j,c) );
+        P(N[j],c*2+1) += std::min( 0.0, m_aec(e*4+j,c) );
       }
     }
   }
@@ -226,11 +226,11 @@ FluxCorrector::verify( std::size_t nchare,
                                              inpoel[e*4+2], inpoel[e*4+3] }};
       // access pointer to solution at element nodes
       std::vector< const tk::real* > u( ncomp );
-      for (ncomp_t c=0; c<ncomp; ++c) u[c] = U.cptr( c, 0 );
+      for (ncomp_t c=0; c<ncomp; ++c) u[c] = U.cptr( c );
       // scatter-add antidiffusive element contributions to nodes
       for (ncomp_t c=0; c<ncomp; ++c)
         for (std::size_t j=0; j<4; ++j)
-          U.var(u[c],N[j]) += m_aec(e*4+j,c,0);
+          U.var(u[c],N[j]) += m_aec(e*4+j,c);
     }
 
     // Compute maximum difference between the assembled AEC and dUh-dUl
@@ -300,10 +300,10 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
 
      // access solution at element nodes at time n
      std::vector< std::array< tk::real, 4 > > un( ncomp );
-     for (ncomp_t c=0; c<ncomp; ++c) un[c] = Un.extract( c, 0, N );
+     for (ncomp_t c=0; c<ncomp; ++c) un[c] = Un.extract( c, N );
      // access pointer to mass diffusion right hand side at element nodes
      std::vector< const tk::real* > d( ncomp );
-     for (ncomp_t c=0; c<ncomp; ++c) d[c] = D.cptr( c, 0 );
+     for (ncomp_t c=0; c<ncomp; ++c) d[c] = D.cptr( c );
 
      // scatter-add mass diffusion element contributions to rhs nodes
      for (std::size_t a=0; a<4; ++a) {
@@ -341,14 +341,14 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
     const std::array< std::size_t, 4 > N{{ inpoel[e*4+0], inpoel[e*4+1],
                                            inpoel[e*4+2], inpoel[e*4+3] }};
     for (ncomp_t c=0; c<ncomp; ++c) {
-      S(e,c*2+0,0) = -std::numeric_limits< tk::real >::max();
-      S(e,c*2+1,0) = std::numeric_limits< tk::real >::max();
+      S(e,c*2+0) = -std::numeric_limits< tk::real >::max();
+      S(e,c*2+1) = std::numeric_limits< tk::real >::max();
       for (std::size_t j=0; j<4; ++j) {
         // compute maximum and minimum nodal values of Ul and Un (Lohner: u^*_i)
-        auto jmax = clip ? Ul(N[j],c,0) : std::max(Ul(N[j],c,0), Un(N[j],c,0));
-        auto jmin = clip ? Ul(N[j],c,0) : std::min(Ul(N[j],c,0), Un(N[j],c,0));
-        if (jmax > S(e,c*2+0,0)) S(e,c*2+0,0) = jmax;
-        if (jmin < S(e,c*2+1,0)) S(e,c*2+1,0) = jmin;
+        auto jmax = clip ? Ul(N[j],c) : std::max(Ul(N[j],c), Un(N[j],c));
+        auto jmin = clip ? Ul(N[j],c) : std::min(Ul(N[j],c), Un(N[j],c));
+        if (jmax > S(e,c*2+0)) S(e,c*2+0) = jmax;
+        if (jmin < S(e,c*2+1)) S(e,c*2+1) = jmin;
       }
     }
   }
@@ -359,8 +359,8 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
   for (std::size_t p=0; p<Un.nunk(); ++p) {
     for (auto e : tk::Around(esup,p)) {
       for (ncomp_t c=0; c<ncomp; ++c) {
-        if (S(e,c*2+0,0) > Q(p,c*2+0,0)) Q(p,c*2+0,0) = S(e,c*2+0,0);
-        if (S(e,c*2+1,0) < Q(p,c*2+1,0)) Q(p,c*2+1,0) = S(e,c*2+1,0);
+        if (S(e,c*2+0) > Q(p,c*2+0)) Q(p,c*2+0) = S(e,c*2+0);
+        if (S(e,c*2+1) < Q(p,c*2+1)) Q(p,c*2+1) = S(e,c*2+1);
       }
     }
   }
@@ -398,8 +398,8 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
   // values are allowed to achieve (Lohner: Q^{+,-}_i)
   for (std::size_t p=0; p<Ul.nunk(); ++p)
     for (ncomp_t c=0; c<ncomp; ++c) {
-      Q(p,c*2+0,0) -= Ul(p,c,0);
-      Q(p,c*2+1,0) -= Ul(p,c,0);
+      Q(p,c*2+0) -= Ul(p,c);
+      Q(p,c*2+1) -= Ul(p,c);
     }
 
   auto eps = g_inputdeck.get< tag::discr, tag::fcteps >();
@@ -409,15 +409,15 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
   for (std::size_t p=0; p<P.nunk(); ++p) {
     for (ncomp_t c=0; c<ncomp; ++c) {
 
-      if (P(p,c*2+0,0) < eps)
-        Q(p,c*2+0,0) = 1.0;
+      if (P(p,c*2+0) < eps)
+        Q(p,c*2+0) = 1.0;
       else
-        Q(p,c*2+0,0) = std::min(1.0,Q(p,c*2+0,0)/P(p,c*2+0,0));
+        Q(p,c*2+0) = std::min(1.0,Q(p,c*2+0)/P(p,c*2+0));
 
-      if (P(p,c*2+1,0) > -eps)
-        Q(p,c*2+1,0) = 1.0;
+      if (P(p,c*2+1) > -eps)
+        Q(p,c*2+1) = 1.0;
       else
-        Q(p,c*2+1,0) = std::min(1.0,Q(p,c*2+1,0)/P(p,c*2+1,0));
+        Q(p,c*2+1) = std::min(1.0,Q(p,c*2+1)/P(p,c*2+1));
 
     }
   }
@@ -431,19 +431,19 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
       std::array< tk::real, 4 > R;
       for (std::size_t j=0; j<4; ++j) {
 
-        if (std::abs(m_aec(e*4+j,c,0)) < eps)
+        if (std::abs(m_aec(e*4+j,c)) < eps)
           R[j] = 1.0;
-        else if (m_aec(e*4+j,c,0) > 0.0)
-          R[j] = Q(N[j],c*2+0,0);
+        else if (m_aec(e*4+j,c) > 0.0)
+          R[j] = Q(N[j],c*2+0);
         else
-          R[j] = Q(N[j],c*2+1,0);
+          R[j] = Q(N[j],c*2+1);
 
       }
-      C(e,c,0) = *std::min_element( begin(R), end(R) );
+      C(e,c) = *std::min_element( begin(R), end(R) );
       // if all vertices happened to be on a Dirichlet boundary, ignore limiting
-      if (C(e,c,0) > 1.0) C(e,c,0) = 1.0;
-      Assert( C(e,c,0) > -eps && C(e,c,0) < 1.0+eps,
-              "0 <= AEC <= 1.0 failed: C = " + std::to_string(C(e,c,0)) );
+      if (C(e,c) > 1.0) C(e,c) = 1.0;
+      Assert( C(e,c) > -eps && C(e,c) < 1.0+eps,
+              "0 <= AEC <= 1.0 failed: C = " + std::to_string(C(e,c)) );
     }
   }
 
@@ -451,8 +451,8 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
     for (const auto& sys : m_sys) {
       tk::real cs = 1.0;
-      for (auto i : sys) if (C(e,i,0) < cs) cs = C(e,i,0);
-      for (auto i : sys) C(e,i,0) = cs;
+      for (auto i : sys) if (C(e,i) < cs) cs = C(e,i);
+      for (auto i : sys) C(e,i) = cs;
     }
   }
 
@@ -463,7 +463,7 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 
     // access pointer to solution at element nodes
     std::vector< const tk::real* > a( ncomp );
-    for (ncomp_t c=0; c<ncomp; ++c) a[c] = A.cptr( c, 0 );
+    for (ncomp_t c=0; c<ncomp; ++c) a[c] = A.cptr( c );
 
     // Scatter-add limited antidiffusive element contributions to nodes. At
     // nodes where Dirichlet boundary conditions are set, the AECs are set to
@@ -473,9 +473,9 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
       auto b = bcdir.find( N[j] );    // Dirichlet BC
       for (ncomp_t c=0; c<ncomp; ++c) {
         if (b != end(bcdir) && b->second[c].first) {
-          A.var(a[c],N[j]) += m_aec(e*4+j,c,0);
+          A.var(a[c],N[j]) += m_aec(e*4+j,c);
         } else {
-          A.var(a[c],N[j]) += C(e,c,0) * m_aec(e*4+j,c,0);
+          A.var(a[c],N[j]) += C(e,c) * m_aec(e*4+j,c);
         }
       }
     }

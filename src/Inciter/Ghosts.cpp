@@ -99,9 +99,9 @@ Ghosts::bndIntegral()
 
   // Integrate over all physical boundary faces
   for (std::size_t f=0; f<m_fd.Nbfac(); ++f) {
-    s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
-    s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
-    s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
+    s[0] += m_geoFace(f,0) * m_geoFace(f,1);
+    s[1] += m_geoFace(f,0) * m_geoFace(f,2);
+    s[2] += m_geoFace(f,0) * m_geoFace(f,3);
   }
 
   s.push_back( 1.0 );  // positive: call-back to resizeComm() after reduction
@@ -827,16 +827,16 @@ Ghosts::leakyAdjacency()
 
   // physical boundary faces
   for (std::size_t f=0; f<m_fd.Nbfac(); ++f) {
-    s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
-    s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
-    s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
+    s[0] += m_geoFace(f,0) * m_geoFace(f,1);
+    s[1] += m_geoFace(f,0) * m_geoFace(f,2);
+    s[2] += m_geoFace(f,0) * m_geoFace(f,3);
   }
 
   // chare-boundary faces
   for (std::size_t f=m_fd.Nipfac(); f<m_fd.Esuf().size()/2; ++f) {
-    s[0] += m_geoFace(f,0,0) * m_geoFace(f,1,0);
-    s[1] += m_geoFace(f,0,0) * m_geoFace(f,2,0);
-    s[2] += m_geoFace(f,0,0) * m_geoFace(f,3,0);
+    s[0] += m_geoFace(f,0) * m_geoFace(f,1);
+    s[1] += m_geoFace(f,0) * m_geoFace(f,2);
+    s[2] += m_geoFace(f,0) * m_geoFace(f,3);
   }
 
   auto eps = std::numeric_limits< tk::real >::epsilon() * 100;
@@ -1087,7 +1087,7 @@ Ghosts::addGeoFace(
                                 {{m_coord[2][A], m_coord[2][B], m_coord[2][C]}} );
 
   for (std::size_t i=0; i<7; ++i)
-    m_geoFace(id[0],i,0) = geochf(0,i,0);
+    m_geoFace(id[0],i) = geochf(0,i);
 }
 
 #include "NoWarning/ghosts.def.h"

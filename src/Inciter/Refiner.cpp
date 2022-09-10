@@ -1001,7 +1001,7 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
-      nodefields.push_back( u.extract( i, 0 ) );
+      nodefields.push_back( u.extract( i ) );
 
   } else if (centering == tk::Centering::ELEM) {
 
@@ -1027,7 +1027,7 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
-      elemfields.push_back( u.extract( i, 0 ) );
+      elemfields.push_back( u.extract( i ) );
   }
 
   // Output mesh
@@ -1556,13 +1556,13 @@ Refiner::nodeinit( std::size_t npoin,
       tk::real vol = 0.0;
       for (auto e : tk::Around(esup,p)) {       // for all cells around node p
         // compute nodal volume: every element contributes their volume / 4
-        vol += geoElem(e,0,0) / 4.0;
+        vol += geoElem(e,0) / 4.0;
         // sum cell value to node weighed by cell volume / 4
         for (std::size_t c=0; c<nprop; ++c)
-          up[c] += ue[e][c] * geoElem(e,0,0) / 4.0;
+          up[c] += ue[e][c] * geoElem(e,0) / 4.0;
       }
       // store nodal value
-      for (std::size_t c=0; c<nprop; ++c) u(p,c,0) = up[c] / vol;
+      for (std::size_t c=0; c<nprop; ++c) u(p,c) = up[c] / vol;
     }
 
   } else Throw( "Scheme centring not handled for nodal initialization" );
@@ -2151,9 +2151,9 @@ Refiner::bndIntegral()
                                      {{y[A], y[B], y[C]}},
                                      {{z[A], z[B], z[C]}} );
       // Sum up face area * face unit-normal
-      s[0] += geoface(0,0,0) * geoface(0,1,0);
-      s[1] += geoface(0,0,0) * geoface(0,2,0);
-      s[2] += geoface(0,0,0) * geoface(0,3,0);
+      s[0] += geoface(0,0) * geoface(0,1);
+      s[1] += geoface(0,0) * geoface(0,2);
+      s[2] += geoface(0,0) * geoface(0,3);
     }
   }
 

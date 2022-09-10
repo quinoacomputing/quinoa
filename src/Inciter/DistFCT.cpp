@@ -157,8 +157,8 @@ DistFCT::next()
   m_a.fill( 0.0 );
   for (std::size_t p=0; p<m_q.nunk(); ++p)
     for (ncomp_t c=0; c<m_q.nprop()/2; ++c) {
-      m_q(p,c*2+0,0) = -std::numeric_limits< tk::real >::max();
-      m_q(p,c*2+1,0) = std::numeric_limits< tk::real >::max();
+      m_q(p,c*2+0) = -std::numeric_limits< tk::real >::max();
+      m_q(p,c*2+1) = std::numeric_limits< tk::real >::max();
     }
 
   for (auto& b : m_pc) std::fill( begin(b), end(b), 0.0 );
@@ -355,10 +355,10 @@ DistFCT::lim( const std::unordered_map< std::size_t,
     const auto& bpc = m_pc[ b.second ];
     const auto& bqc = m_qc[ b.second ];
     for (ncomp_t c=0; c<m_p.nprop()/2; ++c) {
-      m_p(lid,c*2+0,0) += bpc[c*2+0];
-      m_p(lid,c*2+1,0) += bpc[c*2+1];
-      if (bqc[c*2+0] > m_q(lid,c*2+0,0)) m_q(lid,c*2+0,0) = bqc[c*2+0];
-      if (bqc[c*2+1] < m_q(lid,c*2+1,0)) m_q(lid,c*2+1,0) = bqc[c*2+1];
+      m_p(lid,c*2+0) += bpc[c*2+0];
+      m_p(lid,c*2+1) += bpc[c*2+1];
+      if (bqc[c*2+0] > m_q(lid,c*2+0)) m_q(lid,c*2+0) = bqc[c*2+0];
+      if (bqc[c*2+1] < m_q(lid,c*2+1)) m_q(lid,c*2+1) = bqc[c*2+1];
     }
   }
 
@@ -420,7 +420,7 @@ DistFCT::apply()
   for (const auto& b : m_bid) {
     auto lid = tk::cref_find( m_lid, b.first );
     const auto& bac = m_ac[ b.second ];
-    for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c,0) += bac[c];
+    for (ncomp_t c=0; c<m_a.nprop(); ++c) m_a(lid,c) += bac[c];
   }
 
   // Update solution in host

@@ -143,7 +143,7 @@ bndSurfInt( ncomp_t system,
           {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
 
         std::array< real, 3 >
-          fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+          fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
 
         // Gaussian quadrature
         for (std::size_t igp=0; igp<ng; ++igp)
@@ -174,7 +174,7 @@ bndSurfInt( ncomp_t system,
           //Compute the basis functions for the left element
           auto B_l = eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
 
-          auto wt = wgp[igp] * geoFace(f,0,0);
+          auto wt = wgp[igp] * geoFace(f,0);
 
           // Compute the state variables at the left element
           auto ugp = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
@@ -237,23 +237,23 @@ update_rhs_bc ( ncomp_t ncomp,
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    R(el, mark, offset) -= wt * fl[c];
+    R(el, mark) -= wt * fl[c];
 
     if(ndof_l > 1)          //DG(P1)
     {
-      R(el, mark+1, offset) -= wt * fl[c] * B_l[1];
-      R(el, mark+2, offset) -= wt * fl[c] * B_l[2];
-      R(el, mark+3, offset) -= wt * fl[c] * B_l[3];
+      R(el, mark+1) -= wt * fl[c] * B_l[1];
+      R(el, mark+2) -= wt * fl[c] * B_l[2];
+      R(el, mark+3) -= wt * fl[c] * B_l[3];
     }
 
     if(ndof_l > 4)          //DG(P2)
     {
-      R(el, mark+4, offset) -= wt * fl[c] * B_l[4];
-      R(el, mark+5, offset) -= wt * fl[c] * B_l[5];
-      R(el, mark+6, offset) -= wt * fl[c] * B_l[6];
-      R(el, mark+7, offset) -= wt * fl[c] * B_l[7];
-      R(el, mark+8, offset) -= wt * fl[c] * B_l[8];
-      R(el, mark+9, offset) -= wt * fl[c] * B_l[9];
+      R(el, mark+4) -= wt * fl[c] * B_l[4];
+      R(el, mark+5) -= wt * fl[c] * B_l[5];
+      R(el, mark+6) -= wt * fl[c] * B_l[6];
+      R(el, mark+7) -= wt * fl[c] * B_l[7];
+      R(el, mark+8) -= wt * fl[c] * B_l[8];
+      R(el, mark+9) -= wt * fl[c] * B_l[9];
     }
   }
 
@@ -361,11 +361,11 @@ bndSurfIntFV( ncomp_t system,
 
         // face normal
         std::array< real, 3 >
-          fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+          fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
 
         // face centroid
         std::array< real, 3 >
-          gp{{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
+          gp{{ geoFace(f,4), geoFace(f,5), geoFace(f,6) }};
 
         std::array< tk::real, 3> ref_gp_l{
           Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
@@ -392,7 +392,7 @@ bndSurfIntFV( ncomp_t system,
         // Add the surface integration term to the rhs
         for (ncomp_t c=0; c<ncomp; ++c)
         {
-          R(el, c, offset) -= geoFace(f,0,0) * fl[c];
+          R(el, c) -= geoFace(f,0) * fl[c];
         }
       
         // Prep for non-conservative terms in multimat
@@ -402,12 +402,12 @@ bndSurfIntFV( ncomp_t system,
           for (std::size_t k=0; k<nmat; ++k)
           {
             for (std::size_t idir=0; idir<3; ++idir)
-              riemannDeriv[3*k+idir][el] += geoFace(f,0,0) * fl[ncomp+k]
+              riemannDeriv[3*k+idir][el] += geoFace(f,0) * fl[ncomp+k]
               * fn[idir];
           }
       
           // Divergence of velocity
-          riemannDeriv[3*nmat][el] += geoFace(f,0,0) * fl[ncomp+nmat];
+          riemannDeriv[3*nmat][el] += geoFace(f,0) * fl[ncomp+nmat];
         }
       }
     }

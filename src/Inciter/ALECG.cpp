@@ -602,7 +602,7 @@ ALECG::volumetric( tk::Fields& u, const std::vector< tk::real >& v )
 
   for (std::size_t i=0; i<u.nunk(); ++i)
     for (ncomp_t c=0; c<u.nprop(); ++c)
-      u(i,c,0) *= v[i];
+      u(i,c) *= v[i];
 }
 
 void
@@ -617,7 +617,7 @@ ALECG::conserved( tk::Fields& u, const std::vector< tk::real >& v )
 
   for (std::size_t i=0; i<u.nunk(); ++i)
     for (ncomp_t c=0; c<u.nprop(); ++c) {
-      u(i,c,0) /= v[i];
+      u(i,c) /= v[i];
     }
 }
 
@@ -880,7 +880,7 @@ ALECG::BC()
   // Apply Dirichlet BCs
   for (const auto& [b,bc] : m_dirbc)
     for (ncomp_t c=0; c<m_u.nprop(); ++c)
-      if (bc[c].first) m_u(b,c,0) = bc[c].second;
+      if (bc[c].first) m_u(b,c) = bc[c].second;
 
   // Apply symmetry BCs
   for (const auto& eq : g_cgpde)
@@ -1054,7 +1054,7 @@ ALECG::rhs()
   for (const auto& [gid,g] : m_chBndGradc) {
     auto bid = tk::cref_find( d->Bid(), gid );
     for (ncomp_t c=0; c<m_chBndGrad.nprop(); ++c)
-      m_chBndGrad(bid,c,0) += g[c];
+      m_chBndGrad(bid,c) += g[c];
   }
 
   // clear gradients receive buffer
@@ -1133,7 +1133,7 @@ ALECG::solve()
   // Combine own and communicated contributions to rhs
   for (const auto& b : m_rhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<m_rhs.nprop(); ++c) m_rhs(lid,c,0) += b.second[c];
+    for (ncomp_t c=0; c<m_rhs.nprop(); ++c) m_rhs(lid,c) += b.second[c];
   }
 
   // clear receive buffer
@@ -1151,7 +1151,7 @@ ALECG::solve()
     // Advance solution, converging to steady state
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c,0) = m_un(i,c,0) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c,0);
+        m_u(i,c) = m_un(i,c) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c);
 
   } else {
 
@@ -1166,7 +1166,7 @@ ALECG::solve()
       const auto& w = d->meshvel();
       for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
         for (std::size_t i=0; i<coord[j].size(); ++i)
-          coord[j][i] = d->Coordn()[j][i] + adt * w(i,j,0);
+          coord[j][i] = d->Coordn()[j][i] + adt * w(i,j);
     }
 
   }
@@ -1363,7 +1363,7 @@ ALECG::resizePostAMR(
       Assert(n.first < m_u.nunk(), "Added node index out of bounds post-AMR");
       Assert(n.second[0] < m_u.nunk() && n.second[1] < m_u.nunk(),
         "Indices of parent-edge nodes out of bounds post-AMR");
-      m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
+      m_u(n.first,c) = (m_u(n.second[0],c) + m_u(n.second[1],c))/2.0;
     }
 
   // Update physical-boundary node-, face-, and element lists
@@ -1461,9 +1461,9 @@ ALECG::writeFields( CkCallback c )
     // Output mesh velocity if ALE is enabled
     if (g_inputdeck.get< tag::ale, tag::ale >()) {
       const auto& w = d->meshvel();
-      add_node_field( "x-mesh-velocity", w.extract(0,0) );
-      add_node_field( "y-mesh-velocity", w.extract(1,0) );
-      add_node_field( "z-mesh-velocity", w.extract(2,0) );
+      add_node_field( "x-mesh-velocity", w.extract(0) );
+      add_node_field( "y-mesh-velocity", w.extract(1) );
+      add_node_field( "z-mesh-velocity", w.extract(2) );
       add_node_field( "volume", d->Vol() );
     }
 

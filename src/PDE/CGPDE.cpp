@@ -82,9 +82,9 @@ bnorm(
   // centroid and boundary point. Here p is the global node id and g is the
   // geometry of the boundary face, see tk::geoFaceTri().
   auto invdistsq = [&]( const tk::Fields& g, std::size_t p ){
-    return 1.0 / ( (g(0,4,0) - x[p])*(g(0,4,0) - x[p]) +
-                   (g(0,5,0) - y[p])*(g(0,5,0) - y[p]) +
-                   (g(0,6,0) - z[p])*(g(0,6,0) - z[p]) );
+    return 1.0 / ( (g(0,4) - x[p])*(g(0,4) - x[p]) +
+                   (g(0,5) - y[p])*(g(0,5) - y[p]) +
+                   (g(0,6) - z[p])*(g(0,6) - z[p]) );
   };
 
   // Compute boundary point normals on all side sets summing inverse distance
@@ -108,9 +108,9 @@ bnorm(
             if (i != end(nodes)) {        // only if user set bc on node
               tk::real r = invdistsq(g,p);
               auto& n = norm[s][gid[p]];  // associate set id and global node id
-              n[0] += r*g(0,1,0);
-              n[1] += r*g(0,2,0);
-              n[2] += r*g(0,3,0);
+              n[0] += r*g(0,1);
+              n[1] += r*g(0,2);
+              n[2] += r*g(0,3);
               n[3] += r;
             }
           }

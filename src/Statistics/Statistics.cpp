@@ -97,7 +97,7 @@ Statistics::setupOrdinary( const ctr::OffsetMap& offset,
         auto o = offset.find( term.var );
         Assert( o != end( offset ), "No such depvar" );
         // Put in starting address of instantaneous variable
-        m_instOrd.back().push_back( m_particles.cptr( term.field, o->second ) );
+        m_instOrd.back().push_back( m_particles.cptr( term.field ) );
         // Collect all means of estimated statistics in a linear vector; this
         // will be used to find means for fluctuations. Thus only collect single
         // terms, i.e., <Y1>, <Y2>, etc., but not <Y1Y2>, etc.
@@ -145,7 +145,7 @@ Statistics::setupCentral( const ctr::OffsetMap& offset,
           auto o = offset.find( term.var );
           Assert( o != end( offset ), "No such depvar" );
           // Put in starting address of instantaneous variable
-          m_instCen.back().push_back( m_particles.cptr(term.field, o->second) );
+          m_instCen.back().push_back( m_particles.cptr(term.field) );
           // Put in index of center for central, m_nord for ordinary moment
           m_ctr.back().push_back(
            m_ordinary.data() + (std::islower(term.var) ? mean(term) : m_nord) );
@@ -191,7 +191,7 @@ Statistics::setupPDF( const ctr::OffsetMap& offset,
       for (const auto& term : probability) {
         auto o = offset.find( term.var );
         Assert( o != end( offset ), "No such depvar" );
-        const tk::real* iptr = m_particles.cptr( term.field, o->second );
+        const tk::real* iptr = m_particles.cptr( term.field );
         if (bs.size() == 1) m_instOrdUniPDF.back().push_back( iptr );
         else if (bs.size() == 2) m_instOrdBiPDF.back().push_back( iptr );
         else if (bs.size() == 3) m_instOrdTriPDF.back().push_back( iptr );
@@ -223,7 +223,7 @@ Statistics::setupPDF( const ctr::OffsetMap& offset,
         Assert( o != end( offset ), "No such depvar" );
         // Put in starting address of instantaneous variable as well as index
         // of center for central, m_nord for ordinary moment
-        const tk::real* iptr = m_particles.cptr( term.field, o->second );
+        const tk::real* iptr = m_particles.cptr( term.field );
         const tk::real* cptr =
           m_ordinary.data() + (std::islower(term.var) ? mean(term) : m_nord);
         if (bs.size() == 1) {

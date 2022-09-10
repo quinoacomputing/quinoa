@@ -101,7 +101,7 @@ class Transport {
         auto s = Problem::initialize( m_system, m_ncomp, m_mat_blk, x[i], y[i],
                                       z[i], t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
-          unk( i, c, m_offset ) = s[c];
+          unk( i, c ) = s[c];
       }
     }
 
@@ -197,7 +197,7 @@ class Transport {
             for (std::size_t c=0; c<m_ncomp; ++c)
               for (std::size_t b=0; b<4; ++b)
                 for (std::size_t j=0; j<3; ++j)
-                  G(i->second,c*3+j,0) += J24 * g[b][j] * U(N[b],c,m_offset);
+                  G(i->second,c*3+j) += J24 * g[b][j] * U(N[b],c);
         }
       }
     }
@@ -257,7 +257,7 @@ class Transport {
       auto Grad = nodegrad( coord, inpoel, lid, bid, vol, esup, U, G );
 
       // zero right hand side for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
+      for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, 0.0 );
 
       // compute domain-edge integral
       domainint( coord, inpoel, edgeid, psup, dfn, U, Grad, R );
@@ -316,10 +316,10 @@ class Transport {
 
         // access solution at element nodes
         std::vector< std::array< real, 4 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, N );
         // access solution at elements
         std::vector< const real* > ue( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue.cptr( c, m_offset );
+        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue.cptr( c );
 
         // get prescribed velocity
         const std::array< std::vector<std::array<real,3>>, 4 > vel{{
@@ -364,13 +364,13 @@ class Transport {
 
         // access solution at elements
         std::vector< real > ue( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c, m_offset );
+        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c );
         // access pointer to right hand side at component and offset
         std::vector< const real* > r( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+        for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
         // access solution at nodes of element
         std::vector< std::array< real, 4 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, N );
 
         // get prescribed velocity
         auto xc = (x[N[0]] + x[N[1]] + x[N[2]] + x[N[3]]) / 4.0;
@@ -426,7 +426,7 @@ class Transport {
         const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
         // access solution at element nodes at recent time step
         std::vector< std::array< real, 4 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, N );
         // get velocity for problem
         const std::array< std::vector<std::array<real,3>>, 4 > vel{{
           Problem::prescribedVelocity( m_system, m_ncomp,
@@ -666,20 +666,20 @@ class Transport {
           for (std::size_t c=0; c<m_ncomp; ++c)
             for (std::size_t b=0; b<4; ++b)
               for (std::size_t i=0; i<3; ++i)
-                Grad(p,c*3+i,0) += J24 * g[b][i] * U(N[b],c,m_offset);
+                Grad(p,c*3+i) += J24 * g[b][i] * U(N[b],c);
         }
 
       // put in nodal gradients of chare-boundary points
       for (const auto& [g,b] : bid) {
         auto i = tk::cref_find( lid, g );
         for (ncomp_t c=0; c<Grad.nprop(); ++c)
-          Grad(i,c,0) = G(b,c,0);
+          Grad(i,c) = G(b,c);
       }
 
       // divide weak result in gradients by nodal volume
       for (std::size_t p=0; p<npoin; ++p)
         for (std::size_t c=0; c<m_ncomp*3; ++c)
-          Grad(p,c,0) /= vol[p];
+          Grad(p,c) /= vol[p];
 
       return Grad;
     }
@@ -717,8 +717,8 @@ class Transport {
       for (std::size_t c=0; c<m_ncomp; ++c) {
         // gradients
         std::array< real, 3 >
-          g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
-          g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
+          g1{ G(p,c*3+0), G(p,c*3+1), G(p,c*3+2) },
+          g2{ G(q,c*3+0), G(q,c*3+1), G(q,c*3+2) };
 
         delta2[c] = uR[c] - uL[c];
         delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
@@ -770,7 +770,7 @@ class Transport {
 
       // access pointer to right hand side at component and offset
       std::vector< const real* > r( m_ncomp );
-      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
       // domain-edge integral
       for (std::size_t p=0,k=0; p<U.nunk(); ++p) {
@@ -782,8 +782,8 @@ class Transport {
           std::vector< tk::real > uL( m_ncomp, 0.0 );
           std::vector< tk::real > uR( m_ncomp, 0.0 );
           for (std::size_t c=0; c<m_ncomp; ++c) {
-            uL[c] = U(p,c,m_offset);
-            uR[c] = U(q,c,m_offset);
+            uL[c] = U(p,c);
+            uR[c] = U(q,c);
           }
           // compute MUSCL reconstruction in edge-end points
           muscl( p, q, coord, G, uL, uR );
@@ -858,7 +858,7 @@ class Transport {
                                   zp{ z[N[0]], z[N[1]], z[N[2]] };
         // access solution at element nodes
         std::vector< std::array< real, 3 > > u( m_ncomp );
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, N );
         // evaluate prescribed velocity
         auto v =
           Problem::prescribedVelocity( m_system, m_ncomp, xp[0], yp[0], zp[0],
@@ -888,7 +888,7 @@ class Transport {
 
       // access pointer to right hand side at component and offset
       std::vector< const real* > r( m_ncomp );
-      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
       // boundary integrals: sum flux contributions to points
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {

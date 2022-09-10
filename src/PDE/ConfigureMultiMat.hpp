@@ -63,9 +63,9 @@ bulkDensityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdo
   using tk::operator+=;
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
-  auto r = U.extract( densityDofIdx(nmat,0,rdof,0), offset );
+  auto r = U.extract( densityDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
-    r += U.extract( densityDofIdx(nmat,k,rdof,0), offset );
+    r += U.extract( densityDofIdx(nmat,k,rdof,0) );
   return r;
 }
 
@@ -83,9 +83,9 @@ bulkPressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
   using tk::operator+=;
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
-  auto p = U.extract( pressureDofIdx(nmat,0,rdof,0), offset );
+  auto p = U.extract( pressureDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
-    p += U.extract( pressureDofIdx(nmat,k,rdof,0), offset );
+    p += U.extract( pressureDofIdx(nmat,k,rdof,0) );
   return p;
 }
 
@@ -103,9 +103,9 @@ bulkSpecificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
   using tk::operator+=;
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
-  auto e = U.extract( energyDofIdx(nmat,0,rdof,0), offset );
+  auto e = U.extract( energyDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
-    e += U.extract( energyDofIdx(nmat,k,rdof,0), offset );
+    e += U.extract( energyDofIdx(nmat,k,rdof,0) );
   return e;
 }
 
@@ -123,7 +123,7 @@ velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 {
   auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
   auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
-  return U.extract( velocityDofIdx(nmat,dir,rdof,0), offset );
+  return U.extract( velocityDofIdx(nmat,dir,rdof,0) );
 }
 
 //! Compute material indicator function for output to file
@@ -142,7 +142,7 @@ matIndicatorOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
   std::vector< tk::real > m(U.nunk(), 0.0);
   for (std::size_t i=0; i<U.nunk(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
-      m[i] += U(i, volfracDofIdx(nmat,k,rdof,0), offset) *
+      m[i] += U(i, volfracDofIdx(nmat,k,rdof,0)) *
         static_cast< tk::real >(k+1);
   }
   return m;
