@@ -63,9 +63,7 @@ class Transport {
       m_problem( Problem() ),
       m_system( c ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::transport >().at(c) ),
-      m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::transport >(c) )
+        g_inputdeck.get< tag::component >().get< tag::transport >().at(c) )
     {
       m_problem.errchk( m_system, m_ncomp );
     }
@@ -596,7 +594,6 @@ class Transport {
     const Problem m_problem;            //!< Problem policy
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
-    const ncomp_t m_offset;             //!< Offset this PDE operates from 
     //! EOS material block
     const std::vector< EoS_Base* > m_mat_blk;
 

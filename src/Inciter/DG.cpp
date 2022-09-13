@@ -67,10 +67,8 @@ DG::DG( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::discr, tag::rdof >()*
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_p( m_u.nunk(),
-       g_inputdeck.get< tag::discr, tag::rdof >()*
-         std::accumulate( begin(g_dgpde), end(g_dgpde), 0u,
-           [](std::size_t s, const DGPDE& eq){ return s + eq.nprim(); } ) ),
+  m_p( m_u.nunk(), g_inputdeck.get< tag::discr, tag::rdof >()*
+    g_dgpde[Disc()->MeshId()].nprim() ),
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::discr, tag::ndof >()*
          g_inputdeck.get< tag::component >().nprop() ),
@@ -114,9 +112,7 @@ DG::DG( const CProxy_Discretization& disc,
                                         "DG" );
 
   // assign number of dofs for each equation in all pde systems
-  for (const auto& eq : g_dgpde) {
-    eq.numEquationDofs(m_numEqDof);
-  }
+  g_dgpde[Disc()->MeshId()].numEquationDofs(m_numEqDof);
 
   // Allocate storage for the vector of nodal extrema
   m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
@@ -238,9 +234,8 @@ DG::setup()
   lhs();
 
   // Determine elements inside user-defined IC box
-  for (auto& eq : g_dgpde)
-    eq.IcBoxElems( myGhosts()->m_geoElem, myGhosts()->m_fd.Esuel().size()/4,
-      m_boxelems );
+  g_dgpde[d->MeshId()].IcBoxElems( myGhosts()->m_geoElem,
+    myGhosts()->m_fd.Esuel().size()/4, m_boxelems );
 
   // Compute volume of user-defined box IC
   d->boxvol( {}, {}, 0 );      // punt for now
@@ -249,10 +244,8 @@ DG::setup()
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
-    for (const auto& eq : g_dgpde) {
-      auto n = eq.histNames();
-      histnames.insert( end(histnames), begin(n), end(n) );
-    }
+    auto n = g_dgpde[d->MeshId()].histNames();
+    histnames.insert( end(histnames), begin(n), end(n) );
     d->histheader( std::move(histnames) );
   }
 }
@@ -270,13 +263,10 @@ DG::box( tk::real v, const std::vector< tk::real >& )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_dgpde)
-  {
-    eq.initialize( m_lhs, myGhosts()->m_inpoel, myGhosts()->m_coord, m_boxelems,
-      m_u, d->T(), myGhosts()->m_fd.Esuel().size()/4 );
-    eq.updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
-      myGhosts()->m_fd.Esuel().size()/4 );
-  }
+  g_dgpde[d->MeshId()].initialize( m_lhs, myGhosts()->m_inpoel, myGhosts()->m_coord, m_boxelems,
+    m_u, d->T(), myGhosts()->m_fd.Esuel().size()/4 );
+  g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
+    myGhosts()->m_fd.Esuel().size()/4 );
 
   m_un = m_u;
 
@@ -346,14 +336,14 @@ DG::next()
   auto d = Disc();
 
   if (pref && m_stage == 0 && d->T() > 0)
-    for (const auto& eq : g_dgpde)
-      eq.eval_ndof( myGhosts()->m_nunk, myGhosts()->m_coord, myGhosts()->m_inpoel,
-                    myGhosts()->m_fd, m_u, m_p,
-                    g_inputdeck.get< tag::pref, tag::indicator >(),
-                    g_inputdeck.get< tag::discr, tag::ndof >(),
-                    g_inputdeck.get< tag::pref, tag::ndofmax >(),
-                    g_inputdeck.get< tag::pref, tag::tolref >(),
-                    m_ndof );
+    g_dgpde[d->MeshId()].eval_ndof( myGhosts()->m_nunk, myGhosts()->m_coord,
+                  myGhosts()->m_inpoel,
+                  myGhosts()->m_fd, m_u, m_p,
+                  g_inputdeck.get< tag::pref, tag::indicator >(),
+                  g_inputdeck.get< tag::discr, tag::ndof >(),
+                  g_inputdeck.get< tag::pref, tag::ndofmax >(),
+                  g_inputdeck.get< tag::pref, tag::tolref >(),
+                  m_ndof );
 
   // communicate solution ghost data (if any)
   if (myGhosts()->m_sendGhost.empty())
@@ -512,7 +502,7 @@ DG::lhs()
 // Compute left-hand side of discrete transport equations
 // *****************************************************************************
 {
-  for (const auto& eq : g_dgpde) eq.lhs( myGhosts()->m_geoElem, m_lhs );
+  g_dgpde[Disc()->MeshId()].lhs( myGhosts()->m_geoElem, m_lhs );
 
   if (!m_initial) stage();
 }
@@ -548,10 +538,10 @@ DG::reco()
     auto d = Disc();
 
     // Reconstruct second-order solution and primitive quantities
-    for (const auto& eq : g_dgpde)
-      eq.reconstruct( d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-        myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
-        myGhosts()->m_coord, m_u, m_p );
+    g_dgpde[d->MeshId()].reconstruct( d->T(), myGhosts()->m_geoFace,
+      myGhosts()->m_geoElem,
+      myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
+      myGhosts()->m_coord, m_u, m_p );
   }
 
   // Send reconstructed solution to neighboring chares
@@ -957,17 +947,16 @@ DG::lim()
   tk::destroy(m_uNodalExtrmc);
   tk::destroy(m_pNodalExtrmc);
 
-  if (rdof > 1)
-    for (const auto& eq : g_dgpde) {
-      eq.limit( d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-                myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
-                myGhosts()->m_coord, m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm,
-                m_pNodalExtrm, m_mtInv, m_u, m_p, m_shockmarker );
+  if (rdof > 1) {
+    g_dgpde[d->MeshId()].limit( d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem,
+              myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
+              myGhosts()->m_coord, m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm,
+              m_pNodalExtrm, m_mtInv, m_u, m_p, m_shockmarker );
 
-      if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
-        eq.Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
-          myGhosts()->m_fd.Esuel().size()/4);
-    }
+    if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
+      g_dgpde[d->MeshId()].Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
+        myGhosts()->m_fd.Esuel().size()/4);
+  }
 
   // Send limited solution to neighboring chares
   if (myGhosts()->m_sendGhost.empty())
@@ -1119,13 +1108,12 @@ DG::dt()
     } else {      // compute dt based on CFL
 
       // find the minimum dt across all PDEs integrated
-      for (const auto& eq : g_dgpde) {
-        auto eqdt =
-          eq.dt( myGhosts()->m_coord, myGhosts()->m_inpoel, myGhosts()->m_fd,
-            myGhosts()->m_geoFace, myGhosts()->m_geoElem, m_ndof, m_u, m_p,
-            myGhosts()->m_fd.Esuel().size()/4 );
-        if (eqdt < mindt) mindt = eqdt;
-      }
+      auto eqdt =
+        g_dgpde[d->MeshId()].dt( myGhosts()->m_coord, myGhosts()->m_inpoel,
+          myGhosts()->m_fd,
+          myGhosts()->m_geoFace, myGhosts()->m_geoElem, m_ndof, m_u, m_p,
+          myGhosts()->m_fd.Esuel().size()/4 );
+      if (eqdt < mindt) mindt = eqdt;
 
       mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
     }
@@ -1209,10 +1197,9 @@ DG::solve( tk::real newdt )
     physT += 0.5*d->Dt();
   }
 
-  for (const auto& eq : g_dgpde)
-    eq.rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-      myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
-      m_u, m_p, m_ndof, m_rhs );
+  g_dgpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
+    myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
+    m_u, m_p, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
@@ -1240,15 +1227,13 @@ DG::solve( tk::real newdt )
     }
 
   // Update primitives based on the evolved solution
-  for (const auto& eq : g_dgpde)
-  {
-    eq.updateInterfaceCells( m_u, myGhosts()->m_fd.Esuel().size()/4, m_ndof );
-    eq.updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
+  g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
+    myGhosts()->m_fd.Esuel().size()/4, m_ndof );
+  g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
+    myGhosts()->m_fd.Esuel().size()/4 );
+  if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
+    g_dgpde[d->MeshId()].cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
       myGhosts()->m_fd.Esuel().size()/4 );
-    if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
-      eq.cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
-        myGhosts()->m_fd.Esuel().size()/4 );
-    }
   }
 
   if (m_stage < 2) {
@@ -1438,11 +1423,9 @@ DG::writeFields(
   // Output time history
   if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
-    for (const auto& eq : g_dgpde) {
-      auto h = eq.histOutput( d->Hist(), myGhosts()->m_inpoel,
-        myGhosts()->m_coord, m_u, m_p );
-      hist.insert( end(hist), begin(h), end(h) );
-    }
+    auto h = g_dgpde[d->MeshId()].histOutput( d->Hist(), myGhosts()->m_inpoel,
+      myGhosts()->m_coord, m_u, m_p );
+    hist.insert( end(hist), begin(h), end(h) );
     d->history( std::move(hist) );
   }
 
@@ -1506,12 +1489,11 @@ DG::writeFields(
   const auto& coord = m_outmesh.coord;
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
   auto t = Disc()->T();
-  for (const auto& eq : g_dgpde) {
-    analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract_comp(1),
-      geoElem.extract_comp(2), geoElem.extract_comp(3), t, elemfields );
-    analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1], coord[2],
-      t, nodefields );
-  }
+  analyticFieldOutput( g_dgpde[d->MeshId()], tk::Centering::ELEM,
+    geoElem.extract_comp(1), geoElem.extract_comp(2), geoElem.extract_comp(3),
+    t, elemfields );
+  analyticFieldOutput( g_dgpde[d->MeshId()], tk::Centering::NODE, coord[0],
+    coord[1], coord[2], t, nodefields );
 
   // Add adaptive indicator array to element-centered field output
   if (g_inputdeck.get< tag::pref, tag::pref >()) {
@@ -1541,10 +1523,8 @@ DG::writeFields(
   auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
 
   // Collect field output names for analytical solutions
-  for (const auto& eq : g_dgpde) {
-    analyticFieldNames( eq, tk::Centering::ELEM, elemfieldnames );
-    analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
-  }
+  analyticFieldNames( g_dgpde[d->MeshId()], tk::Centering::ELEM, elemfieldnames );
+  analyticFieldNames( g_dgpde[d->MeshId()], tk::Centering::NODE, nodefieldnames );
 
   if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );

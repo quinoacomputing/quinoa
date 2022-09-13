@@ -177,7 +177,7 @@ ALECG::queryBnd()
   // Query and match user-specified Dirichlet boundary conditions to side sets
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
   if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
-  m_dirbc = match( m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
+  m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
                    m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
                    /* increment = */ false );
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
@@ -496,7 +496,7 @@ ALECG::setup()
   auto d = Disc();
 
   // Determine nodes inside user-defined IC box
-  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), d->Inpoel(),
+  g_cgpde[d->MeshId()].IcBoxNodes( d->Coord(), d->Inpoel(),
     d->ElemBlockId(), m_boxnodes, m_nodeblockid, m_nusermeshblk );
 
   // Communicate mesh block nodes to other chares on chare-boundary
@@ -581,10 +581,8 @@ ALECG::continueSetup()
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
-    for (const auto& eq : g_cgpde) {
-      auto n = eq.histNames();
-      histnames.insert( end(histnames), begin(n), end(n) );
-    }
+    auto n = g_cgpde[d->MeshId()].histNames();
+    histnames.insert( end(histnames), begin(n), end(n) );
     d->histheader( std::move(histnames) );
   }
 }
@@ -638,9 +636,8 @@ ALECG::box( tk::real v, const std::vector< tk::real >& blkvols )
   d->MeshBlkVol() = blkvols;
 
   // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde)
-    eq.initialize( d->Coord(), m_u, d->T(), d->Boxvol(), m_boxnodes,
-      d->MeshBlkVol(), m_nodeblockid );
+  g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
+    m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
 
   // Multiply conserved variables with mesh volume
   volumetric( m_u, Disc()->Vol() );
@@ -670,10 +667,10 @@ ALECG::meshvelstart()
 
   // query fluid velocity across all systems integrated
   tk::UnsMesh::Coords vel;
-  for (const auto& eq : g_cgpde) eq.velocity( m_u, vel );
+  g_cgpde[d->MeshId()].velocity( m_u, vel );
   // query speed of sound in mesh nodes across all systems integrated
   std::vector< tk::real > soundspeed;
-  for (const auto& eq : g_cgpde) eq.soundspeed( m_u, soundspeed );
+  g_cgpde[d->MeshId()].soundspeed( m_u, soundspeed );
 
   volumetric( m_u, d->Vol() );
 
@@ -873,9 +870,10 @@ ALECG::BC()
 //!   latter, in finite volume methods.
 // *****************************************************************************
 {
-  const auto& coord = Disc()->Coord();
+  auto d = Disc();
+  const auto& coord = d->Coord();
 
-  conserved( m_u, Disc()->Vol() );
+  conserved( m_u, d->Vol() );
 
   // Apply Dirichlet BCs
   for (const auto& [b,bc] : m_dirbc)
@@ -883,22 +881,19 @@ ALECG::BC()
       if (bc[c].first) m_u(b,c) = bc[c].second;
 
   // Apply symmetry BCs
-  for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
+  g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
 
   // Apply farfield BCs
-  for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+  g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
   // Apply sponge conditions
-  for (const auto& eq : g_cgpde)
-    eq.sponge( m_u, coord, m_spongenodes );
+  g_cgpde[d->MeshId()].sponge( m_u, coord, m_spongenodes );
 
   // Apply user defined time dependent BCs
-  for (const auto& eq : g_cgpde)
-    eq.timedepbc( Disc()->T(), m_u, m_timedepbcnodes, m_timedepbcFn );
+  g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
+    m_timedepbcFn );
 
-  volumetric( m_u, Disc()->Vol() );
+  volumetric( m_u, d->Vol() );
 }
 
 void
@@ -936,8 +931,7 @@ ALECG::dt()
     if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
 
       // compute new dt for each mesh point
-      for (const auto& eq : g_cgpde)
-        eq.dt( d->It(), d->Vol(), m_u, m_dtp );
+      g_cgpde[d->MeshId()].dt( d->It(), d->Vol(), m_u, m_dtp );
 
       // find the smallest dt of all nodes on this chare
       mindt = *std::min_element( begin(m_dtp), end(m_dtp) );
@@ -945,11 +939,9 @@ ALECG::dt()
     } else {    // compute new dt for this chare
 
       // find the smallest dt of all equations on this chare
-      for (const auto& eq : g_cgpde) {
-        auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), d->Dtn(), m_u,
-                           d->Vol(), d->Voln() );
-        if (eqdt < mindt) mindt = eqdt;
-      }
+      auto eqdt = g_cgpde[d->MeshId()].dt( d->Coord(), d->Inpoel(), d->T(),
+        d->Dtn(), m_u, d->Vol(), d->Voln() );
+      if (eqdt < mindt) mindt = eqdt;
 
     }
     volumetric( m_u, Disc()->Vol() );
@@ -996,9 +988,8 @@ ALECG::chBndGrad()
   // Divide solution with mesh volume
   conserved( m_u, Disc()->Vol() );
   // Compute own portion of gradients for all equations
-  for (const auto& eq : g_cgpde)
-    eq.chBndGrad( d->Coord(), d->Inpoel(), m_bndel, d->Gid(), d->Bid(), m_u,
-                  m_chBndGrad );
+  g_cgpde[d->MeshId()].chBndGrad( d->Coord(), d->Inpoel(), m_bndel, d->Gid(),
+    d->Bid(), m_u, m_chBndGrad );
   // Multiply solution with mesh volume
   volumetric( m_u, Disc()->Vol() );
 
@@ -1067,13 +1058,11 @@ ALECG::rhs()
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
   conserved( m_u, Disc()->Vol() );
-  for (const auto& eq : g_cgpde) {
-    eq.rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
-            m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-            m_symbctri, m_spongenodes, d->Vol(), m_edgenode, m_edgeid,
-            m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
-            m_rhs );
-  }
+  g_cgpde[d->MeshId()].rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
+          m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
+          m_symbctri, m_spongenodes, d->Vol(), m_edgenode, m_edgeid,
+          m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
+          m_rhs );
   volumetric( m_u, Disc()->Vol() );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
@@ -1468,28 +1457,24 @@ ALECG::writeFields( CkCallback c )
     }
 
     // Collect field output names for analytical solutions
-    for (const auto& eq : g_cgpde)
-      analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+    analyticFieldNames( g_cgpde[d->MeshId()], tk::Centering::NODE,
+      nodefieldnames );
 
     // Collect field output from analytical solutions (if exist)
-    for (const auto& eq : g_cgpde)
-      analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1],
-                           coord[2], d->T(), nodefields );
+    analyticFieldOutput( g_cgpde[d->MeshId()], tk::Centering::NODE, coord[0],
+      coord[1], coord[2], d->T(), nodefields );
 
     // Query and collect block and surface field names from PDEs integrated
     std::vector< std::string > nodesurfnames;
-    for (const auto& eq : g_cgpde) {
-      auto s = eq.surfNames();
-      nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
-    }
+    auto sn = g_cgpde[d->MeshId()].surfNames();
+    nodesurfnames.insert( end(nodesurfnames), begin(sn), end(sn) );
 
     // Collect node block and surface field solution
     std::vector< std::vector< tk::real > > nodesurfs;
     conserved( m_u, Disc()->Vol() );
-    for (const auto& eq : g_cgpde) {
-      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), m_u );
-      nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
-    }
+    auto so = g_cgpde[d->MeshId()].surfOutput( tk::bfacenodes(m_bface,
+      m_triinpoel), m_u );
+    nodesurfs.insert( end(nodesurfs), begin(so), end(so) );
 
     // Query refinement data
     auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
@@ -1537,10 +1522,8 @@ ALECG::out()
   if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
     conserved( m_u, Disc()->Vol() );
-    for (const auto& eq : g_cgpde) {
-      auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
-      hist.insert( end(hist), begin(h), end(h) );
-    }
+    auto h = g_cgpde[d->MeshId()].histOutput( d->Hist(), d->Inpoel(), m_u );
+    hist.insert( end(hist), begin(h), end(h) );
     volumetric( m_u, Disc()->Vol() );
     d->history( std::move(hist) );
   }

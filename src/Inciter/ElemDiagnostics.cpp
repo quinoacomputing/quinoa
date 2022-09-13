@@ -179,9 +179,8 @@ const
 
       std::vector< tk::real > s;
 
-      for (const auto& eq : g_dgpde)
-        // cppcheck-suppress useStlAlgorithm
-        s = eq.solution( gp[0], gp[1], gp[2], d.T() );
+      // cppcheck-suppress useStlAlgorithm
+      s = g_dgpde[d.MeshId()].solution( gp[0], gp[1], gp[2], d.T() );
 
       for (std::size_t c=0; c<u.nprop()/rdof; ++c)
       {
@@ -217,10 +216,9 @@ const
       }
     }
     tk::real sp_te(0.0);
-    for (const auto& eq : g_dgpde) {
-      // cppcheck-suppress useStlAlgorithm
-      sp_te += eq.sp_totalenergy(e, u);
-    }
+    // cppcheck-suppress useStlAlgorithm
+    sp_te += g_dgpde[d.MeshId()].sp_totalenergy(e, u);
+
     // Compute sum of the total energy over the entire domain (only the
     // first entry is used)
     diag[TOTALSOL][0] += geoElem(e,0) * sp_te;

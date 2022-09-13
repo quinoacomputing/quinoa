@@ -98,19 +98,15 @@ NodeDiagnostics::compute(
     for (std::size_t i=0; i<an.nunk(); ++i) {
       // Query analytic solution for all components of all PDEs integrated
       std::vector< tk::real > a;
-      for (const auto& eq : g_cgpde) {
-        auto s = eq.solution( x[i], y[i], z[i], d.T()+d.Dt() );
-        std::move( begin(s), end(s), std::back_inserter(a) );
-      }
+      auto s = g_cgpde[d.MeshId()].solution( x[i], y[i], z[i], d.T()+d.Dt() );
+      std::move( begin(s), end(s), std::back_inserter(a) );
       Assert( a.size() == u.nprop(), "Size mismatch" );
       for (std::size_t c=0; c<an.nprop(); ++c) an(i,c) = a[c];
     }
     // Apply symmetry BCs on analytic solution (if exist, if not, IC)
-    for (const auto& eq : g_cgpde)
-      eq.symbc( an, coord, bnorm, symbcnodes );
+    g_cgpde[d.MeshId()].symbc( an, coord, bnorm, symbcnodes );
     // Apply farfield BCs on analytic solution (if exist, if not, IC)
-    for (const auto& eq : g_cgpde)
-      eq.farfieldbc( an, coord, bnorm, farfieldbcnodes );
+    g_cgpde[d.MeshId()].farfieldbc( an, coord, bnorm, farfieldbcnodes );
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk(); ++i) {

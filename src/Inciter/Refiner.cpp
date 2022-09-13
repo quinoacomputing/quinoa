@@ -996,7 +996,7 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Evaluate initial conditions on current mesh at t0
     tk::Fields u( m_coord[0].size(), nprop );
-    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox, blkvols,
+    g_cgpde[m_meshid].initialize( m_coord, u, t0, V, inbox, blkvols,
       nodeblockid );
 
     // Extract all scalar components from solution for output to file
@@ -1012,18 +1012,20 @@ Refiner::writeMesh( const std::string& basefilename,
     auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
     tk::Fields lhs( m_inpoel.size()/4, ndof*nprop );
 
-    // Generate left hand side for DG initialize
+    // Generate left hand side for DG and evaluate initial conditions on
+    // current mesh at t0
     auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
-    for (const auto& eq : g_dgpde) eq.lhs( geoElem, lhs );
-    for (const auto& eq : g_fvpde) eq.lhs( geoElem, lhs );
-
-    // Evaluate initial conditions on current mesh at t0
     auto u = lhs;
-    for (const auto& eq : g_dgpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, u, t0, m_inpoel.size()/4 );
-    for (const auto& eq : g_fvpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, elemblockid, u, t0,
+    if (scheme == ctr::SchemeType::FV) {
+      g_fvpde[m_meshid].lhs( geoElem, lhs );
+      g_fvpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+        u, t0, m_inpoel.size()/4 );
+    }
+    else {
+      g_dgpde[m_meshid].lhs( geoElem, lhs );
+      g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, u, t0,
         m_inpoel.size()/4 );
+    }
 
     // Extract all scalar components from solution for output to file
     for (std::size_t i=0; i<nprop; ++i)
@@ -1529,7 +1531,7 @@ Refiner::nodeinit( std::size_t npoin,
   if (centering == tk::Centering::NODE) {
 
     // Evaluate ICs for all scalar components integrated
-    for (auto& eq : g_cgpde) eq.initialize( m_coord, u, t0, V, inbox, blkvols,
+    g_cgpde[m_meshid].initialize( m_coord, u, t0, V, inbox, blkvols,
       nodeblockid );
 
   } else if (centering == tk::Centering::ELEM) {
@@ -1539,16 +1541,16 @@ Refiner::nodeinit( std::size_t npoin,
     tk::Fields ue( m_inpoel.size()/4, nprop );
     auto lhs = ue;
     auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
-    for (const auto& eq : g_dgpde)
-      eq.lhs( geoElem, lhs );
-    for (const auto& eq : g_dgpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, ue, t0, esuel.size()/4 );
-
-    for (const auto& eq : g_fvpde)
-      eq.lhs( geoElem, lhs );
-    for (const auto& eq : g_fvpde)
-      eq.initialize( lhs, m_inpoel, m_coord, inbox, elemblockid, ue, t0,
-        esuel.size()/4 );
+    if (scheme == ctr::SchemeType::FV) {
+    g_fvpde[m_meshid].lhs( geoElem, lhs );
+    g_fvpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+      ue, t0, esuel.size()/4 );
+    }
+    else {
+    g_dgpde[m_meshid].lhs( geoElem, lhs );
+    g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, ue, t0,
+      esuel.size()/4 );
+    }
 
     // Transfer initial conditions from cells to nodes
     for (std::size_t p=0; p<npoin; ++p) {    // for all mesh nodes on this chare

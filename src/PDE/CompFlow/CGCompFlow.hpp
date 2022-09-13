@@ -68,7 +68,6 @@ class CompFlow {
       m_physics(),
       m_problem(),
       m_system( c ),
-      m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_stagCnf( g_inputdeck.specialBC< eq, tag::stag >( c ) ),
       m_skipCnf( g_inputdeck.specialBC< eq, tag::skip >( c ) ),
       m_fr( g_inputdeck.get< param, eq, tag::farfield_density >().size() > c ?
@@ -1078,7 +1077,6 @@ class CompFlow {
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy
     const ncomp_t m_system;             //!< Equation system index
-    const ncomp_t m_offset;             //!< Offset PDE operates from
     //! Stagnation BC user configuration: point coordinates and radii
     const std::tuple< std::vector< real >, std::vector< real > > m_stagCnf;
     //! Skip BC user configuration: point coordinates and radii

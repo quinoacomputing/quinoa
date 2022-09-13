@@ -69,7 +69,6 @@ class MultiMat {
     explicit MultiMat( ncomp_t c ) :
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
-      m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_riemann( multimatRiemannSolver(
         g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) )
     {
@@ -846,8 +845,6 @@ class MultiMat {
     const ncomp_t m_system;
     //! Number of components in this PDE system
     const ncomp_t m_ncomp;
-    //! Offset PDE system operates from
-    const ncomp_t m_offset;
     //! Riemann solver
     tk::RiemannFluxFn m_riemann;
     //! BC configuration
