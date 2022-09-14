@@ -263,8 +263,9 @@ DG::box( tk::real v, const std::vector< tk::real >& )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  g_dgpde[d->MeshId()].initialize( m_lhs, myGhosts()->m_inpoel, myGhosts()->m_coord, m_boxelems,
-    m_u, d->T(), myGhosts()->m_fd.Esuel().size()/4 );
+  g_dgpde[d->MeshId()].initialize( m_lhs, myGhosts()->m_inpoel,
+    myGhosts()->m_coord, m_boxelems, d->ElemBlockId(), m_u, d->T(),
+    myGhosts()->m_fd.Esuel().size()/4 );
   g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4 );
 

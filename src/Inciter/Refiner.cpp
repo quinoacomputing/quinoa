@@ -1023,8 +1023,8 @@ Refiner::writeMesh( const std::string& basefilename,
     }
     else {
       g_dgpde[m_meshid].lhs( geoElem, lhs );
-      g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, u, t0,
-        m_inpoel.size()/4 );
+      g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+        u, t0, m_inpoel.size()/4 );
     }
 
     // Extract all scalar components from solution for output to file
@@ -1548,8 +1548,8 @@ Refiner::nodeinit( std::size_t npoin,
     }
     else {
     g_dgpde[m_meshid].lhs( geoElem, lhs );
-    g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, ue, t0,
-      esuel.size()/4 );
+    g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+      ue, t0, esuel.size()/4 );
     }
 
     // Transfer initial conditions from cells to nodes

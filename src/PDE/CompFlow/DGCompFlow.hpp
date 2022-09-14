@@ -145,6 +145,8 @@ class CompFlow {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::unordered_set< std::size_t > >& inbox,
+                const std::unordered_map< std::size_t,
+                  std::set< std::size_t > >&,
                 tk::Fields& unk,
                 tk::real t,
                 const std::size_t nielem ) const
