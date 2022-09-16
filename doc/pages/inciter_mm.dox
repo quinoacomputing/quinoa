@@ -1,11 +1,11 @@
 namespace inciter {
 /*!
-  \page      inciter_mm Multi-material DG hydrodynamics
+  \page      inciter_mm Multi-material hydrodynamics
 
 @tableofcontents{xml}
 
 @ref inciter_main supports multiple hydrodynamics schemes. This page describes
-governing equations and the `DG` method for multi-material flows.
+governing equations and the `DG` and `FV` methods for multi-material flows.
 
 @section goveqns Governing equations for multi-material hydrodynamics
 The stiff velocity equilibrium multi-material hydrodynamic equations are
@@ -123,6 +123,10 @@ method of lines. A 3rd order total variation diminishing (TVD) Runge-Kutta
 scheme is used to discretize the time derivatives.
 
 @section spcdiscr Spatial discretization
+Two spatial discretizations are currently configured to solve multi-material
+hydrodynamics: `DG` and `FV`.
+
+@subsection dgm Discontinuous Galerkin (DG)
 A modal Reconstructed Discontinuous Galerkin (rDG) method is used to discretize
 the multi-material system in space. The specific rDG method implemented in
 Quinoa uses Dubiner's orthogonal basis functions (see the @ref inciter_dg
@@ -131,6 +135,11 @@ is via a least-squares procedure based on node-neighbors. Fluxes through
 cell-faces are calculated using multi-material Riemann solvers. Non-linear
 instabilities are suppresed using a vertex-based limiter. Further details can be
 found in the @ref papers_inciter "Inciter papers".
+
+@subsection fvm Finite Volume (FV)
+The FV method for multi-material hydrodynamics is a cell-centered second order
+method, that uses least-squares reconstruction to obtain solution gradients.
+The rest of the numerical method closely follows DG.
 
 @section intreco Algebraic interface reconstruction
 Tangent of Hyperbola for INterface Capturing (THINC) is used to algebraically

@@ -4,7 +4,7 @@
 @section resources_code Code
 
 - Source code --- https://github.com/quinoacomputing/quinoa
-- Documentation --- https://quinoacomputing.org
+- Documentation --- https://quinoacomputing.github.io
 - GitHub organization --- https://github.com/quinoacomputing
 - Roadmap -- @ref roadmap
 
@@ -16,7 +16,7 @@
 @section resources_legal Legal
 
 - License --- https://github.com/quinoacomputing/quinoa/blob/master/LICENSE
-- Third-party libraries and licenses --- https://quinoacomputing.org/licenses.html
+- Third-party libraries and licenses --- https://quinoacomputing.github.io/licenses.html
 
 @section resources_contributing Contributing
 
@@ -24,7 +24,7 @@
 
 @section resources_quality Code quality
 
-- GCov --- https://quinoacomputing.org/coverage
+- GCov --- https://quinoacomputing.github.io/coverage
 - Codecov --- https://codecov.io/gh/quinoacomputing/quinoa/commits
 - Sonarqube --- https://sonarqube.com/organizations/quinoacomputing
 - Azure --- https://dev.azure.com/quinoacomputing/Quinoa
@@ -52,6 +52,7 @@
 [Francisco Gonzalez](https://github.com/franjgonzalez) -
 [Christoph Junghans](https://github.com/junghans) -
 [Weizhao Li](https://github.com/WeizhaoLi2018) -
+[Tanner Nielsen](https://github.com/TannerNielsen) -
 [Aditya Pakki](https://github.com/adityapakki) -
 [Aditya Pandare](https://github.com/adityakpandare) -
 [Robert Pavel](https://github.com/rspavel) -
