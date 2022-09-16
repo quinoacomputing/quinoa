@@ -531,7 +531,7 @@ THINCReco( std::size_t system,
   // check reconstructed volfracs for positivity
   bool neg_vf = false;
   for (std::size_t k=0; k<nmat; ++k) {
-    if (alReco[k] < 1e-16) neg_vf = true;
+    if (alReco[k] < 1e-16 && matInt[k] > 0) neg_vf = true;
   }
   for (std::size_t k=0; k<nmat; ++k) {
     if (neg_vf) {
