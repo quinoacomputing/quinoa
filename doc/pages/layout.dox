@@ -181,34 +181,33 @@ some optimizations.) This decision leaves us with the following choices:
     3. EqCompPar: [ equation ] [ component ] [ particle ]
     4. EqParComp: [ equation ] [ particle ] [ component ]
 
-Access is based on the 3 coordinates: _particle_ (or _unknown_), _component_,
-and _offset_. _Particle_ is the particle index, component denotes the given
+Access is based on the 2 coordinates: _particle_ (or _unknown_), and
+_component_. _Particle_ is the particle index, component denotes the given
 component of a vector equation, e.g., velocity has 3 components, a
 multi-material turbulent mix model governed by the Dirichlet SDE has \f$K=N-1\f$
-scalars (components), and _offset_ is determined by the relative position of the
-given equation compared to the other equations. Using these 3 coordinates the
+scalars (components). Using these 2 coordinates the
 index calculations for the above 3 cases are:
 
     1. ParEqComp: [ particle ] [ equation ] [ component ]
 
-         baseptr + particle*nprop + offset + component
+         baseptr + particle*nprop + component
 
 where _nprop_ is the total number of particle properties, e.g., 3 positions, 3
 velocities, 5 scalars \f$\to\f$ nprop = 11.
 
     3. EqCompPar: [ equation ] [ component ] [ particle ]
 
-         baseptr + (offset+component)*npar + particle
+         baseptr + component*npar + particle
 
 where _npar_ is the total number of particles.
 
     4. EqParComp: [ equation ] [ particle ] [ component ]
 
-         baseptr + offset*npar + nce*particle + component
+         baseptr + npar + nce*particle + component
 
 where _nce_ is the number of components for the given equation. Since this would
-require another function argument (besides _particle_, _component_, and
-_offset_), and it costs an integer-multiply more than the other two layouts, we
+require another function argument (besides _particle_ and _component_),
+and it costs an integer-multiply more than the other two layouts, we
 dismiss this layout, and only implement the following two:
 
     1. ParEqComp - Particle-major
@@ -249,22 +248,21 @@ class Data {
    // Overloads for particle-, and property-major accesses
    inline
    tk::real& access( int particle, int property, int2type<ParticleMajor> ) {
-     return *(m_ptr + particle*m_nprop + m_offset + property);
+     return *(m_ptr + particle*m_nprop + property);
    }
    inline
    tk::real& access( int particle, int property, int2type<PropertyMajor> ) {
      // This is the same for now, not called, irrelevant in zero-cost-test
-     return *(m_ptr + particle*m_nprop + m_offset + property);
+     return *(m_ptr + particle*m_nprop + property);
    }
 
    tk::real* const m_ptr;
    const int m_nprop;
-   const int m_offset;
 
   public:
     // Constructor
-    Data( tk::real* const ptr, int nprop, int offset ) :
-      m_ptr(ptr), m_nprop(nprop), m_offset(offset) {}
+    Data( tk::real* const ptr, int nprop ) :
+      m_ptr(ptr), m_nprop(nprop) {}
 
     // Access dispatch
     inline tk::real& operator()( int particle, int property ) {
@@ -279,9 +277,9 @@ Test by adding to @code{.cpp}Dirichlet@endcode (derived equation class)
 constructor (client code):
 
 @code{.cpp}
-Data< Layout > d( particles, m_nprop, m_offset );
+Data< Layout > d( particles, m_nprop );
 Model::aa = d( 34, 3 );
-Model::bb = *(m_particles + 34*m_nprop + m_offset + 3);
+Model::bb = *(m_particles + 34*m_nprop + 3);
 @endcode
 
 Add to @code{.cpp}Model@endcode:
@@ -508,7 +506,7 @@ __Layout-dependent algorithm:__
 //! Advance particles
 void advance(int p, int tid, tk::real dt) override {
   // Get access to particle scalars
-  tk::real* y = m_particles.ptr() + p*m_nprop + m_offset;
+  tk::real* y = m_particles.ptr() + p*m_nprop;
   
   // Compute Nth scalar
   tk::real yn = 1.0 - y[0];
@@ -545,8 +543,8 @@ __Layout-independent algorithm:__
 //! Advance particles
 void advance(int p, int tid, tk::real dt) override {
   // Compute Nth scalar
-  tk::real yn = 1.0 - m_particles(p, 0, m_offset);
-  for (int i=1; i<m_ncomp; ++i) yn -= m_particles(p, i, m_offset);
+  tk::real yn = 1.0 - m_particles(p, 0);
+  for (int i=1; i<m_ncomp; ++i) yn -= m_particles(p, i);
 
   // Generate Gaussian random numbers with zero mean and unit variance
   tk::real dW[m_ncomp];
@@ -554,10 +552,10 @@ void advance(int p, int tid, tk::real dt) override {
 
   // Advance first m_ncomp (K=N-1) scalars
   for (int i=0; i<m_ncomp; ++i) {
-    tk::real d = m_k[i] * m_particles(p, i, m_offset) * yn * dt;
+    tk::real d = m_k[i] * m_particles(p, i) * yn * dt;
     if (d > 0.0) d = sqrt(d); else d = 0.0;
-    m_particles(p, i, m_offset) +=
-      0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i]) * m_particles(p, i, m_offset) )*dt
+    m_particles(p, i) +=
+      0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i]) * m_particles(p, i) )*dt
       + d*dW[i];
   }
 }
