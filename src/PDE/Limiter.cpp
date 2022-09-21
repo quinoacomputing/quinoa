@@ -623,8 +623,8 @@ VertexBasedMultiMat_P1(
 
       std::vector< tk::real > phic_p2, phip_p2;
 
-      PositivityLimitingMultiMat(nmat, system, offset, rdof, dof_el, e, inpoel,
-        coord, U, P, phic, phic_p2, phip, phip_p2);
+      PositivityLimitingMultiMat(nmat, system, offset, mat_blk, rdof, dof_el, e,
+        inpoel, coord, U, P, phic, phic_p2, phip, phip_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -807,8 +807,8 @@ VertexBasedMultiMat_P2(
         //}
       }
 
-      PositivityLimitingMultiMat(nmat, system, offset, ndof, dof_el, e, inpoel,
-          coord, U, P, phic_p1, phic_p2, phip_p1, phic_p2);
+      PositivityLimitingMultiMat(nmat, system, offset, mat_blk, ndof, dof_el, e,
+          inpoel, coord, U, P, phic_p1, phic_p2, phip_p1, phic_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -861,6 +861,7 @@ VertexBasedMultiMat_FV(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -921,8 +922,8 @@ VertexBasedMultiMat_FV(
 
     // apply positivity preserving limiter
     std::vector< tk::real > phic_p2, phip_p2;
-    PositivityLimitingMultiMat(nmat, system, offset, rdof, rdof, e, inpoel,
-      coord, U, P, phic, phic_p2, phip, phip_p2);
+    PositivityLimitingMultiMat(nmat, system, offset, mat_blk, rdof, rdof, e,
+      inpoel, coord, U, P, phic, phic_p2, phip, phip_p2);
 
     // apply limiter function
     for (std::size_t c=0; c<ncomp; ++c)
@@ -1789,8 +1790,9 @@ BoundPreservingLimitingFunction( const tk::real min,
 }
 
 void PositivityLimitingMultiMat( std::size_t nmat,
-                                 std::size_t system,
+                                 std::size_t,
                                  ncomp_t offset,
+                               const std::vector< inciter::EoS_Base* >& mat_blk,
                                  std::size_t rdof,
                                  std::size_t ndof_el,
                                  std::size_t e,
@@ -1807,6 +1809,7 @@ void PositivityLimitingMultiMat( std::size_t nmat,
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] system Equation system index
 //! \param[in] offset Index for equation system
+//! \param[in] mat_blk EOS material block
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] ndof_el Number of dofs for element e
 //! \param[in] e Element being checked for consistency
@@ -1898,7 +1901,7 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
-        auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
+        auto min_pre = mat_blk[imat]->min_eff_pressure(min);
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0), offset);
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
@@ -1947,7 +1950,7 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
-        auto min_pre = min_eff_pressure< tag::multimat >(system, min, imat);
+        auto min_pre = mat_blk[imat]->min_eff_pressure(min);
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0), offset);
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
@@ -2174,10 +2177,10 @@ void MarkShockCells ( const std::size_t nelem,
       std::array< std::vector< tk::real >, 2 > state;
 
       // Evaluate the high order solution at the qudrature point
-      state[0] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
-        nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = tk::evalPolynomialSol(system, offset, 0, ncomp, nprim, rdof,
-        nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
+      state[0] = tk::evalPolynomialSol(system, offset, mat_blk, 0, ncomp, nprim,
+        rdof, nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+      state[1] = tk::evalPolynomialSol(system, offset, mat_blk, 0, ncomp, nprim,
+        rdof, nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
@@ -2339,5 +2342,24 @@ correctLimConservMultiMat(
     }
   }
 }
+
+
+//! Constrain material partial pressure (alpha_k * p_k)
+//! \param[in] apr Material partial pressure (alpha_k * p_k)
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for the
+//!   single-material system, this argument can be left unspecified by the
+//!   calling code
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Constrained material partial pressure (alpha_k * p_k)
+tk::real constrain_pressure( const std::vector< EoS_Base* >& mat_blk,
+  tk::real apr,
+  tk::real alpha=1.0,
+  std::size_t imat=0 )
+{
+  return std::max(apr, alpha*mat_blk[imat]->min_eff_pressure(1e-12));
+}
+
 
 } // inciter::

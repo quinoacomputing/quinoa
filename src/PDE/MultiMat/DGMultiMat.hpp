@@ -336,8 +336,8 @@ class MultiMat {
             pri[pressureIdx(nmat,imat)] = m_mat_blk[imat]->eos_pressure(
               arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat );
 
-            pri[pressureIdx(nmat,imat)] = constrain_pressure< tag::multimat >(
-              m_system, pri[pressureIdx(nmat,imat)], alphamat, imat);
+            pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
+              pri[pressureIdx(nmat,imat)], alphamat, imat);
           }
 
           // Evaluate bulk velocity at quadrature point
@@ -675,8 +675,8 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( m_system, nmat, m_offset, ndof, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, riemannDeriv,
+      tk::nonConservativeInt( m_system, nmat, m_offset, m_mat_blk, ndof, rdof,
+                              nelem, inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
       // compute finite pressure relaxation terms

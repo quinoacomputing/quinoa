@@ -159,6 +159,7 @@ VertexBasedMultiMat_FV(
   std::size_t nelem,
   std::size_t system,
   std::size_t offset,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -254,6 +255,7 @@ BoundPreservingLimitingFunction( const tk::real min,
 void PositivityLimitingMultiMat( std::size_t nmat,
                                  std::size_t system,
                                  ncomp_t offset,
+                               const std::vector< inciter::EoS_Base* >& mat_blk,
                                  std::size_t rdof,
                                  std::size_t ndof_el,
                                  std::size_t e,
@@ -307,6 +309,14 @@ correctLimConservMultiMat(
   const tk::Fields& geoElem,
   const tk::Fields& prim,
   tk::Fields& unk );
+
+
+//! Constrain material partial pressure (alpha_k * p_k)
+tk::real constrain_pressure( const std::vector< EoS_Base* >& mat_blk,
+  tk::real apr,
+  tk::real alpha,
+  std::size_t imat );
+
 
 } // inciter::
 

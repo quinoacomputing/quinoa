@@ -333,6 +333,18 @@ class JWL: public EoS_Base {
     }
 
 
+    tk::real min_eff_pressure( tk::real min ) override
+    // *************************************************************************                    
+    //! Compute the minimum effective pressure used for positivity preserving                       
+    //!   limiting                                                                                  
+    //! \param[in] min Minimum threshold in positivity preserving limiting                          
+    //! \return Minimum effective pressure                                                          
+    // *************************************************************************     
+    {
+      return min;  // TBN: double check to make sure this is appropriate for JWL
+    }
+
+
     // Destructor
     ~JWL() override {}
 };

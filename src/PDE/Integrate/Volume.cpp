@@ -43,6 +43,7 @@ tk::volInt( ncomp_t system,
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
 //! \param[in] t Physical time
+//! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Total number of degrees of freedom included reconstructed ones
 //! \param[in] nelem Maximum number of elements
@@ -113,8 +114,8 @@ tk::volInt( ncomp_t system,
 
         auto wt = wgp[igp] * geoElem(e, 0, 0);
 
-        auto state = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
-          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
+        auto state = evalPolynomialSol(system, offset, mat_blk, intsharp, ncomp,
+          nprim, rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
           {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
         // evaluate prescribed velocity (if any)

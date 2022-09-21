@@ -60,6 +60,7 @@ bndSurfInt( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
@@ -177,8 +178,9 @@ bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0,0);
 
           // Compute the state variables at the left element
-          auto ugp = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
-            rdof, nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+          auto ugp = evalPolynomialSol(system, offset, mat_blk, intsharp, ncomp,
+            nprim, rdof, nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l,
+            B_l, U, P);
 
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
@@ -302,6 +304,7 @@ bndSurfIntFV( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] offset Offset this PDE system operates from
+//! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
 //! \param[in] fd Face connectivity and boundary conditions object
@@ -376,8 +379,9 @@ bndSurfIntFV( ncomp_t system,
         auto B_l = eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
 
         // Compute the state variables at the left element
-        auto ugp = evalPolynomialSol(system, offset, intsharp, ncomp, nprim,
-          rdof, nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+        auto ugp = evalPolynomialSol(system, offset, mat_blk, intsharp, ncomp,
+          nprim, rdof, nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l,
+          U, P);
 
         Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                 "appended boundary state vector" );

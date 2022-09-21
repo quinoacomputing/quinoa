@@ -16,6 +16,7 @@
 #include <cmath>
 #include "Data.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS_Base.hpp"
 
 namespace inciter {
 
@@ -155,49 +156,6 @@ tk::real eos_pressure( ncomp_t system,
   }
 
   return partpressure;
-}
-
-//! Constrain material partial pressure (alpha_k * p_k)
-//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
-//! \param[in] system Equation system index
-//! \param[in] apr Material partial pressure (alpha_k * p_k)
-//! \param[in] alpha Material volume fraction. Default is 1.0, so that for the
-//!   single-material system, this argument can be left unspecified by the
-//!   calling code
-//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
-//!   for the single-material system, this argument can be left unspecified by
-//!   the calling code
-//! \return Constrained material partial pressure (alpha_k * p_k)
-template< class Eq >
-tk::real constrain_pressure( ncomp_t system,
-  tk::real apr,
-  tk::real alpha=1.0,
-  std::size_t imat=0 )
-{
-  // query input deck to get p_c
-  auto p_c = pstiff< Eq >(system, imat);
-
-  return std::max(apr, alpha*(-p_c+1e-12));
-}
-
-//! Compute the minimum effective pressure used for positivity preserving
-//!   limiting
-//! \tparam Eq Equation type to operate on, e.g., tag::compflow, tag::multimat
-//! \param[in] system Equation system index
-//! \param[in] min Minimum threshold in positivity preserving limiting
-//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
-//!   for the single-material system, this argument can be left unspecified by
-//!   the calling code
-//! \return Minimum effective pressure
-template< class Eq >
-tk::real min_eff_pressure( ncomp_t system,
-  tk::real min,
-  std::size_t imat=0 )
-{
-  // query input deck to get p_c
-  auto p_c = pstiff< Eq >(system, imat);
-
-  return (min - p_c);
 }
 
 } //inciter::

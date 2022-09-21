@@ -272,7 +272,7 @@ class MultiMat {
             m_mat_blk[k]->eos_pressure( arhomat, vel[0], vel[1], vel[2],
                                         arhoemat, alphamat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset) =
-            constrain_pressure< tag::multimat >(m_system,
+            constrain_pressure( m_mat_blk,
             prim(e, pressureDofIdx(nmat, k, rdof, 0), m_offset), alphamat, k);
           for (std::size_t idof=1; idof<rdof; ++idof)
             prim(e, pressureDofIdx(nmat, k, rdof, idof), m_offset) = 0.0;
@@ -403,7 +403,7 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          m_system, m_offset, coord, U, P, nmat );
+          m_system, m_offset, m_mat_blk, coord, U, P, nmat );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
@@ -523,8 +523,9 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeIntFV( m_system, nmat, m_offset, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, riemannDeriv, R );
+      tk::nonConservativeIntFV( m_system, nmat, m_offset, m_mat_blk, rdof,
+                                nelem, inpoel, coord, geoElem, U, P,
+                                riemannDeriv, R );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
