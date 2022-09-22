@@ -386,7 +386,6 @@ tk::eval_basis( const std::size_t ndof,
 
 std::vector< tk::real >
 tk::eval_state ( ncomp_t ncomp,
-                 ncomp_t offset,
                  const std::size_t ndof,
                  const std::size_t ndof_el,
                  const std::size_t e,
@@ -396,7 +395,6 @@ tk::eval_state ( ncomp_t ncomp,
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for the local element
 //! \param[in] e Index for the tetrahedron element
@@ -419,23 +417,23 @@ tk::eval_state ( ncomp_t ncomp,
   for (ncomp_t c=VarRange[0]; c<=VarRange[1]; ++c)
   {
     auto mark = c*ndof;
-    state[c] = U( e, mark, offset );
+    state[c] = U( e, mark );
 
     if(ndof_el > 1)        //DG(P1)
     {
-      state[c] += U( e, mark+1, offset ) * B[1]
-                + U( e, mark+2, offset ) * B[2]
-                + U( e, mark+3, offset ) * B[3];
+      state[c] += U( e, mark+1 ) * B[1]
+                + U( e, mark+2 ) * B[2]
+                + U( e, mark+3 ) * B[3];
     }
 
     if(ndof_el > 4)        //DG(P2)
     {
-      state[c] += U( e, mark+4, offset ) * B[4]
-                + U( e, mark+5, offset ) * B[5]
-                + U( e, mark+6, offset ) * B[6]
-                + U( e, mark+7, offset ) * B[7]
-                + U( e, mark+8, offset ) * B[8]
-                + U( e, mark+9, offset ) * B[9];
+      state[c] += U( e, mark+4 ) * B[4]
+                + U( e, mark+5 ) * B[5]
+                + U( e, mark+6 ) * B[6]
+                + U( e, mark+7 ) * B[7]
+                + U( e, mark+8 ) * B[8]
+                + U( e, mark+9 ) * B[9];
     }
   }
 
@@ -444,7 +442,6 @@ tk::eval_state ( ncomp_t ncomp,
 
 std::vector< std::vector< tk::real > >
 tk::DubinerToTaylor( ncomp_t ncomp,
-                     ncomp_t offset,
                      const std::size_t e,
                      const std::size_t ndof,
                      const tk::Fields& U,
@@ -453,7 +450,6 @@ tk::DubinerToTaylor( ncomp_t ncomp,
 // *****************************************************************************
 //  Transform the solution with Dubiner basis to the solution with Taylor basis
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Index for equation systems
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] U High-order solution vector with Dubiner basis
@@ -478,7 +474,7 @@ tk::DubinerToTaylor( ncomp_t ncomp,
   for(ncomp_t icomp = 0; icomp < ncomp; icomp++)
   {
     auto mark = icomp * ndof;
-    unk[icomp][0] = U(e, mark, offset);
+    unk[icomp][0] = U(e, mark);
   }
 
   // Evaluate the first order derivative
@@ -506,7 +502,7 @@ tk::DubinerToTaylor( ncomp_t ncomp,
     {
       unk[icomp][idir+1] = 0;
       for(std::size_t idof = 1; idof < ndof; idof++)
-        unk[icomp][idir+1] += U(e, mark+idof, offset) * dBdx[idir][idof];
+        unk[icomp][idir+1] += U(e, mark+idof) * dBdx[idir][idof];
     }
   }
 
@@ -590,7 +586,7 @@ tk::DubinerToTaylor( ncomp_t ncomp,
       {
         unk[icomp][idir+4] = 0;
         for(std::size_t ibasis = 0; ibasis < 6; ibasis++)
-          unk[icomp][idir+4] += U(e, mark+4+ibasis, offset) * d2Bdx2[idir][ibasis];
+          unk[icomp][idir+4] += U(e, mark+4+ibasis) * d2Bdx2[idir][ibasis];
       }
     }
   }
@@ -644,7 +640,7 @@ tk::TaylorToDubiner( ncomp_t ncomp,
   }
 
   // Coordinates of the centroid in physical domain
-  std::array< tk::real, 3 > x_c{geoElem(e,1,0), geoElem(e,2,0), geoElem(e,3,0)};
+  std::array< tk::real, 3 > x_c{geoElem(e,1), geoElem(e,2), geoElem(e,3)};
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -804,7 +800,6 @@ tk::eval_TaylorBasis( const std::size_t ndof,
 
 std::vector< std::vector< tk::real > >
 tk::DubinerToTaylorRefEl( ncomp_t ncomp,
-  ncomp_t offset,
   const std::size_t e,
   const std::size_t ndof,
   const std::size_t ndof_el,
@@ -813,7 +808,6 @@ tk::DubinerToTaylorRefEl( ncomp_t ncomp,
 // *****************************************************************************
 //  Transform the solution from Dubiner basis to Taylor basis
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Index for equation systems
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Local number of degrees of freedom for the element
@@ -847,7 +841,7 @@ tk::DubinerToTaylorRefEl( ncomp_t ncomp,
     auto Bt = eval_TaylorBasisRefEl(ndof_el, coordgp[0][igp], coordgp[1][igp],
       coordgp[2][igp]);
 
-    auto state = tk::eval_state(ncomp, offset, ndof, ndof_el, e, U, B,
+    auto state = tk::eval_state(ncomp, ndof, ndof_el, e, U, B,
       {0,ncomp-1});
 
     for (std::size_t c=0; c<ncomp; ++c) {

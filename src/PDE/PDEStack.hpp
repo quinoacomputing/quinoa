@@ -130,8 +130,7 @@ class PDEStack {
                   ctr::Problem().name( key.get< tag::problem >() ) +
                   + "') in factory" );
         // Associate equation system index (value) to all variable offsets
-        auto offset = ncomp.offset< EqTag >(c);
-        for (ncomp_t i=0; i<nc; ++i) g_inputdeck.get<tag::sys>()[offset+i] = c;
+        for (ncomp_t i=0; i<nc; ++i) g_inputdeck.get<tag::sys>()[i] = c;
         // instantiate and return PDE object
         return it->second( c );
       } else Throw ( "Can't create PDE with zero components" );

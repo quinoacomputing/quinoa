@@ -28,8 +28,6 @@
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
-extern std::vector< CGPDE > g_cgpde;
-extern std::vector< DGPDE > g_dgpde;
 
 } // inciter::
 

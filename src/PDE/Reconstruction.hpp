@@ -39,8 +39,7 @@ lhsLeastSq_P0P1(
 
 //! Compute internal surface contributions to the least-squares reconstruction
 void
-intLeastSq_P0P1( ncomp_t offset,
-                 const std::size_t rdof,
+intLeastSq_P0P1( const std::size_t rdof,
                  const inciter::FaceData& fd,
                  const Fields& geoElem,
                  const Fields& W,
@@ -53,7 +52,6 @@ void
 bndLeastSqConservedVar_P0P1(
   ncomp_t system,
   ncomp_t ncomp,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
@@ -71,7 +69,6 @@ bndLeastSqConservedVar_P0P1(
 //! Solve 3x3 system for least-squares reconstruction
 void
 solveLeastSq_P0P1(
-  ncomp_t offset,
   const std::size_t rdof,
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
@@ -83,7 +80,6 @@ solveLeastSq_P0P1(
 void
 recoLeastSqExtStencil(
   std::size_t rdof,
-  std::size_t offset,
   std::size_t e,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -93,8 +89,7 @@ recoLeastSqExtStencil(
 
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
-transform_P0P1( ncomp_t offset,
-                std::size_t rdof,
+transform_P0P1( std::size_t rdof,
                 std::size_t nelem,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
@@ -104,7 +99,6 @@ transform_P0P1( ncomp_t offset,
 //! Compute THINC reconstructions near material interfaces
 void
 THINCReco( std::size_t system,
-  std::size_t offset,
   std::size_t rdof,
   std::size_t nmat,
   std::size_t e,
@@ -121,7 +115,6 @@ THINCReco( std::size_t system,
 //! Compute THINC reconstructions for linear advection (transport)
 void
 THINCRecoTransport( std::size_t system,
-  std::size_t offset,
   std::size_t rdof,
   std::size_t,
   std::size_t e,
@@ -168,7 +161,6 @@ THINCFunction_new( std::size_t rdof,
 //! Evaluate polynomial solution at quadrature point
 std::vector< tk::real >
 evalPolynomialSol(std::size_t system,
-  std::size_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   int intsharp,
   std::size_t ncomp,
@@ -187,8 +179,7 @@ evalPolynomialSol(std::size_t system,
 
 //! Compute safe reconstructions near material interfaces
 void
-safeReco( std::size_t offset,
-          std::size_t rdof,
+safeReco( std::size_t rdof,
           std::size_t nmat,
           std::size_t el,
           int er,

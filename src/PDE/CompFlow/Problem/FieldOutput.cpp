@@ -39,7 +39,6 @@ std::vector< std::string > CompFlowFieldNames()
 
 std::vector< std::vector< tk::real > > 
 CompFlowFieldOutput( ncomp_t,
-                     ncomp_t offset,
                      const std::vector< EoS_Base* >& mat_blk,
                      std::size_t nunk,
                      std::size_t rdof,
@@ -48,8 +47,6 @@ CompFlowFieldOutput( ncomp_t,
 //  Return field output going to file
 //! \param[in] system Equation system index, i.e., which compressible
 //!   flow equation system we operate on among the systems of PDEs
-//! \param[in] offset System offset specifying the position of the system of
-//!   PDEs among other systems
 //! \param[in] nunk Number of unknowns to extract
 //! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
 //!   the number of scalar components to shift when extracting scalar
@@ -59,11 +56,11 @@ CompFlowFieldOutput( ncomp_t,
 // *****************************************************************************
 {
   std::vector< std::vector< tk::real > > out;
-  const auto r  = U.extract( 0*rdof, offset );
-  const auto ru = U.extract( 1*rdof, offset );
-  const auto rv = U.extract( 2*rdof, offset );
-  const auto rw = U.extract( 3*rdof, offset );
-  const auto re = U.extract( 4*rdof, offset );
+  const auto r  = U.extract_comp( 0*rdof );
+  const auto ru = U.extract_comp( 1*rdof );
+  const auto rv = U.extract_comp( 2*rdof );
+  const auto rw = U.extract_comp( 3*rdof );
+  const auto re = U.extract_comp( 4*rdof );
 
   Assert( r.size() >= nunk, "Size mismatch" );
   Assert( ru.size() >= nunk, "Size mismatch" );

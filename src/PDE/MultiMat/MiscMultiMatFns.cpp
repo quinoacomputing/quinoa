@@ -70,7 +70,6 @@ cleanTraceMultiMat(
   std::size_t nelem,
   std::size_t system,
   const std::vector< EoS_Base* >& mat_blk,
-  std::size_t offset,
   const tk::Fields& geoElem,
   std::size_t nmat,
   tk::Fields& U,
@@ -80,7 +79,6 @@ cleanTraceMultiMat(
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
 //! \param[in] mat_blk EOS material block
-//! \param[in] offset Offset for equation systems
 //! \param[in] geoElem Element geometry array
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in/out] U High-order solution vector which gets modified
@@ -102,7 +100,7 @@ cleanTraceMultiMat(
     std::size_t kmax = 0;
     for (std::size_t k=0; k<nmat; ++k)
     {
-      auto al = U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
+      auto al = U(e, volfracDofIdx(nmat, k, rdof, 0));
       if (al > almax)
       {
         almax = al;
@@ -117,13 +115,13 @@ cleanTraceMultiMat(
     relaxInd[kmax] = 1;
     relaxVol += almax;
 
-    auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0), offset);
-    auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0), offset);
-    auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0), offset);
-    auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset)/almax;
+    auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
+    auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
+    auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
+    auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0))/almax;
     auto tmax = mat_blk[kmax]->eos_temperature(
-      U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
-      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset), almax );
+      U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
+      U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax );
 
     tk::real p_target(0.0), d_al(0.0), d_arE(0.0);
     //// get equilibrium pressure
@@ -131,9 +129,9 @@ cleanTraceMultiMat(
     //tk::real ratio(0.0);
     //for (std::size_t k=0; k<nmat; ++k)
     //{
-    //  auto arhok = U(e, densityDofIdx(nmat,k,rdof,0), offset);
-    //  auto alk = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-    //  auto apk = P(e, pressureDofIdx(nmat,k,rdof,0), offset);
+    //  auto arhok = U(e, densityDofIdx(nmat,k,rdof,0));
+    //  auto alk = U(e, volfracDofIdx(nmat,k,rdof,0));
+    //  auto apk = P(e, pressureDofIdx(nmat,k,rdof,0));
     //  auto ak = eos_soundspeed< tag::multimat >(system, arhok, apk, alk, k );
     //  kmat[k] = arhok * ak * ak;
 
@@ -147,8 +145,8 @@ cleanTraceMultiMat(
     // 1. Correct minority materials and store volume/energy changes
     for (std::size_t k=0; k<nmat; ++k)
     {
-      auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
-      auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0), offset) / alk;
+      auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
+      auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
       auto Pck = pstiff< tag::multimat >(system, k);
       // for positive volume fractions
       if (matExists(alk))
@@ -168,7 +166,7 @@ cleanTraceMultiMat(
           //}
           //else
           //{
-          //  auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0), offset);
+          //  auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
           //  auto ck = eos_soundspeed< tag::multimat >(system, arhok, alk*pk,
           //    alk, k);
           //  auto kk = arhok * ck * ck;
@@ -177,20 +175,20 @@ cleanTraceMultiMat(
           alk_new = alk;
 
           // energy change
-          auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0), offset)
+          auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0))
             / alk_new;
           auto rhoEmat = mat_blk[k]->eos_totalenergy( rhomat, u, v, w,
                                                       p_target);
 
           // volume-fraction and total energy flux into majority material
           d_al += (alk - alk_new);
-          d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0), offset)
+          d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
             - alk_new * rhoEmat);
 
           // update state of trace material
-          U(e, volfracDofIdx(nmat, k, rdof, 0), offset) = alk_new;
-          U(e, energyDofIdx(nmat, k, rdof, 0), offset) = alk_new*rhoEmat;
-          P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk_new*p_target;
+          U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk_new;
+          U(e, energyDofIdx(nmat, k, rdof, 0)) = alk_new*rhoEmat;
+          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new*p_target;
         }
       }
       // check for unbounded volume fractions
@@ -199,29 +197,29 @@ cleanTraceMultiMat(
         auto rhok = mat_blk[k]->eos_density(p_target, tmax);
         d_al += (alk - 1e-14);
         // update state of trace material
-        U(e, volfracDofIdx(nmat, k, rdof, 0), offset) = 1e-14;
-        U(e, densityDofIdx(nmat, k, rdof, 0), offset) = 1e-14 * rhok;
-        U(e, energyDofIdx(nmat, k, rdof, 0), offset) = 1e-14
+        U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
+        U(e, densityDofIdx(nmat, k, rdof, 0)) = 1e-14 * rhok;
+        U(e, energyDofIdx(nmat, k, rdof, 0)) = 1e-14
           * mat_blk[k]->eos_totalenergy(rhok, u, v, w, p_target );
-        P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = 1e-14 *
+        P(e, pressureDofIdx(nmat, k, rdof, 0)) = 1e-14 *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
-          U(e, volfracDofIdx(nmat, k, rdof, i), offset) = 0.0;
-          U(e, densityDofIdx(nmat, k, rdof, i), offset) = 0.0;
-          U(e, energyDofIdx(nmat, k, rdof, i), offset) = 0.0;
-          P(e, pressureDofIdx(nmat, k, rdof, i), offset) = 0.0;
+          U(e, volfracDofIdx(nmat, k, rdof, i)) = 0.0;
+          U(e, densityDofIdx(nmat, k, rdof, i)) = 0.0;
+          U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
+          P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
       else {
-        auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0), offset) / alk;
+        auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0)) / alk;
         // update state of trace material
-        U(e, energyDofIdx(nmat, k, rdof, 0), offset) = alk
+        U(e, energyDofIdx(nmat, k, rdof, 0)) = alk
           * mat_blk[k]->eos_totalenergy( rhok, u, v, w, p_target );
-        P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk *
+        P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
-          U(e, energyDofIdx(nmat, k, rdof, i), offset) = 0.0;
-          P(e, pressureDofIdx(nmat, k, rdof, i), offset) = 0.0;
+          U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
+          P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
     }
@@ -229,34 +227,34 @@ cleanTraceMultiMat(
     // 2. Based on volume change in majority material, compute energy change
     //auto gmax = gamma< tag::multimat >(system, kmax);
     //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
-    //auto rhomax_new = U(e, densityDofIdx(nmat, kmax, rdof, 0), offset)
+    //auto rhomax_new = U(e, densityDofIdx(nmat, kmax, rdof, 0))
     //  / (almax+d_al);
     //auto rhoEmax_new = eos_totalenergy< tag::multimat >(system, rhomax_new, u,
     //  v, w, pmax_new, kmax);
     //auto d_arEmax_new = (almax+d_al) * rhoEmax_new
-    //  - U(e, energyDofIdx(nmat, kmax, rdof, 0), offset);
+    //  - U(e, energyDofIdx(nmat, kmax, rdof, 0));
 
-    U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset) += d_al;
-    //U(e, energyDofIdx(nmat, kmax, rdof, 0), offset) += d_arEmax_new;
+    U(e, volfracDofIdx(nmat, kmax, rdof, 0)) += d_al;
+    //U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arEmax_new;
 
     // 2. Flux energy change into majority material
-    U(e, energyDofIdx(nmat, kmax, rdof, 0), offset) += d_arE;
-    P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) =
+    U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arE;
+    P(e, pressureDofIdx(nmat, kmax, rdof, 0)) =
       mat_blk[kmax]->eos_pressure(
-      U(e, densityDofIdx(nmat, kmax, rdof, 0), offset), u, v, w,
-      U(e, energyDofIdx(nmat, kmax, rdof, 0), offset),
-      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset) );
+      U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
+      U(e, energyDofIdx(nmat, kmax, rdof, 0)),
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0)) );
 
     // enforce unit sum of volume fractions
     auto alsum = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
-      alsum += U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
+      alsum += U(e, volfracDofIdx(nmat, k, rdof, 0));
 
     for (std::size_t k=0; k<nmat; ++k) {
-      U(e, volfracDofIdx(nmat, k, rdof, 0), offset) /= alsum;
-      U(e, densityDofIdx(nmat, k, rdof, 0), offset) /= alsum;
-      U(e, energyDofIdx(nmat, k, rdof, 0), offset) /= alsum;
-      P(e, pressureDofIdx(nmat, k, rdof, 0), offset) /= alsum;
+      U(e, volfracDofIdx(nmat, k, rdof, 0)) /= alsum;
+      U(e, densityDofIdx(nmat, k, rdof, 0)) /= alsum;
+      U(e, energyDofIdx(nmat, k, rdof, 0)) /= alsum;
+      P(e, pressureDofIdx(nmat, k, rdof, 0)) /= alsum;
     }
 
     //// bulk quantities
@@ -265,9 +263,9 @@ cleanTraceMultiMat(
     //{
     //  if (relaxInd[k] > 0.0)
     //  {
-    //    rhoEb += U(e, energyDofIdx(nmat,k,rdof,0), offset);
-    //    volb += U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-    //    rhob += U(e, densityDofIdx(nmat,k,rdof,0), offset);
+    //    rhoEb += U(e, energyDofIdx(nmat,k,rdof,0));
+    //    volb += U(e, volfracDofIdx(nmat,k,rdof,0));
+    //    rhob += U(e, densityDofIdx(nmat,k,rdof,0));
     //  }
     //}
 
@@ -279,9 +277,9 @@ cleanTraceMultiMat(
     //  auto gk = gamma< tag::multimat >(system, k);
     //  auto Pck = pstiff< tag::multimat >(system, k);
 
-    //  pmix -= U(e, volfracDofIdx(nmat,k,rdof,0), offset) * gk * Pck *
+    //  pmix -= U(e, volfracDofIdx(nmat,k,rdof,0)) * gk * Pck *
     //    relaxInd[k] / (gk-1.0);
-    //  den += U(e, volfracDofIdx(nmat,k,rdof,0), offset) * relaxInd[k]
+    //  den += U(e, volfracDofIdx(nmat,k,rdof,0)) * relaxInd[k]
     //    / (gk-1.0);
     //}
     //pmix /= den;
@@ -291,29 +289,29 @@ cleanTraceMultiMat(
     //{
     //  if (relaxInd[k] > 0.0)
     //  {
-    //    auto alk_new = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
-    //    U(e, energyDofIdx(nmat,k,rdof,0), offset) = alk_new *
+    //    auto alk_new = U(e, volfracDofIdx(nmat,k,rdof,0));
+    //    U(e, energyDofIdx(nmat,k,rdof,0)) = alk_new *
     //      eos_totalenergy< tag::multimat >(system, rhomat[k], u, v, w, pmix,
     //      k);
-    //    P(e, pressureDofIdx(nmat, k, rdof, 0), offset) = alk_new * pmix;
+    //    P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new * pmix;
     //  }
     //}
 
-    pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0), offset) /
-      U(e, volfracDofIdx(nmat, kmax, rdof, 0), offset);
+    pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0)) /
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0));
 
     // check for unphysical state
     for (std::size_t k=0; k<nmat; ++k)
     {
-      auto alpha = U(e, volfracDofIdx(nmat, k, rdof, 0), offset);
-      auto arho = U(e, densityDofIdx(nmat, k, rdof, 0), offset);
-      auto apr = P(e, pressureDofIdx(nmat, k, rdof, 0), offset);
+      auto alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
+      auto arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+      auto apr = P(e, pressureDofIdx(nmat, k, rdof, 0));
 
       // lambda for screen outputs
       auto screenout = [&]()
       {
-        std::cout << "Element centroid: " << geoElem(e,1,0) << ", "
-          << geoElem(e,2,0) << ", " << geoElem(e,3,0) << std::endl;
+        std::cout << "Element centroid: " << geoElem(e,1) << ", "
+          << geoElem(e,2) << ", " << geoElem(e,3) << std::endl;
         std::cout << "Material-id:      " << k << std::endl;
         std::cout << "Volume-fraction:  " << alpha << std::endl;
         std::cout << "Partial density:  " << arho << std::endl;
@@ -341,7 +339,6 @@ timeStepSizeMultiMat(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const std::size_t nelem,
-  std::size_t offset,
   std::size_t nmat,
   const tk::Fields& U,
   const tk::Fields& P )
@@ -352,7 +349,6 @@ timeStepSizeMultiMat(
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
 //! \param[in] nelem Number of elements
-//! \param[in] offset Index for equation systems
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] U High-order solution vector
 //! \param[in] P High-order vector of primitives
@@ -381,16 +377,16 @@ timeStepSizeMultiMat(
     B_l[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, offset, rdof, ndof, el, U, B_l, {0, ncomp-1});
+    ugp = eval_state(ncomp, rdof, ndof, el, U, B_l, {0, ncomp-1});
     // get primitive quantities
-    pgp = eval_state(nprim, offset, rdof, ndof, el, P, B_l, {0, nprim-1});
+    pgp = eval_state(nprim, rdof, ndof, el, P, B_l, {0, nprim-1});
 
     // advection velocity
     u = pgp[velocityIdx(nmat, 0)];
     v = pgp[velocityIdx(nmat, 1)];
     w = pgp[velocityIdx(nmat, 2)];
 
-    vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+    vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
     // acoustic speed
     a = 0.0;
@@ -402,7 +398,7 @@ timeStepSizeMultiMat(
       }
     }
 
-    dSV_l = geoFace(f,0,0) * (std::fabs(vn) + a);
+    dSV_l = geoFace(f,0) * (std::fabs(vn) + a);
 
     // right element
     if (er > -1) {
@@ -413,16 +409,16 @@ timeStepSizeMultiMat(
       B_r[0] = 1.0;
 
       // get conserved quantities
-      ugp = eval_state( ncomp, offset, rdof, ndof, eR, U, B_r, {0, ncomp-1});
+      ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r, {0, ncomp-1});
       // get primitive quantities
-      pgp = eval_state( nprim, offset, rdof, ndof, eR, P, B_r, {0, nprim-1});
+      pgp = eval_state( nprim, rdof, ndof, eR, P, B_r, {0, nprim-1});
 
       // advection velocity
       u = pgp[velocityIdx(nmat, 0)];
       v = pgp[velocityIdx(nmat, 1)];
       w = pgp[velocityIdx(nmat, 2)];
 
-      vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+      vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
       // acoustic speed
       a = 0.0;
@@ -434,7 +430,7 @@ timeStepSizeMultiMat(
         }
       }
 
-      dSV_r = geoFace(f,0,0) * (std::fabs(vn) + a);
+      dSV_r = geoFace(f,0) * (std::fabs(vn) + a);
 
       delt[eR] += std::max( dSV_l, dSV_r );
     } else {
@@ -449,7 +445,7 @@ timeStepSizeMultiMat(
   // compute allowable dt
   for (std::size_t e=0; e<nelem; ++e)
   {
-    mindt = std::min( mindt, geoElem(e,0,0)/delt[e] );
+    mindt = std::min( mindt, geoElem(e,0)/delt[e] );
   }
 
   return mindt;
@@ -461,7 +457,6 @@ timeStepSizeMultiMatFV(
   const tk::Fields& geoElem,
   const std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   std::size_t nmat,
   const int engSrcAd,
   const tk::Fields& U,
@@ -472,7 +467,6 @@ timeStepSizeMultiMatFV(
 //! \param[in] geoElem Element geometry array
 //! \param[in] nelem Number of elements
 //! \param[in] system Index for equation systems
-//! \param[in] offset Index for equation systems
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] engSrcAd Whether the energy source was added
 //! \param[in] U High-order solution vector
@@ -512,9 +506,9 @@ timeStepSizeMultiMatFV(
     B[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, offset, rdof, ndof, e, U, B, {0, ncomp-1});
+    ugp = eval_state(ncomp, rdof, ndof, e, U, B, {0, ncomp-1});
     // get primitive quantities
-    pgp = eval_state(nprim, offset, rdof, ndof, e, P, B, {0, nprim-1});
+    pgp = eval_state(nprim, rdof, ndof, e, P, B, {0, nprim-1});
 
     // magnitude of advection velocity
     auto u = pgp[velocityIdx(nmat, 0)];
@@ -536,7 +530,7 @@ timeStepSizeMultiMatFV(
     auto v_char = vmag + a + v_front;
 
     // characteristic length (radius of insphere)
-    auto dx = std::min(std::cbrt(geoElem(e,0,0)), geoElem(e,4,0))
+    auto dx = std::min(std::cbrt(geoElem(e,0)), geoElem(e,4))
       /std::sqrt(24.0);
 
     // element dt

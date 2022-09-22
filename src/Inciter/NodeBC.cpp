@@ -26,7 +26,8 @@ namespace inciter {
 extern std::vector< CGPDE > g_cgpde;
 
 std::unordered_map< std::size_t, std::vector< std::pair< bool, tk::real > > >
-match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
+match( std::size_t meshid,
+       [[maybe_unused]] tk::ctr::ncomp_t ncomp,
        tk::real t,
        tk::real dt,
        const std::vector< tk::real >& tp,
@@ -125,27 +126,25 @@ match( [[maybe_unused]] tk::ctr::ncomp_t ncomp,
   for (const auto& s : bnode) {     // for all side sets passed in
     std::size_t c = 0;
     auto l = local(s.second);   // generate local node ids on side set
-    for (std::size_t eq=0; eq<g_cgpde.size(); ++eq) {
-      // query Dirichlet BCs at nodes of this side set
-      auto eqbc =
-        g_cgpde[eq].dirbc( t, dt, tp, dtp, {s.first,l}, coord, increment );
-      for (const auto& n : eqbc) {
-        auto id = n.first;                      // BC node ID
-        const auto& bcs = n.second;             // BCs
-        auto& nodebc = dirbc[ id ];     // BCs to be set for node
-        if (nodebc.size() > c) {        // node already has BCs from this PDE
-          Assert( nodebc.size() == c+bcs.size(), "Size mismatch" );
-          for (std::size_t i=0; i<bcs.size(); i++) {
-            if (bcs[i].first) nodebc[c+i] = bcs[i];
-          }
-        } else {        // node does not yet have BCs from this PDE
-          // This branch needs to be completed for system of systems of PDEs.
-          // See note above.
-          nodebc.insert( end(nodebc), begin(bcs), end(bcs) );
+    // query Dirichlet BCs at nodes of this side set
+    auto eqbc =
+      g_cgpde[meshid].dirbc( t, dt, tp, dtp, {s.first,l}, coord, increment );
+    for (const auto& n : eqbc) {
+      auto id = n.first;                      // BC node ID
+      const auto& bcs = n.second;             // BCs
+      auto& nodebc = dirbc[ id ];     // BCs to be set for node
+      if (nodebc.size() > c) {        // node already has BCs from this PDE
+        Assert( nodebc.size() == c+bcs.size(), "Size mismatch" );
+        for (std::size_t i=0; i<bcs.size(); i++) {
+          if (bcs[i].first) nodebc[c+i] = bcs[i];
         }
+      } else {        // node does not yet have BCs from this PDE
+        // This branch needs to be completed for system of systems of PDEs.
+        // See note above.
+        nodebc.insert( end(nodebc), begin(bcs), end(bcs) );
       }
-      if (!eqbc.empty()) c += eqbc.cbegin()->second.size();
     }
+    if (!eqbc.empty()) c += eqbc.cbegin()->second.size();
   }
 
   // Verify the size of each NodeBC vectors. They must have the same lengths and
@@ -189,7 +188,7 @@ correctBC( const tk::Fields& a,
     Assert( bc.size() == dul.nprop(), "Size mismatch" );
     for (std::size_t c=0; c<bc.size(); ++c) {
       if ( bc[c].first &&
-           std::abs( dul(i,c,0) + a(i,c,0) - bc[c].second ) >
+           std::abs( dul(i,c) + a(i,c) - bc[c].second ) >
              std::numeric_limits< tk::real >::epsilon() )
       {
          return false;

@@ -84,17 +84,17 @@ lhsLeastSq_P0P1( const inciter::FaceData& fd,
     // internal face contribution
       eR = static_cast< std::size_t >(er);
       // Put in cell-centroid coordinates
-      geoElemR = {{ geoElem(eR,1,0), geoElem(eR,2,0), geoElem(eR,3,0) }};
+      geoElemR = {{ geoElem(eR,1), geoElem(eR,2), geoElem(eR,3) }};
     }
     else {
     // boundary face contribution
       // Put in face-centroid coordinates
-      geoElemR = {{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
+      geoElemR = {{ geoFace(f,4), geoFace(f,5), geoFace(f,6) }};
     }
 
-    std::array< real, 3 > wdeltax{{ geoElemR[0]-geoElem(el,1,0),
-                                    geoElemR[1]-geoElem(el,2,0),
-                                    geoElemR[2]-geoElem(el,3,0) }};
+    std::array< real, 3 > wdeltax{{ geoElemR[0]-geoElem(el,1),
+                                    geoElemR[1]-geoElem(el,2),
+                                    geoElemR[2]-geoElem(el,3) }};
 
     // define a lambda for contributing to lhs matrix
     auto lhs = [&]( std::size_t e ){
@@ -114,8 +114,7 @@ lhsLeastSq_P0P1( const inciter::FaceData& fd,
 }
 
 void
-intLeastSq_P0P1( ncomp_t offset,
-                 const std::size_t rdof,
+intLeastSq_P0P1( const std::size_t rdof,
                  const inciter::FaceData& fd,
                  const Fields& geoElem,
                  const Fields& W,
@@ -124,7 +123,6 @@ intLeastSq_P0P1( ncomp_t offset,
 // *****************************************************************************
 //  \brief Compute internal surface contributions to rhs vector of the
 //    least-squares reconstruction
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoElem Element geometry array
@@ -155,9 +153,9 @@ intLeastSq_P0P1( ncomp_t offset,
 
     // 'wdeltax' is the distance vector between the centroids of this element
     // and its neighbor
-    std::array< real, 3 > wdeltax{{ geoElem(er,1,0)-geoElem(el,1,0),
-                                    geoElem(er,2,0)-geoElem(el,2,0),
-                                    geoElem(er,3,0)-geoElem(el,3,0) }};
+    std::array< real, 3 > wdeltax{{ geoElem(er,1)-geoElem(el,1),
+                                    geoElem(er,2)-geoElem(el,2),
+                                    geoElem(er,3)-geoElem(el,3) }};
 
     for (std::size_t idir=0; idir<3; ++idir)
     {
@@ -166,10 +164,10 @@ intLeastSq_P0P1( ncomp_t offset,
       {
         auto mark = c*rdof;
         rhs_ls[el][c][idir] +=
-          wdeltax[idir] * (W(er,mark,offset)-W(el,mark,offset));
+          wdeltax[idir] * (W(er,mark)-W(el,mark));
         if (er < nelem)
           rhs_ls[er][c][idir] +=
-            wdeltax[idir] * (W(er,mark,offset)-W(el,mark,offset));
+            wdeltax[idir] * (W(er,mark)-W(el,mark));
       }
     }
   }
@@ -179,7 +177,6 @@ void
 bndLeastSqConservedVar_P0P1(
   ncomp_t system,
   ncomp_t ncomp,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
@@ -198,7 +195,6 @@ bndLeastSqConservedVar_P0P1(
 //    least-squares reconstruction of conserved quantities of the PDE system
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
@@ -237,14 +233,14 @@ bndLeastSqConservedVar_P0P1(
 
         // arrays for quadrature points
         std::array< real, 3 >
-          fc{{ geoFace(f,4,0), geoFace(f,5,0), geoFace(f,6,0) }};
+          fc{{ geoFace(f,4), geoFace(f,5), geoFace(f,6) }};
         std::array< real, 3 >
-          fn{{ geoFace(f,1,0), geoFace(f,2,0), geoFace(f,3,0) }};
+          fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
 
         // Compute the state variables at the left element
         std::vector< real >B(1,1.0);
-        auto ul = eval_state( ncomp, offset, rdof, 1, el, U, B, {0, ncomp-1} );
-        auto uprim = eval_state( nprim, offset, rdof, 1, el, P, B, {0, nprim-1} );
+        auto ul = eval_state( ncomp, rdof, 1, el, U, B, {0, ncomp-1} );
+        auto uprim = eval_state( nprim, rdof, 1, el, P, B, {0, nprim-1} );
 
         // consolidate primitives into state vector
         ul.insert(ul.end(), uprim.begin(), uprim.end());
@@ -256,9 +252,9 @@ bndLeastSqConservedVar_P0P1(
         auto ustate = state( system, ncomp, mat_blk, ul, fc[0], fc[1], fc[2], t,
                              fn );
 
-        std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1,0),
-                                        fc[1]-geoElem(el,2,0),
-                                        fc[2]-geoElem(el,3,0) }};
+        std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1),
+                                        fc[1]-geoElem(el,2),
+                                        fc[2]-geoElem(el,3) }};
 
         for (std::size_t idir=0; idir<3; ++idir)
         {
@@ -274,7 +270,6 @@ bndLeastSqConservedVar_P0P1(
 
 void
 solveLeastSq_P0P1(
-  ncomp_t offset,
   const std::size_t rdof,
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
@@ -282,7 +277,6 @@ solveLeastSq_P0P1(
   const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  Solve the 3x3 linear system for least-squares reconstruction
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] lhs LHS reconstruction matrix
 //! \param[in] rhs RHS reconstruction vector
@@ -305,9 +299,9 @@ solveLeastSq_P0P1(
       // solve system using Cramer's rule
       auto ux = tk::cramer( lhs[e], rhs[e][c] );
 
-      W(e,mark+1,offset) = ux[0];
-      W(e,mark+2,offset) = ux[1];
-      W(e,mark+3,offset) = ux[2];
+      W(e,mark+1) = ux[0];
+      W(e,mark+2) = ux[1];
+      W(e,mark+3) = ux[2];
     }
   }
 }
@@ -315,7 +309,6 @@ solveLeastSq_P0P1(
 void
 recoLeastSqExtStencil(
   std::size_t rdof,
-  std::size_t offset,
   std::size_t e,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
@@ -326,7 +319,6 @@ recoLeastSqExtStencil(
 //  \brief Reconstruct the second-order solution using least-squares approach
 //    from an extended stencil involving the node-neighbors
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] e Element whoes solution is being reconstructed
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element-node connectivity
@@ -361,9 +353,9 @@ recoLeastSqExtStencil(
     for (auto er : pesup)
     {
       // centroid distance
-      std::array< real, 3 > wdeltax{{ geoElem(er,1,0)-geoElem(e,1,0),
-                                      geoElem(er,2,0)-geoElem(e,2,0),
-                                      geoElem(er,3,0)-geoElem(e,3,0) }};
+      std::array< real, 3 > wdeltax{{ geoElem(er,1)-geoElem(e,1),
+                                      geoElem(er,2)-geoElem(e,2),
+                                      geoElem(er,3)-geoElem(e,3) }};
 
       // contribute to lhs matrix
       for (std::size_t idir=0; idir<3; ++idir)
@@ -377,7 +369,7 @@ recoLeastSqExtStencil(
         auto cmark = c - varRange[0];
         for (std::size_t idir=0; idir<3; ++idir)
           rhs_ls[cmark][idir] +=
-            wdeltax[idir] * (W(er,mark,offset)-W(e,mark,offset));
+            wdeltax[idir] * (W(er,mark)-W(e,mark));
       }
     }
   }
@@ -392,16 +384,15 @@ recoLeastSqExtStencil(
 
     // Update the P1 dofs with the reconstructioned gradients.
     // Since this reconstruction does not affect the cell-averaged solution,
-    // W(e,mark+0,offset) is unchanged.
-    W(e,mark+1,offset) = ux[0];
-    W(e,mark+2,offset) = ux[1];
-    W(e,mark+3,offset) = ux[2];
+    // W(e,mark+0) is unchanged.
+    W(e,mark+1) = ux[0];
+    W(e,mark+2) = ux[1];
+    W(e,mark+3) = ux[2];
   }
 }
 
 void
-transform_P0P1( ncomp_t offset,
-                std::size_t rdof,
+transform_P0P1( std::size_t rdof,
                 std::size_t nelem,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
@@ -409,7 +400,6 @@ transform_P0P1( ncomp_t offset,
                 const std::array< std::size_t, 2 >& varRange )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
-//! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nelem Total number of elements
 //! \param[in] inpoel Element-node connectivity
@@ -450,21 +440,20 @@ transform_P0P1( ncomp_t offset,
       auto ux = tk::cramer( {{ {{dBdx[0][1], dBdx[0][2], dBdx[0][3]}},
                                {{dBdx[1][1], dBdx[1][2], dBdx[1][3]}},
                                {{dBdx[2][1], dBdx[2][2], dBdx[2][3]}} }},
-                            {{ W(e,mark+1,offset),
-                               W(e,mark+2,offset),
-                               W(e,mark+3,offset) }} );
+                            {{ W(e,mark+1),
+                               W(e,mark+2),
+                               W(e,mark+3) }} );
 
       // replace physical derivatives with transformed dofs
-      W(e,mark+1,offset) = ux[0];
-      W(e,mark+2,offset) = ux[1];
-      W(e,mark+3,offset) = ux[2];
+      W(e,mark+1) = ux[0];
+      W(e,mark+2) = ux[1];
+      W(e,mark+3) = ux[2];
     }
   }
 }
 
 void
 THINCReco( std::size_t system,
-           std::size_t offset,
            std::size_t rdof,
            std::size_t nmat,
            std::size_t e,
@@ -480,7 +469,6 @@ THINCReco( std::size_t system,
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for multi-material flows
 //! \param[in] system Equation system index
-//! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of materials
 //! \param[in] e Element for which interface reconstruction is being calculated
@@ -522,7 +510,7 @@ THINCReco( std::size_t system,
   std::vector< std::size_t > matInt(nmat, 0);
   std::vector< tk::real > alAvg(nmat, 0.0);
   for (std::size_t k=0; k<nmat; ++k)
-    alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+    alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
   auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
 
   // Step-1: Perform THINC reconstruction
@@ -532,19 +520,19 @@ THINCReco( std::size_t system,
   for (std::size_t k=0; k<nmat; ++k) {
     auto mark = k*rdof;
     for (std::size_t i=0; i<rdof; ++i) {
-      alSol[mark+i] = U(e, volfracDofIdx(nmat,k,rdof,i), offset);
+      alSol[mark+i] = U(e, volfracDofIdx(nmat,k,rdof,i));
     }
     // initialize with TVD reconstructions which will be modified if near
     // material interface
     alReco[k] = state[volfracIdx(nmat,k)];
   }
-  THINCFunction(rdof, nmat, e, inpoel, coord, ref_xp, geoElem(e,0,0), bparam,
+  THINCFunction(rdof, nmat, e, inpoel, coord, ref_xp, geoElem(e,0), bparam,
     alSol, intInd, matInt, alReco);
 
   // check reconstructed volfracs for positivity
   bool neg_vf = false;
   for (std::size_t k=0; k<nmat; ++k) {
-    if (alReco[k] < 1e-16) neg_vf = true;
+    if (alReco[k] < 1e-16 && matInt[k] > 0) neg_vf = true;
   }
   for (std::size_t k=0; k<nmat; ++k) {
     if (neg_vf) {
@@ -566,21 +554,21 @@ THINCReco( std::size_t system,
     auto rhobCC(0.0), rhobHO(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      auto alCC = U(e, volfracDofIdx(nmat,k,rdof,0), offset);
+      auto alCC = U(e, volfracDofIdx(nmat,k,rdof,0));
       alCC = std::max(1e-14, alCC);
 
       if (matInt[k])
       {
         state[volfracIdx(nmat,k)] = alReco[k];
         state[densityIdx(nmat,k)] = alReco[k]
-          * U(e, densityDofIdx(nmat,k,rdof,0), offset)/alCC;
+          * U(e, densityDofIdx(nmat,k,rdof,0))/alCC;
         state[energyIdx(nmat,k)] = alReco[k]
-          * U(e, energyDofIdx(nmat,k,rdof,0), offset)/alCC;
+          * U(e, energyDofIdx(nmat,k,rdof,0))/alCC;
         state[ncomp+pressureIdx(nmat,k)] = alReco[k]
-          * P(e, pressureDofIdx(nmat,k,rdof,0), offset)/alCC;
+          * P(e, pressureDofIdx(nmat,k,rdof,0))/alCC;
       }
 
-      rhobCC += U(e, densityDofIdx(nmat,k,rdof,0), offset);
+      rhobCC += U(e, densityDofIdx(nmat,k,rdof,0));
       rhobHO += state[densityIdx(nmat,k)];
     }
 
@@ -588,16 +576,15 @@ THINCReco( std::size_t system,
     for (std::size_t i=0; i<3; ++i)
     {
       state[momentumIdx(nmat,i)] = rhobHO
-        * U(e, momentumDofIdx(nmat,i,rdof,0), offset)/rhobCC;
+        * U(e, momentumDofIdx(nmat,i,rdof,0))/rhobCC;
       state[ncomp+velocityIdx(nmat,i)] =
-        P(e, velocityDofIdx(nmat,i,rdof,0), offset);
+        P(e, velocityDofIdx(nmat,i,rdof,0));
     }
   }
 }
 
 void
 THINCRecoTransport( std::size_t system,
-                    std::size_t offset,
                     std::size_t rdof,
                     std::size_t,
                     std::size_t e,
@@ -613,7 +600,6 @@ THINCRecoTransport( std::size_t system,
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for transport
 //! \param[in] system Equation system index
-//! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] e Element for which interface reconstruction is being calculated
 //! \param[in] inpoel Element-node connectivity
@@ -640,7 +626,7 @@ THINCRecoTransport( std::size_t system,
   std::vector< std::size_t > matInt(ncomp, 0);
   std::vector< tk::real > alAvg(ncomp, 0.0);
   for (std::size_t k=0; k<ncomp; ++k)
-    alAvg[k] = U(e, k*rdof, offset);
+    alAvg[k] = U(e, k*rdof);
   auto intInd = inciter::interfaceIndicator(ncomp, alAvg, matInt);
 
   // create a vector of volume-fractions and pass it to the THINC function
@@ -650,10 +636,10 @@ THINCRecoTransport( std::size_t system,
   for (std::size_t k=0; k<ncomp; ++k) {
     auto mark = k*rdof;
     for (std::size_t i=0; i<rdof; ++i) {
-      alSol[mark+i] = U(e,mark+i,offset);
+      alSol[mark+i] = U(e,mark+i);
     }
   }
-  THINCFunction(rdof, ncomp, e, inpoel, coord, ref_xp, geoElem(e,0,0), bparam,
+  THINCFunction(rdof, ncomp, e, inpoel, coord, ref_xp, geoElem(e,0), bparam,
     alSol, intInd, matInt, alReco);
 
   state = alReco;
@@ -1005,7 +991,6 @@ THINCFunction_new( std::size_t rdof,
 
 std::vector< tk::real >
 evalPolynomialSol( std::size_t system,
-                   std::size_t offset,
                    const std::vector< inciter::EoS_Base* >& mat_blk,
                    int intsharp,
                    std::size_t ncomp,
@@ -1024,7 +1009,6 @@ evalPolynomialSol( std::size_t system,
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] system Equation system index
-//! \param[in] offset Index for equation systems
 //! \param[in] mat_blk EOS material block
 //! \param[in] intsharp Interface reconstruction indicator
 //! \param[in] ncomp Number of components in the PDE system
@@ -1047,8 +1031,8 @@ evalPolynomialSol( std::size_t system,
   std::vector< real > state;
   std::vector< real > sprim;
 
-  state = eval_state( ncomp, offset, rdof, dof_e, e, U, B, {0, ncomp-1} );
-  sprim = eval_state( nprim, offset, rdof, dof_e, e, P, B, {0, nprim-1} );
+  state = eval_state( ncomp, rdof, dof_e, e, U, B, {0, ncomp-1} );
+  sprim = eval_state( nprim, rdof, dof_e, e, P, B, {0, nprim-1} );
 
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());
@@ -1064,13 +1048,13 @@ evalPolynomialSol( std::size_t system,
     //  vfmin[k] = VolFracMax(el, 2*k, 0);
     //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
     //}
-    tk::THINCReco(system, offset, rdof, nmat, e, inpoel, coord, geoElem,
+    tk::THINCReco(system, rdof, nmat, e, inpoel, coord, geoElem,
       ref_gp, U, P, vfmin, vfmax, state);
 
     // Until the appropriate setup for activating THINC with Transport
     // is ready, the following lines will need to be uncommented for
     // using THINC with Transport
-    //tk::THINCRecoTransport(system, offset, rdof, nmat, el, inpoel, coord,
+    //tk::THINCRecoTransport(system, rdof, nmat, el, inpoel, coord,
     //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
   }
 
@@ -1089,8 +1073,7 @@ evalPolynomialSol( std::size_t system,
 }
 
 void
-safeReco( std::size_t offset,
-          std::size_t rdof,
+safeReco( std::size_t rdof,
           std::size_t nmat,
           std::size_t el,
           int er,
@@ -1098,7 +1081,6 @@ safeReco( std::size_t offset,
           std::array< std::vector< real >, 2 >& state )
 // *****************************************************************************
 //  Compute safe reconstructions near material interfaces
-//! \param[in] offset Index for equation systems
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of material is PDE system
 //! \param[in] el Element on the left-side of face
@@ -1140,16 +1122,16 @@ safeReco( std::size_t offset,
 
     // Density
     // establish left- and right-hand states
-    ul = U(el, densityDofIdx(nmat, k, rdof, 0), offset);
-    ur = U(eR, densityDofIdx(nmat, k, rdof, 0), offset);
+    ul = U(el, densityDofIdx(nmat, k, rdof, 0));
+    ur = U(eR, densityDofIdx(nmat, k, rdof, 0));
 
     // limit reconstructed density
     safeLimit(densityIdx(nmat,k), ul, ur);
 
     // Energy
     // establish left- and right-hand states
-    ul = U(el, energyDofIdx(nmat, k, rdof, 0), offset);
-    ur = U(eR, energyDofIdx(nmat, k, rdof, 0), offset);
+    ul = U(el, energyDofIdx(nmat, k, rdof, 0));
+    ur = U(eR, energyDofIdx(nmat, k, rdof, 0));
 
     // limit reconstructed energy
     safeLimit(energyIdx(nmat,k), ul, ur);

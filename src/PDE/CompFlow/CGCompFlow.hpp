@@ -68,7 +68,6 @@ class CompFlow {
       m_physics(),
       m_problem(),
       m_system( c ),
-      m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_stagCnf( g_inputdeck.specialBC< eq, tag::stag >( c ) ),
       m_skipCnf( g_inputdeck.specialBC< eq, tag::skip >( c ) ),
       m_fr( g_inputdeck.get< param, eq, tag::farfield_density >().size() > c ?
@@ -268,15 +267,15 @@ class CompFlow {
           }
         }
 
-        unk(i,0,m_offset) = s[0]; // rho
+        unk(i,0) = s[0]; // rho
         if (!skipPoint(x[i],y[i],z[i]) && stagPoint(x[i],y[i],z[i])) {
-          unk(i,1,m_offset) = unk(i,2,m_offset) = unk(i,3,m_offset) = 0.0;
+          unk(i,1) = unk(i,2) = unk(i,3) = 0.0;
         } else {
-          unk(i,1,m_offset) = s[1]; // rho * u
-          unk(i,2,m_offset) = s[2]; // rho * v
-          unk(i,3,m_offset) = s[3]; // rho * w
+          unk(i,1) = s[1]; // rho * u
+          unk(i,2) = s[2]; // rho * v
+          unk(i,3) = s[3]; // rho * w
         }
-        unk(i,4,m_offset) = s[4]; // rho * e, e: total = kinetic + internal
+        unk(i,4) = s[4]; // rho * e, e: total = kinetic + internal
       }
     }
 
@@ -286,10 +285,10 @@ class CompFlow {
     void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const {
       for (std::size_t j=0; j<3; ++j) {
         // extract momentum
-        v[j] = u.extract( 1+j, m_offset );
+        v[j] = u.extract_comp( 1+j );
         Assert( v[j].size() == u.nunk(), "Size mismatch" );
         // divide by density
-        for (std::size_t i=0; i<u.nunk(); ++i) v[j][i] /= u(i,0,m_offset);
+        for (std::size_t i=0; i<u.nunk(); ++i) v[j][i] /= u(i,0);
       }
     }
 
@@ -299,11 +298,11 @@ class CompFlow {
     void soundspeed( const tk::Fields& U, std::vector< tk::real >& s ) const {
       s.resize( U.nunk() );
       for (std::size_t i=0; i<U.nunk(); ++i) {
-        auto r  = U(i,0,m_offset);
-        auto ru = U(i,1,m_offset);
-        auto rv = U(i,2,m_offset);
-        auto rw = U(i,3,m_offset);
-        auto re = U(i,4,m_offset);
+        auto r  = U(i,0);
+        auto ru = U(i,1);
+        auto rv = U(i,2);
+        auto rw = U(i,3);
+        auto re = U(i,4);
         auto p = m_mat_blk[0]->eos_pressure( r, ru/r, rv/r, rw/r, re );
         s[i] = m_mat_blk[0]->eos_soundspeed( r, p );
       }
@@ -380,7 +379,7 @@ class CompFlow {
 
         // access solution at element nodes
         std::array< std::array< real, 4 >, m_ncomp > u;
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, N );
 
         // apply stagnation BCs
         for (std::size_t a=0; a<4; ++a)
@@ -392,7 +391,7 @@ class CompFlow {
 
         // access solution at elements
         std::array< const real*, m_ncomp > ue;
-        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue.cptr( c, m_offset );
+        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue.cptr( c );
 
         // pressure
         std::array< real, 4 > p;
@@ -450,10 +449,10 @@ class CompFlow {
 
         // access solution at elements
         std::array< real, m_ncomp > ue;
-        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c, m_offset );
-        // access pointer to right hand side at component and offset
+        for (ncomp_t c=0; c<m_ncomp; ++c) ue[c] = Ue( e, c );
+        // access pointer to right hand side at component
         std::array< const real*, m_ncomp > r;
-        for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+        for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
         // pressure
         auto p = m_mat_blk[0]->eos_pressure( ue[0], ue[1]/ue[0], ue[2]/ue[0],
@@ -555,11 +554,11 @@ class CompFlow {
           if (i != end(bid)) {
             real u[5];
             for (std::size_t b=0; b<4; ++b) {
-              u[0] = U(N[b],0,m_offset);
-              u[1] = U(N[b],1,m_offset)/u[0];
-              u[2] = U(N[b],2,m_offset)/u[0];
-              u[3] = U(N[b],3,m_offset)/u[0];
-              u[4] = U(N[b],4,m_offset)/u[0]
+              u[0] = U(N[b],0);
+              u[1] = U(N[b],1)/u[0];
+              u[2] = U(N[b],2)/u[0];
+              u[3] = U(N[b],3)/u[0];
+              u[4] = U(N[b],4)/u[0]
                      - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
               if ( !skipPoint(x[N[b]],y[N[b]],z[N[b]]) &&
                    stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
@@ -568,7 +567,7 @@ class CompFlow {
               }
               for (std::size_t c=0; c<5; ++c)
                 for (std::size_t j=0; j<3; ++j)
-                  G(i->second,c*3+j,0) += J24 * g[b][j] * u[c];
+                  G(i->second,c*3+j) += J24 * g[b][j] * u[c];
             }
           }
         }
@@ -638,7 +637,7 @@ class CompFlow {
       auto Grad = nodegrad( coord, inpoel, lid, bid, vol, esup, U, G );
 
       // zero right hand side for all components
-      for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, m_offset, 0.0 );
+      for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, 0.0 );
 
       // compute sponge pressure multiplers at sponge side sets
       auto spmult = spongePressures( coord, spongenodes );
@@ -719,7 +718,7 @@ class CompFlow {
         const auto L = std::cbrt( tk::triple( ba, ca, da ) / 6.0 );
         // access solution at element nodes at recent time step
         std::array< std::array< real, 4 >, m_ncomp > u;
-        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, m_offset, N );
+        for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, N );
         // compute the maximum length of the characteristic velocity (fluid
         // velocity + sound velocity) across the four element nodes
         real maxvel = 0.0;
@@ -894,12 +893,12 @@ class CompFlow {
                 if (i != end(j->second)) {
                   std::array< real, 3 >
                     n{ i->second[0], i->second[1], i->second[2] },
-                    v{ U(p,1,m_offset), U(p,2,m_offset), U(p,3,m_offset) };
+                    v{ U(p,1), U(p,2), U(p,3) };
                   auto v_dot_n = tk::dot( v, n );
                   // symbc: remove normal component of velocity
-                  U(p,1,m_offset) -= v_dot_n * n[0];
-                  U(p,2,m_offset) -= v_dot_n * n[1];
-                  U(p,3,m_offset) -= v_dot_n * n[2];
+                  U(p,1) -= v_dot_n * n[0];
+                  U(p,2) -= v_dot_n * n[1];
+                  U(p,3) -= v_dot_n * n[2];
                 }
               }
             }
@@ -934,11 +933,11 @@ class CompFlow {
               if (j != end(bnorm)) {
                 auto i = j->second.find(p);      // find normal for node
                 if (i != end(j->second)) {
-                  auto& r  = U(p,0,m_offset);
-                  auto& ru = U(p,1,m_offset);
-                  auto& rv = U(p,2,m_offset);
-                  auto& rw = U(p,3,m_offset);
-                  auto& re = U(p,4,m_offset);
+                  auto& r  = U(p,0);
+                  auto& ru = U(p,1);
+                  auto& rv = U(p,2);
+                  auto& rw = U(p,3);
+                  auto& re = U(p,4);
                   auto vn =
                     (ru*i->second[0] + rv*i->second[1] + rw*i->second[2]) / r;
                   auto a = m_mat_blk[0]->eos_soundspeed( r,
@@ -999,9 +998,9 @@ class CompFlow {
             }
             // sponge velocity: reduce kinetic energy by a user percentage
             for (std::size_t s=0; s<ss[m_system].size(); ++s) {
-              U(p,1,m_offset) -= U(p,1,m_offset)*sp[s];
-              U(p,2,m_offset) -= U(p,2,m_offset)*sp[s];
-              U(p,3,m_offset) -= U(p,3,m_offset)*sp[s];
+              U(p,1) -= U(p,1)*sp[s];
+              U(p,2) -= U(p,2)*sp[s];
+              U(p,3) -= U(p,3)*sp[s];
             }
           }
         }
@@ -1030,11 +1029,11 @@ class CompFlow {
           auto unk = tk::sample<5>(t, timedepfn[ib]);
 
           // apply BCs after converting to conserved vars
-          U(p,0,m_offset) = unk[1];
-          U(p,1,m_offset) = unk[1]*unk[2];
-          U(p,2,m_offset) = unk[1]*unk[3];
-          U(p,3,m_offset) = unk[1]*unk[4];
-          U(p,4,m_offset) = m_mat_blk[0]->eos_totalenergy( unk[1], unk[2],
+          U(p,0) = unk[1];
+          U(p,1) = unk[1]*unk[2];
+          U(p,2) = unk[1]*unk[3];
+          U(p,3) = unk[1]*unk[4];
+          U(p,4) = m_mat_blk[0]->eos_totalenergy( unk[1], unk[2],
                                                            unk[3], unk[4],
                                                            unk[0]);
         }
@@ -1078,7 +1077,6 @@ class CompFlow {
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy
     const ncomp_t m_system;             //!< Equation system index
-    const ncomp_t m_offset;             //!< Offset PDE operates from
     //! Stagnation BC user configuration: point coordinates and radii
     const std::tuple< std::vector< real >, std::vector< real > > m_stagCnf;
     //! Skip BC user configuration: point coordinates and radii
@@ -1189,11 +1187,11 @@ class CompFlow {
           // scatter-add gradient contributions to boundary nodes
           real u[m_ncomp];
           for (std::size_t b=0; b<4; ++b) {
-            u[0] = U(N[b],0,m_offset);
-            u[1] = U(N[b],1,m_offset)/u[0];
-            u[2] = U(N[b],2,m_offset)/u[0];
-            u[3] = U(N[b],3,m_offset)/u[0];
-            u[4] = U(N[b],4,m_offset)/u[0]
+            u[0] = U(N[b],0);
+            u[1] = U(N[b],1)/u[0];
+            u[2] = U(N[b],2)/u[0];
+            u[3] = U(N[b],3)/u[0];
+            u[4] = U(N[b],4)/u[0]
                    - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
             if ( !skipPoint(x[N[b]],y[N[b]],z[N[b]]) &&
                  stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
@@ -1202,7 +1200,7 @@ class CompFlow {
             }
             for (std::size_t c=0; c<m_ncomp; ++c)
               for (std::size_t i=0; i<3; ++i)
-                Grad(p,c*3+i,0) += J24 * g[b][i] * u[c];
+                Grad(p,c*3+i) += J24 * g[b][i] * u[c];
           }
         }
 
@@ -1210,13 +1208,13 @@ class CompFlow {
       for (const auto& [g,b] : bid) {
         auto i = tk::cref_find( lid, g );
         for (ncomp_t c=0; c<Grad.nprop(); ++c)
-          Grad(i,c,0) = G(b,c,0);
+          Grad(i,c) = G(b,c);
       }
 
       // divide weak result in gradients by nodal volume
       for (std::size_t p=0; p<npoin; ++p)
         for (std::size_t c=0; c<m_ncomp*3; ++c)
-          Grad(p,c,0) /= vol[p];
+          Grad(p,c) /= vol[p];
 
       return Grad;
     }
@@ -1263,22 +1261,22 @@ class CompFlow {
         auto q = edgenode[e*2+1];
 
         // compute primitive variables at edge-end points
-        real rL  = U(p,0,m_offset);
-        real ruL = U(p,1,m_offset) / rL;
-        real rvL = U(p,2,m_offset) / rL;
-        real rwL = U(p,3,m_offset) / rL;
-        real reL = U(p,4,m_offset) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
-        real w1L = W(p,0,0);
-        real w2L = W(p,1,0);
-        real w3L = W(p,2,0);
-        real rR  = U(q,0,m_offset);
-        real ruR = U(q,1,m_offset) / rR;
-        real rvR = U(q,2,m_offset) / rR;
-        real rwR = U(q,3,m_offset) / rR;
-        real reR = U(q,4,m_offset) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
-        real w1R = W(q,0,0);
-        real w2R = W(q,1,0);
-        real w3R = W(q,2,0);
+        real rL  = U(p,0);
+        real ruL = U(p,1) / rL;
+        real rvL = U(p,2) / rL;
+        real rwL = U(p,3) / rL;
+        real reL = U(p,4) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
+        real w1L = W(p,0);
+        real w2L = W(p,1);
+        real w3L = W(p,2);
+        real rR  = U(q,0);
+        real ruR = U(q,1) / rR;
+        real rvR = U(q,2) / rR;
+        real rwR = U(q,3) / rR;
+        real reR = U(q,4) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
+        real w1R = W(q,0);
+        real w2R = W(q,1);
+        real w3R = W(q,2);
 
         // apply stagnation BCs to primitive variables
         if ( !skipPoint(x[p],y[p],z[p]) && stagPoint(x[p],y[p],z[p]) )
@@ -1324,9 +1322,9 @@ class CompFlow {
         for (std::size_t c=0; c<m_ncomp; ++c) dflux[e*m_ncomp+c] = f[c];
       }
 
-      // access pointer to right hand side at component and offset
+      // access pointer to right hand side at component
       std::array< const real*, m_ncomp > r;
-      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
       // domain-edge integral: sum flux contributions to points
       for (std::size_t p=0,k=0; p<U.nunk(); ++p)
@@ -1386,8 +1384,8 @@ class CompFlow {
       // MUSCL reconstruction of edge-end-point primitive variables
       for (std::size_t c=0; c<5; ++c) {
         // gradients
-        std::array< real, 3 > g1{ G(p,c*3+0,0), G(p,c*3+1,0), G(p,c*3+2,0) },
-                              g2{ G(q,c*3+0,0), G(q,c*3+1,0), G(q,c*3+2,0) };
+        std::array< real, 3 > g1{ G(p,c*3+0), G(p,c*3+1), G(p,c*3+2) },
+                              g2{ G(q,c*3+0), G(q,c*3+1), G(q,c*3+2) };
 
         delta2[c] = rs[c] - ls[c];
         delta1[c] = 2.0 * tk::dot(g1,vw) - delta2[c];
@@ -1501,30 +1499,30 @@ class CompFlow {
         std::size_t N[3] =
           { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
         // access solution at element nodes
-        real rA  = U(N[0],0,m_offset);
-        real rB  = U(N[1],0,m_offset);
-        real rC  = U(N[2],0,m_offset);
-        real ruA = U(N[0],1,m_offset);
-        real ruB = U(N[1],1,m_offset);
-        real ruC = U(N[2],1,m_offset);
-        real rvA = U(N[0],2,m_offset);
-        real rvB = U(N[1],2,m_offset);
-        real rvC = U(N[2],2,m_offset);
-        real rwA = U(N[0],3,m_offset);
-        real rwB = U(N[1],3,m_offset);
-        real rwC = U(N[2],3,m_offset);
-        real reA = U(N[0],4,m_offset);
-        real reB = U(N[1],4,m_offset);
-        real reC = U(N[2],4,m_offset);
-        real w1A = W(N[0],0,0);
-        real w2A = W(N[0],1,0);
-        real w3A = W(N[0],2,0);
-        real w1B = W(N[1],0,0);
-        real w2B = W(N[1],1,0);
-        real w3B = W(N[1],2,0);
-        real w1C = W(N[2],0,0);
-        real w2C = W(N[2],1,0);
-        real w3C = W(N[2],2,0);
+        real rA  = U(N[0],0);
+        real rB  = U(N[1],0);
+        real rC  = U(N[2],0);
+        real ruA = U(N[0],1);
+        real ruB = U(N[1],1);
+        real ruC = U(N[2],1);
+        real rvA = U(N[0],2);
+        real rvB = U(N[1],2);
+        real rvC = U(N[2],2);
+        real rwA = U(N[0],3);
+        real rwB = U(N[1],3);
+        real rwC = U(N[2],3);
+        real reA = U(N[0],4);
+        real reB = U(N[1],4);
+        real reC = U(N[2],4);
+        real w1A = W(N[0],0);
+        real w2A = W(N[0],1);
+        real w3A = W(N[0],2);
+        real w1B = W(N[1],0);
+        real w2B = W(N[1],1);
+        real w3B = W(N[1],2);
+        real w1C = W(N[2],0);
+        real w2C = W(N[2],1);
+        real w3C = W(N[2],2);
         // apply stagnation BCs
         if ( !skipPoint(x[N[0]],y[N[0]],z[N[0]]) &&
              stagPoint(x[N[0]],y[N[0]],z[N[0]]) )
@@ -1595,9 +1593,9 @@ class CompFlow {
         }
       }
 
-      // access pointer to right hand side at component and offset
+      // access pointer to right hand side at component
       std::array< const real*, m_ncomp > r;
-      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
       // boundary integrals: sum flux contributions to points
       for (std::size_t e=0; e<triinpoel.size()/3; ++e)
@@ -1628,9 +1626,9 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      // access pointer to right hand side at component and offset
+      // access pointer to right hand side at component
       std::array< const real*, m_ncomp > r;
-      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c, m_offset );
+      for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
       // source integral
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
@@ -1778,7 +1776,7 @@ class CompFlow {
                   auto J =
                     tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
                   auto J24 = J/24.0;
-                  R(p,4,m_offset) += J24 * S;
+                  R(p,4) += J24 * S;
                 }
               }
             }

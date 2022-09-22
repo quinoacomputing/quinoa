@@ -145,10 +145,12 @@ class DGPDE {
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblkid,
       tk::Fields& unk,
       tk::real t,
       const std::size_t nielem ) const
-    { self->initialize( L, inpoel, coord, inbox, unk, t, nielem ); }
+    { self->initialize( L, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -337,6 +339,7 @@ class DGPDE {
         const std::vector< std::size_t >&,
         const tk::UnsMesh::Coords&,
         const std::vector< std::unordered_set< std::size_t > >&,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&,
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
@@ -456,11 +459,13 @@ class DGPDE {
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
         const std::vector< std::unordered_set< std::size_t > >& inbox,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          elemblkid,
         tk::Fields& unk,
         tk::real t,
         const std::size_t nielem )
-      const override { data.initialize( L, inpoel, coord, inbox, unk, t,
-        nielem ); }
+      const override { data.initialize( L, inpoel, coord, inbox, elemblkid, unk,
+        t, nielem ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updateInterfaceCells( tk::Fields& unk,

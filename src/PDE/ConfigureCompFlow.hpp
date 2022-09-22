@@ -56,29 +56,25 @@ namespace compflow {
 //! Compute density for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the CompFlow
-//!   equation system among other systems
 //! \return Fluid density ready to be output to file
 static tk::GetVarFn::result_type
-densityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t )
+densityOutVar( const tk::Fields& U, std::size_t )
 {
-  return U.extract( 0, offset );
+  return U.extract_comp( 0 );
 }
 
 //! Compute velocity component for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the CompFlow
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Velocity component ready to be output to file
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
-velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
+velocityOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator/=;
-  auto r = U.extract( 0, offset ), u = U.extract( (dir+1)*rdof, offset );
+  auto r = U.extract_comp( 0 ), u = U.extract_comp( (dir+1)*rdof );
   u /= r;
   return u;
 }
@@ -86,30 +82,24 @@ velocityOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
 //! Compute volumetric total energy (energy per unit volume) for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the CompFlow
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Volumetric total energy ready to be output to file
 static tk::GetVarFn::result_type
-volumetricTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
-                             std::size_t rdof )
+volumetricTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 {
-  return U.extract( 4*rdof, offset );
+  return U.extract_comp( 4*rdof );
 }
 
 //! Compute specific total energy (energy per unit mass) for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the CompFlow
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Specific total energy ready to be output to file
 static tk::GetVarFn::result_type
-specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
-                           std::size_t rdof )
+specificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator/=;
-  auto r = U.extract( 0, offset ), e = U.extract( 4*rdof, offset );
+  auto r = U.extract_comp( 0 ), e = U.extract_comp( 4*rdof );
   e /= r;
   return e;
 }
@@ -118,38 +108,34 @@ specificTotalEnergyOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
 //! \note Must follow the signature in tk::GetVarFn
 //! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the CompFlow
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Momentum component ready to be output to file
 template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
-momentumOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
+momentumOutVar( const tk::Fields& U, std::size_t rdof )
 {
-  return U.extract( (dir+1)*rdof, offset );
+  return U.extract_comp( (dir+1)*rdof );
 }
 
 //! Compute pressure for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the CompFlow
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Pressure ready to be output to file
 static tk::GetVarFn::result_type
-pressureOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset, std::size_t rdof )
+pressureOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator/=;
-  auto r = U.extract( 0, offset ),
-       u = U.extract( 1*rdof, offset ),
-       v = U.extract( 2*rdof, offset ),
-       w = U.extract( 3*rdof, offset ),
-       re = U.extract( 4*rdof, offset );
+  auto r = U.extract_comp( 0 ),
+       u = U.extract_comp( 1*rdof ),
+       v = U.extract_comp( 2*rdof ),
+       w = U.extract_comp( 3*rdof ),
+       re = U.extract_comp( 4*rdof );
   u /= r;
   v /= r;
   w /= r;
   auto p = r;
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), offset );
+  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
   for (std::size_t i=0; i<U.nunk(); ++i)
     // \brief This uses the old eos_pressure call for now, because we didn't 
     // want to change the GetVarFn function signature right now. It's only in

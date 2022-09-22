@@ -65,9 +65,7 @@ class Transport {
       m_problem( Problem() ),
       m_system( c ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< eq >().at(c) ),
-      m_offset(
-        g_inputdeck.get< tag::component >().offset< eq >(c) )
+        g_inputdeck.get< tag::component >().get< eq >().at(c) )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
@@ -127,11 +125,12 @@ class Transport {
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& /*inbox*/,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&,
       tk::Fields& unk,
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
     }
 
@@ -140,7 +139,7 @@ class Transport {
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
+      tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
     //! Update the interface cells to first order dofs
@@ -219,35 +218,35 @@ class Transport {
         tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
         // 1. internal face contributions
-        tk::intLeastSq_P0P1( m_offset, rdof, fd, geoElem, U, rhs_ls, varRange );
+        tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls, varRange );
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset, 
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, 
             m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second, 
             P, U, rhs_ls, varRange );
 
         // 3. solve 3x3 least-squares system
-        tk::solveLeastSq_P0P1( m_offset, rdof, lhs_ls, rhs_ls, U, varRange );
+        tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U, varRange );
 
         for (std::size_t e=0; e<nelem; ++e)
         {
           std::vector< std::size_t > matInt(m_ncomp, 0);
           std::vector< tk::real > alAvg(m_ncomp, 0.0);
           for (std::size_t k=0; k<m_ncomp; ++k)
-            alAvg[k] = U(e, k*rdof, m_offset);
+            alAvg[k] = U(e, k*rdof);
           auto intInd = interfaceIndicator(m_ncomp, alAvg, matInt);
           if ((intsharp > 0) && intInd)
           {
             // Reconstruct second-order dofs of volume-fractions in Taylor space
             // using nodal-stencils, for a good interface-normal estimate
-            tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+            tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
               U, varRange );
           }
         }
 
         // 4. transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1( m_offset, rdof, nelem, inpoel, coord, U, varRange );
+        tk::transform_P0P1( rdof, nelem, inpoel, coord, U, varRange );
       }
     }
 
@@ -285,12 +284,12 @@ class Transport {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
 
       if (limiter == ctr::LimiterType::WENOP1)
-        WENO_P1( fd.Esuel(), m_offset, U );
+        WENO_P1( fd.Esuel(), U );
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
-        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+        Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, coord, U );
+          m_system, coord, U );
     }
 
     //! Update the conservative variable solution for this PDE system
@@ -355,20 +354,20 @@ class Transport {
       std::vector< std::vector< tk::real > > riemannLoc;
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_offset, m_mat_blk, t, ndof, rdof,
+      tk::surfInt( m_system, m_ncomp, m_mat_blk, t, ndof, rdof,
                    inpoel, coord, fd, geoFace, geoElem, Upwind::flux,
                    Problem::prescribedVelocity, U, P, ndofel, R, vriem,
                    riemannLoc, riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, m_offset, t, m_mat_blk, ndof, rdof,
+        tk::volInt( m_system, m_ncomp, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
                     Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, m_ncomp, m_offset, m_mat_blk, ndof, rdof, 
+        tk::bndSurfInt( m_system, m_ncomp, m_mat_blk, ndof, rdof, 
           b.first, fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
           riemannLoc, riemannDeriv, intsharp );
@@ -510,7 +509,7 @@ class Transport {
 
       tk::real sp_m(0.0);
       for (std::size_t c=0; c<m_ncomp; ++c) {
-        sp_m += unk(e,c*rdof,m_offset);
+        sp_m += unk(e,c*rdof);
       }
       return sp_m;
     }
@@ -520,7 +519,6 @@ class Transport {
     const Problem m_problem;            //!< Problem policy
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
-    const ncomp_t m_offset;             //!< Offset this PDE operates from
     //! BC configuration
     BCStateFn m_bc;
     //! \brief EOS material block - This PDE does not require an EOS block,

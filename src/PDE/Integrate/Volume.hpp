@@ -30,7 +30,6 @@ using ncomp_t = kw::ncomp::info::expect::type;
 void
 volInt( ncomp_t system,
         std::size_t nmat,
-        ncomp_t offset,
         real t,
         const std::vector< inciter::EoS_Base* >& mat_blk,
         const std::size_t ndof,
@@ -50,7 +49,6 @@ volInt( ncomp_t system,
 //! Update the rhs by adding the source term integrals
 void
 update_rhs( ncomp_t ncomp,
-            ncomp_t offset,
             const std::size_t ndof,
             const std::size_t ndof_el,
             const tk::real wt,

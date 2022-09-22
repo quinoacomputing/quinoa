@@ -29,7 +29,6 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! Compute source term integrals for DG
 void
 srcInt( ncomp_t system,
-        ncomp_t offset,
         const std::vector< inciter::EoS_Base* >& mat_blk,
         real t,
         const std::size_t ndof,
@@ -44,8 +43,7 @@ srcInt( ncomp_t system,
 
 //! Update the rhs by adding the source term integrals
 void
-update_rhs( ncomp_t offset,
-            const std::size_t ndof,
+update_rhs( const std::size_t ndof,
             const std::size_t ndof_el,
             const tk::real wt,
             const std::size_t e,
@@ -56,7 +54,6 @@ update_rhs( ncomp_t offset,
 //! Compute source term integrals for FV
 void
 srcIntFV( ncomp_t system,
-          ncomp_t offset,
           const std::vector< inciter::EoS_Base* >& mat_blk,
           real t,
           const std::size_t nelem,

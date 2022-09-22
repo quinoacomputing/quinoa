@@ -33,7 +33,6 @@ using bcconf_t = kw::sideset::info::expect::type;
 void
 surfInt( ncomp_t system,
          std::size_t nmat,
-         ncomp_t offset,
          const std::vector< inciter::EoS_Base* >& mat_blk,
          real t,
          const std::size_t ndof,
@@ -58,7 +57,6 @@ surfInt( ncomp_t system,
 void
 update_rhs_fa ( ncomp_t ncomp,
                 std::size_t nmat,
-                ncomp_t offset,
                 const std::size_t ndof,
                 const std::size_t ndof_l,
                 const std::size_t ndof_r,
@@ -76,7 +74,6 @@ update_rhs_fa ( ncomp_t ncomp,
 void
 surfIntFV( ncomp_t system,
   std::size_t nmat,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   real t,
   const std::size_t rdof,

@@ -73,7 +73,7 @@ nodegrad( std::size_t node,
        grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
      // access field data for scalar component c at nodes of element
-     auto u = U.extract( c, 0, N );
+     auto u = U.extract( c, N );
 
      // compute nodal volume: every element contributes their volume / 4
      vol += 5.0*J/120.0;
@@ -141,7 +141,7 @@ edgegrad( const std::array< std::vector< tk::real >, 3 >& coord,
        grad[0][i] = -grad[1][i]-grad[2][i]-grad[3][i];
 
      // access field data for scalar component c at nodes of element
-     auto u = U.extract( c, 0, N );
+     auto u = U.extract( c, N );
 
      // compute edge volume: every element contributes their volume / 6
      vol += J/36.0;

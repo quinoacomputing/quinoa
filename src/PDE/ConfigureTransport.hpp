@@ -51,19 +51,16 @@ namespace transport {
 //! Compute material indicator function for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
-//! \param[in] offset System offset specifying the position of the Transport
-//!   equation system among other systems
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Material indicator function ready to be output to file
 static tk::GetVarFn::result_type
-matIndicatorOutVar( const tk::Fields& U, tk::ctr::ncomp_t offset,
-                    std::size_t rdof )
+matIndicatorOutVar( const tk::Fields& U, std::size_t rdof )
 {
   auto ncomp = U.nprop()/rdof;
   std::vector< tk::real > m(U.nunk(), 0.0);
   for (std::size_t i=0; i<U.nunk(); ++i) {
     for (std::size_t k=0; k<ncomp; ++k)
-      m[i] += U(i, rdof*k, offset) * static_cast< tk::real >(k+1);
+      m[i] += U(i, rdof*k) * static_cast< tk::real >(k+1);
   }
   return m;
 }

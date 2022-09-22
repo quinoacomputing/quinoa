@@ -28,7 +28,6 @@ cleanTraceMultiMat(
   std::size_t nelem,
   std::size_t system,
   const std::vector< EoS_Base* >& mat_blk,
-  std::size_t offset,
   const tk::Fields& geoElem,
   std::size_t nmat,
   tk::Fields& U,
@@ -42,7 +41,6 @@ timeStepSizeMultiMat(
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const std::size_t nelem,
-  std::size_t offset,
   std::size_t nmat,
   const tk::Fields& U,
   const tk::Fields& P );
@@ -54,7 +52,6 @@ timeStepSizeMultiMatFV(
   const tk::Fields& geoElem,
   const std::size_t nelem,
   std::size_t system,
-  std::size_t offset,
   std::size_t nmat,
   const int engSrcAd,
   const tk::Fields& U,

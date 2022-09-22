@@ -64,10 +64,8 @@ FV::FV( const CProxy_Discretization& disc,
        g_inputdeck.get< tag::discr, tag::rdof >()*
        g_inputdeck.get< tag::component >().nprop() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_p( m_u.nunk(),
-       g_inputdeck.get< tag::discr, tag::rdof >()*
-         std::accumulate( begin(g_fvpde), end(g_fvpde), 0u,
-           [](std::size_t s, const FVPDE& eq){ return s + eq.nprim(); } ) ),
+  m_p( m_u.nunk(), g_inputdeck.get< tag::discr, tag::rdof >()*
+    g_fvpde[Disc()->MeshId()].nprim() ),
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::component >().nprop() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
@@ -195,9 +193,8 @@ FV::setup()
   lhs();
 
   // Determine elements inside user-defined IC box
-  for (auto& eq : g_fvpde)
-    eq.IcBoxElems( myGhosts()->m_geoElem, myGhosts()->m_fd.Esuel().size()/4,
-      m_boxelems );
+  g_fvpde[d->MeshId()].IcBoxElems( myGhosts()->m_geoElem,
+    myGhosts()->m_fd.Esuel().size()/4, m_boxelems );
 
   // Compute volume of user-defined box IC
   d->boxvol( {}, {}, 0 );      // punt for now
@@ -206,10 +203,8 @@ FV::setup()
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
-    for (const auto& eq : g_fvpde) {
-      auto n = eq.histNames();
-      histnames.insert( end(histnames), begin(n), end(n) );
-    }
+    auto n = g_fvpde[d->MeshId()].histNames();
+    histnames.insert( end(histnames), begin(n), end(n) );
     d->histheader( std::move(histnames) );
   }
 }
@@ -227,12 +222,11 @@ FV::box( tk::real v, const std::vector< tk::real >& )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  for (const auto& eq : g_fvpde)
-  {
-    eq.initialize( m_lhs, myGhosts()->m_inpoel, myGhosts()->m_coord, m_boxelems,
-      d->ElemBlockId(), m_u, d->T(), myGhosts()->m_fd.Esuel().size()/4 );
-    eq.updatePrimitives( m_u, m_p, myGhosts()->m_fd.Esuel().size()/4 );
-  }
+  g_fvpde[d->MeshId()].initialize( m_lhs, myGhosts()->m_inpoel,
+    myGhosts()->m_coord, m_boxelems, d->ElemBlockId(), m_u, d->T(),
+    myGhosts()->m_fd.Esuel().size()/4 );
+  g_fvpde[d->MeshId()].updatePrimitives( m_u, m_p,
+    myGhosts()->m_fd.Esuel().size()/4 );
 
   m_un = m_u;
 
@@ -411,12 +405,12 @@ FV::extractFieldOutput(
       for (std::size_t f=0; f<m_uNodefields.nprop(); ++f) {
         std::size_t j = 0;
         for (auto g : nodes)
-          lu[f][j++] = m_uNodefields(tk::cref_find(lid,g),f,0);
+          lu[f][j++] = m_uNodefields(tk::cref_find(lid,g),f);
       }
       for (std::size_t f=0; f<m_pNodefields.nprop(); ++f) {
         std::size_t j = 0;
         for (auto g : nodes)
-          lp[f][j++] = m_pNodefields(tk::cref_find(lid,g),f,0);
+          lp[f][j++] = m_pNodefields(tk::cref_find(lid,g),f);
       }
       // Pack (partial) number of elements surrounding chare boundary nodes
       std::vector< std::size_t > nesup( nodes.size() );
@@ -439,7 +433,7 @@ FV::lhs()
 // Compute left-hand side of discrete transport equations
 // *****************************************************************************
 {
-  for (const auto& eq : g_fvpde) eq.lhs( myGhosts()->m_geoElem, m_lhs );
+  g_fvpde[Disc()->MeshId()].lhs( myGhosts()->m_geoElem, m_lhs );
 
   if (!m_initial) stage();
 }
@@ -458,18 +452,17 @@ FV::reco()
     Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
     Assert( m_pc[0][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c,0) = m_uc[0][b.second][c];
+      m_u(b.first,c) = m_uc[0][b.second][c];
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c,0) = m_pc[0][b.second][c];
+      m_p(b.first,c) = m_pc[0][b.second][c];
     }
   }
 
   if (rdof > 1) {
     // Reconstruct second-order solution and primitive quantities
-    for (const auto& eq : g_fvpde)
-      eq.reconstruct( myGhosts()->m_geoElem, myGhosts()->m_fd,
-        myGhosts()->m_esup, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
+    g_fvpde[Disc()->MeshId()].reconstruct( myGhosts()->m_geoElem, myGhosts()->m_fd,
+      myGhosts()->m_esup, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
   }
 
   // start limiting
@@ -484,15 +477,15 @@ FV::lim()
 {
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-  if (rdof > 1)
-    for (const auto& eq : g_fvpde) {
-      eq.limit( myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_esup,
-        myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
+  if (rdof > 1) {
+    g_fvpde[Disc()->MeshId()].limit( myGhosts()->m_geoElem, myGhosts()->m_fd,
+      myGhosts()->m_esup,
+      myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
 
-      if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
-        eq.Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
-          myGhosts()->m_fd.Esuel().size()/4);
-    }
+    if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
+      g_fvpde[Disc()->MeshId()].Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
+        myGhosts()->m_fd.Esuel().size()/4);
+  }
 
   // Send limited solution to neighboring chares
   if (myGhosts()->m_sendGhost.empty())
@@ -572,10 +565,10 @@ FV::dt()
     Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
     Assert( m_pc[1][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c,0) = m_uc[1][b.second][c];
+      m_u(b.first,c) = m_uc[1][b.second][c];
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c,0) = m_pc[1][b.second][c];
+      m_p(b.first,c) = m_pc[1][b.second][c];
     }
   }
 
@@ -595,12 +588,11 @@ FV::dt()
     } else {      // compute dt based on CFL
 
       // find the minimum dt across all PDEs integrated
-      for (const auto& eq : g_fvpde) {
-        auto eqdt =
-          eq.dt( myGhosts()->m_fd, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-            m_u, m_p, myGhosts()->m_fd.Esuel().size()/4, m_propFrontEngSrc );
-        if (eqdt < mindt) mindt = eqdt;
-      }
+      auto eqdt =
+        g_fvpde[d->MeshId()].dt( myGhosts()->m_fd, myGhosts()->m_geoFace,
+          myGhosts()->m_geoElem,
+          m_u, m_p, myGhosts()->m_fd.Esuel().size()/4, m_propFrontEngSrc );
+      if (eqdt < mindt) mindt = eqdt;
 
       tk::real coeff(1.0);
       if (d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It());
@@ -651,37 +643,34 @@ FV::solve( tk::real newdt )
 
   // initialize energy source as not added (modified in eq.rhs appropriately)
   m_propFrontEngSrc = 0;
-  for (const auto& eq : g_fvpde)
-    eq.rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-      myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
-      d->ElemBlockId(), m_u, m_p, m_rhs, m_propFrontEngSrc );
+  g_fvpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
+    myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
+    d->ElemBlockId(), m_u, m_p, m_rhs, m_propFrontEngSrc );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
     for (std::size_t c=0; c<neq; ++c)
     {
       auto rmark = c*rdof;
-      m_u(e, rmark, 0) =  rkcoef[0][m_stage] * m_un(e, rmark, 0)
-        + rkcoef[1][m_stage] * ( m_u(e, rmark, 0)
-          + d->Dt() * m_rhs(e, c, 0)/m_lhs(e, c, 0) );
+      m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
+        + rkcoef[1][m_stage] * ( m_u(e, rmark)
+          + d->Dt() * m_rhs(e, c)/m_lhs(e, c) );
       // zero out reconstructed dofs of equations using reduced dofs
       if (rdof > 1) {
         for (std::size_t k=1; k<rdof; ++k)
         {
           rmark = c*rdof+k;
-          m_u(e, rmark, 0) = 0.0;
+          m_u(e, rmark) = 0.0;
         }
       }
     }
 
   // Update primitives based on the evolved solution
-  for (const auto& eq : g_fvpde)
-  {
-    eq.updatePrimitives( m_u, m_p, myGhosts()->m_fd.Esuel().size()/4 );
-    if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
-      eq.cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
-        myGhosts()->m_fd.Esuel().size()/4 );
-    }
+  g_fvpde[d->MeshId()].updatePrimitives( m_u, m_p,
+    myGhosts()->m_fd.Esuel().size()/4 );
+  if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
+    g_fvpde[d->MeshId()].cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
+      myGhosts()->m_fd.Esuel().size()/4 );
   }
 
   if (m_stage < 2) {
@@ -816,8 +805,8 @@ FV::resizePostAMR(
   for (const auto& [child,parent] : addedTets) {
     Assert( child < nelem, "Indexing out of new solution vector" );
     Assert( parent < old_nelem, "Indexing out of old solution vector" );
-    for (std::size_t i=0; i<unprop; ++i) m_u(child,i,0) = m_un(parent,i,0);
-    for (std::size_t i=0; i<pnprop; ++i) m_p(child,i,0) = pn(parent,i,0);
+    for (std::size_t i=0; i<unprop; ++i) m_u(child,i) = m_un(parent,i);
+    for (std::size_t i=0; i<pnprop; ++i) m_p(child,i) = pn(parent,i);
   }
   m_un = m_u;
 
@@ -861,11 +850,9 @@ FV::writeFields( CkCallback c )
   // Output time history
   if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
-    for (const auto& eq : g_fvpde) {
-      auto h = eq.histOutput( d->Hist(), myGhosts()->m_inpoel,
-        myGhosts()->m_coord, m_u, m_p );
-      hist.insert( end(hist), begin(h), end(h) );
-    }
+    auto h = g_fvpde[d->MeshId()].histOutput( d->Hist(), myGhosts()->m_inpoel,
+      myGhosts()->m_coord, m_u, m_p );
+    hist.insert( end(hist), begin(h), end(h) );
     d->history( std::move(hist) );
   }
 
@@ -879,8 +866,8 @@ FV::writeFields( CkCallback c )
     Assert( m_uNodefields.nprop() == f.first.size(), "Size mismatch" );
     auto p = tk::cref_find( lid, g );
     for (std::size_t i=0; i<f.first.size(); ++i) {
-      m_uNodefields(p,i,0) += f.first[i];
-      m_uNodefields(p,i,0) /= static_cast< tk::real >(
+      m_uNodefields(p,i) += f.first[i];
+      m_uNodefields(p,i) /= static_cast< tk::real >(
                               esup.second[p+1] - esup.second[p] + f.second );
     }
   }
@@ -889,8 +876,8 @@ FV::writeFields( CkCallback c )
     Assert( m_pNodefields.nprop() == f.first.size(), "Size mismatch" );
     auto p = tk::cref_find( lid, g );
     for (std::size_t i=0; i<f.first.size(); ++i) {
-      m_pNodefields(p,i,0) += f.first[i];
-      m_pNodefields(p,i,0) /= static_cast< tk::real >(
+      m_pNodefields(p,i) += f.first[i];
+      m_pNodefields(p,i) /= static_cast< tk::real >(
                               esup.second[p+1] - esup.second[p] + f.second );
     }
   }
@@ -912,9 +899,9 @@ FV::writeFields( CkCallback c )
     if (!chbnd(gid[p])) {
       auto n = static_cast< tk::real >( esup.second[p+1] - esup.second[p] );
       for (std::size_t i=0; i<m_uNodefields.nprop(); ++i)
-        m_uNodefields(p,i,0) /= n;
+        m_uNodefields(p,i) /= n;
       for (std::size_t i=0; i<m_pNodefields.nprop(); ++i)
-        m_pNodefields(p,i,0) /= n;
+        m_pNodefields(p,i) /= n;
     }
   }
 
@@ -928,22 +915,19 @@ FV::writeFields( CkCallback c )
   const auto& coord = m_outmesh.coord;
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
   auto t = Disc()->T();
-  for (const auto& eq : g_fvpde) {
-    analyticFieldOutput( eq, tk::Centering::ELEM, geoElem.extract(1,0),
-      geoElem.extract(2,0), geoElem.extract(3,0), t, elemfields );
-    analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1], coord[2],
-      t, nodefields );
-  }
+  analyticFieldOutput( g_fvpde[d->MeshId()], tk::Centering::ELEM,
+    geoElem.extract_comp(1), geoElem.extract_comp(2), geoElem.extract_comp(3),
+    t, elemfields );
+  analyticFieldOutput( g_fvpde[d->MeshId()], tk::Centering::NODE, coord[0],
+    coord[1], coord[2], t, nodefields );
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
   auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
 
   // Collect field output names for analytical solutions
-  for (const auto& eq : g_fvpde) {
-    analyticFieldNames( eq, tk::Centering::ELEM, elemfieldnames );
-    analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
-  }
+  analyticFieldNames( g_fvpde[d->MeshId()], tk::Centering::ELEM, elemfieldnames );
+  analyticFieldNames( g_fvpde[d->MeshId()], tk::Centering::NODE, nodefieldnames );
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );

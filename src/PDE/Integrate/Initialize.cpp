@@ -29,7 +29,6 @@ extern ctr::InputDeck g_inputdeck;
 void
 tk::initialize( ncomp_t system,
                 ncomp_t ncomp,
-                ncomp_t offset,
                 const std::vector< inciter::EoS_Base* >& mat_blk,
                 const Fields& L,
                 const std::vector< std::size_t >& inpoel,
@@ -44,7 +43,6 @@ tk::initialize( ncomp_t system,
 //! \details This is the public interface exposed to client code.
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] L Block diagonal mass matrix
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of node coordinates
@@ -79,7 +77,7 @@ tk::initialize( ncomp_t system,
 
   for (std::size_t e=0; e<nielem; ++e) {    // for all tets
     // The volume of tetrahedron
-    auto vole = L(e, 0, offset);
+    auto vole = L(e, 0);
 
     // Extract the element coordinates
     std::array< std::array< real, 3>, 4 > coordel {{
@@ -109,7 +107,7 @@ tk::initialize( ncomp_t system,
     }
 
     // Compute the initial conditions
-    eval_init(ncomp, offset, ndof, rdof, e, R, L, unk);
+    eval_init(ncomp, ndof, rdof, e, R, L, unk);
   }
 }
 
@@ -160,7 +158,6 @@ tk::update_rhs( ncomp_t ncomp,
 
 void
 tk::eval_init( ncomp_t ncomp,
-               ncomp_t offset,
                const std::size_t ndof,
                const std::size_t rdof,
                const std::size_t e,
@@ -170,7 +167,6 @@ tk::eval_init( ncomp_t ncomp,
 // *****************************************************************************
 //  Compute the initial conditions
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Number of degrees of freedom
 //! \param[in] rdof Total number of reconstructed degrees of freedom
 //! \param[in] e Element index
@@ -184,30 +180,30 @@ tk::eval_init( ncomp_t ncomp,
     // DG(P0)
     auto mark = c*ndof;
     auto rmark = c*rdof;
-    unk(e, rmark, offset) = R[mark] / L(e, mark,   offset);
+    unk(e, rmark) = R[mark] / L(e, mark);
 
     // if P0P1, initialize higher dofs to 0
     if (rdof > ndof)
     {
-      unk(e, rmark+1, offset) = 0.0;
-      unk(e, rmark+2, offset) = 0.0;
-      unk(e, rmark+3, offset) = 0.0;
+      unk(e, rmark+1) = 0.0;
+      unk(e, rmark+2) = 0.0;
+      unk(e, rmark+3) = 0.0;
     }
 
     if(ndof > 1)          // DG(P1)
     {
-      unk(e, rmark+1, offset) = R[mark+1] / L(e, mark+1, offset);
-      unk(e, rmark+2, offset) = R[mark+2] / L(e, mark+2, offset);
-      unk(e, rmark+3, offset) = R[mark+3] / L(e, mark+3, offset);
+      unk(e, rmark+1) = R[mark+1] / L(e, mark+1);
+      unk(e, rmark+2) = R[mark+2] / L(e, mark+2);
+      unk(e, rmark+3) = R[mark+3] / L(e, mark+3);
  
       if(ndof > 4)        // DG(P2)
       {
-        unk(e, rmark+4, offset) = R[mark+4] / L(e, mark+4, offset);
-        unk(e, rmark+5, offset) = R[mark+5] / L(e, mark+5, offset);
-        unk(e, rmark+6, offset) = R[mark+6] / L(e, mark+6, offset);
-        unk(e, rmark+7, offset) = R[mark+7] / L(e, mark+7, offset);
-        unk(e, rmark+8, offset) = R[mark+8] / L(e, mark+8, offset);
-        unk(e, rmark+9, offset) = R[mark+9] / L(e, mark+9, offset);
+        unk(e, rmark+4) = R[mark+4] / L(e, mark+4);
+        unk(e, rmark+5) = R[mark+5] / L(e, mark+5);
+        unk(e, rmark+6) = R[mark+6] / L(e, mark+6);
+        unk(e, rmark+7) = R[mark+7] / L(e, mark+7);
+        unk(e, rmark+8) = R[mark+8] / L(e, mark+8);
+        unk(e, rmark+9) = R[mark+9] / L(e, mark+9);
       }
     }
   }

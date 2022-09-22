@@ -1352,7 +1352,7 @@ genGeoFaceTri( std::size_t nipfac,
                              {{zp1, zp2, zp3}} );
 
     for (std::size_t i=0; i<7; ++i)
-      geoFace(f,i,0) = geoif(0,i,0);
+      geoFace(f,i) = geoif(0,i);
   }
 
   return geoFace;
@@ -1415,18 +1415,18 @@ geoFaceTri( const std::array< real, 3 >& x,
   Fields geoiFace( 1, 7 );
 
   // compute area
-  geoiFace(0,0,0) = area( x, y, z );
+  geoiFace(0,0) = area( x, y, z );
 
   // compute unit normal to face
   auto n = normal( x, y, z );
-  geoiFace(0,1,0) = n[0];
-  geoiFace(0,2,0) = n[1];
-  geoiFace(0,3,0) = n[2];
+  geoiFace(0,1) = n[0];
+  geoiFace(0,2) = n[1];
+  geoiFace(0,3) = n[2];
 
   // compute centroid
-  geoiFace(0,4,0) = (x[0]+x[1]+x[2])/3.0;
-  geoiFace(0,5,0) = (y[0]+y[1]+y[2])/3.0;
-  geoiFace(0,6,0) = (z[0]+z[1]+z[2])/3.0;
+  geoiFace(0,4) = (x[0]+x[1]+x[2])/3.0;
+  geoiFace(0,5) = (y[0]+y[1]+y[2])/3.0;
+  geoiFace(0,6) = (z[0]+z[1]+z[2])/3.0;
 
   return geoiFace;
 }
@@ -1478,12 +1478,12 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
 
     Assert( vole > 0, "Element Jacobian non-positive" );
 
-    geoElem(e,0,0) = vole;
+    geoElem(e,0) = vole;
 
     // get centroid
-    geoElem(e,1,0) = (x[A]+x[B]+x[C]+x[D])/4.0;
-    geoElem(e,2,0) = (y[A]+y[B]+y[C]+y[D])/4.0;
-    geoElem(e,3,0) = (z[A]+z[B]+z[C]+z[D])/4.0;
+    geoElem(e,1) = (x[A]+x[B]+x[C]+x[D])/4.0;
+    geoElem(e,2) = (y[A]+y[B]+y[C]+y[D])/4.0;
+    geoElem(e,3) = (z[A]+z[B]+z[C]+z[D])/4.0;
 
     // calculate minimum edge-length
     tk::real edgelen = std::numeric_limits< tk::real >::max();
@@ -1496,7 +1496,7 @@ genGeoElemTet( const std::vector< std::size_t >& inpoel,
           z[ni]-z[nj] ) );
       }
     }
-    geoElem(e,4,0) = edgelen;
+    geoElem(e,4) = edgelen;
   }
 
   return geoElem;
@@ -1540,9 +1540,9 @@ leakyPartition( const std::vector< int >& esueltet,
                                    {{y[A], y[B], y[C]}},
                                    {{z[A], z[B], z[C]}} );
         // Sum up face area * face unit-normal
-        s[0] += geoface(0,0,0) * geoface(0,1,0);
-        s[1] += geoface(0,0,0) * geoface(0,2,0);
-        s[2] += geoface(0,0,0) * geoface(0,3,0);
+        s[0] += geoface(0,0) * geoface(0,1);
+        s[1] += geoface(0,0) * geoface(0,2);
+        s[2] += geoface(0,0) * geoface(0,3);
       }
   }
 

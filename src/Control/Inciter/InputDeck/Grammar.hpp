@@ -1043,8 +1043,6 @@ namespace grm {
       const auto& refvar = stack.template get< tag::amr, tag::refvar >();
       // get ncomponents object from this input deck
       const auto& ncomps = stack.template get< tag::component >();
-      // compute offset map associating offsets to dependent variables
-      auto offsetmap = ncomps.offsetmap( stack );
       // compute number of components associated to dependent variabels
       auto ncompmap = ncomps.ncompmap( stack );
       // reference variable index vector to fill
@@ -1059,10 +1057,8 @@ namespace grm {
         // components configured for the eq system for this dependent variable
         if (f >= tk::cref_find( ncompmap, depvar ))
           Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
-        // get offset for depvar
-        auto eqsys_offset = tk::cref_find( offsetmap, depvar );
-        // the index is the eq offset + field ID
-        auto idx = eqsys_offset + f;
+        // the index is the eq field ID
+        auto idx = f;
         // save refvar index in system of all systems
         refidx.push_back( idx );
       }

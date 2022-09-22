@@ -175,33 +175,32 @@ const
       auto B = tk::eval_basis( dofe, coordgp[0][igp], coordgp[1][igp],
                                coordgp[2][igp]);
 
-      auto wt = wgp[igp] * geoElem(e, 0, 0);
+      auto wt = wgp[igp] * geoElem(e, 0);
 
       std::vector< tk::real > s;
 
-      for (const auto& eq : g_dgpde)
-        // cppcheck-suppress useStlAlgorithm
-        s = eq.solution( gp[0], gp[1], gp[2], d.T() );
+      // cppcheck-suppress useStlAlgorithm
+      s = g_dgpde[d.MeshId()].solution( gp[0], gp[1], gp[2], d.T() );
 
       for (std::size_t c=0; c<u.nprop()/rdof; ++c)
       {
         auto mark = c*rdof;
-        auto ugp = u(e, mark, 0);
+        auto ugp = u(e, mark);
 
         if(dofe > 1)
         {
-          ugp +=  u(e, mark+1, 0) * B[1]
-                + u(e, mark+2, 0) * B[2]
-                + u(e, mark+3, 0) * B[3];
+          ugp +=  u(e, mark+1) * B[1]
+                + u(e, mark+2) * B[2]
+                + u(e, mark+3) * B[3];
 
           if(dofe > 4)
           {
-            ugp +=  u(e, mark+4, 0) * B[4]
-                  + u(e, mark+5, 0) * B[5]
-                  + u(e, mark+6, 0) * B[6]
-                  + u(e, mark+7, 0) * B[7]
-                  + u(e, mark+8, 0) * B[8]
-                  + u(e, mark+9, 0) * B[9];
+            ugp +=  u(e, mark+4) * B[4]
+                  + u(e, mark+5) * B[5]
+                  + u(e, mark+6) * B[6]
+                  + u(e, mark+7) * B[7]
+                  + u(e, mark+8) * B[8]
+                  + u(e, mark+9) * B[9];
           }
         }
 
@@ -217,12 +216,11 @@ const
       }
     }
     tk::real sp_te(0.0);
-    for (const auto& eq : g_dgpde) {
-      // cppcheck-suppress useStlAlgorithm
-      sp_te += eq.sp_totalenergy(e, u);
-    }
+    // cppcheck-suppress useStlAlgorithm
+    sp_te += g_dgpde[d.MeshId()].sp_totalenergy(e, u);
+
     // Compute sum of the total energy over the entire domain (only the
     // first entry is used)
-    diag[TOTALSOL][0] += geoElem(e,0,0) * sp_te;
+    diag[TOTALSOL][0] += geoElem(e,0) * sp_te;
   }
 }

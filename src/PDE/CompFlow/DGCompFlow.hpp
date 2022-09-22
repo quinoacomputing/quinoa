@@ -69,7 +69,6 @@ class CompFlow {
       m_problem(),
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
-      m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_riemann( compflowRiemannSolver(
         g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) )
     {
@@ -146,11 +145,13 @@ class CompFlow {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::unordered_set< std::size_t > >& inbox,
+                const std::unordered_map< std::size_t,
+                  std::set< std::size_t > >&,
                 tk::Fields& unk,
                 tk::real t,
                 const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
@@ -174,17 +175,17 @@ class CompFlow {
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
-                s[c] = unk(e,mark,m_offset);
+                s[c] = unk(e,mark);
                 // set high-order DOFs to zero
                 for (std::size_t i=1; i<rdof; ++i)
-                  unk(e,mark+i,m_offset) = 0.0;
+                  unk(e,mark+i) = 0.0;
               }
               initializeBox<inciter::ctr::box>( m_system, m_mat_blk, 1.0, V_ex,
                 t, b, bgpreic[m_system][0], c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
-                unk(e,mark,m_offset) = s[c];
+                unk(e,mark) = s[c];
               }
             }
             ++bcnt;
@@ -198,7 +199,7 @@ class CompFlow {
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
+      tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
     //! Update the interface cells to first order dofs
@@ -272,21 +273,21 @@ class CompFlow {
         tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
         // 1. internal face contributions
-        tk::intLeastSq_P0P1( m_offset, rdof, fd, geoElem, U, rhs_ls,
+        tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls,
           {0, m_ncomp-1} );
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, m_offset,
+          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp,
             m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second,
             P, U, rhs_ls, {0, m_ncomp-1} );
 
         // 3. solve 3x3 least-squares system
-        tk::solveLeastSq_P0P1( m_offset, rdof, lhs_ls, rhs_ls, U,
+        tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U,
           {0, m_ncomp-1} );
 
         // 4. transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1( m_offset, rdof, nelem, inpoel, coord, U,
+        tk::transform_P0P1( rdof, nelem, inpoel, coord, U,
           {0, m_ncomp-1} );
       }
     }
@@ -329,16 +330,16 @@ class CompFlow {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
       if (limiter == ctr::LimiterType::WENOP1)
-        WENO_P1( fd.Esuel(), m_offset, U );
+        WENO_P1( fd.Esuel(), U );
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
-        Superbee_P1( fd.Esuel(), inpoel, ndofel, m_offset, coord, U );
+        Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
         VertexBasedCompflow_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
+          m_system, m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
           shockmarker);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
+          m_system, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
           uNodalExtrm, mtInv, flux, U, shockmarker);
     }
 
@@ -408,23 +409,23 @@ class CompFlow {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_offset, m_mat_blk, t, ndof, rdof, inpoel,
+      tk::surfInt( m_system, 1, m_mat_blk, t, ndof, rdof, inpoel,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    R, vriem, riemannLoc, riemannDeriv );
 
       // compute optional source term
-      tk::srcInt( m_system, m_offset, m_mat_blk, t, ndof, fd.Esuel().size()/4,
+      tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4,
                   inpoel, coord, geoElem, Problem::src, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, 1, m_offset, t, m_mat_blk, ndof, rdof,
+        tk::volInt( m_system, 1, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
                     U, P, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, 1, m_offset, m_mat_blk, ndof, rdof, b.first,
+        tk::bndSurfInt( m_system, 1, m_mat_blk, ndof, rdof, b.first,
                         fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                         velfn, b.second, U, P, ndofel, R, vriem, riemannLoc,
                         riemannDeriv );
@@ -588,7 +589,7 @@ class CompFlow {
             tk::Jacobian(coordel_l[0], coordel_l[1], gp, coordel_l[3])/detT_l,
             tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], gp)/detT_l );
 
-          auto wt = wgp[igp] * geoFace(f,0,0);
+          auto wt = wgp[igp] * geoFace(f,0);
 
           std::array< std::vector< tk::real >, 2 > ugp;
 
@@ -596,20 +597,20 @@ class CompFlow {
           for (ncomp_t c=0; c<5; ++c)
           {
             auto mark = c*rdof;
-            ugp[0].push_back( U(el, mark, m_offset) );
+            ugp[0].push_back( U(el, mark) );
 
             if(ndofel[el] > 1)          //DG(P1)
-              ugp[0][c] +=  U(el, mark+1, m_offset) * B_l[1]
-                          + U(el, mark+2, m_offset) * B_l[2]
-                          + U(el, mark+3, m_offset) * B_l[3];
+              ugp[0][c] +=  U(el, mark+1) * B_l[1]
+                          + U(el, mark+2) * B_l[2]
+                          + U(el, mark+3) * B_l[3];
 
             if(ndofel[el] > 4)          //DG(P2)
-              ugp[0][c] +=  U(el, mark+4, m_offset) * B_l[4]
-                          + U(el, mark+5, m_offset) * B_l[5]
-                          + U(el, mark+6, m_offset) * B_l[6]
-                          + U(el, mark+7, m_offset) * B_l[7]
-                          + U(el, mark+8, m_offset) * B_l[8]
-                          + U(el, mark+9, m_offset) * B_l[9];
+              ugp[0][c] +=  U(el, mark+4) * B_l[4]
+                          + U(el, mark+5) * B_l[5]
+                          + U(el, mark+6) * B_l[6]
+                          + U(el, mark+7) * B_l[7]
+                          + U(el, mark+8) * B_l[8]
+                          + U(el, mark+9) * B_l[9];
           }
 
           rho = ugp[0][0];
@@ -621,7 +622,7 @@ class CompFlow {
 
           a = m_mat_blk[0]->eos_soundspeed( rho, p );
 
-          vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+          vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
           dSV_l = wt * (std::fabs(vn) + a);
 
@@ -655,20 +656,20 @@ class CompFlow {
             for (ncomp_t c=0; c<5; ++c)
             {
               auto mark = c*rdof;
-              ugp[1].push_back( U(eR, mark, m_offset) );
+              ugp[1].push_back( U(eR, mark) );
 
               if(ndofel[eR] > 1)          //DG(P1)
-                ugp[1][c] +=  U(eR, mark+1, m_offset) * B_r[1]
-                            + U(eR, mark+2, m_offset) * B_r[2]
-                            + U(eR, mark+3, m_offset) * B_r[3];
+                ugp[1][c] +=  U(eR, mark+1) * B_r[1]
+                            + U(eR, mark+2) * B_r[2]
+                            + U(eR, mark+3) * B_r[3];
 
               if(ndofel[eR] > 4)         //DG(P2)
-                ugp[1][c] +=  U(eR, mark+4, m_offset) * B_r[4]
-                            + U(eR, mark+5, m_offset) * B_r[5]
-                            + U(eR, mark+6, m_offset) * B_r[6]
-                            + U(eR, mark+7, m_offset) * B_r[7]
-                            + U(eR, mark+8, m_offset) * B_r[8]
-                            + U(eR, mark+9, m_offset) * B_r[9];
+                ugp[1][c] +=  U(eR, mark+4) * B_r[4]
+                            + U(eR, mark+5) * B_r[5]
+                            + U(eR, mark+6) * B_r[6]
+                            + U(eR, mark+7) * B_r[7]
+                            + U(eR, mark+8) * B_r[8]
+                            + U(eR, mark+9) * B_r[9];
             }
 
             rho = ugp[1][0];
@@ -679,7 +680,7 @@ class CompFlow {
             p = m_mat_blk[0]->eos_pressure( rho, u, v, w, rhoE );
             a = m_mat_blk[0]->eos_soundspeed( rho, p );
 
-            vn = u*geoFace(f,1,0) + v*geoFace(f,2,0) + w*geoFace(f,3,0);
+            vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
             dSV_r = wt * (std::fabs(vn) + a);
             delt[eR] += std::max( dSV_l, dSV_r );
@@ -707,7 +708,7 @@ class CompFlow {
 
         // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
         // where p is the order of the DG polynomial by linear stability theory.
-        mindt = std::min( mindt, geoElem(e,0,0)/ (delt[e] * (2.0*dgp + 1.0)) );
+        mindt = std::min( mindt, geoElem(e,0)/ (delt[e] * (2.0*dgp + 1.0)) );
       }
 
       return mindt;
@@ -723,10 +724,10 @@ class CompFlow {
               const std::array< std::size_t, 4 >& N ) const
     {
       std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( 1, m_offset, N );
-      v[1] = U.extract( 2, m_offset, N );
-      v[2] = U.extract( 3, m_offset, N );
-      auto r = U.extract( 0, m_offset, N );
+      v[0] = U.extract( 1, N );
+      v[1] = U.extract( 2, N );
+      v[2] = U.extract( 3, N );
+      auto r = U.extract( 0, N );
       std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
                       []( tk::real s, tk::real& d ){ return d /= s; } );
       std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
@@ -793,7 +794,7 @@ class CompFlow {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, 0, rdof, rdof, e, U, B, {0, m_ncomp-1});
+        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B, {0, m_ncomp-1});
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
@@ -844,7 +845,7 @@ class CompFlow {
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
-      return unk(e,4*rdof,m_offset);
+      return unk(e,4*rdof);
     }
 
   private:
@@ -856,8 +857,6 @@ class CompFlow {
     const ncomp_t m_system;
     //! Number of components in this PDE system
     const ncomp_t m_ncomp;
-    //! Offset PDE system operates from
-    const ncomp_t m_offset;
     //! Riemann solver
     tk::RiemannFluxFn m_riemann;
     //! BC configuration
@@ -1153,8 +1152,8 @@ class CompFlow {
 
             // add source
             for (auto e : boxelems) {
-              std::array< tk::real, 3 > node{{ geoElem(e,1,0), geoElem(e,2,0),
-                geoElem(e,3,0) }};
+              std::array< tk::real, 3 > node{{ geoElem(e,1), geoElem(e,2),
+                geoElem(e,3) }};
               // Transform node to reference space of box
               tk::movePoint(b_centroid, node);
               tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
@@ -1199,9 +1198,9 @@ class CompFlow {
                   std::vector< tk::real > s(5, 0.0);
                   s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
 
-                  auto wt = wgp[igp] * geoElem(e, 0, 0);
+                  auto wt = wgp[igp] * geoElem(e, 0);
 
-                  tk::update_rhs( m_offset, ndof, ndofel[e], wt, e, B, s, R );
+                  tk::update_rhs( ndof, ndofel[e], wt, e, B, s, R );
                 }
               }
             }

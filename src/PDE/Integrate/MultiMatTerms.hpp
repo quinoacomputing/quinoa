@@ -30,7 +30,6 @@ using ncomp_t = kw::ncomp::info::expect::type;
 void
 nonConservativeInt( ncomp_t system,
                     std::size_t nmat,
-                    ncomp_t offset,
                     const std::vector< inciter::EoS_Base* >& mat_blk,
                     const std::size_t ndof,
                     const std::size_t rdof,
@@ -48,7 +47,6 @@ nonConservativeInt( ncomp_t system,
 //! Update the rhs by adding the non-conservative term integrals
 void
 updateRhsNonCons( ncomp_t ncomp,
-                ncomp_t offset,
                 const std::size_t nmat,
                 const std::size_t ndof,
                 const std::size_t ndof_el,
@@ -64,7 +62,6 @@ void
 nonConservativeIntFV(
   ncomp_t system,
   std::size_t nmat,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,
@@ -80,7 +77,6 @@ nonConservativeIntFV(
 void
 pressureRelaxationInt( ncomp_t system,
                        std::size_t nmat,
-                       ncomp_t offset,
                        const std::vector< inciter::EoS_Base* >& mat_blk,
                        const std::size_t ndof,
                        const std::size_t rdof,
@@ -99,7 +95,6 @@ pressureRelaxationInt( ncomp_t system,
 void
 updateRhsPre(
   ncomp_t ncomp,
-  ncomp_t offset,
   const std::size_t ndof,
   const std::size_t ndof_el,
   const tk::real wt,
@@ -113,7 +108,6 @@ void
 pressureRelaxationIntFV(
   ncomp_t system,
   std::size_t nmat,
-  ncomp_t offset,
   const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,

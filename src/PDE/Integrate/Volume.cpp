@@ -21,7 +21,6 @@
 void
 tk::volInt( ncomp_t system,
             std::size_t nmat,
-            ncomp_t offset,
             real t,
             const std::vector< inciter::EoS_Base* >& mat_blk,
             const std::size_t ndof,
@@ -41,7 +40,6 @@ tk::volInt( ncomp_t system,
 //  Compute volume integrals for DG
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] t Physical time
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -112,10 +110,10 @@ tk::volInt( ncomp_t system,
         auto B = eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
-        auto wt = wgp[igp] * geoElem(e, 0, 0);
+        auto wt = wgp[igp] * geoElem(e, 0);
 
-        auto state = evalPolynomialSol(system, offset, mat_blk, intsharp, ncomp,
-          nprim, rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
+        auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
           {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
         // evaluate prescribed velocity (if any)
@@ -124,7 +122,7 @@ tk::volInt( ncomp_t system,
         // comput flux
         auto fl = flux( system, ncomp, mat_blk, state, v );
 
-        update_rhs( ncomp, offset, ndof, ndofel[e], wt, e, dBdx, fl, R );
+        update_rhs( ncomp, ndof, ndofel[e], wt, e, dBdx, fl, R );
       }
     }
   }
@@ -132,7 +130,6 @@ tk::volInt( ncomp_t system,
 
 void
 tk::update_rhs( ncomp_t ncomp,
-                ncomp_t offset,
                 const std::size_t ndof,
                 const std::size_t ndof_el,
                 const tk::real wt,
@@ -143,7 +140,6 @@ tk::update_rhs( ncomp_t ncomp,
 // *****************************************************************************
 //  Update the rhs by adding the source term integrals
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for local element
 //! \param[in] wt Weight of gauss quadrature point
@@ -164,26 +160,26 @@ tk::update_rhs( ncomp_t ncomp,
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    R(e, mark+1, offset) +=
+    R(e, mark+1) +=
       wt * (fl[c][0]*dBdx[0][1] + fl[c][1]*dBdx[1][1] + fl[c][2]*dBdx[2][1]);
-    R(e, mark+2, offset) +=
+    R(e, mark+2) +=
       wt * (fl[c][0]*dBdx[0][2] + fl[c][1]*dBdx[1][2] + fl[c][2]*dBdx[2][2]);
-    R(e, mark+3, offset) +=
+    R(e, mark+3) +=
       wt * (fl[c][0]*dBdx[0][3] + fl[c][1]*dBdx[1][3] + fl[c][2]*dBdx[2][3]);
 
     if( ndof_el > 4 )
     {
-      R(e, mark+4, offset) +=
+      R(e, mark+4) +=
         wt * (fl[c][0]*dBdx[0][4] + fl[c][1]*dBdx[1][4] + fl[c][2]*dBdx[2][4]);
-      R(e, mark+5, offset) +=
+      R(e, mark+5) +=
         wt * (fl[c][0]*dBdx[0][5] + fl[c][1]*dBdx[1][5] + fl[c][2]*dBdx[2][5]);
-      R(e, mark+6, offset) +=
+      R(e, mark+6) +=
         wt * (fl[c][0]*dBdx[0][6] + fl[c][1]*dBdx[1][6] + fl[c][2]*dBdx[2][6]);
-      R(e, mark+7, offset) +=
+      R(e, mark+7) +=
         wt * (fl[c][0]*dBdx[0][7] + fl[c][1]*dBdx[1][7] + fl[c][2]*dBdx[2][7]);
-      R(e, mark+8, offset) +=
+      R(e, mark+8) +=
         wt * (fl[c][0]*dBdx[0][8] + fl[c][1]*dBdx[1][8] + fl[c][2]*dBdx[2][8]);
-      R(e, mark+9, offset) +=
+      R(e, mark+9) +=
         wt * (fl[c][0]*dBdx[0][9] + fl[c][1]*dBdx[1][9] + fl[c][2]*dBdx[2][9]);
     }
   }

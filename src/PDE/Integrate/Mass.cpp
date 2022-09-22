@@ -17,14 +17,12 @@
 
 void
 tk::mass( ncomp_t ncomp,
-          ncomp_t offset,
           ncomp_t ndof,
           const Fields& geoElem,
           Fields& l )
 // *****************************************************************************
 //  Compute the block-diagonal mass matrix for DG
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] offset Offset this PDE system operates from
 //! \param[in] ndof Number of solution degrees of freedom
 //! \param[in] geoElem Element geometry array
 //! \param[in,out] l Block diagonal mass matrix
@@ -36,11 +34,11 @@ tk::mass( ncomp_t ncomp,
 
   // Compute LHS
   for (std::size_t e=0; e<nelem; ++e) {
-    auto M = massMatrixDubiner(ndof, geoElem(e,0,0));
+    auto M = massMatrixDubiner(ndof, geoElem(e,0));
     for (ncomp_t c=0; c<ncomp; ++c) {
       const auto mark = c * ndof;
       for (std::size_t i=0; i<ndof; ++i) {
-        l(e, mark+i, offset) = M[i];
+        l(e, mark+i) = M[i];
       }
     }
   }
@@ -78,7 +76,7 @@ tk::lump( ncomp_t ncomp,
 
     // access pointer to lumped mass left hand side at element nodes
     std::vector< const tk::real* > l( ncomp );
-    for (ncomp_t c=0; c<ncomp; ++c) l[c] = L.cptr( c, 0 );
+    for (ncomp_t c=0; c<ncomp; ++c) l[c] = L.cptr( c );
 
     // scatter-add lumped mass element contributions to lhs nodes
     for (ncomp_t c=0; c<ncomp; ++c)

@@ -23,8 +23,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Compute the block-diagnoal mass matrix for DG
 void
-mass( ncomp_t ncomp, ncomp_t offset, ncomp_t ndof, const Fields& geoElem,
-      Fields& l );
+mass( ncomp_t ncomp, ncomp_t ndof, const Fields& geoElem, Fields& l );
 
 //! Compute lumped mass matrix for CG
 tk::Fields

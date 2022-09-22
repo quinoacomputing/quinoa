@@ -71,7 +71,6 @@ class MultiMat {
     explicit MultiMat( ncomp_t c ) :
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
-      m_offset( g_inputdeck.get< tag::component >().offset< eq >(c) ),
       m_riemann( multimatRiemannSolver(
         g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) )
     {
@@ -143,7 +142,9 @@ class MultiMat {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] inbox List of elements at which box user ICs are set for
-    //!    each IC box
+    //!   each IC box
+    //! \param[in] elemblkid Element ids associated with mesh block ids where
+    //!   user ICs are set
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
@@ -151,25 +152,29 @@ class MultiMat {
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblkid,
       tk::Fields& unk,
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_offset, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_system, m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
+      const auto& icmbk = ic.get< tag::meshblock >();
 
       const auto& bgpreic = ic.get< tag::pressure >();
       tk::real bgpre =
         (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
         bgpreic[m_system][0] : 0.0;
 
-      // Set initial conditions inside user-defined IC box
+      // Set initial conditions inside user-defined IC boxes and mesh blocks
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
+        // inside user-defined box
         if (icbox.size() > m_system) {
           std::size_t bcnt = 0;
           for (const auto& b : icbox[m_system]) {   // for all boxes
@@ -182,20 +187,40 @@ class MultiMat {
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
-                s[c] = unk(e,mark,m_offset);
+                s[c] = unk(e,mark);
                 // set high-order DOFs to zero
                 for (std::size_t i=1; i<rdof; ++i)
-                  unk(e,mark+i,m_offset) = 0.0;
+                  unk(e,mark+i) = 0.0;
               }
               initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, bgpre,
                 s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
-                unk(e,mark,m_offset) = s[c];
+                unk(e,mark) = s[c];
               }
             }
             ++bcnt;
+          }
+        }
+
+        // inside user-specified mesh blocks
+        if (icmbk.size() > m_system) {
+          for (const auto& b : icmbk[m_system]) { // for all blocks
+            auto blid = b.get< tag::blockid >();
+            auto V_ex = b.get< tag::volume >();
+            if (elemblkid.find(blid) != elemblkid.end()) {
+              const auto& elset = tk::cref_find(elemblkid, blid);
+              if (elset.find(e) != elset.end()) {
+                initializeBox<ctr::meshblock>( m_system, m_mat_blk, V_ex, t, b,
+                  bgpre, s );
+                // store initialization in solution vector
+                for (std::size_t c=0; c<m_ncomp; ++c) {
+                  auto mark = c*rdof;
+                  unk(e,mark) = s[c];
+                }
+              }
+            }
           }
         }
       }
@@ -209,7 +234,7 @@ class MultiMat {
       // Unlike Compflow and Transport, there is a weak reconstruction about
       // conservative variable after limiting function which will require the
       // size of left hand side vector to be rdof
-      tk::mass( m_ncomp, m_offset, ndof, geoElem, l );
+      tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
     //! Update the interface cells to first order dofs
@@ -234,7 +259,7 @@ class MultiMat {
         std::vector< std::size_t > matInt(nmat, 0);
         std::vector< tk::real > alAvg(nmat, 0.0);
         for (std::size_t k=0; k<nmat; ++k)
-          alAvg[k] = unk(e, volfracDofIdx(nmat,k,rdof,0), m_offset);
+          alAvg[k] = unk(e, volfracDofIdx(nmat,k,rdof,0));
         auto intInd = interfaceIndicator(nmat, alAvg, matInt);
 
         // interface cells cannot be high-order
@@ -243,14 +268,14 @@ class MultiMat {
           for (std::size_t k=0; k<nmat; ++k) {
             if (matInt[k]) {
               for (std::size_t i=1; i<rdof; ++i) {
-                unk(e, densityDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
-                unk(e, energyDofIdx(nmat,k,rdof,i), m_offset) = 0.0;
+                unk(e, densityDofIdx(nmat,k,rdof,i)) = 0.0;
+                unk(e, energyDofIdx(nmat,k,rdof,i)) = 0.0;
               }
             }
           }
           for (std::size_t idir=0; idir<3; ++idir) {
             for (std::size_t i=1; i<rdof; ++i) {
-              unk(e, momentumDofIdx(nmat,idir,rdof,i), m_offset) = 0.0;
+              unk(e, momentumDofIdx(nmat,idir,rdof,i)) = 0.0;
             }
           }
         }
@@ -310,9 +335,9 @@ class MultiMat {
           auto B =
             tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
-          auto w = wgp[igp] * geoElem(e, 0, 0);
+          auto w = wgp[igp] * geoElem(e, 0);
 
-          auto state = tk::eval_state( m_ncomp, 0, rdof, ndof, e, unk, B, {0, m_ncomp-1} );
+          auto state = tk::eval_state( m_ncomp, rdof, ndof, e, unk, B, {0, m_ncomp-1} );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -360,9 +385,9 @@ class MultiMat {
           auto rmark = k * rdof;
           for(std::size_t idof = 0; idof < ndof; idof++)
           {
-            prim(e, rmark+idof, 0) = R[mark+idof] / L(e, mark+idof, 0);
-            if(fabs(prim(e, rmark+idof, 0)) < 1e-16)
-              prim(e, rmark+idof, 0) = 0;
+            prim(e, rmark+idof) = R[mark+idof] / L(e, mark+idof);
+            if(fabs(prim(e, rmark+idof)) < 1e-16)
+              prim(e, rmark+idof) = 0;
           }
         }
       }
@@ -399,7 +424,7 @@ class MultiMat {
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
       auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk,
-        m_offset, geoElem, nmat, unk, prim);
+        geoElem, nmat, unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
     }
@@ -450,12 +475,12 @@ class MultiMat {
       {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
-        tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
           U, varRange );
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, U, varRange);
+      tk::transform_P0P1(rdof, nelem, inpoel, coord, U, varRange);
 
       //----- reconstruction of primitive quantities -----
       //--------------------------------------------------
@@ -467,12 +492,12 @@ class MultiMat {
         {
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
-          tk::recoLeastSqExtStencil( rdof, m_offset, e, esup, inpoel, geoElem,
+          tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
             P, {0, nprim()-1} );
         }
 
         // 2.
-        tk::transform_P0P1(m_offset, rdof, nelem, inpoel, coord, P,
+        tk::transform_P0P1(rdof, nelem, inpoel, coord, P,
           {0, nprim()-1});
       }
     }
@@ -525,19 +550,19 @@ class MultiMat {
       // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::SUPERBEEP1)
       {
-        SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_system, m_offset,
+        SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel, m_system,
           coord, U, P, nmat );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, flux,U, P,
+          m_system, m_mat_blk, fd, geoFace, geoElem, coord, flux,U, P,
           nmat, shockmarker );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
       {
         VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_offset, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
+          m_system, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
           uNodalExtrm, pNodalExtrm, mtInv, flux, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
@@ -641,23 +666,23 @@ class MultiMat {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, nmat, m_offset, m_mat_blk, t, ndof, rdof, inpoel,
+      tk::surfInt( m_system, nmat, m_mat_blk, t, ndof, rdof, inpoel,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    R, vriem, riemannLoc, riemannDeriv, intsharp );
 
       // compute optional source term
-      tk::srcInt( m_system, m_offset, m_mat_blk, t, ndof, fd.Esuel().size()/4,
+      tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4,
                   inpoel, coord, geoElem, Problem::src, ndofel, R, nmat );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, nmat, m_offset, t, m_mat_blk, ndof, rdof, nelem,
+        tk::volInt( m_system, nmat, t, m_mat_blk, ndof, rdof, nelem,
                     inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
                     intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, nmat, m_offset, m_mat_blk, ndof, rdof,
+        tk::bndSurfInt( m_system, nmat, m_mat_blk, ndof, rdof,
                         b.first, fd, geoFace, geoElem, inpoel, coord, t,
                         m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
@@ -671,12 +696,12 @@ class MultiMat {
         Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
                 "for non-conservative terms has incorrect size" );
         for (std::size_t e=0; e<U.nunk(); ++e)
-          riemannDeriv[k][e] /= geoElem(e, 0, 0);
+          riemannDeriv[k][e] /= geoElem(e, 0);
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( m_system, nmat, m_offset, m_mat_blk, ndof, rdof,
-                              nelem, inpoel, coord, geoElem, U, P, riemannDeriv,
+      tk::nonConservativeInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
+                              inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
       // compute finite pressure relaxation terms
@@ -684,7 +709,7 @@ class MultiMat {
       {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
                                          tag::prelax_timescale >()[m_system];
-        tk::pressureRelaxationInt( m_system, nmat, m_offset, m_mat_blk, ndof,
+        tk::pressureRelaxationInt( m_system, nmat, m_mat_blk, ndof,
                                    rdof, nelem, inpoel, coord, geoElem, U, P,
                                    ndofel, ct, R, intsharp );
       }
@@ -754,7 +779,7 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       auto mindt = timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem,
-        nielem, m_offset, nmat, U, P);
+        nielem, nmat, U, P);
 
       tk::real dgp = 0.0;
       if (ndof == 4)
@@ -786,14 +811,14 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
 
       std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( momentumDofIdx(nmat, 0, rdof, 0), m_offset, N );
-      v[1] = U.extract( momentumDofIdx(nmat, 1, rdof, 0), m_offset, N );
-      v[2] = U.extract( momentumDofIdx(nmat, 2, rdof, 0), m_offset, N );
+      v[0] = U.extract( momentumDofIdx(nmat, 0, rdof, 0), N );
+      v[1] = U.extract( momentumDofIdx(nmat, 1, rdof, 0), N );
+      v[2] = U.extract( momentumDofIdx(nmat, 2, rdof, 0), N );
 
       std::vector< std::array< tk::real, 4 > > ar;
       ar.resize(nmat);
       for (std::size_t k=0; k<nmat; ++k)
-        ar[k] = U.extract( densityDofIdx(nmat, k, rdof, 0), m_offset, N );
+        ar[k] = U.extract( densityDofIdx(nmat, k, rdof, 0), N );
 
       std::array< tk::real, 4 > r{{ 0.0, 0.0, 0.0, 0.0 }};
       for (std::size_t i=0; i<r.size(); ++i) {
@@ -887,8 +912,8 @@ class MultiMat {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, m_offset, rdof, rdof, e, U, B, {0, m_ncomp-1});
-        auto php = eval_state(nprim(), m_offset, rdof, rdof, e, P, B, {0, nprim()-1});
+        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B, {0, m_ncomp-1});
+        auto php = eval_state(nprim(), rdof, rdof, e, P, B, {0, nprim()-1});
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
@@ -950,7 +975,7 @@ class MultiMat {
       tk::real sp_te(0.0);
       // sum each material total energy
       for (std::size_t k=0; k<nmat; ++k) {
-        sp_te += unk(e, energyDofIdx(nmat,k,rdof,0), m_offset);
+        sp_te += unk(e, energyDofIdx(nmat,k,rdof,0));
       }
       return sp_te;
     }
@@ -960,8 +985,6 @@ class MultiMat {
     const ncomp_t m_system;
     //! Number of components in this PDE system
     const ncomp_t m_ncomp;
-    //! Offset PDE system operates from
-    const ncomp_t m_offset;
     //! Riemann solver
     tk::RiemannFluxFn m_riemann;
     //! BC configuration

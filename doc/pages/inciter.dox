@@ -33,33 +33,33 @@ of objects embedded in a fluid flow, allowing the computation of body motion in
 response to aerodynamic forces, and (E) implementing new equations of state,
 suitable for detonation products, to enable blast simulations.
 
-Inciter currently has three different family of fluid dynamics algorithms:
+Inciter currently has three different families of fluid dynamics algorithms:
 
-1. `DiagCG`, a node-centered continuous Galerkin finite element method,
-   combining flux-corrected transport with Lax-Wendroff time
-   stepping, see @ref inciter_diagcg for a high-level description and
-   @ref papers_inciter "Inciter papers" for more details.
-
-2. `ALECG`, a node-centered continuous Galerkin finite element method,
+1. `ALECG`, a node-centered continuous Galerkin finite element method,
    featuring Riemann solvers and MUSCL reconstruction on cell-edges, combined
    with Runge-Kutta time stepping, see @ref inciter_alecg for a high-level
    description and @ref papers_inciter "Inciter papers" for more details.
 
-3. `DG`, a cell-centered discontinuous Galerkin finte element method,
+2. `DG`, a cell-centered discontinuous Galerkin finte element method,
    containing multiple solvers for both single-, and multi-material
    flows, see @ref inciter_dg and @ref inciter_mm for high-level descriptions
    and @ref papers_inciter "Inciter papers" for more details.
 
-4. `FV`, a cell-centered finte volume method for multi-material flows, see
-   @ref inciter_fv for a high-level description and @ref papers_inciter "Inciter
-   papers" for more details.
+3. `FV`, a cell-centered finite volume method for multi-material flows, see
+   @ref inciter_mm for a high-level description and @ref papers_inciter "Inciter
+   papers" for more details. `FV` methods are considered a part of the `DG`
+   family of methods.
+
+4. `DiagCG`, a node-centered continuous Galerkin finite element method,
+   combining flux-corrected transport with Lax-Wendroff time
+   stepping, see @ref inciter_diagcg for a high-level description and
+   @ref papers_inciter "Inciter papers" for more details.
 
 @section inciter_pages Related pages
-- @ref inciter_diagcg "DiagCG hydrodynamics"
 - @ref inciter_alecg "ALECG hydrodynamics"
 - @ref inciter_dg "Single-material DG hydrodynamics"
-- @ref inciter_mm "Multi-material DG hydrodynamics"
-- @ref inciter_fv "Multi-material FV hydrodynamics"
+- @ref inciter_mm "Multi-material hydrodynamics"
+- @ref inciter_diagcg "DiagCG hydrodynamics"
 - @ref inciter_amr "Adaptive Mesh Refinement (TetAMR)"
 - @ref inciter_cmd "Command line arguments"
 - @ref inciter_ctr "Control file keywords"

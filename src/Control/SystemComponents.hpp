@@ -92,21 +92,6 @@ namespace ctr {
 //! Inherit type of number of components from keyword 'ncomp'
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! \brief Map associating offsets to dependent variables for systems
-//! \details This map associates offsets of systems of differential
-//!   equations in a larger data array storing dependent variables for all
-//!   scalar components of a system of systems. These offsets are where a
-//!   particular system starts and their field (or component) ids then can be
-//!   used to access an individual scalar component based on theses offsets.
-//! \note We use a case-insensitive character comparison functor for the
-//!   offset map, since the keys (dependent variables) in the offset map are
-//!   only used to indicate the equation's dependent variable, however, queries
-//!   (using std::map's member function, find) can be fired up for both ordinary
-//!   and central moments of dependent variables (which are denoted by upper and
-//!   lower case, characters, respectively) for which the offset (for the same
-//!   dependent variable) should be the same.
-using OffsetMap = std::map< char, ncomp_t, CaseInsensitiveCharLess >;
-
 //! \brief Map associating number of scalar components to dependent variables
 //!   for systems
 //! \details This map associates the number of properties (scalar components)
@@ -164,50 +149,6 @@ class ncomponents : public
     //! \return Total number of components
     ncomp_t nprop() const noexcept {
       return (... + std::accumulate(begin(vec<Tags>()), end(vec<Tags>()), 0u));
-    }
-
-    //! \brief Compute the offset for a given equation tag, i.e., the sum of the
-    //!   number of components up to a given tag
-    //! \return offset for tag
-    //! \param[in] c Index for system given by template argument tag
-    //! \details This offset is used to index into the data array (the equation
-    //!   systems operate on during the numerical solution) and get to the
-    //!   beginning of data for a given differential equation system.
-    template< typename tag >
-    ncomp_t offset( ncomp_t c ) const noexcept {
-      ncomp_t offset = 0;
-      bool found = false;
-      ( ... , [&](){
-        if (std::is_same_v< tag, Tags >) {
-          const auto& v = vec<Tags>();
-          // Make sure we are not trying to index beyond the length for this eq
-          Assert( v.size() >= c, "Indexing out of bounds" );
-          // If we have found the tag we are looking for, we count up to the
-          // given system index and add those to the offset
-          for (ncomp_t q=0; q<c; ++q) offset += v[q];
-          found = true;
-        } else if (!found) {
-          // If we have not found the tag we are looking for, we add all the
-          // number of scalars for that tag to the offset
-          const auto& v = vec<Tags>();
-          offset = std::accumulate( begin(v), end(v), offset );
-        } }() );
-      return offset;
-    }
-
-    //! Compute map of offsets associated to dependent variables
-    //! \param[in] d Input deck to operate on
-    //! \return Map of offsets associated to dependent variables
-    template< class InputDeck >
-    OffsetMap offsetmap( const InputDeck& d ) const {
-      OffsetMap map;
-      ( ... ,  [&](){
-        const auto& depvar = d.template get< tag::param, Tags, tag::depvar >();
-        ncomp_t c = 0;
-        const auto& ncomps = d.template get< tag::component >();
-        for (auto v : depvar)
-          map[ v ] = ncomps.template offset< Tags >( c++ ); }() );
-      return map;
     }
 
     //! \brief Compute map of number of properties (scalar components)

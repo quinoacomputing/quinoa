@@ -55,30 +55,30 @@ void Data_object::test< 1 >() {
                  tk::Data< tk::EqCompUnk >( 2, 3 ).nprop(), 3 );
 }
 
-//! Test that tk::Data's operator() returns the correct value
-template<> template<>
-void Data_object::test< 2 >() {
-  set_test_name( "operator() returns correct value" );
-
-  tk::Data< tk::UnkEqComp > pp( 2, 5 );
-  tk::Data< tk::EqCompUnk > pe( 2, 5 );
-
-  pp( 1, 2, 2 ) = 0.23;
-  pe( 1, 2, 2 ) = 0.32;
-
-  const tk::real& cu = pp( 1, 2, 2 );
-  const tk::real& ce = pe( 1, 2, 2 );
-
-  tk::real& u = pp( 1, 2, 2 );
-  tk::real& e = pe( 1, 2, 2 );
-
-  // Test all template specializations const-ref access
-  ensure_equals( "<UnkEqComp>::() cref incorrect", cu, 0.23 );
-  ensure_equals( "<EqCompUnk>::() cref incorrect", ce, 0.32 );
-  // Test all template specializations ref access
-  ensure_equals( "<UnkEqComp>::() ref incorrect", u, 0.23 );
-  ensure_equals( "<EqCompUnk>::() ref incorrect", e, 0.32 );
-}
+////! Test that tk::Data's operator() returns the correct value
+//template<> template<>
+//void Data_object::test< 2 >() {
+//  set_test_name( "operator() returns correct value" );
+//
+//  tk::Data< tk::UnkEqComp > pp( 2, 5 );
+//  tk::Data< tk::EqCompUnk > pe( 2, 5 );
+//
+//  pp( 1, 2, 2 ) = 0.23;
+//  pe( 1, 2, 2 ) = 0.32;
+//
+//  const tk::real& cu = pp( 1, 2, 2 );
+//  const tk::real& ce = pe( 1, 2, 2 );
+//
+//  tk::real& u = pp( 1, 2, 2 );
+//  tk::real& e = pe( 1, 2, 2 );
+//
+//  // Test all template specializations const-ref access
+//  ensure_equals( "<UnkEqComp>::() cref incorrect", cu, 0.23 );
+//  ensure_equals( "<EqCompUnk>::() cref incorrect", ce, 0.32 );
+//  // Test all template specializations ref access
+//  ensure_equals( "<UnkEqComp>::() ref incorrect", u, 0.23 );
+//  ensure_equals( "<EqCompUnk>::() ref incorrect", e, 0.32 );
+//}
 
 //! Test that tk::Data's operator() throws for out-of-bounds indices
 template<> template<>
@@ -88,13 +88,13 @@ void Data_object::test< 3 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 5 );
   tk::Data< tk::EqCompUnk > pe( 2, 5 );
 
-  pp( 1, 2, 2 ) = 0.23;
-  pe( 1, 2, 2 ) = 0.32;
+  pp( 1, 2 ) = 0.23;
+  pe( 1, 2 ) = 0.32;
 
   // Test all template specializations const-ref access
 
   try {
-    pp( 2, 2, 2 );   // unknown out of bounds
+    pp( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -105,51 +105,7 @@ void Data_object::test< 3 >() {
   }
 
   try {
-    pp( 1, 3, 2 );   // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pp( 1, 2, 3 );   // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 2, 2, 2 );   // unknown out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 1, 3, 2 );   // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 1, 2, 3 );   // offset+component out of bounds
+    pp( 1, 5 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -162,7 +118,7 @@ void Data_object::test< 3 >() {
   // Test all template specializations non-const-ref access
 
   try {
-    pp( 2, 2, 2 );  // unknown out of bounds
+    pp( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -173,51 +129,7 @@ void Data_object::test< 3 >() {
   }
 
   try {
-    pp( 1, 3, 2 );  // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pp( 1, 2, 3 );  // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 2, 2, 2 );  // unknown out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 1, 3, 2 );  // offset+component out of bounds
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    pe( 1, 2, 3 );  // offset+component out of bounds
+    pp( 1, 5 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -228,190 +140,190 @@ void Data_object::test< 3 >() {
   }
 }
 
-//! Test that tk::Data's var( cptr() ) returns the correct value
-template<> template<>
-void Data_object::test< 4 >() {
-  set_test_name( "var(cptr()) returns correct value" );
-
-  tk::Data< tk::UnkEqComp > pp( 2, 5 );
-  tk::Data< tk::EqCompUnk > pe( 2, 5 );
-
-  pp( 1, 2, 2 ) = 0.23;
-  pe( 1, 2, 2 ) = 0.32;
-
-  const tk::real& cu = pp.var( pp.cptr(2,2), 1 );
-  const tk::real& ce = pe.var( pe.cptr(2,2), 1 );
-
-  tk::real& u = pp.var( pp.cptr(2,2), 1 );
-  tk::real& e = pe.var( pe.cptr(2,2), 1 );
-
-  // Test all template specializations const-ref access
-  ensure_equals( "<UnkEqComp>::var(cptr) cref incorrect", cu, 0.23 );
-  ensure_equals( "<EqCompUnk>::var(cptr) cref incorrect", ce, 0.32 );
-  // Test all template specializations non-const-ref access
-  ensure_equals( "<UnkEqComp>::var(cptr) ref incorrect", u, 0.23 );
-  ensure_equals( "<EqCompUnk>::var(cptr) ref incorrect", e, 0.32 );
-}
-
-//! Test that tk::Data's var() throws for out-of-bounds indices
-template<> template<>
-void Data_object::test< 5 >() {
-  set_test_name( "var(cptr()) throws for out-of-bounds indices" );
-
-  tk::Data< tk::UnkEqComp > pp( 2, 5 );
-  tk::Data< tk::EqCompUnk > pe( 2, 5 );
-
-  pp( 1, 2, 2 ) = 0.23;
-  pe( 1, 2, 2 ) = 0.32;
-
-  // Test all template specializations const-ref access
-
-  try {
-    // unknown out of bounds
-    pp.var( pp.cptr(2,2), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pp.var( pp.cptr(1,3), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pp.var( pp.cptr(1,2), 3 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // unknown out of bounds
-    pe.var( pe.cptr(2,2), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pe.var( pe.cptr(1,3), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pe.var( pe.cptr(1,2), 3 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  // Test all template specializations non-const-ref access
-
-  try {
-   // unknown out of bounds
-   pp.var( pp.cptr(2,2), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pp.var( pp.cptr(1,3), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pp.var( pp.cptr(1,2), 3 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // unknown out of bounds
-    pe.var( pe.cptr(2,2), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pe.var( pe.cptr(1,3), 2 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-
-  try {
-    // offset+component out of bounds
-    pe.var( pe.cptr(1,2), 3 );
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
-  }
-  catch ( tk::Exception& ) {
-    // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
-  }
-}
+////! Test that tk::Data's var( cptr() ) returns the correct value
+//template<> template<>
+//void Data_object::test< 4 >() {
+//  set_test_name( "var(cptr()) returns correct value" );
+//
+//  tk::Data< tk::UnkEqComp > pp( 2, 5 );
+//  tk::Data< tk::EqCompUnk > pe( 2, 5 );
+//
+//  pp( 1, 2, 2 ) = 0.23;
+//  pe( 1, 2, 2 ) = 0.32;
+//
+//  const tk::real& cu = pp.var( pp.cptr(2), 1 );
+//  const tk::real& ce = pe.var( pe.cptr(2), 1 );
+//
+//  tk::real& u = pp.var( pp.cptr(2), 1 );
+//  tk::real& e = pe.var( pe.cptr(2), 1 );
+//
+//  // Test all template specializations const-ref access
+//  ensure_equals( "<UnkEqComp>::var(cptr) cref incorrect", cu, 0.23 );
+//  ensure_equals( "<EqCompUnk>::var(cptr) cref incorrect", ce, 0.32 );
+//  // Test all template specializations non-const-ref access
+//  ensure_equals( "<UnkEqComp>::var(cptr) ref incorrect", u, 0.23 );
+//  ensure_equals( "<EqCompUnk>::var(cptr) ref incorrect", e, 0.32 );
+//}
+//
+////! Test that tk::Data's var() throws for out-of-bounds indices
+//template<> template<>
+//void Data_object::test< 5 >() {
+//  set_test_name( "var(cptr()) throws for out-of-bounds indices" );
+//
+//  tk::Data< tk::UnkEqComp > pp( 2, 5 );
+//  tk::Data< tk::EqCompUnk > pe( 2, 5 );
+//
+//  pp( 1, 2, 2 ) = 0.23;
+//  pe( 1, 2, 2 ) = 0.32;
+//
+//  // Test all template specializations const-ref access
+//
+//  try {
+//    // unknown out of bounds
+//    pp.var( pp.cptr(2), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pp.var( pp.cptr(1), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pp.var( pp.cptr(1), 3 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // unknown out of bounds
+//    pe.var( pe.cptr(2), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pe.var( pe.cptr(1), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pe.var( pe.cptr(1), 3 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  // Test all template specializations non-const-ref access
+//
+//  try {
+//   // unknown out of bounds
+//   pp.var( pp.cptr(2), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pp.var( pp.cptr(1), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pp.var( pp.cptr(1), 3 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // unknown out of bounds
+//    pe.var( pe.cptr(2), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pe.var( pe.cptr(1), 2 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//
+//  try {
+//    // offset+component out of bounds
+//    pe.var( pe.cptr(1), 3 );
+//    #ifndef NDEBUG
+//    fail( "should throw exception in DEBUG mode" );
+//    #endif
+//  }
+//  catch ( tk::Exception& ) {
+//    // exception thrown in DEBUG mode, test ok
+//    // Assert skipped in RELEASE mode, test ok
+//  }
+//}
 
 //! Test that tk::Data's var( cptr() ) is equivalent to operator()
 template<> template<>
@@ -421,14 +333,14 @@ void Data_object::test< 6 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 6 );
   tk::Data< tk::EqCompUnk > pe( 2, 6 );
 
-  pp( 1, 2, 3 ) = 0.23;
-  pe( 1, 2, 3 ) = 0.32;
+  pp( 1, 2 ) = 0.23;
+  pe( 1, 2 ) = 0.32;
 
   // Test all template specializations
   ensure_equals( "<UnkEqComp>::var(cptr) value incorrect",
-                 pp.var( pp.cptr(2,3), 1 ), pp(1,2,3), prec );
+                 pp.var( pp.cptr(2), 1 ), pp(1,2), prec );
   ensure_equals( "<EqCompUnk>::var(cptr) value incorrect",
-                 pe.var( pe.cptr(2,3), 1 ), pe(1,2,3), prec );
+                 pe.var( pe.cptr(2), 1 ), pe(1,2), prec );
 }
 
 //! Test that tk::Data's layou() returns correct string
@@ -452,48 +364,48 @@ void Data_object::test< 8 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 3 );
   tk::Data< tk::EqCompUnk > pe( 2, 3 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 0, 1, 0 ) = 0.2;
-  pp( 0, 2, 0 ) = 0.3;
-  pp( 1, 0, 0 ) = 0.4;
-  pp( 1, 1, 0 ) = 0.5;
-  pp( 1, 2, 0 ) = 0.6;
+  pp( 0, 0 ) = 0.1;
+  pp( 0, 1 ) = 0.2;
+  pp( 0, 2 ) = 0.3;
+  pp( 1, 0 ) = 0.4;
+  pp( 1, 1 ) = 0.5;
+  pp( 1, 2 ) = 0.6;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 0, 1, 0 ) = 0.2;
-  pe( 0, 2, 0 ) = 0.3;
-  pe( 1, 0, 0 ) = 0.4;
-  pe( 1, 1, 0 ) = 0.5;
-  pe( 1, 2, 0 ) = 0.6;
+  pe( 0, 0 ) = 0.1;
+  pe( 0, 1 ) = 0.2;
+  pe( 0, 2 ) = 0.3;
+  pe( 1, 0 ) = 0.4;
+  pe( 1, 1 ) = 0.5;
+  pe( 1, 2 ) = 0.6;
 
   using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::extract() vector of unknowns at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.4 }, pp.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.4 }, pp.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::extract() vector of unknowns at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::extract() vector of unknowns at 2,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 2, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract_comp( 2 ) );
   veceq( "<UnkEqComp>::extract() vector of unknowns at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::extract() vector of unknowns at 1,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 1, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract_comp( 2 ) );
   veceq( "<UnkEqComp>::extract() vector of unknowns at 0,2 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 0, 2 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract_comp( 2 ) );
 
   veceq( "<EqCompUnk>::extract() vector of unknowns at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.4 }, pe.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.4 }, pe.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::extract() vector of unknowns at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::extract() vector of unknowns at 2,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 2, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract_comp( 2 ) );
   veceq( "<EqCompUnk>::extract() vector of unknowns at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::extract() vector of unknowns at 1,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 1, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract_comp( 2 ) );
   veceq( "<EqCompUnk>::extract() vector of unknowns at 0,2 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 0, 2 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract_comp( 2 ) );
 }
 
 //! Test that tk::Data's extract() returns correct vector components
@@ -504,19 +416,19 @@ void Data_object::test< 9 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 3 );
   tk::Data< tk::EqCompUnk > pe( 2, 3 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 0, 1, 0 ) = 0.2;
-  pp( 0, 2, 0 ) = 0.3;
-  pp( 1, 0, 0 ) = 0.4;
-  pp( 1, 1, 0 ) = 0.5;
-  pp( 1, 2, 0 ) = 0.6;
+  pp( 0, 0 ) = 0.1;
+  pp( 0, 1 ) = 0.2;
+  pp( 0, 2 ) = 0.3;
+  pp( 1, 0 ) = 0.4;
+  pp( 1, 1 ) = 0.5;
+  pp( 1, 2 ) = 0.6;
 
-  pe( 0, 0, 0 ) = 0.3;
-  pe( 0, 1, 0 ) = 0.2;
-  pe( 0, 2, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.6;
-  pe( 1, 1, 0 ) = 0.5;
-  pe( 1, 2, 0 ) = 0.4;
+  pe( 0, 0 ) = 0.3;
+  pe( 0, 1 ) = 0.2;
+  pe( 0, 2 ) = 0.1;
+  pe( 1, 0 ) = 0.6;
+  pe( 1, 1 ) = 0.5;
+  pe( 1, 2 ) = 0.4;
 
   using unittest::veceq;
 
@@ -540,19 +452,19 @@ void Data_object::test< 10 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 3 );
   tk::Data< tk::EqCompUnk > pe( 2, 3 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 0, 1, 0 ) = 0.2;
-  pp( 0, 2, 0 ) = 0.3;
-  pp( 1, 0, 0 ) = 0.4;
-  pp( 1, 1, 0 ) = 0.5;
-  pp( 1, 2, 0 ) = 0.6;
+  pp( 0, 0 ) = 0.1;
+  pp( 0, 1 ) = 0.2;
+  pp( 0, 2 ) = 0.3;
+  pp( 1, 0 ) = 0.4;
+  pp( 1, 1 ) = 0.5;
+  pp( 1, 2 ) = 0.6;
 
-  pe( 0, 0, 0 ) = 0.3;
-  pe( 0, 1, 0 ) = 0.2;
-  pe( 0, 2, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.6;
-  pe( 1, 1, 0 ) = 0.5;
-  pe( 1, 2, 0 ) = 0.4;
+  pe( 0, 0 ) = 0.3;
+  pe( 0, 1 ) = 0.2;
+  pe( 0, 2 ) = 0.1;
+  pe( 1, 0 ) = 0.6;
+  pe( 1, 1 ) = 0.5;
+  pe( 1, 2 ) = 0.4;
 
   using unittest::veceq;
 
@@ -576,70 +488,70 @@ void Data_object::test< 11 >() {
   tk::Data< tk::UnkEqComp > pp( 8, 2 );
   tk::Data< tk::EqCompUnk > pe( 8, 2 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 1, 0, 0 ) = 0.2;
-  pp( 2, 0, 0 ) = 0.3;
-  pp( 3, 0, 0 ) = 0.4;
-  pp( 4, 0, 0 ) = 0.5;
-  pp( 5, 0, 0 ) = 0.6;
-  pp( 6, 0, 0 ) = 0.7;
-  pp( 7, 0, 0 ) = 0.8;
+  pp( 0, 0 ) = 0.1;
+  pp( 1, 0 ) = 0.2;
+  pp( 2, 0 ) = 0.3;
+  pp( 3, 0 ) = 0.4;
+  pp( 4, 0 ) = 0.5;
+  pp( 5, 0 ) = 0.6;
+  pp( 6, 0 ) = 0.7;
+  pp( 7, 0 ) = 0.8;
 
-  pp( 0, 1, 0 ) = 1.1;
-  pp( 1, 1, 0 ) = 1.2;
-  pp( 2, 1, 0 ) = 1.3;
-  pp( 3, 1, 0 ) = 1.4;
-  pp( 4, 1, 0 ) = 1.5;
-  pp( 5, 1, 0 ) = 1.6;
-  pp( 6, 1, 0 ) = 1.7;
-  pp( 7, 1, 0 ) = 1.8;
+  pp( 0, 1 ) = 1.1;
+  pp( 1, 1 ) = 1.2;
+  pp( 2, 1 ) = 1.3;
+  pp( 3, 1 ) = 1.4;
+  pp( 4, 1 ) = 1.5;
+  pp( 5, 1 ) = 1.6;
+  pp( 6, 1 ) = 1.7;
+  pp( 7, 1 ) = 1.8;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.2;
-  pe( 2, 0, 0 ) = 0.3;
-  pe( 3, 0, 0 ) = 0.4;
-  pe( 4, 0, 0 ) = 0.5;
-  pe( 5, 0, 0 ) = 0.6;
-  pe( 6, 0, 0 ) = 0.7;
-  pe( 7, 0, 0 ) = 0.8;
+  pe( 0, 0 ) = 0.1;
+  pe( 1, 0 ) = 0.2;
+  pe( 2, 0 ) = 0.3;
+  pe( 3, 0 ) = 0.4;
+  pe( 4, 0 ) = 0.5;
+  pe( 5, 0 ) = 0.6;
+  pe( 6, 0 ) = 0.7;
+  pe( 7, 0 ) = 0.8;
 
-  pe( 0, 1, 0 ) = 1.1;
-  pe( 1, 1, 0 ) = 1.2;
-  pe( 2, 1, 0 ) = 1.3;
-  pe( 3, 1, 0 ) = 1.4;
-  pe( 4, 1, 0 ) = 1.5;
-  pe( 5, 1, 0 ) = 1.6;
-  pe( 6, 1, 0 ) = 1.7;
-  pe( 7, 1, 0 ) = 1.8;
+  pe( 0, 1 ) = 1.1;
+  pe( 1, 1 ) = 1.2;
+  pe( 2, 1 ) = 1.3;
+  pe( 3, 1 ) = 1.4;
+  pe( 4, 1 ) = 1.5;
+  pe( 5, 1 ) = 1.6;
+  pe( 6, 1 ) = 1.7;
+  pe( 7, 1 ) = 1.8;
 
   using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }},
-           pp.extract( 0, 0, 3, 2, 1, 0 ) );
+           pp.extract( 0, 3, 2, 1, 0 ) );
   veceq( "<UnkEqComp>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }},
-           pp.extract( 0, 0, 1, 3, 5, 7 ) );
+           pp.extract( 0, 1, 3, 5, 7 ) );
   veceq( "<UnkEqComp>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }},
-           pp.extract( 0, 1, 3, 2, 1, 0 ) );
+           pp.extract( 1, 3, 2, 1, 0 ) );
   veceq( "<UnkEqComp>::extract() array of four reals at 0,1:1,3,5,7 incorrect",
          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }},
-           pp.extract( 0, 1, 1, 3, 5, 7 ) );
+           pp.extract( 1, 1, 3, 5, 7 ) );
 
   veceq( "<EqCompUnk>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
          std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }},
-           pe.extract( 0, 0, 3, 2, 1, 0 ) );
+           pe.extract( 0, 3, 2, 1, 0 ) );
   veceq( "<EqCompUnk>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
          std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }},
-           pe.extract( 0, 0, 1, 3, 5, 7 ) );
+           pe.extract( 0, 1, 3, 5, 7 ) );
   veceq( "<EqCompUnk>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
          std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }},
-           pe.extract( 0, 1, 3, 2, 1, 0 ) );
+           pe.extract( 1, 3, 2, 1, 0 ) );
   veceq( "<kEqCompUnk>::extract() array of four reals 0,1:1,3,5,7 incorrect",
          std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }},
-           pe.extract( 0, 1, 1, 3, 5, 7 ) );
+           pe.extract( 1, 1, 3, 5, 7 ) );
 }
 
 //! Test that tk::Data's extract() returns correct array of four reals
@@ -650,70 +562,70 @@ void Data_object::test< 12 >() {
   tk::Data< tk::UnkEqComp > pp( 8, 2 );
   tk::Data< tk::EqCompUnk > pe( 8, 2 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 1, 0, 0 ) = 0.2;
-  pp( 2, 0, 0 ) = 0.3;
-  pp( 3, 0, 0 ) = 0.4;
-  pp( 4, 0, 0 ) = 0.5;
-  pp( 5, 0, 0 ) = 0.6;
-  pp( 6, 0, 0 ) = 0.7;
-  pp( 7, 0, 0 ) = 0.8;
+  pp( 0, 0 ) = 0.1;
+  pp( 1, 0 ) = 0.2;
+  pp( 2, 0 ) = 0.3;
+  pp( 3, 0 ) = 0.4;
+  pp( 4, 0 ) = 0.5;
+  pp( 5, 0 ) = 0.6;
+  pp( 6, 0 ) = 0.7;
+  pp( 7, 0 ) = 0.8;
 
-  pp( 0, 1, 0 ) = 1.1;
-  pp( 1, 1, 0 ) = 1.2;
-  pp( 2, 1, 0 ) = 1.3;
-  pp( 3, 1, 0 ) = 1.4;
-  pp( 4, 1, 0 ) = 1.5;
-  pp( 5, 1, 0 ) = 1.6;
-  pp( 6, 1, 0 ) = 1.7;
-  pp( 7, 1, 0 ) = 1.8;
+  pp( 0, 1 ) = 1.1;
+  pp( 1, 1 ) = 1.2;
+  pp( 2, 1 ) = 1.3;
+  pp( 3, 1 ) = 1.4;
+  pp( 4, 1 ) = 1.5;
+  pp( 5, 1 ) = 1.6;
+  pp( 6, 1 ) = 1.7;
+  pp( 7, 1 ) = 1.8;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.2;
-  pe( 2, 0, 0 ) = 0.3;
-  pe( 3, 0, 0 ) = 0.4;
-  pe( 4, 0, 0 ) = 0.5;
-  pe( 5, 0, 0 ) = 0.6;
-  pe( 6, 0, 0 ) = 0.7;
-  pe( 7, 0, 0 ) = 0.8;
+  pe( 0, 0 ) = 0.1;
+  pe( 1, 0 ) = 0.2;
+  pe( 2, 0 ) = 0.3;
+  pe( 3, 0 ) = 0.4;
+  pe( 4, 0 ) = 0.5;
+  pe( 5, 0 ) = 0.6;
+  pe( 6, 0 ) = 0.7;
+  pe( 7, 0 ) = 0.8;
 
-  pe( 0, 1, 0 ) = 1.1;
-  pe( 1, 1, 0 ) = 1.2;
-  pe( 2, 1, 0 ) = 1.3;
-  pe( 3, 1, 0 ) = 1.4;
-  pe( 4, 1, 0 ) = 1.5;
-  pe( 5, 1, 0 ) = 1.6;
-  pe( 6, 1, 0 ) = 1.7;
-  pe( 7, 1, 0 ) = 1.8;
+  pe( 0, 1 ) = 1.1;
+  pe( 1, 1 ) = 1.2;
+  pe( 2, 1 ) = 1.3;
+  pe( 3, 1 ) = 1.4;
+  pe( 4, 1 ) = 1.5;
+  pe( 5, 1 ) = 1.6;
+  pe( 6, 1 ) = 1.7;
+  pe( 7, 1 ) = 1.8;
 
   using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
           std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }},
-            pp.extract( 0, 0, {{3,2,1,0}} ) );
+            pp.extract( 0, {{3,2,1,0}} ) );
   veceq( "<UnkEqComp>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
           std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }},
-            pp.extract( 0, 0, {{1,3,5,7}} ) );
+            pp.extract( 0, {{1,3,5,7}} ) );
   veceq( "<UnkEqComp>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
           std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }},
-            pp.extract( 0, 1, {{3,2,1,0}} ) );
+            pp.extract( 1, {{3,2,1,0}} ) );
   veceq( "<UnkEqComp>::extract() array of four reals at 0,1:1,3,5,7 incorrect",
           std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }},
-            pp.extract( 0, 1, {{1,3,5,7}} ) );
+            pp.extract( 1, {{1,3,5,7}} ) );
 
   veceq( "<EqCompUnk>::extract() array of four reals at 0,0:3,2,1,0 incorrect",
           std::array< tk::real, 4 >{{ 0.4, 0.3, 0.2, 0.1 }},
-            pe.extract( 0, 0, {{3,2,1,0}} ) );
+            pe.extract( 0, {{3,2,1,0}} ) );
   veceq( "<EqCompUnk>::extract() array of four reals at 0,0:1,3,5,7 incorrect",
           std::array< tk::real, 4 >{{ 0.2, 0.4, 0.6, 0.8 }},
-            pe.extract( 0, 0, {{1,3,5,7}} ) );
+            pe.extract( 0, {{1,3,5,7}} ) );
   veceq( "<EqCompUnk>::extract() array of four reals at 0,1:3,2,1,0 incorrect",
           std::array< tk::real, 4 >{{ 1.4, 1.3, 1.2, 1.1 }},
-            pe.extract( 0, 1, {{3,2,1,0}} ) );
+            pe.extract( 1, {{3,2,1,0}} ) );
   veceq( "<kEqCompUnk>::extract() array of four reals 0,1:1,3,5,7 incorrect",
           std::array< tk::real, 4 >{{ 1.2, 1.4, 1.6, 1.8 }},
-            pe.extract( 0, 1, {{1,3,5,7}} ) );
+            pe.extract( 1, {{1,3,5,7}} ) );
 }
 
 //! Test that tk::Data's fill() correctly fills complete data array
@@ -731,18 +643,18 @@ void Data_object::test< 13 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::fill() all with the same value at 0,0 incorrect",
-          std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract( 0, 0 ) );
+          std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::fill() all with the same value at 1,0 incorrect",
-          std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract( 1, 0 ) );
+          std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::fill() all with the same value at 0,1 incorrect",
-          std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract( 0, 1 ) );
+          std::vector< tk::real >{ 0.0, 0.0, 0.0 }, pp.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::fill() all with the same value at 0,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, pe.extract( 0, 0 ) );
+          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, pe.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::fill() all with the same value at 1,0 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, pe.extract( 1, 0 ) );
+          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, pe.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::fill() all with the same value at 0,1 incorrect",
-          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, pe.extract( 0, 1 ) );
+          std::vector< tk::real >{ 0.1, 0.1, 0.1 }, pe.extract_comp( 1 ) );
 }
 
 //! Test that tk::Data's fill() correctly fills vector of unknowns
@@ -753,34 +665,34 @@ void Data_object::test< 14 >() {
   tk::Data< tk::UnkEqComp > pp( 3, 2 );
   tk::Data< tk::EqCompUnk > pe( 3, 2 );
 
-  pp.fill( 0, 0, 1.5 );
-  pp.fill( 1, 0, 2.5 );
+  pp.fill( 0, 1.5 );
+  pp.fill( 1, 2.5 );
 
-  pe.fill( 0, 0, 0.5 );
-  pe.fill( 1, 0, -0.5 );
+  pe.fill( 0, 0.5 );
+  pe.fill( 1, -0.5 );
 
   using unittest::veceq;
 
   // Test all template specializations
   veceq(
     "<UnkEqComp>::fill() vector of unknowns with the same value at 0,0 incorrect",
-    std::vector< tk::real >{ 1.5, 1.5, 1.5 }, pp.extract( 0, 0 ) );
+    std::vector< tk::real >{ 1.5, 1.5, 1.5 }, pp.extract_comp( 0 ) );
   veceq(
     "<UnkEqComp>::fill() vector of unknowns with the same value at 1,0 incorrect",
-    std::vector< tk::real >{ 2.5, 2.5, 2.5 }, pp.extract( 1, 0 ) );
+    std::vector< tk::real >{ 2.5, 2.5, 2.5 }, pp.extract_comp( 1 ) );
   veceq(
     "<UnkEqComp>::fill() vector of unknowns with the same value at 0,1 incorrect",
-    std::vector< tk::real >{ 2.5, 2.5, 2.5 }, pp.extract( 0, 1 ) );
+    std::vector< tk::real >{ 2.5, 2.5, 2.5 }, pp.extract_comp( 1 ) );
 
   veceq(
     "<EqCompUnk>::fill() vector of unknowns with the same value at 0,0 incorrect",
-    std::vector< tk::real >{ 0.5, 0.5, 0.5 }, pe.extract( 0, 0 ) );
+    std::vector< tk::real >{ 0.5, 0.5, 0.5 }, pe.extract_comp( 0 ) );
   veceq(
     "<EqCompUnk>::fill() vector of unknowns with the same value at 1,0 incorrect",
-    std::vector< tk::real >{ -0.5, -0.5, -0.5 }, pe.extract( 1, 0 ) );
+    std::vector< tk::real >{ -0.5, -0.5, -0.5 }, pe.extract_comp( 1 ) );
   veceq(
     "<EqCompUnk>::fill() vector of unknowns with the same value at 0,1 incorrect",
-    std::vector< tk::real >{ -0.5, -0.5, -0.5 }, pe.extract( 0, 1 ) );
+    std::vector< tk::real >{ -0.5, -0.5, -0.5 }, pe.extract_comp( 1 ) );
 }
 
 //! \brief Test that tk::Data's memory layout, i.e., stores data with
@@ -794,14 +706,10 @@ void Data_object::test< 15 >() {
 
   // Test all template specializations
   ensure_equals( "<UnkEqComp>::component stride incorrect",
-                 pp.cptr(2,2) - pp.cptr(1,2), 1 );
-  ensure_equals( "<UnkEqComp>::offset stride incorrect",
-                 pp.cptr(2,2) - pp.cptr(2,1), 1 );
+                 pp.cptr(2) - pp.cptr(1), 1 );
 
   ensure_equals( "<EqCompUnk>::component stride incorrect",
-                 pe.cptr(2,2) - pe.cptr(1,2), 2 );
-  ensure_equals( "<EqCompUnk>::offset stride incorrect",
-                 pe.cptr(2,2) - pe.cptr(2,1), 2 );
+                 pe.cptr(2) - pe.cptr(1), 2 );
 }
 
 //! Test tk::Data's copy constructor
@@ -824,18 +732,18 @@ void Data_object::test< 16 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::ctor() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract_comp( 0 ) );
   veceq( "<UnkEqComp>::ctor() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract_comp( 1 ) );
   veceq( "<UnkEqComp>::ctor() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::ctor() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract_comp( 0 ) );
   veceq( "<EqCompUnk>::ctor() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract_comp( 1 ) );
   veceq( "<EqCompUnk>::ctor() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract_comp( 1 ) );
 }
 
 //! Test tk::Data's copy assignment
@@ -859,18 +767,18 @@ void Data_object::test< 17 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::cass() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::cass() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::cass() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::cass() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::cass() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::cass() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's move constructor
@@ -893,18 +801,18 @@ void Data_object::test< 18 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::mctor() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract_comp( 0 ) );
   veceq( "<UnkEqComp>::mctor() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract_comp( 1 ) );
   veceq( "<UnkEqComp>::mctor() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, v[0].extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::mctor() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract_comp( 0 ) );
   veceq( "<EqCompUnk>::mctor() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract_comp( 1 ) );
   veceq( "<EqCompUnk>::mctor() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, w[0].extract_comp( 1 ) );
 }
 
 //! Test tk::Data's move assignment
@@ -925,18 +833,18 @@ void Data_object::test< 19 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::mass() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::mass() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::mass() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::mass() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::mass() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::mass() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator-=
@@ -957,33 +865,33 @@ void Data_object::test< 20 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator-=() at 0,0 incorrect",
-         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator-=() at 1,0 incorrect",
-         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator-=() at 0,1 incorrect",
-         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator-=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator-=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator-=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e1.extract_comp( 1 ) );
 
   // Test the rhs of the subtract stay the same for all template specializations
   veceq( "<UnkEqComp>::operator-=() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator-=() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator-=() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator-=() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator-=() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator-=() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator-
@@ -1004,48 +912,48 @@ void Data_object::test< 21 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator-() at 0,0 incorrect",
-         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p.extract( 0, 0 ) );
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator-() at 1,0 incorrect",
-         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p.extract( 1, 0 ) );
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator-() at 0,1 incorrect",
-         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p.extract( 0, 1 ) );
+         std::vector< tk::real >{ -0.2, -0.2, -0.2 }, p.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator-() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator-() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator-() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, e.extract_comp( 1 ) );
 
   // Test the lhs of the subtract stay the same for all template specializations
   veceq( "<UnkEqComp>::operator-() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator-() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator-() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator-() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator-() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator-() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
 
   // Test the rhs of the subtract stay the same for all template specializations
   veceq( "<UnkEqComp>::operator-() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator-() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator-() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator-() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator-() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator-() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator+=
@@ -1066,33 +974,33 @@ void Data_object::test< 22 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator+=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator+=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator+=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator+=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator+=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator+=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e1.extract_comp( 1 ) );
 
   // Test the rhs of the addition stay the same for all template specializations
   veceq( "<UnkEqComp>::operator+=() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator+=() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator+=() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator+=() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator+=() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator+=() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator+
@@ -1113,48 +1021,48 @@ void Data_object::test< 23 >() {
 
   // Test the result of the addition for all template specializations
   veceq( "<UnkEqComp>::operator+() res at 0,0 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator+() res at 1,0 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator+() res at 0,1 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, p.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator+() res at 0,0 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator+() res at 1,0 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator+() res at 0,1 incorrect",
-         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.4, 0.4, 0.4 }, e.extract_comp( 1 ) );
 
   // Test the lhs of the addition stay the same for all template specializations
   veceq( "<UnkEqComp>::operator+() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator+() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator+() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator+() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator+() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator+() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
 
   // Test the rhs of the addition stay the same for all template specializations
   veceq( "<UnkEqComp>::operator+() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator+() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator+() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator+() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator+() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator+() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator*= by Data as rhs
@@ -1175,33 +1083,33 @@ void Data_object::test< 24 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator*=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e1.extract_comp( 1 ) );
 
   // Test the rhs of the multiply stay the same for all template specializations
   veceq( "<UnkEqComp>::operator*=() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*=() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*=() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*=() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*=() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*=() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator* by Data as rhs
@@ -1222,48 +1130,48 @@ void Data_object::test< 25 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator*() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, p.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.03, 0.03, 0.03 }, e.extract_comp( 1 ) );
 
   // Test the lhs of the multiply stay the same for all template specializations
   veceq( "<UnkEqComp>::operator*() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
 
   // Test the rhs of the multiply stay the same for all template specializations
   veceq( "<UnkEqComp>::operator*() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p2.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e2.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator*= by tk::real as rhs
@@ -1284,18 +1192,18 @@ void Data_object::test< 26 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator*=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*=() at 0,0 incorrect",
-         std::vector< tk::real >{ 1.2, 1.2, 1.2 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 1.2, 1.2, 1.2 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*=() at 1,0 incorrect",
-         std::vector< tk::real >{ 1.2, 1.2, 1.2 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 1.2, 1.2, 1.2 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*=() at 0,1 incorrect",
-         std::vector< tk::real >{ 1.2, 1.2, 1.2 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 1.2, 1.2, 1.2 }, e1.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator* by tk::real as rhs
@@ -1316,33 +1224,33 @@ void Data_object::test< 27 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator*() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract_comp( 1 ) );
 
   // Test the lhs of the multiply stay the same for all template specializations
   veceq( "<UnkEqComp>::operator*() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
 }
 
 
@@ -1364,33 +1272,33 @@ void Data_object::test< 28 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator/=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator/=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator/=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator/=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator/=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator/=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e1.extract_comp( 1 ) );
 
   // Test the rhs of the division stay the same for all template specializations
   veceq( "<UnkEqComp>::operator/=() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator/=() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator/=() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator/=() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator/=() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator/=() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator/
@@ -1411,48 +1319,48 @@ void Data_object::test< 29 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator/() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator/() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator/() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator/() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator/() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator/() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, e.extract_comp( 1 ) );
 
   // Test the lhs of the division stay the same for all template specializations
   veceq( "<UnkEqComp>::operator/() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator/() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator/() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator/() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator/() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator/() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
 
   // Test the rhs of the division stay the same for all template specializations
   veceq( "<UnkEqComp>::operator/() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator/() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator/() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.2, 0.2 }, p2.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator/() rhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator/() rhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator/() rhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.6, 0.6, 0.6 }, e2.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator/= by tk::real as rhs
@@ -1473,18 +1381,18 @@ void Data_object::test< 30 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator/=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.8, 0.8, 0.8 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.8, 0.8, 0.8 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator/=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.8, 0.8, 0.8 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.8, 0.8, 0.8 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator/=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.8, 0.8, 0.8 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.8, 0.8, 0.8 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*=() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.075, 0.075, 0.075 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.075, 0.075, 0.075 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*=() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.075, 0.075, 0.075 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.075, 0.075, 0.075 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*=() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.075, 0.075, 0.075 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.075, 0.075, 0.075 }, e1.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator* by tk::real as rhs
@@ -1505,33 +1413,33 @@ void Data_object::test< 31 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator/() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator/() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator/() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.5, 0.5, 0.5 }, p.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator/() at 0,0 incorrect",
-         std::vector< tk::real >{ 1.0, 1.0, 1.0 }, e.extract( 0, 0 ) );
+         std::vector< tk::real >{ 1.0, 1.0, 1.0 }, e.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator/() at 1,0 incorrect",
-         std::vector< tk::real >{ 1.0, 1.0, 1.0 }, e.extract( 1, 0 ) );
+         std::vector< tk::real >{ 1.0, 1.0, 1.0 }, e.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator/() at 0,1 incorrect",
-         std::vector< tk::real >{ 1.0, 1.0, 1.0 }, e.extract( 0, 1 ) );
+         std::vector< tk::real >{ 1.0, 1.0, 1.0 }, e.extract_comp( 1 ) );
 
   // Test the lhs of the division stay the same for all template specializations
   veceq( "<UnkEqComp>::operator*() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator* by tk::real as lhs
@@ -1552,33 +1460,33 @@ void Data_object::test< 32 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator*() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.02, 0.02, 0.02 }, p.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.09, 0.09, 0.09 }, e.extract_comp( 1 ) );
 
   // Test the lhs of the multiply stay the same for all template specializations
   veceq( "<UnkEqComp>::operator*() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator*() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator*() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p1.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator*() lhs at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator*() lhs at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator*() lhs at 0,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e1.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator min
@@ -1599,18 +1507,18 @@ void Data_object::test< 33 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator min() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator min() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator min() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, p.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator min() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator min() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator min() at 0,1 incorrect",
-         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.1, 0.1, 0.1 }, e.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator max
@@ -1631,18 +1539,18 @@ void Data_object::test< 34 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator max() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator max() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator max() at 0.3 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, p.extract_comp( 1 ) );
 
   veceq( "<EqCompUnk>::operator max() at 0,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator max() at 1,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator max() at 0.3 incorrect",
-         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.3, 0.3 }, e.extract_comp( 1 ) );
 }
 
 //! Test tk::Data's operator==
@@ -1713,7 +1621,7 @@ void Data_object::test< 37 >() {
   // Test unequal objects with UnkEqComp data layout
   tk::Data< tk::UnkEqComp > q1( 3, 2 ), q2( 3, 2 );
   q1.fill( 0.1 );
-  q2.fill( 0.0 );  q2(2,0,0) = 1.0;
+  q2.fill( 0.0 );  q2(2,0) = 1.0;
   m = tk::maxdiff(q1,q2);
   ensure_equals( "<UnkEqComp>::maxdiff neq pos incorrect",
                  static_cast<tk::real>(m.first), 4.0, prec );
@@ -1722,7 +1630,7 @@ void Data_object::test< 37 >() {
   // Test unequal objects with EqCompUnk data layout
   tk::Data< tk::UnkEqComp > f1( 3, 2 ), f2( 3, 2 );
   f1.fill( 0.1 );
-  f2.fill( 0.0 );  f2(2,1,0) = -1.0;
+  f2.fill( 0.0 );  f2(2,1) = -1.0;
   m = tk::maxdiff(f1,f2);
   ensure_equals( "<EqCompUnk>::maxdiff neq pos incorrect",
                  static_cast<tk::real>(m.first), 5.0, prec );
@@ -1736,9 +1644,9 @@ void Data_object::test< 38 >() {
 
   // Test with UnkEqComp data layout
   tk::Data< tk::UnkEqComp > p( 3, 2 );
-  p(0,0,0) = 1.0;  p(0,1,0) = 2.0;
-  p(1,0,0) = 3.0;  p(1,1,0) = 4.0;
-  p(2,0,0) = 5.0;  p(2,1,0) = 6.0;
+  p(0,0) = 1.0;  p(0,1) = 2.0;
+  p(1,0) = 3.0;  p(1,1) = 4.0;
+  p(2,0) = 5.0;  p(2,1) = 6.0;
 
   p.push_back( {0.2, 0.3} );
 
@@ -1766,9 +1674,9 @@ void Data_object::test< 39 >() {
 
   // Test with UnkEqComp data layout
   tk::Data< tk::UnkEqComp > p( 3, 2 );
-  p(0,0,0) = 1.0;  p(0,1,0) = 2.0;
-  p(1,0,0) = 3.0;  p(1,1,0) = 4.0;
-  p(2,0,0) = 5.0;  p(2,1,0) = 6.0;
+  p(0,0) = 1.0;  p(0,1) = 2.0;
+  p(1,0) = 3.0;  p(1,1) = 4.0;
+  p(2,0) = 5.0;  p(2,1) = 6.0;
 
   // Enlarge by 4*2 (nprop=2 stays constant)
   p.resize( p.nunk()+4 );
@@ -1804,9 +1712,9 @@ void Data_object::test< 40 >() {
 
   // Test with UnkEqComp data layout
   tk::Data< tk::UnkEqComp > p( 3, 2 );
-  p(0,0,0) = 1.0;  p(0,1,0) = 2.0;
-  p(1,0,0) = 3.0;  p(1,1,0) = 4.0;
-  p(2,0,0) = 5.0;  p(2,1,0) = 6.0;
+  p(0,0) = 1.0;  p(0,1) = 2.0;
+  p(1,0) = 3.0;  p(1,1) = 4.0;
+  p(2,0) = 5.0;  p(2,1) = 6.0;
 
   // Enlarge by 4*2 (nprop=2 stays constant)
   p.resize( p.nunk()+4, -2.13 );
@@ -1842,9 +1750,9 @@ void Data_object::test< 41 >() {
 
   // Test with UnkEqComp data layout with a single component
   tk::Data< tk::UnkEqComp > p( 3, 1 );
-  p(0,0,0) = 1.0;
-  p(1,0,0) = 3.0;
-  p(2,0,0) = 5.0;
+  p(0,0) = 1.0;
+  p(1,0) = 3.0;
+  p(2,0) = 5.0;
 
   p.rm( { 0, 2 } );
 
@@ -1857,9 +1765,9 @@ void Data_object::test< 41 >() {
   // Test with UnkEqComp data layout with a multiple components removing a
   // single unknown
   tk::Data< tk::UnkEqComp > q( 3, 2 );
-  q(0,0,0) = 1.0;  q(0,1,0) = 2.0;
-  q(1,0,0) = 3.0;  q(1,1,0) = 4.0;
-  q(2,0,0) = 5.0;  q(2,1,0) = 6.0;
+  q(0,0) = 1.0;  q(0,1) = 2.0;
+  q(1,0) = 3.0;  q(1,1) = 4.0;
+  q(2,0) = 5.0;  q(2,1) = 6.0;
 
   q.rm( { 1 } );
 
@@ -1875,9 +1783,9 @@ void Data_object::test< 41 >() {
   // Test with UnkEqComp data layout with a multiple components removing
   // multiple unknowns
   tk::Data< tk::UnkEqComp > r( 3, 2 );
-  r(0,0,0) = 1.0;  r(0,1,0) = 2.0;
-  r(1,0,0) = 3.0;  r(1,1,0) = 4.0;
-  r(2,0,0) = 5.0;  r(2,1,0) = 6.0;
+  r(0,0) = 1.0;  r(0,1) = 2.0;
+  r(1,0) = 3.0;  r(1,1) = 4.0;
+  r(2,0) = 5.0;  r(2,1) = 6.0;
 
   r.rm( { 0, 2 } );
 
@@ -1897,70 +1805,70 @@ void Data_object::test< 42 >() {
   tk::Data< tk::UnkEqComp > pp( 8, 2 );
   tk::Data< tk::EqCompUnk > pe( 8, 2 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 1, 0, 0 ) = 0.2;
-  pp( 2, 0, 0 ) = 0.3;
-  pp( 3, 0, 0 ) = 0.4;
-  pp( 4, 0, 0 ) = 0.5;
-  pp( 5, 0, 0 ) = 0.6;
-  pp( 6, 0, 0 ) = 0.7;
-  pp( 7, 0, 0 ) = 0.8;
+  pp( 0, 0 ) = 0.1;
+  pp( 1, 0 ) = 0.2;
+  pp( 2, 0 ) = 0.3;
+  pp( 3, 0 ) = 0.4;
+  pp( 4, 0 ) = 0.5;
+  pp( 5, 0 ) = 0.6;
+  pp( 6, 0 ) = 0.7;
+  pp( 7, 0 ) = 0.8;
 
-  pp( 0, 1, 0 ) = 1.1;
-  pp( 1, 1, 0 ) = 1.2;
-  pp( 2, 1, 0 ) = 1.3;
-  pp( 3, 1, 0 ) = 1.4;
-  pp( 4, 1, 0 ) = 1.5;
-  pp( 5, 1, 0 ) = 1.6;
-  pp( 6, 1, 0 ) = 1.7;
-  pp( 7, 1, 0 ) = 1.8;
+  pp( 0, 1 ) = 1.1;
+  pp( 1, 1 ) = 1.2;
+  pp( 2, 1 ) = 1.3;
+  pp( 3, 1 ) = 1.4;
+  pp( 4, 1 ) = 1.5;
+  pp( 5, 1 ) = 1.6;
+  pp( 6, 1 ) = 1.7;
+  pp( 7, 1 ) = 1.8;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.2;
-  pe( 2, 0, 0 ) = 0.3;
-  pe( 3, 0, 0 ) = 0.4;
-  pe( 4, 0, 0 ) = 0.5;
-  pe( 5, 0, 0 ) = 0.6;
-  pe( 6, 0, 0 ) = 0.7;
-  pe( 7, 0, 0 ) = 0.8;
+  pe( 0, 0 ) = 0.1;
+  pe( 1, 0 ) = 0.2;
+  pe( 2, 0 ) = 0.3;
+  pe( 3, 0 ) = 0.4;
+  pe( 4, 0 ) = 0.5;
+  pe( 5, 0 ) = 0.6;
+  pe( 6, 0 ) = 0.7;
+  pe( 7, 0 ) = 0.8;
 
-  pe( 0, 1, 0 ) = 1.1;
-  pe( 1, 1, 0 ) = 1.2;
-  pe( 2, 1, 0 ) = 1.3;
-  pe( 3, 1, 0 ) = 1.4;
-  pe( 4, 1, 0 ) = 1.5;
-  pe( 5, 1, 0 ) = 1.6;
-  pe( 6, 1, 0 ) = 1.7;
-  pe( 7, 1, 0 ) = 1.8;
+  pe( 0, 1 ) = 1.1;
+  pe( 1, 1 ) = 1.2;
+  pe( 2, 1 ) = 1.3;
+  pe( 3, 1 ) = 1.4;
+  pe( 4, 1 ) = 1.5;
+  pe( 5, 1 ) = 1.6;
+  pe( 6, 1 ) = 1.7;
+  pe( 7, 1 ) = 1.8;
 
   using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::extract() array of three reals at 0,0:3,2,1 incorrect",
          std::array< tk::real, 3 >{{ 0.4, 0.3, 0.2 }},
-           pp.extract( 0, 0, 3, 2, 1 ) );
+           pp.extract( 0, 3, 2, 1 ) );
   veceq( "<UnkEqComp>::extract() array of three reals at 0,0:1,3,5 incorrect",
          std::array< tk::real, 3 >{{ 0.2, 0.4, 0.6 }},
-           pp.extract( 0, 0, 1, 3, 5 ) );
+           pp.extract( 0, 1, 3, 5 ) );
   veceq( "<UnkEqComp>::extract() array of three reals at 0,1:3,1,0 incorrect",
          std::array< tk::real, 3 >{{ 1.4, 1.2, 1.1 }},
-           pp.extract( 0, 1, 3, 1, 0 ) );
+           pp.extract( 1, 3, 1, 0 ) );
   veceq( "<UnkEqComp>::extract() array of three reals at 0,1:3,5,7 incorrect",
          std::array< tk::real, 3 >{{ 1.4, 1.6, 1.8 }},
-           pp.extract( 0, 1, 3, 5, 7 ) );
+           pp.extract( 1, 3, 5, 7 ) );
 
   veceq( "<EqCompUnk>::extract() array of three reals at 0,0:3,2,1 incorrect",
          std::array< tk::real, 3 >{{ 0.4, 0.3, 0.2 }},
-           pe.extract( 0, 0, 3, 2, 1 ) );
+           pe.extract( 0, 3, 2, 1 ) );
   veceq( "<EqCompUnk>::extract() array of three reals at 0,0:1,3,5 incorrect",
          std::array< tk::real, 3 >{{ 0.2, 0.4, 0.6 }},
-           pe.extract( 0, 0, 1, 3, 5 ) );
+           pe.extract( 0, 1, 3, 5 ) );
   veceq( "<EqCompUnk>::extract() array of three reals at 0,1:3,1,0 incorrect",
          std::array< tk::real, 3 >{{ 1.4, 1.2, 1.1 }},
-           pe.extract( 0, 1, 3, 1, 0 ) );
+           pe.extract( 1, 3, 1, 0 ) );
   veceq( "<kEqCompUnk>::extract() array of three reals 0,1:3,5,7 incorrect",
          std::array< tk::real, 3 >{{ 1.4, 1.6, 1.8 }},
-           pe.extract( 0, 1, 3, 5, 7 ) );
+           pe.extract( 1, 3, 5, 7 ) );
 }
 
 //! Test that tk::Data's extract() returns correct array of three reals
@@ -1971,70 +1879,70 @@ void Data_object::test< 43 >() {
   tk::Data< tk::UnkEqComp > pp( 8, 2 );
   tk::Data< tk::EqCompUnk > pe( 8, 2 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 1, 0, 0 ) = 0.2;
-  pp( 2, 0, 0 ) = 0.3;
-  pp( 3, 0, 0 ) = 0.4;
-  pp( 4, 0, 0 ) = 0.5;
-  pp( 5, 0, 0 ) = 0.6;
-  pp( 6, 0, 0 ) = 0.7;
-  pp( 7, 0, 0 ) = 0.8;
+  pp( 0, 0 ) = 0.1;
+  pp( 1, 0 ) = 0.2;
+  pp( 2, 0 ) = 0.3;
+  pp( 3, 0 ) = 0.4;
+  pp( 4, 0 ) = 0.5;
+  pp( 5, 0 ) = 0.6;
+  pp( 6, 0 ) = 0.7;
+  pp( 7, 0 ) = 0.8;
 
-  pp( 0, 1, 0 ) = 1.1;
-  pp( 1, 1, 0 ) = 1.2;
-  pp( 2, 1, 0 ) = 1.3;
-  pp( 3, 1, 0 ) = 1.4;
-  pp( 4, 1, 0 ) = 1.5;
-  pp( 5, 1, 0 ) = 1.6;
-  pp( 6, 1, 0 ) = 1.7;
-  pp( 7, 1, 0 ) = 1.8;
+  pp( 0, 1 ) = 1.1;
+  pp( 1, 1 ) = 1.2;
+  pp( 2, 1 ) = 1.3;
+  pp( 3, 1 ) = 1.4;
+  pp( 4, 1 ) = 1.5;
+  pp( 5, 1 ) = 1.6;
+  pp( 6, 1 ) = 1.7;
+  pp( 7, 1 ) = 1.8;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 1, 0, 0 ) = 0.2;
-  pe( 2, 0, 0 ) = 0.3;
-  pe( 3, 0, 0 ) = 0.4;
-  pe( 4, 0, 0 ) = 0.5;
-  pe( 5, 0, 0 ) = 0.6;
-  pe( 6, 0, 0 ) = 0.7;
-  pe( 7, 0, 0 ) = 0.8;
+  pe( 0, 0 ) = 0.1;
+  pe( 1, 0 ) = 0.2;
+  pe( 2, 0 ) = 0.3;
+  pe( 3, 0 ) = 0.4;
+  pe( 4, 0 ) = 0.5;
+  pe( 5, 0 ) = 0.6;
+  pe( 6, 0 ) = 0.7;
+  pe( 7, 0 ) = 0.8;
 
-  pe( 0, 1, 0 ) = 1.1;
-  pe( 1, 1, 0 ) = 1.2;
-  pe( 2, 1, 0 ) = 1.3;
-  pe( 3, 1, 0 ) = 1.4;
-  pe( 4, 1, 0 ) = 1.5;
-  pe( 5, 1, 0 ) = 1.6;
-  pe( 6, 1, 0 ) = 1.7;
-  pe( 7, 1, 0 ) = 1.8;
+  pe( 0, 1 ) = 1.1;
+  pe( 1, 1 ) = 1.2;
+  pe( 2, 1 ) = 1.3;
+  pe( 3, 1 ) = 1.4;
+  pe( 4, 1 ) = 1.5;
+  pe( 5, 1 ) = 1.6;
+  pe( 6, 1 ) = 1.7;
+  pe( 7, 1 ) = 1.8;
 
   using unittest::veceq;
 
   // Test all template specializations
   veceq( "<UnkEqComp>::extract() array of three reals at 0,0:3,2,1 incorrect",
           std::array< tk::real, 3 >{{ 0.4, 0.3, 0.2 }},
-            pp.extract( 0, 0, std::array<std::size_t,3>{{3,2,1}} ) );
+            pp.extract( 0, std::array<std::size_t,3>{{3,2,1}} ) );
   veceq( "<UnkEqComp>::extract() array of three reals at 0,0:1,3,5 incorrect",
           std::array< tk::real, 3 >{{ 0.2, 0.4, 0.6 }},
-            pp.extract( 0, 0, std::array<std::size_t,3>{{1,3,5}} ) );
+            pp.extract( 0, std::array<std::size_t,3>{{1,3,5}} ) );
   veceq( "<UnkEqComp>::extract() array of three reals at 0,1:3,1,0 incorrect",
           std::array< tk::real, 3 >{{ 1.4, 1.2, 1.1 }},
-            pp.extract( 0, 1, std::array<std::size_t,3>{{3,1,0}} ) );
+            pp.extract( 1, std::array<std::size_t,3>{{3,1,0}} ) );
   veceq( "<UnkEqComp>::extract() array of three reals at 0,1:3,5,7 incorrect",
           std::array< tk::real, 3 >{{ 1.4, 1.6, 1.8 }},
-            pp.extract( 0, 1, std::array<std::size_t,3>{{3,5,7}} ) );
+            pp.extract( 1, std::array<std::size_t,3>{{3,5,7}} ) );
 
   veceq( "<EqCompUnk>::extract() array of three reals at 0,0:3,2,1 incorrect",
           std::array< tk::real, 3 >{{ 0.4, 0.3, 0.2 }},
-            pe.extract( 0, 0, std::array<std::size_t,3>{{3,2,1}} ) );
+            pe.extract( 0, std::array<std::size_t,3>{{3,2,1}} ) );
   veceq( "<EqCompUnk>::extract() array of three reals at 0,0:1,3,5 incorrect",
           std::array< tk::real, 3 >{{ 0.2, 0.4, 0.6 }},
-            pe.extract( 0, 0, std::array<std::size_t,3>{{1,3,5}} ) );
+            pe.extract( 0, std::array<std::size_t,3>{{1,3,5}} ) );
   veceq( "<EqCompUnk>::extract() array of three reals at 0,1:3,1,0 incorrect",
           std::array< tk::real, 3 >{{ 1.4, 1.2, 1.1 }},
-            pe.extract( 0, 1, std::array<std::size_t,3>{{3,1,0}} ) );
+            pe.extract( 1, std::array<std::size_t,3>{{3,1,0}} ) );
   veceq( "<kEqCompUnk>::extract() array of three reals 0,1:3,5,7 incorrect",
           std::array< tk::real, 3 >{{ 1.4, 1.6, 1.8 }},
-            pe.extract( 0, 1, std::array<std::size_t,3>{{3,5,7}} ) );
+            pe.extract( 1, std::array<std::size_t,3>{{3,5,7}} ) );
 }
 
 //! Test that tk::Data's constructor is graceful on zero-size containers
@@ -2078,7 +1986,7 @@ void Data_object::test< 45 >() {
   // Test all template specializations const-ref access
 
   try {
-    pp( 2, 2, 2 );   // unknown out of bounds
+    pp( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2089,7 +1997,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pp( 1, 3, 2 );   // offset+component out of bounds
+    pp( 1, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2100,7 +2008,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pp( 1, 2, 3 );   // offset+component out of bounds
+    pp( 1, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2111,7 +2019,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 2, 2, 2 );   // unknown out of bounds
+    pe( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2122,7 +2030,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 1, 3, 2 );   // offset+component out of bounds
+    pe( 1, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2133,7 +2041,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 1, 2, 3 );   // offset+component out of bounds
+    pe( 1, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2146,7 +2054,7 @@ void Data_object::test< 45 >() {
   // Test all template specializations non-const-ref access
 
   try {
-    pp( 2, 2, 2 );  // unknown out of bounds
+    pp( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2157,7 +2065,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pp( 1, 3, 2 );  // offset+component out of bounds
+    pp( 1, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2168,7 +2076,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pp( 1, 2, 3 );  // offset+component out of bounds
+    pp( 1, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2179,7 +2087,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 2, 2, 2 );  // unknown out of bounds
+    pe( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2190,7 +2098,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 1, 3, 2 );  // offset+component out of bounds
+    pe( 1, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2201,7 +2109,7 @@ void Data_object::test< 45 >() {
   }
 
   try {
-    pe( 1, 2, 3 );  // offset+component out of bounds
+    pe( 1, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2223,7 +2131,7 @@ void Data_object::test< 46 >() {
   // Test all template specializations const-ref access
 
   try {
-    pp( 2, 2, 2 );   // unknown out of bounds
+    pp( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2234,7 +2142,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pp( 1, 3, 2 );   // offset+component out of bounds
+    pp( 1, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2245,7 +2153,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pp( 1, 2, 3 );   // offset+component out of bounds
+    pp( 1, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2256,7 +2164,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 2, 2, 2 );   // unknown out of bounds
+    pe( 2, 2 );   // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2267,7 +2175,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 1, 3, 2 );   // offset+component out of bounds
+    pe( 1, 3 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2278,7 +2186,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 1, 2, 3 );   // offset+component out of bounds
+    pe( 1, 2 );   // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2291,7 +2199,7 @@ void Data_object::test< 46 >() {
   // Test all template specializations non-const-ref access
 
   try {
-    pp( 2, 2, 2 );  // unknown out of bounds
+    pp( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2302,7 +2210,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pp( 1, 3, 2 );  // offset+component out of bounds
+    pp( 1, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2313,7 +2221,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pp( 1, 2, 3 );  // offset+component out of bounds
+    pp( 1, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2324,7 +2232,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 2, 2, 2 );  // unknown out of bounds
+    pe( 2, 2 );  // unknown out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2335,7 +2243,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 1, 3, 2 );  // offset+component out of bounds
+    pe( 1, 3 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2346,7 +2254,7 @@ void Data_object::test< 46 >() {
   }
 
   try {
-    pe( 1, 2, 3 );  // offset+component out of bounds
+    pe( 1, 2 );  // offset+component out of bounds
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -2365,19 +2273,19 @@ void Data_object::test< 47 >() {
   tk::Data< tk::UnkEqComp > pp( 2, 3 );
   tk::Data< tk::EqCompUnk > pe( 2, 3 );
 
-  pp( 0, 0, 0 ) = 0.1;
-  pp( 0, 1, 0 ) = 0.2;
-  pp( 0, 2, 0 ) = 0.3;
-  pp( 1, 0, 0 ) = 0.4;
-  pp( 1, 1, 0 ) = 0.5;
-  pp( 1, 2, 0 ) = 0.6;
+  pp( 0, 0 ) = 0.1;
+  pp( 0, 1 ) = 0.2;
+  pp( 0, 2 ) = 0.3;
+  pp( 1, 0 ) = 0.4;
+  pp( 1, 1 ) = 0.5;
+  pp( 1, 2 ) = 0.6;
 
-  pe( 0, 0, 0 ) = 0.1;
-  pe( 0, 1, 0 ) = 0.2;
-  pe( 0, 2, 0 ) = 0.3;
-  pe( 1, 0, 0 ) = 0.4;
-  pe( 1, 1, 0 ) = 0.5;
-  pe( 1, 2, 0 ) = 0.6;
+  pe( 0, 0 ) = 0.1;
+  pe( 0, 1 ) = 0.2;
+  pe( 0, 2 ) = 0.3;
+  pe( 1, 0 ) = 0.4;
+  pe( 1, 1 ) = 0.5;
+  pe( 1, 2 ) = 0.6;
 
   using unittest::veceq;
 
@@ -2404,30 +2312,30 @@ void Data_object::test< 48 >() {
 
   // Test all template specializations
   veceq( "<UnkEqComp>::operator= from flat vector at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.4 }, pp.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.4 }, pp.extract_comp( 0 ) );
   veceq( "<UnkEqComp>::operator= from flat vector at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator= from flat vector at 2,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 2, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract_comp( 2 ) );
   veceq( "<UnkEqComp>::operator= from flat vector at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.5 }, pp.extract_comp( 1 ) );
   veceq( "<UnkEqComp>::operator= from flat vector at 1,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 1, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract_comp( 2 ) );
   veceq( "<UnkEqComp>::operator= from flat vector at 0,2 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract( 0, 2 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pp.extract_comp( 2 ) );
 
   veceq( "<EqCompUnk>::operator= from flat vector at 0,0 incorrect",
-         std::vector< tk::real >{ 0.1, 0.4 }, pe.extract( 0, 0 ) );
+         std::vector< tk::real >{ 0.1, 0.4 }, pe.extract_comp( 0 ) );
   veceq( "<EqCompUnk>::operator= from flat vector at 1,0 incorrect",
-         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract( 1, 0 ) );
+         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator= from flat vector at 2,0 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 2, 0 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract_comp( 2 ) );
   veceq( "<EqCompUnk>::operator= from flat vector at 0,1 incorrect",
-         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract( 0, 1 ) );
+         std::vector< tk::real >{ 0.2, 0.5 }, pe.extract_comp( 1 ) );
   veceq( "<EqCompUnk>::operator= from flat vector at 1,1 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 1, 1 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract_comp( 2 ) );
   veceq( "<EqCompUnk>::operator= from flat vector at 0,2 incorrect",
-         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract( 0, 2 ) );
+         std::vector< tk::real >{ 0.3, 0.6 }, pe.extract_comp( 2 ) );
 }
 
 //! Test that tk::Data's operator=() assigns correct vector

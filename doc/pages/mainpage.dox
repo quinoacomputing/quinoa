@@ -24,23 +24,9 @@ why "Philosophy" page.
 
 @m_class{m-note m-default m-landing-news}
 
-  @par Recently modified pages
-  @ref walker_main
-  @m_span{m-text m-dim} <em> Jun 02, 2019 </em> @m_endspan <br>
-  @ref build
-  @m_span{m-text m-dim} <em> Jun 02, 2019 </em> @m_endspan <br>
-  @ref index
-  @m_span{m-text m-dim} <em> Jun 04, 2019 </em> @m_endspan <br>
-  @ref inciter_newpde_problem_h
-  @m_span{m-text m-dim} <em> Jun 01, 2019 </em> @m_endspan <br>
-  @ref files
-  @m_span{m-text m-dim} <em> Jun 01, 2019 </em> @m_endspan <br>
-
 @section mainpage_tools Tools
 
 Quinoa consists of the following tools:
-
-@note If you are looking for information on tools, _walker_, _rngtest_, or _fileconv_, previously part of Quinoa, browse the archived version of this site at https://quinoacomputing.org/archive.
 
   - @ref inciter_main --- __Navier-Stokes solver for complex domains__
 
@@ -50,6 +36,11 @@ Quinoa consists of the following tools:
     continuous and discontinuous Galerkin finite element and finite volume methods, and
     solution-adaptive mesh-, and polynomial-degree refinement, enabling dynamically
     concentrating compute resources to regions with interesting physics.
+
+  @m_div{m-col-m-16 m-center-m}
+  <img src="multimat.png"/>
+  Examples of multi-material shock hydrodynamics using _Inciter_.
+  @m_enddiv
 
   - @ref unittest_main --- __Test suite for synchronous and asynchronous
     functions__
@@ -70,14 +61,7 @@ Quinoa consists of the following tools:
     [UGRID](https://www.simcenter.msstate.edu/software/documentation/aflr3),
     [RDGFLO, https://www.mae.ncsu.edu/people/hluo2).
 
-@section mainpage_try Try
-
-The quickest is to try the pre-built executables inside a [docker
-container](https://hub.docker.com/r/quinoacomputing/quinoa). See also
-- https://quinoacomputing.github.io/examples.html
-- https://github.com/quinoacomputing/quinoa-examples
-
-For larger problems and computers, however, you should @ref build "build" from source.
+@note If you are looking for information on tools, _walker_, _rngtest_, or _fileconv_, previously part of Quinoa, browse the archived version of this site at https://quinoacomputing.org/archive.
 
 @section mainpage_build Build
 
@@ -123,9 +107,9 @@ git clone --recurse-submodules --branch=develop https://github.com/quinoacomputi
 @verbatim
     quinoa
       ├── cmake/ - CMake code, shared between github.com/quinoacomputing/quinoa-tpl and src/
-      ├── doc/ - Documentation, rendered at quinoacomputing.org
+      ├── doc/ - Documentation, rendered at quinoacomputing.github.io
       ├── external/ - External packages from github.com/quinoacomputing/quinoa-tpl
-      ├── src/ - Compilable sources, see quinoacomputing.org/files.html
+      ├── src/ - Compilable sources, see quinoacomputing.github.io/files.html
       ├── tests/ - Unit-, and regression tests
       ├── tools/ - Development utilities and docker files
       ├── LICENSE - Copyright and license

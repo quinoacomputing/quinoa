@@ -297,7 +297,7 @@ DiagCG::setup()
   auto d = Disc();
 
   // Determine nodes inside user-defined IC box
-  for (auto& eq : g_cgpde) eq.IcBoxNodes( d->Coord(), d->Inpoel(),
+  g_cgpde[d->MeshId()].IcBoxNodes( d->Coord(), d->Inpoel(),
     d->ElemBlockId(), m_boxnodes, m_nodeblockid, m_nusermeshblk );
 
   // Compute volume of user-defined box IC
@@ -307,10 +307,8 @@ DiagCG::setup()
   const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
-    for (const auto& eq : g_cgpde) {
-      auto n = eq.histNames();
-      histnames.insert( end(histnames), begin(n), end(n) );
-    }
+    auto n = g_cgpde[d->MeshId()].histNames();
+    histnames.insert( end(histnames), begin(n), end(n) );
     d->histheader( std::move(histnames) );
   }
 }
@@ -333,16 +331,13 @@ DiagCG::box( tk::real v, const std::vector< tk::real >& blkvols )
   d->MeshBlkVol() = blkvols;
 
   // Set initial conditions for all PDEs
-  for (auto& eq : g_cgpde)
-    eq.initialize( coord, m_u, d->T(), d->Boxvol(), m_boxnodes, d->MeshBlkVol(),
-      m_nodeblockid );
+  g_cgpde[d->MeshId()].initialize( coord, m_u, d->T(), d->Boxvol(), m_boxnodes,
+    d->MeshBlkVol(), m_nodeblockid );
 
   // Apply symmetry BCs on initial conditions
-  for (const auto& eq : g_cgpde)
-    eq.symbc( m_u, coord, m_bnorm, m_symbcnodes );
+  g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
   // Apply farfield BCs on initial conditions
-  for (const auto& eq : g_cgpde)
-    eq.farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+  g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
   // Output initial conditions to file (regardless of whether it was requested)
   writeFields( CkCallback(CkIndex_DiagCG::init(), thisProxy[thisIndex]) );
@@ -427,7 +422,7 @@ DiagCG::lhsmerge()
   for (const auto& b : m_lhsc) {
     auto lid = tk::cref_find( Disc()->Lid(), b.first );
     for (ncomp_t c=0; c<m_lhs.nprop(); ++c)
-      m_lhs(lid,c,0) += b.second[c];
+      m_lhs(lid,c) += b.second[c];
   }
 
   // Clear receive buffer
@@ -468,11 +463,9 @@ DiagCG::dt()
   } else {      // compute dt based on CFL
 
     // find the minimum dt across all PDEs integrated
-    for (const auto& eq : g_cgpde) {
-      auto eqdt = eq.dt( d->Coord(), d->Inpoel(), d->T(), d->Dtn(), m_u,
-                         d->Vol(), d->Vol() );
-      if (eqdt < mindt) mindt = eqdt;
-    }
+    auto eqdt = g_cgpde[d->MeshId()].dt( d->Coord(), d->Inpoel(), d->T(),
+      d->Dtn(), m_u, d->Vol(), d->Vol() );
+    if (eqdt < mindt) mindt = eqdt;
 
   }
 
@@ -519,19 +512,19 @@ DiagCG::rhs()
   for (std::size_t e=0; e<inpoel.size()/4; ++e)
     for (ncomp_t c=0; c<m_u.nprop(); ++c)
       for (std::size_t a=0; a<4; ++a)
-        m_ue(e,c,0) += m_u(inpoel[e*4+a],c,0)/4.0;
+        m_ue(e,c) += m_u(inpoel[e*4+a],c)/4.0;
 
   // Scatter the right-hand side for chare-boundary cells only
   m_rhs.fill( 0.0 );
-  for (const auto& eq : g_cgpde)
-   eq.rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue, m_rhs );
+  g_cgpde[d->MeshId()].rhs( d->T(), d->Dt(), d->Coord(), d->Inpoel(), m_u, m_ue,
+    m_rhs );
 
   // Compute mass diffusion
   auto dif = d->FCT()->diff( *d, m_u );
 
   // Query and match user-specified boundary conditions to side sets
-  m_bcdir = match( m_u.nprop(), d->T(), d->Dt(), m_tp, m_dtp, d->Coord(),
-                   lid, m_bnode, /* increment = */ true );
+  m_bcdir = match( d->MeshId(), m_u.nprop(), d->T(), d->Dt(), m_tp, m_dtp,
+                   d->Coord(), lid, m_bnode, /* increment = */ true );
 
   // Send rhs data on chare-boundary nodes to fellow chares
   if (d->NodeCommMap().empty())
@@ -600,13 +593,13 @@ DiagCG::solve( tk::Fields& dif )
   // Combine own and communicated contributions to rhs
   for (const auto& b : m_rhsc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c,0) += b.second[c];
+    for (ncomp_t c=0; c<ncomp; ++c) m_rhs(lid,c) += b.second[c];
   }
 
   // Combine own and communicated contributions to mass diffusion
   for (const auto& b : m_difc) {
     auto lid = tk::cref_find( d->Lid(), b.first );
-    for (ncomp_t c=0; c<ncomp; ++c) dif(lid,c,0) += b.second[c];
+    for (ncomp_t c=0; c<ncomp; ++c) dif(lid,c) += b.second[c];
   }
 
   // Clear receive buffers
@@ -623,9 +616,9 @@ DiagCG::solve( tk::Fields& dif )
   for (const auto& [b,bc] : m_bcdir) {
     for (ncomp_t c=0; c<ncomp; ++c) {
       if (bc[c].first) {
-        m_lhs( b, c, 0 ) = 1.0;
-        m_rhs( b, c, 0 ) = bc[c].second;
-        dif( b, c, 0 ) = 0.0;
+        m_lhs( b, c ) = 1.0;
+        m_rhs( b, c ) = bc[c].second;
+        dif( b, c ) = 0.0;
       }
     }
   }
@@ -637,15 +630,13 @@ DiagCG::solve( tk::Fields& dif )
   m_du = m_rhs / m_lhs;
 
   const auto& coord = d->Coord();
-  for (const auto& eq : g_cgpde) {
-    // Apply symmetry BCs
-    eq.symbc( dul, coord, m_bnorm, m_symbcnodes );
-    eq.symbc( m_ul, coord, m_bnorm, m_symbcnodes );
-    eq.symbc( m_du, coord, m_bnorm, m_symbcnodes );
-    // Apply farfield BCs
-    eq.farfieldbc( m_ul, coord, m_bnorm, m_farfieldbcnodes );
-    eq.farfieldbc( m_du, coord, m_bnorm, m_farfieldbcnodes );
-  }
+  // Apply symmetry BCs
+  g_cgpde[d->MeshId()].symbc( dul, coord, m_bnorm, m_symbcnodes );
+  g_cgpde[d->MeshId()].symbc( m_ul, coord, m_bnorm, m_symbcnodes );
+  g_cgpde[d->MeshId()].symbc( m_du, coord, m_bnorm, m_symbcnodes );
+  // Apply farfield BCs
+  g_cgpde[d->MeshId()].farfieldbc( m_ul, coord, m_bnorm, m_farfieldbcnodes );
+  g_cgpde[d->MeshId()].farfieldbc( m_du, coord, m_bnorm, m_farfieldbcnodes );
 
   // Continue with FCT
   d->FCT()->aec( *d, m_du, m_u, m_bcdir, m_symbcnodemap, m_bnorm );
@@ -673,29 +664,25 @@ DiagCG::writeFields( CkCallback c ) const
     // Collect field output from numerical solution requested by user
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
     // Collect field output names for analytical solutions
-    for (const auto& eq : g_cgpde)
-      analyticFieldNames( eq, tk::Centering::NODE, nodefieldnames );
+    analyticFieldNames( g_cgpde[d->MeshId()], tk::Centering::NODE,
+      nodefieldnames );
 
     // Collect field output from analytical solutions (if exist)
     auto t = d->T();
-    for (const auto& eq : g_cgpde)
-      analyticFieldOutput( eq, tk::Centering::NODE, coord[0], coord[1],
-                           coord[2], t, nodefields );
+    analyticFieldOutput( g_cgpde[d->MeshId()], tk::Centering::NODE, coord[0],
+      coord[1], coord[2], t, nodefields );
 
     // Query and collect block and surface field names from PDEs integrated
     std::vector< std::string > nodesurfnames;
-    for (const auto& eq : g_cgpde) {
-      auto s = eq.surfNames();
-      nodesurfnames.insert( end(nodesurfnames), begin(s), end(s) );
-    }
+    auto sn = g_cgpde[d->MeshId()].surfNames();
+    nodesurfnames.insert( end(nodesurfnames), begin(sn), end(sn) );
 
     // Collect node field solution
     auto u = m_u;
     std::vector< std::vector< tk::real > > nodesurfs;
-    for (const auto& eq : g_cgpde) {
-      auto s = eq.surfOutput( tk::bfacenodes(m_bface,m_triinpoel), u );
-      nodesurfs.insert( end(nodesurfs), begin(s), end(s) );
-    }
+    auto so = g_cgpde[d->MeshId()].surfOutput( tk::bfacenodes(m_bface,
+      m_triinpoel), u );
+    nodesurfs.insert( end(nodesurfs), begin(so), end(so) );
 
     // Query refinement data
     //auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
@@ -882,7 +869,7 @@ DiagCG::resizePostAMR(
       Assert(n.first < m_u.nunk(), "Added node index out of bounds post-AMR");
       Assert(n.second[0] < m_u.nunk() && n.second[1] < m_u.nunk(),
         "Indices of parent-edge nodes out of bounds post-AMR");
-      m_u(n.first,c,0) = (m_u(n.second[0],c,0) + m_u(n.second[1],c,0))/2.0;
+      m_u(n.first,c) = (m_u(n.second[0],c) + m_u(n.second[1],c))/2.0;
     }
 
   // Update physical-boundary node lists
@@ -916,10 +903,8 @@ DiagCG::out()
   // Output time history
   if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
-    for (const auto& eq : g_cgpde) {
-      auto h = eq.histOutput( d->Hist(), d->Inpoel(), m_u );
-      hist.insert( end(hist), begin(h), end(h) );
-    }
+    auto h = g_cgpde[d->MeshId()].histOutput( d->Hist(), d->Inpoel(), m_u );
+    hist.insert( end(hist), begin(h), end(h) );
     d->history( std::move(hist) );
   }
 
