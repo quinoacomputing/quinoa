@@ -298,6 +298,7 @@ class MultiMat {
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] prim Array of primitives
     //! \param[in] nielem Number of internal elements
+		//! \param[in] ndofel Array of dofs
     //! \details This function computes and stores the dofs for primitive
     //!   quantities, which are required for obtaining reconstructed states used
     //!   in the Riemann solver. See /PDE/Riemann/AUSM.hpp, where the
@@ -307,7 +308,8 @@ class MultiMat {
                            const tk::Fields& L,
                            const tk::Fields& geoElem,
                            tk::Fields& prim,
-                           std::size_t nielem ) const
+                           std::size_t nielem,
+													 std::vector< std::size_t >& ndofel ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -338,16 +340,21 @@ class MultiMat {
 
         tk::GaussQuadratureTet( ng, coordgp, wgp );
 
+				// Local degree of freedom
+				auto dof_el = ndofel[e];
+				if(dof_el == 1)
+					dof_el = 4;
+
         // Loop over quadrature points in element e
         for (std::size_t igp=0; igp<ng; ++igp)
         {
           // Compute the basis function
           auto B =
-            tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+            tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
           auto w = wgp[igp] * geoElem(e, 0);
 
-          auto state = tk::eval_state( m_ncomp, rdof, ndof, e, unk, B, {0, m_ncomp-1} );
+          auto state = tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B, {0, m_ncomp-1} );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -383,7 +390,7 @@ class MultiMat {
           for(std::size_t k = 0; k < nprim(); k++)
           {
             auto mark = k * ndof;
-            for(std::size_t idof = 0; idof < ndof; idof++)
+            for(std::size_t idof = 0; idof < dof_el; idof++)
               R[mark+idof] += w * pri[k] * B[idof];
           }
         }
@@ -393,7 +400,7 @@ class MultiMat {
         {
           auto mark = k * ndof;
           auto rmark = k * rdof;
-          for(std::size_t idof = 0; idof < ndof; idof++)
+          for(std::size_t idof = 0; idof < dof_el; idof++)
           {
             prim(e, rmark+idof) = R[mark+idof] / L(e, mark+idof);
             if(fabs(prim(e, rmark+idof)) < 1e-16)
@@ -608,6 +615,52 @@ class MultiMat {
       correctLimConservMultiMat(nielem, m_mat_blk, nmat, geoElem, prim, unk);
     }
 
+
+		//! Reset the high order solution for p-adaptive scheme
+		//! \param[in] fd Face connectivity and boundary conditions object
+		//! \param[in,out] U Solution vector at recent time step
+    //! \param[in,out] P Primitive vector at recent time step
+		//! \param[in] ndofel Vector of local number of degrees of freedome
+    //! \details This function reset the high order coefficient for p-adaptive
+    //!   solution polynomials. Unlike compflow class, the high order of fv
+		//!		solution will not be reset since p0p1 is the base scheme for
+		//!		multi-material p-adaptive DG method.
+    void resetAdapSol( const inciter::FaceData& fd,
+                       tk::Fields& unk,
+                       tk::Fields& prim,
+                       const std::vector< std::size_t >& ndofel ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+			const auto ncomp = unk.nprop() / rdof;
+			const auto nprim = prim.nprop() / rdof;
+
+      for(std::size_t e = 0; e < fd.Esuel().size()/4; e++)
+      {
+        if(ndofel[e] < 10)
+        {
+          for (std::size_t c=0; c<ncomp; ++c)
+          {
+            auto mark = c*rdof;
+            unk(e, mark+4) = 0.0;
+            unk(e, mark+5) = 0.0;
+            unk(e, mark+6) = 0.0;
+            unk(e, mark+7) = 0.0;
+            unk(e, mark+8) = 0.0;
+            unk(e, mark+9) = 0.0;
+          }
+					for (std::size_t c=0; c<nprim; ++c)
+          {
+            auto mark = c*rdof;
+            prim(e, mark+4) = 0.0;
+            prim(e, mark+5) = 0.0;
+            prim(e, mark+6) = 0.0;
+            prim(e, mark+7) = 0.0;
+            prim(e, mark+8) = 0.0;
+            prim(e, mark+9) = 0.0;
+          }
+        }
+      }
+    }
 
     //! Compute right hand side
     //! \param[in] t Physical time

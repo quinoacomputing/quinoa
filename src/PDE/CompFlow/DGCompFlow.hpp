@@ -218,7 +218,8 @@ class CompFlow {
                            const tk::Fields&,
                            const tk::Fields&,
                            tk::Fields&,
-                           std::size_t ) const {}
+                           std::size_t,
+													 std::vector< std::size_t >& ) const {}
 
     //! Clean up the state of trace materials for this PDE system
     //! \details This function cleans up the state of materials present in trace
@@ -351,6 +352,47 @@ class CompFlow {
                           const tk::Fields&,
                           tk::Fields&,
                           std::size_t ) const {}
+
+		//! Reset the high order solution for p-adaptive scheme
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in,out] U Solution vector at recent time step
+    //! \param[in] ndofel Vector of local number of degrees of freedome
+    //! \details This function reset the high order coefficient for p-adaptive
+    //!   solution polynomials.
+    void resetAdapSol( const inciter::FaceData& fd,
+                       tk::Fields& unk,
+                       tk::Fields&,
+                       const std::vector< std::size_t >& ndofel ) const
+		{
+			const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+			const auto ncomp = unk.nprop() / rdof;
+
+			for(std::size_t e = 0; e < fd.Esuel().size()/4; e++)
+    	{
+    	  if(ndofel[e] == 1)
+    	  {
+    	    for (std::size_t c=0; c<ncomp; ++c)
+    	    {
+    	      auto mark = c*rdof;
+    	      unk(e, mark+1) = 0.0;
+    	      unk(e, mark+2) = 0.0;
+    	      unk(e, mark+3) = 0.0;
+    	    }
+    	  } else if(ndofel[e] == 4)
+    	  {
+    	    for (std::size_t c=0; c<ncomp; ++c)
+    	    {
+    	      auto mark = c*rdof;
+    	      unk(e, mark+4) = 0.0;
+    	      unk(e, mark+5) = 0.0;
+    	      unk(e, mark+6) = 0.0;
+    	      unk(e, mark+7) = 0.0;
+    	      unk(e, mark+8) = 0.0;
+    	      unk(e, mark+9) = 0.0;
+    	    }
+    	  }
+    	}
+		}
 
     //! Compute right hand side
     //! \param[in] t Physical time

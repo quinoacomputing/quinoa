@@ -419,14 +419,14 @@ tk::eval_state ( ncomp_t ncomp,
     auto mark = c*ndof;
     state[c] = U( e, mark );
 
-    if(ndof_el > 1)        //DG(P1)
+    if(ndof_el > 1)        // Second order polynomial solution
     {
       state[c] += U( e, mark+1 ) * B[1]
                 + U( e, mark+2 ) * B[2]
                 + U( e, mark+3 ) * B[3];
     }
 
-    if(ndof_el > 4)        //DG(P2)
+    if(ndof_el > 4)        // Third order polynomial solution
     {
       state[c] += U( e, mark+4 ) * B[4]
                 + U( e, mark+5 ) * B[5]

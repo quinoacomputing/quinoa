@@ -96,23 +96,28 @@ tk::volInt( ncomp_t system,
       // Compute the derivatives of basis function for DG(P1)
       auto dBdx = eval_dBdx_p1( ndofel[e], jacInv );
 
+			// Local degree of freedom used to evaluate solution
+			auto dof_el = ndofel[e];
+			if(ncomp > 5 && dof_el == 1)
+		  	dof_el = 4;
+
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)
       {
-        if (ndofel[e] > 4)
+        if (dof_el > 4)
           eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
 
         // Compute the coordinates of quadrature point at physical domain
         auto gp = eval_gp( igp, coordel, coordgp );
 
         // Compute the basis function
-        auto B = eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+        auto B = eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
         auto wt = wgp[igp] * geoElem(e, 0);
 
         auto state = evalPolynomialSol(system, intsharp, ncomp, nprim,
-          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
+          rdof, nmat, e, dof_el, inpoel, coord, geoElem,
           {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
         // evaluate prescribed velocity (if any)
@@ -121,7 +126,7 @@ tk::volInt( ncomp_t system,
         // comput flux
         auto fl = flux( system, ncomp, mat_blk, state, v );
 
-        update_rhs( ncomp, ndof, ndofel[e], wt, e, dBdx, fl, R );
+        update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );
       }
     }
   }

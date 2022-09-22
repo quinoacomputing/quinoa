@@ -135,6 +135,11 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
         dof_el = ndofel[e];
       }
 
+			// For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
+      // for solution evaluation should be 4
+      if(dof_el == 1)
+        dof_el = 4;
+
       // Compute the basis function
       auto B =
         eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
@@ -477,6 +482,11 @@ pressureRelaxationInt( ncomp_t system,
       {
         dof_el = ndofel[e];
       }
+
+			// For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
+      // for solution evaluation should be 4
+      if(dof_el == 1)
+        dof_el = 4;
 
       // Compute the basis function
       auto B =

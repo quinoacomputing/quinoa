@@ -267,7 +267,7 @@ DG::box( tk::real v, const std::vector< tk::real >& )
     myGhosts()->m_coord, m_boxelems, d->ElemBlockId(), m_u, d->T(),
     myGhosts()->m_fd.Esuel().size()/4 );
   g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
-    myGhosts()->m_fd.Esuel().size()/4 );
+    myGhosts()->m_fd.Esuel().size()/4, m_ndof );
 
   m_un = m_u;
 
@@ -1156,35 +1156,7 @@ DG::solve( tk::real newdt )
 
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   if (pref && m_stage == 0)
-  {
-    // When the element are coarsened, high order terms should be zero
-    for(std::size_t e = 0; e < myGhosts()->m_nunk; e++)
-    {
-      const auto ncomp= m_u.nprop()/rdof;
-      if(m_ndof[e] == 1)
-      {
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          auto mark = c*rdof;
-          m_u(e, mark+1) = 0.0;
-          m_u(e, mark+2) = 0.0;
-          m_u(e, mark+3) = 0.0;
-        }
-      } else if(m_ndof[e] == 4)
-      {
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          auto mark = c*ndof;
-          m_u(e, mark+4) = 0.0;
-          m_u(e, mark+5) = 0.0;
-          m_u(e, mark+6) = 0.0;
-          m_u(e, mark+7) = 0.0;
-          m_u(e, mark+8) = 0.0;
-          m_u(e, mark+9) = 0.0;
-        }
-      }
-    }
-  }
+    g_dgpde[d->MeshId()].resetAdapSol( myGhosts()->m_fd, m_u, m_p, m_ndof );
 
   // Update Un
   if (m_stage == 0) m_un = m_u;
@@ -1231,7 +1203,7 @@ DG::solve( tk::real newdt )
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof );
   g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
-    myGhosts()->m_fd.Esuel().size()/4 );
+    myGhosts()->m_fd.Esuel().size()/4, m_ndof );
   if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
     g_dgpde[d->MeshId()].cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
       myGhosts()->m_fd.Esuel().size()/4 );

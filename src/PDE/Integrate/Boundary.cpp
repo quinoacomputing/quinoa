@@ -163,6 +163,11 @@ bndSurfInt( ncomp_t system,
             dof_el = ndofel[el];
           }
 
+					// For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
+      		// for solution evaluation should be 4
+      		if(ncomp > 5 && dof_el == 1)
+      		    dof_el = 4;
+
           std::array< tk::real, 3> ref_gp_l{
             Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
             Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,

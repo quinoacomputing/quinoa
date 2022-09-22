@@ -95,6 +95,17 @@ surfInt( ncomp_t system,
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
+		// For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
+		// for solution evaluation should be 4
+		auto ndof_l = ndofel[el];
+		auto ndof_r = ndofel[er];
+		if(ncomp > 5) {
+			if(ndof_l == 1)
+				ndof_l = 4;
+			if(ndof_r == 1)
+				ndof_r = 4;
+		}
+
     auto ng_l = tk::NGfa(ndofel[el]);
     auto ng_r = tk::NGfa(ndofel[er]);
 
@@ -173,6 +184,15 @@ surfInt( ncomp_t system,
         dof_el = ndofel[el];
         dof_er = ndofel[er];
       }
+
+			// For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
+    	// for solution evaluation should be 4
+    	if(ncomp > 5) {
+    	  if(dof_el == 1)
+    	    dof_el = 4;
+    	  if(dof_er == 1)
+    	    dof_er = 4;
+    	}
 
       std::array< tk::real, 3> ref_gp_l{
         Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
