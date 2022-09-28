@@ -61,6 +61,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_ninitsol( 0 ),
   m_nlim( 0 ),
   m_nnod( 0 ),
+  m_nrefine( 0 ),
+  m_nsmooth( 0 ),
   m_nreco( 0 ),
   m_nnodalExtrema( 0 ),
   m_u( Disc()->Inpoel().size()/4,
@@ -128,6 +130,8 @@ DG::DG( const CProxy_Discretization& disc,
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
+    thisProxy[ thisIndex ].wait4refine();
+    thisProxy[ thisIndex ].wait4smooth();
     thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4nod();
     thisProxy[ thisIndex ].wait4reco();
@@ -508,14 +512,12 @@ DG::lhs()
   if (!m_initial) stage();
 }
 
-void
-DG::reco()
+void DG::refine()
 // *****************************************************************************
-// Compute reconstructions
+// Add the protective layer for ndof refinement
 // *****************************************************************************
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
   // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -533,9 +535,160 @@ DG::reco()
     }
   }
 
+  if (pref && m_stage==0) refine_ndof();
+
+  if (myGhosts()->m_sendGhost.empty())
+    comrefine_complete();
+  else
+    for(const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
+                                             prim( ghostdata.size() );
+      std::vector< std::size_t > ndof;
+      std::size_t j = 0;
+      for(const auto& i : ghostdata) {
+        Assert( i < myGhosts()->m_fd.Esuel().size()/4, "Sending refined ndof  "
+          "data" );
+        tetid[j] = i;
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
+        ++j;
+      }
+      thisProxy[ cid ].comrefine( thisIndex, tetid, ndof );
+    }
+
+  ownrefine_complete();
+}
+
+void
+DG::comrefine( int fromch,
+               const std::vector< std::size_t >& tetid,
+               const std::vector< std::size_t >& ndof )
+// *****************************************************************************
+//  Receive chare-boundary ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive solution data for
+//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
+//! \details This function receives contributions to the refined ndof data
+//!   from fellow chares.
+// *****************************************************************************
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  if (pref && m_stage == 0)
+    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comrefine()" );
+
+  // Find local-to-ghost tet id map for sender chare
+  const auto& n = tk::cref_find( myGhosts()->m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= myGhosts()->m_fd.Esuel().size()/4,
+      "Receiving solution non-ghost data" );
+    auto b = tk::cref_find( myGhosts()->m_bid, j );
+    if (pref && m_stage == 0) {
+      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
+      m_ndofc[1][b] = ndof[i];
+    }
+  }
+
+  // if we have received all solution ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed to limiting
+  if (++m_nrefine == myGhosts()->m_sendGhost.size()) {
+    m_nrefine = 0;
+    comrefine_complete();
+  }
+}
+
+void
+DG::smooth()
+// *****************************************************************************
+// Smooth the refined ndof distribution
+// *****************************************************************************
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  for (const auto& b : myGhosts()->m_bid) {
+    if (pref && m_stage == 0)
+      m_ndof[ b.first ] = m_ndofc[1][ b.second ];
+  }
+
+  if (pref && m_stage==0) smooth_ndof();
+
+  if (myGhosts()->m_sendGhost.empty())
+    comsmooth_complete();
+  else
+    for(const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::size_t > ndof;
+      std::size_t j = 0;
+      for(const auto& i : ghostdata) {
+        Assert( i < myGhosts()->m_fd.Esuel().size()/4, "Sending ndof data" );
+        tetid[j] = i;
+        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
+        ++j;
+      }
+      thisProxy[ cid ].comsmooth( thisIndex, tetid, ndof );
+    }
+
+  ownsmooth_complete();
+}
+
+void
+DG::comsmooth( int fromch,
+               const std::vector< std::size_t >& tetid,
+               const std::vector< std::size_t >& ndof )
+// *****************************************************************************
+//  Receive chare-boundary ghost data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive solution data for
+//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
+//! \details This function receives contributions to the smoothed ndof data
+//!   from fellow chares.
+// *****************************************************************************
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  if (pref && m_stage == 0)
+    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsmooth()" );
+
+  const auto& n = tk::cref_find( myGhosts()->m_ghost, fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( n, tetid[i] );
+    Assert( j >= myGhosts()->m_fd.Esuel().size()/4, "Receiving ndof data" );
+    auto b = tk::cref_find( myGhosts()->m_bid, j );
+    if (pref && m_stage == 0) {
+      Assert( b < m_ndofc[2].size(), "Indexing out of bounds" );
+      m_ndofc[2][b] = ndof[i];
+    }
+  }
+
+  if (++m_nsmooth == myGhosts()->m_sendGhost.size()) {
+    m_nsmooth = 0;
+    comsmooth_complete();
+  }
+}
+
+void
+DG::reco()
+// *****************************************************************************
+// Compute reconstructions
+// *****************************************************************************
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+
+  // Combine own and communicated contributions of unreconstructed solution and
+  // degrees of freedom in cells (if p-adaptive)
+  for (const auto& b : myGhosts()->m_bid) {
+    if (pref && m_stage == 0) {
+      m_ndof[ b.first ] = m_ndofc[2][ b.second ];
+    }
+  }
+
   auto d = Disc();
   if (pref && m_stage==0) {
-    propagate_ndof();
     g_dgpde[d->MeshId()].resetAdapSol( myGhosts()->m_fd, m_u, m_p, m_ndof );
   }
 
@@ -609,8 +762,8 @@ DG::comreco( int fromch,
     m_uc[1][b] = u[i];
     m_pc[1][b] = prim[i];
     if (pref && m_stage == 0) {
-      Assert( b < m_ndofc[1].size(), "Indexing out of bounds" );
-      m_ndofc[1][b] = ndof[i];
+      Assert( b < m_ndofc[3].size(), "Indexing out of bounds" );
+      m_ndofc[3][b] = ndof[i];
     }
   }
 
@@ -650,7 +803,7 @@ DG::nodalExtrema()
       m_p(boundary,c) = m_pc[1][localtet][c];
     }
     if (pref && m_stage == 0) {
-      m_ndof[ boundary ] = m_ndofc[1][ localtet ];
+      m_ndof[ boundary ] = m_ndofc[3][ localtet ];
     }
   }
 
@@ -986,34 +1139,103 @@ DG::lim()
 }
 
 void
-DG::propagate_ndof()
+DG::refine_ndof()
 // *****************************************************************************
 //  p-refine all elements that are adjacent to p-refined elements
 //! \details This function p-refines all the neighbors of an element that has
 //!   been p-refined as a result of an error indicator.
 // *****************************************************************************
 {
-  const auto& esuf = myGhosts()->m_fd.Esuf();
+  auto d = Disc();
+  const auto& coord = d->Coord();
+  const auto& inpoel = d->Inpoel();
+  const auto npoin = coord[0].size();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  std::vector<std::size_t> node_ndof(npoin, 1);
 
-  // Copy number of degrees of freedom for each cell
-  auto ndof = m_ndof;
-
-  // p-refine all neighboring elements of elements that have been p-refined as a
-  // result of error indicators
-  for( auto f=myGhosts()->m_fd.Nbfac(); f<esuf.size()/2; ++f )
+  // Mark the max ndof for each node and store in node_ndof 
+  for(std::size_t e = 0; e < nelem; e++)
   {
-    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
-
-    if (m_ndof[el] > m_ndof[er])
-      ndof[er] = m_ndof[el];
-
-    if (m_ndof[el] < m_ndof[er])
-      ndof[el] = m_ndof[er];
+    for(std::size_t inode = 0; inode < 4; inode++)
+    {
+      auto ip = inpoel[4*e+inode];
+      const auto& pesup = tk::cref_find(myGhosts()->m_esup, ip);
+      for(auto er : pesup)
+        node_ndof[ip] = std::max(m_ndof[er], node_ndof[ip]);
+    }
   }
 
-  // Update number of degrees of freedom for each cell
-  m_ndof = ndof;
+  for(std::size_t e = 0; e < nelem; e++)
+  {
+    std::size_t counter_p2(0);
+    std::size_t counter_p1(0);
+    for(std::size_t inode = 0; inode < 4; inode++)
+    {
+      auto node = inpoel[4*e+inode];
+      if(node_ndof[node] == 10)
+        counter_p2++;
+      else if (node_ndof[node] == 4)
+        counter_p1++;
+    }
+
+    // If there is one node with ndof as 10, all of the elements around this
+    // node will be refined. Same procedure is applied when ndof is 4.
+    if(counter_p2 > 0 && m_ndof[e] < 10)
+    {
+      if(m_ndof[e] == 4)
+        m_ndof[e] = 10;
+      if(m_ndof[e] == 1)
+        m_ndof[e] = 4;
+    }
+    else if(counter_p1 > 0 && m_ndof[e] < 4)
+      m_ndof[e] = 4;
+  }
+}
+
+void DG::smooth_ndof()
+// *****************************************************************************
+//  Smooth the refined ndof distribution to avoid zigzag refinement
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto& inpoel = d->Inpoel();
+  const auto& coord = d->Coord();
+  const auto npoin = coord[0].size();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  std::vector<std::size_t> node_ndof(npoin, 1);
+
+  // Mark the max ndof for each node and store in node_ndof
+  for(std::size_t e = 0; e < nelem; e++)
+  {
+    for(std::size_t inode = 0; inode < 4; inode++)
+    {
+      auto ip = inpoel[4*e+inode];
+      const auto& pesup = tk::cref_find(myGhosts()->m_esup, ip);
+      for(auto er : pesup)
+        node_ndof[ip] = std::max(m_ndof[er], node_ndof[ip]);
+    }
+  }
+
+  for(std::size_t e = 0; e < nelem; e++)
+  {
+    std::size_t counter_p2(0);
+    std::size_t counter_p1(0);
+    for(std::size_t inode = 0; inode < 4; inode++)
+    {
+      auto node = inpoel[4*e+inode];
+      if(node_ndof[node] == 10)
+        counter_p2++;
+      else if (node_ndof[node] == 4)
+        counter_p1++;
+    }
+
+    // If the ndof of all the nodes in the element is 10, this element will be
+    // refined. Same procedure is applied when all the ndofs are 4.
+    if(counter_p2 == 4 && m_ndof[e] == 4)
+      m_ndof[e] = 10;
+    else if(counter_p1 == 4 && m_ndof[e] == 1)
+      m_ndof[e] = 4;
+  }
 }
 
 void
@@ -1054,8 +1276,8 @@ DG::comlim( int fromch,
     m_uc[2][b] = u[i];
     m_pc[2][b] = prim[i];
     if (pref && m_stage == 0) {
-      Assert( b < m_ndofc[2].size(), "Indexing out of bounds" );
-      m_ndofc[2][b] = ndof[i];
+      Assert( b < m_ndofc[4].size(), "Indexing out of bounds" );
+      m_ndofc[4][b] = ndof[i];
     }
   }
 
@@ -1090,7 +1312,7 @@ DG::dt()
       m_p(b.first,c) = m_pc[2][b.second][c];
     }
     if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[2][ b.second ];
+      m_ndof[ b.first ] = m_ndofc[4][ b.second ];
     }
   }
 
@@ -1142,6 +1364,8 @@ DG::solve( tk::real newdt )
 {
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
+  thisProxy[ thisIndex ].wait4refine();
+  thisProxy[ thisIndex ].wait4smooth();
   thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4nodalExtrema();
   thisProxy[ thisIndex ].wait4lim();
