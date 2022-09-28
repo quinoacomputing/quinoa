@@ -188,9 +188,12 @@ class DGPDE {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      const bool pref,
+                      const std::vector< std::size_t >& ndofel ) const
     {
-      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P );
+      self->reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P,
+        pref, ndofel );
     }
 
     //! Public interface to limiting the second-order solution
@@ -376,7 +379,9 @@ class DGPDE {
                                 const std::vector< std::size_t >&,
                                 const tk::UnsMesh::Coords&,
                                 tk::Fields&,
-                                tk::Fields& ) const = 0;
+                                tk::Fields&,
+                                const bool,
+                                const std::vector< std::size_t >& ) const = 0;
       virtual void limit( tk::real,
                           const tk::Fields&,
                           const tk::Fields&,
@@ -511,9 +516,12 @@ class DGPDE {
                         const std::vector< std::size_t >& inpoel,
                         const tk::UnsMesh::Coords& coord,
                         tk::Fields& U,
-                        tk::Fields& P ) const override
+                        tk::Fields& P,
+                        const bool pref,
+                        const std::vector< std::size_t >& ndofel )const override
       {
-        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P );
+        data.reconstruct( t, geoFace, geoElem, fd, esup, inpoel, coord, U, P,
+          pref, ndofel );
       }
       void limit( tk::real t,
                   const tk::Fields& geoFace,

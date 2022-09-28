@@ -353,7 +353,10 @@ class MultiMat {
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
-      std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+      std::vector< std::vector< std::size_t > >
+          varRange(nelem, std::vector<std::size_t>(2, 0));
+        for (std::size_t e=0; e<nelem; ++e)
+          varRange[e][1] = m_ncomp-1;
 
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
@@ -361,7 +364,7 @@ class MultiMat {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
         tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-          U, varRange );
+          U, varRange[e] );
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs
@@ -377,12 +380,11 @@ class MultiMat {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
         tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-          P, {0, nprim()-1} );
+          P, varRange[e] );
       }
 
       // 2.
-      tk::transform_P0P1(rdof, nelem, inpoel, coord, P,
-        {0, nprim()-1});
+      tk::transform_P0P1(rdof, nelem, inpoel, coord, P, varRange );
     }
 
     //! Limit second-order solution, and primitive quantities separately

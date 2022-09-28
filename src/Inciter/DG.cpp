@@ -533,17 +533,18 @@ DG::reco()
     }
   }
 
-  if (pref && m_stage==0) propagate_ndof();
+  auto d = Disc();
+  if (pref && m_stage==0) {
+    propagate_ndof();
+    g_dgpde[d->MeshId()].resetAdapSol( myGhosts()->m_fd, m_u, m_p, m_ndof );
+  }
 
-  if (rdof > 1) {
-    auto d = Disc();
-
+  if (rdof > 1)
     // Reconstruct second-order solution and primitive quantities
     g_dgpde[d->MeshId()].reconstruct( d->T(), myGhosts()->m_geoFace,
       myGhosts()->m_geoElem,
       myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
-      myGhosts()->m_coord, m_u, m_p );
-  }
+      myGhosts()->m_coord, m_u, m_p, pref, m_ndof );
 
   // Send reconstructed solution to neighboring chares
   if (myGhosts()->m_sendGhost.empty())
@@ -1153,10 +1154,6 @@ DG::solve( tk::real newdt )
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
-
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-  if (pref && m_stage == 0)
-    g_dgpde[d->MeshId()].resetAdapSol( myGhosts()->m_fd, m_u, m_p, m_ndof );
 
   // Update Un
   if (m_stage == 0) m_un = m_u;

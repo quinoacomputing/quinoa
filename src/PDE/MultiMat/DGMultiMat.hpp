@@ -454,6 +454,8 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
+    //! \param[in] pref Indicator for p-adaptive algorithm
+    //! \param[in] ndofel Vector of local number of degrees of freedome
     void reconstruct( tk::real,
                       const tk::Fields&,
                       const tk::Fields& geoElem,
@@ -463,7 +465,9 @@ class MultiMat {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      const bool pref,
+                      const std::vector< std::size_t >& ndofel ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -482,18 +486,38 @@ class MultiMat {
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
-      std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
-      // If DG is applied, reconstruct only volume fractions
-      if (!is_p0p1 && ndof > 1)
-        varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
-
+      std::vector< std::vector< std::size_t > > 
+        varRange(nelem, std::vector<std::size_t>(2, 0));
+      if(pref) {  // p-adaptive scheme
+        for (std::size_t e=0; e<nelem; ++e) {
+          // If DG is applied, reconstruct only volume fractions
+          if(ndofel[e] > 1) {
+              varRange[e][0] = volfracIdx(nmat, 0);
+              varRange[e][1] = volfracIdx(nmat, nmat-1);
+          }
+          else  // If P0P1 is applied for this element
+              varRange[e][1] = m_ncomp-1;
+        }
+      } else {
+        // If DG is applied, reconstruct only volume fractions
+        if(!is_p0p1 && ndof > 1) {
+          for (std::size_t e=0; e<nelem; ++e) {
+            varRange[e][0] = volfracIdx(nmat, 0);
+            varRange[e][1] = volfracIdx(nmat, nmat-1);
+          }
+        } else {
+          for (std::size_t e=0; e<nelem; ++e)
+            varRange[e][1] = m_ncomp-1;
+        }
+      }
+      
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
       {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
         tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-          U, varRange );
+          U, varRange[e] );
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs
@@ -510,12 +534,11 @@ class MultiMat {
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
           tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-            P, {0, nprim()-1} );
+            P, varRange[e] );
         }
 
         // 2.
-        tk::transform_P0P1(rdof, nelem, inpoel, coord, P,
-          {0, nprim()-1});
+        tk::transform_P0P1(rdof, nelem, inpoel, coord, P, varRange);
       }
     }
 

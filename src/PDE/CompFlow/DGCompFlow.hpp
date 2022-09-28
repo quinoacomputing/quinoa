@@ -246,7 +246,9 @@ class CompFlow {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      const bool,
+                      const std::vector< std::size_t >& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
@@ -269,27 +271,33 @@ class CompFlow {
             ( m_ncomp,
               {{ 0.0, 0.0, 0.0 }} ) );
 
+        // specify how many variables need to be reconstructed
+        std::vector< std::vector< std::size_t > >
+          varRange(nelem, std::vector<std::size_t>(2, 0));
+        for (std::size_t e=0; e<nelem; ++e)
+          varRange[e][1] = m_ncomp-1;
+
         // reconstruct x,y,z-derivatives of unknowns
         // 0. get lhs matrix, which is only geometry dependent
         tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
         // 1. internal face contributions
         tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls,
-          {0, m_ncomp-1} );
+          varRange );
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
           tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp,
             m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second,
-            P, U, rhs_ls, {0, m_ncomp-1} );
+            P, U, rhs_ls, varRange );
 
         // 3. solve 3x3 least-squares system
         tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U,
-          {0, m_ncomp-1} );
+          varRange );
 
         // 4. transform reconstructed derivatives to Dubiner dofs
         tk::transform_P0P1( rdof, nelem, inpoel, coord, U,
-          {0, m_ncomp-1} );
+          varRange );
       }
     }
 

@@ -186,7 +186,9 @@ class Transport {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      const bool,
+                      const std::vector< std::size_t >& ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
@@ -207,7 +209,10 @@ class Transport {
                             {{0.0, 0.0, 0.0}},
                             {{0.0, 0.0, 0.0}} }} );
         // specify how many variables need to be reconstructed
-        std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+        std::vector< std::vector< std::size_t > >
+          varRange(nelem, std::vector<std::size_t>(2, 0));
+        for (std::size_t e=0; e<nelem; ++e)
+          varRange[e][1] = m_ncomp-1;
 
         std::vector< std::vector< std::array< tk::real, 3 > > >
           rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >
@@ -242,7 +247,7 @@ class Transport {
             // Reconstruct second-order dofs of volume-fractions in Taylor space
             // using nodal-stencils, for a good interface-normal estimate
             tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-              U, varRange );
+              U, varRange[e] );
           }
         }
 
