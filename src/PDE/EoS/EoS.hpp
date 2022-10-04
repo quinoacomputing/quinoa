@@ -16,7 +16,6 @@
 #include <cmath>
 #include "Data.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS_Base.hpp"
 
 namespace inciter {
 

@@ -5,8 +5,8 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Stiffened-gas equation of state
-  \details   This file defines functions for the stiffened gas equation of
+  \brief     Jones, Wilkins, and Lee (JWL) equation of state
+  \details   This file defines functions for the JWL equation of
              state for the compressible flow equations.
 */
 // *****************************************************************************
@@ -25,10 +25,16 @@ using ncomp_t = kw::ncomp::info::expect::type;
 class JWL: public EoS_Base {
 
   private:
-    tk::real m_w, m_cv, m_rho0, m_e0, m_a, m_b, m_r1, m_r2; //, m_tr, m_rhor;
+    tk::real m_w, m_cv, m_rho0, m_e0, m_a, m_b, m_r1, m_r2;
 
 
     tk::real intEnergy( tk::real rho, tk::real pr )
+    // *************************************************************************
+    //! \brief Calculate internal energy using the JWL equation of state
+    //! \param[in] rho Material density
+    //! \param[in] pr Material pressure
+    //! \return Material internal energy calculated using the JWL EoS
+    // *************************************************************************
     {
       tk::real rho0 = m_rho0;
       tk::real a = m_a;
@@ -47,6 +53,15 @@ class JWL: public EoS_Base {
 
 
     tk::real bisection( tk::real a, tk::real b, tk::real p_known, tk::real t_known )
+    // *************************************************************************
+    //! \brief Calculate density from known pressure and temperature using
+    //!   bisection root finding method for JWL equation of state
+    //! \param[in] a Left density bound for root finding
+    //! \param[in] b Right density bound for root finding
+    //! \param[in] p_known Known pressure
+    //! \param[in] t_known Known temperature
+    //! \return Material density calculated by inverting JWL pressure equation
+    // *************************************************************************
     {
       tk::real tol = 1e-10;
       std::size_t maxiter = 1000;
@@ -83,6 +98,13 @@ class JWL: public EoS_Base {
 
 
     tk::real PfromRT( tk::real rho, tk::real T)
+    // *************************************************************************
+    //! \brief Calculate pressure from density and temperature using JWL
+    //!   equation of state
+    //! \param[in] rho Material density
+    //! \param[in] T Material temperature
+    //! \return Material pressure calculated using the JWL EoS
+    // *************************************************************************
     {
       tk::real rho0 = m_rho0;
       tk::real a = m_a;
