@@ -96,10 +96,10 @@ tk::volInt( ncomp_t system,
       // Compute the derivatives of basis function for DG(P1)
       auto dBdx = eval_dBdx_p1( ndofel[e], jacInv );
 
-			// Local degree of freedom used to evaluate solution
-			auto dof_el = ndofel[e];
-			if(ncomp > 5 && dof_el == 1)
-		  	dof_el = 4;
+      // Local degree of freedom used to evaluate solution
+      auto dof_el = ndofel[e];
+      if(ncomp > 5 && dof_el == 1)
+        dof_el = 4;
 
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)

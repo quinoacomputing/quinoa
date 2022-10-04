@@ -157,7 +157,7 @@ class Transport {
                            const tk::Fields&,
                            tk::Fields&,
                            std::size_t,
-													 std::vector< std::size_t >& ) const {}
+                           std::vector< std::size_t >& ) const {}
 
     //! Clean up the state of trace materials for this PDE system
     //! \details This function cleans up the state of materials present in trace
@@ -307,9 +307,9 @@ class Transport {
                           tk::Fields&,
                           std::size_t ) const {}
 
-		//! Reset the high order solution for p-adaptive scheme
-		//! \details This function reset the high order coefficient for p-adaptive
-		//!		solution polynomials and is currently not used in transport.
+    //! Reset the high order solution for p-adaptive scheme
+    //! \details This function reset the high order coefficient for p-adaptive
+    //!   solution polynomials and is currently not used in transport.
     void resetAdapSol( const inciter::FaceData&,
                        tk::Fields&,
                        tk::Fields&,

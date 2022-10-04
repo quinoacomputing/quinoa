@@ -737,10 +737,10 @@ VertexBasedMultiMat_P2(
       dof_el = ndofel[e];
     }
 
-		// For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
+    // For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
     // for solution evaluation should be 4
-		if(ncomp > 5 && dof_el == 1)
-			dof_el = 4;
+    if(ncomp > 5 && dof_el == 1)
+      dof_el = 4;
 
     if (dof_el > 1)
     {

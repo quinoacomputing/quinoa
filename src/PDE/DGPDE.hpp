@@ -227,14 +227,14 @@ class DGPDE {
       self->Correct_Conserv( prim, geoElem, unk, nielem );
     }
 
-		//! Public interface to reset the high order solution for p-adaptive scheme
-		void resetAdapSol( const inciter::FaceData& fd,
-											 tk::Fields& unk,
-	                     tk::Fields& prim,
-											 const std::vector< std::size_t >& ndofel ) const
-		{
-			self->resetAdapSol( fd, unk, prim, ndofel );
-		}
+    //! Public interface to reset the high order solution for p-adaptive scheme
+    void resetAdapSol( const inciter::FaceData& fd,
+                       tk::Fields& unk,
+                       tk::Fields& prim,
+                       const std::vector< std::size_t >& ndofel ) const
+    {
+      self->resetAdapSol( fd, unk, prim, ndofel );
+    }
 
     //! Public interface to computing the P1 right-hand side vector
     void rhs( tk::real t,
@@ -365,7 +365,7 @@ class DGPDE {
                                      const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t,
-																		 std::vector< std::size_t >& ) const = 0;
+                                     std::vector< std::size_t >& ) const = 0;
       virtual void cleanTraceMaterial( const tk::Fields&,
                                        tk::Fields&,
                                        tk::Fields&,
@@ -414,11 +414,11 @@ class DGPDE {
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
                         tk::Fields& ) const = 0;
-			virtual void resetAdapSol( const inciter::FaceData&,
-      													 tk::Fields&,
-        												 tk::Fields&,
-			  												 const std::vector< std::size_t >& )
-																 const = 0;
+      virtual void resetAdapSol( const inciter::FaceData&,
+                                 tk::Fields&,
+                                 tk::Fields&,
+                                 const std::vector< std::size_t >& )
+                                 const = 0;
       virtual void eval_ndof( std::size_t,
                               const tk::UnsMesh::Coords&,
                               const std::vector< std::size_t >&,
@@ -498,10 +498,10 @@ class DGPDE {
                              const tk::Fields& geoElem,
                              tk::Fields& prim,
                              std::size_t nielem,
-														 std::vector< std::size_t >& ndofel )
+                             std::vector< std::size_t >& ndofel )
       const override {
-				data.updatePrimitives( unk, L, geoElem, prim, nielem, ndofel );
-			}
+        data.updatePrimitives( unk, L, geoElem, prim, nielem, ndofel );
+      }
       void cleanTraceMaterial( const tk::Fields& geoElem,
                                tk::Fields& unk,
                                tk::Fields& prim,
@@ -551,13 +551,13 @@ class DGPDE {
       {
         data.Correct_Conserv( prim, geoElem, unk, nielem );
       }
-			void resetAdapSol( const inciter::FaceData& fd,
+      void resetAdapSol( const inciter::FaceData& fd,
                          tk::Fields& unk,
                          tk::Fields& prim,
                          const std::vector< std::size_t >& ndofel ) const override
-			{
-				data.resetAdapSol( fd, unk, prim, ndofel );
-			}
+      {
+        data.resetAdapSol( fd, unk, prim, ndofel );
+      }
       void rhs(
         tk::real t,
         const tk::Fields& geoFace,

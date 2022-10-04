@@ -298,7 +298,7 @@ class MultiMat {
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] prim Array of primitives
     //! \param[in] nielem Number of internal elements
-		//! \param[in] ndofel Array of dofs
+    //! \param[in] ndofel Array of dofs
     //! \details This function computes and stores the dofs for primitive
     //!   quantities, which are required for obtaining reconstructed states used
     //!   in the Riemann solver. See /PDE/Riemann/AUSM.hpp, where the
@@ -309,7 +309,7 @@ class MultiMat {
                            const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem,
-													 std::vector< std::size_t >& ndofel ) const
+                           std::vector< std::size_t >& ndofel ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -340,10 +340,10 @@ class MultiMat {
 
         tk::GaussQuadratureTet( ng, coordgp, wgp );
 
-				// Local degree of freedom
-				auto dof_el = ndofel[e];
-				if(dof_el == 1)
-					dof_el = 4;
+        // Local degree of freedom
+        auto dof_el = ndofel[e];
+        if(dof_el == 1)
+          dof_el = 4;
 
         // Loop over quadrature points in element e
         for (std::size_t igp=0; igp<ng; ++igp)
@@ -639,23 +639,23 @@ class MultiMat {
     }
 
 
-		//! Reset the high order solution for p-adaptive scheme
-		//! \param[in] fd Face connectivity and boundary conditions object
-		//! \param[in,out] U Solution vector at recent time step
+    //! Reset the high order solution for p-adaptive scheme
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Primitive vector at recent time step
-		//! \param[in] ndofel Vector of local number of degrees of freedome
+    //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \details This function reset the high order coefficient for p-adaptive
     //!   solution polynomials. Unlike compflow class, the high order of fv
-		//!		solution will not be reset since p0p1 is the base scheme for
-		//!		multi-material p-adaptive DG method.
+    //!   solution will not be reset since p0p1 is the base scheme for
+    //!   multi-material p-adaptive DG method.
     void resetAdapSol( const inciter::FaceData& fd,
                        tk::Fields& unk,
                        tk::Fields& prim,
                        const std::vector< std::size_t >& ndofel ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-			const auto ncomp = unk.nprop() / rdof;
-			const auto nprim = prim.nprop() / rdof;
+      const auto ncomp = unk.nprop() / rdof;
+      const auto nprim = prim.nprop() / rdof;
 
       for(std::size_t e = 0; e < fd.Esuel().size()/4; e++)
       {
@@ -671,7 +671,7 @@ class MultiMat {
             unk(e, mark+8) = 0.0;
             unk(e, mark+9) = 0.0;
           }
-					for (std::size_t c=0; c<nprim; ++c)
+          for (std::size_t c=0; c<nprim; ++c)
           {
             auto mark = c*rdof;
             prim(e, mark+4) = 0.0;
