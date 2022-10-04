@@ -609,8 +609,8 @@ VertexBasedMultiMat_P1(
 
       std::vector< tk::real > phic_p2, phip_p2;
 
-      PositivityLimitingMultiMat(nmat, system, rdof, dof_el, e, inpoel,
-        coord, U, P, phic, phic_p2, phip, phip_p2);
+      PositivityLimitingMultiMat(nmat, system, rdof, dof_el, ndofel, e, inpoel,
+        coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -796,8 +796,8 @@ VertexBasedMultiMat_P2(
         //}
       }
 
-      PositivityLimitingMultiMat(nmat, system, ndof, dof_el, e, inpoel,
-          coord, U, P, phic_p1, phic_p2, phip_p1, phic_p2);
+      PositivityLimitingMultiMat(nmat, system, ndof, dof_el, ndofel, e, inpoel,
+          coord, fd.Esuel(), U, P, phic_p1, phic_p2, phip_p1, phic_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -908,8 +908,8 @@ VertexBasedMultiMat_FV(
 
     // apply positivity preserving limiter
     std::vector< tk::real > phic_p2, phip_p2;
-    PositivityLimitingMultiMat(nmat, system, rdof, rdof, e, inpoel,
-      coord, U, P, phic, phic_p2, phip, phip_p2);
+    //PositivityLimitingMultiMat(nmat, system, rdof, rdof, ndofel, e, inpoel,
+    //  coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
 
     // apply limiter function
     for (std::size_t c=0; c<ncomp; ++c)
@@ -1767,9 +1767,11 @@ void PositivityLimitingMultiMat( std::size_t nmat,
                                  std::size_t system,
                                  std::size_t rdof,
                                  std::size_t ndof_el,
+                                 const std::vector< std::size_t >& ndofel,
                                  std::size_t e,
                                  const std::vector< std::size_t >& inpoel,
                                  const tk::UnsMesh::Coords& coord,
+                                 const std::vector< int >& esuel,
                                  const tk::Fields& U,
                                  const tk::Fields& P,
                                  std::vector< tk::real >& phic_p1,
@@ -1782,9 +1784,11 @@ void PositivityLimitingMultiMat( std::size_t nmat,
 //! \param[in] system Equation system index
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] ndof_el Number of dofs for element e
+//! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in] e Element being checked for consistency
 //! \param[in] inpoel Element connectivity
 //! \param[in] coord Array of nodal coordinates
+//! \param[in] esuel Elements surrounding elements
 //! \param[in] U Vector of conservative variables
 //! \param[in] P Vector of primitive variables
 //! \param[in,out] phic_p1 Vector of limiter functions for P1 dofs of the
@@ -1831,7 +1835,9 @@ void PositivityLimitingMultiMat( std::size_t nmat,
       {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
       {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
 
-    auto ng = tk::NGfa(ndof_el);
+    auto nel = esuel[4*e+lf];
+
+    auto ng = tk::NGfa(std::max(ndofel[e], ndofel[nel]));
 
     std::array< std::vector< tk::real >, 2 > coordgp;
     std::vector< tk::real > wgp;
@@ -1881,7 +1887,7 @@ void PositivityLimitingMultiMat( std::size_t nmat,
     }
   }
 
-  if(ndof_el > 4)
+  if(ndofel[e] > 4)
   {
     auto ng = tk::NGvol(ndof_el);
     std::array< std::vector< tk::real >, 3 > coordgp;
