@@ -199,15 +199,14 @@ class StiffenedGas: public EoS_Base {
 
 
     tk::real min_eff_pressure( tk::real min ) override
-    // *************************************************************************                    
-    //! Compute the minimum effective pressure used for positivity preserving                       
-    //!   limiting                                                                                  
-    //! \param[in] min Minimum threshold in positivity preserving limiting                          
-    //! \return Minimum effective pressure                                                          
-    // *************************************************************************     
+    // *************************************************************************
+    //! Compute the minimum effective pressure
+    //! \param[in] min Minimum threshold in positivity preserving limiting
+    //! \return Minimum effective pressure
+    // *************************************************************************
     {
       auto p_c = m_pstiff;
-    
+
       return (min - p_c);
     }
 
