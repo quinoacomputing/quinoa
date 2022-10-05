@@ -34,6 +34,7 @@ namespace tk {
 void
 nonConservativeInt( [[maybe_unused]] ncomp_t system,
                     std::size_t nmat,
+                    const std::vector< inciter::EoS_Base* >& mat_blk,
                     const std::size_t ndof,
                     const std::size_t rdof,
                     const std::size_t nelem,
@@ -56,6 +57,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //!   International Journal of Multiphase Flow, 113, 208-230.
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] nelem Total number of elements
@@ -141,7 +143,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(system, intsharp, ncomp, nprim,
+      auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
@@ -294,6 +296,7 @@ void
 nonConservativeIntFV(
   ncomp_t system,
   std::size_t nmat,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,
   const std::vector< std::size_t >& inpoel,
@@ -313,6 +316,7 @@ nonConservativeIntFV(
 //!   International Journal of Multiphase Flow, 113, 208-230.
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] nelem Total number of elements
 //! \param[in] inpoel Element-node connectivity
@@ -341,7 +345,7 @@ nonConservativeIntFV(
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
 
-    auto state = evalPolynomialSol(system, 0, ncomp, nprim,
+    auto state = evalPolynomialSol(system, mat_blk, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
       {{0.25, 0.25, 0.25}}, B, U, P);
 
@@ -418,6 +422,7 @@ pressureRelaxationInt( ncomp_t system,
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] nelem Total number of elements
@@ -484,7 +489,7 @@ pressureRelaxationInt( ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(system, intsharp, ncomp, nprim,
+      auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
@@ -592,6 +597,7 @@ pressureRelaxationIntFV(
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] nelem Total number of elements
 //! \param[in] geoElem Element geometry array
@@ -619,7 +625,7 @@ pressureRelaxationIntFV(
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
 
-    auto state = evalPolynomialSol(system, 0, ncomp, nprim,
+    auto state = evalPolynomialSol(system, mat_blk, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
       {{0.25, 0.25, 0.25}}, B, U, P);
 

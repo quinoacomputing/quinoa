@@ -1,17 +1,17 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/StiffenedGas.hpp
+  \file      src/PDE/EoS/JWL.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Stiffened-gas equation of state
-  \details   This file defines functions for the stiffened gas equation of
+  \brief     Jones, Wilkins, and Lee (JWL) equation of state
+  \details   This file defines functions for the JWL equation of
              state for the compressible flow equations.
 */
 // *****************************************************************************
-#ifndef StiffenedGas_h
-#define StiffenedGas_h
+#ifndef JWL_h
+#define JWL_h
 
 #include <cmath>
 #include <iostream>
@@ -22,20 +22,132 @@ namespace inciter {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-class StiffenedGas: public EoS_Base {
+class JWL: public EoS_Base {
 
   private:
-    tk::real m_gamma, m_pstiff, m_cv;
+    tk::real m_w, m_cv, m_rho0, m_e0, m_a, m_b, m_r1, m_r2;
+
+
+    tk::real intEnergy( tk::real rho, tk::real pr )
+    // *************************************************************************
+    //! \brief Calculate internal energy using the JWL equation of state
+    //! \param[in] rho Material density
+    //! \param[in] pr Material pressure
+    //! \return Material internal energy calculated using the JWL EoS
+    // *************************************************************************
+    {
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w_jwl = m_w;
+      tk::real e0 = m_e0;
+
+      tk::real e = e0 + 1.0/w_jwl/rho*( pr
+                    - a*(1.0 - w_jwl*rho/r1/rho0)*exp(-r1*rho0/rho)
+                    - b*(1.0 - w_jwl*rho/r2/rho0)*exp(-r2*rho0/rho) );
+
+      return e;
+    }
+
+
+    tk::real bisection( tk::real a, tk::real b, tk::real p_known, tk::real t_known )
+    // *************************************************************************
+    //! \brief Calculate density from known pressure and temperature using
+    //!   bisection root finding method for JWL equation of state
+    //! \param[in] a Left density bound for root finding
+    //! \param[in] b Right density bound for root finding
+    //! \param[in] p_known Known pressure
+    //! \param[in] t_known Known temperature
+    //! \return Material density calculated by inverting JWL pressure equation
+    // *************************************************************************
+    {
+      tk::real tol = 1e-10;
+      std::size_t maxiter = 1000;
+      std::size_t i(0);
+      tk::real c;
+      tk::real root(0);
+
+      // function to minimize = p_known - PfromRT
+      // bounds b > a
+
+      while (i < maxiter)
+      {
+        c = (a + b)/2.0;
+        if ( p_known - PfromRT( c, t_known) <= 1e-16 or (b - a)/2.0 < tol )
+        {
+          root = c;
+          break;
+        }
+
+        i++;
+        if ( static_cast< int > (std::copysign( 1.0, p_known - PfromRT( c, t_known) )) ==
+             static_cast< int > (std::copysign( 1.0, p_known - PfromRT( a, t_known) )) )
+        {
+          a = c;
+        }
+        else
+        {
+          b = c;
+        }
+
+      }
+      return root;
+    }
+
+
+    tk::real PfromRT( tk::real rho, tk::real T)
+    // *************************************************************************
+    //! \brief Calculate pressure from density and temperature using JWL
+    //!   equation of state
+    //! \param[in] rho Material density
+    //! \param[in] T Material temperature
+    //! \return Material pressure calculated using the JWL EoS
+    // *************************************************************************
+    {
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w_jwl = m_w;
+      tk::real c_v = m_cv;
+//      tk::real t_r = m_tr;      // reference temperature
+//      tk::real rho_r = m_rhor;  // reference density
+      tk::real t_r = 1200.0;      // reference temperature
+      tk::real rho_r = 5.0e3;  // reference density
+
+      tk::real pr;
+
+      pr = a*exp(-r1*rho0/rho) + b*exp(-r2*rho0/rho) + w_jwl*(c_v*T*rho
+         - c_v*t_r*std::pow(rho0/rho_r, w_jwl)*rho0/std::pow(rho0/rho, w_jwl+1));
+
+      return pr;
+    }
 
   public:
     // *************************************************************************
     //  Constructor
-    //! \param[in] gamma Ratio of specific heats
-    //! \param[in] pstiff Stiffened pressure term
+    //! \param[in] w Grueneisen coefficient
     //! \param[in] cv Specific heat at constant volume
+    //! \param[in] rho0 Density of reference state
+    //! \param[in] e0 Internal energy of reference state
+    //! \param[in] A Parameter A
+    //! \param[in] B Parameter B
+    //! \param[in] R1 Parameter R1
+    //! \param[in] R2 Parameter R2
     // *************************************************************************
-    StiffenedGas(tk::real gamma, tk::real pstiff, tk::real cv ) :
-      m_gamma(gamma), m_pstiff(pstiff), m_cv(cv)
+    JWL( tk::real w, tk::real cv, tk::real rho0, tk::real e0, tk::real A,
+         tk::real B, tk::real R1, tk::real R2 ) :
+      m_w(w),
+      m_cv(cv),
+      m_rho0(rho0),
+      m_e0(e0),
+      m_a(A),
+      m_b(B),
+      m_r1(R1),
+      m_r2(R2)
     { }
 
 
@@ -49,11 +161,13 @@ class StiffenedGas: public EoS_Base {
     //! \return Material density calculated using the stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real g = m_gamma;
-      tk::real p_c = m_pstiff;
-      tk::real c_v = m_cv;
+      tk::real rho_r = m_rho0;  // reference density
+      tk::real r_guessL = 1e-2*rho_r;  // left density bound
+      tk::real r_guessR = 1e2*rho_r;   // right density bound
+      tk::real rho;
+
+      rho = bisection( r_guessL, r_guessR, pr, temp );
     
-      tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
       return rho;
     }
 
@@ -83,11 +197,22 @@ class StiffenedGas: public EoS_Base {
     //!   stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real g = m_gamma;
-      tk::real p_c = m_pstiff;
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w_jwl = m_w;
+      tk::real e0 = m_e0;
 
-      tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) -
-        alpha*p_c) * (g-1.0) - alpha*p_c;
+      // reference energy (input quantity, might need for calculation)
+//      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
+      // internal energy
+      tk::real rhoe = (arhoE - 0.5*arho*(u*u + v*v + w*w))/alpha;
+
+      tk::real partpressure = a*(alpha*1.0 - w_jwl*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
+                            + b*(alpha*1.0 - w_jwl*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
+                            + w_jwl*(rhoe - e0)*arho/rho0;
 
       // check partial pressure divergence
       if (!std::isfinite(partpressure)) {
@@ -123,25 +248,37 @@ class StiffenedGas: public EoS_Base {
     //! \return Material speed of sound using the stiffened-gas EoS
     // *************************************************************************
     {
-      auto g = m_gamma;
-      auto p_c = m_pstiff;
-    
-      auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
-    
-      tk::real a = std::sqrt( g * p_eff / arho );
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w_jwl = m_w;
+
+      // limiting pressure to near-zero
+      auto apr_eff = std::max( 1.0e-15, apr );
+
+      auto co1 = rho0*alpha*alpha/(arho*arho);
+      auto co2 = alpha*(1.0+w_jwl)/arho;
+
+      tk::real ss = a*(r1*co1 - co2) * exp(-r1*alpha*rho0/arho)
+                  + b*(r2*co1 - co2) * exp(-r2*alpha*rho0/arho)
+                  + (1.0+w_jwl)*apr_eff/arho;
+
+      ss = std::sqrt(ss);
     
       // check sound speed divergence
-      if (!std::isfinite(a)) {
+      if (!std::isfinite(ss)) {
         std::cout << "Material-id:      " << imat << std::endl;
         std::cout << "Volume-fraction:  " << alpha << std::endl;
         std::cout << "Partial density:  " << arho << std::endl;
         std::cout << "Partial pressure: " << apr << std::endl;
         Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
-          + std::to_string(a) + ", material volume fraction: " +
+          + std::to_string(ss) + ", material volume fraction: " +
           std::to_string(alpha));
       }
     
-      return a;
+      return ss;
     }
 
 
@@ -161,10 +298,13 @@ class StiffenedGas: public EoS_Base {
     //! \return Material specific total energy using the stiffened-gas EoS
     // *************************************************************************
     {
-      auto g = m_gamma;
-      auto p_c = m_pstiff;
+
+      // reference energy (input quantity, might need for calculation)
+//      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
     
-      tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * rho * (u*u + v*v + w*w) + p_c;
+      tk::real rhoE = intEnergy( rho, pr )
+                    + 0.5*rho*(u*u + v*v + w*w);
+
       return rhoE;
     }
 
@@ -189,11 +329,28 @@ class StiffenedGas: public EoS_Base {
     //! \return Material temperature using the stiffened-gas EoS
     // *************************************************************************
     {
-      auto c_v = m_cv;
-      auto p_c = m_pstiff;
+      tk::real rho0 = m_rho0;
+      tk::real a = m_a;
+      tk::real b = m_b;
+      tk::real r1 = m_r1;
+      tk::real r2 = m_r2;
+      tk::real w_jwl = m_w;
+      tk::real c_v = m_cv;      // constant specific heat
+//      tk::real t_r = m_tr;      // reference temperature
+//      tk::real rho_r = m_rhor;  // reference density
+      tk::real t_r = 1200.0;      // reference temperature
+      tk::real rho_r = 5.0e3;  // reference density
+
+      tk::real rho = arho/alpha;
+
+      // reference energy (input quantity, might need for calculation)
+//      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
     
-      tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) 
-                   / (arho*c_v);
+      tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho - 1.0/rho0*(
+                   a/r1*exp(-r1*rho0/rho)
+                 + b/r2*exp(-r2*rho0/rho) ))/c_v
+                 + ( t_r*std::pow(rho0/rho_r, w_jwl) )/std::pow(rho0/rho, w_jwl);
+
       return t;
     }
 
@@ -205,17 +362,15 @@ class StiffenedGas: public EoS_Base {
     //! \return Minimum effective pressure
     // *************************************************************************
     {
-      auto p_c = m_pstiff;
-
-      return (min - p_c);
+      return min;  // TBN: double check to make sure this is appropriate for JWL
     }
 
 
     // Destructor
-    ~StiffenedGas() override {}
+    ~JWL() override {}
 };
 
 } //inciter::
 
-#endif // StiffenedGas_h
+#endif // JWL_h
 

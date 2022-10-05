@@ -115,9 +115,11 @@ namespace grm {
     REPMATID,           //!< Repeating material id
     ONEMATID,           //!< Material id not one-based
     GAPMATID,           //!< Material id not contiguous
+    NOEOS,              //!< EOS not supported
     EOSGAMMA,           //!< Wrong number of EOS gamma parameters
     EOSCV,              //!< Wrong number of EOS cv parameters
     EOSPSTIFF,          //!< Wrong number of EOS pstiff parameters
+    EOSJWLPARAM,        //!< Wrong number of JWL EOS parameters
     NODT,               //!< No time-step-size policy selected
     MULDT,              //!< Multiple time-step-size policies selected
     NOSAMPLES,          //!< PDF need a variable
@@ -272,6 +274,8 @@ namespace grm {
       "not one-based. Material ids must begin with one." },
     { MsgKey::GAPMATID, "Material ids specified in 'material ... end' blocks "
       "have a gap. Material ids must be contiguous." },
+    { MsgKey::NOEOS, "Unsupported equation of state (EOS) specified in "
+      "preceding block's 'material ... end' sub-block." },
     { MsgKey::EOSGAMMA, "Incorrect number of equation of state (EOS) 'gamma' "
       "parameters configured in the preceding block's 'material ... end' "
       "sub-block. The number of components between 'gamma ... end' is "
@@ -285,6 +289,11 @@ namespace grm {
     { MsgKey::EOSPSTIFF, "Incorrect number of equation of state (EOS) 'pstiff' "
       "parameters configured in the preceding block's 'material ... end' "
       "sub-block. The number of components between 'pstiff ... end' "
+      "is incorrect, whose size must equal the number of material-ids set by "
+      "keyword 'id' in that 'material ... end' sub-block." },
+    { MsgKey::EOSJWLPARAM, "Incorrect number of JWL equation of state (EOS) "
+      "parameters configured in the preceding block's 'material ... end' "
+      "sub-block. The number of components between 'param ... end' "
       "is incorrect, whose size must equal the number of material-ids set by "
       "keyword 'id' in that 'material ... end' sub-block." },
     { MsgKey::NODT, "No time step calculation policy has been selected in the "

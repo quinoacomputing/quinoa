@@ -195,6 +195,7 @@ bndLeastSqConservedVar_P0P1(
 //    least-squares reconstruction of conserved quantities of the PDE system
 //! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] bcconfig BC configuration vector for multiple side sets
 //! \param[in] fd Face connectivity and boundary conditions object
@@ -990,6 +991,7 @@ THINCFunction_new( std::size_t rdof,
 
 std::vector< tk::real >
 evalPolynomialSol( std::size_t system,
+                   const std::vector< inciter::EoS_Base* >& mat_blk,
                    int intsharp,
                    std::size_t ncomp,
                    std::size_t nprim,
@@ -1007,6 +1009,7 @@ evalPolynomialSol( std::size_t system,
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] system Equation system index
+//! \param[in] mat_blk EOS material block
 //! \param[in] intsharp Interface reconstruction indicator
 //! \param[in] ncomp Number of components in the PDE system
 //! \param[in] nprim Number of primitive quantities
@@ -1061,9 +1064,8 @@ evalPolynomialSol( std::size_t system,
     using inciter::volfracIdx;
 
     for (std::size_t k=0; k<nmat; ++k) {
-      state[ncomp+pressureIdx(nmat,k)] = inciter::constrain_pressure
-        < tag::multimat >(system, state[ncomp+pressureIdx(nmat,k)],
-        state[volfracIdx(nmat,k)], k);
+      state[ncomp+pressureIdx(nmat,k)] = constrain_pressure( mat_blk,
+        state[ncomp+pressureIdx(nmat,k)], state[volfracIdx(nmat,k)], k );
     }
   }
 

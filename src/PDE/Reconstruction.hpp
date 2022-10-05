@@ -161,6 +161,7 @@ THINCFunction_new( std::size_t rdof,
 //! Evaluate polynomial solution at quadrature point
 std::vector< tk::real >
 evalPolynomialSol(std::size_t system,
+  const std::vector< inciter::EoS_Base* >& mat_blk,
   int intsharp,
   std::size_t ncomp,
   std::size_t nprim,

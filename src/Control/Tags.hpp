@@ -100,6 +100,14 @@ struct mixmassfracbeta {
 struct alpha { static std::string name() { return "alpha"; } };
 struct gamma { static std::string name() { return "gamma"; } };
 struct pstiff { static std::string name() { return "pstiff"; } };
+struct w_gru { static std::string name() { return "w_gru"; } };
+struct A_jwl { static std::string name() { return "A_jwl"; } };
+struct B_jwl { static std::string name() { return "B_jwl"; } };
+struct C_jwl { static std::string name() { return "C_jwl"; } };
+struct R1_jwl { static std::string name() { return "R1_jwl"; } };
+struct R2_jwl { static std::string name() { return "R2_jwl"; } };
+struct rho0_jwl { static std::string name() { return "rho0_jwl"; } };
+struct e0_jwl { static std::string name() { return "e0_jwl"; } };
 struct hydroproductions {
   static std::string name() { return "hydroproductions"; } };
 struct diffeq { static std::string name() { return "diffeq"; } };

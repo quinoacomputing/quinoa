@@ -50,6 +50,9 @@ class EoS_Base {
                                       tk::real,
                                       tk::real,
                                       tk::real=1.0 )=0;
+
+    virtual tk::real min_eff_pressure( tk::real )=0;
+
     // Virtual destructor
     virtual ~EoS_Base(){}
 };

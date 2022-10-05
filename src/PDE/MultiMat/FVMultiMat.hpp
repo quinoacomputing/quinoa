@@ -35,14 +35,13 @@
 #include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "Problem/FieldOutput.hpp"
 #include "Problem/BoxInitialization.hpp"
 #include "MultiMat/BCFunctions.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
 
@@ -82,16 +81,7 @@ class MultiMat {
         , extrapolate } ) );
 
       // EoS initialization
-      auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      for (std::size_t k=0; k<nmat; ++k) {
-        // query input deck to get gamma, p_c, cv
-        auto g = gamma< eq >(m_system, k);
-        auto ps = pstiff< eq >(m_system, k);
-        auto c_v = cv< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
-        }
-
+      initializeMaterialEoS( m_system, m_mat_blk );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -281,7 +271,7 @@ class MultiMat {
             m_mat_blk[k]->eos_pressure( arhomat, vel[0], vel[1], vel[2],
                                         arhoemat, alphamat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
-            constrain_pressure< tag::multimat >(m_system,
+            constrain_pressure( m_mat_blk,
             prim(e, pressureDofIdx(nmat, k, rdof, 0)), alphamat, k);
           for (std::size_t idof=1; idof<rdof; ++idof)
             prim(e, pressureDofIdx(nmat, k, rdof, idof)) = 0.0;
@@ -412,7 +402,7 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          m_system, coord, U, P, nmat );
+          m_system, m_mat_blk, coord, U, P, nmat );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
@@ -532,7 +522,7 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeIntFV( m_system, nmat, rdof, nelem,
+      tk::nonConservativeIntFV( m_system, nmat, m_mat_blk, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv, R );
 
       // compute finite pressure relaxation terms

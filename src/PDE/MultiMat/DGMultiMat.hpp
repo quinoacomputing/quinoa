@@ -37,8 +37,6 @@
 #include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/StiffenedGas.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -46,6 +44,7 @@
 #include "Problem/BoxInitialization.hpp"
 #include "PrefIndicator.hpp"
 #include "MultiMat/BCFunctions.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
 
@@ -85,16 +84,7 @@ class MultiMat {
         , extrapolate } ) );
 
       // EoS initialization
-      auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      for (std::size_t k=0; k<nmat; ++k) {
-        // query input deck to get gamma, p_c, cv
-        auto g = gamma< eq >(m_system, k);
-        auto ps = pstiff< eq >(m_system, k);
-        auto c_v = cv< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
-        }
-
+      initializeMaterialEoS( m_system, m_mat_blk );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -371,8 +361,8 @@ class MultiMat {
             pri[pressureIdx(nmat,imat)] = m_mat_blk[imat]->eos_pressure(
               arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat );
 
-            pri[pressureIdx(nmat,imat)] = constrain_pressure< tag::multimat >(
-              m_system, pri[pressureIdx(nmat,imat)], alphamat, imat);
+            pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
+              pri[pressureIdx(nmat,imat)], alphamat, imat);
           }
 
           // Evaluate bulk velocity at quadrature point
@@ -710,7 +700,7 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( m_system, nmat, ndof, rdof, nelem,
+      tk::nonConservativeInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
