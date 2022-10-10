@@ -363,7 +363,7 @@ class CompFlow {
 
     //! Reset the high order solution for p-adaptive scheme
     //! \param[in] fd Face connectivity and boundary conditions object
-    //! \param[in,out] U Solution vector at recent time step
+    //! \param[in,out] unk Solution vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \details This function reset the high order coefficient for p-adaptive
     //!   solution polynomials.

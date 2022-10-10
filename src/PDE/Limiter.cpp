@@ -1835,7 +1835,9 @@ void PositivityLimitingMultiMat( std::size_t nmat,
       {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
       {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
 
-    auto nel = esuel[4*e+lf];
+    std::size_t nel;
+    if (esuel[4*e+lf] == -1) nel = e;
+    else nel = static_cast< std::size_t >(esuel[4*e+lf]);
 
     auto ng = tk::NGfa(std::max(ndofel[e], ndofel[nel]));
 
