@@ -7,7 +7,8 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Jones, Wilkins, and Lee (JWL) equation of state
   \details   This file defines functions for the JWL equation of
-             state for the compressible flow equations.
+             state for the compressible flow equations. These functions are
+             taken from 'JWL Equation of State', Menikoff, LA-UR-15-29536.
 */
 // *****************************************************************************
 #ifndef JWL_h
@@ -30,10 +31,13 @@ class JWL: public EoS_Base {
 
     tk::real intEnergy( tk::real rho, tk::real pr )
     // *************************************************************************
-    //! \brief Calculate internal energy using the JWL equation of state
+    //! \brief Calculate specific internal energy using the JWL equation of
+    //!   state
     //! \param[in] rho Material density
     //! \param[in] pr Material pressure
     //! \return Material internal energy calculated using the JWL EoS
+    //! \details By inverting Eqn. 1 in 'JWL Equation of State', Menikoff,
+    //!   LA-UR-15-29536
     // *************************************************************************
     {
       tk::real rho0 = m_rho0;
@@ -63,19 +67,29 @@ class JWL: public EoS_Base {
     //! \return Material density calculated by inverting JWL pressure equation
     // *************************************************************************
     {
-      tk::real tol = 1e-10;
+      tk::real tol = 1e-12;
       std::size_t maxiter = 1000;
       std::size_t i(0);
       tk::real c;
       tk::real root(0);
+      std::size_t idebug = 0;
 
-      // function to minimize = p_known - PfromRT
+      // function to minimize: fcn = p_known - PfromRT
       // bounds b > a
 
       while (i < maxiter)
       {
+
         c = (a + b)/2.0;
-        if ( p_known - PfromRT( c, t_known) <= 1e-16 or (b - a)/2.0 < tol )
+        auto fcn = p_known - PfromRT( c, t_known);
+        if ( idebug == 1)
+        {
+          std::cout << "Bisection iter:      " << i << std::endl;
+          std::cout << "fcn:  " << fcn << std::endl;
+          std::cout << "(b - a)/2.0: " << (b - a)/2.0 << std::endl;
+        }
+
+        if ( std::abs(fcn) <= 1e-16 or (b - a)/2.0 < tol )
         {
           root = c;
           break;
@@ -92,6 +106,12 @@ class JWL: public EoS_Base {
           b = c;
         }
 
+        if ( i == maxiter )
+        {
+          Throw("JWL Bisection for density failed to converge after iterations"
+          + std::to_string(i));
+        }
+
       }
       return root;
     }
@@ -104,6 +124,7 @@ class JWL: public EoS_Base {
     //! \param[in] rho Material density
     //! \param[in] T Material temperature
     //! \return Material pressure calculated using the JWL EoS
+    //! \details From Eqn. 14 in 'JWL Equation of State', Menikoff, LA-UR-15-29536
     // *************************************************************************
     {
       tk::real rho0 = m_rho0;
@@ -115,8 +136,8 @@ class JWL: public EoS_Base {
       tk::real c_v = m_cv;
 //      tk::real t_r = m_tr;      // reference temperature
 //      tk::real rho_r = m_rhor;  // reference density
-      tk::real t_r = 1200.0;      // reference temperature
-      tk::real rho_r = 5.0e3;  // reference density
+      tk::real t_r = 300.0;      // reference temperature
+      tk::real rho_r = rho0;  // reference density
 
       tk::real pr;
 
@@ -167,7 +188,7 @@ class JWL: public EoS_Base {
       tk::real rho;
 
       rho = bisection( r_guessL, r_guessR, pr, temp );
-    
+
       return rho;
     }
 
@@ -195,6 +216,7 @@ class JWL: public EoS_Base {
     //!   by the calling code
     //! \return Material partial pressure (alpha_k * p_k) calculated using the
     //!   stiffened-gas EoS
+    //! \details From Eqn. 1 in 'JWL Equation of State', Menikoff, LA-UR-15-29536
     // *************************************************************************
     {
       tk::real rho0 = m_rho0;
@@ -207,12 +229,12 @@ class JWL: public EoS_Base {
 
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
-      // internal energy
-      tk::real rhoe = (arhoE - 0.5*arho*(u*u + v*v + w*w))/alpha;
+      // specific internal energy
+      tk::real e = (arhoE - 0.5*arho*(u*u + v*v + w*w))/arho;
 
-      tk::real partpressure = a*(alpha*1.0 - w_jwl*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
-                            + b*(alpha*1.0 - w_jwl*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
-                            + w_jwl*(rhoe - e0)*arho/rho0;
+      tk::real partpressure = a*(alpha - w_jwl*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
+                            + b*(alpha - w_jwl*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
+                            + w_jwl*arho*(e - e0);
 
       // check partial pressure divergence
       if (!std::isfinite(partpressure)) {
@@ -302,7 +324,7 @@ class JWL: public EoS_Base {
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
     
-      tk::real rhoE = intEnergy( rho, pr )
+      tk::real rhoE = rho*intEnergy( rho, pr )
                     + 0.5*rho*(u*u + v*v + w*w);
 
       return rhoE;
@@ -336,20 +358,21 @@ class JWL: public EoS_Base {
       tk::real r2 = m_r2;
       tk::real w_jwl = m_w;
       tk::real c_v = m_cv;      // constant specific heat
+      tk::real e0 = m_e0;
 //      tk::real t_r = m_tr;      // reference temperature
 //      tk::real rho_r = m_rhor;  // reference density
-      tk::real t_r = 1200.0;      // reference temperature
-      tk::real rho_r = 5.0e3;  // reference density
+      tk::real t_r = 300.0;      // reference temperature
+      tk::real rho_r = rho0;  // reference density
 
       tk::real rho = arho/alpha;
 
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
     
-      tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho - 1.0/rho0*(
+      tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho - e0 - 1.0/rho0*(
                    a/r1*exp(-r1*rho0/rho)
                  + b/r2*exp(-r2*rho0/rho) ))/c_v
-                 + ( t_r*std::pow(rho0/rho_r, w_jwl) )/std::pow(rho0/rho, w_jwl);
+                 + ( t_r*std::pow(rho/rho_r, w_jwl) );
 
       return t;
     }

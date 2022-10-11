@@ -68,7 +68,7 @@ void initializeMaterialEoS( std::size_t system,
 bool
 cleanTraceMultiMat(
   std::size_t nelem,
-  std::size_t system,
+  std::size_t,
   const std::vector< EoS_Base* >& mat_blk,
   const tk::Fields& geoElem,
   std::size_t nmat,
@@ -147,14 +147,13 @@ cleanTraceMultiMat(
     {
       auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
       auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
-      auto Pck = pstiff< tag::multimat >(system, k);
       // for positive volume fractions
       if (matExists(alk))
       {
         // check if volume fraction is lesser than threshold (al_eps) and
         // if the material (effective) pressure is negative. If either of
         // these conditions is true, perform pressure relaxation.
-        if ((alk < al_eps) || (pk+Pck < 0.0)/*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
+        if ((alk < al_eps) || (pk < mat_blk[k]->min_eff_pressure(0.0))/*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
         {
           //auto gk = gamma< tag::multimat >(system, k);
 
