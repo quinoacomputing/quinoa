@@ -40,17 +40,9 @@ class JWL: public EoS_Base {
     //!   LA-UR-15-29536
     // *************************************************************************
     {
-      tk::real rho0 = m_rho0;
-      tk::real a = m_a;
-      tk::real b = m_b;
-      tk::real r1 = m_r1;
-      tk::real r2 = m_r2;
-      tk::real w_jwl = m_w;
-      tk::real de = m_de;
-
-      tk::real e = - de + 1.0/w_jwl/rho*( pr
-                    - a*(1.0 - w_jwl*rho/r1/rho0)*exp(-r1*rho0/rho)
-                    - b*(1.0 - w_jwl*rho/r2/rho0)*exp(-r2*rho0/rho) );
+      tk::real e = - m_de + 1.0/m_w/rho*( pr
+                    - m_a*(1.0 - m_w*rho/m_r1/m_rho0)*exp(-m_r1*m_rho0/rho)
+                    - m_b*(1.0 - m_w*rho/m_r2/m_rho0)*exp(-m_r2*m_rho0/rho) );
 
       return e;
     }
@@ -79,7 +71,6 @@ class JWL: public EoS_Base {
 
       while (i < maxiter)
       {
-
         c = (a + b)/2.0;
         auto fcn = p_known - PfromRT( c, t_known);
         if ( idebug == 1)
@@ -127,19 +118,8 @@ class JWL: public EoS_Base {
     //! \details From Eqn. 14 in 'JWL Equation of State', Menikoff, LA-UR-15-29536
     // *************************************************************************
     {
-      tk::real rho0 = m_rho0;
-      tk::real a = m_a;
-      tk::real b = m_b;
-      tk::real r1 = m_r1;
-      tk::real r2 = m_r2;
-      tk::real w_jwl = m_w;
-      tk::real c_v = m_cv;
-
-      tk::real pr;
-
-      pr = a*exp(-r1*rho0/rho) + b*exp(-r2*rho0/rho) + w_jwl*(c_v*T*rho);
-
-      return pr;
+      return ( m_a*exp(-m_r1*m_rho0/rho) + m_b*exp(-m_r2*m_rho0/rho) +
+        m_w*(m_cv*T*rho) );
     }
 
   public:
@@ -147,9 +127,11 @@ class JWL: public EoS_Base {
     //  Constructor
     //! \param[in] w Grueneisen coefficient
     //! \param[in] cv Specific heat at constant volume
-    //! \param[in] rho0 Density of reference state
+    //! \param[in] rho0 Density of initial state
     //! \param[in] de Heat of detonation for products. For reactants, it is
     //!   chosen such that the ambient internal energy (e0) is 0.
+    //! \param[in] rhor Density of reference state
+    //! \param[in] er Energy of reference state
     //! \param[in] A Parameter A
     //! \param[in] B Parameter B
     //! \param[in] R1 Parameter R1
@@ -178,16 +160,15 @@ class JWL: public EoS_Base {
     tk::real eos_density( tk::real pr,
                           tk::real temp ) override
     // *************************************************************************
-    //! \brief Calculate density from the material pressure and temperature 
+    //! \brief Calculate density from the material pressure and temperature
     //!   using the stiffened-gas equation of state
     //! \param[in] pr Material pressure
     //! \param[in] temp Material temperature
     //! \return Material density calculated using the stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real rho_r = m_rhor;  // reference density
-      tk::real r_guessL = 1e-2*rho_r;  // left density bound
-      tk::real r_guessR = 1e2*rho_r;   // right density bound
+      tk::real r_guessL = 1e-2*m_rhor;  // left density bound
+      tk::real r_guessR = 1e2*m_rhor;   // right density bound
       tk::real rho;
 
       rho = bisection( r_guessL, r_guessR, pr, temp );
@@ -222,22 +203,15 @@ class JWL: public EoS_Base {
     //! \details From Eqn. 1 in 'JWL Equation of State', Menikoff, LA-UR-15-29536
     // *************************************************************************
     {
-      tk::real rho0 = m_rho0;
-      tk::real a = m_a;
-      tk::real b = m_b;
-      tk::real r1 = m_r1;
-      tk::real r2 = m_r2;
-      tk::real w_jwl = m_w;
-      tk::real de = m_de;
-
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
       // specific internal energy
       tk::real e = (arhoE - 0.5*arho*(u*u + v*v + w*w))/arho;
 
-      tk::real partpressure = a*(alpha - w_jwl*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
-                            + b*(alpha - w_jwl*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
-                            + w_jwl*arho*(e + de);
+      tk::real partpressure =
+        m_a*(alpha - m_w*arho/(m_rho0*m_r1))*exp(-m_r1*alpha*m_rho0/arho) +
+        m_b*(alpha - m_w*arho/(m_rho0*m_r2))*exp(-m_r2*alpha*m_rho0/arho) +
+        m_w*arho*(e + m_de);
 
       // check partial pressure divergence
       if (!std::isfinite(partpressure)) {
@@ -273,25 +247,18 @@ class JWL: public EoS_Base {
     //! \return Material speed of sound using the stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real rho0 = m_rho0;
-      tk::real a = m_a;
-      tk::real b = m_b;
-      tk::real r1 = m_r1;
-      tk::real r2 = m_r2;
-      tk::real w_jwl = m_w;
-
       // limiting pressure to near-zero
       auto apr_eff = std::max( 1.0e-15, apr );
 
-      auto co1 = rho0*alpha*alpha/(arho*arho);
-      auto co2 = alpha*(1.0+w_jwl)/arho;
+      auto co1 = m_rho0*alpha*alpha/(arho*arho);
+      auto co2 = alpha*(1.0+m_w)/arho;
 
-      tk::real ss = a*(r1*co1 - co2) * exp(-r1*alpha*rho0/arho)
-                  + b*(r2*co1 - co2) * exp(-r2*alpha*rho0/arho)
-                  + (1.0+w_jwl)*apr_eff/arho;
+      tk::real ss = m_a*(m_r1*co1 - co2) * exp(-m_r1*alpha*m_rho0/arho)
+                  + m_b*(m_r2*co1 - co2) * exp(-m_r2*alpha*m_rho0/arho)
+                  + (1.0+m_w)*apr_eff/arho;
 
       ss = std::sqrt(ss);
-    
+
       // check sound speed divergence
       if (!std::isfinite(ss)) {
         std::cout << "Material-id:      " << imat << std::endl;
@@ -302,7 +269,7 @@ class JWL: public EoS_Base {
           + std::to_string(ss) + ", material volume fraction: " +
           std::to_string(alpha));
       }
-    
+
       return ss;
     }
 
@@ -323,10 +290,9 @@ class JWL: public EoS_Base {
     //! \return Material specific total energy using the stiffened-gas EoS
     // *************************************************************************
     {
-
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
-    
+
       tk::real rhoE = rho*intEnergy( rho, pr )
                     + 0.5*rho*(u*u + v*v + w*w);
 
@@ -354,22 +320,14 @@ class JWL: public EoS_Base {
     //! \return Material temperature using the stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real rho0 = m_rho0;
-      tk::real a = m_a;
-      tk::real b = m_b;
-      tk::real r1 = m_r1;
-      tk::real r2 = m_r2;
-      tk::real c_v = m_cv;      // constant specific heat
-      tk::real de = m_de;
-
       tk::real rho = arho/alpha;
 
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
-    
-      tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho + de - 1.0/rho0*(
-                   a/r1*exp(-r1*rho0/rho)
-                 + b/r2*exp(-r2*rho0/rho) ))/c_v;
+
+      tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho + m_de -
+        1.0/m_rho0*( m_a/m_r1*exp(-m_r1*m_rho0/rho)
+                   + m_b/m_r2*exp(-m_r2*m_rho0/rho) ))/m_cv;
 
       return t;
     }
