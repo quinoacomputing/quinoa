@@ -3516,7 +3516,7 @@ struct rho0_jwl_info {
   static std::string shortDescription() { return "JWL EoS rho0 parameter"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the material property rho0, which is the
-      density of reference state (units: kg/m3) for the Jones-Wilkins-Lee
+      density of initial state (units: kg/m3) for the Jones-Wilkins-Lee
       equation of state.)";
   }
   struct expect {
@@ -3543,6 +3543,39 @@ struct de_jwl_info {
   };
 };
 using de_jwl = keyword< de_jwl_info, TAOCPP_PEGTL_STRING("de_jwl") >;
+
+struct rhor_jwl_info {
+  static std::string name() { return "rhor_jwl"; }
+  static std::string shortDescription() { return "JWL EoS rhor parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property rhor, which is the
+      density of reference state (units: kg/m3) for the Jones-Wilkins-Lee
+      equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using rhor_jwl = keyword< rhor_jwl_info, TAOCPP_PEGTL_STRING("rhor_jwl") >;
+
+struct er_jwl_info {
+  static std::string name() { return "er_jwl"; }
+  static std::string shortDescription() { return "JWL EoS er parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property er, which is the
+      specific energy of the reference state (units: J/kg) for the
+      Jones-Wilkins-Lee equation of state. It is used to calculate the reference
+      temperature for the EoS.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using er_jwl = keyword< er_jwl_info, TAOCPP_PEGTL_STRING("er_jwl") >;
 
 struct stiffenedgas_info {
   static std::string name() { return "Stiffened gas"; }
@@ -3600,6 +3633,8 @@ struct material_info {
     + R2_jwl::string()+ "\', \'"
     + rho0_jwl::string()+ "\', \'"
     + de_jwl::string()+ "\', \'"
+    + rhor_jwl::string()+ "\', \'"
+    + er_jwl::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"
     + mat_k::string() + "\'. "

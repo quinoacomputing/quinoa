@@ -59,8 +59,10 @@ void initializeMaterialEoS( std::size_t system,
       auto R2_jwl = getmatprop< tag::multimat, tag::R2_jwl >(system, k);
       auto rho0_jwl = getmatprop< tag::multimat, tag::rho0_jwl >(system, k);
       auto de_jwl = getmatprop< tag::multimat, tag::de_jwl >(system, k);
-      mat_blk.push_back(new JWL(w, c_v, rho0_jwl, de_jwl, 0.0, 0.0, A_jwl,
-        B_jwl, R1_jwl, R2_jwl));
+      auto rhor_jwl = getmatprop< tag::multimat, tag::rhor_jwl >(system, k);
+      auto er_jwl = getmatprop< tag::multimat, tag::er_jwl >(system, k);
+      mat_blk.push_back(new JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, er_jwl,
+        A_jwl, B_jwl, R1_jwl, R2_jwl));
     }
   }
 }
