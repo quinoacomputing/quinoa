@@ -26,7 +26,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 class JWL: public EoS_Base {
 
   private:
-    tk::real m_w, m_cv, m_rho0, m_e0, m_a, m_b, m_r1, m_r2;
+    tk::real m_w, m_cv, m_rho0, m_de, m_rhor, m_er, m_a, m_b, m_r1, m_r2, m_tr;
 
 
     tk::real intEnergy( tk::real rho, tk::real pr )
@@ -46,9 +46,9 @@ class JWL: public EoS_Base {
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
       tk::real w_jwl = m_w;
-      tk::real e0 = m_e0;
+      tk::real de = m_de;
 
-      tk::real e = e0 + 1.0/w_jwl/rho*( pr
+      tk::real e = - de + 1.0/w_jwl/rho*( pr
                     - a*(1.0 - w_jwl*rho/r1/rho0)*exp(-r1*rho0/rho)
                     - b*(1.0 - w_jwl*rho/r2/rho0)*exp(-r2*rho0/rho) );
 
@@ -134,15 +134,10 @@ class JWL: public EoS_Base {
       tk::real r2 = m_r2;
       tk::real w_jwl = m_w;
       tk::real c_v = m_cv;
-//      tk::real t_r = m_tr;      // reference temperature
-//      tk::real rho_r = m_rhor;  // reference density
-      tk::real t_r = 300.0;      // reference temperature
-      tk::real rho_r = rho0;  // reference density
 
       tk::real pr;
 
-      pr = a*exp(-r1*rho0/rho) + b*exp(-r2*rho0/rho) + w_jwl*(c_v*T*rho
-         - c_v*t_r*std::pow(rho0/rho_r, w_jwl)*rho0/std::pow(rho0/rho, w_jwl+1));
+      pr = a*exp(-r1*rho0/rho) + b*exp(-r2*rho0/rho) + w_jwl*(c_v*T*rho);
 
       return pr;
     }
@@ -153,23 +148,31 @@ class JWL: public EoS_Base {
     //! \param[in] w Grueneisen coefficient
     //! \param[in] cv Specific heat at constant volume
     //! \param[in] rho0 Density of reference state
-    //! \param[in] e0 Internal energy of reference state
+    //! \param[in] de Heat of detonation for products. For reactants, it is
+    //!   chosen such that the ambient internal energy (e0) is 0.
     //! \param[in] A Parameter A
     //! \param[in] B Parameter B
     //! \param[in] R1 Parameter R1
     //! \param[in] R2 Parameter R2
     // *************************************************************************
-    JWL( tk::real w, tk::real cv, tk::real rho0, tk::real e0, tk::real A,
-         tk::real B, tk::real R1, tk::real R2 ) :
+    JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
+         tk::real er, tk::real A, tk::real B, tk::real R1, tk::real R2 ) :
       m_w(w),
       m_cv(cv),
       m_rho0(rho0),
-      m_e0(e0),
+      m_de(de),
+      m_rhor(rhor),
+      m_er(er),
       m_a(A),
       m_b(B),
       m_r1(R1),
       m_r2(R2)
-    { }
+    {
+      // reference temperature from Eqn (15)
+      m_tr = 1.0/m_cv * (m_er + de -
+        (m_a/m_r1*exp(-m_r1*m_rho0/m_rhor) +
+         m_b/m_r2*exp(-m_r2*m_rho0/m_rhor)) / m_rho0);
+    }
 
 
     tk::real eos_density( tk::real pr,
@@ -182,7 +185,7 @@ class JWL: public EoS_Base {
     //! \return Material density calculated using the stiffened-gas EoS
     // *************************************************************************
     {
-      tk::real rho_r = m_rho0;  // reference density
+      tk::real rho_r = m_rhor;  // reference density
       tk::real r_guessL = 1e-2*rho_r;  // left density bound
       tk::real r_guessR = 1e2*rho_r;   // right density bound
       tk::real rho;
@@ -225,7 +228,7 @@ class JWL: public EoS_Base {
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
       tk::real w_jwl = m_w;
-      tk::real e0 = m_e0;
+      tk::real de = m_de;
 
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
@@ -234,7 +237,7 @@ class JWL: public EoS_Base {
 
       tk::real partpressure = a*(alpha - w_jwl*arho/(rho0*r1))*exp(-r1*alpha*rho0/arho)
                             + b*(alpha - w_jwl*arho/(rho0*r2))*exp(-r2*alpha*rho0/arho)
-                            + w_jwl*arho*(e - e0);
+                            + w_jwl*arho*(e + de);
 
       // check partial pressure divergence
       if (!std::isfinite(partpressure)) {
@@ -356,23 +359,17 @@ class JWL: public EoS_Base {
       tk::real b = m_b;
       tk::real r1 = m_r1;
       tk::real r2 = m_r2;
-      tk::real w_jwl = m_w;
       tk::real c_v = m_cv;      // constant specific heat
-      tk::real e0 = m_e0;
-//      tk::real t_r = m_tr;      // reference temperature
-//      tk::real rho_r = m_rhor;  // reference density
-      tk::real t_r = 300.0;      // reference temperature
-      tk::real rho_r = rho0;  // reference density
+      tk::real de = m_de;
 
       tk::real rho = arho/alpha;
 
       // reference energy (input quantity, might need for calculation)
 //      tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
     
-      tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho - e0 - 1.0/rho0*(
+      tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho + de - 1.0/rho0*(
                    a/r1*exp(-r1*rho0/rho)
-                 + b/r2*exp(-r2*rho0/rho) ))/c_v
-                 + ( t_r*std::pow(rho/rho_r, w_jwl) );
+                 + b/r2*exp(-r2*rho0/rho) ))/c_v;
 
       return t;
     }

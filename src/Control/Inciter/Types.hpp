@@ -412,8 +412,8 @@ using material = tk::TaggedTuple< brigand::list<
   , tag::R2_jwl,   std::vector< kw::R2_jwl::info::expect::type >
     //! JWL EoS parameter rho0
   , tag::rho0_jwl, std::vector< kw::rho0_jwl::info::expect::type >
-    //! JWL EoS parameter e0
-  , tag::e0_jwl,   std::vector< kw::e0_jwl::info::expect::type >
+    //! JWL EoS parameter de
+  , tag::de_jwl,   std::vector< kw::de_jwl::info::expect::type >
     //! Dynamic viscosity
   , tag::mu,       std::vector< kw::mat_mu::info::expect::type >
     //! Spec. heat at const vol.

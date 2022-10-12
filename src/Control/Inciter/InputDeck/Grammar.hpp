@@ -598,11 +598,11 @@ namespace grm {
           const auto& r1_jwl = mtype.template get< tag::R1_jwl >();
           const auto& r2_jwl = mtype.template get< tag::R2_jwl >();
           const auto& rho0_jwl = mtype.template get< tag::rho0_jwl >();
-          const auto& e0_jwl = mtype.template get< tag::e0_jwl >();
+          const auto& de_jwl = mtype.template get< tag::de_jwl >();
           if (w_gru.size() != mat_id.size() || a_jwl.size() != mat_id.size() ||
             b_jwl.size() != mat_id.size() || r1_jwl.size() != mat_id.size() ||
             r2_jwl.size() != mat_id.size() || rho0_jwl.size() != mat_id.size()
-            || e0_jwl.size() != mat_id.size())
+            || de_jwl.size() != mat_id.size())
             Message< Stack, ERROR, MsgKey::EOSJWLPARAM >( stack, in );
         }
 
@@ -1793,7 +1793,7 @@ namespace deck {
               , material_vector< eq, kw::R1_jwl, tag::R1_jwl >
               , material_vector< eq, kw::R2_jwl, tag::R2_jwl >
               , material_vector< eq, kw::rho0_jwl, tag::rho0_jwl >
-              , material_vector< eq, kw::e0_jwl, tag::e0_jwl >
+              , material_vector< eq, kw::de_jwl, tag::de_jwl >
               , material_vector< eq, kw::mat_cv, tag::cv >
               , material_vector< eq, kw::mat_k, tag::k >
               , material_option< eq, ctr::Material, kw::eos, tag::eos >

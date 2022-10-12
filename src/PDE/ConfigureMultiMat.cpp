@@ -154,8 +154,8 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
         parameters(mtype.get< tag::R2_jwl >()) );
       nfo.emplace_back( "JWL parameter rho0",
         parameters(mtype.get< tag::rho0_jwl >()) );
-      nfo.emplace_back( "JWL parameter e0",
-        parameters(mtype.get< tag::e0_jwl >()) );
+      nfo.emplace_back( "JWL parameter de",
+        parameters(mtype.get< tag::de_jwl >()) );
     }
 
     // Viscosity is optional: vector may be empty

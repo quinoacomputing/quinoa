@@ -3527,12 +3527,13 @@ struct rho0_jwl_info {
 };
 using rho0_jwl = keyword< rho0_jwl_info, TAOCPP_PEGTL_STRING("rho0_jwl") >;
 
-struct e0_jwl_info {
-  static std::string name() { return "e0_jwl"; }
-  static std::string shortDescription() { return "JWL EoS e0 parameter"; }
+struct de_jwl_info {
+  static std::string name() { return "de_jwl"; }
+  static std::string shortDescription() { return "JWL EoS de parameter"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the material property e0, which is the
-      internal energy of reference state (units: J/kg) for the
+    R"(This keyword is used to specify the material property de, which is the
+      heat of detonation for products; and for reactants, it is chosen such that
+      the ambient internal energy (e0) is 0 (units: J/kg). Used for the
       Jones-Wilkins-Lee equation of state.)";
   }
   struct expect {
@@ -3541,7 +3542,7 @@ struct e0_jwl_info {
     static std::string description() { return "real"; }
   };
 };
-using e0_jwl = keyword< e0_jwl_info, TAOCPP_PEGTL_STRING("e0_jwl") >;
+using de_jwl = keyword< de_jwl_info, TAOCPP_PEGTL_STRING("de_jwl") >;
 
 struct stiffenedgas_info {
   static std::string name() { return "Stiffened gas"; }
@@ -3598,7 +3599,7 @@ struct material_info {
     + R1_jwl::string()+ "\', \'"
     + R2_jwl::string()+ "\', \'"
     + rho0_jwl::string()+ "\', \'"
-    + e0_jwl::string()+ "\', \'"
+    + de_jwl::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"
     + mat_k::string() + "\'. "

@@ -147,7 +147,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::R1_jwl
                                  , kw::R2_jwl
                                  , kw::rho0_jwl
-                                 , kw::e0_jwl
+                                 , kw::de_jwl
                                  , kw::mat_mu
                                  , kw::mat_cv
                                  , kw::mat_k
