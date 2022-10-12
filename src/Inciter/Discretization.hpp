@@ -120,16 +120,30 @@ class Discretization : public CBase_Discretization {
     //!   library (if coupled to other solver)
     void transferInit();
 
-    //! Receive a list of callbacks from our own child solver
-    void transferCallback( std::vector< CkCallback >& cb );
-
-    //! Receive mesh transfer callbacks from source mesh/solver
-    void comcb( std::size_t srcmeshid, CkCallback c );
+    //! Finish setting up communication maps and solution transfer callbacks
+    void comfinal();
 
     //! Start solution transfer (if coupled)
-    void transfer( const tk::Fields& u );
+    //!\brief the passed in callback is how we notify the solver associated
+    //!   with this Disc's mesh.  If we are the destination of the
+    //!   transfer, we will also have to notify the Disc source mesh, via the
+    //!   callback previously exchanged in comcb during setup.  This callback
+    //!   is specific to the  transfer and will be used by both source and dest
+    //!   meshes to signal the completion of the transfer operation.
+    void transfer( const tk::Fields& u, CkCallback cb );
 
-    //! Resize mesh data structures after mesh refinement
+    //! Solution transfer completed CB
+    //! \brief Called by ExaM2M when the destination mesh completes
+    //!  triggers callback passed in by destination solver
+    //!  triggers call to discretization source
+    void transferCompleteCBinDest ();
+
+    //! Solution transfer completed
+    //! \brief Called into source by destination when transfer completes
+    //!  triggers callback passed in by solver
+    void transferCompleteNotifyFromDest ();
+
+  //! Resize mesh data structures after mesh refinement
     void resizePostAMR(
       const tk::UnsMesh::Chunk& chunk,
       const tk::UnsMesh::Coords& coord,
@@ -421,6 +435,7 @@ class Discretization : public CBase_Discretization {
     void pup( PUP::er &p ) override {
       p | m_meshid;
       p | m_transfer_complete;
+      p | solver_transfer_complete_CB;
       p | m_transfer;
       p | m_mytransfer;
       p | m_disc;
@@ -492,6 +507,11 @@ class Discretization : public CBase_Discretization {
     //! Solution/mesh transfer (coupling) information
     //! \details This has the same size with the same src/dst information on
     //!   all solvers.
+    CkCallback  solver_transfer_complete_CB;
+    //! Solution/mesh transfer (coupling) information coordination propagation
+    //! \details This has the same size with the same src/dst information on
+    //!   all solvers.
+
     std::vector< Transfer > m_transfer;
     //! My solution transfer/mesh (coupling) information
     //! \details This is a subset of m_transfer, holding only those entries
@@ -638,8 +658,6 @@ class Discretization : public CBase_Discretization {
     //! Determine if communication of mesh transfer callbacks is complete
     bool transferCallbacksComplete() const;
 
-    //! Finish setting up communication maps and solution transfer callbacks
-    void comfinal();
 };
 
 } // inciter::

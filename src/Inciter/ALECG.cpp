@@ -148,21 +148,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4meshblk();
 
   // Generate callbacks for solution transfers we are involved in
+  d->comfinal();
 
-  // Always add a callback to be used when we are not involved in any transfers
-  std::vector< CkCallback > cb;
-  auto c = CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]);
-  cb.push_back( c );
-
-  // Generate a callback for each transfer we are involved in (either as a
-  // source or a destination)
-  auto meshid = d->MeshId();
-  for (const auto& t : d->Transfers())
-    if (meshid == t.src || meshid == t.dst)
-      cb.push_back( c );
-
-  // Send callbacks to base
-  d->transferCallback( cb );
 }
 //! [Constructor]
 
@@ -643,7 +630,8 @@ ALECG::box( tk::real v, const std::vector< tk::real >& blkvols )
   volumetric( m_u, Disc()->Vol() );
 
   // Initiate IC transfer (if coupled)
-  Disc()->transfer( m_u );
+
+  Disc()->transfer( m_u ,  CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]));
 
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
@@ -1393,9 +1381,13 @@ ALECG::transfer()
 // *****************************************************************************
 {
   // Initiate solution transfer (if coupled)
-  //Disc()->transfer( m_u,
-  //  CkCallback(CkIndex_ALECG::stage(), thisProxy[thisIndex]) );
+
+#ifdef HAS_EXAM2M
+  Disc()->transfer( m_u, CkCallback(CkIndex_ALECG::stage(), thisProxy[thisIndex]));
+#else
   thisProxy[thisIndex].stage();
+#endif
+
 }
 
 //! [stage]
