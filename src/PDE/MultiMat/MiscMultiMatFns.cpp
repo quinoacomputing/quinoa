@@ -18,6 +18,7 @@
 #include "EoS/EoS.hpp"
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/JWL.hpp"
+#include "EoS/EosVariant.hpp"
 
 namespace inciter {
 
@@ -31,6 +32,7 @@ void initializeMaterialEoS( std::size_t system,
 //! \param[in,out] mat_blk Material block that gets initialized
 // *****************************************************************************
 {
+  std::vector< EOS > mats;
   // EoS initialization
   auto nmat =
     g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
@@ -64,6 +66,7 @@ void initializeMaterialEoS( std::size_t system,
       mat_blk.push_back(new JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, er_jwl,
         A_jwl, B_jwl, R1_jwl, R2_jwl));
     }
+    mats.emplace_back(mateos, 1, system, k);
   }
 }
 
