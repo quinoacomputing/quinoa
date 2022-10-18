@@ -25,14 +25,14 @@ namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 
 void initializeMaterialEoS( std::size_t system,
-  std::vector< EoS_Base* >& mat_blk )
+  std::vector< EoS_Base* >& mat_blk,
+  std::vector< EOS >& mats )
 // *****************************************************************************
 //  Initialize the material block with configured EOS
 //! \param[in] system Index of system being solved
 //! \param[in,out] mat_blk Material block that gets initialized
 // *****************************************************************************
 {
-  std::vector< EOS > mats;
   // EoS initialization
   auto nmat =
     g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];

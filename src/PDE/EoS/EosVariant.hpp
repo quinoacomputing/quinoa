@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/EOS.hpp
+  \file      src/PDE/EoS/EosVariant.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -9,14 +9,15 @@
     where children implement specific EOS functions.
 */
 // *****************************************************************************
-#ifndef EOS_h
-#define EOS_h
+#ifndef EosVariant_h
+#define EosVariant_h
 
 #include "Exception.hpp"
 #include "PUPUtil.hpp"
 #include "Inciter/Options/Material.hpp"
 #include "EoS/SGclass.hpp"
 #include "EoS/JWLclass.hpp"
+#include "EoS/EoS.hpp"
 
 namespace inciter {
 
@@ -80,7 +81,7 @@ class EOS {
       else Throw( "Unknown material EOS" );
     }
 
-    //! Entry method tags for specific EOS classes to use with eoscall()
+    //! Entry method tags for specific EOS classes to use with eosCall()
     struct eos_density {};
     struct eos_pressure {};
     struct eos_soundspeed {};
@@ -94,8 +95,8 @@ class EOS {
     //! \details This function issues a call to a member function of the
     //!   EOS vector and is thus equivalent to mat_blk[imat].Fn(...).
     template< typename Fn, typename... Args >
-    tk::real eoscall( Args&&... args ) {
-      return std::visit( [&]( auto& m )-> tk::real {
+    tk::real eosCall( Args&&... args ) const {
+      return std::visit( [&]( const auto& m )-> tk::real {
           if constexpr( std::is_same_v< Fn, eos_density > )
             return m.eos_density( std::forward< Args >( args )... );
 
@@ -132,4 +133,4 @@ class EOS {
 
 } // inciter::
 
-#endif // EOS_h
+#endif // EosVariant_h

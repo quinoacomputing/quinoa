@@ -410,7 +410,8 @@ pressureRelaxationInt( ncomp_t system,
                        const std::vector< std::size_t >& ndofel,
                        const tk::real ct,
                        Fields& R,
-                       int intsharp )
+                       int intsharp,
+                       const std::vector< inciter::EOS >& mats )
 // *****************************************************************************
 //  Compute volume integrals of pressure relaxation terms in multi-material DG
 //! \details This is called for multi-material DG to compute volume integrals of
@@ -507,6 +508,7 @@ pressureRelaxationInt( ncomp_t system,
         real alphamat = state[volfracIdx(nmat, k)];
         apmat[k] = state[ncomp+pressureIdx(nmat, k)];
         real amat = mat_blk[k]->eos_soundspeed( arhomat, apmat[k], alphamat );
+        auto cmat = mats[k].eosCall< inciter::EOS::eos_soundspeed >( arhomat, apmat[k], alphamat );
         kmat[k] = arhomat * amat * amat;
         pb += apmat[k];
 

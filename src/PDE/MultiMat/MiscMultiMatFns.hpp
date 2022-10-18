@@ -16,11 +16,13 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "EoS/EoS_Base.hpp"
+#include "EoS/EosVariant.hpp"
 
 namespace inciter {
 
 void initializeMaterialEoS( std::size_t system,
-  std::vector< EoS_Base* >& mat_blk );
+  std::vector< EoS_Base* >& mat_blk,
+  std::vector< EOS >& mats );
 
 //! Clean up the state of trace materials for multi-material PDE system
 bool

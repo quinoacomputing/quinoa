@@ -21,6 +21,7 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "EoS/EoS_Base.hpp"
+#include "EoS/EosVariant.hpp"
 
 namespace tk {
 
@@ -89,7 +90,8 @@ pressureRelaxationInt( ncomp_t system,
                        const std::vector< std::size_t >& ndofel,
                        const tk::real ct,
                        Fields& R,
-                       int intsharp );
+                       int intsharp,
+                       const std::vector< inciter::EOS >& mats );
 
 //! Update the rhs by adding the pressure relaxation integrals
 void

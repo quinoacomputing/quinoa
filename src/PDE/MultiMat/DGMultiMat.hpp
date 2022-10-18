@@ -84,7 +84,7 @@ class MultiMat {
         , extrapolate } ) );
 
       // EoS initialization
-      initializeMaterialEoS( m_system, m_mat_blk );
+      initializeMaterialEoS( m_system, m_mat_blk, m_mats );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -711,7 +711,7 @@ class MultiMat {
                                          tag::prelax_timescale >()[m_system];
         tk::pressureRelaxationInt( m_system, nmat, m_mat_blk, ndof,
                                    rdof, nelem, inpoel, coord, geoElem, U, P,
-                                   ndofel, ct, R, intsharp );
+                                   ndofel, ct, R, intsharp, m_mats );
       }
     }
 
@@ -991,6 +991,7 @@ class MultiMat {
     BCStateFn m_bc;
     //! EOS material block
     std::vector< EoS_Base* > m_mat_blk;
+    std::vector< EOS > m_mats;
 
     //! Evaluate conservative part of physical flux function for this PDE system
     //! \param[in] system Equation system index
