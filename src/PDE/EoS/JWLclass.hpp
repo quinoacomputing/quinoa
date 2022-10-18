@@ -26,7 +26,7 @@ class JWLclass {
     tk::real m_w, m_cv, m_rho0, m_de, m_rhor, m_er, m_a, m_b, m_r1, m_r2, m_tr;
 
 
-    tk::real intEnergy( tk::real rho, tk::real pr )
+    tk::real intEnergy( tk::real rho, tk::real pr ) const
     // *************************************************************************
     //! \brief Calculate specific internal energy using the JWL equation of
     //!   state
@@ -45,7 +45,8 @@ class JWLclass {
     }
 
 
-    tk::real bisection( tk::real a, tk::real b, tk::real p_known, tk::real t_known )
+    tk::real bisection( tk::real a, tk::real b, tk::real p_known,
+      tk::real t_known ) const
     // *************************************************************************
     //! \brief Calculate density from known pressure and temperature using
     //!   bisection root finding method for JWL equation of state
@@ -105,7 +106,7 @@ class JWLclass {
     }
 
 
-    tk::real PfromRT( tk::real rho, tk::real T)
+    tk::real PfromRT( tk::real rho, tk::real T) const
     // *************************************************************************
     //! \brief Calculate pressure from density and temperature using JWL
     //!   equation of state
@@ -161,7 +162,7 @@ class JWLclass {
 
 
     tk::real eos_density( tk::real pr,
-                          tk::real temp )
+                          tk::real temp ) const
     // *************************************************************************
     //! \brief Calculate density from the material pressure and temperature
     //!   using the stiffened-gas equation of state
@@ -186,7 +187,7 @@ class JWLclass {
                            tk::real w,
                            tk::real arhoE,
                            tk::real alpha=1.0,
-                           std::size_t imat=0 )
+                           std::size_t imat=0 ) const
     // *************************************************************************
     //! \brief Calculate pressure from the material density, momentum and total
     //!   energy using the stiffened-gas equation of state
@@ -236,7 +237,7 @@ class JWLclass {
     tk::real eos_soundspeed( tk::real arho,
                              tk::real apr,
                              tk::real alpha=1.0,
-                             std::size_t imat=0 )
+                             std::size_t imat=0 ) const
     // *************************************************************************
     //! Calculate speed of sound from the material density and material pressure
     //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -281,7 +282,7 @@ class JWLclass {
                               tk::real u,
                               tk::real v,
                               tk::real w,
-                              tk::real pr )
+                              tk::real pr ) const
     // *************************************************************************
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
@@ -308,7 +309,7 @@ class JWLclass {
                               tk::real v,
                               tk::real w,
                               tk::real arhoE,
-                              tk::real alpha=1.0 )
+                              tk::real alpha=1.0 ) const
     // *************************************************************************
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
@@ -336,7 +337,7 @@ class JWLclass {
     }
 
 
-    tk::real min_eff_pressure( tk::real min )
+    tk::real min_eff_pressure( tk::real min ) const
     // *************************************************************************
     //! Compute the minimum effective pressure
     //! \param[in] min Minimum threshold in positivity preserving limiting

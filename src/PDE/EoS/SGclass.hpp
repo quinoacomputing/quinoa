@@ -43,7 +43,7 @@ class SGclass {
 
 
     tk::real eos_density( tk::real pr,
-                          tk::real temp )
+                          tk::real temp ) const
     // *************************************************************************
     //! \brief Calculate density from the material pressure and temperature 
     //!   using the stiffened-gas equation of state
@@ -67,7 +67,7 @@ class SGclass {
                            tk::real w,
                            tk::real arhoE,
                            tk::real alpha=1.0,
-                           std::size_t imat=0 )
+                           std::size_t imat=0 ) const
     // *************************************************************************
     //! \brief Calculate pressure from the material density, momentum and total
     //!   energy using the stiffened-gas equation of state
@@ -112,7 +112,7 @@ class SGclass {
     tk::real eos_soundspeed( tk::real arho,
                              tk::real apr,
                              tk::real alpha=1.0,
-                             std::size_t imat=0 )
+                             std::size_t imat=0 ) const
     // *************************************************************************
     //! Calculate speed of sound from the material density and material pressure
     //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -152,7 +152,7 @@ class SGclass {
                               tk::real u,
                               tk::real v,
                               tk::real w,
-                              tk::real pr )
+                              tk::real pr ) const
     // *************************************************************************
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
@@ -177,7 +177,7 @@ class SGclass {
                               tk::real v,
                               tk::real w,
                               tk::real arhoE,
-                              tk::real alpha=1.0 )
+                              tk::real alpha=1.0 ) const
     // *************************************************************************
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
@@ -201,7 +201,7 @@ class SGclass {
     }
 
 
-    tk::real min_eff_pressure( tk::real min )
+    tk::real min_eff_pressure( tk::real min ) const
     // *************************************************************************
     //! Compute the minimum effective pressure
     //! \param[in] min Minimum threshold in positivity preserving limiting
