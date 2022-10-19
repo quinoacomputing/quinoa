@@ -317,7 +317,7 @@ VertexBasedCompflow_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -398,7 +398,7 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -498,7 +498,7 @@ VertexBasedMultiMat_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -661,7 +661,7 @@ VertexBasedMultiMat_P2(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -1998,7 +1998,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const std::size_t system,
                       const std::size_t ndof,
                       const std::size_t rdof,
-                      const std::vector< inciter::EoS_Base* >& mat_blk,
+                      const std::vector< inciter::EOS >& mat_blk,
                       const std::vector< std::size_t >& ndofel,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
@@ -2317,12 +2317,13 @@ correctLimConservMultiMat(
 //!   for the single-material system, this argument can be left unspecified by
 //!   the calling code
 //! \return Constrained material partial pressure (alpha_k * p_k)
-tk::real constrain_pressure( const std::vector< EoS_Base* >& mat_blk,
+tk::real constrain_pressure( const std::vector< EOS >& mat_blk,
   tk::real apr,
   tk::real alpha=1.0,
   std::size_t imat=0 )
 {
-  return std::max(apr, alpha*mat_blk[imat]->min_eff_pressure(1e-12));
+  return std::max(apr, alpha*mat_blk[imat].eosCall<
+    inciter::EOS::min_eff_pressure >(1e-12));
 }
 
 

@@ -24,6 +24,7 @@
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "EoS/EoS_Base.hpp"
+#include "EoS/EosVariant.hpp"
 
 namespace tk {
 
@@ -161,7 +162,7 @@ THINCFunction_new( std::size_t rdof,
 //! Evaluate polynomial solution at quadrature point
 std::vector< tk::real >
 evalPolynomialSol(std::size_t system,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   int intsharp,
   std::size_t ncomp,
   std::size_t nprim,

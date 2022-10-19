@@ -33,7 +33,7 @@ struct HLLC {
   //! \return Riemann solution according to Harten-Lax-van Leer-Contact
   //! \note The function signature must follow tk::RiemannFluxFn
   static tk::RiemannFluxFn::result_type
-  flux( const std::vector< EoS_Base* >& mat_blk,
+  flux( const std::vector< EOS >& mat_blk,
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {} )
@@ -52,11 +52,13 @@ struct HLLC {
     auto vr = u[1][2]/rhor;
     auto wr = u[1][3]/rhor;
 
-    auto pl = mat_blk[0]->eos_pressure( rhol, ul, vl, wl, u[0][4] );
-    auto pr = mat_blk[0]->eos_pressure( rhor, ur, vr, wr, u[1][4] );
+    auto pl = mat_blk[0].eosCall< EOS::eos_pressure >( rhol, ul, vl, wl,
+      u[0][4] );
+    auto pr = mat_blk[0].eosCall< EOS::eos_pressure >( rhor, ur, vr, wr,
+      u[1][4] );
 
-    auto al = mat_blk[0]->eos_soundspeed( rhol, pl );
-    auto ar = mat_blk[0]->eos_soundspeed( rhor, pr );
+    auto al = mat_blk[0].eosCall< EOS::eos_soundspeed >( rhol, pl );
+    auto ar = mat_blk[0].eosCall< EOS::eos_soundspeed >( rhor, pr );
 
     // Face-normal velocities
     tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];

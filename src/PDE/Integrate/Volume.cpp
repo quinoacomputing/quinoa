@@ -22,7 +22,7 @@ void
 tk::volInt( ncomp_t system,
             std::size_t nmat,
             real t,
-            const std::vector< inciter::EoS_Base* >& mat_blk,
+            const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
             const std::size_t nelem,

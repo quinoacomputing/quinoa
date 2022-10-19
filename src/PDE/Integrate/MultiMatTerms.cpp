@@ -25,7 +25,6 @@
 #include "MultiMatTerms.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
-#include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 
@@ -34,7 +33,7 @@ namespace tk {
 void
 nonConservativeInt( [[maybe_unused]] ncomp_t system,
                     std::size_t nmat,
-                    const std::vector< inciter::EoS_Base* >& mat_blk,
+                    const std::vector< inciter::EOS >& mat_blk,
                     const std::size_t ndof,
                     const std::size_t rdof,
                     const std::size_t nelem,
@@ -296,7 +295,7 @@ void
 nonConservativeIntFV(
   ncomp_t system,
   std::size_t nmat,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,
   const std::vector< std::size_t >& inpoel,
@@ -398,7 +397,7 @@ nonConservativeIntFV(
 void
 pressureRelaxationInt( ncomp_t system,
                        std::size_t nmat,
-                       const std::vector< inciter::EoS_Base* >& mat_blk,
+                       const std::vector< inciter::EOS >& mat_blk,
                        const std::size_t ndof,
                        const std::size_t rdof,
                        const std::size_t nelem,
@@ -410,8 +409,7 @@ pressureRelaxationInt( ncomp_t system,
                        const std::vector< std::size_t >& ndofel,
                        const tk::real ct,
                        Fields& R,
-                       int intsharp,
-                       const std::vector< inciter::EOS >& mats )
+                       int intsharp )
 // *****************************************************************************
 //  Compute volume integrals of pressure relaxation terms in multi-material DG
 //! \details This is called for multi-material DG to compute volume integrals of
@@ -507,8 +505,8 @@ pressureRelaxationInt( ncomp_t system,
         real arhomat = state[densityIdx(nmat, k)];
         real alphamat = state[volfracIdx(nmat, k)];
         apmat[k] = state[ncomp+pressureIdx(nmat, k)];
-        real amat = mat_blk[k]->eos_soundspeed( arhomat, apmat[k], alphamat );
-        auto cmat = mats[k].eosCall< inciter::EOS::eos_soundspeed >( arhomat, apmat[k], alphamat );
+        real amat = mat_blk[k].eosCall< inciter::EOS::eos_soundspeed >( arhomat,
+          apmat[k], alphamat );
         kmat[k] = arhomat * amat * amat;
         pb += apmat[k];
 
@@ -578,7 +576,7 @@ void
 pressureRelaxationIntFV(
   ncomp_t system,
   std::size_t nmat,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,
   const std::vector< std::size_t >& inpoel,
@@ -644,7 +642,8 @@ pressureRelaxationIntFV(
       real arhomat = state[densityIdx(nmat, k)];
       real alphamat = state[volfracIdx(nmat, k)];
       apmat[k] = state[ncomp+pressureIdx(nmat, k)];
-      real amat = mat_blk[k]->eos_soundspeed( arhomat, apmat[k], alphamat );
+      real amat = mat_blk[k].eosCall< inciter::EOS::eos_soundspeed >( arhomat,
+        apmat[k], alphamat );
       kmat[k] = arhomat * amat * amat;
       pb += apmat[k];
 

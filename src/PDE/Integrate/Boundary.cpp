@@ -29,7 +29,7 @@ namespace tk {
 void
 bndSurfInt( ncomp_t system,
             std::size_t nmat,
-            const std::vector< inciter::EoS_Base* >& mat_blk,
+            const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
             const std::vector< bcconf_t >& bcconfig,
@@ -272,7 +272,7 @@ update_rhs_bc ( ncomp_t ncomp,
 void
 bndSurfIntFV( ncomp_t system,
   std::size_t nmat,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
   const inciter::FaceData& fd,

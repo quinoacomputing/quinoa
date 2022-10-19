@@ -22,6 +22,7 @@
 #include "Keywords.hpp"
 #include "Fields.hpp"
 #include "EoS/EoS_Base.hpp"
+#include "EoS/EosVariant.hpp"
 
 namespace tk {
 
@@ -41,7 +42,7 @@ using InitializeFn = std::function<
 //!    surface using a Riemann solver
 //! \see e.g., inciter::Upwind, inciter::LaxFriedrichs, inciter::HLLC
 using RiemannFluxFn = std::function<
-  std::vector< real >( const std::vector< inciter::EoS_Base* >& ,
+  std::vector< real >( const std::vector< inciter::EOS >& ,
                        const std::array< real, 3 >&,
                        const std::array< std::vector< real >, 2 >&,
                        const std::vector< std::array< real, 3 > >& ) >;

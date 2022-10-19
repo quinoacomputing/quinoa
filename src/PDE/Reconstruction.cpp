@@ -991,7 +991,7 @@ THINCFunction_new( std::size_t rdof,
 
 std::vector< tk::real >
 evalPolynomialSol( std::size_t system,
-                   const std::vector< inciter::EoS_Base* >& mat_blk,
+                   const std::vector< inciter::EOS >& mat_blk,
                    int intsharp,
                    std::size_t ncomp,
                    std::size_t nprim,
