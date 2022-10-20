@@ -17,6 +17,8 @@ inciter
     problem interface_advection
     depvar u
 
+    prelax 0
+
     nmat 3
     material
       id 1 2 3 end

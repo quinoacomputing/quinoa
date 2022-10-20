@@ -3282,8 +3282,8 @@ struct prelax_info {
        no effect when used for the other PDE types.)";
   }
   struct expect {
-    using type = int;
-    static std::string description() { return "string"; }
+    using type = uint64_t;
+    static std::string description() { return "uint"; }
     static std::string choices() { return "1 | 0"; }
   };
 };
@@ -3295,8 +3295,8 @@ struct prelax_timescale_info {
     "Time-scale for multi-material finite pressure relaxation"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the time-scale at which finite pressure
-       relaxation between multiple materials occurs. The default value of 1.0
-       corresponds to a relaxation time of the order of time required for a
+       relaxation between multiple materials occurs. The default value of 0.25
+       corresponds to a relaxation time that is 4 times the time required for a
        sound wave to pass through a computational element. It is used only for
        multimat, and has no effect for the other PDE types.)";
   }
@@ -3324,7 +3324,7 @@ struct intsharp_info {
   }
   struct expect {
     using type = int;
-    static std::string description() { return "string"; }
+    static std::string description() { return "uint"; }
     static std::string choices() { return "1 | 0"; }
   };
 };

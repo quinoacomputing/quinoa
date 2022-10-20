@@ -651,16 +651,16 @@ namespace grm {
         ++icount;
       }
 
-      // If pressure relaxation is not specified, default to 'false'
+      // If pressure relaxation is not specified, default to 'true'
       auto& prelax = stack.template get< param, eq, tag::prelax >();
       if (prelax.empty() || prelax.size() != neq.get< eq >())
-        prelax.push_back( 0 );
+        prelax.push_back( 1 );
 
-      // If pressure relaxation time-scale is not specified, default to 1.0
+      // If pressure relaxation time-scale is not specified, default to 0.25
       auto& prelax_ts = stack.template get< param, eq,
                                             tag::prelax_timescale >();
       if (prelax_ts.empty() || prelax_ts.size() != neq.get< eq >())
-        prelax_ts.push_back( 1.0 );
+        prelax_ts.push_back( 0.25 );
 
       // If interface compression is not specified, default to 'false'
       auto& intsharp = stack.template get< param, eq, tag::intsharp >();

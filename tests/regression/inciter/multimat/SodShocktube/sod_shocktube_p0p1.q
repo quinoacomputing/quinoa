@@ -23,6 +23,8 @@ inciter
     problem sod_shocktube
     depvar u
 
+    prelax 0
+
     nmat 2
     material
       id 1 2 end
