@@ -214,10 +214,6 @@ class SGclass {
     }
 
 
-    // Destructor
-    ~SGclass() {}
-
-
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

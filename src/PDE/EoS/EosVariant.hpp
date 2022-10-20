@@ -12,6 +12,8 @@
 #ifndef EosVariant_h
 #define EosVariant_h
 
+#include <variant>
+
 #include "Exception.hpp"
 #include "PUPUtil.hpp"
 #include "Inciter/Options/Material.hpp"

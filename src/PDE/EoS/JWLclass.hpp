@@ -348,10 +348,6 @@ class JWLclass {
     }
 
 
-    // Destructor
-    ~JWLclass() {}
-
-
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
