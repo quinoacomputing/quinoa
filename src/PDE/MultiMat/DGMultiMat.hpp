@@ -423,8 +423,8 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk,
-        geoElem, nmat, unk, prim);
+      auto neg_density = cleanTraceMultiMat(nielem, m_mat_blk, geoElem, nmat,
+        unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
     }

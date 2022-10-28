@@ -311,8 +311,8 @@ class MultiMat {
       Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) <= 4, "High-order "
               "discretizations not set up for multimat cleanTraceMaterial()" );
 
-      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk,
-        geoElem, nmat, unk, prim);
+      auto neg_density = cleanTraceMultiMat(nielem, m_mat_blk, geoElem, nmat,
+        unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
     }

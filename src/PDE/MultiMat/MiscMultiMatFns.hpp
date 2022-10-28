@@ -26,7 +26,6 @@ void initializeMaterialEoS( std::size_t system,
 bool
 cleanTraceMultiMat(
   std::size_t nelem,
-  std::size_t system,
   const std::vector< EoS_Base* >& mat_blk,
   const tk::Fields& geoElem,
   std::size_t nmat,

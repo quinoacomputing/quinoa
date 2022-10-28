@@ -70,7 +70,6 @@ void initializeMaterialEoS( std::size_t system,
 bool
 cleanTraceMultiMat(
   std::size_t nelem,
-  std::size_t,
   const std::vector< EoS_Base* >& mat_blk,
   const tk::Fields& geoElem,
   std::size_t nmat,
@@ -79,7 +78,6 @@ cleanTraceMultiMat(
 // *****************************************************************************
 //  Clean up the state of trace materials for multi-material PDE system
 //! \param[in] nelem Number of elements
-//! \param[in] system Index for equation systems
 //! \param[in] mat_blk EOS material block
 //! \param[in] geoElem Element geometry array
 //! \param[in] nmat Number of materials in this PDE system
