@@ -78,10 +78,7 @@ and release available.
 
 The issue tracker on GitHub is the preferred channel for @ref contributing_bugs
 "bug reports", @ref contributing_features "feature requests", and submitting
-@ref contributing_pr "pull requests", but please __do not__ use the issue
-tracker for personal support requests &mdash; use our
-[Chat](https://quinoa.zulipchat.com) or [email list](https://quinoa.groups.io)
-for those.
+@ref contributing_pr "pull requests".
 
 @section contributing_bugs Bug reports
 
@@ -202,8 +199,7 @@ agreement](https://www.clahub.com/agreements/quinoacomputing/quinoa) (CLA).
 If you are an individual and you are sure you own the intellectual property,
 then you will need to sign the above _individual_ CLA. If you work for a company
 that wants to allow you to contribute your work, then you will need to sign a
-_corporate_ CLA. If you would like to sign the _corporate_ CLA, please send us
-an [email](mailto:quinoa@lanl.gov) so we can send it to you. Once we receive the
+_corporate_ CLA. Once we receive the
 signed CLA, we will be able to accept your pull requests.
 
 __NOTE:__ Only original source code from you and other people that have signed

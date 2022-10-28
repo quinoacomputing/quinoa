@@ -1637,48 +1637,6 @@ struct control_info {
 };
 using control = keyword< control_info, TAOCPP_PEGTL_STRING("control") >;
 
-struct smallcrush_info {
-  static std::string name() { return "SmallCrush"; }
-  static std::string shortDescription() {
-    return "Select RNG battery SmallCrush"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the description of the random number
-    generator test suite, i.e., battery, 'SmallCrush'. SmallCrush is a
-    battery of relatively small number, O(10), of tests, defined in TestU01,
-    a library for the empirical testing of random number generators. For more "
-    info, see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.)";
-  }
-};
-using smallcrush = keyword< smallcrush_info, TAOCPP_PEGTL_STRING("smallcrush") >;
-
-struct crush_info {
-  static std::string name() { return "Crush"; }
-  static std::string shortDescription() { return
-    "Select RNG battery Crush"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the description of the random number
-    generator test suite, i.e., battery, 'Crush'. Crush is a suite of
-    stringent statistical tests, O(100), defined in TestU01, a library for
-    the empirical testing of random number generators. For more info, see
-    http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.)";
-  }
-};
-using crush = keyword< crush_info, TAOCPP_PEGTL_STRING("crush") >;
-
-struct bigcrush_info {
-  static std::string name() { return "BigCrush"; }
-  static std::string shortDescription() { return
-    "Select RNG battery BigCrush"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the description of the random number
-    generator test suite, i.e., battery, 'BigCrush'. BigCrush is a
-    suite of very stringent statistical tests, O(100), defined in TestU01, a
-    library for the empirical testing of random number generators. For more
-    info, see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.)";
-  }
-};
-using bigcrush = keyword< bigcrush_info, TAOCPP_PEGTL_STRING("bigcrush") >;
-
 struct verbose_info {
   static std::string name() { return "verbose"; }
   static std::string shortDescription() { return
