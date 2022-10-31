@@ -83,7 +83,7 @@ void initializeBox( std::size_t system,
     }
   }
   // material states (density, pressure, velocity)
-  tk::real u = 0.0, v = 0.0, w = 0.0, spi(0.0), pr(0.0), rbulk(0.0);
+  tk::real u = 0.0, v = 0.0, w = 0.0, spi(0.0), pr(0.0), tmp(0.0), rbulk(0.0);
   std::vector< tk::real > rhok(nmat, 0.0);
   // 1. User-specified mass, specific energy (J/m^3) and volume of box
   if (boxmas > 0.0) {
@@ -92,20 +92,40 @@ void initializeBox( std::size_t system,
     rhok[boxmatid-1] = boxmas / V_ex;
     spi = boxenc / rhok[boxmatid-1];
 
-    // based on the density and energy of the material, determine pressure
-    // and temperature
+    // Determine pressure and temperature
     auto boxmat_vf = s[volfracIdx(nmat,boxmatid-1)];
-    pr = mat_blk[boxmatid-1]->eos_pressure(
-      boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
-      boxmat_vf );
-    auto t_box = mat_blk[boxmatid-1]->eos_temperature(
-      boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
-      boxmat_vf );
+
+    // Since initiate type 'linear' assigns the background IC values to all
+    // nodes within a box at initialization (followed by adding a time-dependent
+    // energy source term representing a propagating wave-front), the pressure
+    // in the box needs to be set to background pressure.
+    if (inittype == ctr::InitiateType::LINEAR && t < 1e-12) {
+      if (boxmas <= 1e-12 || boxenc <= 1e-12 || bgpreic <= 1e-12)
+        Throw("Box mass, energy content and background pressure must be "
+          "specified for IC with linear propagating source");
+
+      pr = bgpreic;
+      auto te = mat_blk[boxmatid-1]->eos_totalenergy(rhok[boxmatid-1], u, v, w,
+        pr);
+      tmp = mat_blk[boxmatid-1]->eos_temperature(
+        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*te, boxmat_vf );
+    }
+    // For initiate type 'impulse', pressure and temperature are determined from
+    // energy content that needs to be dumped into the box at IC.
+    else if (inittype == ctr::InitiateType::IMPULSE) {
+      pr = mat_blk[boxmatid-1]->eos_pressure(
+        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
+        boxmat_vf );
+      tmp = mat_blk[boxmatid-1]->eos_temperature(
+        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
+        boxmat_vf );
+    }
+    else Throw( "IC box initiate type not implemented for multimat" );
 
     // find density of trace material quantities in the box based on pressure
     for (std::size_t k=0; k<nmat; ++k) {
       if (k != boxmatid-1) {
-        rhok[k] = mat_blk[k]->eos_density(pr, t_box );
+        rhok[k] = mat_blk[k]->eos_density(pr, tmp );
       }
     }
   }
@@ -129,23 +149,7 @@ void initializeBox( std::size_t system,
   // bulk density
   for (std::size_t k=0; k<nmat; ++k) rbulk += s[volfracIdx(nmat,k)]*rhok[k];
 
-  // [II]
-  // Since initiate type 'linear' assigns the background IC values to all nodes
-  // within a box at initialization (followed by adding a time-dependent energy
-  // source term representing a propagating wave-front), the pressure in the
-  // box needs to be set to background pressure. No special treatment needed
-  // for type 'impulse'.
-  if (inittype == ctr::InitiateType::LINEAR && t < 1e-12) {
-    if (boxmas <= 1e-12 || boxenc <= 1e-12 || bgpreic <= 1e-12)
-      Throw("Box mass, energy content and background pressure must be "
-        "specified for IC with linear propagating source");
-
-    pr = bgpreic;
-  }
-  else if (inittype != ctr::InitiateType::IMPULSE)
-    Throw( "IC box initiate type not implemented for multimat" );
-
-  // [III] Finally initialize the solution vector
+  // [II] Finally initialize the solution vector
   for (std::size_t k=0; k<nmat; ++k) {
     // partial density
     s[densityIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k];
