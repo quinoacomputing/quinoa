@@ -2657,6 +2657,22 @@ struct veleq_info {
 };
 using veleq = keyword< veleq_info, TAOCPP_PEGTL_STRING("veleq") >;
 
+struct energy_pill_info {
+  static std::string name() { return "Energy pill initialization"; }
+  static std::string shortDescription() { return "Specify the multi-material "
+    " compressible flow with energy pill as physics configuration"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an energy pill initialization as physics
+    configuration for multiple material compressible flow. Example:
+    "multimat physics energy_pill end")";
+    }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using energy_pill = keyword< energy_pill_info,
+  TAOCPP_PEGTL_STRING("energy_pill") >;
+
 struct advection_info {
   static std::string name() { return "Advection"; }
   static std::string shortDescription() { return

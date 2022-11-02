@@ -159,6 +159,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::navierstokes
                                  , kw::euler
                                  , kw::veleq
+                                 , kw::energy_pill
                                  , kw::user_defined
                                  , kw::vortical_flow
                                  , kw::pde_alpha

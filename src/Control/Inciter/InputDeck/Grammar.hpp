@@ -525,8 +525,9 @@ namespace grm {
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
-      if (physics.back() == inciter::ctr::PhysicsType::VELEQ) {
-        // physics = veleq: m-material compressible flow
+      if (physics.back() == inciter::ctr::PhysicsType::VELEQ ||
+        physics.back() == inciter::ctr::PhysicsType::ENERGYPILL) {
+        // physics = veleq/energy pill: m-material compressible flow
         // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
         if (nmat.empty() || nmat.size() != neq.get< eq >()) {
