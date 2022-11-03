@@ -44,6 +44,15 @@ class MultiMatPhysicsVelEq {
       const int ) const
     { return std::numeric_limits< tk::real >::max(); }
 
+    //! Compute sources corresponding to this physics
+    void physSrc( std::size_t,
+      std::size_t,
+      tk::real,
+      const tk::Fields&,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&,
+      tk::Fields&,
+      int& ) const {};
+
     //! Return enum denoting physics policy
     //! \return Enum denoting physics policy.
     static ctr::PhysicsType type() noexcept { return ctr::PhysicsType::VELEQ; }

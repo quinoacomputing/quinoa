@@ -25,9 +25,8 @@ namespace inciter {
 namespace fv {
 
 //! MultiMat system of PDEs problem: EnergyPill (velocity equilibrium)
-//! \details This class is a no-op, consistent with no additional physics needed
-//!   to make the basic implementation in MultiMat the Euler equations
-//!   governing multi-material compressible flow.
+//! \details This class implements additional physics needed on top of the
+//!   basic MultiMat Euler equations governing multi-material compressible flow.
 class MultiMatPhysicsEnergyPill {
 
   public:
@@ -36,6 +35,16 @@ class MultiMatPhysicsEnergyPill {
       const tk::Fields& geoElem,
       std::size_t nelem,
       const int engSrcAd ) const;
+
+    //! Compute sources corresponding to this physics
+    void physSrc( std::size_t system,
+      std::size_t nmat,
+      tk::real t,
+      const tk::Fields& geoElem,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblkid,
+      tk::Fields& R,
+      int& engSrcAdded ) const;
 
     //! Return enum denoting physics policy
     //! \return Enum denoting physics policy.
