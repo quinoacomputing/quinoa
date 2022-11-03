@@ -66,6 +66,7 @@ class MultiMat {
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit MultiMat( ncomp_t c ) :
+      m_physics(),
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_riemann( multimatRiemannSolver(
@@ -644,8 +645,12 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-      return timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, m_system,
-        nmat, engSrcAd, U, P);
+      // obtain dt restrictions from all physics
+      auto dt_e = timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, nmat, U,
+        P);
+      auto dt_p = m_physics.dtRestriction(m_system, geoElem, nielem, engSrcAd);
+
+      return std::min(dt_e, dt_p);
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.
@@ -831,6 +836,8 @@ class MultiMat {
     }
 
   private:
+    //! Physics policy
+    const Physics m_physics;
     //! Equation system index
     const ncomp_t m_system;
     //! Number of components in this PDE system

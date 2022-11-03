@@ -30,12 +30,15 @@
 #include <brigand/sequences/list.hpp>
 
 #include "DGVelEq.hpp"
+#include "FVEnergyPill.hpp"
 
 namespace inciter {
 namespace fv {
 
 //! MultiMat Physics policies implemented using discontinuous Galerkin
-using MultiMatPhysics = brigand::list< inciter::dg::MultiMatPhysicsVelEq >;
+using MultiMatPhysics = brigand::list< inciter::dg::MultiMatPhysicsVelEq
+                                     , MultiMatPhysicsEnergyPill
+                                     >;
 
 } // fv::
 } // inciter::

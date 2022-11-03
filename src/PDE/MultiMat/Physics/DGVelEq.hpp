@@ -36,6 +36,14 @@ namespace dg {
 class MultiMatPhysicsVelEq {
 
   public:
+    //! Compute the time step size restriction based on this physics
+    //! \return A large time step size, i.e., ignore
+    tk::real dtRestriction( std::size_t,
+      const tk::Fields&,
+      std::size_t,
+      const int ) const
+    { return std::numeric_limits< tk::real >::max(); }
+
     //! Return enum denoting physics policy
     //! \return Enum denoting physics policy.
     static ctr::PhysicsType type() noexcept { return ctr::PhysicsType::VELEQ; }
