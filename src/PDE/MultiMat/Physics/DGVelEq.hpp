@@ -51,7 +51,7 @@ class MultiMatPhysicsVelEq {
       const tk::Fields&,
       const std::unordered_map< std::size_t, std::set< std::size_t > >&,
       tk::Fields&,
-      int& ) const {};
+      int& ) const {}
 
     //! Return enum denoting physics policy
     //! \return Enum denoting physics policy.
