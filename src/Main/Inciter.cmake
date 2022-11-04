@@ -12,6 +12,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       InciterControl
                       PDE
                       Inciter
+                      EOS
                       TransportProblem
                       CGTransportPhysics
                       CompFlowProblem
