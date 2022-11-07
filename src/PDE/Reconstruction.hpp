@@ -23,7 +23,6 @@
 #include "FunctionPrototypes.hpp"
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
-#include "EoS/EoS_Base.hpp"
 #include "EoS/EosVariant.hpp"
 
 namespace tk {
@@ -53,7 +52,7 @@ void
 bndLeastSqConservedVar_P0P1(
   ncomp_t system,
   ncomp_t ncomp,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
   const inciter::FaceData& fd,

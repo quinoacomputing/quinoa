@@ -44,7 +44,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! \brief Evaluate the increment from t to t+dt of an analytical solution at
 //!   (x,y,z) for all components
 std::vector< tk::real >
-solinc( tk::ncomp_t system, tk::ncomp_t ncomp, const std::vector< EoS_Base* >&,
+solinc( tk::ncomp_t system, tk::ncomp_t ncomp, const std::vector< EOS >&,
         tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution );
 
 //! Compute boundary point normals

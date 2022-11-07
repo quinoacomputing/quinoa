@@ -269,8 +269,8 @@ class MultiMat {
           tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0));
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0));
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
-            m_mat_blk[k]->eos_pressure( arhomat, vel[0], vel[1], vel[2],
-                                        arhoemat, alphamat );
+            m_mat_blk[k].eosCall< EOS::pressure >( arhomat, vel[0], vel[1],
+            vel[2], arhoemat, alphamat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             constrain_pressure( m_mat_blk,
             prim(e, pressureDofIdx(nmat, k, rdof, 0)), alphamat, k);
@@ -767,8 +767,7 @@ class MultiMat {
     //! BC configuration
     BCStateFn m_bc;
     //! EOS material block
-    std::vector< EoS_Base* > m_mat_blk;
-    std::vector< EOS > m_mats;
+    std::vector< EOS > m_mat_blk;
 
     //! Evaluate conservative part of physical flux function for this PDE system
     //! \param[in] system Equation system index
@@ -780,7 +779,7 @@ class MultiMat {
     static tk::FluxFn::result_type
     flux( ncomp_t system,
           [[maybe_unused]] ncomp_t ncomp,
-          const std::vector< EoS_Base* >&,
+          const std::vector< EOS >&,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
@@ -806,7 +805,7 @@ class MultiMat {
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp,
-               const std::vector< EoS_Base* >& mat_blk,
+               const std::vector< EOS >& mat_blk,
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
@@ -832,7 +831,7 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k]->eos_pressure(
+        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].eosCall< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
           ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );

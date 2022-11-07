@@ -40,7 +40,7 @@ explicit EOS::EOS( ctr::MaterialType mattype,
       ps = getmatprop< tag::multimat, tag::pstiff >(system, k);
       c_v = getmatprop< tag::multimat, tag::cv >(system, k);
     }
-    material = SGclass(g, ps, c_v);
+    material = StiffenedGas(g, ps, c_v);
   }
   else if (mattype == ctr::MaterialType::JWL) {
     if (eqtype == 0) Throw("JWL not set up for PDE type");
@@ -57,7 +57,7 @@ explicit EOS::EOS( ctr::MaterialType mattype,
     auto de_jwl = getmatprop< tag::multimat, tag::de_jwl >(system, k);
     auto rhor_jwl = getmatprop< tag::multimat, tag::rhor_jwl >(system, k);
     auto er_jwl = getmatprop< tag::multimat, tag::er_jwl >(system, k);
-    material = JWLclass(w, c_v, rho0_jwl, de_jwl, rhor_jwl, er_jwl, A_jwl, B_jwl,
+    material = JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, er_jwl, A_jwl, B_jwl,
       R1_jwl, R2_jwl);
   }
   else Throw( "Unknown material EOS" );

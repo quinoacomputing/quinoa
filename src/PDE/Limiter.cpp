@@ -22,7 +22,6 @@
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Basis.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
 #include "PrefIndicator.hpp"
 #include "Reconstruction.hpp"
 #include "Integrate/Mass.hpp"
@@ -844,7 +843,7 @@ VertexBasedMultiMat_FV(
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -1760,7 +1759,7 @@ BoundPreservingLimitingFunction( const tk::real min,
 }
 
 void PositivityLimitingMultiMat( std::size_t nmat,
-                               const std::vector< inciter::EoS_Base* >& mat_blk,
+                                 const std::vector< inciter::EOS >& mat_blk,
                                  std::size_t rdof,
                                  std::size_t ndof_el,
                                  std::size_t e,
@@ -1867,7 +1866,7 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
-        auto min_pre = mat_blk[imat]->min_eff_pressure(min);
+        auto min_pre = mat_blk[imat].eosCall< EOS::min_eff_pressure >(min);
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
@@ -1916,7 +1915,7 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
-        auto min_pre = mat_blk[imat]->min_eff_pressure(min);
+        auto min_pre = mat_blk[imat].eosCall< EOS::min_eff_pressure >(min);
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
@@ -2198,7 +2197,7 @@ void MarkShockCells ( const std::size_t nelem,
 void
 correctLimConservMultiMat(
   std::size_t nelem,
-  const std::vector< EoS_Base* >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   std::size_t nmat,
   const tk::Fields& geoElem,
   const tk::Fields& prim,
@@ -2277,7 +2276,7 @@ correctLimConservMultiMat(
         auto alphamat = U[volfracIdx(nmat, imat)];
         auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
         auto premat = P[pressureIdx(nmat, imat)]/alphamat;
-        s[imat] = alphamat * mat_blk[imat]->eos_totalenergy( rhomat,
+        s[imat] = alphamat * mat_blk[imat].eosCall< EOS::totalenergy >( rhomat,
           vel[0], vel[1], vel[2], premat );
       }
 
@@ -2323,7 +2322,7 @@ tk::real constrain_pressure( const std::vector< EOS >& mat_blk,
   std::size_t imat=0 )
 {
   return std::max(apr, alpha*mat_blk[imat].eosCall<
-    inciter::EOS::min_eff_pressure >(1e-12));
+    EOS::min_eff_pressure >(1e-12));
 }
 
 

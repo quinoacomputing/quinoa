@@ -23,8 +23,6 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
@@ -177,7 +175,7 @@ void
 bndLeastSqConservedVar_P0P1(
   ncomp_t system,
   ncomp_t ncomp,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
   const inciter::FaceData& fd,

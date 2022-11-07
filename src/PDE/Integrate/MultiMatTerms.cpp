@@ -505,7 +505,7 @@ pressureRelaxationInt( ncomp_t system,
         real arhomat = state[densityIdx(nmat, k)];
         real alphamat = state[volfracIdx(nmat, k)];
         apmat[k] = state[ncomp+pressureIdx(nmat, k)];
-        real amat = mat_blk[k].eosCall< inciter::EOS::eos_soundspeed >( arhomat,
+        real amat = mat_blk[k].eosCall< inciter::EOS::soundspeed >( arhomat,
           apmat[k], alphamat );
         kmat[k] = arhomat * amat * amat;
         pb += apmat[k];
@@ -642,7 +642,7 @@ pressureRelaxationIntFV(
       real arhomat = state[densityIdx(nmat, k)];
       real alphamat = state[volfracIdx(nmat, k)];
       apmat[k] = state[ncomp+pressureIdx(nmat, k)];
-      real amat = mat_blk[k].eosCall< inciter::EOS::eos_soundspeed >( arhomat,
+      real amat = mat_blk[k].eosCall< inciter::EOS::soundspeed >( arhomat,
         apmat[k], alphamat );
       kmat[k] = arhomat * amat * amat;
       pb += apmat[k];

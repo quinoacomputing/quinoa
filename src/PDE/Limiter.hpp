@@ -20,7 +20,6 @@
 #include "UnsMesh.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "FunctionPrototypes.hpp"
-#include "EoS/EoS_Base.hpp"
 #include "EoS/EosVariant.hpp"
 
 namespace inciter {
@@ -71,7 +70,7 @@ VertexBasedCompflow_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EOS >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -88,7 +87,7 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EOS >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -109,7 +108,7 @@ VertexBasedMultiMat_P1(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EOS >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -128,7 +127,7 @@ VertexBasedMultiMat_P2(
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EOS >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -151,7 +150,7 @@ VertexBasedMultiMat_FV(
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -239,7 +238,7 @@ BoundPreservingLimitingFunction( const tk::real min,
 
 //! Positivity preserving limiter for multi-material solver
 void PositivityLimitingMultiMat( std::size_t nmat,
-                               const std::vector< inciter::EoS_Base* >& mat_blk,
+                                 const std::vector< EOS >& mat_blk,
                                  std::size_t rdof,
                                  std::size_t ndof_el,
                                  std::size_t e,
@@ -270,7 +269,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const std::size_t system,
                       const std::size_t ndof,
                       const std::size_t rdof,
-                      const std::vector< inciter::EOS >& mat_blk,
+                      const std::vector< EOS >& mat_blk,
                       const std::vector< std::size_t >& ndofel,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
@@ -286,7 +285,7 @@ void MarkShockCells ( const std::size_t nelem,
 void
 correctLimConservMultiMat(
   std::size_t nelem,
-  const std::vector< EoS_Base* >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   std::size_t nmat,
   const tk::Fields& geoElem,
   const tk::Fields& prim,

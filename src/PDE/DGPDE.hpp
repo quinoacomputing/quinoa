@@ -70,7 +70,7 @@ template< class Eq > struct ConfigBC {
 
 //! State function for invalid/un-configured boundary conditions
 [[noreturn]] tk::StateFn::result_type
-invalidBC( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
+invalidBC( ncomp_t, ncomp_t, const std::vector< EOS >&,
            const std::vector< tk::real >&, tk::real, tk::real, tk::real,
            tk::real, const std::array< tk::real, 3> & );
 

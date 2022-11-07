@@ -16,18 +16,21 @@
 #include <cmath>
 #include <iostream>
 #include "Data.hpp"
-#include "EoS_Base.hpp"
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
-
-class StiffenedGas: public EoS_Base {
+class StiffenedGas {
 
   private:
     tk::real m_gamma, m_pstiff, m_cv;
 
   public:
+    // *************************************************************************
+    //  Default constructor
+    // *************************************************************************
+    StiffenedGas(){}
+
+
     // *************************************************************************
     //  Constructor
     //! \param[in] gamma Ratio of specific heats
@@ -39,8 +42,8 @@ class StiffenedGas: public EoS_Base {
     { }
 
 
-    tk::real eos_density( tk::real pr,
-                          tk::real temp ) override
+    tk::real density( tk::real pr,
+                      tk::real temp ) const
     // *************************************************************************
     //! \brief Calculate density from the material pressure and temperature 
     //!   using the stiffened-gas equation of state
@@ -58,13 +61,13 @@ class StiffenedGas: public EoS_Base {
     }
 
 
-    tk::real eos_pressure( tk::real arho,
-                           tk::real u,
-                           tk::real v,
-                           tk::real w,
-                           tk::real arhoE,
-                           tk::real alpha=1.0,
-                           std::size_t imat=0 ) override
+    tk::real pressure( tk::real arho,
+                       tk::real u,
+                       tk::real v,
+                       tk::real w,
+                       tk::real arhoE,
+                       tk::real alpha=1.0,
+                       std::size_t imat=0 ) const
     // *************************************************************************
     //! \brief Calculate pressure from the material density, momentum and total
     //!   energy using the stiffened-gas equation of state
@@ -106,10 +109,10 @@ class StiffenedGas: public EoS_Base {
     }
 
 
-    tk::real eos_soundspeed( tk::real arho,
-                             tk::real apr,
-                             tk::real alpha=1.0,
-                             std::size_t imat=0 ) override
+    tk::real soundspeed( tk::real arho,
+                         tk::real apr,
+                         tk::real alpha=1.0,
+                         std::size_t imat=0 ) const
     // *************************************************************************
     //! Calculate speed of sound from the material density and material pressure
     //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -145,11 +148,11 @@ class StiffenedGas: public EoS_Base {
     }
 
 
-    tk::real eos_totalenergy( tk::real rho,
-                              tk::real u,
-                              tk::real v,
-                              tk::real w,
-                              tk::real pr ) override
+    tk::real totalenergy( tk::real rho,
+                          tk::real u,
+                          tk::real v,
+                          tk::real w,
+                          tk::real pr ) const
     // *************************************************************************
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
@@ -169,12 +172,12 @@ class StiffenedGas: public EoS_Base {
     }
 
 
-    tk::real eos_temperature( tk::real arho,
-                              tk::real u,
-                              tk::real v,
-                              tk::real w,
-                              tk::real arhoE,
-                              tk::real alpha=1.0 ) override
+    tk::real temperature( tk::real arho,
+                          tk::real u,
+                          tk::real v,
+                          tk::real w,
+                          tk::real arhoE,
+                          tk::real alpha=1.0 ) const
     // *************************************************************************
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
@@ -198,7 +201,7 @@ class StiffenedGas: public EoS_Base {
     }
 
 
-    tk::real min_eff_pressure( tk::real min ) override
+    tk::real min_eff_pressure( tk::real min ) const
     // *************************************************************************
     //! Compute the minimum effective pressure
     //! \param[in] min Minimum threshold in positivity preserving limiting
@@ -211,11 +214,22 @@ class StiffenedGas: public EoS_Base {
     }
 
 
-    // Destructor
-    ~StiffenedGas() override {}
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &p ) /*override*/ {
+      p | m_gamma;
+      p | m_pstiff;
+      p | m_cv;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] i StiffenedGas object reference
+    friend void operator|( PUP::er& p, StiffenedGas& i ) { i.pup(p); }
+    //@}
 };
 
 } //inciter::
 
 #endif // StiffenedGas_h
-

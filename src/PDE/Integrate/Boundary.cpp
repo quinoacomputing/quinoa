@@ -22,7 +22,6 @@
 #include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
-#include "EoS/EoS_Base.hpp"
 
 namespace tk {
 

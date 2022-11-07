@@ -595,7 +595,7 @@ class Transport {
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     //! EOS material block
-    const std::vector< EoS_Base* > m_mat_blk;
+    const std::vector< EOS > m_mat_blk;
 
     //! \brief Compute/assemble nodal gradients of primitive variables for
     //!   ALECG in all points

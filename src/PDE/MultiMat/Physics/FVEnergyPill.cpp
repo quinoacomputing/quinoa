@@ -146,7 +146,7 @@ physSrc( std::size_t system,
                 s[energyIdx(nmat,blkmatid-1)] = amplE;
 
                 // Add the source term to the rhs
-                for (ncomp_t c=0; c<ncomp; ++c)
+                for (std::size_t c=0; c<ncomp; ++c)
                 {
                   R(e, c) += geoElem(e,0) * s[c];
                 }

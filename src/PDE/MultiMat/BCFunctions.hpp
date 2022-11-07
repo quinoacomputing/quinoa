@@ -30,7 +30,7 @@ namespace inciter {
   //!   the vector of primitive quantities appended to it.
   static tk::StateFn::result_type
   symmetry( ncomp_t system, ncomp_t ncomp,
-            const std::vector< EoS_Base* >&,
+            const std::vector< EOS >&,
             const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
             const std::array< tk::real, 3 >& fn )
@@ -105,7 +105,7 @@ namespace inciter {
   static tk::StateFn::result_type
   farfieldOutlet( ncomp_t system,
                   ncomp_t ncomp,
-                  const std::vector< EoS_Base* >& mat_blk,
+                  const std::vector< EOS >& mat_blk,
                   const std::vector< tk::real >& ul,
                   tk::real, tk::real, tk::real, tk::real,
                   const std::array< tk::real, 3 >& fn )
@@ -133,8 +133,9 @@ namespace inciter {
     tk::real a(0.0);
     for (std::size_t k=0; k<nmat; ++k)
       if (ul[volfracIdx(nmat, k)] > 1.0e-04)
-        a = std::max( a, mat_blk[k]->eos_soundspeed( ul[densityIdx(nmat, k)],
-          ul[ncomp+pressureIdx(nmat, k)], ul[volfracIdx(nmat, k)] ) );
+        a = std::max( a, mat_blk[k].eosCall< EOS::soundspeed >(
+          ul[densityIdx(nmat, k)], ul[ncomp+pressureIdx(nmat, k)],
+          ul[volfracIdx(nmat, k)] ) );
 
     // Mach number
     auto Ma = vn / a;
@@ -142,7 +143,7 @@ namespace inciter {
     if(Ma >= 0 && Ma < 1) {         // Subsonic outflow
       for (std::size_t k=0; k<nmat; ++k)
         ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
-        mat_blk[k]->eos_totalenergy(
+        mat_blk[k].eosCall< EOS::totalenergy >(
           ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
 
       // Internal cell primitive quantities using the separately reconstructed
@@ -170,7 +171,7 @@ namespace inciter {
   //!   the vector of primitive quantities appended to it.
   static tk::StateFn::result_type
   extrapolate( ncomp_t, ncomp_t,
-               const std::vector< EoS_Base* >&,
+               const std::vector< EOS >&,
                const std::vector< tk::real >& ul,
                tk::real, tk::real, tk::real, tk::real,
                const std::array< tk::real, 3 >& )

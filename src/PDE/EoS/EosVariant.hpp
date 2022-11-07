@@ -16,8 +16,8 @@
 
 #include "PUPUtil.hpp"
 #include "Inciter/Options/Material.hpp"
-#include "EoS/SGclass.hpp"
-#include "EoS/JWLclass.hpp"
+#include "EoS/StiffenedGas.hpp"
+#include "EoS/JWL.hpp"
 
 namespace inciter {
 
@@ -26,8 +26,8 @@ class EOS {
 
   private:
     //! Variant type listing all eos types modeling the same concept
-    std::variant< SGclass
-                , JWLclass
+    std::variant< StiffenedGas
+                , JWL
                 > material;
 
   public:
@@ -41,11 +41,11 @@ class EOS {
       std::size_t k );
 
     //! Entry method tags for specific EOS classes to use with eosCall()
-    struct eos_density {};
-    struct eos_pressure {};
-    struct eos_soundspeed {};
-    struct eos_totalenergy {};
-    struct eos_temperature {};
+    struct density {};
+    struct pressure {};
+    struct soundspeed {};
+    struct totalenergy {};
+    struct temperature {};
     struct min_eff_pressure {};
     //! Call EOS function
     //! \tparam Fn Function tag identifying the function to call
@@ -56,20 +56,20 @@ class EOS {
     template< typename Fn, typename... Args >
     tk::real eosCall( Args&&... args ) const {
       return std::visit( [&]( const auto& m )-> tk::real {
-          if constexpr( std::is_same_v< Fn, eos_density > )
-            return m.eos_density( std::forward< Args >( args )... );
+          if constexpr( std::is_same_v< Fn, density > )
+            return m.density( std::forward< Args >( args )... );
 
-          else if constexpr( std::is_same_v< Fn, eos_pressure > )
-            return m.eos_pressure( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, pressure > )
+            return m.pressure( std::forward< Args >( args )... );
 
-          else if constexpr( std::is_same_v< Fn, eos_soundspeed > )
-            return m.eos_soundspeed( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, soundspeed > )
+            return m.soundspeed( std::forward< Args >( args )... );
 
-          else if constexpr( std::is_same_v< Fn, eos_totalenergy > )
-            return m.eos_totalenergy( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, totalenergy > )
+            return m.totalenergy( std::forward< Args >( args )... );
 
-          else if constexpr( std::is_same_v< Fn, eos_temperature > )
-            return m.eos_temperature( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, temperature > )
+            return m.temperature( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
             return m.min_eff_pressure( std::forward< Args >( args )... );

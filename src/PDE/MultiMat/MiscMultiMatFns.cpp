@@ -15,18 +15,13 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/StiffenedGas.hpp"
-#include "EoS/JWL.hpp"
-#include "EoS/EosVariant.hpp"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
 void initializeMaterialEoS( std::size_t system,
-  std::vector< EoS_Base* >& mat_blk,
-  std::vector< EOS >& mats )
+  std::vector< EOS >& mat_blk )
 // *****************************************************************************
 //  Initialize the material block with configured EOS
 //! \param[in] system Index of system being solved
@@ -42,38 +37,14 @@ void initializeMaterialEoS( std::size_t system,
     tag::matidxmap >();
   for (std::size_t k=0; k<nmat; ++k) {
     auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get<tag::eos>();
-    if (mateos == inciter::ctr::MaterialType::STIFFENEDGAS) {
-      // query input deck to get gamma, p_c, cv
-      auto g = gamma< tag::multimat >(system, k);
-      auto ps = pstiff< tag::multimat >(system, k);
-      auto c_v = cv< tag::multimat >(system, k);
-      mat_blk.push_back(new StiffenedGas(g, ps, c_v));
-    }
-    else if (mateos == inciter::ctr::MaterialType::JWL) {
-      // query input deck to get jwl parameters
-      auto w = getmatprop< tag::multimat, tag::w_gru >(system, k);
-      auto c_v = cv< tag::multimat >(system, k);
-      auto A_jwl = getmatprop< tag::multimat, tag::A_jwl >(system, k);
-      auto B_jwl = getmatprop< tag::multimat, tag::B_jwl >(system, k);
-      //[[maybe_unused]] auto C_jwl =
-      //  getmatprop< tag::multimat, tag::C_jwl >(system, k);
-      auto R1_jwl = getmatprop< tag::multimat, tag::R1_jwl >(system, k);
-      auto R2_jwl = getmatprop< tag::multimat, tag::R2_jwl >(system, k);
-      auto rho0_jwl = getmatprop< tag::multimat, tag::rho0_jwl >(system, k);
-      auto de_jwl = getmatprop< tag::multimat, tag::de_jwl >(system, k);
-      auto rhor_jwl = getmatprop< tag::multimat, tag::rhor_jwl >(system, k);
-      auto er_jwl = getmatprop< tag::multimat, tag::er_jwl >(system, k);
-      mat_blk.push_back(new JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, er_jwl,
-        A_jwl, B_jwl, R1_jwl, R2_jwl));
-    }
-    mats.emplace_back(mateos, 1, system, k);
+    mat_blk.emplace_back(mateos, 1, system, k);
   }
 }
 
 bool
 cleanTraceMultiMat(
   std::size_t nelem,
-  const std::vector< EoS_Base* >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
   std::size_t nmat,
   tk::Fields& U,
@@ -122,7 +93,7 @@ cleanTraceMultiMat(
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
     auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
     auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0))/almax;
-    auto tmax = mat_blk[kmax]->eos_temperature(
+    auto tmax = mat_blk[kmax].eosCall< EOS::temperature >(
       U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax );
 
@@ -156,7 +127,9 @@ cleanTraceMultiMat(
         // check if volume fraction is lesser than threshold (al_eps) and
         // if the material (effective) pressure is negative. If either of
         // these conditions is true, perform pressure relaxation.
-        if ((alk < al_eps) || (pk < mat_blk[k]->min_eff_pressure(0.0))/*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
+        if ((alk < al_eps) ||
+          (pk < mat_blk[k].eosCall< EOS::min_eff_pressure >(0.0))
+          /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
         {
           //auto gk = gamma< tag::multimat >(system, k);
 
@@ -179,7 +152,7 @@ cleanTraceMultiMat(
           // energy change
           auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0))
             / alk_new;
-          auto rhoEmat = mat_blk[k]->eos_totalenergy( rhomat, u, v, w,
+          auto rhoEmat = mat_blk[k].eosCall< EOS::totalenergy >( rhomat, u, v, w,
                                                       p_target);
 
           // volume-fraction and total energy flux into majority material
@@ -196,13 +169,13 @@ cleanTraceMultiMat(
       // check for unbounded volume fractions
       else if (alk < 0.0)
       {
-        auto rhok = mat_blk[k]->eos_density(p_target, tmax);
+        auto rhok = mat_blk[k].eosCall< EOS::density >(p_target, tmax);
         d_al += (alk - 1e-14);
         // update state of trace material
         U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
         U(e, densityDofIdx(nmat, k, rdof, 0)) = 1e-14 * rhok;
         U(e, energyDofIdx(nmat, k, rdof, 0)) = 1e-14
-          * mat_blk[k]->eos_totalenergy(rhok, u, v, w, p_target );
+          * mat_blk[k].eosCall< EOS::totalenergy >(rhok, u, v, w, p_target );
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = 1e-14 *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
@@ -216,7 +189,7 @@ cleanTraceMultiMat(
         auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0)) / alk;
         // update state of trace material
         U(e, energyDofIdx(nmat, k, rdof, 0)) = alk
-          * mat_blk[k]->eos_totalenergy( rhok, u, v, w, p_target );
+          * mat_blk[k].eosCall< EOS::totalenergy >( rhok, u, v, w, p_target );
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
@@ -242,7 +215,7 @@ cleanTraceMultiMat(
     // 2. Flux energy change into majority material
     U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arE;
     P(e, pressureDofIdx(nmat, kmax, rdof, 0)) =
-      mat_blk[kmax]->eos_pressure(
+      mat_blk[kmax].eosCall< EOS::pressure >(
       U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0)),
       U(e, volfracDofIdx(nmat, kmax, rdof, 0)) );
@@ -336,7 +309,7 @@ cleanTraceMultiMat(
 
 tk::real
 timeStepSizeMultiMat(
-  const std::vector< EoS_Base* >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   const std::vector< int >& esuf,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
@@ -395,7 +368,8 @@ timeStepSizeMultiMat(
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-        a = std::max( a, mat_blk[k]->eos_soundspeed( ugp[densityIdx(nmat, k)],
+        a = std::max( a, mat_blk[k].eosCall< EOS::soundspeed >(
+          ugp[densityIdx(nmat, k)],
           pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)] ) );
       }
     }
@@ -427,8 +401,9 @@ timeStepSizeMultiMat(
       for (std::size_t k=0; k<nmat; ++k)
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-          a = std::max( a, mat_blk[k]->eos_soundspeed( ugp[densityIdx(nmat, k)],
-            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)] ) );
+          a = std::max( a, mat_blk[k].eosCall< EOS::soundspeed >(
+            ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+            ugp[volfracIdx(nmat, k)] ) );
         }
       }
 
@@ -455,7 +430,7 @@ timeStepSizeMultiMat(
 
 tk::real
 timeStepSizeMultiMatFV(
-  const std::vector< EoS_Base* >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
   std::size_t nelem,
   std::size_t nmat,
@@ -503,8 +478,9 @@ timeStepSizeMultiMatFV(
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-        a = std::max( a, mat_blk[k]->eos_soundspeed( ugp[densityIdx(nmat, k)],
-          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)] ) );
+        a = std::max( a, mat_blk[k].eosCall< EOS::soundspeed >(
+          ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+          ugp[volfracIdx(nmat, k)] ) );
       }
     }
 
