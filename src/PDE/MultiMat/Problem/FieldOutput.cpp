@@ -12,7 +12,6 @@
 // *****************************************************************************
 #include "FieldOutput.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
-#include "EoS/EoS.hpp"
 #include "Vector.hpp"
 
 namespace inciter {
@@ -51,7 +50,7 @@ std::vector< std::vector< tk::real > >
 MultiMatFieldOutput(
   ncomp_t,
   std::size_t nmat,
-  const std::vector< EoS_Base* >& mat_blk,
+  const std::vector< EOS >& mat_blk,
   std::size_t nunk,
   std::size_t rdof,
   const std::vector< tk::real >&,
@@ -134,7 +133,7 @@ MultiMatFieldOutput(
   for (std::size_t k=0; k<nmat; ++k) {
     for (std::size_t i=0; i<nunk; ++i) {
       out[3*nmat+5+k][i] =
-      mat_blk[k]->eos_soundspeed(
+      mat_blk[k].eosCall< EOS::soundspeed >(
         std::max(1e-16, U(i, densityDofIdx(nmat,k,rdof,0))),
         P(i, pressureDofIdx(nmat,k,rdof,0)),
         U(i, volfracDofIdx(nmat,k,rdof,0)) );

@@ -82,7 +82,7 @@ class MultiMat {
         , extrapolate } ) );
 
       // EoS initialization
-      initializeMaterialEoS( m_system, m_mat_blk, m_mats );
+      initializeMaterialEoS( m_system, m_mat_blk );
     }
 
     //! Find the number of primitive quantities required for this PDE system

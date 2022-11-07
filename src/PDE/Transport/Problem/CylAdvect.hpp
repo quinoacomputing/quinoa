@@ -23,7 +23,7 @@
 #include "Types.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EosVariant.hpp"
 
 namespace inciter {
 
@@ -37,13 +37,13 @@ class TransportProblemCylAdvect {
     //! Initialize numerical solution
     static std::vector< tk::real >
     initialize( ncomp_t system, ncomp_t ncomp,
-                const std::vector< EoS_Base* >& mat_blk,
+                const std::vector< EOS >& mat_blk,
                 tk::real x, tk::real y, tk::real, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static std::vector< tk::real >
     analyticSolution( ncomp_t system, ncomp_t ncomp,
-                      const std::vector< EoS_Base* >& mat_blk, tk::real x,
+                      const std::vector< EOS >& mat_blk, tk::real x,
                       tk::real y, tk::real z, tk::real t )
     { return initialize( system, ncomp, mat_blk, x, y, z, t ); }
 

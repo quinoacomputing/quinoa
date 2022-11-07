@@ -27,7 +27,7 @@ using inciter::CompFlowProblemRayleighTaylor;
 tk::InitializeFn::result_type
 CompFlowProblemRayleighTaylor::initialize( ncomp_t system,
                                            ncomp_t,
-                                        const std::vector< EoS_Base* >& mat_blk,
+                                           const std::vector< EOS >& mat_blk,
                                            tk::real x,
                                            tk::real y,
                                            tk::real z,
@@ -66,7 +66,7 @@ CompFlowProblemRayleighTaylor::initialize( ncomp_t system,
   const tk::real v = ft*z*cos(M_PI*y);
   const tk::real w = ft*(-0.5*M_PI*z*z*(cos(M_PI*x)-sin(M_PI*y)));
   // total specific energy
-  const tk::real rE = mat_blk[0]->eos_totalenergy( r, u, v, w, p );
+  const tk::real rE = mat_blk[0].eosCall< EOS::totalenergy >( r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -74,7 +74,7 @@ CompFlowProblemRayleighTaylor::initialize( ncomp_t system,
 tk::InitializeFn::result_type
 CompFlowProblemRayleighTaylor::analyticSolution( ncomp_t system,
                                                  ncomp_t,
-                                        const std::vector< EoS_Base* >& mat_blk,
+                                              const std::vector< EOS >& mat_blk,
                                                  tk::real x,
                                                  tk::real y,
                                                  tk::real z,
@@ -113,7 +113,7 @@ CompFlowProblemRayleighTaylor::analyticSolution( ncomp_t system,
   auto v = ft*z*cos(M_PI*y);
   auto w = ft*(-0.5*M_PI*z*z*(cos(M_PI*x)-sin(M_PI*y)));
   // total specific energy
-  auto E = mat_blk[0]->eos_totalenergy( r, u, v, w, p ) / r;
+  auto E = mat_blk[0].eosCall< EOS::totalenergy >( r, u, v, w, p ) / r;
 
   return {{ r, u, v, w, E, p }};
 }

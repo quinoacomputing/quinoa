@@ -14,8 +14,7 @@
 #define MultiMatBoxInitialization_h
 
 #include "Fields.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EosVariant.hpp"
 #include "Control/Inciter/Types.hpp"
 #include "ContainerUtil.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
@@ -26,7 +25,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 template< class B >
 void initializeBox( std::size_t system,
-                    const std::vector< EoS_Base* >& mat_blk,
+                    const std::vector< EOS >& mat_blk,
                     tk::real V_ex,
                     tk::real t,
                     const B& b,
@@ -60,7 +59,8 @@ void initializeBox( std::size_t system,
   const auto& initiate = b.template get< tag::initiate >();
   auto inittype = initiate.template get< tag::init >();
 
-  auto boxmatid = b.template get< tag::materialid >();
+  // get material id in box (offset by 1, since input deck uses 1-based ids)
+  std::size_t boxmatid = b.template get< tag::materialid >() - 1;
   const auto& boxvel = b.template get< tag::velocity >();
   auto boxpre = b.template get< tag::pressure >();
   auto boxene = b.template get< tag::energy >();
@@ -75,7 +75,7 @@ void initializeBox( std::size_t system,
 
   // material volume fractions
   for (std::size_t k=0; k<nmat; ++k) {
-    if (k == boxmatid-1) {
+    if (k == boxmatid) {
       s[volfracIdx(nmat,k)] = 1.0 - (static_cast< tk::real >(nmat-1))*alphamin;
     }
     else {
@@ -89,11 +89,11 @@ void initializeBox( std::size_t system,
   if (boxmas > 0.0) {
     if (boxenc <= 1e-12) Throw( "Box energy content must be nonzero" );
     // determine density and energy of material in the box
-    rhok[boxmatid-1] = boxmas / V_ex;
-    spi = boxenc / rhok[boxmatid-1];
+    rhok[boxmatid] = boxmas / V_ex;
+    spi = boxenc / rhok[boxmatid];
 
     // Determine pressure and temperature
-    auto boxmat_vf = s[volfracIdx(nmat,boxmatid-1)];
+    auto boxmat_vf = s[volfracIdx(nmat,boxmatid)];
 
     // Since initiate type 'linear' assigns the background IC values to all
     // nodes within a box at initialization (followed by adding a time-dependent
@@ -105,34 +105,34 @@ void initializeBox( std::size_t system,
           "specified for IC with linear propagating source");
 
       pr = bgpreic;
-      auto te = mat_blk[boxmatid-1]->eos_totalenergy(rhok[boxmatid-1], u, v, w,
-        pr);
-      tmp = mat_blk[boxmatid-1]->eos_temperature(
-        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*te, boxmat_vf );
+      auto te = mat_blk[boxmatid].eosCall< EOS::totalenergy >(
+        rhok[boxmatid], u, v, w, pr);
+      tmp = mat_blk[boxmatid].eosCall< EOS::temperature >(
+        boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*te, boxmat_vf );
     }
     // For initiate type 'impulse', pressure and temperature are determined from
     // energy content that needs to be dumped into the box at IC.
     else if (inittype == ctr::InitiateType::IMPULSE) {
-      pr = mat_blk[boxmatid-1]->eos_pressure(
-        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
+      pr = mat_blk[boxmatid].eosCall< EOS::pressure >(
+        boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*rhok[boxmatid]*spi,
         boxmat_vf );
-      tmp = mat_blk[boxmatid-1]->eos_temperature(
-        boxmat_vf*rhok[boxmatid-1], u, v, w, boxmat_vf*rhok[boxmatid-1]*spi,
+      tmp = mat_blk[boxmatid].eosCall< EOS::temperature >(
+        boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*rhok[boxmatid]*spi,
         boxmat_vf );
     }
     else Throw( "IC box initiate type not implemented for multimat" );
 
     // find density of trace material quantities in the box based on pressure
     for (std::size_t k=0; k<nmat; ++k) {
-      if (k != boxmatid-1) {
-        rhok[k] = mat_blk[k]->eos_density(pr, tmp );
+      if (k != boxmatid) {
+        rhok[k] = mat_blk[k].eosCall< EOS::density >(pr, tmp);
       }
     }
   }
   // 2. User-specified temperature, pressure and velocity in box
   else {
     for (std::size_t k=0; k<nmat; ++k) {
-      rhok[k] = mat_blk[k]->eos_density(boxpre, boxtemp );
+      rhok[k] = mat_blk[k].eosCall< EOS::density >(boxpre, boxtemp);
     }
     if (boxvel.size() == 3) {
       u = boxvel[0];
@@ -154,13 +154,13 @@ void initializeBox( std::size_t system,
     // partial density
     s[densityIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k];
     // total specific energy
-    if (boxmas > 0.0 && k == boxmatid-1 &&
+    if (boxmas > 0.0 && k == boxmatid &&
       inittype == ctr::InitiateType::IMPULSE) {
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k] * spi;
     }
     else {
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-        mat_blk[k]->eos_totalenergy( rhok[k], u, v, w, pr );
+        mat_blk[k].eosCall< EOS::totalenergy >( rhok[k], u, v, w, pr );
     }
   }
   // bulk momentum

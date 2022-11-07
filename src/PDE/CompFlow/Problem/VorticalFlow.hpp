@@ -26,7 +26,7 @@
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EosVariant.hpp"
 
 namespace inciter {
 
@@ -45,12 +45,12 @@ class CompFlowProblemVorticalFlow {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >&,
+    initialize( ncomp_t system, ncomp_t, const std::vector< EOS >&,
                 tk::real x, tk::real y, tk::real z, tk::real );
 
     //! Evaluate analytical solution at (x,y,z) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >&,
+    analyticSolution( ncomp_t system, ncomp_t, const std::vector< EOS >&,
                       tk::real x, tk::real y, tk::real z, tk::real );
 
     //! Compute and return source term for vortical flow manufactured solution
@@ -62,7 +62,7 @@ class CompFlowProblemVorticalFlow {
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >& mat_blk,
+    src( ncomp_t system, ncomp_t, const std::vector< EOS >& mat_blk,
          tk::real x, tk::real y, tk::real z, tk::real,
          std::vector< tk::real >& sv )
     {

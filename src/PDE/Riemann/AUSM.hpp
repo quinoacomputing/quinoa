@@ -22,7 +22,6 @@
 #include "Tags.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
-#include "EoS/EoS.hpp"
 #include "EoS/EosVariant.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
@@ -69,14 +68,14 @@ struct AUSM {
       pml[k] = u[0][ncomp+pressureIdx(nmat, k)];
       pl += pml[k];
       hml[k] = u[0][energyIdx(nmat, k)] + pml[k];
-      amatl = mat_blk[k].eosCall< EOS::eos_soundspeed >(
+      amatl = mat_blk[k].eosCall< EOS::soundspeed >(
         u[0][densityIdx(nmat, k)], pml[k], al_l[k] );
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
       pr += pmr[k];
       hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
-      amatr = mat_blk[k].eosCall< EOS::eos_soundspeed >(
+      amatr = mat_blk[k].eosCall< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], pmr[k], al_r[k] );
 
       // Average states for mixture speed of sound

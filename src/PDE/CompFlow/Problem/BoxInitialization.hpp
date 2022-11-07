@@ -14,8 +14,7 @@
 #define BoxInitialization_h
 
 #include "Fields.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EosVariant.hpp"
 #include "ContainerUtil.hpp"
 #include "Control/Inciter/Types.hpp"
 
@@ -27,7 +26,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 template< class B >
 void initializeBox( std::size_t,
-                    const std::vector< EoS_Base* >& mat_blk,
+                    const std::vector< EOS >& mat_blk,
                     tk::real VRatio,
                     tk::real V_ex,
                     tk::real t,
@@ -85,7 +84,8 @@ void initializeBox( std::size_t,
       rw = rho * boxvel[2];
     }
     if (boxpre > 0.0) {
-      re = mat_blk[0]->eos_totalenergy( rho, ru/rho, rv/rho, rw/rho, boxpre );
+      re = mat_blk[0].eosCall< EOS::totalenergy >( rho, ru/rho, rv/rho, rw/rho,
+        boxpre );
     }
     if (boxene > 0.0) {
       auto ux = ru/rho, uy = rv/rho, uz = rw/rho;
@@ -138,7 +138,7 @@ void initializeBox( std::size_t,
     // separately. This is not currently supported.
     if (bgpreic > 0.0) {
       // energy based on box density and background pressure
-      spi = mat_blk[0]->eos_totalenergy( rho, u, v, w, bgpreic ) / rho;
+      spi = mat_blk[0].eosCall< EOS::totalenergy >(rho, u, v, w, bgpreic) / rho;
     } else Throw( "Background pressure must be specified for box-IC "
                   "with linear propagating source");
 

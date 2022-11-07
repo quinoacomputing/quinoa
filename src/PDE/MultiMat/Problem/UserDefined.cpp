@@ -17,7 +17,6 @@
 #include "UserDefined.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
-#include "EoS/EoS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
@@ -31,7 +30,7 @@ using inciter::MultiMatProblemUserDefined;
 tk::InitializeFn::result_type
 MultiMatProblemUserDefined::initialize( ncomp_t system,
                                         ncomp_t ncomp,
-                                        const std::vector< EoS_Base* >& mat_blk,
+                                        const std::vector< EOS >& mat_blk,
                                         tk::real,
                                         tk::real,
                                         tk::real,
@@ -79,12 +78,13 @@ MultiMatProblemUserDefined::initialize( ncomp_t system,
   auto rb = 0.0;
   for (std::size_t k=0; k<nmat; ++k) {
     // density
-    auto rhok = mat_blk[k]->eos_density(bgpreic[system][0], bgtempic[system][0]);
+    auto rhok = mat_blk[k].eosCall< EOS::density >(bgpreic[system][0],
+      bgtempic[system][0]);
     // partial density
     s[densityIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok;
     // total specific energy
     s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-      mat_blk[k]->eos_totalenergy( rhok, u, v, w, bgpreic[system][0] );
+      mat_blk[k].eosCall< EOS::totalenergy >(rhok, u, v, w, bgpreic[system][0]);
     // bulk density
     rb += s[densityIdx(nmat,k)];
   }

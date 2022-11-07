@@ -15,8 +15,6 @@
 
 #include "UnderwaterEx.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
@@ -30,7 +28,7 @@ using inciter::MultiMatProblemUnderwaterEx;
 tk::InitializeFn::result_type
 MultiMatProblemUnderwaterEx::initialize( ncomp_t system,
                                          ncomp_t ncomp,
-                                        const std::vector< EoS_Base* >& mat_blk,
+                                         const std::vector< EOS >& mat_blk,
                                          tk::real x,
                                          tk::real y,
                                          tk::real z,
@@ -101,12 +99,12 @@ MultiMatProblemUnderwaterEx::initialize( ncomp_t system,
   for (std::size_t k=0; k<nmat; ++k)
   {
     // densities
-    r[k] = mat_blk[k]->eos_density( p, temp );
+    r[k] = mat_blk[k].eosCall< EOS::density >( p, temp );
     // partial density
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r[k];
     // total specific energy
     s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
-      mat_blk[k]->eos_totalenergy( r[k], u, v, w, p );
+      mat_blk[k].eosCall< EOS::totalenergy >( r[k], u, v, w, p );
     rb += s[densityIdx(nmat, k)];
   }
 

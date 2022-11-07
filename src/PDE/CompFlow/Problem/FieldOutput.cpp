@@ -13,7 +13,7 @@
 
 #include "FieldOutput.hpp"
 #include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EosVariant.hpp"
 #include "ContainerUtil.hpp"
 #include "History.hpp"
 
@@ -39,7 +39,7 @@ std::vector< std::string > CompFlowFieldNames()
 
 std::vector< std::vector< tk::real > > 
 CompFlowFieldOutput( ncomp_t,
-                     const std::vector< EoS_Base* >& mat_blk,
+                     const std::vector< EOS >& mat_blk,
                      std::size_t nunk,
                      std::size_t rdof,
                      const tk::Fields& U )
@@ -88,7 +88,8 @@ CompFlowFieldOutput( ncomp_t,
 
   std::vector< tk::real > P( nunk, 0.0 );
   for (std::size_t i=0; i<nunk; ++i) {
-    P[i] = mat_blk[0]->eos_pressure( r[i], u[i], v[i], w[i], r[i]*E[i] );
+    P[i] = mat_blk[0].eosCall< EOS::pressure >( r[i], u[i], v[i], w[i],
+      r[i]*E[i] );
   }
   out.push_back( P );
 
@@ -116,7 +117,7 @@ std::vector< std::string > CompFlowSurfNames()
 
 std::vector< std::vector< tk::real > >
 CompFlowSurfOutput( ncomp_t,
-                    const std::vector< EoS_Base* >& mat_blk,
+                    const std::vector< EOS >& mat_blk,
                     const std::map< int, std::vector< std::size_t > >& bnd,
                     const tk::Fields& U )
 // *****************************************************************************
@@ -148,8 +149,8 @@ CompFlowSurfOutput( ncomp_t,
       out[i+2][j] = u[2]/u[0];
       out[i+3][j] = u[3]/u[0];
       out[i+4][j] = u[4]/u[0];
-      out[i+5][j] = mat_blk[0]->eos_pressure( u[0], u[1]/u[0], u[2]/u[0],
-                                              u[3]/u[0], u[4] );
+      out[i+5][j] = mat_blk[0].eosCall< EOS::pressure >( u[0], u[1]/u[0],
+        u[2]/u[0], u[3]/u[0], u[4] );
       ++j;
     }
   }
@@ -178,7 +179,7 @@ std::vector< std::string > CompFlowHistNames()
 
 std::vector< std::vector< tk::real > >
 CompFlowHistOutput( ncomp_t,
-                    const std::vector< EoS_Base* >& mat_blk,
+                    const std::vector< EOS >& mat_blk,
                     const std::vector< HistData >& h,
                     const std::vector< std::size_t >& inpoel,
                     const tk::Fields& U )
@@ -208,8 +209,8 @@ CompFlowHistOutput( ncomp_t,
       out[j][2] += n[i] * u[2]/u[0];
       out[j][3] += n[i] * u[3]/u[0];
       out[j][4] += n[i] * u[4]/u[0];
-      out[j][5] += n[i] * mat_blk[0]->eos_pressure( u[0], u[1]/u[0], u[2]/u[0],
-                                                    u[3]/u[0], u[4] );
+      out[j][5] += n[i] * mat_blk[0].eosCall< EOS::pressure >( u[0], u[1]/u[0],
+        u[2]/u[0], u[3]/u[0], u[4] );
     }
     ++j;
   }

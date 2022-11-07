@@ -22,7 +22,7 @@ using inciter::EOS;
 //! \param[in] system Index of system being solved
 //! \param[in] k Material index
 //! \details Based on the input enum we assign the correct material eos
-explicit EOS::EOS( ctr::MaterialType mattype,
+EOS::EOS( ctr::MaterialType mattype,
   std::size_t eqtype,
   std::size_t system,
   std::size_t k )

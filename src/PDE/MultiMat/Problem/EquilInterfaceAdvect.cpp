@@ -15,8 +15,6 @@
 
 #include "EquilInterfaceAdvect.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
@@ -30,7 +28,7 @@ using inciter::MultiMatProblemEquilInterfaceAdvect;
 tk::InitializeFn::result_type
 MultiMatProblemEquilInterfaceAdvect::initialize( ncomp_t system,
                                                  ncomp_t ncomp,
-                                       const std::vector< EoS_Base* >& mat_blk,
+                                              const std::vector< EOS >& mat_blk,
                                                  tk::real x,
                                                  tk::real y,
                                                  tk::real z,
@@ -79,9 +77,9 @@ MultiMatProblemEquilInterfaceAdvect::initialize( ncomp_t system,
   s[densityIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*r;
   // total specific energy
   s[energyIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*
-                            mat_blk[0]->eos_totalenergy( r, u, v, w, p );
+    mat_blk[0].eosCall< EOS::totalenergy >( r, u, v, w, p );
   s[energyIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*
-                            mat_blk[1]->eos_totalenergy( r, u, v, w, p );
+    mat_blk[1].eosCall< EOS::totalenergy >( r, u, v, w, p );
   // momentum
   s[momentumIdx(nmat, 0)] = r*u;
   s[momentumIdx(nmat, 1)] = r*v;

@@ -27,7 +27,7 @@ using inciter::CompFlowProblemVorticalFlow;
 tk::InitializeFn::result_type
 CompFlowProblemVorticalFlow::initialize( ncomp_t system,
                                          ncomp_t,
-                                       const std::vector< inciter::EoS_Base* >&,
+                                         const std::vector< EOS >&,
                                          tk::real x,
                                          tk::real y,
                                          tk::real z,
@@ -64,7 +64,7 @@ CompFlowProblemVorticalFlow::initialize( ncomp_t system,
 tk::InitializeFn::result_type
 CompFlowProblemVorticalFlow::analyticSolution( ncomp_t system,
                                                ncomp_t,
-                                               const std::vector< EoS_Base* >&,
+                                               const std::vector< EOS >&,
                                                tk::real x,
                                                tk::real y,
                                                tk::real z,

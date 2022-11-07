@@ -84,7 +84,7 @@ class MultiMat {
         , extrapolate } ) );
 
       // EoS initialization
-      initializeMaterialEoS( m_system, m_mat_blk, m_mats );
+      initializeMaterialEoS( m_system, m_mat_blk );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -712,7 +712,7 @@ class MultiMat {
                                          tag::prelax_timescale >()[m_system];
         tk::pressureRelaxationInt( m_system, nmat, m_mat_blk, ndof,
                                    rdof, nelem, inpoel, coord, geoElem, U, P,
-                                   ndofel, ct, R, intsharp, m_mats );
+                                   ndofel, ct, R, intsharp );
       }
     }
 

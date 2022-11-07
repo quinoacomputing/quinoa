@@ -15,8 +15,6 @@
 
 #include "WaterAirShocktube.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
@@ -30,7 +28,7 @@ using inciter::MultiMatProblemWaterAirShocktube;
 tk::InitializeFn::result_type
 MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
                                               ncomp_t ncomp,
-                                       const std::vector< EoS_Base* >& mat_blk,
+                                              const std::vector< EOS >& mat_blk,
                                               tk::real x,
                                               tk::real,
                                               tk::real,
@@ -67,7 +65,7 @@ MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
     p = 1.0e9;
     // densities
     for (std::size_t k=0; k<nmat; ++k)
-      r[k] = mat_blk[k]->eos_density( p, 494.646 );
+      r[k] = mat_blk[k].eosCall< EOS::density >( p, 494.646 );
     // velocity
     u = 0.0;
     v = 0.0;
@@ -81,7 +79,7 @@ MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
     p = 1.0e5;
     // densities
     for (std::size_t k=0; k<nmat; ++k)
-      r[k] = mat_blk[k]->eos_density( p, 34.844 );
+      r[k] = mat_blk[k].eosCall< EOS::density >( p, 34.844 );
     // velocity
     u = 0.0;
     v = 0.0;
@@ -93,7 +91,7 @@ MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r[k];
     // total specific energy
     s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
-      mat_blk[k]->eos_totalenergy( r[k], u, v, w, p );
+      mat_blk[k].eosCall< EOS::totalenergy >( r[k], u, v, w, p );
   }
 
   return s;
