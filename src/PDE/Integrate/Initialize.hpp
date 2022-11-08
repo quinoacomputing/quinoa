@@ -20,7 +20,7 @@
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 

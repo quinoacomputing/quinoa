@@ -14,7 +14,7 @@
 #define BoxInitialization_h
 
 #include "Fields.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 #include "ContainerUtil.hpp"
 #include "Control/Inciter/Types.hpp"
 

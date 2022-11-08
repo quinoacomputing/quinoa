@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/EosVariant.hpp
+  \file      src/PDE/EoS/EOS.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -9,8 +9,8 @@
     where children implement specific EOS functions.
 */
 // *****************************************************************************
-#ifndef EosVariant_h
-#define EosVariant_h
+#ifndef EOS_h
+#define EOS_h
 
 #include <variant>
 
@@ -28,7 +28,7 @@ class EOS {
     //! Variant type listing all eos types modeling the same concept
     std::variant< StiffenedGas
                 , JWL
-                > material;
+                > m_material;
 
   public:
     //! Empty constructor for Charm++
@@ -73,7 +73,7 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
             return m.min_eff_pressure( std::forward< Args >( args )... );
-        }, material );
+        }, m_material );
     }
 
     /** @name Charm++ pack/unpack serializer member functions */
@@ -81,7 +81,7 @@ class EOS {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) {
-      p | material;
+      p | m_material;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -92,4 +92,4 @@ class EOS {
 
 } // inciter::
 
-#endif // EosVariant_h
+#endif // EOS_h

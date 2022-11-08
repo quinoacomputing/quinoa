@@ -27,7 +27,7 @@
 #include "Problem/BoxInitialization.hpp"
 #include "Riemann/Rusanov.hpp"
 #include "NodeBC.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 #include "History.hpp"
 #include "Table.hpp"
 

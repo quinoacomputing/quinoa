@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/EosVariant.cpp
+  \file      src/PDE/EoS/EOS.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -10,9 +10,9 @@
 */
 // *****************************************************************************
 
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 #include "Exception.hpp"
-#include "EoS/EoS.hpp"
+#include "EoS/GetMatProp.hpp"
 
 using inciter::EOS;
 
@@ -40,7 +40,7 @@ EOS::EOS( ctr::MaterialType mattype,
       ps = getmatprop< tag::multimat, tag::pstiff >(system, k);
       c_v = getmatprop< tag::multimat, tag::cv >(system, k);
     }
-    material = StiffenedGas(g, ps, c_v);
+    m_material = StiffenedGas(g, ps, c_v);
   }
   else if (mattype == ctr::MaterialType::JWL) {
     if (eqtype == 0) Throw("JWL not set up for PDE type");
@@ -57,7 +57,7 @@ EOS::EOS( ctr::MaterialType mattype,
     auto de_jwl = getmatprop< tag::multimat, tag::de_jwl >(system, k);
     auto rhor_jwl = getmatprop< tag::multimat, tag::rhor_jwl >(system, k);
     auto er_jwl = getmatprop< tag::multimat, tag::er_jwl >(system, k);
-    material = JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, er_jwl, A_jwl, B_jwl,
+    m_material = JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, er_jwl, A_jwl, B_jwl,
       R1_jwl, R2_jwl);
   }
   else Throw( "Unknown material EOS" );

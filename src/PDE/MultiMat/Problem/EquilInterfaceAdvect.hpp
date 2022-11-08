@@ -24,7 +24,7 @@
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 

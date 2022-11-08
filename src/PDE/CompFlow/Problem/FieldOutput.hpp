@@ -14,7 +14,7 @@
 #define CompFlowFieldOutput_h
 
 #include "Fields.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 #include "History.hpp"
 
 namespace inciter {

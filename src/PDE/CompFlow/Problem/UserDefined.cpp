@@ -16,7 +16,7 @@
 
 #include "UserDefined.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
+#include "EoS/GetMatProp.hpp"
 #include "FieldOutput.hpp"
 
 namespace inciter {

@@ -37,7 +37,7 @@
 #include "Integrate/Volume.hpp"
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "PrefIndicator.hpp"

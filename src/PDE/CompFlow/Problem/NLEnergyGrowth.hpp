@@ -23,8 +23,8 @@
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/GetMatProp.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 

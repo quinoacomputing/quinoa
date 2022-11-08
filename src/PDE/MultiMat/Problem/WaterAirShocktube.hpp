@@ -22,7 +22,7 @@
 #include "FunctionPrototypes.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 

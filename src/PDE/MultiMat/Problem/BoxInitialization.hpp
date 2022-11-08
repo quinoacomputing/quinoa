@@ -14,7 +14,7 @@
 #define MultiMatBoxInitialization_h
 
 #include "Fields.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 #include "Control/Inciter/Types.hpp"
 #include "ContainerUtil.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"

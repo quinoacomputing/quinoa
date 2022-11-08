@@ -1,5 +1,5 @@
 add_library(EOS
-            EosVariant.cpp)
+            EOS.cpp)
 
 target_include_directories(EOS PUBLIC
                            ${QUINOA_SOURCE_DIR}

@@ -36,7 +36,7 @@
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "PrefIndicator.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 

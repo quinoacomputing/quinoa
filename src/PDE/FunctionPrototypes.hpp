@@ -21,7 +21,7 @@
 #include "Types.hpp"
 #include "Keywords.hpp"
 #include "Fields.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 
 namespace tk {
 

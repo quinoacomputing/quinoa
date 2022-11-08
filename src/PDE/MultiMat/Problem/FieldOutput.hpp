@@ -14,7 +14,7 @@
 #define FieldOutput_h
 
 #include "Fields.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 

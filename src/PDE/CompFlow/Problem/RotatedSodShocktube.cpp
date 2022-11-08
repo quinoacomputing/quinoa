@@ -13,7 +13,7 @@
 
 #include "Vector.hpp"
 #include "RotatedSodShocktube.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 
 using inciter::CompFlowProblemRotatedSodShocktube;
 

@@ -20,7 +20,7 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 
 namespace tk {
 

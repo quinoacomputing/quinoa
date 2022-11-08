@@ -12,8 +12,8 @@
 // *****************************************************************************
 
 #include "FieldOutput.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/GetMatProp.hpp"
+#include "EoS/EOS.hpp"
 #include "ContainerUtil.hpp"
 #include "History.hpp"
 

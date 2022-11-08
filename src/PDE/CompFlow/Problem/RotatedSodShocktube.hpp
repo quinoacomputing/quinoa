@@ -16,7 +16,7 @@
 
 #include "Types.hpp"
 #include "SodShocktube.hpp"
-#include "EoS/EosVariant.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 
