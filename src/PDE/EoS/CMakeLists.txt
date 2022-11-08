@@ -1,5 +1,7 @@
 add_library(EOS
-            EOS.cpp)
+            EOS.cpp
+            StiffenedGas.cpp
+            JWL.cpp)
 
 target_include_directories(EOS PUBLIC
                            ${QUINOA_SOURCE_DIR}

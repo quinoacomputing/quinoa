@@ -21,6 +21,11 @@
 
 namespace inciter {
 
+//! Equation types
+enum class EqType : uint8_t { compflow
+                            , multimat
+                            };
+
 //! Base class for generic forwarding interface to eos types
 class EOS {
 
@@ -36,7 +41,7 @@ class EOS {
 
     //! Constructor
     explicit EOS( ctr::MaterialType mattype,
-      std::size_t eqtype,
+      EqType eq,
       std::size_t system,
       std::size_t k );
 

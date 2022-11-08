@@ -18,19 +18,19 @@ using inciter::EOS;
 
 //! Constructor
 //! \param[in] mattype Material type
-//! \param[in] eqtype Type of PDE being solved
+//! \param[in] eq Type of PDE being solved
 //! \param[in] system Index of system being solved
 //! \param[in] k Material index
 //! \details Based on the input enum we assign the correct material eos
 EOS::EOS( ctr::MaterialType mattype,
-  std::size_t eqtype,
+  EqType eq,
   std::size_t system,
   std::size_t k )
 {
   if (mattype == ctr::MaterialType::STIFFENEDGAS) {
     // query input deck to get gamma, p_c, cv
     tk::real g, ps, c_v;
-    if (eqtype == 0) {
+    if (eq == EqType::compflow) {
       g = getmatprop< tag::compflow, tag::gamma >(system, k);
       ps = getmatprop< tag::compflow, tag::pstiff >(system, k);
       c_v = getmatprop< tag::compflow, tag::cv >(system, k);
@@ -43,7 +43,7 @@ EOS::EOS( ctr::MaterialType mattype,
     m_material = StiffenedGas(g, ps, c_v);
   }
   else if (mattype == ctr::MaterialType::JWL) {
-    if (eqtype == 0) Throw("JWL not set up for PDE type");
+    if (eq == EqType::compflow) Throw("JWL not set up for PDE type");
     // query input deck to get jwl parameters
     auto w = getmatprop< tag::multimat, tag::w_gru >(system, k);
     auto c_v = getmatprop< tag::multimat, tag::cv >(system, k);

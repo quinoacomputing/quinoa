@@ -37,7 +37,7 @@ void initializeMaterialEoS( std::size_t system,
     tag::matidxmap >();
   for (std::size_t k=0; k<nmat; ++k) {
     auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get<tag::eos>();
-    mat_blk.emplace_back(mateos, 1, system, k);
+    mat_blk.emplace_back(mateos, EqType::multimat, system, k);
   }
 }
 

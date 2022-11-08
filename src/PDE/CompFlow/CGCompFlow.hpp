@@ -84,7 +84,7 @@ class CompFlow {
       const auto& matidxmap = g_inputdeck.get< tag::param, eq, tag::matidxmap >
         ();
       auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();
-      m_mat_blk.emplace_back(mateos, 0, m_system, 0);
+      m_mat_blk.emplace_back(mateos, EqType::compflow, m_system, 0);
     }
 
     //! Determine nodes that lie inside the user-defined IC box and mesh blocks
