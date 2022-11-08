@@ -50,7 +50,7 @@ CompFlowProblemSheddingFlow::initialize( ncomp_t system,
                             tag::farfield_pressure >()[ system ];
   auto u = g_inputdeck.get< tag::param, eq,
                             tag::farfield_velocity >()[ system ];
-  auto rE = mat_blk[0].eosCall< EOS::totalenergy >( r, u[0], u[1], u[2], p );
+  auto rE = mat_blk[0].compute< EOS::totalenergy >( r, u[0], u[1], u[2], p );
 
   return {{ r, r*u[0], r*u[1], r*u[2], rE }};
 }

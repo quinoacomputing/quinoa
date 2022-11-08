@@ -93,7 +93,7 @@ cleanTraceMultiMat(
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
     auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
     auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0))/almax;
-    auto tmax = mat_blk[kmax].eosCall< EOS::temperature >(
+    auto tmax = mat_blk[kmax].compute< EOS::temperature >(
       U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax );
 
@@ -128,7 +128,7 @@ cleanTraceMultiMat(
         // if the material (effective) pressure is negative. If either of
         // these conditions is true, perform pressure relaxation.
         if ((alk < al_eps) ||
-          (pk < mat_blk[k].eosCall< EOS::min_eff_pressure >(0.0))
+          (pk < mat_blk[k].compute< EOS::min_eff_pressure >(0.0))
           /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
         {
           //auto gk = gamma< tag::multimat >(system, k);
@@ -152,7 +152,7 @@ cleanTraceMultiMat(
           // energy change
           auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0))
             / alk_new;
-          auto rhoEmat = mat_blk[k].eosCall< EOS::totalenergy >( rhomat, u, v, w,
+          auto rhoEmat = mat_blk[k].compute< EOS::totalenergy >( rhomat, u, v, w,
                                                       p_target);
 
           // volume-fraction and total energy flux into majority material
@@ -169,13 +169,13 @@ cleanTraceMultiMat(
       // check for unbounded volume fractions
       else if (alk < 0.0)
       {
-        auto rhok = mat_blk[k].eosCall< EOS::density >(p_target, tmax);
+        auto rhok = mat_blk[k].compute< EOS::density >(p_target, tmax);
         d_al += (alk - 1e-14);
         // update state of trace material
         U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
         U(e, densityDofIdx(nmat, k, rdof, 0)) = 1e-14 * rhok;
         U(e, energyDofIdx(nmat, k, rdof, 0)) = 1e-14
-          * mat_blk[k].eosCall< EOS::totalenergy >(rhok, u, v, w, p_target );
+          * mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, p_target );
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = 1e-14 *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
@@ -189,7 +189,7 @@ cleanTraceMultiMat(
         auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0)) / alk;
         // update state of trace material
         U(e, energyDofIdx(nmat, k, rdof, 0)) = alk
-          * mat_blk[k].eosCall< EOS::totalenergy >( rhok, u, v, w, p_target );
+          * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, p_target );
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
           p_target;
         for (std::size_t i=1; i<rdof; ++i) {
@@ -215,7 +215,7 @@ cleanTraceMultiMat(
     // 2. Flux energy change into majority material
     U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arE;
     P(e, pressureDofIdx(nmat, kmax, rdof, 0)) =
-      mat_blk[kmax].eosCall< EOS::pressure >(
+      mat_blk[kmax].compute< EOS::pressure >(
       U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0)),
       U(e, volfracDofIdx(nmat, kmax, rdof, 0)) );
@@ -368,7 +368,7 @@ timeStepSizeMultiMat(
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-        a = std::max( a, mat_blk[k].eosCall< EOS::soundspeed >(
+        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
           pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)] ) );
       }
@@ -401,7 +401,7 @@ timeStepSizeMultiMat(
       for (std::size_t k=0; k<nmat; ++k)
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-          a = std::max( a, mat_blk[k].eosCall< EOS::soundspeed >(
+          a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
             ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
             ugp[volfracIdx(nmat, k)] ) );
         }
@@ -478,7 +478,7 @@ timeStepSizeMultiMatFV(
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-        a = std::max( a, mat_blk[k].eosCall< EOS::soundspeed >(
+        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
           ugp[volfracIdx(nmat, k)] ) );
       }

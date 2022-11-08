@@ -358,7 +358,7 @@ class MultiMat {
             auto alphamat = state[volfracIdx(nmat, imat)];
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
-            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].eosCall<
+            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
               alphamat );
 
@@ -1056,7 +1056,7 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].eosCall< EOS::pressure >(
+        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
           ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );

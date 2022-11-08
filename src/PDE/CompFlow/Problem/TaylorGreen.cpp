@@ -53,7 +53,7 @@ CompFlowProblemTaylorGreen::initialize( ncomp_t,
   auto v = -cos(M_PI*x) * sin(M_PI*y);
   auto w = 0.0;
   // total specific energy
-  auto rE = mat_blk[0].eosCall< EOS::totalenergy >( r, u, v, w, p );
+  auto rE = mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -87,7 +87,7 @@ CompFlowProblemTaylorGreen::analyticSolution( ncomp_t,
   auto v = -cos(M_PI*x) * sin(M_PI*y);
   auto w = 0.0;
   // total specific energy
-  auto E = mat_blk[0].eosCall< EOS::totalenergy >( r, u, v, w, p );
+  auto E = mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p );
 
   return {{ r, u, v, w, E, p }};
 }

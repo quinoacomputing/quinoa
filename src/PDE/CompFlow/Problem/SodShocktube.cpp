@@ -69,7 +69,7 @@ CompFlowProblemSodShocktube::initialize( ncomp_t,
     w = 0.0;
   }
   // total specific energy
-  rE = mat_blk[0].eosCall< EOS::totalenergy >( r, u, v, w, p );
+  rE = mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }

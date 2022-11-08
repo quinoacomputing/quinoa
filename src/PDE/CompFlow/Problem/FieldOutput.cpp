@@ -88,7 +88,7 @@ CompFlowFieldOutput( ncomp_t,
 
   std::vector< tk::real > P( nunk, 0.0 );
   for (std::size_t i=0; i<nunk; ++i) {
-    P[i] = mat_blk[0].eosCall< EOS::pressure >( r[i], u[i], v[i], w[i],
+    P[i] = mat_blk[0].compute< EOS::pressure >( r[i], u[i], v[i], w[i],
       r[i]*E[i] );
   }
   out.push_back( P );
@@ -149,7 +149,7 @@ CompFlowSurfOutput( ncomp_t,
       out[i+2][j] = u[2]/u[0];
       out[i+3][j] = u[3]/u[0];
       out[i+4][j] = u[4]/u[0];
-      out[i+5][j] = mat_blk[0].eosCall< EOS::pressure >( u[0], u[1]/u[0],
+      out[i+5][j] = mat_blk[0].compute< EOS::pressure >( u[0], u[1]/u[0],
         u[2]/u[0], u[3]/u[0], u[4] );
       ++j;
     }
@@ -209,7 +209,7 @@ CompFlowHistOutput( ncomp_t,
       out[j][2] += n[i] * u[2]/u[0];
       out[j][3] += n[i] * u[3]/u[0];
       out[j][4] += n[i] * u[4]/u[0];
-      out[j][5] += n[i] * mat_blk[0].eosCall< EOS::pressure >( u[0], u[1]/u[0],
+      out[j][5] += n[i] * mat_blk[0].compute< EOS::pressure >( u[0], u[1]/u[0],
         u[2]/u[0], u[3]/u[0], u[4] );
     }
     ++j;

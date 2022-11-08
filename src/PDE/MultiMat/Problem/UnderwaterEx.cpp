@@ -99,12 +99,12 @@ MultiMatProblemUnderwaterEx::initialize( ncomp_t system,
   for (std::size_t k=0; k<nmat; ++k)
   {
     // densities
-    r[k] = mat_blk[k].eosCall< EOS::density >( p, temp );
+    r[k] = mat_blk[k].compute< EOS::density >( p, temp );
     // partial density
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r[k];
     // total specific energy
     s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
-      mat_blk[k].eosCall< EOS::totalenergy >( r[k], u, v, w, p );
+      mat_blk[k].compute< EOS::totalenergy >( r[k], u, v, w, p );
     rb += s[densityIdx(nmat, k)];
   }
 

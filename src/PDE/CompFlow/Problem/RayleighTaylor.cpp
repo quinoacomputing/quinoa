@@ -66,7 +66,7 @@ CompFlowProblemRayleighTaylor::initialize( ncomp_t system,
   const tk::real v = ft*z*cos(M_PI*y);
   const tk::real w = ft*(-0.5*M_PI*z*z*(cos(M_PI*x)-sin(M_PI*y)));
   // total specific energy
-  const tk::real rE = mat_blk[0].eosCall< EOS::totalenergy >( r, u, v, w, p );
+  const tk::real rE = mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -113,7 +113,7 @@ CompFlowProblemRayleighTaylor::analyticSolution( ncomp_t system,
   auto v = ft*z*cos(M_PI*y);
   auto w = ft*(-0.5*M_PI*z*z*(cos(M_PI*x)-sin(M_PI*y)));
   // total specific energy
-  auto E = mat_blk[0].eosCall< EOS::totalenergy >( r, u, v, w, p ) / r;
+  auto E = mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p ) / r;
 
   return {{ r, u, v, w, E, p }};
 }

@@ -269,7 +269,7 @@ class MultiMat {
           tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0));
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0));
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
-            m_mat_blk[k].eosCall< EOS::pressure >( arhomat, vel[0], vel[1],
+            m_mat_blk[k].compute< EOS::pressure >( arhomat, vel[0], vel[1],
             vel[2], arhoemat, alphamat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             constrain_pressure( m_mat_blk,
@@ -831,7 +831,7 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].eosCall< EOS::pressure >(
+        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
           ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );

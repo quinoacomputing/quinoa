@@ -77,9 +77,9 @@ MultiMatProblemEquilInterfaceAdvect::initialize( ncomp_t system,
   s[densityIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*r;
   // total specific energy
   s[energyIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*
-    mat_blk[0].eosCall< EOS::totalenergy >( r, u, v, w, p );
+    mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p );
   s[energyIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*
-    mat_blk[1].eosCall< EOS::totalenergy >( r, u, v, w, p );
+    mat_blk[1].compute< EOS::totalenergy >( r, u, v, w, p );
   // momentum
   s[momentumIdx(nmat, 0)] = r*u;
   s[momentumIdx(nmat, 1)] = r*v;

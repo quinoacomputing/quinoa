@@ -45,7 +45,7 @@ class EOS {
       std::size_t system,
       std::size_t k );
 
-    //! Entry method tags for specific EOS classes to use with eosCall()
+    //! Entry method tags for specific EOS classes to use with compute()
     struct density {};
     struct pressure {};
     struct soundspeed {};
@@ -59,7 +59,7 @@ class EOS {
     //! \details This function issues a call to a member function of the
     //!   EOS vector and is thus equivalent to mat_blk[imat].Fn(...).
     template< typename Fn, typename... Args >
-    tk::real eosCall( Args&&... args ) const {
+    tk::real compute( Args&&... args ) const {
       return std::visit( [&]( const auto& m )-> tk::real {
           if constexpr( std::is_same_v< Fn, density > )
             return m.density( std::forward< Args >( args )... );

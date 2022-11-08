@@ -618,9 +618,9 @@ class CompFlow {
           v = ugp[0][2]/rho;
           w = ugp[0][3]/rho;
           rhoE = ugp[0][4];
-          p = m_mat_blk[0].eosCall< EOS::pressure >( rho, u, v, w, rhoE );
+          p = m_mat_blk[0].compute< EOS::pressure >( rho, u, v, w, rhoE );
 
-          a = m_mat_blk[0].eosCall< EOS::soundspeed >( rho, p );
+          a = m_mat_blk[0].compute< EOS::soundspeed >( rho, p );
 
           vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
@@ -677,8 +677,8 @@ class CompFlow {
             v = ugp[1][2]/rho;
             w = ugp[1][3]/rho;
             rhoE = ugp[1][4];
-            p = m_mat_blk[0].eosCall< EOS::pressure >( rho, u, v, w, rhoE );
-            a = m_mat_blk[0].eosCall< EOS::soundspeed >( rho, p );
+            p = m_mat_blk[0].compute< EOS::pressure >( rho, u, v, w, rhoE );
+            a = m_mat_blk[0].compute< EOS::soundspeed >( rho, p );
 
             vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
@@ -803,7 +803,7 @@ class CompFlow {
         Up[j][2] = uhp[2]/uhp[0];
         Up[j][3] = uhp[3]/uhp[0];
         Up[j][4] = uhp[4]/uhp[0];
-        Up[j][5] = m_mat_blk[0].eosCall< EOS::pressure >( uhp[0], uhp[1]/uhp[0],
+        Up[j][5] = m_mat_blk[0].compute< EOS::pressure >( uhp[0], uhp[1]/uhp[0],
           uhp[2]/uhp[0], uhp[3]/uhp[0], uhp[4] );
         ++j;
       }
@@ -883,7 +883,7 @@ class CompFlow {
       auto u = ugp[1] / ugp[0];
       auto v = ugp[2] / ugp[0];
       auto w = ugp[3] / ugp[0];
-      auto p = mat_blk[0].eosCall< EOS::pressure >( ugp[0], u, v, w, ugp[4] );
+      auto p = mat_blk[0].compute< EOS::pressure >( ugp[0], u, v, w, ugp[4] );
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
@@ -987,7 +987,7 @@ class CompFlow {
                                    tag::farfield_velocity >()[ system ];
 
       // Speed of sound from farfield
-      auto fa = mat_blk[0].eosCall< EOS::soundspeed >( frho, fp );
+      auto fa = mat_blk[0].compute< EOS::soundspeed >( frho, fp );
 
       // Normal component from farfield
       auto fvn = fu[0]*fn[0] + fu[1]*fn[1] + fu[2]*fn[2];
@@ -996,11 +996,11 @@ class CompFlow {
       auto fM = fvn / fa;
 
       // Specific total energy from farfield
-      auto frhoE = mat_blk[0].eosCall< EOS::totalenergy >( frho, fu[0], fu[1],
+      auto frhoE = mat_blk[0].compute< EOS::totalenergy >( frho, fu[0], fu[1],
         fu[2], fp );
 
       // Pressure from internal cell
-      auto p = mat_blk[0].eosCall< EOS::pressure >( ul[0], ul[1]/ul[0],
+      auto p = mat_blk[0].compute< EOS::pressure >( ul[0], ul[1]/ul[0],
         ul[2]/ul[0], ul[3]/ul[0], ul[4] );
 
       auto ur = ul;
@@ -1025,7 +1025,7 @@ class CompFlow {
         ur[1] = frho * fu[0];
         ur[2] = frho * fu[1];
         ur[3] = frho * fu[2];
-        ur[4] = mat_blk[0].eosCall< EOS::totalenergy >( frho, fu[0], fu[1],
+        ur[4] = mat_blk[0].compute< EOS::totalenergy >( frho, fu[0], fu[1],
           fu[2], p );
       } else if(fM >= 0 && fM < 1)       // Subsonic outflow
       {
@@ -1033,7 +1033,7 @@ class CompFlow {
         // outgoing characteristic. Therefore, we calculate the ghost cell state
         // by taking pressure from the outside and other quantities from the
         // internal cell.
-        ur[4] = mat_blk[0].eosCall< EOS::totalenergy >( ul[0], ul[1]/ul[0],
+        ur[4] = mat_blk[0].compute< EOS::totalenergy >( ul[0], ul[1]/ul[0],
           ul[2]/ul[0], ul[3]/ul[0], fp );
       }
       // Otherwise, for supersonic outflow, all the characteristics are from

@@ -65,7 +65,7 @@ MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
     p = 1.0e9;
     // densities
     for (std::size_t k=0; k<nmat; ++k)
-      r[k] = mat_blk[k].eosCall< EOS::density >( p, 494.646 );
+      r[k] = mat_blk[k].compute< EOS::density >( p, 494.646 );
     // velocity
     u = 0.0;
     v = 0.0;
@@ -79,7 +79,7 @@ MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
     p = 1.0e5;
     // densities
     for (std::size_t k=0; k<nmat; ++k)
-      r[k] = mat_blk[k].eosCall< EOS::density >( p, 34.844 );
+      r[k] = mat_blk[k].compute< EOS::density >( p, 34.844 );
     // velocity
     u = 0.0;
     v = 0.0;
@@ -91,7 +91,7 @@ MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r[k];
     // total specific energy
     s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
-      mat_blk[k].eosCall< EOS::totalenergy >( r[k], u, v, w, p );
+      mat_blk[k].compute< EOS::totalenergy >( r[k], u, v, w, p );
   }
 
   return s;

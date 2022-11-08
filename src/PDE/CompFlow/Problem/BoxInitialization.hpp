@@ -84,7 +84,7 @@ void initializeBox( std::size_t,
       rw = rho * boxvel[2];
     }
     if (boxpre > 0.0) {
-      re = mat_blk[0].eosCall< EOS::totalenergy >( rho, ru/rho, rv/rho, rw/rho,
+      re = mat_blk[0].compute< EOS::totalenergy >( rho, ru/rho, rv/rho, rw/rho,
         boxpre );
     }
     if (boxene > 0.0) {
@@ -138,7 +138,7 @@ void initializeBox( std::size_t,
     // separately. This is not currently supported.
     if (bgpreic > 0.0) {
       // energy based on box density and background pressure
-      spi = mat_blk[0].eosCall< EOS::totalenergy >(rho, u, v, w, bgpreic) / rho;
+      spi = mat_blk[0].compute< EOS::totalenergy >(rho, u, v, w, bgpreic) / rho;
     } else Throw( "Background pressure must be specified for box-IC "
                   "with linear propagating source");
 

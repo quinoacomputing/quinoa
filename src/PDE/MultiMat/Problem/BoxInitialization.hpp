@@ -105,18 +105,18 @@ void initializeBox( std::size_t system,
           "specified for IC with linear propagating source");
 
       pr = bgpreic;
-      auto te = mat_blk[boxmatid].eosCall< EOS::totalenergy >(
+      auto te = mat_blk[boxmatid].compute< EOS::totalenergy >(
         rhok[boxmatid], u, v, w, pr);
-      tmp = mat_blk[boxmatid].eosCall< EOS::temperature >(
+      tmp = mat_blk[boxmatid].compute< EOS::temperature >(
         boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*te, boxmat_vf );
     }
     // For initiate type 'impulse', pressure and temperature are determined from
     // energy content that needs to be dumped into the box at IC.
     else if (inittype == ctr::InitiateType::IMPULSE) {
-      pr = mat_blk[boxmatid].eosCall< EOS::pressure >(
+      pr = mat_blk[boxmatid].compute< EOS::pressure >(
         boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*rhok[boxmatid]*spi,
         boxmat_vf );
-      tmp = mat_blk[boxmatid].eosCall< EOS::temperature >(
+      tmp = mat_blk[boxmatid].compute< EOS::temperature >(
         boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*rhok[boxmatid]*spi,
         boxmat_vf );
     }
@@ -125,14 +125,14 @@ void initializeBox( std::size_t system,
     // find density of trace material quantities in the box based on pressure
     for (std::size_t k=0; k<nmat; ++k) {
       if (k != boxmatid) {
-        rhok[k] = mat_blk[k].eosCall< EOS::density >(pr, tmp);
+        rhok[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
       }
     }
   }
   // 2. User-specified temperature, pressure and velocity in box
   else {
     for (std::size_t k=0; k<nmat; ++k) {
-      rhok[k] = mat_blk[k].eosCall< EOS::density >(boxpre, boxtemp);
+      rhok[k] = mat_blk[k].compute< EOS::density >(boxpre, boxtemp);
     }
     if (boxvel.size() == 3) {
       u = boxvel[0];
@@ -160,7 +160,7 @@ void initializeBox( std::size_t system,
     }
     else {
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-        mat_blk[k].eosCall< EOS::totalenergy >( rhok[k], u, v, w, pr );
+        mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr );
     }
   }
   // bulk momentum

@@ -86,10 +86,10 @@ MultiMatProblemInterfaceAdvection::initialize( ncomp_t system,
   auto rhob = 0.0;
   for (std::size_t k=0; k<nmat; ++k)
   {
-    auto rhok = mat_blk[k].eosCall< EOS::density >( 1.0e5, 300.0 );
+    auto rhok = mat_blk[k].compute< EOS::density >( 1.0e5, 300.0 );
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)] * rhok;
     s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]
-      * mat_blk[k].eosCall< EOS::totalenergy >( rhok, u, v, w, 1.0e5 );
+      * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, 1.0e5 );
     rhob += s[densityIdx(nmat, k)];
   }
   s[momentumIdx(nmat, 0)] = rhob * u;

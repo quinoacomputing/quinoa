@@ -81,12 +81,12 @@ MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t system, ncomp_t ncomp,
   auto rb = 0.0;
   for (std::size_t k=0; k<nmat; ++k) {
     // density
-    auto r = mat_blk[k].eosCall< EOS::density >(p, T);
+    auto r = mat_blk[k].compute< EOS::density >(p, T);
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r;
     rb += s[densityIdx(nmat, k)];
     // total specific energy
     s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
-      mat_blk[k].eosCall< EOS::totalenergy >( r, u, v, w, p );
+      mat_blk[k].compute< EOS::totalenergy >( r, u, v, w, p );
   }
   // momentum
   s[momentumIdx(nmat, 0)] = rb*u;

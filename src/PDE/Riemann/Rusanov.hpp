@@ -82,8 +82,8 @@ struct Rusanov {
     auto vr = rvR/rR - w2R;
     auto wr = rwR/rR - w3R;
 
-    auto al = mat_blk[0].eosCall< EOS::soundspeed >( rL, pL );
-    auto ar = mat_blk[0].eosCall< EOS::soundspeed >( rR, pR );
+    auto al = mat_blk[0].compute< EOS::soundspeed >( rL, pL );
+    auto ar = mat_blk[0].compute< EOS::soundspeed >( rR, pR );
 
     // dissipation
     real len = tk::length( {mx,my,mz} );

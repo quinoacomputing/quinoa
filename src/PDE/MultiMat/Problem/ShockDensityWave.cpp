@@ -100,7 +100,7 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t system,
 
     // total specific energy
     s[energyIdx(nmat, imat)] = s[volfracIdx(nmat, imat)]*
-      mat_blk[imat].eosCall< EOS::totalenergy >( r, u, v, w, p );
+      mat_blk[imat].compute< EOS::totalenergy >( r, u, v, w, p );
 
     rb += s[densityIdx(nmat, imat)];
   }

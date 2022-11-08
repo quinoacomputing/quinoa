@@ -133,7 +133,7 @@ namespace inciter {
     tk::real a(0.0);
     for (std::size_t k=0; k<nmat; ++k)
       if (ul[volfracIdx(nmat, k)] > 1.0e-04)
-        a = std::max( a, mat_blk[k].eosCall< EOS::soundspeed >(
+        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ul[densityIdx(nmat, k)], ul[ncomp+pressureIdx(nmat, k)],
           ul[volfracIdx(nmat, k)] ) );
 
@@ -143,7 +143,7 @@ namespace inciter {
     if(Ma >= 0 && Ma < 1) {         // Subsonic outflow
       for (std::size_t k=0; k<nmat; ++k)
         ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
-        mat_blk[k].eosCall< EOS::totalenergy >(
+        mat_blk[k].compute< EOS::totalenergy >(
           ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
 
       // Internal cell primitive quantities using the separately reconstructed

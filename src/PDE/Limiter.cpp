@@ -1866,7 +1866,7 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
-        auto min_pre = mat_blk[imat].eosCall< EOS::min_eff_pressure >(min);
+        auto min_pre = mat_blk[imat].compute< EOS::min_eff_pressure >(min);
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
@@ -1915,7 +1915,7 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
-        auto min_pre = mat_blk[imat].eosCall< EOS::min_eff_pressure >(min);
+        auto min_pre = mat_blk[imat].compute< EOS::min_eff_pressure >(min);
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
@@ -2276,7 +2276,7 @@ correctLimConservMultiMat(
         auto alphamat = U[volfracIdx(nmat, imat)];
         auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
         auto premat = P[pressureIdx(nmat, imat)]/alphamat;
-        s[imat] = alphamat * mat_blk[imat].eosCall< EOS::totalenergy >( rhomat,
+        s[imat] = alphamat * mat_blk[imat].compute< EOS::totalenergy >( rhomat,
           vel[0], vel[1], vel[2], premat );
       }
 
@@ -2321,7 +2321,7 @@ tk::real constrain_pressure( const std::vector< EOS >& mat_blk,
   tk::real alpha=1.0,
   std::size_t imat=0 )
 {
-  return std::max(apr, alpha*mat_blk[imat].eosCall<
+  return std::max(apr, alpha*mat_blk[imat].compute<
     EOS::min_eff_pressure >(1e-12));
 }
 

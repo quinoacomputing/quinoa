@@ -78,13 +78,13 @@ MultiMatProblemUserDefined::initialize( ncomp_t system,
   auto rb = 0.0;
   for (std::size_t k=0; k<nmat; ++k) {
     // density
-    auto rhok = mat_blk[k].eosCall< EOS::density >(bgpreic[system][0],
+    auto rhok = mat_blk[k].compute< EOS::density >(bgpreic[system][0],
       bgtempic[system][0]);
     // partial density
     s[densityIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok;
     // total specific energy
     s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-      mat_blk[k].eosCall< EOS::totalenergy >(rhok, u, v, w, bgpreic[system][0]);
+      mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, bgpreic[system][0]);
     // bulk density
     rb += s[densityIdx(nmat,k)];
   }

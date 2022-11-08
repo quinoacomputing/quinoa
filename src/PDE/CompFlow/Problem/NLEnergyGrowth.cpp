@@ -142,7 +142,7 @@ CompFlowProblemNLEnergyGrowth::analyticSolution( ncomp_t system,
   // energy
   auto re = r*ec(ce,k,t,h,-1.0/3.0);
   // pressure
-  auto p = mat_blk[0].eosCall< EOS::pressure >( r, 0.0, 0.0, 0.0, re );
+  auto p = mat_blk[0].compute< EOS::pressure >( r, 0.0, 0.0, 0.0, re );
 
   return {{ r, 0.0, 0.0, 0.0, re/r, p }};
 }
