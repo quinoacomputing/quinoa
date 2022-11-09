@@ -7,7 +7,8 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Compressible multi-material flow using finite volumes
   \details   This file implements calls to the physics operators governing
-    compressible multi-material flow using finite volume discretizations.
+    compressible multi-material flow (with velocity equilibrium) using finite
+    volume discretizations.
 */
 // *****************************************************************************
 #ifndef FVMultiMat_h
@@ -54,8 +55,7 @@ namespace fv {
 //!   the behavior of the class. The policies are:
 //!   - Physics - physics configuration, see PDE/MultiMat/Physics.h
 //!   - Problem - problem configuration, see PDE/MultiMat/Problem.h
-//! \note The default physics is velocity equilibrium (veleq), set in
-//!   inciter::deck::check_multimat()
+//! \note The default physics is Euler, set in inciter::deck::check_multimat()
 template< class Physics, class Problem >
 class MultiMat {
 

@@ -8,8 +8,8 @@
   \brief     Compressible multi-material flow using discontinuous Galerkin
     finite elements
   \details   This file implements calls to the physics operators governing
-    compressible multi-material flow using discontinuous Galerkin
-    discretizations.
+    compressible multi-material flow (with velocity equilibrium) using
+    discontinuous Galerkin discretizations.
 */
 // *****************************************************************************
 #ifndef DGMultiMat_h
@@ -57,8 +57,7 @@ namespace dg {
 //!   the behavior of the class. The policies are:
 //!   - Physics - physics configuration, see PDE/MultiMat/Physics.h
 //!   - Problem - problem configuration, see PDE/MultiMat/Problem.h
-//! \note The default physics is velocity equilibrium (veleq), set in
-//!   inciter::deck::check_multimat()
+//! \note The default physics is Euler, set in inciter::deck::check_multimat()
 template< class Physics, class Problem >
 class MultiMat {
 

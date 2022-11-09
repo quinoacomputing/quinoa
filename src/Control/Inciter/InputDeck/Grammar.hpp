@@ -512,10 +512,10 @@ namespace grm {
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
 
-      // If physics type is not given, default to 'veleq'
+      // If physics type is not given, default to 'euler'
       auto& physics = stack.template get< param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
-        physics.push_back( inciter::ctr::PhysicsType::VELEQ );
+        physics.push_back( inciter::ctr::PhysicsType::EULER );
 
       // Set default flux to AUSM if not specified
       auto& flux = stack.template get< tag::param, eq, tag::flux >();
@@ -525,9 +525,9 @@ namespace grm {
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
-      if (physics.back() == inciter::ctr::PhysicsType::VELEQ ||
+      if (physics.back() == inciter::ctr::PhysicsType::EULER ||
         physics.back() == inciter::ctr::PhysicsType::ENERGYPILL) {
-        // physics = veleq/energy pill: m-material compressible flow
+        // physics = euler/energy pill: m-material compressible flow
         // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
         if (nmat.empty() || nmat.size() != neq.get< eq >()) {

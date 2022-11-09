@@ -17,7 +17,7 @@
       policy option. Example:
       \code{.cpp}
         static ctr::PhysicsType type() noexcept {
-          return ctr::PhysicsType::VELEQ;
+          return ctr::PhysicsType::EULER;
         }
       \endcode
       which returns the enum value of the option from the underlying option
@@ -29,14 +29,14 @@
 
 #include <brigand/sequences/list.hpp>
 
-#include "DGVelEq.hpp"
+#include "DGEuler.hpp"
 #include "FVEnergyPill.hpp"
 
 namespace inciter {
 namespace fv {
 
 //! MultiMat Physics policies implemented using discontinuous Galerkin
-using MultiMatPhysics = brigand::list< inciter::dg::MultiMatPhysicsVelEq
+using MultiMatPhysics = brigand::list< inciter::dg::MultiMatPhysicsEuler
                                      , MultiMatPhysicsEnergyPill
                                      >;
 

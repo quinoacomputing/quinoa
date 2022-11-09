@@ -1076,8 +1076,8 @@ multi-material compressible flow physics:
 Physics configuration:
 - @subpage inciter_newpde_dg_h -
   list of all MultiMat DG physics policies
-- @subpage inciter_newpde_dgveleq_h -
-  a new physics policy specific to velocity equilibrium
+- @subpage inciter_newpde_dgeuler_h -
+  a new physics policy for inviscid multi-material policy
 
 Problem configuration:
 - @subpage inciter_newpde_userdefined_h -

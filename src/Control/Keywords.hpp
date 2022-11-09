@@ -804,7 +804,7 @@ struct nmat_info {
     "Set number of materials for a system of differential equations"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the number of materials, e.g., for
-    multi-material flow, see also the keyword 'multimat' and 'veleq'.)";
+    multi-material flow, see also the keyword 'multimat'.)";
   }
   struct expect {
     using type = std::size_t;
@@ -2642,21 +2642,6 @@ struct euler_info {
 };
 using euler = keyword< euler_info, TAOCPP_PEGTL_STRING("euler") >;
 
-struct veleq_info {
-  static std::string name() { return "Velocity equilibrium"; }
-  static std::string shortDescription() { return "Specify the multi-material "
-    " compressible flow with velocity equilibrium as physics configuration"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select a compressible flow algorithm as physics
-    configuration designed for multiple materials assuming velocity equailibrium
-    (single velocity). Example: "multimat physics veleq end")";
-    }
-  struct expect {
-    static std::string description() { return "string"; }
-  };
-};
-using veleq = keyword< veleq_info, TAOCPP_PEGTL_STRING("veleq") >;
-
 struct energy_pill_info {
   static std::string name() { return "Energy pill initialization"; }
   static std::string shortDescription() { return "Specify the multi-material "
@@ -3687,7 +3672,8 @@ struct multimat_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce the multimat ... end block,
     used to specify the configuration for a system of partial differential
-    equations, governing multi-material compressible fluid flow. Keywords
+    equations, governing multi-material compressible fluid flow assuming
+    velocity equailibrium (single velocity). Keywords
     allowed in a multimat ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + physics::string() + "\', \'"
