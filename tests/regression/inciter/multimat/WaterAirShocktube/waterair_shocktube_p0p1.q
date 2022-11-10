@@ -19,7 +19,7 @@ inciter
 
   multimat
 
-    physics veleq
+    physics euler
     problem waterair_shocktube
     depvar u
 

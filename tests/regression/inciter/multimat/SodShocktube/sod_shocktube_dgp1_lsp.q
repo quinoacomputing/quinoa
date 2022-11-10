@@ -20,7 +20,7 @@ inciter
 
   multimat
 
-    physics veleq
+    physics euler
     problem sod_shocktube
     depvar u
 
