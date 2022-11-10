@@ -3519,14 +3519,14 @@ struct rhor_jwl_info {
 };
 using rhor_jwl = keyword< rhor_jwl_info, TAOCPP_PEGTL_STRING("rhor_jwl") >;
 
-struct er_jwl_info {
-  static std::string name() { return "er_jwl"; }
+struct Pr_jwl_info {
+  static std::string name() { return "Pr_jwl"; }
   static std::string shortDescription() { return "JWL EoS er parameter"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the material property er, which is the
-      specific energy of the reference state (units: J/kg) for the
-      Jones-Wilkins-Lee equation of state. It is used to calculate the reference
-      temperature for the EoS.)";
+    R"(This keyword is used to specify the material property Pr, which is the
+      pressure at the reference state (units: Pa) for the Jones-Wilkins-Lee
+      equation of state. It is used to calculate the reference temperature for
+      the EoS.)";
   }
   struct expect {
     using type = tk::real;
@@ -3534,7 +3534,7 @@ struct er_jwl_info {
     static std::string description() { return "real"; }
   };
 };
-using er_jwl = keyword< er_jwl_info, TAOCPP_PEGTL_STRING("er_jwl") >;
+using Pr_jwl = keyword< Pr_jwl_info, TAOCPP_PEGTL_STRING("Pr_jwl") >;
 
 struct stiffenedgas_info {
   static std::string name() { return "Stiffened gas"; }
@@ -3593,7 +3593,7 @@ struct material_info {
     + rho0_jwl::string()+ "\', \'"
     + de_jwl::string()+ "\', \'"
     + rhor_jwl::string()+ "\', \'"
-    + er_jwl::string()+ "\', \'"
+    + Pr_jwl::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"
     + mat_k::string() + "\'. "

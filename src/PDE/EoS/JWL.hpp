@@ -21,7 +21,7 @@ namespace inciter {
 class JWL {
 
   private:
-    tk::real m_w, m_cv, m_rho0, m_de, m_rhor, m_er, m_a, m_b, m_r1, m_r2, m_tr;
+    tk::real m_w, m_cv, m_rho0, m_de, m_rhor, m_pr, m_a, m_b, m_r1, m_r2, m_tr;
 
     //! Calculate specific internal energy
     tk::real intEnergy( tk::real rho, tk::real pr ) const;
@@ -91,7 +91,7 @@ class JWL {
       p | m_rho0;
       p | m_de;
       p | m_rhor;
-      p | m_er;
+      p | m_pr;
       p | m_a;
       p | m_b;
       p | m_r1;
