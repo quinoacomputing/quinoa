@@ -1348,12 +1348,13 @@ struct linear_info {
   static std::string shortDescription() { return
     "Select the linear initiation type, e.g., for a box IC"; }
   static std::string longDescription() { return
-    R"(This keyword can be used to select the 'linear' initiation/assignment
-    type for box initial conditions. Linear initiation uses a linear function
-    in time and space, configured with an initiation point in space, a constant
-    velocity of the growing spherical front in time (and space) linearly, and
-    width of the front and assigns values to mesh points falling within the
-    growing spherical shell inside a configured box.)"; }
+    R"(This keyword is be used to specify the 'linear' initiation parameters
+    for a particular box or meshblock, as a part of the 'energy_pill'
+    initialization. Linear initiation uses a linear function in time and space,
+    configured with an initiation point in space, a constant velocity of the
+    growing spherical front in time (and space) linearly, and width of the front
+    and assigns values to mesh points falling within the growing spherical shell
+    inside a configured box or meshblock.)"; }
 };
 using linear = keyword< linear_info, TAOCPP_PEGTL_STRING("linear") >;
 
@@ -2649,7 +2650,9 @@ struct energy_pill_info {
   static std::string longDescription() { return
     R"(This keyword is used to select an energy pill initialization as physics
     configuration for multiple material compressible flow. Example:
-    "multimat physics energy_pill end")";
+    "multimat physics energy_pill end". Parameters for the linearly traveling
+    front are required to be specified when energy_pill is selected. See
+    'linear' for more details.)";
     }
   struct expect {
     static std::string description() { return "string"; }
