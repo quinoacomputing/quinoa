@@ -65,8 +65,8 @@ JWL::density(
 //! \return Material density calculated using the stiffened-gas EoS
 // *************************************************************************
 {
-  tk::real r_guessL = 1e-2*m_rhor;  // left density bound
-  tk::real r_guessR = 1e2*m_rhor;   // right density bound
+  tk::real r_guessL = 1e-4*m_rho0;  // left density bound
+  tk::real r_guessR = 1e2*m_rho0;   // right density bound
   tk::real rho;
 
   rho = bisection( r_guessL, r_guessR, pr, temp );
@@ -290,6 +290,8 @@ JWL::bisection(
   tk::real c;
   tk::real root(0);
   std::size_t idebug = 0;
+  auto a_o = a;
+  auto b_o = b;
 
   // function to minimize: fcn = p_known - PfromRT
   // bounds b > a
@@ -324,8 +326,13 @@ JWL::bisection(
 
     if ( i == maxiter )
     {
-      Throw("JWL Bisection for density failed to converge after iterations"
+      Throw("JWL Bisection for density failed to converge after iterations "
       + std::to_string(i));
+    }
+    if (std::abs(root-a_o) < 1e-16 || std::abs(root-b_o) < 1e-16)
+    {
+      Throw("JWL bisection for density resulted in left/right bound as "
+      "solution. Extend bounds for correctness");
     }
 
   }
