@@ -135,7 +135,7 @@ namespace inciter {
       if (ul[volfracIdx(nmat, k)] > 1.0e-04)
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ul[densityIdx(nmat, k)], ul[ncomp+pressureIdx(nmat, k)],
-          ul[volfracIdx(nmat, k)] ) );
+          ul[volfracIdx(nmat, k)], k ) );
 
     // Mach number
     auto Ma = vn / a;

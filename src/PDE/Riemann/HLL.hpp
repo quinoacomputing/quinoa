@@ -64,14 +64,14 @@ struct HLL {
       pl += pml[k];
       hml[k] = u[0][energyIdx(nmat, k)] + pml[k];
       amatl = mat_blk[k].compute< EOS::soundspeed >(
-        u[0][densityIdx(nmat, k)], pml[k], al_l[k] );
+        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k );
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
       pr += pmr[k];
       hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
       amatr = mat_blk[k].compute< EOS::soundspeed >(
-        u[1][densityIdx(nmat, k)], pmr[k], al_r[k] );
+        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k );
 
       // Mixture speed of sound
       ac_l += u[0][densityIdx(nmat, k)] * amatl * amatl;

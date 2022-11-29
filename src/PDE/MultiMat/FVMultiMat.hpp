@@ -270,7 +270,7 @@ class MultiMat {
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0));
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             m_mat_blk[k].compute< EOS::pressure >( arhomat, vel[0], vel[1],
-            vel[2], arhoemat, alphamat );
+            vel[2], arhoemat, alphamat, k );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             constrain_pressure( m_mat_blk,
             prim(e, pressureDofIdx(nmat, k, rdof, 0)), alphamat, k);
@@ -834,7 +834,7 @@ class MultiMat {
         ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

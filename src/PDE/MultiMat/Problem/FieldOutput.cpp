@@ -136,7 +136,7 @@ MultiMatFieldOutput(
       mat_blk[k].compute< EOS::soundspeed >(
         std::max(1e-16, U(i, densityDofIdx(nmat,k,rdof,0))),
         P(i, pressureDofIdx(nmat,k,rdof,0)),
-        U(i, volfracDofIdx(nmat,k,rdof,0)) );
+        U(i, volfracDofIdx(nmat,k,rdof,0)), k );
     }
   }
 

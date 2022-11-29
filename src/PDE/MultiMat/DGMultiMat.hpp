@@ -359,7 +359,7 @@ class MultiMat {
             auto arhoemat = state[energyIdx(nmat, imat)];
             pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
-              alphamat );
+              alphamat, imat );
 
             pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
               pri[pressureIdx(nmat,imat)], alphamat, imat);
@@ -1058,7 +1058,7 @@ class MultiMat {
         ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

@@ -218,7 +218,7 @@ cleanTraceMultiMat(
       mat_blk[kmax].compute< EOS::pressure >(
       U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0)),
-      U(e, volfracDofIdx(nmat, kmax, rdof, 0)) );
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0)), kmax );
 
     // enforce unit sum of volume fractions
     auto alsum = 0.0;
@@ -370,7 +370,7 @@ timeStepSizeMultiMat(
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
-          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)] ) );
+          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k ) );
       }
     }
 
@@ -403,7 +403,7 @@ timeStepSizeMultiMat(
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
           a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
             ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-            ugp[volfracIdx(nmat, k)] ) );
+            ugp[volfracIdx(nmat, k)], k ) );
         }
       }
 
@@ -480,7 +480,7 @@ timeStepSizeMultiMatFV(
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-          ugp[volfracIdx(nmat, k)] ) );
+          ugp[volfracIdx(nmat, k)], k ) );
       }
     }
 

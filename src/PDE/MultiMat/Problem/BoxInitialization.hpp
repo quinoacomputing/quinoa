@@ -115,7 +115,7 @@ void initializeBox( std::size_t system,
     else if (inittype == ctr::InitiateType::IMPULSE) {
       pr = mat_blk[boxmatid].compute< EOS::pressure >(
         boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*rhok[boxmatid]*spi,
-        boxmat_vf );
+        boxmat_vf, boxmatid );
       tmp = mat_blk[boxmatid].compute< EOS::temperature >(
         boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*rhok[boxmatid]*spi,
         boxmat_vf );
