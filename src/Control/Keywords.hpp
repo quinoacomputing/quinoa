@@ -3054,8 +3054,10 @@ struct front_width_info {
   static std::string name() { return "front_width"; }
   static std::string shortDescription() { return "Specify a front_width"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the width of the front used in specifying
-    a mesh block or box IC.  Example specification: 'front_width 1.0e-5')";
+    R"(This keyword is used to specify the width of the propagating front for
+    a mesh block or box IC, with 'initiate linear' type. The suggested value of
+    the front width is about 4-5 times the mesh size inside the mesh block
+    or box.  Example specification: 'front_width 1.0e-5')";
   }
   struct expect {
     using type = tk::real;
