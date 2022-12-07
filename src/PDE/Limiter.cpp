@@ -1997,7 +1997,7 @@ void PositivityPreservingMultiMat_FV(
         {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
         {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
 
-      auto ng = 1;
+      std::size_t ng = 1;
 
       std::array< std::vector< tk::real >, 2 > coordgp;
       std::vector< tk::real > wgp;
@@ -2054,7 +2054,7 @@ void PositivityPreservingMultiMat_FV(
         {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
         {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
 
-      auto ng = 1;
+      std::size_t ng = 1;
 
       std::array< std::vector< tk::real >, 2 > coordgp;
       std::vector< tk::real > wgp;
