@@ -843,7 +843,6 @@ VertexBasedMultiMat_FV(
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< inciter::EOS >& mat_blk,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -900,11 +899,6 @@ VertexBasedMultiMat_FV(
       if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
         consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic, phip);
     }
-
-    // apply positivity preserving limiter
-    std::vector< tk::real > phic_p2, phip_p2;
-    PositivityLimitingMultiMat(nmat, mat_blk, rdof, rdof, e, inpoel,
-      coord, U, P, phic, phic_p2, phip, phip_p2);
 
     // apply limiter function
     for (std::size_t c=0; c<ncomp; ++c)
@@ -1866,7 +1860,9 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
-        auto min_pre = mat_blk[imat].compute< EOS::min_eff_pressure >(min);
+        auto min_pre = std::max(min, state[volfracIdx(nmat, imat)] *
+          mat_blk[imat].compute< EOS::min_eff_pressure >(min, rho,
+          state[volfracIdx(nmat, imat)]));
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
@@ -1915,7 +1911,9 @@ void PositivityLimitingMultiMat( std::size_t nmat,
         phic_bound[energyIdx(nmat, imat)] =
           std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
         // Evaluate the limiting coefficient for material pressure
-        auto min_pre = mat_blk[imat].compute< EOS::min_eff_pressure >(min);
+        auto min_pre = std::max(min, state[volfracIdx(nmat, imat)] *
+          mat_blk[imat].compute< EOS::min_eff_pressure >(min, rho,
+          state[volfracIdx(nmat, imat)]));
         auto pre = sprim[pressureIdx(nmat, imat)];
         auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
@@ -1935,6 +1933,167 @@ void PositivityLimitingMultiMat( std::size_t nmat,
     for(std::size_t icomp = pressureIdx(nmat, 0); icomp < pressureIdx(nmat, nmat);
         icomp++)
       phip_p2[icomp] = std::min( phip_bound[icomp], phip_p2[icomp] );
+  }
+}
+
+void PositivityPreservingMultiMat_FV(
+  const std::vector< std::size_t >& inpoel,
+  std::size_t nelem,
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& /*geoFace*/,
+  tk::Fields& U,
+  tk::Fields& P )
+// *****************************************************************************
+//  Positivity preserving limiter for the FV multi-material solver
+//! \param[in] inpoel Element connectivity
+//! \param[in] nelem Number of elements
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk Material EOS block
+//! \param[in] coord Array of nodal coordinates
+////! \param[in] geoFace Face geometry array
+//! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] P High-order vector of primitives which gets limited
+//! \details This positivity preserving limiter function should be called for
+//!   FV multimat.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ncomp = U.nprop() / rdof;
+  const auto nprim = P.nprop() / rdof;
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // Extract the element coordinates
+    std::array< std::array< tk::real, 3>, 4 > coordel {{
+      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+    // Compute the determinant of Jacobian matrix
+    auto detT =
+      tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+    std::vector< tk::real > phic(ncomp, 1.0);
+    std::vector< tk::real > phip(nprim, 1.0);
+
+    const tk::real min = 1e-15;
+
+    // 1. Enforce positive density and total energy
+    for (std::size_t lf=0; lf<4; ++lf)
+    {
+      std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
+                                               inpoel[4*e+tk::lpofa[lf][1]],
+                                               inpoel[4*e+tk::lpofa[lf][2]] }};
+
+      std::array< std::array< tk::real, 3>, 3 > coordfa {{
+        {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
+        {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
+        {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
+
+      auto ng = 1;
+
+      std::array< std::vector< tk::real >, 2 > coordgp;
+      std::vector< tk::real > wgp;
+
+      coordgp[0].resize( ng );
+      coordgp[1].resize( ng );
+      wgp.resize( ng );
+
+      tk::GaussQuadratureTri( ng, coordgp, wgp );
+      auto gp = tk::eval_gp( 0, coordfa, coordgp );
+      auto B = tk::eval_basis( rdof,
+            tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+      auto state = eval_state(ncomp, rdof, rdof, e, U, B, {0, ncomp-1});
+
+      for(std::size_t i=0; i<nmat; i++)
+      {
+        tk::real phi_rho(1.0), phi_rhoe(1.0);
+        // Evaluate the limiting coefficient for material density
+        auto rho = state[densityIdx(nmat, i)];
+        auto rho_avg = U(e, densityDofIdx(nmat, i, rdof, 0));
+        phi_rho = PositivityLimiting(min, rho, rho_avg);
+        phic[densityIdx(nmat, i)] =
+          std::min(phic[densityIdx(nmat, i)], phi_rho);
+        // Evaluate the limiting coefficient for material energy
+        auto rhoe = state[energyIdx(nmat, i)];
+        auto rhoe_avg = U(e, energyDofIdx(nmat, i, rdof, 0));
+        phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
+        phic[energyIdx(nmat, i)] =
+          std::min(phic[energyIdx(nmat, i)], phi_rhoe);
+      }
+    }
+    // apply limiter coefficient
+    for(std::size_t i=0; i<nmat; i++)
+    {
+      U(e, densityDofIdx(nmat,i,rdof,1)) *= phic[densityIdx(nmat,i)];
+      U(e, densityDofIdx(nmat,i,rdof,2)) *= phic[densityIdx(nmat,i)];
+      U(e, densityDofIdx(nmat,i,rdof,3)) *= phic[densityIdx(nmat,i)];
+      U(e, energyDofIdx(nmat,i,rdof,1)) *= phic[energyIdx(nmat,i)];
+      U(e, energyDofIdx(nmat,i,rdof,2)) *= phic[energyIdx(nmat,i)];
+      U(e, energyDofIdx(nmat,i,rdof,3)) *= phic[energyIdx(nmat,i)];
+    }
+
+    // 2. Enforce positive pressure (assuming density is positive)
+    for (std::size_t lf=0; lf<4; ++lf)
+    {
+      std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
+                                               inpoel[4*e+tk::lpofa[lf][1]],
+                                               inpoel[4*e+tk::lpofa[lf][2]] }};
+
+      std::array< std::array< tk::real, 3>, 3 > coordfa {{
+        {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
+        {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
+        {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
+
+      auto ng = 1;
+
+      std::array< std::vector< tk::real >, 2 > coordgp;
+      std::vector< tk::real > wgp;
+
+      coordgp[0].resize( ng );
+      coordgp[1].resize( ng );
+      wgp.resize( ng );
+
+      tk::GaussQuadratureTri( ng, coordgp, wgp );
+      auto gp = tk::eval_gp( 0, coordfa, coordgp );
+      auto B = tk::eval_basis( rdof,
+            tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+      auto state = eval_state(ncomp, rdof, rdof, e, U, B, {0, ncomp-1});
+      auto sprim = eval_state(nprim, rdof, rdof, e, P, B, {0, nprim-1});
+
+      for(std::size_t i=0; i<nmat; i++)
+      {
+        tk::real phi_pre(1.0);
+        // Evaluate the limiting coefficient for material pressure
+        auto rho = state[densityIdx(nmat, i)];
+        auto min_pre = std::max(min, state[volfracIdx(nmat, i)] *
+          mat_blk[i].compute< EOS::min_eff_pressure >(min, rho,
+          state[volfracIdx(nmat, i)]));
+        auto pre = sprim[pressureIdx(nmat, i)];
+        auto pre_avg = P(e, pressureDofIdx(nmat, i, rdof, 0));
+        phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
+        phip[pressureIdx(nmat, i)] =
+          std::min(phip[pressureIdx(nmat, i)], phi_pre);
+      }
+    }
+    // apply limiter coefficient
+    for(std::size_t i=0; i<nmat; i++)
+    {
+      P(e, pressureDofIdx(nmat,i,rdof,1)) *= phip[pressureIdx(nmat,i)];
+      P(e, pressureDofIdx(nmat,i,rdof,2)) *= phip[pressureIdx(nmat,i)];
+      P(e, pressureDofIdx(nmat,i,rdof,3)) *= phip[pressureIdx(nmat,i)];
+    }
   }
 }
 
@@ -2306,9 +2465,16 @@ correctLimConservMultiMat(
   }
 }
 
-
-//! Constrain material partial pressure (alpha_k * p_k)
+tk::real
+constrain_pressure( const std::vector< EOS >& mat_blk,
+  tk::real apr,
+  tk::real arho,
+  tk::real alpha=1.0,
+  std::size_t imat=0 )
+// *****************************************************************************
+//  Constrain material partial pressure (alpha_k * p_k)
 //! \param[in] apr Material partial pressure (alpha_k * p_k)
+//! \param[in] arho Material partial density (alpha_k * rho_k)
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for the
 //!   single-material system, this argument can be left unspecified by the
 //!   calling code
@@ -2316,13 +2482,10 @@ correctLimConservMultiMat(
 //!   for the single-material system, this argument can be left unspecified by
 //!   the calling code
 //! \return Constrained material partial pressure (alpha_k * p_k)
-tk::real constrain_pressure( const std::vector< EOS >& mat_blk,
-  tk::real apr,
-  tk::real alpha=1.0,
-  std::size_t imat=0 )
+// *****************************************************************************
 {
   return std::max(apr, alpha*mat_blk[imat].compute<
-    EOS::min_eff_pressure >(1e-12));
+    EOS::min_eff_pressure >(1e-12, arho, alpha));
 }
 
 

@@ -150,7 +150,6 @@ VertexBasedMultiMat_FV(
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t system,
-  const std::vector< EOS >& mat_blk,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -251,6 +250,17 @@ void PositivityLimitingMultiMat( std::size_t nmat,
                                  std::vector< tk::real >& phip_p1,
                                  std::vector< tk::real >& phip_p2 );
 
+//! Positivity preserving limiter for the FV multi-material solver
+void PositivityPreservingMultiMat_FV(
+  const std::vector< std::size_t >& inpoel,
+  std::size_t nelem,
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoFace,
+  tk::Fields& U,
+  tk::Fields& P );
+
 //! Positivity preserving limiter function
 tk::real
 PositivityLimiting( const tk::real min,
@@ -291,13 +301,13 @@ correctLimConservMultiMat(
   const tk::Fields& prim,
   tk::Fields& unk );
 
-
 //! Constrain material partial pressure (alpha_k * p_k)
-tk::real constrain_pressure( const std::vector< EOS >& mat_blk,
+tk::real
+constrain_pressure( const std::vector< EOS >& mat_blk,
   tk::real apr,
+  tk::real arho,
   tk::real alpha,
   std::size_t imat );
-
 
 } // inciter::
 

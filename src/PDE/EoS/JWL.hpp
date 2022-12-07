@@ -78,8 +78,11 @@ class JWL {
                           tk::real arhoE,
                           tk::real alpha=1.0 ) const;
 
-    //! Compute the minimum effective pressure
-    tk::real min_eff_pressure( tk::real min ) const;
+    //! Compute the minimum allowed pressure
+    tk::real min_eff_pressure(
+      tk::real min,
+      tk::real arho,
+      tk::real alpha ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

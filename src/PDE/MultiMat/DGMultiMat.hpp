@@ -362,7 +362,7 @@ class MultiMat {
               alphamat, imat );
 
             pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
-              pri[pressureIdx(nmat,imat)], alphamat, imat);
+              pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
           }
 
           // Evaluate bulk velocity at quadrature point

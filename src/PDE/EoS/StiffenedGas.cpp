@@ -197,14 +197,16 @@ StiffenedGas::temperature(
 }
 
 tk::real
-StiffenedGas::min_eff_pressure( tk::real min ) const
+StiffenedGas::min_eff_pressure(
+  tk::real min,
+  tk::real,
+  tk::real ) const
 // *************************************************************************
-//! Compute the minimum effective pressure
-//! \param[in] min Minimum threshold in positivity preserving limiting
-//! \return Minimum effective pressure
+//! Compute the minimum allowed pressure
+//! \param[in] min Numerical threshold above which pressure needs to be limited
+//! \return Minimum pressure allowed by physical constraints
 // *************************************************************************
 {
-  auto p_c = m_pstiff;
-
-  return (min - p_c);
+  // minimum pressure is constrained by zero soundspeed.
+  return (min - m_pstiff);
 }

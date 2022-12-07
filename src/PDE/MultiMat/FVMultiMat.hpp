@@ -273,7 +273,7 @@ class MultiMat {
             vel[2], arhoemat, alphamat, k );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             constrain_pressure( m_mat_blk,
-            prim(e, pressureDofIdx(nmat, k, rdof, 0)), alphamat, k);
+            prim(e, pressureDofIdx(nmat, k, rdof, 0)), arhomat, alphamat, k);
           for (std::size_t idof=1; idof<rdof; ++idof)
             prim(e, pressureDofIdx(nmat, k, rdof, idof)) = 0.0;
         }
@@ -377,14 +377,14 @@ class MultiMat {
     }
 
     //! Limit second-order solution, and primitive quantities separately
-//    //! \param[in] geoElem Element geometry array
+    //! \param[in] geoFace Face geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
-    void limit( const tk::Fields& /*geoElem*/,
+    void limit( const tk::Fields& geoFace,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -403,7 +403,9 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          m_system, m_mat_blk, coord, U, P, nmat );
+          m_system, coord, U, P, nmat );
+        PositivityPreservingMultiMat_FV( inpoel, fd.Esuel().size()/4, nmat,
+          m_mat_blk, coord, geoFace, U, P );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {

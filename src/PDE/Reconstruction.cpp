@@ -1060,10 +1060,12 @@ evalPolynomialSol( std::size_t system,
   if (state.size() > ncomp) {
     using inciter::pressureIdx;
     using inciter::volfracIdx;
+    using inciter::densityIdx;
 
     for (std::size_t k=0; k<nmat; ++k) {
       state[ncomp+pressureIdx(nmat,k)] = constrain_pressure( mat_blk,
-        state[ncomp+pressureIdx(nmat,k)], state[volfracIdx(nmat,k)], k );
+        state[ncomp+pressureIdx(nmat,k)], state[densityIdx(nmat,k)],
+        state[volfracIdx(nmat,k)], k );
     }
   }
 

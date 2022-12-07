@@ -167,8 +167,10 @@ JWL::soundspeed(
     std::cout << "Volume-fraction:  " << alpha << std::endl;
     std::cout << "Partial density:  " << arho << std::endl;
     std::cout << "Partial pressure: " << apr << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
-      + std::to_string(ss) + ", material volume fraction: " +
+    std::cout << "Min allowed pres: " << alpha*min_eff_pressure(0.0, arho,
+      alpha) << std::endl;
+    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed. "
+      "ss^2: " + std::to_string(ss) + ", material volume fraction: " +
       std::to_string(alpha));
   }
 
@@ -237,14 +239,29 @@ JWL::temperature(
 }
 
 tk::real
-JWL::min_eff_pressure( tk::real min ) const
+JWL::min_eff_pressure(
+  tk::real min,
+  tk::real arho,
+  tk::real alpha ) const
 // *************************************************************************
-//! Compute the minimum effective pressure
-//! \param[in] min Minimum threshold in positivity preserving limiting
-//! \return Minimum effective pressure
+//! Compute the minimum allowed pressure
+//! \param[in] min Numerical threshold above which pressure needs to be limited
+//! \param[in] arho Material partial density (alpha_k * rho_k)
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
+//!   the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \return Minimum pressure allowed by physical constraints
 // *************************************************************************
 {
-  return min;  // TBN: double check to make sure this is appropriate for JWL
+  auto co1 = m_rho0*alpha*alpha/(arho*arho);
+  auto co2 = alpha*(1.0+m_w)/arho;
+
+  // minimum pressure is constrained by zero soundspeed.
+  auto apr = -(m_a*(m_r1*co1 - co2) * exp(-m_r1*alpha*m_rho0/arho)
+             + m_b*(m_r2*co1 - co2) * exp(-m_r2*alpha*m_rho0/arho))
+    * arho/(1.0+m_w);
+
+  return apr/alpha + min;
 }
 
 tk::real

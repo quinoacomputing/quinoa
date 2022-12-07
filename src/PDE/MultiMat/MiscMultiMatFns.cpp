@@ -106,7 +106,7 @@ cleanTraceMultiMat(
     //  auto arhok = U(e, densityDofIdx(nmat,k,rdof,0));
     //  auto alk = U(e, volfracDofIdx(nmat,k,rdof,0));
     //  auto apk = P(e, pressureDofIdx(nmat,k,rdof,0));
-    //  auto ak = eos_soundspeed< tag::multimat >(system, arhok, apk, alk, k );
+    //  auto ak = mat_blk[k].compute< EOS::soundspeed >(arhok, apk, alk, k);
     //  kmat[k] = arhok * ak * ak;
 
     //  p_target += alk * apk / kmat[k];
@@ -128,7 +128,8 @@ cleanTraceMultiMat(
         // if the material (effective) pressure is negative. If either of
         // these conditions is true, perform pressure relaxation.
         if ((alk < al_eps) ||
-          (pk < mat_blk[k].compute< EOS::min_eff_pressure >(0.0))
+          (pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
+          U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
           /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
         {
           //auto gk = gamma< tag::multimat >(system, k);
@@ -149,11 +150,16 @@ cleanTraceMultiMat(
           //}
           alk_new = alk;
 
+          // determine target relaxation pressure
+          auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+            U(e, densityDofIdx(nmat, k, rdof, 0)), alk_new);
+          prelax = std::max(prelax, p_target);
+
           // energy change
           auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0))
             / alk_new;
-          auto rhoEmat = mat_blk[k].compute< EOS::totalenergy >( rhomat, u, v, w,
-                                                      p_target);
+          auto rhoEmat = mat_blk[k].compute< EOS::totalenergy >(rhomat, u, v, w,
+            prelax);
 
           // volume-fraction and total energy flux into majority material
           d_al += (alk - alk_new);
@@ -163,7 +169,7 @@ cleanTraceMultiMat(
           // update state of trace material
           U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk_new;
           U(e, energyDofIdx(nmat, k, rdof, 0)) = alk_new*rhoEmat;
-          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new*p_target;
+          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new*prelax;
         }
       }
       // check for unbounded volume fractions
@@ -186,12 +192,16 @@ cleanTraceMultiMat(
         }
       }
       else {
+        // determine target relaxation pressure
+        auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+          U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
+        prelax = std::max(prelax, p_target);
         auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0)) / alk;
         // update state of trace material
         U(e, energyDofIdx(nmat, k, rdof, 0)) = alk
-          * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, p_target );
+          * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, prelax );
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
-          p_target;
+          prelax;
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
           P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;

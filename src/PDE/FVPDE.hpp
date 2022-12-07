@@ -145,7 +145,7 @@ class FVPDE {
     }
 
     //! Public interface to limiting the second-order solution
-    void limit( const tk::Fields& geoElem,
+    void limit( const tk::Fields& geoFace,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -153,7 +153,7 @@ class FVPDE {
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
-      self->limit( geoElem, fd, esup, inpoel, coord, U, P );
+      self->limit( geoFace, fd, esup, inpoel, coord, U, P );
     }
 
     //! Public interface to update the conservative variable solution
@@ -379,7 +379,7 @@ class FVPDE {
       {
         data.reconstruct( geoElem, fd, esup, inpoel, coord, U, P );
       }
-      void limit( const tk::Fields& geoElem,
+      void limit( const tk::Fields& geoFace,
                   const inciter::FaceData& fd,
                   const std::map< std::size_t, std::vector< std::size_t > >&
                     esup,
@@ -388,7 +388,7 @@ class FVPDE {
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {
-        data.limit( geoElem, fd, esup, inpoel, coord, U, P );
+        data.limit( geoFace, fd, esup, inpoel, coord, U, P );
       }
       void Correct_Conserv( const tk::Fields& prim,
                           const tk::Fields& geoElem,
