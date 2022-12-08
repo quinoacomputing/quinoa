@@ -120,11 +120,11 @@ physSrc( std::size_t system,
           // determine times at which sourcing is initialized and terminated
           auto v_front = mb.template get< tag::initiate, tag::velocity >();
           auto w_front = mb.template get< tag::initiate, tag::front_width >();
-          auto tInit = 0.0;
+          auto tInit = mb.template get< tag::initiate, tag::init_time >();
 
           if (t >= tInit) {
             // current radius of front
-            tk::real r_front = v_front * t;
+            tk::real r_front = v_front * (t-tInit);
             // arbitrary shape form
             auto amplE = enc * v_front / w_front;
 
