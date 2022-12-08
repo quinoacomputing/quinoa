@@ -251,6 +251,7 @@ using diagnostics = tk::TaggedTuple< brigand::list<
 using InitiateParameters = tk::TaggedTuple< brigand::list<
     tag::init,          InitiateType
   , tag::point,         std::vector< kw::point::info::expect::type >
+  , tag::init_time,     kw::init_time::info::expect::type
   , tag::front_width,   kw::front_width::info::expect::type
   , tag::velocity,      kw::velocity::info::expect::type
 > >;

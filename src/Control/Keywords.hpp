@@ -1332,55 +1332,6 @@ struct zmax_info {
 };
 using zmax = keyword< zmax_info, TAOCPP_PEGTL_STRING("zmax") >;
 
-struct impulse_info {
-  static std::string name() { return "impulse"; }
-  static std::string shortDescription() { return
-    "Select the impulse initiation type, e.g., for a box IC"; }
-  static std::string longDescription() { return
-    R"(This keyword can be used to select the 'impulse' initiation/assignment
-    type for box initial conditions. It simply assigns the prescribed values to
-    mesh points within a configured box at t=0.)"; }
-};
-using impulse = keyword< impulse_info, TAOCPP_PEGTL_STRING("impulse") >;
-
-struct linear_info {
-  static std::string name() { return "linear"; }
-  static std::string shortDescription() { return
-    "Select the linear initiation type, e.g., for a box IC"; }
-  static std::string longDescription() { return
-    R"(This keyword is be used to specify the 'linear' initiation parameters
-    for a particular box or meshblock, as a part of the 'energy_pill'
-    initialization. Linear initiation uses a linear function in time and space,
-    configured with an initiation point in space, a constant velocity of the
-    growing spherical front in time (and space) linearly, and width of the front
-    and assigns values to mesh points falling within the growing spherical shell
-    inside a configured box or meshblock.)"; }
-};
-using linear = keyword< linear_info, TAOCPP_PEGTL_STRING("linear") >;
-
-struct initiate_info {
-  static std::string name() { return "initiate type"; }
-  static std::string shortDescription() { return "Initiation/assignemt type"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select an initiation type to configure how
-    values are assigned, e.g., for a box initial condition. This can be used to
-    specify, how the values are assigned to mesh nodes within a box. Examples:
-    (1) impulse: assign the full values at t=0 for all points in a box,
-    (2) linear: use a linear function in time and space, configured with an
-    initiation point in space, a constant velocity of the growing spherical
-    front in time (and space) linearly, and width of the front and assigns
-    values to mesh points falling within the growing spherical shell inside a
-    configured box.)"; }
-  struct expect {
-    static std::string description() { return "string"; }
-    static std::string choices() {
-      return '\'' + impulse::string() + "\' | \'"
-                  + linear::string() + '\'';
-    }
-  };
-};
-using initiate = keyword< initiate_info, TAOCPP_PEGTL_STRING("initiate") >;
-
 struct box_info {
   static std::string name() { return "box"; }
   static std::string shortDescription() { return
@@ -3050,6 +3001,24 @@ struct point_info {
 };
 using point = keyword< point_info, TAOCPP_PEGTL_STRING("point") >;
 
+struct init_time_info {
+  static std::string name() { return "init_time"; }
+  static std::string shortDescription()
+    { return "Specify the initialization time"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the time at which the propagating front
+    is initialized for a mesh block or box IC, with 'initiate linear' type.
+    Delays in initializing separate mesh blocks or boxes can be achieved using
+    different initialization times. Example specification: 'init_time 1.0e-3')";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using init_time = keyword< init_time_info, TAOCPP_PEGTL_STRING("init_time") >;
+
 struct front_width_info {
   static std::string name() { return "front_width"; }
   static std::string shortDescription() { return "Specify a front_width"; }
@@ -3067,6 +3036,61 @@ struct front_width_info {
 };
 using front_width = keyword< front_width_info,
   TAOCPP_PEGTL_STRING("front_width") >;
+
+struct impulse_info {
+  static std::string name() { return "impulse"; }
+  static std::string shortDescription() { return
+    "Select the impulse initiation type, e.g., for a box IC"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to select the 'impulse' initiation/assignment
+    type for box initial conditions. It simply assigns the prescribed values to
+    mesh points within a configured box at t=0.)"; }
+};
+using impulse = keyword< impulse_info, TAOCPP_PEGTL_STRING("impulse") >;
+
+struct linear_info {
+  static std::string name() { return "linear"; }
+  static std::string shortDescription() { return
+    "Select the linear initiation type, e.g., for a box IC"; }
+  static std::string longDescription() { return
+    R"(This keyword is be used to specify the 'linear' initiation parameters
+    for a particular box or meshblock, as a part of the 'energy_pill'
+    initialization. Linear initiation uses a linear function in time and space,
+    configured with an initiation point in space, a constant velocity of the
+    growing spherical front in time (and space) linearly, and width of the front
+    and assigns values to mesh points falling within the growing spherical shell
+    inside a configured box or meshblock. The following keywords are allowed
+    in a linear ... end block: )"
+    + std::string("\'")
+    + point::string()+ "\', \'"
+    + init_time::string()+ "\', \'"
+    + front_width::string()+ "\', \'"
+    + velocity::string() + "\'."; }
+};
+using linear = keyword< linear_info, TAOCPP_PEGTL_STRING("linear") >;
+
+struct initiate_info {
+  static std::string name() { return "initiate type"; }
+  static std::string shortDescription() { return "Initiation/assignemt type"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an initiation type to configure how
+    values are assigned, e.g., for a box initial condition. This can be used to
+    specify, how the values are assigned to mesh nodes within a box. Examples:
+    (1) impulse: assign the full values at t=0 for all points in a box,
+    (2) linear: use a linear function in time and space, configured with an
+    initiation point in space, a constant velocity of the growing spherical
+    front in time (and space) linearly, and width of the front and assigns
+    values to mesh points falling within the growing spherical shell inside a
+    configured box.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + impulse::string() + "\' | \'"
+                  + linear::string() + '\'';
+    }
+  };
+};
+using initiate = keyword< initiate_info, TAOCPP_PEGTL_STRING("initiate") >;
 
 struct radius_info {
   static std::string name() { return "radius"; }

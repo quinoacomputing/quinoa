@@ -225,11 +225,11 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
                         parameters( b.get< tag::velocity >() ) );
       nfo.emplace_back( boxname + " pressure",
                         parameter( b.get< tag::pressure >() ) );
-      nfo.emplace_back( boxname + " internal energy per unit mass",
+      nfo.emplace_back( boxname + " energy per unit mass",
                         parameter( b.get< tag::energy >() ) );
       nfo.emplace_back( boxname + " mass",
                         parameter( b.get< tag::mass >() ) );
-      nfo.emplace_back( boxname + " internal energy per unit volume",
+      nfo.emplace_back( boxname + " energy per unit volume",
                         parameter( b.get< tag::energy_content >() ) );
       nfo.emplace_back( boxname + " temperature",
                         parameter( b.get< tag::temperature >() ) );
@@ -254,11 +254,11 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
                         parameters( b.get< tag::velocity >() ) );
       nfo.emplace_back( blockname + " pressure",
                         parameter( b.get< tag::pressure >() ) );
-      nfo.emplace_back( blockname + " internal energy per unit mass",
+      nfo.emplace_back( blockname + " energy per unit mass",
                         parameter( b.get< tag::energy >() ) );
       nfo.emplace_back( blockname + " mass",
                         parameter( b.get< tag::mass >() ) );
-      nfo.emplace_back( blockname + " internal energy per unit volume",
+      nfo.emplace_back( blockname + " energy per unit volume",
                         parameter( b.get< tag::energy_content >() ) );
       nfo.emplace_back( blockname + " temperature",
                         parameter( b.get< tag::temperature >() ) );
@@ -267,11 +267,13 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
       auto opt = ctr::Initiate();
       nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(inittype) );
       if (inittype == ctr::InitiateType::LINEAR) {
-        nfo.emplace_back( blockname + " initiate linear point",
+        nfo.emplace_back( blockname + " initiate point",
                           parameters( initiate.get< tag::point >() ) );
-        nfo.emplace_back( blockname + " initiate linear front width",
+        nfo.emplace_back( blockname + " initialization time",
+                          parameter( initiate.get< tag::init_time >() ) );
+        nfo.emplace_back( blockname + " linear front width",
                           parameter( initiate.get< tag::front_width >() ) );
-        nfo.emplace_back( blockname + " initiate linear velocity",
+        nfo.emplace_back( blockname + " linear velocity",
                           parameter( initiate.get< tag::velocity >() ) );
       }
     }

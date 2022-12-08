@@ -290,6 +290,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::bc_skip
                                  , kw::sponge
                                  , kw::point
+                                 , kw::init_time
                                  , kw::front_width
                                  , kw::radius
                                  , kw::gauss_hump

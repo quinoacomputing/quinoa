@@ -1711,6 +1711,8 @@ namespace deck {
                  tk::grm::block< use< kw::end >
                    , box_deep_vector< eq, kw::point, tag::initiate, tag::point,
                       tag::box >
+                   , box_deep_parameter< eq, kw::init_time, tag::initiate,
+                                         tag::init_time, tag::box >
                    , box_deep_parameter< eq, kw::front_width, tag::initiate,
                                          tag::front_width, tag::box >
                    , box_deep_parameter< eq, kw::velocity, tag::initiate,
@@ -1744,6 +1746,8 @@ namespace deck {
                  tk::grm::block< use< kw::end >
                    , box_deep_vector< eq, kw::point, tag::initiate, tag::point,
                       tag::meshblock >
+                   , box_deep_parameter< eq, kw::init_time, tag::initiate,
+                                         tag::init_time, tag::meshblock >
                    , box_deep_parameter< eq, kw::front_width, tag::initiate,
                                          tag::front_width, tag::meshblock >
                    , box_deep_parameter< eq, kw::velocity, tag::initiate,
