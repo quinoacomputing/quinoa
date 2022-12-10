@@ -30,6 +30,7 @@ void initializeBox( std::size_t system,
                     tk::real t,
                     const B& b,
                     tk::real bgpreic,
+                    tk::real bgtempic,
                     std::vector< tk::real >& s )
 // *****************************************************************************
 // Set the solution in the user-defined IC box/mesh block
@@ -39,6 +40,7 @@ void initializeBox( std::size_t system,
 //! \param[in] t Physical time
 //! \param[in] b IC box configuration to use
 //! \param[in] bgpreic Background pressure user input
+//! \param[in] bgtempic Background temperature user input
 //! \param[in,out] s Solution vector that is set to box ICs
 //! \details This function sets the fluid density and total specific energy
 //!   within a box initial condition, configured by the user. If the user
@@ -100,15 +102,25 @@ void initializeBox( std::size_t system,
     // energy source term representing a propagating wave-front), the pressure
     // in the box needs to be set to background pressure.
     if (inittype == ctr::InitiateType::LINEAR && t < 1e-12) {
-      if (boxmas <= 1e-12 || boxenc <= 1e-12 || bgpreic <= 1e-12)
-        Throw("Box mass, energy content and background pressure must be "
-          "specified for IC with linear propagating source");
+      if (boxmas <= 1e-12 || boxenc <= 1e-12 || bgpreic <= 1e-12 ||
+        bgtempic <= 1e-12)
+        Throw("Box mass, energy content, background pressure and background "
+          "temperature must be specified for IC with linear propagating source");
 
       pr = bgpreic;
       auto te = mat_blk[boxmatid].compute< EOS::totalenergy >(
         rhok[boxmatid], u, v, w, pr);
       tmp = mat_blk[boxmatid].compute< EOS::temperature >(
         boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*te, boxmat_vf );
+
+      // if the above density and pressure lead to an invalid thermodynamic
+      // state (negative temperature/energy), change temperature to background
+      // temperature and use corresponding density.
+      if (tmp < 0.0 || te < 0.0) {
+        tmp = bgtempic;
+        rhok[boxmatid] = mat_blk[boxmatid].compute< EOS::density >(pr, tmp);
+        spi = boxenc / rhok[boxmatid];
+      }
     }
     // For initiate type 'impulse', pressure and temperature are determined from
     // energy content that needs to be dumped into the box at IC.

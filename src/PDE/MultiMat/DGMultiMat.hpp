@@ -169,6 +169,10 @@ class MultiMat {
       tk::real bgpre =
         (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
         bgpreic[m_system][0] : 0.0;
+      const auto& bgtempic = ic.get< tag::temperature >();
+      tk::real bgtemp =
+        (bgtempic.size() > m_system && !bgtempic[m_system].empty()) ?
+        bgtempic[m_system][0] : 0.0;
 
       // Set initial conditions inside user-defined IC boxes and mesh blocks
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -192,7 +196,7 @@ class MultiMat {
                   unk(e,mark+i) = 0.0;
               }
               initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, bgpre,
-                s );
+                bgtemp, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -212,7 +216,7 @@ class MultiMat {
               const auto& elset = tk::cref_find(elemblkid, blid);
               if (elset.find(e) != elset.end()) {
                 initializeBox<ctr::meshblock>( m_system, m_mat_blk, V_ex, t, b,
-                  bgpre, s );
+                  bgpre, bgtemp, s );
                 // store initialization in solution vector
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   auto mark = c*rdof;
