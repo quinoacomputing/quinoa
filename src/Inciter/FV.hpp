@@ -204,6 +204,8 @@ class FV : public CBase_FV {
       p | m_outmesh;
       p | m_boxelems;
       p | m_propFrontEngSrc;
+      p | m_rkcoef;
+      p | m_nrk;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -273,6 +275,10 @@ class FV : public CBase_FV {
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
     //! Integer indicating if energy source due to propagating front was added
     int m_propFrontEngSrc;
+    //! Runge-Kutta coefficients
+    std::array< std::vector< tk::real >, 2 > m_rkcoef;
+    //! Number of Runge-Kutta stages
+    std::size_t m_nrk;
 
     //! Access bound Discretization class pointer
     Ghosts* myGhosts() const {

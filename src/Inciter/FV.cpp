@@ -39,10 +39,6 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< FVPDE > g_fvpde;
 
-//! Runge-Kutta coefficients
-static const std::array< std::array< tk::real, 3 >, 2 >
-  rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
-
 } // inciter::
 
 extern tk::CProxy_ChareStateCollector stateProxy;
@@ -85,7 +81,8 @@ FV::FV( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
-  m_propFrontEngSrc(1)
+  m_propFrontEngSrc(1),
+  m_nrk(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -93,6 +90,17 @@ FV::FV( const CProxy_Discretization& disc,
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
+  //! Runge-Kutta coefficients
+  m_nrk = 2;
+  m_rkcoef[0].resize(m_nrk);
+  m_rkcoef[1].resize(m_nrk);
+  if (m_nrk == 2) {
+    m_rkcoef = {{ {{ 0.0, 1.0/2.0 }}, {{ 1.0, 1.0/2.0 }} }};
+  }
+  else {
+    m_rkcoef = {{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+  }
+
   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
       g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "FV", thisIndex, CkMyPe(), Disc()->It(),
@@ -634,11 +642,20 @@ FV::solve( tk::real newdt )
 
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
-  if (m_stage == 1) {
-    physT += d->Dt();
+  // 2-stage RK
+  if (m_nrk == 2) {
+    if (m_stage == 1) {
+      physT += d->Dt();
+    }
   }
-  else if (m_stage == 2) {
-    physT += 0.5*d->Dt();
+  // 3-stage RK
+  else {
+    if (m_stage == 1) {
+      physT += d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += 0.5*d->Dt();
+    }
   }
 
   // initialize energy source as not added (modified in eq.rhs appropriately)
@@ -652,8 +669,8 @@ FV::solve( tk::real newdt )
     for (std::size_t c=0; c<neq; ++c)
     {
       auto rmark = c*rdof;
-      m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
-        + rkcoef[1][m_stage] * ( m_u(e, rmark)
+      m_u(e, rmark) =  m_rkcoef[0][m_stage] * m_un(e, rmark)
+        + m_rkcoef[1][m_stage] * ( m_u(e, rmark)
           + d->Dt() * m_rhs(e, c)/m_lhs(e, c) );
       // zero out reconstructed dofs of equations using reduced dofs
       if (rdof > 1) {
@@ -673,7 +690,7 @@ FV::solve( tk::real newdt )
       myGhosts()->m_fd.Esuel().size()/4 );
   }
 
-  if (m_stage < 2) {
+  if (m_stage < m_nrk-1) {
 
     // continue with next time step stage
     stage();
@@ -983,7 +1000,7 @@ FV::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise prepare for nodal field output
-  if (m_stage < 3)
+  if (m_stage < m_nrk)
     next();
   else
     startFieldOutput( CkCallback(CkIndex_FV::step(), thisProxy[thisIndex]) );
