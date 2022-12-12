@@ -307,6 +307,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::underwater_ex
                                  , kw::shockdensity_wave
                                  , kw::equilinterface_advect
+                                 , kw::sinewave_packet
                                  , kw::richtmyer_meshkov >;
 
     //! Set of tags to ignore when printing this InputDeck

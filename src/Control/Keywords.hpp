@@ -2529,6 +2529,20 @@ using richtmyer_meshkov =
   keyword< richtmyer_meshkov_info,
   TAOCPP_PEGTL_STRING("richtmyer_meshkov") >;
 
+struct sinewave_packet_info {
+  static std::string name() { return "Advection of sinewave packet"; }
+  static std::string shortDescription() { return
+    "Select the advection of sinewave packet problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the advection of sinewave packet
+    problem.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using sinewave_packet = keyword< sinewave_packet_info,
+  TAOCPP_PEGTL_STRING("sinewave_packet") >;
+
 struct problem_info {
   static std::string name() { return "Test problem"; }
   static std::string shortDescription() { return
@@ -2559,6 +2573,7 @@ struct problem_info {
                   + shockdensity_wave::string() + "\' | \'"
                   + equilinterface_advect::string() + "\' | \'"
                   + richtmyer_meshkov::string() + "\' | \'"
+                  + sinewave_packet::string() + "\' | \'"
                   + gauss_hump_compflow::string() + '\'';
     }
   };
