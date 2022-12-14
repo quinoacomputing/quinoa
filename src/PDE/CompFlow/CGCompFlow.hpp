@@ -1693,8 +1693,8 @@ class CompFlow {
 
           // determine times at which sourcing is initialized and terminated
           auto iv = b.template get< tag::initiate, tag::velocity >();
-          auto wFront = 0.08;
-          auto tInit = 0.0;
+          auto wFront = mb.template get< tag::initiate, tag::front_width >();
+          auto tInit = mb.template get< tag::initiate, tag::init_time >();
           auto tFinal = tInit + (box[5] - box[4] - wFront) / std::fabs(iv);
           auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
@@ -1731,7 +1731,7 @@ class CompFlow {
             tk::real zInit(b_min[2]);
             if (iv < 0.0) zInit = b_max[2];
             // current location of front
-            auto z0 = zInit + iv*t;
+            auto z0 = zInit + iv * (t-tInit);
             auto z1 = z0 + std::copysign(wFront, iv);
             tk::real s0(z0), s1(z1);
             // if velocity of propagation is negative, initial position is z1
