@@ -1992,26 +1992,22 @@ void PositivityPreservingMultiMat_FV(
                                                inpoel[4*e+tk::lpofa[lf][1]],
                                                inpoel[4*e+tk::lpofa[lf][2]] }};
 
+      // face coordinates
       std::array< std::array< tk::real, 3>, 3 > coordfa {{
         {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
         {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
         {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
 
-      std::size_t ng = 1;
+      // face centroid
+      std::array< tk::real, 3 > fc{{
+        (coordfa[0][0]+coordfa[1][0]+coordfa[2][0])/3.0 ,
+        (coordfa[0][1]+coordfa[1][1]+coordfa[2][1])/3.0 ,
+        (coordfa[0][2]+coordfa[1][2]+coordfa[2][2])/3.0 }};
 
-      std::array< std::vector< tk::real >, 2 > coordgp;
-      std::vector< tk::real > wgp;
-
-      coordgp[0].resize( ng );
-      coordgp[1].resize( ng );
-      wgp.resize( ng );
-
-      tk::GaussQuadratureTri( ng, coordgp, wgp );
-      auto gp = tk::eval_gp( 0, coordfa, coordgp );
       auto B = tk::eval_basis( rdof,
-            tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+            tk::Jacobian( coordel[0], fc, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], fc, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], fc ) / detT );
       auto state = eval_state(ncomp, rdof, rdof, e, U, B, {0, ncomp-1});
 
       for(std::size_t i=0; i<nmat; i++)
@@ -2049,26 +2045,22 @@ void PositivityPreservingMultiMat_FV(
                                                inpoel[4*e+tk::lpofa[lf][1]],
                                                inpoel[4*e+tk::lpofa[lf][2]] }};
 
+      // face coordinates
       std::array< std::array< tk::real, 3>, 3 > coordfa {{
         {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
         {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
         {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
 
-      std::size_t ng = 1;
+      // face centroid
+      std::array< tk::real, 3 > fc{{
+        (coordfa[0][0]+coordfa[1][0]+coordfa[2][0])/3.0 ,
+        (coordfa[0][1]+coordfa[1][1]+coordfa[2][1])/3.0 ,
+        (coordfa[0][2]+coordfa[1][2]+coordfa[2][2])/3.0 }};
 
-      std::array< std::vector< tk::real >, 2 > coordgp;
-      std::vector< tk::real > wgp;
-
-      coordgp[0].resize( ng );
-      coordgp[1].resize( ng );
-      wgp.resize( ng );
-
-      tk::GaussQuadratureTri( ng, coordgp, wgp );
-      auto gp = tk::eval_gp( 0, coordfa, coordgp );
       auto B = tk::eval_basis( rdof,
-            tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+            tk::Jacobian( coordel[0], fc, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], fc, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], fc ) / detT );
       auto state = eval_state(ncomp, rdof, rdof, e, U, B, {0, ncomp-1});
       auto sprim = eval_state(nprim, rdof, rdof, e, P, B, {0, nprim-1});
 
