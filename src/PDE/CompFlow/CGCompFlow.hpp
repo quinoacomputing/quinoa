@@ -1693,8 +1693,8 @@ class CompFlow {
 
           // determine times at which sourcing is initialized and terminated
           auto iv = b.template get< tag::initiate, tag::velocity >();
-          auto wFront = mb.template get< tag::initiate, tag::front_width >();
-          auto tInit = mb.template get< tag::initiate, tag::init_time >();
+          auto wFront = b.template get< tag::initiate, tag::front_width >();
+          auto tInit = b.template get< tag::initiate, tag::init_time >();
           auto tFinal = tInit + (box[5] - box[4] - wFront) / std::fabs(iv);
           auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
