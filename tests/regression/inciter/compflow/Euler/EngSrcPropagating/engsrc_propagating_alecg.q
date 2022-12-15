@@ -39,6 +39,7 @@ inciter
         # linear propagation of energy source
         linear
           velocity -8.2e+3 # detonation velocity: 0.82 cm/us = 82e+3 m/s
+          front_width 0.08
         end
       end
     end
