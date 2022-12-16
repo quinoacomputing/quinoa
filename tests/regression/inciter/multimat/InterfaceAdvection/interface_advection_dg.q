@@ -10,6 +10,7 @@ inciter
   dt 2.5e-7
   ttyi 1    # TTY output interval
   scheme dg
+  limsol_projection false
 
   multimat
 

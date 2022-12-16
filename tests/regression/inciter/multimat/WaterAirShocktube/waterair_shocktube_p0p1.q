@@ -12,6 +12,7 @@ inciter
   scheme p0p1
   limiter vertexbasedp1
   shock_detector_coeff 0.0
+  limsol_projection false
 
   partitioning
     algorithm mj
