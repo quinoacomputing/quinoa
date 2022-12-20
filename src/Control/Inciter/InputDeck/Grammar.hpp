@@ -205,7 +205,7 @@ namespace grm {
       auto& intsharp_p = stack.template get< param, eq,
                                             tag::intsharp_param >();
       if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
-        intsharp_p.push_back( 1.0 );
+        intsharp_p.push_back( 1.8 );
     }
   };
 
