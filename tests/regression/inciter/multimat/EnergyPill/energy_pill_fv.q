@@ -42,14 +42,14 @@ inciter
         mass 1024.0
         volume 0.64
         energy_content 9.0e+9
-        initiate linear
+        initiate impulse #linear
 
-        linear
-          point 0 0 0.75 end
-          init_time 5e-5
-          front_width 0.375
-          velocity 8.2e+3
-        end
+        #linear
+        #  point 0 0 0.75 end
+        #  init_time 5e-5
+        #  front_width 0.375
+        #  velocity 8.2e+3
+        #end
       end
     end
 

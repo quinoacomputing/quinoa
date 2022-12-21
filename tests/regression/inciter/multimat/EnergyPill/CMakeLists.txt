@@ -5,13 +5,17 @@
 
 add_regression_test(multimat_energy_pill_fv
                     ${INCITER_EXECUTABLE}
-                    NUMPES 2
+                    NUMPES 4
                     INPUTFILES energy_pill_fv.q tubetest_2blk_924.exo
                     ARGS -c energy_pill_fv.q -i tubetest_2blk_924.exo -v
-                    BIN_BASELINE energy_pill_fv_pe2.std.exo.0
-                                 energy_pill_fv_pe2.std.exo.1
-                    BIN_RESULT out.e-s.0.2.0
-                               out.e-s.0.2.1
+                    BIN_BASELINE energy_pill_fv_pe4.std.exo.0
+                                 energy_pill_fv_pe4.std.exo.1
+                                 energy_pill_fv_pe4.std.exo.2
+                                 energy_pill_fv_pe4.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
                     BIN_DIFF_PROG_CONF exodiff_fv.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_fv.std
