@@ -19,6 +19,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "ContainerUtil.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "NoWarning/charm++.hpp"
 
 namespace inciter {
 
@@ -44,10 +45,10 @@ MultiMatPhysicsEnergyPill::dtRestriction( std::size_t system,
 {
   auto mindt = std::numeric_limits< tk::real >::max();
   // determine front propagation speed if relevant energy sources were added
-  tk::real v_front(0.0);
   if (engSrcAd == 1) {
     const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
       tag::meshblock >();
+    tk::real v_front(0.0);
     if (icmbk.size() > system) {
       for (const auto& b : icmbk[system]) { // for all blocks
         auto inittype = b.template get< tag::initiate, tag::init >();
@@ -57,16 +58,16 @@ MultiMatPhysicsEnergyPill::dtRestriction( std::size_t system,
         }
       }
     }
-  }
 
-  for (std::size_t e=0; e<nelem; ++e)
-  {
-    // characteristic length (radius of insphere)
-    auto dx = std::min(std::cbrt(geoElem(e,0)), geoElem(e,4))
-      /std::sqrt(24.0);
+    for (std::size_t e=0; e<nelem; ++e)
+    {
+      // characteristic length (radius of insphere)
+      auto dx = std::min(std::cbrt(geoElem(e,0)), geoElem(e,4))
+        /std::sqrt(24.0);
 
-    // element dt
-    if (std::abs(v_front) > 1e-8) mindt = dx/v_front;
+      // element dt
+      if (std::abs(v_front) > 1e-8) mindt = std::min(mindt, dx/v_front);
+    }
   }
 
   return mindt;
@@ -109,7 +110,6 @@ physSrc( std::size_t system,
         if (inittype == ctr::InitiateType::LINEAR) { // if propagating src
 
           const auto& blkelems = tk::cref_find(elemblkid,blid);
-          std::size_t ncomp = R.nprop();
 
           auto enc = mb.template get< tag::energy_content >();
           Assert( enc > 0.0, "Box energy content must be nonzero" );
@@ -139,17 +139,9 @@ physSrc( std::size_t system,
 
               // if element centroid lies within spherical shell add sources
               if (r_e >= r_front && r_e <= r_front+w_front) {
-                engSrcAdded = 1;
-                // Compute the source term variable
-                std::vector< tk::real > s(ncomp, 0.0);
-                // arbitrary shape form
-                s[energyIdx(nmat,blkmatid-1)] = amplE;
-
                 // Add the source term to the rhs
-                for (std::size_t c=0; c<ncomp; ++c)
-                {
-                  R(e, c) += geoElem(e,0) * s[c];
-                }
+                R(e, energyIdx(nmat,blkmatid-1)) += geoElem(e,0) * amplE;
+                engSrcAdded = 1;
               }
             }
           }
