@@ -848,16 +848,6 @@ class MultiMat {
       return MultiMatFieldNames(nmat);
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > nodalFieldNames() const
-    {
-      auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-
-      return MultiMatFieldNames(nmat);
-    }
-
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file
     std::vector< std::string > histNames() const {

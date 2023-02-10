@@ -1464,17 +1464,25 @@ ALECG::writeFields( CkCallback c )
     analyticFieldOutput( g_cgpde[d->MeshId()], tk::Centering::NODE, coord[0],
       coord[1], coord[2], d->T(), nodefields );
 
-    // Query and collect block and surface field names from PDEs integrated
+    // Query and collect nodal block and surface field names from PDEs integrated
     std::vector< std::string > nodesurfnames;
     auto sn = g_cgpde[d->MeshId()].surfNames();
     nodesurfnames.insert( end(nodesurfnames), begin(sn), end(sn) );
 
-    // Collect node block and surface field solution
+    // Collect nodal block and surface field solution
     std::vector< std::vector< tk::real > > nodesurfs;
     conserved( m_u, Disc()->Vol() );
     auto so = g_cgpde[d->MeshId()].surfOutput( tk::bfacenodes(m_bface,
       m_triinpoel), m_u );
     nodesurfs.insert( end(nodesurfs), begin(so), end(so) );
+
+    // Collect elemental block and surface field names from PDEs integrated
+    auto elemsurfnames = nodesurfnames;
+
+    // Collect elemental block and surface field solution
+    std::vector< std::vector< tk::real > > elemsurfs;
+    auto eso = g_cgpde[d->MeshId()].elemSurfOutput( m_bface, m_triinpoel, m_u );
+    elemsurfs.insert( end(elemsurfs), begin(eso), end(eso) );
 
     // Query refinement data
     auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
@@ -1504,8 +1512,8 @@ ALECG::writeFields( CkCallback c )
 
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), coord, m_bface, tk::remap(m_bnode,d->Lid()),
-              m_triinpoel, elemfieldnames, nodefieldnames, nodesurfnames,
-              elemfields, nodefields, nodesurfs, c );
+              m_triinpoel, elemfieldnames, nodefieldnames, elemsurfnames,
+              nodesurfnames, elemfields, nodefields, elemsurfs, nodesurfs, c );
 
   }
 }

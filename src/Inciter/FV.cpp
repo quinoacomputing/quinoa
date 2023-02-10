@@ -944,7 +944,7 @@ FV::writeFields( CkCallback c )
   const auto& triinpoel = m_outmesh.triinpoel;
   d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            {}, elemfields, nodefields, {}, c );
+            {}, {}, elemfields, nodefields, {}, {}, c );
 }
 
 void

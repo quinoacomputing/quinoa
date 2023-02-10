@@ -158,6 +158,60 @@ CompFlowSurfOutput( ncomp_t,
   return out;
 }
 
+std::vector< std::vector< tk::real > >
+CompFlowElemSurfOutput( ncomp_t,
+  const std::vector< EOS >& mat_blk,
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinpoel,
+  const tk::Fields& U )
+// *****************************************************************************
+//  Return element surface field output (on triangle faces) going to file
+//! \param[in] system Equation system index, i.e., which compressible
+//!   flow equation system we operate on among the systems of PDEs
+//! \param[in] mat_blk Material EOS block
+//! \param[in] bface Boundary-faces mapped to side set ids
+//! \param[in] triinpoel Boundary triangle face connecitivity with local ids
+//! \param[in] U Solution vector at recent time step
+//! \return Vector of vectors of solution on side set faces to be output to file
+// *****************************************************************************
+{
+  std::vector< std::vector< tk::real > > out;
+
+  // extract field output along side sets requested
+  for (auto s : g_inputdeck.outsets()) {
+    // get face list for side set requested
+    auto b = bface.find(s);
+    if (b == end(bface)) continue;
+    const auto& faces = b->second;
+    std::vector< tk::real > surfaceSol( faces.size() );
+    auto i = out.size();
+    out.insert( end(out), 6, surfaceSol );
+    std::size_t j = 0;
+    for (auto f : faces) {
+      // access solutions at nodes
+      auto UA = U.extract(triinpoel[f*3+0]);
+      auto UB = U.extract(triinpoel[f*3+1]);
+      auto UC = U.extract(triinpoel[f*3+2]);
+
+      auto rho = (UA[0] + UB[0] + UC[0]) / 3.0;
+      auto u = (UA[1]/UA[0] + UB[1]/UB[0] + UC[1]/UC[0]) / 3.0;
+      auto v = (UA[2]/UA[0] + UB[2]/UB[0] + UC[2]/UC[0]) / 3.0;
+      auto w = (UA[3]/UA[0] + UB[3]/UB[0] + UC[3]/UC[0]) / 3.0;
+      auto E = (UA[4]/UA[0] + UB[4]/UB[0] + UC[4]/UC[0]) / 3.0;
+
+      out[i+0][j] = rho;
+      out[i+1][j] = u;
+      out[i+2][j] = v;
+      out[i+3][j] = w;
+      out[i+4][j] = E;
+      out[i+5][j] = mat_blk[0].compute< EOS::pressure >( rho, u, v, w, rho*E );
+      ++j;
+    }
+  }
+
+  return out;
+}
+
 std::vector< std::string > CompFlowHistNames()
 // *****************************************************************************
 // Return time history field names to be output to file

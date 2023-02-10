@@ -1053,11 +1053,20 @@ class CompFlow {
     std::vector< std::string > histNames() const
     { return CompFlowHistNames(); }
 
-    //! Return surface field output going to file
+    //! Return nodal surface field output going to file
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
                 const tk::Fields& U ) const
     { return CompFlowSurfOutput( m_system, m_mat_blk, bnd, U ); }
+
+    //! Return elemental surface field output (on triangle faces) going to file
+    std::vector< std::vector< real > >
+    elemSurfOutput( const std::map< int, std::vector< std::size_t > >& bface,
+      const std::vector< std::size_t >& triinpoel,
+      const tk::Fields& U ) const
+    {
+      return CompFlowElemSurfOutput( m_system, m_mat_blk, bface, triinpoel, U );
+    }
 
     //! Return time history field output evaluated at time history points
     std::vector< std::vector< real > >

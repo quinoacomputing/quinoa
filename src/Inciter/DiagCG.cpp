@@ -729,8 +729,8 @@ DiagCG::writeFields( CkCallback c ) const
 
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), coord, m_bface, tk::remap( m_bnode,d->Lid() ),
-              m_triinpoel, elemfieldnames, nodefieldnames, nodesurfnames,
-              elemfields, nodefields, nodesurfs, c );
+              m_triinpoel, elemfieldnames, nodefieldnames, {}, nodesurfnames,
+              elemfields, nodefields, {}, nodesurfs, c );
 
   }
 }

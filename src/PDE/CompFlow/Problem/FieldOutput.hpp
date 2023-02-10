@@ -42,6 +42,14 @@ CompFlowSurfOutput( ncomp_t system,
                     const std::map< int, std::vector< std::size_t > >& bnd,
                     const tk::Fields& U );
 
+//! Return element surface field output (on triangle faces) going to file
+std::vector< std::vector< tk::real > >
+CompFlowElemSurfOutput( ncomp_t,
+  const std::vector< EOS >& mat_blk,
+  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::vector< std::size_t >& triinpoel,
+  const tk::Fields& U );
+
 //! Return time history field names to be output to file
 std::vector< std::string > CompFlowHistNames();
 
