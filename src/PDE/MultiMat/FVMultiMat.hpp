@@ -626,6 +626,11 @@ class MultiMat {
       return MultiMatFieldNames(nmat);
     }
 
+    //! Return surface field names to be output to file
+    //! \return Vector of strings labelling surface fields output in file
+    std::vector< std::string > surfNames() const
+    { return MultiMatSurfNames(); }
+
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file
     std::vector< std::string > histNames() const {
@@ -634,11 +639,15 @@ class MultiMat {
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
-    surfOutput( const std::map< int, std::vector< std::size_t > >&,
-                tk::Fields& ) const
+    surfOutput( const inciter::FaceData& fd,
+      const tk::Fields& U,
+      const tk::Fields& P ) const
     {
-      std::vector< std::vector< tk::real > > s; // punt for now
-      return s;
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      return MultiMatSurfOutput( m_system, nmat, rdof, fd, U, P );
     }
 
     //! Return time history field output evaluated at time history points

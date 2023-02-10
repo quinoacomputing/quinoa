@@ -15,6 +15,7 @@
 
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
+#include "FaceData.hpp"
 
 namespace inciter {
 
@@ -34,6 +35,18 @@ MultiMatFieldOutput(
   std::size_t rdof,
   const std::vector< tk::real >& vol,
   const std::array< std::vector< tk::real >, 3 >& coord,
+  const tk::Fields& U,
+  const tk::Fields& P );
+
+//! Return surface field names to be output to file
+std::vector< std::string > MultiMatSurfNames();
+
+//! Return element surface field output (on triangle faces) going to file
+std::vector< std::vector< tk::real > >
+MultiMatSurfOutput( ncomp_t,
+  const std::size_t nmat,
+  const std::size_t rdof,
+  const FaceData& fd,
   const tk::Fields& U,
   const tk::Fields& P );
 

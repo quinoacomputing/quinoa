@@ -12,10 +12,18 @@ add_regression_test(multimat_energy_pill_fv
                                  energy_pill_fv_pe4.std.exo.1
                                  energy_pill_fv_pe4.std.exo.2
                                  energy_pill_fv_pe4.std.exo.3
+                                 energy_pill_fv_pe4-surf.1.std.exo.0
+                                 energy_pill_fv_pe4-surf.1.std.exo.1
+                                 energy_pill_fv_pe4-surf.1.std.exo.2
+                                 energy_pill_fv_pe4-surf.1.std.exo.3
                     BIN_RESULT out.e-s.0.4.0
                                out.e-s.0.4.1
                                out.e-s.0.4.2
                                out.e-s.0.4.3
+                               out-surf.1.e-s.0.4.0
+                               out-surf.1.e-s.0.4.1
+                               out-surf.1.e-s.0.4.2
+                               out-surf.1.e-s.0.4.3
                     BIN_DIFF_PROG_CONF exodiff_fv.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_fv.std

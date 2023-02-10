@@ -66,10 +66,13 @@ inciter
 
   field_output
     interval 10
+    sideset 1 end
     var elem
-      material_indicator
       density
       pressure
+      x-velocity
+      y-velocity
+      z-velocity
       specific_total_energy
     end
   end
