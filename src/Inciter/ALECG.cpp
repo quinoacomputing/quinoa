@@ -35,10 +35,6 @@
 #include "Integrate/Mass.hpp"
 #include "FieldOutput.hpp"
 
-#ifdef HAS_ROOT
-  #include "RootMeshWriter.hpp"
-#endif
-
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;

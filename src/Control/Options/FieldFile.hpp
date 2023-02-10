@@ -24,9 +24,6 @@ namespace ctr {
 
 //! Field output file types
 enum class FieldFileType : uint8_t { EXODUSII
-                                     #ifdef HAS_ROOT
-                                   , ROOT
-                                     #endif
                                    };
 
 //! \brief Pack/Unpack FieldFileType: forward overload to generic enum class
@@ -40,9 +37,6 @@ class FieldFile : public tk::Toggle< FieldFileType > {
   public:
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::exodusii
-                                  #ifdef HAS_ROOT
-                                  , kw::root
-                                  #endif
                                   >;
 
     //! \brief Options constructor
@@ -54,15 +48,9 @@ class FieldFile : public tk::Toggle< FieldFileType > {
         "Field output file type",
         //! Enums -> names
         { { FieldFileType::EXODUSII, kw::exodusii::name() },
-          #ifdef HAS_ROOT
-          { FieldFileType::ROOT, kw::root::name() }
-          #endif
         },
         //! keywords -> Enums
         { { kw::exodusii::string(), FieldFileType::EXODUSII },
-          #ifdef HAS_ROOT
-          { kw::root::string(), FieldFileType::ROOT }
-          #endif
         } ) {}
 };
 

@@ -44,7 +44,6 @@ target_include_directories(Inciter PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${HYPRE_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
-                           ${ROOT_INCLUDE_DIRS}
                            ${EXAM2M_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
