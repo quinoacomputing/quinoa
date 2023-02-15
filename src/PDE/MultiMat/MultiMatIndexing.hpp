@@ -50,6 +50,10 @@ inline std::size_t momentumIdx( std::size_t nmat, std::size_t idir )
 inline std::size_t energyIdx( std::size_t nmat, std::size_t kmat )
 { return (2*nmat+3+kmat); }
 
+inline std::size_t deformIdx( std::size_t nmat, std::size_t kmat,
+  std::size_t i, std::size_t j )
+{ return (2*nmat+3+nmat + 9*kmat/*ksld*/+3*i+j); }
+
 //! Get the index of the required velocity component from vector of primitives
 //! \param[in] nmat Number of materials
 //! \param[in] idir Required component direction;

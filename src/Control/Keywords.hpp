@@ -3513,6 +3513,19 @@ struct jwl_info {
 };
 using jwl = keyword< jwl_info, TAOCPP_PEGTL_STRING("jwl") >;
 
+struct smallshearsolid_info {
+  static std::string name() { return "SMALLSHEARSOLID"; }
+  static std::string shortDescription() { return
+    "Select the SMALLSHEARSOLID equation of state"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the small shear strain equation of state
+    for solids. See Plohr, J. N., & Plohr, B. J. (2005). Linearized analysis of
+    Richtmyer–Meshkov flow for elastic materials. Journal of Fluid Mechanics,
+    537, 55-89 for further details.)"; }
+};
+using smallshearsolid = keyword< smallshearsolid_info,
+  TAOCPP_PEGTL_STRING("smallshearsolid") >;
+
 struct eos_info {
   static std::string name() { return "Equation of state"; }
   static std::string shortDescription() { return
@@ -3523,7 +3536,9 @@ struct eos_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + stiffenedgas::string() + "\' | \'"
-                  + jwl::string() + '\'';
+                  + jwl::string() + "\' | \'"
+                  + smallshearsolid::string()
+                  + '\'';
     }
   };
 };

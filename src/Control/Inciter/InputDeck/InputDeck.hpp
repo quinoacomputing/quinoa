@@ -138,6 +138,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::eos
                                  , kw::stiffenedgas
                                  , kw::jwl
+                                 , kw::smallshearsolid
                                  , kw::mat_gamma
                                  , kw::mat_pstiff
                                  , kw::w_gru

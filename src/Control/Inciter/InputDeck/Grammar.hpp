@@ -534,9 +534,20 @@ namespace grm {
           Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
           nmat.push_back( 2 );
         }
+
         // set ncomp based on nmat
         auto m = nmat.back();
-        ncomp.push_back( m + m + 3 + m );
+        auto ntot = m + m + 3 + m;
+        // if solid EOS, add components
+        const auto& matprop = stack.template get< param, eq, tag::material >();
+        for (const auto& mtype : matprop.back()) {
+          if (mtype.template get< tag::eos >() ==
+            inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+            ntot += 9;
+          }
+        }
+
+        ncomp.push_back( ntot );
       }
 
       // Verify correct number of multi-material properties (gamma, cv, pstiff)
