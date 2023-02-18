@@ -57,7 +57,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t system,
   const auto& bgtempic = ic.get< tag::temperature >();
 
   Assert( bgtempic.size() > system, "No background temperature IC" );
-  Assert( bgpreic.size() > 3*system, "No background pressure IC" );
+  Assert( bgpreic.size() > system, "No background pressure IC" );
 
   auto alphamin = 1.0e-12;
 

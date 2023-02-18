@@ -60,5 +60,15 @@ EOS::EOS( ctr::MaterialType mattype,
     m_material = JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, Pr_jwl, A_jwl, B_jwl,
       R1_jwl, R2_jwl);
   }
+  else if (mattype == ctr::MaterialType::SMALLSHEARSOLID) {
+    if (eq == EqType::compflow)
+      Throw("SmallShearSolid not set up for PDE type");
+    // query input deck for SmallShearSolid parameters
+    auto g = getmatprop< tag::multimat, tag::gamma >(system, k);
+    auto ps = getmatprop< tag::multimat, tag::pstiff >(system, k);
+    auto c_v = getmatprop< tag::multimat, tag::cv >(system, k);
+    auto mu = getmatprop< tag::multimat, tag::mu >(system, k);
+    m_material = SmallShearSolid(g, ps, c_v, mu);
+  }
   else Throw( "Unknown material EOS" );
 }

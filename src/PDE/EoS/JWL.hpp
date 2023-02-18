@@ -6,7 +6,7 @@
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Jones, Wilkins, and Lee (JWL) equation of state
-  \details   This file defines functions for the JWL equation of
+  \details   This file declares functions for the JWL equation of
              state for the compressible flow equations. These functions are
              taken from 'JWL Equation of State', Menikoff, LA-UR-15-29536.
 */

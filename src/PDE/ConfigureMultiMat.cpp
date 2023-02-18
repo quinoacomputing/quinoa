@@ -133,11 +133,17 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     nfo.emplace_back( "material id", parameters( m_id ) );
     nfo.emplace_back( "specific heat at constant volume",
       parameters(mtype.get< tag::cv >()) );
-    if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::STIFFENEDGAS) {
+    if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::STIFFENEDGAS ||
+      mtype.get<tag::eos>() == inciter::ctr::MaterialType::SMALLSHEARSOLID) {
       nfo.emplace_back( "ratio of specific heats",
         parameters(mtype.get< tag::gamma >()) );
       nfo.emplace_back( "material stiffness",
         parameters(mtype.get< tag::pstiff >()) );
+      if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::SMALLSHEARSOLID)
+      {
+        nfo.emplace_back( "material shear modulus",
+          parameters(mtype.get< tag::mu >()) );
+      }
     }
     else if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::JWL) {
       nfo.emplace_back( "Gruneisen coefficient w",
@@ -161,11 +167,6 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
       nfo.emplace_back( "JWL parameter Pr",
         parameters(mtype.get< tag::Pr_jwl >()) );
     }
-
-    // Viscosity is optional: vector may be empty
-    const auto& mu = mtype.get< tag::mu >();
-    if (!mu.empty())
-      nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
 
     // Heat conductivity is optional: vector may be empty
     const auto& k = mtype.get< tag::k >();

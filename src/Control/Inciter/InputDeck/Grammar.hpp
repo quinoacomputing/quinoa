@@ -563,7 +563,8 @@ namespace grm {
         const auto& meos = mtype.template get< tag::eos >();
         const auto& mat_id = mtype.template get< tag::id >();
 
-        if (meos == inciter::ctr::MaterialType::STIFFENEDGAS) {
+        if (meos == inciter::ctr::MaterialType::STIFFENEDGAS ||
+          meos == inciter::ctr::MaterialType::SMALLSHEARSOLID) {
           const auto& gamma = mtype.template get< tag::gamma >();
           // If gamma vector is wrong size, error out
           if (gamma.empty() || gamma.size() != mat_id.size())
@@ -590,6 +591,13 @@ namespace grm {
           // If stiffness coefficient vector is wrong size, error out
           if (pstiff.size() != mat_id.size())
             Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+
+          // Check shear modulus vector size
+          if (meos == inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+            const auto& mu = mtype.template get< tag::mu >();
+            if (mu.size() != mat_id.size())
+              Message< Stack, ERROR, MsgKey::EOSMU >( stack, in );
+          }
         }
         else if (meos == inciter::ctr::MaterialType::JWL) {
           auto& cv = mtype.template get< tag::cv >();

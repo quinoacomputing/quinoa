@@ -99,6 +99,7 @@ namespace grm {
     EOSGAMMA,           //!< Wrong number of EOS gamma parameters
     EOSCV,              //!< Wrong number of EOS cv parameters
     EOSPSTIFF,          //!< Wrong number of EOS pstiff parameters
+    EOSMU,              //!< Wrong number of EOS mu parameters
     EOSJWLPARAM,        //!< Wrong number of JWL EOS parameters
     NODT,               //!< No time-step-size policy selected
     MULDT,              //!< Multiple time-step-size policies selected
@@ -239,6 +240,11 @@ namespace grm {
     { MsgKey::EOSPSTIFF, "Incorrect number of equation of state (EOS) 'pstiff' "
       "parameters configured in the preceding block's 'material ... end' "
       "sub-block. The number of components between 'pstiff ... end' "
+      "is incorrect, whose size must equal the number of material-ids set by "
+      "keyword 'id' in that 'material ... end' sub-block." },
+    { MsgKey::EOSMU, "Incorrect number of equation of state (EOS) 'mu' "
+      "parameters configured in the preceding block's 'material ... end' "
+      "sub-block. The number of components between 'mu ... end' "
       "is incorrect, whose size must equal the number of material-ids set by "
       "keyword 'id' in that 'material ... end' sub-block." },
     { MsgKey::EOSJWLPARAM, "Incorrect number of JWL equation of state (EOS) "

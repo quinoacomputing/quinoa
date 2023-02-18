@@ -1,33 +1,36 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/StiffenedGas.hpp
+  \file      src/PDE/EoS/SmallShearSolid.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Stiffened-gas equation of state
-  \details   This file declares functions for the stiffened gas equation of
-             state for the compressible flow equations.
+  \brief     Small shear strain equation of state for solids
+  \details   This file declares functions for the SmallShearSolid equation of
+             state for the compressible flow equations. These functions are
+             taken from Plohr, J. N., & Plohr, B. J. (2005). Linearized analysis
+             of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
+             Mechanics, 537, 55-89.
 */
 // *****************************************************************************
-#ifndef StiffenedGas_h
-#define StiffenedGas_h
+#ifndef SmallShearSolid_h
+#define SmallShearSolid_h
 
 #include "Data.hpp"
 
 namespace inciter {
 
-class StiffenedGas {
+class SmallShearSolid {
 
   private:
-    tk::real m_gamma, m_pstiff, m_cv;
+    tk::real m_gamma, m_pstiff, m_cv, m_mu;
 
   public:
     //! Default constructor
-    StiffenedGas() = default;
+    SmallShearSolid() = default;
 
     //! Constructor
-    StiffenedGas(tk::real gamma, tk::real pstiff, tk::real cv );
+    SmallShearSolid(tk::real gamma, tk::real pstiff, tk::real cv, tk::real mu );
 
 
     //! Calculate density from the material pressure and temperature
@@ -80,14 +83,15 @@ class StiffenedGas {
       p | m_gamma;
       p | m_pstiff;
       p | m_cv;
+      p | m_mu;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i StiffenedGas object reference
-    friend void operator|( PUP::er& p, StiffenedGas& i ) { i.pup(p); }
+    //! \param[in,out] i SmallShearSolid object reference
+    friend void operator|( PUP::er& p, SmallShearSolid& i ) { i.pup(p); }
     //@}
 };
 
 } //inciter::
 
-#endif // StiffenedGas_h
+#endif // SmallShearSolid_h

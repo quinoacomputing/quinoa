@@ -3297,10 +3297,11 @@ using mat_pstiff = keyword< mat_pstiff_info, TAOCPP_PEGTL_STRING("pstiff") >;
 
 struct mat_mu_info {
   static std::string name() { return "mu"; }
-  static std::string shortDescription() { return "dynamic viscosity"; }
+  static std::string shortDescription()
+    { return "shear modulus/dynamic viscosity"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the material property, dynamic
-       viscosity.)";
+    R"(This keyword is used to specify the material property, shear modulus for
+       solids, or dynamic viscosity for fluids.)";
   }
   struct expect {
     using type = tk::real;

@@ -18,6 +18,7 @@
 #include "Inciter/Options/Material.hpp"
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/JWL.hpp"
+#include "EoS/SmallShearSolid.hpp"
 
 namespace inciter {
 
@@ -33,6 +34,7 @@ class EOS {
     //! Variant type listing all eos types modeling the same concept
     std::variant< StiffenedGas
                 , JWL
+                , SmallShearSolid
                 > m_material;
 
   public:
