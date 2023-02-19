@@ -71,7 +71,7 @@ class MultiMat {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_riemann( multimatRiemannSolver(
-        g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) )
+        g_inputdeck.get< tag::param, tag::multimat, tag::flux >() ) )
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,

@@ -120,8 +120,8 @@ class PDEStack {
       if ( nc ) {
         // re-create key and search for it
         ctr::PDEKey key{{ eq,
-          g_inputdeck.get< tag::param, EqTag, tag::physics >()[c],
-          g_inputdeck.get< tag::param, EqTag, tag::problem >()[c] }};
+          g_inputdeck.get< tag::param, EqTag, tag::physics >(),
+          g_inputdeck.get< tag::param, EqTag, tag::problem >() }};
         const auto it = f.find( key );
         Assert( it != end( f ),
                 "Can't find PDE with key('" +

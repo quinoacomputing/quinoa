@@ -69,7 +69,7 @@ class CompFlow {
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_riemann( compflowRiemannSolver(
-        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) )
+        g_inputdeck.get< tag::param, tag::compflow, tag::flux >() ) )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys

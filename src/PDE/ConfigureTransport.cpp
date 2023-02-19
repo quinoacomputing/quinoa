@@ -85,7 +85,7 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   infoMesh< eq >( c, nfo );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< param, eq, tag::problem >()[c] ) );
+    g_inputdeck.get< param, eq, tag::problem >() ) );
 
   auto intsharp = g_inputdeck.get< tag::param, eq, tag::intsharp >()[c];
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );

@@ -86,10 +86,10 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   infoMesh< eq >( c, nfo );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
-    g_inputdeck.get< tag::param, eq, tag::physics >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::physics >() ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, eq, tag::problem >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::problem >() ) );
 
   auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
   nfo.emplace_back( "number of components", parameter( ncomp ) );
@@ -97,7 +97,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   if (scheme != ctr::SchemeType::DiagCG && scheme != ctr::SchemeType::ALECG)
     nfo.emplace_back( "flux", ctr::Flux().name(
-      g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
+      g_inputdeck.get< tag::param, eq, tag::flux >() ) );
 
   // Material property output
   const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c][0];

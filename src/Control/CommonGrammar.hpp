@@ -56,10 +56,6 @@ namespace grm {
   //!   case). This is true for both inserting variables into the set as well as
   //!   at matching terms of products in parsing requested statistics.
   static std::set< char, tk::ctr::CaseInsensitiveCharLess > depvars;
-  //! \brief Parser-lifetime storage for PDF names
-  //! \details Used to track the names of PDFs registered so that parsing new
-  //!    ones can be required to be unique.
-  static std::set< std::string > pdfnames;
 
   // Common auxiliary functions (reused by multiple grammars)
 
@@ -102,11 +98,6 @@ namespace grm {
     NOGAMMA,            //!< No icgamma...end block when initpolicy = jointgamma
     NOMEAN,             //!< No mean when initpolicy = jointcorrgaussian
     NOCOV,              //!< No cov when initpolicy = jointcorrgaussian
-    WRONGBETAPDF,       //!< Wrong number of parameters for a beta pdf
-    WRONGGAMMAPDF,      //!< Wrong number of parameters for a gamma pdf
-    WRONGGAUSSIAN,      //!< Wrong number of parameters for a Gaussian PDF
-    WRONGDIRICHLET,     //!< Wrong number of parameters for a Dirichlet PDF
-    NEGATIVEPARAM,      //!< Negative parameter given configuring a PDF
     NONCOMP,            //!< No number of components selected
     LARGECOMP,          //!< Component index indexing out of max eq sys ncomp
     BADRANGE,           //!< Incorrect time range configuration
@@ -122,20 +113,6 @@ namespace grm {
     EOSJWLPARAM,        //!< Wrong number of JWL EOS parameters
     NODT,               //!< No time-step-size policy selected
     MULDT,              //!< Multiple time-step-size policies selected
-    NOSAMPLES,          //!< PDF need a variable
-    INVALIDSAMPLESPACE, //!< PDF sample space specification incorrect
-    MALFORMEDSAMPLE,    //!< PDF sample space variable specification incorrect
-    INVALIDBINSIZE,     //!< PDF sample space bin size specification incorrect
-    INVALIDEXTENT,      //!< PDF sample space extent specification incorrect
-    EXTENTLOWER,        //!< PDF sample space extents in non-increasing order
-    NOBINS,             //!< PDF sample space bin size required
-    ZEROBINSIZE,        //!< PDF sample space bin size incorrect
-    MAXSAMPLES,         //!< PDF sample space dimension too large
-    MAXBINSIZES,        //!< PDF sample space bin sizes too many
-    MAXEXTENTS,         //!< PDF sample space extent-pairs too many
-    BINSIZES,           //!< PDF sample space vars unequal to number of bins
-    PDF,                //!< PDF specification syntax error
-    PDFEXISTS,          //!< PDF identifier already defined
     POINTEXISTS,        //!< Point identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
     BOUNDS,             //!< Specified value out of bounds
@@ -320,18 +297,6 @@ namespace grm {
       "initpolicy is selected. Pick an initpolicy different than jointdelta "
       "(using keyword 'init') or specify at least a single spike...end block "
       "(within an icdelta...end block)." },
-    { MsgKey::NOBETA, "No beta...end block with at least a single "
-      "betapdf...end block has been specified within the block preceding this "
-      "position. This is mandatory for the preceding block if jointbeta "
-      "initpolicy is selected. Pick an initpolicy different than jointbeta "
-      "(using keyword 'init') or specify at least a single betapdf...end block "
-      "(within a icbeta...end block)." },
-    { MsgKey::NOGAMMA, "No gamma...end block with at least a single "
-      "gammapdf...end block has been specified within the block preceding this "
-      "position. This is mandatory for the preceding block if jointgamma "
-      "initpolicy is selected. Pick an initpolicy different than jointgamma "
-      "(using keyword 'init') or specify at least a single gammapdf...end block "
-      "(within a icgamma...end block)." },
     { MsgKey::NOMEAN, "No means have been specified within icjointgaussian..."
       "end block for jointcorrgaussian initialization policy." },
     { MsgKey::NOCOV, "No covariance matrix has been specified within "
@@ -342,55 +307,7 @@ namespace grm {
       "must contain an even number of real numbers, where every odd one is the "
       "sample space position of a spike followed by the spike height "
       "specifying the relative probability of the spike." },
-    { MsgKey::WRONGBETAPDF, "Wrong number of beta distribution parameters. A "
-      "beta distribution must be configured by exactly four real numbers in a "
-      "betapdf...end block." },
-    { MsgKey::WRONGGAMMAPDF, "Wrong number of gamma distribution parameters. A "
-      "gamma distribution must be configured by exactly two real numbers in a "
-      "gammapdf...end block." },
-    { MsgKey::WRONGGAUSSIAN, "Wrong number of Gaussian distribution "
-      "parameters. A Gaussian distribution must be configured by exactly 2 "
-      "real numbers in a gaussian...end block." },
-    { MsgKey::WRONGDIRICHLET, "Wrong number of Dirichlet distribution "
-      "parameters." },
-    { MsgKey::NEGATIVEPARAM, "Negative distribution parameter (e.g., variance, "
-      "shape, scale) specified configuring a probabililty distribution." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
-    { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
-    { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
-      "non-empty list of sample space variables, must be followed by a "
-      "colon, followed by a non-empty list of bin sizes (reals numbers), e.g., "
-      "\"(x y : 0.1 0.2)\"" },
-    { MsgKey::MALFORMEDSAMPLE, "A PDF sample space variable must be a single "
-      "upper or lowercase letter optionally followed by an integer. "
-      "Multiple variables, specifying a multi-dimensional sample space, must "
-      "be separated by white spaces." },
-    { MsgKey::INVALIDBINSIZE, "PDF sample space bin size(s) specification "
-      "incorrect. A non-empty list of sample space variables, must be followed "
-      "by a colon, followed by a non-empty list of bin sizes (real numbers), "
-      "e.g., \"(x y : 0.1 0.2)\"" },
-    { MsgKey::INVALIDEXTENT, "PDF sample space extents specification "
-      "incorrect. The semi-colon following the list of bin sizes, must be "
-      "followed by a non-empty list of extents (real numbers), e.g., \"(x y : "
-      "0.1 0.2 ; 0.0 1.0 0.2 0.9)\". The number of real numbers representing "
-      "the sample space extents must be exactly twice the number of sample "
-      "space dimensions, i.e., in this 2D example 4 (2 pairs)." },
-    { MsgKey::EXTENTLOWER, "PDF sample space extents must be a pair of a "
-      "smaller and a larger numerical value, in that order." },
-    { MsgKey::NOBINS, "Need at least one sample space bin size, followed by a "
-      "colon, in a PDF specification." },
-    { MsgKey::ZEROBINSIZE, "Sample space bin size must be a real number and "
-      "greater than zero." },
-    { MsgKey::MAXSAMPLES, "The maximum number of sample space variables for a "
-      "joint PDF is 3." },
-    { MsgKey::MAXBINSIZES, "The maximum number of bins sizes for a joint PDF "
-      "is 3."},
-    { MsgKey::MAXEXTENTS, "The maximum number of optional sample space extents "
-      "for a joint PDF is 3 pairs."},
-    { MsgKey::BINSIZES, "The number of sample space variables for a PDF must "
-      "equal the number of bin sizes given." },
-    { MsgKey::PDF, "Syntax error while parsing PDF specification." },
-    { MsgKey::PDFEXISTS, "PDF already exists. PDF identifiers must be unique."},
     { MsgKey::POINTEXISTS, "Point already exists. Point identifiers must be "
       "unique."},
     { MsgKey::BADPRECISION, "Precision specification invalid. It should be a "
@@ -1185,26 +1102,6 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct match_pdfname : pegtl::success {};
-  //! \brief Match PDF name to the registered ones
-  //! \details This is used to check the set of PDF names dependent previously
-  //!    registered to make sure all are unique.
-  template<>
-  struct action< match_pdfname > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      // find matched name in set of registered ones
-      if (pdfnames.find( in.string() ) == pdfnames.end()) {
-        pdfnames.insert( in.string() );
-        stack.template get< tag::cmd, tag::io, tag::pdfnames >().
-          push_back( in.string() );
-      }
-      else  // error out if name matched var is already registered
-        Message< Stack, ERROR, MsgKey::PDFEXISTS >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
   template< template< class > class use, class Option, typename sel,
             typename vec, typename... tags >
   struct check_store_option : pegtl::success {};
@@ -1336,84 +1233,6 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< tk::ctr::Moment m > struct push_sample : pegtl::success {};
-  //! Add matched value as Term into vector of vector of PDFs
-  template< tk::ctr::Moment m >
-  struct action< push_sample< m > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      // Use a shorthand of reference to vector to push_back to
-      auto& pdf = stack.template get< tag::pdf >();
-      // Error out if sample space already has at least 3 dimensions
-      if ( pdf.back().size() >= 3 ) {
-        Message< Stack, ERROR, MsgKey::MAXSAMPLES >( stack, in );
-      }
-      // Error out if matched sample space variable starts with a digit
-      if ( std::isdigit(in.string()[0]) )
-        Message< Stack, ERROR, MsgKey::MALFORMEDSAMPLE >( stack, in );
-      // Push term into current vector
-      pdf.back().emplace_back( tk::ctr::Term( in.string()[0], field, m ) );
-      // If central moment, trigger estimation of mean (in statistics)
-      if (m == tk::ctr::Moment::CENTRAL) {
-        tk::ctr::Term term( static_cast<char>(toupper(in.string()[0])),
-                            field,
-                            tk::ctr::Moment::ORDINARY );
-        auto& stats = stack.template get< tag::stat >();
-        if (!stats.empty())
-          stats.insert( stats.end()-1, tk::ctr::Product( 1, term ) );
-        else
-          stats.emplace_back( tk::ctr::Product( 1, term ) );
-      }
-      field = 0;            // reset default field
-    }
-  };
-
-  //! Rule used to trigger action
-  struct push_binsize : pegtl::success {};
-  //! Push matched value into vector of vector binsizes
-  template<>
-  struct action< push_binsize > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      // Use a shorthand of reference to vector to push_back to
-      auto& bins = stack.template get< tag::discr, tag::binsize >().back();
-      // Error out if binsize vector already has at least 3 dimensions
-      if ( bins.size() >= 3 ) {
-        Message< Stack, ERROR, MsgKey::MAXBINSIZES >( stack, in );
-      }
-      // Push term into vector if larger than zero
-      const auto& binsize = stack.template convert< tk::real >( in.string() );
-      if ( !(binsize > std::numeric_limits< tk::real >::epsilon()) )
-        Message< Stack, ERROR, MsgKey::ZEROBINSIZE >( stack, in );
-      else
-        bins.emplace_back( binsize );
-    }
-  };
-
-  //! Rule used to trigger action
-  struct push_extents : pegtl::success {};
-  //! Push matched value into vector of PDF extents
-  template<>
-  struct action< push_extents > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      // Use a shorthand of reference to vector to push_back to
-      auto& vec = stack.template get< tag::discr, tag::extent >().back();
-      // Error out if extents vector already has at least 3 pairs
-      if (vec.size() >= 6)
-        Message< Stack, ERROR, MsgKey::MAXEXTENTS >( stack, in );
-      // Error out if extents vector already has the enough pairs to match the
-      // number of sample space dimensions
-      if (vec.size() >=
-          stack.template get< tag::discr, tag::binsize >().back().size() * 2) {
-        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in );
-      }
-      // Push extent into vector
-      vec.emplace_back( stack.template convert< tk::real >( in.string() ) );
-    }
-  };
-
-  //! Rule used to trigger action
   template< class eq, class param, class... xparam >
   struct check_vector : pegtl::success {};
   //! Check parameter vector
@@ -1430,181 +1249,6 @@ namespace grm {
   struct action< noop > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& ) {}
-  };
-
-  //! Rule used to trigger action
-  template< class eq, class param, class... xparam >
-  struct check_spikes : pegtl::success {};
-  //! Check if the spikes parameter vector specifications are correct
-  //! \details Spikes are used to specify sample-space locations and relative
-  //!    probability heights for a joint-delta PDF.
-  template< class eq, class param, class... xparam >
-  struct action< check_spikes< eq, param, xparam... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      const auto& spike =
-        stack.template get< tag::param, eq, param, xparam... >().back().back();
-      // Error out if the number of spikes-vector is odd
-      if (spike.size() % 2)
-        Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, in );
-      // Error out if the sum of spike heights does not add up to unity, but
-      // only if the spike block is not empty (an empty spike..end block
-      // is okay and is used to specify no delta spikes for a dependent
-      // variable).
-      if (!spike.empty()) {
-        tk::real sum = 0.0;
-        for (std::size_t i=1; i<spike.size(); i+=2)  // every even is a height
-          sum += spike[i];
-        if (std::abs(sum-1.0) > std::numeric_limits< tk::real >::epsilon())
-          Message< Stack, ERROR, MsgKey::HEIGHTSPIKES >( stack, in );
-      }
-    }
-  };
-
-  //! Rule used to trigger action
-  template< class eq, class param, class... xparam >
-  struct check_betapdfs : pegtl::success {};
-  //! Check if the betapdf parameter vector specifications are correct
-  //! \details Betapdf vectors are used to configure univariate beta
-  //!   distributions.
-  template< class eq, class param, class... xparam >
-  struct action< check_betapdfs< eq, param, xparam... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      const auto& betapdf =
-        stack.template get< tag::param, eq, param, xparam... >().back().back();
-      // Error out if the number parameters is not four
-      if (betapdf.size() != 4)
-        Message< Stack, ERROR, MsgKey::WRONGBETAPDF >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
-  template< class eq, class param, class... xparam >
-  struct check_gammapdfs : pegtl::success {};
-  //! Check if the gammapdf parameter vector specifications are correct
-  //! \details gammapdf vectors are used to configure univariate gamma
-  //!   distributions.
-  template< class eq, class param, class... xparam >
-  struct action< check_gammapdfs< eq, param, xparam... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      const auto& gamma =
-        stack.template get< tag::param, eq, param, xparam... >().back().back();
-      // Error out if the number parameters is not two
-      if (gamma.size() != 2)
-        Message< Stack, ERROR, MsgKey::WRONGGAMMAPDF >( stack, in );
-      // Error out if the specified shape or scale parameter negative
-      if (gamma[0] < 0.0 || gamma[1] < 0.0)
-        Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
-  template< class eq, class param, class... xparam >
-  struct check_dirichletpdf : pegtl::success {};
-  //! Check if the dirichletpdf parameter vector specifications are correct
-  //! \details dirichletpdf vectors are used to configure multivariate
-  //!    Dirichlet distributions.
-  template< class eq, class param, class... xparam >
-  struct action< check_dirichletpdf< eq, param, xparam... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      const auto& dir =
-        stack.template get< tag::param, eq, param, xparam... >().back();
-      // get recently configured eq block number of scalar components
-      auto ncomp =
-        stack.template get< tag::component >().template get< eq >().back();
-      // Error out if the number parameters does not equal ncomp
-      if (dir.size() != ncomp-2)
-        Message< Stack, ERROR, MsgKey::WRONGDIRICHLET >( stack, in );
-      // Error out if the specified shape or scale parameter negative
-      for (auto a : dir)
-        if (a < 0.0)
-          Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
-  template< class eq, class param, class... xparam >
-  struct check_gaussians : pegtl::success {};
-  //! Check if the Gaussian PDF parameter vector specifications are correct
-  //! \details Gaussian vectors are used to configure univariate Gaussian
-  //!   distributions.
-  template< class eq, class param, class... xparam >
-  struct action< check_gaussians< eq, param, xparam... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      const auto& gaussian =
-        stack.template get< tag::param, eq, param, xparam... >().back().back();
-      // Error out if the number parameters is not two
-      if (gaussian.size() != 2)
-        Message< Stack, ERROR, MsgKey::WRONGGAUSSIAN >( stack, in );
-      // Error out if the specified variance is negative
-      if (gaussian.back() < 0.0)
-        Message< Stack, ERROR, MsgKey::NEGATIVEPARAM >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
-  struct check_expectation : pegtl::success {};
-  //! Check if there is at least one variable in expectation
-  template<>
-  struct action< check_expectation > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      if (stack.template get< tag::stat >().back().empty())
-        Message< Stack, ERROR, MsgKey::NOTERMS >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
-  struct check_binsizes : pegtl::success {};
-  //! Check if the number of binsizes equal the PDF sample space variables
-  template<>
-  struct action< check_binsizes > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      if (stack.template get< tag::pdf >().back().size() !=
-          stack.template get< tag::discr, tag::binsize >().back().size())
-          Message< Stack, ERROR, MsgKey::BINSIZES >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
-  struct check_extents : pegtl::success {};
-  //! Check if the number of extents equal 2 * the PDF sample space variables
-  template<>
-  struct action< check_extents > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      // Use a shorthand to extents vector
-      const auto& e = stack.template get< tag::discr, tag::extent >().back();
-      // Check if the number of extents are correct
-      if (!e.empty() &&
-          e.size() !=
-            stack.template get< tag::discr, tag::binsize >().back().size()*2)
-        Message< Stack, ERROR, MsgKey::INVALIDEXTENT >( stack, in );
-      // Check if the lower extents are indeed lower than the higher extents
-      if (e.size() > 1 && e[0] > e[1])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in );
-      if (e.size() > 3 && e[2] > e[3])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in );
-      if (e.size() > 5 && e[4] > e[5])
-        Message< Stack, ERROR, MsgKey::EXTENTLOWER >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
-  struct check_samples : pegtl::success {};
-  //! Check if there is at least one sample space variable in PDF
-  template<>
-  struct action< check_samples > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      if (stack.template get< tag::pdf >().back().empty())
-        Message< Stack, ERROR, MsgKey::NOSAMPLES >( stack, in );
-    }
   };
 
   //! Rule used to trigger action
@@ -1886,75 +1530,6 @@ namespace grm {
            act< fieldvar< pegtl::lower >,
                 match_depvar< push_term< tk::ctr::Moment::CENTRAL > > > > {};
 
-  //! \brief sample space variable: fieldvar matched to selected depvars
-  template< class c, tk::ctr::Moment m >
-  struct sample_space_var :
-         scan_until<
-           fieldvar< c >,
-           match_depvar< push_sample< m > >,
-           pegtl::one<':'> > {};
-
-  //! Match samples: sample space variables optionally separated by fillers
-  struct samples :
-         pegtl::sor<
-           sample_space_var< pegtl::upper, tk::ctr::Moment::ORDINARY >,
-           sample_space_var< pegtl::lower, tk::ctr::Moment::CENTRAL >
-         > {};
-
-  //! Match bin(sizes): real numbers as many sample space dimensions were given
-  struct bins :
-         pegtl::sor<
-           scan_until< number, push_binsize, pegtl::one<')'> >,
-           act< pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
-                msg< ERROR, MsgKey::INVALIDBINSIZE > > > {};
-
-  //! Plow through expectations between characters '<' and '>'
-  struct parse_expectations :
-         readkw< pegtl::seq< act< pegtl::one<'<'>, start_vector< tag::stat > >,
-                             pegtl::until< pegtl::one<'>'>, term >,
-                             check_expectation > > {};
-
-  //! Match list of sample space variables with error checking
-  struct sample_space :
-         pegtl::seq<
-           start_vector< tag::pdf >,
-           pegtl::until< pegtl::one<':'>, samples >,
-           check_samples > {};
-
-  //! Match extents: optional user-specified extents of PDF sample space
-  struct extents :
-         pegtl::sor<
-           scan_until< number, push_extents, pegtl::one<')'> >,
-           act< pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
-                msg< ERROR, MsgKey::INVALIDEXTENT > > > {};
-
-  //! Match binsizes followed by optional extents with error checking
-  struct bins_exts :
-         pegtl::seq<
-           start_vector< tag::discr, tag::binsize >,
-           start_vector< tag::discr, tag::extent >,
-           pegtl::until< pegtl::sor< pegtl::one<';'>,
-                                     pegtl::at< pegtl::one<')'> > >,
-                         bins >,
-           pegtl::until< pegtl::one<')'>, extents >,
-           check_binsizes,
-           check_extents > {};
-
-  //! \brief Match pdf description: name + sample space specification
-  //! \details Example syntax (without the quotes): "name(x y z : 1.0 2.0 3.0)",
-  //!    'name' is the name of the pdf, and x,y,z are sample space variables,
-  //!    while 1.0 2.0 3.0 are bin sizes corresponding to the x y z sample space
-  //!    dimensions, respectively.
-  struct parse_pdf :
-         readkw<
-           pegtl::if_must<
-             act< pegtl::seq< pegtl::identifier, pegtl::at< pegtl::one<'('> > >,
-                  match_pdfname >,
-             pegtl::sor< pegtl::one<'('>,
-                         msg< ERROR, MsgKey::KEYWORD > >,
-             pegtl::sor< pegtl::seq< sample_space, bins_exts >,
-                         msg< ERROR, MsgKey::INVALIDSAMPLESPACE > > > > {};
-
   //! Match precision of floating-point numbers in digits (for text output)
   template< template< class > class use, class prec >
   struct precision :
@@ -2009,21 +1584,6 @@ namespace grm {
            tk::grm::block< use< kw::end >,
              tk::grm::scan< tk::grm::number,
                tk::grm::Store_back_back< tag, tags... > > > > {};
-
-  //! Parse statistics ... end block
-  template< template< class > class use, template< class... Ts > class store >
-  struct statistics :
-         pegtl::if_must< readkw< typename use< kw::statistics >::pegtl_string >,
-                         block< use< kw::end >,
-                                interval_iter< use< kw::interval_iter >,
-                                  tag::output, tag::iter, tag::stat >,
-                                process< use< kw::txt_float_format >,
-                                         store< tk::ctr::TxtFloatFormat,
-                                                tag::flformat,
-                                                tag::stat >,
-                                         pegtl::alpha >,
-                                precision< use, tag::stat >,
-                                parse_expectations > > {};
 
   //! Parse diagnostics ... end block
   template< template< class > class use, template< class... Ts > class store >
@@ -2132,48 +1692,6 @@ namespace grm {
   struct title :
          pegtl::if_must< readkw< typename use< kw::title >::pegtl_string >,
                          quoted< Set< tag::title > > > {};
-
-  //! Match and set policy parameter
-  template< template< class > class use, typename keyword,
-            typename option, typename p, typename... tags >
-  struct policy :
-         process<
-           keyword,
-           store_back_option< use, option, tag::param, p, tags... >,
-           pegtl::alpha > {};
-
-  //! Match and set a PDF option
-  template< class keyword, class store >
-  struct pdf_option :
-         process< keyword, store, pegtl::alpha > {};
-
-  //! Match pdfs ... end block
-  template< template< class > class use, template< class... Ts > class store >
-  struct pdfs :
-         pegtl::if_must<
-           tk::grm::readkw< typename use < kw::pdfs >::pegtl_string >,
-           tk::grm::block<
-             use< kw::end >,
-             tk::grm::interval_iter< use< kw::interval_iter >,
-                                     tag::output, tag::iter, tag::pdf >,
-             pdf_option< use< kw::filetype >,
-                         store< tk::ctr::PDFFile,
-                                tag::selected,
-                                tag::filetype > >,
-             pdf_option< use< kw::pdf_policy >,
-                         store< tk::ctr::PDFPolicy,
-                                tag::selected,
-                                tag::pdfpolicy > >,
-             pdf_option< use< kw::pdf_centering >,
-                         store< tk::ctr::PDFCentering,
-                                tag::selected,
-                                tag::pdfctr > >,
-             pdf_option< use< kw::txt_float_format >,
-                         store< tk::ctr::TxtFloatFormat,
-                                tag::flformat,
-                                tag::pdf > >,
-             precision< use, tag::pdf >,
-             parse_pdf > > {};
 
   //! \brief Ensure that a grammar only uses keywords from a pool of
   //!   pre-defined keywords
