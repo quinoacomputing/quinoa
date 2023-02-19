@@ -24,9 +24,6 @@
 #include "Exception.hpp"
 #include "Tags.hpp"
 #include "StatCtr.hpp"
-#include "Options/PDFFile.hpp"
-#include "Options/PDFPolicy.hpp"
-#include "Options/PDFCentering.hpp"
 #include "Options/TxtFloatFormat.hpp"
 #include "Options/Error.hpp"
 
@@ -686,22 +683,6 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags >
-  struct Store_back_back_back : pegtl::success {};
-  //! \brief Convert and push back value to vector of back of vector of back of
-  //!   vector in state at position given by tags
-  //! \details This struct and its apply function are used as a functor-like
-  //!    wrapper for calling the store_back_back_back member function of the
-  //!    underlying grammar stack, tk::Control::store_back_back_back.
-  template< typename tag, typename...tags >
-  struct action< Store_back_back_back< tag, tags... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      stack.template store_back_back_back< tag, tags... >( in.string() );
-    }
-  };
-
-  //! Rule used to trigger action
   template< typename target, typename tag, typename... tags >
   struct Back_back_store : pegtl::success {};
   //! \brief Convert and store value to vector of vector in state at position
@@ -833,40 +814,6 @@ namespace grm {
       Option opt;
       if (opt.exist(in.string())) {
         stack.template get<tag,tags...>().push_back( opt.value( in.string() ) );
-      } else {
-        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
-      }
-      // trigger error at compile-time if any of the expected option values
-      // is not in the keywords pool of the grammar
-      brigand::for_each< typename Option::keywords >( is_keyword< use >() );
-    }
-  };
-
-  //! Rule used to trigger action
-  template< template < class > class use, class Option,
-            typename tag, typename... tags >
-  struct store_back_back_option : pegtl::success {};
-  //! \brief Push back option to vector of back of vector in state at position
-  //!   given by tags
-  //! \details This struct and its apply function are used as a functor-like
-  //!   wrapper for pushing back an option (an object deriving from
-  //!   tk::Toggle) into the back of a vector of a vector in the grammar stack.
-  //!   See walker::ctr::DiffEq for an example specialization of tk::Toggle to
-  //!   see how an option is created from tk::Toggle. We also do a simple sanity
-  //!   check here testing if the desired option value exist for the particular
-  //!   option type and error out if there is a problem. Errors and warnings are
-  //!   accumulated during parsing and diagnostics are given after the parsing
-  //!   is finished. This functor is similar to store_back_option but pushes the
-  //!   option back to a vector of a vector.
-  template< template < class > class use, class Option,
-            typename tag, typename... tags >
-  struct action< store_back_back_option< use, Option, tag, tags... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      Option opt;
-      if (opt.exist(in.string())) {
-        stack.template get<tag,tags...>().back().
-              push_back( opt.value( in.string() ) );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
       }
@@ -1102,29 +1049,6 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< template< class > class use, class Option, typename sel,
-            typename vec, typename... tags >
-  struct check_store_option : pegtl::success {};
-  //! Put option in state at position given by tags if among the selected
-  template< template < class > class use, class Option, typename sel,
-            typename vec, typename... tags >
-  struct action< check_store_option< use, Option, sel, vec, tags... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      // error out if chosen item does not exist in selected vector
-      bool exists = false;
-      for (const auto& r : stack.template get< sel, vec >()) {
-        // cppcheck-suppress useStlAlgorithm
-        if (Option().value(in.string()) == r) exists = true;
-      }
-      if (exists)
-        action< store_back_option< use, Option, tags... > >::apply( in, stack );
-      else
-        Message< Stack, ERROR, MsgKey::NOTSELECTED >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
   struct add_depvar : pegtl::success {};
   //! Add depvar (dependent variable) to the selected ones
   template<>
@@ -1204,31 +1128,6 @@ namespace grm {
     static void apply( const Input&, Stack& stack ) {
       // no arg: use default ctor
       stack.template get< tag, tags... >().back().back().emplace_back();
-    }
-  };
-
-  //! Rule used to trigger action
-  template< typename tk::ctr::Moment, char var = '\0' >
-  struct push_term : pegtl::success {};
-  //! Add matched value as Term into vector of vector of statistics
-  template< tk::ctr::Moment m, char var >
-  struct action< push_term< m, var > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      // If var is given, push var, otherwise push first char of value
-      char v(var ? var : in.string()[0]);
-      // Use a shorthand of reference to vector to push_back to
-      auto& stats = stack.template get< tag::stat >();
-      // Push term into current vector
-      stats.back().emplace_back( tk::ctr::Term( v, field, m ) );
-      // If central moment, trigger mean (in statistics)
-      if (m == tk::ctr::Moment::CENTRAL) {
-        tk::ctr::Term term( static_cast<char>(toupper(v)),
-                            field,
-                            tk::ctr::Moment::ORDINARY );
-        stats.insert( stats.end()-1, tk::ctr::Product( 1, term ) );
-      }
-      field = 0;            // reset default field
     }
   };
 
@@ -1521,15 +1420,6 @@ namespace grm {
            pegtl::seq< var, act< pegtl::plus< pegtl::digit >, save_field > >,
            var > {};
 
-  //! \brief Match  term: upper or lowercase fieldvar matched to selected
-  //!    depvars for stats
-  struct term :
-         pegtl::sor<
-           act< fieldvar< pegtl::upper >,
-                match_depvar< push_term< tk::ctr::Moment::ORDINARY > > >,
-           act< fieldvar< pegtl::lower >,
-                match_depvar< push_term< tk::ctr::Moment::CENTRAL > > > > {};
-
   //! Match precision of floating-point numbers in digits (for text output)
   template< template< class > class use, class prec >
   struct precision :
@@ -1646,37 +1536,6 @@ namespace grm {
                                  use< kw::end >,
                                  start< tag::param, eq, param, xparams... > >,
                          check< eq, param, xparams... > > {};
-
-  //! Match equation/model option vector
-  //! \details This structure is used to match a keyword ... end block that
-  //!   contains a list (i.e., a vector) of numbers. The keyword that starts the
-  //!   block is passed in via the 'keyword' template argument. The 'store'
-  //!   argument abstracts away a "functor" used to store the parsed values
-  //!   (e.g. a push_back operaton on a std::vector. The 'start' argument
-  //!   abstracts away the starter functor used to start the inserting operation
-  //!   before parsing a value (usually a push_back on a vector using the
-  //!   default value constructor). The 'check' argument abstracts away a
-  //!   functor used to do error checking on the value parsed. Arguments 'eq'
-  //!   and 'param' denote two levels of the hierarchy relative to tag::param,
-  //!   at which the parameter vector lives. Example client-code: see
-  //!   walker::deck::sde_option_vector.
-  template< template< class > class use,
-            typename keyword,
-            class option,
-            template< class, class... > class store,
-            template< class, class... > class start,
-            template< class, class > class check,
-            typename eq,
-            typename param >
-  struct option_vector :
-         pegtl::if_must<
-           vector<
-             keyword,
-             store_back_back_option< use, option, tag::param, eq, param >,
-             use< kw::end >,
-             start< tag::param, eq, param >,
-             pegtl::alpha >,
-           check< eq, param > > {};
 
   //! Match model parameter dependent variable
   template< template< class > class use, typename model, typename Tag >
