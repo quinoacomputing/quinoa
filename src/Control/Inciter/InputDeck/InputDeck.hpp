@@ -196,7 +196,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::taylor_green
                                  , kw::filetype
                                  , kw::exodusii
-                                 , kw::root
                                  , kw::error
                                  , kw::l2
                                  , kw::linf
