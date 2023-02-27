@@ -960,6 +960,17 @@ using outvar_material_indicator =
   keyword< outvar_material_indicator_info,
     TAOCPP_PEGTL_STRING("material_indicator") >;
 
+struct outvar_schlieren_info {
+  static std::string name() { return "schlieren"; }
+  static std::string shortDescription() { return "Request Schlieren"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to request the numerical Schlieren function
+       ln(1+|grad(bulk_density)|) as an output variable.)";
+  }
+};
+using outvar_schlieren = keyword< outvar_schlieren_info,
+    TAOCPP_PEGTL_STRING("schlieren") >;
+
 struct outvar_analytic_info {
   static std::string name() { return "analytic"; }
   static std::string shortDescription() { return "Request analytic solution"; }
@@ -991,6 +1002,7 @@ struct outvar_info {
     + outvar_zvelocity::string() + "\', \'"
     + outvar_pressure::string() + "\', \'"
     + outvar_material_indicator::string() + "\', \'"
+    + outvar_schlieren::string() + "\', \'"
     + outvar_analytic::string() + "\'.";
   }
 };

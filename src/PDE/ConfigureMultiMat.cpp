@@ -302,6 +302,7 @@ assignMultiMatGetVars( const std::string& name, tk::GetVarFn& f )
   assign< outvar_yvelocity >( name, velocityOutVar<1>, f );
   assign< outvar_zvelocity >( name, velocityOutVar<2>, f );
   assign< outvar_material_indicator >( name, matIndicatorOutVar, f );
+  assign< outvar_schlieren >( name, schlierenOutVar, f );
 }
 
 }  // inciter::

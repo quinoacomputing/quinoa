@@ -71,7 +71,7 @@ FV::FV( const CProxy_Discretization& disc,
   m_uc(),
   m_pc(),
   m_initial( 1 ),
-  m_uElemfields(m_u.nunk(), g_inputdeck.get< tag::component >().nprop()),
+  m_uElemfields(m_u.nunk(), m_u.nprop()),
   m_pElemfields(m_u.nunk(),
     m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
   m_uNodefields(m_npoin, g_inputdeck.get< tag::component >().nprop()),
@@ -902,7 +902,7 @@ FV::writeFields( CkCallback c )
 
   // Collect field output from numerical solution requested by user
   auto elemfields = numericFieldOutput( m_uElemfields, tk::Centering::ELEM,
-    m_pElemfields );
+    m_pElemfields, g_inputdeck.get< tag::discr, tag::rdof >() );
   auto nodefields = numericFieldOutput( m_uNodefields, tk::Centering::NODE,
     m_pNodefields );
 

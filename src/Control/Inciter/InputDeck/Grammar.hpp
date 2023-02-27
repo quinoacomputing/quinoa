@@ -2254,6 +2254,7 @@ namespace deck {
            , outvar_human< kw::outvar_zvelocity >
            , outvar_human< kw::outvar_pressure >
            , outvar_human< kw::outvar_material_indicator >
+           , outvar_human< kw::outvar_schlieren >
            , outvar_human< kw::outvar_analytic >
            > > {};
 

@@ -135,6 +135,31 @@ matIndicatorOutVar( const tk::Fields& U, std::size_t rdof )
   return m;
 }
 
+//! Compute Schlieren function for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] rdof Number of reconstructed solution DOFs
+//! \return Schlieren function ready to be output to file
+static tk::GetVarFn::result_type
+schlierenOutVar( const tk::Fields& U, std::size_t rdof )
+{
+  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
+  std::vector< tk::real > m(U.nunk(), 0.0);
+  for (std::size_t i=0; i<U.nunk(); ++i) {
+    tk::real dxrho(0.0), dyrho(0.0), dzrho(0.0);
+    for (std::size_t k=0; k<nmat; ++k) {
+      dxrho += U(i, densityDofIdx(nmat,k,rdof,1));
+      dyrho += U(i, densityDofIdx(nmat,k,rdof,2));
+      dzrho += U(i, densityDofIdx(nmat,k,rdof,3));
+    }
+
+    // log( 1 + | grad(bulk-density) | )
+    m[i] = std::log(1.0 + std::sqrt(dxrho*dxrho + dyrho*dyrho + dzrho*dzrho));
+  }
+  return m;
+}
+
 } // multimat::
 
 #if defined(__clang__)

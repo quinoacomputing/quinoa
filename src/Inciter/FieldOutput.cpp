@@ -40,31 +40,37 @@ numericFieldNames( tk::Centering c )
 std::vector< std::vector< tk::real > >
 numericFieldOutput( const tk::Fields& U,
                     tk::Centering c,
-                    const tk::Fields& P )
+                    const tk::Fields& P,
+                    const std::size_t ndof )
 // *****************************************************************************
 // Collect field output from numerical solution based on user input
 //! \param[in] U Solution data to extract from
 //! \param[in] c Extract variables only with this centering
 //! \param[in] P Optional primitive variable solution data to extract from
+//! \param[in] ndof Solution dofs (gradients) in U, per mesh entity (default
+//!   value is 1)
 //! \return Output fields requested by user
+//! \note U potentially has more dofs than P, to allow gradient outputs.
 // *****************************************************************************
 {
   // will not use P if empty
   const auto& p = P.empty() ? U : P;
+  const auto pdof = P.empty() ? ndof : 1;
 
   //auto rdof =
   //  c == tk::Centering::NODE ? 1 : g_inputdeck.get< tag::discr, tag::rdof >();
-  std::size_t rdof = 1;
 
   std::vector< std::vector< tk::real > > f;
   for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
     if (v.centering == c) {
       const auto& F = v.primitive() ? p : U;
+      // since U and P have different dofs passed into this function
+      const auto dof = v.primitive() ? pdof : ndof;
       if (v.name.empty()) {        // depvar-based direct access
-        f.push_back( F.extract_comp( v.field*rdof ) );
+        f.push_back( F.extract_comp( v.field*dof ) );
       } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
         Assert( v.getvar, "getvar() not configured for " + v.name );
-        f.push_back( v.getvar( F, rdof ) );
+        f.push_back( v.getvar( F, dof ) );
       }
     }
   }
@@ -107,7 +113,9 @@ evalSolution(
 //! \note If the incoming mesh is refined (for field output) compared to the
 //!   mesh the numerical solution is computed on, the solution is evaluated in
 //!   cells as wells as in nodes. If the solution is not refined, the solution
-//!   is evaluated in nodes.
+//!   is evaluated in nodes. Another note: uElemFields potentially has more dofs
+//!   than the other field-vectors passed into this function to allow gradient
+//!   outputs.
 // *****************************************************************************
 {
   using tk::dot;
@@ -124,6 +132,9 @@ evalSolution(
   uElemfields.resize( nelem );
   pElemfields.resize( nelem );
 
+  Assert(uElemfields.nprop() == U.nprop(),
+    "Incorrect size of element field output vector");
+
   auto npoin = coord[0].size();
   uNodefields.resize( npoin );
   pNodefields.resize( npoin );
@@ -138,7 +149,9 @@ evalSolution(
   for (std::size_t e=0; e<U.nunk(); ++e) {
     if (e < nelem) {
       for (std::size_t i=0; i<uncomp; ++i) {
-        uElemfields(e,i) = U(e,rdof*i);
+        for (std::size_t j=0; j<rdof; ++j) {
+          uElemfields(e,rdof*i+j) = U(e,rdof*i+j);
+        }
       }
       for (std::size_t i=0; i<pncomp; ++i) {
         pElemfields(e,i) = P(e,rdof*i);
@@ -217,7 +230,12 @@ evalSolution(
       auto u = eval_state( uncomp, rdof, dofe, parent, U, B, {0, uncomp-1} );
       auto p = eval_state( pncomp, rdof, dofe, parent, P, B, {0, pncomp-1} );
       // Assign cell center solution from parent to child
-      for (std::size_t i=0; i<uncomp; ++i) uElemfields(child,i) = u[i];
+      for (std::size_t i=0; i<uncomp; ++i) {
+        uElemfields(child,rdof*i) = u[i];
+        for (std::size_t j=1; j<rdof; ++j) {
+          uElemfields(child,rdof*i+j) = U(parent, rdof*i+j);
+        }
+      }
       for (std::size_t i=0; i<pncomp; ++i) pElemfields(child,i) = p[i];
       // Extract child element's node coordinates
       std::array< std::array< real, 3>, 4 > cc{{
