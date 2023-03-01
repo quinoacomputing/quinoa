@@ -94,6 +94,11 @@ class ExodusIIMeshWriter {
                           int varid,
                           const std::vector< tk::real >& var ) const;
 
+    //! \brief Write multiple element scalar fields to ExodusII file at multiple
+    //!   time steps
+    void writeElemScalars(
+      const std::vector< std::vector< std::vector< tk::real > > >& var ) const;
+
     //!  Write elem scalar field to ExodusII file
     void writeElemScalar( uint64_t it,
                           int varid,
