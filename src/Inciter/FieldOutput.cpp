@@ -14,6 +14,7 @@
 #include "ContainerUtil.hpp"
 #include "Vector.hpp"
 #include "Integrate/Basis.hpp"
+#include "Reconstruction.hpp"
 
 namespace inciter {
 
@@ -148,9 +149,10 @@ evalSolution(
   // Assign values to element-fields
   for (std::size_t e=0; e<U.nunk(); ++e) {
     if (e < nelem) {
+      auto ute = tk::invTransform_P0P1(rdof, e, inpoel, coord, U);
       for (std::size_t i=0; i<uncomp; ++i) {
         for (std::size_t j=0; j<rdof; ++j) {
-          uElemfields(e,rdof*i+j) = U(e,rdof*i+j);
+          uElemfields(e,rdof*i+j) = ute(0,rdof*i+j); //U(e,rdof*i+j);
         }
       }
       for (std::size_t i=0; i<pncomp; ++i) {
@@ -232,8 +234,9 @@ evalSolution(
       // Assign cell center solution from parent to child
       for (std::size_t i=0; i<uncomp; ++i) {
         uElemfields(child,rdof*i) = u[i];
+        auto utparent = tk::invTransform_P0P1(rdof, parent, pinpoel, coord, U);
         for (std::size_t j=1; j<rdof; ++j) {
-          uElemfields(child,rdof*i+j) = U(parent, rdof*i+j);
+          uElemfields(child,rdof*i+j) = utparent(0, rdof*i+j);
         }
       }
       for (std::size_t i=0; i<pncomp; ++i) pElemfields(child,i) = p[i];

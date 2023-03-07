@@ -450,6 +450,61 @@ transform_P0P1( std::size_t rdof,
   }
 }
 
+Fields
+invTransform_P0P1( std::size_t rdof,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& W )
+// *****************************************************************************
+//  Transform the Dubiner P1-derivatives to the physical derivatives
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] e Element whoes solution is being transformed
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] W Second-order reconstructed vector to transform
+//! \return The solution on cell e, transformed from the Dubiner space to the
+//!   Taylor space (physical derivatives).
+// *****************************************************************************
+{
+  Fields Wt(1, W.nprop());
+
+  auto ncomp = W.nprop()/rdof;
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  // Extract the element coordinates
+  std::array< std::array< real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+  }};
+
+  auto jacInv =
+    tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+  // Compute the derivatives of basis function for DG(P1)
+  auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+
+  for (ncomp_t c=0; c<ncomp; ++c)
+  {
+    auto mark = c*rdof;
+
+    Wt(0,mark) = W(e,mark);
+
+    // solve system (matrix-vector product)
+    for (std::size_t i=1; i<rdof; ++i) {
+      Wt(0,mark+i) = W(e,mark+1) * dBdx[i-1][1]
+        + W(e,mark+2) * dBdx[i-1][2]
+        + W(e,mark+3) * dBdx[i-1][3];
+    }
+  }
+
+  return Wt;
+}
+
 void
 THINCReco( std::size_t system,
            std::size_t rdof,

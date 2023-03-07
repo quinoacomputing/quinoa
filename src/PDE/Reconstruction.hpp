@@ -96,6 +96,14 @@ transform_P0P1( std::size_t rdof,
                 Fields& W,
                 const std::array< std::size_t, 2 >& varRange );
 
+//! Transform the Dubiner P1-derivatives to the physical derivatives
+Fields
+invTransform_P0P1( std::size_t rdof,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& W );
+
 //! Compute THINC reconstructions near material interfaces
 void
 THINCReco( std::size_t system,
