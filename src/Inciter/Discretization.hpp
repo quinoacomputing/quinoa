@@ -120,14 +120,17 @@ class Discretization : public CBase_Discretization {
     //!   library (if coupled to other solver)
     void transferInit();
 
-    //! Receive a list of callbacks from our own child solver
-    void transferCallback( std::vector< CkCallback >& cb );
-
-    //! Receive mesh transfer callbacks from source mesh/solver
-    void comcb( std::size_t srcmeshid, CkCallback c );
+    //! Finish setting up communication maps and solution transfer callbacks
+    void comfinal();
 
     //! Start solution transfer (if coupled)
-    void transfer( const tk::Fields& u );
+    void transfer( const tk::Fields& u, CkCallback cb );
+
+    //! Solution transfer completed CB
+    void transferCompleteCBinDest();
+
+    //! Solution transfer completed
+    void transferCompleteNotifyFromDest();
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(
@@ -423,6 +426,7 @@ class Discretization : public CBase_Discretization {
     void pup( PUP::er &p ) override {
       p | m_meshid;
       p | m_transfer_complete;
+      p | solver_transfer_complete_CB;
       p | m_transfer;
       p | m_mytransfer;
       p | m_disc;
@@ -491,7 +495,10 @@ class Discretization : public CBase_Discretization {
     std::size_t m_meshid;
     //! Function to continue with if not coupled to any other solver
     CkCallback m_transfer_complete;
-    //! Solution/mesh transfer (coupling) information
+    //! \brief Charm++ callback of the function to call after a mesh-to-mesh
+    //!   solution transfer is complete
+    CkCallback  solver_transfer_complete_CB;
+    //! Solution/mesh transfer (coupling) information coordination propagation
     //! \details This has the same size with the same src/dst information on
     //!   all solvers.
     std::vector< Transfer > m_transfer;
@@ -639,9 +646,6 @@ class Discretization : public CBase_Discretization {
 
     //! Determine if communication of mesh transfer callbacks is complete
     bool transferCallbacksComplete() const;
-
-    //! Finish setting up communication maps and solution transfer callbacks
-    void comfinal();
 };
 
 } // inciter::

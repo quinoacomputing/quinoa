@@ -1054,6 +1054,7 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 // *****************************************************************************
 {
   auto meshid = tk::cref_find( m_meshid, summeshid );
+  //std::cout << "Trans: " << meshid << " Transporter::disccreated()\n";
 
   // Update number of mesh points for mesh, since it may have been refined
   if (g_inputdeck.get< tag::amr, tag::t0ref >()) m_npoin[meshid] = npoin;
