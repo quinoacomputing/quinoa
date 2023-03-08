@@ -468,6 +468,7 @@ invTransform_P0P1( std::size_t rdof,
 // *****************************************************************************
 {
   Fields Wt(1, W.nprop());
+  Wt.fill(0.0);
 
   auto ncomp = W.nprop()/rdof;
   const auto& cx = coord[0];
@@ -485,8 +486,8 @@ invTransform_P0P1( std::size_t rdof,
   auto jacInv =
     tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-  // Compute the derivatives of basis function for DG(P1)
-  auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+  // Compute the first derivatives (only) of basis function for DG(P1)
+  auto dBdx = tk::eval_dBdx_p1( 4, jacInv );
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
@@ -495,10 +496,12 @@ invTransform_P0P1( std::size_t rdof,
     Wt(0,mark) = W(e,mark);
 
     // solve system (matrix-vector product)
-    for (std::size_t i=1; i<rdof; ++i) {
-      Wt(0,mark+i) = W(e,mark+1) * dBdx[i-1][1]
-        + W(e,mark+2) * dBdx[i-1][2]
-        + W(e,mark+3) * dBdx[i-1][3];
+    if (rdof > 1) {
+      for (std::size_t i=1; i<4; ++i) {
+        Wt(0,mark+i) = W(e,mark+1) * dBdx[i-1][1]
+          + W(e,mark+2) * dBdx[i-1][2]
+          + W(e,mark+3) * dBdx[i-1][3];
+      }
     }
   }
 
