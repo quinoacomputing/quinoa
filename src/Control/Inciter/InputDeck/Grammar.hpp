@@ -168,11 +168,14 @@ namespace grm {
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
         ncomp.push_back( 1 );
 
-      // Default physics type is 'advection'
+      // If physics type is not given, default to 'advection'
+      auto& physics = stack.template get< param, eq, tag::physics >();
+      if (physics.empty() || physics.size() != neq.get< eq >())
+        physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
+
       // If physics type is advection-diffusion, check for correct number of
       // advection velocity, shear, and diffusion coefficients
-      const auto& physics = stack.template get< param, eq, tag::physics >();
-      if (physics == inciter::ctr::PhysicsType::ADVDIFF) {
+      if (physics.back() == inciter::ctr::PhysicsType::ADVDIFF) {
         auto& u0 = stack.template get< param, eq, tag::u0 >();
         if (u0.back().size() != ncomp.back())  // must define 1 component
           Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
@@ -183,6 +186,10 @@ namespace grm {
         if (lambda.back().size() != 2*ncomp.back()) // must define 2 shear comps
           Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
       }
+      // If problem type is not given, error out
+      auto& problem = stack.template get< param, eq, tag::problem >();
+      if (problem.empty() || problem.size() != neq.get< eq >())
+        Message< Stack, ERROR, MsgKey::NOPROBLEM >( stack, in );
       // Error check Dirichlet boundary condition block for all transport eq
       // configurations
       const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
@@ -224,8 +231,8 @@ namespace grm {
 
       // If physics type is not given, default to 'euler'
       auto& physics = stack.template get< param, eq, tag::physics >();
-      if (physics == inciter::ctr::PhysicsType::ADVECTION) {
-        physics = inciter::ctr::PhysicsType::EULER;
+      if (physics.empty() || physics.size() != neq.get< eq >()) {
+        physics.push_back( inciter::ctr::PhysicsType::EULER );
       }
 
       // Set number of components to 5 (mass, 3 x mom, energy)
@@ -236,7 +243,10 @@ namespace grm {
       if (sysfct.empty() || sysfct.size() != neq.get< eq >())
         sysfct.push_back( 1 );
 
-      // Default flux is set to HLLC
+      // Set default flux to HLLC if not specified
+      auto& flux = stack.template get< tag::param, eq, tag::flux >();
+      if (flux.empty() || flux.size() != neq.get< eq >())
+        flux.push_back( inciter::ctr::FluxType::HLLC );
 
       // Verify that sysfctvar variables are within bounds (if specified) and
       // defaults if not
@@ -303,17 +313,19 @@ namespace grm {
       idxmap[mat_id[0]] = 0;
 
       // If problem type is not given, default to 'user_defined'
-      const auto& problem = stack.template get< param, eq, tag::problem >();
-      if (problem == inciter::ctr::ProblemType::VORTICAL_FLOW) {
+      auto& problem = stack.template get< param, eq, tag::problem >();
+      if (problem.empty() || problem.size() != neq.get< eq >())
+        problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
+      else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
         const auto& alpha = stack.template get< param, eq, tag::alpha >();
         const auto& beta = stack.template get< param, eq, tag::beta >();
         const auto& p0 = stack.template get< param, eq, tag::p0 >();
-        if ( alpha.size() != 1 ||
-             beta.size() != 1 ||
-             p0.size() != 1 )
+        if ( alpha.size() != problem.size() ||
+             beta.size() != problem.size() ||
+             p0.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
       }
-      else if (problem == inciter::ctr::ProblemType::NL_ENERGY_GROWTH) {
+      else if (problem.back() == inciter::ctr::ProblemType::NL_ENERGY_GROWTH) {
         const auto& alpha = stack.template get< param, eq, tag::alpha >();
         const auto& betax = stack.template get< param, eq, tag::betax >();
         const auto& betay = stack.template get< param, eq, tag::betay >();
@@ -321,16 +333,16 @@ namespace grm {
         const auto& kappa = stack.template get< param, eq, tag::kappa >();
         const auto& r0 = stack.template get< param, eq, tag::r0 >();
         const auto& ce = stack.template get< param, eq, tag::ce >();
-        if ( alpha.size() != 1 ||
-             betax.size() != 1 ||
-             betay.size() != 1 ||
-             betaz.size() != 1 ||
-             kappa.size() != 1 ||
-             r0.size() != 1 ||
-             ce.size() != 1 )
+        if ( alpha.size() != problem.size() ||
+             betax.size() != problem.size() ||
+             betay.size() != problem.size() ||
+             betaz.size() != problem.size() ||
+             kappa.size() != problem.size() ||
+             r0.size() != problem.size() ||
+             ce.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::ENERGY_UNFINISHED >( stack, in);
       }
-      else if (problem == inciter::ctr::ProblemType::RAYLEIGH_TAYLOR) {
+      else if (problem.back() == inciter::ctr::ProblemType::RAYLEIGH_TAYLOR) {
         const auto& alpha = stack.template get< param, eq, tag::alpha >();
         const auto& betax = stack.template get< param, eq, tag::betax >();
         const auto& betay = stack.template get< param, eq, tag::betay >();
@@ -338,13 +350,13 @@ namespace grm {
         const auto& kappa = stack.template get< param, eq, tag::kappa >();
         const auto& p0 = stack.template get< param, eq, tag::p0 >();
         const auto& r0 = stack.template get< param, eq, tag::r0 >();
-        if ( alpha.size() != 1 ||
-             betax.size() != 1 ||
-             betay.size() != 1 ||
-             betaz.size() != 1 ||
-             kappa.size() != 1 ||
-             p0.size() != 1 ||
-             r0.size() != 1 )
+        if ( alpha.size() != problem.size() ||
+             betax.size() != problem.size() ||
+             betay.size() != problem.size() ||
+             betaz.size() != problem.size() ||
+             kappa.size() != problem.size() ||
+             p0.size() != problem.size() ||
+             r0.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::RT_UNFINISHED >( stack, in);
       }
 
@@ -355,7 +367,7 @@ namespace grm {
       auto& bgpressureic = ic.template get< tag::pressure >();
       auto& bgenergyic = ic.template get< tag::energy >();
       auto& bgtemperatureic = ic.template get< tag::temperature >();
-      if (problem == inciter::ctr::ProblemType::USER_DEFINED) {
+      if (problem.back() == inciter::ctr::ProblemType::USER_DEFINED) {
         // must have defined background ICs for user-defined ICs
         auto n = neq.get< eq >();
         if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
@@ -502,19 +514,19 @@ namespace grm {
 
       // If physics type is not given, default to 'euler'
       auto& physics = stack.template get< param, eq, tag::physics >();
-      if (physics == inciter::ctr::PhysicsType::ADVECTION)
-        physics = inciter::ctr::PhysicsType::EULER;
+      if (physics.empty() || physics.size() != neq.get< eq >())
+        physics.push_back( inciter::ctr::PhysicsType::EULER );
 
       // Set default flux to AUSM if not specified
       auto& flux = stack.template get< tag::param, eq, tag::flux >();
-      if (flux == inciter::ctr::FluxType::HLLC)
-        flux = inciter::ctr::FluxType::AUSM;
+      if (flux.empty() || flux.size() != neq.get< eq >())
+        flux.push_back( inciter::ctr::FluxType::AUSM );
 
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
-      if (physics == inciter::ctr::PhysicsType::EULER ||
-        physics == inciter::ctr::PhysicsType::ENERGYPILL) {
+      if (physics.back() == inciter::ctr::PhysicsType::EULER ||
+        physics.back() == inciter::ctr::PhysicsType::ENERGYPILL) {
         // physics = euler/energy pill: m-material compressible flow
         // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
@@ -663,14 +675,16 @@ namespace grm {
         intsharp_p.push_back( 1.0 );
 
       // If problem type is not given, default to 'user_defined'
-      const auto& problem = stack.template get< param, eq, tag::problem >();
-      if (problem == inciter::ctr::ProblemType::VORTICAL_FLOW) {
+      auto& problem = stack.template get< param, eq, tag::problem >();
+      if (problem.empty() || problem.size() != neq.get< eq >())
+        problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
+      else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
         const auto& alpha = stack.template get< param, eq, tag::alpha >();
         const auto& beta = stack.template get< param, eq, tag::beta >();
         const auto& p0 = stack.template get< param, eq, tag::p0 >();
-        if ( alpha.size() != 1 ||
-             beta.size() != 1 ||
-             p0.size() != 1 )
+        if ( alpha.size() != problem.size() ||
+             beta.size() != problem.size() ||
+             p0.size() != problem.size() )
           Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
       }
 
@@ -682,7 +696,7 @@ namespace grm {
       auto& bgpressureic = ic.template get< tag::pressure >();
       auto& bgenergyic = ic.template get< tag::energy >();
       auto& bgtemperatureic = ic.template get< tag::temperature >();
-      if (problem == inciter::ctr::ProblemType::USER_DEFINED) {
+      if (problem.back() == inciter::ctr::ProblemType::USER_DEFINED) {
         // must have defined background ICs for user-defined ICs
         auto n = neq.get< eq >();
         if (bgmatid.size() != n) {
@@ -1816,14 +1830,16 @@ namespace deck {
          pegtl::if_must<
            scan_eq< use< kw::transport >, tag::transport >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::process< use< kw::physics >,
-                             tk::grm::store_inciter_option< ctr::Physics,
-                             tag::param, tag::transport, tag::physics >,
-                             pegtl::alpha >,
-                           tk::grm::process< use< kw::problem >,
-                             tk::grm::store_inciter_option< ctr::Problem,
-                             tag::param, tag::transport, tag::problem >,
-                             pegtl::alpha >,
+                           tk::grm::policy< use,
+                                            use< kw::physics >,
+                                            ctr::Physics,
+                                            tag::transport,
+                                            tag::physics >,
+                           tk::grm::policy< use,
+                                            use< kw::problem >,
+                                            ctr::Problem,
+                                            tag::transport,
+                                            tag::problem >,
                            tk::grm::depvar< use,
                                             tag::transport,
                                             tag::depvar >,
@@ -1863,22 +1879,27 @@ namespace deck {
            tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::process< use< kw::physics >,
-                             tk::grm::store_inciter_option< ctr::Physics,
-                             tag::param, tag::compflow, tag::physics >,
-                             pegtl::alpha >,
-                           tk::grm::process< use< kw::problem >,
-                             tk::grm::store_inciter_option< ctr::Problem,
-                             tag::param, tag::compflow, tag::problem >,
-                             pegtl::alpha >,
+                           tk::grm::policy< use,
+                                            use< kw::physics >,
+                                            ctr::Physics,
+                                            tag::compflow,
+                                            tag::physics >,
+                           tk::grm::policy< use,
+                                            use< kw::problem >,
+                                            ctr::Problem,
+                                            tag::compflow,
+                                            tag::problem >,
                            tk::grm::depvar< use,
                                             tag::compflow,
                                             tag::depvar >,
                            mesh< tag::compflow >,
                            tk::grm::process<
                              use< kw::flux >,
-                               tk::grm::store_inciter_option< ctr::Flux,
-                                 tag::param, tag::compflow, tag::flux >,
+                               tk::grm::store_back_option< use,
+                                                           ctr::Flux,
+                                                           tag::param,
+                                                           tag::compflow,
+                                                           tag::flux >,
                              pegtl::alpha >,
                            ic< tag::compflow >,
                            tk::grm::lua< use, tag::param, tag::compflow >,
@@ -1931,14 +1952,16 @@ namespace deck {
             tag::meshblock >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::material >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::process< use< kw::physics >,
-                             tk::grm::store_inciter_option< ctr::Physics,
-                             tag::param, tag::multimat, tag::physics >,
-                             pegtl::alpha >,
-                           tk::grm::process< use< kw::problem >,
-                             tk::grm::store_inciter_option< ctr::Problem,
-                             tag::param, tag::multimat, tag::problem >,
-                             pegtl::alpha >,
+                           tk::grm::policy< use,
+                                            use< kw::physics >,
+                                            ctr::Physics,
+                                            tag::multimat,
+                                            tag::physics >,
+                           tk::grm::policy< use,
+                                            use< kw::problem >,
+                                            ctr::Problem,
+                                            tag::multimat,
+                                            tag::problem >,
                            tk::grm::depvar< use,
                                             tag::multimat,
                                             tag::depvar >,
@@ -1948,8 +1971,11 @@ namespace deck {
                                       tag::nmat >,
                            tk::grm::process<
                              use< kw::flux >,
-                               tk::grm::store_inciter_option< ctr::Flux,
-                                 tag::param, tag::multimat, tag::flux >,
+                               tk::grm::store_back_option< use,
+                                                           ctr::Flux,
+                                                           tag::param,
+                                                           tag::multimat,
+                                                           tag::flux >,
                              pegtl::alpha >,
                            ic< tag::multimat >,
                            material_properties< tag::multimat >,

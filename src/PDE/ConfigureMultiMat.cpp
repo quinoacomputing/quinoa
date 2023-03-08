@@ -86,13 +86,13 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   infoMesh< eq >( c, nfo );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
-    g_inputdeck.get< tag::param, eq, tag::physics >() ) );
+    g_inputdeck.get< tag::param, eq, tag::physics >()[c] ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, eq, tag::problem >() ) );
+    g_inputdeck.get< tag::param, eq, tag::problem >()[c] ) );
 
   nfo.emplace_back( "flux", ctr::Flux().name(
-    g_inputdeck.get< tag::param, eq, tag::flux >() ) );
+    g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
 
   auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[c];
   nfo.emplace_back( "number of materials", std::to_string( nmat ) );

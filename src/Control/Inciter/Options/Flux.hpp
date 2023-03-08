@@ -22,8 +22,8 @@ namespace inciter {
 namespace ctr {
 
 //! Flux types
-enum class FluxType : uint8_t { HLLC
-                              , LaxFriedrichs
+enum class FluxType : uint8_t { LaxFriedrichs
+                              , HLLC
                               , UPWIND
                               , AUSM
                               , HLL
@@ -38,8 +38,8 @@ class Flux : public tk::Toggle< FluxType > {
 
   public:
     //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::hllc
-                                  , kw::laxfriedrichs
+    using keywords = brigand::list< kw::laxfriedrichs
+                                  , kw::hllc
                                   , kw::upwind
                                   , kw::ausm
                                   , kw::hll
@@ -53,15 +53,15 @@ class Flux : public tk::Toggle< FluxType > {
         //! Group, i.e., options, name
         kw::flux::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { FluxType::HLLC, kw::hllc::name() }
-        , { FluxType::LaxFriedrichs, kw::laxfriedrichs::name() }
+        { { FluxType::LaxFriedrichs, kw::laxfriedrichs::name() }
+        , { FluxType::HLLC, kw::hllc::name() }
         , { FluxType::UPWIND, kw::upwind::name() }
         , { FluxType::AUSM, kw::ausm::name() }
         , { FluxType::HLL, kw::hll::name() }
         },
         //! keywords -> Enums
-        { { kw::hllc::string(), FluxType::HLLC }
-        , { kw::laxfriedrichs::string(), FluxType::LaxFriedrichs }
+        { { kw::laxfriedrichs::string(), FluxType::LaxFriedrichs }
+        , { kw::hllc::string(), FluxType::HLLC }
         , { kw::upwind::string(), FluxType::UPWIND }
         , { kw::ausm::string(), FluxType::AUSM }
         , { kw::hll::string(), FluxType::HLL }

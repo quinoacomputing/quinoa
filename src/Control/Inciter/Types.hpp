@@ -371,8 +371,8 @@ using SpongeParameters = tk::TaggedTuple< brigand::list<
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
-  , tag::physics,       PhysicsType
-  , tag::problem,       ProblemType
+  , tag::physics,       std::vector< PhysicsType >
+  , tag::problem,       std::vector< ProblemType >
   , tag::diffusivity,   std::vector< std::vector<
                         kw::pde_diffusivity::info::expect::type > >
   , tag::lambda,        std::vector< std::vector<
@@ -431,8 +431,8 @@ using material = tk::TaggedTuple< brigand::list<
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
-  , tag::physics,       PhysicsType
-  , tag::problem,       ProblemType
+  , tag::physics,       std::vector< PhysicsType >
+  , tag::problem,       std::vector< ProblemType >
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
   , tag::farfield_density,  std::vector< kw::density::info::expect::type >
   , tag::farfield_velocity, std::vector< std::vector<
@@ -475,7 +475,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
       tag::eosidx,      std::vector< std::size_t >,
       tag::matidx,      std::vector< std::size_t > > >
     //! Flux function type
-  , tag::flux,          FluxType
+  , tag::flux,          std::vector< FluxType >
     //! Lua code (multiple blocks)
   , tag::lua,           std::vector< std::string >
 > >;
@@ -484,8 +484,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
 using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
-  , tag::physics,       PhysicsType
-  , tag::problem,       ProblemType
+  , tag::physics,       std::vector< PhysicsType >
+  , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
   , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::ic,            ic
@@ -538,7 +538,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::intsharp_param,
                       std::vector< kw::intsharp_param::info::expect::type >
     //! Flux function type
-  , tag::flux,          FluxType
+  , tag::flux,          std::vector< FluxType >
 > >;
 
 //! Parameters storage
