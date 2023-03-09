@@ -14,7 +14,7 @@
 
 #include <numeric>
 
-#include <Kokkos_Core.hpp>
+#include "NoWarning/kokkos_cr.hpp"
 
 #include "Partitioner.hpp"
 #include "DerivedData.hpp"

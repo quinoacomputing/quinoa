@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/Zoltan2_PartitioningProblem.hpp
+  \file      src/NoWarning/kokkos_cr.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Include Zoltan2_PartitioningProblem.hpp with turning off specific
+  \brief     Include Kokkos_Core.hpp with turning off specific
              compiler warnings
 */
 // *****************************************************************************
-#ifndef nowarning_Zoltan2_PartitioningProblem_h
-#define nowarning_Zoltan2_PartitioningProblem_h
+#ifndef nowarning_kokkos_cr_h
+#define nowarning_kokkos_cr_h
 
 #include "Macro.hpp"
 
@@ -73,7 +73,7 @@
   #pragma warning( disable: 239 )
 #endif
 
-#include <Zoltan2_PartitioningProblem.hpp>
+#include <Kokkos_Core.hpp>
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -83,4 +83,4 @@
   #pragma warning( pop )
 #endif
 
-#endif // nowarning_Zoltan2_PartitioningProblem_h
+#endif // nowarning_kokkos_cr_h

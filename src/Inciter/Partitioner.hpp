@@ -72,7 +72,7 @@ class Partitioner : public CBase_Partitioner {
                  const std::map< int, std::vector< std::size_t > >& bnode );
 
     //! Destructor
-    ~Partitioner();
+    ~Partitioner() override;
 
     #if defined(__clang__)
       #pragma clang diagnostic push
