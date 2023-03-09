@@ -14,6 +14,8 @@
 
 #include <numeric>
 
+#include <Kokkos_Core.hpp>
+
 #include "Partitioner.hpp"
 #include "DerivedData.hpp"
 #include "Reorder.hpp"
@@ -89,6 +91,8 @@ Partitioner::Partitioner(
 //! \param[in] bnode Node lists of side sets (whole mesh)
 // *****************************************************************************
 {
+  Kokkos::initialize();
+
   // Create mesh reader
   tk::MeshReader mr( filename );
 
@@ -151,7 +155,7 @@ Partitioner::partition( int nchare )
                                   "number of compute nodes" );
 
   // Generate element IDs for Zoltan
-  std::vector< long > gelemid( m_ginpoel.size()/4 );
+  std::vector< long long > gelemid( m_ginpoel.size()/4 );
   std::iota( begin(gelemid), end(gelemid), 0 );
 
   m_nchare = nchare;
@@ -610,6 +614,11 @@ Partitioner::distribution( int npart ) const
   auto mynchare = chunksize;
   if (CkMyNode() == CkNumNodes()-1) mynchare += npart % CkNumNodes();
   return {{ chunksize, mynchare }};
+}
+
+Partitioner::~Partitioner()
+{
+  Kokkos::finalize();
 }
 
 #include "NoWarning/partitioner.def.h"
