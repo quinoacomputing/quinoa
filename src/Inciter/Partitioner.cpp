@@ -91,6 +91,10 @@ Partitioner::Partitioner(
 //! \param[in] bnode Node lists of side sets (whole mesh)
 // *****************************************************************************
 {
+  // The following call has to be made on all MPI ranks immediately after
+  // initializing MPI. This has to be done from a Charm++ nodegroup, since there
+  // exists only one rank per node on a nodegroup, in SMP mode.
+  // see https://github.com/trilinos/Trilinos/issues/11197#issuecomment-1301325163
   Kokkos::initialize();
 
   // Create mesh reader
@@ -617,7 +621,12 @@ Partitioner::distribution( int npart ) const
 }
 
 Partitioner::~Partitioner()
+// *****************************************************************************
+//  Destructor
+// *****************************************************************************
 {
+  // The following call has to be made on all MPI ranks to free all resources.
+  // see https://github.com/trilinos/Trilinos/issues/11197#issuecomment-1301325163
   Kokkos::finalize();
 }
 
