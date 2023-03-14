@@ -18,10 +18,6 @@
 #include "Reorder.hpp"
 #include "ExodusIIMeshWriter.hpp"
 
-#ifdef HAS_ROOT
-  #include "RootMeshWriter.hpp"
-#endif
-
 using tk::MeshWriter;
 
 MeshWriter::MeshWriter( ctr::FieldFileType filetype,
@@ -122,15 +118,6 @@ MeshWriter::write(
     auto vf = filename( basefilename, meshid, itr, chareid );
   
     if (meshoutput) {
-      #ifdef HAS_ROOT
-      if (m_filetype == ctr::FieldFileType::ROOT) {
-
-        RootMeshWriter rmw( vf, 0 );
-        rmw.writeMesh( UnsMesh( inpoel, coord ) );
-        rmw.writeNodeVarNames( nodefieldnames );
-
-      } else
-      #endif
       if (m_filetype == ctr::FieldFileType::EXODUSII) {
 
         // Write volume mesh and field names
@@ -197,16 +184,6 @@ MeshWriter::write(
     }
 
     if (fieldoutput) {
-      #ifdef HAS_ROOT
-      if (m_filetype == ctr::FieldFileType::ROOT) {
-
-        RootMeshWriter rw( vf, 1 );
-        rw.writeTimeStamp( itf, time );
-        int varid = 0;
-        for (const auto& v : nodefields) rw.writeNodeScalar( itf, ++varid, v );
-
-      } else
-      #endif
       if (m_filetype == ctr::FieldFileType::EXODUSII) {
 
         // Write volume variable fields
@@ -291,9 +268,6 @@ MeshWriter::filename( const std::string& basefilename,
          + '.' + std::to_string( itr )        // iteration count with new mesh
          + '.' + std::to_string( m_nchare )   // total number of workers
          + '.' + std::to_string( chareid )    // new file per worker
-         #ifdef HAS_ROOT
-         + (m_filetype == ctr::FieldFileType::ROOT ? ".root" : "")
-         #endif
          ;
 }
 

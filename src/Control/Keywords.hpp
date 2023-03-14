@@ -308,19 +308,6 @@ struct exodusii_info {
 };
 using exodusii = keyword< exodusii_info, TAOCPP_PEGTL_STRING("exodusii") >;
 
-struct root_info {
-  static std::string name() { return "root"; }
-  static std::string shortDescription() { return
-    "Select Root output"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the Root output file type readable by the
-    Root framework from CERN for mesh-based field output in a field_output ...
-    end block. Example: "filetype root", which selects the root file output
-    format. For more info on Root, see https://root.cern.ch.)";
-  }
-};
-using root = keyword< root_info, TAOCPP_PEGTL_STRING("root") >;
-
 struct filetype_info {
   static std::string name() { return "filetype"; }
   static std::string shortDescription() { return
@@ -332,93 +319,19 @@ struct filetype_info {
     "filetype exodusii", which selects ExodusII output. Valid options depend on
     which block the keyword is used: in a pdfs ... end the valid choices are
     'txt', 'gmshtxt', 'gmshbin', and 'exodusii', in a field_output ... end
-    block the valid choices are 'exodusii' and 'root'.)"; }
+    block the valid choice is 'exodusii'.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + txt::string() + "\' | \'"
                   + gmshtxt::string() + "\' | \'"
                   + gmshbin::string() + "\' | \'"
-                  + root::string() + "\' | \'"
                   + exodusii::string() + '\'';
     }
   };
 
 };
 using filetype = keyword< filetype_info, TAOCPP_PEGTL_STRING("filetype") >;
-
-struct overwrite_info {
-  static std::string name() { return "overwrite"; }
-  static std::string shortDescription() { return
-    "Select PDF output policy overwrite"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the
-    the 'overwrite' output file policy for requested probability density
-    functions (PDFs) within a pdfs ... end block. Example: "policy
-    overwrite", which selects the overwrite output file policy. The
-    overwrite policy overwrites the same output file containing a single time
-    step. Valid PDF policy options are 'overwrite', 'multiple', and
-    'evolution'. For more info on the structure of the pdfs ... end block,
-    see doc/pages/statistics_output.dox.)"; }
-};
-using overwrite = keyword< overwrite_info, TAOCPP_PEGTL_STRING("overwrite") >;
-
-struct multiple_info {
-  static std::string name() { return "multiple"; }
-  static std::string shortDescription() { return
-    "Select PDF output policy multiple"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select
-    the 'multiple' output file policy for requested probability density
-    functions (PDFs) within a pdfs ... end block. Example: "policy
-    multiple", which selects the multiple output file policy. The
-    multiple policy output creates a new file for each time step. Valid PDF
-    policy options are 'overwrite', 'multiple', and 'evolution'. For more
-    info on the structure of the pdfs ... end block, see
-    doc/pages/statistics_output.dox.)"; }
-};
-using multiple = keyword< multiple_info, TAOCPP_PEGTL_STRING("multiple") >;
-
-struct evolution_info {
-  static std::string name() { return "evolution"; }
-  static std::string shortDescription() { return
-    "Select PDF output policy evolution"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select
-    the 'evolution' output file policy for requested probability density
-    functions (PDFs) within a pdfs ... end block. Example: "policy
-    evolution", which selects the evolution output file policy. The
-    evolution policy output appends new time step to the same output file for
-    each time instant, yielding a time evolution of data in a single file.
-    Valid PDF policy options are 'overwrite', 'multiple', and 'evolution'. For
-    more info on the structure of the pdfs ... end block, see
-    doc/pages/statistics_output.dox.)";
-  }
-};
-using evolution = keyword< evolution_info, TAOCPP_PEGTL_STRING("evolution") >;
-
-struct policy_info {
-  static std::string name() { return "policy"; }
-  static std::string shortDescription() { return
-    "Select PDF output file policy"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select
-    the output file policy for requested probability density functions
-    (PDFs) within a pdfs ... end block. Example: "policy overwrite", which
-    selects the overwrite output file policy. Valid options are 'overwrite',
-    'multiple', and 'evolution'. For more info on the structure of the
-    pdfs ... end block, see doc/pages/statistics_output.dox.)";
-  }
-  struct expect {
-    static std::string description() { return "string"; }
-    static std::string choices() {
-      return '\'' + overwrite::string() + "\' | \'"
-                  + multiple::string() + "\' | \'"
-                  + evolution::string() + '\'';
-    }
-  };
-};
-using pdf_policy = keyword< policy_info, TAOCPP_PEGTL_STRING("policy") >;
 
 struct txt_float_default_info {
   static std::string name() { return "default"; }

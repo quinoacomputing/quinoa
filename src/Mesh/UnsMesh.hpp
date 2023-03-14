@@ -183,9 +183,12 @@ class UnsMesh {
       const Coords& coord,
       const std::vector< std::size_t >& triinp,
       const std::vector< std::string >& nodevarnames = {},
+      const std::vector< std::string >& elemvarnames = {},
       const std::vector< tk::real >& vartimes = {},
       const std::vector< std::vector< std::vector< tk::real > > >&
-        nodevars = {} ) :
+        nodevars = {},
+      const std::vector< std::vector< std::vector< tk::real > > >&
+        elemvars = {} ) :
       m_graphsize( graphsize( triinp ) ),
       m_lininpoel(),
       m_triinpoel( triinp ),
@@ -194,8 +197,10 @@ class UnsMesh {
       m_y( coord[1] ),
       m_z( coord[2] ),
       m_nodevarnames( nodevarnames ),
+      m_elemvarnames( elemvarnames ),
       m_vartimes( vartimes ),
-      m_nodevars( nodevars )
+      m_nodevars( nodevars ),
+      m_elemvars( elemvars )
     {
       Assert( m_triinpoel.size()%3 == 0,
               "Size of triinpoel must be divisible by 3" );
@@ -358,6 +363,14 @@ class UnsMesh {
     { return m_nodevarnames; }
     ///@}
 
+    /** @name Element variable names accessors */
+    ///@{
+    const std::vector< std::string >& elemvarnames() const noexcept
+    { return m_elemvarnames; }
+    std::vector< std::string >& elemvarnames() noexcept
+    { return m_elemvarnames; }
+    ///@}
+
     /** @name Variable times accessors */
     ///@{
     const std::vector< tk::real >& vartimes() const noexcept
@@ -371,6 +384,14 @@ class UnsMesh {
     const noexcept { return m_nodevars; }
     std::vector< std::vector< std::vector< tk::real > > >& nodevars() noexcept
     { return m_nodevars; }
+    ///@}
+
+    /** @name Element variables accessors */
+    ///@{
+    const std::vector< std::vector< std::vector< tk::real > > >& elemvars()
+    const noexcept { return m_elemvars; }
+    std::vector< std::vector< std::vector< tk::real > > >& elemvars() noexcept
+    { return m_elemvars; }
     ///@}
 
   private:
@@ -411,11 +432,17 @@ class UnsMesh {
     //! Node field data names
     std::vector< std::string > m_nodevarnames;
 
+    //! Element field data names
+    std::vector< std::string > m_elemvarnames;
+
     //! Time values for node field data
     std::vector< tk::real > m_vartimes;
 
     //! Node field data
     std::vector< std::vector< std::vector< tk::real > > > m_nodevars;
+
+    //! Element field data
+    std::vector< std::vector< std::vector< tk::real > > > m_elemvars;
 
     //! Compute and return number of unique nodes in element connectivity
     //! \param[in] inpoel Element connectivity

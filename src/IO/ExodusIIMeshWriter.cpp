@@ -85,7 +85,9 @@ ExodusIIMeshWriter::writeMesh( const UnsMesh& mesh ) const
   writeNodesets( mesh );
   writeTimeValues( mesh.vartimes() );
   writeNodeVarNames( mesh.nodevarnames() );
+  writeElemVarNames( mesh.elemvarnames() );
   writeNodeScalars( mesh.nodevars() );
+  writeElemScalars( mesh.elemvars() );
 }
 
 void
@@ -510,6 +512,27 @@ ExodusIIMeshWriter::writeNodeScalar( uint64_t it,
                         static_cast< int64_t >( var.size() ),
                         var.data() ) == 0,
             "Failed to write node scalar to ExodusII file: " + m_filename );
+  }
+}
+
+void
+ExodusIIMeshWriter::writeElemScalars(
+  const std::vector< std::vector< std::vector< tk::real > > >& var ) const
+// *****************************************************************************
+//  Write multiple element scalar fields to ExodusII file at multiple time steps
+//! \param[in] var Vector of elemental variables to read to: inner vector:
+//!   elements, middle vector: (physics) variable, outer vector: time step
+// *****************************************************************************
+{
+  uint64_t time = 0;
+  int varid = 0;
+
+  for (const auto& t : var) {    // for all times
+    ++time;
+    for (const auto& v : t) {    // for all variables
+      writeElemScalar( time, ++varid, v );
+    }
+    varid = 0;
   }
 }
 

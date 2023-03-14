@@ -30,7 +30,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       MeshWriter
                       ExodusIIMeshIO
                       ${OMEGAHMESHIO}
-                      ${ROOTMESHIO}
                       MeshDetect
                       Mesh
                       Statistics
