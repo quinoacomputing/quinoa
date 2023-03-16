@@ -15,6 +15,8 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "Limiter.hpp"
+#include "Reconstruction.hpp"
 
 namespace inciter {
 
@@ -506,6 +508,52 @@ timeStepSizeMultiMatFV(
   }
 
   return mindt;
+}
+
+void storeGradDensity(
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& U,
+  tk::Fields& uFieldout )
+// *****************************************************************************
+//  Store the gradient of material densities for field output
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which interface reconstruction is being calculated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] U Solution vector
+//! \param[in,out] uFieldout Field output vector
+// *****************************************************************************
+{
+  // i. interface detection
+  std::vector< std::size_t > matInt(nmat, 0);
+  std::vector< tk::real > alAvg(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
+  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+  // ii. store gradients rho_k * grad(alpha_k)
+  for (std::size_t k=0; k<nmat; ++k) {
+    for (std::size_t i=1; i<rdof; ++i) {
+      uFieldout(e, densityDofIdx(nmat,k,rdof,i)) =
+        U(e, volfracDofIdx(nmat,k,rdof,i)) *
+        U(e, densityDofIdx(nmat,k,rdof,0));
+    }
+  }
+  // ii. add gradients alpha_k * grad(rho_k)
+  if (!intInd) {
+    auto ut = tk::invTransform_P0P1(rdof, e, inpoel, coord, U);
+    for (std::size_t k=0; k<nmat; ++k) {
+      for (std::size_t i=1; i<rdof; ++i) {
+        uFieldout(e, densityDofIdx(nmat,k,rdof,i)) +=
+          U(e, volfracDofIdx(nmat,k,rdof,0)) *
+          ut(0, densityDofIdx(nmat,k,rdof,i));
+      }
+    }
+  }
 }
 
 } //inciter::

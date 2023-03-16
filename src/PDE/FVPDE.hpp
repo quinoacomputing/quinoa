@@ -139,9 +139,10 @@ class FVPDE {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      tk::Fields& ufo ) const
     {
-      self->reconstruct( geoElem, fd, esup, inpoel, coord, U, P );
+      self->reconstruct( geoElem, fd, esup, inpoel, coord, U, P, ufo );
     }
 
     //! Public interface to limiting the second-order solution
@@ -284,6 +285,7 @@ class FVPDE {
                                 const std::vector< std::size_t >&,
                                 const tk::UnsMesh::Coords&,
                                 tk::Fields&,
+                                tk::Fields&,
                                 tk::Fields& ) const = 0;
       virtual void limit( const tk::Fields&,
                           const inciter::FaceData&,
@@ -381,9 +383,10 @@ class FVPDE {
                         const std::vector< std::size_t >& inpoel,
                         const tk::UnsMesh::Coords& coord,
                         tk::Fields& U,
-                        tk::Fields& P ) const override
+                        tk::Fields& P,
+                        tk::Fields& ufo ) const override
       {
-        data.reconstruct( geoElem, fd, esup, inpoel, coord, U, P );
+        data.reconstruct( geoElem, fd, esup, inpoel, coord, U, P, ufo );
       }
       void limit( const tk::Fields& geoFace,
                   const inciter::FaceData& fd,

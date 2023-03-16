@@ -330,6 +330,7 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
+    //! \param[in,out] uFieldout Field output vector
     void reconstruct( const tk::Fields& geoElem,
                       const inciter::FaceData& fd,
                       const std::map< std::size_t, std::vector< std::size_t > >&
@@ -337,18 +338,25 @@ class MultiMat {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      tk::Fields& uFieldout ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( uFieldout.nunk() == nelem, "Number of unknowns in density gradient "
+              "vector must equal "+ std::to_string(nelem) );
 
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
       std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+
+      uFieldout.fill(0.0);
 
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
@@ -357,6 +365,9 @@ class MultiMat {
         // using nodal-stencils, for a good interface-normal estimate
         tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
           U, varRange );
+
+        // store gradients of material density before transformation
+        storeGradDensity(rdof, nmat, e, inpoel, coord, U, uFieldout);
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs

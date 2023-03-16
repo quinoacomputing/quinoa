@@ -542,7 +542,7 @@ DG::reco()
     g_dgpde[d->MeshId()].reconstruct( d->T(), myGhosts()->m_geoFace,
       myGhosts()->m_geoElem,
       myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
-      myGhosts()->m_coord, m_u, m_p );
+      myGhosts()->m_coord, m_u, m_p, m_uElemfields );
   }
 
   // Send reconstructed solution to neighboring chares

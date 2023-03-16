@@ -54,6 +54,17 @@ timeStepSizeMultiMatFV(
   const tk::Fields& U,
   const tk::Fields& P );
 
+//! Store the gradient of material densities for field output
+void
+storeGradDensity(
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& U,
+  tk::Fields& uFieldout );
+
 } //inciter::
 
 #endif // MiscMultiMatFns_h

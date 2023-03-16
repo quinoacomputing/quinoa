@@ -14,7 +14,6 @@
 #include "ContainerUtil.hpp"
 #include "Vector.hpp"
 #include "Integrate/Basis.hpp"
-#include "Reconstruction.hpp"
 
 namespace inciter {
 
@@ -149,11 +148,8 @@ evalSolution(
   // Assign values to element-fields
   for (std::size_t e=0; e<U.nunk(); ++e) {
     if (e < nelem) {
-      auto ute = tk::invTransform_P0P1(rdof, e, inpoel, coord, U);
       for (std::size_t i=0; i<uncomp; ++i) {
-        for (std::size_t j=0; j<rdof; ++j) {
-          uElemfields(e,rdof*i+j) = ute(0,rdof*i+j); //U(e,rdof*i+j);
-        }
+        uElemfields(e,rdof*i) = U(e,rdof*i);
       }
       for (std::size_t i=0; i<pncomp; ++i) {
         pElemfields(e,i) = P(e,rdof*i);
@@ -232,13 +228,7 @@ evalSolution(
       auto u = eval_state( uncomp, rdof, dofe, parent, U, B, {0, uncomp-1} );
       auto p = eval_state( pncomp, rdof, dofe, parent, P, B, {0, pncomp-1} );
       // Assign cell center solution from parent to child
-      for (std::size_t i=0; i<uncomp; ++i) {
-        uElemfields(child,rdof*i) = u[i];
-        auto utparent = tk::invTransform_P0P1(rdof, parent, pinpoel, coord, U);
-        for (std::size_t j=1; j<rdof; ++j) {
-          uElemfields(child,rdof*i+j) = utparent(0, rdof*i+j);
-        }
-      }
+      for (std::size_t i=0; i<uncomp; ++i) uElemfields(child,rdof*i) = u[i];
       for (std::size_t i=0; i<pncomp; ++i) pElemfields(child,i) = p[i];
       // Extract child element's node coordinates
       std::array< std::array< real, 3>, 4 > cc{{

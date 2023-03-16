@@ -457,7 +457,8 @@ FV::reco()
   if (rdof > 1) {
     // Reconstruct second-order solution and primitive quantities
     g_fvpde[Disc()->MeshId()].reconstruct( myGhosts()->m_geoElem, myGhosts()->m_fd,
-      myGhosts()->m_esup, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
+      myGhosts()->m_esup, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p,
+      m_uElemfields );
   }
 
   // start limiting
@@ -659,14 +660,14 @@ FV::solve( tk::real newdt )
       m_u(e, rmark) =  m_rkcoef[0][m_stage] * m_un(e, rmark)
         + m_rkcoef[1][m_stage] * ( m_u(e, rmark)
           + d->Dt() * m_rhs(e, c)/m_lhs(e, c) );
-      //// zero out reconstructed dofs of equations using reduced dofs
-      //if (rdof > 1) {
-      //  for (std::size_t k=1; k<rdof; ++k)
-      //  {
-      //    rmark = c*rdof+k;
-      //    m_u(e, rmark) = 0.0;
-      //  }
-      //}
+      // zero out reconstructed dofs of equations using reduced dofs
+      if (rdof > 1) {
+        for (std::size_t k=1; k<rdof; ++k)
+        {
+          rmark = c*rdof+k;
+          m_u(e, rmark) = 0.0;
+        }
+      }
     }
 
   // Update primitives based on the evolved solution

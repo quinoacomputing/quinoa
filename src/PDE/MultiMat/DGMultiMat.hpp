@@ -441,6 +441,7 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
+    //! \param[in,out] uFieldout Field output vector
     void reconstruct( tk::real,
                       const tk::Fields&,
                       const tk::Fields& geoElem,
@@ -450,7 +451,8 @@ class MultiMat {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& P ) const
+                      tk::Fields& P,
+                      tk::Fields& uFieldout ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -465,6 +467,8 @@ class MultiMat {
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( uFieldout.nunk() == nelem, "Number of unknowns in density gradient "
+              "vector must equal "+ std::to_string(nelem) );
 
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
@@ -474,6 +478,8 @@ class MultiMat {
       if (!is_p0p1 && ndof > 1)
         varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
 
+      uFieldout.fill(0.0);
+
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
       {
@@ -481,6 +487,9 @@ class MultiMat {
         // using nodal-stencils, for a good interface-normal estimate
         tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
           U, varRange );
+
+        // store gradients of material density before transformation
+        storeGradDensity(rdof, nmat, e, inpoel, coord, U, uFieldout);
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs
