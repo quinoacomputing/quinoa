@@ -90,11 +90,11 @@ recoLeastSqExtStencil(
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
 transform_P0P1( std::size_t rdof,
-                std::size_t nelem,
+                std::size_t e,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& W,
-                const std::vector< std::vector< std::size_t > >& varRange );
+                const std::vector< std::size_t >& varRange );
 
 //! Compute THINC reconstructions near material interfaces
 void

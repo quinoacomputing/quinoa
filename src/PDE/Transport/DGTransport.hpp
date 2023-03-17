@@ -252,7 +252,9 @@ class Transport {
         }
 
         // 4. transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1( rdof, nelem, inpoel, coord, U, varRange );
+        for (std::size_t e=0; e<nelem; ++e) {
+          tk::transform_P0P1( rdof, e, inpoel, coord, U, varRange[e] );
+        }
       }
     }
 

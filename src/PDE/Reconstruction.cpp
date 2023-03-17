@@ -395,15 +395,15 @@ recoLeastSqExtStencil(
 
 void
 transform_P0P1( std::size_t rdof,
-                std::size_t nelem,
+                std::size_t e,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& W,
-                const std::vector< std::vector< std::size_t > >& varRange )
+                const std::vector< std::size_t >& varRange )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
 //! \param[in] rdof Total number of reconstructed dofs
-//! \param[in] nelem Total number of elements
+//! \param[in] e Element for which reconstruction is being calculated
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] W Second-order reconstructed vector which gets transformed to
@@ -418,39 +418,36 @@ transform_P0P1( std::size_t rdof,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
-  for (std::size_t e=0; e<nelem; ++e)
+  // Extract the element coordinates
+  std::array< std::array< real, 3>, 4 > coordel {{
+    {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+    {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+    {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+    {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+  }};
+
+  auto jacInv =
+    tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+  // Compute the derivatives of basis function for DG(P1)
+  auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+
+  for (ncomp_t c=varRange[0]; c<=varRange[1]; ++c)
   {
-    // Extract the element coordinates
-    std::array< std::array< real, 3>, 4 > coordel {{
-      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-    }};
+    auto mark = c*rdof;
 
-    auto jacInv =
-      tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+    // solve system using Cramer's rule
+    auto ux = tk::cramer( {{ {{dBdx[0][1], dBdx[0][2], dBdx[0][3]}},
+                             {{dBdx[1][1], dBdx[1][2], dBdx[1][3]}},
+                             {{dBdx[2][1], dBdx[2][2], dBdx[2][3]}} }},
+                          {{ W(e,mark+1),
+                             W(e,mark+2),
+                             W(e,mark+3) }} );
 
-    // Compute the derivatives of basis function for DG(P1)
-    auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
-
-    for (ncomp_t c=varRange[e][0]; c<=varRange[e][1]; ++c)
-    {
-      auto mark = c*rdof;
-
-      // solve system using Cramer's rule
-      auto ux = tk::cramer( {{ {{dBdx[0][1], dBdx[0][2], dBdx[0][3]}},
-                               {{dBdx[1][1], dBdx[1][2], dBdx[1][3]}},
-                               {{dBdx[2][1], dBdx[2][2], dBdx[2][3]}} }},
-                            {{ W(e,mark+1),
-                               W(e,mark+2),
-                               W(e,mark+3) }} );
-
-      // replace physical derivatives with transformed dofs
-      W(e,mark+1) = ux[0];
-      W(e,mark+2) = ux[1];
-      W(e,mark+3) = ux[2];
-    }
+    // replace physical derivatives with transformed dofs
+    W(e,mark+1) = ux[0];
+    W(e,mark+2) = ux[1];
+    W(e,mark+3) = ux[2];
   }
 }
 

@@ -521,24 +521,48 @@ class MultiMat {
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1(rdof, nelem, inpoel, coord, U, varRange);
+      for (std::size_t e=0; e<nelem; ++e)
+        tk::transform_P0P1(rdof, e, inpoel, coord, U, varRange[e]);
 
       //----- reconstruction of primitive quantities -----
       //--------------------------------------------------
       // For multimat, conserved and primitive quantities are reconstructed
       // separately.
-      if (is_p0p1) {
-        // 1.
-        for (std::size_t e=0; e<nelem; ++e)
-        {
+
+      // Vector of Boolean indicator for whether the primitive variable should
+      // be reconstructed or not
+      std::vector<bool> reco_prim(nelem, false);
+      for (std::size_t e=0; e<nelem; ++e) {
+        // There are two conditions that requires the reconstruction of the
+        // primitive variables:
+        //    1. p-adaptive is triggered and P0P1 scheme is applied to specific
+        //       elements
+        //    2. p-adaptive is not triggered and P0P1 scheme is applied to the
+        //       whole computation domain
+        reco_prim[e] = (pref && ndofel[e] == 1) || (!pref && is_p0p1);
+      }
+
+      // Start the least square reconstruction for the primitive variables
+      // 1.
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        if(reco_prim[e]) {
+          // Adjust the varRange vector based on the index of primitive variable
+          varRange[e][0] = 0;
+          varRange[e][1] = velocityIdx(nmat, 3-1);
+
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
           tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
             P, varRange[e] );
         }
+      }
 
-        // 2.
-        tk::transform_P0P1(rdof, nelem, inpoel, coord, P, varRange);
+      // 2.
+      for (std::size_t e=0; e<nelem; ++e) {
+        if(reco_prim[e]) {
+          tk::transform_P0P1(rdof, e, inpoel, coord, P, varRange[e]);
+        }
       }
     }
 
@@ -791,14 +815,14 @@ class MultiMat {
                               ndofel, R, intsharp );
 
       // compute finite pressure relaxation terms
-      if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
-      {
-        const auto ct = g_inputdeck.get< tag::param, tag::multimat,
-                                         tag::prelax_timescale >()[m_system];
-        tk::pressureRelaxationInt( m_system, nmat, m_mat_blk, ndof,
-                                   rdof, nelem, inpoel, coord, geoElem, U, P,
-                                   ndofel, ct, R, intsharp );
-      }
+      //if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
+      //{
+      //  const auto ct = g_inputdeck.get< tag::param, tag::multimat,
+      //                                   tag::prelax_timescale >()[m_system];
+      //  tk::pressureRelaxationInt( m_system, nmat, m_mat_blk, ndof,
+      //                             rdof, nelem, inpoel, coord, geoElem, U, P,
+      //                             ndofel, ct, R, intsharp );
+      //}
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
