@@ -529,13 +529,7 @@ void storeGradDensity(
 //! \param[in,out] uFieldout Field output vector
 // *****************************************************************************
 {
-  // i. interface detection
-  std::vector< std::size_t > matInt(nmat, 0);
-  std::vector< tk::real > alAvg(nmat, 0.0);
-  for (std::size_t k=0; k<nmat; ++k)
-    alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
-  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
-  // ii. store gradients rho_k * grad(alpha_k)
+  // i. store gradients rho_k * grad(alpha_k)
   for (std::size_t k=0; k<nmat; ++k) {
     for (std::size_t i=1; i<rdof; ++i) {
       uFieldout(e, densityDofIdx(nmat,k,rdof,i)) =
@@ -544,14 +538,11 @@ void storeGradDensity(
     }
   }
   // ii. add gradients alpha_k * grad(rho_k)
-  if (!intInd) {
-    auto ut = tk::invTransform_P0P1(rdof, e, inpoel, coord, U);
-    for (std::size_t k=0; k<nmat; ++k) {
-      for (std::size_t i=1; i<rdof; ++i) {
-        uFieldout(e, densityDofIdx(nmat,k,rdof,i)) +=
-          U(e, volfracDofIdx(nmat,k,rdof,0)) *
-          ut(0, densityDofIdx(nmat,k,rdof,i));
-      }
+  auto ut = tk::invTransform_P0P1(rdof, e, inpoel, coord, U);
+  for (std::size_t k=0; k<nmat; ++k) {
+    for (std::size_t i=1; i<rdof; ++i) {
+      uFieldout(e, densityDofIdx(nmat,k,rdof,i)) +=
+        ut(0, densityDofIdx(nmat,k,rdof,i));
     }
   }
 }
