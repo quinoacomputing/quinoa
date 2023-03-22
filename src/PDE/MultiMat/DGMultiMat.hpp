@@ -342,8 +342,6 @@ class MultiMat {
 
         // Local degree of freedom
         auto dof_el = ndofel[e];
-        if(dof_el == 1)
-          dof_el = 4;
 
         // Loop over quadrature points in element e
         for (std::size_t igp=0; igp<ng; ++igp)
