@@ -608,7 +608,7 @@ VertexBasedMultiMat_P1(
 
       std::vector< tk::real > phic_p2, phip_p2;
 
-      PositivityLimitingMultiMat(nmat, mat_blk, rdof, dof_el, e, inpoel,
+      PositivityLimitingMultiMat(nmat, mat_blk, rdof, dof_el, ndofel, e, inpoel,
         coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
 
       // limits under which compression is to be performed
@@ -795,7 +795,7 @@ VertexBasedMultiMat_P2(
         //}
       }
 
-      PositivityLimitingMultiMat(nmat, mat_blk, ndof, dof_el, e, inpoel,
+      PositivityLimitingMultiMat(nmat, mat_blk, ndof, dof_el, ndofel, e, inpoel,
           coord, fd.Esuel(), U, P, phic_p1, phic_p2, phip_p1, phic_p2);
 
       // limits under which compression is to be performed
