@@ -25,7 +25,7 @@ namespace tk {
 void
 surfInt( ncomp_t system,
          std::size_t nmat,
-         const std::vector< inciter::EoS_Base* >& mat_blk,
+         const std::vector< inciter::EOS >& mat_blk,
          real t,
          const std::size_t ndof,
          const std::size_t rdof,
@@ -48,6 +48,7 @@ surfInt( ncomp_t system,
 //  Compute internal surface flux integrals
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -200,9 +201,9 @@ surfInt( ncomp_t system,
 
       std::array< std::vector< real >, 2 > state;
 
-      state[0] = evalPolynomialSol(system, intsharp, ncomp, nprim, rdof,
+      state[0] = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
         nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = evalPolynomialSol(system, intsharp, ncomp, nprim, rdof,
+      state[1] = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
         nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
@@ -328,7 +329,7 @@ update_rhs_fa( ncomp_t ncomp,
 void
 surfIntFV( ncomp_t system,
   std::size_t nmat,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   real t,
   const std::size_t rdof,
   const std::vector< std::size_t >& inpoel,
@@ -438,9 +439,9 @@ surfIntFV( ncomp_t system,
 
     std::array< std::vector< real >, 2 > state;
 
-    state[0] = evalPolynomialSol(system, intsharp, ncomp, nprim, rdof,
+    state[0] = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
       nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-    state[1] = evalPolynomialSol(system, intsharp, ncomp, nprim, rdof,
+    state[1] = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
       nmat, er, rdof, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
     //safeReco(rdof, nmat, el, er, U, state);

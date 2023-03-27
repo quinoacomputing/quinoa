@@ -95,10 +95,14 @@ MeshConvDriver::execute() const
       m_print.diag( name + ": ntri: " +
         std::to_string(mesh.triinpoel().size()/3) +
         ", ntime: " + std::to_string(mesh.vartimes().size()) +
-        (!mesh.nodevars().empty() ? ", nvar: " +
+        (!mesh.nodevars().empty() ? ", node_var: " +
            std::to_string(mesh.nodevars()[0].size()) : "") +
         (!mesh.nodevars()[0].empty() ? ", npoin: " +
-           std::to_string(mesh.nodevars()[0][0].size()) : "") );
+           std::to_string(mesh.nodevars()[0][0].size()) : "") +
+        (!mesh.elemvars().empty() ? ", elem_var: " +
+           std::to_string(mesh.elemvars()[0].size()) : "") +
+        (!mesh.elemvars()[0].empty() ? ", nelem: " +
+           std::to_string(mesh.elemvars()[0][0].size()) : "") );
     };
 
     // Output-mesh containers, will store aggregated surface(s) and field output
@@ -107,10 +111,13 @@ MeshConvDriver::execute() const
     auto& Y = coords[1];
     auto& Z = coords[2];
     std::size_t npoin = 0;
+    std::size_t nelem = 0;
     std::vector< std::size_t > otriinpoel;
     std::vector< std::string > nodevarnames;
+    std::vector< std::string > elemvarnames;
     std::vector< tk::real > vartimes;
     std::vector< std::vector< std::vector< tk::real > > > nodevars;
+    std::vector< std::vector< std::vector< tk::real > > > elemvars;
     // Counter for number of non-empty meshes processed
     std::size_t k = 0;
     for (std::size_t m=0; m<nfile; ++m) {
@@ -124,6 +131,7 @@ MeshConvDriver::execute() const
       const auto& y = mesh.y();
       const auto& z = mesh.z();
       nodevarnames = mesh.nodevarnames();
+      elemvarnames = mesh.elemvarnames();
       vartimes = mesh.vartimes();
       // Echo some diagnostics on the mesh being processes to screen
       diag( name, mesh );
@@ -165,12 +173,28 @@ MeshConvDriver::execute() const
             ++npoin;      // increase number of nodes in output mesh
           }
         }
+
+        // aggregate elemental field data for all times and variables
+        std::size_t etime = 0;
+        std::size_t evarid = 0;
+        for (const auto& t : mesh.elemvars()) {  // for all times
+          if (k == 0 && nelem == 0) elemvars.push_back( {} );
+          for (const auto& v : t) {              // for all variables
+            if (k == 0 && nelem == 0) elemvars.back().push_back( {} );
+            elemvars[etime][evarid].push_back( v[e] );
+            ++evarid;
+          }
+          ++etime;
+          evarid = 0;
+        }
+        ++nelem;    // increase number of elements in output mesh
       }
       ++k;        // increase number of non-empty meshes processed
     }
 
     // Construct aggregated output mesh
-    tk::UnsMesh outmesh( coords, otriinpoel, nodevarnames, vartimes, nodevars );
+    tk::UnsMesh outmesh( coords, otriinpoel, nodevarnames, elemvarnames,
+      vartimes, nodevars, elemvars );
     // Echo diagnostics on the aggreegate output mesh
     diag( m_output, outmesh );
     // Write output mesh to file

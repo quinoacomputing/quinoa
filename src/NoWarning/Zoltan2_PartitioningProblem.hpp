@@ -18,6 +18,7 @@
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wextra-semi"
   #pragma clang diagnostic ignored "-Wextra-semi-stmt"
+  #pragma clang diagnostic ignored "-Wnewline-eof"
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wsign-conversion"
   #pragma clang diagnostic ignored "-Wsign-compare"

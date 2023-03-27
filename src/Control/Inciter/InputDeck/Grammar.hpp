@@ -205,7 +205,7 @@ namespace grm {
       auto& intsharp_p = stack.template get< param, eq,
                                             tag::intsharp_param >();
       if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
-        intsharp_p.push_back( 1.0 );
+        intsharp_p.push_back( 1.8 );
     }
   };
 
@@ -300,6 +300,9 @@ namespace grm {
         // If stiffness coefficient vector is wrong size, error out
         if (pstiff.size() != 1)
           Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+      }
+      else {
+        Message< Stack, ERROR, MsgKey::NOEOS >( stack, in );
       }
 
       // Generate mapping between material index and eos parameter index
@@ -509,10 +512,10 @@ namespace grm {
       if (depvar.empty() || depvar.size() != neq.get< eq >())
         Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
 
-      // If physics type is not given, default to 'veleq'
+      // If physics type is not given, default to 'euler'
       auto& physics = stack.template get< param, eq, tag::physics >();
       if (physics.empty() || physics.size() != neq.get< eq >())
-        physics.push_back( inciter::ctr::PhysicsType::VELEQ );
+        physics.push_back( inciter::ctr::PhysicsType::EULER );
 
       // Set default flux to AUSM if not specified
       auto& flux = stack.template get< tag::param, eq, tag::flux >();
@@ -522,8 +525,9 @@ namespace grm {
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
-      if (physics.back() == inciter::ctr::PhysicsType::VELEQ) {
-        // physics = veleq: m-material compressible flow
+      if (physics.back() == inciter::ctr::PhysicsType::EULER ||
+        physics.back() == inciter::ctr::PhysicsType::ENERGYPILL) {
+        // physics = euler/energy pill: m-material compressible flow
         // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
         if (nmat.empty() || nmat.size() != neq.get< eq >()) {
@@ -541,7 +545,7 @@ namespace grm {
       auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
       matidxmap.template get< tag::eosidx >().resize(nmat.back());
       matidxmap.template get< tag::matidx >().resize(nmat.back());
-      std::size_t tmat(0), i(0);
+      std::size_t tmat(0), i(0), mtypei(0);
       std::set< std::size_t > matidset;
 
       for (auto& mtype : matprop.back()) {
@@ -576,6 +580,35 @@ namespace grm {
           if (pstiff.size() != mat_id.size())
             Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
         }
+        else if (meos == inciter::ctr::MaterialType::JWL) {
+          auto& cv = mtype.template get< tag::cv >();
+          // As a default, the specific heat of air (717.5 J/Kg-K) is used
+          if (cv.empty()) {
+            for (std::size_t k=0; k<mat_id.size(); ++k) {
+              cv.push_back(717.5);
+            }
+          }
+          // If specific heat vector is wrong size, error out
+          if (cv.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSCV >( stack, in );
+
+          // If JWL parameter vectors are wrong size, error out
+          const auto& w_gru = mtype.template get< tag::w_gru >();
+          const auto& a_jwl = mtype.template get< tag::A_jwl >();
+          const auto& b_jwl = mtype.template get< tag::B_jwl >();
+          const auto& r1_jwl = mtype.template get< tag::R1_jwl >();
+          const auto& r2_jwl = mtype.template get< tag::R2_jwl >();
+          const auto& rho0_jwl = mtype.template get< tag::rho0_jwl >();
+          const auto& de_jwl = mtype.template get< tag::de_jwl >();
+          const auto& rhor_jwl = mtype.template get< tag::rhor_jwl >();
+          const auto& pr_jwl = mtype.template get< tag::Pr_jwl >();
+          if (w_gru.size() != mat_id.size() || a_jwl.size() != mat_id.size() ||
+            b_jwl.size() != mat_id.size() || r1_jwl.size() != mat_id.size() ||
+            r2_jwl.size() != mat_id.size() || rho0_jwl.size() != mat_id.size()
+            || de_jwl.size() != mat_id.size() ||
+            rhor_jwl.size() != mat_id.size() || pr_jwl.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSJWLPARAM >( stack, in );
+        }
 
         // Track total number of materials in multiple material blocks
         tmat += mat_id.size();
@@ -593,13 +626,16 @@ namespace grm {
         auto& idxmap = matidxmap.template get< tag::matidx >();
         for (auto midx : mat_id) {
           midx -= 1;
-          eosmap[midx] = static_cast< std::size_t >(mtype.template get<
-            tag::eos >());
+          //eosmap[midx] = static_cast< std::size_t >(mtype.template get<
+          //  tag::eos >());
+          eosmap[midx] = mtypei;
           idxmap[midx] = i;
           ++i;
         }
         // end of materials for this eos, thus reset index counter
         i = 0;
+        // increment material-type/eos-type index counter
+        ++mtypei;
       }
 
       // If total number of materials is incorrect, error out
@@ -616,16 +652,16 @@ namespace grm {
         ++icount;
       }
 
-      // If pressure relaxation is not specified, default to 'false'
+      // If pressure relaxation is not specified, default to 'true'
       auto& prelax = stack.template get< param, eq, tag::prelax >();
       if (prelax.empty() || prelax.size() != neq.get< eq >())
-        prelax.push_back( 0 );
+        prelax.push_back( 1 );
 
-      // If pressure relaxation time-scale is not specified, default to 1.0
+      // If pressure relaxation time-scale is not specified, default to 0.25
       auto& prelax_ts = stack.template get< param, eq,
                                             tag::prelax_timescale >();
       if (prelax_ts.empty() || prelax_ts.size() != neq.get< eq >())
-        prelax_ts.push_back( 1.0 );
+        prelax_ts.push_back( 0.25 );
 
       // If interface compression is not specified, default to 'false'
       auto& intsharp = stack.template get< param, eq, tag::intsharp >();
@@ -1675,6 +1711,8 @@ namespace deck {
                  tk::grm::block< use< kw::end >
                    , box_deep_vector< eq, kw::point, tag::initiate, tag::point,
                       tag::box >
+                   , box_deep_parameter< eq, kw::init_time, tag::initiate,
+                                         tag::init_time, tag::box >
                    , box_deep_parameter< eq, kw::front_width, tag::initiate,
                                          tag::front_width, tag::box >
                    , box_deep_parameter< eq, kw::velocity, tag::initiate,
@@ -1708,6 +1746,8 @@ namespace deck {
                  tk::grm::block< use< kw::end >
                    , box_deep_vector< eq, kw::point, tag::initiate, tag::point,
                       tag::meshblock >
+                   , box_deep_parameter< eq, kw::init_time, tag::initiate,
+                                         tag::init_time, tag::meshblock >
                    , box_deep_parameter< eq, kw::front_width, tag::initiate,
                                          tag::front_width, tag::meshblock >
                    , box_deep_parameter< eq, kw::velocity, tag::initiate,
@@ -1754,6 +1794,16 @@ namespace deck {
               , material_vector< eq, kw::mat_gamma, tag::gamma >
               , material_vector< eq, kw::mat_mu, tag::mu >
               , material_vector< eq, kw::mat_pstiff, tag::pstiff >
+              , material_vector< eq, kw::w_gru, tag::w_gru >
+              , material_vector< eq, kw::A_jwl, tag::A_jwl >
+              , material_vector< eq, kw::B_jwl, tag::B_jwl >
+              , material_vector< eq, kw::C_jwl, tag::C_jwl >
+              , material_vector< eq, kw::R1_jwl, tag::R1_jwl >
+              , material_vector< eq, kw::R2_jwl, tag::R2_jwl >
+              , material_vector< eq, kw::rho0_jwl, tag::rho0_jwl >
+              , material_vector< eq, kw::de_jwl, tag::de_jwl >
+              , material_vector< eq, kw::rhor_jwl, tag::rhor_jwl >
+              , material_vector< eq, kw::Pr_jwl, tag::Pr_jwl >
               , material_vector< eq, kw::mat_cv, tag::cv >
               , material_vector< eq, kw::mat_k, tag::k >
               , material_option< eq, ctr::Material, kw::eos, tag::eos >

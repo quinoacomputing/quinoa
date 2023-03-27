@@ -37,8 +37,7 @@
 #include "Integrate/Volume.hpp"
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/StiffenedGas.hpp"
+#include "EoS/EOS.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "PrefIndicator.hpp"
@@ -83,11 +82,12 @@ class CompFlow {
         , extrapolate } ) );
 
       // EoS initialization
-      // query input deck to get gamma, p_c, cv
-      auto g = gamma< eq >(m_system, 0);
-      auto ps = pstiff< eq >(m_system, 0);
-      auto c_v = cv< eq >(m_system, 0);
-      m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
+      const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[
+        m_system];
+      const auto& matidxmap = g_inputdeck.get< tag::param, eq, tag::matidxmap >
+        ();
+      auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();
+      m_mat_blk.emplace_back(mateos, EqType::compflow, m_system, 0);
 
     }
 
@@ -669,9 +669,9 @@ class CompFlow {
           v = ugp[0][2]/rho;
           w = ugp[0][3]/rho;
           rhoE = ugp[0][4];
-          p = m_mat_blk[0]->eos_pressure( rho, u, v, w, rhoE );
+          p = m_mat_blk[0].compute< EOS::pressure >( rho, u, v, w, rhoE );
 
-          a = m_mat_blk[0]->eos_soundspeed( rho, p );
+          a = m_mat_blk[0].compute< EOS::soundspeed >( rho, p );
 
           vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
@@ -728,8 +728,8 @@ class CompFlow {
             v = ugp[1][2]/rho;
             w = ugp[1][3]/rho;
             rhoE = ugp[1][4];
-            p = m_mat_blk[0]->eos_pressure( rho, u, v, w, rhoE );
-            a = m_mat_blk[0]->eos_soundspeed( rho, p );
+            p = m_mat_blk[0].compute< EOS::pressure >( rho, u, v, w, rhoE );
+            a = m_mat_blk[0].compute< EOS::soundspeed >( rho, p );
 
             vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
@@ -854,7 +854,7 @@ class CompFlow {
         Up[j][2] = uhp[2]/uhp[0];
         Up[j][3] = uhp[3]/uhp[0];
         Up[j][4] = uhp[4]/uhp[0];
-        Up[j][5] = m_mat_blk[0]->eos_pressure( uhp[0], uhp[1]/uhp[0],
+        Up[j][5] = m_mat_blk[0].compute< EOS::pressure >( uhp[0], uhp[1]/uhp[0],
           uhp[2]/uhp[0], uhp[3]/uhp[0], uhp[4] );
         ++j;
       }
@@ -913,7 +913,7 @@ class CompFlow {
     //! BC configuration
     BCStateFn m_bc;
     //! EOS material block
-    std::vector< EoS_Base* > m_mat_blk;
+    std::vector< EOS > m_mat_blk;
 
     //! Evaluate physical flux function for this PDE system
     //! \param[in] ncomp Number of scalar components in this PDE system
@@ -925,7 +925,7 @@ class CompFlow {
     static tk::FluxFn::result_type
     flux( ncomp_t,
           [[maybe_unused]] ncomp_t ncomp,
-          const std::vector< EoS_Base* >& mat_blk,
+          const std::vector< EOS >& mat_blk,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
@@ -934,7 +934,7 @@ class CompFlow {
       auto u = ugp[1] / ugp[0];
       auto v = ugp[2] / ugp[0];
       auto w = ugp[3] / ugp[0];
-      auto p = mat_blk[0]->eos_pressure( ugp[0], u, v, w, ugp[4] );
+      auto p = mat_blk[0].compute< EOS::pressure >( ugp[0], u, v, w, ugp[4] );
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
@@ -974,7 +974,7 @@ class CompFlow {
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp,
-               const std::vector< EoS_Base* >& mat_blk,
+               const std::vector< EOS >& mat_blk,
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
@@ -989,7 +989,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    symmetry( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
+    symmetry( ncomp_t, ncomp_t, const std::vector< EOS >&,
               const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
               tk::real, const std::array< tk::real, 3 >& fn )
     {
@@ -1023,7 +1023,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    farfield( ncomp_t system, ncomp_t, const std::vector< EoS_Base* >& mat_blk,
+    farfield( ncomp_t system, ncomp_t, const std::vector< EOS >& mat_blk,
               const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
               tk::real, const std::array< tk::real, 3 >& fn )
     {
@@ -1038,7 +1038,7 @@ class CompFlow {
                                    tag::farfield_velocity >()[ system ];
 
       // Speed of sound from farfield
-      auto fa = mat_blk[0]->eos_soundspeed( frho, fp );
+      auto fa = mat_blk[0].compute< EOS::soundspeed >( frho, fp );
 
       // Normal component from farfield
       auto fvn = fu[0]*fn[0] + fu[1]*fn[1] + fu[2]*fn[2];
@@ -1047,11 +1047,12 @@ class CompFlow {
       auto fM = fvn / fa;
 
       // Specific total energy from farfield
-      auto frhoE = mat_blk[0]->eos_totalenergy( frho, fu[0], fu[1], fu[2], fp );
+      auto frhoE = mat_blk[0].compute< EOS::totalenergy >( frho, fu[0], fu[1],
+        fu[2], fp );
 
       // Pressure from internal cell
-      auto p = mat_blk[0]->eos_pressure( ul[0], ul[1]/ul[0], ul[2]/ul[0],
-                                         ul[3]/ul[0], ul[4] );
+      auto p = mat_blk[0].compute< EOS::pressure >( ul[0], ul[1]/ul[0],
+        ul[2]/ul[0], ul[3]/ul[0], ul[4] );
 
       auto ur = ul;
 
@@ -1075,15 +1076,16 @@ class CompFlow {
         ur[1] = frho * fu[0];
         ur[2] = frho * fu[1];
         ur[3] = frho * fu[2];
-        ur[4] = mat_blk[0]->eos_totalenergy( frho, fu[0], fu[1], fu[2], p );
+        ur[4] = mat_blk[0].compute< EOS::totalenergy >( frho, fu[0], fu[1],
+          fu[2], p );
       } else if(fM >= 0 && fM < 1)       // Subsonic outflow
       {
         // For subsonic outflow, there are 1 incoming characteristcs and 4
         // outgoing characteristic. Therefore, we calculate the ghost cell state
         // by taking pressure from the outside and other quantities from the
         // internal cell.
-        ur[4] = mat_blk[0]->eos_totalenergy( ul[0], ul[1]/ul[0], ul[2]/ul[0],
-                                             ul[3]/ul[0], fp );
+        ur[4] = mat_blk[0].compute< EOS::totalenergy >( ul[0], ul[1]/ul[0],
+          ul[2]/ul[0], ul[3]/ul[0], fp );
       }
       // Otherwise, for supersonic outflow, all the characteristics are from
       // internal cell. Therefore, we calculate the ghost cell state using the
@@ -1099,7 +1101,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    extrapolate( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
+    extrapolate( ncomp_t, ncomp_t, const std::vector< EOS >&,
                  const std::vector< tk::real >& ul, tk::real, tk::real,
                  tk::real, tk::real, const std::array< tk::real, 3 >& )
     {

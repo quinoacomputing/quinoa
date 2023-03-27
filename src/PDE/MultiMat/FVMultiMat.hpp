@@ -7,7 +7,8 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Compressible multi-material flow using finite volumes
   \details   This file implements calls to the physics operators governing
-    compressible multi-material flow using finite volume discretizations.
+    compressible multi-material flow (with velocity equilibrium) using finite
+    volume discretizations.
 */
 // *****************************************************************************
 #ifndef FVMultiMat_h
@@ -35,14 +36,13 @@
 #include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "Problem/FieldOutput.hpp"
 #include "Problem/BoxInitialization.hpp"
 #include "MultiMat/BCFunctions.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
 
@@ -55,8 +55,7 @@ namespace fv {
 //!   the behavior of the class. The policies are:
 //!   - Physics - physics configuration, see PDE/MultiMat/Physics.h
 //!   - Problem - problem configuration, see PDE/MultiMat/Problem.h
-//! \note The default physics is velocity equilibrium (veleq), set in
-//!   inciter::deck::check_multimat()
+//! \note The default physics is Euler, set in inciter::deck::check_multimat()
 template< class Physics, class Problem >
 class MultiMat {
 
@@ -67,6 +66,7 @@ class MultiMat {
     //! Constructor
     //! \param[in] c Equation system index (among multiple systems configured)
     explicit MultiMat( ncomp_t c ) :
+      m_physics(),
       m_system( c ),
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
       m_riemann( multimatRiemannSolver(
@@ -82,16 +82,7 @@ class MultiMat {
         , extrapolate } ) );
 
       // EoS initialization
-      auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      for (std::size_t k=0; k<nmat; ++k) {
-        // query input deck to get gamma, p_c, cv
-        auto g = gamma< eq >(m_system, k);
-        auto ps = pstiff< eq >(m_system, k);
-        auto c_v = cv< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
-        }
-
+      initializeMaterialEoS( m_system, m_mat_blk );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -159,6 +150,10 @@ class MultiMat {
       tk::real bgpre =
         (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
         bgpreic[m_system][0] : 0.0;
+      const auto& bgtempic = ic.get< tag::temperature >();
+      tk::real bgtemp =
+        (bgtempic.size() > m_system && !bgtempic[m_system].empty()) ?
+        bgtempic[m_system][0] : 0.0;
 
       // Set initial conditions inside user-defined IC boxes and mesh blocks
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -182,7 +177,7 @@ class MultiMat {
                   unk(e,mark+i) = 0.0;
               }
               initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, bgpre,
-                s );
+                bgtemp, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -202,7 +197,7 @@ class MultiMat {
               const auto& elset = tk::cref_find(elemblkid, blid);
               if (elset.find(e) != elset.end()) {
                 initializeBox<ctr::meshblock>( m_system, m_mat_blk, V_ex, t, b,
-                  bgpre, s );
+                  bgpre, bgtemp, s );
                 // store initialization in solution vector
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   auto mark = c*rdof;
@@ -278,11 +273,11 @@ class MultiMat {
           tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0));
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0));
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
-            m_mat_blk[k]->eos_pressure( arhomat, vel[0], vel[1], vel[2],
-                                        arhoemat, alphamat );
+            m_mat_blk[k].compute< EOS::pressure >( arhomat, vel[0], vel[1],
+            vel[2], arhoemat, alphamat, k );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
-            constrain_pressure< tag::multimat >(m_system,
-            prim(e, pressureDofIdx(nmat, k, rdof, 0)), alphamat, k);
+            constrain_pressure( m_mat_blk,
+            prim(e, pressureDofIdx(nmat, k, rdof, 0)), arhomat, alphamat, k);
           for (std::size_t idof=1; idof<rdof; ++idof)
             prim(e, pressureDofIdx(nmat, k, rdof, idof)) = 0.0;
         }
@@ -321,8 +316,8 @@ class MultiMat {
       Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) <= 4, "High-order "
               "discretizations not set up for multimat cleanTraceMaterial()" );
 
-      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk,
-        geoElem, nmat, unk, prim);
+      auto neg_density = cleanTraceMultiMat(nielem, m_mat_blk, geoElem, nmat,
+        unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
     }
@@ -390,14 +385,14 @@ class MultiMat {
     }
 
     //! Limit second-order solution, and primitive quantities separately
-//    //! \param[in] geoElem Element geometry array
+    //! \param[in] geoFace Face geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
-    void limit( const tk::Fields& /*geoElem*/,
+    void limit( const tk::Fields& geoFace,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -417,6 +412,8 @@ class MultiMat {
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
           m_system, coord, U, P, nmat );
+        PositivityPreservingMultiMat_FV( inpoel, fd.Esuel().size()/4, nmat,
+          m_mat_blk, coord, geoFace, U, P );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
@@ -536,7 +533,7 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeIntFV( m_system, nmat, rdof, nelem,
+      tk::nonConservativeIntFV( m_system, nmat, m_mat_blk, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv, R );
 
       // compute finite pressure relaxation terms
@@ -550,87 +547,7 @@ class MultiMat {
       }
 
       // compute external (energy) sources
-      const auto& icmbk = g_inputdeck.get< tag::param, eq, tag::ic,
-        tag::meshblock >();
-      if (icmbk.size() > m_system) {
-        for (const auto& b : icmbk[m_system]) { // for all blocks
-          auto blid = b.get< tag::blockid >();
-          if (elemblkid.find(blid) != elemblkid.end()) {
-            const auto& initiate = b.template get< tag::initiate >();
-            auto inittype = initiate.template get< tag::init >();
-            if (inittype == ctr::InitiateType::LINEAR) {
-              blockSrc( nmat, t, geoElem, b, tk::cref_find(elemblkid,blid), R,
-                engSrcAdded );
-            }
-          }
-        }
-      }
-    }
-
-    //! Compute sources corresponding to a propagating front in user-defined box
-    //! \param[in] nmat Number of materials
-    //! \param[in] t Physical time
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] mb Mesh block for which sources are being added
-    //! \param[in] blkelems Element set in the mesh block being considered
-    //! \param[in,out] R Right-hand side vector
-    //! \param[in,out] engSrcAdded Whether the energy source was added
-    //! \details This function adds the energy source corresponding to a
-    //!   spherically growing wave-front propagating with a user-specified
-    //!   velocity, within a user-configured mesh block initial condition.
-    //!   Example (SI) units of the quantities involved:
-    //!    * internal energy content (energy per unit volume): J/m^3
-    //!    * specific energy (internal energy per unit mass): J/kg
-    void blockSrc( std::size_t nmat,
-      tk::real t,
-      const tk::Fields& geoElem,
-      const ctr::meshblock& mb,
-      const std::set< std::size_t >& blkelems,
-      tk::Fields& R,
-      int& engSrcAdded ) const
-    {
-      auto enc = mb.template get< tag::energy_content >();
-      Assert( enc > 0.0, "Box energy content must be nonzero" );
-      const auto& x0_front = mb.template get< tag::initiate, tag::point >();
-      Assert(x0_front.size()==3, "Incorrectly sized front initial location");
-      auto blkmatid = mb.template get< tag::materialid >();
-
-      // determine times at which sourcing is initialized and terminated
-      auto v_front = mb.template get< tag::initiate, tag::velocity >();
-      auto w_front = mb.template get< tag::initiate, tag::front_width >();
-      auto tInit = 0.0;
-
-      if (t >= tInit) {
-        // current radius of front
-        tk::real r_front = v_front * t;
-        // arbitrary shape form
-        auto amplE = enc * v_front / w_front;
-
-        for (auto e : blkelems) {
-          std::array< tk::real, 3 > node{{ geoElem(e,1), geoElem(e,2),
-            geoElem(e,3) }};
-
-          auto r_e = std::sqrt(
-            (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
-            (node[1]-x0_front[1])*(node[1]-x0_front[1]) +
-            (node[2]-x0_front[2])*(node[2]-x0_front[2]) );
-
-          // if element centroid lies within spherical shell add sources
-          if (r_e >= r_front && r_e <= r_front+w_front) {
-            engSrcAdded = 1;
-            // Compute the source term variable
-            std::vector< tk::real > s(m_ncomp, 0.0);
-            // arbitrary shape form
-            s[energyIdx(nmat,blkmatid-1)] = amplE;
-
-            // Add the source term to the rhs
-            for (ncomp_t c=0; c<m_ncomp; ++c)
-            {
-              R(e, c) += geoElem(e,0) * s[c];
-            }
-          }
-        }
-      }
+      m_physics.physSrc(m_system, nmat, t, geoElem, elemblkid, R, engSrcAdded);
     }
 
     //! Compute the minimum time step size
@@ -658,8 +575,12 @@ class MultiMat {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
-      return timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, m_system,
-        nmat, engSrcAd, U, P);
+      // obtain dt restrictions from all physics
+      auto dt_e = timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, nmat, U,
+        P);
+      auto dt_p = m_physics.dtRestriction(m_system, geoElem, nielem, engSrcAd);
+
+      return std::min(dt_e, dt_p);
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.
@@ -709,15 +630,10 @@ class MultiMat {
       return MultiMatFieldNames(nmat);
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > nodalFieldNames() const
-    {
-      auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-
-      return MultiMatFieldNames(nmat);
-    }
+    //! Return surface field names to be output to file
+    //! \return Vector of strings labelling surface fields output in file
+    std::vector< std::string > surfNames() const
+    { return MultiMatSurfNames(); }
 
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file
@@ -727,11 +643,15 @@ class MultiMat {
 
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
-    surfOutput( const std::map< int, std::vector< std::size_t > >&,
-                tk::Fields& ) const
+    surfOutput( const inciter::FaceData& fd,
+      const tk::Fields& U,
+      const tk::Fields& P ) const
     {
-      std::vector< std::vector< tk::real > > s; // punt for now
-      return s;
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+
+      return MultiMatSurfOutput( m_system, nmat, rdof, fd, U, P );
     }
 
     //! Return time history field output evaluated at time history points
@@ -845,6 +765,8 @@ class MultiMat {
     }
 
   private:
+    //! Physics policy
+    const Physics m_physics;
     //! Equation system index
     const ncomp_t m_system;
     //! Number of components in this PDE system
@@ -854,7 +776,7 @@ class MultiMat {
     //! BC configuration
     BCStateFn m_bc;
     //! EOS material block
-    std::vector< EoS_Base* > m_mat_blk;
+    std::vector< EOS > m_mat_blk;
 
     //! Evaluate conservative part of physical flux function for this PDE system
     //! \param[in] system Equation system index
@@ -866,7 +788,7 @@ class MultiMat {
     static tk::FluxFn::result_type
     flux( ncomp_t system,
           [[maybe_unused]] ncomp_t ncomp,
-          const std::vector< EoS_Base* >&,
+          const std::vector< EOS >&,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
@@ -892,7 +814,7 @@ class MultiMat {
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp,
-               const std::vector< EoS_Base* >& mat_blk,
+               const std::vector< EOS >& mat_blk,
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
@@ -918,10 +840,10 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k]->eos_pressure(
+        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

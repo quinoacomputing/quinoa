@@ -17,7 +17,7 @@
 // *****************************************************************************
 
 #include "CGNavierStokes.hpp"
-#include "EoS/EoS.hpp"
+#include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 

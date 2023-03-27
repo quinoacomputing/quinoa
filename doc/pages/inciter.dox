@@ -63,6 +63,7 @@ Inciter currently has three different families of fluid dynamics algorithms:
 - @ref inciter_amr "Adaptive Mesh Refinement (TetAMR)"
 - @ref inciter_cmd "Command line arguments"
 - @ref inciter_ctr "Control file keywords"
+- @ref output "Field output files"
 - @ref papers_inciter "Publications"
 - @ref roadmap_inciter "Roadmap"
 - @ref inciter_performance "Performance"

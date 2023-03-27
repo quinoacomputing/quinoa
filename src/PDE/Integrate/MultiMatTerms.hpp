@@ -20,7 +20,7 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EOS.hpp"
 
 namespace tk {
 
@@ -30,6 +30,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 void
 nonConservativeInt( ncomp_t system,
                     std::size_t nmat,
+                    const std::vector< inciter::EOS >& mat_blk,
                     const std::size_t ndof,
                     const std::size_t rdof,
                     const std::size_t nelem,
@@ -61,6 +62,7 @@ void
 nonConservativeIntFV(
   ncomp_t system,
   std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,
   const std::vector< std::size_t >& inpoel,
@@ -75,7 +77,7 @@ nonConservativeIntFV(
 void
 pressureRelaxationInt( ncomp_t system,
                        std::size_t nmat,
-                       const std::vector< inciter::EoS_Base* >& mat_blk,
+                       const std::vector< inciter::EOS >& mat_blk,
                        const std::size_t ndof,
                        const std::size_t rdof,
                        const std::size_t nelem,
@@ -106,7 +108,7 @@ void
 pressureRelaxationIntFV(
   ncomp_t system,
   std::size_t nmat,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
   const std::size_t nelem,
   const std::vector< std::size_t >& inpoel,

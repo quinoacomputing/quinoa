@@ -3,6 +3,7 @@ project(PDE CXX)
 add_library(PDE
             PDEStack.cpp
             Limiter.cpp
+            MultiMat/MiscMultiMatFns.cpp
             PrefIndicator.cpp
             Reconstruction.cpp
             ConfigureTransport.cpp
@@ -43,4 +44,6 @@ add_subdirectory(Transport/Physics)
 add_subdirectory(Transport/Problem)
 add_subdirectory(CompFlow/Physics)
 add_subdirectory(CompFlow/Problem)
+add_subdirectory(MultiMat/Physics)
 add_subdirectory(MultiMat/Problem)
+add_subdirectory(EoS)

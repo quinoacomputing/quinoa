@@ -10,12 +10,15 @@ inciter
   dt 2.5e-7
   ttyi 1    # TTY output interval
   scheme dg
+  limsol_projection false
 
   multimat
 
-    physics veleq
+    physics euler
     problem interface_advection
     depvar u
+
+    prelax 0
 
     nmat 3
     material

@@ -165,7 +165,6 @@ target_include_directories(MeshWriter PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
-                           ${ROOT_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS})
 
 set_target_properties(MeshWriter PROPERTIES LIBRARY_OUTPUT_NAME

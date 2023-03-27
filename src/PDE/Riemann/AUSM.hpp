@@ -22,8 +22,7 @@
 #include "Tags.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EOS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
@@ -38,7 +37,7 @@ struct AUSM {
   //!   velocities and volume-fractions.
   //! \note The function signature must follow tk::RiemannFluxFn
   static tk::RiemannFluxFn::result_type
-  flux( const std::vector< EoS_Base* >& mat_blk,
+  flux( const std::vector< EOS >& mat_blk,
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {} )
@@ -69,15 +68,15 @@ struct AUSM {
       pml[k] = u[0][ncomp+pressureIdx(nmat, k)];
       pl += pml[k];
       hml[k] = u[0][energyIdx(nmat, k)] + pml[k];
-      amatl = mat_blk[k]->eos_soundspeed( u[0][densityIdx(nmat, k)], pml[k],
-                                          al_l[k] );
+      amatl = mat_blk[k].compute< EOS::soundspeed >(
+        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k );
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
       pr += pmr[k];
       hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
-      amatr = mat_blk[k]->eos_soundspeed( u[1][densityIdx(nmat, k)], pmr[k],
-                                          al_r[k] );
+      amatr = mat_blk[k].compute< EOS::soundspeed >(
+        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k );
 
       // Average states for mixture speed of sound
       arhom12[k] = 0.5*(u[0][densityIdx(nmat, k)] + u[1][densityIdx(nmat, k)]);

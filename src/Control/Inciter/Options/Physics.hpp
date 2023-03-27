@@ -27,7 +27,7 @@ enum class PhysicsType : uint8_t { ADVECTION,
                                    ADVDIFF,
                                    EULER,
                                    NAVIERSTOKES,
-                                   VELEQ };
+                                   ENERGYPILL };
 
 //! Pack/Unpack PhysicsType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PhysicsType& e ) { PUP::pup( p, e ); }
@@ -41,7 +41,7 @@ class Physics : public tk::Toggle< PhysicsType > {
                                   , kw::advdiff
                                   , kw::euler
                                   , kw::navierstokes
-                                  , kw::veleq
+                                  , kw::energy_pill
                                   >;
 
     //! \brief Options constructor
@@ -56,14 +56,15 @@ class Physics : public tk::Toggle< PhysicsType > {
           { PhysicsType::ADVDIFF, kw::advdiff::name() },
           { PhysicsType::EULER, kw::euler::name() },
           { PhysicsType::NAVIERSTOKES, kw::navierstokes::name() },
-          { PhysicsType::VELEQ, kw::veleq::name() }
+          { PhysicsType::ENERGYPILL, kw::energy_pill::name() }
         },
         //! keywords -> Enums
         { { kw::advection::string(), PhysicsType::ADVECTION },
           { kw::advdiff::string(), PhysicsType::ADVDIFF },
           { kw::euler::string(), PhysicsType::EULER },
           { kw::navierstokes::string(), PhysicsType::NAVIERSTOKES },
-          { kw::veleq::string(), PhysicsType::VELEQ } } )
+          { kw::energy_pill::string(), PhysicsType::ENERGYPILL }
+        } )
     {}
 };
 

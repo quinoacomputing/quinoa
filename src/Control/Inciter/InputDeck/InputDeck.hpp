@@ -140,6 +140,16 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::jwl
                                  , kw::mat_gamma
                                  , kw::mat_pstiff
+                                 , kw::w_gru
+                                 , kw::A_jwl
+                                 , kw::B_jwl
+                                 , kw::C_jwl
+                                 , kw::R1_jwl
+                                 , kw::R2_jwl
+                                 , kw::rho0_jwl
+                                 , kw::de_jwl
+                                 , kw::rhor_jwl
+                                 , kw::Pr_jwl
                                  , kw::mat_mu
                                  , kw::mat_cv
                                  , kw::mat_k
@@ -148,7 +158,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::advdiff
                                  , kw::navierstokes
                                  , kw::euler
-                                 , kw::veleq
+                                 , kw::energy_pill
                                  , kw::user_defined
                                  , kw::vortical_flow
                                  , kw::pde_alpha
@@ -186,7 +196,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::taylor_green
                                  , kw::filetype
                                  , kw::exodusii
-                                 , kw::root
                                  , kw::error
                                  , kw::l2
                                  , kw::linf
@@ -280,6 +289,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::bc_skip
                                  , kw::sponge
                                  , kw::point
+                                 , kw::init_time
                                  , kw::front_width
                                  , kw::radius
                                  , kw::gauss_hump
@@ -296,6 +306,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::underwater_ex
                                  , kw::shockdensity_wave
                                  , kw::equilinterface_advect
+                                 , kw::sinewave_packet
                                  , kw::richtmyer_meshkov >;
 
     //! Set of tags to ignore when printing this InputDeck
@@ -333,7 +344,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       get< tag::discr, tag::ndof >() = 1;
       get< tag::discr, tag::rdof >() = 1;
       get< tag::discr, tag::accuracy_test >() = false;
-      get< tag::discr, tag::limsol_projection >() = false;
+      get< tag::discr, tag::limsol_projection >() = true;
       get< tag::discr, tag::shock_detector_coeff >() = 1.0;
       // Default field output file type
       get< tag::selected, tag::filetype >() = tk::ctr::FieldFileType::EXODUSII;

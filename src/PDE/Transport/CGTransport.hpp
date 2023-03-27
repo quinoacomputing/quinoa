@@ -561,10 +561,16 @@ class Transport {
     //!   surfOutput(), which provides the vector of surface fields to be output
     std::vector< std::string > surfNames() const { return {}; }
 
-    //! Return surface field output going to file
+    //! Return nodal surface field output going to file
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >&,
                 const tk::Fields& ) const { return {}; }
+
+    //! Return elemental surface field output (on triangle faces) going to file
+    std::vector< std::vector< real > >
+    elemSurfOutput( const std::map< int, std::vector< std::size_t > >&,
+      const std::vector< std::size_t >&,
+      const tk::Fields& ) const { return {}; }
 
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file
@@ -595,7 +601,7 @@ class Transport {
     const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     //! EOS material block
-    const std::vector< EoS_Base* > m_mat_blk;
+    const std::vector< EOS > m_mat_blk;
 
     //! \brief Compute/assemble nodal gradients of primitive variables for
     //!   ALECG in all points

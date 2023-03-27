@@ -128,15 +128,39 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     const auto& m_id = mtype.get< tag::id >();
     ctr::Material opt;
     nfo.emplace_back( opt.name( mtype.get< tag::eos >() ),
-      std::to_string(m_id.size()) );
+      std::to_string(m_id.size())+" materials" );
 
     nfo.emplace_back( "material id", parameters( m_id ) );
-    nfo.emplace_back( "ratio of specific heats",
-      parameters(mtype.get< tag::gamma >()) );
     nfo.emplace_back( "specific heat at constant volume",
       parameters(mtype.get< tag::cv >()) );
-    nfo.emplace_back( "material stiffness",
-      parameters(mtype.get< tag::pstiff >()) );
+    if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::STIFFENEDGAS) {
+      nfo.emplace_back( "ratio of specific heats",
+        parameters(mtype.get< tag::gamma >()) );
+      nfo.emplace_back( "material stiffness",
+        parameters(mtype.get< tag::pstiff >()) );
+    }
+    else if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::JWL) {
+      nfo.emplace_back( "Gruneisen coefficient w",
+        parameters(mtype.get< tag::w_gru >()) );
+      nfo.emplace_back( "JWL parameter A",
+        parameters(mtype.get< tag::A_jwl >()) );
+      nfo.emplace_back( "JWL parameter B",
+        parameters(mtype.get< tag::B_jwl >()) );
+      nfo.emplace_back( "JWL parameter C",
+        parameters(mtype.get< tag::C_jwl >()) );
+      nfo.emplace_back( "JWL parameter R1",
+        parameters(mtype.get< tag::R1_jwl >()) );
+      nfo.emplace_back( "JWL parameter R2",
+        parameters(mtype.get< tag::R2_jwl >()) );
+      nfo.emplace_back( "JWL parameter rho0",
+        parameters(mtype.get< tag::rho0_jwl >()) );
+      nfo.emplace_back( "JWL parameter de",
+        parameters(mtype.get< tag::de_jwl >()) );
+      nfo.emplace_back( "JWL parameter rhor",
+        parameters(mtype.get< tag::rhor_jwl >()) );
+      nfo.emplace_back( "JWL parameter Pr",
+        parameters(mtype.get< tag::Pr_jwl >()) );
+    }
 
     // Viscosity is optional: vector may be empty
     const auto& mu = mtype.get< tag::mu >();
@@ -201,11 +225,11 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
                         parameters( b.get< tag::velocity >() ) );
       nfo.emplace_back( boxname + " pressure",
                         parameter( b.get< tag::pressure >() ) );
-      nfo.emplace_back( boxname + " internal energy per unit mass",
+      nfo.emplace_back( boxname + " energy per unit mass",
                         parameter( b.get< tag::energy >() ) );
       nfo.emplace_back( boxname + " mass",
                         parameter( b.get< tag::mass >() ) );
-      nfo.emplace_back( boxname + " internal energy per unit volume",
+      nfo.emplace_back( boxname + " energy per unit volume",
                         parameter( b.get< tag::energy_content >() ) );
       nfo.emplace_back( boxname + " temperature",
                         parameter( b.get< tag::temperature >() ) );
@@ -230,11 +254,11 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
                         parameters( b.get< tag::velocity >() ) );
       nfo.emplace_back( blockname + " pressure",
                         parameter( b.get< tag::pressure >() ) );
-      nfo.emplace_back( blockname + " internal energy per unit mass",
+      nfo.emplace_back( blockname + " energy per unit mass",
                         parameter( b.get< tag::energy >() ) );
       nfo.emplace_back( blockname + " mass",
                         parameter( b.get< tag::mass >() ) );
-      nfo.emplace_back( blockname + " internal energy per unit volume",
+      nfo.emplace_back( blockname + " energy per unit volume",
                         parameter( b.get< tag::energy_content >() ) );
       nfo.emplace_back( blockname + " temperature",
                         parameter( b.get< tag::temperature >() ) );
@@ -243,11 +267,13 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
       auto opt = ctr::Initiate();
       nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(inittype) );
       if (inittype == ctr::InitiateType::LINEAR) {
-        nfo.emplace_back( blockname + " initiate linear point",
+        nfo.emplace_back( blockname + " initiate point",
                           parameters( initiate.get< tag::point >() ) );
-        nfo.emplace_back( blockname + " initiate linear front width",
+        nfo.emplace_back( blockname + " initialization time",
+                          parameter( initiate.get< tag::init_time >() ) );
+        nfo.emplace_back( blockname + " linear front width",
                           parameter( initiate.get< tag::front_width >() ) );
-        nfo.emplace_back( blockname + " initiate linear velocity",
+        nfo.emplace_back( blockname + " linear velocity",
                           parameter( initiate.get< tag::velocity >() ) );
       }
     }

@@ -28,7 +28,7 @@ using inciter::TransportProblemCylAdvect;
 
 std::vector< tk::real >
 TransportProblemCylAdvect::initialize( ncomp_t system, ncomp_t ncomp,
-          const std::vector< EoS_Base* >&, tk::real x, tk::real y,
+          const std::vector< EOS >&, tk::real x, tk::real y,
           tk::real, tk::real t )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,t) for all components

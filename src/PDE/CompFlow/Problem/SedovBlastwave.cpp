@@ -27,7 +27,7 @@ using inciter::CompFlowProblemSedovBlastwave;
 tk::InitializeFn::result_type
 CompFlowProblemSedovBlastwave::initialize( ncomp_t system,
                                            ncomp_t,
-                                        const std::vector< EoS_Base* >& mat_blk,
+                                           const std::vector< EOS >& mat_blk,
                                            tk::real x,
                                            tk::real y,
                                            tk::real z,
@@ -68,7 +68,7 @@ CompFlowProblemSedovBlastwave::initialize( ncomp_t system,
   // velocity
   u = v = w = 0.0;
   // total specific energy
-  rE = mat_blk[0]->eos_totalenergy( r, u, v, w, p );
+  rE = mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -76,7 +76,7 @@ CompFlowProblemSedovBlastwave::initialize( ncomp_t system,
 tk::InitializeFn::result_type
 CompFlowProblemSedovBlastwave::analyticSolution( ncomp_t system,
                                                  ncomp_t,
-                                        const std::vector< EoS_Base* >& mat_blk,
+                                              const std::vector< EOS >& mat_blk,
                                                  tk::real x,
                                                  tk::real y,
                                                  tk::real z,

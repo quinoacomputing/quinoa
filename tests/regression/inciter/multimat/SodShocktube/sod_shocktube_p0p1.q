@@ -12,6 +12,7 @@ inciter
   scheme p0p1
   limiter vertexbasedp1
   shock_detector_coeff 0.0
+  limsol_projection false
 
   partitioning
     algorithm mj
@@ -19,9 +20,11 @@ inciter
 
   multimat
 
-    physics veleq
+    physics euler
     problem sod_shocktube
     depvar u
+
+    prelax 0
 
     nmat 2
     material

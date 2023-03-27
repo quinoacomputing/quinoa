@@ -44,7 +44,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! \brief Evaluate the increment from t to t+dt of an analytical solution at
 //!   (x,y,z) for all components
 std::vector< tk::real >
-solinc( tk::ncomp_t system, tk::ncomp_t ncomp, const std::vector< EoS_Base* >&,
+solinc( tk::ncomp_t system, tk::ncomp_t ncomp, const std::vector< EOS >&,
         tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution );
 
 //! Compute boundary point normals
@@ -264,11 +264,18 @@ class CGPDE {
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
 
-    //! Public interface to returning surface field output
+    //! Public interface to returning nodal surface field output
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
                 const tk::Fields& U ) const
     { return self->surfOutput( bnd, U ); }
+
+    //! Public interface to returning elemental surface field output
+    std::vector< std::vector< real > >
+    elemSurfOutput( const std::map< int, std::vector< std::size_t > >& bface,
+      const std::vector< std::size_t >& triinpoel,
+      const tk::Fields& U ) const
+    { return self->elemSurfOutput( bface, triinpoel, U ); }
 
     //! Public interface to returning time history output
     std::vector< std::vector< real > >
@@ -410,6 +417,10 @@ class CGPDE {
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
+        const tk::Fields& ) const = 0;
+      virtual std::vector< std::vector< real > > elemSurfOutput(
+        const std::map< int, std::vector< std::size_t > >&,
+        const std::vector< std::size_t >&,
         const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< real > > histOutput(
         const std::vector< HistData >&,
@@ -556,6 +567,11 @@ class CGPDE {
         const std::map< int, std::vector< std::size_t > >& bnd,
         const tk::Fields& U ) const override
       { return data.surfOutput( bnd, U ); }
+      std::vector< std::vector< real > > elemSurfOutput(
+        const std::map< int, std::vector< std::size_t > >& bface,
+        const std::vector< std::size_t >& triinpoel,
+        const tk::Fields& U ) const override
+      { return data.elemSurfOutput( bface, triinpoel, U ); }
       std::vector< std::vector< real > > histOutput(
         const std::vector< HistData >& h,
         const std::vector< std::size_t >& inpoel,

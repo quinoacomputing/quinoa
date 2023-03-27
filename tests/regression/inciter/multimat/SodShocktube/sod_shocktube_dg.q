@@ -10,12 +10,15 @@ inciter
   dt   1.0e-3 # Time step size
   ttyi 10     # TTY output interval
   scheme dg
+  limsol_projection false
 
   multimat
 
-    physics veleq
+    physics euler
     problem sod_shocktube
     depvar u
+
+    prelax 0
 
     nmat 2
     material

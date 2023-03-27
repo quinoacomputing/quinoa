@@ -12,11 +12,13 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       InciterControl
                       PDE
                       Inciter
+                      EOS
                       TransportProblem
                       CGTransportPhysics
                       CompFlowProblem
                       MultiMatProblem
                       CGCompFlowPhysics
+                      FVMultiMatPhysics
                       Integrate
                       MeshRefinement
                       LoadBalance
@@ -28,7 +30,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       MeshWriter
                       ExodusIIMeshIO
                       ${OMEGAHMESHIO}
-                      ${ROOTMESHIO}
                       MeshDetect
                       Mesh
                       Statistics

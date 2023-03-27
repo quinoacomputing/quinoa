@@ -82,9 +82,13 @@ ExodusIIMeshReader::readMesh( UnsMesh& mesh )
   readSidesetFaces( mesh.bface(), mesh.faceid() );
   readTimeValues( mesh.vartimes() );
   readNodeVarNames( mesh.nodevarnames() );
+  readElemVarNames( mesh.elemvarnames() );
   readNodeScalars( mesh.vartimes().size(),
                    mesh.nodevarnames().size(),
                    mesh.nodevars() );
+  readElemScalars( mesh.vartimes().size(),
+                   mesh.elemvarnames().size(),
+                   mesh.elemvars() );
 }
 
 void
@@ -202,10 +206,10 @@ ExodusIIMeshReader::readHeader()
 // *****************************************************************************
 {
   char title[MAX_LINE_LENGTH+1];
-  int ndim, n, nnodeset, nelemset, nnode, neblk;
+  int ndim, nelem, nnodeset, nelemset, nnode, neblk;
 
   ErrChk(
-    ex_get_init( m_inFile, title, &ndim, &nnode, &n, &neblk, &nnodeset,
+    ex_get_init( m_inFile, title, &ndim, &nnode, &nelem, &neblk, &nnodeset,
                  &nelemset ) == 0,
     "Failed to read header from ExodusII file: " + m_filename );
 
@@ -216,6 +220,7 @@ ExodusIIMeshReader::readHeader()
           "than zero" );
   ErrChk( ndim == 3, "Need a 3D mesh from ExodusII file " + m_filename );
 
+  m_nelem = static_cast< std::size_t >( nelem );
   m_neblk = static_cast< std::size_t >( neblk );
   m_neset = static_cast< std::size_t >( nelemset );
 
@@ -900,6 +905,55 @@ ExodusIIMeshReader::readNodeVarNames( std::vector< std::string >& nv ) const
 }
 
 void
+ExodusIIMeshReader::readElemVarNames( std::vector< std::string >& ev ) const
+// *****************************************************************************
+//  Read the names of elemental output variables from ExodusII file
+//! \param[in,out] ev Elemental variable names
+// *****************************************************************************
+{
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wvla"
+    #pragma clang diagnostic ignored "-Wvla-extension"
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvla"
+  #endif
+
+  int numvars = 0;
+
+  ErrChk(
+    ex_get_variable_param( m_inFile, EX_ELEM_BLOCK, &numvars ) == 0,
+    "Failed to read element output variable parameters from ExodusII file: " +
+    m_filename );
+
+  if (numvars) {
+
+    char* names[ static_cast< std::size_t >( numvars ) ];
+    for (int i=0; i<numvars; ++i)
+      names[i] = static_cast<char*>( calloc((MAX_STR_LENGTH+1), sizeof(char)) );
+
+    ErrChk( ex_get_variable_names( m_inFile,
+                                   EX_ELEM_BLOCK,
+                                   numvars,
+                                   names ) == 0,
+            "Failed to read element variable names from ExodusII file: " +
+            m_filename );
+
+    ev.resize( static_cast< std::size_t >( numvars ) );
+    std::size_t i = 0;
+    for (auto& n : ev) n = names[ i++ ];
+
+  }
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic pop
+  #endif
+}
+
+void
 ExodusIIMeshReader::readTimeValues( std::vector< tk::real >& tv ) const
 // *****************************************************************************
 //  Read time values from ExodusII file
@@ -945,6 +999,40 @@ ExodusIIMeshReader::readNodeScalars(
                           static_cast< int64_t >( var[t][id].size() ),
                           var[t][id].data() ) == 0,
               "Failed to read node scalar from ExodusII file: " + m_filename );
+    }
+  }
+}
+
+void
+ExodusIIMeshReader::readElemScalars(
+  std::size_t ntime,
+  std::size_t nvar,
+  std::vector< std::vector< std::vector< tk::real > > >& var ) const
+// *****************************************************************************
+//  Read element scalar fields from ExodusII file
+//! \param[in] ntime Number of time steps to read
+//! \param[in] nvar Number of variables to read
+//! \param[in] var Vector of elemental variables to read to: inner vector:
+//!   elements, middle vector: (physics) variable, outer vector: time step
+// *****************************************************************************
+{
+  var.resize( ntime );
+  for (auto& v : var) {
+    v.resize( nvar );
+    for (auto& n : v) n.resize( m_nelem );
+  }
+
+  for (std::size_t t=0; t<var.size(); ++t) {
+    for (std::size_t id=0; id<var[t].size(); ++id) {
+      ErrChk( ex_get_var( m_inFile,
+                          static_cast< int >( t+1 ),
+                          EX_ELEM_BLOCK,
+                          static_cast< int >( id+1 ),
+                          1,
+                          static_cast< int64_t >( var[t][id].size() ),
+                          var[t][id].data() ) == 0,
+              "Failed to read element scalar from ExodusII file: " +
+              m_filename );
     }
   }
 }

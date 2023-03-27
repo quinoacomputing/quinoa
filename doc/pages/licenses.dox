@@ -38,12 +38,6 @@ executable.
   - Web: http://www.boost.org
   - License: @subpage boost_license_page
 
-\subsection pstreams_license PStreams for POSIX process Control
-  - Required
-  - Searched for and if not found, built by default
-  - Web: http://pstreams.sourceforge.net/
-  - License: @subpage pstreams_license_page
-
 \subsection hdf5_license The HDF5 data model
   - Required
   - Searched for and if not found, built by default
@@ -68,18 +62,6 @@ executable.
   - Web: http://www.cs.sandia.gov/Zoltan/Zoltan.html
   - License: @subpage zoltan_license_page
 
-\subsection rngsselib_license RNGSSELIB for random number generation
-  - Optional
-  - Searched for and if not found, built by default
-  - Web: http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
-  - License: @subpage rngsselib_license_page
-
-\subsection testu01_license TestU01 for statistical testing of random number generators
-  - Required
-  - Searched for and if not found, built by default
-  - Web: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
-  - License: @subpage testu01_license_page
-
 \subsection pugixml_license PugiXML for XML format reading and writing
   - Required
   - Searched for and if not found, built by default
@@ -97,12 +79,6 @@ executable.
   - Searched for and if not found, built by default
   - Web: http://www.netlib.org/lapack
   - License: @subpage lapack_license_page
-
-\subsection aec_license AEC for adaptive entropy coding
-  - Required (only with static linking)
-  - Searched for and if not found, built by default
-  - Web: https://gitlab.dkrz.de/k202009/libaec
-  - License: @subpage aec_license_page
 
 \subsection libstdcpp_license Libstdc++ for standard C++ containers and algorithms
   - Either libc++ or libstdc++ required
@@ -134,18 +110,6 @@ executable.
   - Web: https://software.intel.com/en-us/intel-mkl
   - License: @subpage mkl_license_page
 
-\subsection h5part_license H5Part for saving particle data to files
-  - Required
-  - Searched for and if not found, built by default
-  - Web: http://vis.lbl.gov/Research/H5Part
-  - License: @subpage h5part_license_page
-
-\subsection random123_license Random123 for random number generation
-  - Required
-  - Searched for and if not found, built by default
-  - Web: http://www.thesalmons.org/john/random123/releases/latest/docs/index.html
-  - License: @subpage random123_license_page
-
 \subsection backwardcpp_license BackwardCpp for generating backtraces
   - Optional
   - Searched for and if not found, built by default
@@ -162,12 +126,6 @@ executable.
   - Searched for and if not found, built by default
   - Web: https://github.com/google/highwayhash
   - License: @subpage highwayhash_license_page
-
-\subsection root_license ROOT for saving field data for data analysis
-  - Optional
-  - Not searched for by default
-  - Web: https://root.cern.ch
-  - License: @subpage root_license_page
 
 \subsection omega_h_license Omega_h for reading large tetrahedron meshes in parallel
   - Optional

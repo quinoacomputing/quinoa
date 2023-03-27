@@ -24,7 +24,7 @@
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -45,7 +45,7 @@ class MultiMatProblemInterfaceAdvection {
     static tk::InitializeFn::result_type
     initialize( ncomp_t system,
                 ncomp_t ncomp,
-                const std::vector< EoS_Base* >&,
+                const std::vector< EOS >&,
                 tk::real x,
                 tk::real y,
                 tk::real /*z*/,
@@ -54,13 +54,13 @@ class MultiMatProblemInterfaceAdvection {
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static std::vector< tk::real >
     analyticSolution( ncomp_t system, ncomp_t ncomp,
-                      const std::vector< EoS_Base* >& mat_blk, tk::real x,
+                      const std::vector< EOS >& mat_blk, tk::real x,
                       tk::real y, tk::real z, tk::real t )
     { return initialize( system, ncomp, mat_blk, x, y, z, t ); }
 
     //! Compute and return source term for interface advection
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&, tk::real, tk::real,
+    src( ncomp_t, ncomp_t, const std::vector< EOS >&, tk::real, tk::real,
          tk::real, tk::real, std::vector< tk::real >& sv )
     {
       for (std::size_t i=0; i<sv.size(); ++i) {

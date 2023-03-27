@@ -21,7 +21,7 @@
 #include "Types.hpp"
 #include "Keywords.hpp"
 #include "Fields.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EOS.hpp"
 
 namespace tk {
 
@@ -33,7 +33,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! \note Used for both continuous and discontinuous Galerkin discretizations
 using InitializeFn = std::function<
   std::vector< real >( ncomp_t, ncomp_t, 
-                       const std::vector< inciter::EoS_Base* >&, real, real,
+                       const std::vector< inciter::EOS >&, real, real,
                        real, real ) >;
 
 //! Function prototype for Riemann flux functions
@@ -41,7 +41,7 @@ using InitializeFn = std::function<
 //!    surface using a Riemann solver
 //! \see e.g., inciter::Upwind, inciter::LaxFriedrichs, inciter::HLLC
 using RiemannFluxFn = std::function<
-  std::vector< real >( const std::vector< inciter::EoS_Base* >& ,
+  std::vector< real >( const std::vector< inciter::EOS >& ,
                        const std::array< real, 3 >&,
                        const std::array< std::vector< real >, 2 >&,
                        const std::vector< std::array< real, 3 > >& ) >;
@@ -54,7 +54,7 @@ using RiemannFluxFn = std::function<
 //! \see e.g., inciter::dg::Transport::flux, inciter::dg::CompFlow::flux
 using FluxFn = std::function<
   std::vector< std::array< real, 3 > >
-  ( ncomp_t, ncomp_t, const std::vector< inciter::EoS_Base* >&,
+  ( ncomp_t, ncomp_t, const std::vector< inciter::EOS >&,
     const std::vector< real >&, const std::vector< std::array< real, 3 > >& ) >;
 
 //! Function prototype for evaluating a prescribed velocity field
@@ -70,7 +70,7 @@ using VelFn = std::function<
 //!    states of boundary faces along physical boundaries
 using StateFn = std::function<
   std::array< std::vector< real >, 2 >
-  ( ncomp_t, ncomp_t, const std::vector< inciter::EoS_Base* >&,
+  ( ncomp_t, ncomp_t, const std::vector< inciter::EOS >&,
     const std::vector< real >&, real, real, real, real,
     const std::array< tk::real, 3 >& ) >;
 
@@ -80,7 +80,7 @@ using StateFn = std::function<
 //!   method of manufactured solutions
 //! \see e.g., CompFlowProblemRayleighTaylor::src
 using SrcFn = std::function<
-  void( ncomp_t, ncomp_t, const std::vector< inciter::EoS_Base* >&, tk::real,
+  void( ncomp_t, ncomp_t, const std::vector< inciter::EOS >&, tk::real,
         tk::real, tk::real, tk::real, std::vector< tk::real >& ) >;
 
 //! \brief Function prototype for computing the element gradient contribution to a

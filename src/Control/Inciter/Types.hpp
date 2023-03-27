@@ -251,6 +251,7 @@ using diagnostics = tk::TaggedTuple< brigand::list<
 using InitiateParameters = tk::TaggedTuple< brigand::list<
     tag::init,          InitiateType
   , tag::point,         std::vector< kw::point::info::expect::type >
+  , tag::init_time,     kw::init_time::info::expect::type
   , tag::front_width,   kw::front_width::info::expect::type
   , tag::velocity,      kw::velocity::info::expect::type
 > >;
@@ -398,6 +399,26 @@ using material = tk::TaggedTuple< brigand::list<
   , tag::gamma,    std::vector< kw::mat_gamma::info::expect::type >
     //! EoS stiffness parameter
   , tag::pstiff,   std::vector< kw::mat_pstiff::info::expect::type >
+    //! Gruneisen coefficient
+  , tag::w_gru,    std::vector< kw::w_gru::info::expect::type >
+    //! JWL EoS parameter A
+  , tag::A_jwl,    std::vector< kw::A_jwl::info::expect::type >
+    //! JWL EoS parameter B
+  , tag::B_jwl,    std::vector< kw::B_jwl::info::expect::type >
+    //! JWL EoS parameter C
+  , tag::C_jwl,    std::vector< kw::C_jwl::info::expect::type >
+    //! JWL EoS parameter R1
+  , tag::R1_jwl,   std::vector< kw::R1_jwl::info::expect::type >
+    //! JWL EoS parameter R2
+  , tag::R2_jwl,   std::vector< kw::R2_jwl::info::expect::type >
+    //! JWL EoS parameter rho0
+  , tag::rho0_jwl, std::vector< kw::rho0_jwl::info::expect::type >
+    //! JWL EoS parameter de
+  , tag::de_jwl,   std::vector< kw::de_jwl::info::expect::type >
+    //! JWL EoS parameter rhor
+  , tag::rhor_jwl, std::vector< kw::rhor_jwl::info::expect::type >
+    //! JWL EoS parameter Pr
+  , tag::Pr_jwl,   std::vector< kw::Pr_jwl::info::expect::type >
     //! Dynamic viscosity
   , tag::mu,       std::vector< kw::mat_mu::info::expect::type >
     //! Spec. heat at const vol.
@@ -494,6 +515,13 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     //! Materials block
   , tag::material,      std::vector< std::vector< material > >
     //! Materials index/EoS map
+    //!   The following data structure is used to index into the correct
+    //!   material vector entry. This is done using the following three maps:
+    //!   1. eosidx: This vector provides the eos-index (value) in the
+    //!   vector<tag::material> for the given user-spec material id (index).
+    //!   2. matidx: This vector provides the material-index (value) inside the
+    //!   vector<tag::material>[eosidx] block for the given user-specified
+    //!   material id (index).
   , tag::matidxmap,     tk::TaggedTuple< brigand::list<
       tag::eosidx,      std::vector< std::size_t >,
       tag::matidx,      std::vector< std::size_t > > >

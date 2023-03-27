@@ -145,7 +145,7 @@ class FVPDE {
     }
 
     //! Public interface to limiting the second-order solution
-    void limit( const tk::Fields& geoElem,
+    void limit( const tk::Fields& geoFace,
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
@@ -153,7 +153,7 @@ class FVPDE {
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
-      self->limit( geoElem, fd, esup, inpoel, coord, U, P );
+      self->limit( geoFace, fd, esup, inpoel, coord, U, P );
     }
 
     //! Public interface to update the conservative variable solution
@@ -197,6 +197,9 @@ class FVPDE {
     std::vector< std::string > analyticFieldNames() const
     { return self->analyticFieldNames(); }
 
+    //! Public interface to returning surface output labels
+    std::vector< std::string > surfNames() const { return self->surfNames(); }
+
     //! Public interface to returning time history field output labels
     std::vector< std::string > histNames() const { return self->histNames(); }
 
@@ -205,9 +208,10 @@ class FVPDE {
 
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
-    surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
-                tk::Fields& U ) const
-    { return self->surfOutput( bnd, U ); }
+    surfOutput( const inciter::FaceData& fd,
+                const tk::Fields& U,
+                const tk::Fields& P ) const
+    { return self->surfOutput( fd, U, P ); }
 
     //! Public interface to return point history output
     std::vector< std::vector< tk::real > >
@@ -312,11 +316,13 @@ class FVPDE {
                            const std::size_t,
                            const int ) const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
+      virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > surfOutput(
-        const std::map< int, std::vector< std::size_t > >&,
-        tk::Fields& ) const = 0;
+        const inciter::FaceData&,
+        const tk::Fields&,
+        const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > histOutput(
         const std::vector< HistData >&,
         const std::vector< std::size_t >&,
@@ -379,7 +385,7 @@ class FVPDE {
       {
         data.reconstruct( geoElem, fd, esup, inpoel, coord, U, P );
       }
-      void limit( const tk::Fields& geoElem,
+      void limit( const tk::Fields& geoFace,
                   const inciter::FaceData& fd,
                   const std::map< std::size_t, std::vector< std::size_t > >&
                     esup,
@@ -388,7 +394,7 @@ class FVPDE {
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {
-        data.limit( geoElem, fd, esup, inpoel, coord, U, P );
+        data.limit( geoFace, fd, esup, inpoel, coord, U, P );
       }
       void Correct_Conserv( const tk::Fields& prim,
                           const tk::Fields& geoElem,
@@ -424,14 +430,17 @@ class FVPDE {
       { return data.dt( fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
+      std::vector< std::string > surfNames() const override
+      { return data.surfNames(); }
       std::vector< std::string > histNames() const override
       { return data.histNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
       std::vector< std::vector< tk::real > > surfOutput(
-        const std::map< int, std::vector< std::size_t > >& bnd,
-        tk::Fields& U ) const override
-      { return data.surfOutput( bnd, U ); }
+        const inciter::FaceData& fd,
+        const tk::Fields& U,
+        const tk::Fields& P ) const override
+      { return data.surfOutput( fd, U, P ); }
       std::vector< std::vector< tk::real > > histOutput(
         const std::vector< HistData >& h,
         const std::vector< std::size_t >& inpoel,

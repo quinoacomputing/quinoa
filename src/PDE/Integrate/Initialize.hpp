@@ -20,7 +20,7 @@
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -35,7 +35,7 @@ namespace tk {
 void
 initialize( ncomp_t system,
             ncomp_t ncomp,
-            const std::vector< inciter::EoS_Base* >& mat_blk,
+            const std::vector< inciter::EOS >& mat_blk,
             const Fields& L,
             const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,

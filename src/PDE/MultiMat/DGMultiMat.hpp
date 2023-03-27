@@ -8,8 +8,8 @@
   \brief     Compressible multi-material flow using discontinuous Galerkin
     finite elements
   \details   This file implements calls to the physics operators governing
-    compressible multi-material flow using discontinuous Galerkin
-    discretizations.
+    compressible multi-material flow (with velocity equilibrium) using
+    discontinuous Galerkin discretizations.
 */
 // *****************************************************************************
 #ifndef DGMultiMat_h
@@ -37,8 +37,6 @@
 #include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/StiffenedGas.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
@@ -46,6 +44,7 @@
 #include "Problem/BoxInitialization.hpp"
 #include "PrefIndicator.hpp"
 #include "MultiMat/BCFunctions.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
 
@@ -58,8 +57,7 @@ namespace dg {
 //!   the behavior of the class. The policies are:
 //!   - Physics - physics configuration, see PDE/MultiMat/Physics.h
 //!   - Problem - problem configuration, see PDE/MultiMat/Problem.h
-//! \note The default physics is velocity equilibrium (veleq), set in
-//!   inciter::deck::check_multimat()
+//! \note The default physics is Euler, set in inciter::deck::check_multimat()
 template< class Physics, class Problem >
 class MultiMat {
 
@@ -85,16 +83,7 @@ class MultiMat {
         , extrapolate } ) );
 
       // EoS initialization
-      auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-      for (std::size_t k=0; k<nmat; ++k) {
-        // query input deck to get gamma, p_c, cv
-        auto g = gamma< eq >(m_system, k);
-        auto ps = pstiff< eq >(m_system, k);
-        auto c_v = cv< eq >(m_system, k);
-        m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
-        }
-
+      initializeMaterialEoS( m_system, m_mat_blk );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -180,6 +169,10 @@ class MultiMat {
       tk::real bgpre =
         (bgpreic.size() > m_system && !bgpreic[m_system].empty()) ?
         bgpreic[m_system][0] : 0.0;
+      const auto& bgtempic = ic.get< tag::temperature >();
+      tk::real bgtemp =
+        (bgtempic.size() > m_system && !bgtempic[m_system].empty()) ?
+        bgtempic[m_system][0] : 0.0;
 
       // Set initial conditions inside user-defined IC boxes and mesh blocks
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -203,7 +196,7 @@ class MultiMat {
                   unk(e,mark+i) = 0.0;
               }
               initializeBox<ctr::box>( m_system, m_mat_blk, V_ex, t, b, bgpre,
-                s );
+                bgtemp, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -223,7 +216,7 @@ class MultiMat {
               const auto& elset = tk::cref_find(elemblkid, blid);
               if (elset.find(e) != elset.end()) {
                 initializeBox<ctr::meshblock>( m_system, m_mat_blk, V_ex, t, b,
-                  bgpre, s );
+                  bgpre, bgtemp, s );
                 // store initialization in solution vector
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   auto mark = c*rdof;
@@ -373,11 +366,12 @@ class MultiMat {
             auto alphamat = state[volfracIdx(nmat, imat)];
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
-            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat]->eos_pressure(
-              arhomat, vel[0], vel[1], vel[2], arhoemat, alphamat );
+            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].compute<
+              EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
+              alphamat, imat );
 
-            pri[pressureIdx(nmat,imat)] = constrain_pressure< tag::multimat >(
-              m_system, pri[pressureIdx(nmat,imat)], alphamat, imat);
+            pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
+              pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
           }
 
           // Evaluate bulk velocity at quadrature point
@@ -438,8 +432,8 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      auto neg_density = cleanTraceMultiMat(nielem, m_system, m_mat_blk,
-        geoElem, nmat, unk, prim);
+      auto neg_density = cleanTraceMultiMat(nielem, m_mat_blk, geoElem, nmat,
+        unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
     }
@@ -808,7 +802,7 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( m_system, nmat, ndof, rdof, nelem,
+      tk::nonConservativeInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
@@ -952,16 +946,6 @@ class MultiMat {
       return MultiMatFieldNames(nmat);
     }
 
-    //! Return field names to be output to file
-    //! \return Vector of strings labelling fields output in file
-    std::vector< std::string > nodalFieldNames() const
-    {
-      auto nmat =
-        g_inputdeck.get< tag::param, eq, tag::nmat >()[m_system];
-
-      return MultiMatFieldNames(nmat);
-    }
-
     //! Return time history field names to be output to file
     //! \return Vector of strings labelling time history fields output in file
     std::vector< std::string > histNames() const {
@@ -1098,7 +1082,7 @@ class MultiMat {
     //! BC configuration
     BCStateFn m_bc;
     //! EOS material block
-    std::vector< EoS_Base* > m_mat_blk;
+    std::vector< EOS > m_mat_blk;
 
     //! Evaluate conservative part of physical flux function for this PDE system
     //! \param[in] system Equation system index
@@ -1110,7 +1094,7 @@ class MultiMat {
     static tk::FluxFn::result_type
     flux( ncomp_t system,
           [[maybe_unused]] ncomp_t ncomp,
-          const std::vector< EoS_Base* >&,
+          const std::vector< EOS >&,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
@@ -1137,7 +1121,7 @@ class MultiMat {
     //!   the vector of primitive quantities appended to it.
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp,
-               const std::vector< EoS_Base* >& mat_blk,
+               const std::vector< EOS >& mat_blk,
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
@@ -1163,10 +1147,10 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k]->eos_pressure(
+        ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)] );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

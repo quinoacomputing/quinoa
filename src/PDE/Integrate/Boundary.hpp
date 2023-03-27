@@ -22,7 +22,7 @@
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EOS.hpp"
 
 namespace tk {
 
@@ -33,7 +33,7 @@ using bcconf_t = kw::sideset::info::expect::type;
 void
 bndSurfInt( ncomp_t system,
             std::size_t nmat,
-            const std::vector< inciter::EoS_Base* >& mat_blk,
+            const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
             const std::vector< bcconf_t >& bcconfig,
@@ -73,7 +73,7 @@ update_rhs_bc ( ncomp_t ncomp,
 void
 bndSurfIntFV( ncomp_t system,
   std::size_t nmat,
-  const std::vector< inciter::EoS_Base* >& mat_blk,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
   const std::vector< bcconf_t >& bcconfig,
   const inciter::FaceData& fd,

@@ -29,7 +29,7 @@ extern ctr::InputDeck g_inputdeck;
 void
 tk::initialize( ncomp_t system,
                 ncomp_t ncomp,
-                const std::vector< inciter::EoS_Base* >& mat_blk,
+                const std::vector< inciter::EOS >& mat_blk,
                 const Fields& L,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,

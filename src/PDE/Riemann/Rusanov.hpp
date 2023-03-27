@@ -19,7 +19,7 @@
 #include "Tags.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
-#include "EoS/EoS.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -65,7 +65,7 @@ struct Rusanov {
   //!   to Rusanov
   #pragma omp declare simd
   static void
-  flux( const std::vector< EoS_Base* >& mat_blk,
+  flux( const std::vector< EOS >& mat_blk,
         real nx, real ny, real nz,
         real mx, real my, real mz,
         real rL, real ruL, real rvL, real rwL, real reL,
@@ -82,8 +82,8 @@ struct Rusanov {
     auto vr = rvR/rR - w2R;
     auto wr = rwR/rR - w3R;
 
-    auto al = mat_blk[0]->eos_soundspeed( rL, pL );
-    auto ar = mat_blk[0]->eos_soundspeed( rR, pR );
+    auto al = mat_blk[0].compute< EOS::soundspeed >( rL, pL );
+    auto ar = mat_blk[0].compute< EOS::soundspeed >( rR, pR );
 
     // dissipation
     real len = tk::length( {mx,my,mz} );

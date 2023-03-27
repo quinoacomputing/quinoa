@@ -38,7 +38,7 @@ inciter
 
   multimat
 
-    physics veleq
+    physics euler
     depvar u
 
     prelax 1  # finite-rate pressure relaxation
@@ -202,7 +202,7 @@ end
  ------------------------------------------------
    < Compressible multi-material flow >
      dependent variable                       : u
-     physics                                  : Velocity equilibrium
+     physics                                  : Euler
      problem                                  : User-defined
      flux                                     : AUSM
      number of materials                      : 4

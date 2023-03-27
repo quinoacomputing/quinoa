@@ -22,7 +22,7 @@ void
 tk::volInt( ncomp_t system,
             std::size_t nmat,
             real t,
-            const std::vector< inciter::EoS_Base* >& mat_blk,
+            const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
             const std::size_t nelem,
@@ -41,6 +41,7 @@ tk::volInt( ncomp_t system,
 //! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] t Physical time
+//! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Total number of degrees of freedom included reconstructed ones
 //! \param[in] nelem Maximum number of elements
@@ -116,8 +117,8 @@ tk::volInt( ncomp_t system,
 
         auto wt = wgp[igp] * geoElem(e, 0);
 
-        auto state = evalPolynomialSol(system, intsharp, ncomp, nprim,
-          rdof, nmat, e, dof_el, inpoel, coord, geoElem,
+        auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
           {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
         // evaluate prescribed velocity (if any)

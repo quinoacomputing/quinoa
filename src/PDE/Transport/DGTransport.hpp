@@ -36,7 +36,7 @@
 #include "Reconstruction.hpp"
 #include "Limiter.hpp"
 #include "PrefIndicator.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -539,7 +539,7 @@ class Transport {
     BCStateFn m_bc;
     //! \brief EOS material block - This PDE does not require an EOS block,
     //! thus this variable has not been intialized.
-    std::vector< EoS_Base* > m_mat_blk;
+    std::vector< EOS > m_mat_blk;
 
     //! Evaluate physical flux function for this PDE system
     //! \param[in] ncomp Number of scalar components in this PDE system
@@ -552,7 +552,7 @@ class Transport {
     static tk::FluxFn::result_type
     flux( ncomp_t,
           ncomp_t ncomp,
-          const std::vector< EoS_Base* >&,
+          const std::vector< EOS >&,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& v )
 
@@ -575,7 +575,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    extrapolate( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
+    extrapolate( ncomp_t, ncomp_t, const std::vector< EOS >&,
                  const std::vector< tk::real >& ul, tk::real, tk::real,
                  tk::real, tk::real, const std::array< tk::real, 3 >& )
     {
@@ -589,7 +589,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    inlet( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&, 
+    inlet( ncomp_t, ncomp_t, const std::vector< EOS >&,
            const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
            tk::real, const std::array< tk::real, 3 >& )
     {
@@ -605,7 +605,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    outlet( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&,
+    outlet( ncomp_t, ncomp_t, const std::vector< EOS >&,
             const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
             tk::real, const std::array< tk::real, 3 >& )
     {
@@ -626,7 +626,7 @@ class Transport {
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
     dirichlet( ncomp_t system, ncomp_t ncomp, 
-               const std::vector< EoS_Base* >& mat_blk,
+               const std::vector< EOS >& mat_blk,
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {

@@ -32,7 +32,7 @@ namespace zoltan {
 std::vector< std::size_t >
 geomPartMesh( tk::ctr::PartitioningAlgorithmType algorithm,
               const std::array< std::vector< tk::real >, 3 >& elemcoord,
-              const std::vector< long >& elemid,
+              const std::vector< long long >& elemid,
               int npart );
 
 } // zoltan::

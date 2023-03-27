@@ -39,10 +39,6 @@ extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 extern std::vector< FVPDE > g_fvpde;
 
-//! Runge-Kutta coefficients
-static const std::array< std::array< tk::real, 3 >, 2 >
-  rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
-
 } // inciter::
 
 extern tk::CProxy_ChareStateCollector stateProxy;
@@ -83,9 +79,9 @@ FV::FV( const CProxy_Discretization& disc,
     m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
   m_uNodefieldsc(),
   m_pNodefieldsc(),
-  m_outmesh(),
   m_boxelems(),
-  m_propFrontEngSrc(1)
+  m_propFrontEngSrc(1),
+  m_nrk(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -93,6 +89,17 @@ FV::FV( const CProxy_Discretization& disc,
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
+  //! Runge-Kutta coefficients
+  m_nrk = 2;
+  m_rkcoef[0].resize(m_nrk);
+  m_rkcoef[1].resize(m_nrk);
+  if (m_nrk == 2) {
+    m_rkcoef = {{ {{ 0.0, 1.0/2.0 }}, {{ 1.0, 1.0/2.0 }} }};
+  }
+  else {
+    m_rkcoef = {{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+  }
+
   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
       g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "FV", thisIndex, CkMyPe(), Disc()->It(),
@@ -240,9 +247,6 @@ FV::start()
 //  Start time stepping
 // *****************************************************************************
 {
-  // Free memory storing output mesh
-  m_outmesh.destroy();
-
   // Start timer measuring time stepping wall clock time
   Disc()->Timer().zero();
   // Zero grind-timer
@@ -276,9 +280,8 @@ FV::startFieldOutput( CkCallback c )
     } else {
 
       // cut off ghosts from mesh connectivity and coordinates
-      const auto& tr = tk::remap( myGhosts()->m_fd.Triinpoel(), d->Gid() );
-      extractFieldOutput( {}, d->Chunk(), d->Coord(), {}, {},
-                          d->NodeCommMap(), myGhosts()->m_fd.Bface(), {}, tr, c );
+      extractFieldOutput( {}, d->Chunk(), d->Coord(), {}, {}, d->NodeCommMap(),
+        {}, {}, {}, c );
 
     }
 
@@ -362,9 +365,9 @@ FV::extractFieldOutput(
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
   const std::unordered_map< std::size_t, std::size_t >& addedTets,
   const tk::NodeCommMap& nodeCommMap,
-  const std::map< int, std::vector< std::size_t > >& bface,
+  const std::map< int, std::vector< std::size_t > >& /* bface */,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
-  const std::vector< std::size_t >& triinpoel,
+  const std::vector< std::size_t >& /* triinpoel */,
   CkCallback c )
 // *****************************************************************************
 // Extract field output going to file
@@ -373,17 +376,9 @@ FV::extractFieldOutput(
 //! \param[in] coord Field-output mesh node coordinates
 //! \param[in] addedTets Field-output mesh cells and their parents (local ids)
 //! \param[in] nodeCommMap Field-output mesh node communication map
-//! \param[in] bface Field-output meshndary-faces mapped to side set ids
-//! \param[in] triinpoel Field-output mesh boundary-face connectivity
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  m_outmesh.chunk = chunk;
-  m_outmesh.coord = coord;
-  m_outmesh.triinpoel = triinpoel;
-  m_outmesh.bface = bface;
-  m_outmesh.nodeCommMap = nodeCommMap;
-
   const auto& inpoel = std::get< 0 >( chunk );
 
   // Evaluate element solution on incoming mesh
@@ -478,7 +473,7 @@ FV::lim()
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
   if (rdof > 1) {
-    g_fvpde[Disc()->MeshId()].limit( myGhosts()->m_geoElem, myGhosts()->m_fd,
+    g_fvpde[Disc()->MeshId()].limit( myGhosts()->m_geoFace, myGhosts()->m_fd,
       myGhosts()->m_esup,
       myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
 
@@ -634,11 +629,20 @@ FV::solve( tk::real newdt )
 
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
-  if (m_stage == 1) {
-    physT += d->Dt();
+  // 2-stage RK
+  if (m_nrk == 2) {
+    if (m_stage == 1) {
+      physT += d->Dt();
+    }
   }
-  else if (m_stage == 2) {
-    physT += 0.5*d->Dt();
+  // 3-stage RK
+  else {
+    if (m_stage == 1) {
+      physT += d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += 0.5*d->Dt();
+    }
   }
 
   // initialize energy source as not added (modified in eq.rhs appropriately)
@@ -652,8 +656,8 @@ FV::solve( tk::real newdt )
     for (std::size_t c=0; c<neq; ++c)
     {
       auto rmark = c*rdof;
-      m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
-        + rkcoef[1][m_stage] * ( m_u(e, rmark)
+      m_u(e, rmark) =  m_rkcoef[0][m_stage] * m_un(e, rmark)
+        + m_rkcoef[1][m_stage] * ( m_u(e, rmark)
           + d->Dt() * m_rhs(e, c)/m_lhs(e, c) );
       // zero out reconstructed dofs of equations using reduced dofs
       if (rdof > 1) {
@@ -673,7 +677,7 @@ FV::solve( tk::real newdt )
       myGhosts()->m_fd.Esuel().size()/4 );
   }
 
-  if (m_stage < 2) {
+  if (m_stage < m_nrk-1) {
 
     // continue with next time step stage
     stage();
@@ -847,21 +851,12 @@ FV::writeFields( CkCallback c )
 {
   auto d = Disc();
 
-  // Output time history
-  if (d->histiter() or d->histtime() or d->histrange()) {
-    std::vector< std::vector< tk::real > > hist;
-    auto h = g_fvpde[d->MeshId()].histOutput( d->Hist(), myGhosts()->m_inpoel,
-      myGhosts()->m_coord, m_u, m_p );
-    hist.insert( end(hist), begin(h), end(h) );
-    d->history( std::move(hist) );
-  }
-
-  const auto& inpoel = std::get< 0 >( m_outmesh.chunk );
+  const auto& inpoel = std::get< 0 >( d->Chunk() );
   auto esup = tk::genEsup( inpoel, 4 );
 
   // Combine own and communicated contributions and finish averaging of node
   // field output in chare boundary nodes
-  const auto& lid = std::get< 2 >( m_outmesh.chunk );
+  const auto& lid = std::get< 2 >( d->Chunk() );
   for (const auto& [g,f] : m_uNodefieldsc) {
     Assert( m_uNodefields.nprop() == f.first.size(), "Size mismatch" );
     auto p = tk::cref_find( lid, g );
@@ -888,13 +883,13 @@ FV::writeFields( CkCallback c )
   // boundary.
   auto chbnd = [ this ]( std::size_t p ) {
     return
-      std::any_of( m_outmesh.nodeCommMap.cbegin(), m_outmesh.nodeCommMap.cend(),
+      std::any_of( Disc()->NodeCommMap().cbegin(), Disc()->NodeCommMap().cend(),
         [&](const auto& s) { return s.second.find(p) != s.second.cend(); } );
   };
 
   // Finish computing node field output averages in internal nodes
-  auto npoin = m_outmesh.coord[0].size();
-  auto& gid = std::get< 1 >( m_outmesh.chunk );
+  auto npoin = d->Coord()[0].size();
+  auto& gid = std::get< 1 >( d->Chunk() );
   for (std::size_t p=0; p<npoin; ++p) {
     if (!chbnd(gid[p])) {
       auto n = static_cast< tk::real >( esup.second[p+1] - esup.second[p] );
@@ -912,7 +907,7 @@ FV::writeFields( CkCallback c )
     m_pNodefields );
 
   // Collect field output from analytical solutions (if exist)
-  const auto& coord = m_outmesh.coord;
+  const auto& coord = d->Coord();
   auto geoElem = tk::genGeoElemTet( inpoel, coord );
   auto t = Disc()->T();
   analyticFieldOutput( g_fvpde[d->MeshId()], tk::Centering::ELEM,
@@ -932,11 +927,18 @@ FV::writeFields( CkCallback c )
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
+  // Collect surface output names
+  auto surfnames = g_fvpde[d->MeshId()].surfNames();
+
+  // Collect surface field solution
+  const auto& fd = myGhosts()->m_fd;
+  auto elemsurfs = g_fvpde[d->MeshId()].surfOutput(fd, m_u, m_p);
+
   // Output chare mesh and fields metadata to file
-  const auto& triinpoel = m_outmesh.triinpoel;
-  d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
+  const auto& triinpoel = tk::remap( fd.Triinpoel(), d->Gid() );
+  d->write( inpoel, d->Coord(), fd.Bface(), {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            {}, elemfields, nodefields, {}, c );
+            surfnames, {}, elemfields, nodefields, elemsurfs, {}, c );
 }
 
 void
@@ -992,7 +994,7 @@ FV::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise prepare for nodal field output
-  if (m_stage < 3)
+  if (m_stage < m_nrk)
     next();
   else
     startFieldOutput( CkCallback(CkIndex_FV::step(), thisProxy[thisIndex]) );
@@ -1056,10 +1058,16 @@ FV::step()
 // Evaluate wether to continue with next time step
 // *****************************************************************************
 {
-  // Free memory storing output mesh
-  m_outmesh.destroy();
-
   auto d = Disc();
+
+  // Output time history
+  if (d->histiter() or d->histtime() or d->histrange()) {
+    std::vector< std::vector< tk::real > > hist;
+    auto h = g_fvpde[d->MeshId()].histOutput( d->Hist(), myGhosts()->m_inpoel,
+      myGhosts()->m_coord, m_u, m_p );
+    hist.insert( end(hist), begin(h), end(h) );
+    d->history( std::move(hist) );
+  }
 
   // Output one-liner status report to screen
   d->status();

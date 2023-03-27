@@ -4,10 +4,15 @@ namespace inciter {
 
 @tableofcontents{xml}
 
-This page describes the AMR algorithm implemented in @ref inciter_main.
+This page describes the AMR algorithm implemented in @ref inciter_main, in
+broadly two parts: overview of the TetAMR library (@ref tetamroverview) which is
+unaware of parallelism, and overall parallel implementation and interfacing
+with `inciter` (@ref parallelamr).
 
-@section overview Overview
+@section tetamroverview Overview of TetAMR
 
+TetAMR is unaware of parallelism and leaves it to the calling code to provide
+appropriate connectivity of the partitioned mesh.
 The two key files are `refinement.hpp` and `mesh_adapter.cpp`
 
 The following files store data structures which represent the core data elements:
@@ -71,6 +76,77 @@ This function calls into `refiner` to actually do the derefinement based on the 
 - `derefine_eight_to_one`, etc to cover all derefinement cases
 
 These functions are mostly logical, and straightforward, and focus on keeping the various data stores up to date. It is also responsible for making sure the operations (such as refining 1:4) are performed on the correct tet faces
+
+@section parallelamr Parallel implementation of AMR
+
+TetAMR's interfacing with Inciter:
+As mentioned previously, TetAMR is unaware of parallelism and leaves it to the calling code (i.e.
+inciter) to provide appropriate connectivity of the partitioned mesh.
+
+@note All calls via `Transporter` consititute a global reduction.
+
+- Depending on the type of refinement, the correct Refiner::function (t0ref, dtref, outref) is first
+  called. These functions are called from different places in src/Inciter/ depending on the use
+  case. These functions can be viewed as the "entrances" into the Refiner class. These functions
+  call Refiner::start().
+- Refiner::start() calls updateEdgeData() and then begins the partition-boundary edge communication
+  required for parallel amr.
+- After the communication is done, Refiner::refine() is called via Transporter::respondedRef().
+  - refine() calls the relevant intermediary function which calls the amr-library's mark-refinement
+    function, to mark edges for refinement.
+  - Following this, via comExtra(), refinement markings from neighboring partitions on the
+    partition-boundary edges are received. This only updates the "remote-edge" refinement
+    information, and not the "local-edge" refinement information. So running the refinement
+    compatibility algorithm at this stage will not make any difference, since that uses local-edge
+    information to determine compatibility.
+  - Once done, the Refiner::correctref() is called via Transporter::compatibility().
+  .
+- Refiner::correctref() begins the parallel-compatibility algorithm.
+  - Using certain rules, correctref() determines if the partition-boundary markings (local-edge
+    ref-data) need corrections due to the neighbor-partitions (stored in the remote-edge data by
+    comExtra in previous step); i.e. the local-edge refinement data is updated (if deemed necessary)
+    based on the remote-edge ref-data, and now the refinement compatibility can be run.
+  - If there are no corrections, Refiner::perform() is called via Transporter::matched(), ending
+    the iterative parallel compatibility algorithm.
+  - If there are corrections:
+    - corrected markings are sent to the amr-library, refinement compatibility is rerun based on
+      these corrections, and the edge-refinement information in Refiner's edge data is updated via
+      updateEdgeData().
+    - comExtra() is again called (indicating the beginning of another parallel-compat iteration)
+      to receive similar corrections from neighbors. This results in an iterative algorithm, until
+      all partitions agree to the state of partition-boundary edges.
+    .
+  .
+- Once the compatibility algorithm converges, perform() is called. perform(), as the name suggests,
+  actually performs the refinement on the mesh.
+  - It adds/removes edges/elements as determined by the previous algorithm.
+  - It then calls updateMesh().
+  .
+- Refiner::updateMesh() updates the mesh data structures stored in Refiner as follows:
+  - Updates fundamental mesh data structures.
+  - Checks for hanging nodes. This trips for many amr-related bugs.
+  - Finally returns to perform().
+  .
+- Refiner::perform() finally calls Refiner::next(), which essentially goes back to the code which
+  called the required Refiner::function.
+
+Refiner::updateMesh() details:
+
+@warning The following documentation is incomplete
+
+- collects unique node-ids from previous and new meshes
+- extends lref (ref-node-id -> local-node-id) with added nodes
+- calls Refiner::newVolMesh():
+  - assigns global-ids to newly added nodes
+  - stores into addedNodes
+  .
+- calls Refiner::newBndMesh():
+  newBndMesh regenerates all boundary data structures (bnode, bface, triinpoel) from scratch.
+  - calls Refiner::boundary():
+  `documentation being updated`
+  - calls Refiner::updateBndData():
+  `documentation being updated`
+  .
 
 @section debugging Debugging
 Uncomment the @code #define ENABLE_TRACE 1 @endcode line in `Inciter/AMR/Loggers.hpp` to get the `trace_out` screen-output from the AMR-library.

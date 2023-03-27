@@ -22,7 +22,7 @@
 #include "FunctionPrototypes.hpp"
 #include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -36,20 +36,20 @@ class CompFlowProblemGaussHump {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t ncomp, const std::vector< EoS_Base* >&,
+    initialize( ncomp_t system, ncomp_t ncomp, const std::vector< EOS >&,
                 tk::real x, tk::real y, tk::real, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
     analyticSolution( ncomp_t system, ncomp_t ncomp,
-                      const std::vector< EoS_Base* >&, tk::real x, tk::real y,
+                      const std::vector< EOS >&, tk::real x, tk::real y,
                       tk::real, tk::real t );
 
     //! Compute and return source term for manufactured solution
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, const std::vector< EoS_Base* >&, tk::real, tk::real,
+    src( ncomp_t, ncomp_t, const std::vector< EOS >&, tk::real, tk::real,
          tk::real, tk::real, std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");

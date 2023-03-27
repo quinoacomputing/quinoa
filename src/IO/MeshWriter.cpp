@@ -18,10 +18,6 @@
 #include "Reorder.hpp"
 #include "ExodusIIMeshWriter.hpp"
 
-#ifdef HAS_ROOT
-  #include "RootMeshWriter.hpp"
-#endif
-
 using tk::MeshWriter;
 
 MeshWriter::MeshWriter( ctr::FieldFileType filetype,
@@ -74,9 +70,11 @@ MeshWriter::write(
   const std::vector< std::size_t >& triinpoel,
   const std::vector< std::string >& elemfieldnames,
   const std::vector< std::string >& nodefieldnames,
+  const std::vector< std::string >& elemsurfnames,
   const std::vector< std::string >& nodesurfnames,
   const std::vector< std::vector< tk::real > >& elemfields,
   const std::vector< std::vector< tk::real > >& nodefields,
+  const std::vector< std::vector< tk::real > >& elemsurfs,
   const std::vector< std::vector< tk::real > >& nodesurfs,
   const std::set< int >& outsets,
   CkCallback c )
@@ -102,9 +100,12 @@ MeshWriter::write(
 //!   mesh chunk with local ids
 //! \param[in] elemfieldnames Names of element fields to be output to file
 //! \param[in] nodefieldnames Names of node fields to be output to file
+//! \param[in] elemsurfnames Names of elemental surface fields to be output to
+//!   file
 //! \param[in] nodesurfnames Names of node surface fields to be output to file
 //! \param[in] elemfields Field data in mesh elements to output to file
 //! \param[in] nodefields Field data in mesh nodes to output to file
+//! \param[in] elemsurfs Surface field data in mesh elements to output to file
 //! \param[in] nodesurfs Surface field data in mesh nodes to output to file
 //! \param[in] outsets Unique set of surface side set ids along which to save
 //!   solution field variables
@@ -117,15 +118,6 @@ MeshWriter::write(
     auto vf = filename( basefilename, meshid, itr, chareid );
   
     if (meshoutput) {
-      #ifdef HAS_ROOT
-      if (m_filetype == ctr::FieldFileType::ROOT) {
-
-        RootMeshWriter rmw( vf, 0 );
-        rmw.writeMesh( UnsMesh( inpoel, coord ) );
-        rmw.writeNodeVarNames( nodefieldnames );
-
-      } else
-      #endif
       if (m_filetype == ctr::FieldFileType::EXODUSII) {
 
         // Write volume mesh and field names
@@ -159,6 +151,7 @@ MeshWriter::write(
             // https://www.paraview.org/Wiki/Restarted_Simulation_Readers.
             es.writeMesh< 3 >( std::vector< std::size_t >{1,2,3},
               UnsMesh::Coords{{ {{0,0,0}}, {{0,0,0}}, {{0,0,0}} }} );
+            es.writeElemVarNames( elemsurfnames );
             es.writeNodeVarNames( nodesurfnames );
             continue;
           }
@@ -183,6 +176,7 @@ MeshWriter::write(
             ++j;
           }
           es.writeMesh< 3 >( inp, scoord );
+          es.writeElemVarNames( elemsurfnames );
           es.writeNodeVarNames( nodesurfnames );
         }
 
@@ -190,16 +184,6 @@ MeshWriter::write(
     }
 
     if (fieldoutput) {
-      #ifdef HAS_ROOT
-      if (m_filetype == ctr::FieldFileType::ROOT) {
-
-        RootMeshWriter rw( vf, 1 );
-        rw.writeTimeStamp( itf, time );
-        int varid = 0;
-        for (const auto& v : nodefields) rw.writeNodeScalar( itf, ++varid, v );
-
-      } else
-      #endif
       if (m_filetype == ctr::FieldFileType::EXODUSII) {
 
         // Write volume variable fields
@@ -214,7 +198,9 @@ MeshWriter::write(
 
         // Write surface node variable fields
         std::size_t j = 0;
+        std::size_t k = 0;
         auto nvar = static_cast< int >( nodesurfnames.size() ) ;
+        auto nevar = static_cast< int >( elemsurfnames.size() ) ;
         for (auto s : outsets) {
           auto sf = filename( basefilename, meshid, itr, chareid, s );
           ExodusIIMeshWriter es( sf, ExoWriter::OPEN );
@@ -226,10 +212,13 @@ MeshWriter::write(
             // multiple files. See also
             // https://www.paraview.org/Wiki/Restarted_Simulation_Readers.
             for (int i=1; i<=nvar; ++i) es.writeNodeScalar( itf, i, {0,0,0} );
+            for (int i=1; i<=nevar; ++i) es.writeElemScalar( itf, i, {0} );
             continue;
           }
           for (int i=1; i<=nvar; ++i)
             es.writeNodeScalar( itf, i, nodesurfs[j++] );
+          for (int i=1; i<=nevar; ++i)
+            es.writeElemScalar( itf, i, elemsurfs[k++] );
         }
 
       }
@@ -279,9 +268,6 @@ MeshWriter::filename( const std::string& basefilename,
          + '.' + std::to_string( itr )        // iteration count with new mesh
          + '.' + std::to_string( m_nchare )   // total number of workers
          + '.' + std::to_string( chareid )    // new file per worker
-         #ifdef HAS_ROOT
-         + (m_filetype == ctr::FieldFileType::ROOT ? ".root" : "")
-         #endif
          ;
 }
 

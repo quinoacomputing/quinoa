@@ -21,16 +21,13 @@
 #include "DerivedData.hpp"
 #include "Exception.hpp"
 #include "Vector.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/EoS_Base.hpp"
 #include "Mesh/Around.hpp"
 #include "Reconstruction.hpp"
 #include "Problem/FieldOutput.hpp"
 #include "Problem/BoxInitialization.hpp"
 #include "Riemann/Rusanov.hpp"
 #include "NodeBC.hpp"
-#include "EoS/EoS.hpp"
-#include "EoS/StiffenedGas.hpp"
+#include "EoS/EOS.hpp"
 #include "History.hpp"
 #include "Table.hpp"
 
@@ -82,12 +79,12 @@ class CompFlow {
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );
 
       // EoS initialization
-      // query input deck to get gamma, p_c, cv
-      auto g = gamma< eq >(m_system, 0);
-      auto ps = pstiff< eq >(m_system, 0);
-      auto c_v = cv< eq >(m_system, 0);
-      m_mat_blk.push_back(new StiffenedGas(g, ps, c_v));
-
+      const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[
+        m_system];
+      const auto& matidxmap = g_inputdeck.get< tag::param, eq, tag::matidxmap >
+        ();
+      auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();
+      m_mat_blk.emplace_back(mateos, EqType::compflow, m_system, 0);
     }
 
     //! Determine nodes that lie inside the user-defined IC box and mesh blocks
@@ -303,8 +300,8 @@ class CompFlow {
         auto rv = U(i,2);
         auto rw = U(i,3);
         auto re = U(i,4);
-        auto p = m_mat_blk[0]->eos_pressure( r, ru/r, rv/r, rw/r, re );
-        s[i] = m_mat_blk[0]->eos_soundspeed( r, p );
+        auto p = m_mat_blk[0].compute< EOS::pressure >(r, ru/r, rv/r, rw/r, re);
+        s[i] = m_mat_blk[0].compute< EOS::soundspeed >( r, p );
       }
     }
 
@@ -396,9 +393,8 @@ class CompFlow {
         // pressure
         std::array< real, 4 > p;
         for (std::size_t a=0; a<4; ++a)
-          p[a] = m_mat_blk[0]->eos_pressure( u[0][a], u[1][a]/u[0][a],
-                                             u[2][a]/u[0][a], u[3][a]/u[0][a],
-                                             u[4][a] );
+          p[a] = m_mat_blk[0].compute< EOS::pressure >( u[0][a],
+            u[1][a]/u[0][a], u[2][a]/u[0][a], u[3][a]/u[0][a], u[4][a] );
 
         // sum flux contributions to element
         real d = deltat/2.0;
@@ -455,8 +451,8 @@ class CompFlow {
         for (ncomp_t c=0; c<m_ncomp; ++c) r[c] = R.cptr( c );
 
         // pressure
-        auto p = m_mat_blk[0]->eos_pressure( ue[0], ue[1]/ue[0], ue[2]/ue[0],
-                                             ue[3]/ue[0], ue[4] );
+        auto p = m_mat_blk[0].compute< EOS::pressure >( ue[0], ue[1]/ue[0],
+          ue[2]/ue[0], ue[3]/ue[0], ue[4] );
 
         // scatter-add flux contributions to rhs at nodes
         real d = deltat * J/6.0;
@@ -728,9 +724,10 @@ class CompFlow {
           auto& rv = u[2][j];    // rho * v
           auto& rw = u[3][j];    // rho * w
           auto& re = u[4][j];    // rho * e
-          auto p = m_mat_blk[0]->eos_pressure( r, ru/r, rv/r, rw/r, re );
+          auto p = m_mat_blk[0].compute< EOS::pressure >( r, ru/r, rv/r, rw/r,
+            re );
           if (p < 0) p = 0.0;
-          auto c = m_mat_blk[0]->eos_soundspeed( r, p );
+          auto c = m_mat_blk[0].compute< EOS::soundspeed >( r, p );
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
 
           // energy source propagation velocity (in all IC boxes configured)
@@ -798,10 +795,10 @@ class CompFlow {
         // access solution at node p at recent time step
         const auto u = U[i];
         // compute pressure
-        auto p = m_mat_blk[0]->eos_pressure( u[0], u[1]/u[0], u[2]/u[0],
-                                             u[3]/u[0], u[4] );
+        auto p = m_mat_blk[0].compute< EOS::pressure >( u[0], u[1]/u[0],
+          u[2]/u[0], u[3]/u[0], u[4] );
         if (p < 0) p = 0.0;
-        auto c = m_mat_blk[0]->eos_soundspeed( u[0], p );
+        auto c = m_mat_blk[0].compute< EOS::soundspeed >( u[0], p );
         // characteristic velocity
         auto v = std::sqrt((u[1]*u[1] + u[2]*u[2] + u[3]*u[3])/u[0]/u[0]) + c;
         // compute dt for node
@@ -940,27 +937,29 @@ class CompFlow {
                   auto& re = U(p,4);
                   auto vn =
                     (ru*i->second[0] + rv*i->second[1] + rw*i->second[2]) / r;
-                  auto a = m_mat_blk[0]->eos_soundspeed( r,
-                    m_mat_blk[0]->eos_pressure( r, ru/r, rv/r, rw/r, re ) );
+                  auto a = m_mat_blk[0].compute< EOS::soundspeed >( r,
+                    m_mat_blk[0].compute< EOS::pressure >( r, ru/r, rv/r, rw/r,
+                    re ) );
                   auto M = vn / a;
                   if (M <= -1.0) {                      // supersonic inflow
                     r  = m_fr;
                     ru = m_fr * m_fu[0];
                     rv = m_fr * m_fu[1];
                     rw = m_fr * m_fu[2];
-                    re = m_mat_blk[0]->eos_totalenergy( m_fr, m_fu[0], m_fu[1],
-                                                        m_fu[2], m_fp );
+                    re = m_mat_blk[0].compute< EOS::totalenergy >( m_fr,
+                      m_fu[0], m_fu[1], m_fu[2], m_fp );
                   } else if (M > -1.0 && M < 0.0) {     // subsonic inflow
+                    auto pr = m_mat_blk[0].compute< EOS::pressure >
+                                                  ( r, ru/r, rv/r, rw/r, re );
                     r  = m_fr;
                     ru = m_fr * m_fu[0];
                     rv = m_fr * m_fu[1];
                     rw = m_fr * m_fu[2];
-                    re = m_mat_blk[0]->eos_totalenergy( m_fr, m_fu[0], m_fu[1],
-                      m_fu[2], m_mat_blk[0]->eos_pressure( r, ru/r, rv/r, rw/r,
-                                                           re ) );
+                    re = m_mat_blk[0].compute< EOS::totalenergy >( m_fr,
+                      m_fu[0], m_fu[1], m_fu[2], pr );
                   } else if (M >= 0.0 && M < 1.0) {     // subsonic outflow
-                    re = m_mat_blk[0]->eos_totalenergy( r, ru/r, rv/r, rw/r,
-                                                        m_fp );
+                    re = m_mat_blk[0].compute< EOS::totalenergy >( r, ru/r,
+                      rv/r, rw/r, m_fp );
                   }
                 }
               }
@@ -1033,9 +1032,8 @@ class CompFlow {
           U(p,1) = unk[1]*unk[2];
           U(p,2) = unk[1]*unk[3];
           U(p,3) = unk[1]*unk[4];
-          U(p,4) = m_mat_blk[0]->eos_totalenergy( unk[1], unk[2],
-                                                           unk[3], unk[4],
-                                                           unk[0]);
+          U(p,4) = m_mat_blk[0].compute< EOS::totalenergy >( unk[1], unk[2],
+            unk[3], unk[4], unk[0]);
         }
       }
     }
@@ -1055,11 +1053,20 @@ class CompFlow {
     std::vector< std::string > histNames() const
     { return CompFlowHistNames(); }
 
-    //! Return surface field output going to file
+    //! Return nodal surface field output going to file
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
                 const tk::Fields& U ) const
     { return CompFlowSurfOutput( m_system, m_mat_blk, bnd, U ); }
+
+    //! Return elemental surface field output (on triangle faces) going to file
+    std::vector< std::vector< real > >
+    elemSurfOutput( const std::map< int, std::vector< std::size_t > >& bface,
+      const std::vector< std::size_t >& triinpoel,
+      const tk::Fields& U ) const
+    {
+      return CompFlowElemSurfOutput( m_system, m_mat_blk, bface, triinpoel, U );
+    }
 
     //! Return time history field output evaluated at time history points
     std::vector< std::vector< real > >
@@ -1085,7 +1092,7 @@ class CompFlow {
     const real m_fp;                    //!< Farfield pressure
     const std::vector< real > m_fu;     //!< Farfield velocity
     //! EOS material block
-    std::vector< EoS_Base* > m_mat_blk;
+    std::vector< EOS > m_mat_blk;
 
     //! Decide if point is a stagnation point
     //! \param[in] x X mesh point coordinates to query
@@ -1299,8 +1306,10 @@ class CompFlow {
         rwR *= rR;
 
         // evaluate pressure at edge-end points
-        real pL = m_mat_blk[0]->eos_pressure( rL, ruL/rL, rvL/rL, rwL/rL, reL );
-        real pR = m_mat_blk[0]->eos_pressure( rR, ruR/rR, rvR/rR, rwR/rR, reR );
+        real pL = m_mat_blk[0].compute< EOS::pressure >( rL, ruL/rL, rvL/rL,
+          rwL/rL, reL );
+        real pR = m_mat_blk[0].compute< EOS::pressure >( rR, ruR/rR, rvR/rR,
+          rwR/rR, reR );
 
         // apply sponge-pressure multipliers
         for (std::size_t s=0; s<nset; ++s) {
@@ -1549,7 +1558,8 @@ class CompFlow {
         real f[m_ncomp][3];
         real p, vn;
         int sym = symbctri[e];
-        p = m_mat_blk[0]->eos_pressure( rA, ruA/rA, rvA/rA, rwA/rA, reA );
+        p = m_mat_blk[0].compute< EOS::pressure >( rA, ruA/rA, rvA/rA, rwA/rA,
+          reA );
         for (std::size_t s=0; s<nset; ++s) p -= p*spmult[N[0]*nset+s];
         vn = sym ? 0.0 : (nx*(ruA/rA-w1A) + ny*(rvA/rA-w2A) + nz*(rwA/rA-w3A));
         f[0][0] = rA*vn;
@@ -1557,7 +1567,8 @@ class CompFlow {
         f[2][0] = rvA*vn + p*ny;
         f[3][0] = rwA*vn + p*nz;
         f[4][0] = reA*vn + p*(sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA)/rA);
-        p = m_mat_blk[0]->eos_pressure( rB, ruB/rB, rvB/rB, rwB/rB, reB );
+        p = m_mat_blk[0].compute< EOS::pressure >( rB, ruB/rB, rvB/rB, rwB/rB,
+          reB );
         for (std::size_t s=0; s<nset; ++s) p -= p*spmult[N[1]*nset+s];
         vn = sym ? 0.0 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
         f[0][1] = rB*vn;
@@ -1565,7 +1576,8 @@ class CompFlow {
         f[2][1] = rvB*vn + p*ny;
         f[3][1] = rwB*vn + p*nz;
         f[4][1] = reB*vn + p*(sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB)/rB);
-        p = m_mat_blk[0]->eos_pressure( rC, ruC/rC, rvC/rC, rwC/rC, reC );
+        p = m_mat_blk[0].compute< EOS::pressure >( rC, ruC/rC, rvC/rC, rwC/rC,
+          reC );
         for (std::size_t s=0; s<nset; ++s) p -= p*spmult[N[2]*nset+s];
         vn = sym ? 0.0 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
         f[0][2] = rC*vn;
@@ -1690,8 +1702,8 @@ class CompFlow {
 
           // determine times at which sourcing is initialized and terminated
           auto iv = b.template get< tag::initiate, tag::velocity >();
-          auto wFront = 0.08;
-          auto tInit = 0.0;
+          auto wFront = b.template get< tag::initiate, tag::front_width >();
+          auto tInit = b.template get< tag::initiate, tag::init_time >();
           auto tFinal = tInit + (box[5] - box[4] - wFront) / std::fabs(iv);
           auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
@@ -1728,7 +1740,7 @@ class CompFlow {
             tk::real zInit(b_min[2]);
             if (iv < 0.0) zInit = b_max[2];
             // current location of front
-            auto z0 = zInit + iv*t;
+            auto z0 = zInit + iv * (t-tInit);
             auto z1 = z0 + std::copysign(wFront, iv);
             tk::real s0(z0), s1(z1);
             // if velocity of propagation is negative, initial position is z1

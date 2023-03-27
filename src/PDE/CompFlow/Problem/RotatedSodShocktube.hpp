@@ -16,7 +16,7 @@
 
 #include "Types.hpp"
 #include "SodShocktube.hpp"
-#include "EoS/EoS_Base.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -28,7 +28,7 @@ class CompFlowProblemRotatedSodShocktube : public CompFlowProblemSodShocktube {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t ncomp, const std::vector< EoS_Base* >&,
+    initialize( ncomp_t system, ncomp_t ncomp, const std::vector< EOS >&,
                 tk::real x, tk::real y, tk::real z, tk::real t );
 
     //! Return problem type

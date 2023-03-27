@@ -29,7 +29,7 @@ using inciter::TransportProblemSlotCyl;
 
 std::vector< tk::real >
 TransportProblemSlotCyl::initialize( ncomp_t, ncomp_t ncomp,
-  const std::vector< EoS_Base* >&, tk::real x, tk::real y, tk::real,
+  const std::vector< EOS >&, tk::real x, tk::real y, tk::real,
   tk::real t )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,t) for all components

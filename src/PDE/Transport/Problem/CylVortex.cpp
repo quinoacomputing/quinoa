@@ -28,7 +28,7 @@ using inciter::TransportProblemCylVortex;
 
 std::vector< tk::real >
 TransportProblemCylVortex::initialize( ncomp_t system, ncomp_t ncomp,
-                                       const std::vector< EoS_Base* >&,
+                                       const std::vector< EOS >&,
                                        tk::real x, tk::real y, tk::real,
                                        tk::real t )
 // *****************************************************************************

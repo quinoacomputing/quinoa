@@ -71,6 +71,9 @@ class Partitioner : public CBase_Partitioner {
                  const std::map< int, std::vector< std::size_t > >& faces,
                  const std::map< int, std::vector< std::size_t > >& bnode );
 
+    //! Destructor
+    ~Partitioner() override;
+
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wundefined-func-template"

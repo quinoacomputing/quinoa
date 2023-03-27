@@ -1614,15 +1614,6 @@ DG::writeFields(
 {
   auto d = Disc();
 
-  // Output time history
-  if (d->histiter() or d->histtime() or d->histrange()) {
-    std::vector< std::vector< tk::real > > hist;
-    auto h = g_dgpde[d->MeshId()].histOutput( d->Hist(), myGhosts()->m_inpoel,
-      myGhosts()->m_coord, m_u, m_p );
-    hist.insert( end(hist), begin(h), end(h) );
-    d->history( std::move(hist) );
-  }
-
   const auto& inpoel = std::get< 0 >( m_outmesh.chunk );
   auto esup = tk::genEsup( inpoel, 4 );
   auto nelem = inpoel.size() / 4;
@@ -1732,7 +1723,7 @@ DG::writeFields(
   const auto& triinpoel = m_outmesh.triinpoel;
   d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            {}, elemfields, nodefields, {}, c );
+            {}, {}, elemfields, nodefields, {}, {}, c );
 }
 
 void
@@ -1852,10 +1843,19 @@ DG::step()
 // Evaluate wether to continue with next time step
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  // Output time history
+  if (d->histiter() or d->histtime() or d->histrange()) {
+    std::vector< std::vector< tk::real > > hist;
+    auto h = g_dgpde[d->MeshId()].histOutput( d->Hist(), myGhosts()->m_inpoel,
+      myGhosts()->m_coord, m_u, m_p );
+    hist.insert( end(hist), begin(h), end(h) );
+    d->history( std::move(hist) );
+  }
+
   // Free memory storing output mesh
   m_outmesh.destroy();
-
-  auto d = Disc();
 
   // Output one-liner status report to screen
   d->status();

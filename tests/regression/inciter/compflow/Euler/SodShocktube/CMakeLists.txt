@@ -137,17 +137,15 @@ add_regression_test(compflow_euler_sodshocktube_alecg_surf ${INCITER_EXECUTABLE}
                     INPUTFILES sod_shocktube_alecg_surf.q rectangle_01_1.5k.exo
                     ARGS -c sod_shocktube_alecg_surf.q -i rectangle_01_1.5k.exo
                          -v
-                    BIN_BASELINE sod_shocktube_alecg.std.exo
-                                 sod_shocktube_alecg-surf.2.std.exo
+                    BIN_BASELINE sod_shocktube_alecg-surf.2.std.exo
                                  sod_shocktube_alecg-surf.4.std.exo
                                  sod_shocktube_alecg-surf.5.std.exo
                                  sod_shocktube_alecg-surf.6.std.exo
-                    BIN_RESULT out.e-s.0.1.0
-                               out-surf.2.e-s.0.1.0
+                    BIN_RESULT out-surf.2.e-s.0.1.0
                                out-surf.4.e-s.0.1.0
                                out-surf.5.e-s.0.1.0
                                out-surf.6.e-s.0.1.0
-                    BIN_DIFF_PROG_CONF exodiff.cfg
+                    BIN_DIFF_PROG_CONF exodiff_surf.cfg
                     TEXT_BASELINE diag_alecg.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg

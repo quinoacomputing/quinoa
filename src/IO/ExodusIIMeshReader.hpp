@@ -127,11 +127,20 @@ class ExodusIIMeshReader {
     //! Read the names of nodal output variables from ExodusII file
     void readNodeVarNames( std::vector< std::string >& nv ) const;
 
+    //! Read the names of elemental output variables from ExodusII file
+    void readElemVarNames( std::vector< std::string >& ev ) const;
+
     //! Read time values from ExodusII file
     void readTimeValues( std::vector< tk::real >& tv ) const;
 
     //! Read node scalar fields from ExodusII file
     void readNodeScalars(
+      std::size_t ntime,
+      std::size_t nvar,
+      std::vector< std::vector< std::vector< tk::real > > >& var ) const;
+
+    //! Read element scalar fields from ExodusII file
+    void readElemScalars(
       std::size_t ntime,
       std::size_t nvar,
       std::vector< std::vector< std::vector< tk::real > > >& var ) const;
@@ -151,6 +160,7 @@ class ExodusIIMeshReader {
                           &m_iowordsize, &version );
       ErrChk( m_inFile > 0, "Failed to open ExodusII file: " + m_filename );
       m_nnode = x.m_nnode;
+      m_nelem = x.m_nelem;
       m_neblk = x.m_neblk;
       m_neset = x.m_neset;
       m_from = x.m_from;
@@ -180,6 +190,7 @@ class ExodusIIMeshReader {
                           &m_iowordsize, &version );
       ErrChk( m_inFile > 0, "Failed to open ExodusII file: " + m_filename );
       m_nnode = x.m_nnode;
+      m_nelem = x.m_nelem;
       m_neblk = x.m_neblk;
       m_neset = x.m_neset;
       m_from = x.m_from;
@@ -196,6 +207,7 @@ class ExodusIIMeshReader {
                             &x.m_iowordsize, &version );
       ErrChk( x.m_inFile > 0, "Failed to open ExodusII file: " + m_filename );
       x.m_nnode = 0;
+      x.m_nelem = 0;
       x.m_neblk = 0;
       x.m_neset = 0;
       x.m_from = 0;
@@ -216,6 +228,7 @@ class ExodusIIMeshReader {
       m_iowordsize( 0 ),
       m_inFile( 0 ),
       m_nnode( 0 ),
+      m_nelem( 0 ),
       m_neblk( 0 ),
       m_neset( 0 ),
       m_from( 0 ),
@@ -234,6 +247,7 @@ class ExodusIIMeshReader {
     int m_iowordsize;                   //!< I/O word size for ExodusII
     int m_inFile;                       //!< ExodusII file handle
     std::size_t m_nnode;                //!< Number of nodes in file
+    std::size_t m_nelem;                //!< Number of elements in file
     std::size_t m_neblk;                //!< Number of element blocks in file
     std::size_t m_neset;                //!< Number of element sets in file
     std::size_t m_from;                 //!< Lower bound of tet ids on this PE

@@ -320,9 +320,11 @@ class Discretization : public CBase_Discretization {
                 const std::vector< std::size_t >& triinpoel,
                 const std::vector< std::string>& elemfieldnames,
                 const std::vector< std::string>& nodefieldnames,
+                const std::vector< std::string>& elemsurfnames,
                 const std::vector< std::string>& nodesurfnames,
                 const std::vector< std::vector< tk::real > >& elemfields,
                 const std::vector< std::vector< tk::real > >& nodefields,
+                const std::vector< std::vector< tk::real > >& elemsurfs,
                 const std::vector< std::vector< tk::real > >& nodesurfs,
                 CkCallback c );
 

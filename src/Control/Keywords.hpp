@@ -308,19 +308,6 @@ struct exodusii_info {
 };
 using exodusii = keyword< exodusii_info, TAOCPP_PEGTL_STRING("exodusii") >;
 
-struct root_info {
-  static std::string name() { return "root"; }
-  static std::string shortDescription() { return
-    "Select Root output"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the Root output file type readable by the
-    Root framework from CERN for mesh-based field output in a field_output ...
-    end block. Example: "filetype root", which selects the root file output
-    format. For more info on Root, see https://root.cern.ch.)";
-  }
-};
-using root = keyword< root_info, TAOCPP_PEGTL_STRING("root") >;
-
 struct filetype_info {
   static std::string name() { return "filetype"; }
   static std::string shortDescription() { return
@@ -332,93 +319,19 @@ struct filetype_info {
     "filetype exodusii", which selects ExodusII output. Valid options depend on
     which block the keyword is used: in a pdfs ... end the valid choices are
     'txt', 'gmshtxt', 'gmshbin', and 'exodusii', in a field_output ... end
-    block the valid choices are 'exodusii' and 'root'.)"; }
+    block the valid choice is 'exodusii'.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + txt::string() + "\' | \'"
                   + gmshtxt::string() + "\' | \'"
                   + gmshbin::string() + "\' | \'"
-                  + root::string() + "\' | \'"
                   + exodusii::string() + '\'';
     }
   };
 
 };
 using filetype = keyword< filetype_info, TAOCPP_PEGTL_STRING("filetype") >;
-
-struct overwrite_info {
-  static std::string name() { return "overwrite"; }
-  static std::string shortDescription() { return
-    "Select PDF output policy overwrite"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select the
-    the 'overwrite' output file policy for requested probability density
-    functions (PDFs) within a pdfs ... end block. Example: "policy
-    overwrite", which selects the overwrite output file policy. The
-    overwrite policy overwrites the same output file containing a single time
-    step. Valid PDF policy options are 'overwrite', 'multiple', and
-    'evolution'. For more info on the structure of the pdfs ... end block,
-    see doc/pages/statistics_output.dox.)"; }
-};
-using overwrite = keyword< overwrite_info, TAOCPP_PEGTL_STRING("overwrite") >;
-
-struct multiple_info {
-  static std::string name() { return "multiple"; }
-  static std::string shortDescription() { return
-    "Select PDF output policy multiple"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select
-    the 'multiple' output file policy for requested probability density
-    functions (PDFs) within a pdfs ... end block. Example: "policy
-    multiple", which selects the multiple output file policy. The
-    multiple policy output creates a new file for each time step. Valid PDF
-    policy options are 'overwrite', 'multiple', and 'evolution'. For more
-    info on the structure of the pdfs ... end block, see
-    doc/pages/statistics_output.dox.)"; }
-};
-using multiple = keyword< multiple_info, TAOCPP_PEGTL_STRING("multiple") >;
-
-struct evolution_info {
-  static std::string name() { return "evolution"; }
-  static std::string shortDescription() { return
-    "Select PDF output policy evolution"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select
-    the 'evolution' output file policy for requested probability density
-    functions (PDFs) within a pdfs ... end block. Example: "policy
-    evolution", which selects the evolution output file policy. The
-    evolution policy output appends new time step to the same output file for
-    each time instant, yielding a time evolution of data in a single file.
-    Valid PDF policy options are 'overwrite', 'multiple', and 'evolution'. For
-    more info on the structure of the pdfs ... end block, see
-    doc/pages/statistics_output.dox.)";
-  }
-};
-using evolution = keyword< evolution_info, TAOCPP_PEGTL_STRING("evolution") >;
-
-struct policy_info {
-  static std::string name() { return "policy"; }
-  static std::string shortDescription() { return
-    "Select PDF output file policy"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select
-    the output file policy for requested probability density functions
-    (PDFs) within a pdfs ... end block. Example: "policy overwrite", which
-    selects the overwrite output file policy. Valid options are 'overwrite',
-    'multiple', and 'evolution'. For more info on the structure of the
-    pdfs ... end block, see doc/pages/statistics_output.dox.)";
-  }
-  struct expect {
-    static std::string description() { return "string"; }
-    static std::string choices() {
-      return '\'' + overwrite::string() + "\' | \'"
-                  + multiple::string() + "\' | \'"
-                  + evolution::string() + '\'';
-    }
-  };
-};
-using pdf_policy = keyword< policy_info, TAOCPP_PEGTL_STRING("policy") >;
 
 struct txt_float_default_info {
   static std::string name() { return "default"; }
@@ -804,7 +717,7 @@ struct nmat_info {
     "Set number of materials for a system of differential equations"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the number of materials, e.g., for
-    multi-material flow, see also the keyword 'multimat' and 'veleq'.)";
+    multi-material flow, see also the keyword 'multimat'.)";
   }
   struct expect {
     using type = std::size_t;
@@ -1332,54 +1245,6 @@ struct zmax_info {
 };
 using zmax = keyword< zmax_info, TAOCPP_PEGTL_STRING("zmax") >;
 
-struct impulse_info {
-  static std::string name() { return "impulse"; }
-  static std::string shortDescription() { return
-    "Select the impulse initiation type, e.g., for a box IC"; }
-  static std::string longDescription() { return
-    R"(This keyword can be used to select the 'impulse' initiation/assignment
-    type for box initial conditions. It simply assigns the prescribed values to
-    mesh points within a configured box at t=0.)"; }
-};
-using impulse = keyword< impulse_info, TAOCPP_PEGTL_STRING("impulse") >;
-
-struct linear_info {
-  static std::string name() { return "linear"; }
-  static std::string shortDescription() { return
-    "Select the linear initiation type, e.g., for a box IC"; }
-  static std::string longDescription() { return
-    R"(This keyword can be used to select the 'linear' initiation/assignment
-    type for box initial conditions. Linear initiation uses a linear function
-    in time and space, configured with an initiation point in space, a constant
-    velocity of the growing spherical front in time (and space) linearly, and
-    width of the front and assigns values to mesh points falling within the
-    growing spherical shell inside a configured box.)"; }
-};
-using linear = keyword< linear_info, TAOCPP_PEGTL_STRING("linear") >;
-
-struct initiate_info {
-  static std::string name() { return "initiate type"; }
-  static std::string shortDescription() { return "Initiation/assignemt type"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to select an initiation type to configure how
-    values are assigned, e.g., for a box initial condition. This can be used to
-    specify, how the values are assigned to mesh nodes within a box. Examples:
-    (1) impulse: assign the full values at t=0 for all points in a box,
-    (2) linear: use a linear function in time and space, configured with an
-    initiation point in space, a constant velocity of the growing spherical
-    front in time (and space) linearly, and width of the front and assigns
-    values to mesh points falling within the growing spherical shell inside a
-    configured box.)"; }
-  struct expect {
-    static std::string description() { return "string"; }
-    static std::string choices() {
-      return '\'' + impulse::string() + "\' | \'"
-                  + linear::string() + '\'';
-    }
-  };
-};
-using initiate = keyword< initiate_info, TAOCPP_PEGTL_STRING("initiate") >;
-
 struct box_info {
   static std::string name() { return "box"; }
   static std::string shortDescription() { return
@@ -1636,48 +1501,6 @@ struct control_info {
   };
 };
 using control = keyword< control_info, TAOCPP_PEGTL_STRING("control") >;
-
-struct smallcrush_info {
-  static std::string name() { return "SmallCrush"; }
-  static std::string shortDescription() {
-    return "Select RNG battery SmallCrush"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the description of the random number
-    generator test suite, i.e., battery, 'SmallCrush'. SmallCrush is a
-    battery of relatively small number, O(10), of tests, defined in TestU01,
-    a library for the empirical testing of random number generators. For more "
-    info, see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.)";
-  }
-};
-using smallcrush = keyword< smallcrush_info, TAOCPP_PEGTL_STRING("smallcrush") >;
-
-struct crush_info {
-  static std::string name() { return "Crush"; }
-  static std::string shortDescription() { return
-    "Select RNG battery Crush"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the description of the random number
-    generator test suite, i.e., battery, 'Crush'. Crush is a suite of
-    stringent statistical tests, O(100), defined in TestU01, a library for
-    the empirical testing of random number generators. For more info, see
-    http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.)";
-  }
-};
-using crush = keyword< crush_info, TAOCPP_PEGTL_STRING("crush") >;
-
-struct bigcrush_info {
-  static std::string name() { return "BigCrush"; }
-  static std::string shortDescription() { return
-    "Select RNG battery BigCrush"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the description of the random number
-    generator test suite, i.e., battery, 'BigCrush'. BigCrush is a
-    suite of very stringent statistical tests, O(100), defined in TestU01, a
-    library for the empirical testing of random number generators. For more
-    info, see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.)";
-  }
-};
-using bigcrush = keyword< bigcrush_info, TAOCPP_PEGTL_STRING("bigcrush") >;
 
 struct verbose_info {
   static std::string name() { return "verbose"; }
@@ -2619,6 +2442,20 @@ using richtmyer_meshkov =
   keyword< richtmyer_meshkov_info,
   TAOCPP_PEGTL_STRING("richtmyer_meshkov") >;
 
+struct sinewave_packet_info {
+  static std::string name() { return "Advection of sinewave packet"; }
+  static std::string shortDescription() { return
+    "Select the advection of sinewave packet problem "; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the advection of sinewave packet
+    problem.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using sinewave_packet = keyword< sinewave_packet_info,
+  TAOCPP_PEGTL_STRING("sinewave_packet") >;
+
 struct problem_info {
   static std::string name() { return "Test problem"; }
   static std::string shortDescription() { return
@@ -2649,6 +2486,7 @@ struct problem_info {
                   + shockdensity_wave::string() + "\' | \'"
                   + equilinterface_advect::string() + "\' | \'"
                   + richtmyer_meshkov::string() + "\' | \'"
+                  + sinewave_packet::string() + "\' | \'"
                   + gauss_hump_compflow::string() + '\'';
     }
   };
@@ -2684,20 +2522,23 @@ struct euler_info {
 };
 using euler = keyword< euler_info, TAOCPP_PEGTL_STRING("euler") >;
 
-struct veleq_info {
-  static std::string name() { return "Velocity equilibrium"; }
+struct energy_pill_info {
+  static std::string name() { return "Energy pill initialization"; }
   static std::string shortDescription() { return "Specify the multi-material "
-    " compressible flow with velocity equilibrium as physics configuration"; }
+    " compressible flow with energy pill as physics configuration"; }
   static std::string longDescription() { return
-    R"(This keyword is used to select a compressible flow algorithm as physics
-    configuration designed for multiple materials assuming velocity equailibrium
-    (single velocity). Example: "multimat physics veleq end")";
+    R"(This keyword is used to select an energy pill initialization as physics
+    configuration for multiple material compressible flow. Example:
+    "multimat physics energy_pill end". Parameters for the linearly traveling
+    front are required to be specified when energy_pill is selected. See
+    'linear' for more details.)";
     }
   struct expect {
     static std::string description() { return "string"; }
   };
 };
-using veleq = keyword< veleq_info, TAOCPP_PEGTL_STRING("veleq") >;
+using energy_pill = keyword< energy_pill_info,
+  TAOCPP_PEGTL_STRING("energy_pill") >;
 
 struct advection_info {
   static std::string name() { return "Advection"; }
@@ -3088,12 +2929,32 @@ struct point_info {
 };
 using point = keyword< point_info, TAOCPP_PEGTL_STRING("point") >;
 
+struct init_time_info {
+  static std::string name() { return "init_time"; }
+  static std::string shortDescription()
+    { return "Specify the initialization time"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the time at which the propagating front
+    is initialized for a mesh block or box IC, with 'initiate linear' type.
+    Delays in initializing separate mesh blocks or boxes can be achieved using
+    different initialization times. Example specification: 'init_time 1.0e-3')";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using init_time = keyword< init_time_info, TAOCPP_PEGTL_STRING("init_time") >;
+
 struct front_width_info {
   static std::string name() { return "front_width"; }
   static std::string shortDescription() { return "Specify a front_width"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the width of the front used in specifying
-    a mesh block or box IC.  Example specification: 'front_width 1.0e-5')";
+    R"(This keyword is used to specify the width of the propagating front for
+    a mesh block or box IC, with 'initiate linear' type. The suggested value of
+    the front width is about 4-5 times the mesh size inside the mesh block
+    or box.  Example specification: 'front_width 1.0e-5')";
   }
   struct expect {
     using type = tk::real;
@@ -3103,6 +2964,61 @@ struct front_width_info {
 };
 using front_width = keyword< front_width_info,
   TAOCPP_PEGTL_STRING("front_width") >;
+
+struct impulse_info {
+  static std::string name() { return "impulse"; }
+  static std::string shortDescription() { return
+    "Select the impulse initiation type, e.g., for a box IC"; }
+  static std::string longDescription() { return
+    R"(This keyword can be used to select the 'impulse' initiation/assignment
+    type for box initial conditions. It simply assigns the prescribed values to
+    mesh points within a configured box at t=0.)"; }
+};
+using impulse = keyword< impulse_info, TAOCPP_PEGTL_STRING("impulse") >;
+
+struct linear_info {
+  static std::string name() { return "linear"; }
+  static std::string shortDescription() { return
+    "Select the linear initiation type, e.g., for a box IC"; }
+  static std::string longDescription() { return
+    R"(This keyword is be used to specify the 'linear' initiation parameters
+    for a particular box or meshblock, as a part of the 'energy_pill'
+    initialization. Linear initiation uses a linear function in time and space,
+    configured with an initiation point in space, a constant velocity of the
+    growing spherical front in time (and space) linearly, and width of the front
+    and assigns values to mesh points falling within the growing spherical shell
+    inside a configured box or meshblock. The following keywords are allowed
+    in a linear ... end block: )"
+    + std::string("\'")
+    + point::string()+ "\', \'"
+    + init_time::string()+ "\', \'"
+    + front_width::string()+ "\', \'"
+    + velocity::string() + "\'."; }
+};
+using linear = keyword< linear_info, TAOCPP_PEGTL_STRING("linear") >;
+
+struct initiate_info {
+  static std::string name() { return "initiate type"; }
+  static std::string shortDescription() { return "Initiation/assignemt type"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an initiation type to configure how
+    values are assigned, e.g., for a box initial condition. This can be used to
+    specify, how the values are assigned to mesh nodes within a box. Examples:
+    (1) impulse: assign the full values at t=0 for all points in a box,
+    (2) linear: use a linear function in time and space, configured with an
+    initiation point in space, a constant velocity of the growing spherical
+    front in time (and space) linearly, and width of the front and assigns
+    values to mesh points falling within the growing spherical shell inside a
+    configured box.)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+    static std::string choices() {
+      return '\'' + impulse::string() + "\' | \'"
+                  + linear::string() + '\'';
+    }
+  };
+};
+using initiate = keyword< initiate_info, TAOCPP_PEGTL_STRING("initiate") >;
 
 struct radius_info {
   static std::string name() { return "radius"; }
@@ -3282,8 +3198,8 @@ struct prelax_info {
        no effect when used for the other PDE types.)";
   }
   struct expect {
-    using type = int;
-    static std::string description() { return "string"; }
+    using type = uint64_t;
+    static std::string description() { return "uint"; }
     static std::string choices() { return "1 | 0"; }
   };
 };
@@ -3295,8 +3211,8 @@ struct prelax_timescale_info {
     "Time-scale for multi-material finite pressure relaxation"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify the time-scale at which finite pressure
-       relaxation between multiple materials occurs. The default value of 1.0
-       corresponds to a relaxation time of the order of time required for a
+       relaxation between multiple materials occurs. The default value of 0.25
+       corresponds to a relaxation time that is 4 times the time required for a
        sound wave to pass through a computational element. It is used only for
        multimat, and has no effect for the other PDE types.)";
   }
@@ -3324,7 +3240,7 @@ struct intsharp_info {
   }
   struct expect {
     using type = int;
-    static std::string description() { return "string"; }
+    static std::string description() { return "uint"; }
     static std::string choices() { return "1 | 0"; }
   };
 };
@@ -3425,6 +3341,158 @@ struct mat_k_info {
 };
 using mat_k = keyword< mat_k_info, TAOCPP_PEGTL_STRING("k") >;
 
+struct w_gru_info {
+  static std::string name() { return "w_gru"; }
+  static std::string shortDescription() { return "Grueneisen coefficient"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property, Gruneisen
+       coefficient for the Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using w_gru = keyword< w_gru_info, TAOCPP_PEGTL_STRING("w_gru") >;
+
+struct A_jwl_info {
+  static std::string name() { return "A_jwl"; }
+  static std::string shortDescription() { return "JWL EoS A parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property A (units: Pa) for
+      the Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using A_jwl = keyword< A_jwl_info, TAOCPP_PEGTL_STRING("A_jwl") >;
+
+struct B_jwl_info {
+  static std::string name() { return "B_jwl"; }
+  static std::string shortDescription() { return "JWL EoS B parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property B (units: Pa) for
+      the Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using B_jwl = keyword< B_jwl_info, TAOCPP_PEGTL_STRING("B_jwl") >;
+
+struct C_jwl_info {
+  static std::string name() { return "C_jwl"; }
+  static std::string shortDescription() { return "JWL EoS C parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property C (units: Pa) for
+      the Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using C_jwl = keyword< C_jwl_info, TAOCPP_PEGTL_STRING("C_jwl") >;
+
+struct R1_jwl_info {
+  static std::string name() { return "R1_jwl"; }
+  static std::string shortDescription() { return "JWL EoS R1 parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property R1 for the
+      Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using R1_jwl = keyword< R1_jwl_info, TAOCPP_PEGTL_STRING("R1_jwl") >;
+
+struct R2_jwl_info {
+  static std::string name() { return "R2_jwl"; }
+  static std::string shortDescription() { return "JWL EoS R2 parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property R2 for the
+      Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real"; }
+  };
+};
+using R2_jwl = keyword< R2_jwl_info, TAOCPP_PEGTL_STRING("R2_jwl") >;
+
+struct rho0_jwl_info {
+  static std::string name() { return "rho0_jwl"; }
+  static std::string shortDescription() { return "JWL EoS rho0 parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property rho0, which is the
+      density of initial state (units: kg/m3) for the Jones-Wilkins-Lee
+      equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using rho0_jwl = keyword< rho0_jwl_info, TAOCPP_PEGTL_STRING("rho0_jwl") >;
+
+struct de_jwl_info {
+  static std::string name() { return "de_jwl"; }
+  static std::string shortDescription() { return "JWL EoS de parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property de, which is the
+      heat of detonation for products; and for reactants, it is chosen such that
+      the ambient internal energy (e0) is 0 (units: J/kg). Used for the
+      Jones-Wilkins-Lee equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using de_jwl = keyword< de_jwl_info, TAOCPP_PEGTL_STRING("de_jwl") >;
+
+struct rhor_jwl_info {
+  static std::string name() { return "rhor_jwl"; }
+  static std::string shortDescription() { return "JWL EoS rhor parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property rhor, which is the
+      density of reference state (units: kg/m3) for the Jones-Wilkins-Lee
+      equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using rhor_jwl = keyword< rhor_jwl_info, TAOCPP_PEGTL_STRING("rhor_jwl") >;
+
+struct Pr_jwl_info {
+  static std::string name() { return "Pr_jwl"; }
+  static std::string shortDescription() { return "JWL EoS er parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property Pr, which is the
+      pressure at the reference state (units: Pa) for the Jones-Wilkins-Lee
+      equation of state. It is used to calculate the reference temperature for
+      the EoS.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using Pr_jwl = keyword< Pr_jwl_info, TAOCPP_PEGTL_STRING("Pr_jwl") >;
+
 struct stiffenedgas_info {
   static std::string name() { return "Stiffened gas"; }
   static std::string shortDescription() { return
@@ -3473,6 +3541,16 @@ struct material_info {
     + eos::string()+ "\', \'"
     + mat_gamma::string()+ "\', \'"
     + mat_pstiff::string()+ "\', \'"
+    + w_gru::string()+ "\', \'"
+    + A_jwl::string()+ "\', \'"
+    + B_jwl::string()+ "\', \'"
+    + C_jwl::string()+ "\', \'"
+    + R1_jwl::string()+ "\', \'"
+    + R2_jwl::string()+ "\', \'"
+    + rho0_jwl::string()+ "\', \'"
+    + de_jwl::string()+ "\', \'"
+    + rhor_jwl::string()+ "\', \'"
+    + Pr_jwl::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"
     + mat_k::string() + "\'. "
@@ -3551,7 +3629,8 @@ struct multimat_info {
   static std::string longDescription() { return
     R"(This keyword is used to introduce the multimat ... end block,
     used to specify the configuration for a system of partial differential
-    equations, governing multi-material compressible fluid flow. Keywords
+    equations, governing multi-material compressible fluid flow assuming
+    velocity equailibrium (single velocity). Keywords
     allowed in a multimat ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + physics::string() + "\', \'"

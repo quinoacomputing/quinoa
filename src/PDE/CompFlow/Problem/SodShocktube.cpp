@@ -27,7 +27,7 @@ using inciter::CompFlowProblemSodShocktube;
 tk::InitializeFn::result_type
 CompFlowProblemSodShocktube::initialize( ncomp_t,
                                          ncomp_t,
-                               const std::vector< inciter::EoS_Base* >& mat_blk,
+                                         const std::vector< EOS >& mat_blk,
                                          tk::real x,
                                          tk::real,
                                          tk::real,
@@ -69,7 +69,7 @@ CompFlowProblemSodShocktube::initialize( ncomp_t,
     w = 0.0;
   }
   // total specific energy
-  rE = mat_blk[0]->eos_totalenergy( r, u, v, w, p );
+  rE = mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -77,7 +77,7 @@ CompFlowProblemSodShocktube::initialize( ncomp_t,
 tk::InitializeFn::result_type
 CompFlowProblemSodShocktube::analyticSolution( ncomp_t system,
                                                ncomp_t,
-                                        const std::vector< EoS_Base* >& mat_blk,
+                                              const std::vector< EOS >& mat_blk,
                                                tk::real x,
                                                tk::real,
                                                tk::real,

@@ -27,7 +27,7 @@ using inciter::CompFlowProblemGaussHump;
 tk::InitializeFn::result_type
 CompFlowProblemGaussHump::initialize( ncomp_t system,
                                       ncomp_t ncomp,
-                                      const std::vector< EoS_Base* >& mat_blk,
+                                      const std::vector< EOS >& mat_blk,
                                       tk::real x,
                                       tk::real y,
                                       tk::real,
@@ -66,7 +66,7 @@ CompFlowProblemGaussHump::initialize( ncomp_t system,
   v = 1;
   w = 0;
   // total specific energy
-  rE = mat_blk[0]->eos_totalenergy( r, u, v, w, p );
+  rE = mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p );
 
   return {{ r, r*u, r*v, r*w, rE }};
 }
@@ -74,7 +74,7 @@ CompFlowProblemGaussHump::initialize( ncomp_t system,
 tk::InitializeFn::result_type
 CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
                                             ncomp_t ncomp,
-                                        const std::vector< EoS_Base* >& mat_blk,
+                                            const std::vector< EOS >& mat_blk,
                                             tk::real x,
                                             tk::real y,
                                             tk::real,
@@ -110,7 +110,7 @@ CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
   auto v = 1.0;
   auto w = 0.0;
   // total specific energy
-  auto E = mat_blk[0]->eos_totalenergy( r, u, v, w, p ) / r;
+  auto E = mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p ) / r;
 
   return {{ r, u, v, w, E, p }};
 }

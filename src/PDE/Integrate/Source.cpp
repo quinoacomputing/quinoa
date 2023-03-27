@@ -21,7 +21,7 @@
 
 void
 tk::srcInt( ncomp_t system,
-            const std::vector< inciter::EoS_Base* >& mat_blk,
+            const std::vector< inciter::EOS >& mat_blk,
             real t,
             const std::size_t ndof,
             const std::size_t nelem,
@@ -144,7 +144,7 @@ tk::update_rhs( const std::size_t ndof,
 
 void
 tk::srcIntFV( ncomp_t system,
-              const std::vector< inciter::EoS_Base* >& mat_blk,
+              const std::vector< inciter::EOS >& mat_blk,
               real t,
               const std::size_t nelem,
               const Fields& geoElem,
