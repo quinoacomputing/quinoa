@@ -24,6 +24,7 @@ namespace tk {
 
 void
 surfInt( ncomp_t system,
+         const bool pref,
          std::size_t nmat,
          const std::vector< inciter::EOS >& mat_blk,
          real t,
@@ -47,6 +48,7 @@ surfInt( ncomp_t system,
 // *****************************************************************************
 //  Compute internal surface flux integrals
 //! \param[in] system Equation system index
+//! \param[in] pref Indicator for p-adaptive algorithm
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] t Physical time
@@ -175,9 +177,9 @@ surfInt( ncomp_t system,
         dof_er = ndofel[er];
       }
 
-      // For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
-      // for solution evaluation should be 4
-      if(ncomp > 5) {
+      // For multi-material p-adaptive simulation, when dofel = 1, p0p1 is
+      // applied and ndof for solution evaluation should be 4
+      if(ncomp > 5 && pref) {
         if(dof_el == 1)
           dof_el = 4;
         if(dof_er == 1)

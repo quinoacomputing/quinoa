@@ -238,6 +238,7 @@ class DGPDE {
 
     //! Public interface to computing the P1 right-hand side vector
     void rhs( tk::real t,
+              const bool pref,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
@@ -249,7 +250,7 @@ class DGPDE {
               const std::vector< std::size_t >& ndofel,
               tk::Fields& R ) const
     {
-      self->rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
+      self->rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
                  ndofel, R );
     }
 
@@ -404,6 +405,7 @@ class DGPDE {
                                     tk::Fields&,
                                     std::size_t ) const = 0;
       virtual void rhs( tk::real,
+                        const bool,
                         const tk::Fields&,
                         const tk::Fields&,
                         const inciter::FaceData&,
@@ -560,6 +562,7 @@ class DGPDE {
       }
       void rhs(
         tk::real t,
+        const bool pref,
         const tk::Fields& geoFace,
         const tk::Fields& geoElem,
         const inciter::FaceData& fd,
@@ -571,7 +574,7 @@ class DGPDE {
         const std::vector< std::size_t >& ndofel,
         tk::Fields& R ) const override
       {
-        data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
+        data.rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
                   ndofel, R );
       }
       void eval_ndof( std::size_t nunk,

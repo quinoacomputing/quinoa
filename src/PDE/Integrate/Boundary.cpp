@@ -27,6 +27,7 @@ namespace tk {
 
 void
 bndSurfInt( ncomp_t system,
+            const bool pref,
             std::size_t nmat,
             const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
@@ -55,6 +56,7 @@ bndSurfInt( ncomp_t system,
 //!   all faces for a particular boundary condition type, configured by the state
 //!   function
 //! \param[in] system Equation system index
+//! \param[in] pref Indicator for p-adaptive algorithm
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -163,9 +165,9 @@ bndSurfInt( ncomp_t system,
             dof_el = ndofel[el];
           }
 
-          // For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
+          // For multi-material p-adaptive simulation, when dofel = 1, p0p1 is applied and ndof
           // for solution evaluation should be 4
-          if(ncomp > 5 && dof_el == 1)
+          if(ncomp > 5 && dof_el == 1 && pref)
             dof_el = 4;
 
           std::array< tk::real, 3> ref_gp_l{

@@ -20,6 +20,7 @@
 
 void
 tk::volInt( ncomp_t system,
+            const bool pref,
             std::size_t nmat,
             real t,
             const std::vector< inciter::EOS >& mat_blk,
@@ -39,6 +40,7 @@ tk::volInt( ncomp_t system,
 // *****************************************************************************
 //  Compute volume integrals for DG
 //! \param[in] system Equation system index
+//! \param[in] pref Indicator for p-adaptive algorithm
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] t Physical time
 //! \param[in] mat_blk EOS material block
@@ -94,13 +96,14 @@ tk::volInt( ncomp_t system,
       auto jacInv =
               inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-      // Compute the derivatives of basis function for DG(P1)
-      auto dBdx = eval_dBdx_p1( ndofel[e], jacInv );
-
-      // Local degree of freedom used to evaluate solution
+      // For multi-material p-adaptive simulation, when dofel = 1 , p0p1 is
+      // applied and ndof for solution evaluation should be 4
       auto dof_el = ndofel[e];
-      if(ncomp > 5 && dof_el == 1)
+      if(ncomp > 5 && pref && dof_el == 1)
         dof_el = 4;
+
+      // Compute the derivatives of basis function for second order terms
+      auto dBdx = eval_dBdx_p1( dof_el, jacInv );
 
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)

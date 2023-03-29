@@ -29,6 +29,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! Compute volume integrals of non-conservative terms for multi-material DG
 void
 nonConservativeInt( ncomp_t system,
+                    const bool pref,
                     std::size_t nmat,
                     const std::vector< inciter::EOS >& mat_blk,
                     const std::size_t ndof,
@@ -76,6 +77,7 @@ nonConservativeIntFV(
 //! Compute volume integrals of pressure relaxation terms in multi-material DG
 void
 pressureRelaxationInt( ncomp_t system,
+                       const bool pref,
                        std::size_t nmat,
                        const std::vector< inciter::EOS >& mat_blk,
                        const std::size_t ndof,

@@ -1153,7 +1153,7 @@ DG::refine_ndof()
   const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
   std::vector<std::size_t> node_ndof(npoin, 1);
 
-  // Mark the max ndof for each node and store in node_ndof 
+  // Mark the max ndof for each node and store in node_ndof
   for(std::size_t e = 0; e < nelem; e++)
   {
     for(std::size_t inode = 0; inode < 4; inode++)
@@ -1375,6 +1375,7 @@ DG::solve( tk::real newdt )
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
@@ -1391,9 +1392,9 @@ DG::solve( tk::real newdt )
     physT += 0.5*d->Dt();
   }
 
-  g_dgpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-    myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
-    m_u, m_p, m_ndof, m_rhs );
+  g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+    myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+    myGhosts()->m_coord, m_u, m_p, m_ndof, m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)

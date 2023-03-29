@@ -375,7 +375,7 @@ class CompFlow {
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto ncomp = unk.nprop() / rdof;
- 
+
       for(std::size_t e=0; e<fd.Esuel().size()/4; e++)
       {
         if(ndofel[e] == 1)
@@ -405,6 +405,7 @@ class CompFlow {
 
     //! Compute right hand side
     //! \param[in] t Physical time
+    //! \param[in] pref Indicator for p-adaptive algorithm
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
@@ -416,6 +417,7 @@ class CompFlow {
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
+              const bool pref,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
@@ -460,7 +462,7 @@ class CompFlow {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_mat_blk, t, ndof, rdof, inpoel,
+      tk::surfInt( m_system, pref, 1, m_mat_blk, t, ndof, rdof, inpoel,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    R, vriem, riemannLoc, riemannDeriv );
 
@@ -470,13 +472,13 @@ class CompFlow {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, 1, t, m_mat_blk, ndof, rdof,
+        tk::volInt( m_system, pref, 1, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
                     U, P, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, 1, m_mat_blk, ndof, rdof, b.first,
+        tk::bndSurfInt( m_system, pref, 1, m_mat_blk, ndof, rdof, b.first,
                         fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                         velfn, b.second, U, P, ndofel, R, vriem, riemannLoc,
                         riemannDeriv );

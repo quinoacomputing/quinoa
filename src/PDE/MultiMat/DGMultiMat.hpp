@@ -478,7 +478,7 @@ class MultiMat {
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
-      std::vector< std::vector< std::size_t > > 
+      std::vector< std::vector< std::size_t > >
         varRange(nelem, std::vector<std::size_t>(2, 0));
       if(pref) {  // p-adaptive scheme
         for (std::size_t e=0; e<nelem; ++e) {
@@ -502,7 +502,7 @@ class MultiMat {
             varRange[e][1] = m_ncomp-1;
         }
       }
-      
+
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
       {
@@ -703,6 +703,7 @@ class MultiMat {
 
     //! Compute right hand side
     //! \param[in] t Physical time
+    //! \param[in] pref Indicator for p-adaptive algorithm
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
@@ -713,6 +714,7 @@ class MultiMat {
     //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
+              const bool pref,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
@@ -768,7 +770,7 @@ class MultiMat {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, nmat, m_mat_blk, t, ndof, rdof, inpoel,
+      tk::surfInt( m_system, pref, nmat, m_mat_blk, t, ndof, rdof, inpoel,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    R, vriem, riemannLoc, riemannDeriv, intsharp );
 
@@ -778,13 +780,13 @@ class MultiMat {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, nmat, t, m_mat_blk, ndof, rdof, nelem,
+        tk::volInt( m_system, pref, nmat, t, m_mat_blk, ndof, rdof, nelem,
                     inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
                     intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, nmat, m_mat_blk, ndof, rdof,
+        tk::bndSurfInt( m_system, pref, nmat, m_mat_blk, ndof, rdof,
                         b.first, fd, geoFace, geoElem, inpoel, coord, t,
                         m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
@@ -802,19 +804,19 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
+      tk::nonConservativeInt( m_system, pref, nmat, m_mat_blk, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
       // compute finite pressure relaxation terms
-      //if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
-      //{
-      //  const auto ct = g_inputdeck.get< tag::param, tag::multimat,
-      //                                   tag::prelax_timescale >()[m_system];
-      //  tk::pressureRelaxationInt( m_system, nmat, m_mat_blk, ndof,
-      //                             rdof, nelem, inpoel, coord, geoElem, U, P,
-      //                             ndofel, ct, R, intsharp );
-      //}
+      if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
+      {
+        const auto ct = g_inputdeck.get< tag::param, tag::multimat,
+                                         tag::prelax_timescale >()[m_system];
+        tk::pressureRelaxationInt( m_system, pref, nmat, m_mat_blk, ndof,
+                                   rdof, nelem, inpoel, coord, geoElem, U, P,
+                                   ndofel, ct, R, intsharp );
+      }
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element

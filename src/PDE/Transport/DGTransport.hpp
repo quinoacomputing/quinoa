@@ -319,6 +319,7 @@ class Transport {
 
     //! Compute right hand side
     //! \param[in] t Physical time
+    //! \param[in] pref Indicator for p-adaptive algorithm
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
@@ -329,6 +330,7 @@ class Transport {
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
+              const bool pref,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
               const inciter::FaceData& fd,
@@ -370,20 +372,20 @@ class Transport {
       std::vector< std::vector< tk::real > > riemannLoc;
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, m_ncomp, m_mat_blk, t, ndof, rdof,
+      tk::surfInt( m_system, pref, m_ncomp, m_mat_blk, t, ndof, rdof,
                    inpoel, coord, fd, geoFace, geoElem, Upwind::flux,
                    Problem::prescribedVelocity, U, P, ndofel, R, vriem,
                    riemannLoc, riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, t, m_mat_blk, ndof, rdof,
+        tk::volInt( m_system, pref, m_ncomp, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
                     Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, m_ncomp, m_mat_blk, ndof, rdof, 
+        tk::bndSurfInt( m_system, pref, m_ncomp, m_mat_blk, ndof, rdof, 
           b.first, fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
           riemannLoc, riemannDeriv, intsharp );

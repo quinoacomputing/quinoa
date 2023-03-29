@@ -32,6 +32,7 @@ namespace tk {
 
 void
 nonConservativeInt( [[maybe_unused]] ncomp_t system,
+                    const bool pref,
                     std::size_t nmat,
                     const std::vector< inciter::EOS >& mat_blk,
                     const std::size_t ndof,
@@ -112,7 +113,25 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
     auto jacInv =
             inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-    // Compute the derivatives of basis function for DG(P1)
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG).
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
+    // For multi-material p-adaptive simulation, when dofel = 1, p0p1 is
+    // applied and ndof for solution evaluation should be 4
+    if(dof_el == 1 && pref)
+      dof_el = 4;
+
+    // Compute the derivatives of basis function for second order terms
     std::array< std::vector<tk::real>, 3 > dBdx;
     if (ndofel[e] > 1)
       dBdx = eval_dBdx_p1( ndofel[e], jacInv );
@@ -122,24 +141,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
     {
       if (ndofel[e] > 4)
         eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
-
-      // If an rDG method is set up (P0P1), then, currently we compute the P1
-      // basis functions and solutions by default. This implies that P0P1 is
-      // unsupported in the p-adaptive DG (PDG).
-      std::size_t dof_el;
-      if (rdof > ndof)
-      {
-        dof_el = rdof;
-      }
-      else
-      {
-        dof_el = ndofel[e];
-      }
-
-      // For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
-      // for solution evaluation should be 4
-      if(dof_el == 1)
-        dof_el = 4;
 
       // Compute the basis function
       auto B =
@@ -401,6 +402,7 @@ nonConservativeIntFV(
 
 void
 pressureRelaxationInt( ncomp_t system,
+                       const bool pref,
                        std::size_t nmat,
                        const std::vector< inciter::EOS >& mat_blk,
                        const std::size_t ndof,
@@ -425,6 +427,7 @@ pressureRelaxationInt( ncomp_t system,
 //!   high‐order finite element Lagrangian hydrodynamics. International Journal
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
 //! \param[in] system Equation system index
+//! \param[in] pref Indicator for p-adaptive algorithm
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -471,27 +474,27 @@ pressureRelaxationInt( ncomp_t system,
     // Compute the derivatives of basis function for DG(P1)
     std::array< std::vector<real>, 3 > dBdx;
 
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG).
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
+    // For multi-material p-adaptive simulation, when dofel = 1, p0p1 is applied
+    // and ndof for solution evaluation should be 4
+    if(dof_el == 1 && pref)
+      dof_el = 4;
+
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
     {
-      // If an rDG method is set up (P0P1), then, currently we compute the P1
-      // basis functions and solutions by default. This implies that P0P1 is
-      // unsupported in the p-adaptive DG (PDG).
-      std::size_t dof_el;
-      if (rdof > ndof)
-      {
-        dof_el = rdof;
-      }
-      else
-      {
-        dof_el = ndofel[e];
-      }
-
-      // For multi-material simulation, when dofel = 1, p0p1 is applied and ndof
-      // for solution evaluation should be 4
-      if(dof_el == 1)
-        dof_el = 4;
-
       // Compute the basis function
       auto B =
         eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );

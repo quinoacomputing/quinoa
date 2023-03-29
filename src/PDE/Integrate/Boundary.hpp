@@ -32,6 +32,7 @@ using bcconf_t = kw::sideset::info::expect::type;
 //! Compute boundary surface flux integrals for a given boundary type for DG
 void
 bndSurfInt( ncomp_t system,
+            const bool pref,
             std::size_t nmat,
             const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
