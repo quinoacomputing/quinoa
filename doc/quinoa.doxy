@@ -2016,12 +2016,7 @@ INCLUDE_FILE_PATTERNS  = *.def.h \
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
 PREDEFINED             = DOXYGEN_GENERATING_OUTPUT \
-                         HAS_MKL \
-                         HAS_RNGSSE2 \
-                         HAS_TESTU01 \
-                         HAS_ROOT \
-                         HAS_BACKWARD \
-                         HAS_OMEGA_H
+                         HAS_BACKWARD
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

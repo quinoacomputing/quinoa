@@ -25,7 +25,6 @@ target_include_directories(PDE PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
-                           ${MKL_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 

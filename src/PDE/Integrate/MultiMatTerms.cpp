@@ -16,11 +16,7 @@
 
 #include "QuinoaConfig.hpp"
 
-#ifdef HAS_MKL
-  #include <mkl_lapacke.h>
-#else
-  #include <lapacke.h>
-#endif
+#include <lapacke.h>
 
 #include "MultiMatTerms.hpp"
 #include "Vector.hpp"
