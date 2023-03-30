@@ -541,7 +541,7 @@ class MultiMat {
         if(reco_prim[e]) {
           // Adjust the varRange vector based on the index of primitive variable
           varRange[e][0] = 0;
-          varRange[e][1] = velocityIdx(nmat, 3-1);
+          varRange[e][1] = velocityIdx(nmat, 3) - 1;
 
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
@@ -560,6 +560,7 @@ class MultiMat {
 
     //! Limit second-order solution, and primitive quantities separately
     //! \param[in] t Physical time
+    //! \param[in] pref Indicator for p-adaptive algorithm
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
@@ -579,6 +580,7 @@ class MultiMat {
     //! \param[in,out] P Vector of primitives at recent time step
     //! \param[in,out] shockmarker Vector of shock-marker values
     void limit( [[maybe_unused]] tk::real t,
+                const bool pref,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
@@ -617,7 +619,7 @@ class MultiMat {
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
       {
-        VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
+        VertexBasedMultiMat_P2( pref, esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_system, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
           uNodalExtrm, pNodalExtrm, mtInv, flux, U, P, nmat, shockmarker );
       }
@@ -628,13 +630,17 @@ class MultiMat {
     }
 
     //! Update the conservative variable solution for this PDE system
+    //! \param[in] pref Indicator for p-adaptive algorithm
     //! \param[in] prim Array of primitive variables
+    //! \param[in] ndofel Vector of local number of degrees of freedome
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] unk Array of conservative variables
     //! \param[in] nielem Number of internal elements
     //! \details This function computes the updated dofs for conservative
     //!   quantities based on the limited solution
-    void Correct_Conserv( const tk::Fields& prim,
+    void Correct_Conserv( const bool pref,
+                          const tk::Fields& prim,
+                          const std::vector< std::size_t >& ndofel,
                           const tk::Fields& geoElem,
                           tk::Fields& unk,
                           std::size_t nielem ) const
@@ -651,7 +657,8 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      correctLimConservMultiMat(nielem, m_mat_blk, nmat, geoElem, prim, unk);
+      correctLimConservMultiMat(pref, nielem, m_mat_blk, nmat, ndofel, geoElem,
+        prim, unk);
     }
 
 

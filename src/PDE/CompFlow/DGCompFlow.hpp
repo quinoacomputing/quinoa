@@ -320,6 +320,7 @@ class CompFlow {
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] shockmarker Vector of shock-marker values
     void limit( [[maybe_unused]] tk::real t,
+                [[maybe_unused]] const bool pref,
                 [[maybe_unused]] const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
@@ -357,7 +358,9 @@ class CompFlow {
     //! \details This function computes the updated dofs for conservative
     //!   quantities based on the limited solution and is currently not used in
     //!   compflow.
-    void Correct_Conserv( const tk::Fields&,
+    void Correct_Conserv( const bool,
+                          const tk::Fields&,
+                          const std::vector< std::size_t >&,
                           const tk::Fields&,
                           tk::Fields&,
                           std::size_t ) const {}

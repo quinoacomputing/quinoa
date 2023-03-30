@@ -122,6 +122,7 @@ VertexBasedMultiMat_P1(
 //! Kuzmin's vertex-based limiter for multi-material DGP2
 void
 VertexBasedMultiMat_P2(
+  const bool pref,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
@@ -276,7 +277,8 @@ interfaceIndicator( std::size_t nmat,
   std::vector< std::size_t >& matInt );
 
 //! Mark the cells that contain discontinuity according to the interface
-void MarkShockCells ( const std::size_t nelem,
+void MarkShockCells ( const bool pref,
+                      const std::size_t nelem,
                       const std::size_t nmat,
                       const std::size_t system,
                       const std::size_t ndof,
@@ -296,9 +298,11 @@ void MarkShockCells ( const std::size_t nelem,
 //! Update the conservative quantities after limiting for multi-material systems
 void
 correctLimConservMultiMat(
+  const bool pref,
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   std::size_t nmat,
+  const std::vector< std::size_t >& ndofel,
   const tk::Fields& geoElem,
   const tk::Fields& prim,
   tk::Fields& unk );

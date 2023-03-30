@@ -1103,14 +1103,15 @@ DG::lim()
   tk::destroy(m_pNodalExtrmc);
 
   if (rdof > 1) {
-    g_dgpde[d->MeshId()].limit( d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-              myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
-              myGhosts()->m_coord, m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm,
-              m_pNodalExtrm, m_mtInv, m_u, m_p, m_shockmarker );
+    g_dgpde[d->MeshId()].limit( d->T(), pref, myGhosts()->m_geoFace,
+              myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_esup,
+              myGhosts()->m_inpoel, myGhosts()->m_coord, m_ndof, d->Gid(),
+              d->Bid(), m_uNodalExtrm, m_pNodalExtrm, m_mtInv, m_u, m_p,
+              m_shockmarker );
 
     if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
-      g_dgpde[d->MeshId()].Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
-        myGhosts()->m_fd.Esuel().size()/4);
+      g_dgpde[d->MeshId()].Correct_Conserv(pref, m_p, m_ndof,
+        myGhosts()->m_geoElem, m_u, myGhosts()->m_fd.Esuel().size()/4);
   }
 
   // Send limited solution to neighboring chares

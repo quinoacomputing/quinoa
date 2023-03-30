@@ -351,7 +351,7 @@ VertexBasedCompflow_P1(
 
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, 1, system, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(false, nelem, 1, system, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -442,7 +442,7 @@ VertexBasedCompflow_P2(
 
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, 1, system, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(false, nelem, 1, system, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -540,7 +540,7 @@ VertexBasedMultiMat_P1(
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, nmat, system, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(false, nelem, nmat, system, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -655,6 +655,7 @@ VertexBasedMultiMat_P1(
 
 void
 VertexBasedMultiMat_P2(
+  const bool pref,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
@@ -677,6 +678,7 @@ VertexBasedMultiMat_P2(
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
 //  Kuzmin's vertex-based limiter for multi-material DGP2
+//! \param[in] pref Indicator for p-adaptive algorithm
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
@@ -716,7 +718,7 @@ VertexBasedMultiMat_P2(
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, nmat, system, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(pref, nelem, nmat, system, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -2156,7 +2158,8 @@ interfaceIndicator( std::size_t nmat,
   return intInd;
 }
 
-void MarkShockCells ( const std::size_t nelem,
+void MarkShockCells ( const bool pref,
+                      const std::size_t nelem,
                       const std::size_t nmat,
                       const std::size_t system,
                       const std::size_t ndof,
@@ -2175,6 +2178,7 @@ void MarkShockCells ( const std::size_t nelem,
 // *****************************************************************************
 //  Mark the cells that contain discontinuity according to the interface
 //    condition
+//! \param[in] pref Indicator for p-adaptive algorithm
 //! \param[in] nelem Number of elements
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] system Equation system index
@@ -2343,12 +2347,14 @@ void MarkShockCells ( const std::size_t nelem,
     IC[er] = std::max(IC[er], Ind);
   }
 
-  tk::real power = 0.0;
-  if(rdof == 10)  power = 1.5;
-  else            power = 1.0;
-
   // Loop over element to mark shock cell
   for (std::size_t e=0; e<nelem; ++e) {
+    std::size_t dof_el = pref ? ndofel[e] : rdof;
+
+    tk::real power = 0.0;
+    if(dof_el == 10)  power = 1.5;
+    else              power = 1.0;
+
     // Evaluate the threshold
     auto thres = coeff * std::pow(geoElem(e, 4), power);
     if(IC[e] > thres)
@@ -2360,17 +2366,21 @@ void MarkShockCells ( const std::size_t nelem,
 
 void
 correctLimConservMultiMat(
+  const bool pref,
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   std::size_t nmat,
+  const std::vector< std::size_t >& ndofel,
   const tk::Fields& geoElem,
   const tk::Fields& prim,
   tk::Fields& unk )
 // *****************************************************************************
 //  Update the conservative quantities after limiting for multi-material systems
+//! \param[in] pref Indicator for p-adaptive algorithm
 //! \param[in] nelem Number of internal elements
 //! \param[in] mat_blk EOS material block
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in] geoElem Element geometry array
 //! \param[in] prim Array of primitive variables
 //! \param[in,out] unk Array of conservative variables
@@ -2383,14 +2393,19 @@ correctLimConservMultiMat(
   std::size_t nprim = prim.nprop()/rdof;
 
   for (std::size_t e=0; e<nelem; ++e) {
+    // Determine the local degree of freedom
+    std::size_t dof_el = pref ? ndofel[e] : rdof;
+    if(pref && dof_el == 1)
+      dof_el = 4;
+
     // Here we pre-compute the right-hand-side vector. The reason that the
     // lhs in DG.cpp is not used is that the size of this vector in this
     // projection procedure should be rdof instead of ndof.
-    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
+    auto L = tk::massMatrixDubiner(dof_el, geoElem(e,0));
 
-    std::vector< tk::real > R((nmat+3)*rdof, 0.0);
+    std::vector< tk::real > R((nmat+3)*dof_el, 0.0);
 
-    auto ng = tk::NGvol(rdof);
+    auto ng = tk::NGvol(dof_el);
 
     // Arrays for quadrature points
     std::array< std::vector< tk::real >, 3 > coordgp;
@@ -2406,15 +2421,15 @@ correctLimConservMultiMat(
     // Loop over quadrature points in element e
     for (std::size_t igp=0; igp<ng; ++igp) {
       // Compute the basis function
-      auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+      auto B = tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
                                coordgp[2][igp] );
 
       auto w = wgp[igp] * geoElem(e, 0);
 
       // Evaluate the solution at quadrature point
-      auto U = tk::eval_state( ncomp, rdof, rdof, e, unk,  B,
+      auto U = tk::eval_state( ncomp, rdof, dof_el, e, unk,  B,
                                {0, ncomp-1} );
-      auto P = tk::eval_state( nprim, rdof, rdof, e, prim, B,
+      auto P = tk::eval_state( nprim, rdof, dof_el, e, prim, B,
                                {0, nprim-1} );
 
       // Solution vector that stores the material energy and bulk momentum
@@ -2446,24 +2461,24 @@ correctLimConservMultiMat(
 
       // Evaluate the righ-hand-side vector
       for(std::size_t k = 0; k < nmat+3; k++) {
-        auto mark = k * rdof;
-        for(std::size_t idof = 0; idof < rdof; idof++)
+        auto mark = k * dof_el;
+        for(std::size_t idof = 0; idof < dof_el; idof++)
           R[mark+idof] += w * s[k] * B[idof];
       }
     }
 
     // Update the high order dofs of the material energy
     for(std::size_t imat = 0; imat < nmat; imat++) {
-      auto mark = imat * rdof;
-      for(std::size_t idof = 1; idof < rdof; idof++)
+      auto mark = imat * dof_el;
+      for(std::size_t idof = 1; idof < dof_el; idof++)
         unk(e, energyDofIdx(nmat, imat, rdof, idof)) =
           R[mark+idof] / L[idof];
     }
 
     // Update the high order dofs of the bulk momentum
     for(std::size_t idir = 0; idir < 3; idir++) {
-      auto mark = (nmat + idir) * rdof;
-      for(std::size_t idof = 1; idof < rdof; idof++)
+      auto mark = (nmat + idir) * dof_el;
+      for(std::size_t idof = 1; idof < dof_el; idof++)
         unk(e, momentumDofIdx(nmat, idir, rdof, idof)) =
           R[mark+idof] / L[idof];
     }

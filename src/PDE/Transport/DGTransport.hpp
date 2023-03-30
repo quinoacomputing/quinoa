@@ -273,6 +273,7 @@ class Transport {
 //    //!   variables
     //! \param[in,out] U Solution vector at recent time step
     void limit( [[maybe_unused]] tk::real t,
+                [[maybe_unused]] const bool pref,
                 [[maybe_unused]] const tk::Fields& geoFace,
                 const tk::Fields&,
                 const inciter::FaceData& fd,
@@ -304,7 +305,9 @@ class Transport {
     //! \details This function computes the updated dofs for conservative
     //!   quantities based on the limited solution and is currently not used in
     //!   transport.
-    void Correct_Conserv( const tk::Fields&,
+    void Correct_Conserv( const bool,
+                          const tk::Fields&,
+                          const std::vector< std::size_t >&,
                           const tk::Fields&,
                           tk::Fields&,
                           std::size_t ) const {}
@@ -385,7 +388,7 @@ class Transport {
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, pref, m_ncomp, m_mat_blk, ndof, rdof, 
+        tk::bndSurfInt( m_system, pref, m_ncomp, m_mat_blk, ndof, rdof,
           b.first, fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
           riemannLoc, riemannDeriv, intsharp );

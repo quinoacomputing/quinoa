@@ -198,6 +198,7 @@ class DGPDE {
 
     //! Public interface to limiting the second-order solution
     void limit( tk::real t,
+                const bool pref,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
@@ -214,17 +215,19 @@ class DGPDE {
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
     {
-      self->limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                   bid, uNodalExtrm, pNodalExtrm, mtInv, U, P, shockmarker );
+      self->limit( t, pref, geoFace, geoElem, fd, esup, inpoel, coord, ndofel,
+                   gid, bid, uNodalExtrm, pNodalExtrm, mtInv, U, P, shockmarker );
     }
 
     //! Public interface to update the conservative variable solution
-    void Correct_Conserv( const tk::Fields& prim,
+    void Correct_Conserv( const bool pref,
+                          const tk::Fields& prim,
+                          const std::vector< std::size_t >& ndofel,
                           const tk::Fields& geoElem,
                           tk::Fields& unk,
                           std::size_t nielem ) const
     {
-      self->Correct_Conserv( prim, geoElem, unk, nielem );
+      self->Correct_Conserv( pref, prim, ndofel, geoElem, unk, nielem );
     }
 
     //! Public interface to reset the high order solution for p-adaptive scheme
@@ -384,6 +387,7 @@ class DGPDE {
                                 const bool,
                                 const std::vector< std::size_t >& ) const = 0;
       virtual void limit( tk::real,
+                          const bool,
                           const tk::Fields&,
                           const tk::Fields&,
                           const inciter::FaceData&,
@@ -400,7 +404,9 @@ class DGPDE {
                           tk::Fields&,
                           tk::Fields&,
                           std::vector< std::size_t >& ) const = 0;
-      virtual void Correct_Conserv( const tk::Fields&,
+      virtual void Correct_Conserv( const bool,
+                                    const tk::Fields&,
+                                    const std::vector< std::size_t >&,
                                     const tk::Fields&,
                                     tk::Fields&,
                                     std::size_t ) const = 0;
@@ -526,6 +532,7 @@ class DGPDE {
           pref, ndofel );
       }
       void limit( tk::real t,
+                  const bool pref,
                   const tk::Fields& geoFace,
                   const tk::Fields& geoElem,
                   const inciter::FaceData& fd,
@@ -543,15 +550,17 @@ class DGPDE {
                   tk::Fields& P,
                   std::vector< std::size_t >& shockmarker ) const override
       {
-        data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
+        data.limit( t, pref, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
                     bid, uNodalExtrm, pNodalExtrm, mtInv, U, P, shockmarker );
       }
-      void Correct_Conserv( const tk::Fields& prim,
+      void Correct_Conserv( const bool pref,
+                          const tk::Fields& prim,
+                          const std::vector< std::size_t >& ndofel,
                           const tk::Fields& geoElem,
                           tk::Fields& unk,
                           std::size_t nielem ) const override
       {
-        data.Correct_Conserv( prim, geoElem, unk, nielem );
+        data.Correct_Conserv( pref, prim, ndofel, geoElem, unk, nielem );
       }
       void resetAdapSol( const inciter::FaceData& fd,
                          tk::Fields& unk,
