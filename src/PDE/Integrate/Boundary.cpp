@@ -270,7 +270,7 @@ update_rhs_bc ( ncomp_t ncomp,
     }
 
     // Divergence of velocity multiples basis fucntion( d(uB) / dx )
-    for(std::size_t idof = 0; idof < ndof; idof++)
+    for(std::size_t idof = 0; idof < ndof_l; idof++)
       riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
   }
 }

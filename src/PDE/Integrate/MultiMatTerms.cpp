@@ -174,16 +174,16 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 
       // compute non-conservative terms
       std::vector< std::vector< tk::real > > ncf
-        (ncomp, std::vector<tk::real>(ndof,0.0));
+        (ncomp, std::vector<tk::real>(ndofel[e],0.0));
 
       for (std::size_t idir=0; idir<3; ++idir)
-        for(std::size_t idof=0; idof<ndof; ++idof)
+        for(std::size_t idof=0; idof<ndofel[e]; ++idof)
           ncf[momentumIdx(nmat, idir)][idof] = 0.0;
 
       for (std::size_t k=0; k<nmat; ++k)
       {
         // evaluate non-conservative term for energy equation
-        for(std::size_t idof=0; idof<ndof; ++idof)
+        for(std::size_t idof=0; idof<ndofel[e]; ++idof)
         {
           ncf[densityIdx(nmat, k)][idof] = 0.0;
           for (std::size_t idir=0; idir<3; ++idir)
@@ -208,7 +208,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
         // In summary, high-order discretization for non-conservative terms in
         // volume fraction equations is avoided for sharp interface problems.
         if (ndof <= 4 || intsharp == 1) {
-          for(std::size_t idof=0; idof<ndof; ++idof)
+          for(std::size_t idof=0; idof<ndofel[e]; ++idof)
             ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
                                            * riemannDeriv[3*nmat+idof][e];
         } else if (intsharp == 0) {     // If DGP2 without THINC
@@ -283,7 +283,7 @@ updateRhsNonCons(
     for (std::size_t k=volfracIdx(nmat,0); k<volfracIdx(nmat,nmat); ++k)
     {
       auto mark = k*ndof;
-      for(std::size_t idof = 1; idof < ndof; idof++)
+      for(std::size_t idof = 1; idof < ndof_el; idof++)
         R(e, mark+idof) += wt * ncf[k][idof];
     }
 
@@ -291,7 +291,7 @@ updateRhsNonCons(
     for (std::size_t c=energyIdx(nmat,0); c<energyIdx(nmat,nmat); ++c)
     {
       auto mark = c*ndof;
-      for(std::size_t idof = 1; idof < ndof; idof++)
+      for(std::size_t idof = 1; idof < ndof_el; idof++)
         R(e, mark+idof) += wt * ncf[c][idof] * B[idof];
     }
   }
@@ -540,7 +540,7 @@ pressureRelaxationInt( ncomp_t system,
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
       }
 
-      updateRhsPre( ncomp, ndof, dof_el, wt, e, B, s_prelax, R );
+      updateRhsPre( ncomp, ndof, ndofel[e], wt, e, B, s_prelax, R );
     }
   }
 }

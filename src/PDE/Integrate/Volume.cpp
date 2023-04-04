@@ -96,11 +96,7 @@ tk::volInt( ncomp_t system,
       auto jacInv =
               inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-      // For multi-material p-adaptive simulation, when dofel = 1 , p0p1 is
-      // applied and ndof for solution evaluation should be 4
       auto dof_el = ndofel[e];
-      if(ncomp > 5 && pref && dof_el == 1)
-        dof_el = 4;
 
       // Compute the derivatives of basis function for second order terms
       auto dBdx = eval_dBdx_p1( dof_el, jacInv );
