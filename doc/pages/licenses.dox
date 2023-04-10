@@ -104,12 +104,6 @@ executable.
   - Web: http://www.open-mpi.org
   - License: @subpage openmpi_license_page
 
-\subsection mkl_license Intel Math Kernel Library for BLAS/LAPACK and random number generation
-  - Optional
-  - Must be present system-wide
-  - Web: https://software.intel.com/en-us/intel-mkl
-  - License: @subpage mkl_license_page
-
 \subsection backwardcpp_license BackwardCpp for generating backtraces
   - Optional
   - Searched for and if not found, built by default
@@ -126,12 +120,6 @@ executable.
   - Searched for and if not found, built by default
   - Web: https://github.com/google/highwayhash
   - License: @subpage highwayhash_license_page
-
-\subsection omega_h_license Omega_h for reading large tetrahedron meshes in parallel
-  - Optional
-  - Not searched for by default
-  - Web: https://github.com/ibaned/omega_h
-  - License: @subpage omega_h_license_page
 
 \subsection brigand_license Brigand for template meta-programming
   - Required

@@ -37,12 +37,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${EXAM2M_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${Zoltan2_LIBRARIES}
-                      ${LAPACKE_LIBRARIES}    # only if MKL not found
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${LAPACKE_LIBRARIES}
                       ${NETCDF_LIBRARIES}     # only for static link
                       ${HDF5_HL_LIBRARIES}    # only for static link
                       ${HDF5_C_LIBRARIES}

@@ -949,14 +949,14 @@ class CompFlow {
                     re = m_mat_blk[0].compute< EOS::totalenergy >( m_fr,
                       m_fu[0], m_fu[1], m_fu[2], m_fp );
                   } else if (M > -1.0 && M < 0.0) {     // subsonic inflow
+                    auto pr = m_mat_blk[0].compute< EOS::pressure >
+                                                  ( r, ru/r, rv/r, rw/r, re );
                     r  = m_fr;
                     ru = m_fr * m_fu[0];
                     rv = m_fr * m_fu[1];
                     rw = m_fr * m_fu[2];
                     re = m_mat_blk[0].compute< EOS::totalenergy >( m_fr,
-                      m_fu[0], m_fu[1], m_fu[2],
-                      m_mat_blk[0].compute< EOS::pressure >( r, ru/r, rv/r,
-                      rw/r, re ) );
+                      m_fu[0], m_fu[1], m_fu[2], pr );
                   } else if (M >= 0.0 && M < 1.0) {     // subsonic outflow
                     re = m_mat_blk[0].compute< EOS::totalenergy >( r, ru/r,
                       rv/r, rw/r, m_fp );
