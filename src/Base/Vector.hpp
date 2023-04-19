@@ -15,6 +15,8 @@
 #include <array>
 #include <cmath>
 #include <vector>
+#include <cblas.h>
+#include <lapacke.h>
 
 #include "Types.hpp"
 #include "Exception.hpp"
@@ -385,6 +387,90 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
     }
   }
   point = x;
+}
+
+//! \brief Get the Right Cauchy-Green strain tensor from the inverse deformation
+//! gradient tensor.
+//! \param[in] g Inverse deformation gradient tensor
+//! \return Right Cauchy-Green tensor
+inline std::array< std::array< tk::real, 3 >, 3 >
+getRightCauchyGreen(const std::array< std::array< tk::real, 3 >, 3 >& g)
+{
+  // allocate pointers as matrices
+  double *G, *C;
+  int m(3);
+  G = (double *)malloc( m*m*sizeof( double ) );
+  C = (double *)malloc( m*m*sizeof( double ) );
+
+  // initialize c-matrices
+  for (std::size_t i=0; i<m; ++i) {
+    for (std::size_t j=0; j<m; ++j)
+      G[i*m+j] = g[i][j];
+  }
+
+  // get g.g^T
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+    m, m, m, 1.0, G, m, G, m, 0.0, C, m);
+
+  // get inv(g.g^T)
+  lapack_int *ipiv;
+  ipiv = (lapack_int *)malloc( m*sizeof( lapack_int ) );
+
+  #ifndef NDEBUG
+  lapack_int ierr =
+  #endif
+    LAPACKE_dgetrf(LAPACK_ROW_MAJOR, m, m, C, m, ipiv);
+  Assert(ierr==0, "Lapack error in LU factorization of g.g^T");
+
+  #ifndef NDEBUG
+  lapack_int jerr =
+  #endif
+    LAPACKE_dgetri(LAPACK_ROW_MAJOR, m, C, m, ipiv);
+  Assert(jerr==0, "Lapack error in inverting g.g^T");
+
+  return {{ {C[0], C[1], C[2]}, {C[3], C[4], C[5]}, {C[6], C[7], C[8]} }};
+}
+
+//! \brief Get the Left Cauchy-Green strain tensor from the inverse deformation
+//! gradient tensor.
+//! \param[in] g Inverse deformation gradient tensor
+//! \return Left Cauchy-Green tensor
+inline std::array< std::array< tk::real, 3 >, 3 >
+getLeftCauchyGreen(const std::array< std::array< tk::real, 3 >, 3 >& g)
+{
+  // allocate pointers as matrices
+  double *G, *b;
+  int m(3);
+  G = (double *)malloc( m*m*sizeof( double ) );
+  b = (double *)malloc( m*m*sizeof( double ) );
+
+  // initialize c-matrices
+  for (std::size_t i=0; i<m; ++i) {
+    for (std::size_t j=0; j<m; ++j)
+      G[i*m+j] = g[i][j];
+  }
+
+  // get g^T.g
+  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+    m, m, m, 1.0, G, m, G, m, 0.0, b, m);
+
+  // get inv(g^T.g)
+  lapack_int *ipiv;
+  ipiv = (lapack_int *)malloc( m*sizeof( lapack_int ) );
+
+  #ifndef NDEBUG
+  lapack_int ierr =
+  #endif
+    LAPACKE_dgetrf(LAPACK_ROW_MAJOR, m, m, b, m, ipiv);
+  Assert(ierr==0, "Lapack error in LU factorization of g^T.g");
+
+  #ifndef NDEBUG
+  lapack_int jerr =
+  #endif
+    LAPACKE_dgetri(LAPACK_ROW_MAJOR, m, b, m, ipiv);
+  Assert(jerr==0, "Lapack error in inverting g^T.g");
+
+  return {{ {b[0], b[1], b[2]}, {b[3], b[4], b[5]}, {b[6], b[7], b[8]} }};
 }
 
 } // tk::

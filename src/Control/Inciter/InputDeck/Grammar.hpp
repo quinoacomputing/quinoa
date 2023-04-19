@@ -537,15 +537,16 @@ namespace grm {
 
         // set ncomp based on nmat
         auto m = nmat.back();
-        auto ntot = m + m + 3 + m;
-        // if solid EOS, add components
-        const auto& matprop = stack.template get< param, eq, tag::material >();
-        for (const auto& mtype : matprop.back()) {
-          if (mtype.template get< tag::eos >() ==
-            inciter::ctr::MaterialType::SMALLSHEARSOLID) {
-            ntot += 9;
-          }
-        }
+        // for now, add deformation tensor components for all materials
+        auto ntot = m + m + 3 + m + 9*m;
+        //// if solid EOS, add components
+        //const auto& matprop = stack.template get< param, eq, tag::material >();
+        //for (const auto& mtype : matprop.back()) {
+        //  if (mtype.template get< tag::eos >() ==
+        //    inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+        //    ntot += 9;
+        //  }
+        //}
 
         ncomp.push_back( ntot );
       }

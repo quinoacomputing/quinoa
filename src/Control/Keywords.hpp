@@ -3520,9 +3520,11 @@ struct smallshearsolid_info {
     "Select the SMALLSHEARSOLID equation of state"; }
   static std::string longDescription() { return
     R"(This keyword is used to select the small shear strain equation of state
-    for solids. See Plohr, J. N., & Plohr, B. J. (2005). Linearized analysis of
-    Richtmyer–Meshkov flow for elastic materials. Journal of Fluid Mechanics,
-    537, 55-89 for further details.)"; }
+    for solids. This EOS uses a small-shear approximation for the elastic
+    contribution, and a stiffened gas EOS for the hydrodynamic contribution of
+    the internal energy See Plohr, J. N., & Plohr, B. J. (2005). Linearized
+    analysis of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
+    Mechanics, 537, 55-89 for further details.)"; }
 };
 using smallshearsolid = keyword< smallshearsolid_info,
   TAOCPP_PEGTL_STRING("smallshearsolid") >;
