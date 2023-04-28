@@ -115,6 +115,24 @@ dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
+//! Compute the dot-product of a matrix and a vector
+//! \param[in] m Matrix
+//! \param[in] v vector
+//! \return Dot-product
+inline std::array< real, 3 >
+matvec(
+  const std::array< std::array< real, 3 >, 3 >& m,
+  const std::array< real, 3 >& v )
+{
+  std::array< real, 3 > mv{0, 0, 0};
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      mv[i] += m[i][j]*v[j];
+  }
+
+  return mv;
+}
+
 //! Compute length of a vector
 //! \param[in] x X coordinate of vector
 //! \param[in] y Y coordinate of vector
@@ -393,8 +411,8 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
 //! gradient tensor.
 //! \param[in] g Inverse deformation gradient tensor
 //! \return Right Cauchy-Green tensor
-inline std::array< std::array< tk::real, 3 >, 3 >
-getRightCauchyGreen(const std::array< std::array< tk::real, 3 >, 3 >& g)
+inline std::array< std::array< real, 3 >, 3 >
+getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
   // allocate pointers as matrices
   double *G, *C;
@@ -435,8 +453,8 @@ getRightCauchyGreen(const std::array< std::array< tk::real, 3 >, 3 >& g)
 //! gradient tensor.
 //! \param[in] g Inverse deformation gradient tensor
 //! \return Left Cauchy-Green tensor
-inline std::array< std::array< tk::real, 3 >, 3 >
-getLeftCauchyGreen(const std::array< std::array< tk::real, 3 >, 3 >& g)
+inline std::array< std::array< real, 3 >, 3 >
+getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
   // allocate pointers as matrices
   double *G, *b;

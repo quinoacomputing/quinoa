@@ -38,7 +38,7 @@ class SmallShearSolid {
     //!   momentum, total energy, and inverse deformation gradient tensor using
     //!   the SmallShearSolid equation of state
     std::array< std::array< tk::real, 3 >, 3 >
-    cauchyStressTensor(
+    CauchyStress(
       tk::real arho,
       tk::real u,
       tk::real v,
@@ -61,7 +61,8 @@ class SmallShearSolid {
                       tk::real temp ) const;
 
     //! Calculate pressure from the material density, momentum and total energy
-    tk::real pressure( tk::real arho,
+    tk::real pressure(
+      tk::real arho,
       tk::real u,
       tk::real v,
       tk::real w,
@@ -71,14 +72,20 @@ class SmallShearSolid {
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! Calculate speed of sound from the material density and material pressure
-    tk::real soundspeed( tk::real arho,
-                         tk::real apr,
-                         tk::real alpha=1.0,
-                         std::size_t imat=0 ) const;
+    tk::real soundspeed(
+      tk::real arho,
+      tk::real apr,
+      tk::real alpha=1.0,
+      std::size_t imat=0,
+      tk::real asigma_nn=0.0,
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
+      const std::array< tk::real, 3 >& adefgradn={{}},
+      const std::array< tk::real, 3 >& asigman={{}} ) const;
 
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
-    tk::real totalenergy( tk::real rho,
+    tk::real totalenergy(
+      tk::real rho,
       tk::real u,
       tk::real v,
       tk::real w,
@@ -87,12 +94,14 @@ class SmallShearSolid {
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
-    tk::real temperature( tk::real arho,
-                          tk::real u,
-                          tk::real v,
-                          tk::real w,
-                          tk::real arhoE,
-                          tk::real alpha=1.0 ) const;
+    tk::real temperature(
+      tk::real arho,
+      tk::real u,
+      tk::real v,
+      tk::real w,
+      tk::real arhoE,
+      tk::real alpha=1.0,
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(

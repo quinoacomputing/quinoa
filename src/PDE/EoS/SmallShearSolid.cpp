@@ -94,7 +94,7 @@ SmallShearSolid::pressure(
 //!   SmallShearSolid EoS
 // *************************************************************************
 {
-  // deformation gradient: 
+  // deformation gradient
   auto defgrad = adefgrad;
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
@@ -129,7 +129,7 @@ SmallShearSolid::pressure(
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
-SmallShearSolid::cauchyStressTensor(
+SmallShearSolid::CauchyStress(
   tk::real arho,
   tk::real u,
   tk::real v,
@@ -154,15 +154,14 @@ SmallShearSolid::cauchyStressTensor(
 //!   for the single-material system, this argument can be left unspecified
 //!   by the calling code
 //! \param[in] adefgrad Material inverse deformation gradient tensor
-//!   (alpha_k * g_k). Default is 0, so that for the single-material system,
-//!   this argument can be left unspecified by the calling code
-//! \return Material partial pressure (alpha_k * p_k) calculated using the
-//!   SmallShearSolid EoS
+//!   (alpha_k * g_k).
+//! \return Material Cauchy stress tensor (alpha_k * sigma_k) calculated using
+//!   the SmallShearSolid EoS
 // *************************************************************************
 {
-  std::array< std::array< tk::real, 3 >, 3 > sig{{{0,0,0}, {0,0,0}, {0,0,0}}};
+  std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
 
-  // deformation gradient: 
+  // deformation gradient
   auto defgrad = adefgrad;
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
@@ -194,12 +193,12 @@ SmallShearSolid::cauchyStressTensor(
   }
 
   // p_mean
-  auto pmean = partpressure/alpha - m_mu * eps2;
+  auto pmean = partpressure - alpha * m_mu * eps2;
 
   // Volumetric component of Cauchy stress tensor
-  sig[0][0] = -pmean;
-  sig[1][1] = -pmean;
-  sig[2][2] = -pmean;
+  asig[0][0] = -pmean;
+  asig[1][1] = -pmean;
+  asig[2][2] = -pmean;
 
   // Deviatoric (trace-free) part of volume-preserving left Cauchy-Green tensor
   auto devbt = tk::getLeftCauchyGreen(defgrad);
@@ -216,10 +215,10 @@ SmallShearSolid::cauchyStressTensor(
   // Add deviatoric component of Cauchy stress tensor
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
-      sig[i][j] += devbt[i][j];
+      asig[i][j] += alpha*devbt[i][j];
   }
 
-  return sig;
+  return asig;
 }
 
 tk::real
@@ -227,7 +226,11 @@ SmallShearSolid::soundspeed(
   tk::real arho,
   tk::real apr,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  tk::real asigma_nn,
+  const std::array< std::array< tk::real, 3 >, 3 >& adefgrad,
+  const std::array< tk::real, 3 >& /*adefgradn*/,
+  const std::array< tk::real, 3 >& /*asigman*/ ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -238,15 +241,171 @@ SmallShearSolid::soundspeed(
 //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
 //!   for the single-material system, this argument can be left unspecified
 //!   by the calling code
+//! \param[in] asigma_nn Material traction vector in normal direction
+//!   (alpha * sigma_ij * n_j) projected onto the normal vector. Default is 0,
+//!   so that for the single-material system, this argument can be left
+//!   unspecified by the calling code
+//! \param[in] adefgrad Material inverse deformation gradient tensor
+//!   (alpha_k * g_k) with the first dimension aligned to direction in which
+//!   wave speeds are required. Default is 0, so that for the single-material
+//!   system, this argument can be left unspecified by the calling code
+//  //! \param[in] adefgradn Material inverse deformation gradient tensor in
+//  //!   direction of vector n (alpha_k * g_ij * n_j). Default is 0, so that for
+//  //!   the single-material system, this argument can be left unspecified by the
+//  //!   calling code
+//  //! \param[in] asigman Material traction vector in normal direction
+//  //!   (alpha * sigma_ij * n_j ). Default is 0, so that for the single-material
+//  //!   system, this argument can be left unspecified by the calling code
 //! \return Material speed of sound using the SmallShearSolid EoS
 // *************************************************************************
 {
-  auto g = m_gamma;
-  auto p_c = m_pstiff;
+  // deformation gradient
+  auto g = adefgrad;
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      g[i][j] /= alpha;
+  }
 
-  auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
+  tk::real g__11 = g[0][0];
+  tk::real g__12 = g[0][1];
+  tk::real g__13 = g[0][2];
+  tk::real g__21 = g[1][0];
+  tk::real g__22 = g[1][1];
+  tk::real g__23 = g[1][2];
+  tk::real g__31 = g[2][0];
+  tk::real g__32 = g[2][1];
+  tk::real g__33 = g[2][2];
 
-  tk::real a = std::sqrt( g * p_eff / arho );
+  // Only consider 1D longitudinal waves for now
+  std::array< tk::real, 3 > dsigdg;
+  auto C = tk::getRightCauchyGreen(g);
+  auto j2 = tk::determinant(C);
+
+  // d(sigma_11)/d(g_11)
+  dsigdg[0] =
+    /* mu * d(bt_11)/d(g_11) */
+    m_mu*( -2*((std::pow(g__13,2) + std::pow(g__33,2))*std::pow(g__22,2) -
+    2*g__23*(g__12*g__13 + g__32*g__33)*g__22 + (std::pow(g__12,2) +
+    std::pow(g__32,2))*std::pow(g__23,2) + std::pow((g__12*g__33 -
+    g__13*g__32),2))*(g__22*g__33 - g__23*g__32)/(std::pow(j2,(1/3))*
+    std::pow(((g__11*g__33 - g__13*g__31)*g__22 + (-g__11*g__32 + g__12*g__31)*
+    g__23 - g__21*(g__12*g__33 - g__13*g__32)),3)) )
+    /* mu/6 * d(tr(Ct))/d(g_11) */ +
+    m_mu*( -2*((std::pow(g__33,3) + (std::pow(g__13,2) + std::pow(g__31,2))*
+    g__33 + g__11*g__13*g__31)*std::pow(g__22,3) + (((-std::pow(g__13,2) -
+    std::pow(g__31,2) - 3*std::pow(g__33,2))*g__32 - 2*g__12*g__13*g__33 -
+    g__11*g__12*g__31)*g__23 - 2*((g__31*g__33 + g__11*g__13/2)*g__32 +
+    g__12*g__13*g__31/2)*g__21)*std::pow(g__22,2) + ((3*g__33*std::pow(g__32,2)
+    + 2*g__12*g__13*g__32 + (std::pow(g__12,2) + std::pow(g__31,2))*g__33 +
+    g__11*g__13*g__31)*std::pow(g__23,2) - 2*g__21*(std::pow(g__33,2)*g__31 +
+    1/2*g__33*g__11*g__13 - 1/2*g__11*g__12*g__32 - 1/2*std::pow(g__12,2)*g__31
+    + 1/2*std::pow(g__13,2)*g__31 - g__31*std::pow(g__32,2))*g__23 +
+    ((std::pow(g__13,2) + std::pow(g__21,2))*g__33 + g__11*g__13*g__31)*
+    std::pow(g__32,2) - 2*(std::pow(g__33,2)*g__13 + g__33*g__11*g__31/2 +
+    g__13*(-std::pow(g__21,2)/2 + std::pow(g__31,2)/2))*g__12*g__32 +
+    ((std::pow(g__12,2) + std::pow(g__21,2))*std::pow(g__33,2) +
+    std::pow(g__12,2)*std::pow(g__31,2) + std::pow(g__13,2)*std::pow(g__21,2))
+    *g__33)*g__22 + (-std::pow(g__32,3) + (-std::pow(g__12,2) -
+    std::pow(g__31,2))*g__32 - g__11*g__12*g__31)*std::pow(g__23,3) + g__21*
+    (2*g__33*g__31*g__32 + g__12*(g__11*g__33 + g__13*g__31))*std::pow(g__23,2)
+    + ((-std::pow(g__13,2) - std::pow(g__21,2))*std::pow(g__32,3) +
+    2*g__33*g__12*g__13*std::pow(g__32,2) + ((-std::pow(g__12,2) -
+    std::pow(g__21,2))*std::pow(g__33,2) + g__11*g__13*g__31*g__33 -
+    std::pow(g__12,2)*std::pow(g__21,2) - std::pow(g__13,2)*std::pow(g__31,2))*
+    g__32 - (g__33*g__11*g__31 + g__13*(std::pow(g__21,2) - std::pow(g__31,2)))
+    *g__12*g__33)*g__23 + (g__11*std::pow(g__32,2) - g__12*g__31*g__32 +
+    g__33*(g__11*g__33 - g__13*g__31))*g__21*(g__12*g__33 - g__13*g__32))/
+    (std::pow(j2,(1/3))*std::pow(((g__11*g__33 - g__13*g__31)*g__22 + (-g__11*
+    g__32 + g__12*g__31)*g__23 - g__21*(g__12*g__33 - g__13*g__32)),3)) )/6.0;
+
+  // d(sigma_11)/d(g_21)
+  dsigdg[1] =
+    /* mu * d(bt_11)/d(g_21) */
+    m_mu*( 2*(g__12*g__33 - g__13*g__32)*((std::pow(g__23,2) +
+    std::pow(g__33,2))*std::pow(g__12,2) - 2*g__13*(g__22*g__23 + g__32*g__33)
+    *g__12 + (std::pow(g__22,2) + std::pow(g__32,2))*std::pow(g__13,2) +
+    std::pow((g__22*g__33 - g__23*g__32),2))/(std::pow(j2,(1/3))*
+    std::pow(((g__22*g__33 - g__23*g__32)*g__11 + (-g__21*g__33 + g__23*g__31)
+    *g__12 + g__13*(g__21*g__32 - g__22*g__31)),3)) )
+    /* mu/6 * d(tr(Ct))/d(g_21) */ +
+    m_mu*( 2*((std::pow(g__33,3) + (std::pow(g__23,2) + std::pow(g__31,2))*g__33
+    + g__21*g__23*g__31)*std::pow(g__12,3) + (((-std::pow(g__23,2) -
+    std::pow(g__31,2) - 3*std::pow(g__33,2))*g__32 - 2*g__33*g__22*g__23 -
+    g__21*g__22*g__31)*g__13 - 2*g__11*((g__31*g__33 + g__21*g__23/2)*g__32 +
+    g__22*g__23*g__31/2))*std::pow(g__12,2) + ((3*g__33*std::pow(g__32,2) +
+    2*g__22*g__23*g__32 + (std::pow(g__22,2) + std::pow(g__31,2))*g__33 +
+    g__21*g__23*g__31)*std::pow(g__13,2) - 2*g__11*(std::pow(g__33,2)*g__31 +
+    1/2*g__33*g__21*g__23 - 1/2*g__21*g__22*g__32 - 1/2*std::pow(g__22,2)*g__31
+    + 1/2*std::pow(g__23,2)*g__31 - g__31*std::pow(g__32,2))*g__13 +
+    ((std::pow(g__11,2) + std::pow(g__23,2))*g__33 + g__21*g__23*g__31)*
+    std::pow(g__32,2) - 2*(std::pow(g__33,2)*g__23 + 1/2*g__33*g__21*g__31 -
+    1/2*std::pow(g__11,2)*g__23 + 1/2*g__23*std::pow(g__31,2))*g__22*g__32 +
+    ((std::pow(g__11,2) + std::pow(g__22,2))*std::pow(g__33,2) +
+    std::pow(g__11,2)*std::pow(g__23,2) + std::pow(g__22,2)*std::pow(g__31,2))
+    *g__33)*g__12 + (-std::pow(g__32,3) + (-std::pow(g__22,2) -
+    std::pow(g__31,2))*g__32 - g__21*g__22*g__31)*std::pow(g__13,3) +
+    g__11*(2*g__33*g__31*g__32 + g__22*(g__21*g__33 + g__23*g__31))*
+    std::pow(g__13,2) + ((-std::pow(g__11,2) - std::pow(g__23,2))*
+    std::pow(g__32,3) + 2*g__33*g__22*g__23*std::pow(g__32,2) +
+    ((-std::pow(g__11,2) - std::pow(g__22,2))*std::pow(g__33,2) + g__21*g__23*
+    g__31*g__33 - std::pow(g__11,2)*std::pow(g__22,2) -
+    std::pow((g__23*g__31),2))*g__32 - g__33*g__22*(std::pow(g__11,2)*g__23 +
+    g__21*g__31*g__33 - g__23*std::pow(g__31,2)))*g__13 + g__11*(g__21*
+    std::pow(g__32,2) - g__22*g__31*g__32 + g__33*(g__21*g__33 - g__23*g__31))*
+    (g__22*g__33 - g__23*g__32))/(std::pow(j2,(1/3))*std::pow(((g__22*g__33 -
+    g__23*g__32)*g__11 + (-g__21*g__33 + g__23*g__31)*g__12 + g__13*(g__21*g__32
+    - g__22*g__31)),3)) )/6.0;
+
+  // d(sigma_11)/d(g_31)
+  dsigdg[2] =
+    /* mu * d(bt_11)/d(g_31) */
+    m_mu*( -2*((std::pow(g__23,2) + std::pow(g__33,2))*std::pow(g__12,2) -
+    2*g__13*(g__22*g__23 + g__32*g__33)*g__12 + (std::pow(g__22,2) +
+    std::pow(g__32,2))*std::pow(g__13,2) + std::pow((g__22*g__33 -
+    g__23*g__32),2))*(g__12*g__23 - g__13*g__22)/(std::pow(j2,(1/3))*
+    std::pow(((g__22*g__33 - g__23*g__32)*g__11 + (-g__21*g__33 + g__23*g__31)
+    *g__12 + g__13*(g__21*g__32 - g__22*g__31)),3)) )
+    /* mu/6 * d(tr(Ct))/d(g_31) */ +
+    m_mu*( -2*((std::pow(g__23,3) + (std::pow(g__21,2) + std::pow(g__33,2))*
+    g__23 + g__33*g__21*g__31)*std::pow(g__12,3) + (((-std::pow(g__21,2) -
+    3*std::pow(g__23,2) - std::pow(g__33,2))*g__22 - 2*g__33*g__23*g__32 -
+    g__21*g__31*g__32)*g__13 - g__11*((2*g__21*g__23 + g__31*g__33)*g__22 +
+    g__33*g__21*g__32))*std::pow(g__12,2) + ((3*std::pow(g__22,2)*g__23 +
+    2*g__33*g__32*g__22 + (std::pow(g__21,2) + std::pow(g__32,2))*g__23 +
+    g__33*g__21*g__31)*std::pow(g__13,2) - g__11*(-2*g__21*std::pow(g__22,2) -
+    g__22*g__31*g__32 + 2*g__21*std::pow(g__23,2) + g__23*g__31*g__33 + g__21*
+    (-std::pow(g__32,2) + std::pow(g__33,2)))*g__13 + ((std::pow(g__11,2) +
+    std::pow(g__33,2))*g__23 + g__33*g__21*g__31)*std::pow(g__22,2) + g__32*
+    (std::pow(g__11,2)*g__33 - std::pow(g__21,2)*g__33 - g__21*g__23*g__31 -
+    2*std::pow(g__23,2)*g__33)*g__22 + g__23*((std::pow(g__11,2) +
+    std::pow(g__32,2))*std::pow(g__23,2) + std::pow(g__11,2)*std::pow(g__33,2)
+    + std::pow(g__21,2)*std::pow(g__32,2)))*g__12 + (-std::pow(g__22,3) +
+    (-std::pow(g__21,2) - std::pow(g__32,2))*g__22 - g__21*g__31*g__32)*
+    std::pow(g__13,3) + g__11*(2*g__21*g__22*g__23 + g__32*(g__21*g__33 +
+    g__23*g__31))*std::pow(g__13,2) + ((-std::pow(g__11,2) - std::pow(g__33,2))
+    *std::pow(g__22,3) + 2*g__33*g__23*g__32*std::pow(g__22,2) +
+    ((-std::pow(g__11,2) - std::pow(g__32,2))*std::pow(g__23,2) +
+    g__21*g__23*g__31*g__33 - std::pow(g__21,2)*std::pow(g__33,2) -
+    std::pow(g__11,2)*std::pow(g__32,2))*g__22 - g__23*g__32*(std::pow(g__11,2)
+    *g__33 - std::pow(g__21,2)*g__33 + g__21*g__23*g__31))*g__13 +
+    g__11*(g__22*g__33 - g__23*g__32)*(g__21*g__22*g__32 + g__21*g__23*g__33 -
+    std::pow(g__22,2)*g__31 - std::pow(g__23,2)*g__31))/(std::pow(j2,(1/3))*
+    std::pow(((g__22*g__33 - g__23*g__32)*g__11 + (-g__21*g__33 + g__23*g__31)
+    *g__12 + g__13*(g__21*g__32 - g__22*g__31)),3)) )/6.0;
+
+  tk::real ap_corr = alpha * std::max(min_eff_pressure(1.0e-15, arho, alpha),
+    apr/alpha);
+  tk::real dsigdrho = -(ap_corr + m_gamma*alpha*m_pstiff) / arho;
+  tk::real dsigde = -(m_gamma-1) * arho;
+
+  // longitudinal acoustic speed
+  // (sig_11 * d(sig_11)/de) / rho - rho*d(sig_11)/d(rho)
+  tk::real a(asigma_nn*alpha*dsigde/arho - arho*dsigdrho);
+  // -g_i1 * d(sig_11)/d(g_i1)
+  for (std::size_t i=0; i<3; ++i) {
+    a -= adefgrad[i][1]*dsigdg[i];
+  }
+  a = std::sqrt(a/arho);
 
   // check sound speed divergence
   if (!std::isfinite(a)) {
@@ -279,7 +438,7 @@ SmallShearSolid::totalenergy(
 //! \param[in] w Z-velocity
 //! \param[in] pr Material pressure
 //! \param[in] defgrad Material inverse deformation gradient tensor
-//!   (alpha_k * g_k). Default is 0, so that for the single-material system,
+//!   g_k. Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
 //! \return Material specific total energy using the SmallShearSolid EoS
 // *************************************************************************
@@ -301,7 +460,8 @@ SmallShearSolid::temperature(
   tk::real v,
   tk::real w,
   tk::real arhoE,
-  tk::real alpha ) const
+  tk::real alpha,
+  const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy
@@ -313,14 +473,27 @@ SmallShearSolid::temperature(
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
+//! \param[in] defgrad Material inverse deformation gradient tensor
+//!   (alpha_k * g_k). Default is 0, so that for the single-material system,
+//!   this argument can be left unspecified by the calling code
 //! \return Material temperature using the SmallShearSolid EoS
 // *************************************************************************
 {
-  auto c_v = m_cv;
-  auto p_c = m_pstiff;
+  // deformation gradient
+  auto defgrad = adefgrad;
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      defgrad[i][j] /= alpha;
+  }
 
-  tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c) 
-               / (arho*c_v);
+  // obtain elastic contribution to energy
+  tk::real eps2;
+  auto arhoEe = alpha*elasticEnergy(arho/alpha, defgrad, eps2);
+  // obtain hydro contribution to energy
+  auto arhoEh = arhoE - arhoEe;
+
+  tk::real t = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) - alpha*m_pstiff)
+               / (arho*m_cv);
   return t;
 }
 
