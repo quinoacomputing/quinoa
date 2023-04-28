@@ -522,9 +522,12 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     //!   2. matidx: This vector provides the material-index (value) inside the
     //!   vector<tag::material>[eosidx] block for the given user-specified
     //!   material id (index).
+    //!   3. solidx: This vector provides the solid-index (value) assigned to
+    //!   the given user-specified material id (index). It is 0 for fluids.
   , tag::matidxmap,     tk::TaggedTuple< brigand::list<
       tag::eosidx,      std::vector< std::size_t >,
-      tag::matidx,      std::vector< std::size_t > > >
+      tag::matidx,      std::vector< std::size_t >,
+      tag::solidx,      std::vector< std::size_t > > >
     //! number of materials
   , tag::nmat,          std::vector< kw::nmat::info::expect::type >
     //! pressure relaxation toggle

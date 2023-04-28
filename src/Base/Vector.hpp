@@ -416,7 +416,7 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
   // allocate pointers as matrices
   double *G, *C;
-  int m(3);
+  unsigned int m(3);
   G = (double *)malloc( m*m*sizeof( double ) );
   C = (double *)malloc( m*m*sizeof( double ) );
 
@@ -458,7 +458,7 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
   // allocate pointers as matrices
   double *G, *b;
-  int m(3);
+  unsigned int m(3);
   G = (double *)malloc( m*m*sizeof( double ) );
   b = (double *)malloc( m*m*sizeof( double ) );
 

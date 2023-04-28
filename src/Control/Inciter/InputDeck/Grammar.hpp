@@ -556,7 +556,8 @@ namespace grm {
       auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
       matidxmap.template get< tag::eosidx >().resize(nmat.back());
       matidxmap.template get< tag::matidx >().resize(nmat.back());
-      std::size_t tmat(0), i(0), mtypei(0);
+      matidxmap.template get< tag::solidx >().resize(nmat.back());
+      std::size_t tmat(0), i(0), mtypei(0), isolcntr(0), isolidx(0);
       std::set< std::size_t > matidset;
 
       for (auto& mtype : matprop.back()) {
@@ -597,6 +598,15 @@ namespace grm {
             const auto& mu = mtype.template get< tag::mu >();
             if (mu.size() != mat_id.size())
               Message< Stack, ERROR, MsgKey::EOSMU >( stack, in );
+
+            // add to solid-counter
+            ++isolcntr;
+            // assign solid-counter value to solid-index
+            isolidx = isolcntr;
+          }
+          else {
+            // since not solid, assign 0 to solid-index
+            isolidx = 0;
           }
         }
         else if (meos == inciter::ctr::MaterialType::JWL) {
@@ -643,12 +653,14 @@ namespace grm {
         // Generate mapping between material index and eos parameter index
         auto& eosmap = matidxmap.template get< tag::eosidx >();
         auto& idxmap = matidxmap.template get< tag::matidx >();
+        auto& solidxmap = matidxmap.template get< tag::solidx >();
         for (auto midx : mat_id) {
           midx -= 1;
           //eosmap[midx] = static_cast< std::size_t >(mtype.template get<
           //  tag::eos >());
           eosmap[midx] = mtypei;
           idxmap[midx] = i;
+          solidxmap[midx] = isolidx;
           ++i;
         }
         // end of materials for this eos, thus reset index counter

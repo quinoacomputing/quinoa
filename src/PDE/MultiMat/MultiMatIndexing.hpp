@@ -52,13 +52,13 @@ inline std::size_t energyIdx( std::size_t nmat, std::size_t kmat )
 
 //! Get the index of the required material deformation gradient equation
 //! \param[in] nmat Number of materials
-//! \param[in] kmat Index of required material
+//! \param[in] ksld Index of required solid
 //! \param[in] i Row-index of required tensor component
 //! \param[in] j Column-index of required tensor component
 //! \return Index of the required material total energy equation
-inline std::size_t deformIdx( std::size_t nmat, std::size_t kmat,
+inline std::size_t deformIdx( std::size_t nmat, std::size_t ksld,
   std::size_t i, std::size_t j )
-{ return (2*nmat+3+nmat + 9*kmat/*ksld*/+3*i+j); }
+{ return (2*nmat+3+nmat + 9*(ksld-1)+3*i+j); }
 
 //! Get the index of the required velocity component from vector of primitives
 //! \param[in] nmat Number of materials
@@ -134,7 +134,7 @@ inline std::size_t energyDofIdx( std::size_t nmat, std::size_t kmat,
 //! \brief Get the index of the required DOF of material deformation gradient
 //!   equation from the DG solution vector
 //! \param[in] nmat Number of materials
-//! \param[in] kmat Index of required material
+//! \param[in] ksld Index of required solid
 //! \param[in] i Row-index of required tensor component
 //! \param[in] j Column-index of required tensor component
 //! \param[in] ndof Number of solution DOFs stored in DG solution vector
@@ -142,9 +142,9 @@ inline std::size_t energyDofIdx( std::size_t nmat, std::size_t kmat,
 //! \return Index of the required material total energy equation
 //! \details This function is used to get the index of the required DOF in the
 //!   solution vector, which is of type tk::Fields.
-inline std::size_t deformDofIdx( std::size_t nmat, std::size_t kmat,
+inline std::size_t deformDofIdx( std::size_t nmat, std::size_t ksld,
   std::size_t i, std::size_t j, std::size_t ndof, std::size_t idof )
-{ return deformIdx(nmat, kmat, i, j)*ndof+idof; }
+{ return deformIdx(nmat, ksld, i, j)*ndof+idof; }
 
 //! \brief Get the index of the required DOF of velocity component from the DG
 //!   vector of primitives
