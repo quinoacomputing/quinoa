@@ -53,13 +53,18 @@ class JWL {
                        tk::real w,
                        tk::real arhoE,
                        tk::real alpha=1.0,
-                       std::size_t imat=0 ) const;
+                       std::size_t imat=0,
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! Calculate speed of sound from the material density and material pressure
     tk::real soundspeed( tk::real arho,
                          tk::real apr,
                          tk::real alpha=1.0,
-                         std::size_t imat=0 ) const;
+                         std::size_t imat=0,
+      tk::real asigma_nn=0.0,
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
+      const std::array< tk::real, 3 >& adefgradn={{}},
+      const std::array< tk::real, 3 >& asigman={{}} ) const;
 
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
@@ -67,7 +72,8 @@ class JWL {
                           tk::real u,
                           tk::real v,
                           tk::real w,
-                          tk::real pr ) const;
+                          tk::real pr,
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
@@ -76,7 +82,8 @@ class JWL {
                           tk::real v,
                           tk::real w,
                           tk::real arhoE,
-                          tk::real alpha=1.0 ) const;
+                          tk::real alpha=1.0,
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(

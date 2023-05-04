@@ -48,6 +48,8 @@ MultiMatProblemUserDefined::initialize( ncomp_t system,
 
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
+  const auto solidx = g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   // Set background ICs
   const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
@@ -82,9 +84,24 @@ MultiMatProblemUserDefined::initialize( ncomp_t system,
       bgtempic[system][0]);
     // partial density
     s[densityIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok;
+    // deformation gradients
+    std::array< std::array< tk::real, 3 >, 3 > g;
+    if (solidx[k] > 0) {
+      for (std::size_t i=0; i<3; ++i) {
+        for (std::size_t j=0; j<3; ++j) {
+          if (i==j) g[i][j] = 1.0;
+          else g[i][j] = 0.0;
+          s[deformIdx(nmat,solidx[k],i,j)] = s[volfracIdx(nmat,k)]*g[i][j];
+        }
+      }
+    }
+    else {
+      g = {{}};
+    }
     // total specific energy
     s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-      mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, bgpreic[system][0]);
+      mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, bgpreic[system][0],
+      g);
     // bulk density
     rb += s[densityIdx(nmat,k)];
   }
