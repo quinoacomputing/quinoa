@@ -54,6 +54,13 @@ timeStepSizeMultiMatFV(
   const tk::Fields& U,
   const tk::Fields& P );
 
+//! Get the inverse deformation gradient tensor for a material at given location
+std::array< std::array< tk::real, 3 >, 3 >
+getDeformGrad(
+  std::size_t nmat,
+  std::size_t k,
+  const std::vector< tk::real >& state );
+
 } //inciter::
 
 #endif // MiscMultiMatFns_h

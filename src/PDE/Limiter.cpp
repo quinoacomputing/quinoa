@@ -25,6 +25,7 @@
 #include "PrefIndicator.hpp"
 #include "Reconstruction.hpp"
 #include "Integrate/Mass.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
 
@@ -2427,8 +2428,12 @@ correctLimConservMultiMat(
         auto alphamat = U[volfracIdx(nmat, imat)];
         auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
         auto premat = P[pressureIdx(nmat, imat)]/alphamat;
+        auto gmat = getDeformGrad(nmat, imat, U);
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            gmat[i][j] /= alphamat;
         s[imat] = alphamat * mat_blk[imat].compute< EOS::totalenergy >( rhomat,
-          vel[0], vel[1], vel[2], premat );
+          vel[0], vel[1], vel[2], premat, gmat );
       }
 
       // Evaluate the righ-hand-side vector

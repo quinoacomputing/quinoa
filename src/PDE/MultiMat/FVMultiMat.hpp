@@ -272,9 +272,10 @@ class MultiMat {
           tk::real arhomat = unk(e, densityDofIdx(nmat, k, rdof, 0));
           tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0));
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0));
+          auto agmat = getDeformGrad(nmat, k, unk.extract(e));
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             m_mat_blk[k].compute< EOS::pressure >( arhomat, vel[0], vel[1],
-            vel[2], arhoemat, alphamat, k );
+            vel[2], arhoemat, alphamat, k, agmat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             constrain_pressure( m_mat_blk,
             prim(e, pressureDofIdx(nmat, k, rdof, 0)), arhomat, alphamat, k);
@@ -836,10 +837,11 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
+        auto agk = getDeformGrad(nmat, k, ur);
         ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k, agk );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

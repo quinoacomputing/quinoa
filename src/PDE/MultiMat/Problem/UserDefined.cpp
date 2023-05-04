@@ -48,7 +48,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t system,
 
   auto nmat =
     g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
-  const auto solidx = g_inputdeck.get< tag::param, tag::multimat,
+  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
 
   // Set background ICs
