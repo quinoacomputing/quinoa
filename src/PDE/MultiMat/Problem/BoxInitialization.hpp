@@ -171,8 +171,12 @@ void initializeBox( std::size_t system,
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k] * spi;
     }
     else {
+      // although the following function returns alpha_k * g_k, since box-init
+      // only works with pure material region initialization (alpha_k=1), the
+      // result is equivalent to g_k
+      auto gk = getDeformGrad(nmat, k, s);
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-        mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr );
+        mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr, gk );
     }
   }
   // bulk momentum

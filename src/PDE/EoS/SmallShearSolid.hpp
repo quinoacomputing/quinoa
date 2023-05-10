@@ -34,20 +34,6 @@ class SmallShearSolid {
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
       tk::real& eps2 ) const;
 
-    //! \brief Calculate the Cauchy stress tensor from the material density,
-    //!   momentum, total energy, and inverse deformation gradient tensor using
-    //!   the SmallShearSolid equation of state
-    std::array< std::array< tk::real, 3 >, 3 >
-    CauchyStress(
-      tk::real arho,
-      tk::real u,
-      tk::real v,
-      tk::real w,
-      tk::real arhoE,
-      tk::real alpha,
-      std::size_t imat,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const;
-
   public:
     //! Default constructor
     SmallShearSolid() = default;
@@ -70,6 +56,20 @@ class SmallShearSolid {
       tk::real alpha=1.0,
       std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Calculate the Cauchy stress tensor from the material density,
+    //!   momentum, total energy, and inverse deformation gradient tensor using
+    //!   the SmallShearSolid equation of state
+    std::array< std::array< tk::real, 3 >, 3 >
+    CauchyStress(
+      tk::real arho,
+      tk::real u,
+      tk::real v,
+      tk::real w,
+      tk::real arhoE,
+      tk::real alpha,
+      std::size_t imat,
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const;
 
     //! Calculate speed of sound from the material density and material pressure
     tk::real soundspeed(

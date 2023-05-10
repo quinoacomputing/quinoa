@@ -83,6 +83,25 @@ class EOS {
         }, m_material );
     }
 
+    //! Entry method tags for specific EOS classes to use with computeTensor()
+    struct CauchyStress {};
+    //! Call EOS function returning a tensor
+    //! \tparam Fn Function tag identifying the function to call
+    //! \tparam Args Types of arguments to pass to function
+    //! \param[in] args Arguments to member function to be called
+    //! \details This function issues a call to a member function of the
+    //!   EOS vector and is thus equivalent to mat_blk[imat].Fn(...).
+    template< typename Fn, typename... Args >
+    std::array< std::array< tk::real, 3 >, 3 > computeTensor( Args&&... args )
+    const {
+      return std::visit( [&]( const auto& m )->
+        std::array< std::array< tk::real, 3 >, 3 > {
+          if constexpr( std::is_same_v< Fn, CauchyStress > )
+            return m.CauchyStress( std::forward< Args >( args )... );
+
+        }, m_material );
+    }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
