@@ -177,21 +177,24 @@ class FVPDE {
               const tk::Fields& U,
               const tk::Fields& P,
               tk::Fields& R,
-              int& engSrcAd ) const
+              int& engSrcAd,
+              std::size_t& engSrcSt ) const
     {
       self->rhs( t, geoFace, geoElem, fd, inpoel, coord, elemblkid, U, P, R,
-        engSrcAd );
+        engSrcAd, engSrcSt );
     }
 
     //! Public interface for computing the minimum time step size
-    tk::real dt( const inciter::FaceData& fd,
+    tk::real dt( tk::real t,
+                 std::size_t& nst,
+                 const inciter::FaceData& fd,
                  const tk::Fields& geoFace,
                  const tk::Fields& geoElem,
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
                  const int engSrcAd ) const
-    { return self->dt( fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
+    { return self->dt( t, nst, fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
 
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
@@ -307,8 +310,11 @@ class FVPDE {
         const tk::Fields&,
         const tk::Fields&,
         tk::Fields&,
-        int& ) const = 0;
-      virtual tk::real dt( const inciter::FaceData&,
+        int&,
+        std::size_t& ) const = 0;
+      virtual tk::real dt( tk::real,
+                           std::size_t&,
+                           const inciter::FaceData&,
                            const tk::Fields&,
                            const tk::Fields&,
                            const tk::Fields&,
@@ -415,19 +421,22 @@ class FVPDE {
         const tk::Fields& U,
         const tk::Fields& P,
         tk::Fields& R,
-        int& engSrcAd ) const override
+        int& engSrcAd,
+        std::size_t& engSrcSt ) const override
       {
         data.rhs( t, geoFace, geoElem, fd, inpoel, coord, elemblkid, U, P, R,
-          engSrcAd );
+          engSrcAd, engSrcSt );
       }
-      tk::real dt( const inciter::FaceData& fd,
+      tk::real dt( tk::real t,
+                   std::size_t& nst,
+                   const inciter::FaceData& fd,
                    const tk::Fields& geoFace,
                    const tk::Fields& geoElem,
                    const tk::Fields& U,
                    const tk::Fields& P,
                    const std::size_t nielem,
                    const int engSrcAd ) const override
-      { return data.dt( fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
+      { return data.dt( t, nst, fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > surfNames() const override

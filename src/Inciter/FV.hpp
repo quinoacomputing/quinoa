@@ -203,6 +203,7 @@ class FV : public CBase_FV {
       p | m_pNodefieldsc;
       p | m_boxelems;
       p | m_propFrontEngSrc;
+      p | m_nstepsEngSrc;
       p | m_rkcoef;
       p | m_nrk;
     }
@@ -272,6 +273,8 @@ class FV : public CBase_FV {
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
     //! Integer indicating if energy source due to propagating front was added
     int m_propFrontEngSrc;
+    //! Number of steps since most recent propagating front was initialized
+    std::size_t m_nstepsEngSrc;
     //! Runge-Kutta coefficients
     std::array< std::vector< tk::real >, 2 > m_rkcoef;
     //! Number of Runge-Kutta stages

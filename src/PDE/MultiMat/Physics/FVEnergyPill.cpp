@@ -33,32 +33,54 @@ tk::real
 MultiMatPhysicsEnergyPill::dtRestriction( std::size_t system,
   const tk::Fields& geoElem,
   std::size_t nelem,
-  const int engSrcAd ) const
+  const int engSrcAd,
+  std::size_t engSrcSt,
+  tk::real physT ) const
 // *****************************************************************************
 //  Compute the time step size restriction based on this physics
 //! \param[in] system Index for equation systems
 //! \param[in] geoElem Element geometry array
 //! \param[in] nelem Number of elements
 //! \param[in] engSrcAd Whether the energy source was added
+//! \param[in] engSrcSt Current number of time steps after energy pill init
+//! \param[in] physT Physical time
 //! \return Maximum allowable time step based on front propagation speed
 // *****************************************************************************
 {
   auto mindt = std::numeric_limits< tk::real >::max();
-  // determine front propagation speed if relevant energy sources were added
-  if (engSrcAd == 1) {
-    const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
-      tag::meshblock >();
-    tk::real v_front(0.0);
-    if (icmbk.size() > system) {
-      for (const auto& b : icmbk[system]) { // for all blocks
-        auto inittype = b.template get< tag::initiate, tag::init >();
-        if (inittype == ctr::InitiateType::LINEAR) {
-          v_front = std::max(v_front,
-            b.template get< tag::initiate, tag::velocity >());
-        }
-      }
+
+  const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
+    tag::meshblock >();
+  tk::real v_front(0.0), dtcoeff(1.0);
+
+  if (icmbk.size() > system) { // for this system
+
+  for (const auto& b : icmbk[system]) { // for all blocks
+  auto inittype = b.template get< tag::initiate, tag::init >();
+
+  if (inittype == ctr::InitiateType::LINEAR) {
+
+    // determine front propagation speed if relevant energy sources were added
+    if (engSrcAd == 1) {
+      v_front = std::max(v_front,
+        b.template get< tag::initiate, tag::velocity >());
     }
 
+    // determine time-step suppression for first n steps after energy pill init
+    auto tInit = b.template get< tag::initiate, tag::init_time >();
+    if (physT >= tInit && engSrcSt < 100) {
+      dtcoeff = 0.01 * static_cast< tk::real >(std::max(engSrcSt/2,
+        std::size_t(1)));
+    }
+
+  }
+
+  }
+
+  }
+
+  // determine restrictive time step
+  if (engSrcAd == 1 && (std::abs(v_front) > 1e-8 || dtcoeff < 1.0)) {
     for (std::size_t e=0; e<nelem; ++e)
     {
       // characteristic length (radius of insphere)
@@ -68,6 +90,7 @@ MultiMatPhysicsEnergyPill::dtRestriction( std::size_t system,
       // element dt
       if (std::abs(v_front) > 1e-8) mindt = std::min(mindt, dx/v_front);
     }
+    mindt *= dtcoeff;
   }
 
   return mindt;
@@ -80,7 +103,8 @@ physSrc( std::size_t system,
   const tk::Fields& geoElem,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblkid,
   tk::Fields& R,
-  int& engSrcAdded ) const
+  int& engSrcAdded,
+  std::size_t& engSrcSteps ) const
 // *****************************************************************************
 //! Compute sources corresponding to a propagating front in user-defined box
 //! \param[in] system Index for equation systems
@@ -91,6 +115,8 @@ physSrc( std::size_t system,
 //!   user ICs are set
 //! \param[in,out] R Right-hand side vector
 //! \param[in,out] engSrcAdded Whether the energy source was added
+//! \param[in,out] engSrcSteps Number of time steps after most recent energy
+//!   pill was initialized
 //! \details This function adds the energy source corresponding to a
 //!   spherically growing wave-front propagating with a user-specified
 //!   velocity, within a user-configured mesh block initial condition.
@@ -101,10 +127,13 @@ physSrc( std::size_t system,
 {
   const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
     tag::meshblock >();
+  auto prev_esa = engSrcAdded;
   if (icmbk.size() > system) {
     for (const auto& mb : icmbk[system]) { // for all blocks
+      int blkSrcAdded(0);
       auto blid = mb.get< tag::blockid >();
       if (elemblkid.find(blid) != elemblkid.end()) { // if elements exist in blk
+        blkSrcAdded = 0;
         const auto& initiate = mb.template get< tag::initiate >();
         auto inittype = initiate.template get< tag::init >();
         if (inittype == ctr::InitiateType::LINEAR) { // if propagating src
@@ -141,13 +170,19 @@ physSrc( std::size_t system,
               if (r_e >= r_front && r_e <= r_front+w_front) {
                 // Add the source term to the rhs
                 R(e, energyIdx(nmat,blkmatid-1)) += geoElem(e,0) * amplE;
-                engSrcAdded = 1;
+                blkSrcAdded = 1;
               }
             }
           }
+
+          engSrcAdded = std::max(engSrcAdded, blkSrcAdded);
 
         }
       }
     }
   }
+
+  // reset counter if energy source was turned off
+  if (engSrcAdded > 0) ++engSrcSteps;
+  if (prev_esa > engSrcAdded) engSrcSteps = 0;
 }
