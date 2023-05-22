@@ -21,10 +21,7 @@ macro(get_compiler CMAKE_MPI_COMPILER UNDERLYING_COMPILER)
   # Detect a Cray machine. This is based on testing for the following
   # environment variables. At least one of these is always defined on a Cray,
   # depending on what programming environment is loaded among the modules.
-  if (NOT DEFINED ENV{CRAY_PRGENVPGI} AND
-      NOT DEFINED ENV{CRAY_PRGENVGNU} AND
-      NOT DEFINED ENV{CRAY_PRGENVCRAY} AND
-      NOT DEFINED ENV{CRAY_PRGENVINTEL})
+  if(NOT DEFINED ENV{CRAYPE_VERSION} AND NOT DEFINED ENV{PE_ENV})
 
     execute_process(
       COMMAND           ${CMAKE_MPI_COMPILER} "-show"
