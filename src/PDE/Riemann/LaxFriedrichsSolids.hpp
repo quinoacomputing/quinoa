@@ -64,7 +64,6 @@ struct LaxFriedrichsSolids {
     auto vr = u[1][ncomp+velocityIdx(nmat, 1)];
     auto wr = u[1][ncomp+velocityIdx(nmat, 2)];
 
-    tk::real pl(0.0), pr(0.0);
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             pml(nmat, 0.0), pmr(nmat, 0.0),
                             am_l(nmat, 0.0),
@@ -72,12 +71,12 @@ struct LaxFriedrichsSolids {
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > ag_l, ag_r,
       asig_l, asig_r;
     std::vector< std::array< tk::real, 3 > > asign_l, asign_r;
+    std::array< tk::real, 3 > sign_l {{0, 0, 0}}, sign_r {{0, 0, 0}};
     for (std::size_t k=0; k<nmat; ++k)
     {
       // Left state
       al_l[k] = u[0][volfracIdx(nmat, k)];
       pml[k] = u[0][ncomp+pressureIdx(nmat, k)];
-      pl += pml[k];
 
       // inv deformation gradient and Cauchy stress tensors
       ag_l.push_back(getDeformGrad(nmat, k, u[0]));
@@ -86,14 +85,17 @@ struct LaxFriedrichsSolids {
         al_l[k], k, ag_l[k]));
       // normal stress (traction) vector
       asign_l.push_back(tk::matvec(asig_l[k], fn));
+      for (std::size_t i=0; i<3; ++i)
+        sign_l[i] += asign_l[k][i];
 
+      // rotate deformation gradient tensor for speed of sound in normal dir
       am_l[k] = mat_blk[k].compute< EOS::soundspeed >(
-        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k );
+        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, tk::dot(asign_l[k],fn),
+        ag_l[k] );
 
       // Right state
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
-      pr += pmr[k];
 
       // inv deformation gradient and Cauchy stress tensors
       ag_r.push_back(getDeformGrad(nmat, k, u[1]));
@@ -102,9 +104,13 @@ struct LaxFriedrichsSolids {
         al_r[k], k, ag_r[k]));
       // normal stress (traction) vector
       asign_r.push_back(tk::matvec(asig_r[k], fn));
+      for (std::size_t i=0; i<3; ++i)
+        sign_l[i] += asign_l[k][i];
 
+      // rotate deformation gradient tensor for speed of sound in normal dir
       am_r[k] = mat_blk[k].compute< EOS::soundspeed >(
-        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k );
+        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, tk::dot(asign_r[k],fn),
+        ag_r[k] );
     }
 
     // Mixture speed of sound
@@ -166,9 +172,9 @@ struct LaxFriedrichsSolids {
     for (std::size_t idir=0; idir<3; ++idir)
     {
       fluxl[momentumIdx(nmat, idir)] = vnl*u[0][momentumIdx(nmat, idir)]
-        + pl*fn[idir];
+        - sign_l[idir];
       fluxr[momentumIdx(nmat, idir)] = vnr*u[1][momentumIdx(nmat, idir)]
-        + pr*fn[idir];
+        - sign_r[idir];
     }
 
     // Numerical flux function
