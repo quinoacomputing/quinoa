@@ -24,31 +24,31 @@ namespace inciter {
 //! \param[in] kmat Index of required material
 //! \return Index of the required material volume fraction
 inline std::size_t volfracIdx( std::size_t /*nmat*/, std::size_t kmat )
-{ return kmat; }
+{ return (3 + 3*kmat); }
 
 //! Get the index of the required material continuity equation
-//! \param[in] nmat Number of materials
+// //! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \return Index of the required material continuity equation
-inline std::size_t densityIdx( std::size_t nmat, std::size_t kmat )
-{ return (nmat+kmat); }
+inline std::size_t densityIdx( std::size_t /*nmat*/, std::size_t kmat )
+{ return (3 + 3*kmat+1); }
 
 //! Get the index of the required momentum equation component
-//! \param[in] nmat Number of materials
+// //! \param[in] nmat Number of materials
 //! \param[in] idir Required component direction;
 //!   0: X-component,
 //!   1: Y-component,
 //!   2: Z-component.
 //! \return Index of the required momentum equation component
-inline std::size_t momentumIdx( std::size_t nmat, std::size_t idir )
-{ return (2*nmat+idir); }
+inline std::size_t momentumIdx( std::size_t /*nmat*/, std::size_t idir )
+{ return idir; }
 
 //! Get the index of the required material total energy equation
-//! \param[in] nmat Number of materials
+// //! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \return Index of the required material total energy equation
-inline std::size_t energyIdx( std::size_t nmat, std::size_t kmat )
-{ return (2*nmat+3+kmat); }
+inline std::size_t energyIdx( std::size_t /*nmat*/, std::size_t kmat )
+{ return (3 + 3*kmat+2); }
 
 //! Get the index of the required velocity component from vector of primitives
 //! \param[in] nmat Number of materials
