@@ -362,9 +362,9 @@ timeStepSizeMultiMat(
     B_l[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, rdof, ndof, el, U, B_l, {0, ncomp-1});
+    ugp = eval_state(ncomp, rdof, ndof, el, U, B_l);
     // get primitive quantities
-    pgp = eval_state(nprim, rdof, ndof, el, P, B_l, {0, nprim-1});
+    pgp = eval_state(nprim, rdof, ndof, el, P, B_l);
 
     // advection velocity
     u = pgp[velocityIdx(nmat, 0)];
@@ -395,9 +395,9 @@ timeStepSizeMultiMat(
       B_r[0] = 1.0;
 
       // get conserved quantities
-      ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r, {0, ncomp-1});
+      ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r);
       // get primitive quantities
-      pgp = eval_state( nprim, rdof, ndof, eR, P, B_r, {0, nprim-1});
+      pgp = eval_state( nprim, rdof, ndof, eR, P, B_r);
 
       // advection velocity
       u = pgp[velocityIdx(nmat, 0)];
@@ -473,9 +473,9 @@ timeStepSizeMultiMatFV(
     B[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, rdof, ndof, e, U, B, {0, ncomp-1});
+    ugp = eval_state(ncomp, rdof, ndof, e, U, B);
     // get primitive quantities
-    pgp = eval_state(nprim, rdof, ndof, e, P, B, {0, nprim-1});
+    pgp = eval_state(nprim, rdof, ndof, e, P, B);
 
     // magnitude of advection velocity
     auto u = pgp[velocityIdx(nmat, 0)];

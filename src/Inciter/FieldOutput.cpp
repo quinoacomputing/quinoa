@@ -169,8 +169,8 @@ evalSolution(
            h{{ce[j][0]-ce[0][0], ce[j][1]-ce[0][1], ce[j][2]-ce[0][2] }};
         auto Bn = tk::eval_basis( dofe,
                                   dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-        auto u = eval_state( uncomp, rdof, dofe, e, U, Bn, {0, uncomp-1} );
-        auto p = eval_state( pncomp, rdof, dofe, e, P, Bn, {0, pncomp-1} );
+        auto u = eval_state( uncomp, rdof, dofe, e, U, Bn );
+        auto p = eval_state( pncomp, rdof, dofe, e, P, Bn );
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[e4+j],i) += u[i];
         for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[e4+j],i) += p[i];
@@ -214,8 +214,8 @@ evalSolution(
       // Compute solution in child centroid
       std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
       auto B = tk::eval_basis( dofe, dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
-      auto u = eval_state( uncomp, rdof, dofe, parent, U, B, {0, uncomp-1} );
-      auto p = eval_state( pncomp, rdof, dofe, parent, P, B, {0, pncomp-1} );
+      auto u = eval_state( uncomp, rdof, dofe, parent, U, B );
+      auto p = eval_state( pncomp, rdof, dofe, parent, P, B );
       // Assign cell center solution from parent to child
       for (std::size_t i=0; i<uncomp; ++i) uElemfields(child,i) = u[i];
       for (std::size_t i=0; i<pncomp; ++i) pElemfields(child,i) = p[i];
@@ -231,8 +231,8 @@ evalSolution(
            hn{{cc[j][0]-cp[0][0], cc[j][1]-cp[0][1], cc[j][2]-cp[0][2] }};
         auto Bn = tk::eval_basis( dofe,
                                   dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
-        auto cnu = eval_state(uncomp, rdof, dofe, parent, U, Bn, {0, uncomp-1});
-        auto cnp = eval_state(pncomp, rdof, dofe, parent, P, Bn, {0, pncomp-1});
+        auto cnu = eval_state(uncomp, rdof, dofe, parent, U, Bn);
+        auto cnp = eval_state(pncomp, rdof, dofe, parent, P, Bn);
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[c4+j],i) += cnu[i];
         for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[c4+j],i) += cnp[i];

@@ -1150,7 +1150,7 @@ SuperbeeLimiting( const tk::Fields& U,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
       auto state =
-        tk::eval_state(ncomp, rdof, dof_el, e, U, B_l, {0, ncomp-1});
+        tk::eval_state(ncomp, rdof, dof_el, e, U, B_l);
 
       Assert( state.size() == ncomp, "Size mismatch" );
 
@@ -1271,7 +1271,7 @@ VertexBasedLimiting(
           tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
           tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
           tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
-    state = tk::eval_state(ncomp, rdof, dof_el, e, U, B_p, VarRange);
+    state = tk::eval_state(ncomp, rdof, dof_el, e, U, B_p);
 
     Assert( state.size() == ncomp, "Size mismatch" );
 
@@ -1673,8 +1673,7 @@ void BoundPreservingLimiting( std::size_t nmat,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-      auto state = eval_state( U.nprop()/ndof, ndof, ndof, e, U, B,
-        {0, U.nprop()/ndof-1} );
+      auto state = eval_state( U.nprop()/ndof, ndof, ndof, e, U, B );
 
       for(std::size_t imat = 0; imat < nmat; imat++)
       {
@@ -1709,8 +1708,7 @@ void BoundPreservingLimiting( std::size_t nmat,
       auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
         coordgp[2][igp] );
 
-      auto state = tk::eval_state(U.nprop()/ndof, ndof, ndof, e, U, B,
-        {0, U.nprop()/ndof-1} );
+      auto state = tk::eval_state(U.nprop()/ndof, ndof, ndof, e, U, B);
 
       for(std::size_t imat = 0; imat < nmat; imat++)
       {
@@ -1839,10 +1837,8 @@ void PositivityLimitingMultiMat( std::size_t nmat,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
 
-      auto state = eval_state(ncomp, rdof, ndof_el, e, U, B,
-        {0, ncomp-1});
-      auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B,
-        {0, nprim-1});
+      auto state = eval_state(ncomp, rdof, ndof_el, e, U, B);
+      auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B);
 
       for(std::size_t imat = 0; imat < nmat; imat++)
       {
@@ -1890,10 +1886,8 @@ void PositivityLimitingMultiMat( std::size_t nmat,
       auto B = tk::eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp],
         coordgp[2][igp] );
 
-      auto state = eval_state(ncomp, rdof, ndof_el, e, U, B,
-        {0, ncomp-1});
-      auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B,
-        {0, nprim-1});
+      auto state = eval_state(ncomp, rdof, ndof_el, e, U, B);
+      auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B);
 
       for(std::size_t imat = 0; imat < nmat; imat++)
       {
@@ -2008,7 +2002,7 @@ void PositivityPreservingMultiMat_FV(
             tk::Jacobian( coordel[0], fc, coordel[2], coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], fc, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], fc ) / detT );
-      auto state = eval_state(ncomp, rdof, rdof, e, U, B, {0, ncomp-1});
+      auto state = eval_state(ncomp, rdof, rdof, e, U, B);
 
       for(std::size_t i=0; i<nmat; i++)
       {
@@ -2061,8 +2055,8 @@ void PositivityPreservingMultiMat_FV(
             tk::Jacobian( coordel[0], fc, coordel[2], coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], fc, coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], coordel[2], fc ) / detT );
-      auto state = eval_state(ncomp, rdof, rdof, e, U, B, {0, ncomp-1});
-      auto sprim = eval_state(nprim, rdof, rdof, e, P, B, {0, nprim-1});
+      auto state = eval_state(ncomp, rdof, rdof, e, U, B);
+      auto sprim = eval_state(nprim, rdof, rdof, e, P, B);
 
       for(std::size_t i=0; i<nmat; i++)
       {
@@ -2399,10 +2393,8 @@ correctLimConservMultiMat(
       auto w = wgp[igp] * geoElem(e, 0);
 
       // Evaluate the solution at quadrature point
-      auto U = tk::eval_state( ncomp, rdof, rdof, e, unk,  B,
-                               {0, ncomp-1} );
-      auto P = tk::eval_state( nprim, rdof, rdof, e, prim, B,
-                               {0, nprim-1} );
+      auto U = tk::eval_state( ncomp, rdof, rdof, e, unk,  B );
+      auto P = tk::eval_state( nprim, rdof, rdof, e, prim, B );
 
       // Solution vector that stores the material energy and bulk momentum
       std::vector< tk::real > s(nmat+3, 0.0);
