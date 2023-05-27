@@ -117,7 +117,7 @@ intLeastSq_P0P1( const std::size_t rdof,
                  const Fields& geoElem,
                  const Fields& W,
                  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                 const std::array< std::size_t, 2 >& varRange )
+                 const std::set< std::size_t >& varList )
 // *****************************************************************************
 //  \brief Compute internal surface contributions to rhs vector of the
 //    least-squares reconstruction
@@ -126,7 +126,7 @@ intLeastSq_P0P1( const std::size_t rdof,
 //! \param[in] geoElem Element geometry array
 //! \param[in] W Solution vector to be reconstructed at recent time step
 //! \param[in,out] rhs_ls RHS reconstruction vector
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
+//! \param[in] varList List of indices in W, that need to be reconstructed
 //! \details This function computing the internal face contributions to the rhs
 //!   vector for reconstruction, is common for primitive and conserved
 //!   quantities. If `W` == `U`, compute internal face contributions for the
@@ -158,7 +158,7 @@ intLeastSq_P0P1( const std::size_t rdof,
     for (std::size_t idir=0; idir<3; ++idir)
     {
       // rhs vector
-      for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
+      for (std::size_t c : varList)
       {
         auto mark = c*rdof;
         rhs_ls[el][c][idir] +=
@@ -186,7 +186,7 @@ bndLeastSqConservedVar_P0P1(
   const Fields& P,
   const Fields& U,
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-  const std::array< std::size_t, 2 >& varRange,
+  const std::set< std::size_t >& varList,
   std::size_t nprim )
 // *****************************************************************************
 //  \brief Compute boundary surface contributions to rhs vector of the
@@ -205,7 +205,7 @@ bndLeastSqConservedVar_P0P1(
 //! \param[in] P Primitive vector to be reconstructed at recent time step
 //! \param[in] U Solution vector to be reconstructed at recent time step
 //! \param[in,out] rhs_ls RHS reconstruction vector
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
+//! \param[in] varList List of indices in W, that need to be reconstructed
 //! \param[in] nprim This is the number of primitive quantities stored for this
 //!   PDE system. This is necessary to extend the state vector to the right
 //!   size, so that correct boundary conditions are obtained.
@@ -257,7 +257,7 @@ bndLeastSqConservedVar_P0P1(
         for (std::size_t idir=0; idir<3; ++idir)
         {
           // rhs vector
-          for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
+          for (std::size_t c : varList)
             rhs_ls[el][c][idir] +=
               wdeltax[idir] * (ustate[1][c]-ustate[0][c]);
         }
@@ -272,14 +272,14 @@ solveLeastSq_P0P1(
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
   Fields& W,
-  const std::array< std::size_t, 2 >& varRange )
+  const std::set< std::size_t >& varList )
 // *****************************************************************************
 //  Solve the 3x3 linear system for least-squares reconstruction
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] lhs LHS reconstruction matrix
 //! \param[in] rhs RHS reconstruction vector
 //! \param[in,out] W Solution vector to be reconstructed at recent time step
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
+//! \param[in] varList List of indices in W, that need to be reconstructed
 //! \details Solves the 3x3 linear system for each element, individually. For
 //!   systems that require reconstructions of primitive quantities, this should
 //!   be called twice, once with the argument 'W' as U (conserved), and again
@@ -290,7 +290,7 @@ solveLeastSq_P0P1(
 
   for (std::size_t e=0; e<nelem; ++e)
   {
-    for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
+    for (std::size_t c : varList)
     {
       auto mark = c*rdof;
 
@@ -312,7 +312,7 @@ recoLeastSqExtStencil(
   const std::vector< std::size_t >& inpoel,
   const Fields& geoElem,
   Fields& W,
-  const std::array< std::size_t, 2 >& varRange )
+  const std::set< std::size_t >& varList )
 // *****************************************************************************
 //  \brief Reconstruct the second-order solution using least-squares approach
 //    from an extended stencil involving the node-neighbors
@@ -322,7 +322,7 @@ recoLeastSqExtStencil(
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] geoElem Element geometry array
 //! \param[in,out] W Solution vector to be reconstructed at recent time step
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
+//! \param[in] varList List of indices in W, that need to be reconstructed
 //! \details A second-order (piecewise linear) solution polynomial is obtained
 //!   from the first-order (piecewise constant) FV solutions by using a
 //!   least-squares (LS) reconstruction process. This LS reconstruction function
@@ -337,9 +337,8 @@ recoLeastSqExtStencil(
                {{0.0, 0.0, 0.0}},
                {{0.0, 0.0, 0.0}} }} );
   // rhs matrix
-  Assert( varRange[0] <= varRange[1], "Incorrect variable range detected" );
   std::vector< std::array< tk::real, 3 > >
-  rhs_ls( varRange[1]-varRange[0]+1, {{ 0.0, 0.0, 0.0 }} );
+  rhs_ls( varList.size(), {{ 0.0, 0.0, 0.0 }} );
 
   // loop over all nodes of the element e
   for (std::size_t lp=0; lp<4; ++lp)
@@ -361,24 +360,26 @@ recoLeastSqExtStencil(
           lhs_ls[idir][jdir] += wdeltax[idir] * wdeltax[jdir];
 
       // compute rhs matrix
-      for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
+      std::size_t i(0);
+      for (std::size_t c : varList)
       {
         auto mark = c*rdof;
-        auto cmark = c - varRange[0];
         for (std::size_t idir=0; idir<3; ++idir)
-          rhs_ls[cmark][idir] +=
+          rhs_ls[i][idir] +=
             wdeltax[idir] * (W(er,mark)-W(e,mark));
+
+        ++i;
       }
     }
   }
 
   // solve least-square normal equation system using Cramer's rule
-  for (ncomp_t c=varRange[0]; c<=varRange[1]; ++c)
+  std::size_t i(0);
+  for (std::size_t c : varList)
   {
     auto mark = c*rdof;
-    auto cmark = c - varRange[0];
 
-    auto ux = tk::cramer( lhs_ls, rhs_ls[cmark] );
+    auto ux = tk::cramer( lhs_ls, rhs_ls[i] );
 
     // Update the P1 dofs with the reconstructioned gradients.
     // Since this reconstruction does not affect the cell-averaged solution,
@@ -386,6 +387,8 @@ recoLeastSqExtStencil(
     W(e,mark+1) = ux[0];
     W(e,mark+2) = ux[1];
     W(e,mark+3) = ux[2];
+
+    ++i;
   }
 }
 
@@ -395,7 +398,7 @@ transform_P0P1( std::size_t rdof,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& W,
-                const std::array< std::size_t, 2 >& varRange )
+                const std::set< std::size_t >& varList )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
 //! \param[in] rdof Total number of reconstructed dofs
@@ -404,7 +407,7 @@ transform_P0P1( std::size_t rdof,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] W Second-order reconstructed vector which gets transformed to
 //!   the Dubiner reference space
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
+//! \param[in] varList List of indices in W, that need to be reconstructed
 //! \details Since the DG solution (and the primitive quantities) are assumed to
 //!   be stored in the Dubiner space, this transformation from Taylor
 //!   coefficients to Dubiner coefficients is necessary.
@@ -430,7 +433,7 @@ transform_P0P1( std::size_t rdof,
     // Compute the derivatives of basis function for DG(P1)
     auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
 
-    for (ncomp_t c=varRange[0]; c<=varRange[1]; ++c)
+    for (std::size_t c : varList)
     {
       auto mark = c*rdof;
 

@@ -348,36 +348,36 @@ class MultiMat {
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
-      std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+      std::set< std::size_t > vars;
+      for (std::size_t c=0; c<m_ncomp; ++c) vars.insert(c);
 
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
       {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
-        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-          U, varRange );
+        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem, U, vars );
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1(rdof, nelem, inpoel, coord, U, varRange);
+      tk::transform_P0P1(rdof, nelem, inpoel, coord, U, vars);
 
       //----- reconstruction of primitive quantities -----
       //--------------------------------------------------
       // For multimat, conserved and primitive quantities are reconstructed
       // separately.
+      vars.clear();
+      for (std::size_t c=0; c<nprim(); ++c) vars.insert(c);
       // 1.
       for (std::size_t e=0; e<nelem; ++e)
       {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
-        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-          P, {0, nprim()-1} );
+        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem, P, vars );
       }
 
       // 2.
-      tk::transform_P0P1(rdof, nelem, inpoel, coord, P,
-        {0, nprim()-1});
+      tk::transform_P0P1(rdof, nelem, inpoel, coord, P, vars);
     }
 
     //! Limit second-order solution, and primitive quantities separately
