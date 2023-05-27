@@ -594,9 +594,6 @@ VertexBasedMultiMat_P1(
 
         for(std::size_t k=0; k<nmat; ++k) {
           if(U(e, volfracDofIdx(nmat,k,rdof,0)) < 1e-4) {
-            // Vector to store the range of limited variables
-            std::set< std::size_t > var;
-
             // limit the density and energy of minor materials
             VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
               ncomp, phic,
@@ -781,20 +778,13 @@ VertexBasedMultiMat_P2(
 
         //for(std::size_t k=0; k<nmat; ++k) {
         //  if(U(e, volfracDofIdx(nmat,k,rdof,0)) < 1e-4) {
-        //    // Vector to store the range of limited variables
-        //    std::array< std::size_t, 2 > VarRange;
-
         //    // limit the density of minor materials
-        //    VarRange[0] = densityIdx(nmat, k);
-        //    VarRange[1] = VarRange[0];
         //    VertexBasedLimiting(unk, U, esup, inpoel, coord, e, rdof, dof_el,
-        //      ncomp, phic_p1, VarRange);
+        //      ncomp, phic_p1, std::set< std::size_t >{densityIdx(nmat,k)});
 
         //    // limit the pressure of minor materials
-        //    VarRange[0] = pressureIdx(nmat, k);
-        //    VarRange[1] = VarRange[0];
         //    VertexBasedLimiting(prim, P, esup, inpoel, coord, e, rdof, dof_el,
-        //      nprim, phip_p1, VarRange);
+        //      nprim, phip_p1, std::set< std::size_t >{pressureIdx(nmat,k)});
         //  }
         //}
       }
@@ -2223,7 +2213,7 @@ void MarkShockCells ( const std::size_t nelem,
   if(nmat > 1) {          // multi-material flow
     for (std::size_t i=0; i<3; ++i) vars.insert(momentumIdx(nmat, i));
   } else {                // single-material flow
-    for (std::size_t i=0; i<3; ++i) vars.insert(i);
+    for (std::size_t i=1; i<=3; ++i) vars.insert(i);
   }
 
   // Loop over faces
