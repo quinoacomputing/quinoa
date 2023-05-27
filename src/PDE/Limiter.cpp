@@ -2219,13 +2219,11 @@ void MarkShockCells ( const std::size_t nelem,
 
   // The interface-conservation based indicator will only evaluate the flux jump
   // for the momentum equations
-  std::array< std::size_t, 2 > VarRange;
+  std::set< std::size_t > vars;
   if(nmat > 1) {          // multi-material flow
-    VarRange[0] = momentumIdx(nmat, 0);
-    VarRange[1] = momentumIdx(nmat, 2);
+    for (std::size_t i=0; i<3; ++i) vars.insert(momentumIdx(nmat, i));
   } else {                // single-material flow
-    VarRange[0] = 1;
-    VarRange[1] = 3;
+    for (std::size_t i=0; i<3; ++i) vars.insert(i);
   }
 
   // Loop over faces
@@ -2323,15 +2321,16 @@ void MarkShockCells ( const std::size_t nelem,
       auto fl = flux( system, ncomp, mat_blk, state[0], {} );
       auto fr = flux( system, ncomp, mat_blk, state[1], {} );
 
-      for(std::size_t icomp = VarRange[0]; icomp <= VarRange[1]; icomp++) {
+      std::size_t i(0);
+      for (const auto& c : vars) {
         tk::real fn_l(0.0), fn_r(0.0);
         for(std::size_t idir = 0; idir < 3; idir++) {
-          fn_l += fl[icomp][idir] * fn[idir];
-          fn_r += fr[icomp][idir] * fn[idir];
+          fn_l += fl[c][idir] * fn[idir];
+          fn_r += fr[c][idir] * fn[idir];
         }
-        auto mark = icomp - VarRange[0];
-        fl_jump[mark] += wgp[igp] * (fn_l - fn_r) * (fn_l - fn_r);
-        fl_avg[mark]  += wgp[igp] * (fn_l + fn_r) * (fn_l + fn_r) * 0.25;
+        fl_jump[i] += wgp[igp] * (fn_l - fn_r) * (fn_l - fn_r);
+        fl_avg[i]  += wgp[igp] * (fn_l + fn_r) * (fn_l + fn_r) * 0.25;
+        ++i;
       }
     }
 
