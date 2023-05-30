@@ -190,7 +190,7 @@ VertexBasedLimiting(
   std::size_t ,
   std::size_t ncomp,
   std::vector< tk::real >& phi,
-  const std::set< std::size_t >& VarList );
+  const std::vector< std::size_t >& VarList );
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 void
@@ -206,7 +206,7 @@ VertexBasedLimiting_P2(
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& NodalExtrm,
-  const std::set< std::size_t >& VarList,
+  const std::vector< std::size_t >& VarList,
   std::vector< tk::real >& phi );
 
 //! Consistent limiter modifications for P1 dofs
