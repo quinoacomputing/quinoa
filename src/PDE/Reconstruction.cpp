@@ -117,7 +117,7 @@ intLeastSq_P0P1( const std::size_t rdof,
                  const Fields& geoElem,
                  const Fields& W,
                  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                 const std::set< std::size_t >& varList )
+                 const std::vector< std::size_t >& varList )
 // *****************************************************************************
 //  \brief Compute internal surface contributions to rhs vector of the
 //    least-squares reconstruction
@@ -158,8 +158,9 @@ intLeastSq_P0P1( const std::size_t rdof,
     for (std::size_t idir=0; idir<3; ++idir)
     {
       // rhs vector
-      for (std::size_t c : varList)
+      for (std::size_t i=0; i<varList.size(); ++i)
       {
+        auto c = varList[i];
         auto mark = c*rdof;
         rhs_ls[el][c][idir] +=
           wdeltax[idir] * (W(er,mark)-W(el,mark));
@@ -186,7 +187,7 @@ bndLeastSqConservedVar_P0P1(
   const Fields& P,
   const Fields& U,
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-  const std::set< std::size_t >& varList,
+  const std::vector< std::size_t >& varList,
   std::size_t nprim )
 // *****************************************************************************
 //  \brief Compute boundary surface contributions to rhs vector of the
@@ -257,9 +258,12 @@ bndLeastSqConservedVar_P0P1(
         for (std::size_t idir=0; idir<3; ++idir)
         {
           // rhs vector
-          for (std::size_t c : varList)
+          for (std::size_t i=0; i<varList.size(); ++i)
+          {
+            auto c = varList[i];
             rhs_ls[el][c][idir] +=
               wdeltax[idir] * (ustate[1][c]-ustate[0][c]);
+          }
         }
       }
     }
@@ -272,7 +276,7 @@ solveLeastSq_P0P1(
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
   Fields& W,
-  const std::set< std::size_t >& varList )
+  const std::vector< std::size_t >& varList )
 // *****************************************************************************
 //  Solve the 3x3 linear system for least-squares reconstruction
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -290,12 +294,12 @@ solveLeastSq_P0P1(
 
   for (std::size_t e=0; e<nelem; ++e)
   {
-    for (std::size_t c : varList)
+    for (std::size_t i=0; i<varList.size(); ++i)
     {
-      auto mark = c*rdof;
+      auto mark = varList[i]*rdof;
 
       // solve system using Cramer's rule
-      auto ux = tk::cramer( lhs[e], rhs[e][c] );
+      auto ux = tk::cramer( lhs[e], rhs[e][varList[i]] );
 
       W(e,mark+1) = ux[0];
       W(e,mark+2) = ux[1];
@@ -312,7 +316,7 @@ recoLeastSqExtStencil(
   const std::vector< std::size_t >& inpoel,
   const Fields& geoElem,
   Fields& W,
-  const std::set< std::size_t >& varList )
+  const std::vector< std::size_t >& varList )
 // *****************************************************************************
 //  \brief Reconstruct the second-order solution using least-squares approach
 //    from an extended stencil involving the node-neighbors
@@ -360,24 +364,21 @@ recoLeastSqExtStencil(
           lhs_ls[idir][jdir] += wdeltax[idir] * wdeltax[jdir];
 
       // compute rhs matrix
-      std::size_t i(0);
-      for (std::size_t c : varList)
+      for (std::size_t i=0; i<varList.size(); i++)
       {
-        auto mark = c*rdof;
+        auto mark = varList[i]*rdof;
         for (std::size_t idir=0; idir<3; ++idir)
           rhs_ls[i][idir] +=
             wdeltax[idir] * (W(er,mark)-W(e,mark));
 
-        ++i;
       }
     }
   }
 
   // solve least-square normal equation system using Cramer's rule
-  std::size_t i(0);
-  for (std::size_t c : varList)
+  for (std::size_t i=0; i<varList.size(); i++)
   {
-    auto mark = c*rdof;
+    auto mark = varList[i]*rdof;
 
     auto ux = tk::cramer( lhs_ls, rhs_ls[i] );
 
@@ -387,8 +388,6 @@ recoLeastSqExtStencil(
     W(e,mark+1) = ux[0];
     W(e,mark+2) = ux[1];
     W(e,mark+3) = ux[2];
-
-    ++i;
   }
 }
 
@@ -398,7 +397,7 @@ transform_P0P1( std::size_t rdof,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& W,
-                const std::set< std::size_t >& varList )
+                const std::vector< std::size_t >& varList )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
 //! \param[in] rdof Total number of reconstructed dofs
@@ -433,9 +432,9 @@ transform_P0P1( std::size_t rdof,
     // Compute the derivatives of basis function for DG(P1)
     auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
 
-    for (std::size_t c : varList)
+    for (std::size_t i=0; i<varList.size(); ++i)
     {
-      auto mark = c*rdof;
+      auto mark = varList[i]*rdof;
 
       // solve system using Cramer's rule
       auto ux = tk::cramer( {{ {{dBdx[0][1], dBdx[0][2], dBdx[0][3]}},

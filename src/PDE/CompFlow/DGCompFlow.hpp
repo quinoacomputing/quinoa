@@ -273,8 +273,8 @@ class CompFlow {
         tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
         // 1. internal face contributions
-        std::set< std::size_t > vars;
-        for (std::size_t c=0; c<m_ncomp; ++c) vars.insert(c);
+        std::vector< std::size_t > vars;
+        for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
         tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls, vars );
 
         // 2. boundary face contributions

@@ -348,8 +348,8 @@ class MultiMat {
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
-      std::set< std::size_t > vars;
-      for (std::size_t c=0; c<m_ncomp; ++c) vars.insert(c);
+      std::vector< std::size_t > vars;
+      for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
 
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
@@ -367,7 +367,7 @@ class MultiMat {
       // For multimat, conserved and primitive quantities are reconstructed
       // separately.
       vars.clear();
-      for (std::size_t c=0; c<nprim(); ++c) vars.insert(c);
+      for (std::size_t c=0; c<nprim(); ++c) vars.push_back(c);
       // 1.
       for (std::size_t e=0; e<nelem; ++e)
       {

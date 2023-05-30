@@ -206,8 +206,8 @@ class Transport {
                             {{0.0, 0.0, 0.0}},
                             {{0.0, 0.0, 0.0}} }} );
         // specify how many variables need to be reconstructed
-        std::set< std::size_t > vars;
-        for (std::size_t c=0; c<m_ncomp; ++c) vars.insert(c);
+        std::vector< std::size_t > vars;
+        for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
 
         std::vector< std::vector< std::array< tk::real, 3 > > >
           rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >

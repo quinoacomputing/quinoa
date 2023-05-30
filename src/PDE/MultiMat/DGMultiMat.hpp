@@ -469,13 +469,13 @@ class MultiMat {
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
-      std::set< std::size_t > vars;
-      for (std::size_t c=0; c<m_ncomp; ++c) vars.insert(c);
+      std::vector< std::size_t > vars;
+      for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
       // If DG is applied, reconstruct only volume fractions
       if (!is_p0p1 && ndof > 1)
       {
         vars.clear();
-        for (std::size_t k=0; k<nmat; ++k) vars.insert(volfracIdx(nmat, k));
+        for (std::size_t k=0; k<nmat; ++k) vars.push_back(volfracIdx(nmat, k));
       }
 
       // 1. solve 3x3 least-squares system
@@ -495,7 +495,7 @@ class MultiMat {
       // separately.
       if (is_p0p1) {
         vars.clear();
-        for (std::size_t c=0; c<nprim(); ++c) vars.insert(c);
+        for (std::size_t c=0; c<nprim(); ++c) vars.push_back(c);
 
         // 1.
         for (std::size_t e=0; e<nelem; ++e)
