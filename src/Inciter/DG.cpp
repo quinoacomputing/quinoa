@@ -85,10 +85,12 @@ DG::DG( const CProxy_Discretization& disc,
   m_diag(),
   m_stage( 0 ),
   m_ndof(),
+  m_interface(),
   m_numEqDof(),
   m_uc(),
   m_pc(),
   m_ndofc(),
+  m_interfacec(),
   m_initial( 1 ),
   m_uElemfields(m_u.nunk(), g_inputdeck.get< tag::component >().nprop()),
   m_pElemfields(m_u.nunk(),
@@ -192,6 +194,7 @@ DG::resizeSolVectors()
   for (auto& n : m_ndofc) n.resize( myGhosts()->m_bid.size() );
   for (auto& u : m_uc) u.resize( myGhosts()->m_bid.size() );
   for (auto& p : m_pc) p.resize( myGhosts()->m_bid.size() );
+  for (auto& i : m_interfacec) i.resize( myGhosts()->m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
@@ -199,6 +202,7 @@ DG::resizeSolVectors()
   {
     const auto ndofmax = g_inputdeck.get< tag::pref, tag::ndofmax >();
     m_ndof.resize( myGhosts()->m_nunk, ndofmax );
+    m_interface.resize( myGhosts()->m_nunk, 0 );
   }
   else
   {
@@ -358,7 +362,8 @@ DG::next()
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
                                              prim( ghostdata.size() );
-      std::vector< std::size_t > ndof;
+      std::vector< std::size_t > interface( ghostdata.size() );
+      std::vector< std::size_t > ndof( ghostdata.size() );
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
         Assert( i < myGhosts()->m_fd.Esuel().size()/4,
@@ -366,10 +371,13 @@ DG::next()
         tetid[j] = i;
         u[j] = m_u[i];
         prim[j] = m_p[i];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
+        if (pref && m_stage == 0) {
+          ndof[j] = m_ndof[i];
+          interface[j] = m_interface[i];
+        }
         ++j;
       }
-      thisProxy[ cid ].comsol( thisIndex, m_stage, tetid, u, prim, ndof );
+      thisProxy[ cid ].comsol( thisIndex, m_stage, tetid, u, prim, interface, ndof );
     }
 
   ownsol_complete();
@@ -381,6 +389,7 @@ DG::comsol( int fromch,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
             const std::vector< std::vector< tk::real > >& prim,
+            const std::vector< std::size_t >& interface,
             const std::vector< std::size_t >& ndof )
 // *****************************************************************************
 //  Receive chare-boundary solution ghost data from neighboring chares
@@ -389,6 +398,7 @@ DG::comsol( int fromch,
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Solution ghost data
 //! \param[in] prim Primitive variables in ghost cells
+//! \param[in] interface Interface marker in ghost cells
 //! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to the unlimited solution
 //!   from fellow chares.
@@ -399,8 +409,10 @@ DG::comsol( int fromch,
 
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
-  if (pref && fromstage == 0)
+  if (pref && fromstage == 0) {
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsol()" );
+    Assert( interface.size() == tetid.size(), "Size mismatch in DG::comsol()" );
+  }
 
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( myGhosts()->m_ghost, fromch );
@@ -416,6 +428,8 @@ DG::comsol( int fromch,
     if (pref && fromstage == 0) {
       Assert( b < m_ndofc[0].size(), "Indexing out of bounds" );
       m_ndofc[0][b] = ndof[i];
+      Assert( b < m_interfacec[0].size(), "Indexing out of bounds" );
+      m_interfacec[0][b] = interface[i];
     }
   }
 
@@ -532,6 +546,7 @@ void DG::refine()
     }
     if (pref && m_stage == 0) {
       m_ndof[ b.first ] = m_ndofc[0][ b.second ];
+      m_interface[ b.first ] = m_interfacec[0][ b.second ];
     }
   }
 
@@ -544,13 +559,13 @@ void DG::refine()
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
                                              prim( ghostdata.size() );
-      std::vector< std::size_t > ndof;
+      std::vector< std::size_t > ndof( ghostdata.size() );
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
         Assert( i < myGhosts()->m_fd.Esuel().size()/4, "Sending refined ndof  "
           "data" );
         tetid[j] = i;
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
+        if (pref && m_stage == 0) ndof[j] = m_ndof[i];
         ++j;
       }
       thisProxy[ cid ].comrefine( thisIndex, tetid, ndof );
@@ -707,7 +722,6 @@ DG::reco()
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
                                              prim( ghostdata.size() );
-      std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
         Assert( i < myGhosts()->m_fd.Esuel().size()/4, "Sending reconstructed ghost "
@@ -715,10 +729,9 @@ DG::reco()
         tetid[j] = i;
         u[j] = m_u[i];
         prim[j] = m_p[i];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
         ++j;
       }
-      thisProxy[ cid ].comreco( thisIndex, tetid, u, prim, ndof );
+      thisProxy[ cid ].comreco( thisIndex, tetid, u, prim );
     }
 
   ownreco_complete();
@@ -728,15 +741,13 @@ void
 DG::comreco( int fromch,
              const std::vector< std::size_t >& tetid,
              const std::vector< std::vector< tk::real > >& u,
-             const std::vector< std::vector< tk::real > >& prim,
-             const std::vector< std::size_t >& ndof )
+             const std::vector< std::vector< tk::real > >& prim )
 // *****************************************************************************
 //  Receive chare-boundary reconstructed ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Reconstructed high-order solution
 //! \param[in] prim Limited high-order primitive quantities
-//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to the reconstructed solution
 //!   from fellow chares.
 // *****************************************************************************
@@ -761,10 +772,6 @@ DG::comreco( int fromch,
     Assert( b < m_pc[1].size(), "Indexing out of bounds" );
     m_uc[1][b] = u[i];
     m_pc[1][b] = prim[i];
-    if (pref && m_stage == 0) {
-      Assert( b < m_ndofc[3].size(), "Indexing out of bounds" );
-      m_ndofc[3][b] = ndof[i];
-    }
   }
 
   // if we have received all solution ghost contributions from neighboring
@@ -787,7 +794,6 @@ DG::nodalExtrema()
   auto gid = d->Gid();
   auto bid = d->Bid();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto ncomp = m_u.nprop() / rdof;
   const auto nprim = m_p.nprop() / rdof;
 
@@ -801,9 +807,6 @@ DG::nodalExtrema()
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
       m_p(boundary,c) = m_pc[1][localtet][c];
-    }
-    if (pref && m_stage == 0) {
-      m_ndof[ boundary ] = m_ndofc[3][ localtet ];
     }
   }
 
@@ -1130,10 +1133,9 @@ DG::lim()
         tetid[j] = i;
         u[j] = m_u[i];
         prim[j] = m_p[i];
-        if (pref && m_stage == 0) ndof.push_back( m_ndof[i] );
         ++j;
       }
-      thisProxy[ cid ].comlim( thisIndex, tetid, u, prim, ndof );
+      thisProxy[ cid ].comlim( thisIndex, tetid, u, prim );
     }
 
   ownlim_complete();
@@ -1234,7 +1236,7 @@ void DG::smooth_ndof()
     // refined. Same procedure is applied when all the ndofs are 4.
     if(counter_p2 == 4 && m_ndof[e] == 4)
       m_ndof[e] = 10;
-    else if(counter_p1 == 4 && m_ndof[e] == 1)
+    else if(counter_p1 == 4 && m_ndof[e] == 1 /*&& m_interface[e] == 0*/)
       m_ndof[e] = 4;
   }
 }
@@ -1243,26 +1245,19 @@ void
 DG::comlim( int fromch,
             const std::vector< std::size_t >& tetid,
             const std::vector< std::vector< tk::real > >& u,
-            const std::vector< std::vector< tk::real > >& prim,
-            const std::vector< std::size_t >& ndof )
+            const std::vector< std::vector< tk::real > >& prim )
 // *****************************************************************************
 //  Receive chare-boundary limiter ghost data from neighboring chares
 //! \param[in] fromch Sender chare id
 //! \param[in] tetid Ghost tet ids we receive solution data for
 //! \param[in] u Limited high-order solution
 //! \param[in] prim Limited high-order primitive quantities
-//! \param[in] ndof Number of degrees of freedom for chare-boundary elements
 //! \details This function receives contributions to the limited solution from
 //!   fellow chares.
 // *****************************************************************************
 {
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comlim()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in DG::comlim()" );
-
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  if (pref && m_stage == 0)
-    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comlim()" );
 
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( myGhosts()->m_ghost, fromch );
@@ -1276,10 +1271,6 @@ DG::comlim( int fromch,
     Assert( b < m_pc[2].size(), "Indexing out of bounds" );
     m_uc[2][b] = u[i];
     m_pc[2][b] = prim[i];
-    if (pref && m_stage == 0) {
-      Assert( b < m_ndofc[4].size(), "Indexing out of bounds" );
-      m_ndofc[4][b] = ndof[i];
-    }
   }
 
   // if we have received all solution ghost contributions from neighboring
@@ -1297,9 +1288,7 @@ DG::dt()
 // Compute time step size
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   auto d = Disc();
-
 
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
@@ -1311,9 +1300,6 @@ DG::dt()
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
       m_p(b.first,c) = m_pc[2][b.second][c];
-    }
-    if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[4][ b.second ];
     }
   }
 
@@ -1403,13 +1389,15 @@ DG::solve( tk::real newdt )
     {
       for (std::size_t k=0; k<m_numEqDof[c]; ++k)
       {
-        auto rmark = c*rdof+k;
-        auto mark = c*ndof+k;
-        m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
-          + rkcoef[1][m_stage] * ( m_u(e, rmark)
-            + d->Dt() * m_rhs(e, mark)/m_lhs(e, mark) );
-        if(fabs(m_u(e, rmark)) < 1e-16)
-          m_u(e, rmark) = 0;
+        if(k < m_ndof[e]) {
+          auto rmark = c*rdof+k;
+          auto mark = c*ndof+k;
+          m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
+            + rkcoef[1][m_stage] * ( m_u(e, rmark)
+              + d->Dt() * m_rhs(e, mark)/m_lhs(e, mark) );
+          if(fabs(m_u(e, rmark)) < 1e-16)
+            m_u(e, rmark) = 0;
+        }
       }
       // zero out unused/reconstructed dofs of equations using reduced dofs
       // (see DGMultiMat::numEquationDofs())
@@ -1424,7 +1412,7 @@ DG::solve( tk::real newdt )
 
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
-    myGhosts()->m_fd.Esuel().size()/4, m_ndof );
+    myGhosts()->m_fd.Esuel().size()/4, m_ndof, m_interface );
   g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof );
   if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
@@ -1686,6 +1674,10 @@ DG::writeFields(
   if (g_inputdeck.get< tag::pref, tag::pref >()) {
     std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
     ndof.resize( nelem );
+    for(std::size_t k = 0; k < nelem; k++) {
+      // Mark the cell with THINC reconstruction as 0 for output
+      if(m_interface[k] == 1) ndof[k] = 0;
+    }
     for (const auto& [child,parent] : addedTets)
       ndof[child] = static_cast< tk::real >( m_ndof[parent] );
     elemfields.push_back( ndof );
@@ -1713,8 +1705,9 @@ DG::writeFields(
   analyticFieldNames( g_dgpde[d->MeshId()], tk::Centering::ELEM, elemfieldnames );
   analyticFieldNames( g_dgpde[d->MeshId()], tk::Centering::NODE, nodefieldnames );
 
-  if (g_inputdeck.get< tag::pref, tag::pref >())
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
     elemfieldnames.push_back( "NDOF" );
+  }
 
   elemfieldnames.push_back( "shock_marker" );
 

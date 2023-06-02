@@ -20,7 +20,6 @@
 
 void
 tk::volInt( ncomp_t system,
-            const bool pref,
             std::size_t nmat,
             real t,
             const std::vector< inciter::EOS >& mat_blk,
@@ -40,7 +39,6 @@ tk::volInt( ncomp_t system,
 // *****************************************************************************
 //  Compute volume integrals for DG
 //! \param[in] system Equation system index
-//! \param[in] pref Indicator for p-adaptive algorithm
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] t Physical time
 //! \param[in] mat_blk EOS material block

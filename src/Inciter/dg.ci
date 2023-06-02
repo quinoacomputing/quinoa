@@ -37,8 +37,7 @@ module dg {
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
-                         const std::vector< std::vector< tk::real > >& prim,
-                         const std::vector< std::size_t >& ndof );
+                         const std::vector< std::vector< tk::real > >& prim );
       entry void comnodeout( const std::vector< std::size_t >& gid,
                              const std::vector< std::size_t >& nesup,
                              const std::vector< std::vector< tk::real > >& Lu,
@@ -52,13 +51,13 @@ module dg {
       entry void comreco( int fromch,
                           const std::vector< std::size_t >& tetid,
                           const std::vector< std::vector< tk::real > >& u,
-                          const std::vector< std::vector< tk::real > >& prim,
-                          const std::vector< std::size_t >& ndof );
+                          const std::vector< std::vector< tk::real > >& prim );
       entry void comsol( int fromch,
                          std::size_t fromstage,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
                          const std::vector< std::vector< tk::real > >& prim,
+                         const std::vector< std::size_t >& interface,
                          const std::vector< std::size_t >& ndof );
       entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void solve( tk::real newdt );

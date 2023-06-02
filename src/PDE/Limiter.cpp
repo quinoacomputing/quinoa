@@ -749,7 +749,9 @@ VertexBasedMultiMat_P2(
       std::vector< tk::real > phic_p1(ncomp, 1.0), phic_p2(ncomp, 1.0);
       std::vector< tk::real > phip_p1(nprim, 1.0), phip_p2(nprim, 1.0);
 
-      if(shockmarker[e]) {
+      // Only when the cell is marked with discontinuous solution or P0P1 scheme
+      // is used, the vertex-based slope limiter will be applied.
+      if(shockmarker[e] || dof_el == 4) {
         // Removing 3rd order DOFs if discontinuity is detected, and applying
         // limiting to the 2nd order/P1 solution
         for (std::size_t c=0; c<ncomp; ++c) {
@@ -1640,7 +1642,7 @@ void BoundPreservingLimiting( std::size_t nmat,
 
   // Compute the upper and lower bound for volume fraction
   const tk::real min = 1e-14;
-  const tk::real max = 1.0 - min;
+  const tk::real max = 1.0 - min * (nmat - 1);
 
   // loop over all faces of the element e
   for (std::size_t lf=0; lf<4; ++lf)

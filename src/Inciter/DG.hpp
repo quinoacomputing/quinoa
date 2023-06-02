@@ -121,15 +121,13 @@ class DG : public CBase_DG {
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
-                 const std::vector< std::vector< tk::real > >& prim,
-                 const std::vector< std::size_t >& ndof );
+                 const std::vector< std::vector< tk::real > >& prim );
 
     //! Receive chare-boundary reconstructed data from neighboring chares
     void comreco( int fromch,
                   const std::vector< std::size_t >& tetid,
                   const std::vector< std::vector< tk::real > >& u,
-                  const std::vector< std::vector< tk::real > >& prim,
-                  const std::vector< std::size_t >& ndof );
+                  const std::vector< std::vector< tk::real > >& prim );
 
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
@@ -137,6 +135,7 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
                  const std::vector< std::vector< tk::real > >& prim,
+                 const std::vector< std::size_t >& interface,
                  const std::vector< std::size_t >& ndof );
 
     //! Receive contributions to nodal gradients on chare-boundaries
@@ -248,10 +247,12 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_stage;
       p | m_ndof;
+      p | m_interface;
       p | m_numEqDof;
       p | m_uc;
       p | m_pc;
       p | m_ndofc;
+      p | m_interfacec;
       p | m_initial;
       p | m_uElemfields;
       p | m_pElemfields;
@@ -329,6 +330,8 @@ class DG : public CBase_DG {
     std::size_t m_stage;
     //! Vector of local number of degrees of freedom for each element
     std::vector< std::size_t > m_ndof;
+    //! Interface marker for field output
+    std::vector< std::size_t > m_interface;
     //! Vector of number of degrees of freedom for each PDE equation/component
     std::vector< std::size_t > m_numEqDof;
     //! Solution receive buffers for ghosts only
@@ -337,7 +340,9 @@ class DG : public CBase_DG {
     std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
-    std::array< std::vector< std::size_t >, 5 > m_ndofc;
+    std::array< std::vector< std::size_t >, 3 > m_ndofc;
+    //! Interface marker receive buffers for ghost only
+    std::array< std::vector< std::size_t >, 1 > m_interfacec;
     //! 1 if starting time stepping, 0 if during time stepping
     std::size_t m_initial;
     //! Solution elem output fields

@@ -147,6 +147,7 @@ class Transport {
     //!   and is currently not used in transport.
     void updateInterfaceCells( tk::Fields&,
       std::size_t,
+      std::vector< std::size_t >&,
       std::vector< std::size_t >& ) const {}
 
     //! Update the primitives for this PDE system
@@ -382,7 +383,7 @@ class Transport {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, pref, m_ncomp, t, m_mat_blk, ndof, rdof,
+        tk::volInt( m_system, m_ncomp, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
                     Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
 
@@ -411,7 +412,7 @@ class Transport {
                     [[maybe_unused]] const std::vector< std::size_t >& inpoel,
                     const inciter::FaceData& fd,
                     const tk::Fields& unk,
-                    const tk::Fields& prim,
+                    [[maybe_unused]] const tk::Fields& prim,
                     inciter::ctr::PrefIndicatorType indicator,
                     std::size_t ndof,
                     std::size_t ndofmax,
@@ -421,8 +422,7 @@ class Transport {
       const auto& esuel = fd.Esuel();
 
       if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
-        spectral_decay( 1, nunk, esuel, unk, prim, ndof, ndofmax, tolref,
-          ndofel );
+        spectral_decay( 1, nunk, esuel, unk, ndof, ndofmax, tolref, ndofel );
       else
         Throw( "No such adaptive indicator type" );
     }

@@ -243,11 +243,13 @@ class MultiMat {
     //! Update the interface cells to first order dofs
     //! \param[in] unk Array of unknowns
     //! \param[in] nielem Number of internal elements
-//    //! \param[in,out] ndofel Array of dofs
+    //! \param[in,out] ndofel Array of dofs
+    //! \param[in,out] interface Vector of interface marker
     //! \details This function resets the high-order terms in interface cells.
     void updateInterfaceCells( tk::Fields& unk,
       std::size_t nielem,
-      std::vector< std::size_t >& /*ndofel*/ ) const
+      std::vector< std::size_t >& ndofel,
+      std::vector< std::size_t >& interface ) const
     {
       auto intsharp =
         g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
@@ -267,7 +269,7 @@ class MultiMat {
 
         // interface cells cannot be high-order
         if (intInd) {
-          //ndofel[e] = 1;
+          interface[e] = 1;
           for (std::size_t k=0; k<nmat; ++k) {
             if (matInt[k]) {
               for (std::size_t i=1; i<rdof; ++i) {
@@ -281,6 +283,29 @@ class MultiMat {
               unk(e, momentumDofIdx(nmat,idir,rdof,i)) = 0.0;
             }
           }
+        } else {
+          // If the cell is marked as interface cell in the previous timestep
+          // and does not marked as interface for the current timestep, DGP2
+          // will be applied for the current timestep in p-adaptive process
+          // Please note this block is added since the spectral decay indicator
+          // does not applied to P0 cells.
+          if (interface[e] == 1) {
+            if(ndofel[e] < 10 && rdof == 10) {
+              ndofel[e] = 10;
+              for (std::size_t k=0; k<nmat; ++k) {
+                for (std::size_t i=1; i<rdof; ++i) {
+                  unk(e, densityDofIdx(nmat,k,rdof,i)) = 0.0;
+                  unk(e, energyDofIdx(nmat,k,rdof,i)) = 0.0;
+                }
+              }
+              for (std::size_t idir=0; idir<3; ++idir) {
+                for (std::size_t i=1; i<rdof; ++i) {
+                  unk(e, momentumDofIdx(nmat,idir,rdof,i)) = 0.0;
+                }
+              }
+            }
+          }
+          interface[e] = 0;
         }
       }
     }
@@ -787,7 +812,7 @@ class MultiMat {
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, pref, nmat, t, m_mat_blk, ndof, rdof, nelem,
+        tk::volInt( m_system, nmat, t, m_mat_blk, ndof, rdof, nelem,
                     inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
                     intsharp );
 
@@ -838,12 +863,13 @@ class MultiMat {
     //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
     //! \param[in] tolref Tolerance for p-refinement
     //! \param[in,out] ndofel Vector of local number of degrees of freedome
+    //! \param[in] interface Vector of interface marker
     void eval_ndof( std::size_t nunk,
                     [[maybe_unused]] const tk::UnsMesh::Coords& coord,
                     [[maybe_unused]] const std::vector< std::size_t >& inpoel,
                     const inciter::FaceData& fd,
                     const tk::Fields& unk,
-                    const tk::Fields& prim,
+                    [[maybe_unused]] const tk::Fields& prim,
                     inciter::ctr::PrefIndicatorType indicator,
                     std::size_t ndof,
                     std::size_t ndofmax,
@@ -855,8 +881,7 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       if(indicator == inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY)
-        spectral_decay(nmat, nunk, esuel, unk, prim, ndof, ndofmax, tolref,
-          ndofel);
+        spectral_decay(nmat, nunk, esuel, unk, ndof, ndofmax, tolref, ndofel);
       else
         Throw( "No such adaptive indicator type" );
     }

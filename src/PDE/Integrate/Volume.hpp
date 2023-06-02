@@ -29,7 +29,6 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! Compute volume integrals for DG
 void
 volInt( ncomp_t system,
-        const bool pref,
         std::size_t nmat,
         real t,
         const std::vector< inciter::EOS >& mat_blk,
