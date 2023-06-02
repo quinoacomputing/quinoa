@@ -540,7 +540,7 @@ SmallShearSolid::elasticEnergy(
   eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
 
   // compute elastic energy
-  auto rhoEe = rho * m_mu * eps2;
+  auto rhoEe = m_mu * eps2;
 
   return rhoEe;
 }

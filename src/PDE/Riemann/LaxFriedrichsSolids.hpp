@@ -64,6 +64,24 @@ struct LaxFriedrichsSolids {
     auto vr = u[1][ncomp+velocityIdx(nmat, 1)];
     auto wr = u[1][ncomp+velocityIdx(nmat, 2)];
 
+    // define rotation matrix
+    std::vector< std::array< tk::real, 3 > > rotMat;
+    tk::real nx = fn[0];
+    tk::real ny = fn[1];
+    tk::real nz = fn[2];
+    rotMat[0][0] = nx;
+    rotMat[0][1] = ny;
+    rotMat[0][2] = nz;
+    rotMat[1][0] = ny;
+    rotMat[1][1] = -nx;
+    rotMat[1][2] = 0.0;
+    rotMat[2][0] = nx*nz;
+    rotMat[2][1] = ny*nz;
+    rotMat[2][2] = -(nx*nx+ny*ny);
+
+				     
+    std::vector< std::array< tk::real, 3 > > agn_l, agn_r;
+    
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             pml(nmat, 0.0), pmr(nmat, 0.0),
                             am_l(nmat, 0.0),
@@ -83,15 +101,22 @@ struct LaxFriedrichsSolids {
       asig_l.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
         u[0][densityIdx(nmat, k)], ul, vl, wl, u[0][energyIdx(nmat, k)],
         al_l[k], k, ag_l[k]));
+
       // normal stress (traction) vector
       asign_l.push_back(tk::matvec(asig_l[k], fn));
       for (std::size_t i=0; i<3; ++i)
         sign_l[i] += asign_l[k][i];
 
       // rotate deformation gradient tensor for speed of sound in normal dir
+      // g*R
+      cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+		  3, 3, 3, 1.0, ag_l[k], 3, rotMat, 3, 0.0, agn_l, 3);
+      // Rt*g*R
+      cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+		  3, 3, 3, 1.0, rotMat, 3, agn_l, 3, 0.0, agn_l, 3);
       am_l[k] = mat_blk[k].compute< EOS::soundspeed >(
         u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, tk::dot(asign_l[k],fn),
-        ag_l[k] );
+        agn_l[k] );
 
       // Right state
       al_r[k] = u[1][volfracIdx(nmat, k)];
@@ -108,9 +133,15 @@ struct LaxFriedrichsSolids {
         sign_l[i] += asign_l[k][i];
 
       // rotate deformation gradient tensor for speed of sound in normal dir
+      // g*R
+      cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+		  3, 3, 3, 1.0, ag_r[k], 3, rotMat, 3, 0.0, agn_r, 3);
+      // Rt*g*R
+      cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+		  3, 3, 3, 1.0, rotMat, 3, agn_r, 3, 0.0, agn_r, 3);
       am_r[k] = mat_blk[k].compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, tk::dot(asign_r[k],fn),
-        ag_r[k] );
+        agn_r[k] );
     }
 
     // Mixture speed of sound
