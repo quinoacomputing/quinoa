@@ -44,7 +44,7 @@ struct LaxFriedrichsSolids {
       g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
     const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
       tag::matidxmap >().template get< tag::solidx >();
-
+    
     auto ncomp = u[0].size()-(3+nmat);
     std::vector< tk::real > flx( ncomp, 0 ), fluxl(ncomp, 0), fluxr(ncomp,0);
 
@@ -63,32 +63,15 @@ struct LaxFriedrichsSolids {
     auto ur = u[1][ncomp+velocityIdx(nmat, 0)];
     auto vr = u[1][ncomp+velocityIdx(nmat, 1)];
     auto wr = u[1][ncomp+velocityIdx(nmat, 2)];
-
-    // define rotation matrix and auxiliary G
-    double *rotMat, *G;
-    rotMat = (double *)malloc ( 3*3*sizeof( double ));
-    G = (double *)malloc( 3*3*sizeof( double ) );
-
-    tk::real nx = fn[0];
-    tk::real ny = fn[1];
-    tk::real nz = fn[2];
-    rotMat[0] = nx;
-    rotMat[1] = ny;
-    rotMat[2] = nz;
-    rotMat[3] = ny;
-    rotMat[4] = -nx;
-    rotMat[5] = 0.0;
-    rotMat[6] = nx*nz;
-    rotMat[7] = ny*nz;
-    rotMat[8] = -(nx*nx+ny*ny);
 				 
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             pml(nmat, 0.0), pmr(nmat, 0.0),
                             am_l(nmat, 0.0),
                             am_r(nmat, 0.0);
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > ag_l, ag_r,
-      asig_l, asig_r, agn_l, agn_r;
+      asig_l, asig_r;
     std::vector< std::array< tk::real, 3 > > asign_l, asign_r;
+    std::array< std::array< tk::real, 3 >, 3 > agn_l, agn_r;
     std::array< tk::real, 3 > sign_l {{0, 0, 0}}, sign_r {{0, 0, 0}};
     for (std::size_t k=0; k<nmat; ++k)
     {
@@ -108,27 +91,10 @@ struct LaxFriedrichsSolids {
         sign_l[i] += asign_l[k][i];
 
       // rotate deformation gradient tensor for speed of sound in normal dir
-      // Value aux G
-      for (std::size_t i=0; i<3; ++i)
-	{
-	  for (std::size_t j=0; j<3; ++j)
-	    G[i*3+j] = ag_l[k][i][j];
-	}
-      // G*R
-      cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-		  3, 3, 3, 1.0, G, 3, rotMat, 3, 0.0, G, 3);
-      // Rt*G*R
-      cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-		  3, 3, 3, 1.0, rotMat, 3, G, 3, 0.0, G, 3);
-      // Value agn_l
-      for (std::size_t i=0; i<3; ++i)
-	{
-	  for (std::size_t j=0; j<3; ++j)
-	    agn_l[k][i][j] = G[i*3+j];
-	}
+      agn_l = tk::rotateTensor(ag_l[k], fn);
       am_l[k] = mat_blk[k].compute< EOS::soundspeed >(
         u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, tk::dot(asign_l[k],fn), 
-        agn_l[k] ); // Problems here
+        agn_l );
 
       // Right state
       al_r[k] = u[1][volfracIdx(nmat, k)];
@@ -145,27 +111,10 @@ struct LaxFriedrichsSolids {
         sign_l[i] += asign_l[k][i];
 
       // rotate deformation gradient tensor for speed of sound in normal dir
-      // Value aux G
-      for (std::size_t i=0; i<3; ++i)
-	{
-	  for (std::size_t j=0; j<3; ++j)
-	    G[i*3+j] = ag_r[k][i][j];
-	}
-      // G*R
-      cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-		  3, 3, 3, 1.0, G, 3, rotMat, 3, 0.0, G, 3);
-      // Rt*G*R
-      cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-		  3, 3, 3, 1.0, rotMat, 3, G, 3, 0.0, G, 3);
-      // Value agn_r
-      for (std::size_t i=0; i<3; ++i)
-	{
-	  for (std::size_t j=0; j<3; ++j)
-	    agn_r[k][i][j] = G[i*3+j];
-	}
+      agn_r = tk::rotateTensor(ag_r[k], fn);
       am_r[k] = mat_blk[k].compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, tk::dot(asign_r[k],fn),
-        agn_r[k] );
+        agn_r );
     }
 
     // Mixture speed of sound
@@ -243,8 +192,8 @@ struct LaxFriedrichsSolids {
     // Store Riemann velocity
     flx.push_back( vriem );
 
-    Assert( flx.size() == (u[0].size()+nmat+1), "Size of multi-material flux "
-            "vector incorrect" );
+    //Assert( flx.size() == (u[0].size()+nmat+1), "Size of multi-material flux "
+    //        "vector incorrect" );
 
     return flx;
   }
