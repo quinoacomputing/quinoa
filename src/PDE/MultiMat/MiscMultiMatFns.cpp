@@ -94,9 +94,9 @@ cleanTraceMultiMat(
     relaxVol += almax;
 
     // get conserved quantities
-    std::vector< tk::real > B_l(rdof, 0.0);
-    B_l[0] = 1.0;
-    ugp = eval_state(ncomp, rdof, ndof, e, U, B_l, {0, ncomp-1});
+    std::vector< tk::real > B(rdof, 0.0);
+    B[0] = 1.0;
+    ugp = eval_state(ncomp, rdof, ndof, e, U, B, {0, ncomp-1});
     
     auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
@@ -168,7 +168,7 @@ cleanTraceMultiMat(
           // energy change
           auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0))
             / alk_new;
-          auto gmat = getDeformGrad(nmat, k, U.extract(e));
+          auto gmat = getDeformGrad(nmat, k, ugp);
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
               gmat[i][j] /= alk_new;
@@ -216,7 +216,7 @@ cleanTraceMultiMat(
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
         prelax = std::max(prelax, p_target);
         auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0)) / alk;
-        auto gk = getDeformGrad(nmat, k, U.extract(e));
+        auto gk = getDeformGrad(nmat, k, ugp);
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             gk[i][j] /= alk;

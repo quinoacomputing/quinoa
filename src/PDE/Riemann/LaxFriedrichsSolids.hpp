@@ -99,7 +99,7 @@ struct LaxFriedrichsSolids {
       // Right state
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
-
+      
       // inv deformation gradient and Cauchy stress tensors
       ag_r.push_back(getDeformGrad(nmat, k, u[1]));
       asig_r.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
@@ -116,6 +116,25 @@ struct LaxFriedrichsSolids {
         u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, tk::dot(asign_r[k],fn),
         agn_r );
     }
+
+    // BEGIN DEBUG
+    if (pml[0] < 0.0 || pmr[0] < 0.0)
+      {
+	printf("pml[0] = %f \n",pml[0]);
+	printf("pmr[0] = %f \n",pmr[0]);
+	tk::real asd = 0.0/0.0;
+      }
+    // if (ag_l[0][0][0] < 0.990 || 1.001 < ag_l[0][0][0])
+    //   {
+    // 	for (int i=0; i<3; i++)
+    // 	  {
+    // 	    for (int j=0; j<3; j++)
+    // 	      {
+    // 		printf("gl[%d][%d] = %f \n", i, j, ag_l[0][i][j]);
+    // 	      }
+    // 	  }
+    //   }
+    // END DEBUG
 
     // Mixture speed of sound
     tk::real ac_l(0.0), ac_r(0.0);
@@ -143,8 +162,10 @@ struct LaxFriedrichsSolids {
       fluxl[densityIdx(nmat, k)] = vnl*u[0][densityIdx(nmat, k)];
       fluxl[energyIdx(nmat, k)] = vnl*u[0][energyIdx(nmat, k)];
       for (std::size_t i=0; i<3; ++i) {
-        fluxl[energyIdx(nmat, k)] -= u[0][ncomp+velocityIdx(nmat,i)] *
-          asign_l[k][i];
+        //fluxl[energyIdx(nmat, k)] -= u[0][ncomp+velocityIdx(nmat,i)] *
+        //  asign_l[k][i];
+	fluxl[energyIdx(nmat, k)] -= u[0][ncomp+velocityIdx(nmat,i)] *
+          asig_l[k][i][i];
       }
 
       // fluxes for inv deformation gradient tensor
@@ -161,9 +182,9 @@ struct LaxFriedrichsSolids {
       fluxr[energyIdx(nmat, k)] = vnr*u[1][energyIdx(nmat, k)];
       for (std::size_t i=0; i<3; ++i) {
         fluxr[energyIdx(nmat, k)] -= u[1][ncomp+velocityIdx(nmat,i)] *
-          asign_r[k][i];
+      	  asign_r[k][i];
       }
-
+      
       // fluxes for inv deformation gradient tensor
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
@@ -192,8 +213,8 @@ struct LaxFriedrichsSolids {
     // Store Riemann velocity
     flx.push_back( vriem );
 
-    //Assert( flx.size() == (u[0].size()+nmat+1), "Size of multi-material flux "
-    //        "vector incorrect" );
+    Assert( flx.size() == (ncomp+nmat+1), "Size of multi-material flux "
+            "vector incorrect" );
 
     return flx;
   }

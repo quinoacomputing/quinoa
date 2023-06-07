@@ -493,8 +493,8 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 //! the (x,y,z) to a new (r,s,t) coordinate system.
 //! The first direction is given by a unit vector r = (rx,ry,rz). Then, the second
 //! is chosen to be:
-//! - s = (ry,-rx,0) if |rx| > 0 and |ry| > 0.
-//! - s = (
+//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0) if |rx| > 0 and |ry| > 0.
+//! - s = (1,0,0) else
 //! Then, third basis vector is obtained from
 //! the cross-product between the first two.
 //! \param[in] mat matrix to be rotated.
@@ -547,17 +547,18 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
 	matAuxIn[i*3+j] = mat[i][j];
     }
   
-  // compute matAux*rotMat and store it into matAux2
+  // compute matAuxIn*rotMat and store it into matAuxOut
   cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
 	      3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
 
-  for (int i=0; i<9; i++)
+  // matAuxOut -> matAuxIn
+  for (std::size_t i=0; i<9; i++)
     {
       matAuxIn[i]  = matAuxOut[i];
       matAuxOut[i] = 0.0;
     }
   
-  // compute rotMat^T*matAux and store it into matAux
+  // compute rotMat^T*matAuxIn and store it into matAuxOut
   cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
 	      3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
   
