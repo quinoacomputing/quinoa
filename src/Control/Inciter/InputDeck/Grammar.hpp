@@ -601,13 +601,16 @@ namespace grm {
           const auto& rho0_jwl = mtype.template get< tag::rho0_jwl >();
           const auto& de_jwl = mtype.template get< tag::de_jwl >();
           const auto& rhor_jwl = mtype.template get< tag::rhor_jwl >();
+          const auto& Tr_jwl = mtype.template get< tag::Tr_jwl >();
           const auto& pr_jwl = mtype.template get< tag::Pr_jwl >();
           if (w_gru.size() != mat_id.size() || a_jwl.size() != mat_id.size() ||
             b_jwl.size() != mat_id.size() || r1_jwl.size() != mat_id.size() ||
             r2_jwl.size() != mat_id.size() || rho0_jwl.size() != mat_id.size()
-            || de_jwl.size() != mat_id.size() ||
-            rhor_jwl.size() != mat_id.size() || pr_jwl.size() != mat_id.size())
+            || de_jwl.size() != mat_id.size() || pr_jwl.size() != mat_id.size())
             Message< Stack, ERROR, MsgKey::EOSJWLPARAM >( stack, in );
+
+          if (rhor_jwl.size() != mat_id.size() && Tr_jwl.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSJWLREFSTATE >( stack, in );
         }
 
         // Track total number of materials in multiple material blocks
@@ -1803,6 +1806,7 @@ namespace deck {
               , material_vector< eq, kw::rho0_jwl, tag::rho0_jwl >
               , material_vector< eq, kw::de_jwl, tag::de_jwl >
               , material_vector< eq, kw::rhor_jwl, tag::rhor_jwl >
+              , material_vector< eq, kw::Tr_jwl, tag::Tr_jwl >
               , material_vector< eq, kw::Pr_jwl, tag::Pr_jwl >
               , material_vector< eq, kw::mat_cv, tag::cv >
               , material_vector< eq, kw::mat_k, tag::k >
