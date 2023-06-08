@@ -215,7 +215,7 @@ SmallShearSolid::CauchyStress(
   // Add deviatoric component of Cauchy stress tensor
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
-      asig[i][j] += alpha*devbt[i][j];
+      asig[i][j] += m_mu*alpha*devbt[i][j];
   }
 
   return asig;
@@ -314,7 +314,7 @@ SmallShearSolid::soundspeed(
     std::pow(g__12,2)*std::pow(g__21,2) - std::pow(g__13,2)*std::pow(g__31,2))*
     g__32 - (g__33*g__11*g__31 + g__13*(std::pow(g__21,2) - std::pow(g__31,2)))
     *g__12*g__33)*g__23 + (g__11*std::pow(g__32,2) - g__12*g__31*g__32 +
-			   g__33*(g__11*g__33 - g__13*g__31))*g__21*(g__12*g__33 - g__13*g__32))/
+    g__33*(g__11*g__33 - g__13*g__31))*g__21*(g__12*g__33 - g__13*g__32))/
     (std::pow(j2,(1/3))*std::pow(((g__11*g__33 - g__13*g__31)*g__22 + (-g__11*
     g__32 + g__12*g__31)*g__23 - g__21*(g__12*g__33 - g__13*g__32)),3)) )/6.0;
 
@@ -406,36 +406,6 @@ SmallShearSolid::soundspeed(
     a -= adefgrad[i][1]*dsigdg[i];
   }
   a = std::sqrt(a/arho);
-
-  // BEGIN DEBUG
-  if (!std::isfinite(a) || a < 0.0)
-    {
-      printf("dsigdg[0] = %f \n", dsigdg[0]);
-      printf("dsigdg[1] = %f \n", dsigdg[1]);
-      printf("dsigdg[2] = %f \n", dsigdg[2]);
-      printf("j2 = %f \n", j2);
-      printf("ap_corr = %f \n", ap_corr);
-      printf("arho = %f \n", arho);
-      printf("asigma_nn = %f \n", asigma_nn);
-      printf("dsigdrho = %f \n", dsigdrho);
-      printf("dsigde = %f \n", dsigde);
-      for (int i=0; i<3; i++)
-	{
-	  for (int j=0; j<3; j++)
-	    {
-	      printf("g[%d][%d] = %f \n", i, j, g[i][j]);
-	    }
-	}
-      for (int i=0; i<3; i++)
-	{
-	  for (int j=0; j<3; j++)
-	    {
-	      printf("C[%d][%d] = %f \n", i, j, C[i][j]);
-	    }
-	}
-      printf("a = %f \n", a);
-    }
-  // END DEBUG
 
   // check sound speed divergence
   if (!std::isfinite(a)) {

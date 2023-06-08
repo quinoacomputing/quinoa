@@ -568,6 +568,133 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
 	    {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
 }
 
+//! \brief Rotate a second order tensor (i.e. a Strain/Stress matrix) from
+//! the (r,s,t) back to the (x,y,z) coordinate system.
+//! The first direction is given by a unit vector r = (rx,ry,rz). Then, the second
+//! is chosen to be:
+//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0) if |rx| > 0 and |ry| > 0.
+//! - s = (1,0,0) else
+//! Then, third basis vector is obtained from
+//! the cross-product between the first two.
+//! \param[in] mat matrix to be rotated.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return Left Cauchy-Green tensor
+inline std::array< std::array< tk::real, 3 >, 3 >
+counterRotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
+	     const std::array< tk::real, 3 >& r )
+{
+  // define rotation matrix
+  tk::real eps = 1.0e-04;
+  double *rotMat;
+  rotMat = (double *)malloc ( 3*3*sizeof( double ));
+  tk::real rx = r[0];
+  tk::real ry = r[1];
+  tk::real rz = r[2];
+  if (std::abs(rx) > eps || std::abs(ry) > eps)
+    {
+      tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+      rotMat[0] = rx;
+      rotMat[1] = ry;
+      rotMat[2] = rz;
+      rotMat[3] = ry/rxryNorm;
+      rotMat[4] = -rx/rxryNorm;
+      rotMat[5] = 0.0;
+      rotMat[6] = rx*rz/rxryNorm;
+      rotMat[7] = ry*rz/rxryNorm;
+      rotMat[8] = -rxryNorm;
+    }
+  else
+    {
+      rotMat[0] = rx;
+      rotMat[1] = ry;
+      rotMat[2] = rz;
+      rotMat[3] = 1.0;
+      rotMat[4] = 0.0;
+      rotMat[5] = 0.0;
+      rotMat[6] = 0.0;
+      rotMat[7] = 1.0;
+      rotMat[8] = 0.0;
+    }
+  
+  // define matAux (I need matrices as row major 1D arrays)
+  double *matAuxIn, *matAuxOut;
+  matAuxIn  = (double *)malloc ( 3*3*sizeof( double ));
+  matAuxOut = (double *)malloc ( 3*3*sizeof( double ));
+  for (std::size_t i=0; i<3; ++i)
+    {
+      for (std::size_t j=0; j<3; ++j)
+	matAuxIn[i*3+j] = mat[i][j];
+    }
+  
+  // compute matAuxIn*rotMat and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+	      3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
+
+  // matAuxOut -> matAuxIn
+  for (std::size_t i=0; i<9; i++)
+    {
+      matAuxIn[i]  = matAuxOut[i];
+      matAuxOut[i] = 0.0;
+    }
+  
+  // compute rotMat^T*matAuxIn and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	      3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
+  
+  // return matAux as a 2D array
+  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
+	    {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+	    {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+}
+
+//! \brief Reflect a second order tensor (i.e. a Strain/Stress matrix)
+//! \param[in] mat matrix to be rotated.
+//! \param[in] reflectMat Reflection matrix
+//! \return Left Cauchy-Green tensor
+inline std::array< std::array< tk::real, 3 >, 3 >
+reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
+              const std::array< std::array< tk::real, 3 >, 3 >& reflectMat)
+{
+  // define rotation matrix
+  double *refMat;
+  refMat = (double *)malloc ( 3*3*sizeof( double ));
+  for (std::size_t i=0; i<3; ++i)
+    {
+      for (std::size_t j=0; j<3; ++j)
+	refMat[i*3+j] = reflectMat[i][j];
+    }
+  
+  // define matAux (I need matrices as row major 1D arrays)
+  double *matAuxIn, *matAuxOut;
+  matAuxIn  = (double *)malloc ( 3*3*sizeof( double ));
+  matAuxOut = (double *)malloc ( 3*3*sizeof( double ));
+  for (std::size_t i=0; i<3; ++i)
+    {
+      for (std::size_t j=0; j<3; ++j)
+	matAuxIn[i*3+j] = mat[i][j];
+    }
+  
+  // compute matAuxIn*refMat and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	      3, 3, 3, 1.0, matAuxIn, 3, refMat, 3, 0.0, matAuxOut, 3);
+
+  // matAuxOut -> matAuxIn
+  for (std::size_t i=0; i<9; i++)
+    {
+      matAuxIn[i]  = matAuxOut[i];
+      matAuxOut[i] = 0.0;
+    }
+  
+  // compute refMat^T*matAuxIn and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+	      3, 3, 3, 1.0, refMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
+  
+  // return matAux as a 2D array
+  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
+	    {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+	    {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+}
+
 } // tk::
 
 #endif // Vector_h

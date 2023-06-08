@@ -117,25 +117,6 @@ struct LaxFriedrichsSolids {
         agn_r );
     }
 
-    // BEGIN DEBUG
-    if (pml[0] < 0.0 || pmr[0] < 0.0)
-      {
-	printf("pml[0] = %f \n",pml[0]);
-	printf("pmr[0] = %f \n",pmr[0]);
-	tk::real asd = 0.0/0.0;
-      }
-    // if (ag_l[0][0][0] < 0.990 || 1.001 < ag_l[0][0][0])
-    //   {
-    // 	for (int i=0; i<3; i++)
-    // 	  {
-    // 	    for (int j=0; j<3; j++)
-    // 	      {
-    // 		printf("gl[%d][%d] = %f \n", i, j, ag_l[0][i][j]);
-    // 	      }
-    // 	  }
-    //   }
-    // END DEBUG
-
     // Mixture speed of sound
     tk::real ac_l(0.0), ac_r(0.0);
     for (std::size_t k=0; k<nmat; ++k)
@@ -162,10 +143,8 @@ struct LaxFriedrichsSolids {
       fluxl[densityIdx(nmat, k)] = vnl*u[0][densityIdx(nmat, k)];
       fluxl[energyIdx(nmat, k)] = vnl*u[0][energyIdx(nmat, k)];
       for (std::size_t i=0; i<3; ++i) {
-        //fluxl[energyIdx(nmat, k)] -= u[0][ncomp+velocityIdx(nmat,i)] *
-        //  asign_l[k][i];
-	fluxl[energyIdx(nmat, k)] -= u[0][ncomp+velocityIdx(nmat,i)] *
-          asig_l[k][i][i];
+        fluxl[energyIdx(nmat, k)] -= u[0][ncomp+velocityIdx(nmat,i)] *
+          asign_l[k][i];
       }
 
       // fluxes for inv deformation gradient tensor
