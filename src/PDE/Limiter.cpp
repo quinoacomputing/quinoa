@@ -899,8 +899,10 @@ VertexBasedMultiMat_FV(
     }
     else
     {
-      if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
-        consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic, phip);
+      if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
+        std::vector< tk::real > phic_p2(ncomp, 1.0);
+        consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic, phic_p2);
+      }
     }
 
     // apply limiter function
@@ -1577,10 +1579,10 @@ void consistentMultiMatLimiting_P1(
   else
   {
     // same limiter for all volume-fractions
-    for (std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k)
+    for (std::size_t k=0; k<nmat; ++k)
       phic_p1[volfracIdx(nmat, k)] = phi_al_p1;
     if(rdof > 4)
-      for (std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); ++k)
+      for (std::size_t k=0; k<nmat; ++k)
         phic_p2[volfracIdx(nmat, k)] = phi_al_p2;
   }
 }
