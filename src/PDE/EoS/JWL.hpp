@@ -21,7 +21,7 @@ namespace inciter {
 class JWL {
 
   private:
-    tk::real m_w, m_cv, m_rho0, m_de, m_rhor, m_pr, m_a, m_b, m_r1, m_r2, m_tr;
+    tk::real m_w, m_cv, m_rho0, m_de, m_rhor, m_tr, m_pr, m_a, m_b, m_r1, m_r2;
 
     //! Calculate specific internal energy
     tk::real intEnergy( tk::real rho, tk::real pr ) const;
@@ -40,7 +40,8 @@ class JWL {
 
     //! Constructor
     JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
-         tk::real er, tk::real A, tk::real B, tk::real R1, tk::real R2 );
+         tk::real tr, tk::real pr, tk::real A, tk::real B, tk::real R1,
+         tk::real R2 );
 
     //! Calculate density from the material pressure and temperature
     tk::real density( tk::real pr,
