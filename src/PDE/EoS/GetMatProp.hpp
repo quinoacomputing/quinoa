@@ -31,6 +31,10 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //!   that for the single-material system, this argument can be left unspecified
 //!   by the calling code
 //! \return Material ratio of specific heats (gamma)
+//! \note This function returns a zero if the vector for the property required
+//!   is empty. This will happen if the user has not specified that property
+//!   in the control file, hence the inputdeck has not allocated that property
+//!   vector.
 template< class Eq, class Prop >
 tk::real
 getmatprop( ncomp_t system, std::size_t imat=0 ) {
@@ -38,7 +42,14 @@ getmatprop( ncomp_t system, std::size_t imat=0 ) {
   const auto& map = g_inputdeck.get< tag::param, Eq, tag::matidxmap >();
   auto meos = map.template get< tag::eosidx >()[ imat ];
   auto midx = map.template get< tag::matidx >()[ imat ];
-  return matprop[ meos ].template get< Prop >()[ midx ];
+  auto pvec = matprop[ meos ].template get< Prop >();
+
+  tk::real mp;
+  if (!pvec.empty())
+    mp = pvec[ midx ];
+  else
+    mp = 0.0;
+  return mp;
 }
 
 //! Get the ratio of specific heats (gamma) for a material

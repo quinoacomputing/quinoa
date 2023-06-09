@@ -340,7 +340,7 @@ class MultiMat {
 
           auto w = wgp[igp] * geoElem(e, 0);
 
-          auto state = tk::eval_state( m_ncomp, rdof, ndof, e, unk, B, {0, m_ncomp-1} );
+          auto state = tk::eval_state( m_ncomp, rdof, ndof, e, unk, B );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -470,40 +470,44 @@ class MultiMat {
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
-      std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+      std::vector< std::size_t > vars;
+      for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
       // If DG is applied, reconstruct only volume fractions
       if (!is_p0p1 && ndof > 1)
-        varRange = {{volfracIdx(nmat, 0), volfracIdx(nmat, nmat-1)}};
+      {
+        vars.clear();
+        for (std::size_t k=0; k<nmat; ++k) vars.push_back(volfracIdx(nmat, k));
+      }
 
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
       {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
-        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-          U, varRange );
+        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem, U, vars );
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1(rdof, nelem, inpoel, coord, U, varRange);
+      tk::transform_P0P1(rdof, nelem, inpoel, coord, U, vars);
 
       //----- reconstruction of primitive quantities -----
       //--------------------------------------------------
       // For multimat, conserved and primitive quantities are reconstructed
       // separately.
       if (is_p0p1) {
+        vars.clear();
+        for (std::size_t c=0; c<nprim(); ++c) vars.push_back(c);
+
         // 1.
         for (std::size_t e=0; e<nelem; ++e)
         {
           // Reconstruct second-order dofs of volume-fractions in Taylor space
           // using nodal-stencils, for a good interface-normal estimate
-          tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-            P, {0, nprim()-1} );
+          tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem, P, vars );
         }
 
         // 2.
-        tk::transform_P0P1(rdof, nelem, inpoel, coord, P,
-          {0, nprim()-1});
+        tk::transform_P0P1(rdof, nelem, inpoel, coord, P, vars);
       }
     }
 
@@ -907,8 +911,8 @@ class MultiMat {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B, {0, m_ncomp-1});
-        auto php = eval_state(nprim(), rdof, rdof, e, P, B, {0, nprim()-1});
+        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
+        auto php = eval_state(nprim(), rdof, rdof, e, P, B);
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);

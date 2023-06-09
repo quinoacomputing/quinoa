@@ -19,12 +19,13 @@
 using inciter::JWL;
 
 JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
-  tk::real pr, tk::real A, tk::real B, tk::real R1, tk::real R2 ) :
+  tk::real tr, tk::real pr, tk::real A, tk::real B, tk::real R1, tk::real R2 ) :
   m_w(w),
   m_cv(cv),
   m_rho0(rho0),
   m_de(de),
   m_rhor(rhor),
+  m_tr(tr),
   m_pr(pr),
   m_a(A),
   m_b(B),
@@ -38,6 +39,7 @@ JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
 //! \param[in] de Heat of detonation for products. For reactants, it is
 //!   chosen such that the ambient internal energy (e0) is 0.
 //! \param[in] rhor Density of reference state
+//! \param[in] tr Temperature of reference state
 //! \param[in] pr Pressure of reference state
 //! \param[in] A Parameter A
 //! \param[in] B Parameter B
@@ -45,12 +47,20 @@ JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
 //! \param[in] R2 Parameter R2
 // *************************************************************************
 {
-  // reference internal energy
-  auto er = intEnergy(rhor, pr);
-  // reference temperature from Eqn (15)
-  m_tr = 1.0/m_cv * (er + de -
-    (m_a/m_r1*exp(-m_r1*m_rho0/m_rhor) +
-     m_b/m_r2*exp(-m_r2*m_rho0/m_rhor)) / m_rho0);
+  // reference density provided
+  if (m_tr < 1e-8) {
+    // reference internal energy
+    auto er = intEnergy(rhor, pr);
+    // reference temperature from Eqn (15)
+    m_tr = 1.0/m_cv * (er + de -
+      (m_a/m_r1*exp(-m_r1*m_rho0/m_rhor) +
+       m_b/m_r2*exp(-m_r2*m_rho0/m_rhor)) / m_rho0);
+  }
+  // reference temperature provided
+  else
+  {
+    m_rhor = density(m_pr, m_tr);
+  }
 }
 
 tk::real
