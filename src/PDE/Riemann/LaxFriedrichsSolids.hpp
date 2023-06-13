@@ -44,7 +44,7 @@ struct LaxFriedrichsSolids {
       g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
     const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
       tag::matidxmap >().template get< tag::solidx >();
-    
+
     auto ncomp = u[0].size()-(3+nmat);
     std::vector< tk::real > flx( ncomp, 0 ), fluxl(ncomp, 0), fluxr(ncomp,0);
 
@@ -63,7 +63,7 @@ struct LaxFriedrichsSolids {
     auto ur = u[1][ncomp+velocityIdx(nmat, 0)];
     auto vr = u[1][ncomp+velocityIdx(nmat, 1)];
     auto wr = u[1][ncomp+velocityIdx(nmat, 2)];
-				 
+
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             pml(nmat, 0.0), pmr(nmat, 0.0),
                             am_l(nmat, 0.0),
@@ -99,7 +99,7 @@ struct LaxFriedrichsSolids {
       // Right state
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
-      
+
       // inv deformation gradient and Cauchy stress tensors
       ag_r.push_back(getDeformGrad(nmat, k, u[1]));
       asig_r.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
@@ -161,9 +161,9 @@ struct LaxFriedrichsSolids {
       fluxr[energyIdx(nmat, k)] = vnr*u[1][energyIdx(nmat, k)];
       for (std::size_t i=0; i<3; ++i) {
         fluxr[energyIdx(nmat, k)] -= u[1][ncomp+velocityIdx(nmat,i)] *
-      	  asign_r[k][i];
+          asign_r[k][i];
       }
-      
+
       // fluxes for inv deformation gradient tensor
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)

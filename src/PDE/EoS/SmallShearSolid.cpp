@@ -542,6 +542,6 @@ SmallShearSolid::elasticEnergy(
   // compute elastic energy
   //auto rhoEe = rho * m_mu * eps2; // I think rho doesn't belong here
   auto rhoEe = m_mu * eps2;
-  
+
   return rhoEe;
 }

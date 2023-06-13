@@ -97,7 +97,7 @@ cleanTraceMultiMat(
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
     ugp = eval_state(ncomp, rdof, ndof, e, U, B, {0, ncomp-1});
-    
+
     auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
     auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
@@ -382,7 +382,7 @@ timeStepSizeMultiMat(
     fn[0] = geoFace(f,1);
     fn[1] = geoFace(f,2);
     fn[2] = geoFace(f,3);
-    
+
     // left element
 
     // Compute the basis function for the left element
@@ -406,13 +406,13 @@ timeStepSizeMultiMat(
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-	auto gk = getDeformGrad(nmat, k, ugp);
-	gk = tk::rotateTensor(gk, fn);
-	tk::real gnn = tk::dot(tk::matvec(gk, fn), fn);
+        auto gk = getDeformGrad(nmat, k, ugp);
+        gk = tk::rotateTensor(gk, fn);
+        tk::real gnn = tk::dot(tk::matvec(gk, fn), fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
           pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
-	  gnn, gk ) );
+          gnn, gk ) );
       }
     }
 
@@ -443,13 +443,13 @@ timeStepSizeMultiMat(
       for (std::size_t k=0; k<nmat; ++k)
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-	  auto gk = getDeformGrad(nmat, k, ugp);
-	  gk = tk::rotateTensor(gk, fn);
-	  tk::real gnn = tk::dot(tk::matvec(gk, fn), fn);
-	  a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
-	    ugp[densityIdx(nmat, k)],
-	    pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
-	    gnn, gk ) );
+          auto gk = getDeformGrad(nmat, k, ugp);
+          gk = tk::rotateTensor(gk, fn);
+          tk::real gnn = tk::dot(tk::matvec(gk, fn), fn);
+          a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
+            ugp[densityIdx(nmat, k)],
+            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
+            gnn, gk ) );
         }
       }
 
