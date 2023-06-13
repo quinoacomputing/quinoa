@@ -96,7 +96,7 @@ cleanTraceMultiMat(
     // get conserved quantities
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
-    ugp = eval_state(ncomp, rdof, ndof, e, U, B, {0, ncomp-1});
+    ugp = eval_state(ncomp, rdof, ndof, e, U, B);
 
     auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));

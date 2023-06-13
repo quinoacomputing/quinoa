@@ -103,7 +103,7 @@ SmallShearSolid::pressure(
 
   // obtain elastic contribution to energy
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(arho/alpha, defgrad, eps2);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -170,7 +170,7 @@ SmallShearSolid::CauchyStress(
 
   // obtain elastic contribution to energy
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(arho/alpha, defgrad, eps2);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -448,7 +448,7 @@ SmallShearSolid::totalenergy(
     (u*u + v*v + w*w) + m_pstiff;
   // obtain elastic contribution to energy
   tk::real eps2;
-  tk::real rhoEe = elasticEnergy(rho, defgrad, eps2);
+  tk::real rhoEe = elasticEnergy(defgrad, eps2);
 
   return (rhoEh + rhoEe);
 }
@@ -488,7 +488,7 @@ SmallShearSolid::temperature(
 
   // obtain elastic contribution to energy
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(arho/alpha, defgrad, eps2);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -514,13 +514,11 @@ SmallShearSolid::min_eff_pressure(
 
 tk::real
 SmallShearSolid::elasticEnergy(
-  tk::real rho,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
   tk::real& eps2 ) const
 // *************************************************************************
 //! \brief Calculate elastic contribution to material energy from the material
 //!   density, and deformation gradient tensor
-//! \param[in] rho Material density
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //! \param[in/out] eps2 Elastic shear distortion
 //! \return Material elastic energy using the SmallShearSolid EoS
