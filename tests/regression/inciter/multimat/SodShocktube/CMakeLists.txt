@@ -54,6 +54,18 @@ add_regression_test(multimat_sod_shocktube_dgp1_limsolprojection
                     TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
                     LABELS dg)
 
+add_regression_test(multimat_sod_shocktube_fv_hll ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sod_shocktube_fv_hll.q rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_fv_hll.q -i rectangle_01_1.5k.exo -v
+                    BIN_BASELINE sod_shocktube_fv_hll.std.exo
+                    BIN_RESULT out.e-s.0.1.0
+                    BIN_DIFF_PROG_CONF exodiff_fv.cfg
+                    TEXT_BASELINE diag_fv_hll.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    LABELS fv multimat)
+
 # Parallel
 
 add_regression_test(multimat_sod_shocktube_dg ${INCITER_EXECUTABLE}
