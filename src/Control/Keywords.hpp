@@ -3477,6 +3477,22 @@ struct rhor_jwl_info {
 };
 using rhor_jwl = keyword< rhor_jwl_info, TAOCPP_PEGTL_STRING("rhor_jwl") >;
 
+struct Tr_jwl_info {
+  static std::string name() { return "Tr_jwl"; }
+  static std::string shortDescription() { return "JWL EoS Tr parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property Tr, which is the
+      temperature of reference state (units: K) for the Jones-Wilkins-Lee
+      equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using Tr_jwl = keyword< Tr_jwl_info, TAOCPP_PEGTL_STRING("Tr_jwl") >;
+
 struct Pr_jwl_info {
   static std::string name() { return "Pr_jwl"; }
   static std::string shortDescription() { return "JWL EoS er parameter"; }
@@ -3568,6 +3584,7 @@ struct material_info {
     + rho0_jwl::string()+ "\', \'"
     + de_jwl::string()+ "\', \'"
     + rhor_jwl::string()+ "\', \'"
+    + Tr_jwl::string()+ "\', \'"
     + Pr_jwl::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"

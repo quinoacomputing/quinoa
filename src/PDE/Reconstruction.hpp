@@ -44,7 +44,7 @@ intLeastSq_P0P1( const std::size_t rdof,
                  const Fields& geoElem,
                  const Fields& W,
                  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                 const std::array< std::size_t, 2 >& varRange );
+                 const std::vector< std::size_t >& varList );
 
 //! \brief Compute boundary surface contributions to rhs vector of the
 //!   least-squares reconstruction of conserved quantities of the PDE system
@@ -63,7 +63,7 @@ bndLeastSqConservedVar_P0P1(
   const Fields& P,
   const Fields& U,
   std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-  const std::array< std::size_t, 2 >& varRange,
+  const std::vector< std::size_t >& varList,
   std::size_t nprim=0 );
 
 //! Solve 3x3 system for least-squares reconstruction
@@ -73,7 +73,7 @@ solveLeastSq_P0P1(
   const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
   const std::vector< std::vector< std::array< real, 3 > > >& rhs,
   Fields& W,
-  const std::array< std::size_t, 2 >& varRange );
+  const std::vector< std::size_t >& varList );
 
 //! \brief Reconstruct the second-order solution using least-squares approach
 //!   from an extended stencil involving the node-neighbors
@@ -85,7 +85,7 @@ recoLeastSqExtStencil(
   const std::vector< std::size_t >& inpoel,
   const Fields& geoElem,
   Fields& W,
-  const std::array< std::size_t, 2 >& varRange );
+  const std::vector< std::size_t >& varList );
 
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
@@ -94,7 +94,7 @@ transform_P0P1( std::size_t rdof,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& W,
-                const std::array< std::size_t, 2 >& varRange );
+                const std::vector< std::size_t >& varList );
 
 //! Compute THINC reconstructions near material interfaces
 void

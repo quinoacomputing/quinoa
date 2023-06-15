@@ -67,23 +67,23 @@ namespace inciter {
       ur[densityIdx(nmat, k)] = ul[densityIdx(nmat, k)];
       ur[energyIdx(nmat, k)] = ul[energyIdx(nmat, k)];
       if (solidx[k] > 0) {
-	// Internal inverse deformation tensor
+        // Internal inverse deformation tensor
         std::array< std::array< tk::real, 3 >, 3 > g;
-	for (std::size_t i=0; i<3; ++i)
-	  for (std::size_t j=0; j<3; ++j)
-	    g[i][j] = ul[deformIdx(nmat,solidx[k],i,j)];
-	// Make reflection matrix
-	std::array< std::array< tk::real, 3 >, 3 >
-	  reflectionMat{{{1,0,0}, {0,1,0}, {0,0,1}}};
-	for (std::size_t i=0; i<3; ++i)
-	  for (std::size_t j=0; j<3; ++j)
-	    reflectionMat[i][j] -= 2*fn[i]*fn[j];
-	// Reflect g
-	g = tk::reflectTensor(g, reflectionMat);
-	// Copy g into ur
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-	    ur[deformIdx(nmat,solidx[k],i,j)] = g[i][j];
+            g[i][j] = ul[deformIdx(nmat,solidx[k],i,j)];
+        // Make reflection matrix
+        std::array< std::array< tk::real, 3 >, 3 >
+        reflectionMat{{{1,0,0}, {0,1,0}, {0,0,1}}};
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            reflectionMat[i][j] -= 2*fn[i]*fn[j];
+        // Reflect g
+        g = tk::reflectTensor(g, reflectionMat);
+        // Copy g into ur
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            ur[deformIdx(nmat,solidx[k],i,j)] = g[i][j];
       }
     }
     ur[momentumIdx(nmat, 0)] = rho * v1r;

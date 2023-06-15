@@ -30,7 +30,6 @@ class SmallShearSolid {
     //! \brief Calculate elastic contribution to material energy from the
     //!   material density, and deformation gradient tensor
     tk::real elasticEnergy(
-      tk::real rho,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
       tk::real& eps2 ) const;
 

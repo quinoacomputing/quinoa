@@ -161,7 +161,7 @@ struct LaxFriedrichsSolids {
       fluxr[energyIdx(nmat, k)] = vnr*u[1][energyIdx(nmat, k)];
       for (std::size_t i=0; i<3; ++i) {
         fluxr[energyIdx(nmat, k)] -= u[1][ncomp+velocityIdx(nmat,i)] *
-      	  asign_r[k][i];
+          asign_r[k][i];
       }
 
       // fluxes for inv deformation gradient tensor

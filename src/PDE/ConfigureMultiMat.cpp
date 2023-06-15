@@ -162,8 +162,14 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
         parameters(mtype.get< tag::rho0_jwl >()) );
       nfo.emplace_back( "JWL parameter de",
         parameters(mtype.get< tag::de_jwl >()) );
-      nfo.emplace_back( "JWL parameter rhor",
-        parameters(mtype.get< tag::rhor_jwl >()) );
+      if (!mtype.get< tag::rhor_jwl >().empty()) {
+        nfo.emplace_back( "JWL parameter rhor",
+          parameters(mtype.get< tag::rhor_jwl >()) );
+      }
+      else if (!mtype.get< tag::Tr_jwl >().empty()) {
+        nfo.emplace_back( "JWL parameter Tr",
+          parameters(mtype.get< tag::Tr_jwl >()) );
+      }
       nfo.emplace_back( "JWL parameter Pr",
         parameters(mtype.get< tag::Pr_jwl >()) );
     }

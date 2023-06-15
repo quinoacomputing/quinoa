@@ -424,7 +424,7 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     for (std::size_t j=0; j<3; ++j)
       G[i*3+j] = g[i][j];
   }
-  
+
   // get g.g^T
   cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
     3, 3, 3, 1.0, G, 3, G, 3, 0.0, C, 3);
@@ -502,7 +502,7 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 //! \return rotated tensor
 inline std::array< std::array< tk::real, 3 >, 3 >
 rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
-	     const std::array< tk::real, 3 >& r )
+             const std::array< tk::real, 3 >& r )
 {
   // define rotation matrix
   tk::real eps = 1.0e-04;
@@ -547,7 +547,7 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
 
   // compute matAuxIn*rotMat and store it into matAuxOut
   cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	      3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
+    3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
 
   // matAuxOut -> matAuxIn
   for (std::size_t i=0; i<9; i++)
@@ -558,12 +558,12 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
 
   // compute rotMat^T*matAuxIn and store it into matAuxOut
   cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-	      3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
+    3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
   // return matAux as a 2D array
   return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
-	    {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
-	    {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
 }
 
 //! \brief Reflect a second order tensor (e.g. a Strain/Stress matrix)
@@ -591,7 +591,7 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
 
   // compute matAuxIn*refMat and store it into matAuxOut
   cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	      3, 3, 3, 1.0, matAuxIn, 3, refMat, 3, 0.0, matAuxOut, 3);
+    3, 3, 3, 1.0, matAuxIn, 3, refMat, 3, 0.0, matAuxOut, 3);
 
   // matAuxOut -> matAuxIn
   for (std::size_t i=0; i<9; i++)
@@ -602,12 +602,12 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
 
   // compute refMat^T*matAuxIn and store it into matAuxOut
   cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-	      3, 3, 3, 1.0, refMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
+    3, 3, 3, 1.0, refMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
   // return matAux as a 2D array
   return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
-	    {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
-	    {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
 }
 
 } // tk::

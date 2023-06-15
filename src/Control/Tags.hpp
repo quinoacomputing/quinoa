@@ -104,6 +104,7 @@ struct R2_jwl { static std::string name() { return "R2_jwl"; } };
 struct rho0_jwl { static std::string name() { return "rho0_jwl"; } };
 struct de_jwl { static std::string name() { return "de_jwl"; } };
 struct rhor_jwl { static std::string name() { return "rhor_jwl"; } };
+struct Tr_jwl { static std::string name() { return "Tr_jwl"; } };
 struct Pr_jwl { static std::string name() { return "Pr_jwl"; } };
 struct hydroproductions {
   static std::string name() { return "hydroproductions"; } };
