@@ -382,7 +382,7 @@ timeStepSizeMultiMat(
     fn[0] = geoFace(f,1);
     fn[1] = geoFace(f,2);
     fn[2] = geoFace(f,3);
-    
+
     // left element
 
     // Compute the basis function for the left element
@@ -408,11 +408,14 @@ timeStepSizeMultiMat(
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
 	auto gk = getDeformGrad(nmat, k, ugp);
 	gk = tk::rotateTensor(gk, fn);
-	tk::real gnn = tk::dot(tk::matvec(gk, fn), fn);
+	auto sk = mat_blk[k].computeTensor< EOS::CauchyStress >(
+	  ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
+	  ugp[volfracIdx(nmat, k)], k, gk );
+	tk::real snn = tk::dot(tk::matvec(sk, fn), fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
           pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
-	  gnn, gk ) );
+	  snn, gk ) );
       }
     }
 
@@ -444,12 +447,15 @@ timeStepSizeMultiMat(
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
 	  auto gk = getDeformGrad(nmat, k, ugp);
+	  auto sk = mat_blk[k].computeTensor< EOS::CauchyStress >(
+	    ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
+	    ugp[volfracIdx(nmat, k)], k, gk );
 	  gk = tk::rotateTensor(gk, fn);
-	  tk::real gnn = tk::dot(tk::matvec(gk, fn), fn);
+	  tk::real snn = tk::dot(tk::matvec(sk, fn), fn);
 	  a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
 	    ugp[densityIdx(nmat, k)],
 	    pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
-	    gnn, gk ) );
+	    snn, gk ) );
         }
       }
 
