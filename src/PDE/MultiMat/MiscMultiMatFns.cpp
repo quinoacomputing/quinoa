@@ -406,16 +406,16 @@ timeStepSizeMultiMat(
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-	auto gk = getDeformGrad(nmat, k, ugp);
-	gk = tk::rotateTensor(gk, fn);
-	auto sk = mat_blk[k].computeTensor< EOS::CauchyStress >(
-	  ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
-	  ugp[volfracIdx(nmat, k)], k, gk );
-	tk::real snn = tk::dot(tk::matvec(sk, fn), fn);
+        auto gk = getDeformGrad(nmat, k, ugp);
+        gk = tk::rotateTensor(gk, fn);
+        auto sk = mat_blk[k].computeTensor< EOS::CauchyStress >(
+          ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
+          ugp[volfracIdx(nmat, k)], k, gk );
+        tk::real snn = tk::dot(tk::matvec(sk, fn), fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
           pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
-	  snn, gk ) );
+          snn, gk ) );
       }
     }
 
@@ -446,16 +446,16 @@ timeStepSizeMultiMat(
       for (std::size_t k=0; k<nmat; ++k)
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-	  auto gk = getDeformGrad(nmat, k, ugp);
-	  auto sk = mat_blk[k].computeTensor< EOS::CauchyStress >(
-	    ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
-	    ugp[volfracIdx(nmat, k)], k, gk );
-	  gk = tk::rotateTensor(gk, fn);
-	  tk::real snn = tk::dot(tk::matvec(sk, fn), fn);
-	  a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
-	    ugp[densityIdx(nmat, k)],
-	    pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
-	    snn, gk ) );
+          auto gk = getDeformGrad(nmat, k, ugp);
+          auto sk = mat_blk[k].computeTensor< EOS::CauchyStress >(
+            ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
+            ugp[volfracIdx(nmat, k)], k, gk );
+          gk = tk::rotateTensor(gk, fn);
+          tk::real snn = tk::dot(tk::matvec(sk, fn), fn);
+          a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
+            ugp[densityIdx(nmat, k)],
+            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
+            snn, gk ) );
         }
       }
 
