@@ -21,6 +21,11 @@
 #include "Types.hpp"
 #include "Exception.hpp"
 
+// ignore old-style-casts required for lapack/blas calls
+#if defined(__clang__)
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
 namespace tk {
 
 //! Flip sign of vector components
