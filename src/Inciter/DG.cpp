@@ -532,7 +532,6 @@ void DG::refine()
     }
     if (pref && m_stage == 0) {
       m_ndof[ b.first ] = m_ndofc[0][ b.second ];
-      m_interface[ b.first ] = m_interfacec[0][ b.second ];
     }
   }
 
@@ -689,16 +688,12 @@ DG::reco()
   }
 
   auto d = Disc();
-  if (pref && m_stage==0) {
-    g_dgpde[d->MeshId()].resetAdapSol( myGhosts()->m_fd, m_u, m_p, m_ndof );
-  }
-
   if (rdof > 1)
     // Reconstruct second-order solution and primitive quantities
     g_dgpde[d->MeshId()].reconstruct( d->T(), myGhosts()->m_geoFace,
       myGhosts()->m_geoElem,
       myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
-      myGhosts()->m_coord, m_u, m_p, m_ndof );
+      myGhosts()->m_coord, m_u, m_p );
 
   // Send reconstructed solution to neighboring chares
   if (myGhosts()->m_sendGhost.empty())
@@ -1050,7 +1045,6 @@ DG::lim()
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ncomp = m_u.nprop() / rdof;
   const auto nprim = m_p.nprop() / rdof;

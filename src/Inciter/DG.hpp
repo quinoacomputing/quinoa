@@ -135,7 +135,6 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
                  const std::vector< std::vector< tk::real > >& prim,
-                 const std::vector< std::size_t >& interface,
                  const std::vector< std::size_t >& ndof );
 
     //! Receive contributions to nodal gradients on chare-boundaries
