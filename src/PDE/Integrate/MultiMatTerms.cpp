@@ -250,6 +250,8 @@ updateRhsNonCons(
 {
   using inciter::volfracIdx;
   using inciter::energyIdx;
+  using inciter::volfracDofIdx;
+  using inciter::energyDofIdx;
 
   //Assert( dBdx[0].size() == ndof_el,
   //        "Size mismatch for basis function derivatives" );
@@ -269,20 +271,16 @@ updateRhsNonCons(
 
   if( ndof_el > 1)
   {
-    // Update rhs with distributions from volume fraction equations
-    for (std::size_t k=volfracIdx(nmat,0); k<volfracIdx(nmat,nmat); ++k)
+    // Update rhs with distributions from volume fraction and energy equations
+    for (std::size_t k=0; k<nmat; ++k)
     {
-      auto mark = k*ndof;
       for(std::size_t idof = 1; idof < ndof; idof++)
-        R(e, mark+idof) += wt * ncf[k][idof];
-    }
-
-    // Update rhs with distributions from the rest of the equatons
-    for (std::size_t c=energyIdx(nmat,0); c<energyIdx(nmat,nmat); ++c)
-    {
-      auto mark = c*ndof;
-      for(std::size_t idof = 1; idof < ndof; idof++)
-        R(e, mark+idof) += wt * ncf[c][idof] * B[idof];
+      {
+        R(e, volfracDofIdx(nmat,k,ndof,idof)) +=
+          wt * ncf[volfracIdx(nmat,k)][idof];
+        R(e, energyDofIdx(nmat,k,ndof,idof)) +=
+          wt * ncf[energyIdx(nmat,k)][idof] * B[idof];
+      }
     }
   }
 }
