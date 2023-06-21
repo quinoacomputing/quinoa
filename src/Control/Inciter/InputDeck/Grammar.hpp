@@ -201,7 +201,7 @@ namespace grm {
       if (intsharp.empty() || intsharp.size() != neq.get< eq >())
         intsharp.push_back( 0 );
 
-      // If interface compression parameter is not specified, default to 1.0
+      // If interface compression parameter is not specified, default to 1.8
       auto& intsharp_p = stack.template get< param, eq,
                                             tag::intsharp_param >();
       if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
@@ -702,11 +702,11 @@ namespace grm {
       if (intsharp.empty() || intsharp.size() != neq.get< eq >())
         intsharp.push_back( 0 );
 
-      // If interface compression parameter is not specified, default to 1.0
+      // If interface compression parameter is not specified, default to 1.8
       auto& intsharp_p = stack.template get< param, eq,
                                             tag::intsharp_param >();
       if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
-        intsharp_p.push_back( 1.0 );
+        intsharp_p.push_back( 1.8 );
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
