@@ -2584,7 +2584,8 @@ struct physics_info {
       return '\'' + advection::string() + "\' | \'"
                   + advdiff::string() + "\' | \'"
                   + navierstokes::string() + "\' | \'"
-                  + euler::string() + '\'';
+                  + euler::string() + "\' | \'"
+                  + energy_pill::string() + '\'';
     }
   };
 };
