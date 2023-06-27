@@ -47,6 +47,8 @@ target_include_directories(Inciter PUBLIC
                            ${EXAM2M_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
+                           ${BLAS_INCLUDE_DIRS}
+                           ${LAPACKE_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Inciter
                            ${PROJECT_BINARY_DIR}/../LinearSolver
                            ${PROJECT_BINARY_DIR}/../Base
@@ -72,6 +74,8 @@ target_include_directories(MeshRefinement PUBLIC
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${TPL_INCLUDE_DIR}
                            ${BRIGAND_INCLUDE_DIRS}
+                           ${BLAS_INCLUDE_DIRS}
+                           ${LAPACKE_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
 addCharmModule( "transporter" "Inciter" )
