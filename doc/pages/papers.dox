@@ -7,6 +7,14 @@ implemented in Quinoa. The papers are grouped by executables.
 @section papers_inciter Inciter
 
 - @m_div{m-text m-strong}
+  A. Pandare, J. Waltz, W. Li, H. Luo, J. Bakosi, **[On the Design of Stable, Consistent, and Conservative High-Order Methods for Multi-Material Hydrodynamics](https://doi.org/10.1016/j.jcp.2023.112313)**, Journal of Computational Physics, 112313, 2023.
+  @m_enddiv
+
+  This paper describes the consistent and conservative discontinuous Galerkin method for
+  multi-material flows, which is implemented in Quinoa's @ref inciter_main under the
+  @ref inciter_dg "DG" hydro scheme using the @ref inciter_mm "multi-material solver".
+
+- @m_div{m-text m-strong}
   J. Bakosi, R. Bird, F.Gonzalez, C. Junghans, W. Li, H. Luo, A. Pandare, J. Waltz, **[Asynchronous distributed-memory task-parallel algorithm for compressible flows on unstructured 3D Eulerian grids](https://doi.org/10.1016/j.advengsoft.2020.102962)**, Advances in Engineering Software, 102962, 2021.
   @m_enddiv
 

@@ -418,17 +418,24 @@ class MultiMat {
       }
     }
 
-    //! Update the conservative variable solution based on limited primitives
+    //! Apply CPL to the conservative variable solution for this PDE system
     //! \param[in] prim Array of primitive variables
     //! \param[in] geoElem Element geometry array
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of conservative variables
     //! \param[in] nielem Number of internal elements
-    //! \details This function computes the updated dofs for conservative
-    //!   quantities based on the limited primitive quantities
-    void Correct_Conserv( const tk::Fields& prim,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const
+    //! \details This function applies CPL to obtain consistent dofs for
+    //!   conservative quantities based on the limited primitive quantities.
+    //!   See Pandare et al. (2023). On the Design of Stable,
+    //!   Consistent, and Conservative High-Order Methods for Multi-Material
+    //!   Hydrodynamics. J Comp Phys, 112313.
+    void CPL( const tk::Fields& prim,
+      const tk::Fields& geoElem,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      tk::Fields& unk,
+      std::size_t nielem ) const
     {
       [[maybe_unused]] const auto rdof =
         g_inputdeck.get< tag::discr, tag::rdof >();
@@ -442,7 +449,8 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      correctLimConservMultiMat(nielem, m_mat_blk, nmat, geoElem, prim, unk);
+      correctLimConservMultiMat(nielem, m_system, m_mat_blk, nmat, inpoel,
+        coord, geoElem, prim, unk);
     }
 
     //! Compute right hand side

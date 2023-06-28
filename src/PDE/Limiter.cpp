@@ -2066,9 +2066,9 @@ void PositivityPreservingMultiMat_FV(
         tk::real phi_pre(1.0);
         // Evaluate the limiting coefficient for material pressure
         auto rho = state[densityIdx(nmat, i)];
-        auto min_pre = std::max(min, state[volfracIdx(nmat, i)] *
+        auto min_pre = std::max(min, U(e,volfracDofIdx(nmat,i,rdof,0)) *
           mat_blk[i].compute< EOS::min_eff_pressure >(min, rho,
-          state[volfracIdx(nmat, i)]));
+          U(e,volfracDofIdx(nmat,i,rdof,0))));
         auto pre = sprim[pressureIdx(nmat, i)];
         auto pre_avg = P(e, pressureDofIdx(nmat, i, rdof, 0));
         phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
@@ -2344,8 +2344,11 @@ void MarkShockCells ( const std::size_t nelem,
 void
 correctLimConservMultiMat(
   std::size_t nelem,
+  std::size_t system,
   const std::vector< EOS >& mat_blk,
   std::size_t nmat,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
   const tk::Fields& geoElem,
   const tk::Fields& prim,
   tk::Fields& unk )
@@ -2354,16 +2357,24 @@ correctLimConservMultiMat(
 //! \param[in] nelem Number of internal elements
 //! \param[in] mat_blk EOS material block
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
 //! \param[in] prim Array of primitive variables
 //! \param[in,out] unk Array of conservative variables
 //! \details This function computes the updated dofs for conservative
-//!   quantities based on the limited primitive quantities
+//!   quantities based on the limited primitive quantities, to re-instate
+//!   consistency between the limited primitive and evolved quantities. For
+//!   further details, see Pandare et al. (2023). On the Design of Stable,
+//!   Consistent, and Conservative High-Order Methods for Multi-Material
+//!   Hydrodynamics. J Comp Phys, 112313.
 // *****************************************************************************
 {
   const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
   std::size_t ncomp = unk.nprop()/rdof;
   std::size_t nprim = prim.nprop()/rdof;
+  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::intsharp >()[system];
 
   for (std::size_t e=0; e<nelem; ++e) {
     // Here we pre-compute the right-hand-side vector. The reason that the
@@ -2395,8 +2406,9 @@ correctLimConservMultiMat(
       auto w = wgp[igp] * geoElem(e, 0);
 
       // Evaluate the solution at quadrature point
-      auto U = tk::eval_state( ncomp, rdof, rdof, e, unk,  B );
-      auto P = tk::eval_state( nprim, rdof, rdof, e, prim, B );
+      auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+        rdof, nmat, e, rdof, inpoel, coord, geoElem,
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim);
 
       // Solution vector that stores the material energy and bulk momentum
       std::vector< tk::real > s(nmat+3, 0.0);
@@ -2404,13 +2416,13 @@ correctLimConservMultiMat(
       // Bulk density at quadrature point
       tk::real rhob(0.0);
       for (std::size_t k=0; k<nmat; ++k)
-        rhob += U[densityIdx(nmat, k)];
+        rhob += state[densityIdx(nmat, k)];
 
       // Velocity vector at quadrature point
       std::array< tk::real, 3 >
-        vel{ P[velocityIdx(nmat, 0)],
-             P[velocityIdx(nmat, 1)],
-             P[velocityIdx(nmat, 2)] };
+        vel{ state[ncomp+velocityIdx(nmat, 0)],
+             state[ncomp+velocityIdx(nmat, 1)],
+             state[ncomp+velocityIdx(nmat, 2)] };
 
       // Compute and store the bulk momentum
       for(std::size_t idir = 0; idir < 3; idir++)
@@ -2418,10 +2430,10 @@ correctLimConservMultiMat(
 
       // Compute and store material energy at quadrature point
       for(std::size_t imat = 0; imat < nmat; imat++) {
-        auto alphamat = U[volfracIdx(nmat, imat)];
-        auto rhomat = U[densityIdx(nmat, imat)]/alphamat;
-        auto premat = P[pressureIdx(nmat, imat)]/alphamat;
-        auto gmat = getDeformGrad(nmat, imat, U);
+        auto alphamat = state[volfracIdx(nmat, imat)];
+        auto rhomat = state[densityIdx(nmat, imat)]/alphamat;
+        auto premat = state[ncomp+pressureIdx(nmat, imat)]/alphamat;
+        auto gmat = getDeformGrad(nmat, imat, state);
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             gmat[i][j] /= alphamat;

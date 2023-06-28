@@ -346,10 +346,12 @@ class CompFlow {
     //! \details This function computes the updated dofs for conservative
     //!   quantities based on the limited solution and is currently not used in
     //!   compflow.
-    void Correct_Conserv( const tk::Fields&,
-                          const tk::Fields&,
-                          tk::Fields&,
-                          std::size_t ) const {}
+    void CPL( const tk::Fields&,
+              const tk::Fields&,
+              const std::vector< std::size_t >&,
+              const tk::UnsMesh::Coords&,
+              tk::Fields&,
+              std::size_t ) const {}
 
     //! Compute right hand side
     //! \param[in] t Physical time

@@ -955,7 +955,8 @@ DG::lim()
               m_pNodalExtrm, m_mtInv, m_u, m_p, m_shockmarker );
 
     if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
-      g_dgpde[d->MeshId()].Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
+      g_dgpde[d->MeshId()].CPL(m_p, myGhosts()->m_geoElem,
+        myGhosts()->m_inpoel, myGhosts()->m_coord, m_u,
         myGhosts()->m_fd.Esuel().size()/4);
   }
 

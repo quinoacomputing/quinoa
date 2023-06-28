@@ -157,12 +157,14 @@ class FVPDE {
     }
 
     //! Public interface to update the conservative variable solution
-    void Correct_Conserv( const tk::Fields& prim,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const
+    void CPL( const tk::Fields& prim,
+              const tk::Fields& geoElem,
+              const std::vector< std::size_t >& inpoel,
+              const tk::UnsMesh::Coords& coord,
+              tk::Fields& unk,
+              std::size_t nielem ) const
     {
-      self->Correct_Conserv( prim, geoElem, unk, nielem );
+      self->CPL( prim, geoElem, inpoel, coord, unk, nielem );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -293,10 +295,12 @@ class FVPDE {
                           const tk::UnsMesh::Coords&,
                           tk::Fields&,
                           tk::Fields& ) const = 0;
-      virtual void Correct_Conserv( const tk::Fields&,
-                                    const tk::Fields&,
-                                    tk::Fields&,
-                                    std::size_t ) const = 0;
+      virtual void CPL( const tk::Fields&,
+                        const tk::Fields&,
+                        const std::vector< std::size_t >&,
+                        const tk::UnsMesh::Coords&,
+                        tk::Fields&,
+                        std::size_t ) const = 0;
       virtual void rhs( tk::real,
         const tk::Fields&,
         const tk::Fields&,
@@ -396,12 +400,14 @@ class FVPDE {
       {
         data.limit( geoFace, fd, esup, inpoel, coord, U, P );
       }
-      void Correct_Conserv( const tk::Fields& prim,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const override
+      void CPL( const tk::Fields& prim,
+                const tk::Fields& geoElem,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                tk::Fields& unk,
+                std::size_t nielem ) const override
       {
-        data.Correct_Conserv( prim, geoElem, unk, nielem );
+        data.CPL( prim, geoElem, inpoel, coord, unk, nielem );
       }
       void rhs(
         tk::real t,
