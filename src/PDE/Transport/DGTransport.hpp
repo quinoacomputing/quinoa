@@ -206,7 +206,8 @@ class Transport {
                             {{0.0, 0.0, 0.0}},
                             {{0.0, 0.0, 0.0}} }} );
         // specify how many variables need to be reconstructed
-        std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+        std::vector< std::size_t > vars;
+        for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
 
         std::vector< std::vector< std::array< tk::real, 3 > > >
           rhs_ls( nelem, std::vector< std::array< tk::real, 3 > >
@@ -218,16 +219,16 @@ class Transport {
         tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
         // 1. internal face contributions
-        tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls, varRange );
+        tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls, vars );
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
           tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, 
             m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second, 
-            P, U, rhs_ls, varRange );
+            P, U, rhs_ls, vars );
 
         // 3. solve 3x3 least-squares system
-        tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U, varRange );
+        tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U, vars );
 
         for (std::size_t e=0; e<nelem; ++e)
         {
@@ -241,12 +242,12 @@ class Transport {
             // Reconstruct second-order dofs of volume-fractions in Taylor space
             // using nodal-stencils, for a good interface-normal estimate
             tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-              U, varRange );
+              U, vars );
           }
         }
 
         // 4. transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1( rdof, nelem, inpoel, coord, U, varRange );
+        tk::transform_P0P1( rdof, nelem, inpoel, coord, U, vars );
       }
     }
 
@@ -296,10 +297,12 @@ class Transport {
     //! \details This function computes the updated dofs for conservative
     //!   quantities based on the limited solution and is currently not used in
     //!   transport.
-    void Correct_Conserv( const tk::Fields&,
-                          const tk::Fields&,
-                          tk::Fields&,
-                          std::size_t ) const {}
+    void CPL( const tk::Fields&,
+              const tk::Fields&,
+              const std::vector< std::size_t >&,
+              const tk::UnsMesh::Coords&,
+              tk::Fields&,
+              std::size_t ) const {}
 
     //! Compute right hand side
     //! \param[in] t Physical time

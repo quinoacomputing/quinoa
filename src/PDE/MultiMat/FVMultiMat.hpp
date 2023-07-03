@@ -272,9 +272,10 @@ class MultiMat {
           tk::real arhomat = unk(e, densityDofIdx(nmat, k, rdof, 0));
           tk::real arhoemat = unk(e, energyDofIdx(nmat, k, rdof, 0));
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0));
+          auto agmat = getDeformGrad(nmat, k, unk.extract(e));
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             m_mat_blk[k].compute< EOS::pressure >( arhomat, vel[0], vel[1],
-            vel[2], arhoemat, alphamat, k );
+            vel[2], arhoemat, alphamat, k, agmat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             constrain_pressure( m_mat_blk,
             prim(e, pressureDofIdx(nmat, k, rdof, 0)), arhomat, alphamat, k);
@@ -348,36 +349,36 @@ class MultiMat {
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
-      std::array< std::size_t, 2 > varRange {{0, m_ncomp-1}};
+      std::vector< std::size_t > vars;
+      for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
 
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
       {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
-        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-          U, varRange );
+        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem, U, vars );
       }
 
       // 2. transform reconstructed derivatives to Dubiner dofs
-      tk::transform_P0P1(rdof, nelem, inpoel, coord, U, varRange);
+      tk::transform_P0P1(rdof, nelem, inpoel, coord, U, vars);
 
       //----- reconstruction of primitive quantities -----
       //--------------------------------------------------
       // For multimat, conserved and primitive quantities are reconstructed
       // separately.
+      vars.clear();
+      for (std::size_t c=0; c<nprim(); ++c) vars.push_back(c);
       // 1.
       for (std::size_t e=0; e<nelem; ++e)
       {
         // Reconstruct second-order dofs of volume-fractions in Taylor space
         // using nodal-stencils, for a good interface-normal estimate
-        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem,
-          P, {0, nprim()-1} );
+        tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem, P, vars );
       }
 
       // 2.
-      tk::transform_P0P1(rdof, nelem, inpoel, coord, P,
-        {0, nprim()-1});
+      tk::transform_P0P1(rdof, nelem, inpoel, coord, P, vars);
     }
 
     //! Limit second-order solution, and primitive quantities separately
@@ -417,17 +418,24 @@ class MultiMat {
       }
     }
 
-    //! Update the conservative variable solution based on limited primitives
+    //! Apply CPL to the conservative variable solution for this PDE system
     //! \param[in] prim Array of primitive variables
     //! \param[in] geoElem Element geometry array
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of conservative variables
     //! \param[in] nielem Number of internal elements
-    //! \details This function computes the updated dofs for conservative
-    //!   quantities based on the limited primitive quantities
-    void Correct_Conserv( const tk::Fields& prim,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const
+    //! \details This function applies CPL to obtain consistent dofs for
+    //!   conservative quantities based on the limited primitive quantities.
+    //!   See Pandare et al. (2023). On the Design of Stable,
+    //!   Consistent, and Conservative High-Order Methods for Multi-Material
+    //!   Hydrodynamics. J Comp Phys, 112313.
+    void CPL( const tk::Fields& prim,
+      const tk::Fields& geoElem,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      tk::Fields& unk,
+      std::size_t nielem ) const
     {
       [[maybe_unused]] const auto rdof =
         g_inputdeck.get< tag::discr, tag::rdof >();
@@ -441,7 +449,8 @@ class MultiMat {
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
 
-      correctLimConservMultiMat(nielem, m_mat_blk, nmat, geoElem, prim, unk);
+      correctLimConservMultiMat(nielem, m_system, m_mat_blk, nmat, inpoel,
+        coord, geoElem, prim, unk);
     }
 
     //! Compute right hand side
@@ -693,8 +702,8 @@ class MultiMat {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B, {0, m_ncomp-1});
-        auto php = eval_state(nprim(), rdof, rdof, e, P, B, {0, nprim()-1});
+        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
+        auto php = eval_state(nprim(), rdof, rdof, e, P, B);
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
@@ -836,10 +845,11 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
+        auto agk = getDeformGrad(nmat, k, ur);
         ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k, agk );
       }
 
       Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "

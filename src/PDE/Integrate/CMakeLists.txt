@@ -20,6 +20,7 @@ target_include_directories(Integrate PUBLIC
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
+                           ${BLAS_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 

@@ -19,12 +19,13 @@
 using inciter::JWL;
 
 JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
-  tk::real pr, tk::real A, tk::real B, tk::real R1, tk::real R2 ) :
+  tk::real tr, tk::real pr, tk::real A, tk::real B, tk::real R1, tk::real R2 ) :
   m_w(w),
   m_cv(cv),
   m_rho0(rho0),
   m_de(de),
   m_rhor(rhor),
+  m_tr(tr),
   m_pr(pr),
   m_a(A),
   m_b(B),
@@ -38,6 +39,7 @@ JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
 //! \param[in] de Heat of detonation for products. For reactants, it is
 //!   chosen such that the ambient internal energy (e0) is 0.
 //! \param[in] rhor Density of reference state
+//! \param[in] tr Temperature of reference state
 //! \param[in] pr Pressure of reference state
 //! \param[in] A Parameter A
 //! \param[in] B Parameter B
@@ -45,12 +47,20 @@ JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
 //! \param[in] R2 Parameter R2
 // *************************************************************************
 {
-  // reference internal energy
-  auto er = intEnergy(rhor, pr);
-  // reference temperature from Eqn (15)
-  m_tr = 1.0/m_cv * (er + de -
-    (m_a/m_r1*exp(-m_r1*m_rho0/m_rhor) +
-     m_b/m_r2*exp(-m_r2*m_rho0/m_rhor)) / m_rho0);
+  // reference density provided
+  if (m_tr < 1e-8) {
+    // reference internal energy
+    auto er = intEnergy(rhor, pr);
+    // reference temperature from Eqn (15)
+    m_tr = 1.0/m_cv * (er + de -
+      (m_a/m_r1*exp(-m_r1*m_rho0/m_rhor) +
+       m_b/m_r2*exp(-m_r2*m_rho0/m_rhor)) / m_rho0);
+  }
+  // reference temperature provided
+  else
+  {
+    m_rhor = density(m_pr, m_tr);
+  }
 }
 
 tk::real
@@ -83,7 +93,8 @@ JWL::pressure(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the stiffened-gas equation of state
@@ -130,12 +141,57 @@ JWL::pressure(
   return partpressure;
 }
 
+std::array< std::array< tk::real, 3 >, 3 >
+JWL::CauchyStress(
+  tk::real arho,
+  tk::real u,
+  tk::real v,
+  tk::real w,
+  tk::real arhoE,
+  tk::real alpha,
+  std::size_t imat,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+// *************************************************************************
+//! \brief Calculate the Cauchy stress tensor from the material density,
+//!   momentum, and total energy
+//! \param[in] arho Material partial density (alpha_k * rho_k)
+//! \param[in] u X-velocity
+//! \param[in] v Y-velocity
+//! \param[in] w Z-velocity
+//! \param[in] arhoE Material total energy (alpha_k * rho_k * E_k)
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
+//!   the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified
+//!   by the calling code
+//! \return Material Cauchy stress tensor (alpha_k * sigma_k)
+// *************************************************************************
+{
+  std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
+
+  // use JWL eos to get pressure
+  auto ap = pressure(arho, u, v, w, arhoE, alpha, imat);
+
+  // Volumetric component of Cauchy stress tensor
+  for (std::size_t i=0; i<3; ++i)
+    asig[i][i] = -ap;
+
+  // No deviatoric contribution
+
+  return asig;
+}
+
 tk::real
 JWL::soundspeed(
   tk::real arho,
   tk::real apr,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  tk::real,
+  const std::array< std::array< tk::real, 3 >, 3 >&,
+  const std::array< tk::real, 3 >&,
+  const std::array< tk::real, 3 >& ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -183,7 +239,8 @@ JWL::totalenergy(
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real pr ) const
+  tk::real pr,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -211,7 +268,8 @@ JWL::temperature(
   tk::real v,
   tk::real w,
   tk::real arhoE,
-  tk::real alpha ) const
+  tk::real alpha,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy

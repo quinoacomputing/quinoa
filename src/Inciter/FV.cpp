@@ -478,7 +478,8 @@ FV::lim()
       myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
 
     if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
-      g_fvpde[Disc()->MeshId()].Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
+      g_fvpde[Disc()->MeshId()].CPL(m_p, myGhosts()->m_geoElem,
+        myGhosts()->m_inpoel, myGhosts()->m_coord, m_u,
         myGhosts()->m_fd.Esuel().size()/4);
   }
 

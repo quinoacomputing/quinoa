@@ -99,7 +99,9 @@ namespace grm {
     EOSGAMMA,           //!< Wrong number of EOS gamma parameters
     EOSCV,              //!< Wrong number of EOS cv parameters
     EOSPSTIFF,          //!< Wrong number of EOS pstiff parameters
+    EOSMU,              //!< Wrong number of EOS mu parameters
     EOSJWLPARAM,        //!< Wrong number of JWL EOS parameters
+    EOSJWLREFSTATE,     //!< Incorrect reference state for JWL EOS
     NODT,               //!< No time-step-size policy selected
     MULDT,              //!< Multiple time-step-size policies selected
     POINTEXISTS,        //!< Point identifier already defined
@@ -241,11 +243,22 @@ namespace grm {
       "sub-block. The number of components between 'pstiff ... end' "
       "is incorrect, whose size must equal the number of material-ids set by "
       "keyword 'id' in that 'material ... end' sub-block." },
+    { MsgKey::EOSMU, "Incorrect number of equation of state (EOS) 'mu' "
+      "parameters configured in the preceding block's 'material ... end' "
+      "sub-block. The number of components between 'mu ... end' "
+      "is incorrect, whose size must equal the number of material-ids set by "
+      "keyword 'id' in that 'material ... end' sub-block." },
     { MsgKey::EOSJWLPARAM, "Incorrect number of JWL equation of state (EOS) "
       "parameters configured in the preceding block's 'material ... end' "
       "sub-block. The number of components between 'param ... end' "
       "is incorrect, whose size must equal the number of material-ids set by "
       "keyword 'id' in that 'material ... end' sub-block." },
+    { MsgKey::EOSJWLREFSTATE, "Either reference density or reference "
+      "temperature must be specified for JWL equation of state (EOS) "
+      "in the preceding block's 'material ... end' sub-block. The number of "
+      "components between one of these 'param ... end' is incorrect, whose "
+      "size must equal the number of material-ids set by keyword 'id' in that "
+      "'material ... end' sub-block." },
     { MsgKey::NODT, "No time step calculation policy has been selected in the "
       "preceeding block. Use keyword 'dt' to set a constant or 'cfl' to set an "
        "adaptive time step size calculation policy." },

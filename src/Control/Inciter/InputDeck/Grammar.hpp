@@ -201,7 +201,7 @@ namespace grm {
       if (intsharp.empty() || intsharp.size() != neq.get< eq >())
         intsharp.push_back( 0 );
 
-      // If interface compression parameter is not specified, default to 1.0
+      // If interface compression parameter is not specified, default to 1.8
       auto& intsharp_p = stack.template get< param, eq,
                                             tag::intsharp_param >();
       if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
@@ -534,9 +534,20 @@ namespace grm {
           Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
           nmat.push_back( 2 );
         }
+
         // set ncomp based on nmat
         auto m = nmat.back();
-        ncomp.push_back( m + m + 3 + m );
+        // if solid EOS, add components
+        auto ntot = m + m + 3 + m;
+        const auto& matprop = stack.template get< param, eq, tag::material >();
+        for (const auto& mtype : matprop.back()) {
+          if (mtype.template get< tag::eos >() ==
+            inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+            ntot += 9;
+          }
+        }
+
+        ncomp.push_back( ntot );
       }
 
       // Verify correct number of multi-material properties (gamma, cv, pstiff)
@@ -545,14 +556,16 @@ namespace grm {
       auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
       matidxmap.template get< tag::eosidx >().resize(nmat.back());
       matidxmap.template get< tag::matidx >().resize(nmat.back());
-      std::size_t tmat(0), i(0), mtypei(0);
+      matidxmap.template get< tag::solidx >().resize(nmat.back());
+      std::size_t tmat(0), i(0), mtypei(0), isolcntr(0), isolidx(0);
       std::set< std::size_t > matidset;
 
       for (auto& mtype : matprop.back()) {
         const auto& meos = mtype.template get< tag::eos >();
         const auto& mat_id = mtype.template get< tag::id >();
 
-        if (meos == inciter::ctr::MaterialType::STIFFENEDGAS) {
+        if (meos == inciter::ctr::MaterialType::STIFFENEDGAS ||
+          meos == inciter::ctr::MaterialType::SMALLSHEARSOLID) {
           const auto& gamma = mtype.template get< tag::gamma >();
           // If gamma vector is wrong size, error out
           if (gamma.empty() || gamma.size() != mat_id.size())
@@ -579,6 +592,22 @@ namespace grm {
           // If stiffness coefficient vector is wrong size, error out
           if (pstiff.size() != mat_id.size())
             Message< Stack, ERROR, MsgKey::EOSPSTIFF >( stack, in );
+
+          // Check shear modulus vector size
+          if (meos == inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+            const auto& mu = mtype.template get< tag::mu >();
+            if (mu.size() != mat_id.size())
+              Message< Stack, ERROR, MsgKey::EOSMU >( stack, in );
+
+            // add to solid-counter
+            ++isolcntr;
+            // assign solid-counter value to solid-index
+            isolidx = isolcntr;
+          }
+          else {
+            // since not solid, assign 0 to solid-index
+            isolidx = 0;
+          }
         }
         else if (meos == inciter::ctr::MaterialType::JWL) {
           auto& cv = mtype.template get< tag::cv >();
@@ -601,13 +630,16 @@ namespace grm {
           const auto& rho0_jwl = mtype.template get< tag::rho0_jwl >();
           const auto& de_jwl = mtype.template get< tag::de_jwl >();
           const auto& rhor_jwl = mtype.template get< tag::rhor_jwl >();
+          const auto& Tr_jwl = mtype.template get< tag::Tr_jwl >();
           const auto& pr_jwl = mtype.template get< tag::Pr_jwl >();
           if (w_gru.size() != mat_id.size() || a_jwl.size() != mat_id.size() ||
             b_jwl.size() != mat_id.size() || r1_jwl.size() != mat_id.size() ||
             r2_jwl.size() != mat_id.size() || rho0_jwl.size() != mat_id.size()
-            || de_jwl.size() != mat_id.size() ||
-            rhor_jwl.size() != mat_id.size() || pr_jwl.size() != mat_id.size())
+            || de_jwl.size() != mat_id.size() || pr_jwl.size() != mat_id.size())
             Message< Stack, ERROR, MsgKey::EOSJWLPARAM >( stack, in );
+
+          if (rhor_jwl.size() != mat_id.size() && Tr_jwl.size() != mat_id.size())
+            Message< Stack, ERROR, MsgKey::EOSJWLREFSTATE >( stack, in );
         }
 
         // Track total number of materials in multiple material blocks
@@ -624,12 +656,14 @@ namespace grm {
         // Generate mapping between material index and eos parameter index
         auto& eosmap = matidxmap.template get< tag::eosidx >();
         auto& idxmap = matidxmap.template get< tag::matidx >();
+        auto& solidxmap = matidxmap.template get< tag::solidx >();
         for (auto midx : mat_id) {
           midx -= 1;
           //eosmap[midx] = static_cast< std::size_t >(mtype.template get<
           //  tag::eos >());
           eosmap[midx] = mtypei;
           idxmap[midx] = i;
+          solidxmap[midx] = isolidx;
           ++i;
         }
         // end of materials for this eos, thus reset index counter
@@ -668,11 +702,11 @@ namespace grm {
       if (intsharp.empty() || intsharp.size() != neq.get< eq >())
         intsharp.push_back( 0 );
 
-      // If interface compression parameter is not specified, default to 1.0
+      // If interface compression parameter is not specified, default to 1.8
       auto& intsharp_p = stack.template get< param, eq,
                                             tag::intsharp_param >();
       if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
-        intsharp_p.push_back( 1.0 );
+        intsharp_p.push_back( 1.8 );
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
@@ -1803,6 +1837,7 @@ namespace deck {
               , material_vector< eq, kw::rho0_jwl, tag::rho0_jwl >
               , material_vector< eq, kw::de_jwl, tag::de_jwl >
               , material_vector< eq, kw::rhor_jwl, tag::rhor_jwl >
+              , material_vector< eq, kw::Tr_jwl, tag::Tr_jwl >
               , material_vector< eq, kw::Pr_jwl, tag::Pr_jwl >
               , material_vector< eq, kw::mat_cv, tag::cv >
               , material_vector< eq, kw::mat_k, tag::k >

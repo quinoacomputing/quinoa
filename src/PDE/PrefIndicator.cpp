@@ -226,10 +226,8 @@ void non_conformity( std::size_t nunk,
 
       std::array< std::vector< tk::real >, 2 > state;
 
-      state[0] = tk::eval_state( ncomp, ndof, ndofel[el], el, unk, B_l,
-        {0, ncomp-1} );
-      state[1] = tk::eval_state( ncomp, ndof, ndofel[er], er, unk, B_r,
-        {0, ncomp-1} );
+      state[0] = tk::eval_state( ncomp, ndof, ndofel[el], el, unk, B_l );
+      state[1] = tk::eval_state( ncomp, ndof, ndofel[er], er, unk, B_r );
 
       Assert( unk[0].size() == ncomp, "Size mismatch" );
       Assert( unk[1].size() == ncomp, "Size mismatch" );
@@ -306,7 +304,7 @@ tk::real evalDiscIndicator_CompFlow( std::size_t e,
     auto B = tk::eval_basis( ndofel, coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
-    auto state = tk::eval_state( ncomp, ndof, ndofel, e, unk, B, {0, ncomp-1} );
+    auto state = tk::eval_state( ncomp, ndof, ndofel, e, unk, B );
 
     U += wgp[igp] * state[0] * state[0];
 
@@ -381,9 +379,8 @@ tk::real evalDiscIndicator_MultiMat( std::size_t e,
     auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
-    auto state = tk::eval_state( ncomp, ndof, ndofel, e, unk, B, {0, ncomp-1} );
-    auto pstate = tk::eval_state( nprim, ndof, ndofel, e, unk, B,
-      {0, nprim-1} );
+    auto state = tk::eval_state( ncomp, ndof, ndofel, e, unk, B );
+    auto pstate = tk::eval_state( nprim, ndof, ndofel, e, unk, B );
 
     // indicator based on material density
     for(std::size_t k = 0; k < nmat; k++) {

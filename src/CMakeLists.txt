@@ -124,6 +124,14 @@ string(APPEND LICENSE "\\n\\nFor third-party licenses, see https://quinoacomputi
 # Include third-party libraries configuration
 include(TPLs)
 
+# Find LAPACK (and BLAS implicitly)
+set(lapack "lapack")
+find_package(LAPACKE)
+if(LAPACKE_FOUND)
+  set(lapack "")
+endif()
+message(STATUS "LAPACK found: "${LAPACKE_LIBRARIES})
+
 # Compilers
 # =========
 # There are two sets of compilers, given by the following CMake variables:

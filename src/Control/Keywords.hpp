@@ -2584,7 +2584,8 @@ struct physics_info {
       return '\'' + advection::string() + "\' | \'"
                   + advdiff::string() + "\' | \'"
                   + navierstokes::string() + "\' | \'"
-                  + euler::string() + '\'';
+                  + euler::string() + "\' | \'"
+                  + energy_pill::string() + '\'';
     }
   };
 };
@@ -3297,10 +3298,11 @@ using mat_pstiff = keyword< mat_pstiff_info, TAOCPP_PEGTL_STRING("pstiff") >;
 
 struct mat_mu_info {
   static std::string name() { return "mu"; }
-  static std::string shortDescription() { return "dynamic viscosity"; }
+  static std::string shortDescription()
+    { return "shear modulus/dynamic viscosity"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the material property, dynamic
-       viscosity.)";
+    R"(This keyword is used to specify the material property, shear modulus for
+       solids, or dynamic viscosity for fluids.)";
   }
   struct expect {
     using type = tk::real;
@@ -3476,6 +3478,22 @@ struct rhor_jwl_info {
 };
 using rhor_jwl = keyword< rhor_jwl_info, TAOCPP_PEGTL_STRING("rhor_jwl") >;
 
+struct Tr_jwl_info {
+  static std::string name() { return "Tr_jwl"; }
+  static std::string shortDescription() { return "JWL EoS Tr parameter"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the material property Tr, which is the
+      temperature of reference state (units: K) for the Jones-Wilkins-Lee
+      equation of state.)";
+  }
+  struct expect {
+    using type = tk::real;
+    static constexpr type lower = 0.0;
+    static std::string description() { return "real"; }
+  };
+};
+using Tr_jwl = keyword< Tr_jwl_info, TAOCPP_PEGTL_STRING("Tr_jwl") >;
+
 struct Pr_jwl_info {
   static std::string name() { return "Pr_jwl"; }
   static std::string shortDescription() { return "JWL EoS er parameter"; }
@@ -3513,6 +3531,21 @@ struct jwl_info {
 };
 using jwl = keyword< jwl_info, TAOCPP_PEGTL_STRING("jwl") >;
 
+struct smallshearsolid_info {
+  static std::string name() { return "SMALLSHEARSOLID"; }
+  static std::string shortDescription() { return
+    "Select the SMALLSHEARSOLID equation of state"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the small shear strain equation of state
+    for solids. This EOS uses a small-shear approximation for the elastic
+    contribution, and a stiffened gas EOS for the hydrodynamic contribution of
+    the internal energy See Plohr, J. N., & Plohr, B. J. (2005). Linearized
+    analysis of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
+    Mechanics, 537, 55-89 for further details.)"; }
+};
+using smallshearsolid = keyword< smallshearsolid_info,
+  TAOCPP_PEGTL_STRING("smallshearsolid") >;
+
 struct eos_info {
   static std::string name() { return "Equation of state"; }
   static std::string shortDescription() { return
@@ -3523,7 +3556,9 @@ struct eos_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + stiffenedgas::string() + "\' | \'"
-                  + jwl::string() + '\'';
+                  + jwl::string() + "\' | \'"
+                  + smallshearsolid::string()
+                  + '\'';
     }
   };
 };
@@ -3550,6 +3585,7 @@ struct material_info {
     + rho0_jwl::string()+ "\', \'"
     + de_jwl::string()+ "\', \'"
     + rhor_jwl::string()+ "\', \'"
+    + Tr_jwl::string()+ "\', \'"
     + Pr_jwl::string()+ "\', \'"
     + mat_mu::string()+ "\', \'"
     + mat_cv::string()+ "\', \'"

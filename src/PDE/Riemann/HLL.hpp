@@ -45,14 +45,8 @@ struct HLL {
     auto ncomp = u[0].size()-(3+nmat);
     std::vector< tk::real > flx(ncomp, 0), fl(ncomp, 0), fr(ncomp, 0);
 
-    // Primitive variables
+    // Primitive quantities
     tk::real rhol(0.0), rhor(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      rhol += u[0][densityIdx(nmat, k)];
-      rhor += u[1][densityIdx(nmat, k)];
-    }
-
     tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0), ac_l(0.0), ac_r(0.0);
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             hml(nmat, 0.0), hmr(nmat, 0.0),
@@ -65,6 +59,7 @@ struct HLL {
       hml[k] = u[0][energyIdx(nmat, k)] + pml[k];
       amatl = mat_blk[k].compute< EOS::soundspeed >(
         u[0][densityIdx(nmat, k)], pml[k], al_l[k], k );
+      rhol += u[0][densityIdx(nmat, k)];
 
       al_r[k] = u[1][volfracIdx(nmat, k)];
       pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
@@ -72,6 +67,7 @@ struct HLL {
       hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
       amatr = mat_blk[k].compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k );
+      rhor += u[1][densityIdx(nmat, k)];
 
       // Mixture speed of sound
       ac_l += u[0][densityIdx(nmat, k)] * amatl * amatl;
@@ -116,7 +112,7 @@ struct HLL {
 
     // Signal velocities
     auto Sl = std::min((vnl-ac_l), (vnr-ac_r));
-    auto Sr = std::min((vnl+ac_l), (vnr+ac_r));
+    auto Sr = std::max((vnl+ac_l), (vnr+ac_r));
 
     // Numerical flux functions and wave-speeds
     auto c_plus(0.0), c_minus(0.0), p_plus(0.0), p_minus(0.0);
@@ -125,14 +121,14 @@ struct HLL {
       for (std::size_t k=0; k<flx.size(); ++k)
         flx[k] = fl[k];
       c_plus = vnl;
-      p_plus = 1.0;
+      p_plus = vnl;
     }
     else if (Sr <= 0.0)
     {
       for (std::size_t k=0; k<flx.size(); ++k)
         flx[k] = fr[k];
       c_minus = vnr;
-      p_minus = 1.0;
+      p_minus = vnr;
     }
     else
     {
@@ -140,14 +136,14 @@ struct HLL {
         flx[k] = (Sr*fl[k] - Sl*fr[k] + Sl*Sr*(u[1][k]-u[0][k])) / (Sr-Sl);
       c_plus = (Sr*vnl - Sr*Sl) / (Sr-Sl);
       c_minus = (Sr*Sl - Sl*vnr) / (Sr-Sl);
-      p_plus = Sr / (Sr-Sl);
-      p_minus = -Sl / (Sr-Sl);
+      p_plus = Sr * vnl / (Sr-Sl);
+      p_minus = -Sl * vnr / (Sr-Sl);
     }
 
     auto vriem = c_plus+c_minus;
 
-    c_plus = c_plus/( std::fabs(vriem) + 1.0e-16 );
-    c_minus = c_minus/( std::fabs(vriem) + 1.0e-16 );
+    p_plus = p_plus/( vriem + std::copysign(1.0e-16,vriem) );
+    p_minus = p_minus/( vriem + std::copysign(1.0e-16,vriem) );
 
     // Store Riemann-advected partial pressures
     for (std::size_t k=0; k<nmat; ++k)

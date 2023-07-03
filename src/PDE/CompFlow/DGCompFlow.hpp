@@ -273,22 +273,21 @@ class CompFlow {
         tk::lhsLeastSq_P0P1(fd, geoElem, geoFace, lhs_ls);
 
         // 1. internal face contributions
-        tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls,
-          {0, m_ncomp-1} );
+        std::vector< std::size_t > vars;
+        for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
+        tk::intLeastSq_P0P1( rdof, fd, geoElem, U, rhs_ls, vars );
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
           tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp,
             m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second,
-            P, U, rhs_ls, {0, m_ncomp-1} );
+            P, U, rhs_ls, vars );
 
         // 3. solve 3x3 least-squares system
-        tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U,
-          {0, m_ncomp-1} );
+        tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U, vars );
 
         // 4. transform reconstructed derivatives to Dubiner dofs
-        tk::transform_P0P1( rdof, nelem, inpoel, coord, U,
-          {0, m_ncomp-1} );
+        tk::transform_P0P1( rdof, nelem, inpoel, coord, U, vars );
       }
     }
 
@@ -347,10 +346,12 @@ class CompFlow {
     //! \details This function computes the updated dofs for conservative
     //!   quantities based on the limited solution and is currently not used in
     //!   compflow.
-    void Correct_Conserv( const tk::Fields&,
-                          const tk::Fields&,
-                          tk::Fields&,
-                          std::size_t ) const {}
+    void CPL( const tk::Fields&,
+              const tk::Fields&,
+              const std::vector< std::size_t >&,
+              const tk::UnsMesh::Coords&,
+              tk::Fields&,
+              std::size_t ) const {}
 
     //! Compute right hand side
     //! \param[in] t Physical time
@@ -794,7 +795,7 @@ class CompFlow {
           chp[2]-cp[0][2]}};
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B, {0, m_ncomp-1});
+        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
