@@ -335,6 +335,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-format-overflow")
   add_compiler_flag("-Wno-pragmas")
   add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-class-memaccess")
 
   # For vectorization:
   #add_compiler_flag("-march=native")

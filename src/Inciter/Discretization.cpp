@@ -55,7 +55,6 @@ Discretization::Discretization(
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid,
   int nc ) :
   m_meshid( meshid ),
-  m_transfer_complete(),
   m_transfer( g_inputdeck.get< tag::couple, tag::transfer >() ),
   m_disc( disc ),
   m_nchare( nc ),
@@ -305,122 +304,84 @@ Discretization::comfinal()
 // Finish setting up communication maps and solution transfer callbacks
 // *****************************************************************************
 {
-//  std::cout << "m:" << m_meshid << ": transfer: ";
-//  for (const auto& t : m_transfer) {
-//    std::cout << t.src << "->" << t.dst << ' ';
-//    if (t.cb.size() > 0) {
-//      std::cout << "cb: ";
-//    }
-//  }
-//  std::cout << '\n';
-
   // Generate own subset of solver/mesh transfer list
-  for (const auto& t : m_transfer)
-    if (t.src == m_meshid || t.dst == m_meshid)
-      {
-        //std::cout << "--->:" << m_meshid << ": push_back t.src " << t.src <<" t.dst  " <<t.dst << std::endl;
-        m_mytransfer.push_back( t );
-      }
-
-//  std::cout << "m:" << m_meshid << ": mytransfer: ";
-//  for (const auto& t : m_mytransfer) {
-//    std::cout << t.src << "->" << t.dst << ' ';
-//    if (t.cb.size() > 0) {
-//      std::cout << "cb: ";
-//    }
-//    std::cout << '\n';
-//  }
+  for (const auto& t : m_transfer) {
+    if (t.src == m_meshid || t.dst == m_meshid) {
+      m_mytransfer.push_back( t );
+    }
+  }
 
   // Signal the runtime system that the workers have been created
-  std::vector< std::size_t > meshdata{ /* initial */ 1, m_meshid };
+  std::vector< std::size_t > meshdata{ /* initial = */ 1, m_meshid };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), m_transporter) );
 }
 
 void
-Discretization::transfer( [[maybe_unused]] const tk::Fields& u, CkCallback cb  )
+Discretization::transfer( [[maybe_unused]] tk::Fields& u, CkCallback cb  )
 // *****************************************************************************
 //  Start solution transfer (if coupled)
 //! \param[in] u Solution to transfer from/to
-//! \param[in] cb this passed in callback is how we notify the solver associated
-//!   with this Discetization's mesh. If we are the destination of the
-//!   transfer, we will also have to notify the Disc source mesh, via the
-//!   callback previously exchanged in comcb during setup. This callback
-//!   is specific to the transfer, and also to the source and desination, and
-//!   will be used by both source and dest meshes to signal the completion of
-//!   the transfer operation.
+//! \param[in] cb Callback to call when transfer is complete.
 // *****************************************************************************
 {
   if (m_mytransfer.empty()) {   // skip transfer if not involved in coupling
-    //    std::cout << "empty transfer" <<std::endl;
-    m_transfer_complete.send();
+
+    cb.send();
+
   } else {
-    //    std::cout << "Discretization::transfer" <<std::endl;
-    solver_transfer_complete_CB=cb;
+
+    m_transfer_complete = cb;
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     #ifdef HAS_EXAM2M
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (m_mytransfer[m_nsrc].src == m_meshid) {
       exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
-      //std::cout << m_meshid << " src\n";
       ++m_nsrc;
     } else {
       m_nsrc = 0;
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
     if (m_mytransfer[m_ndst].dst == m_meshid) {
-      //      std::cout << "Discretization::transfer dest:" << m_meshid<<std::endl;
       exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
-        CkCallback(CkIndex_Discretization::transferCompleteCBinDest(), thisProxy ) );
+        CkCallback( CkIndex_Discretization::transfer_complete(), thisProxy ) );
       ++m_ndst;
-      //std::cout << m_meshid << " dst\n";
     } else {
       m_ndst = 0;
     }
-    #else
-    m_transfer_complete.send();
     #endif
+
   }
+
   m_nsrc = 0;
   m_ndst = 0;
 }
 
-void Discretization::transferCompleteCBinDest()
+void Discretization::transfer_complete()
 // *****************************************************************************
-//! Solution transfer completed CB
+//! Solution transfer completed (from ExaM2M)
 //! \brief This is called by ExaM2M on the destination mesh when the
 //!   transfer completes. Since this is called only on the destination, we find
 //!   and notify the corresponding source of the completion.
-//!   (triggers callback passed in by destination solver)
-//!   (triggers call to discretization source)
 // *****************************************************************************
 {
-  //! lookup the source disc and notify it of completion
+  // Lookup the source disc and notify it of completion
   for (auto& t : m_transfer) {
-    // If we are a source of a transfer, ignore that transfer
-    if (m_meshid == t.src)
-      {
-      }
-    // If we are the destination, notify the source of completion
-    else if (m_meshid == t.dst)
-      {
-        m_disc[ t.src ][ thisIndex ].transferCompleteNotifyFromDest();
-      }
+    if (m_meshid == t.dst) {
+      m_disc[ t.src ][ thisIndex ].transfer_complete_from_dest();
+    }
   }
-  //! callback to the solver that initiated the transfer
-  //  std::cout << "m: " << m_meshid <<"Discretization::transferCompleteCBinDest"<<std::endl;
-  solver_transfer_complete_CB.send();
+  m_transfer_complete.send();
 }
 
-void Discretization::transferCompleteNotifyFromDest()
+void Discretization::transfer_complete_from_dest()
 // *****************************************************************************
-//! Solution transfer completed
+//! Solution transfer completed (from dest Discretization)
 //! \details Called on the source only by the destination when a transfer step
-//!   completes. (triggers callback passed in by solver in the source mesh)
+//!   completes.
 // *****************************************************************************
 {
-  //std::cout << "m: " << m_meshid <<"Discretization::transferCompleteNotifyFromDest"<<std::endl;
-  solver_transfer_complete_CB.send();
+  m_transfer_complete.send();
 }
 
 std::vector< std::size_t >

@@ -65,13 +65,13 @@ DG::DG( const CProxy_Discretization& disc,
   m_nnodalExtrema( 0 ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::rdof >()*
-       g_inputdeck.get< tag::component >().nprop() ),
+       g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(), g_inputdeck.get< tag::discr, tag::rdof >()*
     g_dgpde[Disc()->MeshId()].nprim() ),
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::discr, tag::ndof >()*
-         g_inputdeck.get< tag::component >().nprop() ),
+         g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_mtInv(
     tk::invMassMatTaylorRefEl(g_inputdeck.get< tag::discr, tag::rdof >()) ),
@@ -88,12 +88,14 @@ DG::DG( const CProxy_Discretization& disc,
   m_pc(),
   m_ndofc(),
   m_initial( 1 ),
-  m_uElemfields(m_u.nunk(), g_inputdeck.get< tag::component >().nprop()),
-  m_pElemfields(m_u.nunk(),
-    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
-  m_uNodefields(m_npoin, g_inputdeck.get< tag::component >().nprop()),
-  m_pNodefields(m_npoin,
-    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
+  m_uElemfields( m_u.nunk(),
+                 g_inputdeck.get< tag::component >().nprop(Disc()->MeshId()) ),
+  m_pElemfields( m_u.nunk(),
+                 m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
+  m_uNodefields( m_npoin,
+                 g_inputdeck.get< tag::component >().nprop(Disc()->MeshId()) ),
+  m_pNodefields( m_npoin,
+                 m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_outmesh(),
@@ -115,10 +117,12 @@ DG::DG( const CProxy_Discretization& disc,
   g_dgpde[Disc()->MeshId()].numEquationDofs(m_numEqDof);
 
   // Allocate storage for the vector of nodal extrema
-  m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
-  m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()));
+  m_uNodalExtrm.resize( Disc()->Bid().size(),
+    std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
+    g_inputdeck.get< tag::component >().nprop(Disc()->MeshId()) ) );
+  m_pNodalExtrm.resize( Disc()->Bid().size(),
+    std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
+    m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ) );
 
   // Initialization for the buffer vector of nodal extrema
   resizeNodalExtremac();

@@ -54,9 +54,6 @@ CompFlowProblemUserDefined::initialize( ncomp_t system,
   const auto& bgenic = ic.get< tag::energy >();
   const auto& bgtempic = ic.get< tag::temperature >();
 
-  Assert( bgrhoic.size() > system, "No background density IC" );
-  Assert( bgvelic.size() > 3*system, "No background velocity IC" );
-
   u[0] = bgrhoic.at(system).at(0);
   u[1] = u[0] * bgvelic.at(system).at(0);
   u[2] = u[0] * bgvelic.at(system).at(1);

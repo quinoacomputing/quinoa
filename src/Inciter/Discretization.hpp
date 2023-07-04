@@ -124,13 +124,13 @@ class Discretization : public CBase_Discretization {
     void comfinal();
 
     //! Start solution transfer (if coupled)
-    void transfer( const tk::Fields& u, CkCallback cb );
+    void transfer( tk::Fields& u, CkCallback cb );
 
-    //! Solution transfer completed CB
-    void transferCompleteCBinDest();
+    //! Solution transfer completed (from ExaM2M)
+    void transfer_complete();
 
-    //! Solution transfer completed
-    void transferCompleteNotifyFromDest();
+    //! Solution transfer completed (from dest Discretization)
+    void transfer_complete_from_dest();
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(
@@ -426,7 +426,6 @@ class Discretization : public CBase_Discretization {
     void pup( PUP::er &p ) override {
       p | m_meshid;
       p | m_transfer_complete;
-      p | solver_transfer_complete_CB;
       p | m_transfer;
       p | m_mytransfer;
       p | m_disc;
@@ -493,11 +492,9 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh ID
     std::size_t m_meshid;
-    //! Function to continue with if not coupled to any other solver
-    CkCallback m_transfer_complete;
     //! \brief Charm++ callback of the function to call after a mesh-to-mesh
     //!   solution transfer is complete
-    CkCallback  solver_transfer_complete_CB;
+    CkCallback m_transfer_complete;
     //! Solution/mesh transfer (coupling) information coordination propagation
     //! \details This has the same size with the same src/dst information on
     //!   all solvers.

@@ -50,7 +50,7 @@ class MeshWriter : public CBase_MeshWriter {
     #endif
 
     //! Set the total number of chares
-    void nchare( int n );
+    void nchare( std::size_t meshid, int n );
 
     //! Output unstructured mesh into file
     void write( std::size_t meshid,
@@ -87,8 +87,8 @@ class MeshWriter : public CBase_MeshWriter {
       p | m_filetype;
       p | m_bndCentering;
       p | m_benchmark;
-      p | m_nchare;
       p | m_nmesh;
+      p | m_nchare;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -103,10 +103,10 @@ class MeshWriter : public CBase_MeshWriter {
     Centering m_bndCentering;
     //! True if benchmark mode
     bool m_benchmark;
-    //! Total number chares across the whole problem
-    int m_nchare;
     //! Total number of meshes
     std::size_t m_nmesh;
+    //! Total number chares across the whole problem (one per mesh)
+    std::vector< int > m_nchare;
 
     //! Compute filename
     std::string filename( const std::string& basefilename,

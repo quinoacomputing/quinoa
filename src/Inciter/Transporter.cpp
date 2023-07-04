@@ -511,10 +511,10 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
   for (auto i : usedsets) {       // for all side sets used in control file
     if (bnd.find(i) != end(bnd))  // used set found among side sets in file
       sidesets_used.insert( i );  // store side set id configured as BC
-    else {
-      Throw( "Boundary conditions specified on side set " +
-        std::to_string(i) + " which does not exist in mesh file" );
-    }
+    //else {
+    //  Throw( "Boundary conditions specified on side set " +
+    //    std::to_string(i) + " which does not exist in mesh file" );
+    //}
   }
 
   // Remove sidesets not used (will not process those further)
@@ -662,6 +662,9 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
   m_meshid[ static_cast<std::size_t>(m_nchare[meshid])*meshid ] = meshid;
   Assert( meshid < m_nelem.size(), "MeshId indexing out" );
 
+  // Tell the meshwriter for this mesh the total number of its chares
+  m_meshwriter[meshid].nchare( meshid, m_nchare[meshid] );
+
   // Partition first mesh
   if (meshid == 0) m_partitioner[0].partition( m_nchare[0] );
 
@@ -681,9 +684,6 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
     // Print out initial mesh statistics
     meshstat( "Initial load distribution" );
-
-    // Tell meshwriter the total number of chares
-    m_meshwriter[meshid].nchare( m_nchare[meshid] );
 
     // Query number of initial mesh refinement steps
     int nref = 0;
@@ -1098,50 +1098,58 @@ Transporter::diagHeader()
 // Configure and write diagnostics file header
 // *****************************************************************************
 {
-  // Output header for diagnostics output file
-  tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
-                     g_inputdeck.get< tag::flformat, tag::diag >(),
-                     g_inputdeck.get< tag::prec, tag::diag >() );
+  for (std::size_t m=0; m<m_input.size(); ++m) {
 
-  // Collect variables names for integral/diagnostics output
-  std::vector< std::string > var;
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
-    for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::DG ||
-           scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
-           scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
-    for (const auto& eq : g_dgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::FV)
-    for (const auto& eq : g_fvpde) varnames( eq, var );
-  else Throw( "Diagnostics header not handled for discretization scheme" );
+   // Output header for diagnostics output file
+    auto mid = m_input.size() > 1 ? std::string( '.' + std::to_string(m) ) : "";
+    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >() + mid,
+                       g_inputdeck.get< tag::flformat, tag::diag >(),
+                       g_inputdeck.get< tag::prec, tag::diag >() );
 
-  const tk::ctr::Error opt;
-  auto nv = var.size();
-  std::vector< std::string > d;
+    // Collect variables names for integral/diagnostics output
+    std::vector< std::string > var;
+    const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+    if ( scheme == ctr::SchemeType::DiagCG ||
+         scheme == ctr::SchemeType::ALECG )
+      for (const auto& eq : g_cgpde) varnames( eq, var );
+    else if ( scheme == ctr::SchemeType::DG ||
+              scheme == ctr::SchemeType::P0P1 ||
+              scheme == ctr::SchemeType::DGP1 ||
+              scheme == ctr::SchemeType::DGP2 ||
+              scheme == ctr::SchemeType::PDG )
+      for (const auto& eq : g_dgpde) varnames( eq, var );
+    else if (scheme == ctr::SchemeType::FV)
+      for (const auto& eq : g_fvpde) varnames( eq, var );
+    else Throw( "Diagnostics header not handled for discretization scheme" );
 
-  // Add 'L2(var)' for all variables as those are always computed
-  const auto& l2name = opt.name( tk::ctr::ErrorType::L2 );
-  for (std::size_t i=0; i<nv; ++i) d.push_back( l2name + '(' + var[i] + ')' );
+    const tk::ctr::Error opt;
+    auto nv = var.size() / m_input.size();
+    std::vector< std::string > d;
 
-  // Query user-requested diagnostics and augment diagnostics file header by
-  // 'err(var)', where 'err' is the error type  configured, and var is the
-  // variable computed, for all variables and all error types configured.
-  const auto& err = g_inputdeck.get< tag::diag, tag::error >();
-  for (const auto& e : err) {
-    const auto& errname = opt.name( e );
-    for (std::size_t i=0; i<nv; ++i)
-      d.push_back( errname + '(' + var[i] + "-IC)" );
+    // Add 'L2(var)' for all variables as those are always computed
+    const auto& l2name = opt.name( tk::ctr::ErrorType::L2 );
+    for (std::size_t i=0; i<nv; ++i) d.push_back( l2name + '(' + var[i] + ')' );
+
+    // Query user-requested diagnostics and augment diagnostics file header by
+    // 'err(var)', where 'err' is the error type  configured, and var is the
+    // variable computed, for all variables and all error types configured.
+    const auto& err = g_inputdeck.get< tag::diag, tag::error >();
+    for (const auto& e : err) {
+      const auto& errname = opt.name( e );
+      for (std::size_t i=0; i<nv; ++i)
+        d.push_back( errname + '(' + var[i] + "-IC)" );
+    }
+
+    // Augment diagnostics variables by L2-norm of the residual and total energy
+    if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
+      for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
+    }
+    d.push_back( "mE" );
+
+    // Write diagnostics header
+    dw.header( d );
+
   }
-
-  // Augment diagnostics variables by L2-norm of the residual and total energy
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
-    for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
-  }
-  d.push_back( "mE" );
-
-  // Write diagnostics header
-  dw.header( d );
 }
 
 void
@@ -1415,17 +1423,17 @@ Transporter::diagnostics( CkReductionMsg* msg )
 //! \note Only used for nodal schemes
 // *****************************************************************************
 {
-  std::size_t meshid;
+  std::size_t meshid, ncomp;
   std::vector< std::vector< tk::real > > d;
 
   // Deserialize diagnostics vector
   PUP::fromMem creator( msg->getData() );
   creator | meshid;
+  creator | ncomp;
   creator | d;
   delete msg;
 
   auto id = std::to_string(meshid);
-  auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
   Assert( ncomp > 0, "Number of scalar components must be positive");
   Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );

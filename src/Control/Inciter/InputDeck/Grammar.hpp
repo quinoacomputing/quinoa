@@ -362,20 +362,20 @@ namespace grm {
 
       // Error check on user-defined problem type
       auto& ic = stack.template get< param, eq, tag::ic >();
-      auto& bgdensityic = ic.template get< tag::density >();
-      auto& bgvelocityic = ic.template get< tag::velocity >();
-      auto& bgpressureic = ic.template get< tag::pressure >();
-      auto& bgenergyic = ic.template get< tag::energy >();
-      auto& bgtemperatureic = ic.template get< tag::temperature >();
+      //auto& bgdensityic = ic.template get< tag::density >();
+      //auto& bgvelocityic = ic.template get< tag::velocity >();
+      //auto& bgpressureic = ic.template get< tag::pressure >();
+      //auto& bgenergyic = ic.template get< tag::energy >();
+      //auto& bgtemperatureic = ic.template get< tag::temperature >();
       if (problem.back() == inciter::ctr::ProblemType::USER_DEFINED) {
         // must have defined background ICs for user-defined ICs
-        auto n = neq.get< eq >();
-        if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
-             ( bgpressureic.size() != n && bgenergyic.size() != n &&
-               bgtemperatureic.size() != n ) )
-        {
-          Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
-        }
+        //auto n = neq.get< eq >();
+        //if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
+        //     ( bgpressureic.size() != n && bgenergyic.size() != n &&
+        //       bgtemperatureic.size() != n ) )
+        //{
+        //  Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
+        //}
 
         // Error check for ic box
         auto& box = ic.template get< tag::box >();
@@ -1795,21 +1795,39 @@ namespace deck {
            tk::grm::readkw< use< kw::ic >::pegtl_string >,
            tk::grm::block< use< kw::end >,
              pegtl::sor<
-               pde_parameter_vector< kw::density, eq,
-                                     tag::ic, tag::density >,
-               pde_parameter_vector< kw::materialid, eq,
-                                     tag::ic, tag::materialid >,
-               pde_parameter_vector< kw::velocity, eq,
-                                     tag::ic, tag::velocity >,
-               pde_parameter_vector< kw::pressure, eq,
-                                     tag::ic, tag::pressure >,
-               pde_parameter_vector< kw::temperature, eq,
-                                     tag::ic, tag::temperature >,
-               pde_parameter_vector< kw::energy, eq,
-                                     tag::ic, tag::energy > >,
+               pegtl::if_must<
+                 tk::grm::vector< kw::density,
+                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
+                                             tag::density >,
+                   use< kw::end > > >,
+               pegtl::if_must<
+                 tk::grm::vector< kw::materialid,
+                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
+                                             tag::materialid >,
+                   use< kw::end > > >,
+               pegtl::if_must<
+                 tk::grm::vector< kw::velocity,
+                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
+                                             tag::velocity >,
+                   use< kw::end > > >,
+               pegtl::if_must<
+                 tk::grm::vector< kw::pressure,
+                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
+                                             tag::pressure >,
+                   use< kw::end > > >,
+               pegtl::if_must<
+                 tk::grm::vector< kw::temperature,
+                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
+                                             tag::temperature >,
+                   use< kw::end > > >,
+               pegtl::if_must<
+                 tk::grm::vector< kw::energy,
+                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
+                                             tag::energy >,
+                   use< kw::end > > >,
                pegtl::seq< box< eq > >,
                pegtl::seq< meshblock< eq > >
-           > > {};
+           > > > {};
 
   //! put in material property for equation matching keyword
   template< typename eq, typename keyword, typename property >
@@ -1908,9 +1926,22 @@ namespace deck {
   struct compflow :
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic, tag::box >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-            tag::meshblock >,
+                                  tag::density >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
+                                  tag::materialid >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
+                                  tag::velocity >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
+                                  tag::pressure >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
+                                  tag::temperature >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
+                                  tag::energy >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
+                                  tag::box >,
+           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
+                                  tag::meshblock >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
@@ -1982,9 +2013,10 @@ namespace deck {
   struct multimat :
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic, tag::box >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-            tag::meshblock >,
+                                  tag::box >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
+                                  tag::meshblock >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::material >,
            tk::grm::block< use< kw::end >,
                            tk::grm::policy< use,

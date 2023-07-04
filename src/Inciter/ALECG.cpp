@@ -69,7 +69,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_dfn(),
   m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
   m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
-  m_u( Disc()->Gid().size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_u( Disc()->Gid().size(),
+       g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_rhsc(),
@@ -143,7 +144,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4meshblk();
 
-  // Generate callbacks for solution transfers we are involved in
   d->comfinal();
 
 }
@@ -193,7 +193,7 @@ ALECG::queryBnd()
   m_timedepbcnodes.clear();
   m_timedepbcFn.clear();
   const auto& timedep =
-    g_inputdeck.template get< tag::param, tag::compflow, tag::bctimedep >();
+    g_inputdeck.get< tag::param, tag::compflow, tag::bctimedep >();
   if (!timedep.empty()) {
     m_timedepbcnodes.resize(timedep[0].size());
     m_timedepbcFn.resize(timedep[0].size());
@@ -248,7 +248,7 @@ ALECG::norm()
 
   // Query nodes at which mesh velocity symmetry BCs are specified
   std::unordered_map<int, std::unordered_set< std::size_t >> ms;
-  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcsym >()) {
+  for (const auto& s : g_inputdeck.get< tag::ale, tag::bcsym >()) {
     auto k = m_bface.find( std::stoi(s) );
     if (k != end(m_bface)) {
       auto& n = ms[ k->first ];
@@ -625,9 +625,6 @@ ALECG::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Multiply conserved variables with mesh volume
   volumetric( m_u, Disc()->Vol() );
 
-  // Initiate IC transfer (if coupled)
-  Disc()->transfer(m_u, CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]));
-
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
 
@@ -672,7 +669,21 @@ ALECG::meshveldone()
   Disc()->meshvelConv();
 
   // Continue
-  if (Disc()->Initial()) lhs(); else ale();
+  if (Disc()->Initial()) {
+
+    conserved( m_u, Disc()->Vol() );
+
+    // Initiate IC transfer (if coupled)
+    Disc()->transfer( m_u,
+      CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]) );
+
+    lhs();
+
+  } else {
+
+    ale();
+
+  }
 }
 
 //! [start]
@@ -719,6 +730,7 @@ ALECG::mergelhs()
   normfinal();
 
   if (Disc()->Initial()) {
+    volumetric( m_u, Disc()->Vol() );
     // Output initial conditions to file
     writeFields( CkCallback(CkIndex_ALECG::start(), thisProxy[thisIndex]) );
   } else {
@@ -1377,11 +1389,11 @@ ALECG::transfer()
 {
   // Initiate solution transfer (if coupled)
 
-#ifdef HAS_EXAM2M
-  Disc()->transfer(m_u, CkCallback(CkIndex_ALECG::stage(), thisProxy[thisIndex]));
-#else
+//#ifdef HAS_EXAM2M
+//  Disc()->transfer(m_u, CkCallback(CkIndex_ALECG::stage(), thisProxy[thisIndex]));
+//#else
   thisProxy[thisIndex].stage();
-#endif
+//#endif
 }
 
 //! [stage]
@@ -1418,11 +1430,19 @@ ALECG::writeFields( CkCallback c )
     auto d = Disc();
     const auto& coord = d->Coord();
 
+    // Find depvar for mesh id. Punt, will go away after getting rid of systems.
+    char depvar = 0;
+    auto meshid = d->MeshId();
+    auto tr = g_inputdeck.get< tag::param, tag::transport, tag::depvar >();
+    if (tr.size() > meshid) depvar = tr[ meshid ];
+    auto co = g_inputdeck.get< tag::param, tag::compflow, tag::depvar >();
+    if (co.size() > meshid) depvar = co[ meshid ];
+
     // Query fields names requested by user
-    auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
+    auto nodefieldnames = numericFieldNames( tk::Centering::NODE, depvar );
     // Collect field output from numerical solution requested by user
     conserved( m_u, Disc()->Vol() );
-    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE, m_u, depvar );
     volumetric( m_u, Disc()->Vol() );
 
     //! Lambda to put in a field for output if not empty

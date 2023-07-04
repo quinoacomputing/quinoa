@@ -26,12 +26,13 @@ extern ctr::InputDeck g_inputdeck;
 
 //! Collect field output names from numerical solution based on user input
 std::vector< std::string >
-numericFieldNames( tk::Centering c );
+numericFieldNames( tk::Centering c, char depvar = 0 );
 
 //! Collect field output from numerical solution based on user input
 std::vector< std::vector< tk::real > >
 numericFieldOutput( const tk::Fields& U, tk::Centering c,
-                    const tk::Fields& P = tk::Fields() );
+                    const tk::Fields& P = tk::Fields(),
+                    char depvar = 0 );
 
 //! Evaluate solution on incoming (a potentially refined) mesh
 void
