@@ -225,6 +225,14 @@ class DGPDE {
       self->CPL( prim, geoElem, inpoel, coord, unk, nielem );
     }
 
+    //! Public interface to getting the cell-averaged deformation gradients
+    std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+      const tk::Fields& U,
+      std::size_t nielem ) const
+    {
+      return self->cellAvgDeformGrad( U, nielem );
+    }
+
     //! Public interface to computing the P1 right-hand side vector
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -391,6 +399,9 @@ class DGPDE {
                         const tk::UnsMesh::Coords&,
                         tk::Fields&,
                         std::size_t ) const = 0;
+      virtual std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+        const tk::Fields&,
+        std::size_t ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -529,6 +540,12 @@ class DGPDE {
                 std::size_t nielem ) const override
       {
         data.CPL( prim, geoElem, inpoel, coord, unk, nielem );
+      }
+      std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+        const tk::Fields& U,
+        std::size_t nielem ) const override
+      {
+        return data.cellAvgDeformGrad( U, nielem );
       }
       void rhs(
         tk::real t,

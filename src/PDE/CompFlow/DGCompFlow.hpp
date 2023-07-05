@@ -353,6 +353,15 @@ class CompFlow {
               tk::Fields&,
               std::size_t ) const {}
 
+    //! Return cell-average deformation gradient tensor (no-op for compflow)
+    //! \details This function is a no-op in compflow.
+    std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+      const tk::Fields&,
+      std::size_t ) const
+    {
+      return {};
+    }
+
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array

@@ -615,6 +615,44 @@ class MultiMat {
         coord, geoElem, prim, unk);
     }
 
+    //! Return cell-average deformation gradient tensor
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] nielem Number of internal elements
+    //! \details This function returns the bulk cell-average inverse
+    //!   deformation gradient tensor
+    std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+      const tk::Fields& unk,
+      std::size_t nielem ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+        tag::matidxmap >().template get< tag::solidx >();
+
+      bool has_solid(false);
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0) has_solid=true;
+      }
+
+      std::array< std::vector< tk::real >, 9 > gb;
+      if (has_solid) {
+        for (auto& gij : gb)
+          gij.resize(nielem, 0.0);
+        for (std::size_t e=0; e<nielem; ++e) {
+          for (std::size_t k=0; k<nmat; ++k) {
+            if (solidx[k] > 0) {
+              for (std::size_t i=0; i<3; ++i)
+                for (std::size_t j=0; j<3; ++j)
+                  gb[3*i+j][e] += unk(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+            }
+          }
+        }
+      }
+
+      return gb;
+    }
+
 
     //! Compute right hand side
     //! \param[in] t Physical time
