@@ -48,7 +48,7 @@ module discretization {
       entry void stat( tk::real mesh_volume );
       entry void transferInit();
       entry void transfer_complete();
-      entry void transfer_complete_dest();
+      entry void transfer_complete_from_dest();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
