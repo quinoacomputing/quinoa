@@ -1514,11 +1514,13 @@ DG::writeFields(
   // Add inverse deformation gradient tensor to element-centered field output
   auto defgrad = g_dgpde[d->MeshId()].cellAvgDeformGrad(m_u,
     myGhosts()->m_fd.Esuel().size()/4);
-  for (const auto& [child,parent] : addedTets)
-    for (auto& gij : defgrad)
-      gij[child] = static_cast< tk::real >(gij[parent]);
-  for (const auto& gij : defgrad)
-    elemfields.push_back(gij);
+  if (!defgrad[0].empty()) {
+    for (const auto& [child,parent] : addedTets)
+      for (auto& gij : defgrad)
+        gij[child] = static_cast< tk::real >(gij[parent]);
+    for (const auto& gij : defgrad)
+      elemfields.push_back(gij);
+  }
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );

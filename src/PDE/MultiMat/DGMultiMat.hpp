@@ -616,7 +616,7 @@ class MultiMat {
     }
 
     //! Return cell-average deformation gradient tensor
-    //! \param[in] U Solution vector at recent time step
+    //! \param[in] unk Solution vector at recent time step
     //! \param[in] nielem Number of internal elements
     //! \details This function returns the bulk cell-average inverse
     //!   deformation gradient tensor
