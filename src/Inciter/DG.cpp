@@ -1201,7 +1201,7 @@ DG::solve( tk::real newdt )
 
   g_dgpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
-    m_u, m_p, m_ndof, m_rhs );
+    m_u, m_p, m_ndof, d->Dt(), m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)

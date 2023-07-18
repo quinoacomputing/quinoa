@@ -373,6 +373,7 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
+    //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -384,6 +385,7 @@ class CompFlow {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const tk::real dt,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -421,7 +423,7 @@ class CompFlow {
       // compute internal surface flux integrals
       tk::surfInt( m_system, 1, m_mat_blk, t, ndof, rdof, inpoel,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   R, vriem, riemannLoc, riemannDeriv );
+                   dt, R, vriem, riemannLoc, riemannDeriv );
 
       // compute optional source term
       tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4,

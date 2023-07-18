@@ -23,6 +23,11 @@
 #include "Quadrature.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+
+namespace inciter {
+extern ctr::InputDeck g_inputdeck;
+}
 
 namespace tk {
 
@@ -839,6 +844,10 @@ fluxTerms(
   using inciter::energyIdx;
   using inciter::velocityIdx;
   using inciter::pressureIdx;
+  using inciter::deformIdx;
+
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   std::vector< std::array< tk::real, 3 > > fl( ncomp );
 
@@ -887,6 +896,30 @@ fluxTerms(
     fl[energyIdx(nmat, k)][0] = u * hmat;
     fl[energyIdx(nmat, k)][1] = v * hmat;
     fl[energyIdx(nmat, k)][2] = w * hmat;
+
+    // conservative part of material inverse deformation gradient
+    if (solidx[k] > 0)
+    {
+      std::array< std::array< tk::real, 3 >, 3 > g;
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+          g[i][j] = ugp[deformIdx(nmat,solidx[k],i,j)];
+      for (std::size_t i=0; i<3; ++i)
+      {
+        fl[deformIdx(nmat,solidx[k],i,0)][0] =
+          u*g[i][0] + v*g[i][1] + w*g[i][2];
+        fl[deformIdx(nmat,solidx[k],i,0)][1] = 0.0;
+        fl[deformIdx(nmat,solidx[k],i,0)][2] = 0.0;
+        fl[deformIdx(nmat,solidx[k],i,1)][0] = 0.0;
+        fl[deformIdx(nmat,solidx[k],i,1)][1] =
+          u*g[i][0] + v*g[i][1] + w*g[i][2];
+        fl[deformIdx(nmat,solidx[k],i,1)][2] = 0.0;
+        fl[deformIdx(nmat,solidx[k],i,2)][0] = 0.0;
+        fl[deformIdx(nmat,solidx[k],i,2)][1] = 0.0;
+        fl[deformIdx(nmat,solidx[k],i,2)][2] =
+          u*g[i][0] + v*g[i][1] + w*g[i][2];
+      }
+    }
   }
 
   return fl;

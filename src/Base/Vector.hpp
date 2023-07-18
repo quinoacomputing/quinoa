@@ -450,7 +450,19 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, C, 3, ipiv);
   Assert(jerr==0, "Lapack error in inverting g.g^T");
 
-  return {{ {C[0], C[1], C[2]}, {C[3], C[4], C[5]}, {C[6], C[7], C[8]} }};
+  // put result into a std::array to be safe
+  std::array< std::array< real, 3 >, 3 > C_out;
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      C_out[i][j] = C[i*3+j];
+  }
+
+  // free allocated pointers
+  free(G);
+  free(C);
+  free(ipiv);
+
+  return C_out;
 }
 
 //! \brief Get the Left Cauchy-Green strain tensor from the inverse deformation
@@ -491,15 +503,29 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, b, 3, ipiv);
   Assert(jerr==0, "Lapack error in inverting g^T.g");
 
-  return {{ {b[0], b[1], b[2]}, {b[3], b[4], b[5]}, {b[6], b[7], b[8]} }};
+  // put result into a std::array to be safe
+  std::array< std::array< real, 3 >, 3 > b_out;
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      b_out[i][j] = b[i*3+j];
+  }
+
+  // free allocated pointers
+  free(G);
+  free(b);
+  free(ipiv);
+
+  return b_out;
 }
 
 //! \brief Rotate a second order tensor (e.g. a Strain/Stress matrix) from
 //! the (x,y,z) to a new (r,s,t) coordinate system.
-//! The first direction is given by a unit vector r = (rx,ry,rz). Then, the second
-//! is chosen to be:
-//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0) if |rx| > 0 or |ry| > 0.
-//! - s = (1,0,0) else
+//! The first direction is given by a unit vector r = (rx,ry,rz).
+//! Then, the second is chosen to be:
+//! if |rx| > 0 or |ry| > 0:
+//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0)
+//! else:
+//! - s = (1,0,0)
 //! Then, third basis vector is obtained from
 //! the cross-product between the first two.
 //! \param[in] mat matrix to be rotated.
@@ -565,10 +591,20 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
     3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
-  // return matAux as a 2D array
-  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
-            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
-            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+  // put result into a std::array to be safe
+  std::array< std::array< real, 3 >, 3 > mat_out;
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      mat_out[i][j] = matAuxOut[i*3+j];
+  }
+
+  // free allocated pointers
+  free(rotMat);
+  free(matAuxIn);
+  free(matAuxOut);
+
+  // return mat_out as a 2D array
+  return mat_out;
 }
 
 //! \brief Reflect a second order tensor (e.g. a Strain/Stress matrix)
@@ -609,10 +645,20 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
     3, 3, 3, 1.0, refMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
-  // return matAux as a 2D array
-  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
-            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
-            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+  // put result into a std::array to be safe
+  std::array< std::array< real, 3 >, 3 > mat_out;
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      mat_out[i][j] = matAuxOut[i*3+j];
+  }
+
+  // free allocated pointers
+  free(refMat);
+  free(matAuxIn);
+  free(matAuxOut);
+
+  // return mat_out as a 2D array
+  return mat_out;
 }
 
 } // tk::
