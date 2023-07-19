@@ -21,6 +21,7 @@
 #include "Vector.hpp"
 #include "Quadrature.hpp"
 #include "Reconstruction.hpp"
+#include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
@@ -332,11 +333,12 @@ update_rhs( std::size_t nmat,
 {
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
-    {
-      auto mark = inciter::deformIdx(nmat,solidx,i,j) * ndof;
       for (std::size_t idof=0; idof<ndof; ++idof)
-        R(e, mark+idof) += wt * s[(i*3+j)*ndof+idof];
-    }
+      {
+        std::size_t dofId = inciter::deformDofIdx(nmat,solidx,i,j,ndof,idof);
+        std::size_t srcId = (i*3+j)*ndof+idof;
+        R(e, dofId) += wt * s[srcId];
+      }
 }
 
 } // tk::

@@ -542,27 +542,21 @@ SmallShearSolid::soundspeed(
     * g__32 - g__22 * g__31) + (-g__32 * g__11 + g__12 * g__31) * g__23
     + g__33 * (g__11 * g__22 - g__12 * g__21));
 
-  double *amat;
-  amat = (double *)malloc( 3*3*sizeof( double ) );
-
   // Define amat
+  double amat[9];
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
     {
       amat[i*3+j] = 0.0;
       for (std::size_t k=0; k<3; ++k)
       {
-	amat[i*3+j] -= adefgrad[k][j]*dsigdg[i][k];
+        amat[i*3+j] -= adefgrad[k][j]*dsigdg[i][k];
       }
       amat[i*3+j] /= arho;
     }
 
-  double *eig_real, *eig_imag;
-  eig_real = (double *)malloc( 3*sizeof( double ) );
-  eig_imag = (double *)malloc( 3*sizeof( double ) );
-  double *vl,*vr;
-  vl = (double *)malloc( 3*sizeof( double ) );
-  vr = (double *)malloc( 3*sizeof( double ) );
+  double eig_real[3], eig_imag[3];
+  double vl[3], vr[3];
   #ifndef NDEBUG
   lapack_int ierr =
   #endif
@@ -576,13 +570,6 @@ SmallShearSolid::soundspeed(
     if (eig_real[i] > eig_max)
       eig_max = eig_real[i];
   tk::real a = std::sqrt(eig_max);
-
-  // free allocated points
-  free(amat);
-  free(vl);
-  free(vr);
-  free(eig_real);
-  free(eig_imag);
 
   // check sound speed divergence
   if (!std::isfinite(a)) {

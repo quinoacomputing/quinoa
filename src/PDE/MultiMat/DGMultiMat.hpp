@@ -631,13 +631,8 @@ class MultiMat {
       const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
         tag::matidxmap >().template get< tag::solidx >();
 
-      bool has_solid(false);
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (solidx[k] > 0) has_solid=true;
-      }
-
       std::array< std::vector< tk::real >, 9 > gb;
-      if (has_solid) {
+      if (tk::haveSolid(nmat, solidx)) {
         for (auto& gij : gb)
           gij.resize(nielem, 0.0);
         for (std::size_t e=0; e<nielem; ++e) {
@@ -687,6 +682,8 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
       const auto intsharp =
         g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
+      const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+        tag::matidxmap >().template get< tag::solidx >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -725,13 +722,13 @@ class MultiMat {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, nmat, m_mat_blk, t, ndof, rdof, inpoel,
+      tk::surfInt( m_system, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    dt, R, vriem, riemannLoc, riemannDeriv, intsharp );
 
       // compute optional source term
-      tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4,
-                  inpoel, coord, geoElem, Problem::src, ndofel, R, nmat );
+      tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
+		  coord, geoElem, Problem::src, ndofel, R, nmat );
 
       if(ndof > 1)
         // compute volume integrals
@@ -764,14 +761,7 @@ class MultiMat {
                               ndofel, R, intsharp );
 
       // Compute integrals for inverse deformation in solid materials
-      const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
-        tag::matidxmap >().template get< tag::solidx >();
-      // Check if we have solids
-      bool haveSolid = false;
-      for (std::size_t k=0; k<nmat; ++k)
-        if (solidx[k] > 0) haveSolid = true;
-      // If we do, call it
-      if (haveSolid)
+      if (tk::haveSolid(nmat, solidx))
         tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, ndofel, dt, R);
 

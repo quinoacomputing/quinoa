@@ -368,8 +368,9 @@ class Transport {
       std::vector< std::vector< tk::real > > riemannLoc;
 
       // compute internal surface flux integrals
+      std::vector< std::size_t > solidx(1, 0);
       tk::surfInt( m_system, m_ncomp, m_mat_blk, t, ndof, rdof,
-                   inpoel, coord, fd, geoFace, geoElem, Upwind::flux,
+                   inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
                    Problem::prescribedVelocity, U, P, ndofel, dt, R, vriem,
                    riemannLoc, riemannDeriv, intsharp );
 

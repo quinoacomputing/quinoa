@@ -421,7 +421,8 @@ class CompFlow {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_mat_blk, t, ndof, rdof, inpoel,
+      std::vector< std::size_t > solidx(1, 0);
+      tk::surfInt( m_system, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    dt, R, vriem, riemannLoc, riemannDeriv );
 

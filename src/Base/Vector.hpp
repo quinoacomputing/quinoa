@@ -419,10 +419,8 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
 inline std::array< std::array< real, 3 >, 3 >
 getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
-  // allocate pointers as matrices
-  double *G, *C;
-  G = (double *)malloc( 3*3*sizeof( double ) );
-  C = (double *)malloc( 3*3*sizeof( double ) );
+  // allocate matrices
+  double G[9], C[9];
 
   // initialize c-matrices
   for (std::size_t i=0; i<3; ++i) {
@@ -435,8 +433,7 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     3, 3, 3, 1.0, G, 3, G, 3, 0.0, C, 3);
 
   // get inv(g.g^T)
-  lapack_int *ipiv;
-  ipiv = (lapack_int *)malloc( 3*sizeof( lapack_int ) );
+  lapack_int ipiv[9];
 
   #ifndef NDEBUG
   lapack_int ierr =
@@ -450,19 +447,10 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, C, 3, ipiv);
   Assert(jerr==0, "Lapack error in inverting g.g^T");
 
-  // put result into a std::array to be safe
-  std::array< std::array< real, 3 >, 3 > C_out;
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      C_out[i][j] = C[i*3+j];
-  }
-
-  // free allocated pointers
-  free(G);
-  free(C);
-  free(ipiv);
-
-  return C_out;
+  // Output C as 2D array
+  return {{ {C[0], C[1], C[2]},
+            {C[3], C[4], C[5]},
+            {C[6], C[7], C[8]} }};
 }
 
 //! \brief Get the Left Cauchy-Green strain tensor from the inverse deformation
@@ -472,10 +460,8 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 inline std::array< std::array< real, 3 >, 3 >
 getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
-  // allocate pointers as matrices
-  double *G, *b;
-  G = (double *)malloc( 3*3*sizeof( double ) );
-  b = (double *)malloc( 3*3*sizeof( double ) );
+  // allocate matrices
+  double G[9], b[9];
 
   // initialize c-matrices
   for (std::size_t i=0; i<3; ++i) {
@@ -488,8 +474,7 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     3, 3, 3, 1.0, G, 3, G, 3, 0.0, b, 3);
 
   // get inv(g^T.g)
-  lapack_int *ipiv;
-  ipiv = (lapack_int *)malloc( 3*sizeof( lapack_int ) );
+  lapack_int ipiv[9];
 
   #ifndef NDEBUG
   lapack_int ierr =
@@ -503,19 +488,10 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, b, 3, ipiv);
   Assert(jerr==0, "Lapack error in inverting g^T.g");
 
-  // put result into a std::array to be safe
-  std::array< std::array< real, 3 >, 3 > b_out;
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      b_out[i][j] = b[i*3+j];
-  }
-
-  // free allocated pointers
-  free(G);
-  free(b);
-  free(ipiv);
-
-  return b_out;
+  // Output b as 2D array
+  return {{ {b[0], b[1], b[2]},
+            {b[3], b[4], b[5]},
+            {b[6], b[7], b[8]} }};
 }
 
 //! \brief Rotate a second order tensor (e.g. a Strain/Stress matrix) from
@@ -537,8 +513,7 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
 {
   // define rotation matrix
   tk::real eps = 1.0e-04;
-  double *rotMat;
-  rotMat = (double *)malloc ( 3*3*sizeof( double ));
+  double rotMat[9];
   tk::real rx = r[0];
   tk::real ry = r[1];
   tk::real rz = r[2];
@@ -568,10 +543,8 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
     rotMat[8] = 0.0;
   }
 
-  // define matAux (I need matrices as row major 1D arrays)
-  double *matAuxIn, *matAuxOut;
-  matAuxIn  = (double *)malloc ( 3*3*sizeof( double ));
-  matAuxOut = (double *)malloc ( 3*3*sizeof( double ));
+  // define matrices
+  double matAuxIn[9], matAuxOut[9];
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       matAuxIn[i*3+j] = mat[i][j];
@@ -591,20 +564,10 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
     3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
-  // put result into a std::array to be safe
-  std::array< std::array< real, 3 >, 3 > mat_out;
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      mat_out[i][j] = matAuxOut[i*3+j];
-  }
-
-  // free allocated pointers
-  free(rotMat);
-  free(matAuxIn);
-  free(matAuxOut);
-
-  // return mat_out as a 2D array
-  return mat_out;
+  // return matAuxOut as a 2D array
+  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
+            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
 }
 
 //! \brief Reflect a second order tensor (e.g. a Strain/Stress matrix)
@@ -616,16 +579,13 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
               const std::array< std::array< tk::real, 3 >, 3 >& reflectMat)
 {
   // define reflection matrix
-  double *refMat;
-  refMat = (double *)malloc ( 3*3*sizeof( double ));
+  double refMat[9];
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       refMat[i*3+j] = reflectMat[i][j];
 
   // define matAux (I need matrices as row major 1D arrays)
-  double *matAuxIn, *matAuxOut;
-  matAuxIn  = (double *)malloc ( 3*3*sizeof( double ));
-  matAuxOut = (double *)malloc ( 3*3*sizeof( double ));
+  double matAuxIn[9], matAuxOut[9];
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       matAuxIn[i*3+j] = mat[i][j];
@@ -645,20 +605,26 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
     3, 3, 3, 1.0, refMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
-  // put result into a std::array to be safe
-  std::array< std::array< real, 3 >, 3 > mat_out;
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      mat_out[i][j] = matAuxOut[i*3+j];
-  }
+  // return matAuxOut as a 2D array
+  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
+            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+}
 
-  // free allocated pointers
-  free(refMat);
-  free(matAuxIn);
-  free(matAuxOut);
+//  \brief Check whether we have solid materials in our problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return true if we have at least one solid, false otherwise.
+inline bool
+haveSolid(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx )
+{
+  bool haveSolid = false;
+  for (std::size_t k=0; k<nmat; ++k)
+    if (solidx[k] > 0) haveSolid = true;
 
-  // return mat_out as a 2D array
-  return mat_out;
+  return haveSolid;
 }
 
 } // tk::

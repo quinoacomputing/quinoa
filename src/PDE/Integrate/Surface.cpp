@@ -36,6 +36,7 @@ surfInt( ncomp_t system,
          const std::size_t ndof,
          const std::size_t rdof,
          const std::vector< std::size_t >& inpoel,
+	 const std::vector< std::size_t >& solidx,
          const UnsMesh::Coords& coord,
          const inciter::FaceData& fd,
          const Fields& geoFace,
@@ -60,6 +61,7 @@ surfInt( ncomp_t system,
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] inpoel Element-node connectivity
+//! \param[in] solidx Material index indicator
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -93,11 +95,7 @@ surfInt( ncomp_t system,
   auto nprim = P.nprop()/rdof;
 
   // Determine if we have solids in our problem
-  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::matidxmap >().template get< tag::solidx >();
-  bool haveSolid = false;
-  for (std::size_t k=0; k<nmat; ++k)
-    if (solidx[k] > 0) haveSolid = true;
+  bool haveSolid = tk::haveSolid(nmat, solidx);
 
   //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
   //        "derivative vector for single material compflow" );

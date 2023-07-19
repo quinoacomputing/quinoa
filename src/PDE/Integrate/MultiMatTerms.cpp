@@ -906,18 +906,16 @@ fluxTerms(
           g[i][j] = ugp[deformIdx(nmat,solidx[k],i,j)];
       for (std::size_t i=0; i<3; ++i)
       {
-        fl[deformIdx(nmat,solidx[k],i,0)][0] =
-          u*g[i][0] + v*g[i][1] + w*g[i][2];
+        tk::real uk_dot_gik = u*g[i][0] + v*g[i][1] + w*g[i][2];
+        fl[deformIdx(nmat,solidx[k],i,0)][0] = uk_dot_gik;
         fl[deformIdx(nmat,solidx[k],i,0)][1] = 0.0;
         fl[deformIdx(nmat,solidx[k],i,0)][2] = 0.0;
         fl[deformIdx(nmat,solidx[k],i,1)][0] = 0.0;
-        fl[deformIdx(nmat,solidx[k],i,1)][1] =
-          u*g[i][0] + v*g[i][1] + w*g[i][2];
+        fl[deformIdx(nmat,solidx[k],i,1)][1] = uk_dot_gik;
         fl[deformIdx(nmat,solidx[k],i,1)][2] = 0.0;
         fl[deformIdx(nmat,solidx[k],i,2)][0] = 0.0;
         fl[deformIdx(nmat,solidx[k],i,2)][1] = 0.0;
-        fl[deformIdx(nmat,solidx[k],i,2)][2] =
-          u*g[i][0] + v*g[i][1] + w*g[i][2];
+        fl[deformIdx(nmat,solidx[k],i,2)][2] = uk_dot_gik;
       }
     }
   }
