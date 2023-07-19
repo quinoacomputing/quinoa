@@ -21,6 +21,7 @@
 #include "Reconstruction.hpp"
 #include "Integrate/SolidTerms.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
@@ -95,7 +96,7 @@ surfInt( ncomp_t system,
   auto nprim = P.nprop()/rdof;
 
   // Determine if we have solids in our problem
-  bool haveSolid = tk::haveSolid(nmat, solidx);
+  bool haveSolid = inciter::haveSolid(nmat, solidx);
 
   //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
   //        "derivative vector for single material compflow" );

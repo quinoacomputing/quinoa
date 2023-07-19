@@ -632,7 +632,7 @@ class MultiMat {
         tag::matidxmap >().template get< tag::solidx >();
 
       std::array< std::vector< tk::real >, 9 > gb;
-      if (tk::haveSolid(nmat, solidx)) {
+      if (inciter::haveSolid(nmat, solidx)) {
         for (auto& gij : gb)
           gij.resize(nielem, 0.0);
         for (std::size_t e=0; e<nielem; ++e) {
@@ -728,7 +728,7 @@ class MultiMat {
 
       // compute optional source term
       tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
-		  coord, geoElem, Problem::src, ndofel, R, nmat );
+                  coord, geoElem, Problem::src, ndofel, R, nmat );
 
       if(ndof > 1)
         // compute volume integrals
@@ -761,7 +761,7 @@ class MultiMat {
                               ndofel, R, intsharp );
 
       // Compute integrals for inverse deformation in solid materials
-      if (tk::haveSolid(nmat, solidx))
+      if (inciter::haveSolid(nmat, solidx))
         tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, ndofel, dt, R);
 

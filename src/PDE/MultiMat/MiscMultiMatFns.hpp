@@ -61,6 +61,12 @@ getDeformGrad(
   std::size_t k,
   const std::vector< tk::real >& state );
 
+//! Check whether we have solid materials in our problem
+bool
+haveSolid(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx );
+
 } //inciter::
 
 #endif // MiscMultiMatFns_h

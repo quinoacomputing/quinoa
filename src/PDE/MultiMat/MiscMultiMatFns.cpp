@@ -582,4 +582,20 @@ getDeformGrad(
   return agk;
 }
 
+//  \brief Check whether we have solid materials in our problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return true if we have at least one solid, false otherwise.
+bool
+haveSolid(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx )
+{
+  bool haveSolid = false;
+  for (std::size_t k=0; k<nmat; ++k)
+    if (solidx[k] > 0) haveSolid = true;
+
+  return haveSolid;
+}
+
 } //inciter::
