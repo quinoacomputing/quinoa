@@ -562,7 +562,7 @@ class MultiMat {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
-    //! \param[in] engSrcAd Whether the energy source was added
+    //! \param[in] srcFlag Whether the energy source was added
     //! \return Minimum time step size
     //! \details The allowable dt is calculated by looking at the maximum
     //!   wave-speed in elements surrounding each face, times the area of that
