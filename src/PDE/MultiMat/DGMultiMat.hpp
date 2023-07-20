@@ -637,6 +637,16 @@ class MultiMat {
           gij.resize(nielem, 0.0);
         for (std::size_t e=0; e<nielem; ++e) {
           for (std::size_t k=0; k<nmat; ++k) {
+	  // printf("::DEBUG::");
+	  // printf("e=%d\n",e);
+	  // printf("material = %d \n", k);
+	  // printf("solidx = %d \n", solidx[k]);
+	  // printf("vol_frac = %e \n", unk(e,volfracIdx(nmat,k)));
+	  // if (solidx[k] > 0) {
+	  //   for (std::size_t i=0; i<3; ++i)
+	  //     for (std::size_t j=0; j<3; ++j)
+	  // 	printf("g(%d,%d) = %e \n",i+1,j+1,unk(e,deformIdx(nmat,solidx[k],i,j)));
+          // }
             if (solidx[k] > 0) {
               for (std::size_t i=0; i<3; ++i)
                 for (std::size_t j=0; j<3; ++j)
@@ -760,10 +770,10 @@ class MultiMat {
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
-      // Compute integrals for inverse deformation in solid materials
-      if (inciter::haveSolid(nmat, solidx))
-        tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, ndofel, dt, R);
+      // // Compute integrals for inverse deformation in solid materials
+      // if (inciter::haveSolid(nmat, solidx))
+      //   tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
+      //                         inpoel, coord, geoElem, U, P, ndofel, dt, R);
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])

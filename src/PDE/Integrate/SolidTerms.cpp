@@ -148,48 +148,68 @@ solidTermsVolInt( ncomp_t system,
       // Loop through materials
       for (std::size_t k=0; k<nmat; ++k)
       {
-        auto g = inciter::getDeformGrad(nmat, k, state);
+        if (solidx[k] > 0)
+        {
+          // ** HARDCODED **
+          // Should be able to store rho_0 for every cell at every Gauss point.
+	  tk::real alpha = state[inciter::volfracIdx(nmat, k)];
+          tk::real rho = state[inciter::densityIdx(nmat, k)]/alpha;
+          tk::real rho0 = 8900.0;
+	  std::array< std::array< tk::real, 3 >, 3 > g;
+	  for (std::size_t i=0; i<3; ++i)
+	    for (std::size_t j=0; j<3; ++j)
+	      g[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)]/alpha;
+          tk::real rfact = eta*(rho/(rho0*tk::determinant(g))-1.0);
 
-        // ** HARDCODED **
-        // Should be able to store rho_0 for every cell at every Gauss point.
-        tk::real rho = state[inciter::densityIdx(nmat, k)];
-        tk::real rho0 = 1000.0;
-        tk::real rfact = eta*(rho/(rho0*tk::determinant(g))-1.0);
+	  printf("::DEBUG::");
+	  printf("e=%d\n",e);
+	  printf("material = %d \n", k);
+	  printf("solidx = %d \n", solidx[k]);
+	  printf("vol_frac = %e \n", U(e,inciter::volfracIdx(nmat,k)));
+	  for (std::size_t i=0; i<3; ++i)
+	    for (std::size_t j=0; j<3; ++j)
+	      printf("g(%d,%d) = %e \n",i+1,j+1,g[i][j]);
+	  printf("rho = %e \n", rho);
+	  printf("rho0 = %e \n", rho0);
+	  printf("eta = %e \n", eta);
+	  printf("detg = %e \n", tk::determinant(g));
+	  printf("rfact = %e \n", rfact);
 
-        // Compute the source terms
-        std::vector< real > s(9*ndof, 0.0);
-        std::vector< real > deriv(4, 0.0);
-        std::vector< std::size_t > defIdx(4, 0);
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            for (std::size_t idof=0; idof<ndof; ++idof)
-            {
-              deriv = {{0.0, 0.0, 0.0, 0.0}};
-              for (std::size_t jdof=0; jdof<rdof; ++jdof)
+          // Compute the source terms
+          std::vector< real > s(9*ndof, 0.0);
+          std::vector< real > deriv(4, 0.0);
+          std::vector< std::size_t > defIdx(4, 0);
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              for (std::size_t idof=0; idof<ndof; ++idof)
               {
-                // Find indeces for all unknowns used
-                defIdx[0] = deformDofIdx(nmat,solidx[k],i,(j+1)%3,rdof,jdof);
-                defIdx[1] = deformDofIdx(nmat,solidx[k],i,      j,rdof,jdof);
-                defIdx[2] = deformDofIdx(nmat,solidx[k],i,      j,rdof,jdof);
-                defIdx[3] = deformDofIdx(nmat,solidx[k],i,(j+2)%3,rdof,jdof);
-                // Compute derivatives
-                deriv[0] += U(e,defIdx[0])*dBdx[      j][jdof];
-                deriv[1] += U(e,defIdx[1])*dBdx[(j+1)%3][jdof];
-                deriv[2] += U(e,defIdx[2])*dBdx[(j+2)%3][jdof];
-                deriv[3] += U(e,defIdx[3])*dBdx[      j][jdof];
+                deriv = {{0.0, 0.0, 0.0, 0.0}};
+                for (std::size_t jdof=0; jdof<rdof; ++jdof)
+                {
+                  // Find indeces for all unknowns used
+                  defIdx[0] = deformDofIdx(nmat,solidx[k],i,(j+1)%3,rdof,jdof);
+                  defIdx[1] = deformDofIdx(nmat,solidx[k],i,      j,rdof,jdof);
+                  defIdx[2] = deformDofIdx(nmat,solidx[k],i,      j,rdof,jdof);
+                  defIdx[3] = deformDofIdx(nmat,solidx[k],i,(j+2)%3,rdof,jdof);
+                  // Compute derivatives
+                  deriv[0] += U(e,defIdx[0])*dBdx[      j][jdof];
+                  deriv[1] += U(e,defIdx[1])*dBdx[(j+1)%3][jdof];
+                  deriv[2] += U(e,defIdx[2])*dBdx[(j+2)%3][jdof];
+                  deriv[3] += U(e,defIdx[3])*dBdx[      j][jdof];
+                }
+                s[(i*3+j)*ndof+idof] = B[idof]*rfact*g[i][j]
+                  + B[idof]*(v[(j+1)%3]*(deriv[0]-deriv[1])
+                            -v[(j+2)%3]*(deriv[2]-deriv[3]))
+                  + D*(dBdx[(j+1)%3][idof]*(deriv[0]-deriv[1])
+                      -dBdx[(j+2)%3][idof]*(deriv[2]-deriv[3]));
               }
-              s[(i*3+j)*ndof+idof] = B[idof]*rfact*g[i][j]
-                + B[idof]*(v[(j+1)%3]*(deriv[0]-deriv[1])
-                          -v[(j+2)%3]*(deriv[2]-deriv[3]))
-                + D*(dBdx[(j+1)%3][idof]*(deriv[0]-deriv[1])
-                    -dBdx[(j+2)%3][idof]*(deriv[2]-deriv[3]));
-            }
 
-        auto wt = wgp[igp] * geoElem(e, 0);
+          auto wt = wgp[igp] * geoElem(e, 0);
 
-        update_rhs( nmat, ndof, wt, e, solidx[k], s, R );
+          update_rhs( nmat, ndof, wt, e, solidx[k], s, R );
+        }
       }
-     }
+    }
   }
 
 }
@@ -271,44 +291,47 @@ solidTermsSurfInt( std::size_t nmat,
   // Loop through materials
   for (std::size_t k=0; k<nmat; ++k)
     {
-      // Compute all derivatives
-      std::array< std::array< std::array< tk::real, 3 >, 3 >, 3 >
-        deriv_l, deriv_r;
-      std::size_t defIdx;
-      for (std::size_t i=0; i<3; ++i)
-        for (std::size_t j=0; j<3; ++j)
-        {
-          deriv_l[0][i][j] = 0.0;
-          deriv_l[1][i][j] = 0.0;
-          deriv_l[2][i][j] = 0.0;
-          deriv_r[0][i][j] = 0.0;
-          deriv_r[1][i][j] = 0.0;
-          deriv_r[2][i][j] = 0.0;
-          for (std::size_t jdof=0; jdof<rdof; ++jdof)
+      if (solidx[k] > 0)
+      {
+        // Compute all derivatives
+        std::array< std::array< std::array< tk::real, 3 >, 3 >, 3 >
+          deriv_l, deriv_r;
+        std::size_t defIdx;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
           {
-            defIdx = deformDofIdx(nmat,solidx[k],i,j,rdof,jdof);
-            deriv_l[0][i][j] += U(el,defIdx)*dBdx_l[0][jdof];
-            deriv_l[1][i][j] += U(el,defIdx)*dBdx_l[1][jdof];
-            deriv_l[2][i][j] += U(el,defIdx)*dBdx_l[2][jdof];
-            deriv_r[0][i][j] += U(er,defIdx)*dBdx_r[0][jdof];
-            deriv_r[1][i][j] += U(er,defIdx)*dBdx_r[1][jdof];
-            deriv_r[2][i][j] += U(er,defIdx)*dBdx_r[2][jdof];
+            deriv_l[0][i][j] = 0.0;
+            deriv_l[1][i][j] = 0.0;
+            deriv_l[2][i][j] = 0.0;
+            deriv_r[0][i][j] = 0.0;
+            deriv_r[1][i][j] = 0.0;
+            deriv_r[2][i][j] = 0.0;
+            for (std::size_t jdof=0; jdof<rdof; ++jdof)
+            {
+              defIdx = deformDofIdx(nmat,solidx[k],i,j,rdof,jdof);
+              deriv_l[0][i][j] += U(el,defIdx)*dBdx_l[0][jdof];
+              deriv_l[1][i][j] += U(el,defIdx)*dBdx_l[1][jdof];
+              deriv_l[2][i][j] += U(el,defIdx)*dBdx_l[2][jdof];
+              deriv_r[0][i][j] += U(er,defIdx)*dBdx_r[0][jdof];
+              deriv_r[1][i][j] += U(er,defIdx)*dBdx_r[1][jdof];
+              deriv_r[2][i][j] += U(er,defIdx)*dBdx_r[2][jdof];
+            }
           }
-        }
 
-      // Compute the source terms
-      tk::real sl, sr;
-      for (std::size_t i=0; i<3; ++i)
-        for (std::size_t j=0; j<3; ++j)
-        {
-          // Compute source
-          sl = D*(fn[(j+1)%3]*(deriv_l[j][i][(j+1)%3]-deriv_l[(j+1)%3][i][j])
-                 -fn[(j+2)%3]*(deriv_l[(j+2)%3][i][j]-deriv_l[j][i][(j+2)%3]));
-          sr = D*(fn[(j+1)%3]*(deriv_r[j][i][(j+1)%3]-deriv_r[(j+1)%3][i][j])
-                 -fn[(j+2)%3]*(deriv_r[(j+2)%3][i][j]-deriv_r[j][i][(j+2)%3]));
-          // Add to flux
-          fl[deformIdx(nmat,solidx[k],i,j)] += 0.5*(sl+sr);
-        }
+        // Compute the source terms
+        tk::real sl, sr;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+          {
+            // Compute source
+            sl = D*(fn[(j+1)%3]*(deriv_l[j][i][(j+1)%3]-deriv_l[(j+1)%3][i][j])
+                  -fn[(j+2)%3]*(deriv_l[(j+2)%3][i][j]-deriv_l[j][i][(j+2)%3]));
+            sr = D*(fn[(j+1)%3]*(deriv_r[j][i][(j+1)%3]-deriv_r[(j+1)%3][i][j])
+                  -fn[(j+2)%3]*(deriv_r[(j+2)%3][i][j]-deriv_r[j][i][(j+2)%3]));
+            // Add to flux
+            fl[deformIdx(nmat,solidx[k],i,j)] += 0.5*(sl+sr);
+          }
+      }
     }
 }
 
