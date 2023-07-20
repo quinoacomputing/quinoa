@@ -34,7 +34,7 @@ class MultiMatPhysicsEnergyPill {
     tk::real dtRestriction( std::size_t system,
       const tk::Fields& geoElem,
       std::size_t nelem,
-      const int engSrcAd ) const;
+      const std::vector< int >& engSrcAd ) const;
 
     //! Compute sources corresponding to this physics
     void physSrc( std::size_t system,
@@ -44,7 +44,7 @@ class MultiMatPhysicsEnergyPill {
       const std::unordered_map< std::size_t, std::set< std::size_t > >&
         elemblkid,
       tk::Fields& R,
-      int& engSrcAdded ) const;
+      std::vector< int >& engSrcAdded ) const;
 
     //! Return enum denoting physics policy
     //! \return Enum denoting physics policy.

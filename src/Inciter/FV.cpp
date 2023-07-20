@@ -80,7 +80,7 @@ FV::FV( const CProxy_Discretization& disc,
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_boxelems(),
-  m_propFrontEngSrc(1),
+  m_srcFlag(m_u.nunk(), 1),
   m_nrk(0)
 // *****************************************************************************
 //  Constructor
@@ -587,7 +587,7 @@ FV::dt()
       auto eqdt =
         g_fvpde[d->MeshId()].dt( myGhosts()->m_fd, myGhosts()->m_geoFace,
           myGhosts()->m_geoElem,
-          m_u, m_p, myGhosts()->m_fd.Esuel().size()/4, m_propFrontEngSrc );
+          m_u, m_p, myGhosts()->m_fd.Esuel().size()/4, m_srcFlag );
       if (eqdt < mindt) mindt = eqdt;
 
       tk::real coeff(1.0);
@@ -647,10 +647,10 @@ FV::solve( tk::real newdt )
   }
 
   // initialize energy source as not added (modified in eq.rhs appropriately)
-  m_propFrontEngSrc = 0;
+  for (auto& fl : m_srcFlag) fl = 0;
   g_fvpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
-    d->ElemBlockId(), m_u, m_p, m_rhs, m_propFrontEngSrc );
+    d->ElemBlockId(), m_u, m_p, m_rhs, m_srcFlag );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)

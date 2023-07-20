@@ -202,7 +202,7 @@ class FV : public CBase_FV {
       p | m_uNodefieldsc;
       p | m_pNodefieldsc;
       p | m_boxelems;
-      p | m_propFrontEngSrc;
+      p | m_srcFlag;
       p | m_rkcoef;
       p | m_nrk;
     }
@@ -270,8 +270,8 @@ class FV : public CBase_FV {
                                                 std::size_t > > m_pNodefieldsc;
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
-    //! Integer indicating if energy source due to propagating front was added
-    int m_propFrontEngSrc;
+    //! Vector indicating if a source was added to element
+    std::vector< int > m_srcFlag;
     //! Runge-Kutta coefficients
     std::array< std::vector< tk::real >, 2 > m_rkcoef;
     //! Number of Runge-Kutta stages

@@ -465,7 +465,7 @@ class MultiMat {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    //! \param[in,out] engSrcAdded Whether the energy source was added
+    //! \param[in,out] srcFlag Whether the energy source was added
     void rhs( tk::real t,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
@@ -477,7 +477,7 @@ class MultiMat {
               const tk::Fields& U,
               const tk::Fields& P,
               tk::Fields& R,
-              int& engSrcAdded ) const
+              std::vector< int >& srcFlag ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
@@ -552,7 +552,7 @@ class MultiMat {
       }
 
       // compute external (energy) sources
-      m_physics.physSrc(m_system, nmat, t, geoElem, elemblkid, R, engSrcAdded);
+      m_physics.physSrc(m_system, nmat, t, geoElem, elemblkid, R, srcFlag);
     }
 
     //! Compute the minimum time step size
@@ -575,7 +575,7 @@ class MultiMat {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
-                 const int engSrcAd ) const
+                 const std::vector< int >& srcFlag ) const
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
@@ -583,7 +583,7 @@ class MultiMat {
       // obtain dt restrictions from all physics
       auto dt_e = timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, nmat, U,
         P);
-      auto dt_p = m_physics.dtRestriction(m_system, geoElem, nielem, engSrcAd);
+      auto dt_p = m_physics.dtRestriction(m_system, geoElem, nielem, srcFlag);
 
       return std::min(dt_e, dt_p);
     }
