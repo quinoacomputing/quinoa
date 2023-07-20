@@ -19,6 +19,13 @@
 #include "Vector.hpp"
 #include "Quadrature.hpp"
 #include "Reconstruction.hpp"
+#include "Integrate/SolidTerms.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
+
+namespace inciter {
+extern ctr::InputDeck g_inputdeck;
+}
 
 namespace tk {
 
@@ -30,6 +37,7 @@ surfInt( ncomp_t system,
          const std::size_t ndof,
          const std::size_t rdof,
          const std::vector< std::size_t >& inpoel,
+         const std::vector< std::size_t >& solidx,
          const UnsMesh::Coords& coord,
          const inciter::FaceData& fd,
          const Fields& geoFace,
@@ -39,6 +47,7 @@ surfInt( ncomp_t system,
          const Fields& U,
          const Fields& P,
          const std::vector< std::size_t >& ndofel,
+         const tk::real dt,
          Fields& R,
          std::vector< std::vector< tk::real > >&,
          std::vector< std::vector< tk::real > >&,
@@ -53,6 +62,7 @@ surfInt( ncomp_t system,
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] inpoel Element-node connectivity
+//! \param[in] solidx Material index indicator
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -61,7 +71,8 @@ surfInt( ncomp_t system,
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
-//! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] dt Delta time
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] vriem Vector of the riemann velocity
 //! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
@@ -83,6 +94,9 @@ surfInt( ncomp_t system,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+
+  // Determine if we have solids in our problem
+  bool haveSolid = inciter::haveSolid(nmat, solidx);
 
   //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
   //        "derivative vector for single material compflow" );
@@ -115,20 +129,20 @@ surfInt( ncomp_t system,
     GaussQuadratureTri( ng, coordgp, wgp );
 
     // Extract the element coordinates
-    std::array< std::array< tk::real, 3>, 4 > coordel_l {{ 
+    std::array< std::array< tk::real, 3>, 4 > coordel_l {{
       {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
       {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
       {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
       {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
 
-    std::array< std::array< tk::real, 3>, 4 > coordel_r {{ 
+    std::array< std::array< tk::real, 3>, 4 > coordel_r {{
       {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
       {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
       {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
       {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
 
     // Compute the determinant of Jacobian matrix
-    auto detT_l = 
+    auto detT_l =
       Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
     auto detT_r =
       Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
@@ -192,9 +206,9 @@ surfInt( ncomp_t system,
 
       std::array< std::vector< real >, 2 > state;
 
-      state[0] = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
+      state[0] = evalPolynomialSol(system,mat_blk, intsharp, ncomp, nprim, rdof,
         nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
+      state[1] = evalPolynomialSol(system,mat_blk, intsharp, ncomp, nprim, rdof,
         nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
@@ -207,6 +221,11 @@ surfInt( ncomp_t system,
 
       // compute flux
       auto fl = flux( mat_blk, fn, state, v );
+
+      // Add RHS inverse deformation terms if necessary
+      if (haveSolid)
+        solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
+                           coordel_l, coordel_r, igp, coordgp, dt, fl );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,
@@ -381,20 +400,20 @@ surfIntFV( ncomp_t system,
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
     // Extract the element coordinates
-    std::array< std::array< tk::real, 3>, 4 > coordel_l {{ 
+    std::array< std::array< tk::real, 3>, 4 > coordel_l {{
       {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
       {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
       {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
       {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
 
-    std::array< std::array< tk::real, 3>, 4 > coordel_r {{ 
+    std::array< std::array< tk::real, 3>, 4 > coordel_r {{
       {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
       {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
       {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
       {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
 
     // Compute the determinant of Jacobian matrix
-    auto detT_l = 
+    auto detT_l =
       Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
     auto detT_r =
       Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );

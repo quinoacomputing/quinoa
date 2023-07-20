@@ -36,6 +36,7 @@
 #include "Integrate/Volume.hpp"
 #include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
+#include "Integrate/SolidTerms.hpp"
 #include "RiemannChoice.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -630,13 +631,8 @@ class MultiMat {
       const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
         tag::matidxmap >().template get< tag::solidx >();
 
-      bool has_solid(false);
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (solidx[k] > 0) has_solid=true;
-      }
-
       std::array< std::vector< tk::real >, 9 > gb;
-      if (has_solid) {
+      if (inciter::haveSolid(nmat, solidx)) {
         for (auto& gij : gb)
           gij.resize(nielem, 0.0);
         for (std::size_t e=0; e<nielem; ++e) {
@@ -644,7 +640,8 @@ class MultiMat {
             if (solidx[k] > 0) {
               for (std::size_t i=0; i<3; ++i)
                 for (std::size_t j=0; j<3; ++j)
-                  gb[3*i+j][e] += unk(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+                  gb[3*i+j][e] +=
+                    unk(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0));
             }
           }
         }
@@ -663,7 +660,8 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
-    //! \param[in] ndofel Vector of local number of degrees of freedome
+    //! \param[in] ndofel Vector of local number of degrees of freedom
+    //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -675,6 +673,7 @@ class MultiMat {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const tk::real dt,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -683,6 +682,8 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
       const auto intsharp =
         g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[m_system];
+      const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+        tag::matidxmap >().template get< tag::solidx >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -721,13 +722,13 @@ class MultiMat {
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, nmat, m_mat_blk, t, ndof, rdof, inpoel,
+      tk::surfInt( m_system, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   R, vriem, riemannLoc, riemannDeriv, intsharp );
+                   dt, R, vriem, riemannLoc, riemannDeriv, intsharp );
 
       // compute optional source term
-      tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4,
-                  inpoel, coord, geoElem, Problem::src, ndofel, R, nmat );
+      tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
+                  coord, geoElem, Problem::src, ndofel, R, nmat );
 
       if(ndof > 1)
         // compute volume integrals
@@ -758,6 +759,11 @@ class MultiMat {
       tk::nonConservativeInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
+
+      // Compute integrals for inverse deformation in solid materials
+      if (inciter::haveSolid(nmat, solidx))
+        tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
+                              inpoel, coord, geoElem, U, P, ndofel, dt, R);
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])

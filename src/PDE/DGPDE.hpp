@@ -244,10 +244,11 @@ class DGPDE {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const tk::real dt,
               tk::Fields& R ) const
     {
       self->rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                 ndofel, R );
+                 ndofel, dt, R );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -412,6 +413,7 @@ class DGPDE {
                         const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
+                        const tk::real,
                         tk::Fields& ) const = 0;
       virtual void eval_ndof( std::size_t,
                               const tk::UnsMesh::Coords&,
@@ -558,10 +560,11 @@ class DGPDE {
         const tk::Fields& U,
         const tk::Fields& P,
         const std::vector< std::size_t >& ndofel,
+        const tk::real dt,
         tk::Fields& R ) const override
       {
         data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                  ndofel, R );
+                  ndofel, dt, R );
       }
       void eval_ndof( std::size_t nunk,
                       const tk::UnsMesh::Coords& coord,
