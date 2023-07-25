@@ -22,8 +22,6 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${HDF5_C_LIBRARIES}
                       ${AEC_LIBRARIES}          # only for static link
                       ${BACKWARD_LIBRARIES}
                       ${OMEGA_H_LIBRARIES}

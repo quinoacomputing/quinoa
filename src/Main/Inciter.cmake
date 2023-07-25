@@ -39,8 +39,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${Zoltan2_LIBRARIES}
                       ${LAPACKE_LIBRARIES}
                       ${NETCDF_LIBRARIES}     # only for static link
-                      ${HDF5_HL_LIBRARIES}    # only for static link
-                      ${HDF5_C_LIBRARIES}
                       ${BACKWARD_LIBRARIES}
                       ${LUA_LIBRARIES}
                       ${LIBCXX_LIBRARIES}     # only for static link with libc++

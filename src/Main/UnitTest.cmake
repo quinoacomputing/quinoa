@@ -70,8 +70,6 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${HDF5_C_LIBRARIES}
                       ${BACKWARD_LIBRARIES}
                       ${LIBCXX_LIBRARIES}       # only for static link with libc++
                       ${LIBCXXABI_LIBRARIES})   # only for static link with libc++
