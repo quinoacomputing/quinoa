@@ -160,6 +160,7 @@ FV::resizeSolVectors()
   // Resize solution vectors, lhs and rhs by the number of ghost tets
   m_u.resize( myGhosts()->m_nunk );
   m_un.resize( myGhosts()->m_nunk );
+  m_srcFlag.resize( myGhosts()->m_nunk );
   m_p.resize( myGhosts()->m_nunk );
   m_lhs.resize( myGhosts()->m_nunk );
   m_rhs.resize( myGhosts()->m_nunk );
@@ -586,8 +587,8 @@ FV::dt()
       // find the minimum dt across all PDEs integrated
       auto eqdt =
         g_fvpde[d->MeshId()].dt( myGhosts()->m_fd, myGhosts()->m_geoFace,
-          myGhosts()->m_geoElem,
-          m_u, m_p, myGhosts()->m_fd.Esuel().size()/4, m_srcFlag );
+          myGhosts()->m_geoElem, m_u, m_p, myGhosts()->m_fd.Esuel().size()/4,
+          m_srcFlag );
       if (eqdt < mindt) mindt = eqdt;
 
       tk::real coeff(1.0);
@@ -780,6 +781,7 @@ FV::resizePostAMR(
   auto nelem = myGhosts()->m_inpoel.size()/4;
   m_p.resize( nelem );
   m_u.resize( nelem );
+  m_srcFlag.resize( nelem );
   m_un.resize( nelem );
   m_lhs.resize( nelem );
   m_rhs.resize( nelem );
