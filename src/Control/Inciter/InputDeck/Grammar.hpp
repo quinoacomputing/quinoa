@@ -53,6 +53,11 @@ namespace deck {
   //! Parser-lifetime storage of elem or node centering
   static tk::Centering centering = tk::Centering::NODE;
 
+  //! Assign depvars starting from this value
+  static char depvar_cnt = 'a';
+  //! Assign solver coupling starting from this value
+  static std::size_t transfer_cnt = 0;
+
   //! Accepted multimat output variable labels and associated index functions
   //! \details The keys are a list of characters accepted as labels for
   //! denoting (matvar-style) output variables used for multi-material variable
@@ -103,48 +108,6 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< class eq > struct check_mesh : pegtl::success {};
-  //! \brief Check mesh ... end block for correctness
-  template< class eq >
-  struct action< check_mesh< eq > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      using inciter::deck::neq;
-      auto& mesh = stack.template get< tag::param, eq, tag::mesh >();
-      auto& mesh_ref = mesh.template get< tag::reference >();
-      // if no mesh reference given by user
-      if (mesh_ref.empty() || mesh_ref.size() != neq.get< eq >()) {
-        // put in '-', meaning no reference
-        mesh_ref.push_back('-');
-        auto& location = mesh.template get< tag::location >();
-        // if no location, put in the origin
-        if (location.size() != neq.get< eq >())
-          location.push_back( { 0.0, 0.0, 0.0 } );
-        else    // reference was not given, but location was, error out
-          Message< Stack, ERROR, MsgKey::LOC_NOMESHREF >( stack, in );
-        auto& orientation = mesh.template get< tag::orientation >();
-        if (orientation.size() != neq.get< eq >())
-          orientation.push_back( { 0.0, 0.0, 0.0 } );
-        else    // reference was not given, but orientation was, error out
-          Message< Stack, ERROR, MsgKey::ORI_NOMESHREF >( stack, in );
-      }
-
-      // Ensure the number of depvars and the number of mesh references equal
-      const auto& depvar = stack.template get< tag::param, eq, tag::depvar >();
-      Assert( depvar.size() == mesh_ref.size(), "Mesh ref size mismatch" );
-
-      // Ensure mesh ref var is not the same as the current depvar and is
-      // defined upstream in input file (by another solver)
-      if ( mesh_ref.back() != '-' &&
-           (mesh_ref.back() == depvar.back() ||
-            depvars.find(mesh_ref.back()) == end(depvars)) )
-      {
-        Message< Stack, ERROR, MsgKey::DEPVAR_AS_MESHREF >( stack, in );
-      }
-    }
-  };
-
-  //! Rule used to trigger action
   template< class eq > struct check_transport : pegtl::success {};
   //! \brief Set defaults and do error checking on the transport equation block
   //! \details This is error checking that only the transport equation block
@@ -158,10 +121,13 @@ namespace grm {
       using inciter::deck::neq;
       using tag::param;
 
-      // Error out if no dependent variable has been selected
+      // Set depvar
       auto& depvar = stack.template get< param, eq, tag::depvar >();
-      if (depvar.empty() || depvar.size() != neq.get< eq >())
-        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
+      if (depvar.empty() || depvar.size() != neq.get< eq >()) {
+        depvar.push_back('c');
+        // add depvar to deck::depvars so it can be selected as outvar later
+        tk::grm::depvars.insert( 'c' );
+      }
 
       // If no number of components has been selected, default to 1
       auto& ncomp = stack.template get< tag::component, eq >();
@@ -224,20 +190,6 @@ namespace grm {
       using inciter::deck::neq;
       using tag::param;
 
-      // Error out if no dependent variable has been selected
-      auto& depvar = stack.template get< param, eq, tag::depvar >();
-      if (depvar.empty() || depvar.size() != neq.get< eq >())
-        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
-
-      // If physics type is not given, default to 'euler'
-      auto& physics = stack.template get< param, eq, tag::physics >();
-      if (physics.empty() || physics.size() != neq.get< eq >()) {
-        physics.push_back( inciter::ctr::PhysicsType::EULER );
-      }
-
-      // Set number of components to 5 (mass, 3 x mom, energy)
-      stack.template get< tag::component, eq >().push_back( 5 );
-
       // Set default to sysfct (on/off) if not specified
       auto& sysfct = stack.template get< param, eq, tag::sysfct >();
       if (sysfct.empty() || sysfct.size() != neq.get< eq >())
@@ -261,6 +213,22 @@ namespace grm {
         }
         for (const auto& i : vars) {
           if (i > 4) Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
+        }
+      }
+
+      // Set number of components to 5 (mass, 3 x mom, energy) if not coupled
+      stack.template get< tag::component, eq >().push_back( 5 );
+
+      if (stack.template get< tag::couple, tag::transfer >().empty()) {
+        auto& problem = stack.template get< param, eq, tag::problem >();
+        if (problem.empty()) {
+          problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
+        }
+        auto& depvar = stack.template get< param, eq, tag::depvar >();
+        if (depvar.empty() || depvar.size() != neq.get< eq >()) {
+          depvar.push_back('a');
+          // add depvar to deck::depvars so it can be selected as outvar later
+          tk::grm::depvars.insert( 'a' );
         }
       }
 
@@ -507,10 +475,13 @@ namespace grm {
       using inciter::deck::neq;
       using tag::param;
 
-      // Error out if no dependent variable has been selected
+      // Set depvar
       auto& depvar = stack.template get< param, eq, tag::depvar >();
-      if (depvar.empty() || depvar.size() != neq.get< eq >())
-        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, in );
+      if (depvar.empty() || depvar.size() != neq.get< eq >()) {
+        depvar.push_back('a');
+        // add depvar to deck::depvars so it can be selected as outvar later
+        tk::grm::depvars.insert( 'a' );
+      }
 
       // If physics type is not given, default to 'euler'
       auto& physics = stack.template get< param, eq, tag::physics >();
@@ -843,40 +814,6 @@ namespace grm {
     }
   };
 
-  //! Function object to count the number of meshes assigned to solvers
-  //! \details This is instantiated for all PDE types at compile time. It goes
-  //!   through all configured solvers (equation system configuration blocks)
-  //!   and counts the number of mesh filenames configured.
-  template< typename Stack >
-  struct count_meshes {
-    const Stack& stack;
-    std::size_t& count;
-    explicit
-    count_meshes( const Stack& s, std::size_t& c ) : stack(s), count(c) {}
-    template< typename eq > void operator()( brigand::type_<eq> ) {
-      count +=
-        stack.template get< tag::param, eq, tag::mesh, tag::filename >().size();
-    }
-  };
-
-  //! Function object to assign mesh ids to solvers
-  //! \details This is instantiated for all PDE types at compile time. It goes
-  //!   through all configured solvers (equation system configuration blocks)
-  //!   and assigns a new mesh id to all solvers configured in the input file.
-  template< typename Stack >
-  struct assign_meshid {
-    Stack& stack;
-    std::size_t& meshid;
-    explicit assign_meshid( Stack& s, std::size_t& m ) : stack(s), meshid(m) {}
-    template< typename eq > void operator()( brigand::type_<eq> ) {
-      const auto& eq_mesh_filename =
-        stack.template get< tag::param, eq, tag::mesh, tag::filename >();
-      auto& id = stack.template get< tag::param, eq, tag::mesh, tag::id >();
-      for (std::size_t i=0; i<eq_mesh_filename.size(); ++i)
-        id.push_back( meshid++ );
-    }
-  };
-
   //! Rule used to trigger action
   struct configure_scheme : pegtl::success {};
   //! Configure scheme selected by user
@@ -964,12 +901,6 @@ namespace grm {
         Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
       }
 
-      // Do error checking on residual eq system component index
-      const auto rc = stack.template get< tag::discr, tag::rescomp >();
-      const auto& ncomps = stack.template get< tag::component >();
-      if (rc < 1 || rc > ncomps.nprop())
-        Message< Stack, ERROR, MsgKey::LARGECOMP >( stack, in );
-
       // Ensure no different BC types are assigned to the same side set
       using PDETypes = inciter::ctr::parameters::Keys;
       using BCTypes = inciter::ctr::bc::Keys;
@@ -987,22 +918,6 @@ namespace grm {
       Assert(
         (stack.template get< tag::history, tag::id >().size() == hist.size()),
         "Number of history points and ids must equal" );
-
-      // If at least a mesh filename is assigned to a solver, all solvers must
-      // have a mesh filename assigned
-      std::size_t nmesh = 0;
-      brigand::for_each< PDETypes >( count_meshes< Stack >( stack, nmesh ) );
-      if (nmesh > 0 && nmesh != depvars.size())
-        Message< Stack, ERROR, MsgKey::MULTIMESH >( stack, in );
-
-      // Remove duplicate transfer steps
-      tk::unique( stack.template get< tag::couple, tag::transfer >() );
-
-      // Now that the inciter ... end block is finished, assign mesh ids to
-      // solvers configured
-      std::size_t meshid = 0;
-      brigand::for_each< PDETypes >( assign_meshid< Stack >( stack, meshid ) );
-      Assert( meshid == nmesh, "Not all meshes configured have mesh ids" );
     }
   };
 
@@ -1318,21 +1233,6 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  struct check_outvar : pegtl::success {};
-  //! Bounds checking for output variables at the end of a var ... end block
-  template<>
-  struct action< check_outvar > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      bool inbounds;
-      brigand::for_each< inciter::ctr::parameters::Keys >
-                       ( OutVarBounds< Stack >( stack, inbounds ) );
-      if (!inbounds)
-        Message< Stack, ERROR, MsgKey::NOSUCHCOMPONENT >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
   struct set_centering : pegtl::success {};
   //! Set variable centering in parser's state
   template<>
@@ -1371,36 +1271,34 @@ namespace grm {
     }
   };
 
-  // Store mesh/solver id as a source of a transfer
-  template< typename Stack > struct store_transfer_src {
-    store_transfer_src( Stack& stack, std::size_t i ) {
-      stack.template get< tag::couple, tag::transfer >().emplace_back( i, 0 );
-    }
-  };
-
-  // Store mesh/solver id as a destination of a transfer
-  template< typename Stack > struct store_transfer_dst {
-    store_transfer_dst( Stack& stack, std::size_t i ) {
-      stack.template get< tag::couple, tag::transfer >().back().dst = i;
-    }
-  };
-
   //! Rule used to trigger action
-  template< template< class > class StoreTransfer >
-  struct push_transfer : pegtl::success {};
-  //! Add matched value as a source or destination of solution transfer
-  //! \tparam StoreTransfer Type of action to invoke: source or destination
-  template< template< class > class StoreTransfer >
-  struct action< push_transfer< StoreTransfer > > {
+  struct couple_mesh : pegtl::success {};
+  //! Couple solvers to use mesh2mesh transfer
+  template<> struct action< couple_mesh > {
     template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      // Extract dependent variables for solvers configured
-      auto depvar = stack.depvar();
-      // Store index of parsed depvar of transfer being configured
-      auto c = in.string()[0];
-      for (std::size_t i=0; i<depvar.size(); ++i)
-        if (depvar[i] == c)
-          StoreTransfer< Stack >( stack, i );
+    static void apply( const Input&, Stack& stack ) {
+      using namespace inciter::ctr;
+      if (inciter::deck::depvar_cnt != 'a') {   // dst only
+        // set number of scalar components
+        stack.template get< tag::component, tag::compflow >().push_back( 5 );
+        // configure physics policy
+        stack.template get< tag::param, tag::compflow, tag::physics >().
+          push_back( PhysicsType::EULER );
+        // add new PDE to instantiate
+        stack.template get< tag::selected, tag::pde >().
+          push_back( PDEType::COMPFLOW );
+        // configure its problem policy
+         stack.template get< tag::param, tag::compflow, tag::problem >().
+           push_back( ProblemType::USER_DEFINED );
+        // setup coupling: src:0 -> dst:1...N
+        auto& t = stack.template get< tag::couple, tag::transfer >();
+        t.emplace_back( 0, ++inciter::deck::transfer_cnt );
+      }
+      // add depvar to deck::depvars so it can be selected as outvar later
+      tk::grm::depvars.insert( inciter::deck::depvar_cnt );
+      // assign depvar
+      stack.template get< tag::param, tag::compflow, tag::depvar >().
+        push_back( inciter::deck::depvar_cnt++ );
     }
   };
 
@@ -1431,8 +1329,6 @@ namespace deck {
          pegtl::seq<
            // register differential equation block
            tk::grm::register_inciter_eq< eq >,
-           // check mesh ... end block
-           tk::grm::check_mesh< eq >,
            // do error checking on this block
            eqchecker< eq > > {};
 
@@ -1862,21 +1758,15 @@ namespace deck {
               , material_option< eq, ctr::Material, kw::eos, tag::eos >
             > > > {};
 
-  //! Mesh ... end block
-  template< class eq >
+  //! mesh ... end block
   struct mesh :
          pegtl::if_must<
            tk::grm::readkw< use< kw::mesh >::pegtl_string >,
            tk::grm::block< use< kw::end >,
-             tk::grm::filename< use, tag::param, eq, tag::mesh, tag::filename >
-           , pde_parameter_vector< kw::location, eq, tag::mesh, tag::location >
-           , pde_parameter_vector< kw::orientation, eq,
-                                   tag::mesh, tag::orientation >
-           , tk::grm::process<
-               use< kw::reference >,
-               tk::grm::Store_back< tag::param, eq, tag::mesh, tag::reference >,
-               pegtl::alpha >
-           > > {};
+             pegtl::if_must<
+               tk::grm::filename< use, tag::param, tag::compflow, tag::mesh,
+                                  tag::filename >,
+               tk::grm::couple_mesh > > > {};
 
   //! transport equation for scalars
   struct transport :
@@ -1896,7 +1786,6 @@ namespace deck {
                            tk::grm::depvar< use,
                                             tag::transport,
                                             tag::depvar >,
-                           mesh< tag::transport >,
                            tk::grm::component< use< kw::ncomp >,
                                                tag::transport >,
                            pde_parameter_vector< kw::pde_diffusivity,
@@ -1929,8 +1818,6 @@ namespace deck {
            tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
                                   tag::density >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::materialid >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
                                   tag::velocity >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
                                   tag::pressure >,
@@ -1955,10 +1842,7 @@ namespace deck {
                                             ctr::Problem,
                                             tag::compflow,
                                             tag::problem >,
-                           tk::grm::depvar< use,
-                                            tag::compflow,
-                                            tag::depvar >,
-                           mesh< tag::compflow >,
+                           mesh,
                            tk::grm::process<
                              use< kw::flux >,
                                tk::grm::store_back_option< use,
@@ -2014,6 +1898,18 @@ namespace deck {
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
+                                  tag::density >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
+                                  tag::materialid >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
+                                  tag::velocity >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
+                                  tag::pressure >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
+                                  tag::temperature >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
+                                  tag::energy >,
+           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
                                   tag::box >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
                                   tag::meshblock >,
@@ -2029,10 +1925,6 @@ namespace deck {
                                             ctr::Problem,
                                             tag::multimat,
                                             tag::problem >,
-                           tk::grm::depvar< use,
-                                            tag::multimat,
-                                            tag::depvar >,
-                           mesh< tag::multimat >,
                            parameter< tag::multimat,
                                       kw::nmat,
                                       tag::nmat >,
@@ -2239,24 +2131,6 @@ namespace deck {
                                   use< kw::end > > > > > >,
               tk::grm::check_ale > {};
 
-  //! \brief Match a depvar, defined upstream of control file, coupling a
-  //!   solver and store
-  template< template< class > class action >
-  struct coupled_solver :
-         tk::grm::scan_until<
-            pegtl::lower,
-            tk::grm::match_depvar< tk::grm::push_transfer< action > > > {};
-
-  //! Couple ... end block (used to configure solver coupling)
-  struct couple :
-         pegtl::if_must<
-           tk::grm::readkw< use< kw::couple >::pegtl_string >,
-           tk::grm::block< use< kw::end >,
-             pegtl::seq<
-               coupled_solver< tk::grm::store_transfer_src >,
-               pegtl::one<'>'>,
-               coupled_solver< tk::grm::store_transfer_dst > > > > {};
-
   //! p-adaptive refinement (pref) ...end block
   struct pref :
          pegtl::if_must<
@@ -2293,7 +2167,7 @@ namespace deck {
   //! Match an output variable based on depvar defined upstream of input file
   struct outvar_depvar :
            tk::grm::scan< tk::grm::fieldvar< pegtl::upper >,
-             tk::grm::match_outvar, tk::grm::check_outvar > {};
+             tk::grm::match_outvar > {};
 
   //! Parse a centering token and if matches, set centering in parser's state
   struct outvar_centering :
@@ -2397,7 +2271,6 @@ namespace deck {
                            ale,
                            pref,
                            partitioning,
-                           couple,
                            field_output,
                            history_output,
                            tk::grm::diagnostics<

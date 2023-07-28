@@ -16,7 +16,6 @@ inciter
   end
 
   compflow
-    depvar u
     physics euler
 
     ic

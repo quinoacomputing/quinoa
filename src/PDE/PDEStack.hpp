@@ -132,7 +132,7 @@ class PDEStack {
         // Associate equation system index (value) to all variable offsets
         for (ncomp_t i=0; i<nc; ++i) g_inputdeck.get<tag::sys>()[i] = c;
         // instantiate and return PDE object
-        return it->second( c );
+        return it->second();
       } else Throw ( "Can't create PDE with zero components" );
     }
 

@@ -16,7 +16,6 @@ inciter
 
   compflow
 
-    depvar c
     physics euler
     problem taylor_green
     sysfct false

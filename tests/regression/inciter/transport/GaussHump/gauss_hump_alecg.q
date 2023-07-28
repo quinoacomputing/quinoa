@@ -20,7 +20,6 @@ inciter
     physics advection
     problem gauss_hump
     ncomp 1
-    depvar c
     bc_sym
       sideset 1 end
     end

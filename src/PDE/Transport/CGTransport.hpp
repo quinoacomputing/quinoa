@@ -57,13 +57,12 @@ class Transport {
 
   public:
     //! Constructor
-    //! \param[in] c Equation system index (among multiple systems configured)
-    explicit Transport( ncomp_t c ) :
+    explicit Transport() :
       m_physics( Physics() ),
       m_problem( Problem() ),
-      m_system( c ),
+      m_system( 0 ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::transport >().at(c) )
+        g_inputdeck.get< tag::component >().get< tag::transport >().at(m_system) )
     {
       m_problem.errchk( m_system, m_ncomp );
     }

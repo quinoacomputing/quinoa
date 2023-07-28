@@ -60,22 +60,21 @@ class CompFlow {
 
   public:
     //! \brief Constructor
-    //! \param[in] c Equation system index (among multiple systems configured)
-    explicit CompFlow( ncomp_t c ) :
+    explicit CompFlow() :
       m_physics(),
       m_problem(),
-      m_system( c ),
-      m_stagCnf( g_inputdeck.specialBC< eq, tag::stag >( c ) ),
-      m_skipCnf( g_inputdeck.specialBC< eq, tag::skip >( c ) ),
-      m_fr( g_inputdeck.get< param, eq, tag::farfield_density >().size() > c ?
-            g_inputdeck.get< param, eq, tag::farfield_density >()[c] : 1.0 ),
-      m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >().size() > c ?
-            g_inputdeck.get< param, eq, tag::farfield_pressure >()[c] : 1.0 ),
-      m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >().size() > c ?
-            g_inputdeck.get< param, eq, tag::farfield_velocity >()[c] :
+      m_system( 0 ),
+      m_stagCnf( g_inputdeck.specialBC< eq, tag::stag >( m_system ) ),
+      m_skipCnf( g_inputdeck.specialBC< eq, tag::skip >( m_system ) ),
+      m_fr( g_inputdeck.get< param, eq, tag::farfield_density >().size() > m_system ?
+            g_inputdeck.get< param, eq, tag::farfield_density >()[m_system] : 1.0 ),
+      m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >().size() > m_system ?
+            g_inputdeck.get< param, eq, tag::farfield_pressure >()[m_system] : 1.0 ),
+      m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >().size() > m_system ?
+            g_inputdeck.get< param, eq, tag::farfield_velocity >()[m_system] :
             std::vector< real >( 3, 0.0 ) )
     {
-      Assert( g_inputdeck.get< tag::component >().get< eq >().at(c) == m_ncomp,
+      Assert( g_inputdeck.get< tag::component >().get< eq >().at(m_system) == m_ncomp,
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );
 
       // EoS initialization

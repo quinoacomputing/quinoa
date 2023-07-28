@@ -23,7 +23,6 @@ inciter
   end
 
   compflow
-    depvar u
     physics euler
     mesh filename "rectangle_01_1.5k.exo" end
     problem sod_shocktube

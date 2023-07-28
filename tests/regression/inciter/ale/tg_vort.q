@@ -29,8 +29,12 @@ inciter
   end
 
   compflow
+    # if only a single filename is listen in a mesh ... end
+    # block, it is not really a coupling, only a way to define the
+    # input mesh filename in the control file, however if more
+    # than one filename is given, the first one is considered the
+    # background mesh (src) and the rest are destinations
     mesh filename "unitcube_1k.exo" end
-    depvar u
     physics euler
     problem taylor_green
     material

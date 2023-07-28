@@ -29,7 +29,6 @@
 #include "CompFlow/CGCompFlow.hpp"
 #include "CompFlow/DGCompFlow.hpp"
 #include "CompFlow/Problem.hpp"
-#include "InfoMesh.hpp"
 
 namespace inciter {
 
@@ -83,8 +82,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
 
-  infoMesh< eq >( c, nfo );
-
   nfo.emplace_back( "physics", ctr::Physics().name(
     g_inputdeck.get< tag::param, eq, tag::physics >()[c] ) );
 
@@ -99,33 +96,37 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     nfo.emplace_back( "flux", ctr::Flux().name(
       g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
 
+  const auto& meshes =
+    g_inputdeck.get< tag::param, eq, tag::mesh, tag::filename >();
+  if (meshes.size() > c) nfo.emplace_back( "mesh", meshes[c] );
+
   // Material property output
-  const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c][0];
-  const auto& m_id = matprop.get< tag::id >();
-  ctr::Material mopt;
-  nfo.emplace_back( mopt.name( matprop.get< tag::eos >() ),
-    std::to_string(m_id.size()) );
+  //const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c][0];
+  //const auto& m_id = matprop.get< tag::id >();
+  //ctr::Material mopt;
+  //nfo.emplace_back( mopt.name( matprop.get< tag::eos >() ),
+  //  std::to_string(m_id.size()) );
 
-  nfo.emplace_back( "ratio of specific heats",
-    parameters(matprop.get< tag::gamma >()) );
-  const auto& cv = matprop.get< tag::cv >();
-  if (!cv.empty())
-    nfo.emplace_back( "specific heat at constant volume",
-      parameters(cv) );
-  const auto& pstiff = matprop.get< tag::pstiff >();
-  if (!pstiff.empty())
-    nfo.emplace_back( "material stiffness",
-      parameters(pstiff) );
+  //nfo.emplace_back( "ratio of specific heats",
+  //  parameters(matprop.get< tag::gamma >()) );
+  //const auto& cv = matprop.get< tag::cv >();
+  //if (!cv.empty())
+  //  nfo.emplace_back( "specific heat at constant volume",
+  //    parameters(cv) );
+  //const auto& pstiff = matprop.get< tag::pstiff >();
+  //if (!pstiff.empty())
+  //  nfo.emplace_back( "material stiffness",
+  //    parameters(pstiff) );
 
-  // Viscosity is optional: vector may be empty
-  const auto& mu = matprop.get< tag::mu >();
-  if (!mu.empty())
-    nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
+  //// Viscosity is optional: vector may be empty
+  //const auto& mu = matprop.get< tag::mu >();
+  //if (!mu.empty())
+  //  nfo.emplace_back( "dynamic viscosity", parameters( mu ) );
 
-  // Heat conductivity is optional: vector may be empty
-  const auto& k = matprop.get< tag::k >();
-  if (!k.empty())
-    nfo.emplace_back( "heat conductivity", parameters( k ) );
+  //// Heat conductivity is optional: vector may be empty
+  //const auto& k = matprop.get< tag::k >();
+  //if (!k.empty())
+  //  nfo.emplace_back( "heat conductivity", parameters( k ) );
 
   const auto& alpha = g_inputdeck.get< tag::param, eq, tag::alpha >();
   if (!alpha.empty()) nfo.emplace_back( "coeff alpha", parameters( alpha ) );

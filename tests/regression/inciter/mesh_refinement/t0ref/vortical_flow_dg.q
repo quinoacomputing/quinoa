@@ -20,7 +20,6 @@ inciter
 
     physics euler
     problem vortical_flow
-    depvar u
 
     alpha 0.1
     beta 1.0
@@ -39,7 +38,7 @@ inciter
   amr
     t0ref true
     initial uniform
-    refvar u end
+    refvar a end
     error jump
   end
 

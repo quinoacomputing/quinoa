@@ -18,7 +18,6 @@ inciter
   end
 
   compflow
-    depvar u
     physics euler
 
     #problem sod_shocktube

@@ -59,13 +59,12 @@ class Transport {
 
   public:
     //! Constructor
-    //! \param[in] c Equation system index (among multiple systems configured)
-    explicit Transport( ncomp_t c ) :
+    explicit Transport() :
       m_physics( Physics() ),
       m_problem( Problem() ),
-      m_system( c ),
+      m_system( 0 ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< eq >().at(c) )
+        g_inputdeck.get< tag::component >().get< eq >().at(m_system) )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys

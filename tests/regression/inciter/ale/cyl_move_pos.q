@@ -143,7 +143,6 @@ inciter
     mesh filename "cyl_thin_9k.exo" end
     #mesh filename "cyl_thin_207k.exo" end
     physics euler
-    depvar u
     ic
       density 1.0 end
       velocity 0.0 0.0 0.0 end

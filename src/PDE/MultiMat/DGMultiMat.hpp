@@ -66,10 +66,9 @@ class MultiMat {
 
   public:
     //! Constructor
-    //! \param[in] c Equation system index (among multiple systems configured)
-    explicit MultiMat( ncomp_t c ) :
-      m_system( c ),
-      m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
+    explicit MultiMat() :
+      m_system( 0 ),
+      m_ncomp( g_inputdeck.get< tag::component, eq >().at(m_system) ),
       m_riemann( multimatRiemannSolver(
         g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(m_system) ) )
     {

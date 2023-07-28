@@ -14,7 +14,6 @@ inciter
   scheme diagcg
 
   transport
-    depvar c
     physics advection
     problem slot_cyl
   end

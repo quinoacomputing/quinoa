@@ -13,7 +13,6 @@ inciter
 
   compflow
 
-    depvar u
     physics euler
     problem taylor_green
 

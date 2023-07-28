@@ -12,7 +12,6 @@ inciter
   ctau 1.0    # FCT mass diffusivity
 
   transport
-    depvar c
     physics advection
     problem slot_cyl
   end

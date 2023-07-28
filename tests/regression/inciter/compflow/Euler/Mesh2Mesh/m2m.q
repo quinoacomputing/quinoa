@@ -17,8 +17,6 @@ inciter
   scheme alecg
 
   compflow
-    mesh filename "unitcube_1k.exo" end
-    depvar u
     physics euler
     problem rayleigh_taylor
     alpha 1.0
@@ -28,21 +26,12 @@ inciter
     p0 1.0
     r0 1.0
     kappa 1.0
-    material
-      gamma 1.66666666666667 end
-    end
-    bc_dirichlet
-      sideset 1 2 3 4 5 6 end
-    end
-  end
-
-  compflow
-    depvar v
     mesh
-      filename "sphere_full.exo"
-      reference u
+      # depvars are automatically assigned and can be referenced
+      # downstream to request output variables
+      filename "unitcube_1k.exo" # depvar: 'a'
+      filename "sphere_full.exo" # depvar: 'b' ...
     end
-    physics euler
     ic
       density  1.0 end
       velocity 0.0 0.0 0.0 end
@@ -51,19 +40,18 @@ inciter
     material
       gamma 1.66666666666667 end
     end
-    #bc_dirichlet
-    #  sideset 1 2 3 4 5 6 end
-    #end
-  end
-
-  couple
-    u > v
+    material
+      gamma 1.66666666666667 end
+    end
+    bc_dirichlet
+      sideset 1 2 3 4 5 6 end
+    end
   end
 
   field_output
     var
-      U1 U2 U3 U4 U5
-      V1 V2 V3 V4 V5
+      A1 A2 A3 A4 A5
+      B1 B2 B3 B4 B5
     end
     interval 5
     #sideset 1 2 3 end

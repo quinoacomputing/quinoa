@@ -325,22 +325,6 @@ using bc = tk::TaggedTuple< brigand::list<
                               kw::sideset::info::expect::type > >
 > >;
 
-//! Solver coupling
-using couple = tk::TaggedTuple< brigand::list<
-    tag::transfer,  std::vector< Transfer >     //!< List of mesh transfers
-> >;
-
-//! Mesh assignment and configuration
-using mesh = tk::TaggedTuple< brigand::list<
-    tag::id,          std::vector< std::size_t >
-  , tag::filename,    std::vector< std::string >
-  , tag::location,    std::vector<
-                        std::vector< kw::location::info::expect::type > >
-  , tag::orientation, std::vector<
-                        std::vector< kw::orientation::info::expect::type > >
-  , tag::reference,   std::vector< char >
-> >;
-
 //! Stagnation points parameters storage
 using StagnationParameters = tk::TaggedTuple< brigand::list<
     tag::point,         std::vector<
@@ -365,6 +349,16 @@ using SpongeParameters = tk::TaggedTuple< brigand::list<
                           kw::velocity::info::expect::type > >
   , tag::pressure,      std::vector< std::vector<
                           kw::pressure::info::expect::type > >
+> >;
+
+//! Solver coupling
+using couple = tk::TaggedTuple< brigand::list<
+    tag::transfer,  std::vector< Transfer >     //!< List of mesh transfers
+> >;
+
+//! Mesh assignment and configuration
+using mesh = tk::TaggedTuple< brigand::list<
+    tag::filename,    std::vector< std::string >
 > >;
 
 //! Transport equation parameters storage
@@ -433,6 +427,7 @@ using material = tk::TaggedTuple< brigand::list<
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
+  , tag::transfer,      std::vector< Transfer >
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
   , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >

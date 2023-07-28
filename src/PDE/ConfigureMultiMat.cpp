@@ -30,7 +30,6 @@
 #include "MultiMat/DGMultiMat.hpp"
 #include "MultiMat/FVMultiMat.hpp"
 #include "MultiMat/Problem.hpp"
-#include "InfoMesh.hpp"
 #include "Inciter/Options/Material.hpp"
 
 namespace inciter {
@@ -82,8 +81,6 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
-
-  infoMesh< eq >( c, nfo );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
     g_inputdeck.get< tag::param, eq, tag::physics >()[c] ) );

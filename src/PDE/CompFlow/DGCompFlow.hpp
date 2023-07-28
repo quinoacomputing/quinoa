@@ -62,12 +62,11 @@ class CompFlow {
 
   public:
     //! Constructor
-    //! \param[in] c Equation system index (among multiple systems configured)
-    explicit CompFlow( ncomp_t c ) :
+    explicit CompFlow() :
       m_physics(),
       m_problem(),
-      m_system( c ),
-      m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
+      m_system( 0 ),
+      m_ncomp( g_inputdeck.get< tag::component, eq >().at(m_system) ),
       m_riemann( compflowRiemannSolver(
         g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) )
     {

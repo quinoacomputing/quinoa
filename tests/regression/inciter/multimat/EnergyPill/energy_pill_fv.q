@@ -18,7 +18,6 @@ inciter
   end
 
   multimat
-    depvar u
     physics energy_pill
 
     nmat 2

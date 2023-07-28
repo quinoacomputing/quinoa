@@ -15,7 +15,6 @@ inciter
     physics advection
     problem gauss_hump
     ncomp 1
-    depvar c
 
     bc_dirichlet
       sideset 1 2 3 4 5 6 end

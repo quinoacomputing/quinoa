@@ -28,7 +28,6 @@
 #include "Transport/CGTransport.hpp"
 #include "Transport/DGTransport.hpp"
 #include "Transport/Problem.hpp"
-#include "InfoMesh.hpp"
 
 namespace inciter {
 
@@ -81,8 +80,6 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   nfo.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< param, eq, tag::depvar >()[c] ) );
-
-  infoMesh< eq >( c, nfo );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< param, eq, tag::problem >()[c] ) );

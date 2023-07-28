@@ -1430,16 +1430,15 @@ ALECG::writeFields( CkCallback c )
     auto d = Disc();
     const auto& coord = d->Coord();
 
-    // Find depvar for mesh id. Punt, will go away after getting rid of systems.
+    // if coupled: depvars: src:'a', dst:'b','c',...
     char depvar = 0;
-    auto meshid = d->MeshId();
-    auto tr = g_inputdeck.get< tag::param, tag::transport, tag::depvar >();
-    if (tr.size() > meshid) depvar = tr[ meshid ];
-    auto co = g_inputdeck.get< tag::param, tag::compflow, tag::depvar >();
-    if (co.size() > meshid) depvar = co[ meshid ];
+    if (not d->Transfers().empty()) {
+      depvar = 'a' + static_cast< char >( d->MeshId() );
+    }
 
     // Query fields names requested by user
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE, depvar );
+
     // Collect field output from numerical solution requested by user
     conserved( m_u, Disc()->Vol() );
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE, m_u, depvar );
