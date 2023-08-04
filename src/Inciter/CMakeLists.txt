@@ -36,6 +36,7 @@ target_include_directories(Inciter PUBLIC
                            ${QUINOA_SOURCE_DIR}/Inciter
                            ${QUINOA_SOURCE_DIR}/PDE
                            ${QUINOA_SOURCE_DIR}/LinearSolver
+                           ${QUINOA_SOURCE_DIR}/Transfer
                            ${QUINOA_TPL_DIR}
                            ${SEACASExodus_INCLUDE_DIRS}
                            ${NETCDF_INCLUDES}
@@ -54,6 +55,7 @@ target_include_directories(Inciter PUBLIC
                            ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../IO
                            ${PROJECT_BINARY_DIR}/../Mesh
+                           ${PROJECT_BINARY_DIR}/../Transfer
                            ${PROJECT_BINARY_DIR}/../Main)
 
 add_library(MeshRefinement
@@ -107,6 +109,7 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 # This is required so that partitioner.decl.h and partitioner.def.h are
 # generated before Transporter including those.
 add_dependencies( "transporterCharmModule" "partitionerCharmModule" )
+add_dependencies( "transporterCharmModule" "controllerCharmModule" )
 
 # Add extra dependency of Discretization charm module on MeshWriter charm
 # module. This is so meshwriter.decl.h and meshwriter.def.h are generated

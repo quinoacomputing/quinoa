@@ -165,6 +165,8 @@ else()  # use MPI
   set(LINKER_COMPILER "${CHARM_COMPILER}")
 endif()
 
+set(EXTRA_LINK_ARGS "-module collidecharm")
+
 MESSAGE(STATUS "MPI C compiler: " ${MPI_C_COMPILER})
 MESSAGE(STATUS "MPI C++ compiler: " ${MPI_CXX_COMPILER})
 MESSAGE(STATUS "Underlying C compiler: " ${UNDERLYING_C_COMPILER})
@@ -648,6 +650,7 @@ endif()
 if (ENABLE_INCITER AND HIGHWAYHASH_FOUND)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
+  add_subdirectory(Transfer)
 endif()
 
 if (ENABLE_INCITER OR ENABLE_UNITTEST)
