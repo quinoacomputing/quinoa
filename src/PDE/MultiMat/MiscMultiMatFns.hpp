@@ -52,7 +52,8 @@ timeStepSizeMultiMatFV(
   std::size_t nelem,
   std::size_t nmat,
   const tk::Fields& U,
-  const tk::Fields& P );
+  const tk::Fields& P,
+  std::vector< tk::real >& local_dte );
 
 //! Get the inverse deformation gradient tensor for a material at given location
 std::array< std::array< tk::real, 3 >, 3 >

@@ -563,6 +563,8 @@ class MultiMat {
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
     //! \param[in] srcFlag Whether the energy source was added
+    //! \param[in,out] local_dte Time step size for each element (for local
+    //!   time stepping)
     //! \return Minimum time step size
     //! \details The allowable dt is calculated by looking at the maximum
     //!   wave-speed in elements surrounding each face, times the area of that
@@ -575,14 +577,15 @@ class MultiMat {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
-                 const std::vector< int >& srcFlag ) const
+                 const std::vector< int >& srcFlag,
+                 std::vector< tk::real >& local_dte ) const
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       // obtain dt restrictions from all physics
       auto dt_e = timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, nmat, U,
-        P);
+        P, local_dte);
       auto dt_p = m_physics.dtRestriction(m_system, geoElem, nielem, srcFlag);
 
       return std::min(dt_e, dt_p);

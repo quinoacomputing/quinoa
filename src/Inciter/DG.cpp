@@ -1251,7 +1251,7 @@ DG::solve( tk::real newdt )
     // Compute diagnostics, e.g., residuals
     auto diag_computed = m_diag.compute( *d,
       m_u.nunk()-myGhosts()->m_fd.Esuel().size()/4, myGhosts()->m_geoElem,
-      m_ndof, m_u );
+      m_ndof, m_u, m_un );
 
     // Continue to mesh refinement (if configured)
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );

@@ -205,6 +205,8 @@ class FV : public CBase_FV {
       p | m_srcFlag;
       p | m_rkcoef;
       p | m_nrk;
+      p | m_dte;
+      p | m_finished;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -276,6 +278,10 @@ class FV : public CBase_FV {
     std::array< std::vector< tk::real >, 2 > m_rkcoef;
     //! Number of Runge-Kutta stages
     std::size_t m_nrk;
+    //! Time step size for each element (for local time stepping)
+    std::vector< tk::real > m_dte;
+    //! Flag for completed calculation
+    int m_finished;
 
     //! Access bound Discretization class pointer
     Ghosts* myGhosts() const {

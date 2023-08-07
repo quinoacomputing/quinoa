@@ -487,7 +487,8 @@ timeStepSizeMultiMatFV(
   std::size_t nelem,
   std::size_t nmat,
   const tk::Fields& U,
-  const tk::Fields& P )
+  const tk::Fields& P,
+  std::vector< tk::real >& local_dte )
 // *****************************************************************************
 //  Time step restriction for multi material cell-centered FV scheme
 //! \param[in] mat_blk Material EOS block
@@ -496,6 +497,8 @@ timeStepSizeMultiMatFV(
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] U High-order solution vector
 //! \param[in] P High-order vector of primitives
+//! \param[in,out] local_dte Time step size for each element (for local
+//!   time stepping)
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
@@ -544,7 +547,8 @@ timeStepSizeMultiMatFV(
       /std::sqrt(24.0);
 
     // element dt
-    mindt = std::min(mindt, dx/v_char);
+    local_dte[e] = dx/v_char;
+    mindt = std::min(mindt, local_dte[e]);
   }
 
   return mindt;

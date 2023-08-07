@@ -192,8 +192,10 @@ class FVPDE {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
-                 const std::vector< int >& srcFlag ) const
-    { return self->dt( fd, geoFace, geoElem, U, P, nielem, srcFlag ); }
+                 const std::vector< int >& srcFlag,
+                 std::vector< tk::real >& local_dte ) const
+    { return self->dt( fd, geoFace, geoElem, U, P, nielem, srcFlag, local_dte );
+    }
 
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
@@ -318,7 +320,8 @@ class FVPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t,
-                           const std::vector< int >& ) const = 0;
+                           const std::vector< int >&,
+                           std::vector< tk::real >& ) const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -432,8 +435,10 @@ class FVPDE {
                    const tk::Fields& U,
                    const tk::Fields& P,
                    const std::size_t nielem,
-                   const std::vector< int >& srcFlag ) const override
-      { return data.dt( fd, geoFace, geoElem, U, P, nielem, srcFlag ); }
+                   const std::vector< int >& srcFlag,
+                   std::vector< tk::real >& local_dte ) const override
+      { return data.dt( fd, geoFace, geoElem, U, P, nielem, srcFlag,
+          local_dte ); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > surfNames() const override
