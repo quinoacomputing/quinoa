@@ -96,16 +96,8 @@ else()
 endif()
 
 # ExaM2M
-if (ENABLE_EXAM2M)
-  find_package(ExaM2M)
-  if(ExaM2M_FOUND)
-    set(HAS_EXAM2M true)  # will become compiler define
-    message(STATUS "ExaM2M enabled")
-  else()
-    set(EXAM2M_LIBRARIES "")
-    set(COLLIDECHARM "")
-  endif()
-endif()
+set(HAS_EXAM2M false)  # will become compiler define
+set(COLLIDECHARM "-module collidecharm")
 
 message(STATUS "------------------------------------------")
 
