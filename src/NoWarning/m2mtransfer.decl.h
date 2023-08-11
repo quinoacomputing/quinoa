@@ -40,6 +40,7 @@
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
+  #pragma clang diagnostic ignored "-Wsuggest-override"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
