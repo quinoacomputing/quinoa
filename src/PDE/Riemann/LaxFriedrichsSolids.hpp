@@ -167,7 +167,7 @@ struct LaxFriedrichsSolids {
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            fluxr[deformIdx(nmat,solidx[k],i,j)] = ag_l[k][i][j]*vnl;
+            fluxr[deformIdx(nmat,solidx[k],i,j)] = ag_r[k][i][j]*vnr;
       }
     }
 
@@ -199,7 +199,7 @@ struct LaxFriedrichsSolids {
     l_plus = l_plus/( std::fabs(vriem) + 1.0e-12 );
     l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
 
-    // Store Riemann u*g (3*9=18)
+    // Store Riemann u*g (3*9=27)
     if (std::fabs(l_plus) > 1.0e-10)
     {
       for (std::size_t k=0; k<nmat; ++k)

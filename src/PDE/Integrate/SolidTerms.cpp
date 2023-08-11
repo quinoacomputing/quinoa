@@ -70,6 +70,8 @@ solidTermsVolInt( ncomp_t system,
 // *****************************************************************************
 {
 
+  using inciter::velocityDofIdx;
+  using inciter::volfracDofIdx;
   using inciter::deformDofIdx;
 
   const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
@@ -163,7 +165,7 @@ solidTermsVolInt( ncomp_t system,
           tk::real rho0;
           if (k==0) rho0 = 8900.0;
           else rho0 = 2700.0;
-          tk::real rfact = eta*(rho/(rho0*tk::determinant(g))-1.0);
+          tk::real rfact = 0.0; //eta*(rho/(rho0*tk::determinant(g))-1.0);
 
           // Compute the source terms
           std::vector< real > s(9*ndof, 0.0);
@@ -183,9 +185,9 @@ solidTermsVolInt( ncomp_t system,
                   defIdx[3]  = deformDofIdx(nmat,solidx[k],i,(j+2)%3,rdof,jdof);
                   defIdx[4]  = volfracDofIdx(nmat,k,rdof,jdof);
                   defIdx[5]  = volfracDofIdx(nmat,k,rdof,jdof);
-                  defIdx[6]  = deformDofIdx(nmat,solidx[k],i,      0,rdof,jdof);
-                  defIdx[7]  = deformDofIdx(nmat,solidx[k],i,      1,rdof,jdof);
-                  defIdx[8]  = deformDofIdx(nmat,solidx[k],i,      2,rdof,jdof);
+                  defIdx[6]  = deformDofIdx(nmat,solidx[k],i,0,rdof,jdof);
+                  defIdx[7]  = deformDofIdx(nmat,solidx[k],i,1,rdof,jdof);
+                  defIdx[8]  = deformDofIdx(nmat,solidx[k],i,2,rdof,jdof);
                   defIdx[9]  = velocityDofIdx(nmat,0,rdof,jdof);
                   defIdx[10] = velocityDofIdx(nmat,1,rdof,jdof);
                   defIdx[11] = velocityDofIdx(nmat,2,rdof,jdof);
@@ -194,24 +196,24 @@ solidTermsVolInt( ncomp_t system,
                   deriv[1]  += U(e,defIdx[1]) *dBdx[(j+1)%3][jdof];
                   deriv[2]  += U(e,defIdx[2]) *dBdx[(j+2)%3][jdof];
                   deriv[3]  += U(e,defIdx[3]) *dBdx[      j][jdof];
-                  deriv[4]  += U(e,defIdx[7]) *dBdx[(j+1)%3][jdof];
-                  deriv[5]  += U(e,defIdx[8]) *dBdx[(j+2)%3][jdof];
-                  deriv[6]  += U(e,defIdx[4]) *dBdx[      j][jdof];
-                  deriv[7]  += U(e,defIdx[5]) *dBdx[      j][jdof];
-                  deriv[8]  += U(e,defIdx[6]) *dBdx[      j][jdof];
-                  deriv[9]  += U(e,defIdx[10])*dBdx[      j][jdof];
-                  deriv[10] += U(e,defIdx[11])*dBdx[      j][jdof];
-                  deriv[11] += U(e,defIdx[12])*dBdx[      j][jdof];
+                  deriv[4]  += U(e,defIdx[4]) *dBdx[(j+1)%3][jdof];
+                  deriv[5]  += U(e,defIdx[5]) *dBdx[(j+2)%3][jdof];
+                  deriv[6]  += U(e,defIdx[6]) *dBdx[      j][jdof];
+                  deriv[7]  += U(e,defIdx[7]) *dBdx[      j][jdof];
+                  deriv[8]  += U(e,defIdx[8]) *dBdx[      j][jdof];
+                  deriv[9]  += U(e,defIdx[9]) *dBdx[      j][jdof];
+                  deriv[10] += U(e,defIdx[10])*dBdx[      j][jdof];
+                  deriv[11] += U(e,defIdx[11])*dBdx[      j][jdof];
                 }
                 s[(i*3+j)*ndof+idof] = B[idof]*rfact*alpha*g[i][j]
                   + alpha*B[idof]*(v[(j+1)%3]*(deriv[0]-deriv[1])
                                   -v[(j+2)%3]*(deriv[2]-deriv[3]))
                   + D*((alpha*dBdx[(j+1)%3][idof]+B[idof]*deriv[4])
                        *(deriv[0]-deriv[1])
-                      -(alpha*dBdx[(j+2)%3][idof]+B[idof]*deriv[5])
+		      -(alpha*dBdx[(j+2)%3][idof]+B[idof]*deriv[5])
                        *(deriv[2]-deriv[3]))
                   - alpha*(v[0]*deriv[6]+v[1]*deriv[7]+v[2]*deriv[8]
-                         +g[i][0]*deriv[9]+g[i][1]*deriv[10]+g[i][2]*deriv[11]);
+                        +g[i][0]*deriv[9]+g[i][1]*deriv[10]+g[i][2]*deriv[11]);
               }
 
         auto wt = wgp[igp] * geoElem(e, 0);
@@ -265,6 +267,7 @@ solidTermsSurfInt( std::size_t nmat,
 {
 
   using inciter::deformIdx;
+  using inciter::volfracDofIdx;
   using inciter::deformDofIdx;
 
   // Diffusion coefficient
@@ -330,8 +333,8 @@ solidTermsSurfInt( std::size_t nmat,
         }
 
       // Compute the source terms
-      tk::real alpha_l = state[0][inciter::volfracIdx(nmat, k)];
-      tk::real alpha_r = state[1][inciter::volfracIdx(nmat, k)];
+      tk::real alpha_l = U(el,volfracDofIdx(nmat,k,rdof,0));
+      tk::real alpha_r = U(er,volfracDofIdx(nmat,k,rdof,0));
       tk::real sl, sr;
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
@@ -349,6 +352,7 @@ solidTermsSurfInt( std::size_t nmat,
           fl[deformIdx(nmat,solidx[k],i,j)] += 0.5*(sl+sr);
         }
     }
+  }
 }
 
 void

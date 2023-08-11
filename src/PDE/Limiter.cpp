@@ -2437,6 +2437,20 @@ correctLimConservMultiMat(
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             gmat[i][j] /= alphamat;
+	// printf("alpha  = %e \n", alphamat);
+	// printf("g11 = %e \n", gmat[0][0]);
+	// printf("g12 = %e \n", gmat[0][1]);
+	// printf("g13 = %e \n", gmat[0][2]);
+	// printf("g21 = %e \n", gmat[1][0]);
+	// printf("g22 = %e \n", gmat[1][1]);
+	// printf("g23 = %e \n", gmat[1][2]);
+	// printf("g31 = %e \n", gmat[2][0]);
+	// printf("g32 = %e \n", gmat[2][1]);
+	// printf("g33 = %e \n", gmat[2][2]);
+	// printf("u = %e \n", vel[0]);
+	// printf("v = %e \n", vel[1]);
+	// printf("w = %e \n", vel[2]);
+	// printf("rho %e \n", rhomat);
         s[imat] = alphamat * mat_blk[imat].compute< EOS::totalenergy >( rhomat,
           vel[0], vel[1], vel[2], premat, gmat );
       }

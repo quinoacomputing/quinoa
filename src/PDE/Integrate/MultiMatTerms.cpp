@@ -237,7 +237,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                 {
                   ncf[deformIdx(nmat,solidx[k],i,j)][idof] +=
                   state[volfracIdx(nmat, k)]*
-                    riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][e];
+                    riemannDeriv[3*nmat+ndof+3*9*k+3*(3*i+j)+idir][e];
                 }
               }
         }
