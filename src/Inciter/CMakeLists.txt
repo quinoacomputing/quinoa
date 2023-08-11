@@ -109,7 +109,7 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 # This is required so that partitioner.decl.h and partitioner.def.h are
 # generated before Transporter including those.
 add_dependencies( "transporterCharmModule" "partitionerCharmModule" )
-add_dependencies( "transporterCharmModule" "controllerCharmModule" )
+add_dependencies( "transporterCharmModule" "m2mtransferCharmModule" )
 
 # Add extra dependency of Discretization charm module on MeshWriter charm
 # module. This is so meshwriter.decl.h and meshwriter.def.h are generated

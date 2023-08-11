@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/controller.def.h
+  \file      src/NoWarning/m2mtransfer.def.h
   \copyright 2020 Charmworks, Inc.
              All rights reserved. See the LICENSE file for details.
-  \brief     Include controller.def.h with turning off specific compiler
+  \brief     Include m2mtransfer.def.h with turning off specific compiler
              warnings
 */
 // *****************************************************************************
-#ifndef nowarning_controller_def_h
-#define nowarning_controller_def_h
+#ifndef nowarning_m2mtransfer_def_h
+#define nowarning_m2mtransfer_def_h
 
 #include "Macro.hpp"
 
@@ -39,7 +39,7 @@
   #pragma GCC diagnostic ignored "-Wsuggest-attribute=noreturn"
 #endif
 
-#include "../Transfer/controller.def.h"
+#include "../Transfer/m2mtransfer.def.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -47,4 +47,4 @@
   #pragma GCC diagnostic pop
 #endif
 
-#endif // nowarning_controller_def_h
+#endif // nowarning_m2mtransfer_def_h

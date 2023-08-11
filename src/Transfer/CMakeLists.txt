@@ -3,7 +3,7 @@ include(charm)
 
 add_library(Worker
             Worker.cpp
-            Controller.cpp)
+            M2MTransfer.cpp)
 
 target_include_directories(Worker PUBLIC
                            ${PROJECT_SOURCE_DIR}
@@ -27,20 +27,20 @@ INSTALL(TARGETS Worker
 
 #INSTALL(DIRECTORY "${PROJECT_SOURCE_DIR}/Transfer/"
 #        DESTINATION "include"
-#        FILES_MATCHING PATTERN "Controller.hpp")
+#        FILES_MATCHING PATTERN "M2MTransfer.hpp")
 #INSTALL(DIRECTORY "${PROJECT_SOURCE_DIR}/NoWarning/"
 #        DESTINATION "include/NoWarning/"
-#        FILES_MATCHING PATTERN "controller.de*.h")
+#        FILES_MATCHING PATTERN "m2mtransfer.de*.h")
 #INSTALL(DIRECTORY "${PROJECT_SOURCE_DIR}/NoWarning/"
 #        DESTINATION "include/NoWarning/"
 #        FILES_MATCHING PATTERN "worker.de*.h")
 #
 #INSTALL(DIRECTORY "${PROJECT_BINARY_DIR}/Transfer/"
 #        DESTINATION "include/Transfer/"
-#        FILES_MATCHING PATTERN "controller.de*.h")
+#        FILES_MATCHING PATTERN "m2mtransfer.de*.h")
 #INSTALL(DIRECTORY "${PROJECT_BINARY_DIR}/Transfer/"
 #        DESTINATION "include/Transfer/"
 #        FILES_MATCHING PATTERN "worker.de*.h")
 
 addCharmModule( "worker" "Worker" )
-addCharmModule( "controller" "Worker" )
+addCharmModule( "m2mtransfer" "Worker" )

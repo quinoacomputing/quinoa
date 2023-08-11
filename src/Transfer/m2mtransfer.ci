@@ -1,10 +1,10 @@
-module controller {
+module m2mtransfer {
 
   extern module worker;
 
   namespace exam2m {
 
-    readonly CProxy_Controller controllerProxy;
+    readonly CProxy_M2MTransfer m2mtransferProxy;
     readonly CollideHandle collideHandle;
 
     class MeshData;
@@ -13,8 +13,8 @@ module controller {
       entry LibMain(CkArgMsg* msg);
     };
 
-    group [migratable] Controller {
-      entry Controller();
+    group [migratable] M2MTransfer {
+      entry M2MTransfer();
 
       entry void addMesh(CkArrayID p, int elem, CkCallback cb);
     };

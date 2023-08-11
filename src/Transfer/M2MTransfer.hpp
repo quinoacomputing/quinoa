@@ -1,6 +1,6 @@
 // Controller for the library
 
-#include "NoWarning/controller.decl.h"
+#include "NoWarning/m2mtransfer.decl.h"
 
 #include "collidecharm.h"
 #include "Fields.hpp"
@@ -28,19 +28,19 @@ class MeshData {
     }
 };
 
-class Controller : public CBase_Controller {
+class M2MTransfer : public CBase_M2MTransfer {
   private:
     std::unordered_map<CmiUInt8, MeshData> proxyMap;
     int current_chunk;
     CmiUInt8 m_sourcemesh, m_destmesh;
 
   public:
-    Controller();
+    M2MTransfer();
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
-    explicit Controller( CkMigrateMessage* ) {}
+    explicit M2MTransfer( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

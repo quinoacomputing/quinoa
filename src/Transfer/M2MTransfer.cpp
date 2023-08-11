@@ -1,6 +1,6 @@
 // Controller for the library
 
-#include "Controller.hpp"
+#include "M2MTransfer.hpp"
 #include "Worker.hpp"
 
 #include <cassert>
@@ -13,7 +13,7 @@ namespace exam2m {
   #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
 
-/* readonly */ CProxy_Controller controllerProxy;
+/* readonly */ CProxy_M2MTransfer m2mtransferProxy;
 //! \brief Charm handle to the collision detection library instance
 /* readonly */ CollideHandle collideHandle;
 
@@ -21,7 +21,7 @@ void collisionHandler( [[maybe_unused]] void *param,
                         int nColl,
                         Collision *colls )
 {
-  controllerProxy.ckLocalBranch()->distributeCollisions( nColl, colls );
+  m2mtransferProxy.ckLocalBranch()->distributeCollisions( nColl, colls );
 }
 
 #if defined(__clang__)
@@ -37,20 +37,20 @@ void collisionHandler( [[maybe_unused]] void *param,
 #endif
 
 void addMesh(CkArrayID p, int elem, CkCallback cb) {
-  controllerProxy[0].addMesh(p, elem, cb);
+  m2mtransferProxy[0].addMesh(p, elem, cb);
 }
 
 void setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u) {
-  controllerProxy.ckLocalBranch()->setSourceTets(p, index, inpoel, coords, u);
+  m2mtransferProxy.ckLocalBranch()->setSourceTets(p, index, inpoel, coords, u);
 }
 
 void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb) {
-  controllerProxy.ckLocalBranch()->setDestPoints(p, index, coords, u, cb);
+  m2mtransferProxy.ckLocalBranch()->setDestPoints(p, index, coords, u, cb);
 }
 
 LibMain::LibMain(CkArgMsg* msg) {
   delete msg;
-  controllerProxy = CProxy_Controller::ckNew();
+  m2mtransferProxy = CProxy_M2MTransfer::ckNew();
 
   // TODO: Need to make sure this is actually correct
   CollideGrid3d gridMap(CkVector3d(0, 0, 0),CkVector3d(2, 100, 2));
@@ -58,9 +58,9 @@ LibMain::LibMain(CkArgMsg* msg) {
       CollideSerialClient(collisionHandler, 0));
 }
 
-Controller::Controller() : current_chunk(0) {}
+M2MTransfer::M2MTransfer() : current_chunk(0) {}
 
-void Controller::addMesh(CkArrayID p, int elem, CkCallback cb) {
+void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb) {
   auto id = static_cast<std::size_t>(CkGroupID(p).idx);
   if (proxyMap.count(id) == 0) {
     CkArrayOptions opts;
@@ -76,18 +76,18 @@ void Controller::addMesh(CkArrayID p, int elem, CkCallback cb) {
     CkAbort("Uhoh...\n");
   }
 }
-void Controller::setMesh( CkArrayID p, MeshData d ) {
+void M2MTransfer::setMesh( CkArrayID p, MeshData d ) {
   proxyMap[static_cast<std::size_t>(CkGroupID(p).idx)] = d;
 }
 
-void Controller::setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb) {
+void M2MTransfer::setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb) {
   m_destmesh = static_cast<std::size_t>(CkGroupID(p).idx);
   Worker* w = proxyMap[m_destmesh].m_proxy[index].ckLocal();
   assert(w);
   w->setDestPoints(coords, u, cb);
 }
 
-void Controller::setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u) {
+void M2MTransfer::setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u) {
   m_sourcemesh = static_cast<std::size_t>(CkGroupID(p).idx);
   Worker* w = proxyMap[m_sourcemesh].m_proxy[index].ckLocal();
   assert(w);
@@ -95,7 +95,7 @@ void Controller::setSourceTets(CkArrayID p, int index, std::vector< std::size_t 
 }
 
 void
-Controller::distributeCollisions(int nColl, Collision* colls)
+M2MTransfer::distributeCollisions(int nColl, Collision* colls)
 // *****************************************************************************
 //  Called when all potential collisions have been found, and now need to be
 //  destributed to the chares in the destination mesh to determine actual
@@ -136,4 +136,4 @@ Controller::distributeCollisions(int nColl, Collision* colls)
 
 } // exam2m::
 
-#include "NoWarning/controller.def.h"
+#include "NoWarning/m2mtransfer.def.h"

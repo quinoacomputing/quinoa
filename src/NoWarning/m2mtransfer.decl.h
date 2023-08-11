@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/controller.decl.h
+  \file      src/NoWarning/m2mtransfer.decl.h
   \copyright 2020 Charmworks, Inc.
              All rights reserved. See the LICENSE file for details.
-  \brief     Include controller.decl.h with turning off specific compiler
+  \brief     Include m2mtransfer.decl.h with turning off specific compiler
              warnings
 */
 // *****************************************************************************
-#ifndef nowarning_controller_decl_h
-#define nowarning_controller_decl_h
+#ifndef nowarning_m2mtransfer_decl_h
+#define nowarning_m2mtransfer_decl_h
 
 #include "Macro.hpp"
 
@@ -57,7 +57,7 @@
   #pragma warning( disable: 2282 )
 #endif
 
-#include "../Transfer/controller.decl.h"
+#include "../Transfer/m2mtransfer.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -67,4 +67,4 @@
   #pragma warning( pop )
 #endif
 
-#endif // nowarning_controller_decl_h
+#endif // nowarning_m2mtransfer_decl_h

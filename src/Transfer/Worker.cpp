@@ -13,7 +13,7 @@
 #include "Worker.hpp"
 #include "Reorder.hpp"
 #include "DerivedData.hpp"
-#include "Controller.hpp"
+#include "M2MTransfer.hpp"
 
 #include "collidecharm.h"
 
@@ -30,7 +30,7 @@ PUPbytes(Collision);
 
 namespace exam2m {
 extern CollideHandle collideHandle;
-extern CProxy_Controller controllerProxy;
+extern CProxy_M2MTransfer m2mtransferProxy;
 }
 
 using exam2m::Worker;
@@ -45,7 +45,7 @@ Worker::Worker( CkArrayID p, MeshData d, CkCallback cb ) :
 {
   CollideRegister(collideHandle, m_firstchunk + thisIndex);
   d.m_proxy = thisProxy;
-  controllerProxy.ckLocalBranch()->setMesh( p, d );
+  m2mtransferProxy.ckLocalBranch()->setMesh( p, d );
   contribute(cb);
 }
 
