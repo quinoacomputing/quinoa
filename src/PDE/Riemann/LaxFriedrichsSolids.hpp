@@ -69,8 +69,8 @@ struct LaxFriedrichsSolids {
                             am_l(nmat, 0.0),
                             am_r(nmat, 0.0);
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > ag_l, ag_r,
-      asig_l, asig_r;
-    std::vector< std::array< tk::real, 3 > > asign_l, asign_r;
+      asig_l, asig_r, devasig_l, devasig_r;
+    std::vector< std::array< tk::real, 3 > > asign_l, asign_r, devasign_l, devasign_r;
     std::array< std::array< tk::real, 3 >, 3 > agn_l, agn_r;
     std::array< tk::real, 3 > sign_l {{0, 0, 0}}, sign_r {{0, 0, 0}};
     for (std::size_t k=0; k<nmat; ++k)
@@ -84,11 +84,16 @@ struct LaxFriedrichsSolids {
       asig_l.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
         u[0][densityIdx(nmat, k)], ul, vl, wl, u[0][energyIdx(nmat, k)],
         al_l[k], k, ag_l[k]));
+      devasig_l.push_back(asig_l[k]);
+      for (std::size_t i=0; i<3; ++i)
+	for (std::size_t j=0; j<3; ++j)
+	  devasig_l[k][i][j] -= pml[k];
 
       // normal stress (traction) vector
       asign_l.push_back(tk::matvec(asig_l[k], fn));
       for (std::size_t i=0; i<3; ++i)
         sign_l[i] += asign_l[k][i];
+      devasign_l.push_back(tk::matvec(devasig_l[k], fn));
 
       // rotate deformation gradient tensor for speed of sound in normal dir
       agn_l = tk::rotateTensor(ag_l[k], fn);
@@ -105,10 +110,16 @@ struct LaxFriedrichsSolids {
       asig_r.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
         u[1][densityIdx(nmat, k)], ur, vr, wr, u[1][energyIdx(nmat, k)],
         al_r[k], k, ag_r[k]));
+      devasig_r.push_back(asig_r[k]);
+      for (std::size_t i=0; i<3; ++i)
+	for (std::size_t j=0; j<3; ++j)
+	  devasig_r[k][i][j] -= pmr[k];
+      
       // normal stress (traction) vector
       asign_r.push_back(tk::matvec(asig_r[k], fn));
       for (std::size_t i=0; i<3; ++i)
         sign_r[i] += asign_r[k][i];
+      devasign_r.push_back(tk::matvec(devasig_r[k], fn));
 
       // rotate deformation gradient tensor for speed of sound in normal dir
       agn_r = tk::rotateTensor(ag_r[k], fn);
@@ -152,7 +163,8 @@ struct LaxFriedrichsSolids {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             fluxl[deformIdx(nmat,solidx[k],i,j)] =
-              (ul*ag_l[k][i][0] + vl*ag_l[k][i][1] + wl*ag_l[k][i][2]) * fn[j];
+	      ag_l[k][i][j]*vnl
+              ;//+ (ul*ag_l[k][i][0] + vl*ag_l[k][i][1] + wl*ag_l[k][i][2]) * fn[j];
       }
 
       // Right fluxes
@@ -169,7 +181,8 @@ struct LaxFriedrichsSolids {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             fluxr[deformIdx(nmat,solidx[k],i,j)] =
-              (ur*ag_r[k][i][0] + vr*ag_r[k][i][1] + wr*ag_r[k][i][2]) * fn[j];
+	      ag_r[k][i][j]*vnr
+              ;//+ (ur*ag_r[k][i][0] + vr*ag_r[k][i][1] + wr*ag_r[k][i][2]) * fn[j];
       }
     }
 
@@ -187,12 +200,95 @@ struct LaxFriedrichsSolids {
 
     // Store Riemann-advected partial pressures
     for (std::size_t k=0; k<nmat; ++k)
-      flx.push_back( 0.5*(pml[k] + pmr[k]) );
-
+    {
+      flx.push_back(0.5*(pml[k]+pmr[k])
+		   + 0.5*(tk::dot(asign_l[k],fn)
+			 +tk::dot(asign_r[k],fn)));
+      // if (solidx[k] > 0)
+      // 	flx.push_back(0.5*(pml[k]+pmr[k])
+      // 		    + 0.5*(tk::dot(asign_l[k],fn)
+      // 			  +tk::dot(asign_r[k],fn)));
+      // else
+      // 	flx.push_back(0.5*(pml[k]+pmr[k])
+      // 		    + 0.5*(tk::dot(asign_l[k],fn)
+      // 			  +tk::dot(asign_r[k],fn)));
+    }	
+    //flx.push_back(0.5*( tk::dot(asign_l[k],fn)
+    //			+ tk::dot(asign_r[k],fn)));
+    
     // Store Riemann velocity
     flx.push_back( vriem );
 
-    Assert( flx.size() == (ncomp+nmat+1), "Size of multi-material flux "
+    // Flux vector splitting
+    auto l_plus = 0.5 * (vriem + std::fabs(vriem));
+    auto l_minus = 0.5 * (vriem - std::fabs(vriem));
+
+    l_plus = l_plus/( std::fabs(vriem) + 1.0e-12 );
+    l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
+
+    // Store Riemann-advected volfrac
+    if (std::fabs(l_plus) > 1.0e-10)
+    {
+      for (std::size_t k=0; k<nmat; ++k)
+        flx.push_back( al_l[k] );
+    }
+    else if (std::fabs(l_minus) > 1.0e-10)
+    {
+      for (std::size_t k=0; k<nmat; ++k)
+        flx.push_back( al_r[k] );
+    }
+    else
+    {
+      for (std::size_t k=0; k<nmat; ++k)
+        flx.push_back( 0.5*(al_l[k] + al_r[k]) );
+    }
+
+    // Store Riemann u*g (3*9=18)
+    if (std::fabs(l_plus) > 1.0e-10)
+    {
+      for (std::size_t k=0; k<nmat; ++k)
+	for (std::size_t i=0; i<3; ++i)
+	  for (std::size_t j=0; j<3; ++j)
+	  {
+	    flx.push_back( ul*ag_l[k][i][j]/al_l[k] );
+	    flx.push_back( vl*ag_l[k][i][j]/al_l[k] );
+	    flx.push_back( wl*ag_l[k][i][j]/al_l[k] );
+	  }
+    }
+    else if (std::fabs(l_minus) > 1.0e-10)
+    {
+      for (std::size_t k=0; k<nmat; ++k)
+	for (std::size_t i=0; i<3; ++i)
+	  for (std::size_t j=0; j<3; ++j)
+	  {
+	    flx.push_back( ur*ag_r[k][i][j]/al_r[k] );
+	    flx.push_back( vr*ag_r[k][i][j]/al_r[k] );
+	    flx.push_back( wr*ag_r[k][i][j]/al_r[k] );
+	  }
+    }
+    else
+    {
+      for (std::size_t k=0; k<nmat; ++k)
+	for (std::size_t i=0; i<3; ++i)
+	  for (std::size_t j=0; j<3; ++j)
+	  {
+	    flx.push_back( 0.5 * (ul*ag_l[k][i][j]/al_l[k]
+				 +ur*ag_r[k][i][j]/al_r[k]) );
+	    flx.push_back( 0.5 * (vl*ag_l[k][i][j]/al_l[k]
+				 +vr*ag_r[k][i][j]/al_r[k]) );
+	    flx.push_back( 0.5 * (wl*ag_l[k][i][j]/al_l[k]
+				 +wr*ag_r[k][i][j]/al_r[k]) );
+	  }
+    }
+
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      flx.push_back(0.5*(asign_l[k][0]+asign_r[k][0]));
+      flx.push_back(0.5*(asign_l[k][1]+asign_r[k][1]));
+      flx.push_back(0.5*(asign_l[k][2]+asign_r[k][2]));
+    }
+
+    Assert( flx.size() == (ncomp+5*nmat+1+9*3*nmat), "Size of multi-material flux "
             "vector incorrect" );
 
     return flx;

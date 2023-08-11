@@ -437,7 +437,7 @@ class MultiMat {
 
     //! Reconstruct second-order solution from first-order
     //! \param[in] geoElem Element geometry array
-    //! \param[in] fd Face connectivity and boundary conditions object
+   //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
@@ -637,21 +637,12 @@ class MultiMat {
           gij.resize(nielem, 0.0);
         for (std::size_t e=0; e<nielem; ++e) {
           for (std::size_t k=0; k<nmat; ++k) {
-	  // printf("::DEBUG::");
-	  // printf("e=%d\n",e);
-	  // printf("material = %d \n", k);
-	  // printf("solidx = %d \n", solidx[k]);
-	  // printf("vol_frac = %e \n", unk(e,volfracIdx(nmat,k)));
-	  // if (solidx[k] > 0) {
-	  //   for (std::size_t i=0; i<3; ++i)
-	  //     for (std::size_t j=0; j<3; ++j)
-	  // 	printf("g(%d,%d) = %e \n",i+1,j+1,unk(e,deformIdx(nmat,solidx[k],i,j)));
-          // }
             if (solidx[k] > 0) {
               for (std::size_t i=0; i<3; ++i)
                 for (std::size_t j=0; j<3; ++j)
                   gb[3*i+j][e] +=
                     unk(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+		    ///unk(e,volfracDofIdx(nmat,k,rdof,0));
             }
           }
         }
@@ -718,8 +709,9 @@ class MultiMat {
       // pressure derivatives in the energy equations. The rest ndof terms refer
       // to derivatives of Riemann velocity times basis function in the volume
       // fraction equation.
+      // Added alpha and g.
       std::vector< std::vector< tk::real > >
-        riemannDeriv( 3*nmat+ndof, std::vector<tk::real>(U.nunk(),0.0) );
+        riemannDeriv( 3*5*nmat+ndof+3*9*nmat, std::vector<tk::real>(U.nunk(),0.0) );
 
       // vectors to store the data of riemann velocity used for reconstruction
       // in volume fraction equation
@@ -753,7 +745,7 @@ class MultiMat {
                         m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
 
-      Assert( riemannDeriv.size() == 3*nmat+ndof, "Size of Riemann derivative "
+      Assert( riemannDeriv.size() == 3*5*nmat+ndof+3*9*nmat, "Size of Riemann derivative "
               "vector incorrect" );
 
       // get derivatives from riemannDeriv
@@ -772,8 +764,9 @@ class MultiMat {
 
       // // Compute integrals for inverse deformation in solid materials
       // if (inciter::haveSolid(nmat, solidx))
-      //   tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
-      //                         inpoel, coord, geoElem, U, P, ndofel, dt, R);
+      //   tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof,
+      // 			      nelem, inpoel, coord, geoElem, U, P,
+      // 			      ndofel, dt, riemannDeriv, R);
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
@@ -784,6 +777,20 @@ class MultiMat {
                                    rdof, nelem, inpoel, coord, geoElem, U, P,
                                    ndofel, ct, R, intsharp );
       }
+
+      // //TESTESTESTEST
+      // for (std::size_t e=0; e<U.nunk(); ++e)
+      // 	for (std::size_t k=0; k<nmat; ++k)
+      // 	  if (solidx[k] > 0)
+      // 	    for (std::size_t i=0; i<3; ++i)
+      // 	      for (std::size_t j=0; j<3; ++j)
+      // 		for (std::size_t idof=0; idof<rdof; ++idof)
+      // 		{
+      // 		  //auto idx = deformDofIdx(nmat, solidx[k], i, j, rdof, idof);
+      // 		  auto idx = energyDofIdx(nmat, k, rdof, idof);
+      // 		  R(e,idx) = 0.0;
+      // 		}
+      // //END TESTESTESTEST
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -1063,14 +1070,14 @@ class MultiMat {
     static tk::FluxFn::result_type
     flux( ncomp_t system,
           [[maybe_unused]] ncomp_t ncomp,
-          const std::vector< EOS >&,
+          const std::vector< EOS >&  mat_blk,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      return tk::fluxTerms(ncomp, nmat, ugp);
+      return tk::fluxTerms(ncomp, nmat, mat_blk, ugp);
     }
 
     //! \brief Boundary state function providing the left and right state of a

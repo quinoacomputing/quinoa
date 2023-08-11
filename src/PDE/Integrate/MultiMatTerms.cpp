@@ -24,6 +24,7 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
@@ -78,6 +79,10 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
   using inciter::momentumIdx;
   using inciter::energyIdx;
   using inciter::velocityIdx;
+  using inciter::deformIdx;
+
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -165,6 +170,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 
         for (std::size_t idir=0; idir<3; ++idir)
           dap[idir] += riemannDeriv[3*k+idir][e];
+	    // riemannDeriv[3*2*nmat+ndof+3*9*nmat+3*k+idir][e];
       }
 
       // compute non-conservative terms
@@ -183,7 +189,8 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
           ncf[densityIdx(nmat, k)][idof] = 0.0;
           for (std::size_t idir=0; idir<3; ++idir)
             ncf[energyIdx(nmat, k)][idof] -= vel[idir] * ( ymat[k]*dap[idir]
-                                                  - riemannDeriv[3*k+idir][e] );
+					       - riemannDeriv[3*k+idir][e] );
+							   // - riemannDeriv[3*2*nmat+ndof+3*9*nmat+3*k+idir][e]);
         }
 
         // Evaluate non-conservative term for volume fraction equation:
@@ -220,13 +227,84 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
             ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)]
                                             * vel[idir] * dBdx[idir][idof];
         }
-      }
 
-      updateRhsNonCons( ncomp, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
+	if (solidx[k] > 0)
+	{
+	  // evaluate non-conservative terms for inverse deformation equation
+	  std::array< std::array< tk::real, 3 >, 3 > g, ag;
+	  for (std::size_t i=0; i<3; ++i)
+	    for (std::size_t j=0; j<3; ++j)
+	    {
+	      ag[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
+	      g[i][j] = state[deformIdx(nmat,solidx[k],i,j)]/state[volfracIdx(nmat, k)];
+	    }
+	  for (std::size_t i=0; i<3; ++i)
+	    for (std::size_t j=0; j<3; ++j)
+	      for(std::size_t idof=0; idof<ndof; ++idof)
+	      {
+	  	ncf[deformIdx(nmat,solidx[k],i,j)][idof] = 0.0;
+		for (std::size_t idir=0; idir<3; ++idir)
+		{
+		  ncf[deformIdx(nmat,solidx[k],i,j)][idof] +=
+		  state[volfracIdx(nmat, k)]*
+		    riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][e]
+		    ;//+ vel[idir]*g[i][idir]*
+		  //riemannDeriv[3*nmat+ndof+3*k+j][e];
+		  
+
+		  
+		    //+vel[idir]*g[i][idir]*riemannDeriv[3*nmat+ndof+3*k+   j][e]
+		    //-vel[idir]*g[i][j]   *riemannDeriv[3*nmat+ndof+3*k+idir][e];
+		// if (std::abs(riemannDeriv[3*nmat+ndof+3*k+0][e]) > 1.0e-04 ||
+		//     std::abs(riemannDeriv[3*nmat+ndof+3*k+1][e]) > 1.0e-04 ||
+		//     std::abs(riemannDeriv[3*nmat+ndof+3*k+2][e]) > 1.0e-04)
+		// {
+		//   printf("e = %d \n", e);
+		//   printf("i = %d \n", i);
+		//   printf("j = %d \n", j);
+		//   printf("idof = %d \n", idof);
+		//   printf("riemannDeriv[x] = %e \n", riemannDeriv[3*nmat+ndof+3*k+0][e]);
+		//   printf("riemannDeriv[y] = %e \n", riemannDeriv[3*nmat+ndof+3*k+1][e]);
+		//   printf("riemannDeriv[z] = %e \n", riemannDeriv[3*nmat+ndof+3*k+2][e]);
+		//   printf("vel[x] = %e \n", vel[0]);
+		//   printf("vel[y] = %e \n", vel[1]);
+		//   printf("vel[z] = %e \n", vel[2]);
+		//   printf("g11 = %e \n", g[0][0]);
+		//   printf("g12 = %e \n", g[0][1]);
+		//   printf("g13 = %e \n", g[0][2]);
+		//   printf("g21 = %e \n", g[1][0]);
+		//   printf("g22 = %e \n", g[1][1]);
+		//   printf("g23 = %e \n", g[1][2]);
+		//   printf("g31 = %e \n", g[2][0]);
+		//   printf("g32 = %e \n", g[2][1]);
+		//   printf("g33 = %e \n", g[2][2]);
+		//   printf("term1 = %e \n", vel[idir]*g[i][idir]*riemannDeriv[3*nmat+ndof+3*k+   j][e]);
+		//   printf("term2 = %e \n", vel[idir]*g[i][j]   *riemannDeriv[3*nmat+ndof+3*k+idir][e]);
+		// }
+		}
+	      }
+	  // // evaluate non-conservative terms for energy
+	  // auto sigma = mat_blk[k].computeTensor< inciter::EOS::CauchyStress >(
+          //   state[densityIdx(nmat,k)], vel[0], vel[1], vel[2],
+	  //   state[energyIdx(nmat, k)], state[volfracIdx(nmat, k)], k, ag);
+	  // for (std::size_t i=0; i<3; ++i)
+	  //   for (std::size_t j=0; j<3; ++j)
+	  //     sigma[i][j] /= state[volfracIdx(nmat, k)];
+	  // for (std::size_t i=0; i<3; ++i)
+	  //   for (std::size_t j=0; j<3; ++j)
+	  //     for(std::size_t idof=0; idof<ndof; ++idof)
+	  //     {
+	  // 	ncf[energyIdx(nmat, k)][idof] -=
+	  // 	  vel[i] * sigma[i][j] * riemannDeriv[3*nmat+ndof+3*k+j][e];
+	  //     }
+	}
+
+	updateRhsNonCons( ncomp, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
+      }
     }
   }
 }
-
+  
 void
 updateRhsNonCons(
   ncomp_t ncomp,
@@ -255,8 +333,13 @@ updateRhsNonCons(
 {
   using inciter::volfracIdx;
   using inciter::energyIdx;
+  using inciter::deformIdx;
   using inciter::volfracDofIdx;
   using inciter::energyDofIdx;
+  using inciter::deformDofIdx;
+
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   //Assert( dBdx[0].size() == ndof_el,
   //        "Size mismatch for basis function derivatives" );
@@ -285,6 +368,10 @@ updateRhsNonCons(
           wt * ncf[volfracIdx(nmat,k)][idof];
         R(e, energyDofIdx(nmat,k,ndof,idof)) +=
           wt * ncf[energyIdx(nmat,k)][idof] * B[idof];
+	for(std::size_t i=0; i<3; ++i)
+	  for(std::size_t j=0; j<3; ++j)
+	    R(e, deformDofIdx(nmat,solidx[k],i,j,ndof,idof)) +=
+	      wt * ncf[deformIdx(nmat,solidx[k],i,j)][idof] * B[idof];
       }
     }
   }
@@ -332,7 +419,7 @@ nonConservativeIntFV(
   using inciter::momentumIdx;
   using inciter::energyIdx;
   using inciter::velocityIdx;
-
+  
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
@@ -384,6 +471,7 @@ nonConservativeIntFV(
       // evaluate non-conservative term for volume fraction equation
       ncf[volfracIdx(nmat, k)] = state[volfracIdx(nmat, k)]
         * riemannDeriv[3*nmat][e];
+
     }
 
     for (ncomp_t c=0; c<ncomp; ++c)
@@ -441,6 +529,10 @@ pressureRelaxationInt( ncomp_t system,
   using inciter::energyIdx;
   using inciter::pressureIdx;
   using inciter::velocityIdx;
+  using inciter::deformIdx;
+
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
@@ -504,8 +596,35 @@ pressureRelaxationInt( ncomp_t system,
         real arhomat = state[densityIdx(nmat, k)];
         real alphamat = state[volfracIdx(nmat, k)];
         apmat[k] = state[ncomp+pressureIdx(nmat, k)];
-        real amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
-          apmat[k], alphamat, k );
+	real amat = 0.0;
+	if (solidx[k] > 0)
+	{
+	  // real gamma = inciter::getmatprop<tag::multimat, tag::gamma>(system, k);
+	  // real pstiff = inciter::getmatprop<tag::multimat, tag::pstiff>(system, k);
+	  // amat = std::sqrt(gamma*(alphamat*pstiff+apmat[k])/arhomat);
+	  
+	  std::array< std::array< tk::real, 3 >, 3 > ag;
+	  for (std::size_t i=0; i<3; ++i)
+	    for (std::size_t j=0; j<3; ++j)
+	      ag[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
+	  auto agrot = tk::rotateTensor(ag, {{1.0, 0.0, 0.0}});
+	  tk::real a = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
+	    apmat[k], alphamat, k, 1.0, agrot);
+	  amat = std::max(a, amat);
+	  agrot = tk::rotateTensor(ag, {{0.0, 1.0, 0.0}});
+	  a = mat_blk[k].compute< inciter::EOS::soundspeed >(
+	    arhomat, apmat[k], alphamat, k, 1.0, agrot);
+	  amat = std::max(amat, a);
+	  agrot = tk::rotateTensor(ag, {{0.0, 0.0, 1.0}});
+	  a = mat_blk[k].compute< inciter::EOS::soundspeed >(
+	    arhomat, apmat[k], alphamat, k, 1.0, agrot);
+	  amat = std::max(amat, a);
+	}
+	else
+	{
+	  amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
+	    apmat[k], alphamat, k );
+	}
         kmat[k] = arhomat * amat * amat;
         pb += apmat[k];
 
@@ -524,7 +643,50 @@ pressureRelaxationInt( ncomp_t system,
           * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
         s_prelax[volfracIdx(nmat, k)] = s_alpha;
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+	if (solidx[k] > 0)
+	  for (size_t i=0; i<3; ++i)
+	    for (size_t j=0; j<3; ++j)
+	    {
+	      tk::real gij =
+		state[deformIdx(nmat,solidx[k],i,j)]/state[volfracIdx(nmat, k)];
+	      s_prelax[deformIdx(nmat,solidx[k],i,j)] = gij * s_alpha;
+	    }
       }
+      
+      // if (std::abs(p_relax-apmat[0]/state[volfracIdx(nmat, 0)]) > 1.0e-4 ||
+      // 	  std::abs(p_relax-apmat[1]/state[volfracIdx(nmat, 1)]) > 1.0e-4)
+      // {
+      // 	printf("DEBUG\n");
+      // 	printf("alpha[0] = %e \n", state[volfracIdx(nmat, 0)]);
+      // 	printf("alpha[1] = %e \n", state[volfracIdx(nmat, 1)]);
+      // 	printf("p[0] = %e \n", apmat[0]/state[volfracIdx(nmat, 0)]);
+      // 	printf("p[1] = %e \n", apmat[1]/state[volfracIdx(nmat, 1)]);
+      // 	printf("apmat[0] = %e \n", apmat[0]);
+      // 	printf("apmat[1] = %e \n", apmat[1]);
+      // 	printf("density[0] = %e \n", state[densityIdx(nmat, 0)]);
+      // 	printf("density[1] = %e \n", state[densityIdx(nmat, 1)]);
+      // 	printf("bulk[0] = %e \n", kmat[0]);
+      // 	printf("bulk[1] = %e \n", kmat[1]);
+      // 	printf("pb = %e \n", pb);
+      // 	printf("p_relax = %e \n", p_relax);
+      // 	printf("s_alpha[0] = %e \n", (apmat[0]-p_relax*state[volfracIdx(nmat, 0)])
+      //     * (state[volfracIdx(nmat, 0)]/kmat[0]) / trelax);
+      // 	printf("s_alpha[1] = %e \n", (apmat[1]-p_relax*state[volfracIdx(nmat, 1)])
+      //     * (state[volfracIdx(nmat, 1)]/kmat[1]) / trelax);
+      // 	std::array< std::array< tk::real, 3 >, 3 > g;
+      // 	for (std::size_t i=0; i<3; ++i)
+      // 	  for (std::size_t j=0; j<3; ++j)
+      // 	    g[i][j] = state[deformIdx(nmat,solidx[0],i,j)]/state[volfracIdx(nmat, 0)];
+      // 	printf("g11 = %e \n", g[0][0]);
+      // 	printf("g12 = %e \n", g[0][1]);
+      // 	printf("g13 = %e \n", g[0][2]);
+      // 	printf("g21 = %e \n", g[1][0]);
+      // 	printf("g22 = %e \n", g[1][1]);
+      // 	printf("g23 = %e \n", g[1][2]);
+      // 	printf("g31 = %e \n", g[2][0]);
+      // 	printf("g32 = %e \n", g[2][1]);
+      // 	printf("g33 = %e \n", g[2][2]);
+      // }
 
       updateRhsPre( ncomp, ndof, dof_el, wt, e, B, s_prelax, R );
     }
@@ -829,6 +991,7 @@ std::vector< std::array< tk::real, 3 > >
 fluxTerms(
   std::size_t ncomp,
   std::size_t nmat,
+  const std::vector< inciter::EOS >&  mat_blk,
   const std::vector< tk::real >& ugp )
 // *****************************************************************************
 //  Compute the flux-function for the multimaterial PDEs
@@ -848,75 +1011,134 @@ fluxTerms(
 
   const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
-
+  
   std::vector< std::array< tk::real, 3 > > fl( ncomp );
 
-  tk::real rho(0.0), p(0.0);
-  for (std::size_t k=0; k<nmat; ++k)
-    rho += ugp[densityIdx(nmat, k)];
-
-  auto u = ugp[ncomp+velocityIdx(nmat,0)];
-  auto v = ugp[ncomp+velocityIdx(nmat,1)];
-  auto w = ugp[ncomp+velocityIdx(nmat,2)];
-
-  std::vector< tk::real > apk( nmat, 0.0 );
-  for (std::size_t k=0; k<nmat; ++k)
+  if (inciter::haveSolid(nmat, solidx))
   {
-    apk[k] = ugp[ncomp+pressureIdx(nmat,k)];
-    p += apk[k];
-  }
+    tk::real rho(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      rho += ugp[densityIdx(nmat, k)];
 
-  // conservative part of momentum flux
-  fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
-  fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
-  fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
+    auto u = ugp[ncomp+velocityIdx(nmat,0)];
+    auto v = ugp[ncomp+velocityIdx(nmat,1)];
+    auto w = ugp[ncomp+velocityIdx(nmat,2)];
 
-  fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
-  fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
-  fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
-
-  fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
-  fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
-  fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
-
-  for (std::size_t k=0; k<nmat; ++k)
-  {
-    // conservative part of volume-fraction flux
-    fl[volfracIdx(nmat, k)][0] = 0.0;
-    fl[volfracIdx(nmat, k)][1] = 0.0;
-    fl[volfracIdx(nmat, k)][2] = 0.0;
-
-    // conservative part of material continuity flux
-    fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
-    fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
-    fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
-
-    // conservative part of material total-energy flux
-    auto hmat = ugp[energyIdx(nmat, k)] + apk[k];
-    fl[energyIdx(nmat, k)][0] = u * hmat;
-    fl[energyIdx(nmat, k)][1] = v * hmat;
-    fl[energyIdx(nmat, k)][2] = w * hmat;
-
-    // conservative part of material inverse deformation gradient
-    if (solidx[k] > 0)
+    std::vector< tk::real > al(nmat, 0.0);
+    std::vector< std::array< std::array< tk::real, 3 >, 3 > > ag, asig;
+    std::array< std::array< tk::real, 3 >, 3 >
+      sig {{ {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }};
+    for (std::size_t k=0; k<nmat; ++k)
     {
-      std::array< std::array< tk::real, 3 >, 3 > g;
-      for (std::size_t i=0; i<3; ++i)
-        for (std::size_t j=0; j<3; ++j)
-          g[i][j] = ugp[deformIdx(nmat,solidx[k],i,j)];
-      for (std::size_t i=0; i<3; ++i)
+      al[k] = ugp[volfracIdx(nmat, k)];
+      // inv deformation gradient and Cauchy stress tensors
+      ag.push_back(inciter::getDeformGrad(nmat, k, ugp));
+      asig.push_back(mat_blk[k].computeTensor< inciter::EOS::CauchyStress >(
+        ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
+        al[k], k, ag[k]));
+      for (size_t i=0; i<3; ++i)
+	for (size_t j=0; j<3; ++j)
+	  sig[i][j] += asig[k][i][j];
+    }
+
+    // conservative part of momentum flux
+    fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u - sig[0][0];
+    fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u - sig[0][1];
+    fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u - sig[0][2];
+
+    fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v - sig[1][0];
+    fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v - sig[1][1];
+    fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v - sig[1][2];
+
+    fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w - sig[2][0];
+    fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w - sig[2][1];
+    fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w - sig[2][2];
+
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // conservative part of volume-fraction flux
+      fl[volfracIdx(nmat, k)][0] = 0.0;
+      fl[volfracIdx(nmat, k)][1] = 0.0;
+      fl[volfracIdx(nmat, k)][2] = 0.0;
+
+      // conservative part of material continuity flux
+      fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+
+      // conservative part of material total-energy flux
+      fl[energyIdx(nmat, k)][0] = u * ugp[energyIdx(nmat, k)]
+	- u * asig[k][0][0] - v * asig[k][1][0] - w * asig[k][2][0];
+      fl[energyIdx(nmat, k)][1] = v * ugp[energyIdx(nmat, k)]
+	- u * asig[k][0][1] - v * asig[k][1][1] - w * asig[k][2][1];
+      fl[energyIdx(nmat, k)][2] = w * ugp[energyIdx(nmat, k)]
+	- u * asig[k][0][2] - v * asig[k][1][2] - w * asig[k][2][2];
+
+      // conservative part of material inverse deformation gradient
+      if (solidx[k] > 0)
       {
-        tk::real uk_dot_gik = u*g[i][0] + v*g[i][1] + w*g[i][2];
-        fl[deformIdx(nmat,solidx[k],i,0)][0] = uk_dot_gik;
-        fl[deformIdx(nmat,solidx[k],i,0)][1] = 0.0;
-        fl[deformIdx(nmat,solidx[k],i,0)][2] = 0.0;
-        fl[deformIdx(nmat,solidx[k],i,1)][0] = 0.0;
-        fl[deformIdx(nmat,solidx[k],i,1)][1] = uk_dot_gik;
-        fl[deformIdx(nmat,solidx[k],i,1)][2] = 0.0;
-        fl[deformIdx(nmat,solidx[k],i,2)][0] = 0.0;
-        fl[deformIdx(nmat,solidx[k],i,2)][1] = 0.0;
-        fl[deformIdx(nmat,solidx[k],i,2)][2] = uk_dot_gik;
+	for (std::size_t i=0; i<3; ++i)
+	{
+	  fl[deformIdx(nmat,solidx[k],i,0)][0] = u*ag[k][i][0];
+	  fl[deformIdx(nmat,solidx[k],i,0)][1] = v*ag[k][i][0];
+	  fl[deformIdx(nmat,solidx[k],i,0)][2] = w*ag[k][i][0];
+	  fl[deformIdx(nmat,solidx[k],i,1)][0] = u*ag[k][i][1];
+	  fl[deformIdx(nmat,solidx[k],i,1)][1] = v*ag[k][i][1];
+	  fl[deformIdx(nmat,solidx[k],i,1)][2] = w*ag[k][i][1];
+	  fl[deformIdx(nmat,solidx[k],i,2)][0] = u*ag[k][i][2];
+	  fl[deformIdx(nmat,solidx[k],i,2)][1] = v*ag[k][i][2];
+	  fl[deformIdx(nmat,solidx[k],i,2)][2] = w*ag[k][i][2];
+	}
       }
+    }
+  }
+  else
+  {
+    tk::real rho(0.0), p(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      rho += ugp[densityIdx(nmat, k)];
+
+    auto u = ugp[ncomp+velocityIdx(nmat,0)];
+    auto v = ugp[ncomp+velocityIdx(nmat,1)];
+    auto w = ugp[ncomp+velocityIdx(nmat,2)];
+
+    std::vector< tk::real > apk( nmat, 0.0 );
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      apk[k] = ugp[ncomp+pressureIdx(nmat,k)];
+      p += apk[k];
+    }
+
+    // conservative part of momentum flux
+    fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
+    fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
+    fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
+
+    fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
+    fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
+    fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
+
+    fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
+    fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
+    fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
+
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // conservative part of volume-fraction flux
+      fl[volfracIdx(nmat, k)][0] = 0.0;
+      fl[volfracIdx(nmat, k)][1] = 0.0;
+      fl[volfracIdx(nmat, k)][2] = 0.0;
+
+      // conservative part of material continuity flux
+      fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+
+      // conservative part of material total-energy flux
+      auto hmat = ugp[energyIdx(nmat, k)] + apk[k];
+      fl[energyIdx(nmat, k)][0] = u * hmat;
+      fl[energyIdx(nmat, k)][1] = v * hmat;
+      fl[energyIdx(nmat, k)][2] = w * hmat;
     }
   }
 

@@ -111,6 +111,30 @@ SmallShearSolid::pressure(
   tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) -
     alpha*m_pstiff) * (m_gamma-1.0) - alpha*m_pstiff;
 
+  // if (partpressure > 1e6)
+  // {
+  //   printf("PRESSURE DEBUG\n");
+  //   printf("alpha  = %e \n", alpha);
+  //   printf("g11 = %e \n", defgrad[0][0]);
+  //   printf("g12 = %e \n", defgrad[0][1]);
+  //   printf("g13 = %e \n", defgrad[0][2]);
+  //   printf("g21 = %e \n", defgrad[1][0]);
+  //   printf("g22 = %e \n", defgrad[1][1]);
+  //   printf("g23 = %e \n", defgrad[1][2]);
+  //   printf("g31 = %e \n", defgrad[2][0]);
+  //   printf("g32 = %e \n", defgrad[2][1]);
+  //   printf("g33 = %e \n", defgrad[2][2]);
+  //   printf("u = %e \n", u);
+  //   printf("v = %e \n", v);
+  //   printf("w = %e \n", w);
+  //   printf("arho %e \n", arho);
+  //   printf("arhoE  = %e \n", arhoE);
+  //   printf("arhoEe = %e \n", arhoEe);
+  //   printf("arhoEh = %e \n", arhoEh);
+  //   printf("K      = %e \n", 0.5 * arho * (u*u + v*v + w*w));
+  //   printf("partpressure = %e \n", partpressure);
+  // }
+  
   // check partial pressure divergence
   if (!std::isfinite(partpressure)) {
     std::cout << "Material-id:      " << imat << std::endl;
@@ -569,6 +593,22 @@ SmallShearSolid::soundspeed(
   for (std::size_t i=1; i<3; i++)
     if (eig_real[i] > eig_max)
       eig_max = eig_real[i];
+  if (eig_max < 0.0)
+  {
+    printf("CSOUND DEBUG\n");
+    printf("alpha  = %e \n", alpha);
+    printf("g11 = %e \n", g[0][0]);
+    printf("g12 = %e \n", g[0][1]);
+    printf("g13 = %e \n", g[0][2]);
+    printf("g21 = %e \n", g[1][0]);
+    printf("g22 = %e \n", g[1][1]);
+    printf("g23 = %e \n", g[1][2]);
+    printf("g31 = %e \n", g[2][0]);
+    printf("g32 = %e \n", g[2][1]);
+    printf("g33 = %e \n", g[2][2]);
+    printf("arho %e \n", arho);
+    printf("apr  = %e \n", apr);
+  }
   tk::real a = std::sqrt(eig_max);
 
   // check sound speed divergence
@@ -702,7 +742,7 @@ SmallShearSolid::elasticEnergy(
   eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
 
   // compute elastic energy
-  auto rhoEe = m_mu * eps2;
+  auto rhoEe = m_mu * eps2 ;
 
   return rhoEe;
 }

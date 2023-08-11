@@ -40,6 +40,7 @@ solidTermsVolInt( ncomp_t system,
                   const Fields& P,
                   const std::vector< std::size_t >& ndofel,
                   const tk::real dt,
+		  const std::vector< std::vector< tk::real > >& riemannDeriv,
                   Fields& R,
                   int intcompr=0 );
 
@@ -53,12 +54,13 @@ solidTermsSurfInt( std::size_t nmat,
                    const std::size_t er,
                    const std::vector< std::size_t >& solidx,
                    const Fields& geoElem,
-                   const Fields& U,
+                   const std::array< std::vector< real >, 2 > state,
                    const std::array< std::array< tk::real, 3>, 4 > coordel_l,
                    const std::array< std::array< tk::real, 3>, 4 > coordel_r,
                    const std::size_t igp,
                    const std::array< std::vector< tk::real >, 2 >& coordgp,
                    const tk::real dt,
+		   const std::vector< std::vector< tk::real > >& riemannDeriv,
                    std::vector< tk::real >& fl );
 
 // Update the rhs by adding volume integration terms

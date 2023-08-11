@@ -224,8 +224,9 @@ surfInt( ncomp_t system,
 
       // // Add RHS inverse deformation terms if necessary
       // if (haveSolid)
-      //   solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
-      //                      coordel_l, coordel_r, igp, coordgp, dt, fl );
+      //   solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx,
+      // 			   geoElem, state, coordel_l, coordel_r, igp,
+      // 			   coordgp, dt, riemannDeriv, fl );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,
@@ -273,6 +274,9 @@ update_rhs_fa( ncomp_t ncomp,
   // following lines commented until rdofel is made available.
   //Assert( B_l.size() == ndof_l, "Size mismatch" );
   //Assert( B_r.size() == ndof_r, "Size mismatch" );
+
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
@@ -333,6 +337,71 @@ update_rhs_fa( ncomp_t ncomp,
       riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
       riemannDeriv[3*nmat+idof][er] -= wt * fl[ncomp+nmat] * B_r[idof];
     }
+    
+    // Gradient of alpha
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      if (solidx[k] > 0)
+      {
+	for (std::size_t idir=0; idir<3; ++idir)
+	{
+	  riemannDeriv[3*nmat+ndof+3*k+idir][el] +=
+	    wt * fl[ncomp+nmat+1+k] * fn[idir];
+	  riemannDeriv[3*nmat+ndof+3*k+idir][er] -=
+	    wt * fl[ncomp+nmat+1+k] * fn[idir];
+	}
+      }
+    }
+
+    // Gradient of u*g
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+      {
+	for (std::size_t i=0; i<3; ++i)
+	  for (std::size_t j=0; j<3; ++j)
+	    for (std::size_t idir=0; idir<3; ++idir)
+	    {
+	      riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][el] +=
+		    wt * fl[ncomp+2*nmat+1+9*3*k+3*(3*i+j)+idir] * fn[idir];
+	      riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][er] -=
+		    wt * fl[ncomp+2*nmat+1+9*3*k+3*(3*i+j)+idir] * fn[idir];
+	      // if (l==j)
+	      // 	for (std::size_t idir=0; idir<3; ++idir)
+	      // 	{
+	      // 	  riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][el] +=
+	      // 	    wt * ( fl[ncomp+2*nmat+1+9*3*k+3*(3*i+j)+l]
+	      // 		 - fl[ncomp+2*nmat+1+9*3*k+3*(3*i+0)+0]
+	      // 		 - fl[ncomp+2*nmat+1+9*3*k+3*(3*i+1)+1]
+	      // 		 - fl[ncomp+2*nmat+1+9*3*k+3*(3*i+2)+2]) * fn[idir];
+	      // 	  riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][er] -=
+	      // 	    wt * ( fl[ncomp+2*nmat+1+9*3*k+3*(3*i+j)+l]
+	      // 	         - fl[ncomp+2*nmat+1+9*3*k+3*(3*i+0)+0]
+	      // 	         - fl[ncomp+2*nmat+1+9*3*k+3*(3*i+1)+1]
+	      // 	         - fl[ncomp+2*nmat+1+9*3*k+3*(3*i+2)+2]) * fn[idir];
+	      // 	}
+	      // else
+	      // 	for (std::size_t idir=0; idir<3; ++idir)
+	      // 	  {
+	      // 	    riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][el] +=
+	      // 	      wt * fl[ncomp+2*nmat+1+9*3*k+3*(3*i+j)+l] * fn[idir];
+	      // 	    riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][er] -=
+	      // 	      wt * fl[ncomp+2*nmat+1+9*3*k+3*(3*i+j)+l] * fn[idir];
+	      // 	  }
+	    }
+      }
+    
+    // Gradients of partial stresses
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+      {
+	for (std::size_t idir=0; idir<3; ++idir)
+	{
+	  riemannDeriv[3*2*nmat+ndof+3*9*nmat+3*k+idir][el] +=
+	    wt * fl[ncomp+2*nmat+1+9*3*nmat+3*k+idir] * fn[idir];
+	  riemannDeriv[3*2*nmat+ndof+3*9*nmat+3*k+idir][er] -=
+	    wt * fl[ncomp+2*nmat+1+9*3*nmat+3*k+idir] * fn[idir];
+	}
+      }
   }
 }
 
@@ -490,6 +559,7 @@ surfIntFV( ncomp_t system,
       // Divergence of velocity
       riemannDeriv[3*nmat][el] += geoFace(f,0) * fl[ncomp+nmat];
       riemannDeriv[3*nmat][er] -= geoFace(f,0) * fl[ncomp+nmat];
+      
     }
   }
 }

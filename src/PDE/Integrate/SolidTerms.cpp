@@ -46,7 +46,8 @@ solidTermsVolInt( ncomp_t system,
                const Fields& P,
                const std::vector< std::size_t >& ndofel,
                const tk::real dt,
-               Fields& R,
+	       const std::vector< std::vector< tk::real > >& riemannDeriv,
+	       Fields& R,
                int intsharp )
 // *****************************************************************************
 //  Compute all RHS volume terms in the inverse deformation equations to
@@ -64,6 +65,7 @@ solidTermsVolInt( ncomp_t system,
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] dt Delta time
+//! \param[in] riemannDeriv Derivatives
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
@@ -154,54 +156,50 @@ solidTermsVolInt( ncomp_t system,
           // Should be able to store rho_0 for every cell at every Gauss point.
 	  tk::real alpha = state[inciter::volfracIdx(nmat, k)];
           tk::real rho = state[inciter::densityIdx(nmat, k)]/alpha;
-          tk::real rho0 = 8900.0;
+          tk::real rho0 = 1000.0; //8900.0;
 	  std::array< std::array< tk::real, 3 >, 3 > g;
 	  for (std::size_t i=0; i<3; ++i)
 	    for (std::size_t j=0; j<3; ++j)
 	      g[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)]/alpha;
           tk::real rfact = eta*(rho/(rho0*tk::determinant(g))-1.0);
 
-	  printf("::DEBUG::");
-	  printf("e=%d\n",e);
-	  printf("material = %d \n", k);
-	  printf("solidx = %d \n", solidx[k]);
-	  printf("vol_frac = %e \n", U(e,inciter::volfracIdx(nmat,k)));
-	  for (std::size_t i=0; i<3; ++i)
-	    for (std::size_t j=0; j<3; ++j)
-	      printf("g(%d,%d) = %e \n",i+1,j+1,g[i][j]);
-	  printf("rho = %e \n", rho);
-	  printf("rho0 = %e \n", rho0);
-	  printf("eta = %e \n", eta);
-	  printf("detg = %e \n", tk::determinant(g));
-	  printf("rfact = %e \n", rfact);
+	  // printf("::DEBUG::");
+	  // printf("e=%d\n",e);
+	  // printf("material = %d \n", k);
+	  // printf("solidx = %d \n", solidx[k]);
+	  // printf("vol_frac = %e \n", U(e,inciter::volfracIdx(nmat,k)));
+	  // for (std::size_t i=0; i<3; ++i)
+	  //   for (std::size_t j=0; j<3; ++j)
+	  //     printf("g(%d,%d) = %e \n",i+1,j+1,g[i][j]);
+	  // printf("rho = %e \n", rho);
+	  // printf("rho0 = %e \n", rho0);
+	  // printf("eta = %e \n", eta);
+	  // printf("detg = %e \n", tk::determinant(g));
+	  // printf("rfact = %e \n", rfact);
 
           // Compute the source terms
           std::vector< real > s(9*ndof, 0.0);
           std::vector< real > deriv(4, 0.0);
+	  std::vector< real > alphaDeriv(2, 0.0);
           std::vector< std::size_t > defIdx(4, 0);
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
               for (std::size_t idof=0; idof<ndof; ++idof)
               {
-                deriv = {{0.0, 0.0, 0.0, 0.0}};
-                for (std::size_t jdof=0; jdof<rdof; ++jdof)
-                {
-                  // Find indeces for all unknowns used
-                  defIdx[0] = deformDofIdx(nmat,solidx[k],i,(j+1)%3,rdof,jdof);
-                  defIdx[1] = deformDofIdx(nmat,solidx[k],i,      j,rdof,jdof);
-                  defIdx[2] = deformDofIdx(nmat,solidx[k],i,      j,rdof,jdof);
-                  defIdx[3] = deformDofIdx(nmat,solidx[k],i,(j+2)%3,rdof,jdof);
-                  // Compute derivatives
-                  deriv[0] += U(e,defIdx[0])*dBdx[      j][jdof];
-                  deriv[1] += U(e,defIdx[1])*dBdx[(j+1)%3][jdof];
-                  deriv[2] += U(e,defIdx[2])*dBdx[(j+2)%3][jdof];
-                  deriv[3] += U(e,defIdx[3])*dBdx[      j][jdof];
-                }
-                s[(i*3+j)*ndof+idof] = B[idof]*rfact*g[i][j]
-                  + B[idof]*(v[(j+1)%3]*(deriv[0]-deriv[1])
-                            -v[(j+2)%3]*(deriv[2]-deriv[3]))
-                  + D*(dBdx[(j+1)%3][idof]*(deriv[0]-deriv[1])
-                      -dBdx[(j+2)%3][idof]*(deriv[2]-deriv[3]));
+		// Using Riemann Derivatives
+		deriv[0] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+(j+1)%3)+      j][e];
+		deriv[1] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+      j)+(j+1)%3][e];
+		deriv[2] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+      j)+(j+2)%3][e];
+		deriv[3] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+(j+2)%3)+      j][e];
+		alphaDeriv[0] = riemannDeriv[3*nmat+ndof+3*k+(j+1)%3][e];
+		alphaDeriv[1] = riemannDeriv[3*nmat+ndof+3*k+(j+2)%3][e];
+                s[(i*3+j)*ndof+idof] = B[idof]*rfact*alpha*g[i][j]
+                  + alpha*B[idof]*(v[(j+1)%3]*(deriv[0]-deriv[1])
+                                  -v[(j+2)%3]*(deriv[2]-deriv[3]))
+                  + D*((alpha*dBdx[(j+1)%3][idof]+B[idof]*alphaDeriv[0])
+		       *(deriv[0]-deriv[1])
+                      -(alpha*dBdx[(j+2)%3][idof]+B[idof]*alphaDeriv[1])
+		       *(deriv[2]-deriv[3]));
               }
 
           auto wt = wgp[igp] * geoElem(e, 0);
@@ -223,12 +221,13 @@ solidTermsSurfInt( std::size_t nmat,
                    const std::size_t er,
                    const std::vector< std::size_t >& solidx,
                    const Fields& geoElem,
-                   const Fields& U,
+                   const std::array< std::vector< real >, 2 > state,
                    const std::array< std::array< tk::real, 3>, 4 > coordel_l,
                    const std::array< std::array< tk::real, 3>, 4 > coordel_r,
                    const std::size_t igp,
                    const std::array< std::vector< tk::real >, 2 >& coordgp,
                    const tk::real dt,
+		   const std::vector< std::vector< tk::real > >& riemannDeriv,
                    std::vector< tk::real >& fl )
 // *****************************************************************************
 //  Compute all RHS surface terms in the inverse deformation equations to
@@ -243,12 +242,13 @@ solidTermsSurfInt( std::size_t nmat,
 //! \param[in] B_r Basis function for the right element
 //! \param[in] solidx Solid material indicator
 //! \param[in] geoElem Element geometry array
-//! \param[in] U Solution vector at recent time step
+//! \param[in] state
 //! \param[in] coordel_l Coordinates of left elements' nodes
 //! \param[in] coordel_r Coordinates of right elements' nodes
 //! \param[in] igp Index of quadrature points
 //! \param[in] coordgp Gauss point coordinates for tetrahedron element
 //! \param[in] dt Delta time
+//! \param[in] riemannDeriv Derivatives
 //! \param[in,out] fl Surface flux
 // *****************************************************************************
 {
@@ -293,41 +293,28 @@ solidTermsSurfInt( std::size_t nmat,
     {
       if (solidx[k] > 0)
       {
-        // Compute all derivatives
-        std::array< std::array< std::array< tk::real, 3 >, 3 >, 3 >
-          deriv_l, deriv_r;
-        std::size_t defIdx;
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-          {
-            deriv_l[0][i][j] = 0.0;
-            deriv_l[1][i][j] = 0.0;
-            deriv_l[2][i][j] = 0.0;
-            deriv_r[0][i][j] = 0.0;
-            deriv_r[1][i][j] = 0.0;
-            deriv_r[2][i][j] = 0.0;
-            for (std::size_t jdof=0; jdof<rdof; ++jdof)
-            {
-              defIdx = deformDofIdx(nmat,solidx[k],i,j,rdof,jdof);
-              deriv_l[0][i][j] += U(el,defIdx)*dBdx_l[0][jdof];
-              deriv_l[1][i][j] += U(el,defIdx)*dBdx_l[1][jdof];
-              deriv_l[2][i][j] += U(el,defIdx)*dBdx_l[2][jdof];
-              deriv_r[0][i][j] += U(er,defIdx)*dBdx_r[0][jdof];
-              deriv_r[1][i][j] += U(er,defIdx)*dBdx_r[1][jdof];
-              deriv_r[2][i][j] += U(er,defIdx)*dBdx_r[2][jdof];
-            }
-          }
-
         // Compute the source terms
+        tk::real alpha_l = state[0][inciter::volfracIdx(nmat, k)];
+        tk::real alpha_r = state[1][inciter::volfracIdx(nmat, k)];
         tk::real sl, sr;
-        for (std::size_t i=0; i<3; ++i)
+	std::vector< real > deriv_l(4, 0.0), deriv_r(4, 0.0);
+	for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-          {
+	    {
+	      // Using Riemann Derivatives
+	      deriv_l[0] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+(j+1)%3)+      j][el];
+	      deriv_l[1] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+      j)+(j+1)%3][el];
+	      deriv_l[2] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+      j)+(j+2)%3][el];
+	      deriv_l[3] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+(j+2)%3)+      j][el];
+	      deriv_r[0] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+(j+1)%3)+      j][er];
+	      deriv_r[1] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+      j)+(j+1)%3][er];
+	      deriv_r[2] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+      j)+(j+2)%3][er];
+	      deriv_r[3] = riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+(j+2)%3)+      j][er];
             // Compute source
-            sl = D*(fn[(j+1)%3]*(deriv_l[j][i][(j+1)%3]-deriv_l[(j+1)%3][i][j])
-                  -fn[(j+2)%3]*(deriv_l[(j+2)%3][i][j]-deriv_l[j][i][(j+2)%3]));
-            sr = D*(fn[(j+1)%3]*(deriv_r[j][i][(j+1)%3]-deriv_r[(j+1)%3][i][j])
-                  -fn[(j+2)%3]*(deriv_r[(j+2)%3][i][j]-deriv_r[j][i][(j+2)%3]));
+            sl = alpha_l*D*(fn[(j+1)%3]*(deriv_l[0]-deriv_l[1])
+                           -fn[(j+2)%3]*(deriv_l[2]-deriv_l[3]));
+            sr = alpha_r*D*(fn[(j+1)%3]*(deriv_r[0]-deriv_r[1])
+                           -fn[(j+2)%3]*(deriv_r[2]-deriv_r[3]));
             // Add to flux
             fl[deformIdx(nmat,solidx[k],i,j)] += 0.5*(sl+sr);
           }
