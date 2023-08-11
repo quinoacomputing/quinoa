@@ -22,6 +22,11 @@
 #include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+
+namespace inciter {
+extern ctr::InputDeck g_inputdeck;
+}
 
 namespace tk {
 
@@ -229,6 +234,9 @@ update_rhs_bc ( ncomp_t ncomp,
   // following line commented until rdofel is made available.
   //Assert( B_l.size() == ndof_l, "Size mismatch" );
 
+    const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
+
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
@@ -265,6 +273,17 @@ update_rhs_bc ( ncomp_t ncomp,
     // Divergence of velocity multiples basis fucntion( d(uB) / dx )
     for(std::size_t idof = 0; idof < ndof; idof++)
       riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
+
+        // Gradient of u*g
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+      {
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t idir=0; idir<3; ++idir)
+              riemannDeriv[3*nmat+ndof+3*9*k+3*(3*i+j)+idir][el] +=
+                wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+idir] * fn[idir];
+      }
   }
 }
 

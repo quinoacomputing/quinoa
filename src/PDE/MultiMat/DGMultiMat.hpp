@@ -709,7 +709,7 @@ class MultiMat {
       // to derivatives of Riemann velocity times basis function in the volume
       // fraction equation.
       std::vector< std::vector< tk::real > >
-        riemannDeriv( 3*nmat+ndof, std::vector<tk::real>(U.nunk(),0.0) );
+        riemannDeriv( (3+3*9)*nmat+ndof, std::vector<tk::real>(U.nunk(),0.0) );
 
       // vectors to store the data of riemann velocity used for reconstruction
       // in volume fraction equation
@@ -743,8 +743,8 @@ class MultiMat {
                         m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
 
-      Assert( riemannDeriv.size() == 3*nmat+ndof, "Size of Riemann derivative "
-              "vector incorrect" );
+      Assert( riemannDeriv.size() == (3+3*9)*nmat+ndof, "Size of Riemann "
+              "derivative vector incorrect" );
 
       // get derivatives from riemannDeriv
       for (std::size_t k=0; k<riemannDeriv.size(); ++k)
@@ -1053,14 +1053,14 @@ class MultiMat {
     static tk::FluxFn::result_type
     flux( ncomp_t system,
           [[maybe_unused]] ncomp_t ncomp,
-          const std::vector< EOS >&,
+          const std::vector< EOS >& mat_blk,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      return tk::fluxTerms(ncomp, nmat, ugp);
+      return tk::fluxTerms(ncomp, nmat, mat_blk, ugp);
     }
 
     //! \brief Boundary state function providing the left and right state of a

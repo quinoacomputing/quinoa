@@ -274,6 +274,9 @@ update_rhs_fa( ncomp_t ncomp,
   //Assert( B_l.size() == ndof_l, "Size mismatch" );
   //Assert( B_r.size() == ndof_r, "Size mismatch" );
 
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
+
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
@@ -333,6 +336,21 @@ update_rhs_fa( ncomp_t ncomp,
       riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
       riemannDeriv[3*nmat+idof][er] -= wt * fl[ncomp+nmat] * B_r[idof];
     }
+
+    // Gradient of u*g
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+      {
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t idir=0; idir<3; ++idir)
+            {
+              riemannDeriv[3*nmat+ndof+3*9*k+3*(3*i+j)+idir][el] +=
+                    wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+idir] * fn[idir];
+              riemannDeriv[3*nmat+ndof+3*9*k+3*(3*i+j)+idir][er] -=
+                    wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+idir] * fn[idir];
+            }
+      }
   }
 }
 

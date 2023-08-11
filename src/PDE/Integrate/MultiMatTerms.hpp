@@ -21,6 +21,7 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "EoS/EOS.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace tk {
 
@@ -142,6 +143,7 @@ std::vector< std::array< tk::real, 3 > >
 fluxTerms(
   std::size_t ncomp,
   std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::vector< tk::real >& ugp );
 } // tk::
 
