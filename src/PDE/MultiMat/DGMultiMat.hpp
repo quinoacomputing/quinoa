@@ -754,7 +754,17 @@ class MultiMat {
         Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
                 "for non-conservative terms has incorrect size" );
         for (std::size_t e=0; e<U.nunk(); ++e)
-          riemannDeriv[k][e] /= geoElem(e, 0);
+	{
+	  riemannDeriv[k][e] /= geoElem(e, 0);
+	  // if (std::abs(riemannDeriv[k][e]) > 1.0e-00)
+	  // {
+	  //   printf("DEBUG \n");
+	  //   printf("k,e = %d, %d \n", k, e);
+	  //   printf("volume = %e \n", geoElem(e, 0));
+	  //   printf("RiemannDeriv0 = %e \n", riemannDeriv[k][e]*geoElem(e, 0));
+	  //   printf("RiemannDeriv1 = %e \n", riemannDeriv[k][e]);
+	  // }
+	}
       }
 
       // compute volume integrals of non-conservative terms

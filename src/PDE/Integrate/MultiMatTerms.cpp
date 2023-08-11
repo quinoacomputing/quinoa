@@ -247,40 +247,53 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 		{
 		  ncf[deformIdx(nmat,solidx[k],i,j)][idof] +=
 		  state[volfracIdx(nmat, k)]*
-		    riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][e];
-		    //+ vel[idir]*g[i][idir]*
-		    //riemannDeriv[3*nmat+ndof+3*k+j][e];
+		    riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][e]
+		    + vel[idir]*g[i][idir]*
+		    riemannDeriv[3*nmat+ndof+3*k+j][e];
 		  
 
 		  
 		    //+vel[idir]*g[i][idir]*riemannDeriv[3*nmat+ndof+3*k+   j][e]
 		    //-vel[idir]*g[i][j]   *riemannDeriv[3*nmat+ndof+3*k+idir][e];
-		// if (std::abs(riemannDeriv[3*nmat+ndof+3*k+0][e]) > 1.0e-04 ||
-		//     std::abs(riemannDeriv[3*nmat+ndof+3*k+1][e]) > 1.0e-04 ||
-		//     std::abs(riemannDeriv[3*nmat+ndof+3*k+2][e]) > 1.0e-04)
-		// {
-		//   printf("e = %d \n", e);
-		//   printf("i = %d \n", i);
-		//   printf("j = %d \n", j);
-		//   printf("idof = %d \n", idof);
-		//   printf("riemannDeriv[x] = %e \n", riemannDeriv[3*nmat+ndof+3*k+0][e]);
-		//   printf("riemannDeriv[y] = %e \n", riemannDeriv[3*nmat+ndof+3*k+1][e]);
-		//   printf("riemannDeriv[z] = %e \n", riemannDeriv[3*nmat+ndof+3*k+2][e]);
-		//   printf("vel[x] = %e \n", vel[0]);
-		//   printf("vel[y] = %e \n", vel[1]);
-		//   printf("vel[z] = %e \n", vel[2]);
-		//   printf("g11 = %e \n", g[0][0]);
-		//   printf("g12 = %e \n", g[0][1]);
-		//   printf("g13 = %e \n", g[0][2]);
-		//   printf("g21 = %e \n", g[1][0]);
-		//   printf("g22 = %e \n", g[1][1]);
-		//   printf("g23 = %e \n", g[1][2]);
-		//   printf("g31 = %e \n", g[2][0]);
-		//   printf("g32 = %e \n", g[2][1]);
-		//   printf("g33 = %e \n", g[2][2]);
-		//   printf("term1 = %e \n", vel[idir]*g[i][idir]*riemannDeriv[3*nmat+ndof+3*k+   j][e]);
-		//   printf("term2 = %e \n", vel[idir]*g[i][j]   *riemannDeriv[3*nmat+ndof+3*k+idir][e]);
-		// }
+		  // if ( std::abs(state[volfracIdx(nmat, k)]*
+		  // 		riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][e]) > 1.0e-04 ||
+		  //      std::abs(vel[idir]*g[i][idir]*
+		  // 		riemannDeriv[3*nmat+ndof+3*k+j][e]) > 1.0e-04 )
+		  //   {
+		  //     printf("e = %d \n", e);
+		  //     printf("i = %d \n", i);
+		  //     printf("j = %d \n", j);
+		  //     printf("idof = %d \n", idof);
+		  //     printf("riemannDeriv_alpha_idx[x] = %d \n", 3*nmat+ndof+3*k+0);
+		  //     printf("riemannDeriv_alpha_idx[y] = %d \n", 3*nmat+ndof+3*k+1);
+		  //     printf("riemannDeriv_alpha_idx[z] = %d \n", 3*nmat+ndof+3*k+2);
+		  //     printf("riemannDeriv_alpha[x] = %e \n", riemannDeriv[3*nmat+ndof+3*k+0][e]);
+		  //     printf("riemannDeriv_alpha[y] = %e \n", riemannDeriv[3*nmat+ndof+3*k+1][e]);
+		  //     printf("riemannDeriv_alpha[z] = %e \n", riemannDeriv[3*nmat+ndof+3*k+2][e]);
+		  //     printf("riemannDeriv_ug_idx[x] = %d \n", 3*2*nmat+ndof+3*9*k+3*(3*i+j)+0);
+		  //     printf("riemannDeriv_ug_idx[y] = %d \n", 3*2*nmat+ndof+3*9*k+3*(3*i+j)+1);
+		  //     printf("riemannDeriv_ug_idx[z] = %d \n", 3*2*nmat+ndof+3*9*k+3*(3*i+j)+2);
+		  //     printf("riemannDeriv_ug[x] = %e \n", riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+0][e]);
+		  //     printf("riemannDeriv_ug[y] = %e \n", riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+1][e]);
+		  //     printf("riemannDeriv_ug[z] = %e \n", riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+2][e]);
+		  //     printf("alpha = %e \n", state[volfracIdx(nmat, k)]);
+		  //     printf("vel[x] = %e \n", vel[0]);
+		  //     printf("vel[y] = %e \n", vel[1]);
+		  //     printf("vel[z] = %e \n", vel[2]);
+		  //     printf("g11 = %e \n", g[0][0]);
+		  //     printf("g12 = %e \n", g[0][1]);
+		  //     printf("g13 = %e \n", g[0][2]);
+		  //     printf("g21 = %e \n", g[1][0]);
+		  //     printf("g22 = %e \n", g[1][1]);
+		  //     printf("g23 = %e \n", g[1][2]);
+		  //     printf("g31 = %e \n", g[2][0]);
+		  //     printf("g32 = %e \n", g[2][1]);
+		  //     printf("g33 = %e \n", g[2][2]);
+		  //     printf("term1 = %e \n", state[volfracIdx(nmat, k)]*
+		  // 	     riemannDeriv[3*2*nmat+ndof+3*9*k+3*(3*i+j)+idir][e]);
+		  //     printf("term2 = %e \n", vel[idir]*g[i][idir]*
+		  // 	     riemannDeriv[3*nmat+ndof+3*k+j][e]);
+		  //   }
 		}
 	      }
 	  // // evaluate non-conservative terms for energy

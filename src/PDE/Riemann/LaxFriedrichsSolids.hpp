@@ -164,7 +164,7 @@ struct LaxFriedrichsSolids {
           for (std::size_t j=0; j<3; ++j)
             fluxl[deformIdx(nmat,solidx[k],i,j)] =
 	      ag_l[k][i][j]*vnl
-              ;//+ (ul*ag_l[k][i][0] + vl*ag_l[k][i][1] + wl*ag_l[k][i][2]) * fn[j];
+              + (ul*ag_l[k][i][0] + vl*ag_l[k][i][1] + wl*ag_l[k][i][2]) * fn[j];
       }
 
       // Right fluxes
@@ -182,7 +182,7 @@ struct LaxFriedrichsSolids {
           for (std::size_t j=0; j<3; ++j)
             fluxr[deformIdx(nmat,solidx[k],i,j)] =
 	      ag_r[k][i][j]*vnr
-              ;//+ (ur*ag_r[k][i][0] + vr*ag_r[k][i][1] + wr*ag_r[k][i][2]) * fn[j];
+              + (ur*ag_r[k][i][0] + vr*ag_r[k][i][1] + wr*ag_r[k][i][2]) * fn[j];
       }
     }
 
@@ -240,7 +240,7 @@ struct LaxFriedrichsSolids {
     else
     {
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( 0.5*(al_l[k] + al_r[k]) );
+        flx.push_back( 0.5*( al_l[k] + al_r[k]) );
     }
 
     // Store Riemann u*g (3*9=18)

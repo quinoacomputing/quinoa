@@ -349,6 +349,20 @@ update_rhs_fa( ncomp_t ncomp,
 	    wt * fl[ncomp+nmat+1+k] * fn[idir];
 	  riemannDeriv[3*nmat+ndof+3*k+idir][er] -=
 	    wt * fl[ncomp+nmat+1+k] * fn[idir];
+
+	  // if (std::abs(wt * fl[ncomp+nmat+1+k] * fn[idir]) > 1.0e-03)
+	  // {
+	  //   printf("at Surface.cpp \n");
+	  //   printf("el = %d \n", el);
+	  //   printf("er = %d \n", er);
+	  //   printf("k = %d \n", k);
+	  //   printf("idir = %d \n", idir);
+	  //   printf("wt = %e \n", wt);
+	  //   printf("fl = %e \n", fl[ncomp+nmat+1+k]);
+	  //   printf("fn = %e \n", fn[idir]);
+	  //   printf("idx = %d \n", 3*nmat+ndof+3*k+idir);
+	  //   printf("term = %e \n", wt * fl[ncomp+nmat+1+k] * fn[idir]);
+	  // }
 	}
       }
     }
