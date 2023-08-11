@@ -118,11 +118,6 @@ class TransferDetails : public CBase_TransferDetails {
 
     //! Contribute tet information to the collision detection library
     void collideTets() const;
-
-    //! Determine if a point is in a tet
-    bool intet(const CkVector3d &point,
-               std::size_t e,
-               std::array< real, 4 >& N) const;
 };
 
 } // exam2m::

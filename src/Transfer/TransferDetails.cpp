@@ -243,7 +243,10 @@ TransferDetails::determineActualCollisions(
   // Iterate over my potential collisions and call intet() to determine
   // if an actual collision occurred, and if so interpolate solution to dest
   for (int i = 0; i < nColls; i++) {
-    if (intet(colls[i].point, colls[i].source_index, N)) {
+    std::vector< tk::real > point
+      {colls[i].point.x, colls[i].point.y, colls[i].point.z};
+    if (tk::intet(*m_coord, *m_inpoel, point, colls[i].source_index, N))
+    {
       numInTet++;
       SolutionData data;
       data.dest_index = colls[i].dest_index;
@@ -285,95 +288,6 @@ TransferDetails::transferSolution( const std::vector< SolutionData >& soln )
   m_numreceived++;
   if (m_numreceived == m_numsent) {
     m_donecb.send();
-  }
-}
-
-bool
-TransferDetails::intet(const CkVector3d &point,
-      std::size_t e,
-      std::array< real, 4 >& N) const
-  // *****************************************************************************
-  //  Determine if a point is in a tetrahedron and evaluate the shapefunction
-  //! \param[in] point Point coordinates
-  //! \param[in] e Mesh cell index
-  //! \param[in,out] N Shapefunctions evaluated at the point
-  //! \return True if ppoint is in mesh cell
-  //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
-  // *****************************************************************************
-{
-  const std::vector< std::size_t >& inpoel = *m_inpoel;
-  const tk::UnsMesh::Coords& coord = *m_coord;
-
-  // Tetrahedron node indices
-  const auto A = inpoel[e*4+0];
-  const auto B = inpoel[e*4+1];
-  const auto C = inpoel[e*4+2];
-  const auto D = inpoel[e*4+3];
-
-  // Tetrahedron node coordinates
-  const auto& x = coord[0];
-  const auto& y = coord[1];
-  const auto& z = coord[2];
-
-  // Point coordinates
-  const auto& xp = point.x;
-  const auto& yp = point.y;
-  const auto& zp = point.z;
-
-  // Evaluate linear shapefunctions at point locations using Cramer's Rule
-  //    | xp |   | x1 x2 x3 x4 |   | N1 |
-  //    | yp | = | y1 y2 y3 y4 | • | N2 |
-  //    | zp |   | z1 z2 z3 z4 |   | N3 |
-  //    | 1  |   | 1  1  1  1  |   | N4 |
-
-  real DetX = (y[B]*z[C] - y[C]*z[B] - y[B]*z[D] + y[D]*z[B] +
-      y[C]*z[D] - y[D]*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
-    x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
-    x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[C]*y[A]*z[D] + x[C]*y[D]*z[A] +
-    x[D]*y[A]*z[C] - x[D]*y[C]*z[A] - x[B]*y[C]*z[D] + x[B]*y[D]*z[C] +
-    x[C]*y[B]*z[D] - x[C]*y[D]*z[B] - x[D]*y[B]*z[C] + x[D]*y[C]*z[B];
-
-  real DetX1 = (y[D]*z[C] - y[C]*z[D] + y[C]*zp - yp*z[C] -
-      y[D]*zp + yp*z[D])*x[B] + x[C]*y[B]*z[D] - x[C]*y[D]*z[B] -
-    x[D]*y[B]*z[C] + x[D]*y[C]*z[B] - x[C]*y[B]*zp + x[C]*yp*z[B] +
-    xp*y[B]*z[C] - xp*y[C]*z[B] + x[D]*y[B]*zp - x[D]*yp*z[B] -
-    xp*y[B]*z[D] + xp*y[D]*z[B] + x[C]*y[D]*zp - x[C]*yp*z[D] -
-    x[D]*y[C]*zp + x[D]*yp*z[C] + xp*y[C]*z[D] - xp*y[D]*z[C];
-
-  real DetX2 = (y[C]*z[D] - y[D]*z[C] - y[C]*zp + yp*z[C] +
-      y[D]*zp - yp*z[D])*x[A] + x[C]*y[D]*z[A] - x[C]*y[A]*z[D] +
-    x[D]*y[A]*z[C] - x[D]*y[C]*z[A] + x[C]*y[A]*zp - x[C]*yp*z[A] -
-    xp*y[A]*z[C] + xp*y[C]*z[A] - x[D]*y[A]*zp + x[D]*yp*z[A] +
-    xp*y[A]*z[D] - xp*y[D]*z[A] - x[C]*y[D]*zp + x[C]*yp*z[D] +
-    x[D]*y[C]*zp - x[D]*yp*z[C] - xp*y[C]*z[D] + xp*y[D]*z[C];
-
-  real DetX3 = (y[D]*z[B] - y[B]*z[D] + y[B]*zp - yp*z[B] -
-      y[D]*zp + yp*z[D])*x[A] + x[B]*y[A]*z[D] - x[B]*y[D]*z[A] -
-    x[D]*y[A]*z[B] + x[D]*y[B]*z[A] - x[B]*y[A]*zp + x[B]*yp*z[A] +
-    xp*y[A]*z[B] - xp*y[B]*z[A] + x[D]*y[A]*zp - x[D]*yp*z[A] -
-    xp*y[A]*z[D] + xp*y[D]*z[A] + x[B]*y[D]*zp - x[B]*yp*z[D] -
-    x[D]*y[B]*zp + x[D]*yp*z[B] + xp*y[B]*z[D] - xp*y[D]*z[B];
-
-  real DetX4 = (y[B]*z[C] - y[C]*z[B] - y[B]*zp + yp*z[B] +
-      y[C]*zp - yp*z[C])*x[A] + x[B]*y[C]*z[A] - x[B]*y[A]*z[C] +
-    x[C]*y[A]*z[B] - x[C]*y[B]*z[A] + x[B]*y[A]*zp - x[B]*yp*z[A] -
-    xp*y[A]*z[B] + xp*y[B]*z[A] - x[C]*y[A]*zp + x[C]*yp*z[A] +
-    xp*y[A]*z[C] - xp*y[C]*z[A] - x[B]*y[C]*zp + x[B]*yp*z[C] +
-    x[C]*y[B]*zp - x[C]*yp*z[B] - xp*y[B]*z[C] + xp*y[C]*z[B];
-
-  // Shape functions evaluated at point
-  N[0] = DetX1/DetX;
-  N[1] = DetX2/DetX;
-  N[2] = DetX3/DetX;
-  N[3] = DetX4/DetX;
-
-  // if min( N^i, 1-N^i ) > 0 for all i, point is in cell
-  if ( std::min(N[0],1.0-N[0]) > 0 && std::min(N[1],1.0-N[1]) > 0 &&
-      std::min(N[2],1.0-N[2]) > 0 && std::min(N[3],1.0-N[3]) > 0 )
-  {
-    return true;
-  } else {
-    return false;
   }
 }
 
