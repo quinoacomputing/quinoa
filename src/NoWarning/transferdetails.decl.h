@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/NoWarning/worker.decl.h
+  \file      src/NoWarning/transferdetails.decl.h
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2020 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Include worker.decl.h with turning off specific compiler
+  \brief     Include transferdetails.decl.h with turning off specific compiler
              warnings.
 */
 // *****************************************************************************
-#ifndef nowarning_worker_decl_h
-#define nowarning_worker_decl_h
+#ifndef nowarning_transferdetails_decl_h
+#define nowarning_transferdetails_decl_h
 
 #include "Macro.hpp"
 
@@ -58,7 +58,7 @@
   #pragma warning( disable: 2282 )
 #endif
 
-#include "../Transfer/worker.decl.h"
+#include "../Transfer/transferdetails.decl.h"
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -68,4 +68,4 @@
   #pragma warning( pop )
 #endif
 
-#endif // nowarning_worker_decl_h
+#endif // nowarning_transferdetails_decl_h

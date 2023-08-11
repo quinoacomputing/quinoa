@@ -1,6 +1,6 @@
 module m2mtransfer {
 
-  extern module worker;
+  extern module transferdetails;
 
   namespace exam2m {
 

@@ -1,7 +1,7 @@
 // Controller for the library
 
 #include "M2MTransfer.hpp"
-#include "Worker.hpp"
+#include "TransferDetails.hpp"
 
 #include <cassert>
 
@@ -69,7 +69,7 @@ void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb) {
     MeshData mesh;
     mesh.m_nchare = elem;
     mesh.m_firstchunk = current_chunk;
-    mesh.m_proxy = CProxy_Worker::ckNew(p, mesh, cb, opts);
+    mesh.m_proxy = CProxy_TransferDetails::ckNew(p, mesh, cb, opts);
     proxyMap[id] = mesh;
     current_chunk += elem;
   } else {
@@ -82,14 +82,14 @@ void M2MTransfer::setMesh( CkArrayID p, MeshData d ) {
 
 void M2MTransfer::setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb) {
   m_destmesh = static_cast<std::size_t>(CkGroupID(p).idx);
-  Worker* w = proxyMap[m_destmesh].m_proxy[index].ckLocal();
+  TransferDetails* w = proxyMap[m_destmesh].m_proxy[index].ckLocal();
   assert(w);
   w->setDestPoints(coords, u, cb);
 }
 
 void M2MTransfer::setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u) {
   m_sourcemesh = static_cast<std::size_t>(CkGroupID(p).idx);
-  Worker* w = proxyMap[m_sourcemesh].m_proxy[index].ckLocal();
+  TransferDetails* w = proxyMap[m_sourcemesh].m_proxy[index].ckLocal();
   assert(w);
   w->setSourceTets(inpoel, coords, u);
 }

@@ -1,17 +1,19 @@
 // *****************************************************************************
 /*!
-  \file      src/Transfer/worker.ci
+  \file      src/Transfer/transferdetails.ci
   \copyright 2020 Charmworks, Inc.
              All rights reserved. See the LICENSE file for details.
-  \brief     Charm++ module interface file for workers holding part of a mesh
-  \details   Charm++ module interface file for workers holding part of a mesh.
+  \brief     Charm++ module interface file for transferdetails holding part of a
+             mesh
+  \details   Charm++ module interface file for transferdetails holding part of a
+             mesh.
 */
 // *****************************************************************************
 
-module worker {
+module transferdetails {
 
   extern module meshwriter;
-  extern module worker;
+  extern module transferdetails;
 
   //include "UnsMesh.hpp";
   include "Callback.hpp";
@@ -24,14 +26,14 @@ module worker {
     class SolutionData;
     class MeshData;
 
-    array [1D] Worker {
-      entry Worker( CkArrayID p, MeshData d, CkCallback cb );
-      entry void processCollisions( CProxy_Worker proxy,
+    array [1D] TransferDetails {
+      entry TransferDetails( CkArrayID p, MeshData d, CkCallback cb );
+      entry void processCollisions( CProxy_TransferDetails proxy,
                                     int nchares,
                                     int offset,
                                     int nColls,
                                     Collision colls[nColls] );
-      entry void determineActualCollisions( CProxy_Worker proxy,
+      entry void determineActualCollisions( CProxy_TransferDetails proxy,
                                             int index,
                                             int nColls,
                                             PotentialCollision colls[nColls] );

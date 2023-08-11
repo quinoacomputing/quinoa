@@ -18,7 +18,7 @@ public:
 
 class MeshData {
   public:
-    CProxy_Worker m_proxy;
+    CProxy_TransferDetails m_proxy;
     int m_firstchunk;
     int m_nchare;
     void pup(PUP::er& p) {

@@ -1,11 +1,11 @@
 # Include function for adding Charm++ modules
 include(charm)
 
-add_library(Worker
-            Worker.cpp
+add_library(TransferDetails
+            TransferDetails.cpp
             M2MTransfer.cpp)
 
-target_include_directories(Worker PUBLIC
+target_include_directories(TransferDetails PUBLIC
                            ${PROJECT_SOURCE_DIR}
                            ${PROJECT_SOURCE_DIR}/Base
                            ${PROJECT_SOURCE_DIR}/Mesh
@@ -18,9 +18,9 @@ target_include_directories(Worker PUBLIC
                            ${HIGHWAYHASH_INCLUDE_DIRS}
 )
 
-set_target_properties(Worker PROPERTIES LIBRARY_OUTPUT_NAME exam2m_worker)
+set_target_properties(TransferDetails PROPERTIES LIBRARY_OUTPUT_NAME exam2m_worker)
 
-INSTALL(TARGETS Worker
+INSTALL(TARGETS TransferDetails
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
@@ -33,14 +33,14 @@ INSTALL(TARGETS Worker
 #        FILES_MATCHING PATTERN "m2mtransfer.de*.h")
 #INSTALL(DIRECTORY "${PROJECT_SOURCE_DIR}/NoWarning/"
 #        DESTINATION "include/NoWarning/"
-#        FILES_MATCHING PATTERN "worker.de*.h")
+#        FILES_MATCHING PATTERN "transferdetails.de*.h")
 #
 #INSTALL(DIRECTORY "${PROJECT_BINARY_DIR}/Transfer/"
 #        DESTINATION "include/Transfer/"
 #        FILES_MATCHING PATTERN "m2mtransfer.de*.h")
 #INSTALL(DIRECTORY "${PROJECT_BINARY_DIR}/Transfer/"
 #        DESTINATION "include/Transfer/"
-#        FILES_MATCHING PATTERN "worker.de*.h")
+#        FILES_MATCHING PATTERN "transferdetails.de*.h")
 
-addCharmModule( "worker" "Worker" )
-addCharmModule( "m2mtransfer" "Worker" )
+addCharmModule( "transferdetails" "TransferDetails" )
+addCharmModule( "m2mtransfer" "TransferDetails" )

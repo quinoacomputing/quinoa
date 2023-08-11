@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Transfer/Worker.cpp
+  \file      src/Transfer/TransferDetails.cpp
   \copyright 2020 Charmworks, Inc.
              All rights reserved. See the LICENSE file for details.
-  \brief     Chare class declaration for workers holding part of a mesh
-  \details   Chare class declaration for workers holding part of a mesh.
+  \brief     Chare class declaration for mesh transfer workers holding part of a
+    mesh
+  \details   Chare class declaration for mesh transfer workers holding part of a
+    mesh.
 */
 // *****************************************************************************
 
-#include <iostream>     // NOT NEEDED WHEN DEBUGGED
-
-#include "Worker.hpp"
+#include "TransferDetails.hpp"
 #include "Reorder.hpp"
 #include "DerivedData.hpp"
 #include "M2MTransfer.hpp"
@@ -33,9 +33,9 @@ extern CollideHandle collideHandle;
 extern CProxy_M2MTransfer m2mtransferProxy;
 }
 
-using exam2m::Worker;
+using exam2m::TransferDetails;
 
-Worker::Worker( CkArrayID p, MeshData d, CkCallback cb ) :
+TransferDetails::TransferDetails( CkArrayID p, MeshData d, CkCallback cb ) :
     m_firstchunk(d.m_firstchunk)
 // *****************************************************************************
 //  Constructor
@@ -50,7 +50,7 @@ Worker::Worker( CkArrayID p, MeshData d, CkCallback cb ) :
 }
 
 void
-Worker::setSourceTets(
+TransferDetails::setSourceTets(
     std::vector< std::size_t>* inpoel,
     tk::UnsMesh::Coords* coords,
     const tk::Fields& u )
@@ -70,7 +70,7 @@ Worker::setSourceTets(
 }
 
 void
-Worker::setDestPoints(
+TransferDetails::setDestPoints(
     tk::UnsMesh::Coords* coords,
     tk::Fields& u,
     CkCallback cb )
@@ -95,7 +95,7 @@ Worker::setDestPoints(
 }
 
 void
-Worker::background()
+TransferDetails::background()
 // *****************************************************************************
 // Initialize dest mesh solution with background data
 //! \details This is useful to see what points did not receive solution.
@@ -106,7 +106,7 @@ Worker::background()
 }
 
 void
-Worker::collideVertices()
+TransferDetails::collideVertices()
 // *****************************************************************************
 // Pass vertex information to the collision detection library
 // *****************************************************************************
@@ -128,7 +128,7 @@ Worker::collideVertices()
 }
 
 void
-Worker::collideTets() const
+TransferDetails::collideTets() const
 // *****************************************************************************
 // Pass tet information to the collision detection library
 // *****************************************************************************
@@ -154,8 +154,8 @@ Worker::collideTets() const
 }
 
 void
-Worker::processCollisions(
-    CProxy_Worker proxy,
+TransferDetails::processCollisions(
+    CProxy_TransferDetails proxy,
     int numchares,
     int chunkoffset,
     int nColl,
@@ -217,8 +217,8 @@ Worker::processCollisions(
 }
 
 void
-Worker::determineActualCollisions(
-    CProxy_Worker proxy,
+TransferDetails::determineActualCollisions(
+    CProxy_TransferDetails proxy,
     int index,
     int nColls,
     PotentialCollision* colls ) const
@@ -266,7 +266,7 @@ Worker::determineActualCollisions(
 }
 
 void
-Worker::transferSolution( const std::vector< SolutionData >& soln )
+TransferDetails::transferSolution( const std::vector< SolutionData >& soln )
 // *****************************************************************************
 //  Receive the solution data for destination mesh points that collided with the
 //  source mesh tetrahedrons
@@ -289,7 +289,7 @@ Worker::transferSolution( const std::vector< SolutionData >& soln )
 }
 
 bool
-Worker::intet(const CkVector3d &point,
+TransferDetails::intet(const CkVector3d &point,
       std::size_t e,
       std::array< real, 4 >& N) const
   // *****************************************************************************
@@ -377,4 +377,4 @@ Worker::intet(const CkVector3d &point,
   }
 }
 
-#include "NoWarning/worker.def.h"
+#include "NoWarning/transferdetails.def.h"

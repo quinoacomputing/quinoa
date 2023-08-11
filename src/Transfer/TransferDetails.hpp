@@ -1,14 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/Transfer/Worker.hpp
+  \file      src/Transfer/TransferDetails.hpp
   \copyright 2020 Charmworks, Inc.
              All rights reserved. See the LICENSE file for details.
-  \brief     Chare class declaration for workers holding part of a mesh
-  \details   Chare class declaration for workers holding part of a mesh.
+  \brief     Chare class declaration for mesh transfer workers holding part of a
+    mesh
+  \details   Chare class declaration for mesh transfer workers holding part of a
+    mesh.
 */
 // *****************************************************************************
-#ifndef Worker_h
-#define Worker_h
+#ifndef TransferDetails_h
+#define TransferDetails_h
 
 #include "Types.hpp"
 #include "PUPUtil.hpp"
@@ -16,7 +18,7 @@
 #include "CommMap.hpp"
 #include "Fields.hpp"
 
-#include "NoWarning/worker.decl.h"
+#include "NoWarning/transferdetails.decl.h"
 
 namespace exam2m {
 
@@ -34,12 +36,12 @@ class SolutionData {
     void pup(PUP::er& p) { p | dest_index; p | solution; }
 };
 
-//! Worker chare array holding part of a mesh
-class Worker : public CBase_Worker {
+//! TransferDetails chare array holding part of a mesh
+class TransferDetails : public CBase_TransferDetails {
 
   public:
     //! Constructor
-    explicit Worker( CkArrayID p, MeshData d, CkCallback cb );
+    explicit TransferDetails( CkArrayID p, MeshData d, CkCallback cb );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -47,7 +49,7 @@ class Worker : public CBase_Worker {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit Worker( CkMigrateMessage* ) {}
+    explicit TransferDetails( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -63,14 +65,14 @@ class Worker : public CBase_Worker {
                         CkCallback cb );
 
     //! Process potential collisions in the destination mesh
-    void processCollisions( CProxy_Worker proxy,
+    void processCollisions( CProxy_TransferDetails proxy,
                             int nchare,
                             int offset,
                             int nColls,
                             Collision* colls );
 
     //! Identify actual collisions in the source mesh
-    void determineActualCollisions( CProxy_Worker proxy,
+    void determineActualCollisions( CProxy_TransferDetails proxy,
                                     int index,
                                     int nColls,
                                     PotentialCollision* colls ) const;
@@ -87,8 +89,8 @@ class Worker : public CBase_Worker {
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i Worker object reference
-    friend void operator|( PUP::er& p, Worker& i ) { i.pup(p); }
+    //! \param[in,out] i TransferDetails object reference
+    friend void operator|( PUP::er& p, TransferDetails& i ) { i.pup(p); }
     //@}
 
   private:
@@ -125,4 +127,4 @@ class Worker : public CBase_Worker {
 
 } // exam2m::
 
-#endif // Worker_h
+#endif // TransferDetails_h
