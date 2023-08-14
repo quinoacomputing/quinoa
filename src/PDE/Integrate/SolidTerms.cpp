@@ -175,7 +175,8 @@ solidTermsVolInt( ncomp_t system,
             for (std::size_t j=0; j<3; ++j)
               for (std::size_t idof=0; idof<ndof; ++idof)
               {
-                for (std::size_t l=0; l<deriv.size(); ++l) deriv[l] = 0.0;
+                for (std::size_t l=0; l<deriv.size(); ++l)
+		  deriv[l] = 0.0;
                 for (std::size_t jdof=0; jdof<rdof; ++jdof)
                 {
                   // Find indeces for all unknowns used
@@ -211,9 +212,9 @@ solidTermsVolInt( ncomp_t system,
                   + D*((alpha*dBdx[(j+1)%3][idof]+B[idof]*deriv[4])
                        *(deriv[0]-deriv[1])
 		      -(alpha*dBdx[(j+2)%3][idof]+B[idof]*deriv[5])
-                       *(deriv[2]-deriv[3]))
-                  - alpha*(v[0]*deriv[6]+v[1]*deriv[7]+v[2]*deriv[8]
-                        +g[i][0]*deriv[9]+g[i][1]*deriv[10]+g[i][2]*deriv[11]);
+                       *(deriv[2]-deriv[3]));
+                  //- alpha*(v[0]*deriv[6]+v[1]*deriv[7]+v[2]*deriv[8]
+                  //      +g[i][0]*deriv[9]+g[i][1]*deriv[10]+g[i][2]*deriv[11]);
               }
 
         auto wt = wgp[igp] * geoElem(e, 0);

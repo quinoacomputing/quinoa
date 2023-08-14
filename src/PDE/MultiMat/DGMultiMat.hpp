@@ -760,10 +760,10 @@ class MultiMat {
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
-      // // Compute integrals for inverse deformation in solid materials
-      // if (inciter::haveSolid(nmat, solidx))
-      //   tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
-      //                         inpoel, coord, geoElem, U, P, ndofel, dt, R);
+      // Compute integrals for inverse deformation in solid materials
+      if (inciter::haveSolid(nmat, solidx))
+        tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
+                              inpoel, coord, geoElem, U, P, ndofel, dt, R);
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
