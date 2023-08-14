@@ -185,9 +185,8 @@ struct LaxFriedrichsSolids {
 
     // Store Riemann-advected partial pressures
     for (std::size_t k=0; k<nmat; ++k)
-      flx.push_back( 0.5*(pml[k]+pmr[k])
-                   + 0.5*(tk::dot(asign_l[k],fn)
-                         +tk::dot(asign_r[k],fn)));
+      flx.push_back( -0.5*(tk::dot(asign_l[k],fn)
+                          +tk::dot(asign_r[k],fn)));
 
     // Store Riemann velocity
     flx.push_back( vriem );

@@ -709,7 +709,7 @@ class MultiMat {
       // to derivatives of Riemann velocity times basis function in the volume
       // fraction equation.
       std::vector< std::vector< tk::real > >
-        riemannDeriv( (3+3*9)*nmat+ndof, std::vector<tk::real>(U.nunk(),0.0) );
+        riemannDeriv((3+3*3*9)*nmat+ndof, std::vector<tk::real>(U.nunk(),0.0));
 
       // vectors to store the data of riemann velocity used for reconstruction
       // in volume fraction equation
@@ -743,7 +743,7 @@ class MultiMat {
                         m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
 
-      Assert( riemannDeriv.size() == (3+3*9)*nmat+ndof, "Size of Riemann "
+      Assert( riemannDeriv.size() == (3+3*3*9)*nmat+ndof, "Size of Riemann "
               "derivative vector incorrect" );
 
       // get derivatives from riemannDeriv

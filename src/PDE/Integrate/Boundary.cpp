@@ -274,15 +274,16 @@ update_rhs_bc ( ncomp_t ncomp,
     for(std::size_t idof = 0; idof < ndof; idof++)
       riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
 
-        // Gradient of u*g
+    // Gradient of u*g``
     for (std::size_t k=0; k<nmat; ++k)
       if (solidx[k] > 0)
       {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            for (std::size_t idir=0; idir<3; ++idir)
-              riemannDeriv[3*nmat+ndof+3*9*k+3*(3*i+j)+idir][el] +=
-                wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+idir] * fn[idir];
+	    for (std::size_t l=0; l<3; ++l)
+	      for (std::size_t idir=0; idir<3; ++idir)
+		riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+j)+3*l+idir][el] +=
+		  wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+l] * fn[idir];
       }
   }
 }

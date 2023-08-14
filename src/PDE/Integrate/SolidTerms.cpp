@@ -169,8 +169,8 @@ solidTermsVolInt( ncomp_t system,
 
           // Compute the source terms
           std::vector< real > s(9*ndof, 0.0);
-          std::vector< real > deriv(12, 0.0);
-          std::vector< std::size_t > defIdx(12, 0);
+          std::vector< real > deriv(6, 0.0);
+          std::vector< std::size_t > defIdx(6, 0);
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
               for (std::size_t idof=0; idof<ndof; ++idof)
@@ -186,12 +186,6 @@ solidTermsVolInt( ncomp_t system,
                   defIdx[3]  = deformDofIdx(nmat,solidx[k],i,(j+2)%3,rdof,jdof);
                   defIdx[4]  = volfracDofIdx(nmat,k,rdof,jdof);
                   defIdx[5]  = volfracDofIdx(nmat,k,rdof,jdof);
-                  defIdx[6]  = deformDofIdx(nmat,solidx[k],i,0,rdof,jdof);
-                  defIdx[7]  = deformDofIdx(nmat,solidx[k],i,1,rdof,jdof);
-                  defIdx[8]  = deformDofIdx(nmat,solidx[k],i,2,rdof,jdof);
-                  defIdx[9]  = velocityDofIdx(nmat,0,rdof,jdof);
-                  defIdx[10] = velocityDofIdx(nmat,1,rdof,jdof);
-                  defIdx[11] = velocityDofIdx(nmat,2,rdof,jdof);
                   // Compute derivatives
                   deriv[0]  += U(e,defIdx[0]) *dBdx[      j][jdof];
                   deriv[1]  += U(e,defIdx[1]) *dBdx[(j+1)%3][jdof];
@@ -199,12 +193,6 @@ solidTermsVolInt( ncomp_t system,
                   deriv[3]  += U(e,defIdx[3]) *dBdx[      j][jdof];
                   deriv[4]  += U(e,defIdx[4]) *dBdx[(j+1)%3][jdof];
                   deriv[5]  += U(e,defIdx[5]) *dBdx[(j+2)%3][jdof];
-                  deriv[6]  += U(e,defIdx[6]) *dBdx[      j][jdof];
-                  deriv[7]  += U(e,defIdx[7]) *dBdx[      j][jdof];
-                  deriv[8]  += U(e,defIdx[8]) *dBdx[      j][jdof];
-                  deriv[9]  += U(e,defIdx[9]) *dBdx[      j][jdof];
-                  deriv[10] += U(e,defIdx[10])*dBdx[      j][jdof];
-                  deriv[11] += U(e,defIdx[11])*dBdx[      j][jdof];
                 }
                 s[(i*3+j)*ndof+idof] = B[idof]*rfact*alpha*g[i][j]
                   + alpha*B[idof]*(v[(j+1)%3]*(deriv[0]-deriv[1])
@@ -213,8 +201,6 @@ solidTermsVolInt( ncomp_t system,
                        *(deriv[0]-deriv[1])
 		      -(alpha*dBdx[(j+2)%3][idof]+B[idof]*deriv[5])
                        *(deriv[2]-deriv[3]));
-                  //- alpha*(v[0]*deriv[6]+v[1]*deriv[7]+v[2]*deriv[8]
-                  //      +g[i][0]*deriv[9]+g[i][1]*deriv[10]+g[i][2]*deriv[11]);
               }
 
         auto wt = wgp[igp] * geoElem(e, 0);
