@@ -60,7 +60,7 @@ void initializeBox( std::size_t system,
 
   const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
-  
+
   const auto& initiate = b.template get< tag::initiate >();
   auto inittype = initiate.template get< tag::init >();
 

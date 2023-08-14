@@ -280,10 +280,10 @@ update_rhs_bc ( ncomp_t ncomp,
       {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-	    for (std::size_t l=0; l<3; ++l)
-	      for (std::size_t idir=0; idir<3; ++idir)
-		riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+j)+3*l+idir][el] +=
-		  wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+l] * fn[idir];
+            for (std::size_t l=0; l<3; ++l)
+              for (std::size_t idir=0; idir<3; ++idir)
+                riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+j)+3*l+idir][el] +=
+                  wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+l] * fn[idir];
       }
   }
 }
@@ -408,7 +408,7 @@ bndSurfIntFV( ncomp_t system,
         {
           R(el, c) -= geoFace(f,0) * fl[c];
         }
-      
+
         // Prep for non-conservative terms in multimat
         if (fl.size() > ncomp)
         {
@@ -419,7 +419,7 @@ bndSurfIntFV( ncomp_t system,
               riemannDeriv[3*k+idir][el] += geoFace(f,0) * fl[ncomp+k]
               * fn[idir];
           }
-      
+
           // Divergence of velocity
           riemannDeriv[3*nmat][el] += geoFace(f,0) * fl[ncomp+nmat];
         }

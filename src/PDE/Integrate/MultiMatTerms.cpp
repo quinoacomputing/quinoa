@@ -233,13 +233,13 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
               for(std::size_t idof=0; idof<ndof; ++idof)
               {
                 ncf[deformIdx(nmat,solidx[k],i,j)][idof] = 0.0;
-		for (std::size_t l=0; l<3; ++l)
-		{
-		  ncf[deformIdx(nmat,solidx[k],i,j)][idof] +=
-		    state[volfracIdx(nmat, k)]*(
-		    riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+j)+3*l+l][e]
-		   -riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+l)+3*l+j][e]);
-		  }
+                for (std::size_t l=0; l<3; ++l)
+                {
+                  ncf[deformIdx(nmat,solidx[k],i,j)][idof] +=
+                    state[volfracIdx(nmat, k)]*(
+                    riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+j)+3*l+l][e]
+                   -riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+l)+3*l+j][e]);
+                  }
               }
         }
       }
