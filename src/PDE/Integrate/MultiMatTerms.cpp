@@ -80,6 +80,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
   using inciter::energyIdx;
   using inciter::velocityIdx;
   using inciter::deformIdx;
+  using inciter::newSolidsAccFn;
 
   const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
@@ -237,8 +238,8 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
                 {
                   ncf[deformIdx(nmat,solidx[k],i,j)][idof] +=
                     state[volfracIdx(nmat, k)]*(
-                    riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+j)+3*l+l][e]
-                   -riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+l)+3*l+j][e]);
+                      riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+l][e]
+                     -riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,l,l)+j][e]);
                   }
               }
         }
@@ -312,10 +313,11 @@ updateRhsNonCons(
           wt * ncf[volfracIdx(nmat,k)][idof];
         R(e, energyDofIdx(nmat,k,ndof,idof)) +=
           wt * ncf[energyIdx(nmat,k)][idof] * B[idof];
-        for(std::size_t i=0; i<3; ++i)
-          for(std::size_t j=0; j<3; ++j)
-            R(e, deformDofIdx(nmat,solidx[k],i,j,ndof,idof)) +=
-              wt * ncf[deformIdx(nmat,solidx[k],i,j)][idof] * B[idof];
+	if (solidx[k] > 0)
+	  for(std::size_t i=0; i<3; ++i)
+	    for(std::size_t j=0; j<3; ++j)
+	      R(e, deformDofIdx(nmat,solidx[k],i,j,ndof,idof)) +=
+		wt * ncf[deformIdx(nmat,solidx[k],i,j)][idof] * B[idof];
       }
     }
   }
@@ -916,16 +918,16 @@ fluxTerms(
 
   std::vector< std::array< tk::real, 3 > > fl( ncomp );
 
+  tk::real rho(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    rho += ugp[densityIdx(nmat, k)];
+
+  auto u = ugp[ncomp+velocityIdx(nmat,0)];
+  auto v = ugp[ncomp+velocityIdx(nmat,1)];
+  auto w = ugp[ncomp+velocityIdx(nmat,2)];
+
   if (inciter::haveSolid(nmat, solidx))
   {
-    tk::real rho(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-      rho += ugp[densityIdx(nmat, k)];
-
-    auto u = ugp[ncomp+velocityIdx(nmat,0)];
-    auto v = ugp[ncomp+velocityIdx(nmat,1)];
-    auto w = ugp[ncomp+velocityIdx(nmat,2)];
-
     std::vector< tk::real > al(nmat, 0.0);
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > ag, asig;
     std::array< std::array< tk::real, 3 >, 3 >
@@ -996,14 +998,7 @@ fluxTerms(
   }
   else
   {
-    tk::real rho(0.0), p(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-      rho += ugp[densityIdx(nmat, k)];
-
-    auto u = ugp[ncomp+velocityIdx(nmat,0)];
-    auto v = ugp[ncomp+velocityIdx(nmat,1)];
-    auto w = ugp[ncomp+velocityIdx(nmat,2)];
-
+    tk::real p(0.0);
     std::vector< tk::real > apk( nmat, 0.0 );
     for (std::size_t k=0; k<nmat; ++k)
     {

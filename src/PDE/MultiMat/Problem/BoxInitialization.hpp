@@ -186,7 +186,7 @@ void initializeBox( std::size_t system,
         }
       }
       else {
-	gk = {{}};
+        gk = {{}};
       }
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
         mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr, gk );

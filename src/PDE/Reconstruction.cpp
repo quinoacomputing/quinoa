@@ -495,16 +495,20 @@ THINCReco( std::size_t system,
   using inciter::energyDofIdx;
   using inciter::pressureDofIdx;
   using inciter::velocityDofIdx;
+  using inciter::deformDofIdx;
   using inciter::volfracIdx;
   using inciter::densityIdx;
   using inciter::momentumIdx;
   using inciter::energyIdx;
   using inciter::pressureIdx;
   using inciter::velocityIdx;
+  using inciter::deformIdx;
 
   auto bparam = inciter::g_inputdeck.get< tag::param, tag::multimat,
     tag::intsharp_param >()[system];
   const auto ncomp = U.nprop()/rdof;
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   // interface detection
   std::vector< std::size_t > matInt(nmat, 0);
@@ -566,6 +570,11 @@ THINCReco( std::size_t system,
           * U(e, energyDofIdx(nmat,k,rdof,0))/alCC;
         state[ncomp+pressureIdx(nmat,k)] = alReco[k]
           * P(e, pressureDofIdx(nmat,k,rdof,0))/alCC;
+        if (solidx[k] > 0)
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              state[deformIdx(nmat,solidx[k],i,j)] = alReco[k]
+                * U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0))/alCC;
       }
 
       rhobCC += U(e, densityDofIdx(nmat,k,rdof,0));

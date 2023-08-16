@@ -222,10 +222,10 @@ surfInt( ncomp_t system,
       // compute flux
       auto fl = flux( mat_blk, fn, state, v );
 
-      // Add RHS inverse deformation terms if necessary
-      if (haveSolid)
-        solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
-                           coordel_l, coordel_r, igp, coordgp, dt, fl );
+      // // Add RHS inverse deformation terms if necessary
+      // if (haveSolid)
+      //   solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
+      //                      coordel_l, coordel_r, igp, coordgp, dt, fl );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,
@@ -273,6 +273,8 @@ update_rhs_fa( ncomp_t ncomp,
   // following lines commented until rdofel is made available.
   //Assert( B_l.size() == ndof_l, "Size mismatch" );
   //Assert( B_r.size() == ndof_r, "Size mismatch" );
+
+  using inciter::newSolidsAccFn;
 
   const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
@@ -346,10 +348,10 @@ update_rhs_fa( ncomp_t ncomp,
             for (std::size_t l=0; l<3; ++l)
               for (std::size_t idir=0; idir<3; ++idir)
               {
-                riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+j)+3*l+idir][el] +=
-                  wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+l] * fn[idir];
-                riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+j)+3*l+idir][er] -=
-                  wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+l] * fn[idir];
+                riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+idir][el] +=
+                  wt * fl[ncomp+nmat+1+newSolidsAccFn(k,i,j,l)] * fn[idir];
+                riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+idir][er] -=
+                  wt * fl[ncomp+nmat+1+newSolidsAccFn(k,i,j,l)] * fn[idir];
             }
       }
   }

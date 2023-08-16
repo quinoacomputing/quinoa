@@ -234,6 +234,8 @@ update_rhs_bc ( ncomp_t ncomp,
   // following line commented until rdofel is made available.
   //Assert( B_l.size() == ndof_l, "Size mismatch" );
 
+  using inciter::newSolidsAccFn;
+
     const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
 
@@ -282,8 +284,8 @@ update_rhs_bc ( ncomp_t ncomp,
           for (std::size_t j=0; j<3; ++j)
             for (std::size_t l=0; l<3; ++l)
               for (std::size_t idir=0; idir<3; ++idir)
-                riemannDeriv[3*nmat+ndof+3*3*9*k+3*3*(3*i+j)+3*l+idir][el] +=
-                  wt * fl[ncomp+nmat+1+9*3*k+3*(3*i+j)+l] * fn[idir];
+                riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+idir][el] +=
+                  wt * fl[ncomp+nmat+1+newSolidsAccFn(k,i,j,l)] * fn[idir];
       }
   }
 }

@@ -222,6 +222,9 @@ class MultiMat {
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   auto mark = c*rdof;
                   unk(e,mark) = s[c];
+		  // set high-order DOFs to zero
+		  for (std::size_t i=1; i<rdof; ++i)
+		    unk(e,mark+i) = 0.0;
                 }
               }
             }
@@ -258,6 +261,8 @@ class MultiMat {
       auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
+      const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+        tag::matidxmap >().template get< tag::solidx >();
 
       for (std::size_t e=0; e<nielem; ++e) {
         std::vector< std::size_t > matInt(nmat, 0);
@@ -275,6 +280,12 @@ class MultiMat {
                 unk(e, densityDofIdx(nmat,k,rdof,i)) = 0.0;
                 unk(e, energyDofIdx(nmat,k,rdof,i)) = 0.0;
               }
+	      if (solidx[k] > 0)
+		for (std::size_t i=0; i<3; ++i)
+		  for (std::size_t j=0; j<3; ++j)
+		    for (std::size_t idof=1; idof<rdof; ++idof){
+		      unk(e, deformDofIdx(nmat,k,i,j,rdof,idof)) = 0.0;
+		}
             }
           }
           for (std::size_t idir=0; idir<3; ++idir) {
@@ -760,10 +771,10 @@ class MultiMat {
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
-      // Compute integrals for inverse deformation in solid materials
-      if (inciter::haveSolid(nmat, solidx))
-        tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, ndofel, dt, R);
+      // // Compute integrals for inverse deformation in solid materials
+      // if (inciter::haveSolid(nmat, solidx))
+      //   tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,
+      //                         inpoel, coord, geoElem, U, P, ndofel, dt, R);
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])

@@ -176,7 +176,7 @@ solidTermsVolInt( ncomp_t system,
               for (std::size_t idof=0; idof<ndof; ++idof)
               {
                 for (std::size_t l=0; l<deriv.size(); ++l)
-		  deriv[l] = 0.0;
+                  deriv[l] = 0.0;
                 for (std::size_t jdof=0; jdof<rdof; ++jdof)
                 {
                   // Find indeces for all unknowns used
@@ -199,7 +199,7 @@ solidTermsVolInt( ncomp_t system,
                                   -v[(j+2)%3]*(deriv[2]-deriv[3]))
                   + D*((alpha*dBdx[(j+1)%3][idof]+B[idof]*deriv[4])
                        *(deriv[0]-deriv[1])
-		      -(alpha*dBdx[(j+2)%3][idof]+B[idof]*deriv[5])
+                      -(alpha*dBdx[(j+2)%3][idof]+B[idof]*deriv[5])
                        *(deriv[2]-deriv[3]));
               }
 

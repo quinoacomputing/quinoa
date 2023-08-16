@@ -546,7 +546,7 @@ VertexBasedMultiMat_P1(
 
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
-    > 1e-6)
+    > 1e-6 && ndof > 1)
     MarkShockCells(nelem, nmat, system, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
 
@@ -1493,6 +1493,8 @@ void consistentMultiMatLimiting_P1(
 //!   conserved quantities
 // *****************************************************************************
 {
+  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
   // find the limiter-function for volume-fractions
   auto phi_al_p1(1.0), phi_al_p2(1.0), almax(0.0), dalmax(0.0);
   //std::size_t nmax(0);
@@ -1558,6 +1560,15 @@ void consistentMultiMatLimiting_P1(
           U(e,energyDofIdx(nmat, k, rdof, idof)) = rhoE *
             U(e,volfracDofIdx(nmat, k, rdof, idof));
       }
+      if (solidx[k] > 0)
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+          {
+            auto gij = U(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0)) / alk;
+            for (std::size_t idof=1; idof<rdof; ++idof)
+              U(e,deformDofIdx(nmat,solidx[k],i,j,rdof,idof)) = gij *
+		U(e,volfracDofIdx(nmat,k,rdof,idof));
+          }
     }
 
     // 2. same limiter for all volume-fractions and densities
@@ -1566,6 +1577,10 @@ void consistentMultiMatLimiting_P1(
       phic_p1[volfracIdx(nmat, k)] = phi_al_p1;
       phic_p1[densityIdx(nmat, k)] = phi_al_p1;
       phic_p1[energyIdx(nmat, k)] = phi_al_p1;
+      if (solidx[k] > 0)
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            phic_p1[deformIdx(nmat,solidx[k],i,j)] = phi_al_p1;
     }
     if(rdof > 4)
     {
@@ -1574,6 +1589,10 @@ void consistentMultiMatLimiting_P1(
         phic_p2[volfracIdx(nmat, k)] = phi_al_p2;
         phic_p2[densityIdx(nmat, k)] = phi_al_p2;
         phic_p2[energyIdx(nmat, k)] = phi_al_p2;
+        if (solidx[k] > 0)
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              phic_p2[deformIdx(nmat,solidx[k],i,j)] = phi_al_p2;
       }
     }
   }
@@ -2185,6 +2204,9 @@ void MarkShockCells ( const std::size_t nelem,
 {
   const auto coeff = g_inputdeck.get< tag::discr, tag::shock_detector_coeff >();
 
+  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
+
   std::vector< tk::real > IC(U.nunk(), 0.0);
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
@@ -2296,6 +2318,16 @@ void MarkShockCells ( const std::size_t nelem,
       Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
 
+      // Force deformation unknown to first order
+      for (std::size_t k=0; k<nmat; ++k)
+	if (solidx[k] > 0)
+	  for (std::size_t i=0; i<3; ++i)
+	    for (std::size_t j=0; j<3; ++j)
+	    {
+	      state[0][deformIdx(nmat, solidx[k], i, j)] = U(el,deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+	      state[1][deformIdx(nmat, solidx[k], i, j)] = U(er,deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+            }
+      
       // Evaluate the flux
       auto fl = flux( system, ncomp, mat_blk, state[0], {} );
       auto fr = flux( system, ncomp, mat_blk, state[1], {} );

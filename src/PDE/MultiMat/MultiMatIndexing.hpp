@@ -178,6 +178,21 @@ inline std::size_t pressureDofIdx( std::size_t nmat, std::size_t kmat,
 inline bool matExists( tk::real volfrac )
 { return (volfrac > 1e-10) ? true : false; }
 
+//! \brief Get the index of the quantity vel[l]*g[i][j] computed inside the
+//!   Riemann flux solver.
+//! \param[in] nmat Number of materials
+//! \param[in] kmat Index of required material
+//! \param[in] i Row of inverse deformation tensor
+//! \param[in] j Column of inverse deformation tensor
+//! \param[in] l Velocity component
+//! \return Index of the quantity vel[l]*g[i][j] computed inside the
+//!   Riemann flux solver.
+//! \details This function is used to get the index of the quantity
+//!   vel[l]*g[i][j] computed inside the Riemann flux solver.
+inline std::size_t newSolidsAccFn( std::size_t kmat,
+  std::size_t i, std::size_t j, std::size_t l)
+{ return 3*9*kmat+3*(3*i+j)+l; }
+
 //@}
 
 } //inciter::
