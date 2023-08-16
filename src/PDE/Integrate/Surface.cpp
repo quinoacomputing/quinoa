@@ -47,7 +47,7 @@ surfInt( ncomp_t system,
          const Fields& U,
          const Fields& P,
          const std::vector< std::size_t >& ndofel,
-         const tk::real dt,
+         const tk::real /*dt*/,
          Fields& R,
          std::vector< std::vector< tk::real > >&,
          std::vector< std::vector< tk::real > >&,
@@ -72,7 +72,7 @@ surfInt( ncomp_t system,
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
-//! \param[in] dt Delta time
+// //! \param[in] dt Delta time
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] vriem Vector of the riemann velocity
 //! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
@@ -95,8 +95,8 @@ surfInt( ncomp_t system,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
-  // Determine if we have solids in our problem
-  bool haveSolid = inciter::haveSolid(nmat, solidx);
+  //// Determine if we have solids in our problem
+  //bool haveSolid = inciter::haveSolid(nmat, solidx);
 
   //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
   //        "derivative vector for single material compflow" );

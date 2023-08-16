@@ -282,7 +282,7 @@ class MultiMat {
                   for (std::size_t j=0; j<3; ++j)
                     for (std::size_t idof=1; idof<rdof; ++idof) {
                       unk(e, deformDofIdx(nmat,k,i,j,rdof,idof)) = 0.0;
-		                }
+                    }
               }
             }
           }

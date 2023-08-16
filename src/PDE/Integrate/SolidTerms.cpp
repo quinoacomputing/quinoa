@@ -165,7 +165,7 @@ solidTermsVolInt( ncomp_t system,
           tk::real rho0;
           if (k==0) rho0 = 8900.0;
           else rho0 = 2700.0;
-          tk::real rfact = 0.0; //eta*(rho/(rho0*tk::determinant(g))-1.0);
+          tk::real rfact = eta*(rho/(rho0*tk::determinant(g))-1.0);
 
           // Compute the source terms
           std::vector< real > s(9*ndof, 0.0);
