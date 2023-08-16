@@ -37,7 +37,7 @@ surfInt( ncomp_t system,
          const std::size_t ndof,
          const std::size_t rdof,
          const std::vector< std::size_t >& inpoel,
-         const std::vector< std::size_t >& solidx,
+         const std::vector< std::size_t >& /*solidx*/,
          const UnsMesh::Coords& coord,
          const inciter::FaceData& fd,
          const Fields& geoFace,
@@ -62,7 +62,7 @@ surfInt( ncomp_t system,
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] inpoel Element-node connectivity
-//! \param[in] solidx Material index indicator
+// //! \param[in] solidx Material index indicator
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
