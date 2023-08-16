@@ -222,6 +222,8 @@ surfInt( ncomp_t system,
       // compute flux
       auto fl = flux( mat_blk, fn, state, v );
 
+      // Code below commented until details about the form of these terms in the
+      // \alpha_k g_k equations are sorted out.
       // // Add RHS inverse deformation terms if necessary
       // if (haveSolid)
       //   solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,

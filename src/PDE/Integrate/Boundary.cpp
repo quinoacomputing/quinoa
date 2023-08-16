@@ -192,6 +192,13 @@ bndSurfInt( ncomp_t system,
           auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1],
                           gp[2], t ) );
 
+          // Code below commented until details about the form of these terms in
+          // the \alpha_k g_k equations are sorted out.
+          // // Add RHS inverse deformation terms if necessary
+          // if (haveSolid)
+          //   solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
+          //                      coordel_l, coordel_r, igp, coordgp, dt, fl );
+
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, ndof, ndofel[el], wt, fn, el, fl,
                          B_l, R, riemannDeriv );

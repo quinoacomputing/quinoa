@@ -222,9 +222,6 @@ class MultiMat {
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   auto mark = c*rdof;
                   unk(e,mark) = s[c];
-		  // set high-order DOFs to zero
-		  for (std::size_t i=1; i<rdof; ++i)
-		    unk(e,mark+i) = 0.0;
                 }
               }
             }
@@ -280,12 +277,13 @@ class MultiMat {
                 unk(e, densityDofIdx(nmat,k,rdof,i)) = 0.0;
                 unk(e, energyDofIdx(nmat,k,rdof,i)) = 0.0;
               }
-	      if (solidx[k] > 0)
-		for (std::size_t i=0; i<3; ++i)
-		  for (std::size_t j=0; j<3; ++j)
-		    for (std::size_t idof=1; idof<rdof; ++idof){
-		      unk(e, deformDofIdx(nmat,k,i,j,rdof,idof)) = 0.0;
-		}
+              if (solidx[k] > 0) {
+                for (std::size_t i=0; i<3; ++i)
+                  for (std::size_t j=0; j<3; ++j)
+                    for (std::size_t idof=1; idof<rdof; ++idof) {
+                      unk(e, deformDofIdx(nmat,k,i,j,rdof,idof)) = 0.0;
+		                }
+              }
             }
           }
           for (std::size_t idir=0; idir<3; ++idir) {
@@ -771,6 +769,8 @@ class MultiMat {
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
+      // Code below commented until details about the form of these terms in the
+      // \alpha_k g_k equations are sorted out.
       // // Compute integrals for inverse deformation in solid materials
       // if (inciter::haveSolid(nmat, solidx))
       //   tk::solidTermsVolInt( m_system, nmat, m_mat_blk, ndof, rdof, nelem,

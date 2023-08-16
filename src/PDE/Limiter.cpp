@@ -1567,7 +1567,7 @@ void consistentMultiMatLimiting_P1(
             auto gij = U(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0)) / alk;
             for (std::size_t idof=1; idof<rdof; ++idof)
               U(e,deformDofIdx(nmat,solidx[k],i,j,rdof,idof)) = gij *
-		U(e,volfracDofIdx(nmat,k,rdof,idof));
+                U(e,volfracDofIdx(nmat,k,rdof,idof));
           }
     }
 
@@ -2320,14 +2320,16 @@ void MarkShockCells ( const std::size_t nelem,
 
       // Force deformation unknown to first order
       for (std::size_t k=0; k<nmat; ++k)
-	if (solidx[k] > 0)
-	  for (std::size_t i=0; i<3; ++i)
-	    for (std::size_t j=0; j<3; ++j)
-	    {
-	      state[0][deformIdx(nmat, solidx[k], i, j)] = U(el,deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
-	      state[1][deformIdx(nmat, solidx[k], i, j)] = U(er,deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+        if (solidx[k] > 0)
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+            {
+              state[0][deformIdx(nmat, solidx[k], i, j)] = U(el,deformDofIdx(
+                nmat, solidx[k], i, j, rdof, 0));
+              state[1][deformIdx(nmat, solidx[k], i, j)] = U(er,deformDofIdx(
+                nmat, solidx[k], i, j, rdof, 0));
             }
-      
+
       // Evaluate the flux
       auto fl = flux( system, ncomp, mat_blk, state[0], {} );
       auto fr = flux( system, ncomp, mat_blk, state[1], {} );

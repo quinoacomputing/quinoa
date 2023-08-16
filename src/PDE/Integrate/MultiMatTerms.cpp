@@ -313,11 +313,12 @@ updateRhsNonCons(
           wt * ncf[volfracIdx(nmat,k)][idof];
         R(e, energyDofIdx(nmat,k,ndof,idof)) +=
           wt * ncf[energyIdx(nmat,k)][idof] * B[idof];
-	if (solidx[k] > 0)
-	  for(std::size_t i=0; i<3; ++i)
-	    for(std::size_t j=0; j<3; ++j)
-	      R(e, deformDofIdx(nmat,solidx[k],i,j,ndof,idof)) +=
-		wt * ncf[deformIdx(nmat,solidx[k],i,j)][idof] * B[idof];
+        if (solidx[k] > 0) {
+          for(std::size_t i=0; i<3; ++i)
+            for(std::size_t j=0; j<3; ++j)
+              R(e, deformDofIdx(nmat,solidx[k],i,j,ndof,idof)) +=
+              wt * ncf[deformIdx(nmat,solidx[k],i,j)][idof] * B[idof];
+        }
       }
     }
   }

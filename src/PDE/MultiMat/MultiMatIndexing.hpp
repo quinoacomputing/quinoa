@@ -180,7 +180,6 @@ inline bool matExists( tk::real volfrac )
 
 //! \brief Get the index of the quantity vel[l]*g[i][j] computed inside the
 //!   Riemann flux solver.
-//! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \param[in] i Row of inverse deformation tensor
 //! \param[in] j Column of inverse deformation tensor
