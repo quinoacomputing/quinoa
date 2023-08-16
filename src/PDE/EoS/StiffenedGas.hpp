@@ -92,6 +92,12 @@ class StiffenedGas {
       tk::real,
       tk::real ) const;
 
+    //! Compute the reference density
+    tk::real refDensity() const { return density(refPressure(), 300.0); }
+
+    //! Compute the reference pressure
+    tk::real refPressure() const { return 1.0e5; }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

@@ -54,6 +54,8 @@ class EOS {
     struct totalenergy {};
     struct temperature {};
     struct min_eff_pressure {};
+    struct refDensity {};
+    struct refPressure {};
     //! Call EOS function
     //! \tparam Fn Function tag identifying the function to call
     //! \tparam Args Types of arguments to pass to function
@@ -80,6 +82,12 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
             return m.min_eff_pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refDensity > )
+            return m.refDensity( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refPressure > )
+            return m.refPressure( std::forward< Args >( args )... );
         }, m_material );
     }
 

@@ -105,6 +105,14 @@ class JWL {
       tk::real arho,
       tk::real alpha ) const;
 
+    //! Compute the reference density
+    //! \details Returns the reference density
+    tk::real refDensity() const { return m_rhor; }
+
+    //! Compute the reference pressure
+    //! \details Returns the reference pressure
+    tk::real refPressure() const { return m_pr; }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
