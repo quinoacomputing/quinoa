@@ -93,7 +93,7 @@ endif()
 # directory based on cmake-supplied compiler ID
 if (NOT TPL_DIR)
   string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
-  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../external/install/${COMP}-${ARCH})
+  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../../quinoa-tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
 endif()
