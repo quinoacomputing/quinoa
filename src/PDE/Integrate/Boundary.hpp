@@ -88,7 +88,6 @@ bndSurfIntFV( ncomp_t system,
   const Fields& U,
   const Fields& P,
   Fields& R,
-  std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp );
 } // tk::
 

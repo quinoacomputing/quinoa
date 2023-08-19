@@ -315,7 +315,6 @@ bndSurfIntFV( ncomp_t system,
   const Fields& U,
   const Fields& P,
   Fields& R,
-  std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for FV
@@ -340,10 +339,6 @@ bndSurfIntFV( ncomp_t system,
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in,out] R Right-hand side vector computed
-//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
-//!   computed from the Riemann solver for use in the non-conservative terms.
-//!   These derivatives are used only for multi-material hydro and unused for
-//!   single-material compflow and linear transport.
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
@@ -357,9 +352,6 @@ bndSurfIntFV( ncomp_t system,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
-
-  //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
-  //        "derivative vector for single material compflow" );
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
@@ -412,25 +404,17 @@ bndSurfIntFV( ncomp_t system,
         auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1],
                         gp[2], t ) );
 
+        // compute non-conservative terms
+        std::vector< tk::real > var_riemann(nmat+1, 0.0);
+        for (std::size_t k=0; k<nmat; ++k) var_riemann[k] = fl[ncomp+k];
+
+        auto ncf_l = nonConservativeIntFV(system, nmat, mat_blk, rdof, el, fn,
+          inpoel, coord, geoElem, U, P, var_riemann);
+
         // Add the surface integration term to the rhs
         for (ncomp_t c=0; c<ncomp; ++c)
         {
-          R(el, c) -= geoFace(f,0) * fl[c];
-        }
-
-        // Prep for non-conservative terms in multimat
-        if (fl.size() > ncomp)
-        {
-          // Gradients of partial pressures
-          for (std::size_t k=0; k<nmat; ++k)
-          {
-            for (std::size_t idir=0; idir<3; ++idir)
-              riemannDeriv[3*k+idir][el] += geoFace(f,0) * fl[ncomp+k]
-              * fn[idir];
-          }
-
-          // Divergence of velocity
-          riemannDeriv[3*nmat][el] += geoFace(f,0) * fl[ncomp+nmat];
+          R(el, c) -= geoFace(f,0) * (fl[c] - ncf_l[c]);
         }
       }
     }

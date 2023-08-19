@@ -501,45 +501,25 @@ class MultiMat {
       // set rhs to zero
       R.fill(0.0);
 
-      // allocate space for Riemann derivatives used in non-conservative terms
-      std::vector< std::vector< tk::real > >
-        riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
-
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real,
         tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
-      // compute internal surface flux integrals
+      // compute internal surface flux (including non-conservative) integrals
       tk::surfIntFV( m_system, nmat, m_mat_blk, t, rdof, inpoel,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, R,
-                     riemannDeriv, intsharp );
+                     intsharp );
 
-      // compute boundary surface flux integrals
+      // compute boundary surface flux (including non-conservative) integrals
       for (const auto& b : m_bc)
         tk::bndSurfIntFV( m_system, nmat, m_mat_blk, rdof, b.first,
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, b.second, U, P, R, riemannDeriv, intsharp );
+                          velfn, b.second, U, P, R, intsharp );
 
       // compute optional source term
       tk::srcIntFV( m_system, m_mat_blk, t, fd.Esuel().size()/4,
                     geoElem, Problem::src, R, nmat );
-
-      Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
-              "vector incorrect" );
-
-      // get derivatives from riemannDeriv
-      for (std::size_t k=0; k<riemannDeriv.size(); ++k)
-      {
-        Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
-                "for non-conservative terms has incorrect size" );
-        for (std::size_t e=0; e<U.nunk(); ++e)
-          riemannDeriv[k][e] /= geoElem(e, 0);
-      }
-
-      // compute volume integrals of non-conservative terms
-      tk::nonConservativeIntFV( m_system, nmat, m_mat_blk, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, riemannDeriv, R );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])

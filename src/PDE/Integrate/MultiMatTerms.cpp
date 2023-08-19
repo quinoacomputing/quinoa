@@ -324,23 +324,23 @@ updateRhsNonCons(
   }
 }
 
-void
+std::vector< tk::real >
 nonConservativeIntFV(
   ncomp_t system,
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
-  const std::size_t nelem,
+  const std::size_t e,
+  const std::array< tk::real, 3 >& fn,
   const std::vector< std::size_t >& inpoel,
   const UnsMesh::Coords& coord,
   const Fields& geoElem,
   const Fields& U,
   const Fields& P,
-  const std::vector< std::vector< tk::real > >& riemannDeriv,
-  Fields& R )
+  const std::vector< tk::real >& var_riemann )
 // *****************************************************************************
-//  Compute volume integrals of non-conservative terms for multi-material FV
-//! \details This is called for multi-material FV, computing volume integrals of
+//  Compute integrals of non-conservative terms for multi-material FV
+//! \details This is called for multi-material FV, computing integrals of
 //!   terms in the volume fraction and energy equations, which do not exist in
 //!   the single-material flow formulation (for `CompFlow`). For further
 //!   details see Pelanti, M., & Shyue, K. M. (2019). A numerical model for
@@ -350,15 +350,14 @@ nonConservativeIntFV(
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] nelem Total number of elements
+//! \param[in] e Element for which contribution is to be calculated
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitive quantities at recent time step
-//! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
+//! \param[in] var_riemann Riemann-values of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms
-//! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
   using inciter::volfracIdx;
@@ -370,61 +369,52 @@ nonConservativeIntFV(
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
-  // compute volume integrals
-  for (std::size_t e=0; e<nelem; ++e)
+  // Compute the basis function
+  std::vector< tk::real > B(rdof, 0.0);
+  B[0] = 1.0;
+
+  auto state = evalPolynomialSol(system, mat_blk, 0, ncomp, nprim,
+    rdof, nmat, e, rdof, inpoel, coord, geoElem,
+    {{0.25, 0.25, 0.25}}, B, U, P);
+
+  // get bulk properties
+  tk::real rhob(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+      rhob += state[densityIdx(nmat, k)];
+
+  // get the velocity vector
+  std::array< tk::real, 3 > vel{{ state[ncomp+velocityIdx(nmat, 0)],
+                                  state[ncomp+velocityIdx(nmat, 1)],
+                                  state[ncomp+velocityIdx(nmat, 2)] }};
+
+  std::vector< tk::real > ymat(nmat, 0.0);
+  tk::real p_face(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
   {
-    // Compute the basis function
-    std::vector< tk::real > B(rdof, 0.0);
-    B[0] = 1.0;
-
-    auto state = evalPolynomialSol(system, mat_blk, 0, ncomp, nprim,
-      rdof, nmat, e, rdof, inpoel, coord, geoElem,
-      {{0.25, 0.25, 0.25}}, B, U, P);
-
-    // get bulk properties
-    tk::real rhob(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-        rhob += state[densityIdx(nmat, k)];
-
-    // get the velocity vector
-    std::array< tk::real, 3 > vel{{ state[ncomp+velocityIdx(nmat, 0)],
-                                    state[ncomp+velocityIdx(nmat, 1)],
-                                    state[ncomp+velocityIdx(nmat, 2)] }};
-
-    std::vector< tk::real > ymat(nmat, 0.0);
-    std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      ymat[k] = state[densityIdx(nmat, k)]/rhob;
-
-      for (std::size_t idir=0; idir<3; ++idir)
-        dap[idir] += riemannDeriv[3*k+idir][e];
-    }
-
-    // compute non-conservative terms
-    std::vector< tk::real > ncf(ncomp, 0.0);
-
-    for (std::size_t idir=0; idir<3; ++idir)
-      ncf[momentumIdx(nmat, idir)] = 0.0;
-
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      // evaluate non-conservative term for energy equation
-      ncf[densityIdx(nmat, k)] = 0.0;
-      for (std::size_t idir=0; idir<3; ++idir)
-        ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*dap[idir]
-                                              - riemannDeriv[3*k+idir][e] );
-
-      // evaluate non-conservative term for volume fraction equation
-      ncf[volfracIdx(nmat, k)] = state[volfracIdx(nmat, k)]
-        * riemannDeriv[3*nmat][e];
-    }
-
-    for (ncomp_t c=0; c<ncomp; ++c)
-    {
-      R(e, c) += geoElem(e,0) * ncf[c];
-    }
+    ymat[k] = state[densityIdx(nmat, k)]/rhob;
+    p_face += var_riemann[k];
   }
+
+  // compute non-conservative terms
+  std::vector< tk::real > ncf(ncomp, 0.0);
+
+  for (std::size_t idir=0; idir<3; ++idir)
+    ncf[momentumIdx(nmat, idir)] = 0.0;
+
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    // evaluate non-conservative term for energy equation
+    ncf[densityIdx(nmat, k)] = 0.0;
+    for (std::size_t idir=0; idir<3; ++idir)
+      ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*p_face*fn[idir]
+                                            - var_riemann[k]*fn[idir] );
+
+    // evaluate non-conservative term for volume fraction equation
+    ncf[volfracIdx(nmat, k)] = state[volfracIdx(nmat, k)]
+      * var_riemann[nmat];
+  }
+
+  return ncf;
 }
 
 void
