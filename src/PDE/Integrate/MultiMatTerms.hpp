@@ -61,15 +61,10 @@ updateRhsNonCons( ncomp_t ncomp,
 //! Compute volume integrals of non-conservative terms for multi-material FV
 std::vector< tk::real >
 nonConservativeIntFV(
-  ncomp_t system,
   std::size_t nmat,
-  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
   const std::size_t e,
   const std::array< tk::real, 3 >& fn,
-  const std::vector< std::size_t >& inpoel,
-  const UnsMesh::Coords& coord,
-  const Fields& geoElem,
   const Fields& U,
   const Fields& P,
   const std::vector< tk::real >& var_riemann );

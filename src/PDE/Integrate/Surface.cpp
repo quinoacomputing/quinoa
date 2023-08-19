@@ -486,10 +486,8 @@ surfIntFV( ncomp_t system,
     std::vector< tk::real > var_riemann(nmat+1, 0.0);
     for (std::size_t k=0; k<nmat+1; ++k) var_riemann[k] = fl[ncomp+k];
 
-    auto ncf_l = nonConservativeIntFV(system, nmat, mat_blk, rdof, el, fn,
-      inpoel, coord, geoElem, U, P, var_riemann);
-    auto ncf_r = nonConservativeIntFV(system, nmat, mat_blk, rdof, er, fn,
-      inpoel, coord, geoElem, U, P, var_riemann);
+    auto ncf_l = nonConservativeIntFV(nmat, rdof, el, fn, U, P, var_riemann);
+    auto ncf_r = nonConservativeIntFV(nmat, rdof, er, fn, U, P, var_riemann);
 
     // Add the surface integration term to the rhs
     for (ncomp_t c=0; c<ncomp; ++c)
