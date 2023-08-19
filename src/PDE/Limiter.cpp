@@ -875,7 +875,10 @@ VertexBasedMultiMat_FV(
     std::vector< tk::real > phip(nprim, 1.0);
     // limit conserved quantities
     std::vector< std::size_t > var;
-    for (std::size_t c=0; c<ncomp; ++c) var.push_back(c);
+    for (std::size_t k=0; k<nmat; ++k) {
+      var.push_back(volfracIdx(nmat,k));
+      var.push_back(densityIdx(nmat,k));
+    }
     VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, rdof, ncomp,
       phic, var);
     // limit primitive quantities

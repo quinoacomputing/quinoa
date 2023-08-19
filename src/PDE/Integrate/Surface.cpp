@@ -464,10 +464,10 @@ surfIntFV( ncomp_t system,
 
     std::array< std::vector< real >, 2 > state;
 
-    state[0] = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
-      nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-    state[1] = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
-      nmat, er, rdof, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
+    state[0] = evalFVSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
+      nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+    state[1] = evalFVSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
+      nmat, er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
     //safeReco(rdof, nmat, el, er, U, state);
 

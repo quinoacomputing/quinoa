@@ -342,6 +342,8 @@ class MultiMat {
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -350,7 +352,10 @@ class MultiMat {
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
       std::vector< std::size_t > vars;
-      for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
+      for (std::size_t k=0; k<nmat; ++k) {
+        vars.push_back(volfracIdx(nmat,k));
+        vars.push_back(densityIdx(nmat,k));
+      }
 
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
