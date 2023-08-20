@@ -2004,7 +2004,8 @@ void PositivityPreservingMultiMat_FV(
 
     const tk::real min = 1e-15;
 
-    // 1. Enforce positive density and total energy
+    // 1. Enforce positive density (total energy will be positive if pressure
+    //    and density are positive)
     for (std::size_t lf=0; lf<4; ++lf)
     {
       std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
@@ -2031,19 +2032,12 @@ void PositivityPreservingMultiMat_FV(
 
       for(std::size_t i=0; i<nmat; i++)
       {
-        tk::real phi_rho(1.0), phi_rhoe(1.0);
         // Evaluate the limiting coefficient for material density
         auto rho = state[densityIdx(nmat, i)];
         auto rho_avg = U(e, densityDofIdx(nmat, i, rdof, 0));
-        phi_rho = PositivityLimiting(min, rho, rho_avg);
+        auto phi_rho = PositivityLimiting(min, rho, rho_avg);
         phic[densityIdx(nmat, i)] =
           std::min(phic[densityIdx(nmat, i)], phi_rho);
-        // Evaluate the limiting coefficient for material energy
-        auto rhoe = state[energyIdx(nmat, i)];
-        auto rhoe_avg = U(e, energyDofIdx(nmat, i, rdof, 0));
-        phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
-        phic[energyIdx(nmat, i)] =
-          std::min(phic[energyIdx(nmat, i)], phi_rhoe);
       }
     }
     // apply limiter coefficient
@@ -2052,9 +2046,6 @@ void PositivityPreservingMultiMat_FV(
       U(e, densityDofIdx(nmat,i,rdof,1)) *= phic[densityIdx(nmat,i)];
       U(e, densityDofIdx(nmat,i,rdof,2)) *= phic[densityIdx(nmat,i)];
       U(e, densityDofIdx(nmat,i,rdof,3)) *= phic[densityIdx(nmat,i)];
-      U(e, energyDofIdx(nmat,i,rdof,1)) *= phic[energyIdx(nmat,i)];
-      U(e, energyDofIdx(nmat,i,rdof,2)) *= phic[energyIdx(nmat,i)];
-      U(e, energyDofIdx(nmat,i,rdof,3)) *= phic[energyIdx(nmat,i)];
     }
 
     // 2. Enforce positive pressure (assuming density is positive)
