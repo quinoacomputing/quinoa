@@ -665,9 +665,6 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
   // Tell the meshwriter for this mesh the total number of its chares
   m_meshwriter[meshid].nchare( meshid, m_nchare[meshid] );
 
-  // Partition first mesh
-  if (meshid == 0) m_partitioner[0].partition( m_nchare[0] );
-
   if (++m_nload == m_nelem.size()) {     // all meshes have been loaded
     m_nload = 0;
     auto print = printer();
@@ -692,6 +689,9 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
 
     m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
       m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0] }} );
+
+    // Partition first mesh
+    m_partitioner[0].partition( m_nchare[0] );
   }
 }
 
