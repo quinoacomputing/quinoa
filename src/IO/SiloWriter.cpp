@@ -61,7 +61,7 @@ SiloWriter::SiloWriter( const std::string& filename,
   DBShowErrors(errLevel, &SiloError);
 
   // Create Silo file
-  m_dbfile = DBCreate(filename.c_str(), 0, DB_LOCAL, filename.c_str(), DB_HDF5);
+  m_dbfile = DBCreate(filename.c_str(), 0, DB_LOCAL, filename.c_str());
   ErrChk( m_dbfile != NULL, "Cannot create Silo file" + filename );
 }
 

@@ -33,7 +33,7 @@ tk::real
 MultiMatPhysicsEnergyPill::dtRestriction( std::size_t system,
   const tk::Fields& geoElem,
   std::size_t nelem,
-  const int engSrcAd ) const
+  const std::vector< int >& engSrcAd ) const
 // *****************************************************************************
 //  Compute the time step size restriction based on this physics
 //! \param[in] system Index for equation systems
@@ -44,30 +44,29 @@ MultiMatPhysicsEnergyPill::dtRestriction( std::size_t system,
 // *****************************************************************************
 {
   auto mindt = std::numeric_limits< tk::real >::max();
-  // determine front propagation speed if relevant energy sources were added
-  if (engSrcAd == 1) {
-    const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
-      tag::meshblock >();
-    tk::real v_front(0.0);
-    if (icmbk.size() > system) {
-      for (const auto& b : icmbk[system]) { // for all blocks
-        auto inittype = b.template get< tag::initiate, tag::init >();
-        if (inittype == ctr::InitiateType::LINEAR) {
-          v_front = std::max(v_front,
-            b.template get< tag::initiate, tag::velocity >());
-        }
+  // determine front propagation speed
+  const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
+    tag::meshblock >();
+  tk::real v_front(0.0);
+  if (icmbk.size() > system) {
+    for (const auto& b : icmbk[system]) { // for all blocks
+      auto inittype = b.template get< tag::initiate, tag::init >();
+      if (inittype == ctr::InitiateType::LINEAR) {
+        v_front = std::max(v_front,
+          b.template get< tag::initiate, tag::velocity >());
       }
     }
+  }
 
-    for (std::size_t e=0; e<nelem; ++e)
-    {
-      // characteristic length (radius of insphere)
-      auto dx = std::min(std::cbrt(geoElem(e,0)), geoElem(e,4))
-        /std::sqrt(24.0);
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // characteristic length (radius of insphere)
+    auto dx = std::min(std::cbrt(geoElem(e,0)), geoElem(e,4))
+      /std::sqrt(24.0);
 
-      // element dt
-      if (std::abs(v_front) > 1e-8) mindt = std::min(mindt, dx/v_front);
-    }
+    // element dt restriction if relevant energy sources were added
+    if (engSrcAd[e] > 0 && std::abs(v_front) > 1e-8)
+      mindt = std::min(mindt, dx/v_front);
   }
 
   return mindt;
@@ -80,7 +79,7 @@ physSrc( std::size_t system,
   const tk::Fields& geoElem,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblkid,
   tk::Fields& R,
-  int& engSrcAdded ) const
+  std::vector< int >& engSrcAdded ) const
 // *****************************************************************************
 //! Compute sources corresponding to a propagating front in user-defined box
 //! \param[in] system Index for equation systems
@@ -141,7 +140,7 @@ physSrc( std::size_t system,
               if (r_e >= r_front && r_e <= r_front+w_front) {
                 // Add the source term to the rhs
                 R(e, energyIdx(nmat,blkmatid-1)) += geoElem(e,0) * amplE;
-                engSrcAdded = 1;
+                engSrcAdded[e] = 1;
               }
             }
           }

@@ -58,6 +58,9 @@ void initializeBox( std::size_t system,
   auto nmat =
     g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
+  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
+
   const auto& initiate = b.template get< tag::initiate >();
   auto inittype = initiate.template get< tag::init >();
 
@@ -171,10 +174,20 @@ void initializeBox( std::size_t system,
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k] * spi;
     }
     else {
-      // although the following function returns alpha_k * g_k, since box-init
-      // only works with pure material region initialization (alpha_k=1), the
-      // result is equivalent to g_k
-      auto gk = getDeformGrad(nmat, k, s);
+      // TEMP: Eventually we would need to initialize gk from control file
+      std::array< std::array< tk::real, 3 >, 3 > gk;
+      if (solidx[k] > 0) {
+        for (std::size_t i=0; i<3; ++i) {
+          for (std::size_t j=0; j<3; ++j) {
+            if (i==j) gk[i][j] = 1.0;
+            else gk[i][j] = 0.0;
+            s[deformIdx(nmat,solidx[k],i,j)] = s[volfracIdx(nmat,k)]*gk[i][j];
+          }
+        }
+      }
+      else {
+        gk = {{}};
+      }
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
         mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr, gk );
     }

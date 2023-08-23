@@ -407,10 +407,10 @@ timeStepSizeMultiMat(
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
         auto gk = getDeformGrad(nmat, k, ugp);
-        gk = tk::rotateTensor(gk, fn);
         auto sk = mat_blk[k].computeTensor< EOS::CauchyStress >(
           ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
           ugp[volfracIdx(nmat, k)], k, gk );
+        gk = tk::rotateTensor(gk, fn);
         tk::real snn = tk::dot(tk::matvec(sk, fn), fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
@@ -487,7 +487,8 @@ timeStepSizeMultiMatFV(
   std::size_t nelem,
   std::size_t nmat,
   const tk::Fields& U,
-  const tk::Fields& P )
+  const tk::Fields& P,
+  std::vector< tk::real >& local_dte )
 // *****************************************************************************
 //  Time step restriction for multi material cell-centered FV scheme
 //! \param[in] mat_blk Material EOS block
@@ -496,6 +497,8 @@ timeStepSizeMultiMatFV(
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] U High-order solution vector
 //! \param[in] P High-order vector of primitives
+//! \param[in,out] local_dte Time step size for each element (for local
+//!   time stepping)
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
@@ -544,7 +547,8 @@ timeStepSizeMultiMatFV(
       /std::sqrt(24.0);
 
     // element dt
-    mindt = std::min(mindt, dx/v_char);
+    local_dte[e] = dx/v_char;
+    mindt = std::min(mindt, local_dte[e]);
   }
 
   return mindt;
@@ -580,6 +584,22 @@ getDeformGrad(
   }
 
   return agk;
+}
+
+//  \brief Check whether we have solid materials in our problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return true if we have at least one solid, false otherwise.
+bool
+haveSolid(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx )
+{
+  bool haveSolid = false;
+  for (std::size_t k=0; k<nmat; ++k)
+    if (solidx[k] > 0) haveSolid = true;
+
+  return haveSolid;
 }
 
 } //inciter::

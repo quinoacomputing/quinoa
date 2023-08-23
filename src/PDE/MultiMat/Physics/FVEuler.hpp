@@ -1,33 +1,34 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/Physics/DGEuler.hpp
+  \file      src/PDE/MultiMat/Physics/FVEuler.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Physics policy for the Euler equation governing multi-material flow
-    using a DG method
+    using a FV method
   \details   This file defines a Physics policy class for the compressible
-    flow equations class dg::MultiMat, defined in PDE/MultiMat/DGMultiMat.h.
+    flow equations class dg::MultiMat, defined in PDE/MultiMat/FVMultiMat.h.
     This specific algorithm solves the Euler (inviscid) equations of
     multi-material flow and uses a finite volume discretization scheme. See
-    PDE/MultiMat/Physics/DG.h for general requirements on Physics policy classes
+    PDE/MultiMat/Physics/FV.h for general requirements on Physics policy classes
     for dg::MultiMat.
 */
 // *****************************************************************************
-#ifndef MultiMatPhysicsDGEuler_h
-#define MultiMatPhysicsDGEuler_h
+#ifndef MultiMatPhysicsFVEuler_h
+#define MultiMatPhysicsFVEuler_h
 
 #include "Types.hpp"
 #include "Exception.hpp"
 #include "Inciter/Options/Physics.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/EOS.hpp"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-namespace dg {
+namespace fv {
 
 //! MultiMat system of PDEs problem: Euler (inviscid)
 //! \details This class is a no-op, consistent with no additional physics needed
@@ -58,8 +59,8 @@ class MultiMatPhysicsEuler {
     static ctr::PhysicsType type() noexcept { return ctr::PhysicsType::EULER; }
 };
 
-} // dg::
+} // fv::
 
 } // inciter::
 
-#endif // CompFlowPhysicsDGMultiMatEuler_h
+#endif // CompFlowPhysicsFVMultiMatEuler_h

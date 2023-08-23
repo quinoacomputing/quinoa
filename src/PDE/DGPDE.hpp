@@ -225,6 +225,14 @@ class DGPDE {
       self->CPL( prim, geoElem, inpoel, coord, unk, nielem );
     }
 
+    //! Public interface to getting the cell-averaged deformation gradients
+    std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+      const tk::Fields& U,
+      std::size_t nielem ) const
+    {
+      return self->cellAvgDeformGrad( U, nielem );
+    }
+
     //! Public interface to computing the P1 right-hand side vector
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -236,10 +244,11 @@ class DGPDE {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const tk::real dt,
               tk::Fields& R ) const
     {
       self->rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                 ndofel, R );
+                 ndofel, dt, R );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -391,6 +400,9 @@ class DGPDE {
                         const tk::UnsMesh::Coords&,
                         tk::Fields&,
                         std::size_t ) const = 0;
+      virtual std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+        const tk::Fields&,
+        std::size_t ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -401,6 +413,7 @@ class DGPDE {
                         const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
+                        const tk::real,
                         tk::Fields& ) const = 0;
       virtual void eval_ndof( std::size_t,
                               const tk::UnsMesh::Coords&,
@@ -530,6 +543,12 @@ class DGPDE {
       {
         data.CPL( prim, geoElem, inpoel, coord, unk, nielem );
       }
+      std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+        const tk::Fields& U,
+        std::size_t nielem ) const override
+      {
+        return data.cellAvgDeformGrad( U, nielem );
+      }
       void rhs(
         tk::real t,
         const tk::Fields& geoFace,
@@ -541,10 +560,11 @@ class DGPDE {
         const tk::Fields& U,
         const tk::Fields& P,
         const std::vector< std::size_t >& ndofel,
+        const tk::real dt,
         tk::Fields& R ) const override
       {
         data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                  ndofel, R );
+                  ndofel, dt, R );
       }
       void eval_ndof( std::size_t nunk,
                       const tk::UnsMesh::Coords& coord,

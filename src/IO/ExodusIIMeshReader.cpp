@@ -56,6 +56,9 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
   m_inFile = ex_open( filename.c_str(), EX_READ, &cpuwordsize, &iowordsize,
                       &version );
 
+  // output exodusII/netcdf configuration
+  //ex_print_config();
+
   ErrChk( m_inFile > 0, "Failed to open ExodusII file: " + filename );
 }
 

@@ -2411,7 +2411,7 @@ HTML_EXTRA_STYLESHEET = \
 
 ##! M_LINKS_NAVBAR1 = why \
 ##!                   "build git_submodules_subtrees licenses build_system" \
-##!                   "<a href=\"https://quinoacomputing.github.io/index.html#mainpage_tools\">Tools</a> inciter_main unittest_main meshconv_main" \
+##!                   "<a href=\"https://quinoacomputing.github.io/index.html#mainpage_tools\">Tools</a> inciter_main meshconv_main unittest_main" \
 ##!                   namespaces annotated files
 
 ##! M_LINKS_NAVBAR2 = "resources <a href=\"https://github.com/quinoacomputing/quinoa\">GitHub</a> papers <a href=\"https://github.com/quinoacomputing/quinoa/blob/master/LICENSE\">License</a> roadmap contributing coverage <a href=\"https://github.com/quinoacomputing/quinoa/releases\">Tarballs</a> <a href=\"https://bestpractices.coreinfrastructure.org/projects/2120\">Practices</a>"

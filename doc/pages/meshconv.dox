@@ -1,5 +1,5 @@
 /*!
-  \page      meshconv_main MeshConv
+  \page      meshconv_main MeshConv (Mesh format converter)
 
 @m_div{m-col-m-6 m-right-m}
 <img src="meshconv_white.svg"/>

@@ -304,6 +304,15 @@ class Transport {
               tk::Fields&,
               std::size_t ) const {}
 
+    //! Return cell-average deformation gradient tensor (no-op for transport)
+    //! \details This function is a no-op in transport.
+    std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+      const tk::Fields&,
+      std::size_t ) const
+    {
+      return {};
+    }
+
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
@@ -314,6 +323,7 @@ class Transport {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
+    //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -325,6 +335,7 @@ class Transport {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const tk::real dt,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -357,9 +368,10 @@ class Transport {
       std::vector< std::vector< tk::real > > riemannLoc;
 
       // compute internal surface flux integrals
+      std::vector< std::size_t > solidx(1, 0);
       tk::surfInt( m_system, m_ncomp, m_mat_blk, t, ndof, rdof,
-                   inpoel, coord, fd, geoFace, geoElem, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, ndofel, R, vriem,
+                   inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
+                   Problem::prescribedVelocity, U, P, ndofel, dt, R, vriem,
                    riemannLoc, riemannDeriv, intsharp );
 
       if(ndof > 1)
@@ -370,7 +382,7 @@ class Transport {
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, m_ncomp, m_mat_blk, ndof, rdof, 
+        tk::bndSurfInt( m_system, m_ncomp, m_mat_blk, ndof, rdof,
           b.first, fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
           riemannLoc, riemannDeriv, intsharp );
