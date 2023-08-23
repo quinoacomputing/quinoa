@@ -96,7 +96,7 @@ else()
 endif()
 
 # ExaM2M
-set(HAS_EXAM2M false)  # will become compiler define
+set(HAS_EXAM2M true)  # will become compiler define
 set(COLLIDECHARM "-module collidecharm")
 
 message(STATUS "------------------------------------------")
