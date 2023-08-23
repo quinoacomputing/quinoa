@@ -1104,7 +1104,7 @@ evalFVSol( std::size_t system,
   const std::vector< real >& B,
   const Fields& U,
   const Fields& P,
-  const std::vector< int >& srcFlag )
+  int srcFlag )
 // *****************************************************************************
 //  Evaluate second-order FV solution at quadrature point
 //! \param[in] system Equation system index
@@ -1122,7 +1122,7 @@ evalFVSol( std::size_t system,
 //! \param[in] B Basis function at given quadrature point
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
-//! \param[in] srcFlag Whether the energy source was added
+//! \param[in] srcFlag Whether the energy source was added to element e
 //! \return High-order unknown/state vector at quadrature point, modified
 //!   if near interfaces using THINC
 // *****************************************************************************
@@ -1152,7 +1152,7 @@ evalFVSol( std::size_t system,
   for (std::size_t k=0; k<nmat; ++k) {
     auto alk = state[volfracIdx(nmat,k)];
     if (matInt[k]) {
-      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>((nmat-1)*1e-12)),
+      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*1e-12),
         1e-12);
     }
     state[energyIdx(nmat,k)] = alk *
@@ -1170,7 +1170,7 @@ evalFVSol( std::size_t system,
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());
 
-  if (intsharp > 0 && srcFlag[e] == 0)
+  if (intsharp > 0 && srcFlag == 0)
   {
     std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 

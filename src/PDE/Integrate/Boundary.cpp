@@ -394,7 +394,8 @@ bndSurfIntFV( ncomp_t system,
 
         // Compute the state variables at the left element
         auto ugp = evalFVSol(system, mat_blk, intsharp, ncomp, nprim,
-          rdof, nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, srcFlag);
+          rdof, nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P,
+          srcFlag[el]);
 
         Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                 "appended boundary state vector" );

@@ -196,7 +196,7 @@ evalFVSol( std::size_t system,
   const std::vector< real >& B,
   const Fields& U,
   const Fields& P,
-  const std::vector< int >& srcFlag );
+  int srcFlag );
 
 //! Compute safe reconstructions near material interfaces
 void

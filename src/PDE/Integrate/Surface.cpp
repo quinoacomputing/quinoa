@@ -467,9 +467,9 @@ surfIntFV( ncomp_t system,
     std::array< std::vector< real >, 2 > state;
 
     state[0] = evalFVSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
-      nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, srcFlag);
+      nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, srcFlag[el]);
     state[1] = evalFVSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
-      nmat, er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P, srcFlag);
+      nmat, er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P, srcFlag[er]);
 
     //safeReco(rdof, nmat, el, er, U, state);
 
