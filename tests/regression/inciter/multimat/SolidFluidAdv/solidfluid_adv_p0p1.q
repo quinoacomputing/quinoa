@@ -20,7 +20,6 @@ inciter
 
     physics euler
     problem user_defined
-    depvar u
 
     flux laxfriedrichs
 

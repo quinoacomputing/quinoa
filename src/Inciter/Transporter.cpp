@@ -1141,7 +1141,10 @@ Transporter::diagHeader()
     }
 
     // Augment diagnostics variables by L2-norm of the residual and total energy
-    if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
+    if ( scheme == ctr::SchemeType::DiagCG ||
+         scheme == ctr::SchemeType::ALECG ||
+         scheme == ctr::SchemeType::FV )
+    {
       for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
     }
     d.push_back( "mE" );
