@@ -392,6 +392,7 @@ class MultiMat {
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+    //! \param[in] srcFlag Whether the energy source was added
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
     void limit( const tk::Fields& geoFace,
@@ -399,6 +400,7 @@ class MultiMat {
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
+                const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
@@ -413,7 +415,7 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          m_system, coord, U, P, nmat );
+          m_system, coord, srcFlag, U, P, nmat );
         PositivityPreservingMultiMat_FV( inpoel, fd.Esuel().size()/4, nmat,
           m_mat_blk, coord, geoFace, U, P );
       }
@@ -421,41 +423,6 @@ class MultiMat {
       {
         Throw("Limiter type not configured for multimat.");
       }
-    }
-
-    //! Apply CPL to the conservative variable solution for this PDE system
-    //! \param[in] prim Array of primitive variables
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in,out] unk Array of conservative variables
-    //! \param[in] nielem Number of internal elements
-    //! \details This function applies CPL to obtain consistent dofs for
-    //!   conservative quantities based on the limited primitive quantities.
-    //!   See Pandare et al. (2023). On the Design of Stable,
-    //!   Consistent, and Conservative High-Order Methods for Multi-Material
-    //!   Hydrodynamics. J Comp Phys, 112313.
-    void CPL( const tk::Fields& prim,
-      const tk::Fields& geoElem,
-      const std::vector< std::size_t >& inpoel,
-      const tk::UnsMesh::Coords& coord,
-      tk::Fields& unk,
-      std::size_t nielem ) const
-    {
-      [[maybe_unused]] const auto rdof =
-        g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto nmat =
-        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
-
-      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
-              "vector and primitive vector at recent time step incorrect" );
-      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
-              "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
-              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-
-      correctLimConservMultiMat(nielem, m_system, m_mat_blk, nmat, inpoel,
-        coord, geoElem, prim, unk);
     }
 
     //! Compute right hand side
@@ -513,14 +480,14 @@ class MultiMat {
 
       // compute internal surface flux (including non-conservative) integrals
       tk::surfIntFV( m_system, nmat, m_mat_blk, t, rdof, inpoel,
-                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, R,
-                     intsharp );
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
+                     srcFlag, R, intsharp );
 
       // compute boundary surface flux (including non-conservative) integrals
       for (const auto& b : m_bc)
         tk::bndSurfIntFV( m_system, nmat, m_mat_blk, rdof, b.first,
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, b.second, U, P, R, intsharp );
+                          velfn, b.second, U, P, srcFlag, R, intsharp );
 
       // compute optional source term
       tk::srcIntFV( m_system, m_mat_blk, t, fd.Esuel().size()/4,

@@ -108,6 +108,8 @@ THINCReco( std::size_t system,
   const std::array< real, 3 >& xp,
   const Fields& U,
   const Fields& P,
+  bool intInd,
+  const std::vector< std::size_t >& matInt,
   const std::vector< real >& vfmin,
   const std::vector< real >& vfmax,
   std::vector< real >& state );
@@ -193,7 +195,8 @@ evalFVSol( std::size_t system,
   const std::array< real, 3 >& ref_gp,
   const std::vector< real >& B,
   const Fields& U,
-  const Fields& P );
+  const Fields& P,
+  const std::vector< int >& srcFlag );
 
 //! Compute safe reconstructions near material interfaces
 void

@@ -80,7 +80,7 @@ FV::FV( const CProxy_Discretization& disc,
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_boxelems(),
-  m_srcFlag(m_u.nunk(), 1),
+  m_srcFlag(m_u.nunk(), 0),
   m_nrk(0),
   m_dte(m_u.nunk(), 0.0),
   m_finished(0)
@@ -479,7 +479,7 @@ FV::lim()
   if (rdof > 1) {
     g_fvpde[Disc()->MeshId()].limit( myGhosts()->m_geoFace, myGhosts()->m_fd,
       myGhosts()->m_esup,
-      myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
+      myGhosts()->m_inpoel, myGhosts()->m_coord, m_srcFlag, m_u, m_p );
   }
 
   // Send limited solution to neighboring chares
@@ -649,8 +649,7 @@ FV::solve( tk::real newdt )
     }
   }
 
-  // initialize energy source as not added (modified in eq.rhs appropriately)
-  for (auto& fl : m_srcFlag) fl = 0;
+  // Compute rhs
   g_fvpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
     d->ElemBlockId(), m_u, m_p, m_rhs, m_srcFlag );
