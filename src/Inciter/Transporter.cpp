@@ -1531,7 +1531,6 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
 
   if (++m_nchk == m_nelem.size()) { // all worker arrays have checkpointed
     m_nchk = 0;
-    #ifndef HAS_EXAM2M
     if (not g_inputdeck.get< tag::cmd, tag::benchmark >()) {
       const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
       CkCallback res( CkIndex_Transporter::resume(), thisProxy );
@@ -1539,10 +1538,6 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
     } else {
       resume();
     }
-    #else
-      printer() << ">>> WARNING: Checkpointing with ExaM2M not yet implemented\n";
-      resume();
-    #endif
   }
 }
 

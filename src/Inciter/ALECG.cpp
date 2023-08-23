@@ -1389,11 +1389,9 @@ ALECG::transfer()
 {
   // Initiate solution transfer (if coupled)
 
-//#ifdef HAS_EXAM2M
+//TODO: enable this for during-timestepping solution transfer
 //  Disc()->transfer(m_u, CkCallback(CkIndex_ALECG::stage(), thisProxy[thisIndex]));
-//#else
   thisProxy[thisIndex].stage();
-//#endif
 }
 
 //! [stage]

@@ -40,7 +40,7 @@ class M2MTransfer : public CBase_M2MTransfer {
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
-    explicit M2MTransfer( CkMigrateMessage* ) {}
+    explicit M2MTransfer( CkMigrateMessage* m ) : CBase_M2MTransfer( m ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

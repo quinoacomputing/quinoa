@@ -25,9 +25,7 @@
 #include "ConjugateGradients.hpp"
 #include "ALE.hpp"
 
-#ifdef HAS_EXAM2M
-  #include "M2MTransfer.hpp"
-#endif
+#include "M2MTransfer.hpp"
 
 namespace inciter {
 
@@ -185,15 +183,11 @@ Discretization::Discretization(
     // skip transfer if single mesh or if not involved in coupling
     transferInit();
   } else {
-    #ifdef HAS_EXAM2M
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
       //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
     }
-    #else
-    transferInit();
-    #endif
   }
 }
 
@@ -333,7 +327,6 @@ Discretization::transfer( [[maybe_unused]] tk::Fields& u, CkCallback cb  )
 
     m_transfer_complete = cb;
     // Pass source and destination meshes to mesh transfer lib (if coupled)
-    #ifdef HAS_EXAM2M
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (m_mytransfer[m_nsrc].src == m_meshid) {
       exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
@@ -349,7 +342,6 @@ Discretization::transfer( [[maybe_unused]] tk::Fields& u, CkCallback cb  )
     } else {
       m_ndst = 0;
     }
-    #endif
 
   }
 
