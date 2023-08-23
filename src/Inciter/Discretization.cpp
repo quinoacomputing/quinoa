@@ -26,7 +26,7 @@
 #include "ALE.hpp"
 
 #ifdef HAS_EXAM2M
-  #include "Controller.hpp"
+  #include "M2MTransfer.hpp"
 #endif
 
 namespace inciter {

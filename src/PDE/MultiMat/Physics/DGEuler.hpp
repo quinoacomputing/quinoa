@@ -41,7 +41,7 @@ class MultiMatPhysicsEuler {
     tk::real dtRestriction( std::size_t,
       const tk::Fields&,
       std::size_t,
-      const int ) const
+      const std::vector< int >& ) const
     { return std::numeric_limits< tk::real >::max(); }
 
     //! Compute sources corresponding to this physics
@@ -51,7 +51,7 @@ class MultiMatPhysicsEuler {
       const tk::Fields&,
       const std::unordered_map< std::size_t, std::set< std::size_t > >&,
       tk::Fields&,
-      int& ) const {}
+      std::vector< int >& ) const {}
 
     //! Return enum denoting physics policy
     //! \return Enum denoting physics policy.

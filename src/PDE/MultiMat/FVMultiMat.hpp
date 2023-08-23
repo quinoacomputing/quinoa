@@ -341,6 +341,8 @@ class MultiMat {
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
+      const auto nmat =
+        g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -349,7 +351,10 @@ class MultiMat {
       //--------------------------------------------------
       // specify how many variables need to be reconstructed
       std::vector< std::size_t > vars;
-      for (std::size_t c=0; c<m_ncomp; ++c) vars.push_back(c);
+      for (std::size_t k=0; k<nmat; ++k) {
+        vars.push_back(volfracIdx(nmat,k));
+        vars.push_back(densityIdx(nmat,k));
+      }
 
       // 1. solve 3x3 least-squares system
       for (std::size_t e=0; e<nelem; ++e)
@@ -464,7 +469,7 @@ class MultiMat {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in,out] R Right-hand side vector computed
-    //! \param[in,out] engSrcAdded Whether the energy source was added
+    //! \param[in,out] srcFlag Whether the energy source was added
     void rhs( tk::real t,
               const tk::Fields& geoFace,
               const tk::Fields& geoElem,
@@ -476,7 +481,7 @@ class MultiMat {
               const tk::Fields& U,
               const tk::Fields& P,
               tk::Fields& R,
-              int& engSrcAdded ) const
+              std::vector< int >& srcFlag ) const
     {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto nmat =
@@ -500,45 +505,25 @@ class MultiMat {
       // set rhs to zero
       R.fill(0.0);
 
-      // allocate space for Riemann derivatives used in non-conservative terms
-      std::vector< std::vector< tk::real > >
-        riemannDeriv( 3*nmat+1, std::vector<tk::real>(U.nunk(),0.0) );
-
       // configure a no-op lambda for prescribed velocity
       auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real,
         tk::real ){
         return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
 
-      // compute internal surface flux integrals
+      // compute internal surface flux (including non-conservative) integrals
       tk::surfIntFV( m_system, nmat, m_mat_blk, t, rdof, inpoel,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, R,
-                     riemannDeriv, intsharp );
+                     intsharp );
 
-      // compute boundary surface flux integrals
+      // compute boundary surface flux (including non-conservative) integrals
       for (const auto& b : m_bc)
         tk::bndSurfIntFV( m_system, nmat, m_mat_blk, rdof, b.first,
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, b.second, U, P, R, riemannDeriv, intsharp );
+                          velfn, b.second, U, P, R, intsharp );
 
       // compute optional source term
       tk::srcIntFV( m_system, m_mat_blk, t, fd.Esuel().size()/4,
                     geoElem, Problem::src, R, nmat );
-
-      Assert( riemannDeriv.size() == 3*nmat+1, "Size of Riemann derivative "
-              "vector incorrect" );
-
-      // get derivatives from riemannDeriv
-      for (std::size_t k=0; k<riemannDeriv.size(); ++k)
-      {
-        Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
-                "for non-conservative terms has incorrect size" );
-        for (std::size_t e=0; e<U.nunk(); ++e)
-          riemannDeriv[k][e] /= geoElem(e, 0);
-      }
-
-      // compute volume integrals of non-conservative terms
-      tk::nonConservativeIntFV( m_system, nmat, m_mat_blk, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, riemannDeriv, R );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[m_system])
@@ -551,7 +536,7 @@ class MultiMat {
       }
 
       // compute external (energy) sources
-      m_physics.physSrc(m_system, nmat, t, geoElem, elemblkid, R, engSrcAdded);
+      m_physics.physSrc(m_system, nmat, t, geoElem, elemblkid, R, srcFlag);
     }
 
     //! Compute the minimum time step size
@@ -561,7 +546,9 @@ class MultiMat {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
-    //! \param[in] engSrcAd Whether the energy source was added
+    //! \param[in] srcFlag Whether the energy source was added
+    //! \param[in,out] local_dte Time step size for each element (for local
+    //!   time stepping)
     //! \return Minimum time step size
     //! \details The allowable dt is calculated by looking at the maximum
     //!   wave-speed in elements surrounding each face, times the area of that
@@ -574,15 +561,16 @@ class MultiMat {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
-                 const int engSrcAd ) const
+                 const std::vector< int >& srcFlag,
+                 std::vector< tk::real >& local_dte ) const
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[m_system];
 
       // obtain dt restrictions from all physics
       auto dt_e = timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, nmat, U,
-        P);
-      auto dt_p = m_physics.dtRestriction(m_system, geoElem, nielem, engSrcAd);
+        P, local_dte);
+      auto dt_p = m_physics.dtRestriction(m_system, geoElem, nielem, srcFlag);
 
       return std::min(dt_e, dt_p);
     }
@@ -792,14 +780,14 @@ class MultiMat {
     static tk::FluxFn::result_type
     flux( ncomp_t system,
           [[maybe_unused]] ncomp_t ncomp,
-          const std::vector< EOS >&,
+          const std::vector< EOS >& mat_blk,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
       const auto nmat =
         g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
 
-      return tk::fluxTerms(ncomp, nmat, ugp);
+      return tk::fluxTerms(ncomp, nmat, mat_blk, ugp);
     }
 
     //! \brief Boundary state function providing the left and right state of a

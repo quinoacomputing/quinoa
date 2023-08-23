@@ -1,5 +1,4 @@
 
-if (EXAM2M_FOUND)
   add_regression_test(compflow_euler_m2m ${INCITER_EXECUTABLE}
                       NUMPES 3
                       INPUTFILES m2m.q unitcube_1k.exo sphere_full.exo
@@ -24,4 +23,3 @@ if (EXAM2M_FOUND)
                                          m2m_sphere.cfg
                                          m2m_sphere.cfg
                       LABELS "alecg;m2m")
-endif()

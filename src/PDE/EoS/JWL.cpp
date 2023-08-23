@@ -206,7 +206,7 @@ JWL::soundspeed(
 // *************************************************************************
 {
   // limiting pressure to near-zero
-  auto apr_eff = std::max( 1.0e-15, apr );
+  auto apr_eff = std::max(alpha*min_eff_pressure(1e-4, arho, alpha), apr);
 
   auto co1 = m_rho0*alpha*alpha/(arho*arho);
   auto co2 = alpha*(1.0+m_w)/arho;
@@ -215,6 +215,7 @@ JWL::soundspeed(
               + m_b*(m_r2*co1 - co2) * exp(-m_r2*alpha*m_rho0/arho)
               + (1.0+m_w)*apr_eff/arho;
 
+  auto ss2 = ss;
   ss = std::sqrt(ss);
 
   // check sound speed divergence
@@ -226,7 +227,7 @@ JWL::soundspeed(
     std::cout << "Min allowed pres: " << alpha*min_eff_pressure(0.0, arho,
       alpha) << std::endl;
     Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed. "
-      "ss^2: " + std::to_string(ss) + ", material volume fraction: " +
+      "ss^2: " + std::to_string(ss2) + ", material volume fraction: " +
       std::to_string(alpha));
   }
 

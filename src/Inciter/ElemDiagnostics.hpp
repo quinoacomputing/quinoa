@@ -31,7 +31,8 @@ class ElemDiagnostics {
                   const std::size_t nchGhost,
                   const tk::Fields& geoElem,
                   const std::vector< std::size_t >& ndofel,
-                  const tk::Fields& u ) const;
+                  const tk::Fields& u,
+                  const tk::Fields& un ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -51,6 +52,7 @@ class ElemDiagnostics {
                        const tk::Fields& geoElem,
                        const std::vector< std::size_t >& pIndex,
                        const tk::Fields& u,
+                       const tk::Fields& un,
                        std::vector< std::vector< tk::real > >& diag ) const;
 };
 

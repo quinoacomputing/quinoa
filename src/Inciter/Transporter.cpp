@@ -1475,6 +1475,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
       diag.push_back( l2res[i] );
     }
   }
+  else if (scheme == ctr::SchemeType::FV) {
+    for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+      l2res[i] = std::sqrt( d[L2RES][i] );
+      diag.push_back( l2res[i] );
+    }
+  }
 
   // Append total energy
   diag.push_back( d[TOTALSOL][0] );
