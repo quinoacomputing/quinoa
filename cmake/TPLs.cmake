@@ -95,10 +95,6 @@ else()
   set(LUA_INCLUDE_DIR "")
 endif()
 
-# ExaM2M
-set(HAS_EXAM2M true)  # will become compiler define
-set(COLLIDECHARM "-module collidecharm")
-
 message(STATUS "------------------------------------------")
 
 # Function to print a list of missing library names
