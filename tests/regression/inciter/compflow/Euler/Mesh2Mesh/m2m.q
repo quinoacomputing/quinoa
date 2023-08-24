@@ -40,9 +40,6 @@ inciter
     material
       gamma 1.66666666666667 end
     end
-    material
-      gamma 1.66666666666667 end
-    end
     bc_dirichlet
       sideset 1 2 3 4 5 6 end
     end
