@@ -27,8 +27,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Compute Solid Terms with volume integrals
 void
-solidTermsVolInt( ncomp_t system,
-                  std::size_t nmat,
+solidTermsVolInt( std::size_t nmat,
                   const std::vector< inciter::EOS >& mat_blk,
                   const std::size_t ndof,
                   const std::size_t rdof,

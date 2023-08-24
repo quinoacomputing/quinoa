@@ -38,14 +38,14 @@ class MultiMatPhysicsEuler {
   public:
     //! Compute the time step size restriction based on this physics
     //! \return A large time step size, i.e., ignore
-    tk::real dtRestriction( std::size_t,
+    tk::real dtRestriction(
       const tk::Fields&,
       std::size_t,
       const std::vector< int >& ) const
     { return std::numeric_limits< tk::real >::max(); }
 
     //! Compute sources corresponding to this physics
-    void physSrc( std::size_t,
+    void physSrc(
       std::size_t,
       tk::real,
       const tk::Fields&,

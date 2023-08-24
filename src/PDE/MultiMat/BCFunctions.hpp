@@ -20,7 +20,6 @@ namespace inciter {
 
   //! \brief Boundary state function providing the left and right state of a
   //!   face at symmetry boundaries
-  //! \param[in] system Equation system index
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
   //! \param[in] fn Unit face normal
@@ -30,14 +29,14 @@ namespace inciter {
   //!   left or right state is the vector of conserved quantities, followed by
   //!   the vector of primitive quantities appended to it.
   static tk::StateFn::result_type
-  symmetry( ncomp_t system, ncomp_t ncomp,
+  symmetry( ncomp_t ncomp,
             const std::vector< EOS >&,
             const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
             const std::array< tk::real, 3 >& fn )
   {
     const auto nmat =
-      g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+      g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
     const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
       tag::matidxmap >().template get< tag::solidx >();
 
@@ -110,7 +109,6 @@ namespace inciter {
 
   //! \brief Boundary state function providing the left and right state of a
   //!   face at farfield outlet boundaries
-  //! \param[in] system Equation system index
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
   //! \param[in] fn Unit face normal
@@ -125,18 +123,17 @@ namespace inciter {
   //!   cell and we obtain the ghost cell state from the internal cell.
   //! \note The function signature must follow tk::StateFn
   static tk::StateFn::result_type
-  farfieldOutlet( ncomp_t system,
-                  ncomp_t ncomp,
+  farfieldOutlet( ncomp_t ncomp,
                   const std::vector< EOS >& mat_blk,
                   const std::vector< tk::real >& ul,
                   tk::real, tk::real, tk::real, tk::real,
                   const std::array< tk::real, 3 >& fn )
   {
     const auto nmat =
-      g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+      g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
 
     auto fp =
-      g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >()[ system ];
+      g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >()[0];
 
     Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
             "state vector" );
@@ -198,7 +195,7 @@ namespace inciter {
   //!   left or right state is the vector of conserved quantities, followed by
   //!   the vector of primitive quantities appended to it.
   static tk::StateFn::result_type
-  extrapolate( ncomp_t, ncomp_t,
+  extrapolate( ncomp_t,
                const std::vector< EOS >&,
                const std::vector< tk::real >& ul,
                tk::real, tk::real, tk::real, tk::real,

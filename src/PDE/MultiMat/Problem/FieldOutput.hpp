@@ -28,7 +28,6 @@ MultiMatFieldNames( std::size_t nmat );
 //! Return field output going to file
 std::vector< std::vector< tk::real > >
 MultiMatFieldOutput(
-  ncomp_t system,
   std::size_t nmat,
   const std::vector< EOS >& mat_blk,
   std::size_t nunk,
@@ -43,7 +42,7 @@ std::vector< std::string > MultiMatSurfNames();
 
 //! Return element surface field output (on triangle faces) going to file
 std::vector< std::vector< tk::real > >
-MultiMatSurfOutput( ncomp_t,
+MultiMatSurfOutput(
   const std::size_t nmat,
   const std::size_t rdof,
   const FaceData& fd,

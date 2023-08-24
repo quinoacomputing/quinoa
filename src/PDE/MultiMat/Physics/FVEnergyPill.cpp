@@ -30,13 +30,12 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::fv::MultiMatPhysicsEnergyPill;
 
 tk::real
-MultiMatPhysicsEnergyPill::dtRestriction( std::size_t system,
+MultiMatPhysicsEnergyPill::dtRestriction(
   const tk::Fields& geoElem,
   std::size_t nelem,
   const std::vector< int >& engSrcAd ) const
 // *****************************************************************************
 //  Compute the time step size restriction based on this physics
-//! \param[in] system Index for equation systems
 //! \param[in] geoElem Element geometry array
 //! \param[in] nelem Number of elements
 //! \param[in] engSrcAd Whether the energy source was added
@@ -48,8 +47,8 @@ MultiMatPhysicsEnergyPill::dtRestriction( std::size_t system,
   const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
     tag::meshblock >();
   tk::real v_front(0.0);
-  if (icmbk.size() > system) {
-    for (const auto& b : icmbk[system]) { // for all blocks
+  if (icmbk.size() > 0) {
+    for (const auto& b : icmbk[0]) { // for all blocks
       auto inittype = b.template get< tag::initiate, tag::init >();
       if (inittype == ctr::InitiateType::LINEAR) {
         v_front = std::max(v_front,
@@ -73,7 +72,7 @@ MultiMatPhysicsEnergyPill::dtRestriction( std::size_t system,
 }
 
 void MultiMatPhysicsEnergyPill::
-physSrc( std::size_t system,
+physSrc(
   std::size_t nmat,
   tk::real t,
   const tk::Fields& geoElem,
@@ -82,7 +81,6 @@ physSrc( std::size_t system,
   std::vector< int >& engSrcAdded ) const
 // *****************************************************************************
 //! Compute sources corresponding to a propagating front in user-defined box
-//! \param[in] system Index for equation systems
 //! \param[in] nmat Number of materials
 //! \param[in] t Physical time
 //! \param[in] geoElem Element geometry array
@@ -100,8 +98,8 @@ physSrc( std::size_t system,
 {
   const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
     tag::meshblock >();
-  if (icmbk.size() > system) {
-    for (const auto& mb : icmbk[system]) { // for all blocks
+  if (icmbk.size() > 0) {
+    for (const auto& mb : icmbk[0]) { // for all blocks
       auto blid = mb.get< tag::blockid >();
       if (elemblkid.find(blid) != elemblkid.end()) { // if elements exist in blk
         const auto& initiate = mb.template get< tag::initiate >();

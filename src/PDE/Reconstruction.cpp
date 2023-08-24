@@ -174,7 +174,6 @@ intLeastSq_P0P1( const std::size_t rdof,
 
 void
 bndLeastSqConservedVar_P0P1(
-  ncomp_t system,
   ncomp_t ncomp,
   const std::vector< inciter::EOS >& mat_blk,
   std::size_t rdof,
@@ -192,7 +191,6 @@ bndLeastSqConservedVar_P0P1(
 // *****************************************************************************
 //  \brief Compute boundary surface contributions to rhs vector of the
 //    least-squares reconstruction of conserved quantities of the PDE system
-//! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -248,8 +246,7 @@ bndLeastSqConservedVar_P0P1(
                 "appended state vector" );
 
         // Compute the state at the face-center using BC
-        auto ustate = state( system, ncomp, mat_blk, ul, fc[0], fc[1], fc[2], t,
-                             fn );
+        auto ustate = state( ncomp, mat_blk, ul, fc[0], fc[1], fc[2], t, fn );
 
         std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1),
                                         fc[1]-geoElem(el,2),
@@ -453,8 +450,7 @@ transform_P0P1( std::size_t rdof,
 }
 
 void
-THINCReco( std::size_t system,
-           std::size_t rdof,
+THINCReco( std::size_t rdof,
            std::size_t nmat,
            std::size_t e,
            const std::vector< std::size_t >& inpoel,
@@ -468,7 +464,6 @@ THINCReco( std::size_t system,
            std::vector< real >& state )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for multi-material flows
-//! \param[in] system Equation system index
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of materials
 //! \param[in] e Element for which interface reconstruction is being calculated
@@ -505,7 +500,7 @@ THINCReco( std::size_t system,
   using inciter::deformIdx;
 
   auto bparam = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp_param >()[system];
+    tag::intsharp_param >()[0];
   const auto ncomp = U.nprop()/rdof;
   const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
@@ -593,8 +588,7 @@ THINCReco( std::size_t system,
 }
 
 void
-THINCRecoTransport( std::size_t system,
-                    std::size_t rdof,
+THINCRecoTransport( std::size_t rdof,
                     std::size_t,
                     std::size_t e,
                     const std::vector< std::size_t >& inpoel,
@@ -608,7 +602,6 @@ THINCRecoTransport( std::size_t system,
                     std::vector< real >& state )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for transport
-//! \param[in] system Equation system index
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] e Element for which interface reconstruction is being calculated
 //! \param[in] inpoel Element-node connectivity
@@ -628,7 +621,7 @@ THINCRecoTransport( std::size_t system,
 // *****************************************************************************
 {
   auto bparam = inciter::g_inputdeck.get< tag::param, tag::transport,
-    tag::intsharp_param >()[system];
+    tag::intsharp_param >()[0];
   auto ncomp = U.nprop()/rdof;
 
   // interface detection
@@ -999,8 +992,7 @@ THINCFunction_new( std::size_t rdof,
 }
 
 std::vector< tk::real >
-evalPolynomialSol( std::size_t system,
-                   const std::vector< inciter::EOS >& mat_blk,
+evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    int intsharp,
                    std::size_t ncomp,
                    std::size_t nprim,
@@ -1017,7 +1009,6 @@ evalPolynomialSol( std::size_t system,
                    const Fields& P )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
-//! \param[in] system Equation system index
 //! \param[in] mat_blk EOS material block
 //! \param[in] intsharp Interface reconstruction indicator
 //! \param[in] ncomp Number of components in the PDE system
@@ -1057,13 +1048,13 @@ evalPolynomialSol( std::size_t system,
     //  vfmin[k] = VolFracMax(el, 2*k, 0);
     //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
     //}
-    tk::THINCReco(system, rdof, nmat, e, inpoel, coord, geoElem,
+    tk::THINCReco(rdof, nmat, e, inpoel, coord, geoElem,
       ref_gp, U, P, vfmin, vfmax, state);
 
     // Until the appropriate setup for activating THINC with Transport
     // is ready, the following lines will need to be uncommented for
     // using THINC with Transport
-    //tk::THINCRecoTransport(system, rdof, nmat, el, inpoel, coord,
+    //tk::THINCRecoTransport(rdof, nmat, el, inpoel, coord,
     //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
   }
 
@@ -1084,24 +1075,22 @@ evalPolynomialSol( std::size_t system,
 }
 
 std::vector< tk::real >
-evalFVSol( std::size_t system,
-  const std::vector< inciter::EOS >& mat_blk,
-  int intsharp,
-  std::size_t ncomp,
-  std::size_t nprim,
-  std::size_t rdof,
-  std::size_t nmat,
-  std::size_t e,
-  const std::vector< std::size_t >& inpoel,
-  const UnsMesh::Coords& coord,
-  const Fields& geoElem,
-  const std::array< real, 3 >& ref_gp,
-  const std::vector< real >& B,
-  const Fields& U,
-  const Fields& P )
+evalFVSol( const std::vector< inciter::EOS >& mat_blk,
+           int intsharp,
+           std::size_t ncomp,
+           std::size_t nprim,
+           std::size_t rdof,
+           std::size_t nmat,
+           std::size_t e,
+           const std::vector< std::size_t >& inpoel,
+           const UnsMesh::Coords& coord,
+           const Fields& geoElem,
+           const std::array< real, 3 >& ref_gp,
+           const std::vector< real >& B,
+           const Fields& U,
+           const Fields& P )
 // *****************************************************************************
 //  Evaluate second-order FV solution at quadrature point
-//! \param[in] system Equation system index
 //! \param[in] mat_blk EOS material block
 //! \param[in] intsharp Interface reconstruction indicator
 //! \param[in] ncomp Number of components in the PDE system
@@ -1156,7 +1145,7 @@ evalFVSol( std::size_t system,
   {
     std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 
-    tk::THINCReco(system, rdof, nmat, e, inpoel, coord, geoElem,
+    tk::THINCReco(rdof, nmat, e, inpoel, coord, geoElem,
       ref_gp, U, P, vfmin, vfmax, state);
   }
 

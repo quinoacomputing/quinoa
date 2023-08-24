@@ -19,8 +19,7 @@
 
 namespace inciter {
 
-void initializeMaterialEoS( std::size_t system,
-  std::vector< EOS >& mat_blk );
+void initializeMaterialEoS( std::vector< EOS >& mat_blk );
 
 //! Clean up the state of trace materials for multi-material PDE system
 bool

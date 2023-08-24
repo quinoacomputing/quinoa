@@ -468,19 +468,18 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
     //! Query special point BC configuration
     //! \tparam eq PDE type to query
     //! \tparam sbc Special BC type to query, e.g., stagnation, skip
-    //! \param[in] system Equation system id
     //! \return Vectors configuring the special points and their radii
     template< class eq, class sbc >
     std::tuple< std::vector< tk::real >, std::vector< tk::real > >
-    specialBC( std::size_t system ) {
+    specialBC() {
       const auto& bcspec = get< tag::param, eq, sbc >();
       const auto& point = bcspec.template get< tag::point >();
       const auto& radius = bcspec.template get< tag::radius >();
       std::vector< tk::real > pnt;
       std::vector< tk::real > rad;
-      if (point.size() > system && radius.size() > system) {
-        pnt = point[ system ];
-        rad = radius[ system ];
+      if (point.size() > 0 && radius.size() > 0) {
+        pnt = point[ 0 ];
+        rad = radius[ 0 ];
       }
       Assert( pnt.size() == 3*rad.size(), "Size mismatch" );
       return { std::move(pnt), std::move(rad) };

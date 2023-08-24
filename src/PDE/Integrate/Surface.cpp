@@ -30,8 +30,7 @@ extern ctr::InputDeck g_inputdeck;
 namespace tk {
 
 void
-surfInt( ncomp_t system,
-         std::size_t nmat,
+surfInt( std::size_t nmat,
          const std::vector< inciter::EOS >& mat_blk,
          real t,
          const std::size_t ndof,
@@ -55,7 +54,6 @@ surfInt( ncomp_t system,
          int intsharp )
 // *****************************************************************************
 //  Compute internal surface flux integrals
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] t Physical time
@@ -206,9 +204,9 @@ surfInt( ncomp_t system,
 
       std::array< std::vector< real >, 2 > state;
 
-      state[0] = evalPolynomialSol(system,mat_blk, intsharp, ncomp, nprim, rdof,
+      state[0] = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
         nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = evalPolynomialSol(system,mat_blk, intsharp, ncomp, nprim, rdof,
+      state[1] = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
         nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
@@ -217,7 +215,7 @@ surfInt( ncomp_t system,
               "appended boundary state vector" );
 
       // evaluate prescribed velocity (if any)
-      auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
+      auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
       // compute flux
       auto fl = flux( mat_blk, fn, state, v );
@@ -360,7 +358,7 @@ update_rhs_fa( ncomp_t ncomp,
 }
 
 void
-surfIntFV( ncomp_t system,
+surfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   real t,
@@ -378,7 +376,6 @@ surfIntFV( ncomp_t system,
   int intsharp )
 // *****************************************************************************
 //  Compute internal surface flux integrals for second order FV
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] t Physical time
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -464,9 +461,9 @@ surfIntFV( ncomp_t system,
 
     std::array< std::vector< real >, 2 > state;
 
-    state[0] = evalFVSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
+    state[0] = evalFVSol(mat_blk, intsharp, ncomp, nprim, rdof,
       nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-    state[1] = evalFVSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
+    state[1] = evalFVSol(mat_blk, intsharp, ncomp, nprim, rdof,
       nmat, er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
     //safeReco(rdof, nmat, el, er, U, state);
@@ -477,7 +474,7 @@ surfIntFV( ncomp_t system,
             "appended boundary state vector" );
 
     // evaluate prescribed velocity (if any)
-    auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
+    auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
     // compute flux
     auto fl = flux( mat_blk, fn, state, v );

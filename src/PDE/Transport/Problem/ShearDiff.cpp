@@ -27,12 +27,11 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::TransportProblemShearDiff;
 
 std::vector< tk::real >
-TransportProblemShearDiff::initialize( ncomp_t system, ncomp_t ncomp,
+TransportProblemShearDiff::initialize( ncomp_t ncomp,
   const std::vector< EOS >&, tk::real x, tk::real y, tk::real z,
   tk::real t )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index
 //! \param[in] ncomp Number of components in this transport equation system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
@@ -43,9 +42,9 @@ TransportProblemShearDiff::initialize( ncomp_t system, ncomp_t ncomp,
 {
   using tag::param;
 
-  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >()[system];
-  const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >()[system];
-  const auto& l = g_inputdeck.get< param, eq, tag::lambda >()[system];
+  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >()[0];
+  const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >()[0];
+  const auto& l = g_inputdeck.get< param, eq, tag::lambda >()[0];
 
   std::vector< tk::real > r( ncomp );
   for (ncomp_t c=0; c<ncomp; ++c) {
@@ -68,37 +67,33 @@ TransportProblemShearDiff::initialize( ncomp_t system, ncomp_t ncomp,
 }
 
 void
-TransportProblemShearDiff::errchk( ncomp_t system, ncomp_t ncomp ) const
+TransportProblemShearDiff::errchk( ncomp_t ncomp ) const
 // *****************************************************************************
 //  Do error checking on PDE parameters
-//! \param[in] system Equation system index, i.e., which transport equation
-//!   system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of components in this transport equation
 // *****************************************************************************
 {
   using tag::param;
 
-  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >()[system];
+  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >()[0];
   ErrChk( ncomp == u0.size(),
     "Wrong number of advection-diffusion PDE parameters 'u0'" );
 
-  const auto& lambda = g_inputdeck.get< param, eq, tag::lambda >()[system];
+  const auto& lambda = g_inputdeck.get< param, eq, tag::lambda >()[0];
   ErrChk( 2*ncomp == lambda.size(),
     "Wrong number of advection-diffusion PDE parameters 'lambda'" );
 
-  const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >()[system];
+  const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >()[0];
   ErrChk( 3*ncomp == d.size(),
     "Wrong number of advection-diffusion PDE parameters 'diffusivity'" );
 }
 
 std::vector< std::array< tk::real, 3 > >
-TransportProblemShearDiff::prescribedVelocity( ncomp_t system, ncomp_t ncomp,
+TransportProblemShearDiff::prescribedVelocity( ncomp_t ncomp,
                                                tk::real, tk::real y, tk::real z,
                                                tk::real )
 // *****************************************************************************
 //  Assign prescribed shear velocity at a point
-//! \param[in] system Equation system index, i.e., which transport equation
-//!   system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of components in this transport equation
 //! \param[in] y y coordinate at which to assign velocity
 //! \param[in] z Z coordinate at which to assign velocity
@@ -108,8 +103,8 @@ TransportProblemShearDiff::prescribedVelocity( ncomp_t system, ncomp_t ncomp,
 {
   using tag::param;
 
-  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >()[ system ];
-  const auto& l = g_inputdeck.get< param, eq, tag::lambda >()[ system ];
+  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >()[ 0 ];
+  const auto& l = g_inputdeck.get< param, eq, tag::lambda >()[ 0 ];
 
   std::vector< std::array< tk::real, 3 > > vel( ncomp );
   for (ncomp_t c=0; c<ncomp; ++c)

@@ -33,7 +33,7 @@ extern ctr::InputDeck g_inputdeck;
 namespace tk {
 
 void
-solidTermsVolInt( ncomp_t system,
+solidTermsVolInt(
                std::size_t nmat,
                const std::vector< inciter::EOS >& mat_blk,
                const std::size_t ndof,
@@ -51,7 +51,6 @@ solidTermsVolInt( ncomp_t system,
 // *****************************************************************************
 //  Compute all RHS volume terms in the inverse deformation equations to
 //  satisfy the condition curl(g) = 0.
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -139,7 +138,7 @@ solidTermsVolInt( ncomp_t system,
 
       // Get state
       std::vector< real > state;
-      state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim, rdof,
+      state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
         nmat, e, rdof, inpoel, coord, geoElem, gp, B, U, P);
 
       // Get velocity

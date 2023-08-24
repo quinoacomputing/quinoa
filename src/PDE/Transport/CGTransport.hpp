@@ -60,11 +60,9 @@ class Transport {
     explicit Transport() :
       m_physics( Physics() ),
       m_problem( Problem() ),
-      m_system( 0 ),
-      m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::transport >().at(m_system) )
+      m_ncomp(g_inputdeck.get< tag::component >().get< tag::transport >().at(0))
     {
-      m_problem.errchk( m_system, m_ncomp );
+      m_problem.errchk( m_ncomp );
     }
 
     //! Determine nodes that lie inside the user-defined IC box
@@ -95,7 +93,7 @@ class Transport {
       const auto& y = coord[1];
       const auto& z = coord[2];
       for (ncomp_t i=0; i<x.size(); ++i) {
-        auto s = Problem::initialize( m_system, m_ncomp, m_mat_blk, x[i], y[i],
+        auto s = Problem::initialize( m_ncomp, m_mat_blk, x[i], y[i],
                                       z[i], t );
         for (ncomp_t c=0; c<m_ncomp; ++c)
           unk( i, c ) = s[c];
@@ -120,8 +118,7 @@ class Transport {
     //! \return Vector of analytic solution at given location and time
     std::vector< real >
     analyticSolution( real xi, real yi, real zi, real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
-                                        zi, t ); }
+    { return Problem::analyticSolution( m_ncomp, m_mat_blk, xi, yi, zi, t ); }
 
     //! Return analytic solution for conserved variables
     //! \param[in] xi X-coordinate at which to evaluate the analytic solution
@@ -131,7 +128,7 @@ class Transport {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
+    { return Problem::initialize( m_ncomp, m_mat_blk, xi, yi, zi, t ); }
 
     //! Compute nodal gradients of primitive variables for ALECG
     //! \param[in] coord Mesh node coordinates
@@ -320,13 +317,13 @@ class Transport {
 
         // get prescribed velocity
         const std::array< std::vector<std::array<real,3>>, 4 > vel{{
-          Problem::prescribedVelocity( m_system, m_ncomp,
+          Problem::prescribedVelocity( m_ncomp,
                                        x[N[0]], y[N[0]], z[N[0]], t ),
-          Problem::prescribedVelocity( m_system, m_ncomp,
+          Problem::prescribedVelocity( m_ncomp,
                                        x[N[1]], y[N[1]], z[N[1]], t ),
-          Problem::prescribedVelocity( m_system, m_ncomp,
+          Problem::prescribedVelocity( m_ncomp,
                                        x[N[2]], y[N[2]], z[N[2]], t ),
-          Problem::prescribedVelocity( m_system, m_ncomp,
+          Problem::prescribedVelocity( m_ncomp,
                                        x[N[3]], y[N[3]], z[N[3]], t ) }};
 
         // sum flux (advection) contributions to element
@@ -374,7 +371,7 @@ class Transport {
         auto yc = (y[N[0]] + y[N[1]] + y[N[2]] + y[N[3]]) / 4.0;
         auto zc = (z[N[0]] + z[N[1]] + z[N[2]] + z[N[3]]) / 4.0;
         const auto vel =
-          Problem::prescribedVelocity( m_system, m_ncomp, xc, yc, zc, t );
+          Problem::prescribedVelocity( m_ncomp, xc, yc, zc, t );
 
         // scatter-add flux contributions to rhs at nodes
         real d = deltat * J/6.0;
@@ -384,7 +381,7 @@ class Transport {
               R.var(r[c],N[a]) += d * grad[a][j] * vel[c][j]*ue[c];
 
         // add (optional) diffusion contribution to right hand side
-        m_physics.diffusionRhs(m_system, m_ncomp, deltat, J, grad, N, u, r, R);
+        m_physics.diffusionRhs(m_ncomp, deltat, J, grad, N, u, r, R);
       }
     }
 
@@ -426,13 +423,13 @@ class Transport {
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, N );
         // get velocity for problem
         const std::array< std::vector<std::array<real,3>>, 4 > vel{{
-          Problem::prescribedVelocity( m_system, m_ncomp,
+          Problem::prescribedVelocity( m_ncomp,
                                        x[N[0]], y[N[0]], z[N[0]], t ),
-          Problem::prescribedVelocity( m_system, m_ncomp,
+          Problem::prescribedVelocity( m_ncomp,
                                        x[N[1]], y[N[1]], z[N[1]], t ),
-          Problem::prescribedVelocity( m_system, m_ncomp,
+          Problem::prescribedVelocity( m_ncomp,
                                        x[N[2]], y[N[2]], z[N[2]], t ),
-          Problem::prescribedVelocity( m_system, m_ncomp,
+          Problem::prescribedVelocity( m_ncomp,
                                        x[N[3]], y[N[3]], z[N[3]], t ) }};
         // compute the maximum length of the characteristic velocity (advection
         // velocity) across the four element nodes
@@ -445,7 +442,7 @@ class Transport {
         // compute element dt for the advection
         auto advection_dt = std::abs(maxvel) > eps ? L / maxvel : large;
         // compute element dt based on diffusion
-        auto diffusion_dt = m_physics.diffusion_dt( m_system, m_ncomp, L, u );
+        auto diffusion_dt = m_physics.diffusion_dt( m_ncomp, L, u );
         // compute minimum element dt
         auto elemdt = std::min( advection_dt, diffusion_dt );
         // find minimum dt across all elements
@@ -491,19 +488,19 @@ class Transport {
       const auto& ubc = g_inputdeck.get< param, transport, tag::bc, bcdir >();
       const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
       if (!ubc.empty()) {
-        Assert( ubc.size() > m_system, "Indexing out of Dirichlet BC eq-vector" );
+        Assert( ubc.size() > 0, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
         const auto& y = coord[1];
         const auto& z = coord[2];
-        for (const auto& b : ubc[m_system])
+        for (const auto& b : ubc[0])
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
               const auto s = increment ?
-                solinc( m_system, m_ncomp, m_mat_blk, x[n], y[n], z[n],
+                solinc( m_ncomp, m_mat_blk, x[n], y[n], z[n],
                         t, deltat, Problem::initialize ) :
-                Problem::initialize( m_system, m_ncomp, m_mat_blk, x[n], y[n],
+                Problem::initialize( m_ncomp, m_mat_blk, x[n], y[n],
                                      z[n], t+deltat );
               auto& nbc = bc[n] = NodeBC( m_ncomp );
               for (ncomp_t c=0; c<m_ncomp; ++c)
@@ -548,7 +545,7 @@ class Transport {
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
-      auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[m_system];
+      auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[0];
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
       return n;
@@ -586,8 +583,7 @@ class Transport {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().
-        at(m_system);
+        g_inputdeck.get< tag::param, tag::transport, tag::depvar >().at(0);
       // construct the name of the numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) );
@@ -597,7 +593,6 @@ class Transport {
   private:
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy
-    const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     //! EOS material block
     const std::vector< EOS > m_mat_blk;
@@ -792,8 +787,7 @@ class Transport {
 
           // evaluate prescribed velocity
           auto v =
-            Problem::prescribedVelocity( m_system, m_ncomp, x[p], y[p], z[p],
-              0.0 );
+            Problem::prescribedVelocity( m_ncomp, x[p], y[p], z[p], 0.0 );
           // sum donain-edge contributions
           for (auto e : tk::cref_find(esued,{p,q})) {
             const std::array< std::size_t, 4 >
@@ -863,8 +857,7 @@ class Transport {
         for (ncomp_t c=0; c<m_ncomp; ++c) u[c] = U.extract( c, N );
         // evaluate prescribed velocity
         auto v =
-          Problem::prescribedVelocity( m_system, m_ncomp, xp[0], yp[0], zp[0],
-            0.0 );
+          Problem::prescribedVelocity( m_ncomp, xp[0], yp[0], zp[0], 0.0 );
         // compute face area
         auto A6 = tk::area( x[N[0]], x[N[1]], x[N[2]],
                             y[N[0]], y[N[1]], y[N[2]],

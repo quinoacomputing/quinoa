@@ -25,14 +25,12 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::MultiMatProblemRichtmyerMeshkov;
 
 tk::InitializeFn::result_type
-MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t system, ncomp_t ncomp,
+MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t ncomp,
   const std::vector< EOS >& mat_blk,
   tk::real x, tk::real y, tk::real,
   tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
@@ -46,7 +44,7 @@ MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t system, ncomp_t ncomp,
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 9, "Number of scalar components must be 9" );
 
-  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
+  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
 
   std::vector< tk::real > s( ncomp, 0.0 );
   tk::real p, T, u, v, w;

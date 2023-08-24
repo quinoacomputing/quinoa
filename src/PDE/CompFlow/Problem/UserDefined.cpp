@@ -28,8 +28,7 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::CompFlowProblemUserDefined;
 
 tk::InitializeFn::result_type
-CompFlowProblemUserDefined::initialize( ncomp_t system,
-                                        ncomp_t ncomp,
+CompFlowProblemUserDefined::initialize( ncomp_t ncomp,
                                         const std::vector< EOS >& mat_blk,
                                         tk::real,
                                         tk::real,
@@ -37,8 +36,6 @@ CompFlowProblemUserDefined::initialize( ncomp_t system,
                                         tk::real )
 // *****************************************************************************
 //! Set initial conditions
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \return Values of all components
 //! \note The function signature must follow tk::InitializeFn
@@ -54,19 +51,19 @@ CompFlowProblemUserDefined::initialize( ncomp_t system,
   const auto& bgenic = ic.get< tag::energy >();
   const auto& bgtempic = ic.get< tag::temperature >();
 
-  u[0] = bgrhoic.at(system).at(0);
-  u[1] = u[0] * bgvelic.at(system).at(0);
-  u[2] = u[0] * bgvelic.at(system).at(1);
-  u[3] = u[0] * bgvelic.at(system).at(2);
+  u[0] = bgrhoic.at(0).at(0);
+  u[1] = u[0] * bgvelic.at(0).at(0);
+  u[2] = u[0] * bgvelic.at(0).at(1);
+  u[3] = u[0] * bgvelic.at(0).at(2);
 
-  if (bgpreic.size() > system && !bgpreic[system].empty()) {
+  if (bgpreic.size() > 0 && !bgpreic[0].empty()) {
     u[4] = mat_blk[0].compute< EOS::totalenergy >( u[0], u[1]/u[0], u[2]/u[0],
-      u[3]/u[0], bgpreic.at(system).at(0) );
-  } else if (bgenic.size() > system && !bgenic[system].empty()) {
-    u[4] = u[0] * bgenic[system][0];
-  } else if (bgtempic.size() > system && !bgtempic[system].empty()) {
-    const auto& c_v = cv< tag::compflow >(system);
-    u[4] = u[0] * bgtempic[system][0] * c_v;
+      u[3]/u[0], bgpreic.at(0).at(0) );
+  } else if (bgenic.size() > 0 && !bgenic[0].empty()) {
+    u[4] = u[0] * bgenic[0][0];
+  } else if (bgtempic.size() > 0 && !bgtempic[0].empty()) {
+    const auto& c_v = cv< tag::compflow >(0);
+    u[4] = u[0] * bgtempic[0][0] * c_v;
   } else Throw( "IC background energy cannot be computed. User must specify "
                 "one of background pressure, energy, or temperature." );
 

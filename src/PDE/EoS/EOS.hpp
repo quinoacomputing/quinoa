@@ -42,10 +42,7 @@ class EOS {
     explicit EOS() {}
 
     //! Constructor
-    explicit EOS( ctr::MaterialType mattype,
-      EqType eq,
-      std::size_t system,
-      std::size_t k );
+    explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k );
 
     //! Entry method tags for specific EOS classes to use with compute()
     struct density {};

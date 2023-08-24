@@ -704,8 +704,9 @@ Transporter::partitioned( std::size_t meshid )
 {
   if (++m_npart == m_nelem.size()) {     // all meshes have been partitioned
     m_npart = 0;
-  } else // partition next mesh
+  } else { // partition next mesh
     m_partitioner[meshid+1].partition( m_nchare[meshid+1] );
+  }
 }
 
 void

@@ -31,13 +31,13 @@ class MultiMatPhysicsEnergyPill {
 
   public:
     //! Compute the time step size restriction based on this physics
-    tk::real dtRestriction( std::size_t system,
+    tk::real dtRestriction(
       const tk::Fields& geoElem,
       std::size_t nelem,
       const std::vector< int >& engSrcAd ) const;
 
     //! Compute sources corresponding to this physics
-    void physSrc( std::size_t system,
+    void physSrc(
       std::size_t nmat,
       tk::real t,
       const tk::Fields& geoElem,

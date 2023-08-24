@@ -62,20 +62,18 @@ class Transport {
     explicit Transport() :
       m_physics( Physics() ),
       m_problem( Problem() ),
-      m_system( 0 ),
-      m_ncomp(
-        g_inputdeck.get< tag::component >().get< eq >().at(m_system) )
+      m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(0) )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
-      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
+      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_bc,
         { dirichlet
         , invalidBC  // Symmetry BC not implemented
         , inlet
         , outlet
         , invalidBC  // Characteristic BC not implemented
         , extrapolate } ) );
-      m_problem.errchk( m_system, m_ncomp );
+      m_problem.errchk( m_ncomp );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -129,7 +127,7 @@ class Transport {
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
     }
 
@@ -192,7 +190,7 @@ class Transport {
       if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1) {
         const auto nelem = fd.Esuel().size()/4;
         const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
-          tag::intsharp >()[m_system];
+          tag::intsharp >()[0];
 
         Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
                 "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -222,7 +220,7 @@ class Transport {
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp, 
+          tk::bndLeastSqConservedVar_P0P1( m_ncomp, 
             m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second, 
             P, U, rhs_ls, vars );
 
@@ -289,7 +287,7 @@ class Transport {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
         VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, coord, U );
+          coord, U );
     }
 
     //! Update the conservative variable solution for this PDE system
@@ -340,7 +338,7 @@ class Transport {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
-        tag::intsharp >()[m_system];
+        tag::intsharp >()[0];
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -368,20 +366,20 @@ class Transport {
 
       // compute internal surface flux integrals
       std::vector< std::size_t > solidx(1, 0);
-      tk::surfInt( m_system, m_ncomp, m_mat_blk, t, ndof, rdof,
+      tk::surfInt( m_ncomp, m_mat_blk, t, ndof, rdof,
                    inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
                    Problem::prescribedVelocity, U, P, ndofel, dt, R, vriem,
                    riemannLoc, riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, m_ncomp, t, m_mat_blk, ndof, rdof,
+        tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
                     Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, m_ncomp, m_mat_blk, ndof, rdof,
+        tk::bndSurfInt( m_ncomp, m_mat_blk, ndof, rdof,
           b.first, fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
           riemannLoc, riemannDeriv, intsharp );
@@ -443,7 +441,7 @@ class Transport {
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
-      auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[m_system];
+      auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[0];
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
       return n;
@@ -470,7 +468,7 @@ class Transport {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-      g_inputdeck.get< tag::param, eq, tag::depvar >().at(m_system);
+      g_inputdeck.get< tag::param, eq, tag::depvar >().at(0);
       // construct the name of the numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) );
@@ -485,7 +483,7 @@ class Transport {
     //! \return Vector of analytic solution at given spatial location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
+    { return Problem::analyticSolution( m_ncomp, m_mat_blk, xi, yi,
                                         zi, t ); }
 
     //! Return analytic solution for conserved variables
@@ -496,7 +494,7 @@ class Transport {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
+    { return Problem::initialize( m_ncomp, m_mat_blk, xi, yi, zi, t ); }
 
     //! Return time history field output evaluated at time history points
     //! \param[in] h History point data
@@ -531,7 +529,6 @@ class Transport {
   private:
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy
-    const ncomp_t m_system;             //!< Equation system index
     const ncomp_t m_ncomp;              //!< Number of components in this PDE
     //! BC configuration
     BCStateFn m_bc;
@@ -548,8 +545,7 @@ class Transport {
     //! \return Flux vectors for all components in this PDE system
     //! \note The function signature must follow tk::FluxFn
     static tk::FluxFn::result_type
-    flux( ncomp_t,
-          ncomp_t ncomp,
+    flux( ncomp_t ncomp,
           const std::vector< EOS >&,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& v )
@@ -573,7 +569,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    extrapolate( ncomp_t, ncomp_t, const std::vector< EOS >&,
+    extrapolate( ncomp_t, const std::vector< EOS >&,
                  const std::vector< tk::real >& ul, tk::real, tk::real,
                  tk::real, tk::real, const std::array< tk::real, 3 >& )
     {
@@ -587,7 +583,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    inlet( ncomp_t, ncomp_t, const std::vector< EOS >&,
+    inlet( ncomp_t, const std::vector< EOS >&,
            const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
            tk::real, const std::array< tk::real, 3 >& )
     {
@@ -603,7 +599,7 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    outlet( ncomp_t, ncomp_t, const std::vector< EOS >&,
+    outlet( ncomp_t, const std::vector< EOS >&,
             const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
             tk::real, const std::array< tk::real, 3 >& )
     {
@@ -623,12 +619,12 @@ class Transport {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    dirichlet( ncomp_t system, ncomp_t ncomp, 
+    dirichlet( ncomp_t ncomp, 
                const std::vector< EOS >& mat_blk,
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::initialize( system, ncomp, mat_blk, x, y, z, t ) }};
+      return {{ ul, Problem::initialize( ncomp, mat_blk, x, y, z, t ) }};
     }
 };
 

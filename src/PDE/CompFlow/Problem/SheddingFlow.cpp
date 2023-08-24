@@ -25,8 +25,7 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::CompFlowProblemSheddingFlow;
 
 tk::InitializeFn::result_type
-CompFlowProblemSheddingFlow::initialize( ncomp_t system,
-                                         ncomp_t,
+CompFlowProblemSheddingFlow::initialize( ncomp_t,
                                          const std::vector< EOS >& mat_blk,
                                          tk::real,
                                          tk::real,
@@ -34,8 +33,6 @@ CompFlowProblemSheddingFlow::initialize( ncomp_t system,
                                          tk::real )
 // *****************************************************************************
 //! Evaluate initial solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::InitializeFn
@@ -44,12 +41,9 @@ CompFlowProblemSheddingFlow::initialize( ncomp_t system,
   using tag::param;
 
   // Assign uniform initial condition according to the farfield state
-  auto r = g_inputdeck.get< tag::param, eq,
-                            tag::farfield_density >()[ system ];
-  auto p = g_inputdeck.get< tag::param, eq,
-                            tag::farfield_pressure >()[ system ];
-  auto u = g_inputdeck.get< tag::param, eq,
-                            tag::farfield_velocity >()[ system ];
+  auto r = g_inputdeck.get< tag::param, eq, tag::farfield_density >()[ 0 ];
+  auto p = g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ 0 ];
+  auto u = g_inputdeck.get< tag::param, eq, tag::farfield_velocity >()[ 0 ];
   auto rE = mat_blk[0].compute< EOS::totalenergy >( r, u[0], u[1], u[2], p );
 
   return {{ r, r*u[0], r*u[1], r*u[2], rE }};

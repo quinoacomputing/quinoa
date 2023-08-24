@@ -20,24 +20,21 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-void initializeMaterialEoS( std::size_t system,
-  std::vector< EOS >& mat_blk )
+void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 // *****************************************************************************
 //  Initialize the material block with configured EOS
-//! \param[in] system Index of system being solved
 //! \param[in,out] mat_blk Material block that gets initialized
 // *****************************************************************************
 {
   // EoS initialization
-  auto nmat =
-    g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
   const auto& matprop = g_inputdeck.get< tag::param, tag::multimat,
-    tag::material >()[system];
+    tag::material >()[0];
   const auto& matidxmap = g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >();
   for (std::size_t k=0; k<nmat; ++k) {
     auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get<tag::eos>();
-    mat_blk.emplace_back(mateos, EqType::multimat, system, k);
+    mat_blk.emplace_back(mateos, EqType::multimat, k);
   }
 }
 
@@ -142,7 +139,7 @@ cleanTraceMultiMat(
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
           /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
         {
-          //auto gk = gamma< tag::multimat >(system, k);
+          //auto gk = gamma< tag::multimat >(0, k);
 
           tk::real alk_new(0.0);
           //// volume change based on polytropic expansion/isentropic compression
@@ -153,7 +150,7 @@ cleanTraceMultiMat(
           //else
           //{
           //  auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
-          //  auto ck = eos_soundspeed< tag::multimat >(system, arhok, alk*pk,
+          //  auto ck = eos_soundspeed< tag::multimat >(0, arhok, alk*pk,
           //    alk, k);
           //  auto kk = arhok * ck * ck;
           //  alk_new = alk - (alk*alk/kk) * (p_target-pk);
@@ -233,11 +230,11 @@ cleanTraceMultiMat(
     }
 
     // 2. Based on volume change in majority material, compute energy change
-    //auto gmax = gamma< tag::multimat >(system, kmax);
+    //auto gmax = gamma< tag::multimat >(0, kmax);
     //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
     //auto rhomax_new = U(e, densityDofIdx(nmat, kmax, rdof, 0))
     //  / (almax+d_al);
-    //auto rhoEmax_new = eos_totalenergy< tag::multimat >(system, rhomax_new, u,
+    //auto rhoEmax_new = eos_totalenergy< tag::multimat >(0, rhomax_new, u,
     //  v, w, pmax_new, kmax);
     //auto d_arEmax_new = (almax+d_al) * rhoEmax_new
     //  - U(e, energyDofIdx(nmat, kmax, rdof, 0));
@@ -282,8 +279,8 @@ cleanTraceMultiMat(
     //pmix = rhoEb - 0.5*rhob*(u*u+v*v+w*w);
     //for (std::size_t k=0; k<nmat; ++k)
     //{
-    //  auto gk = gamma< tag::multimat >(system, k);
-    //  auto Pck = pstiff< tag::multimat >(system, k);
+    //  auto gk = gamma< tag::multimat >(0, k);
+    //  auto Pck = pstiff< tag::multimat >(0, k);
 
     //  pmix -= U(e, volfracDofIdx(nmat,k,rdof,0)) * gk * Pck *
     //    relaxInd[k] / (gk-1.0);
@@ -299,7 +296,7 @@ cleanTraceMultiMat(
     //  {
     //    auto alk_new = U(e, volfracDofIdx(nmat,k,rdof,0));
     //    U(e, energyDofIdx(nmat,k,rdof,0)) = alk_new *
-    //      eos_totalenergy< tag::multimat >(system, rhomat[k], u, v, w, pmix,
+    //      eos_totalenergy< tag::multimat >(0, rhomat[k], u, v, w, pmix,
     //      k);
     //    P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new * pmix;
     //  }

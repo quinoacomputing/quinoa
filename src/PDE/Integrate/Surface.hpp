@@ -31,8 +31,7 @@ using bcconf_t = kw::sideset::info::expect::type;
 
 //! Compute internal surface flux integrals for DG
 void
-surfInt( ncomp_t system,
-         std::size_t nmat,
+surfInt( std::size_t nmat,
          const std::vector< inciter::EOS >& mat_blk,
          real t,
          const std::size_t ndof,
@@ -74,7 +73,7 @@ update_rhs_fa ( ncomp_t ncomp,
 
 // Compute internal surface flux integrals for second order FV
 void
-surfIntFV( ncomp_t system,
+surfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   real t,

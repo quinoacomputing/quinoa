@@ -33,8 +33,7 @@ extern ctr::InputDeck g_inputdeck;
 namespace tk {
 
 void
-nonConservativeInt( [[maybe_unused]] ncomp_t system,
-                    std::size_t nmat,
+nonConservativeInt( std::size_t nmat,
                     const std::vector< inciter::EOS >& mat_blk,
                     const std::size_t ndof,
                     const std::size_t rdof,
@@ -56,7 +55,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //!   details see Pelanti, M., & Shyue, K. M. (2019). A numerical model for
 //!   multiphase liquid–vapor–gas flows with interfaces and cavitation.
 //!   International Journal of Multiphase Flow, 113, 208-230.
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -149,7 +147,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+      auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
@@ -395,8 +393,7 @@ nonConservativeIntFV(
 }
 
 void
-pressureRelaxationInt( ncomp_t system,
-                       std::size_t nmat,
+pressureRelaxationInt( std::size_t nmat,
                        const std::vector< inciter::EOS >& mat_blk,
                        const std::size_t ndof,
                        const std::size_t rdof,
@@ -419,7 +416,6 @@ pressureRelaxationInt( ncomp_t system,
 //!   Rieben, R. N., & Tomov, V. Z. (2016). Multi‐material closure model for
 //!   high‐order finite element Lagrangian hydrodynamics. International Journal
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -492,7 +488,7 @@ pressureRelaxationInt( ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+      auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
@@ -606,7 +602,6 @@ updateRhsPre(
 
 void
 pressureRelaxationIntFV(
-  ncomp_t system,
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
@@ -627,7 +622,6 @@ pressureRelaxationIntFV(
 //!   Rieben, R. N., & Tomov, V. Z. (2016). Multi‐material closure model for
 //!   high‐order finite element Lagrangian hydrodynamics. International Journal
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -657,7 +651,7 @@ pressureRelaxationIntFV(
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
 
-    auto state = evalPolynomialSol(system, mat_blk, 0, ncomp, nprim,
+    auto state = evalPolynomialSol(mat_blk, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
       {{0.25, 0.25, 0.25}}, B, U, P);
 

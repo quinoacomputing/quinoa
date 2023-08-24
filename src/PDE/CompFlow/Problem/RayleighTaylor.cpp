@@ -25,8 +25,7 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::CompFlowProblemRayleighTaylor;
 
 tk::InitializeFn::result_type
-CompFlowProblemRayleighTaylor::initialize( ncomp_t system,
-                                           ncomp_t,
+CompFlowProblemRayleighTaylor::initialize( ncomp_t,
                                            const std::vector< EOS >& mat_blk,
                                            tk::real x,
                                            tk::real y,
@@ -34,8 +33,6 @@ CompFlowProblemRayleighTaylor::initialize( ncomp_t system,
                                            tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -47,13 +44,13 @@ CompFlowProblemRayleighTaylor::initialize( ncomp_t system,
   using tag::param; using std::sin; using std::cos;
 
   // manufactured solution parameters
-  const auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
-  const auto bx = g_inputdeck.get< param, eq, tag::betax >()[system];
-  const auto by = g_inputdeck.get< param, eq, tag::betay >()[system];
-  const auto bz = g_inputdeck.get< param, eq, tag::betaz >()[system];
-  const auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
-  const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
-  const auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
+  const auto a = g_inputdeck.get< param, eq, tag::alpha >()[0];
+  const auto bx = g_inputdeck.get< param, eq, tag::betax >()[0];
+  const auto by = g_inputdeck.get< param, eq, tag::betay >()[0];
+  const auto bz = g_inputdeck.get< param, eq, tag::betaz >()[0];
+  const auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[0];
+  const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[0];
+  const auto k = g_inputdeck.get< param, eq, tag::kappa >()[0];
   // spatial component of density and pressure fields
   const tk::real gx = bx*x*x + by*y*y + bz*z*z;
   // density
@@ -72,17 +69,15 @@ CompFlowProblemRayleighTaylor::initialize( ncomp_t system,
 }
 
 tk::InitializeFn::result_type
-CompFlowProblemRayleighTaylor::analyticSolution( ncomp_t system,
-                                                 ncomp_t,
-                                              const std::vector< EOS >& mat_blk,
-                                                 tk::real x,
-                                                 tk::real y,
-                                                 tk::real z,
-                                                 tk::real t )
+CompFlowProblemRayleighTaylor::analyticSolution(
+  ncomp_t,
+  const std::vector< EOS >& mat_blk,
+  tk::real x,
+  tk::real y,
+  tk::real z,
+  tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \param[in] z Z coordinate where to evaluate the solution
@@ -94,13 +89,13 @@ CompFlowProblemRayleighTaylor::analyticSolution( ncomp_t system,
   using tag::param; using std::sin; using std::cos;
 
   // manufactured solution parameters
-  auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
-  auto bx = g_inputdeck.get< param, eq, tag::betax >()[system];
-  auto by = g_inputdeck.get< param, eq, tag::betay >()[system];
-  auto bz = g_inputdeck.get< param, eq, tag::betaz >()[system];
-  auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
-  auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
-  auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
+  auto a = g_inputdeck.get< param, eq, tag::alpha >()[0];
+  auto bx = g_inputdeck.get< param, eq, tag::betax >()[0];
+  auto by = g_inputdeck.get< param, eq, tag::betay >()[0];
+  auto bz = g_inputdeck.get< param, eq, tag::betaz >()[0];
+  auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[0];
+  auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[0];
+  auto k = g_inputdeck.get< param, eq, tag::kappa >()[0];
   // spatial component of density and pressure fields
   auto gx = bx*x*x + by*y*y + bz*z*z;
   // density

@@ -24,8 +24,7 @@ namespace inciter {
 using ncomp_t = kw::ncomp::info::expect::type;
 
 template< class B >
-void initializeBox( std::size_t system,
-                    const std::vector< EOS >& mat_blk,
+void initializeBox( const std::vector< EOS >& mat_blk,
                     tk::real V_ex,
                     tk::real t,
                     const B& b,
@@ -35,7 +34,6 @@ void initializeBox( std::size_t system,
 // *****************************************************************************
 // Set the solution in the user-defined IC box/mesh block
 //! \tparam B IC-block type to operate, ctr::box, or ctr::meshblock
-//! \param[in] system Equation system index
 //! \param[in] V_ex Exact box volume
 //! \param[in] t Physical time
 //! \param[in] b IC box configuration to use
@@ -56,7 +54,7 @@ void initializeBox( std::size_t system,
 // *****************************************************************************
 {
   auto nmat =
-    g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+    g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
 
   const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();

@@ -49,20 +49,18 @@ using BCStateFn =
 //!   not correctly specified. For now we simply ignore if BCs are not
 //!   specified by allowing empty BC vectors from the user input.
 template< class Eq > struct ConfigBC {
-  std::size_t system;  //! Compflow system id
   BCStateFn& state;    //!< BC state config: sidesets + statefn
   const std::vector< tk::StateFn >& fn;    //!< BC state functions
   std::size_t c;       //!< Counts BC types configured
   //! Constructor
-  ConfigBC( std::size_t sys,
-            BCStateFn& s,
+  ConfigBC( BCStateFn& s,
             const std::vector< tk::StateFn >& f ) :
-    system(sys), state(s), fn(f), c(0) {}
+    state(s), fn(f), c(0) {}
   //! Function to call for each BC type
   template< typename U > void operator()( brigand::type_<U> ) {
     std::vector< bcconf_t > cfg;
     const auto& v = g_inputdeck.get< tag::param, Eq, tag::bc, U >();
-    if (v.size() > system) cfg = v[system];
+    if (v.size() > 0) cfg = v[0];
     Assert( fn.size() > c, "StateFn missing for BC type" );
     state.push_back( { cfg, fn[c++] } );
   }
@@ -70,7 +68,7 @@ template< class Eq > struct ConfigBC {
 
 //! State function for invalid/un-configured boundary conditions
 [[noreturn]] tk::StateFn::result_type
-invalidBC( ncomp_t, ncomp_t, const std::vector< EOS >&,
+invalidBC( ncomp_t, const std::vector< EOS >&,
            const std::vector< tk::real >&, tk::real, tk::real, tk::real,
            tk::real, const std::array< tk::real, 3> & );
 

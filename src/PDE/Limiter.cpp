@@ -131,7 +131,6 @@ SuperbeeMultiMat_P1(
   const std::vector< int >& esuel,
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
-  std::size_t system,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -141,7 +140,6 @@ SuperbeeMultiMat_P1(
 //! \param[in] esuel Elements surrounding elements
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
-//! \param[in] system Index for equation systems
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -152,7 +150,7 @@ SuperbeeMultiMat_P1(
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[system];
+    tag::intsharp >()[0];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -236,7 +234,6 @@ VertexBasedTransport_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U )
 // *****************************************************************************
@@ -245,7 +242,6 @@ VertexBasedTransport_P1(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
-//! \param[in] system Index for equation systems
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \details This vertex-based limiter function should be called for transport.
@@ -257,7 +253,7 @@ VertexBasedTransport_P1(
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::transport,
-    tag::intsharp >()[system];
+    tag::intsharp >()[0];
   std::size_t ncomp = U.nprop()/rdof;
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -318,7 +314,6 @@ VertexBasedCompflow_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const std::vector< inciter::EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -333,7 +328,6 @@ VertexBasedCompflow_P1(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
-//! \param[in] system Index for equation systems
 //! \param[in] mat_blk EOS material block
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -354,7 +348,7 @@ VertexBasedCompflow_P1(
 
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, 1, system, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(nelem, 1, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -401,7 +395,6 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const std::vector< inciter::EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -420,7 +413,6 @@ VertexBasedCompflow_P2(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
-//! \param[in] system Index for equation systems
 //! \param[in] mat_blk EOS material block
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -447,7 +439,7 @@ VertexBasedCompflow_P2(
 
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, 1, system, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(nelem, 1, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -503,7 +495,6 @@ VertexBasedMultiMat_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const std::vector< inciter::EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -520,7 +511,6 @@ VertexBasedMultiMat_P1(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
-//! \param[in] system Index for equation systems
 //! \param[in] mat_blk EOS material block
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -540,14 +530,14 @@ VertexBasedMultiMat_P1(
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[system];
+    tag::intsharp >()[0];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6 && ndof > 1)
-    MarkShockCells(nelem, nmat, system, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(nelem, nmat, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -660,7 +650,6 @@ VertexBasedMultiMat_P2(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const std::vector< inciter::EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -682,7 +671,6 @@ VertexBasedMultiMat_P2(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
-//! \param[in] system Index for equation systems
 //! \param[in] mat_blk EOS material block
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
@@ -710,14 +698,14 @@ VertexBasedMultiMat_P2(
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[system];
+    tag::intsharp >()[0];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
-    MarkShockCells(nelem, nmat, system, ndof, rdof, mat_blk, ndofel,
+    MarkShockCells(nelem, nmat, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -842,7 +830,6 @@ VertexBasedMultiMat_FV(
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
-  std::size_t system,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U,
   tk::Fields& P,
@@ -852,7 +839,6 @@ VertexBasedMultiMat_FV(
 //! \param[in] esup Elements surrounding points
 //! \param[in] inpoel Element connectivity
 //! \param[in] nelem Number of elements
-//! \param[in] system Index for equation systems
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -865,7 +851,7 @@ VertexBasedMultiMat_FV(
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[system];
+    tag::intsharp >()[0];
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -2155,7 +2141,6 @@ interfaceIndicator( std::size_t nmat,
 
 void MarkShockCells ( const std::size_t nelem,
                       const std::size_t nmat,
-                      const std::size_t system,
                       const std::size_t ndof,
                       const std::size_t rdof,
                       const std::vector< inciter::EOS >& mat_blk,
@@ -2174,7 +2159,6 @@ void MarkShockCells ( const std::size_t nelem,
 //    condition
 //! \param[in] nelem Number of elements
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] system Equation system index
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] mat_blk EOS material block
@@ -2302,9 +2286,9 @@ void MarkShockCells ( const std::size_t nelem,
       std::array< std::vector< tk::real >, 2 > state;
 
       // Evaluate the high order solution at the qudrature point
-      state[0] = tk::evalPolynomialSol(system, mat_blk, 0, ncomp, nprim, rdof,
+      state[0] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
         nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = tk::evalPolynomialSol(system, mat_blk, 0, ncomp, nprim, rdof,
+      state[1] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
         nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
@@ -2325,8 +2309,8 @@ void MarkShockCells ( const std::size_t nelem,
             }
 
       // Evaluate the flux
-      auto fl = flux( system, ncomp, mat_blk, state[0], {} );
-      auto fr = flux( system, ncomp, mat_blk, state[1], {} );
+      auto fl = flux( ncomp, mat_blk, state[0], {} );
+      auto fr = flux( ncomp, mat_blk, state[1], {} );
 
       std::size_t i(0);
       for (const auto& c : vars) {
@@ -2372,7 +2356,6 @@ void MarkShockCells ( const std::size_t nelem,
 void
 correctLimConservMultiMat(
   std::size_t nelem,
-  std::size_t system,
   const std::vector< EOS >& mat_blk,
   std::size_t nmat,
   const std::vector< std::size_t >& inpoel,
@@ -2402,7 +2385,7 @@ correctLimConservMultiMat(
   std::size_t ncomp = unk.nprop()/rdof;
   std::size_t nprim = prim.nprop()/rdof;
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[system];
+    tag::intsharp >()[0];
 
   for (std::size_t e=0; e<nelem; ++e) {
     // Here we pre-compute the right-hand-side vector. The reason that the
@@ -2434,7 +2417,7 @@ correctLimConservMultiMat(
       auto w = wgp[igp] * geoElem(e, 0);
 
       // Evaluate the solution at quadrature point
-      auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+      auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, rdof, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim);
 
