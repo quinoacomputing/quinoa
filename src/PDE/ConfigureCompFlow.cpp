@@ -279,18 +279,15 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     g_inputdeck.get< tag::param, eq, tag::bc, tag::bcfarfield >();
   if (fs.size() > c) {
     nfo.emplace_back( "Farfield BC sideset(s)", parameters( fs[c] ) );
-    const auto& fr =
-      g_inputdeck.get< tag::param, eq, tag::farfield_density >();
-    if (fr.size() > c)
-      nfo.emplace_back( "Farfield BC density", std::to_string(fr[c]) );
+      nfo.emplace_back( "Farfield BC density", std::to_string(
+        g_inputdeck.get< tag::param, eq, tag::farfield_density >() ) );
     const auto& fu =
       g_inputdeck.get< tag::param, eq, tag::farfield_velocity >();
-    if (fu.size() > c)
-      nfo.emplace_back( "Farfield BC velocity", parameters( fu[c] ) );
-    const auto& fp =
-      g_inputdeck.get< tag::param, eq, tag::farfield_pressure >();
-    if (fp.size() > c)
-      nfo.emplace_back( "Farfield BC pressure", std::to_string(fp[c]) );
+    if (!fu.empty()) {
+      nfo.emplace_back( "Farfield BC velocity", parameters(fu) );
+    }
+    nfo.emplace_back( "Farfield BC pressure", std::to_string(
+      g_inputdeck.get< tag::param, eq, tag::farfield_pressure >() ) );
   }
 
   const auto& sym =

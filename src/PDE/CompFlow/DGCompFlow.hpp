@@ -985,9 +985,9 @@ class CompFlow {
       using tag::param; using tag::bc;
 
       // Primitive variables from farfield
-      auto frho = g_inputdeck.get< param, eq, tag::farfield_density >()[0];
-      auto fp   = g_inputdeck.get< param, eq, tag::farfield_pressure >()[0];
-      auto fu   = g_inputdeck.get< param, eq, tag::farfield_velocity >()[0];
+      auto frho = g_inputdeck.get< param, eq, tag::farfield_density >();
+      auto fp   = g_inputdeck.get< param, eq, tag::farfield_pressure >();
+      const auto& fu = g_inputdeck.get< param, eq, tag::farfield_velocity >();
 
       // Speed of sound from farfield
       auto fa = mat_blk[0].compute< EOS::soundspeed >( frho, fp );

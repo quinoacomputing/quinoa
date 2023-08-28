@@ -1478,6 +1478,14 @@ namespace deck {
                            tk::grm::Store_back< tag::param, eq, param >,
                            kw_type > {};
 
+  //! put in PDE parameter for equation matching keyword
+  template< typename eq, typename keyword, typename param,
+            class kw_type = tk::grm::number >
+  struct store_parameter :
+         tk::grm::process< use< keyword >,
+                           tk::grm::Store< tag::param, eq, param >,
+                           kw_type > {};
+
   //! put in PDE bool parameter for equation matching keyword into vector< int >
   template< typename eq, typename keyword, typename p >
   struct parameter_bool :
@@ -1576,10 +1584,14 @@ namespace deck {
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             parameter< eq, kw::pressure, tag::farfield_pressure >,
-             parameter< eq, kw::density, tag::farfield_density >,
-             pde_parameter_vector< kw::velocity, eq,
-                                   tag::farfield_velocity >,
+             store_parameter< eq, kw::pressure, tag::farfield_pressure >,
+             store_parameter< eq, kw::density, tag::farfield_density >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::velocity >,
+                                        tk::grm::Store_back,
+                                        tk::grm::start_vector,
+                                        tk::grm::check_vector,
+                                        eq, tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back_back,

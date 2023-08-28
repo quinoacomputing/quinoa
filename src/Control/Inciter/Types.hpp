@@ -430,10 +430,9 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::transfer,      std::vector< Transfer >
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
-  , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
-  , tag::farfield_density,  std::vector< kw::density::info::expect::type >
-  , tag::farfield_velocity, std::vector< std::vector<
-                              kw::velocity::info::expect::type > >
+  , tag::farfield_pressure, kw::pressure::info::expect::type
+  , tag::farfield_density,  kw::density::info::expect::type
+  , tag::farfield_velocity, std::vector< kw::velocity::info::expect::type >
   , tag::bc,            bc
   , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::sponge,        SpongeParameters
@@ -486,10 +485,9 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bc,            bc
   , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::ic,            ic
-  , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
-  , tag::farfield_density,  std::vector< kw::density::info::expect::type >
-  , tag::farfield_velocity, std::vector< std::vector<
-                              kw::velocity::info::expect::type > >
+  , tag::farfield_pressure, kw::pressure::info::expect::type
+  , tag::farfield_density,  kw::density::info::expect::type
+  , tag::farfield_velocity, std::vector< kw::velocity::info::expect::type >
   , tag::sponge,        SpongeParameters
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >

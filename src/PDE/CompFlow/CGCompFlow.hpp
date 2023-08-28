@@ -65,13 +65,9 @@ class CompFlow {
       m_problem(),
       m_stagCnf( g_inputdeck.specialBC< eq, tag::stag >() ),
       m_skipCnf( g_inputdeck.specialBC< eq, tag::skip >() ),
-      m_fr( g_inputdeck.get< param, eq, tag::farfield_density >().size() > 0 ?
-            g_inputdeck.get< param, eq, tag::farfield_density >()[0] : 1.0 ),
-      m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >().size() > 0 ?
-            g_inputdeck.get< param, eq, tag::farfield_pressure >()[0] : 1.0 ),
-      m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >().size() > 0 ?
-            g_inputdeck.get< param, eq, tag::farfield_velocity >()[0] :
-            std::vector< real >( 3, 0.0 ) )
+      m_fr( g_inputdeck.get< param, eq, tag::farfield_density >() ),
+      m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >() ),
+      m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >() )
     {
       Assert( g_inputdeck.get< tag::component >().get< eq >().at(0) == m_ncomp,
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );

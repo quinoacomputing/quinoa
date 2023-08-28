@@ -41,9 +41,9 @@ CompFlowProblemSheddingFlow::initialize( ncomp_t,
   using tag::param;
 
   // Assign uniform initial condition according to the farfield state
-  auto r = g_inputdeck.get< tag::param, eq, tag::farfield_density >()[ 0 ];
-  auto p = g_inputdeck.get< tag::param, eq, tag::farfield_pressure >()[ 0 ];
-  auto u = g_inputdeck.get< tag::param, eq, tag::farfield_velocity >()[ 0 ];
+  auto r = g_inputdeck.get< tag::param, eq, tag::farfield_density >();
+  auto p = g_inputdeck.get< tag::param, eq, tag::farfield_pressure >();
+  const auto& u = g_inputdeck.get< tag::param, eq, tag::farfield_velocity >();
   auto rE = mat_blk[0].compute< EOS::totalenergy >( r, u[0], u[1], u[2], p );
 
   return {{ r, r*u[0], r*u[1], r*u[2], rE }};

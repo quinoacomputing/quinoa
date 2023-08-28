@@ -133,7 +133,7 @@ namespace inciter {
       g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
 
     auto fp =
-      g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >()[0];
+      g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >();
 
     Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
             "state vector" );
