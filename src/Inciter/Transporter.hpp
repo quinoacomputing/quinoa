@@ -359,8 +359,9 @@ class Transporter : public CBase_Transporter {
         using tag::param;
         using eq = typename brigand::front< U >;
         using bc = typename brigand::back< U >;
-        for (const auto& s : inputdeck.get< param, eq, tag::bc, bc >())
-          for (const auto& i : s) userbc.insert( std::stoi(i) );
+        for (auto s : inputdeck.get< param, eq, tag::bc, bc >()) {
+          userbc.insert( std::stoi(s) );
+        }
       }
     };
 

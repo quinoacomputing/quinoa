@@ -831,7 +831,7 @@ class CompFlow {
         const auto& x = coord[0];
         const auto& y = coord[1];
         const auto& z = coord[2];
-        for (const auto& b : ubc[0])
+        for (const auto& b : ubc)
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
@@ -872,9 +872,9 @@ class CompFlow {
         for (auto p : nodes) {                 // for all symbc nodes
           if (!skipPoint(x[p],y[p],z[p])) {
             // for all user-def symbc sets
-            for (std::size_t s=0; s<sbc[0].size(); ++s) {
+            for (std::size_t s=0; s<sbc.size(); ++s) {
               // find nodes & normals for side
-              auto j = bnorm.find(std::stoi(sbc[0][s]));
+              auto j = bnorm.find(std::stoi(sbc[s]));
               if (j != end(bnorm)) {
                 auto i = j->second.find(p);      // find normal for node
                 if (i != end(j->second)) {
@@ -915,7 +915,7 @@ class CompFlow {
       if (fbc.size() > 0)               // use farbcs for this system
         for (auto p : nodes)                   // for all farfieldbc nodes
           if (!skipPoint(x[p],y[p],z[p]))
-            for (const auto& s : fbc[0]) {// for all user-def farbc sets
+            for (const auto& s : fbc) {// for all user-def farbc sets
               auto j = bnorm.find(std::stoi(s));// find nodes & normals for side
               if (j != end(bnorm)) {
                 auto i = j->second.find(p);      // find normal for node
@@ -980,13 +980,13 @@ class CompFlow {
         const auto& spvel = sponge.get< tag::velocity >();
         for (auto p : nodes) {             // for all sponge nodes
           if (!skipPoint(x[p],y[p],z[p])) {
-            std::vector< tk::real > sp( ss[0].size(), 0.0 );
+            std::vector< tk::real > sp( ss.size(), 0.0 );
             if (spvel.size() > 0) {
-              sp = spvel[0];
+              sp = spvel;
               for (auto& s : sp) s = std::sqrt(s);
             }
             // sponge velocity: reduce kinetic energy by a user percentage
-            for (std::size_t s=0; s<ss[0].size(); ++s) {
+            for (std::size_t s=0; s<ss.size(); ++s) {
               U(p,1) -= U(p,1)*sp[s];
               U(p,2) -= U(p,2)*sp[s];
               U(p,3) -= U(p,3)*sp[s];
@@ -1810,13 +1810,13 @@ class CompFlow {
       const auto& ss = sponge.get< tag::sideset >();
       if (ss.size() > 0) {  // if symbcs configured for this system
         const auto& sppre = sponge.get< tag::pressure >();
-        nset = ss[0].size();  // number of sponge side sets configured
+        nset = ss.size();  // number of sponge side sets configured
         spmult.resize( x.size() * nset, 0.0 );
         for (auto p : nodes) {
           if (not skipPoint(x[p],y[p],z[p]) && sppre.size() > 0) {
-            Assert( nset == sppre[0].size(), "Size mismatch" );
+            Assert( nset == sppre.size(), "Size mismatch" );
             for (std::size_t s=0; s<nset; ++s)
-              spmult[p*nset+s] = sppre[0][s];
+              spmult[p*nset+s] = sppre[s];
           } else {
             for (std::size_t s=0; s<nset; ++s)
               spmult[p*nset+s] = 0.0;
@@ -1824,7 +1824,7 @@ class CompFlow {
         }
       }
       Assert( ss.size() > 0 ?
-              spmult.size() == x.size() * ss[0].size() :
+              spmult.size() == x.size() * ss.size() :
               spmult.size() == 0, "Sponge pressure multipler wrong size" );
       return spmult;
     }

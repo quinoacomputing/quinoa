@@ -1083,10 +1083,11 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< typename... tags >
   struct noop : pegtl::success {};
   //! Action that does nothing
-  template<>
-  struct action< noop > {
+  template< typename... tags >
+  struct action< noop< tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& ) {}
   };
@@ -1251,7 +1252,7 @@ namespace grm {
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
   template< class key, class insert, class endkeyword,
-            class starter = noop, class value = pegtl::digit >
+            class starter = noop< key >, class value = pegtl::digit >
   struct dimensions :
          pegtl::seq<
            act< readkw< typename key::pegtl_string >, starter >,
@@ -1261,7 +1262,7 @@ namespace grm {
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
   template< class key, class insert, class endkeyword,
-            class starter = noop, class value = number >
+            class starter = noop< key >, class value = number >
   // cppcheck-suppress syntaxError
   struct vector :
          pegtl::seq<

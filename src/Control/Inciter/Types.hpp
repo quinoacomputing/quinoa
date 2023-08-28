@@ -311,18 +311,12 @@ using ic = tk::TaggedTuple< brigand::list<
 
 //! Boundary conditions configuration (list of side sets for each eq system)
 using bc = tk::TaggedTuple< brigand::list<
-    tag::bcdir,             std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcsym,             std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcinlet,           std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcoutlet,          std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcfarfield,        std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcextrapolate,     std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
+    tag::bcdir,          std::vector< kw::sideset::info::expect::type >
+  , tag::bcsym,          std::vector< kw::sideset::info::expect::type >
+  , tag::bcinlet,        std::vector< kw::sideset::info::expect::type >
+  , tag::bcoutlet,       std::vector< kw::sideset::info::expect::type >
+  , tag::bcfarfield,     std::vector< kw::sideset::info::expect::type >
+  , tag::bcextrapolate,  std::vector< kw::sideset::info::expect::type >
 > >;
 
 //! Stagnation points parameters storage
@@ -343,12 +337,9 @@ using SkipParameters = tk::TaggedTuple< brigand::list<
 
 //! Sponge parameters storage
 using SpongeParameters = tk::TaggedTuple< brigand::list<
-    tag::sideset,       std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::velocity,      std::vector< std::vector<
-                          kw::velocity::info::expect::type > >
-  , tag::pressure,      std::vector< std::vector<
-                          kw::pressure::info::expect::type > >
+    tag::sideset,       std::vector< kw::sideset::info::expect::type >
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
+  , tag::pressure,      std::vector< kw::pressure::info::expect::type >
 > >;
 
 //! Solver coupling

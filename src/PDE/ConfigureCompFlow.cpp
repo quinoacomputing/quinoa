@@ -297,14 +297,13 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
     const auto& sponge = g_inputdeck.get< tag::param, eq, tag::sponge >();
     const auto& ss = sponge.get< tag::sideset >();
-    if (ss.size() > c)
-      nfo.emplace_back( "Sponge sideset(s)", parameters( ss[c] ) );
+    if (!ss.empty()) nfo.emplace_back( "Sponge sideset(s)", parameters( ss ) );
     const auto& spvel = sponge.get< tag::velocity >();
-    if (spvel.size() > c)
-      nfo.emplace_back( "Sponge velocity parameters", parameters( spvel[c] ) );
+    if (!spvel.empty())
+      nfo.emplace_back( "Sponge velocity parameters", parameters( spvel ) );
     const auto& sppre = sponge.get< tag::pressure >();
-    if (sppre.size() > c)
-      nfo.emplace_back( "Sponge pressure parameters", parameters( sppre[c] ) );
+    if (!sppre.empty())
+      nfo.emplace_back( "Sponge pressure parameters", parameters( sppre ) );
   }
 
   const auto& dir =

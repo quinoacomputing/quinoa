@@ -428,21 +428,27 @@ namespace grm {
         const auto& ss = sponge.template get< tag::sideset >();
 
         const auto& spvel = sponge.template get< tag::velocity >();
-        if ( !spvel.empty() && !spvel.back().empty()) {
-          if (spvel.back().size() != ss.back().size())
+        if ( !spvel.empty()) {
+          if (spvel.size() != ss.size()) {
             Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
-          for (const auto& s : spvel.back())
-            if ( s < 0.0 || s > 1.0 )
+          }
+          for (const auto& s : spvel) {
+            if ( s < 0.0 || s > 1.0 ) {
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+            }
+          }
         }
 
         const auto& sppre = sponge.template get< tag::velocity >();
-        if ( !sppre.empty() && !sppre.back().empty()) {
-          if (sppre.back().size() != ss.back().size())
+        if ( !sppre.empty()) {
+          if (sppre.size() != ss.size()) {
             Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
-          for (const auto& s : sppre.back())
-            if ( s < 0.0 || s > 1.0 )
+          }
+          for (const auto& s : sppre) {
+            if ( s < 0.0 || s > 1.0 ) {
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+            }
+          }
         }
 
         // Error check user defined time dependent BC for this system
@@ -801,15 +807,13 @@ namespace grm {
       using Eq = typename brigand::front< U >;
       using BC = typename brigand::back< U >;
       const auto& bc = m_stack.template get< tag::param, Eq, tag::bc, BC >();
-      for (const auto& eq : bc) {
-        std::unordered_set< int > bcset;
-        for (const auto& s : eq) {
-          auto id = std::stoi(s);
-          if (bcset.find(id) != end(bcset))
-            Message< Stack, ERROR, MsgKey::NONDISJOINTBC >( m_stack, m_input );
-          else
-            bcset.insert( id );
-        }
+      std::unordered_set< int > bcset;
+      for (const auto& s : bc) {
+        auto id = std::stoi(s);
+        if (bcset.find(id) != end(bcset))
+          Message< Stack, ERROR, MsgKey::NONDISJOINTBC >( m_stack, m_input );
+        else
+          bcset.insert( id );
       }
     }
   };
@@ -1502,8 +1506,8 @@ namespace deck {
              use< kw::end >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::bc, param > > > {};
 
@@ -1560,20 +1564,20 @@ namespace deck {
              use< kw::end >,
              tk::grm::parameter_vector< use,
                                         use< kw::velocity >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::sponge, tag::velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::pressure >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::sponge, tag::pressure >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::sponge, tag::sideset > > > {};
 
@@ -1589,13 +1593,13 @@ namespace deck {
              tk::grm::parameter_vector< use,
                                         use< kw::velocity >,
                                         tk::grm::Store_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::bc, param > > > {};
 
