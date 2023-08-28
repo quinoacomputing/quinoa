@@ -81,7 +81,7 @@ class CompFlow {
 
       // EoS initialization
       const auto& matprop =
-        g_inputdeck.get< tag::param, eq, tag::material >()[0];
+        g_inputdeck.get< tag::param, eq, tag::material >();
       const auto& matidxmap =
         g_inputdeck.get< tag::param, eq, tag::matidxmap >();
       auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();

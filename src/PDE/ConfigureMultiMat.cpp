@@ -120,7 +120,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
   // Material property output
-  const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[c];
+  const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >();
   for (const auto& mtype : matprop) {
     const auto& m_id = mtype.get< tag::id >();
     ctr::Material opt;

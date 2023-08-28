@@ -233,7 +233,7 @@ namespace grm {
       }
 
       // Verify correct number of material properties configured
-      auto& matprop = stack.template get< param, eq, tag::material >().back()[0];
+      auto& matprop = stack.template get< param, eq, tag::material >().back();
       auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
       matidxmap.template get< tag::eosidx >().resize(1);
       matidxmap.template get< tag::matidx >().resize(1);
@@ -517,7 +517,7 @@ namespace grm {
         // if solid EOS, add components
         auto ntot = m + m + 3 + m;
         const auto& matprop = stack.template get< param, eq, tag::material >();
-        for (const auto& mtype : matprop.back()) {
+        for (const auto& mtype : matprop) {
           if (mtype.template get< tag::eos >() ==
             inciter::ctr::MaterialType::SMALLSHEARSOLID) {
             ntot += 9;
@@ -537,7 +537,7 @@ namespace grm {
       std::size_t tmat(0), i(0), mtypei(0), isolcntr(0), isolidx(0);
       std::set< std::size_t > matidset;
 
-      for (auto& mtype : matprop.back()) {
+      for (auto& mtype : matprop) {
         const auto& meos = mtype.template get< tag::eos >();
         const auto& mat_id = mtype.template get< tag::id >();
 
@@ -1462,7 +1462,7 @@ namespace deck {
   struct material_option :
          tk::grm::process<
            use< keyword >,
-           tk::grm::back_back_store_option< target, use, Option,
+           tk::grm::back_store_option< target, use, Option,
              tag::param, eq, tag::material >,
            pegtl::alpha > {};
 
@@ -1470,7 +1470,7 @@ namespace deck {
   template< class eq, typename keyword, typename target >
   struct material_vector :
          tk::grm::vector< use< keyword >,
-                          tk::grm::Back_back_store_back< target,
+                          tk::grm::Back_store_back< target,
                             tag::param, eq, tag::material >,
                           use< kw::end > > {};
 
@@ -1752,7 +1752,6 @@ namespace deck {
          pegtl::seq<
           pegtl::if_must<
             tk::grm::readkw< use< kw::material >::pegtl_string >,
-              tk::grm::start_vector_back< tag::param, eq, tag::material >,
             tk::grm::block< use< kw::end >,
                 material_vector< eq, kw::id, tag::id >
               , material_vector< eq, kw::mat_gamma, tag::gamma >

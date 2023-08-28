@@ -456,7 +456,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::p0,            std::vector< kw::pde_p0::info::expect::type >
     //! Materials block
-  , tag::material,      std::vector< std::vector< material > >
+  , tag::material,      std::vector< material >
     //! Materials index/EoS map
   , tag::matidxmap,     tk::TaggedTuple< brigand::list<
       tag::eosidx,      std::vector< std::size_t >,
@@ -499,7 +499,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::p0,            std::vector< kw::pde_p0::info::expect::type >
     //! Materials block
-  , tag::material,      std::vector< std::vector< material > >
+  , tag::material,      std::vector< material >
     //! Materials index/EoS map
     //!   The following data structure is used to index into the correct
     //!   material vector entry. This is done using the following three maps:

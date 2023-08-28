@@ -789,7 +789,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       Option opt;
       if (opt.exist(in.string())) {
-        stack.template get< tag, tags... >().back().back().template
+        stack.template get< tag, tags... >().back().template
           get< target >() = opt.value( in.string() );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
