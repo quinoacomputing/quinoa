@@ -206,7 +206,8 @@ JWL::soundspeed(
 // *************************************************************************
 {
   // limiting pressure to near-zero
-  auto apr_eff = std::max(alpha*min_eff_pressure(1e-4, arho, alpha), apr);
+  auto apr_eff = std::max(alpha*
+    min_eff_pressure(1e-4*std::abs(apr/alpha), arho, alpha), apr);
 
   auto co1 = m_rho0*alpha*alpha/(arho*arho);
   auto co2 = alpha*(1.0+m_w)/arho;
