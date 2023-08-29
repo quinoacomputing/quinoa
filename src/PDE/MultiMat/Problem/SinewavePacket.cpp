@@ -40,7 +40,7 @@ MultiMatProblemSinewavePacket::initialize( ncomp_t ncomp,
 //! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
+  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
 
   Assert(nmat == 1, "Sinewave packet advection not set up for more than one "
     "material");

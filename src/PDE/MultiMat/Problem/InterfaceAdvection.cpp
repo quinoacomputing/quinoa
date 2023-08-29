@@ -37,7 +37,7 @@ MultiMatProblemInterfaceAdvection::initialize(
 // *****************************************************************************
 {
   auto nmat =
-    g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
+    g_inputdeck.get< tag::param, eq, tag::nmat >();
 
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Incorrect number of components in multi-material "

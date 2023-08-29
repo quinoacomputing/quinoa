@@ -43,7 +43,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
 {
   tk::InitializeFn::result_type s( ncomp, 0.0 );
 
-  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
+  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
   const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
 

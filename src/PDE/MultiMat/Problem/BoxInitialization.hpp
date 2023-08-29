@@ -53,8 +53,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
-  auto nmat =
-    g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
 
   const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();

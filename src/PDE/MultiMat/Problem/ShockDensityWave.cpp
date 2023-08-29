@@ -43,8 +43,7 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t ncomp,
 //!   This problem does not have an analytical solution.
 // *****************************************************************************
 {
-  auto nmat =
-    g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
+  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
 
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Number of scalar components must be 6 or 9" );

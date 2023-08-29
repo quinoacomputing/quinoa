@@ -27,7 +27,7 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 // *****************************************************************************
 {
   // EoS initialization
-  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
   const auto& matprop = g_inputdeck.get< tag::param, tag::multimat,
     tag::material >();
   const auto& matidxmap = g_inputdeck.get< tag::param, tag::multimat,

@@ -91,7 +91,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( "flux", ctr::Flux().name(
     g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
 
-  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >()[c];
+  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
   nfo.emplace_back( "number of materials", std::to_string( nmat ) );
 
   auto prelax = g_inputdeck.get< tag::param, eq, tag::prelax >()[c];

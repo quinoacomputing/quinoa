@@ -491,15 +491,14 @@ namespace grm {
         // physics = euler/energy pill: m-material compressible flow
         // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
-        if (nmat.empty() || nmat.size() != neq.get< eq >()) {
+        if (nmat == inciter::g_inputdeck_defaults.get<param, eq, tag::nmat>()) {
           Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
-          nmat.push_back( 2 );
+          nmat = 2;
         }
 
         // set ncomp based on nmat
-        auto m = nmat.back();
         // if solid EOS, add components
-        auto ntot = m + m + 3 + m;
+        auto ntot = nmat + nmat + 3 + nmat;
         const auto& matprop = stack.template get< param, eq, tag::material >();
         for (const auto& mtype : matprop) {
           if (mtype.template get< tag::eos >() ==
@@ -515,9 +514,9 @@ namespace grm {
       // have been configured
       auto& matprop = stack.template get< param, eq, tag::material >();
       auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
-      matidxmap.template get< tag::eosidx >().resize(nmat.back());
-      matidxmap.template get< tag::matidx >().resize(nmat.back());
-      matidxmap.template get< tag::solidx >().resize(nmat.back());
+      matidxmap.template get< tag::eosidx >().resize(nmat);
+      matidxmap.template get< tag::matidx >().resize(nmat);
+      matidxmap.template get< tag::solidx >().resize(nmat);
       std::size_t tmat(0), i(0), mtypei(0), isolcntr(0), isolidx(0);
       std::set< std::size_t > matidset;
 
@@ -634,7 +633,7 @@ namespace grm {
       }
 
       // If total number of materials is incorrect, error out
-      if (tmat != nmat.back())
+      if (tmat != nmat)
         Message< Stack, ERROR, MsgKey::NUMMAT >( stack, in );
 
       // Check if material ids are contiguous and 1-based
@@ -715,7 +714,7 @@ namespace grm {
             if (boxmatid == 0) {
               Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
             }
-            else if (boxmatid > nmat.back()) {
+            else if (boxmatid > nmat) {
               Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
             }
             auto& boxorient = b.template get< tag::orientation >();
@@ -738,7 +737,7 @@ namespace grm {
             if (blkmatid == 0) {
               Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
             }
-            else if (blkmatid > nmat.back()) {
+            else if (blkmatid > nmat) {
               Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
             }
 
@@ -1114,7 +1113,7 @@ namespace grm {
       using inciter::deck::multimatvars;
       using inciter::ctr::OutVar;
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
-      auto nmat = stack.template get< param, multimat, tag::nmat >().back();
+      auto nmat = stack.template get< param, multimat, tag::nmat >();
       auto depvar = stack.template get< param, multimat, tag::depvar >().back();
       // first char of matched token: accepted multimatvar label char
       char v = static_cast<char>( in.string()[0] );
@@ -1922,9 +1921,7 @@ namespace deck {
                                             ctr::Problem,
                                             tag::multimat,
                                             tag::problem >,
-                           parameter< tag::multimat,
-                                      kw::nmat,
-                                      tag::nmat >,
+                           store_parameter<tag::multimat, kw::nmat, tag::nmat>,
                            tk::grm::process<
                              use< kw::flux >,
                                tk::grm::store_back_option< use,

@@ -40,8 +40,7 @@ struct LaxFriedrichsSolids {
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {} )
   {
-    const auto nmat =
-      g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+    auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
       tag::matidxmap >().template get< tag::solidx >();
 

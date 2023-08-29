@@ -59,8 +59,7 @@ static tk::GetVarFn::result_type
 bulkDensityOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator+=;
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
-  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
   auto r = U.extract_comp( densityDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
     r += U.extract_comp( densityDofIdx(nmat,k,rdof,0) );
@@ -76,8 +75,7 @@ static tk::GetVarFn::result_type
 bulkPressureOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator+=;
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
-  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
   auto p = U.extract_comp( pressureDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
     p += U.extract_comp( pressureDofIdx(nmat,k,rdof,0) );
@@ -93,8 +91,7 @@ static tk::GetVarFn::result_type
 bulkSpecificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator+=;
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
-  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
   auto e = U.extract_comp( energyDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
     e += U.extract_comp( energyDofIdx(nmat,k,rdof,0) );
@@ -111,8 +108,7 @@ template< tk::ctr::ncomp_t dir >
 tk::GetVarFn::result_type
 velocityOutVar( const tk::Fields& U, std::size_t rdof )
 {
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
-  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
   return U.extract_comp( velocityDofIdx(nmat,dir,rdof,0) );
 }
 
@@ -124,8 +120,7 @@ velocityOutVar( const tk::Fields& U, std::size_t rdof )
 static tk::GetVarFn::result_type
 matIndicatorOutVar( const tk::Fields& U, std::size_t rdof )
 {
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
-  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[ sys ];
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
   std::vector< tk::real > m(U.nunk(), 0.0);
   for (std::size_t i=0; i<U.nunk(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)
