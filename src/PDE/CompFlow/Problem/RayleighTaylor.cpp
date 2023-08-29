@@ -44,13 +44,13 @@ CompFlowProblemRayleighTaylor::initialize( ncomp_t,
   using tag::param; using std::sin; using std::cos;
 
   // manufactured solution parameters
-  const auto a = g_inputdeck.get< param, eq, tag::alpha >()[0];
-  const auto bx = g_inputdeck.get< param, eq, tag::betax >()[0];
-  const auto by = g_inputdeck.get< param, eq, tag::betay >()[0];
-  const auto bz = g_inputdeck.get< param, eq, tag::betaz >()[0];
-  const auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[0];
-  const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[0];
-  const auto k = g_inputdeck.get< param, eq, tag::kappa >()[0];
+  const auto a = g_inputdeck.get< param, eq, tag::alpha >();
+  const auto bx = g_inputdeck.get< param, eq, tag::betax >();
+  const auto by = g_inputdeck.get< param, eq, tag::betay >();
+  const auto bz = g_inputdeck.get< param, eq, tag::betaz >();
+  const auto p0 = g_inputdeck.get< param, eq, tag::p0 >();
+  const auto r0 = g_inputdeck.get< param, eq, tag::r0 >();
+  const auto k = g_inputdeck.get< param, eq, tag::kappa >();
   // spatial component of density and pressure fields
   const tk::real gx = bx*x*x + by*y*y + bz*z*z;
   // density
@@ -89,13 +89,13 @@ CompFlowProblemRayleighTaylor::analyticSolution(
   using tag::param; using std::sin; using std::cos;
 
   // manufactured solution parameters
-  auto a = g_inputdeck.get< param, eq, tag::alpha >()[0];
-  auto bx = g_inputdeck.get< param, eq, tag::betax >()[0];
-  auto by = g_inputdeck.get< param, eq, tag::betay >()[0];
-  auto bz = g_inputdeck.get< param, eq, tag::betaz >()[0];
-  auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[0];
-  auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[0];
-  auto k = g_inputdeck.get< param, eq, tag::kappa >()[0];
+  auto a = g_inputdeck.get< param, eq, tag::alpha >();
+  auto bx = g_inputdeck.get< param, eq, tag::betax >();
+  auto by = g_inputdeck.get< param, eq, tag::betay >();
+  auto bz = g_inputdeck.get< param, eq, tag::betaz >();
+  auto p0 = g_inputdeck.get< param, eq, tag::p0 >();
+  auto r0 = g_inputdeck.get< param, eq, tag::r0 >();
+  auto k = g_inputdeck.get< param, eq, tag::kappa >();
   // spatial component of density and pressure fields
   auto gx = bx*x*x + by*y*y + bz*z*z;
   // density

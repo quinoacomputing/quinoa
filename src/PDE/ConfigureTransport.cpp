@@ -98,21 +98,6 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
-  const auto& diff = g_inputdeck.get< param, eq, tag::diffusivity >();
-  if (diff.size() > c)
-    nfo.emplace_back( "coeff diffusivity [" + std::to_string( ncomp ) + "]",
-                       parameters( diff[c] ) );
-
-  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >();
-  if (u0.size() > c)
-    nfo.emplace_back( "coeff u0 [" + std::to_string( ncomp ) + "]",
-                       parameters( u0[c] ) );
-
-  const auto& lambda = g_inputdeck.get< param, eq, tag::lambda >();
-  if (lambda.size() > c)
-    nfo.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
-      parameters( lambda[c] ) );
-
   const auto& bcdir = g_inputdeck.get< param, eq, tag::bc, tag::bcdir >();
   if (bcdir.size() > c)
     nfo.emplace_back( "Dirichlet boundary [" + std::to_string( ncomp ) + "]",

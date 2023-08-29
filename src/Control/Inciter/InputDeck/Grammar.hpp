@@ -139,19 +139,6 @@ namespace grm {
       if (physics.empty() || physics.size() != neq.get< eq >())
         physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
 
-      // If physics type is advection-diffusion, check for correct number of
-      // advection velocity, shear, and diffusion coefficients
-      if (physics.back() == inciter::ctr::PhysicsType::ADVDIFF) {
-        auto& u0 = stack.template get< param, eq, tag::u0 >();
-        if (u0.back().size() != ncomp.back())  // must define 1 component
-          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
-        auto& diff = stack.template get< param, eq, tag::diffusivity >();
-        if (diff.back().size() != 3*ncomp.back())  // must define 3 components
-          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
-        auto& lambda = stack.template get< param, eq, tag::lambda >();
-        if (lambda.back().size() != 2*ncomp.back()) // must define 2 shear comps
-          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
-      }
       // If problem type is not given, error out
       auto& problem = stack.template get< param, eq, tag::problem >();
       if (problem.empty() || problem.size() != neq.get< eq >())
@@ -266,50 +253,8 @@ namespace grm {
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
-      if (problem.empty() || problem.size() != neq.get< eq >())
+      if (problem.empty() || problem.size() != neq.get< eq >()) {
         problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
-      else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
-        const auto& alpha = stack.template get< param, eq, tag::alpha >();
-        const auto& beta = stack.template get< param, eq, tag::beta >();
-        const auto& p0 = stack.template get< param, eq, tag::p0 >();
-        if ( alpha.size() != problem.size() ||
-             beta.size() != problem.size() ||
-             p0.size() != problem.size() )
-          Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
-      }
-      else if (problem.back() == inciter::ctr::ProblemType::NL_ENERGY_GROWTH) {
-        const auto& alpha = stack.template get< param, eq, tag::alpha >();
-        const auto& betax = stack.template get< param, eq, tag::betax >();
-        const auto& betay = stack.template get< param, eq, tag::betay >();
-        const auto& betaz = stack.template get< param, eq, tag::betaz >();
-        const auto& kappa = stack.template get< param, eq, tag::kappa >();
-        const auto& r0 = stack.template get< param, eq, tag::r0 >();
-        const auto& ce = stack.template get< param, eq, tag::ce >();
-        if ( alpha.size() != problem.size() ||
-             betax.size() != problem.size() ||
-             betay.size() != problem.size() ||
-             betaz.size() != problem.size() ||
-             kappa.size() != problem.size() ||
-             r0.size() != problem.size() ||
-             ce.size() != problem.size() )
-          Message< Stack, ERROR, MsgKey::ENERGY_UNFINISHED >( stack, in);
-      }
-      else if (problem.back() == inciter::ctr::ProblemType::RAYLEIGH_TAYLOR) {
-        const auto& alpha = stack.template get< param, eq, tag::alpha >();
-        const auto& betax = stack.template get< param, eq, tag::betax >();
-        const auto& betay = stack.template get< param, eq, tag::betay >();
-        const auto& betaz = stack.template get< param, eq, tag::betaz >();
-        const auto& kappa = stack.template get< param, eq, tag::kappa >();
-        const auto& p0 = stack.template get< param, eq, tag::p0 >();
-        const auto& r0 = stack.template get< param, eq, tag::r0 >();
-        if ( alpha.size() != problem.size() ||
-             betax.size() != problem.size() ||
-             betay.size() != problem.size() ||
-             betaz.size() != problem.size() ||
-             kappa.size() != problem.size() ||
-             p0.size() != problem.size() ||
-             r0.size() != problem.size() )
-          Message< Stack, ERROR, MsgKey::RT_UNFINISHED >( stack, in);
       }
 
       // Error check on user-defined problem type
@@ -670,16 +615,8 @@ namespace grm {
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
-      if (problem.empty() || problem.size() != neq.get< eq >())
+      if (problem.empty() || problem.size() != neq.get< eq >()) {
         problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
-      else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
-        const auto& alpha = stack.template get< param, eq, tag::alpha >();
-        const auto& beta = stack.template get< param, eq, tag::beta >();
-        const auto& p0 = stack.template get< param, eq, tag::p0 >();
-        if ( alpha.size() != problem.size() ||
-             beta.size() != problem.size() ||
-             p0.size() != problem.size() )
-          Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
       }
 
       // Error check on user-defined problem type
@@ -1786,15 +1723,27 @@ namespace deck {
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
                                                tag::transport >,
-                           pde_parameter_vector< kw::pde_diffusivity,
-                                                 tag::transport,
-                                                 tag::diffusivity >,
-                           pde_parameter_vector< kw::pde_lambda,
-                                                 tag::transport,
-                                                 tag::lambda >,
-                           pde_parameter_vector< kw::pde_u0,
-                                                 tag::transport,
-                                                 tag::u0 >,
+                           tk::grm::parameter_vector< use,
+                                                      use<kw::pde_diffusivity>,
+                                                      tk::grm::Store_back,
+                                                      tk::grm::noop,
+                                                      tk::grm::check_vector,
+                                                      tag::transport,
+                                                      tag::diffusivity >,
+                           tk::grm::parameter_vector< use,
+                                                      use< kw::pde_lambda >,
+                                                      tk::grm::Store_back,
+                                                      tk::grm::noop,
+                                                      tk::grm::check_vector,
+                                                      tag::transport,
+                                                      tag::lambda >,
+                           tk::grm::parameter_vector< use,
+                                                      use< kw::pde_u0 >,
+                                                      tk::grm::Store_back,
+                                                      tk::grm::noop,
+                                                      tk::grm::check_vector,
+                                                      tag::transport,
+                                                      tag::u0 >,
                            bc< kw::bc_dirichlet, tag::transport, tag::bcdir >,
                            bc< kw::bc_sym, tag::transport, tag::bcsym >,
                            bc< kw::bc_inlet, tag::transport, tag::bcinlet >,
@@ -1856,24 +1805,24 @@ namespace deck {
                                       tag::sysfctvar >,
                            parameter_bool< tag::compflow, kw::sysfct,
                                            tag::sysfct >,
-                           parameter< tag::compflow, kw::pde_alpha,
-                                      tag::alpha >,
-                           parameter< tag::compflow, kw::pde_p0,
-                                      tag::p0 >,
-                           parameter< tag::compflow, kw::pde_betax,
-                                      tag::betax >,
-                           parameter< tag::compflow, kw::pde_betay,
-                                      tag::betay >,
-                           parameter< tag::compflow, kw::pde_betaz,
-                                      tag::betaz >,
-                           parameter< tag::compflow, kw::pde_beta,
-                                      tag::beta >,
-                           parameter< tag::compflow, kw::pde_r0,
-                                      tag::r0 >,
-                           parameter< tag::compflow, kw::pde_ce,
-                                      tag::ce >,
-                           parameter< tag::compflow, kw::pde_kappa,
-                                      tag::kappa >,
+                           store_parameter< tag::compflow, kw::pde_alpha,
+                                            tag::alpha >,
+                           store_parameter< tag::compflow, kw::pde_p0,
+                                            tag::p0 >,
+                           store_parameter< tag::compflow, kw::pde_betax,
+                                            tag::betax >,
+                           store_parameter< tag::compflow, kw::pde_betay,
+                                            tag::betay >,
+                           store_parameter< tag::compflow, kw::pde_betaz,
+                                            tag::betaz >,
+                           store_parameter< tag::compflow, kw::pde_beta,
+                                            tag::beta >,
+                           store_parameter< tag::compflow, kw::pde_r0,
+                                            tag::r0 >,
+                           store_parameter< tag::compflow, kw::pde_ce,
+                                            tag::ce >,
+                           store_parameter< tag::compflow, kw::pde_kappa,
+                                            tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc_spec< tag::compflow, tag::stag, kw::bc_stag >,
@@ -1932,15 +1881,15 @@ namespace deck {
                              pegtl::alpha >,
                            ic< tag::multimat >,
                            material_properties< tag::multimat >,
-                           parameter< tag::multimat,
-                                      kw::pde_alpha,
-                                      tag::alpha >,
-                           parameter< tag::multimat,
-                                      kw::pde_p0,
-                                      tag::p0 >,
-                           parameter< tag::multimat,
-                                      kw::pde_beta,
-                                      tag::beta >,
+                           store_parameter< tag::multimat,
+                                            kw::pde_alpha,
+                                            tag::alpha >,
+                           store_parameter< tag::multimat,
+                                            kw::pde_p0,
+                                            tag::p0 >,
+                           store_parameter< tag::multimat,
+                                            kw::pde_beta,
+                                            tag::beta >,
                            bc< kw::bc_dirichlet,
                                tag::multimat,
                                tag::bcdir >,

@@ -358,20 +358,16 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::mesh,          mesh
   , tag::physics,       std::vector< PhysicsType >
   , tag::problem,       std::vector< ProblemType >
-  , tag::diffusivity,   std::vector< std::vector<
-                        kw::pde_diffusivity::info::expect::type > >
-  , tag::lambda,        std::vector< std::vector<
-                        kw::pde_lambda::info::expect::type > >
-  , tag::u0,            std::vector< std::vector<
-                        kw::pde_u0::info::expect::type > >
+  , tag::diffusivity,   std::vector< kw::pde_diffusivity::info::expect::type >
+  , tag::lambda,        std::vector< kw::pde_lambda::info::expect::type >
+  , tag::u0,            std::vector< kw::pde_u0::info::expect::type >
   , tag::bc,            bc
   , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::sponge,        SpongeParameters
   //! interface compression toggle
   , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
   //! interface compression parameter
-  , tag::intsharp_param,
-                      std::vector< kw::intsharp_param::info::expect::type >
+  , tag::intsharp_param, std::vector< kw::intsharp_param::info::expect::type >
 > >;
 
 //! Material configuration
@@ -437,23 +433,23 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   //! Indices of system-FCT scalar components considered as a system
   , tag::sysfctvar,     std::vector< kw::sysfctvar::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
+  , tag::alpha,         kw::pde_alpha::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::beta,          std::vector< kw::pde_beta::info::expect::type >
+  , tag::beta,          kw::pde_beta::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betax,         std::vector< kw::pde_betax::info::expect::type >
+  , tag::betax,         kw::pde_betax::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betay,         std::vector< kw::pde_betay::info::expect::type >
+  , tag::betay,         kw::pde_betay::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betaz,         std::vector< kw::pde_betaz::info::expect::type >
+  , tag::betaz,         kw::pde_betaz::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::r0,            std::vector< kw::pde_r0::info::expect::type >
+  , tag::r0,            kw::pde_r0::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::ce,            std::vector< kw::pde_ce::info::expect::type >
+  , tag::ce,            kw::pde_ce::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::kappa,         std::vector< kw::pde_kappa::info::expect::type >
+  , tag::kappa,         kw::pde_kappa::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::p0,            std::vector< kw::pde_p0::info::expect::type >
+  , tag::p0,            kw::pde_p0::info::expect::type
     //! Materials block
   , tag::material,      std::vector< material >
     //! Materials index/EoS map
@@ -480,23 +476,23 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_velocity, std::vector< kw::velocity::info::expect::type >
   , tag::sponge,        SpongeParameters
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
+  , tag::alpha,         kw::pde_alpha::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::beta,          std::vector< kw::pde_beta::info::expect::type >
+  , tag::beta,          kw::pde_beta::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betax,         std::vector< kw::pde_betax::info::expect::type >
+  , tag::betax,         kw::pde_betax::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betay,         std::vector< kw::pde_betay::info::expect::type >
+  , tag::betay,         kw::pde_betay::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betaz,         std::vector< kw::pde_betaz::info::expect::type >
+  , tag::betaz,         kw::pde_betaz::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::r0,            std::vector< kw::pde_r0::info::expect::type >
+  , tag::r0,            kw::pde_r0::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::ce,            std::vector< kw::pde_ce::info::expect::type >
+  , tag::ce,            kw::pde_ce::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::kappa,         std::vector< kw::pde_kappa::info::expect::type >
+  , tag::kappa,         kw::pde_kappa::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::p0,            std::vector< kw::pde_p0::info::expect::type >
+  , tag::p0,            kw::pde_p0::info::expect::type
     //! Materials block
   , tag::material,      std::vector< material >
     //! Materials index/EoS map

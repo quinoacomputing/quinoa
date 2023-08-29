@@ -42,9 +42,9 @@ TransportProblemShearDiff::initialize( ncomp_t ncomp,
 {
   using tag::param;
 
-  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >()[0];
-  const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >()[0];
-  const auto& l = g_inputdeck.get< param, eq, tag::lambda >()[0];
+  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >();
+  const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >();
+  const auto& l = g_inputdeck.get< param, eq, tag::lambda >();
 
   std::vector< tk::real > r( ncomp );
   for (ncomp_t c=0; c<ncomp; ++c) {
@@ -75,15 +75,15 @@ TransportProblemShearDiff::errchk( ncomp_t ncomp ) const
 {
   using tag::param;
 
-  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >()[0];
+  auto u0 = g_inputdeck.get< param, eq, tag::u0 >();
   ErrChk( ncomp == u0.size(),
     "Wrong number of advection-diffusion PDE parameters 'u0'" );
 
-  const auto& lambda = g_inputdeck.get< param, eq, tag::lambda >()[0];
+  auto lambda = g_inputdeck.get< param, eq, tag::lambda >();
   ErrChk( 2*ncomp == lambda.size(),
     "Wrong number of advection-diffusion PDE parameters 'lambda'" );
 
-  const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >()[0];
+  auto& d = g_inputdeck.get< param, eq, tag::diffusivity >();
   ErrChk( 3*ncomp == d.size(),
     "Wrong number of advection-diffusion PDE parameters 'diffusivity'" );
 }
@@ -103,8 +103,8 @@ TransportProblemShearDiff::prescribedVelocity( ncomp_t ncomp,
 {
   using tag::param;
 
-  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >()[ 0 ];
-  const auto& l = g_inputdeck.get< param, eq, tag::lambda >()[ 0 ];
+  auto u0 = g_inputdeck.get< param, eq, tag::u0 >();
+  auto l = g_inputdeck.get< param, eq, tag::lambda >();
 
   std::vector< std::array< tk::real, 3 > > vel( ncomp );
   for (ncomp_t c=0; c<ncomp; ++c)

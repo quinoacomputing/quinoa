@@ -73,13 +73,13 @@ class CompFlowProblemNLEnergyGrowth {
       Assert(sv.size() == 5, "Incorrect source vector size");
       using tag::param; using std::sin; using std::cos;
       // manufactured solution parameters
-      const auto a = g_inputdeck.get< param, eq, tag::alpha >()[0];
-      const auto bx = g_inputdeck.get< param, eq, tag::betax >()[0];
-      const auto by = g_inputdeck.get< param, eq, tag::betay >()[0];
-      const auto bz = g_inputdeck.get< param, eq, tag::betaz >()[0];
-      const auto ce = g_inputdeck.get< param, eq, tag::ce >()[0];
-      const auto kappa = g_inputdeck.get< param, eq, tag::kappa >()[0];
-      const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[0];
+      const auto a = g_inputdeck.get< param, eq, tag::alpha >();
+      const auto bx = g_inputdeck.get< param, eq, tag::betax >();
+      const auto by = g_inputdeck.get< param, eq, tag::betay >();
+      const auto bz = g_inputdeck.get< param, eq, tag::betaz >();
+      const auto ce = g_inputdeck.get< param, eq, tag::ce >();
+      const auto kappa = g_inputdeck.get< param, eq, tag::kappa >();
+      const auto r0 = g_inputdeck.get< param, eq, tag::r0 >();
       // ratio of specific heats
       const auto g = gamma< tag::compflow >(0);
       // spatial component of density field

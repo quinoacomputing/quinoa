@@ -43,9 +43,9 @@ CompFlowProblemVorticalFlow::initialize( ncomp_t,
   using tag::param; using tag::compflow;
 
   // manufactured solution parameters
-  auto a = g_inputdeck.get< param, compflow, tag::alpha >()[ 0 ];
-  auto b = g_inputdeck.get< param, compflow, tag::beta >()[ 0 ];
-  auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ 0 ];
+  auto a = g_inputdeck.get< param, compflow, tag::alpha >();
+  auto b = g_inputdeck.get< param, compflow, tag::beta >();
+  auto p0 = g_inputdeck.get< param, compflow, tag::p0 >();
   // ratio of specific heats
   auto g = gamma< tag::compflow >(0);
   // velocity
@@ -77,9 +77,9 @@ CompFlowProblemVorticalFlow::analyticSolution( ncomp_t,
   using tag::param; using tag::compflow;
 
   // manufactured solution parameters
-  auto a = g_inputdeck.get< param, compflow, tag::alpha >()[ 0 ];
-  auto b = g_inputdeck.get< param, compflow, tag::beta >()[ 0 ];
-  auto p0 = g_inputdeck.get< param, compflow, tag::p0 >()[ 0 ];
+  auto a = g_inputdeck.get< param, compflow, tag::alpha >();
+  auto b = g_inputdeck.get< param, compflow, tag::beta >();
+  auto p0 = g_inputdeck.get< param, compflow, tag::p0 >();
   // ratio of specific heats
   auto g = gamma< tag::compflow >(0);
   // velocity
