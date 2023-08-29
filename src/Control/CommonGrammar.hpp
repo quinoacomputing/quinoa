@@ -593,17 +593,17 @@ namespace grm {
 
   //! Rule used to trigger action
   template< typename tag, typename... tags >
-  struct Store_back_bool : pegtl::success {};
+  struct Store_bool : pegtl::success {};
   //! \brief Convert and push back a bool to vector of ints in state at position
   //!    given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store_back member function of the underlying
   //!    grammar stack, tk::Control::store_back.
   template< typename tag, typename...tags >
-  struct action< Store_back_bool< tag, tags... > > {
+  struct action< Store_bool< tag, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      stack.template store_back_bool< tag, tags... >( in.string() );
+      stack.template store_bool< tag, tags... >( in.string() );
     }
   };
 

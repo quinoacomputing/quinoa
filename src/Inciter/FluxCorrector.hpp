@@ -43,7 +43,7 @@ class FluxCorrector {
     //! \param[in] is Size of the mesh element connectivity vector (inpoel size)
     explicit FluxCorrector( std::size_t is = 0 ) :
       m_aec( is, g_inputdeck.get< tag::component >().nprop() ),
-      m_sys( findsys< tag::compflow >() ),
+      m_sys( g_inputdeck.get< tag::param, tag::compflow, tag::sysfctvar >() ),
       m_vel( findvel< tag::compflow >() ) {}
 
     //! Collect scalar comonent indices for equation systems
@@ -59,14 +59,15 @@ class FluxCorrector {
         // Access number of scalar components in all systems of type Eq
         const auto& ncompv = g_inputdeck.get< tag::component >().get< Eq >();
         // Assign variable indices for system FCT for each Eq system
-        for (std::size_t e=0; e<ncompv.size(); ++e) {
-          if (g_inputdeck.get< tag::param, Eq, tag::sysfct >().at(e)) {
-            sys.push_back( std::vector< ncomp_t >() );
-            for (auto c : sv.at(e)) {
-              sys.back().push_back( c );
+        if (sv.size() == ncompv.size()) {
+          for (std::size_t e=0; e<ncompv.size(); ++e) {
+            if (g_inputdeck.get< tag::param, Eq, tag::sysfct >()) {
+              sys.push_back( std::vector< ncomp_t >() );
+              for (auto c : sv) {
+                sys.back().push_back( c );
+              }
             }
-          }
-        } }() );
+        } } }() );
       for ([[maybe_unused]] const auto& s : sys) {
         Assert( std::all_of( begin(s), end(s), [&]( std::size_t i ){
                   return i < g_inputdeck.get< tag::component >().nprop(); } ),
@@ -167,8 +168,8 @@ class FluxCorrector {
   private:
    //! Antidiffusive element contributions for all scalar components
    tk::Fields m_aec;
-   //! Component indices to treat as a system for multiple systems
-   std::vector< std::vector< ncomp_t > > m_sys;
+   //! Component indices to treat as a system
+   std::vector< ncomp_t > m_sys;
    //! Component indices to treat as a velocity vector for multiple systems
    std::vector< std::array< ncomp_t, 3 > > m_vel;
 };

@@ -327,19 +327,14 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   const auto fct = g_inputdeck.get< tag::discr, tag::fct >();
   if (scheme == ctr::SchemeType::DiagCG && fct) {
-
-    const auto& sys = g_inputdeck.get< tag::param, eq, tag::sysfct >();
-    if (sys.size() > c) {
-      nfo.emplace_back( "FCT system character", bool_to_string( sys[c] ) );
-
-      if (sys[c]) {     // if system FCT is enabled for this system
-        const auto& sv = g_inputdeck.get< tag::param, eq, tag::sysfctvar >();
-        if (sv.size() > c) {
-          nfo.emplace_back( "System-FCT variables", parameters( sv[c] ) );
-        }
+    auto sys = g_inputdeck.get< tag::param, eq, tag::sysfct >();
+    nfo.emplace_back( "FCT system character", bool_to_string( sys ) );
+    if (sys) {
+      const auto& sv = g_inputdeck.get< tag::param, eq, tag::sysfctvar >();
+      if (!sv.empty()) {
+        nfo.emplace_back( "System-FCT variables", parameters( sv ) );
       }
     }
-
   }
 
   return nfo;

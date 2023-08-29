@@ -433,10 +433,9 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   //! Skip boundary condition configuration storage
   , tag::skip,          SkipParameters
   //! System FCT character
-  , tag::sysfct,        std::vector< int >
+  , tag::sysfct,        int
   //! Indices of system-FCT scalar components considered as a system
-  , tag::sysfctvar,     std::vector<
-                          std::vector< kw::sysfctvar::info::expect::type > >
+  , tag::sysfctvar,     std::vector< kw::sysfctvar::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
   , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)

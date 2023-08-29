@@ -190,31 +190,15 @@ namespace grm {
       using inciter::deck::neq;
       using tag::param;
 
-      // Set default to sysfct (on/off) if not specified
-      auto& sysfct = stack.template get< param, eq, tag::sysfct >();
-      if (sysfct.empty() || sysfct.size() != neq.get< eq >())
-        sysfct.push_back( 1 );
-
       // Set default flux to HLLC if not specified
       auto& flux = stack.template get< tag::param, eq, tag::flux >();
       if (flux.empty() || flux.size() != neq.get< eq >())
         flux.push_back( inciter::ctr::FluxType::HLLC );
 
-      // Verify that sysfctvar variables are within bounds (if specified) and
-      // defaults if not
+      auto sysfct = stack.template get< param, eq, tag::sysfct >();
       auto& sysfctvar = stack.template get< param, eq, tag::sysfctvar >();
       // If sysfctvar is not specified, use all variables for system FCT
-      if (sysfctvar.empty() || sysfctvar.back().empty()) {
-        sysfctvar.push_back( {0,1,2,3,4} );
-      } else {  // if specified, do error checking on variables
-        auto& vars = sysfctvar.back();
-        if (vars.size() > 5) {
-          Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
-        }
-        for (const auto& i : vars) {
-          if (i > 4) Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
-        }
-      }
+      if (sysfct && sysfctvar.empty()) sysfctvar = { 0,1,2,3,4 };
 
       // Set number of components to 5 (mass, 3 x mom, energy) if not coupled
       stack.template get< tag::component, eq >().push_back( 5 );
@@ -1494,7 +1478,7 @@ namespace deck {
   template< typename eq, typename keyword, typename p >
   struct parameter_bool :
          tk::grm::process< use< keyword >,
-                           tk::grm::Store_back_bool< tag::param, eq, p >,
+                           tk::grm::Store_bool< tag::param, eq, p >,
                            pegtl::alpha > {};
 
   //! Boundary conditions block
@@ -1869,11 +1853,9 @@ namespace deck {
                            ic< tag::compflow >,
                            tk::grm::lua< use, tag::param, tag::compflow >,
                            material_properties< tag::compflow >,
-                           pde_parameter_vector< kw::sysfctvar,
-                                                 tag::compflow,
-                                                 tag::sysfctvar >,
-                           parameter_bool< tag::compflow,
-                                           kw::sysfct,
+                           parameter< tag::compflow, kw::sysfctvar,
+                                      tag::sysfctvar >,
+                           parameter_bool< tag::compflow, kw::sysfct,
                                            tag::sysfct >,
                            parameter< tag::compflow, kw::pde_alpha,
                                       tag::alpha >,
