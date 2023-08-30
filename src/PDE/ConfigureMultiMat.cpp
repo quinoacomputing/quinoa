@@ -83,7 +83,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
-    g_inputdeck.get< tag::param, eq, tag::physics >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::physics >() ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, eq, tag::problem >()[c] ) );

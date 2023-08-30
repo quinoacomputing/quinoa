@@ -134,15 +134,6 @@ namespace grm {
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
         ncomp.push_back( 1 );
 
-      // If physics type is not given, default to 'advection'
-      auto& physics = stack.template get< param, eq, tag::physics >();
-      if (physics.empty() || physics.size() != neq.get< eq >())
-        physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
-
-      // If problem type is not given, error out
-      auto& problem = stack.template get< param, eq, tag::problem >();
-      if (problem.empty() || problem.size() != neq.get< eq >())
-        Message< Stack, ERROR, MsgKey::NOPROBLEM >( stack, in );
       // Error check Dirichlet boundary condition block for all transport eq
       // configurations
       const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
@@ -259,20 +250,20 @@ namespace grm {
 
       // Error check on user-defined problem type
       auto& ic = stack.template get< param, eq, tag::ic >();
-      //auto& bgdensityic = ic.template get< tag::density >();
-      //auto& bgvelocityic = ic.template get< tag::velocity >();
-      //auto& bgpressureic = ic.template get< tag::pressure >();
-      //auto& bgenergyic = ic.template get< tag::energy >();
-      //auto& bgtemperatureic = ic.template get< tag::temperature >();
+      auto& bgdensityic = ic.template get< tag::density >();
+      auto& bgvelocityic = ic.template get< tag::velocity >();
+      auto& bgpressureic = ic.template get< tag::pressure >();
+      auto& bgenergyic = ic.template get< tag::energy >();
+      auto& bgtemperatureic = ic.template get< tag::temperature >();
       if (problem.back() == inciter::ctr::ProblemType::USER_DEFINED) {
         // must have defined background ICs for user-defined ICs
-        //auto n = neq.get< eq >();
-        //if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
-        //     ( bgpressureic.size() != n && bgenergyic.size() != n &&
-        //       bgtemperatureic.size() != n ) )
-        //{
-        //  Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
-        //}
+        auto n = neq.get< eq >();
+        if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
+             ( bgpressureic.size() != n && bgenergyic.size() != n &&
+               bgtemperatureic.size() != n ) )
+        {
+          Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
+        }
 
         // Error check for ic box
         auto& box = ic.template get< tag::box >();
@@ -418,11 +409,6 @@ namespace grm {
         tk::grm::depvars.insert( 'a' );
       }
 
-      // If physics type is not given, default to 'euler'
-      auto& physics = stack.template get< param, eq, tag::physics >();
-      if (physics.empty() || physics.size() != neq.get< eq >())
-        physics.push_back( inciter::ctr::PhysicsType::EULER );
-
       // Set default flux to AUSM if not specified
       auto& flux = stack.template get< tag::param, eq, tag::flux >();
       if (flux.empty() || flux.size() != neq.get< eq >())
@@ -431,8 +417,10 @@ namespace grm {
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
-      if (physics.back() == inciter::ctr::PhysicsType::EULER ||
-        physics.back() == inciter::ctr::PhysicsType::ENERGYPILL) {
+      auto physics = stack.template get< param, eq, tag::physics >();
+      if (physics == inciter::ctr::PhysicsType::EULER ||
+          physics == inciter::ctr::PhysicsType::ENERGYPILL)
+      {
         // physics = euler/energy pill: m-material compressible flow
         // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
@@ -1206,8 +1194,8 @@ namespace grm {
         // set number of scalar components
         stack.template get< tag::component, tag::compflow >().push_back( 5 );
         // configure physics policy
-        stack.template get< tag::param, tag::compflow, tag::physics >().
-          push_back( PhysicsType::EULER );
+        stack.template get< tag::param, tag::compflow, tag::physics >() =
+          PhysicsType::EULER;
         // add new PDE to instantiate
         stack.template get< tag::selected, tag::pde >().
           push_back( PDEType::COMPFLOW );
@@ -1708,11 +1696,13 @@ namespace deck {
          pegtl::if_must<
            scan_eq< use< kw::transport >, tag::transport >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::policy< use,
-                                            use< kw::physics >,
-                                            ctr::Physics,
-                                            tag::transport,
-                                            tag::physics >,
+                           tk::grm::process< use< kw::physics >,
+                                             tk::grm::store_inciter_option<
+                                               ctr::Physics,
+                                               tag::param,
+                                               tag::transport,
+                                               tag::physics >,
+                                             pegtl::alpha >,
                            tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,
@@ -1779,11 +1769,13 @@ namespace deck {
            tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::policy< use,
-                                            use< kw::physics >,
-                                            ctr::Physics,
-                                            tag::compflow,
-                                            tag::physics >,
+                           tk::grm::process< use< kw::physics >,
+                                             tk::grm::store_inciter_option<
+                                               ctr::Physics,
+                                               tag::param,
+                                               tag::compflow,
+                                               tag::physics >,
+                                             pegtl::alpha >,
                            tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,
@@ -1860,11 +1852,13 @@ namespace deck {
                                   tag::meshblock >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::material >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::policy< use,
-                                            use< kw::physics >,
-                                            ctr::Physics,
-                                            tag::multimat,
-                                            tag::physics >,
+                           tk::grm::process< use< kw::physics >,
+                                             tk::grm::store_inciter_option<
+                                               ctr::Physics,
+                                               tag::param,
+                                               tag::multimat,
+                                               tag::physics >,
+                                             pegtl::alpha >,
                            tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,

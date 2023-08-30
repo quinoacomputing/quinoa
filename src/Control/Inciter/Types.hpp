@@ -356,7 +356,7 @@ using mesh = tk::TaggedTuple< brigand::list<
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
-  , tag::physics,       std::vector< PhysicsType >
+  , tag::physics,       PhysicsType
   , tag::problem,       std::vector< ProblemType >
   , tag::diffusivity,   std::vector< kw::pde_diffusivity::info::expect::type >
   , tag::lambda,        std::vector< kw::pde_lambda::info::expect::type >
@@ -415,7 +415,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
   , tag::transfer,      std::vector< Transfer >
-  , tag::physics,       std::vector< PhysicsType >
+  , tag::physics,       PhysicsType
   , tag::problem,       std::vector< ProblemType >
   , tag::farfield_pressure, kw::pressure::info::expect::type
   , tag::farfield_density,  kw::density::info::expect::type
@@ -466,7 +466,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
 using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
-  , tag::physics,       std::vector< PhysicsType >
+  , tag::physics,       PhysicsType
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
   , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
