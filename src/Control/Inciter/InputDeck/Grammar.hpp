@@ -362,7 +362,7 @@ namespace grm {
 
         // Error check user defined time dependent BC for this system
         const auto& tdepbc =
-          stack.template get< tag::param, eq, tag::bctimedep >().back();
+          stack.template get< tag::param, eq, tag::bctimedep >();
         // multiple time dependent BCs can be specified on different side sets
         for (const auto& bndry : tdepbc) {
           const auto& s = bndry.template get< tag::sideset >();
@@ -1401,12 +1401,11 @@ namespace deck {
   struct timedep_bc :
          pegtl::if_must<
            tk::grm::readkw< use< kw::bc_timedep >::pegtl_string >,
-           tk::grm::start_vector_back< tag::param, eq, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
-             user_fn< tag::fn, tk::grm::Back_back_store_back, tag::param, eq,
+             user_fn< tag::fn, tk::grm::Back_store_back, tag::param, eq,
                tag::bctimedep >,
              pegtl::if_must< tk::grm::vector< use< kw::sideset >,
-               tk::grm::Back_back_store_back< tag::sideset, tag::param, eq,
+               tk::grm::Back_store_back< tag::sideset, tag::param, eq,
                  tag::bctimedep >,
                use< kw::end > > > > > {};
 

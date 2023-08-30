@@ -377,11 +377,9 @@ class Transporter : public CBase_Transporter {
         : inputdeck(i), userbc(u) {}
       template< typename eq > void operator()( brigand::type_<eq> ) {
         using tag::param;
-        for (const auto& sys : inputdeck.get< param, eq, tag::bctimedep >()) {
-          for (const auto& b : sys) {
-            for (auto i : b.template get< tag::sideset >())
-              userbc.insert( std::stoi(i) );
-          }
+        for (const auto& b : inputdeck.get< param, eq, tag::bctimedep >()) {
+          for (auto i : b.template get< tag::sideset >())
+            userbc.insert( std::stoi(i) );
         }
       }
     };

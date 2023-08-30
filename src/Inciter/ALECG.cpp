@@ -195,10 +195,10 @@ ALECG::queryBnd()
   const auto& timedep =
     g_inputdeck.get< tag::param, tag::compflow, tag::bctimedep >();
   if (!timedep.empty()) {
-    m_timedepbcnodes.resize(timedep[0].size());
-    m_timedepbcFn.resize(timedep[0].size());
+    m_timedepbcnodes.resize(timedep.size());
+    m_timedepbcFn.resize(timedep.size());
     std::size_t ib=0;
-    for (const auto& bndry : timedep[0]) {
+    for (const auto& bndry : timedep) {
       std::unordered_set< std::size_t > nodes;
       for (const auto& s : bndry.template get< tag::sideset >()) {
         auto k = m_bnode.find( std::stoi(s) );

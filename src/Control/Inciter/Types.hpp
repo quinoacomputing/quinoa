@@ -362,7 +362,7 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::lambda,        std::vector< kw::pde_lambda::info::expect::type >
   , tag::u0,            std::vector< kw::pde_u0::info::expect::type >
   , tag::bc,            bc
-  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
+  , tag::bctimedep,     std::vector< time_dependent_bc >
   , tag::sponge,        SpongeParameters
   //! interface compression toggle
   , tag::intsharp,      kw::intsharp::info::expect::type
@@ -421,7 +421,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_density,  kw::density::info::expect::type
   , tag::farfield_velocity, std::vector< kw::velocity::info::expect::type >
   , tag::bc,            bc
-  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
+  , tag::bctimedep,     std::vector< time_dependent_bc >
   , tag::sponge,        SpongeParameters
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
@@ -469,7 +469,7 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::physics,       PhysicsType
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
-  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
+  , tag::bctimedep,     std::vector< time_dependent_bc >
   , tag::ic,            ic
   , tag::farfield_pressure, kw::pressure::info::expect::type
   , tag::farfield_density,  kw::density::info::expect::type

@@ -283,8 +283,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     nfo.emplace_back( "Dirichlet BC sideset(s)", parameters( dir[c] ) );
 
   const auto& timedep = g_inputdeck.get< tag::param, eq, tag::bctimedep >();
-  if (timedep.size() > c) {
-    for (const auto& bndry : timedep[c]) {
+  if (!timedep.empty()) {
+    for (const auto& bndry : timedep) {
       nfo.emplace_back( "Time dependent BC sideset(s)",
         parameters(bndry.get< tag::sideset >()) );
     }
