@@ -293,18 +293,12 @@ using meshblock = tk::TaggedTuple< brigand::list<
 
 //! Initial condition configuration
 using ic = tk::TaggedTuple< brigand::list<
-    tag::density,       std::vector<
-                          std::vector< kw::density::info::expect::type > >
-  , tag::materialid,    std::vector<
-                          std::vector< kw::materialid::info::expect::type > >
-  , tag::velocity,      std::vector<
-                          std::vector< kw::velocity::info::expect::type > >
-  , tag::pressure,      std::vector<
-                          std::vector< kw::pressure::info::expect::type > >
-  , tag::energy,        std::vector<
-                          std::vector< kw::energy::info::expect::type > >
-  , tag::temperature,   std::vector<
-                          std::vector< kw::temperature::info::expect::type > >
+    tag::density,       std::vector< kw::density::info::expect::type >
+  , tag::materialid,    std::vector< kw::materialid::info::expect::type >
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
+  , tag::pressure,      std::vector< kw::pressure::info::expect::type >
+  , tag::energy,        std::vector< kw::energy::info::expect::type >
+  , tag::temperature,   std::vector< kw::temperature::info::expect::type >
   , tag::box,           std::vector< std::vector< box > >
   , tag::meshblock,     std::vector< std::vector< meshblock > >
 > >;

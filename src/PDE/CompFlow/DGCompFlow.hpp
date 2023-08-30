@@ -179,7 +179,7 @@ class CompFlow {
                   unk(e,mark+i) = 0.0;
               }
               initializeBox<inciter::ctr::box>( m_mat_blk, 1.0, V_ex,
-                t, b, bgpreic[0][0], c_v, s );
+                t, b, bgpreic[0], c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;

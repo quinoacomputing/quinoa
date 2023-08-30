@@ -212,8 +212,7 @@ class CompFlow {
       const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
 
       const auto& bgpreic = ic.get< tag::pressure >();
-      tk::real bgpre =
-        (bgpreic.size() > 0 && !bgpreic[0].empty()) ? bgpreic[0][0] : 0.0;
+      tk::real bgpre = !bgpreic.empty() ? bgpreic[0] : 0.0;
 
       auto c_v = cv< eq >(0);
 

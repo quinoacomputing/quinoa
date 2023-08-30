@@ -289,12 +289,6 @@ namespace grm {
           }
         }
 
-        // Error check Dirichlet boundary condition block for all compflow
-        // configurations
-        const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
-        for (const auto& s : bc)
-          if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
-
         // Error check stagnation BC block
         const auto& stag = stack.template get<tag::param, eq, tag::stag>();
         const auto& spoint = stag.template get< tag::point >();
@@ -365,10 +359,8 @@ namespace grm {
           stack.template get< tag::param, eq, tag::bctimedep >();
         // multiple time dependent BCs can be specified on different side sets
         for (const auto& bndry : tdepbc) {
-          const auto& s = bndry.template get< tag::sideset >();
-          if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
           const auto& f = bndry.template get< tag::fn >();
-          if (f.empty() or f.size() % 6 != 0)
+          if (f.size() % 6 != 0)
             Message< Stack, ERROR, MsgKey::INCOMPLETEUSERFN>( stack, in );
         }
       }
@@ -642,12 +634,6 @@ namespace grm {
           }
         }
       }
-
-      // Error check Dirichlet boundary condition block for all multimat
-      // configurations
-      const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
-      for (const auto& s : bc)
-        if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
     }
   };
 
@@ -1583,33 +1569,33 @@ namespace deck {
              pegtl::sor<
                pegtl::if_must<
                  tk::grm::vector< kw::density,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::density >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::density >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::materialid,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::materialid >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::materialid >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::velocity,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::velocity >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::velocity >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::pressure,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::pressure >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::pressure >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::temperature,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::temperature >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::temperature >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::energy,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::energy >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::energy >,
                    use< kw::end > > >,
                pegtl::seq< box< eq > >,
                pegtl::seq< meshblock< eq > >
@@ -1719,16 +1705,6 @@ namespace deck {
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::density >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::velocity >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::pressure >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::temperature >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::energy >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
                                   tag::box >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
                                   tag::meshblock >,
@@ -1800,18 +1776,6 @@ namespace deck {
   struct multimat :
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::density >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::materialid >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::velocity >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::pressure >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::temperature >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::energy >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
                                   tag::box >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::ic,

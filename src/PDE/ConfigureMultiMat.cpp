@@ -182,29 +182,29 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
 
   const auto& bgmatidic = ic.get< tag::materialid >();
-  if (bgmatidic.size() > c && !bgmatidic[c].empty())
+  if (!bgmatidic.empty())
     nfo.emplace_back( "IC background material id",
-                      parameter( bgmatidic[c][0] ) );
+                      parameters( bgmatidic ) );
   const auto& bgdensityic = ic.get< tag::density >();
-  if (bgdensityic.size() > c && !bgdensityic[c].empty())
+  if (!bgdensityic.empty())
     nfo.emplace_back( "IC background density",
-                      parameter( bgdensityic[c][0] ) );
+                      parameters( bgdensityic ) );
   const auto& bgvelocityic = ic.get< tag::velocity >();
-  if (bgvelocityic.size() > c && !bgvelocityic[c].empty())
+  if (!bgvelocityic.empty())
     nfo.emplace_back( "IC background velocity",
-                      parameters( bgvelocityic[c] ) );
+                      parameters( bgvelocityic ) );
   const auto& bgpressureic = ic.get< tag::pressure >();
-  if (bgpressureic.size() > c && !bgpressureic[c].empty())
+  if (!bgpressureic.empty())
     nfo.emplace_back( "IC background pressure",
-                      parameter( bgpressureic[c][0] ) );
+                      parameters( bgpressureic ) );
   const auto& bgenergyic = ic.get< tag::energy >();
-  if (bgenergyic.size() > c && !bgenergyic[c].empty())
+  if (!bgenergyic.empty())
     nfo.emplace_back( "IC background energy",
-                      parameter( bgenergyic[c][0] ) );
+                      parameters( bgenergyic ) );
   const auto& bgtemperatureic = ic.get< tag::temperature >();
-  if (bgtemperatureic.size() > c && !bgtemperatureic[c].empty())
+  if (!bgtemperatureic.empty())
     nfo.emplace_back( "IC background temperature",
-                      parameter( bgtemperatureic[c][0] ) );
+                      parameters( bgtemperatureic ) );
 
   const auto& icbox = ic.get< tag::box >();
   if (icbox.size() > c) {

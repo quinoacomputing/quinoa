@@ -143,13 +143,9 @@ class MultiMat {
       const auto& icmbk = ic.get< tag::meshblock >();
 
       const auto& bgpreic = ic.get< tag::pressure >();
-      tk::real bgpre =
-        (bgpreic.size() > 0 && !bgpreic[0].empty()) ?
-        bgpreic[0][0] : 0.0;
+      tk::real bgpre = !bgpreic.empty() ? bgpreic[0] : 0.0;
       const auto& bgtempic = ic.get< tag::temperature >();
-      tk::real bgtemp =
-        (bgtempic.size() > 0 && !bgtempic[0].empty()) ?
-        bgtempic[0][0] : 0.0;
+      tk::real bgtemp = !bgtempic.empty() ? bgtempic[0] : 0.0;
 
       // Set initial conditions inside user-defined IC boxes and mesh blocks
       std::vector< tk::real > s(m_ncomp, 0.0);

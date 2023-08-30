@@ -51,19 +51,19 @@ CompFlowProblemUserDefined::initialize( ncomp_t ncomp,
   const auto& bgenic = ic.get< tag::energy >();
   const auto& bgtempic = ic.get< tag::temperature >();
 
-  u[0] = bgrhoic.at(0).at(0);
-  u[1] = u[0] * bgvelic.at(0).at(0);
-  u[2] = u[0] * bgvelic.at(0).at(1);
-  u[3] = u[0] * bgvelic.at(0).at(2);
+  u[0] = bgrhoic.at(0);
+  u[1] = u[0] * bgvelic.at(0);
+  u[2] = u[0] * bgvelic.at(1);
+  u[3] = u[0] * bgvelic.at(2);
 
-  if (bgpreic.size() > 0 && !bgpreic[0].empty()) {
+  if (!bgpreic.empty()) {
     u[4] = mat_blk[0].compute< EOS::totalenergy >( u[0], u[1]/u[0], u[2]/u[0],
-      u[3]/u[0], bgpreic.at(0).at(0) );
-  } else if (bgenic.size() > 0 && !bgenic[0].empty()) {
-    u[4] = u[0] * bgenic[0][0];
-  } else if (bgtempic.size() > 0 && !bgtempic[0].empty()) {
+      u[3]/u[0], bgpreic.at(0) );
+  } else if (!bgenic.empty()) {
+    u[4] = u[0] * bgenic[0];
+  } else if (!bgtempic.empty()) {
     const auto& c_v = cv< tag::compflow >(0);
-    u[4] = u[0] * bgtempic[0][0] * c_v;
+    u[4] = u[0] * bgtempic[0] * c_v;
   } else Throw( "IC background energy cannot be computed. User must specify "
                 "one of background pressure, energy, or temperature." );
 
