@@ -94,24 +94,24 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
   nfo.emplace_back( "number of materials", std::to_string( nmat ) );
 
-  auto prelax = g_inputdeck.get< tag::param, eq, tag::prelax >()[c];
+  auto prelax = g_inputdeck.get< tag::param, eq, tag::prelax >();
   nfo.emplace_back( "finite pressure relaxation", std::to_string( prelax ) );
 
   if (prelax)
   {
     auto prelax_ts =
-      g_inputdeck.get< tag::param, eq, tag::prelax_timescale >()[c];
+      g_inputdeck.get< tag::param, eq, tag::prelax_timescale >();
     nfo.emplace_back( "pressure relaxation time-scale",
                       std::to_string( prelax_ts ) );
   }
 
-  auto intsharp = g_inputdeck.get< tag::param, eq, tag::intsharp >()[c];
+  auto intsharp = g_inputdeck.get< tag::param, eq, tag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
   if (intsharp)
   {
     auto intsharp_param =
-      g_inputdeck.get< tag::param, eq, tag::intsharp_param >()[c];
+      g_inputdeck.get< tag::param, eq, tag::intsharp_param >();
     nfo.emplace_back( "interface sharpening parameter",
                       std::to_string( intsharp_param ) );
   }

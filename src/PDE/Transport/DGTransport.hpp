@@ -190,7 +190,7 @@ class Transport {
       if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1) {
         const auto nelem = fd.Esuel().size()/4;
         const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
-          tag::intsharp >()[0];
+          tag::intsharp >();
 
         Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
                 "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -338,7 +338,7 @@ class Transport {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
-        tag::intsharp >()[0];
+        tag::intsharp >();
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );

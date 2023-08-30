@@ -150,7 +150,7 @@ SuperbeeMultiMat_P1(
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[0];
+    tag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -253,7 +253,7 @@ VertexBasedTransport_P1(
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::transport,
-    tag::intsharp >()[0];
+    tag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -530,7 +530,7 @@ VertexBasedMultiMat_P1(
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[0];
+    tag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -698,7 +698,7 @@ VertexBasedMultiMat_P2(
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[0];
+    tag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -851,7 +851,7 @@ VertexBasedMultiMat_FV(
 {
   const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[0];
+    tag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -2385,7 +2385,7 @@ correctLimConservMultiMat(
   std::size_t ncomp = unk.nprop()/rdof;
   std::size_t nprim = prim.nprop()/rdof;
   const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >()[0];
+    tag::intsharp >();
 
   for (std::size_t e=0; e<nelem; ++e) {
     // Here we pre-compute the right-hand-side vector. The reason that the

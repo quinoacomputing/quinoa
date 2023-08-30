@@ -19,6 +19,8 @@ inciter
 
   multimat
     physics energy_pill
+    prelax 1
+    prelax_timescale 0.25
 
     nmat 2
 

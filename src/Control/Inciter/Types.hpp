@@ -365,9 +365,9 @@ using TransportPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
   , tag::sponge,        SpongeParameters
   //! interface compression toggle
-  , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
+  , tag::intsharp,      kw::intsharp::info::expect::type
   //! interface compression parameter
-  , tag::intsharp_param, std::vector< kw::intsharp_param::info::expect::type >
+  , tag::intsharp_param, kw::intsharp_param::info::expect::type
 > >;
 
 //! Material configuration
@@ -512,15 +512,15 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     //! number of materials
   , tag::nmat,          kw::nmat::info::expect::type
     //! pressure relaxation toggle
-  , tag::prelax,        std::vector< kw::prelax::info::expect::type >
+  , tag::prelax,        kw::prelax::info::expect::type
     //! pressure relaxation time scale
   , tag::prelax_timescale,
-                      std::vector< kw::prelax_timescale::info::expect::type >
+                        kw::prelax_timescale::info::expect::type
     //! interface compression toggle
-  , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
+  , tag::intsharp,      kw::intsharp::info::expect::type
     //! interface compression parameter
   , tag::intsharp_param,
-                      std::vector< kw::intsharp_param::info::expect::type >
+                        kw::intsharp_param::info::expect::type
     //! Flux function type
   , tag::flux,          std::vector< FluxType >
 > >;

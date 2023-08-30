@@ -478,7 +478,7 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
       const auto intsharp =
-        g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >()[0];
+        g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -516,10 +516,10 @@ class MultiMat {
                     geoElem, Problem::src, R, nmat );
 
       // compute finite pressure relaxation terms
-      if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >()[0])
+      if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >())
       {
         const auto ct = g_inputdeck.get< tag::param, tag::multimat,
-                                         tag::prelax_timescale >()[0];
+                                         tag::prelax_timescale >();
         tk::pressureRelaxationIntFV( nmat, m_mat_blk, rdof,
                                      nelem, inpoel, coord, geoElem, U, P, ct,
                                      R );

@@ -139,17 +139,6 @@ namespace grm {
       const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
       for (const auto& s : bc)
         if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
-
-      // If interface compression is not specified, default to 'false'
-      auto& intsharp = stack.template get< param, eq, tag::intsharp >();
-      if (intsharp.empty() || intsharp.size() != neq.get< eq >())
-        intsharp.push_back( 0 );
-
-      // If interface compression parameter is not specified, default to 1.8
-      auto& intsharp_p = stack.template get< param, eq,
-                                            tag::intsharp_param >();
-      if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
-        intsharp_p.push_back( 1.8 );
     }
   };
 
@@ -578,28 +567,6 @@ namespace grm {
           Message< Stack, ERROR, MsgKey::GAPMATID >( stack, in );
         ++icount;
       }
-
-      // If pressure relaxation is not specified, default to 'true'
-      auto& prelax = stack.template get< param, eq, tag::prelax >();
-      if (prelax.empty() || prelax.size() != neq.get< eq >())
-        prelax.push_back( 1 );
-
-      // If pressure relaxation time-scale is not specified, default to 0.25
-      auto& prelax_ts = stack.template get< param, eq,
-                                            tag::prelax_timescale >();
-      if (prelax_ts.empty() || prelax_ts.size() != neq.get< eq >())
-        prelax_ts.push_back( 0.25 );
-
-      // If interface compression is not specified, default to 'false'
-      auto& intsharp = stack.template get< param, eq, tag::intsharp >();
-      if (intsharp.empty() || intsharp.size() != neq.get< eq >())
-        intsharp.push_back( 0 );
-
-      // If interface compression parameter is not specified, default to 1.8
-      auto& intsharp_p = stack.template get< param, eq,
-                                            tag::intsharp_param >();
-      if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
-        intsharp_p.push_back( 1.8 );
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
@@ -1740,12 +1707,12 @@ namespace deck {
                            bc< kw::bc_outlet, tag::transport, tag::bcoutlet >,
                            bc< kw::bc_extrapolate, tag::transport,
                                tag::bcextrapolate >,
-                           parameter< tag::transport,
-                                      kw::intsharp_param,
-                                      tag::intsharp_param >,
-                           parameter< tag::transport,
-                                      kw::intsharp,
-                                      tag::intsharp > >,
+                           store_parameter< tag::transport,
+                                            kw::intsharp_param,
+                                            tag::intsharp_param >,
+                           store_parameter< tag::transport,
+                                            kw::intsharp,
+                                            tag::intsharp > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow
@@ -1902,18 +1869,18 @@ namespace deck {
                            farfield_bc< kw::bc_farfield,
                                         tag::multimat,
                                         tag::bcfarfield >,
-                           parameter< tag::multimat,
-                                      kw::prelax_timescale,
-                                      tag::prelax_timescale >,
-                           parameter< tag::multimat,
-                                      kw::prelax,
-                                      tag::prelax >,
-                           parameter< tag::multimat,
-                                      kw::intsharp_param,
-                                      tag::intsharp_param >,
-                           parameter< tag::multimat,
-                                      kw::intsharp,
-                                      tag::intsharp > >,
+                           store_parameter< tag::multimat,
+                                            kw::prelax_timescale,
+                                            tag::prelax_timescale >,
+                           store_parameter< tag::multimat,
+                                            kw::prelax,
+                                            tag::prelax >,
+                           store_parameter< tag::multimat,
+                                            kw::intsharp_param,
+                                            tag::intsharp_param >,
+                           store_parameter< tag::multimat,
+                                            kw::intsharp,
+                                            tag::intsharp > >,
            check_errors< tag::multimat, tk::grm::check_multimat > > {};
 
   //! partitioning ... end block
