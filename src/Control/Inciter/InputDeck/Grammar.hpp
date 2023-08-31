@@ -285,42 +285,6 @@ namespace grm {
           }
         }
 
-        // Error check stagnation BC block
-        const auto& stag = stack.template get<tag::param, eq, tag::stag>();
-        const auto& spoint = stag.template get< tag::point >();
-        const auto& sradius = stag.template get< tag::radius >();
-        if ( (!spoint.empty() && !spoint.back().empty() &&
-              !sradius.empty() && !sradius.back().empty() &&
-              spoint.back().size() != 3*sradius.back().size())
-         || (!sradius.empty() && !sradius.back().empty() &&
-              !spoint.empty() && !spoint.back().empty() &&
-              spoint.back().size() != 3*sradius.back().size())
-         || (!spoint.empty() && !spoint.back().empty() &&
-              (sradius.empty() || (!sradius.empty() && sradius.back().empty())))
-         || (!sradius.empty() && !sradius.back().empty() &&
-              (spoint.empty() || (!spoint.empty() && spoint.back().empty()))) )
-        {
-          Message< Stack, ERROR, MsgKey::STAGBCWRONG >( stack, in );
-        }
-
-        // Error check skip BC block
-        const auto& skip = stack.template get<tag::param, eq, tag::skip>();
-        const auto& kpoint = skip.template get< tag::point >();
-        const auto& kradius = skip.template get< tag::radius >();
-        if ( (!kpoint.empty() && !kpoint.back().empty() &&
-              !kradius.empty() && !kradius.back().empty() &&
-              kpoint.back().size() != 3*kradius.back().size())
-          || (!kradius.empty() && !kradius.back().empty() &&
-              !kpoint.empty() && !kpoint.back().empty() &&
-              kpoint.back().size() != 3*kradius.back().size())
-          || (!kpoint.empty() && !kpoint.back().empty() &&
-              (kradius.empty() || (!kradius.empty() && kradius.back().empty())))
-          || (!kradius.empty() && !kradius.back().empty() &&
-              (kpoint.empty() || (!kpoint.empty() && kpoint.back().empty()))) )
-        {
-          Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
-        }
-
         // Error check sponge BC parameter vectors for symmetry BC block
         const auto& sponge =
           stack.template get< tag::param, eq, tag::sponge >();
@@ -1396,14 +1360,14 @@ namespace deck {
              use< kw::end >,
              tk::grm::parameter_vector< use,
                                         use< kw::radius >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, bc, tag::radius >,
              tk::grm::parameter_vector< use,
                                         use< kw::point >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, bc, tag::point > > > {};
 

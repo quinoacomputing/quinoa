@@ -63,8 +63,10 @@ class CompFlow {
     explicit CompFlow() :
       m_physics(),
       m_problem(),
-      m_stagCnf( g_inputdeck.specialBC< eq, tag::stag >() ),
-      m_skipCnf( g_inputdeck.specialBC< eq, tag::skip >() ),
+      m_stagCnf({g_inputdeck.get< tag::param, eq, tag::stag, tag::point >(),
+                 g_inputdeck.get< tag::param, eq, tag::stag, tag::radius >()}),
+      m_skipCnf({g_inputdeck.get< tag::param, eq, tag::skip, tag::point >(),
+                 g_inputdeck.get< tag::param, eq, tag::skip, tag::radius >()}),
       m_fr( g_inputdeck.get< param, eq, tag::farfield_density >() ),
       m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >() ),
       m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >() )

@@ -230,19 +230,19 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   const auto& stag = g_inputdeck.get< tag::param, eq, tag::stag >();
   const auto& spoint = stag.get< tag::point >();
-  if (spoint.size() > c)
-    nfo.emplace_back( "Stagnation point(s)", parameters( spoint[c] ) );
+  if (!spoint.empty())
+    nfo.emplace_back( "Stagnation point(s)", parameters( spoint ) );
   const auto& sradius = stag.get< tag::radius >();
-  if (sradius.size() > c)
-    nfo.emplace_back( "Stagnation point(s) radii", parameters( sradius[c] ) );
+  if (!sradius.empty())
+    nfo.emplace_back( "Stagnation point(s) radii", parameters( sradius ) );
 
   const auto& skip = g_inputdeck.get< tag::param, eq, tag::skip >();
   const auto& kpoint = skip.get< tag::point >();
-  if (kpoint.size() > c)
-    nfo.emplace_back( "Skip point(s)", parameters( kpoint[c] ) );
+  if (!kpoint.empty())
+    nfo.emplace_back( "Skip point(s)", parameters( kpoint ) );
   const auto& kradius = skip.get< tag::radius >();
-  if (kradius.size() > c)
-    nfo.emplace_back( "Skip point(s) radii", parameters( kradius[c] ) );
+  if (!kradius.empty())
+    nfo.emplace_back( "Skip point(s) radii", parameters( kradius ) );
 
   const auto& fs =
     g_inputdeck.get< tag::param, eq, tag::bc, tag::bcfarfield >();

@@ -315,18 +315,14 @@ using bc = tk::TaggedTuple< brigand::list<
 
 //! Stagnation points parameters storage
 using StagnationParameters = tk::TaggedTuple< brigand::list<
-    tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
+    tag::point,         std::vector< kw::point::info::expect::type >
+  , tag::radius,        std::vector< kw::radius::info::expect::type >
 > >;
 
 //! Skip points parameters storage
 using SkipParameters = tk::TaggedTuple< brigand::list<
-    tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
+    tag::point,         std::vector< kw::point::info::expect::type >
+  , tag::radius,        std::vector< kw::radius::info::expect::type >
 > >;
 
 //! Sponge parameters storage
