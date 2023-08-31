@@ -936,6 +936,11 @@ FV::writeFields( CkCallback c )
   analyticFieldOutput( g_fvpde[d->MeshId()], tk::Centering::NODE, coord[0],
     coord[1], coord[2], t, nodefields );
 
+  // Add sound speed vector
+  std::vector< tk::real > soundspd(nelem, 0.0);
+  g_fvpde[d->MeshId()].soundspeed(nelem, m_u, m_p, soundspd);
+  elemfields.push_back(soundspd);
+
   // Add source flag array to element-centered field output
   std::vector< tk::real > srcFlag( begin(m_srcFlag), end(m_srcFlag) );
   // Here m_srcFlag has a size of m_u.nunk() which is the number of the
@@ -956,6 +961,7 @@ FV::writeFields( CkCallback c )
   analyticFieldNames( g_fvpde[d->MeshId()], tk::Centering::ELEM, elemfieldnames );
   analyticFieldNames( g_fvpde[d->MeshId()], tk::Centering::NODE, nodefieldnames );
 
+  elemfieldnames.push_back( "sound speed" );
   elemfieldnames.push_back( "src_flag" );
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );

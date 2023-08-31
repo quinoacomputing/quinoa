@@ -231,6 +231,15 @@ class FVPDE {
     sp_totalenergy( std::size_t e, const tk::Fields& unk ) const
     { return self->sp_totalenergy( e, unk ); }
 
+    //! Public interface to returning the relevant sound speed in each cell
+    void
+    soundspeed(
+      std::size_t nielem,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      std::vector< tk::real >& ss ) const
+    { return self->soundspeed( nielem, U, P, ss ); }
+
     //! Copy assignment
     FVPDE& operator=( const FVPDE& x )
     { FVPDE tmp(x); *this = std::move(tmp); return *this; }
@@ -327,6 +336,11 @@ class FVPDE {
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
       virtual tk::real sp_totalenergy(
         std::size_t, const tk::Fields& ) const = 0;
+      virtual void soundspeed(
+        std::size_t,
+        const tk::Fields&,
+        const tk::Fields&,
+        std::vector< tk::real >& ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -444,6 +458,12 @@ class FVPDE {
        const override { return data.solution( xi, yi, zi, t ); }
       tk::real sp_totalenergy( std::size_t e, const tk::Fields& unk )
        const override { return data.sp_totalenergy( e, unk ); }
+      void soundspeed(
+        std::size_t nielem,
+        const tk::Fields& U,
+        const tk::Fields& P,
+        std::vector< tk::real >& ss )
+       const override { return data.soundspeed( nielem, U, P, ss ); }
       T data;
     };
 
