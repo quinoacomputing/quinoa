@@ -104,9 +104,9 @@ class CompFlow {
 
       // Detect if user has configured IC boxes
       const auto& icbox = g_inputdeck.get<tag::param, eq, tag::ic, tag::box>();
-      if (icbox.size() > 0) {
+      if (!icbox.empty()) {
         std::size_t bcnt = 0;
-        for (const auto& b : icbox[0]) {   // for all boxes for this eq
+        for (const auto& b : icbox) {   // for all boxes for this eq
           inbox.emplace_back();
           std::vector< tk::real > box
             { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
@@ -154,22 +154,20 @@ class CompFlow {
       const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
         tag::meshblock >();
       // if mesh blocks have been specified for this system
-      if (mblks.size() > 0) {
-        if (!mblks[0].empty()) {
-          std::size_t idMax(0);
-          for (const auto& imb : mblks[0]) {
-            idMax = std::max(idMax, imb.get< tag::blockid >());
-          }
-          // size is idMax+1 since block ids are usually 1-based
-          nuserblk = nuserblk+idMax+1;
+      if (!mblks.empty()) {
+        std::size_t idMax(0);
+        for (const auto& imb : mblks) {
+          idMax = std::max(idMax, imb.get< tag::blockid >());
+        }
+        // size is idMax+1 since block ids are usually 1-based
+        nuserblk = nuserblk+idMax+1;
 
-          // determine node set for IC mesh blocks
-          for (const auto& [blid, elset] : elemblkid) {
-            if (!elset.empty()) {
-              auto& ndset = nodeblkid[blid];
-              for (auto ie : elset) {
-                for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
-              }
+        // determine node set for IC mesh blocks
+        for (const auto& [blid, elset] : elemblkid) {
+          if (!elset.empty()) {
+            auto& ndset = nodeblkid[blid];
+            for (auto ie : elset) {
+              for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
             }
           }
         }
@@ -221,9 +219,9 @@ class CompFlow {
         auto s = Problem::initialize( m_ncomp, m_mat_blk, x[i], y[i], z[i], t );
 
         // initialize the user-defined box IC
-        if (icbox.size() > 0) {
+        if (!icbox.empty()) {
           std::size_t bcnt = 0;
-          for (const auto& b : icbox[0]) { // for all boxes
+          for (const auto& b : icbox) { // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(i) != inbox[bcnt].end())
             {
               std::vector< tk::real > box
@@ -240,17 +238,15 @@ class CompFlow {
         }
 
         // initialize user-defined mesh block ICs
-        if (mblks.size() > 0) {
-          for (const auto& b : mblks[0]) { // for all blocks
-            auto blid = b.get< tag::blockid >();
-            auto V_ex = b.get< tag::volume >();
-            if (blid >= blkvols.size()) Throw("Block volume not found");
-            if (nodeblkid.find(blid) != nodeblkid.end()) {
-              const auto& ndset = tk::cref_find(nodeblkid, blid);
-              if (ndset.find(i) != ndset.end()) {
-                initializeBox<ctr::meshblock>( m_mat_blk,
-                  V_ex/blkvols[blid], V_ex, t, b, bgpre, c_v, s );
-              }
+        for (const auto& b : mblks) { // for all blocks
+          auto blid = b.get< tag::blockid >();
+          auto V_ex = b.get< tag::volume >();
+          if (blid >= blkvols.size()) Throw("Block volume not found");
+          if (nodeblkid.find(blid) != nodeblkid.end()) {
+            const auto& ndset = tk::cref_find(nodeblkid, blid);
+            if (ndset.find(i) != ndset.end()) {
+              initializeBox<ctr::meshblock>( m_mat_blk,
+                V_ex/blkvols[blid], V_ex, t, b, bgpre, c_v, s );
             }
           }
         }
@@ -638,9 +634,9 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > 0 && !boxnodes.empty()) {
+      if (!icbox.empty() && !boxnodes.empty()) {
         std::size_t bcnt = 0;
-        for (const auto& b : icbox[0]) {   // for all boxes for this eq
+        for (const auto& b : icbox) {   // for all boxes for this eq
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
@@ -720,8 +716,8 @@ class CompFlow {
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
 
           // energy source propagation velocity (in all IC boxes configured)
-          if (icbox.size() > 0) {
-            for (const auto& b : icbox[0]) {   // for all boxes for this eq
+          if (!icbox.empty()) {
+            for (const auto& b : icbox) {   // for all boxes for this eq
               const auto& initiate = b.template get< tag::initiate >();
               auto iv = initiate.template get< tag::velocity >();
               auto inittype = initiate.template get< tag::init >();
@@ -1676,8 +1672,8 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > 0) {
-        for (const auto& b : icbox[0]) {   // for all boxes for this eq
+      if (!icbox.empty()) {
+        for (const auto& b : icbox) {   // for all boxes for this eq
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
              b.template get< tag::ymin >(), b.template get< tag::ymax >(),

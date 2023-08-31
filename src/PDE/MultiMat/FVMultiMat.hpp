@@ -151,9 +151,9 @@ class MultiMat {
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
         // inside user-defined box
-        if (icbox.size() > 0) {
+        if (!icbox.empty()) {
           std::size_t bcnt = 0;
-          for (const auto& b : icbox[0]) {   // for all boxes
+          for (const auto& b : icbox) {   // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
               std::vector< tk::real > box
@@ -181,20 +181,18 @@ class MultiMat {
         }
 
         // inside user-specified mesh blocks
-        if (icmbk.size() > 0) {
-          for (const auto& b : icmbk[0]) { // for all blocks
-            auto blid = b.get< tag::blockid >();
-            auto V_ex = b.get< tag::volume >();
-            if (elemblkid.find(blid) != elemblkid.end()) {
-              const auto& elset = tk::cref_find(elemblkid, blid);
-              if (elset.find(e) != elset.end()) {
-                initializeBox<ctr::meshblock>( m_mat_blk, V_ex, t, b,
-                  bgpre, bgtemp, s );
-                // store initialization in solution vector
-                for (std::size_t c=0; c<m_ncomp; ++c) {
-                  auto mark = c*rdof;
-                  unk(e,mark) = s[c];
-                }
+        for (const auto& b : icmbk) { // for all blocks
+          auto blid = b.get< tag::blockid >();
+          auto V_ex = b.get< tag::volume >();
+          if (elemblkid.find(blid) != elemblkid.end()) {
+            const auto& elset = tk::cref_find(elemblkid, blid);
+            if (elset.find(e) != elset.end()) {
+              initializeBox<ctr::meshblock>( m_mat_blk, V_ex, t, b,
+                bgpre, bgtemp, s );
+              // store initialization in solution vector
+              for (std::size_t c=0; c<m_ncomp; ++c) {
+                auto mark = c*rdof;
+                unk(e,mark) = s[c];
               }
             }
           }

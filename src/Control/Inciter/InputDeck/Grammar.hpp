@@ -256,36 +256,32 @@ namespace grm {
 
         // Error check for ic box
         auto& box = ic.template get< tag::box >();
-        if (!box.empty()) {
-          for (auto& b : box.back()) {   // for all boxes
-            auto& boxorient = b.template get< tag::orientation >();
-            if (boxorient.size() == 0)
-              boxorient.resize(3, 0.0);
-            else if (boxorient.size() != 3)
-              Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
-          }
+        for (auto& b : box) {   // for all boxes
+          auto& boxorient = b.template get< tag::orientation >();
+          if (boxorient.size() == 0)
+            boxorient.resize(3, 0.0);
+          else if (boxorient.size() != 3)
+            Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
         }
 
         // Error check for ic mesh block
         const auto& mblock = ic.template get< tag::meshblock >();
-        if (!mblock.empty()) {
-          for (const auto& b : mblock.back()) {   // for all blocks
-            if (stack.template get< tag::discr, tag::scheme >() ==
-              inciter::ctr::SchemeType::ALECG) {
-              Message< Stack, ERROR, MsgKey::MESHBLOCKSUPPORT >(stack, in);
-            }
-            else {
-              const auto& blkid = b.template get< tag::blockid >();
-              if (blkid == 0)
-                Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
+        for (const auto& b : mblock) {   // for all blocks
+          if (stack.template get< tag::discr, tag::scheme >() ==
+            inciter::ctr::SchemeType::ALECG) {
+            Message< Stack, ERROR, MsgKey::MESHBLOCKSUPPORT >(stack, in);
+          }
+          else {
+            const auto& blkid = b.template get< tag::blockid >();
+            if (blkid == 0)
+              Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
 
-              // if energy content is used to initialize block, then volume must
-              // be specified
-              const auto& blkenc = b.template get< tag::energy_content >();
-              const auto& blkvol = b.template get< tag::volume >();
-              if (blkenc > 0.0 && blkvol < 1e-12)
-                Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
-            }
+            // if energy content is used to initialize block, then volume must
+            // be specified
+            const auto& blkenc = b.template get< tag::energy_content >();
+            const auto& blkvol = b.template get< tag::volume >();
+            if (blkenc > 0.0 && blkvol < 1e-12)
+              Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
           }
         }
 
@@ -592,46 +588,42 @@ namespace grm {
         // within nmat
         auto& icbox = ic.template get< tag::box >();
 
-        if (!icbox.empty()) {
-          for (auto& b : icbox.back()) {   // for all boxes
-            auto boxmatid = b.template get< tag::materialid >();
-            if (boxmatid == 0) {
-              Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
-            }
-            else if (boxmatid > nmat) {
-              Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
-            }
-            auto& boxorient = b.template get< tag::orientation >();
-            if (boxorient.size() == 0)
-              boxorient.resize(3, 0.0);
-            else if (boxorient.size() != 3)
-              Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
+        for (auto& b : icbox) {   // for all boxes
+          auto boxmatid = b.template get< tag::materialid >();
+          if (boxmatid == 0) {
+            Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
           }
+          else if (boxmatid > nmat) {
+            Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
+          }
+          auto& boxorient = b.template get< tag::orientation >();
+          if (boxorient.size() == 0)
+            boxorient.resize(3, 0.0);
+          else if (boxorient.size() != 3)
+            Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
         }
 
         // each IC mesh block should have block id and material id specified,
         // and the material id should be within nmat
         const auto& mblock = ic.template get< tag::meshblock >();
-        if (!mblock.empty()) {
-          for (const auto& b : mblock.back()) {   // for all blocks
-            const auto& blkid = b.template get< tag::blockid >();
-            if (blkid == 0)
-              Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
-            const auto& blkmatid = b.template get< tag::materialid >();
-            if (blkmatid == 0) {
-              Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
-            }
-            else if (blkmatid > nmat) {
-              Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
-            }
-
-            // if energy content is used to initialize block, then volume must
-            // be specified
-            const auto& blkenc = b.template get< tag::energy_content >();
-            const auto& blkvol = b.template get< tag::volume >();
-            if (blkenc > 0.0 && blkvol < 1e-12)
-              Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
+        for (const auto& b : mblock) {   // for all blocks
+          const auto& blkid = b.template get< tag::blockid >();
+          if (blkid == 0)
+            Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
+          const auto& blkmatid = b.template get< tag::materialid >();
+          if (blkmatid == 0) {
+            Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
           }
+          else if (blkmatid > nmat) {
+            Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
+          }
+
+          // if energy content is used to initialize block, then volume must
+          // be specified
+          const auto& blkenc = b.template get< tag::energy_content >();
+          const auto& blkvol = b.template get< tag::volume >();
+          if (blkenc > 0.0 && blkvol < 1e-12)
+            Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
         }
       }
     }
@@ -1274,7 +1266,7 @@ namespace deck {
                pegtl::sor< tk::grm::number,
                            tk::grm::msg< tk::grm::ERROR,
                                          tk::grm::MsgKey::MISSING > >,
-               tk::grm::Back_back_store< target,
+               tk::grm::Back_store< target,
                  tag::param, eq, tag::ic, icunit > > > {};
 
    //! Match box parameter and store deep
@@ -1287,14 +1279,14 @@ namespace deck {
                pegtl::sor< tk::grm::number,
                            tk::grm::msg< tk::grm::ERROR,
                                          tk::grm::MsgKey::MISSING > >,
-               tk::grm::Back_back_deep_store< target, subtarget,
+               tk::grm::Back_deep_store< target, subtarget,
                  tag::param, eq, tag::ic, icunit > > > {};
 
    //! Match box parameter vector
   template< class eq, typename keyword, typename target, typename icunit >
   struct box_vector :
          tk::grm::vector< use< keyword >,
-                          tk::grm::Back_back_store_back< target,
+                          tk::grm::Back_store_back< target,
                             tag::param, eq, tag::ic, icunit >,
                           use< kw::end > > {};
 
@@ -1303,7 +1295,7 @@ namespace deck {
     typename icunit >
   struct box_deep_vector :
          tk::grm::vector< use< keyword >,
-                          tk::grm::Back_back_deep_store_back< target, subtarget,
+                          tk::grm::Back_deep_store_back< target, subtarget,
                             tag::param, eq, tag::ic, icunit >,
                           use< kw::end > > {};
 
@@ -1314,7 +1306,7 @@ namespace deck {
   struct box_option :
          tk::grm::process<
            use< keyword >,
-           tk::grm::back_back_deep_store_option< target, subtarget, use,
+           tk::grm::back_deep_store_option< target, subtarget, use,
              Option, tag::param, eq, tag::ic, icunit >,
            pegtl::alpha > {};
 
@@ -1493,7 +1485,7 @@ namespace deck {
   struct box :
          pegtl::if_must<
            tk::grm::readkw< use< kw::box >::pegtl_string >,
-           tk::grm::start_vector_back< tag::param, eq, tag::ic, tag::box >,
+           tk::grm::start_vector< tag::param, eq, tag::ic, tag::box >,
            tk::grm::block< use< kw::end >
              , box_parameter< eq, kw::xmin, tag::xmin, tag::box >
              , box_parameter< eq, kw::xmax, tag::xmax, tag::box >
@@ -1530,7 +1522,7 @@ namespace deck {
   struct meshblock :
          pegtl::if_must<
            tk::grm::readkw< use< kw::meshblock >::pegtl_string >,
-           tk::grm::start_vector_back< tag::param, eq, tag::ic, tag::meshblock >,
+           tk::grm::start_vector< tag::param, eq, tag::ic, tag::meshblock >,
            tk::grm::block< use< kw::end >
              , box_parameter< eq, kw::blockid, tag::blockid, tag::meshblock >
              , box_parameter< eq, kw::materialid, tag::materialid,
@@ -1704,10 +1696,6 @@ namespace deck {
   struct compflow :
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::box >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::meshblock >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
@@ -1776,10 +1764,6 @@ namespace deck {
   struct multimat :
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::box >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::meshblock >,
            tk::grm::start_vector< tag::param, tag::multimat, tag::material >,
            tk::grm::block< use< kw::end >,
                            tk::grm::process< use< kw::physics >,

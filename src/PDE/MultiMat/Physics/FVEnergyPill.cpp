@@ -47,13 +47,11 @@ MultiMatPhysicsEnergyPill::dtRestriction(
   const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
     tag::meshblock >();
   tk::real v_front(0.0);
-  if (icmbk.size() > 0) {
-    for (const auto& b : icmbk[0]) { // for all blocks
-      auto inittype = b.template get< tag::initiate, tag::init >();
-      if (inittype == ctr::InitiateType::LINEAR) {
-        v_front = std::max(v_front,
-          b.template get< tag::initiate, tag::velocity >());
-      }
+  for (const auto& b : icmbk) { // for all blocks
+    auto inittype = b.template get< tag::initiate, tag::init >();
+    if (inittype == ctr::InitiateType::LINEAR) {
+      v_front = std::max(v_front,
+        b.template get< tag::initiate, tag::velocity >());
     }
   }
 
@@ -98,52 +96,50 @@ physSrc(
 {
   const auto& icmbk = g_inputdeck.get< tag::param, tag::multimat, tag::ic,
     tag::meshblock >();
-  if (icmbk.size() > 0) {
-    for (const auto& mb : icmbk[0]) { // for all blocks
-      auto blid = mb.get< tag::blockid >();
-      if (elemblkid.find(blid) != elemblkid.end()) { // if elements exist in blk
-        const auto& initiate = mb.template get< tag::initiate >();
-        auto inittype = initiate.template get< tag::init >();
-        if (inittype == ctr::InitiateType::LINEAR) { // if propagating src
+  for (const auto& mb : icmbk) { // for all blocks
+    auto blid = mb.get< tag::blockid >();
+    if (elemblkid.find(blid) != elemblkid.end()) { // if elements exist in blk
+      const auto& initiate = mb.template get< tag::initiate >();
+      auto inittype = initiate.template get< tag::init >();
+      if (inittype == ctr::InitiateType::LINEAR) { // if propagating src
 
-          const auto& blkelems = tk::cref_find(elemblkid,blid);
+        const auto& blkelems = tk::cref_find(elemblkid,blid);
 
-          auto enc = mb.template get< tag::energy_content >();
-          Assert( enc > 0.0, "Box energy content must be nonzero" );
-          const auto& x0_front = mb.template get< tag::initiate, tag::point >();
-          Assert(x0_front.size()==3, "Incorrectly sized front initial location");
-          auto blkmatid = mb.template get< tag::materialid >();
+        auto enc = mb.template get< tag::energy_content >();
+        Assert( enc > 0.0, "Box energy content must be nonzero" );
+        const auto& x0_front = mb.template get< tag::initiate, tag::point >();
+        Assert(x0_front.size()==3, "Incorrectly sized front initial location");
+        auto blkmatid = mb.template get< tag::materialid >();
 
-          // determine times at which sourcing is initialized and terminated
-          auto v_front = mb.template get< tag::initiate, tag::velocity >();
-          auto w_front = mb.template get< tag::initiate, tag::front_width >();
-          auto tInit = mb.template get< tag::initiate, tag::init_time >();
+        // determine times at which sourcing is initialized and terminated
+        auto v_front = mb.template get< tag::initiate, tag::velocity >();
+        auto w_front = mb.template get< tag::initiate, tag::front_width >();
+        auto tInit = mb.template get< tag::initiate, tag::init_time >();
 
-          if (t >= tInit) {
-            // current radius of front
-            tk::real r_front = v_front * (t-tInit);
-            // arbitrary shape form
-            auto amplE = enc * v_front / w_front;
+        if (t >= tInit) {
+          // current radius of front
+          tk::real r_front = v_front * (t-tInit);
+          // arbitrary shape form
+          auto amplE = enc * v_front / w_front;
 
-            for (auto e : blkelems) {
-              std::array< tk::real, 3 > node{{ geoElem(e,1), geoElem(e,2),
-                geoElem(e,3) }};
+          for (auto e : blkelems) {
+            std::array< tk::real, 3 > node{{ geoElem(e,1), geoElem(e,2),
+              geoElem(e,3) }};
 
-              auto r_e = std::sqrt(
-                (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
-                (node[1]-x0_front[1])*(node[1]-x0_front[1]) +
-                (node[2]-x0_front[2])*(node[2]-x0_front[2]) );
+            auto r_e = std::sqrt(
+              (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
+              (node[1]-x0_front[1])*(node[1]-x0_front[1]) +
+              (node[2]-x0_front[2])*(node[2]-x0_front[2]) );
 
-              // if element centroid lies within spherical shell add sources
-              if (r_e >= r_front && r_e <= r_front+w_front) {
-                // Add the source term to the rhs
-                R(e, energyIdx(nmat,blkmatid-1)) += geoElem(e,0) * amplE;
-                engSrcAdded[e] = 1;
-              }
+            // if element centroid lies within spherical shell add sources
+            if (r_e >= r_front && r_e <= r_front+w_front) {
+              // Add the source term to the rhs
+              R(e, energyIdx(nmat,blkmatid-1)) += geoElem(e,0) * amplE;
+              engSrcAdded[e] = 1;
             }
           }
-
         }
+
       }
     }
   }

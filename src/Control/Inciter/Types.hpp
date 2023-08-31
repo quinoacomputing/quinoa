@@ -299,8 +299,8 @@ using ic = tk::TaggedTuple< brigand::list<
   , tag::pressure,      std::vector< kw::pressure::info::expect::type >
   , tag::energy,        std::vector< kw::energy::info::expect::type >
   , tag::temperature,   std::vector< kw::temperature::info::expect::type >
-  , tag::box,           std::vector< std::vector< box > >
-  , tag::meshblock,     std::vector< std::vector< meshblock > >
+  , tag::box,           std::vector< box >
+  , tag::meshblock,     std::vector< meshblock >
 > >;
 
 //! Boundary conditions configuration (list of side sets for each eq system)
