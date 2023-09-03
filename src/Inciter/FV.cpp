@@ -80,7 +80,7 @@ FV::FV( const CProxy_Discretization& disc,
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_boxelems(),
-  m_srcFlag(m_u.nunk(), 1),
+  m_srcFlag(m_u.nunk(), 0),
   m_nrk(0),
   m_dte(m_u.nunk(), 0.0),
   m_finished(0)
