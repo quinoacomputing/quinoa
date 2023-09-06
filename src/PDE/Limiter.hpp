@@ -151,6 +151,7 @@ VertexBasedMultiMat_FV(
   std::size_t nelem,
   std::size_t system,
   const tk::UnsMesh::Coords& coord,
+  const std::vector< int >& srcFlag,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat );

@@ -463,6 +463,8 @@ THINCReco( std::size_t system,
            const std::array< real, 3 >& ref_xp,
            const Fields& U,
            const Fields& P,
+           bool intInd,
+           const std::vector< std::size_t >& matInt,
            [[maybe_unused]] const std::vector< real >& vfmin,
            [[maybe_unused]] const std::vector< real >& vfmax,
            std::vector< real >& state )
@@ -478,6 +480,9 @@ THINCReco( std::size_t system,
 //! \param[in] ref_xp Quadrature point in reference space
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
+//! \param[in] intInd Boolean which indicates if the element contains a
+//!   material interface
+//! \param[in] matInt Array indicating which material has an interface
 //! \param[in] vfmin Vector containing min volume fractions for each material
 //!   in this cell
 //! \param[in] vfmax Vector containing max volume fractions for each material
@@ -510,13 +515,6 @@ THINCReco( std::size_t system,
   const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
 
-  // interface detection
-  std::vector< std::size_t > matInt(nmat, 0);
-  std::vector< tk::real > alAvg(nmat, 0.0);
-  for (std::size_t k=0; k<nmat; ++k)
-    alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
-  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
-
   // Step-1: Perform THINC reconstruction
   // create a vector of volume-fractions and pass it to the THINC function
   std::vector< real > alSol(rdof*nmat, 0.0);
@@ -543,8 +541,8 @@ THINCReco( std::size_t system,
       std::cout << "Material-id:        " << k << std::endl;
       std::cout << "Volume-fraction:    " << std::setprecision(18) << alReco[k]
         << std::endl;
-      std::cout << "Cell-avg vol-frac:  " << std::setprecision(18) << alAvg[k]
-        << std::endl;
+      std::cout << "Cell-avg vol-frac:  " << std::setprecision(18) <<
+        U(e,volfracDofIdx(nmat,k,rdof,0)) << std::endl;
       std::cout << "Material-interface? " << intInd << std::endl;
       std::cout << "Mat-k-involved?     " << matInt[k] << std::endl;
     }
@@ -1043,6 +1041,13 @@ evalPolynomialSol( std::size_t system,
   state = eval_state( ncomp, rdof, dof_e, e, U, B );
   sprim = eval_state( nprim, rdof, dof_e, e, P, B );
 
+  // interface detection
+  std::vector< std::size_t > matInt(nmat, 0);
+  std::vector< tk::real > alAvg(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
+  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());
 
@@ -1058,7 +1063,7 @@ evalPolynomialSol( std::size_t system,
     //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
     //}
     tk::THINCReco(system, rdof, nmat, e, inpoel, coord, geoElem,
-      ref_gp, U, P, vfmin, vfmax, state);
+      ref_gp, U, P, intInd, matInt, vfmin, vfmax, state);
 
     // Until the appropriate setup for activating THINC with Transport
     // is ready, the following lines will need to be uncommented for
@@ -1098,7 +1103,8 @@ evalFVSol( std::size_t system,
   const std::array< real, 3 >& ref_gp,
   const std::vector< real >& B,
   const Fields& U,
-  const Fields& P )
+  const Fields& P,
+  int srcFlag )
 // *****************************************************************************
 //  Evaluate second-order FV solution at quadrature point
 //! \param[in] system Equation system index
@@ -1116,6 +1122,7 @@ evalFVSol( std::size_t system,
 //! \param[in] B Basis function at given quadrature point
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
+//! \param[in] srcFlag Whether the energy source was added to element e
 //! \return High-order unknown/state vector at quadrature point, modified
 //!   if near interfaces using THINC
 // *****************************************************************************
@@ -1133,10 +1140,21 @@ evalFVSol( std::size_t system,
   state = eval_state( ncomp, rdof, rdof, e, U, B );
   sprim = eval_state( nprim, rdof, rdof, e, P, B );
 
+  // interface detection so that eos is called on the appropriate quantities
+  std::vector< std::size_t > matInt(nmat, 0);
+  std::vector< tk::real > alAvg(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
+  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+
   // get mat-energy from reconstructed mat-pressure
   auto rhob(0.0);
   for (std::size_t k=0; k<nmat; ++k) {
     auto alk = state[volfracIdx(nmat,k)];
+    if (matInt[k]) {
+      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*1e-12),
+        1e-12);
+    }
     state[energyIdx(nmat,k)] = alk *
       mat_blk[k].compute< inciter::EOS::totalenergy >(
       state[densityIdx(nmat,k)]/alk, sprim[velocityIdx(nmat,0)],
@@ -1152,12 +1170,12 @@ evalFVSol( std::size_t system,
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());
 
-  if (intsharp > 0)
+  if (intsharp > 0 && srcFlag == 0)
   {
     std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 
     tk::THINCReco(system, rdof, nmat, e, inpoel, coord, geoElem,
-      ref_gp, U, P, vfmin, vfmax, state);
+      ref_gp, U, P, intInd, matInt, vfmin, vfmax, state);
   }
 
   // physical constraints
