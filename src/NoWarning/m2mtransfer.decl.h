@@ -21,6 +21,7 @@
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
   #pragma clang diagnostic ignored "-Wextra-semi"
+  #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wconversion"
   #pragma clang diagnostic ignored "-Wsign-conversion"
@@ -41,6 +42,9 @@
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wsuggest-override"
+  #pragma clang diagnostic ignored "-Wsuggest-destructor-override"
+  #pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
+  #pragma clang diagnostic ignored "-Wunused-template"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
