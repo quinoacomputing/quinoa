@@ -30,7 +30,7 @@ inciter
       # depvars are automatically assigned and can be referenced
       # downstream to request output variables
       filename "unitcube_1k.exo" # depvar: 'a'
-      filename "sphere_full.exo" # depvar: 'b' ...
+      filename "sphere_r0375_2345.exo" # depvar: 'b' ...
     end
     ic
       density  1.0 end
