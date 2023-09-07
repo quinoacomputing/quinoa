@@ -88,7 +88,7 @@ set(SOL2_ROOT ${TPL_DIR}) # prefer ours
 
 find_package(Lua)
 find_package(Sol2)
-if (LUA_FOUND AND SOL2_FOUND)
+if (LUA_FOUND AND Sol2_FOUND)
   set(HAS_LUA true)  # will become compiler define
   message(STATUS "Lua enabled")
 else()
