@@ -28,6 +28,7 @@ MultiMatFieldNames( std::size_t nmat );
 //! Return field output going to file
 std::vector< std::vector< tk::real > >
 MultiMatFieldOutput(
+  ncomp_t,
   std::size_t nmat,
   const std::vector< EOS >& mat_blk,
   std::size_t nunk,
@@ -36,6 +37,7 @@ MultiMatFieldOutput(
   const std::array< std::vector< tk::real >, 3 >& coord,
   const tk::Fields& U,
   const tk::Fields& P );
+
 
 //! Return surface field names to be output to file
 std::vector< std::string > MultiMatSurfNames();

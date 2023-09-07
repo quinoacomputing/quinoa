@@ -414,7 +414,7 @@ class CompFlow {
       std::vector< std::vector< tk::real > > riemannLoc;
 
       // configure a no-op lambda for prescribed velocity
-      auto velfn = [this]( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
+      auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
       // compute internal surface flux integrals
@@ -917,7 +917,6 @@ class CompFlow {
 
     //! \brief Boundary state function providing the left and right state of a
     //!   face at Dirichlet boundaries
-    //! \param[in] system Equation system index
     //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] mat_blk EOS material block
     //! \param[in] ul Left (domain-internal) state

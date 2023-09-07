@@ -9,6 +9,7 @@ target_include_directories(TransferDetails PUBLIC
                            ${PROJECT_SOURCE_DIR}
                            ${PROJECT_SOURCE_DIR}/Base
                            ${PROJECT_SOURCE_DIR}/Mesh
+                           ${PROJECT_SOURCE_DIR}/Transfer
                            ${PROJECT_BINARY_DIR}/Transfer
                            ${PROJECT_BINARY_DIR}/Main
                            ${PROJECT_BINARY_DIR}/IO
@@ -44,3 +45,5 @@ INSTALL(TARGETS TransferDetails
 
 addCharmModule( "transferdetails" "TransferDetails" )
 addCharmModule( "m2mtransfer" "TransferDetails" )
+
+add_dependencies( "transferdetailsCharmModule" "meshwriterCharmModule" )
