@@ -755,6 +755,21 @@ class MultiMat {
         // get primitive quantities
         pgp = eval_state(nprim, rdof, ndof, e, P, B);
 
+//Sound speed loop using volume fractions (no lower limit):
+    // acoustic speed
+        ss[e] = 0.0;
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+//      if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+//         Experimental
+          ss[e] =  ss[e]+ volfracIdx(nmat,k)* m_mat_blk[k].compute< EOS::soundspeed >(
+            ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+            ugp[volfracIdx(nmat, k)], k );
+//      }
+        }
+
+
+/*Orig:
         // acoustic speed (this should be consistent with time-step calculation)
         ss[e] = 0.0;
         for (std::size_t k=0; k<nmat; ++k)
@@ -765,6 +780,22 @@ class MultiMat {
               ugp[volfracIdx(nmat, k)], k ) );
           }
         }
+*/
+/*AUSM:
+        // acoustic speed (this should be consistent with time-step calculation)
+        ss[e] = 0.0;
+        tk::real rholoc(0.0);
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+            rholoc = rholoc + ugp[densityIdx(nmat,k)];
+            ss[e] += ugp[densityIdx(nmat,k)] * m_mat_blk[k].compute< EOS::soundspeed >(
+              ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+              ugp[volfracIdx(nmat, k)], k ) * m_mat_blk[k].compute< EOS::soundspeed >(
+              ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+              ugp[volfracIdx(nmat, k)], k ) ;
+        }
+        ss[e] = std::sqrt( ss[e] / rholoc );
+*/
       }
     }
 

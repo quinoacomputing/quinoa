@@ -528,15 +528,55 @@ timeStepSizeMultiMatFV(
     auto w = pgp[velocityIdx(nmat, 2)];
     auto vmag = std::sqrt(tk::dot({u, v, w}, {u, v, w}));
 
+/* orig sound speed loop
+
     // acoustic speed
     tk::real a = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
           ugp[volfracIdx(nmat, k)], k ) );
+
       }
+    }
+
+*/
+
+/* Sound Speed Loop for mixed gas - AUSM
+ *
+    // acoustic speed
+    tk::real a = 0.0;
+    tk::real rholoc(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+//         Experimental
+            rholoc = rholoc + ugp[densityIdx(nmat,k)];
+            a += ugp[densityIdx(nmat,k)] * mat_blk[k].compute< EOS::soundspeed >(
+              ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+              ugp[volfracIdx(nmat, k)], k ) * mat_blk[k].compute< EOS::soundspeed >(
+              ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+              ugp[volfracIdx(nmat, k)], k ) ;
+
+    }
+//    a = std::sqrt( a / rholoc );
+
+
+*/
+
+//Sound speed loop using volume fractions (no lower limit):
+    // acoustic speed
+    tk::real a = 0.0;
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+//      if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+//         Experimental
+        a =  a+ volfracIdx(nmat,k)* mat_blk[k].compute< EOS::soundspeed >(
+          ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+          ugp[volfracIdx(nmat, k)], k );
+//      }
     }
 
     // characteristic wave speed
