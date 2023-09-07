@@ -390,6 +390,7 @@ class MultiMat {
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+    //! \param[in] srcFlag Whether the energy source was added
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
     void limit( const tk::Fields& geoFace,
@@ -397,6 +398,7 @@ class MultiMat {
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
+                const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
@@ -411,7 +413,7 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          coord, U, P, nmat );
+          coord, srcFlag, U, P, nmat );
         PositivityPreservingMultiMat_FV( inpoel, fd.Esuel().size()/4, nmat,
           m_mat_blk, coord, geoFace, U, P );
       }
@@ -510,14 +512,14 @@ class MultiMat {
 
       // compute internal surface flux (including non-conservative) integrals
       tk::surfIntFV( nmat, m_mat_blk, t, rdof, inpoel,
-                     coord, fd, geoFace, geoElem, m_riemann, velfn,
-                     U, P, R, intsharp );
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
+                     srcFlag, R, intsharp );
 
       // compute boundary surface flux (including non-conservative) integrals
       for (const auto& b : m_bc)
         tk::bndSurfIntFV( nmat, m_mat_blk, rdof, b.first,
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, b.second, U, P, R, intsharp );
+                          velfn, b.second, U, P, srcFlag, R, intsharp );
 
       // compute optional source term
       tk::srcIntFV( m_mat_blk, t, fd.Esuel().size()/4,
@@ -751,6 +753,50 @@ class MultiMat {
         sp_te += unk(e, energyDofIdx(nmat,k,rdof,0));
       }
       return sp_te;
+    }
+
+    //! Compute relevant sound speed for output
+    //! \param[in] nielem Number of internal elements
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive vector at recent time step
+    //! \param[in,out] ss Sound speed vector
+    void soundspeed(
+      std::size_t nielem,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      std::vector< tk::real >& ss) const
+    {
+      Assert( ss.size() == nielem, "Size of sound speed vector incorrect " );
+
+      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+      std::size_t ncomp = U.nprop()/rdof;
+      std::size_t nprim = P.nprop()/rdof;
+
+      std::vector< tk::real > ugp(ncomp, 0.0), pgp(nprim, 0.0);
+
+      for (std::size_t e=0; e<nielem; ++e) {
+        // basis function at centroid
+        std::vector< tk::real > B(rdof, 0.0);
+        B[0] = 1.0;
+
+        // get conserved quantities
+        ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+        // get primitive quantities
+        pgp = eval_state(nprim, rdof, ndof, e, P, B);
+
+        // acoustic speed (this should be consistent with time-step calculation)
+        ss[e] = 0.0;
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+            ss[e] = std::max( ss[e], m_mat_blk[k].compute< EOS::soundspeed >(
+              ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+              ugp[volfracIdx(nmat, k)], k ) );
+          }
+        }
+      }
     }
 
   private:

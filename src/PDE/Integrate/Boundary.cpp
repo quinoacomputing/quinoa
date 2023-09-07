@@ -310,6 +310,7 @@ bndSurfIntFV(
   const StateFn& state,
   const Fields& U,
   const Fields& P,
+  const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp )
 // *****************************************************************************
@@ -333,6 +334,7 @@ bndSurfIntFV(
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] srcFlag Whether the energy source was added
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
@@ -387,7 +389,8 @@ bndSurfIntFV(
 
         // Compute the state variables at the left element
         auto ugp = evalFVSol(mat_blk, intsharp, ncomp, nprim,
-          rdof, nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+          rdof, nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P,
+          srcFlag[el]);
 
         Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                 "appended boundary state vector" );

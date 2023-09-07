@@ -87,6 +87,7 @@ surfIntFV(
   const VelFn& vel,
   const Fields& U,
   const Fields& P,
+  const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp );
 

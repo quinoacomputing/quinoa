@@ -71,6 +71,7 @@ Discretization::Discretization(
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_dtn( m_dt ),
   m_nvol( 0 ),
+  m_nxfer( 0 ),
   m_fct( fctproxy ),
   m_ale( aleproxy ),
   m_transporter( transporter ),
@@ -325,6 +326,8 @@ Discretization::transfer( [[maybe_unused]] tk::Fields& u, CkCallback cb  )
 
   } else {
 
+    thisProxy[ thisIndex ].wait4transfer();
+
     m_transfer_complete = cb;
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
@@ -363,7 +366,30 @@ void Discretization::transfer_complete()
       m_disc[ t.src ][ thisIndex ].transfer_complete_from_dest();
     }
   }
-  m_transfer_complete.send();
+
+  // Call m_transfer_complete from neighbor chares
+  if (m_nodeCommMap.empty())
+   all_transfers_complete();
+  else
+    for (const auto& [c,n] : m_nodeCommMap) {
+      thisProxy[c].comxfer();
+    }
+
+  ownxfer_complete();
+}
+
+void
+Discretization::comxfer()
+// *****************************************************************************
+//  Check nodal solution transfers on chare-boundaries
+//! \details This function checks if all neighboring chares have completed
+//!   solution transfers.
+// *****************************************************************************
+{
+  if (++m_nxfer == m_nodeCommMap.size()) {
+    m_nxfer = 0;
+    comxfer_complete();
+  }
 }
 
 void Discretization::transfer_complete_from_dest()
@@ -371,6 +397,14 @@ void Discretization::transfer_complete_from_dest()
 //! Solution transfer completed (from dest Discretization)
 //! \details Called on the source only by the destination when a transfer step
 //!   completes.
+// *****************************************************************************
+{
+  m_transfer_complete.send();
+}
+
+void Discretization::all_transfers_complete()
+// *****************************************************************************
+//! Solution transfer completed for all neighboring chares
 // *****************************************************************************
 {
   m_transfer_complete.send();

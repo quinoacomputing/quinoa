@@ -80,7 +80,7 @@ FV::FV( const CProxy_Discretization& disc,
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_boxelems(),
-  m_srcFlag(m_u.nunk(), 1),
+  m_srcFlag(m_u.nunk(), 0),
   m_nrk(0),
   m_dte(m_u.nunk(), 0.0),
   m_finished(0)
@@ -479,7 +479,7 @@ FV::lim()
   if (rdof > 1) {
     g_fvpde[Disc()->MeshId()].limit( myGhosts()->m_geoFace, myGhosts()->m_fd,
       myGhosts()->m_esup,
-      myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
+      myGhosts()->m_inpoel, myGhosts()->m_coord, m_srcFlag, m_u, m_p );
   }
 
   // Send limited solution to neighboring chares
@@ -649,8 +649,7 @@ FV::solve( tk::real newdt )
     }
   }
 
-  // initialize energy source as not added (modified in eq.rhs appropriately)
-  for (auto& fl : m_srcFlag) fl = 0;
+  // Compute rhs
   g_fvpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
     d->ElemBlockId(), m_u, m_p, m_rhs, m_srcFlag );
@@ -873,6 +872,7 @@ FV::writeFields( CkCallback c )
 
   const auto& inpoel = std::get< 0 >( d->Chunk() );
   auto esup = tk::genEsup( inpoel, 4 );
+  auto nelem = inpoel.size() / 4;
 
   // Combine own and communicated contributions and finish averaging of node
   // field output in chare boundary nodes
@@ -936,6 +936,23 @@ FV::writeFields( CkCallback c )
   analyticFieldOutput( g_fvpde[d->MeshId()], tk::Centering::NODE, coord[0],
     coord[1], coord[2], t, nodefields );
 
+  // Add sound speed vector
+  std::vector< tk::real > soundspd(nelem, 0.0);
+  g_fvpde[d->MeshId()].soundspeed(nelem, m_u, m_p, soundspd);
+  elemfields.push_back(soundspd);
+
+  // Add source flag array to element-centered field output
+  std::vector< tk::real > srcFlag( begin(m_srcFlag), end(m_srcFlag) );
+  // Here m_srcFlag has a size of m_u.nunk() which is the number of the
+  // elements within this partition (nelem) plus the ghost partition cells.
+  // For the purpose of output, we only need the solution data within this
+  // partition. Therefore, resizing it to nelem removes the extra partition
+  // boundary allocations in the srcFlag vector. Since the code assumes that
+  // the boundary elements are on the top, the resize operation keeps the lower
+  // portion.
+  srcFlag.resize( nelem );
+  elemfields.push_back( srcFlag );
+
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
   auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
@@ -943,6 +960,9 @@ FV::writeFields( CkCallback c )
   // Collect field output names for analytical solutions
   analyticFieldNames( g_fvpde[d->MeshId()], tk::Centering::ELEM, elemfieldnames );
   analyticFieldNames( g_fvpde[d->MeshId()], tk::Centering::NODE, nodefieldnames );
+
+  elemfieldnames.push_back( "sound speed" );
+  elemfieldnames.push_back( "src_flag" );
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );

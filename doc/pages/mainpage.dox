@@ -61,8 +61,6 @@ Quinoa consists of the following tools:
     [UGRID](https://www.simcenter.msstate.edu/software/documentation/aflr3),
     [RDGFLO](https://www.mae.ncsu.edu/people/hluo2).
 
-@note If you are looking for information on tools, _walker_, _rngtest_, or _fileconv_, previously part of Quinoa, browse the archived version of this site at https://quinoacomputing.org/archive.
-
 @section mainpage_build Build
 
 The standard way to build from source is to perform the following steps. For

@@ -86,6 +86,7 @@ bndSurfIntFV(
   const StateFn& state,
   const Fields& U,
   const Fields& P,
+  const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp );
 } // tk::
