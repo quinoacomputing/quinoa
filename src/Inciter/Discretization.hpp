@@ -129,8 +129,14 @@ class Discretization : public CBase_Discretization {
     //! Solution transfer completed (from ExaM2M)
     void transfer_complete();
 
+    //! Check nodal solution transfers on chare-boundaries
+    void comxfer();
+
     //! Solution transfer completed (from dest Discretization)
     void transfer_complete_from_dest();
+
+    //! Solution transfer completed for all neighboring chares
+    void all_transfers_complete();
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(
@@ -441,6 +447,7 @@ class Discretization : public CBase_Discretization {
       p | m_dt;
       p | m_dtn;
       p | m_nvol;
+      p | m_nxfer;
       p | m_fct;
       p | m_ale;
       p | m_transporter;
@@ -537,6 +544,9 @@ class Discretization : public CBase_Discretization {
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
+    //! \brief Number of chares from which we received solution transfers
+    //!   contributions on chare boundaries
+    std::size_t m_nxfer;
     //! Distributed FCT proxy
     CProxy_DistFCT m_fct;
     //! Distributed ALE proxy

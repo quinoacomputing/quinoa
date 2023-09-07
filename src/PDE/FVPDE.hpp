@@ -150,21 +150,11 @@ class FVPDE {
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
+                const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
-      self->limit( geoFace, fd, esup, inpoel, coord, U, P );
-    }
-
-    //! Public interface to update the conservative variable solution
-    void CPL( const tk::Fields& prim,
-              const tk::Fields& geoElem,
-              const std::vector< std::size_t >& inpoel,
-              const tk::UnsMesh::Coords& coord,
-              tk::Fields& unk,
-              std::size_t nielem ) const
-    {
-      self->CPL( prim, geoElem, inpoel, coord, unk, nielem );
+      self->limit( geoFace, fd, esup, inpoel, coord, srcFlag, U, P );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -241,6 +231,15 @@ class FVPDE {
     sp_totalenergy( std::size_t e, const tk::Fields& unk ) const
     { return self->sp_totalenergy( e, unk ); }
 
+    //! Public interface to returning the relevant sound speed in each cell
+    void
+    soundspeed(
+      std::size_t nielem,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      std::vector< tk::real >& ss ) const
+    { return self->soundspeed( nielem, U, P, ss ); }
+
     //! Copy assignment
     FVPDE& operator=( const FVPDE& x )
     { FVPDE tmp(x); *this = std::move(tmp); return *this; }
@@ -295,14 +294,9 @@ class FVPDE {
                             std::vector< std::size_t > >&,
                           const std::vector< std::size_t >&,
                           const tk::UnsMesh::Coords&,
+                          const std::vector< int >&,
                           tk::Fields&,
                           tk::Fields& ) const = 0;
-      virtual void CPL( const tk::Fields&,
-                        const tk::Fields&,
-                        const std::vector< std::size_t >&,
-                        const tk::UnsMesh::Coords&,
-                        tk::Fields&,
-                        std::size_t ) const = 0;
       virtual void rhs( tk::real,
         const tk::Fields&,
         const tk::Fields&,
@@ -342,6 +336,11 @@ class FVPDE {
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
       virtual tk::real sp_totalenergy(
         std::size_t, const tk::Fields& ) const = 0;
+      virtual void soundspeed(
+        std::size_t,
+        const tk::Fields&,
+        const tk::Fields&,
+        std::vector< tk::real >& ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -398,19 +397,11 @@ class FVPDE {
                     esup,
                   const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord,
+                  const std::vector< int >& srcFlag,
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {
-        data.limit( geoFace, fd, esup, inpoel, coord, U, P );
-      }
-      void CPL( const tk::Fields& prim,
-                const tk::Fields& geoElem,
-                const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord,
-                tk::Fields& unk,
-                std::size_t nielem ) const override
-      {
-        data.CPL( prim, geoElem, inpoel, coord, unk, nielem );
+        data.limit( geoFace, fd, esup, inpoel, coord, srcFlag, U, P );
       }
       void rhs(
         tk::real t,
@@ -467,6 +458,12 @@ class FVPDE {
        const override { return data.solution( xi, yi, zi, t ); }
       tk::real sp_totalenergy( std::size_t e, const tk::Fields& unk )
        const override { return data.sp_totalenergy( e, unk ); }
+      void soundspeed(
+        std::size_t nielem,
+        const tk::Fields& U,
+        const tk::Fields& P,
+        std::vector< tk::real >& ss )
+       const override { return data.soundspeed( nielem, U, P, ss ); }
       T data;
     };
 

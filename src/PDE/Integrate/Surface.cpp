@@ -372,6 +372,7 @@ surfIntFV(
   const VelFn& vel,
   const Fields& U,
   const Fields& P,
+  const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp )
 // *****************************************************************************
@@ -388,6 +389,7 @@ surfIntFV(
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] srcFlag Whether the energy source was added
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
@@ -462,9 +464,9 @@ surfIntFV(
     std::array< std::vector< real >, 2 > state;
 
     state[0] = evalFVSol(mat_blk, intsharp, ncomp, nprim, rdof,
-      nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+      nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, srcFlag[el]);
     state[1] = evalFVSol(mat_blk, intsharp, ncomp, nprim, rdof,
-      nmat, er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
+      nmat, er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P, srcFlag[er]);
 
     //safeReco(rdof, nmat, el, er, U, state);
 

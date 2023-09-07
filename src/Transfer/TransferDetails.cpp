@@ -88,7 +88,7 @@ TransferDetails::setDestPoints(
   // Initialize msg counters, callback, and background solution data
   m_numsent = 0;
   m_numreceived = 0;
-  //background();
+  background();
 
   // Send vertex data to the collision detection library
   collideVertices();
