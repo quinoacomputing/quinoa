@@ -507,7 +507,7 @@ class MultiMat {
       R.fill(0.0);
 
       // configure a no-op lambda for prescribed velocity
-      auto velfn = [this]( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
+      auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
       // compute internal surface flux (including non-conservative) integrals

@@ -724,7 +724,7 @@ class MultiMat {
       std::vector< std::vector< tk::real > > riemannLoc( U.nunk() );
 
       // configure a no-op lambda for prescribed velocity
-      auto velfn = [this]( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
+      auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
       // compute internal surface flux integrals
