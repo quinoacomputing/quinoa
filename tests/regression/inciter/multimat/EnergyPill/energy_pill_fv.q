@@ -19,11 +19,7 @@ inciter
 
   multimat
     physics energy_pill
-    prelax 1
-    prelax_timescale 0.25
-
     nmat 2
-
     material
       id 1 2 end
       gamma 1.4 1.4 end
