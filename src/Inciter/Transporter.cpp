@@ -1111,7 +1111,8 @@ Transporter::diagHeader()
     std::vector< std::string > var;
     const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
     if ( scheme == ctr::SchemeType::DiagCG ||
-         scheme == ctr::SchemeType::ALECG )
+         scheme == ctr::SchemeType::ALECG ||
+         scheme == ctr::SchemeType::OversetFE )
       for (const auto& eq : g_cgpde) varnames( eq, var );
     else if ( scheme == ctr::SchemeType::DG ||
               scheme == ctr::SchemeType::P0P1 ||
@@ -1144,6 +1145,7 @@ Transporter::diagHeader()
     // Augment diagnostics variables by L2-norm of the residual and total energy
     if ( scheme == ctr::SchemeType::DiagCG ||
          scheme == ctr::SchemeType::ALECG ||
+         scheme == ctr::SchemeType::OversetFE ||
          scheme == ctr::SchemeType::FV )
     {
       for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
@@ -1473,7 +1475,8 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Finish computing the L2 norm of the residual and append
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   std::vector< tk::real > l2res( d[L2RES].size(), 0.0 );
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG ||
+    scheme == ctr::SchemeType::OversetFE) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol[meshid] );
       diag.push_back( l2res[i] );

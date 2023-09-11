@@ -362,7 +362,9 @@ namespace grm {
         if (!mblock.empty()) {
           for (const auto& b : mblock.back()) {   // for all blocks
             if (stack.template get< tag::discr, tag::scheme >() ==
-              inciter::ctr::SchemeType::ALECG) {
+              inciter::ctr::SchemeType::ALECG ||
+              stack.template get< tag::discr, tag::scheme >() ==
+              inciter::ctr::SchemeType::OversetFE) {
               Message< Stack, ERROR, MsgKey::MESHBLOCKSUPPORT >(stack, in);
             }
             else {
@@ -849,7 +851,8 @@ namespace grm {
         stack.template get< tag::pref, tag::pref >() = true;
       } else if (scheme != SchemeType::DG &&
           scheme != SchemeType::DiagCG &&
-          scheme != SchemeType::ALECG) {
+          scheme != SchemeType::ALECG &&
+          scheme != SchemeType::OversetFE) {
         Throw("Scheme type not configured in configure_scheme");
       }
     }

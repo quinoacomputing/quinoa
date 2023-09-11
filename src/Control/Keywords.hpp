@@ -4384,6 +4384,17 @@ struct alecg_info {
 };
 using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
 
+struct oversetfe_info {
+  static std::string name() { return "oversetFE+RK"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "finite element with overset meshes + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the continuous Galerkin finite element
+    scheme with Runge-Kutta (RK) time stepping, combined with overset grids.
+    See Control/Inciter/Options/Scheme.hpp for other valid options.)"; }
+};
+using oversetfe = keyword< oversetfe_info, TAOCPP_PEGTL_STRING("oversetfe") >;
+
 struct dg_info {
   static std::string name() { return "DG(P0)+RK"; }
   static std::string shortDescription() { return

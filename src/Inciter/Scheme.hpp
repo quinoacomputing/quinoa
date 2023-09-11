@@ -82,6 +82,7 @@
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/diagcg.decl.h"
 #include "NoWarning/alecg.decl.h"
+#include "NoWarning/oversetfe.decl.h"
 #include "NoWarning/distfct.decl.h"
 #include "NoWarning/dg.decl.h"
 #include "NoWarning/fv.decl.h"
@@ -99,6 +100,7 @@ class Scheme {
     using Proxy = std::variant< CProxy_DiagCG
                               , CProxy_DG
                               , CProxy_ALECG
+                              , CProxy_OversetFE
                               , CProxy_FV >;
 
   public:
@@ -106,6 +108,7 @@ class Scheme {
     using ProxyElem = std::variant< CProxy_DiagCG::element_t
                                   , CProxy_DG::element_t
                                   , CProxy_ALECG::element_t
+                                  , CProxy_OversetFE::element_t
                                   , CProxy_FV::element_t >;
 
     //! Empty constructor for Charm++
@@ -141,6 +144,8 @@ class Scheme {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::ALECG) {
         proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(bound) );
+      } else if (scheme == ctr::SchemeType::OversetFE) {
+        proxy = static_cast< CProxy_OversetFE >( CProxy_OversetFE::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::FV) {
         proxy = static_cast< CProxy_FV >( CProxy_FV::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );

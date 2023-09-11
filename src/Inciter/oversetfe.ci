@@ -1,0 +1,108 @@
+// *****************************************************************************
+/*!
+  \file      src/Inciter/oversetfe.ci
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019-2021 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Charm++ module interface for continuous Galerkin + ALE + RK
+  \details   Charm++ module interface file for the continuous Galerkin (CG)
+             finite element scheme in the arbitrary Lagrangian-Eulerian (ALE)
+             reference frame + Runge-Kutta (RK) time stepping.
+  \see       OversetFE.hpp and OversetFE.cpp for more info.
+*/
+// *****************************************************************************
+
+module oversetfe {
+
+  //! [External modules and includes]
+  extern module transporter;
+  extern module discretization;
+  extern module ghosts;
+
+  include "UnsMesh.hpp";
+  include "PUPUtil.hpp";
+  //! [External modules and includes]
+
+  namespace inciter {
+
+    //! [1D Charm++ chare array]
+    array [1D] OversetFE {
+    //! [1D Charm++ chare array]
+      //! [Entry methods]
+      entry OversetFE( const CProxy_Discretization& disc,
+              const CProxy_Ghosts& ghostsproxy,
+              const std::map< int, std::vector< std::size_t > >& bface,
+              const std::map< int, std::vector< std::size_t > >& bnode,
+              const std::vector< std::size_t >& triinpoel );
+      initnode void registerReducers();
+      entry void setup();
+      entry void box( tk::real v, const std::vector< tk::real >& blkvol );
+      entry void resizeComm();
+      entry void nodeNeighSetup();
+      entry void start();
+      entry void refine( const std::vector< tk::real >& l2ref );
+      entry [reductiontarget] void advance( tk::real newdt );
+      entry void comdfnorm(
+              const std::unordered_map< tk::UnsMesh::Edge,
+              std::array< tk::real, 3 >,
+              tk::UnsMesh::Hash<2>, tk::UnsMesh::Eq<2> >& dfnorm );
+      entry void comnorm( const std::unordered_map< int,
+       std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
+      entry void comblk( const std::vector< std::size_t >& gid,
+        const std::vector< std::set< std::size_t > >& mb );
+      entry void comChBndGrad( const std::vector< std::size_t >& gid,
+                               const std::vector< std::vector< tk::real > >& G );
+      entry void comrhs( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& R );
+      entry void resized();
+      entry void meshveldone();
+      entry void lhs();
+      entry void step();
+      entry void next();
+      entry void stage();
+      entry void evalLB( int nrestart );
+      //! [Entry methods]
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      //! [DAG]
+      entry void wait4meshblk() {
+        when ownblk_complete(), comblk_complete() serial "meshblk"
+          { continueSetup(); } }
+
+      entry void wait4norm() {
+        when ownnorm_complete(), comnorm_complete(),
+             owndfnorm_complete(), comdfnorm_complete(),
+             transfer_complete() serial "norm" { mergelhs(); } }
+
+      entry void wait4grad() {
+        when owngrad_complete(), comgrad_complete() serial "grad" { rhs(); } }
+
+      entry void wait4rhs() {
+        when ownrhs_complete(), comrhs_complete() serial "rhs" { solve(); } }
+
+      entry void wait4mesh() {
+        when norm_complete(), resize_complete() serial "trans" {
+          if (m_newmesh == 0) meshvelstart(); else transfer(); } }
+
+      entry void ownblk_complete();
+      entry void comblk_complete();
+      entry void ownnorm_complete();
+      entry void comnorm_complete();
+      entry void owndfnorm_complete();
+      entry void comdfnorm_complete();
+      entry void transfer_complete();
+      entry void ownrhs_complete();
+      entry void comrhs_complete();
+      entry void owngrad_complete();
+      entry void comgrad_complete();
+      entry void norm_complete();
+      entry void resize_complete();
+      //! [DAG]
+    }
+
+  } // inciter::
+
+}

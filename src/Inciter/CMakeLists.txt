@@ -13,6 +13,7 @@ add_library(Inciter
             DiagCG.cpp
             ALECG.cpp
             ALE.cpp
+            OversetFE.cpp
             Ghosts.cpp
             DG.cpp
             FV.cpp
@@ -87,6 +88,7 @@ addCharmModule( "refiner" "Inciter" )
 addCharmModule( "sorter" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "alecg" "Inciter" )
+addCharmModule( "oversetfe" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
 addCharmModule( "fv" "Inciter" )

@@ -257,6 +257,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::scheme
                                  , kw::diagcg
                                  , kw::alecg
+                                 , kw::oversetfe
                                  , kw::dg
                                  , kw::p0p1
                                  , kw::dgp1

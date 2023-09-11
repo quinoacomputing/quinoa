@@ -71,6 +71,7 @@ endif()
 if (ENABLE_INCITER)
   add_dependencies("UnitTest" "diagcgCharmModule"
                               "alecgCharmModule"
+                              "oversetfeCharmModule"
                               "distfctCharmModule"
                               "dgCharmModule"
                               "fvCharmModule"
