@@ -1568,6 +1568,7 @@ namespace deck {
          pegtl::seq<
           pegtl::if_must<
             tk::grm::readkw< use< kw::material >::pegtl_string >,
+            tk::grm::start_vector< tag::param, eq, tag::material >,
             tk::grm::block< use< kw::end >,
                 material_vector< eq, kw::id, tag::id >
               , material_vector< eq, kw::mat_gamma, tag::gamma >
@@ -1660,7 +1661,6 @@ namespace deck {
   struct compflow :
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
                            tk::grm::process< use< kw::physics >,
@@ -1728,7 +1728,6 @@ namespace deck {
   struct multimat :
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::material >,
            tk::grm::block< use< kw::end >,
                            tk::grm::process< use< kw::physics >,
                                              tk::grm::store_inciter_option<
