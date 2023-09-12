@@ -947,9 +947,6 @@ OversetFE::rhs()
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
-  // Apply boundary-conditions
-  BC();
-
   // Communicate rhs to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
     comrhs_complete();
@@ -1032,6 +1029,9 @@ OversetFE::solve()
         m_u(i,c) = m_un(i,c) + adt * m_rhs(i,c) / d->Vol()[i];
 
   }
+
+  // Apply boundary-conditions
+  BC();
 
   // Increment Runge-Kutta stage counter
   ++m_stage;
