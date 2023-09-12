@@ -1419,11 +1419,7 @@ ALECG::writeFields( CkCallback c )
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-
-    c.send();
-
-  } else {
+  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
     auto d = Disc();
     const auto& coord = d->Coord();
@@ -1516,9 +1512,11 @@ ALECG::writeFields( CkCallback c )
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), coord, m_bface, tk::remap(m_bnode,d->Lid()),
               m_triinpoel, elemfieldnames, nodefieldnames, elemsurfnames,
-              nodesurfnames, elemfields, nodefields, elemsurfs, nodesurfs, c );
+              nodesurfnames, elemfields, nodefields, elemsurfs, nodesurfs );
 
   }
+
+  c.send();
 }
 
 void
