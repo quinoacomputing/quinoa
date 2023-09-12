@@ -1486,7 +1486,7 @@ namespace grm {
   template< template< class > class use,
             typename keyword,
             template< class, class... > class store,
-            template< class, class... > class start,
+            template< class... > class start,
             template< class, class, class... > class check,
             typename eq,
             typename param,
