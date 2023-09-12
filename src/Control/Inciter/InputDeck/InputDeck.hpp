@@ -390,9 +390,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
         std::numeric_limits< kw::interval_iter::info::expect::type >::max();
       get< tag::output, tag::iter, tag::history >() =
         std::numeric_limits< kw::interval_iter::info::expect::type >::max();
-      // Defaults for PDE parameters
+      // Defaults for multimat parameters
       get< tag::param, tag::multimat, tag::prelax >() = 1;
       get< tag::param, tag::multimat, tag::prelax_timescale >() = 0.25;
+      get< tag::param, tag::multimat, tag::intsharp >() = 0;
+      get< tag::param, tag::multimat, tag::intsharp_param >() = 1.8;
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );
