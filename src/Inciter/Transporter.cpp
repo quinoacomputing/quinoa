@@ -1388,6 +1388,19 @@ Transporter::boxvol( tk::real* meshdata, int n )
 }
 
 void
+Transporter::solutionTransferred( std::size_t summeshid )
+// *****************************************************************************
+// Reduction target broadcasting to Schemes after mesh transfer
+//! \param[in] summeshid mesh id summed across the distributed mesh
+// *****************************************************************************
+{
+  // extract summed mesh id from vector
+  auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
+
+  m_scheme[meshid].bcast< Scheme::lhs >();
+}
+
+void
 Transporter::inthead( const InciterPrint& print )
 // *****************************************************************************
 // Print out time integration header to screen

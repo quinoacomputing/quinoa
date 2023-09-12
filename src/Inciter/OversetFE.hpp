@@ -92,12 +92,6 @@ class OversetFE : public CBase_OversetFE {
     //! Return from migration
     void ResumeFromSync() override;
 
-    //! Size communication buffers (no-op)
-    void resizeComm() {}
-
-    //! Setup node-neighborhood (no-op)
-    void nodeNeighSetup() {}
-
     //! Start setup for solution
     void setup();
 
@@ -141,22 +135,6 @@ class OversetFE : public CBase_OversetFE {
     //! Optionally refine/derefine mesh
     void refine( const std::vector< tk::real >& l2res );
 
-    //! Receive new mesh from Refiner
-    void resizePostAMR(
-      const std::vector< std::size_t >& ginpoel,
-      const tk::UnsMesh::Chunk& chunk,
-      const tk::UnsMesh::Coords& coord,
-      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
-      const std::unordered_map< std::size_t, std::size_t >& addedTets,
-      const std::set< std::size_t >& removedNodes,
-      const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
-      const tk::NodeCommMap& nodeCommMap,
-      const std::map< int, std::vector< std::size_t > >& bface,
-      const std::map< int, std::vector< std::size_t > >& bnode,
-      const std::vector< std::size_t >& triinpoel,
-      const std::unordered_map< std::size_t, std::set< std::size_t > >&
-        elemblockid );
-
     //! Extract field output to file
     void extractFieldOutput(
       const std::vector< std::size_t >& /* ginpoel */,
@@ -174,15 +152,6 @@ class OversetFE : public CBase_OversetFE {
     //! \return Const-ref to current solution
     const tk::Fields& solution() const { return m_u; }
 
-    //! Start computing the mesh mesh velocity for ALE
-    void meshvelstart();
-
-    //! Done with computing the mesh velocity for ALE mesh motion
-    void meshveldone();
-
-    //! Resizing data sutrctures after mesh refinement has been completed
-    void resized();
-
     //! Evaluate whether to continue with next time step
     void step();
 
@@ -194,6 +163,30 @@ class OversetFE : public CBase_OversetFE {
 
     //! Continue to next time step
     void next();
+
+    //! Size communication buffers (no-op)
+    void resizeComm() {}
+
+    //! Setup node-neighborhood (no-op)
+    void nodeNeighSetup() {}
+
+    //! Receive new mesh from Refiner (no-op)
+    void resizePostAMR(
+      const std::vector< std::size_t >&,
+      const tk::UnsMesh::Chunk&,
+      const tk::UnsMesh::Coords&,
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >&,
+      const std::unordered_map< std::size_t, std::size_t >&,
+      const std::set< std::size_t >&,
+      const std::unordered_map< std::size_t, std::size_t >&,
+      const tk::NodeCommMap&,
+      const std::map< int, std::vector< std::size_t > >&,
+      const std::map< int, std::vector< std::size_t > >&,
+      const std::vector< std::size_t >&,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >& ) {}
+
+    //! Resizing data structures after mesh refinement has completed (no-op)
+    void resized() {}
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -239,8 +232,7 @@ class OversetFE : public CBase_OversetFE {
       p | m_dtp;
       p | m_tp;
       p | m_finished;
-      p | m_newmesh;
-      p | m_refinedmesh;
+      p | m_movedmesh;
       p | m_nusermeshblk;
       p | m_nodeblockid;
       p | m_nodeblockidc;
@@ -355,11 +347,8 @@ class OversetFE : public CBase_OversetFE {
     std::vector< tk::real > m_tp;
     //! True in the last time step
     int m_finished;
-    //! \brief State indicating the reason we are recomputing the normals.
-    //    0: after ALE; 1: after AMR
-    int m_newmesh;
-    //! State indicating if the mesh has been refined by dtref
-    int m_refinedmesh;
+    //! True if overset mesh moved
+    int m_movedmesh;
     //! Number of mesh-blocks with user-defined ICs
     std::size_t m_nusermeshblk;
     //! Local node ids associated with mesh block ids
@@ -407,7 +396,7 @@ class OversetFE : public CBase_OversetFE {
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields( CkCallback c );
+    void writeFields();
 
     //! Combine own and communicated contributions to normals
     void mergelhs();

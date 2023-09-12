@@ -410,6 +410,43 @@ void Discretization::all_transfers_complete()
   m_transfer_complete.send();
 }
 
+void Discretization::blockingSolutionTransfer([[maybe_unused]] tk::Fields& u)
+// *****************************************************************************
+//  Start solution transfer (if coupled)
+//! \param[in] u Solution to transfer from/to
+// *****************************************************************************
+{
+  if (!m_mytransfer.empty()) {   // only transfer if involved in coupling
+
+    // Pass source and destination meshes to mesh transfer lib (if coupled)
+    Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
+    if (m_mytransfer[m_nsrc].src == m_meshid) {
+      exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
+      ++m_nsrc;
+    } else {
+      m_nsrc = 0;
+    }
+    Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
+    if (m_mytransfer[m_ndst].dst == m_meshid) {
+      exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
+        CkCallback( CkIndex_Discretization::transfer_complete(), thisProxy ) );
+      ++m_ndst;
+    } else {
+      m_ndst = 0;
+    }
+
+  }
+
+  m_nsrc = 0;
+  m_ndst = 0;
+
+  // Reduce to transporter
+  std::vector< std::size_t > meshid{m_meshid};
+  contribute( meshid, CkReduction::sum_ulong,
+    CkCallback(CkReductionTarget(Transporter,solutionTransferred),
+    m_transporter) );
+}
+
 std::vector< std::size_t >
 Discretization::bndel() const
 // *****************************************************************************

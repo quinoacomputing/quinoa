@@ -191,6 +191,9 @@ class Transporter : public CBase_Transporter {
     //! Reduction target computing total volume of IC box
     void boxvol( tk::real* meshdata, int n );
 
+    //! Reduction target broadcasting to Schemes after mesh transfer
+    void solutionTransferred( std::size_t summeshid );
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );

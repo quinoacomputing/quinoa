@@ -92,8 +92,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_dtp( m_u.nunk(), 0.0 ),
   m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_finished( 0 ),
-  m_newmesh( 0 ),
-  m_refinedmesh( 0 ),
+  m_movedmesh( 0 ),
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
   m_nodeblockidc()
@@ -223,10 +222,6 @@ OversetFE::queryBnd()
 
   Assert(m_timedepbcFn.size() == m_timedepbcnodes.size(), "Incorrect number of "
     "time dependent functions.");
-
-  // Query ALE mesh velocity boundary condition node lists and node lists at
-  // which ALE moves boundaries
-  d->meshvelBnd( m_bface, m_bnode, m_triinpoel );
 }
 
 void
@@ -621,69 +616,54 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
     m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
 
-  // Multiply conserved variables with mesh volume
-  volumetric( m_u, Disc()->Vol() );
+  // We multiply conserved variables with mesh volume after m2m transfer,
+  // see lhs()
 
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
 
-  // Start computing the mesh mesh velocity for ALE
-  meshvelstart();
-}
-
-void
-OversetFE::meshvelstart()
-// *****************************************************************************
-// Start computing the mesh mesh velocity for ALE
-// *****************************************************************************
-{
-  auto d = Disc();
-
   // Apply boundary conditions on numerical solution
   BC();
 
-  conserved( m_u, d->Vol() );
-
-  // query fluid velocity across all systems integrated
-  tk::UnsMesh::Coords vel;
-  g_cgpde[d->MeshId()].velocity( m_u, vel );
-  // query speed of sound in mesh nodes across all systems integrated
-  std::vector< tk::real > soundspeed;
-  g_cgpde[d->MeshId()].soundspeed( m_u, soundspeed );
-
-  volumetric( m_u, d->Vol() );
-
-  // Start computing the mesh mesh velocity for ALE
-  d->meshvelStart( vel, soundspeed, m_bnorm, rkcoef[m_stage] * d->Dt(),
-    CkCallback(CkIndex_OversetFE::meshveldone(), thisProxy[thisIndex]) );
+  // Initiate IC transfer (if coupled)
+  Disc()->blockingSolutionTransfer(m_u);
 }
 
+//! [Compute lhs]
 void
-OversetFE::meshveldone()
+OversetFE::lhs()
 // *****************************************************************************
-// Done with computing the mesh velocity for ALE
+// Compute the left-hand side of transport equations
+//! \details Also (re-)compute all data structures if the mesh changed.
 // *****************************************************************************
 {
-  // Assess and record mesh velocity linear solver conergence
-  Disc()->meshvelConv();
+  // No need for LHS in OversetFE
 
-  // Continue
-  if (Disc()->Initial()) {
+  // Multiply conserved variables with mesh volume since m2m transfer is done
+  volumetric( m_u, Disc()->Vol() );
 
-    conserved( m_u, Disc()->Vol() );
-
-    // Initiate IC transfer (if coupled)
-    Disc()->transfer( m_u,
-      CkCallback(CkIndex_OversetFE::transfer_complete(), thisProxy[thisIndex]) );
-
-    lhs();
-
-  } else {
-
-    ale();
-
-  }
+  // If mesh moved: (Re-)compute boundary point- and dual-face normals, and
+  //   then proceed to stage()
+  // If mesh did not move: shortcut to stage()
+  if (m_movedmesh || Disc()->Initial()) norm();
+  else stage();
 }
+//! [Compute lhs]
+
+//! [Merge normals and continue]
+void
+OversetFE::mergelhs()
+// *****************************************************************************
+// The own and communication portion of the left-hand side is complete
+// *****************************************************************************
+{
+  // Combine own and communicated contributions of normals
+  normfinal();
+
+  // Start with time stepping logic
+  if (Disc()->Initial()) start(); else stage();
+}
+//! [Merge normals and continue]
 
 //! [start]
 void
@@ -698,45 +678,12 @@ OversetFE::start()
   Disc()->Timer().zero();
   // Zero grind-timer
   Disc()->grindZero();
+  // Output initial conditions to file
+  writeFields();
   // Continue to first time step
   next();
 }
 //! [start]
-
-//! [Compute lhs]
-void
-OversetFE::lhs()
-// *****************************************************************************
-// Compute the left-hand side of transport equations
-//! \details Also (re-)compute all data structures if the mesh changed.
-// *****************************************************************************
-{
-  // No need for LHS in OversetFE
-
-  // (Re-)compute boundary point-, and dual-face normals
-  norm();
-}
-//! [Compute lhs]
-
-//! [Merge normals and continue]
-void
-OversetFE::mergelhs()
-// *****************************************************************************
-// The own and communication portion of the left-hand side is complete
-// *****************************************************************************
-{
-  // Combine own and communicated contributions of normals
-  normfinal();
-
-  if (Disc()->Initial()) {
-    volumetric( m_u, Disc()->Vol() );
-    // Output initial conditions to file
-    writeFields( CkCallback(CkIndex_OversetFE::start(), thisProxy[thisIndex]) );
-  } else {
-    norm_complete();
-  }
-}
-//! [Merge normals and continue]
 
 void
 OversetFE::normfinal()
@@ -1143,75 +1090,23 @@ OversetFE::solve()
     // Advance unsteady solution
     m_u = m_un + adt * m_rhs;
 
-    // Advance mesh if ALE is enabled
-    if (g_inputdeck.get< tag::ale, tag::ale >()) {
-      auto& coord = d->Coord();
-      const auto& w = d->meshvel();
-      for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
-        for (std::size_t i=0; i<coord[j].size(); ++i)
-          coord[j][i] = d->Coordn()[j][i] + adt * w(i,j);
-    }
-
   }
 
-  m_newmesh = 0;  // recompute normals after ALE (if enabled)
-  m_refinedmesh = 0;  // mesh has not been refined by ALE
-  // Activate SDAG waits
-  thisProxy[ thisIndex ].wait4norm();
-  thisProxy[ thisIndex ].wait4mesh();
+  // Increment Runge-Kutta stage counter
+  ++m_stage;
 
-  //! [Continue after solve]
-  // Recompute mesh volumes if ALE is enabled
-  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+  // Activate SDAG wait for next time step stage
+  thisProxy[ thisIndex ].wait4grad();
+  thisProxy[ thisIndex ].wait4rhs();
 
-    transfer_complete();
-    // Save nodal volumes at previous time step stage
-    d->Voln() = d->Vol();
-    // Prepare for recomputing the nodal volumes
-    d->startvol();
-    auto meshid = d->MeshId();
-    contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
-                CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
-
-  } else {
-
-    norm_complete();
-    resized();
-
-  }
-  //! [Continue after solve]
-}
-
-void
-OversetFE::ale()
-// *****************************************************************************
-//  Continue after computing the new mesh velocity for ALE
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  if (m_stage < 2) {
-
-    // Activate SDAG wait for next time step stage
-    thisProxy[ thisIndex ].wait4grad();
-    thisProxy[ thisIndex ].wait4rhs();
-
-    // continue to mesh-to-mesh transfer (if coupled)
-    transfer();
-
-  } else {
-
-    // Ensure new field output file if mesh moved if ALE is enabled
-    if (g_inputdeck.get< tag::ale, tag::ale >()) {
-      d->Itf() = 0;  // Zero field output iteration count if mesh moved
-      ++d->Itr();    // Increase number of iterations with a change in the mesh
-    }
-
+  // Compute diagnostics, and finish-up time step (if m_stage == 3)
+  bool diag_computed(false);
+  if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
     conserved( m_u, Disc()->Vol() );
     conserved( m_un, Disc()->Voln() );
-    auto diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
-                                         m_symbcnodes, m_farfieldbcnodes );
+    diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
+                                    m_symbcnodes, m_farfieldbcnodes );
     volumetric( m_u, Disc()->Vol() );
     volumetric( m_un, Disc()->Voln() );
     // Increase number of iterations and physical time
@@ -1219,21 +1114,22 @@ OversetFE::ale()
     // Advance physical time for local time stepping
     if (g_inputdeck.get< tag::discr, tag::steady_state >())
       for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
-    // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
-
   }
+  // Continue to finish-up time-step-stage
+  // Note: refine is called via a bcast if diag_computed == true
+  if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
 }
 
 //! [Refine]
 void
 OversetFE::refine( const std::vector< tk::real >& l2res )
 // *****************************************************************************
-// Optionally refine/derefine mesh
+// Finish up end of time-step procedures and continue to moving mesh
 //! \param[in] l2res L2-norms of the residual for each scalar component
 //!   computed across the whole problem
 // *****************************************************************************
 {
+  if (m_stage == 3) {
   auto d = Disc();
 
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
@@ -1252,133 +1148,16 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
     if (d->finished()) m_finished = 1;
 
   }
-
-  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-
-  // Activate SDAG waits for re-computing the normals
-  m_newmesh = 1;  // recompute normals after AMR (if enabled)
-  thisProxy[ thisIndex ].wait4norm();
-  thisProxy[ thisIndex ].wait4mesh();
-
-  // if t>0 refinement enabled and we hit the frequency
-  if (dtref && !(d->It() % dtfreq)) {   // refine
-
-    // Convert to conserved unknowns, since the next step changes volumes
-    conserved(m_u, d->Vol());
-
-    m_refinedmesh = 1;
-    d->startvol();
-    d->Ref()->dtref( m_bface, m_bnode, m_triinpoel );
-    d->refined() = 1;
-
-  } else {      // do not refine
-
-    m_refinedmesh = 0;
-    d->refined() = 0;
-    norm_complete();
-    resized();
-
   }
+
+  // TODO: Move overset mesh somewhere here
+  m_movedmesh = 0;
+  // Normals need to be recomputed if overset mesh has been moved
+  if (m_movedmesh) thisProxy[ thisIndex ].wait4norm();
+
+  transfer();
 }
 //! [Refine]
-
-//! [Resize]
-void
-OversetFE::resizePostAMR(
-  const std::vector< std::size_t >& /*ginpoel*/,
-  const tk::UnsMesh::Chunk& chunk,
-  const tk::UnsMesh::Coords& coord,
-  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
-  const std::unordered_map< std::size_t, std::size_t >& /*addedTets*/,
-  const std::set< std::size_t >& removedNodes,
-  const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
-  const tk::NodeCommMap& nodeCommMap,
-  const std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& bnode,
-  const std::vector< std::size_t >& triinpoel,
-  const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
-// *****************************************************************************
-//  Receive new mesh from Refiner
-//! \param[in] ginpoel Mesh connectivity with global node ids
-//! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
-//! \param[in] coord New mesh node coordinates
-//! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
-//! \param[in] addedTets Newly added mesh cells and their parents (local ids)
-//! \param[in] removedNodes Newly removed mesh node local ids
-//! \param[in] amrNodeMap Node id map after amr (local ids)
-//! \param[in] nodeCommMap New node communication map
-//! \param[in] bface Boundary-faces mapped to side set ids
-//! \param[in] bnode Boundary-node lists mapped to side set ids
-//! \param[in] triinpoel Boundary-face connectivity
-//! \param[in] elemblockid Local tet ids associated with mesh block ids
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  d->Itf() = 0;  // Zero field output iteration count if AMR
-  ++d->Itr();    // Increase number of iterations with a change in the mesh
-
-  // Resize mesh data structures after mesh refinement
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
-    elemblockid );
-
-  // Remove newly removed nodes from solution vectors
-  m_u.rm(removedNodes);
-  m_un.rm(removedNodes);
-  m_rhs.rm(removedNodes);
-
-  // Resize auxiliary solution vectors
-  auto npoin = coord[0].size();
-  auto nprop = m_u.nprop();
-  m_u.resize( npoin );
-  m_un.resize( npoin );
-  m_rhs.resize( npoin );
-  m_chBndGrad.resize( d->Bid().size() );
-  tk::destroy(m_esup);
-  tk::destroy(m_psup);
-  m_esup = tk::genEsup( d->Inpoel(), 4 );
-  m_psup = tk::genPsup( d->Inpoel(), 4, m_esup );
-
-  // Update solution on new mesh
-  for (const auto& n : addedNodes)
-    for (std::size_t c=0; c<nprop; ++c) {
-      Assert(n.first < m_u.nunk(), "Added node index out of bounds post-AMR");
-      Assert(n.second[0] < m_u.nunk() && n.second[1] < m_u.nunk(),
-        "Indices of parent-edge nodes out of bounds post-AMR");
-      m_u(n.first,c) = (m_u(n.second[0],c) + m_u(n.second[1],c))/2.0;
-    }
-
-  // Update physical-boundary node-, face-, and element lists
-  m_bnode = bnode;
-  m_bface = bface;
-  m_triinpoel = tk::remap( triinpoel, d->Lid() );
-
-  auto meshid = d->MeshId();
-  contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
-              CkCallback(CkReductionTarget(Transporter,resized), d->Tr()) );
-}
-//! [Resize]
-
-void
-OversetFE::resized()
-// *****************************************************************************
-// Resizing data sutrctures after mesh refinement has been completed
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Revert to volumetric unknowns, if soln was converted in OversetFE::refine()
-  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
-  if (dtref && !(d->It() % dtfreq) && m_refinedmesh==1) {
-    volumetric(m_u, d->Vol());
-    // Update previous volumes after refinement
-    d->Voln() = d->Vol();
-  }
-
-  resize_complete();
-}
 
 void
 OversetFE::transfer()
@@ -1387,10 +1166,15 @@ OversetFE::transfer()
 // *****************************************************************************
 {
   // Initiate solution transfer (if coupled)
+  conserved(m_u, Disc()->Vol());
 
-//TODO: enable this for during-timestepping solution transfer
-//  Disc()->transfer(m_u, CkCallback(CkIndex_OversetFE::stage(), thisProxy[thisIndex]));
-  thisProxy[thisIndex].stage();
+  //TODO: enable this for during-timestepping solution transfer
+  //Disc()->blockingSolutionTransfer(m_u);
+
+  std::vector< std::size_t > meshid{Disc()->MeshId()};
+  contribute( meshid, CkReduction::sum_ulong,
+    CkCallback(CkReductionTarget(Transporter,solutionTransferred),
+    Disc()->Tr()) );
 }
 
 //! [stage]
@@ -1400,29 +1184,26 @@ OversetFE::stage()
 // Evaluate whether to continue with next time step stage
 // *****************************************************************************
 {
-  transfer_complete();
-
-  // Increment Runge-Kutta stage counter
-  ++m_stage;
-
   // if not all Runge-Kutta stages complete, continue to next time stage,
-  // otherwise output field data to file(s)
-  if (m_stage < 3) chBndGrad(); else out();
+  // otherwise start next time step
+  if (m_stage == 3) {
+    // start with next time step
+    step();
+  }
+  else {
+    // start with next time-step stage
+    chBndGrad();
+  }
 }
 //! [stage]
 
 void
-OversetFE::writeFields( CkCallback c )
+OversetFE::writeFields()
 // *****************************************************************************
 // Output mesh-based fields to file
-//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
-
-    c.send();
-
-  } else {
+  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
 
     auto d = Disc();
     const auto& coord = d->Coord();
@@ -1440,23 +1221,6 @@ OversetFE::writeFields( CkCallback c )
     conserved( m_u, Disc()->Vol() );
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE, m_u, depvar );
     volumetric( m_u, Disc()->Vol() );
-
-    //! Lambda to put in a field for output if not empty
-    auto add_node_field = [&]( const auto& name, const auto& field ){
-      if (not field.empty()) {
-        nodefieldnames.push_back( name );
-        nodefields.push_back( field );
-      }
-    };
-
-    // Output mesh velocity if ALE is enabled
-    if (g_inputdeck.get< tag::ale, tag::ale >()) {
-      const auto& w = d->meshvel();
-      add_node_field( "x-mesh-velocity", w.extract_comp(0) );
-      add_node_field( "y-mesh-velocity", w.extract_comp(1) );
-      add_node_field( "z-mesh-velocity", w.extract_comp(2) );
-      add_node_field( "volume", d->Vol() );
-    }
 
     // Collect field output names for analytical solutions
     analyticFieldNames( g_cgpde[d->MeshId()], tk::Centering::NODE,
@@ -1486,36 +1250,14 @@ OversetFE::writeFields( CkCallback c )
     auto eso = g_cgpde[d->MeshId()].elemSurfOutput( m_bface, m_triinpoel, m_u );
     elemsurfs.insert( end(elemsurfs), begin(eso), end(eso) );
 
-    // Query refinement data
-    auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-
-    std::tuple< std::vector< std::string >,
-                std::vector< std::vector< tk::real > >,
-                std::vector< std::string >,
-                std::vector< std::vector< tk::real > > > r;
-    if (dtref) r = d->Ref()->refinementFields();
     volumetric( m_u, Disc()->Vol() );
 
-    auto& refinement_elemfieldnames = std::get< 0 >( r );
-    auto& refinement_elemfields = std::get< 1 >( r );
-    auto& refinement_nodefieldnames = std::get< 2 >( r );
-    auto& refinement_nodefields = std::get< 3 >( r );
-
-    nodefieldnames.insert( end(nodefieldnames),
-      begin(refinement_nodefieldnames), end(refinement_nodefieldnames) );
-    nodefields.insert( end(nodefields),
-      begin(refinement_nodefields), end(refinement_nodefields) );
-
-    auto elemfieldnames = std::move(refinement_elemfieldnames);
-    auto elemfields = std::move(refinement_elemfields);
-
-    Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), coord, m_bface, tk::remap(m_bnode,d->Lid()),
-              m_triinpoel, elemfieldnames, nodefieldnames, elemsurfnames,
-              nodesurfnames, elemfields, nodefields, elemsurfs, nodesurfs, c );
+              m_triinpoel, {}, nodefieldnames, elemsurfnames,
+              nodesurfnames, {}, nodefields, elemsurfs, nodesurfs );
 
   }
 }
@@ -1540,9 +1282,7 @@ OversetFE::out()
 
   // Output field data
   if (d->fielditer() or d->fieldtime() or d->fieldrange() or m_finished)
-    writeFields( CkCallback(CkIndex_OversetFE::step(), thisProxy[thisIndex]) );
-  else
-    step();
+    writeFields();
 }
 
 void
@@ -1605,6 +1345,9 @@ OversetFE::step()
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Output solution to file
+  out();
 
   // Output one-liner status report to screen
   d->status();
