@@ -417,7 +417,7 @@ class OversetFE : public CBase_OversetFE {
     void evalRestart();
 
     //! Query/update boundary-conditions-related data structures from user input
-    void queryBnd();
+    void getBCNodes();
 
     //! Apply boundary conditions
     void BC();
