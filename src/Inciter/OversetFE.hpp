@@ -222,7 +222,6 @@ class OversetFE : public CBase_OversetFE {
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
       p | m_symbctri;
-      p | m_spongenodes;
       p | m_timedepbcnodes;
       p | m_timedepbcFn;
       p | m_stage;
@@ -323,8 +322,6 @@ class OversetFE : public CBase_OversetFE {
     std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
-    //! Unique set of nodes at which sponge parameters are set
-    std::unordered_set< std::size_t > m_spongenodes;
     //! \brief Unique set of nodes at which time dependent BCs are set
     //    for each time dependent BC
     std::vector< std::unordered_set< std::size_t > > m_timedepbcnodes;
@@ -424,15 +421,6 @@ class OversetFE : public CBase_OversetFE {
 
     //! Apply boundary conditions
     void BC();
-
-    //! Multiply solution with mesh volume
-    void volumetric( tk::Fields& u, const std::vector< tk::real >& v );
-
-    //! Divide solution with mesh volume
-    void conserved( tk::Fields& u, const std::vector< tk::real >& v );
-
-    //! Continue after computing the new mesh velocity for ALE
-    void ale();
 };
 
 } // inciter::

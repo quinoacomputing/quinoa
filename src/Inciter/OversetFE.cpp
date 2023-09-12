@@ -82,7 +82,6 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_symbcnodes(),
   m_farfieldbcnodes(),
   m_symbctri(),
-  m_spongenodes(),
   m_timedepbcnodes(),
   m_timedepbcFn(),
   m_stage( 0 ),
@@ -181,11 +180,6 @@ OversetFE::queryBnd()
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
     if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
       m_symbctri[e] = 1;
-
-  // Prepare unique set of sponge nodes
-  auto sponge = d->bcnodes< tag::sponge, tag::sideset >( m_bface, m_triinpoel );
-  for (const auto& [s,nodes] : sponge)
-    m_spongenodes.insert( begin(nodes), end(nodes) );
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -566,37 +560,6 @@ OversetFE::continueSetup()
 //! [setup]
 
 void
-OversetFE::volumetric( tk::Fields& u, const std::vector< tk::real >& v )
-// *****************************************************************************
-//  Multiply solution with mesh volume
-//! \param[in,out] u Solution vector
-//! \param[in] v Volume to multiply with
-// *****************************************************************************
-{
-  Assert( v.size() == u.nunk(), "Size mismatch" );
-
-  for (std::size_t i=0; i<u.nunk(); ++i)
-    for (ncomp_t c=0; c<u.nprop(); ++c)
-      u(i,c) *= v[i];
-}
-
-void
-OversetFE::conserved( tk::Fields& u, const std::vector< tk::real >& v )
-// *****************************************************************************
-//  Divide solution with mesh volume
-//! \param[in,out] u Solution vector
-//! \param[in] v Volume to divide with
-// *****************************************************************************
-{
-  Assert( v.size() == u.nunk(), "Size mismatch" );
-
-  for (std::size_t i=0; i<u.nunk(); ++i)
-    for (ncomp_t c=0; c<u.nprop(); ++c) {
-      u(i,c) /= v[i];
-    }
-}
-
-void
 OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
 // *****************************************************************************
 // Receive total box IC volume and set conditions in box
@@ -615,9 +578,6 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Set initial conditions for all PDEs
   g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
     m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
-
-  // We multiply conserved variables with mesh volume after m2m transfer,
-  // see lhs()
 
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
@@ -638,9 +598,6 @@ OversetFE::lhs()
 // *****************************************************************************
 {
   // No need for LHS in OversetFE
-
-  // Multiply conserved variables with mesh volume since m2m transfer is done
-  volumetric( m_u, Disc()->Vol() );
 
   // If mesh moved: (Re-)compute boundary point- and dual-face normals, and
   //   then proceed to stage()
@@ -814,8 +771,6 @@ OversetFE::BC()
   auto d = Disc();
   const auto& coord = d->Coord();
 
-  conserved( m_u, d->Vol() );
-
   // Apply Dirichlet BCs
   for (const auto& [b,bc] : m_dirbc)
     for (ncomp_t c=0; c<m_u.nprop(); ++c)
@@ -827,14 +782,9 @@ OversetFE::BC()
   // Apply farfield BCs
   g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
-  // Apply sponge conditions
-  g_cgpde[d->MeshId()].sponge( m_u, coord, m_spongenodes );
-
   // Apply user defined time dependent BCs
   g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
     m_timedepbcFn );
-
-  volumetric( m_u, d->Vol() );
 }
 
 void
@@ -868,7 +818,6 @@ OversetFE::dt()
   } else {      // compute dt based on CFL
 
     //! [Find the minimum dt across all PDEs integrated]
-    conserved( m_u, Disc()->Vol() );
     if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
 
       // compute new dt for each mesh point
@@ -885,7 +834,6 @@ OversetFE::dt()
       if (eqdt < mindt) mindt = eqdt;
 
     }
-    volumetric( m_u, Disc()->Vol() );
     //! [Find the minimum dt across all PDEs integrated]
 
   }
@@ -926,13 +874,9 @@ OversetFE::chBndGrad()
 {
   auto d = Disc();
 
-  // Divide solution with mesh volume
-  conserved( m_u, Disc()->Vol() );
   // Compute own portion of gradients for all equations
   g_cgpde[d->MeshId()].chBndGrad( d->Coord(), d->Inpoel(), m_bndel, d->Gid(),
     d->Bid(), m_u, m_chBndGrad );
-  // Multiply solution with mesh volume
-  volumetric( m_u, Disc()->Vol() );
 
   // Communicate gradients to other chares on chare-boundary
   if (d->NodeCommMap().empty())        // in serial we are done
@@ -998,13 +942,11 @@ OversetFE::rhs()
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
-  conserved( m_u, Disc()->Vol() );
   g_cgpde[d->MeshId()].rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-          m_symbctri, m_spongenodes, d->Vol(), m_edgenode, m_edgeid,
+          m_symbctri, {}, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
           m_rhs );
-  volumetric( m_u, Disc()->Vol() );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
@@ -1072,7 +1014,6 @@ OversetFE::solve()
   // Update state at time n
   if (m_stage == 0) {
     m_un = m_u;
-    if (g_inputdeck.get< tag::ale, tag::ale >()) d->UpdateCoordn();
   }
 
   // Solve the sytem
@@ -1081,14 +1022,17 @@ OversetFE::solve()
     // Advance solution, converging to steady state
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c) = m_un(i,c) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c);
+        m_u(i,c) = m_un(i,c) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c)
+          / d->Vol()[i];
 
   } else {
 
     auto adt = rkcoef[m_stage] * d->Dt();
 
     // Advance unsteady solution
-    m_u = m_un + adt * m_rhs;
+    for (std::size_t i=0; i<m_u.nunk(); ++i)
+      for (ncomp_t c=0; c<m_u.nprop(); ++c)
+        m_u(i,c) = m_un(i,c) + adt * m_rhs(i,c) / d->Vol()[i];
 
   }
 
@@ -1103,12 +1047,8 @@ OversetFE::solve()
   bool diag_computed(false);
   if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
-    conserved( m_u, Disc()->Vol() );
-    conserved( m_un, Disc()->Voln() );
     diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
                                     m_symbcnodes, m_farfieldbcnodes );
-    volumetric( m_u, Disc()->Vol() );
-    volumetric( m_un, Disc()->Voln() );
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping
@@ -1130,24 +1070,24 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
 // *****************************************************************************
 {
   if (m_stage == 3) {
-  auto d = Disc();
+    auto d = Disc();
 
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-  const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
-  const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
+    const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+    const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
+    const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
 
-  if (steady) {
+    if (steady) {
 
-    // this is the last time step if max time of max number of time steps
-    // reached or the residual has reached its convergence criterion
-    if (d->finished() or l2res[rc] < residual) m_finished = 1;
+      // this is the last time step if max time of max number of time steps
+      // reached or the residual has reached its convergence criterion
+      if (d->finished() or l2res[rc] < residual) m_finished = 1;
 
-  } else {
+    } else {
 
-    // this is the last time step if max time or max iterations reached
-    if (d->finished()) m_finished = 1;
+      // this is the last time step if max time or max iterations reached
+      if (d->finished()) m_finished = 1;
 
-  }
+    }
   }
 
   // TODO: Move overset mesh somewhere here
@@ -1166,8 +1106,6 @@ OversetFE::transfer()
 // *****************************************************************************
 {
   // Initiate solution transfer (if coupled)
-  conserved(m_u, Disc()->Vol());
-
   //TODO: enable this for during-timestepping solution transfer
   //Disc()->blockingSolutionTransfer(m_u);
 
@@ -1218,9 +1156,7 @@ OversetFE::writeFields()
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE, depvar );
 
     // Collect field output from numerical solution requested by user
-    conserved( m_u, Disc()->Vol() );
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE, m_u, depvar );
-    volumetric( m_u, Disc()->Vol() );
 
     // Collect field output names for analytical solutions
     analyticFieldNames( g_cgpde[d->MeshId()], tk::Centering::NODE,
@@ -1237,7 +1173,6 @@ OversetFE::writeFields()
 
     // Collect nodal block and surface field solution
     std::vector< std::vector< tk::real > > nodesurfs;
-    conserved( m_u, Disc()->Vol() );
     auto so = g_cgpde[d->MeshId()].surfOutput( tk::bfacenodes(m_bface,
       m_triinpoel), m_u );
     nodesurfs.insert( end(nodesurfs), begin(so), end(so) );
@@ -1249,8 +1184,6 @@ OversetFE::writeFields()
     std::vector< std::vector< tk::real > > elemsurfs;
     auto eso = g_cgpde[d->MeshId()].elemSurfOutput( m_bface, m_triinpoel, m_u );
     elemsurfs.insert( end(elemsurfs), begin(eso), end(eso) );
-
-    volumetric( m_u, Disc()->Vol() );
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
@@ -1273,10 +1206,8 @@ OversetFE::out()
   // Output time history
   if (d->histiter() or d->histtime() or d->histrange()) {
     std::vector< std::vector< tk::real > > hist;
-    conserved( m_u, Disc()->Vol() );
     auto h = g_cgpde[d->MeshId()].histOutput( d->Hist(), d->Inpoel(), m_u );
     hist.insert( end(hist), begin(h), end(h) );
-    volumetric( m_u, Disc()->Vol() );
     d->history( std::move(hist) );
   }
 
