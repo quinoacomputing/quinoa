@@ -139,7 +139,9 @@ class Discretization : public CBase_Discretization {
     void all_transfers_complete();
 
     //! Start global-reduction-based solution transfer (if coupled)
-    void blockingSolutionTransfer( tk::Fields& u );
+    void blockingSolutionTransfer(
+      tk::Fields& u,
+      CkCallback cb );
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(

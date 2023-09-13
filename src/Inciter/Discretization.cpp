@@ -410,13 +410,24 @@ void Discretization::all_transfers_complete()
   m_transfer_complete.send();
 }
 
-void Discretization::blockingSolutionTransfer([[maybe_unused]] tk::Fields& u)
+void Discretization::blockingSolutionTransfer(
+  [[maybe_unused]] tk::Fields& u,
+  CkCallback cb )
 // *****************************************************************************
-//  Start solution transfer (if coupled)
+//  Start global-reduction-based solution transfer (if coupled)
 //! \param[in] u Solution to transfer from/to
+//! \param[in] cb Callback to call if mesh not involved in transfers.
 // *****************************************************************************
 {
-  if (!m_mytransfer.empty()) {   // only transfer if involved in coupling
+  if (m_mytransfer.empty()) {    // return to scheme if not involved in transfer
+
+    // returns to the discretization scheme. If transfers are expected, the
+    // same function is called, but via Transported (i.e. after a reduction)
+    cb.send();
+
+  }
+
+  else {    // only transfer if involved in coupling
 
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
@@ -435,16 +446,16 @@ void Discretization::blockingSolutionTransfer([[maybe_unused]] tk::Fields& u)
       m_ndst = 0;
     }
 
+    m_nsrc = 0;
+    m_ndst = 0;
+
+    // Reduce to transporter
+    std::vector< std::size_t > meshid{m_meshid};
+    contribute( meshid, CkReduction::sum_ulong,
+      CkCallback(CkReductionTarget(Transporter,solutionTransferred),
+      m_transporter) );
+
   }
-
-  m_nsrc = 0;
-  m_ndst = 0;
-
-  // Reduce to transporter
-  std::vector< std::size_t > meshid{m_meshid};
-  contribute( meshid, CkReduction::sum_ulong,
-    CkCallback(CkReductionTarget(Transporter,solutionTransferred),
-    m_transporter) );
 }
 
 std::vector< std::size_t >

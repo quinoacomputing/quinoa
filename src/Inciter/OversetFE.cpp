@@ -575,7 +575,8 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   d->Voln() = d->Vol();
 
   // Initiate IC transfer (if coupled)
-  Disc()->blockingSolutionTransfer(m_u);
+  Disc()->blockingSolutionTransfer( m_u,
+    CkCallback(CkIndex_OversetFE::lhs(), thisProxy[thisIndex]) );
 }
 
 //! [Compute lhs]
@@ -1104,12 +1105,10 @@ OversetFE::transfer()
 {
   // Initiate solution transfer (if coupled)
   //TODO: enable this for during-timestepping solution transfer
-  //Disc()->blockingSolutionTransfer(m_u);
+  //Disc()->blockingSolutionTransfer( m_u,
+  //  CkCallback(CkIndex_OversetFE::lhs(), thisProxy[thisIndex]) );
 
-  std::vector< std::size_t > meshid{Disc()->MeshId()};
-  contribute( meshid, CkReduction::sum_ulong,
-    CkCallback(CkReductionTarget(Transporter,solutionTransferred),
-    Disc()->Tr()) );
+  lhs();
 }
 
 //! [stage]
