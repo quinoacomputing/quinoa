@@ -20,12 +20,11 @@ namespace lua {
 //! Interpret inciter box ... end blocks using Lua
 //! \tparam eq Equation system index
 //! \param[in] iclua Lua::sol table handle for IC block
-//! \param[in] cnt Lua block counter
 //! \param[in,out] icbox Box configuration tuple in nested vectors to write to
 template< class eq >
 void box( const sol::table& iclua,
-          std::size_t cnt,
-          std::vector< std::vector< ctr::box > >& icbox )
+          std::size_t,
+          std::vector< ctr::box >& icbox )
 {
   const auto& boxlua = iclua[ kw::box::string() ];
   if (boxlua.valid()) {
@@ -34,8 +33,8 @@ void box( const sol::table& iclua,
 
       const auto& s = boxlua[i];
       if (not s.valid()) break;
-      icbox[cnt].emplace_back();
-      auto& b = icbox[cnt].back();
+      icbox.emplace_back();
+      auto& b = icbox.back();
 
       b.template get< tag::xmin >() = s[ kw::xmin::string() ].get_or(0.0);
       b.template get< tag::xmax >() = s[ kw::xmax::string() ].get_or(0.0);

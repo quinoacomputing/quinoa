@@ -81,7 +81,7 @@ class CompFlow {
 
       // EoS initialization
       const auto& matprop =
-        g_inputdeck.get< tag::param, eq, tag::material >()[0];
+        g_inputdeck.get< tag::param, eq, tag::material >();
       const auto& matidxmap =
         g_inputdeck.get< tag::param, eq, tag::matidxmap >();
       auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();
@@ -163,7 +163,7 @@ class CompFlow {
       for (std::size_t e=0; e<nielem; ++e) {
         if (icbox.size() > 0) {
           std::size_t bcnt = 0;
-          for (const auto& b : icbox[0]) {   // for all boxes
+          for (const auto& b : icbox) {   // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
               std::vector< tk::real > box
@@ -179,7 +179,7 @@ class CompFlow {
                   unk(e,mark+i) = 0.0;
               }
               initializeBox<inciter::ctr::box>( m_mat_blk, 1.0, V_ex,
-                t, b, bgpreic[0][0], c_v, s );
+                t, b, bgpreic[0], c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -444,9 +444,9 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > 0 && !boxelems.empty()) {
+      if (!icbox.empty() && !boxelems.empty()) {
         std::size_t bcnt = 0;
-        for (const auto& b : icbox[0]) {   // for all boxes for this eq
+        for (const auto& b : icbox) {   // for all boxes for this eq
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
@@ -984,9 +984,9 @@ class CompFlow {
       using tag::param; using tag::bc;
 
       // Primitive variables from farfield
-      auto frho = g_inputdeck.get< param, eq, tag::farfield_density >()[0];
-      auto fp   = g_inputdeck.get< param, eq, tag::farfield_pressure >()[0];
-      auto fu   = g_inputdeck.get< param, eq, tag::farfield_velocity >()[0];
+      auto frho = g_inputdeck.get< param, eq, tag::farfield_density >();
+      auto fp   = g_inputdeck.get< param, eq, tag::farfield_pressure >();
+      const auto& fu = g_inputdeck.get< param, eq, tag::farfield_velocity >();
 
       // Speed of sound from farfield
       auto fa = mat_blk[0].compute< EOS::soundspeed >( frho, fp );
@@ -1085,127 +1085,125 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > 0) {
-        for (const auto& b : icbox[0]) {   // for all boxes for this eq
-          std::vector< tk::real > box
-           { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-             b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-             b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+      for (const auto& b : icbox) {   // for all boxes for this eq
+        std::vector< tk::real > box
+         { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+           b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+           b.template get< tag::zmin >(), b.template get< tag::zmax >() };
 
-          auto boxenc = b.template get< tag::energy_content >();
-          Assert( boxenc > 0.0, "Box energy content must be nonzero" );
+        auto boxenc = b.template get< tag::energy_content >();
+        Assert( boxenc > 0.0, "Box energy content must be nonzero" );
 
-          auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
+        auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
 
-          // determine times at which sourcing is initialized and terminated
-          const auto& initiate = b.template get< tag::initiate >();
-          auto iv = initiate.template get< tag::velocity >();
-          auto wFront = 0.1;
-          auto tInit = 0.0;
-          auto tFinal = tInit + (box[5] - box[4] - 2.0*wFront) / std::fabs(iv);
-          auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
+        // determine times at which sourcing is initialized and terminated
+        const auto& initiate = b.template get< tag::initiate >();
+        auto iv = initiate.template get< tag::velocity >();
+        auto wFront = 0.1;
+        auto tInit = 0.0;
+        auto tFinal = tInit + (box[5] - box[4] - 2.0*wFront) / std::fabs(iv);
+        auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
-          const auto& cx = coord[0];
-          const auto& cy = coord[1];
-          const auto& cz = coord[2];
+        const auto& cx = coord[0];
+        const auto& cy = coord[1];
+        const auto& cz = coord[2];
 
-          if (t >= tInit && t <= tFinal) {
-            // The energy front is assumed to have a half-sine-wave shape. The
-            // half wave-length is the width of the front. At t=0, the center of
-            // this front (i.e. the peak of the partial-sine-wave) is at X_0 +
-            // W_0.  W_0 is calculated based on the width of the front and the
-            // direction of propagation (which is assumed to be along the
-            // z-direction).  If the front propagation velocity is positive, it
-            // is assumed that the initial position of the energy source is the
-            // minimum z-coordinate of the box; whereas if this velocity is
-            // negative, the initial position is the maximum z-coordinate of the
-            // box.
+        if (t >= tInit && t <= tFinal) {
+          // The energy front is assumed to have a half-sine-wave shape. The
+          // half wave-length is the width of the front. At t=0, the center of
+          // this front (i.e. the peak of the partial-sine-wave) is at X_0 +
+          // W_0.  W_0 is calculated based on the width of the front and the
+          // direction of propagation (which is assumed to be along the
+          // z-direction).  If the front propagation velocity is positive, it
+          // is assumed that the initial position of the energy source is the
+          // minimum z-coordinate of the box; whereas if this velocity is
+          // negative, the initial position is the maximum z-coordinate of the
+          // box.
 
-            // Orientation of box
-            std::array< tk::real, 3 > b_orientn{{
-              b.template get< tag::orientation >()[0],
-              b.template get< tag::orientation >()[1],
-              b.template get< tag::orientation >()[2] }};
-            std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
-              0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
-            // Transform box to reference space
-            std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
-            std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
-            tk::movePoint(b_centroid, b_min);
-            tk::movePoint(b_centroid, b_max);
+          // Orientation of box
+          std::array< tk::real, 3 > b_orientn{{
+            b.template get< tag::orientation >()[0],
+            b.template get< tag::orientation >()[1],
+            b.template get< tag::orientation >()[2] }};
+          std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
+            0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
+          // Transform box to reference space
+          std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
+          std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
+          tk::movePoint(b_centroid, b_min);
+          tk::movePoint(b_centroid, b_max);
 
-            // initial center of front
-            tk::real zInit(b_min[2]);
-            if (iv < 0.0) zInit = b_max[2];
-            // current location of front
-            auto z0 = zInit + iv*t;
-            auto z1 = z0 + std::copysign(wFront, iv);
-            tk::real s0(z0), s1(z1);
-            // if velocity of propagation is negative, initial position is z1
-            if (iv < 0.0) {
-              s0 = z1;
-              s1 = z0;
-            }
-            // Sine-wave (positive part of the wave) source term amplitude
-            auto pi = 4.0 * std::atan(1.0);
-            auto amplE = boxenc * V_ex * pi
-              / (aBox * wFront * 2.0 * (tFinal-tInit));
-            //// Square wave (constant) source term amplitude
-            //auto amplE = boxenc * V_ex
-            //  / (aBox * wFront * (tFinal-tInit));
+          // initial center of front
+          tk::real zInit(b_min[2]);
+          if (iv < 0.0) zInit = b_max[2];
+          // current location of front
+          auto z0 = zInit + iv*t;
+          auto z1 = z0 + std::copysign(wFront, iv);
+          tk::real s0(z0), s1(z1);
+          // if velocity of propagation is negative, initial position is z1
+          if (iv < 0.0) {
+            s0 = z1;
+            s1 = z0;
+          }
+          // Sine-wave (positive part of the wave) source term amplitude
+          auto pi = 4.0 * std::atan(1.0);
+          auto amplE = boxenc * V_ex * pi
+            / (aBox * wFront * 2.0 * (tFinal-tInit));
+          //// Square wave (constant) source term amplitude
+          //auto amplE = boxenc * V_ex
+          //  / (aBox * wFront * (tFinal-tInit));
 
-            // add source
-            for (auto e : boxelems) {
-              std::array< tk::real, 3 > node{{ geoElem(e,1), geoElem(e,2),
-                geoElem(e,3) }};
-              // Transform node to reference space of box
-              tk::movePoint(b_centroid, node);
-              tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
-                node);
+          // add source
+          for (auto e : boxelems) {
+            std::array< tk::real, 3 > node{{ geoElem(e,1), geoElem(e,2),
+              geoElem(e,3) }};
+            // Transform node to reference space of box
+            tk::movePoint(b_centroid, node);
+            tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+              node);
 
-              if (node[2] >= s0 && node[2] <= s1) {
-                auto ng = tk::NGvol(ndofel[e]);
+            if (node[2] >= s0 && node[2] <= s1) {
+              auto ng = tk::NGvol(ndofel[e]);
 
-                // arrays for quadrature points
-                std::array< std::vector< tk::real >, 3 > coordgp;
-                std::vector< tk::real > wgp;
+              // arrays for quadrature points
+              std::array< std::vector< tk::real >, 3 > coordgp;
+              std::vector< tk::real > wgp;
 
-                coordgp[0].resize( ng );
-                coordgp[1].resize( ng );
-                coordgp[2].resize( ng );
-                wgp.resize( ng );
+              coordgp[0].resize( ng );
+              coordgp[1].resize( ng );
+              coordgp[2].resize( ng );
+              wgp.resize( ng );
 
-                tk::GaussQuadratureTet( ng, coordgp, wgp );
+              tk::GaussQuadratureTet( ng, coordgp, wgp );
 
-                // Extract the element coordinates
-                std::array< std::array< tk::real, 3>, 4 > coordel{{
-                {{ cx[inpoel[4*e  ]], cy[inpoel[4*e  ]], cz[inpoel[4*e  ]] }},
-                {{ cx[inpoel[4*e+1]], cy[inpoel[4*e+1]], cz[inpoel[4*e+1]] }},
-                {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
-                {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}}};
+              // Extract the element coordinates
+              std::array< std::array< tk::real, 3>, 4 > coordel{{
+              {{ cx[inpoel[4*e  ]], cy[inpoel[4*e  ]], cz[inpoel[4*e  ]] }},
+              {{ cx[inpoel[4*e+1]], cy[inpoel[4*e+1]], cz[inpoel[4*e+1]] }},
+              {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
+              {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}}};
 
-                for (std::size_t igp=0; igp<ng; ++igp) {
-                  // Compute the coordinates of quadrature point at physical
-                  // domain
-                  auto gp = tk::eval_gp( igp, coordel, coordgp );
+              for (std::size_t igp=0; igp<ng; ++igp) {
+                // Compute the coordinates of quadrature point at physical
+                // domain
+                auto gp = tk::eval_gp( igp, coordel, coordgp );
 
-                  // Transform quadrature point to reference space of box
-                  tk::movePoint(b_centroid, gp);
-                  tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
-                    gp);
+                // Transform quadrature point to reference space of box
+                tk::movePoint(b_centroid, gp);
+                tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+                  gp);
 
-                  // Compute the basis function
-                  auto B = tk::eval_basis( ndofel[e], coordgp[0][igp],
-                                           coordgp[1][igp], coordgp[2][igp] );
+                // Compute the basis function
+                auto B = tk::eval_basis( ndofel[e], coordgp[0][igp],
+                                         coordgp[1][igp], coordgp[2][igp] );
 
-                  // Compute the source term variable
-                  std::vector< tk::real > s(5, 0.0);
-                  s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
+                // Compute the source term variable
+                std::vector< tk::real > s(5, 0.0);
+                s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
 
-                  auto wt = wgp[igp] * geoElem(e, 0);
+                auto wt = wgp[igp] * geoElem(e, 0);
 
-                  tk::update_rhs( ndof, ndofel[e], wt, e, B, s, R );
-                }
+                tk::update_rhs( ndof, ndofel[e], wt, e, B, s, R );
               }
             }
           }

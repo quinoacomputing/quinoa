@@ -37,7 +37,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 template< class Eq, class Prop >
 tk::real
 getmatprop( std::size_t imat=0 ) {
-  const auto& matprop = g_inputdeck.get< tag::param, Eq, tag::material >()[0];
+  const auto& matprop = g_inputdeck.get< tag::param, Eq, tag::material >();
   const auto& map = g_inputdeck.get< tag::param, Eq, tag::matidxmap >();
   auto meos = map.template get< tag::eosidx >()[ imat ];
   auto midx = map.template get< tag::matidx >()[ imat ];

@@ -63,22 +63,20 @@ class CompFlow {
     explicit CompFlow() :
       m_physics(),
       m_problem(),
-      m_stagCnf( g_inputdeck.specialBC< eq, tag::stag >() ),
-      m_skipCnf( g_inputdeck.specialBC< eq, tag::skip >() ),
-      m_fr( g_inputdeck.get< param, eq, tag::farfield_density >().size() > 0 ?
-            g_inputdeck.get< param, eq, tag::farfield_density >()[0] : 1.0 ),
-      m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >().size() > 0 ?
-            g_inputdeck.get< param, eq, tag::farfield_pressure >()[0] : 1.0 ),
-      m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >().size() > 0 ?
-            g_inputdeck.get< param, eq, tag::farfield_velocity >()[0] :
-            std::vector< real >( 3, 0.0 ) )
+      m_stagCnf({g_inputdeck.get< tag::param, eq, tag::stag, tag::point >(),
+                 g_inputdeck.get< tag::param, eq, tag::stag, tag::radius >()}),
+      m_skipCnf({g_inputdeck.get< tag::param, eq, tag::skip, tag::point >(),
+                 g_inputdeck.get< tag::param, eq, tag::skip, tag::radius >()}),
+      m_fr( g_inputdeck.get< param, eq, tag::farfield_density >() ),
+      m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >() ),
+      m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >() )
     {
       Assert( g_inputdeck.get< tag::component >().get< eq >().at(0) == m_ncomp,
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );
 
       // EoS initialization
       const auto& matprop =
-        g_inputdeck.get< tag::param, eq, tag::material >()[0];
+        g_inputdeck.get< tag::param, eq, tag::material >();
       const auto& matidxmap =
         g_inputdeck.get< tag::param, eq, tag::matidxmap >();
       auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();
@@ -108,9 +106,9 @@ class CompFlow {
 
       // Detect if user has configured IC boxes
       const auto& icbox = g_inputdeck.get<tag::param, eq, tag::ic, tag::box>();
-      if (icbox.size() > 0) {
+      if (!icbox.empty()) {
         std::size_t bcnt = 0;
-        for (const auto& b : icbox[0]) {   // for all boxes for this eq
+        for (const auto& b : icbox) {   // for all boxes for this eq
           inbox.emplace_back();
           std::vector< tk::real > box
             { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
@@ -158,22 +156,20 @@ class CompFlow {
       const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
         tag::meshblock >();
       // if mesh blocks have been specified for this system
-      if (mblks.size() > 0) {
-        if (!mblks[0].empty()) {
-          std::size_t idMax(0);
-          for (const auto& imb : mblks[0]) {
-            idMax = std::max(idMax, imb.get< tag::blockid >());
-          }
-          // size is idMax+1 since block ids are usually 1-based
-          nuserblk = nuserblk+idMax+1;
+      if (!mblks.empty()) {
+        std::size_t idMax(0);
+        for (const auto& imb : mblks) {
+          idMax = std::max(idMax, imb.get< tag::blockid >());
+        }
+        // size is idMax+1 since block ids are usually 1-based
+        nuserblk = nuserblk+idMax+1;
 
-          // determine node set for IC mesh blocks
-          for (const auto& [blid, elset] : elemblkid) {
-            if (!elset.empty()) {
-              auto& ndset = nodeblkid[blid];
-              for (auto ie : elset) {
-                for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
-              }
+        // determine node set for IC mesh blocks
+        for (const auto& [blid, elset] : elemblkid) {
+          if (!elset.empty()) {
+            auto& ndset = nodeblkid[blid];
+            for (auto ie : elset) {
+              for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
             }
           }
         }
@@ -216,8 +212,7 @@ class CompFlow {
       const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
 
       const auto& bgpreic = ic.get< tag::pressure >();
-      tk::real bgpre =
-        (bgpreic.size() > 0 && !bgpreic[0].empty()) ? bgpreic[0][0] : 0.0;
+      tk::real bgpre = !bgpreic.empty() ? bgpreic[0] : 0.0;
 
       auto c_v = cv< eq >(0);
 
@@ -226,9 +221,9 @@ class CompFlow {
         auto s = Problem::initialize( m_ncomp, m_mat_blk, x[i], y[i], z[i], t );
 
         // initialize the user-defined box IC
-        if (icbox.size() > 0) {
+        if (!icbox.empty()) {
           std::size_t bcnt = 0;
-          for (const auto& b : icbox[0]) { // for all boxes
+          for (const auto& b : icbox) { // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(i) != inbox[bcnt].end())
             {
               std::vector< tk::real > box
@@ -245,17 +240,15 @@ class CompFlow {
         }
 
         // initialize user-defined mesh block ICs
-        if (mblks.size() > 0) {
-          for (const auto& b : mblks[0]) { // for all blocks
-            auto blid = b.get< tag::blockid >();
-            auto V_ex = b.get< tag::volume >();
-            if (blid >= blkvols.size()) Throw("Block volume not found");
-            if (nodeblkid.find(blid) != nodeblkid.end()) {
-              const auto& ndset = tk::cref_find(nodeblkid, blid);
-              if (ndset.find(i) != ndset.end()) {
-                initializeBox<ctr::meshblock>( m_mat_blk,
-                  V_ex/blkvols[blid], V_ex, t, b, bgpre, c_v, s );
-              }
+        for (const auto& b : mblks) { // for all blocks
+          auto blid = b.get< tag::blockid >();
+          auto V_ex = b.get< tag::volume >();
+          if (blid >= blkvols.size()) Throw("Block volume not found");
+          if (nodeblkid.find(blid) != nodeblkid.end()) {
+            const auto& ndset = tk::cref_find(nodeblkid, blid);
+            if (ndset.find(i) != ndset.end()) {
+              initializeBox<ctr::meshblock>( m_mat_blk,
+                V_ex/blkvols[blid], V_ex, t, b, bgpre, c_v, s );
             }
           }
         }
@@ -643,9 +636,9 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > 0 && !boxnodes.empty()) {
+      if (!icbox.empty() && !boxnodes.empty()) {
         std::size_t bcnt = 0;
-        for (const auto& b : icbox[0]) {   // for all boxes for this eq
+        for (const auto& b : icbox) {   // for all boxes for this eq
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
@@ -725,8 +718,8 @@ class CompFlow {
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
 
           // energy source propagation velocity (in all IC boxes configured)
-          if (icbox.size() > 0) {
-            for (const auto& b : icbox[0]) {   // for all boxes for this eq
+          if (!icbox.empty()) {
+            for (const auto& b : icbox) {   // for all boxes for this eq
               const auto& initiate = b.template get< tag::initiate >();
               auto iv = initiate.template get< tag::velocity >();
               auto inittype = initiate.template get< tag::init >();
@@ -835,7 +828,7 @@ class CompFlow {
         const auto& x = coord[0];
         const auto& y = coord[1];
         const auto& z = coord[2];
-        for (const auto& b : ubc[0])
+        for (const auto& b : ubc)
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
@@ -876,9 +869,9 @@ class CompFlow {
         for (auto p : nodes) {                 // for all symbc nodes
           if (!skipPoint(x[p],y[p],z[p])) {
             // for all user-def symbc sets
-            for (std::size_t s=0; s<sbc[0].size(); ++s) {
+            for (std::size_t s=0; s<sbc.size(); ++s) {
               // find nodes & normals for side
-              auto j = bnorm.find(std::stoi(sbc[0][s]));
+              auto j = bnorm.find(std::stoi(sbc[s]));
               if (j != end(bnorm)) {
                 auto i = j->second.find(p);      // find normal for node
                 if (i != end(j->second)) {
@@ -919,7 +912,7 @@ class CompFlow {
       if (fbc.size() > 0)               // use farbcs for this system
         for (auto p : nodes)                   // for all farfieldbc nodes
           if (!skipPoint(x[p],y[p],z[p]))
-            for (const auto& s : fbc[0]) {// for all user-def farbc sets
+            for (const auto& s : fbc) {// for all user-def farbc sets
               auto j = bnorm.find(std::stoi(s));// find nodes & normals for side
               if (j != end(bnorm)) {
                 auto i = j->second.find(p);      // find normal for node
@@ -984,13 +977,13 @@ class CompFlow {
         const auto& spvel = sponge.get< tag::velocity >();
         for (auto p : nodes) {             // for all sponge nodes
           if (!skipPoint(x[p],y[p],z[p])) {
-            std::vector< tk::real > sp( ss[0].size(), 0.0 );
+            std::vector< tk::real > sp( ss.size(), 0.0 );
             if (spvel.size() > 0) {
-              sp = spvel[0];
+              sp = spvel;
               for (auto& s : sp) s = std::sqrt(s);
             }
             // sponge velocity: reduce kinetic energy by a user percentage
-            for (std::size_t s=0; s<ss[0].size(); ++s) {
+            for (std::size_t s=0; s<ss.size(); ++s) {
               U(p,1) -= U(p,1)*sp[s];
               U(p,2) -= U(p,2)*sp[s];
               U(p,3) -= U(p,3)*sp[s];
@@ -1681,8 +1674,8 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > 0) {
-        for (const auto& b : icbox[0]) {   // for all boxes for this eq
+      if (!icbox.empty()) {
+        for (const auto& b : icbox) {   // for all boxes for this eq
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
@@ -1814,13 +1807,13 @@ class CompFlow {
       const auto& ss = sponge.get< tag::sideset >();
       if (ss.size() > 0) {  // if symbcs configured for this system
         const auto& sppre = sponge.get< tag::pressure >();
-        nset = ss[0].size();  // number of sponge side sets configured
+        nset = ss.size();  // number of sponge side sets configured
         spmult.resize( x.size() * nset, 0.0 );
         for (auto p : nodes) {
           if (not skipPoint(x[p],y[p],z[p]) && sppre.size() > 0) {
-            Assert( nset == sppre[0].size(), "Size mismatch" );
+            Assert( nset == sppre.size(), "Size mismatch" );
             for (std::size_t s=0; s<nset; ++s)
-              spmult[p*nset+s] = sppre[0][s];
+              spmult[p*nset+s] = sppre[s];
           } else {
             for (std::size_t s=0; s<nset; ++s)
               spmult[p*nset+s] = 0.0;
@@ -1828,7 +1821,7 @@ class CompFlow {
         }
       }
       Assert( ss.size() > 0 ?
-              spmult.size() == x.size() * ss[0].size() :
+              spmult.size() == x.size() * ss.size() :
               spmult.size() == 0, "Sponge pressure multipler wrong size" );
       return spmult;
     }

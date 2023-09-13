@@ -134,44 +134,11 @@ namespace grm {
       if (ncomp.empty() || ncomp.size() != neq.get< eq >())
         ncomp.push_back( 1 );
 
-      // If physics type is not given, default to 'advection'
-      auto& physics = stack.template get< param, eq, tag::physics >();
-      if (physics.empty() || physics.size() != neq.get< eq >())
-        physics.push_back( inciter::ctr::PhysicsType::ADVECTION );
-
-      // If physics type is advection-diffusion, check for correct number of
-      // advection velocity, shear, and diffusion coefficients
-      if (physics.back() == inciter::ctr::PhysicsType::ADVDIFF) {
-        auto& u0 = stack.template get< param, eq, tag::u0 >();
-        if (u0.back().size() != ncomp.back())  // must define 1 component
-          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
-        auto& diff = stack.template get< param, eq, tag::diffusivity >();
-        if (diff.back().size() != 3*ncomp.back())  // must define 3 components
-          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
-        auto& lambda = stack.template get< param, eq, tag::lambda >();
-        if (lambda.back().size() != 2*ncomp.back()) // must define 2 shear comps
-          Message< Stack, ERROR, MsgKey::WRONGSIZE >( stack, in );
-      }
-      // If problem type is not given, error out
-      auto& problem = stack.template get< param, eq, tag::problem >();
-      if (problem.empty() || problem.size() != neq.get< eq >())
-        Message< Stack, ERROR, MsgKey::NOPROBLEM >( stack, in );
       // Error check Dirichlet boundary condition block for all transport eq
       // configurations
       const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
       for (const auto& s : bc)
         if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
-
-      // If interface compression is not specified, default to 'false'
-      auto& intsharp = stack.template get< param, eq, tag::intsharp >();
-      if (intsharp.empty() || intsharp.size() != neq.get< eq >())
-        intsharp.push_back( 0 );
-
-      // If interface compression parameter is not specified, default to 1.8
-      auto& intsharp_p = stack.template get< param, eq,
-                                            tag::intsharp_param >();
-      if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
-        intsharp_p.push_back( 1.8 );
     }
   };
 
@@ -190,31 +157,15 @@ namespace grm {
       using inciter::deck::neq;
       using tag::param;
 
-      // Set default to sysfct (on/off) if not specified
-      auto& sysfct = stack.template get< param, eq, tag::sysfct >();
-      if (sysfct.empty() || sysfct.size() != neq.get< eq >())
-        sysfct.push_back( 1 );
-
       // Set default flux to HLLC if not specified
       auto& flux = stack.template get< tag::param, eq, tag::flux >();
       if (flux.empty() || flux.size() != neq.get< eq >())
         flux.push_back( inciter::ctr::FluxType::HLLC );
 
-      // Verify that sysfctvar variables are within bounds (if specified) and
-      // defaults if not
+      auto sysfct = stack.template get< param, eq, tag::sysfct >();
       auto& sysfctvar = stack.template get< param, eq, tag::sysfctvar >();
       // If sysfctvar is not specified, use all variables for system FCT
-      if (sysfctvar.empty() || sysfctvar.back().empty()) {
-        sysfctvar.push_back( {0,1,2,3,4} );
-      } else {  // if specified, do error checking on variables
-        auto& vars = sysfctvar.back();
-        if (vars.size() > 5) {
-          Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
-        }
-        for (const auto& i : vars) {
-          if (i > 4) Message< Stack, ERROR, MsgKey::SYSFCTVAR >( stack, in );
-        }
-      }
+      if (sysfct && sysfctvar.empty()) sysfctvar = { 0,1,2,3,4 };
 
       // Set number of components to 5 (mass, 3 x mom, energy) if not coupled
       stack.template get< tag::component, eq >().push_back( 5 );
@@ -233,7 +184,7 @@ namespace grm {
       }
 
       // Verify correct number of material properties configured
-      auto& matprop = stack.template get< param, eq, tag::material >().back()[0];
+      auto& matprop = stack.template get< param, eq, tag::material >().back();
       auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
       matidxmap.template get< tag::eosidx >().resize(1);
       matidxmap.template get< tag::matidx >().resize(1);
@@ -282,144 +233,56 @@ namespace grm {
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
-      if (problem.empty() || problem.size() != neq.get< eq >())
+      if (problem.empty() || problem.size() != neq.get< eq >()) {
         problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
-      else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
-        const auto& alpha = stack.template get< param, eq, tag::alpha >();
-        const auto& beta = stack.template get< param, eq, tag::beta >();
-        const auto& p0 = stack.template get< param, eq, tag::p0 >();
-        if ( alpha.size() != problem.size() ||
-             beta.size() != problem.size() ||
-             p0.size() != problem.size() )
-          Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
-      }
-      else if (problem.back() == inciter::ctr::ProblemType::NL_ENERGY_GROWTH) {
-        const auto& alpha = stack.template get< param, eq, tag::alpha >();
-        const auto& betax = stack.template get< param, eq, tag::betax >();
-        const auto& betay = stack.template get< param, eq, tag::betay >();
-        const auto& betaz = stack.template get< param, eq, tag::betaz >();
-        const auto& kappa = stack.template get< param, eq, tag::kappa >();
-        const auto& r0 = stack.template get< param, eq, tag::r0 >();
-        const auto& ce = stack.template get< param, eq, tag::ce >();
-        if ( alpha.size() != problem.size() ||
-             betax.size() != problem.size() ||
-             betay.size() != problem.size() ||
-             betaz.size() != problem.size() ||
-             kappa.size() != problem.size() ||
-             r0.size() != problem.size() ||
-             ce.size() != problem.size() )
-          Message< Stack, ERROR, MsgKey::ENERGY_UNFINISHED >( stack, in);
-      }
-      else if (problem.back() == inciter::ctr::ProblemType::RAYLEIGH_TAYLOR) {
-        const auto& alpha = stack.template get< param, eq, tag::alpha >();
-        const auto& betax = stack.template get< param, eq, tag::betax >();
-        const auto& betay = stack.template get< param, eq, tag::betay >();
-        const auto& betaz = stack.template get< param, eq, tag::betaz >();
-        const auto& kappa = stack.template get< param, eq, tag::kappa >();
-        const auto& p0 = stack.template get< param, eq, tag::p0 >();
-        const auto& r0 = stack.template get< param, eq, tag::r0 >();
-        if ( alpha.size() != problem.size() ||
-             betax.size() != problem.size() ||
-             betay.size() != problem.size() ||
-             betaz.size() != problem.size() ||
-             kappa.size() != problem.size() ||
-             p0.size() != problem.size() ||
-             r0.size() != problem.size() )
-          Message< Stack, ERROR, MsgKey::RT_UNFINISHED >( stack, in);
       }
 
       // Error check on user-defined problem type
       auto& ic = stack.template get< param, eq, tag::ic >();
-      //auto& bgdensityic = ic.template get< tag::density >();
-      //auto& bgvelocityic = ic.template get< tag::velocity >();
-      //auto& bgpressureic = ic.template get< tag::pressure >();
-      //auto& bgenergyic = ic.template get< tag::energy >();
-      //auto& bgtemperatureic = ic.template get< tag::temperature >();
+      auto& bgdensityic = ic.template get< tag::density >();
+      auto& bgvelocityic = ic.template get< tag::velocity >();
+      auto& bgpressureic = ic.template get< tag::pressure >();
+      auto& bgenergyic = ic.template get< tag::energy >();
+      auto& bgtemperatureic = ic.template get< tag::temperature >();
       if (problem.back() == inciter::ctr::ProblemType::USER_DEFINED) {
         // must have defined background ICs for user-defined ICs
-        //auto n = neq.get< eq >();
-        //if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
-        //     ( bgpressureic.size() != n && bgenergyic.size() != n &&
-        //       bgtemperatureic.size() != n ) )
-        //{
-        //  Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
-        //}
+        auto n = neq.get< eq >();
+        if ( bgdensityic.size() != n || bgvelocityic.size() != n ||
+             ( bgpressureic.size() != n && bgenergyic.size() != n &&
+               bgtemperatureic.size() != n ) )
+        {
+          Message< Stack, ERROR, MsgKey::BGICMISSING >( stack, in );
+        }
 
         // Error check for ic box
         auto& box = ic.template get< tag::box >();
-        if (!box.empty()) {
-          for (auto& b : box.back()) {   // for all boxes
-            auto& boxorient = b.template get< tag::orientation >();
-            if (boxorient.size() == 0)
-              boxorient.resize(3, 0.0);
-            else if (boxorient.size() != 3)
-              Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
-          }
+        for (auto& b : box) {   // for all boxes
+          auto& boxorient = b.template get< tag::orientation >();
+          if (boxorient.size() == 0)
+            boxorient.resize(3, 0.0);
+          else if (boxorient.size() != 3)
+            Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
         }
 
         // Error check for ic mesh block
         const auto& mblock = ic.template get< tag::meshblock >();
-        if (!mblock.empty()) {
-          for (const auto& b : mblock.back()) {   // for all blocks
-            if (stack.template get< tag::discr, tag::scheme >() ==
-              inciter::ctr::SchemeType::ALECG) {
-              Message< Stack, ERROR, MsgKey::MESHBLOCKSUPPORT >(stack, in);
-            }
-            else {
-              const auto& blkid = b.template get< tag::blockid >();
-              if (blkid == 0)
-                Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
-
-              // if energy content is used to initialize block, then volume must
-              // be specified
-              const auto& blkenc = b.template get< tag::energy_content >();
-              const auto& blkvol = b.template get< tag::volume >();
-              if (blkenc > 0.0 && blkvol < 1e-12)
-                Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
-            }
+        for (const auto& b : mblock) {   // for all blocks
+          if (stack.template get< tag::discr, tag::scheme >() ==
+            inciter::ctr::SchemeType::ALECG) {
+            Message< Stack, ERROR, MsgKey::MESHBLOCKSUPPORT >(stack, in);
           }
-        }
+          else {
+            const auto& blkid = b.template get< tag::blockid >();
+            if (blkid == 0)
+              Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
 
-        // Error check Dirichlet boundary condition block for all compflow
-        // configurations
-        const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
-        for (const auto& s : bc)
-          if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
-
-        // Error check stagnation BC block
-        const auto& stag = stack.template get<tag::param, eq, tag::stag>();
-        const auto& spoint = stag.template get< tag::point >();
-        const auto& sradius = stag.template get< tag::radius >();
-        if ( (!spoint.empty() && !spoint.back().empty() &&
-              !sradius.empty() && !sradius.back().empty() &&
-              spoint.back().size() != 3*sradius.back().size())
-         || (!sradius.empty() && !sradius.back().empty() &&
-              !spoint.empty() && !spoint.back().empty() &&
-              spoint.back().size() != 3*sradius.back().size())
-         || (!spoint.empty() && !spoint.back().empty() &&
-              (sradius.empty() || (!sradius.empty() && sradius.back().empty())))
-         || (!sradius.empty() && !sradius.back().empty() &&
-              (spoint.empty() || (!spoint.empty() && spoint.back().empty()))) )
-        {
-          Message< Stack, ERROR, MsgKey::STAGBCWRONG >( stack, in );
-        }
-
-        // Error check skip BC block
-        const auto& skip = stack.template get<tag::param, eq, tag::skip>();
-        const auto& kpoint = skip.template get< tag::point >();
-        const auto& kradius = skip.template get< tag::radius >();
-        if ( (!kpoint.empty() && !kpoint.back().empty() &&
-              !kradius.empty() && !kradius.back().empty() &&
-              kpoint.back().size() != 3*kradius.back().size())
-          || (!kradius.empty() && !kradius.back().empty() &&
-              !kpoint.empty() && !kpoint.back().empty() &&
-              kpoint.back().size() != 3*kradius.back().size())
-          || (!kpoint.empty() && !kpoint.back().empty() &&
-              (kradius.empty() || (!kradius.empty() && kradius.back().empty())))
-          || (!kradius.empty() && !kradius.back().empty() &&
-              (kpoint.empty() || (!kpoint.empty() && kpoint.back().empty()))) )
-        {
-          Message< Stack, ERROR, MsgKey::SKIPBCWRONG >( stack, in );
+            // if energy content is used to initialize block, then volume must
+            // be specified
+            const auto& blkenc = b.template get< tag::energy_content >();
+            const auto& blkvol = b.template get< tag::volume >();
+            if (blkenc > 0.0 && blkvol < 1e-12)
+              Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
+          }
         }
 
         // Error check sponge BC parameter vectors for symmetry BC block
@@ -428,32 +291,36 @@ namespace grm {
         const auto& ss = sponge.template get< tag::sideset >();
 
         const auto& spvel = sponge.template get< tag::velocity >();
-        if ( !spvel.empty() && !spvel.back().empty()) {
-          if (spvel.back().size() != ss.back().size())
+        if ( !spvel.empty()) {
+          if (spvel.size() != ss.size()) {
             Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
-          for (const auto& s : spvel.back())
-            if ( s < 0.0 || s > 1.0 )
+          }
+          for (const auto& s : spvel) {
+            if ( s < 0.0 || s > 1.0 ) {
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+            }
+          }
         }
 
         const auto& sppre = sponge.template get< tag::velocity >();
-        if ( !sppre.empty() && !sppre.back().empty()) {
-          if (sppre.back().size() != ss.back().size())
+        if ( !sppre.empty()) {
+          if (sppre.size() != ss.size()) {
             Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
-          for (const auto& s : sppre.back())
-            if ( s < 0.0 || s > 1.0 )
+          }
+          for (const auto& s : sppre) {
+            if ( s < 0.0 || s > 1.0 ) {
               Message< Stack, ERROR, MsgKey::SPONGEBCWRONG >( stack, in );
+            }
+          }
         }
 
         // Error check user defined time dependent BC for this system
         const auto& tdepbc =
-          stack.template get< tag::param, eq, tag::bctimedep >().back();
+          stack.template get< tag::param, eq, tag::bctimedep >();
         // multiple time dependent BCs can be specified on different side sets
         for (const auto& bndry : tdepbc) {
-          const auto& s = bndry.template get< tag::sideset >();
-          if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
           const auto& f = bndry.template get< tag::fn >();
-          if (f.empty() or f.size() % 6 != 0)
+          if (f.size() % 6 != 0)
             Message< Stack, ERROR, MsgKey::INCOMPLETEUSERFN>( stack, in );
         }
       }
@@ -483,11 +350,6 @@ namespace grm {
         tk::grm::depvars.insert( 'a' );
       }
 
-      // If physics type is not given, default to 'euler'
-      auto& physics = stack.template get< param, eq, tag::physics >();
-      if (physics.empty() || physics.size() != neq.get< eq >())
-        physics.push_back( inciter::ctr::PhysicsType::EULER );
-
       // Set default flux to AUSM if not specified
       auto& flux = stack.template get< tag::param, eq, tag::flux >();
       if (flux.empty() || flux.size() != neq.get< eq >())
@@ -496,22 +358,23 @@ namespace grm {
       // Set number of scalar components based on number of materials
       auto& nmat = stack.template get< param, eq, tag::nmat >();
       auto& ncomp = stack.template get< tag::component, eq >();
-      if (physics.back() == inciter::ctr::PhysicsType::EULER ||
-        physics.back() == inciter::ctr::PhysicsType::ENERGYPILL) {
+      auto physics = stack.template get< param, eq, tag::physics >();
+      if (physics == inciter::ctr::PhysicsType::EULER ||
+          physics == inciter::ctr::PhysicsType::ENERGYPILL)
+      {
         // physics = euler/energy pill: m-material compressible flow
         // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
-        if (nmat.empty() || nmat.size() != neq.get< eq >()) {
+        if (nmat == inciter::g_inputdeck_defaults.get<param, eq, tag::nmat>()) {
           Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
-          nmat.push_back( 2 );
+          nmat = 2;
         }
 
         // set ncomp based on nmat
-        auto m = nmat.back();
         // if solid EOS, add components
-        auto ntot = m + m + 3 + m;
+        auto ntot = nmat + nmat + 3 + nmat;
         const auto& matprop = stack.template get< param, eq, tag::material >();
-        for (const auto& mtype : matprop.back()) {
+        for (const auto& mtype : matprop) {
           if (mtype.template get< tag::eos >() ==
             inciter::ctr::MaterialType::SMALLSHEARSOLID) {
             ntot += 9;
@@ -525,13 +388,13 @@ namespace grm {
       // have been configured
       auto& matprop = stack.template get< param, eq, tag::material >();
       auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
-      matidxmap.template get< tag::eosidx >().resize(nmat.back());
-      matidxmap.template get< tag::matidx >().resize(nmat.back());
-      matidxmap.template get< tag::solidx >().resize(nmat.back());
+      matidxmap.template get< tag::eosidx >().resize(nmat);
+      matidxmap.template get< tag::matidx >().resize(nmat);
+      matidxmap.template get< tag::solidx >().resize(nmat);
       std::size_t tmat(0), i(0), mtypei(0), isolcntr(0), isolidx(0);
       std::set< std::size_t > matidset;
 
-      for (auto& mtype : matprop.back()) {
+      for (auto& mtype : matprop) {
         const auto& meos = mtype.template get< tag::eos >();
         const auto& mat_id = mtype.template get< tag::id >();
 
@@ -644,7 +507,7 @@ namespace grm {
       }
 
       // If total number of materials is incorrect, error out
-      if (tmat != nmat.back())
+      if (tmat != nmat)
         Message< Stack, ERROR, MsgKey::NUMMAT >( stack, in );
 
       // Check if material ids are contiguous and 1-based
@@ -657,40 +520,10 @@ namespace grm {
         ++icount;
       }
 
-      // If pressure relaxation is not specified, default to 'true'
-      auto& prelax = stack.template get< param, eq, tag::prelax >();
-      if (prelax.empty() || prelax.size() != neq.get< eq >())
-        prelax.push_back( 1 );
-
-      // If pressure relaxation time-scale is not specified, default to 0.25
-      auto& prelax_ts = stack.template get< param, eq,
-                                            tag::prelax_timescale >();
-      if (prelax_ts.empty() || prelax_ts.size() != neq.get< eq >())
-        prelax_ts.push_back( 0.25 );
-
-      // If interface compression is not specified, default to 'false'
-      auto& intsharp = stack.template get< param, eq, tag::intsharp >();
-      if (intsharp.empty() || intsharp.size() != neq.get< eq >())
-        intsharp.push_back( 0 );
-
-      // If interface compression parameter is not specified, default to 1.8
-      auto& intsharp_p = stack.template get< param, eq,
-                                            tag::intsharp_param >();
-      if (intsharp_p.empty() || intsharp_p.size() != neq.get< eq >())
-        intsharp_p.push_back( 1.8 );
-
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
-      if (problem.empty() || problem.size() != neq.get< eq >())
+      if (problem.empty() || problem.size() != neq.get< eq >()) {
         problem.push_back( inciter::ctr::ProblemType::USER_DEFINED );
-      else if (problem.back() == inciter::ctr::ProblemType::VORTICAL_FLOW) {
-        const auto& alpha = stack.template get< param, eq, tag::alpha >();
-        const auto& beta = stack.template get< param, eq, tag::beta >();
-        const auto& p0 = stack.template get< param, eq, tag::p0 >();
-        if ( alpha.size() != problem.size() ||
-             beta.size() != problem.size() ||
-             p0.size() != problem.size() )
-          Message< Stack, ERROR, MsgKey::VORTICAL_UNFINISHED >( stack, in );
       }
 
       // Error check on user-defined problem type
@@ -719,54 +552,44 @@ namespace grm {
         // within nmat
         auto& icbox = ic.template get< tag::box >();
 
-        if (!icbox.empty()) {
-          for (auto& b : icbox.back()) {   // for all boxes
-            auto boxmatid = b.template get< tag::materialid >();
-            if (boxmatid == 0) {
-              Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
-            }
-            else if (boxmatid > nmat.back()) {
-              Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
-            }
-            auto& boxorient = b.template get< tag::orientation >();
-            if (boxorient.size() == 0)
-              boxorient.resize(3, 0.0);
-            else if (boxorient.size() != 3)
-              Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
+        for (auto& b : icbox) {   // for all boxes
+          auto boxmatid = b.template get< tag::materialid >();
+          if (boxmatid == 0) {
+            Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
           }
+          else if (boxmatid > nmat) {
+            Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
+          }
+          auto& boxorient = b.template get< tag::orientation >();
+          if (boxorient.size() == 0)
+            boxorient.resize(3, 0.0);
+          else if (boxorient.size() != 3)
+            Message< Stack, ERROR, MsgKey::BOXORIENTWRONG >(stack, in);
         }
 
         // each IC mesh block should have block id and material id specified,
         // and the material id should be within nmat
         const auto& mblock = ic.template get< tag::meshblock >();
-        if (!mblock.empty()) {
-          for (const auto& b : mblock.back()) {   // for all blocks
-            const auto& blkid = b.template get< tag::blockid >();
-            if (blkid == 0)
-              Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
-            const auto& blkmatid = b.template get< tag::materialid >();
-            if (blkmatid == 0) {
-              Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
-            }
-            else if (blkmatid > nmat.back()) {
-              Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
-            }
-
-            // if energy content is used to initialize block, then volume must
-            // be specified
-            const auto& blkenc = b.template get< tag::energy_content >();
-            const auto& blkvol = b.template get< tag::volume >();
-            if (blkenc > 0.0 && blkvol < 1e-12)
-              Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
+        for (const auto& b : mblock) {   // for all blocks
+          const auto& blkid = b.template get< tag::blockid >();
+          if (blkid == 0)
+            Message< Stack, ERROR, MsgKey::MESHBLOCKIDMISSING >(stack, in);
+          const auto& blkmatid = b.template get< tag::materialid >();
+          if (blkmatid == 0) {
+            Message< Stack, ERROR, MsgKey::BOXMATIDMISSING >( stack, in );
           }
+          else if (blkmatid > nmat) {
+            Message< Stack, ERROR, MsgKey::BOXMATIDWRONG >( stack, in );
+          }
+
+          // if energy content is used to initialize block, then volume must
+          // be specified
+          const auto& blkenc = b.template get< tag::energy_content >();
+          const auto& blkvol = b.template get< tag::volume >();
+          if (blkenc > 0.0 && blkvol < 1e-12)
+            Message< Stack, ERROR, MsgKey::MESHBLOCKVOL >(stack, in);
         }
       }
-
-      // Error check Dirichlet boundary condition block for all multimat
-      // configurations
-      const auto& bc = stack.template get< param, eq, tag::bc, tag::bcdir >();
-      for (const auto& s : bc)
-        if (s.empty()) Message< Stack, ERROR, MsgKey::BC_EMPTY >( stack, in );
     }
   };
 
@@ -801,15 +624,13 @@ namespace grm {
       using Eq = typename brigand::front< U >;
       using BC = typename brigand::back< U >;
       const auto& bc = m_stack.template get< tag::param, Eq, tag::bc, BC >();
-      for (const auto& eq : bc) {
-        std::unordered_set< int > bcset;
-        for (const auto& s : eq) {
-          auto id = std::stoi(s);
-          if (bcset.find(id) != end(bcset))
-            Message< Stack, ERROR, MsgKey::NONDISJOINTBC >( m_stack, m_input );
-          else
-            bcset.insert( id );
-        }
+      std::unordered_set< int > bcset;
+      for (const auto& s : bc) {
+        auto id = std::stoi(s);
+        if (bcset.find(id) != end(bcset))
+          Message< Stack, ERROR, MsgKey::NONDISJOINTBC >( m_stack, m_input );
+        else
+          bcset.insert( id );
       }
     }
   };
@@ -1127,7 +948,7 @@ namespace grm {
       using inciter::deck::multimatvars;
       using inciter::ctr::OutVar;
       auto& vars = stack.template get< tag::cmd, tag::io, tag::outvar >();
-      auto nmat = stack.template get< param, multimat, tag::nmat >().back();
+      auto nmat = stack.template get< param, multimat, tag::nmat >();
       auto depvar = stack.template get< param, multimat, tag::depvar >().back();
       // first char of matched token: accepted multimatvar label char
       char v = static_cast<char>( in.string()[0] );
@@ -1283,8 +1104,8 @@ namespace grm {
         // set number of scalar components
         stack.template get< tag::component, tag::compflow >().push_back( 5 );
         // configure physics policy
-        stack.template get< tag::param, tag::compflow, tag::physics >().
-          push_back( PhysicsType::EULER );
+        stack.template get< tag::param, tag::compflow, tag::physics >() =
+          PhysicsType::EULER;
         // add new PDE to instantiate
         stack.template get< tag::selected, tag::pde >().
           push_back( PDEType::COMPFLOW );
@@ -1410,7 +1231,7 @@ namespace deck {
                pegtl::sor< tk::grm::number,
                            tk::grm::msg< tk::grm::ERROR,
                                          tk::grm::MsgKey::MISSING > >,
-               tk::grm::Back_back_store< target,
+               tk::grm::Back_store< target,
                  tag::param, eq, tag::ic, icunit > > > {};
 
    //! Match box parameter and store deep
@@ -1423,14 +1244,14 @@ namespace deck {
                pegtl::sor< tk::grm::number,
                            tk::grm::msg< tk::grm::ERROR,
                                          tk::grm::MsgKey::MISSING > >,
-               tk::grm::Back_back_deep_store< target, subtarget,
+               tk::grm::Back_deep_store< target, subtarget,
                  tag::param, eq, tag::ic, icunit > > > {};
 
    //! Match box parameter vector
   template< class eq, typename keyword, typename target, typename icunit >
   struct box_vector :
          tk::grm::vector< use< keyword >,
-                          tk::grm::Back_back_store_back< target,
+                          tk::grm::Back_store_back< target,
                             tag::param, eq, tag::ic, icunit >,
                           use< kw::end > > {};
 
@@ -1439,7 +1260,7 @@ namespace deck {
     typename icunit >
   struct box_deep_vector :
          tk::grm::vector< use< keyword >,
-                          tk::grm::Back_back_deep_store_back< target, subtarget,
+                          tk::grm::Back_deep_store_back< target, subtarget,
                             tag::param, eq, tag::ic, icunit >,
                           use< kw::end > > {};
 
@@ -1450,7 +1271,7 @@ namespace deck {
   struct box_option :
          tk::grm::process<
            use< keyword >,
-           tk::grm::back_back_deep_store_option< target, subtarget, use,
+           tk::grm::back_deep_store_option< target, subtarget, use,
              Option, tag::param, eq, tag::ic, icunit >,
            pegtl::alpha > {};
 
@@ -1459,7 +1280,7 @@ namespace deck {
   struct material_option :
          tk::grm::process<
            use< keyword >,
-           tk::grm::back_back_store_option< target, use, Option,
+           tk::grm::back_store_option< target, use, Option,
              tag::param, eq, tag::material >,
            pegtl::alpha > {};
 
@@ -1467,7 +1288,7 @@ namespace deck {
   template< class eq, typename keyword, typename target >
   struct material_vector :
          tk::grm::vector< use< keyword >,
-                          tk::grm::Back_back_store_back< target,
+                          tk::grm::Back_store_back< target,
                             tag::param, eq, tag::material >,
                           use< kw::end > > {};
 
@@ -1479,11 +1300,19 @@ namespace deck {
                            tk::grm::Store_back< tag::param, eq, param >,
                            kw_type > {};
 
+  //! put in PDE parameter for equation matching keyword
+  template< typename eq, typename keyword, typename param,
+            class kw_type = tk::grm::number >
+  struct store_parameter :
+         tk::grm::process< use< keyword >,
+                           tk::grm::Store< tag::param, eq, param >,
+                           kw_type > {};
+
   //! put in PDE bool parameter for equation matching keyword into vector< int >
   template< typename eq, typename keyword, typename p >
   struct parameter_bool :
          tk::grm::process< use< keyword >,
-                           tk::grm::Store_back_bool< tag::param, eq, p >,
+                           tk::grm::Store_bool< tag::param, eq, p >,
                            pegtl::alpha > {};
 
   //! Boundary conditions block
@@ -1495,8 +1324,8 @@ namespace deck {
              use< kw::end >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::bc, param > > > {};
 
@@ -1515,12 +1344,11 @@ namespace deck {
   struct timedep_bc :
          pegtl::if_must<
            tk::grm::readkw< use< kw::bc_timedep >::pegtl_string >,
-           tk::grm::start_vector_back< tag::param, eq, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
-             user_fn< tag::fn, tk::grm::Back_back_store_back, tag::param, eq,
+             user_fn< tag::fn, tk::grm::Back_store_back, tag::param, eq,
                tag::bctimedep >,
              pegtl::if_must< tk::grm::vector< use< kw::sideset >,
-               tk::grm::Back_back_store_back< tag::sideset, tag::param, eq,
+               tk::grm::Back_store_back< tag::sideset, tag::param, eq,
                  tag::bctimedep >,
                use< kw::end > > > > > {};
 
@@ -1533,14 +1361,14 @@ namespace deck {
              use< kw::end >,
              tk::grm::parameter_vector< use,
                                         use< kw::radius >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, bc, tag::radius >,
              tk::grm::parameter_vector< use,
                                         use< kw::point >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, bc, tag::point > > > {};
 
@@ -1553,20 +1381,20 @@ namespace deck {
              use< kw::end >,
              tk::grm::parameter_vector< use,
                                         use< kw::velocity >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::sponge, tag::velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::pressure >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::sponge, tag::pressure >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::sponge, tag::sideset > > > {};
 
@@ -1577,14 +1405,18 @@ namespace deck {
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
-             parameter< eq, kw::pressure, tag::farfield_pressure >,
-             parameter< eq, kw::density, tag::farfield_density >,
-             pde_parameter_vector< kw::velocity, eq,
-                                   tag::farfield_velocity >,
+             store_parameter< eq, kw::pressure, tag::farfield_pressure >,
+             store_parameter< eq, kw::density, tag::farfield_density >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::velocity >,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
+                                        tk::grm::check_vector,
+                                        eq, tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
-                                        tk::grm::Store_back_back,
-                                        tk::grm::start_vector,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq, tag::bc, param > > > {};
 
@@ -1618,7 +1450,7 @@ namespace deck {
   struct box :
          pegtl::if_must<
            tk::grm::readkw< use< kw::box >::pegtl_string >,
-           tk::grm::start_vector_back< tag::param, eq, tag::ic, tag::box >,
+           tk::grm::start_vector< tag::param, eq, tag::ic, tag::box >,
            tk::grm::block< use< kw::end >
              , box_parameter< eq, kw::xmin, tag::xmin, tag::box >
              , box_parameter< eq, kw::xmax, tag::xmax, tag::box >
@@ -1655,7 +1487,7 @@ namespace deck {
   struct meshblock :
          pegtl::if_must<
            tk::grm::readkw< use< kw::meshblock >::pegtl_string >,
-           tk::grm::start_vector_back< tag::param, eq, tag::ic, tag::meshblock >,
+           tk::grm::start_vector< tag::param, eq, tag::ic, tag::meshblock >,
            tk::grm::block< use< kw::end >
              , box_parameter< eq, kw::blockid, tag::blockid, tag::meshblock >
              , box_parameter< eq, kw::materialid, tag::materialid,
@@ -1694,33 +1526,33 @@ namespace deck {
              pegtl::sor<
                pegtl::if_must<
                  tk::grm::vector< kw::density,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::density >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::density >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::materialid,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::materialid >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::materialid >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::velocity,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::velocity >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::velocity >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::pressure,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::pressure >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::pressure >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::temperature,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::temperature >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::temperature >,
                    use< kw::end > > >,
                pegtl::if_must<
                  tk::grm::vector< kw::energy,
-                   tk::grm::Store_back_back< tag::param, eq, tag::ic,
-                                             tag::energy >,
+                   tk::grm::Store_back< tag::param, eq, tag::ic,
+                                        tag::energy >,
                    use< kw::end > > >,
                pegtl::seq< box< eq > >,
                pegtl::seq< meshblock< eq > >
@@ -1737,7 +1569,7 @@ namespace deck {
          pegtl::seq<
           pegtl::if_must<
             tk::grm::readkw< use< kw::material >::pegtl_string >,
-              tk::grm::start_vector_back< tag::param, eq, tag::material >,
+            tk::grm::start_vector< tag::param, eq, tag::material >,
             tk::grm::block< use< kw::end >,
                 material_vector< eq, kw::id, tag::id >
               , material_vector< eq, kw::mat_gamma, tag::gamma >
@@ -1774,11 +1606,13 @@ namespace deck {
          pegtl::if_must<
            scan_eq< use< kw::transport >, tag::transport >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::policy< use,
-                                            use< kw::physics >,
-                                            ctr::Physics,
-                                            tag::transport,
-                                            tag::physics >,
+                           tk::grm::process< use< kw::physics >,
+                                             tk::grm::store_inciter_option<
+                                               ctr::Physics,
+                                               tag::param,
+                                               tag::transport,
+                                               tag::physics >,
+                                             pegtl::alpha >,
                            tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,
@@ -1789,55 +1623,54 @@ namespace deck {
                                             tag::depvar >,
                            tk::grm::component< use< kw::ncomp >,
                                                tag::transport >,
-                           pde_parameter_vector< kw::pde_diffusivity,
-                                                 tag::transport,
-                                                 tag::diffusivity >,
-                           pde_parameter_vector< kw::pde_lambda,
-                                                 tag::transport,
-                                                 tag::lambda >,
-                           pde_parameter_vector< kw::pde_u0,
-                                                 tag::transport,
-                                                 tag::u0 >,
+                           tk::grm::parameter_vector< use,
+                                                      use<kw::pde_diffusivity>,
+                                                      tk::grm::Store_back,
+                                                      tk::grm::noop,
+                                                      tk::grm::check_vector,
+                                                      tag::transport,
+                                                      tag::diffusivity >,
+                           tk::grm::parameter_vector< use,
+                                                      use< kw::pde_lambda >,
+                                                      tk::grm::Store_back,
+                                                      tk::grm::noop,
+                                                      tk::grm::check_vector,
+                                                      tag::transport,
+                                                      tag::lambda >,
+                           tk::grm::parameter_vector< use,
+                                                      use< kw::pde_u0 >,
+                                                      tk::grm::Store_back,
+                                                      tk::grm::noop,
+                                                      tk::grm::check_vector,
+                                                      tag::transport,
+                                                      tag::u0 >,
                            bc< kw::bc_dirichlet, tag::transport, tag::bcdir >,
                            bc< kw::bc_sym, tag::transport, tag::bcsym >,
                            bc< kw::bc_inlet, tag::transport, tag::bcinlet >,
                            bc< kw::bc_outlet, tag::transport, tag::bcoutlet >,
                            bc< kw::bc_extrapolate, tag::transport,
                                tag::bcextrapolate >,
-                           parameter< tag::transport,
-                                      kw::intsharp_param,
-                                      tag::intsharp_param >,
-                           parameter< tag::transport,
-                                      kw::intsharp,
-                                      tag::intsharp > >,
+                           store_parameter< tag::transport,
+                                            kw::intsharp_param,
+                                            tag::intsharp_param >,
+                           store_parameter< tag::transport,
+                                            kw::intsharp,
+                                            tag::intsharp > >,
            check_errors< tag::transport, tk::grm::check_transport > > {};
 
   //! compressible flow
   struct compflow :
          pegtl::if_must<
            scan_eq< use< kw::compflow >, tag::compflow >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::density >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::velocity >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::pressure >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::temperature >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::energy >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::box >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::ic,
-                                  tag::meshblock >,
-           tk::grm::start_vector< tag::param, tag::compflow, tag::material >,
            tk::grm::start_vector< tag::param, tag::compflow, tag::bctimedep >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::policy< use,
-                                            use< kw::physics >,
-                                            ctr::Physics,
-                                            tag::compflow,
-                                            tag::physics >,
+                           tk::grm::process< use< kw::physics >,
+                                             tk::grm::store_inciter_option<
+                                               ctr::Physics,
+                                               tag::param,
+                                               tag::compflow,
+                                               tag::physics >,
+                                             pegtl::alpha >,
                            tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,
@@ -1855,30 +1688,28 @@ namespace deck {
                            ic< tag::compflow >,
                            tk::grm::lua< use, tag::param, tag::compflow >,
                            material_properties< tag::compflow >,
-                           pde_parameter_vector< kw::sysfctvar,
-                                                 tag::compflow,
-                                                 tag::sysfctvar >,
-                           parameter_bool< tag::compflow,
-                                           kw::sysfct,
+                           parameter< tag::compflow, kw::sysfctvar,
+                                      tag::sysfctvar >,
+                           parameter_bool< tag::compflow, kw::sysfct,
                                            tag::sysfct >,
-                           parameter< tag::compflow, kw::pde_alpha,
-                                      tag::alpha >,
-                           parameter< tag::compflow, kw::pde_p0,
-                                      tag::p0 >,
-                           parameter< tag::compflow, kw::pde_betax,
-                                      tag::betax >,
-                           parameter< tag::compflow, kw::pde_betay,
-                                      tag::betay >,
-                           parameter< tag::compflow, kw::pde_betaz,
-                                      tag::betaz >,
-                           parameter< tag::compflow, kw::pde_beta,
-                                      tag::beta >,
-                           parameter< tag::compflow, kw::pde_r0,
-                                      tag::r0 >,
-                           parameter< tag::compflow, kw::pde_ce,
-                                      tag::ce >,
-                           parameter< tag::compflow, kw::pde_kappa,
-                                      tag::kappa >,
+                           store_parameter< tag::compflow, kw::pde_alpha,
+                                            tag::alpha >,
+                           store_parameter< tag::compflow, kw::pde_p0,
+                                            tag::p0 >,
+                           store_parameter< tag::compflow, kw::pde_betax,
+                                            tag::betax >,
+                           store_parameter< tag::compflow, kw::pde_betay,
+                                            tag::betay >,
+                           store_parameter< tag::compflow, kw::pde_betaz,
+                                            tag::betaz >,
+                           store_parameter< tag::compflow, kw::pde_beta,
+                                            tag::beta >,
+                           store_parameter< tag::compflow, kw::pde_r0,
+                                            tag::r0 >,
+                           store_parameter< tag::compflow, kw::pde_ce,
+                                            tag::ce >,
+                           store_parameter< tag::compflow, kw::pde_kappa,
+                                            tag::kappa >,
                            bc< kw::bc_dirichlet, tag::compflow, tag::bcdir >,
                            bc< kw::bc_sym, tag::compflow, tag::bcsym >,
                            bc_spec< tag::compflow, tag::stag, kw::bc_stag >,
@@ -1898,37 +1729,20 @@ namespace deck {
   struct multimat :
          pegtl::if_must<
            scan_eq< use< kw::multimat >, tag::multimat >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::density >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::materialid >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::velocity >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::pressure >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::temperature >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::energy >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::box >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::ic,
-                                  tag::meshblock >,
-           tk::grm::start_vector< tag::param, tag::multimat, tag::material >,
            tk::grm::block< use< kw::end >,
-                           tk::grm::policy< use,
-                                            use< kw::physics >,
-                                            ctr::Physics,
-                                            tag::multimat,
-                                            tag::physics >,
+                           tk::grm::process< use< kw::physics >,
+                                             tk::grm::store_inciter_option<
+                                               ctr::Physics,
+                                               tag::param,
+                                               tag::multimat,
+                                               tag::physics >,
+                                             pegtl::alpha >,
                            tk::grm::policy< use,
                                             use< kw::problem >,
                                             ctr::Problem,
                                             tag::multimat,
                                             tag::problem >,
-                           parameter< tag::multimat,
-                                      kw::nmat,
-                                      tag::nmat >,
+                           store_parameter<tag::multimat, kw::nmat, tag::nmat>,
                            tk::grm::process<
                              use< kw::flux >,
                                tk::grm::store_back_option< use,
@@ -1939,15 +1753,15 @@ namespace deck {
                              pegtl::alpha >,
                            ic< tag::multimat >,
                            material_properties< tag::multimat >,
-                           parameter< tag::multimat,
-                                      kw::pde_alpha,
-                                      tag::alpha >,
-                           parameter< tag::multimat,
-                                      kw::pde_p0,
-                                      tag::p0 >,
-                           parameter< tag::multimat,
-                                      kw::pde_beta,
-                                      tag::beta >,
+                           store_parameter< tag::multimat,
+                                            kw::pde_alpha,
+                                            tag::alpha >,
+                           store_parameter< tag::multimat,
+                                            kw::pde_p0,
+                                            tag::p0 >,
+                           store_parameter< tag::multimat,
+                                            kw::pde_beta,
+                                            tag::beta >,
                            bc< kw::bc_dirichlet,
                                tag::multimat,
                                tag::bcdir >,
@@ -1966,18 +1780,18 @@ namespace deck {
                            farfield_bc< kw::bc_farfield,
                                         tag::multimat,
                                         tag::bcfarfield >,
-                           parameter< tag::multimat,
-                                      kw::prelax_timescale,
-                                      tag::prelax_timescale >,
-                           parameter< tag::multimat,
-                                      kw::prelax,
-                                      tag::prelax >,
-                           parameter< tag::multimat,
-                                      kw::intsharp_param,
-                                      tag::intsharp_param >,
-                           parameter< tag::multimat,
-                                      kw::intsharp,
-                                      tag::intsharp > >,
+                           store_parameter< tag::multimat,
+                                            kw::prelax_timescale,
+                                            tag::prelax_timescale >,
+                           store_parameter< tag::multimat,
+                                            kw::prelax,
+                                            tag::prelax >,
+                           store_parameter< tag::multimat,
+                                            kw::intsharp_param,
+                                            tag::intsharp_param >,
+                           store_parameter< tag::multimat,
+                                            kw::intsharp,
+                                            tag::intsharp > >,
            check_errors< tag::multimat, tk::grm::check_multimat > > {};
 
   //! partitioning ... end block

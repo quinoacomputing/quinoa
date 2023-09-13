@@ -77,13 +77,13 @@ CompFlowProblemNLEnergyGrowth::initialize( ncomp_t,
   using tag::param;
 
   // manufactured solution parameters
-  auto ce = g_inputdeck.get< param, eq, tag::ce >()[0];
-  auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[0];
-  auto a = g_inputdeck.get< param, eq, tag::alpha >()[0];
-  auto k = g_inputdeck.get< param, eq, tag::kappa >()[0];
-  auto bx = g_inputdeck.get< param, eq, tag::betax >()[0];
-  auto by = g_inputdeck.get< param, eq, tag::betay >()[0];
-  auto bz = g_inputdeck.get< param, eq, tag::betaz >()[0];
+  auto ce = g_inputdeck.get< param, eq, tag::ce >();
+  auto r0 = g_inputdeck.get< param, eq, tag::r0 >();
+  auto a = g_inputdeck.get< param, eq, tag::alpha >();
+  auto k = g_inputdeck.get< param, eq, tag::kappa >();
+  auto bx = g_inputdeck.get< param, eq, tag::betax >();
+  auto by = g_inputdeck.get< param, eq, tag::betay >();
+  auto bz = g_inputdeck.get< param, eq, tag::betaz >();
   // spatial component of density field
   auto gx = 1.0 - x*x - y*y - z*z;
   // internal energy parameter
@@ -119,13 +119,13 @@ CompFlowProblemNLEnergyGrowth::analyticSolution(
   using tag::param;
 
   // manufactured solution parameters
-  auto ce = g_inputdeck.get< param, eq, tag::ce >()[0];
-  auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[0];
-  auto a = g_inputdeck.get< param, eq, tag::alpha >()[0];
-  auto k = g_inputdeck.get< param, eq, tag::kappa >()[0];
-  auto bx = g_inputdeck.get< param, eq, tag::betax >()[0];
-  auto by = g_inputdeck.get< param, eq, tag::betay >()[0];
-  auto bz = g_inputdeck.get< param, eq, tag::betaz >()[0];
+  auto ce = g_inputdeck.get< param, eq, tag::ce >();
+  auto r0 = g_inputdeck.get< param, eq, tag::r0 >();
+  auto a = g_inputdeck.get< param, eq, tag::alpha >();
+  auto k = g_inputdeck.get< param, eq, tag::kappa >();
+  auto bx = g_inputdeck.get< param, eq, tag::betax >();
+  auto by = g_inputdeck.get< param, eq, tag::betay >();
+  auto bz = g_inputdeck.get< param, eq, tag::betaz >();
   // spatial component of density field
   auto gx = 1.0 - x*x - y*y - z*z;
   // internal energy parameter

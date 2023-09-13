@@ -54,7 +54,7 @@ CompFlowProblemSedovBlastwave::initialize( ncomp_t,
 
     auto eps = std::numeric_limits< tk::real >::epsilon();
     if (std::abs(x) < eps && std::abs(y) < eps && std::abs(z) < eps)
-      p = g_inputdeck.get< tag::param, tag::compflow, tag::p0 >()[ 0 ];
+      p = g_inputdeck.get< tag::param, tag::compflow, tag::p0 >();
     else
       p = 0.67e-4;
 

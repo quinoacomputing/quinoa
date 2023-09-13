@@ -83,7 +83,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
-    g_inputdeck.get< tag::param, eq, tag::physics >()[c] ) );
+    g_inputdeck.get< tag::param, eq, tag::physics >() ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< tag::param, eq, tag::problem >()[c] ) );
@@ -129,64 +129,35 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   //if (!k.empty())
   //  nfo.emplace_back( "heat conductivity", parameters( k ) );
 
-  const auto& alpha = g_inputdeck.get< tag::param, eq, tag::alpha >();
-  if (!alpha.empty()) nfo.emplace_back( "coeff alpha", parameters( alpha ) );
-
-  const auto& beta =
-    g_inputdeck.get< tag::param, eq, tag::beta >();
-  if (!beta.empty())
-    nfo.emplace_back( "coeff beta", parameters( beta ) );
-
-  const auto& bx = g_inputdeck.get< tag::param, eq, tag::betax >();
-  if (!bx.empty()) nfo.emplace_back( "coeff betax", parameters( bx ) );
-
-  const auto& by = g_inputdeck.get< tag::param, eq, tag::betay >();
-  if (!by.empty()) nfo.emplace_back( "coeff betay", parameters( by ) );
-
-  const auto& bz = g_inputdeck.get< tag::param, eq, tag::betaz >();
-  if (!bz.empty()) nfo.emplace_back( "coeff betaz", parameters( bz ) );
-
-  const auto& r0 = g_inputdeck.get< tag::param, eq, tag::r0 >();
-  if (!r0.empty()) nfo.emplace_back( "coeff r0", parameters( r0 ) );
-
-  const auto& ce = g_inputdeck.get< tag::param, eq, tag::ce >();
-  if (!ce.empty()) nfo.emplace_back( "coeff ce", parameters( ce ) );
-
-  const auto& kappa = g_inputdeck.get< tag::param, eq, tag::kappa >();
-  if (!kappa.empty()) nfo.emplace_back( "coeff k", parameters( kappa ) );
-
-  const auto& p0 = g_inputdeck.get< tag::param, eq, tag::p0 >();
-  if (!p0.empty()) nfo.emplace_back( "coeff p0", parameters( p0 ) );
-
   // ICs
 
   const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
 
   const auto& bgdensityic = ic.get< tag::density >();
-  if (bgdensityic.size() > c && !bgdensityic[c].empty())
+  if (!bgdensityic.empty())
     nfo.emplace_back( "IC background density",
-                      parameter( bgdensityic[c][0] ) );
+                      parameters( bgdensityic ) );
   const auto& bgvelocityic = ic.get< tag::velocity >();
-  if (bgvelocityic.size() > c && !bgvelocityic[c].empty())
+  if (!bgvelocityic.empty())
     nfo.emplace_back( "IC background velocity",
-                      parameters( bgvelocityic[c] ) );
+                      parameters( bgvelocityic ) );
   const auto& bgpressureic = ic.get< tag::pressure >();
-  if (bgpressureic.size() > c && !bgpressureic[c].empty())
+  if (!bgpressureic.empty())
     nfo.emplace_back( "IC background pressure",
-                      parameter( bgpressureic[c][0] ) );
+                      parameters( bgpressureic ) );
   const auto& bgenergyic = ic.get< tag::energy >();
-  if (bgenergyic.size() > c && !bgenergyic[c].empty())
+  if (!bgenergyic.empty())
     nfo.emplace_back( "IC background energy",
-                      parameter( bgenergyic[c][0] ) );
+                      parameters( bgenergyic ) );
   const auto& bgtemperatureic = ic.get< tag::temperature >();
-  if (bgtemperatureic.size() > c && !bgtemperatureic[c].empty())
+  if (!bgtemperatureic.empty())
     nfo.emplace_back( "IC background temperature",
-                      parameter( bgtemperatureic[c][0] ) );
+                      parameters( bgtemperatureic ) );
 
   const auto& icbox = ic.get< tag::box >();
-  if (icbox.size() > c) {
+  if (!icbox.empty()) {
     std::size_t bcnt = 0;
-    for (const auto& b : icbox[c]) {   // for all boxes configured for this eq
+    for (const auto& b : icbox) {   // for all boxes configured for this eq
       std::vector< tk::real > box
         { b.get< tag::xmin >(), b.get< tag::xmax >(),
           b.get< tag::ymin >(), b.get< tag::ymax >(),
@@ -230,68 +201,63 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   }
 
   const auto& icblock = ic.get< tag::meshblock >();
-  if (icblock.size() > c) {
-    for (const auto& b : icblock[c]) {   // for all blocks configured for eq
-      std::string blockname = "IC mesh block " +
-        parameter(b.get< tag::blockid >());
+  for (const auto& b : icblock) {   // for all blocks configured for eq
+    std::string blockname = "IC mesh block " +
+      parameter(b.get< tag::blockid >());
 
-      nfo.emplace_back( blockname + " volume",
-                        parameter( b.get< tag::volume >() ) );
-      nfo.emplace_back( blockname + " density",
-                        parameter( b.get< tag::density >() ) );
-      nfo.emplace_back( blockname + " velocity",
-                        parameters( b.get< tag::velocity >() ) );
-      nfo.emplace_back( blockname + " pressure",
-                        parameter( b.get< tag::pressure >() ) );
-      nfo.emplace_back( blockname + " internal energy per unit mass",
-                        parameter( b.get< tag::energy >() ) );
-      nfo.emplace_back( blockname + " mass",
-                        parameter( b.get< tag::mass >() ) );
-      nfo.emplace_back( blockname + " internal energy per unit volume",
-                        parameter( b.get< tag::energy_content >() ) );
-      nfo.emplace_back( blockname + " temperature",
-                        parameter( b.get< tag::temperature >() ) );
-      const auto& initiate = b.get< tag::initiate >();
-      const auto& inittype = initiate.get< tag::init >();
-      auto opt = ctr::Initiate();
-      nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(inittype) );
-    }
+    nfo.emplace_back( blockname + " volume",
+                      parameter( b.get< tag::volume >() ) );
+    nfo.emplace_back( blockname + " density",
+                      parameter( b.get< tag::density >() ) );
+    nfo.emplace_back( blockname + " velocity",
+                      parameters( b.get< tag::velocity >() ) );
+    nfo.emplace_back( blockname + " pressure",
+                      parameter( b.get< tag::pressure >() ) );
+    nfo.emplace_back( blockname + " internal energy per unit mass",
+                      parameter( b.get< tag::energy >() ) );
+    nfo.emplace_back( blockname + " mass",
+                      parameter( b.get< tag::mass >() ) );
+    nfo.emplace_back( blockname + " internal energy per unit volume",
+                      parameter( b.get< tag::energy_content >() ) );
+    nfo.emplace_back( blockname + " temperature",
+                      parameter( b.get< tag::temperature >() ) );
+    const auto& initiate = b.get< tag::initiate >();
+    const auto& inittype = initiate.get< tag::init >();
+    auto opt = ctr::Initiate();
+    nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(inittype) );
   }
 
   // BCs
 
   const auto& stag = g_inputdeck.get< tag::param, eq, tag::stag >();
   const auto& spoint = stag.get< tag::point >();
-  if (spoint.size() > c)
-    nfo.emplace_back( "Stagnation point(s)", parameters( spoint[c] ) );
+  if (!spoint.empty())
+    nfo.emplace_back( "Stagnation point(s)", parameters( spoint ) );
   const auto& sradius = stag.get< tag::radius >();
-  if (sradius.size() > c)
-    nfo.emplace_back( "Stagnation point(s) radii", parameters( sradius[c] ) );
+  if (!sradius.empty())
+    nfo.emplace_back( "Stagnation point(s) radii", parameters( sradius ) );
 
   const auto& skip = g_inputdeck.get< tag::param, eq, tag::skip >();
   const auto& kpoint = skip.get< tag::point >();
-  if (kpoint.size() > c)
-    nfo.emplace_back( "Skip point(s)", parameters( kpoint[c] ) );
+  if (!kpoint.empty())
+    nfo.emplace_back( "Skip point(s)", parameters( kpoint ) );
   const auto& kradius = skip.get< tag::radius >();
-  if (kradius.size() > c)
-    nfo.emplace_back( "Skip point(s) radii", parameters( kradius[c] ) );
+  if (!kradius.empty())
+    nfo.emplace_back( "Skip point(s) radii", parameters( kradius ) );
 
   const auto& fs =
     g_inputdeck.get< tag::param, eq, tag::bc, tag::bcfarfield >();
   if (fs.size() > c) {
     nfo.emplace_back( "Farfield BC sideset(s)", parameters( fs[c] ) );
-    const auto& fr =
-      g_inputdeck.get< tag::param, eq, tag::farfield_density >();
-    if (fr.size() > c)
-      nfo.emplace_back( "Farfield BC density", std::to_string(fr[c]) );
+      nfo.emplace_back( "Farfield BC density", std::to_string(
+        g_inputdeck.get< tag::param, eq, tag::farfield_density >() ) );
     const auto& fu =
       g_inputdeck.get< tag::param, eq, tag::farfield_velocity >();
-    if (fu.size() > c)
-      nfo.emplace_back( "Farfield BC velocity", parameters( fu[c] ) );
-    const auto& fp =
-      g_inputdeck.get< tag::param, eq, tag::farfield_pressure >();
-    if (fp.size() > c)
-      nfo.emplace_back( "Farfield BC pressure", std::to_string(fp[c]) );
+    if (!fu.empty()) {
+      nfo.emplace_back( "Farfield BC velocity", parameters(fu) );
+    }
+    nfo.emplace_back( "Farfield BC pressure", std::to_string(
+      g_inputdeck.get< tag::param, eq, tag::farfield_pressure >() ) );
   }
 
   const auto& sym =
@@ -301,14 +267,13 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
     const auto& sponge = g_inputdeck.get< tag::param, eq, tag::sponge >();
     const auto& ss = sponge.get< tag::sideset >();
-    if (ss.size() > c)
-      nfo.emplace_back( "Sponge sideset(s)", parameters( ss[c] ) );
+    if (!ss.empty()) nfo.emplace_back( "Sponge sideset(s)", parameters( ss ) );
     const auto& spvel = sponge.get< tag::velocity >();
-    if (spvel.size() > c)
-      nfo.emplace_back( "Sponge velocity parameters", parameters( spvel[c] ) );
+    if (!spvel.empty())
+      nfo.emplace_back( "Sponge velocity parameters", parameters( spvel ) );
     const auto& sppre = sponge.get< tag::pressure >();
-    if (sppre.size() > c)
-      nfo.emplace_back( "Sponge pressure parameters", parameters( sppre[c] ) );
+    if (!sppre.empty())
+      nfo.emplace_back( "Sponge pressure parameters", parameters( sppre ) );
   }
 
   const auto& dir =
@@ -317,8 +282,8 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     nfo.emplace_back( "Dirichlet BC sideset(s)", parameters( dir[c] ) );
 
   const auto& timedep = g_inputdeck.get< tag::param, eq, tag::bctimedep >();
-  if (timedep.size() > c) {
-    for (const auto& bndry : timedep[c]) {
+  if (!timedep.empty()) {
+    for (const auto& bndry : timedep) {
       nfo.emplace_back( "Time dependent BC sideset(s)",
         parameters(bndry.get< tag::sideset >()) );
     }
@@ -332,19 +297,14 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   const auto fct = g_inputdeck.get< tag::discr, tag::fct >();
   if (scheme == ctr::SchemeType::DiagCG && fct) {
-
-    const auto& sys = g_inputdeck.get< tag::param, eq, tag::sysfct >();
-    if (sys.size() > c) {
-      nfo.emplace_back( "FCT system character", bool_to_string( sys[c] ) );
-
-      if (sys[c]) {     // if system FCT is enabled for this system
-        const auto& sv = g_inputdeck.get< tag::param, eq, tag::sysfctvar >();
-        if (sv.size() > c) {
-          nfo.emplace_back( "System-FCT variables", parameters( sv[c] ) );
-        }
+    auto sys = g_inputdeck.get< tag::param, eq, tag::sysfct >();
+    nfo.emplace_back( "FCT system character", bool_to_string( sys ) );
+    if (sys) {
+      const auto& sv = g_inputdeck.get< tag::param, eq, tag::sysfctvar >();
+      if (!sv.empty()) {
+        nfo.emplace_back( "System-FCT variables", parameters( sv ) );
       }
     }
-
   }
 
   return nfo;

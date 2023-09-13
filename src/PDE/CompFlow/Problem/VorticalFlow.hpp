@@ -68,9 +68,8 @@ class CompFlowProblemVorticalFlow {
       using tag::param; using tag::compflow;
 
       // manufactured solution parameters
-      const auto& a =
-        g_inputdeck.get< param, compflow, tag::alpha >()[ 0 ];
-      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ 0 ];
+      auto a = g_inputdeck.get< param, compflow, tag::alpha >();
+      auto b = g_inputdeck.get< param, compflow, tag::beta >();
       // ratio of specific heats
       tk::real g = gamma< tag::compflow >(0);
       // evaluate solution at x,y,z

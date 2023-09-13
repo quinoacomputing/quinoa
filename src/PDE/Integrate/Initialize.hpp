@@ -81,9 +81,9 @@ BoxElems(
   // Detect if user has configured IC boxes
   const auto& icbox = inciter::g_inputdeck.get<tag::param, eq, tag::ic,
     tag::box>();
-  if (icbox.size() > 0) {
+  if (!icbox.empty()) {
     std::size_t bcnt = 0;
-    for (const auto& b : icbox[0]) {   // for all boxes for this eq
+    for (const auto& b : icbox) {   // for all boxes for this eq
      inbox.emplace_back();
       std::vector< tk::real > box
         { b.template get< tag::xmin >(), b.template get< tag::xmax >(),

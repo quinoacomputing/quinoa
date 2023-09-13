@@ -49,7 +49,7 @@ TransportPhysicsAdvDiff::diffusionRhs(
 // *****************************************************************************
 {
   // diffusivities for all components
-  const auto& diff = g_inputdeck.get< tag::param, eq, tag::diffusivity >()[0];
+  auto diff = g_inputdeck.get< tag::param, eq, tag::diffusivity >();
 
   // add diffusion contribution to right hand side
   const auto d = deltat * J/6.0;
@@ -75,7 +75,7 @@ TransportPhysicsAdvDiff::diffusion_dt(
 // *****************************************************************************
 {
   // diffusivities for all components
-  const auto& df = g_inputdeck.get< tag::param, eq, tag::diffusivity >()[0];
+  auto df = g_inputdeck.get< tag::param, eq, tag::diffusivity >();
 
   // compute the minimum diffusion time step size across the four nodes
   tk::real mindt = std::numeric_limits< tk::real >::max();

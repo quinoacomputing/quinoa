@@ -67,12 +67,12 @@ class CompFlowProblemRayleighTaylor {
       using tag::param; using std::sin; using std::cos;
 
       // manufactured solution parameters
-      auto a = g_inputdeck.get< param, eq, tag::alpha >()[0];
-      auto bx = g_inputdeck.get< param, eq, tag::betax >()[0];
-      auto by = g_inputdeck.get< param, eq, tag::betay >()[0];
-      auto bz = g_inputdeck.get< param, eq, tag::betaz >()[0];
-      auto k = g_inputdeck.get< param, eq, tag::kappa >()[0];
-      auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[0];
+      auto a = g_inputdeck.get< param, eq, tag::alpha >();
+      auto bx = g_inputdeck.get< param, eq, tag::betax >();
+      auto by = g_inputdeck.get< param, eq, tag::betay >();
+      auto bz = g_inputdeck.get< param, eq, tag::betaz >();
+      auto k = g_inputdeck.get< param, eq, tag::kappa >();
+      auto p0 = g_inputdeck.get< param, eq, tag::p0 >();
       // ratio of specific heats
       auto g = gamma< tag::compflow >(0);
 

@@ -47,8 +47,7 @@ MultiMatProblemUnderwaterEx::initialize( ncomp_t ncomp,
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 12, "Number of scalar components must be 12" );
 
-  auto nmat =
-    g_inputdeck.get< tag::param, eq, tag::nmat >()[0];
+  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
 
   std::vector< tk::real > s(ncomp, 0.0), r(nmat, 0.0);
   tk::real p, u, v, w, temp;

@@ -505,7 +505,7 @@ THINCReco( std::size_t rdof,
   using inciter::deformIdx;
 
   auto bparam = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp_param >()[0];
+    tag::intsharp_param >();
   const auto ncomp = U.nprop()/rdof;
   const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
@@ -619,7 +619,7 @@ THINCRecoTransport( std::size_t rdof,
 // *****************************************************************************
 {
   auto bparam = inciter::g_inputdeck.get< tag::param, tag::transport,
-    tag::intsharp_param >()[0];
+    tag::intsharp_param >();
   auto ncomp = U.nprop()/rdof;
 
   // interface detection

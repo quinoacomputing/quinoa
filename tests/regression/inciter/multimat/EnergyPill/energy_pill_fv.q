@@ -19,9 +19,7 @@ inciter
 
   multimat
     physics energy_pill
-
     nmat 2
-
     material
       id 1 2 end
       gamma 1.4 1.4 end

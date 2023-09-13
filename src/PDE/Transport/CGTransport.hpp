@@ -492,7 +492,7 @@ class Transport {
         const auto& x = coord[0];
         const auto& y = coord[1];
         const auto& z = coord[2];
-        for (const auto& b : ubc[0])
+        for (const auto& b : ubc)
           if (std::stoi(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );

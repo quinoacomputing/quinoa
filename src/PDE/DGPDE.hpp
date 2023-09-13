@@ -60,7 +60,7 @@ template< class Eq > struct ConfigBC {
   template< typename U > void operator()( brigand::type_<U> ) {
     std::vector< bcconf_t > cfg;
     const auto& v = g_inputdeck.get< tag::param, Eq, tag::bc, U >();
-    if (v.size() > 0) cfg = v[0];
+    if (v.size() > 0) cfg = v;
     Assert( fn.size() > c, "StateFn missing for BC type" );
     state.push_back( { cfg, fn[c++] } );
   }

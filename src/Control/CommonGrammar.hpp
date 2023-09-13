@@ -593,17 +593,17 @@ namespace grm {
 
   //! Rule used to trigger action
   template< typename tag, typename... tags >
-  struct Store_back_bool : pegtl::success {};
+  struct Store_bool : pegtl::success {};
   //! \brief Convert and push back a bool to vector of ints in state at position
   //!    given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for calling the store_back member function of the underlying
   //!    grammar stack, tk::Control::store_back.
   template< typename tag, typename...tags >
-  struct action< Store_back_bool< tag, tags... > > {
+  struct action< Store_bool< tag, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      stack.template store_back_bool< tag, tags... >( in.string() );
+      stack.template store_bool< tag, tags... >( in.string() );
     }
   };
 
@@ -643,9 +643,28 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< typename target, typename tag, typename... tags >
+  struct Back_store : pegtl::success {};
+  //! \brief Convert and store value to vector of vector in state at position
+  //!   given by tags and target
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back member function of the underlying
+  //!    grammar stack. tag and tags... address a vector of vectors, whose
+  //!    inner value_type is a tagged tuple to which we store here after
+  //!    conversion, indexed by target.
+  template< typename target, typename tag, typename...tags >
+  struct action< Back_store< target, tag, tags... > > {
+    template< typename Input, typename Stack >
+    static void apply( const Input& in, Stack& stack ) {
+      stack.template get< tag, tags... >().back().template
+        store< target >( in.string() );
+    }
+  };
+
+  //! Rule used to trigger action
   template< typename target, typename subtarget, typename tag,
             typename... tags >
-  struct Back_back_deep_store : pegtl::success {};
+  struct Back_deep_store : pegtl::success {};
   //! \brief Convert and store value to vector of vector in state at position
   //!   given by tags and target
   //! \details This struct and its apply function are used as a functor-like
@@ -654,10 +673,10 @@ namespace grm {
   //!    inner value_type is a tagged tuple to which we store here after
   //!    conversion, indexed by target and subtarget (hence deep).
   template< typename target, typename subtarget, typename tag, typename...tags >
-  struct action< Back_back_deep_store< target, subtarget, tag, tags... > > {
+  struct action< Back_deep_store< target, subtarget, tag, tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      stack.template get< tag, tags... >().back().back().template
+      stack.template get< tag, tags... >().back().template
         store< target, subtarget >( in.string() );
     }
   };
@@ -701,7 +720,7 @@ namespace grm {
   //! Rule used to trigger action
   template< typename target, typename subtarget, typename tag,
             typename... tags >
-  struct Back_back_deep_store_back : pegtl::success {};
+  struct Back_deep_store_back : pegtl::success {};
   //! \brief Convert and store value to vector of vector in state at position
   //!   given by tags and target
   //! \details This struct and its apply function are used as a functor-like
@@ -710,11 +729,11 @@ namespace grm {
   //!    inner value_type is a tagged tuple to which we store_back here after
   //!    conversion, indexed by target and subtarget (hence deep).
   template< typename target, typename subtarget, typename tag, typename...tags >
-  struct action< Back_back_deep_store_back< target, subtarget, tag, tags... > >
+  struct action< Back_deep_store_back< target, subtarget, tag, tags... > >
   {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      stack.template get< tag, tags... >().back().back().template
+      stack.template get< tag, tags... >().back().template
         store_back< target, subtarget >( in.string() );
     }
   };
@@ -789,7 +808,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       Option opt;
       if (opt.exist(in.string())) {
-        stack.template get< tag, tags... >().back().back().template
+        stack.template get< tag, tags... >().back().template
           get< target >() = opt.value( in.string() );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
@@ -839,7 +858,7 @@ namespace grm {
   //! Rule used to trigger action
   template< typename target, typename subtarget, template < class > class use,
             class Option, typename tag, typename... tags >
-  struct back_back_deep_store_option : pegtl::success {};
+  struct back_deep_store_option : pegtl::success {};
   //! \brief Push back option to vector of back of vector in state at position
   //!   given by tags
   //! \details This struct and its apply function are used as a functor-like
@@ -855,14 +874,14 @@ namespace grm {
   //!   is finished.
   template< typename target, typename subtarget, template < class > class use,
             class Option, typename tag, typename... tags >
-  struct action< back_back_deep_store_option< target, subtarget, use, Option,
+  struct action< back_deep_store_option< target, subtarget, use, Option,
                  tag, tags... > >
   {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       Option opt;
       if (opt.exist(in.string())) {
-        stack.template get< tag, tags... >().back().back().template
+        stack.template get< tag, tags... >().back().template
           get< target, subtarget >() = opt.value( in.string() );
       } else {
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, in );
@@ -1083,10 +1102,11 @@ namespace grm {
   };
 
   //! Rule used to trigger action
+  template< typename... tags >
   struct noop : pegtl::success {};
   //! Action that does nothing
-  template<>
-  struct action< noop > {
+  template< typename... tags >
+  struct action< noop< tags... > > {
     template< typename Input, typename Stack >
     static void apply( const Input&, Stack& ) {}
   };
@@ -1251,7 +1271,7 @@ namespace grm {
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
   template< class key, class insert, class endkeyword,
-            class starter = noop, class value = pegtl::digit >
+            class starter = noop< key >, class value = pegtl::digit >
   struct dimensions :
          pegtl::seq<
            act< readkw< typename key::pegtl_string >, starter >,
@@ -1261,7 +1281,7 @@ namespace grm {
   //!   'endkeyword', calling 'insert' for each if matches and allow comments
   //!   between values
   template< class key, class insert, class endkeyword,
-            class starter = noop, class value = number >
+            class starter = noop< key >, class value = number >
   // cppcheck-suppress syntaxError
   struct vector :
          pegtl::seq<
@@ -1466,7 +1486,7 @@ namespace grm {
   template< template< class > class use,
             typename keyword,
             template< class, class... > class store,
-            template< class, class... > class start,
+            template< class... > class start,
             template< class, class, class... > class check,
             typename eq,
             typename param,

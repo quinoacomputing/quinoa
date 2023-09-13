@@ -35,8 +35,7 @@ namespace inciter {
             tk::real, tk::real, tk::real, tk::real,
             const std::array< tk::real, 3 >& fn )
   {
-    const auto nmat =
-      g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+    auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
       tag::matidxmap >().template get< tag::solidx >();
 
@@ -129,11 +128,10 @@ namespace inciter {
                   tk::real, tk::real, tk::real, tk::real,
                   const std::array< tk::real, 3 >& fn )
   {
-    const auto nmat =
-      g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[0];
+    auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
 
     auto fp =
-      g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >()[0];
+      g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >();
 
     Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
             "state vector" );

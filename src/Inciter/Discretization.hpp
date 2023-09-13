@@ -367,16 +367,14 @@ class Discretization : public CBase_Discretization {
       template< typename Eq > void operator()( brigand::type_<Eq> ) {
         const auto& ss =
           g_inputdeck.template get< tag::param, Eq, tags... >();
-        for (const auto& eq : ss) {
-          for (const auto& s : eq) {
-            auto k = m_bface.find( std::stoi(s) );
-            if (k != end(m_bface)) {
-              auto& n = m_nodes[ k->first ];  // associate set id
-              for (auto f : k->second) {      // face ids on side set
-                n.insert( m_triinpoel[f*3+0] );
-                n.insert( m_triinpoel[f*3+1] );
-                n.insert( m_triinpoel[f*3+2] );
-              }
+        for (const auto& s : ss) {
+          auto k = m_bface.find( std::stoi(s) );
+          if (k != end(m_bface)) {
+            auto& n = m_nodes[ k->first ];  // associate set id
+            for (auto f : k->second) {      // face ids on side set
+              n.insert( m_triinpoel[f*3+0] );
+              n.insert( m_triinpoel[f*3+1] );
+              n.insert( m_triinpoel[f*3+2] );
             }
           }
         }
