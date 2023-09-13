@@ -362,9 +362,7 @@ namespace grm {
         if (!mblock.empty()) {
           for (const auto& b : mblock.back()) {   // for all blocks
             if (stack.template get< tag::discr, tag::scheme >() ==
-              inciter::ctr::SchemeType::ALECG ||
-              stack.template get< tag::discr, tag::scheme >() ==
-              inciter::ctr::SchemeType::OversetFE) {
+              inciter::ctr::SchemeType::ALECG) {
               Message< Stack, ERROR, MsgKey::MESHBLOCKSUPPORT >(stack, in);
             }
             else {
