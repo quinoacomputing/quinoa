@@ -575,7 +575,7 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   d->Voln() = d->Vol();
 
   // Initiate IC transfer (if coupled)
-  Disc()->blockingSolutionTransfer( m_u,
+  Disc()->transfer( m_u,
     CkCallback(CkIndex_OversetFE::lhs(), thisProxy[thisIndex]) );
 }
 
@@ -608,7 +608,12 @@ OversetFE::mergelhs()
   normfinal();
 
   // Start with time stepping logic
-  if (Disc()->Initial()) start(); else stage();
+  if (Disc()->Initial()) {
+    // Output initial conditions to file
+    writeFields();
+    start();
+  }
+  else stage();
 }
 //! [Merge normals and continue]
 
@@ -625,8 +630,6 @@ OversetFE::start()
   Disc()->Timer().zero();
   // Zero grind-timer
   Disc()->grindZero();
-  // Output initial conditions to file
-  writeFields();
   // Continue to first time step
   next();
 }
@@ -1105,7 +1108,7 @@ OversetFE::transfer()
 {
   // Initiate solution transfer (if coupled)
   //TODO: enable this for during-timestepping solution transfer
-  //Disc()->blockingSolutionTransfer( m_u,
+  //Disc()->transfer( m_u,
   //  CkCallback(CkIndex_OversetFE::lhs(), thisProxy[thisIndex]) );
 
   lhs();
