@@ -78,8 +78,7 @@ MeshWriter::write(
   const std::vector< std::vector< tk::real > >& nodefields,
   const std::vector< std::vector< tk::real > >& elemsurfs,
   const std::vector< std::vector< tk::real > >& nodesurfs,
-  const std::set< int >& outsets,
-  CkCallback c )
+  const std::set< int >& outsets )
 // *****************************************************************************
 //  Output unstructured mesh into file
 //! \param[in] meshid Mesh Id
@@ -111,7 +110,6 @@ MeshWriter::write(
 //! \param[in] nodesurfs Surface field data in mesh nodes to output to file
 //! \param[in] outsets Unique set of surface side set ids along which to save
 //!   solution field variables
-//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   if (!m_benchmark) {
@@ -227,8 +225,6 @@ MeshWriter::write(
     }
 
   }
-
-  c.send();
 }
 
 std::string

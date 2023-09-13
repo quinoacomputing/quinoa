@@ -978,7 +978,9 @@ FV::writeFields( CkCallback c )
   const auto& triinpoel = tk::remap( fd.Triinpoel(), d->Gid() );
   d->write( inpoel, d->Coord(), fd.Bface(), {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            surfnames, {}, elemfields, nodefields, elemsurfs, {}, c );
+            surfnames, {}, elemfields, nodefields, elemsurfs, {} );
+
+  c.send();
 }
 
 void
