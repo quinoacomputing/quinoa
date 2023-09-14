@@ -146,6 +146,24 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
 //! [Constructor]
 
 void
+OversetFE::transferFlag()
+{
+//  auto d = Disc(); 
+//  ^^^Don't think I actually need this
+
+  //Zero out soilution space for nodes with a specific transfer flag set
+  for(auto i : m_solTransferFlag){ //Check the flag value:
+    if(m_solTransferFlag[i] ==1){
+      for (ncomp_t c=0; c<m_u.nprop(); ++c){ //Loop over number of equations. I don't really understand type ncomp_t, but aping this from other routines in this file.
+        m_u(i,c) = 0.0;
+      }
+    } 
+  }
+}
+
+
+
+void
 OversetFE::getBCNodes()
 // *****************************************************************************
 // Query/update boundary-conditions-related data structures from user input

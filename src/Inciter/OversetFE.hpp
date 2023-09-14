@@ -419,6 +419,9 @@ class OversetFE : public CBase_OversetFE {
     //! Query/update boundary-conditions-related data structures from user input
     void getBCNodes();
 
+    //! Transfer mseh values from one mesh to the other opnly if flag is set
+    void transferFlag();
+
     //! Apply boundary conditions
     void BC();
 };
