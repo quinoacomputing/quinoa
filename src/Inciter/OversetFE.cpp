@@ -31,7 +31,6 @@
 #include "Reorder.hpp"
 #include "Around.hpp"
 #include "CGPDE.hpp"
-#include "Integrate/Mass.hpp"
 #include "FieldOutput.hpp"
 
 namespace inciter {
