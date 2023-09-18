@@ -153,6 +153,14 @@ OversetFE::getBCNodes()
 {
   auto d = Disc();
 
+  // Query and match user-specified Dirichlet boundary conditions to side sets
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
+  m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
+                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
+                   /* increment = */ false );
+  if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
+
   // Prepare unique set of symmetry BC nodes
   auto sym = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : sym)
@@ -763,24 +771,32 @@ OversetFE::BC()
   auto d = Disc();
   const auto& coord = d->Coord();
 
-  // Query and match user-specified Dirichlet boundary conditions to side sets
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-  if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
-  m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
-                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
-                   /* increment = */ false );
-  if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
+  const auto& bcmesh = g_inputdeck.get< tag::param, tag::compflow, tag::mesh >();
 
-  // Apply Dirichlet BCs
-  for (const auto& [b,bc] : m_dirbc)
-    for (ncomp_t c=0; c<m_u.nprop(); ++c)
-      if (bc[c].first) m_u(b,c) = bc[c].second;
+  // Query and match user-specified Dirichlet boundary conditions to side sets
+  if (bcmesh.get< tag::bcdir >()[ d->MeshId() ]) {
+    const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+    if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
+    m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
+                     m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
+                   /* increment = */ false );
+    if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
+
+    // Apply Dirichlet BCs
+    for (const auto& [b,bc] : m_dirbc)
+      for (ncomp_t c=0; c<m_u.nprop(); ++c)
+        if (bc[c].first) m_u(b,c) = bc[c].second;
+  }
 
   // Apply symmetry BCs
-  g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
+  if (bcmesh.get< tag::bcsym >()[ d->MeshId() ]) {
+    g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
+  }
 
   // Apply farfield BCs
-  g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+  if (bcmesh.get< tag::bcfarfield >()[ d->MeshId() ]) {
+    g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+  }
 
   // Apply user defined time dependent BCs
   g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,

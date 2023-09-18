@@ -324,6 +324,25 @@ namespace grm {
             Message< Stack, ERROR, MsgKey::INCOMPLETEUSERFN>( stack, in );
         }
       }
+
+      // Lambda to replace BC mesh config with BC mesh mask
+      auto mask = [&]( auto& bc ){
+        std::set< std::size_t > b( begin(bc), end(bc) );
+        bc.clear();
+        auto n = stack.template get< tag::couple, tag::transfer >().size() + 1;
+        bc.resize( n, 1 );
+        if (b.empty()) return;
+        for (std::size_t i=0; i<n; ++i) bc[i] = b.count( i + 1 );
+      };
+
+      // Generate BC mesh masks
+      auto& conf = stack.template get< tag::param, eq, tag::mesh >();
+      mask( conf.template get< tag::bcdir >() );
+      mask( conf.template get< tag::bcsym >() );
+      mask( conf.template get< tag::bcinlet >() );
+      mask( conf.template get< tag::bcoutlet >() );
+      mask( conf.template get< tag::bcfarfield >() );
+      mask( conf.template get< tag::bcextrapolate >() );
     }
   };
 
@@ -1316,18 +1335,24 @@ namespace deck {
                            pegtl::alpha > {};
 
   //! Boundary conditions block
-  template< class keyword, class eq, class param >
+  template< class keyword, class eq, class bctype >
   struct bc :
          pegtl::if_must<
            tk::grm::readkw< typename use< keyword >::pegtl_string >,
            tk::grm::block<
              use< kw::end >,
              tk::grm::parameter_vector< use,
+                                        use< kw::mesh >,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
+                                        tk::grm::check_vector,
+                                        eq, tag::mesh, bctype >,
+             tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back,
                                         tk::grm::noop,
                                         tk::grm::check_vector,
-                                        eq, tag::bc, param > > > {};
+                                        eq, tag::bc, bctype > > > {};
 
   //! Match user-defined function as a discrete list of real numbers
   template< class target, template< class... > class insert, class tag,

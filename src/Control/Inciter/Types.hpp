@@ -313,6 +313,17 @@ using bc = tk::TaggedTuple< brigand::list<
   , tag::bcextrapolate,  std::vector< kw::sideset::info::expect::type >
 > >;
 
+//! Mesh assignment and configuration
+using mesh = tk::TaggedTuple< brigand::list<
+    tag::filename,      std::vector< std::string >
+  , tag::bcdir,         std::vector< std::size_t >
+  , tag::bcsym,         std::vector< std::size_t >
+  , tag::bcinlet,       std::vector< std::size_t >
+  , tag::bcoutlet,      std::vector< std::size_t >
+  , tag::bcfarfield,    std::vector< std::size_t >
+  , tag::bcextrapolate, std::vector< std::size_t >
+> >;
+
 //! Stagnation points parameters storage
 using StagnationParameters = tk::TaggedTuple< brigand::list<
     tag::point,         std::vector< kw::point::info::expect::type >
@@ -335,11 +346,6 @@ using SpongeParameters = tk::TaggedTuple< brigand::list<
 //! Solver coupling
 using couple = tk::TaggedTuple< brigand::list<
     tag::transfer,  std::vector< Transfer >     //!< List of mesh transfers
-> >;
-
-//! Mesh assignment and configuration
-using mesh = tk::TaggedTuple< brigand::list<
-    tag::filename,    std::vector< std::string >
 > >;
 
 //! Transport equation parameters storage

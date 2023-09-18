@@ -41,6 +41,7 @@ inciter
       gamma 1.66666666666667 end
     end
     bc_dirichlet
+      mesh 1 end
       sideset 1 2 3 4 5 6 end
     end
   end
