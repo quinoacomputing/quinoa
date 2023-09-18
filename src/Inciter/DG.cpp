@@ -736,11 +736,6 @@ DG::comreco( int fromch,
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comreco()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in DG::comreco()" );
 
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  if (pref && m_stage == 0)
-    Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comreco()" );
-
   // Find local-to-ghost tet id map for sender chare
   const auto& n = tk::cref_find( myGhosts()->m_ghost, fromch );
 
