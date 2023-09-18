@@ -221,6 +221,7 @@ class OversetFE : public CBase_OversetFE {
       p | m_dirbc;
       p | m_chBndGradc;
       p | m_solTransferFlag;
+      p | m_blank;
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
@@ -314,7 +315,9 @@ class OversetFE : public CBase_OversetFE {
     //! Flag indicating appropriate solution transfers for overset
     //! \details Value 0: Do not transfer solution, 1: transfer solution,
     //!   2: blank nodes
-    std::vector< tk::real > m_solTransferFlag;
+    std::vector< int > m_solTransferFlag;
+    //! Blanking coefficient for overset, indicating hole in the background mesh
+    std::vector< tk::real > m_blank;
     //! Diagnostics object
     NodeDiagnostics m_diag;
     //! Face normals in boundary points associated to side sets

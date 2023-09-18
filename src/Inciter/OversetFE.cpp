@@ -76,7 +76,8 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_dirbc(),
   m_chBndGradc(),
-  m_solTransferFlag( m_u.nunk(), 0.0 ),
+  m_solTransferFlag( m_u.nunk(), 0 ),
+  m_blank( m_u.nunk(), 1.0 ),
   m_diag(),
   m_bnorm(),
   m_bnormc(),
@@ -591,8 +592,7 @@ OversetFE::transferOtoB()
 // *****************************************************************************
 {
   // Do corrections in solution based on incoming transfer
-  if (Disc()->MeshId() > 0) {
-  }
+  applySolTransfer();
 
   // Set up transfer-flags for receiving mesh
   setTransferFlags(1);
@@ -612,8 +612,7 @@ OversetFE::lhs()
 // *****************************************************************************
 {
   // Do corrections in solution based on incoming transfer
-  if (Disc()->MeshId() == 0) {
-  }
+  applySolTransfer();
 
   // No need for LHS in OversetFE
 
@@ -672,14 +671,27 @@ OversetFE::applySolTransfer()
 {
   // Zero out soilution space for nodes with a specific transfer flag set
   for (auto i : m_solTransferFlag) { // Check the flag value:
+
     if (m_solTransferFlag[i] == 1) {
+      // overset-BC nodes: use transferred solution and blank nodes
       for (ncomp_t c=0; c<m_u.nprop(); ++c) { // Loop over number of equations.
-        m_u(i,c) = 0.0;
+        m_u(i,c) = m_uc(i,c);
       }
+      m_blank[i] = 0.0;
     }
+    else if (m_solTransferFlag[i] == 2) {
+      // hole: blank nodes
+      m_blank[i] = 0.0;
+    }
+    else {
+      // do nothing
+      m_blank[i] = 1.0;
+    }
+
   }
 }
 
+void
 OversetFE::setTransferFlags(
   std::size_t dirn )
 // *****************************************************************************
@@ -690,33 +702,33 @@ OversetFE::setTransferFlags(
   // Called from transfer-B-to-O
   if (dirn == 0) {
     if (Disc()->MeshId() == 0) {
-      // Background meshes: assign appropriate values to flag
-      for (const auto& [blid, ndset] : m_nodeblockid) {
-        for (auto i : ndset) {
-          if (blid == 102) m_solTransferFlag[i] = 1.0;
-          else if (blid == 103 || blid == 104) m_solTransferFlag[i] = 2.0;
-        }
-      }
-    }
-    else {
-      // Overset mesh: reset all mesh transfer flags
-      for (auto& flag : m_solTransferFlag) flag = 0.0;
-    }
-  }
-  // Called from transfer-O-to-B
-  else {
-    if (Disc()->MeshId() == 0) {
       // Background meshes: reset all mesh transfer flags
-      for (auto& flag : m_solTransferFlag) flag = 0.0;
+      for (auto& flag : m_solTransferFlag) flag = 0;
     }
     else {
       // Overset mesh: assign appropriate values to flag
       for (const auto& [blid, ndset] : m_nodeblockid) {
         for (auto i : ndset) {
-          if (blid == 102) m_solTransferFlag[i] = 1.0;
-          else if (blid == 103 || blid == 104) m_solTransferFlag[i] = 2.0;
+          if (blid == 102) m_solTransferFlag[i] = 1;
+          else if (blid == 103 || blid == 104) m_solTransferFlag[i] = 2;
         }
       }
+    }
+  }
+  // Called from transfer-O-to-B
+  else {
+    if (Disc()->MeshId() == 0) {
+      // Background meshes: assign appropriate values to flag
+      for (const auto& [blid, ndset] : m_nodeblockid) {
+        for (auto i : ndset) {
+          if (blid == 102) m_solTransferFlag[i] = 1;
+          else if (blid == 103 || blid == 104) m_solTransferFlag[i] = 2;
+        }
+      }
+    }
+    else {
+      // Overset mesh: reset all mesh transfer flags
+      for (auto& flag : m_solTransferFlag) flag = 0;
     }
   }
 }
@@ -1106,7 +1118,7 @@ OversetFE::solve()
     // Advance solution, converging to steady state
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c) = m_un(i,c) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c)
+        m_u(i,c) = m_un(i,c) + m_blank[i]*rkcoef[m_stage]*m_dtp[i] * m_rhs(i,c)
           / d->Vol()[i];
 
   } else {
@@ -1116,7 +1128,7 @@ OversetFE::solve()
     // Advance unsteady solution
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c) = m_un(i,c) + adt * m_rhs(i,c) / d->Vol()[i];
+        m_u(i,c) = m_un(i,c) + m_blank[i] * adt * m_rhs(i,c) / d->Vol()[i];
 
   }
 
