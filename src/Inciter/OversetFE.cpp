@@ -636,9 +636,8 @@ OversetFE::mergelhs()
 
   // Start with time stepping logic
   if (Disc()->Initial()) {
-    // Output initial conditions to file
-    writeFields();
-    start();
+    // Output initial conditions to file and then start time stepping
+    writeFields( CkCallback(CkIndex_OversetFE::start(), thisProxy[thisIndex]) );
   }
   else stage();
 }
@@ -1222,8 +1221,8 @@ OversetFE::stage()
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise start next time step
   if (m_stage == 3) {
-    // start with next time step
-    step();
+    // output field data and start with next time step
+    out();
   }
   else {
     // start with next time-step stage
@@ -1233,12 +1232,17 @@ OversetFE::stage()
 //! [stage]
 
 void
-OversetFE::writeFields()
+OversetFE::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+
+    c.send();
+
+  } else {
 
     auto d = Disc();
     const auto& coord = d->Coord();
@@ -1287,7 +1291,7 @@ OversetFE::writeFields()
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), coord, m_bface, tk::remap(m_bnode,d->Lid()),
               m_triinpoel, {}, nodefieldnames, elemsurfnames,
-              nodesurfnames, {}, nodefields, elemsurfs, nodesurfs );
+              nodesurfnames, {}, nodefields, elemsurfs, nodesurfs, c );
 
   }
 }
@@ -1295,7 +1299,7 @@ OversetFE::writeFields()
 void
 OversetFE::out()
 // *****************************************************************************
-// Output mesh field data
+// Output mesh field data and continue to next time step
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1310,7 +1314,9 @@ OversetFE::out()
 
   // Output field data
   if (d->fielditer() or d->fieldtime() or d->fieldrange() or m_finished)
-    writeFields();
+    writeFields(CkCallback( CkIndex_OversetFE::step(), thisProxy[thisIndex]) );
+  else
+    step();
 }
 
 void
@@ -1373,9 +1379,6 @@ OversetFE::step()
 // *****************************************************************************
 {
   auto d = Disc();
-
-  // Output solution to file
-  out();
 
   // Output one-liner status report to screen
   d->status();

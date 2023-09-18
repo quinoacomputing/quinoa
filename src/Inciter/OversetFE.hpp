@@ -408,11 +408,11 @@ class OversetFE : public CBase_OversetFE {
     //! Continue setup for solution, after communication for mesh blocks
     void continueSetup();
 
-    //! Output mesh and particle fields to files
+    //! Output mesh field data and continue to next time step
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields();
+    void writeFields( CkCallback c );
 
     //! Combine own and communicated contributions to normals
     void mergelhs();
