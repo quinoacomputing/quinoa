@@ -669,7 +669,7 @@ OversetFE::applySolTransfer()
 // *****************************************************************************
 {
   // Zero out soilution space for nodes with a specific transfer flag set
-  for (auto i : m_solTransferFlag) { // Check the flag value:
+  for (std::size_t i=0; i<m_solTransferFlag.size(); ++i) { // Check the flag value:
 
     if (m_solTransferFlag[i] == 1) {
       // overset-BC nodes: use transferred solution and blank nodes
@@ -707,9 +707,8 @@ OversetFE::setTransferFlags(
     else {
       // Overset mesh: assign appropriate values to flag
       for (const auto& [blid, ndset] : m_nodeblockid) {
-        for (auto i : ndset) {
-          if (blid == 102) m_solTransferFlag[i] = 1;
-          else if (blid == 103 || blid == 104) m_solTransferFlag[i] = 2;
+        if (blid == 101) {
+          for (auto i : ndset) m_solTransferFlag[i] = 1;
         }
       }
     }
@@ -720,8 +719,8 @@ OversetFE::setTransferFlags(
       // Background meshes: assign appropriate values to flag
       for (const auto& [blid, ndset] : m_nodeblockid) {
         for (auto i : ndset) {
-          if (blid == 102) m_solTransferFlag[i] = 1;
-          else if (blid == 103 || blid == 104) m_solTransferFlag[i] = 2;
+          if (blid == 103) m_solTransferFlag[i] = 1;
+          else if (blid == 104) m_solTransferFlag[i] = 2;
         }
       }
     }
