@@ -340,7 +340,8 @@ class Discretization : public CBase_Discretization {
                 const std::vector< std::vector< tk::real > >& elemfields,
                 const std::vector< std::vector< tk::real > >& nodefields,
                 const std::vector< std::vector< tk::real > >& elemsurfs,
-                const std::vector< std::vector< tk::real > >& nodesurfs );
+                const std::vector< std::vector< tk::real > >& nodesurfs,
+                CkCallback c );
 
     //! Zero grind-timer
     void grindZero();

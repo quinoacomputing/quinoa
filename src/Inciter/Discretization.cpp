@@ -886,7 +886,8 @@ Discretization::write(
   const std::vector< std::vector< tk::real > >& elemfields,
   const std::vector< std::vector< tk::real > >& nodefields,
   const std::vector< std::vector< tk::real > >& elemsurfs,
-  const std::vector< std::vector< tk::real > >& nodesurfs )
+  const std::vector< std::vector< tk::real > >& nodesurfs,
+  CkCallback c )
 // *****************************************************************************
 //  Output mesh and fields data (solution dump) to file(s)
 //! \param[in] inpoel Mesh connectivity for the mesh chunk to be written
@@ -906,6 +907,7 @@ Discretization::write(
 //! \param[in] nodefields Field data in mesh nodes to output to file
 //! \param[in] elemsurfs Surface field data in mesh elements to output to file
 //! \param[in] nodesurfs Surface field data in mesh nodes to output to file
+//! \param[in] c Function to continue with after the write
 //! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
 //!   an instance is guaranteed on every PE. We index the first PE on every
 //!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a
@@ -940,7 +942,7 @@ Discretization::write(
            g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
            inpoel, coord, bface, bnode, triinpoel, elemfieldnames,
            nodefieldnames, elemsurfnames, nodesurfnames, elemfields, nodefields,
-           elemsurfs, nodesurfs, g_inputdeck.outsets() );
+           elemsurfs, nodesurfs, g_inputdeck.outsets(), c );
 }
 
 void
