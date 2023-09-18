@@ -674,7 +674,7 @@ ALECG::meshveldone()
     conserved( m_u, Disc()->Vol() );
 
     // Initiate IC transfer (if coupled)
-    Disc()->transfer( m_u,
+    Disc()->transfer( m_u, 0,
       CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]) );
 
     lhs();

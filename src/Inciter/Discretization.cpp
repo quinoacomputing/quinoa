@@ -313,10 +313,15 @@ Discretization::comfinal()
 }
 
 void
-Discretization::transfer( [[maybe_unused]] tk::Fields& u, CkCallback cb  )
+Discretization::transfer(
+  tk::Fields& u,
+  std::size_t dirn,
+  CkCallback cb )
 // *****************************************************************************
 //  Start solution transfer (if coupled)
-//! \param[in] u Solution to transfer from/to
+//! \param[in,out] u Solution to transfer from/to
+//! \param[in] dirn Direction of solution transfer. 0: from background to
+//!   overset, 1: from overset to background
 //! \param[in] cb Callback to call when transfer is complete.
 // *****************************************************************************
 {
@@ -326,21 +331,35 @@ Discretization::transfer( [[maybe_unused]] tk::Fields& u, CkCallback cb  )
 
   } else {
 
+    // determine source and destination mesh depending on direction of transfer
+    std::size_t fromMesh(0), toMesh(0);
+    CkCallback cb_xfer;
+    if (dirn == 0) {
+      fromMesh = m_mytransfer[m_nsrc].src;
+      toMesh = m_mytransfer[m_ndst].dst;
+      cb_xfer = CkCallback( CkIndex_Discretization::transfer_complete(), thisProxy );
+    }
+    else {
+      fromMesh = m_mytransfer[m_nsrc].dst;
+      toMesh = m_mytransfer[m_ndst].src;
+      cb_xfer = CkCallback( CkIndex_Discretization::revtransfer_complete(), thisProxy );
+    }
+
     thisProxy[ thisIndex ].wait4transfer();
 
     m_transfer_complete = cb;
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
-    if (m_mytransfer[m_nsrc].src == m_meshid) {
+    if (fromMesh == m_meshid) {
       exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
       ++m_nsrc;
     } else {
       m_nsrc = 0;
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
-    if (m_mytransfer[m_ndst].dst == m_meshid) {
+    if (toMesh == m_meshid) {
       exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
-        CkCallback( CkIndex_Discretization::transfer_complete(), thisProxy ) );
+        cb_xfer );
       ++m_ndst;
     } else {
       m_ndst = 0;
@@ -364,6 +383,32 @@ void Discretization::transfer_complete()
   for (auto& t : m_transfer) {
     if (m_meshid == t.dst) {
       m_disc[ t.src ][ thisIndex ].transfer_complete_from_dest();
+    }
+  }
+
+  // Call m_transfer_complete from neighbor chares
+  if (m_nodeCommMap.empty())
+   all_transfers_complete();
+  else
+    for (const auto& [c,n] : m_nodeCommMap) {
+      thisProxy[c].comxfer();
+    }
+
+  ownxfer_complete();
+}
+
+void Discretization::revtransfer_complete()
+// *****************************************************************************
+//! Solution transfer from overset to background mesh completed (from ExaM2M)
+//! \brief This is called by ExaM2M on the destination mesh when the
+//!   transfer completes. Since this is called only on the destination, we find
+//!   and notify the corresponding source of the completion.
+// *****************************************************************************
+{
+  // Lookup the source disc and notify it of completion
+  for (auto& t : m_transfer) {
+    if (m_meshid == t.src) {
+      m_disc[ t.dst ][ thisIndex ].transfer_complete_from_dest();
     }
   }
 
