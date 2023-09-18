@@ -124,10 +124,16 @@ class Discretization : public CBase_Discretization {
     void comfinal();
 
     //! Start solution transfer (if coupled)
-    void transfer( tk::Fields& u, CkCallback cb );
+    void transfer(
+      tk::Fields& u,
+      std::size_t dirn,
+      CkCallback cb );
 
     //! Solution transfer completed (from ExaM2M)
     void transfer_complete();
+
+    //! Solution transfer from overset to background mesh completed (from ExaM2M)
+    void revtransfer_complete();
 
     //! Check nodal solution transfers on chare-boundaries
     void comxfer();

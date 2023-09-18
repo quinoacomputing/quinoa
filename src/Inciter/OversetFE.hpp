@@ -107,6 +107,9 @@ class OversetFE : public CBase_OversetFE {
     //! Compute left-hand side of transport equations
     void lhs();
 
+    //! Transfer solution from O to B
+    void transferOtoB();
+
     //! Receive contributions to duual-face normals on chare boundaries
     void comdfnorm(
       const std::unordered_map< tk::UnsMesh::Edge,
@@ -210,12 +213,14 @@ class OversetFE : public CBase_OversetFE {
       p | m_esup;
       p | m_psup;
       p | m_u;
+      p | m_uc;
       p | m_un;
       p | m_rhs;
       p | m_rhsc;
       p | m_chBndGrad;
       p | m_dirbc;
       p | m_chBndGradc;
+      p | m_solTransferFlag;
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
@@ -281,6 +286,9 @@ class OversetFE : public CBase_OversetFE {
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
+    //! Copy of unknown/solution vector at mesh nodes for m2m transfer
+    //! TODO: avoid creating this copy
+    tk::Fields m_uc;
     //! Unknown/solution vector at mesh nodes at previous time
     tk::Fields m_un;
     //! Right-hand side vector (for the high order system)
@@ -303,6 +311,10 @@ class OversetFE : public CBase_OversetFE {
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndGradc;
+    //! Flag indicating appropriate solution transfers for overset
+    //! \details Value 0: Do not transfer solution, 1: transfer solution,
+    //!   2: blank nodes
+    std::vector< tk::real > m_solTransferFlag;
     //! Diagnostics object
     NodeDiagnostics m_diag;
     //! Face normals in boundary points associated to side sets
@@ -381,6 +393,10 @@ class OversetFE : public CBase_OversetFE {
     void
     bnorm( const std::unordered_map< int,
              std::unordered_set< std::size_t > >& bcnodes );
+
+    //! Set flags informing solution transfer decisions
+    void setTransferFlags(
+      std::size_t dirn );
 
     //! \brief Finish computing dual-face and boundary point normals and apply
     //!   boundary conditions on the initial conditions

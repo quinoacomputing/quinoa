@@ -48,6 +48,7 @@ module discretization {
       entry void stat( tk::real mesh_volume );
       entry void transferInit();
       entry void transfer_complete();
+      entry void revtransfer_complete();
       entry void transfer_complete_from_dest();
       entry void comxfer();
       entry void all_transfers_complete();
