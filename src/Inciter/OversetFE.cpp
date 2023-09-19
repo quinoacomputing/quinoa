@@ -156,14 +156,6 @@ OversetFE::getBCNodes()
 {
   auto d = Disc();
 
-  // Query and match user-specified Dirichlet boundary conditions to side sets
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-  if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
-  m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
-                   m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
-                   /* increment = */ false );
-  if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
-
   // Prepare unique set of symmetry BC nodes
   auto sym = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : sym)
