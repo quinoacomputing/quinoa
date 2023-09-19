@@ -1038,9 +1038,7 @@ Refiner::writeMesh( const std::string& basefilename,
            thisIndex, basefilename, m_inpoel, m_coord, m_bface,
            tk::remap(m_bnode,m_lid), tk::remap(m_triinpoel,m_lid),
            elemfieldnames, nodefieldnames, {}, {}, elemfields, nodefields, {},
-           {}, {} );
-
-  c.send();
+           {}, {}, c );
 }
 
 void

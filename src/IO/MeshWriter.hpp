@@ -74,7 +74,8 @@ class MeshWriter : public CBase_MeshWriter {
                 const std::vector< std::vector< tk::real > >& nodefields,
                 const std::vector< std::vector< tk::real > >& elemsurfs,
                 const std::vector< std::vector< tk::real > >& nodesurfs,
-                const std::set< int >& outsets );
+                const std::set< int >& outsets,
+                CkCallback c );
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

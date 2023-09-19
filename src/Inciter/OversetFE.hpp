@@ -107,6 +107,9 @@ class OversetFE : public CBase_OversetFE {
     //! Compute left-hand side of transport equations
     void lhs();
 
+    //! Transfer solution from O to B
+    void transferOtoB();
+
     //! Receive contributions to duual-face normals on chare boundaries
     void comdfnorm(
       const std::unordered_map< tk::UnsMesh::Edge,
@@ -210,12 +213,15 @@ class OversetFE : public CBase_OversetFE {
       p | m_esup;
       p | m_psup;
       p | m_u;
+      p | m_uc;
       p | m_un;
       p | m_rhs;
       p | m_rhsc;
       p | m_chBndGrad;
       p | m_dirbc;
       p | m_chBndGradc;
+      p | m_oversetFlag;
+      p | m_blank;
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
@@ -281,6 +287,12 @@ class OversetFE : public CBase_OversetFE {
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
+    //! \brief Copy of unknown/solution vector at mesh nodes for m2m transfer,
+    //!   appended with a solution-transfer-flag. This flag indicates
+    //!   appropriate solution transfers for the overset procedure.
+    //!   Value 0: Do not transfer solution, 1: transfer sol, 2: blank nodes
+    //! TODO: avoid creating this copy
+    tk::Fields m_uc;
     //! Unknown/solution vector at mesh nodes at previous time
     tk::Fields m_un;
     //! Right-hand side vector (for the high order system)
@@ -303,6 +315,16 @@ class OversetFE : public CBase_OversetFE {
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndGradc;
+    //! Flag indicating appropriate solution transfers for overset mesh
+    //! \details On an overset mesh, this flag is the uint equivalent of the
+    //!   last component in m_uc. m_uc gets transferred to/from the background
+    //!   mesh, so the flag in m_uc gets changed when returning from a B-to-O
+    //!   transfer. Hence, this copy is kept on the overset mesh for appropriate
+    //!   use in applySolTransfer().
+    //!   Value 0: Do not transfer solution, 1: transfer sol, 2: blank nodes
+    std::vector< std::size_t > m_oversetFlag;
+    //! Blanking coefficient for overset, indicating hole in the background mesh
+    std::vector< tk::real > m_blank;
     //! Diagnostics object
     NodeDiagnostics m_diag;
     //! Face normals in boundary points associated to side sets
@@ -382,6 +404,10 @@ class OversetFE : public CBase_OversetFE {
     bnorm( const std::unordered_map< int,
              std::unordered_set< std::size_t > >& bcnodes );
 
+    //! Set flags informing solution transfer decisions
+    void setTransferFlags(
+      std::size_t dirn );
+
     //! \brief Finish computing dual-face and boundary point normals and apply
     //!   boundary conditions on the initial conditions
     void normfinal();
@@ -389,11 +415,11 @@ class OversetFE : public CBase_OversetFE {
     //! Continue setup for solution, after communication for mesh blocks
     void continueSetup();
 
-    //! Output mesh and particle fields to files
+    //! Output mesh field data and continue to next time step
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields();
+    void writeFields( CkCallback c );
 
     //! Combine own and communicated contributions to normals
     void mergelhs();
@@ -418,6 +444,10 @@ class OversetFE : public CBase_OversetFE {
 
     //! Query/update boundary-conditions-related data structures from user input
     void getBCNodes();
+
+    // \brief Apply the transferred solution to the solution vector based on
+    //   transfer flags previously set up
+    void applySolTransfer( std::size_t dirn );
 
     //! Apply boundary conditions
     void BC();

@@ -57,6 +57,7 @@ module oversetfe {
                          const std::vector< std::vector< tk::real > >& R );
       entry void resized();
       entry void lhs();
+      entry void transferOtoB();
       entry void step();
       entry void next();
       entry void stage();

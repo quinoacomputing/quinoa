@@ -69,12 +69,15 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( Disc()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
+  m_uc( m_u.nunk(), m_u.nprop()+1 ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_rhsc(),
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_dirbc(),
   m_chBndGradc(),
+  m_oversetFlag(),
+  m_blank( m_u.nunk(), 1.0 ),
   m_diag(),
   m_bnorm(),
   m_bnormc(),
@@ -581,8 +584,38 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
 
+  // Size and initialize transfer flags on overset mesh
+  if (d->MeshId() != 0) {
+    m_oversetFlag.resize(m_u.nunk());
+    for (const auto& [blid, ndset] : m_nodeblockid) {
+      if (blid == 101) {
+        for (auto i : ndset) m_oversetFlag[i] = 1.0;
+      }
+    }
+  }
+
+  // Set up transfer-flags for receiving mesh
+  setTransferFlags(0);
+
   // Initiate IC transfer (if coupled)
-  Disc()->transfer( m_u,
+  d->transfer( m_uc, 0,
+    CkCallback(CkIndex_OversetFE::transferOtoB(), thisProxy[thisIndex]) );
+}
+
+void
+OversetFE::transferOtoB()
+// *****************************************************************************
+// Transfer solution from O to B
+// *****************************************************************************
+{
+  // Do corrections in solution based on incoming transfer
+  applySolTransfer(0);
+
+  // Set up transfer-flags for receiving mesh
+  setTransferFlags(1);
+
+  // Initiate IC reverse-transfer (if coupled)
+  Disc()->transfer( m_uc, 1,
     CkCallback(CkIndex_OversetFE::lhs(), thisProxy[thisIndex]) );
 }
 
@@ -594,6 +627,9 @@ OversetFE::lhs()
 //! \details Also (re-)compute all data structures if the mesh changed.
 // *****************************************************************************
 {
+  // Do corrections in solution based on incoming transfer
+  applySolTransfer(1);
+
   // No need for LHS in OversetFE
 
   // If mesh moved: (Re-)compute boundary point- and dual-face normals, and
@@ -616,9 +652,8 @@ OversetFE::mergelhs()
 
   // Start with time stepping logic
   if (Disc()->Initial()) {
-    // Output initial conditions to file
-    writeFields();
-    start();
+    // Output initial conditions to file and then start time stepping
+    writeFields( CkCallback(CkIndex_OversetFE::start(), thisProxy[thisIndex]) );
   }
   else stage();
 }
@@ -641,6 +676,110 @@ OversetFE::start()
   next();
 }
 //! [start]
+
+void
+OversetFE::applySolTransfer(
+  std::size_t dirn )
+// *****************************************************************************
+// \brief Apply the transferred solution to the solution vector based on
+//   transfer flags previously set up
+//! \param[in] dirn 0 if called from B to O, 1 if called from O to B
+// *****************************************************************************
+{
+  // Change solution only if:
+  //   1. undergoing transfer from B to O, and currently on O
+  if (dirn == 0 && Disc()->MeshId() != 0) {
+
+    for (std::size_t i=0; i<m_oversetFlag.size(); ++i) { // Check flag value
+      if (m_oversetFlag[i] == 1) {
+        // overset-BC nodes: use transferred solution and blank nodes
+        for (ncomp_t c=0; c<m_u.nprop(); ++c) { // Loop over number of equations
+          m_u(i,c) = m_uc(i,c);
+        }
+        m_blank[i] = 0.0;
+      }
+    }
+
+  }
+  //   2. undergoing transfer from O to B, and currently on B
+  else if (dirn == 1 && Disc()->MeshId() == 0) {
+
+    //TODO: index the flag in a better way
+    std::size_t iflag = m_uc.nprop()-1;
+
+    // Zero out solution space for nodes with a specific transfer flag set
+    for (std::size_t i=0; i<m_uc.nunk(); ++i) { // Check flag value
+
+      if (std::abs(m_uc(i,iflag) - 1.0) < 1e-4) {
+        // overset-BC nodes: use transferred solution and blank nodes
+        for (ncomp_t c=0; c<m_u.nprop(); ++c) { // Loop over number of equations
+          m_u(i,c) = m_uc(i,c);
+        }
+        m_blank[i] = 0.0;
+      }
+      else if (std::abs(m_uc(i,iflag) - 2.0) < 1e-4) {
+        // hole: blank nodes
+        m_blank[i] = 0.0;
+      }
+      else {
+        // do nothing
+        m_blank[i] = 1.0;
+      }
+
+    }
+
+  }
+}
+
+void
+OversetFE::setTransferFlags(
+  std::size_t dirn )
+// *****************************************************************************
+//  Set flags informing solution transfer decisions
+//! \param[in] dirn 0 if called from B to O, 1 if called from O to B
+// *****************************************************************************
+{
+  // Copy solution and reset flags
+  //TODO: index the flag in a better way
+  std::size_t iflag = m_uc.nprop()-1;
+
+  for (std::size_t i=0; i<m_u.nunk(); ++i) {
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_uc(i,c) = m_u(i,c);
+    }
+    // Reset flags
+    m_uc(i,iflag) = 0.0;
+  }
+
+  // Transfer flags are based on block-ids that are hardcoded
+  // TODO: remove hardcoding
+
+  // Called from transfer-B-to-O
+  if (dirn == 0) {
+    if (Disc()->MeshId() != 0) {
+      // Overset meshes: assign appropriate values to flag
+      for (const auto& [blid, ndset] : m_nodeblockid) {
+        if (blid == 101) {
+          for (auto i : ndset) m_uc(i,m_u.nprop()) = 1.0;
+        }
+      }
+    }
+  }
+  // Called from transfer-O-to-B
+  else {
+    if (Disc()->MeshId() != 0) {
+      // Overset meshes: assign appropriate values to flag
+      for (const auto& [blid, ndset] : m_nodeblockid) {
+        if (blid == 103) {
+          for (auto i : ndset) m_uc(i,m_u.nprop()) = 1.0;
+        }
+        else if (blid == 104) {
+          for (auto i : ndset) m_uc(i,m_u.nprop()) = 2.0;
+        }
+      }
+    }
+  }
+}
 
 void
 OversetFE::normfinal()
@@ -1035,7 +1174,7 @@ OversetFE::solve()
     // Advance solution, converging to steady state
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c) = m_un(i,c) + rkcoef[m_stage] * m_dtp[i] * m_rhs(i,c)
+        m_u(i,c) = m_un(i,c) + m_blank[i]*rkcoef[m_stage]*m_dtp[i] * m_rhs(i,c)
           / d->Vol()[i];
 
   } else {
@@ -1045,7 +1184,7 @@ OversetFE::solve()
     // Advance unsteady solution
     for (std::size_t i=0; i<m_u.nunk(); ++i)
       for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c) = m_un(i,c) + adt * m_rhs(i,c) / d->Vol()[i];
+        m_u(i,c) = m_un(i,c) + m_blank[i] * adt * m_rhs(i,c) / d->Vol()[i];
 
   }
 
@@ -1139,8 +1278,8 @@ OversetFE::stage()
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise start next time step
   if (m_stage == 3) {
-    // start with next time step
-    step();
+    // output field data and start with next time step
+    out();
   }
   else {
     // start with next time-step stage
@@ -1150,12 +1289,17 @@ OversetFE::stage()
 //! [stage]
 
 void
-OversetFE::writeFields()
+OversetFE::writeFields( CkCallback c )
 // *****************************************************************************
 // Output mesh-based fields to file
+//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+
+    c.send();
+
+  } else {
 
     auto d = Disc();
     const auto& coord = d->Coord();
@@ -1204,7 +1348,7 @@ OversetFE::writeFields()
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), coord, m_bface, tk::remap(m_bnode,d->Lid()),
               m_triinpoel, {}, nodefieldnames, elemsurfnames,
-              nodesurfnames, {}, nodefields, elemsurfs, nodesurfs );
+              nodesurfnames, {}, nodefields, elemsurfs, nodesurfs, c );
 
   }
 }
@@ -1212,7 +1356,7 @@ OversetFE::writeFields()
 void
 OversetFE::out()
 // *****************************************************************************
-// Output mesh field data
+// Output mesh field data and continue to next time step
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1227,7 +1371,9 @@ OversetFE::out()
 
   // Output field data
   if (d->fielditer() or d->fieldtime() or d->fieldrange() or m_finished)
-    writeFields();
+    writeFields(CkCallback( CkIndex_OversetFE::step(), thisProxy[thisIndex]) );
+  else
+    step();
 }
 
 void
@@ -1290,9 +1436,6 @@ OversetFE::step()
 // *****************************************************************************
 {
   auto d = Disc();
-
-  // Output solution to file
-  out();
 
   // Output one-liner status report to screen
   d->status();
