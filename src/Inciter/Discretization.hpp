@@ -124,19 +124,13 @@ class Discretization : public CBase_Discretization {
     void comfinal();
 
     //! Start solution transfer (if coupled)
-    void transfer( tk::Fields& u, CkCallback cb );
+    void transfer( tk::Fields& u );
 
     //! Solution transfer completed (from ExaM2M)
-    void transfer_complete();
-
-    //! Check nodal solution transfers on chare-boundaries
-    void comxfer();
+    void m2m_complete();
 
     //! Solution transfer completed (from dest Discretization)
-    void transfer_complete_from_dest();
-
-    //! Solution transfer completed for all neighboring chares
-    void all_transfers_complete();
+    void transfer_complete();
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(

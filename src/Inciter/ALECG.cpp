@@ -674,10 +674,7 @@ ALECG::meshveldone()
     conserved( m_u, Disc()->Vol() );
 
     // Initiate IC transfer (if coupled)
-    Disc()->transfer( m_u,
-      CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]) );
-
-    lhs();
+    Disc()->transfer( m_u );
 
   } else {
 
@@ -1165,7 +1162,6 @@ ALECG::solve()
   // Recompute mesh volumes if ALE is enabled
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
 
-    transfer_complete();
     // Save nodal volumes at previous time step stage
     d->Voln() = d->Vol();
     // Prepare for recomputing the nodal volumes
@@ -1401,8 +1397,6 @@ ALECG::stage()
 // Evaluate whether to continue with next time step stage
 // *****************************************************************************
 {
-  transfer_complete();
-
   // Increment Runge-Kutta stage counter
   ++m_stage;
 
