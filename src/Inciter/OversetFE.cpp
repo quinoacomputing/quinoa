@@ -69,14 +69,14 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( Disc()->Gid().size(),
        g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
-  m_uc( m_u.nunk(), m_u.nprop() ),
+  m_uc( m_u.nunk(), m_u.nprop()+1 ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_rhsc(),
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_dirbc(),
   m_chBndGradc(),
-  m_solTransferFlag( m_u.nunk(), 0 ),
+  m_oversetFlag(),
   m_blank( m_u.nunk(), 1.0 ),
   m_diag(),
   m_bnorm(),
@@ -576,11 +576,20 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
 
+  // Size and initialize transfer flags on overset mesh
+  if (d->MeshId() != 0) {
+    m_oversetFlag.resize(m_u.nunk());
+    for (const auto& [blid, ndset] : m_nodeblockid) {
+      if (blid == 101) {
+        for (auto i : ndset) m_oversetFlag[i] = 1.0;
+      }
+    }
+  }
+
   // Set up transfer-flags for receiving mesh
   setTransferFlags(0);
 
   // Initiate IC transfer (if coupled)
-  m_uc = m_u;
   d->transfer( m_uc, 0,
     CkCallback(CkIndex_OversetFE::transferOtoB(), thisProxy[thisIndex]) );
 }
@@ -592,13 +601,12 @@ OversetFE::transferOtoB()
 // *****************************************************************************
 {
   // Do corrections in solution based on incoming transfer
-  applySolTransfer();
+  applySolTransfer(0);
 
   // Set up transfer-flags for receiving mesh
   setTransferFlags(1);
 
   // Initiate IC reverse-transfer (if coupled)
-  m_uc = m_u;
   Disc()->transfer( m_uc, 1,
     CkCallback(CkIndex_OversetFE::lhs(), thisProxy[thisIndex]) );
 }
@@ -612,7 +620,7 @@ OversetFE::lhs()
 // *****************************************************************************
 {
   // Do corrections in solution based on incoming transfer
-  applySolTransfer();
+  applySolTransfer(1);
 
   // No need for LHS in OversetFE
 
@@ -662,29 +670,54 @@ OversetFE::start()
 //! [start]
 
 void
-OversetFE::applySolTransfer()
+OversetFE::applySolTransfer(
+  std::size_t dirn )
 // *****************************************************************************
 // \brief Apply the transferred solution to the solution vector based on
 //   transfer flags previously set up
+//! \param[in] dirn 0 if called from B to O, 1 if called from O to B
 // *****************************************************************************
 {
-  // Zero out soilution space for nodes with a specific transfer flag set
-  for (std::size_t i=0; i<m_solTransferFlag.size(); ++i) { // Check the flag value:
+  // Change solution only if:
+  //   1. undergoing transfer from B to O, and currently on O
+  if (dirn == 0 && Disc()->MeshId() != 0) {
 
-    if (m_solTransferFlag[i] == 1) {
-      // overset-BC nodes: use transferred solution and blank nodes
-      for (ncomp_t c=0; c<m_u.nprop(); ++c) { // Loop over number of equations.
-        m_u(i,c) = m_uc(i,c);
+    for (std::size_t i=0; i<m_oversetFlag.size(); ++i) { // Check flag value
+      if (m_oversetFlag[i] == 1) {
+        // overset-BC nodes: use transferred solution and blank nodes
+        for (ncomp_t c=0; c<m_u.nprop(); ++c) { // Loop over number of equations
+          m_u(i,c) = m_uc(i,c);
+        }
+        m_blank[i] = 0.0;
       }
-      m_blank[i] = 0.0;
     }
-    else if (m_solTransferFlag[i] == 2) {
-      // hole: blank nodes
-      m_blank[i] = 0.0;
-    }
-    else {
-      // do nothing
-      m_blank[i] = 1.0;
+
+  }
+  //   2. undergoing transfer from O to B, and currently on B
+  else if (dirn == 1 && Disc()->MeshId() == 0) {
+
+    //TODO: index the flag in a better way
+    std::size_t iflag = m_uc.nprop()-1;
+
+    // Zero out solution space for nodes with a specific transfer flag set
+    for (std::size_t i=0; i<m_uc.nunk(); ++i) { // Check flag value
+
+      if (std::abs(m_uc(i,iflag) - 1.0) < 1e-4) {
+        // overset-BC nodes: use transferred solution and blank nodes
+        for (ncomp_t c=0; c<m_u.nprop(); ++c) { // Loop over number of equations
+          m_u(i,c) = m_uc(i,c);
+        }
+        m_blank[i] = 0.0;
+      }
+      else if (std::abs(m_uc(i,iflag) - 2.0) < 1e-4) {
+        // hole: blank nodes
+        m_blank[i] = 0.0;
+      }
+      else {
+        // do nothing
+        m_blank[i] = 1.0;
+      }
+
     }
 
   }
@@ -698,35 +731,44 @@ OversetFE::setTransferFlags(
 //! \param[in] dirn 0 if called from B to O, 1 if called from O to B
 // *****************************************************************************
 {
+  // Copy solution and reset flags
+  //TODO: index the flag in a better way
+  std::size_t iflag = m_uc.nprop()-1;
+
+  for (std::size_t i=0; i<m_u.nunk(); ++i) {
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_uc(i,c) = m_u(i,c);
+    }
+    // Reset flags
+    m_uc(i,iflag) = 0.0;
+  }
+
+  // Transfer flags are based on block-ids that are hardcoded
+  // TODO: remove hardcoding
+
   // Called from transfer-B-to-O
   if (dirn == 0) {
-    if (Disc()->MeshId() == 0) {
-      // Background meshes: reset all mesh transfer flags
-      for (auto& flag : m_solTransferFlag) flag = 0;
-    }
-    else {
-      // Overset mesh: assign appropriate values to flag
+    if (Disc()->MeshId() != 0) {
+      // Overset meshes: assign appropriate values to flag
       for (const auto& [blid, ndset] : m_nodeblockid) {
         if (blid == 101) {
-          for (auto i : ndset) m_solTransferFlag[i] = 1;
+          for (auto i : ndset) m_uc(i,m_u.nprop()) = 1.0;
         }
       }
     }
   }
   // Called from transfer-O-to-B
   else {
-    if (Disc()->MeshId() == 0) {
-      // Background meshes: assign appropriate values to flag
+    if (Disc()->MeshId() != 0) {
+      // Overset meshes: assign appropriate values to flag
       for (const auto& [blid, ndset] : m_nodeblockid) {
-        for (auto i : ndset) {
-          if (blid == 103) m_solTransferFlag[i] = 1;
-          else if (blid == 104) m_solTransferFlag[i] = 2;
+        if (blid == 103) {
+          for (auto i : ndset) m_uc(i,m_u.nprop()) = 1.0;
+        }
+        else if (blid == 104) {
+          for (auto i : ndset) m_uc(i,m_u.nprop()) = 2.0;
         }
       }
-    }
-    else {
-      // Overset mesh: reset all mesh transfer flags
-      for (auto& flag : m_solTransferFlag) flag = 0;
     }
   }
 }
