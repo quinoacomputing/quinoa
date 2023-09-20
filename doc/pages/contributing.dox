@@ -6,7 +6,8 @@ direction in which we envision the development of all tools, i.e., _what_ to
 contribute, are described by the @ref roadmap.
 
 Thank you for considering contributing to Quinoa. Please read the information
-below to help make your contribution easy and effective for everyone involved.
+below (especially the @ref styling "styling guidelines") to help make your
+contribution easy and effective for everyone involved.
 
 Following these guidelines helps to communicate that you respect the time of the
 developers managing this project. In return, they will reciprocate that respect
@@ -14,6 +15,26 @@ in addressing your issue, assessing changes, and helping you finalize your pull
 requests.
 
 @tableofcontents{xml}
+
+@section styling Styling in Quinoa
+
+A few styling guidelines to keep in mind when contributing to Quinoa:
+
+- Code should not exceed 80 columns. If a particular line exceeds 80 columns,
+  add a continuing line, with an indentation to indicate continuity with
+  previous line.
+- Indentation: if-conditions, for-loops, continuation lines, etc need to be
+  indented by *exactly two* spaces. Nested loops/conditions should be indented
+  recursively.
+- Tab-spaces: No usage of tab-spaces for any reason, only regular spaces must
+  be used. In `vim` the tab-key can be mapped to two regular spaces. Add
+  the following to your `.vimrc`:
+
+       set expandtab
+       set tabstop=2
+
+- Whitespaces: Lines cannot end in white spaces, i.e. no trailing whitespaces.
+  Nor can an empty line have white spaces.
 
 @section contributing_seek Types of contributions we are looking for
 
