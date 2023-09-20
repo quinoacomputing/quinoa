@@ -337,12 +337,12 @@ Discretization::transfer(
     if (dirn == 0) {
       fromMesh = m_mytransfer[m_nsrc].src;
       toMesh = m_mytransfer[m_ndst].dst;
-      cb_xfer = CkCallback( CkIndex_Discretization::transfer_complete(), thisProxy );
+      cb_xfer = CkCallback( CkIndex_Discretization::transfer_complete(), thisProxy[thisIndex] );
     }
     else {
       fromMesh = m_mytransfer[m_nsrc].dst;
       toMesh = m_mytransfer[m_ndst].src;
-      cb_xfer = CkCallback( CkIndex_Discretization::revtransfer_complete(), thisProxy );
+      cb_xfer = CkCallback( CkIndex_Discretization::revtransfer_complete(), thisProxy[thisIndex] );
     }
 
     thisProxy[ thisIndex ].wait4transfer();
