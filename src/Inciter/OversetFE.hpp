@@ -220,7 +220,6 @@ class OversetFE : public CBase_OversetFE {
       p | m_chBndGrad;
       p | m_dirbc;
       p | m_chBndGradc;
-      p | m_oversetFlag;
       p | m_blank;
       p | m_diag;
       p | m_bnorm;
@@ -315,14 +314,6 @@ class OversetFE : public CBase_OversetFE {
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndGradc;
-    //! Flag indicating appropriate solution transfers for overset mesh
-    //! \details On an overset mesh, this flag is the uint equivalent of the
-    //!   last component in m_uc. m_uc gets transferred to/from the background
-    //!   mesh, so the flag in m_uc gets changed when returning from a B-to-O
-    //!   transfer. Hence, this copy is kept on the overset mesh for appropriate
-    //!   use in applySolTransfer().
-    //!   Value 0: Do not transfer solution, 1: transfer sol, 2: blank nodes
-    std::vector< std::size_t > m_oversetFlag;
     //! Blanking coefficient for overset, indicating hole in the background mesh
     std::vector< tk::real > m_blank;
     //! Diagnostics object

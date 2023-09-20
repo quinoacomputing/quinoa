@@ -76,7 +76,6 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_chBndGrad( Disc()->Bid().size(), m_u.nprop()*3 ),
   m_dirbc(),
   m_chBndGradc(),
-  m_oversetFlag(),
   m_blank( m_u.nunk(), 1.0 ),
   m_diag(),
   m_bnorm(),
@@ -576,14 +575,6 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
 
-  // Size and initialize transfer flags on overset mesh
-  if (d->MeshId() != 0) {
-    m_oversetFlag.resize(m_u.nunk());
-    for (auto i : m_farfieldbcnodes) {
-      m_oversetFlag[i] = 1.0;
-    }
-  }
-
   // Set up transfer-flags for receiving mesh
   setTransferFlags(0);
 
@@ -680,14 +671,14 @@ OversetFE::applySolTransfer(
   //   1. undergoing transfer from B to O, and currently on O
   if (dirn == 0 && Disc()->MeshId() != 0) {
 
-    for (std::size_t i=0; i<m_oversetFlag.size(); ++i) { // Check flag value
-      if (m_oversetFlag[i] == 1) {
-        // overset-BC nodes: use transferred solution and blank nodes
-        for (ncomp_t c=0; c<m_u.nprop(); ++c) { // Loop over number of equations
-          m_u(i,c) = m_uc(i,c);
-        }
-        m_blank[i] = 0.0;
+    for (auto i : m_farfieldbcnodes) {
+      // overset-BC nodes: use transferred solution and blank nodes.
+      // the transfer-flag from m_uc is not used since it has been overwritten
+      // by Disc()->transfer() with the flag from B
+      for (ncomp_t c=0; c<m_u.nprop(); ++c) { // Loop over number of equations
+        m_u(i,c) = m_uc(i,c);
       }
+      m_blank[i] = 0.0;
     }
 
   }
