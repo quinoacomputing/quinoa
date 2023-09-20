@@ -579,10 +579,8 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Size and initialize transfer flags on overset mesh
   if (d->MeshId() != 0) {
     m_oversetFlag.resize(m_u.nunk());
-    for (const auto& [blid, ndset] : m_nodeblockid) {
-      if (blid == 101) {
-        for (auto i : ndset) m_oversetFlag[i] = 1.0;
-      }
+    for (auto i : m_farfieldbcnodes) {
+      m_oversetFlag[i] = 1.0;
     }
   }
 
@@ -743,18 +741,14 @@ OversetFE::setTransferFlags(
     m_uc(i,iflag) = 0.0;
   }
 
-  // Transfer flags are based on block-ids that are hardcoded
+  // Transfer flags for O to B are based on block-ids that are hardcoded
   // TODO: remove hardcoding
 
   // Called from transfer-B-to-O
   if (dirn == 0) {
     if (Disc()->MeshId() != 0) {
       // Overset meshes: assign appropriate values to flag
-      for (const auto& [blid, ndset] : m_nodeblockid) {
-        if (blid == 101) {
-          for (auto i : ndset) m_uc(i,m_u.nprop()) = 1.0;
-        }
-      }
+      for (auto i : m_farfieldbcnodes) m_uc(i,iflag) = 1.0;
     }
   }
   // Called from transfer-O-to-B
@@ -763,10 +757,10 @@ OversetFE::setTransferFlags(
       // Overset meshes: assign appropriate values to flag
       for (const auto& [blid, ndset] : m_nodeblockid) {
         if (blid == 103) {
-          for (auto i : ndset) m_uc(i,m_u.nprop()) = 1.0;
+          for (auto i : ndset) m_uc(i,iflag) = 1.0;
         }
         else if (blid == 104) {
-          for (auto i : ndset) m_uc(i,m_u.nprop()) = 2.0;
+          for (auto i : ndset) m_uc(i,iflag) = 2.0;
         }
       }
     }
@@ -905,7 +899,8 @@ OversetFE::BC()
   const auto& bcmesh = g_inputdeck.get< tag::param, tag::compflow, tag::mesh >();
 
   // Query and match user-specified Dirichlet boundary conditions to side sets
-  if (bcmesh.get< tag::bcdir >()[ d->MeshId() ]) {
+  if (bcmesh.get< tag::bcdir >().empty() ||
+    bcmesh.get< tag::bcdir >()[ d->MeshId() ]) {
     const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
     if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
     m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
@@ -920,12 +915,14 @@ OversetFE::BC()
   }
 
   // Apply symmetry BCs
-  if (bcmesh.get< tag::bcsym >()[ d->MeshId() ]) {
+  if (bcmesh.get< tag::bcsym >().empty() ||
+    bcmesh.get< tag::bcsym >()[ d->MeshId() ]) {
     g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
   }
 
   // Apply farfield BCs
-  if (bcmesh.get< tag::bcfarfield >()[ d->MeshId() ]) {
+  if (bcmesh.get< tag::bcfarfield >().empty() ||
+    (bcmesh.get< tag::bcfarfield >()[ d->MeshId() ] && d->MeshId() == 0)) {
     g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
   }
 
