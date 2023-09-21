@@ -316,6 +316,7 @@ using bc = tk::TaggedTuple< brigand::list<
 //! Mesh assignment and configuration
 using mesh = tk::TaggedTuple< brigand::list<
     tag::filename,      std::vector< std::string >
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
   , tag::bcdir,         std::vector< std::size_t >
   , tag::bcsym,         std::vector< std::size_t >
   , tag::bcinlet,       std::vector< std::size_t >

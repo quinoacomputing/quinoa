@@ -1439,6 +1439,12 @@ namespace deck {
                                         tk::grm::check_vector,
                                         eq, tag::farfield_velocity >,
              tk::grm::parameter_vector< use,
+                                        use< kw::mesh >,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
+                                        tk::grm::check_vector,
+                                        eq, tag::mesh, tag::bcfarfield >,
+             tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
                                         tk::grm::Store_back,
                                         tk::grm::noop,
@@ -1624,7 +1630,12 @@ namespace deck {
              pegtl::if_must<
                tk::grm::filename< use, tag::param, tag::compflow, tag::mesh,
                                   tag::filename >,
-               tk::grm::couple_mesh > > > {};
+               tk::grm::couple_mesh >,
+             pegtl::if_must<
+               tk::grm::vector< kw::velocity,
+                 tk::grm::Store_back< tag::param, tag::compflow, tag::mesh,
+                                      tag::velocity >,
+                 use< kw::end > > > > > {};
 
   //! transport equation for scalars
   struct transport :
