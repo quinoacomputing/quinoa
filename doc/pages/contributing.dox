@@ -20,21 +20,21 @@ requests.
 
 A few styling guidelines to keep in mind when contributing to Quinoa:
 
-- Code should not exceed 80 columns. If a particular line exceeds 80 columns,
-  add a continuing line, with an indentation to indicate continuity with
-  previous line.
-- Indentation: if-conditions, for-loops, continuation lines, etc need to be
+- Indentation: if-conditions, for-loops, continuation lines, etc. should be
   indented by *exactly two* spaces. Nested loops/conditions should be indented
   recursively.
-- Tab-spaces: No usage of tab-spaces for any reason, only regular spaces must
-  be used. In `vim` the tab-key can be mapped to two regular spaces. Add
-  the following to your `.vimrc`:
+- Tab-spaces: No usage of tab-spaces for any reason (including indentation).
+  Only regular spaces should be used. In `vim` the tab-key can be mapped to two
+  regular spaces by adding the following to your `.vimrc`:
 
        set expandtab
        set tabstop=2
 
 - Whitespaces: Lines cannot end in white spaces, i.e. no trailing whitespaces.
   Nor can an empty line have white spaces.
+- Code should not exceed 80 columns. If a particular line exceeds 80 columns,
+  add a continuing line, with an indentation to indicate continuity with
+  previous line.
 
 @section contributing_seek Types of contributions we are looking for
 
