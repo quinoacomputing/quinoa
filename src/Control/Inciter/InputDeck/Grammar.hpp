@@ -1630,7 +1630,12 @@ namespace deck {
              pegtl::if_must<
                tk::grm::filename< use, tag::param, tag::compflow, tag::mesh,
                                   tag::filename >,
-               tk::grm::couple_mesh > > > {};
+               tk::grm::couple_mesh >,
+             pegtl::if_must<
+               tk::grm::vector< kw::velocity,
+                 tk::grm::Store_back< tag::param, tag::compflow, tag::mesh,
+                                      tag::velocity >,
+                 use< kw::end > > > > > {};
 
   //! transport equation for scalars
   struct transport :
