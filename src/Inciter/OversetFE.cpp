@@ -575,11 +575,21 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
 
+  // Initiate solution transfer (if coupled)
+  transfer();
+}
+
+void
+OversetFE::transfer()
+// *****************************************************************************
+// Transfer solution to other solver and mesh if coupled
+// *****************************************************************************
+{
   // Set up transfer-flags for receiving mesh
   setTransferFlags(0);
 
   // Initiate IC transfer (if coupled)
-  d->transfer( m_uc, 0,
+  Disc()->transfer( m_uc, 0,
     CkCallback(CkIndex_OversetFE::transferOtoB(), thisProxy[thisIndex]) );
 }
 
@@ -1233,20 +1243,6 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
   transfer();
 }
 //! [Refine]
-
-void
-OversetFE::transfer()
-// *****************************************************************************
-// Transfer solution to other solver and mesh if coupled
-// *****************************************************************************
-{
-  // Initiate solution transfer (if coupled)
-  //TODO: enable this for during-timestepping solution transfer
-  //Disc()->transfer( m_u,
-  //  CkCallback(CkIndex_OversetFE::lhs(), thisProxy[thisIndex]) );
-
-  lhs();
-}
 
 //! [stage]
 void
