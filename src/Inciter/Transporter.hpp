@@ -192,7 +192,7 @@ class Transporter : public CBase_Transporter {
     void boxvol( tk::real* meshdata, int n );
 
     //! Reduction target broadcasting to Schemes after mesh transfer
-    void solutionTransferred( std::size_t summeshid );
+    void solutionTransferred( std::size_t sumtransfertype );
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
@@ -218,6 +218,7 @@ class Transporter : public CBase_Transporter {
       p | m_nchare;
       p | m_meshid;
       p | m_nload;
+      p | m_ntrans;
       p | m_npart;
       p | m_nstat;
       p | m_ndisc;
@@ -260,6 +261,8 @@ class Transporter : public CBase_Transporter {
     std::vector< std::size_t > m_ncit;
     //! Number of meshes loaded
     std::size_t m_nload;
+    //! Number of meshes that have transferred solution
+    std::size_t m_ntrans;
     //! Number of meshes partitioned
     std::size_t m_npart;
     //! Number of mesh statistics computed

@@ -35,6 +35,7 @@ module diagcg {
       entry void box( tk::real v, const std::vector< tk::real >& blkvol );
       entry void resizeComm();
       entry void nodeNeighSetup();
+      entry void transferSol();
       entry void init();
       entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void advance( tk::real newdt );

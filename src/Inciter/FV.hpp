@@ -167,6 +167,9 @@ class FV : public CBase_FV {
     //! Unused in FV
     void resized() {}
 
+    //! (no-op)
+    void transferSol() {}
+
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 

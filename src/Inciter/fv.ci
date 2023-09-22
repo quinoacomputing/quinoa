@@ -49,6 +49,7 @@ module fv {
       entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
+      entry void transferSol();
       entry void lhs();
       entry void step();
       entry void start();

@@ -322,7 +322,7 @@ Discretization::transfer(
 //! \param[in,out] u Solution to transfer from/to
 //! \param[in] dirn Direction of solution transfer. 0: from background to
 //!   overset, 1: from overset to background
-//! \param[in] cb Callback to call when transfer is complete.
+//! \param[in] cb Callback to call if no transfers configured.
 // *****************************************************************************
 {
   if (m_mytransfer.empty()) {   // skip transfer if not involved in coupling
@@ -337,17 +337,14 @@ Discretization::transfer(
     if (dirn == 0) {
       fromMesh = m_mytransfer[m_nsrc].src;
       toMesh = m_mytransfer[m_ndst].dst;
-      cb_xfer = CkCallback( CkIndex_Discretization::transfer_complete(), thisProxy[thisIndex] );
+      cb_xfer = CkCallback( CkIndex_Discretization::to_complete(), thisProxy[thisIndex] );
     }
     else {
       fromMesh = m_mytransfer[m_nsrc].dst;
       toMesh = m_mytransfer[m_ndst].src;
-      cb_xfer = CkCallback( CkIndex_Discretization::revtransfer_complete(), thisProxy[thisIndex] );
+      cb_xfer = CkCallback( CkIndex_Discretization::from_complete(), thisProxy[thisIndex] );
     }
 
-    thisProxy[ thisIndex ].wait4transfer();
-
-    m_transfer_complete = cb;
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (fromMesh == m_meshid) {
@@ -371,9 +368,9 @@ Discretization::transfer(
   m_ndst = 0;
 }
 
-void Discretization::transfer_complete()
+void Discretization::to_complete()
 // *****************************************************************************
-//! Solution transfer completed (from ExaM2M)
+//! Solution transfer from background to overset mesh completed (from ExaM2M)
 //! \brief This is called by ExaM2M on the destination mesh when the
 //!   transfer completes. Since this is called only on the destination, we find
 //!   and notify the corresponding source of the completion.
@@ -382,22 +379,14 @@ void Discretization::transfer_complete()
   // Lookup the source disc and notify it of completion
   for (auto& t : m_transfer) {
     if (m_meshid == t.dst) {
-      m_disc[ t.src ][ thisIndex ].transfer_complete_from_dest();
+      m_disc[ t.src ][ thisIndex ].transfer_complete(0);
     }
   }
 
-  // Call m_transfer_complete from neighbor chares
-  if (m_nodeCommMap.empty())
-   all_transfers_complete();
-  else
-    for (const auto& [c,n] : m_nodeCommMap) {
-      thisProxy[c].comxfer();
-    }
-
-  ownxfer_complete();
+  thisProxy[ thisIndex ].transfer_complete(0);
 }
 
-void Discretization::revtransfer_complete()
+void Discretization::from_complete()
 // *****************************************************************************
 //! Solution transfer from overset to background mesh completed (from ExaM2M)
 //! \brief This is called by ExaM2M on the destination mesh when the
@@ -408,51 +397,23 @@ void Discretization::revtransfer_complete()
   // Lookup the source disc and notify it of completion
   for (auto& t : m_transfer) {
     if (m_meshid == t.src) {
-      m_disc[ t.dst ][ thisIndex ].transfer_complete_from_dest();
+      m_disc[ t.dst ][ thisIndex ].transfer_complete(1);
     }
   }
 
-  // Call m_transfer_complete from neighbor chares
-  if (m_nodeCommMap.empty())
-   all_transfers_complete();
-  else
-    for (const auto& [c,n] : m_nodeCommMap) {
-      thisProxy[c].comxfer();
-    }
-
-  ownxfer_complete();
+  thisProxy[ thisIndex ].transfer_complete(1);
 }
 
-void
-Discretization::comxfer()
+void Discretization::transfer_complete( std::size_t dirn )
 // *****************************************************************************
-//  Check nodal solution transfers on chare-boundaries
-//! \details This function checks if all neighboring chares have completed
-//!   solution transfers.
+//! Solution transfer completed
+//! \note Single exit point after solution transfer between meshes
 // *****************************************************************************
 {
-  if (++m_nxfer == m_nodeCommMap.size()) {
-    m_nxfer = 0;
-    comxfer_complete();
-  }
-}
-
-void Discretization::transfer_complete_from_dest()
-// *****************************************************************************
-//! Solution transfer completed (from dest Discretization)
-//! \details Called on the source only by the destination when a transfer step
-//!   completes.
-// *****************************************************************************
-{
-  m_transfer_complete.send();
-}
-
-void Discretization::all_transfers_complete()
-// *****************************************************************************
-//! Solution transfer completed for all neighboring chares
-// *****************************************************************************
-{
-  m_transfer_complete.send();
+  std::vector< std::size_t > vdirn{ dirn };
+  contribute( vdirn, CkReduction::sum_ulong,
+    CkCallback(CkReductionTarget(Transporter,solutionTransferred),
+    m_transporter) );
 }
 
 std::vector< std::size_t >

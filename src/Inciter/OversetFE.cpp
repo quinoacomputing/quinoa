@@ -95,7 +95,8 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_movedmesh( 0 ),
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
-  m_nodeblockidc()
+  m_nodeblockidc(),
+  m_ixfer(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -576,37 +577,24 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   d->Voln() = d->Vol();
 
   // Initiate solution transfer (if coupled)
-  transfer();
+  transferSol();
 }
 
 void
-OversetFE::transfer()
+OversetFE::transferSol()
 // *****************************************************************************
 // Transfer solution to other solver and mesh if coupled
 // *****************************************************************************
 {
   // Set up transfer-flags for receiving mesh
-  setTransferFlags(0);
+  if (m_ixfer == 1) {
+    applySolTransfer(0);
+  }
+  setTransferFlags(m_ixfer);
+  ++m_ixfer;
 
   // Initiate IC transfer (if coupled)
-  Disc()->transfer( m_uc, 0,
-    CkCallback(CkIndex_OversetFE::transferOtoB(), thisProxy[thisIndex]) );
-}
-
-void
-OversetFE::transferOtoB()
-// *****************************************************************************
-// Transfer solution from O to B
-// *****************************************************************************
-{
-  // Do corrections in solution based on incoming transfer
-  applySolTransfer(0);
-
-  // Set up transfer-flags for receiving mesh
-  setTransferFlags(1);
-
-  // Initiate IC reverse-transfer (if coupled)
-  Disc()->transfer( m_uc, 1,
+  Disc()->transfer( m_uc, m_ixfer-1,
     CkCallback(CkIndex_OversetFE::lhs(), thisProxy[thisIndex]) );
 }
 
@@ -620,6 +608,7 @@ OversetFE::lhs()
 {
   // Do corrections in solution based on incoming transfer
   applySolTransfer(1);
+  m_ixfer = 0;
 
   // No need for LHS in OversetFE
 
@@ -1158,24 +1147,16 @@ OversetFE::solve()
     m_un = m_u;
   }
 
-  // Solve the sytem
-  if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
+  // Explicit time-stepping using RK3
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  for (std::size_t i=0; i<m_u.nunk(); ++i) {
+    // time-step
+    auto dtp = d->Dt();
+    if (steady) dtp = m_dtp[i];
 
-    // Advance solution, converging to steady state
-    for (std::size_t i=0; i<m_u.nunk(); ++i)
-      for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c) = m_un(i,c) + m_blank[i]*rkcoef[m_stage]*m_dtp[i] * m_rhs(i,c)
-          / d->Vol()[i];
-
-  } else {
-
-    auto adt = rkcoef[m_stage] * d->Dt();
-
-    // Advance unsteady solution
-    for (std::size_t i=0; i<m_u.nunk(); ++i)
-      for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        m_u(i,c) = m_un(i,c) + m_blank[i] * adt * m_rhs(i,c) / d->Vol()[i];
-
+    for (ncomp_t c=0; c<m_u.nprop(); ++c)
+      m_u(i,c) = m_un(i,c) + m_blank[i] * rkcoef[m_stage] * dtp * m_rhs(i,c)
+        / d->Vol()[i];
   }
 
   // Apply boundary-conditions
@@ -1240,7 +1221,8 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
   // Normals need to be recomputed if overset mesh has been moved
   if (m_movedmesh) thisProxy[ thisIndex ].wait4norm();
 
-  transfer();
+  // Start solution transfer
+  transferSol();
 }
 //! [Refine]
 

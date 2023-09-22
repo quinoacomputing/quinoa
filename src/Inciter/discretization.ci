@@ -47,11 +47,9 @@ module discretization {
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
       entry void transferInit();
-      entry void transfer_complete();
-      entry void revtransfer_complete();
-      entry void transfer_complete_from_dest();
-      entry void comxfer();
-      entry void all_transfers_complete();
+      entry void transfer_complete(std::size_t dirn);
+      entry void to_complete();
+      entry void from_complete();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
@@ -59,14 +57,8 @@ module discretization {
       entry void wait4vol() {
         when ownvol_complete(), comvol_complete() serial "vol" { totalvol(); } }
 
-      entry void wait4transfer() {
-        when ownxfer_complete(), comxfer_complete() serial "xfer"
-        { all_transfers_complete(); } }
-
       entry void ownvol_complete();
       entry void comvol_complete();
-      entry void ownxfer_complete();
-      entry void comxfer_complete();
     }
 
   } // inciter::

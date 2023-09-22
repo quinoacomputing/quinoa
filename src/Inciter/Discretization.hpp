@@ -129,20 +129,14 @@ class Discretization : public CBase_Discretization {
       std::size_t dirn,
       CkCallback cb );
 
-    //! Solution transfer completed (from ExaM2M)
-    void transfer_complete();
+    //! Solution transfer from background to overset mesh completed (from ExaM2M)
+    void to_complete();
 
     //! Solution transfer from overset to background mesh completed (from ExaM2M)
-    void revtransfer_complete();
+    void from_complete();
 
-    //! Check nodal solution transfers on chare-boundaries
-    void comxfer();
-
-    //! Solution transfer completed (from dest Discretization)
-    void transfer_complete_from_dest();
-
-    //! Solution transfer completed for all neighboring chares
-    void all_transfers_complete();
+    //! Solution transfer completed
+    void transfer_complete( std::size_t dirn );
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(
@@ -435,7 +429,6 @@ class Discretization : public CBase_Discretization {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_meshid;
-      p | m_transfer_complete;
       p | m_transfer;
       p | m_mytransfer;
       p | m_disc;
@@ -503,9 +496,6 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh ID
     std::size_t m_meshid;
-    //! \brief Charm++ callback of the function to call after a mesh-to-mesh
-    //!   solution transfer is complete
-    CkCallback m_transfer_complete;
     //! Solution/mesh transfer (coupling) information coordination propagation
     //! \details This has the same size with the same src/dst information on
     //!   all solvers.

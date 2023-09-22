@@ -64,6 +64,7 @@ Transporter::Transporter() :
   m_meshid(),
   m_ncit( m_nchare.size(), 0 ),
   m_nload( 0 ),
+  m_ntrans( 0 ),
   m_npart( 0 ),
   m_nstat( 0 ),
   m_ndisc( 0 ),
@@ -1388,16 +1389,21 @@ Transporter::boxvol( tk::real* meshdata, int n )
 }
 
 void
-Transporter::solutionTransferred( std::size_t summeshid )
+Transporter::solutionTransferred( std::size_t sumtransfertype )
 // *****************************************************************************
 // Reduction target broadcasting to Schemes after mesh transfer
-//! \param[in] summeshid mesh id summed across the distributed mesh
+//! \param[in] sumtransfertype Indicator of type of transfer summed over meshes
 // *****************************************************************************
 {
-  // extract summed mesh id from vector
-  auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
-
-  m_scheme[meshid].bcast< Scheme::lhs >();
+  if (++m_ntrans == m_nelem.size()) {    // all meshes have been loaded
+    m_ntrans = 0;
+    if (sumtransfertype == 0) {
+      for (auto& m : m_scheme) m.bcast< Scheme::transferSol >();
+    }
+    else {
+      for (auto& m : m_scheme) m.bcast< Scheme::lhs >();
+    }
+  }
 }
 
 void

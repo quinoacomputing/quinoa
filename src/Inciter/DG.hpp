@@ -201,6 +201,9 @@ class DG : public CBase_DG {
     //! Unused in DG
     void resized() {}
 
+    //! (no-op)
+    void transferSol() {}
+
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 

@@ -98,6 +98,9 @@ class OversetFE : public CBase_OversetFE {
     //! Receive total box IC volume and set conditions in box
     void box( tk::real v, const std::vector< tk::real >& blkvols );
 
+    //! Transfer solution to other solver and mesh if coupled
+    void transferSol();
+
     // Start time stepping
     void start();
 
@@ -106,9 +109,6 @@ class OversetFE : public CBase_OversetFE {
 
     //! Compute left-hand side of transport equations
     void lhs();
-
-    //! Transfer solution from O to B
-    void transferOtoB();
 
     //! Receive contributions to duual-face normals on chare boundaries
     void comdfnorm(
@@ -240,6 +240,7 @@ class OversetFE : public CBase_OversetFE {
       p | m_nusermeshblk;
       p | m_nodeblockid;
       p | m_nodeblockidc;
+      p | m_ixfer;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -367,6 +368,8 @@ class OversetFE : public CBase_OversetFE {
     //! \details Key: mesh block id, value: set of global node ids for nodes
     //!   in this mesh block.
     std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockidc;
+    //! Counter for two-way transfer
+    int m_ixfer;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -426,9 +429,6 @@ class OversetFE : public CBase_OversetFE {
 
     //! Compute time step size
     void dt();
-
-    //! Transfer solution to other solver and mesh if coupled
-    void transfer();
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();

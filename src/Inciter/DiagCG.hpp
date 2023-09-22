@@ -104,6 +104,9 @@ class DiagCG : public CBase_DiagCG {
     //! Setup node-neighborhood (no-op)
     void nodeNeighSetup() {}
 
+    //! (no-op)
+    void transferSol() {}
+
     //! Setup: query boundary conditions, output mesh, etc.
     void setup();
 
