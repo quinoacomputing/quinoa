@@ -369,7 +369,7 @@ class OversetFE : public CBase_OversetFE {
     //!   in this mesh block.
     std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockidc;
     //! Counter for two-way transfer
-    int m_ixfer;
+    std::size_t m_ixfer;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
