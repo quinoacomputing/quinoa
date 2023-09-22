@@ -20,7 +20,6 @@ inciter
   end
 
   compflow
-    depvar u
     physics euler
     problem nl_energy_growth
     alpha 0.25
@@ -45,7 +44,7 @@ inciter
    dtref true
    dtref_uniform true
    dtfreq 5
-   refvar u end
+   refvar a end
    error jump
   end
 

@@ -153,7 +153,8 @@ Sorter::setup( std::size_t npoin )
           Assert( bin < N, "Will index out of number of chares" );
           auto& b = chbnd[ static_cast< int >( bin ) ];
           b.get< tag::node >().insert( g );
-          if (scheme == ctr::SchemeType::ALECG) {
+          if (scheme == ctr::SchemeType::ALECG ||
+            scheme == ctr::SchemeType::OversetFE) {
             auto h = m_ginpoel[ mark + tk::lpofa[ f ][ tk::lpoet[n][1] ] ];
             b.get< tag::edge >().insert( { std::min(g,h), std::max(g,h) } );
           }

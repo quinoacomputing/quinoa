@@ -67,13 +67,13 @@ DG::DG( const CProxy_Discretization& disc,
   m_nnodalExtrema( 0 ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::rdof >()*
-       g_inputdeck.get< tag::component >().nprop() ),
+       g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(), g_inputdeck.get< tag::discr, tag::rdof >()*
     g_dgpde[Disc()->MeshId()].nprim() ),
   m_lhs( m_u.nunk(),
          g_inputdeck.get< tag::discr, tag::ndof >()*
-         g_inputdeck.get< tag::component >().nprop() ),
+         g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_mtInv(
     tk::invMassMatTaylorRefEl(g_inputdeck.get< tag::discr, tag::rdof >()) ),
@@ -90,12 +90,14 @@ DG::DG( const CProxy_Discretization& disc,
   m_pc(),
   m_ndofc(),
   m_initial( 1 ),
-  m_uElemfields(m_u.nunk(), g_inputdeck.get< tag::component >().nprop()),
-  m_pElemfields(m_u.nunk(),
-    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
-  m_uNodefields(m_npoin, g_inputdeck.get< tag::component >().nprop()),
-  m_pNodefields(m_npoin,
-    m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
+  m_uElemfields( m_u.nunk(),
+                 g_inputdeck.get< tag::component >().nprop(Disc()->MeshId()) ),
+  m_pElemfields( m_u.nunk(),
+                 m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
+  m_uNodefields( m_npoin,
+                 g_inputdeck.get< tag::component >().nprop(Disc()->MeshId()) ),
+  m_pNodefields( m_npoin,
+                 m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ),
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_outmesh(),
@@ -117,10 +119,12 @@ DG::DG( const CProxy_Discretization& disc,
   g_dgpde[Disc()->MeshId()].numEquationDofs(m_numEqDof);
 
   // Allocate storage for the vector of nodal extrema
-  m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*g_inputdeck.get< tag::component >().nprop() ) );
-  m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()));
+  m_uNodalExtrm.resize( Disc()->Bid().size(),
+    std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
+    g_inputdeck.get< tag::component >().nprop(Disc()->MeshId()) ) );
+  m_pNodalExtrm.resize( Disc()->Bid().size(),
+    std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
+    m_p.nprop() / g_inputdeck.get< tag::discr, tag::rdof >() ) );
 
   // Initialization for the buffer vector of nodal extrema
   resizeNodalExtremac();
@@ -1087,7 +1091,8 @@ DG::lim()
               m_pNodalExtrm, m_mtInv, m_u, m_p, m_shockmarker );
 
     if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
-      g_dgpde[d->MeshId()].Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
+      g_dgpde[d->MeshId()].CPL(m_p, myGhosts()->m_geoElem,
+        myGhosts()->m_inpoel, myGhosts()->m_coord, m_u,
         myGhosts()->m_fd.Esuel().size()/4);
   }
 
@@ -1386,7 +1391,7 @@ DG::solve( tk::real newdt )
 
   g_dgpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
-    m_u, m_p, m_ndof, m_rhs );
+    m_u, m_p, m_ndof, d->Dt(), m_rhs );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
@@ -1436,7 +1441,7 @@ DG::solve( tk::real newdt )
     // Compute diagnostics, e.g., residuals
     auto diag_computed = m_diag.compute( *d,
       m_u.nunk()-myGhosts()->m_fd.Esuel().size()/4, myGhosts()->m_geoElem,
-      m_ndof, m_u );
+      m_ndof, m_u, m_un );
 
     // Continue to mesh refinement (if configured)
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
@@ -1696,6 +1701,17 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
+  // Add inverse deformation gradient tensor to element-centered field output
+  auto defgrad = g_dgpde[d->MeshId()].cellAvgDeformGrad(m_u,
+    myGhosts()->m_fd.Esuel().size()/4);
+  if (!defgrad[0].empty()) {
+    for (const auto& [child,parent] : addedTets)
+      for (auto& gij : defgrad)
+        gij[child] = static_cast< tk::real >(gij[parent]);
+    for (const auto& gij : defgrad)
+      elemfields.push_back(gij);
+  }
+
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
   auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
@@ -1709,6 +1725,12 @@ DG::writeFields(
 
   elemfieldnames.push_back( "shock_marker" );
 
+  if (!defgrad[0].empty()) {
+    for (std::size_t i=1; i<=3; ++i)
+      for (std::size_t j=1; j<=3; ++j)
+        elemfieldnames.push_back("g"+std::to_string(i)+std::to_string(j));
+  }
+
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
@@ -1716,7 +1738,9 @@ DG::writeFields(
   const auto& triinpoel = m_outmesh.triinpoel;
   d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            {}, {}, elemfields, nodefields, {}, {}, c );
+            {}, {}, elemfields, nodefields, {}, {} );
+
+  c.send();
 }
 
 void

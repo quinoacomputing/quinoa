@@ -14,12 +14,12 @@
 #define BCFunctions_h
 
 #include "FunctionPrototypes.hpp"
+#include "MiscMultiMatFns.hpp"
 
 namespace inciter {
 
   //! \brief Boundary state function providing the left and right state of a
   //!   face at symmetry boundaries
-  //! \param[in] system Equation system index
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
   //! \param[in] fn Unit face normal
@@ -29,14 +29,15 @@ namespace inciter {
   //!   left or right state is the vector of conserved quantities, followed by
   //!   the vector of primitive quantities appended to it.
   static tk::StateFn::result_type
-  symmetry( ncomp_t system, ncomp_t ncomp,
+  symmetry( ncomp_t ncomp,
             const std::vector< EOS >&,
             const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
             const std::array< tk::real, 3 >& fn )
   {
-    const auto nmat =
-      g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+    auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
+    const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+      tag::matidxmap >().template get< tag::solidx >();
 
     Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
             "state vector" );
@@ -63,6 +64,25 @@ namespace inciter {
       ur[volfracIdx(nmat, k)] = ul[volfracIdx(nmat, k)];
       ur[densityIdx(nmat, k)] = ul[densityIdx(nmat, k)];
       ur[energyIdx(nmat, k)] = ul[energyIdx(nmat, k)];
+      if (solidx[k] > 0) {
+        // Internal inverse deformation tensor
+        std::array< std::array< tk::real, 3 >, 3 > g;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            g[i][j] = ul[deformIdx(nmat,solidx[k],i,j)];
+        // Make reflection matrix
+        std::array< std::array< tk::real, 3 >, 3 >
+        reflectionMat{{{1,0,0}, {0,1,0}, {0,0,1}}};
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            reflectionMat[i][j] -= 2*fn[i]*fn[j];
+        // Reflect g
+        g = tk::reflectTensor(g, reflectionMat);
+        // Copy g into ur
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            ur[deformIdx(nmat,solidx[k],i,j)] = g[i][j];
+      }
     }
     ur[momentumIdx(nmat, 0)] = rho * v1r;
     ur[momentumIdx(nmat, 1)] = rho * v2r;
@@ -88,7 +108,6 @@ namespace inciter {
 
   //! \brief Boundary state function providing the left and right state of a
   //!   face at farfield outlet boundaries
-  //! \param[in] system Equation system index
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
   //! \param[in] fn Unit face normal
@@ -103,18 +122,16 @@ namespace inciter {
   //!   cell and we obtain the ghost cell state from the internal cell.
   //! \note The function signature must follow tk::StateFn
   static tk::StateFn::result_type
-  farfieldOutlet( ncomp_t system,
-                  ncomp_t ncomp,
+  farfieldOutlet( ncomp_t ncomp,
                   const std::vector< EOS >& mat_blk,
                   const std::vector< tk::real >& ul,
                   tk::real, tk::real, tk::real, tk::real,
                   const std::array< tk::real, 3 >& fn )
   {
-    const auto nmat =
-      g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+    auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
 
     auto fp =
-      g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >()[ system ];
+      g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >();
 
     Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
             "state vector" );
@@ -141,10 +158,16 @@ namespace inciter {
     auto Ma = vn / a;
 
     if(Ma >= 0 && Ma < 1) {         // Subsonic outflow
-      for (std::size_t k=0; k<nmat; ++k)
+      for (std::size_t k=0; k<nmat; ++k) {
+        auto gk = getDeformGrad(nmat, k, ul);
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            gk[i][j] /= ul[volfracIdx(nmat, k)];
         ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
         mat_blk[k].compute< EOS::totalenergy >(
-          ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
+          ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp,
+          gk );
+      }
 
       // Internal cell primitive quantities using the separately reconstructed
       // primitive quantities. This is used to get ghost state for primitive
@@ -170,7 +193,7 @@ namespace inciter {
   //!   left or right state is the vector of conserved quantities, followed by
   //!   the vector of primitive quantities appended to it.
   static tk::StateFn::result_type
-  extrapolate( ncomp_t, ncomp_t,
+  extrapolate( ncomp_t,
                const std::vector< EOS >&,
                const std::vector< tk::real >& ul,
                tk::real, tk::real, tk::real, tk::real,

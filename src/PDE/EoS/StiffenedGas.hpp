@@ -6,7 +6,7 @@
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Stiffened-gas equation of state
-  \details   This file defines functions for the stiffened gas equation of
+  \details   This file declares functions for the stiffened gas equation of
              state for the compressible flow equations.
 */
 // *****************************************************************************
@@ -41,13 +41,31 @@ class StiffenedGas {
                        tk::real w,
                        tk::real arhoE,
                        tk::real alpha=1.0,
-                       std::size_t imat=0 ) const;
+                       std::size_t imat=0,
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}}) const;
+
+    //! \brief Calculate the Cauchy stress tensor from the material density,
+    //!   momentum, and total energy
+    std::array< std::array< tk::real, 3 >, 3 >
+    CauchyStress(
+      tk::real arho,
+      tk::real u,
+      tk::real v,
+      tk::real w,
+      tk::real arhoE,
+      tk::real alpha,
+      std::size_t imat,
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
 
     //! Calculate speed of sound from the material density and material pressure
     tk::real soundspeed( tk::real arho,
                          tk::real apr,
                          tk::real alpha=1.0,
-                         std::size_t imat=0 ) const;
+                         std::size_t imat=0,
+      tk::real asigma_nn=0.0,
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
+      const std::array< tk::real, 3 >& adefgradn={{}},
+      const std::array< tk::real, 3 >& asigman={{}} ) const;
 
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
@@ -55,7 +73,8 @@ class StiffenedGas {
                           tk::real u,
                           tk::real v,
                           tk::real w,
-                          tk::real pr ) const;
+                          tk::real pr,
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
@@ -64,13 +83,20 @@ class StiffenedGas {
                           tk::real v,
                           tk::real w,
                           tk::real arhoE,
-                          tk::real alpha=1.0 ) const;
+                          tk::real alpha=1.0,
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(
       tk::real min,
       tk::real,
       tk::real ) const;
+
+    //! Compute the reference density
+    tk::real refDensity() const { return density(refPressure(), 300.0); }
+
+    //! Compute the reference pressure
+    tk::real refPressure() const { return 1.0e5; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

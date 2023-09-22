@@ -21,30 +21,18 @@ namespace inciter {
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
-//! Return field names to be output to file
-std::vector< std::string > CompFlowFieldNames();
-
-//! Return field output going to file
-std::vector< std::vector< tk::real > > 
-CompFlowFieldOutput( ncomp_t system,
-                     const std::vector< EOS >& mat_blk,
-                     std::size_t nunk,
-                     std::size_t rdof,
-                     const tk::Fields& U );
-
 //! Return surface field names to be output to file
 std::vector< std::string > CompFlowSurfNames();
 
 //! Return surface field output going to file
 std::vector< std::vector< tk::real > >
-CompFlowSurfOutput( ncomp_t system,
-                    const std::vector< EOS >& mat_blk,
+CompFlowSurfOutput( const std::vector< EOS >& mat_blk,
                     const std::map< int, std::vector< std::size_t > >& bnd,
                     const tk::Fields& U );
 
 //! Return element surface field output (on triangle faces) going to file
 std::vector< std::vector< tk::real > >
-CompFlowElemSurfOutput( ncomp_t,
+CompFlowElemSurfOutput(
   const std::vector< EOS >& mat_blk,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
@@ -55,8 +43,7 @@ std::vector< std::string > CompFlowHistNames();
 
 //! Return time history field output evaluated at time history points
 std::vector< std::vector< tk::real > >
-CompFlowHistOutput( ncomp_t system,
-                    const std::vector< EOS >& mat_blk,
+CompFlowHistOutput( const std::vector< EOS >& mat_blk,
                     const std::vector< HistData >& h,
                     const std::vector< std::size_t >& inpoel,
                     const tk::Fields& U );

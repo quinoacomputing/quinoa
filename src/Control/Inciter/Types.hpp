@@ -293,36 +293,43 @@ using meshblock = tk::TaggedTuple< brigand::list<
 
 //! Initial condition configuration
 using ic = tk::TaggedTuple< brigand::list<
-    tag::density,       std::vector<
-                          std::vector< kw::density::info::expect::type > >
-  , tag::materialid,    std::vector<
-                          std::vector< kw::materialid::info::expect::type > >
-  , tag::velocity,      std::vector<
-                          std::vector< kw::velocity::info::expect::type > >
-  , tag::pressure,      std::vector<
-                          std::vector< kw::pressure::info::expect::type > >
-  , tag::energy,        std::vector<
-                          std::vector< kw::energy::info::expect::type > >
-  , tag::temperature,   std::vector<
-                          std::vector< kw::temperature::info::expect::type > >
-  , tag::box,           std::vector< std::vector< box > >
-  , tag::meshblock,     std::vector< std::vector< meshblock > >
+    tag::density,       std::vector< kw::density::info::expect::type >
+  , tag::materialid,    std::vector< kw::materialid::info::expect::type >
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
+  , tag::pressure,      std::vector< kw::pressure::info::expect::type >
+  , tag::energy,        std::vector< kw::energy::info::expect::type >
+  , tag::temperature,   std::vector< kw::temperature::info::expect::type >
+  , tag::box,           std::vector< box >
+  , tag::meshblock,     std::vector< meshblock >
 > >;
 
 //! Boundary conditions configuration (list of side sets for each eq system)
 using bc = tk::TaggedTuple< brigand::list<
-    tag::bcdir,             std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcsym,             std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcinlet,           std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcoutlet,          std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcfarfield,        std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
-  , tag::bcextrapolate,     std::vector< std::vector<
-                              kw::sideset::info::expect::type > >
+    tag::bcdir,          std::vector< kw::sideset::info::expect::type >
+  , tag::bcsym,          std::vector< kw::sideset::info::expect::type >
+  , tag::bcinlet,        std::vector< kw::sideset::info::expect::type >
+  , tag::bcoutlet,       std::vector< kw::sideset::info::expect::type >
+  , tag::bcfarfield,     std::vector< kw::sideset::info::expect::type >
+  , tag::bcextrapolate,  std::vector< kw::sideset::info::expect::type >
+> >;
+
+//! Stagnation points parameters storage
+using StagnationParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector< kw::point::info::expect::type >
+  , tag::radius,        std::vector< kw::radius::info::expect::type >
+> >;
+
+//! Skip points parameters storage
+using SkipParameters = tk::TaggedTuple< brigand::list<
+    tag::point,         std::vector< kw::point::info::expect::type >
+  , tag::radius,        std::vector< kw::radius::info::expect::type >
+> >;
+
+//! Sponge parameters storage
+using SpongeParameters = tk::TaggedTuple< brigand::list<
+    tag::sideset,       std::vector< kw::sideset::info::expect::type >
+  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
+  , tag::pressure,      std::vector< kw::pressure::info::expect::type >
 > >;
 
 //! Solver coupling
@@ -332,61 +339,25 @@ using couple = tk::TaggedTuple< brigand::list<
 
 //! Mesh assignment and configuration
 using mesh = tk::TaggedTuple< brigand::list<
-    tag::id,          std::vector< std::size_t >
-  , tag::filename,    std::vector< std::string >
-  , tag::location,    std::vector<
-                        std::vector< kw::location::info::expect::type > >
-  , tag::orientation, std::vector<
-                        std::vector< kw::orientation::info::expect::type > >
-  , tag::reference,   std::vector< char >
-> >;
-
-//! Stagnation points parameters storage
-using StagnationParameters = tk::TaggedTuple< brigand::list<
-    tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
-> >;
-
-//! Skip points parameters storage
-using SkipParameters = tk::TaggedTuple< brigand::list<
-    tag::point,         std::vector<
-                          std::vector< kw::point::info::expect::type > >
-  , tag::radius,        std::vector<
-                          std::vector< kw::radius::info::expect::type > >
-> >;
-
-//! Sponge parameters storage
-using SpongeParameters = tk::TaggedTuple< brigand::list<
-    tag::sideset,       std::vector< std::vector<
-                          kw::sideset::info::expect::type > >
-  , tag::velocity,      std::vector< std::vector<
-                          kw::velocity::info::expect::type > >
-  , tag::pressure,      std::vector< std::vector<
-                          kw::pressure::info::expect::type > >
+    tag::filename,    std::vector< std::string >
 > >;
 
 //! Transport equation parameters storage
 using TransportPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
-  , tag::physics,       std::vector< PhysicsType >
+  , tag::physics,       PhysicsType
   , tag::problem,       std::vector< ProblemType >
-  , tag::diffusivity,   std::vector< std::vector<
-                        kw::pde_diffusivity::info::expect::type > >
-  , tag::lambda,        std::vector< std::vector<
-                        kw::pde_lambda::info::expect::type > >
-  , tag::u0,            std::vector< std::vector<
-                        kw::pde_u0::info::expect::type > >
+  , tag::diffusivity,   std::vector< kw::pde_diffusivity::info::expect::type >
+  , tag::lambda,        std::vector< kw::pde_lambda::info::expect::type >
+  , tag::u0,            std::vector< kw::pde_u0::info::expect::type >
   , tag::bc,            bc
-  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
+  , tag::bctimedep,     std::vector< time_dependent_bc >
   , tag::sponge,        SpongeParameters
   //! interface compression toggle
-  , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
+  , tag::intsharp,      kw::intsharp::info::expect::type
   //! interface compression parameter
-  , tag::intsharp_param,
-                      std::vector< kw::intsharp_param::info::expect::type >
+  , tag::intsharp_param, kw::intsharp_param::info::expect::type
 > >;
 
 //! Material configuration
@@ -433,14 +404,14 @@ using material = tk::TaggedTuple< brigand::list<
 using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
-  , tag::physics,       std::vector< PhysicsType >
+  , tag::transfer,      std::vector< Transfer >
+  , tag::physics,       PhysicsType
   , tag::problem,       std::vector< ProblemType >
-  , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
-  , tag::farfield_density,  std::vector< kw::density::info::expect::type >
-  , tag::farfield_velocity, std::vector< std::vector<
-                              kw::velocity::info::expect::type > >
+  , tag::farfield_pressure, kw::pressure::info::expect::type
+  , tag::farfield_density,  kw::density::info::expect::type
+  , tag::farfield_velocity, std::vector< kw::velocity::info::expect::type >
   , tag::bc,            bc
-  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
+  , tag::bctimedep,     std::vector< time_dependent_bc >
   , tag::sponge,        SpongeParameters
   , tag::ic,            ic
   //! Stagnation boundary condition configuration storage
@@ -448,30 +419,29 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   //! Skip boundary condition configuration storage
   , tag::skip,          SkipParameters
   //! System FCT character
-  , tag::sysfct,        std::vector< int >
+  , tag::sysfct,        int
   //! Indices of system-FCT scalar components considered as a system
-  , tag::sysfctvar,     std::vector<
-                          std::vector< kw::sysfctvar::info::expect::type > >
+  , tag::sysfctvar,     std::vector< kw::sysfctvar::info::expect::type >
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
+  , tag::alpha,         kw::pde_alpha::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::beta,          std::vector< kw::pde_beta::info::expect::type >
+  , tag::beta,          kw::pde_beta::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betax,         std::vector< kw::pde_betax::info::expect::type >
+  , tag::betax,         kw::pde_betax::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betay,         std::vector< kw::pde_betay::info::expect::type >
+  , tag::betay,         kw::pde_betay::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betaz,         std::vector< kw::pde_betaz::info::expect::type >
+  , tag::betaz,         kw::pde_betaz::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::r0,            std::vector< kw::pde_r0::info::expect::type >
+  , tag::r0,            kw::pde_r0::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::ce,            std::vector< kw::pde_ce::info::expect::type >
+  , tag::ce,            kw::pde_ce::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::kappa,         std::vector< kw::pde_kappa::info::expect::type >
+  , tag::kappa,         kw::pde_kappa::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::p0,            std::vector< kw::pde_p0::info::expect::type >
+  , tag::p0,            kw::pde_p0::info::expect::type
     //! Materials block
-  , tag::material,      std::vector< std::vector< material > >
+  , tag::material,      std::vector< material >
     //! Materials index/EoS map
   , tag::matidxmap,     tk::TaggedTuple< brigand::list<
       tag::eosidx,      std::vector< std::size_t >,
@@ -486,36 +456,35 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
 using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     tag::depvar,        std::vector< char >
   , tag::mesh,          mesh
-  , tag::physics,       std::vector< PhysicsType >
+  , tag::physics,       PhysicsType
   , tag::problem,       std::vector< ProblemType >
   , tag::bc,            bc
-  , tag::bctimedep,     std::vector< std::vector< time_dependent_bc > >
+  , tag::bctimedep,     std::vector< time_dependent_bc >
   , tag::ic,            ic
-  , tag::farfield_pressure, std::vector< kw::pressure::info::expect::type >
-  , tag::farfield_density,  std::vector< kw::density::info::expect::type >
-  , tag::farfield_velocity, std::vector< std::vector<
-                              kw::velocity::info::expect::type > >
+  , tag::farfield_pressure, kw::pressure::info::expect::type
+  , tag::farfield_density,  kw::density::info::expect::type
+  , tag::farfield_velocity, std::vector< kw::velocity::info::expect::type >
   , tag::sponge,        SpongeParameters
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::alpha,         std::vector< kw::pde_alpha::info::expect::type >
+  , tag::alpha,         kw::pde_alpha::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::beta,          std::vector< kw::pde_beta::info::expect::type >
+  , tag::beta,          kw::pde_beta::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betax,         std::vector< kw::pde_betax::info::expect::type >
+  , tag::betax,         kw::pde_betax::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betay,         std::vector< kw::pde_betay::info::expect::type >
+  , tag::betay,         kw::pde_betay::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::betaz,         std::vector< kw::pde_betaz::info::expect::type >
+  , tag::betaz,         kw::pde_betaz::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::r0,            std::vector< kw::pde_r0::info::expect::type >
+  , tag::r0,            kw::pde_r0::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::ce,            std::vector< kw::pde_ce::info::expect::type >
+  , tag::ce,            kw::pde_ce::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::kappa,         std::vector< kw::pde_kappa::info::expect::type >
+  , tag::kappa,         kw::pde_kappa::info::expect::type
     //! Parameter vector (for specific, e.g., verification problems)
-  , tag::p0,            std::vector< kw::pde_p0::info::expect::type >
+  , tag::p0,            kw::pde_p0::info::expect::type
     //! Materials block
-  , tag::material,      std::vector< std::vector< material > >
+  , tag::material,      std::vector< material >
     //! Materials index/EoS map
     //!   The following data structure is used to index into the correct
     //!   material vector entry. This is done using the following three maps:
@@ -524,21 +493,24 @@ using MultiMatPDEParameters = tk::TaggedTuple< brigand::list<
     //!   2. matidx: This vector provides the material-index (value) inside the
     //!   vector<tag::material>[eosidx] block for the given user-specified
     //!   material id (index).
+    //!   3. solidx: This vector provides the solid-index (value) assigned to
+    //!   the given user-specified material id (index). It is 0 for fluids.
   , tag::matidxmap,     tk::TaggedTuple< brigand::list<
       tag::eosidx,      std::vector< std::size_t >,
-      tag::matidx,      std::vector< std::size_t > > >
+      tag::matidx,      std::vector< std::size_t >,
+      tag::solidx,      std::vector< std::size_t > > >
     //! number of materials
-  , tag::nmat,          std::vector< kw::nmat::info::expect::type >
+  , tag::nmat,          kw::nmat::info::expect::type
     //! pressure relaxation toggle
-  , tag::prelax,        std::vector< kw::prelax::info::expect::type >
+  , tag::prelax,        kw::prelax::info::expect::type
     //! pressure relaxation time scale
   , tag::prelax_timescale,
-                      std::vector< kw::prelax_timescale::info::expect::type >
+                        kw::prelax_timescale::info::expect::type
     //! interface compression toggle
-  , tag::intsharp,      std::vector< kw::intsharp::info::expect::type >
+  , tag::intsharp,      kw::intsharp::info::expect::type
     //! interface compression parameter
   , tag::intsharp_param,
-                      std::vector< kw::intsharp_param::info::expect::type >
+                        kw::intsharp_param::info::expect::type
     //! Flux function type
   , tag::flux,          std::vector< FluxType >
 > >;

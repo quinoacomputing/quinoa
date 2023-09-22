@@ -27,12 +27,11 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::TransportProblemGaussHump;
 
 std::vector< tk::real >
-TransportProblemGaussHump::initialize( ncomp_t system, ncomp_t ncomp,
+TransportProblemGaussHump::initialize( ncomp_t ncomp,
   const std::vector< EOS >&, tk::real x, tk::real y, tk::real,
   tk::real t )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,t) for all components
-//! \param[in] system Equation system index
 //! \param[in] ncomp Number of components in this transport equation system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
@@ -40,7 +39,7 @@ TransportProblemGaussHump::initialize( ncomp_t system, ncomp_t ncomp,
 //! \return Values of all components evaluated at (x,y,t)
 // *****************************************************************************
 {
-  const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0, t );
+  const auto vel = prescribedVelocity( ncomp, x, y, 0.0, t );
 
   std::vector< tk::real > s( ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c)
@@ -56,7 +55,7 @@ TransportProblemGaussHump::initialize( ncomp_t system, ncomp_t ncomp,
 }
 
 std::vector< std::array< tk::real, 3 > >
-TransportProblemGaussHump::prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real,
+TransportProblemGaussHump::prescribedVelocity( ncomp_t ncomp, tk::real,
                                                tk::real, tk::real, tk::real )
 // *****************************************************************************
 //! Assign prescribed velocity at a point

@@ -12,7 +12,6 @@ inciter
   scheme dg
 
   transport
-    depvar c
     physics advection
     problem slot_cyl
     bc_dirichlet

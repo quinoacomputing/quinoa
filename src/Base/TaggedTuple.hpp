@@ -155,12 +155,12 @@ class TaggedTuple{
     //! Convert bool and push back, converting from string, to vector of ints
     //! \param[in] value Value to convert and store
     template< typename Tag, typename... Tags >
-    void store_back_bool( const std::string& value ) noexcept {
+    void store_bool( const std::string& value ) noexcept {
       if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
       {
-        get< Tag, Tags... >().push_back( convert_bool( value ) );
+        get< Tag, Tags... >() = convert_bool( value );
       } else {
-        get< Tag >().push_back( convert_bool( value ) );
+        get< Tag >() = convert_bool( value );
       }
     }
 

@@ -1,0 +1,22 @@
+module m2mtransfer {
+
+  extern module transferdetails;
+
+  namespace exam2m {
+
+    readonly CProxy_M2MTransfer m2mtransferProxy;
+    readonly CollideHandle collideHandle;
+
+    class MeshData;
+
+    mainchare LibMain {
+      entry LibMain(CkArgMsg* msg);
+    };
+
+    group [migratable] M2MTransfer {
+      entry M2MTransfer();
+
+      entry void addMesh(CkArrayID p, int elem, CkCallback cb);
+    };
+  }
+};

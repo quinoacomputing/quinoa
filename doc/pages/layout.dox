@@ -420,8 +420,8 @@ a way that is invisible to client code.
 
 @subsection layout_input Quinoa::Walker input file used for the benchmark
 
-Note that walker is no longer part of Quinoa. But you can still browse its
-documentation at https://quinoacomputing.org/archive.
+Note that walker is no longer part of Quinoa. Walker's code can be pulled from
+Quinoa's git history.
 
 We will integrate for the duration of a 100,000 time steps a system of 100
 coupled non-linear stochastic differential equations (SDEs) whose statistically

@@ -62,18 +62,16 @@ class CompFlow {
 
   public:
     //! Constructor
-    //! \param[in] c Equation system index (among multiple systems configured)
-    explicit CompFlow( ncomp_t c ) :
+    explicit CompFlow() :
       m_physics(),
       m_problem(),
-      m_system( c ),
-      m_ncomp( g_inputdeck.get< tag::component, eq >().at(c) ),
+      m_ncomp( g_inputdeck.get< tag::component, eq >().at(0) ),
       m_riemann( compflowRiemannSolver(
-        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(m_system) ) )
+        g_inputdeck.get< tag::param, tag::compflow, tag::flux >().at(0) ) )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
-      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_system, m_bc,
+      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_bc,
         { dirichlet
         , symmetry
         , invalidBC         // Inlet BC not implemented
@@ -82,12 +80,12 @@ class CompFlow {
         , extrapolate } ) );
 
       // EoS initialization
-      const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >()[
-        m_system];
-      const auto& matidxmap = g_inputdeck.get< tag::param, eq, tag::matidxmap >
-        ();
+      const auto& matprop =
+        g_inputdeck.get< tag::param, eq, tag::material >();
+      const auto& matidxmap =
+        g_inputdeck.get< tag::param, eq, tag::matidxmap >();
       auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();
-      m_mat_blk.emplace_back(mateos, EqType::compflow, m_system, 0);
+      m_mat_blk.emplace_back(mateos, EqType::compflow, 0);
 
     }
 
@@ -128,7 +126,7 @@ class CompFlow {
       std::size_t nielem,
       std::vector< std::unordered_set< std::size_t > >& inbox ) const
     {
-      tk::BoxElems< eq >(m_system, geoElem, nielem, inbox);
+      tk::BoxElems< eq >(geoElem, nielem, inbox);
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -151,21 +149,21 @@ class CompFlow {
                 tk::real t,
                 const std::size_t nielem ) const
     {
-      tk::initialize( m_system, m_ncomp, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
       const auto& bgpreic = ic.get< tag::pressure >();
-      auto c_v = cv< eq >(m_system);
+      auto c_v = cv< eq >(0);
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
-        if (icbox.size() > m_system) {
+        if (icbox.size() > 0) {
           std::size_t bcnt = 0;
-          for (const auto& b : icbox[m_system]) {   // for all boxes
+          for (const auto& b : icbox) {   // for all boxes
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
               std::vector< tk::real > box
@@ -180,8 +178,8 @@ class CompFlow {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i) = 0.0;
               }
-              initializeBox<inciter::ctr::box>( m_system, m_mat_blk, 1.0, V_ex,
-                t, b, bgpreic[m_system][0], c_v, s );
+              initializeBox<inciter::ctr::box>( m_mat_blk, 1.0, V_ex,
+                t, b, bgpreic[0], c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -279,7 +277,7 @@ class CompFlow {
 
         // 2. boundary face contributions
         for (const auto& b : m_bc)
-          tk::bndLeastSqConservedVar_P0P1( m_system, m_ncomp,
+          tk::bndLeastSqConservedVar_P0P1( m_ncomp,
             m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second,
             P, U, rhs_ls, vars );
 
@@ -334,11 +332,11 @@ class CompFlow {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
         VertexBasedCompflow_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
           shockmarker);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_system, m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
+          m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
           uNodalExtrm, mtInv, flux, U, shockmarker);
     }
 
@@ -346,10 +344,21 @@ class CompFlow {
     //! \details This function computes the updated dofs for conservative
     //!   quantities based on the limited solution and is currently not used in
     //!   compflow.
-    void Correct_Conserv( const tk::Fields&,
-                          const tk::Fields&,
-                          tk::Fields&,
-                          std::size_t ) const {}
+    void CPL( const tk::Fields&,
+              const tk::Fields&,
+              const std::vector< std::size_t >&,
+              const tk::UnsMesh::Coords&,
+              tk::Fields&,
+              std::size_t ) const {}
+
+    //! Return cell-average deformation gradient tensor (no-op for compflow)
+    //! \details This function is a no-op in compflow.
+    std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+      const tk::Fields&,
+      std::size_t ) const
+    {
+      return {};
+    }
 
     //! Compute right hand side
     //! \param[in] t Physical time
@@ -362,6 +371,7 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
+    //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
               const tk::Fields& geoFace,
@@ -373,6 +383,7 @@ class CompFlow {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const tk::real dt,
               tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
@@ -403,28 +414,28 @@ class CompFlow {
       std::vector< std::vector< tk::real > > riemannLoc;
 
       // configure a no-op lambda for prescribed velocity
-      auto velfn = [this]( ncomp_t, ncomp_t, tk::real, tk::real, tk::real,
-        tk::real ){
-        return std::vector< std::array< tk::real, 3 > >( m_ncomp ); };
+      auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
+        return tk::VelFn::result_type(); };
 
       // compute internal surface flux integrals
-      tk::surfInt( m_system, 1, m_mat_blk, t, ndof, rdof, inpoel,
+      std::vector< std::size_t > solidx(1, 0);
+      tk::surfInt( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   R, vriem, riemannLoc, riemannDeriv );
+                   dt, R, vriem, riemannLoc, riemannDeriv );
 
       // compute optional source term
-      tk::srcInt( m_system, m_mat_blk, t, ndof, fd.Esuel().size()/4,
+      tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4,
                   inpoel, coord, geoElem, Problem::src, ndofel, R );
 
       if(ndof > 1)
         // compute volume integrals
-        tk::volInt( m_system, 1, t, m_mat_blk, ndof, rdof,
+        tk::volInt( 1, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
                     U, P, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( m_system, 1, m_mat_blk, ndof, rdof, b.first,
+        tk::bndSurfInt( 1, m_mat_blk, ndof, rdof, b.first,
                         fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                         velfn, b.second, U, P, ndofel, R, vriem, riemannLoc,
                         riemannDeriv );
@@ -433,9 +444,9 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > m_system && !boxelems.empty()) {
+      if (!icbox.empty() && !boxelems.empty()) {
         std::size_t bcnt = 0;
-        for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
+        for (const auto& b : icbox) {   // for all boxes for this eq
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
@@ -823,7 +834,7 @@ class CompFlow {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     analyticSolution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::analyticSolution( m_system, m_ncomp, m_mat_blk, xi, yi,
+    { return Problem::analyticSolution( m_ncomp, m_mat_blk, xi, yi,
                                         zi, t ); }
 
     //! Return analytic solution for conserved variables
@@ -834,7 +845,7 @@ class CompFlow {
     //! \return Vector of analytic solution at given location and time
     std::vector< tk::real >
     solution( tk::real xi, tk::real yi, tk::real zi, tk::real t ) const
-    { return Problem::initialize( m_system, m_ncomp, m_mat_blk, xi, yi, zi, t ); }
+    { return Problem::initialize( m_ncomp, m_mat_blk, xi, yi, zi, t ); }
 
     //! Return cell-averaged specific total energy for an element
     //! \param[in] e Element id for which total energy is required
@@ -852,8 +863,6 @@ class CompFlow {
     const Physics m_physics;
     //! Problem policy
     const Problem m_problem;
-    //! Equation system index
-    const ncomp_t m_system;
     //! Number of components in this PDE system
     const ncomp_t m_ncomp;
     //! Riemann solver
@@ -871,8 +880,7 @@ class CompFlow {
     //! \return Flux vectors for all components in this PDE system
     //! \note The function signature must follow tk::FluxFn
     static tk::FluxFn::result_type
-    flux( ncomp_t,
-          [[maybe_unused]] ncomp_t ncomp,
+    flux( [[maybe_unused]] ncomp_t ncomp,
           const std::vector< EOS >& mat_blk,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
@@ -909,7 +917,6 @@ class CompFlow {
 
     //! \brief Boundary state function providing the left and right state of a
     //!   face at Dirichlet boundaries
-    //! \param[in] system Equation system index
     //! \param[in] ncomp Number of scalar components in this PDE system
     //! \param[in] mat_blk EOS material block
     //! \param[in] ul Left (domain-internal) state
@@ -921,12 +928,12 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    dirichlet( ncomp_t system, ncomp_t ncomp,
+    dirichlet( ncomp_t ncomp,
                const std::vector< EOS >& mat_blk,
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::initialize( system, ncomp, mat_blk, x, y, z, t ) }};
+      return {{ ul, Problem::initialize( ncomp, mat_blk, x, y, z, t ) }};
     }
 
     //! \brief Boundary state function providing the left and right state of a
@@ -937,7 +944,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    symmetry( ncomp_t, ncomp_t, const std::vector< EOS >&,
+    symmetry( ncomp_t, const std::vector< EOS >&,
               const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
               tk::real, const std::array< tk::real, 3 >& fn )
     {
@@ -963,7 +970,6 @@ class CompFlow {
 
     //! \brief Boundary state function providing the left and right state of a
     //!   face at farfield boundaries
-    //! \param[in] system Equation system index
     //! \param[in] mat_blk EOS material block
     //! \param[in] ul Left (domain-internal) state
     //! \param[in] fn Unit face normal
@@ -971,19 +977,16 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    farfield( ncomp_t system, ncomp_t, const std::vector< EOS >& mat_blk,
+    farfield( ncomp_t, const std::vector< EOS >& mat_blk,
               const std::vector< tk::real >& ul, tk::real, tk::real, tk::real,
               tk::real, const std::array< tk::real, 3 >& fn )
     {
       using tag::param; using tag::bc;
 
       // Primitive variables from farfield
-      auto frho = g_inputdeck.get< param, eq,
-                                   tag::farfield_density >()[ system ];
-      auto fp   = g_inputdeck.get< param, eq,
-                                   tag::farfield_pressure >()[ system ];
-      auto fu   = g_inputdeck.get< param, eq,
-                                   tag::farfield_velocity >()[ system ];
+      auto frho = g_inputdeck.get< param, eq, tag::farfield_density >();
+      auto fp   = g_inputdeck.get< param, eq, tag::farfield_pressure >();
+      const auto& fu = g_inputdeck.get< param, eq, tag::farfield_velocity >();
 
       // Speed of sound from farfield
       auto fa = mat_blk[0].compute< EOS::soundspeed >( frho, fp );
@@ -1049,7 +1052,7 @@ class CompFlow {
     //!   system
     //! \note The function signature must follow tk::StateFn
     static tk::StateFn::result_type
-    extrapolate( ncomp_t, ncomp_t, const std::vector< EOS >&,
+    extrapolate( ncomp_t, const std::vector< EOS >&,
                  const std::vector< tk::real >& ul, tk::real, tk::real,
                  tk::real, tk::real, const std::array< tk::real, 3 >& )
     {
@@ -1082,127 +1085,125 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
 
-      if (icbox.size() > m_system) {
-        for (const auto& b : icbox[m_system]) {   // for all boxes for this eq
-          std::vector< tk::real > box
-           { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-             b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-             b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+      for (const auto& b : icbox) {   // for all boxes for this eq
+        std::vector< tk::real > box
+         { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+           b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+           b.template get< tag::zmin >(), b.template get< tag::zmax >() };
 
-          auto boxenc = b.template get< tag::energy_content >();
-          Assert( boxenc > 0.0, "Box energy content must be nonzero" );
+        auto boxenc = b.template get< tag::energy_content >();
+        Assert( boxenc > 0.0, "Box energy content must be nonzero" );
 
-          auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
+        auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
 
-          // determine times at which sourcing is initialized and terminated
-          const auto& initiate = b.template get< tag::initiate >();
-          auto iv = initiate.template get< tag::velocity >();
-          auto wFront = 0.1;
-          auto tInit = 0.0;
-          auto tFinal = tInit + (box[5] - box[4] - 2.0*wFront) / std::fabs(iv);
-          auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
+        // determine times at which sourcing is initialized and terminated
+        const auto& initiate = b.template get< tag::initiate >();
+        auto iv = initiate.template get< tag::velocity >();
+        auto wFront = 0.1;
+        auto tInit = 0.0;
+        auto tFinal = tInit + (box[5] - box[4] - 2.0*wFront) / std::fabs(iv);
+        auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
-          const auto& cx = coord[0];
-          const auto& cy = coord[1];
-          const auto& cz = coord[2];
+        const auto& cx = coord[0];
+        const auto& cy = coord[1];
+        const auto& cz = coord[2];
 
-          if (t >= tInit && t <= tFinal) {
-            // The energy front is assumed to have a half-sine-wave shape. The
-            // half wave-length is the width of the front. At t=0, the center of
-            // this front (i.e. the peak of the partial-sine-wave) is at X_0 +
-            // W_0.  W_0 is calculated based on the width of the front and the
-            // direction of propagation (which is assumed to be along the
-            // z-direction).  If the front propagation velocity is positive, it
-            // is assumed that the initial position of the energy source is the
-            // minimum z-coordinate of the box; whereas if this velocity is
-            // negative, the initial position is the maximum z-coordinate of the
-            // box.
+        if (t >= tInit && t <= tFinal) {
+          // The energy front is assumed to have a half-sine-wave shape. The
+          // half wave-length is the width of the front. At t=0, the center of
+          // this front (i.e. the peak of the partial-sine-wave) is at X_0 +
+          // W_0.  W_0 is calculated based on the width of the front and the
+          // direction of propagation (which is assumed to be along the
+          // z-direction).  If the front propagation velocity is positive, it
+          // is assumed that the initial position of the energy source is the
+          // minimum z-coordinate of the box; whereas if this velocity is
+          // negative, the initial position is the maximum z-coordinate of the
+          // box.
 
-            // Orientation of box
-            std::array< tk::real, 3 > b_orientn{{
-              b.template get< tag::orientation >()[0],
-              b.template get< tag::orientation >()[1],
-              b.template get< tag::orientation >()[2] }};
-            std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
-              0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
-            // Transform box to reference space
-            std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
-            std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
-            tk::movePoint(b_centroid, b_min);
-            tk::movePoint(b_centroid, b_max);
+          // Orientation of box
+          std::array< tk::real, 3 > b_orientn{{
+            b.template get< tag::orientation >()[0],
+            b.template get< tag::orientation >()[1],
+            b.template get< tag::orientation >()[2] }};
+          std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
+            0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
+          // Transform box to reference space
+          std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
+          std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
+          tk::movePoint(b_centroid, b_min);
+          tk::movePoint(b_centroid, b_max);
 
-            // initial center of front
-            tk::real zInit(b_min[2]);
-            if (iv < 0.0) zInit = b_max[2];
-            // current location of front
-            auto z0 = zInit + iv*t;
-            auto z1 = z0 + std::copysign(wFront, iv);
-            tk::real s0(z0), s1(z1);
-            // if velocity of propagation is negative, initial position is z1
-            if (iv < 0.0) {
-              s0 = z1;
-              s1 = z0;
-            }
-            // Sine-wave (positive part of the wave) source term amplitude
-            auto pi = 4.0 * std::atan(1.0);
-            auto amplE = boxenc * V_ex * pi
-              / (aBox * wFront * 2.0 * (tFinal-tInit));
-            //// Square wave (constant) source term amplitude
-            //auto amplE = boxenc * V_ex
-            //  / (aBox * wFront * (tFinal-tInit));
+          // initial center of front
+          tk::real zInit(b_min[2]);
+          if (iv < 0.0) zInit = b_max[2];
+          // current location of front
+          auto z0 = zInit + iv*t;
+          auto z1 = z0 + std::copysign(wFront, iv);
+          tk::real s0(z0), s1(z1);
+          // if velocity of propagation is negative, initial position is z1
+          if (iv < 0.0) {
+            s0 = z1;
+            s1 = z0;
+          }
+          // Sine-wave (positive part of the wave) source term amplitude
+          auto pi = 4.0 * std::atan(1.0);
+          auto amplE = boxenc * V_ex * pi
+            / (aBox * wFront * 2.0 * (tFinal-tInit));
+          //// Square wave (constant) source term amplitude
+          //auto amplE = boxenc * V_ex
+          //  / (aBox * wFront * (tFinal-tInit));
 
-            // add source
-            for (auto e : boxelems) {
-              std::array< tk::real, 3 > node{{ geoElem(e,1), geoElem(e,2),
-                geoElem(e,3) }};
-              // Transform node to reference space of box
-              tk::movePoint(b_centroid, node);
-              tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
-                node);
+          // add source
+          for (auto e : boxelems) {
+            std::array< tk::real, 3 > node{{ geoElem(e,1), geoElem(e,2),
+              geoElem(e,3) }};
+            // Transform node to reference space of box
+            tk::movePoint(b_centroid, node);
+            tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+              node);
 
-              if (node[2] >= s0 && node[2] <= s1) {
-                auto ng = tk::NGvol(ndofel[e]);
+            if (node[2] >= s0 && node[2] <= s1) {
+              auto ng = tk::NGvol(ndofel[e]);
 
-                // arrays for quadrature points
-                std::array< std::vector< tk::real >, 3 > coordgp;
-                std::vector< tk::real > wgp;
+              // arrays for quadrature points
+              std::array< std::vector< tk::real >, 3 > coordgp;
+              std::vector< tk::real > wgp;
 
-                coordgp[0].resize( ng );
-                coordgp[1].resize( ng );
-                coordgp[2].resize( ng );
-                wgp.resize( ng );
+              coordgp[0].resize( ng );
+              coordgp[1].resize( ng );
+              coordgp[2].resize( ng );
+              wgp.resize( ng );
 
-                tk::GaussQuadratureTet( ng, coordgp, wgp );
+              tk::GaussQuadratureTet( ng, coordgp, wgp );
 
-                // Extract the element coordinates
-                std::array< std::array< tk::real, 3>, 4 > coordel{{
-                {{ cx[inpoel[4*e  ]], cy[inpoel[4*e  ]], cz[inpoel[4*e  ]] }},
-                {{ cx[inpoel[4*e+1]], cy[inpoel[4*e+1]], cz[inpoel[4*e+1]] }},
-                {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
-                {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}}};
+              // Extract the element coordinates
+              std::array< std::array< tk::real, 3>, 4 > coordel{{
+              {{ cx[inpoel[4*e  ]], cy[inpoel[4*e  ]], cz[inpoel[4*e  ]] }},
+              {{ cx[inpoel[4*e+1]], cy[inpoel[4*e+1]], cz[inpoel[4*e+1]] }},
+              {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
+              {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}}};
 
-                for (std::size_t igp=0; igp<ng; ++igp) {
-                  // Compute the coordinates of quadrature point at physical
-                  // domain
-                  auto gp = tk::eval_gp( igp, coordel, coordgp );
+              for (std::size_t igp=0; igp<ng; ++igp) {
+                // Compute the coordinates of quadrature point at physical
+                // domain
+                auto gp = tk::eval_gp( igp, coordel, coordgp );
 
-                  // Transform quadrature point to reference space of box
-                  tk::movePoint(b_centroid, gp);
-                  tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
-                    gp);
+                // Transform quadrature point to reference space of box
+                tk::movePoint(b_centroid, gp);
+                tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+                  gp);
 
-                  // Compute the basis function
-                  auto B = tk::eval_basis( ndofel[e], coordgp[0][igp],
-                                           coordgp[1][igp], coordgp[2][igp] );
+                // Compute the basis function
+                auto B = tk::eval_basis( ndofel[e], coordgp[0][igp],
+                                         coordgp[1][igp], coordgp[2][igp] );
 
-                  // Compute the source term variable
-                  std::vector< tk::real > s(5, 0.0);
-                  s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
+                // Compute the source term variable
+                std::vector< tk::real > s(5, 0.0);
+                s[4] = amplE * std::sin(pi*(gp[2]-s0)/wFront);
 
-                  auto wt = wgp[igp] * geoElem(e, 0);
+                auto wt = wgp[igp] * geoElem(e, 0);
 
-                  tk::update_rhs( ndof, ndofel[e], wt, e, B, s, R );
-                }
+                tk::update_rhs( ndof, ndofel[e], wt, e, B, s, R );
               }
             }
           }

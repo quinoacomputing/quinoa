@@ -18,17 +18,15 @@
 using inciter::CompFlowProblemRotatedSodShocktube;
 
 tk::InitializeFn::result_type
-CompFlowProblemRotatedSodShocktube::initialize( ncomp_t system,
-                                                ncomp_t ncomp,
-                                              const std::vector< EOS >& mat_blk,
-                                                tk::real x,
-                                                tk::real y,
-                                                tk::real z,
-                                                tk::real t )
+CompFlowProblemRotatedSodShocktube::initialize(
+  ncomp_t ncomp,
+  const std::vector< EOS >& mat_blk,
+  tk::real x,
+  tk::real y,
+  tk::real z,
+  tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
@@ -43,5 +41,5 @@ CompFlowProblemRotatedSodShocktube::initialize( ncomp_t system,
   tk::real a = -45.0*M_PI/180.0;
   auto c = tk::rotateX( tk::rotateY( tk::rotateZ( {{ x, y, z }}, a ), a ), a );
   return CompFlowProblemSodShocktube::
-           initialize( system, ncomp, mat_blk, c[0], c[1], c[2], t );
+           initialize( ncomp, mat_blk, c[0], c[1], c[2], t );
 }

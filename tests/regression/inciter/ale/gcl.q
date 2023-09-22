@@ -24,7 +24,6 @@ inciter
 
   compflow
     mesh filename "rectangle_01_1.5k.exo" end
-    depvar u
     physics euler
     problem user_defined
     ic

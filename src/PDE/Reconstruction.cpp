@@ -174,7 +174,6 @@ intLeastSq_P0P1( const std::size_t rdof,
 
 void
 bndLeastSqConservedVar_P0P1(
-  ncomp_t system,
   ncomp_t ncomp,
   const std::vector< inciter::EOS >& mat_blk,
   std::size_t rdof,
@@ -192,7 +191,6 @@ bndLeastSqConservedVar_P0P1(
 // *****************************************************************************
 //  \brief Compute boundary surface contributions to rhs vector of the
 //    least-squares reconstruction of conserved quantities of the PDE system
-//! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -248,8 +246,7 @@ bndLeastSqConservedVar_P0P1(
                 "appended state vector" );
 
         // Compute the state at the face-center using BC
-        auto ustate = state( system, ncomp, mat_blk, ul, fc[0], fc[1], fc[2], t,
-                             fn );
+        auto ustate = state( ncomp, mat_blk, ul, fc[0], fc[1], fc[2], t, fn );
 
         std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1),
                                         fc[1]-geoElem(el,2),
@@ -453,8 +450,7 @@ transform_P0P1( std::size_t rdof,
 }
 
 void
-THINCReco( std::size_t system,
-           std::size_t rdof,
+THINCReco( std::size_t rdof,
            std::size_t nmat,
            std::size_t e,
            const std::vector< std::size_t >& inpoel,
@@ -463,12 +459,13 @@ THINCReco( std::size_t system,
            const std::array< real, 3 >& ref_xp,
            const Fields& U,
            const Fields& P,
+           bool intInd,
+           const std::vector< std::size_t >& matInt,
            [[maybe_unused]] const std::vector< real >& vfmin,
            [[maybe_unused]] const std::vector< real >& vfmax,
            std::vector< real >& state )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for multi-material flows
-//! \param[in] system Equation system index
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of materials
 //! \param[in] e Element for which interface reconstruction is being calculated
@@ -478,6 +475,9 @@ THINCReco( std::size_t system,
 //! \param[in] ref_xp Quadrature point in reference space
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
+//! \param[in] intInd Boolean which indicates if the element contains a
+//!   material interface
+//! \param[in] matInt Array indicating which material has an interface
 //! \param[in] vfmin Vector containing min volume fractions for each material
 //!   in this cell
 //! \param[in] vfmax Vector containing max volume fractions for each material
@@ -495,23 +495,20 @@ THINCReco( std::size_t system,
   using inciter::energyDofIdx;
   using inciter::pressureDofIdx;
   using inciter::velocityDofIdx;
+  using inciter::deformDofIdx;
   using inciter::volfracIdx;
   using inciter::densityIdx;
   using inciter::momentumIdx;
   using inciter::energyIdx;
   using inciter::pressureIdx;
   using inciter::velocityIdx;
+  using inciter::deformIdx;
 
   auto bparam = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp_param >()[system];
+    tag::intsharp_param >();
   const auto ncomp = U.nprop()/rdof;
-
-  // interface detection
-  std::vector< std::size_t > matInt(nmat, 0);
-  std::vector< tk::real > alAvg(nmat, 0.0);
-  for (std::size_t k=0; k<nmat; ++k)
-    alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
-  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   // Step-1: Perform THINC reconstruction
   // create a vector of volume-fractions and pass it to the THINC function
@@ -539,8 +536,8 @@ THINCReco( std::size_t system,
       std::cout << "Material-id:        " << k << std::endl;
       std::cout << "Volume-fraction:    " << std::setprecision(18) << alReco[k]
         << std::endl;
-      std::cout << "Cell-avg vol-frac:  " << std::setprecision(18) << alAvg[k]
-        << std::endl;
+      std::cout << "Cell-avg vol-frac:  " << std::setprecision(18) <<
+        U(e,volfracDofIdx(nmat,k,rdof,0)) << std::endl;
       std::cout << "Material-interface? " << intInd << std::endl;
       std::cout << "Mat-k-involved?     " << matInt[k] << std::endl;
     }
@@ -566,6 +563,11 @@ THINCReco( std::size_t system,
           * U(e, energyDofIdx(nmat,k,rdof,0))/alCC;
         state[ncomp+pressureIdx(nmat,k)] = alReco[k]
           * P(e, pressureDofIdx(nmat,k,rdof,0))/alCC;
+        if (solidx[k] > 0)
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              state[deformIdx(nmat,solidx[k],i,j)] = alReco[k]
+                * U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0))/alCC;
       }
 
       rhobCC += U(e, densityDofIdx(nmat,k,rdof,0));
@@ -584,8 +586,7 @@ THINCReco( std::size_t system,
 }
 
 void
-THINCRecoTransport( std::size_t system,
-                    std::size_t rdof,
+THINCRecoTransport( std::size_t rdof,
                     std::size_t,
                     std::size_t e,
                     const std::vector< std::size_t >& inpoel,
@@ -599,7 +600,6 @@ THINCRecoTransport( std::size_t system,
                     std::vector< real >& state )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for transport
-//! \param[in] system Equation system index
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] e Element for which interface reconstruction is being calculated
 //! \param[in] inpoel Element-node connectivity
@@ -619,7 +619,7 @@ THINCRecoTransport( std::size_t system,
 // *****************************************************************************
 {
   auto bparam = inciter::g_inputdeck.get< tag::param, tag::transport,
-    tag::intsharp_param >()[system];
+    tag::intsharp_param >();
   auto ncomp = U.nprop()/rdof;
 
   // interface detection
@@ -990,8 +990,7 @@ THINCFunction_new( std::size_t rdof,
 }
 
 std::vector< tk::real >
-evalPolynomialSol( std::size_t system,
-                   const std::vector< inciter::EOS >& mat_blk,
+evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    int intsharp,
                    std::size_t ncomp,
                    std::size_t nprim,
@@ -1008,7 +1007,6 @@ evalPolynomialSol( std::size_t system,
                    const Fields& P )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
-//! \param[in] system Equation system index
 //! \param[in] mat_blk EOS material block
 //! \param[in] intsharp Interface reconstruction indicator
 //! \param[in] ncomp Number of components in the PDE system
@@ -1034,6 +1032,13 @@ evalPolynomialSol( std::size_t system,
   state = eval_state( ncomp, rdof, dof_e, e, U, B );
   sprim = eval_state( nprim, rdof, dof_e, e, P, B );
 
+  // interface detection
+  std::vector< std::size_t > matInt(nmat, 0);
+  std::vector< tk::real > alAvg(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
+  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());
 
@@ -1048,13 +1053,13 @@ evalPolynomialSol( std::size_t system,
     //  vfmin[k] = VolFracMax(el, 2*k, 0);
     //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
     //}
-    tk::THINCReco(system, rdof, nmat, e, inpoel, coord, geoElem,
-      ref_gp, U, P, vfmin, vfmax, state);
+    tk::THINCReco(rdof, nmat, e, inpoel, coord, geoElem,
+      ref_gp, U, P, intInd, matInt, vfmin, vfmax, state);
 
     // Until the appropriate setup for activating THINC with Transport
     // is ready, the following lines will need to be uncommented for
     // using THINC with Transport
-    //tk::THINCRecoTransport(system, rdof, nmat, el, inpoel, coord,
+    //tk::THINCRecoTransport(rdof, nmat, el, inpoel, coord,
     //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
   }
 
@@ -1064,6 +1069,106 @@ evalPolynomialSol( std::size_t system,
     using inciter::volfracIdx;
     using inciter::densityIdx;
 
+    for (std::size_t k=0; k<nmat; ++k) {
+      state[ncomp+pressureIdx(nmat,k)] = constrain_pressure( mat_blk,
+        state[ncomp+pressureIdx(nmat,k)], state[densityIdx(nmat,k)],
+        state[volfracIdx(nmat,k)], k );
+    }
+  }
+
+  return state;
+}
+
+std::vector< tk::real >
+evalFVSol( const std::vector< inciter::EOS >& mat_blk,
+           int intsharp,
+           std::size_t ncomp,
+           std::size_t nprim,
+           std::size_t rdof,
+           std::size_t nmat,
+           std::size_t e,
+           const std::vector< std::size_t >& inpoel,
+           const UnsMesh::Coords& coord,
+           const Fields& geoElem,
+           const std::array< real, 3 >& ref_gp,
+           const std::vector< real >& B,
+           const Fields& U,
+           const Fields& P,
+           int srcFlag )
+// *****************************************************************************
+//  Evaluate second-order FV solution at quadrature point
+//! \param[in] mat_blk EOS material block
+//! \param[in] intsharp Interface reconstruction indicator
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] nprim Number of primitive quantities
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which polynomial solution is being evaluated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_gp Quadrature point in reference space
+//! \param[in] B Basis function at given quadrature point
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \param[in] srcFlag Whether the energy source was added to element e
+//! \return High-order unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+// *****************************************************************************
+{
+  using inciter::pressureIdx;
+  using inciter::velocityIdx;
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::energyIdx;
+  using inciter::momentumIdx;
+
+  std::vector< real > state;
+  std::vector< real > sprim;
+
+  state = eval_state( ncomp, rdof, rdof, e, U, B );
+  sprim = eval_state( nprim, rdof, rdof, e, P, B );
+
+  // interface detection so that eos is called on the appropriate quantities
+  std::vector< std::size_t > matInt(nmat, 0);
+  std::vector< tk::real > alAvg(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
+  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+
+  // get mat-energy from reconstructed mat-pressure
+  auto rhob(0.0);
+  for (std::size_t k=0; k<nmat; ++k) {
+    auto alk = state[volfracIdx(nmat,k)];
+    if (matInt[k]) {
+      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*1e-12),
+        1e-12);
+    }
+    state[energyIdx(nmat,k)] = alk *
+      mat_blk[k].compute< inciter::EOS::totalenergy >(
+      state[densityIdx(nmat,k)]/alk, sprim[velocityIdx(nmat,0)],
+      sprim[velocityIdx(nmat,1)], sprim[velocityIdx(nmat,2)],
+      sprim[pressureIdx(nmat,k)]/alk);
+    rhob += state[densityIdx(nmat,k)];
+  }
+  // get momentum from reconstructed velocity and bulk density
+  for (std::size_t i=0; i<3; ++i) {
+    state[momentumIdx(nmat,i)] = rhob * sprim[velocityIdx(nmat,i)];
+  }
+
+  // consolidate primitives into state vector
+  state.insert(state.end(), sprim.begin(), sprim.end());
+
+  if (intsharp > 0 && srcFlag == 0)
+  {
+    std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
+
+    tk::THINCReco(rdof, nmat, e, inpoel, coord, geoElem,
+      ref_gp, U, P, intInd, matInt, vfmin, vfmax, state);
+  }
+
+  // physical constraints
+  if (state.size() > ncomp) {
     for (std::size_t k=0; k<nmat; ++k) {
       state[ncomp+pressureIdx(nmat,k)] = constrain_pressure( mat_blk,
         state[ncomp+pressureIdx(nmat,k)], state[densityIdx(nmat,k)],

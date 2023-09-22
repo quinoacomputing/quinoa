@@ -21,10 +21,13 @@
 namespace inciter {
 
 std::pair< int, std::unique_ptr<char[]> >
-serialize( std::size_t meshid, const std::vector< std::vector< tk::real > >& d )
+serialize( std::size_t meshid,
+           std::size_t ncomp,
+           const std::vector< std::vector< tk::real > >& d )
 // *****************************************************************************
 // Serialize std::vectors to raw memory stream
 //! \param[in] meshid Mesh ID
+//! \param[in] ncomp Number of scalar components being solved
 //! \param[in] d Diagnostics vector of vectors (of eq components)
 //! \return Pair of the length and the raw stream containing the serialized
 //!   vectors
@@ -33,6 +36,7 @@ serialize( std::size_t meshid, const std::vector< std::vector< tk::real > >& d )
   // Prepare for serializing diagnostics to a raw binary stream, compute size
   PUP::sizer sizer;
   sizer | meshid;
+  sizer | ncomp;
   sizer | const_cast< std::vector< std::vector< tk::real > >& >( d );
 
   // Create raw character stream to store the serialized vectors
@@ -41,6 +45,7 @@ serialize( std::size_t meshid, const std::vector< std::vector< tk::real > >& d )
   // Serialize vector, each message will contain a vector
   PUP::toMem packer( flatData.get() );
   packer | meshid;
+  packer | ncomp;
   packer | const_cast< std::vector< std::vector< tk::real > >& >( d );
 
   // Return size of and raw stream
@@ -57,8 +62,7 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
 //! \return Aggregated diagnostics built for further aggregation if needed
 // *****************************************************************************
 {
-  // Will store deserialized diagnostics vector of vectors
-  std::size_t meshid;
+  std::size_t meshid, ncomp;
   std::vector< std::vector< tk::real > > v;
 
   // Create PUP deserializer based on message passed in
@@ -66,17 +70,20 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
 
   // Deserialize vector from raw stream
   creator | meshid;
+  creator | ncomp;
   creator | v;
 
   for (int m=1; m<nmsg; ++m) {
     // Unpack vector
-    std::size_t mid;
+    std::size_t mid, nc;
     std::vector< std::vector< tk::real > > w;
     PUP::fromMem curCreator( msgs[m]->getData() );
     curCreator | mid;
+    curCreator | nc;
     curCreator | w;
     // Aggregate diagnostics vector
     meshid = mid;
+    ncomp = nc;
     Assert( v.size() == w.size(),
             "Size mismatch during diagnostics aggregation" );
     Assert( v.size() == inciter::NUMDIAG,
@@ -103,7 +110,7 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
   }
 
   // Serialize concatenated diagnostics vector to raw stream
-  auto stream = serialize( meshid, v );
+  auto stream = serialize( meshid, ncomp, v );
 
   // Forward serialized diagnostics
   return CkReductionMsg::buildNew( stream.first, stream.second.get() );

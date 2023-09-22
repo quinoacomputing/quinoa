@@ -28,7 +28,7 @@ module meshwriter {
                         bool benchmark,
                         std::size_t nmesh );
 
-      entry void nchare( int n );
+      entry void nchare( std::size_t meshid, int n );
 
       entry void write(
         std::size_t meshid,
@@ -52,8 +52,7 @@ module meshwriter {
         const std::vector< std::vector< tk::real > >& nodefields,
         const std::vector< std::vector< tk::real > >& elemsurfs,
         const std::vector< std::vector< tk::real > >& nodesurfs,
-        const std::set< int >& outsets,
-        CkCallback c );
+        const std::set< int >& outsets );
     };
 
   } // tk::

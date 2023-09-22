@@ -26,8 +26,7 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::MultiMatProblemWaterAirShocktube;
 
 tk::InitializeFn::result_type
-MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
-                                              ncomp_t ncomp,
+MultiMatProblemWaterAirShocktube::initialize( ncomp_t ncomp,
                                               const std::vector< EOS >& mat_blk,
                                               tk::real x,
                                               tk::real,
@@ -35,8 +34,6 @@ MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
                                               tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which multi-material
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
@@ -50,8 +47,7 @@ MultiMatProblemWaterAirShocktube::initialize( ncomp_t system,
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 9, "Number of scalar components must be 9" );
 
-  auto nmat =
-    g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
+  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
 
   std::vector< tk::real > s(ncomp, 0.0), r(nmat, 0.0);
   tk::real p, u, v, w;

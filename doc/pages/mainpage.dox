@@ -59,13 +59,11 @@ Quinoa consists of the following tools:
     [HyperMesh](http://www.altairhyperworks.com/product/HyperMesh),
     ASC used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code,
     [UGRID](https://www.simcenter.msstate.edu/software/documentation/aflr3),
-    [RDGFLO, https://www.mae.ncsu.edu/people/hluo2).
-
-@note If you are looking for information on tools, _walker_, _rngtest_, or _fileconv_, previously part of Quinoa, browse the archived version of this site at https://quinoacomputing.org/archive.
+    [RDGFLO](https://www.mae.ncsu.edu/people/hluo2).
 
 @section mainpage_build Build
 
-The simplest way to build from source is to perform the following steps. For
+The standard way to build from source is to perform the following steps. For
 other ways to build, see the page on @ref build "building Quinoa".
 
 - Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
@@ -79,13 +77,21 @@ other ways to build, see the page on @ref build "building Quinoa".
        spack install environment-modules cmake gcc openmpi%gcc hdf5%gcc+hl
        module load gcc-9.2.0-clang-10.0.0-apple-vcpkolh openmpi-3.1.4-gcc-9.2.0-my2rkcv hdf5-1.10.5-gcc-9.2.0-prdkirn
 
-- Clone, build third-party libraries, build & test
+- Clone and build third-party libraries (libraries will be installed in `<current-dir>/quinoa-tpl/install/`)
 
-       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git; cd quinoa
-       mkdir external/build; cd external/build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make; cd -
-       mkdir build; cd build; cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make -sj8 && ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
+       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa-tpl.git; cd quinoa-tpl
+       mkdir build; cd build
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make -sj8
+       cd ../..
 
-  @note The above will use 8 CPU cores to compile the code and run the tests.
+- Build Quinoa & test (in dir "adjacent" to `quinoa-tpl/`):
+
+       git clone https://github.com/quinoacomputing/quinoa.git; cd quinoa
+       mkdir build; cd build
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make -sj8
+       ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
+
+  @note The above will use 8 CPU cores to compile the third-party libraries and code, and run the tests.
   You might need to adjust this to get optimal performance.
 
 All executables will be under `build/Main/`.
@@ -99,7 +105,7 @@ branch can lag behind our
 edge) branch. If you want the latest, clone with
 
 ```
-git clone --recurse-submodules --branch=develop https://github.com/quinoacomputing/quinoa.git
+git clone --branch=develop https://github.com/quinoacomputing/quinoa.git
 ```
 
 @section mainpage_directory_layout Directory layout
@@ -108,7 +114,6 @@ git clone --recurse-submodules --branch=develop https://github.com/quinoacomputi
     quinoa
       ├── cmake/ - CMake code, shared between github.com/quinoacomputing/quinoa-tpl and src/
       ├── doc/ - Documentation, rendered at quinoacomputing.github.io
-      ├── external/ - External packages from github.com/quinoacomputing/quinoa-tpl
       ├── src/ - Compilable sources, see quinoacomputing.github.io/files.html
       ├── tests/ - Unit-, and regression tests
       ├── tools/ - Development utilities and docker files

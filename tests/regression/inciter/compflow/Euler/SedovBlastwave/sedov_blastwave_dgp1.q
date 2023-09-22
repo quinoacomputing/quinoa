@@ -16,7 +16,6 @@ inciter
 
     physics euler
     problem sedov_blastwave
-    depvar u
 
     alpha 0.1
     beta 1.0

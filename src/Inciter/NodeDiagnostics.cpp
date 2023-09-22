@@ -138,7 +138,7 @@ NodeDiagnostics::compute(
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
-    auto stream = serialize( d.MeshId(), diag );
+    auto stream = serialize( d.MeshId(), u.nprop(), diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 

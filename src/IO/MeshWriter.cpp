@@ -27,8 +27,8 @@ MeshWriter::MeshWriter( ctr::FieldFileType filetype,
   m_filetype( filetype ),
   m_bndCentering( bnd_centering ),
   m_benchmark( benchmark ),
-  m_nchare( 0 ),
-  m_nmesh( nmesh )
+  m_nmesh( nmesh ),
+  m_nchare( nmesh, 0 )
 // *****************************************************************************
 //  Constructor: set some defaults that stay constant at all times
 //! \param[in] filetype Output file format type
@@ -44,13 +44,15 @@ MeshWriter::MeshWriter( ctr::FieldFileType filetype,
 }
 
 void
-MeshWriter::nchare( int n )
+MeshWriter::nchare( std::size_t meshid, int n )
 // *****************************************************************************
 //  Set the total number of chares
-//! \param[in] n Total number of chares across the whole problem
+//! \param[in] meshid Mesh whose number of chares to set
+//! \param[in] n Total number of chares across the whole problem (for a mesh)
 // *****************************************************************************
 {
-  m_nchare = n;
+  Assert( meshid < m_nchare.size(), "Size mismatch" );
+  m_nchare[ meshid ] = n;
 }
 
 void
@@ -76,8 +78,7 @@ MeshWriter::write(
   const std::vector< std::vector< tk::real > >& nodefields,
   const std::vector< std::vector< tk::real > >& elemsurfs,
   const std::vector< std::vector< tk::real > >& nodesurfs,
-  const std::set< int >& outsets,
-  CkCallback c )
+  const std::set< int >& outsets )
 // *****************************************************************************
 //  Output unstructured mesh into file
 //! \param[in] meshid Mesh Id
@@ -109,7 +110,6 @@ MeshWriter::write(
 //! \param[in] nodesurfs Surface field data in mesh nodes to output to file
 //! \param[in] outsets Unique set of surface side set ids along which to save
 //!   solution field variables
-//! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
   if (!m_benchmark) {
@@ -123,7 +123,7 @@ MeshWriter::write(
         // Write volume mesh and field names
         ExodusIIMeshWriter ev( vf, ExoWriter::CREATE );
         // Write chare mesh (do not write side sets in parallel)
-        if (m_nchare == 1) {
+        if (m_nchare[meshid] == 1) {
 
           if (m_bndCentering == Centering::ELEM)
             ev.writeMesh( inpoel, coord, bface, triinpoel );
@@ -225,8 +225,6 @@ MeshWriter::write(
     }
 
   }
-
-  c.send();
 }
 
 std::string
@@ -266,7 +264,7 @@ MeshWriter::filename( const std::string& basefilename,
          + (m_nmesh > 1 ? '.' + std::to_string(meshid) : "")
          + ".e-s"
          + '.' + std::to_string( itr )        // iteration count with new mesh
-         + '.' + std::to_string( m_nchare )   // total number of workers
+         + '.' + std::to_string( m_nchare[meshid] ) // total number of workers
          + '.' + std::to_string( chareid )    // new file per worker
          ;
 }

@@ -449,11 +449,9 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
 
   // System limiting
   for (std::size_t e=0; e<inpoel.size()/4; ++e) {
-    for (const auto& sys : m_sys) {
-      tk::real cs = 1.0;
-      for (auto i : sys) if (C(e,i) < cs) cs = C(e,i);
-      for (auto i : sys) C(e,i) = cs;
-    }
+    tk::real cs = 1.0;
+    for (auto i : m_sys) if (C(e,i) < cs) cs = C(e,i);
+    for (auto i : m_sys) C(e,i) = cs;
   }
 
   // save the limited antidiffusive element contributions (Lohner: AEC^c)

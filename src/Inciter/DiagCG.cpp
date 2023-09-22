@@ -57,7 +57,8 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_bnode( bnode ),
   m_bface( bface ),
   m_triinpoel( tk::remap(triinpoel,Disc()->Lid()) ),
-  m_u( Disc()->Gid().size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_u( Disc()->Gid().size(),
+       g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
   m_ul( m_u.nunk(), m_u.nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
   m_ue( Disc()->Inpoel().size()/4, m_u.nprop() ),
@@ -730,7 +731,9 @@ DiagCG::writeFields( CkCallback c ) const
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), coord, m_bface, tk::remap( m_bnode,d->Lid() ),
               m_triinpoel, elemfieldnames, nodefieldnames, {}, nodesurfnames,
-              elemfields, nodefields, {}, nodesurfs, c );
+              elemfields, nodefields, {}, nodesurfs );
+
+    c.send();
 
   }
 }

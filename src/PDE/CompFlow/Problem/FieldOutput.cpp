@@ -19,83 +19,6 @@
 
 namespace inciter {
 
-std::vector< std::string > CompFlowFieldNames()
-// *****************************************************************************
-// Return field names to be output to file
-//! \return Vector of strings labelling fields output in file
-// *****************************************************************************
-{
-  std::vector< std::string > n;
-
-  n.push_back( "density_numerical" );
-  n.push_back( "x-velocity_numerical" );
-  n.push_back( "y-velocity_numerical" );
-  n.push_back( "z-velocity_numerical" );
-  n.push_back( "specific_total_energy_numerical" );
-  n.push_back( "pressure_numerical" );
-
-  return n;
-}
-
-std::vector< std::vector< tk::real > > 
-CompFlowFieldOutput( ncomp_t,
-                     const std::vector< EOS >& mat_blk,
-                     std::size_t nunk,
-                     std::size_t rdof,
-                     const tk::Fields& U )
-// *****************************************************************************
-//  Return field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
-//! \param[in] nunk Number of unknowns to extract
-//! \param[in] rdof Number of reconstructed degrees of freedom. This is used as
-//!   the number of scalar components to shift when extracting scalar
-//!   components.
-//! \param[in] U Solution vector at recent time step
-//! \return Vector of vectors to be output to file
-// *****************************************************************************
-{
-  std::vector< std::vector< tk::real > > out;
-  const auto r  = U.extract_comp( 0*rdof );
-  const auto ru = U.extract_comp( 1*rdof );
-  const auto rv = U.extract_comp( 2*rdof );
-  const auto rw = U.extract_comp( 3*rdof );
-  const auto re = U.extract_comp( 4*rdof );
-
-  Assert( r.size() >= nunk, "Size mismatch" );
-  Assert( ru.size() >= nunk, "Size mismatch" );
-  Assert( rv.size() >= nunk, "Size mismatch" );
-  Assert( rw.size() >= nunk, "Size mismatch" );
-  Assert( re.size() >= nunk, "Size mismatch" );
-
-  out.push_back( r );
-
-  std::vector< tk::real > u = ru;
-  for (std::size_t i=0; i<nunk; ++i) u[i] /= r[i];
-  out.push_back( u );
-
-  std::vector< tk::real > v = rv;
-  for (std::size_t i=0; i<nunk; ++i) v[i] /= r[i];
-  out.push_back( v );
-
-  std::vector< tk::real > w = rw;
-  for (std::size_t i=0; i<nunk; ++i) w[i] /= r[i];
-  out.push_back( w );
-
-  std::vector< tk::real > E = re;
-  for (std::size_t i=0; i<nunk; ++i) E[i] /= r[i];
-  out.push_back( E );
-
-  std::vector< tk::real > P( nunk, 0.0 );
-  for (std::size_t i=0; i<nunk; ++i) {
-    P[i] = mat_blk[0].compute< EOS::pressure >( r[i], u[i], v[i], w[i],
-      r[i]*E[i] );
-  }
-  out.push_back( P );
-
-  return out;
-}
-
 std::vector< std::string > CompFlowSurfNames()
 // *****************************************************************************
 // Return surface field names to be output to file
@@ -116,14 +39,11 @@ std::vector< std::string > CompFlowSurfNames()
 }
 
 std::vector< std::vector< tk::real > >
-CompFlowSurfOutput( ncomp_t,
-                    const std::vector< EOS >& mat_blk,
+CompFlowSurfOutput( const std::vector< EOS >& mat_blk,
                     const std::map< int, std::vector< std::size_t > >& bnd,
                     const tk::Fields& U )
 // *****************************************************************************
 //  Return surface field output going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] bnd Boundary node/elem lists mapped to side set ids
 //! \param[in] U Solution vector at recent time step
 //! \return Vector of vectors of solution along side sets to be output to file
@@ -159,15 +79,13 @@ CompFlowSurfOutput( ncomp_t,
 }
 
 std::vector< std::vector< tk::real > >
-CompFlowElemSurfOutput( ncomp_t,
+CompFlowElemSurfOutput(
   const std::vector< EOS >& mat_blk,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
   const tk::Fields& U )
 // *****************************************************************************
 //  Return element surface field output (on triangle faces) going to file
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] mat_blk Material EOS block
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
@@ -232,15 +150,12 @@ std::vector< std::string > CompFlowHistNames()
 }
 
 std::vector< std::vector< tk::real > >
-CompFlowHistOutput( ncomp_t,
-                    const std::vector< EOS >& mat_blk,
+CompFlowHistOutput( const std::vector< EOS >& mat_blk,
                     const std::vector< HistData >& h,
                     const std::vector< std::size_t >& inpoel,
                     const tk::Fields& U )
 // *****************************************************************************
 //  Return time history field output evaluated at time history points
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] h History point data
 //! \param[in] inpoel Mesh element connectivity
 //! \param[in] U Solution vector at recent time step

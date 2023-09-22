@@ -36,12 +36,12 @@ class CompFlowProblemGaussHump {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t ncomp, const std::vector< EOS >&,
+    initialize( ncomp_t ncomp, const std::vector< EOS >&,
                 tk::real x, tk::real y, tk::real, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t ncomp,
+    analyticSolution( ncomp_t ncomp,
                       const std::vector< EOS >&, tk::real x, tk::real y,
                       tk::real, tk::real t );
 
@@ -49,7 +49,7 @@ class CompFlowProblemGaussHump {
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, const std::vector< EOS >&, tk::real, tk::real,
+    src( ncomp_t, const std::vector< EOS >&, tk::real, tk::real,
          tk::real, tk::real, std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");
@@ -64,8 +64,7 @@ class CompFlowProblemGaussHump {
 
     //! Assign prescribed velocity at a point
     static std::vector< std::array< tk::real, 3 > >
-    prescribedVelocity( ncomp_t,
-                        ncomp_t ncomp,
+    prescribedVelocity( ncomp_t ncomp,
                         tk::real,
                         tk::real,
                         tk::real );

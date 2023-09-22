@@ -16,7 +16,6 @@ inciter
 
     physics euler
     problem interface_advection
-    depvar u
 
     prelax 0
 

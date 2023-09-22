@@ -28,8 +28,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Compute source term integrals for DG
 void
-srcInt( ncomp_t system,
-        const std::vector< inciter::EOS >& mat_blk,
+srcInt( const std::vector< inciter::EOS >& mat_blk,
         real t,
         const std::size_t ndof,
         const std::size_t nelem,
@@ -53,8 +52,7 @@ update_rhs( const std::size_t ndof,
 
 //! Compute source term integrals for FV
 void
-srcIntFV( ncomp_t system,
-          const std::vector< inciter::EOS >& mat_blk,
+srcIntFV( const std::vector< inciter::EOS >& mat_blk,
           real t,
           const std::size_t nelem,
           const Fields& geoElem,

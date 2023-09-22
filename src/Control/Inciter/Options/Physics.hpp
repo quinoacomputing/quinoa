@@ -23,11 +23,12 @@ namespace inciter {
 namespace ctr {
 
 //! Physics types
-enum class PhysicsType : uint8_t { ADVECTION,
-                                   ADVDIFF,
-                                   EULER,
-                                   NAVIERSTOKES,
-                                   ENERGYPILL };
+enum class PhysicsType : uint8_t { ADVECTION
+                                 , ADVDIFF
+                                 , EULER
+                                 , NAVIERSTOKES
+                                 , ENERGYPILL
+                                 };
 
 //! Pack/Unpack PhysicsType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PhysicsType& e ) { PUP::pup( p, e ); }
@@ -52,18 +53,18 @@ class Physics : public tk::Toggle< PhysicsType > {
         //! Group, i.e., options, name
         kw::physics::name(),
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { PhysicsType::ADVECTION, kw::advection::name() },
-          { PhysicsType::ADVDIFF, kw::advdiff::name() },
-          { PhysicsType::EULER, kw::euler::name() },
-          { PhysicsType::NAVIERSTOKES, kw::navierstokes::name() },
-          { PhysicsType::ENERGYPILL, kw::energy_pill::name() }
+        { { PhysicsType::ADVECTION, kw::advection::name() }
+        , { PhysicsType::ADVDIFF, kw::advdiff::name() }
+        , { PhysicsType::EULER, kw::euler::name() }
+        , { PhysicsType::NAVIERSTOKES, kw::navierstokes::name() }
+        , { PhysicsType::ENERGYPILL, kw::energy_pill::name() }
         },
         //! keywords -> Enums
-        { { kw::advection::string(), PhysicsType::ADVECTION },
-          { kw::advdiff::string(), PhysicsType::ADVDIFF },
-          { kw::euler::string(), PhysicsType::EULER },
-          { kw::navierstokes::string(), PhysicsType::NAVIERSTOKES },
-          { kw::energy_pill::string(), PhysicsType::ENERGYPILL }
+        { { kw::advection::string(), PhysicsType::ADVECTION }
+        , { kw::advdiff::string(), PhysicsType::ADVDIFF }
+        , { kw::euler::string(), PhysicsType::EULER }
+        , { kw::navierstokes::string(), PhysicsType::NAVIERSTOKES }
+        , { kw::energy_pill::string(), PhysicsType::ENERGYPILL }
         } )
     {}
 };

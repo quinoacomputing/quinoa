@@ -191,6 +191,9 @@ class Transporter : public CBase_Transporter {
     //! Reduction target computing total volume of IC box
     void boxvol( tk::real* meshdata, int n );
 
+    //! Reduction target broadcasting to Schemes after mesh transfer
+    void solutionTransferred( std::size_t summeshid );
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
@@ -359,8 +362,9 @@ class Transporter : public CBase_Transporter {
         using tag::param;
         using eq = typename brigand::front< U >;
         using bc = typename brigand::back< U >;
-        for (const auto& s : inputdeck.get< param, eq, tag::bc, bc >())
-          for (const auto& i : s) userbc.insert( std::stoi(i) );
+        for (auto s : inputdeck.get< param, eq, tag::bc, bc >()) {
+          userbc.insert( std::stoi(s) );
+        }
       }
     };
 
@@ -376,11 +380,9 @@ class Transporter : public CBase_Transporter {
         : inputdeck(i), userbc(u) {}
       template< typename eq > void operator()( brigand::type_<eq> ) {
         using tag::param;
-        for (const auto& sys : inputdeck.get< param, eq, tag::bctimedep >()) {
-          for (const auto& b : sys) {
-            for (auto i : b.template get< tag::sideset >())
-              userbc.insert( std::stoi(i) );
-          }
+        for (const auto& b : inputdeck.get< param, eq, tag::bctimedep >()) {
+          for (auto i : b.template get< tag::sideset >())
+            userbc.insert( std::stoi(i) );
         }
       }
     };

@@ -25,9 +25,7 @@
 #include "ConjugateGradients.hpp"
 #include "ALE.hpp"
 
-#ifdef HAS_EXAM2M
-  #include "Controller.hpp"
-#endif
+#include "M2MTransfer.hpp"
 
 namespace inciter {
 
@@ -55,7 +53,6 @@ Discretization::Discretization(
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid,
   int nc ) :
   m_meshid( meshid ),
-  m_transfer_complete(),
   m_transfer( g_inputdeck.get< tag::couple, tag::transfer >() ),
   m_disc( disc ),
   m_nchare( nc ),
@@ -74,6 +71,7 @@ Discretization::Discretization(
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
   m_dtn( m_dt ),
   m_nvol( 0 ),
+  m_nxfer( 0 ),
   m_fct( fctproxy ),
   m_ale( aleproxy ),
   m_transporter( transporter ),
@@ -186,15 +184,11 @@ Discretization::Discretization(
     // skip transfer if single mesh or if not involved in coupling
     transferInit();
   } else {
-    #ifdef HAS_EXAM2M
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
-      std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+      //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
     }
-    #else
-    transferInit();
-    #endif
   }
 }
 
@@ -300,147 +294,120 @@ Discretization::meshvelConv()
 }
 
 void
-Discretization::transferCallback( std::vector< CkCallback >& cb )
-// *****************************************************************************
-// Receive a list of callbacks from our own child solver
-//! \param[in] cb List of callbacks
-//! \details This is called by our child solver, either when it is coupled to
-//!    another solver or not.
-// *****************************************************************************
-{
-  // Store callback for when there is no transfer we are involved in
-  m_transfer_complete = cb.back();
-  cb.pop_back();
-
-  // Distribute callbacks
-  for (auto& t : m_transfer) {
-    // If we are a source of a transfer, send callback to the destination solver
-    if (m_meshid == t.src) {
-      Assert( !cb.empty(), "Insufficient number of src callbacks, meshid: " +
-                           std::to_string(m_meshid) );
-      m_disc[ t.dst ][ thisIndex ].comcb( m_meshid, cb.back() );
-      cb.pop_back();
-    // If we are a destination of a callback, store it
-    } else if (m_meshid == t.dst) {
-      Assert( !cb.empty(), "Insufficient number of dst callbacks, meshid: " +
-                           std::to_string(m_meshid) );
-      t.cb.push_back( cb.back() );
-      cb.pop_back();
-      //t.cbs.push_back( m_meshid );    // only for debugging
-    }
-  }
-  Assert( cb.empty(), "Not all callbacks have been processed" );
-
-  if (transferCallbacksComplete()) comfinal();
-}
-
-void
-Discretization::comcb( std::size_t srcmeshid, CkCallback c )
-// *****************************************************************************
-// Receive mesh transfer callbacks from source mesh/solver
-//! \param[in] srcmeshid Source mesh (solver) id
-//! \param[in] c Callback received
-// *****************************************************************************
-{
-  // Store received mesh transfer callback from source mesh/solver
-  for (auto& t : m_transfer)
-    if (srcmeshid == t.src && m_meshid == t.dst) {
-      t.cb.push_back( c );
-      //t.cbs.push_back( srcmeshid );   // only for debugging
-    }
-
-  if (transferCallbacksComplete()) comfinal();
-}
-
-bool
-Discretization::transferCallbacksComplete() const
-// *****************************************************************************
-// Determine if communication of mesh transfer callbacks is complete
-//! \return True if communication of mesh transfer callbacks have been
-//!   completed on this solver
-// *****************************************************************************
-{
-  bool c = true;
-
-  // Our callbacks are complete if all transfers we are involved in as a
-  // destination have exactly two callbacks.
-  for (const auto& t : m_transfer)
-    if (m_meshid == t.dst && t.cb.size() != 2)
-      c = false;
-
-  return c;
-}
-
-void
 Discretization::comfinal()
 // *****************************************************************************
 // Finish setting up communication maps and solution transfer callbacks
 // *****************************************************************************
 {
-//  std::cout << "m:" << m_meshid << ": transfer: ";
-//  for (const auto& t : m_transfer) {
-//    std::cout << t.src << "->" << t.dst << ' ';
-//    if (t.cb.size() > 0) {
-//      std::cout << "cb: ";
-//      for (auto m : t.cbs) std::cout << m << ' ';
-//    }
-//  }
-//  std::cout << '\n';
-
   // Generate own subset of solver/mesh transfer list
-  for (const auto& t : m_transfer)
-    if (t.src == m_meshid || t.dst == m_meshid)
+  for (const auto& t : m_transfer) {
+    if (t.src == m_meshid || t.dst == m_meshid) {
       m_mytransfer.push_back( t );
-
-//  std::cout << "m:" << m_meshid << ": mytransfer: ";
-//  for (const auto& t : m_mytransfer) {
-//    std::cout << t.src << "->" << t.dst << ' ';
-//    if (t.cb.size() > 0) {
-//      std::cout << "cb: ";
-//      for (auto m : t.cbs) std::cout << m << ' ';
-//    }
-//  }
-//  std::cout << '\n';
+    }
+  }
 
   // Signal the runtime system that the workers have been created
-  std::vector< std::size_t > meshdata{ /* initial */ 1, m_meshid };
+  std::vector< std::size_t > meshdata{ /* initial = */ 1, m_meshid };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), m_transporter) );
 }
 
 void
-Discretization::transfer( [[maybe_unused]] const tk::Fields& u )
+Discretization::transfer( [[maybe_unused]] tk::Fields& u, CkCallback cb  )
 // *****************************************************************************
 //  Start solution transfer (if coupled)
 //! \param[in] u Solution to transfer from/to
+//! \param[in] cb Callback to call when transfer is complete.
 // *****************************************************************************
 {
   if (m_mytransfer.empty()) {   // skip transfer if not involved in coupling
-    m_transfer_complete.send();
+
+    cb.send();
+
   } else {
+
+    thisProxy[ thisIndex ].wait4transfer();
+
+    m_transfer_complete = cb;
     // Pass source and destination meshes to mesh transfer lib (if coupled)
-    #ifdef HAS_EXAM2M
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (m_mytransfer[m_nsrc].src == m_meshid) {
       exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
       ++m_nsrc;
-      //std::cout << m_meshid << " src\n";
     } else {
       m_nsrc = 0;
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
     if (m_mytransfer[m_ndst].dst == m_meshid) {
       exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
-                             m_mytransfer[m_ndst].cb );
+        CkCallback( CkIndex_Discretization::transfer_complete(), thisProxy ) );
       ++m_ndst;
-      //std::cout << m_meshid << " dst\n";
     } else {
       m_ndst = 0;
     }
-    #else
-    m_transfer_complete.send();
-    #endif
+
   }
+
+  m_nsrc = 0;
+  m_ndst = 0;
+}
+
+void Discretization::transfer_complete()
+// *****************************************************************************
+//! Solution transfer completed (from ExaM2M)
+//! \brief This is called by ExaM2M on the destination mesh when the
+//!   transfer completes. Since this is called only on the destination, we find
+//!   and notify the corresponding source of the completion.
+// *****************************************************************************
+{
+  // Lookup the source disc and notify it of completion
+  for (auto& t : m_transfer) {
+    if (m_meshid == t.dst) {
+      m_disc[ t.src ][ thisIndex ].transfer_complete_from_dest();
+    }
+  }
+
+  // Call m_transfer_complete from neighbor chares
+  if (m_nodeCommMap.empty())
+   all_transfers_complete();
+  else
+    for (const auto& [c,n] : m_nodeCommMap) {
+      thisProxy[c].comxfer();
+    }
+
+  ownxfer_complete();
+}
+
+void
+Discretization::comxfer()
+// *****************************************************************************
+//  Check nodal solution transfers on chare-boundaries
+//! \details This function checks if all neighboring chares have completed
+//!   solution transfers.
+// *****************************************************************************
+{
+  if (++m_nxfer == m_nodeCommMap.size()) {
+    m_nxfer = 0;
+    comxfer_complete();
+  }
+}
+
+void Discretization::transfer_complete_from_dest()
+// *****************************************************************************
+//! Solution transfer completed (from dest Discretization)
+//! \details Called on the source only by the destination when a transfer step
+//!   completes.
+// *****************************************************************************
+{
+  m_transfer_complete.send();
+}
+
+void Discretization::all_transfers_complete()
+// *****************************************************************************
+//! Solution transfer completed for all neighboring chares
+// *****************************************************************************
+{
+  m_transfer_complete.send();
 }
 
 std::vector< std::size_t >
@@ -874,8 +841,7 @@ Discretization::write(
   const std::vector< std::vector< tk::real > >& elemfields,
   const std::vector< std::vector< tk::real > >& nodefields,
   const std::vector< std::vector< tk::real > >& elemsurfs,
-  const std::vector< std::vector< tk::real > >& nodesurfs,
-  CkCallback c )
+  const std::vector< std::vector< tk::real > >& nodesurfs )
 // *****************************************************************************
 //  Output mesh and fields data (solution dump) to file(s)
 //! \param[in] inpoel Mesh connectivity for the mesh chunk to be written
@@ -895,7 +861,6 @@ Discretization::write(
 //! \param[in] nodefields Field data in mesh nodes to output to file
 //! \param[in] elemsurfs Surface field data in mesh elements to output to file
 //! \param[in] nodesurfs Surface field data in mesh nodes to output to file
-//! \param[in] c Function to continue with after the write
 //! \details Since m_meshwriter is a Charm++ chare group, it never migrates and
 //!   an instance is guaranteed on every PE. We index the first PE on every
 //!   logical compute node. In Charm++'s non-SMP mode, a node is the same as a
@@ -930,7 +895,7 @@ Discretization::write(
            g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
            inpoel, coord, bface, bnode, triinpoel, elemfieldnames,
            nodefieldnames, elemsurfnames, nodesurfnames, elemfields, nodefields,
-           elemsurfs, nodesurfs, g_inputdeck.outsets(), c );
+           elemsurfs, nodesurfs, g_inputdeck.outsets() );
 }
 
 void

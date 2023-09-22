@@ -28,7 +28,7 @@ class CompFlowProblemRotatedSodShocktube : public CompFlowProblemSodShocktube {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t ncomp, const std::vector< EOS >&,
+    initialize( ncomp_t ncomp, const std::vector< EOS >&,
                 tk::real x, tk::real y, tk::real z, tk::real t );
 
     //! Return problem type

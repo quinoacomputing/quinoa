@@ -19,8 +19,7 @@
 
 namespace inciter {
 
-void initializeMaterialEoS( std::size_t system,
-  std::vector< EOS >& mat_blk );
+void initializeMaterialEoS( std::vector< EOS >& mat_blk );
 
 //! Clean up the state of trace materials for multi-material PDE system
 bool
@@ -52,7 +51,21 @@ timeStepSizeMultiMatFV(
   std::size_t nelem,
   std::size_t nmat,
   const tk::Fields& U,
-  const tk::Fields& P );
+  const tk::Fields& P,
+  std::vector< tk::real >& local_dte );
+
+//! Get the inverse deformation gradient tensor for a material at given location
+std::array< std::array< tk::real, 3 >, 3 >
+getDeformGrad(
+  std::size_t nmat,
+  std::size_t k,
+  const std::vector< tk::real >& state );
+
+//! Check whether we have solid materials in our problem
+bool
+haveSolid(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx );
 
 } //inciter::
 

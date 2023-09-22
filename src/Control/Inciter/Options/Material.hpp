@@ -24,6 +24,7 @@ namespace ctr {
 //! Material types
 enum class MaterialType : uint8_t { STIFFENEDGAS
                                   , JWL
+                                  , SMALLSHEARSOLID
                                   };
 
 //! Pack/Unpack MaterialType: forward overload to generic enum class packer
@@ -36,6 +37,7 @@ class Material : public tk::Toggle< MaterialType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::stiffenedgas
                                   , kw::jwl
+                                  , kw::smallshearsolid
                                   >;
 
     //! \brief Options constructor
@@ -48,10 +50,12 @@ class Material : public tk::Toggle< MaterialType > {
         //! Enums -> names (if defined, policy codes, if not, name)
         { { MaterialType::STIFFENEDGAS, kw::stiffenedgas::name() }
         , { MaterialType::JWL, kw::jwl::name() }
+        , { MaterialType::SMALLSHEARSOLID, kw::smallshearsolid::name() }
         },
         //! keywords -> Enums
         { { kw::stiffenedgas::string(), MaterialType::STIFFENEDGAS }
         , { kw::jwl::string(), MaterialType::JWL }
+        , { kw::smallshearsolid::string(), MaterialType::SMALLSHEARSOLID }
         } )
     {}
 

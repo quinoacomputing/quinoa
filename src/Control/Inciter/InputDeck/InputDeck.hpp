@@ -138,6 +138,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::eos
                                  , kw::stiffenedgas
                                  , kw::jwl
+                                 , kw::smallshearsolid
                                  , kw::mat_gamma
                                  , kw::mat_pstiff
                                  , kw::w_gru
@@ -256,6 +257,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::scheme
                                  , kw::diagcg
                                  , kw::alecg
+                                 , kw::oversetfe
                                  , kw::dg
                                  , kw::p0p1
                                  , kw::dgp1
@@ -389,6 +391,11 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
         std::numeric_limits< kw::interval_iter::info::expect::type >::max();
       get< tag::output, tag::iter, tag::history >() =
         std::numeric_limits< kw::interval_iter::info::expect::type >::max();
+      // Defaults for multimat parameters
+      get< tag::param, tag::multimat, tag::prelax >() = 1;
+      get< tag::param, tag::multimat, tag::prelax_timescale >() = 0.25;
+      get< tag::param, tag::multimat, tag::intsharp >() = 0;
+      get< tag::param, tag::multimat, tag::intsharp_param >() = 1.8;
       // Initialize help: fill own keywords
       const auto& ctrinfoFill = tk::ctr::Info( get< tag::cmd, tag::ctrinfo >() );
       brigand::for_each< keywords >( ctrinfoFill );
@@ -462,27 +469,6 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
       std::vector< char > depvar;
       brigand::for_each< PDETypes >( Depvar( *this, depvar ) );
       return depvar;
-    }
-
-    //! Query special point BC configuration
-    //! \tparam eq PDE type to query
-    //! \tparam sbc Special BC type to query, e.g., stagnation, skip
-    //! \param[in] system Equation system id
-    //! \return Vectors configuring the special points and their radii
-    template< class eq, class sbc >
-    std::tuple< std::vector< tk::real >, std::vector< tk::real > >
-    specialBC( std::size_t system ) {
-      const auto& bcspec = get< tag::param, eq, sbc >();
-      const auto& point = bcspec.template get< tag::point >();
-      const auto& radius = bcspec.template get< tag::radius >();
-      std::vector< tk::real > pnt;
-      std::vector< tk::real > rad;
-      if (point.size() > system && radius.size() > system) {
-        pnt = point[ system ];
-        rad = radius[ system ];
-      }
-      Assert( pnt.size() == 3*rad.size(), "Size mismatch" );
-      return { std::move(pnt), std::move(rad) };
     }
 
     //! Query scheme centering

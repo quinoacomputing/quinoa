@@ -22,7 +22,6 @@ inciter
 
     physics euler
     problem sod_shocktube
-    depvar u
 
     prelax 0
 

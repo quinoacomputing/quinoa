@@ -58,12 +58,12 @@ FV::FV( const CProxy_Discretization& disc,
   m_nnod( 0 ),
   m_u( Disc()->Inpoel().size()/4,
        g_inputdeck.get< tag::discr, tag::rdof >()*
-       g_inputdeck.get< tag::component >().nprop() ),
+       g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(), g_inputdeck.get< tag::discr, tag::rdof >()*
     g_fvpde[Disc()->MeshId()].nprim() ),
   m_lhs( m_u.nunk(),
-         g_inputdeck.get< tag::component >().nprop() ),
+         g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_npoin( Disc()->Coord()[0].size() ),
   m_diag(),
@@ -71,17 +71,19 @@ FV::FV( const CProxy_Discretization& disc,
   m_uc(),
   m_pc(),
   m_initial( 1 ),
-  m_uElemfields(m_u.nunk(), g_inputdeck.get< tag::component >().nprop()),
+  m_uElemfields( m_u.nunk(), m_lhs.nprop() ),
   m_pElemfields(m_u.nunk(),
     m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
-  m_uNodefields(m_npoin, g_inputdeck.get< tag::component >().nprop()),
+  m_uNodefields( m_npoin, m_lhs.nprop() ),
   m_pNodefields(m_npoin,
     m_p.nprop()/g_inputdeck.get< tag::discr, tag::rdof >()),
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_boxelems(),
-  m_propFrontEngSrc(1),
-  m_nrk(0)
+  m_srcFlag(m_u.nunk(), 0),
+  m_nrk(0),
+  m_dte(m_u.nunk(), 0.0),
+  m_finished(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -160,9 +162,11 @@ FV::resizeSolVectors()
   // Resize solution vectors, lhs and rhs by the number of ghost tets
   m_u.resize( myGhosts()->m_nunk );
   m_un.resize( myGhosts()->m_nunk );
+  m_srcFlag.resize( myGhosts()->m_nunk );
   m_p.resize( myGhosts()->m_nunk );
   m_lhs.resize( myGhosts()->m_nunk );
   m_rhs.resize( myGhosts()->m_nunk );
+  m_dte.resize( myGhosts()->m_nunk );
 
   // Size communication buffer for solution
   for (auto& u : m_uc) u.resize( myGhosts()->m_bid.size() );
@@ -475,11 +479,7 @@ FV::lim()
   if (rdof > 1) {
     g_fvpde[Disc()->MeshId()].limit( myGhosts()->m_geoFace, myGhosts()->m_fd,
       myGhosts()->m_esup,
-      myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p );
-
-    if (g_inputdeck.get< tag::discr, tag::limsol_projection >())
-      g_fvpde[Disc()->MeshId()].Correct_Conserv(m_p, myGhosts()->m_geoElem, m_u,
-        myGhosts()->m_fd.Esuel().size()/4);
+      myGhosts()->m_inpoel, myGhosts()->m_coord, m_srcFlag, m_u, m_p );
   }
 
   // Send limited solution to neighboring chares
@@ -585,12 +585,15 @@ FV::dt()
       // find the minimum dt across all PDEs integrated
       auto eqdt =
         g_fvpde[d->MeshId()].dt( myGhosts()->m_fd, myGhosts()->m_geoFace,
-          myGhosts()->m_geoElem,
-          m_u, m_p, myGhosts()->m_fd.Esuel().size()/4, m_propFrontEngSrc );
+          myGhosts()->m_geoElem, m_u, m_p, myGhosts()->m_fd.Esuel().size()/4,
+          m_srcFlag, m_dte );
       if (eqdt < mindt) mindt = eqdt;
 
+      // time-step suppression for unsteady problems
       tk::real coeff(1.0);
-      if (d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It());
+      if (!g_inputdeck.get< tag::discr, tag::steady_state >()) {
+        if (d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It());
+      }
 
       mindt *= coeff * g_inputdeck.get< tag::discr, tag::cfl >();
     }
@@ -627,7 +630,8 @@ FV::solve( tk::real newdt )
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
-  // physical time at time-stage for computing exact source terms
+  // physical time at time-stage for computing exact source terms for
+  // unsteady problems
   tk::real physT(d->T());
   // 2-stage RK
   if (m_nrk == 2) {
@@ -645,20 +649,22 @@ FV::solve( tk::real newdt )
     }
   }
 
-  // initialize energy source as not added (modified in eq.rhs appropriately)
-  m_propFrontEngSrc = 0;
+  // Compute rhs
   g_fvpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
-    d->ElemBlockId(), m_u, m_p, m_rhs, m_propFrontEngSrc );
+    d->ElemBlockId(), m_u, m_p, m_rhs, m_srcFlag );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
   for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
     for (std::size_t c=0; c<neq; ++c)
     {
+      auto dte = d->Dt();
+      if (steady) dte = m_dte[e];
       auto rmark = c*rdof;
       m_u(e, rmark) =  m_rkcoef[0][m_stage] * m_un(e, rmark)
         + m_rkcoef[1][m_stage] * ( m_u(e, rmark)
-          + d->Dt() * m_rhs(e, c)/m_lhs(e, c) );
+          + dte * m_rhs(e, c)/m_lhs(e, c) );
       // zero out reconstructed dofs of equations using reduced dofs
       if (rdof > 1) {
         for (std::size_t k=1; k<rdof; ++k)
@@ -690,16 +696,16 @@ FV::solve( tk::real newdt )
     // Compute diagnostics, e.g., residuals
     auto diag_computed = m_diag.compute( *d,
       m_u.nunk()-myGhosts()->m_fd.Esuel().size()/4, myGhosts()->m_geoElem,
-      std::vector< std::size_t>{}, m_u );
+      std::vector< std::size_t>{}, m_u, m_un );
 
     // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
+    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
 
   }
 }
 
 void
-FV::refine( [[maybe_unused]] const std::vector< tk::real >& l2res )
+FV::refine( const std::vector< tk::real >& l2res )
 // *****************************************************************************
 // Optionally refine/derefine mesh
 //! \param[in] l2res L2-norms of the residual for each scalar component
@@ -707,6 +713,18 @@ FV::refine( [[maybe_unused]] const std::vector< tk::real >& l2res )
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Assess convergence for steady state
+  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
+  const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
+
+  bool converged(false);
+  if (steady) converged = l2res[rc] < residual;
+
+  // this is the last time step if max time of max number of time steps
+  // reached or the residual has reached its convergence criterion
+  if (d->finished() or converged) m_finished = 1;
 
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
@@ -779,6 +797,7 @@ FV::resizePostAMR(
   auto nelem = myGhosts()->m_inpoel.size()/4;
   m_p.resize( nelem );
   m_u.resize( nelem );
+  m_srcFlag.resize( nelem );
   m_un.resize( nelem );
   m_lhs.resize( nelem );
   m_rhs.resize( nelem );
@@ -828,7 +847,7 @@ FV::fieldOutput() const
   auto d = Disc();
 
   // Output field data
-  return d->fielditer() or d->fieldtime() or d->fieldrange() or d->finished();
+  return d->fielditer() or d->fieldtime() or d->fieldrange() or m_finished;
 }
 
 bool
@@ -853,6 +872,7 @@ FV::writeFields( CkCallback c )
 
   const auto& inpoel = std::get< 0 >( d->Chunk() );
   auto esup = tk::genEsup( inpoel, 4 );
+  auto nelem = inpoel.size() / 4;
 
   // Combine own and communicated contributions and finish averaging of node
   // field output in chare boundary nodes
@@ -916,6 +936,23 @@ FV::writeFields( CkCallback c )
   analyticFieldOutput( g_fvpde[d->MeshId()], tk::Centering::NODE, coord[0],
     coord[1], coord[2], t, nodefields );
 
+  // Add sound speed vector
+  std::vector< tk::real > soundspd(nelem, 0.0);
+  g_fvpde[d->MeshId()].soundspeed(nelem, m_u, m_p, soundspd);
+  elemfields.push_back(soundspd);
+
+  // Add source flag array to element-centered field output
+  std::vector< tk::real > srcFlag( begin(m_srcFlag), end(m_srcFlag) );
+  // Here m_srcFlag has a size of m_u.nunk() which is the number of the
+  // elements within this partition (nelem) plus the ghost partition cells.
+  // For the purpose of output, we only need the solution data within this
+  // partition. Therefore, resizing it to nelem removes the extra partition
+  // boundary allocations in the srcFlag vector. Since the code assumes that
+  // the boundary elements are on the top, the resize operation keeps the lower
+  // portion.
+  srcFlag.resize( nelem );
+  elemfields.push_back( srcFlag );
+
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
   auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
@@ -923,6 +960,9 @@ FV::writeFields( CkCallback c )
   // Collect field output names for analytical solutions
   analyticFieldNames( g_fvpde[d->MeshId()], tk::Centering::ELEM, elemfieldnames );
   analyticFieldNames( g_fvpde[d->MeshId()], tk::Centering::NODE, nodefieldnames );
+
+  elemfieldnames.push_back( "sound speed" );
+  elemfieldnames.push_back( "src_flag" );
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
@@ -938,7 +978,9 @@ FV::writeFields( CkCallback c )
   const auto& triinpoel = tk::remap( fd.Triinpoel(), d->Gid() );
   d->write( inpoel, d->Coord(), fd.Bface(), {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            surfnames, {}, elemfields, nodefields, elemsurfs, {}, c );
+            surfnames, {}, elemfields, nodefields, elemsurfs, {} );
+
+  c.send();
 }
 
 void
@@ -1009,8 +1051,8 @@ FV::evalLB( int nrestart )
 {
   auto d = Disc();
 
-  // Detect if just returned from a checkpoint and if so, zero timers
-  d->restarted( nrestart );
+  // Detect if just returned from a checkpoint and if so, zero timers and flag
+  if (d->restarted( nrestart )) m_finished = 0;
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
@@ -1074,12 +1116,8 @@ FV::step()
   // Reset Runge-Kutta stage counter
   m_stage = 0;
 
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-
   // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+  if (not m_finished) {
 
     evalRestart();
  

@@ -55,7 +55,8 @@ ElemDiagnostics::compute( Discretization& d,
                           const std::size_t nchGhost,
                           const tk::Fields& geoElem,
                           const std::vector< std::size_t >& ndofel,
-                          const tk::Fields& u ) const
+                          const tk::Fields& u,
+                          const tk::Fields& un ) const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization base class to read from
@@ -63,6 +64,7 @@ ElemDiagnostics::compute( Discretization& d,
 //! \param[in] geoElem Element geometry
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] u Current solution vector
+//! \param[in] un Previous time-step solution vector
 //! \return True if diagnostics have been computed
 //! \details Diagnostics are defined as some norm, e.g., L2 norm, of a quantity,
 //!    computed in mesh elements, A, as ||A||_2 = sqrt[ sum_i(A_i)^2 V_i ],
@@ -90,7 +92,7 @@ ElemDiagnostics::compute( Discretization& d,
       diag( NUMDIAG, std::vector< tk::real >( u.nprop()/rdof, 0.0 ) );
 
     // Compute diagnostics for DG
-    compute_diag(d, rdof, nchGhost, geoElem, ndofel, u, diag);
+    compute_diag(d, rdof, nchGhost, geoElem, ndofel, u, un, diag);
 
     // Append diagnostics vector with metadata on the current time step
     // ITER: Current iteration count (only the first entry is used)
@@ -101,7 +103,7 @@ ElemDiagnostics::compute( Discretization& d,
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
-    auto stream = serialize( d.MeshId(), diag );
+    auto stream = serialize( d.MeshId(), u.nprop()/rdof, diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 
@@ -119,6 +121,7 @@ ElemDiagnostics::compute_diag( const Discretization& d,
                                const tk::Fields& geoElem,
                                const std::vector< std::size_t >& ndofel,
                                const tk::Fields& u,
+                               const tk::Fields& un,
                                std::vector< std::vector< tk::real > >& diag )
 const
 // *****************************************************************************
@@ -129,6 +132,7 @@ const
 //! \param[in] geoElem Element geometry
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] u Current solution vector
+//! \param[in] un Previous time-step solution vector
 //! \param[in,out] diag Diagnostics vector
 // *****************************************************************************
 {
@@ -222,5 +226,10 @@ const
     // Compute sum of the total energy over the entire domain (only the
     // first entry is used)
     diag[TOTALSOL][0] += geoElem(e,0) * sp_te;
+
+    // Compute sum for L2 norm of the cell-avg residual
+    for (std::size_t c=0; c<u.nprop()/rdof; ++c)
+      diag[L2RES][c] += geoElem(e, 0) *
+        ( (u(e,c*rdof)-un(e,c*rdof)) * (u(e,c*rdof)-un(e,c*rdof)) );
   }
 }

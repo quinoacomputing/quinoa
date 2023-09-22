@@ -22,12 +22,16 @@
 #include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+
+namespace inciter {
+extern ctr::InputDeck g_inputdeck;
+}
 
 namespace tk {
 
 void
-bndSurfInt( ncomp_t system,
-            std::size_t nmat,
+bndSurfInt( std::size_t nmat,
             const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
@@ -54,7 +58,6 @@ bndSurfInt( ncomp_t system,
 //! \details This function computes contributions from surface integrals along
 //!   all faces for a particular boundary condition type, configured by the state
 //!   function
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -174,18 +177,23 @@ bndSurfInt( ncomp_t system,
           auto wt = wgp[igp] * geoFace(f,0);
 
           // Compute the state variables at the left element
-          auto ugp = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+          auto ugp = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
             rdof, nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
 
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
 
-          auto var = state( system, ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t,
-                            fn );
+          auto var = state( ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t, fn );
 
           // Compute the numerical flux
-          auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1],
-                          gp[2], t ) );
+          auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t));
+
+          // Code below commented until details about the form of these terms in
+          // the \alpha_k g_k equations are sorted out.
+          // // Add RHS inverse deformation terms if necessary
+          // if (haveSolid)
+          //   solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
+          //                      coordel_l, coordel_r, igp, coordgp, dt, fl );
 
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, ndof, ndofel[el], wt, fn, el, fl,
@@ -229,6 +237,11 @@ update_rhs_bc ( ncomp_t ncomp,
   // following line commented until rdofel is made available.
   //Assert( B_l.size() == ndof_l, "Size mismatch" );
 
+  using inciter::newSolidsAccFn;
+
+    const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
+
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
@@ -265,11 +278,23 @@ update_rhs_bc ( ncomp_t ncomp,
     // Divergence of velocity multiples basis fucntion( d(uB) / dx )
     for(std::size_t idof = 0; idof < ndof; idof++)
       riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
+
+    // Gradient of u*g``
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+      {
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t l=0; l<3; ++l)
+              for (std::size_t idir=0; idir<3; ++idir)
+                riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+idir][el] +=
+                  wt * fl[ncomp+nmat+1+newSolidsAccFn(k,i,j,l)] * fn[idir];
+      }
   }
 }
 
 void
-bndSurfIntFV( ncomp_t system,
+bndSurfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
@@ -285,15 +310,14 @@ bndSurfIntFV( ncomp_t system,
   const StateFn& state,
   const Fields& U,
   const Fields& P,
+  const std::vector< int >& srcFlag,
   Fields& R,
-  std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp )
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for FV
 //! \details This function computes contributions from surface integrals along
 //!   all faces for a particular boundary condition type, configured by the state
 //!   function
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -310,11 +334,8 @@ bndSurfIntFV( ncomp_t system,
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] srcFlag Whether the energy source was added
 //! \param[in,out] R Right-hand side vector computed
-//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
-//!   computed from the Riemann solver for use in the non-conservative terms.
-//!   These derivatives are used only for multi-material hydro and unused for
-//!   single-material compflow and linear transport.
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
@@ -328,9 +349,6 @@ bndSurfIntFV( ncomp_t system,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
-
-  //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
-  //        "derivative vector for single material compflow" );
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find( std::stoi(s) );// faces for side set
@@ -370,38 +388,28 @@ bndSurfIntFV( ncomp_t system,
         auto B_l = eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
 
         // Compute the state variables at the left element
-        auto ugp = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
-          rdof, nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+        auto ugp = evalFVSol(mat_blk, intsharp, ncomp, nprim,
+          rdof, nmat, el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P,
+          srcFlag[el]);
 
         Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                 "appended boundary state vector" );
 
-        auto var = state( system, ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t,
-                          fn );
+        auto var = state( ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t, fn );
 
         // Compute the numerical flux
-        auto fl = flux( mat_blk, fn, var, vel( system, ncomp, gp[0], gp[1],
-                        gp[2], t ) );
+        auto fl = flux( mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t) );
+
+        // compute non-conservative terms
+        std::vector< tk::real > var_riemann(nmat+1, 0.0);
+        for (std::size_t k=0; k<nmat; ++k) var_riemann[k] = fl[ncomp+k];
+
+        auto ncf_l = nonConservativeIntFV(nmat, rdof, el, fn, U, P, var_riemann);
 
         // Add the surface integration term to the rhs
         for (ncomp_t c=0; c<ncomp; ++c)
         {
-          R(el, c) -= geoFace(f,0) * fl[c];
-        }
-      
-        // Prep for non-conservative terms in multimat
-        if (fl.size() > ncomp)
-        {
-          // Gradients of partial pressures
-          for (std::size_t k=0; k<nmat; ++k)
-          {
-            for (std::size_t idir=0; idir<3; ++idir)
-              riemannDeriv[3*k+idir][el] += geoFace(f,0) * fl[ncomp+k]
-              * fn[idir];
-          }
-      
-          // Divergence of velocity
-          riemannDeriv[3*nmat][el] += geoFace(f,0) * fl[ncomp+nmat];
+          R(el, c) -= geoFace(f,0) * (fl[c] - ncf_l[c]);
         }
       }
     }

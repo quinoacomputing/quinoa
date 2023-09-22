@@ -17,7 +17,6 @@ inciter
 
   compflow
 
-    depvar c
     physics euler
     problem rayleigh_taylor
     alpha 1.0

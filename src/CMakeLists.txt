@@ -93,7 +93,7 @@ endif()
 # directory based on cmake-supplied compiler ID
 if (NOT TPL_DIR)
   string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
-  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../external/install/${COMP}-${ARCH})
+  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../../quinoa-tpl/install/${COMP}-${ARCH})
   get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
   set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
 endif()
@@ -123,6 +123,14 @@ string(APPEND LICENSE "\\n\\nFor third-party licenses, see https://quinoacomputi
 
 # Include third-party libraries configuration
 include(TPLs)
+
+# Find LAPACK (and BLAS implicitly)
+set(lapack "lapack")
+find_package(LAPACKE)
+if(LAPACKE_FOUND)
+  set(lapack "")
+endif()
+message(STATUS "LAPACK found: "${LAPACKE_LIBRARIES})
 
 # Compilers
 # =========
@@ -156,6 +164,8 @@ else()  # use MPI
   get_mpi_compilers()
   set(LINKER_COMPILER "${CHARM_COMPILER}")
 endif()
+
+set(EXTRA_LINK_ARGS "-module collidecharm")
 
 MESSAGE(STATUS "MPI C compiler: " ${MPI_C_COMPILER})
 MESSAGE(STATUS "MPI C++ compiler: " ${MPI_CXX_COMPILER})
@@ -327,6 +337,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-format-overflow")
   add_compiler_flag("-Wno-pragmas")
   add_compiler_flag("-Wno-unknown-pragmas")
+  add_compiler_flag("-Wno-class-memaccess")
 
   # For vectorization:
   #add_compiler_flag("-march=native")
@@ -639,6 +650,7 @@ endif()
 if (ENABLE_INCITER AND HIGHWAYHASH_FOUND)
   add_subdirectory(PDE)
   add_subdirectory(Inciter)
+  add_subdirectory(Transfer)
 endif()
 
 if (ENABLE_INCITER OR ENABLE_UNITTEST)

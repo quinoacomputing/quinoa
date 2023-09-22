@@ -16,7 +16,6 @@ inciter
     physics advdiff
     problem shear_diff
     ncomp 2
-    depvar c
     diffusivity 3.0 2.0 1.0 1.0 2.0 3.0 end
     u0 10.0 15.0 end
     lambda 0.5 1.0 0.75 0.25 end

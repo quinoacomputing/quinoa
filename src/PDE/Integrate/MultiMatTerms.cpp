@@ -23,12 +23,17 @@
 #include "Quadrature.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/GetMatProp.hpp"
+
+namespace inciter {
+extern ctr::InputDeck g_inputdeck;
+}
 
 namespace tk {
 
 void
-nonConservativeInt( [[maybe_unused]] ncomp_t system,
-                    std::size_t nmat,
+nonConservativeInt( std::size_t nmat,
                     const std::vector< inciter::EOS >& mat_blk,
                     const std::size_t ndof,
                     const std::size_t rdof,
@@ -50,7 +55,6 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 //!   details see Pelanti, M., & Shyue, K. M. (2019). A numerical model for
 //!   multiphase liquid–vapor–gas flows with interfaces and cavitation.
 //!   International Journal of Multiphase Flow, 113, 208-230.
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -73,6 +77,11 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
   using inciter::momentumIdx;
   using inciter::energyIdx;
   using inciter::velocityIdx;
+  using inciter::deformIdx;
+  using inciter::newSolidsAccFn;
+
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -138,7 +147,7 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+      auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
@@ -215,6 +224,23 @@ nonConservativeInt( [[maybe_unused]] ncomp_t system,
             ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)]
                                             * vel[idir] * dBdx[idir][idof];
         }
+
+        if (solidx[k] > 0)
+        {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              for(std::size_t idof=0; idof<ndof; ++idof)
+              {
+                ncf[deformIdx(nmat,solidx[k],i,j)][idof] = 0.0;
+                for (std::size_t l=0; l<3; ++l)
+                {
+                  ncf[deformIdx(nmat,solidx[k],i,j)][idof] +=
+                    state[volfracIdx(nmat, k)]*(
+                      riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+l][e]
+                     -riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,l,l)+j][e]);
+                  }
+              }
+        }
       }
 
       updateRhsNonCons( ncomp, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
@@ -250,8 +276,13 @@ updateRhsNonCons(
 {
   using inciter::volfracIdx;
   using inciter::energyIdx;
+  using inciter::deformIdx;
   using inciter::volfracDofIdx;
   using inciter::energyDofIdx;
+  using inciter::deformDofIdx;
+
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   //Assert( dBdx[0].size() == ndof_el,
   //        "Size mismatch for basis function derivatives" );
@@ -280,46 +311,42 @@ updateRhsNonCons(
           wt * ncf[volfracIdx(nmat,k)][idof];
         R(e, energyDofIdx(nmat,k,ndof,idof)) +=
           wt * ncf[energyIdx(nmat,k)][idof] * B[idof];
+        if (solidx[k] > 0) {
+          for(std::size_t i=0; i<3; ++i)
+            for(std::size_t j=0; j<3; ++j)
+              R(e, deformDofIdx(nmat,solidx[k],i,j,ndof,idof)) +=
+              wt * ncf[deformIdx(nmat,solidx[k],i,j)][idof] * B[idof];
+        }
       }
     }
   }
 }
 
-void
+std::vector< tk::real >
 nonConservativeIntFV(
-  ncomp_t system,
   std::size_t nmat,
-  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
-  const std::size_t nelem,
-  const std::vector< std::size_t >& inpoel,
-  const UnsMesh::Coords& coord,
-  const Fields& geoElem,
+  const std::size_t e,
+  const std::array< tk::real, 3 >& fn,
   const Fields& U,
   const Fields& P,
-  const std::vector< std::vector< tk::real > >& riemannDeriv,
-  Fields& R )
+  const std::vector< tk::real >& var_riemann )
 // *****************************************************************************
-//  Compute volume integrals of non-conservative terms for multi-material FV
-//! \details This is called for multi-material FV, computing volume integrals of
+//  Compute integrals of non-conservative terms for multi-material FV
+//! \details This is called for multi-material FV, computing integrals of
 //!   terms in the volume fraction and energy equations, which do not exist in
 //!   the single-material flow formulation (for `CompFlow`). For further
 //!   details see Pelanti, M., & Shyue, K. M. (2019). A numerical model for
 //!   multiphase liquid–vapor–gas flows with interfaces and cavitation.
 //!   International Journal of Multiphase Flow, 113, 208-230.
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] nelem Total number of elements
-//! \param[in] inpoel Element-node connectivity
-//! \param[in] coord Array of nodal coordinates
-//! \param[in] geoElem Element geometry array
+//! \param[in] e Element for which contribution is to be calculated
+//! \param[in] fn Face normal
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitive quantities at recent time step
-//! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
+//! \param[in] var_riemann Riemann-values of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms
-//! \param[in,out] R Right-hand side vector added to
 // *****************************************************************************
 {
   using inciter::volfracIdx;
@@ -327,70 +354,46 @@ nonConservativeIntFV(
   using inciter::momentumIdx;
   using inciter::energyIdx;
   using inciter::velocityIdx;
+  using inciter::volfracDofIdx;
+  using inciter::densityDofIdx;
+  using inciter::velocityDofIdx;
 
   auto ncomp = U.nprop()/rdof;
-  auto nprim = P.nprop()/rdof;
 
-  // compute volume integrals
-  for (std::size_t e=0; e<nelem; ++e)
+  // get bulk properties
+  tk::real rhob(0.0), p_face(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
   {
-    // Compute the basis function
-    std::vector< tk::real > B(rdof, 0.0);
-    B[0] = 1.0;
-
-    auto state = evalPolynomialSol(system, mat_blk, 0, ncomp, nprim,
-      rdof, nmat, e, rdof, inpoel, coord, geoElem,
-      {{0.25, 0.25, 0.25}}, B, U, P);
-
-    // get bulk properties
-    tk::real rhob(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-        rhob += state[densityIdx(nmat, k)];
-
-    // get the velocity vector
-    std::array< tk::real, 3 > vel{{ state[ncomp+velocityIdx(nmat, 0)],
-                                    state[ncomp+velocityIdx(nmat, 1)],
-                                    state[ncomp+velocityIdx(nmat, 2)] }};
-
-    std::vector< tk::real > ymat(nmat, 0.0);
-    std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      ymat[k] = state[densityIdx(nmat, k)]/rhob;
-
-      for (std::size_t idir=0; idir<3; ++idir)
-        dap[idir] += riemannDeriv[3*k+idir][e];
-    }
-
-    // compute non-conservative terms
-    std::vector< tk::real > ncf(ncomp, 0.0);
-
-    for (std::size_t idir=0; idir<3; ++idir)
-      ncf[momentumIdx(nmat, idir)] = 0.0;
-
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      // evaluate non-conservative term for energy equation
-      ncf[densityIdx(nmat, k)] = 0.0;
-      for (std::size_t idir=0; idir<3; ++idir)
-        ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*dap[idir]
-                                              - riemannDeriv[3*k+idir][e] );
-
-      // evaluate non-conservative term for volume fraction equation
-      ncf[volfracIdx(nmat, k)] = state[volfracIdx(nmat, k)]
-        * riemannDeriv[3*nmat][e];
-    }
-
-    for (ncomp_t c=0; c<ncomp; ++c)
-    {
-      R(e, c) += geoElem(e,0) * ncf[c];
-    }
+    rhob += U(e, densityDofIdx(nmat,k,rdof,0));
+    p_face += var_riemann[k];
   }
+
+  std::array< tk::real, 3 > vel{{ P(e, velocityDofIdx(nmat,0,rdof,0)),
+                                  P(e, velocityDofIdx(nmat,1,rdof,0)),
+                                  P(e, velocityDofIdx(nmat,2,rdof,0)) }};
+
+  // compute non-conservative terms
+  std::vector< tk::real > ncf(ncomp, 0.0);
+  std::vector< tk::real > ymat(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    ymat[k] = U(e, densityDofIdx(nmat,k,rdof,0))/rhob;
+
+    // evaluate non-conservative term for energy equation
+    for (std::size_t idir=0; idir<3; ++idir)
+      ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*p_face*fn[idir]
+                                            - var_riemann[k]*fn[idir] );
+
+    // evaluate non-conservative term for volume fraction equation
+    ncf[volfracIdx(nmat, k)] = U(e, volfracDofIdx(nmat,k,rdof,0))
+      * var_riemann[nmat];
+  }
+
+  return ncf;
 }
 
 void
-pressureRelaxationInt( ncomp_t system,
-                       std::size_t nmat,
+pressureRelaxationInt( std::size_t nmat,
                        const std::vector< inciter::EOS >& mat_blk,
                        const std::size_t ndof,
                        const std::size_t rdof,
@@ -413,7 +416,6 @@ pressureRelaxationInt( ncomp_t system,
 //!   Rieben, R. N., & Tomov, V. Z. (2016). Multi‐material closure model for
 //!   high‐order finite element Lagrangian hydrodynamics. International Journal
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -436,6 +438,10 @@ pressureRelaxationInt( ncomp_t system,
   using inciter::energyIdx;
   using inciter::pressureIdx;
   using inciter::velocityIdx;
+  using inciter::deformIdx;
+
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
@@ -482,7 +488,7 @@ pressureRelaxationInt( ncomp_t system,
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+      auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
@@ -499,8 +505,28 @@ pressureRelaxationInt( ncomp_t system,
         real arhomat = state[densityIdx(nmat, k)];
         real alphamat = state[volfracIdx(nmat, k)];
         apmat[k] = state[ncomp+pressureIdx(nmat, k)];
-        real amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
-          apmat[k], alphamat, k );
+        real amat = 0.0;
+        if (solidx[k] > 0)
+        {
+          std::array< std::array< tk::real, 3 >, 3 > ag;
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              ag[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
+          auto agrot = tk::rotateTensor(ag, {{1.0, 0.0, 0.0}});
+          amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
+            apmat[k], alphamat, k, 1.0, agrot);
+          agrot = tk::rotateTensor(ag, {{0.0, 1.0, 0.0}});
+          amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
+            arhomat, apmat[k], alphamat, k, 1.0, agrot));
+          agrot = tk::rotateTensor(ag, {{0.0, 0.0, 1.0}});
+          amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
+            arhomat, apmat[k], alphamat, k, 1.0, agrot));
+        }
+        else
+        {
+          amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
+            apmat[k], alphamat, k );
+        }
         kmat[k] = arhomat * amat * amat;
         pb += apmat[k];
 
@@ -519,6 +545,14 @@ pressureRelaxationInt( ncomp_t system,
           * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
         s_prelax[volfracIdx(nmat, k)] = s_alpha;
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+        if (solidx[k] > 0)
+          for (size_t i=0; i<3; ++i)
+            for (size_t j=0; j<3; ++j)
+            {
+              tk::real gij =
+                state[deformIdx(nmat,solidx[k],i,j)]/state[volfracIdx(nmat, k)];
+              s_prelax[deformIdx(nmat,solidx[k],i,j)] = gij * s_alpha;
+            }
       }
 
       updateRhsPre( ncomp, ndof, dof_el, wt, e, B, s_prelax, R );
@@ -568,7 +602,6 @@ updateRhsPre(
 
 void
 pressureRelaxationIntFV(
-  ncomp_t system,
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
@@ -589,7 +622,6 @@ pressureRelaxationIntFV(
 //!   Rieben, R. N., & Tomov, V. Z. (2016). Multi‐material closure model for
 //!   high‐order finite element Lagrangian hydrodynamics. International Journal
 //!   for Numerical Methods in Fluids, 82(10), 689-706.
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
@@ -619,7 +651,7 @@ pressureRelaxationIntFV(
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
 
-    auto state = evalPolynomialSol(system, mat_blk, 0, ncomp, nprim,
+    auto state = evalPolynomialSol(mat_blk, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
       {{0.25, 0.25, 0.25}}, B, U, P);
 
@@ -824,11 +856,13 @@ std::vector< std::array< tk::real, 3 > >
 fluxTerms(
   std::size_t ncomp,
   std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::vector< tk::real >& ugp )
 // *****************************************************************************
 //  Compute the flux-function for the multimaterial PDEs
 //! \param[in] ncomp Number of components in this PDE system
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
 //! \param[in] U Solution vector at recent time step
 //! \return Flux vectors for all components in multi-material PDE system
 // *****************************************************************************
@@ -839,10 +873,14 @@ fluxTerms(
   using inciter::energyIdx;
   using inciter::velocityIdx;
   using inciter::pressureIdx;
+  using inciter::deformIdx;
+
+  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   std::vector< std::array< tk::real, 3 > > fl( ncomp );
 
-  tk::real rho(0.0), p(0.0);
+  tk::real rho(0.0);
   for (std::size_t k=0; k<nmat; ++k)
     rho += ugp[densityIdx(nmat, k)];
 
@@ -850,43 +888,117 @@ fluxTerms(
   auto v = ugp[ncomp+velocityIdx(nmat,1)];
   auto w = ugp[ncomp+velocityIdx(nmat,2)];
 
-  std::vector< tk::real > apk( nmat, 0.0 );
-  for (std::size_t k=0; k<nmat; ++k)
+  if (inciter::haveSolid(nmat, solidx))
   {
-    apk[k] = ugp[ncomp+pressureIdx(nmat,k)];
-    p += apk[k];
+    std::vector< tk::real > al(nmat, 0.0);
+    std::vector< std::array< std::array< tk::real, 3 >, 3 > > ag, asig;
+    std::array< std::array< tk::real, 3 >, 3 >
+      sig {{ {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }};
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      al[k] = ugp[volfracIdx(nmat, k)];
+      // inv deformation gradient and Cauchy stress tensors
+      ag.push_back(inciter::getDeformGrad(nmat, k, ugp));
+      asig.push_back(mat_blk[k].computeTensor< inciter::EOS::CauchyStress >(
+        ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
+        al[k], k, ag[k]));
+      for (size_t i=0; i<3; ++i)
+        for (size_t j=0; j<3; ++j)
+          sig[i][j] += asig[k][i][j];
+    }
+
+    // conservative part of momentum flux
+    fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u - sig[0][0];
+    fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u - sig[0][1];
+    fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u - sig[0][2];
+
+    fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v - sig[1][0];
+    fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v - sig[1][1];
+    fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v - sig[1][2];
+
+    fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w - sig[2][0];
+    fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w - sig[2][1];
+    fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w - sig[2][2];
+
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // conservative part of volume-fraction flux
+      fl[volfracIdx(nmat, k)][0] = 0.0;
+      fl[volfracIdx(nmat, k)][1] = 0.0;
+      fl[volfracIdx(nmat, k)][2] = 0.0;
+
+      // conservative part of material continuity flux
+      fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+
+      // conservative part of material total-energy flux
+      fl[energyIdx(nmat, k)][0] = u * ugp[energyIdx(nmat, k)]
+        - u * asig[k][0][0] - v * asig[k][1][0] - w * asig[k][2][0];
+      fl[energyIdx(nmat, k)][1] = v * ugp[energyIdx(nmat, k)]
+        - u * asig[k][0][1] - v * asig[k][1][1] - w * asig[k][2][1];
+      fl[energyIdx(nmat, k)][2] = w * ugp[energyIdx(nmat, k)]
+        - u * asig[k][0][2] - v * asig[k][1][2] - w * asig[k][2][2];
+
+      // conservative part of material inverse deformation gradient
+      if (solidx[k] > 0)
+      {
+        for (std::size_t i=0; i<3; ++i)
+        {
+          fl[deformIdx(nmat,solidx[k],i,0)][0] = u*ag[k][i][0];
+          fl[deformIdx(nmat,solidx[k],i,0)][1] = v*ag[k][i][0];
+          fl[deformIdx(nmat,solidx[k],i,0)][2] = w*ag[k][i][0];
+          fl[deformIdx(nmat,solidx[k],i,1)][0] = u*ag[k][i][1];
+          fl[deformIdx(nmat,solidx[k],i,1)][1] = v*ag[k][i][1];
+          fl[deformIdx(nmat,solidx[k],i,1)][2] = w*ag[k][i][1];
+          fl[deformIdx(nmat,solidx[k],i,2)][0] = u*ag[k][i][2];
+          fl[deformIdx(nmat,solidx[k],i,2)][1] = v*ag[k][i][2];
+          fl[deformIdx(nmat,solidx[k],i,2)][2] = w*ag[k][i][2];
+        }
+      }
+    }
   }
-
-  // conservative part of momentum flux
-  fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
-  fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
-  fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
-
-  fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
-  fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
-  fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
-
-  fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
-  fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
-  fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
-
-  for (std::size_t k=0; k<nmat; ++k)
+  else
   {
-    // conservative part of volume-fraction flux
-    fl[volfracIdx(nmat, k)][0] = 0.0;
-    fl[volfracIdx(nmat, k)][1] = 0.0;
-    fl[volfracIdx(nmat, k)][2] = 0.0;
+    tk::real p(0.0);
+    std::vector< tk::real > apk( nmat, 0.0 );
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      apk[k] = ugp[ncomp+pressureIdx(nmat,k)];
+      p += apk[k];
+    }
 
-    // conservative part of material continuity flux
-    fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
-    fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
-    fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+    // conservative part of momentum flux
+    fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
+    fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
+    fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
 
-    // conservative part of material total-energy flux
-    auto hmat = ugp[energyIdx(nmat, k)] + apk[k];
-    fl[energyIdx(nmat, k)][0] = u * hmat;
-    fl[energyIdx(nmat, k)][1] = v * hmat;
-    fl[energyIdx(nmat, k)][2] = w * hmat;
+    fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
+    fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
+    fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
+
+    fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
+    fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
+    fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
+
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // conservative part of volume-fraction flux
+      fl[volfracIdx(nmat, k)][0] = 0.0;
+      fl[volfracIdx(nmat, k)][1] = 0.0;
+      fl[volfracIdx(nmat, k)][2] = 0.0;
+
+      // conservative part of material continuity flux
+      fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+
+      // conservative part of material total-energy flux
+      auto hmat = ugp[energyIdx(nmat, k)] + apk[k];
+      fl[energyIdx(nmat, k)][0] = u * hmat;
+      fl[energyIdx(nmat, k)][1] = v * hmat;
+      fl[energyIdx(nmat, k)][2] = w * hmat;
+    }
   }
 
   return fl;

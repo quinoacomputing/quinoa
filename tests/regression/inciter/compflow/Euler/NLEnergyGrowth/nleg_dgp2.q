@@ -12,7 +12,6 @@ inciter
 
   compflow
 
-    depvar u
     physics euler
     problem nl_energy_growth
     alpha 0.25
