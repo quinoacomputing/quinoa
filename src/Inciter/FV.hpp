@@ -170,6 +170,9 @@ class FV : public CBase_FV {
     //! (no-op)
     void transferSol() {}
 
+    //! (no-op)
+    void advance( tk::real ) {}
+
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 

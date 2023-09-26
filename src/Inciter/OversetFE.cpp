@@ -978,8 +978,16 @@ OversetFE::dt()
   thisProxy[ thisIndex ].wait4rhs();
 
   // Contribute to minimum dt across all chares and advance to next step
-  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(OversetFE,advance), thisProxy) );
+  if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
+    contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
+                CkCallback(CkReductionTarget(OversetFE,advance), thisProxy) );
+  }
+  else {
+    // if solving a time-accurate problem, find minimum dt across all meshes
+    // and eventually broadcast to OversetFE::advance()
+    contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
+      CkCallback(CkReductionTarget(Transporter,minDtAcrossMeshes), d->Tr()) );
+  }
   //! [Advance]
 }
 
@@ -1217,6 +1225,9 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
   }
 
   // TODO: Move overset mesh somewhere here
+  // if moved, add the following two lines
+  // d->Itf() = 0;  // Zero field output iteration count if mesh moved
+  // ++d->Itr();    // Increase number of iterations with a change in the mesh
   m_movedmesh = 0;
   // Normals need to be recomputed if overset mesh has been moved
   if (m_movedmesh) thisProxy[ thisIndex ].wait4norm();

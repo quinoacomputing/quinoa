@@ -204,6 +204,9 @@ class DG : public CBase_DG {
     //! (no-op)
     void transferSol() {}
 
+    //! (no-op)
+    void advance( tk::real ) {}
+
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 

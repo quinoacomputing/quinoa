@@ -50,6 +50,7 @@ module fv {
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void transferSol();
+      entry void advance( tk::real newdt );
       entry void lhs();
       entry void step();
       entry void start();

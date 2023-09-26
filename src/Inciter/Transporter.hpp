@@ -194,6 +194,9 @@ class Transporter : public CBase_Transporter {
     //! Reduction target broadcasting to Schemes after mesh transfer
     void solutionTransferred( std::size_t sumtransfertype );
 
+    //! Reduction target that computes minimum timestep across meshes
+    void minDtAcrossMeshes( tk::real mindt );
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
@@ -219,6 +222,8 @@ class Transporter : public CBase_Transporter {
       p | m_meshid;
       p | m_nload;
       p | m_ntrans;
+      p | m_ndtmsh;
+      p | m_dtmsh;
       p | m_npart;
       p | m_nstat;
       p | m_ndisc;
@@ -263,6 +268,10 @@ class Transporter : public CBase_Transporter {
     std::size_t m_nload;
     //! Number of meshes that have transferred solution
     std::size_t m_ntrans;
+    //! Number of meshes that have computed their dt
+    std::size_t m_ndtmsh;
+    //! Minimum dt on each mesh (sized at each time step and then emptied)
+    std::vector< tk::real > m_dtmsh;
     //! Number of meshes partitioned
     std::size_t m_npart;
     //! Number of mesh statistics computed

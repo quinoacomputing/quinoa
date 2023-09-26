@@ -65,6 +65,8 @@ Transporter::Transporter() :
   m_ncit( m_nchare.size(), 0 ),
   m_nload( 0 ),
   m_ntrans( 0 ),
+  m_ndtmsh( 0 ),
+  m_dtmsh(),
   m_npart( 0 ),
   m_nstat( 0 ),
   m_ndisc( 0 ),
@@ -1403,6 +1405,31 @@ Transporter::solutionTransferred( std::size_t sumtransfertype )
     else {
       for (auto& m : m_scheme) m.bcast< Scheme::lhs >();
     }
+  }
+}
+
+void
+Transporter::minDtAcrossMeshes( tk::real mindt )
+// *****************************************************************************
+// Reduction target that computes minimum timestep across all meshes
+//! \param[in] mindt Minimum dt collected across all meshes
+// *****************************************************************************
+{
+  m_dtmsh.push_back(mindt);
+
+  if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
+    Assert(m_dtmsh.size() == m_nelem.size(), "Incorrect size of dtmsh");
+
+    // compute minimum dt across meshes
+    tk::real dt = std::numeric_limits< tk::real >::max();
+    for (auto idt : m_dtmsh) dt = std::min(dt, idt);
+
+    // clear dt-vector and counter
+    m_dtmsh.clear();
+    m_ndtmsh = 0;
+
+    // broadcast to advance time step
+    for (auto& m : m_scheme) m.bcast< Scheme::advance >( dt );
   }
 }
 
