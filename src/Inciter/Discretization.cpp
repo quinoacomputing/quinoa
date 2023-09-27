@@ -427,7 +427,7 @@ void Discretization::transfer_complete()
 //! \note Single exit point after solution transfer between meshes
 // *****************************************************************************
 {
-  contribute( 0, NULL, CkReduction::nop,
+  contribute( sizeof(nullptr), nullptr, CkReduction::nop,
     CkCallback(CkReductionTarget(Transporter,solutionTransferred),
     m_transporter) );
 }
