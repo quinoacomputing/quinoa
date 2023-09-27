@@ -331,6 +331,8 @@ Discretization::transfer(
 
   } else {
 
+    m_transfer_complete = cb;
+
     // determine source and destination mesh depending on direction of transfer
     std::size_t fromMesh(0), toMesh(0);
     CkCallback cb_xfer;
@@ -397,11 +399,21 @@ void Discretization::from_complete()
   // Lookup the source disc and notify it of completion
   for (auto& t : m_transfer) {
     if (m_meshid == t.src) {
-      m_disc[ t.dst ][ thisIndex ].transfer_complete(1);
+      m_disc[ t.dst ][ thisIndex ].transfer_complete_from_dest();
     }
   }
 
-  thisProxy[ thisIndex ].transfer_complete(1);
+  m_transfer_complete.send();
+}
+
+void Discretization::transfer_complete_from_dest()
+// *****************************************************************************
+//! Solution transfer completed (from dest Discretization)
+//! \details Called on the source only by the destination when a transfer step
+//!   completes.
+// *****************************************************************************
+{
+  m_transfer_complete.send();
 }
 
 void Discretization::transfer_complete( std::size_t dirn )
