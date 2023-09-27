@@ -729,6 +729,9 @@ OversetFE::setTransferFlags(
     }
     // Reset flags
     m_uc(i,iflag) = 0.0;
+
+    // reset blanking coefficient
+    m_blank[i] = 1.0;
   }
 
   // Transfer flags for O to B are based on block-ids that are hardcoded
