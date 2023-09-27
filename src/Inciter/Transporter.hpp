@@ -192,7 +192,7 @@ class Transporter : public CBase_Transporter {
     void boxvol( tk::real* meshdata, int n );
 
     //! Reduction target broadcasting to Schemes after mesh transfer
-    void solutionTransferred( std::size_t sumtransfertype );
+    void solutionTransferred();
 
     //! Reduction target that computes minimum timestep across meshes
     void minDtAcrossMeshes( tk::real mindt );

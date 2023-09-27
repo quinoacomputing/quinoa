@@ -47,7 +47,7 @@ module discretization {
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
       entry void transferInit();
-      entry void transfer_complete(std::size_t dirn);
+      entry void transfer_complete();
       entry void to_complete();
       entry void from_complete();
       entry void transfer_complete_from_dest();

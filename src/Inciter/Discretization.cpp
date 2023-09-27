@@ -322,7 +322,12 @@ Discretization::transfer(
 //! \param[in,out] u Solution to transfer from/to
 //! \param[in] dirn Direction of solution transfer. 0: from background to
 //!   overset, 1: from overset to background
-//! \param[in] cb Callback to call if no transfers configured.
+//! \param[in] cb Callback to call when back and forth transfers complete.
+//! \details This function initiates the solution transfer (direction dependent
+//!   on 'dirn') between meshes. It invokes a reduction to Transporter when the
+//!   transfer in one direction is complete (dirn == 0), or calls back the
+//!   'cb' function in Scheme when transfers both directions are complete.
+//!   The function relies on 'dirn' to make this decision.
 // *****************************************************************************
 {
   if (m_mytransfer.empty()) {   // skip transfer if not involved in coupling
@@ -381,11 +386,11 @@ void Discretization::to_complete()
   // Lookup the source disc and notify it of completion
   for (auto& t : m_transfer) {
     if (m_meshid == t.dst) {
-      m_disc[ t.src ][ thisIndex ].transfer_complete(0);
+      m_disc[ t.src ][ thisIndex ].transfer_complete();
     }
   }
 
-  thisProxy[ thisIndex ].transfer_complete(0);
+  thisProxy[ thisIndex ].transfer_complete();
 }
 
 void Discretization::from_complete()
@@ -409,21 +414,20 @@ void Discretization::from_complete()
 void Discretization::transfer_complete_from_dest()
 // *****************************************************************************
 //! Solution transfer completed (from dest Discretization)
-//! \details Called on the source only by the destination when a transfer step
-//!   completes.
+//! \details Called on the source only by the destination when a back and forth
+//!   transfer step completes.
 // *****************************************************************************
 {
   m_transfer_complete.send();
 }
 
-void Discretization::transfer_complete( std::size_t dirn )
+void Discretization::transfer_complete()
 // *****************************************************************************
-//! Solution transfer completed
+//! Solution transfer completed (one-way)
 //! \note Single exit point after solution transfer between meshes
 // *****************************************************************************
 {
-  std::vector< std::size_t > vdirn{ dirn };
-  contribute( vdirn, CkReduction::sum_ulong,
+  contribute( 0, NULL, CkReduction::nop,
     CkCallback(CkReductionTarget(Transporter,solutionTransferred),
     m_transporter) );
 }

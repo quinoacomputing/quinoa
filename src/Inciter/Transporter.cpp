@@ -1391,20 +1391,14 @@ Transporter::boxvol( tk::real* meshdata, int n )
 }
 
 void
-Transporter::solutionTransferred( std::size_t sumtransfertype )
+Transporter::solutionTransferred()
 // *****************************************************************************
 // Reduction target broadcasting to Schemes after mesh transfer
-//! \param[in] sumtransfertype Indicator of type of transfer summed over meshes
 // *****************************************************************************
 {
   if (++m_ntrans == m_nelem.size()) {    // all meshes have been loaded
     m_ntrans = 0;
-    if (sumtransfertype == 0) {
-      for (auto& m : m_scheme) m.bcast< Scheme::transferSol >();
-    }
-    else {
-      for (auto& m : m_scheme) m.bcast< Scheme::lhs >();
-    }
+    for (auto& m : m_scheme) m.bcast< Scheme::transferSol >();
   }
 }
 

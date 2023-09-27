@@ -138,8 +138,8 @@ class Discretization : public CBase_Discretization {
     //! Solution transfer completed (from dest Discretization)
     void transfer_complete_from_dest();
 
-    //! Solution transfer completed
-    void transfer_complete( std::size_t dirn );
+    //! Solution transfer completed (one-way)
+    void transfer_complete();
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(
