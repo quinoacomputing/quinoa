@@ -702,7 +702,7 @@ class CompFlow {
             real pR = m_mat_blk[0].compute< EOS::pressure >( rR, ruR/rR, rvR/rR,
               rwR/rR, reR );
 
-            if (std::abs(pR/pL) > 5.0) {
+            if (std::abs(pR/pL) > 2.0) {
               movedmesh = 1;
               break;
             }
