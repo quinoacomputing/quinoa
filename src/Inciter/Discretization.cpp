@@ -1023,7 +1023,9 @@ Discretization::histfilename( const std::string& id,
   auto of = g_inputdeck.get< tag::cmd, tag::io, tag::output >();
   std::stringstream ss;
 
-  ss << std::setprecision(static_cast<int>(precision)) << of << ".hist." << id;
+  auto mid =
+    m_disc.size() > 1 ? std::string( '.' + std::to_string(m_meshid) ) : "";
+  ss << std::setprecision(static_cast<int>(precision)) << of << mid << ".hist." << id;
 
   return ss.str();
 }
