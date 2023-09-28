@@ -260,6 +260,19 @@ class Transport {
       bndint( coord, triinpoel, symbctri, U, R );
     }
 
+    //! Compute overset mesh motion for OversetFE (no-op for transport)
+    void getMeshVel(
+      real,
+      const std::array< std::vector< real >, 3 >&,
+      const std::pair< std::vector< std::size_t >,
+                       std::vector< std::size_t > >&,
+      const std::unordered_set< std::size_t >&,
+      const std::array< tk::real, 3 >&,
+      const tk::Fields&,
+      tk::Fields&,
+      int& ) const
+    { }
+
     //! Compute right hand side for DiagCG (CG+FCT)
     //! \param[in] t Physical time
     //! \param[in] deltat Size of time step

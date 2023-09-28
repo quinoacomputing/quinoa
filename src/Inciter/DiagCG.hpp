@@ -117,7 +117,7 @@ class DiagCG : public CBase_DiagCG {
     void init();
 
     //! Advance equations to next time step
-    void advance( tk::real newdt );
+    void advance( tk::real newdt, tk::real );
 
     //! Compute left-hand side of transport equations
     void lhs();

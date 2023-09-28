@@ -216,6 +216,10 @@ class Discretization : public CBase_Discretization {
     std::vector< tk::real >& Voln() { return m_voln; }
     //! Element mesh volumes at t=t0 accessors as const-ref
     const std::vector< tk::real >& Vol0() const { return m_vol0; }
+    //! Element mesh velocity accessor as const-ref
+    const tk::Fields& MeshVel() const { return m_meshvel; }
+    //! Element mesh velocity accessor as ref
+    tk::Fields& MeshVel() { return m_meshvel; }
 
     //! Set 'initial' flag
     //! \param[in] i Value to put in 'initial'

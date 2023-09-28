@@ -58,7 +58,7 @@ module dg {
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void transferSol();
-      entry void advance( tk::real newdt );
+      entry void advance( tk::real newdt, tk::real );
       entry void lhs();
       entry void comnodalExtrema( const std::vector< std::size_t >& gid,
                                   const std::vector< std::vector< tk::real > >& G1,
