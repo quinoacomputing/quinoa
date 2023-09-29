@@ -1411,7 +1411,8 @@ Transporter::minDtAcrossMeshes( tk::real* reducndata, [[maybe_unused]] int n )
 //! \param[in] n Size of vector, automatically computed by Charm
 // *****************************************************************************
 {
-  Assert(n-1 == m_nelem.size(), "Incorrectly sized reduction vector");
+  Assert(static_cast<std::size_t>(n-1) == m_nelem.size(),
+    "Incorrectly sized reduction vector");
   m_dtmsh.push_back(reducndata[0]);
 
   if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
