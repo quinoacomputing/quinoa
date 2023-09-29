@@ -105,6 +105,9 @@ class ALECG : public CBase_ALECG {
     //! Setup node-neighborhood (no-op)
     void nodeNeighSetup() {}
 
+    //! (no-op)
+    void transferSol() {}
+
     //! Start setup for solution
     void setup();
 

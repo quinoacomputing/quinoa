@@ -163,14 +163,14 @@ class CompFlow {
         }
         // size is idMax+1 since block ids are usually 1-based
         nuserblk = nuserblk+idMax+1;
+      }
 
-        // determine node set for IC mesh blocks
-        for (const auto& [blid, elset] : elemblkid) {
-          if (!elset.empty()) {
-            auto& ndset = nodeblkid[blid];
-            for (auto ie : elset) {
-              for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
-            }
+      // determine node set for IC mesh blocks
+      for (const auto& [blid, elset] : elemblkid) {
+        if (!elset.empty()) {
+          auto& ndset = nodeblkid[blid];
+          for (auto ie : elset) {
+            for (std::size_t i=0; i<4; ++i) ndset.insert(inpoel[4*ie+i]);
           }
         }
       }

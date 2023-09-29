@@ -124,19 +124,22 @@ class Discretization : public CBase_Discretization {
     void comfinal();
 
     //! Start solution transfer (if coupled)
-    void transfer( tk::Fields& u, CkCallback cb );
+    void transfer(
+      tk::Fields& u,
+      std::size_t dirn,
+      CkCallback cb );
 
-    //! Solution transfer completed (from ExaM2M)
-    void transfer_complete();
+    //! Solution transfer from background to overset mesh completed (from ExaM2M)
+    void to_complete();
 
-    //! Check nodal solution transfers on chare-boundaries
-    void comxfer();
+    //! Solution transfer from overset to background mesh completed (from ExaM2M)
+    void from_complete();
 
     //! Solution transfer completed (from dest Discretization)
     void transfer_complete_from_dest();
 
-    //! Solution transfer completed for all neighboring chares
-    void all_transfers_complete();
+    //! Solution transfer completed (one-way)
+    void transfer_complete();
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(
@@ -334,7 +337,8 @@ class Discretization : public CBase_Discretization {
                 const std::vector< std::vector< tk::real > >& elemfields,
                 const std::vector< std::vector< tk::real > >& nodefields,
                 const std::vector< std::vector< tk::real > >& elemsurfs,
-                const std::vector< std::vector< tk::real > >& nodesurfs );
+                const std::vector< std::vector< tk::real > >& nodesurfs,
+                CkCallback c );
 
     //! Zero grind-timer
     void grindZero();
@@ -497,7 +501,7 @@ class Discretization : public CBase_Discretization {
     //! Mesh ID
     std::size_t m_meshid;
     //! \brief Charm++ callback of the function to call after a mesh-to-mesh
-    //!   solution transfer is complete
+    //!   solution transfer (to-and-fro) is complete
     CkCallback m_transfer_complete;
     //! Solution/mesh transfer (coupling) information coordination propagation
     //! \details This has the same size with the same src/dst information on

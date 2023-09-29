@@ -64,6 +64,9 @@ Transporter::Transporter() :
   m_meshid(),
   m_ncit( m_nchare.size(), 0 ),
   m_nload( 0 ),
+  m_ntrans( 0 ),
+  m_ndtmsh( 0 ),
+  m_dtmsh(),
   m_npart( 0 ),
   m_nstat( 0 ),
   m_ndisc( 0 ),
@@ -1388,16 +1391,40 @@ Transporter::boxvol( tk::real* meshdata, int n )
 }
 
 void
-Transporter::solutionTransferred( std::size_t summeshid )
+Transporter::solutionTransferred()
 // *****************************************************************************
 // Reduction target broadcasting to Schemes after mesh transfer
-//! \param[in] summeshid mesh id summed across the distributed mesh
 // *****************************************************************************
 {
-  // extract summed mesh id from vector
-  auto meshid = tk::cref_find( m_meshid, static_cast<std::size_t>(summeshid) );
+  if (++m_ntrans == m_nelem.size()) {    // all meshes have been loaded
+    m_ntrans = 0;
+    for (auto& m : m_scheme) m.bcast< Scheme::transferSol >();
+  }
+}
 
-  m_scheme[meshid].bcast< Scheme::lhs >();
+void
+Transporter::minDtAcrossMeshes( tk::real mindt )
+// *****************************************************************************
+// Reduction target that computes minimum timestep across all meshes
+//! \param[in] mindt Minimum dt collected across all meshes
+// *****************************************************************************
+{
+  m_dtmsh.push_back(mindt);
+
+  if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
+    Assert(m_dtmsh.size() == m_nelem.size(), "Incorrect size of dtmsh");
+
+    // compute minimum dt across meshes
+    tk::real dt = std::numeric_limits< tk::real >::max();
+    for (auto idt : m_dtmsh) dt = std::min(dt, idt);
+
+    // clear dt-vector and counter
+    m_dtmsh.clear();
+    m_ndtmsh = 0;
+
+    // broadcast to advance time step
+    for (auto& m : m_scheme) m.bcast< Scheme::advance >( dt );
+  }
 }
 
 void

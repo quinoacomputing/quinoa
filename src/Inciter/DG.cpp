@@ -1738,9 +1738,7 @@ DG::writeFields(
   const auto& triinpoel = m_outmesh.triinpoel;
   d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            {}, {}, elemfields, nodefields, {}, {} );
-
-  c.send();
+            {}, {}, elemfields, nodefields, {}, {}, c );
 }
 
 void

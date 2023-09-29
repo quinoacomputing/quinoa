@@ -98,6 +98,9 @@ class OversetFE : public CBase_OversetFE {
     //! Receive total box IC volume and set conditions in box
     void box( tk::real v, const std::vector< tk::real >& blkvols );
 
+    //! Transfer solution to other solver and mesh if coupled
+    void transferSol();
+
     // Start time stepping
     void start();
 
@@ -210,12 +213,14 @@ class OversetFE : public CBase_OversetFE {
       p | m_esup;
       p | m_psup;
       p | m_u;
+      p | m_uc;
       p | m_un;
       p | m_rhs;
       p | m_rhsc;
       p | m_chBndGrad;
       p | m_dirbc;
       p | m_chBndGradc;
+      p | m_blank;
       p | m_diag;
       p | m_bnorm;
       p | m_bnormc;
@@ -235,6 +240,7 @@ class OversetFE : public CBase_OversetFE {
       p | m_nusermeshblk;
       p | m_nodeblockid;
       p | m_nodeblockidc;
+      p | m_ixfer;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -281,6 +287,12 @@ class OversetFE : public CBase_OversetFE {
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vector at mesh nodes
     tk::Fields m_u;
+    //! \brief Copy of unknown/solution vector at mesh nodes for m2m transfer,
+    //!   appended with a solution-transfer-flag. This flag indicates
+    //!   appropriate solution transfers for the overset procedure.
+    //!   Value 0: Do not transfer solution, 1: transfer sol, 2: blank nodes
+    //! TODO: avoid creating this copy
+    tk::Fields m_uc;
     //! Unknown/solution vector at mesh nodes at previous time
     tk::Fields m_un;
     //! Right-hand side vector (for the high order system)
@@ -303,6 +315,8 @@ class OversetFE : public CBase_OversetFE {
     //! \details Key: chare id, value: gradients for all scalar components per
     //!   node
     std::unordered_map< std::size_t, std::vector< tk::real > > m_chBndGradc;
+    //! Blanking coefficient for overset, indicating hole in the background mesh
+    std::vector< tk::real > m_blank;
     //! Diagnostics object
     NodeDiagnostics m_diag;
     //! Face normals in boundary points associated to side sets
@@ -354,6 +368,8 @@ class OversetFE : public CBase_OversetFE {
     //! \details Key: mesh block id, value: set of global node ids for nodes
     //!   in this mesh block.
     std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockidc;
+    //! Counter for two-way transfer
+    std::size_t m_ixfer;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -382,6 +398,10 @@ class OversetFE : public CBase_OversetFE {
     bnorm( const std::unordered_map< int,
              std::unordered_set< std::size_t > >& bcnodes );
 
+    //! Set flags informing solution transfer decisions
+    void setTransferFlags(
+      std::size_t dirn );
+
     //! \brief Finish computing dual-face and boundary point normals and apply
     //!   boundary conditions on the initial conditions
     void normfinal();
@@ -389,11 +409,11 @@ class OversetFE : public CBase_OversetFE {
     //! Continue setup for solution, after communication for mesh blocks
     void continueSetup();
 
-    //! Output mesh and particle fields to files
+    //! Output mesh field data and continue to next time step
     void out();
 
     //! Output mesh-based fields to file
-    void writeFields();
+    void writeFields( CkCallback c );
 
     //! Combine own and communicated contributions to normals
     void mergelhs();
@@ -410,14 +430,15 @@ class OversetFE : public CBase_OversetFE {
     //! Compute time step size
     void dt();
 
-    //! Transfer solution to other solver and mesh if coupled
-    void transfer();
-
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();
 
     //! Query/update boundary-conditions-related data structures from user input
     void getBCNodes();
+
+    // \brief Apply the transferred solution to the solution vector based on
+    //   transfer flags previously set up
+    void applySolTransfer( std::size_t dirn );
 
     //! Apply boundary conditions
     void BC();

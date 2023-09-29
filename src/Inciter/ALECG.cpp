@@ -674,7 +674,7 @@ ALECG::meshveldone()
     conserved( m_u, Disc()->Vol() );
 
     // Initiate IC transfer (if coupled)
-    Disc()->transfer( m_u,
+    Disc()->transfer( m_u, 0,
       CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]) );
 
     lhs();
@@ -1419,7 +1419,11 @@ ALECG::writeFields( CkCallback c )
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (!g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+
+    c.send();
+
+  } else {
 
     auto d = Disc();
     const auto& coord = d->Coord();
@@ -1512,11 +1516,9 @@ ALECG::writeFields( CkCallback c )
     // Send mesh and fields data (solution dump) for output to file
     d->write( d->Inpoel(), coord, m_bface, tk::remap(m_bnode,d->Lid()),
               m_triinpoel, elemfieldnames, nodefieldnames, elemsurfnames,
-              nodesurfnames, elemfields, nodefields, elemsurfs, nodesurfs );
+              nodesurfnames, elemfields, nodefields, elemsurfs, nodesurfs, c );
 
   }
-
-  c.send();
 }
 
 void
