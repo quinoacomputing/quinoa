@@ -452,7 +452,8 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
     //! Materials index/EoS map
   , tag::matidxmap,     tk::TaggedTuple< brigand::list<
       tag::eosidx,      std::vector< std::size_t >,
-      tag::matidx,      std::vector< std::size_t > > >
+      tag::matidx,      std::vector< std::size_t >,
+      tag::solidx,      std::vector< std::size_t > > >
     //! Flux function type
   , tag::flux,          std::vector< FluxType >
     //! Lua code (multiple blocks)
