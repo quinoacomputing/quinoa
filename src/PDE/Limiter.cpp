@@ -2184,11 +2184,8 @@ void MarkShockCells ( const std::size_t nelem,
 {
   const auto coeff = g_inputdeck.get< tag::discr, tag::shock_detector_coeff >();
 
-  auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
     tag::matidxmap >().template get< tag::solidx >();
-
-  if(solidx.empty())
-    solidx.push_back(0);
 
   std::vector< tk::real > IC(U.nunk(), 0.0);
   const auto& esuf = fd.Esuf();
