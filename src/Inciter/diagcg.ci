@@ -38,7 +38,7 @@ module diagcg {
       entry void transferSol();
       entry void init();
       entry void refine( const std::vector< tk::real >& l2ref );
-      entry [reductiontarget] void advance( tk::real newdt );
+      entry [reductiontarget] void advance( tk::real newdt, tk::real );
       entry void comnorm( const std::unordered_map< int,
        std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
       entry void comlhs( const std::vector< std::size_t >& gid,

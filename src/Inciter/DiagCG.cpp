@@ -483,7 +483,7 @@ DiagCG::dt()
 }
 
 void
-DiagCG::advance( tk::real newdt )
+DiagCG::advance( tk::real newdt, tk::real )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt Size of this new time step

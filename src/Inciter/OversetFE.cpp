@@ -143,6 +143,19 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4meshblk();
 
+  // Determine user-specified mesh velocity
+  const auto& uservelvec = g_inputdeck.get< tag::param, tag::compflow,
+    tag::mesh, tag::velocity >();
+  if (!uservelvec.empty())
+    m_uservel = {uservelvec[d->MeshId()*3],
+      uservelvec[d->MeshId()*3 + 1],
+      uservelvec[d->MeshId()*3 + 2]};
+  else m_uservel = {0, 0, 0};
+
+  if (g_inputdeck.get< tag::discr, tag::steady_state >() &&
+    std::sqrt(tk::dot(m_uservel, m_uservel)) > 1e-8)
+    Throw("Mesh motion cannot be activated for steady state problem");
+
   d->comfinal();
 
 }
@@ -975,36 +988,50 @@ OversetFE::dt()
 
   }
 
+  // Determine if this chunk of mesh needs to be moved
+  g_cgpde[d->MeshId()].getMeshVel(d->T(), d->Coord(), m_psup, m_symbcnodes,
+    m_uservel, m_u, d->MeshVel(), m_movedmesh);
+
   //! [Advance]
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
 
+  // TODO: this is a hacky way to know if any chunk moved. redesign it
+  std::vector < tk::real > reducndata(d->Transfers().size()+2, 0.0);
+
+  reducndata[0] = mindt;
+  reducndata[d->MeshId()+1] = static_cast< tk::real >(-m_movedmesh);
+
   // Contribute to minimum dt across all chares and advance to next step
   if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
-    contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
+    contribute( reducndata, CkReduction::min_double,
                 CkCallback(CkReductionTarget(OversetFE,advance), thisProxy) );
   }
   else {
     // if solving a time-accurate problem, find minimum dt across all meshes
     // and eventually broadcast to OversetFE::advance()
-    contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
+    contribute( reducndata, CkReduction::min_double,
       CkCallback(CkReductionTarget(Transporter,minDtAcrossMeshes), d->Tr()) );
   }
   //! [Advance]
 }
 
 void
-OversetFE::advance( tk::real newdt )
+OversetFE::advance( tk::real newdt, tk::real nmovedmesh )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt The smallest dt across the whole problem
+//! \param[in] nmovedmesh (negative of) if any chunk of this mesh moved
 // *****************************************************************************
 {
   auto d = Disc();
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
+
+  // TODO: this is a hacky way to know if any chunk moved. redesign it
+  if (nmovedmesh < -0.1) m_movedmesh = 1;
 
   // Compute gradients for next time step
   chBndGrad();
@@ -1083,6 +1110,16 @@ OversetFE::rhs()
 
   const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
 
+  // Assign mesh velocity
+  if (m_movedmesh) {
+    const auto& coord = d->Coord();
+    auto& mvel = d->MeshVel();
+    for (std::size_t p=0; p<coord[0].size(); ++p) {
+      for (std::size_t i=0; i<3; ++i)
+        mvel(p, i) = m_uservel[i];
+    }
+  }
+
   // Compute own portion of right-hand side for all equations
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   if (steady)
@@ -1090,7 +1127,7 @@ OversetFE::rhs()
   g_cgpde[d->MeshId()].rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
           m_symbctri, {}, d->Vol(), m_edgenode, m_edgeid,
-          m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
+          m_boxnodes, m_chBndGrad, m_u, d->MeshVel(), m_tp, d->Boxvol(),
           m_rhs );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
@@ -1170,6 +1207,26 @@ OversetFE::solve()
         / d->Vol()[i];
   }
 
+  // Move overset mesh
+  if (m_movedmesh) {
+    auto& x = d->Coord()[0];
+    auto& y = d->Coord()[1];
+    auto& z = d->Coord()[2];
+    const auto& w = d->MeshVel();
+    for (std::size_t i=0; i<w.nunk(); ++i) {
+      // time-step
+      auto dtp = d->Dt();
+      if (steady) dtp = m_dtp[i];
+
+      x[i] += rkcoef[m_stage] * dtp * w(i,0);
+      y[i] += rkcoef[m_stage] * dtp * w(i,1);
+      z[i] += rkcoef[m_stage] * dtp * w(i,2);
+    }
+  }
+  // the following line will be needed for situations where the mesh stops
+  // moving after its initial motion
+  // else m_movedmesh = 0;
+
   // Apply boundary-conditions
   BC();
 
@@ -1206,9 +1263,9 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
 //!   computed across the whole problem
 // *****************************************************************************
 {
-  if (m_stage == 3) {
-    auto d = Disc();
+  auto d = Disc();
 
+  if (m_stage == 3) {
     const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
     const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
     const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
@@ -1227,13 +1284,12 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
     }
   }
 
-  // TODO: Move overset mesh somewhere here
-  // if moved, add the following two lines
-  // d->Itf() = 0;  // Zero field output iteration count if mesh moved
-  // ++d->Itr();    // Increase number of iterations with a change in the mesh
-  m_movedmesh = 0;
-  // Normals need to be recomputed if overset mesh has been moved
-  if (m_movedmesh) thisProxy[ thisIndex ].wait4norm();
+  if (m_movedmesh) {
+    // Normals need to be recomputed if overset mesh has been moved
+    thisProxy[ thisIndex ].wait4norm();
+    d->Itf() = 0;  // Zero field output iteration count if mesh moved
+    ++d->Itr();    // Increase number of iterations with a change in the mesh
+  }
 
   // Start solution transfer
   transferSol();

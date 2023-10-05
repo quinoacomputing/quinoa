@@ -956,7 +956,7 @@ ALECG::dt()
 }
 
 void
-ALECG::advance( tk::real newdt )
+ALECG::advance( tk::real newdt, tk::real )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt The smallest dt across the whole problem
