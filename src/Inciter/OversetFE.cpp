@@ -161,24 +161,25 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
 }
 //! [Constructor]
 
-void
+bool
 OversetFE::setupIntergridBoundaries()
 // *****************************************************************************
 // Setup data structures for intergrid boundaries
+// \return True if did anything
 // *****************************************************************************
 {
   auto d = Disc();
   auto meshid = d->MeshId();
 
-  if (meshid == 0) return;
+  if (meshid == 0) return false;
 
   const auto& ib = g_inputdeck.get< tag::param, tag::compflow,
                                     tag::intergrid_boundary >();
-  if (not ib.get< tag::mesh >()[ meshid ]) return;
+  if (not ib.get< tag::mesh >()[ meshid ]) return false;
 
   std::unordered_set< std::size_t > is;
   for (auto s : ib.get< tag::sideset >()) is.insert( s );
-  if (is.empty()) return;
+  if (is.empty()) return false;
 
   std::size_t iflag = m_uc.nprop()-1;
 
@@ -227,6 +228,8 @@ OversetFE::setupIntergridBoundaries()
       }
     }
   }
+
+  return true;
 }
 
 void
@@ -828,18 +831,17 @@ OversetFE::setTransferFlags(
   // Called from transfer-O-to-B
   else {
     if (Disc()->MeshId() != 0) {
-       setupIntergridBoundaries();
-//std::cout << thisIndex << ", " << Disc()->MeshId() << ", 103: ";
-      // Overset meshes: assign appropriate values to flag
-      for (const auto& [blid, ndset] : m_nodeblockid) {
-        if (blid == 103) {
-          //for (auto i : ndset) m_uc(i,iflag) = 1.0;
-        }
-        else if (blid == 104) {
-          for (auto i : ndset) m_uc(i,iflag) = 2.0;
+      if (!setupIntergridBoundaries()) {
+        // Overset meshes: assign appropriate values to flag
+        for (const auto& [blid, ndset] : m_nodeblockid) {
+          if (blid == 103) {
+            for (auto i : ndset) m_uc(i,iflag) = 1.0;
+          }
+          else if (blid == 104) {
+            for (auto i : ndset) m_uc(i,iflag) = 2.0;
+          }
         }
       }
-//std::cout << '\n';
     }
   }
 }
