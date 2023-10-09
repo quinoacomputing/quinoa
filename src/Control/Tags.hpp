@@ -253,6 +253,8 @@ struct init_time { static std::string name() { return "init_time"; } };
 struct front_width { static std::string name() { return "front_width"; } };
 struct radius { static std::string name() { return "radius"; } };
 struct sideset { static std::string name() { return "sideset"; } };
+struct intergrid_boundary { static std::string name()
+ { return "intergrid_boundary"; } };
 struct sponge { static std::string name() { return "sponge"; } };
 struct bcinlet { static std::string name() { return "bcinlet"; } };
 struct bcoutlet { static std::string name() { return "bcoutlet"; } };

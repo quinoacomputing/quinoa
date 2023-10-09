@@ -2848,6 +2848,24 @@ struct cweight_info {
 };
 using cweight = keyword< cweight_info, TAOCPP_PEGTL_STRING("cweight") >;
 
+struct intergrid_boundary_info {
+  static std::string name() { return "intergrid_boundary"; }
+  static std::string shortDescription() { return
+    "Designate an side set an intergrid boundary";
+  }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an side set of a mesh to be used as an
+       intergrid boundary through which solutions on multiple meshes
+       interact.)";
+  }
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "strings"; }
+  };
+};
+using intergrid_boundary =
+  keyword< intergrid_boundary_info, TAOCPP_PEGTL_STRING("intergrid_boundary") >;
+
 struct sideset_info {
   static std::string name() { return "sideset"; }
   static std::string shortDescription() { return

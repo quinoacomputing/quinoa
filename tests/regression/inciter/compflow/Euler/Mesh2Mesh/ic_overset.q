@@ -59,6 +59,11 @@ inciter
       velocity 0.0 0.0 0.0 end
     end
 
+    intergrid_boundary
+      mesh 2 end
+      sideset 102 end
+    end
+
   end
 
   diagnostics

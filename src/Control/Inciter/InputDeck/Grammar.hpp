@@ -335,7 +335,7 @@ namespace grm {
         for (std::size_t i=0; i<n; ++i) bc[i] = b.count( i + 1 );
       };
 
-      // Generate BC mesh masks
+      // Generate mesh masks
       auto& conf = stack.template get< tag::param, eq, tag::mesh >();
       mask( conf.template get< tag::bcdir >() );
       mask( conf.template get< tag::bcsym >() );
@@ -343,6 +343,8 @@ namespace grm {
       mask( conf.template get< tag::bcoutlet >() );
       mask( conf.template get< tag::bcfarfield >() );
       mask( conf.template get< tag::bcextrapolate >() );
+      auto& ig = stack.template get<tag::param, eq, tag::intergrid_boundary>();
+      mask( ig.template get< tag::mesh >() );
     }
   };
 
@@ -1451,6 +1453,30 @@ namespace deck {
                                         tk::grm::check_vector,
                                         eq, tag::bc, param > > > {};
 
+  //! Integrid boundary block
+  template< class eq >
+  struct intergrid_boundary :
+         pegtl::if_must<
+           tk::grm::readkw<typename use<kw::intergrid_boundary>::pegtl_string>,
+           tk::grm::block<
+             use< kw::end >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::mesh >,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
+                                        tk::grm::check_vector,
+                                        eq,
+                                        tag::intergrid_boundary,
+                                        tag::mesh >,
+             tk::grm::parameter_vector< use,
+                                        use< kw::sideset >,
+                                        tk::grm::Store_back,
+                                        tk::grm::noop,
+                                        tk::grm::check_vector,
+                                        eq,
+                                        tag::intergrid_boundary,
+                                        tag::sideset > > > {};
+
   //! edgelist ... end block
   struct edgelist :
          tk::grm::vector< use< kw::amr_edgelist >,
@@ -1755,6 +1781,7 @@ namespace deck {
                            farfield_bc< kw::bc_farfield,
                                         tag::compflow,
                                         tag::bcfarfield >,
+                           intergrid_boundary< tag::compflow >,
                            bc< kw::bc_extrapolate, tag::compflow,
                                tag::bcextrapolate >,
                            timedep_bc< tag::compflow >

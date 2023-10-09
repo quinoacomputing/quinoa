@@ -162,6 +162,74 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
 //! [Constructor]
 
 void
+OversetFE::setupIntergridBoundaries()
+// *****************************************************************************
+// Setup data structures for intergrid boundaries
+// *****************************************************************************
+{
+  auto d = Disc();
+  auto meshid = d->MeshId();
+
+  if (meshid == 0) return;
+
+  const auto& ib = g_inputdeck.get< tag::param, tag::compflow,
+                                    tag::intergrid_boundary >();
+  if (not ib.get< tag::mesh >()[ meshid ]) return;
+
+  std::unordered_set< std::size_t > is;
+  for (auto s : ib.get< tag::sideset >()) is.insert( s );
+  if (is.empty()) return;
+
+  std::size_t iflag = m_uc.nprop()-1;
+
+  tk::UnsMesh::FaceSet btri;
+  for (const auto& [ setid, faceids ] : m_bface) {
+    if ( is.count(setid) ) {
+      for (auto f : faceids) {
+        btri.insert( { m_triinpoel[f*3+0],
+                       m_triinpoel[f*3+1],
+                       m_triinpoel[f*3+2] } );
+      }
+    }
+  }
+
+  const auto& inpoel = d->Inpoel();
+  std::unordered_set< std::size_t > bp;
+  for (std::size_t e=0; e<inpoel.size()/4; e++) {
+    std::size_t N[4] = {
+      inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    for (const auto& [a,b,c] : tk::lpofa) {
+      auto f = btri.find( { N[a], N[b], N[c] } );
+      if (f != end(btri)) {
+        m_uc( N[0], iflag ) =
+        m_uc( N[1], iflag ) =
+        m_uc( N[2], iflag ) =
+        m_uc( N[3], iflag ) = 1.0;
+        bp.insert( N[0] );
+        bp.insert( N[1] );
+        bp.insert( N[2] );
+        bp.insert( N[3] );
+        continue;
+      }
+    }
+  }
+
+  for (std::size_t e=0; e<inpoel.size()/4; e++) {
+    std::size_t N[4] = {
+      inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    for (std::size_t i=0; i<4; ++i) {
+      if (bp.count(N[i])) {
+        m_uc( N[0], iflag ) =
+        m_uc( N[1], iflag ) =
+        m_uc( N[2], iflag ) =
+        m_uc( N[3], iflag ) = 1.0;
+        continue;
+      }
+    }
+  }
+}
+
+void
 OversetFE::getBCNodes()
 // *****************************************************************************
 // Query/update boundary-conditions-related data structures from user input
@@ -760,15 +828,18 @@ OversetFE::setTransferFlags(
   // Called from transfer-O-to-B
   else {
     if (Disc()->MeshId() != 0) {
+       setupIntergridBoundaries();
+//std::cout << thisIndex << ", " << Disc()->MeshId() << ", 103: ";
       // Overset meshes: assign appropriate values to flag
       for (const auto& [blid, ndset] : m_nodeblockid) {
         if (blid == 103) {
-          for (auto i : ndset) m_uc(i,iflag) = 1.0;
+          //for (auto i : ndset) m_uc(i,iflag) = 1.0;
         }
         else if (blid == 104) {
           for (auto i : ndset) m_uc(i,iflag) = 2.0;
         }
       }
+//std::cout << '\n';
     }
   }
 }
@@ -1370,6 +1441,9 @@ OversetFE::writeFields( CkCallback c )
     std::vector< std::vector< tk::real > > elemsurfs;
     auto eso = g_cgpde[d->MeshId()].elemSurfOutput( m_bface, m_triinpoel, m_u );
     elemsurfs.insert( end(elemsurfs), begin(eso), end(eso) );
+
+    nodefieldnames.push_back( "of" );
+    nodefields.push_back( m_uc.extract_comp(m_uc.nprop()-1) );
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 

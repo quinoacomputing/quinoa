@@ -509,6 +509,11 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
     usedsets.insert( num );
   }
 
+  // Add sidesets requested as intergrid boundary
+  const auto& is = g_inputdeck.get< tag::param, tag::compflow,
+                                    tag::intergrid_boundary, tag::sideset >();
+  for (auto s : is) usedsets.insert( s );
+
   // Find user-configured side set ids among side sets read from mesh file
   std::unordered_set< int > sidesets_used;
   for (auto i : usedsets) {       // for all side sets used in control file
