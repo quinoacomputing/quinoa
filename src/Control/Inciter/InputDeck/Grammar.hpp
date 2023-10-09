@@ -188,6 +188,7 @@ namespace grm {
       auto& matidxmap = stack.template get< param, eq, tag::matidxmap >();
       matidxmap.template get< tag::eosidx >().resize(1);
       matidxmap.template get< tag::matidx >().resize(1);
+      matidxmap.template get< tag::solidx >().resize(1);
       auto& meos = matprop.template get< tag::eos >();
       auto& mat_id = matprop.template get< tag::id >();
 
@@ -227,9 +228,11 @@ namespace grm {
       // Generate mapping between material index and eos parameter index
       auto& eosmap = matidxmap.template get< tag::eosidx >();
       auto& idxmap = matidxmap.template get< tag::matidx >();
+      auto& solidxmap = matidxmap.template get< tag::solidx >();
       eosmap[mat_id[0]] = static_cast< std::size_t >(matprop.template get<
         tag::eos >());
       idxmap[mat_id[0]] = 0;
+      solidxmap[mat_id[0]] = 0;
 
       // If problem type is not given, default to 'user_defined'
       auto& problem = stack.template get< param, eq, tag::problem >();
