@@ -176,6 +176,9 @@ class Discretization : public CBase_Discretization {
       const std::unordered_map< std::size_t, std::set< std::size_t > >& nodeblk,
       std::size_t nuserblk );
 
+    //! Communicate holes to background mesh
+    void setupHoles( CkCallback cont );
+
     /** @name Accessors */
     ///@{
     //! Coordinates accessor as const-ref
@@ -307,6 +310,11 @@ class Discretization : public CBase_Discretization {
 
     //! Edge communication map accessor as const-ref
     const tk::EdgeCommMap& EdgeCommMap() const { return m_edgeCommMap; }
+
+    //! Holes data accessor
+    const std::unordered_map< std::size_t,
+      std::unordered_map< std::size_t, std::vector< tk::real > > >& hol() const
+    { return m_hol; }
     //@}
 
     //! Set time step size
@@ -409,6 +417,12 @@ class Discretization : public CBase_Discretization {
     //! Find elements along our mesh chunk boundary
     std::vector< std::size_t > bndel() const;
 
+    //! Receive hole data
+    void aggregateHoles( CkReductionMsg* msg );
+
+    //! Hole communication complete
+    void holComplete();
+
     //! Decide if field output iteration count interval is hit
     bool fielditer() const;
 
@@ -504,6 +518,8 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh ID
     std::size_t m_meshid;
+    //! Callback to continue with after hole communication
+    CkCallback m_holcont;
     //! \brief Charm++ callback of the function to call after a mesh-to-mesh
     //!   solution transfer (to-and-fro) is complete
     CkCallback m_transfer_complete;
@@ -645,6 +661,12 @@ class Discretization : public CBase_Discretization {
     std::vector< std::size_t > m_triinpoel;
     //! Local tet ids associated with mesh block ids
     std::unordered_map< std::size_t, std::set< std::size_t > > m_elemblockid;
+    //! Holes tessellation
+    //! \details: Value: list of triangle node coordinates
+    //!    (x1,y1,z1,x2,y2,z2,x3,y3,z3), ..., inner key, hole id, outer key
+    //!    meshid
+    std::unordered_map< std::size_t,
+      std::unordered_map< std::size_t, std::vector< tk::real > > > m_hol;
 
     //! Generate the Bid data-structure based on the node communication-map
     std::unordered_map< std::size_t, std::size_t > genBid();

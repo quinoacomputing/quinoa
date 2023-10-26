@@ -1461,6 +1461,8 @@ namespace deck {
   struct intergrid_boundary :
          pegtl::if_must<
            tk::grm::readkw<typename use<kw::intergrid_boundary>::pegtl_string>,
+           tk::grm::start_vector< tag::param, eq, tag::intergrid_boundary,
+                                  tag::sideset >,
            tk::grm::block<
              use< kw::end >,
              tk::grm::parameter_vector< use,
@@ -1473,7 +1475,7 @@ namespace deck {
                                         tag::mesh >,
              tk::grm::parameter_vector< use,
                                         use< kw::sideset >,
-                                        tk::grm::Store_back,
+                                        tk::grm::Store_back_back,
                                         tk::grm::noop,
                                         tk::grm::check_vector,
                                         eq,

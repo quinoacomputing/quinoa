@@ -393,6 +393,9 @@ class OversetFE : public CBase_OversetFE {
     //! Setup data structures for intergrid boundaries
     bool setupIntergridBoundaries();
 
+    //! Find nodes within holes
+    bool findHoles();
+
     //! Start (re-)computing boundare point-, and dual-face normals
     void norm();
 

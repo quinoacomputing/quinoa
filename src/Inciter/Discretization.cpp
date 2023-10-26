@@ -24,11 +24,13 @@
 #include "QuinoaBuildConfig.hpp"
 #include "ConjugateGradients.hpp"
 #include "ALE.hpp"
+#include "HoleReducer.hpp"
 
 #include "M2MTransfer.hpp"
 
 namespace inciter {
 
+static CkReduction::reducerType HoleMerger;
 static CkReduction::reducerType PDFMerger;
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
@@ -98,7 +100,7 @@ Discretization::Discretization(
   m_meshvel( 0, 3 ),
   m_meshvel_converged( true ),
   m_bface( bface ),
-  m_triinpoel( triinpoel ),
+  m_triinpoel( tk::remap( triinpoel, m_lid ) ),
   m_elemblockid( elemblockid )
 // *****************************************************************************
 //  Constructor
@@ -457,6 +459,98 @@ Discretization::bndel() const
 }
 
 void
+Discretization::setupHoles( CkCallback cont )
+// *****************************************************************************
+// Communicate holes to background mesh
+//! \param[in] cont Callback to continue with after holes have been aggregated
+// *****************************************************************************
+{
+  m_holcont = cont;
+
+  std::unordered_map< std::size_t, std::vector< tk::real > > hol;
+
+  if (m_meshid == 0) {
+    tk::destroy( m_hol );
+  }
+  else {
+    const auto& ib = g_inputdeck.get< tag::param, tag::compflow,
+                                      tag::intergrid_boundary >();
+    if (ib.get< tag::mesh >()[ m_meshid ]) {    // own meshid only
+      std::size_t nhol = 0;
+      for (const auto& ibs : ib.get< tag::sideset >()) {  // each hole
+        std::unordered_set< std::size_t > is;
+        for (auto s : ibs) is.insert( s );  // collect sidesets of hole
+        if (!is.empty()) {
+          const auto& x = m_coord[0];
+          const auto& y = m_coord[1];
+          const auto& z = m_coord[2];
+          auto& h = hol[ ++nhol ];
+          for (const auto& [ setid, faceids ] : m_bface) {
+            if ( is.count(setid) ) {
+              for (auto f : faceids) {
+                const auto t = m_triinpoel.data() + f*3;
+                h.push_back( x[t[0]] );
+                h.push_back( y[t[0]] );
+                h.push_back( z[t[0]] );
+                h.push_back( x[t[1]] );
+                h.push_back( y[t[1]] );
+                h.push_back( z[t[1]] );
+                h.push_back( x[t[2]] );
+                h.push_back( y[t[2]] );
+                h.push_back( z[t[2]] );
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // all overset meshes send their hole-parts to the bg mesh for assembly
+    // (allreduce to all partitions of mesh 0)
+    for (std::size_t m=1; m<m_disc.size(); ++m) {
+      auto stream = serialize( m_meshid, hol );
+      contribute( stream.first, stream.second.get(), HoleMerger,
+       CkCallback(CkIndex_Discretization::aggregateHoles(nullptr), m_disc[0]) );
+    }
+  }
+}
+
+void
+Discretization::aggregateHoles( CkReductionMsg* msg )
+// *****************************************************************************
+//  Receive hole data from other meshes
+//! \param[in] msg Aggregated hole data
+//! \note Only bg (mesh 0) is supposed to call this.
+// *****************************************************************************
+{
+  std::size_t mid;
+  std::unordered_map< std::size_t, std::vector< tk::real > > inhol;
+
+  PUP::fromMem creator( msg->getData() );
+  creator | mid;
+  creator | inhol;
+  delete msg;
+
+  for (auto&& [hid,data] : inhol) {
+    tk::concat( std::move(data), m_hol[mid][hid] );
+  }
+
+  // back to sender overset mesh so it can continue (enough to this partition)
+  m_disc[mid][thisIndex].holComplete();
+  // bg mesh also complete
+  m_holcont.send();
+}
+
+void
+Discretization::holComplete()
+// *****************************************************************************
+// Hole communication complete
+// *****************************************************************************
+{
+  m_holcont.send();
+}
+
+void
 Discretization::resizePostAMR(
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
@@ -524,6 +618,7 @@ Discretization::registerReducers()
 // *****************************************************************************
 {
   PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
+  HoleMerger = CkReduction::addReducer( mergeHole );
 }
 
 tk::UnsMesh::Coords

@@ -11,7 +11,7 @@ inciter
   cfl 0.5
 
   partitioning
-   algorithm rcb
+   algorithm mj
   end
 
   scheme oversetfe
@@ -32,8 +32,9 @@ inciter
     mesh
       # depvars are automatically assigned and can be referenced
       # downstream to request output variables
-      filename "freestream_BGmesh_15k.exo" # depvar: 'a'
-      filename "sphere_OSmesh_12k.exo" # depvar: 'b' ...
+      filename "freestream_BGmesh_15k.exo"
+      #filename "freestream_BGmesh_118k.exo" # to see hole better
+      filename "sphere_OSmesh_12k.exo"
     end
 
     ic

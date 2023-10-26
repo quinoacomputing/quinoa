@@ -328,7 +328,7 @@ using mesh = tk::TaggedTuple< brigand::list<
 //! Integrid boundary configuration
 using intergrid_boundary = tk::TaggedTuple< brigand::list<
     tag::mesh,    std::vector< std::size_t >
-  , tag::sideset, std::vector< std::size_t >
+  , tag::sideset, std::vector< std::vector< std::size_t > >
 > >;
 
 //! Stagnation points parameters storage
