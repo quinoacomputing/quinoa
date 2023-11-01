@@ -35,7 +35,7 @@ find_path(CBLAS_INCLUDE_DIR cblas.h DOC "C-interface to BLAS"
           HINTS ${CBLAS_ROOT}/include $ENV{CBLAS_ROOT}/include
           PATH_SUFFIXES blas cblas)
 
-find_library(CBLAS_LIBRARY NAMES cblas refcblas
+find_library(CBLAS_LIBRARY NAMES cblas blas refblas
              HINTS ${CBLAS_ROOT}/lib
                    $ENV{CBLAS_ROOT}/lib
              PATH_SUFFIXES blas cblas)
