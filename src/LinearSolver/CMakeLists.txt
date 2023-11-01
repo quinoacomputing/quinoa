@@ -16,7 +16,7 @@ target_include_directories(LinearSolver PUBLIC
                            ${CHARM_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
-                           ${BLAS_INCLUDE_DIRS}
+                           ${CBLAS_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../LinearSolver)
 

@@ -25,7 +25,7 @@ target_include_directories(CompFlowProblem PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
-                           ${BLAS_INCLUDE_DIRS})
+                           ${CBLAS_INCLUDE_DIRS})
 
 set_target_properties(CompFlowProblem
                       PROPERTIES LIBRARY_OUTPUT_NAME quinoa_compflowproblem)

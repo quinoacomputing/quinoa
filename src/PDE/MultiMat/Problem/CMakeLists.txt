@@ -24,7 +24,7 @@ target_include_directories(MultiMatProblem PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
-                           ${BLAS_INCLUDE_DIRS})
+                           ${CBLAS_INCLUDE_DIRS})
 
 set_target_properties(MultiMatProblem
                       PROPERTIES LIBRARY_OUTPUT_NAME quinoa_multimatproblem)

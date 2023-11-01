@@ -132,6 +132,14 @@ if(LAPACKE_FOUND)
 endif()
 message(STATUS "LAPACK found: "${LAPACKE_LIBRARIES})
 
+# Find CBLAS
+set(cblas "cblas")
+find_package(CBLAS)
+if(CBLAS_FOUND)
+  set(cblas "")
+endif()
+message(STATUS "CBLAS found: "${CBLAS_LIBRARIES})
+
 # Compilers
 # =========
 # There are two sets of compilers, given by the following CMake variables:
