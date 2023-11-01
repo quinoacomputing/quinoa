@@ -25,6 +25,12 @@
 #  if(CBLAS_FOUND)
 #    target_link_libraries (TARGET ${CBLAS_LIBRARIES})
 #  endif()
+#
+# In case BLAS is not installed in the default directory, set the CBLAS_ROOT
+# variable to point to the root of BLAS, such that 'cblas.h' can be found in
+# $CBLAS_ROOT/include. This can either be done using an environmental variable
+# (e.g. export CBLAS_ROOT=/path/to/BLAS) or using a CMake variable
+# (e.g. cmake -DCBLAS_ROOT=/path/to/BLAS ..).
 
 # If already in cache, be silent
 if(CBLAS_LIBRARIES AND CBLAS_INCLUDE_DIRS)
