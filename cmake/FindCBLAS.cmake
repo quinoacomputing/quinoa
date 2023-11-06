@@ -39,12 +39,12 @@ endif()
 
 find_path(CBLAS_INCLUDE_DIR cblas.h DOC "C-interface to BLAS"
           HINTS ${CBLAS_ROOT}/include $ENV{CBLAS_ROOT}/include
-          PATH_SUFFIXES blas cblas)
+          PATH_SUFFIXES blas cblas openblas)
 
-find_library(CBLAS_LIBRARY NAMES cblas blas refblas
+find_library(CBLAS_LIBRARY NAMES cblas openblas gslcblas blas refblas
              HINTS ${CBLAS_ROOT}/lib
                    $ENV{CBLAS_ROOT}/lib
-             PATH_SUFFIXES blas cblas)
+             PATH_SUFFIXES blas cblas openblas)
 
 set(CBLAS_INCLUDE_DIRS ${CBLAS_INCLUDE_DIR})
 set(CBLAS_LIBRARIES ${CBLAS_LIBRARY})
