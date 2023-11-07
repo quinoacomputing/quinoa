@@ -36,15 +36,8 @@ include(GNUInstallDirs)
 include(BuildType)
 
 # Set BUILD_SHARED_LIBS
-include(BuildShared)
-
-# Conditionally enforce static linking for executables added after this point.
-# This must precede all add_executable() calls adding executables to link
-# statically.
-if (NOT BUILD_SHARED_LIBS)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-endif()
+set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries. Possible value: ON")
+message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 
 # Determine number of CPUs available
 if (DEFINED ENV{SLURM_NPROCS})
@@ -600,29 +593,25 @@ configure_file( "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.cpp.in"
 # Remove build hostname from cmake cache
 unset(HOSTNAME CACHE)
 
-if (BUILD_SHARED_LIBS)
+### Set RPATH so that shared libs paths stay in the binary after install ###
+# Don't skip the full RPATH for the build tree
+set(CMAKE_SKIP_BUILD_RPATH false)
 
-  ### Set RPATH so that shared libs paths stay in the binary after install ###
-  # Don't skip the full RPATH for the build tree
-  set(CMAKE_SKIP_BUILD_RPATH false)
-  
-  # When building, don't use the install RPATH
-  # (use later on when installing)
-  set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
-  
-  # Add the automatically determined parts of the RPATH
-  # which point to directories outside the build tree to the install RPATH
-  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
-  
-  # the RPATH to be used when installing, but only if it's not a system directory
-  list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
-       "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" isSystemDir)
-  if("${isSystemDir}" STREQUAL "-1")
-     set(CMAKE_INSTALL_RPATH
-       "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-  endif("${isSystemDir}" STREQUAL "-1")
+# When building, don't use the install RPATH
+# (use later on when installing)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
 
-endif(BUILD_SHARED_LIBS)
+# Add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
+
+# the RPATH to be used when installing, but only if it's not a system directory
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
+     "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+   set(CMAKE_INSTALL_RPATH
+     "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+endif("${isSystemDir}" STREQUAL "-1")
 
 # Components
 if (CHARM_FOUND)
@@ -670,15 +659,6 @@ if (ENABLE_UNITTEST AND ENABLE_TESTS)
 endif()
 
 add_subdirectory(Main)
-
-# Conditionally enforce static link for all executables. This must be after all
-# add_executable() calls creating the targets for executables in EXECUTABLES.
-if (NOT BUILD_SHARED_LIBS)
-  foreach(exe IN LISTS EXECUTABLES)
-    set_property(TARGET ${exe} PROPERTY LINK_SEARCH_START_STATIC 1)
-    set_property(TARGET ${exe} PROPERTY LINK_SEARCH_END_STATIC 1)
-  endforeach()
-endif()
 
 # Add a target to generate documentation using doxygen and m.css
 find_package(Doxygen 1.8.15)

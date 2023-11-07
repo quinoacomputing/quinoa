@@ -219,12 +219,6 @@ also the Charm++ manual on how to run in SMP mode.
 @note SMP mode configures more regression tests, specifically exercising SMP,
 compared to non-SMP mode, thus enables a more thorough testing.
 
-@section build_static Static build
-
-Some machines, e.g., Crays, prefer builds using static libraries. This can be
-done by passing the cmake argument `-DBUILD_SHARED_LIBS=off` to _both_ TPL and
-Quinoa configure steps. See also section @ref build_default.
-
 @section build_projections Build with Charm++'s Projections enabled
 
 To use Charm++'s performance analysis tool, Projections, you can build Charm++

@@ -44,10 +44,6 @@ The following main steps are taken by the TPL-cmake script to configure the buil
 
  - The operating system is detected in [cmake/DetectOS.cmake](https://github.com/quinoacomputing/cmake-modules/blob/master/DetectOS.cmake). This is mostly used for working around some quirks for some specific operating systems, e.g., Alpine Linux.
 
- - Whether a dynamically or statically linked build is performed is decided in [cmake/BuildSharedS.cmake](https://github.com/quinoacomputing/cmake-modules/blob/master/BuildShared.cmake). This can be configured by the cmake variable `BUILD_SHARED_LIBS` (on/off). The default is _off_, yielding a dynamic build (except on Crays, where the default is static).
-
-   @warning If `BUILD_SHARED_LIBS` is configured one way for the TPL-build, it is important to set the same for the Quinoa build as well. The default is _off_ for both, yielding shared objects for the third party libraries as well as for the Quinoa build, allowing dynamic linking, which, in general is less error-prone for a small runtime cost (which is negligible compared to the number crunching cost).
-
  - The target build architecture is detected and configured in [cmake/TargetArch.cmake](https://github.com/quinoacomputing/cmake-modules/blob/master/TargetArch.cmake). This is used for setting the correct architecture-specific configuration for, e.g., the runtime system, Charm++.
 
  - The install directory in which to install all third-party libraries is configured by the `CMAKE_INSTALL_PREFIX` cmake variable. The default is `quinoa-tpl/install/<compiler>-<architecture>/`, e.g., `quinoa-tpl/install/clang-x86_64/`. If a custom location is set, the subsequent Quinoa build can be told by setting the `TPL_DIR` cmake variable to the path used as `CMAKE_INSTALL_PREFIX` for the TPL build.
@@ -79,8 +75,6 @@ In the Quinoa repository the main entry point of the Quinoa-build is [src/CMakeL
  - The default build type is set. This can be configured by the cmake variable `CMAKE_BUILD_TYPE`. The default is _Release_. See the @ref build_system_tpl for more details.
 
  - The operating system is detected. See the @ref build_system_tpl for more details.
-
- - Whether a dynamically or statically linked build is performed is decided. The default is dynamic linking. See the @ref build_system_tpl for more details.
 
  - The target build architecture is detected and configured. See the @ref build_system_tpl for more details.
 

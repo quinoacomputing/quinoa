@@ -18,8 +18,8 @@ and subtrees in Quinoa.
 @section tpl_vs_tool TPLs and external tools
 
 An important distinction between TPLs and tools is that TPLs are libraries
-whose source we directly use, e.g., via include files and/or (static and
-dynamic) linking, while from a tool we do not include source code nor link its
+whose source we directly use, e.g., via include files and/or
+(dynamic) linking, while from a tool we do not include source code nor link its
 object files, only build it and use it as a separate (external) executable. To
 learn more about TPLs and tools, check out the page on @ref licenses.
 
