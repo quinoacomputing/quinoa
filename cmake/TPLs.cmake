@@ -26,6 +26,7 @@ find_package(Charm)
 
 #### BLAS/LAPACK library with LAPACKE C-interface
 find_package(LAPACKE)
+find_package(CBLAS)
 
 #### Boost
 set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours

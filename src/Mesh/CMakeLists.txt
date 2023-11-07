@@ -17,7 +17,7 @@ target_include_directories(Mesh PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
-                           ${BLAS_INCLUDE_DIRS}
+                           ${CBLAS_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 

@@ -15,7 +15,7 @@ target_include_directories(EOS PUBLIC
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
-                           ${BLAS_INCLUDE_DIRS}
+                           ${CBLAS_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 
 set_target_properties(EOS

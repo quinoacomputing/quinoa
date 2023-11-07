@@ -39,6 +39,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${SEACASExodus_LIBRARIES}
                       ${Zoltan2_LIBRARIES}
                       ${LAPACKE_LIBRARIES}
+                      ${CBLAS_LIBRARIES}
                       ${NETCDF_LIBRARIES}     # only for static link
                       ${BACKWARD_LIBRARIES}
                       ${LUA_LIBRARIES}
