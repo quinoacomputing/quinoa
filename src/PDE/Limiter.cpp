@@ -906,7 +906,7 @@ VertexBasedMultiMat_FV(
       if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
         std::vector< tk::real > phic_p2(ncomp, 1.0);
         consistentMultiMatLimiting_P1(nmat, rdof, e, solidx, U, P, phic,
-					phic_p2);
+          phic_p2);
       }
     }
 
