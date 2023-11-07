@@ -64,18 +64,12 @@ Quinoa consists of the following tools:
 @section mainpage_build Build
 
 The standard way to build from source is to perform the following steps. For
-other ways to build, see the page on @ref build "building Quinoa".
+other build options, see the page on @ref build "building Quinoa".
 
 - Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
 
        apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev liblua5.3-dev
-       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libnetcdf-mpi-dev libbackward-cpp-dev tao-pegtl-dev binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
-
-- Install prerequisites: _Mac OS X_
-
-       spack install cmake libtool autoconf automake
-       spack install environment-modules cmake gcc openmpi%gcc hdf5%gcc+hl
-       module load gcc-9.2.0-clang-10.0.0-apple-vcpkolh openmpi-3.1.4-gcc-9.2.0-my2rkcv hdf5-1.10.5-gcc-9.2.0-prdkirn
+       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libnetcdf-mpi-dev libbackward-cpp-dev tao-pegtl-dev binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
 
 - Clone and build third-party libraries (libraries will be installed in `<current-dir>/quinoa-tpl/install/`)
 
@@ -102,11 +96,7 @@ consequence, our
 [master](https://github.com/quinoacomputing/quinoa/commits/master) (stable)
 branch can lag behind our
 [develop](https://github.com/quinoacomputing/quinoa/commits/develop) (bleeding
-edge) branch. If you want the latest, clone with
-
-```
-git clone --branch=develop https://github.com/quinoacomputing/quinoa.git
-```
+edge) branch.
 
 @section mainpage_directory_layout Directory layout
 

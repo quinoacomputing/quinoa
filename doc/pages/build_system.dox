@@ -15,8 +15,7 @@ page on @ref build "building".
 
 @section build_system_overview Overview
 
-As section _@ref build_stages_ on the @ref build "build page" describes, Quinoa
-is built in two stages:
+As section _@ref build_defaults_ describes, Quinoa is built in two stages:
 
  1. Build third-party libraries (TPLs)
  2. Build Quinoa
@@ -26,8 +25,7 @@ Both stages consist of the following two steps
  - Use cmake to configure the build
  - Perform the build
 
-As the section on @ref build_default "build defaults" discusses,
-some of the [cmake code](https://github.com/quinoacomputing/cmake-modules) is
+Some of the [cmake code](https://github.com/quinoacomputing/cmake-modules) is
 abstracted away into its own git repository so that it can be effectively
 shared between the two repositories:
 [quinoa](https://github.com/quinoacomputing/quinoa) and

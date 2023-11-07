@@ -16,29 +16,14 @@ See section @ref mainpage_build on the main page.
  - C and C++ compilers, the latter implementing the C++17 standard
  - Message Passing Interface library, e.g., [OpenMPI](https://www.open-mpi.org)
 
-@section build_supported Routinely tested
-
- Compilers:
+@section build_supported Routinely tested compilers
  - GNU
  - Clang
  - Intel
 
- C++ standard library:
- - libc++
- - libstdc++
+@section build_default Build using the defaults
 
- MPI:
- - OpenMPI
- - Intel MPI
-
- Operating systems:
- - Debian Linux
- - Alpine Linux
- - RedHat Enterprise Linux
-
-@section build_stages Two-stage build
-
-Quinoa is built in two stages, of which the first one may be optional:
+Quinoa is built in two stages:
 
  1. Build third-party libraries (TPLs)
  2. Build Quinoa
@@ -48,7 +33,7 @@ Both stages consist of the following two steps
  - Use cmake to configure the build
  - Perform the build
 
-The first step may be optional if all TPLs are found on the system or are
+The first stage may be optional if all TPLs are found on the system or are
 pre-installed and/or configured, e.g., via environment modules.
 
 @note If some libraries are not found by the Quinoa cmake step, not all
@@ -57,10 +42,7 @@ single executable, see @ref build_specific_executables, or a build
 configured for only building the documentation, see
 https://github.com/quinoacomputing/buildenv/blob/master/debian-doc.
 
-@section build_default Build using the defaults
-
-The easiest, but not necessarily the quickest, way to build Quinoa is to use the
-defaults.
+The easiest way to build Quinoa is to use the defaults.
 
 Install the prerequisites (instructions for a Debian-based Linux):
 
@@ -119,7 +101,7 @@ directory is pulled into _quinoa_ as a git subtree, (and as a submodule into
 _quinoa-tpl_) whose origin is https://github.com/quinoacomputing/cmake-modules.
 Therefore changes to files under `cmake/` should be made to the
 [cmake-modules](https://github.com/quinoacomputing/cmake-modules) repository
-and then pulled in to _quinoa_ and _quinoa-tpl_. See also the page on on @ref
+and then pulled in to _quinoa_ and _quinoa-tpl_. See also the page on @ref
 git_submodules_subtrees.
 
 @section build_specific_executables Build specific executables only
@@ -291,8 +273,7 @@ the TPL build by passing to cmake, e.g.,
 
 @section build_cpplibrary Configuring the C++ standard library
 
-We routinely use and test _libc++_ and _libstdc++_.  Which one to use can be
-configured by the cmake variable `STDLIBCPP`, as
+_libc++_ or _libstdc++_ can be configured by the cmake variable `STDLIBCPP`, as
 
        -DSTDLIBCPP=libc++
 
@@ -304,8 +285,7 @@ or
 With the gnu compilers _libstdc++_ is the only option.
 
 @warning The configuration for the standard library must be specified so that
-_both_ the TPL and the Quinoa builds use the same implementation. See the
-section on @ref build_stages.
+_both_ the TPL and the Quinoa builds use the same implementation.
 
 @section build_system_specs Build system features, requirements, and defaults
 
