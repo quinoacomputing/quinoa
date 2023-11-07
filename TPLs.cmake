@@ -49,11 +49,6 @@ find_package(PEGTL 2.0.0)
 ### NetCDF
 find_package(NetCDF)
 
-#### Zlib (only for static link)
-if(NOT BUILD_SHARED_LIBS AND NOT ARCH MATCHES "ppc64")
-  find_package(ZLIB)
-endif()
-
 #### Zoltan2 library
 find_package(Zoltan2)
 

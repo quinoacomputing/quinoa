@@ -50,23 +50,13 @@ find_path (NETCDF_INCLUDES netcdf.h
                  /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/netcdf/mpi
             PATH_SUFFIXES include)
 
-if(NOT BUILD_SHARED_LIBS)
-  find_library (NETCDF_LIBRARIES_C NAMES libnetcdf.a
-                HINTS ${NETCDF_ROOT}
-                      ${NETCDF_DIR}
-                      $ENV{NETCDF_DIR}
-                      ${CMAKE_INSTALL_PREFIX}
-                      /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/netcdf/mpi
-                PATH_SUFFIXES lib lib64)
-else()
-  find_library (NETCDF_LIBRARIES_C NAMES netcdf
-                HINTS ${NETCDF_ROOT}
-                      ${NETCDF_DIR}
-                      $ENV{NETCDF_DIR}
-                      ${CMAKE_INSTALL_PREFIX}
-                      /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/netcdf/mpi
-                PATH_SUFFIXES lib lib64)
-endif()
+find_library (NETCDF_LIBRARIES_C NAMES netcdf
+              HINTS ${NETCDF_ROOT}
+                    ${NETCDF_DIR}
+                    $ENV{NETCDF_DIR}
+                    ${CMAKE_INSTALL_PREFIX}
+                    /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/netcdf/mpi
+              PATH_SUFFIXES lib lib64)
 mark_as_advanced(NETCDF_LIBRARIES_C)
 
 set (NetCDF_has_interfaces "YES") # will be set to NO if we're missing any interfaces
@@ -91,15 +81,9 @@ macro (NetCDF_check_interface lang header libs)
   endif (NETCDF_${lang})
 endmacro (NetCDF_check_interface)
 
-if(NOT BUILD_SHARED_LIBS)
-  NetCDF_check_interface (CXX netcdfcpp.h libnetcdf_c++.a)
-  NetCDF_check_interface (F77 netcdf.inc  libnetcdff.a)
-  NetCDF_check_interface (F90 netcdf.mod  libnetcdff.a)
-else()
-  NetCDF_check_interface (CXX netcdfcpp.h netcdf_c++)
-  NetCDF_check_interface (F77 netcdf.inc  netcdff)
-  NetCDF_check_interface (F90 netcdf.mod  netcdff)
-endif()
+NetCDF_check_interface (CXX netcdfcpp.h netcdf_c++)
+NetCDF_check_interface (F77 netcdf.inc  netcdff)
+NetCDF_check_interface (F90 netcdf.mod  netcdff)
 
 set (NETCDF_LIBRARIES ${NetCDF_libs})
 

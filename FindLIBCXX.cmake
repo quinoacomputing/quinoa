@@ -36,21 +36,10 @@ find_path(LIBCXX_INCLUDE_DIR NAMES cxxabi.h HINTS ${LIBCXX_PATH}/include
                                             /usr/include/c++/v1
                                             $ENV{LIBCXX_PATH}/include/c++/v1)
 
-if(BUILD_SHARED_LIBS)
-  find_library(LIBCXX_LIBRARY NAMES c++ HINTS ${LIBCXX_PATH}/lib
-                                              $ENV{LIBCXX_PATH}/lib)
-  find_library(LIBCXXABI_LIBRARY NAMES c++abi HINTS ${LIBCXX_PATH}/lib
-                                              $ENV{LIBCXX_PATH}/lib)
-else()
-  find_library(LIBCXX_LIBRARY NAMES libc++.a HINTS ${LIBCXX_PATH}/lib
-                                                   $ENV{LIBCXX_PATH}/lib)
-  if(ARCH MATCHES "ppc64")
-    set(LIBCXXABI_LIBRARY "")
-  else()
-    find_library(LIBCXXABI_LIBRARY NAMES libc++abi.a HINTS ${LIBCXX_PATH}/lib
-                                                     $ENV{LIBCXX_PATH}/lib)
-  endif()
-endif()
+find_library(LIBCXX_LIBRARY NAMES c++ HINTS ${LIBCXX_PATH}/lib
+                                            $ENV{LIBCXX_PATH}/lib)
+find_library(LIBCXXABI_LIBRARY NAMES c++abi HINTS ${LIBCXX_PATH}/lib
+                                            $ENV{LIBCXX_PATH}/lib)
 
 if(LIBCXX_INCLUDE_DIR AND LIBCXX_LIBRARY AND LIBCXXABI_LIBRARY)
   set(LIBCXX_INCLUDE_DIRS ${LIBCXX_INCLUDE_DIR})
