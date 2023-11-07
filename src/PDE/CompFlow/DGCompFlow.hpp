@@ -325,6 +325,8 @@ class CompFlow {
     {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto& solidx = g_inputdeck.get< tag::param, tag::compflow,
+        tag::matidxmap >().template get< tag::solidx >();
 
       if (limiter == ctr::LimiterType::WENOP1)
         WENO_P1( fd.Esuel(), U );
@@ -332,12 +334,12 @@ class CompFlow {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
         VertexBasedCompflow_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U,
           shockmarker);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, mtInv, flux, U, shockmarker);
+          uNodalExtrm, mtInv, flux, solidx, U, shockmarker);
     }
 
     //! Update the conservative variable solution for this PDE system
@@ -389,6 +391,9 @@ class CompFlow {
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
 
+      const auto& solidx = g_inputdeck.get< tag::param, tag::compflow,
+        tag::matidxmap >().template get< tag::solidx >();
+
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
       Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
@@ -418,7 +423,6 @@ class CompFlow {
         return tk::VelFn::result_type(); };
 
       // compute internal surface flux integrals
-      std::vector< std::size_t > solidx(1, 0);
       tk::surfInt( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                    dt, R, vriem, riemannLoc, riemannDeriv );

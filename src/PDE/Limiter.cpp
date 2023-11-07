@@ -132,6 +132,7 @@ SuperbeeMultiMat_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   const tk::UnsMesh::Coords& coord,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat )
@@ -141,6 +142,7 @@ SuperbeeMultiMat_P1(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] coord Array of nodal coordinates
+//! \param[in] solidx Material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -205,7 +207,7 @@ SuperbeeMultiMat_P1(
       else
       {
         if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
-          consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic,
+          consistentMultiMatLimiting_P1(nmat, rdof, e, solidx, U, P, phic,
             phic_p2);
       }
 
@@ -320,6 +322,7 @@ VertexBasedCompflow_P1(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -334,6 +337,7 @@ VertexBasedCompflow_P1(
 // //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] flux Riemann flux function to use
+//! \param[in] solidx Material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for compflow.
@@ -349,7 +353,7 @@ VertexBasedCompflow_P1(
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, 1, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -405,6 +409,7 @@ VertexBasedCompflow_P2(
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& uNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -425,6 +430,7 @@ VertexBasedCompflow_P2(
 //!   variables
 //! \param[in] mtInv Inverse of Taylor mass matrix
 //! \param[in] flux Riemann flux function to use
+//! \param[in] solidx Material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for compflow.
@@ -440,7 +446,7 @@ VertexBasedCompflow_P2(
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, 1, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, U, U, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, U, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -501,6 +507,7 @@ VertexBasedMultiMat_P1(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -517,6 +524,7 @@ VertexBasedMultiMat_P1(
 // //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] flux Riemann flux function to use
+//! \param[in] solidx Material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -538,7 +546,7 @@ VertexBasedMultiMat_P1(
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6 && ndof > 1)
     MarkShockCells(nelem, nmat, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -621,7 +629,7 @@ VertexBasedMultiMat_P1(
             phic_p2);
 
         if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
-          consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic,
+          consistentMultiMatLimiting_P1(nmat, rdof, e, solidx, U, P, phic,
             phic_p2);
       }
 
@@ -661,6 +669,7 @@ VertexBasedMultiMat_P2(
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& pNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -685,6 +694,7 @@ VertexBasedMultiMat_P2(
 //!   variables
 //! \param[in] mtInv Inverse of Taylor mass matrix
 //! \param[in] flux Riemann flux function to use
+//! \param[in] solidx Material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -706,7 +716,7 @@ VertexBasedMultiMat_P2(
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, nmat, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, U, P, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -800,7 +810,7 @@ VertexBasedMultiMat_P2(
             phic_p1, phic_p2);
 
         if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
-          consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic_p1,
+          consistentMultiMatLimiting_P1(nmat, rdof, e, solidx, U, P, phic_p1,
             phic_p2);
       }
 
@@ -832,6 +842,7 @@ VertexBasedMultiMat_FV(
   std::size_t nelem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< int >& srcFlag,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat )
@@ -842,6 +853,7 @@ VertexBasedMultiMat_FV(
 //! \param[in] nelem Number of elements
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] srcFlag Whether the energy source was added
+//! \param[in] solidx Material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -893,7 +905,8 @@ VertexBasedMultiMat_FV(
     {
       if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
         std::vector< tk::real > phic_p2(ncomp, 1.0);
-        consistentMultiMatLimiting_P1(nmat, rdof, e, U, P, phic, phic_p2);
+        consistentMultiMatLimiting_P1(nmat, rdof, e, solidx, U, P, phic,
+					phic_p2);
       }
     }
 
@@ -1467,6 +1480,7 @@ void consistentMultiMatLimiting_P1(
   std::size_t nmat,
   std::size_t rdof,
   std::size_t e,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   [[maybe_unused]] tk::Fields& P,
   std::vector< tk::real >& phic_p1,
@@ -1476,6 +1490,7 @@ void consistentMultiMatLimiting_P1(
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] e Element being checked for consistency
+//! \param[in] solidx Material index indicator
 //! \param[in] U Vector of conservative variables
 //! \param[in] P Vector of primitive variables
 //! \param[in,out] phic_p1 Vector of limiter functions for P1 dofs of the
@@ -1484,8 +1499,6 @@ void consistentMultiMatLimiting_P1(
 //!   conserved quantities
 // *****************************************************************************
 {
-  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
-    tag::matidxmap >().template get< tag::solidx >();
   // find the limiter-function for volume-fractions
   auto phi_al_p1(1.0), phi_al_p2(1.0), almax(0.0), dalmax(0.0);
   //std::size_t nmax(0);
@@ -2153,6 +2166,7 @@ void MarkShockCells ( const std::size_t nelem,
                       [[maybe_unused]] const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const tk::FluxFn& flux,
+                      const std::vector< std::size_t >& solidx,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker )
@@ -2171,6 +2185,7 @@ void MarkShockCells ( const std::size_t nelem,
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
 //! \param[in] flux Flux function to use
+//! \param[in] solidx Material index indicator
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in, out] shockmarker Vector of the shock indicator
@@ -2183,9 +2198,6 @@ void MarkShockCells ( const std::size_t nelem,
 // *****************************************************************************
 {
   const auto coeff = g_inputdeck.get< tag::discr, tag::shock_detector_coeff >();
-
-  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
-    tag::matidxmap >().template get< tag::solidx >();
 
   std::vector< tk::real > IC(U.nunk(), 0.0);
   const auto& esuf = fd.Esuf();
