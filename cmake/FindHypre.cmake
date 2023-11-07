@@ -64,11 +64,7 @@ else()
   set(HYPRE_INCLUDE_DIRS "")
 endif()
 
-if(NOT BUILD_SHARED_LIBS)
-  find_library(HYPRE_LIBRARY NAMES libHYPRE.a HINTS ${HYPRE_ROOT}/lib)
-else()
-  find_library(HYPRE_LIBRARY NAMES HYPRE HINTS ${HYPRE_ROOT}/lib)
-endif()
+find_library(HYPRE_LIBRARY NAMES HYPRE HINTS ${HYPRE_ROOT}/lib)
 
 set(HYPRE_LIBRARIES ${HYPRE_LIBRARY})
 

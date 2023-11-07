@@ -33,11 +33,6 @@ function(config_executable target)
     set_target_properties(${target} PROPERTIES LINK_FLAGS "${MPI_LINK_FLAGS}")
   endif()
 
-  # Conditionally enforce static linking
-  if(NOT BUILD_SHARED_LIBS)
-    set_target_properties(${target} PROPERTIES LINK_FLAGS "-static")
-  endif()
-
   INSTALL(TARGETS ${target}
           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Runtime

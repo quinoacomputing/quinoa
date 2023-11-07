@@ -34,14 +34,9 @@ endif()
 FIND_PATH(PUGIXML_INCLUDE_DIR NAMES pugixml.hpp HINTS ${PUGIXML_ROOT}/include
                                                 $ENV{PUGIXML_ROOT}/include)
 
-if(NOT BUILD_SHARED_LIBS)
- find_library(PUGIXML_LIBRARY NAMES libpugixml.a HINTS ${PUGIXML_ROOT}/lib
-                                                 $ENV{PUGIXML_ROOT}/lib64)
-else()
- find_library(PUGIXML_LIBRARY NAMES pugixml HINTS ${PUGIXML_ROOT}
-                                                  $ENV{PUGIXML_ROOT}
-                                            PATH_SUFFIXES lib lib64)
-endif()
+find_library(PUGIXML_LIBRARY NAMES pugixml HINTS ${PUGIXML_ROOT}
+                                                 $ENV{PUGIXML_ROOT}
+                                           PATH_SUFFIXES lib lib64)
 
 if(PUGIXML_INCLUDE_DIR)
   set(PUGIXML_INCLUDE_DIRS ${PUGIXML_INCLUDE_DIR})
