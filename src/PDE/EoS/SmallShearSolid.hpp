@@ -76,7 +76,6 @@ class SmallShearSolid {
       tk::real apr,
       tk::real alpha=1.0,
       std::size_t imat=0,
-      tk::real asigma_nn=0.0,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
       const std::array< tk::real, 3 >& adefgradn={{}},
       const std::array< tk::real, 3 >& asigman={{}} ) const;
