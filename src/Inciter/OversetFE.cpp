@@ -195,6 +195,7 @@ OversetFE::setupIntergridBoundaries()
 
   std::size_t iflag = m_uc.nprop()-1;
 
+  // 1st layer
   const auto& inpoel = d->Inpoel();
   std::unordered_set< std::size_t > bp;
   for (std::size_t e=0; e<inpoel.size()/4; e++) {
@@ -216,6 +217,7 @@ OversetFE::setupIntergridBoundaries()
     }
   }
 
+  // 2nd layer
   for (std::size_t e=0; e<inpoel.size()/4; e++) {
     std::size_t N[4] = {
       inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
@@ -240,11 +242,9 @@ OversetFE::findHoles()
 // \return True if did anything
 // *****************************************************************************
 {
-  auto d = Disc();
+  if (Disc()->MeshId() != 0) return false;
 
-  if (d->MeshId() != 0) return false;
-
-  const auto& hol = d->hol();
+  const auto& hol = Disc()->hol();
 
   //std::cout << "hol: p:" << thisIndex << ':';
   //for (const auto& [mid,h] : hol) {
@@ -254,6 +254,7 @@ OversetFE::findHoles()
   //std::cout << '\n';
 
   std::vector< tk::real > face;
+  std::vector< std::array< std::array< tk::real, 3 >, 3 > > tri;
   for (const auto& [m,h] : hol) {                       // each overset mesh
     for (const auto& [hid,tricoord] : h) {              // each hole
       for (std::size_t t=0; t<tricoord.size(); t+=9) {  // each triangle
@@ -266,6 +267,9 @@ OversetFE::findHoles()
         auto x2 = tricoord[t+6];
         auto y2 = tricoord[t+7];
         auto z2 = tricoord[t+8];
+        tri.push_back( { x0,y0,z0 } );
+        tri.push_back( { x1,y1,z1 } );
+        tri.push_back( { x2,y2,z2 } );
         const std::array< tk::real, 3 >
           ba{ x1-x0, y1-y0, z1-z0 }, ca{ x2-x0, y2-y0, z2-z0 };
         auto n = tk::cross( ba, ca );
@@ -281,27 +285,57 @@ OversetFE::findHoles()
 
   std::size_t iflag = m_uc.nprop()-1;
 
-  const auto& x = d->Coord()[0];
-  const auto& y = d->Coord()[1];
-  const auto& z = d->Coord()[2];
+  const auto& x = Disc()->Coord()[0];
+  const auto& y = Disc()->Coord()[1];
+  const auto& z = Disc()->Coord()[2];
 
   //using std::abs;
 
   //for (std::size_t i=0; i<m_uc.nunk(); ++i) m_uc(i,iflag) = 0.0;
 
+  // lambda to compute the sign of the Jacobian of tet of vertices a, b, c, d
+  // returns true if Jacobian is negative
+  auto vol = [&]( const std::array< tk::real, 3 >& a,
+                  const std::array< tk::real, 3 >& b,
+                  const std::array< tk::real, 3 >& c,
+                  const std::array< tk::real, 3 >& d )
+  {
+    const std::array< tk::real, 3 >
+      ba{{ b[0]-a[0], b[1]-a[1], b[2]-a[2] }},
+      ca{{ c[0]-a[0], c[1]-a[1], c[2]-a[2] }},
+      da{{ d[0]-a[0], d[1]-a[1], d[2]-a[2] }};
+    return std::signbit( tk::triple( ba, ca, da ) );
+  };
+
+  // lambda to find out if triangle f is visible to point i
+  auto visible = [&]( const tk::real f[], std::size_t i ){
+    std::array< tk::real, 3 > q2{ x[i], y[i], z[i] },
+                              q1{ f[0], f[1], f[2] };
+    return std::none_of( begin(tri), end(tri),
+      [&]( const auto& t ){
+        const auto& p1 = t[0];
+        const auto& p2 = t[1];
+        const auto& p3 = t[2];
+        auto q = vol(q1,q2,p1,p2);
+        return (vol(q1,p1,p2,p3) != vol(q2,p1,p2,p3)) &&
+                q == vol(q1,q2,p2,p3) && q == vol(q1,q2,p3,p1);
+
+      } );
+  };
+
   for (std::size_t i=0; i<m_uc.nunk(); ++i) {
     bool inhole = true;
-    for (std::size_t t=0; t<face.size()/6; ++t) {
-      const auto f = face.data() + t*6;
+    for (std::size_t t=0; t<face.size(); t+=6) {
+      const auto f = face.data() + t;
       auto dx = x[i] - f[0];
       auto dy = y[i] - f[1];
       auto dz = z[i] - f[2];
-      if (dx*f[3] + dy*f[4] + dz*f[5] < 0.0) {
+      if (visible(f,i) && dx*f[3] + dy*f[4] + dz*f[5] < 0.0) {
         inhole = false;
-        t = face.size()/6;
+        t = face.size();
       }
     }
-    if (inhole) m_uc(i,iflag) = 2.0;
+    if (inhole) { std::cout << i << " in hole\n"; m_uc(i,iflag) = 2.0; }
   }
 
   return true;

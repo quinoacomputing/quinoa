@@ -338,6 +338,8 @@ Discretization::transfer(
 
   } else {
 
+std::cout << "tr:" << m_meshid << ":" << thisIndex << ":" << dirn << '\n';
+
     m_transfer_complete = cb;
 
     // determine source and destination mesh depending on direction of transfer
