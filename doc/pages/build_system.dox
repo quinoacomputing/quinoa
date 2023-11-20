@@ -97,7 +97,7 @@ In the Quinoa repository the main entry point of the Quinoa-build is [src/CMakeL
  - This is followed by compiler-specific settings and flags, e.g., enabling and disabling certain warnings for all of Quinoa. Some warnings are only locally disabled under directory `src/NoWarning/`.
 
 @section build_system_reated Related pages
-- @ref mainpage_build "Quickstart on how to build"
+- @ref easybuild "Quickstart on how to build"
 - @ref git_submodules_subtrees "Third-party libraries and cmake code"
 - @ref licenses "A list of all required and optional third-party libraries"
 - @ref build_system "Build system internals"

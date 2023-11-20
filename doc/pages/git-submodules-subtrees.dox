@@ -93,8 +93,8 @@ git subtree push --prefix=cmake cmake master
 To ease and automate building the @ref licenses "third-party libraries" that are
 not always available on a system, we maintain a [git
 repository](https://github.com/quinoacomputing/quinoa-tpl) that consists of a
-list of git submodules pointing to the libraries. Check the @ref mainpage_build
-"Build section of the main page" for a list of libraries that _may_ be installed
+list of git submodules pointing to the libraries. Check the @ref easybuild
+"Quick build section" for a list of libraries that _may_ be installed
 by your operating system's package manager, which then can accelerate and ease
 installing the TPLs.
 

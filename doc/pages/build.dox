@@ -1,14 +1,11 @@
 /*!
-  @page      build Build
+  @page      build Advanced build options
 
 @tableofcontents{xml}
 
-This page discusses various ways of building Quinoa, including requirements,
-optional libraries, defaults, and build system options.
-
-@section build_quick Quick start
-
-See section @ref mainpage_build on the main page.
+This page discusses various advanced Quinoa build options, including requirements,
+optional libraries, defaults, and build system options. See
+@ref easybuild "Quick build" for the default build.
 
 @section build_requirements Minimum requirements
 
