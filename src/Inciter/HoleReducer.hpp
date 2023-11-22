@@ -23,13 +23,13 @@
 
 namespace inciter {
 
-//! Serialize std::vector to raw memory stream
+//! Serialize hole surface data to raw memory stream
 std::pair< int, std::unique_ptr<char[]> >
 serialize( std::size_t meshid,
            const std::unordered_map< std::size_t,
                                      std::vector< tk::real > >& d );
 
-//! Charm++ custom reducer for merging std::vectors during reduction across PEs
+//! Charm++ custom reducer for merging hole data during reduction across PEs
 CkReductionMsg*
 mergeHole( int nmsg, CkReductionMsg **msgs );
 

@@ -24,13 +24,13 @@ std::pair< int, std::unique_ptr<char[]> >
 serialize( std::size_t meshid,
            const std::unordered_map< std::size_t, std::vector< tk::real > >& d )
 // *****************************************************************************
-// Serialize std::vectors to raw memory stream
+// Serialize hole surface data to raw memory stream
 //! \param[in] meshid Mesh ID
 //! \param[in] d Hole data structure
 //! \return Pair of the length and the raw stream containing serialized data
 // *****************************************************************************
 {
-  // Prepare for serializing diagnostics to a raw binary stream, compute size
+  // Prepare for serializing hole data to a raw binary stream, compute size
   PUP::sizer sizer;
   sizer | meshid;
   sizer | const_cast< std::unordered_map< std::size_t,
@@ -52,11 +52,11 @@ serialize( std::size_t meshid,
 CkReductionMsg*
 mergeHole( int nmsg, CkReductionMsg **msgs )
 // *****************************************************************************
-// Charm++ custom reducer for merging diagnostics during reduction across PEs
+// Charm++ custom reducer for merging hole data during reduction across PEs
 //! \param[in] nmsg Number of messages in msgs
 //! \param[in] msgs Charm++ reduction message containing the serialized
-//!   diagnostics
-//! \return Aggregated diagnostics built for further aggregation if needed
+//!   hole surface data
+//! \return Aggregated hole surface data built for further aggregation if needed
 // *****************************************************************************
 {
   std::size_t meshid;
@@ -81,10 +81,10 @@ mergeHole( int nmsg, CkReductionMsg **msgs )
     for (auto&& [hid,data] : inholes) tk::concat( std::move(data), v[hid] );
   }
 
-  // Serialize concatenated diagnostics vector to raw stream
+  // Serialize concatenated hole surface data to raw stream
   auto stream = serialize( meshid, v );
 
-  // Forward serialized diagnostics
+  // Forward serialized hole surface data
   return CkReductionMsg::buildNew( stream.first, stream.second.get() );
 }
 
