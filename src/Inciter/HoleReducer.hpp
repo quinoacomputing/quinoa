@@ -5,8 +5,8 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Custom Charm++ reducer for merging diagnostics across PEs
-  \details   Custom Charm++ reducer for merging diagnostics across PEs.
+  \brief     Custom Charm++ reducer for aggregating hole data across PEs
+  \details   Custom Charm++ reducer for aggregating hole data across PEs.
 */
 // *****************************************************************************
 #ifndef HoleReducer_h
