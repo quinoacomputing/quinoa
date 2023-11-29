@@ -26,6 +26,7 @@ find_package(Charm)
 
 #### BLAS/LAPACK library with LAPACKE C-interface
 find_package(LAPACKE)
+find_package(CBLAS)
 
 #### Boost
 set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
@@ -47,11 +48,6 @@ find_package(PEGTL 2.0.0)
 
 ### NetCDF
 find_package(NetCDF)
-
-#### Zlib (only for static link)
-if(NOT BUILD_SHARED_LIBS AND NOT ARCH MATCHES "ppc64")
-  find_package(ZLIB)
-endif()
 
 #### Zoltan2 library
 find_package(Zoltan2)

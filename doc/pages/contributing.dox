@@ -141,12 +141,9 @@ Example:
 >
 >
 > Attach the full screen output of both the _TPL-cmake_ as well as the
-> _Quinoa-cmake_ build configuration steps. See @ref build_stages.
+> _Quinoa-cmake_ build configuration steps. See @ref build_default.
 >
-> Attach the input file and, if relevant, the input mesh file. If the mesh is
-> large, try to reproduce it with a smaller mesh. If you cannot, use our [file
-> transfer service](https://transfer.lanl.gov) to send us the larger mesh and
-> address the file to quinoa@lanl.gov.
+> Attach the input file and, if relevant, the input mesh file.
 >
 > Attach the full screen output of the run reproducing the problem, including
 > those of the Charm++ runtime system as well as the call and stack traces.

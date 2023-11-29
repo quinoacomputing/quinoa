@@ -1,0 +1,36 @@
+/*!
+  @page      easybuild Build
+
+The standard way to build from source is to perform the following steps.
+
+- Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
+
+       apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev liblua5.3-dev
+       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libnetcdf-mpi-dev libbackward-cpp-dev tao-pegtl-dev binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
+
+- Clone and build third-party libraries (libraries will be installed in `<current-dir>/quinoa-tpl/install/`)
+
+       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa-tpl.git; cd quinoa-tpl
+       mkdir build; cd build
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make -sj8
+       cd ../..
+
+- Build Quinoa & test (in dir "adjacent" to `quinoa-tpl/`):
+
+       git clone https://github.com/quinoacomputing/quinoa.git; cd quinoa
+       mkdir build; cd build
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make -sj8
+
+- Run tests (in dir "adjacent" to `quinoa-tpl/`):
+
+       ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
+
+  @note The above will use 8 CPU cores to compile the third-party libraries and code, and run the tests.
+  You might need to adjust this to get optimal performance.
+
+All executables will be under `build/Main/`.
+
+If all of the above steps finished without error, Quinoa has successfully been built.
+For other advanced build options, see the page on @ref build "Advanced builds".
+
+*/

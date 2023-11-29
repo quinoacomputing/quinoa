@@ -56,6 +56,7 @@ Inciter currently has three different families of fluid dynamics algorithms:
    @ref papers_inciter "Inciter papers" for more details.
 
 @section inciter_pages Related pages
+- @ref running_inciter "Running Inciter"
 - @ref inciter_alecg "ALECG hydrodynamics"
 - @ref inciter_dg "Single-material DG hydrodynamics"
 - @ref inciter_mm "Multi-material hydrodynamics"
@@ -63,7 +64,6 @@ Inciter currently has three different families of fluid dynamics algorithms:
 - @ref inciter_amr "Adaptive Mesh Refinement (TetAMR)"
 - @ref inciter_cmd "Command line arguments"
 - @ref inciter_ctr "Control file keywords"
-- @ref output "Field output files"
 - @ref papers_inciter "Publications"
 - @ref roadmap_inciter "Roadmap"
 - @ref inciter_performance "Performance"

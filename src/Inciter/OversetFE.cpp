@@ -1429,6 +1429,11 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
     const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
     const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
 
+    if (m_movedmesh) {
+      d->Itf() = 0;  // Zero field output iteration count if mesh moved
+      ++d->Itr();    // Increase number of iterations with a change in the mesh
+    }
+
     if (steady) {
 
       // this is the last time step if max time of max number of time steps
@@ -1446,8 +1451,6 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
   if (m_movedmesh) {
     // Normals need to be recomputed if overset mesh has been moved
     thisProxy[ thisIndex ].wait4norm();
-    d->Itf() = 0;  // Zero field output iteration count if mesh moved
-    ++d->Itr();    // Increase number of iterations with a change in the mesh
   }
 
   // Start solution transfer (by setting up holes)

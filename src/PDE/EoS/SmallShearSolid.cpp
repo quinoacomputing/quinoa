@@ -227,7 +227,6 @@ SmallShearSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  tk::real,
   const std::array< std::array< tk::real, 3 >, 3 >& adefgrad,
   const std::array< tk::real, 3 >& /*adefgradn*/,
   const std::array< tk::real, 3 >& /*asigman*/ ) const

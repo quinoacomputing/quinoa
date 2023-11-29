@@ -514,13 +514,13 @@ pressureRelaxationInt( std::size_t nmat,
               ag[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
           auto agrot = tk::rotateTensor(ag, {{1.0, 0.0, 0.0}});
           amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
-            apmat[k], alphamat, k, 1.0, agrot);
+            apmat[k], alphamat, k, agrot);
           agrot = tk::rotateTensor(ag, {{0.0, 1.0, 0.0}});
           amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-            arhomat, apmat[k], alphamat, k, 1.0, agrot));
+            arhomat, apmat[k], alphamat, k, agrot));
           agrot = tk::rotateTensor(ag, {{0.0, 0.0, 1.0}});
           amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-            arhomat, apmat[k], alphamat, k, 1.0, agrot));
+            arhomat, apmat[k], alphamat, k, agrot));
         }
         else
         {

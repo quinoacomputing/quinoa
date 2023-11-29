@@ -1,9 +1,0 @@
-/*!
-  \page      fileconv_main FileConv
-
-__Output-file converter between ROOT and ExodusII__
-
-This is in the process of being absorbed into @ref meshconv_main. When that is
-finished, _FileConv_ as a separate executable will be eliminated.
-
-*/

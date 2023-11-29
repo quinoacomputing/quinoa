@@ -188,7 +188,6 @@ JWL::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  tk::real,
   const std::array< std::array< tk::real, 3 >, 3 >&,
   const std::array< tk::real, 3 >&,
   const std::array< tk::real, 3 >& ) const

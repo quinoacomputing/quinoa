@@ -1,0 +1,34 @@
+/*!
+  @page      devpage References for developers
+
+This page is for Quinoa developers.
+
+See @ref build "advanced build options".
+
+We roughly follow the development model described
+[here](http://nvie.com/posts/a-successful-git-branching-model). As a
+consequence, our
+[master](https://github.com/quinoacomputing/quinoa/commits/master) (stable)
+branch can lag behind our
+[develop](https://github.com/quinoacomputing/quinoa/commits/develop) (bleeding
+edge) branch.
+
+@section mainpage_directory_layout Directory layout
+
+@verbatim
+    quinoa
+      ├── cmake/ - CMake code, shared between github.com/quinoacomputing/quinoa-tpl and src/
+      ├── doc/ - Documentation, rendered at quinoacomputing.github.io
+      ├── src/ - Compilable sources, see quinoacomputing.github.io/files.html
+      ├── tests/ - Unit-, and regression tests
+      ├── tools/ - Development utilities and docker files
+      ├── LICENSE - Copyright and license
+      └── README.md - This file, rendered at github.com/quinoacomputing/quinoa
+@endverbatim
+
+@section mainpage_roadmap Roadmap
+
+The rough directions in which each of Quinoa's tools are developed are
+described by the @ref roadmap.
+
+*/
