@@ -484,7 +484,7 @@ Discretization::setupHoles( CkCallback cont )
           const auto& x = m_coord[0];
           const auto& y = m_coord[1];
           const auto& z = m_coord[2];
-          auto& h = hol[ ++nhol ];
+          auto& h = hol[ nhol++ ];
           for (const auto& [ setid, faceids ] : m_bface) {
             if ( is.count(setid) ) {
               for (auto f : faceids) {

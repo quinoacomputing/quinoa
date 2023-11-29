@@ -246,13 +246,6 @@ OversetFE::findHoles()
 
   const auto& hol = d->hol();
 
-  //std::cout << "hol: p:" << thisIndex << ':';
-  //for (const auto& [mid,h] : hol) {
-  //  std::cout << "m:" << mid << ": ";
-  //  for (const auto& [hid,hd] : h) std::cout << hid << ":" << hd.size() << ' ';
-  //}
-  //std::cout << '\n';
-
   std::vector< tk::real > face;
   for (const auto& [m,h] : hol) {                       // each overset mesh
     for (const auto& [hid,tricoord] : h) {              // each hole
@@ -266,12 +259,18 @@ OversetFE::findHoles()
         auto x2 = tricoord[t+6];
         auto y2 = tricoord[t+7];
         auto z2 = tricoord[t+8];
+        auto cx = (x0 + x1 + x2) / 3.0;
+        auto cy = (y0 + y1 + y2) / 3.0;
+        auto cz = (z0 + z1 + z2) / 3.0;
         const std::array< tk::real, 3 >
           ba{ x1-x0, y1-y0, z1-z0 }, ca{ x2-x0, y2-y0, z2-z0 };
         auto n = tk::cross( ba, ca );
-        face.push_back( x0 );
-        face.push_back( y0 );
-        face.push_back( z0 );
+        n[0] /= 2.0;
+        n[1] /= 2.0;
+        n[2] /= 2.0;
+        face.push_back( cx );
+        face.push_back( cy );
+        face.push_back( cz );
         face.push_back( n[0] );
         face.push_back( n[1] );
         face.push_back( n[2] );
@@ -284,24 +283,31 @@ OversetFE::findHoles()
   const auto& x = d->Coord()[0];
   const auto& y = d->Coord()[1];
   const auto& z = d->Coord()[2];
+  const auto npoin = m_uc.nunk();
 
-  //using std::abs;
+  for (std::size_t i=0; i<m_uc.nunk(); ++i) m_uc(i,iflag) = 0.0;
 
-  //for (std::size_t i=0; i<m_uc.nunk(); ++i) m_uc(i,iflag) = 0.0;
+  const auto& ib = g_inputdeck.get< tag::param, tag::compflow,
+                                    tag::intergrid_boundary >();
 
-  for (std::size_t i=0; i<m_uc.nunk(); ++i) {
-    bool inhole = true;
+  // compute partial integral for finding hole nodes on bg mesh
+  auto eps = 1.0e-8;
+  const auto& origin = ib.get< tag::point >();
+  for (std::size_t i=0; i<npoin; ++i) {
+    tk::real holeint = 0.0;
     for (std::size_t t=0; t<face.size()/6; ++t) {
       const auto f = face.data() + t*6;
-      auto dx = x[i] - f[0];
-      auto dy = y[i] - f[1];
-      auto dz = z[i] - f[2];
-      if (dx*f[3] + dy*f[4] + dz*f[5] < 0.0) {
-        inhole = false;
-        t = face.size()/6;
-      }
+      auto dx = f[0] - x[i];
+      auto dy = f[1] - y[i];
+      auto dz = f[2] - z[i];
+      auto r = std::pow( dx*dx + dy*dy + dz*dz, 1.5 );
+      auto vx = dx / r;
+      auto vy = dy / r;
+      auto vz = dz / r;
+      holeint += vx*f[3] + vy*f[4] + vz*f[5];
     }
-    if (inhole) m_uc(i,iflag) = 2.0;
+    //if (std::abs(holeint) > eps) m_uc(i,iflag) = 2.0;
+    m_uc(i,iflag) = holeint;
   }
 
   return true;
