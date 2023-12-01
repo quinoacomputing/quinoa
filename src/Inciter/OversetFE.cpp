@@ -265,9 +265,9 @@ OversetFE::findHoles()
         const std::array< tk::real, 3 >
           ba{ x1-x0, y1-y0, z1-z0 }, ca{ x2-x0, y2-y0, z2-z0 };
         auto n = tk::cross( ba, ca );
-        n[0] /= 2.0;
-        n[1] /= 2.0;
-        n[2] /= 2.0;
+        n[0] /= -2.0;
+        n[1] /= -2.0;
+        n[2] /= -2.0;
         face.push_back( cx );
         face.push_back( cy );
         face.push_back( cz );
@@ -285,14 +285,11 @@ OversetFE::findHoles()
   const auto& z = d->Coord()[2];
   const auto npoin = m_uc.nunk();
 
-  for (std::size_t i=0; i<m_uc.nunk(); ++i) m_uc(i,iflag) = 0.0;
-
   const auto& ib = g_inputdeck.get< tag::param, tag::compflow,
                                     tag::intergrid_boundary >();
 
   // compute partial integral for finding hole nodes on bg mesh
-  auto eps = 1.0e-8;
-  const auto& origin = ib.get< tag::point >();
+  auto eps = 1.0;
   for (std::size_t i=0; i<npoin; ++i) {
     tk::real holeint = 0.0;
     for (std::size_t t=0; t<face.size()/6; ++t) {
@@ -306,8 +303,7 @@ OversetFE::findHoles()
       auto vz = dz / r;
       holeint += vx*f[3] + vy*f[4] + vz*f[5];
     }
-    //if (std::abs(holeint) > eps) m_uc(i,iflag) = 2.0;
-    m_uc(i,iflag) = holeint;
+    if (std::abs(holeint - 4.0*M_PI) < eps) m_uc(i,iflag) = 2.0;
   }
 
   return true;
@@ -914,21 +910,7 @@ OversetFE::setTransferFlags(
   }
   // Called from transfer-O-to-B
   else {
-    if (Disc()->MeshId() != 0) {
-      // Overset meshes: assign appropriate values to flag
-      if (!setupIntergridBoundaries()) {
-        for (const auto& [blid, ndset] : m_nodeblockid) {
-          if (blid == 103) {
-            for (auto i : ndset) m_uc(i,iflag) = 1.0;
-          }
-        }
-      }
-      //for (const auto& [blid, ndset] : m_nodeblockid) {
-      //  if (blid == 104) {
-      //    for (auto i : ndset) m_uc(i,iflag) = 2.0;
-      //  }
-      //}
-    }
+    setupIntergridBoundaries();
   }
 }
 

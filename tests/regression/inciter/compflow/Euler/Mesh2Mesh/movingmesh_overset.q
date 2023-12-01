@@ -24,7 +24,9 @@ inciter
     mesh
       # depvars are automatically assigned and can be referenced
       # downstream to request output variables
-      filename "freestream_BGmesh_15k.exo" velocity 0 0 0 end # depvar: 'a'
+      #filename "freestream_BGmesh_15k.exo" velocity 0 0 0 end # depvar: 'a'
+      #filename "freestream_BGmesh_118k.exo" velocity 0 0 0 end # depvar: 'a'
+      filename "freestream_BGmesh_947k.exo" velocity 0 0 0 end # depvar: 'a'
       filename "sphere_OSmesh_12k.exo" velocity 5 0 0 end # depvar: 'b' ...
     end
 
@@ -64,6 +66,11 @@ inciter
       pressure 1.0
       density 1.0
       velocity 0.0 0.0 0.0 end
+    end
+
+    intergrid_boundary
+      mesh 2 end
+      sideset 102 end
     end
 
   end
