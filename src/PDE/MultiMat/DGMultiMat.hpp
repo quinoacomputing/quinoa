@@ -69,6 +69,7 @@ class MultiMat {
     //! Constructor
     explicit MultiMat() :
       m_ncomp( g_inputdeck.get< tag::component, eq >().at(0) ),
+      m_nprim(nprim()),
       m_riemann( multimatRiemannSolver(
         g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(0) ) )
     {
@@ -91,8 +92,20 @@ class MultiMat {
     std::size_t nprim() const
     {
       auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
-      // multimat needs individual material pressures and velocities currently
-      return (nmat+3);
+      const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
+        tag::matidxmap >().template get< tag::solidx >();
+
+      // individual material pressures and three velocity components
+      std::size_t np(nmat+3);
+
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0) {
+          // individual material Cauchy stress tensor components
+          np += 6;
+        }
+      }
+
+      return np;
     }
 
     //! Find the number of materials set up for this PDE system
@@ -310,12 +323,12 @@ class MultiMat {
               "vector and primitive vector at recent time step incorrect" );
       Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
-              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
+      Assert( prim.nprop() == rdof*m_nprim, "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       for (std::size_t e=0; e<nielem; ++e)
       {
-        std::vector< tk::real > R(nprim()*ndof, 0.0);
+        std::vector< tk::real > R(m_nprim*ndof, 0.0);
 
         auto ng = tk::NGvol(ndof);
 
@@ -352,7 +365,7 @@ class MultiMat {
                  state[momentumIdx(nmat, 1)]/rhob,
                  state[momentumIdx(nmat, 2)]/rhob };
 
-          std::vector< tk::real > pri(nprim(), 0.0);
+          std::vector< tk::real > pri(m_nprim, 0.0);
 
           // Evaluate material pressure at quadrature point
           for(std::size_t imat = 0; imat < nmat; imat++)
@@ -374,7 +387,7 @@ class MultiMat {
             pri[velocityIdx(nmat,idir)] = vel[idir];
           }
 
-          for(std::size_t k = 0; k < nprim(); k++)
+          for(std::size_t k = 0; k < m_nprim; k++)
           {
             auto mark = k * ndof;
             for(std::size_t idof = 0; idof < ndof; idof++)
@@ -383,7 +396,7 @@ class MultiMat {
         }
 
         // Update the DG solution of primitive variables
-        for(std::size_t k = 0; k < nprim(); k++)
+        for(std::size_t k = 0; k < m_nprim; k++)
         {
           auto mark = k * ndof;
           auto rmark = k * rdof;
@@ -423,8 +436,8 @@ class MultiMat {
               "vector and primitive vector at recent time step incorrect" );
       Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
-              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
+      Assert( prim.nprop() == rdof*m_nprim, "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       auto neg_density = cleanTraceMultiMat(nielem, m_mat_blk, geoElem, nmat,
         unk, prim);
@@ -493,7 +506,7 @@ class MultiMat {
       // separately.
       if (is_p0p1) {
         vars.clear();
-        for (std::size_t c=0; c<nprim(); ++c) vars.push_back(c);
+        for (std::size_t c=0; c<m_nprim; ++c) vars.push_back(c);
 
         // 1.
         for (std::size_t e=0; e<nelem; ++e)
@@ -603,8 +616,8 @@ class MultiMat {
               "vector and primitive vector at recent time step incorrect" );
       Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
-              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
+      Assert( prim.nprop() == rdof*m_nprim, "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       correctLimConservMultiMat(nielem, m_mat_blk, nmat, inpoel,
         coord, geoElem, prim, unk);
@@ -685,8 +698,8 @@ class MultiMat {
               "vector and right-hand side at recent time step incorrect" );
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( P.nprop() == rdof*nprim(), "Number of components in primitive "
-              "vector must equal "+ std::to_string(rdof*nprim()) );
+      Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
+              "vector must equal "+ std::to_string(rdof*m_nprim) );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
@@ -952,7 +965,7 @@ class MultiMat {
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
         auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
-        auto php = eval_state(nprim(), rdof, rdof, e, P, B);
+        auto php = eval_state(m_nprim, rdof, rdof, e, P, B);
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
@@ -1018,6 +1031,8 @@ class MultiMat {
   private:
     //! Number of components in this PDE system
     const ncomp_t m_ncomp;
+    //! Number of primitive quantities stored in this PDE system
+    const ncomp_t m_nprim;
     //! Riemann solver
     tk::RiemannFluxFn m_riemann;
     //! BC configuration
@@ -1063,6 +1078,10 @@ class MultiMat {
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
       auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
+      const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+        tag::matidxmap >().template get< tag::solidx >();
+
+      auto nsld = numSolids(nmat, solidx);
 
       auto ur = Problem::initialize( ncomp, mat_blk, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );
@@ -1090,7 +1109,7 @@ class MultiMat {
           ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k, agk );
       }
 
-      Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended "
+      Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
               "boundary state vector" );
 
       return {{ std::move(ul), std::move(ur) }};

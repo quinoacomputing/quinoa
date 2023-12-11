@@ -44,7 +44,8 @@ struct LaxFriedrichsSolids {
     const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
       tag::matidxmap >().template get< tag::solidx >();
 
-    auto ncomp = u[0].size()-(3+nmat);
+    auto nsld = numSolids(nmat, solidx);
+    auto ncomp = u[0].size()-(3+nmat+nsld*6);
     std::vector< tk::real > flx( ncomp, 0 ), fluxl(ncomp, 0), fluxr(ncomp,0);
 
     // Primitive variables

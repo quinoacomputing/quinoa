@@ -67,6 +67,11 @@ haveSolid(
   std::size_t nmat,
   const std::vector< std::size_t >& solidx );
 
+//! Count total number of solid materials in the problem
+std::size_t numSolids(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx );
+
 } //inciter::
 
 #endif // MiscMultiMatFns_h

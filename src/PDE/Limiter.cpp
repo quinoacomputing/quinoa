@@ -2395,7 +2395,16 @@ correctLimConservMultiMat(
     // projection procedure should be rdof instead of ndof.
     auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
 
-    std::vector< tk::real > R((nmat+3)*rdof, 0.0);
+    // The right-hand side vector is sized as nprim, i.e. the primitive quantity
+    // vector. However, it stores the consistently obtained values of evolved
+    // quantities, since nprim is the number of evolved quantities that need to
+    // be evaluated consistently. For this reason, accessing R will require
+    // the primitive quantity accessors. But this access is intended to give
+    // the corresponding evolved quantites, as follows:
+    // pressureIdx() - mat. total energy
+    // velocityIdx() - bulk momentum components
+    // stressIdx() - mat. inverse deformation gradient tensor components
+    std::vector< tk::real > R(nprim*rdof, 0.0);
 
     auto ng = tk::NGvol(rdof);
 
@@ -2424,7 +2433,7 @@ correctLimConservMultiMat(
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim);
 
       // Solution vector that stores the material energy and bulk momentum
-      std::vector< tk::real > s(nmat+3, 0.0);
+      std::vector< tk::real > s(nprim, 0.0);
 
       // Bulk density at quadrature point
       tk::real rhob(0.0);
@@ -2439,7 +2448,7 @@ correctLimConservMultiMat(
 
       // Compute and store the bulk momentum
       for(std::size_t idir = 0; idir < 3; idir++)
-        s[nmat+idir] = rhob * vel[idir];
+        s[velocityIdx(nmat, idir)] = rhob * vel[idir];
 
       // Compute and store material energy at quadrature point
       for(std::size_t imat = 0; imat < nmat; imat++) {
@@ -2450,12 +2459,13 @@ correctLimConservMultiMat(
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             gmat[i][j] /= alphamat;
-        s[imat] = alphamat * mat_blk[imat].compute< EOS::totalenergy >( rhomat,
-          vel[0], vel[1], vel[2], premat, gmat );
+        s[pressureIdx(nmat,imat)] = alphamat *
+          mat_blk[imat].compute< EOS::totalenergy >( rhomat, vel[0], vel[1],
+          vel[2], premat, gmat );
       }
 
       // Evaluate the righ-hand-side vector
-      for(std::size_t k = 0; k < nmat+3; k++) {
+      for(std::size_t k = 0; k < nprim; k++) {
         auto mark = k * rdof;
         for(std::size_t idof = 0; idof < rdof; idof++)
           R[mark+idof] += w * s[k] * B[idof];
@@ -2464,18 +2474,16 @@ correctLimConservMultiMat(
 
     // Update the high order dofs of the material energy
     for(std::size_t imat = 0; imat < nmat; imat++) {
-      auto mark = imat * rdof;
       for(std::size_t idof = 1; idof < rdof; idof++)
         unk(e, energyDofIdx(nmat, imat, rdof, idof)) =
-          R[mark+idof] / L[idof];
+          R[pressureDofIdx(nmat,imat,rdof,idof)] / L[idof];
     }
 
     // Update the high order dofs of the bulk momentum
     for(std::size_t idir = 0; idir < 3; idir++) {
-      auto mark = (nmat + idir) * rdof;
       for(std::size_t idof = 1; idof < rdof; idof++)
         unk(e, momentumDofIdx(nmat, idir, rdof, idof)) =
-          R[mark+idof] / L[idof];
+          R[velocityDofIdx(nmat,idir,rdof,idof)] / L[idof];
     }
   }
 }
