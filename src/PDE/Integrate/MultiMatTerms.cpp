@@ -902,6 +902,8 @@ fluxTerms(
       asig.push_back(mat_blk[k].computeTensor< inciter::EOS::CauchyStress >(
         ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
         al[k], k, ag[k]));
+      for (std::size_t i=0; i<3; ++i) asig[k][i][i] -= ugp[ncomp+pressureIdx(nmat,k)];
+
       for (size_t i=0; i<3; ++i)
         for (size_t j=0; j<3; ++j)
           sig[i][j] += asig[k][i][j];

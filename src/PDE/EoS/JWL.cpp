@@ -170,14 +170,7 @@ JWL::CauchyStress(
 {
   std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
 
-  // use JWL eos to get pressure
-  auto ap = pressure(arho, u, v, w, arhoE, alpha, imat);
-
-  // Volumetric component of Cauchy stress tensor
-  for (std::size_t i=0; i<3; ++i)
-    asig[i][i] = -ap;
-
-  // No deviatoric contribution
+  // No elastic contribution
 
   return asig;
 }

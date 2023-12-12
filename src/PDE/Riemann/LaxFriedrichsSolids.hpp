@@ -84,6 +84,7 @@ struct LaxFriedrichsSolids {
       asig_l.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
         u[0][densityIdx(nmat, k)], ul, vl, wl, u[0][energyIdx(nmat, k)],
         al_l[k], k, ag_l[k]));
+      for (std::size_t i=0; i<3; ++i) asig_l[k][i][i] -= pml[k];
 
       // normal stress (traction) vector
       asign_l.push_back(tk::matvec(asig_l[k], fn));
@@ -104,6 +105,8 @@ struct LaxFriedrichsSolids {
       asig_r.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
         u[1][densityIdx(nmat, k)], ur, vr, wr, u[1][energyIdx(nmat, k)],
         al_r[k], k, ag_r[k]));
+      for (std::size_t i=0; i<3; ++i) asig_r[k][i][i] -= pmr[k];
+
       // normal stress (traction) vector
       asign_r.push_back(tk::matvec(asig_r[k], fn));
       for (std::size_t i=0; i<3; ++i)
