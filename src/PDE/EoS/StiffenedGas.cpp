@@ -104,28 +104,17 @@ StiffenedGas::pressure(
 
 std::array< std::array< tk::real, 3 >, 3 >
 StiffenedGas::CauchyStress(
-  tk::real arho,
-  tk::real u,
-  tk::real v,
-  tk::real w,
-  tk::real arhoE,
-  tk::real alpha,
-  std::size_t imat,
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  std::size_t,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate the Cauchy stress tensor from the material density,
 //!   momentum, and total energy
-//! \param[in] arho Material partial density (alpha_k * rho_k)
-//! \param[in] u X-velocity
-//! \param[in] v Y-velocity
-//! \param[in] w Z-velocity
-//! \param[in] arhoE Material total energy (alpha_k * rho_k * E_k)
-//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
-//!   the single-material system, this argument can be left unspecified by
-//!   the calling code
-//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
-//!   for the single-material system, this argument can be left unspecified
-//!   by the calling code
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k)
 // *************************************************************************
 {

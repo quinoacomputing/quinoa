@@ -39,7 +39,7 @@ namespace inciter {
     const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
       tag::matidxmap >().template get< tag::solidx >();
 
-    auto nsld = numSolids(nmat, solidx);
+    [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
 
     Assert( ul.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
             "internal state vector" );
@@ -137,7 +137,7 @@ namespace inciter {
     auto fp =
       g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >();
 
-    auto nsld = numSolids(nmat, solidx);
+    [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
 
     Assert( ul.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
             "internal state vector" );

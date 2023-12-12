@@ -1081,7 +1081,7 @@ class MultiMat {
       const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
         tag::matidxmap >().template get< tag::solidx >();
 
-      auto nsld = numSolids(nmat, solidx);
+      [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
 
       auto ur = Problem::initialize( ncomp, mat_blk, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );

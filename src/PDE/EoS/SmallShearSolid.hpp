@@ -65,7 +65,7 @@ class SmallShearSolid {
       tk::real,
       tk::real,
       tk::real,
-      tk::real arhoE,
+      tk::real,
       tk::real alpha,
       std::size_t /*imat*/,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const;

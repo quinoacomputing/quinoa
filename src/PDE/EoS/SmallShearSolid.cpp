@@ -134,7 +134,7 @@ SmallShearSolid::CauchyStress(
   tk::real,
   tk::real,
   tk::real,
-  tk::real arhoE,
+  tk::real,
   tk::real alpha,
   std::size_t /*imat*/,
   const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const
@@ -142,7 +142,6 @@ SmallShearSolid::CauchyStress(
 //! \brief Calculate the elastic Cauchy stress tensor from the material density,
 //!   momentum, total energy, and inverse deformation gradient tensor using the
 //!   SmallShearSolid equation of state
-//! \param[in] arhoE Material total energy (alpha_k * rho_k * E_k)
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
@@ -166,7 +165,7 @@ SmallShearSolid::CauchyStress(
 
   // obtain elastic contribution to energy
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  elasticEnergy(defgrad, eps2);
 
   // p_mean
   auto pmean = - alpha * m_mu * eps2;
