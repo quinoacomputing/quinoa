@@ -3,6 +3,10 @@
 
 This page is for Quinoa developers.
 
+See @ref inciter_design "page on inciter design" for high-level software design
+and some implementation aspects. Specifically, see the
+@ref inciter_setup "section on setup" for details of how inciter starts up.
+
 See @ref build "advanced build options".
 
 We roughly follow the development model described
