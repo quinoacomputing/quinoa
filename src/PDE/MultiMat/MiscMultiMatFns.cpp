@@ -184,10 +184,10 @@ cleanTraceMultiMat(
         }
       }
       // check for unbounded volume fractions
-      else if (alk < 0.0)
+      else if (alk < 0.0 || !std::isfinite(alk))
       {
         auto rhok = mat_blk[k].compute< EOS::density >(p_target, tmax);
-        d_al += (alk - 1e-14);
+        if (std::isfinite(alk)) d_al += (alk - 1e-14);
         // update state of trace material
         U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
         U(e, densityDofIdx(nmat, k, rdof, 0)) = 1e-14 * rhok;
@@ -315,15 +315,17 @@ cleanTraceMultiMat(
       // lambda for screen outputs
       auto screenout = [&]()
       {
-        std::cout << "Element centroid: " << geoElem(e,1) << ", "
+        std::cout << "Element centroid:  " << geoElem(e,1) << ", "
           << geoElem(e,2) << ", " << geoElem(e,3) << std::endl;
-        std::cout << "Material-id:      " << k << std::endl;
-        std::cout << "Volume-fraction:  " << alpha << std::endl;
-        std::cout << "Partial density:  " << arho << std::endl;
-        std::cout << "Partial pressure: " << apr << std::endl;
-        std::cout << "Major pressure:   " << pmax << std::endl;
-        std::cout << "Major temperature:" << tmax << std::endl;
-        std::cout << "Velocity:         " << u << ", " << v << ", " << w
+        std::cout << "Material-id:       " << k << std::endl;
+        std::cout << "Volume-fraction:   " << alpha << std::endl;
+        std::cout << "Partial density:   " << arho << std::endl;
+        std::cout << "Partial pressure:  " << apr << std::endl;
+        std::cout << "Major pressure:    " << pmax << " (mat " << kmax << ")"
+          << std::endl;
+        std::cout << "Major temperature: " << tmax << " (mat " << kmax << ")"
+          << std::endl;
+        std::cout << "Velocity:          " << u << ", " << v << ", " << w
           << std::endl;
       };
 
