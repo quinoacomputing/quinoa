@@ -679,8 +679,8 @@ FV::solve( tk::real newdt )
   g_fvpde[d->MeshId()].updatePrimitives( m_u, m_p,
     myGhosts()->m_fd.Esuel().size()/4 );
   if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
-    g_fvpde[d->MeshId()].cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
-      myGhosts()->m_fd.Esuel().size()/4 );
+    g_fvpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem, m_u,
+      m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
 
   if (m_stage < m_nrk-1) {

@@ -221,7 +221,8 @@ class CompFlow {
     //! Clean up the state of trace materials for this PDE system
     //! \details This function cleans up the state of materials present in trace
     //!   quantities in each cell. This is unused for compflow.
-    void cleanTraceMaterial( const tk::Fields&,
+    void cleanTraceMaterial( tk::real,
+                             const tk::Fields&,
                              tk::Fields&,
                              tk::Fields&,
                              std::size_t ) const {}

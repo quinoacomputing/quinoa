@@ -275,6 +275,7 @@ class MultiMat {
     }
 
     //! Clean up the state of trace materials for this PDE system
+    //! \param[in] t Physical time
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] unk Array of unknowns
     //! \param[in,out] prim Array of primitives
@@ -287,7 +288,8 @@ class MultiMat {
     //!   small amount of material. The state of that tiny material might
     //!   become unphysical and cause solution to diverge; thus requiring such
     //!   a "reset".
-    void cleanTraceMaterial( const tk::Fields& geoElem,
+    void cleanTraceMaterial( tk::real t,
+                             const tk::Fields& geoElem,
                              tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem ) const
@@ -305,7 +307,7 @@ class MultiMat {
       Assert( (g_inputdeck.get< tag::discr, tag::ndof >()) <= 4, "High-order "
               "discretizations not set up for multimat cleanTraceMaterial()" );
 
-      auto neg_density = cleanTraceMultiMat(nielem, m_mat_blk, geoElem, nmat,
+      auto neg_density = cleanTraceMultiMat(t, nielem, m_mat_blk, geoElem, nmat,
         unk, prim);
 
       if (neg_density) Throw("Negative partial density.");

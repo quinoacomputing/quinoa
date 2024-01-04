@@ -40,6 +40,7 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 
 bool
 cleanTraceMultiMat(
+  tk::real t,
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
@@ -48,6 +49,7 @@ cleanTraceMultiMat(
   tk::Fields& P )
 // *****************************************************************************
 //  Clean up the state of trace materials for multi-material PDE system
+//! \param[in] t Physical time
 //! \param[in] nelem Number of elements
 //! \param[in] mat_blk EOS material block
 //! \param[in] geoElem Element geometry array
@@ -315,6 +317,7 @@ cleanTraceMultiMat(
       // lambda for screen outputs
       auto screenout = [&]()
       {
+        std::cout << "Physical time:     " << t << std::endl;
         std::cout << "Element centroid:  " << geoElem(e,1) << ", "
           << geoElem(e,2) << ", " << geoElem(e,3) << std::endl;
         std::cout << "Material-id:       " << k << std::endl;

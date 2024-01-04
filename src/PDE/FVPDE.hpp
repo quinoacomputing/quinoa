@@ -125,11 +125,12 @@ class FVPDE {
     { self->updatePrimitives( unk, prim, nielem ); }
 
     //! Public interface to cleaning up trace materials for the diff eq
-    void cleanTraceMaterial( const tk::Fields& geoElem,
+    void cleanTraceMaterial( tk::real t,
+                             const tk::Fields& geoElem,
                              tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem ) const
-    { self->cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+    { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
 
     //! Public interface to reconstructing the second-order solution
     void reconstruct( const tk::Fields& geoElem,
@@ -276,7 +277,8 @@ class FVPDE {
       virtual void updatePrimitives( const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t ) const = 0;
-      virtual void cleanTraceMaterial( const tk::Fields&,
+      virtual void cleanTraceMaterial( tk::real,
+                                       const tk::Fields&,
                                        tk::Fields&,
                                        tk::Fields&,
                                        std::size_t ) const = 0;
@@ -375,11 +377,12 @@ class FVPDE {
                              tk::Fields& prim,
                              std::size_t nielem )
       const override { data.updatePrimitives( unk, prim, nielem ); }
-      void cleanTraceMaterial( const tk::Fields& geoElem,
+      void cleanTraceMaterial( tk::real t,
+                               const tk::Fields& geoElem,
                                tk::Fields& unk,
                                tk::Fields& prim,
                                std::size_t nielem )
-      const override { data.cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+      const override { data.cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
       void reconstruct( const tk::Fields& geoElem,
                         const inciter::FaceData& fd,
                         const std::map< std::size_t,

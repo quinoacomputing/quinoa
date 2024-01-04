@@ -24,6 +24,7 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk );
 //! Clean up the state of trace materials for multi-material PDE system
 bool
 cleanTraceMultiMat(
+  tk::real t,
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,

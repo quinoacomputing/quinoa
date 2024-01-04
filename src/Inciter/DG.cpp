@@ -1238,8 +1238,8 @@ DG::solve( tk::real newdt )
   g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4 );
   if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
-    g_dgpde[d->MeshId()].cleanTraceMaterial( myGhosts()->m_geoElem, m_u, m_p,
-      myGhosts()->m_fd.Esuel().size()/4 );
+    g_dgpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem, m_u,
+      m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
 
   if (m_stage < 2) {
