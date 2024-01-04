@@ -188,7 +188,8 @@ cleanTraceMultiMat(
       // check for unbounded volume fractions
       else if (alk < 0.0 || !std::isfinite(alk))
       {
-        auto rhok = mat_blk[k].compute< EOS::density >(p_target, tmax);
+        auto rhok = mat_blk[k].compute< EOS::density >(p_target,
+          std::max(1e-8,tmax));
         if (std::isfinite(alk)) d_al += (alk - 1e-14);
         // update state of trace material
         U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
