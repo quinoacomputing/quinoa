@@ -184,7 +184,7 @@ OversetFE::setupIntergridBoundaries()
 
   tk::UnsMesh::FaceSet btri;
   for (const auto& [ setid, faceids ] : m_bface) {
-    if ( is.count(setid) ) {
+    if ( is.count( static_cast<std::size_t>(setid) ) ) {
       for (auto f : faceids) {
         btri.insert( { m_triinpoel[f*3+0],
                        m_triinpoel[f*3+1],
@@ -284,9 +284,6 @@ OversetFE::findHoles()
   const auto& y = d->Coord()[1];
   const auto& z = d->Coord()[2];
   const auto npoin = m_uc.nunk();
-
-  const auto& ib = g_inputdeck.get< tag::param, tag::compflow,
-                                    tag::intergrid_boundary >();
 
   // compute partial integral for finding hole nodes on bg mesh
   auto eps = 1.0;

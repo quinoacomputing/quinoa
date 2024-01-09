@@ -486,7 +486,7 @@ Discretization::setupHoles( CkCallback cont )
           const auto& z = m_coord[2];
           auto& h = hol[ nhol++ ];
           for (const auto& [ setid, faceids ] : m_bface) {
-            if ( is.count(setid) ) {
+            if ( is.count( static_cast<std::size_t>(setid) ) ) {
               for (auto f : faceids) {
                 const auto t = m_triinpoel.data() + f*3;
                 h.push_back( x[t[0]] );
