@@ -72,7 +72,8 @@
 
   add_regression_test(compflow_euler_movingmesh_overset ${INCITER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES movingmesh_overset.q freestream_BGmesh_15k.exo sphere_OSmesh_12k.exo
+                      INPUTFILES movingmesh_overset.q freestream_BGmesh_15k.exo
+                                 sphere_OSmesh_12k.exo
                       ARGS -c movingmesh_overset.q -v
                       BIN_BASELINE statbackground_pe4.std.exo.0
                                    statbackground_pe4.std.exo.1
