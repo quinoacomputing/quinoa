@@ -9,13 +9,22 @@ inciter
   nstep 10    # Max number of time steps
   dt   0.001  # Time step size
   ttyi 1      # TTY output interval
-  ctau 1.0    # FCT mass diffusivity
 
   scheme oversetfe
 
-  transport
-    physics advection
-    problem slot_cyl
+  compflow
+    physics euler
+    problem user_defined
+    material
+      gamma 1.66666666666667 end
+    end
+    mesh filename "unitcube_1k.exo" end
+    mesh filename "unitcube_1k.exo" end
+    ic
+      density  1.0 end
+      velocity 0.0 0.0 0.0 end
+      pressure 1.0 end
+    end
   end
 
   field_output

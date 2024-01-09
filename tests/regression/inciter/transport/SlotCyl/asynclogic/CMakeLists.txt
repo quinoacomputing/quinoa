@@ -23,15 +23,23 @@ function(add_async_test scheme virt npes ppn migr)
     set(migr_append_name "_migr")
     set(migr_label "migration")
   endif()
+  if(scheme STREQUAL "oversetfe")
+    set(ARG "-c slot_cyl_${scheme}.q -v -u ${virt} -b ${migr_cmd}")
+    set(TEXT_RES "diag.0;diag.1")
+    set(TEXT_BAS "noop.ndiff.cfg;noop.ndiff.cfg")
+  else()
+    set(ARG "-c slot_cyl_${scheme}.q -i unitcube_1k.exo -v -u ${virt} -b ${migr_cmd}")
+    set(TEXT_RES diag)
+    set(TEXT_BAS "noop.ndiff.cfg")
+  endif()
   add_regression_test(
     asynclogic_${scheme}_u${virt}${migr_append_name}
     ${INCITER_EXECUTABLE}
     NUMPES ${npes} PPN ${ppn}
     INPUTFILES slot_cyl_${scheme}.q unitcube_1k.exo
-    ARGS -c slot_cyl_${scheme}.q -i unitcube_1k.exo -v -u ${virt} -b
-         ${migr_cmd}
-    TEXT_BASELINE noop.ndiff.cfg
-    TEXT_RESULT diag
+    ARGS ${ARG}
+    TEXT_BASELINE ${TEXT_BAS}
+    TEXT_RESULT ${TEXT_RES}
     TEXT_DIFF_PROG_ARGS --trunc
     TEXT_DIFF_PROG_CONF noop.ndiff.cfg
     LABELS ${scheme} ${migr_label})
