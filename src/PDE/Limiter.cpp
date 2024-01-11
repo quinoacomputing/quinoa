@@ -1733,11 +1733,14 @@ void BoundPreservingLimiting( std::size_t nmat,
     }
   }
 
-  for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); k++)
-    phic_p1[k] = std::min(phi_bound[k], phic_p1[k]);
+  for(std::size_t k=0; k<nmat; k++)
+    phic_p1[volfracIdx(nmat, k)] = std::min(phi_bound[k],
+      phic_p1[volfracIdx(nmat, k)]);
+
   if(ndof > 4)
-    for(std::size_t k=volfracIdx(nmat, 0); k<volfracIdx(nmat, nmat); k++)
-      phic_p2[k] = std::min(phi_bound[k], phic_p2[k]);
+    for(std::size_t k=0; k<nmat; k++)
+      phic_p2[volfracIdx(nmat, k)] = std::min(phi_bound[k],
+        phic_p2[volfracIdx(nmat, k)]);
 }
 
 tk::real
