@@ -134,7 +134,7 @@ physSrc(
             // if element centroid lies within spherical shell add sources
             if (r_e >= r_front && r_e <= r_front+w_front) {
               // Add the source term to the rhs
-              R(e, energyIdx(nmat,blkmatid-1)) += geoElem(e,0) * amplE;
+              R(e, energyDofIdx(nmat,blkmatid-1,1,0)) += geoElem(e,0) * amplE;
               engSrcAdded[e] = 1;
             }
           }
