@@ -69,7 +69,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_dfn(),
   m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
   m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
-  m_u( Disc()->Gid().size(), g_inputdeck.get< tag::component >().nprop() ),
+  m_u( Disc()->Gid().size(),
+       g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_rhsc(),
@@ -143,22 +144,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4meshblk();
 
-  // Generate callbacks for solution transfers we are involved in
+  d->comfinal();
 
-  // Always add a callback to be used when we are not involved in any transfers
-  std::vector< CkCallback > cb;
-  auto c = CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]);
-  cb.push_back( c );
-
-  // Generate a callback for each transfer we are involved in (either as a
-  // source or a destination)
-  auto meshid = d->MeshId();
-  for (const auto& t : d->Transfers())
-    if (meshid == t.src || meshid == t.dst)
-      cb.push_back( c );
-
-  // Send callbacks to base
-  d->transferCallback( cb );
 }
 //! [Constructor]
 
@@ -206,12 +193,12 @@ ALECG::queryBnd()
   m_timedepbcnodes.clear();
   m_timedepbcFn.clear();
   const auto& timedep =
-    g_inputdeck.template get< tag::param, tag::compflow, tag::bctimedep >();
+    g_inputdeck.get< tag::param, tag::compflow, tag::bctimedep >();
   if (!timedep.empty()) {
-    m_timedepbcnodes.resize(timedep[0].size());
-    m_timedepbcFn.resize(timedep[0].size());
+    m_timedepbcnodes.resize(timedep.size());
+    m_timedepbcFn.resize(timedep.size());
     std::size_t ib=0;
-    for (const auto& bndry : timedep[0]) {
+    for (const auto& bndry : timedep) {
       std::unordered_set< std::size_t > nodes;
       for (const auto& s : bndry.template get< tag::sideset >()) {
         auto k = m_bnode.find( std::stoi(s) );
@@ -261,7 +248,7 @@ ALECG::norm()
 
   // Query nodes at which mesh velocity symmetry BCs are specified
   std::unordered_map<int, std::unordered_set< std::size_t >> ms;
-  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcsym >()) {
+  for (const auto& s : g_inputdeck.get< tag::ale, tag::bcsym >()) {
     auto k = m_bface.find( std::stoi(s) );
     if (k != end(m_bface)) {
       auto& n = ms[ k->first ];
@@ -638,9 +625,6 @@ ALECG::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Multiply conserved variables with mesh volume
   volumetric( m_u, Disc()->Vol() );
 
-  // Initiate IC transfer (if coupled)
-  Disc()->transfer( m_u );
-
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
 
@@ -685,7 +669,21 @@ ALECG::meshveldone()
   Disc()->meshvelConv();
 
   // Continue
-  if (Disc()->Initial()) lhs(); else ale();
+  if (Disc()->Initial()) {
+
+    conserved( m_u, Disc()->Vol() );
+
+    // Initiate IC transfer (if coupled)
+    Disc()->transfer( m_u, 0,
+      CkCallback(CkIndex_ALECG::transfer_complete(), thisProxy[thisIndex]) );
+
+    lhs();
+
+  } else {
+
+    ale();
+
+  }
 }
 
 //! [start]
@@ -732,6 +730,7 @@ ALECG::mergelhs()
   normfinal();
 
   if (Disc()->Initial()) {
+    volumetric( m_u, Disc()->Vol() );
     // Output initial conditions to file
     writeFields( CkCallback(CkIndex_ALECG::start(), thisProxy[thisIndex]) );
   } else {
@@ -957,7 +956,7 @@ ALECG::dt()
 }
 
 void
-ALECG::advance( tk::real newdt )
+ALECG::advance( tk::real newdt, tk::real )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt The smallest dt across the whole problem
@@ -1389,8 +1388,9 @@ ALECG::transfer()
 // *****************************************************************************
 {
   // Initiate solution transfer (if coupled)
-  //Disc()->transfer( m_u,
-  //  CkCallback(CkIndex_ALECG::stage(), thisProxy[thisIndex]) );
+
+//TODO: enable this for during-timestepping solution transfer
+//  Disc()->transfer(m_u, CkCallback(CkIndex_ALECG::stage(), thisProxy[thisIndex]));
   thisProxy[thisIndex].stage();
 }
 
@@ -1428,11 +1428,18 @@ ALECG::writeFields( CkCallback c )
     auto d = Disc();
     const auto& coord = d->Coord();
 
+    // if coupled: depvars: src:'a', dst:'b','c',...
+    char depvar = 0;
+    if (not d->Transfers().empty()) {
+      depvar = 'a' + static_cast< char >( d->MeshId() );
+    }
+
     // Query fields names requested by user
-    auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
+    auto nodefieldnames = numericFieldNames( tk::Centering::NODE, depvar );
+
     // Collect field output from numerical solution requested by user
     conserved( m_u, Disc()->Vol() );
-    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE, m_u, depvar );
     volumetric( m_u, Disc()->Vol() );
 
     //! Lambda to put in a field for output if not empty

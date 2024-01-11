@@ -25,6 +25,7 @@ namespace ctr {
 //! Scheme types
 enum class SchemeType : uint8_t { DiagCG
                                 , ALECG
+                                , OversetFE
                                 , DG
                                 , P0P1 
                                 , DGP1 
@@ -42,6 +43,7 @@ class Scheme : public tk::Toggle< SchemeType > {
     //! Valid expected choices to make them also available at compile-time
     using keywords = brigand::list< kw::diagcg
                                   , kw::alecg
+                                  , kw::oversetfe
                                   , kw::dg
                                   , kw::p0p1
                                   , kw::dgp1
@@ -60,6 +62,7 @@ class Scheme : public tk::Toggle< SchemeType > {
         //! Enums -> names (if defined, policy codes, if not, name)
         { { SchemeType::DiagCG, kw::diagcg::name() },
           { SchemeType::ALECG, kw::alecg::name() },
+          { SchemeType::OversetFE, kw::oversetfe::name() },
           { SchemeType::DG, kw::dg::name() },
           { SchemeType::P0P1, kw::p0p1::name() },
           { SchemeType::DGP1, kw::dgp1::name() },
@@ -69,6 +72,7 @@ class Scheme : public tk::Toggle< SchemeType > {
         //! keywords -> Enums
         { { kw::diagcg::string(), SchemeType::DiagCG },
           { kw::alecg::string(), SchemeType::ALECG },
+          { kw::oversetfe::string(), SchemeType::OversetFE },
           { kw::dg::string(), SchemeType::DG },
           { kw::p0p1::string(), SchemeType::P0P1 }, 
           { kw::dgp1::string(), SchemeType::DGP1 }, 
@@ -81,7 +85,8 @@ class Scheme : public tk::Toggle< SchemeType > {
     //! \return Mesh centering for scheme type
     tk::Centering centering( SchemeType type ) {
       if ( type == SchemeType::DiagCG ||
-           type == SchemeType::ALECG )
+           type == SchemeType::ALECG ||
+           type == SchemeType::OversetFE )
 
         return tk::Centering::NODE;
 

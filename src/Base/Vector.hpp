@@ -15,11 +15,25 @@
 #include <array>
 #include <cmath>
 #include <vector>
+#include <cblas.h>
+#include <lapacke.h>
 
 #include "Types.hpp"
 #include "Exception.hpp"
 
+// ignore old-style-casts required for lapack/blas calls
+#if defined(__clang__)
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
 namespace tk {
+
+//! \brief Index for Cauchy stress components, since only the 6 independent
+//!   components are stored.
+const std::array< std::array< std::size_t, 3 >, 3 > stressCmp{{
+  {{0, 3, 4}},
+  {{3, 1, 5}},
+  {{4, 5, 2}} }};
 
 //! Flip sign of vector components
 //! \param[in] v Vector whose components to multiply by -1.0
@@ -111,6 +125,24 @@ inline real
 dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 {
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+}
+
+//! Compute the dot-product of a matrix and a vector
+//! \param[in] m Matrix
+//! \param[in] v vector
+//! \return Dot-product
+inline std::array< real, 3 >
+matvec(
+  const std::array< std::array< real, 3 >, 3 >& m,
+  const std::array< real, 3 >& v )
+{
+  std::array< real, 3 > mv{0, 0, 0};
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      mv[i] += m[i][j]*v[j];
+  }
+
+  return mv;
 }
 
 //! Compute length of a vector
@@ -385,6 +417,205 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
     }
   }
   point = x;
+}
+
+//! \brief Get the Right Cauchy-Green strain tensor from the inverse deformation
+//! gradient tensor.
+//! \param[in] g Inverse deformation gradient tensor
+//! \return Right Cauchy-Green tensor
+inline std::array< std::array< real, 3 >, 3 >
+getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
+{
+  // allocate matrices
+  double G[9], C[9];
+
+  // initialize c-matrices
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      G[i*3+j] = g[i][j];
+  }
+
+  // get g.g^T
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+    3, 3, 3, 1.0, G, 3, G, 3, 0.0, C, 3);
+
+  // get inv(g.g^T)
+  lapack_int ipiv[9];
+
+  #ifndef NDEBUG
+  lapack_int ierr =
+  #endif
+    LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, C, 3, ipiv);
+  Assert(ierr==0, "Lapack error in LU factorization of g.g^T");
+
+  #ifndef NDEBUG
+  lapack_int jerr =
+  #endif
+    LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, C, 3, ipiv);
+  Assert(jerr==0, "Lapack error in inverting g.g^T");
+
+  // Output C as 2D array
+  return {{ {C[0], C[1], C[2]},
+            {C[3], C[4], C[5]},
+            {C[6], C[7], C[8]} }};
+}
+
+//! \brief Get the Left Cauchy-Green strain tensor from the inverse deformation
+//! gradient tensor.
+//! \param[in] g Inverse deformation gradient tensor
+//! \return Left Cauchy-Green tensor
+inline std::array< std::array< real, 3 >, 3 >
+getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
+{
+  // allocate matrices
+  double G[9], b[9];
+
+  // initialize c-matrices
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      G[i*3+j] = g[i][j];
+  }
+
+  // get g^T.g
+  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+    3, 3, 3, 1.0, G, 3, G, 3, 0.0, b, 3);
+
+  // get inv(g^T.g)
+  lapack_int ipiv[9];
+
+  #ifndef NDEBUG
+  lapack_int ierr =
+  #endif
+    LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, b, 3, ipiv);
+  Assert(ierr==0, "Lapack error in LU factorization of g^T.g");
+
+  #ifndef NDEBUG
+  lapack_int jerr =
+  #endif
+    LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, b, 3, ipiv);
+  Assert(jerr==0, "Lapack error in inverting g^T.g");
+
+  // Output b as 2D array
+  return {{ {b[0], b[1], b[2]},
+            {b[3], b[4], b[5]},
+            {b[6], b[7], b[8]} }};
+}
+
+//! \brief Rotate a second order tensor (e.g. a Strain/Stress matrix) from
+//! the (x,y,z) to a new (r,s,t) coordinate system.
+//! The first direction is given by a unit vector r = (rx,ry,rz).
+//! Then, the second is chosen to be:
+//! if |rx| > 0 or |ry| > 0:
+//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0)
+//! else:
+//! - s = (1,0,0)
+//! Then, third basis vector is obtained from
+//! the cross-product between the first two.
+//! \param[in] mat matrix to be rotated.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return rotated tensor
+inline std::array< std::array< tk::real, 3 >, 3 >
+rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
+             const std::array< tk::real, 3 >& r )
+{
+  // define rotation matrix
+  tk::real eps = 1.0e-04;
+  double rotMat[9];
+  tk::real rx = r[0];
+  tk::real ry = r[1];
+  tk::real rz = r[2];
+  if (std::abs(rx) > eps || std::abs(ry) > eps)
+  {
+    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+    rotMat[0] = rx;
+    rotMat[1] = ry;
+    rotMat[2] = rz;
+    rotMat[3] = ry/rxryNorm;
+    rotMat[4] = -rx/rxryNorm;
+    rotMat[5] = 0.0;
+    rotMat[6] = rx*rz/rxryNorm;
+    rotMat[7] = ry*rz/rxryNorm;
+    rotMat[8] = -rxryNorm;
+  }
+  else
+  {
+    rotMat[0] = rx;
+    rotMat[1] = ry;
+    rotMat[2] = rz;
+    rotMat[3] = 1.0;
+    rotMat[4] = 0.0;
+    rotMat[5] = 0.0;
+    rotMat[6] = 0.0;
+    rotMat[7] = 1.0;
+    rotMat[8] = 0.0;
+  }
+
+  // define matrices
+  double matAuxIn[9], matAuxOut[9];
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      matAuxIn[i*3+j] = mat[i][j];
+
+  // compute matAuxIn*rotMat and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+    3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
+
+  // matAuxOut -> matAuxIn
+  for (std::size_t i=0; i<9; i++)
+  {
+    matAuxIn[i]  = matAuxOut[i];
+    matAuxOut[i] = 0.0;
+  }
+
+  // compute rotMat^T*matAuxIn and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+    3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
+
+  // return matAuxOut as a 2D array
+  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
+            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+}
+
+//! \brief Reflect a second order tensor (e.g. a Strain/Stress matrix)
+//! \param[in] mat matrix to be rotated.
+//! \param[in] reflectMat Reflection matrix
+//! \return reflected tensor
+inline std::array< std::array< tk::real, 3 >, 3 >
+reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
+              const std::array< std::array< tk::real, 3 >, 3 >& reflectMat)
+{
+  // define reflection matrix
+  double refMat[9];
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      refMat[i*3+j] = reflectMat[i][j];
+
+  // define matAux (I need matrices as row major 1D arrays)
+  double matAuxIn[9], matAuxOut[9];
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      matAuxIn[i*3+j] = mat[i][j];
+
+  // compute matAuxIn*refMat and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+    3, 3, 3, 1.0, matAuxIn, 3, refMat, 3, 0.0, matAuxOut, 3);
+
+  // matAuxOut -> matAuxIn
+  for (std::size_t i=0; i<9; i++)
+  {
+    matAuxIn[i]  = matAuxOut[i];
+    matAuxOut[i] = 0.0;
+  }
+
+  // compute refMat^T*matAuxIn and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+    3, 3, 3, 1.0, refMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
+
+  // return matAuxOut as a 2D array
+  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
+            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
 }
 
 } // tk::

@@ -120,14 +120,26 @@ class Discretization : public CBase_Discretization {
     //!   library (if coupled to other solver)
     void transferInit();
 
-    //! Receive a list of callbacks from our own child solver
-    void transferCallback( std::vector< CkCallback >& cb );
-
-    //! Receive mesh transfer callbacks from source mesh/solver
-    void comcb( std::size_t srcmeshid, CkCallback c );
+    //! Finish setting up communication maps and solution transfer callbacks
+    void comfinal();
 
     //! Start solution transfer (if coupled)
-    void transfer( const tk::Fields& u );
+    void transfer(
+      tk::Fields& u,
+      std::size_t dirn,
+      CkCallback cb );
+
+    //! Solution transfer from background to overset mesh completed (from ExaM2M)
+    void to_complete();
+
+    //! Solution transfer from overset to background mesh completed (from ExaM2M)
+    void from_complete();
+
+    //! Solution transfer completed (from dest Discretization)
+    void transfer_complete_from_dest();
+
+    //! Solution transfer completed (one-way)
+    void transfer_complete();
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(
@@ -204,6 +216,10 @@ class Discretization : public CBase_Discretization {
     std::vector< tk::real >& Voln() { return m_voln; }
     //! Element mesh volumes at t=t0 accessors as const-ref
     const std::vector< tk::real >& Vol0() const { return m_vol0; }
+    //! Element mesh velocity accessor as const-ref
+    const tk::Fields& MeshVel() const { return m_meshvel; }
+    //! Element mesh velocity accessor as ref
+    tk::Fields& MeshVel() { return m_meshvel; }
 
     //! Set 'initial' flag
     //! \param[in] i Value to put in 'initial'
@@ -356,16 +372,14 @@ class Discretization : public CBase_Discretization {
       template< typename Eq > void operator()( brigand::type_<Eq> ) {
         const auto& ss =
           g_inputdeck.template get< tag::param, Eq, tags... >();
-        for (const auto& eq : ss) {
-          for (const auto& s : eq) {
-            auto k = m_bface.find( std::stoi(s) );
-            if (k != end(m_bface)) {
-              auto& n = m_nodes[ k->first ];  // associate set id
-              for (auto f : k->second) {      // face ids on side set
-                n.insert( m_triinpoel[f*3+0] );
-                n.insert( m_triinpoel[f*3+1] );
-                n.insert( m_triinpoel[f*3+2] );
-              }
+        for (const auto& s : ss) {
+          auto k = m_bface.find( std::stoi(s) );
+          if (k != end(m_bface)) {
+            auto& n = m_nodes[ k->first ];  // associate set id
+            for (auto f : k->second) {      // face ids on side set
+              n.insert( m_triinpoel[f*3+0] );
+              n.insert( m_triinpoel[f*3+1] );
+              n.insert( m_triinpoel[f*3+2] );
             }
           }
         }
@@ -440,6 +454,7 @@ class Discretization : public CBase_Discretization {
       p | m_dt;
       p | m_dtn;
       p | m_nvol;
+      p | m_nxfer;
       p | m_fct;
       p | m_ale;
       p | m_transporter;
@@ -489,9 +504,10 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh ID
     std::size_t m_meshid;
-    //! Function to continue with if not coupled to any other solver
+    //! \brief Charm++ callback of the function to call after a mesh-to-mesh
+    //!   solution transfer (to-and-fro) is complete
     CkCallback m_transfer_complete;
-    //! Solution/mesh transfer (coupling) information
+    //! Solution/mesh transfer (coupling) information coordination propagation
     //! \details This has the same size with the same src/dst information on
     //!   all solvers.
     std::vector< Transfer > m_transfer;
@@ -535,6 +551,9 @@ class Discretization : public CBase_Discretization {
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
+    //! \brief Number of chares from which we received solution transfers
+    //!   contributions on chare boundaries
+    std::size_t m_nxfer;
     //! Distributed FCT proxy
     CProxy_DistFCT m_fct;
     //! Distributed ALE proxy
@@ -639,9 +658,6 @@ class Discretization : public CBase_Discretization {
 
     //! Determine if communication of mesh transfer callbacks is complete
     bool transferCallbacksComplete() const;
-
-    //! Finish setting up communication maps and solution transfer callbacks
-    void comfinal();
 };
 
 } // inciter::

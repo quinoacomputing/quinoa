@@ -105,6 +105,9 @@ class ALECG : public CBase_ALECG {
     //! Setup node-neighborhood (no-op)
     void nodeNeighSetup() {}
 
+    //! (no-op)
+    void transferSol() {}
+
     //! Start setup for solution
     void setup();
 
@@ -115,7 +118,7 @@ class ALECG : public CBase_ALECG {
     void start();
 
     //! Advance equations to next time step
-    void advance( tk::real newdt );
+    void advance( tk::real newdt, tk::real );
 
     //! Compute left-hand side of transport equations
     void lhs();

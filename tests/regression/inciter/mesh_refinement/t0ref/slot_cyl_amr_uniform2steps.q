@@ -21,7 +21,6 @@ inciter
   end
 
   transport
-    depvar c
     physics advection
     problem slot_cyl
   end

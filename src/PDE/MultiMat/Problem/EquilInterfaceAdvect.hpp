@@ -38,19 +38,19 @@ class MultiMatProblemEquilInterfaceAdvect {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t ncomp, const std::vector< EOS >&,
+    initialize( ncomp_t ncomp, const std::vector< EOS >&,
                 tk::real x, tk::real, tk::real, tk::real );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static std::vector< tk::real >
-    analyticSolution( ncomp_t system, ncomp_t ncomp,
+    analyticSolution( ncomp_t ncomp,
                       const std::vector< EOS >& mat_blk, tk::real x,
                       tk::real y, tk::real z, tk::real t )
-    { return initialize( system, ncomp, mat_blk, x, y, z, t ); }
+    { return initialize( ncomp, mat_blk, x, y, z, t ); }
 
     //! Compute and return source term for this problem
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t nmat, const std::vector< EOS >& mat_blk,
+    src( ncomp_t nmat, const std::vector< EOS >& mat_blk,
          tk::real x, tk::real y, tk::real z, tk::real t,
          std::vector< tk::real >& sv )
     {
@@ -58,7 +58,7 @@ class MultiMatProblemEquilInterfaceAdvect {
       Assert(sv.size() == ncomp, "Incorrect source vector size");
 
       // solution at given location and time
-      auto s = initialize(system, ncomp, mat_blk, x, y, z, t);
+      auto s = initialize(ncomp, mat_blk, x, y, z, t);
       tk::real rhob(0.0);
       for (std::size_t k=0; k<nmat; ++k) {
         rhob += s[densityIdx(nmat,k)];

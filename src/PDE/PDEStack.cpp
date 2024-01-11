@@ -114,7 +114,8 @@ PDEStack::selectedCG() const
   std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
   const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::DiagCG || sch == ctr::SchemeType::ALECG) {
+  if (sch == ctr::SchemeType::DiagCG || sch == ctr::SchemeType::ALECG
+    || sch == ctr::SchemeType::OversetFE) {
 
     for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
       if (d == ctr::PDEType::TRANSPORT)

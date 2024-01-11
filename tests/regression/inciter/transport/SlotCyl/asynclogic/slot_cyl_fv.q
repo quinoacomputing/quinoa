@@ -16,7 +16,6 @@ inciter
 
     physics euler
     problem interface_advection
-    depvar u
 
     nmat 3
     material

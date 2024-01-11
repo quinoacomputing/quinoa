@@ -35,7 +35,6 @@ inciter
   end
 
   compflow
-    depvar u
     physics euler
     mesh filename "tube.exo" end
     problem sod_shocktube

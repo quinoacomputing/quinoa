@@ -21,9 +21,9 @@ inciter
   end
 
   compflow
-    depvar u
     physics euler
     problem sod_shocktube
+    sysfct true
 
     material
       gamma 1.4 end

@@ -12,7 +12,6 @@ inciter
   scheme dgp1
 
   transport
-    depvar c
     physics advection
     problem slot_cyl
     bc_dirichlet

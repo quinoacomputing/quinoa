@@ -17,7 +17,6 @@ inciter
     physics advection
     problem cyl_advect
     ncomp 1
-    depvar c
 
     bc_extrapolate
       sideset 1 end

@@ -44,8 +44,8 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! \brief Evaluate the increment from t to t+dt of an analytical solution at
 //!   (x,y,z) for all components
 std::vector< tk::real >
-solinc( tk::ncomp_t system, tk::ncomp_t ncomp, const std::vector< EOS >&,
-        tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution );
+solinc( tk::ncomp_t ncomp, const std::vector< EOS >&, tk::real x, tk::real y,
+        tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution );
 
 //! Compute boundary point normals
 std::unordered_map< int,
@@ -186,6 +186,20 @@ class CGPDE {
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
         esup, symbctri, spongenodes, vol, edgenode, edgeid,
         boxnodes, G, U, W, tp, V, R ); }
+
+    //! Public interface to compute the mesh velocity for OversetFE
+    void getMeshVel(
+      real t,
+      const std::array< std::vector< real >, 3 >& coord,
+      const std::pair< std::vector< std::size_t >,
+                       std::vector< std::size_t > >& psup,
+      const std::unordered_set< std::size_t >& symbcnodes,
+      const std::array< tk::real, 3 >& uservel,
+      const tk::Fields& U,
+      tk::Fields& meshvel,
+      int& movedmesh ) const
+    { self->getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
+        movedmesh ); }
 
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
@@ -369,6 +383,16 @@ class CGPDE {
         const std::vector< real >&,
         real,
         tk::Fields& ) const = 0;
+      virtual void getMeshVel(
+        real,
+        const std::array< std::vector< real >, 3 >&,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >&,
+        const std::unordered_set< std::size_t >&,
+        const std::array< tk::real, 3 >&,
+        const tk::Fields&,
+        tk::Fields&,
+        int& ) const = 0;
       virtual real dt( const std::array< std::vector< real >, 3 >&,
                        const std::vector< std::size_t >&,
                        tk::real,
@@ -504,6 +528,18 @@ class CGPDE {
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
                   esup, symbctri, spongenodes, vol, edgenode,
                   edgeid, boxnodes, G, U, W, tp, V, R ); }
+      void getMeshVel(
+        real t,
+        const std::array< std::vector< real >, 3 >& coord,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >& psup,
+        const std::unordered_set< std::size_t >& symbcnodes,
+        const std::array< tk::real, 3 >& uservel,
+        const tk::Fields& U,
+        tk::Fields& meshvel,
+        int& movedmesh ) const override
+      { data.getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
+          movedmesh ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                tk::real t,

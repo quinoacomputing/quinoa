@@ -50,16 +50,6 @@ if(BACKWARDCPP_INCLUDE_DIR AND BACKWARD_CMAKE_CONFIG_DIR)
   list(APPEND CMAKE_MODULE_PATH "${BACKWARD_CMAKE_CONFIG_DIR}")
   include(BackwardConfig)
 
-  # If BackwardCpp uses libdw, it needs additional libs for static builds
-  if(NOT BUILD_SHARED_LIBS AND BACKWARD_LIBRARIES MATCHES "libdw")
-    set(BACKWARD_STATIC_LIBS elf ebl bz2 lzma)
-    foreach(lib ${BACKWARD_STATIC_LIBS})
-      find_library(BACKWARD_${lib}_LIBRARY NAMES lib${lib}.a
-                   HINTS /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE})
-      list(APPEND BACKWARD_LIBRARIES "${BACKWARD_${lib}_LIBRARY}")
-    endforeach()
-  endif()
-
   message(STATUS "Backward-cpp config: ${BACKWARD_DEFINITIONS}")
   if (BACKWARD_LIBRARIES)
     message(STATUS "Backward-cpp libraries: ${BACKWARD_LIBRARIES}")

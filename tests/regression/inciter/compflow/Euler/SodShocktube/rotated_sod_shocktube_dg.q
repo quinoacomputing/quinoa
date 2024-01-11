@@ -15,7 +15,6 @@ inciter
 
     physics euler
     problem rotated_sod_shocktube
-    depvar u
 
     material
       gamma 1.4 end # ratio of specific heats

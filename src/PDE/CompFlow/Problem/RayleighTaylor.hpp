@@ -43,18 +43,15 @@ class CompFlowProblemRayleighTaylor {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t, const std::vector< EOS >&,
+    initialize( ncomp_t, const std::vector< EOS >&,
                 tk::real x, tk::real y, tk::real z, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t,
-                      const std::vector< EOS >&, tk::real x, tk::real y,
-                      tk::real z, tk::real t );
+    analyticSolution( ncomp_t, const std::vector< EOS >&, tk::real x,
+                      tk::real y, tk::real z, tk::real t );
 
     //! Compute and return source term for Rayleigh-Taylor manufactured solution
-    //! \param[in] system Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
@@ -62,7 +59,7 @@ class CompFlowProblemRayleighTaylor {
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, const std::vector< EOS >& mat_blk,
+    src( ncomp_t, const std::vector< EOS >& mat_blk,
          tk::real x, tk::real y, tk::real z, tk::real t,
          std::vector< tk::real >& sv )
     {
@@ -70,17 +67,17 @@ class CompFlowProblemRayleighTaylor {
       using tag::param; using std::sin; using std::cos;
 
       // manufactured solution parameters
-      auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
-      auto bx = g_inputdeck.get< param, eq, tag::betax >()[system];
-      auto by = g_inputdeck.get< param, eq, tag::betay >()[system];
-      auto bz = g_inputdeck.get< param, eq, tag::betaz >()[system];
-      auto k = g_inputdeck.get< param, eq, tag::kappa >()[system];
-      auto p0 = g_inputdeck.get< param, eq, tag::p0 >()[system];
+      auto a = g_inputdeck.get< param, eq, tag::alpha >();
+      auto bx = g_inputdeck.get< param, eq, tag::betax >();
+      auto by = g_inputdeck.get< param, eq, tag::betay >();
+      auto bz = g_inputdeck.get< param, eq, tag::betaz >();
+      auto k = g_inputdeck.get< param, eq, tag::kappa >();
+      auto p0 = g_inputdeck.get< param, eq, tag::p0 >();
       // ratio of specific heats
-      auto g = gamma< tag::compflow >(system);
+      auto g = gamma< tag::compflow >(0);
 
       // evaluate solution at x,y,z,t
-      auto s = initialize( system, 5, mat_blk, x, y, z, t );
+      auto s = initialize( 0, mat_blk, x, y, z, t );
 
       // density, velocity, energy, pressure
       auto rho = s[0];

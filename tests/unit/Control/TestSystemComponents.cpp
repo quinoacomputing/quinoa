@@ -96,7 +96,8 @@ void SystemComponents_object::test< 3 >() {
   nc.get< eq2 >().push_back( 2 );
 
   // Test offsets of all equations
-  ensure_equals( "total number of components", nc.nprop(), 10 );
+  ensure_equals( "total number of components", nc.nprop(0), 5 );
+  ensure_equals( "total number of components", nc.nprop(1), 5 );
 }
 
 } // tut::

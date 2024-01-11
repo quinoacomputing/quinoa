@@ -29,14 +29,14 @@
 
 #include <brigand/sequences/list.hpp>
 
-#include "DGEuler.hpp"
+#include "FVEuler.hpp"
 #include "FVEnergyPill.hpp"
 
 namespace inciter {
 namespace fv {
 
 //! MultiMat Physics policies implemented using discontinuous Galerkin
-using MultiMatPhysics = brigand::list< inciter::dg::MultiMatPhysicsEuler
+using MultiMatPhysics = brigand::list< MultiMatPhysicsEuler
                                      , MultiMatPhysicsEnergyPill
                                      >;
 

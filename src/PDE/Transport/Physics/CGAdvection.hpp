@@ -36,7 +36,6 @@ class TransportPhysicsAdvection {
     //! Add diffusion contribution to rhs (no-op for advection only)
     void
     diffusionRhs( ncomp_t,
-                  ncomp_t,
                   tk::real,
                   tk::real,
                   const std::array< std::array< tk::real, 3 >, 4 >&,
@@ -49,7 +48,6 @@ class TransportPhysicsAdvection {
     //! \return A large time step size, i.e., ignore
     tk::real
     diffusion_dt( tk::ctr::ncomp_t,
-                  tk::ctr::ncomp_t,
                   tk::real,
                   const std::vector< std::array< tk::real, 4 > >& ) const
     { return std::numeric_limits< tk::real >::max(); }

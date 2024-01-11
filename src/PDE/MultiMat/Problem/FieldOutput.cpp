@@ -205,7 +205,7 @@ std::vector< std::string > MultiMatSurfNames()
 }
 
 std::vector< std::vector< tk::real > >
-MultiMatSurfOutput( ncomp_t,
+MultiMatSurfOutput(
   const std::size_t nmat,
   const std::size_t rdof,
   const FaceData& fd,
@@ -213,7 +213,6 @@ MultiMatSurfOutput( ncomp_t,
   const tk::Fields& P )
 // *****************************************************************************
 //  Return element surface field output (on triangle faces) going to file
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] fd Face connectivity and boundary conditions object

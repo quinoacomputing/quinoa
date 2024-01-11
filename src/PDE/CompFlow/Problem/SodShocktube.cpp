@@ -26,7 +26,6 @@ using inciter::CompFlowProblemSodShocktube;
 
 tk::InitializeFn::result_type
 CompFlowProblemSodShocktube::initialize( ncomp_t,
-                                         ncomp_t,
                                          const std::vector< EOS >& mat_blk,
                                          tk::real x,
                                          tk::real,
@@ -34,8 +33,6 @@ CompFlowProblemSodShocktube::initialize( ncomp_t,
                                          tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::InitializeFn
@@ -75,24 +72,22 @@ CompFlowProblemSodShocktube::initialize( ncomp_t,
 }
 
 tk::InitializeFn::result_type
-CompFlowProblemSodShocktube::analyticSolution( ncomp_t system,
-                                               ncomp_t,
-                                              const std::vector< EOS >& mat_blk,
-                                               tk::real x,
-                                               tk::real,
-                                               tk::real,
-                                               tk::real )
+CompFlowProblemSodShocktube::analyticSolution(
+  ncomp_t,
+  const std::vector< EOS >& mat_blk,
+  tk::real x,
+  tk::real,
+  tk::real,
+  tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] x X coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::InitializeFn
 //! \warning This is NOT the analytic solution at all times, only at t=0
 // *****************************************************************************
 {
-  return initialize( system, 0, mat_blk, x, 0, 0, 0 );
+  return initialize( 0, mat_blk, x, 0, 0, 0 );
 }
 
 std::vector< std::string >

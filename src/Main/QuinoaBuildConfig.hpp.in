@@ -29,7 +29,6 @@
 // Optional TPLs
 #cmakedefine HAS_BACKWARD
 #cmakedefine HAS_LUA
-#cmakedefine HAS_EXAM2M
 
 // Executables optional
 #cmakedefine ENABLE_INCITER

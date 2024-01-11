@@ -21,6 +21,7 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "EoS/EOS.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace tk {
 
@@ -28,8 +29,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Compute volume integrals of non-conservative terms for multi-material DG
 void
-nonConservativeInt( ncomp_t system,
-                    std::size_t nmat,
+nonConservativeInt( std::size_t nmat,
                     const std::vector< inciter::EOS >& mat_blk,
                     const std::size_t ndof,
                     const std::size_t rdof,
@@ -58,25 +58,19 @@ updateRhsNonCons( ncomp_t ncomp,
                 Fields& R );
 
 //! Compute volume integrals of non-conservative terms for multi-material FV
-void
+std::vector< tk::real >
 nonConservativeIntFV(
-  ncomp_t system,
   std::size_t nmat,
-  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
-  const std::size_t nelem,
-  const std::vector< std::size_t >& inpoel,
-  const UnsMesh::Coords& coord,
-  const Fields& geoElem,
+  const std::size_t e,
+  const std::array< tk::real, 3 >& fn,
   const Fields& U,
   const Fields& P,
-  const std::vector< std::vector< tk::real > >& riemannDeriv,
-  Fields& R );
+  const std::vector< tk::real >& var_riemann );
 
 //! Compute volume integrals of pressure relaxation terms in multi-material DG
 void
-pressureRelaxationInt( ncomp_t system,
-                       std::size_t nmat,
+pressureRelaxationInt( std::size_t nmat,
                        const std::vector< inciter::EOS >& mat_blk,
                        const std::size_t ndof,
                        const std::size_t rdof,
@@ -106,7 +100,6 @@ updateRhsPre(
 //! Compute volume integrals of pressure relaxation terms in multi-material FV
 void
 pressureRelaxationIntFV(
-  ncomp_t system,
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
@@ -142,6 +135,7 @@ std::vector< std::array< tk::real, 3 > >
 fluxTerms(
   std::size_t ncomp,
   std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::vector< tk::real >& ugp );
 } // tk::
 

@@ -191,6 +191,12 @@ class Transporter : public CBase_Transporter {
     //! Reduction target computing total volume of IC box
     void boxvol( tk::real* meshdata, int n );
 
+    //! Reduction target broadcasting to Schemes after mesh transfer
+    void solutionTransferred();
+
+    //! Reduction target that computes minimum timestep across meshes
+    void minDtAcrossMeshes( tk::real* reducndata, int n );
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );
@@ -215,6 +221,9 @@ class Transporter : public CBase_Transporter {
       p | m_nchare;
       p | m_meshid;
       p | m_nload;
+      p | m_ntrans;
+      p | m_ndtmsh;
+      p | m_dtmsh;
       p | m_npart;
       p | m_nstat;
       p | m_ndisc;
@@ -257,6 +266,12 @@ class Transporter : public CBase_Transporter {
     std::vector< std::size_t > m_ncit;
     //! Number of meshes loaded
     std::size_t m_nload;
+    //! Number of meshes that have transferred solution
+    std::size_t m_ntrans;
+    //! Number of meshes that have computed their dt
+    std::size_t m_ndtmsh;
+    //! Minimum dt on each mesh (sized at each time step and then emptied)
+    std::vector< tk::real > m_dtmsh;
     //! Number of meshes partitioned
     std::size_t m_npart;
     //! Number of mesh statistics computed
@@ -359,8 +374,9 @@ class Transporter : public CBase_Transporter {
         using tag::param;
         using eq = typename brigand::front< U >;
         using bc = typename brigand::back< U >;
-        for (const auto& s : inputdeck.get< param, eq, tag::bc, bc >())
-          for (const auto& i : s) userbc.insert( std::stoi(i) );
+        for (auto s : inputdeck.get< param, eq, tag::bc, bc >()) {
+          userbc.insert( std::stoi(s) );
+        }
       }
     };
 
@@ -376,11 +392,9 @@ class Transporter : public CBase_Transporter {
         : inputdeck(i), userbc(u) {}
       template< typename eq > void operator()( brigand::type_<eq> ) {
         using tag::param;
-        for (const auto& sys : inputdeck.get< param, eq, tag::bctimedep >()) {
-          for (const auto& b : sys) {
-            for (auto i : b.template get< tag::sideset >())
-              userbc.insert( std::stoi(i) );
-          }
+        for (const auto& b : inputdeck.get< param, eq, tag::bctimedep >()) {
+          for (auto i : b.template get< tag::sideset >())
+            userbc.insert( std::stoi(i) );
         }
       }
     };

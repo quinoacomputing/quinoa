@@ -50,7 +50,6 @@ intLeastSq_P0P1( const std::size_t rdof,
 //!   least-squares reconstruction of conserved quantities of the PDE system
 void
 bndLeastSqConservedVar_P0P1(
-  ncomp_t system,
   ncomp_t ncomp,
   const std::vector< inciter::EOS >& mat_blk,
   std::size_t rdof,
@@ -98,7 +97,7 @@ transform_P0P1( std::size_t rdof,
 
 //! Compute THINC reconstructions near material interfaces
 void
-THINCReco( std::size_t system,
+THINCReco(
   std::size_t rdof,
   std::size_t nmat,
   std::size_t e,
@@ -108,13 +107,15 @@ THINCReco( std::size_t system,
   const std::array< real, 3 >& xp,
   const Fields& U,
   const Fields& P,
+  bool intInd,
+  const std::vector< std::size_t >& matInt,
   const std::vector< real >& vfmin,
   const std::vector< real >& vfmax,
   std::vector< real >& state );
 
 //! Compute THINC reconstructions for linear advection (transport)
 void
-THINCRecoTransport( std::size_t system,
+THINCRecoTransport(
   std::size_t rdof,
   std::size_t,
   std::size_t e,
@@ -160,7 +161,7 @@ THINCFunction_new( std::size_t rdof,
 
 //! Evaluate polynomial solution at quadrature point
 std::vector< tk::real >
-evalPolynomialSol(std::size_t system,
+evalPolynomialSol(
   const std::vector< inciter::EOS >& mat_blk,
   int intsharp,
   std::size_t ncomp,
@@ -176,6 +177,25 @@ evalPolynomialSol(std::size_t system,
   const std::vector< real >& B,
   const Fields& U,
   const Fields& P);
+
+//! Evaluate second-order FV solution at quadrature point
+std::vector< tk::real >
+evalFVSol(
+  const std::vector< inciter::EOS >& mat_blk,
+  int intsharp,
+  std::size_t ncomp,
+  std::size_t nprim,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& ref_gp,
+  const std::vector< real >& B,
+  const Fields& U,
+  const Fields& P,
+  int srcFlag );
 
 //! Compute safe reconstructions near material interfaces
 void

@@ -13,6 +13,7 @@ add_library(Inciter
             DiagCG.cpp
             ALECG.cpp
             ALE.cpp
+            OversetFE.cpp
             Ghosts.cpp
             DG.cpp
             FV.cpp
@@ -36,6 +37,7 @@ target_include_directories(Inciter PUBLIC
                            ${QUINOA_SOURCE_DIR}/Inciter
                            ${QUINOA_SOURCE_DIR}/PDE
                            ${QUINOA_SOURCE_DIR}/LinearSolver
+                           ${QUINOA_SOURCE_DIR}/Transfer
                            ${QUINOA_TPL_DIR}
                            ${SEACASExodus_INCLUDE_DIRS}
                            ${NETCDF_INCLUDES}
@@ -47,11 +49,14 @@ target_include_directories(Inciter PUBLIC
                            ${EXAM2M_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH}
+                           ${CBLAS_INCLUDE_DIRS}
+                           ${LAPACKE_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Inciter
                            ${PROJECT_BINARY_DIR}/../LinearSolver
                            ${PROJECT_BINARY_DIR}/../Base
                            ${PROJECT_BINARY_DIR}/../IO
                            ${PROJECT_BINARY_DIR}/../Mesh
+                           ${PROJECT_BINARY_DIR}/../Transfer
                            ${PROJECT_BINARY_DIR}/../Main)
 
 add_library(MeshRefinement
@@ -72,6 +77,8 @@ target_include_directories(MeshRefinement PUBLIC
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${TPL_INCLUDE_DIR}
                            ${BRIGAND_INCLUDE_DIRS}
+                           ${CBLAS_INCLUDE_DIRS}
+                           ${LAPACKE_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
 addCharmModule( "transporter" "Inciter" )
@@ -81,6 +88,7 @@ addCharmModule( "refiner" "Inciter" )
 addCharmModule( "sorter" "Inciter" )
 addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "alecg" "Inciter" )
+addCharmModule( "oversetfe" "Inciter" )
 addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
 addCharmModule( "fv" "Inciter" )
@@ -103,6 +111,7 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 # This is required so that partitioner.decl.h and partitioner.def.h are
 # generated before Transporter including those.
 add_dependencies( "transporterCharmModule" "partitionerCharmModule" )
+add_dependencies( "transporterCharmModule" "m2mtransferCharmModule" )
 
 # Add extra dependency of Discretization charm module on MeshWriter charm
 # module. This is so meshwriter.decl.h and meshwriter.def.h are generated

@@ -93,7 +93,8 @@ JWL::pressure(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the stiffened-gas equation of state
@@ -140,12 +141,38 @@ JWL::pressure(
   return partpressure;
 }
 
+std::array< std::array< tk::real, 3 >, 3 >
+JWL::CauchyStress(
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  std::size_t,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+// *************************************************************************
+//! \brief Calculate the Cauchy stress tensor from the material density,
+//!   momentum, and total energy
+//! \return Material Cauchy stress tensor (alpha_k * sigma_k)
+// *************************************************************************
+{
+  std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
+
+  // No elastic contribution
+
+  return asig;
+}
+
 tk::real
 JWL::soundspeed(
   tk::real arho,
   tk::real apr,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  const std::array< std::array< tk::real, 3 >, 3 >&,
+  const std::array< tk::real, 3 >&,
+  const std::array< tk::real, 3 >& ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -160,7 +187,8 @@ JWL::soundspeed(
 // *************************************************************************
 {
   // limiting pressure to near-zero
-  auto apr_eff = std::max( 1.0e-15, apr );
+  auto apr_eff = std::max(alpha*
+    min_eff_pressure(1e-4*std::abs(apr/alpha), arho, alpha), apr);
 
   auto co1 = m_rho0*alpha*alpha/(arho*arho);
   auto co2 = alpha*(1.0+m_w)/arho;
@@ -169,6 +197,7 @@ JWL::soundspeed(
               + m_b*(m_r2*co1 - co2) * exp(-m_r2*alpha*m_rho0/arho)
               + (1.0+m_w)*apr_eff/arho;
 
+  auto ss2 = ss;
   ss = std::sqrt(ss);
 
   // check sound speed divergence
@@ -180,7 +209,7 @@ JWL::soundspeed(
     std::cout << "Min allowed pres: " << alpha*min_eff_pressure(0.0, arho,
       alpha) << std::endl;
     Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed. "
-      "ss^2: " + std::to_string(ss) + ", material volume fraction: " +
+      "ss^2: " + std::to_string(ss2) + ", material volume fraction: " +
       std::to_string(alpha));
   }
 
@@ -193,7 +222,8 @@ JWL::totalenergy(
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real pr ) const
+  tk::real pr,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -221,7 +251,8 @@ JWL::temperature(
   tk::real v,
   tk::real w,
   tk::real arhoE,
-  tk::real alpha ) const
+  tk::real alpha,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy

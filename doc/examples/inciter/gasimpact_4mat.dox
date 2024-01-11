@@ -29,7 +29,7 @@ inciter
   term 10.0
   cfl 0.75
   ttyi 25  # TTY output interval
-  scheme p0p1
+  scheme fv
   limiter vertexbasedp1
 
   partitioning
@@ -39,7 +39,6 @@ inciter
   multimat
 
     physics euler
-    depvar u
 
     prelax 1  # finite-rate pressure relaxation
     prelax_timescale 0.1  # time scale for pressure relaxation

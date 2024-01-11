@@ -198,6 +198,7 @@ struct materialid { static std::string name() { return "materialid"; } };
 struct matidxmap { static std::string name() { return "matidxmap"; } };
 struct matidx { static std::string name() { return "matidx"; } };
 struct eosidx { static std::string name() { return "eosidx"; } };
+struct solidx { static std::string name() { return "solidx"; } };
 struct mass { static std::string name() { return "mass"; } };
 struct hydro {};
 struct mix {};

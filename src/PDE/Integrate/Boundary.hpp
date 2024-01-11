@@ -31,8 +31,7 @@ using bcconf_t = kw::sideset::info::expect::type;
 
 //! Compute boundary surface flux integrals for a given boundary type for DG
 void
-bndSurfInt( ncomp_t system,
-            std::size_t nmat,
+bndSurfInt( std::size_t nmat,
             const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
@@ -71,7 +70,7 @@ update_rhs_bc ( ncomp_t ncomp,
 
 //! Compute boundary surface flux integrals for a given boundary type for FV
 void
-bndSurfIntFV( ncomp_t system,
+bndSurfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
@@ -87,8 +86,8 @@ bndSurfIntFV( ncomp_t system,
   const StateFn& state,
   const Fields& U,
   const Fields& P,
+  const std::vector< int >& srcFlag,
   Fields& R,
-  std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp );
 } // tk::
 

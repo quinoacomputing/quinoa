@@ -25,8 +25,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 //! Set the solution in the user-defined IC box
 
 template< class B >
-void initializeBox( std::size_t,
-                    const std::vector< EOS >& mat_blk,
+void initializeBox( const std::vector< EOS >& mat_blk,
                     tk::real VRatio,
                     tk::real V_ex,
                     tk::real t,
@@ -37,7 +36,6 @@ void initializeBox( std::size_t,
 // *****************************************************************************
 // Set the solution in the user-defined IC box/block
 //! \tparam B IC-block type to operate, ctr::box, or ctr::meshblock
-//! \param[in] system Equation system index
 //! \param[in] VRatio Ratio of exact box volume to discrete box volume
 //! \param[in] V_ex Exact box volume
 //! \param[in] t Physical time

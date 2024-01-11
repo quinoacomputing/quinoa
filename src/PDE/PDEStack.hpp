@@ -120,7 +120,7 @@ class PDEStack {
       if ( nc ) {
         // re-create key and search for it
         ctr::PDEKey key{{ eq,
-          g_inputdeck.get< tag::param, EqTag, tag::physics >()[c],
+          g_inputdeck.get< tag::param, EqTag, tag::physics >(),
           g_inputdeck.get< tag::param, EqTag, tag::problem >()[c] }};
         const auto it = f.find( key );
         Assert( it != end( f ),
@@ -132,7 +132,7 @@ class PDEStack {
         // Associate equation system index (value) to all variable offsets
         for (ncomp_t i=0; i<nc; ++i) g_inputdeck.get<tag::sys>()[i] = c;
         // instantiate and return PDE object
-        return it->second( c );
+        return it->second();
       } else Throw ( "Can't create PDE with zero components" );
     }
 

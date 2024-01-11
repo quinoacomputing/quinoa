@@ -13,6 +13,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       PDE
                       Inciter
                       EOS
+                      TransferDetails
                       TransportProblem
                       CGTransportPhysics
                       CompFlowProblem
@@ -38,9 +39,8 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${SEACASExodus_LIBRARIES}
                       ${Zoltan2_LIBRARIES}
                       ${LAPACKE_LIBRARIES}
+                      ${CBLAS_LIBRARIES}
                       ${NETCDF_LIBRARIES}     # only for static link
-                      ${HDF5_HL_LIBRARIES}    # only for static link
-                      ${HDF5_C_LIBRARIES}
                       ${BACKWARD_LIBRARIES}
                       ${LUA_LIBRARIES}
                       ${LIBCXX_LIBRARIES}     # only for static link with libc++

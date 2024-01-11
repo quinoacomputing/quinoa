@@ -13,7 +13,6 @@ inciter
   compflow
     physics euler
     problem gauss_hump_compflow
-    depvar u
 
     material
       gamma 1.66666666666667 end # =5/3 ratio of specific heats

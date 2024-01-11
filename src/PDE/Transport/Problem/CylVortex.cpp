@@ -27,13 +27,12 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::TransportProblemCylVortex;
 
 std::vector< tk::real >
-TransportProblemCylVortex::initialize( ncomp_t system, ncomp_t ncomp,
+TransportProblemCylVortex::initialize( ncomp_t ncomp,
                                        const std::vector< EOS >&,
                                        tk::real x, tk::real y, tk::real,
                                        tk::real t )
 // *****************************************************************************
 //  Evaluate initial solution at (x,y,t) for all components
-//! \param[in] system Equation system index
 //! \param[in] ncomp Number of components in this transport equation system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
@@ -43,7 +42,7 @@ TransportProblemCylVortex::initialize( ncomp_t system, ncomp_t ncomp,
 //!   and not the solution at any time t>0.
 // *****************************************************************************
 {
-  const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0, t );
+  const auto vel = prescribedVelocity( ncomp, x, y, 0.0, t );
 
   if (ncomp != 4) Throw("Cylinder deformation in vortex is only set up for 4 "
     "components");
@@ -66,7 +65,7 @@ TransportProblemCylVortex::initialize( ncomp_t system, ncomp_t ncomp,
 }
 
 std::vector< std::array< tk::real, 3 > >
-TransportProblemCylVortex::prescribedVelocity( ncomp_t, ncomp_t ncomp,
+TransportProblemCylVortex::prescribedVelocity( ncomp_t ncomp,
   tk::real x, tk::real y, tk::real, tk::real t )
 // *****************************************************************************
 //! Assign prescribed velocity at a point

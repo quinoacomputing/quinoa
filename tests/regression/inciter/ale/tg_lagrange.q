@@ -23,7 +23,6 @@ inciter
 
   compflow
     mesh filename "unitcube_1k.exo" end
-    depvar u
     physics euler
     problem taylor_green
     material

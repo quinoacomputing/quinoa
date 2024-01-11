@@ -22,6 +22,7 @@ target_include_directories(Base PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${BACKWARD_INCLUDE_DIRS}
                            ${BRIGAND_INCLUDE_DIRS}
+                           ${CBLAS_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_DIRS}
                            ${MPI_CXX_INCLUDE_PATH})
 

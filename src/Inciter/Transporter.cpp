@@ -64,6 +64,9 @@ Transporter::Transporter() :
   m_meshid(),
   m_ncit( m_nchare.size(), 0 ),
   m_nload( 0 ),
+  m_ntrans( 0 ),
+  m_ndtmsh( 0 ),
+  m_dtmsh(),
   m_npart( 0 ),
   m_nstat( 0 ),
   m_ndisc( 0 ),
@@ -511,10 +514,10 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
   for (auto i : usedsets) {       // for all side sets used in control file
     if (bnd.find(i) != end(bnd))  // used set found among side sets in file
       sidesets_used.insert( i );  // store side set id configured as BC
-    else {
-      Throw( "Boundary conditions specified on side set " +
-        std::to_string(i) + " which does not exist in mesh file" );
-    }
+    //else {
+    //  Throw( "Boundary conditions specified on side set " +
+    //    std::to_string(i) + " which does not exist in mesh file" );
+    //}
   }
 
   // Remove sidesets not used (will not process those further)
@@ -662,8 +665,8 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
   m_meshid[ static_cast<std::size_t>(m_nchare[meshid])*meshid ] = meshid;
   Assert( meshid < m_nelem.size(), "MeshId indexing out" );
 
-  // Partition first mesh
-  if (meshid == 0) m_partitioner[0].partition( m_nchare[0] );
+  // Tell the meshwriter for this mesh the total number of its chares
+  m_meshwriter[meshid].nchare( meshid, m_nchare[meshid] );
 
   if (++m_nload == m_nelem.size()) {     // all meshes have been loaded
     m_nload = 0;
@@ -682,9 +685,6 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
     // Print out initial mesh statistics
     meshstat( "Initial load distribution" );
 
-    // Tell meshwriter the total number of chares
-    m_meshwriter[meshid].nchare( m_nchare[meshid] );
-
     // Query number of initial mesh refinement steps
     int nref = 0;
     if (g_inputdeck.get< tag::amr, tag::t0ref >())
@@ -692,6 +692,9 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
 
     m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
       m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0] }} );
+
+    // Partition first mesh
+    m_partitioner[0].partition( m_nchare[0] );
   }
 }
 
@@ -704,8 +707,9 @@ Transporter::partitioned( std::size_t meshid )
 {
   if (++m_npart == m_nelem.size()) {     // all meshes have been partitioned
     m_npart = 0;
-  } else // partition next mesh
+  } else { // partition next mesh
     m_partitioner[meshid+1].partition( m_nchare[meshid+1] );
+  }
 }
 
 void
@@ -1054,6 +1058,7 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 // *****************************************************************************
 {
   auto meshid = tk::cref_find( m_meshid, summeshid );
+  //std::cout << "Trans: " << meshid << " Transporter::disccreated()\n";
 
   // Update number of mesh points for mesh, since it may have been refined
   if (g_inputdeck.get< tag::amr, tag::t0ref >()) m_npoin[meshid] = npoin;
@@ -1097,50 +1102,63 @@ Transporter::diagHeader()
 // Configure and write diagnostics file header
 // *****************************************************************************
 {
-  // Output header for diagnostics output file
-  tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >(),
-                     g_inputdeck.get< tag::flformat, tag::diag >(),
-                     g_inputdeck.get< tag::prec, tag::diag >() );
+  for (std::size_t m=0; m<m_input.size(); ++m) {
 
-  // Collect variables names for integral/diagnostics output
-  std::vector< std::string > var;
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG)
-    for (const auto& eq : g_cgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::DG ||
-           scheme == ctr::SchemeType::P0P1 || scheme == ctr::SchemeType::DGP1 ||
-           scheme == ctr::SchemeType::DGP2 || scheme == ctr::SchemeType::PDG)
-    for (const auto& eq : g_dgpde) varnames( eq, var );
-  else if (scheme == ctr::SchemeType::FV)
-    for (const auto& eq : g_fvpde) varnames( eq, var );
-  else Throw( "Diagnostics header not handled for discretization scheme" );
+   // Output header for diagnostics output file
+    auto mid = m_input.size() > 1 ? std::string( '.' + std::to_string(m) ) : "";
+    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >() + mid,
+                       g_inputdeck.get< tag::flformat, tag::diag >(),
+                       g_inputdeck.get< tag::prec, tag::diag >() );
 
-  const tk::ctr::Error opt;
-  auto nv = var.size();
-  std::vector< std::string > d;
+    // Collect variables names for integral/diagnostics output
+    std::vector< std::string > var;
+    const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+    if ( scheme == ctr::SchemeType::DiagCG ||
+         scheme == ctr::SchemeType::ALECG ||
+         scheme == ctr::SchemeType::OversetFE )
+      for (const auto& eq : g_cgpde) varnames( eq, var );
+    else if ( scheme == ctr::SchemeType::DG ||
+              scheme == ctr::SchemeType::P0P1 ||
+              scheme == ctr::SchemeType::DGP1 ||
+              scheme == ctr::SchemeType::DGP2 ||
+              scheme == ctr::SchemeType::PDG )
+      for (const auto& eq : g_dgpde) varnames( eq, var );
+    else if (scheme == ctr::SchemeType::FV)
+      for (const auto& eq : g_fvpde) varnames( eq, var );
+    else Throw( "Diagnostics header not handled for discretization scheme" );
 
-  // Add 'L2(var)' for all variables as those are always computed
-  const auto& l2name = opt.name( tk::ctr::ErrorType::L2 );
-  for (std::size_t i=0; i<nv; ++i) d.push_back( l2name + '(' + var[i] + ')' );
+    const tk::ctr::Error opt;
+    auto nv = var.size() / m_input.size();
+    std::vector< std::string > d;
 
-  // Query user-requested diagnostics and augment diagnostics file header by
-  // 'err(var)', where 'err' is the error type  configured, and var is the
-  // variable computed, for all variables and all error types configured.
-  const auto& err = g_inputdeck.get< tag::diag, tag::error >();
-  for (const auto& e : err) {
-    const auto& errname = opt.name( e );
-    for (std::size_t i=0; i<nv; ++i)
-      d.push_back( errname + '(' + var[i] + "-IC)" );
+    // Add 'L2(var)' for all variables as those are always computed
+    const auto& l2name = opt.name( tk::ctr::ErrorType::L2 );
+    for (std::size_t i=0; i<nv; ++i) d.push_back( l2name + '(' + var[i] + ')' );
+
+    // Query user-requested diagnostics and augment diagnostics file header by
+    // 'err(var)', where 'err' is the error type  configured, and var is the
+    // variable computed, for all variables and all error types configured.
+    const auto& err = g_inputdeck.get< tag::diag, tag::error >();
+    for (const auto& e : err) {
+      const auto& errname = opt.name( e );
+      for (std::size_t i=0; i<nv; ++i)
+        d.push_back( errname + '(' + var[i] + "-IC)" );
+    }
+
+    // Augment diagnostics variables by L2-norm of the residual and total energy
+    if ( scheme == ctr::SchemeType::DiagCG ||
+         scheme == ctr::SchemeType::ALECG ||
+         scheme == ctr::SchemeType::OversetFE ||
+         scheme == ctr::SchemeType::FV )
+    {
+      for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
+    }
+    d.push_back( "mE" );
+
+    // Write diagnostics header
+    dw.header( d );
+
   }
-
-  // Augment diagnostics variables by L2-norm of the residual and total energy
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
-    for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
-  }
-  d.push_back( "mE" );
-
-  // Write diagnostics header
-  dw.header( d );
 }
 
 void
@@ -1373,6 +1391,51 @@ Transporter::boxvol( tk::real* meshdata, int n )
 }
 
 void
+Transporter::solutionTransferred()
+// *****************************************************************************
+// Reduction target broadcasting to Schemes after mesh transfer
+// *****************************************************************************
+{
+  if (++m_ntrans == m_nelem.size()) {    // all meshes have been loaded
+    m_ntrans = 0;
+    for (auto& m : m_scheme) m.bcast< Scheme::transferSol >();
+  }
+}
+
+void
+Transporter::minDtAcrossMeshes( tk::real* reducndata, [[maybe_unused]] int n )
+// *****************************************************************************
+// Reduction target that computes minimum timestep across all meshes
+//! \param[in] reducndata Vector containing minimum values of dt and mesh-moved
+//!   flags, collected across all meshes
+//! \param[in] n Size of vector, automatically computed by Charm
+// *****************************************************************************
+{
+  Assert(static_cast<std::size_t>(n-1) == m_nelem.size(),
+    "Incorrectly sized reduction vector");
+  m_dtmsh.push_back(reducndata[0]);
+
+  if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
+    Assert(m_dtmsh.size() == m_nelem.size(), "Incorrect size of dtmsh");
+
+    // compute minimum dt across meshes
+    tk::real dt = std::numeric_limits< tk::real >::max();
+    for (auto idt : m_dtmsh) dt = std::min(dt, idt);
+
+    // clear dt-vector and counter
+    m_dtmsh.clear();
+    m_ndtmsh = 0;
+
+    // broadcast to advance time step
+    std::size_t ic(0);
+    for (auto& m : m_scheme) {
+      m.bcast< Scheme::advance >( dt, reducndata[ic+1] );
+      ++ic;
+    }
+  }
+}
+
+void
 Transporter::inthead( const InciterPrint& print )
 // *****************************************************************************
 // Print out time integration header to screen
@@ -1414,17 +1477,17 @@ Transporter::diagnostics( CkReductionMsg* msg )
 //! \note Only used for nodal schemes
 // *****************************************************************************
 {
-  std::size_t meshid;
+  std::size_t meshid, ncomp;
   std::vector< std::vector< tk::real > > d;
 
   // Deserialize diagnostics vector
   PUP::fromMem creator( msg->getData() );
   creator | meshid;
+  creator | ncomp;
   creator | d;
   delete msg;
 
   auto id = std::to_string(meshid);
-  auto ncomp = g_inputdeck.get< tag::component >().nprop();
 
   Assert( ncomp > 0, "Number of scalar components must be positive");
   Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );
@@ -1460,9 +1523,16 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Finish computing the L2 norm of the residual and append
   const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
   std::vector< tk::real > l2res( d[L2RES].size(), 0.0 );
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG) {
+  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG ||
+    scheme == ctr::SchemeType::OversetFE) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol[meshid] );
+      diag.push_back( l2res[i] );
+    }
+  }
+  else if (scheme == ctr::SchemeType::FV) {
+    for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+      l2res[i] = std::sqrt( d[L2RES][i] );
       diag.push_back( l2res[i] );
     }
   }
@@ -1513,7 +1583,6 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
 
   if (++m_nchk == m_nelem.size()) { // all worker arrays have checkpointed
     m_nchk = 0;
-    #ifndef HAS_EXAM2M
     if (not g_inputdeck.get< tag::cmd, tag::benchmark >()) {
       const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
       CkCallback res( CkIndex_Transporter::resume(), thisProxy );
@@ -1521,10 +1590,6 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
     } else {
       resume();
     }
-    #else
-      printer() << ">>> WARNING: Checkpointing with ExaM2M not yet implemented\n";
-      resume();
-    #endif
   }
 }
 

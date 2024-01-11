@@ -147,8 +147,8 @@ class ncomponents : public
 
     //! Compute total number of components in the systems of systems configured
     //! \return Total number of components
-    ncomp_t nprop() const noexcept {
-      return (... + std::accumulate(begin(vec<Tags>()), end(vec<Tags>()), 0u));
+    ncomp_t nprop( std::size_t meshid = 0 ) const noexcept {
+     return (... + (vec<Tags>().size() > meshid ? vec<Tags>()[meshid] : 0) );
     }
 
     //! \brief Compute map of number of properties (scalar components)

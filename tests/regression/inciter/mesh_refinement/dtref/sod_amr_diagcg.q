@@ -18,7 +18,6 @@ inciter
   end
 
   compflow
-    depvar u
     physics euler
     problem sod_shocktube
 
@@ -34,7 +33,7 @@ inciter
     dtfreq 1
 
     initial uniform
-    refvar u end
+    refvar a end
     error jump
   end
 

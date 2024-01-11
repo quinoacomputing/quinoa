@@ -2584,7 +2584,8 @@ struct physics_info {
       return '\'' + advection::string() + "\' | \'"
                   + advdiff::string() + "\' | \'"
                   + navierstokes::string() + "\' | \'"
-                  + euler::string() + '\'';
+                  + euler::string() + "\' | \'"
+                  + energy_pill::string() + '\'';
     }
   };
 };
@@ -3297,10 +3298,11 @@ using mat_pstiff = keyword< mat_pstiff_info, TAOCPP_PEGTL_STRING("pstiff") >;
 
 struct mat_mu_info {
   static std::string name() { return "mu"; }
-  static std::string shortDescription() { return "dynamic viscosity"; }
+  static std::string shortDescription()
+    { return "shear modulus/dynamic viscosity"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify the material property, dynamic
-       viscosity.)";
+    R"(This keyword is used to specify the material property, shear modulus for
+       solids, or dynamic viscosity for fluids.)";
   }
   struct expect {
     using type = tk::real;
@@ -3529,6 +3531,21 @@ struct jwl_info {
 };
 using jwl = keyword< jwl_info, TAOCPP_PEGTL_STRING("jwl") >;
 
+struct smallshearsolid_info {
+  static std::string name() { return "SMALLSHEARSOLID"; }
+  static std::string shortDescription() { return
+    "Select the SMALLSHEARSOLID equation of state"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the small shear strain equation of state
+    for solids. This EOS uses a small-shear approximation for the elastic
+    contribution, and a stiffened gas EOS for the hydrodynamic contribution of
+    the internal energy See Plohr, J. N., & Plohr, B. J. (2005). Linearized
+    analysis of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
+    Mechanics, 537, 55-89 for further details.)"; }
+};
+using smallshearsolid = keyword< smallshearsolid_info,
+  TAOCPP_PEGTL_STRING("smallshearsolid") >;
+
 struct eos_info {
   static std::string name() { return "Equation of state"; }
   static std::string shortDescription() { return
@@ -3539,7 +3556,9 @@ struct eos_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + stiffenedgas::string() + "\' | \'"
-                  + jwl::string() + '\'';
+                  + jwl::string() + "\' | \'"
+                  + smallshearsolid::string()
+                  + '\'';
     }
   };
 };
@@ -4364,6 +4383,17 @@ struct alecg_info {
     for other valid options.)"; }
 };
 using alecg = keyword< alecg_info, TAOCPP_PEGTL_STRING("alecg") >;
+
+struct oversetfe_info {
+  static std::string name() { return "oversetFE+RK"; }
+  static std::string shortDescription() { return "Select continuous Galerkin "
+    "finite element with overset meshes + Runge-Kutta"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the continuous Galerkin finite element
+    scheme with Runge-Kutta (RK) time stepping, combined with overset grids.
+    See Control/Inciter/Options/Scheme.hpp for other valid options.)"; }
+};
+using oversetfe = keyword< oversetfe_info, TAOCPP_PEGTL_STRING("oversetfe") >;
 
 struct dg_info {
   static std::string name() { return "DG(P0)+RK"; }

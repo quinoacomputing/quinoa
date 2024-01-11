@@ -662,14 +662,14 @@ SHOW_USED_FILES        = YES
 # (if specified).
 # The default value is: YES.
 
-SHOW_FILES             = YES
+SHOW_FILES             = NO
 
 # Set the SHOW_NAMESPACES tag to NO to disable the generation of the Namespaces
 # page. This will remove the Namespaces entry from the Quick Index and from the
 # Folder Tree View (if specified).
 # The default value is: YES.
 
-SHOW_NAMESPACES        = YES
+SHOW_NAMESPACES        = NO
 
 # The FILE_VERSION_FILTER tag can be used to specify a program or script that
 # doxygen should invoke to get the current version for each file (typically from
@@ -2409,14 +2409,17 @@ HTML_EXTRA_STYLESHEET = \
 
 ##! M_FAVICON = @CMAKE_CURRENT_SOURCE_DIR@/../doc/images/quinoa_sum.png
 
-##! M_LINKS_NAVBAR1 = why \
-##!                   "build git_submodules_subtrees licenses build_system" \
-##!                   "<a href=\"https://quinoacomputing.github.io/index.html#mainpage_tools\">Tools</a> inciter_main unittest_main meshconv_main" \
-##!                   namespaces annotated files
+##! M_LINKS_NAVBAR1 = "<a href=\"https://quinoacomputing.github.io/index.html#mainpage_tools\">Tools</a> inciter_main meshconv_main unittest_main" \
+##!                   "easybuild build git_submodules_subtrees licenses build_system"
 
 ##! M_LINKS_NAVBAR2 = "resources <a href=\"https://github.com/quinoacomputing/quinoa\">GitHub</a> papers <a href=\"https://github.com/quinoacomputing/quinoa/blob/master/LICENSE\">License</a> roadmap contributing coverage <a href=\"https://github.com/quinoacomputing/quinoa/releases\">Tarballs</a> <a href=\"https://bestpractices.coreinfrastructure.org/projects/2120\">Practices</a>"
 
-##! M_PAGE_FINE_PRINT = "<p>Quinoa docs, part of the <a href="http://quinoacomputing.github.io/">Quinoa project</a>. Copyright © J. Bakosi 2012&ndash;2015, Los Alamos National Security, LLC, 2016&ndash;2018, <a href="https://www.triadns.org/">Triad National Security, LLC,</a> 2019-2021. Generated on @BUILD_DATE_SIMPLE@ based on <a href="https://github.com/quinoacomputing/quinoa/commit/@GIT_SHA1_ONLY@">@GIT_SHA1_ONLY@</a> by <a href="http://doxygen.org/">Doxygen</a> and <a href="http://mcss.mosra.cz/">m.css</a>. Contact us via <a href="https://github.com/quinoacomputing/quinoa/issues">GitHub</a>.</p>"
+##! M_PAGE_FINE_PRINT = "<p>Quinoa docs, part of the <a href="https://github.com/quinoacomputing/">Quinoa project</a>. Copyright © J. Bakosi 2012&ndash;2015, Los Alamos National Security, LLC, 2016&ndash;2018, <a href="https://www.triadns.org/">Triad National Security, LLC,</a> 2019-2023. Generated on @BUILD_DATE_SIMPLE@ using <a href="http://doxygen.org/">Doxygen</a> and <a href="http://mcss.mosra.cz/">m.css</a>. Contact us via <a href="https://github.com/quinoacomputing/quinoa/issues">GitHub</a>.</p>"
+
+# previously, the commit hash was included in the M_PAGE_FINE_PRINT using the
+# following code: <a href="https://github.com/quinoacomputing/quinoa/commit/@GIT_SHA1_ONLY@">@GIT_SHA1_ONLY@</a>
+# However, this is now removed since the functionality to pick up the SHA is
+# broken from the CI-side.
 
 ALIASES += \
     "m_div{1}=@xmlonly<mcss:div xmlns:mcss=\"http://mcss.mosra.cz/doxygen/\" mcss:class=\"\1\">@endxmlonly" \

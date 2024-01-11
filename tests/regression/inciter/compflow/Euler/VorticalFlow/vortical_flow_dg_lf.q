@@ -15,7 +15,6 @@ inciter
 
     physics euler
     problem vortical_flow
-    depvar u
 
     flux laxfriedrichs
 

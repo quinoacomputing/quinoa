@@ -22,7 +22,6 @@ inciter
 
     physics euler
     problem waterair_shocktube
-    depvar u
 
     prelax 1
     prelax_timescale 0.25

@@ -18,7 +18,6 @@ inciter
   end
 
   compflow
-    depvar u
     physics euler
 
     # units: m,kg,s,

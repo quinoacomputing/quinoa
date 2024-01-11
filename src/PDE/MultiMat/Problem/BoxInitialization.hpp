@@ -24,8 +24,7 @@ namespace inciter {
 using ncomp_t = kw::ncomp::info::expect::type;
 
 template< class B >
-void initializeBox( std::size_t system,
-                    const std::vector< EOS >& mat_blk,
+void initializeBox( const std::vector< EOS >& mat_blk,
                     tk::real V_ex,
                     tk::real t,
                     const B& b,
@@ -35,7 +34,6 @@ void initializeBox( std::size_t system,
 // *****************************************************************************
 // Set the solution in the user-defined IC box/mesh block
 //! \tparam B IC-block type to operate, ctr::box, or ctr::meshblock
-//! \param[in] system Equation system index
 //! \param[in] V_ex Exact box volume
 //! \param[in] t Physical time
 //! \param[in] b IC box configuration to use
@@ -55,8 +53,10 @@ void initializeBox( std::size_t system,
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
-  auto nmat =
-    g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
+
+  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
 
   const auto& initiate = b.template get< tag::initiate >();
   auto inittype = initiate.template get< tag::init >();
@@ -171,8 +171,22 @@ void initializeBox( std::size_t system,
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k] * spi;
     }
     else {
+      // TEMP: Eventually we would need to initialize gk from control file
+      std::array< std::array< tk::real, 3 >, 3 > gk;
+      if (solidx[k] > 0) {
+        for (std::size_t i=0; i<3; ++i) {
+          for (std::size_t j=0; j<3; ++j) {
+            if (i==j) gk[i][j] = 1.0;
+            else gk[i][j] = 0.0;
+            s[deformIdx(nmat,solidx[k],i,j)] = s[volfracIdx(nmat,k)]*gk[i][j];
+          }
+        }
+      }
+      else {
+        gk = {{}};
+      }
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-        mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr );
+        mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr, gk );
     }
   }
   // bulk momentum

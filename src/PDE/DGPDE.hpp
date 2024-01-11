@@ -49,20 +49,18 @@ using BCStateFn =
 //!   not correctly specified. For now we simply ignore if BCs are not
 //!   specified by allowing empty BC vectors from the user input.
 template< class Eq > struct ConfigBC {
-  std::size_t system;  //! Compflow system id
   BCStateFn& state;    //!< BC state config: sidesets + statefn
   const std::vector< tk::StateFn >& fn;    //!< BC state functions
   std::size_t c;       //!< Counts BC types configured
   //! Constructor
-  ConfigBC( std::size_t sys,
-            BCStateFn& s,
+  ConfigBC( BCStateFn& s,
             const std::vector< tk::StateFn >& f ) :
-    system(sys), state(s), fn(f), c(0) {}
+    state(s), fn(f), c(0) {}
   //! Function to call for each BC type
   template< typename U > void operator()( brigand::type_<U> ) {
     std::vector< bcconf_t > cfg;
     const auto& v = g_inputdeck.get< tag::param, Eq, tag::bc, U >();
-    if (v.size() > system) cfg = v[system];
+    if (v.size() > 0) cfg = v;
     Assert( fn.size() > c, "StateFn missing for BC type" );
     state.push_back( { cfg, fn[c++] } );
   }
@@ -70,7 +68,7 @@ template< class Eq > struct ConfigBC {
 
 //! State function for invalid/un-configured boundary conditions
 [[noreturn]] tk::StateFn::result_type
-invalidBC( ncomp_t, ncomp_t, const std::vector< EOS >&,
+invalidBC( ncomp_t, const std::vector< EOS >&,
            const std::vector< tk::real >&, tk::real, tk::real, tk::real,
            tk::real, const std::array< tk::real, 3> & );
 
@@ -171,11 +169,12 @@ class DGPDE {
     { self->updatePrimitives( unk, L, geoElem, prim, nielem ); }
 
     //! Public interface to cleaning up trace materials for the diff eq
-    void cleanTraceMaterial( const tk::Fields& geoElem,
+    void cleanTraceMaterial( tk::real t,
+                             const tk::Fields& geoElem,
                              tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem ) const
-    { self->cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+    { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
 
     //! Public interface to reconstructing the second-order solution
     void reconstruct( tk::real t,
@@ -215,12 +214,22 @@ class DGPDE {
     }
 
     //! Public interface to update the conservative variable solution
-    void Correct_Conserv( const tk::Fields& prim,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const
+    void CPL( const tk::Fields& prim,
+              const tk::Fields& geoElem,
+              const std::vector< std::size_t >& inpoel,
+              const tk::UnsMesh::Coords& coord,
+              tk::Fields& unk,
+              std::size_t nielem ) const
     {
-      self->Correct_Conserv( prim, geoElem, unk, nielem );
+      self->CPL( prim, geoElem, inpoel, coord, unk, nielem );
+    }
+
+    //! Public interface to getting the cell-averaged deformation gradients
+    std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+      const tk::Fields& U,
+      std::size_t nielem ) const
+    {
+      return self->cellAvgDeformGrad( U, nielem );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -234,10 +243,11 @@ class DGPDE {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const tk::real dt,
               tk::Fields& R ) const
     {
       self->rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                 ndofel, R );
+                 ndofel, dt, R );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -352,7 +362,8 @@ class DGPDE {
                                      const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t ) const = 0;
-      virtual void cleanTraceMaterial( const tk::Fields&,
+      virtual void cleanTraceMaterial( tk::real,
+                                       const tk::Fields&,
                                        tk::Fields&,
                                        tk::Fields&,
                                        std::size_t ) const = 0;
@@ -383,10 +394,15 @@ class DGPDE {
                           tk::Fields&,
                           tk::Fields&,
                           std::vector< std::size_t >& ) const = 0;
-      virtual void Correct_Conserv( const tk::Fields&,
-                                    const tk::Fields&,
-                                    tk::Fields&,
-                                    std::size_t ) const = 0;
+      virtual void CPL( const tk::Fields&,
+                        const tk::Fields&,
+                        const std::vector< std::size_t >&,
+                        const tk::UnsMesh::Coords&,
+                        tk::Fields&,
+                        std::size_t ) const = 0;
+      virtual std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+        const tk::Fields&,
+        std::size_t ) const = 0;
       virtual void rhs( tk::real,
                         const tk::Fields&,
                         const tk::Fields&,
@@ -397,6 +413,7 @@ class DGPDE {
                         const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
+                        const tk::real,
                         tk::Fields& ) const = 0;
       virtual void eval_ndof( std::size_t,
                               const tk::UnsMesh::Coords&,
@@ -478,11 +495,12 @@ class DGPDE {
                              tk::Fields& prim,
                              std::size_t nielem )
       const override { data.updatePrimitives( unk, L, geoElem, prim, nielem ); }
-      void cleanTraceMaterial( const tk::Fields& geoElem,
+      void cleanTraceMaterial( tk::real t,
+                               const tk::Fields& geoElem,
                                tk::Fields& unk,
                                tk::Fields& prim,
                                std::size_t nielem )
-      const override { data.cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+      const override { data.cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
       void reconstruct( tk::real t,
                         const tk::Fields& geoFace,
                         const tk::Fields& geoElem,
@@ -517,12 +535,20 @@ class DGPDE {
         data.limit( t, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
                     bid, uNodalExtrm, pNodalExtrm, mtInv, U, P, shockmarker );
       }
-      void Correct_Conserv( const tk::Fields& prim,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const override
+      void CPL( const tk::Fields& prim,
+                const tk::Fields& geoElem,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                tk::Fields& unk,
+                std::size_t nielem ) const override
       {
-        data.Correct_Conserv( prim, geoElem, unk, nielem );
+        data.CPL( prim, geoElem, inpoel, coord, unk, nielem );
+      }
+      std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+        const tk::Fields& U,
+        std::size_t nielem ) const override
+      {
+        return data.cellAvgDeformGrad( U, nielem );
       }
       void rhs(
         tk::real t,
@@ -535,10 +561,11 @@ class DGPDE {
         const tk::Fields& U,
         const tk::Fields& P,
         const std::vector< std::size_t >& ndofel,
+        const tk::real dt,
         tk::Fields& R ) const override
       {
         data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                  ndofel, R );
+                  ndofel, dt, R );
       }
       void eval_ndof( std::size_t nunk,
                       const tk::UnsMesh::Coords& coord,

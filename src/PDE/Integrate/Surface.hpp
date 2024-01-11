@@ -31,13 +31,13 @@ using bcconf_t = kw::sideset::info::expect::type;
 
 //! Compute internal surface flux integrals for DG
 void
-surfInt( ncomp_t system,
-         std::size_t nmat,
+surfInt( std::size_t nmat,
          const std::vector< inciter::EOS >& mat_blk,
          real t,
          const std::size_t ndof,
          const std::size_t rdof,
          const std::vector< std::size_t >& inpoel,
+         const std::vector< std::size_t >& solidx,
          const UnsMesh::Coords& coord,
          const inciter::FaceData& fd,
          const Fields& geoFace,
@@ -47,6 +47,7 @@ surfInt( ncomp_t system,
          const Fields& U,
          const Fields& P,
          const std::vector< std::size_t >& ndofel,
+         const tk::real dt,
          Fields& R,
          std::vector< std::vector< tk::real > >& vriem,
          std::vector< std::vector< tk::real > >& xcoord,
@@ -72,7 +73,7 @@ update_rhs_fa ( ncomp_t ncomp,
 
 // Compute internal surface flux integrals for second order FV
 void
-surfIntFV( ncomp_t system,
+surfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   real t,
@@ -86,8 +87,8 @@ surfIntFV( ncomp_t system,
   const VelFn& vel,
   const Fields& U,
   const Fields& P,
+  const std::vector< int >& srcFlag,
   Fields& R,
-  std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp );
 
 } // tk::
