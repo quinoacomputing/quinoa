@@ -711,10 +711,13 @@ class MultiMat {
       R.fill(0.0);
 
       // Allocate space for Riemann derivatives used in non-conservative terms.
-      // The first 3*nmat terms represents the non-conservative term of partial
-      // pressure derivatives in the energy equations. The rest ndof terms refer
-      // to derivatives of Riemann velocity times basis function in the volume
-      // fraction equation.
+      // The following Riemann derivatives are stored, in order:
+      // 1) 3*nmat terms: derivatives of partial pressure of each material,
+      //    for the energy equations.
+      // 2) ndof terms: derivatives of Riemann velocity times the basis
+      //    function, for the volume fraction equations.
+      // 3) nmat*3*3*9 terms: 3 derivatives of u_l*g_ij for each material, for
+      //    the deformation gradient equations.
       std::vector< std::vector< tk::real > >
         riemannDeriv((3+3*3*9)*nmat+ndof, std::vector<tk::real>(U.nunk(),0.0));
 

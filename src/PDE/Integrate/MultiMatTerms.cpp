@@ -238,7 +238,7 @@ nonConservativeInt( std::size_t nmat,
                     state[volfracIdx(nmat, k)]*(
                       riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+l][e]
                      -riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,l,l)+j][e]);
-                  }
+                }
               }
         }
       }

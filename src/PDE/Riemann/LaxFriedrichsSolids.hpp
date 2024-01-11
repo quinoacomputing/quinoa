@@ -192,7 +192,7 @@ struct LaxFriedrichsSolids {
     // Store Riemann velocity
     flx.push_back( vriem );
 
-        // Flux vector splitting
+    // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem));
     auto l_minus = 0.5 * (vriem - std::fabs(vriem));
 
