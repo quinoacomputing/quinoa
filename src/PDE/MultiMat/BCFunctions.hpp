@@ -39,8 +39,10 @@ namespace inciter {
     const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
       tag::matidxmap >().template get< tag::solidx >();
 
-    Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
-            "state vector" );
+    [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
+
+    Assert( ul.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
+            "internal state vector" );
 
     tk::real rho(0.0);
     for (std::size_t k=0; k<nmat; ++k)
@@ -100,8 +102,8 @@ namespace inciter {
     for (std::size_t k=0; k<nmat; ++k)
       ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
 
-    Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended boundary "
-            "state vector" );
+    Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
+            "boundary state vector" );
 
     return {{ std::move(ul), std::move(ur) }};
   }
@@ -129,12 +131,16 @@ namespace inciter {
                   const std::array< tk::real, 3 >& fn )
   {
     auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
+    const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+      tag::matidxmap >().template get< tag::solidx >();
 
     auto fp =
       g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >();
 
-    Assert( ul.size() == ncomp+nmat+3, "Incorrect size for appended internal "
-            "state vector" );
+    [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
+
+    Assert( ul.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
+            "internal state vector" );
 
     auto ur = ul;
 
@@ -178,8 +184,8 @@ namespace inciter {
         ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
     }
 
-    Assert( ur.size() == ncomp+nmat+3, "Incorrect size for appended boundary "
-            "state vector" );
+    Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
+            "boundary state vector" );
 
     return {{ std::move(ul), std::move(ur) }};
   }

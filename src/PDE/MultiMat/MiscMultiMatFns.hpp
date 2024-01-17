@@ -24,6 +24,7 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk );
 //! Clean up the state of trace materials for multi-material PDE system
 bool
 cleanTraceMultiMat(
+  tk::real t,
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
@@ -64,6 +65,11 @@ getDeformGrad(
 //! Check whether we have solid materials in our problem
 bool
 haveSolid(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx );
+
+//! Count total number of solid materials in the problem
+std::size_t numSolids(
   std::size_t nmat,
   const std::vector< std::size_t >& solidx );
 

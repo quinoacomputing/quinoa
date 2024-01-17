@@ -24,6 +24,14 @@ why "Philosophy" page.
 
 @m_class{m-note m-default m-landing-news}
 
+@section mainpage_quickstart Getting started
+
+- @ref easybuild "Build and test Quinoa"
+- @ref running_inciter "Running Inciter"
+- @ref running_meshconv "Running MeshConv"
+
+Useful references for developers can be found @ref devpage "here".
+
 @section mainpage_tools Tools
 
 Quinoa consists of the following tools:
@@ -51,80 +59,7 @@ Quinoa consists of the following tools:
 
   - @ref meshconv_main --- __Tetrahedron-mesh converter__
 
-    _MeshConv_ is a mesh file converter that can be used to convert tetrahedron
-    meshes from and to either of the following formats:
-    [Gmsh](http://www.geuz.org/gmsh),
-    [Netgen](https://sourceforge.net/projects/netgen-mesher),
-    [ExodusII](https://github.com/gsjaardema/seacas),
-    [HyperMesh](http://www.altairhyperworks.com/product/HyperMesh),
-    ASC used in [Jacob Waltz](https://www.researchgate.net/scientific-contributions/2014382994_Jacob_Waltz)'s _Chicoma_ code,
-    [UGRID](https://www.simcenter.msstate.edu/software/documentation/aflr3),
-    [RDGFLO](https://www.mae.ncsu.edu/people/hluo2).
-
-@section mainpage_build Build
-
-The standard way to build from source is to perform the following steps. For
-other ways to build, see the page on @ref build "building Quinoa".
-
-- Install prerequisites: _Debian/Ubuntu linux_ (line 1: required, line 2: recommended)
-
-       apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev liblua5.3-dev
-       apt-get install gmsh libpugixml-dev libpstreams-dev libboost-all-dev libblas-dev liblapack-dev liblapacke-dev libhdf5-dev libhdf5-openmpi-dev libnetcdf-mpi-dev libbackward-cpp-dev tao-pegtl-dev binutils-dev flex bison python3-pygments python3-jinja2 texlive-latex-base libdw-dev
-
-- Install prerequisites: _Mac OS X_
-
-       spack install cmake libtool autoconf automake
-       spack install environment-modules cmake gcc openmpi%gcc hdf5%gcc+hl
-       module load gcc-9.2.0-clang-10.0.0-apple-vcpkolh openmpi-3.1.4-gcc-9.2.0-my2rkcv hdf5-1.10.5-gcc-9.2.0-prdkirn
-
-- Clone and build third-party libraries (libraries will be installed in `<current-dir>/quinoa-tpl/install/`)
-
-       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa-tpl.git; cd quinoa-tpl
-       mkdir build; cd build
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 .. && make -sj8
-       cd ../..
-
-- Build Quinoa & test (in dir "adjacent" to `quinoa-tpl/`):
-
-       git clone https://github.com/quinoacomputing/quinoa.git; cd quinoa
-       mkdir build; cd build
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src && make -sj8
-       ./charmrun +p8 Main/unittest -v -q && ctest -j8 --output-on-failure -LE extreme
-
-  @note The above will use 8 CPU cores to compile the third-party libraries and code, and run the tests.
-  You might need to adjust this to get optimal performance.
-
-All executables will be under `build/Main/`.
-
-We roughly follow the development model described
-[here](http://nvie.com/posts/a-successful-git-branching-model). As a
-consequence, our
-[master](https://github.com/quinoacomputing/quinoa/commits/master) (stable)
-branch can lag behind our
-[develop](https://github.com/quinoacomputing/quinoa/commits/develop) (bleeding
-edge) branch. If you want the latest, clone with
-
-```
-git clone --branch=develop https://github.com/quinoacomputing/quinoa.git
-```
-
-@section mainpage_directory_layout Directory layout
-
-@verbatim
-    quinoa
-      ├── cmake/ - CMake code, shared between github.com/quinoacomputing/quinoa-tpl and src/
-      ├── doc/ - Documentation, rendered at quinoacomputing.github.io
-      ├── src/ - Compilable sources, see quinoacomputing.github.io/files.html
-      ├── tests/ - Unit-, and regression tests
-      ├── tools/ - Development utilities and docker files
-      ├── LICENSE - Copyright and license
-      └── README.md - This file, rendered at github.com/quinoacomputing/quinoa
-@endverbatim
-
-@section mainpage_roadmap Roadmap
-
-The rough directions in which each of Quinoa's tools are developed are
-described by the @ref roadmap.
+    _MeshConv_ is a mesh file format converter for tetrahedron meshes.
 
 @section mainpage_contributing Contributing
 
@@ -133,12 +68,11 @@ the @ref contributing "Contributing guide" and @ref resources_contact "contact u
 
 @section mainpage_license License
 
-Quinoa is certified [Open
-Source](http://www.opensource.org/docs/definition.html) software. It may be
-used for any purpose, including commercial purposes, at absolutely no cost. It
-is distributed under the terms of the 3-clause BSD license listed below. See
-also @ref resources_legal.
-
-@include LICENSE
+Quinoa is open source software. It is distributed under the terms of the
+3-clause BSD license listed
+[here](https://github.com/quinoacomputing/quinoa/blob/master/LICENSE).
+See also @ref resources_legal.
+It may be used for any purpose, including commercial purposes, at absolutely no
+cost.
 
 */

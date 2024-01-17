@@ -44,7 +44,8 @@ struct LaxFriedrichsSolids {
     const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
       tag::matidxmap >().template get< tag::solidx >();
 
-    auto ncomp = u[0].size()-(3+nmat);
+    auto nsld = numSolids(nmat, solidx);
+    auto ncomp = u[0].size()-(3+nmat+nsld*6);
     std::vector< tk::real > flx( ncomp, 0 ), fluxl(ncomp, 0), fluxr(ncomp,0);
 
     // Primitive variables
@@ -83,6 +84,7 @@ struct LaxFriedrichsSolids {
       asig_l.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
         u[0][densityIdx(nmat, k)], ul, vl, wl, u[0][energyIdx(nmat, k)],
         al_l[k], k, ag_l[k]));
+      for (std::size_t i=0; i<3; ++i) asig_l[k][i][i] -= pml[k];
 
       // normal stress (traction) vector
       asign_l.push_back(tk::matvec(asig_l[k], fn));
@@ -92,8 +94,7 @@ struct LaxFriedrichsSolids {
       // rotate deformation gradient tensor for speed of sound in normal dir
       agn_l = tk::rotateTensor(ag_l[k], fn);
       am_l[k] = mat_blk[k].compute< EOS::soundspeed >(
-        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, tk::dot(asign_l[k],fn),
-        agn_l );
+        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, agn_l );
 
       // Right state
       al_r[k] = u[1][volfracIdx(nmat, k)];
@@ -104,6 +105,8 @@ struct LaxFriedrichsSolids {
       asig_r.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
         u[1][densityIdx(nmat, k)], ur, vr, wr, u[1][energyIdx(nmat, k)],
         al_r[k], k, ag_r[k]));
+      for (std::size_t i=0; i<3; ++i) asig_r[k][i][i] -= pmr[k];
+
       // normal stress (traction) vector
       asign_r.push_back(tk::matvec(asig_r[k], fn));
       for (std::size_t i=0; i<3; ++i)
@@ -112,8 +115,7 @@ struct LaxFriedrichsSolids {
       // rotate deformation gradient tensor for speed of sound in normal dir
       agn_r = tk::rotateTensor(ag_r[k], fn);
       am_r[k] = mat_blk[k].compute< EOS::soundspeed >(
-        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, tk::dot(asign_r[k],fn),
-        agn_r );
+        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, agn_r );
     }
 
     // Mixture speed of sound
@@ -190,7 +192,7 @@ struct LaxFriedrichsSolids {
     // Store Riemann velocity
     flx.push_back( vriem );
 
-        // Flux vector splitting
+    // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem));
     auto l_minus = 0.5 * (vriem - std::fabs(vriem));
 

@@ -8,7 +8,7 @@ libraries (TPLs), and the list of compilers and tools used by Quinoa.
 
 An important distinction between @ref tpl_licenses and @ref tools_web is that
 TPLs are libraries whose source we directly use, e.g., via include files and/or
-(static and dynamic) linking, while from a tool we do not include source code
+(dynamic) linking, while from a tool we do not include source code
 nor link its object files, only build it and use it as a separate (external)
 executable.
 

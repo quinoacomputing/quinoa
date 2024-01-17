@@ -48,13 +48,13 @@ class StiffenedGas {
     //!   momentum, and total energy
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
-      tk::real arho,
-      tk::real u,
-      tk::real v,
-      tk::real w,
-      tk::real arhoE,
-      tk::real alpha,
-      std::size_t imat,
+      tk::real,
+      tk::real,
+      tk::real,
+      tk::real,
+      tk::real,
+      tk::real,
+      std::size_t,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
 
     //! Calculate speed of sound from the material density and material pressure
@@ -62,7 +62,6 @@ class StiffenedGas {
                          tk::real apr,
                          tk::real alpha=1.0,
                          std::size_t imat=0,
-      tk::real asigma_nn=0.0,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
       const std::array< tk::real, 3 >& adefgradn={{}},
       const std::array< tk::real, 3 >& asigman={{}} ) const;

@@ -352,7 +352,7 @@ update_rhs_fa( ncomp_t ncomp,
                   wt * fl[ncomp+nmat+1+newSolidsAccFn(k,i,j,l)] * fn[idir];
                 riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+idir][er] -=
                   wt * fl[ncomp+nmat+1+newSolidsAccFn(k,i,j,l)] * fn[idir];
-            }
+              }
       }
   }
 }

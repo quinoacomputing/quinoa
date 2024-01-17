@@ -238,7 +238,7 @@ nonConservativeInt( std::size_t nmat,
                     state[volfracIdx(nmat, k)]*(
                       riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+l][e]
                      -riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,l,l)+j][e]);
-                  }
+                }
               }
         }
       }
@@ -514,13 +514,13 @@ pressureRelaxationInt( std::size_t nmat,
               ag[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
           auto agrot = tk::rotateTensor(ag, {{1.0, 0.0, 0.0}});
           amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
-            apmat[k], alphamat, k, 1.0, agrot);
+            apmat[k], alphamat, k, agrot);
           agrot = tk::rotateTensor(ag, {{0.0, 1.0, 0.0}});
           amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-            arhomat, apmat[k], alphamat, k, 1.0, agrot));
+            arhomat, apmat[k], alphamat, k, agrot));
           agrot = tk::rotateTensor(ag, {{0.0, 0.0, 1.0}});
           amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-            arhomat, apmat[k], alphamat, k, 1.0, agrot));
+            arhomat, apmat[k], alphamat, k, agrot));
         }
         else
         {
@@ -902,6 +902,8 @@ fluxTerms(
       asig.push_back(mat_blk[k].computeTensor< inciter::EOS::CauchyStress >(
         ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
         al[k], k, ag[k]));
+      for (std::size_t i=0; i<3; ++i) asig[k][i][i] -= ugp[ncomp+pressureIdx(nmat,k)];
+
       for (size_t i=0; i<3; ++i)
         for (size_t j=0; j<3; ++j)
           sig[i][j] += asig[k][i][j];

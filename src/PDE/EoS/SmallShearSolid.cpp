@@ -130,29 +130,24 @@ SmallShearSolid::pressure(
 
 std::array< std::array< tk::real, 3 >, 3 >
 SmallShearSolid::CauchyStress(
-  tk::real arho,
-  tk::real u,
-  tk::real v,
-  tk::real w,
-  tk::real arhoE,
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
   tk::real alpha,
-  std::size_t imat,
+  std::size_t /*imat*/,
   const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const
 // *************************************************************************
-//! \brief Calculate the Cauchy stress tensor from the material density,
+//! \brief Calculate the elastic Cauchy stress tensor from the material density,
 //!   momentum, total energy, and inverse deformation gradient tensor using the
 //!   SmallShearSolid equation of state
-//! \param[in] arho Material partial density (alpha_k * rho_k)
-//! \param[in] u X-velocity
-//! \param[in] v Y-velocity
-//! \param[in] w Z-velocity
-//! \param[in] arhoE Material total energy (alpha_k * rho_k * E_k)
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
-//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
-//!   for the single-material system, this argument can be left unspecified
-//!   by the calling code
+// //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+// //!   for the single-material system, this argument can be left unspecified
+// //!   by the calling code
 //! \param[in] adefgrad Material inverse deformation gradient tensor
 //!   (alpha_k * g_k).
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k) calculated using
@@ -170,30 +165,10 @@ SmallShearSolid::CauchyStress(
 
   // obtain elastic contribution to energy
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
-  // obtain hydro contribution to energy
-  auto arhoEh = arhoE - arhoEe;
-
-  // use stiffened gas eos to get pressure
-  tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) -
-    alpha*m_pstiff) * (m_gamma-1.0) - alpha*m_pstiff;
-
-  // check partial pressure divergence
-  if (!std::isfinite(partpressure)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Total energy:     " << arhoE << std::endl;
-    std::cout << "Hydro energy:     " << arhoEh << std::endl;
-    std::cout << "Velocity:         " << u << ", " << v << ", " << w
-      << std::endl;
-    Throw("Material-" + std::to_string(imat) +
-      " has nan/inf partial pressure: " + std::to_string(partpressure) +
-      ", material volume fraction: " + std::to_string(alpha));
-  }
+  elasticEnergy(defgrad, eps2);
 
   // p_mean
-  auto pmean = partpressure - alpha * m_mu * eps2;
+  auto pmean = - alpha * m_mu * eps2;
 
   // Volumetric component of Cauchy stress tensor
   asig[0][0] = -pmean;
@@ -227,7 +202,6 @@ SmallShearSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  tk::real,
   const std::array< std::array< tk::real, 3 >, 3 >& adefgrad,
   const std::array< tk::real, 3 >& /*adefgradn*/,
   const std::array< tk::real, 3 >& /*asigman*/ ) const
@@ -570,6 +544,10 @@ SmallShearSolid::soundspeed(
     if (eig_real[i] > eig_max)
       eig_max = eig_real[i];
   tk::real a = std::sqrt(eig_max);
+
+  // hydrodynamic contribution
+  auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
+  a += std::sqrt( m_gamma * p_eff / arho );
 
   // check sound speed divergence
   if (!std::isfinite(a)) {

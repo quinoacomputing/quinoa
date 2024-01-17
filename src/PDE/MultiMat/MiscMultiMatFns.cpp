@@ -40,6 +40,7 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 
 bool
 cleanTraceMultiMat(
+  tk::real t,
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
@@ -48,6 +49,7 @@ cleanTraceMultiMat(
   tk::Fields& P )
 // *****************************************************************************
 //  Clean up the state of trace materials for multi-material PDE system
+//! \param[in] t Physical time
 //! \param[in] nelem Number of elements
 //! \param[in] mat_blk EOS material block
 //! \param[in] geoElem Element geometry array
@@ -184,10 +186,11 @@ cleanTraceMultiMat(
         }
       }
       // check for unbounded volume fractions
-      else if (alk < 0.0)
+      else if (alk < 0.0 || !std::isfinite(alk))
       {
-        auto rhok = mat_blk[k].compute< EOS::density >(p_target, tmax);
-        d_al += (alk - 1e-14);
+        auto rhok = mat_blk[k].compute< EOS::density >(p_target,
+          std::max(1e-8,tmax));
+        if (std::isfinite(alk)) d_al += (alk - 1e-14);
         // update state of trace material
         U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
         U(e, densityDofIdx(nmat, k, rdof, 0)) = 1e-14 * rhok;
@@ -315,15 +318,18 @@ cleanTraceMultiMat(
       // lambda for screen outputs
       auto screenout = [&]()
       {
-        std::cout << "Element centroid: " << geoElem(e,1) << ", "
+        std::cout << "Physical time:     " << t << std::endl;
+        std::cout << "Element centroid:  " << geoElem(e,1) << ", "
           << geoElem(e,2) << ", " << geoElem(e,3) << std::endl;
-        std::cout << "Material-id:      " << k << std::endl;
-        std::cout << "Volume-fraction:  " << alpha << std::endl;
-        std::cout << "Partial density:  " << arho << std::endl;
-        std::cout << "Partial pressure: " << apr << std::endl;
-        std::cout << "Major pressure:   " << pmax << std::endl;
-        std::cout << "Major temperature:" << tmax << std::endl;
-        std::cout << "Velocity:         " << u << ", " << v << ", " << w
+        std::cout << "Material-id:       " << k << std::endl;
+        std::cout << "Volume-fraction:   " << alpha << std::endl;
+        std::cout << "Partial density:   " << arho << std::endl;
+        std::cout << "Partial pressure:  " << apr << std::endl;
+        std::cout << "Major pressure:    " << pmax << " (mat " << kmax << ")"
+          << std::endl;
+        std::cout << "Major temperature: " << tmax << " (mat " << kmax << ")"
+          << std::endl;
+        std::cout << "Velocity:          " << u << ", " << v << ", " << w
           << std::endl;
       };
 
@@ -404,15 +410,10 @@ timeStepSizeMultiMat(
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
         auto gk = getDeformGrad(nmat, k, ugp);
-        auto sk = mat_blk[k].computeTensor< EOS::CauchyStress >(
-          ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
-          ugp[volfracIdx(nmat, k)], k, gk );
         gk = tk::rotateTensor(gk, fn);
-        tk::real snn = tk::dot(tk::matvec(sk, fn), fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
-          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
-          snn, gk ) );
+          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk ) );
       }
     }
 
@@ -444,15 +445,10 @@ timeStepSizeMultiMat(
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
           auto gk = getDeformGrad(nmat, k, ugp);
-          auto sk = mat_blk[k].computeTensor< EOS::CauchyStress >(
-            ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
-            ugp[volfracIdx(nmat, k)], k, gk );
           gk = tk::rotateTensor(gk, fn);
-          tk::real snn = tk::dot(tk::matvec(sk, fn), fn);
           a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
             ugp[densityIdx(nmat, k)],
-            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k,
-            snn, gk ) );
+            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk ) );
         }
       }
 
@@ -583,20 +579,40 @@ getDeformGrad(
   return agk;
 }
 
-//  \brief Check whether we have solid materials in our problem
-//! \param[in] nmat Number of materials in this PDE system
-//! \param[in] solidx Material index indicator
-//! \return true if we have at least one solid, false otherwise.
 bool
 haveSolid(
   std::size_t nmat,
   const std::vector< std::size_t >& solidx )
+// *****************************************************************************
+//  Check whether we have solid materials in our problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return true if we have at least one solid, false otherwise.
+// *****************************************************************************
 {
   bool haveSolid = false;
   for (std::size_t k=0; k<nmat; ++k)
     if (solidx[k] > 0) haveSolid = true;
 
   return haveSolid;
+}
+
+std::size_t numSolids(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx )
+// *****************************************************************************
+//  Count total number of solid materials in the problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return Total number of solid materials in the problem
+// *****************************************************************************
+{
+  // count number of solid materials
+  std::size_t nsld(0);
+  for (std::size_t k=0; k<nmat; ++k)
+    if (solidx[k] > 0) ++nsld;
+
+  return nsld;
 }
 
 } //inciter::
