@@ -142,7 +142,7 @@ SuperbeeMultiMat_P1(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] coord Array of nodal coordinates
-//! \param[in] solidx Material index indicator
+//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -337,7 +337,7 @@ VertexBasedCompflow_P1(
 // //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] flux Riemann flux function to use
-//! \param[in] solidx Material index indicator
+//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for compflow.
@@ -433,7 +433,7 @@ VertexBasedCompflow_P2(
 //!   variables
 //! \param[in] mtInv Inverse of Taylor mass matrix
 //! \param[in] flux Riemann flux function to use
-//! \param[in] solidx Material index indicator
+//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for compflow.
@@ -530,7 +530,7 @@ VertexBasedMultiMat_P1(
 // //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] flux Riemann flux function to use
-//! \param[in] solidx Material index indicator
+//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -700,7 +700,7 @@ VertexBasedMultiMat_P2(
 //!   variables
 //! \param[in] mtInv Inverse of Taylor mass matrix
 //! \param[in] flux Riemann flux function to use
-//! \param[in] solidx Material index indicator
+//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -859,7 +859,7 @@ VertexBasedMultiMat_FV(
 //! \param[in] nelem Number of elements
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] srcFlag Whether the energy source was added
-//! \param[in] solidx Material index indicator
+//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -1496,7 +1496,7 @@ void consistentMultiMatLimiting_P1(
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] e Element being checked for consistency
-//! \param[in] solidx Material index indicator
+//! \param[in] solidx Solid material index indicator
 //! \param[in] U Vector of conservative variables
 //! \param[in] P Vector of primitive variables
 //! \param[in,out] phic_p1 Vector of limiter functions for P1 dofs of the
@@ -2194,7 +2194,7 @@ void MarkShockCells ( const std::size_t nelem,
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
 //! \param[in] flux Flux function to use
-//! \param[in] solidx Material index indicator
+//! \param[in] solidx Solid material index indicator
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in, out] shockmarker Vector of the shock indicator
