@@ -1129,26 +1129,22 @@ DG::refine_ndof()
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto& coord = d->Coord();
   const auto& inpoel = d->Inpoel();
-  const auto npoin = coord[0].size();
+  const auto npoin = d->Coord()[0].size();
   const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
   std::vector<std::size_t> node_ndof(npoin, 1);
 
   // Mark the max ndof for each node and store in node_ndof
-  for(std::size_t e = 0; e < nelem; e++)
+  for(std::size_t ip=0; ip<npoin; ip++)
   {
-    for(std::size_t inode = 0; inode < 4; inode++)
-    {
-      auto ip = inpoel[4*e+inode];
-      const auto& pesup = tk::cref_find(myGhosts()->m_esup, ip);
-      for(auto er : pesup)
-        node_ndof[ip] = std::max(m_ndof[er], node_ndof[ip]);
-    }
+    const auto& pesup = tk::cref_find(myGhosts()->m_esup, ip);
+    for(auto er : pesup)
+      node_ndof[ip] = std::max(m_ndof[er], node_ndof[ip]);
   }
 
   for(std::size_t e = 0; e < nelem; e++)
   {
+    // Find if any node of this element has p1/p2 ndofs
     std::size_t counter_p2(0);
     std::size_t counter_p1(0);
     for(std::size_t inode = 0; inode < 4; inode++)
@@ -1160,8 +1156,8 @@ DG::refine_ndof()
         counter_p1++;
     }
 
-    // If there is one node with ndof as 10, all of the elements around this
-    // node will be refined. Same procedure is applied when ndof is 4.
+    // If there is at least one node with p1/p2 ndofs, all of the elements
+    // around this node are refined to p1/p2.
     if(counter_p2 > 0 && m_ndof[e] < 10)
     {
       if(m_ndof[e] == 4)
@@ -1181,25 +1177,21 @@ void DG::smooth_ndof()
 {
   auto d = Disc();
   const auto& inpoel = d->Inpoel();
-  const auto& coord = d->Coord();
-  const auto npoin = coord[0].size();
+  const auto npoin = d->Coord()[0].size();
   const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
   std::vector<std::size_t> node_ndof(npoin, 1);
 
   // Mark the max ndof for each node and store in node_ndof
-  for(std::size_t e = 0; e < nelem; e++)
+  for(std::size_t ip=0; ip<npoin; ip++)
   {
-    for(std::size_t inode = 0; inode < 4; inode++)
-    {
-      auto ip = inpoel[4*e+inode];
-      const auto& pesup = tk::cref_find(myGhosts()->m_esup, ip);
-      for(auto er : pesup)
-        node_ndof[ip] = std::max(m_ndof[er], node_ndof[ip]);
-    }
+    const auto& pesup = tk::cref_find(myGhosts()->m_esup, ip);
+    for(auto er : pesup)
+      node_ndof[ip] = std::max(m_ndof[er], node_ndof[ip]);
   }
 
   for(std::size_t e = 0; e < nelem; e++)
   {
+    // Find if any node of this element has p1/p2 ndofs
     std::size_t counter_p2(0);
     std::size_t counter_p1(0);
     for(std::size_t inode = 0; inode < 4; inode++)
@@ -1211,8 +1203,8 @@ void DG::smooth_ndof()
         counter_p1++;
     }
 
-    // If the ndof of all the nodes in the element is 10, this element will be
-    // refined. Same procedure is applied when all the ndofs are 4.
+    // If all the nodes in the element are p1/p2, this element is refined to
+    // p1/p2.
     if(counter_p2 == 4 && m_ndof[e] == 4)
       m_ndof[e] = 10;
     else if(counter_p1 == 4 && m_ndof[e] == 1)
