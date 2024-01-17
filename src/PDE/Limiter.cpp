@@ -350,10 +350,13 @@ VertexBasedCompflow_P1(
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
+  // Null field for MarkShockCells argument
+  tk::Fields P;
+
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, 1, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, U, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -443,10 +446,13 @@ VertexBasedCompflow_P2(
   const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
+  // Null field for MarkShockCells argument
+  tk::Fields P;
+
   if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, 1, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, U, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
