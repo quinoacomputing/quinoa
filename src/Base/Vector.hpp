@@ -28,13 +28,6 @@
 
 namespace tk {
 
-//! \brief Index for Cauchy stress components, since only the 6 independent
-//!   components are stored.
-const std::array< std::array< std::size_t, 3 >, 3 > stressCmp{{
-  {{0, 3, 4}},
-  {{3, 1, 5}},
-  {{4, 5, 2}} }};
-
 //! Flip sign of vector components
 //! \param[in] v Vector whose components to multiply by -1.0
 inline void

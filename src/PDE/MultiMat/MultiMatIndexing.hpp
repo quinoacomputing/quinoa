@@ -217,6 +217,13 @@ inline std::size_t newSolidsAccFn( std::size_t kmat,
   std::size_t i, std::size_t j, std::size_t l)
 { return 3*9*kmat+3*(3*i+j)+l; }
 
+//! \brief Index for Cauchy stress components, since only the 6 independent
+//!   components are stored.
+const std::array< std::array< std::size_t, 3 >, 3 > stressCmp{{
+  {{0, 3, 4}},
+  {{3, 1, 5}},
+  {{4, 5, 2}} }};
+
 //@}
 
 } //inciter::
