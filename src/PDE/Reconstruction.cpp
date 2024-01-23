@@ -1034,10 +1034,13 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 
   // interface detection
   std::vector< std::size_t > matInt(nmat, 0);
-  std::vector< tk::real > alAvg(nmat, 0.0);
-  for (std::size_t k=0; k<nmat; ++k)
-    alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
-  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+  bool intInd(false);
+  if (nmat > 1) {
+    std::vector< tk::real > alAvg(nmat, 0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
+    intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+  }
 
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());
