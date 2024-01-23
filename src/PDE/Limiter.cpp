@@ -1958,17 +1958,31 @@ void PositivityLimitingMultiMat( std::size_t nmat,
       }
     }
   }
-  for(std::size_t icomp = volfracIdx(nmat, nmat); icomp < ncomp; icomp++)
-    phic_p1[icomp] = std::min( phic_bound[icomp], phic_p1[icomp] );
-  for(std::size_t icomp = pressureIdx(nmat, 0); icomp < pressureIdx(nmat, nmat);
-      icomp++)
-    phip_p1[icomp] = std::min( phip_bound[icomp], phip_p1[icomp] );
-  if(ndof_el > 4) {
-    for(std::size_t icomp = volfracIdx(nmat, nmat); icomp < ncomp; icomp++)
-      phic_p2[icomp] = std::min( phic_bound[icomp], phic_p2[icomp] );
-    for(std::size_t icomp = pressureIdx(nmat, 0); icomp < pressureIdx(nmat, nmat);
-        icomp++)
-      phip_p2[icomp] = std::min( phip_bound[icomp], phip_p2[icomp] );
+
+  // apply new bounds to material quantities
+  for (std::size_t k=0; k<nmat; ++k) {
+    // mat density
+    phic_p1[densityIdx(nmat, k)] = std::min( phic_bound[densityIdx(nmat, k)],
+      phic_p1[densityIdx(nmat, k)] );
+    // mat energy
+    phic_p1[energyIdx(nmat, k)] = std::min( phic_bound[energyIdx(nmat, k)],
+      phic_p1[energyIdx(nmat, k)] );
+    // mat pressure
+    phip_p1[pressureIdx(nmat, k)] = std::min( phip_bound[pressureIdx(nmat, k)],
+      phip_p1[pressureIdx(nmat, k)] );
+
+    // for dgp2
+    if (ndof_el > 4) {
+      // mat density
+      phic_p2[densityIdx(nmat, k)] = std::min( phic_bound[densityIdx(nmat, k)],
+        phic_p2[densityIdx(nmat, k)] );
+      // mat energy
+      phic_p2[energyIdx(nmat, k)] = std::min( phic_bound[energyIdx(nmat, k)],
+        phic_p2[energyIdx(nmat, k)] );
+      // mat pressure
+      phip_p2[pressureIdx(nmat, k)] = std::min( phip_bound[pressureIdx(nmat, k)],
+        phip_p2[pressureIdx(nmat, k)] );
+    }
   }
 }
 
