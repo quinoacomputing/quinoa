@@ -37,17 +37,21 @@ module dg {
       entry void comlim( int fromch,
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& u,
-                         const std::vector< std::vector< tk::real > >& prim,
-                         const std::vector< std::size_t >& ndof );
+                         const std::vector< std::vector< tk::real > >& prim );
       entry void comnodeout( const std::vector< std::size_t >& gid,
                              const std::vector< std::size_t >& nesup,
                              const std::vector< std::vector< tk::real > >& Lu,
                              const std::vector< std::vector< tk::real > >& Lp );
+      entry void comrefine( int fromch,
+                            const std::vector< std::size_t >& tetid,
+                            const std::vector< std::size_t >& ndof );
+      entry void comsmooth( int fromch,
+                            const std::vector< std::size_t >& tetid,
+                            const std::vector< std::size_t >& ndof );
       entry void comreco( int fromch,
                           const std::vector< std::size_t >& tetid,
                           const std::vector< std::vector< tk::real > >& u,
-                          const std::vector< std::vector< tk::real > >& prim,
-                          const std::vector< std::size_t >& ndof );
+                          const std::vector< std::vector< tk::real > >& prim );
       entry void comsol( int fromch,
                          std::size_t fromstage,
                          const std::vector< std::size_t >& tetid,
@@ -72,7 +76,16 @@ module dg {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4sol() {
-        when ownsol_complete(), comsol_complete() serial "sol" { reco(); } }
+        when ownsol_complete(), comsol_complete() serial "sol" { refine(); }
+      }
+
+      entry void wait4refine() {
+        when ownrefine_complete(), comrefine_complete() serial "refine" { smooth(); }
+      }
+
+      entry void wait4smooth() {
+        when ownsmooth_complete(), comsmooth_complete() serial "smooth" { reco(); }
+      }
 
       entry void wait4reco() {
         when ownreco_complete(), comreco_complete() serial "reco"
@@ -93,6 +106,10 @@ module dg {
 
       entry void ownsol_complete();
       entry void comsol_complete();
+      entry void ownrefine_complete();
+      entry void comrefine_complete();
+      entry void ownsmooth_complete();
+      entry void comsmooth_complete();
       entry void ownreco_complete();
       entry void comreco_complete();
       entry void ownnodalExtrema_complete();

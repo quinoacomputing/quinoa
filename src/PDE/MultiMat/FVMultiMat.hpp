@@ -398,12 +398,14 @@ class MultiMat {
 
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
+      const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+        tag::matidxmap >().template get< tag::solidx >();
 
       // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          coord, srcFlag, U, P, nmat );
+          coord, srcFlag, solidx, U, P, nmat );
         PositivityPreservingMultiMat_FV( inpoel, fd.Esuel().size()/4, nmat,
           m_mat_blk, coord, geoFace, U, P );
       }

@@ -566,24 +566,27 @@ class MultiMat {
       const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
       auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+        tag::matidxmap >().template get< tag::solidx >();
 
       // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::SUPERBEEP1)
       {
         SuperbeeMultiMat_P1( fd.Esuel(), inpoel, ndofel,
-          coord, U, P, nmat );
+          coord, solidx, U, P, nmat );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_mat_blk, fd, geoFace, geoElem, coord, flux,U, P,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, P,
           nmat, shockmarker );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
       {
         VertexBasedMultiMat_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, pNodalExtrm, mtInv, flux, U, P, nmat, shockmarker );
+          uNodalExtrm, pNodalExtrm, mtInv, flux, solidx, U, P, nmat,
+          shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {

@@ -107,19 +107,27 @@ class DG : public CBase_DG {
     //! Continue to next time step
     void next();
 
+    //!  Receive chare-boundary updated solution from neighboring chares
+    void comrefine( int fromch,
+                    const std::vector< std::size_t >& tetid,
+                    const std::vector< std::size_t >& ndof );
+
+    //  Receive chare-boundary refined ndof from neighboring chares
+    void comsmooth( int fromch,
+                    const std::vector< std::size_t >& tetid,
+                    const std::vector< std::size_t >& ndof );
+
     //! Receive chare-boundary limiter function data from neighboring chares
     void comlim( int fromch,
                  const std::vector< std::size_t >& tetid,
                  const std::vector< std::vector< tk::real > >& u,
-                 const std::vector< std::vector< tk::real > >& prim,
-                 const std::vector< std::size_t >& ndof );
+                 const std::vector< std::vector< tk::real > >& prim );
 
     //! Receive chare-boundary reconstructed data from neighboring chares
     void comreco( int fromch,
                   const std::vector< std::size_t >& tetid,
                   const std::vector< std::vector< tk::real > >& u,
-                  const std::vector< std::vector< tk::real > >& prim,
-                  const std::vector< std::size_t >& ndof );
+                  const std::vector< std::vector< tk::real > >& prim );
 
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
@@ -225,6 +233,8 @@ class DG : public CBase_DG {
       p | m_ninitsol;
       p | m_nlim;
       p | m_nnod;
+      p | m_nrefine;
+      p | m_nsmooth;
       p | m_nreco;
       p | m_nnodalExtrema;
       p | m_u;
@@ -284,6 +294,10 @@ class DG : public CBase_DG {
     //! \brief Counter signaling that we have received all our node solution
     //!   contributions
     std::size_t m_nnod;
+    //! Counter signaling that we have received all refined ndof
+    std::size_t m_nrefine;
+    //! Counter signaling that we have received all smoothed ndof
+    std::size_t m_nsmooth;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
     //! \brief Counter signaling that we have received all our nodal extrema from
@@ -372,6 +386,12 @@ class DG : public CBase_DG {
       CkCallback c,
       const std::unordered_map< std::size_t, std::size_t >& addedTets );
 
+    //! Add the protective layer for ndof refinement
+    void refine();
+
+    //! Smooth the refined ndof distribution
+    void smooth();
+
     //! Compute solution reconstructions
     void reco();
 
@@ -391,7 +411,10 @@ class DG : public CBase_DG {
     void evalRestart();
 
     //! p-refine all elements that are adjacent to p-refined elements
-    void propagate_ndof();
+    void refine_ndof();
+
+    //! Smooth the refined ndof distribution to avoid zigzag refinement
+    void smooth_ndof();
 
     //! Decide wether to output field data
     bool fieldOutput() const;

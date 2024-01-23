@@ -46,6 +46,7 @@ SuperbeeMultiMat_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   const tk::UnsMesh::Coords& coord,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat );
@@ -73,6 +74,7 @@ VertexBasedCompflow_P1(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker );
 
@@ -93,6 +95,7 @@ VertexBasedCompflow_P2(
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker );
 
@@ -109,6 +112,7 @@ VertexBasedMultiMat_P1(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -132,6 +136,7 @@ VertexBasedMultiMat_P2(
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -145,6 +150,7 @@ VertexBasedMultiMat_FV(
   std::size_t nelem,
   const tk::UnsMesh::Coords& coord,
   const std::vector< int >& srcFlag,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat );
@@ -207,6 +213,7 @@ VertexBasedLimiting_P2(
 void consistentMultiMatLimiting_P1( const std::size_t nmat,
   const std::size_t rdof,
   const std::size_t e,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::vector< tk::real >& phic_p1,
@@ -280,6 +287,7 @@ void MarkShockCells ( const std::size_t nelem,
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const tk::FluxFn& flux,
+                      const std::vector< std::size_t >& solidx,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker );

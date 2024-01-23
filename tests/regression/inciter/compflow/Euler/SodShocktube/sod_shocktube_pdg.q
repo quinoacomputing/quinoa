@@ -10,7 +10,7 @@ inciter
   cfl 0.3
   ttyi 10       # TTY output interval
   scheme pdg
-  limiter superbeep1
+  limiter vertexbasedp1
 
   compflow
 
@@ -35,7 +35,7 @@ inciter
   end
 
   pref
-    ndofmax 4
+    ndofmax 10
     tolref 0
   end
 
