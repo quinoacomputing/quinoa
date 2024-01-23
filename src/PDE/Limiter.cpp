@@ -600,9 +600,16 @@ VertexBasedMultiMat_P1(
         for(std::size_t k=0; k<nmat; ++k) {
           if(U(e, volfracDofIdx(nmat,k,rdof,0)) < 1e-4) {
             // limit the density and energy of minor materials
+            vars.clear();
+            vars.push_back(densityIdx(nmat, k));
+            vars.push_back(energyIdx(nmat, k));
+            if (solidx[k] > 0) {
+              for (std::size_t i=0; i<3; ++i)
+                for (std::size_t j=0; j<3; ++j)
+                  vars.push_back(deformIdx(nmat, solidx[k], i, j));
+            }
             VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
-              ncomp, phic, std::vector< std::size_t >{densityIdx(nmat, k),
-              energyIdx(nmat, k)});
+              ncomp, phic, vars);
 
             // limit the pressure of minor materials
             VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el,

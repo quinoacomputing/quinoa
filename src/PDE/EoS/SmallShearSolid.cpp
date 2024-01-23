@@ -118,6 +118,7 @@ SmallShearSolid::pressure(
     std::cout << "Partial density:  " << arho << std::endl;
     std::cout << "Total energy:     " << arhoE << std::endl;
     std::cout << "Hydro energy:     " << arhoEh << std::endl;
+    std::cout << "det(defgrad):     " << tk::determinant(defgrad) << std::endl;
     std::cout << "Velocity:         " << u << ", " << v << ", " << w
       << std::endl;
     Throw("Material-" + std::to_string(imat) +
