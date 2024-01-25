@@ -23,7 +23,7 @@ inciter
 
     flux laxfriedrichs
 
-    prelax 1
+    prelax 0
 
     intsharp 0
 
@@ -49,7 +49,7 @@ inciter
       materialid 2 end
       pressure 1.0e5 end
       temperature 300.0 end
-      velocity 1000.0 0.0 0.0 end
+      velocity 100.0 0.0 0.0 end
 
       # left-side conditions
       box
@@ -59,7 +59,7 @@ inciter
         zmin -1.0 zmax 1.0
         pressure 1.0e5
         temperature 300.0
-        velocity 1000.0 0.0 0.0 end
+        velocity 100.0 0.0 0.0 end
       end
     end
 

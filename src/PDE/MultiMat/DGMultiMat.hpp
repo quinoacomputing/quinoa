@@ -318,6 +318,8 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
       const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
       auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
+      const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+        tag::matidxmap >().template get< tag::solidx >();
 
       Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -380,6 +382,19 @@ class MultiMat {
 
             pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
+
+            if (solidx[imat] > 0) {
+              auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(
+              arhomat, vel[0], vel[1], vel[2], arhoemat,
+              alphamat, imat, agmat );
+
+              pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
+              pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
+              pri[stressIdx(nmat,solidx[imat],2)] = asigmat[2][2];
+              pri[stressIdx(nmat,solidx[imat],3)] = asigmat[0][1];
+              pri[stressIdx(nmat,solidx[imat],4)] = asigmat[0][2];
+              pri[stressIdx(nmat,solidx[imat],5)] = asigmat[1][2];
+            }
           }
 
           // Evaluate bulk velocity at quadrature point
