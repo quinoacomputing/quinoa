@@ -167,8 +167,11 @@ nonConservativeInt( std::size_t nmat,
       {
         ymat[k] = state[densityIdx(nmat, k)]/rhob;
 
+        std::size_t mark(3*k);
+        if (solidx[k] > 0) mark = 3*nmat+ndof+3*3*9*nmat+3*(solidx[k]-1);
+
         for (std::size_t idir=0; idir<3; ++idir)
-          dap[idir] += riemannDeriv[3*k+idir][e];
+          dap[idir] += riemannDeriv[mark+idir][e];
       }
 
       // compute non-conservative terms
@@ -182,12 +185,16 @@ nonConservativeInt( std::size_t nmat,
       for (std::size_t k=0; k<nmat; ++k)
       {
         // evaluate non-conservative term for energy equation
+        std::size_t mark(3*k);
+        if (solidx[k] > 0) mark = 3*nmat+ndof+3*3*9*nmat+3*(solidx[k]-1);
+
         for(std::size_t idof=0; idof<ndof; ++idof)
         {
           ncf[densityIdx(nmat, k)][idof] = 0.0;
+
           for (std::size_t idir=0; idir<3; ++idir)
             ncf[energyIdx(nmat, k)][idof] -= vel[idir] * ( ymat[k]*dap[idir]
-                                                  - riemannDeriv[3*k+idir][e] );
+                                                  - riemannDeriv[mark+idir][e] );
         }
 
         // Evaluate non-conservative term for volume fraction equation:

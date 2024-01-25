@@ -694,6 +694,7 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::intsharp >();
       const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
         tag::matidxmap >().template get< tag::solidx >();
+      auto nsld = numSolids(nmat, solidx);
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -721,8 +722,11 @@ class MultiMat {
       //    function, for the volume fraction equations.
       // 3) nmat*3*3*9 terms: 3 derivatives of u_l*g_ij for each material, for
       //    the deformation gradient equations.
+      // 4) 3*nsld terms: 3 derivatives of \alpha \sigma_ij for each solid
+      //    material, for the energy equations.
       std::vector< std::vector< tk::real > >
-        riemannDeriv((3+3*3*9)*nmat+ndof, std::vector<tk::real>(U.nunk(),0.0));
+        riemannDeriv(3*nmat+ndof+3*3*9*nmat+3*nsld,
+        std::vector<tk::real>(U.nunk(),0.0));
 
       // vectors to store the data of riemann velocity used for reconstruction
       // in volume fraction equation
@@ -755,8 +759,8 @@ class MultiMat {
                         m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
 
-      Assert( riemannDeriv.size() == (3+3*3*9)*nmat+ndof, "Size of Riemann "
-              "derivative vector incorrect" );
+      Assert( riemannDeriv.size() == 3*nmat+ndof+3*3*9*nmat+3*nsld, "Size of "
+              "Riemann derivative vector incorrect" );
 
       // get derivatives from riemannDeriv
       for (std::size_t k=0; k<riemannDeriv.size(); ++k)
