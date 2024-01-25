@@ -295,12 +295,11 @@ update_rhs_bc ( ncomp_t ncomp,
     for (std::size_t k=0; k<nmat; ++k)
       if (solidx[k] > 0)
       {
-        std::size_t mark = ncomp+nmat+1+3*9*nmat+9*(solidx[k]-1);
+        std::size_t mark = ncomp+nmat+1+3*9*nmat+3*(solidx[k]-1);
 
         for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            riemannDeriv[3*nmat+ndof+3*3*9*nmat+3*(solidx[k]-1)+i][el] -=
-              wt * fl[mark+3*i+j] * fn[j];
+          riemannDeriv[3*nmat+ndof+3*3*9*nmat+3*(solidx[k]-1)+i][el] -=
+            wt * fl[mark+i];
       }
   }
 }

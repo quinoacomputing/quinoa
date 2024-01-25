@@ -194,7 +194,7 @@ struct LaxFriedrichsSolids {
     l_plus = l_plus/( std::fabs(vriem) + 1.0e-12 );
     l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
 
-    // Store Riemann u*g (3*9*nmat=27*nmat) and Riemann asig_ij (9*nsld)
+    // Store Riemann u*g (3*9*nmat=27*nmat) and Riemann asign_ij (3*nsld)
     if (std::fabs(l_plus) > 1.0e-10)
     {
       for (std::size_t k=0; k<nmat; ++k)
@@ -209,8 +209,7 @@ struct LaxFriedrichsSolids {
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-              flx.push_back( asig_l[k][i][j] );
+            flx.push_back( asign_l[k][i] );
         }
       }
     }
@@ -228,8 +227,7 @@ struct LaxFriedrichsSolids {
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-              flx.push_back( asig_r[k][i][j] );
+            flx.push_back( asign_r[k][i] );
         }
       }
     }
@@ -250,13 +248,12 @@ struct LaxFriedrichsSolids {
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-              flx.push_back( 0.5 * (asig_l[k][i][j] + asig_r[k][i][j]) );
+            flx.push_back( 0.5 * (asign_l[k][i] + asign_r[k][i]) );
         }
       }
     }
 
-    Assert( flx.size() == (ncomp+nmat+1+3*9*nmat+9*nsld), "Size of "
+    Assert( flx.size() == (ncomp+nmat+1+3*9*nmat+3*nsld), "Size of "
             "multi-material flux vector incorrect" );
 
     return flx;
