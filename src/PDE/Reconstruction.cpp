@@ -496,6 +496,7 @@ THINCReco( std::size_t rdof,
   using inciter::pressureDofIdx;
   using inciter::velocityDofIdx;
   using inciter::deformDofIdx;
+  using inciter::stressDofIdx;
   using inciter::volfracIdx;
   using inciter::densityIdx;
   using inciter::momentumIdx;
@@ -503,6 +504,7 @@ THINCReco( std::size_t rdof,
   using inciter::pressureIdx;
   using inciter::velocityIdx;
   using inciter::deformIdx;
+  using inciter::stressIdx;
 
   auto bparam = inciter::g_inputdeck.get< tag::param, tag::multimat,
     tag::intsharp_param >();
@@ -563,11 +565,16 @@ THINCReco( std::size_t rdof,
           * U(e, energyDofIdx(nmat,k,rdof,0))/alCC;
         state[ncomp+pressureIdx(nmat,k)] = alReco[k]
           * P(e, pressureDofIdx(nmat,k,rdof,0))/alCC;
-        if (solidx[k] > 0)
+        if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
               state[deformIdx(nmat,solidx[k],i,j)] = alReco[k]
                 * U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0))/alCC;
+
+          for (std::size_t i=0; i<6; ++i)
+            state[ncomp+stressIdx(nmat,solidx[k],i)] = alReco[k]
+              * P(e, stressDofIdx(nmat,solidx[k],i,rdof,0))/alCC;
+        }
       }
 
       rhobCC += U(e, densityDofIdx(nmat,k,rdof,0));

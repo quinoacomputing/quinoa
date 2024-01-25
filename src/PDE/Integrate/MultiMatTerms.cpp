@@ -856,14 +856,14 @@ std::vector< std::array< tk::real, 3 > >
 fluxTerms(
   std::size_t ncomp,
   std::size_t nmat,
-  const std::vector< inciter::EOS >& mat_blk,
+  const std::vector< inciter::EOS >& /*mat_blk*/,
   const std::vector< tk::real >& ugp )
 // *****************************************************************************
 //  Compute the flux-function for the multimaterial PDEs
 //! \param[in] ncomp Number of components in this PDE system
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] mat_blk EOS material block
-//! \param[in] U Solution vector at recent time step
+// //! \param[in] mat_blk EOS material block
+//! \param[in] ugp State vector at the Gauss point at which flux is required
 //! \return Flux vectors for all components in multi-material PDE system
 // *****************************************************************************
 {
@@ -899,9 +899,7 @@ fluxTerms(
       al[k] = ugp[volfracIdx(nmat, k)];
       // inv deformation gradient and Cauchy stress tensors
       ag.push_back(inciter::getDeformGrad(nmat, k, ugp));
-      asig.push_back(mat_blk[k].computeTensor< inciter::EOS::CauchyStress >(
-        ugp[densityIdx(nmat, k)], u, v, w, ugp[energyIdx(nmat, k)],
-        al[k], k, ag[k]));
+      asig.push_back(inciter::getCauchyStress(nmat, k, ncomp, ugp));
       for (std::size_t i=0; i<3; ++i) asig[k][i][i] -= ugp[ncomp+pressureIdx(nmat,k)];
 
       for (size_t i=0; i<3; ++i)

@@ -62,6 +62,14 @@ getDeformGrad(
   std::size_t k,
   const std::vector< tk::real >& state );
 
+//! Get the elastic Cauchy stress tensor for a material at given location
+std::array< std::array< tk::real, 3 >, 3 >
+getCauchyStress(
+  std::size_t nmat,
+  std::size_t k,
+  std::size_t ncomp,
+  const std::vector< tk::real >& state );
+
 //! Check whether we have solid materials in our problem
 bool
 haveSolid(

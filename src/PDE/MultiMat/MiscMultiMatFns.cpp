@@ -579,6 +579,38 @@ getDeformGrad(
   return agk;
 }
 
+std::array< std::array< tk::real, 3 >, 3 >
+getCauchyStress(
+  std::size_t nmat,
+  std::size_t k,
+  std::size_t ncomp,
+  const std::vector< tk::real >& state )
+// *****************************************************************************
+//  Get the elastic Cauchy stress tensor for a material at given location
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] k Material id whose deformation gradient is required
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] state State vector at location
+//! \return Elastic Cauchy stress tensor (alpha * \sigma_ij) of material k
+// *****************************************************************************
+{
+  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
+    tag::matidxmap >().template get< tag::solidx >();
+  std::array< std::array< tk::real, 3 >, 3 >
+    asigk{{ {{0,0,0}}, {{0,0,0}}, {{0,0,0}} }};
+
+  // elastic Cauchy stress for solids
+  if (solidx[k] > 0) {
+    for (std::size_t i=0; i<3; ++i) {
+      for (std::size_t j=0; j<3; ++j)
+        asigk[i][j] = state[ncomp +
+          stressIdx(nmat, solidx[k], stressCmp[i][j])];
+    }
+  }
+
+  return asigk;
+}
+
 bool
 haveSolid(
   std::size_t nmat,

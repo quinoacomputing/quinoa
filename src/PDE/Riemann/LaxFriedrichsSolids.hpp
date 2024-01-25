@@ -81,9 +81,7 @@ struct LaxFriedrichsSolids {
 
       // inv deformation gradient and Cauchy stress tensors
       ag_l.push_back(getDeformGrad(nmat, k, u[0]));
-      asig_l.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
-        u[0][densityIdx(nmat, k)], ul, vl, wl, u[0][energyIdx(nmat, k)],
-        al_l[k], k, ag_l[k]));
+      asig_l.push_back(getCauchyStress(nmat, k, ncomp, u[0]));
       for (std::size_t i=0; i<3; ++i) asig_l[k][i][i] -= pml[k];
 
       // normal stress (traction) vector
@@ -102,9 +100,7 @@ struct LaxFriedrichsSolids {
 
       // inv deformation gradient and Cauchy stress tensors
       ag_r.push_back(getDeformGrad(nmat, k, u[1]));
-      asig_r.push_back(mat_blk[k].computeTensor< EOS::CauchyStress >(
-        u[1][densityIdx(nmat, k)], ur, vr, wr, u[1][energyIdx(nmat, k)],
-        al_r[k], k, ag_r[k]));
+      asig_r.push_back(getCauchyStress(nmat, k, ncomp, u[1]));
       for (std::size_t i=0; i<3; ++i) asig_r[k][i][i] -= pmr[k];
 
       // normal stress (traction) vector
