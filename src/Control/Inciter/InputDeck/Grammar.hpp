@@ -399,7 +399,9 @@ namespace grm {
         for (const auto& mtype : matprop) {
           if (mtype.template get< tag::eos >() ==
             inciter::ctr::MaterialType::SMALLSHEARSOLID) {
-            ntot += 9;
+            const auto& mat_id = mtype.template get< tag::id >();
+            // Add 9 components per solid (inv-deformation gradient tensor)
+            ntot += 9*mat_id.size();
           }
         }
 
@@ -454,15 +456,6 @@ namespace grm {
             const auto& mu = mtype.template get< tag::mu >();
             if (mu.size() != mat_id.size())
               Message< Stack, ERROR, MsgKey::EOSMU >( stack, in );
-
-            // add to solid-counter
-            ++isolcntr;
-            // assign solid-counter value to solid-index
-            isolidx = isolcntr;
-          }
-          else {
-            // since not solid, assign 0 to solid-index
-            isolidx = 0;
           }
         }
         else if (meos == inciter::ctr::MaterialType::JWL) {
@@ -519,6 +512,18 @@ namespace grm {
           //  tag::eos >());
           eosmap[midx] = mtypei;
           idxmap[midx] = i;
+
+          if (meos == inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+            // add to solid-counter
+            ++isolcntr;
+            // assign solid-counter value to solid-index
+            isolidx = isolcntr;
+          }
+          else {
+            // since not solid, assign 0 to solid-index
+            isolidx = 0;
+          }
+
           solidxmap[midx] = isolidx;
           ++i;
         }
