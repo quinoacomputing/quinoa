@@ -2,14 +2,14 @@
 # add_regression_test().
 
 # Parallel
-add_regression_test(multimat_solidfluid_adv_p0p1 ${INCITER_EXECUTABLE}
+add_regression_test(multimat_solid_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES solidfluid_adv_p0p1.q rectangle_01_1.5k.exo
-                    ARGS -c solidfluid_adv_p0p1.q -i rectangle_01_1.5k.exo -v
-                    BIN_BASELINE solidfluid_adv_p0p1_pe4.std.exo.0
-                                 solidfluid_adv_p0p1_pe4.std.exo.1
-                                 solidfluid_adv_p0p1_pe4.std.exo.2
-                                 solidfluid_adv_p0p1_pe4.std.exo.3
+                    INPUTFILES solid_shocktube_p0p1.q rectangle_01_int50_struc896.exo
+                    ARGS -c solid_shocktube_p0p1.q -i rectangle_01_int50_struc896.exo -v
+                    BIN_BASELINE solid_shocktube_p0p1_pe4.std.exo.0
+                                 solid_shocktube_p0p1_pe4.std.exo.1
+                                 solid_shocktube_p0p1_pe4.std.exo.2
+                                 solid_shocktube_p0p1_pe4.std.exo.3
                     BIN_RESULT out.e-s.0.4.0
                                out.e-s.0.4.1
                                out.e-s.0.4.2
