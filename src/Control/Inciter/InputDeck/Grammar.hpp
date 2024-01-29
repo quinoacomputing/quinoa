@@ -1725,7 +1725,6 @@ namespace deck {
                                                            tag::flux >,
                              pegtl::alpha >,
                            ic< tag::compflow >,
-                           tk::grm::lua< use, tag::param, tag::compflow >,
                            material_properties< tag::compflow >,
                            parameter< tag::compflow, kw::sysfctvar,
                                       tag::sysfctvar >,
