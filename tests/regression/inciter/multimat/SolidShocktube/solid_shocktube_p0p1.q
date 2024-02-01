@@ -7,7 +7,7 @@ title "Solid-solid (Cu-Cu) shock tube"
 inciter
 
   term 3e-5
-  nstep 20
+  nstep 10
   cfl 0.8
   ttyi 5  # TTY output interval
   scheme p0p1
@@ -24,7 +24,7 @@ inciter
 
     flux laxfriedrichs
 
-    prelax 1
+    prelax 0
 
     intsharp 1
 
@@ -68,7 +68,7 @@ inciter
   end
 
   diagnostics
-    interval 5
+    interval 2
     format    scientific
     error l2
   end

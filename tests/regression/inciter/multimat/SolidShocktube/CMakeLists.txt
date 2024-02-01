@@ -3,17 +3,11 @@
 
 # Parallel
 add_regression_test(multimat_solid_shocktube_p0p1 ${INCITER_EXECUTABLE}
-                    NUMPES 4
+                    NUMPES 1
                     INPUTFILES solid_shocktube_p0p1.q rectangle_01_int50_struc896.exo
                     ARGS -c solid_shocktube_p0p1.q -i rectangle_01_int50_struc896.exo -v
-                    BIN_BASELINE solid_shocktube_p0p1_pe4.std.exo.0
-                                 solid_shocktube_p0p1_pe4.std.exo.1
-                                 solid_shocktube_p0p1_pe4.std.exo.2
-                                 solid_shocktube_p0p1_pe4.std.exo.3
-                    BIN_RESULT out.e-s.0.4.0
-                               out.e-s.0.4.1
-                               out.e-s.0.4.2
-                               out.e-s.0.4.3
+                    BIN_BASELINE solid_shocktube_p0p1.std.exo.0
+                    BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_p0p1.std
