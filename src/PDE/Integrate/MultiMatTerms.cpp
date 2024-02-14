@@ -242,7 +242,7 @@ nonConservativeInt( std::size_t nmat,
                 for (std::size_t l=0; l<3; ++l)
                 {
                   ncf[deformIdx(nmat,solidx[k],i,j)][idof] +=
-                    state[volfracIdx(nmat, k)]*(
+                    std::pow(state[volfracIdx(nmat,k)],1.0/3.0)*(
                       riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+l][e]
                      -riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,l,l)+j][e]);
                 }
@@ -515,19 +515,16 @@ pressureRelaxationInt( std::size_t nmat,
         real amat = 0.0;
         if (solidx[k] > 0)
         {
-          std::array< std::array< tk::real, 3 >, 3 > ag;
-          for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-              ag[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
-          auto agrot = tk::rotateTensor(ag, {{1.0, 0.0, 0.0}});
+          auto g = inciter::getDeformGrad(nmat, k, state);
+          auto grot = tk::rotateTensor(g, {{1.0, 0.0, 0.0}});
           amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
-            apmat[k], alphamat, k, agrot);
-          agrot = tk::rotateTensor(ag, {{0.0, 1.0, 0.0}});
+            apmat[k], alphamat, k, grot);
+          grot = tk::rotateTensor(g, {{0.0, 1.0, 0.0}});
           amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-            arhomat, apmat[k], alphamat, k, agrot));
-          agrot = tk::rotateTensor(ag, {{0.0, 0.0, 1.0}});
+            arhomat, apmat[k], alphamat, k, grot));
+          grot = tk::rotateTensor(g, {{0.0, 0.0, 1.0}});
           amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-            arhomat, apmat[k], alphamat, k, agrot));
+            arhomat, apmat[k], alphamat, k, grot));
         }
         else
         {
@@ -553,13 +550,15 @@ pressureRelaxationInt( std::size_t nmat,
         s_prelax[volfracIdx(nmat, k)] = s_alpha;
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
         if (solidx[k] > 0)
+        {
+          auto g = inciter::getDeformGrad(nmat, k, state);
           for (size_t i=0; i<3; ++i)
             for (size_t j=0; j<3; ++j)
             {
-              tk::real gij =
-                state[deformIdx(nmat,solidx[k],i,j)]/state[volfracIdx(nmat, k)];
-              s_prelax[deformIdx(nmat,solidx[k],i,j)] = gij * s_alpha;
+              s_prelax[deformIdx(nmat,solidx[k],i,j)] = (1.0/3.0) * g[i][j]
+                * std::pow(state[volfracIdx(nmat,k)],-2.0/3.0) * s_alpha;
             }
+        }
       }
 
       updateRhsPre( ncomp, ndof, dof_el, wt, e, B, s_prelax, R );
@@ -898,14 +897,14 @@ fluxTerms(
   if (inciter::haveSolid(nmat, solidx))
   {
     std::vector< tk::real > al(nmat, 0.0);
-    std::vector< std::array< std::array< tk::real, 3 >, 3 > > ag, asig;
+    std::vector< std::array< std::array< tk::real, 3 >, 3 > > g, asig;
     std::array< std::array< tk::real, 3 >, 3 >
       sig {{ {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }};
     for (std::size_t k=0; k<nmat; ++k)
     {
       al[k] = ugp[volfracIdx(nmat, k)];
       // inv deformation gradient and Cauchy stress tensors
-      ag.push_back(inciter::getDeformGrad(nmat, k, ugp));
+      g.push_back(inciter::getDeformGrad(nmat, k, ugp));
       asig.push_back(inciter::getCauchyStress(nmat, k, ncomp, ugp));
       for (std::size_t i=0; i<3; ++i) asig[k][i][i] -= ugp[ncomp+pressureIdx(nmat,k)];
 
@@ -952,15 +951,15 @@ fluxTerms(
       {
         for (std::size_t i=0; i<3; ++i)
         {
-          fl[deformIdx(nmat,solidx[k],i,0)][0] = u*ag[k][i][0];
-          fl[deformIdx(nmat,solidx[k],i,0)][1] = v*ag[k][i][0];
-          fl[deformIdx(nmat,solidx[k],i,0)][2] = w*ag[k][i][0];
-          fl[deformIdx(nmat,solidx[k],i,1)][0] = u*ag[k][i][1];
-          fl[deformIdx(nmat,solidx[k],i,1)][1] = v*ag[k][i][1];
-          fl[deformIdx(nmat,solidx[k],i,1)][2] = w*ag[k][i][1];
-          fl[deformIdx(nmat,solidx[k],i,2)][0] = u*ag[k][i][2];
-          fl[deformIdx(nmat,solidx[k],i,2)][1] = v*ag[k][i][2];
-          fl[deformIdx(nmat,solidx[k],i,2)][2] = w*ag[k][i][2];
+          fl[deformIdx(nmat,solidx[k],i,0)][0] = u*std::pow(al[k],1.0/3.0)*g[k][i][0];
+          fl[deformIdx(nmat,solidx[k],i,0)][1] = v*std::pow(al[k],1.0/3.0)*g[k][i][0];
+          fl[deformIdx(nmat,solidx[k],i,0)][2] = w*std::pow(al[k],1.0/3.0)*g[k][i][0];
+          fl[deformIdx(nmat,solidx[k],i,1)][0] = u*std::pow(al[k],1.0/3.0)*g[k][i][1];
+          fl[deformIdx(nmat,solidx[k],i,1)][1] = v*std::pow(al[k],1.0/3.0)*g[k][i][1];
+          fl[deformIdx(nmat,solidx[k],i,1)][2] = w*std::pow(al[k],1.0/3.0)*g[k][i][1];
+          fl[deformIdx(nmat,solidx[k],i,2)][0] = u*std::pow(al[k],1.0/3.0)*g[k][i][2];
+          fl[deformIdx(nmat,solidx[k],i,2)][1] = v*std::pow(al[k],1.0/3.0)*g[k][i][2];
+          fl[deformIdx(nmat,solidx[k],i,2)][2] = w*std::pow(al[k],1.0/3.0)*g[k][i][2];
         }
       }
     }

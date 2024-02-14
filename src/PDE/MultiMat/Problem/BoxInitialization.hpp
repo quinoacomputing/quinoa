@@ -178,7 +178,8 @@ void initializeBox( const std::vector< EOS >& mat_blk,
           for (std::size_t j=0; j<3; ++j) {
             if (i==j) gk[i][j] = 1.0;
             else gk[i][j] = 0.0;
-            s[deformIdx(nmat,solidx[k],i,j)] = s[volfracIdx(nmat,k)]*gk[i][j];
+            s[deformIdx(nmat,solidx[k],i,j)] =
+              std::pow(s[volfracIdx(nmat,k)],1.0/3.0)*gk[i][j];
           }
         }
       }
