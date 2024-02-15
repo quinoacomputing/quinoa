@@ -284,7 +284,7 @@ class MultiMat {
                 for (std::size_t i=0; i<3; ++i)
                   for (std::size_t j=0; j<3; ++j)
                     for (std::size_t idof=1; idof<rdof; ++idof) {
-                      unk(e, deformDofIdx(nmat,k,i,j,rdof,idof)) = 0.0;
+                      unk(e, deformDofIdx(nmat,solidx[k],i,j,rdof,idof)) = 0.0;
                     }
               }
             }
@@ -666,9 +666,11 @@ class MultiMat {
             if (solidx[k] > 0) {
               for (std::size_t i=0; i<3; ++i)
                 for (std::size_t j=0; j<3; ++j)
+		{
                   gb[3*i+j][e] +=
-		    std::pow(unk(e,volfracDofIdx(nmat,solidx[k],rdof,0)),2./3.)
+		    std::pow(unk(e,volfracDofIdx(nmat,k,rdof,0)),0.0/3.0)
                     *unk(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+		}
             }
           }
         }

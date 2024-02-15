@@ -558,7 +558,8 @@ getDeformGrad(
     // deformation gradient for solids
     for (std::size_t i=0; i<3; ++i) {
       for (std::size_t j=0; j<3; ++j)
-        gk[i][j] = state[deformIdx(nmat,solidx[k],i,j)]/std::pow(state[volfracIdx(nmat,k)],1.0/3.0);
+        gk[i][j] = state[deformIdx(nmat,solidx[k],i,j)]
+          /std::pow(state[volfracIdx(nmat,k)],1.0/1.0);
     }
   }
   else {
