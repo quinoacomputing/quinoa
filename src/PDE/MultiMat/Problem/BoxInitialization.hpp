@@ -179,7 +179,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
             if (i==j) gk[i][j] = 1.0;
             else gk[i][j] = 0.0;
             s[deformIdx(nmat,solidx[k],i,j)] =
-              std::pow(s[volfracIdx(nmat,k)],1.0/1.0)*gk[i][j];
+              std::pow(s[volfracIdx(nmat,k)],1.0/3.0)*gk[i][j];
           }
         }
       }
