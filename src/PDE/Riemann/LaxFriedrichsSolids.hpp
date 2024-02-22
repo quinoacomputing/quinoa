@@ -148,7 +148,7 @@ struct LaxFriedrichsSolids {
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            fluxl[deformIdx(nmat,solidx[k],i,j)] = std::pow(al_l[k],1.0/1.0)*g_l[k][i][j]*vnl;
+            fluxl[deformIdx(nmat,solidx[k],i,j)] = std::pow(al_l[k],1.0/3.0)*g_l[k][i][j]*vnl;
       }
 
       // Right fluxes
@@ -164,7 +164,7 @@ struct LaxFriedrichsSolids {
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            fluxr[deformIdx(nmat,solidx[k],i,j)] = std::pow(al_r[k],1.0/1.0)*g_r[k][i][j]*vnr;
+            fluxr[deformIdx(nmat,solidx[k],i,j)] = std::pow(al_r[k],1.0/3.0)*g_r[k][i][j]*vnr;
       }
     }
 
