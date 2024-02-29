@@ -13,6 +13,7 @@
 #include "InciterPrint.hpp"
 #include "InciterDriver.hpp"
 #include "Inciter/InputDeck/Parser.hpp"
+#include "Inciter/InputDeck/LuaParser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "TaggedTupleDeepPrint.hpp"
@@ -24,6 +25,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::NewInputDeck g_newinputdeck;
 
 } // inciter::
 
@@ -70,6 +72,10 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline, int nrestart )
   // Parse input deck into g_inputdeck
   print.item( "Control file", cmdline.get< tag::io, tag::control >() );
   g_inputdeck = g_inputdeck_defaults;   // overwrite with defaults if restarted
+
+  //LuaParser luaparser( print, cmdline, g_newinputdeck );
+  //print.item( "Parsed lua file", "success" );
+
   InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
   print.item( "Parsed control file", "success" );
   print.endpart();

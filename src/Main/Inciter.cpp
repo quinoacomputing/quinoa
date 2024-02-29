@@ -32,6 +32,7 @@
 #include "Inciter/CmdLine/Parser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/NewInputDeck.hpp"
 #include "ChareStateCollector.hpp"
 #include "LBSwitch.hpp"
 
@@ -89,6 +90,12 @@ ctr::InputDeck g_inputdeck_defaults;
 //!   system distributes it to all PEs during initialization. Once distributed,
 //!   the object does not change.
 ctr::InputDeck g_inputdeck;
+//! Lua Input deck filled by LuaParser, containing all input data
+//! \details This object is in global scope, it contains all of user input, and
+//!   thus it is made available to all PEs for convenience reasons. The runtime
+//!   system distributes it to all PEs during initialization. Once distributed,
+//!   the object does not change.
+ctr::NewInputDeck g_newinputdeck;
 //! Partial differential equations using continuous Galerkin selected by user
 //! \details This vector is in global scope, because it holds polymorphic
 //!   objects, and thus must be distributed to all PEs during initialization.
