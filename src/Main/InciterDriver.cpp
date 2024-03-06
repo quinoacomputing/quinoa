@@ -25,7 +25,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
-extern ctr::NewInputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // inciter::
 
@@ -73,17 +73,19 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline, int nrestart )
   print.item( "Control file", cmdline.get< tag::io, tag::control >() );
   g_inputdeck = g_inputdeck_defaults;   // overwrite with defaults if restarted
 
-  //LuaParser luaparser( print, cmdline, g_newinputdeck );
-  //print.item( "Parsed lua file", "success" );
+  LuaParser luaparser( print, cmdline, g_newinputdeck );
+  print.item( "Parsed lua file", "success" );
 
-  InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
-  print.item( "Parsed control file", "success" );
+  //InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
+  //print.item( "Parsed control file", "success" );
   print.endpart();
 
   // Output command line object to file
   auto logfilename = tk::inciter_executable() + "_input.log";
   tk::Writer log( logfilename );
   tk::print( log.stream(), "inputdeck", g_inputdeck );
+
+  CkExit();
 }
 
 void

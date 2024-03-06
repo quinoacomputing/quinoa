@@ -32,7 +32,7 @@
 #include "Inciter/CmdLine/Parser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "Inciter/InputDeck/NewInputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "ChareStateCollector.hpp"
 #include "LBSwitch.hpp"
 
@@ -95,7 +95,7 @@ ctr::InputDeck g_inputdeck;
 //!   thus it is made available to all PEs for convenience reasons. The runtime
 //!   system distributes it to all PEs during initialization. Once distributed,
 //!   the object does not change.
-ctr::NewInputDeck g_newinputdeck;
+ctr::New2InputDeck g_newinputdeck;
 //! Partial differential equations using continuous Galerkin selected by user
 //! \details This vector is in global scope, because it holds polymorphic
 //!   objects, and thus must be distributed to all PEs during initialization.

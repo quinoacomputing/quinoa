@@ -46,6 +46,22 @@ struct info_t {
     longDescription(lDescr),
     typeDescription(tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | keyword;
+    p | shortDescription;
+    p | longDescription;
+    p | typeDescription;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i info_t object reference
+  friend void operator|( PUP::er& p, info_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Struct for storing entries in the input deck
@@ -62,6 +78,20 @@ struct entry_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | data;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i entry_t object reference
+  friend void operator|( PUP::er& p, entry_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Struct for storing options in the input deck
@@ -79,6 +109,20 @@ struct option_t {
     info(kw, sDescr, lDescr, tDescr),
     data(d)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | data;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i option_t object reference
+  friend void operator|( PUP::er& p, option_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Struct for storing vector entries
@@ -87,6 +131,7 @@ struct vecentry_t {
   info_t info;
   std::vector< T > data;
 
+  // constructor
   vecentry_t< T >(
     std::string kw,
     std::string sDescr,
@@ -96,6 +141,20 @@ struct vecentry_t {
     info(kw, sDescr, lDescr, tDescr),
     data(d)
     {}
+
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &p ) {
+      p | info;
+      p | data;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] i vecentry_t object reference
+    friend void operator|( PUP::er& p, vecentry_t& i ) { i.pup(p); }
+    //@}
 };
 
 // -----------------------------------------------------------------------------
@@ -113,10 +172,6 @@ struct transport_t {
     R"(This keyword is used to specify the number of scalar
     components of transport (linear advection) equations.)", "uint"};
 
-  entry_t< std::string > depvar {"depvar",
-    "Select dependent variable name for transport equation.",
-    R"(Select dependent variable name for transport equation.)", "string"};
-
   entry_t< ProblemType > problem {"problem",
     "Specify problem configuration for partial differential equation solver",
     R"(This keyword is used to specify the problem configuration for the
@@ -130,6 +185,21 @@ struct transport_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | ncomp;
+    p | problem;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i transport_t object reference
+  friend void operator|( PUP::er& p, transport_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! CompFlow PDE block
@@ -151,6 +221,20 @@ struct compflow_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | problem;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i compflow_t object reference
+  friend void operator|( PUP::er& p, compflow_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! MultiMat PDE block
@@ -208,6 +292,25 @@ struct multimat_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | nmat;
+    p | prelax;
+    p | prelax_timescale;
+    p | intsharp;
+    p | intsharp_param;
+    p | problem;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i multimat_t object reference
+  friend void operator|( PUP::er& p, multimat_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Material block
@@ -298,6 +401,37 @@ struct material_t {
   vecentry_t< tk::real > k {"k", "heat conductivity",
     R"(This keyword is used to specify the material property, heat
     conductivity.)", "real"};
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | id;
+    p | eos;
+    p | gamma;
+    p | pstiff;
+    p | w_gru;
+    p | A_jwl;
+    p | B_jwl;
+    p | C_jwl;
+    p | R1_jwl;
+    p | R2_jwl;
+    p | rho0_jwl;
+    p | de_jwl;
+    p | rhor_jwl;
+    p | Tr_jwl;
+    p | Pr_jwl;
+    p | mu;
+    p | cv;
+    p | k;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i material_t object reference
+  friend void operator|( PUP::er& p, material_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Material index table
@@ -317,6 +451,22 @@ struct matidxmap_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | eosidx;
+    p | matidx;
+    p | solidx;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i matidxmap_t object reference
+  friend void operator|( PUP::er& p, matidxmap_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Field output block
@@ -376,6 +526,27 @@ struct fieldoutput_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | iter_interval;
+    p | time_interval;
+    p | time_range;
+    p | refined;
+    p | filetype;
+    p | elemvar;
+    p | nodevar;
+    p | sideset;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i fieldoutput_t object reference
+  friend void operator|( PUP::er& p, fieldoutput_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Diagnostics output block
@@ -421,6 +592,23 @@ struct diagnostics_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | iter_interval;
+    p | error;
+    p | format;
+    p | precision;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i diagnostics_t object reference
+  friend void operator|( PUP::er& p, diagnostics_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! History point block
@@ -438,6 +626,21 @@ struct point_t {
   vecentry_t< tk::real > coord {"coord", "Specify point coordinates",
     R"(This keyword is used to specify coordinates of the history-point.)",
     "3 reals"};
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | id;
+    p | coord;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i point_t object reference
+  friend void operator|( PUP::er& p, point_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! History output block
@@ -486,6 +689,24 @@ struct historyoutput_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | iter_interval;
+    p | time_interval;
+    p | time_range;
+    p | precision;
+    p | point;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i historyoutput_t object reference
+  friend void operator|( PUP::er& p, historyoutput_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! ALE move sideset block
@@ -510,6 +731,22 @@ struct move_t {
     R"(This keyword is used to specify a user-defined function block with
     discrete points, listed inside the fn block. Used in ale mesh motion and
     time-dependent BC specification)", "reals" };
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | sideset;
+    p | fntype;
+    p | fn;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i move_t object reference
+  friend void operator|( PUP::er& p, move_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! ALE block
@@ -517,11 +754,11 @@ struct move_t {
 struct ale_t {
   info_t info;
 
+  // entries inside the block
   entry_t< bool > ale {"ale", "Boolean indicating ALE",
     R"(AUTO-GENERATED boolean indicating if ALE mesh-motion is activated)",
     "bool"};
 
-  // entries inside the block
   entry_t< MeshVelocitySmootherType > smoother {"smoother",
     "Select mesh velocity smoother",
     R"(This keyword is used to select a mesh velocity smoother option, used for
@@ -601,6 +838,29 @@ struct ale_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | ale;
+    p | smoother;
+    p | mesh_velocity;
+    p | mesh_motion;
+    p | meshforce;
+    p | move;
+    p | dvcfl;
+    p | vortmult;
+    p | maxit;
+    p | tolerance;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i ale_t object reference
+  friend void operator|( PUP::er& p, ale_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! AMR coords block
@@ -677,6 +937,25 @@ struct coords_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | xminus;
+    p | xplus;
+    p | yminus;
+    p | yplus;
+    p | zminus;
+    p | zplus;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i coords_t object reference
+  friend void operator|( PUP::er& p, coords_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! AMR block
@@ -781,6 +1060,32 @@ struct amr_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | amr;
+    p | t0ref;
+    p | dtref;
+    p | dtref_uniform;
+    p | dtfreq;
+    p | maxlevels;
+    p | initial;
+    p | coords;
+    p | edgelist;
+    p | error;
+    p | refvar;
+    p | tol_refine;
+    p | tol_derefine;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i amr_t object reference
+  friend void operator|( PUP::er& p, amr_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! p-refinement block
@@ -821,6 +1126,23 @@ struct pref_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | pref;
+    p | indicator;
+    p | ndofmax;
+    p | tolref;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i pref_t object reference
+  friend void operator|( PUP::er& p, pref_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Time-dependent Boundary conditions (bc) block
@@ -847,6 +1169,21 @@ struct bctimedep_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | sideset;
+    p | fn;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i bctimedep_t object reference
+  friend void operator|( PUP::er& p, bctimedep_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Boundary conditions (bc) block
@@ -949,6 +1286,35 @@ struct bc_t {
   entry_t< tk::real > density {"density", "Specify density",
     R"(This keyword is used to configure a density, used for, e.g., boundary
     or initial conditions.)", "real"};
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | mesh;
+    p | dirichlet;
+    p | symmetry;
+    p | inlet;
+    p | outlet;
+    p | farfield;
+    p | extrapolate;
+    p | stag;
+    p | skip;
+    p | sponge;
+    p | timedep;
+    p | point;
+    p | radius;
+    p | velocity;
+    p | pressure;
+    p | density;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i bc_t object reference
+  friend void operator|( PUP::er& p, bc_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Box initialization block
@@ -1053,6 +1419,39 @@ struct box_t {
     a mesh block or box IC, with 'initiate linear' type. The suggested value of
     the front width is about 4-5 times the mesh size inside the mesh block
     or box.)", "real"};
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | materialid;
+    p | volume;
+    p | mass;
+    p | density;
+    p | velocity;
+    p | pressure;
+    p | energy;
+    p | energy_content;
+    p | temperature;
+    p | xmin;
+    p | xmax;
+    p | ymin;
+    p | ymax;
+    p | zmin;
+    p | zmax;
+    p | orientation;
+    p | initiate;
+    p | point;
+    p | init_time;
+    p | front_width;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i box_t object reference
+  friend void operator|( PUP::er& p, box_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Mesh-block initialization block
@@ -1136,6 +1535,33 @@ struct block_t {
     a mesh block or box IC, with 'initiate linear' type. The suggested value of
     the front width is about 4-5 times the mesh size inside the mesh block
     or box.)", "real"};
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | blockid;
+    p | materialid;
+    p | volume;
+    p | mass;
+    p | density;
+    p | velocity;
+    p | pressure;
+    p | energy;
+    p | energy_content;
+    p | temperature;
+    p | initiate;
+    p | point;
+    p | init_time;
+    p | front_width;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i block_t object reference
+  friend void operator|( PUP::er& p, block_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Initial conditions (ic) block
@@ -1175,6 +1601,23 @@ struct ic_t {
     std::string tDescr ) :
     info(kw, sDescr, lDescr, tDescr)
     {}
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | materialid;
+    p | pressure;
+    p | temperature;
+    p | velocity;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i ic_t object reference
+  friend void operator|( PUP::er& p, ic_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! Mesh (for overset) block
@@ -1200,6 +1643,23 @@ struct mesh_t {
     R"(This keyword is used to configure a velocity vector used for
     moving the overset mesh.)",
     "3 reals"};
+
+  /** @name Charm++ pack/unpack serializer member functions */
+  ///@{
+  //! \brief Pack/Unpack serialize member function
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  void pup( PUP::er &p ) {
+    p | info;
+    p | filename;
+    p | location;
+    p | orientation;
+    p | velocity;
+  }
+  //! \brief Pack/Unpack serialize operator|
+  //! \param[in,out] p Charm++'s PUP::er serializer object reference
+  //! \param[in,out] i mesh_t object reference
+  friend void operator|( PUP::er& p, mesh_t& i ) { i.pup(p); }
+  //@}
 };
 
 //! The new input deck struct for inciter
@@ -1629,6 +2089,12 @@ struct NewInputDeck {
       used to specify the configuration for a system of partial differential
       equations, governing compressible multi-material hydrodynamics assuming
       velocity equilibrium (single velocity).)", "block-title"};
+
+    // Dependent variable name
+
+    entry_t< std::string > depvar {"depvar",
+      "Select dependent variable name for PDE.",
+      R"(Select dependent variable name for PDE.)", "string"};
 
     // -------------------------------------------------------------------------
     // physics choices
@@ -2157,6 +2623,65 @@ struct NewInputDeck {
       R"(This keyword is used to select the Richtmyer-Meshkov instability
       problem. In this problem, a shock hits a perturbed material interface.)",
       "string"};
+
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er &p ) {
+      p | inciter;
+      p | title;
+      p | nstep;
+      p | term;
+      p | t0;
+      p | dt;
+      p | cfl;
+      p | ttyi;
+      p | steady_state;
+      p | residual;
+      p | rescomp;
+      p | partitioning;
+      p | pelocal_reorder;
+      p | operator_reorder;
+      p | scheme;
+      p | ndof;
+      p | rdof;
+      p | limiter;
+      p | cweight;
+      p | shock_detector_coeff;
+      p | accuracy_test;
+      p | limsol_projection;
+      p | fct;
+      p | fctclip;
+      p | fcteps;
+      p | ctau;
+      p | sysfct;
+      p | sysfctvar;
+      p | flux;
+      p | pde;
+      p | transport;
+      p | compflow;
+      p | multimat;
+      p | depvar;
+      p | physics;
+      p | ncomp;
+      p | material;
+      p | matidxmap;
+      p | field_output;
+      p | diagnostics;
+      p | history_output;
+      p | ale;
+      p | amr;
+      p | pref;
+      p | bc;
+      p | ic;
+      p | mesh;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] i NewInputDeck object reference
+    friend void operator|( PUP::er& p, NewInputDeck& i ) { i.pup(p); }
+    //@}
 };
 
 } // ctr::

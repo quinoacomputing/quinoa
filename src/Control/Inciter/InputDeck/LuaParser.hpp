@@ -15,7 +15,7 @@
 
 #include "FileParser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "NewInputDeck.hpp"
+#include "New2InputDeck.hpp"
 
 namespace tk { class Print; }
 
@@ -31,10 +31,10 @@ class LuaParser : public tk::FileParser {
     //! Constructor
     explicit LuaParser( const tk::Print& print,
                               const ctr::CmdLine& cmdline,
-                              ctr::NewInputDeck& inputdeck );
+                              ctr::New2InputDeck& inputdeck );
 
     //! Store lua inputdeck in custom struct
-    inciter::ctr::NewInputDeck
+    inciter::ctr::New2InputDeck
     storeInputDeck(
       const sol::table& lua_ideck );
 

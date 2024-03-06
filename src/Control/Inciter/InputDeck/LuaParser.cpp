@@ -21,6 +21,7 @@
 #include "Inciter/Types.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/NewInputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
 #include "Inciter/InputDeck/Grammar.hpp"
 
@@ -37,7 +38,7 @@ using inciter::LuaParser;
 
 LuaParser::LuaParser( const tk::Print& print,
                       const ctr::CmdLine& cmdline,
-                      ctr::NewInputDeck& inputdeck ) :
+                      ctr::New2InputDeck& inputdeck ) :
   FileParser( cmdline.get< tag::io, tag::control >() )
 // *****************************************************************************
 //  Constructor
@@ -78,7 +79,7 @@ LuaParser::LuaParser( const tk::Print& print,
   diagnostics( print, std::vector< std::string >{}/*id.get< tag::error >()*/ );
 }
 
-inciter::ctr::NewInputDeck
+inciter::ctr::New2InputDeck
 LuaParser::storeInputDeck(
   const sol::table& lua_ideck )
 // *****************************************************************************
@@ -86,81 +87,85 @@ LuaParser::storeInputDeck(
 //! \param[in] lua_ideck Lua inputdeck parsed by sol2
 // *****************************************************************************
 {
-  inciter::ctr::NewInputDeck gideck;
+  inciter::ctr::New2InputDeck gideck;
 
   // TODO: explore replacing storeIfSpecd() and storeOptIfSpecd with sol::get_or()
 
   storeIfSpecd< std::string >(
-    lua_ideck, "title", gideck.title.data, "No title");
+    lua_ideck, "title", gideck.get< newtag::title >(), "No title");
 
   // time stepping options
   // ---------------------------------------------------------------------------
   storeIfSpecd< uint64_t >(
-    lua_ideck, "nstep", gideck.nstep.data,
+    lua_ideck, "nstep", gideck.get< newtag::nstep >(),
     std::numeric_limits< uint64_t >::max());
   storeIfSpecd< tk::real >(
-    lua_ideck, "term", gideck.term.data,
+    lua_ideck, "term", gideck.get< newtag::term >(),
     std::numeric_limits< tk::real >::max());
   storeIfSpecd< tk::real >(
-    lua_ideck, "t0", gideck.t0.data, 0.0);
+    lua_ideck, "t0", gideck.get< newtag::t0 >(), 0.0);
   storeIfSpecd< tk::real >(
-    lua_ideck, "dt", gideck.dt.data, 0.0);
+    lua_ideck, "dt", gideck.get< newtag::dt >(), 0.0);
   storeIfSpecd< tk::real >(
-    lua_ideck, "cfl", gideck.cfl.data, 0.0);
+    lua_ideck, "cfl", gideck.get< newtag::cfl >(), 0.0);
   storeIfSpecd< uint32_t >(
-    lua_ideck, "ttyi", gideck.ttyi.data, 1);
+    lua_ideck, "ttyi", gideck.get< newtag::ttyi >(), 1);
   storeIfSpecd< bool >(
-    lua_ideck, "steady_state", gideck.steady_state.data, false);
+    lua_ideck, "steady_state", gideck.get< newtag::steady_state >(), false);
   storeIfSpecd< tk::real >(
-    lua_ideck, "residual", gideck.residual.data, 1.0e-8);
+    lua_ideck, "residual", gideck.get< newtag::residual >(), 1.0e-8);
   storeIfSpecd< uint32_t >(
-    lua_ideck, "rescomp", gideck.rescomp.data, 1);
+    lua_ideck, "rescomp", gideck.get< newtag::rescomp >(), 1);
 
   // partitioning/reordering options
   // ---------------------------------------------------------------------------
   storeOptIfSpecd< tk::ctr::PartitioningAlgorithmType,
     tk::ctr::PartitioningAlgorithm >(
-    lua_ideck, "partitioning", gideck.partitioning.data,
+    lua_ideck, "partitioning", gideck.get< newtag::partitioning >(),
     tk::ctr::PartitioningAlgorithmType::RCB);
   storeIfSpecd< bool >(
-    lua_ideck, "pelocal_reorder", gideck.pelocal_reorder.data, false);
+    lua_ideck, "pelocal_reorder", gideck.get< newtag::pelocal_reorder >(),
+    false);
   storeIfSpecd< bool >(
-    lua_ideck, "operator_reorder", gideck.operator_reorder.data, false);
+    lua_ideck, "operator_reorder", gideck.get< newtag::operator_reorder >(),
+    false);
 
   // discretization scheme options
   // ---------------------------------------------------------------------------
   using inciter::ctr::SchemeType;
   storeOptIfSpecd< SchemeType, inciter::ctr::Scheme >(
-    lua_ideck, "scheme", gideck.scheme.data, SchemeType::DiagCG);
+    lua_ideck, "scheme", gideck.get< newtag::scheme >(), SchemeType::DiagCG);
   storeOptIfSpecd< inciter::ctr::LimiterType, inciter::ctr::Limiter >(
-    lua_ideck, "limiter", gideck.limiter.data,
+    lua_ideck, "limiter", gideck.get< newtag::limiter >(),
     inciter::ctr::LimiterType::NOLIMITER);
   storeIfSpecd< tk::real >(
-    lua_ideck, "cweight", gideck.cweight.data, 1.0);
+    lua_ideck, "cweight", gideck.get< newtag::cweight >(), 1.0);
   storeIfSpecd< tk::real >(
-    lua_ideck, "shock_detector_coeff", gideck.shock_detector_coeff.data, 1.0);
+    lua_ideck, "shock_detector_coeff",
+    gideck.get< newtag::shock_detector_coeff >(), 1.0);
   storeIfSpecd< bool >(
-    lua_ideck, "accuracy_test", gideck.accuracy_test.data, false);
+    lua_ideck, "accuracy_test", gideck.get< newtag::accuracy_test >(), false);
   storeIfSpecd< bool >(
-    lua_ideck, "limsol_projection", gideck.limsol_projection.data, true);
+    lua_ideck, "limsol_projection", gideck.get< newtag::limsol_projection >(),
+    true);
   storeIfSpecd< bool >(
-    lua_ideck, "fct", gideck.fct.data, true);
+    lua_ideck, "fct", gideck.get< newtag::fct >(), true);
   storeIfSpecd< bool >(
-    lua_ideck, "fctclip", gideck.fctclip.data, false);
+    lua_ideck, "fctclip", gideck.get< newtag::fctclip >(), false);
   storeIfSpecd< tk::real >(
-    lua_ideck, "fcteps", gideck.fcteps.data,
+    lua_ideck, "fcteps", gideck.get< newtag::fcteps >(),
     std::numeric_limits< tk::real >::epsilon());
   storeIfSpecd< tk::real >(
-    lua_ideck, "ctau", gideck.ctau.data, 1.0);
+    lua_ideck, "ctau", gideck.get< newtag::ctau >(), 1.0);
   storeIfSpecd< bool >(
-    lua_ideck, "sysfct", gideck.sysfct.data, false);
+    lua_ideck, "sysfct", gideck.get< newtag::sysfct >(), false);
   storeVecIfSpecd< std::size_t >(
-    lua_ideck, "sysfctvar", gideck.sysfctvar.data, {{0, 1, 2, 3, 4}});
+    lua_ideck, "sysfctvar", gideck.get< newtag::sysfctvar >(), {{0, 1, 2, 3, 4}});
 
   // configure solutions DOFs
-  auto scheme = gideck.scheme.data;
-  auto& ndof = gideck.ndof.data;
-  auto& rdof = gideck.rdof.data;
+  auto scheme = gideck.get< newtag::scheme >();
+  auto& ndof = gideck.get< newtag::ndof >();
+  auto& rdof = gideck.get< newtag::rdof >();
   ndof = rdof = 1;
   if (scheme == SchemeType::P0P1 || scheme == SchemeType::FV) {
     ndof = 1; rdof = 4;
@@ -170,7 +175,7 @@ LuaParser::storeInputDeck(
     ndof = rdof = 10;
   } else if (scheme == SchemeType::PDG) {
     ndof = rdof = 10;
-    gideck.pref.pref.data = true;
+    gideck.get< newtag::pref, newtag::pref >() = true;
   } else if (scheme != SchemeType::DG &&
       scheme != SchemeType::DiagCG &&
       scheme != SchemeType::ALECG &&
@@ -183,54 +188,69 @@ LuaParser::storeInputDeck(
 
   // check transport
   if (lua_ideck["transport"].valid()) {
-    gideck.pde.data = inciter::ctr::PDEType::TRANSPORT;
+    gideck.get< newtag::pde >() = inciter::ctr::PDEType::TRANSPORT;
     storeIfSpecd< std::size_t >(
-      lua_ideck["transport"], "ncomp", gideck.transport.ncomp.data, 1);
-    storeIfSpecd< std::string >(
-      lua_ideck["transport"], "depvar", gideck.transport.depvar.data, "c");
+      lua_ideck["transport"], "ncomp",
+      gideck.get< newtag::transport, newtag::ncomp >(), 1);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
-      lua_ideck["transport"], "problem", gideck.transport.problem.data,
+      lua_ideck["transport"], "problem",
+      gideck.get< newtag::transport, newtag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
-  storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
-    lua_ideck, "flux", gideck.flux.data, inciter::ctr::FluxType::UPWIND);
+    storeIfSpecd< std::string >(
+      lua_ideck, "depvar", gideck.get< newtag::depvar >(), "c");
+    storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
+      lua_ideck, "flux", gideck.get< newtag::flux >(),
+      inciter::ctr::FluxType::UPWIND);
 
     // store number of equations in PDE system
-    gideck.ncomp.data = gideck.transport.ncomp.data;
+    gideck.get< newtag::ncomp >() =
+      gideck.get< newtag::transport, newtag::ncomp >();
   }
 
   // check compflow
   if (lua_ideck["compflow"].valid()) {
-    gideck.pde.data = inciter::ctr::PDEType::COMPFLOW;
+    gideck.get< newtag::pde >() = inciter::ctr::PDEType::COMPFLOW;
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
-      lua_ideck["compflow"], "problem", gideck.compflow.problem.data,
+      lua_ideck["compflow"], "problem",
+      gideck.get< newtag::compflow, newtag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
+    storeIfSpecd< std::string >(
+      lua_ideck, "depvar", gideck.get< newtag::depvar >(), "a");
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
-      lua_ideck, "flux", gideck.flux.data, inciter::ctr::FluxType::HLLC);
+      lua_ideck, "flux", gideck.get< newtag::flux >(),
+      inciter::ctr::FluxType::HLLC);
 
     // store number of equations in PDE system
-    gideck.ncomp.data = 5;
+    gideck.get< newtag::ncomp >() = 5;
   }
 
   // check multimat
   if (lua_ideck["multimat"].valid()) {
-    gideck.pde.data = inciter::ctr::PDEType::MULTIMAT;
+    gideck.get< newtag::pde >() = inciter::ctr::PDEType::MULTIMAT;
     storeIfSpecd< std::size_t >(
-      lua_ideck["multimat"], "nmat", gideck.multimat.nmat.data, 2);
+      lua_ideck["multimat"], "nmat",
+      gideck.get< newtag::multimat, newtag::nmat >(), 2);
     storeIfSpecd< uint64_t >(
-      lua_ideck["multimat"], "prelax", gideck.multimat.prelax.data, 1);
+      lua_ideck["multimat"], "prelax",
+      gideck.get< newtag::multimat, newtag::prelax >(), 1);
     storeIfSpecd< tk::real >(
       lua_ideck["multimat"], "prelax_timescale",
-      gideck.multimat.prelax_timescale.data, 0.25);
+      gideck.get< newtag::multimat, newtag::prelax_timescale >(), 0.25);
     storeIfSpecd< int >(
-      lua_ideck["multimat"], "intsharp", gideck.multimat.intsharp.data, 0);
+      lua_ideck["multimat"], "intsharp",
+      gideck.get< newtag::multimat, newtag::intsharp >(), 0);
     storeIfSpecd< tk::real >(
       lua_ideck["multimat"], "intsharp_param",
-      gideck.multimat.intsharp_param.data, 1.8);
+      gideck.get< newtag::multimat, newtag::intsharp_param >(), 1.8);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
-      lua_ideck["multimat"], "problem", gideck.multimat.problem.data,
+      lua_ideck["multimat"], "problem",
+      gideck.get< newtag::multimat, newtag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
+    storeIfSpecd< std::string >(
+      lua_ideck, "depvar", gideck.get< newtag::depvar >(), "a");
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
-      lua_ideck, "flux", gideck.flux.data, inciter::ctr::FluxType::AUSM);
+      lua_ideck, "flux", gideck.get< newtag::flux >(),
+      inciter::ctr::FluxType::AUSM);
 
     // number of equations in PDE system are determined based on materials
   }
@@ -238,7 +258,8 @@ LuaParser::storeInputDeck(
   // physics
   // ---------------------------------------------------------------------------
   storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
-    lua_ideck, "physics", gideck.physics.data, inciter::ctr::PhysicsType::EULER);
+    lua_ideck, "physics", gideck.get< newtag::physics >(),
+    inciter::ctr::PhysicsType::EULER);
 
   // Assemble material blocks
   // ---------------------------------------------------------------------------
@@ -252,78 +273,79 @@ LuaParser::storeInputDeck(
 
     // size material map vectors
     std::size_t nmat(1);
-    if (gideck.pde.data == inciter::ctr::PDEType::MULTIMAT)
-      nmat = gideck.multimat.nmat.data;
-    gideck.matidxmap.eosidx.resize(nmat);
-    gideck.matidxmap.matidx.resize(nmat);
-    gideck.matidxmap.solidx.resize(nmat);
+    if (gideck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT)
+      nmat = gideck.get< newtag::multimat, newtag::nmat >();
+    gideck.get< newtag::matidxmap, newtag::eosidx >().resize(nmat);
+    gideck.get< newtag::matidxmap, newtag::matidx >().resize(nmat);
+    gideck.get< newtag::matidxmap, newtag::solidx >().resize(nmat);
 
     // size material vector appropriately
     // size of the material vector is the number of distinct types of materials
     sol::table sol_mat = lua_ideck["material"];
-    gideck.material.resize(sol_mat.size());
+    gideck.get< newtag::material >().resize(sol_mat.size());
 
     // store material properties
-    for (std::size_t i=0; i<gideck.material.size(); ++i) {
+    for (std::size_t i=0; i<gideck.get< newtag::material >().size(); ++i) {
+      auto& mati_deck = gideck.get< newtag::material >()[i];
       // eos
       storeOptIfSpecd< inciter::ctr::MaterialType, inciter::ctr::Material >(
-        sol_mat[i+1], "eos", gideck.material[i].eos.data,
+        sol_mat[i+1], "eos", mati_deck.get< newtag::eos >(),
         inciter::ctr::MaterialType::STIFFENEDGAS);
 
       // material ids in this eos (default is for compflow i.e. single mat)
       storeVecIfSpecd< uint64_t >(
-        sol_mat[i+1], "id", gideck.material[i].id.data,
+        sol_mat[i+1], "id", mati_deck.get< newtag::id >(),
         std::vector< uint64_t >(1,1));
 
       // Track total number of materials in multiple material blocks (eos's)
-      tmat += gideck.material[i].id.data.size();
+      tmat += mati_deck.get< newtag::id >().size();
 
       // Check for repeating user specified material ids
-      for (auto midx : gideck.material[i].id.data) {
+      for (auto midx : mati_deck.get< newtag::id >()) {
         if (!matidset.count(midx))
           matidset.insert(midx);
         else
           Throw("Repeating material id specified");
       }
 
-      std::size_t ntype = gideck.material[i].id.data.size();
+      std::size_t ntype = mati_deck.get< newtag::id >().size();
       // cv
       if (!sol_mat[i+1]["cv"].valid())
         sol_mat[i+1]["cv"] = std::vector< tk::real >(ntype, 717.5);
-      checkStoreMatProp(sol_mat[i+1], "cv", ntype, gideck.material[i].cv.data);
+      checkStoreMatProp(sol_mat[i+1], "cv", ntype, mati_deck.get< newtag::cv >());
 
       // reset solid-index
       isolidx = 0;
 
       // Stiffened-gas materials
-      if (gideck.material[i].eos.data ==
+      if (mati_deck.get< newtag::eos >() ==
         inciter::ctr::MaterialType::STIFFENEDGAS) {
         // gamma
         checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          gideck.material[i].gamma.data);
+          mati_deck.get< newtag::gamma >());
 
         // pstiff
         if (!sol_mat[i+1]["pstiff"].valid())
           sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
         checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
-          gideck.material[i].pstiff.data);
+          mati_deck.get< newtag::pstiff >());
       }
       // Small-shear solid materials
-      else if (gideck.material[i].eos.data ==
+      else if (mati_deck.get< newtag::eos >() ==
         inciter::ctr::MaterialType::SMALLSHEARSOLID) {
         // gamma
         checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          gideck.material[i].gamma.data);
+          mati_deck.get< newtag::gamma >());
 
         // pstiff
         if (!sol_mat[i+1]["pstiff"].valid())
           sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
         checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
-          gideck.material[i].pstiff.data);
+          mati_deck.get< newtag::pstiff >());
 
         // mu
         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
-          gideck.material[i].mu.data);
+          mati_deck.get< newtag::mu >());
 
         // add to solid-counter
         ++isolcntr;
@@ -331,48 +353,48 @@ LuaParser::storeInputDeck(
         isolidx = isolcntr;
       }
       // JWL materials
-      else if (gideck.material[i].eos.data == inciter::ctr::MaterialType::JWL) {
+      else if (mati_deck.get< newtag::eos >() == inciter::ctr::MaterialType::JWL) {
         // w_gru
         checkStoreMatProp(sol_mat[i+1], "w_gru", ntype,
-          gideck.material[i].w_gru.data);
+          mati_deck.get< newtag::w_gru >());
 
         // a_jwl
         checkStoreMatProp(sol_mat[i+1], "A_jwl", ntype,
-          gideck.material[i].A_jwl.data);
+          mati_deck.get< newtag::A_jwl >());
 
         // b_jwl
         checkStoreMatProp(sol_mat[i+1], "B_jwl", ntype,
-          gideck.material[i].B_jwl.data);
+          mati_deck.get< newtag::B_jwl >());
 
         // R1_jwl
         checkStoreMatProp(sol_mat[i+1], "R1_jwl", ntype,
-          gideck.material[i].R1_jwl.data);
+          mati_deck.get< newtag::R1_jwl >());
 
         // R2_jwl
         checkStoreMatProp(sol_mat[i+1], "R2_jwl", ntype,
-          gideck.material[i].R2_jwl.data);
+          mati_deck.get< newtag::R2_jwl >());
 
         // rho0_jwl
         checkStoreMatProp(sol_mat[i+1], "rho0_jwl", ntype,
-          gideck.material[i].rho0_jwl.data);
+          mati_deck.get< newtag::rho0_jwl >());
 
         // de_jwl
         checkStoreMatProp(sol_mat[i+1], "de_jwl", ntype,
-          gideck.material[i].de_jwl.data);
+          mati_deck.get< newtag::de_jwl >());
 
         // Pr_jwl
         checkStoreMatProp(sol_mat[i+1], "Pr_jwl", ntype,
-          gideck.material[i].Pr_jwl.data);
+          mati_deck.get< newtag::Pr_jwl >());
 
         // rhor_jwl
         if (sol_mat[i+1]["rhor_jwl"].valid()) {
           checkStoreMatProp(sol_mat[i+1], "rhor_jwl", ntype,
-            gideck.material[i].rhor_jwl.data);
+            mati_deck.get< newtag::rhor_jwl >());
         }
         // Tr_jwl
         else if (sol_mat[i+1]["Tr_jwl"].valid()) {
           checkStoreMatProp(sol_mat[i+1], "Tr_jwl", ntype,
-            gideck.material[i].Tr_jwl.data);
+            mati_deck.get< newtag::Tr_jwl >());
         }
         else
           Throw("Either reference density or reference temperature must be "
@@ -380,10 +402,10 @@ LuaParser::storeInputDeck(
       }
 
       // Generate mapping between material index and eos parameter index
-      auto& eosmap = gideck.matidxmap.eosidx;
-      auto& idxmap = gideck.matidxmap.matidx;
-      auto& solidxmap = gideck.matidxmap.solidx;
-      for (auto midx : gideck.material[i].id.data) {
+      auto& eosmap = gideck.get< newtag::matidxmap, newtag::eosidx >();
+      auto& idxmap = gideck.get< newtag::matidxmap, newtag::matidx >();
+      auto& solidxmap = gideck.get< newtag::matidxmap, newtag::solidx >();
+      for (auto midx : mati_deck.get< newtag::id >()) {
         midx -= 1;
         eosmap[midx] = mtypei;
         idxmap[midx] = imatcntr;
@@ -418,202 +440,212 @@ LuaParser::storeInputDeck(
     }
 
     // Set up number of PDEs for multimat
-    if (gideck.pde.data == inciter::ctr::PDEType::MULTIMAT) {
+    if (gideck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT) {
       auto ntot = nmat + nmat + 3 + nmat;
       // if solid EOS, add components
-      for (std::size_t i=0; i<gideck.matidxmap.solidx.size(); ++i) {
-        if (gideck.matidxmap.solidx[i] > 0)
+      const auto& solidx = gideck.get< newtag::matidxmap, newtag::solidx >();
+      for (std::size_t i=0; i<solidx.size(); ++i) {
+        if (solidx[i] > 0)
           ntot += 9;
       }
-      gideck.ncomp.data = ntot;
+      gideck.get< newtag::ncomp >() = ntot;
     }
   }
 
   // Field output block
   // ---------------------------------------------------------------------------
   if (lua_ideck["field_output"].valid()) {
+    auto& fo_deck = gideck.get< newtag::field_output >();
 
     // interval iteration
     storeIfSpecd< uint32_t >(
       lua_ideck["field_output"], "interval",
-      gideck.field_output.iter_interval.data,
+      fo_deck.get< newtag::iter_interval >(),
       std::numeric_limits< uint32_t >::max());
 
     // interval physical time
     storeIfSpecd< tk::real >(
       lua_ideck["field_output"], "time_interval",
-      gideck.field_output.time_interval.data,
+      fo_deck.get< newtag::time_interval >(),
       std::numeric_limits< tk::real >::max());
 
     // interval time range
     storeVecIfSpecd< tk::real >(
       lua_ideck["field_output"], "time_range",
-      gideck.field_output.time_range.data, {});
+      fo_deck.get< newtag::time_range >(), {});
 
     // refined mesh field output
     storeIfSpecd< bool >(
-      lua_ideck["field_output"], "refined", gideck.field_output.refined.data,
+      lua_ideck["field_output"], "refined", fo_deck.get< newtag::refined >(),
       false);
 
     // filetype
     storeOptIfSpecd< tk::ctr::FieldFileType, tk::ctr::FieldFile >(
-      lua_ideck["field_output"], "filetype", gideck.field_output.filetype.data,
+      lua_ideck["field_output"], "filetype", fo_deck.get< newtag::filetype >(),
       tk::ctr::FieldFileType::EXODUSII);
 
     // sidesets for field output
     storeVecIfSpecd< uint64_t >(
-      lua_ideck["field_output"], "sideset", gideck.field_output.sideset.data, {});
+      lua_ideck["field_output"], "sideset", fo_deck.get< newtag::sideset >(), {});
 
     // element variables
     storeVecIfSpecd< std::string >(
-      lua_ideck["field_output"], "elemvar", gideck.field_output.elemvar.data, {});
+      lua_ideck["field_output"], "elemvar", fo_deck.get< newtag::elemvar >(), {});
 
     // node variables
     storeVecIfSpecd< std::string >(
-      lua_ideck["field_output"], "nodevar", gideck.field_output.nodevar.data, {});
+      lua_ideck["field_output"], "nodevar", fo_deck.get< newtag::nodevar >(), {});
   }
   else {
     // TODO: remove double-specification of defaults
-    gideck.field_output.iter_interval.data =
+    auto& fo_deck = gideck.get< newtag::field_output >();
+    fo_deck.get< newtag::iter_interval >() =
       std::numeric_limits< uint32_t >::max();
-    gideck.field_output.time_interval.data =
+    fo_deck.get< newtag::time_interval >() =
       std::numeric_limits< tk::real >::max();
-    gideck.field_output.time_range.data = {};
-    gideck.field_output.refined.data = false;
-    gideck.field_output.filetype.data = tk::ctr::FieldFileType::EXODUSII;
-    gideck.field_output.sideset.data = {};
-    gideck.field_output.elemvar.data = {};
-    gideck.field_output.nodevar.data = {};
+    fo_deck.get< newtag::time_range >() = {};
+    fo_deck.get< newtag::refined >() = false;
+    fo_deck.get< newtag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
+    fo_deck.get< newtag::sideset >() = {};
+    fo_deck.get< newtag::elemvar >() = {};
+    fo_deck.get< newtag::nodevar >() = {};
   }
 
   // Diagnostics output block
   // ---------------------------------------------------------------------------
   if (lua_ideck["diagnostics"].valid()) {
+    auto& diag_deck = gideck.get< newtag::diagnostics >();
 
     // interval iteration
     storeIfSpecd< uint32_t >(
       lua_ideck["diagnostics"], "interval",
-      gideck.diagnostics.iter_interval.data, 1);
+      diag_deck.get< newtag::iter_interval >(), 1);
 
     // error norm
     storeOptIfSpecd< tk::ctr::ErrorType, tk::ctr::Error >(
-      lua_ideck["diagnostics"], "error",
-      gideck.diagnostics.error.data, tk::ctr::ErrorType::L2);
+      lua_ideck["diagnostics"], "error", diag_deck.get< newtag::error >(),
+      tk::ctr::ErrorType::L2);
 
     // float format
     storeOptIfSpecd< tk::ctr::TxtFloatFormatType, tk::ctr::TxtFloatFormat >(
-      lua_ideck["diagnostics"], "format",
-      gideck.diagnostics.format.data, tk::ctr::TxtFloatFormatType::DEFAULT);
+      lua_ideck["diagnostics"], "format", diag_deck.get< newtag::format >(),
+      tk::ctr::TxtFloatFormatType::DEFAULT);
 
     // precision
     storeIfSpecd< uint32_t >(
       lua_ideck["diagnostics"], "precision",
-      gideck.diagnostics.precision.data, std::cout.precision());
+      diag_deck.get< newtag::precision >(), std::cout.precision());
   }
   else {
     // TODO: remove double-specification of defaults
-    gideck.diagnostics.iter_interval.data = 1;
-    gideck.diagnostics.error.data = tk::ctr::ErrorType::L2;
-    gideck.diagnostics.format.data = tk::ctr::TxtFloatFormatType::DEFAULT;
-    gideck.diagnostics.precision.data = std::cout.precision();
+    auto& diag_deck = gideck.get< newtag::diagnostics >();
+    diag_deck.get< newtag::iter_interval >() = 1;
+    diag_deck.get< newtag::error >() = tk::ctr::ErrorType::L2;
+    diag_deck.get< newtag::format >() = tk::ctr::TxtFloatFormatType::DEFAULT;
+    diag_deck.get< newtag::precision >() = std::cout.precision();
   }
 
   // History output block
   // ---------------------------------------------------------------------------
   if (lua_ideck["history_output"].valid()) {
+    auto& hist_deck = gideck.get< newtag::history_output >();
 
     // interval iteration
     storeIfSpecd< uint32_t >(
       lua_ideck["history_output"], "interval",
-      gideck.history_output.iter_interval.data,
+      hist_deck.get< newtag::iter_interval >(),
       std::numeric_limits< uint32_t >::max());
 
     // interval time
     storeIfSpecd< tk::real >(
       lua_ideck["history_output"], "time_interval",
-      gideck.history_output.time_interval.data,
+      hist_deck.get< newtag::time_interval >(),
       std::numeric_limits< tk::real >::max());
 
     // interval time range
     storeVecIfSpecd< tk::real >(
       lua_ideck["history_output"], "time_range",
-      gideck.history_output.time_range.data, {});
+      hist_deck.get< newtag::time_range >(), {});
 
     // point probes
     if (lua_ideck["history_output"]["point"].valid()) {
       const sol::table& sol_pt = lua_ideck["history_output"]["point"];
-      gideck.history_output.point.resize(sol_pt.size());
+      hist_deck.get< newtag::point >().resize(sol_pt.size());
 
-      for (std::size_t i=0; i<gideck.history_output.point.size(); ++i) {
+      for (std::size_t i=0; i<hist_deck.get< newtag::point >().size(); ++i) {
+        auto& pti = hist_deck.get< newtag::point >()[i];
         storeIfSpecd< std::string >(
-          sol_pt[i+1], "id", gideck.history_output.point[i].id.data, "p");
+          sol_pt[i+1], "id", pti.get< newtag::id >(), "p");
         storeVecIfSpecd< tk::real >(
-          sol_pt[i+1], "coord", gideck.history_output.point[i].coord.data, {});
+          sol_pt[i+1], "coord", pti.get< newtag::coord >(), {});
       }
     }
 
     // precision
     storeIfSpecd< uint32_t >(
       lua_ideck["history_output"], "precision",
-      gideck.history_output.precision.data, std::cout.precision());
+      hist_deck.get< newtag::precision >(), std::cout.precision());
 
     // error check point
-    for (std::size_t i=0; i<gideck.history_output.point.size(); ++i) {
-      if (gideck.history_output.point[i].coord.data.size() != 3)
+    for (std::size_t i=0; i<hist_deck.get< newtag::point >().size(); ++i) {
+      if (hist_deck.get< newtag::point >()[i].get< newtag::coord >().size() != 3)
       Throw("Three reals required for point coordinates in history_output.");
     }
   }
   else {
     // TODO: remove double-specification of defaults
-    gideck.history_output.iter_interval.data =
+    auto& hist_deck = gideck.get< newtag::history_output >();
+    hist_deck.get< newtag::iter_interval >() =
       std::numeric_limits< uint32_t >::max();
-    gideck.history_output.time_interval.data =
+    hist_deck.get< newtag::time_interval >() =
       std::numeric_limits< tk::real >::max();
-    gideck.history_output.time_range.data = {};
-    gideck.history_output.precision.data = std::cout.precision();
-    gideck.history_output.point.resize(0);
+    hist_deck.get< newtag::time_range >() = {};
+    hist_deck.get< newtag::precision >() = std::cout.precision();
+    hist_deck.get< newtag::point >().resize(0);
   }
 
   // ALE block
   // ---------------------------------------------------------------------------
-  gideck.ale.ale.data = false;
+  gideck.get< newtag::ale, newtag::ale >() = false;
   if (lua_ideck["ale"].valid()) {
-    gideck.ale.ale.data = true;
+    auto& ale_deck = gideck.get< newtag::ale >();
+    ale_deck.get< newtag::ale >() = true;
 
     // Mesh velocity smoother
     storeOptIfSpecd< inciter::ctr::MeshVelocitySmootherType,
       inciter::ctr::MeshVelocitySmoother >(lua_ideck["ale"], "smoother",
-      gideck.ale.smoother.data, inciter::ctr::MeshVelocitySmootherType::NONE);
+      ale_deck.get< newtag::smoother >(), inciter::ctr::MeshVelocitySmootherType::NONE);
 
     // Mesh velocity
     storeOptIfSpecd< inciter::ctr::MeshVelocityType,
       inciter::ctr::MeshVelocity >(lua_ideck["ale"], "mesh_velocity",
-      gideck.ale.mesh_velocity.data, inciter::ctr::MeshVelocityType::SINE);
+      ale_deck.get< newtag::mesh_velocity >(), inciter::ctr::MeshVelocityType::SINE);
 
     // Mesh motion direction
     storeVecIfSpecd< std::size_t >(lua_ideck["ale"], "mesh_motion",
-      gideck.ale.mesh_motion.data, { 0, 1, 2 });
+      ale_deck.get< newtag::mesh_motion >(), { 0, 1, 2 });
 
     // Mesh force
     storeVecIfSpecd< tk::real >(lua_ideck["ale"], "meshforce",
-      gideck.ale.meshforce.data, { 0, 0, 0, 0 });
+      ale_deck.get< newtag::meshforce >(), { 0, 0, 0, 0 });
 
     // Move sidesets with user defined function
     if (lua_ideck["ale"]["move"].valid()) {
       const sol::table& sol_mv = lua_ideck["ale"]["move"];
-      gideck.ale.move.resize(sol_mv.size());
+      ale_deck.get< newtag::move >().resize(sol_mv.size());
 
-      for (std::size_t i=0; i<gideck.ale.move.size(); ++i) {
+      for (std::size_t i=0; i<ale_deck.get< newtag::move >().size(); ++i) {
+        auto& mvi = ale_deck.get< newtag::move >()[i];
         storeOptIfSpecd< tk::ctr::UserTableType, tk::ctr::UserTable >(
-          sol_mv[i+1], "fntype", gideck.ale.move[i].fntype.data,
+          sol_mv[i+1], "fntype", mvi.get< newtag::fntype >(),
           tk::ctr::UserTableType::POSITION);
         storeIfSpecd< uint64_t >(
-          sol_mv[i+1], "sideset", gideck.ale.move[i].sideset.data, 0);
+          sol_mv[i+1], "sideset", mvi.get< newtag::sideset >(), 0);
         storeVecIfSpecd< tk::real >(
-          sol_mv[i+1], "fn", gideck.ale.move[i].fn.data, {});
+          sol_mv[i+1], "fn", mvi.get< newtag::fn >(), {});
 
         // error checking on user-def function
-        if (gideck.ale.move[i].fn.data.size() % 4 != 0)
+        if (mvi.get< newtag::fn >().size() % 4 != 0)
           Throw("Incomplete user-defined function for ALE sideset movement. An "
           "R->R^3 function is expected, the number of descrete entries must be "
           "divisible by 4: one 'column' for the abscissa, and 3 for the "
@@ -622,110 +654,116 @@ LuaParser::storeInputDeck(
     }
 
     // dv-CFL
-    storeIfSpecd< tk::real >(lua_ideck["ale"], "dvcfl", gideck.ale.dvcfl.data,
+    storeIfSpecd< tk::real >(lua_ideck["ale"], "dvcfl", ale_deck.get< newtag::dvcfl >(),
       0.01);
 
     // Vorticity multiplier
     storeIfSpecd< tk::real >(lua_ideck["ale"], "vortmult",
-      gideck.ale.vortmult.data, 0.0);
+      ale_deck.get< newtag::vortmult >(), 0.0);
 
     // Mesh velocity max iterations
     storeIfSpecd< std::size_t >(lua_ideck["ale"], "maxit",
-      gideck.ale.maxit.data, 5);
+      ale_deck.get< newtag::maxit >(), 5);
 
     // Mesh velocity max iterations
     storeIfSpecd< tk::real >(lua_ideck["ale"], "tolerance",
-      gideck.ale.tolerance.data, 1e-2);
+      ale_deck.get< newtag::tolerance >(), 1e-2);
   }
 
   // AMR block
   // ---------------------------------------------------------------------------
-  gideck.amr.amr.data = false;
+  gideck.get< newtag::amr, newtag::amr >() = false;
   if (lua_ideck["amr"].valid()) {
-    gideck.amr.amr.data = true;
+    auto& amr_deck = gideck.get< newtag::amr >();
+    amr_deck.get< newtag::amr >() = true;
 
     // Initial refinement toggle
-    storeIfSpecd< bool >(lua_ideck["amr"], "t0ref", gideck.amr.t0ref.data,
+    storeIfSpecd< bool >(lua_ideck["amr"], "t0ref", amr_deck.get< newtag::t0ref >(),
       false);
 
     // Mesh refinement during time-stepping toggle
-    storeIfSpecd< bool >(lua_ideck["amr"], "dtref", gideck.amr.dtref.data,
+    storeIfSpecd< bool >(lua_ideck["amr"], "dtref", amr_deck.get< newtag::dtref >(),
       false);
 
     // Uniform mesh refinement during time-stepping toggle
     storeIfSpecd< bool >(lua_ideck["amr"], "dtref_uniform",
-      gideck.amr.dtref_uniform.data, false);
+      amr_deck.get< newtag::dtref_uniform >(), false);
 
     // Mesh refinement frequency during time-stepping toggle
     storeIfSpecd< std::size_t >(lua_ideck["amr"], "dtfreq",
-      gideck.amr.dtfreq.data, 3);
+      amr_deck.get< newtag::dtfreq >(), 3);
 
     // Maximum AMR levels
     storeIfSpecd< std::size_t >(lua_ideck["amr"], "maxlevels",
-      gideck.amr.maxlevels.data, 2);
+      amr_deck.get< newtag::maxlevels >(), 2);
 
     // Initial AMR steps
     storeOptVecIfSpecd< inciter::ctr::AMRInitialType, inciter::ctr::AMRInitial >(
-      lua_ideck["amr"], "initial", gideck.amr.initial.data, {});
+      lua_ideck["amr"], "initial", amr_deck.get< newtag::initial >(), {});
 
     // Initial AMR coordinate based
     if (lua_ideck["amr"]["coords"].valid()) {
       auto rmax = std::numeric_limits< tk::real >::max() / 100;
 
       storeIfSpecd< tk::real >(lua_ideck["amr"]["coords"], "xminus",
-        gideck.amr.coords.xminus.data, rmax);
+        amr_deck.get< newtag::coords, newtag::xminus >(), rmax);
       storeIfSpecd< tk::real >(lua_ideck["amr"]["coords"], "xplus",
-        gideck.amr.coords.xplus.data, -rmax);
+        amr_deck.get< newtag::coords, newtag::xplus >(), -rmax);
 
       storeIfSpecd< tk::real >(lua_ideck["amr"]["coords"], "yminus",
-        gideck.amr.coords.yminus.data, rmax);
+        amr_deck.get< newtag::coords, newtag::yminus >(), rmax);
       storeIfSpecd< tk::real >(lua_ideck["amr"]["coords"], "yplus",
-        gideck.amr.coords.yplus.data, -rmax);
+        amr_deck.get< newtag::coords, newtag::yplus >(), -rmax);
 
       storeIfSpecd< tk::real >(lua_ideck["amr"]["coords"], "zminus",
-        gideck.amr.coords.zminus.data, rmax);
+        amr_deck.get< newtag::coords, newtag::zminus >(), rmax);
       storeIfSpecd< tk::real >(lua_ideck["amr"]["coords"], "zplus",
-        gideck.amr.coords.zplus.data, -rmax);
+        amr_deck.get< newtag::coords, newtag::zplus >(), -rmax);
     }
 
     // Initial AMR edgelist based
     storeVecIfSpecd< std::size_t >(lua_ideck["amr"], "edgelist",
-      gideck.amr.edgelist.data, {});
+      amr_deck.get< newtag::edgelist >(), {});
+    if (amr_deck.get< newtag::edgelist >().size() % 2 != 0)
+      Throw("The number of edge-nodes, marking edges as pairs of nodes, used "
+        "for explicit tagging of edges for initial mesh refineoment, is odd "
+        "(it must be even).");
 
     // Error type for AMR
     storeOptIfSpecd< inciter::ctr::AMRErrorType, inciter::ctr::AMRError >(
-      lua_ideck["amr"], "error", gideck.amr.error.data,
+      lua_ideck["amr"], "error", amr_deck.get< newtag::error >(),
       inciter::ctr::AMRErrorType::JUMP);
 
     // Tolerances for refine/de-refine
     storeIfSpecd< tk::real >(lua_ideck["amr"], "tol_refine",
-      gideck.amr.tol_refine.data, 0.2);
+      amr_deck.get< newtag::tol_refine >(), 0.2);
     storeIfSpecd< tk::real >(lua_ideck["amr"], "tol_derefine",
-      gideck.amr.tol_derefine.data, 0.05);
+      amr_deck.get< newtag::tol_derefine >(), 0.05);
   }
 
   // p-refinement block
   // ---------------------------------------------------------------------------
-  gideck.pref.pref.data = false;
+  gideck.get< newtag::pref, newtag::pref >() = false;
   if (lua_ideck["pref"].valid()) {
-    gideck.pref.pref.data = true;
+    auto& pref_deck = gideck.get< newtag::pref >();
+    pref_deck.get< newtag::pref >() = true;
 
     // p-ref indicator type
     storeOptIfSpecd< inciter::ctr::PrefIndicatorType,
       inciter::ctr::PrefIndicator >(lua_ideck["pref"], "indicator",
-      gideck.pref.indicator.data,
+      pref_deck.get< newtag::indicator >(),
       inciter::ctr::PrefIndicatorType::SPECTRAL_DECAY);
 
     // p-ref max degrees-of-freedom per cell
     storeIfSpecd< std::size_t >(lua_ideck["pref"], "ndofmax",
-      gideck.pref.ndofmax.data, 10);
+      pref_deck.get< newtag::ndofmax >(), 10);
 
     // p-ref tolerance
     storeIfSpecd< tk::real >(lua_ideck["pref"], "tolref",
-      gideck.pref.tolref.data, 0.5);
+      pref_deck.get< newtag::tolref >(), 0.5);
 
     // error checking on the tolerance
-    if (gideck.pref.tolref.data < 0.0 || gideck.pref.tolref.data > 1.0)
+    if (pref_deck.get< newtag::tolref >() < 0.0 || pref_deck.get< newtag::tolref >() > 1.0)
       Throw("The p-refinement tolerance must be a real number "
         "between 0.0 and 1.0, both inclusive.");
   }
@@ -734,39 +772,41 @@ LuaParser::storeInputDeck(
   // ---------------------------------------------------------------------------
   if (lua_ideck["mesh"].valid()) {
     const sol::table& lua_mesh = lua_ideck["mesh"];
-    gideck.mesh.resize(lua_mesh.size());
+    auto& mesh_deck = gideck.get< newtag::mesh >();
+    mesh_deck.resize(lua_mesh.size());
 
-    for (std::size_t i=0; i<gideck.mesh.size(); ++i) {
+    for (std::size_t i=0; i<mesh_deck.size(); ++i) {
       // filename
       storeIfSpecd< std::string >(lua_mesh[i+1], "filename",
-        gideck.mesh[i].filename.data, "");
+        mesh_deck[i].get< newtag::filename >(), "");
 
       // location
       storeVecIfSpecd< tk::real >(lua_mesh[i+1], "location",
-        gideck.mesh[i].location.data, {0.0, 0.0, 0.0});
-      if (gideck.mesh[i].location.data.size() != 3)
+        mesh_deck[i].get< newtag::location >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< newtag::location >().size() != 3)
         Throw("Mesh location requires 3 coordinates.");
 
       // orientation
       storeVecIfSpecd< tk::real >(lua_mesh[i+1], "orientation",
-        gideck.mesh[i].orientation.data, {0.0, 0.0, 0.0});
-      if (gideck.mesh[i].orientation.data.size() != 3)
+        mesh_deck[i].get< newtag::orientation >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< newtag::orientation >().size() != 3)
         Throw("Mesh orientation requires 3 rotation angles.");
 
       // velocity
       storeVecIfSpecd< tk::real >(lua_mesh[i+1], "velocity",
-        gideck.mesh[i].velocity.data, {0.0, 0.0, 0.0});
-      if (gideck.mesh[i].velocity.data.size() != 3)
+        mesh_deck[i].get< newtag::velocity >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< newtag::velocity >().size() != 3)
         Throw("Mesh velocity requires 3 components.");
     }
   }
   else {
     // TODO: remove double-specification of defaults
-    gideck.mesh.resize(1);
-    gideck.mesh[0].filename.data = "";
-    gideck.mesh[0].location.data = {0.0, 0.0, 0.0};
-    gideck.mesh[0].orientation.data = {0.0, 0.0, 0.0};
-    gideck.mesh[0].velocity.data = {0.0, 0.0, 0.0};
+    auto& mesh_deck = gideck.get< newtag::mesh >();
+    mesh_deck.resize(1);
+    mesh_deck[0].get< newtag::filename >() = "";
+    mesh_deck[0].get< newtag::location >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< newtag::orientation >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< newtag::velocity >() = {0.0, 0.0, 0.0};
   }
 
   // Boundary conditions block
@@ -774,84 +814,85 @@ LuaParser::storeInputDeck(
   if (lua_ideck["bc"].valid()) {
     std::set< std::size_t > totalmesh;
     const sol::table& sol_bc = lua_ideck["bc"];
-    gideck.bc.resize(sol_bc.size());
+    auto& bc_deck = gideck.get< newtag::bc >();
+    bc_deck.resize(sol_bc.size());
 
-    for (std::size_t i=0; i<gideck.bc.size(); ++i) {
+    for (std::size_t i=0; i<bc_deck.size(); ++i) {
       storeVecIfSpecd< std::size_t >(sol_bc[i+1], "mesh",
-        gideck.bc[i].mesh.data, {1});
+        bc_deck[i].get< newtag::mesh >(), {1});
       // collect meshes for error checking
-      totalmesh.insert(gideck.bc[i].mesh.data.begin(),
-        gideck.bc[i].mesh.data.end());
+      totalmesh.insert(bc_deck[i].get< newtag::mesh >().begin(),
+        bc_deck[i].get< newtag::mesh >().end());
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "dirichlet",
-        gideck.bc[i].dirichlet.data, {});
+        bc_deck[i].get< newtag::dirichlet >(), {});
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "symmetry",
-        gideck.bc[i].symmetry.data, {});
+        bc_deck[i].get< newtag::symmetry >(), {});
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "inlet",
-        gideck.bc[i].inlet.data, {});
+        bc_deck[i].get< newtag::inlet >(), {});
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "outlet",
-        gideck.bc[i].outlet.data, {});
+        bc_deck[i].get< newtag::outlet >(), {});
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "farfield",
-        gideck.bc[i].farfield.data, {});
+        bc_deck[i].get< newtag::farfield >(), {});
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "extrapolate",
-        gideck.bc[i].extrapolate.data, {});
+        bc_deck[i].get< newtag::extrapolate >(), {});
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "stag",
-        gideck.bc[i].stag.data, {});
+        bc_deck[i].get< newtag::stag >(), {});
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "skip",
-        gideck.bc[i].skip.data, {});
+        bc_deck[i].get< newtag::skip >(), {});
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "sponge",
-        gideck.bc[i].sponge.data, {});
+        bc_deck[i].get< newtag::sponge >(), {});
 
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
         storeVecIfSpecd< uint64_t >(sol_bc[i+1]["timedep"], "sideset",
-          gideck.bc[i].timedep.sideset.data, {});
+          bc_deck[i].get< newtag::timedep, newtag::sideset >(), {});
         storeVecIfSpecd< tk::real >(sol_bc[i+1]["timedep"], "fn",
-          gideck.bc[i].timedep.fn.data, {});
+          bc_deck[i].get< newtag::timedep, newtag::fn >(), {});
 
         // error checking on user-def function
-        if (gideck.bc[i].timedep.fn.data.size() % 6 != 0)
+        if (bc_deck[i].get< newtag::timedep, newtag::fn >().size() % 6 != 0)
           Throw("Incomplete user-defined function for time-dependent BC. An "
           "R->R^5 function is expected, the number of descrete entries must be "
           "divisible by 6: one 'column' for the abscissa, and 5 for the ordinate.");
       }
 
       // Stagnation point
-      storeVecIfSpecd< tk::real >(sol_bc[i+1], "point", gideck.bc[i].point.data,
-        {0.0, 0.0, 0.0});
-      if (gideck.bc[i].point.data.size() != 3)
+      storeVecIfSpecd< tk::real >(sol_bc[i+1], "point",
+        bc_deck[i].get< newtag::point >(), {0.0, 0.0, 0.0});
+      if (bc_deck[i].get< newtag::point >().size() != 3)
         Throw("BC point requires 3 coordinates.");
 
       // Stagnation radius
-      storeIfSpecd< tk::real >(sol_bc[i+1], "radius", gideck.bc[i].radius.data,
+      storeIfSpecd< tk::real >(sol_bc[i+1], "radius", bc_deck[i].get< newtag::radius >(),
         0.0);
 
       // Velocity for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "velocity",
-        gideck.bc[i].velocity.data, {0.0, 0.0, 0.0});
-      if (gideck.bc[i].velocity.data.size() != 3)
+        bc_deck[i].get< newtag::velocity >(), {0.0, 0.0, 0.0});
+      if (bc_deck[i].get< newtag::velocity >().size() != 3)
         Throw("BC velocity requires 3 components.");
 
       // Pressure for inlet/outlet/farfield
       storeIfSpecd< tk::real >(sol_bc[i+1], "pressure",
-        gideck.bc[i].pressure.data, 0.0);
+        bc_deck[i].get< newtag::pressure >(), 0.0);
 
       // Density for inlet/outlet/farfield
       storeIfSpecd< tk::real >(sol_bc[i+1], "density",
-        gideck.bc[i].density.data, 0.0);
+        bc_deck[i].get< newtag::density >(), 0.0);
     }
 
     // error checking on number of meshes
-    if (totalmesh.size() != gideck.mesh.size())
-      Throw("Total meshes (" + std::to_string(gideck.mesh.size()) +
+    if (totalmesh.size() != gideck.get< newtag::mesh >().size())
+      Throw("Total meshes (" + std::to_string(gideck.get< newtag::mesh >().size()) +
         ") not equal to the meshes on which BC's are specified (" +
         std::to_string(totalmesh.size()));
 
@@ -869,155 +910,158 @@ LuaParser::storeInputDeck(
   // Initial condition block
   // ---------------------------------------------------------------------------
   if (lua_ideck["ic"].valid()) {
+    auto& ic_deck = gideck.get< newtag::ic >();
 
     // background IC values
     storeIfSpecd< std::size_t >(lua_ideck["ic"], "materialid",
-      gideck.ic.materialid.data, 1);
+      ic_deck.get< newtag::materialid >(), 1);
 
     storeIfSpecd< tk::real >(lua_ideck["ic"], "pressure",
-      gideck.ic.pressure.data, 0.0);
+      ic_deck.get< newtag::pressure >(), 0.0);
 
     storeIfSpecd< tk::real >(lua_ideck["ic"], "temperature",
-      gideck.ic.temperature.data, 0.0);
+      ic_deck.get< newtag::temperature >(), 0.0);
 
     storeVecIfSpecd< tk::real >(lua_ideck["ic"], "velocity",
-      gideck.ic.velocity.data, {0.0, 0.0, 0.0});
-    if (gideck.ic.velocity.data.size() != 3)
+      ic_deck.get< newtag::velocity >(), {0.0, 0.0, 0.0});
+    if (ic_deck.get< newtag::velocity >().size() != 3)
       Throw("Velocity in IC requires 3 components.");
 
     // IC box
     if (lua_ideck["ic"]["box"].valid()) {
       const sol::table& lua_box = lua_ideck["ic"]["box"];
-      gideck.ic.box.resize(lua_box.size());
+      auto& box_deck = ic_deck.get< newtag::box >();
+      box_deck.resize(lua_box.size());
 
-      for (std::size_t i=0; i<gideck.ic.box.size(); ++i) {
+      for (std::size_t i=0; i<box_deck.size(); ++i) {
         storeIfSpecd< std::size_t >(lua_box[i+1], "materialid",
-          gideck.ic.box[i].materialid.data, 1);
+          box_deck[i].get< newtag::materialid >(), 1);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "volume",
-          gideck.ic.box[i].volume.data, 0.0);
+          box_deck[i].get< newtag::volume >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "mass",
-          gideck.ic.box[i].mass.data, 0.0);
+          box_deck[i].get< newtag::mass >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "density",
-          gideck.ic.box[i].density.data, 0.0);
+          box_deck[i].get< newtag::density >(), 0.0);
 
         storeVecIfSpecd< tk::real >(lua_box[i+1], "velocity",
-          gideck.ic.box[i].velocity.data, {0.0, 0.0, 0.0});
-        if (gideck.ic.box[i].velocity.data.size() != 3)
+          box_deck[i].get< newtag::velocity >(), {0.0, 0.0, 0.0});
+        if (box_deck[i].get< newtag::velocity >().size() != 3)
           Throw("Velocity in IC box requires 3 components.");
 
         storeIfSpecd< tk::real >(lua_box[i+1], "pressure",
-          gideck.ic.box[i].pressure.data, 0.0);
+          box_deck[i].get< newtag::pressure >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "energy",
-          gideck.ic.box[i].energy.data, 0.0);
+          box_deck[i].get< newtag::energy >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "energy_content",
-          gideck.ic.box[i].energy_content.data, 0.0);
+          box_deck[i].get< newtag::energy_content >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "temperature",
-          gideck.ic.box[i].temperature.data, 0.0);
+          box_deck[i].get< newtag::temperature >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "xmin",
-          gideck.ic.box[i].xmin.data, 0.0);
+          box_deck[i].get< newtag::xmin >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "xmax",
-          gideck.ic.box[i].xmax.data, 0.0);
+          box_deck[i].get< newtag::xmax >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "ymin",
-          gideck.ic.box[i].ymin.data, 0.0);
+          box_deck[i].get< newtag::ymin >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "ymax",
-          gideck.ic.box[i].ymax.data, 0.0);
+          box_deck[i].get< newtag::ymax >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "zmin",
-          gideck.ic.box[i].zmin.data, 0.0);
+          box_deck[i].get< newtag::zmin >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "zmax",
-          gideck.ic.box[i].zmax.data, 0.0);
+          box_deck[i].get< newtag::zmax >(), 0.0);
 
         storeVecIfSpecd< tk::real >(lua_box[i+1], "orientation",
-          gideck.ic.box[i].orientation.data, {0.0, 0.0, 0.0});
-        if (gideck.ic.box[i].orientation.data.size() != 3)
+          box_deck[i].get< newtag::orientation >(), {0.0, 0.0, 0.0});
+        if (box_deck[i].get< newtag::orientation >().size() != 3)
           Throw("Orientation in IC box requires 3 rotation angles.");
 
         storeOptIfSpecd< inciter::ctr::InitiateType, inciter::ctr::Initiate >(
-          lua_box[i+1], "initiate", gideck.ic.box[i].initiate.data,
+          lua_box[i+1], "initiate", box_deck[i].get< newtag::initiate >(),
           inciter::ctr::InitiateType::IMPULSE);
 
         storeVecIfSpecd< tk::real >(lua_box[i+1], "point",
-          gideck.ic.box[i].point.data, {0.0, 0.0, 0.0});
-        if (gideck.ic.box[i].point.data.size() != 3)
+          box_deck[i].get< newtag::point >(), {0.0, 0.0, 0.0});
+        if (box_deck[i].get< newtag::point >().size() != 3)
           Throw("Point in IC box requires 3 coordinates.");
 
         storeIfSpecd< tk::real >(lua_box[i+1], "init_time",
-          gideck.ic.box[i].init_time.data, 0.0);
+          box_deck[i].get< newtag::init_time >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_box[i+1], "front_width",
-          gideck.ic.box[i].front_width.data, 0.0);
+          box_deck[i].get< newtag::front_width >(), 0.0);
       }
     }
 
     // IC mesh-block
     if (lua_ideck["ic"]["meshblock"].valid()) {
       const sol::table& lua_meshblock = lua_ideck["ic"]["meshblock"];
-      gideck.ic.meshblock.resize(lua_meshblock.size());
+      auto& mblk_deck = ic_deck.get< newtag::meshblock >();
+      mblk_deck.resize(lua_meshblock.size());
 
-      for (std::size_t i=0; i<gideck.ic.meshblock.size(); ++i) {
+      for (std::size_t i=0; i<mblk_deck.size(); ++i) {
         storeIfSpecd< std::size_t >(lua_meshblock[i+1], "blockid",
-          gideck.ic.meshblock[i].blockid.data, 0);
-        if (gideck.ic.meshblock[i].blockid.data == 0)
+          mblk_deck[i].get< newtag::blockid >(), 0);
+        if (mblk_deck[i].get< newtag::blockid >() == 0)
           Throw("Each IC mesh block must specify the mesh block id.");
 
         storeIfSpecd< std::size_t >(lua_meshblock[i+1], "materialid",
-          gideck.ic.meshblock[i].materialid.data, 1);
+          mblk_deck[i].get< newtag::materialid >(), 1);
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "energy_content",
-          gideck.ic.meshblock[i].energy_content.data, 0.0);
+          mblk_deck[i].get< newtag::energy_content >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "volume",
-          gideck.ic.meshblock[i].volume.data, 0.0);
-        if (gideck.ic.meshblock[i].energy_content.data > 0.0 &&
-          gideck.ic.meshblock[i].volume.data < 1e-12)
+          mblk_deck[i].get< newtag::volume >(), 0.0);
+        if (mblk_deck[i].get< newtag::energy_content >() > 0.0 &&
+          mblk_deck[i].get< newtag::volume >() < 1e-12)
           Throw("Mesh block volume must be specified, if energy content is "
             "used to initialize block");
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "mass",
-          gideck.ic.meshblock[i].mass.data, 0.0);
+          mblk_deck[i].get< newtag::mass >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "density",
-          gideck.ic.meshblock[i].density.data, 0.0);
+          mblk_deck[i].get< newtag::density >(), 0.0);
 
         storeVecIfSpecd< tk::real >(lua_meshblock[i+1], "velocity",
-          gideck.ic.meshblock[i].velocity.data, {0.0, 0.0, 0.0});
-        if (gideck.ic.meshblock[i].velocity.data.size() != 3)
+          mblk_deck[i].get< newtag::velocity >(), {0.0, 0.0, 0.0});
+        if (mblk_deck[i].get< newtag::velocity >().size() != 3)
           Throw("Velocity in IC meshblock requires 3 components.");
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "pressure",
-          gideck.ic.meshblock[i].pressure.data, 0.0);
+          mblk_deck[i].get< newtag::pressure >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "energy",
-          gideck.ic.meshblock[i].energy.data, 0.0);
+          mblk_deck[i].get< newtag::energy >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "temperature",
-          gideck.ic.meshblock[i].temperature.data, 0.0);
+          mblk_deck[i].get< newtag::temperature >(), 0.0);
 
         storeOptIfSpecd< inciter::ctr::InitiateType, inciter::ctr::Initiate >(
-          lua_meshblock[i+1], "initiate", gideck.ic.meshblock[i].initiate.data,
+          lua_meshblock[i+1], "initiate", mblk_deck[i].get< newtag::initiate >(),
           inciter::ctr::InitiateType::IMPULSE);
 
         storeVecIfSpecd< tk::real >(lua_meshblock[i+1], "point",
-          gideck.ic.meshblock[i].point.data, {0.0, 0.0, 0.0});
-        if (gideck.ic.meshblock[i].point.data.size() != 3)
+          mblk_deck[i].get< newtag::point >(), {0.0, 0.0, 0.0});
+        if (mblk_deck[i].get< newtag::point >().size() != 3)
           Throw("Point in IC meshblock requires 3 coordinates.");
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "init_time",
-          gideck.ic.meshblock[i].init_time.data, 0.0);
+          mblk_deck[i].get< newtag::init_time >(), 0.0);
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "front_width",
-          gideck.ic.meshblock[i].front_width.data, 0.0);
+          mblk_deck[i].get< newtag::front_width >(), 0.0);
       }
     }
   }
@@ -1028,236 +1072,241 @@ LuaParser::storeInputDeck(
   // ---------------------------------------------------------------------------
   // ---------------------------------------------------------------------------
 
-  //std::cout << gideck.title.data << std::endl;
-  //std::cout << "cfl = " << gideck.cfl.data << std::endl;
-  //std::cout << "scheme = " << static_cast< std::size_t >(gideck.scheme.data) << std::endl;
-  //auto nmat = gideck.multimat.nmat.data;
+  //std::cout << gideck.get< newtag::title >() << std::endl;
+  //std::cout << "cfl = " << gideck.get< newtag::cfl >() << std::endl;
+  //std::cout << "scheme = " << static_cast< std::size_t >(gideck.get< newtag::scheme >()) << std::endl;
+  //auto nmat = gideck.get< newtag::multimat, newtag::nmat >();
   //std::cout << "nmat " << nmat << std::endl;
-  //std::cout << "ncomp " << gideck.ncomp.data << std::endl;
+  //std::cout << "ncomp " << gideck.get< newtag::ncomp >() << std::endl;
 
   //for (std::size_t k=0; k<nmat; ++k)
-  //  std::cout << gideck.matidxmap.eosidx[k] << ", ";
+  //  std::cout << gideck.get< newtag::matidxmap, newtag::eosidx >()[k] << ", ";
   //std::cout << std::endl;
   //for (std::size_t k=0; k<nmat; ++k)
-  //  std::cout << gideck.matidxmap.matidx[k] << ", ";
+  //  std::cout << gideck.get< newtag::matidxmap, newtag::matidx >()[k] << ", ";
   //std::cout << std::endl;
   //for (std::size_t k=0; k<nmat; ++k)
-  //  std::cout << gideck.matidxmap.solidx[k] << ", ";
+  //  std::cout << gideck.get< newtag::matidxmap, newtag::solidx >()[k] << ", ";
   //std::cout << std::endl;
 
   //inciter::ctr::Material matclass;
-  //for (std::size_t i=0; i<gideck.material.size(); ++i) {
+  //for (std::size_t i=0; i<gideck.get< newtag::material >().size(); ++i) {
+  //  const auto& mati_deck = gideck.get< newtag::material >()[i];
   //  std::cout << "MatType "
-  //    << matclass.name(gideck.material[i].eos.data) << std::endl;
-  //  for (std::size_t k=0; k<gideck.material[i].id.data.size(); ++k) {
-  //    std::cout << gideck.material[i].id.data[k] << std::endl;
+  //    << matclass.name(mati_deck.get< newtag::eos >()) << std::endl;
+  //  for (std::size_t k=0; k<mati_deck.get< newtag::id >().size(); ++k) {
+  //    std::cout << mati_deck.get< newtag::id >()[k] << std::endl;
 
-  //    //std::cout << ", cv = " << gideck.material[i].cv.data[k];
+  //    //std::cout << ", cv = " << mati_deck.get< newtag::cv >()[k];
 
-  //    //if (gideck.material[i].eos.data == "stiffenedgas") {
-  //    //  std::cout << ", gamma = " << gideck.material[i].gamma.data[k] << ", "
-  //    //    << ", pstiff = " << gideck.material[i].pstiff.data[k] << ", ";
+  //    //if (mati_deck.get< newtag::eos >() == inciter::ctr::MaterialType::STIFFENEDGAS) {
+  //    //  std::cout << ", gamma = " << mati_deck.get< newtag::gamma >()[k] << ", "
+  //    //    << ", pstiff = " << mati_deck.get< newtag::pstiff >()[k] << ", ";
   //    //}
 
-  //    //if (gideck.material[i].eos.data == "smallshearsolid") {
-  //    //  std::cout << ", gamma = " << gideck.material[i].gamma.data[k] << ", "
-  //    //    << ", pstiff = " << gideck.material[i].pstiff.data[k] << ", "
-  //    //    << ", mu = " << gideck.material[i].mu.data[k] << ", ";
+  //    //if (mati_deck.get< newtag::eos >() == inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+  //    //  std::cout << ", gamma = " << mati_deck.get< newtag::gamma >()[k] << ", "
+  //    //    << ", pstiff = " << mati_deck.get< newtag::pstiff >()[k] << ", "
+  //    //    << ", mu = " << mati_deck.get< newtag::mu >()[k] << ", ";
   //    //}
 
-  //    //if (gideck.material[i].eos.data == "jwl") {
-  //    //  std::cout << ", w_gru = " << gideck.material[i].w_gru.data[k] << ", "
-  //    //    << ", A_jwl = " << gideck.material[i].A_jwl.data[k] << ", "
-  //    //    << ", B_jwl = " << gideck.material[i].B_jwl.data[k] << ", "
-  //    //    << ", R1_jwl = " << gideck.material[i].R1_jwl.data[k] << ", "
-  //    //    << ", R2_jwl = " << gideck.material[i].R2_jwl.data[k] << ", "
-  //    //    << ", rho0_jwl = " << gideck.material[i].rho0_jwl.data[k] << ", "
-  //    //    << ", de_jwl = " << gideck.material[i].de_jwl.data[k] << ", "
-  //    //    << ", Tr_jwl = " << gideck.material[i].Tr_jwl.data[k] << ", "
-  //    //    << ", Pr_jwl = " << gideck.material[i].Pr_jwl.data[k] << ", ";
+  //    //if (mati_deck.get< newtag::eos >() == inciter::ctr::MaterialType::JWL) {
+  //    //  std::cout << ", w_gru = " << mati_deck.get< newtag::w_gru >()[k] << ", "
+  //    //    << ", A_jwl = " << mati_deck.get< newtag::A_jwl >()[k] << ", "
+  //    //    << ", B_jwl = " << mati_deck.get< newtag::B_jwl >()[k] << ", "
+  //    //    << ", R1_jwl = " << mati_deck.get< newtag::R1_jwl >()[k] << ", "
+  //    //    << ", R2_jwl = " << mati_deck.get< newtag::R2_jwl >()[k] << ", "
+  //    //    << ", rho0_jwl = " << mati_deck.get< newtag::rho0_jwl >()[k] << ", "
+  //    //    << ", de_jwl = " << mati_deck.get< newtag::de_jwl >()[k] << ", "
+  //    //    << ", Tr_jwl = " << mati_deck.get< newtag::Tr_jwl >()[k] << ", "
+  //    //    << ", Pr_jwl = " << mati_deck.get< newtag::Pr_jwl >()[k] << ", ";
   //    //}
 
   //    //std::cout << std::endl;
   //  }
   //}
 
-  //std::cout << " diag iter: " << gideck.diagnostics.iter_interval.data << std::endl;
-  //std::cout << " diag norm: " << static_cast< std::size_t >(gideck.diagnostics.error.data) << std::endl;
-  //std::cout << " diag format: " << static_cast< std::size_t >(gideck.diagnostics.format.data) << std::endl;
-  //std::cout << " diag prec: " << gideck.diagnostics.precision.data << std::endl;
+  //std::cout << " diag iter: " << gideck.get< newtag::diagnostics, newtag::iter_interval >() << std::endl;
+  //std::cout << " diag norm: " << static_cast< std::size_t >(gideck.get< newtag::diagnostics, newtag::error >()) << std::endl;
+  //std::cout << " diag format: " << static_cast< std::size_t >(gideck.get< newtag::diagnostics, newtag::format >()) << std::endl;
+  //std::cout << " diag prec: " << gideck.get< newtag::diagnostics, newtag::precision >() << std::endl;
 
-  //std::cout << " F-O/P ref: "<< gideck.field_output.refined.data << std::endl;
-  //std::cout << " F-O/P time: "<< gideck.field_output.time_interval.data << std::endl;
-  //std::cout << " F-O/P iter: "<< gideck.field_output.iter_interval.data << std::endl;
-  //std::cout << " F-O/P filetype: "<< static_cast< std::size_t >(gideck.field_output.filetype.data) << std::endl;
+  //std::cout << " F-O/P ref: "<< gideck.get< newtag::field_output, newtag::refined >() << std::endl;
+  //std::cout << " F-O/P time: "<< gideck.get< newtag::field_output, newtag::time_interval >() << std::endl;
+  //std::cout << " F-O/P iter: "<< gideck.get< newtag::field_output, newtag::iter_interval >() << std::endl;
+  //std::cout << " F-O/P filetype: "<< static_cast< std::size_t >(gideck.get< newtag::field_output, newtag::filetype >()) << std::endl;
   //std::cout << " F-O/P sidesets: ";
-  //for (std::size_t i=0; i< gideck.field_output.sideset.data.size(); ++i)
-  //  std::cout << gideck.field_output.sideset.data[i] << ", ";
+  //for (std::size_t i=0; i< gideck.get< newtag::field_output, newtag::sideset >().size(); ++i)
+  //  std::cout << gideck.get< newtag::field_output, newtag::sideset >()[i] << ", ";
   //std::cout << std::endl;
   //std::cout << " F-O/P elemvars: ";
-  //for (std::size_t i=0; i< gideck.field_output.elemvar.data.size(); ++i)
-  //  std::cout << gideck.field_output.elemvar.data[i] << ", ";
+  //for (std::size_t i=0; i< gideck.get< newtag::field_output, newtag::elemvar >().size(); ++i)
+  //  std::cout << gideck.get< newtag::field_output, newtag::elemvar >()[i] << ", ";
   //std::cout << std::endl;
   //std::cout << " F-O/P nodevars: ";
-  //for (std::size_t i=0; i< gideck.field_output.nodevar.data.size(); ++i)
-  //  std::cout << gideck.field_output.nodevar.data[i] << ", ";
+  //for (std::size_t i=0; i< gideck.get< newtag::field_output, newtag::nodevar >().size(); ++i)
+  //  std::cout << gideck.get< newtag::field_output, newtag::nodevar >()[i] << ", ";
   //std::cout << std::endl;
 
-  //std::cout << " hist time: " << gideck.history_output.time_interval.data << std::endl;
-  //std::cout << " hist iter: " << gideck.history_output.iter_interval.data << std::endl;
+  //std::cout << " hist time: " << gideck.get< newtag::history_output, newtag::time_interval >() << std::endl;
+  //std::cout << " hist iter: " << gideck.get< newtag::history_output, newtag::iter_interval >() << std::endl;
   //std::cout << " hist range: ";
-  //for (std::size_t i=0; i< gideck.history_output.time_range.data.size(); ++i)
-  //  std::cout << gideck.history_output.time_range.data[i] << ", ";
+  //for (std::size_t i=0; i< gideck.get< newtag::history_output, newtag::time_range >().size(); ++i)
+  //  std::cout << gideck.get< newtag::history_output, newtag::time_range >()[i] << ", ";
   //std::cout << std::endl;
   //std::cout << " hist point: " << std::endl;
-  //for (std::size_t i=0; i< gideck.history_output.point.size(); ++i) {
-  //  std::cout << gideck.history_output.point[i].id.data << ": ";
-  //  for (std::size_t j=0; j< gideck.history_output.point[i].coord.data.size(); ++j)
-  //    std::cout << gideck.history_output.point[i].coord.data[j] << ", ";
+  //for (std::size_t i=0; i< gideck.get< newtag::history_output, newtag::point >().size(); ++i) {
+  //  std::cout << gideck.get< newtag::history_output, newtag::point >()[i].get< newtag::id >() << ": ";
+  //  for (std::size_t j=0; j< gideck.get< newtag::history_output, newtag::point >()[i].get< newtag::coord >().size(); ++j)
+  //    std::cout << gideck.get< newtag::history_output, newtag::point >()[i].get< newtag::coord >()[j] << ", ";
   //  std::cout << std::endl;
   //}
   //std::cout << std::endl;
 
-  //std::cout << " ALE " << gideck.ale.ale.data << std::endl;
-  //for (std::size_t i=0; i< gideck.ale.move.size(); ++i) {
-  //  std::cout << static_cast<std::size_t>(gideck.ale.move[i].fntype.data) << ": "
-  //    << gideck.ale.move[i].sideset.data << std::endl;
-  //  for (std::size_t j=0; j< gideck.ale.move[i].fn.data.size(); ++j)
-  //    std::cout << gideck.ale.move[i].fn.data[j] << ", ";
+  //std::cout << " ALE " << gideck.get< newtag::ale >().get< newtag::ale >() << std::endl;
+  //for (std::size_t i=0; i< gideck.get< newtag::ale >().get< newtag::move >().size(); ++i) {
+  //  const auto& mvi = gideck.get< newtag::ale >().get< newtag::move >()[i];
+  //  std::cout << static_cast<std::size_t>(mvi.get< newtag::fntype >()) << ": "
+  //    << mvi.get< newtag::sideset >() << std::endl;
+  //  for (std::size_t j=0; j< mvi.get< newtag::fn >().size(); ++j)
+  //    std::cout << mvi.get< newtag::fn >()[j] << ", ";
   //  std::cout << std::endl;
   //}
 
-  //std::cout << " AMR " << gideck.amr.amr.data << std::endl;
-  //std::cout << " t0ref " << gideck.amr.t0ref.data << std::endl;
-  //std::cout << " dtref " << gideck.amr.dtref.data << std::endl;
-  //std::cout << " dtref_uniform " << gideck.amr.dtref_uniform.data << std::endl;
-  //std::cout << " dtfreq " << gideck.amr.dtfreq.data << std::endl;
-  //std::cout << " maxlevels " << gideck.amr.maxlevels.data << std::endl;
+  //std::cout << " AMR " << gideck.get< newtag::amr, newtag::amr >() << std::endl;
+  //std::cout << " t0ref " << gideck.get< newtag::amr, newtag::t0ref >() << std::endl;
+  //std::cout << " dtref " << gideck.get< newtag::amr, newtag::dtref >() << std::endl;
+  //std::cout << " dtref_uniform " << gideck.get< newtag::amr, newtag::dtref_uniform >() << std::endl;
+  //std::cout << " dtfreq " << gideck.get< newtag::amr, newtag::dtfreq >() << std::endl;
+  //std::cout << " maxlevels " << gideck.get< newtag::amr, newtag::maxlevels >() << std::endl;
   //std::cout << " initial ";
-  //for (std::size_t i=0; i<gideck.amr.initial.data.size(); ++i)
-  //  std::cout << static_cast< std::size_t >(gideck.amr.initial.data[i]) << ", ";
+  //for (std::size_t i=0; i<gideck.get< newtag::amr, newtag::initial >().size(); ++i)
+  //  std::cout << static_cast< std::size_t >(gideck.get< newtag::amr, newtag::initial >()[i]) << ", ";
   //std::cout << std::endl;
-  //std::cout << " error type " << static_cast< std::size_t >(gideck.amr.error.data)
+  //std::cout << " error type " << static_cast< std::size_t >(gideck.get< newtag::amr, newtag::error >())
   //  << std::endl;
 
-  //std::cout << " pref " << gideck.pref.pref.data << std::endl;
+  //std::cout << " pref " << gideck.get< newtag::pref, newtag::pref >() << std::endl;
   //std::cout << " indicator type " <<
-  //  static_cast< std::size_t >(gideck.pref.indicator.data) << std::endl;
-  //std::cout << " ndofmax " << gideck.pref.ndofmax.data << std::endl;
-  //std::cout << " tolref " << gideck.pref.tolref.data << std::endl;
+  //  static_cast< std::size_t >(gideck.get< newtag::pref, newtag::indicator >()) << std::endl;
+  //std::cout << " ndofmax " << gideck.get< newtag::pref, newtag::ndofmax >() << std::endl;
+  //std::cout << " tolref " << gideck.get< newtag::pref, newtag::tolref >() << std::endl;
 
   //std::cout << " Meshes: " << std::endl;
-  //for (std::size_t j=0; j< gideck.mesh.size(); ++j) {
-  //  std::cout << " " << gideck.mesh[j].filename.data << std::endl;
+  //for (std::size_t j=0; j< gideck.get< newtag::mesh >().size(); ++j) {
+  //  std::cout << " " << gideck.get< newtag::mesh >()[j].get< newtag::filename >() << std::endl;
   //  std::cout << " location: ";
-  //  for (std::size_t i=0; i<gideck.mesh[j].location.data.size(); ++i)
-  //    std::cout << gideck.mesh[j].location.data[i] << ", ";
+  //  for (std::size_t i=0; i<gideck.get< newtag::mesh >()[j].get< newtag::location >().size(); ++i)
+  //    std::cout << gideck.get< newtag::mesh >()[j].get< newtag::location >()[i] << ", ";
   //  std::cout << std::endl;
   //  std::cout << " orientation: ";
-  //  for (std::size_t i=0; i<gideck.mesh[j].orientation.data.size(); ++i)
-  //    std::cout << gideck.mesh[j].orientation.data[i] << ", ";
+  //  for (std::size_t i=0; i<gideck.get< newtag::mesh >()[j].get< newtag::orientation >().size(); ++i)
+  //    std::cout << gideck.get< newtag::mesh >()[j].get< newtag::orientation >()[i] << ", ";
   //  std::cout << std::endl;
   //  std::cout << " velocity: ";
-  //  for (std::size_t i=0; i<gideck.mesh[j].velocity.data.size(); ++i)
-  //    std::cout << gideck.mesh[j].velocity.data[i] << ", ";
+  //  for (std::size_t i=0; i<gideck.get< newtag::mesh >()[j].get< newtag::velocity >().size(); ++i)
+  //    std::cout << gideck.get< newtag::mesh >()[j].get< newtag::velocity >()[i] << ", ";
   //  std::cout << std::endl;
   //}
 
   //std::cout << " BCs: " << std::endl;
-  //for (std::size_t j=0; j< gideck.bc.size(); ++j) {
+  //for (std::size_t j=0; j< gideck.get< newtag::bc >().size(); ++j) {
+  //  const auto& bcj = gideck.get< newtag::bc >()[j];
   //  std::cout << " bc-meshes: ";
-  //  for (std::size_t i=0; i<gideck.bc[j].mesh.data.size(); ++i)
-  //    std::cout << gideck.bc[j].mesh.data[i] << ", ";
+  //  for (std::size_t i=0; i<bcj.get< newtag::mesh >().size(); ++i)
+  //    std::cout << bcj.get< newtag::mesh >()[i] << ", ";
   //  std::cout << std::endl;
   //  std::cout << " dirichlet: ";
-  //  for (std::size_t i=0; i<gideck.bc[j].dirichlet.data.size(); ++i)
-  //    std::cout << gideck.bc[j].dirichlet.data[i] << ", ";
+  //  for (std::size_t i=0; i<bcj.get< newtag::dirichlet >().size(); ++i)
+  //    std::cout << bcj.get< newtag::dirichlet >()[i] << ", ";
   //  std::cout << std::endl;
   //  std::cout << " symmetry: ";
-  //  for (std::size_t i=0; i<gideck.bc[j].symmetry.data.size(); ++i)
-  //    std::cout << gideck.bc[j].symmetry.data[i] << ", ";
+  //  for (std::size_t i=0; i<bcj.get< newtag::symmetry >().size(); ++i)
+  //    std::cout << bcj.get< newtag::symmetry >()[i] << ", ";
   //  std::cout << std::endl;
   //  std::cout << " farfield: ";
-  //  for (std::size_t i=0; i<gideck.bc[j].farfield.data.size(); ++i)
-  //    std::cout << gideck.bc[j].farfield.data[i] << ", ";
+  //  for (std::size_t i=0; i<bcj.get< newtag::farfield >().size(); ++i)
+  //    std::cout << bcj.get< newtag::farfield >()[i] << ", ";
   //  std::cout << std::endl;
   //  std::cout << " inlet: ";
-  //  for (std::size_t i=0; i<gideck.bc[j].inlet.data.size(); ++i)
-  //    std::cout << gideck.bc[j].inlet.data[i] << ", ";
+  //  for (std::size_t i=0; i<bcj.get< newtag::inlet >().size(); ++i)
+  //    std::cout << bcj.get< newtag::inlet >()[i] << ", ";
   //  std::cout << std::endl;
-  //  std::cout << " pressure " << gideck.bc[j].pressure.data << std::endl;
-  //  std::cout << " density " << gideck.bc[j].density.data << std::endl;
-  //  std::cout << " velocity " << gideck.bc[j].velocity.data[0] << ", "
-  //    << gideck.bc[j].velocity.data[1] << ", "
-  //    << gideck.bc[j].velocity.data[2] << std::endl;
+  //  std::cout << " pressure " << bcj.get< newtag::pressure >() << std::endl;
+  //  std::cout << " density " << bcj.get< newtag::density >() << std::endl;
+  //  std::cout << " velocity " << bcj.get< newtag::velocity >()[0] << ", "
+  //    << bcj.get< newtag::velocity >()[1] << ", "
+  //    << bcj.get< newtag::velocity >()[2] << std::endl;
   //  std::cout << " timedep: ";
-  //  for (std::size_t i=0; i<gideck.bc[j].timedep.sideset.data.size(); ++i)
-  //    std::cout << gideck.bc[j].timedep.sideset.data[i] << ", ";
+  //  for (std::size_t i=0; i<bcj.get< newtag::timedep, newtag::sideset >().size(); ++i)
+  //    std::cout << bcj.get< newtag::timedep, newtag::sideset >()[i] << ", ";
   //  std::cout << std::endl;
-  //  for (std::size_t i=0; i<gideck.bc[j].timedep.fn.data.size(); ++i)
-  //    std::cout << gideck.bc[j].timedep.fn.data[i] << ", ";
+  //  for (std::size_t i=0; i<bcj.get< newtag::timedep, newtag::fn >().size(); ++i)
+  //    std::cout << bcj.get< newtag::timedep, newtag::fn >()[i] << ", ";
   //  std::cout << std::endl;
   //}
 
   //std::cout << " ICs: " << std::endl;
-  //std::cout << " matid " << gideck.ic.materialid.data << std::endl;
-  //std::cout << " pressure " << gideck.ic.pressure.data << std::endl;
-  //std::cout << " temperature " << gideck.ic.temperature.data << std::endl;
-  //std::cout << " velocity " << gideck.ic.velocity.data[0] << ", "
-  //  << gideck.ic.velocity.data[1] << ", "
-  //  << gideck.ic.velocity.data[2] << std::endl;
+  //std::cout << " matid " << gideck.get< newtag::ic, newtag::materialid >() << std::endl;
+  //std::cout << " pressure " << gideck.get< newtag::ic, newtag::pressure >() << std::endl;
+  //std::cout << " temperature " << gideck.get< newtag::ic, newtag::temperature >() << std::endl;
+  //std::cout << " velocity " << gideck.get< newtag::ic, newtag::velocity >()[0] << ", "
+  //  << gideck.get< newtag::ic, newtag::velocity >()[1] << ", "
+  //  << gideck.get< newtag::ic, newtag::velocity >()[2] << std::endl;
   //std::cout << " IC box: " << std::endl;
-  //for (std::size_t i=0; i<gideck.ic.box.size(); ++i) {
+  //for (std::size_t i=0; i<gideck.get< newtag::ic, newtag::box >().size(); ++i) {
+  //  const auto& bxi = gideck.get< newtag::ic, newtag::box >()[i];
   //  std::cout << "  box " << i << std::endl;
   //  std::cout << " energy_content " <<
-  //    gideck.ic.box[i].energy_content.data << std::endl;
+  //    bxi.get< newtag::energy_content >() << std::endl;
   //  std::cout << " xmin " <<
-  //    gideck.ic.box[i].xmin.data << std::endl;
+  //    bxi.get< newtag::xmin >() << std::endl;
   //  std::cout << " xmax " <<
-  //    gideck.ic.box[i].xmax.data << std::endl;
+  //    bxi.get< newtag::xmax >() << std::endl;
   //  std::cout << " ymin " <<
-  //    gideck.ic.box[i].ymin.data << std::endl;
+  //    bxi.get< newtag::ymin >() << std::endl;
   //  std::cout << " ymax " <<
-  //    gideck.ic.box[i].ymax.data << std::endl;
+  //    bxi.get< newtag::ymax >() << std::endl;
   //  std::cout << " zmin " <<
-  //    gideck.ic.box[i].zmin.data << std::endl;
+  //    bxi.get< newtag::zmin >() << std::endl;
   //  std::cout << " zmax " <<
-  //    gideck.ic.box[i].zmax.data << std::endl;
+  //    bxi.get< newtag::zmax >() << std::endl;
   //  std::cout << " orientation "
-  //    << gideck.ic.box[i].orientation.data[0] << ", "
-  //    << gideck.ic.box[i].orientation.data[1] << ", "
-  //    << gideck.ic.box[i].orientation.data[2] << ", "
+  //    << bxi.get< newtag::orientation >()[0] << ", "
+  //    << bxi.get< newtag::orientation >()[1] << ", "
+  //    << bxi.get< newtag::orientation >()[2] << ", "
   //    << std::endl;
-  //  std::cout << " initiate " << static_cast< std::size_t >(gideck.ic.box[i].initiate.data) << std::endl;
+  //  std::cout << " initiate " << static_cast< std::size_t >(bxi.get< newtag::initiate >()) << std::endl;
   //  std::cout << " point "
-  //    << gideck.ic.box[i].point.data[0] << ", "
-  //    << gideck.ic.box[i].point.data[1] << ", "
-  //    << gideck.ic.box[i].point.data[2] << ", "
+  //    << bxi.get< newtag::point >()[0] << ", "
+  //    << bxi.get< newtag::point >()[1] << ", "
+  //    << bxi.get< newtag::point >()[2] << ", "
   //    << std::endl;
   //  std::cout << " init_time " <<
-  //    gideck.ic.box[i].init_time.data << std::endl;
+  //    bxi.get< newtag::init_time >() << std::endl;
   //  std::cout << " front_width " <<
-  //    gideck.ic.box[i].front_width.data << std::endl;
+  //    bxi.get< newtag::front_width >() << std::endl;
   //}
   //std::cout << " IC block: " << std::endl;
-  //for (std::size_t i=0; i<gideck.ic.meshblock.size(); ++i) {
+  //for (std::size_t i=0; i<gideck.get< newtag::ic, newtag::meshblock >().size(); ++i) {
+  //  const auto& mblki = gideck.get< newtag::ic, newtag::meshblock >()[i];
   //  std::cout << "  meshblock " << i << std::endl;
   //  std::cout << " blockid " <<
-  //    gideck.ic.meshblock[i].blockid.data << std::endl;
+  //    mblki.get< newtag::blockid >() << std::endl;
   //  std::cout << " materid " <<
-  //    gideck.ic.meshblock[i].materialid.data << std::endl;
+  //    mblki.get< newtag::materialid >() << std::endl;
   //  std::cout << " energy_content " <<
-  //    gideck.ic.meshblock[i].energy_content.data << std::endl;
-  //  std::cout << " initiate " << static_cast< std::size_t >(gideck.ic.meshblock[i].initiate.data) << std::endl;
+  //    mblki.get< newtag::energy_content >() << std::endl;
+  //  std::cout << " initiate " << static_cast< std::size_t >(mblki.get< newtag::initiate >()) << std::endl;
   //  std::cout << " point "
-  //    << gideck.ic.meshblock[i].point.data[0] << ", "
-  //    << gideck.ic.meshblock[i].point.data[1] << ", "
-  //    << gideck.ic.meshblock[i].point.data[2] << ", "
+  //    << mblki.get< newtag::point >()[0] << ", "
+  //    << mblki.get< newtag::point >()[1] << ", "
+  //    << mblki.get< newtag::point >()[2] << ", "
   //    << std::endl;
   //  std::cout << " init_time " <<
-  //    gideck.ic.meshblock[i].init_time.data << std::endl;
+  //    mblki.get< newtag::init_time >() << std::endl;
   //  std::cout << " front_width " <<
-  //    gideck.ic.meshblock[i].front_width.data << std::endl;
+  //    mblki.get< newtag::front_width >() << std::endl;
   //}
 
   return gideck;
