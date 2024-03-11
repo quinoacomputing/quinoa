@@ -20,6 +20,7 @@
 #include "Inciter/Components.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "Inciter/Options/Scheme.hpp"
+#include "Transfer.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
 
 namespace newtag {
@@ -184,6 +185,19 @@ namespace newtag {
 
   DEFTAG(filename);
   DEFTAG(location);
+  DEFTAG(transfer);
+
+  using bclist = tk::TaggedTuple< brigand::list<
+    dirichlet,   std::vector< std::size_t >,
+    symmetry,    std::vector< std::size_t >,
+    inlet,       std::vector< std::size_t >,
+    outlet,      std::vector< std::size_t >,
+    farfield,    std::vector< std::size_t >,
+    extrapolate, std::vector< std::size_t >,
+    stag,        std::vector< std::size_t >,
+    skip,        std::vector< std::size_t >,
+    sponge,      std::vector< std::size_t >
+  > >;
 } // newtag::
 
 namespace inciter {
@@ -354,6 +368,8 @@ using ConfigMembers = brigand::list<
     newtag::vortmult,      tk::real,
     newtag::maxit,         std::size_t,
     newtag::tolerance,     tk::real,
+    newtag::dirichlet,     std::vector< std::size_t >,
+    newtag::symmetry,      std::vector< std::size_t >,
     newtag::move,          std::vector<
       tk::SimpTaggedTuple< brigand::list<
         newtag::sideset, uint64_t,
@@ -483,7 +499,9 @@ using ConfigMembers = brigand::list<
       newtag::orientation, std::vector< tk::real >,
       newtag::velocity,    std::vector< tk::real >
     > >
-  >
+  >,
+
+  newtag::transfer, std::vector< Transfer >
 >;
 
 // Class storing the Config params
@@ -511,6 +529,21 @@ class New2InputDeck : public tk::SimpTaggedTuple< ConfigMembers > {
       get< newtag::amr, newtag::coords, newtag::zminus >() = rmax;
       get< newtag::amr, newtag::coords, newtag::zplus >() = -rmax;
     }
+
+    //! Extract list of mesh filenames (each assigned to a solver)
+    std::vector< std::string > mesh() const {
+      std::vector< std::string > meshes;
+      const auto& mdeck = this->get< newtag::mesh >();
+      for (const auto& im : mdeck) {
+        meshes.push_back(im.get< newtag::filename >());
+      }
+      return meshes;
+    }
+
+    //! Query scheme centering
+    //! \return Scheme centering
+    tk::Centering centering() const
+    { return ctr::Scheme().centering( get< newtag::scheme >() ); }
 
     /** @name Pack/Unpack: Serialize New2InputDeck object for Charm++ */
     ///@{

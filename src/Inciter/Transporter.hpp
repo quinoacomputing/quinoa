@@ -24,8 +24,11 @@
 #include "Progress.hpp"
 #include "Scheme.hpp"
 #include "ContainerUtil.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
+
+extern ctr::New2InputDeck g_newinputdeck;
 
 //! Indices for progress report on mesh preparation
 enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD };
@@ -354,10 +357,10 @@ class Transporter : public CBase_Transporter {
     InciterPrint printer() const {
       const auto& def =
         g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
-      auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
+      auto nrestart = g_newinputdeck.get< newtag::cmd, tag::io, tag::nrestart >();
       return InciterPrint(
-        g_inputdeck.get< tag::cmd >().logname( def, nrestart ),
-        g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog,
+        g_newinputdeck.get< newtag::cmd >().logname( def, nrestart ),
+        g_newinputdeck.get< newtag::cmd, tag::verbose >() ? std::cout : std::clog,
         std::ios_base::app );
     }
 
@@ -366,35 +369,14 @@ class Transporter : public CBase_Transporter {
     //!   configured for all PDE types querying all BC types. Used on a
     //!   Carteisan product of 2 type lists: PDE types and BC types.
     struct UserBC {
-      const ctr::InputDeck& inputdeck;
+      const ctr::New2InputDeck& inputdeck;
       std::unordered_set< int >& userbc;
-      explicit UserBC( const ctr::InputDeck& i, std::unordered_set< int >& u )
+      explicit UserBC( const ctr::New2InputDeck& i, std::unordered_set< int >& u )
         : inputdeck(i), userbc(u) {}
       template< typename U > void operator()( brigand::type_<U> ) {
-        using tag::param;
-        using eq = typename brigand::front< U >;
-        using bc = typename brigand::back< U >;
-        for (auto s : inputdeck.get< param, eq, tag::bc, bc >()) {
-          userbc.insert( std::stoi(s) );
-        }
-      }
-    };
-
-    //! Function object for querying the side set ids for time dependent BCs
-    //! \details Used to query and collect the side set ids the user has
-    //!   configured for all PDE types querying time dependent BCs. Used on
-    //!   PDE type list.
-    struct UserTimedepBC {
-      const ctr::InputDeck& inputdeck;
-      std::unordered_set< int >& userbc;
-      explicit UserTimedepBC( const ctr::InputDeck& i,
-        std::unordered_set< int >& u )
-        : inputdeck(i), userbc(u) {}
-      template< typename eq > void operator()( brigand::type_<eq> ) {
-        using tag::param;
-        for (const auto& b : inputdeck.get< param, eq, tag::bctimedep >()) {
-          for (auto i : b.template get< tag::sideset >())
-            userbc.insert( std::stoi(i) );
+        const auto& bcs = inputdeck.get< newtag::bc >();
+        for (const auto& bci : bcs) {
+          userbc.insert( bci.get< U >().begin(), bci.get< U >().end() );
         }
       }
     };

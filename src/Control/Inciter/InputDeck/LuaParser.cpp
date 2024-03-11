@@ -631,6 +631,14 @@ LuaParser::storeInputDeck(
     storeVecIfSpecd< tk::real >(lua_ideck["ale"], "meshforce",
       ale_deck.get< newtag::meshforce >(), { 0, 0, 0, 0 });
 
+    // Dirichlet
+    storeVecIfSpecd< std::size_t >(lua_ideck["ale"], "dirichlet",
+      ale_deck.get< newtag::dirichlet >(), {});
+
+    // Symmetry
+    storeVecIfSpecd< std::size_t >(lua_ideck["ale"], "symmetry",
+      ale_deck.get< newtag::symmetry >(), {});
+
     // Move sidesets with user defined function
     if (lua_ideck["ale"]["move"].valid()) {
       const sol::table& sol_mv = lua_ideck["ale"]["move"];

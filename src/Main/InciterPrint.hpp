@@ -20,13 +20,14 @@
 #include "Print.hpp"
 #include "ContainerUtil.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/Options/Physics.hpp"
 #include "Inciter/Options/Problem.hpp"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck_defaults;
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 //! InciterPrint : tk::Print
 class InciterPrint : public tk::Print {
@@ -51,7 +52,7 @@ class InciterPrint : public tk::Print {
       Option opt;
       m_stream << m_item_name_value_fmt
                   % m_item_indent % opt.group()
-                  % opt.name( g_inputdeck.get< tags... >() );
+                  % opt.name( g_newinputdeck.get< tags... >() );
     }
 
     // Helper class for compact output of PDE policies

@@ -16,11 +16,11 @@
 #include "Sorter.hpp"
 #include "Reorder.hpp"
 #include "DerivedData.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // inciter::
 
@@ -124,7 +124,7 @@ Sorter::setup( std::size_t npoin )
   std::array< std::size_t, 2 > chunksize{{
      npoin / N, std::numeric_limits< std::size_t >::max() / N }};
 
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  const auto scheme = g_newinputdeck.get< newtag::scheme >();
 
   // Find chare-boundary nodes and edges of our mesh chunk. This algorithm
   // collects the global mesh node ids and edges on the chare boundary. A node
@@ -300,12 +300,12 @@ Sorter::start()
     maps.get< tag::edge >() = std::move(edges);
   }
 
-  if (g_inputdeck.get< tag::cmd, tag::feedback >()) m_host.chcomm();
+  if (g_newinputdeck.get< newtag::cmd, tag::feedback >()) m_host.chcomm();
 
   tk::destroy( m_nodech );
   tk::destroy( m_chnode );
 
-  if (g_inputdeck.get< tag::discr, tag::pelocal_reorder >())
+  if (g_newinputdeck.get< newtag::pelocal_reorder >())
     mask();   // continue with mesh node reordering if requested (or required)
   else
     createDiscWorkers();  // skip mesh node reordering
@@ -345,7 +345,7 @@ Sorter::mask()
   // Count up total number of nodes this chare will need to receive
   auto nrecv = tk::sumvalsize( m_reordcomm );
 
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chmask();
+  if ( g_newinputdeck.get< newtag::cmd, tag::feedback >() ) m_host.chmask();
 
   // Compute number of mesh node IDs we will assign IDs to
   auto nuniq = m_nodeset.size() - nrecv;
@@ -532,7 +532,7 @@ Sorter::finish()
   m_reorderRefiner.send();
 
   // Progress report to host
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chreordered();
+  if ( g_newinputdeck.get< newtag::cmd, tag::feedback >() ) m_host.chreordered();
 
   createDiscWorkers();
 }
@@ -599,7 +599,7 @@ Sorter::createWorkers()
   m_scheme[m_meshid].insert( thisIndex, m_scheme[m_meshid].disc(),
     m_scheme[m_meshid].ghosts(), m_bface, m_bnode, m_triinpoel );
 
-  if ( g_inputdeck.get< tag::cmd, tag::feedback >() ) m_host.chcreated();
+  if ( g_newinputdeck.get< newtag::cmd, tag::feedback >() ) m_host.chcreated();
 
   contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
               m_cbs.get< tag::workinserted >() );
