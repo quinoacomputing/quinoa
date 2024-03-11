@@ -48,8 +48,8 @@ LuaParser::LuaParser( const tk::Print& print,
 //!    parsing
 // *****************************************************************************
 {
-  //// Create InputDeck (a tagged tuple) to store parsed input
-  //ctr::InputDeck id( cmdline );
+  // Create InputDeck (a tagged tuple) to store parsed input
+  ctr::New2InputDeck ideck( cmdline );
 
   //// Reset parser's output stream to that of print's. This is so that mild
   //// warnings emitted during parsing can be output using the pretty printer.
@@ -73,22 +73,24 @@ LuaParser::LuaParser( const tk::Print& print,
   // TODO: remove this cout
   //std::cout << " READ IN SUCCESSFUL " << std::endl;
 
-  inputdeck = storeInputDeck(lua_deck["inciter"]);
+  storeInputDeck(lua_deck["inciter"], ideck);
 
   // Echo errors and warnings accumulated during parsing
   diagnostics( print, std::vector< std::string >{}/*id.get< tag::error >()*/ );
+
+  inputdeck = std::move( ideck );
 }
 
-inciter::ctr::New2InputDeck
+void
 LuaParser::storeInputDeck(
-  const sol::table& lua_ideck )
+  const sol::table& lua_ideck,
+  ctr::New2InputDeck& gideck )
 // *****************************************************************************
 //  Store lua inputdeck in custom struct
 //! \param[in] lua_ideck Lua inputdeck parsed by sol2
+//! \param[in,out] gideck Inciter's inputdeck storage
 // *****************************************************************************
 {
-  inciter::ctr::New2InputDeck gideck;
-
   // TODO: explore replacing storeIfSpecd() and storeOptIfSpecd with sol::get_or()
 
   storeIfSpecd< std::string >(
@@ -1308,8 +1310,6 @@ LuaParser::storeInputDeck(
   //  std::cout << " front_width " <<
   //    mblki.get< newtag::front_width >() << std::endl;
   //}
-
-  return gideck;
 }
 
 void

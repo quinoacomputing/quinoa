@@ -34,9 +34,9 @@ class LuaParser : public tk::FileParser {
                               ctr::New2InputDeck& inputdeck );
 
     //! Store lua inputdeck in custom struct
-    inciter::ctr::New2InputDeck
-    storeInputDeck(
-      const sol::table& lua_ideck );
+    void storeInputDeck(
+      const sol::table& lua_ideck,
+      ctr::New2InputDeck& gideck );
 
     //! Check and store material property into inpudeck storage
     void checkStoreMatProp(

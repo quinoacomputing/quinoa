@@ -23,6 +23,7 @@
 #include "Options/PartitioningAlgorithm.hpp"
 
 namespace newtag {
+  DEFTAG(cmd);
   DEFTAG(title);
   DEFTAG(nstep);
   DEFTAG(term);
@@ -192,6 +193,9 @@ namespace ctr {
 using ConfigMembers = brigand::list<
 
   newtag::title, std::string,
+
+  // Command line parameters
+  newtag::cmd, CmdLine,
 
   // time stepping options
   // ---------------------------------------------------------------------------
@@ -486,6 +490,28 @@ using ConfigMembers = brigand::list<
 class New2InputDeck : public tk::SimpTaggedTuple< ConfigMembers > {
 
   public:
+
+    //! \brief Constructor: set defaults
+    //! \param[in] cl Previously parsed and store command line
+    //! \details Anything not set here is initialized by the compiler using the
+    //!   default constructor for the corresponding type.
+    explicit New2InputDeck( const CmdLine& cl = {} ) {
+      // Set previously parsed command line
+      get< newtag::cmd >() = cl;
+      // Default time stepping params
+      get< newtag::dt >() = 0.0;
+      get< newtag::cfl >() = 0.0;
+      // Default AMR settings
+      auto rmax =
+        std::numeric_limits< kw::amr_xminus::info::expect::type >::max() / 100;
+      get< newtag::amr, newtag::coords, newtag::xminus >() = rmax;
+      get< newtag::amr, newtag::coords, newtag::xplus >() = -rmax;
+      get< newtag::amr, newtag::coords, newtag::yminus >() = rmax;
+      get< newtag::amr, newtag::coords, newtag::yplus >() = -rmax;
+      get< newtag::amr, newtag::coords, newtag::zminus >() = rmax;
+      get< newtag::amr, newtag::coords, newtag::zplus >() = -rmax;
+    }
+
     /** @name Pack/Unpack: Serialize New2InputDeck object for Charm++ */
     ///@{
     //! \brief Pack/Unpack serialize member function
