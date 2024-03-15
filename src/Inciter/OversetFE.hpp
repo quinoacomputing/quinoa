@@ -32,14 +32,11 @@
 #include "DerivedData.hpp"
 #include "FluxCorrector.hpp"
 #include "NodeDiagnostics.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Ghosts.hpp"
 
 #include "NoWarning/oversetfe.decl.h"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 //! OversetFE Charm++ chare array used to advance PDEs in time with OversetFE+RK
 class OversetFE : public CBase_OversetFE {

@@ -20,12 +20,6 @@
 #include "ContainerUtil.hpp"
 #include "DistFCT.hpp"
 
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // inciter::
-
 using inciter::DistFCT;
 
 DistFCT::DistFCT( int nchare,

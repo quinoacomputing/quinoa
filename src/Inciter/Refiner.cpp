@@ -17,7 +17,6 @@
 #include "Reorder.hpp"
 #include "AMR/mesh_adapter.hpp"
 #include "AMR/Error.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "CGPDE.hpp"
 #include "DGPDE.hpp"
@@ -31,9 +30,8 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
 extern ctr::New2InputDeck g_newinputdeck;
-extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::New2InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
 extern std::vector< FVPDE > g_fvpde;
@@ -978,7 +976,7 @@ Refiner::writeMesh( const std::string& basefilename,
   std::vector< std::string > solfieldnames;
   for (std::size_t i=0; i<nprop; ++i) {
     solfieldnames.push_back(
-      g_newinputdeck.get< newtag::depvar >() + std::to_string(i+1) );
+      g_newinputdeck.get< newtag::depvar >()[0] + std::to_string(i+1) );
   }
   Assert( solfieldnames.size() == nprop, "Size mismatch" );
 
@@ -1449,12 +1447,13 @@ Refiner::coordRefine()
   // The default is the largest representable double
   auto eps =
     std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
-  auto xminus_default = g_inputdeck_defaults.get< tag::amr, tag::xminus >();
-  auto xplus_default = g_inputdeck_defaults.get< tag::amr, tag::xplus >();
-  auto yminus_default = g_inputdeck_defaults.get< tag::amr, tag::yminus >();
-  auto yplus_default = g_inputdeck_defaults.get< tag::amr, tag::yplus >();
-  auto zminus_default = g_inputdeck_defaults.get< tag::amr, tag::zminus >();
-  auto zplus_default = g_inputdeck_defaults.get< tag::amr, tag::zplus >();
+  const auto& amr_defcoord = g_inputdeck_defaults.get< newtag::amr, newtag::coords >();
+  auto xminus_default = amr_defcoord.get< newtag::xminus >();
+  auto xplus_default = amr_defcoord.get< newtag::xplus >();
+  auto yminus_default = amr_defcoord.get< newtag::yminus >();
+  auto yplus_default = amr_defcoord.get< newtag::yplus >();
+  auto zminus_default = amr_defcoord.get< newtag::zminus >();
+  auto zplus_default = amr_defcoord.get< newtag::zplus >();
 
   // Decide if user has configured the half-world
   bool xm = std::abs(xminus - xminus_default) > eps ? true : false;

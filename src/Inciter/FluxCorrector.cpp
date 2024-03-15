@@ -23,7 +23,7 @@
 #include "Around.hpp"
 #include "DerivedData.hpp"
 #include "FluxCorrector.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 using inciter::FluxCorrector;
 
@@ -79,8 +79,8 @@ FluxCorrector::aec(
 //!   doi:10.1002/fld.1650071007
 // *****************************************************************************
 {
-  auto ncomp = g_inputdeck.get< tag::component >().nprop();
-  auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
+  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
+  auto ctau = g_newinputdeck.get< newtag::ctau >();
 
   Assert( vol.size() == coord[0].size(), "Nodal volume vector size mismatch" );
   Assert( m_aec.nunk() == inpoel.size() && m_aec.nprop() == ncomp,
@@ -217,7 +217,7 @@ FluxCorrector::verify( std::size_t nchare,
           "Unknown array size mismatch" );
 
   if (nchare == 1) {
-    auto ncomp = g_inputdeck.get< tag::component >().nprop();
+    auto ncomp = g_newinputdeck.get< newtag::ncomp >();
     tk::Fields U( dUh.nunk(), dUh.nprop() );
     U.fill( 0.0 );
 
@@ -267,8 +267,8 @@ FluxCorrector::diff( const std::array< std::vector< tk::real >, 3 >& coord,
 //! \return Mass diffusion contribution to the RHS of the low order system
 // *****************************************************************************
 {
-  auto ncomp = g_inputdeck.get< tag::component >().nprop();
-  auto ctau = g_inputdeck.get< tag::discr, tag::ctau >();
+  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
+  auto ctau = g_newinputdeck.get< newtag::ctau >();
 
   // access node coordinates
   const auto& x = coord[0];
@@ -332,8 +332,8 @@ FluxCorrector::alw( const std::vector< std::size_t >& inpoel,
   Assert( Q.nunk() == Un.nunk() && Q.nprop() == Un.nprop()*2, "Max and min "
           "unknowns of elements surrounding nodes array size mismatch" );
 
-  auto ncomp = g_inputdeck.get< tag::component >().nprop();
-  auto clip = g_inputdeck.get< tag::discr, tag::fctclip >();
+  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
+  auto clip = g_newinputdeck.get< newtag::fctclip >();
 
   // compute maximum and minimum nodal values of all elements (Lohner: u^*_el)
   tk::Fields S( inpoel.size()/4, ncomp*2 );
@@ -392,7 +392,7 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
   Assert( P.nunk() == Ul.nunk() && P.nprop() == Ul.nprop()*2, "Size mismatch" );
   Assert( A.nunk() == Ul.nunk() && A.nprop() == Ul.nprop(), "Size mismatch" );
 
-  auto ncomp = g_inputdeck.get< tag::component >().nprop();
+  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
 
   // compute the maximum and minimum increments and decrements nodal solution
   // values are allowed to achieve (Lohner: Q^{+,-}_i)
@@ -402,7 +402,7 @@ FluxCorrector::lim( const std::vector< std::size_t >& inpoel,
       Q(p,c*2+1) -= Ul(p,c);
     }
 
-  auto eps = g_inputdeck.get< tag::discr, tag::fcteps >();
+  auto eps = g_newinputdeck.get< newtag::fcteps >();
 
   // compute the ratios of positive and negative element contributions that
   // ensure monotonicity (Lohner: R^{+,-})

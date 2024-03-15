@@ -22,7 +22,7 @@
 #include "ContainerUtil.hpp"
 #include "UnsMesh.hpp"
 #include "ExodusIIMeshWriter.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "DerivedData.hpp"
 #include "CGPDE.hpp"
 #include "Discretization.hpp"
@@ -37,8 +37,7 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
-extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::New2InputDeck g_newinputdeck;
 extern std::vector< CGPDE > g_cgpde;
 
 //! Runge-Kutta coefficients
@@ -70,7 +69,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
   m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( Disc()->Gid().size(),
-       g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
+       g_newinputdeck.get< newtag::ncomp >() ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
   m_rhsc(),
@@ -91,7 +90,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_edgenode(),
   m_edgeid(),
   m_dtp( m_u.nunk(), 0.0 ),
-  m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_tp( m_u.nunk(), g_newinputdeck.get< newtag::t0 >() ),
   m_finished( 0 ),
   m_newmesh( 0 ),
   m_refinedmesh( 0 ),
@@ -112,7 +111,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   auto d = Disc();
 
   // Perform optional operator-access-pattern mesh node reordering
-  if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
+  if (g_newinputdeck.get< newtag::operator_reorder >()) {
 
     // Create new local ids based on access pattern of PDE operators
     std::unordered_map< std::size_t, std::size_t > map;
@@ -158,7 +157,7 @@ ALECG::queryBnd()
   auto d = Disc();
 
   // Query and match user-specified Dirichlet boundary conditions to side sets
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  const auto steady = g_newinputdeck.get< newtag::steady_state >();
   if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
   m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
                    m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
@@ -166,12 +165,12 @@ ALECG::queryBnd()
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
   // Prepare unique set of symmetry BC nodes
-  auto sym = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
+  auto sym = d->bcnodes< newtag::symmetry >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : sym)
     m_symbcnodes.insert( begin(nodes), end(nodes) );
 
   // Prepare unique set of farfield BC nodes
-  auto far = d->bcnodes< tag::bc, tag::bcfarfield >( m_bface, m_triinpoel );
+  auto far = d->bcnodes< newtag::farfield >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : far)
     m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
 
@@ -185,7 +184,7 @@ ALECG::queryBnd()
       m_symbctri[e] = 1;
 
   // Prepare unique set of sponge nodes
-  auto sponge = d->bcnodes< tag::sponge, tag::sideset >( m_bface, m_triinpoel );
+  auto sponge = d->bcnodes< newtag::sponge >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : sponge)
     m_spongenodes.insert( begin(nodes), end(nodes) );
 
@@ -193,15 +192,15 @@ ALECG::queryBnd()
   m_timedepbcnodes.clear();
   m_timedepbcFn.clear();
   const auto& timedep =
-    g_inputdeck.get< tag::param, tag::compflow, tag::bctimedep >();
+    g_newinputdeck.get< newtag::bc >()[d->MeshId()].get< newtag::timedep >();
   if (!timedep.empty()) {
     m_timedepbcnodes.resize(timedep.size());
     m_timedepbcFn.resize(timedep.size());
     std::size_t ib=0;
     for (const auto& bndry : timedep) {
       std::unordered_set< std::size_t > nodes;
-      for (const auto& s : bndry.template get< tag::sideset >()) {
-        auto k = m_bnode.find( std::stoi(s) );
+      for (const auto& s : bndry.template get< newtag::sideset >()) {
+        auto k = m_bnode.find(s);
         if (k != end(m_bnode)) {
           for (auto g : k->second) {      // global node ids on side set
             nodes.insert( tk::cref_find(d->Lid(),g) );
@@ -213,7 +212,7 @@ ALECG::queryBnd()
       // Store user defined discrete function in time. This is done in the same
       // loop as the BC nodes, so that the indices for the two vectors
       // m_timedepbcnodes and m_timedepbcFn are consistent with each other
-      auto fn = bndry.template get< tag::fn >();
+      auto fn = bndry.template get< newtag::fn >();
       for (std::size_t ir=0; ir<fn.size()/6; ++ir) {
         m_timedepbcFn[ib].push_back({{ fn[ir*6+0], fn[ir*6+1], fn[ir*6+2],
           fn[ir*6+3], fn[ir*6+4], fn[ir*6+5] }});
@@ -239,17 +238,17 @@ ALECG::norm()
   auto d = Disc();
 
   // Query nodes at which symmetry BCs are specified
-  auto bn = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
+  auto bn = d->bcnodes< newtag::symmetry >( m_bface, m_triinpoel );
 
   // Query nodes at which farfield BCs are specified
-  auto far = d->bcnodes< tag::bc, tag::bcfarfield >( m_bface, m_triinpoel );
+  auto far = d->bcnodes< newtag::farfield >( m_bface, m_triinpoel );
   // Merge BC data where boundary-point normals are required
   for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
 
   // Query nodes at which mesh velocity symmetry BCs are specified
   std::unordered_map<int, std::unordered_set< std::size_t >> ms;
-  for (const auto& s : g_inputdeck.get< tag::ale, tag::bcsym >()) {
-    auto k = m_bface.find( std::stoi(s) );
+  for (const auto& s : g_newinputdeck.get< newtag::ale, newtag::symmetry >()) {
+    auto k = m_bface.find(s);
     if (k != end(m_bface)) {
       auto& n = ms[ k->first ];
       for (auto f : k->second) {
@@ -466,7 +465,7 @@ ALECG::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
+  if (!g_newinputdeck.get< newtag::cmd, tag::nonblocking >()) next();
 }
 
 //! [setup]
@@ -561,7 +560,7 @@ ALECG::continueSetup()
   d->boxvol( m_boxnodes, m_nodeblockid, m_nusermeshblk );
 
   // Query time history field output labels from all PDEs integrated
-  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  const auto& hist_points = g_newinputdeck.get< newtag::history_output, newtag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
     auto n = g_cgpde[d->MeshId()].histNames();
@@ -908,14 +907,13 @@ ALECG::dt()
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
-  auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
-  auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
+  auto const_dt = g_newinputdeck.get< newtag::dt >();
   auto eps = std::numeric_limits< tk::real >::epsilon();
 
   auto d = Disc();
 
   // use constant dt if configured
-  if (std::abs(const_dt - def_const_dt) > eps) {
+  if (std::abs(const_dt) > eps) {
 
     mindt = const_dt;
 
@@ -923,7 +921,7 @@ ALECG::dt()
 
     //! [Find the minimum dt across all PDEs integrated]
     conserved( m_u, Disc()->Vol() );
-    if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
+    if (g_newinputdeck.get< newtag::steady_state >()) {
 
       // compute new dt for each mesh point
       g_cgpde[d->MeshId()].dt( d->It(), d->Vol(), m_u, m_dtp );
@@ -1046,7 +1044,7 @@ ALECG::rhs()
   // clear gradients receive buffer
   tk::destroy(m_chBndGradc);
 
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  const auto steady = g_newinputdeck.get< newtag::steady_state >();
 
   // Compute own portion of right-hand side for all equations
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
@@ -1126,11 +1124,11 @@ ALECG::solve()
   // Update state at time n
   if (m_stage == 0) {
     m_un = m_u;
-    if (g_inputdeck.get< tag::ale, tag::ale >()) d->UpdateCoordn();
+    if (g_newinputdeck.get< newtag::ale, newtag::ale >()) d->UpdateCoordn();
   }
 
   // Solve the sytem
-  if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
+  if (g_newinputdeck.get< newtag::steady_state >()) {
 
     // Advance solution, converging to steady state
     for (std::size_t i=0; i<m_u.nunk(); ++i)
@@ -1145,10 +1143,10 @@ ALECG::solve()
     m_u = m_un + adt * m_rhs;
 
     // Advance mesh if ALE is enabled
-    if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    if (g_newinputdeck.get< newtag::ale, newtag::ale >()) {
       auto& coord = d->Coord();
       const auto& w = d->meshvel();
-      for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+      for (auto j : g_newinputdeck.get< newtag::ale, newtag::mesh_motion >())
         for (std::size_t i=0; i<coord[j].size(); ++i)
           coord[j][i] = d->Coordn()[j][i] + adt * w(i,j);
     }
@@ -1163,7 +1161,7 @@ ALECG::solve()
 
   //! [Continue after solve]
   // Recompute mesh volumes if ALE is enabled
-  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+  if (g_newinputdeck.get< newtag::ale, newtag::ale >()) {
 
     transfer_complete();
     // Save nodal volumes at previous time step stage
@@ -1203,7 +1201,7 @@ ALECG::ale()
   } else {
 
     // Ensure new field output file if mesh moved if ALE is enabled
-    if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    if (g_newinputdeck.get< newtag::ale, newtag::ale >()) {
       d->Itf() = 0;  // Zero field output iteration count if mesh moved
       ++d->Itr();    // Increase number of iterations with a change in the mesh
     }
@@ -1218,7 +1216,7 @@ ALECG::ale()
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping
-    if (g_inputdeck.get< tag::discr, tag::steady_state >())
+    if (g_newinputdeck.get< newtag::steady_state >())
       for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
     // Continue to mesh refinement (if configured)
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
@@ -1237,9 +1235,9 @@ ALECG::refine( const std::vector< tk::real >& l2res )
 {
   auto d = Disc();
 
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-  const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
-  const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
+  const auto steady = g_newinputdeck.get< newtag::steady_state >();
+  const auto residual = g_newinputdeck.get< newtag::residual >();
+  const auto rc = g_newinputdeck.get< newtag::rescomp >() - 1;
 
   if (steady) {
 
@@ -1254,8 +1252,8 @@ ALECG::refine( const std::vector< tk::real >& l2res )
 
   }
 
-  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+  auto dtref = g_newinputdeck.get< newtag::amr, newtag::dtref >();
+  auto dtfreq = g_newinputdeck.get< newtag::amr, newtag::dtfreq >();
 
   // Activate SDAG waits for re-computing the normals
   m_newmesh = 1;  // recompute normals after AMR (if enabled)
@@ -1370,8 +1368,8 @@ ALECG::resized()
   auto d = Disc();
 
   // Revert to volumetric unknowns, if soln was converted in ALECG::refine()
-  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
-  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
+  auto dtref = g_newinputdeck.get< newtag::amr, newtag::dtref >();
+  auto dtfreq = g_newinputdeck.get< newtag::amr, newtag::dtfreq >();
   if (dtref && !(d->It() % dtfreq) && m_refinedmesh==1) {
     volumetric(m_u, d->Vol());
     // Update previous volumes after refinement
@@ -1419,7 +1417,7 @@ ALECG::writeFields( CkCallback c )
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+  if (g_newinputdeck.get< newtag::cmd, tag::benchmark >()) {
 
     c.send();
 
@@ -1451,7 +1449,7 @@ ALECG::writeFields( CkCallback c )
     };
 
     // Output mesh velocity if ALE is enabled
-    if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    if (g_newinputdeck.get< newtag::ale, newtag::ale >()) {
       const auto& w = d->meshvel();
       add_node_field( "x-mesh-velocity", w.extract_comp(0) );
       add_node_field( "y-mesh-velocity", w.extract_comp(1) );
@@ -1488,7 +1486,7 @@ ALECG::writeFields( CkCallback c )
     elemsurfs.insert( end(elemsurfs), begin(eso), end(eso) );
 
     // Query refinement data
-    auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+    auto dtref = g_newinputdeck.get< newtag::amr, newtag::dtref >();
 
     std::tuple< std::vector< std::string >,
                 std::vector< std::vector< tk::real > >,
@@ -1559,8 +1557,8 @@ ALECG::evalLB( int nrestart )
   // finished flag
   if (d->restarted( nrestart )) m_finished = 0;
 
-  const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
-  const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
+  const auto lbfreq = g_newinputdeck.get< newtag::cmd, tag::lbfreq >();
+  const auto nonblocking = g_newinputdeck.get< newtag::cmd, tag::nonblocking >();
 
   // Load balancing if user frequency is reached or after the second time-step
   if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
@@ -1583,8 +1581,8 @@ ALECG::evalRestart()
 {
   auto d = Disc();
 
-  const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
-  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+  const auto rsfreq = g_newinputdeck.get< newtag::cmd, tag::rsfreq >();
+  const auto benchmark = g_newinputdeck.get< newtag::cmd, tag::benchmark >();
 
   if (not benchmark and not (d->It() % rsfreq)) {
 

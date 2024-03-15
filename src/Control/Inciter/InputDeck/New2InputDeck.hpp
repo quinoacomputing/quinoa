@@ -283,7 +283,7 @@ using ConfigMembers = brigand::list<
   > >,
 
   // Dependent variable name
-  newtag::depvar, std::string,
+  newtag::depvar, std::vector< char >,
 
   // physics choices
   newtag::physics, PhysicsType,
@@ -347,6 +347,7 @@ using ConfigMembers = brigand::list<
     newtag::iter_interval, uint32_t,
     newtag::time_interval, tk::real,
     newtag::time_range,    std::vector< tk::real >,
+    newtag::format,        tk::ctr::TxtFloatFormatType,
     newtag::precision,     uint32_t,
     newtag::point,         std::vector<
       tk::SimpTaggedTuple< brigand::list<
@@ -372,7 +373,7 @@ using ConfigMembers = brigand::list<
     newtag::symmetry,      std::vector< std::size_t >,
     newtag::move,          std::vector<
       tk::SimpTaggedTuple< brigand::list<
-        newtag::sideset, uint64_t,
+        newtag::sideset, std::vector< uint64_t >,
         newtag::fntype,  tk::ctr::UserTableType,
         newtag::fn,      std::vector< tk::real >
       > >
@@ -432,10 +433,12 @@ using ConfigMembers = brigand::list<
       newtag::velocity,    std::vector< tk::real >,
       newtag::pressure,    tk::real,
       newtag::density,     tk::real,
-      newtag::timedep,     tk::SimpTaggedTuple< brigand::list<
-        newtag::sideset,   std::vector< uint64_t >,
-        newtag::fn,        std::vector< tk::real >
-      > >
+      newtag::timedep,     std::vector<
+        tk::SimpTaggedTuple< brigand::list<
+          newtag::sideset,   std::vector< uint64_t >,
+          newtag::fn,        std::vector< tk::real >
+        > >
+      >
     > >
   >,
 

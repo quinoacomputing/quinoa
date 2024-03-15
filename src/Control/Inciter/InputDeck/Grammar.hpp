@@ -26,7 +26,7 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::InputDeck g_oldinputdeck_defaults;
 
 //! Inciter input deck facilitating user input for computing shock hydrodynamics
 namespace deck {
@@ -387,7 +387,7 @@ namespace grm {
         // physics = euler/energy pill: m-material compressible flow
         // scalar components: volfrac:m + mass:m + momentum:3 + energy:m
         // if nmat is unspecified, configure it be 2
-        if (nmat == inciter::g_inputdeck_defaults.get<param, eq, tag::nmat>()) {
+        if (nmat == 0) {
           Message< Stack, WARNING, MsgKey::NONMAT >( stack, in );
           nmat = 2;
         }
@@ -627,7 +627,7 @@ namespace grm {
     static void apply( const Input& in, Stack& stack ) {
       store_option< Stack, inciter::deck::use, Option, inciter::ctr::InputDeck,
                     Input, tags... >
-                  ( stack, in, inciter::g_inputdeck_defaults );
+                  ( stack, in, inciter::g_oldinputdeck_defaults );
     }
   };
 
@@ -719,21 +719,20 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       using inciter::deck::neq;
-      using inciter::g_inputdeck_defaults;
 
       // Error out if no dt policy has been selected
       const auto& dt = stack.template get< tag::discr, tag::dt >();
       const auto& cfl = stack.template get< tag::discr, tag::cfl >();
-      if ( std::abs(dt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) <
+      if ( std::abs(dt) <
             std::numeric_limits< tk::real >::epsilon() &&
-          std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) <
+          std::abs(cfl) <
             std::numeric_limits< tk::real >::epsilon() )
         Message< Stack, ERROR, MsgKey::NODT >( stack, in );
 
       // If both dt and cfl are given, warn that dt wins over cfl
-      if ( std::abs(dt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
+      if ( std::abs(dt) >
             std::numeric_limits< tk::real >::epsilon() &&
-          std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
+          std::abs(cfl) >
             std::numeric_limits< tk::real >::epsilon() )
         Message< Stack, WARNING, MsgKey::MULDT >( stack, in );
 
@@ -771,7 +770,6 @@ namespace grm {
   template<> struct action< check_ale > {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
-      using inciter::g_inputdeck_defaults;
 
      // Trigger error if steady state + ALE are both enabled
       auto steady = stack.template get< tag::discr, tag::steady_state >();
@@ -782,9 +780,8 @@ namespace grm {
 
       // Set a sensible default for dvCFL if ALE is enabled and if dvcfl not set
       auto& dvcfl = stack.template get< tag::ale, tag::dvcfl >();
-      auto dvcfl_default = g_inputdeck_defaults.get< tag::ale, tag::dvcfl >();
       auto eps = std::numeric_limits< tk::real >::epsilon();
-      if (ale && std::abs(dvcfl - dvcfl_default) < eps) dvcfl = 0.01;
+      if (ale && std::abs(dvcfl) < eps) dvcfl = 0.01;
 
       // Set a default of zeros for the mesh force ALE parameters
       auto& meshforce = stack.template get< tag::ale, tag::meshforce >();

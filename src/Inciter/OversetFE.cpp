@@ -21,7 +21,7 @@
 #include "ContainerUtil.hpp"
 #include "UnsMesh.hpp"
 #include "ExodusIIMeshWriter.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "DerivedData.hpp"
 #include "CGPDE.hpp"
 #include "Discretization.hpp"
@@ -35,8 +35,7 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
-extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::New2InputDeck g_newinputdeck;
 extern std::vector< CGPDE > g_cgpde;
 
 //! Runge-Kutta coefficients
@@ -68,7 +67,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
   m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( Disc()->Gid().size(),
-       g_inputdeck.get< tag::component >().nprop( Disc()->MeshId() ) ),
+       g_newinputdeck.get< newtag::ncomp >() ),
   m_uc( m_u.nunk(), m_u.nprop()+1 ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
@@ -90,7 +89,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_edgenode(),
   m_edgeid(),
   m_dtp( m_u.nunk(), 0.0 ),
-  m_tp( m_u.nunk(), g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_tp( m_u.nunk(), g_newinputdeck.get< newtag::t0 >() ),
   m_finished( 0 ),
   m_movedmesh( 0 ),
   m_nusermeshblk( 0 ),
@@ -111,7 +110,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   auto d = Disc();
 
   // Perform optional operator-access-pattern mesh node reordering
-  if (g_inputdeck.get< tag::discr, tag::operator_reorder >()) {
+  if (g_newinputdeck.get< newtag::operator_reorder >()) {
 
     // Create new local ids based on access pattern of PDE operators
     std::unordered_map< std::size_t, std::size_t > map;
@@ -144,15 +143,11 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4meshblk();
 
   // Determine user-specified mesh velocity
-  const auto& uservelvec = g_inputdeck.get< tag::param, tag::compflow,
-    tag::mesh, tag::velocity >();
-  if (!uservelvec.empty())
-    m_uservel = {uservelvec[d->MeshId()*3],
-      uservelvec[d->MeshId()*3 + 1],
-      uservelvec[d->MeshId()*3 + 2]};
-  else m_uservel = {0, 0, 0};
+  const auto& uservelvec =
+    g_newinputdeck.get< newtag::mesh >()[d->MeshId()].get< newtag::velocity >();
+  m_uservel = {uservelvec[0], uservelvec[1], uservelvec[2]};
 
-  if (g_inputdeck.get< tag::discr, tag::steady_state >() &&
+  if (g_newinputdeck.get< newtag::steady_state >() &&
     std::sqrt(tk::dot(m_uservel, m_uservel)) > 1e-8)
     Throw("Mesh motion cannot be activated for steady state problem");
 
@@ -170,12 +165,12 @@ OversetFE::getBCNodes()
   auto d = Disc();
 
   // Prepare unique set of symmetry BC nodes
-  auto sym = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
+  auto sym = d->bcnodes< newtag::symmetry >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : sym)
     m_symbcnodes.insert( begin(nodes), end(nodes) );
 
   // Prepare unique set of farfield BC nodes
-  auto far = d->bcnodes< tag::bc, tag::bcfarfield >( m_bface, m_triinpoel );
+  auto far = d->bcnodes< newtag::farfield >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : far)
     m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
 
@@ -192,15 +187,15 @@ OversetFE::getBCNodes()
   m_timedepbcnodes.clear();
   m_timedepbcFn.clear();
   const auto& timedep =
-    g_inputdeck.get< tag::param, tag::compflow, tag::bctimedep >();
+    g_newinputdeck.get< newtag::bc >()[d->MeshId()].get< newtag::timedep >();
   if (!timedep.empty()) {
     m_timedepbcnodes.resize(timedep.size());
     m_timedepbcFn.resize(timedep.size());
     std::size_t ib=0;
     for (const auto& bndry : timedep) {
       std::unordered_set< std::size_t > nodes;
-      for (const auto& s : bndry.template get< tag::sideset >()) {
-        auto k = m_bnode.find( std::stoi(s) );
+      for (const auto& s : bndry.template get< newtag::sideset >()) {
+        auto k = m_bnode.find(s);
         if (k != end(m_bnode)) {
           for (auto g : k->second) {      // global node ids on side set
             nodes.insert( tk::cref_find(d->Lid(),g) );
@@ -212,7 +207,7 @@ OversetFE::getBCNodes()
       // Store user defined discrete function in time. This is done in the same
       // loop as the BC nodes, so that the indices for the two vectors
       // m_timedepbcnodes and m_timedepbcFn are consistent with each other
-      auto fn = bndry.template get< tag::fn >();
+      auto fn = bndry.template get< newtag::fn >();
       for (std::size_t ir=0; ir<fn.size()/6; ++ir) {
         m_timedepbcFn[ib].push_back({{ fn[ir*6+0], fn[ir*6+1], fn[ir*6+2],
           fn[ir*6+3], fn[ir*6+4], fn[ir*6+5] }});
@@ -234,17 +229,17 @@ OversetFE::norm()
   auto d = Disc();
 
   // Query nodes at which symmetry BCs are specified
-  auto bn = d->bcnodes< tag::bc, tag::bcsym >( m_bface, m_triinpoel );
+  auto bn = d->bcnodes< newtag::symmetry >( m_bface, m_triinpoel );
 
   // Query nodes at which farfield BCs are specified
-  auto far = d->bcnodes< tag::bc, tag::bcfarfield >( m_bface, m_triinpoel );
+  auto far = d->bcnodes< newtag::farfield >( m_bface, m_triinpoel );
   // Merge BC data where boundary-point normals are required
   for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
 
   // Query nodes at which mesh velocity symmetry BCs are specified
   std::unordered_map<int, std::unordered_set< std::size_t >> ms;
-  for (const auto& s : g_inputdeck.get< tag::ale, tag::bcsym >()) {
-    auto k = m_bface.find( std::stoi(s) );
+  for (const auto& s : g_newinputdeck.get< newtag::ale, newtag::symmetry >()) {
+    auto k = m_bface.find(s);
     if (k != end(m_bface)) {
       auto& n = ms[ k->first ];
       for (auto f : k->second) {
@@ -461,7 +456,7 @@ OversetFE::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
+  if (!g_newinputdeck.get< newtag::cmd, tag::nonblocking >()) next();
 }
 
 //! [setup]
@@ -556,7 +551,7 @@ OversetFE::continueSetup()
   d->boxvol( m_boxnodes, m_nodeblockid, m_nusermeshblk );
 
   // Query time history field output labels from all PDEs integrated
-  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  const auto& hist_points = g_newinputdeck.get< newtag::history_output, newtag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
     auto n = g_cgpde[d->MeshId()].histNames();
@@ -902,39 +897,43 @@ OversetFE::BC()
   auto d = Disc();
   const auto& coord = d->Coord();
 
-  const auto& bcmesh = g_inputdeck.get< tag::param, tag::compflow, tag::mesh >();
+  const auto& bcmesh = g_newinputdeck.get< newtag::bc >();
 
-  // Query and match user-specified Dirichlet boundary conditions to side sets
-  if (bcmesh.get< tag::bcdir >().empty() ||
-    bcmesh.get< tag::bcdir >()[ d->MeshId() ]) {
-    const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-    if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
-    m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
-                     m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
-                   /* increment = */ false );
-    if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
+  for (const auto& bci : bcmesh) {
+    // only if this bc is meant for current mesh
+    bool bc_match(false);
+    const auto& bcm = bci.get< newtag::mesh >();
+    for (const auto& im : bcm) {
+      bc_match = (im == d->MeshId());
+    }
+    if (bc_match) {
 
-    // Apply Dirichlet BCs
-    for (const auto& [b,bc] : m_dirbc)
-      for (ncomp_t c=0; c<m_u.nprop(); ++c)
-        if (bc[c].first) m_u(b,c) = bc[c].second;
+      // Query and match user-specified Dirichlet boundary conditions to side sets
+      const auto steady = g_newinputdeck.get< newtag::steady_state >();
+      if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
+      m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
+                       m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
+                     /* increment = */ false );
+      if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
+
+      // Apply Dirichlet BCs
+      for (const auto& [b,bc] : m_dirbc)
+        for (ncomp_t c=0; c<m_u.nprop(); ++c)
+          if (bc[c].first) m_u(b,c) = bc[c].second;
+
+      // Apply symmetry BCs
+      g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
+
+      // Apply farfield BCs
+      if (bci.get< newtag::farfield >().empty() || (d->MeshId() == 0)) {
+        g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+      }
+
+      // Apply user defined time dependent BCs
+      g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
+        m_timedepbcFn );
+    }
   }
-
-  // Apply symmetry BCs
-  if (bcmesh.get< tag::bcsym >().empty() ||
-    bcmesh.get< tag::bcsym >()[ d->MeshId() ]) {
-    g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
-  }
-
-  // Apply farfield BCs
-  if (bcmesh.get< tag::bcfarfield >().empty() ||
-    (bcmesh.get< tag::bcfarfield >()[ d->MeshId() ] && d->MeshId() == 0)) {
-    g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
-  }
-
-  // Apply user defined time dependent BCs
-  g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
-    m_timedepbcFn );
 }
 
 void
@@ -954,21 +953,20 @@ OversetFE::dt()
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
-  auto const_dt = g_inputdeck.get< tag::discr, tag::dt >();
-  auto def_const_dt = g_inputdeck_defaults.get< tag::discr, tag::dt >();
+  auto const_dt = g_newinputdeck.get< newtag::dt >();
   auto eps = std::numeric_limits< tk::real >::epsilon();
 
   auto d = Disc();
 
   // use constant dt if configured
-  if (std::abs(const_dt - def_const_dt) > eps) {
+  if (std::abs(const_dt) > eps) {
 
     mindt = const_dt;
 
   } else {      // compute dt based on CFL
 
     //! [Find the minimum dt across all PDEs integrated]
-    if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
+    if (g_newinputdeck.get< newtag::steady_state >()) {
 
       // compute new dt for each mesh point
       g_cgpde[d->MeshId()].dt( d->It(), d->Vol(), m_u, m_dtp );
@@ -1004,7 +1002,7 @@ OversetFE::dt()
   reducndata[d->MeshId()+1] = static_cast< tk::real >(-m_movedmesh);
 
   // Contribute to minimum dt across all chares and advance to next step
-  if (g_inputdeck.get< tag::discr, tag::steady_state >()) {
+  if (g_newinputdeck.get< newtag::steady_state >()) {
     contribute( reducndata, CkReduction::min_double,
                 CkCallback(CkReductionTarget(OversetFE,advance), thisProxy) );
   }
@@ -1108,7 +1106,7 @@ OversetFE::rhs()
   // clear gradients receive buffer
   tk::destroy(m_chBndGradc);
 
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  const auto steady = g_newinputdeck.get< newtag::steady_state >();
 
   // Assign mesh velocity
   if (m_movedmesh) {
@@ -1196,7 +1194,7 @@ OversetFE::solve()
   }
 
   // Explicit time-stepping using RK3
-  const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+  const auto steady = g_newinputdeck.get< newtag::steady_state >();
   for (std::size_t i=0; i<m_u.nunk(); ++i) {
     // time-step
     auto dtp = d->Dt();
@@ -1246,7 +1244,7 @@ OversetFE::solve()
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping
-    if (g_inputdeck.get< tag::discr, tag::steady_state >())
+    if (g_newinputdeck.get< newtag::steady_state >())
       for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
   }
   // Continue to finish-up time-step-stage
@@ -1266,9 +1264,9 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
   auto d = Disc();
 
   if (m_stage == 3) {
-    const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
-    const auto residual = g_inputdeck.get< tag::discr, tag::residual >();
-    const auto rc = g_inputdeck.get< tag::discr, tag::rescomp >() - 1;
+    const auto steady = g_newinputdeck.get< newtag::steady_state >();
+    const auto residual = g_newinputdeck.get< newtag::residual >();
+    const auto rc = g_newinputdeck.get< newtag::rescomp >() - 1;
 
     if (m_movedmesh) {
       d->Itf() = 0;  // Zero field output iteration count if mesh moved
@@ -1326,7 +1324,7 @@ OversetFE::writeFields( CkCallback c )
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+  if (g_newinputdeck.get< newtag::cmd, tag::benchmark >()) {
 
     c.send();
 
@@ -1420,8 +1418,8 @@ OversetFE::evalLB( int nrestart )
   // finished flag
   if (d->restarted( nrestart )) m_finished = 0;
 
-  const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
-  const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
+  const auto lbfreq = g_newinputdeck.get< newtag::cmd, tag::lbfreq >();
+  const auto nonblocking = g_newinputdeck.get< newtag::cmd, tag::nonblocking >();
 
   // Load balancing if user frequency is reached or after the second time-step
   if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
@@ -1444,8 +1442,8 @@ OversetFE::evalRestart()
 {
   auto d = Disc();
 
-  const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
-  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
+  const auto rsfreq = g_newinputdeck.get< newtag::cmd, tag::rsfreq >();
+  const auto benchmark = g_newinputdeck.get< newtag::cmd, tag::benchmark >();
 
   if (not benchmark and not (d->It() % rsfreq)) {
 

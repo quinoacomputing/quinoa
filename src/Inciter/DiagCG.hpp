@@ -38,14 +38,11 @@
 #include "FluxCorrector.hpp"
 #include "NodeDiagnostics.hpp"
 #include "CommMap.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Ghosts.hpp"
 
 #include "NoWarning/diagcg.decl.h"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 //! DiagCG Charm++ chare array used to advance PDEs in time with DiagCG+LW+FCT
 class DiagCG : public CBase_DiagCG {

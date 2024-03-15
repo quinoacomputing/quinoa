@@ -24,14 +24,14 @@
 #include "UnsMesh.hpp"
 #include "CommMap.hpp"
 #include "History.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 //! \brief Discretization Charm++ chare array holding common functinoality to
 //!   all discretization schemes
@@ -361,19 +361,23 @@ class Discretization : public CBase_Discretization {
       const std::map< int, std::vector< std::size_t > >& m_bface;
       const std::vector< std::size_t >& m_triinpoel;
       std::unordered_map< int, std::unordered_set< std::size_t > >& m_nodes;
+      std::size_t m_mid;
 
       explicit
         SidesetNodes( const std::map< int, std::vector< std::size_t > >& bface,
                       const std::vector< std::size_t >& triinpoel,
                       std::unordered_map< int,
-                        std::unordered_set< std::size_t > >& nodes )
-        : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes) {}
+                        std::unordered_set< std::size_t > >& nodes,
+                      std::size_t mid )
+        : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes), m_mid(mid) {}
 
       template< typename Eq > void operator()( brigand::type_<Eq> ) {
-        const auto& ss =
-          g_inputdeck.template get< tag::param, Eq, tags... >();
+        const auto& bc =
+          g_newinputdeck.template get< newtag::bc >()[m_mid];
+        // collect sidesets for this mesh with this bc type
+        const auto& ss = bc.template get< tags... >();
         for (const auto& s : ss) {
-          auto k = m_bface.find( std::stoi(s) );
+          auto k = m_bface.find(s);
           if (k != end(m_bface)) {
             auto& n = m_nodes[ k->first ];  // associate set id
             for (auto f : k->second) {      // face ids on side set
@@ -402,7 +406,7 @@ class Discretization : public CBase_Discretization {
       using PDETypes = ctr::parameters::Keys;
       std::unordered_map< int, std::unordered_set< std::size_t > > nodes;
       brigand::for_each< PDETypes >(
-        SidesetNodes< tags... >( bface, triinpoel, nodes ) );
+        SidesetNodes< tags... >( bface, triinpoel, nodes, this->MeshId() ) );
       return nodes;
     }
 
@@ -541,9 +545,9 @@ class Discretization : public CBase_Discretization {
     //! Recent floor of physics time divided by history output interval time
     tk::real m_physHistFloor;
     //! Recent floors of physics time divided by field output time for ranges
-    std::vector< tk::real > m_rangeFieldFloor;
+    tk::real m_rangeFieldFloor;
     //! Recent floors of physics time divided by history output time for ranges
-    std::vector< tk::real > m_rangeHistFloor;
+    tk::real m_rangeHistFloor;
     //! Physical time step size
     tk::real m_dt;
     //! Physical time step size at the previous time step

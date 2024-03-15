@@ -26,7 +26,7 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::New2InputDeck g_inputdeck_defaults;
 extern ctr::New2InputDeck g_newinputdeck;
 
 //! InciterPrint : tk::Print

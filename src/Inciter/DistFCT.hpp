@@ -39,7 +39,6 @@
 #include "FluxCorrector.hpp"
 #include "Discretization.hpp"
 #include "DiagCG.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 
 #include "NoWarning/distfct.decl.h"
 

@@ -188,6 +188,9 @@ LuaParser::storeInputDeck(
   // PDE options
   // ---------------------------------------------------------------------------
 
+  char depvar_cnt = 'a';
+  gideck.get< newtag::depvar >().resize(1);
+
   // check transport
   if (lua_ideck["transport"].valid()) {
     gideck.get< newtag::pde >() = inciter::ctr::PDEType::TRANSPORT;
@@ -198,8 +201,7 @@ LuaParser::storeInputDeck(
       lua_ideck["transport"], "problem",
       gideck.get< newtag::transport, newtag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
-    storeIfSpecd< std::string >(
-      lua_ideck, "depvar", gideck.get< newtag::depvar >(), "c");
+    gideck.get< newtag::depvar >()[0] = 'c';
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< newtag::flux >(),
       inciter::ctr::FluxType::UPWIND);
@@ -216,8 +218,7 @@ LuaParser::storeInputDeck(
       lua_ideck["compflow"], "problem",
       gideck.get< newtag::compflow, newtag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
-    storeIfSpecd< std::string >(
-      lua_ideck, "depvar", gideck.get< newtag::depvar >(), "a");
+    gideck.get< newtag::depvar >()[0] = 'a';
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< newtag::flux >(),
       inciter::ctr::FluxType::HLLC);
@@ -248,14 +249,16 @@ LuaParser::storeInputDeck(
       lua_ideck["multimat"], "problem",
       gideck.get< newtag::multimat, newtag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
-    storeIfSpecd< std::string >(
-      lua_ideck, "depvar", gideck.get< newtag::depvar >(), "a");
+    gideck.get< newtag::depvar >()[0] = 'a';
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< newtag::flux >(),
       inciter::ctr::FluxType::AUSM);
 
     // number of equations in PDE system are determined based on materials
   }
+
+  // add depvar to deck::depvars so it can be selected as outvar later
+  tk::grm::depvars.insert( gideck.get< newtag::depvar >()[0] );
 
   // physics
   // ---------------------------------------------------------------------------
@@ -583,6 +586,11 @@ LuaParser::storeInputDeck(
       }
     }
 
+    // float format
+    storeOptIfSpecd< tk::ctr::TxtFloatFormatType, tk::ctr::TxtFloatFormat >(
+      lua_ideck["history_output"], "format", hist_deck.get< newtag::format >(),
+      tk::ctr::TxtFloatFormatType::DEFAULT);
+
     // precision
     storeIfSpecd< uint32_t >(
       lua_ideck["history_output"], "precision",
@@ -649,8 +657,8 @@ LuaParser::storeInputDeck(
         storeOptIfSpecd< tk::ctr::UserTableType, tk::ctr::UserTable >(
           sol_mv[i+1], "fntype", mvi.get< newtag::fntype >(),
           tk::ctr::UserTableType::POSITION);
-        storeIfSpecd< uint64_t >(
-          sol_mv[i+1], "sideset", mvi.get< newtag::sideset >(), 0);
+        storeVecIfSpecd< uint64_t >(
+          sol_mv[i+1], "sideset", mvi.get< newtag::sideset >(), {});
         storeVecIfSpecd< tk::real >(
           sol_mv[i+1], "fn", mvi.get< newtag::fn >(), {});
 
@@ -807,6 +815,18 @@ LuaParser::storeInputDeck(
         mesh_deck[i].get< newtag::velocity >(), {0.0, 0.0, 0.0});
       if (mesh_deck[i].get< newtag::velocity >().size() != 3)
         Throw("Mesh velocity requires 3 components.");
+
+      // Transfer object
+      if (i > 0) {
+        gideck.get< newtag::transfer >().emplace_back( 0, i );
+
+        // assign depvar
+        ++depvar_cnt;
+        gideck.get< newtag::depvar >().push_back(depvar_cnt);
+
+        // add depvar to deck::depvars so it can be selected as outvar later
+        tk::grm::depvars.insert(depvar_cnt);
+      }
     }
   }
   else {
@@ -863,16 +883,23 @@ LuaParser::storeInputDeck(
 
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
-        storeVecIfSpecd< uint64_t >(sol_bc[i+1]["timedep"], "sideset",
-          bc_deck[i].get< newtag::timedep, newtag::sideset >(), {});
-        storeVecIfSpecd< tk::real >(sol_bc[i+1]["timedep"], "fn",
-          bc_deck[i].get< newtag::timedep, newtag::fn >(), {});
+        const sol::table& sol_tdbc = sol_bc[i+1]["timedep"];
+        auto& tdbc_deck = bc_deck[i].get< newtag::timedep >();
+        tdbc_deck.resize(sol_tdbc.size());
 
-        // error checking on user-def function
-        if (bc_deck[i].get< newtag::timedep, newtag::fn >().size() % 6 != 0)
-          Throw("Incomplete user-defined function for time-dependent BC. An "
-          "R->R^5 function is expected, the number of descrete entries must be "
-          "divisible by 6: one 'column' for the abscissa, and 5 for the ordinate.");
+        for (std::size_t j=0; j<tdbc_deck.size(); ++j) {
+          storeVecIfSpecd< uint64_t >(sol_tdbc[j+1], "sideset",
+            tdbc_deck[j].get< newtag::sideset >(), {});
+          storeVecIfSpecd< tk::real >(sol_tdbc[j+1], "fn",
+            tdbc_deck[j].get< newtag::fn >(), {});
+
+          // error checking on user-def function
+          if (tdbc_deck[j].get< newtag::fn >().size() % 6 != 0)
+            Throw("Incomplete user-defined function for time-dependent BC. An "
+            "R->R^5 function is expected, the number of descrete entries must "
+            "be divisible by 6: one 'column' for the abscissa, and 5 for the "
+            "ordinate.");
+        }
       }
 
       // Stagnation point
@@ -1219,6 +1246,17 @@ LuaParser::storeInputDeck(
   //  std::cout << std::endl;
   //}
 
+  //std::cout << "depvar and transfer. transfer size: "
+  //  << gideck.get< newtag::transfer >().size() << std::endl;
+  //for (std::size_t i=0; i<gideck.get< newtag::depvar >().size(); ++i) {
+  //  std::cout << gideck.get< newtag::depvar >()[i] << ", ";
+  //  if (i>0) {
+  //    std::cout << gideck.get< newtag::transfer >()[i-1].src << " > "
+  //    << gideck.get< newtag::transfer >()[i-1].dst ;
+  //  }
+  //  std::cout << std::endl;
+  //}
+
   //std::cout << " BCs: " << std::endl;
   //for (std::size_t j=0; j< gideck.get< newtag::bc >().size(); ++j) {
   //  const auto& bcj = gideck.get< newtag::bc >()[j];
@@ -1248,12 +1286,15 @@ LuaParser::storeInputDeck(
   //    << bcj.get< newtag::velocity >()[1] << ", "
   //    << bcj.get< newtag::velocity >()[2] << std::endl;
   //  std::cout << " timedep: ";
-  //  for (std::size_t i=0; i<bcj.get< newtag::timedep, newtag::sideset >().size(); ++i)
-  //    std::cout << bcj.get< newtag::timedep, newtag::sideset >()[i] << ", ";
-  //  std::cout << std::endl;
-  //  for (std::size_t i=0; i<bcj.get< newtag::timedep, newtag::fn >().size(); ++i)
-  //    std::cout << bcj.get< newtag::timedep, newtag::fn >()[i] << ", ";
-  //  std::cout << std::endl;
+  //  const auto& tdbc = bcj.get< newtag::timedep >();
+  //  for (std::size_t l=0; l<tdbc.size(); ++l) {
+  //    for (std::size_t i=0; i<tdbc[l].get< newtag::sideset >().size(); ++i)
+  //      std::cout << tdbc[l].get< newtag::sideset >()[i] << ", ";
+  //    std::cout << std::endl;
+  //    for (std::size_t i=0; i<tdbc[l].get< newtag::fn >().size(); ++i)
+  //      std::cout << tdbc[l].get< newtag::fn >()[i] << ", ";
+  //    std::cout << std::endl;
+  //  }
   //}
 
   //std::cout << " ICs: " << std::endl;

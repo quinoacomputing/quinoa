@@ -356,7 +356,7 @@ class Transporter : public CBase_Transporter {
     //! \return Pretty printer
     InciterPrint printer() const {
       const auto& def =
-        g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
+        g_inputdeck_defaults.get< newtag::cmd, tag::io, tag::screen >();
       auto nrestart = g_newinputdeck.get< newtag::cmd, tag::io, tag::nrestart >();
       return InciterPrint(
         g_newinputdeck.get< newtag::cmd >().logname( def, nrestart ),

@@ -22,11 +22,11 @@
 
 #include "Keywords.hpp"
 #include "Fields.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 //! FluxCorrector is used to perform flux-corrected transport
 //! \see Löhner, R., Morgan, K., Peraire, J. and Vahdati, M. (1987), Finite
@@ -42,32 +42,19 @@ class FluxCorrector {
     //! Constructor
     //! \param[in] is Size of the mesh element connectivity vector (inpoel size)
     explicit FluxCorrector( std::size_t is = 0 ) :
-      m_aec( is, g_inputdeck.get< tag::component >().nprop() ),
-      m_sys( g_inputdeck.get< tag::param, tag::compflow, tag::sysfctvar >() ),
-      m_vel( findvel< tag::compflow >() ) {}
+      m_aec( is, g_newinputdeck.get< newtag::ncomp >() ),
+      m_sys( g_newinputdeck.get< newtag::sysfctvar >() ),
+      m_vel( findvel() ) {}
 
     //! Find components of a velocity for equation systems
-    //! \tparam Eq Equation types to consider as equation systems
     //! \return List of 3 component indices to treat as a velocity
     //! \warning Currently, this is only a punt for single-material flow: we
     //!   simply take the components 1,2,3 as the velocity for each system of
     //!   type Eq
-    template< class... Eq >
     std::vector< std::array< ncomp_t, 3 > >
     findvel() {
       std::vector< std::array< ncomp_t, 3 > > vel;
-      ( ... , [&](){
-        // Access number of scalar components in all systems of type Eq
-        const auto& ncompv = g_inputdeck.get< tag::component >().get< Eq >();
-        // Assign variable indices for system FCT for each Eq system
-        for (std::size_t e=0; e<ncompv.size(); ++e) {
-          vel.push_back( { 1, 2, 3 } );
-        } }() );
-      for ([[maybe_unused]] const auto& v : vel) {
-        Assert( std::all_of( begin(v), end(v), [&]( std::size_t i ){
-                  return i < g_inputdeck.get< tag::component >().nprop(); } ),
-                "Eq system index larger than total number of components" );
-      }
+      vel.push_back( {1, 2, 3} );
       return vel;
     }
 

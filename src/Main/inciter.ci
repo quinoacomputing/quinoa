@@ -37,7 +37,7 @@ mainmodule inciter {
   namespace inciter {
 
     // Order important: must be the same as in Main/Inciter.C
-    readonly ctr::InputDeck g_inputdeck_defaults;
+    readonly ctr::New2InputDeck g_inputdeck_defaults;
     readonly ctr::InputDeck g_inputdeck;
     readonly ctr::New2InputDeck g_newinputdeck;
     readonly std::vector< CGPDE > g_cgpde;

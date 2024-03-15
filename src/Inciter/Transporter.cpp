@@ -34,7 +34,6 @@
 #include "LoadDistributor.hpp"
 #include "MeshReader.hpp"
 #include "Inciter/Types.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "NodeDiagnostics.hpp"
 #include "ElemDiagnostics.hpp"
@@ -49,8 +48,7 @@ extern CProxy_Main mainProxy;
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
-extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::New2InputDeck g_inputdeck_defaults;
 extern ctr::New2InputDeck g_newinputdeck;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
@@ -265,11 +263,9 @@ Transporter::info( const InciterPrint& print )
   print.item( "Start time", t0 );
   print.item( "Terminate time", term );
 
-  if (std::abs(constdt - g_inputdeck_defaults.get< tag::discr, tag::dt >()) >
-        std::numeric_limits< tk::real >::epsilon())
+  if (constdt > std::numeric_limits< tk::real >::epsilon())
     print.item( "Constant time step size", constdt );
-  else if (std::abs(cfl - g_inputdeck_defaults.get< tag::discr, tag::cfl >()) >
-             std::numeric_limits< tk::real >::epsilon())
+  else if (cfl > std::numeric_limits< tk::real >::epsilon())
   {
     print.item( "CFL coefficient", cfl );
   }
@@ -307,31 +303,32 @@ Transporter::info( const InciterPrint& print )
         std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
 
       const auto& amr_coord = g_newinputdeck.get< newtag::amr, newtag::coords >();
+      const auto& amr_defcoord = g_inputdeck_defaults.get< newtag::amr, newtag::coords >();
 
       auto xminus = amr_coord.get< newtag::xminus >();
-      auto xminus_default = g_inputdeck_defaults.get< tag::amr, tag::xminus >();
+      auto xminus_default = amr_defcoord.get< newtag::xminus >();
       if (std::abs( xminus - xminus_default ) > eps)
         print.item( "Initial refinement x-", xminus );
       auto xplus = amr_coord.get< newtag::xplus >();
-      auto xplus_default = g_inputdeck_defaults.get< tag::amr, tag::xplus >();
+      auto xplus_default = amr_defcoord.get< newtag::xplus >();
       if (std::abs( xplus - xplus_default ) > eps)
         print.item( "Initial refinement x+", xplus );
 
       auto yminus = amr_coord.get< newtag::yminus >();
-      auto yminus_default = g_inputdeck_defaults.get< tag::amr, tag::yminus >();
+      auto yminus_default = amr_defcoord.get< newtag::yminus >();
       if (std::abs( yminus - yminus_default ) > eps)
         print.item( "Initial refinement y-", yminus );
       auto yplus = amr_coord.get< newtag::yplus >();
-      auto yplus_default = g_inputdeck_defaults.get< tag::amr, tag::yplus >();
+      auto yplus_default = amr_defcoord.get< newtag::yplus >();
       if (std::abs( yplus - yplus_default ) > eps)
         print.item( "Initial refinement y+", yplus );
 
       auto zminus = amr_coord.get< newtag::zminus >();
-      auto zminus_default = g_inputdeck_defaults.get< tag::amr, tag::zminus >();
+      auto zminus_default = amr_defcoord.get< newtag::zminus >();
       if (std::abs( zminus - zminus_default ) > eps)
         print.item( "Initial refinement z-", zminus );
       auto zplus = amr_coord.get< newtag::zplus >();
-      auto zplus_default = g_inputdeck_defaults.get< tag::amr, tag::zplus >();
+      auto zplus_default = amr_defcoord.get< newtag::zplus >();
       if (std::abs( zplus - zplus_default ) > eps)
         print.item( "Initial refinement z+", zplus );
     }
@@ -381,7 +378,9 @@ Transporter::info( const InciterPrint& print )
        print.item( opt.group() + ' ' + std::to_string(i) + " interpreted as",
                    opt.name( m.get< newtag::fntype >() ) );
        const auto& s = m.get< newtag::sideset >();
-       print.item( "Moving sideset with table " + std::to_string(i), s);
+       if (not s.empty())
+         print.item( "Moving sideset(s) with table " + std::to_string(i),
+                     tk::parameters(s));
        ++i;
     }
   }
@@ -487,13 +486,16 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
   // of tag::bc)
   const auto& bcs = g_newinputdeck.get< newtag::bc >();
   for (const auto& bci : bcs) {
-    usedsets.insert( bci.get< newtag::timedep, newtag::sideset >().begin(),
-      bci.get< newtag::timedep, newtag::sideset >().end() );
+    for (const auto& b : bci.get< newtag::timedep >()) {
+      for (auto i : b.get< newtag::sideset >())
+        usedsets.insert(i);
+    }
   }
 
   // Query side sets of boundaries prescribed as moving with ALE
   for (const auto& move : g_newinputdeck.get< newtag::ale, newtag::move >())
-    usedsets.insert( move.get< newtag::sideset >() );
+    for (auto i : move.get< newtag::sideset >())
+      usedsets.insert(i);
 
   // Add sidesets requested for field output
   const auto& ss = g_newinputdeck.get< newtag::cmd, tag::io, tag::surface >();
