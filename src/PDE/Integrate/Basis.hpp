@@ -31,7 +31,6 @@
 namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
-using bcconf_t = kw::sideset::info::expect::type;
 
 //! Compute the coordinates of quadrature points for face integral
 std::array< tk::real, 3 >

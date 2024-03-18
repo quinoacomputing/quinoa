@@ -22,10 +22,10 @@
 #include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 }
 
 namespace tk {
@@ -35,7 +35,7 @@ bndSurfInt( std::size_t nmat,
             const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
-            const std::vector< bcconf_t >& bcconfig,
+            const std::vector< std::size_t >& bcconfig,
             const inciter::FaceData& fd,
             const Fields& geoFace,
             const Fields& geoElem,
@@ -103,7 +103,7 @@ bndSurfInt( std::size_t nmat,
   //        "derivative vector for single material compflow" );
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
-    auto bc = bface.find( std::stoi(s) );// faces for side set
+    auto bc = bface.find(s);// faces for side set
     if (bc != end(bface))
     {
       for (const auto& f : bc->second)
@@ -239,8 +239,8 @@ update_rhs_bc ( ncomp_t ncomp,
 
   using inciter::newSolidsAccFn;
 
-    const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::matidxmap >().template get< tag::solidx >();
+  const auto& solidx =
+    inciter::g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
@@ -309,7 +309,7 @@ bndSurfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
-  const std::vector< bcconf_t >& bcconfig,
+  const std::vector< std::size_t >& bcconfig,
   const inciter::FaceData& fd,
   const Fields& geoFace,
   const Fields& geoElem,
@@ -362,7 +362,7 @@ bndSurfIntFV(
   auto nprim = P.nprop()/rdof;
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
-    auto bc = bface.find( std::stoi(s) );// faces for side set
+    auto bc = bface.find(s);// faces for side set
     if (bc != end(bface))
     {
       for (const auto& f : bc->second)

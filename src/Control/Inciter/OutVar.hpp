@@ -15,7 +15,6 @@
 #include "Keywords.hpp"
 #include "Centering.hpp"
 #include "Fields.hpp"
-#include "FunctionPrototypes.hpp"
 #include "ConfigureOutVar.hpp"
 
 namespace inciter {

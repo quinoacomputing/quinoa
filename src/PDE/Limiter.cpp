@@ -21,7 +21,7 @@
 #include "DerivedData.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Basis.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "PrefIndicator.hpp"
 #include "Reconstruction.hpp"
 #include "Integrate/Mass.hpp"
@@ -29,7 +29,7 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 void
 WENO_P1( const std::vector< int >& esuel,
@@ -42,8 +42,8 @@ WENO_P1( const std::vector< int >& esuel,
 //! \note This limiter function is experimental and untested. Use with caution.
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto cweight = inciter::g_inputdeck.get< tag::discr, tag::cweight >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto cweight = inciter::g_newinputdeck.get< newtag::cweight >();
   auto nelem = esuel.size()/4;
   std::array< std::vector< tk::real >, 3 >
     limU {{ std::vector< tk::real >(nelem),
@@ -86,8 +86,8 @@ Superbee_P1( const std::vector< int >& esuel,
 //! \details This Superbee function should be called for transport and compflow
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = inciter::g_newinputdeck.get< newtag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
   auto beta_lim = 2.0;
@@ -149,10 +149,10 @@ SuperbeeMultiMat_P1(
 //! \details This Superbee function should be called for multimat
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = inciter::g_newinputdeck.get< newtag::ndof >();
+  const auto intsharp = inciter::g_newinputdeck.get< newtag::multimat,
+    newtag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -206,7 +206,7 @@ SuperbeeMultiMat_P1(
       }
       else
       {
-        if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
+        if (!g_newinputdeck.get< newtag::accuracy_test >())
           consistentMultiMatLimiting_P1(nmat, rdof, e, solidx, U, P, phic,
             phic_p2);
       }
@@ -252,10 +252,10 @@ VertexBasedTransport_P1(
 //!   computational and applied mathematics, 233(12), 3077-3085.
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::transport,
-    tag::intsharp >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = inciter::g_newinputdeck.get< newtag::ndof >();
+  const auto intsharp = inciter::g_newinputdeck.get< newtag::transport,
+    newtag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -346,14 +346,14 @@ VertexBasedCompflow_P1(
 //!   computational and applied mathematics, 233(12), 3077-3085.
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = inciter::g_newinputdeck.get< newtag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
   // Null field for MarkShockCells argument
   tk::Fields P;
 
-  if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
+  if (inciter::g_newinputdeck.get< newtag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, 1, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
@@ -442,14 +442,14 @@ VertexBasedCompflow_P2(
 //!   computational and applied mathematics, 233(12), 3077-3085.
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = inciter::g_newinputdeck.get< newtag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
   // Null field for MarkShockCells argument
   tk::Fields P;
 
-  if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
+  if (inciter::g_newinputdeck.get< newtag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, 1, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
@@ -541,15 +541,15 @@ VertexBasedMultiMat_P1(
 //!   computational and applied mathematics, 233(12), 3077-3085.
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = inciter::g_newinputdeck.get< newtag::ndof >();
+  const auto intsharp = inciter::g_newinputdeck.get< newtag::multimat,
+    newtag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
-  if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
+  if (inciter::g_newinputdeck.get< newtag::shock_detector_coeff >()
     > 1e-6 && ndof > 1)
     MarkShockCells(nelem, nmat, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
@@ -641,7 +641,7 @@ VertexBasedMultiMat_P1(
           BoundPreservingLimiting(nmat, ndof, e, inpoel, coord, U, phic,
             phic_p2);
 
-        if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
+        if (!g_newinputdeck.get< newtag::accuracy_test >())
           consistentMultiMatLimiting_P1(nmat, rdof, e, solidx, U, P, phic,
             phic_p2);
       }
@@ -718,15 +718,15 @@ VertexBasedMultiMat_P2(
 //!   computational and applied mathematics, 233(12), 3077-3085.
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = inciter::g_newinputdeck.get< newtag::ndof >();
+  const auto intsharp = inciter::g_newinputdeck.get< newtag::multimat,
+    newtag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
-  if (inciter::g_inputdeck.get< tag::discr, tag::shock_detector_coeff >()
+  if (inciter::g_newinputdeck.get< newtag::shock_detector_coeff >()
     > 1e-6)
     MarkShockCells(nelem, nmat, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
@@ -822,7 +822,7 @@ VertexBasedMultiMat_P2(
           BoundPreservingLimiting(nmat, ndof, e, inpoel, coord, U,
             phic_p1, phic_p2);
 
-        if (!g_inputdeck.get< tag::discr, tag::accuracy_test >())
+        if (!g_newinputdeck.get< newtag::accuracy_test >())
           consistentMultiMatLimiting_P1(nmat, rdof, e, solidx, U, P, phic_p1,
             phic_p2);
       }
@@ -876,9 +876,9 @@ VertexBasedMultiMat_FV(
 //!   computational and applied mathematics, 233(12), 3077-3085.
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
-  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto intsharp = inciter::g_newinputdeck.get< newtag::multimat,
+    newtag::intsharp >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -916,7 +916,7 @@ VertexBasedMultiMat_FV(
     }
     else
     {
-      if (!g_inputdeck.get< tag::discr, tag::accuracy_test >()) {
+      if (!g_newinputdeck.get< newtag::accuracy_test >()) {
         std::vector< tk::real > phic_p2(ncomp, 1.0);
         consistentMultiMatLimiting_P1(nmat, rdof, e, solidx, U, P, phic,
           phic_p2);
@@ -2009,7 +2009,7 @@ void PositivityPreservingMultiMat_FV(
 //!   FV multimat.
 // *****************************************************************************
 {
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
   const auto ncomp = U.nprop() / rdof;
   const auto nprim = P.nprop() / rdof;
 
@@ -2227,7 +2227,7 @@ void MarkShockCells ( const std::size_t nelem,
 //!   doi: https://doi.org/10.1016/j.jcp.2021.110618
 // *****************************************************************************
 {
-  const auto coeff = g_inputdeck.get< tag::discr, tag::shock_detector_coeff >();
+  const auto coeff = g_newinputdeck.get< newtag::shock_detector_coeff >();
 
   std::vector< tk::real > IC(U.nunk(), 0.0);
   const auto& esuf = fd.Esuf();
@@ -2425,11 +2425,11 @@ correctLimConservMultiMat(
 //!   Hydrodynamics. J Comp Phys, 112313.
 // *****************************************************************************
 {
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto rdof = g_newinputdeck.get< newtag::rdof >();
   std::size_t ncomp = unk.nprop()/rdof;
   std::size_t nprim = prim.nprop()/rdof;
-  const auto intsharp = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp >();
+  const auto intsharp = inciter::g_newinputdeck.get< newtag::multimat,
+    newtag::intsharp >();
 
   for (std::size_t e=0; e<nelem; ++e) {
     // Here we pre-compute the right-hand-side vector. The reason that the

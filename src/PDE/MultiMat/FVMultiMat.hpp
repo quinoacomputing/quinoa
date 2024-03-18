@@ -71,7 +71,7 @@ class MultiMat {
         g_inputdeck.get< tag::param, tag::multimat, tag::flux >().at(0) ) )
     {
       // associate boundary condition configurations with state functions
-      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_bc,
+      brigand::for_each< newtag::bclist::Keys >( ConfigBC( m_bc,
         { dirichlet
         , symmetry
         , invalidBC         // Inlet BC not implemented

@@ -12,12 +12,14 @@
 // *****************************************************************************
 
 #include "FieldOutput.hpp"
-#include "EoS/GetMatProp.hpp"
-#include "EoS/EOS.hpp"
 #include "ContainerUtil.hpp"
 #include "History.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+#include "EoS/GetMatProp.hpp"
 
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
 
 std::vector< std::string > CompFlowSurfNames()
 // *****************************************************************************

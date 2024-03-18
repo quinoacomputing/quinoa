@@ -18,22 +18,20 @@
 namespace inciter {
 
 std::vector< std::string >
-numericFieldNames( tk::Centering c, char depvar )
+numericFieldNames( tk::Centering c, char /*depvar*/ )
 // *****************************************************************************
 // Collect field output names from numerical solution based on user input
 //! \param[in] c Extract variable names only with this centering
-//! \param[in] depvar Consider this depvar (mesh) only, ignore if 0
+// //! \param[in] depvar Consider this depvar (mesh) only, ignore if 0
 //! \return Output field names requested by user
 // *****************************************************************************
 {
   std::vector< std::string > f;
-  for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
-    if (!depvar || depvar == std::tolower(v.var)) {
-      if (v.centering == c && !v.analytic()) {
-        std::stringstream s;
-        if (v.alias.empty()) s << v; else s << v.alias;
-        f.push_back( s.str() );
-      }
+  for (const auto& v : g_newinputdeck.get< newtag::field_output, newtag::outvar >()) {
+    if (v.centering == c && !v.analytic()) {
+      std::stringstream s;
+      s << v.name;
+      f.push_back( s.str() );
     }
   }
 
@@ -44,13 +42,13 @@ std::vector< std::vector< tk::real > >
 numericFieldOutput( const tk::Fields& U,
                     tk::Centering c,
                     const tk::Fields& P,
-                    char depvar )
+                    char /*depvar*/ )
 // *****************************************************************************
 // Collect field output from numerical solution based on user input
 //! \param[in] U Solution data to extract from
 //! \param[in] c Extract variables only with this centering
 //! \param[in] P Optional primitive variable solution data to extract from
-//! \param[in] depvar Consider this depvar (mesh) only, ignore if 0
+// //! \param[in] depvar Consider this depvar (mesh) only, ignore if 0
 //! \return Output fields requested by user
 // *****************************************************************************
 {
@@ -58,20 +56,18 @@ numericFieldOutput( const tk::Fields& U,
   const auto& p = P.empty() ? U : P;
 
   //auto rdof =
-  //  c == tk::Centering::NODE ? 1 : g_inputdeck.get< tag::discr, tag::rdof >();
+  //  c == tk::Centering::NODE ? 1 : g_newinputdeck.get< newtag::rdof >();
   std::size_t rdof = 1;
 
   std::vector< std::vector< tk::real > > f;
-  for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
-    if (!depvar || depvar == std::tolower(v.var)) {
-      if (v.centering == c) {
-        const auto& F = v.primitive() ? p : U;
-        if (v.name.empty()) {        // depvar-based direct access
-          f.push_back( F.extract_comp( v.field*rdof ) );
-        } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
-          Assert( v.getvar, "getvar() not configured for " + v.name );
-          f.push_back( v.getvar( F, rdof ) );
-        }
+  for (const auto& v : g_newinputdeck.get< newtag::field_output, newtag::outvar >()) {
+    if (v.centering == c) {
+      const auto& F = v.primitive() ? p : U;
+      if (v.type == 0 || v.type == 1) {        // depvar-based direct access
+        f.push_back( F.extract_comp( v.field*rdof ) );
+      } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
+        Assert( v.getvar, "getvar() not configured for " + v.name );
+        f.push_back( v.getvar( F, rdof ) );
       }
     }
   }
@@ -121,7 +117,7 @@ evalSolution(
   using tk::real;
 
   const auto nelem = inpoel.size()/4;
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto rdof = g_newinputdeck.get< newtag::rdof >();
   const auto uncomp = U.nprop() / rdof;
   const auto pncomp = P.nprop() / rdof;
 

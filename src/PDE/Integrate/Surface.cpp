@@ -20,11 +20,11 @@
 #include "Quadrature.hpp"
 #include "Reconstruction.hpp"
 #include "Integrate/SolidTerms.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 }
 
 namespace tk {
@@ -276,8 +276,8 @@ update_rhs_fa( ncomp_t ncomp,
 
   using inciter::newSolidsAccFn;
 
-  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::matidxmap >().template get< tag::solidx >();
+  const auto& solidx =
+    inciter::g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {

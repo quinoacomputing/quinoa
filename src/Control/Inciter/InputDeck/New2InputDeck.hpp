@@ -22,6 +22,7 @@
 #include "Inciter/Options/Scheme.hpp"
 #include "Transfer.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
+#include "Inciter/NewOutVar.hpp"
 
 namespace newtag {
   DEFTAG(cmd);
@@ -66,6 +67,7 @@ namespace newtag {
   DEFTAG(intsharp);
   DEFTAG(intsharp_param);
   DEFTAG(depvar);
+  DEFTAG(sys);
   DEFTAG(physics);
 
   DEFTAG(material);
@@ -98,9 +100,8 @@ namespace newtag {
   DEFTAG(time_range);
   DEFTAG(refined);
   DEFTAG(filetype);
-  DEFTAG(elemvar);
-  DEFTAG(nodevar);
   DEFTAG(sideset);
+  DEFTAG(outvar);
   DEFTAG(diagnostics);
   DEFTAG(error);
   DEFTAG(format);
@@ -153,8 +154,8 @@ namespace newtag {
   DEFTAG(outlet);
   DEFTAG(farfield);
   DEFTAG(extrapolate);
-  DEFTAG(stag);
-  DEFTAG(skip);
+  DEFTAG(stag_point);
+  DEFTAG(skip_point);
   DEFTAG(sponge);
   DEFTAG(radius);
   DEFTAG(timedep);
@@ -182,6 +183,7 @@ namespace newtag {
   DEFTAG(initiate);
   DEFTAG(init_time);
   DEFTAG(front_width);
+  DEFTAG(front_speed);
 
   DEFTAG(filename);
   DEFTAG(location);
@@ -193,10 +195,7 @@ namespace newtag {
     inlet,       std::vector< std::size_t >,
     outlet,      std::vector< std::size_t >,
     farfield,    std::vector< std::size_t >,
-    extrapolate, std::vector< std::size_t >,
-    stag,        std::vector< std::size_t >,
-    skip,        std::vector< std::size_t >,
-    sponge,      std::vector< std::size_t >
+    extrapolate, std::vector< std::size_t >
   > >;
 } // newtag::
 
@@ -261,8 +260,10 @@ using ConfigMembers = brigand::list<
   // Transport
   // ---------------------------------------------------------------------------
   newtag::transport, tk::SimpTaggedTuple< brigand::list<
-    newtag::ncomp,   std::size_t,
-    newtag::problem, ProblemType
+    newtag::ncomp,          std::size_t,
+    newtag::intsharp,       int,
+    newtag::intsharp_param, tk::real,
+    newtag::problem,        ProblemType
   > >,
 
   // CompFlow
@@ -284,6 +285,8 @@ using ConfigMembers = brigand::list<
 
   // Dependent variable name
   newtag::depvar, std::vector< char >,
+
+  newtag::sys, std::map< std::size_t, std::size_t >,
 
   // physics choices
   newtag::physics, PhysicsType,
@@ -327,9 +330,8 @@ using ConfigMembers = brigand::list<
     newtag::time_range,    std::vector< tk::real >,
     newtag::refined,       bool,
     newtag::filetype,      tk::ctr::FieldFileType,
-    newtag::elemvar,       std::vector< std::string >,
-    newtag::nodevar,       std::vector< std::string >,
-    newtag::sideset,       std::vector< uint64_t >
+    newtag::sideset,       std::vector< uint64_t >,
+    newtag::outvar,        std::vector< NewOutVar >
   > >,
 
   // Diagnostics block
@@ -425,10 +427,9 @@ using ConfigMembers = brigand::list<
       newtag::outlet,      std::vector< std::size_t >,
       newtag::farfield,    std::vector< std::size_t >,
       newtag::extrapolate, std::vector< std::size_t >,
-      newtag::stag,        std::vector< std::size_t >,
-      newtag::skip,        std::vector< std::size_t >,
+      newtag::stag_point,  std::vector< tk::real >,
+      newtag::skip_point,  std::vector< tk::real >,
       newtag::sponge,      std::vector< std::size_t >,
-      newtag::point,       std::vector< tk::real >,
       newtag::radius,      tk::real,
       newtag::velocity,    std::vector< tk::real >,
       newtag::pressure,    tk::real,
@@ -470,7 +471,8 @@ using ConfigMembers = brigand::list<
         newtag::initiate,       InitiateType,
         newtag::point,          std::vector< tk::real >,
         newtag::init_time,      tk::real,
-        newtag::front_width,    tk::real
+        newtag::front_width,    tk::real,
+        newtag::front_speed,    tk::real
       > >
     >,
     newtag::meshblock, std::vector<

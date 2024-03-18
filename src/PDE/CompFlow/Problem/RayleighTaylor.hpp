@@ -24,7 +24,6 @@
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
-#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -74,7 +73,7 @@ class CompFlowProblemRayleighTaylor {
       auto k = g_inputdeck.get< param, eq, tag::kappa >();
       auto p0 = g_inputdeck.get< param, eq, tag::p0 >();
       // ratio of specific heats
-      auto g = gamma< tag::compflow >(0);
+      auto g = getmatprop< newtag::gamma >();
 
       // evaluate solution at x,y,z,t
       auto s = initialize( 0, mat_blk, x, y, z, t );

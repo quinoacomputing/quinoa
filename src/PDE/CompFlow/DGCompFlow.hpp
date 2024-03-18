@@ -71,7 +71,7 @@ class CompFlow {
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
-      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_bc,
+      brigand::for_each< newtag::bclist::Keys >( ConfigBC( m_bc,
         { dirichlet
         , symmetry
         , invalidBC         // Inlet BC not implemented
@@ -156,7 +156,7 @@ class CompFlow {
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
       const auto& icbox = ic.get< tag::box >();
       const auto& bgpreic = ic.get< tag::pressure >();
-      auto c_v = cv< eq >(0);
+      auto c_v = getmatprop< newtag::cv >();
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);

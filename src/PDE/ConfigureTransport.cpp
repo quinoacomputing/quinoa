@@ -67,9 +67,8 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 //! \return vector of string pairs describing the PDE configuration
 // *****************************************************************************
 {
-  using tag::param;
   using tk::parameters;
-  using eq = tag::transport;
+  using eq = newtag::transport;
 
   auto c = ++cnt[ ctr::PDEType::TRANSPORT ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -79,52 +78,47 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
 
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< param, eq, tag::depvar >()[c] ) );
+    g_newinputdeck.get< newtag::depvar >()[c] ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< param, eq, tag::problem >()[c] ) );
+    g_newinputdeck.get< eq, newtag::problem >() ) );
 
-  auto intsharp = g_inputdeck.get< tag::param, eq, tag::intsharp >();
+  auto intsharp = g_newinputdeck.get< eq, newtag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
-  if (intsharp)
-  {
-    auto intsharp_param =
-      g_inputdeck.get< tag::param, eq, tag::intsharp_param >();
-    nfo.emplace_back( "interface sharpening parameter",
-                      std::to_string( intsharp_param ) );
-  }
-
-  auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
+  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
-  const auto& bcdir = g_inputdeck.get< param, eq, tag::bc, tag::bcdir >();
-  if (bcdir.size() > c)
-    nfo.emplace_back( "Dirichlet boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcdir[c] ) );
+  const auto& bc = g_newinputdeck.get< newtag::bc >();
+  for (const auto& ib : bc) {
+    const auto& bcdir = ib.get< newtag::dirichlet >();
+    if (!bcdir.empty())
+      nfo.emplace_back( "Dirichlet boundary [" + std::to_string( ncomp ) + "]",
+        parameters( bcdir ) );
 
-  const auto& bcsym = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
-  if (bcsym.size() > c)
-    nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcsym[c] ) );
+    const auto& bcsym = ib.get< newtag::symmetry >();
+    if (!bcsym.empty())
+      nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
+        parameters( bcsym ) );
 
-  const auto& bcinlet =
-    g_inputdeck.get< param, eq, tag::bc, tag::bcinlet >();
-  if (bcinlet.size() > c)
-    nfo.emplace_back( "Inlet boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcinlet[c] ) );
+    const auto& bcinlet =
+      ib.get< newtag::inlet >();
+    if (!bcinlet.empty())
+      nfo.emplace_back( "Inlet boundary [" + std::to_string( ncomp ) + "]",
+        parameters( bcinlet ) );
 
-  const auto& bcoutlet =
-    g_inputdeck.get< param, eq, tag::bc, tag::bcoutlet >();
-  if (bcoutlet.size() > c)
-    nfo.emplace_back( "Outlet boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcoutlet[c] ) );
+    const auto& bcoutlet =
+      ib.get< newtag::outlet >();
+    if (!bcoutlet.empty())
+      nfo.emplace_back( "Outlet boundary [" + std::to_string( ncomp ) + "]",
+        parameters( bcoutlet ) );
 
-  const auto& bcextrapolate =
-    g_inputdeck.get< param, eq, tag::bc, tag::bcextrapolate >();
-  if (bcextrapolate.size() > c)
-    nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
-      parameters( bcextrapolate[c] ) );
+    const auto& bcextrapolate =
+      ib.get< newtag::extrapolate >();
+    if (!bcextrapolate.empty())
+      nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
+        parameters( bcextrapolate ) );
+  }
 
   return nfo;
 }

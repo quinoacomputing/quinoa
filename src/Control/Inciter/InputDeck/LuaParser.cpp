@@ -197,6 +197,12 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["transport"], "ncomp",
       gideck.get< newtag::transport, newtag::ncomp >(), 1);
+    storeIfSpecd< int >(
+      lua_ideck["multimat"], "intsharp",
+      gideck.get< newtag::transport, newtag::intsharp >(), 0);
+    storeIfSpecd< tk::real >(
+      lua_ideck["multimat"], "intsharp_param",
+      gideck.get< newtag::transport, newtag::intsharp_param >(), 1.8);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["transport"], "problem",
       gideck.get< newtag::transport, newtag::problem >(),
@@ -493,13 +499,83 @@ LuaParser::storeInputDeck(
     storeVecIfSpecd< uint64_t >(
       lua_ideck["field_output"], "sideset", fo_deck.get< newtag::sideset >(), {});
 
+    // Assign outvar
+    auto& foutvar = fo_deck.get< newtag::outvar >();
+    std::size_t nevar(0), nnvar(0);
+
     // element variables
-    storeVecIfSpecd< std::string >(
-      lua_ideck["field_output"], "elemvar", fo_deck.get< newtag::elemvar >(), {});
+    if (lua_ideck["field_output"]["elemvar"].valid()) {
+      nevar = sol::table(lua_ideck["field_output"]["elemvar"]).size();
+      for (std::size_t i=0; i<nevar; ++i) {
+        std::string varname(lua_ideck["field_output"]["elemvar"][i+1]);
+        foutvar.emplace_back(
+          inciter::ctr::NewOutVar(0, tk::Centering::ELEM, varname) );
+      }
+    }
 
     // node variables
-    storeVecIfSpecd< std::string >(
-      lua_ideck["field_output"], "nodevar", fo_deck.get< newtag::nodevar >(), {});
+    if (lua_ideck["field_output"]["nodevar"].valid()) {
+      nnvar = sol::table(lua_ideck["field_output"]["nodevar"]).size();
+      for (std::size_t i=0; i<nnvar; ++i) {
+        std::string varname(lua_ideck["field_output"]["nodevar"][i+1]);
+        foutvar.emplace_back(
+          inciter::ctr::NewOutVar(0, tk::Centering::NODE, varname) );
+      }
+    }
+
+    Assert(foutvar.size() == (nevar + nnvar),
+      "Incorrectly sized outvar vector.");
+
+    // assign field-ids to the outvar
+    std::size_t nmat(1);
+    if (gideck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT)
+      nmat = gideck.get< newtag::multimat, newtag::nmat >();
+
+    for (std::size_t i=0; i<foutvar.size(); ++i) {
+
+      // index-based quantity specification
+      if (foutvar[i].name.length() == 2) {
+        foutvar[i].type = 0;
+        auto qty = foutvar[i].name.at(0);
+        auto j = std::stoul(std::string{foutvar[i].name.at(1)}) - 1;
+
+        if (gideck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT) {
+        // multimat quantities
+          if (qty == 'D') {  // density
+            foutvar[i].field = densityIdx(nmat, j);
+          }
+          if (qty == 'F') {  // volume fraction
+            foutvar[i].field = volfracIdx(nmat, j);
+          }
+          if (qty == 'M') {  // momentum
+            foutvar[i].field = momentumIdx(nmat, j);
+          }
+          if (qty == 'E') {  // specific total energy
+            foutvar[i].field = energyIdx(nmat, j);
+          }
+          if (qty == 'U') {  // velocity (primitive)
+            foutvar[i].type = 1;
+            foutvar[i].field = velocityIdx(nmat, j);
+          }
+          if (qty == 'P') {  // material pressure (primitive)
+            foutvar[i].type = 1;
+            foutvar[i].field = pressureIdx(nmat, j);
+          }
+        }
+        else {
+        // quantities specified by depvar
+          for (const auto& id : gideck.get< newtag::depvar >())
+            if (qty == id) foutvar[i].field = j;
+        }
+      }
+
+      // name-based quantity specification
+      else {
+        foutvar[i].type = 2;
+        foutvar[i].assignGetVar();
+      }
+
+    }
   }
   else {
     // TODO: remove double-specification of defaults
@@ -512,8 +588,6 @@ LuaParser::storeInputDeck(
     fo_deck.get< newtag::refined >() = false;
     fo_deck.get< newtag::filetype >() = tk::ctr::FieldFileType::EXODUSII;
     fo_deck.get< newtag::sideset >() = {};
-    fo_deck.get< newtag::elemvar >() = {};
-    fo_deck.get< newtag::nodevar >() = {};
   }
 
   // Diagnostics output block
@@ -872,12 +946,6 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "extrapolate",
         bc_deck[i].get< newtag::extrapolate >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "stag",
-        bc_deck[i].get< newtag::stag >(), {});
-
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "skip",
-        bc_deck[i].get< newtag::skip >(), {});
-
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "sponge",
         bc_deck[i].get< newtag::sponge >(), {});
 
@@ -903,14 +971,20 @@ LuaParser::storeInputDeck(
       }
 
       // Stagnation point
-      storeVecIfSpecd< tk::real >(sol_bc[i+1], "point",
-        bc_deck[i].get< newtag::point >(), {0.0, 0.0, 0.0});
-      if (bc_deck[i].get< newtag::point >().size() != 3)
+      storeVecIfSpecd< tk::real >(sol_bc[i+1], "stag_point",
+        bc_deck[i].get< newtag::stag_point >(), {0.0, 0.0, 0.0});
+      if (bc_deck[i].get< newtag::stag_point >().size() != 3)
         Throw("BC point requires 3 coordinates.");
 
-      // Stagnation radius
-      storeIfSpecd< tk::real >(sol_bc[i+1], "radius", bc_deck[i].get< newtag::radius >(),
-        0.0);
+      // Skip pt
+      storeVecIfSpecd< tk::real >(sol_bc[i+1], "skip_point",
+        bc_deck[i].get< newtag::skip_point >(), {0.0, 0.0, 0.0});
+      if (bc_deck[i].get< newtag::skip_point >().size() != 3)
+        Throw("BC point requires 3 coordinates.");
+
+      // Stagnation/skip radius
+      storeIfSpecd< tk::real >(sol_bc[i+1], "radius",
+        bc_deck[i].get< newtag::radius >(), 0.0);
 
       // Velocity for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "velocity",
@@ -1037,6 +1111,9 @@ LuaParser::storeInputDeck(
 
         storeIfSpecd< tk::real >(lua_box[i+1], "front_width",
           box_deck[i].get< newtag::front_width >(), 0.0);
+
+        storeIfSpecd< tk::real >(lua_box[i+1], "front_speed",
+          box_deck[i].get< newtag::front_speed >(), 0.0);
       }
     }
 
@@ -1176,13 +1253,13 @@ LuaParser::storeInputDeck(
   //for (std::size_t i=0; i< gideck.get< newtag::field_output, newtag::sideset >().size(); ++i)
   //  std::cout << gideck.get< newtag::field_output, newtag::sideset >()[i] << ", ";
   //std::cout << std::endl;
-  //std::cout << " F-O/P elemvars: ";
-  //for (std::size_t i=0; i< gideck.get< newtag::field_output, newtag::elemvar >().size(); ++i)
-  //  std::cout << gideck.get< newtag::field_output, newtag::elemvar >()[i] << ", ";
-  //std::cout << std::endl;
-  //std::cout << " F-O/P nodevars: ";
-  //for (std::size_t i=0; i< gideck.get< newtag::field_output, newtag::nodevar >().size(); ++i)
-  //  std::cout << gideck.get< newtag::field_output, newtag::nodevar >()[i] << ", ";
+  //std::cout << " F-O/P vars: " << std::endl;
+  //const auto& foutvar = gideck.get< newtag::field_output, newtag::outvar >();
+  //for (std::size_t i=0; i< foutvar.size(); ++i) {
+  //  std::cout << static_cast<char>(foutvar[i].centering) << ": " << foutvar[i].name << ", ";
+  //  if (foutvar[i].type != 2) std::cout << foutvar[i].field;
+  //  std::cout << std::endl;
+  //}
   //std::cout << std::endl;
 
   //std::cout << " hist time: " << gideck.get< newtag::history_output, newtag::time_interval >() << std::endl;

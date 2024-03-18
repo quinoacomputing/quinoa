@@ -21,11 +21,12 @@
 #include "Inciter/Options/PDE.hpp"
 #include "FunctionPrototypes.hpp"
 #include "ContainerUtil.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 //! Register compressible flow PDEs into PDE factory
 void
@@ -135,14 +136,13 @@ pressureOutVar( const tk::Fields& U, std::size_t rdof )
   v /= r;
   w /= r;
   auto p = r;
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
   for (std::size_t i=0; i<U.nunk(); ++i) {
     // \brief This uses the old eos_pressure call for now, because we didn't 
     // want to change the GetVarFn function signature right now. It's only in
     // the single material CompFlow class, so it shouldn't need multi-material
     // EOSs anyway.
-    auto g = gamma< tag::compflow >(sys);
-    auto p_c = pstiff< tag::compflow >(sys);
+    auto g = getmatprop< newtag::gamma >();
+    auto p_c = getmatprop< newtag::pstiff >();
     p[i] = (re[i] - 0.5 * r[i] * (u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) - p_c)
                             * (g-1.0) - p_c;
 //    p[i] = m_mat_blk[0]->eos_pressure( sys, r[i], u[i], v[i], w[i], re[i] );

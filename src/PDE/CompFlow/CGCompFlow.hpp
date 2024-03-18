@@ -214,7 +214,7 @@ class CompFlow {
       const auto& bgpreic = ic.get< tag::pressure >();
       tk::real bgpre = !bgpreic.empty() ? bgpreic[0] : 0.0;
 
-      auto c_v = cv< eq >(0);
+      auto c_v = getmatprop< newtag::cv >();
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
@@ -742,7 +742,7 @@ class CompFlow {
       const auto& z = coord[2];
 
       // ratio of specific heats
-      auto g = gamma< eq >(0);
+      auto g = getmatprop< newtag::gamma >();
       // compute the minimum dt across all elements we own
       real mindt = std::numeric_limits< real >::max();
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {

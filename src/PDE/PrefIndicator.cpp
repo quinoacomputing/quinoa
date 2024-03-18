@@ -18,11 +18,8 @@
 #include "Vector.hpp"
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 void spectral_decay( std::size_t nmat,
                      std::size_t nunk,

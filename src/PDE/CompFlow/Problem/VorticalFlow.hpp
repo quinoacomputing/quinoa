@@ -26,7 +26,6 @@
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
-#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -71,7 +70,7 @@ class CompFlowProblemVorticalFlow {
       auto a = g_inputdeck.get< param, compflow, tag::alpha >();
       auto b = g_inputdeck.get< param, compflow, tag::beta >();
       // ratio of specific heats
-      tk::real g = gamma< tag::compflow >(0);
+      tk::real g = getmatprop< newtag::gamma >();
       // evaluate solution at x,y,z
       auto s = initialize( 5, mat_blk, x, y, z, 0.0 );
 

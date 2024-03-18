@@ -68,7 +68,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 //! \return vector of string pairs describing the PDE configuration
 // *****************************************************************************
 {
-  using eq = tag::multimat;
+  using eq = newtag::multimat;
   using tk::parameter;
   using tk::parameters;
 
@@ -80,205 +80,82 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::MULTIMAT ), "" );
 
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, eq, tag::depvar >()[c] ) );
+    g_newinputdeck.get< newtag::depvar >()[c] ) );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
-    g_inputdeck.get< tag::param, eq, tag::physics >() ) );
+    g_newinputdeck.get< newtag::physics >() ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< tag::param, eq, tag::problem >()[c] ) );
+    g_newinputdeck.get< eq, newtag::problem >() ) );
 
   nfo.emplace_back( "flux", ctr::Flux().name(
-    g_inputdeck.get< tag::param, eq, tag::flux >().at(c) ) );
+    g_newinputdeck.get< newtag::flux >() ) );
 
-  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
+  auto nmat = g_newinputdeck.get< eq, newtag::nmat >();
   nfo.emplace_back( "number of materials", std::to_string( nmat ) );
 
-  auto prelax = g_inputdeck.get< tag::param, eq, tag::prelax >();
+  auto prelax = g_newinputdeck.get< eq, newtag::prelax >();
   nfo.emplace_back( "finite pressure relaxation", std::to_string( prelax ) );
 
-  if (prelax)
-  {
-    auto prelax_ts =
-      g_inputdeck.get< tag::param, eq, tag::prelax_timescale >();
-    nfo.emplace_back( "pressure relaxation time-scale",
-                      std::to_string( prelax_ts ) );
-  }
-
-  auto intsharp = g_inputdeck.get< tag::param, eq, tag::intsharp >();
+  auto intsharp = g_newinputdeck.get< eq, newtag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
-  if (intsharp)
-  {
-    auto intsharp_param =
-      g_inputdeck.get< tag::param, eq, tag::intsharp_param >();
-    nfo.emplace_back( "interface sharpening parameter",
-                      std::to_string( intsharp_param ) );
-  }
-
-  auto ncomp = g_inputdeck.get< tag::component >().get< eq >()[c];
+  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
-  // Material property output
-  const auto& matprop = g_inputdeck.get< tag::param, eq, tag::material >();
+  // Material eos output
+  const auto& matprop = g_newinputdeck.get< newtag::material >();
   for (const auto& mtype : matprop) {
-    const auto& m_id = mtype.get< tag::id >();
+    const auto& m_id = mtype.get< newtag::id >();
     ctr::Material opt;
-    nfo.emplace_back( opt.name( mtype.get< tag::eos >() ),
+    nfo.emplace_back( opt.name( mtype.get< newtag::eos >() ),
       std::to_string(m_id.size())+" materials" );
-
     nfo.emplace_back( "material id", parameters( m_id ) );
-    nfo.emplace_back( "specific heat at constant volume",
-      parameters(mtype.get< tag::cv >()) );
-    if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::STIFFENEDGAS ||
-      mtype.get<tag::eos>() == inciter::ctr::MaterialType::SMALLSHEARSOLID) {
-      nfo.emplace_back( "ratio of specific heats",
-        parameters(mtype.get< tag::gamma >()) );
-      nfo.emplace_back( "material stiffness",
-        parameters(mtype.get< tag::pstiff >()) );
-      if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::SMALLSHEARSOLID)
-      {
-        nfo.emplace_back( "material shear modulus",
-          parameters(mtype.get< tag::mu >()) );
-      }
-    }
-    else if (mtype.get<tag::eos>() == inciter::ctr::MaterialType::JWL) {
-      nfo.emplace_back( "Gruneisen coefficient w",
-        parameters(mtype.get< tag::w_gru >()) );
-      nfo.emplace_back( "JWL parameter A",
-        parameters(mtype.get< tag::A_jwl >()) );
-      nfo.emplace_back( "JWL parameter B",
-        parameters(mtype.get< tag::B_jwl >()) );
-      nfo.emplace_back( "JWL parameter C",
-        parameters(mtype.get< tag::C_jwl >()) );
-      nfo.emplace_back( "JWL parameter R1",
-        parameters(mtype.get< tag::R1_jwl >()) );
-      nfo.emplace_back( "JWL parameter R2",
-        parameters(mtype.get< tag::R2_jwl >()) );
-      nfo.emplace_back( "JWL parameter rho0",
-        parameters(mtype.get< tag::rho0_jwl >()) );
-      nfo.emplace_back( "JWL parameter de",
-        parameters(mtype.get< tag::de_jwl >()) );
-      if (!mtype.get< tag::rhor_jwl >().empty()) {
-        nfo.emplace_back( "JWL parameter rhor",
-          parameters(mtype.get< tag::rhor_jwl >()) );
-      }
-      else if (!mtype.get< tag::Tr_jwl >().empty()) {
-        nfo.emplace_back( "JWL parameter Tr",
-          parameters(mtype.get< tag::Tr_jwl >()) );
-      }
-      nfo.emplace_back( "JWL parameter Pr",
-        parameters(mtype.get< tag::Pr_jwl >()) );
-    }
-
-    // Heat conductivity is optional: vector may be empty
-    const auto& k = mtype.get< tag::k >();
-    if (!k.empty())
-      nfo.emplace_back( "heat conductivity", parameters( k ) );
   }
 
   // ICs and IC-boxes
 
-  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+  const auto& ic = g_newinputdeck.get< newtag::ic >();
 
-  const auto& bgmatidic = ic.get< tag::materialid >();
-  if (!bgmatidic.empty())
-    nfo.emplace_back( "IC background material id",
-                      parameters( bgmatidic ) );
-  const auto& bgdensityic = ic.get< tag::density >();
-  if (!bgdensityic.empty())
-    nfo.emplace_back( "IC background density",
-                      parameters( bgdensityic ) );
-  const auto& bgvelocityic = ic.get< tag::velocity >();
-  if (!bgvelocityic.empty())
-    nfo.emplace_back( "IC background velocity",
-                      parameters( bgvelocityic ) );
-  const auto& bgpressureic = ic.get< tag::pressure >();
-  if (!bgpressureic.empty())
-    nfo.emplace_back( "IC background pressure",
-                      parameters( bgpressureic ) );
-  const auto& bgenergyic = ic.get< tag::energy >();
-  if (!bgenergyic.empty())
-    nfo.emplace_back( "IC background energy",
-                      parameters( bgenergyic ) );
-  const auto& bgtemperatureic = ic.get< tag::temperature >();
-  if (!bgtemperatureic.empty())
-    nfo.emplace_back( "IC background temperature",
-                      parameters( bgtemperatureic ) );
+  const auto& bgmatidic = ic.get< newtag::materialid >();
+  nfo.emplace_back( "IC background material id", parameter( bgmatidic ) );
 
-  const auto& icbox = ic.get< tag::box >();
+  const auto& icbox = ic.get< newtag::box >();
   if (!icbox.empty()) {
     std::size_t bcnt = 0;
     for (const auto& b : icbox) {   // for all boxes configured for this eq
       std::vector< tk::real > box
-        { b.get< tag::xmin >(), b.get< tag::xmax >(),
-          b.get< tag::ymin >(), b.get< tag::ymax >(),
-          b.get< tag::zmin >(), b.get< tag::zmax >() };
+        { b.get< newtag::xmin >(), b.get< newtag::xmax >(),
+          b.get< newtag::ymin >(), b.get< newtag::ymax >(),
+          b.get< newtag::zmin >(), b.get< newtag::zmax >() };
 
       std::string boxname = "IC box " + parameter(bcnt);
       nfo.emplace_back( boxname, parameters( box ) );
 
       nfo.emplace_back( boxname + " orientation",
-        parameters(b.get< tag::orientation >()) );
+        parameters(b.get< newtag::orientation >()) );
 
       nfo.emplace_back( boxname + " material id",
-                        parameter( b.get< tag::materialid >() ) );
-      nfo.emplace_back( boxname + " density",
-                        parameter( b.get< tag::density >() ) );
-      nfo.emplace_back( boxname + " velocity",
-                        parameters( b.get< tag::velocity >() ) );
-      nfo.emplace_back( boxname + " pressure",
-                        parameter( b.get< tag::pressure >() ) );
-      nfo.emplace_back( boxname + " energy per unit mass",
-                        parameter( b.get< tag::energy >() ) );
-      nfo.emplace_back( boxname + " mass",
-                        parameter( b.get< tag::mass >() ) );
-      nfo.emplace_back( boxname + " energy per unit volume",
-                        parameter( b.get< tag::energy_content >() ) );
-      nfo.emplace_back( boxname + " temperature",
-                        parameter( b.get< tag::temperature >() ) );
+                        parameter( b.get< newtag::materialid >() ) );
+
+      const auto& initiate = b.get< newtag::initiate >();
+      auto opt = ctr::Initiate();
+      nfo.emplace_back( boxname + ' ' + opt.group(), opt.name(initiate) );
 
       ++bcnt;
     }
   }
 
-  const auto& icblock = ic.get< tag::meshblock >();
+  const auto& icblock = ic.get< newtag::meshblock >();
   for (const auto& b : icblock) {   // for all blocks configured for eq
     std::string blockname = "IC mesh block " +
-      parameter(b.get< tag::blockid >());
+      parameter(b.get< newtag::blockid >());
 
     nfo.emplace_back( blockname + " material id",
-                      parameter( b.get< tag::materialid >() ) );
-    nfo.emplace_back( blockname + " volume",
-                      parameter( b.get< tag::volume >() ) );
-    nfo.emplace_back( blockname + " density",
-                      parameter( b.get< tag::density >() ) );
-    nfo.emplace_back( blockname + " velocity",
-                      parameters( b.get< tag::velocity >() ) );
-    nfo.emplace_back( blockname + " pressure",
-                      parameter( b.get< tag::pressure >() ) );
-    nfo.emplace_back( blockname + " energy per unit mass",
-                      parameter( b.get< tag::energy >() ) );
-    nfo.emplace_back( blockname + " mass",
-                      parameter( b.get< tag::mass >() ) );
-    nfo.emplace_back( blockname + " energy per unit volume",
-                      parameter( b.get< tag::energy_content >() ) );
-    nfo.emplace_back( blockname + " temperature",
-                      parameter( b.get< tag::temperature >() ) );
-    const auto& initiate = b.get< tag::initiate >();
-    const auto& inittype = initiate.get< tag::init >();
+                      parameter( b.get< newtag::materialid >() ) );
+    const auto& initiate = b.get< newtag::initiate >();
     auto opt = ctr::Initiate();
-    nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(inittype) );
-    if (inittype == ctr::InitiateType::LINEAR) {
-      nfo.emplace_back( blockname + " initiate point",
-                        parameters( initiate.get< tag::point >() ) );
-      nfo.emplace_back( blockname + " initialization time",
-                        parameter( initiate.get< tag::init_time >() ) );
-      nfo.emplace_back( blockname + " linear front width",
-                        parameter( initiate.get< tag::front_width >() ) );
-      nfo.emplace_back( blockname + " linear velocity",
-                        parameter( initiate.get< tag::velocity >() ) );
-    }
+    nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(initiate) );
   }
 
   return nfo;

@@ -16,8 +16,8 @@
 
 #include "UserDefined.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/GetMatProp.hpp"
 #include "FieldOutput.hpp"
+#include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
@@ -62,7 +62,7 @@ CompFlowProblemUserDefined::initialize( ncomp_t ncomp,
   } else if (!bgenic.empty()) {
     u[4] = u[0] * bgenic[0];
   } else if (!bgtempic.empty()) {
-    const auto& c_v = cv< tag::compflow >(0);
+    const auto& c_v = getmatprop< newtag::cv >();
     u[4] = u[0] * bgtempic[0] * c_v;
   } else Throw( "IC background energy cannot be computed. User must specify "
                 "one of background pressure, energy, or temperature." );

@@ -66,7 +66,7 @@ class Transport {
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
-      brigand::for_each< ctr::bc::Keys >( ConfigBC< eq >( m_bc,
+      brigand::for_each< newtag::bclist::Keys >( ConfigBC( m_bc,
         { dirichlet
         , invalidBC  // Symmetry BC not implemented
         , inlet

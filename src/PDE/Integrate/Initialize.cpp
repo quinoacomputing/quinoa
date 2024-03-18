@@ -18,11 +18,11 @@
 #include "Data.hpp"
 #include "Initialize.hpp"
 #include "Quadrature.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // inciter::
 
@@ -51,8 +51,8 @@ tk::initialize( ncomp_t ncomp,
 //! \param[in] nielem Number of internal elements
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = inciter::g_newinputdeck.get< newtag::ndof >();
+  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
 
   // Number of quadrature points for volume integration
   auto ng = tk::NGinit(ndof);

@@ -15,17 +15,18 @@
 #include <array>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 #include "Vector.hpp"
 #include "Around.hpp"
 #include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Limiter.hpp"
 
 namespace inciter {
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 }
 
 namespace tk {
@@ -177,7 +178,7 @@ bndLeastSqConservedVar_P0P1(
   ncomp_t ncomp,
   const std::vector< inciter::EOS >& mat_blk,
   std::size_t rdof,
-  const std::vector< bcconf_t >& bcconfig,
+  const std::vector< std::size_t >& bcconfig,
   const inciter::FaceData& fd,
   const Fields& geoFace,
   const Fields& geoElem,
@@ -218,7 +219,7 @@ bndLeastSqConservedVar_P0P1(
   const auto& esuf = fd.Esuf();
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
-    auto bc = bface.find( std::stoi(s) );// faces for side set
+    auto bc = bface.find(s);// faces for side set
     if (bc != end(bface))
     {
       // Compute boundary face contributions
@@ -506,11 +507,11 @@ THINCReco( std::size_t rdof,
   using inciter::deformIdx;
   using inciter::stressIdx;
 
-  auto bparam = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp_param >();
+  auto bparam = inciter::g_newinputdeck.get< newtag::multimat,
+    newtag::intsharp_param >();
   const auto ncomp = U.nprop()/rdof;
-  const auto& solidx = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::matidxmap >().template get< tag::solidx >();
+  const auto& solidx = inciter::g_newinputdeck.get< newtag::matidxmap,
+    newtag::solidx >();
 
   // Step-1: Perform THINC reconstruction
   // create a vector of volume-fractions and pass it to the THINC function
@@ -625,8 +626,8 @@ THINCRecoTransport( std::size_t rdof,
 //!   should only be called for transport.
 // *****************************************************************************
 {
-  auto bparam = inciter::g_inputdeck.get< tag::param, tag::transport,
-    tag::intsharp_param >();
+  auto bparam = inciter::g_newinputdeck.get< newtag::transport,
+    newtag::intsharp_param >();
   auto ncomp = U.nprop()/rdof;
 
   // interface detection

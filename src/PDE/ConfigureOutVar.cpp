@@ -19,18 +19,9 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // inciter::
-
-//! Function object for counting the total number of eq systems configured
-struct Neq {
-  std::size_t& neq;
-  explicit Neq( std::size_t& n ) : neq(n) {}
-  template< typename U > void operator()( brigand::type_<U> ) {
-    neq += inciter::g_inputdeck.get< tag::param, U, tag::depvar >().size();
-  }
-};
 
 tk::GetVarFn
 inciter::assignGetVars( const std::string& name )
@@ -45,7 +36,7 @@ inciter::assignGetVars( const std::string& name )
 
   // Query total number of eq sytems configured by user
   std::size_t neq = 0;
-  brigand::for_each< ctr::parameters::Keys >( Neq(neq) );
+  neq = inciter::g_newinputdeck.get< newtag::depvar >().size();
 
   // Only attempt to configure getvars if we are called after the inputdeck has
   // been populated. This guard is here because OutVars, stored in the
@@ -53,11 +44,11 @@ inciter::assignGetVars( const std::string& name )
   // in which case we do nothing, but wait for when we are called with the
   // inputdeck populated.
   if (neq) {
-    if (!g_inputdeck.get< tag::param, tag::transport, tag::depvar >().empty())
+    if (g_newinputdeck.get< newtag::pde >() == inciter::ctr::PDEType::TRANSPORT)
       assignTransportGetVars( name, f );
-    if (!g_inputdeck.get< tag::param, tag::compflow, tag::depvar >().empty())
+    if (g_newinputdeck.get< newtag::pde >() == inciter::ctr::PDEType::COMPFLOW)
       assignCompFlowGetVars( name, f );
-    if (!g_inputdeck.get< tag::param, tag::multimat, tag::depvar >().empty())
+    if (g_newinputdeck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT)
       assignMultiMatGetVars( name, f );
     // At this point all non-analytic human-readable outvars must have a getvar
     // function assigned

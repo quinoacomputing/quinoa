@@ -27,7 +27,6 @@
 namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
-using bcconf_t = kw::sideset::info::expect::type;
 
 //! Compute boundary surface flux integrals for a given boundary type for DG
 void
@@ -35,7 +34,7 @@ bndSurfInt( std::size_t nmat,
             const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
-            const std::vector< bcconf_t >& bcconfig,
+            const std::vector< std::size_t >& bcconfig,
             const inciter::FaceData& fd,
             const Fields& geoFace,
             const Fields& geoElem,
@@ -74,7 +73,7 @@ bndSurfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
-  const std::vector< bcconf_t >& bcconfig,
+  const std::vector< std::size_t >& bcconfig,
   const inciter::FaceData& fd,
   const Fields& geoFace,
   const Fields& geoElem,

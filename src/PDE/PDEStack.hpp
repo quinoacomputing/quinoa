@@ -33,11 +33,11 @@
 #include "FVPDE.hpp"
 #include "PDEFactory.hpp"
 #include "SystemComponents.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 //! \brief Partial differential equations stack
 class PDEStack {
@@ -109,19 +109,12 @@ class PDEStack {
     {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
-      const auto& ncomp = g_inputdeck.get< tag::component >();
-      Assert( c < (ncomp.get< EqTag >().size()),
-              "The number of scalar components is unspecified for the PDE to "
-              "be instantiated. This is most likely a grammar error in the "
-              "parser. The parser should not allow the user to select a PDE "
-              "without configuring the number of scalar components the "
-              "equation consists of. See inciter::deck::check_eq." );
-      auto nc = ncomp.get< EqTag >()[c];
+      const auto& nc = g_newinputdeck.get< newtag::ncomp >();
       if ( nc ) {
         // re-create key and search for it
         ctr::PDEKey key{{ eq,
-          g_inputdeck.get< tag::param, EqTag, tag::physics >(),
-          g_inputdeck.get< tag::param, EqTag, tag::problem >()[c] }};
+          g_newinputdeck.get< newtag::physics >(),
+          g_newinputdeck.get< EqTag, newtag::problem >() }};
         const auto it = f.find( key );
         Assert( it != end( f ),
                 "Can't find PDE with key('" +
@@ -130,7 +123,7 @@ class PDEStack {
                   ctr::Problem().name( key.get< tag::problem >() ) +
                   + "') in factory" );
         // Associate equation system index (value) to all variable offsets
-        for (ncomp_t i=0; i<nc; ++i) g_inputdeck.get<tag::sys>()[i] = c;
+        for (ncomp_t i=0; i<nc; ++i) g_newinputdeck.get<newtag::sys>()[i] = c;
         // instantiate and return PDE object
         return it->second();
       } else Throw ( "Can't create PDE with zero components" );

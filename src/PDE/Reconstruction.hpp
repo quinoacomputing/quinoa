@@ -53,7 +53,7 @@ bndLeastSqConservedVar_P0P1(
   ncomp_t ncomp,
   const std::vector< inciter::EOS >& mat_blk,
   std::size_t rdof,
-  const std::vector< bcconf_t >& bcconfig,
+  const std::vector< std::size_t >& bcconfig,
   const inciter::FaceData& fd,
   const Fields& geoFace,
   const Fields& geoElem,

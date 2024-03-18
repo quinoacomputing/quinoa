@@ -27,7 +27,6 @@
 namespace tk {
 
 using ncomp_t = kw::ncomp::info::expect::type;
-using bcconf_t = kw::sideset::info::expect::type;
 
 //! Compute internal surface flux integrals for DG
 void

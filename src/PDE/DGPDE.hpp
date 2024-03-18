@@ -30,25 +30,24 @@
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "FunctionPrototypes.hpp"
 #include "History.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
-using bcconf_t = kw::sideset::info::expect::type;
 using BCStateFn =
-  std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
+  std::vector< std::pair< std::vector< std::size_t >, tk::StateFn > >;
 
 //! Extract BC configuration ignoring if BC not specified
 //! \note A more preferable way of catching errors such as this function
 //!   hides is during parsing, so that we don't even get here if BCs are
 //!   not correctly specified. For now we simply ignore if BCs are not
 //!   specified by allowing empty BC vectors from the user input.
-template< class Eq > struct ConfigBC {
+struct ConfigBC {
   BCStateFn& state;    //!< BC state config: sidesets + statefn
   const std::vector< tk::StateFn >& fn;    //!< BC state functions
   std::size_t c;       //!< Counts BC types configured
@@ -58,8 +57,11 @@ template< class Eq > struct ConfigBC {
     state(s), fn(f), c(0) {}
   //! Function to call for each BC type
   template< typename U > void operator()( brigand::type_<U> ) {
-    std::vector< bcconf_t > cfg;
-    const auto& v = g_inputdeck.get< tag::param, Eq, tag::bc, U >();
+    std::vector< std::size_t > cfg, v;
+    // collect sidesets across all meshes
+    for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+      v.insert(v.end(), ibc.get< U >().begin(), ibc.get< U >().end());
+    }
     if (v.size() > 0) cfg = v;
     Assert( fn.size() > c, "StateFn missing for BC type" );
     state.push_back( { cfg, fn[c++] } );
