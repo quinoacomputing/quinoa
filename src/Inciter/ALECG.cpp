@@ -184,7 +184,7 @@ ALECG::queryBnd()
       m_symbctri[e] = 1;
 
   // Prepare unique set of sponge nodes
-  auto sponge = d->bcnodes< newtag::sponge >( m_bface, m_triinpoel );
+  auto sponge = d->bcnodes< newtag::sponge, newtag::sideset >( m_bface, m_triinpoel );
   for (const auto& [s,nodes] : sponge)
     m_spongenodes.insert( begin(nodes), end(nodes) );
 

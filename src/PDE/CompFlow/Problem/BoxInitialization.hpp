@@ -16,11 +16,8 @@
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 #include "ContainerUtil.hpp"
-#include "Control/Inciter/Types.hpp"
 
 namespace inciter {
-
-using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Set the solution in the user-defined IC box
 
@@ -56,16 +53,15 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
-  const auto& initiate = b.template get< tag::initiate >();
-  auto inittype = initiate.template get< tag::init >();
+  const auto& initiate = b.template get< newtag::initiate >();
 
-  auto boxrho = b.template get< tag::density >();
-  const auto& boxvel = b.template get< tag::velocity >();
-  auto boxpre = b.template get< tag::pressure >();
-  auto boxene = b.template get< tag::energy >();
-  auto boxtem = b.template get< tag::temperature >();
-  auto boxmas = b.template get< tag::mass >();
-  auto boxenc = b.template get< tag::energy_content >();
+  auto boxrho = b.template get< newtag::density >();
+  const auto& boxvel = b.template get< newtag::velocity >();
+  auto boxpre = b.template get< newtag::pressure >();
+  auto boxene = b.template get< newtag::energy >();
+  auto boxtem = b.template get< newtag::temperature >();
+  auto boxmas = b.template get< newtag::mass >();
+  auto boxenc = b.template get< newtag::energy_content >();
 
   tk::real rho = 0.0, ru = 0.0, rv = 0.0, rw = 0.0, re = 0.0, spi = 0.0;
   bool boxmassic = false;
@@ -95,7 +91,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 
   // Initiate type 'impulse' simply assigns the prescribed values to all
   // nodes within a box.
-  if (inittype == ctr::InitiateType::IMPULSE) {
+  if (initiate == ctr::InitiateType::IMPULSE) {
     // superimpose on existing velocity field
     auto u = s[1]/s[0], v = s[2]/s[0], w = s[3]/s[0];
     auto ke = 0.5*(u*u + v*v + w*w);
@@ -118,7 +114,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   // z-direction with a velocity specified in the IC linear...end block.
   // The wave front is smoothed out to include a couple of mesh nodes.
   // see boxSrc() for further details.
-  else if (inittype == ctr::InitiateType::LINEAR && t < 1e-12) {
+  else if (initiate == ctr::InitiateType::LINEAR && t < 1e-12) {
 
     // superimpose on existing velocity field
     const auto u = s[1]/s[0],

@@ -20,7 +20,6 @@
 #ifndef Basis_h
 #define Basis_h
 
-#include "Types.hpp"
 #include "Vector.hpp"
 #include "Fields.hpp"
 #include "FaceData.hpp"

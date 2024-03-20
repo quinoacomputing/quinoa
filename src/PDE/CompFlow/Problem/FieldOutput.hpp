@@ -19,8 +19,6 @@
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
-
 //! Return surface field names to be output to file
 std::vector< std::string > CompFlowSurfNames();
 

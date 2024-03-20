@@ -15,7 +15,6 @@
 
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
-#include "Control/Inciter/Types.hpp"
 #include "ContainerUtil.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
@@ -53,22 +52,20 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
-  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
+  auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
 
-  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
-    tag::matidxmap >().template get< tag::solidx >();
+  const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
 
-  const auto& initiate = b.template get< tag::initiate >();
-  auto inittype = initiate.template get< tag::init >();
+  const auto& initiate = b.template get< newtag::initiate >();
 
   // get material id in box (offset by 1, since input deck uses 1-based ids)
-  std::size_t boxmatid = b.template get< tag::materialid >() - 1;
-  const auto& boxvel = b.template get< tag::velocity >();
-  auto boxpre = b.template get< tag::pressure >();
-  auto boxene = b.template get< tag::energy >();
-  auto boxtemp = b.template get< tag::temperature >();
-  auto boxmas = b.template get< tag::mass >();
-  auto boxenc = b.template get< tag::energy_content >();
+  std::size_t boxmatid = b.template get< newtag::materialid >() - 1;
+  const auto& boxvel = b.template get< newtag::velocity >();
+  auto boxpre = b.template get< newtag::pressure >();
+  auto boxene = b.template get< newtag::energy >();
+  auto boxtemp = b.template get< newtag::temperature >();
+  auto boxmas = b.template get< newtag::mass >();
+  auto boxenc = b.template get< newtag::energy_content >();
 
   auto alphamin = 1.0e-12;
 
@@ -101,7 +98,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
     // nodes within a box at initialization (followed by adding a time-dependent
     // energy source term representing a propagating wave-front), the pressure
     // in the box needs to be set to background pressure.
-    if (inittype == ctr::InitiateType::LINEAR && t < 1e-12) {
+    if (initiate == ctr::InitiateType::LINEAR && t < 1e-12) {
       if (boxmas <= 1e-12 || boxenc <= 1e-12 || bgpreic <= 1e-12 ||
         bgtempic <= 1e-12)
         Throw("Box mass, energy content, background pressure and background "
@@ -124,7 +121,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
     }
     // For initiate type 'impulse', pressure and temperature are determined from
     // energy content that needs to be dumped into the box at IC.
-    else if (inittype == ctr::InitiateType::IMPULSE) {
+    else if (initiate == ctr::InitiateType::IMPULSE) {
       pr = mat_blk[boxmatid].compute< EOS::pressure >(
         boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*rhok[boxmatid]*spi,
         boxmat_vf, boxmatid );
@@ -167,7 +164,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
     s[densityIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k];
     // total specific energy
     if (boxmas > 0.0 && k == boxmatid &&
-      inittype == ctr::InitiateType::IMPULSE) {
+      initiate == ctr::InitiateType::IMPULSE) {
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k] * spi;
     }
     else {

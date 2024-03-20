@@ -13,14 +13,7 @@
 // *****************************************************************************
 
 #include "TaylorGreen.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
 
 using inciter::CompFlowProblemTaylorGreen;
 
@@ -39,7 +32,7 @@ CompFlowProblemTaylorGreen::initialize( ncomp_t,
 //! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  using tag::param; using std::sin; using std::cos;
+  using std::sin; using std::cos;
 
   // density
   auto r = 1.0;
@@ -70,7 +63,7 @@ CompFlowProblemTaylorGreen::analyticSolution( ncomp_t,
 //! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  using tag::param; using std::sin; using std::cos;
+  using std::sin; using std::cos;
 
   // density
   auto r = 1.0;

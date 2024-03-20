@@ -16,7 +16,6 @@
 // *****************************************************************************
 
 #include "PDEStack.hpp"
-#include "Tags.hpp"
 
 #include "ConfigureTransport.hpp"
 #include "ConfigureCompFlow.hpp"

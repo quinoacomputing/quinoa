@@ -20,7 +20,7 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "SystemComponents.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "EoS/EOS.hpp"
 
@@ -30,8 +30,8 @@ namespace inciter {
 class CompFlowProblemSedovBlastwave {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::compflow;
+    using ncomp_t = tk::ncomp_t;
+    using eq = newtag::compflow;
 
   public:
     //! Initialize numerical solution

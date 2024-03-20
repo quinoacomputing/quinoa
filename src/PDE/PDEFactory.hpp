@@ -19,7 +19,6 @@
 #include "DGPDE.hpp"
 #include "FVPDE.hpp"
 #include "Factory.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/PDE.hpp"
 
 namespace inciter {

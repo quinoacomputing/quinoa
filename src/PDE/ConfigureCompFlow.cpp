@@ -154,12 +154,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
       nfo.emplace_back( "Stagnation point(s) radii", parameter( radius ) );
     }
 
-    const auto& skip = ib.get< newtag::skip_point >();
-    if (!skip.empty()) {
-      nfo.emplace_back( "Skip point(s)", parameters( skip ) );
-      nfo.emplace_back( "Skip point(s) radii", parameter( radius ) );
-    }
-
     const auto& fs = ib.get< newtag::farfield >();
     if (!fs.empty())
       nfo.emplace_back( "Farfield BC sideset(s)", parameters( fs ) );
@@ -168,7 +162,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
     if (!sym.empty())
       nfo.emplace_back( "Symmetry BC sideset(s)", parameters( sym ) );
 
-    const auto& sponge = ib.get< newtag::sponge >();
+    const auto& sponge = ib.get< newtag::sponge, newtag::sideset >();
     if (!sponge.empty())
       nfo.emplace_back( "Sponge sideset(s)", parameters( sponge ) );
 

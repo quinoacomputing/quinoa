@@ -13,12 +13,12 @@
 // *****************************************************************************
 
 #include "SheddingFlow.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "FieldOutput.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // ::inciter
 
@@ -38,12 +38,10 @@ CompFlowProblemSheddingFlow::initialize( ncomp_t,
 //! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  using tag::param;
-
   // Assign uniform initial condition according to the farfield state
-  auto r = g_inputdeck.get< tag::param, eq, tag::farfield_density >();
-  auto p = g_inputdeck.get< tag::param, eq, tag::farfield_pressure >();
-  const auto& u = g_inputdeck.get< tag::param, eq, tag::farfield_velocity >();
+  auto r = g_newinputdeck.get< newtag::bc >()[0].get< newtag::density >();
+  auto p = g_newinputdeck.get< newtag::bc >()[0].get< newtag::pressure >();
+  const auto& u = g_newinputdeck.get< newtag::bc >()[0].get< newtag::velocity >();
   auto rE = mat_blk[0].compute< EOS::totalenergy >( r, u[0], u[1], u[2], p );
 
   return {{ r, r*u[0], r*u[1], r*u[2], rE }};

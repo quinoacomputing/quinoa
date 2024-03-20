@@ -14,7 +14,6 @@
 
 #include <vector>
 
-#include "Types.hpp"
 #include "Fields.hpp"
 #include "Vector.hpp"
 #include "FunctionPrototypes.hpp"

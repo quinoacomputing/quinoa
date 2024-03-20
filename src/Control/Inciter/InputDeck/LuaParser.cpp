@@ -207,6 +207,15 @@ LuaParser::storeInputDeck(
       lua_ideck["transport"], "problem",
       gideck.get< newtag::transport, newtag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
+    storeVecIfSpecd< tk::real >(
+      lua_ideck["transport"], "diffusivity",
+      gideck.get< newtag::transport, newtag::diffusivity >(), {0.0, 0.0, 0.0});
+    storeVecIfSpecd< tk::real >(
+      lua_ideck["transport"], "u0",
+      gideck.get< newtag::transport, newtag::u0 >(), {0.0, 0.0, 0.0});
+    storeVecIfSpecd< tk::real >(
+      lua_ideck["transport"], "lambda",
+      gideck.get< newtag::transport, newtag::lambda >(), {0.0, 0.0, 0.0});
     gideck.get< newtag::depvar >()[0] = 'c';
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< newtag::flux >(),
@@ -224,6 +233,27 @@ LuaParser::storeInputDeck(
       lua_ideck["compflow"], "problem",
       gideck.get< newtag::compflow, newtag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
+
+    // problem parameters for MMS
+    storeIfSpecd< tk::real >(lua_ideck["compflow"], "alpha",
+      gideck.get< newtag::compflow, newtag::alpha >(), 0.0);
+    storeIfSpecd< tk::real >(lua_ideck["compflow"], "beta",
+      gideck.get< newtag::compflow, newtag::beta >(), 0.0);
+    storeIfSpecd< tk::real >(lua_ideck["compflow"], "betax",
+      gideck.get< newtag::compflow, newtag::betax >(), 0.0);
+    storeIfSpecd< tk::real >(lua_ideck["compflow"], "betay",
+      gideck.get< newtag::compflow, newtag::betay >(), 0.0);
+    storeIfSpecd< tk::real >(lua_ideck["compflow"], "betaz",
+      gideck.get< newtag::compflow, newtag::betaz >(), 0.0);
+    storeIfSpecd< tk::real >(lua_ideck["compflow"], "r0",
+      gideck.get< newtag::compflow, newtag::r0 >(), 0.0);
+    storeIfSpecd< tk::real >(lua_ideck["compflow"], "p0",
+      gideck.get< newtag::compflow, newtag::p0 >(), 0.0);
+    storeIfSpecd< tk::real >(lua_ideck["compflow"], "ce",
+      gideck.get< newtag::compflow, newtag::ce >(), 0.0);
+    storeIfSpecd< tk::real >(lua_ideck["compflow"], "kappa",
+      gideck.get< newtag::compflow, newtag::kappa >(), 0.0);
+
     gideck.get< newtag::depvar >()[0] = 'a';
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< newtag::flux >(),
@@ -946,8 +976,15 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "extrapolate",
         bc_deck[i].get< newtag::extrapolate >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "sponge",
-        bc_deck[i].get< newtag::sponge >(), {});
+      // Sponge BC
+      if (sol_bc[i+1]["sponge"].valid()) {
+        storeVecIfSpecd< uint64_t >(sol_bc[i+1]["sponge"], "sideset",
+          bc_deck[i].get< newtag::sponge, newtag::sideset >(), {});
+        storeVecIfSpecd< tk::real >(sol_bc[i+1]["sponge"], "vparam",
+          bc_deck[i].get< newtag::sponge, newtag::vparam >(), {});
+        storeIfSpecd< tk::real >(sol_bc[i+1]["sponge"], "pparam",
+          bc_deck[i].get< newtag::sponge, newtag::pparam >(), {1.0});
+      }
 
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
@@ -976,13 +1013,7 @@ LuaParser::storeInputDeck(
       if (bc_deck[i].get< newtag::stag_point >().size() != 3)
         Throw("BC point requires 3 coordinates.");
 
-      // Skip pt
-      storeVecIfSpecd< tk::real >(sol_bc[i+1], "skip_point",
-        bc_deck[i].get< newtag::skip_point >(), {0.0, 0.0, 0.0});
-      if (bc_deck[i].get< newtag::skip_point >().size() != 3)
-        Throw("BC point requires 3 coordinates.");
-
-      // Stagnation/skip radius
+      // Stagnation radius
       storeIfSpecd< tk::real >(sol_bc[i+1], "radius",
         bc_deck[i].get< newtag::radius >(), 0.0);
 
@@ -1032,6 +1063,12 @@ LuaParser::storeInputDeck(
 
     storeIfSpecd< tk::real >(lua_ideck["ic"], "temperature",
       ic_deck.get< newtag::temperature >(), 0.0);
+
+    storeIfSpecd< tk::real >(lua_ideck["ic"], "density",
+      ic_deck.get< newtag::density >(), 0.0);
+
+    storeIfSpecd< tk::real >(lua_ideck["ic"], "energy",
+      ic_deck.get< newtag::energy >(), 0.0);
 
     storeVecIfSpecd< tk::real >(lua_ideck["ic"], "velocity",
       ic_deck.get< newtag::velocity >(), {0.0, 0.0, 0.0});
@@ -1176,6 +1213,9 @@ LuaParser::storeInputDeck(
 
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "front_width",
           mblk_deck[i].get< newtag::front_width >(), 0.0);
+
+        storeIfSpecd< tk::real >(lua_meshblock[i+1], "front_speed",
+          mblk_deck[i].get< newtag::front_speed >(), 0.0);
       }
     }
   }

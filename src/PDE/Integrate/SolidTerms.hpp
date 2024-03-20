@@ -16,7 +16,6 @@
 #ifndef SolidTerms_h
 #define SolidTerms_h
 
-#include "Types.hpp"
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "EoS/EOS.hpp"

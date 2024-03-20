@@ -18,7 +18,6 @@
 
 #include <limits>
 
-#include "Types.hpp"
 #include "Inciter/Options/Physics.hpp"
 
 namespace inciter {

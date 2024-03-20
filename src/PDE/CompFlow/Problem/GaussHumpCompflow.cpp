@@ -13,14 +13,7 @@
 // *****************************************************************************
 
 #include "GaussHumpCompflow.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
 
 using inciter::CompFlowProblemGaussHump;
 
@@ -42,8 +35,6 @@ CompFlowProblemGaussHump::initialize( ncomp_t ncomp,
 // *****************************************************************************
 {
   Assert( ncomp == 5, "Number of scalar components must be 5" );
-
-  using tag::param;
 
   const auto vel = prescribedVelocity( ncomp, x, y, 0.0 );
 
@@ -86,8 +77,6 @@ CompFlowProblemGaussHump::analyticSolution( ncomp_t ncomp,
 // *****************************************************************************
 {
   Assert( ncomp == 5, "Number of scalar components must be 5" );
-
-  using tag::param;
 
   const auto vel = prescribedVelocity( ncomp, x, y, 0.0 );
 

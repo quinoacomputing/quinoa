@@ -13,14 +13,7 @@
 // *****************************************************************************
 
 #include "SodShocktube.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
 
 using inciter::CompFlowProblemSodShocktube;
 
@@ -42,8 +35,6 @@ CompFlowProblemSodShocktube::initialize( ncomp_t,
 //!   been implemented yet.
 // *****************************************************************************
 {
-  using tag::param;
-
   tk::real r, p, u, v, w, rE;
   if (x<0.5) {
     // density

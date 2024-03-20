@@ -13,12 +13,12 @@
 // *****************************************************************************
 
 #include "RayleighTaylor.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "FieldOutput.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // ::inciter
 
@@ -41,16 +41,16 @@ CompFlowProblemRayleighTaylor::initialize( ncomp_t,
 //! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  using tag::param; using std::sin; using std::cos;
+  using std::sin; using std::cos;
 
   // manufactured solution parameters
-  const auto a = g_inputdeck.get< param, eq, tag::alpha >();
-  const auto bx = g_inputdeck.get< param, eq, tag::betax >();
-  const auto by = g_inputdeck.get< param, eq, tag::betay >();
-  const auto bz = g_inputdeck.get< param, eq, tag::betaz >();
-  const auto p0 = g_inputdeck.get< param, eq, tag::p0 >();
-  const auto r0 = g_inputdeck.get< param, eq, tag::r0 >();
-  const auto k = g_inputdeck.get< param, eq, tag::kappa >();
+  const auto a = g_newinputdeck.get< eq, newtag::alpha >();
+  const auto bx = g_newinputdeck.get< eq, newtag::betax >();
+  const auto by = g_newinputdeck.get< eq, newtag::betay >();
+  const auto bz = g_newinputdeck.get< eq, newtag::betaz >();
+  const auto p0 = g_newinputdeck.get< eq, newtag::p0 >();
+  const auto r0 = g_newinputdeck.get< eq, newtag::r0 >();
+  const auto k = g_newinputdeck.get< eq, newtag::kappa >();
   // spatial component of density and pressure fields
   const tk::real gx = bx*x*x + by*y*y + bz*z*z;
   // density
@@ -86,16 +86,16 @@ CompFlowProblemRayleighTaylor::analyticSolution(
 //! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  using tag::param; using std::sin; using std::cos;
+  using std::sin; using std::cos;
 
   // manufactured solution parameters
-  auto a = g_inputdeck.get< param, eq, tag::alpha >();
-  auto bx = g_inputdeck.get< param, eq, tag::betax >();
-  auto by = g_inputdeck.get< param, eq, tag::betay >();
-  auto bz = g_inputdeck.get< param, eq, tag::betaz >();
-  auto p0 = g_inputdeck.get< param, eq, tag::p0 >();
-  auto r0 = g_inputdeck.get< param, eq, tag::r0 >();
-  auto k = g_inputdeck.get< param, eq, tag::kappa >();
+  auto a = g_newinputdeck.get< eq, newtag::alpha >();
+  auto bx = g_newinputdeck.get< eq, newtag::betax >();
+  auto by = g_newinputdeck.get< eq, newtag::betay >();
+  auto bz = g_newinputdeck.get< eq, newtag::betaz >();
+  auto p0 = g_newinputdeck.get< eq, newtag::p0 >();
+  auto r0 = g_newinputdeck.get< eq, newtag::r0 >();
+  auto k = g_newinputdeck.get< eq, newtag::kappa >();
   // spatial component of density and pressure fields
   auto gx = bx*x*x + by*y*y + bz*z*z;
   // density

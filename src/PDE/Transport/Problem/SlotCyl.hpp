@@ -20,8 +20,7 @@
 #include <vector>
 #include <array>
 
-#include "Types.hpp"
-#include "SystemComponents.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "EoS/EOS.hpp"
 
@@ -35,8 +34,8 @@ namespace inciter {
 //!   627-665.
 class TransportProblemSlotCyl {
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::transport;
+    using ncomp_t = inciter::ctr::ncomp_t;
+    using eq = newtag::transport;
 
   public:
     //! Initialize numerical solution

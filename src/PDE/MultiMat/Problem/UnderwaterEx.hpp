@@ -20,8 +20,8 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "EoS/EOS.hpp"
 
 namespace inciter {
@@ -33,8 +33,8 @@ namespace inciter {
 class MultiMatProblemUnderwaterEx {
 
   protected:
-    using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::multimat;
+    using ncomp_t = tk::ncomp_t;
+    using eq = newtag::multimat;
 
   public:
     //! Initialize numerical solution

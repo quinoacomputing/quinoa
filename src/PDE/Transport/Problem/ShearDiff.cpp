@@ -16,11 +16,11 @@
 // *****************************************************************************
 
 #include "ShearDiff.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // ::inciter
 
@@ -40,11 +40,9 @@ TransportProblemShearDiff::initialize( ncomp_t ncomp,
 //! \return Values of all components evaluated at (x,y,t)
 // *****************************************************************************
 {
-  using tag::param;
-
-  const auto& u0 = g_inputdeck.get< param, eq, tag::u0 >();
-  const auto& d = g_inputdeck.get< param, eq, tag::diffusivity >();
-  const auto& l = g_inputdeck.get< param, eq, tag::lambda >();
+  const auto& u0 = g_newinputdeck.get< eq, newtag::u0 >();
+  const auto& d = g_newinputdeck.get< eq, newtag::diffusivity >();
+  const auto& l = g_newinputdeck.get< eq, newtag::lambda >();
 
   std::vector< tk::real > r( ncomp );
   for (ncomp_t c=0; c<ncomp; ++c) {
@@ -73,17 +71,15 @@ TransportProblemShearDiff::errchk( ncomp_t ncomp ) const
 //! \param[in] ncomp Number of components in this transport equation
 // *****************************************************************************
 {
-  using tag::param;
-
-  auto u0 = g_inputdeck.get< param, eq, tag::u0 >();
+  auto u0 = g_newinputdeck.get< eq, newtag::u0 >();
   ErrChk( ncomp == u0.size(),
     "Wrong number of advection-diffusion PDE parameters 'u0'" );
 
-  auto lambda = g_inputdeck.get< param, eq, tag::lambda >();
+  auto lambda = g_newinputdeck.get< eq, newtag::lambda >();
   ErrChk( 2*ncomp == lambda.size(),
     "Wrong number of advection-diffusion PDE parameters 'lambda'" );
 
-  auto& d = g_inputdeck.get< param, eq, tag::diffusivity >();
+  auto& d = g_newinputdeck.get< eq, newtag::diffusivity >();
   ErrChk( 3*ncomp == d.size(),
     "Wrong number of advection-diffusion PDE parameters 'diffusivity'" );
 }
@@ -101,10 +97,8 @@ TransportProblemShearDiff::prescribedVelocity( ncomp_t ncomp,
 //!   ncomp * ndim = [ncomp][3]
 // *****************************************************************************
 {
-  using tag::param;
-
-  auto u0 = g_inputdeck.get< param, eq, tag::u0 >();
-  auto l = g_inputdeck.get< param, eq, tag::lambda >();
+  auto u0 = g_newinputdeck.get< eq, newtag::u0 >();
+  auto l = g_newinputdeck.get< eq, newtag::lambda >();
 
   std::vector< std::array< tk::real, 3 > > vel( ncomp );
   for (ncomp_t c=0; c<ncomp; ++c)

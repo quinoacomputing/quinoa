@@ -13,13 +13,14 @@
 #ifndef FieldOutput_h
 #define FieldOutput_h
 
+#include "Types.hpp"
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 #include "FaceData.hpp"
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Return multi-material field names to be output to file
 std::vector< std::string >

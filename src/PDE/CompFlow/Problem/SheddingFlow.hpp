@@ -20,8 +20,8 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "EoS/EOS.hpp"
 
 namespace inciter {
@@ -30,8 +30,8 @@ namespace inciter {
 class CompFlowProblemSheddingFlow {
 
   protected:
-    using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::compflow;
+    using ncomp_t = tk::ncomp_t;
+    using eq = newtag::compflow;
 
   public:
     //! Initialize numerical solution

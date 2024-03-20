@@ -26,13 +26,13 @@
 #include "NoWarning/front.hpp"
 
 #include "Tags.hpp"
+#include "Types.hpp"
 #include "Exception.hpp"
 #include "Factory.hpp"
 #include "CGPDE.hpp"
 #include "DGPDE.hpp"
 #include "FVPDE.hpp"
 #include "PDEFactory.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
@@ -43,7 +43,7 @@ extern ctr::New2InputDeck g_newinputdeck;
 class PDEStack {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
 
   public:
     //! Constructor: register partial differential equations into factory

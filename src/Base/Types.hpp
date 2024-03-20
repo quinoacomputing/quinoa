@@ -12,11 +12,16 @@
 #ifndef Types_h
 #define Types_h
 
+#include <cstddef>
+
 namespace tk {
 
 //! Real number type used throughout the whole code.
 // TODO Test with single precision and possibly others.
 using real = double;
+
+//! uint type used throughout the whole code.
+using ncomp_t = std::size_t;
 
 } // tk::
 

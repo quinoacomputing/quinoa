@@ -20,8 +20,8 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
 
@@ -32,7 +32,7 @@ class CompFlowProblemShockDensityWave {
 
   protected:
     using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::compflow;
+    using eq = newtag::compflow;
 
   public:
     //! Initialize numerical solution

@@ -15,13 +15,13 @@
 #include <limits>
 
 #include "UserDefined.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "FieldOutput.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // ::inciter
 
@@ -43,25 +43,24 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
 {
   tk::InitializeFn::result_type s( ncomp, 0.0 );
 
-  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
-  const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
-    tag::matidxmap >().template get< tag::solidx >();
+  auto nmat = g_newinputdeck.get< eq, newtag::nmat >();
+  const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   // Set background ICs
-  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
-  const auto& bgmatid = ic.get< tag::materialid >();
-  const auto& bgvelic = ic.get< tag::velocity >();
-  const auto& bgpreic = ic.get< tag::pressure >();
-  const auto& bgtempic = ic.get< tag::temperature >();
+  const auto& ic = g_newinputdeck.get< newtag::ic >();
+  const auto& bgmatid = ic.get< newtag::materialid >();
+  const auto& bgvelic = ic.get< newtag::velocity >();
+  const auto& bgpreic = ic.get< newtag::pressure >();
+  const auto& bgtempic = ic.get< newtag::temperature >();
 
-  Assert( bgtempic.size() > 0, "No background temperature IC" );
-  Assert( bgpreic.size() > 0, "No background pressure IC" );
+  if (bgtempic < 1e-12) Throw( "No background temperature IC" );
+  if (bgpreic < 1e-12) Throw( "No background pressure IC" );
 
   auto alphamin = 1.0e-12;
 
   // initialize background material states
   for (std::size_t k=0; k<nmat; ++k) {
-    if (k == bgmatid.at(0)-1) {
+    if (k == bgmatid-1) {
       s[volfracIdx(nmat,k)] = 1.0 - (static_cast< tk::real >(nmat-1))*alphamin;
     }
     else {
@@ -76,7 +75,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
   auto rb = 0.0;
   for (std::size_t k=0; k<nmat; ++k) {
     // density
-    auto rhok = mat_blk[k].compute< EOS::density >(bgpreic[0], bgtempic[0]);
+    auto rhok = mat_blk[k].compute< EOS::density >(bgpreic, bgtempic);
     // partial density
     s[densityIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok;
     // deformation gradients
@@ -95,7 +94,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
     }
     // total specific energy
     s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-      mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, bgpreic[0],
+      mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, bgpreic,
       g);
     // bulk density
     rb += s[densityIdx(nmat,k)];
@@ -106,7 +105,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
   s[momentumIdx(nmat,1)] = rb * v;
   s[momentumIdx(nmat,2)] = rb * w;
 
-  if (bgpreic.empty() || bgtempic.empty())
+  if (bgpreic< 1e-12 || bgtempic< 1e-12)
     Throw("User must specify background pressure and temperature in IC.");
 
   return s;

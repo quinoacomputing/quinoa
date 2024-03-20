@@ -14,12 +14,12 @@
 // *****************************************************************************
 
 #include "SodShocktube.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // ::inciter
 
@@ -47,7 +47,7 @@ MultiMatProblemSodShocktube::initialize( ncomp_t ncomp,
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 9, "Number of scalar components must be 9" );
 
-  auto nmat = g_inputdeck.get< tag::param, eq, tag::nmat >();
+  auto nmat = g_newinputdeck.get< eq, newtag::nmat >();
 
   std::vector< tk::real > s( ncomp, 0.0 );
   tk::real r, p, u, v, w;

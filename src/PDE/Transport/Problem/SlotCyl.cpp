@@ -16,14 +16,6 @@
 // *****************************************************************************
 
 #include "SlotCyl.hpp"
-#include "SystemComponents.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
 
 using inciter::TransportProblemSlotCyl;
 

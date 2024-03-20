@@ -14,7 +14,6 @@
 #ifndef Mass_h
 #define Mass_h
 
-#include "Types.hpp"
 #include "Fields.hpp"
 
 namespace tk {

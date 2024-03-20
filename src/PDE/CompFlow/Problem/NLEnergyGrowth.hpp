@@ -20,14 +20,13 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 //! CompFlow system of PDEs problem: nonlinear energy growth (NLEG)
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
@@ -36,8 +35,8 @@ extern ctr::InputDeck g_inputdeck;
 class CompFlowProblemNLEnergyGrowth {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::compflow;
+    using ncomp_t = tk::ncomp_t;
+    using eq = newtag::compflow;
 
     //! Compute internal energy parameter
     static tk::real hx( tk::real bx, tk::real by, tk::real bz,
@@ -70,15 +69,15 @@ class CompFlowProblemNLEnergyGrowth {
          tk::real y, tk::real z, tk::real t, std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");
-      using tag::param; using std::sin; using std::cos;
+      using std::sin; using std::cos;
       // manufactured solution parameters
-      const auto a = g_inputdeck.get< param, eq, tag::alpha >();
-      const auto bx = g_inputdeck.get< param, eq, tag::betax >();
-      const auto by = g_inputdeck.get< param, eq, tag::betay >();
-      const auto bz = g_inputdeck.get< param, eq, tag::betaz >();
-      const auto ce = g_inputdeck.get< param, eq, tag::ce >();
-      const auto kappa = g_inputdeck.get< param, eq, tag::kappa >();
-      const auto r0 = g_inputdeck.get< param, eq, tag::r0 >();
+      const auto a = g_newinputdeck.get< eq, newtag::alpha >();
+      const auto bx = g_newinputdeck.get< eq, newtag::betax >();
+      const auto by = g_newinputdeck.get< eq, newtag::betay >();
+      const auto bz = g_newinputdeck.get< eq, newtag::betaz >();
+      const auto ce = g_newinputdeck.get< eq, newtag::ce >();
+      const auto kappa = g_newinputdeck.get< eq, newtag::kappa >();
+      const auto r0 = g_newinputdeck.get< eq, newtag::r0 >();
       // ratio of specific heats
       const auto g = getmatprop< newtag::gamma >();
       // spatial component of density field

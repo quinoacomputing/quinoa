@@ -61,6 +61,18 @@ namespace newtag {
   DEFTAG(transport);
   DEFTAG(compflow);
   DEFTAG(multimat);
+  DEFTAG(diffusivity);
+  DEFTAG(lambda);
+  DEFTAG(u0);
+  DEFTAG(alpha);
+  DEFTAG(beta);
+  DEFTAG(betax);
+  DEFTAG(betay);
+  DEFTAG(betaz);
+  DEFTAG(r0);
+  DEFTAG(p0);
+  DEFTAG(ce);
+  DEFTAG(kappa);
   DEFTAG(nmat);
   DEFTAG(prelax);
   DEFTAG(prelax_timescale);
@@ -155,8 +167,9 @@ namespace newtag {
   DEFTAG(farfield);
   DEFTAG(extrapolate);
   DEFTAG(stag_point);
-  DEFTAG(skip_point);
   DEFTAG(sponge);
+  DEFTAG(vparam);
+  DEFTAG(pparam);
   DEFTAG(radius);
   DEFTAG(timedep);
 
@@ -197,11 +210,55 @@ namespace newtag {
     farfield,    std::vector< std::size_t >,
     extrapolate, std::vector< std::size_t >
   > >;
+
+  using newbox = tk::SimpTaggedTuple< brigand::list<
+    newtag::materialid,     std::size_t,
+    newtag::volume,         tk::real,
+    newtag::mass,           tk::real,
+    newtag::density,        tk::real,
+    newtag::velocity,       std::vector< tk::real >,
+    newtag::pressure,       tk::real,
+    newtag::energy,         tk::real,
+    newtag::energy_content, tk::real,
+    newtag::temperature,    tk::real,
+    newtag::xmin,           tk::real,
+    newtag::xmax,           tk::real,
+    newtag::ymin,           tk::real,
+    newtag::ymax,           tk::real,
+    newtag::zmin,           tk::real,
+    newtag::zmax,           tk::real,
+    newtag::orientation,    std::vector< tk::real >,
+    newtag::initiate,       inciter::ctr::InitiateType,
+    newtag::point,          std::vector< tk::real >,
+    newtag::init_time,      tk::real,
+    newtag::front_width,    tk::real,
+    newtag::front_speed,    tk::real
+  > >;
+
+  using newmeshblock = tk::SimpTaggedTuple< brigand::list<
+    newtag::blockid,        std::uint64_t,
+    newtag::materialid,     std::size_t,
+    newtag::volume,         tk::real,
+    newtag::mass,           tk::real,
+    newtag::density,        tk::real,
+    newtag::velocity,       std::vector< tk::real >,
+    newtag::pressure,       tk::real,
+    newtag::energy,         tk::real,
+    newtag::energy_content, tk::real,
+    newtag::temperature,    tk::real,
+    newtag::initiate,       inciter::ctr::InitiateType,
+    newtag::point,          std::vector< tk::real >,
+    newtag::init_time,      tk::real,
+    newtag::front_width,    tk::real,
+    newtag::front_speed,    tk::real
+  > >;
 } // newtag::
 
 namespace inciter {
 
 namespace ctr {
+
+using ncomp_t = std::size_t;
 
 using ConfigMembers = brigand::list<
 
@@ -263,13 +320,25 @@ using ConfigMembers = brigand::list<
     newtag::ncomp,          std::size_t,
     newtag::intsharp,       int,
     newtag::intsharp_param, tk::real,
-    newtag::problem,        ProblemType
+    newtag::problem,        ProblemType,
+    newtag::diffusivity,    std::vector< tk::real >,
+    newtag::lambda,         std::vector< tk::real >,
+    newtag::u0,             std::vector< tk::real >
   > >,
 
   // CompFlow
   // ---------------------------------------------------------------------------
   newtag::compflow, tk::SimpTaggedTuple< brigand::list<
-    newtag::problem, ProblemType
+    newtag::problem, ProblemType,
+    newtag::alpha,   tk::real,
+    newtag::beta,    tk::real,
+    newtag::betax,   tk::real,
+    newtag::betay,   tk::real,
+    newtag::betaz,   tk::real,
+    newtag::r0,      tk::real,
+    newtag::p0,      tk::real,
+    newtag::ce,      tk::real,
+    newtag::kappa,   tk::real
   > >,
 
   // MultiMat
@@ -428,12 +497,15 @@ using ConfigMembers = brigand::list<
       newtag::farfield,    std::vector< std::size_t >,
       newtag::extrapolate, std::vector< std::size_t >,
       newtag::stag_point,  std::vector< tk::real >,
-      newtag::skip_point,  std::vector< tk::real >,
-      newtag::sponge,      std::vector< std::size_t >,
       newtag::radius,      tk::real,
       newtag::velocity,    std::vector< tk::real >,
       newtag::pressure,    tk::real,
       newtag::density,     tk::real,
+      newtag::sponge,      tk::SimpTaggedTuple< brigand::list<
+        newtag::sideset,     std::vector< uint64_t >,
+        newtag::vparam,      std::vector< tk::real >,
+        newtag::pparam,      tk::real
+      > >,
       newtag::timedep,     std::vector<
         tk::SimpTaggedTuple< brigand::list<
           newtag::sideset,   std::vector< uint64_t >,
@@ -449,50 +521,11 @@ using ConfigMembers = brigand::list<
     newtag::materialid,  std::size_t,
     newtag::pressure,    tk::real,
     newtag::temperature, tk::real,
+    newtag::density,     tk::real,
+    newtag::energy,      tk::real,
     newtag::velocity,    std::vector< tk::real >,
-    newtag::box,         std::vector<
-      tk::SimpTaggedTuple< brigand::list<
-        newtag::materialid,     std::size_t,
-        newtag::volume,         tk::real,
-        newtag::mass,           tk::real,
-        newtag::density,        tk::real,
-        newtag::velocity,       std::vector< tk::real >,
-        newtag::pressure,       tk::real,
-        newtag::energy,         tk::real,
-        newtag::energy_content, tk::real,
-        newtag::temperature,    tk::real,
-        newtag::xmin,           tk::real,
-        newtag::xmax,           tk::real,
-        newtag::ymin,           tk::real,
-        newtag::ymax,           tk::real,
-        newtag::zmin,           tk::real,
-        newtag::zmax,           tk::real,
-        newtag::orientation,    std::vector< tk::real >,
-        newtag::initiate,       InitiateType,
-        newtag::point,          std::vector< tk::real >,
-        newtag::init_time,      tk::real,
-        newtag::front_width,    tk::real,
-        newtag::front_speed,    tk::real
-      > >
-    >,
-    newtag::meshblock, std::vector<
-      tk::SimpTaggedTuple< brigand::list<
-        newtag::blockid,        std::uint64_t,
-        newtag::materialid,     std::size_t,
-        newtag::volume,         tk::real,
-        newtag::mass,           tk::real,
-        newtag::density,        tk::real,
-        newtag::velocity,       std::vector< tk::real >,
-        newtag::pressure,       tk::real,
-        newtag::energy,         tk::real,
-        newtag::energy_content, tk::real,
-        newtag::temperature,    tk::real,
-        newtag::initiate,       InitiateType,
-        newtag::point,          std::vector< tk::real >,
-        newtag::init_time,      tk::real,
-        newtag::front_width,    tk::real
-      > >
-    >
+    newtag::box,         std::vector< newtag::newbox >,
+    newtag::meshblock,   std::vector< newtag::newmeshblock >
   > >,
 
   // Overset mesh block

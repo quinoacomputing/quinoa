@@ -19,13 +19,10 @@
 #include <functional>
 
 #include "Types.hpp"
-#include "Keywords.hpp"
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 
 namespace tk {
-
-using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Function prototype for Problem::intiialize() functions
 //! \details Functions of this type are used to initialize the computed fields

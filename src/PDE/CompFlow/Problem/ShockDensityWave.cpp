@@ -13,14 +13,7 @@
 // *****************************************************************************
 
 #include "ShockDensityWave.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
 
 using inciter::CompFlowProblemShockDensityWave;
 
@@ -41,8 +34,6 @@ CompFlowProblemShockDensityWave::initialize( ncomp_t,
 //!   This problem does not have an analytical solution.
 // *****************************************************************************
 {
-  using tag::param;
-
   tk::real r, p, u, v, w, rE;
   if (x > -4.0) {
     // density

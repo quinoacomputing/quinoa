@@ -19,7 +19,7 @@
 #include <string>
 
 #include "Types.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
@@ -27,14 +27,12 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
-
 //! MultiMat system of PDEs problem: user defined
 class MultiMatProblemUserDefined {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::multimat;
+    using ncomp_t = tk::ncomp_t;
+    using eq = newtag::multimat;
 
   public:
     //! Initialize numerical solution

@@ -22,14 +22,13 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 //! CompFlow system of PDEs problem: vortical flow
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
@@ -38,8 +37,8 @@ extern ctr::InputDeck g_inputdeck;
 class CompFlowProblemVorticalFlow {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::compflow;
+    using ncomp_t = tk::ncomp_t;
+    using eq = newtag::compflow;
 
   public:
     //! Initialize numerical solution
@@ -64,11 +63,10 @@ class CompFlowProblemVorticalFlow {
          std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");
-      using tag::param; using tag::compflow;
 
       // manufactured solution parameters
-      auto a = g_inputdeck.get< param, compflow, tag::alpha >();
-      auto b = g_inputdeck.get< param, compflow, tag::beta >();
+      auto a = g_newinputdeck.get< eq, newtag::alpha >();
+      auto b = g_newinputdeck.get< eq, newtag::beta >();
       // ratio of specific heats
       tk::real g = getmatprop< newtag::gamma >();
       // evaluate solution at x,y,z

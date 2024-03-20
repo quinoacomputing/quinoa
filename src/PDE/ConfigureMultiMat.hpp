@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "PDEFactory.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"

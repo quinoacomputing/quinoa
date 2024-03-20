@@ -19,12 +19,6 @@
 #include "CGNavierStokes.hpp"
 #include "EoS/GetMatProp.hpp"
 
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // inciter::
-
 using inciter::cg::CompFlowPhysicsNavierStokes;
 
 void

@@ -16,13 +16,6 @@
 // *****************************************************************************
 
 #include "GaussHump.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
 
 using inciter::TransportProblemGaussHump;
 

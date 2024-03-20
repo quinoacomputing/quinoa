@@ -21,11 +21,8 @@
 #include "Types.hpp"
 #include "Exception.hpp"
 #include "Inciter/Options/Physics.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 namespace dg {
 

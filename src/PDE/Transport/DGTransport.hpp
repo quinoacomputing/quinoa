@@ -40,7 +40,7 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 namespace dg {
 
@@ -55,14 +55,14 @@ template< class Physics, class Problem >
 class Transport {
 
   private:
-    using eq = tag::transport;
+    using eq = newtag::transport;
 
   public:
     //! Constructor
     explicit Transport() :
       m_physics( Physics() ),
       m_problem( Problem() ),
-      m_ncomp( g_inputdeck.get< tag::component >().get< eq >().at(0) )
+      m_ncomp( g_newinputdeck.get< newtag::ncomp >() )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
@@ -99,7 +99,7 @@ class Transport {
     {
       // all equation-dofs initialized to ndofs
       for (std::size_t i=0; i<m_ncomp; ++i) {
-        numEqDof.push_back(g_inputdeck.get< tag::discr, tag::ndof >());
+        numEqDof.push_back(g_newinputdeck.get< newtag::ndof >());
       }
     }
 
@@ -135,7 +135,7 @@ class Transport {
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
+      const auto ndof = g_newinputdeck.get< newtag::ndof >();
       tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
@@ -185,13 +185,13 @@ class Transport {
                       tk::Fields& U,
                       tk::Fields& P ) const
     {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto rdof = g_newinputdeck.get< newtag::rdof >();
 
       // do reconstruction only if P0P1
-      if (rdof == 4 && g_inputdeck.get< tag::discr, tag::ndof >() == 1) {
+      if (rdof == 4 && g_newinputdeck.get< newtag::ndof >() == 1) {
         const auto nelem = fd.Esuel().size()/4;
-        const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
-          tag::intsharp >();
+        const auto intsharp = g_newinputdeck.get< newtag::transport,
+          newtag::intsharp >();
 
         Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
                 "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -280,7 +280,7 @@ class Transport {
                 tk::Fields&,
                 std::vector< std::size_t >& ) const
     {
-      const auto limiter = g_inputdeck.get< tag::discr, tag::limiter >();
+      const auto limiter = g_newinputdeck.get< newtag::limiter >();
 
       if (limiter == ctr::LimiterType::WENOP1)
         WENO_P1( fd.Esuel(), U );
@@ -336,10 +336,10 @@ class Transport {
               const tk::real dt,
               tk::Fields& R ) const
     {
-      const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-      const auto intsharp = g_inputdeck.get< tag::param, tag::transport,
-        tag::intsharp >();
+      const auto ndof = g_newinputdeck.get< newtag::ndof >();
+      const auto rdof = g_newinputdeck.get< newtag::rdof >();
+      const auto intsharp = g_newinputdeck.get< newtag::transport,
+        newtag::intsharp >();
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -442,7 +442,7 @@ class Transport {
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
-      auto depvar = g_inputdeck.get< tag::param, eq, tag::depvar >()[0];
+      auto depvar = g_newinputdeck.get< newtag::depvar >()[0];
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
       return n;
@@ -469,7 +469,7 @@ class Transport {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-      g_inputdeck.get< tag::param, eq, tag::depvar >().at(0);
+      g_newinputdeck.get< newtag::depvar >().at(0);
       // construct the name of the numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) );
@@ -518,7 +518,7 @@ class Transport {
     //!   return total mass.
     tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
     {
-      const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+      const auto rdof = g_newinputdeck.get< newtag::rdof >();
 
       tk::real sp_m(0.0);
       for (std::size_t c=0; c<m_ncomp; ++c) {

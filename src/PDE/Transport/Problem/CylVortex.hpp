@@ -20,8 +20,7 @@
 #include <vector>
 #include <array>
 
-#include "Types.hpp"
-#include "SystemComponents.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "EoS/EOS.hpp"
 
@@ -30,8 +29,8 @@ namespace inciter {
 //! Transport PDE problem: deformation of cylinder in a vortex
 class TransportProblemCylVortex {
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
-    using eq = tag::transport;
+    using ncomp_t = inciter::ctr::ncomp_t;
+    using eq = newtag::transport;
 
   public:
     //! Evaluate analytical solution at (x,y,t) for all components

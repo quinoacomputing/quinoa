@@ -15,13 +15,13 @@
 #include <limits>
 
 #include "UserDefined.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "FieldOutput.hpp"
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // ::inciter
 
@@ -44,26 +44,26 @@ CompFlowProblemUserDefined::initialize( ncomp_t ncomp,
   tk::InitializeFn::result_type u( ncomp, 0.0 );
 
   // Set background ICs
-  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
-  const auto& bgrhoic = ic.get< tag::density >();
-  const auto& bgvelic = ic.get< tag::velocity >();
-  const auto& bgpreic = ic.get< tag::pressure >();
-  const auto& bgenic = ic.get< tag::energy >();
-  const auto& bgtempic = ic.get< tag::temperature >();
+  const auto& ic = g_newinputdeck.get< newtag::ic >();
+  const auto& bgrhoic = ic.get< newtag::density >();
+  const auto& bgvelic = ic.get< newtag::velocity >();
+  const auto& bgpreic = ic.get< newtag::pressure >();
+  const auto& bgenic = ic.get< newtag::energy >();
+  const auto& bgtempic = ic.get< newtag::temperature >();
 
-  u[0] = bgrhoic.at(0);
-  u[1] = u[0] * bgvelic.at(0);
-  u[2] = u[0] * bgvelic.at(1);
-  u[3] = u[0] * bgvelic.at(2);
+  u[0] = bgrhoic;
+  u[1] = u[0] * bgvelic[0];
+  u[2] = u[0] * bgvelic[1];
+  u[3] = u[0] * bgvelic[2];
 
-  if (!bgpreic.empty()) {
+  if (bgpreic > 1e-12) {
     u[4] = mat_blk[0].compute< EOS::totalenergy >( u[0], u[1]/u[0], u[2]/u[0],
-      u[3]/u[0], bgpreic.at(0) );
-  } else if (!bgenic.empty()) {
-    u[4] = u[0] * bgenic[0];
-  } else if (!bgtempic.empty()) {
+      u[3]/u[0], bgpreic );
+  } else if (bgenic > 1e-12) {
+    u[4] = u[0] * bgenic;
+  } else if (bgtempic > 1e-12) {
     const auto& c_v = getmatprop< newtag::cv >();
-    u[4] = u[0] * bgtempic[0] * c_v;
+    u[4] = u[0] * bgtempic * c_v;
   } else Throw( "IC background energy cannot be computed. User must specify "
                 "one of background pressure, energy, or temperature." );
 

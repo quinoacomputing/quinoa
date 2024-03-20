@@ -35,9 +35,8 @@ namespace inciter {
             tk::real, tk::real, tk::real, tk::real,
             const std::array< tk::real, 3 >& fn )
   {
-    auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
-    const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
-      tag::matidxmap >().template get< tag::solidx >();
+    auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+    const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
 
     [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
 
@@ -130,12 +129,11 @@ namespace inciter {
                   tk::real, tk::real, tk::real, tk::real,
                   const std::array< tk::real, 3 >& fn )
   {
-    auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
-    const auto& solidx = g_inputdeck.get< tag::param, tag::multimat,
-      tag::matidxmap >().template get< tag::solidx >();
+    auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+    const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
 
     auto fp =
-      g_inputdeck.get< tag::param, tag::multimat, tag::farfield_pressure >();
+      g_newinputdeck.get< newtag::bc >()[0].get< newtag::pressure >();
 
     [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
 

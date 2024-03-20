@@ -33,7 +33,7 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 namespace cg {
 
@@ -48,9 +48,8 @@ class CompFlow {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
-    using eq = tag::compflow;
+    using eq = newtag::compflow;
     using real = tk::real;
-    using param = tag::param;
 
     static constexpr std::size_t m_ncomp = 5;
     static constexpr real muscl_eps = 1.0e-9;
@@ -63,24 +62,35 @@ class CompFlow {
     explicit CompFlow() :
       m_physics(),
       m_problem(),
-      m_stagCnf({g_inputdeck.get< tag::param, eq, tag::stag, tag::point >(),
-                 g_inputdeck.get< tag::param, eq, tag::stag, tag::radius >()}),
-      m_skipCnf({g_inputdeck.get< tag::param, eq, tag::skip, tag::point >(),
-                 g_inputdeck.get< tag::param, eq, tag::skip, tag::radius >()}),
-      m_fr( g_inputdeck.get< param, eq, tag::farfield_density >() ),
-      m_fp( g_inputdeck.get< param, eq, tag::farfield_pressure >() ),
-      m_fu( g_inputdeck.get< param, eq, tag::farfield_velocity >() )
+      m_stagCnf(),
+      m_fr(),
+      m_fp(),
+      m_fu()
     {
-      Assert( g_inputdeck.get< tag::component >().get< eq >().at(0) == m_ncomp,
+      Assert( g_newinputdeck.get< newtag::ncomp >() == m_ncomp,
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );
 
       // EoS initialization
       const auto& matprop =
-        g_inputdeck.get< tag::param, eq, tag::material >();
+        g_newinputdeck.get< newtag::material >();
       const auto& matidxmap =
-        g_inputdeck.get< tag::param, eq, tag::matidxmap >();
-      auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();
+        g_newinputdeck.get< newtag::matidxmap >();
+      auto mateos = matprop[matidxmap.get< newtag::eosidx >()[0]].get<newtag::eos>();
       m_mat_blk.emplace_back( mateos, EqType::compflow, 0 );
+
+      // Boundary condition configurations
+      for (const auto& bci : g_newinputdeck.get< newtag::bc >()) {
+        // store stag-point coordinates
+        auto& spt = std::get< 0 >(m_stagCnf);
+        spt.insert( spt.end(), bci.get< newtag::stag_point >().begin(),
+          bci.get< newtag::stag_point >().end() );
+        // store stag-radius
+        std::get< 1 >(m_stagCnf).push_back( bci.get< newtag::radius >() );
+        // freestream quantities
+        m_fr = bci.get< newtag::density >();
+        m_fp = bci.get< newtag::pressure >();
+        m_fu = bci.get< newtag::velocity >();
+      }
     }
 
     //! Determine nodes that lie inside the user-defined IC box and mesh blocks
@@ -105,21 +115,21 @@ class CompFlow {
       const auto& z = coord[2];
 
       // Detect if user has configured IC boxes
-      const auto& icbox = g_inputdeck.get<tag::param, eq, tag::ic, tag::box>();
+      const auto& icbox = g_newinputdeck.get<newtag::ic, newtag::box>();
       if (!icbox.empty()) {
         std::size_t bcnt = 0;
         for (const auto& b : icbox) {   // for all boxes for this eq
           inbox.emplace_back();
           std::vector< tk::real > box
-            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-              b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+            { b.template get< newtag::xmin >(), b.template get< newtag::xmax >(),
+              b.template get< newtag::ymin >(), b.template get< newtag::ymax >(),
+              b.template get< newtag::zmin >(), b.template get< newtag::zmax >() };
 
           // Determine orientation of box
           std::array< tk::real, 3 > b_orientn{{
-            b.template get< tag::orientation >()[0],
-            b.template get< tag::orientation >()[1],
-            b.template get< tag::orientation >()[2] }};
+            b.template get< newtag::orientation >()[0],
+            b.template get< newtag::orientation >()[1],
+            b.template get< newtag::orientation >()[2] }};
           std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
             0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
 
@@ -153,13 +163,12 @@ class CompFlow {
       }
 
       // size IC mesh blocks volume vector
-      const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
-        tag::meshblock >();
+      const auto& mblks = g_newinputdeck.get< newtag::ic, newtag::meshblock >();
       // if mesh blocks have been specified for this system
       if (!mblks.empty()) {
         std::size_t idMax(0);
         for (const auto& imb : mblks) {
-          idMax = std::max(idMax, imb.get< tag::blockid >());
+          idMax = std::max(idMax, imb.get< newtag::blockid >());
         }
         // size is idMax+1 since block ids are usually 1-based
         nuserblk = nuserblk+idMax+1;
@@ -203,16 +212,13 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
-      const auto& icbox = ic.get< tag::box >();
-
-      const auto& mblks = g_inputdeck.get< tag::param, eq, tag::ic,
-        tag::meshblock >();
+      const auto& ic = g_newinputdeck.get< newtag::ic >();
+      const auto& icbox = ic.get< newtag::box >();
+      const auto& mblks = ic.get< newtag::meshblock >();
 
       const auto eps = 1000.0 * std::numeric_limits< tk::real >::epsilon();
 
-      const auto& bgpreic = ic.get< tag::pressure >();
-      tk::real bgpre = !bgpreic.empty() ? bgpreic[0] : 0.0;
+      tk::real bgpre = ic.get< newtag::pressure >();
 
       auto c_v = getmatprop< newtag::cv >();
 
@@ -227,12 +233,12 @@ class CompFlow {
             if (inbox.size() > bcnt && inbox[bcnt].find(i) != inbox[bcnt].end())
             {
               std::vector< tk::real > box
-              { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-                b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-                b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+              { b.template get< newtag::xmin >(), b.template get< newtag::xmax >(),
+                b.template get< newtag::ymin >(), b.template get< newtag::ymax >(),
+                b.template get< newtag::zmin >(), b.template get< newtag::zmax >() };
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               if (V_ex < eps) V = 1.0;
-              initializeBox<ctr::box>( m_mat_blk, V_ex/V,
+              initializeBox<newtag::newbox>( m_mat_blk, V_ex/V,
                 V_ex, t, b, bgpre, c_v, s );
             }
             ++bcnt;
@@ -241,20 +247,20 @@ class CompFlow {
 
         // initialize user-defined mesh block ICs
         for (const auto& b : mblks) { // for all blocks
-          auto blid = b.get< tag::blockid >();
-          auto V_ex = b.get< tag::volume >();
+          auto blid = b.get< newtag::blockid >();
+          auto V_ex = b.get< newtag::volume >();
           if (blid >= blkvols.size()) Throw("Block volume not found");
           if (nodeblkid.find(blid) != nodeblkid.end()) {
             const auto& ndset = tk::cref_find(nodeblkid, blid);
             if (ndset.find(i) != ndset.end()) {
-              initializeBox<ctr::meshblock>( m_mat_blk,
+              initializeBox<newtag::newmeshblock>( m_mat_blk,
                 V_ex/blkvols[blid], V_ex, t, b, bgpre, c_v, s );
             }
           }
         }
 
         unk(i,0) = s[0]; // rho
-        if (!skipPoint(x[i],y[i],z[i]) && stagPoint(x[i],y[i],z[i])) {
+        if (stagPoint(x[i],y[i],z[i])) {
           unk(i,1) = unk(i,2) = unk(i,3) = 0.0;
         } else {
           unk(i,1) = s[1]; // rho * u
@@ -368,8 +374,7 @@ class CompFlow {
 
         // apply stagnation BCs
         for (std::size_t a=0; a<4; ++a)
-          if ( !skipPoint(x[N[a]],y[N[a]],z[N[a]]) &&
-               stagPoint(x[N[a]],y[N[a]],z[N[a]]) )
+          if ( stagPoint(x[N[a]],y[N[a]],z[N[a]]) )
           {
             u[1][a] = u[2][a] = u[3][a] = 0.0;
           }
@@ -543,8 +548,7 @@ class CompFlow {
               u[3] = U(N[b],3)/u[0];
               u[4] = U(N[b],4)/u[0]
                      - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
-              if ( !skipPoint(x[N[b]],y[N[b]],z[N[b]]) &&
-                   stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
+              if ( stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
               {
                 u[1] = u[2] = u[3] = 0.0;
               }
@@ -633,20 +637,18 @@ class CompFlow {
       bndint( coord, triinpoel, symbctri, U, W, spmult, R );
 
       // compute external (energy) sources
-      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
-      const auto& icbox = ic.get< tag::box >();
+      const auto& icbox = g_newinputdeck.get< newtag::ic, newtag::box >();
 
       if (!icbox.empty() && !boxnodes.empty()) {
         std::size_t bcnt = 0;
         for (const auto& b : icbox) {   // for all boxes for this eq
           std::vector< tk::real > box
-           { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-             b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-             b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+           { b.template get< newtag::xmin >(), b.template get< newtag::xmax >(),
+             b.template get< newtag::ymin >(), b.template get< newtag::ymax >(),
+             b.template get< newtag::zmin >(), b.template get< newtag::zmax >() };
 
-          const auto& initiate = b.template get< tag::initiate >();
-          auto inittype = initiate.template get< tag::init >();
-          if (inittype == ctr::InitiateType::LINEAR) {
+          const auto& initiate = b.template get< newtag::initiate >();
+          if (initiate == ctr::InitiateType::LINEAR) {
             boxSrc( V, t, inpoel, esup, boxnodes[bcnt], coord, R );
           }
           ++bcnt;
@@ -734,8 +736,7 @@ class CompFlow {
               "vector at recent time step incorrect" );
 
       // energy source propagation time and velocity
-      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
-      const auto& icbox = ic.get< tag::box >();
+      const auto& icbox = g_newinputdeck.get< newtag::ic, newtag::box >();
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -775,12 +776,11 @@ class CompFlow {
           // energy source propagation velocity (in all IC boxes configured)
           if (!icbox.empty()) {
             for (const auto& b : icbox) {   // for all boxes for this eq
-              const auto& initiate = b.template get< tag::initiate >();
-              auto iv = initiate.template get< tag::velocity >();
-              auto inittype = initiate.template get< tag::init >();
-              if (inittype == ctr::InitiateType::LINEAR) {
-                auto zmin = b.template get< tag::zmin >();
-                auto zmax = b.template get< tag::zmax >();
+              const auto& initiate = b.template get< newtag::initiate >();
+              auto iv = b.template get< newtag::front_speed >();
+              if (initiate == ctr::InitiateType::LINEAR) {
+                auto zmin = b.template get< newtag::zmin >();
+                auto zmax = b.template get< newtag::zmax >();
                 auto wFront = 0.08;
                 auto tInit = 0.0;
                 auto tFinal = tInit + (zmax - zmin - 2.0*wFront) /
@@ -804,11 +804,11 @@ class CompFlow {
         // find minimum dt across all elements
         mindt = std::min( elemdt, mindt );
       }
-      mindt *= g_inputdeck.get< tag::discr, tag::cfl >();
+      mindt *= g_newinputdeck.get< newtag::cfl >();
 
       // compute the minimum dt across all nodes we contribute to due to volume
       // change in time
-      auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
+      auto dvcfl = g_newinputdeck.get< newtag::ale, newtag::dvcfl >();
       if (dtn > 0.0 && dvcfl > 0.0) {
         Assert( vol.size() == voln.size(), "Size mismatch" );
         for (std::size_t p=0; p<vol.size(); ++p) {
@@ -844,7 +844,7 @@ class CompFlow {
         // characteristic velocity
         auto v = std::sqrt((u[1]*u[1] + u[2]*u[2] + u[3]*u[3])/u[0]/u[0]) + c;
         // compute dt for node
-        dtp[i] = L / v * g_inputdeck.get< tag::discr, tag::cfl >();
+        dtp[i] = L / v * g_newinputdeck.get< newtag::cfl >();
       }
     }
 
@@ -873,18 +873,24 @@ class CompFlow {
            const std::array< std::vector< real >, 3 >& coord,
            bool increment ) const
     {
-      using tag::param; using tag::bcdir;
       using NodeBC = std::vector< std::pair< bool, real > >;
       std::map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_inputdeck.get< param, eq, tag::bc, bcdir >();
-      const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+
+      // collect sidesets across all meshes
+      std::vector< std::size_t > ubc;
+      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+        ubc.insert(ubc.end(), ibc.get< newtag::dirichlet >().begin(),
+          ibc.get< newtag::dirichlet >().end());
+      }
+
+      const auto steady = g_newinputdeck.get< newtag::steady_state >();
       if (!ubc.empty()) {
         Assert( ubc.size() > 0, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
         const auto& y = coord[1];
         const auto& z = coord[2];
         for (const auto& b : ubc)
-          if (std::stoi(b) == ss.first)
+          if (b == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
@@ -893,7 +899,7 @@ class CompFlow {
                         t, deltat, Problem::initialize ) :
                 Problem::initialize( m_ncomp, m_mat_blk, x[n], y[n],
                                      z[n], t+deltat );
-              if ( !skipPoint(x[n],y[n],z[n]) && stagPoint(x[n],y[n],z[n]) ) {
+              if ( stagPoint(x[n],y[n],z[n]) ) {
                 s[1] = s[2] = s[3] = 0.0;
               }
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
@@ -905,40 +911,40 @@ class CompFlow {
 
     //! Set symmetry boundary conditions at nodes
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] coord Mesh node coordinates
     //! \param[in] bnorm Face normals in boundary points, key local node id,
     //!   first 3 reals of value: unit normal, outer key: side set id
     //! \param[in] nodes Unique set of node ids at which to set symmetry BCs
     void
     symbc( tk::Fields& U,
-           const std::array< std::vector< real >, 3 >& coord,
+           const std::array< std::vector< real >, 3 >&,
            const std::unordered_map< int,
              std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
            const std::unordered_set< std::size_t >& nodes ) const
     {
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-      const auto& sbc = g_inputdeck.get< param, eq, tag::bc, tag::bcsym >();
+      // collect sidesets across all meshes
+      std::vector< std::size_t > sbc;
+      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+        sbc.insert(sbc.end(), ibc.get< newtag::symmetry >().begin(),
+          ibc.get< newtag::symmetry >().end());
+      }
+
       if (sbc.size() > 0) {             // use symbcs for this system
         for (auto p : nodes) {                 // for all symbc nodes
-          if (!skipPoint(x[p],y[p],z[p])) {
-            // for all user-def symbc sets
-            for (std::size_t s=0; s<sbc.size(); ++s) {
-              // find nodes & normals for side
-              auto j = bnorm.find(std::stoi(sbc[s]));
-              if (j != end(bnorm)) {
-                auto i = j->second.find(p);      // find normal for node
-                if (i != end(j->second)) {
-                  std::array< real, 3 >
-                    n{ i->second[0], i->second[1], i->second[2] },
-                    v{ U(p,1), U(p,2), U(p,3) };
-                  auto v_dot_n = tk::dot( v, n );
-                  // symbc: remove normal component of velocity
-                  U(p,1) -= v_dot_n * n[0];
-                  U(p,2) -= v_dot_n * n[1];
-                  U(p,3) -= v_dot_n * n[2];
-                }
+          // for all user-def symbc sets
+          for (std::size_t s=0; s<sbc.size(); ++s) {
+            // find nodes & normals for side
+            auto j = bnorm.find(sbc[s]);
+            if (j != end(bnorm)) {
+              auto i = j->second.find(p);      // find normal for node
+              if (i != end(j->second)) {
+                std::array< real, 3 >
+                  n{ i->second[0], i->second[1], i->second[2] },
+                  v{ U(p,1), U(p,2), U(p,3) };
+                auto v_dot_n = tk::dot( v, n );
+                // symbc: remove normal component of velocity
+                U(p,1) -= v_dot_n * n[0];
+                U(p,2) -= v_dot_n * n[1];
+                U(p,3) -= v_dot_n * n[2];
               }
             }
           }
@@ -948,69 +954,69 @@ class CompFlow {
 
     //! Set farfield boundary conditions at nodes
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] coord Mesh node coordinates
     //! \param[in] bnorm Face normals in boundary points, key local node id,
     //!   first 3 reals of value: unit normal, outer key: side set id
     //! \param[in] nodes Unique set of node ids at which to set farfield BCs
     void
     farfieldbc(
       tk::Fields& U,
-      const std::array< std::vector< real >, 3 >& coord,
+      const std::array< std::vector< real >, 3 >&,
       const std::unordered_map< int,
         std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
       const std::unordered_set< std::size_t >& nodes ) const
     {
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-      const auto& fbc = g_inputdeck.get<param, eq, tag::bc, tag::bcfarfield>();
+      // collect sidesets across all meshes
+      std::vector< std::size_t > fbc;
+      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+        fbc.insert(fbc.end(), ibc.get< newtag::farfield >().begin(),
+          ibc.get< newtag::farfield >().end());
+      }
+
       if (fbc.size() > 0)               // use farbcs for this system
         for (auto p : nodes)                   // for all farfieldbc nodes
-          if (!skipPoint(x[p],y[p],z[p]))
-            for (const auto& s : fbc) {// for all user-def farbc sets
-              auto j = bnorm.find(std::stoi(s));// find nodes & normals for side
-              if (j != end(bnorm)) {
-                auto i = j->second.find(p);      // find normal for node
-                if (i != end(j->second)) {
-                  auto& r  = U(p,0);
-                  auto& ru = U(p,1);
-                  auto& rv = U(p,2);
-                  auto& rw = U(p,3);
-                  auto& re = U(p,4);
-                  auto vn =
-                    (ru*i->second[0] + rv*i->second[1] + rw*i->second[2]) / r;
-                  auto a = m_mat_blk[0].compute< EOS::soundspeed >( r,
-                    m_mat_blk[0].compute< EOS::pressure >( r, ru/r, rv/r, rw/r,
-                    re ) );
-                  auto M = vn / a;
-                  if (M <= -1.0) {                      // supersonic inflow
-                    r  = m_fr;
-                    ru = m_fr * m_fu[0];
-                    rv = m_fr * m_fu[1];
-                    rw = m_fr * m_fu[2];
-                    re = m_mat_blk[0].compute< EOS::totalenergy >( m_fr,
-                      m_fu[0], m_fu[1], m_fu[2], m_fp );
-                  } else if (M > -1.0 && M < 0.0) {     // subsonic inflow
-                    auto pr = m_mat_blk[0].compute< EOS::pressure >
-                                                  ( r, ru/r, rv/r, rw/r, re );
-                    r  = m_fr;
-                    ru = m_fr * m_fu[0];
-                    rv = m_fr * m_fu[1];
-                    rw = m_fr * m_fu[2];
-                    re = m_mat_blk[0].compute< EOS::totalenergy >( m_fr,
-                      m_fu[0], m_fu[1], m_fu[2], pr );
-                  } else if (M >= 0.0 && M < 1.0) {     // subsonic outflow
-                    re = m_mat_blk[0].compute< EOS::totalenergy >( r, ru/r,
-                      rv/r, rw/r, m_fp );
-                  }
+          for (const auto& s : fbc) {// for all user-def farbc sets
+            auto j = bnorm.find(s);// find nodes & normals for side
+            if (j != end(bnorm)) {
+              auto i = j->second.find(p);      // find normal for node
+              if (i != end(j->second)) {
+                auto& r  = U(p,0);
+                auto& ru = U(p,1);
+                auto& rv = U(p,2);
+                auto& rw = U(p,3);
+                auto& re = U(p,4);
+                auto vn =
+                  (ru*i->second[0] + rv*i->second[1] + rw*i->second[2]) / r;
+                auto a = m_mat_blk[0].compute< EOS::soundspeed >( r,
+                  m_mat_blk[0].compute< EOS::pressure >( r, ru/r, rv/r, rw/r,
+                  re ) );
+                auto M = vn / a;
+                if (M <= -1.0) {                      // supersonic inflow
+                  r  = m_fr;
+                  ru = m_fr * m_fu[0];
+                  rv = m_fr * m_fu[1];
+                  rw = m_fr * m_fu[2];
+                  re = m_mat_blk[0].compute< EOS::totalenergy >( m_fr,
+                    m_fu[0], m_fu[1], m_fu[2], m_fp );
+                } else if (M > -1.0 && M < 0.0) {     // subsonic inflow
+                  auto pr = m_mat_blk[0].compute< EOS::pressure >
+                                                ( r, ru/r, rv/r, rw/r, re );
+                  r  = m_fr;
+                  ru = m_fr * m_fu[0];
+                  rv = m_fr * m_fu[1];
+                  rw = m_fr * m_fu[2];
+                  re = m_mat_blk[0].compute< EOS::totalenergy >( m_fr,
+                    m_fu[0], m_fu[1], m_fu[2], pr );
+                } else if (M >= 0.0 && M < 1.0) {     // subsonic outflow
+                  re = m_mat_blk[0].compute< EOS::totalenergy >( r, ru/r,
+                    rv/r, rw/r, m_fp );
                 }
               }
             }
+          }
     }
 
     //! Apply sponge conditions at sponge nodes
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] coord Mesh node coordinates
     //! \param[in] nodes Unique set of node ids at which to apply sponge
     //! \details This function applies a sponge-like parameter to nodes of a
     //!   side set specified in the input file. We remove a user-specified
@@ -1020,29 +1026,29 @@ class CompFlow {
     //!   via a viscosity-like effect.
     void
     sponge( tk::Fields& U,
-            const std::array< std::vector< real >, 3 >& coord,
+            const std::array< std::vector< real >, 3 >&,
             const std::unordered_set< std::size_t >& nodes ) const
     {
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-      const auto& sponge = g_inputdeck.get< param, eq, tag::sponge >();
-      const auto& ss = sponge.get< tag::sideset >();
+      // collect sidesets across all meshes
+      std::vector< std::size_t > ss;
+      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+        ss.insert(ss.end(), ibc.get< newtag::sponge, newtag::sideset >().begin(),
+          ibc.get< newtag::sponge, newtag::sideset >().end());
+      }
+      const auto spvel =
+        g_newinputdeck.get< newtag::bc >()[0].get< newtag::sponge, newtag::vparam >();
       if (ss.size() > 0) {          // sponge side set for this system
-        const auto& spvel = sponge.get< tag::velocity >();
         for (auto p : nodes) {             // for all sponge nodes
-          if (!skipPoint(x[p],y[p],z[p])) {
-            std::vector< tk::real > sp( ss.size(), 0.0 );
-            if (spvel.size() > 0) {
-              sp = spvel;
-              for (auto& s : sp) s = std::sqrt(s);
-            }
-            // sponge velocity: reduce kinetic energy by a user percentage
-            for (std::size_t s=0; s<ss.size(); ++s) {
-              U(p,1) -= U(p,1)*sp[s];
-              U(p,2) -= U(p,2)*sp[s];
-              U(p,3) -= U(p,3)*sp[s];
-            }
+          std::vector< tk::real > sp( ss.size(), 0.0 );
+          if (spvel.size() > 0) {
+            sp = spvel;
+            for (auto& s : sp) s = std::sqrt(s);
+          }
+          // sponge velocity: reduce kinetic energy by a user percentage
+          for (std::size_t s=0; s<ss.size(); ++s) {
+            U(p,1) -= U(p,1)*sp[s];
+            U(p,2) -= U(p,2)*sp[s];
+            U(p,3) -= U(p,3)*sp[s];
           }
         }
       }
@@ -1126,12 +1132,10 @@ class CompFlow {
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy
     //! Stagnation BC user configuration: point coordinates and radii
-    const std::tuple< std::vector< real >, std::vector< real > > m_stagCnf;
-    //! Skip BC user configuration: point coordinates and radii
-    const std::tuple< std::vector< real >, std::vector< real > > m_skipCnf;
-    const real m_fr;                    //!< Farfield density
-    const real m_fp;                    //!< Farfield pressure
-    const std::vector< real > m_fu;     //!< Farfield velocity
+    std::tuple< std::vector< real >, std::vector< real > > m_stagCnf;
+    real m_fr;                    //!< Farfield density
+    real m_fp;                    //!< Farfield pressure
+    std::vector< real > m_fu;     //!< Farfield velocity
     //! EOS material block
     std::vector< EOS > m_mat_blk;
 
@@ -1145,23 +1149,6 @@ class CompFlow {
     stagPoint( real x, real y, real z ) const {
       const auto& pnt = std::get< 0 >( m_stagCnf );
       const auto& rad = std::get< 1 >( m_stagCnf );
-      for (std::size_t i=0; i<rad.size(); ++i) {
-        if (tk::length( x-pnt[i*3+0], y-pnt[i*3+1], z-pnt[i*3+2] ) < rad[i])
-          return true;
-      }
-      return false;
-    }
-
-    //! Decide if point is a skip-BC point
-    //! \param[in] x X mesh point coordinates to query
-    //! \param[in] y Y mesh point coordinates to query
-    //! \param[in] z Z mesh point coordinates to query
-    //! \return True if point is configured as a skip-BC point by the user
-    #pragma omp declare simd
-    bool
-    skipPoint( real x, real y, real z ) const {
-      const auto& pnt = std::get< 0 >( m_skipCnf );
-      const auto& rad = std::get< 1 >( m_skipCnf );
       for (std::size_t i=0; i<rad.size(); ++i) {
         if (tk::length( x-pnt[i*3+0], y-pnt[i*3+1], z-pnt[i*3+2] ) < rad[i])
           return true;
@@ -1241,8 +1228,7 @@ class CompFlow {
             u[3] = U(N[b],3)/u[0];
             u[4] = U(N[b],4)/u[0]
                    - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
-            if ( !skipPoint(x[N[b]],y[N[b]],z[N[b]]) &&
-                 stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
+            if ( stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
             {
               u[1] = u[2] = u[3] = 0.0;
             }
@@ -1327,9 +1313,9 @@ class CompFlow {
         real w3R = W(q,2);
 
         // apply stagnation BCs to primitive variables
-        if ( !skipPoint(x[p],y[p],z[p]) && stagPoint(x[p],y[p],z[p]) )
+        if ( stagPoint(x[p],y[p],z[p]) )
           ruL = rvL = rwL = 0.0;
-        if ( !skipPoint(x[q],y[q],z[q]) && stagPoint(x[q],y[q],z[q]) )
+        if ( stagPoint(x[q],y[q],z[q]) )
           ruR = rvR = rwR = 0.0;
 
         // compute MUSCL reconstruction in edge-end points
@@ -1574,18 +1560,15 @@ class CompFlow {
         real w2C = W(N[2],1);
         real w3C = W(N[2],2);
         // apply stagnation BCs
-        if ( !skipPoint(x[N[0]],y[N[0]],z[N[0]]) &&
-             stagPoint(x[N[0]],y[N[0]],z[N[0]]) )
+        if ( stagPoint(x[N[0]],y[N[0]],z[N[0]]) )
         {
           ruA = rvA = rwA = 0.0;
         }
-        if ( !skipPoint(x[N[1]],y[N[1]],z[N[1]]) &&
-             stagPoint(x[N[1]],y[N[1]],z[N[1]]) )
+        if ( stagPoint(x[N[1]],y[N[1]],z[N[1]]) )
         {
           ruB = rvB = rwB = 0.0;
         }
-        if ( !skipPoint(x[N[2]],y[N[2]],z[N[2]]) &&
-             stagPoint(x[N[2]],y[N[2]],z[N[2]]) )
+        if ( stagPoint(x[N[2]],y[N[2]],z[N[2]]) )
         {
           ruC = rvC = rwC = 0.0;
         }
@@ -1695,7 +1678,7 @@ class CompFlow {
         // sum source contributions to nodes
         for (std::size_t a=0; a<4; ++a) {
           std::vector< real > s(m_ncomp);
-          if (g_inputdeck.get< tag::discr, tag::steady_state >()) t = tp[N[a]];
+          if (g_newinputdeck.get< newtag::steady_state >()) t = tp[N[a]];
           Problem::src( 1, m_mat_blk, x[N[a]], y[N[a]], z[N[a]], t, s );
           for (std::size_t c=0; c<m_ncomp; ++c)
             R.var(r[c],N[a]) += J24 * s[c];
@@ -1726,25 +1709,24 @@ class CompFlow {
                  const std::array< std::vector< real >, 3 >& coord,
                  tk::Fields& R ) const
     {
-      const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
-      const auto& icbox = ic.get< tag::box >();
+      const auto& icbox = g_newinputdeck.get< newtag::ic, newtag::box >();
 
       if (!icbox.empty()) {
         for (const auto& b : icbox) {   // for all boxes for this eq
           std::vector< tk::real > box
-           { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-             b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-             b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+           { b.template get< newtag::xmin >(), b.template get< newtag::xmax >(),
+             b.template get< newtag::ymin >(), b.template get< newtag::ymax >(),
+             b.template get< newtag::zmin >(), b.template get< newtag::zmax >() };
 
-          auto boxenc = b.template get< tag::energy_content >();
+          auto boxenc = b.template get< newtag::energy_content >();
           Assert( boxenc > 0.0, "Box energy content must be nonzero" );
 
           auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
 
           // determine times at which sourcing is initialized and terminated
-          auto iv = b.template get< tag::initiate, tag::velocity >();
-          auto wFront = b.template get< tag::initiate, tag::front_width >();
-          auto tInit = b.template get< tag::initiate, tag::init_time >();
+          auto iv = b.template get< newtag::front_speed >();
+          auto wFront = b.template get< newtag::front_width >();
+          auto tInit = b.template get< newtag::init_time >();
           auto tFinal = tInit + (box[5] - box[4] - wFront) / std::fabs(iv);
           auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
@@ -1766,9 +1748,9 @@ class CompFlow {
 
             // Orientation of box
             std::array< tk::real, 3 > b_orientn{{
-              b.template get< tag::orientation >()[0],
-              b.template get< tag::orientation >()[1],
-              b.template get< tag::orientation >()[2] }};
+              b.template get< newtag::orientation >()[0],
+              b.template get< newtag::orientation >()[1],
+              b.template get< newtag::orientation >()[2] }};
             std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
               0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
             // Transform box to reference space
@@ -1854,18 +1836,21 @@ class CompFlow {
                      const std::unordered_set< std::size_t >& nodes ) const
     {
       const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
       std::vector< tk::real > spmult;
       std::size_t nset = 0;     // number of sponge side sets configured
-      const auto& sponge = g_inputdeck.get< param, eq, tag::sponge >();
-      const auto& ss = sponge.get< tag::sideset >();
+      // collect sidesets across all meshes
+      std::vector< std::size_t > ss;
+      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+        ss.insert(ss.end(), ibc.get< newtag::sponge, newtag::sideset >().begin(),
+          ibc.get< newtag::sponge, newtag::sideset >().end());
+      }
+      const auto sppre =
+        g_newinputdeck.get< newtag::bc >()[0].get< newtag::sponge, newtag::vparam >();
       if (ss.size() > 0) {  // if symbcs configured for this system
-        const auto& sppre = sponge.get< tag::pressure >();
         nset = ss.size();  // number of sponge side sets configured
         spmult.resize( x.size() * nset, 0.0 );
         for (auto p : nodes) {
-          if (not skipPoint(x[p],y[p],z[p]) && sppre.size() > 0) {
+          if (sppre.size() > 0) {
             Assert( nset == sppre.size(), "Size mismatch" );
             for (std::size_t s=0; s<nset; ++s)
               spmult[p*nset+s] = sppre[s];

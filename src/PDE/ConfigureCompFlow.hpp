@@ -17,7 +17,6 @@
 #include <vector>
 
 #include "PDEFactory.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "FunctionPrototypes.hpp"
 #include "ContainerUtil.hpp"
