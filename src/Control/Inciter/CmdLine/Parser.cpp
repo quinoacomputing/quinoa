@@ -22,7 +22,7 @@
 #include "Inciter/CmdLine/Parser.hpp"
 #include "Inciter/CmdLine/Grammar.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
+#include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace tk {
 namespace grm {
@@ -34,7 +34,7 @@ tk::Print g_print;
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
+extern ctr::New2InputDeck g_newinputdeck;
 
 } // inciter::
 
@@ -53,7 +53,7 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
 // *****************************************************************************
 {
   // Create CmdLine (a tagged tuple) to store parsed input
-  ctr::CmdLine cmd( g_inputdeck.get< tag::cmd, tag::ctrinfo >() );
+  ctr::CmdLine cmd( g_newinputdeck.get< newtag::cmd, tag::ctrinfo >() );
 
   // Reset parser's output stream to that of print's. This is so that mild
   // warnings emitted during parsing can be output using the pretty printer.

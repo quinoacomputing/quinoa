@@ -15,7 +15,6 @@
 #include "Inciter/InputDeck/Parser.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "TaggedTupleDeepPrint.hpp"
 #include "Writer.hpp"
 
@@ -23,8 +22,6 @@
 
 namespace inciter {
 
-extern ctr::InputDeck g_inputdeck;
-extern ctr::InputDeck g_oldinputdeck_defaults;
 extern ctr::New2InputDeck g_inputdeck_defaults;
 extern ctr::New2InputDeck g_newinputdeck;
 
@@ -77,14 +74,7 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline, int nrestart )
   LuaParser luaparser( print, cmdline, g_newinputdeck );
   print.item( "Parsed lua file", "success" );
 
-  //InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
-  //print.item( "Parsed control file", "success" );
   print.endpart();
-
-  // Output command line object to file
-  auto logfilename = tk::inciter_executable() + "_input.log";
-  tk::Writer log( logfilename );
-  tk::print( log.stream(), "inputdeck", g_inputdeck );
 
   CkExit();
 }

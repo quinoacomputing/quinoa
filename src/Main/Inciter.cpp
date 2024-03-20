@@ -90,12 +90,6 @@ ctr::InputDeck g_oldinputdeck_defaults;
 //!   convenience reasons. The runtime system distributes it to all PEs during
 //!   initialization. Once distributed, the object does not change.
 ctr::New2InputDeck g_inputdeck_defaults;
-//! Input deck filled by parser, containing all input data
-//! \details This object is in global scope, it contains all of user input, and
-//!   thus it is made available to all PEs for convenience reasons. The runtime
-//!   system distributes it to all PEs during initialization. Once distributed,
-//!   the object does not change.
-ctr::InputDeck g_inputdeck;
 //! Lua Input deck filled by LuaParser, containing all input data
 //! \details This object is in global scope, it contains all of user input, and
 //!   thus it is made available to all PEs for convenience reasons. The runtime
@@ -270,13 +264,13 @@ class Main : public CBase_Main {
                           tk::inciter_executable(),
                           inciter::g_inputdeck_defaults.get< newtag::cmd,
                             tag::io, tag::screen >(),
-                          inciter::g_inputdeck.get< tag::cmd,
+                          inciter::g_newinputdeck.get< newtag::cmd,
                             tag::io, tag::nrestart >()+1 ) ),
       m_timer(1),
       m_timestamp()
     {
       // increase number of restarts (available for Transporter on PE 0)
-      ++inciter::g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
+      ++inciter::g_newinputdeck.get< newtag::cmd, tag::io, tag::nrestart >();
       g_trace = m_cmdline.get< tag::trace >();
       tk::MainCtor( mainProxy, thisProxy, m_timer, m_cmdline,
                     CkCallback( CkIndex_Main::quiescence(), thisProxy ) );
@@ -294,7 +288,7 @@ class Main : public CBase_Main {
     void finalize() {
       tk::finalize( m_cmdline, m_timer, stateProxy, m_timestamp,
         inciter::g_inputdeck_defaults.get< newtag::cmd, tag::io, tag::screen >(),
-        inciter::g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >(),
+        inciter::g_newinputdeck.get< newtag::cmd, tag::io, tag::nrestart >(),
         CkCallback( CkIndex_Main::dumpstate(nullptr), thisProxy ) );
     }
 
@@ -310,7 +304,7 @@ class Main : public CBase_Main {
     void dumpstate( CkReductionMsg* msg ) {
       tk::dumpstate( m_cmdline,
         inciter::g_inputdeck_defaults.get< newtag::cmd, tag::io, tag::screen >(),
-        inciter::g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >(),
+        inciter::g_newinputdeck.get< newtag::cmd, tag::io, tag::nrestart >(),
         msg );
     }
 
