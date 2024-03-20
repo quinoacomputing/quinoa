@@ -26,7 +26,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 //! FluxCorrector is used to perform flux-corrected transport
 //! \see Löhner, R., Morgan, K., Peraire, J. and Vahdati, M. (1987), Finite
@@ -42,8 +42,8 @@ class FluxCorrector {
     //! Constructor
     //! \param[in] is Size of the mesh element connectivity vector (inpoel size)
     explicit FluxCorrector( std::size_t is = 0 ) :
-      m_aec( is, g_newinputdeck.get< newtag::ncomp >() ),
-      m_sys( g_newinputdeck.get< newtag::sysfctvar >() ),
+      m_aec( is, g_inputdeck.get< newtag::ncomp >() ),
+      m_sys( g_inputdeck.get< newtag::sysfctvar >() ),
       m_vel( findvel() ) {}
 
     //! Find components of a velocity for equation systems

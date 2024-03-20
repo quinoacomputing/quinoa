@@ -30,7 +30,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 extern ctr::New2InputDeck g_inputdeck_defaults;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
@@ -72,9 +72,9 @@ Refiner::Refiner( std::size_t meshid,
   m_elemblockid(),
   m_nchare( nchare ),
   m_mode( RefMode::T0REF ),
-  m_initref( g_newinputdeck.get< newtag::amr, newtag::initial >() ),
-  m_ninitref( g_newinputdeck.get< newtag::amr, newtag::initial >().size() ),
-  m_refiner( g_newinputdeck.get< newtag::amr, newtag::maxlevels >(), m_inpoel ),
+  m_initref( g_inputdeck.get< newtag::amr, newtag::initial >() ),
+  m_ninitref( g_inputdeck.get< newtag::amr, newtag::initial >().size() ),
+  m_refiner( g_inputdeck.get< newtag::amr, newtag::maxlevels >(), m_inpoel ),
   m_nref( 0 ),
   m_nbnd( 0 ),
   m_extra( 0 ),
@@ -160,7 +160,7 @@ Refiner::Refiner( std::size_t meshid,
 
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
-  if (g_newinputdeck.get< newtag::amr, newtag::t0ref >() && m_ninitref > 0)
+  if (g_inputdeck.get< newtag::amr, newtag::t0ref >() && m_ninitref > 0)
     t0ref();
   else
     endt0ref();
@@ -249,7 +249,7 @@ Refiner::reorder()
   // (t<0) refinement. However, this appears to correctly update the local mesh
   // based on the reordered one (from Sorter) at least when t0ref is off.
   m_refiner = AMR::mesh_adapter_t(
-    g_newinputdeck.get< newtag::amr, newtag::maxlevels >(), m_inpoel );
+    g_inputdeck.get< newtag::amr, newtag::maxlevels >(), m_inpoel );
 }
 
 tk::UnsMesh::Coords
@@ -336,7 +336,7 @@ Refiner::t0ref()
   Assert( m_ninitref > 0, "No initial mesh refinement steps configured" );
   // Output initial mesh to file
   auto l = m_ninitref - m_initref.size();  // num initref steps completed
-  auto t0 = g_newinputdeck.get< newtag::t0 >();
+  auto t0 = g_inputdeck.get< newtag::t0 >();
   if (l == 0) {
     writeMesh( "t0ref", l, t0-1.0,
       CkCallback( CkIndex_Refiner::start(), thisProxy[thisIndex] ) );
@@ -550,7 +550,7 @@ Refiner::refine()
 
   } else if (m_mode == RefMode::DTREF) {
 
-    if (g_newinputdeck.get< newtag::amr, newtag::dtref_uniform >())
+    if (g_inputdeck.get< newtag::amr, newtag::dtref_uniform >())
       uniformRefine();
     else
       errorRefine();
@@ -972,17 +972,17 @@ Refiner::writeMesh( const std::string& basefilename,
   auto& nodefields = std::get< 3 >( r );
 
   // Prepare solution field names: depvar + component id for all eqs
-  auto nprop = g_newinputdeck.get< newtag::ncomp >();
+  auto nprop = g_inputdeck.get< newtag::ncomp >();
   std::vector< std::string > solfieldnames;
   for (std::size_t i=0; i<nprop; ++i) {
     solfieldnames.push_back(
-      g_newinputdeck.get< newtag::depvar >()[0] + std::to_string(i+1) );
+      g_inputdeck.get< newtag::depvar >()[0] + std::to_string(i+1) );
   }
   Assert( solfieldnames.size() == nprop, "Size mismatch" );
 
-  const auto scheme = g_newinputdeck.get< newtag::scheme >();
+  const auto scheme = g_inputdeck.get< newtag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
-  auto t0 = g_newinputdeck.get< newtag::t0 >();
+  auto t0 = g_inputdeck.get< newtag::t0 >();
 
   // list of nodes/elements at which box ICs are defined
   std::vector< std::unordered_set< std::size_t > > inbox;
@@ -1013,7 +1013,7 @@ Refiner::writeMesh( const std::string& basefilename,
     elemfieldnames.insert( end(elemfieldnames),
                            begin(solfieldnames), end(solfieldnames) );
 
-    auto ndof = g_newinputdeck.get< newtag::ndof >();
+    auto ndof = g_inputdeck.get< newtag::ndof >();
     tk::Fields lhs( m_inpoel.size()/4, ndof*nprop );
 
     // Generate left hand side for DG and evaluate initial conditions on
@@ -1103,7 +1103,7 @@ Refiner::perform()
   if (m_mode == RefMode::T0REF) {
 
     auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
-    auto t0 = g_newinputdeck.get< newtag::t0 >();
+    auto t0 = g_inputdeck.get< newtag::t0 >();
     // Generate times equally subdividing t0-1...t0 to ninitref steps
     auto t =
       t0 - 1.0 + static_cast<tk::real>(l)/static_cast<tk::real>(m_ninitref);
@@ -1267,8 +1267,8 @@ Refiner::errorsInEdges(
 {
   // Get the indices (in the system of systems) of refinement variables and the
   // error indicator configured
-  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
-  auto errtype = g_newinputdeck.get< newtag::amr, newtag::error >();
+  auto ncomp = g_inputdeck.get< newtag::ncomp >();
+  auto errtype = g_inputdeck.get< newtag::amr, newtag::error >();
 
   // Compute points surrounding points
   auto psup = tk::genPsup( m_inpoel, 4, esup );
@@ -1316,7 +1316,7 @@ Refiner::solution( std::size_t npoin,
     // Query current solution
     u = m_scheme[m_meshid].ckLocal< Scheme::solution >( thisIndex );
  
-    const auto scheme = g_newinputdeck.get< newtag::scheme >();
+    const auto scheme = g_inputdeck.get< newtag::scheme >();
     const auto centering = ctr::Scheme().centering( scheme );
     if (centering == tk::Centering::ELEM) {
 
@@ -1359,8 +1359,8 @@ Refiner::errorRefine()
   // Compute error in edges. Tag edge for refinement if error exceeds
   // refinement tolerance, tag edge for derefinement if error is below
   // derefinement tolerance.
-  auto tolref = g_newinputdeck.get< newtag::amr, newtag::tol_refine >();
-  auto tolderef = g_newinputdeck.get< newtag::amr, newtag::tol_derefine >();
+  auto tolref = g_inputdeck.get< newtag::amr, newtag::tol_refine >();
+  auto tolderef = g_inputdeck.get< newtag::amr, newtag::tol_derefine >();
   std::vector< std::pair< edge_t, edge_tag > > tagged_edges;
   for (const auto& e : errorsInEdges(npoin,esup,u)) {
     if (e.second > tolref) {
@@ -1389,7 +1389,7 @@ Refiner::edgelistRefine()
 // *****************************************************************************
 {
   // Get user-defined node-pairs (edges) to tag for refinement
-  const auto& edgenodelist = g_newinputdeck.get< newtag::amr, newtag::edgelist >();
+  const auto& edgenodelist = g_inputdeck.get< newtag::amr, newtag::edgelist >();
 
   if (!edgenodelist.empty()) {  // if user explicitly tagged edges
     // Find number of nodes in old mesh
@@ -1436,7 +1436,7 @@ Refiner::coordRefine()
 // *****************************************************************************
 {
   // Get user-defined half-world coordinates
-  const auto& amr_coord = g_newinputdeck.get< newtag::amr, newtag::coords >();
+  const auto& amr_coord = g_inputdeck.get< newtag::amr, newtag::coords >();
   auto xminus = amr_coord.get< newtag::xminus >();
   auto xplus  = amr_coord.get< newtag::xplus >();
   auto yminus = amr_coord.get< newtag::yminus >();
@@ -1518,14 +1518,14 @@ Refiner::nodeinit( std::size_t npoin,
 //! \return Initial conditions (evaluated at t0) at nodes
 // *****************************************************************************
 {
-  auto t0 = g_newinputdeck.get< newtag::t0 >();
-  auto nprop = g_newinputdeck.get< newtag::ncomp >();
+  auto t0 = g_inputdeck.get< newtag::t0 >();
+  auto nprop = g_inputdeck.get< newtag::ncomp >();
 
   // Will store nodal ICs
   tk::Fields u( m_coord[0].size(), nprop );
 
   // Evaluate ICs differently depending on nodal or cell-centered discretization
-  const auto scheme = g_newinputdeck.get< newtag::scheme >();
+  const auto scheme = g_inputdeck.get< newtag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
   // list of nodes/elements at which box ICs are defined
   std::vector< std::unordered_set< std::size_t > > inbox;

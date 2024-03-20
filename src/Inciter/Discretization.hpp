@@ -31,7 +31,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 //! \brief Discretization Charm++ chare array holding common functinoality to
 //!   all discretization schemes
@@ -373,7 +373,7 @@ class Discretization : public CBase_Discretization {
 
       template< typename Eq > void operator()( brigand::type_<Eq> ) {
         const auto& bc =
-          g_newinputdeck.template get< newtag::bc >()[m_mid];
+          g_inputdeck.template get< newtag::bc >()[m_mid];
         // collect sidesets for this mesh with this bc type
         const auto& ss = bc.template get< tags... >();
         for (const auto& s : ss) {

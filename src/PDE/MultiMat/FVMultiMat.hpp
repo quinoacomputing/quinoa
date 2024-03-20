@@ -46,7 +46,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 namespace fv {
 
@@ -66,9 +66,9 @@ class MultiMat {
     //! Constructor
     explicit MultiMat() :
       m_physics(),
-      m_ncomp( g_newinputdeck.get< newtag::ncomp >() ),
+      m_ncomp( g_inputdeck.get< newtag::ncomp >() ),
       m_riemann( multimatRiemannSolver(
-        g_newinputdeck.get< newtag::flux >() ) )
+        g_inputdeck.get< newtag::flux >() ) )
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< newtag::bclist::Keys >( ConfigBC( m_bc,
@@ -88,7 +88,7 @@ class MultiMat {
     //!   this PDE system
     std::size_t nprim() const
     {
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
       // multimat needs individual material pressures and velocities currently
       return (nmat+3);
     }
@@ -97,7 +97,7 @@ class MultiMat {
     //! \return The number of materials set up for this PDE system
     std::size_t nmat() const
     {
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
       return nmat;
     }
 
@@ -137,8 +137,8 @@ class MultiMat {
       tk::initialize( m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      const auto& ic = g_newinputdeck.get< newtag::ic >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      const auto& ic = g_inputdeck.get< newtag::ic >();
       const auto& icbox = ic.get< newtag::box >();
       const auto& icmbk = ic.get< newtag::meshblock >();
 
@@ -221,8 +221,8 @@ class MultiMat {
                            tk::Fields& prim,
                            std::size_t nielem ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -292,8 +292,8 @@ class MultiMat {
                              tk::Fields& prim,
                              std::size_t nielem ) const
     {
-      [[maybe_unused]] const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      [[maybe_unused]] const auto rdof = g_inputdeck.get< newtag::rdof >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -301,7 +301,7 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-      Assert( (g_newinputdeck.get< newtag::ndof >()) <= 4, "High-order "
+      Assert( (g_inputdeck.get< newtag::ndof >()) <= 4, "High-order "
               "discretizations not set up for multimat cleanTraceMaterial()" );
 
       auto neg_density = cleanTraceMultiMat(t, nielem, m_mat_blk, geoElem, nmat,
@@ -327,9 +327,9 @@ class MultiMat {
                       tk::Fields& U,
                       tk::Fields& P ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
       const auto nelem = fd.Esuel().size()/4;
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -393,9 +393,9 @@ class MultiMat {
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
 
-      const auto limiter = g_newinputdeck.get< newtag::limiter >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
-      const auto& solidx = g_newinputdeck.get<
+      const auto limiter = g_inputdeck.get< newtag::limiter >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
+      const auto& solidx = g_inputdeck.get<
         newtag::matidxmap, newtag::solidx >();
 
       // limit vectors of conserved and primitive quantities
@@ -431,8 +431,8 @@ class MultiMat {
       tk::Fields& unk,
       std::size_t nielem ) const
     {
-      [[maybe_unused]] const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      [[maybe_unused]] const auto rdof = g_inputdeck.get< newtag::rdof >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -471,10 +471,10 @@ class MultiMat {
               tk::Fields& R,
               std::vector< int >& srcFlag ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
       const auto intsharp =
-        g_newinputdeck.get< newtag::multimat, newtag::intsharp >();
+        g_inputdeck.get< newtag::multimat, newtag::intsharp >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -512,9 +512,9 @@ class MultiMat {
                     geoElem, Problem::src, R, nmat );
 
       // compute finite pressure relaxation terms
-      if (g_newinputdeck.get< newtag::multimat, newtag::prelax >())
+      if (g_inputdeck.get< newtag::multimat, newtag::prelax >())
       {
-        const auto ct = g_newinputdeck.get< newtag::multimat,
+        const auto ct = g_inputdeck.get< newtag::multimat,
                                          newtag::prelax_timescale >();
         tk::pressureRelaxationIntFV( nmat, m_mat_blk, rdof,
                                      nelem, inpoel, coord, geoElem, U, P, ct,
@@ -550,7 +550,7 @@ class MultiMat {
                  const std::vector< int >& srcFlag,
                  std::vector< tk::real >& local_dte ) const
     {
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       // obtain dt restrictions from all physics
       auto dt_e = timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, nmat, U,
@@ -569,8 +569,8 @@ class MultiMat {
               const std::array< std::vector< tk::real >, 3 >&,
               const std::array< std::size_t, 4 >& N ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       std::array< std::array< tk::real, 4 >, 3 > v;
       v[0] = U.extract( momentumDofIdx(nmat, 0, rdof, 0), N );
@@ -600,7 +600,7 @@ class MultiMat {
     //! Return analytic field names to be output to file
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
-      auto nmat = g_newinputdeck.get< eq, newtag::nmat >();
+      auto nmat = g_inputdeck.get< eq, newtag::nmat >();
 
       return MultiMatFieldNames(nmat);
     }
@@ -622,8 +622,8 @@ class MultiMat {
       const tk::Fields& U,
       const tk::Fields& P ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       return MultiMatSurfOutput( nmat, rdof, fd, U, P );
     }
@@ -643,8 +643,8 @@ class MultiMat {
                 const tk::Fields& U,
                 const tk::Fields& P ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -693,7 +693,7 @@ class MultiMat {
     //! \return Vector of strings labelling integral variables output
     std::vector< std::string > names() const
     {
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
       return MultiMatDiagNames(nmat);
     }
 
@@ -723,8 +723,8 @@ class MultiMat {
     //! \return Cell-averaged specific total energy for given element
     tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       tk::real sp_te(0.0);
       // sum each material total energy
@@ -747,9 +747,9 @@ class MultiMat {
     {
       Assert( ss.size() == nielem, "Size of sound speed vector incorrect " );
 
-      const auto ndof = g_newinputdeck.get< newtag::ndof >();
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      const auto ndof = g_inputdeck.get< newtag::ndof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
       std::size_t ncomp = U.nprop()/rdof;
       std::size_t nprim = P.nprop()/rdof;
 
@@ -802,7 +802,7 @@ class MultiMat {
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       return tk::fluxTerms(ncomp, nmat, mat_blk, ugp);
     }
@@ -826,7 +826,7 @@ class MultiMat {
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
-      auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+      auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
       auto ur = Problem::initialize( ncomp, mat_blk, x, y, z, t );
       Assert( ur.size() == ncomp, "Incorrect size for boundary state vector" );

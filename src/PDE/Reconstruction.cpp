@@ -26,7 +26,7 @@
 #include "Limiter.hpp"
 
 namespace inciter {
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 }
 
 namespace tk {
@@ -507,10 +507,10 @@ THINCReco( std::size_t rdof,
   using inciter::deformIdx;
   using inciter::stressIdx;
 
-  auto bparam = inciter::g_newinputdeck.get< newtag::multimat,
+  auto bparam = inciter::g_inputdeck.get< newtag::multimat,
     newtag::intsharp_param >();
   const auto ncomp = U.nprop()/rdof;
-  const auto& solidx = inciter::g_newinputdeck.get< newtag::matidxmap,
+  const auto& solidx = inciter::g_inputdeck.get< newtag::matidxmap,
     newtag::solidx >();
 
   // Step-1: Perform THINC reconstruction
@@ -626,7 +626,7 @@ THINCRecoTransport( std::size_t rdof,
 //!   should only be called for transport.
 // *****************************************************************************
 {
-  auto bparam = inciter::g_newinputdeck.get< newtag::transport,
+  auto bparam = inciter::g_inputdeck.get< newtag::transport,
     newtag::intsharp_param >();
   auto ncomp = U.nprop()/rdof;
 

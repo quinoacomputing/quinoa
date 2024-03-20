@@ -27,7 +27,7 @@
 namespace inciter {
 
 extern ctr::New2InputDeck g_inputdeck_defaults;
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 //! InciterPrint : tk::Print
 class InciterPrint : public tk::Print {
@@ -52,7 +52,7 @@ class InciterPrint : public tk::Print {
       Option opt;
       m_stream << m_item_name_value_fmt
                   % m_item_indent % opt.group()
-                  % opt.name( g_newinputdeck.get< tags... >() );
+                  % opt.name( g_inputdeck.get< tags... >() );
     }
 
     // Helper class for compact output of PDE policies

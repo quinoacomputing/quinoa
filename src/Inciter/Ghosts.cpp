@@ -60,8 +60,8 @@ Ghosts::Ghosts( const CProxy_Discretization& disc,
 //! \param[in] cbDone Function to continue with when Ghosts have been computed
 // *****************************************************************************
 {
-  if (g_newinputdeck.get< newtag::cmd, tag::chare >() ||
-      g_newinputdeck.get< newtag::cmd, tag::quiescence >())
+  if (g_inputdeck.get< newtag::cmd, tag::chare >() ||
+      g_inputdeck.get< newtag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "Ghosts", thisIndex, CkMyPe(), Disc()->It(),
                                         "Ghosts" );
 }
@@ -166,7 +166,7 @@ Ghosts::resizeComm()
       }
   }
 
-  if ( g_newinputdeck.get< newtag::cmd, tag::feedback >() ) d->Tr().chbndface();
+  if ( g_inputdeck.get< newtag::cmd, tag::feedback >() ) d->Tr().chbndface();
 
   // In the following we assume that the size of the (potential) boundary-face
   // adjacency map above does not necessarily equal to that of the node
@@ -211,8 +211,8 @@ Ghosts::comfac( int fromch, const tk::UnsMesh::FaceSet& infaces )
 //! \param[in] infaces Unique set of faces we potentially share with fromch
 // *****************************************************************************
 {
-  if (g_newinputdeck.get< newtag::cmd, tag::chare >() ||
-      g_newinputdeck.get< newtag::cmd, tag::quiescence >())
+  if (g_inputdeck.get< newtag::cmd, tag::chare >() ||
+      g_inputdeck.get< newtag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "Ghosts", thisIndex, CkMyPe(), Disc()->It(),
                                         "comfac" );
 
@@ -236,7 +236,7 @@ Ghosts::bndFaces()
 // *****************************************************************************
 {
   auto d = Disc();
-  if ( g_newinputdeck.get< newtag::cmd, tag::feedback >() ) d->Tr().chcomfac();
+  if ( g_inputdeck.get< newtag::cmd, tag::feedback >() ) d->Tr().chcomfac();
   const auto& esuel = m_fd.Esuel();
   const auto& gid = d->Gid();
 
@@ -420,8 +420,8 @@ Ghosts::reqGhost()
 // Receive requests for ghost data
 // *****************************************************************************
 {
-  if (g_newinputdeck.get< newtag::cmd, tag::chare >() ||
-      g_newinputdeck.get< newtag::cmd, tag::quiescence >())
+  if (g_inputdeck.get< newtag::cmd, tag::chare >() ||
+      g_inputdeck.get< newtag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "Ghosts", thisIndex, CkMyPe(), Disc()->It(),
                                         "reqGhost" );
 
@@ -439,15 +439,15 @@ Ghosts::sendGhost()
 // Send all of our ghost data to fellow chares
 // *****************************************************************************
 {
-  if (g_newinputdeck.get< newtag::cmd, tag::chare >() ||
-      g_newinputdeck.get< newtag::cmd, tag::quiescence >())
+  if (g_inputdeck.get< newtag::cmd, tag::chare >() ||
+      g_inputdeck.get< newtag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "Ghosts", thisIndex, CkMyPe(), Disc()->It(),
                                         "sendGhost" );
 
   for (const auto& c : m_ghostData)
     thisProxy[ c.first ].comGhost( thisIndex, c.second );
 
-  if ( g_newinputdeck.get< newtag::cmd, tag::feedback >() ) Disc()->Tr().chghost();
+  if ( g_inputdeck.get< newtag::cmd, tag::feedback >() ) Disc()->Tr().chghost();
 }
 
 void
@@ -458,8 +458,8 @@ Ghosts::comGhost( int fromch, const GhostData& ghost )
 //! \param[in] ghost Ghost data, see Inciter/FaceData.h for the type
 // *****************************************************************************
 {
-  if (g_newinputdeck.get< newtag::cmd, tag::chare >() ||
-      g_newinputdeck.get< newtag::cmd, tag::quiescence >())
+  if (g_inputdeck.get< newtag::cmd, tag::chare >() ||
+      g_inputdeck.get< newtag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "Ghosts", thisIndex, CkMyPe(), Disc()->It(),
                                         "comGhost" );
 
@@ -773,7 +773,7 @@ Ghosts::adj()
   tk::destroy(m_ghostData);
   tk::destroy(m_esupc);
 
-  if ( g_newinputdeck.get< newtag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
+  if ( g_inputdeck.get< newtag::cmd, tag::feedback >() ) Disc()->Tr().chadj();
 
   // Error checking on ghost data
   for(const auto& n : m_sendGhost)

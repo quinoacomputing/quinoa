@@ -23,7 +23,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -44,7 +44,7 @@ MultiMatPhysicsEnergyPill::dtRestriction(
 {
   auto mindt = std::numeric_limits< tk::real >::max();
   // determine front propagation speed
-  const auto& icmbk = g_newinputdeck.get< newtag::ic, newtag::meshblock >();
+  const auto& icmbk = g_inputdeck.get< newtag::ic, newtag::meshblock >();
   tk::real v_front(0.0);
   for (const auto& b : icmbk) { // for all blocks
     auto inittype = b.template get< newtag::initiate >();
@@ -93,7 +93,7 @@ physSrc(
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
-  const auto& icmbk = g_newinputdeck.get< newtag::ic, newtag::meshblock >();
+  const auto& icmbk = g_inputdeck.get< newtag::ic, newtag::meshblock >();
   for (const auto& mb : icmbk) { // for all blocks
     auto blid = mb.get< newtag::blockid >();
     if (elemblkid.find(blid) != elemblkid.end()) { // if elements exist in blk

@@ -44,7 +44,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 namespace dg {
 
@@ -65,9 +65,9 @@ class CompFlow {
     explicit CompFlow() :
       m_physics(),
       m_problem(),
-      m_ncomp( g_newinputdeck.get< newtag::ncomp >() ),
+      m_ncomp( g_inputdeck.get< newtag::ncomp >() ),
       m_riemann( compflowRiemannSolver(
-        g_newinputdeck.get< newtag::flux >() ) )
+        g_inputdeck.get< newtag::flux >() ) )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
@@ -81,9 +81,9 @@ class CompFlow {
 
       // EoS initialization
       const auto& matprop =
-        g_newinputdeck.get< newtag::material >();
+        g_inputdeck.get< newtag::material >();
       const auto& matidxmap =
-        g_newinputdeck.get< newtag::matidxmap >();
+        g_inputdeck.get< newtag::matidxmap >();
       auto mateos = matprop[matidxmap.get< newtag::eosidx >()[0]].get<newtag::eos>();
       m_mat_blk.emplace_back(mateos, EqType::compflow, 0);
 
@@ -113,7 +113,7 @@ class CompFlow {
     {
       // all equation-dofs initialized to ndof
       for (std::size_t i=0; i<m_ncomp; ++i) {
-        numEqDof.push_back(g_newinputdeck.get< newtag::ndof >());
+        numEqDof.push_back(g_inputdeck.get< newtag::ndof >());
       }
     }
 
@@ -152,8 +152,8 @@ class CompFlow {
       tk::initialize( m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      const auto& ic = g_newinputdeck.get< newtag::ic >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      const auto& ic = g_inputdeck.get< newtag::ic >();
       const auto& icbox = ic.get< newtag::box >();
       const auto& bgpreic = ic.get< newtag::pressure >();
       auto c_v = getmatprop< newtag::cv >();
@@ -196,7 +196,7 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto ndof = g_newinputdeck.get< newtag::ndof >();
+      const auto ndof = g_inputdeck.get< newtag::ndof >();
       tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
@@ -246,10 +246,10 @@ class CompFlow {
                       tk::Fields& U,
                       tk::Fields& P ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
 
       // do reconstruction only if P0P1
-      if (rdof == 4 && g_newinputdeck.get< newtag::ndof >() == 1) {
+      if (rdof == 4 && g_inputdeck.get< newtag::ndof >() == 1) {
         const auto nelem = fd.Esuel().size()/4;
 
         Assert( U.nprop() == rdof*5, "Number of components in solution "
@@ -324,9 +324,9 @@ class CompFlow {
                 tk::Fields&,
                 std::vector< std::size_t >& shockmarker) const
     {
-      const auto limiter = g_newinputdeck.get< newtag::limiter >();
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+      const auto limiter = g_inputdeck.get< newtag::limiter >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
       if (limiter == ctr::LimiterType::WENOP1)
         WENO_P1( fd.Esuel(), U );
@@ -388,10 +388,10 @@ class CompFlow {
               const tk::real dt,
               tk::Fields& R ) const
     {
-      const auto ndof = g_newinputdeck.get< newtag::ndof >();
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
+      const auto ndof = g_inputdeck.get< newtag::ndof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
 
-      const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+      const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -444,7 +444,7 @@ class CompFlow {
                         riemannDeriv );
 
      // compute external (energy) sources
-      const auto& ic = g_newinputdeck.get< newtag::ic >();
+      const auto& ic = g_inputdeck.get< newtag::ic >();
       const auto& icbox = ic.get< newtag::box >();
 
       if (!icbox.empty() && !boxelems.empty()) {
@@ -519,7 +519,7 @@ class CompFlow {
                  const tk::Fields&,
                  const std::size_t /*nielem*/ ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
 
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
@@ -780,7 +780,7 @@ class CompFlow {
                 const tk::Fields& U,
                 const tk::Fields& ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -855,7 +855,7 @@ class CompFlow {
     //! \return Cell-averaged specific total energy for given element
     tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
 
       return unk(e,4*rdof);
     }
@@ -984,7 +984,7 @@ class CompFlow {
               tk::real, const std::array< tk::real, 3 >& fn )
     {
       // Primitive variables from farfield
-      const auto& bc = g_newinputdeck.get< newtag::bc >()[0];
+      const auto& bc = g_inputdeck.get< newtag::bc >()[0];
       auto frho = bc.get< newtag::density >();
       auto fp   = bc.get< newtag::pressure >();
       const auto& fu = bc.get< newtag::velocity >();
@@ -1082,8 +1082,8 @@ class CompFlow {
                  const std::vector< std::size_t >& ndofel,
                  tk::Fields& R ) const
     {
-      const auto ndof = g_newinputdeck.get< newtag::ndof >();
-      const auto& ic = g_newinputdeck.get< newtag::ic >();
+      const auto ndof = g_inputdeck.get< newtag::ndof >();
+      const auto& ic = g_inputdeck.get< newtag::ic >();
       const auto& icbox = ic.get< newtag::box >();
 
       for (const auto& b : icbox) {   // for all boxes for this eq

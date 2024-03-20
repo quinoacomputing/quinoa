@@ -40,7 +40,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 namespace dg {
 
@@ -62,7 +62,7 @@ class Transport {
     explicit Transport() :
       m_physics( Physics() ),
       m_problem( Problem() ),
-      m_ncomp( g_newinputdeck.get< newtag::ncomp >() )
+      m_ncomp( g_inputdeck.get< newtag::ncomp >() )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
@@ -99,7 +99,7 @@ class Transport {
     {
       // all equation-dofs initialized to ndofs
       for (std::size_t i=0; i<m_ncomp; ++i) {
-        numEqDof.push_back(g_newinputdeck.get< newtag::ndof >());
+        numEqDof.push_back(g_inputdeck.get< newtag::ndof >());
       }
     }
 
@@ -135,7 +135,7 @@ class Transport {
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto ndof = g_newinputdeck.get< newtag::ndof >();
+      const auto ndof = g_inputdeck.get< newtag::ndof >();
       tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
@@ -185,12 +185,12 @@ class Transport {
                       tk::Fields& U,
                       tk::Fields& P ) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
 
       // do reconstruction only if P0P1
-      if (rdof == 4 && g_newinputdeck.get< newtag::ndof >() == 1) {
+      if (rdof == 4 && g_inputdeck.get< newtag::ndof >() == 1) {
         const auto nelem = fd.Esuel().size()/4;
-        const auto intsharp = g_newinputdeck.get< newtag::transport,
+        const auto intsharp = g_inputdeck.get< newtag::transport,
           newtag::intsharp >();
 
         Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
@@ -280,7 +280,7 @@ class Transport {
                 tk::Fields&,
                 std::vector< std::size_t >& ) const
     {
-      const auto limiter = g_newinputdeck.get< newtag::limiter >();
+      const auto limiter = g_inputdeck.get< newtag::limiter >();
 
       if (limiter == ctr::LimiterType::WENOP1)
         WENO_P1( fd.Esuel(), U );
@@ -336,9 +336,9 @@ class Transport {
               const tk::real dt,
               tk::Fields& R ) const
     {
-      const auto ndof = g_newinputdeck.get< newtag::ndof >();
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
-      const auto intsharp = g_newinputdeck.get< newtag::transport,
+      const auto ndof = g_inputdeck.get< newtag::ndof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      const auto intsharp = g_inputdeck.get< newtag::transport,
         newtag::intsharp >();
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
@@ -442,7 +442,7 @@ class Transport {
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
-      auto depvar = g_newinputdeck.get< newtag::depvar >()[0];
+      auto depvar = g_inputdeck.get< newtag::depvar >()[0];
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
       return n;
@@ -469,7 +469,7 @@ class Transport {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-      g_newinputdeck.get< newtag::depvar >().at(0);
+      g_inputdeck.get< newtag::depvar >().at(0);
       // construct the name of the numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) );
@@ -518,7 +518,7 @@ class Transport {
     //!   return total mass.
     tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
     {
-      const auto rdof = g_newinputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< newtag::rdof >();
 
       tk::real sp_m(0.0);
       for (std::size_t c=0; c<m_ncomp; ++c) {

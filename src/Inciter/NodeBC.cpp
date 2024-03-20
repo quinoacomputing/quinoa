@@ -27,7 +27,7 @@ extern std::vector< CGPDE > g_cgpde;
 
 std::unordered_map< std::size_t, std::vector< std::pair< bool, tk::real > > >
 match( std::size_t meshid,
-       [[maybe_unused]] tk::ctr::ncomp_t ncomp,
+       [[maybe_unused]] tk::ncomp_t ncomp,
        tk::real t,
        tk::real dt,
        const std::vector< tk::real >& tp,

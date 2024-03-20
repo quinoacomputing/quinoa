@@ -27,7 +27,7 @@
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 }
 
 namespace tk {
@@ -74,7 +74,7 @@ solidTermsVolInt(
   using inciter::deformDofIdx;
 
   const auto& solidx =
-    inciter::g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+    inciter::g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   auto ncomp = R.nprop()/ndof;
   auto nprim = P.nprop()/rdof;

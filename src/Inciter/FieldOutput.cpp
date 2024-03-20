@@ -27,7 +27,7 @@ numericFieldNames( tk::Centering c, char /*depvar*/ )
 // *****************************************************************************
 {
   std::vector< std::string > f;
-  for (const auto& v : g_newinputdeck.get< newtag::field_output, newtag::outvar >()) {
+  for (const auto& v : g_inputdeck.get< newtag::field_output, newtag::outvar >()) {
     if (v.centering == c && !v.analytic()) {
       std::stringstream s;
       s << v.name;
@@ -56,11 +56,11 @@ numericFieldOutput( const tk::Fields& U,
   const auto& p = P.empty() ? U : P;
 
   //auto rdof =
-  //  c == tk::Centering::NODE ? 1 : g_newinputdeck.get< newtag::rdof >();
+  //  c == tk::Centering::NODE ? 1 : g_inputdeck.get< newtag::rdof >();
   std::size_t rdof = 1;
 
   std::vector< std::vector< tk::real > > f;
-  for (const auto& v : g_newinputdeck.get< newtag::field_output, newtag::outvar >()) {
+  for (const auto& v : g_inputdeck.get< newtag::field_output, newtag::outvar >()) {
     if (v.centering == c) {
       const auto& F = v.primitive() ? p : U;
       if (v.type == 0 || v.type == 1) {        // depvar-based direct access
@@ -117,7 +117,7 @@ evalSolution(
   using tk::real;
 
   const auto nelem = inpoel.size()/4;
-  const auto rdof = g_newinputdeck.get< newtag::rdof >();
+  const auto rdof = g_inputdeck.get< newtag::rdof >();
   const auto uncomp = U.nprop() / rdof;
   const auto pncomp = P.nprop() / rdof;
 

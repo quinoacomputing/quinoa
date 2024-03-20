@@ -18,7 +18,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 }
 
@@ -40,7 +40,7 @@ MultiMatProblemSinewavePacket::initialize( ncomp_t ncomp,
 //! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  auto nmat = g_newinputdeck.get< eq, newtag::nmat >();
+  auto nmat = g_inputdeck.get< eq, newtag::nmat >();
 
   Assert(nmat == 1, "Sinewave packet advection not set up for more than one "
     "material");

@@ -38,7 +38,7 @@ mainmodule inciter {
 
     // Order important: must be the same as in Main/Inciter.C
     readonly ctr::New2InputDeck g_inputdeck_defaults;
-    readonly ctr::New2InputDeck g_newinputdeck;
+    readonly ctr::New2InputDeck g_inputdeck;
     readonly std::vector< CGPDE > g_cgpde;
     readonly std::vector< DGPDE > g_dgpde;
     readonly std::vector< FVPDE > g_fvpde;

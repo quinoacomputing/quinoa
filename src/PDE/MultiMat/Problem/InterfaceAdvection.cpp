@@ -18,7 +18,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -43,7 +43,7 @@ MultiMatProblemInterfaceAdvection::initialize(
 // *****************************************************************************
 {
   auto nmat =
-    g_newinputdeck.get< eq, newtag::nmat >();
+    g_inputdeck.get< eq, newtag::nmat >();
 
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Incorrect number of components in multi-material "

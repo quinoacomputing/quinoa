@@ -29,7 +29,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -163,13 +163,13 @@ Partitioner::partition( int nchare )
   std::iota( begin(gelemid), end(gelemid), 0 );
 
   m_nchare = nchare;
-  const auto alg = g_newinputdeck.get< newtag::partitioning >();
+  const auto alg = g_inputdeck.get< newtag::partitioning >();
   const auto che = tk::zoltan::geomPartMesh( alg,
                                              centroids( m_inpoel, m_coord ),
                                              gelemid,
                                              nchare );
 
-  if ( g_newinputdeck.get< newtag::cmd, tag::feedback >() ) m_host.pepartitioned();
+  if ( g_inputdeck.get< newtag::cmd, tag::feedback >() ) m_host.pepartitioned();
 
   contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
               m_cbp.get< tag::partitioned >() );
@@ -270,7 +270,7 @@ Partitioner::recvMesh()
 // *****************************************************************************
 {
   if (--m_ndist == 0) {
-    if (g_newinputdeck.get< newtag::cmd, tag::feedback >()) m_host.pedistributed();
+    if (g_inputdeck.get< newtag::cmd, tag::feedback >()) m_host.pedistributed();
     contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
                 m_cbp.get< tag::distributed >() );
   }
@@ -588,7 +588,7 @@ Partitioner::distribute( std::unordered_map< int, MeshData >&& mesh )
 
   // Export chare IDs and mesh we do not own to fellow compute nodes
   if (exp.empty()) {
-    if ( g_newinputdeck.get< newtag::cmd, tag::feedback >() ) m_host.pedistributed();
+    if ( g_inputdeck.get< newtag::cmd, tag::feedback >() ) m_host.pedistributed();
     contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
                 m_cbp.get< tag::distributed >() );
   } else {

@@ -38,8 +38,8 @@ struct LaxFriedrichsSolids {
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {} )
   {
-    auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
-    const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+    auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
+    const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
     auto nsld = numSolids(nmat, solidx);
     auto ncomp = u[0].size()-(3+nmat+nsld*6);

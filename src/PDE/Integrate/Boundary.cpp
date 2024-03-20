@@ -25,7 +25,7 @@
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 
 namespace inciter {
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 }
 
 namespace tk {
@@ -240,7 +240,7 @@ update_rhs_bc ( ncomp_t ncomp,
   using inciter::newSolidsAccFn;
 
   const auto& solidx =
-    inciter::g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+    inciter::g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {

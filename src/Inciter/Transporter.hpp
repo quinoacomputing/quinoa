@@ -28,7 +28,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 //! Indices for progress report on mesh preparation
 enum ProgMesh{ PART=0, DIST, REFINE, BND, COMM, MASK, REORD };
@@ -357,10 +357,10 @@ class Transporter : public CBase_Transporter {
     InciterPrint printer() const {
       const auto& def =
         g_inputdeck_defaults.get< newtag::cmd, tag::io, tag::screen >();
-      auto nrestart = g_newinputdeck.get< newtag::cmd, tag::io, tag::nrestart >();
+      auto nrestart = g_inputdeck.get< newtag::cmd, tag::io, tag::nrestart >();
       return InciterPrint(
-        g_newinputdeck.get< newtag::cmd >().logname( def, nrestart ),
-        g_newinputdeck.get< newtag::cmd, tag::verbose >() ? std::cout : std::clog,
+        g_inputdeck.get< newtag::cmd >().logname( def, nrestart ),
+        g_inputdeck.get< newtag::cmd, tag::verbose >() ? std::cout : std::clog,
         std::ios_base::app );
     }
 

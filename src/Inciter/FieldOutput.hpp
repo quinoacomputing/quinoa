@@ -22,7 +22,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 //! Collect field output names from numerical solution based on user input
 std::vector< std::string >
@@ -60,7 +60,7 @@ analyticFieldNames( const PDE& eq,
                     tk::Centering c,
                     std::vector< std::string >& f )
 {
-  for (const auto& v : g_newinputdeck.get< newtag::field_output, newtag::outvar >())
+  for (const auto& v : g_inputdeck.get< newtag::field_output, newtag::outvar >())
     if (v.centering == c && v.analytic())
       tk::concat( eq.analyticFieldNames(), f );
 }
@@ -84,7 +84,7 @@ analyticFieldOutput( const PDE& eq,
                      tk::real t,
                      std::vector< std::vector< tk::real > >& f )
 {
-  for (const auto& v : g_newinputdeck.get< newtag::field_output, newtag::outvar >()) {
+  for (const auto& v : g_inputdeck.get< newtag::field_output, newtag::outvar >()) {
     if (v.centering == c && v.analytic()) {
       auto ncomp = eq.analyticSolution( x[0], y[0], z[0], t ).size();
       f.resize( f.size() + ncomp, std::vector< tk::real >( x.size() ) );

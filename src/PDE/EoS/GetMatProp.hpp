@@ -18,7 +18,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
@@ -35,8 +35,8 @@ using ncomp_t = kw::ncomp::info::expect::type;
 template< class Prop >
 tk::real
 getmatprop( std::size_t imat=0 ) {
-  const auto& matprop = g_newinputdeck.get< newtag::material >();
-  const auto& map = g_newinputdeck.get< newtag::matidxmap >();
+  const auto& matprop = g_inputdeck.get< newtag::material >();
+  const auto& map = g_inputdeck.get< newtag::matidxmap >();
   auto meos = map.template get< newtag::eosidx >()[ imat ];
   auto midx = map.template get< newtag::matidx >()[ imat ];
   auto pvec = matprop[ meos ].template get< Prop >();

@@ -35,7 +35,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 extern std::vector< CGPDE > g_cgpde;
 
 //! Runge-Kutta coefficients
@@ -67,7 +67,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_esup( tk::genEsup( Disc()->Inpoel(), 4 ) ),
   m_psup( tk::genPsup( Disc()->Inpoel(), 4, m_esup ) ),
   m_u( Disc()->Gid().size(),
-       g_newinputdeck.get< newtag::ncomp >() ),
+       g_inputdeck.get< newtag::ncomp >() ),
   m_uc( m_u.nunk(), m_u.nprop()+1 ),
   m_un( m_u.nunk(), m_u.nprop() ),
   m_rhs( m_u.nunk(), m_u.nprop() ),
@@ -89,7 +89,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_edgenode(),
   m_edgeid(),
   m_dtp( m_u.nunk(), 0.0 ),
-  m_tp( m_u.nunk(), g_newinputdeck.get< newtag::t0 >() ),
+  m_tp( m_u.nunk(), g_inputdeck.get< newtag::t0 >() ),
   m_finished( 0 ),
   m_movedmesh( 0 ),
   m_nusermeshblk( 0 ),
@@ -110,7 +110,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   auto d = Disc();
 
   // Perform optional operator-access-pattern mesh node reordering
-  if (g_newinputdeck.get< newtag::operator_reorder >()) {
+  if (g_inputdeck.get< newtag::operator_reorder >()) {
 
     // Create new local ids based on access pattern of PDE operators
     std::unordered_map< std::size_t, std::size_t > map;
@@ -144,10 +144,10 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
 
   // Determine user-specified mesh velocity
   const auto& uservelvec =
-    g_newinputdeck.get< newtag::mesh >()[d->MeshId()].get< newtag::velocity >();
+    g_inputdeck.get< newtag::mesh >()[d->MeshId()].get< newtag::velocity >();
   m_uservel = {uservelvec[0], uservelvec[1], uservelvec[2]};
 
-  if (g_newinputdeck.get< newtag::steady_state >() &&
+  if (g_inputdeck.get< newtag::steady_state >() &&
     std::sqrt(tk::dot(m_uservel, m_uservel)) > 1e-8)
     Throw("Mesh motion cannot be activated for steady state problem");
 
@@ -187,7 +187,7 @@ OversetFE::getBCNodes()
   m_timedepbcnodes.clear();
   m_timedepbcFn.clear();
   const auto& timedep =
-    g_newinputdeck.get< newtag::bc >()[d->MeshId()].get< newtag::timedep >();
+    g_inputdeck.get< newtag::bc >()[d->MeshId()].get< newtag::timedep >();
   if (!timedep.empty()) {
     m_timedepbcnodes.resize(timedep.size());
     m_timedepbcFn.resize(timedep.size());
@@ -238,7 +238,7 @@ OversetFE::norm()
 
   // Query nodes at which mesh velocity symmetry BCs are specified
   std::unordered_map<int, std::unordered_set< std::size_t >> ms;
-  for (const auto& s : g_newinputdeck.get< newtag::ale, newtag::symmetry >()) {
+  for (const auto& s : g_inputdeck.get< newtag::ale, newtag::symmetry >()) {
     auto k = m_bface.find(s);
     if (k != end(m_bface)) {
       auto& n = ms[ k->first ];
@@ -456,7 +456,7 @@ OversetFE::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (!g_newinputdeck.get< newtag::cmd, tag::nonblocking >()) next();
+  if (!g_inputdeck.get< newtag::cmd, tag::nonblocking >()) next();
 }
 
 //! [setup]
@@ -551,7 +551,7 @@ OversetFE::continueSetup()
   d->boxvol( m_boxnodes, m_nodeblockid, m_nusermeshblk );
 
   // Query time history field output labels from all PDEs integrated
-  const auto& hist_points = g_newinputdeck.get< newtag::history_output, newtag::point >();
+  const auto& hist_points = g_inputdeck.get< newtag::history_output, newtag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
     auto n = g_cgpde[d->MeshId()].histNames();
@@ -897,7 +897,7 @@ OversetFE::BC()
   auto d = Disc();
   const auto& coord = d->Coord();
 
-  const auto& bcmesh = g_newinputdeck.get< newtag::bc >();
+  const auto& bcmesh = g_inputdeck.get< newtag::bc >();
 
   for (const auto& bci : bcmesh) {
     // only if this bc is meant for current mesh
@@ -909,7 +909,7 @@ OversetFE::BC()
     if (bc_match) {
 
       // Query and match user-specified Dirichlet boundary conditions to side sets
-      const auto steady = g_newinputdeck.get< newtag::steady_state >();
+      const auto steady = g_inputdeck.get< newtag::steady_state >();
       if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
       m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
                        m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
@@ -953,7 +953,7 @@ OversetFE::dt()
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
-  auto const_dt = g_newinputdeck.get< newtag::dt >();
+  auto const_dt = g_inputdeck.get< newtag::dt >();
   auto eps = std::numeric_limits< tk::real >::epsilon();
 
   auto d = Disc();
@@ -966,7 +966,7 @@ OversetFE::dt()
   } else {      // compute dt based on CFL
 
     //! [Find the minimum dt across all PDEs integrated]
-    if (g_newinputdeck.get< newtag::steady_state >()) {
+    if (g_inputdeck.get< newtag::steady_state >()) {
 
       // compute new dt for each mesh point
       g_cgpde[d->MeshId()].dt( d->It(), d->Vol(), m_u, m_dtp );
@@ -1002,7 +1002,7 @@ OversetFE::dt()
   reducndata[d->MeshId()+1] = static_cast< tk::real >(-m_movedmesh);
 
   // Contribute to minimum dt across all chares and advance to next step
-  if (g_newinputdeck.get< newtag::steady_state >()) {
+  if (g_inputdeck.get< newtag::steady_state >()) {
     contribute( reducndata, CkReduction::min_double,
                 CkCallback(CkReductionTarget(OversetFE,advance), thisProxy) );
   }
@@ -1106,7 +1106,7 @@ OversetFE::rhs()
   // clear gradients receive buffer
   tk::destroy(m_chBndGradc);
 
-  const auto steady = g_newinputdeck.get< newtag::steady_state >();
+  const auto steady = g_inputdeck.get< newtag::steady_state >();
 
   // Assign mesh velocity
   if (m_movedmesh) {
@@ -1194,7 +1194,7 @@ OversetFE::solve()
   }
 
   // Explicit time-stepping using RK3
-  const auto steady = g_newinputdeck.get< newtag::steady_state >();
+  const auto steady = g_inputdeck.get< newtag::steady_state >();
   for (std::size_t i=0; i<m_u.nunk(); ++i) {
     // time-step
     auto dtp = d->Dt();
@@ -1244,7 +1244,7 @@ OversetFE::solve()
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping
-    if (g_newinputdeck.get< newtag::steady_state >())
+    if (g_inputdeck.get< newtag::steady_state >())
       for (std::size_t i=0; i<m_u.nunk(); ++i) m_tp[i] += m_dtp[i];
   }
   // Continue to finish-up time-step-stage
@@ -1264,9 +1264,9 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
   auto d = Disc();
 
   if (m_stage == 3) {
-    const auto steady = g_newinputdeck.get< newtag::steady_state >();
-    const auto residual = g_newinputdeck.get< newtag::residual >();
-    const auto rc = g_newinputdeck.get< newtag::rescomp >() - 1;
+    const auto steady = g_inputdeck.get< newtag::steady_state >();
+    const auto residual = g_inputdeck.get< newtag::residual >();
+    const auto rc = g_inputdeck.get< newtag::rescomp >() - 1;
 
     if (m_movedmesh) {
       d->Itf() = 0;  // Zero field output iteration count if mesh moved
@@ -1324,7 +1324,7 @@ OversetFE::writeFields( CkCallback c )
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (g_newinputdeck.get< newtag::cmd, tag::benchmark >()) {
+  if (g_inputdeck.get< newtag::cmd, tag::benchmark >()) {
 
     c.send();
 
@@ -1418,8 +1418,8 @@ OversetFE::evalLB( int nrestart )
   // finished flag
   if (d->restarted( nrestart )) m_finished = 0;
 
-  const auto lbfreq = g_newinputdeck.get< newtag::cmd, tag::lbfreq >();
-  const auto nonblocking = g_newinputdeck.get< newtag::cmd, tag::nonblocking >();
+  const auto lbfreq = g_inputdeck.get< newtag::cmd, tag::lbfreq >();
+  const auto nonblocking = g_inputdeck.get< newtag::cmd, tag::nonblocking >();
 
   // Load balancing if user frequency is reached or after the second time-step
   if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
@@ -1442,8 +1442,8 @@ OversetFE::evalRestart()
 {
   auto d = Disc();
 
-  const auto rsfreq = g_newinputdeck.get< newtag::cmd, tag::rsfreq >();
-  const auto benchmark = g_newinputdeck.get< newtag::cmd, tag::benchmark >();
+  const auto rsfreq = g_inputdeck.get< newtag::cmd, tag::rsfreq >();
+  const auto benchmark = g_inputdeck.get< newtag::cmd, tag::benchmark >();
 
   if (not benchmark and not (d->It() % rsfreq)) {
 

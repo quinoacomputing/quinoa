@@ -21,7 +21,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -43,11 +43,11 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
 {
   tk::InitializeFn::result_type s( ncomp, 0.0 );
 
-  auto nmat = g_newinputdeck.get< eq, newtag::nmat >();
-  const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+  auto nmat = g_inputdeck.get< eq, newtag::nmat >();
+  const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   // Set background ICs
-  const auto& ic = g_newinputdeck.get< newtag::ic >();
+  const auto& ic = g_inputdeck.get< newtag::ic >();
   const auto& bgmatid = ic.get< newtag::materialid >();
   const auto& bgvelic = ic.get< newtag::velocity >();
   const auto& bgpreic = ic.get< newtag::pressure >();

@@ -23,7 +23,7 @@
 namespace inciter {
 
 extern ctr::New2InputDeck g_inputdeck_defaults;
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -69,9 +69,9 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline, int nrestart )
 
   // Parse input deck into g_inputdeck
   print.item( "Control file", cmdline.get< tag::io, tag::control >() );
-  g_newinputdeck = g_inputdeck_defaults;   // overwrite with defaults if restarted
+  g_inputdeck = g_inputdeck_defaults;   // overwrite with defaults if restarted
 
-  LuaParser luaparser( print, cmdline, g_newinputdeck );
+  LuaParser luaparser( print, cmdline, g_inputdeck );
   print.item( "Parsed lua file", "success" );
 
   print.endpart();

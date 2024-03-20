@@ -22,7 +22,6 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Base/TestWriter.cpp
                ../../tests/unit/Control/TestFileParser.cpp
                ../../tests/unit/Control/TestStringParser.cpp
-               ../../tests/unit/Control/TestSystemComponents.cpp
                ../../tests/unit/Control/TestToggle.cpp
                ../../tests/unit/${TestScheme}
                ../../tests/unit/${TestError}

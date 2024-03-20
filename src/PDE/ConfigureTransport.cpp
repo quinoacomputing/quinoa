@@ -78,18 +78,18 @@ infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
 
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_newinputdeck.get< newtag::depvar >()[c] ) );
+    g_inputdeck.get< newtag::depvar >()[c] ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_newinputdeck.get< eq, newtag::problem >() ) );
+    g_inputdeck.get< eq, newtag::problem >() ) );
 
-  auto intsharp = g_newinputdeck.get< eq, newtag::intsharp >();
+  auto intsharp = g_inputdeck.get< eq, newtag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
-  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
+  auto ncomp = g_inputdeck.get< newtag::ncomp >();
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
-  const auto& bc = g_newinputdeck.get< newtag::bc >();
+  const auto& bc = g_inputdeck.get< newtag::bc >();
   for (const auto& ib : bc) {
     const auto& bcdir = ib.get< newtag::dirichlet >();
     if (!bcdir.empty())

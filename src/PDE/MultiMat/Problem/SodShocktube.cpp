@@ -19,7 +19,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -47,7 +47,7 @@ MultiMatProblemSodShocktube::initialize( ncomp_t ncomp,
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 9, "Number of scalar components must be 9" );
 
-  auto nmat = g_newinputdeck.get< eq, newtag::nmat >();
+  auto nmat = g_inputdeck.get< eq, newtag::nmat >();
 
   std::vector< tk::real > s( ncomp, 0.0 );
   tk::real r, p, u, v, w;

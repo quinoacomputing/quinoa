@@ -36,7 +36,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 

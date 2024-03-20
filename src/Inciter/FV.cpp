@@ -35,7 +35,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 extern std::vector< FVPDE > g_fvpde;
 
 } // inciter::
@@ -56,13 +56,13 @@ FV::FV( const CProxy_Discretization& disc,
   m_nlim( 0 ),
   m_nnod( 0 ),
   m_u( Disc()->Inpoel().size()/4,
-       g_newinputdeck.get< newtag::rdof >()*
-       g_newinputdeck.get< newtag::ncomp >() ),
+       g_inputdeck.get< newtag::rdof >()*
+       g_inputdeck.get< newtag::ncomp >() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_p( m_u.nunk(), g_newinputdeck.get< newtag::rdof >()*
+  m_p( m_u.nunk(), g_inputdeck.get< newtag::rdof >()*
     g_fvpde[Disc()->MeshId()].nprim() ),
   m_lhs( m_u.nunk(),
-         g_newinputdeck.get< newtag::ncomp >() ),
+         g_inputdeck.get< newtag::ncomp >() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_npoin( Disc()->Coord()[0].size() ),
   m_diag(),
@@ -72,10 +72,10 @@ FV::FV( const CProxy_Discretization& disc,
   m_initial( 1 ),
   m_uElemfields( m_u.nunk(), m_lhs.nprop() ),
   m_pElemfields(m_u.nunk(),
-    m_p.nprop()/g_newinputdeck.get< newtag::rdof >()),
+    m_p.nprop()/g_inputdeck.get< newtag::rdof >()),
   m_uNodefields( m_npoin, m_lhs.nprop() ),
   m_pNodefields(m_npoin,
-    m_p.nprop()/g_newinputdeck.get< newtag::rdof >()),
+    m_p.nprop()/g_inputdeck.get< newtag::rdof >()),
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_boxelems(),
@@ -101,8 +101,8 @@ FV::FV( const CProxy_Discretization& disc,
     m_rkcoef = {{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
   }
 
-  if (g_newinputdeck.get< newtag::cmd, tag::chare >() ||
-      g_newinputdeck.get< newtag::cmd, tag::quiescence >())
+  if (g_inputdeck.get< newtag::cmd, tag::chare >() ||
+      g_inputdeck.get< newtag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "FV", thisIndex, CkMyPe(), Disc()->It(),
                                         "FV" );
 
@@ -149,7 +149,7 @@ FV::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (!g_newinputdeck.get< newtag::cmd, tag::nonblocking >()) next();
+  if (!g_inputdeck.get< newtag::cmd, tag::nonblocking >()) next();
 }
 
 void
@@ -188,8 +188,8 @@ FV::setup()
 // Set initial conditions, generate lhs, output mesh
 // *****************************************************************************
 {
-  if (g_newinputdeck.get< newtag::cmd, tag::chare >() ||
-      g_newinputdeck.get< newtag::cmd, tag::quiescence >())
+  if (g_inputdeck.get< newtag::cmd, tag::chare >() ||
+      g_inputdeck.get< newtag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "FV", thisIndex, CkMyPe(), Disc()->It(),
                                         "setup" );
 
@@ -210,7 +210,7 @@ FV::setup()
   d->boxvol( {}, {}, 0 );      // punt for now
 
   // Query time history field output labels from all PDEs integrated
-  const auto& hist_points = g_newinputdeck.get< newtag::history_output, newtag::point >();
+  const auto& hist_points = g_inputdeck.get< newtag::history_output, newtag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
     auto n = g_fvpde[d->MeshId()].histNames();
@@ -266,7 +266,7 @@ FV::startFieldOutput( CkCallback c )
 // *****************************************************************************
 {
   // No field output in benchmark mode or if field output frequency not hit
-  if (g_newinputdeck.get< newtag::cmd, tag::benchmark >() || !fieldOutput()) {
+  if (g_inputdeck.get< newtag::cmd, tag::benchmark >() || !fieldOutput()) {
 
     c.send();
 
@@ -442,7 +442,7 @@ FV::reco()
 // Compute reconstructions
 // *****************************************************************************
 {
-  const auto rdof = g_newinputdeck.get< newtag::rdof >();
+  const auto rdof = g_inputdeck.get< newtag::rdof >();
 
   // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -473,7 +473,7 @@ FV::lim()
 // Compute limiter function
 // *****************************************************************************
 {
-  const auto rdof = g_newinputdeck.get< newtag::rdof >();
+  const auto rdof = g_inputdeck.get< newtag::rdof >();
 
   if (rdof > 1) {
     g_fvpde[Disc()->MeshId()].limit( myGhosts()->m_geoFace, myGhosts()->m_fd,
@@ -570,7 +570,7 @@ FV::dt()
 
   if (m_stage == 0)
   {
-    auto const_dt = g_newinputdeck.get< newtag::dt >();
+    auto const_dt = g_inputdeck.get< newtag::dt >();
     auto eps = std::numeric_limits< tk::real >::epsilon();
 
     // use constant dt if configured
@@ -589,11 +589,11 @@ FV::dt()
 
       // time-step suppression for unsteady problems
       tk::real coeff(1.0);
-      if (!g_newinputdeck.get< newtag::steady_state >()) {
+      if (!g_inputdeck.get< newtag::steady_state >()) {
         if (d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It());
       }
 
-      mindt *= coeff * g_newinputdeck.get< newtag::cfl >();
+      mindt *= coeff * g_inputdeck.get< newtag::cfl >();
     }
   }
   else
@@ -619,7 +619,7 @@ FV::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4nod();
 
   auto d = Disc();
-  const auto rdof = g_newinputdeck.get< newtag::rdof >();
+  const auto rdof = g_inputdeck.get< newtag::rdof >();
   const auto neq = m_u.nprop()/rdof;
 
   // Set new time step size
@@ -653,7 +653,7 @@ FV::solve( tk::real newdt )
     d->ElemBlockId(), m_u, m_p, m_rhs, m_srcFlag );
 
   // Explicit time-stepping using RK3 to discretize time-derivative
-  const auto steady = g_newinputdeck.get< newtag::steady_state >();
+  const auto steady = g_inputdeck.get< newtag::steady_state >();
   for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
     for (std::size_t c=0; c<neq; ++c)
     {
@@ -676,7 +676,7 @@ FV::solve( tk::real newdt )
   // Update primitives based on the evolved solution
   g_fvpde[d->MeshId()].updatePrimitives( m_u, m_p,
     myGhosts()->m_fd.Esuel().size()/4 );
-  if (!g_newinputdeck.get< newtag::accuracy_test >()) {
+  if (!g_inputdeck.get< newtag::accuracy_test >()) {
     g_fvpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem, m_u,
       m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
@@ -713,9 +713,9 @@ FV::refine( const std::vector< tk::real >& l2res )
   auto d = Disc();
 
   // Assess convergence for steady state
-  const auto steady = g_newinputdeck.get< newtag::steady_state >();
-  const auto residual = g_newinputdeck.get< newtag::residual >();
-  const auto rc = g_newinputdeck.get< newtag::rescomp >() - 1;
+  const auto steady = g_inputdeck.get< newtag::steady_state >();
+  const auto residual = g_inputdeck.get< newtag::residual >();
+  const auto rc = g_inputdeck.get< newtag::rescomp >() - 1;
 
   bool converged(false);
   if (steady) converged = l2res[rc] < residual;
@@ -724,8 +724,8 @@ FV::refine( const std::vector< tk::real >& l2res )
   // reached or the residual has reached its convergence criterion
   if (d->finished() or converged) m_finished = 1;
 
-  auto dtref = g_newinputdeck.get< newtag::amr, newtag::dtref >();
-  auto dtfreq = g_newinputdeck.get< newtag::amr, newtag::dtfreq >();
+  auto dtref = g_inputdeck.get< newtag::amr, newtag::dtref >();
+  auto dtfreq = g_inputdeck.get< newtag::amr, newtag::dtfreq >();
 
   // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
@@ -855,8 +855,8 @@ FV::refinedOutput() const
 //! \return True if field output will use a refined mesh
 // *****************************************************************************
 {
-  return g_newinputdeck.get< newtag::cmd, tag::io, tag::refined >() &&
-         g_newinputdeck.get< newtag::scheme >() != ctr::SchemeType::FV;
+  return g_inputdeck.get< newtag::cmd, tag::io, tag::refined >() &&
+         g_inputdeck.get< newtag::scheme >() != ctr::SchemeType::FV;
 }
 
 void
@@ -1050,8 +1050,8 @@ FV::evalLB( int nrestart )
   // Detect if just returned from a checkpoint and if so, zero timers and flag
   if (d->restarted( nrestart )) m_finished = 0;
 
-  const auto lbfreq = g_newinputdeck.get< newtag::cmd, tag::lbfreq >();
-  const auto nonblocking = g_newinputdeck.get< newtag::cmd, tag::nonblocking >();
+  const auto lbfreq = g_inputdeck.get< newtag::cmd, tag::lbfreq >();
+  const auto nonblocking = g_inputdeck.get< newtag::cmd, tag::nonblocking >();
 
   // Load balancing if user frequency is reached or after the second time-step
   if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
@@ -1074,8 +1074,8 @@ FV::evalRestart()
 {
   auto d = Disc();
 
-  const auto rsfreq = g_newinputdeck.get< newtag::cmd, tag::rsfreq >();
-  const auto benchmark = g_newinputdeck.get< newtag::cmd, tag::benchmark >();
+  const auto rsfreq = g_inputdeck.get< newtag::cmd, tag::rsfreq >();
+  const auto benchmark = g_inputdeck.get< newtag::cmd, tag::benchmark >();
 
   if ( !benchmark && (d->It()) % rsfreq == 0 ) {
 

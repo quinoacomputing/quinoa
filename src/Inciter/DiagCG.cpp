@@ -36,7 +36,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 extern std::vector< CGPDE > g_cgpde;
 
 } // inciter::
@@ -57,7 +57,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_bface( bface ),
   m_triinpoel( tk::remap(triinpoel,Disc()->Lid()) ),
   m_u( Disc()->Gid().size(),
-       g_newinputdeck.get< newtag::ncomp >() ),
+       g_inputdeck.get< newtag::ncomp >() ),
   m_ul( m_u.nunk(), m_u.nprop() ),
   m_du( m_u.nunk(), m_u.nprop() ),
   m_ue( Disc()->Inpoel().size()/4, m_u.nprop() ),
@@ -76,7 +76,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   m_diag(),
   m_boxnodes(),
   m_dtp( m_u.nunk(), 0.0 ),
-  m_tp( m_u.nunk(), g_newinputdeck.get< newtag::t0 >() ),
+  m_tp( m_u.nunk(), g_inputdeck.get< newtag::t0 >() ),
   m_finished( 0 ),
   m_nusermeshblk( 0 ),
   m_nodeblockid()
@@ -93,7 +93,7 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
   auto d = Disc();
 
   // Perform optional operator-access-pattern mesh node reordering
-  if (g_newinputdeck.get< newtag::operator_reorder >()) {
+  if (g_inputdeck.get< newtag::operator_reorder >()) {
 
     const auto& inpoel = d->Inpoel();
 
@@ -285,7 +285,7 @@ DiagCG::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (!g_newinputdeck.get< newtag::cmd, tag::nonblocking >()) next();
+  if (!g_inputdeck.get< newtag::cmd, tag::nonblocking >()) next();
 }
 
 void
@@ -304,7 +304,7 @@ DiagCG::setup()
   d->boxvol( m_boxnodes, m_nodeblockid, m_nusermeshblk );
 
   // Query time history field output labels from all PDEs integrated
-  const auto& hist_points = g_newinputdeck.get< newtag::history_output, newtag::point >();
+  const auto& hist_points = g_inputdeck.get< newtag::history_output, newtag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
     auto n = g_cgpde[d->MeshId()].histNames();
@@ -449,7 +449,7 @@ DiagCG::dt()
 {
   tk::real mindt = std::numeric_limits< tk::real >::max();
 
-  auto const_dt = g_newinputdeck.get< newtag::dt >();
+  auto const_dt = g_inputdeck.get< newtag::dt >();
   auto eps = std::numeric_limits< tk::real >::epsilon();
 
   auto d = Disc();
@@ -649,7 +649,7 @@ DiagCG::writeFields( CkCallback c ) const
 //! \param[in] c Function to continue with after the write
 // *****************************************************************************
 {
-  if (g_newinputdeck.get< newtag::cmd, tag::benchmark >()) {
+  if (g_inputdeck.get< newtag::cmd, tag::benchmark >()) {
 
     c.send();
 
@@ -684,7 +684,7 @@ DiagCG::writeFields( CkCallback c ) const
     nodesurfs.insert( end(nodesurfs), begin(so), end(so) );
 
     // Query refinement data
-    //auto dtref = g_newinputdeck.get< newtag::amr, newtag::dtref >();
+    //auto dtref = g_inputdeck.get< newtag::amr, newtag::dtref >();
 
     std::tuple< std::vector< std::string >,
                 std::vector< std::vector< tk::real > >,
@@ -750,7 +750,7 @@ DiagCG::update( const tk::Fields& a, [[maybe_unused]] tk::Fields&& dul )
 
   // Apply limited antidiffusive element contributions to low order solution
   auto un = m_u;
-  if (g_newinputdeck.get< newtag::fct >())
+  if (g_inputdeck.get< newtag::fct >())
     m_u = m_ul + a;
   else
     m_u = m_u + m_du;
@@ -774,8 +774,8 @@ DiagCG::refine( [[maybe_unused]] const std::vector< tk::real >& l2res )
 {
   auto d = Disc();
 
-  auto dtref = g_newinputdeck.get< newtag::amr, newtag::dtref >();
-  auto dtfreq = g_newinputdeck.get< newtag::amr, newtag::dtfreq >();
+  auto dtref = g_inputdeck.get< newtag::amr, newtag::dtref >();
+  auto dtfreq = g_inputdeck.get< newtag::amr, newtag::dtfreq >();
 
   // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // h-refine
@@ -926,8 +926,8 @@ DiagCG::evalLB( int nrestart )
   // Detect if just returned from a checkpoint and if so, zero timers
   d->restarted( nrestart );
 
-  const auto lbfreq = g_newinputdeck.get< newtag::cmd, tag::lbfreq >();
-  const auto nonblocking = g_newinputdeck.get< newtag::cmd, tag::nonblocking >();
+  const auto lbfreq = g_inputdeck.get< newtag::cmd, tag::lbfreq >();
+  const auto nonblocking = g_inputdeck.get< newtag::cmd, tag::nonblocking >();
 
   // Load balancing if user frequency is reached or after the second time-step
   if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
@@ -950,8 +950,8 @@ DiagCG::evalRestart()
 {
   auto d = Disc();
 
-  const auto rsfreq = g_newinputdeck.get< newtag::cmd, tag::rsfreq >();
-  const auto benchmark = g_newinputdeck.get< newtag::cmd, tag::benchmark >();
+  const auto rsfreq = g_inputdeck.get< newtag::cmd, tag::rsfreq >();
+  const auto benchmark = g_inputdeck.get< newtag::cmd, tag::benchmark >();
 
   if (not benchmark and not (d->It() % rsfreq)) {
 
@@ -977,8 +977,8 @@ DiagCG::step()
   // Output one-liner status report to screen
   d->status();
 
-  const auto term = g_newinputdeck.get< newtag::term >();
-  const auto nstep = g_newinputdeck.get< newtag::nstep >();
+  const auto term = g_inputdeck.get< newtag::term >();
+  const auto nstep = g_inputdeck.get< newtag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // If neither max iterations nor max time reached, continue, otherwise finish

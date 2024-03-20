@@ -20,7 +20,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 // *****************************************************************************
@@ -29,9 +29,9 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 // *****************************************************************************
 {
   // EoS initialization
-  auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
-  const auto& matprop = g_newinputdeck.get< newtag::material >();
-  const auto& matidxmap = g_newinputdeck.get< newtag::matidxmap >();
+  auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
+  const auto& matprop = g_inputdeck.get< newtag::material >();
+  const auto& matidxmap = g_inputdeck.get< newtag::matidxmap >();
   for (std::size_t k=0; k<nmat; ++k) {
     auto mateos = matprop[matidxmap.get< newtag::eosidx >()[k]].get<newtag::eos>();
     mat_blk.emplace_back(mateos, EqType::multimat, k);
@@ -59,8 +59,8 @@ cleanTraceMultiMat(
 //! \return Boolean indicating if an unphysical material state was found
 // *****************************************************************************
 {
-  const auto ndof = g_newinputdeck.get< newtag::ndof >();
-  const auto rdof = g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = g_inputdeck.get< newtag::ndof >();
+  const auto rdof = g_inputdeck.get< newtag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   auto al_eps = 1.0e-02;
   auto neg_density = false;
@@ -366,8 +366,8 @@ timeStepSizeMultiMat(
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
-  const auto ndof = g_newinputdeck.get< newtag::ndof >();
-  const auto rdof = g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = g_inputdeck.get< newtag::ndof >();
+  const auto rdof = g_inputdeck.get< newtag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -495,8 +495,8 @@ timeStepSizeMultiMatFV(
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
-  const auto ndof = g_newinputdeck.get< newtag::ndof >();
-  const auto rdof = g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = g_inputdeck.get< newtag::ndof >();
+  const auto rdof = g_inputdeck.get< newtag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -560,7 +560,7 @@ getDeformGrad(
 //! \return Inverse deformation gradient tensor (alpha_k * g_k) of material k
 // *****************************************************************************
 {
-  const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+  const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
   std::array< std::array< tk::real, 3 >, 3 > agk;
 
   if (solidx[k] > 0) {
@@ -593,7 +593,7 @@ getCauchyStress(
 //! \return Elastic Cauchy stress tensor (alpha * \sigma_ij) of material k
 // *****************************************************************************
 {
-  const auto& solidx = g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+  const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
   std::array< std::array< tk::real, 3 >, 3 >
     asigk{{ {{0,0,0}}, {{0,0,0}}, {{0,0,0}} }};
 

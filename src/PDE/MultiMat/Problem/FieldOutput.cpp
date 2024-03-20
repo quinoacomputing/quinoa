@@ -17,7 +17,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 std::vector< std::string >
 MultiMatFieldNames( std::size_t nmat )
@@ -227,7 +227,7 @@ MultiMatSurfOutput(
   const auto& esuf = fd.Esuf();
 
   // extract field output along side sets requested
-  for (auto s : g_newinputdeck.get< newtag::field_output, newtag::sideset >()) {
+  for (auto s : g_inputdeck.get< newtag::field_output, newtag::sideset >()) {
     // get face list for side set requested
     auto b = bface.find(s);
     if (b == end(bface)) continue;

@@ -19,7 +19,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -36,7 +36,7 @@ inciter::assignGetVars( const std::string& name )
 
   // Query total number of eq sytems configured by user
   std::size_t neq = 0;
-  neq = inciter::g_newinputdeck.get< newtag::depvar >().size();
+  neq = inciter::g_inputdeck.get< newtag::depvar >().size();
 
   // Only attempt to configure getvars if we are called after the inputdeck has
   // been populated. This guard is here because OutVars, stored in the
@@ -44,11 +44,11 @@ inciter::assignGetVars( const std::string& name )
   // in which case we do nothing, but wait for when we are called with the
   // inputdeck populated.
   if (neq) {
-    if (g_newinputdeck.get< newtag::pde >() == inciter::ctr::PDEType::TRANSPORT)
+    if (g_inputdeck.get< newtag::pde >() == inciter::ctr::PDEType::TRANSPORT)
       assignTransportGetVars( name, f );
-    if (g_newinputdeck.get< newtag::pde >() == inciter::ctr::PDEType::COMPFLOW)
+    if (g_inputdeck.get< newtag::pde >() == inciter::ctr::PDEType::COMPFLOW)
       assignCompFlowGetVars( name, f );
-    if (g_newinputdeck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT)
+    if (g_inputdeck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT)
       assignMultiMatGetVars( name, f );
     // At this point all non-analytic human-readable outvars must have a getvar
     // function assigned

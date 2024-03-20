@@ -112,11 +112,11 @@ PDEStack::selectedCG() const
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
-  const auto sch = g_newinputdeck.get< newtag::scheme >();
+  const auto sch = g_inputdeck.get< newtag::scheme >();
   if (sch == ctr::SchemeType::DiagCG || sch == ctr::SchemeType::ALECG
     || sch == ctr::SchemeType::OversetFE) {
 
-    const auto& d = g_newinputdeck.get< newtag::pde >();
+    const auto& d = g_inputdeck.get< newtag::pde >();
     if (d == ctr::PDEType::TRANSPORT)
       pdes.push_back( createCG< newtag::transport >( d, cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
@@ -138,13 +138,13 @@ PDEStack::selectedDG() const
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< DGPDE > pdes;                // will store instantiated PDEs
 
-  auto sch = g_newinputdeck.get< newtag::scheme >();
+  auto sch = g_inputdeck.get< newtag::scheme >();
   if (sch == ctr::SchemeType::DG ||
       sch == ctr::SchemeType::P0P1 || sch == ctr::SchemeType::DGP1 ||
       sch == ctr::SchemeType::DGP2 || sch == ctr::SchemeType::PDG ||
       sch == ctr::SchemeType::FV) {
 
-    const auto& d = g_newinputdeck.get< newtag::pde >();
+    const auto& d = g_inputdeck.get< newtag::pde >();
     if (d == ctr::PDEType::TRANSPORT)
       pdes.push_back( createDG< newtag::transport >( d, cnt ) );
     else if (d == ctr::PDEType::COMPFLOW)
@@ -168,10 +168,10 @@ PDEStack::selectedFV() const
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< FVPDE > pdes;                // will store instantiated PDEs
 
-  auto sch = g_newinputdeck.get< newtag::scheme >();
+  auto sch = g_inputdeck.get< newtag::scheme >();
   if (sch == ctr::SchemeType::FV) {
 
-    const auto& d = g_newinputdeck.get< newtag::pde >();
+    const auto& d = g_inputdeck.get< newtag::pde >();
     if (d == ctr::PDEType::MULTIMAT)
       pdes.push_back( createFV< newtag::multimat >( d, cnt ) );
     else Throw( "Can't find selected FVPDE" );
@@ -193,7 +193,7 @@ PDEStack::info() const
   // will store info on all differential equations selected
   std::vector< std::vector< std::pair< std::string, std::string > > > nfo;
 
-  const auto& d = g_newinputdeck.get< newtag::pde >();
+  const auto& d = g_inputdeck.get< newtag::pde >();
   if (d == ctr::PDEType::TRANSPORT)
     nfo.emplace_back( infoTransport( cnt ) );
   else if (d == ctr::PDEType::COMPFLOW)

@@ -36,7 +36,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 using BCStateFn =
@@ -59,7 +59,7 @@ struct ConfigBC {
   template< typename U > void operator()( brigand::type_<U> ) {
     std::vector< std::size_t > cfg, v;
     // collect sidesets across all meshes
-    for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+    for (const auto& ibc : g_inputdeck.get< newtag::bc >()) {
       v.insert(v.end(), ibc.get< U >().begin(), ibc.get< U >().end());
     }
     if (v.size() > 0) cfg = v;

@@ -26,7 +26,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 //! CompFlow system of PDEs problem: nonlinear energy growth (NLEG)
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
@@ -71,13 +71,13 @@ class CompFlowProblemNLEnergyGrowth {
       Assert(sv.size() == 5, "Incorrect source vector size");
       using std::sin; using std::cos;
       // manufactured solution parameters
-      const auto a = g_newinputdeck.get< eq, newtag::alpha >();
-      const auto bx = g_newinputdeck.get< eq, newtag::betax >();
-      const auto by = g_newinputdeck.get< eq, newtag::betay >();
-      const auto bz = g_newinputdeck.get< eq, newtag::betaz >();
-      const auto ce = g_newinputdeck.get< eq, newtag::ce >();
-      const auto kappa = g_newinputdeck.get< eq, newtag::kappa >();
-      const auto r0 = g_newinputdeck.get< eq, newtag::r0 >();
+      const auto a = g_inputdeck.get< eq, newtag::alpha >();
+      const auto bx = g_inputdeck.get< eq, newtag::betax >();
+      const auto by = g_inputdeck.get< eq, newtag::betay >();
+      const auto bz = g_inputdeck.get< eq, newtag::betaz >();
+      const auto ce = g_inputdeck.get< eq, newtag::ce >();
+      const auto kappa = g_inputdeck.get< eq, newtag::kappa >();
+      const auto r0 = g_inputdeck.get< eq, newtag::r0 >();
       // ratio of specific heats
       const auto g = getmatprop< newtag::gamma >();
       // spatial component of density field

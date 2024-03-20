@@ -21,7 +21,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -44,7 +44,7 @@ CompFlowProblemUserDefined::initialize( ncomp_t ncomp,
   tk::InitializeFn::result_type u( ncomp, 0.0 );
 
   // Set background ICs
-  const auto& ic = g_newinputdeck.get< newtag::ic >();
+  const auto& ic = g_inputdeck.get< newtag::ic >();
   const auto& bgrhoic = ic.get< newtag::density >();
   const auto& bgvelic = ic.get< newtag::velocity >();
   const auto& bgpreic = ic.get< newtag::pressure >();

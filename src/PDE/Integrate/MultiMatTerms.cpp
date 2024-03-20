@@ -27,7 +27,7 @@
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 }
 
 namespace tk {
@@ -81,7 +81,7 @@ nonConservativeInt( std::size_t nmat,
   using inciter::newSolidsAccFn;
 
   const auto& solidx =
-    inciter::g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+    inciter::g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   const auto& cx = coord[0];
   const auto& cy = coord[1];
@@ -289,7 +289,7 @@ updateRhsNonCons(
   using inciter::deformDofIdx;
 
   const auto& solidx =
-    inciter::g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+    inciter::g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   //Assert( dBdx[0].size() == ndof_el,
   //        "Size mismatch for basis function derivatives" );
@@ -448,7 +448,7 @@ pressureRelaxationInt( std::size_t nmat,
   using inciter::deformIdx;
 
   const auto& solidx =
-    inciter::g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+    inciter::g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
@@ -883,7 +883,7 @@ fluxTerms(
   using inciter::deformIdx;
 
   const auto& solidx =
-    inciter::g_newinputdeck.get< newtag::matidxmap, newtag::solidx >();
+    inciter::g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
 
   std::vector< std::array< tk::real, 3 > > fl( ncomp );
 

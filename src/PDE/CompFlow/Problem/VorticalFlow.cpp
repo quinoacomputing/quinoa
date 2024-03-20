@@ -18,7 +18,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -43,9 +43,9 @@ CompFlowProblemVorticalFlow::initialize( ncomp_t,
   using newtag::compflow;
 
   // manufactured solution parameters
-  auto a = g_newinputdeck.get< compflow, newtag::alpha >();
-  auto b = g_newinputdeck.get< compflow, newtag::beta >();
-  auto p0 = g_newinputdeck.get< compflow, newtag::p0 >();
+  auto a = g_inputdeck.get< compflow, newtag::alpha >();
+  auto b = g_inputdeck.get< compflow, newtag::beta >();
+  auto p0 = g_inputdeck.get< compflow, newtag::p0 >();
   // ratio of specific heats
   auto g = getmatprop< newtag::gamma >();
   // velocity
@@ -77,9 +77,9 @@ CompFlowProblemVorticalFlow::analyticSolution( ncomp_t,
   using newtag::compflow;
 
   // manufactured solution parameters
-  auto a = g_newinputdeck.get< compflow, newtag::alpha >();
-  auto b = g_newinputdeck.get< compflow, newtag::beta >();
-  auto p0 = g_newinputdeck.get< compflow, newtag::p0 >();
+  auto a = g_inputdeck.get< compflow, newtag::alpha >();
+  auto b = g_inputdeck.get< compflow, newtag::beta >();
+  auto p0 = g_inputdeck.get< compflow, newtag::p0 >();
   // ratio of specific heats
   auto g = getmatprop< newtag::gamma >();
   // velocity

@@ -18,7 +18,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -44,13 +44,13 @@ CompFlowProblemRayleighTaylor::initialize( ncomp_t,
   using std::sin; using std::cos;
 
   // manufactured solution parameters
-  const auto a = g_newinputdeck.get< eq, newtag::alpha >();
-  const auto bx = g_newinputdeck.get< eq, newtag::betax >();
-  const auto by = g_newinputdeck.get< eq, newtag::betay >();
-  const auto bz = g_newinputdeck.get< eq, newtag::betaz >();
-  const auto p0 = g_newinputdeck.get< eq, newtag::p0 >();
-  const auto r0 = g_newinputdeck.get< eq, newtag::r0 >();
-  const auto k = g_newinputdeck.get< eq, newtag::kappa >();
+  const auto a = g_inputdeck.get< eq, newtag::alpha >();
+  const auto bx = g_inputdeck.get< eq, newtag::betax >();
+  const auto by = g_inputdeck.get< eq, newtag::betay >();
+  const auto bz = g_inputdeck.get< eq, newtag::betaz >();
+  const auto p0 = g_inputdeck.get< eq, newtag::p0 >();
+  const auto r0 = g_inputdeck.get< eq, newtag::r0 >();
+  const auto k = g_inputdeck.get< eq, newtag::kappa >();
   // spatial component of density and pressure fields
   const tk::real gx = bx*x*x + by*y*y + bz*z*z;
   // density
@@ -89,13 +89,13 @@ CompFlowProblemRayleighTaylor::analyticSolution(
   using std::sin; using std::cos;
 
   // manufactured solution parameters
-  auto a = g_newinputdeck.get< eq, newtag::alpha >();
-  auto bx = g_newinputdeck.get< eq, newtag::betax >();
-  auto by = g_newinputdeck.get< eq, newtag::betay >();
-  auto bz = g_newinputdeck.get< eq, newtag::betaz >();
-  auto p0 = g_newinputdeck.get< eq, newtag::p0 >();
-  auto r0 = g_newinputdeck.get< eq, newtag::r0 >();
-  auto k = g_newinputdeck.get< eq, newtag::kappa >();
+  auto a = g_inputdeck.get< eq, newtag::alpha >();
+  auto bx = g_inputdeck.get< eq, newtag::betax >();
+  auto by = g_inputdeck.get< eq, newtag::betay >();
+  auto bz = g_inputdeck.get< eq, newtag::betaz >();
+  auto p0 = g_inputdeck.get< eq, newtag::p0 >();
+  auto r0 = g_inputdeck.get< eq, newtag::r0 >();
+  auto k = g_inputdeck.get< eq, newtag::kappa >();
   // spatial component of density and pressure fields
   auto gx = bx*x*x + by*y*y + bz*z*z;
   // density

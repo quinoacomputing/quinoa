@@ -69,7 +69,6 @@
 #include "Types.hpp"
 #include "StatCtr.hpp"
 #include "Particles.hpp"
-#include "SystemComponents.hpp"
 #include "UniPDF.hpp"
 #include "BiPDF.hpp"
 #include "TriPDF.hpp"

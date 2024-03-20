@@ -80,25 +80,25 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::COMPFLOW ), "" );
 
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_newinputdeck.get< newtag::depvar >()[c] ) );
+    g_inputdeck.get< newtag::depvar >()[c] ) );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
-    g_newinputdeck.get< newtag::physics >() ) );
+    g_inputdeck.get< newtag::physics >() ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_newinputdeck.get< eq, newtag::problem >() ) );
+    g_inputdeck.get< eq, newtag::problem >() ) );
 
-  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
+  auto ncomp = g_inputdeck.get< newtag::ncomp >();
   nfo.emplace_back( "number of components", parameter( ncomp ) );
 
-  const auto scheme = g_newinputdeck.get< newtag::scheme >();
+  const auto scheme = g_inputdeck.get< newtag::scheme >();
   if (scheme != ctr::SchemeType::DiagCG && scheme != ctr::SchemeType::ALECG
     && scheme != ctr::SchemeType::OversetFE)
     nfo.emplace_back( "flux", ctr::Flux().name(
-      g_newinputdeck.get< newtag::flux >() ) );
+      g_inputdeck.get< newtag::flux >() ) );
 
   const auto& meshes =
-    g_newinputdeck.get< newtag::mesh >();
+    g_inputdeck.get< newtag::mesh >();
 
   if (meshes.size() > c) {
     for (const auto& m : meshes) {
@@ -108,7 +108,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   // ICs
 
-  const auto& ic = g_newinputdeck.get< newtag::ic >();
+  const auto& ic = g_inputdeck.get< newtag::ic >();
 
   const auto& icbox = ic.get< newtag::box >();
   if (!icbox.empty()) {
@@ -145,7 +145,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   // BCs
 
-  const auto& bc = g_newinputdeck.get< newtag::bc >();
+  const auto& bc = g_inputdeck.get< newtag::bc >();
   for (const auto& ib : bc) {
     const auto& stag = ib.get< newtag::stag_point >();
     const auto& radius = ib.get< newtag::radius >();

@@ -23,7 +23,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -78,7 +78,7 @@ BoxElems(
 // *****************************************************************************
 {
   // Detect if user has configured IC boxes
-  const auto& icbox = inciter::g_newinputdeck.get<newtag::ic, newtag::box>();
+  const auto& icbox = inciter::g_inputdeck.get<newtag::ic, newtag::box>();
   if (!icbox.empty()) {
     std::size_t bcnt = 0;
     for (const auto& b : icbox) {   // for all boxes for this eq

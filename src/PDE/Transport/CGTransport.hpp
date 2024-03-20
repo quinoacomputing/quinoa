@@ -31,7 +31,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 namespace cg {
 
@@ -60,7 +60,7 @@ class Transport {
     explicit Transport() :
       m_physics( Physics() ),
       m_problem( Problem() ),
-      m_ncomp(g_newinputdeck.get< newtag::ncomp >())
+      m_ncomp(g_inputdeck.get< newtag::ncomp >())
     {
       m_problem.errchk( m_ncomp );
     }
@@ -461,7 +461,7 @@ class Transport {
         // find minimum dt across all elements
         if (elemdt < mindt) mindt = elemdt;
       }
-      return mindt * g_newinputdeck.get< newtag::cfl >();
+      return mindt * g_inputdeck.get< newtag::cfl >();
     }
 
     //! Compute a time step size for each mesh node (for steady time stepping)
@@ -497,8 +497,8 @@ class Transport {
     {
       using NodeBC = std::vector< std::pair< bool, real > >;
       std::map< std::size_t, NodeBC > bc;
-      const auto& ubc = g_newinputdeck.get< newtag::bc >()[0].get< newtag::dirichlet >();
-      const auto steady = g_newinputdeck.get< newtag::steady_state >();
+      const auto& ubc = g_inputdeck.get< newtag::bc >()[0].get< newtag::dirichlet >();
+      const auto steady = g_inputdeck.get< newtag::steady_state >();
       if (!ubc.empty()) {
         Assert( ubc.size() > 0, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
@@ -557,7 +557,7 @@ class Transport {
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
       std::vector< std::string > n;
-      auto depvar = g_newinputdeck.get< newtag::depvar >()[0];
+      auto depvar = g_inputdeck.get< newtag::depvar >()[0];
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) + "_analytic" );
       return n;
@@ -595,7 +595,7 @@ class Transport {
     std::vector< std::string > names() const {
       std::vector< std::string > n;
       const auto& depvar =
-        g_newinputdeck.get< newtag::depvar >().at(0);
+        g_inputdeck.get< newtag::depvar >().at(0);
       // construct the name of the numerical solution for all components
       for (ncomp_t c=0; c<m_ncomp; ++c)
         n.push_back( depvar + std::to_string(c) );

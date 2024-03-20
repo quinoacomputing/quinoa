@@ -80,31 +80,31 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::MULTIMAT ), "" );
 
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_newinputdeck.get< newtag::depvar >()[c] ) );
+    g_inputdeck.get< newtag::depvar >()[c] ) );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
-    g_newinputdeck.get< newtag::physics >() ) );
+    g_inputdeck.get< newtag::physics >() ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_newinputdeck.get< eq, newtag::problem >() ) );
+    g_inputdeck.get< eq, newtag::problem >() ) );
 
   nfo.emplace_back( "flux", ctr::Flux().name(
-    g_newinputdeck.get< newtag::flux >() ) );
+    g_inputdeck.get< newtag::flux >() ) );
 
-  auto nmat = g_newinputdeck.get< eq, newtag::nmat >();
+  auto nmat = g_inputdeck.get< eq, newtag::nmat >();
   nfo.emplace_back( "number of materials", std::to_string( nmat ) );
 
-  auto prelax = g_newinputdeck.get< eq, newtag::prelax >();
+  auto prelax = g_inputdeck.get< eq, newtag::prelax >();
   nfo.emplace_back( "finite pressure relaxation", std::to_string( prelax ) );
 
-  auto intsharp = g_newinputdeck.get< eq, newtag::intsharp >();
+  auto intsharp = g_inputdeck.get< eq, newtag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
-  auto ncomp = g_newinputdeck.get< newtag::ncomp >();
+  auto ncomp = g_inputdeck.get< newtag::ncomp >();
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
   // Material eos output
-  const auto& matprop = g_newinputdeck.get< newtag::material >();
+  const auto& matprop = g_inputdeck.get< newtag::material >();
   for (const auto& mtype : matprop) {
     const auto& m_id = mtype.get< newtag::id >();
     ctr::Material opt;
@@ -115,7 +115,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
 
   // ICs and IC-boxes
 
-  const auto& ic = g_newinputdeck.get< newtag::ic >();
+  const auto& ic = g_inputdeck.get< newtag::ic >();
 
   const auto& bgmatidic = ic.get< newtag::materialid >();
   nfo.emplace_back( "IC background material id", parameter( bgmatidic ) );

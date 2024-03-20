@@ -25,7 +25,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 //! Register compressible flow PDEs into PDE factory
 void

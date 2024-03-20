@@ -28,7 +28,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 //! CompFlow system of PDEs problem: vortical flow
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
@@ -65,8 +65,8 @@ class CompFlowProblemVorticalFlow {
       Assert(sv.size() == 5, "Incorrect source vector size");
 
       // manufactured solution parameters
-      auto a = g_newinputdeck.get< eq, newtag::alpha >();
-      auto b = g_newinputdeck.get< eq, newtag::beta >();
+      auto a = g_inputdeck.get< eq, newtag::alpha >();
+      auto b = g_inputdeck.get< eq, newtag::beta >();
       // ratio of specific heats
       tk::real g = getmatprop< newtag::gamma >();
       // evaluate solution at x,y,z

@@ -33,7 +33,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 namespace cg {
 
@@ -67,19 +67,19 @@ class CompFlow {
       m_fp(),
       m_fu()
     {
-      Assert( g_newinputdeck.get< newtag::ncomp >() == m_ncomp,
+      Assert( g_inputdeck.get< newtag::ncomp >() == m_ncomp,
        "Number of CompFlow PDE components must be " + std::to_string(m_ncomp) );
 
       // EoS initialization
       const auto& matprop =
-        g_newinputdeck.get< newtag::material >();
+        g_inputdeck.get< newtag::material >();
       const auto& matidxmap =
-        g_newinputdeck.get< newtag::matidxmap >();
+        g_inputdeck.get< newtag::matidxmap >();
       auto mateos = matprop[matidxmap.get< newtag::eosidx >()[0]].get<newtag::eos>();
       m_mat_blk.emplace_back( mateos, EqType::compflow, 0 );
 
       // Boundary condition configurations
-      for (const auto& bci : g_newinputdeck.get< newtag::bc >()) {
+      for (const auto& bci : g_inputdeck.get< newtag::bc >()) {
         // store stag-point coordinates
         auto& spt = std::get< 0 >(m_stagCnf);
         spt.insert( spt.end(), bci.get< newtag::stag_point >().begin(),
@@ -115,7 +115,7 @@ class CompFlow {
       const auto& z = coord[2];
 
       // Detect if user has configured IC boxes
-      const auto& icbox = g_newinputdeck.get<newtag::ic, newtag::box>();
+      const auto& icbox = g_inputdeck.get<newtag::ic, newtag::box>();
       if (!icbox.empty()) {
         std::size_t bcnt = 0;
         for (const auto& b : icbox) {   // for all boxes for this eq
@@ -163,7 +163,7 @@ class CompFlow {
       }
 
       // size IC mesh blocks volume vector
-      const auto& mblks = g_newinputdeck.get< newtag::ic, newtag::meshblock >();
+      const auto& mblks = g_inputdeck.get< newtag::ic, newtag::meshblock >();
       // if mesh blocks have been specified for this system
       if (!mblks.empty()) {
         std::size_t idMax(0);
@@ -212,7 +212,7 @@ class CompFlow {
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      const auto& ic = g_newinputdeck.get< newtag::ic >();
+      const auto& ic = g_inputdeck.get< newtag::ic >();
       const auto& icbox = ic.get< newtag::box >();
       const auto& mblks = ic.get< newtag::meshblock >();
 
@@ -637,7 +637,7 @@ class CompFlow {
       bndint( coord, triinpoel, symbctri, U, W, spmult, R );
 
       // compute external (energy) sources
-      const auto& icbox = g_newinputdeck.get< newtag::ic, newtag::box >();
+      const auto& icbox = g_inputdeck.get< newtag::ic, newtag::box >();
 
       if (!icbox.empty() && !boxnodes.empty()) {
         std::size_t bcnt = 0;
@@ -736,7 +736,7 @@ class CompFlow {
               "vector at recent time step incorrect" );
 
       // energy source propagation time and velocity
-      const auto& icbox = g_newinputdeck.get< newtag::ic, newtag::box >();
+      const auto& icbox = g_inputdeck.get< newtag::ic, newtag::box >();
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -804,11 +804,11 @@ class CompFlow {
         // find minimum dt across all elements
         mindt = std::min( elemdt, mindt );
       }
-      mindt *= g_newinputdeck.get< newtag::cfl >();
+      mindt *= g_inputdeck.get< newtag::cfl >();
 
       // compute the minimum dt across all nodes we contribute to due to volume
       // change in time
-      auto dvcfl = g_newinputdeck.get< newtag::ale, newtag::dvcfl >();
+      auto dvcfl = g_inputdeck.get< newtag::ale, newtag::dvcfl >();
       if (dtn > 0.0 && dvcfl > 0.0) {
         Assert( vol.size() == voln.size(), "Size mismatch" );
         for (std::size_t p=0; p<vol.size(); ++p) {
@@ -844,7 +844,7 @@ class CompFlow {
         // characteristic velocity
         auto v = std::sqrt((u[1]*u[1] + u[2]*u[2] + u[3]*u[3])/u[0]/u[0]) + c;
         // compute dt for node
-        dtp[i] = L / v * g_newinputdeck.get< newtag::cfl >();
+        dtp[i] = L / v * g_inputdeck.get< newtag::cfl >();
       }
     }
 
@@ -878,12 +878,12 @@ class CompFlow {
 
       // collect sidesets across all meshes
       std::vector< std::size_t > ubc;
-      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+      for (const auto& ibc : g_inputdeck.get< newtag::bc >()) {
         ubc.insert(ubc.end(), ibc.get< newtag::dirichlet >().begin(),
           ibc.get< newtag::dirichlet >().end());
       }
 
-      const auto steady = g_newinputdeck.get< newtag::steady_state >();
+      const auto steady = g_inputdeck.get< newtag::steady_state >();
       if (!ubc.empty()) {
         Assert( ubc.size() > 0, "Indexing out of Dirichlet BC eq-vector" );
         const auto& x = coord[0];
@@ -923,7 +923,7 @@ class CompFlow {
     {
       // collect sidesets across all meshes
       std::vector< std::size_t > sbc;
-      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+      for (const auto& ibc : g_inputdeck.get< newtag::bc >()) {
         sbc.insert(sbc.end(), ibc.get< newtag::symmetry >().begin(),
           ibc.get< newtag::symmetry >().end());
       }
@@ -967,7 +967,7 @@ class CompFlow {
     {
       // collect sidesets across all meshes
       std::vector< std::size_t > fbc;
-      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+      for (const auto& ibc : g_inputdeck.get< newtag::bc >()) {
         fbc.insert(fbc.end(), ibc.get< newtag::farfield >().begin(),
           ibc.get< newtag::farfield >().end());
       }
@@ -1031,12 +1031,12 @@ class CompFlow {
     {
       // collect sidesets across all meshes
       std::vector< std::size_t > ss;
-      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+      for (const auto& ibc : g_inputdeck.get< newtag::bc >()) {
         ss.insert(ss.end(), ibc.get< newtag::sponge, newtag::sideset >().begin(),
           ibc.get< newtag::sponge, newtag::sideset >().end());
       }
       const auto spvel =
-        g_newinputdeck.get< newtag::bc >()[0].get< newtag::sponge, newtag::vparam >();
+        g_inputdeck.get< newtag::bc >()[0].get< newtag::sponge, newtag::vparam >();
       if (ss.size() > 0) {          // sponge side set for this system
         for (auto p : nodes) {             // for all sponge nodes
           std::vector< tk::real > sp( ss.size(), 0.0 );
@@ -1678,7 +1678,7 @@ class CompFlow {
         // sum source contributions to nodes
         for (std::size_t a=0; a<4; ++a) {
           std::vector< real > s(m_ncomp);
-          if (g_newinputdeck.get< newtag::steady_state >()) t = tp[N[a]];
+          if (g_inputdeck.get< newtag::steady_state >()) t = tp[N[a]];
           Problem::src( 1, m_mat_blk, x[N[a]], y[N[a]], z[N[a]], t, s );
           for (std::size_t c=0; c<m_ncomp; ++c)
             R.var(r[c],N[a]) += J24 * s[c];
@@ -1709,7 +1709,7 @@ class CompFlow {
                  const std::array< std::vector< real >, 3 >& coord,
                  tk::Fields& R ) const
     {
-      const auto& icbox = g_newinputdeck.get< newtag::ic, newtag::box >();
+      const auto& icbox = g_inputdeck.get< newtag::ic, newtag::box >();
 
       if (!icbox.empty()) {
         for (const auto& b : icbox) {   // for all boxes for this eq
@@ -1840,12 +1840,12 @@ class CompFlow {
       std::size_t nset = 0;     // number of sponge side sets configured
       // collect sidesets across all meshes
       std::vector< std::size_t > ss;
-      for (const auto& ibc : g_newinputdeck.get< newtag::bc >()) {
+      for (const auto& ibc : g_inputdeck.get< newtag::bc >()) {
         ss.insert(ss.end(), ibc.get< newtag::sponge, newtag::sideset >().begin(),
           ibc.get< newtag::sponge, newtag::sideset >().end());
       }
       const auto sppre =
-        g_newinputdeck.get< newtag::bc >()[0].get< newtag::sponge, newtag::vparam >();
+        g_inputdeck.get< newtag::bc >()[0].get< newtag::sponge, newtag::vparam >();
       if (ss.size() > 0) {  // if symbcs configured for this system
         nset = ss.size();  // number of sponge side sets configured
         spmult.resize( x.size() * nset, 0.0 );

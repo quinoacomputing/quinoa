@@ -22,7 +22,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_newinputdeck;
+extern ctr::New2InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -51,8 +51,8 @@ tk::initialize( ncomp_t ncomp,
 //! \param[in] nielem Number of internal elements
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_newinputdeck.get< newtag::ndof >();
-  const auto rdof = inciter::g_newinputdeck.get< newtag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< newtag::ndof >();
+  const auto rdof = inciter::g_inputdeck.get< newtag::rdof >();
 
   // Number of quadrature points for volume integration
   auto ng = tk::NGinit(ndof);

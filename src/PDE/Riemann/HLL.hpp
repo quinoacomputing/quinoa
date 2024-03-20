@@ -37,7 +37,7 @@ struct HLL {
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& )
   {
-    auto nmat = g_newinputdeck.get< newtag::multimat, newtag::nmat >();
+    auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
 
     auto ncomp = u[0].size()-(3+nmat);
     std::vector< tk::real > flx(ncomp, 0), fl(ncomp, 0), fr(ncomp, 0);
