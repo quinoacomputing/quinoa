@@ -29,7 +29,7 @@ namespace inciter {
 //! Transport PDE problem: advection of two-dimensional Gaussian hump
 class TransportProblemGaussHump {
   private:
-    using ncomp_t = inciter::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
     using eq = newtag::transport;
 
   public:

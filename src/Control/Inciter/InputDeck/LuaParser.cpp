@@ -20,16 +20,35 @@
 #include "Exception.hpp"
 #include "Inciter/Types.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "Inciter/InputDeck/NewInputDeck.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
-#include "Inciter/InputDeck/Grammar.hpp"
+#include "PDE/MultiMat/MultiMatIndexing.hpp"
 
 namespace tk {
 namespace grm {
 
 //TODO: remove this?
 extern tk::Print g_print;
+
+  //! \brief Case-insensitive character comparison functor
+  struct CaseInsensitiveCharLess {
+    //! Function call operator
+    //! \param[in] lhs Left character of the comparitor operand
+    //! \param[in] rhs Right character of the comparitor operand
+    //! \return Boolean indicating the result of the comparison
+    bool operator() ( char lhs, char rhs ) const {
+      return std::tolower( lhs ) < std::tolower( rhs );
+    }
+  };
+
+  //! \brief Parser-lifetime storage for dependent variables selected.
+  //! \details Used to track the dependent variable of differential equations
+  //!   (i.e., models) assigned during parsing. It needs to be case insensitive
+  //!   since we only care about whether the variable is selected or not and not
+  //!   whether it denotes a full variable (upper case) or a fluctuation (lower
+  //!   case). This is true for both inserting variables into the set as well as
+  //!   at matching terms of products in parsing requested statistics.
+  static std::set< char, CaseInsensitiveCharLess > depvars;
 
 } // grm::
 } // tk::

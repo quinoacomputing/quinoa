@@ -20,10 +20,10 @@
 
 #include <brigand/algorithms/for_each.hpp>
 
+#include "Types.hpp"
 #include "NoWarning/set.hpp"
 
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "Inciter/Components.hpp"
 
 namespace inciter {
 
@@ -40,8 +40,7 @@ using InputDeckMembers = brigand::list<
   , tag::discr,           discretization
   , tag::prec,            precision
   , tag::flformat,        floatformat
-  , tag::component,       ncomps
-  , tag::sys,             std::map< tk::ctr::ncomp_t, tk::ctr::ncomp_t >
+  , tag::sys,             std::map< tk::ncomp_t, tk::ncomp_t >
   , tag::output,          output_parameters
   , tag::param,           parameters
   , tag::couple,          couple

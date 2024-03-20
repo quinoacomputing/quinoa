@@ -32,8 +32,8 @@ class TransportPhysicsAdvection {
 
     //! Add diffusion contribution to rhs at 2nd step stage (no-op)
     static void
-    diffusionRhs( tk::ctr::ncomp_t,
-                  tk::ctr::ncomp_t,
+    diffusionRhs( tk::ncomp_t,
+                  tk::ncomp_t,
                   tk::real,
                   tk::real,
                   const std::array< std::array< tk::real, 3 >, 4 >&,
@@ -45,8 +45,8 @@ class TransportPhysicsAdvection {
     //! Compute the minimum time step size based on the diffusion
     //! \return A large time step size, i.e., ignore
     static tk::real
-    diffusion_dt( tk::ctr::ncomp_t,
-                  tk::ctr::ncomp_t,
+    diffusion_dt( tk::ncomp_t,
+                  tk::ncomp_t,
                   tk::real,
                   const std::vector< std::array< tk::real, 4 > >& )
     { return std::numeric_limits< tk::real >::max(); }

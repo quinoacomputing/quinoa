@@ -35,7 +35,7 @@ registerMultiMat( DGFactory& df, FVFactory& ff,
 
 //! Return information on the multi-material compressible flow PDE
 std::vector< std::pair< std::string, std::string > >
-infoMultiMat( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt );
+infoMultiMat( std::map< ctr::PDEType, tk::ncomp_t >& cnt );
 
 //! \brief Assign function that computes physics variables from the
 //!   numerical solution for MultiMat
@@ -106,7 +106,7 @@ bulkSpecificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 //! \param[in] U Numerical solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Velocity component ready to be output to file
-template< tk::ctr::ncomp_t dir >
+template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
 velocityOutVar( const tk::Fields& U, std::size_t rdof )
 {

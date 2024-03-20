@@ -36,7 +36,7 @@ registerCompFlow( CGFactory& cf,
 
 //! Return information on the compressible flow PDE
 std::vector< std::pair< std::string, std::string > >
-infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt );
+infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt );
 
 //! \brief Assign function that computes physics variables from the
 //!   numerical solution for CompFlow
@@ -69,7 +69,7 @@ densityOutVar( const tk::Fields& U, std::size_t )
 //! \param[in] U Numerical solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Velocity component ready to be output to file
-template< tk::ctr::ncomp_t dir >
+template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
 velocityOutVar( const tk::Fields& U, std::size_t rdof )
 {
@@ -110,7 +110,7 @@ specificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 //! \param[in] U Numerical solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Momentum component ready to be output to file
-template< tk::ctr::ncomp_t dir >
+template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
 momentumOutVar( const tk::Fields& U, std::size_t rdof )
 {

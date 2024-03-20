@@ -27,7 +27,7 @@ namespace cg {
 class TransportPhysicsAdvDiff {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
     using eq = newtag::transport;
 
   public:

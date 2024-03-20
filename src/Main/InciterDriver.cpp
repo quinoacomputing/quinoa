@@ -12,7 +12,6 @@
 
 #include "InciterPrint.hpp"
 #include "InciterDriver.hpp"
-#include "Inciter/InputDeck/Parser.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "TaggedTupleDeepPrint.hpp"

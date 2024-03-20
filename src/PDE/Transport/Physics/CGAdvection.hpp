@@ -29,7 +29,7 @@ namespace cg {
 class TransportPhysicsAdvection {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
 
   public:
     //! Add diffusion contribution to rhs (no-op for advection only)
@@ -46,7 +46,7 @@ class TransportPhysicsAdvection {
     //! Compute the minimum time step size based on the diffusion
     //! \return A large time step size, i.e., ignore
     tk::real
-    diffusion_dt( tk::ctr::ncomp_t,
+    diffusion_dt( ncomp_t,
                   tk::real,
                   const std::vector< std::array< tk::real, 4 > >& ) const
     { return std::numeric_limits< tk::real >::max(); }

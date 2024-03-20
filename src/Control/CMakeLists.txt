@@ -9,7 +9,6 @@ if (ENABLE_INCITER)
   add_library(InciterControl
               FileParser.cpp
               StringParser.cpp
-              Inciter/InputDeck/Parser.cpp
               Inciter/InputDeck/LuaParser.cpp
               Inciter/CmdLine/Parser.cpp)
 

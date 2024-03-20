@@ -19,7 +19,6 @@
 #include <iostream>
 
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "Inciter/Components.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "Inciter/Options/Scheme.hpp"
 #include "Options/PartitioningAlgorithm.hpp"

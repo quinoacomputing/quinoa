@@ -18,6 +18,7 @@
 #ifndef CompFlowPhysicsDGEuler_h
 #define CompFlowPhysicsDGEuler_h
 
+#include "Types.hpp"
 #include "Inciter/Options/Physics.hpp"
 
 namespace inciter {
@@ -30,7 +31,7 @@ namespace dg {
 class CompFlowPhysicsEuler {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
 
   public:
     //! Return physics type

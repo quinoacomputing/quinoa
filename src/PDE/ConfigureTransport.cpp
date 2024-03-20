@@ -60,7 +60,7 @@ registerTransport( CGFactory& cf,
 }
 
 std::vector< std::pair< std::string, std::string > >
-infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt )
+infoTransport( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
 // *****************************************************************************
 //  Return information on the transport PDE
 //! \param[inout] cnt std::map of counters for all PDE types
