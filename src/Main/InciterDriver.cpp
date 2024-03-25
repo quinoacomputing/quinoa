@@ -21,8 +21,8 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck_defaults;
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -40,7 +40,7 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline, int nrestart )
 
   // Create pretty printer
   const auto& def =
-    g_inputdeck_defaults.get< newtag::cmd, tag::io, tag::screen >();
+    g_inputdeck_defaults.get< tag::cmd, tag::io, tag::screen >();
   InciterPrint print( cmdline.logname( def, nrestart ),
                       cmdline.get< tag::verbose >() ? std::cout : std::clog,
                       std::ios_base::app );

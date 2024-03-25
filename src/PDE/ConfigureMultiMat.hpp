@@ -19,14 +19,14 @@
 #include <vector>
 
 #include "PDEFactory.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
 #include "ContainerUtil.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 //! Register compressible flow PDEs into PDE factory
 void
@@ -56,7 +56,7 @@ static tk::GetVarFn::result_type
 bulkDensityOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator+=;
-  auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
   auto r = U.extract_comp( densityDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
     r += U.extract_comp( densityDofIdx(nmat,k,rdof,0) );
@@ -72,7 +72,7 @@ static tk::GetVarFn::result_type
 bulkPressureOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator+=;
-  auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
   auto p = U.extract_comp( pressureDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
     p += U.extract_comp( pressureDofIdx(nmat,k,rdof,0) );
@@ -88,7 +88,7 @@ static tk::GetVarFn::result_type
 bulkSpecificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 {
   using tk::operator+=;
-  auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
   auto e = U.extract_comp( energyDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
     e += U.extract_comp( energyDofIdx(nmat,k,rdof,0) );
@@ -105,7 +105,7 @@ template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
 velocityOutVar( const tk::Fields& U, std::size_t rdof )
 {
-  auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
   return U.extract_comp( velocityDofIdx(nmat,dir,rdof,0) );
 }
 
@@ -117,7 +117,7 @@ velocityOutVar( const tk::Fields& U, std::size_t rdof )
 static tk::GetVarFn::result_type
 matIndicatorOutVar( const tk::Fields& U, std::size_t rdof )
 {
-  auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
   std::vector< tk::real > m(U.nunk(), 0.0);
   for (std::size_t i=0; i<U.nunk(); ++i) {
     for (std::size_t k=0; k<nmat; ++k)

@@ -19,14 +19,14 @@
 
 #include "Print.hpp"
 #include "ContainerUtil.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/Options/Physics.hpp"
 #include "Inciter/Options/Problem.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck_defaults;
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::InputDeck g_inputdeck;
 
 //! InciterPrint : tk::Print
 class InciterPrint : public tk::Print {

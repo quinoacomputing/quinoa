@@ -13,12 +13,12 @@
 // *****************************************************************************
 
 #include "InterfaceAdvection.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -43,7 +43,7 @@ MultiMatProblemInterfaceAdvection::initialize(
 // *****************************************************************************
 {
   auto nmat =
-    g_inputdeck.get< eq, newtag::nmat >();
+    g_inputdeck.get< eq, tag::nmat >();
 
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Incorrect number of components in multi-material "

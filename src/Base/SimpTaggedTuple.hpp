@@ -29,10 +29,10 @@
 #include "PUPUtil.hpp"
 #include "Exception.hpp"
 
-namespace newtag {
+namespace tag {
 //! Printable tag for SimpTaggedTuple that returns its name
-#define DEFTAG(n) struct n { static const char* key() { return #n; } }
-} // newtag::
+#define DEFTAG(n) struct n { static const char* name() { return #n; } }
+} // tag::
 
 namespace tk {
 

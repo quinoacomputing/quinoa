@@ -14,13 +14,13 @@
 #include <iostream>
 
 #include "MiscMultiMatFns.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 // *****************************************************************************
@@ -29,11 +29,11 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 // *****************************************************************************
 {
   // EoS initialization
-  auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
-  const auto& matprop = g_inputdeck.get< newtag::material >();
-  const auto& matidxmap = g_inputdeck.get< newtag::matidxmap >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+  const auto& matprop = g_inputdeck.get< tag::material >();
+  const auto& matidxmap = g_inputdeck.get< tag::matidxmap >();
   for (std::size_t k=0; k<nmat; ++k) {
-    auto mateos = matprop[matidxmap.get< newtag::eosidx >()[k]].get<newtag::eos>();
+    auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get<tag::eos>();
     mat_blk.emplace_back(mateos, EqType::multimat, k);
   }
 }
@@ -59,8 +59,8 @@ cleanTraceMultiMat(
 //! \return Boolean indicating if an unphysical material state was found
 // *****************************************************************************
 {
-  const auto ndof = g_inputdeck.get< newtag::ndof >();
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   auto al_eps = 1.0e-02;
   auto neg_density = false;
@@ -141,7 +141,7 @@ cleanTraceMultiMat(
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
           /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
         {
-          //auto gk = gamma< newtag::multimat >(0, k);
+          //auto gk = gamma< tag::multimat >(0, k);
 
           tk::real alk_new(0.0);
           //// volume change based on polytropic expansion/isentropic compression
@@ -152,7 +152,7 @@ cleanTraceMultiMat(
           //else
           //{
           //  auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
-          //  auto ck = eos_soundspeed< newtag::multimat >(0, arhok, alk*pk,
+          //  auto ck = eos_soundspeed< tag::multimat >(0, arhok, alk*pk,
           //    alk, k);
           //  auto kk = arhok * ck * ck;
           //  alk_new = alk - (alk*alk/kk) * (p_target-pk);
@@ -233,11 +233,11 @@ cleanTraceMultiMat(
     }
 
     // 2. Based on volume change in majority material, compute energy change
-    //auto gmax = gamma< newtag::multimat >(0, kmax);
+    //auto gmax = gamma< tag::multimat >(0, kmax);
     //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
     //auto rhomax_new = U(e, densityDofIdx(nmat, kmax, rdof, 0))
     //  / (almax+d_al);
-    //auto rhoEmax_new = eos_totalenergy< newtag::multimat >(0, rhomax_new, u,
+    //auto rhoEmax_new = eos_totalenergy< tag::multimat >(0, rhomax_new, u,
     //  v, w, pmax_new, kmax);
     //auto d_arEmax_new = (almax+d_al) * rhoEmax_new
     //  - U(e, energyDofIdx(nmat, kmax, rdof, 0));
@@ -282,8 +282,8 @@ cleanTraceMultiMat(
     //pmix = rhoEb - 0.5*rhob*(u*u+v*v+w*w);
     //for (std::size_t k=0; k<nmat; ++k)
     //{
-    //  auto gk = gamma< newtag::multimat >(0, k);
-    //  auto Pck = pstiff< newtag::multimat >(0, k);
+    //  auto gk = gamma< tag::multimat >(0, k);
+    //  auto Pck = pstiff< tag::multimat >(0, k);
 
     //  pmix -= U(e, volfracDofIdx(nmat,k,rdof,0)) * gk * Pck *
     //    relaxInd[k] / (gk-1.0);
@@ -299,7 +299,7 @@ cleanTraceMultiMat(
     //  {
     //    auto alk_new = U(e, volfracDofIdx(nmat,k,rdof,0));
     //    U(e, energyDofIdx(nmat,k,rdof,0)) = alk_new *
-    //      eos_totalenergy< newtag::multimat >(0, rhomat[k], u, v, w, pmix,
+    //      eos_totalenergy< tag::multimat >(0, rhomat[k], u, v, w, pmix,
     //      k);
     //    P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new * pmix;
     //  }
@@ -366,8 +366,8 @@ timeStepSizeMultiMat(
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
-  const auto ndof = g_inputdeck.get< newtag::ndof >();
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -495,8 +495,8 @@ timeStepSizeMultiMatFV(
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
-  const auto ndof = g_inputdeck.get< newtag::ndof >();
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -560,7 +560,7 @@ getDeformGrad(
 //! \return Inverse deformation gradient tensor (alpha_k * g_k) of material k
 // *****************************************************************************
 {
-  const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
   std::array< std::array< tk::real, 3 >, 3 > agk;
 
   if (solidx[k] > 0) {
@@ -593,7 +593,7 @@ getCauchyStress(
 //! \return Elastic Cauchy stress tensor (alpha * \sigma_ij) of material k
 // *****************************************************************************
 {
-  const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
   std::array< std::array< tk::real, 3 >, 3 >
     asigk{{ {{0,0,0}}, {{0,0,0}}, {{0,0,0}} }};
 

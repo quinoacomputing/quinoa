@@ -16,7 +16,7 @@
 #ifndef TransportPhysicsCGAdvDiff_h
 #define TransportPhysicsCGAdvDiff_h
 
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Fields.hpp"
 #include "Inciter/Options/Physics.hpp"
 
@@ -28,7 +28,7 @@ class TransportPhysicsAdvDiff {
 
   private:
     using ncomp_t = tk::ncomp_t;
-    using eq = newtag::transport;
+    using eq = tag::transport;
 
   public:
     //! Add diffusion contribution to rhs

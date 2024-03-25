@@ -14,11 +14,11 @@
 #include "ALE.hpp"
 #include "DerivedData.hpp"
 #include "Vector.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -67,7 +67,7 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
 //! \param[in] nodeCommMap Node communication map
 // *****************************************************************************
 {
-  auto smoother = g_inputdeck.get< newtag::ale, newtag::smoother >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
   if (smoother == ctr::MeshVelocitySmootherType::LAPLACE)
     m_conjugategradients[ thisIndex ].        // solve for mesh velocity
@@ -151,12 +151,12 @@ ALE::moveCfg()
 {
   decltype(m_move) cfg;
 
-  for (const auto& m : g_inputdeck.get< newtag::ale, newtag::move >()) {
-    const auto& fn = m.get< newtag::fn >();
+  for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
+    const auto& fn = m.get< tag::fn >();
     Assert( fn.size() % 4 == 0, "Incomplete user-defined function" );
     cfg.emplace_back();
     // store user-defined function type
-    std::get<0>(cfg.back()) = m.get< newtag::fntype >();
+    std::get<0>(cfg.back()) = m.get< tag::fntype >();
     // store user-defined function discrete data
     for (std::size_t i=0; i<fn.size()/4; ++i)
       std::get<1>(cfg.back()).
@@ -182,7 +182,7 @@ ALE::meshvelBnd(
   // Prepare unique set of mesh velocity Dirichlet BC nodes
   tk::destroy( m_meshveldirbcnodes );
   std::unordered_map<int, std::unordered_set< std::size_t >> meshveldirbcnodes;
-  for (const auto& s : g_inputdeck.template get< newtag::ale, newtag::dirichlet >()) {
+  for (const auto& s : g_inputdeck.template get< tag::ale, tag::dirichlet >()) {
     auto k = bface.find(s);
     if (k != end(bface)) {
       auto& n = meshveldirbcnodes[ k->first ];  // associate set id
@@ -210,7 +210,7 @@ ALE::meshvelBnd(
   // only partial due to domain decomposition.
   tk::destroy( m_meshvelsymbcnodes );
   std::unordered_map<int, std::unordered_set< std::size_t >> meshvelsymbcnodes;
-  for (const auto& s : g_inputdeck.template get< newtag::ale, newtag::symmetry >()) {
+  for (const auto& s : g_inputdeck.template get< tag::ale, tag::symmetry >()) {
     auto k = bnode.find(s);
     if (k != end(bnode)) {
       auto& n = meshvelsymbcnodes[ k->first ];  // associate set id
@@ -226,8 +226,8 @@ ALE::meshvelBnd(
   // based on user-defined functions.
   std::unordered_map< int, std::unordered_set< std::size_t > > movenodes;
   std::size_t i = 0;
-  for (const auto& m : g_inputdeck.get< newtag::ale, newtag::move >()) {
-    for (const auto& s : m.get< newtag::sideset >()) {
+  for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
+    for (const auto& s : m.get< tag::sideset >()) {
       auto k = bnode.find(s);
       if (k != end(bnode)) {
         auto& n = movenodes[ k->first ];        // associate set id
@@ -314,7 +314,7 @@ ALE::start(
   m_adt = adt;
 
   // assign mesh velocity
-  auto meshveltype = g_inputdeck.get< newtag::ale, newtag::mesh_velocity >();
+  auto meshveltype = g_inputdeck.get< tag::ale, tag::mesh_velocity >();
   if (meshveltype == ctr::MeshVelocityType::SINE) {
 
     // prescribe mesh velocity with a sine function during setup
@@ -325,7 +325,7 @@ ALE::start(
   } else if (meshveltype == ctr::MeshVelocityType::FLUID) {
 
     // equate mesh velocity with fluid velocity
-    for (auto j : g_inputdeck.get< newtag::ale, newtag::mesh_motion >())
+    for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
       for (std::size_t i=0; i<vel[j].size(); ++i)
         m_w(i,j) = vel[j][i];
 
@@ -336,14 +336,14 @@ ALE::start(
       if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
         auto meshvel = tk::sample<3>( t, std::get<1>(m) );
         for (auto i : std::get<2>(m))
-          for (auto j : g_inputdeck.get< newtag::ale, newtag::mesh_motion >())
+          for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
             m_w(i,j) = meshvel[j];
       } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
         auto eps = std::numeric_limits< tk::real >::epsilon();
         if (adt > eps) {      // dt == 0 during setup
           auto pos = tk::sample<3>( t+adt, std::get<1>(m) );
           for (auto i : std::get<2>(m))
-            for (auto j : g_inputdeck.get< newtag::ale, newtag::mesh_motion >())
+            for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
               m_w(i,j) = (m_coord0[j][i] + pos[j] - coordn[j][i]) / adt;
         }
       }
@@ -486,14 +486,14 @@ ALE::meshvelbc( tk::real maxv )
   std::size_t ignorebc = false;
 
   // smooth mesh velocity if needed
-  auto smoother = g_inputdeck.get< newtag::ale, newtag::smoother >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
   if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
     // scale mesh velocity with a function of the fluid vorticity
     if (maxv > 1.0e-8) {
-      auto mult = g_inputdeck.get< newtag::ale, newtag::vortmult >();
-      for (auto j : g_inputdeck.get< newtag::ale, newtag::mesh_motion >())
+      auto mult = g_inputdeck.get< tag::ale, tag::vortmult >();
+      for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
         for (std::size_t p=0; p<m_vorticity[0].size(); ++p)
           m_w(p,j) *= std::max( 0.0, 1.0 - mult*m_vorticity[0][p]/maxv );
     }
@@ -507,7 +507,7 @@ ALE::meshvelbc( tk::real maxv )
       if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
         auto meshvel = tk::sample<3>( m_t, std::get<1>(m) );
         for (auto i : std::get<2>(m))
-          for (auto j : g_inputdeck.get< newtag::ale, newtag::mesh_motion >())
+          for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
             m_w(i,j) = meshvel[j];
       } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
         auto eps = std::numeric_limits< tk::real >::epsilon();
@@ -565,20 +565,20 @@ ALE::applied( [[maybe_unused]] CkDataMsg* msg )
   //  std::cout << "applied: " << *norm << '\n';
   //}
 
-  auto smoother = g_inputdeck.get< newtag::ale, newtag::smoother >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
   if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
     m_conjugategradients[ thisIndex ].ckLocal()->solve(
-       g_inputdeck.get< newtag::ale, newtag::maxit >(),
-       g_inputdeck.get< newtag::ale, newtag::tolerance >(),
+       g_inputdeck.get< tag::ale, tag::maxit >(),
+       g_inputdeck.get< tag::ale, tag::tolerance >(),
        CkCallback(CkIndex_ALE::solved(nullptr), thisProxy[thisIndex]) );
 
   } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
     m_conjugategradients[ thisIndex ].ckLocal()->solve(
-       g_inputdeck.get< newtag::ale, newtag::maxit >(),
-       g_inputdeck.get< newtag::ale, newtag::tolerance >(),
+       g_inputdeck.get< tag::ale, tag::maxit >(),
+       g_inputdeck.get< tag::ale, tag::tolerance >(),
        CkCallback(CkIndex_ALE::helmholtz(nullptr), thisProxy[thisIndex]) );
 
   } else {
@@ -659,7 +659,7 @@ ALE::gradpot()
   tk::destroy(m_gradpotc);
 
   // finish computing the gradient dividing weak sum by the nodal volumes
-  for (auto j : g_inputdeck.get< newtag::ale, newtag::mesh_motion >())
+  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
     for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
       m_gradpot[j][p] /= m_vol[p];
 
@@ -677,7 +677,7 @@ ALE::solved( [[maybe_unused]] CkDataMsg* msg )
   //  std::cout << "solved: " << *normres << '\n';
   //}
 
-  auto smoother = g_inputdeck.get< newtag::ale, newtag::smoother >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
   if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
@@ -686,14 +686,14 @@ ALE::solved( [[maybe_unused]] CkDataMsg* msg )
 
     // Assign mesh velocity from linear solution skipping dimensions that are
     // not allowed to move
-    for (auto j : g_inputdeck.get< newtag::ale, newtag::mesh_motion >())
+    for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
       for (std::size_t i=0; i<m_w.nunk(); ++i)
         m_w(i,j) = w[i*m_w.nprop()+j];
 
   } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
-    auto a1 = g_inputdeck.get< newtag::ale, newtag::vortmult >();
-    for (auto j : g_inputdeck.get< newtag::ale, newtag::mesh_motion >())
+    auto a1 = g_inputdeck.get< tag::ale, tag::vortmult >();
+    for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
       for (std::size_t p=0; p<m_w.nunk(); ++p)
         m_w(p,j) += a1 * (m_gradpot[j][p] - m_w(p,j));
 
@@ -717,7 +717,7 @@ ALE::startforce()
   const auto& z = m_coord[2];
 
   // compute pseudo-pressure gradient for mesh force
-  const auto& f = g_inputdeck.get< newtag::ale, newtag::meshforce >();
+  const auto& f = g_inputdeck.get< tag::ale, tag::meshforce >();
   m_wf.fill( 0.0 );
   for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
     // access node IDs
@@ -824,7 +824,7 @@ ALE::meshforce()
       m_wf(p,j) /= m_vol[p];
 
   // advance mesh velocity in time due to pseudo-pressure gradient mesh force
-  for (auto j : g_inputdeck.get< newtag::ale, newtag::mesh_motion >())
+  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
     for (std::size_t i=0; i<m_w.nunk(); ++i)
        // This is likely incorrect. It should be m_w = m_w0 + ...
        m_w(i,j) += m_adt * m_wf(i,j);
@@ -835,7 +835,7 @@ ALE::meshforce()
     if (not move(i)) m_w(i,0) = m_w(i,1) = m_w(i,2) = 0.0;
 
   // On meshvel symmetry BCs remove normal component of mesh velocity
-  const auto& sbc = g_inputdeck.get< newtag::ale, newtag::symmetry >();
+  const auto& sbc = g_inputdeck.get< tag::ale, tag::symmetry >();
   for (auto p : m_meshvelsymbcnodes) {
     for (const auto& s : sbc) {
       auto j = m_bnorm.find(s);

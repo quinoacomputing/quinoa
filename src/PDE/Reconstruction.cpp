@@ -22,11 +22,11 @@
 #include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
 
 namespace inciter {
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 }
 
 namespace tk {
@@ -507,11 +507,11 @@ THINCReco( std::size_t rdof,
   using inciter::deformIdx;
   using inciter::stressIdx;
 
-  auto bparam = inciter::g_inputdeck.get< newtag::multimat,
-    newtag::intsharp_param >();
+  auto bparam = inciter::g_inputdeck.get< tag::multimat,
+    tag::intsharp_param >();
   const auto ncomp = U.nprop()/rdof;
-  const auto& solidx = inciter::g_inputdeck.get< newtag::matidxmap,
-    newtag::solidx >();
+  const auto& solidx = inciter::g_inputdeck.get< tag::matidxmap,
+    tag::solidx >();
 
   // Step-1: Perform THINC reconstruction
   // create a vector of volume-fractions and pass it to the THINC function
@@ -626,8 +626,8 @@ THINCRecoTransport( std::size_t rdof,
 //!   should only be called for transport.
 // *****************************************************************************
 {
-  auto bparam = inciter::g_inputdeck.get< newtag::transport,
-    newtag::intsharp_param >();
+  auto bparam = inciter::g_inputdeck.get< tag::transport,
+    tag::intsharp_param >();
   auto ncomp = U.nprop()/rdof;
 
   // interface detection

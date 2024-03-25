@@ -68,7 +68,7 @@ infoTransport( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
 // *****************************************************************************
 {
   using tk::parameters;
-  using eq = newtag::transport;
+  using eq = tag::transport;
 
   auto c = ++cnt[ ctr::PDEType::TRANSPORT ];       // count eqs
   --c;  // used to index vectors starting with 0
@@ -78,43 +78,43 @@ infoTransport( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
 
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< newtag::depvar >()[c] ) );
+    g_inputdeck.get< tag::depvar >()[c] ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< eq, newtag::problem >() ) );
+    g_inputdeck.get< eq, tag::problem >() ) );
 
-  auto intsharp = g_inputdeck.get< eq, newtag::intsharp >();
+  auto intsharp = g_inputdeck.get< eq, tag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
-  auto ncomp = g_inputdeck.get< newtag::ncomp >();
+  auto ncomp = g_inputdeck.get< tag::ncomp >();
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
-  const auto& bc = g_inputdeck.get< newtag::bc >();
+  const auto& bc = g_inputdeck.get< tag::bc >();
   for (const auto& ib : bc) {
-    const auto& bcdir = ib.get< newtag::dirichlet >();
+    const auto& bcdir = ib.get< tag::dirichlet >();
     if (!bcdir.empty())
       nfo.emplace_back( "Dirichlet boundary [" + std::to_string( ncomp ) + "]",
         parameters( bcdir ) );
 
-    const auto& bcsym = ib.get< newtag::symmetry >();
+    const auto& bcsym = ib.get< tag::symmetry >();
     if (!bcsym.empty())
       nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
         parameters( bcsym ) );
 
     const auto& bcinlet =
-      ib.get< newtag::inlet >();
+      ib.get< tag::inlet >();
     if (!bcinlet.empty())
       nfo.emplace_back( "Inlet boundary [" + std::to_string( ncomp ) + "]",
         parameters( bcinlet ) );
 
     const auto& bcoutlet =
-      ib.get< newtag::outlet >();
+      ib.get< tag::outlet >();
     if (!bcoutlet.empty())
       nfo.emplace_back( "Outlet boundary [" + std::to_string( ncomp ) + "]",
         parameters( bcoutlet ) );
 
     const auto& bcextrapolate =
-      ib.get< newtag::extrapolate >();
+      ib.get< tag::extrapolate >();
     if (!bcextrapolate.empty())
       nfo.emplace_back( "Symmetry boundary [" + std::to_string( ncomp ) + "]",
         parameters( bcextrapolate ) );

@@ -27,7 +27,7 @@
 #include "Vector.hpp"
 #include "ContainerUtil.hpp"
 #include "UnsMesh.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Initialize.hpp"
@@ -44,7 +44,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 namespace dg {
 
@@ -58,16 +58,16 @@ template< class Physics, class Problem >
 class CompFlow {
 
   private:
-    using eq = newtag::compflow;
+    using eq = tag::compflow;
 
   public:
     //! Constructor
     explicit CompFlow() :
       m_physics(),
       m_problem(),
-      m_ncomp( g_inputdeck.get< newtag::ncomp >() ),
+      m_ncomp( g_inputdeck.get< tag::ncomp >() ),
       m_riemann( compflowRiemannSolver(
-        g_inputdeck.get< newtag::flux >() ) )
+        g_inputdeck.get< tag::flux >() ) )
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
@@ -81,10 +81,10 @@ class CompFlow {
 
       // EoS initialization
       const auto& matprop =
-        g_inputdeck.get< newtag::material >();
+        g_inputdeck.get< tag::material >();
       const auto& matidxmap =
-        g_inputdeck.get< newtag::matidxmap >();
-      auto mateos = matprop[matidxmap.get< newtag::eosidx >()[0]].get<newtag::eos>();
+        g_inputdeck.get< tag::matidxmap >();
+      auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();
       m_mat_blk.emplace_back(mateos, EqType::compflow, 0);
 
     }
@@ -113,7 +113,7 @@ class CompFlow {
     {
       // all equation-dofs initialized to ndof
       for (std::size_t i=0; i<m_ncomp; ++i) {
-        numEqDof.push_back(g_inputdeck.get< newtag::ndof >());
+        numEqDof.push_back(g_inputdeck.get< tag::ndof >());
       }
     }
 
@@ -152,11 +152,11 @@ class CompFlow {
       tk::initialize( m_ncomp, m_mat_blk, L, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
-      const auto rdof = g_inputdeck.get< newtag::rdof >();
-      const auto& ic = g_inputdeck.get< newtag::ic >();
-      const auto& icbox = ic.get< newtag::box >();
-      const auto& bgpreic = ic.get< newtag::pressure >();
-      auto c_v = getmatprop< newtag::cv >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto& ic = g_inputdeck.get< tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      const auto& bgpreic = ic.get< tag::pressure >();
+      auto c_v = getmatprop< tag::cv >();
 
       // Set initial conditions inside user-defined IC box
       std::vector< tk::real > s(m_ncomp, 0.0);
@@ -167,9 +167,9 @@ class CompFlow {
             if (inbox.size() > bcnt && inbox[bcnt].find(e) != inbox[bcnt].end())
             {
               std::vector< tk::real > box
-              { b.template get< newtag::xmin >(), b.template get< newtag::xmax >(),
-                b.template get< newtag::ymin >(), b.template get< newtag::ymax >(),
-                b.template get< newtag::zmin >(), b.template get< newtag::zmax >() };
+              { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+                b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+                b.template get< tag::zmin >(), b.template get< tag::zmax >() };
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -196,7 +196,7 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto ndof = g_inputdeck.get< newtag::ndof >();
+      const auto ndof = g_inputdeck.get< tag::ndof >();
       tk::mass( m_ncomp, ndof, geoElem, l );
     }
 
@@ -246,10 +246,10 @@ class CompFlow {
                       tk::Fields& U,
                       tk::Fields& P ) const
     {
-      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
 
       // do reconstruction only if P0P1
-      if (rdof == 4 && g_inputdeck.get< newtag::ndof >() == 1) {
+      if (rdof == 4 && g_inputdeck.get< tag::ndof >() == 1) {
         const auto nelem = fd.Esuel().size()/4;
 
         Assert( U.nprop() == rdof*5, "Number of components in solution "
@@ -324,9 +324,9 @@ class CompFlow {
                 tk::Fields&,
                 std::vector< std::size_t >& shockmarker) const
     {
-      const auto limiter = g_inputdeck.get< newtag::limiter >();
-      const auto rdof = g_inputdeck.get< newtag::rdof >();
-      const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
+      const auto limiter = g_inputdeck.get< tag::limiter >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
       if (limiter == ctr::LimiterType::WENOP1)
         WENO_P1( fd.Esuel(), U );
@@ -388,10 +388,10 @@ class CompFlow {
               const tk::real dt,
               tk::Fields& R ) const
     {
-      const auto ndof = g_inputdeck.get< newtag::ndof >();
-      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
 
-      const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -444,18 +444,18 @@ class CompFlow {
                         riemannDeriv );
 
      // compute external (energy) sources
-      const auto& ic = g_inputdeck.get< newtag::ic >();
-      const auto& icbox = ic.get< newtag::box >();
+      const auto& ic = g_inputdeck.get< tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
 
       if (!icbox.empty() && !boxelems.empty()) {
         std::size_t bcnt = 0;
         for (const auto& b : icbox) {   // for all boxes for this eq
           std::vector< tk::real > box
-           { b.template get< newtag::xmin >(), b.template get< newtag::xmax >(),
-             b.template get< newtag::ymin >(), b.template get< newtag::ymax >(),
-             b.template get< newtag::zmin >(), b.template get< newtag::zmax >() };
+           { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+             b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+             b.template get< tag::zmin >(), b.template get< tag::zmax >() };
 
-          const auto& initiate = b.template get< newtag::initiate >();
+          const auto& initiate = b.template get< tag::initiate >();
           if (initiate == ctr::InitiateType::LINEAR) {
             boxSrc( t, inpoel, boxelems[bcnt], coord, geoElem, ndofel, R );
           }
@@ -519,7 +519,7 @@ class CompFlow {
                  const tk::Fields&,
                  const std::size_t /*nielem*/ ) const
     {
-      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
 
       const auto& esuf = fd.Esuf();
       const auto& inpofa = fd.Inpofa();
@@ -786,7 +786,7 @@ class CompFlow {
                 const tk::Fields& U,
                 const tk::Fields& ) const
     {
-      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -861,7 +861,7 @@ class CompFlow {
     //! \return Cell-averaged specific total energy for given element
     tk::real sp_totalenergy(std::size_t e, const tk::Fields& unk) const
     {
-      const auto rdof = g_inputdeck.get< newtag::rdof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
 
       return unk(e,4*rdof);
     }
@@ -990,10 +990,10 @@ class CompFlow {
               tk::real, const std::array< tk::real, 3 >& fn )
     {
       // Primitive variables from farfield
-      const auto& bc = g_inputdeck.get< newtag::bc >()[0];
-      auto frho = bc.get< newtag::density >();
-      auto fp   = bc.get< newtag::pressure >();
-      const auto& fu = bc.get< newtag::velocity >();
+      const auto& bc = g_inputdeck.get< tag::bc >()[0];
+      auto frho = bc.get< tag::density >();
+      auto fp   = bc.get< tag::pressure >();
+      const auto& fu = bc.get< tag::velocity >();
 
       // Speed of sound from farfield
       auto fa = mat_blk[0].compute< EOS::soundspeed >( frho, fp );
@@ -1088,23 +1088,23 @@ class CompFlow {
                  const std::vector< std::size_t >& ndofel,
                  tk::Fields& R ) const
     {
-      const auto ndof = g_inputdeck.get< newtag::ndof >();
-      const auto& ic = g_inputdeck.get< newtag::ic >();
-      const auto& icbox = ic.get< newtag::box >();
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto& ic = g_inputdeck.get< tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
 
       for (const auto& b : icbox) {   // for all boxes for this eq
         std::vector< tk::real > box
-         { b.template get< newtag::xmin >(), b.template get< newtag::xmax >(),
-           b.template get< newtag::ymin >(), b.template get< newtag::ymax >(),
-           b.template get< newtag::zmin >(), b.template get< newtag::zmax >() };
+         { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+           b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+           b.template get< tag::zmin >(), b.template get< tag::zmax >() };
 
-        auto boxenc = b.template get< newtag::energy_content >();
+        auto boxenc = b.template get< tag::energy_content >();
         Assert( boxenc > 0.0, "Box energy content must be nonzero" );
 
         auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
 
         // determine times at which sourcing is initialized and terminated
-        auto iv = b.template get< newtag::front_speed >();
+        auto iv = b.template get< tag::front_speed >();
         auto wFront = 0.1;
         auto tInit = 0.0;
         auto tFinal = tInit + (box[5] - box[4] - 2.0*wFront) / std::fabs(iv);
@@ -1128,9 +1128,9 @@ class CompFlow {
 
           // Orientation of box
           std::array< tk::real, 3 > b_orientn{{
-            b.template get< newtag::orientation >()[0],
-            b.template get< newtag::orientation >()[1],
-            b.template get< newtag::orientation >()[2] }};
+            b.template get< tag::orientation >()[0],
+            b.template get< tag::orientation >()[1],
+            b.template get< tag::orientation >()[2] }};
           std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
             0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
           // Transform box to reference space

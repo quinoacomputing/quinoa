@@ -13,12 +13,12 @@
 // *****************************************************************************
 
 #include "SedovBlastwave.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -42,7 +42,7 @@ CompFlowProblemSedovBlastwave::initialize( ncomp_t,
 {
   tk::real r=0, p=0, u=0, v=0, w=0, rE=0;
 
-  const auto scheme = g_inputdeck.get< newtag::scheme >();
+  const auto scheme = g_inputdeck.get< tag::scheme >();
   const auto centering = ctr::Scheme().centering( scheme );
 
   // pressure
@@ -54,7 +54,7 @@ CompFlowProblemSedovBlastwave::initialize( ncomp_t,
 
     auto eps = std::numeric_limits< tk::real >::epsilon();
     if (std::abs(x) < eps && std::abs(y) < eps && std::abs(z) < eps)
-      p = g_inputdeck.get< newtag::compflow, newtag::p0 >();
+      p = g_inputdeck.get< tag::compflow, tag::p0 >();
     else
       p = 0.67e-4;
 

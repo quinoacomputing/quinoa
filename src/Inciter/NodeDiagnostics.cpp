@@ -16,12 +16,12 @@
 #include "NodeDiagnostics.hpp"
 #include "DiagReducer.hpp"
 #include "Discretization.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Refiner.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 extern std::vector< CGPDE > g_cgpde;
 
 static CkReduction::reducerType DiagMerger;
@@ -78,7 +78,7 @@ NodeDiagnostics::compute(
   // Optionally collect diagnostics and send for aggregation across all workers
 
   // Query after how many time steps user wants to dump diagnostics
-  auto diagfreq = g_inputdeck.get< newtag::diagnostics, newtag::iter_interval >();
+  auto diagfreq = g_inputdeck.get< tag::diagnostics, tag::iter_interval >();
 
   if ( !((d.It()+1) % diagfreq) ) {     // if remainder, don't dump
 

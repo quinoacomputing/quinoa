@@ -16,11 +16,11 @@
 // *****************************************************************************
 
 #include "CGAdvDiff.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -49,7 +49,7 @@ TransportPhysicsAdvDiff::diffusionRhs(
 // *****************************************************************************
 {
   // diffusivities for all components
-  auto diff = g_inputdeck.get< eq, newtag::diffusivity >();
+  auto diff = g_inputdeck.get< eq, tag::diffusivity >();
 
   // add diffusion contribution to right hand side
   const auto d = deltat * J/6.0;
@@ -75,7 +75,7 @@ TransportPhysicsAdvDiff::diffusion_dt(
 // *****************************************************************************
 {
   // diffusivities for all components
-  auto df = g_inputdeck.get< eq, newtag::diffusivity >();
+  auto df = g_inputdeck.get< eq, tag::diffusivity >();
 
   // compute the minimum diffusion time step size across the four nodes
   tk::real mindt = std::numeric_limits< tk::real >::max();

@@ -15,13 +15,13 @@
 #include <limits>
 
 #include "UserDefined.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -44,12 +44,12 @@ CompFlowProblemUserDefined::initialize( ncomp_t ncomp,
   tk::InitializeFn::result_type u( ncomp, 0.0 );
 
   // Set background ICs
-  const auto& ic = g_inputdeck.get< newtag::ic >();
-  const auto& bgrhoic = ic.get< newtag::density >();
-  const auto& bgvelic = ic.get< newtag::velocity >();
-  const auto& bgpreic = ic.get< newtag::pressure >();
-  const auto& bgenic = ic.get< newtag::energy >();
-  const auto& bgtempic = ic.get< newtag::temperature >();
+  const auto& ic = g_inputdeck.get< tag::ic >();
+  const auto& bgrhoic = ic.get< tag::density >();
+  const auto& bgvelic = ic.get< tag::velocity >();
+  const auto& bgpreic = ic.get< tag::pressure >();
+  const auto& bgenic = ic.get< tag::energy >();
+  const auto& bgtempic = ic.get< tag::temperature >();
 
   u[0] = bgrhoic;
   u[1] = u[0] * bgvelic[0];
@@ -62,7 +62,7 @@ CompFlowProblemUserDefined::initialize( ncomp_t ncomp,
   } else if (bgenic > 1e-12) {
     u[4] = u[0] * bgenic;
   } else if (bgtempic > 1e-12) {
-    const auto& c_v = getmatprop< newtag::cv >();
+    const auto& c_v = getmatprop< tag::cv >();
     u[4] = u[0] * bgtempic * c_v;
   } else Throw( "IC background energy cannot be computed. User must specify "
                 "one of background pressure, energy, or temperature." );

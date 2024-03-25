@@ -33,11 +33,11 @@
 #include "DGPDE.hpp"
 #include "FVPDE.hpp"
 #include "PDEFactory.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 //! \brief Partial differential equations stack
 class PDEStack {
@@ -109,12 +109,12 @@ class PDEStack {
     {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
-      const auto& nc = g_inputdeck.get< newtag::ncomp >();
+      const auto& nc = g_inputdeck.get< tag::ncomp >();
       if ( nc ) {
         // re-create key and search for it
         ctr::PDEKey key{{ eq,
-          g_inputdeck.get< newtag::physics >(),
-          g_inputdeck.get< EqTag, newtag::problem >() }};
+          g_inputdeck.get< tag::physics >(),
+          g_inputdeck.get< EqTag, tag::problem >() }};
         const auto it = f.find( key );
         Assert( it != end( f ),
                 "Can't find PDE with key('" +
@@ -123,7 +123,7 @@ class PDEStack {
                   ctr::Problem().name( key.get< tag::problem >() ) +
                   + "') in factory" );
         // Associate equation system index (value) to all variable offsets
-        for (ncomp_t i=0; i<nc; ++i) g_inputdeck.get<newtag::sys>()[i] = c;
+        for (ncomp_t i=0; i<nc; ++i) g_inputdeck.get<tag::sys>()[i] = c;
         // instantiate and return PDE object
         return it->second();
       } else Throw ( "Can't create PDE with zero components" );

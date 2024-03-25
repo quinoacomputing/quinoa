@@ -20,7 +20,7 @@
 #include <vector>
 #include <array>
 
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "EoS/EOS.hpp"
 
@@ -64,7 +64,7 @@ namespace inciter {
 class TransportProblemShearDiff {
   private:
     using ncomp_t = tk::ncomp_t;
-    using eq = newtag::transport;
+    using eq = tag::transport;
 
   public:
     //! Initialize numerical solution

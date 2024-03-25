@@ -14,11 +14,11 @@
 #define GetMatProp_h
 
 #include <cmath>
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 using ncomp_t = kw::ncomp::info::expect::type;
 
@@ -35,10 +35,10 @@ using ncomp_t = kw::ncomp::info::expect::type;
 template< class Prop >
 tk::real
 getmatprop( std::size_t imat=0 ) {
-  const auto& matprop = g_inputdeck.get< newtag::material >();
-  const auto& map = g_inputdeck.get< newtag::matidxmap >();
-  auto meos = map.template get< newtag::eosidx >()[ imat ];
-  auto midx = map.template get< newtag::matidx >()[ imat ];
+  const auto& matprop = g_inputdeck.get< tag::material >();
+  const auto& map = g_inputdeck.get< tag::matidxmap >();
+  auto meos = map.template get< tag::eosidx >()[ imat ];
+  auto midx = map.template get< tag::matidx >()[ imat ];
   auto pvec = matprop[ meos ].template get< Prop >();
 
   tk::real mp;

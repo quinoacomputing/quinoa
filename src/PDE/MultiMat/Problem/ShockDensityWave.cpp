@@ -14,12 +14,12 @@
 // *****************************************************************************
 
 #include "ShockDensityWave.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -43,7 +43,7 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t ncomp,
 //!   This problem does not have an analytical solution.
 // *****************************************************************************
 {
-  auto nmat = g_inputdeck.get< eq, newtag::nmat >();
+  auto nmat = g_inputdeck.get< eq, tag::nmat >();
 
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Number of scalar components must be 6 or 9" );

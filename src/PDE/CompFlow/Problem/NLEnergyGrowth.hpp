@@ -21,12 +21,12 @@
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 //! CompFlow system of PDEs problem: nonlinear energy growth (NLEG)
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
@@ -36,7 +36,7 @@ class CompFlowProblemNLEnergyGrowth {
 
   private:
     using ncomp_t = tk::ncomp_t;
-    using eq = newtag::compflow;
+    using eq = tag::compflow;
 
     //! Compute internal energy parameter
     static tk::real hx( tk::real bx, tk::real by, tk::real bz,
@@ -71,15 +71,15 @@ class CompFlowProblemNLEnergyGrowth {
       Assert(sv.size() == 5, "Incorrect source vector size");
       using std::sin; using std::cos;
       // manufactured solution parameters
-      const auto a = g_inputdeck.get< eq, newtag::alpha >();
-      const auto bx = g_inputdeck.get< eq, newtag::betax >();
-      const auto by = g_inputdeck.get< eq, newtag::betay >();
-      const auto bz = g_inputdeck.get< eq, newtag::betaz >();
-      const auto ce = g_inputdeck.get< eq, newtag::ce >();
-      const auto kappa = g_inputdeck.get< eq, newtag::kappa >();
-      const auto r0 = g_inputdeck.get< eq, newtag::r0 >();
+      const auto a = g_inputdeck.get< eq, tag::alpha >();
+      const auto bx = g_inputdeck.get< eq, tag::betax >();
+      const auto by = g_inputdeck.get< eq, tag::betay >();
+      const auto bz = g_inputdeck.get< eq, tag::betaz >();
+      const auto ce = g_inputdeck.get< eq, tag::ce >();
+      const auto kappa = g_inputdeck.get< eq, tag::kappa >();
+      const auto r0 = g_inputdeck.get< eq, tag::r0 >();
       // ratio of specific heats
-      const auto g = getmatprop< newtag::gamma >();
+      const auto g = getmatprop< tag::gamma >();
       // spatial component of density field
       const auto gx = 1.0 - x*x - y*y - z*z;
       // derivative of spatial component of density field

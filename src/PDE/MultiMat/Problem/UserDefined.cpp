@@ -15,13 +15,13 @@
 #include <limits>
 
 #include "UserDefined.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -43,15 +43,15 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
 {
   tk::InitializeFn::result_type s( ncomp, 0.0 );
 
-  auto nmat = g_inputdeck.get< eq, newtag::nmat >();
-  const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
+  auto nmat = g_inputdeck.get< eq, tag::nmat >();
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   // Set background ICs
-  const auto& ic = g_inputdeck.get< newtag::ic >();
-  const auto& bgmatid = ic.get< newtag::materialid >();
-  const auto& bgvelic = ic.get< newtag::velocity >();
-  const auto& bgpreic = ic.get< newtag::pressure >();
-  const auto& bgtempic = ic.get< newtag::temperature >();
+  const auto& ic = g_inputdeck.get< tag::ic >();
+  const auto& bgmatid = ic.get< tag::materialid >();
+  const auto& bgvelic = ic.get< tag::velocity >();
+  const auto& bgpreic = ic.get< tag::pressure >();
+  const auto& bgtempic = ic.get< tag::temperature >();
 
   if (bgtempic < 1e-12) Throw( "No background temperature IC" );
   if (bgpreic < 1e-12) Throw( "No background pressure IC" );

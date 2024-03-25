@@ -24,14 +24,14 @@
 #include "UnsMesh.hpp"
 #include "CommMap.hpp"
 #include "History.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 //! \brief Discretization Charm++ chare array holding common functinoality to
 //!   all discretization schemes
@@ -373,7 +373,7 @@ class Discretization : public CBase_Discretization {
 
       template< typename Eq > void operator()( brigand::type_<Eq> ) {
         const auto& bc =
-          g_inputdeck.template get< newtag::bc >()[m_mid];
+          g_inputdeck.template get< tag::bc >()[m_mid];
         // collect sidesets for this mesh with this bc type
         const auto& ss = bc.template get< tags... >();
         for (const auto& s : ss) {

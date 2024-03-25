@@ -13,12 +13,12 @@
 // *****************************************************************************
 
 #include "NLEnergyGrowth.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -75,13 +75,13 @@ CompFlowProblemNLEnergyGrowth::initialize( ncomp_t,
 // *****************************************************************************
 {
   // manufactured solution parameters
-  auto ce = g_inputdeck.get< eq, newtag::ce >();
-  auto r0 = g_inputdeck.get< eq, newtag::r0 >();
-  auto a = g_inputdeck.get< eq, newtag::alpha >();
-  auto k = g_inputdeck.get< eq, newtag::kappa >();
-  auto bx = g_inputdeck.get< eq, newtag::betax >();
-  auto by = g_inputdeck.get< eq, newtag::betay >();
-  auto bz = g_inputdeck.get< eq, newtag::betaz >();
+  auto ce = g_inputdeck.get< eq, tag::ce >();
+  auto r0 = g_inputdeck.get< eq, tag::r0 >();
+  auto a = g_inputdeck.get< eq, tag::alpha >();
+  auto k = g_inputdeck.get< eq, tag::kappa >();
+  auto bx = g_inputdeck.get< eq, tag::betax >();
+  auto by = g_inputdeck.get< eq, tag::betay >();
+  auto bz = g_inputdeck.get< eq, tag::betaz >();
   // spatial component of density field
   auto gx = 1.0 - x*x - y*y - z*z;
   // internal energy parameter
@@ -115,13 +115,13 @@ CompFlowProblemNLEnergyGrowth::analyticSolution(
 // *****************************************************************************
 {
   // manufactured solution parameters
-  auto ce = g_inputdeck.get< eq, newtag::ce >();
-  auto r0 = g_inputdeck.get< eq, newtag::r0 >();
-  auto a = g_inputdeck.get< eq, newtag::alpha >();
-  auto k = g_inputdeck.get< eq, newtag::kappa >();
-  auto bx = g_inputdeck.get< eq, newtag::betax >();
-  auto by = g_inputdeck.get< eq, newtag::betay >();
-  auto bz = g_inputdeck.get< eq, newtag::betaz >();
+  auto ce = g_inputdeck.get< eq, tag::ce >();
+  auto r0 = g_inputdeck.get< eq, tag::r0 >();
+  auto a = g_inputdeck.get< eq, tag::alpha >();
+  auto k = g_inputdeck.get< eq, tag::kappa >();
+  auto bx = g_inputdeck.get< eq, tag::betax >();
+  auto by = g_inputdeck.get< eq, tag::betay >();
+  auto bz = g_inputdeck.get< eq, tag::betaz >();
   // spatial component of density field
   auto gx = 1.0 - x*x - y*y - z*z;
   // internal energy parameter

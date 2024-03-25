@@ -21,12 +21,12 @@
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 //! CompFlow system of PDEs problem: Rayleigh-Taylor
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
@@ -36,7 +36,7 @@ class CompFlowProblemRayleighTaylor {
 
   private:
     using ncomp_t = tk::ncomp_t;
-    using eq = newtag::compflow;
+    using eq = tag::compflow;
 
   public:
     //! Initialize numerical solution
@@ -65,14 +65,14 @@ class CompFlowProblemRayleighTaylor {
       using std::sin; using std::cos;
 
       // manufactured solution parameters
-      auto a = g_inputdeck.get< eq, newtag::alpha >();
-      auto bx = g_inputdeck.get< eq, newtag::betax >();
-      auto by = g_inputdeck.get< eq, newtag::betay >();
-      auto bz = g_inputdeck.get< eq, newtag::betaz >();
-      auto k = g_inputdeck.get< eq, newtag::kappa >();
-      auto p0 = g_inputdeck.get< eq, newtag::p0 >();
+      auto a = g_inputdeck.get< eq, tag::alpha >();
+      auto bx = g_inputdeck.get< eq, tag::betax >();
+      auto by = g_inputdeck.get< eq, tag::betay >();
+      auto bz = g_inputdeck.get< eq, tag::betaz >();
+      auto k = g_inputdeck.get< eq, tag::kappa >();
+      auto p0 = g_inputdeck.get< eq, tag::p0 >();
       // ratio of specific heats
-      auto g = getmatprop< newtag::gamma >();
+      auto g = getmatprop< tag::gamma >();
 
       // evaluate solution at x,y,z,t
       auto s = initialize( 0, mat_blk, x, y, z, t );

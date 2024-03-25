@@ -14,12 +14,12 @@
 // *****************************************************************************
 
 #include "UnderwaterEx.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -47,7 +47,7 @@ MultiMatProblemUnderwaterEx::initialize( ncomp_t ncomp,
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 12, "Number of scalar components must be 12" );
 
-  auto nmat = g_inputdeck.get< eq, newtag::nmat >();
+  auto nmat = g_inputdeck.get< eq, tag::nmat >();
 
   std::vector< tk::real > s(ncomp, 0.0), r(nmat, 0.0);
   tk::real p, u, v, w, temp;

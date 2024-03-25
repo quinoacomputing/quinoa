@@ -18,12 +18,12 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EOS.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -78,21 +78,21 @@ BoxElems(
 // *****************************************************************************
 {
   // Detect if user has configured IC boxes
-  const auto& icbox = inciter::g_inputdeck.get<newtag::ic, newtag::box>();
+  const auto& icbox = inciter::g_inputdeck.get<tag::ic, tag::box>();
   if (!icbox.empty()) {
     std::size_t bcnt = 0;
     for (const auto& b : icbox) {   // for all boxes for this eq
      inbox.emplace_back();
       std::vector< tk::real > box
-        { b.template get< newtag::xmin >(), b.template get< newtag::xmax >(),
-          b.template get< newtag::ymin >(), b.template get< newtag::ymax >(),
-          b.template get< newtag::zmin >(), b.template get< newtag::zmax >() };
+        { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+          b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+          b.template get< tag::zmin >(), b.template get< tag::zmax >() };
 
       // Determine orientation of box
       std::array< tk::real, 3 > b_orientn{{
-        b.template get< newtag::orientation >()[0],
-        b.template get< newtag::orientation >()[1],
-        b.template get< newtag::orientation >()[2] }};
+        b.template get< tag::orientation >()[0],
+        b.template get< tag::orientation >()[1],
+        b.template get< tag::orientation >()[2] }};
       std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
         0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
 

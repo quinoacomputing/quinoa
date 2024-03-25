@@ -22,7 +22,7 @@
 #include "Vector.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "EoS/EOS.hpp"
 
@@ -33,7 +33,7 @@ class MultiMatProblemEquilInterfaceAdvect {
 
   protected:
     using ncomp_t = tk::ncomp_t;
-    using eq = newtag::multimat;
+    using eq = tag::multimat;
 
   public:
     //! Initialize numerical solution

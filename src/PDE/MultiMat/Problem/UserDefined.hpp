@@ -19,7 +19,7 @@
 #include <string>
 
 #include "Types.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
@@ -32,7 +32,7 @@ class MultiMatProblemUserDefined {
 
   private:
     using ncomp_t = tk::ncomp_t;
-    using eq = newtag::multimat;
+    using eq = tag::multimat;
 
   public:
     //! Initialize numerical solution

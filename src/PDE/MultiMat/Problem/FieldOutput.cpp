@@ -13,12 +13,12 @@
 #include "FieldOutput.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Vector.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "ConfigureMultiMat.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 std::map< std::string, tk::GetVarFn > MultiMatOutVarFn()
 // *****************************************************************************
@@ -194,7 +194,7 @@ MultiMatFieldOutput(
   //  for (std::size_t k=0; k<nmat; ++k)
   //  {
   //    if (U(i, volfracDofIdx(nmat,k,rdof,0)) > 1.0e-04) {
-  //      a = std::max( a, eos_soundspeed< newtag::multimat >( 0,
+  //      a = std::max( a, eos_soundspeed< tag::multimat >( 0,
   //        U(i, densityDofIdx(nmat,k,rdof,0)),
   //        P(i, pressureDofIdx(nmat,k,rdof,0)),
   //        U(i, volfracDofIdx(nmat,k,rdof,0)), k ) );
@@ -249,7 +249,7 @@ MultiMatSurfOutput(
   const auto& esuf = fd.Esuf();
 
   // extract field output along side sets requested
-  for (auto s : g_inputdeck.get< newtag::field_output, newtag::sideset >()) {
+  for (auto s : g_inputdeck.get< tag::field_output, tag::sideset >()) {
     // get face list for side set requested
     auto b = bface.find(s);
     if (b == end(bface)) continue;

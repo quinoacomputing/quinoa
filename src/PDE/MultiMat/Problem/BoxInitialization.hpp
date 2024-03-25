@@ -52,20 +52,20 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
-  auto nmat = g_inputdeck.get< newtag::multimat, newtag::nmat >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
-  const auto& solidx = g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
-  const auto& initiate = b.template get< newtag::initiate >();
+  const auto& initiate = b.template get< tag::initiate >();
 
   // get material id in box (offset by 1, since input deck uses 1-based ids)
-  std::size_t boxmatid = b.template get< newtag::materialid >() - 1;
-  const auto& boxvel = b.template get< newtag::velocity >();
-  auto boxpre = b.template get< newtag::pressure >();
-  auto boxene = b.template get< newtag::energy >();
-  auto boxtemp = b.template get< newtag::temperature >();
-  auto boxmas = b.template get< newtag::mass >();
-  auto boxenc = b.template get< newtag::energy_content >();
+  std::size_t boxmatid = b.template get< tag::materialid >() - 1;
+  const auto& boxvel = b.template get< tag::velocity >();
+  auto boxpre = b.template get< tag::pressure >();
+  auto boxene = b.template get< tag::energy >();
+  auto boxtemp = b.template get< tag::temperature >();
+  auto boxmas = b.template get< tag::mass >();
+  auto boxenc = b.template get< tag::energy_content >();
 
   auto alphamin = 1.0e-12;
 

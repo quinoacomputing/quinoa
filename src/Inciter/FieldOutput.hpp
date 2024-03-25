@@ -16,14 +16,14 @@
 #include "Fields.hpp"
 #include "Centering.hpp"
 #include "ContainerUtil.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "UnsMesh.hpp"
 #include "Discretization.hpp"
 #include "FunctionPrototypes.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 //! Collect field output names from numerical solution based on user input
 std::vector< std::string >
@@ -62,7 +62,7 @@ analyticFieldNames( const PDE& eq,
                     tk::Centering c,
                     std::vector< std::string >& f )
 {
-  for (const auto& v : g_inputdeck.get< newtag::field_output, newtag::outvar >())
+  for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >())
     if (v.centering == c && v.analytic())
       tk::concat( eq.analyticFieldNames(), f );
 }
@@ -86,7 +86,7 @@ analyticFieldOutput( const PDE& eq,
                      tk::real t,
                      std::vector< std::vector< tk::real > >& f )
 {
-  for (const auto& v : g_inputdeck.get< newtag::field_output, newtag::outvar >()) {
+  for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
     if (v.centering == c && v.analytic()) {
       auto ncomp = eq.analyticSolution( x[0], y[0], z[0], t ).size();
       f.resize( f.size() + ncomp, std::vector< tk::real >( x.size() ) );

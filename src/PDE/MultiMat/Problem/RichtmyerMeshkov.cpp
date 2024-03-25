@@ -14,11 +14,11 @@
 // *****************************************************************************
 
 #include "RichtmyerMeshkov.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -44,7 +44,7 @@ MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t ncomp,
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 9, "Number of scalar components must be 9" );
 
-  auto nmat = g_inputdeck.get< eq, newtag::nmat >();
+  auto nmat = g_inputdeck.get< eq, tag::nmat >();
 
   std::vector< tk::real > s( ncomp, 0.0 );
   tk::real p, T, u, v, w;

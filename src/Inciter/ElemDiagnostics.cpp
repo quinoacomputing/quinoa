@@ -22,11 +22,11 @@
 #include "Discretization.hpp"
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 extern std::vector< DGPDE > g_dgpde;
 
 static CkReduction::reducerType DiagMerger;
@@ -79,12 +79,12 @@ ElemDiagnostics::compute( Discretization& d,
   // Optionally collect diagnostics and send for aggregation across all workers
 
   // Query after how many time steps user wants to dump diagnostics
-  auto diagfreq = g_inputdeck.get< newtag::diagnostics, newtag::iter_interval >();
+  auto diagfreq = g_inputdeck.get< tag::diagnostics, tag::iter_interval >();
 
   if ( !((d.It()+1) % diagfreq) || d.finished() ) {  // if remainder, don't compute diagnostics
 
     // Query number of degrees of freedom from user's setting
-    const auto rdof = g_inputdeck.get< newtag::rdof >();
+    const auto rdof = g_inputdeck.get< tag::rdof >();
 
     // Diagnostics vector (of vectors) during aggregation. See
     // Inciter/Diagnostics.h.

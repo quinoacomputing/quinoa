@@ -16,14 +16,14 @@
 // *****************************************************************************
 
 #include "FVEnergyPill.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "ContainerUtil.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "NoWarning/charm++.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // inciter::
 
@@ -44,13 +44,13 @@ MultiMatPhysicsEnergyPill::dtRestriction(
 {
   auto mindt = std::numeric_limits< tk::real >::max();
   // determine front propagation speed
-  const auto& icmbk = g_inputdeck.get< newtag::ic, newtag::meshblock >();
+  const auto& icmbk = g_inputdeck.get< tag::ic, tag::meshblock >();
   tk::real v_front(0.0);
   for (const auto& b : icmbk) { // for all blocks
-    auto inittype = b.template get< newtag::initiate >();
+    auto inittype = b.template get< tag::initiate >();
     if (inittype == ctr::InitiateType::LINEAR) {
       v_front = std::max(v_front,
-        b.template get< newtag::front_speed >());
+        b.template get< tag::front_speed >());
     }
   }
 
@@ -93,25 +93,25 @@ physSrc(
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
-  const auto& icmbk = g_inputdeck.get< newtag::ic, newtag::meshblock >();
+  const auto& icmbk = g_inputdeck.get< tag::ic, tag::meshblock >();
   for (const auto& mb : icmbk) { // for all blocks
-    auto blid = mb.get< newtag::blockid >();
+    auto blid = mb.get< tag::blockid >();
     if (elemblkid.find(blid) != elemblkid.end()) { // if elements exist in blk
-      const auto& initiate = mb.template get< newtag::initiate >();
+      const auto& initiate = mb.template get< tag::initiate >();
       if (initiate == ctr::InitiateType::LINEAR) { // if propagating src
 
         const auto& blkelems = tk::cref_find(elemblkid,blid);
 
-        auto enc = mb.template get< newtag::energy_content >();
+        auto enc = mb.template get< tag::energy_content >();
         Assert( enc > 0.0, "Box energy content must be nonzero" );
-        const auto& x0_front = mb.template get< newtag::point >();
+        const auto& x0_front = mb.template get< tag::point >();
         Assert(x0_front.size()==3, "Incorrectly sized front initial location");
-        auto blkmatid = mb.template get< newtag::materialid >();
+        auto blkmatid = mb.template get< tag::materialid >();
 
         // determine times at which sourcing is initialized and terminated
-        auto v_front = mb.template get< newtag::front_speed >();
-        auto w_front = mb.template get< newtag::front_width >();
-        auto tInit = mb.template get< newtag::init_time >();
+        auto v_front = mb.template get< tag::front_speed >();
+        auto w_front = mb.template get< tag::front_width >();
+        auto tInit = mb.template get< tag::init_time >();
 
         if (t >= tInit) {
           // current radius of front

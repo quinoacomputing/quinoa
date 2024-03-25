@@ -23,7 +23,7 @@
 #include "DiagReducer.hpp"
 #include "DerivedData.hpp"
 #include "ElemDiagnostics.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Refiner.hpp"
 #include "Limiter.hpp"
 #include "Reorder.hpp"
@@ -35,7 +35,7 @@
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 extern std::vector< DGPDE > g_dgpde;
 
 //! Runge-Kutta coefficients
@@ -65,17 +65,17 @@ DG::DG( const CProxy_Discretization& disc,
   m_nreco( 0 ),
   m_nnodalExtrema( 0 ),
   m_u( Disc()->Inpoel().size()/4,
-       g_inputdeck.get< newtag::rdof >()*
-       g_inputdeck.get< newtag::ncomp >() ),
+       g_inputdeck.get< tag::rdof >()*
+       g_inputdeck.get< tag::ncomp >() ),
   m_un( m_u.nunk(), m_u.nprop() ),
-  m_p( m_u.nunk(), g_inputdeck.get< newtag::rdof >()*
+  m_p( m_u.nunk(), g_inputdeck.get< tag::rdof >()*
     g_dgpde[Disc()->MeshId()].nprim() ),
   m_lhs( m_u.nunk(),
-         g_inputdeck.get< newtag::ndof >()*
-         g_inputdeck.get< newtag::ncomp >() ),
+         g_inputdeck.get< tag::ndof >()*
+         g_inputdeck.get< tag::ncomp >() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_mtInv(
-    tk::invMassMatTaylorRefEl(g_inputdeck.get< newtag::rdof >()) ),
+    tk::invMassMatTaylorRefEl(g_inputdeck.get< tag::rdof >()) ),
   m_uNodalExtrm(),
   m_pNodalExtrm(),
   m_uNodalExtrmc(),
@@ -90,13 +90,13 @@ DG::DG( const CProxy_Discretization& disc,
   m_ndofc(),
   m_initial( 1 ),
   m_uElemfields( m_u.nunk(),
-                 g_inputdeck.get< newtag::ncomp >() ),
+                 g_inputdeck.get< tag::ncomp >() ),
   m_pElemfields( m_u.nunk(),
-                 m_p.nprop() / g_inputdeck.get< newtag::rdof >() ),
+                 m_p.nprop() / g_inputdeck.get< tag::rdof >() ),
   m_uNodefields( m_npoin,
-                 g_inputdeck.get< newtag::ncomp >() ),
+                 g_inputdeck.get< tag::ncomp >() ),
   m_pNodefields( m_npoin,
-                 m_p.nprop() / g_inputdeck.get< newtag::rdof >() ),
+                 m_p.nprop() / g_inputdeck.get< tag::rdof >() ),
   m_uNodefieldsc(),
   m_pNodefieldsc(),
   m_outmesh(),
@@ -109,8 +109,8 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
 {
-  if (g_inputdeck.get< newtag::cmd, tag::chare >() ||
-      g_inputdeck.get< newtag::cmd, tag::quiescence >())
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
                                         "DG" );
 
@@ -120,10 +120,10 @@ DG::DG( const CProxy_Discretization& disc,
   // Allocate storage for the vector of nodal extrema
   m_uNodalExtrm.resize( Disc()->Bid().size(),
     std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
-    g_inputdeck.get< newtag::ncomp >() ) );
+    g_inputdeck.get< tag::ncomp >() ) );
   m_pNodalExtrm.resize( Disc()->Bid().size(),
     std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
-    m_p.nprop() / g_inputdeck.get< newtag::rdof >() ) );
+    m_p.nprop() / g_inputdeck.get< tag::rdof >() ) );
 
   // Initialization for the buffer vector of nodal extrema
   resizeNodalExtremac();
@@ -175,7 +175,7 @@ DG::ResumeFromSync()
 {
   if (Disc()->It() == 0) Throw( "it = 0 in ResumeFromSync()" );
 
-  if (!g_inputdeck.get< newtag::cmd, tag::nonblocking >()) next();
+  if (!g_inputdeck.get< tag::cmd, tag::nonblocking >()) next();
 }
 
 void
@@ -197,15 +197,15 @@ DG::resizeSolVectors()
   for (auto& p : m_pc) p.resize( myGhosts()->m_bid.size() );
 
   // Initialize number of degrees of freedom in mesh elements
-  const auto pref = g_inputdeck.get< newtag::pref, newtag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   if( pref )
   {
-    const auto ndofmax = g_inputdeck.get< newtag::pref, newtag::ndofmax >();
+    const auto ndofmax = g_inputdeck.get< tag::pref, tag::ndofmax >();
     m_ndof.resize( myGhosts()->m_nunk, ndofmax );
   }
   else
   {
-    const auto ndof = g_inputdeck.get< newtag::ndof >();
+    const auto ndof = g_inputdeck.get< tag::ndof >();
     m_ndof.resize( myGhosts()->m_nunk, ndof );
   }
 
@@ -226,8 +226,8 @@ DG::setup()
 // Set initial conditions, generate lhs, output mesh
 // *****************************************************************************
 {
-  if (g_inputdeck.get< newtag::cmd, tag::chare >() ||
-      g_inputdeck.get< newtag::cmd, tag::quiescence >())
+  if (g_inputdeck.get< tag::cmd, tag::chare >() ||
+      g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
                                         "setup" );
 
@@ -248,7 +248,7 @@ DG::setup()
   d->boxvol( {}, {}, 0 );      // punt for now
 
   // Query time history field output labels from all PDEs integrated
-  const auto& hist_points = g_inputdeck.get< newtag::history_output, newtag::point >();
+  const auto& hist_points = g_inputdeck.get< tag::history_output, tag::point >();
   if (!hist_points.empty()) {
     std::vector< std::string > histnames;
     auto n = g_dgpde[d->MeshId()].histNames();
@@ -307,7 +307,7 @@ DG::startFieldOutput( CkCallback c )
 // *****************************************************************************
 {
   // No field output in benchmark mode or if field output frequency not hit
-  if (g_inputdeck.get< newtag::cmd, tag::benchmark >() || !fieldOutput()) {
+  if (g_inputdeck.get< tag::cmd, tag::benchmark >() || !fieldOutput()) {
 
     c.send();
 
@@ -339,7 +339,7 @@ DG::next()
 // Advance equations to next time step
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< newtag::pref, newtag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   auto d = Disc();
 
@@ -347,10 +347,10 @@ DG::next()
     g_dgpde[d->MeshId()].eval_ndof( myGhosts()->m_nunk, myGhosts()->m_coord,
                   myGhosts()->m_inpoel,
                   myGhosts()->m_fd, m_u, m_p,
-                  g_inputdeck.get< newtag::pref, newtag::indicator >(),
-                  g_inputdeck.get< newtag::ndof >(),
-                  g_inputdeck.get< newtag::pref, newtag::ndofmax >(),
-                  g_inputdeck.get< newtag::pref, newtag::tolref >(),
+                  g_inputdeck.get< tag::pref, tag::indicator >(),
+                  g_inputdeck.get< tag::ndof >(),
+                  g_inputdeck.get< tag::pref, tag::ndofmax >(),
+                  g_inputdeck.get< tag::pref, tag::tolref >(),
                   m_ndof );
 
   // communicate solution ghost data (if any)
@@ -400,7 +400,7 @@ DG::comsol( int fromch,
   Assert( u.size() == tetid.size(), "Size mismatch in DG::comsol()" );
   Assert( prim.size() == tetid.size(), "Size mismatch in DG::comsol()" );
 
-  const auto pref = g_inputdeck.get< newtag::pref, newtag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && fromstage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsol()" );
@@ -520,7 +520,7 @@ void DG::refine()
 // Add the protective layer for ndof refinement
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< newtag::pref, newtag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -575,7 +575,7 @@ DG::comrefine( int fromch,
 //!   from fellow chares.
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< newtag::pref, newtag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && m_stage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comrefine()" );
@@ -609,7 +609,7 @@ DG::smooth()
 // Smooth the refined ndof distribution
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< newtag::pref, newtag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   for (const auto& b : myGhosts()->m_bid) {
     if (pref && m_stage == 0)
@@ -650,7 +650,7 @@ DG::comsmooth( int fromch,
 //!   from fellow chares.
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< newtag::pref, newtag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   if (pref && m_stage == 0)
     Assert( ndof.size() == tetid.size(), "Size mismatch in DG::comsmooth()" );
@@ -679,8 +679,8 @@ DG::reco()
 // Compute reconstructions
 // *****************************************************************************
 {
-  const auto pref = g_inputdeck.get< newtag::pref, newtag::pref >();
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
 
   // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
@@ -772,7 +772,7 @@ DG::nodalExtrema()
   auto d = Disc();
   auto gid = d->Gid();
   auto bid = d->Bid();
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ncomp = m_u.nprop() / rdof;
   const auto nprim = m_p.nprop() / rdof;
 
@@ -863,7 +863,7 @@ DG::comnodalExtrema( const std::vector< std::size_t >& gid,
   Assert( G1.size() == gid.size(), "Size mismatch" );
   Assert( G2.size() == gid.size(), "Size mismatch" );
 
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ncomp = m_u.nprop() / rdof;
   const auto nprim = m_p.nprop() / rdof;
 
@@ -905,7 +905,7 @@ void DG::resizeNodalExtremac()
 //  Resize the buffer vector of nodal extrema
 // *****************************************************************************
 {
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ncomp = m_u.nprop() / rdof;
   const auto nprim = m_p.nprop() / rdof;
 
@@ -960,7 +960,7 @@ void DG::evalNodalExtrmRefEl(
 //!   variables
 // *****************************************************************************
 {
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
 
   for (auto e : bndel)
   {
@@ -1043,7 +1043,7 @@ DG::lim()
 // *****************************************************************************
 {
   auto d = Disc();
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ncomp = m_u.nprop() / rdof;
   const auto nprim = m_p.nprop() / rdof;
 
@@ -1089,7 +1089,7 @@ DG::lim()
               myGhosts()->m_coord, m_ndof, d->Gid(), d->Bid(), m_uNodalExtrm,
               m_pNodalExtrm, m_mtInv, m_u, m_p, m_shockmarker );
 
-    if (g_inputdeck.get< newtag::limsol_projection >())
+    if (g_inputdeck.get< tag::limsol_projection >())
       g_dgpde[d->MeshId()].CPL(m_p, myGhosts()->m_geoElem,
         myGhosts()->m_inpoel, myGhosts()->m_coord, m_u,
         myGhosts()->m_fd.Esuel().size()/4);
@@ -1277,7 +1277,7 @@ DG::dt()
 
   if (m_stage == 0)
   {
-    auto const_dt = g_inputdeck.get< newtag::dt >();
+    auto const_dt = g_inputdeck.get< tag::dt >();
     auto eps = std::numeric_limits< tk::real >::epsilon();
 
     // use constant dt if configured
@@ -1295,7 +1295,7 @@ DG::dt()
           myGhosts()->m_fd.Esuel().size()/4 );
       if (eqdt < mindt) mindt = eqdt;
 
-      mindt *= g_inputdeck.get< newtag::cfl >();
+      mindt *= g_inputdeck.get< tag::cfl >();
     }
   }
   else
@@ -1328,14 +1328,14 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4nod();
 
   auto d = Disc();
-  const auto rdof = g_inputdeck.get< newtag::rdof >();
-  const auto ndof = g_inputdeck.get< newtag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  const auto pref = g_inputdeck.get< newtag::pref, newtag::pref >();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   if (pref && m_stage == 0)
   {
     // When the element are coarsened, high order terms should be zero
@@ -1413,7 +1413,7 @@ DG::solve( tk::real newdt )
     myGhosts()->m_fd.Esuel().size()/4, m_ndof );
   g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4 );
-  if (!g_inputdeck.get< newtag::accuracy_test >()) {
+  if (!g_inputdeck.get< tag::accuracy_test >()) {
     g_dgpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem, m_u,
       m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
@@ -1449,8 +1449,8 @@ DG::refine( [[maybe_unused]] const std::vector< tk::real >& l2res )
 {
   auto d = Disc();
 
-  auto dtref = g_inputdeck.get< newtag::amr, newtag::dtref >();
-  auto dtfreq = g_inputdeck.get< newtag::amr, newtag::dtfreq >();
+  auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
+  auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
 
   // if t>0 refinement enabled and we hit the dtref frequency
   if (dtref && !(d->It() % dtfreq)) {   // refine
@@ -1524,9 +1524,9 @@ DG::resizePostAMR(
   m_lhs.resize( nelem );
   m_rhs.resize( nelem );
   m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*g_inputdeck.get< newtag::ncomp >() ) );
+    m_ndof_NodalExtrm*g_inputdeck.get< tag::ncomp >() ) );
   m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< newtag::rdof >()));
+    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::rdof >()));
 
   // Resize the buffer vector of nodal extrema
   resizeNodalExtremac();
@@ -1586,8 +1586,8 @@ DG::refinedOutput() const
 //! \return True if field output will use a refined mesh
 // *****************************************************************************
 {
-  return g_inputdeck.get< newtag::cmd, tag::io, tag::refined >() &&
-         g_inputdeck.get< newtag::scheme >() != ctr::SchemeType::DG;
+  return g_inputdeck.get< tag::cmd, tag::io, tag::refined >() &&
+         g_inputdeck.get< tag::scheme >() != ctr::SchemeType::DG;
 }
 
 void
@@ -1669,7 +1669,7 @@ DG::writeFields(
     coord[1], coord[2], t, nodefields );
 
   // Add adaptive indicator array to element-centered field output
-  if (g_inputdeck.get< newtag::pref, newtag::pref >()) {
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
     std::vector< tk::real > ndof( begin(m_ndof), end(m_ndof) );
     ndof.resize( nelem );
     for (const auto& [child,parent] : addedTets)
@@ -1710,7 +1710,7 @@ DG::writeFields(
   analyticFieldNames( g_dgpde[d->MeshId()], tk::Centering::ELEM, elemfieldnames );
   analyticFieldNames( g_dgpde[d->MeshId()], tk::Centering::NODE, nodefieldnames );
 
-  if (g_inputdeck.get< newtag::pref, newtag::pref >())
+  if (g_inputdeck.get< tag::pref, tag::pref >())
     elemfieldnames.push_back( "NDOF" );
 
   elemfieldnames.push_back( "shock_marker" );
@@ -1802,8 +1802,8 @@ DG::evalLB( int nrestart )
   // Detect if just returned from a checkpoint and if so, zero timers
   d->restarted( nrestart );
 
-  const auto lbfreq = g_inputdeck.get< newtag::cmd, tag::lbfreq >();
-  const auto nonblocking = g_inputdeck.get< newtag::cmd, tag::nonblocking >();
+  const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
+  const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
 
   // Load balancing if user frequency is reached or after the second time-step
   if ( (d->It()) % lbfreq == 0 || d->It() == 2 ) {
@@ -1826,8 +1826,8 @@ DG::evalRestart()
 {
   auto d = Disc();
 
-  const auto rsfreq = g_inputdeck.get< newtag::cmd, tag::rsfreq >();
-  const auto benchmark = g_inputdeck.get< newtag::cmd, tag::benchmark >();
+  const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
+  const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
 
   if (not benchmark and not (d->It() % rsfreq)) {
 
@@ -1867,8 +1867,8 @@ DG::step()
   // Reset Runge-Kutta stage counter
   m_stage = 0;
 
-  const auto term = g_inputdeck.get< newtag::term >();
-  const auto nstep = g_inputdeck.get< newtag::nstep >();
+  const auto term = g_inputdeck.get< tag::term >();
+  const auto nstep = g_inputdeck.get< tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
 
   // If neither max iterations nor max time reached, continue, otherwise finish

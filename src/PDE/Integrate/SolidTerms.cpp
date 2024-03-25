@@ -24,10 +24,10 @@
 #include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 }
 
 namespace tk {
@@ -74,7 +74,7 @@ solidTermsVolInt(
   using inciter::deformDofIdx;
 
   const auto& solidx =
-    inciter::g_inputdeck.get< newtag::matidxmap, newtag::solidx >();
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   auto ncomp = R.nprop()/ndof;
   auto nprim = P.nprop()/rdof;

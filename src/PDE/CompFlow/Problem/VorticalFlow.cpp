@@ -13,12 +13,12 @@
 // *****************************************************************************
 
 #include "VorticalFlow.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
@@ -40,14 +40,14 @@ CompFlowProblemVorticalFlow::initialize( ncomp_t,
 //! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  using newtag::compflow;
+  using tag::compflow;
 
   // manufactured solution parameters
-  auto a = g_inputdeck.get< compflow, newtag::alpha >();
-  auto b = g_inputdeck.get< compflow, newtag::beta >();
-  auto p0 = g_inputdeck.get< compflow, newtag::p0 >();
+  auto a = g_inputdeck.get< compflow, tag::alpha >();
+  auto b = g_inputdeck.get< compflow, tag::beta >();
+  auto p0 = g_inputdeck.get< compflow, tag::p0 >();
   // ratio of specific heats
-  auto g = getmatprop< newtag::gamma >();
+  auto g = getmatprop< tag::gamma >();
   // velocity
   auto ru = a*x - b*y;
   auto rv = b*x + a*y;
@@ -74,14 +74,14 @@ CompFlowProblemVorticalFlow::analyticSolution( ncomp_t,
 //! \note The function signature must follow tk::InitializeFn
 // *****************************************************************************
 {
-  using newtag::compflow;
+  using tag::compflow;
 
   // manufactured solution parameters
-  auto a = g_inputdeck.get< compflow, newtag::alpha >();
-  auto b = g_inputdeck.get< compflow, newtag::beta >();
-  auto p0 = g_inputdeck.get< compflow, newtag::p0 >();
+  auto a = g_inputdeck.get< compflow, tag::alpha >();
+  auto b = g_inputdeck.get< compflow, tag::beta >();
+  auto p0 = g_inputdeck.get< compflow, tag::p0 >();
   // ratio of specific heats
-  auto g = getmatprop< newtag::gamma >();
+  auto g = getmatprop< tag::gamma >();
   // velocity
   auto ru = a*x - b*y;
   auto rv = b*x + a*y;

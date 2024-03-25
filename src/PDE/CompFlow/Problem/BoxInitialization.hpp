@@ -53,15 +53,15 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
-  const auto& initiate = b.template get< newtag::initiate >();
+  const auto& initiate = b.template get< tag::initiate >();
 
-  auto boxrho = b.template get< newtag::density >();
-  const auto& boxvel = b.template get< newtag::velocity >();
-  auto boxpre = b.template get< newtag::pressure >();
-  auto boxene = b.template get< newtag::energy >();
-  auto boxtem = b.template get< newtag::temperature >();
-  auto boxmas = b.template get< newtag::mass >();
-  auto boxenc = b.template get< newtag::energy_content >();
+  auto boxrho = b.template get< tag::density >();
+  const auto& boxvel = b.template get< tag::velocity >();
+  auto boxpre = b.template get< tag::pressure >();
+  auto boxene = b.template get< tag::energy >();
+  auto boxtem = b.template get< tag::temperature >();
+  auto boxmas = b.template get< tag::mass >();
+  auto boxenc = b.template get< tag::energy_content >();
 
   tk::real rho = 0.0, ru = 0.0, rv = 0.0, rw = 0.0, re = 0.0, spi = 0.0;
   bool boxmassic = false;

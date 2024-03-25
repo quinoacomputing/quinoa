@@ -21,7 +21,7 @@
 #include "Vector.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EOS.hpp"
 
 namespace inciter {
@@ -31,7 +31,7 @@ class MultiMatProblemSinewavePacket {
 
   protected:
     using ncomp_t = tk::ncomp_t;
-    using eq = newtag::multimat;
+    using eq = tag::multimat;
 
   public:
     //! Initialize numerical solution

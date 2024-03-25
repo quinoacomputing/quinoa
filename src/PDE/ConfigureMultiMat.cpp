@@ -68,7 +68,7 @@ infoMultiMat( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
 //! \return vector of string pairs describing the PDE configuration
 // *****************************************************************************
 {
-  using eq = newtag::multimat;
+  using eq = tag::multimat;
   using tk::parameter;
   using tk::parameters;
 
@@ -80,65 +80,65 @@ infoMultiMat( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::MULTIMAT ), "" );
 
   nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< newtag::depvar >()[c] ) );
+    g_inputdeck.get< tag::depvar >()[c] ) );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
-    g_inputdeck.get< newtag::physics >() ) );
+    g_inputdeck.get< tag::physics >() ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
-    g_inputdeck.get< eq, newtag::problem >() ) );
+    g_inputdeck.get< eq, tag::problem >() ) );
 
   nfo.emplace_back( "flux", ctr::Flux().name(
-    g_inputdeck.get< newtag::flux >() ) );
+    g_inputdeck.get< tag::flux >() ) );
 
-  auto nmat = g_inputdeck.get< eq, newtag::nmat >();
+  auto nmat = g_inputdeck.get< eq, tag::nmat >();
   nfo.emplace_back( "number of materials", std::to_string( nmat ) );
 
-  auto prelax = g_inputdeck.get< eq, newtag::prelax >();
+  auto prelax = g_inputdeck.get< eq, tag::prelax >();
   nfo.emplace_back( "finite pressure relaxation", std::to_string( prelax ) );
 
-  auto intsharp = g_inputdeck.get< eq, newtag::intsharp >();
+  auto intsharp = g_inputdeck.get< eq, tag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
-  auto ncomp = g_inputdeck.get< newtag::ncomp >();
+  auto ncomp = g_inputdeck.get< tag::ncomp >();
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
   // Material eos output
-  const auto& matprop = g_inputdeck.get< newtag::material >();
+  const auto& matprop = g_inputdeck.get< tag::material >();
   for (const auto& mtype : matprop) {
-    const auto& m_id = mtype.get< newtag::id >();
+    const auto& m_id = mtype.get< tag::id >();
     ctr::Material opt;
-    nfo.emplace_back( opt.name( mtype.get< newtag::eos >() ),
+    nfo.emplace_back( opt.name( mtype.get< tag::eos >() ),
       std::to_string(m_id.size())+" materials" );
     nfo.emplace_back( "material id", parameters( m_id ) );
   }
 
   // ICs and IC-boxes
 
-  const auto& ic = g_inputdeck.get< newtag::ic >();
+  const auto& ic = g_inputdeck.get< tag::ic >();
 
-  const auto& bgmatidic = ic.get< newtag::materialid >();
+  const auto& bgmatidic = ic.get< tag::materialid >();
   nfo.emplace_back( "IC background material id", parameter( bgmatidic ) );
 
-  const auto& icbox = ic.get< newtag::box >();
+  const auto& icbox = ic.get< tag::box >();
   if (!icbox.empty()) {
     std::size_t bcnt = 0;
     for (const auto& b : icbox) {   // for all boxes configured for this eq
       std::vector< tk::real > box
-        { b.get< newtag::xmin >(), b.get< newtag::xmax >(),
-          b.get< newtag::ymin >(), b.get< newtag::ymax >(),
-          b.get< newtag::zmin >(), b.get< newtag::zmax >() };
+        { b.get< tag::xmin >(), b.get< tag::xmax >(),
+          b.get< tag::ymin >(), b.get< tag::ymax >(),
+          b.get< tag::zmin >(), b.get< tag::zmax >() };
 
       std::string boxname = "IC box " + parameter(bcnt);
       nfo.emplace_back( boxname, parameters( box ) );
 
       nfo.emplace_back( boxname + " orientation",
-        parameters(b.get< newtag::orientation >()) );
+        parameters(b.get< tag::orientation >()) );
 
       nfo.emplace_back( boxname + " material id",
-                        parameter( b.get< newtag::materialid >() ) );
+                        parameter( b.get< tag::materialid >() ) );
 
-      const auto& initiate = b.get< newtag::initiate >();
+      const auto& initiate = b.get< tag::initiate >();
       auto opt = ctr::Initiate();
       nfo.emplace_back( boxname + ' ' + opt.group(), opt.name(initiate) );
 
@@ -146,14 +146,14 @@ infoMultiMat( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
     }
   }
 
-  const auto& icblock = ic.get< newtag::meshblock >();
+  const auto& icblock = ic.get< tag::meshblock >();
   for (const auto& b : icblock) {   // for all blocks configured for eq
     std::string blockname = "IC mesh block " +
-      parameter(b.get< newtag::blockid >());
+      parameter(b.get< tag::blockid >());
 
     nfo.emplace_back( blockname + " material id",
-                      parameter( b.get< newtag::materialid >() ) );
-    const auto& initiate = b.get< newtag::initiate >();
+                      parameter( b.get< tag::materialid >() ) );
+    const auto& initiate = b.get< tag::initiate >();
     auto opt = ctr::Initiate();
     nfo.emplace_back( blockname + ' ' + opt.group(), opt.name(initiate) );
   }

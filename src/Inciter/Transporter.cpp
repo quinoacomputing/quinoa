@@ -33,7 +33,7 @@
 #include "ContainerUtil.hpp"
 #include "LoadDistributor.hpp"
 #include "MeshReader.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "NodeDiagnostics.hpp"
 #include "ElemDiagnostics.hpp"
 #include "DiagWriter.hpp"
@@ -47,8 +47,8 @@ extern CProxy_Main mainProxy;
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck_defaults;
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::InputDeck g_inputdeck;
 extern std::vector< CGPDE > g_cgpde;
 extern std::vector< DGPDE > g_dgpde;
 extern std::vector< FVPDE > g_fvpde;
@@ -88,9 +88,9 @@ Transporter::Transporter() :
   m_maxstat( m_nchare.size() ),
   m_avgstat( m_nchare.size() ),
   m_timer(),
-  m_progMesh( g_inputdeck.get< newtag::cmd, tag::feedback >(),
+  m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
-  m_progWork( g_inputdeck.get< newtag::cmd, tag::feedback >(),
+  m_progWork( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgWorkPrefix, ProgWorkLegend )
 // *****************************************************************************
 //  Constructor
@@ -99,10 +99,10 @@ Transporter::Transporter() :
   // Echo configuration to screen
   info( printer() );
 
-  const auto nstep = g_inputdeck.get< newtag::nstep >();
-  const auto t0 = g_inputdeck.get< newtag::t0 >();
-  const auto term = g_inputdeck.get< newtag::term >();
-  const auto constdt = g_inputdeck.get< newtag::dt >();
+  const auto nstep = g_inputdeck.get< tag::nstep >();
+  const auto t0 = g_inputdeck.get< tag::t0 >();
+  const auto term = g_inputdeck.get< tag::term >();
+  const auto constdt = g_inputdeck.get< tag::dt >();
 
   // If the desired max number of time steps is larger than zero, and the
   // termination time is larger than the initial time, and the constant time
@@ -126,9 +126,9 @@ Transporter::Transporter() :
 
 Transporter::Transporter( CkMigrateMessage* m ) :
   CBase_Transporter( m ),
-  m_progMesh( g_inputdeck.get< newtag::cmd, tag::feedback >(),
+  m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
-  m_progWork( g_inputdeck.get< newtag::cmd, tag::feedback >(),
+  m_progWork( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgWorkPrefix, ProgWorkLegend )
 // *****************************************************************************
 //  Migrate constructor: returning from a checkpoint
@@ -157,7 +157,7 @@ Transporter::input()
 // *****************************************************************************
 {
   // Query input mesh filename specified on the command line
-  const auto& cmdinput = g_inputdeck.get< newtag::cmd, tag::io, tag::input >();
+  const auto& cmdinput = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
 
   // Extract mesh filenames specified in the control file (assigned to solvers)
   auto ctrinput = g_inputdeck.mesh();
@@ -168,7 +168,7 @@ Transporter::input()
 
    // Prepend control file path to mesh filenames in given in control file
   if (not ctrinput.empty()) {
-     const auto& ctr = g_inputdeck.get< newtag::cmd, tag::io, tag::control >();
+     const auto& ctr = g_inputdeck.get< tag::cmd, tag::io, tag::control >();
      auto path = ctr.substr( 0, ctr.find_last_of("/")+1 );
      for (auto& f : ctrinput) f = path + f;
   }
@@ -205,58 +205,58 @@ Transporter::info( const InciterPrint& print )
   print.part( "Problem" );
 
   // Print out info on problem title
-  if ( !g_inputdeck.get< newtag::title >().empty() )
-    print.title( g_inputdeck.get< newtag::title >() );
+  if ( !g_inputdeck.get< tag::title >().empty() )
+    print.title( g_inputdeck.get< tag::title >() );
 
-  const auto nstep = g_inputdeck.get< newtag::nstep >();
-  const auto t0 = g_inputdeck.get< newtag::t0 >();
-  const auto term = g_inputdeck.get< newtag::term >();
-  const auto constdt = g_inputdeck.get< newtag::dt >();
-  const auto cfl = g_inputdeck.get< newtag::cfl >();
-  const auto scheme = g_inputdeck.get< newtag::scheme >();
+  const auto nstep = g_inputdeck.get< tag::nstep >();
+  const auto t0 = g_inputdeck.get< tag::t0 >();
+  const auto term = g_inputdeck.get< tag::term >();
+  const auto constdt = g_inputdeck.get< tag::dt >();
+  const auto cfl = g_inputdeck.get< tag::cfl >();
+  const auto scheme = g_inputdeck.get< tag::scheme >();
 
   // Print discretization parameters
   print.section( "Discretization parameters" );
-  print.Item< ctr::Scheme, newtag::scheme >();
+  print.Item< ctr::Scheme, tag::scheme >();
 
   if (scheme == ctr::SchemeType::DiagCG) {
-    auto fct = g_inputdeck.get< newtag::fct >();
+    auto fct = g_inputdeck.get< tag::fct >();
     print.item( "Flux-corrected transport (FCT)", fct );
     if (fct) {
       print.item( "FCT mass diffusion coeff",
-                  g_inputdeck.get< newtag::ctau >() );
+                  g_inputdeck.get< tag::ctau >() );
       print.item( "FCT small number",
-                  g_inputdeck.get< newtag::fcteps >() );
+                  g_inputdeck.get< tag::fcteps >() );
       print.item( "Clipping FCT",
-                  g_inputdeck.get< newtag::fctclip >() );
+                  g_inputdeck.get< tag::fctclip >() );
     }
   } else if (g_inputdeck.centering() == tk::Centering::ELEM)
   {
-    print.Item< ctr::Limiter, newtag::limiter >();
+    print.Item< ctr::Limiter, tag::limiter >();
 
     print.item("Shock detection based limiting",
-      g_inputdeck.get< newtag::shock_detector_coeff >());
+      g_inputdeck.get< tag::shock_detector_coeff >());
 
-    if (g_inputdeck.get< newtag::accuracy_test >())
+    if (g_inputdeck.get< tag::accuracy_test >())
     {
       print.item("WARNING: order-of-accuracy testing enabled",
         "robustness corrections inactive");
     }
 
     print.item("Limited solution projection",
-      g_inputdeck.get< newtag::limsol_projection >());
+      g_inputdeck.get< tag::limsol_projection >());
   }
   print.item( "PE-locality mesh reordering",
-              g_inputdeck.get< newtag::pelocal_reorder >() );
+              g_inputdeck.get< tag::pelocal_reorder >() );
   print.item( "Operator-access mesh reordering",
-              g_inputdeck.get< newtag::operator_reorder >() );
-  auto steady = g_inputdeck.get< newtag::steady_state >();
+              g_inputdeck.get< tag::operator_reorder >() );
+  auto steady = g_inputdeck.get< tag::steady_state >();
   print.item( "Local time stepping", steady );
   if (steady) {
     print.item( "L2-norm residual convergence criterion",
-                g_inputdeck.get< newtag::residual >() );
+                g_inputdeck.get< tag::residual >() );
     print.item( "Convergence criterion component index",
-                g_inputdeck.get< newtag::rescomp >() );
+                g_inputdeck.get< tag::rescomp >() );
   }
   print.item( "Number of time steps", nstep );
   print.item( "Start time", t0 );
@@ -276,107 +276,107 @@ Transporter::info( const InciterPrint& print )
   if (scheme == ctr::SchemeType::PDG) {
     print.section( "Polynomial refinement (p-ref)" );
     print.item( "p-refinement",
-                g_inputdeck.get< newtag::pref, newtag::pref >() );
-    print.Item< ctr::PrefIndicator, newtag::pref, newtag::indicator >();
+                g_inputdeck.get< tag::pref, tag::pref >() );
+    print.Item< ctr::PrefIndicator, tag::pref, tag::indicator >();
     print.item( "Max degrees of freedom",
-                g_inputdeck.get< newtag::pref, newtag::ndofmax >() );
+                g_inputdeck.get< tag::pref, tag::ndofmax >() );
     print.item( "Tolerance",
-                g_inputdeck.get< newtag::pref, newtag::tolref >() );
+                g_inputdeck.get< tag::pref, tag::tolref >() );
   }
 
   // Print out adaptive mesh refinement configuration
-  const auto amr = g_inputdeck.get< newtag::amr, newtag::amr >();
+  const auto amr = g_inputdeck.get< tag::amr, tag::amr >();
   if (amr) {
     print.section( "Mesh refinement (h-ref)" );
-    auto maxlevels = g_inputdeck.get< newtag::amr, newtag::maxlevels >();
+    auto maxlevels = g_inputdeck.get< tag::amr, tag::maxlevels >();
     print.item( "Maximum mesh refinement levels", maxlevels );
-    print.Item< ctr::AMRError, newtag::amr, newtag::error >();
-    auto t0ref = g_inputdeck.get< newtag::amr, newtag::t0ref >();
+    print.Item< ctr::AMRError, tag::amr, tag::error >();
+    auto t0ref = g_inputdeck.get< tag::amr, tag::t0ref >();
     print.item( "Refinement at t<0 (t0ref)", t0ref );
     if (t0ref) {
-      const auto& initref = g_inputdeck.get< newtag::amr, newtag::initial >();
+      const auto& initref = g_inputdeck.get< tag::amr, tag::initial >();
       print.item( "Initial refinement steps", initref.size() );
-      print.edgeref( g_inputdeck.get< newtag::amr, newtag::edgelist >() );
+      print.edgeref( g_inputdeck.get< tag::amr, tag::edgelist >() );
 
       auto eps =
         std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
 
-      const auto& amr_coord = g_inputdeck.get< newtag::amr, newtag::coords >();
-      const auto& amr_defcoord = g_inputdeck_defaults.get< newtag::amr, newtag::coords >();
+      const auto& amr_coord = g_inputdeck.get< tag::amr, tag::coords >();
+      const auto& amr_defcoord = g_inputdeck_defaults.get< tag::amr, tag::coords >();
 
-      auto xminus = amr_coord.get< newtag::xminus >();
-      auto xminus_default = amr_defcoord.get< newtag::xminus >();
+      auto xminus = amr_coord.get< tag::xminus >();
+      auto xminus_default = amr_defcoord.get< tag::xminus >();
       if (std::abs( xminus - xminus_default ) > eps)
         print.item( "Initial refinement x-", xminus );
-      auto xplus = amr_coord.get< newtag::xplus >();
-      auto xplus_default = amr_defcoord.get< newtag::xplus >();
+      auto xplus = amr_coord.get< tag::xplus >();
+      auto xplus_default = amr_defcoord.get< tag::xplus >();
       if (std::abs( xplus - xplus_default ) > eps)
         print.item( "Initial refinement x+", xplus );
 
-      auto yminus = amr_coord.get< newtag::yminus >();
-      auto yminus_default = amr_defcoord.get< newtag::yminus >();
+      auto yminus = amr_coord.get< tag::yminus >();
+      auto yminus_default = amr_defcoord.get< tag::yminus >();
       if (std::abs( yminus - yminus_default ) > eps)
         print.item( "Initial refinement y-", yminus );
-      auto yplus = amr_coord.get< newtag::yplus >();
-      auto yplus_default = amr_defcoord.get< newtag::yplus >();
+      auto yplus = amr_coord.get< tag::yplus >();
+      auto yplus_default = amr_defcoord.get< tag::yplus >();
       if (std::abs( yplus - yplus_default ) > eps)
         print.item( "Initial refinement y+", yplus );
 
-      auto zminus = amr_coord.get< newtag::zminus >();
-      auto zminus_default = amr_defcoord.get< newtag::zminus >();
+      auto zminus = amr_coord.get< tag::zminus >();
+      auto zminus_default = amr_defcoord.get< tag::zminus >();
       if (std::abs( zminus - zminus_default ) > eps)
         print.item( "Initial refinement z-", zminus );
-      auto zplus = amr_coord.get< newtag::zplus >();
-      auto zplus_default = amr_defcoord.get< newtag::zplus >();
+      auto zplus = amr_coord.get< tag::zplus >();
+      auto zplus_default = amr_defcoord.get< tag::zplus >();
       if (std::abs( zplus - zplus_default ) > eps)
         print.item( "Initial refinement z+", zplus );
     }
-    auto dtref = g_inputdeck.get< newtag::amr, newtag::dtref >();
+    auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
     print.item( "Refinement at t>0 (dtref)", dtref );
     if (dtref) {
-      auto dtfreq = g_inputdeck.get< newtag::amr, newtag::dtfreq >();
+      auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
       print.item( "Mesh refinement frequency, t>0", dtfreq );
       print.item( "Uniform-only mesh refinement, t>0",
-                  g_inputdeck.get< newtag::amr, newtag::dtref_uniform >() );
+                  g_inputdeck.get< tag::amr, tag::dtref_uniform >() );
     }
     print.item( "Refinement tolerance",
-                g_inputdeck.get< newtag::amr, newtag::tol_refine >() );
+                g_inputdeck.get< tag::amr, tag::tol_refine >() );
     print.item( "De-refinement tolerance",
-                g_inputdeck.get< newtag::amr, newtag::tol_derefine >() );
+                g_inputdeck.get< tag::amr, tag::tol_derefine >() );
   }
 
   // Print out ALE configuration
-  const auto ale = g_inputdeck.get< newtag::ale, newtag::ale >();
+  const auto ale = g_inputdeck.get< tag::ale, tag::ale >();
   if (ale) {
     print.section( "Arbitrary Lagrangian-Eulerian (ALE) mesh motion" );
-    auto dvcfl = g_inputdeck.get< newtag::ale, newtag::dvcfl >();
+    auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
     print.item( "Volume-change CFL coefficient", dvcfl );
-    print.Item< ctr::MeshVelocity, newtag::ale, newtag::mesh_velocity >();
-    print.Item< ctr::MeshVelocitySmoother, newtag::ale, newtag::smoother >();
+    print.Item< ctr::MeshVelocity, tag::ale, tag::mesh_velocity >();
+    print.Item< ctr::MeshVelocitySmoother, tag::ale, tag::smoother >();
     print.item( "Mesh motion dimensions", tk::parameters(
-                g_inputdeck.get< newtag::ale, newtag::mesh_motion >() ) );
-    const auto& meshforce = g_inputdeck.get< newtag::ale, newtag::meshforce >();
+                g_inputdeck.get< tag::ale, tag::mesh_motion >() ) );
+    const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
     print.item( "Mesh velocity force coefficients", tk::parameters(meshforce) );
     print.item( "Vorticity multiplier",
-                g_inputdeck.get< newtag::ale, newtag::vortmult >() );
+                g_inputdeck.get< tag::ale, tag::vortmult >() );
     print.item( "Mesh velocity linear solver tolerance",
-                g_inputdeck.get< newtag::ale, newtag::tolerance >() );
+                g_inputdeck.get< tag::ale, tag::tolerance >() );
     print.item( "Mesh velocity linear solver maxit",
-                g_inputdeck.get< newtag::ale, newtag::maxit >() );
-    const auto& dir = g_inputdeck.get< newtag::ale, newtag::dirichlet >();
+                g_inputdeck.get< tag::ale, tag::maxit >() );
+    const auto& dir = g_inputdeck.get< tag::ale, tag::dirichlet >();
     if (not dir.empty())
       print.item( "Mesh velocity Dirichlet BC sideset(s)",
                   tk::parameters( dir ) );
-    const auto& sym = g_inputdeck.get< newtag::ale, newtag::symmetry >();
+    const auto& sym = g_inputdeck.get< tag::ale, tag::symmetry >();
     if (not sym.empty())
       print.item( "Mesh velocity symmetry BC sideset(s)",
                   tk::parameters( sym ) );
     std::size_t i = 1;
-    for (const auto& m : g_inputdeck.get< newtag::ale, newtag::move >()) {
+    for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
        tk::ctr::UserTable opt;
        print.item( opt.group() + ' ' + std::to_string(i) + " interpreted as",
-                   opt.name( m.get< newtag::fntype >() ) );
-       const auto& s = m.get< newtag::sideset >();
+                   opt.name( m.get< tag::fntype >() ) );
+       const auto& s = m.get< tag::sideset >();
        if (not s.empty())
          print.item( "Moving sideset(s) with table " + std::to_string(i),
                      tk::parameters(s));
@@ -387,37 +387,37 @@ Transporter::info( const InciterPrint& print )
   // Print I/O filenames
   print.section( "Input/Output filenames and directories" );
   print.item( "Input mesh(es)", tk::parameters( m_input ) );
-  const auto& of = g_inputdeck.get< newtag::cmd, tag::io, tag::output >();
+  const auto& of = g_inputdeck.get< tag::cmd, tag::io, tag::output >();
   print.item( "Volume field output file(s)",
               of + ".e-s.<meshid>.<numchares>.<chareid>" );
   print.item( "Surface field output file(s)",
               of + "-surf.<surfid>.e-s.<meshid>.<numchares>.<chareid>" );
   print.item( "History output file(s)", of + ".hist.{pointid}" );
   print.item( "Diagnostics file",
-              g_inputdeck.get< newtag::cmd, tag::io, tag::diag >() );
+              g_inputdeck.get< tag::cmd, tag::io, tag::diag >() );
   print.item( "Checkpoint/restart directory",
-              g_inputdeck.get< newtag::cmd, tag::io, tag::restart >() + '/' );
+              g_inputdeck.get< tag::cmd, tag::io, tag::restart >() + '/' );
 
   // Print output intervals
   print.section( "Output intervals (in units of iteration count)" );
-  print.item( "TTY", g_inputdeck.get< newtag::ttyi>() );
+  print.item( "TTY", g_inputdeck.get< tag::ttyi>() );
   print.item( "Field and surface",
-              g_inputdeck.get< newtag::field_output, newtag::iter_interval >() );
+              g_inputdeck.get< tag::field_output, tag::iter_interval >() );
   print.item( "History",
-              g_inputdeck.get< newtag::history_output, newtag::iter_interval >() );
+              g_inputdeck.get< tag::history_output, tag::iter_interval >() );
   print.item( "Diagnostics",
-              g_inputdeck.get< newtag::diagnostics, newtag::iter_interval >() );
+              g_inputdeck.get< tag::diagnostics, tag::iter_interval >() );
   print.item( "Checkpoint/restart",
-              g_inputdeck.get< newtag::cmd, tag::rsfreq >() );
-  auto tf = g_inputdeck.get< newtag::field_output, newtag::time_interval >();
-  auto th = g_inputdeck.get< newtag::history_output, newtag::time_interval >();
+              g_inputdeck.get< tag::cmd, tag::rsfreq >() );
+  auto tf = g_inputdeck.get< tag::field_output, tag::time_interval >();
+  auto th = g_inputdeck.get< tag::history_output, tag::time_interval >();
   if (tf>0.0 || th>0.0) {
     print.section( "Output intervals (in units of physics time)" );
     if (tf > 0.0) print.item( "Field and surface", tf );
     if (th > 0.0) print.item( "History", th );
   }
-  const auto& rf = g_inputdeck.get< newtag::field_output, newtag::time_range >();
-  const auto& rh = g_inputdeck.get< newtag::history_output, newtag::time_range >();
+  const auto& rf = g_inputdeck.get< tag::field_output, tag::time_range >();
+  const auto& rh = g_inputdeck.get< tag::history_output, tag::time_range >();
   if (not rf.empty() or not rh.empty()) {
     print.section( "Output time ranges (in units of physics time)" );
     print.item("Field output { mintime, maxtime, dt }", tk::parameters(rf));
@@ -440,17 +440,17 @@ Transporter::info( const InciterPrint& print )
   //  print.item( "Surface side set(s)", tk::parameters(outsets) );
 
   // Print output variables: history
-  const auto& pt = g_inputdeck.get< newtag::history_output, newtag::point >();
+  const auto& pt = g_inputdeck.get< tag::history_output, tag::point >();
   if (!pt.empty()) {
     print.section( "Output time history" );
     for (std::size_t p=0; p<pt.size(); ++p) {
-      const auto& id = pt[p].get< newtag::id >();
+      const auto& id = pt[p].get< tag::id >();
       std::stringstream ss;
-      auto prec = g_inputdeck.get< newtag::history_output, newtag::precision >();
+      auto prec = g_inputdeck.get< tag::history_output, tag::precision >();
       ss << std::setprecision( static_cast<int>(prec) );
       ss << of << ".hist." << id;
       print.longitem( "At point " + id + ' ' +
-        tk::parameters(pt[p].get<newtag::coord>()), ss.str() );
+        tk::parameters(pt[p].get<tag::coord>()), ss.str() );
     }
   }
 
@@ -482,21 +482,21 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
 
   // Query side sets of time dependent BCs (since tag::bctimedep is not a part
   // of tag::bc)
-  const auto& bcs = g_inputdeck.get< newtag::bc >();
+  const auto& bcs = g_inputdeck.get< tag::bc >();
   for (const auto& bci : bcs) {
-    for (const auto& b : bci.get< newtag::timedep >()) {
-      for (auto i : b.get< newtag::sideset >())
+    for (const auto& b : bci.get< tag::timedep >()) {
+      for (auto i : b.get< tag::sideset >())
         usedsets.insert(i);
     }
   }
 
   // Query side sets of boundaries prescribed as moving with ALE
-  for (const auto& move : g_inputdeck.get< newtag::ale, newtag::move >())
-    for (auto i : move.get< newtag::sideset >())
+  for (const auto& move : g_inputdeck.get< tag::ale, tag::move >())
+    for (auto i : move.get< tag::sideset >())
       usedsets.insert(i);
 
   // Add sidesets requested for field output
-  const auto& ss = g_inputdeck.get< newtag::cmd, tag::io, tag::surface >();
+  const auto& ss = g_inputdeck.get< tag::cmd, tag::io, tag::surface >();
   for (const auto& s : ss) {
     std::stringstream conv( s );
     int num;
@@ -529,7 +529,7 @@ Transporter::createPartitioner()
 // Create mesh partitioner AND boundary conditions group
 // *****************************************************************************
 {
-  auto scheme = g_inputdeck.get< newtag::scheme >();
+  auto scheme = g_inputdeck.get< tag::scheme >();
   auto centering = ctr::Scheme().centering( scheme );
   auto print = printer();
 
@@ -568,8 +568,8 @@ Transporter::createPartitioner()
 
   // Create (discretization) Scheme chare worker arrays for all meshes
   for ([[maybe_unused]] const auto& filename : m_input)
-    m_scheme.emplace_back( g_inputdeck.get< newtag::scheme >(),
-                           g_inputdeck.get< newtag::ale, newtag::ale >(),
+    m_scheme.emplace_back( g_inputdeck.get< tag::scheme >(),
+                           g_inputdeck.get< tag::ale, tag::ale >(),
                            need_linearsolver(),
                            centering );
 
@@ -619,9 +619,9 @@ Transporter::createPartitioner()
     // Create MeshWriter chare group for mesh
     m_meshwriter.push_back(
       tk::CProxy_MeshWriter::ckNew(
-        g_inputdeck.get< newtag::field_output, newtag::filetype >(),
+        g_inputdeck.get< tag::field_output, tag::filetype >(),
         centering,
-        g_inputdeck.get< newtag::cmd, tag::benchmark >(),
+        g_inputdeck.get< tag::cmd, tag::benchmark >(),
         m_input.size() ) );
 
     // Create mesh partitioner Charm++ chare nodegroup for all meshes
@@ -652,7 +652,7 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
   uint64_t chunksize, remainder;
   m_nchare[meshid] = static_cast<int>(
     tk::linearLoadDistributor(
-       g_inputdeck.get< newtag::cmd, tag::virtualization >(),
+       g_inputdeck.get< tag::cmd, tag::virtualization >(),
        m_nelem[meshid], CkNumPes(), chunksize, remainder ) );
 
   // Store sum of meshids (across all chares, key) for each meshid (value).
@@ -673,17 +673,17 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
 
     // Print out mesh partitioning configuration
     print.section( "Mesh partitioning" );
-    print.Item< tk::ctr::PartitioningAlgorithm, newtag::partitioning >();
+    print.Item< tk::ctr::PartitioningAlgorithm, tag::partitioning >();
     print.item( "Virtualization [0.0...1.0]",
-                g_inputdeck.get< newtag::cmd, tag::virtualization >() );
+                g_inputdeck.get< tag::cmd, tag::virtualization >() );
     // Print out initial mesh statistics
     meshstat( "Initial load distribution" );
 
     // Query number of initial mesh refinement steps
     int nref = 0;
-    if (g_inputdeck.get< newtag::amr, newtag::t0ref >())
-      nref = static_cast<int>(g_inputdeck.get< newtag::amr,
-        newtag::initial >().size());
+    if (g_inputdeck.get< tag::amr, tag::t0ref >())
+      nref = static_cast<int>(g_inputdeck.get< tag::amr,
+        tag::initial >().size());
 
     m_progMesh.start( print, "Preparing mesh", {{ CkNumPes(), CkNumPes(), nref,
       m_nchare[0], m_nchare[0], m_nchare[0], m_nchare[0] }} );
@@ -825,7 +825,7 @@ Transporter::matched( std::size_t summeshid,
 
     if (refmode == Refiner::RefMode::T0REF) {
 
-      if (!g_inputdeck.get< newtag::cmd, tag::feedback >()) {
+      if (!g_inputdeck.get< tag::cmd, tag::feedback >()) {
         ctr::AMRInitial opt;
         print.diag( { "meshid", "t0ref", "type", "nref", "nderef", "ncorr" },
                     { std::to_string(meshid),
@@ -840,7 +840,7 @@ Transporter::matched( std::size_t summeshid,
 
     } else if (refmode == Refiner::RefMode::DTREF) {
 
-      auto dtref_uni = g_inputdeck.get< newtag::amr, newtag::dtref_uniform >();
+      auto dtref_uni = g_inputdeck.get< tag::amr, tag::dtref_uniform >();
       print.diag( { "meshid", "dtref", "type", "nref", "nderef", "ncorr" },
                   { std::to_string(meshid),
                     std::to_string(++m_ndtrefit[meshid]),
@@ -1030,9 +1030,9 @@ Transporter::need_linearsolver() const
 //! \return True if ALE will neeed a linear solver
 // *****************************************************************************
 {
-  auto smoother = g_inputdeck.get< newtag::ale, newtag::smoother >();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
-  if ( g_inputdeck.get< newtag::ale, newtag::ale >() and
+  if ( g_inputdeck.get< tag::ale, tag::ale >() and
        (smoother == ctr::MeshVelocitySmootherType::LAPLACE ||
         smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) )
   {
@@ -1056,22 +1056,22 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
   //std::cout << "Trans: " << meshid << " Transporter::disccreated()\n";
 
   // Update number of mesh points for mesh, since it may have been refined
-  if (g_inputdeck.get< newtag::amr, newtag::t0ref >()) m_npoin[meshid] = npoin;
+  if (g_inputdeck.get< tag::amr, tag::t0ref >()) m_npoin[meshid] = npoin;
 
   if (++m_ndisc == m_nelem.size()) { // all Disc arrays have been created
     m_ndisc = 0;
     auto print = printer();
     m_progMesh.end( print );
-    if (g_inputdeck.get< newtag::amr, newtag::t0ref >())
+    if (g_inputdeck.get< tag::amr, tag::t0ref >())
       meshstat( "Initially (t<0) refined mesh graph statistics" );
   }
 
   m_refiner[meshid].sendProxy();
 
-  if (g_inputdeck.get< newtag::scheme >() == ctr::SchemeType::DiagCG)
+  if (g_inputdeck.get< tag::scheme >() == ctr::SchemeType::DiagCG)
     m_scheme[meshid].fct().doneInserting();
 
-  if (g_inputdeck.get< newtag::ale, newtag::ale >())
+  if (g_inputdeck.get< tag::ale, tag::ale >())
     m_scheme[meshid].ale().doneInserting();
 
   if (need_linearsolver())
@@ -1101,13 +1101,13 @@ Transporter::diagHeader()
 
    // Output header for diagnostics output file
     auto mid = m_input.size() > 1 ? std::string( '.' + std::to_string(m) ) : "";
-    tk::DiagWriter dw( g_inputdeck.get< newtag::cmd, tag::io, tag::diag >() + mid,
-      g_inputdeck.get< newtag::diagnostics, newtag::format >(),
-      g_inputdeck.get< newtag::diagnostics, newtag::precision >() );
+    tk::DiagWriter dw( g_inputdeck.get< tag::cmd, tag::io, tag::diag >() + mid,
+      g_inputdeck.get< tag::diagnostics, tag::format >(),
+      g_inputdeck.get< tag::diagnostics, tag::precision >() );
 
     // Collect variables names for integral/diagnostics output
     std::vector< std::string > var;
-    const auto scheme = g_inputdeck.get< newtag::scheme >();
+    const auto scheme = g_inputdeck.get< tag::scheme >();
     if ( scheme == ctr::SchemeType::DiagCG ||
          scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE )
@@ -1133,7 +1133,7 @@ Transporter::diagHeader()
     // Query user-requested diagnostics and augment diagnostics file header by
     // 'err(var)', where 'err' is the error type  configured, and var is the
     // variable computed, for all variables and all error types configured.
-    const auto& err = g_inputdeck.get< newtag::diagnostics, newtag::error >();
+    const auto& err = g_inputdeck.get< tag::diagnostics, tag::error >();
     const auto& errname = opt.name( err );
     for (std::size_t i=0; i<nv; ++i)
       d.push_back( errname + '(' + var[i] + "-IC)" );
@@ -1435,8 +1435,8 @@ Transporter::inthead( const InciterPrint& print )
 //! \param[in] print Pretty printer object to use for printing
 // *****************************************************************************
 {
-  auto refined = g_inputdeck.get< newtag::cmd, tag::io, tag::refined >();
-  const auto scheme = g_inputdeck.get< newtag::scheme >();
+  auto refined = g_inputdeck.get< tag::cmd, tag::io, tag::refined >();
+  const auto scheme = g_inputdeck.get< tag::scheme >();
   if (refined && scheme == ctr::SchemeType::DG) {
     printer() << "\n>>> WARNING: Ignoring refined field output for DG(P0)\n\n";
     refined = false;
@@ -1497,7 +1497,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
     diag[i] = sqrt( d[L2SOL][i] / m_meshvol[meshid] );
   
   // Query user-requested error types to output
-  const auto& error = g_inputdeck.get< newtag::diagnostics, newtag::error >();
+  const auto& error = g_inputdeck.get< tag::diagnostics, tag::error >();
 
   decltype(ncomp) n = 0;
   n += ncomp;
@@ -1512,7 +1512,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   }
 
   // Finish computing the L2 norm of the residual and append
-  const auto scheme = g_inputdeck.get< newtag::scheme >();
+  const auto scheme = g_inputdeck.get< tag::scheme >();
   std::vector< tk::real > l2res( d[L2RES].size(), 0.0 );
   if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG ||
     scheme == ctr::SchemeType::OversetFE) {
@@ -1532,11 +1532,11 @@ Transporter::diagnostics( CkReductionMsg* msg )
   diag.push_back( d[TOTALSOL][0] );
 
   // Append diagnostics file at selected times
-  auto filename = g_inputdeck.get< newtag::cmd, tag::io, tag::diag >();
+  auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();
   if (m_nelem.size() > 1) filename += '.' + id;
   tk::DiagWriter dw( filename,
-    g_inputdeck.get< newtag::diagnostics, newtag::format >(),
-    g_inputdeck.get< newtag::diagnostics, newtag::precision >(),
+    g_inputdeck.get< tag::diagnostics, tag::format >(),
+    g_inputdeck.get< tag::diagnostics, tag::precision >(),
     std::ios_base::app );
   dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
 
@@ -1555,7 +1555,7 @@ Transporter::resume()
   if (std::any_of(begin(m_finished), end(m_finished), [](auto f){return !f;})) {
     // If just restarted from a checkpoint, Main( CkMigrateMessage* msg ) has
     // increased nrestart in g_inputdeck, but only on PE 0, so broadcast.
-    auto nrestart = g_inputdeck.get< newtag::cmd, tag::io, tag::nrestart >();
+    auto nrestart = g_inputdeck.get< tag::cmd, tag::io, tag::nrestart >();
     for (std::size_t i=0; i<m_nelem.size(); ++i)
       m_scheme[i].bcast< Scheme::evalLB >( nrestart );
   } else
@@ -1574,8 +1574,8 @@ Transporter::checkpoint( std::size_t finished, std::size_t meshid )
 
   if (++m_nchk == m_nelem.size()) { // all worker arrays have checkpointed
     m_nchk = 0;
-    if (not g_inputdeck.get< newtag::cmd, tag::benchmark >()) {
-      const auto& restart = g_inputdeck.get< newtag::cmd, tag::io, tag::restart >();
+    if (not g_inputdeck.get< tag::cmd, tag::benchmark >()) {
+      const auto& restart = g_inputdeck.get< tag::cmd, tag::io, tag::restart >();
       CkCallback res( CkIndex_Transporter::resume(), thisProxy );
       CkStartCheckpoint( restart.c_str(), res );
     } else {

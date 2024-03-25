@@ -22,7 +22,7 @@
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "EoS/EOS.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 
@@ -31,7 +31,7 @@ class CompFlowProblemUserDefined {
 
   private:
     using ncomp_t = tk::ncomp_t;
-    using eq = newtag::compflow;
+    using eq = tag::compflow;
     using real = tk::real;
 
   public:

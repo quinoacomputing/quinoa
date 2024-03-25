@@ -14,13 +14,13 @@
 #include "FieldOutput.hpp"
 #include "ContainerUtil.hpp"
 #include "History.hpp"
-#include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
 #include "ConfigureCompFlow.hpp"
 
 namespace inciter {
 
-extern ctr::New2InputDeck g_inputdeck;
+extern ctr::InputDeck g_inputdeck;
 
 std::map< std::string, tk::GetVarFn > CompFlowOutVarFn()
 // *****************************************************************************
@@ -79,7 +79,7 @@ CompFlowSurfOutput( const std::vector< EOS >& mat_blk,
   std::vector< std::vector< tk::real > > out;
 
   // extract field output along side sets requested
-  for (auto s : g_inputdeck.get< newtag::field_output, newtag::sideset >()) {
+  for (auto s : g_inputdeck.get< tag::field_output, tag::sideset >()) {
     // get node list for side set requested
     auto b = bnd.find(s);
     if (b == end(bnd)) continue;
@@ -123,7 +123,7 @@ CompFlowElemSurfOutput(
   std::vector< std::vector< tk::real > > out;
 
   // extract field output along side sets requested
-  for (auto s : g_inputdeck.get< newtag::field_output, newtag::sideset >()) {
+  for (auto s : g_inputdeck.get< tag::field_output, tag::sideset >()) {
     // get face list for side set requested
     auto b = bface.find(s);
     if (b == end(bface)) continue;
