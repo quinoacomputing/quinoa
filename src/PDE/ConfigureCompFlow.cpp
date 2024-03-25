@@ -182,29 +182,4 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
   return nfo;
 }
 
-void
-assignCompFlowGetVars( const std::string& name, tk::GetVarFn& f )
-// *****************************************************************************
-// Assign functions that compute physics variables from the numerical solution
-// for CompFlow
-//! \param[in] name Name of variable whose tk::GetVarFn is to be assigned
-//! \param[in,out] f Function assigned
-// *****************************************************************************
-{
-  using namespace kw;
-  using namespace compflow;
-
-  assign< outvar_density >( name, densityOutVar, f );
-  assign< outvar_xvelocity >( name, velocityOutVar<0>, f );
-  assign< outvar_yvelocity >( name, velocityOutVar<1>, f );
-  assign< outvar_zvelocity >( name, velocityOutVar<2>, f );
-  assign< outvar_specific_total_energy >( name, specificTotalEnergyOutVar, f );
-  assign< outvar_volumetric_total_energy >
-        ( name, volumetricTotalEnergyOutVar, f );
-  assign< outvar_xmomentum >( name, momentumOutVar<0>, f );
-  assign< outvar_ymomentum >( name, momentumOutVar<1>, f );
-  assign< outvar_zmomentum >( name, momentumOutVar<2>, f );
-  assign< outvar_pressure >( name, pressureOutVar, f );
-}
-
 }  // inciter::

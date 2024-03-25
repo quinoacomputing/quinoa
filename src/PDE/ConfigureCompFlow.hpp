@@ -38,11 +38,6 @@ registerCompFlow( CGFactory& cf,
 std::vector< std::pair< std::string, std::string > >
 infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt );
 
-//! \brief Assign function that computes physics variables from the
-//!   numerical solution for CompFlow
-void
-assignCompFlowGetVars( const std::string& name, tk::GetVarFn& f );
-
 /** @name Functions that compute physics variables from the numerical solution for CompFlow */
 ///@{
 

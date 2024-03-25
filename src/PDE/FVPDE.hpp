@@ -188,6 +188,10 @@ class FVPDE {
     { return self->dt( fd, geoFace, geoElem, U, P, nielem, srcFlag, local_dte );
     }
 
+    //! Public interface to returning maps of output var functions
+    std::map< std::string, tk::GetVarFn > OutVarFn() const
+    { return self->OutVarFn(); }
+
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
     { return self->analyticFieldNames(); }
@@ -318,6 +322,7 @@ class FVPDE {
                            const std::size_t,
                            const std::vector< int >&,
                            std::vector< tk::real >& ) const = 0;
+      virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -433,6 +438,8 @@ class FVPDE {
                    std::vector< tk::real >& local_dte ) const override
       { return data.dt( fd, geoFace, geoElem, U, P, nielem, srcFlag,
           local_dte ); }
+      std::map< std::string, tk::GetVarFn > OutVarFn() const override
+      { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > surfNames() const override

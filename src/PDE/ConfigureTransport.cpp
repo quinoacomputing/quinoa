@@ -123,19 +123,4 @@ infoTransport( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
   return nfo;
 }
 
-void
-assignTransportGetVars( const std::string& name, tk::GetVarFn& f )
-// *****************************************************************************
-// Assign functions that compute physics variables from the numerical solution
-// for Transport
-//! \param[in] name Name of variable whose tk::GetVarFn is to be assigned
-//! \param[in,out] f Function assigned
-// *****************************************************************************
-{
-  using namespace kw;
-  using namespace transport;
-
-  assign< outvar_material_indicator >( name, matIndicatorOutVar, f );
-}
-
 }  // inciter::

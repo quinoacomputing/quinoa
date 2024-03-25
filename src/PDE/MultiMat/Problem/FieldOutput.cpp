@@ -14,10 +14,32 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Vector.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
+#include "ConfigureMultiMat.hpp"
 
 namespace inciter {
 
 extern ctr::New2InputDeck g_inputdeck;
+
+std::map< std::string, tk::GetVarFn > MultiMatOutVarFn()
+// *****************************************************************************
+// Return a map that associates user-specified strings to functions
+//! \return Map that associates user-specified strings to functions that compute
+//!   relevant quantities to be output to file
+// *****************************************************************************
+{
+  std::map< std::string, tk::GetVarFn > OutFnMap;
+
+  // Allowed strings for user-def field output vars
+  OutFnMap["density"] = multimat::bulkDensityOutVar;
+  OutFnMap["pressure"] = multimat::bulkPressureOutVar;
+  OutFnMap["specific_total_energy"] = multimat::bulkSpecificTotalEnergyOutVar;
+  OutFnMap["x-velocity"] = multimat::velocityOutVar<0>;
+  OutFnMap["y-velocity"] = multimat::velocityOutVar<1>;
+  OutFnMap["z-velocity"] = multimat::velocityOutVar<2>;
+  OutFnMap["material_indicator"] = multimat::matIndicatorOutVar;
+
+  return OutFnMap;
+}
 
 std::vector< std::string >
 MultiMatFieldNames( std::size_t nmat )

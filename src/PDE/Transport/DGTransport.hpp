@@ -37,6 +37,8 @@
 #include "Limiter.hpp"
 #include "PrefIndicator.hpp"
 #include "EoS/EOS.hpp"
+#include "FunctionPrototypes.hpp"
+#include "ConfigureTransport.hpp"
 
 namespace inciter {
 
@@ -436,6 +438,16 @@ class Transport {
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
       return mindt;
+    }
+
+    //! Return a map that associates user-specified strings to functions
+    //! \return Map that associates user-specified strings to functions that
+    //!  compute relevant quantities to be output to file
+    std::map< std::string, tk::GetVarFn > OutVarFn() const {
+      std::map< std::string, tk::GetVarFn > OutFnMap;
+      OutFnMap["material_indicator"] = transport::matIndicatorOutVar;
+
+      return OutFnMap;
     }
 
     //! Return analytic field names to be output to file

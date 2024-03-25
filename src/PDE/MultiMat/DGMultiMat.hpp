@@ -922,6 +922,12 @@ class MultiMat {
       return v;
     }
 
+    //! Return a map that associates user-specified strings to functions
+    //! \return Map that associates user-specified strings to functions that
+    //!   compute relevant quantities to be output to file
+    std::map< std::string, tk::GetVarFn > OutVarFn() const
+    { return MultiMatOutVarFn(); }
+
     //! Return analytic field names to be output to file
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {

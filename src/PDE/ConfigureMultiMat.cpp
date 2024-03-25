@@ -161,26 +161,4 @@ infoMultiMat( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
   return nfo;
 }
 
-void
-assignMultiMatGetVars( const std::string& name, tk::GetVarFn& f )
-// *****************************************************************************
-// Assign functions that compute physics variables from the numerical solution
-// for MultiMat
-//! \param[in] name Name of variable whose tk::GetVarFn is to be assigned
-//! \param[in,out] f Function assigned
-// *****************************************************************************
-{
-  using namespace kw;
-  using namespace multimat;
-
-  assign< outvar_density >( name, bulkDensityOutVar, f );
-  assign< outvar_pressure >( name, bulkPressureOutVar, f );
-  assign< outvar_specific_total_energy >
-        ( name, bulkSpecificTotalEnergyOutVar, f );
-  assign< outvar_xvelocity >( name, velocityOutVar<0>, f );
-  assign< outvar_yvelocity >( name, velocityOutVar<1>, f );
-  assign< outvar_zvelocity >( name, velocityOutVar<2>, f );
-  assign< outvar_material_indicator >( name, matIndicatorOutVar, f );
-}
-
 }  // inciter::

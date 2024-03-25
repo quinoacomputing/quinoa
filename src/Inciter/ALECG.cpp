@@ -1437,7 +1437,8 @@ ALECG::writeFields( CkCallback c )
 
     // Collect field output from numerical solution requested by user
     conserved( m_u, Disc()->Vol() );
-    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE, m_u, depvar );
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE,
+      g_cgpde[Disc()->MeshId()].OutVarFn(), m_u, depvar );
     volumetric( m_u, Disc()->Vol() );
 
     //! Lambda to put in a field for output if not empty

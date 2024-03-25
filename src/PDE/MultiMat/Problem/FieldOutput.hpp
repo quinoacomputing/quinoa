@@ -17,10 +17,14 @@
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 #include "FaceData.hpp"
+#include "FunctionPrototypes.hpp"
 
 namespace inciter {
 
 using ncomp_t = tk::ncomp_t;
+
+//! Return a map that associates user-specified strings to functions
+std::map< std::string, tk::GetVarFn > MultiMatOutVarFn();
 
 //! Return multi-material field names to be output to file
 std::vector< std::string >

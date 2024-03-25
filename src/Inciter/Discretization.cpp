@@ -118,9 +118,6 @@ Discretization::Discretization(
 //! \param[in] nc Total number of Discretization chares
 // *****************************************************************************
 {
-  for (auto& foutvar : g_inputdeck.get< newtag::field_output, newtag::outvar>()) {
-    foutvar.assignGetVar();
-  }
   Assert( !m_inpoel.empty(), "No elements assigned to Discretization chare" );
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Jacobian in input mesh to Discretization non-positive" );

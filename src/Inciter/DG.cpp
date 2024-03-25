@@ -1654,9 +1654,9 @@ DG::writeFields(
 
   // Collect field output from numerical solution requested by user
   auto elemfields = numericFieldOutput( m_uElemfields, tk::Centering::ELEM,
-    m_pElemfields );
+    g_dgpde[Disc()->MeshId()].OutVarFn(), m_pElemfields );
   auto nodefields = numericFieldOutput( m_uNodefields, tk::Centering::NODE,
-    m_pNodefields );
+    g_dgpde[Disc()->MeshId()].OutVarFn(), m_pNodefields );
 
   // Collect field output from analytical solutions (if exist)
   const auto& coord = m_outmesh.coord;

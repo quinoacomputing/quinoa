@@ -16,8 +16,12 @@
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 #include "History.hpp"
+#include "FunctionPrototypes.hpp"
 
 namespace inciter {
+
+//! Return a map that associates user-specified strings to functions
+std::map< std::string, tk::GetVarFn > CompFlowOutVarFn();
 
 //! Return surface field names to be output to file
 std::vector< std::string > CompFlowSurfNames();

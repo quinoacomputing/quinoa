@@ -661,7 +661,8 @@ DiagCG::writeFields( CkCallback c ) const
     // Query fields names requested by user
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
     // Collect field output from numerical solution requested by user
-    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE );
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE,
+      g_cgpde[Disc()->MeshId()].OutVarFn() );
     // Collect field output names for analytical solutions
     analyticFieldNames( g_cgpde[d->MeshId()], tk::Centering::NODE,
       nodefieldnames );

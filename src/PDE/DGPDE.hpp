@@ -282,6 +282,10 @@ class DGPDE {
     { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U,
                        P, nielem ); }
 
+    //! Public interface to returning maps of output var functions
+    std::map< std::string, tk::GetVarFn > OutVarFn() const
+    { return self->OutVarFn(); }
+
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
     { return self->analyticFieldNames(); }
@@ -437,6 +441,7 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t ) const = 0;
+      virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
@@ -593,6 +598,8 @@ class DGPDE {
                    const std::size_t nielem ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
                         U, P, nielem ); }
+      std::map< std::string, tk::GetVarFn > OutVarFn() const override
+      { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > histNames() const override

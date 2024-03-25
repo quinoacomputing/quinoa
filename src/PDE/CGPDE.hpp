@@ -265,6 +265,10 @@ class CGPDE {
       const std::vector< tk::Table<5> >& timedepfn ) const
     { self->timedepbc( t, U, nodes, timedepfn ); }
 
+    //! Public interface to returning maps of output var functions
+    std::map< std::string, tk::GetVarFn > OutVarFn() const
+    { return self->OutVarFn(); }
+
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
     { return self->analyticFieldNames(); }
@@ -435,6 +439,7 @@ class CGPDE {
         tk::Fields&,
         const std::vector< std::unordered_set< std::size_t > >&,
         const std::vector< tk::Table<5> >& ) const = 0;
+      virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -591,6 +596,8 @@ class CGPDE {
         const std::vector< std::unordered_set< std::size_t > >& nodes,
         const std::vector< tk::Table<5> >& timedepfn ) const override
       { data.timedepbc( t, U, nodes, timedepfn ); }
+      std::map< std::string, tk::GetVarFn > OutVarFn() const override
+      { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > surfNames() const override

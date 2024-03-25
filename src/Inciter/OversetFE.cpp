@@ -1343,7 +1343,8 @@ OversetFE::writeFields( CkCallback c )
     auto nodefieldnames = numericFieldNames( tk::Centering::NODE, depvar );
 
     // Collect field output from numerical solution requested by user
-    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE, m_u, depvar );
+    auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE,
+      g_cgpde[Disc()->MeshId()].OutVarFn(), m_u, depvar );
 
     // Collect field output names for analytical solutions
     analyticFieldNames( g_cgpde[d->MeshId()], tk::Centering::NODE,

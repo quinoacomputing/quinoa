@@ -19,6 +19,7 @@
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "UnsMesh.hpp"
 #include "Discretization.hpp"
+#include "FunctionPrototypes.hpp"
 
 namespace inciter {
 
@@ -31,6 +32,7 @@ numericFieldNames( tk::Centering c, char depvar = 0 );
 //! Collect field output from numerical solution based on user input
 std::vector< std::vector< tk::real > >
 numericFieldOutput( const tk::Fields& U, tk::Centering c,
+                    const std::map< std::string, tk::GetVarFn >& outvarfn,
                     const tk::Fields& P = tk::Fields(),
                     char depvar = 0 );
 

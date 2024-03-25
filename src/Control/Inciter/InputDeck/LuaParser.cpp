@@ -1503,27 +1503,27 @@ LuaParser::addOutVar(
     // multimat/matvar quantities
       if (qty == 'D') {  // density
         foutvar.emplace_back(
-          inciter::ctr::OutVar(qty, inciter::densityIdx(nmat,j), c, {}, varname) );
+          inciter::ctr::OutVar(c, varname, inciter::densityIdx(nmat,j)) );
       }
       else if (qty == 'F') {  // volume fraction
         foutvar.emplace_back(
-          inciter::ctr::OutVar(qty, inciter::volfracIdx(nmat,j), c, {}, varname) );
+          inciter::ctr::OutVar(c, varname, inciter::volfracIdx(nmat,j)) );
       }
       else if (qty == 'M') {  // momentum
         foutvar.emplace_back(
-          inciter::ctr::OutVar(qty, inciter::momentumIdx(nmat,j), c, {}, varname) );
+          inciter::ctr::OutVar(c, varname, inciter::momentumIdx(nmat,j)) );
       }
       else if (qty == 'E') {  // specific total energy
         foutvar.emplace_back(
-          inciter::ctr::OutVar(qty, inciter::energyIdx(nmat,j), c, {}, varname) );
+          inciter::ctr::OutVar(c, varname, inciter::energyIdx(nmat,j)) );
       }
       else if (qty == 'U') {  // velocity (primitive)
         foutvar.emplace_back(
-          inciter::ctr::OutVar(qty, inciter::velocityIdx(nmat,j), c, {}, varname) );
+          inciter::ctr::OutVar(c, varname, inciter::velocityIdx(nmat,j)) );
       }
       else if (qty == 'P') {  // material pressure (primitive)
         foutvar.emplace_back(
-          inciter::ctr::OutVar(qty, inciter::pressureIdx(nmat,j), c, {}, varname) );
+          inciter::ctr::OutVar(c, varname, inciter::pressureIdx(nmat,j)) );
       }
       else {
         // error out if incorrect matvar used
@@ -1534,12 +1534,12 @@ LuaParser::addOutVar(
     // quantities specified by depvar
       for (const auto& id : depv)
         if (qty == id) {
-          foutvar.emplace_back( inciter::ctr::OutVar(qty, j, c) );
+          foutvar.emplace_back( inciter::ctr::OutVar(c, varname, j) );
         }
     }
   }
   else {
   // name-based quantity specification
-    foutvar.emplace_back( inciter::ctr::OutVar({}, 0, c, varname) );
+    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, 0, varname) );
   }
 }

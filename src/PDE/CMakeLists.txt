@@ -9,7 +9,6 @@ add_library(PDE
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
             ConfigureMultiMat.cpp
-            ConfigureOutVar.cpp
             CGPDE.cpp
             FVPDE.cpp
             DGPDE.cpp)

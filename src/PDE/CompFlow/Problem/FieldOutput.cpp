@@ -16,10 +16,35 @@
 #include "History.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
+#include "ConfigureCompFlow.hpp"
 
 namespace inciter {
 
 extern ctr::New2InputDeck g_inputdeck;
+
+std::map< std::string, tk::GetVarFn > CompFlowOutVarFn()
+// *****************************************************************************
+// Return a map that associates user-specified strings to functions
+//! \return Map that associates user-specified strings to functions that compute
+//!   relevant quantities to be output to file
+// *****************************************************************************
+{
+  std::map< std::string, tk::GetVarFn > OutFnMap;
+
+  // Allowed strings for user-def field output vars
+  OutFnMap["density"] = compflow::densityOutVar;
+  OutFnMap["x-velocity"] = compflow::velocityOutVar<0>;
+  OutFnMap["y-velocity"] = compflow::velocityOutVar<1>;
+  OutFnMap["z-velocity"] = compflow::velocityOutVar<2>;
+  OutFnMap["specific_total_energy"] = compflow::specificTotalEnergyOutVar;
+  OutFnMap["volumetric_total_energy"] = compflow::volumetricTotalEnergyOutVar;
+  OutFnMap["x-momentum"] = compflow::momentumOutVar<0>;
+  OutFnMap["y-momentum"] = compflow::momentumOutVar<1>;
+  OutFnMap["z-momentum"] = compflow::momentumOutVar<2>;
+  OutFnMap["pressure"] = compflow::pressureOutVar;
+
+  return OutFnMap;
+}
 
 std::vector< std::string > CompFlowSurfNames()
 // *****************************************************************************
