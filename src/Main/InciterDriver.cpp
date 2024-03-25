@@ -14,7 +14,6 @@
 #include "InciterDriver.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "TaggedTupleDeepPrint.hpp"
 #include "Writer.hpp"
 
 #include "NoWarning/transporter.decl.h"

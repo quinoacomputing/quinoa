@@ -293,21 +293,6 @@ namespace grm {
   };
 
   //! Rule used to trigger action
-  template< typename tag, typename... tags >
-  struct Store_back : pegtl::success {};
-  //! Convert and push back value to vector in state at position given by tags
-  //! \details This struct and its apply function are used as a functor-like
-  //!    wrapper for calling the store_back member function of the underlying
-  //!    grammar stack, tk::Control::store_back.
-  template< typename tag, typename...tags >
-  struct action< Store_back< tag, tags... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      stack.template store_back< tag, tags... >( in.string() );
-    }
-  };
-
-  //! Rule used to trigger action
   template< typename... tags >
   struct Invert_switch : pegtl::success {};
   //! Invert bool in switch at position given by tags
