@@ -319,38 +319,6 @@ struct zmax { static std::string name() { return "zmax"; } };
 struct lua { static std::string name() { return "lua"; } };
 
 struct BirthdaySpacings {};
-struct Collision {};
-struct RandomWalk1 {};
-struct Gap {};
-struct SimplePoker {};
-struct CouponCollector {};
-struct MaxOft {};
-struct WeightDistrib {};
-struct MatrixRank {};
-struct HammingIndep {};
-struct SerialOver {};
-struct CollisionOver {};
-struct ClosePairs {};
-struct ClosePairsBitMatch {};
-struct Run {};
-struct Permutation {};
-struct CollisionPermut {};
-struct SampleProd {};
-struct SampleMean {};
-struct SampleCorr {};
-struct AppearanceSpacings {};
-struct SumCollector {};
-struct Savir2 {};
-struct GCD {};
-struct LinearComp {};
-struct LempelZiv {};
-struct Fourier3 {};
-struct LongestHeadRun {};
-struct PeriodsInStrings {};
-struct HammingWeight2 {};
-struct HammingCorr {};
-struct StringRun {};
-struct AutoCorr {};
 
 } // tag::
 

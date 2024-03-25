@@ -18,11 +18,25 @@
 #include "SimpTaggedTuple.hpp"
 #include "NewTag.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "Inciter/Options/PDE.hpp"
-#include "Inciter/Options/Scheme.hpp"
 #include "Transfer.hpp"
-#include "Options/PartitioningAlgorithm.hpp"
 #include "Inciter/OutVar.hpp"
+#include "Inciter/Options/PDE.hpp"
+#include "Inciter/Options/Problem.hpp"
+#include "Inciter/Options/Scheme.hpp"
+#include "Inciter/Options/Limiter.hpp"
+#include "Inciter/Options/Flux.hpp"
+#include "Inciter/Options/Initiate.hpp"
+#include "Inciter/Options/AMRInitial.hpp"
+#include "Inciter/Options/AMRError.hpp"
+#include "Inciter/Options/PrefIndicator.hpp"
+#include "Inciter/Options/MeshVelocity.hpp"
+#include "Inciter/Options/MeshVelocitySmoother.hpp"
+#include "Inciter/Options/Material.hpp"
+#include "Options/PartitioningAlgorithm.hpp"
+#include "Options/TxtFloatFormat.hpp"
+#include "Options/FieldFile.hpp"
+#include "Options/Error.hpp"
+#include "Options/UserTable.hpp"
 
 namespace inciter {
 
@@ -30,7 +44,7 @@ namespace ctr {
 
 using ncomp_t = std::size_t;
 
-using bclist = tk::TaggedTuple< brigand::list<
+using bclist = tk::SimpTaggedTuple< brigand::list<
   newtag::dirichlet,   std::vector< std::size_t >,
   newtag::symmetry,    std::vector< std::size_t >,
   newtag::inlet,       std::vector< std::size_t >,

@@ -18,7 +18,6 @@
 
 #include "Print.hpp"
 #include "Exception.hpp"
-#include "Inciter/Types.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"

@@ -33,7 +33,6 @@
 #include "ContainerUtil.hpp"
 #include "LoadDistributor.hpp"
 #include "MeshReader.hpp"
-#include "Inciter/Types.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "NodeDiagnostics.hpp"
 #include "ElemDiagnostics.hpp"

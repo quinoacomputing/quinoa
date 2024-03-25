@@ -403,10 +403,8 @@ class Discretization : public CBase_Discretization {
     bcnodes( const std::map< int, std::vector< std::size_t > >& bface,
              const std::vector< std::size_t >& triinpoel ) const
     {
-      using PDETypes = ctr::parameters::Keys;
       std::unordered_map< int, std::unordered_set< std::size_t > > nodes;
-      brigand::for_each< PDETypes >(
-        SidesetNodes< tags... >( bface, triinpoel, nodes, this->MeshId() ) );
+      SidesetNodes< tags... >( bface, triinpoel, nodes, this->MeshId() );
       return nodes;
     }
 

@@ -19,13 +19,34 @@
 #include <brigand/algorithms/for_each.hpp>
 
 #include "QuinoaConfig.hpp"
+#include "TaggedTuple.hpp"
+#include "PrintUtil.hpp"
+#include "Tags.hpp"
 #include "HelpFactory.hpp"
 #include "Keywords.hpp"
-#include "Inciter/Types.hpp"
+#include "Inciter/OutVar.hpp"
 
 namespace inciter {
 //! Inciter control facilitating user input to internal data transfer
 namespace ctr {
+
+//! IO parameters storage
+using ios = tk::TaggedTuple< brigand::list<
+    tag::nrestart,  int                             //!< Number of restarts
+  , tag::control,   kw::control::info::expect::type //!< Control filename
+  , tag::input,     kw::input::info::expect::type   //!< Input filename
+  , tag::output,    kw::output::info::expect::type  //!< Output filename
+    //! Refined output (output field data on a refined mesh)
+  , tag::refined,   kw::refined::info::expect::type
+  , tag::screen,    kw::screen::info::expect::type  //!< Screen output filename
+    //! List of side sets to save as field output
+  , tag::surface,   std::vector< kw::sideset::info::expect::type >
+    //! Diagnostics filename
+  , tag::diag,      kw::diagnostics_cmd::info::expect::type
+  , tag::particles, std::string                     //!< Particles filename
+  , tag::outvar,    std::vector< OutVar >           //!< Output variables
+  , tag::restart,   kw::restart::info::expect::type //!< Restart dirname
+> >;
 
 //! Member data for tagged tuple
 using CmdLineMembers = brigand::list<
