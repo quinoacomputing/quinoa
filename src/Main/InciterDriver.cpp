@@ -74,8 +74,6 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline, int nrestart )
   print.item( "Parsed lua file", "success" );
 
   print.endpart();
-
-  CkExit();
 }
 
 void

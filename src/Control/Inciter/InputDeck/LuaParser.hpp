@@ -45,6 +45,16 @@ class LuaParser : public tk::FileParser {
       std::size_t vecsize,
       std::vector< tk::real >& storage );
 
+    //! Check and store field output variables
+    void addOutVar(
+      const std::string& varname,
+      std::vector< char >& depv,
+      std::size_t nmat,
+      inciter::ctr::PDEType pde,
+      tk::Centering c,
+      std::vector< inciter::ctr::OutVar >& foutvar );
+
+  private:
     //! Assign parameter to inputdeck entry if specified, else default
     //! \tparam N Type of parameter being read/assigned
     //! \param[in] table Sol-table which contains said parameter

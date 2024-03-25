@@ -428,7 +428,6 @@ Transporter::info( const InciterPrint& print )
   //// Print output variables: fields and surfaces
   //const auto nodeoutvars = g_inputdeck.outvars( tk::Centering::NODE );
   //const auto elemoutvars = g_inputdeck.outvars( tk::Centering::ELEM );
-  //const auto aliases = g_inputdeck.outvar_aliases();
   //const auto outsets = g_inputdeck.outsets();
   //if (!nodeoutvars.empty() || !elemoutvars.empty() || !outsets.empty())
   //   print.section( "Output fields" );
@@ -441,20 +440,20 @@ Transporter::info( const InciterPrint& print )
   //if (!outsets.empty())
   //  print.item( "Surface side set(s)", tk::parameters(outsets) );
 
-  //// Print output variables: history
-  //const auto& pt = g_inputdeck.get< tag::history, tag::point >();
-  //const auto& id = g_inputdeck.get< tag::history, tag::id >();
-  //if (!pt.empty()) {
-  //  print.section( "Output time history" );
-  //  for (std::size_t p=0; p<pt.size(); ++p) {
-  //    std::stringstream ss;
-  //    auto prec = g_inputdeck.get< tag::prec, tag::history >();
-  //    ss << std::setprecision( static_cast<int>(prec) );
-  //    ss << of << ".hist." << id[p];
-  //    print.longitem( "At point " + id[p] + ' ' + tk::parameters(pt[p]),
-  //                    ss.str() );
-  //  }
-  //}
+  // Print output variables: history
+  const auto& pt = g_inputdeck.get< newtag::history_output, newtag::point >();
+  if (!pt.empty()) {
+    print.section( "Output time history" );
+    for (std::size_t p=0; p<pt.size(); ++p) {
+      const auto& id = pt[p].get< newtag::id >();
+      std::stringstream ss;
+      auto prec = g_inputdeck.get< newtag::history_output, newtag::precision >();
+      ss << std::setprecision( static_cast<int>(prec) );
+      ss << of << ".hist." << id;
+      print.longitem( "At point " + id + ' ' +
+        tk::parameters(pt[p].get<newtag::coord>()), ss.str() );
+    }
+  }
 
   print.endsubsection();
 }
@@ -478,7 +477,7 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
 // *****************************************************************************
 {
   // Query side set ids at which BCs assigned for all BC types for all PDEs
-  using bclist = newtag::bclist::Keys;
+  using bclist = ctr::bclist::Keys;
   std::unordered_set< int > usedsets;
   brigand::for_each< bclist >( UserBC( g_inputdeck, usedsets ) );
 

@@ -19,7 +19,6 @@
 
 #include "Print.hpp"
 #include "ContainerUtil.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/Options/Physics.hpp"
 #include "Inciter/Options/Problem.hpp"

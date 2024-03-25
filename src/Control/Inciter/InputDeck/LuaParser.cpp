@@ -19,7 +19,6 @@
 #include "Print.hpp"
 #include "Exception.hpp"
 #include "Inciter/Types.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
@@ -551,14 +550,17 @@ LuaParser::storeInputDeck(
     // Assign outvar
     auto& foutvar = fo_deck.get< newtag::outvar >();
     std::size_t nevar(0), nnvar(0);
+    std::size_t nmat(1);
+    if (gideck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT)
+      nmat = gideck.get< newtag::multimat, newtag::nmat >();
 
     // element variables
     if (lua_ideck["field_output"]["elemvar"].valid()) {
       nevar = sol::table(lua_ideck["field_output"]["elemvar"]).size();
       for (std::size_t i=0; i<nevar; ++i) {
         std::string varname(lua_ideck["field_output"]["elemvar"][i+1]);
-        foutvar.emplace_back(
-          inciter::ctr::NewOutVar(0, tk::Centering::ELEM, varname) );
+        addOutVar(varname, gideck.get< newtag::depvar >(), nmat,
+          gideck.get< newtag::pde >(), tk::Centering::ELEM, foutvar);
       }
     }
 
@@ -567,64 +569,13 @@ LuaParser::storeInputDeck(
       nnvar = sol::table(lua_ideck["field_output"]["nodevar"]).size();
       for (std::size_t i=0; i<nnvar; ++i) {
         std::string varname(lua_ideck["field_output"]["nodevar"][i+1]);
-        foutvar.emplace_back(
-          inciter::ctr::NewOutVar(0, tk::Centering::NODE, varname) );
+        addOutVar(varname, gideck.get< newtag::depvar >(), nmat,
+          gideck.get< newtag::pde >(), tk::Centering::NODE, foutvar);
       }
     }
 
     Assert(foutvar.size() == (nevar + nnvar),
       "Incorrectly sized outvar vector.");
-
-    // assign field-ids to the outvar
-    std::size_t nmat(1);
-    if (gideck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT)
-      nmat = gideck.get< newtag::multimat, newtag::nmat >();
-
-    for (std::size_t i=0; i<foutvar.size(); ++i) {
-
-      // index-based quantity specification
-      if (foutvar[i].name.length() == 2) {
-        foutvar[i].type = 0;
-        auto qty = foutvar[i].name.at(0);
-        auto j = std::stoul(std::string{foutvar[i].name.at(1)}) - 1;
-
-        if (gideck.get< newtag::pde >() == inciter::ctr::PDEType::MULTIMAT) {
-        // multimat quantities
-          if (qty == 'D') {  // density
-            foutvar[i].field = densityIdx(nmat, j);
-          }
-          if (qty == 'F') {  // volume fraction
-            foutvar[i].field = volfracIdx(nmat, j);
-          }
-          if (qty == 'M') {  // momentum
-            foutvar[i].field = momentumIdx(nmat, j);
-          }
-          if (qty == 'E') {  // specific total energy
-            foutvar[i].field = energyIdx(nmat, j);
-          }
-          if (qty == 'U') {  // velocity (primitive)
-            foutvar[i].type = 1;
-            foutvar[i].field = velocityIdx(nmat, j);
-          }
-          if (qty == 'P') {  // material pressure (primitive)
-            foutvar[i].type = 1;
-            foutvar[i].field = pressureIdx(nmat, j);
-          }
-        }
-        else {
-        // quantities specified by depvar
-          for (const auto& id : gideck.get< newtag::depvar >())
-            if (qty == id) foutvar[i].field = j;
-        }
-      }
-
-      // name-based quantity specification
-      else {
-        foutvar[i].type = 2;
-        foutvar[i].assignGetVar();
-      }
-
-    }
   }
   else {
     // TODO: remove double-specification of defaults
@@ -1523,4 +1474,72 @@ LuaParser::checkStoreMatProp(
   // store values from table to inputdeck
   storeVecIfSpecd< tk::real >(table, key, storage,
     std::vector< tk::real >(vecsize, 0.0));
+}
+
+void
+LuaParser::addOutVar(
+  const std::string& varname,
+  std::vector< char >& depv,
+  std::size_t nmat,
+  inciter::ctr::PDEType pde,
+  tk::Centering c,
+  std::vector< inciter::ctr::OutVar >& foutvar )
+// *****************************************************************************
+//  Check and store field output variables
+//! \param[in] varname Name of variable requested
+//! \param[in] depv List of depvars
+//! \param[in] nmat Number of materials configured
+//! \param[in] pde Type of PDE configured
+//! \param[in] c Variable centering requested
+//! \param[in,out] foutvar Input deck storage where output vars are stored
+// *****************************************************************************
+{
+  // index-based quantity specification
+  if (varname.length() == 2) {
+    auto qty = varname.at(0);
+    auto j = std::stoul(std::string{varname.at(1)}) - 1;
+
+    if (pde == inciter::ctr::PDEType::MULTIMAT) {
+    // multimat/matvar quantities
+      if (qty == 'D') {  // density
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(qty, inciter::densityIdx(nmat,j), c, {}, varname) );
+      }
+      else if (qty == 'F') {  // volume fraction
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(qty, inciter::volfracIdx(nmat,j), c, {}, varname) );
+      }
+      else if (qty == 'M') {  // momentum
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(qty, inciter::momentumIdx(nmat,j), c, {}, varname) );
+      }
+      else if (qty == 'E') {  // specific total energy
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(qty, inciter::energyIdx(nmat,j), c, {}, varname) );
+      }
+      else if (qty == 'U') {  // velocity (primitive)
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(qty, inciter::velocityIdx(nmat,j), c, {}, varname) );
+      }
+      else if (qty == 'P') {  // material pressure (primitive)
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(qty, inciter::pressureIdx(nmat,j), c, {}, varname) );
+      }
+      else {
+        // error out if incorrect matvar used
+        Throw("field_output: matvar " + varname + " not found");
+      }
+    }
+    else {
+    // quantities specified by depvar
+      for (const auto& id : depv)
+        if (qty == id) {
+          foutvar.emplace_back( inciter::ctr::OutVar(qty, j, c) );
+        }
+    }
+  }
+  else {
+  // name-based quantity specification
+    foutvar.emplace_back( inciter::ctr::OutVar({}, 0, c, varname) );
+  }
 }

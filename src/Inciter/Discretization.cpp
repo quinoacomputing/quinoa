@@ -118,6 +118,9 @@ Discretization::Discretization(
 //! \param[in] nc Total number of Discretization chares
 // *****************************************************************************
 {
+  for (auto& foutvar : g_inputdeck.get< newtag::field_output, newtag::outvar>()) {
+    foutvar.assignGetVar();
+  }
   Assert( !m_inpoel.empty(), "No elements assigned to Discretization chare" );
   Assert( tk::positiveJacobians( m_inpoel, m_coord ),
           "Jacobian in input mesh to Discretization non-positive" );
@@ -955,11 +958,13 @@ Discretization::next()
 
   // Update floors of physics time divided by output interval times for ranges
   const auto& rf = g_inputdeck.get< newtag::field_output, newtag::time_range >();
-  if (m_t > rf[0] and m_t < rf[1])
-    m_rangeFieldFloor = std::floor( m_t / rf[2] );
-  const auto& rh = g_inputdeck.get< newtag::history_output, newtag::time_range >();
-  if (m_t > rh[0] and m_t < rh[1])
-    m_rangeHistFloor = std::floor( m_t / rh[2] );
+  if (!rf.empty()) {
+    if (m_t > rf[0] and m_t < rf[1])
+      m_rangeFieldFloor = std::floor( m_t / rf[2] );
+    const auto& rh = g_inputdeck.get< newtag::history_output, newtag::time_range >();
+    if (m_t > rh[0] and m_t < rh[1])
+      m_rangeHistFloor = std::floor( m_t / rh[2] );
+  }
 
   ++m_it;
   m_t += m_dt;
@@ -1111,8 +1116,10 @@ Discretization::fieldrange() const
   bool output = false;
 
   const auto& rf = g_inputdeck.get< newtag::field_output, newtag::time_range >();
-  if (m_t > rf[0] and m_t < rf[1])
-    output |= std::floor(m_t/rf[2]) - m_rangeFieldFloor > eps;
+  if (!rf.empty()) {
+    if (m_t > rf[0] and m_t < rf[1])
+      output |= std::floor(m_t/rf[2]) - m_rangeFieldFloor > eps;
+  }
 
   return output;
 }
@@ -1161,8 +1168,10 @@ Discretization::histrange() const
   bool output = false;
 
   const auto& rh = g_inputdeck.get< newtag::history_output, newtag::time_range >();
-  if (m_t > rh[0] and m_t < rh[1])
-    output |= std::floor(m_t/rh[2]) - m_rangeHistFloor > eps;
+  if (!rh.empty()) {
+    if (m_t > rh[0] and m_t < rh[1])
+      output |= std::floor(m_t/rh[2]) - m_rangeHistFloor > eps;
+  }
 
   return output;
 }

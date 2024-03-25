@@ -71,7 +71,7 @@ class CompFlow {
     {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
-      brigand::for_each< newtag::bclist::Keys >( ConfigBC( m_bc,
+      brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
         { dirichlet
         , symmetry
         , invalidBC         // Inlet BC not implemented
@@ -178,7 +178,7 @@ class CompFlow {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i) = 0.0;
               }
-              initializeBox<newtag::newbox>( m_mat_blk, 1.0, V_ex,
+              initializeBox<ctr::newbox>( m_mat_blk, 1.0, V_ex,
                 t, b, bgpreic, c_v, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {

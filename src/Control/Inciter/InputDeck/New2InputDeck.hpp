@@ -16,242 +16,13 @@
 
 #include <getopt.h>
 #include "SimpTaggedTuple.hpp"
+#include "NewTag.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "Inciter/Options/Scheme.hpp"
 #include "Transfer.hpp"
 #include "Options/PartitioningAlgorithm.hpp"
-#include "Inciter/NewOutVar.hpp"
-
-namespace newtag {
-  DEFTAG(cmd);
-  DEFTAG(title);
-  DEFTAG(nstep);
-  DEFTAG(term);
-  DEFTAG(t0);
-  DEFTAG(dt);
-  DEFTAG(cfl);
-  DEFTAG(ttyi);
-  DEFTAG(steady_state);
-  DEFTAG(residual);
-  DEFTAG(rescomp);
-  DEFTAG(partitioning);
-  DEFTAG(pelocal_reorder);
-  DEFTAG(operator_reorder);
-  DEFTAG(scheme);
-  DEFTAG(ndof);
-  DEFTAG(rdof);
-  DEFTAG(flux);
-  DEFTAG(limiter);
-  DEFTAG(cweight);
-  DEFTAG(shock_detector_coeff);
-  DEFTAG(accuracy_test);
-  DEFTAG(limsol_projection);
-  DEFTAG(fct);
-  DEFTAG(fctclip);
-  DEFTAG(fcteps);
-  DEFTAG(ctau);
-  DEFTAG(sysfct);
-  DEFTAG(sysfctvar);
-
-  DEFTAG(ncomp);
-  DEFTAG(pde);
-  DEFTAG(problem);
-  DEFTAG(transport);
-  DEFTAG(compflow);
-  DEFTAG(multimat);
-  DEFTAG(diffusivity);
-  DEFTAG(lambda);
-  DEFTAG(u0);
-  DEFTAG(alpha);
-  DEFTAG(beta);
-  DEFTAG(betax);
-  DEFTAG(betay);
-  DEFTAG(betaz);
-  DEFTAG(r0);
-  DEFTAG(p0);
-  DEFTAG(ce);
-  DEFTAG(kappa);
-  DEFTAG(nmat);
-  DEFTAG(prelax);
-  DEFTAG(prelax_timescale);
-  DEFTAG(intsharp);
-  DEFTAG(intsharp_param);
-  DEFTAG(depvar);
-  DEFTAG(sys);
-  DEFTAG(physics);
-
-  DEFTAG(material);
-  DEFTAG(eos);
-  DEFTAG(id);
-  DEFTAG(gamma);
-  DEFTAG(pstiff);
-  DEFTAG(w_gru);
-  DEFTAG(A_jwl);
-  DEFTAG(B_jwl);
-  DEFTAG(C_jwl);
-  DEFTAG(R1_jwl);
-  DEFTAG(R2_jwl);
-  DEFTAG(rho0_jwl);
-  DEFTAG(de_jwl);
-  DEFTAG(rhor_jwl);
-  DEFTAG(Tr_jwl);
-  DEFTAG(Pr_jwl);
-  DEFTAG(mu);
-  DEFTAG(cv);
-  DEFTAG(k);
-  DEFTAG(matidxmap);
-  DEFTAG(eosidx);
-  DEFTAG(matidx);
-  DEFTAG(solidx);
-
-  DEFTAG(field_output);
-  DEFTAG(iter_interval);
-  DEFTAG(time_interval);
-  DEFTAG(time_range);
-  DEFTAG(refined);
-  DEFTAG(filetype);
-  DEFTAG(sideset);
-  DEFTAG(outvar);
-  DEFTAG(diagnostics);
-  DEFTAG(error);
-  DEFTAG(format);
-  DEFTAG(precision);
-  DEFTAG(history_output);
-  DEFTAG(point);
-  DEFTAG(coord);
-
-  DEFTAG(ale);
-  DEFTAG(smoother);
-  DEFTAG(mesh_velocity);
-  DEFTAG(mesh_motion);
-  DEFTAG(meshforce);
-  DEFTAG(dvcfl);
-  DEFTAG(vortmult);
-  DEFTAG(maxit);
-  DEFTAG(tolerance);
-  DEFTAG(move);
-  DEFTAG(fntype);
-  DEFTAG(fn);
-
-  DEFTAG(amr);
-  DEFTAG(t0ref);
-  DEFTAG(dtref);
-  DEFTAG(dtref_uniform);
-  DEFTAG(dtfreq);
-  DEFTAG(maxlevels);
-  DEFTAG(initial);
-  DEFTAG(edgelist);
-  DEFTAG(coords);
-  DEFTAG(xminus);
-  DEFTAG(xplus);
-  DEFTAG(yminus);
-  DEFTAG(yplus);
-  DEFTAG(zminus);
-  DEFTAG(zplus);
-  DEFTAG(refvar);
-  DEFTAG(tol_refine);
-  DEFTAG(tol_derefine);
-  DEFTAG(pref);
-  DEFTAG(indicator);
-  DEFTAG(ndofmax);
-  DEFTAG(tolref);
-
-  DEFTAG(bc);
-  DEFTAG(mesh);
-  DEFTAG(dirichlet);
-  DEFTAG(symmetry);
-  DEFTAG(inlet);
-  DEFTAG(outlet);
-  DEFTAG(farfield);
-  DEFTAG(extrapolate);
-  DEFTAG(stag_point);
-  DEFTAG(sponge);
-  DEFTAG(vparam);
-  DEFTAG(pparam);
-  DEFTAG(radius);
-  DEFTAG(timedep);
-
-  DEFTAG(ic);
-  DEFTAG(materialid);
-  DEFTAG(pressure);
-  DEFTAG(temperature);
-  DEFTAG(velocity);
-  DEFTAG(box);
-  DEFTAG(meshblock);
-  DEFTAG(blockid);
-  DEFTAG(volume);
-  DEFTAG(mass);
-  DEFTAG(density);
-  DEFTAG(energy);
-  DEFTAG(energy_content);
-  DEFTAG(xmin);
-  DEFTAG(xmax);
-  DEFTAG(ymin);
-  DEFTAG(ymax);
-  DEFTAG(zmin);
-  DEFTAG(zmax);
-  DEFTAG(orientation);
-  DEFTAG(initiate);
-  DEFTAG(init_time);
-  DEFTAG(front_width);
-  DEFTAG(front_speed);
-
-  DEFTAG(filename);
-  DEFTAG(location);
-  DEFTAG(transfer);
-
-  using bclist = tk::TaggedTuple< brigand::list<
-    dirichlet,   std::vector< std::size_t >,
-    symmetry,    std::vector< std::size_t >,
-    inlet,       std::vector< std::size_t >,
-    outlet,      std::vector< std::size_t >,
-    farfield,    std::vector< std::size_t >,
-    extrapolate, std::vector< std::size_t >
-  > >;
-
-  using newbox = tk::SimpTaggedTuple< brigand::list<
-    newtag::materialid,     std::size_t,
-    newtag::volume,         tk::real,
-    newtag::mass,           tk::real,
-    newtag::density,        tk::real,
-    newtag::velocity,       std::vector< tk::real >,
-    newtag::pressure,       tk::real,
-    newtag::energy,         tk::real,
-    newtag::energy_content, tk::real,
-    newtag::temperature,    tk::real,
-    newtag::xmin,           tk::real,
-    newtag::xmax,           tk::real,
-    newtag::ymin,           tk::real,
-    newtag::ymax,           tk::real,
-    newtag::zmin,           tk::real,
-    newtag::zmax,           tk::real,
-    newtag::orientation,    std::vector< tk::real >,
-    newtag::initiate,       inciter::ctr::InitiateType,
-    newtag::point,          std::vector< tk::real >,
-    newtag::init_time,      tk::real,
-    newtag::front_width,    tk::real,
-    newtag::front_speed,    tk::real
-  > >;
-
-  using newmeshblock = tk::SimpTaggedTuple< brigand::list<
-    newtag::blockid,        std::uint64_t,
-    newtag::materialid,     std::size_t,
-    newtag::volume,         tk::real,
-    newtag::mass,           tk::real,
-    newtag::density,        tk::real,
-    newtag::velocity,       std::vector< tk::real >,
-    newtag::pressure,       tk::real,
-    newtag::energy,         tk::real,
-    newtag::energy_content, tk::real,
-    newtag::temperature,    tk::real,
-    newtag::initiate,       inciter::ctr::InitiateType,
-    newtag::point,          std::vector< tk::real >,
-    newtag::init_time,      tk::real,
-    newtag::front_width,    tk::real,
-    newtag::front_speed,    tk::real
-  > >;
-} // newtag::
+#include "Inciter/OutVar.hpp"
 
 namespace inciter {
 
@@ -259,12 +30,66 @@ namespace ctr {
 
 using ncomp_t = std::size_t;
 
+using bclist = tk::TaggedTuple< brigand::list<
+  newtag::dirichlet,   std::vector< std::size_t >,
+  newtag::symmetry,    std::vector< std::size_t >,
+  newtag::inlet,       std::vector< std::size_t >,
+  newtag::outlet,      std::vector< std::size_t >,
+  newtag::farfield,    std::vector< std::size_t >,
+  newtag::extrapolate, std::vector< std::size_t >
+> >;
+
+using newbox = tk::SimpTaggedTuple< brigand::list<
+  newtag::materialid,     std::size_t,
+  newtag::volume,         tk::real,
+  newtag::mass,           tk::real,
+  newtag::density,        tk::real,
+  newtag::velocity,       std::vector< tk::real >,
+  newtag::pressure,       tk::real,
+  newtag::energy,         tk::real,
+  newtag::energy_content, tk::real,
+  newtag::temperature,    tk::real,
+  newtag::xmin,           tk::real,
+  newtag::xmax,           tk::real,
+  newtag::ymin,           tk::real,
+  newtag::ymax,           tk::real,
+  newtag::zmin,           tk::real,
+  newtag::zmax,           tk::real,
+  newtag::orientation,    std::vector< tk::real >,
+  newtag::initiate,       inciter::ctr::InitiateType,
+  newtag::point,          std::vector< tk::real >,
+  newtag::init_time,      tk::real,
+  newtag::front_width,    tk::real,
+  newtag::front_speed,    tk::real
+> >;
+
+using newmeshblock = tk::SimpTaggedTuple< brigand::list<
+  newtag::blockid,        std::uint64_t,
+  newtag::materialid,     std::size_t,
+  newtag::volume,         tk::real,
+  newtag::mass,           tk::real,
+  newtag::density,        tk::real,
+  newtag::velocity,       std::vector< tk::real >,
+  newtag::pressure,       tk::real,
+  newtag::energy,         tk::real,
+  newtag::energy_content, tk::real,
+  newtag::temperature,    tk::real,
+  newtag::initiate,       inciter::ctr::InitiateType,
+  newtag::point,          std::vector< tk::real >,
+  newtag::init_time,      tk::real,
+  newtag::front_width,    tk::real,
+  newtag::front_speed,    tk::real
+> >;
+
 using ConfigMembers = brigand::list<
 
   newtag::title, std::string,
 
   // Command line parameters
   newtag::cmd, CmdLine,
+
+  // Control file help object
+  newtag::ctrinfo, tk::ctr::HelpFactory,
 
   // time stepping options
   // ---------------------------------------------------------------------------
@@ -399,7 +224,7 @@ using ConfigMembers = brigand::list<
     newtag::refined,       bool,
     newtag::filetype,      tk::ctr::FieldFileType,
     newtag::sideset,       std::vector< uint64_t >,
-    newtag::outvar,        std::vector< NewOutVar >
+    newtag::outvar,        std::vector< OutVar >
   > >,
 
   // Diagnostics block
@@ -523,8 +348,8 @@ using ConfigMembers = brigand::list<
     newtag::density,     tk::real,
     newtag::energy,      tk::real,
     newtag::velocity,    std::vector< tk::real >,
-    newtag::box,         std::vector< newtag::newbox >,
-    newtag::meshblock,   std::vector< newtag::newmeshblock >
+    newtag::box,         std::vector< newbox >,
+    newtag::meshblock,   std::vector< newmeshblock >
   > >,
 
   // Overset mesh block
@@ -565,6 +390,9 @@ class New2InputDeck : public tk::SimpTaggedTuple< ConfigMembers > {
       get< newtag::amr, newtag::coords, newtag::yplus >() = -rmax;
       get< newtag::amr, newtag::coords, newtag::zminus >() = rmax;
       get< newtag::amr, newtag::coords, newtag::zplus >() = -rmax;
+      //// Initialize help: fill own keywords
+      //const auto& ctrinfoFill = tk::ctr::Info( get< newtag::ctrinfo >() );
+      //brigand::for_each< keywords >( ctrinfoFill );
     }
 
     //! Extract list of mesh filenames (each assigned to a solver)

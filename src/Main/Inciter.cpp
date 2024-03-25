@@ -31,7 +31,6 @@
 #include "InciterDriver.hpp"
 #include "Inciter/CmdLine/Parser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/New2InputDeck.hpp"
 #include "ChareStateCollector.hpp"
 #include "LBSwitch.hpp"
@@ -78,12 +77,6 @@ namespace inciter {
   #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
 
-//! Defaults of input deck, facilitates detection what is set by user
-//! \details This object is in global scope, it contains the default of all
-//!   possible user input, and thus it is made available to all PEs for
-//!   convenience reasons. The runtime system distributes it to all PEs during
-//!   initialization. Once distributed, the object does not change.
-ctr::InputDeck g_oldinputdeck_defaults;
 //! Defaults of input deck, facilitates detection what is set by user
 //! \details This object is in global scope, it contains the default of all
 //!   possible user input, and thus it is made available to all PEs for

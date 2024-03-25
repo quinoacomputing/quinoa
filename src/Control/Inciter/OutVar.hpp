@@ -15,6 +15,7 @@
 #include "Keywords.hpp"
 #include "Centering.hpp"
 #include "Fields.hpp"
+#include "FunctionPrototypes.hpp"
 #include "ConfigureOutVar.hpp"
 
 namespace inciter {
@@ -29,7 +30,6 @@ struct OutVar {
   ncomp_t field;       //!< Field ID
   Centering centering; //!< Centering
   std::string name;    //!< Human readable name (built-in, code knows it)
-  std::string alias;   //!< Alias (only user knows it)
   std::string matvar;  //!< Material-based physics label + material id
   tk::GetVarFn getvar; //!< Function to compute variable from numerical solution
 
@@ -38,15 +38,13 @@ struct OutVar {
   //! \param[in] f Field ID
   //! \param[in] c Variable centering
   //! \param[in] n Human readable name
-  //! \param[in] a Alias
   //! \param[in] m Material-based physics label + material id
   explicit OutVar( char v = 0,
                    ncomp_t f = 0,
                    Centering c = Centering::NODE,
                    const std::string& n = {},
-                   const std::string& a = {},
                    const std::string& m = {} ) :
-    var(v), field(f), centering(c), name(n), alias(a), matvar(m),
+    var(v), field(f), centering(c), name(n), matvar(m),
     getvar(assignGetVars(name)) {}
 
   /** @name Pack/Unpack: Serialize OutVar object for Charm++ */
@@ -58,7 +56,6 @@ struct OutVar {
     p | field;
     p | centering;
     p | name;
-    p | alias;
     p | matvar;
     getvar = assignGetVars(name);
   }
@@ -83,12 +80,11 @@ struct OutVar {
              centering == outvar.centering && name < outvar.name)
       return true;
     else if (var == outvar.var && field == outvar.field &&
-             centering == outvar.centering && name == outvar.name &&
-             alias < outvar.alias)
+             centering == outvar.centering && name == outvar.name)
       return true;
     else if (var == outvar.var && field == outvar.field &&
              centering == outvar.centering && name == outvar.name &&
-             alias == outvar.alias && matvar < outvar.matvar)
+             matvar < outvar.matvar)
       return true;
     else
       return false;
@@ -108,6 +104,10 @@ struct OutVar {
            matvar.find('P') != std::string::npos ||
            name.find("pressure") != std::string::npos ||
            name.find("velocity") != std::string::npos;
+  }
+
+  void assignGetVar() {
+    getvar = assignGetVars(name);
   }
 };
 

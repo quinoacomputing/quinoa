@@ -71,7 +71,7 @@ class MultiMat {
         g_inputdeck.get< newtag::flux >() ) )
     {
       // associate boundary condition configurations with state functions
-      brigand::for_each< newtag::bclist::Keys >( ConfigBC( m_bc,
+      brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
         { dirichlet
         , symmetry
         , invalidBC         // Inlet BC not implemented
@@ -166,7 +166,7 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i) = 0.0;
               }
-              initializeBox<newtag::newbox>( m_mat_blk, V_ex, t, b, bgpre,
+              initializeBox<ctr::newbox>( m_mat_blk, V_ex, t, b, bgpre,
                 bgtemp, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
@@ -185,7 +185,7 @@ class MultiMat {
           if (elemblkid.find(blid) != elemblkid.end()) {
             const auto& elset = tk::cref_find(elemblkid, blid);
             if (elset.find(e) != elset.end()) {
-              initializeBox<newtag::newmeshblock>( m_mat_blk, V_ex, t, b,
+              initializeBox<ctr::newmeshblock>( m_mat_blk, V_ex, t, b,
                 bgpre, bgtemp, s );
               // store initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {

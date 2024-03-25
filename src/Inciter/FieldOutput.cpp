@@ -63,7 +63,7 @@ numericFieldOutput( const tk::Fields& U,
   for (const auto& v : g_inputdeck.get< newtag::field_output, newtag::outvar >()) {
     if (v.centering == c) {
       const auto& F = v.primitive() ? p : U;
-      if (v.type == 0 || v.type == 1) {        // depvar-based direct access
+      if (v.name.empty()) {        // depvar-based direct access
         f.push_back( F.extract_comp( v.field*rdof ) );
       } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
         Assert( v.getvar, "getvar() not configured for " + v.name );
