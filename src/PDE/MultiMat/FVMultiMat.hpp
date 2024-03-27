@@ -639,7 +639,8 @@ class MultiMat {
     //! \param[in] U Array of unknowns
     //! \param[in] P Array of primitive quantities
     //! \return Vector of time history output of bulk flow quantities (density,
-    //!   velocity, total energy, and pressure) evaluated at time history points
+    //!   velocity, total energy, pressure, and volume fraction) evaluated at 
+    //!   time history points
     std::vector< std::vector< tk::real > >
     histOutput( const std::vector< HistData >& h,
                 const std::vector< std::size_t >& inpoel,
@@ -678,11 +679,12 @@ class MultiMat {
         auto php = eval_state(nprim(), rdof, rdof, e, P, B);
 
         // store solution in history output vector
-        Up[j].resize(6, 0.0);
+        Up[j].resize(6+nmat, 0.0);
         for (std::size_t k=0; k<nmat; ++k) {
           Up[j][0] += uhp[densityIdx(nmat,k)];
           Up[j][4] += uhp[energyIdx(nmat,k)];
           Up[j][5] += php[pressureIdx(nmat,k)];
+          Up[j][6+k] = uhp[volfracIdx(nmat,k)];
         }
         Up[j][1] = php[velocityIdx(nmat,0)];
         Up[j][2] = php[velocityIdx(nmat,1)];
