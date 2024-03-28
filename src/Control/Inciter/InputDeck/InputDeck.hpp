@@ -381,6 +381,9 @@ using ConfigMembers = brigand::list<
 class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
   public:
+    //! Set of tags to ignore when printing this InputDeck
+    using ignore = CmdLine::ignore;
+
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
     //! \details Anything not set here is initialized by the compiler using the

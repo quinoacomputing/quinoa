@@ -14,6 +14,8 @@
 #include "InciterDriver.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+#include "TaggedTupleDeepPrint.hpp"
 #include "Writer.hpp"
 
 #include "NoWarning/transporter.decl.h"
@@ -73,6 +75,11 @@ InciterDriver::InciterDriver( const ctr::CmdLine& cmdline, int nrestart )
   print.item( "Parsed lua file", "success" );
 
   print.endpart();
+
+  // Output command line object to file
+  auto logfilename = tk::inciter_executable() + "_input.log";
+  tk::Writer log( logfilename );
+  tk::print( log.stream(), "inputdeck", g_inputdeck );
 }
 
 void

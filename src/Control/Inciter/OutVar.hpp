@@ -83,6 +83,27 @@ struct OutVar {
 //! \param[in,out] v OutVar object reference
 inline void pup( PUP::er& p, OutVar& v ) { v.pup(p); }
 
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
+//! Operator << for writing OutVar to output streams
+//! \param[in,out] os Output stream to write to
+//! \param[in] outvar OutVar to write
+//! \return Updated output stream
+static std::ostream& operator<< ( std::ostream& os, const OutVar& outvar ) {
+  if (outvar.name.empty())
+    os << outvar.field+1;
+  else
+    os << outvar.name;
+  return os;
+}
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
+
 } // ctr::
 } // inciter::
 
