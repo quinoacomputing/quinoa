@@ -16,7 +16,6 @@
 
 #include "QuinoaBuildConfig.hpp"
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace tk {
@@ -35,10 +34,6 @@ inline void operator|( PUP::er& p, FieldFileType& e ) { PUP::pup( p, e ); }
 class FieldFile : public tk::Toggle< FieldFileType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::exodusii
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
@@ -47,10 +42,10 @@ class FieldFile : public tk::Toggle< FieldFileType > {
         //! Group, i.e., options, name 
         "Field output file type",
         //! Enums -> names
-        { { FieldFileType::EXODUSII, kw::exodusii::name() },
+        { { FieldFileType::EXODUSII, "exodusii" },
         },
         //! keywords -> Enums
-        { { kw::exodusii::string(), FieldFileType::EXODUSII },
+        { { "exodusii", FieldFileType::EXODUSII },
         } ) {}
 };
 

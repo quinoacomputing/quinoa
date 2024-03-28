@@ -39,7 +39,7 @@ namespace inciter {
 
 namespace cg {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! \brief Evaluate the increment from t to t+dt of an analytical solution at
 //!   (x,y,z) for all components
@@ -70,7 +70,7 @@ bnorm( const std::map< int, std::vector< std::size_t > >& bface,
 class CGPDE {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
     using real = tk::real;
 
   public:

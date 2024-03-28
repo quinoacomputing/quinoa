@@ -25,9 +25,6 @@
 namespace tk {
 namespace grm {
 
-//TODO: remove this?
-extern tk::Print g_print;
-
   //! \brief Case-insensitive character comparison functor
   struct CaseInsensitiveCharLess {
     //! Function call operator
@@ -53,47 +50,52 @@ extern tk::Print g_print;
 
 using inciter::LuaParser;
 
-LuaParser::LuaParser( const tk::Print& print,
+LuaParser::LuaParser( const tk::Print& /*print*/,
                       const ctr::CmdLine& cmdline,
                       ctr::InputDeck& inputdeck ) :
-  FileParser( cmdline.get< tag::io, tag::control >() )
+  m_filename( cmdline.get< tag::io, tag::control >() )
 // *****************************************************************************
 //  Constructor
-//! \param[in] print Pretty printer
+// //! \param[in] print Pretty printer
 //! \param[in] cmdline Command line stack
 //! \param[in,out] inputdeck Input deck stack where data is stored during
 //!    parsing
 // *****************************************************************************
 {
+  // Make sure there is a filename
+  Assert( !m_filename.empty(), "No filename specified" );
+
+  // Local file stream handle
+  std::ifstream q;
+
+  // Check if file exists, throw exception if it does not
+  q.open( m_filename, std::ifstream::in );
+  ErrChk( q.good(), "Failed to open file: " + m_filename );
+
+  // Attempt to read a character, throw if it fails
+  // It is curious that on some systems opening a directory instead of a file
+  // with the above ifstream::open() call does not set the failbit. Thus we get
+  // here fine, so we try to read a character from it. If it is a directory or
+  // an empty file the read will fail, so we throw. Read more at: http://
+  // stackoverflow.com/questions/9591036/
+  // ifstream-open-doesnt-set-error-bits-when-argument-is-a-directory.
+  q.get();
+  ErrChk( q.good(), "Failed to read from file: " + m_filename );
+
+  // Close it
+  q.close();
+  ErrChk( !q.fail(), "Failed to close file: " + m_filename );
+
   // Create InputDeck (a tagged tuple) to store parsed input
   ctr::InputDeck ideck( cmdline );
 
-  //// Reset parser's output stream to that of print's. This is so that mild
-  //// warnings emitted during parsing can be output using the pretty printer.
-  //// Usually, errors and warnings are simply accumulated during parsing and
-  //// printed during diagnostics after the parser has finished. Howver, in some
-  //// special cases we can provide a more user-friendly message right during
-  //// parsing since there is more information available to construct a more
-  //// sensible message. This is done in e.g., tk::grm::store_option. Resetting
-  //// the global g_print, to that of passed in as the constructor argument allows
-  //// not to have to create a new pretty printer, but use the existing one.
-  //tk::grm::g_print.reset( print.save() );
-
-  //// Parse input file and populate the underlying tagged tuple
-  //tao::pegtl::file_input<> in( m_filename );
-  //tao::pegtl::parse< deck::read_file, tk::grm::action >( in, id );
-
+  // Read lua file into sol object
   sol::state lua_deck;
   lua_deck.open_libraries(sol::lib::base);
   lua_deck.script_file(m_filename);
 
-  // TODO: remove this cout
-  //std::cout << " READ IN SUCCESSFUL " << std::endl;
-
+  // Store inputdeck parameters from sol object into tagged tuple
   storeInputDeck(lua_deck["inciter"], ideck);
-
-  // Echo errors and warnings accumulated during parsing
-  diagnostics( print, std::vector< std::string >{}/*id.get< tag::error >()*/ );
 
   inputdeck = std::move( ideck );
 }

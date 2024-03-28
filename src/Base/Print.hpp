@@ -701,7 +701,7 @@ class Print {
     mutable format m_diag_end_fmt = format("%s\n");
     mutable format m_progress_fmt = format("%s");
     mutable format m_help_title_fmt = format("\n%s %s\n");
-    mutable format m_help_item_fmt = format("%20s%11s %s\n");
+    mutable format m_help_item_fmt = format("%25s%25s %s\n");
     mutable format m_helpkw_cmd_title_fmt =
               format("\n%s command-line keyword %s--%s\n\n");
     mutable format m_helpkw_ctr_title_fmt =

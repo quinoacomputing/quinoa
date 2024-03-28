@@ -13,7 +13,7 @@
 #define Tags_h
 
 #include <string>
-#include "SimpTaggedTuple.hpp"
+#include "TaggedTuple.hpp"
 
 //! Tags used as unique-type labels for compile-time code-generation
 namespace tag {

@@ -20,7 +20,6 @@
 
 #include "NoWarning/pup.hpp"
 
-#include "Keywords.hpp"
 #include "Fields.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
@@ -36,7 +35,7 @@ extern ctr::InputDeck g_inputdeck;
 class FluxCorrector {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
 
   public:
     //! Constructor

@@ -20,7 +20,7 @@
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 template< class B >
 void initializeBox( const std::vector< EOS >& mat_blk,

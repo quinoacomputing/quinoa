@@ -15,7 +15,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace tk {
@@ -35,12 +34,6 @@ inline void operator|( PUP::er& p, TxtFloatFormatType& e ) { PUP::pup( p, e ); }
 class TxtFloatFormat : public tk::Toggle< TxtFloatFormatType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::txt_float_default
-                                  , kw::txt_float_fixed
-                                  , kw::txt_float_scientific
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
@@ -49,13 +42,13 @@ class TxtFloatFormat : public tk::Toggle< TxtFloatFormatType > {
         //! Group, i.e., options, name
         "floating-point format",
         //! Enums -> names
-        { { TxtFloatFormatType::DEFAULT, kw::txt_float_default::name() },
-          { TxtFloatFormatType::FIXED, kw::txt_float_fixed::name() },
-          { TxtFloatFormatType::SCIENTIFIC, kw::txt_float_scientific::name() } },
+        { { TxtFloatFormatType::DEFAULT, "default" },
+          { TxtFloatFormatType::FIXED, "fixed" },
+          { TxtFloatFormatType::SCIENTIFIC, "scientific" } },
         //! keywords -> Enums
-        { { kw::txt_float_default::string(), TxtFloatFormatType::DEFAULT },
-          { kw::txt_float_fixed::string(), TxtFloatFormatType::FIXED },
-        { kw::txt_float_scientific::string(), TxtFloatFormatType::SCIENTIFIC } }
+        { { "default", TxtFloatFormatType::DEFAULT },
+          { "fixed", TxtFloatFormatType::FIXED },
+        { "scientific", TxtFloatFormatType::SCIENTIFIC } }
       ) {}
 };
 

@@ -13,7 +13,6 @@
 
 #include "NoWarning/sol.hpp"
 
-#include "FileParser.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
 #include "InputDeck.hpp"
 
@@ -25,7 +24,7 @@ namespace inciter {
 //! \details This class is used to interface with sol2, for the purpose of
 //!   parsing the control file for the computational shock hydrodynamics tool,
 //!   Inciter.
-class LuaParser : public tk::FileParser {
+class LuaParser {
 
   public:
     //! Constructor
@@ -55,6 +54,8 @@ class LuaParser : public tk::FileParser {
       std::vector< inciter::ctr::OutVar >& foutvar );
 
   private:
+    const std::string m_filename;             //!< Name of file to parse
+
     //! Assign parameter to inputdeck entry if specified, else default
     //! \tparam N Type of parameter being read/assigned
     //! \param[in] table Sol-table which contains said parameter

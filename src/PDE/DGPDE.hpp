@@ -38,7 +38,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 using BCStateFn =
   std::vector< std::pair< std::vector< std::size_t >, tk::StateFn > >;
 
@@ -85,7 +85,7 @@ invalidBC( ncomp_t, const std::vector< EOS >&,
 class DGPDE {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
 
   public:
     //! Default constructor taking no arguments for Charm++

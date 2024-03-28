@@ -15,7 +15,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace inciter {
@@ -33,27 +32,19 @@ inline void operator|( PUP::er& p, PrefIndicatorType& e ) { PUP::pup( p, e ); }
 class PrefIndicator : public tk::Toggle< PrefIndicatorType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::pref_spectral_decay
-                                  , kw::pref_non_conformity >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
     explicit PrefIndicator() :
       tk::Toggle< PrefIndicatorType >(
         //! Group, i.e., options, name
-        kw::pref_indicator::name(),
+        "p-adaptive indicator",
         //! Enums -> names
-        { { PrefIndicatorType::SPECTRAL_DECAY,
-            kw::pref_spectral_decay::name() },
-          { PrefIndicatorType::NON_CONFORMITY,
-            kw::pref_non_conformity::name() } },
+        { { PrefIndicatorType::SPECTRAL_DECAY, "spectral_decay" },
+          { PrefIndicatorType::NON_CONFORMITY, "non_conformity" } },
         //! keywords -> Enums
-        { { kw::pref_spectral_decay::string(),
-            PrefIndicatorType::SPECTRAL_DECAY },
-          { kw::pref_non_conformity::string(),
-            PrefIndicatorType::NON_CONFORMITY } } ) {}
+        { { "spectral_decay", PrefIndicatorType::SPECTRAL_DECAY },
+          { "non_conformity", PrefIndicatorType::NON_CONFORMITY } } ) {}
 };
 
 } // ctr::

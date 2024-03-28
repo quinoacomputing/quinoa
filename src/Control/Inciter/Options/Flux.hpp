@@ -15,7 +15,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace inciter {
@@ -37,34 +36,26 @@ inline void operator|( PUP::er& p, FluxType& e ) { PUP::pup( p, e ); }
 class Flux : public tk::Toggle< FluxType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::laxfriedrichs
-                                  , kw::hllc
-                                  , kw::upwind
-                                  , kw::ausm
-                                  , kw::hll
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
     explicit Flux() :
       tk::Toggle< FluxType >(
         //! Group, i.e., options, name
-        kw::flux::name(),
+        "Flux",
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { FluxType::LaxFriedrichs, kw::laxfriedrichs::name() }
-        , { FluxType::HLLC, kw::hllc::name() }
-        , { FluxType::UPWIND, kw::upwind::name() }
-        , { FluxType::AUSM, kw::ausm::name() }
-        , { FluxType::HLL, kw::hll::name() }
+        { { FluxType::LaxFriedrichs, "laxfriedrichs" }
+        , { FluxType::HLLC, "hllc" }
+        , { FluxType::UPWIND, "upwind" }
+        , { FluxType::AUSM, "ausm" }
+        , { FluxType::HLL, "hll" }
         },
         //! keywords -> Enums
-        { { kw::laxfriedrichs::string(), FluxType::LaxFriedrichs }
-        , { kw::hllc::string(), FluxType::HLLC }
-        , { kw::upwind::string(), FluxType::UPWIND }
-        , { kw::ausm::string(), FluxType::AUSM }
-        , { kw::hll::string(), FluxType::HLL }
+        { { "laxfriedrichs", FluxType::LaxFriedrichs }
+        , { "hllc", FluxType::HLLC }
+        , { "upwind", FluxType::UPWIND }
+        , { "ausm", FluxType::AUSM }
+        , { "hll", FluxType::HLL }
         } )
     {}
 

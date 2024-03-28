@@ -219,7 +219,7 @@ class Ghosts : public CBase_Ghosts {
     ///@}
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
 
     //! Counter for face adjacency communication map
     std::size_t m_ncomfac;

@@ -20,7 +20,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Get a property for a material
 //! \tparam Prop Tag of property required

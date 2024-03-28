@@ -38,7 +38,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! \brief Partial differential equation base for discontinuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
@@ -51,7 +51,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 class FVPDE {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
 
   public:
     //! Default constructor taking no arguments for Charm++

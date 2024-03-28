@@ -15,7 +15,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace inciter {
@@ -34,30 +33,23 @@ inline void operator|( PUP::er& p, LimiterType& e ) { PUP::pup( p, e ); }
 class Limiter : public tk::Toggle< LimiterType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::nolimiter
-                                  , kw::wenop1
-                                  , kw::superbeep1
-                                  , kw::vertexbasedp1
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
     explicit Limiter() :
       tk::Toggle< LimiterType >(
         //! Group, i.e., options, name
-        kw::limiter::name(),
+        "Limiter",
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { LimiterType::NOLIMITER, kw::nolimiter::name() },
-          { LimiterType::WENOP1, kw::wenop1::name() },
-          { LimiterType::SUPERBEEP1, kw::superbeep1::name() },
-          { LimiterType::VERTEXBASEDP1, kw::vertexbasedp1::name() } },
+        { { LimiterType::NOLIMITER, "nolimiter" },
+          { LimiterType::WENOP1, "wenop1" },
+          { LimiterType::SUPERBEEP1, "superbeep1" },
+          { LimiterType::VERTEXBASEDP1, "vertexbasedp1" } },
         //! keywords -> Enums
-        { { kw::nolimiter::string(), LimiterType::NOLIMITER },
-          { kw::wenop1::string(), LimiterType::WENOP1 },
-          { kw::superbeep1::string(), LimiterType::SUPERBEEP1 },
-          { kw::vertexbasedp1::string(), LimiterType::VERTEXBASEDP1 } } )
+        { { "nolimiter", LimiterType::NOLIMITER },
+          { "wenop1", LimiterType::WENOP1 },
+          { "superbeep1", LimiterType::SUPERBEEP1 },
+          { "vertexbasedp1", LimiterType::VERTEXBASEDP1 } } )
     {}
 
 };

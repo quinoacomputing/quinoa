@@ -47,7 +47,7 @@ template< class Physics, class Problem >
 class CompFlow {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
     using eq = tag::compflow;
     using real = tk::real;
 

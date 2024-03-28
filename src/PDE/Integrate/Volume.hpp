@@ -23,7 +23,7 @@
 
 namespace tk {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Compute volume integrals for DG
 void

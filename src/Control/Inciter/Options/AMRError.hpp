@@ -15,7 +15,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace inciter {
@@ -32,23 +31,19 @@ inline void operator|( PUP::er& p, AMRErrorType& e ) { PUP::pup( p, e ); }
 class AMRError : public tk::Toggle< AMRErrorType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::amr_jump
-                                  , kw::amr_hessian >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
     explicit AMRError() :
       tk::Toggle< AMRErrorType >(
         //! Group, i.e., options, name
-        kw::amr_error::name(),
+        "AMR error estimator",
         //! Enums -> names
-        { { AMRErrorType::JUMP, kw::amr_jump::name() },
-          { AMRErrorType::HESSIAN, kw::amr_hessian::name() } },
+        { { AMRErrorType::JUMP, "jump" },
+          { AMRErrorType::HESSIAN, "hessian" } },
         //! keywords -> Enums
-        { { kw::amr_jump::string(), AMRErrorType::JUMP },
-          { kw::amr_hessian::string(), AMRErrorType::HESSIAN } } ) {}
+        { { "jump", AMRErrorType::JUMP },
+          { "hessian", AMRErrorType::HESSIAN } } ) {}
 };
 
 } // ctr::

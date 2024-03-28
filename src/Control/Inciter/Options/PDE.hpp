@@ -16,7 +16,6 @@
 
 #include "TaggedTuple.hpp"
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "Inciter/Options/Physics.hpp"
 #include "Inciter/Options/Problem.hpp"
 
@@ -43,24 +42,18 @@ using PDEKey =
 class PDE : public tk::Toggle< PDEType > {
 
   public:
-    // List valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::transport
-                                  , kw::compflow
-                                  , kw::multimat
-                                  >;
-
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit PDE() :
       tk::Toggle< PDEType >( "Partial differential equation",
         //! Enums -> names
-        { { PDEType::TRANSPORT, kw::transport::name() },
-          { PDEType::COMPFLOW, kw::compflow::name() },
-          { PDEType::MULTIMAT, kw::multimat::name() } },
+        { { PDEType::TRANSPORT, "transport" },
+          { PDEType::COMPFLOW, "compflow" },
+          { PDEType::MULTIMAT, "multimat" } },
         //! keywords -> Enums
-        { { kw::transport::string(), PDEType::TRANSPORT },
-          { kw::compflow::string(), PDEType::COMPFLOW },
-          { kw::multimat::string(), PDEType::MULTIMAT } } ) {}
+        { { "transport", PDEType::TRANSPORT },
+          { "compflow", PDEType::COMPFLOW },
+          { "multimat", PDEType::MULTIMAT } } ) {}
 };
 
 } // ctr::

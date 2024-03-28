@@ -46,7 +46,7 @@ template< class Physics, class Problem >
 class Transport {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
     using real = tk::real;
     using eq = tag::transport;
 

@@ -15,7 +15,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace tk {
@@ -33,11 +32,6 @@ inline void operator|( PUP::er& p, ErrorType& e ) { PUP::pup( p, e ); }
 class Error : public tk::Toggle< ErrorType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::l2
-                                  , kw::linf
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
@@ -46,11 +40,11 @@ class Error : public tk::Toggle< ErrorType > {
         //! Group, i.e., options, name
         "error",
         //! Enums -> names
-        { { ErrorType::L2, kw::l2::name() },
-          { ErrorType::LINF, kw::linf::name() } },
+        { { ErrorType::L2, "l2" },
+          { ErrorType::LINF, "linf" } },
         //! keywords -> Enums
-        { { kw::l2::string(), ErrorType::L2 },
-          { kw::linf::string(), ErrorType::LINF } }
+        { { "l2", ErrorType::L2 },
+          { "linf", ErrorType::LINF } }
       ) {}
 };
 

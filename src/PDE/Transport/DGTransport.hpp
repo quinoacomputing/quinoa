@@ -23,7 +23,6 @@
 #include "Macro.hpp"
 #include "Exception.hpp"
 #include "Vector.hpp"
-#include "Inciter/Options/BC.hpp"
 #include "UnsMesh.hpp"
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"

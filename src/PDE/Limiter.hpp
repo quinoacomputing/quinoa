@@ -24,7 +24,7 @@
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1
 void

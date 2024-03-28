@@ -1446,7 +1446,7 @@ Refiner::coordRefine()
 
   // The default is the largest representable double
   auto eps =
-    std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
+    std::numeric_limits< tk::real >::epsilon();
   const auto& amr_defcoord = g_inputdeck_defaults.get< tag::amr, tag::coords >();
   auto xminus_default = amr_defcoord.get< tag::xminus >();
   auto xplus_default = amr_defcoord.get< tag::xplus >();

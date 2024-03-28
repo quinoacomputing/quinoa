@@ -21,7 +21,6 @@
 #include <algorithm>
 
 #include "Types.hpp"
-#include "Keywords.hpp"
 #include "Exception.hpp"
 
 #include "NoWarning/pup_stl.hpp"
@@ -38,7 +37,7 @@ class Data {
 
   private:
     //! \brief Inherit type of number of components from keyword 'ncomp'
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
 
   public:
     //! Default constructor (required for Charm++ migration)

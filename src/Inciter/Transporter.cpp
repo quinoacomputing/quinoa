@@ -296,10 +296,8 @@ Transporter::info( const InciterPrint& print )
     if (t0ref) {
       const auto& initref = g_inputdeck.get< tag::amr, tag::initial >();
       print.item( "Initial refinement steps", initref.size() );
-      print.edgeref( g_inputdeck.get< tag::amr, tag::edgelist >() );
 
-      auto eps =
-        std::numeric_limits< kw::amr_xminus::info::expect::type >::epsilon();
+      auto eps = std::numeric_limits< tk::real >::epsilon();
 
       const auto& amr_coord = g_inputdeck.get< tag::amr, tag::coords >();
       const auto& amr_defcoord = g_inputdeck_defaults.get< tag::amr, tag::coords >();

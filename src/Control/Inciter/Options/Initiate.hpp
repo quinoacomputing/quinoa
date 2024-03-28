@@ -15,7 +15,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace inciter {
@@ -32,24 +31,19 @@ inline void operator|( PUP::er& p, InitiateType& e ) { PUP::pup( p, e ); }
 class Initiate : public tk::Toggle< InitiateType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::impulse
-                                  , kw::linear
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
     explicit Initiate() :
       tk::Toggle< InitiateType >(
         //! Group, i.e., options, name
-        kw::initiate::name(),
+        "initiate type",
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { InitiateType::IMPULSE, kw::impulse::name() },
-          { InitiateType::LINEAR, kw::linear::name() } },
+        { { InitiateType::IMPULSE, "impulse" },
+          { InitiateType::LINEAR, "linear" } },
         //! keywords -> Enums
-        { { kw::impulse::string(), InitiateType::IMPULSE },
-          { kw::linear::string(), InitiateType::LINEAR } } )
+        { { "impulse", InitiateType::IMPULSE },
+          { "linear", InitiateType::LINEAR } } )
     {}
 
 };

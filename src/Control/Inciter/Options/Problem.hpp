@@ -16,7 +16,6 @@
 #include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace inciter {
@@ -54,101 +53,63 @@ inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
 class Problem : public tk::Toggle< ProblemType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::user_defined
-                                  , kw::shear_diff
-                                  , kw::vortical_flow
-                                  , kw::nl_energy_growth
-                                  , kw::rayleigh_taylor
-                                  , kw::taylor_green
-                                  , kw::slot_cyl
-                                  , kw::gauss_hump
-                                  , kw::cyl_advect
-                                  , kw::cyl_vortex
-                                  , kw::shedding_flow
-                                  , kw::sod_shocktube
-                                  , kw::rotated_sod_shocktube
-                                  , kw::sedov_blastwave
-                                  , kw::interface_advection
-                                  , kw::gauss_hump_compflow
-                                  , kw::waterair_shocktube
-                                  , kw::shock_hebubble
-                                  , kw::underwater_ex
-                                  , kw::shockdensity_wave
-                                  , kw::equilinterface_advect
-                                  , kw::richtmyer_meshkov
-                                  , kw::sinewave_packet
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
     explicit Problem() :
       tk::Toggle< ProblemType >(
         //! Group, i.e., options, name
-        kw::problem::name(),
+        "Problem",
         //! Enums -> names
-        { { ProblemType::USER_DEFINED, kw::user_defined::name() },
-          { ProblemType::SHEAR_DIFF, kw::shear_diff::name() },
-          { ProblemType::VORTICAL_FLOW, kw::vortical_flow::name() },
-          { ProblemType::NL_ENERGY_GROWTH, kw::nl_energy_growth::name() },
-          { ProblemType::RAYLEIGH_TAYLOR, kw::rayleigh_taylor::name() },
-          { ProblemType::TAYLOR_GREEN, kw::taylor_green::name() },
-          { ProblemType::SLOT_CYL, kw::slot_cyl::name() },
-          { ProblemType::GAUSS_HUMP, kw::gauss_hump::name() },
-          { ProblemType::CYL_ADVECT, kw::cyl_advect::name() },
-          { ProblemType::CYL_VORTEX, kw::cyl_vortex::name() },
-          { ProblemType::SHEDDING_FLOW, kw::shedding_flow::name() },
-          { ProblemType::SOD_SHOCKTUBE, kw::sod_shocktube::name() },
-          { ProblemType::ROTATED_SOD_SHOCKTUBE,
-            kw::rotated_sod_shocktube::name() },
-          { ProblemType::SEDOV_BLASTWAVE, kw::sedov_blastwave::name() },
-          { ProblemType::INTERFACE_ADVECTION,
-            kw::interface_advection::name() },
-          { ProblemType::GAUSS_HUMP_COMPFLOW,
-            kw::gauss_hump_compflow::name() },
-          { ProblemType::WATERAIR_SHOCKTUBE, kw::waterair_shocktube::name() },
-          { ProblemType::SHOCK_HEBUBBLE, kw::shock_hebubble::name() },
-          { ProblemType::UNDERWATER_EX, kw::underwater_ex::name() },
-          { ProblemType::SHOCKDENSITY_WAVE, kw::shockdensity_wave::name() },
-          { ProblemType::EQUILINTERFACE_ADVECT, kw::equilinterface_advect::name() },
-          { ProblemType::RICHTMYER_MESHKOV, kw::richtmyer_meshkov::name() },
-          { ProblemType::SINEWAVE_PACKET, kw::sinewave_packet::name() }
+        { { ProblemType::USER_DEFINED, "user_defined" },
+          { ProblemType::SHEAR_DIFF, "shear_diff" },
+          { ProblemType::VORTICAL_FLOW, "vortical_flow" },
+          { ProblemType::NL_ENERGY_GROWTH, "nl_energy_growth" },
+          { ProblemType::RAYLEIGH_TAYLOR, "rayleigh_taylor" },
+          { ProblemType::TAYLOR_GREEN, "taylor_green" },
+          { ProblemType::SLOT_CYL, "slot_cyl" },
+          { ProblemType::GAUSS_HUMP, "gauss_hump" },
+          { ProblemType::CYL_ADVECT, "cyl_advect" },
+          { ProblemType::CYL_VORTEX, "cyl_vortex" },
+          { ProblemType::SHEDDING_FLOW, "shedding_flow" },
+          { ProblemType::SOD_SHOCKTUBE, "sod_shocktube" },
+          { ProblemType::ROTATED_SOD_SHOCKTUBE, "rotated_sod_shocktube" },
+          { ProblemType::SEDOV_BLASTWAVE, "sedov_blastwave" },
+          { ProblemType::INTERFACE_ADVECTION, "interface_advection" },
+          { ProblemType::GAUSS_HUMP_COMPFLOW, "gauss_hump_compflow" },
+          { ProblemType::WATERAIR_SHOCKTUBE, "waterair_shocktube" },
+          { ProblemType::SHOCK_HEBUBBLE, "shock_hebubble" },
+          { ProblemType::UNDERWATER_EX, "underwater_ex" },
+          { ProblemType::SHOCKDENSITY_WAVE, "shockdensity_wave" },
+          { ProblemType::EQUILINTERFACE_ADVECT, "equilinterface_advect" },
+          { ProblemType::RICHTMYER_MESHKOV, "richtmyer_meshkov" },
+          { ProblemType::SINEWAVE_PACKET, "sinewave_packet" }
         },
         //! keywords -> Enums
-        { { kw::user_defined::string(), ProblemType::USER_DEFINED },
-          { kw::shear_diff::string(), ProblemType::SHEAR_DIFF },
-          { kw::vortical_flow::string(), ProblemType::VORTICAL_FLOW },
-          { kw::nl_energy_growth::string(), ProblemType::NL_ENERGY_GROWTH },
-          { kw::rayleigh_taylor::string(), ProblemType::RAYLEIGH_TAYLOR },
-          { kw::taylor_green::string(), ProblemType::TAYLOR_GREEN },
-          { kw::slot_cyl::string(), ProblemType::SLOT_CYL },
-          { kw::gauss_hump::string(), ProblemType::GAUSS_HUMP },
-          { kw::cyl_advect::string(), ProblemType::CYL_ADVECT },
-          { kw::cyl_vortex::string(), ProblemType::CYL_VORTEX },
-          { kw::shedding_flow::string(), ProblemType::SHEDDING_FLOW },
-          { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
-          { kw::rotated_sod_shocktube::string(),
-            ProblemType::ROTATED_SOD_SHOCKTUBE },
-          { kw::sod_shocktube::string(), ProblemType::SOD_SHOCKTUBE },
-          { kw::sedov_blastwave::string(), ProblemType::SEDOV_BLASTWAVE },
-          { kw::interface_advection::string(),
-            ProblemType::INTERFACE_ADVECTION },
-          { kw::gauss_hump_compflow::string(),
-            ProblemType::GAUSS_HUMP_COMPFLOW },
-          { kw::waterair_shocktube::string(),
-            ProblemType::WATERAIR_SHOCKTUBE },
-          { kw::shock_hebubble::string(),
-            ProblemType::SHOCK_HEBUBBLE },
-          { kw::underwater_ex::string(),
-            ProblemType::UNDERWATER_EX },
-          { kw::shockdensity_wave::string(),
-            ProblemType::SHOCKDENSITY_WAVE },
-          { kw::equilinterface_advect::string(),
-            ProblemType::EQUILINTERFACE_ADVECT },
-          { kw::richtmyer_meshkov::string(),
-            ProblemType::RICHTMYER_MESHKOV },
-          { kw::sinewave_packet::string(), ProblemType::SINEWAVE_PACKET }
+        { { "user_defined", ProblemType::USER_DEFINED },
+          { "shear_diff", ProblemType::SHEAR_DIFF },
+          { "vortical_flow", ProblemType::VORTICAL_FLOW },
+          { "nl_energy_growth", ProblemType::NL_ENERGY_GROWTH },
+          { "rayleigh_taylor", ProblemType::RAYLEIGH_TAYLOR },
+          { "taylor_green", ProblemType::TAYLOR_GREEN },
+          { "slot_cyl", ProblemType::SLOT_CYL },
+          { "gauss_hump", ProblemType::GAUSS_HUMP },
+          { "cyl_advect", ProblemType::CYL_ADVECT },
+          { "cyl_vortex", ProblemType::CYL_VORTEX },
+          { "shedding_flow", ProblemType::SHEDDING_FLOW },
+          { "sod_shocktube", ProblemType::SOD_SHOCKTUBE },
+          { "rotated_sod_shocktube", ProblemType::ROTATED_SOD_SHOCKTUBE },
+          { "sod_shocktube", ProblemType::SOD_SHOCKTUBE },
+          { "sedov_blastwave", ProblemType::SEDOV_BLASTWAVE },
+          { "interface_advection", ProblemType::INTERFACE_ADVECTION },
+          { "gauss_hump_compflow", ProblemType::GAUSS_HUMP_COMPFLOW },
+          { "waterair_shocktube", ProblemType::WATERAIR_SHOCKTUBE },
+          { "shock_hebubble", ProblemType::SHOCK_HEBUBBLE },
+          { "underwater_ex", ProblemType::UNDERWATER_EX },
+          { "shockdensity_wave", ProblemType::SHOCKDENSITY_WAVE },
+          { "equilinterface_advect", ProblemType::EQUILINTERFACE_ADVECT },
+          { "richtmyer_meshkov", ProblemType::RICHTMYER_MESHKOV },
+          { "sinewave_packet", ProblemType::SINEWAVE_PACKET }
         } )
     {}
 };

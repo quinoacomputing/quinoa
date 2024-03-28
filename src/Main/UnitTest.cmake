@@ -18,7 +18,6 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Base/TestTimer.cpp
                ../../tests/unit/Base/TestVector.cpp
                ../../tests/unit/Base/TestWriter.cpp
-               ../../tests/unit/Control/TestFileParser.cpp
                ../../tests/unit/Control/TestStringParser.cpp
                ../../tests/unit/Control/TestToggle.cpp
                ../../tests/unit/${TestScheme}

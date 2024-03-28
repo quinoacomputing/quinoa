@@ -259,7 +259,7 @@ class ALECG : public CBase_ALECG {
     //@}
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
