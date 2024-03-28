@@ -10,9 +10,7 @@ inciter
   cfl   0.2   # CFL coefficient
   ttyi 1      # TTY output interval
 
-  scheme diagcg
-
-  fct true
+  scheme alecg
 
   partitioning
     algorithm mj
