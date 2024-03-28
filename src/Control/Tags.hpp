@@ -44,23 +44,10 @@ struct rsfreq { static std::string name() { return "rsfreq"; } };
 struct pdf { static std::string name() { return "pdf"; } };
 struct nchare {};
 struct bounds {};
-struct meshvelocity { static std::string name() { return "meshvelocity"; } };
-struct couple { static std::string name() { return "couple"; } };
-struct reference { static std::string name() { return "reference"; } };
-struct flformat { static std::string name() { return "flformat"; } };
 struct ordinary {};
 struct central {};
 struct binsize { static std::string name() { return "binsize"; } };
 struct extent { static std::string name() { return "extent"; } };
-struct numfracbeta { static std::string name() { return "numfracbeta"; } };
-struct massfracbeta { static std::string name() { return "massfracbeta"; } };
-struct mixnumfracbeta {
-  static std::string name() { return "mixnumfracbeta"; } };
-struct mixmassfracbeta {
-  static std::string name() { return "mixmassfracbeta"; } };
-struct hydroproductions {
-  static std::string name() { return "hydroproductions"; } };
-struct diffeq { static std::string name() { return "diffeq"; } };
 struct tolderef { static std::string name() { return "tolderef"; } };
 struct partitioner { static std::string name() { return "partitioner"; } };
 struct partitioned { static std::string name() { return "partitioned"; } };
@@ -81,15 +68,8 @@ struct control { static std::string name() { return "control"; } };
 struct stat { static std::string name() { return "stat"; } };
 struct field { static std::string name() { return "field"; } };
 struct surface { static std::string name() { return "surface"; } };
-struct atwood {};
 struct b { static std::string name() { return "b"; } };
 struct S { static std::string name() { return "S"; } };
-struct bprime { static std::string name() { return "bprime"; } };
-struct kappaprime { static std::string name() { return "kappaprime"; } };
-struct rho2 { static std::string name() { return "rho2"; } };
-struct rho { static std::string name() { return "rho"; } };
-struct mean_gradient { static std::string name() { return "mean_gradient"; } };
-struct rcomma { static std::string name() { return "rcomma"; } };
 struct r { static std::string name() { return "r"; } };
 struct c { static std::string name() { return "c"; } };
 struct c0 { static std::string name() { return "c0"; } };
@@ -101,22 +81,12 @@ struct mean { static std::string name() { return "mean"; } };
 struct cov { static std::string name() { return "cov"; } };
 struct timescale { static std::string name() { return "timescale"; } };
 struct virtualization {static std::string name() { return "virtualization"; }};
-struct position { static std::string name() { return "position"; } };
-struct dissipation { static std::string name() { return "dissipation"; } };
-struct normalization { static std::string name() { return "normalization"; } };
 struct hydro {};
 struct mix {};
 struct frequency {};
 struct mixrate {};
 struct selected { static std::string name() { return "selected"; } };
 struct discr { static std::string name() { return "discr"; } };
-struct farfield_pressure {
-  static std::string name() { return "farfield_pressure"; } };
-struct farfield_density {
-  static std::string name() { return "farfield_density"; } };
-struct farfield_velocity {
-  static std::string name() { return "farfield_velocity"; } };
-struct bcfarfield { static std::string name() { return "bcfarfield"; } };
 struct component { static std::string name() { return "component"; } };
 struct iter { static std::string name() { return "iter"; } };
 struct time { static std::string name() { return "time"; } };
@@ -135,12 +105,6 @@ struct group { static std::string name() { return "group"; } };
 struct esup {};
 struct psup {};
 struct gid {};
-struct bcdir { static std::string name() { return "bcdir"; } };
-struct bcsym { static std::string name() { return "bcsym"; } };
-struct bcinlet { static std::string name() { return "bcinlet"; } };
-struct bcoutlet { static std::string name() { return "bcoutlet"; } };
-struct bcextrapolate { static std::string name() { return "bcextrapolate"; } };
-struct bctimedep { static std::string name() { return "bctimedep"; } };
 struct position_id { static std::string name() { return "position_id"; } };
 struct velocity_id { static std::string name() { return "velocity_id"; } };
 struct dissipation_id {
@@ -166,7 +130,6 @@ struct ch {};
 struct pe {};
 struct it {};
 struct node {};
-struct lua { static std::string name() { return "lua"; } };
 
 DEFTAG(cmd);
 DEFTAG(ctrinfo);

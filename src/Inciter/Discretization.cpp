@@ -1015,7 +1015,7 @@ Discretization::restarted( int nrestart )
 
 std::string
 Discretization::histfilename( const std::string& id,
-                              kw::precision::info::expect::type precision )
+                              std::streamsize precision )
 // *****************************************************************************
 //  Construct history output filename
 //! \param[in] id History point id

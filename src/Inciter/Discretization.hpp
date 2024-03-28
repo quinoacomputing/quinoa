@@ -17,7 +17,6 @@
 
 #include "Types.hpp"
 #include "Timer.hpp"
-#include "Keywords.hpp"
 #include "Fields.hpp"
 #include "PUPUtil.hpp"
 #include "PDFReducer.hpp"
@@ -320,7 +319,7 @@ class Discretization : public CBase_Discretization {
 
     //! Construct history output filename
     std::string histfilename( const std::string& id,
-                              kw::precision::info::expect::type precision );
+                              std::streamsize precision );
 
     //! Output headers for time history files (one for each point)
     void histheader( std::vector< std::string >&& names );

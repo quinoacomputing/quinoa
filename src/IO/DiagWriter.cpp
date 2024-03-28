@@ -20,7 +20,7 @@ using tk::DiagWriter;
 
 DiagWriter::DiagWriter( const std::string& filename,
                               ctr::TxtFloatFormatType format,
-                              kw::precision::info::expect::type precision,
+                              std::streamsize precision,
                               std::ios_base::openmode mode ) :
   Writer( filename, mode ),
   m_precision( static_cast<int>(precision) ),

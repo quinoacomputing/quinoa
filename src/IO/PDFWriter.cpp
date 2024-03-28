@@ -24,7 +24,7 @@ using tk::PDFWriter;
 
 PDFWriter::PDFWriter( const std::string& filename,
                       ctr::TxtFloatFormatType format,
-                      kw::precision::info::expect::type precision ) :
+                      std::streamsize precision ) :
   Writer( filename )
 // *****************************************************************************
 //  Constructor

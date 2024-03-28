@@ -72,12 +72,8 @@ namespace grm {
     NOPROBLEM,          //!< No test problem type selected
     NOCOEFF,            //!< No coefficients policy selected
     NOTSELECTED,        //!< Option not selected upstream
-    EXISTS,             //!< Variable already used
     NOSOLVE,            //!< Dependent variable to solve for has not been spec'd
-    POSITIVECOMPONENT,  //!< Scalar component must be positive
     NOTALPHA,           //!< Variable must be alphanumeric
-    NODT,               //!< No time-step-size policy selected
-    MULDT,              //!< Multiple time-step-size policies selected
     POINTEXISTS,        //!< Point identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
     BOUNDS,             //!< Specified value out of bounds
@@ -103,21 +99,11 @@ namespace grm {
     { MsgKey::NOTSELECTED, "Option is not among the selected ones. The keyword "
       "here is appropriate, but in order to use this keyword in this context, "
       "the option must be selected upstream." },
-    { MsgKey::EXISTS, "Dependent variable already used." },
-    { MsgKey::POSITIVECOMPONENT, "Scalar component must be positive." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
     { MsgKey::NOSOLVE, "Dependent variable to solve for not specified within "
       "the block preceding this position. This is mandatory for the preceding "
       "block. Use the keyword 'solve' to specify the type of the dependent "
       "variable to solve for." },
-    { MsgKey::NODT, "No time step calculation policy has been selected in the "
-      "preceeding block. Use keyword 'dt' to set a constant or 'cfl' to set an "
-       "adaptive time step size calculation policy." },
-    { MsgKey::MULDT, "Multiple time step calculation policies has been "
-      "selected in the preceeding block. Use either keyword 'dt' to set a "
-      "constant or 'cfl' to set an adaptive time step size calculation policy. "
-      "Setting 'cfl' and 'dt' are mutually exclusive. If both 'cfl' and 'dt' "
-      "are set, 'dt' wins." },
     { MsgKey::NOINIT, "No (or too many) initialization policy (or policies) "
       "has been specified within the block preceding this position. An "
       "initialization policy (and only one) is mandatory for the preceding "
@@ -187,37 +173,6 @@ namespace grm {
     }
   }
 
-  #if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-local-typedef"
-  #elif defined(STRICT_GNUC)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-  #endif
-  //! Compile-time test functor verifying that type U is a keyword
-  //! \details This functor is used for triggering a compiler error if any of
-  //!   the expected option values is not in the keywords pool of the grammar.
-  //!   It is used inside of a brigand::for_each to run a compile-time loop
-  //!   over an type sequence, e.g., a list, which verifies that each type in
-  //!   the list is a valid keyword that defines the type 'pegtl_string'.
-  //!  \see kw::keyword in Control/Keyword.h
-  //!  \see e.g. store_option
-  template< template< class > class use >
-  struct is_keyword {
-    template< typename U > void operator()( brigand::type_<U> ) {
-      // Attempting to define the type below accomplishes triggering an error if
-      // the type does not define pegtl_string. The compiler, however, does not
-      // see that far, and generates a warning: unused type alias 'kw', so we
-      // ignore it around this template.
-      using kw = typename use< U >::pegtl_string;
-    }
-  };
-  #if defined(__clang__)
-    #pragma clang diagnostic pop
-  #elif defined(STRICT_GNUC)
-    #pragma GCC diagnostic pop
-  #endif
-
   // Common PEGTL actions (PEGTL actions reused by multiple grammars)
 
   //! PEGTL action base: do nothing by default
@@ -258,20 +213,6 @@ namespace grm {
     template< typename Input, typename Stack >
     static void apply( const Input& in, Stack& stack ) {
       Message< Stack, type, key >( stack, in );
-    }
-  };
-
-  //! Rule used to trigger action
-  template< typename tag, typename... tags > struct Set : pegtl::success {};
-  //! Put value in state at position given by tags without conversion
-  //! \details This struct and its apply function are used as a functor-like
-  //!    wrapper for calling the set member function of the underlying grammar
-  //!    stack, tk::Control::set.
-  template< typename tag, typename... tags >
-  struct action< Set< tag, tags... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input& in, Stack& stack ) {
-      stack.template get< tag, tags... >() = in.string();
     }
   };
 
@@ -369,16 +310,6 @@ namespace grm {
     }
   };
 
-  //! Rule used to trigger action
-  template< typename... tags >
-  struct noop : pegtl::success {};
-  //! Action that does nothing
-  template< typename... tags >
-  struct action< noop< tags... > > {
-    template< typename Input, typename Stack >
-    static void apply( const Input&, Stack& ) {}
-  };
-
   // Common grammar (grammar that is reused by multiple grammars)
 
   //! Read 'token' until 'erased' trimming, i.e., not consuming, 'erased'
@@ -461,72 +392,11 @@ namespace grm {
                      pegtl::blank,
                      pegtl::space > {};
 
-  //! Parse comment: start with '#' until eol
-  struct comment :
-         pegtl::pad< trim< pegtl::one<'#'>, pegtl::eol >,
-                     pegtl::blank,
-                     pegtl::eol > {};
-
-  //! Ignore comments and empty lines
-  struct ignore :
-         pegtl::sor< comment, pegtl::until< pegtl::eol, pegtl::space > > {};
-
   //! Parse a number: an optional sign followed by digits
   struct number :
          pegtl::seq< pegtl::opt< pegtl::sor< pegtl::one<'+'>,
                                              pegtl::one<'-'> > >,
                      pegtl::digit > {};
-
-  //! Plow through 'tokens' until 'endkeyword'
-  template< class endkeyword, typename... tokens >
-  struct block :
-         pegtl::until<
-           readkw< typename endkeyword::pegtl_string >,
-           pegtl::sor< comment,
-                       ignore,
-                       tokens...,
-                       unknown< ERROR, MsgKey::KEYWORD > > > {};
-
-  //! \brief Read in list of dimensions between keywords 'key' and
-  //!   'endkeyword', calling 'insert' for each if matches and allow comments
-  //!   between values
-  template< class key, class insert, class endkeyword,
-            class starter = noop< key >, class value = pegtl::digit >
-  struct dimensions :
-         pegtl::seq<
-           act< readkw< typename key::pegtl_string >, starter >,
-           block< endkeyword, scan< value, insert > > > {};
-
-  //! Plow through vector of values between keywords 'key' and
-  //!   'endkeyword', calling 'insert' for each if matches and allow comments
-  //!   between values
-  template< class key, class insert, class endkeyword,
-            class starter = noop< key >, class value = number >
-  // cppcheck-suppress syntaxError
-  struct vector :
-         pegtl::seq<
-           act< readkw< typename key::pegtl_string >, starter >,
-           block< endkeyword, scan< value, insert > > > {};
-
-  //! \brief Scan string between characters 'lbound' and 'rbound' and if matches
-  //!   apply action 'insert'
-  template< class insert, char lbound = '"', char rbound = '"' >
-  struct quoted :
-         pegtl::if_must< pegtl::one< lbound >,
-                         act< pegtl::sor< trim< pegtl::not_one< lbound >,
-                                                pegtl::one< rbound > >,
-                                          unknown< ERROR, MsgKey::QUOTED > >,
-                              insert >,
-                         pegtl::one< rbound > > {};
-
-  //! \brief Process 'keyword' and if matches, parse following token (expecting
-  //!   'kw_type' and call 'insert' action on it
-  template< class keyword, class insert, class kw_type = pegtl::digit >
-  struct process :
-         pegtl::if_must<
-           readkw< typename keyword::pegtl_string >,
-           scan< pegtl::sor< kw_type, msg< ERROR, MsgKey::MISSING > >,
-                 insert > > {};
 
   //! \brief Process command line 'keyword' and call its 'insert' action if
   //!   matches 'kw_type'
@@ -553,16 +423,6 @@ namespace grm {
   struct process_cmd_switch :
          pegtl::seq<readcmd< use<keyword> >, Invert_switch< tag, tags... >> {};
 
-  //! \brief Generic file parser entry point: parse 'keywords' and 'ignore'
-  //!   until end of file
-  template< typename keywords, typename... ign >
-  struct read_file :
-         pegtl::until< pegtl::eof,
-                       pegtl::sor<
-                         keywords,
-                         ign...,
-                         unknown< ERROR, MsgKey::KEYWORD > > > {};
-
   //! Process but ignore Charm++'s charmrun arguments starting with '+'
   struct charmarg :
          pegtl::seq< pegtl::one<'+'>,
@@ -576,26 +436,6 @@ namespace grm {
                          keywords,
                          charmarg,
                          unknown< ERROR, MsgKey::KEYWORD > > > {};
-
-  //! Match control parameter, enforce bounds if defined
-  template< typename keyword, class kw_type, template< class... > class store,
-            typename... tags >
-  struct control :
-         pegtl::if_must<
-           process< keyword, store< tags... >, kw_type >,
-           typename std::conditional<
-             tk::HasVar_expect_lower< typename keyword::info >::value,
-             check_lower_bound< keyword, tags... >,
-             pegtl::success >::type,
-           typename std::conditional<
-             tk::HasVar_expect_upper< typename keyword::info >::value,
-             check_upper_bound< keyword, tags... >,
-             pegtl::success >::type > {};
-
-  //! Match model parameter
-  template< typename keyword, typename kw_type, typename model, typename Tag >
-  struct parameter :
-         control< keyword, kw_type, Store, tag::param, model, Tag > {};
 
   //! \brief Ensure that a grammar only uses keywords from a pool of
   //!   pre-defined keywords

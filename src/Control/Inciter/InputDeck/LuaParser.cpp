@@ -138,6 +138,11 @@ LuaParser::storeInputDeck(
   storeIfSpecd< uint32_t >(
     lua_ideck, "rescomp", gideck.get< tag::rescomp >(), 1);
 
+  if (gideck.get< tag::dt >() < 1e-12 && gideck.get< tag::cfl >() < 1e-12)
+    Throw("No time step calculation policy has been selected in the "
+      "preceeding block. Use keyword 'dt' to set a constant or 'cfl' to set an "
+      "adaptive time step size calculation policy.");
+
   // partitioning/reordering options
   // ---------------------------------------------------------------------------
   storeOptIfSpecd< tk::ctr::PartitioningAlgorithmType,

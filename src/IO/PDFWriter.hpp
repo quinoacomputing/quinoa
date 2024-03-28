@@ -36,7 +36,7 @@ class PDFWriter : public tk::Writer {
     explicit PDFWriter(
       const std::string& filename,
       tk::ctr::TxtFloatFormatType format = tk::ctr::TxtFloatFormatType::DEFAULT,
-      kw::precision::info::expect::type precision = std::cout.precision() );
+      std::streamsize precision = std::cout.precision() );
 
     //! Write univariate PDF to text file
     void writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const;
