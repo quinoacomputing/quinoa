@@ -20,6 +20,7 @@ add_library(Inciter
             FluxCorrector.cpp
             DistFCT.cpp
             DiagReducer.cpp
+            HoleReducer.cpp
             NodeDiagnostics.cpp
             ElemDiagnostics.cpp
             FieldOutput.cpp

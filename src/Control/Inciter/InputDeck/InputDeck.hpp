@@ -128,6 +128,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::diagnostics
                                  , kw::history_output
                                  , kw::mesh
+                                 , kw::intergrid_boundary
                                  , kw::filename
                                  , kw::location
                                  , kw::orientation

@@ -315,14 +315,20 @@ using bc = tk::TaggedTuple< brigand::list<
 
 //! Mesh assignment and configuration
 using mesh = tk::TaggedTuple< brigand::list<
-    tag::filename,      std::vector< std::string >
-  , tag::velocity,      std::vector< kw::velocity::info::expect::type >
-  , tag::bcdir,         std::vector< std::size_t >
-  , tag::bcsym,         std::vector< std::size_t >
-  , tag::bcinlet,       std::vector< std::size_t >
-  , tag::bcoutlet,      std::vector< std::size_t >
-  , tag::bcfarfield,    std::vector< std::size_t >
-  , tag::bcextrapolate, std::vector< std::size_t >
+    tag::filename,           std::vector< std::string >
+  , tag::velocity,           std::vector< kw::velocity::info::expect::type >
+  , tag::bcdir,              std::vector< std::size_t >
+  , tag::bcsym,              std::vector< std::size_t >
+  , tag::bcinlet,            std::vector< std::size_t >
+  , tag::bcoutlet,           std::vector< std::size_t >
+  , tag::bcfarfield,         std::vector< std::size_t >
+  , tag::bcextrapolate,      std::vector< std::size_t >
+> >;
+
+//! Integrid boundary configuration
+using intergrid_boundary = tk::TaggedTuple< brigand::list<
+    tag::mesh,    std::vector< std::size_t >
+  , tag::sideset, std::vector< std::vector< std::size_t > >
 > >;
 
 //! Stagnation points parameters storage
@@ -417,6 +423,7 @@ using CompFlowPDEParameters = tk::TaggedTuple< brigand::list<
   , tag::farfield_pressure, kw::pressure::info::expect::type
   , tag::farfield_density,  kw::density::info::expect::type
   , tag::farfield_velocity, std::vector< kw::velocity::info::expect::type >
+  , tag::intergrid_boundary, intergrid_boundary
   , tag::bc,            bc
   , tag::bctimedep,     std::vector< time_dependent_bc >
   , tag::sponge,        SpongeParameters

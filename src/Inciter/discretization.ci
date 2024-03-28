@@ -45,6 +45,8 @@ module discretization {
       entry void vol();
       entry void comvol( const std::vector< std::size_t >& gid,
                          const std::vector< tk::real >& nodevol );
+      entry [reductiontarget] void aggregateHoles( CkReductionMsg* msg );
+      entry void holComplete();
       entry void stat( tk::real mesh_volume );
       entry void transferInit();
       entry void transfer_complete();

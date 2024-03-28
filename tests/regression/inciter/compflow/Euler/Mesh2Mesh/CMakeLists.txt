@@ -51,9 +51,29 @@
                                          m2m_sphere.cfg
                       LABELS "oversetfe;m2m")
 
+  add_regression_test(compflow_euler_icoverset_intergrid ${INCITER_EXECUTABLE}
+                      NUMPES 2
+                      INPUTFILES ic_overset_intergrid.q freestream_BGmesh_15k.exo sphere_OSmesh_12k.exo
+                      ARGS -c ic_overset_intergrid.q -v
+                      BIN_BASELINE background_intergrid_pe2.std.exo.0
+                                   background_intergrid_pe2.std.exo.1
+                                   overset_intergrid_pe2.std.exo.0
+                                   overset_intergrid_pe2.std.exo.1
+                      BIN_RESULT out.0.e-s.0.2.0
+                                 out.0.e-s.0.2.1
+                                 out.1.e-s.0.2.0
+                                 out.1.e-s.0.2.1
+                      BIN_DIFF_PROG_ARGS -m
+                      BIN_DIFF_PROG_CONF m2m_cube.cfg
+                                         m2m_cube.cfg
+                                         m2m_sphere.cfg
+                                         m2m_sphere.cfg
+                      LABELS "oversetfe;m2m")
+
   add_regression_test(compflow_euler_movingmesh_overset ${INCITER_EXECUTABLE}
                       NUMPES 4
-                      INPUTFILES movingmesh_overset.q freestream_BGmesh_15k.exo sphere_OSmesh_12k.exo
+                      INPUTFILES movingmesh_overset.q freestream_BGmesh_15k.exo
+                                 sphere_OSmesh_12k.exo
                       ARGS -c movingmesh_overset.q -v
                       BIN_BASELINE statbackground_pe4.std.exo.0
                                    statbackground_pe4.std.exo.1
