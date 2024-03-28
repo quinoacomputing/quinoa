@@ -1929,7 +1929,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         is 1 instead of 0 in gauss_hump_transport which enables it to be the
         regression testcase for p-adaptive DG scheme.)"});
 
-      kwvector.push_back({" waterair_shocktube",
+      kwvector.push_back({"waterair_shocktube",
         "Select the water-air shock-tube test problem ",
         R"(This keyword is used to select the Water-air shock-tube test problem.
         The purpose of this test problem is to test the correctness of the
