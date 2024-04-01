@@ -6,8 +6,8 @@
 add_regression_test(multimat_energy_pill_fv
                     ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES energy_pill_fv.q tubetest_2blk_924.exo
-                    ARGS -c energy_pill_fv.q -i tubetest_2blk_924.exo -v
+                    INPUTFILES energy_pill_fv.lua tubetest_2blk_924.exo
+                    ARGS -c energy_pill_fv.lua -i tubetest_2blk_924.exo -v
                     BIN_BASELINE energy_pill_fv_pe4.std.exo.0
                                  energy_pill_fv_pe4.std.exo.1
                                  energy_pill_fv_pe4.std.exo.2

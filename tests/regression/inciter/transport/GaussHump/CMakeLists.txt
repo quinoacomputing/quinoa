@@ -5,8 +5,8 @@
 
 add_regression_test(gauss_hump_alecg ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES gauss_hump_alecg.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_alecg.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES gauss_hump_alecg.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_alecg.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_alecg.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_cg.cfg
@@ -18,8 +18,8 @@ add_regression_test(gauss_hump_alecg ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES gauss_hump_p0p1.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_p0p1.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES gauss_hump_p0p1.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_p0p1.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_p0p1.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
@@ -31,8 +31,8 @@ add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES gauss_hump_dgp2.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_dgp2.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES gauss_hump_dgp2.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_dgp2.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_dgp2.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
@@ -46,8 +46,8 @@ add_regression_test(gauss_hump_dgp2 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_alecg ${INCITER_EXECUTABLE}
                     NUMPES 4 PPN 1
-                    INPUTFILES gauss_hump_alecg.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_alecg.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES gauss_hump_alecg.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_alecg.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_alecg.std.exo.0
                                  gauss_hump_alecg.std.exo.1
                                  gauss_hump_alecg.std.exo.2
@@ -65,8 +65,8 @@ add_regression_test(gauss_hump_alecg ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_p0p1.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_p0p1.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES gauss_hump_p0p1.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_p0p1.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_p0p1_pe4_u0.0.std.exo.0
                                  gauss_hump_p0p1_pe4_u0.0.std.exo.1
                                  gauss_hump_p0p1_pe4_u0.0.std.exo.2
@@ -84,8 +84,8 @@ add_regression_test(gauss_hump_p0p1 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_dgp2.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_dgp2.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES gauss_hump_dgp2.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_dgp2.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_dgp2_pe4.std.exo.0
                                  gauss_hump_dgp2_pe4.std.exo.1
                                  gauss_hump_dgp2_pe4.std.exo.2
@@ -105,8 +105,8 @@ add_regression_test(gauss_hump_dgp2 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dg_u0.5 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v -u 0.5
+                    INPUTFILES gauss_hump.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump.lua -i unitsquare_01_3.6k.exo -v -u 0.5
                     BIN_BASELINE gauss_hump_pe4_u0.5.std.exo.0
                                  gauss_hump_pe4_u0.5.std.exo.1
                                  gauss_hump_pe4_u0.5.std.exo.2
@@ -132,8 +132,8 @@ add_regression_test(gauss_hump_dg_u0.5 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dg_u0.9 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_cube.q unitcube_1k.exo diag_cube.std
-                    ARGS -c gauss_hump_cube.q -i unitcube_1k.exo -v -u 0.9
+                    INPUTFILES gauss_hump_cube.lua unitcube_1k.exo diag_cube.std
+                    ARGS -c gauss_hump_cube.lua -i unitcube_1k.exo -v -u 0.9
                     TEXT_BASELINE diag_cube.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF gauss_hump_diag.ndiff.cfg
@@ -141,8 +141,8 @@ add_regression_test(gauss_hump_dg_u0.9 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_p0p1_u0.9 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_p0p1.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_p0p1.q -i unitsquare_01_3.6k.exo -v -u 0.9
+                    INPUTFILES gauss_hump_p0p1.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_p0p1.lua -i unitsquare_01_3.6k.exo -v -u 0.9
                     BIN_BASELINE gauss_hump_p0p1_pe4_u0.9.std.exo.0
                                  gauss_hump_p0p1_pe4_u0.9.std.exo.1
                                  gauss_hump_p0p1_pe4_u0.9.std.exo.2
@@ -232,8 +232,8 @@ add_regression_test(gauss_hump_p0p1_u0.9 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_alecg_u0.9 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_alecg.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_alecg.q -i unitsquare_01_3.6k.exo -v -u 0.9
+                    INPUTFILES gauss_hump_alecg.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_alecg.lua -i unitsquare_01_3.6k.exo -v -u 0.9
                     BIN_BASELINE gauss_hump_alecg_u0.9.std.exo.0
                                  gauss_hump_alecg_u0.9.std.exo.1
                                  gauss_hump_alecg_u0.9.std.exo.2
@@ -323,8 +323,8 @@ add_regression_test(gauss_hump_alecg_u0.9 ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_dg_u0.9_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump.q -i unitsquare_01_3.6k.exo -v -u 0.9
+                    INPUTFILES gauss_hump.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump.lua -i unitsquare_01_3.6k.exo -v -u 0.9
                          +balancer RandCentLB +LBDebug 1
                     BIN_BASELINE gauss_hump_pe4_u0.9.std.exo.0
                                  gauss_hump_pe4_u0.9.std.exo.1
@@ -415,8 +415,8 @@ add_regression_test(gauss_hump_dg_u0.9_migr ${INCITER_EXECUTABLE}
 
 add_regression_test(gauss_hump_alecg_u0.9_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_alecg.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_alecg.q -i unitsquare_01_3.6k.exo -v -u 0.9
+                    INPUTFILES gauss_hump_alecg.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_alecg.lua -i unitsquare_01_3.6k.exo -v -u 0.9
                          -l 10 +balancer RandCentLB +LBDebug 1
                     BIN_BASELINE gauss_hump_alecg_u0.9.std.exo.0
                                  gauss_hump_alecg_u0.9.std.exo.1

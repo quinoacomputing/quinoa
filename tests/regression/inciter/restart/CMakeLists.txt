@@ -5,8 +5,8 @@
 
 add_regression_test(trans_alecg_checkpoint ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES slot_cyl_alecg.q unitsquare_01_3.6k.exo
-                    ARGS -c slot_cyl_alecg.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES slot_cyl_alecg.lua unitsquare_01_3.6k.exo
+                    ARGS -c slot_cyl_alecg.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE slot_cyl_alecg_checkpoint.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
@@ -17,8 +17,8 @@ add_regression_test(trans_alecg_checkpoint ${INCITER_EXECUTABLE}
 
 add_regression_test(trans_alecg_restart ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES slot_cyl_alecg_restart.q unitsquare_01_3.6k.exo
-                    ARGS -c slot_cyl_alecg_restart.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES slot_cyl_alecg_restart.lua unitsquare_01_3.6k.exo
+                    ARGS -c slot_cyl_alecg_restart.lua -i unitsquare_01_3.6k.exo -v
                          +restart restart
                     BIN_BASELINE slot_cyl_alecg.std.exo
                     BIN_RESULT out.e-s.0.1.0
@@ -33,8 +33,8 @@ add_regression_test(trans_alecg_restart ${INCITER_EXECUTABLE}
 
 add_regression_test(trans_alecg_checkpoint ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES slot_cyl_alecg.q unitsquare_01_3.6k.exo
-                    ARGS -c slot_cyl_alecg.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES slot_cyl_alecg.lua unitsquare_01_3.6k.exo
+                    ARGS -c slot_cyl_alecg.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE slot_cyl_alecg_checkpoint.std.exo.0
                                  slot_cyl_alecg_checkpoint.std.exo.1
                                  slot_cyl_alecg_checkpoint.std.exo.2
@@ -52,8 +52,8 @@ add_regression_test(trans_alecg_checkpoint ${INCITER_EXECUTABLE}
 
 add_regression_test(trans_alecg_restart ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES slot_cyl_alecg_restart.q unitsquare_01_3.6k.exo
-                    ARGS -c slot_cyl_alecg_restart.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES slot_cyl_alecg_restart.lua unitsquare_01_3.6k.exo
+                    ARGS -c slot_cyl_alecg_restart.lua -i unitsquare_01_3.6k.exo -v
                          +restart restart
                     BIN_BASELINE slot_cyl_alecg.std.exo.0
                                  slot_cyl_alecg.std.exo.1

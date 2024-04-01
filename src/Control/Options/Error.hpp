@@ -40,8 +40,8 @@ class Error : public tk::Toggle< ErrorType > {
         //! Group, i.e., options, name
         "error",
         //! Enums -> names
-        { { ErrorType::L2, "l2" },
-          { ErrorType::LINF, "linf" } },
+        { { ErrorType::L2, "L2" },
+          { ErrorType::LINF, "Linf" } },
         //! keywords -> Enums
         { { "l2", ErrorType::L2 },
           { "linf", ErrorType::LINF } }

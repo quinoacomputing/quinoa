@@ -549,17 +549,33 @@ LuaParser::storeInputDeck(
     if (gideck.get< tag::pde >() == inciter::ctr::PDEType::MULTIMAT)
       nmat = gideck.get< tag::multimat, tag::nmat >();
 
+    // elem aliases
+    std::vector< std::string > elemalias;
+    if (lua_ideck["field_output"]["elemvar"].valid())
+      nevar = sol::table(lua_ideck["field_output"]["elemvar"]).size();
+    storeVecIfSpecd< std::string >(
+      lua_ideck["field_output"], "elemalias", elemalias,
+      std::vector< std::string >(nevar, ""));
+
+    // node aliases
+    std::vector< std::string > nodealias;
+    if (lua_ideck["field_output"]["nodevar"].valid())
+      nnvar = sol::table(lua_ideck["field_output"]["nodevar"]).size();
+    storeVecIfSpecd< std::string >(
+      lua_ideck["field_output"], "nodealias", nodealias,
+      std::vector< std::string >(nnvar, ""));
+
+    // error check on aliases
+    if (elemalias.size() != nevar)
+      Throw("elemalias should have the same size as elemvar.");
+    if (nodealias.size() != nnvar)
+      Throw("nodealias should have the same size as nodevar.");
+
     // element variables
     if (lua_ideck["field_output"]["elemvar"].valid()) {
-      nevar = sol::table(lua_ideck["field_output"]["elemvar"]).size();
-
-      if (lua_ideck["field_output"]["elemalias"].valid())
-        if (sol::table(lua_ideck["field_output"]["elemalias"]).size() != nevar)
-          Throw("elemalias should have the same size as elemvar.");
-
       for (std::size_t i=0; i<nevar; ++i) {
         std::string varname(lua_ideck["field_output"]["elemvar"][i+1]);
-        std::string alias(lua_ideck["field_output"]["elemalias"][i+1]);
+        std::string alias(elemalias[i]);
         addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
           gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
       }
@@ -567,15 +583,9 @@ LuaParser::storeInputDeck(
 
     // node variables
     if (lua_ideck["field_output"]["nodevar"].valid()) {
-      nnvar = sol::table(lua_ideck["field_output"]["nodevar"]).size();
-
-      if (lua_ideck["field_output"]["nodealias"].valid())
-        if (sol::table(lua_ideck["field_output"]["nodealias"]).size() != nnvar)
-          Throw("nodealias should have the same size as nodevar.");
-
       for (std::size_t i=0; i<nnvar; ++i) {
         std::string varname(lua_ideck["field_output"]["nodevar"][i+1]);
-        std::string alias(lua_ideck["field_output"]["nodealias"][i+1]);
+        std::string alias(nodealias[i]);
         addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
           gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
       }
@@ -1022,6 +1032,9 @@ LuaParser::storeInputDeck(
       ++ic;
     }
   }
+  else if (gideck.get< tag::scheme >() == inciter::ctr::SchemeType::ALECG ||
+           gideck.get< tag::scheme >() == inciter::ctr::SchemeType::OversetFE)
+    gideck.get< tag::bc >().resize(1);
   // error checking for unspecified BC's
   else
     Throw("No boundary conditions specified in input file.");
