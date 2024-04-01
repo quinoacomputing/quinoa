@@ -10,15 +10,12 @@ add_library(Inciter
             Discretization.cpp
             Refiner.cpp
             Sorter.cpp
-            DiagCG.cpp
             ALECG.cpp
             ALE.cpp
             OversetFE.cpp
             Ghosts.cpp
             DG.cpp
             FV.cpp
-            FluxCorrector.cpp
-            DistFCT.cpp
             DiagReducer.cpp
             NodeDiagnostics.cpp
             ElemDiagnostics.cpp
@@ -86,10 +83,8 @@ addCharmModule( "partitioner" "Inciter" )
 addCharmModule( "discretization" "Inciter" )
 addCharmModule( "refiner" "Inciter" )
 addCharmModule( "sorter" "Inciter" )
-addCharmModule( "diagcg" "Inciter" )
 addCharmModule( "alecg" "Inciter" )
 addCharmModule( "oversetfe" "Inciter" )
-addCharmModule( "distfct" "Inciter" )
 addCharmModule( "dg" "Inciter" )
 addCharmModule( "fv" "Inciter" )
 addCharmModule( "ale" "Inciter" )

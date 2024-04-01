@@ -30,7 +30,6 @@
 #include "UnsMesh.hpp"
 #include "Base/Fields.hpp"
 #include "Scheme.hpp"
-#include "DiagCG.hpp"
 #include "ALECG.hpp"
 #include "OversetFE.hpp"
 #include "DG.hpp"

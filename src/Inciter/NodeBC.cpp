@@ -7,7 +7,7 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Boundary conditions for nodal discretizations
   \details   Boundary conditions for nodal discretizations, such as continuous
-    Galerkin finite elements, e.g., DiagCG.
+    Galerkin finite elements.
 */
 // *****************************************************************************
 
@@ -155,48 +155,6 @@ match( std::size_t meshid,
           "Size of NodeBC vector incorrect" );
  
   return dirbc;
-}
-
-bool
-correctBC( const tk::Fields& a,
-           const tk::Fields& dul,
-           const std::unordered_map< std::size_t,
-                   std::vector< std::pair< bool, tk::real > > >& dirbc )
-// *****************************************************************************
-//  Verify that the change in the solution at those nodes where Dirichlet
-//  boundary conditions are set is exactly the amount the BCs prescribe
-//! \param[in] a Limited antidiffusive element contributions (from FCT)
-//! \param[in] dul Low order solution increment
-//! \param[in] dirbc Vector of boundary conditions (true/false + BC value) for
-//!   all scalar components integrated associated of all systems to local node
-//!   ID
-//! \return True if solution is correct at Dirichlet boundary condition nodes
-//! \details We loop through the map that associates a vector of of boundary
-//!   conditions (true/false, indicating whether the BC is set + BC value if
-//!   true) for all scalar components integrated associated of all systems to
-//!   global node IDs. Then for all scalar components of all systems of systems
-//!   of PDEs integrated if a BC is to be set for a given component, we compute
-//!   the low order solution increment + the anti-diffusive element
-//!   contributions (in FCT), which is the current solution increment (to be
-//!   used to update the solution at time n in FCT) at that node. This solution
-//!   increment must equal the BC prescribed at the given node as we solve for
-//!   solution increments. If not, the BCs are not set correctly, which is an
-//!   error.
-// *****************************************************************************
-{
-  for (const auto& [i,bc] : dirbc) {
-    Assert( bc.size() == dul.nprop(), "Size mismatch" );
-    for (std::size_t c=0; c<bc.size(); ++c) {
-      if ( bc[c].first &&
-           std::abs( dul(i,c) + a(i,c) - bc[c].second ) >
-             std::numeric_limits< tk::real >::epsilon() )
-      {
-         return false;
-      }
-    }
-  }
-
-  return true;
 }
 
 } // inciter::

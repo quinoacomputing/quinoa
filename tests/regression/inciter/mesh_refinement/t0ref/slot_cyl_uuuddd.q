@@ -11,7 +11,6 @@ inciter
   ttyi 1      # TTY output interval
 
   scheme alecg
-  fct true
 
   partitioning
     algorithm mj

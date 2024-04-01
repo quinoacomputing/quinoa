@@ -160,7 +160,7 @@ LuaParser::storeInputDeck(
   // ---------------------------------------------------------------------------
   using inciter::ctr::SchemeType;
   storeOptIfSpecd< SchemeType, inciter::ctr::Scheme >(
-    lua_ideck, "scheme", gideck.get< tag::scheme >(), SchemeType::DiagCG);
+    lua_ideck, "scheme", gideck.get< tag::scheme >(), SchemeType::ALECG);
   storeOptIfSpecd< inciter::ctr::LimiterType, inciter::ctr::Limiter >(
     lua_ideck, "limiter", gideck.get< tag::limiter >(),
     inciter::ctr::LimiterType::NOLIMITER);
@@ -174,19 +174,6 @@ LuaParser::storeInputDeck(
   storeIfSpecd< bool >(
     lua_ideck, "limsol_projection", gideck.get< tag::limsol_projection >(),
     true);
-  storeIfSpecd< bool >(
-    lua_ideck, "fct", gideck.get< tag::fct >(), true);
-  storeIfSpecd< bool >(
-    lua_ideck, "fctclip", gideck.get< tag::fctclip >(), false);
-  storeIfSpecd< tk::real >(
-    lua_ideck, "fcteps", gideck.get< tag::fcteps >(),
-    std::numeric_limits< tk::real >::epsilon());
-  storeIfSpecd< tk::real >(
-    lua_ideck, "ctau", gideck.get< tag::ctau >(), 1.0);
-  storeIfSpecd< bool >(
-    lua_ideck, "sysfct", gideck.get< tag::sysfct >(), false);
-  storeVecIfSpecd< std::size_t >(
-    lua_ideck, "sysfctvar", gideck.get< tag::sysfctvar >(), {{0, 1, 2, 3, 4}});
 
   // configure solutions DOFs
   auto scheme = gideck.get< tag::scheme >();
@@ -203,7 +190,6 @@ LuaParser::storeInputDeck(
     ndof = rdof = 10;
     gideck.get< tag::pref, tag::pref >() = true;
   } else if (scheme != SchemeType::DG &&
-      scheme != SchemeType::DiagCG &&
       scheme != SchemeType::ALECG &&
       scheme != SchemeType::OversetFE) {
     Throw("Scheme type not configured in configure_scheme");

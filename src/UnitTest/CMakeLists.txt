@@ -69,10 +69,8 @@ endif()
 # Add extra dependencies of UnitTest on those CharmModules that are required for
 # testing Inciter.
 if (ENABLE_INCITER)
-  add_dependencies("UnitTest" "diagcgCharmModule"
-                              "alecgCharmModule"
+  add_dependencies("UnitTest" "alecgCharmModule"
                               "oversetfeCharmModule"
-                              "distfctCharmModule"
                               "dgCharmModule"
                               "fvCharmModule"
                               "aleCharmModule"

@@ -40,7 +40,6 @@ using inciter::Discretization;
 Discretization::Discretization(
   std::size_t meshid,
   const std::vector< CProxy_Discretization >& disc,
-  const CProxy_DistFCT& fctproxy,
   const CProxy_ALE& aleproxy,
   const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   const CProxy_Transporter& transporter,
@@ -70,7 +69,6 @@ Discretization::Discretization(
   m_dtn( m_dt ),
   m_nvol( 0 ),
   m_nxfer( 0 ),
-  m_fct( fctproxy ),
   m_ale( aleproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
@@ -102,7 +100,6 @@ Discretization::Discretization(
 //  Constructor
 //! \param[in] meshid Mesh ID
 //! \param[in] disc All Discretization proxies (one per mesh)
-//! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] aleproxy Distributed ALE proxy
 //! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
 //!   solver proxy
@@ -158,15 +155,6 @@ Discretization::Discretization(
       }
     }
   }
-
-  // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
-  // is configured false in the input deck, at this point, we still need the FCT
-  // object as FCT is still being performed, only its results are ignored.
-  const auto sch = g_inputdeck.get< tag::scheme >();
-  const auto nprop = g_inputdeck.get< tag::ncomp >();
-  if (sch == ctr::SchemeType::DiagCG)
-    m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
-                               m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
   if (g_inputdeck.get< tag::ale, tag::ale >()) {

@@ -22,8 +22,7 @@ namespace inciter {
 namespace ctr {
 
 //! Scheme types
-enum class SchemeType : uint8_t { DiagCG
-                                , ALECG
+enum class SchemeType : uint8_t { ALECG
                                 , OversetFE
                                 , DG
                                 , P0P1 
@@ -47,8 +46,7 @@ class Scheme : public tk::Toggle< SchemeType > {
         //! Group, i.e., options, name
         "Scheme",
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { SchemeType::DiagCG, "diagcg" },
-          { SchemeType::ALECG, "alecg" },
+        { { SchemeType::ALECG, "alecg" },
           { SchemeType::OversetFE, "oversetfe" },
           { SchemeType::DG, "dg" },
           { SchemeType::P0P1, "p0p1" },
@@ -57,8 +55,7 @@ class Scheme : public tk::Toggle< SchemeType > {
           { SchemeType::PDG, "pdg" },
           { SchemeType::FV, "fv" } },
         //! keywords -> Enums
-        { { "diagcg", SchemeType::DiagCG },
-          { "alecg", SchemeType::ALECG },
+        { { "alecg", SchemeType::ALECG },
           { "oversetfe", SchemeType::OversetFE },
           { "dg", SchemeType::DG },
           { "p0p1", SchemeType::P0P1 }, 
@@ -71,8 +68,7 @@ class Scheme : public tk::Toggle< SchemeType > {
     //! \param[in] type Scheme type
     //! \return Mesh centering for scheme type
     tk::Centering centering( SchemeType type ) {
-      if ( type == SchemeType::DiagCG ||
-           type == SchemeType::ALECG ||
+      if ( type == SchemeType::ALECG ||
            type == SchemeType::OversetFE )
 
         return tk::Centering::NODE;

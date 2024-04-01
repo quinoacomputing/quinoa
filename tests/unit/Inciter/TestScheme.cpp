@@ -78,16 +78,14 @@ template<> template<>
 void Scheme_object::test< 1 >() {
   set_test_name( "ctor which" );
 
-  inciter::Scheme c( inciter::ctr::SchemeType::DiagCG );
-  ensure_equals( "Underlying type", c.index(), 0 );
   inciter::Scheme d( inciter::ctr::SchemeType::DG );
-  ensure_equals( "Underlying type", d.index(), 1 );
+  ensure_equals( "Underlying type", d.index(), 0 );
   inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
-  ensure_equals( "Underlying type", a.index(), 2 );
+  ensure_equals( "Underlying type", a.index(), 1 );
   inciter::Scheme o( inciter::ctr::SchemeType::OversetFE );
-  ensure_equals( "Underlying type", o.index(), 3 );
+  ensure_equals( "Underlying type", o.index(), 2 );
   inciter::Scheme f( inciter::ctr::SchemeType::FV );
-  ensure_equals( "Underlying type", f.index(), 4 );
+  ensure_equals( "Underlying type", f.index(), 3 );
 }
 
 //! Test if operator[] returns the correct underlying type
@@ -95,19 +93,17 @@ template<> template<>
 void Scheme_object::test< 2 >() {
   set_test_name( "operator[] which" );
 
-  inciter::Scheme c( inciter::ctr::SchemeType::DiagCG );
-  ensure_equals( "Underlying element type", c.index_element(), 0 );
   inciter::Scheme d( inciter::ctr::SchemeType::DG );
-  ensure_equals( "Underlying element type", d.index_element(), 1 );
+  ensure_equals( "Underlying element type", d.index_element(), 0 );
   inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
-  ensure_equals( "Underlying element type", a.index_element(), 2 );
+  ensure_equals( "Underlying element type", a.index_element(), 1 );
   inciter::Scheme o( inciter::ctr::SchemeType::OversetFE );
-  ensure_equals( "Underlying element type", o.index_element(), 3 );
+  ensure_equals( "Underlying element type", o.index_element(), 2 );
   inciter::Scheme f( inciter::ctr::SchemeType::FV );
-  ensure_equals( "Underlying element type", f.index_element(), 4 );
+  ensure_equals( "Underlying element type", f.index_element(), 3 );
 }
 
-//! Test Pack/Unpack of Scheme holding CProxy_DiagCG
+//! Test Pack/Unpack of Scheme holding CProxy_DG
 //! \details Every Charm++ migration test, such as this one, consists of two
 //!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
@@ -122,13 +118,13 @@ void Scheme_object::test< 3 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate Scheme(DiagCG) 1" );
+  set_test_name( "Charm:migrate Scheme(DG) 1" );
 
   CProxy_Receiver::ckNew(
-    inciter::Scheme( inciter::ctr::SchemeType::DiagCG ), 0, "DiagCG" );
+    inciter::Scheme( inciter::ctr::SchemeType::DG ), 0, "DG" );
 }
 
-//! Test Pack/Unpack of Scheme holding CProxy_DG
+//! Test Pack/Unpack of Scheme holding CProxy_AELCG
 //! \details Every Charm++ migration test, such as this one, consists of two
 //!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
@@ -143,55 +139,13 @@ void Scheme_object::test< 4 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate Scheme(DG) 1" );
-
-  CProxy_Receiver::ckNew(
-    inciter::Scheme( inciter::ctr::SchemeType::DG ), 1, "DG" );
-}
-
-//! Test Pack/Unpack of Scheme holding CProxy_AELCG
-//! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both trigger a TUT test,
-//!   but the receive side is created manually, i.e., without the awareness of
-//!   the TUT library. Unfortunately thus, there is no good way to count up
-//!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::m_migrations.
-template<> template<>
-void Scheme_object::test< 5 >() {
-  // This test spawns a new Charm++ chare. The "1" at the end of the test name
-  // signals that this is only the first part of this test: the part up to
-  // firing up an asynchronous Charm++ chare. The second part creates a new test
-  // result, sending it back to the suite if successful. If that chare never
-  // executes, the suite will hang waiting for that chare to call back.
   set_test_name( "Charm:migrate Scheme(ALECG) 1" );
 
   CProxy_Receiver::ckNew(
-    inciter::Scheme( inciter::ctr::SchemeType::ALECG ), 2, "ALECG" );
+    inciter::Scheme( inciter::ctr::SchemeType::ALECG ), 1, "ALECG" );
 }
 
 //! Test Pack/Unpack of Scheme holding CProxy_OversetFE
-//! \details Every Charm++ migration test, such as this one, consists of two
-//!   unit tests: one for send and one for receive. Both trigger a TUT test,
-//!   but the receive side is created manually, i.e., without the awareness of
-//!   the TUT library. Unfortunately thus, there is no good way to count up
-//!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.h in
-//!   unittest::TUTSuite::m_migrations.
-template<> template<>
-void Scheme_object::test< 7 >() {
-  // This test spawns a new Charm++ chare. The "1" at the end of the test name
-  // signals that this is only the first part of this test: the part up to
-  // firing up an asynchronous Charm++ chare. The second part creates a new test
-  // result, sending it back to the suite if successful. If that chare never
-  // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate Scheme(OversetFE) 1" );
-
-  CProxy_Receiver::ckNew(
-    inciter::Scheme( inciter::ctr::SchemeType::OversetFE ), 3, "OversetFE" );
-}
-
-//! Test Pack/Unpack of Scheme holding CProxy_FV
 //! \details Every Charm++ migration test, such as this one, consists of two
 //!   unit tests: one for send and one for receive. Both trigger a TUT test,
 //!   but the receive side is created manually, i.e., without the awareness of
@@ -206,10 +160,31 @@ void Scheme_object::test< 6 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "Charm:migrate Scheme(OversetFE) 1" );
+
+  CProxy_Receiver::ckNew(
+    inciter::Scheme( inciter::ctr::SchemeType::OversetFE ), 2, "OversetFE" );
+}
+
+//! Test Pack/Unpack of Scheme holding CProxy_FV
+//! \details Every Charm++ migration test, such as this one, consists of two
+//!   unit tests: one for send and one for receive. Both trigger a TUT test,
+//!   but the receive side is created manually, i.e., without the awareness of
+//!   the TUT library. Unfortunately thus, there is no good way to count up
+//!   these additional tests, and thus if a test such as this is added to the
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
+//!   unittest::TUTSuite::m_migrations.
+template<> template<>
+void Scheme_object::test< 5 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
   set_test_name( "Charm:migrate Scheme(FV) 1" );
 
   CProxy_Receiver::ckNew(
-    inciter::Scheme( inciter::ctr::SchemeType::FV ), 4, "FV" );
+    inciter::Scheme( inciter::ctr::SchemeType::FV ), 3, "FV" );
 }
 
 } // tut::

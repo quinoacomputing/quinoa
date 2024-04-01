@@ -33,7 +33,7 @@ MeshWriter::MeshWriter( ctr::FieldFileType filetype,
 //  Constructor: set some defaults that stay constant at all times
 //! \param[in] filetype Output file format type
 //! \param[in] bnd_centering Centering to identify what boundary data to write.
-//!   For a nodal scheme, e.g., DiagCG, this is nodal, for a DG scheme, this is
+//!   For a nodal scheme, e.g., ALECG, this is nodal, for a DG scheme, this is
 //!   cell-based.
 //! \param[in] benchmark True of benchmark mode. No field output happens in
 //!   benchmark mode. This (and associated if tests) are here so client code

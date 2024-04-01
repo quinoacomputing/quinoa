@@ -12,8 +12,6 @@ inciter
 
   scheme alecg
 
-  fct true
-
   partitioning
     algorithm mj
   end

@@ -65,7 +65,6 @@ class Discretization : public CBase_Discretization {
       Discretization(
         std::size_t meshid,
         const std::vector< CProxy_Discretization >& disc,
-        const CProxy_DistFCT& fctproxy,
         const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
@@ -281,12 +280,6 @@ class Discretization : public CBase_Discretization {
       return m_refiner[ thisIndex ].ckLocal();
     }
 
-    //! Access bound DistFCT class pointer
-    DistFCT* FCT() const {
-      Assert(m_fct[ thisIndex ].ckLocal() != nullptr, "DistFCT ckLocal() null");
-      return m_fct[ thisIndex ].ckLocal();
-    }
-
     //! Access Discretization proxy for a mesh
     CProxy_Discretization coupled( std::size_t meshid ) const {
       Assert( meshid < m_disc.size(),
@@ -456,7 +449,6 @@ class Discretization : public CBase_Discretization {
       p | m_dtn;
       p | m_nvol;
       p | m_nxfer;
-      p | m_fct;
       p | m_ale;
       p | m_transporter;
       p | m_meshwriter;
@@ -555,8 +547,6 @@ class Discretization : public CBase_Discretization {
     //! \brief Number of chares from which we received solution transfers
     //!   contributions on chare boundaries
     std::size_t m_nxfer;
-    //! Distributed FCT proxy
-    CProxy_DistFCT m_fct;
     //! Distributed ALE proxy
     CProxy_ALE m_ale;
     //! Transporter proxy

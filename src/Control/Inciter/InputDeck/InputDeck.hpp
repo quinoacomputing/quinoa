@@ -137,12 +137,6 @@ using ConfigMembers = brigand::list<
   tag::shock_detector_coeff, tk::real,
   tag::accuracy_test,        bool,
   tag::limsol_projection,    bool,
-  tag::fct,                  bool,
-  tag::fctclip,              bool,
-  tag::fcteps,               tk::real,
-  tag::ctau,                 tk::real,
-  tag::sysfct,               bool,
-  tag::sysfctvar,            std::vector< std::size_t >,
 
   // PDE options
   // ---------------------------------------------------------------------------
@@ -553,16 +547,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         necessarily connected to the temporal discretization scheme. See
         Control/Inciter/Options/Scheme.hpp for valid options.)", "string"});
 
-      kwvector.push_back({"diagcg",
-        "Select continuous Galerkin + Lax Wendroff with a lumped-mass matrix LHS",
-        R"(This keyword is used to select the lumped-mass matrix continuous Galerkin
-        (CG) finite element spatial discretiztaion used in inciter. CG is combined
-        with a Lax-Wendroff scheme for time discretization and flux-corrected
-        transport (FCT) for treating discontinuous solutions. This option selects
-        the scheme that stores the left-hand side matrix lumped, i.e., only the
-        diagonal elements stored and thus does not require a linear solver. See
-        Control/Inciter/Options/Scheme.hpp for other valid options.)"});
-
       kwvector.push_back({"alecg",
         "Select continuous Galerkin with ALE + Runge-Kutta",
         R"(This keyword is used to select the continuous Galerkin finite element
@@ -698,56 +682,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         quantities. See Pandare et al. (2023). On the Design of Stable,
         Consistent, and Conservative High-Order Methods for Multi-Material
         Hydrodynamics. J Comp Phys (490).)", "bool"});
-
-      kwvector.push_back({"fct", "Turn flux-corrected transport on/off",
-        R"(This keyword can be used to turn on/off flux-corrected transport (FCT).
-        Note that FCT is only used in conjunction with continuous Galerkin finite
-        element discretization, configured by scheme diagcg and it has no
-        effect when the discontinuous Galerkin (DG) scheme is used, configured by
-        'scheme dg'. Also note that even if FCT is turned off, it is still
-        performed, only its result is not applied.)", "bool"});
-
-      kwvector.push_back({"fctclip",
-        "Turn on clipping flux-corrected transport on/off",
-        R"(This keyword can be used to turn on/off the clipping limiter used for
-        flux-corrected transport (FCT). The clipping limiter only looks at the
-        current low order solution to determine the allowed solution minima and
-        maxima, instead of the minimum and maximum of the low order solution and
-        the previous solution.)", "bool"});
-
-      kwvector.push_back({"fcteps",
-        "A number that is considered small enough for FCT",
-        R"(This keyword is used to set the epsilon (a small number) below which
-        FCT quantities are considered small enough to be treated as zero. Setting
-        this number to be somewhat larger than the machine zero, e.g., 1.0e-15,
-        helps ignoring some noise that otherwise could contaminate the
-        solution.)", "real"});
-
-      kwvector.push_back({"ctau", "Set FCT mass diffusion coefficient",
-        R"(This keyword is used to set the mass diffusion coefficient used in
-        flux-corrected transport, used for integrating transport equations.)",
-        "real"});
-
-      kwvector.push_back({"sysfct",
-        "Turn on system nature of flux-corrected transport",
-        R"(This keyword can be used to enable a system-nature for flux-corrected
-        transport (FCT). Note that FCT is only used in conjunction with continuous
-        Galerkin finite element discretization, configured by scheme diagcg and it
-        has no effect when the discontinuous Galerkin (DG) scheme is used,
-        configured by 'scheme dg'. Enabling the system-nature for FCT will choose
-        the limiter coefficients for a system of equations, e.g., compressible
-        flow, in way that accounts for the system-nature of the equations. An
-        example is assinging the minimum of the limit coefficient to all variables
-        limited in a computational cell, e.g., density, momentum, and specitic
-        total energy. This yields better, more monotonic, results.)", "bool"});
-
-      kwvector.push_back({"sysfctvar",
-        "Specify a list of scalar component indices considered for system FCT",
-        R"(This keyword is used to specify a list of integers that are considered
-        for computing the system-nature of flux-corrected transport. Example:
-        'sysfctvar 0 1 2 3 end', which means ignoring the energy (by not listing 4)
-        when computing the coupled limit coefficient for a system of mass, momentum,
-        and energy for single-material compressible flow.)", "uint(s)"});
 
       // -----------------------------------------------------------------------
       // flux options

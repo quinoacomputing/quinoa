@@ -156,12 +156,6 @@ DEFTAG(cweight);
 DEFTAG(shock_detector_coeff);
 DEFTAG(accuracy_test);
 DEFTAG(limsol_projection);
-DEFTAG(fct);
-DEFTAG(fctclip);
-DEFTAG(fcteps);
-DEFTAG(ctau);
-DEFTAG(sysfct);
-DEFTAG(sysfctvar);
 
 DEFTAG(ncomp);
 DEFTAG(pde);

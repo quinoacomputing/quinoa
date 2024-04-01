@@ -92,8 +92,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
   nfo.emplace_back( "number of components", parameter( ncomp ) );
 
   const auto scheme = g_inputdeck.get< tag::scheme >();
-  if (scheme != ctr::SchemeType::DiagCG && scheme != ctr::SchemeType::ALECG
-    && scheme != ctr::SchemeType::OversetFE)
+  if (scheme != ctr::SchemeType::ALECG && scheme != ctr::SchemeType::OversetFE)
     nfo.emplace_back( "flux", ctr::Flux().name(
       g_inputdeck.get< tag::flux >() ) );
 

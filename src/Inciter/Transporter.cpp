@@ -219,18 +219,7 @@ Transporter::info( const InciterPrint& print )
   print.section( "Discretization parameters" );
   print.Item< ctr::Scheme, tag::scheme >();
 
-  if (scheme == ctr::SchemeType::DiagCG) {
-    auto fct = g_inputdeck.get< tag::fct >();
-    print.item( "Flux-corrected transport (FCT)", fct );
-    if (fct) {
-      print.item( "FCT mass diffusion coeff",
-                  g_inputdeck.get< tag::ctau >() );
-      print.item( "FCT small number",
-                  g_inputdeck.get< tag::fcteps >() );
-      print.item( "Clipping FCT",
-                  g_inputdeck.get< tag::fctclip >() );
-    }
-  } else if (g_inputdeck.centering() == tk::Centering::ELEM)
+  if (g_inputdeck.centering() == tk::Centering::ELEM)
   {
     print.Item< ctr::Limiter, tag::limiter >();
 
@@ -1066,9 +1055,6 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
 
   m_refiner[meshid].sendProxy();
 
-  if (g_inputdeck.get< tag::scheme >() == ctr::SchemeType::DiagCG)
-    m_scheme[meshid].fct().doneInserting();
-
   if (g_inputdeck.get< tag::ale, tag::ale >())
     m_scheme[meshid].ale().doneInserting();
 
@@ -1106,8 +1092,7 @@ Transporter::diagHeader()
     // Collect variables names for integral/diagnostics output
     std::vector< std::string > var;
     const auto scheme = g_inputdeck.get< tag::scheme >();
-    if ( scheme == ctr::SchemeType::DiagCG ||
-         scheme == ctr::SchemeType::ALECG ||
+    if ( scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE )
       for (const auto& eq : g_cgpde) varnames( eq, var );
     else if ( scheme == ctr::SchemeType::DG ||
@@ -1137,8 +1122,7 @@ Transporter::diagHeader()
       d.push_back( errname + '(' + var[i] + "-IC)" );
 
     // Augment diagnostics variables by L2-norm of the residual and total energy
-    if ( scheme == ctr::SchemeType::DiagCG ||
-         scheme == ctr::SchemeType::ALECG ||
+    if ( scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE ||
          scheme == ctr::SchemeType::FV )
     {
@@ -1512,8 +1496,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Finish computing the L2 norm of the residual and append
   const auto scheme = g_inputdeck.get< tag::scheme >();
   std::vector< tk::real > l2res( d[L2RES].size(), 0.0 );
-  if (scheme == ctr::SchemeType::DiagCG || scheme == ctr::SchemeType::ALECG ||
-    scheme == ctr::SchemeType::OversetFE) {
+  if (scheme == ctr::SchemeType::ALECG || scheme == ctr::SchemeType::OversetFE) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol[meshid] );
       diag.push_back( l2res[i] );
