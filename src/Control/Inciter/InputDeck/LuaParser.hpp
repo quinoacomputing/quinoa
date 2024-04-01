@@ -47,6 +47,7 @@ class LuaParser {
     //! Check and store field output variables
     void addOutVar(
       const std::string& varname,
+      const std::string& alias,
       std::vector< char >& depv,
       std::size_t nmat,
       inciter::ctr::PDEType pde,

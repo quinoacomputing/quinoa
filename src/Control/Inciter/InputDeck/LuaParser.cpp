@@ -201,6 +201,12 @@ LuaParser::storeInputDeck(
   char depvar_cnt = 'a';
   gideck.get< tag::depvar >().resize(1);
 
+  // physics
+  // ---------------------------------------------------------------------------
+  storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
+    lua_ideck, "physics", gideck.get< tag::physics >(),
+    inciter::ctr::PhysicsType::EULER);
+
   // check transport
   if (lua_ideck["transport"].valid()) {
     gideck.get< tag::pde >() = inciter::ctr::PDEType::TRANSPORT;
@@ -208,10 +214,10 @@ LuaParser::storeInputDeck(
       lua_ideck["transport"], "ncomp",
       gideck.get< tag::transport, tag::ncomp >(), 1);
     storeIfSpecd< int >(
-      lua_ideck["multimat"], "intsharp",
+      lua_ideck["transport"], "intsharp",
       gideck.get< tag::transport, tag::intsharp >(), 0);
     storeIfSpecd< tk::real >(
-      lua_ideck["multimat"], "intsharp_param",
+      lua_ideck["transport"], "intsharp_param",
       gideck.get< tag::transport, tag::intsharp_param >(), 1.8);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["transport"], "problem",
@@ -230,6 +236,9 @@ LuaParser::storeInputDeck(
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< tag::flux >(),
       inciter::ctr::FluxType::UPWIND);
+    if (gideck.get< tag::physics >() == inciter::ctr::PhysicsType::EULER) {
+      gideck.get< tag::physics >() = inciter::ctr::PhysicsType::ADVECTION;
+    }
 
     // store number of equations in PDE system
     gideck.get< tag::ncomp >() =
@@ -305,12 +314,6 @@ LuaParser::storeInputDeck(
 
   // add depvar to deck::depvars so it can be selected as outvar later
   tk::grm::depvars.insert( gideck.get< tag::depvar >()[0] );
-
-  // physics
-  // ---------------------------------------------------------------------------
-  storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
-    lua_ideck, "physics", gideck.get< tag::physics >(),
-    inciter::ctr::PhysicsType::EULER);
 
   // Assemble material blocks
   // ---------------------------------------------------------------------------
@@ -549,9 +552,15 @@ LuaParser::storeInputDeck(
     // element variables
     if (lua_ideck["field_output"]["elemvar"].valid()) {
       nevar = sol::table(lua_ideck["field_output"]["elemvar"]).size();
+
+      if (lua_ideck["field_output"]["elemalias"].valid())
+        if (sol::table(lua_ideck["field_output"]["elemalias"]).size() != nevar)
+          Throw("elemalias should have the same size as elemvar.");
+
       for (std::size_t i=0; i<nevar; ++i) {
         std::string varname(lua_ideck["field_output"]["elemvar"][i+1]);
-        addOutVar(varname, gideck.get< tag::depvar >(), nmat,
+        std::string alias(lua_ideck["field_output"]["elemalias"][i+1]);
+        addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
           gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
       }
     }
@@ -559,9 +568,15 @@ LuaParser::storeInputDeck(
     // node variables
     if (lua_ideck["field_output"]["nodevar"].valid()) {
       nnvar = sol::table(lua_ideck["field_output"]["nodevar"]).size();
+
+      if (lua_ideck["field_output"]["nodealias"].valid())
+        if (sol::table(lua_ideck["field_output"]["nodealias"]).size() != nnvar)
+          Throw("nodealias should have the same size as nodevar.");
+
       for (std::size_t i=0; i<nnvar; ++i) {
         std::string varname(lua_ideck["field_output"]["nodevar"][i+1]);
-        addOutVar(varname, gideck.get< tag::depvar >(), nmat,
+        std::string alias(lua_ideck["field_output"]["nodealias"][i+1]);
+        addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
           gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
       }
     }
@@ -1471,6 +1486,7 @@ LuaParser::checkStoreMatProp(
 void
 LuaParser::addOutVar(
   const std::string& varname,
+  const std::string& alias,
   std::vector< char >& depv,
   std::size_t nmat,
   inciter::ctr::PDEType pde,
@@ -1479,6 +1495,7 @@ LuaParser::addOutVar(
 // *****************************************************************************
 //  Check and store field output variables
 //! \param[in] varname Name of variable requested
+//! \param[in] alias User specified alias for output
 //! \param[in] depv List of depvars
 //! \param[in] nmat Number of materials configured
 //! \param[in] pde Type of PDE configured
@@ -1487,6 +1504,7 @@ LuaParser::addOutVar(
 // *****************************************************************************
 {
   // index-based quantity specification
+  // ----------------------------------
   if (varname.length() == 2) {
     auto qty = varname.at(0);
     auto j = std::stoul(std::string{varname.at(1)}) - 1;
@@ -1495,27 +1513,27 @@ LuaParser::addOutVar(
     // multimat/matvar quantities
       if (qty == 'D') {  // density
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, inciter::densityIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, alias, inciter::densityIdx(nmat,j)) );
       }
       else if (qty == 'F') {  // volume fraction
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, inciter::volfracIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, alias, inciter::volfracIdx(nmat,j)) );
       }
       else if (qty == 'M') {  // momentum
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, inciter::momentumIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, alias, inciter::momentumIdx(nmat,j)) );
       }
       else if (qty == 'E') {  // specific total energy
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, inciter::energyIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, alias, inciter::energyIdx(nmat,j)) );
       }
       else if (qty == 'U') {  // velocity (primitive)
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, inciter::velocityIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, alias, inciter::velocityIdx(nmat,j)) );
       }
       else if (qty == 'P') {  // material pressure (primitive)
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, inciter::pressureIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, alias, inciter::pressureIdx(nmat,j)) );
       }
       else {
         // error out if incorrect matvar used
@@ -1525,13 +1543,19 @@ LuaParser::addOutVar(
     else {
     // quantities specified by depvar
       for (const auto& id : depv)
-        if (qty == id) {
-          foutvar.emplace_back( inciter::ctr::OutVar(c, varname, j) );
+        if (std::tolower(qty) == id) {
+          foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, j) );
         }
     }
   }
-  else {
+  // analytic quantity specification
+  // -------------------------------
+  else if (varname.find("analytic") != std::string::npos) {
+    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, 0) );
+  }
   // name-based quantity specification
-    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, 0, varname) );
+  // ---------------------------------
+  else {
+    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, 0, varname) );
   }
 }

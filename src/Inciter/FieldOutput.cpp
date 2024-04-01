@@ -30,7 +30,7 @@ numericFieldNames( tk::Centering c, char /*depvar*/ )
   for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
     if (v.centering == c && !v.analytic()) {
       std::stringstream s;
-      s << v.name;
+      if (v.alias.empty()) s << v.name; else s << v.alias;
       f.push_back( s.str() );
     }
   }
@@ -63,11 +63,11 @@ numericFieldOutput( const tk::Fields& U,
 
   std::vector< std::vector< tk::real > > f;
   for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
-    if (v.centering == c) {
+    if (v.centering == c && !v.analytic()) {
       const auto& F = v.primitive() ? p : U;
       if (v.varFnIdx == "null") {        // depvar-based direct access
         f.push_back( F.extract_comp( v.field*rdof ) );
-      } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
+      } else {  // human-readable non-analytic via custom fn
         Assert(outvarfn.find(v.varFnIdx) != outvarfn.end(),
           "getvar() not configured for " + v.name );
         f.push_back( outvarfn.at(v.varFnIdx)( F, rdof ) );

@@ -5,8 +5,8 @@
 
 add_regression_test(cyl_advect_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES cyl_advect_dg.q unitsquare_01_3.6k.exo
-                    ARGS -c cyl_advect_dg.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES cyl_advect_dg.lua unitsquare_01_3.6k.exo
+                    ARGS -c cyl_advect_dg.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE cyl_advect_dg.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
@@ -18,8 +18,8 @@ add_regression_test(cyl_advect_dg ${INCITER_EXECUTABLE}
 
 add_regression_test(cyl_advect_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES cyl_advect_dgp1.q unitsquare_01_3.6k.exo
-                    ARGS -c cyl_advect_dgp1.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES cyl_advect_dgp1.lua unitsquare_01_3.6k.exo
+                    ARGS -c cyl_advect_dgp1.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE cyl_advect_dgp1.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
@@ -31,8 +31,8 @@ add_regression_test(cyl_advect_dgp1 ${INCITER_EXECUTABLE}
 
 add_regression_test(cyl_advect_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES cyl_advect_dgp1.q unitsquare_01_3.6k.exo
-                    ARGS -c cyl_advect_dgp1.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES cyl_advect_dgp1.lua unitsquare_01_3.6k.exo
+                    ARGS -c cyl_advect_dgp1.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE cyl_advect_dgp1_pe4_u0.0.std.exo.0
                                  cyl_advect_dgp1_pe4_u0.0.std.exo.1
                                  cyl_advect_dgp1_pe4_u0.0.std.exo.2
@@ -52,8 +52,8 @@ add_regression_test(cyl_advect_dgp1 ${INCITER_EXECUTABLE}
 
 add_regression_test(cyl_advect_dgp1_u0.90 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES cyl_advect_dgp1.q unitsquare_01_3.6k.exo
-                    ARGS -c cyl_advect_dgp1.q -i unitsquare_01_3.6k.exo -v -u 0.90
+                    INPUTFILES cyl_advect_dgp1.lua unitsquare_01_3.6k.exo
+                    ARGS -c cyl_advect_dgp1.lua -i unitsquare_01_3.6k.exo -v -u 0.90
                     BIN_BASELINE cyl_advect_dgp1_pe4_u0.90.std.exo.0
                                  cyl_advect_dgp1_pe4_u0.90.std.exo.1
                                  cyl_advect_dgp1_pe4_u0.90.std.exo.2
@@ -145,8 +145,8 @@ add_regression_test(cyl_advect_dgp1_u0.90 ${INCITER_EXECUTABLE}
 
 add_regression_test(cyl_advect_dgp1_u0.90_lbfreq5_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES cyl_advect_dgp1.q unitsquare_01_3.6k.exo
-                    ARGS -c cyl_advect_dgp1.q -i unitsquare_01_3.6k.exo -v -u 0.90
+                    INPUTFILES cyl_advect_dgp1.lua unitsquare_01_3.6k.exo
+                    ARGS -c cyl_advect_dgp1.lua -i unitsquare_01_3.6k.exo -v -u 0.90
                          +balancer RandCentLB +LBDebug 1 -l 5
                     BIN_BASELINE cyl_advect_dgp1_pe4_u0.90.std.exo.0
                                  cyl_advect_dgp1_pe4_u0.90.std.exo.1
@@ -237,8 +237,8 @@ add_regression_test(cyl_advect_dgp1_u0.90_lbfreq5_migr ${INCITER_EXECUTABLE}
 
 add_regression_test(cyl_advect_dgp1_weno_u0.90_lbfreq5_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES cyl_advect_dgp1_weno.q unitsquare_01_3.6k.exo
-                    ARGS -c cyl_advect_dgp1_weno.q -i unitsquare_01_3.6k.exo -v -u 0.90
+                    INPUTFILES cyl_advect_dgp1_weno.lua unitsquare_01_3.6k.exo
+                    ARGS -c cyl_advect_dgp1_weno.lua -i unitsquare_01_3.6k.exo -v -u 0.90
                          +balancer RandCentLB +LBDebug 1 -l 5
                     BIN_BASELINE cyl_advect_dgp1_weno_pe4_u0.90.std.exo.0
                                  cyl_advect_dgp1_weno_pe4_u0.90.std.exo.1
