@@ -413,7 +413,7 @@ bndSurfIntFV(
 
         // compute non-conservative terms
         std::vector< tk::real > var_riemann(nmat+1, 0.0);
-        for (std::size_t k=0; k<nmat; ++k) var_riemann[k] = fl[ncomp+k];
+        for (std::size_t k=0; k<nmat+1; ++k) var_riemann[k] = fl[ncomp+k];
 
         auto ncf_l = nonConservativeIntFV(nmat, rdof, el, fn, U, P, var_riemann);
 
