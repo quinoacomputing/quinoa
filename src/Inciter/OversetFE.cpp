@@ -157,9 +157,154 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
     Throw("Mesh motion cannot be activated for steady state problem");
 
   d->comfinal();
-
 }
 //! [Constructor]
+
+bool
+OversetFE::setupIntergridBoundaries()
+// *****************************************************************************
+// Setup data structures for intergrid boundaries
+// \return True if did anything
+// *****************************************************************************
+{
+  auto d = Disc();
+  auto meshid = d->MeshId();
+
+  if (meshid == 0) return false;
+
+  const auto& ib = g_inputdeck.get< tag::param, tag::compflow,
+                                    tag::intergrid_boundary >();
+  if (not ib.get< tag::mesh >()[ meshid ]) return false;
+
+  std::unordered_set< std::size_t > is;
+  for (const auto& ibs : ib.get< tag::sideset >()) {
+    for (auto s : ibs) is.insert( s );
+  }
+  if (is.empty()) return false;
+
+  tk::UnsMesh::FaceSet btri;
+  for (const auto& [ setid, faceids ] : m_bface) {
+    if ( is.count( static_cast<std::size_t>(setid) ) ) {
+      for (auto f : faceids) {
+        btri.insert( { m_triinpoel[f*3+0],
+                       m_triinpoel[f*3+1],
+                       m_triinpoel[f*3+2] } );
+      }
+    }
+  }
+
+  std::size_t iflag = m_uc.nprop()-1;
+
+  const auto& inpoel = d->Inpoel();
+  std::unordered_set< std::size_t > bp;
+  for (std::size_t e=0; e<inpoel.size()/4; e++) {
+    std::size_t N[4] = {
+      inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    for (const auto& [a,b,c] : tk::lpofa) {
+      auto f = btri.find( { N[a], N[b], N[c] } );
+      if (f != end(btri)) {
+        m_uc( N[0], iflag ) =
+        m_uc( N[1], iflag ) =
+        m_uc( N[2], iflag ) =
+        m_uc( N[3], iflag ) = 1.0;
+        bp.insert( N[0] );
+        bp.insert( N[1] );
+        bp.insert( N[2] );
+        bp.insert( N[3] );
+        continue;
+      }
+    }
+  }
+
+  for (std::size_t e=0; e<inpoel.size()/4; e++) {
+    std::size_t N[4] = {
+      inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+    for (std::size_t i=0; i<4; ++i) {
+      if (bp.count(N[i])) {
+        m_uc( N[0], iflag ) =
+        m_uc( N[1], iflag ) =
+        m_uc( N[2], iflag ) =
+        m_uc( N[3], iflag ) = 1.0;
+        continue;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool
+OversetFE::findHoles()
+// *****************************************************************************
+// Find nodes within holes
+// \return True if did anything
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  if (d->MeshId() != 0) return false;
+
+  const auto& hol = d->hol();
+
+  std::vector< tk::real > face;
+  for (const auto& [m,h] : hol) {                       // each overset mesh
+    for (const auto& [hid,tricoord] : h) {              // each hole
+      for (std::size_t t=0; t<tricoord.size(); t+=9) {  // each triangle
+        auto x0 = tricoord[t+0];
+        auto y0 = tricoord[t+1];
+        auto z0 = tricoord[t+2];
+        auto x1 = tricoord[t+3];
+        auto y1 = tricoord[t+4];
+        auto z1 = tricoord[t+5];
+        auto x2 = tricoord[t+6];
+        auto y2 = tricoord[t+7];
+        auto z2 = tricoord[t+8];
+        auto cx = (x0 + x1 + x2) / 3.0;
+        auto cy = (y0 + y1 + y2) / 3.0;
+        auto cz = (z0 + z1 + z2) / 3.0;
+        const std::array< tk::real, 3 >
+          ba{ x1-x0, y1-y0, z1-z0 }, ca{ x2-x0, y2-y0, z2-z0 };
+        auto n = tk::cross( ba, ca );
+        n[0] /= -2.0;
+        n[1] /= -2.0;
+        n[2] /= -2.0;
+        face.push_back( cx );
+        face.push_back( cy );
+        face.push_back( cz );
+        face.push_back( n[0] );
+        face.push_back( n[1] );
+        face.push_back( n[2] );
+      }
+    }
+  }
+
+  std::size_t iflag = m_uc.nprop()-1;
+
+  const auto& x = d->Coord()[0];
+  const auto& y = d->Coord()[1];
+  const auto& z = d->Coord()[2];
+  const auto npoin = m_uc.nunk();
+
+  // compute partial integral for finding hole nodes on bg mesh
+  auto eps = 1.0;
+  for (std::size_t i=0; i<npoin; ++i) {
+    tk::real holeint = 0.0;
+    for (std::size_t t=0; t<face.size()/6; ++t) {
+      const auto f = face.data() + t*6;
+      auto dx = f[0] - x[i];
+      auto dy = f[1] - y[i];
+      auto dz = f[2] - z[i];
+      auto r = std::pow( dx*dx + dy*dy + dz*dz, 1.5 );
+      auto vx = dx / r;
+      auto vy = dy / r;
+      auto vz = dz / r;
+      holeint += vx*f[3] + vy*f[4] + vz*f[5];
+    }
+    if (std::abs(holeint - 4.0*M_PI) < eps) m_uc(i,iflag) = 2.0;
+  }
+
+  return true;
+}
 
 void
 OversetFE::getBCNodes()
@@ -589,8 +734,9 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
 
-  // Initiate solution transfer (if coupled)
-  transferSol();
+  // Setup holes for overset
+  d->setupHoles(
+    CkCallback( CkIndex_OversetFE::transferSol(), thisProxy[thisIndex] ) );
 }
 
 void
@@ -700,6 +846,8 @@ OversetFE::applySolTransfer(
     //TODO: index the flag in a better way
     std::size_t iflag = m_uc.nprop()-1;
 
+    findHoles();
+
     // Zero out solution space for nodes with a specific transfer flag set
     for (std::size_t i=0; i<m_uc.nunk(); ++i) { // Check flag value
 
@@ -759,17 +907,7 @@ OversetFE::setTransferFlags(
   }
   // Called from transfer-O-to-B
   else {
-    if (Disc()->MeshId() != 0) {
-      // Overset meshes: assign appropriate values to flag
-      for (const auto& [blid, ndset] : m_nodeblockid) {
-        if (blid == 103) {
-          for (auto i : ndset) m_uc(i,iflag) = 1.0;
-        }
-        else if (blid == 104) {
-          for (auto i : ndset) m_uc(i,iflag) = 2.0;
-        }
-      }
-    }
+    setupIntergridBoundaries();
   }
 }
 
@@ -1294,8 +1432,9 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
     thisProxy[ thisIndex ].wait4norm();
   }
 
-  // Start solution transfer
-  transferSol();
+  // Start solution transfer (by setting up holes)
+  d->setupHoles(
+    CkCallback( CkIndex_OversetFE::transferSol(), thisProxy[thisIndex] ) );
 }
 //! [Refine]
 
@@ -1373,6 +1512,9 @@ OversetFE::writeFields( CkCallback c )
     std::vector< std::vector< tk::real > > elemsurfs;
     auto eso = g_cgpde[d->MeshId()].elemSurfOutput( m_bface, m_triinpoel, m_u );
     elemsurfs.insert( end(elemsurfs), begin(eso), end(eso) );
+
+    nodefieldnames.push_back( "of" );
+    nodefields.push_back( m_uc.extract_comp(m_uc.nprop()-1) );
 
     Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
