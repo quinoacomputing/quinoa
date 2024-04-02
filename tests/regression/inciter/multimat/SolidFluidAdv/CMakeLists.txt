@@ -19,4 +19,4 @@ add_regression_test(multimat_solidfluid_adv_p0p1 ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF ndiff.cfg
-                    LABELS dg multimat)
+                    LABELS dg multimat solids)
