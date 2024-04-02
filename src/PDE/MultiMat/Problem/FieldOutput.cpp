@@ -291,6 +291,7 @@ std::vector< std::string > MultiMatHistNames()
 // *****************************************************************************
 {
   std::vector< std::string > n;
+  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
 
   n.push_back( "density" );
   n.push_back( "x-velocity" );
@@ -298,6 +299,8 @@ std::vector< std::string > MultiMatHistNames()
   n.push_back( "z-velocity" );
   n.push_back( "energy" );
   n.push_back( "pressure" );
+  for (std::size_t k=0; k<nmat; ++k)
+    n.push_back( "volfrac"+std::to_string(k+1) );
 
   return n;
 }
