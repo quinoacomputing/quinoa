@@ -291,7 +291,7 @@ std::vector< std::string > MultiMatHistNames()
 // *****************************************************************************
 {
   std::vector< std::string > n;
-  auto nmat = g_inputdeck.get< tag::param, tag::multimat, tag::nmat >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
   n.push_back( "density" );
   n.push_back( "x-velocity" );
