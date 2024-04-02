@@ -113,7 +113,7 @@ class PDEStack {
       if ( nc ) {
         // re-create key and search for it
         ctr::PDEKey key{{ eq,
-          g_inputdeck.get< tag::physics >(),
+          g_inputdeck.get< EqTag, tag::physics >(),
           g_inputdeck.get< EqTag, tag::problem >() }};
         const auto it = f.find( key );
         Assert( it != end( f ),

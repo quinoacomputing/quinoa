@@ -9,10 +9,9 @@ inciter = {
   scheme = "alecg",
 
   transport = {
+    physics = "advection",
     problem = "slot_cyl"
   },
-
-  physics = "advection",
 
   field_output = {
     interval = 1,

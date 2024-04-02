@@ -201,12 +201,6 @@ LuaParser::storeInputDeck(
   char depvar_cnt = 'a';
   gideck.get< tag::depvar >().resize(1);
 
-  // physics
-  // ---------------------------------------------------------------------------
-  storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
-    lua_ideck, "physics", gideck.get< tag::physics >(),
-    inciter::ctr::PhysicsType::EULER);
-
   // check transport
   if (lua_ideck["transport"].valid()) {
     gideck.get< tag::pde >() = inciter::ctr::PDEType::TRANSPORT;
@@ -236,9 +230,10 @@ LuaParser::storeInputDeck(
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< tag::flux >(),
       inciter::ctr::FluxType::UPWIND);
-    if (gideck.get< tag::physics >() == inciter::ctr::PhysicsType::EULER) {
-      gideck.get< tag::physics >() = inciter::ctr::PhysicsType::ADVECTION;
-    }
+    storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
+      lua_ideck["transport"], "physics",
+      gideck.get< tag::transport, tag::physics >(),
+      inciter::ctr::PhysicsType::ADVECTION);
 
     // store number of equations in PDE system
     gideck.get< tag::ncomp >() =
@@ -252,6 +247,10 @@ LuaParser::storeInputDeck(
       lua_ideck["compflow"], "problem",
       gideck.get< tag::compflow, tag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
+    storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
+      lua_ideck["compflow"], "physics",
+      gideck.get< tag::compflow, tag::physics >(),
+      inciter::ctr::PhysicsType::EULER);
 
     // problem parameters for MMS
     storeIfSpecd< tk::real >(lua_ideck["compflow"], "alpha",
@@ -304,6 +303,10 @@ LuaParser::storeInputDeck(
       lua_ideck["multimat"], "problem",
       gideck.get< tag::multimat, tag::problem >(),
       inciter::ctr::ProblemType::USER_DEFINED);
+    storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
+      lua_ideck["multimat"], "physics",
+      gideck.get< tag::multimat, tag::physics >(),
+      inciter::ctr::PhysicsType::EULER);
     gideck.get< tag::depvar >()[0] = 'a';
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< tag::flux >(),

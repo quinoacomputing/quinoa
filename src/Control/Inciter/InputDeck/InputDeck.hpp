@@ -146,6 +146,7 @@ using ConfigMembers = brigand::list<
   // Transport
   // ---------------------------------------------------------------------------
   tag::transport, tk::TaggedTuple< brigand::list<
+    tag::physics,        PhysicsType,
     tag::ncomp,          std::size_t,
     tag::intsharp,       int,
     tag::intsharp_param, tk::real,
@@ -158,6 +159,7 @@ using ConfigMembers = brigand::list<
   // CompFlow
   // ---------------------------------------------------------------------------
   tag::compflow, tk::TaggedTuple< brigand::list<
+    tag::physics, PhysicsType,
     tag::problem, ProblemType,
     tag::alpha,   tk::real,
     tag::beta,    tk::real,
@@ -173,6 +175,7 @@ using ConfigMembers = brigand::list<
   // MultiMat
   // ---------------------------------------------------------------------------
   tag::multimat, tk::TaggedTuple< brigand::list<
+    tag::physics,          PhysicsType,
     tag::nmat,             std::size_t,
     tag::prelax,           uint64_t,
     tag::prelax_timescale, tk::real,
@@ -185,9 +188,6 @@ using ConfigMembers = brigand::list<
   tag::depvar, std::vector< char >,
 
   tag::sys, std::map< std::size_t, std::size_t >,
-
-  // physics choices
-  tag::physics, PhysicsType,
 
   // Material/EOS object
   // ---------------------------------------------------------------------------

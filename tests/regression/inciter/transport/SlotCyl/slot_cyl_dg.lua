@@ -8,10 +8,9 @@ inciter = {
   scheme = "dg",
 
   transport = {
+    physics = "advection",
     problem = "slot_cyl"
   },
-
-  physics = "advection",
 
   bc = {
     {

@@ -83,7 +83,7 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
     g_inputdeck.get< tag::depvar >()[c] ) );
 
   nfo.emplace_back( "physics", ctr::Physics().name(
-    g_inputdeck.get< tag::physics >() ) );
+    g_inputdeck.get< eq, tag::physics >() ) );
 
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< eq, tag::problem >() ) );

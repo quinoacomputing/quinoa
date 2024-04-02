@@ -9,11 +9,10 @@ inciter = {
   limiter = "superbeep1",
 
   transport = {
+    physics = "advection",
     problem = "gauss_hump",
     ncomp = 1
   },
-
-  physics = "advection",
 
   bc = {
     {

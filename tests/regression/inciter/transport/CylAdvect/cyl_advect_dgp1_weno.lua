@@ -10,11 +10,10 @@ inciter = {
   cweight = 200.0,
 
   transport = {
+    physics = "advection",
     problem = "cyl_advect",
     ncomp = 1
   },
-
-  physics = "advection",
 
   bc = {
     {

@@ -9,6 +9,7 @@ inciter = {
   partitioning = "mj",
 
   transport = {
+    physics = "advection",
     problem = "gauss_hump",
     ncomp = 1
   },
@@ -18,8 +19,6 @@ inciter = {
       symmetry = {1}
     }
   },
-
-  physics = "advection",
 
   diagnostics = {
     interval = 1,

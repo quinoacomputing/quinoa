@@ -12,10 +12,9 @@ inciter = {
   partitioning = "mj",
 
   multimat = {
+    physics = "energy_pill",
     nmat = 2
   },
-
-  physics = "energy_pill",
 
   material = {
     {
