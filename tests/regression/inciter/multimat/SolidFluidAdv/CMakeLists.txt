@@ -4,8 +4,8 @@
 # Parallel
 add_regression_test(multimat_solidfluid_adv_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES solidfluid_adv_p0p1.q rectangle_01_1.5k.exo
-                    ARGS -c solidfluid_adv_p0p1.q -i rectangle_01_1.5k.exo -v
+                    INPUTFILES solidfluid_adv_p0p1.lua rectangle_01_1.5k.exo
+                    ARGS -c solidfluid_adv_p0p1.lua -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE solidfluid_adv_p0p1_pe4.std.exo.0
                                  solidfluid_adv_p0p1_pe4.std.exo.1
                                  solidfluid_adv_p0p1_pe4.std.exo.2

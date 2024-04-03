@@ -5,8 +5,8 @@
 
 add_regression_test(multimat_sod_shocktube_dg ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES sod_shocktube_dg.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_dg.q -i rectangle_01_1.5k.exo -v
+                    INPUTFILES sod_shocktube_dg.lua rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_dg.lua -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE sod_shocktube_dg.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
@@ -17,8 +17,8 @@ add_regression_test(multimat_sod_shocktube_dg ${INCITER_EXECUTABLE}
 
 add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES sod_shocktube_p0p1.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_p0p1.q -i rectangle_01_1.5k.exo -v
+                    INPUTFILES sod_shocktube_p0p1.lua rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_p0p1.lua -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE sod_shocktube_p0p1.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
@@ -29,8 +29,8 @@ add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
 
 add_regression_test(multimat_sod_shocktube_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES sod_shocktube_dgp1.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_dgp1.q -i rectangle_01_1.5k.exo -v
+                    INPUTFILES sod_shocktube_dgp1.lua rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_dgp1.lua -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE sod_shocktube_dgp1.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
@@ -43,8 +43,8 @@ add_regression_test(multimat_sod_shocktube_dgp1 ${INCITER_EXECUTABLE}
 add_regression_test(multimat_sod_shocktube_dgp1_limsolprojection
                     ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES sod_shocktube_dgp1_lsp.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_dgp1_lsp.q -i rectangle_01_1.5k.exo -v
+                    INPUTFILES sod_shocktube_dgp1_lsp.lua rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_dgp1_lsp.lua -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE sod_shocktube_dgp1_lsp.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
@@ -56,8 +56,8 @@ add_regression_test(multimat_sod_shocktube_dgp1_limsolprojection
 
 add_regression_test(multimat_sod_shocktube_fv_hll ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES sod_shocktube_fv_hll.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_fv_hll.q -i rectangle_01_1.5k.exo -v
+                    INPUTFILES sod_shocktube_fv_hll.lua rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_fv_hll.lua -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE sod_shocktube_fv_hll.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_fv.cfg
@@ -70,8 +70,8 @@ add_regression_test(multimat_sod_shocktube_fv_hll ${INCITER_EXECUTABLE}
 
 add_regression_test(multimat_sod_shocktube_dg ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES sod_shocktube_dg.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_dg.q -i rectangle_01_1.5k.exo -v
+                    INPUTFILES sod_shocktube_dg.lua rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_dg.lua -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE sod_shocktube_dg_pe4_u0.0.std.exo.0
                                  sod_shocktube_dg_pe4_u0.0.std.exo.1
                                  sod_shocktube_dg_pe4_u0.0.std.exo.2
@@ -89,8 +89,8 @@ add_regression_test(multimat_sod_shocktube_dg ${INCITER_EXECUTABLE}
 
 add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES sod_shocktube_p0p1.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_p0p1.q -i rectangle_01_1.5k.exo -v
+                    INPUTFILES sod_shocktube_p0p1.lua rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_p0p1.lua -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE sod_shocktube_p0p1_pe4_u0.0.std.exo.0
                                  sod_shocktube_p0p1_pe4_u0.0.std.exo.1
                                  sod_shocktube_p0p1_pe4_u0.0.std.exo.2
@@ -108,8 +108,8 @@ add_regression_test(multimat_sod_shocktube_p0p1 ${INCITER_EXECUTABLE}
 
 add_regression_test(multimat_sod_shocktube_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES sod_shocktube_dgp1.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_dgp1.q -i rectangle_01_1.5k.exo -v
+                    INPUTFILES sod_shocktube_dgp1.lua rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_dgp1.lua -i rectangle_01_1.5k.exo -v
                     BIN_BASELINE sod_shocktube_dgp1_pe4_u0.0.std.exo.0
                                  sod_shocktube_dgp1_pe4_u0.0.std.exo.1
                                  sod_shocktube_dgp1_pe4_u0.0.std.exo.2
@@ -129,8 +129,8 @@ add_regression_test(multimat_sod_shocktube_dgp1 ${INCITER_EXECUTABLE}
 
 add_regression_test(multimat_sod_shocktube_p0p1_u0.9 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES sod_shocktube_p0p1.q rectangle_01_1.5k.exo
-                    ARGS -c sod_shocktube_p0p1.q -i rectangle_01_1.5k.exo -u 0.9 -v
+                    INPUTFILES sod_shocktube_p0p1.lua rectangle_01_1.5k.exo
+                    ARGS -c sod_shocktube_p0p1.lua -i rectangle_01_1.5k.exo -u 0.9 -v
                     BIN_BASELINE sod_shocktube_p0p1_pe4_u0.9.std.exo.0
                                  sod_shocktube_p0p1_pe4_u0.9.std.exo.1
                                  sod_shocktube_p0p1_pe4_u0.9.std.exo.2

@@ -322,7 +322,8 @@ LuaParser::storeInputDeck(
   // ---------------------------------------------------------------------------
 
   // solid counters
-  std::size_t tmat(0), imatcntr(0), mtypei(0), isolcntr(0), isolidx(0);
+  std::size_t tmat(0), imatcntr(0), mtypei(0), isolcntr(0);
+  bool is_solid(false);
   std::set< std::size_t > matidset;
 
   // material vector
@@ -371,8 +372,8 @@ LuaParser::storeInputDeck(
         sol_mat[i+1]["cv"] = std::vector< tk::real >(ntype, 717.5);
       checkStoreMatProp(sol_mat[i+1], "cv", ntype, mati_deck.get< tag::cv >());
 
-      // reset solid-index
-      isolidx = 0;
+      // reset solid-marker
+      is_solid = false;
 
       // Stiffened-gas materials
       if (mati_deck.get< tag::eos >() ==
@@ -404,10 +405,8 @@ LuaParser::storeInputDeck(
         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
           mati_deck.get< tag::mu >());
 
-        // add to solid-counter
-        ++isolcntr;
-        // assign solid-counter value to solid-index
-        isolidx = isolcntr;
+        // assign solid
+        is_solid = true;
       }
       // JWL materials
       else if (mati_deck.get< tag::eos >() == inciter::ctr::MaterialType::JWL) {
@@ -466,7 +465,11 @@ LuaParser::storeInputDeck(
         midx -= 1;
         eosmap[midx] = mtypei;
         idxmap[midx] = imatcntr;
-        solidxmap[midx] = isolidx;
+        if (is_solid) {
+          // add to solid-counter
+          ++isolcntr;
+          solidxmap[midx] = isolcntr;
+        }
         ++imatcntr;
       }
       // end of materials for this eos, thus reset index counter
