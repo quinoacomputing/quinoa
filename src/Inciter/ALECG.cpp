@@ -82,7 +82,6 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_symbcnodes(),
   m_farfieldbcnodes(),
   m_symbctri(),
-  m_spongenodes(),
   m_timedepbcnodes(),
   m_timedepbcFn(),
   m_stage( 0 ),
@@ -182,11 +181,6 @@ ALECG::queryBnd()
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
     if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
       m_symbctri[e] = 1;
-
-  // Prepare unique set of sponge nodes
-  auto sponge = d->bcnodes< tag::sponge, tag::sideset >( m_bface, m_triinpoel );
-  for (const auto& [s,nodes] : sponge)
-    m_spongenodes.insert( begin(nodes), end(nodes) );
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -880,9 +874,6 @@ ALECG::BC()
   // Apply farfield BCs
   g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
-  // Apply sponge conditions
-  g_cgpde[d->MeshId()].sponge( m_u, coord, m_spongenodes );
-
   // Apply user defined time dependent BCs
   g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
     m_timedepbcFn );
@@ -1053,7 +1044,7 @@ ALECG::rhs()
   conserved( m_u, Disc()->Vol() );
   g_cgpde[d->MeshId()].rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-          m_symbctri, m_spongenodes, d->Vol(), m_edgenode, m_edgeid,
+          m_symbctri, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
           m_rhs );
   volumetric( m_u, Disc()->Vol() );

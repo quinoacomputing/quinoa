@@ -41,17 +41,6 @@ namespace grm {
   //! a command line parser.
   extern Print g_print;
 
-  // Common InputDeck state
-
-  //! \brief Parser-lifetime storage for dependent variables selected.
-  //! \details Used to track the dependent variable of differential equations
-  //!   (i.e., models) assigned during parsing. It needs to be case insensitive
-  //!   since we only care about whether the variable is selected or not and not
-  //!   whether it denotes a full variable (upper case) or a fluctuation (lower
-  //!   case). This is true for both inserting variables into the set as well as
-  //!   at matching terms of products in parsing requested statistics.
-  static std::set< char, tk::ctr::CaseInsensitiveCharLess > depvars;
-
   // Common auxiliary functions (reused by multiple grammars)
 
   //! C-style enum indicating warning or error (used as template argument)

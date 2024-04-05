@@ -6,8 +6,8 @@
 add_regression_test(compflow_engsrc_propagating_alecg
                     ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES engsrc_propagating_alecg.q tubetest_12k.exo
-                    ARGS -c engsrc_propagating_alecg.q -i tubetest_12k.exo -v
+                    INPUTFILES engsrc_propagating_alecg.lua tubetest_12k.exo
+                    ARGS -c engsrc_propagating_alecg.lua -i tubetest_12k.exo -v
                     BIN_BASELINE engsrc_propagating_alecg_pe4.std.exo.0
                                  engsrc_propagating_alecg_pe4.std.exo.1
                                  engsrc_propagating_alecg_pe4.std.exo.2

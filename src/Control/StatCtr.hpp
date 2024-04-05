@@ -212,17 +212,6 @@ std::ostream& pdf( std::ostream& os,
   #pragma clang diagnostic pop
 #endif
 
-//! \brief Case-insensitive character comparison functor
-struct CaseInsensitiveCharLess {
-  //! Function call operator
-  //! \param[in] lhs Left character of the comparitor operand
-  //! \param[in] rhs Right character of the comparitor operand
-  //! \return Boolean indicating the result of the comparison
-  bool operator() ( char lhs, char rhs ) const {
-    return std::tolower( lhs ) < std::tolower( rhs );
-  }
-};
-
 //! \brief Find out if a vector of Terms only contains ordinary moment terms
 //! \details If and only if all terms are ordinary, the vector of Terms is
 //!    ordinary.

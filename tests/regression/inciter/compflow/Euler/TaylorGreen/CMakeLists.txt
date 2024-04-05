@@ -5,8 +5,8 @@
 
 add_regression_test(compflow_euler_taylor_green_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES taylor_green_dgp2.q unitcube_1k.exo
-                    ARGS -c taylor_green_dgp2.q -i unitcube_1k.exo -v
+                    INPUTFILES taylor_green_dgp2.lua unitcube_1k.exo
+                    ARGS -c taylor_green_dgp2.lua -i unitcube_1k.exo -v
                     BIN_BASELINE taylor_green_dgp2.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
@@ -18,8 +18,8 @@ add_regression_test(compflow_euler_taylor_green_dgp2 ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_taylor_green_dgp2_cfl ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES taylor_green_dgp2_cfl.q unitcube_1k.exo
-                    ARGS -c taylor_green_dgp2_cfl.q -i unitcube_1k.exo -v
+                    INPUTFILES taylor_green_dgp2_cfl.lua unitcube_1k.exo
+                    ARGS -c taylor_green_dgp2_cfl.lua -i unitcube_1k.exo -v
                     BIN_BASELINE taylor_green_dgp2_cfl.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
@@ -33,8 +33,8 @@ add_regression_test(compflow_euler_taylor_green_dgp2_cfl ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_taylor_green_dgp2 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES taylor_green_dgp2.q unitcube_1k.exo
-                    ARGS -c taylor_green_dgp2.q -i unitcube_1k.exo -v
+                    INPUTFILES taylor_green_dgp2.lua unitcube_1k.exo
+                    ARGS -c taylor_green_dgp2.lua -i unitcube_1k.exo -v
                     BIN_BASELINE taylor_green_dgp2_pe4.std.exo.0
                                  taylor_green_dgp2_pe4.std.exo.1
                                  taylor_green_dgp2_pe4.std.exo.2
@@ -52,8 +52,8 @@ add_regression_test(compflow_euler_taylor_green_dgp2 ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_taylor_green_dgp2_cfl ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES taylor_green_dgp2_cfl.q unitcube_1k.exo
-                    ARGS -c taylor_green_dgp2_cfl.q -i unitcube_1k.exo -v
+                    INPUTFILES taylor_green_dgp2_cfl.lua unitcube_1k.exo
+                    ARGS -c taylor_green_dgp2_cfl.lua -i unitcube_1k.exo -v
                     BIN_BASELINE taylor_green_dgp2_cfl_pe4.std.exo.0
                                  taylor_green_dgp2_cfl_pe4.std.exo.1
                                  taylor_green_dgp2_cfl_pe4.std.exo.2

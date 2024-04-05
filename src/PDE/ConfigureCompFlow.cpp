@@ -79,9 +79,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
 
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::COMPFLOW ), "" );
 
-  nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::depvar >()[c] ) );
-
   nfo.emplace_back( "physics", ctr::Physics().name(
     g_inputdeck.get< eq, tag::physics >() ) );
 
@@ -160,10 +157,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
     const auto& sym = ib.get< tag::symmetry >();
     if (!sym.empty())
       nfo.emplace_back( "Symmetry BC sideset(s)", parameters( sym ) );
-
-    const auto& sponge = ib.get< tag::sponge, tag::sideset >();
-    if (!sponge.empty())
-      nfo.emplace_back( "Sponge sideset(s)", parameters( sponge ) );
 
     const auto& dir = ib.get< tag::dirichlet >();
     if (!dir.empty())

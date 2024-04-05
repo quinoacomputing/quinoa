@@ -235,7 +235,6 @@ class ALECG : public CBase_ALECG {
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
       p | m_symbctri;
-      p | m_spongenodes;
       p | m_timedepbcnodes;
       p | m_timedepbcFn;
       p | m_stage;
@@ -337,8 +336,6 @@ class ALECG : public CBase_ALECG {
     std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
-    //! Unique set of nodes at which sponge parameters are set
-    std::unordered_set< std::size_t > m_spongenodes;
     //! \brief Unique set of nodes at which time dependent BCs are set
     //    for each time dependent BC
     std::vector< std::unordered_set< std::size_t > > m_timedepbcnodes;

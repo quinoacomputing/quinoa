@@ -269,7 +269,6 @@ DEFTAG(outlet);
 DEFTAG(farfield);
 DEFTAG(extrapolate);
 DEFTAG(stag_point);
-DEFTAG(sponge);
 DEFTAG(vparam);
 DEFTAG(pparam);
 DEFTAG(radius);

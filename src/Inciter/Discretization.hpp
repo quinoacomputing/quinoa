@@ -361,9 +361,8 @@ class Discretization : public CBase_Discretization {
                       std::unordered_map< int,
                         std::unordered_set< std::size_t > >& nodes,
                       std::size_t mid )
-        : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes), m_mid(mid) {}
-
-      template< typename Eq > void operator()( brigand::type_<Eq> ) {
+        : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes), m_mid(mid)
+      {
         const auto& bc =
           g_inputdeck.template get< tag::bc >()[m_mid];
         // collect sidesets for this mesh with this bc type

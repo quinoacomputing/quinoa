@@ -855,7 +855,7 @@ FV::refinedOutput() const
 //! \return True if field output will use a refined mesh
 // *****************************************************************************
 {
-  return g_inputdeck.get< tag::cmd, tag::io, tag::refined >() &&
+  return g_inputdeck.get< tag::field_output, tag::refined >() &&
          g_inputdeck.get< tag::scheme >() != ctr::SchemeType::FV;
 }
 

@@ -512,6 +512,59 @@ LuaParser::storeInputDeck(
     }
   }
 
+  // Mesh specification block (for overset)
+  // ---------------------------------------------------------------------------
+  if (lua_ideck["mesh"].valid()) {
+    const sol::table& lua_mesh = lua_ideck["mesh"];
+    auto& mesh_deck = gideck.get< tag::mesh >();
+    mesh_deck.resize(lua_mesh.size());
+
+    for (std::size_t i=0; i<mesh_deck.size(); ++i) {
+      // filename
+      storeIfSpecd< std::string >(lua_mesh[i+1], "filename",
+        mesh_deck[i].get< tag::filename >(), "");
+
+      // location
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "location",
+        mesh_deck[i].get< tag::location >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::location >().size() != 3)
+        Throw("Mesh location requires 3 coordinates.");
+
+      // orientation
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "orientation",
+        mesh_deck[i].get< tag::orientation >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::orientation >().size() != 3)
+        Throw("Mesh orientation requires 3 rotation angles.");
+
+      // velocity
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "velocity",
+        mesh_deck[i].get< tag::velocity >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::velocity >().size() != 3)
+        Throw("Mesh velocity requires 3 components.");
+
+      // Transfer object
+      if (i > 0) {
+        gideck.get< tag::transfer >().emplace_back( 0, i );
+
+        // assign depvar
+        ++depvar_cnt;
+        gideck.get< tag::depvar >().push_back(depvar_cnt);
+
+        // add depvar to deck::depvars so it can be selected as outvar later
+        tk::grm::depvars.insert(depvar_cnt);
+      }
+    }
+  }
+  else {
+    // TODO: remove double-specification of defaults
+    auto& mesh_deck = gideck.get< tag::mesh >();
+    mesh_deck.resize(1);
+    mesh_deck[0].get< tag::filename >() = "";
+    mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< tag::velocity >() = {0.0, 0.0, 0.0};
+  }
+
   // Field output block
   // ---------------------------------------------------------------------------
   if (lua_ideck["field_output"].valid()) {
@@ -538,6 +591,7 @@ LuaParser::storeInputDeck(
     storeIfSpecd< bool >(
       lua_ideck["field_output"], "refined", fo_deck.get< tag::refined >(),
       false);
+    gideck.get< tag::cmd, tag::io, tag::refined >() = fo_deck.get< tag::refined >();
 
     // filetype
     storeOptIfSpecd< tk::ctr::FieldFileType, tk::ctr::FieldFile >(
@@ -788,6 +842,7 @@ LuaParser::storeInputDeck(
   // AMR block
   // ---------------------------------------------------------------------------
   gideck.get< tag::amr, tag::amr >() = false;
+  gideck.get< tag::amr, tag::maxlevels >() = 2; // this is needed for outref
   if (lua_ideck["amr"].valid()) {
     auto& amr_deck = gideck.get< tag::amr >();
     amr_deck.get< tag::amr >() = true;
@@ -883,59 +938,6 @@ LuaParser::storeInputDeck(
         "between 0.0 and 1.0, both inclusive.");
   }
 
-  // Mesh specification block (for overset)
-  // ---------------------------------------------------------------------------
-  if (lua_ideck["mesh"].valid()) {
-    const sol::table& lua_mesh = lua_ideck["mesh"];
-    auto& mesh_deck = gideck.get< tag::mesh >();
-    mesh_deck.resize(lua_mesh.size());
-
-    for (std::size_t i=0; i<mesh_deck.size(); ++i) {
-      // filename
-      storeIfSpecd< std::string >(lua_mesh[i+1], "filename",
-        mesh_deck[i].get< tag::filename >(), "");
-
-      // location
-      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "location",
-        mesh_deck[i].get< tag::location >(), {0.0, 0.0, 0.0});
-      if (mesh_deck[i].get< tag::location >().size() != 3)
-        Throw("Mesh location requires 3 coordinates.");
-
-      // orientation
-      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "orientation",
-        mesh_deck[i].get< tag::orientation >(), {0.0, 0.0, 0.0});
-      if (mesh_deck[i].get< tag::orientation >().size() != 3)
-        Throw("Mesh orientation requires 3 rotation angles.");
-
-      // velocity
-      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "velocity",
-        mesh_deck[i].get< tag::velocity >(), {0.0, 0.0, 0.0});
-      if (mesh_deck[i].get< tag::velocity >().size() != 3)
-        Throw("Mesh velocity requires 3 components.");
-
-      // Transfer object
-      if (i > 0) {
-        gideck.get< tag::transfer >().emplace_back( 0, i );
-
-        // assign depvar
-        ++depvar_cnt;
-        gideck.get< tag::depvar >().push_back(depvar_cnt);
-
-        // add depvar to deck::depvars so it can be selected as outvar later
-        tk::grm::depvars.insert(depvar_cnt);
-      }
-    }
-  }
-  else {
-    // TODO: remove double-specification of defaults
-    auto& mesh_deck = gideck.get< tag::mesh >();
-    mesh_deck.resize(1);
-    mesh_deck[0].get< tag::filename >() = "";
-    mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
-    mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
-    mesh_deck[0].get< tag::velocity >() = {0.0, 0.0, 0.0};
-  }
-
   // Boundary conditions block
   // ---------------------------------------------------------------------------
   if (lua_ideck["bc"].valid()) {
@@ -969,16 +971,6 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "extrapolate",
         bc_deck[i].get< tag::extrapolate >(), {});
 
-      // Sponge BC
-      if (sol_bc[i+1]["sponge"].valid()) {
-        storeVecIfSpecd< uint64_t >(sol_bc[i+1]["sponge"], "sideset",
-          bc_deck[i].get< tag::sponge, tag::sideset >(), {});
-        storeVecIfSpecd< tk::real >(sol_bc[i+1]["sponge"], "vparam",
-          bc_deck[i].get< tag::sponge, tag::vparam >(), {});
-        storeIfSpecd< tk::real >(sol_bc[i+1]["sponge"], "pparam",
-          bc_deck[i].get< tag::sponge, tag::pparam >(), {1.0});
-      }
-
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
         const sol::table& sol_tdbc = sol_bc[i+1]["timedep"];
@@ -1002,9 +994,11 @@ LuaParser::storeInputDeck(
 
       // Stagnation point
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "stag_point",
-        bc_deck[i].get< tag::stag_point >(), {0.0, 0.0, 0.0});
-      if (bc_deck[i].get< tag::stag_point >().size() != 3)
-        Throw("BC point requires 3 coordinates.");
+        bc_deck[i].get< tag::stag_point >(), {});
+      if (!bc_deck[i].get< tag::stag_point >().empty() &&
+        bc_deck[i].get< tag::stag_point >().size() % 3 != 0)
+        Throw("BC stagnation point requires 3 coordinate values for each "
+          "point. Thus, this vector must be divisible by 3.");
 
       // Stagnation radius
       storeIfSpecd< tk::real >(sol_bc[i+1], "radius",

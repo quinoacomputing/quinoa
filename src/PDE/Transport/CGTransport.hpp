@@ -227,7 +227,6 @@ class Transport {
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbctri,
-      const std::unordered_set< std::size_t >&,
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
@@ -415,11 +414,6 @@ class Transport {
               std::unordered_map< std::size_t,
                 std::array< real, 4 > > >&,
       const std::unordered_set< std::size_t >& ) const {}
-
-    //! Apply sponge conditions at boundary nodes (no-op for transport)
-    void sponge( tk::Fields&,
-                 const std::array< std::vector< real >, 3 >&,
-                 const std::unordered_set< std::size_t >& ) const {}
 
     //! Apply user defined time dependent BCs (no-op for transport)
     void

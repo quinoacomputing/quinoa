@@ -77,9 +77,6 @@ infoTransport( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
 
   nfo.emplace_back( ctr::PDE().name( ctr::PDEType::TRANSPORT ), "" );
 
-  nfo.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::depvar >()[c] ) );
-
   nfo.emplace_back( "problem", ctr::Problem().name(
     g_inputdeck.get< eq, tag::problem >() ) );
 

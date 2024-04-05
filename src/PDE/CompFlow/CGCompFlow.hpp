@@ -417,8 +417,6 @@ class CompFlow {
     //! \param[in] psup Points surrounding points
     //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
-    //! \param[in] spongenodes Unique set of nodes at which to apply sponge
-    //               conditions
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
@@ -442,7 +440,6 @@ class CompFlow {
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup,
               const std::vector< int >& symbctri,
-              const std::unordered_set< std::size_t >& spongenodes,
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
@@ -469,15 +466,11 @@ class CompFlow {
       // zero right hand side for all components
       for (ncomp_t c=0; c<m_ncomp; ++c) R.fill( c, 0.0 );
 
-      // compute sponge pressure multiplers at sponge side sets
-      auto spmult = spongePressures( coord, spongenodes );
-
       // compute domain-edge integral
-      domainint( coord, gid, edgenode, edgeid, psup, dfn, U, W, Grad,
-                 spmult, R );
+      domainint( coord, gid, edgenode, edgeid, psup, dfn, U, W, Grad, R );
 
       // compute boundary integrals
-      bndint( coord, triinpoel, symbctri, U, W, spmult, R );
+      bndint( coord, triinpoel, symbctri, U, W, R );
 
       // compute external (energy) sources
       const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
@@ -858,45 +851,6 @@ class CompFlow {
           }
     }
 
-    //! Apply sponge conditions at sponge nodes
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] nodes Unique set of node ids at which to apply sponge
-    //! \details This function applies a sponge-like parameter to nodes of a
-    //!   side set specified in the input file. We remove a user-specified
-    //!   percentage of the kinetic energy by reducing the tangential
-    //!   component of the velocity at a boundary and thereby modeling the
-    //!   effect of a solid wall on the fluid via fluid-structure interaction
-    //!   via a viscosity-like effect.
-    void
-    sponge( tk::Fields& U,
-            const std::array< std::vector< real >, 3 >&,
-            const std::unordered_set< std::size_t >& nodes ) const
-    {
-      // collect sidesets across all meshes
-      std::vector< std::size_t > ss;
-      for (const auto& ibc : g_inputdeck.get< tag::bc >()) {
-        ss.insert(ss.end(), ibc.get< tag::sponge, tag::sideset >().begin(),
-          ibc.get< tag::sponge, tag::sideset >().end());
-      }
-      const auto spvel =
-        g_inputdeck.get< tag::bc >()[0].get< tag::sponge, tag::vparam >();
-      if (ss.size() > 0) {          // sponge side set for this system
-        for (auto p : nodes) {             // for all sponge nodes
-          std::vector< tk::real > sp( ss.size(), 0.0 );
-          if (spvel.size() > 0) {
-            sp = spvel;
-            for (auto& s : sp) s = std::sqrt(s);
-          }
-          // sponge velocity: reduce kinetic energy by a user percentage
-          for (std::size_t s=0; s<ss.size(); ++s) {
-            U(p,1) -= U(p,1)*sp[s];
-            U(p,2) -= U(p,2)*sp[s];
-            U(p,3) -= U(p,3)*sp[s];
-          }
-        }
-      }
-    }
-
     //! Apply user defined time dependent BCs
     //! \param[in] t Physical time
     //! \param[in,out] U Solution vector at recent time step
@@ -998,7 +952,7 @@ class CompFlow {
     stagPoint( real x, real y, real z ) const {
       const auto& pnt = std::get< 0 >( m_stagCnf );
       const auto& rad = std::get< 1 >( m_stagCnf );
-      for (std::size_t i=0; i<rad.size(); ++i) {
+      for (std::size_t i=0; i<pnt.size()/3; ++i) {
         if (tk::length( x-pnt[i*3+0], y-pnt[i*3+1], z-pnt[i*3+2] ) < rad[i])
           return true;
       }
@@ -1112,7 +1066,6 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] W Mesh velocity
     //! \param[in] G Nodal gradients
-    //! \param[in] spmult Sponge pressure multiplers at nodes, one per symBC set
     //! \param[in,out] R Right-hand side vector computed
     void domainint( const std::array< std::vector< real >, 3 >& coord,
                     const std::vector< std::size_t >& gid,
@@ -1124,7 +1077,6 @@ class CompFlow {
                     const tk::Fields& U,
                     const tk::Fields& W,
                     const tk::Fields& G,
-                    const std::vector< tk::real >& spmult,
                     tk::Fields& R ) const
     {
       // domain-edge integral: compute fluxes in edges
@@ -1134,9 +1086,6 @@ class CompFlow {
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
-
-      // number of side sets configured with sponge pressure multipliers
-      std::size_t nset = spmult.size() / x.size();
 
       #pragma omp simd
       for (std::size_t e=0; e<edgenode.size()/2; ++e) {
@@ -1186,12 +1135,6 @@ class CompFlow {
           rwL/rL, reL );
         real pR = m_mat_blk[0].compute< EOS::pressure >( rR, ruR/rR, rvR/rR,
           rwR/rR, reR );
-
-        // apply sponge-pressure multipliers
-        for (std::size_t s=0; s<nset; ++s) {
-          pL -= pL*spmult[p*nset+s];
-          pR -= pR*spmult[q*nset+s];
-        }
 
         // compute Riemann flux using edge-end point states
         real f[m_ncomp];
@@ -1356,14 +1299,12 @@ class CompFlow {
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in] W Mesh velocity
-    //! \param[in] spmult Sponge pressure multiplers at nodes, one per symBC set
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
                  const std::vector< int >& symbctri,
                  const tk::Fields& U,
                  const tk::Fields& W,
-                 const std::vector< tk::real >& spmult,
                  tk::Fields& R ) const
     {
 
@@ -1374,9 +1315,6 @@ class CompFlow {
 
       // boundary integrals: compute fluxes in edges
       std::vector< real > bflux( triinpoel.size() * m_ncomp * 2 );
-
-      // number of side sets configured with sponge pressure multipliers
-      std::size_t nset = spmult.size() / x.size();
 
       #pragma omp simd
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
@@ -1433,7 +1371,6 @@ class CompFlow {
         int sym = symbctri[e];
         p = m_mat_blk[0].compute< EOS::pressure >( rA, ruA/rA, rvA/rA, rwA/rA,
           reA );
-        for (std::size_t s=0; s<nset; ++s) p -= p*spmult[N[0]*nset+s];
         vn = sym ? 0.0 : (nx*(ruA/rA-w1A) + ny*(rvA/rA-w2A) + nz*(rwA/rA-w3A));
         f[0][0] = rA*vn;
         f[1][0] = ruA*vn + p*nx;
@@ -1442,7 +1379,6 @@ class CompFlow {
         f[4][0] = reA*vn + p*(sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA)/rA);
         p = m_mat_blk[0].compute< EOS::pressure >( rB, ruB/rB, rvB/rB, rwB/rB,
           reB );
-        for (std::size_t s=0; s<nset; ++s) p -= p*spmult[N[1]*nset+s];
         vn = sym ? 0.0 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
         f[0][1] = rB*vn;
         f[1][1] = ruB*vn + p*nx;
@@ -1451,7 +1387,6 @@ class CompFlow {
         f[4][1] = reB*vn + p*(sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB)/rB);
         p = m_mat_blk[0].compute< EOS::pressure >( rC, ruC/rC, rvC/rC, rwC/rC,
           reC );
-        for (std::size_t s=0; s<nset; ++s) p -= p*spmult[N[2]*nset+s];
         vn = sym ? 0.0 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
         f[0][2] = rC*vn;
         f[1][2] = ruC*vn + p*nx;
@@ -1667,52 +1602,6 @@ class CompFlow {
           }
         }
       }
-    }
-
-    //! Compute sponge pressure multiplers at sponge side sets
-    //! \param[in] coord Mesh node coordinates
-    //! \param[in] nodes Unique set of nodes for sponge conditions
-    //! \return Sponge ressure multiplers at nodes, one per sponge side set
-    //! \details This function computes a sponge-like multiplier that will be
-    //!   applied to nodes of side sets specified in the input file. This is
-    //!   used to reduce the pressure gradient normal to boundaries and thereby
-    //!   modeling the effect of a solid wall on the fluid via fluid-structure
-    //!   interaction.
-    //! \note If no sponge pressure coefficients are configured, an empty
-    //!   vector is returned.
-    std::vector< tk::real >
-    spongePressures( const std::array< std::vector< real >, 3 >& coord,
-                     const std::unordered_set< std::size_t >& nodes ) const
-    {
-      const auto& x = coord[0];
-      std::vector< tk::real > spmult;
-      std::size_t nset = 0;     // number of sponge side sets configured
-      // collect sidesets across all meshes
-      std::vector< std::size_t > ss;
-      for (const auto& ibc : g_inputdeck.get< tag::bc >()) {
-        ss.insert(ss.end(), ibc.get< tag::sponge, tag::sideset >().begin(),
-          ibc.get< tag::sponge, tag::sideset >().end());
-      }
-      const auto sppre =
-        g_inputdeck.get< tag::bc >()[0].get< tag::sponge, tag::vparam >();
-      if (ss.size() > 0) {  // if symbcs configured for this system
-        nset = ss.size();  // number of sponge side sets configured
-        spmult.resize( x.size() * nset, 0.0 );
-        for (auto p : nodes) {
-          if (sppre.size() > 0) {
-            Assert( nset == sppre.size(), "Size mismatch" );
-            for (std::size_t s=0; s<nset; ++s)
-              spmult[p*nset+s] = sppre[s];
-          } else {
-            for (std::size_t s=0; s<nset; ++s)
-              spmult[p*nset+s] = 0.0;
-          }
-        }
-      }
-      Assert( ss.size() > 0 ?
-              spmult.size() == x.size() * ss.size() :
-              spmult.size() == 0, "Sponge pressure multipler wrong size" );
-      return spmult;
     }
 
 };

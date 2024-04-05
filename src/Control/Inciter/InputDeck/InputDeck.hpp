@@ -330,11 +330,6 @@ using ConfigMembers = brigand::list<
       tag::velocity,    std::vector< tk::real >,
       tag::pressure,    tk::real,
       tag::density,     tk::real,
-      tag::sponge,      tk::TaggedTuple< brigand::list<
-        tag::sideset,     std::vector< uint64_t >,
-        tag::vparam,      std::vector< tk::real >,
-        tag::pparam,      tk::real
-      > >,
       tag::timedep,     std::vector<
         tk::TaggedTuple< brigand::list<
           tag::sideset,   std::vector< uint64_t >,
@@ -981,7 +976,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "Configure physics time range for output (in units of physics time)",
         R"(This keyword is used to configure field-, or history-output, specifying
         a start time, a stop time, and an output frequency in physics time units.
-        Example: 'time_range 0.2 0.3 0.001 end', which specifies that from t=0.2 to
+        Example: 'time_range = {0.2, 0.3, 0.001}', which specifies that from t=0.2 to
         t=0.3 output should happen at physics time units of dt=0.001. This must be
         used within a relevant block.)", "vector of 3 reals"});
 
@@ -1549,13 +1544,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       kwvector.push_back({"stag",
         "List sidesets with stagnation boundary conditions",
         R"(This keyword is used to list (multiple) stagnation BC sidesets.)",
-        "vector of uint(s)"});
-
-      kwvector.push_back({"sponge",
-        "List sidesets with a sponge boundary",
-        R"(This keyword is used to list (multiple) sponge sidesets, used to
-        specify the configuration for applying sponge parameters on boundaries.
-        Keywords allowed in a sponge block: 'pressure' and 'velocity'.)",
         "vector of uint(s)"});
 
       kwvector.push_back({"timedep",

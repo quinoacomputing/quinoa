@@ -258,6 +258,9 @@ Transporter::info( const InciterPrint& print )
     print.item( "CFL coefficient", cfl );
   }
 
+  print.item( "Dependent var names",
+    tk::parameters(g_inputdeck.get< tag::depvar >()) );
+
   // Print out info on settings of selected partial differential equations
   print.pdes( "Partial differential equations integrated", stack.info() );
 
@@ -1417,7 +1420,7 @@ Transporter::inthead( const InciterPrint& print )
 //! \param[in] print Pretty printer object to use for printing
 // *****************************************************************************
 {
-  auto refined = g_inputdeck.get< tag::cmd, tag::io, tag::refined >();
+  auto refined = g_inputdeck.get< tag::field_output, tag::refined >();
   const auto scheme = g_inputdeck.get< tag::scheme >();
   if (refined && scheme == ctr::SchemeType::DG) {
     printer() << "\n>>> WARNING: Ignoring refined field output for DG(P0)\n\n";
