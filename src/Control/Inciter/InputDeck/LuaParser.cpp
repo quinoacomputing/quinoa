@@ -692,7 +692,7 @@ LuaParser::storeInputDeck(
       tk::ctr::TxtFloatFormatType::DEFAULT);
 
     // precision
-    storeIfSpecd< uint32_t >(
+    storeIfSpecd< std::streamsize >(
       lua_ideck["diagnostics"], "precision",
       diag_deck.get< tag::precision >(), std::cout.precision());
   }
@@ -747,7 +747,7 @@ LuaParser::storeInputDeck(
       tk::ctr::TxtFloatFormatType::DEFAULT);
 
     // precision
-    storeIfSpecd< uint32_t >(
+    storeIfSpecd< std::streamsize >(
       lua_ideck["history_output"], "precision",
       hist_deck.get< tag::precision >(), std::cout.precision());
 

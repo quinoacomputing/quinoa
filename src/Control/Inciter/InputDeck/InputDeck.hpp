@@ -238,7 +238,7 @@ using ConfigMembers = brigand::list<
     tag::iter_interval, uint32_t,
     tag::error,         tk::ctr::ErrorType,
     tag::format,        tk::ctr::TxtFloatFormatType,
-    tag::precision,     uint32_t
+    tag::precision,     std::streamsize
   > >,
 
   // History output block
@@ -248,7 +248,7 @@ using ConfigMembers = brigand::list<
     tag::time_interval, tk::real,
     tag::time_range,    std::vector< tk::real >,
     tag::format,        tk::ctr::TxtFloatFormatType,
-    tag::precision,     uint32_t,
+    tag::precision,     std::streamsize,
     tag::point,         std::vector<
       tk::TaggedTuple< brigand::list<
         tag::id,    std::string,
