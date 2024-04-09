@@ -900,38 +900,36 @@ OversetFE::BC()
   const auto& bcmesh = g_inputdeck.get< tag::bc >();
 
   for (const auto& bci : bcmesh) {
-    // only if this bc is meant for current mesh
-    bool bc_match(false);
     const auto& bcm = bci.get< tag::mesh >();
     for (const auto& im : bcm) {
-      bc_match = (im-1 == d->MeshId());
-    }
-    if (bc_match) {
+      // only if this bc is meant for current mesh
+      if (im-1 == d->MeshId()) {
 
-      // Query and match user-specified Dirichlet boundary conditions to side sets
-      const auto steady = g_inputdeck.get< tag::steady_state >();
-      if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
-      m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
-                       m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
-                     /* increment = */ false );
-      if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
+        // Query and match user-specified Dirichlet boundary conditions to side sets
+        const auto steady = g_inputdeck.get< tag::steady_state >();
+        if (steady) for (auto& deltat : m_dtp) deltat *= rkcoef[m_stage];
+        m_dirbc = match( d->MeshId(), m_u.nprop(), d->T(), rkcoef[m_stage] * d->Dt(),
+                         m_tp, m_dtp, d->Coord(), d->Lid(), m_bnode,
+                       /* increment = */ false );
+        if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
-      // Apply Dirichlet BCs
-      for (const auto& [b,bc] : m_dirbc)
-        for (ncomp_t c=0; c<m_u.nprop(); ++c)
-          if (bc[c].first) m_u(b,c) = bc[c].second;
+        // Apply Dirichlet BCs
+        for (const auto& [b,bc] : m_dirbc)
+          for (ncomp_t c=0; c<m_u.nprop(); ++c)
+            if (bc[c].first) m_u(b,c) = bc[c].second;
 
-      // Apply symmetry BCs
-      g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
+        // Apply symmetry BCs
+        g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
 
-      // Apply farfield BCs
-      if (bci.get< tag::farfield >().empty() || (d->MeshId() == 0)) {
-        g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+        // Apply farfield BCs
+        if (bci.get< tag::farfield >().empty() || (d->MeshId() == 0)) {
+          g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
+        }
+
+        // Apply user defined time dependent BCs
+        g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
+          m_timedepbcFn );
       }
-
-      // Apply user defined time dependent BCs
-      g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
-        m_timedepbcFn );
     }
   }
 }

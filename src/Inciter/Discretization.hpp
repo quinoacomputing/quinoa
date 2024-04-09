@@ -364,9 +364,19 @@ class Discretization : public CBase_Discretization {
         : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes), m_mid(mid)
       {
         const auto& bc =
-          g_inputdeck.template get< tag::bc >()[m_mid];
-        // collect sidesets for this mesh with this bc type
-        const auto& ss = bc.template get< tags... >();
+          g_inputdeck.template get< tag::bc >();
+        std::vector< std::size_t > ss;
+        for (const auto& bci : bc) {
+          const auto& bcm = bci.get< tag::mesh >();
+          for (const auto& im : bcm) {
+            // only if this bc is meant for current mesh
+            // collect sidesets for this mesh with this bc type
+            if (im-1 == m_mid) {
+              ss.insert( ss.end(), bci.template get< tags... >().begin(),
+                bci.template get< tags... >().end() );
+            }
+          }
+        }
         for (const auto& s : ss) {
           auto k = m_bface.find(s);
           if (k != end(m_bface)) {

@@ -160,7 +160,10 @@ Transporter::input()
   const auto& cmdinput = g_inputdeck.get< tag::cmd, tag::io, tag::input >();
 
   // Extract mesh filenames specified in the control file (assigned to solvers)
-  auto ctrinput = g_inputdeck.mesh();
+  std::vector< std::string > ctrinput;
+  for (const auto& im : g_inputdeck.get< tag::mesh >()) {
+    ctrinput.push_back(im.get< tag::filename >());
+  }
 
   ErrChk( not cmdinput.empty() or not ctrinput.empty(),
     "Either a single input mesh must be given on the command line or multiple "
@@ -258,8 +261,12 @@ Transporter::info( const InciterPrint& print )
     print.item( "CFL coefficient", cfl );
   }
 
-  print.item( "Dependent var names",
-    tk::parameters(g_inputdeck.get< tag::depvar >()) );
+  const auto& meshes = g_inputdeck.get< tag::mesh >();
+  const auto& depvars = g_inputdeck.get< tag::depvar >();
+  for (std::size_t i=0; i<meshes.size(); ++i) {
+    print.item( "Dependent var name and assoc. mesh", std::string{depvars[i]}
+      + " - " + meshes[i].get< tag::filename >() );
+  }
 
   // Print out info on settings of selected partial differential equations
   print.pdes( "Partial differential equations integrated", stack.info() );

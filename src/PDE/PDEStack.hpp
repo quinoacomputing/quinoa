@@ -21,6 +21,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "NoWarning/back.hpp"
 #include "NoWarning/front.hpp"
@@ -112,9 +113,12 @@ class PDEStack {
       const auto& nc = g_inputdeck.get< tag::ncomp >();
       if ( nc ) {
         // re-create key and search for it
+        auto prob = g_inputdeck.get< EqTag, tag::problem >();
+        // if more than one mesh, set problem type for all additional meshes
+        // as user-defined
+        if (cnt[eq] > 1) prob = ctr::ProblemType::USER_DEFINED;
         ctr::PDEKey key{{ eq,
-          g_inputdeck.get< EqTag, tag::physics >(),
-          g_inputdeck.get< EqTag, tag::problem >() }};
+          g_inputdeck.get< EqTag, tag::physics >(), prob }};
         const auto it = f.find( key );
         Assert( it != end( f ),
                 "Can't find PDE with key('" +

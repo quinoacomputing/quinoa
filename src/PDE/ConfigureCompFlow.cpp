@@ -93,15 +93,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
     nfo.emplace_back( "flux", ctr::Flux().name(
       g_inputdeck.get< tag::flux >() ) );
 
-  const auto& meshes =
-    g_inputdeck.get< tag::mesh >();
-
-  if (meshes.size() > c) {
-    for (const auto& m : meshes) {
-      nfo.emplace_back( "mesh", m.get< tag::filename >() );
-    }
-  }
-
   // ICs
 
   const auto& ic = g_inputdeck.get< tag::ic >();

@@ -116,11 +116,13 @@ PDEStack::selectedCG() const
   if (sch == ctr::SchemeType::ALECG || sch == ctr::SchemeType::OversetFE) {
 
     const auto& d = g_inputdeck.get< tag::pde >();
-    if (d == ctr::PDEType::TRANSPORT)
-      pdes.push_back( createCG< tag::transport >( d, cnt ) );
-    else if (d == ctr::PDEType::COMPFLOW)
-      pdes.push_back( createCG< tag::compflow >( d, cnt ) );
-    else Throw( "Can't find selected CGPDE" );
+    for (std::size_t i=0; i<g_inputdeck.get< tag::mesh >().size(); ++i) {
+      if (d == ctr::PDEType::TRANSPORT)
+        pdes.push_back( createCG< tag::transport >( d, cnt ) );
+      else if (d == ctr::PDEType::COMPFLOW)
+        pdes.push_back( createCG< tag::compflow >( d, cnt ) );
+      else Throw( "Can't find selected CGPDE" );
+    }
 
   }
 
@@ -144,13 +146,15 @@ PDEStack::selectedDG() const
       sch == ctr::SchemeType::FV) {
 
     const auto& d = g_inputdeck.get< tag::pde >();
-    if (d == ctr::PDEType::TRANSPORT)
-      pdes.push_back( createDG< tag::transport >( d, cnt ) );
-    else if (d == ctr::PDEType::COMPFLOW)
-      pdes.push_back( createDG< tag::compflow >( d, cnt ) );
-    else if (d == ctr::PDEType::MULTIMAT)
-      pdes.push_back( createDG< tag::multimat >( d, cnt ) );
-    else Throw( "Can't find selected DGPDE" );
+    for (std::size_t i=0; i<g_inputdeck.get< tag::mesh >().size(); ++i) {
+      if (d == ctr::PDEType::TRANSPORT)
+        pdes.push_back( createDG< tag::transport >( d, cnt ) );
+      else if (d == ctr::PDEType::COMPFLOW)
+        pdes.push_back( createDG< tag::compflow >( d, cnt ) );
+      else if (d == ctr::PDEType::MULTIMAT)
+        pdes.push_back( createDG< tag::multimat >( d, cnt ) );
+      else Throw( "Can't find selected DGPDE" );
+    }
 
   }
 
@@ -171,9 +175,11 @@ PDEStack::selectedFV() const
   if (sch == ctr::SchemeType::FV) {
 
     const auto& d = g_inputdeck.get< tag::pde >();
-    if (d == ctr::PDEType::MULTIMAT)
-      pdes.push_back( createFV< tag::multimat >( d, cnt ) );
-    else Throw( "Can't find selected FVPDE" );
+    for (std::size_t i=0; i<g_inputdeck.get< tag::mesh >().size(); ++i) {
+      if (d == ctr::PDEType::MULTIMAT)
+        pdes.push_back( createFV< tag::multimat >( d, cnt ) );
+      else Throw( "Can't find selected FVPDE" );
+    }
 
   }
 
