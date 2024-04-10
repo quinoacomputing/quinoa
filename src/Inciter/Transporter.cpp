@@ -483,14 +483,14 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
   for (const auto& bci : bcs) {
     for (const auto& b : bci.get< tag::timedep >()) {
       for (auto i : b.get< tag::sideset >())
-        usedsets.insert(i);
+        usedsets.insert(static_cast<int>(i));
     }
   }
 
   // Query side sets of boundaries prescribed as moving with ALE
   for (const auto& move : g_inputdeck.get< tag::ale, tag::move >())
     for (auto i : move.get< tag::sideset >())
-      usedsets.insert(i);
+      usedsets.insert(static_cast<int>(i));
 
   // Add sidesets requested for field output
   const auto& ss = g_inputdeck.get< tag::cmd, tag::io, tag::surface >();

@@ -183,7 +183,7 @@ ALE::meshvelBnd(
   tk::destroy( m_meshveldirbcnodes );
   std::unordered_map<int, std::unordered_set< std::size_t >> meshveldirbcnodes;
   for (const auto& s : g_inputdeck.template get< tag::ale, tag::dirichlet >()) {
-    auto k = bface.find(s);
+    auto k = bface.find(static_cast<int>(s));
     if (k != end(bface)) {
       auto& n = meshveldirbcnodes[ k->first ];  // associate set id
       for (auto f : k->second) {                // face ids on side set
@@ -211,7 +211,7 @@ ALE::meshvelBnd(
   tk::destroy( m_meshvelsymbcnodes );
   std::unordered_map<int, std::unordered_set< std::size_t >> meshvelsymbcnodes;
   for (const auto& s : g_inputdeck.template get< tag::ale, tag::symmetry >()) {
-    auto k = bnode.find(s);
+    auto k = bnode.find(static_cast<int>(s));
     if (k != end(bnode)) {
       auto& n = meshvelsymbcnodes[ k->first ];  // associate set id
       for (auto g : k->second) {                // node ids on side set
@@ -228,7 +228,7 @@ ALE::meshvelBnd(
   std::size_t i = 0;
   for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
     for (const auto& s : m.get< tag::sideset >()) {
-      auto k = bnode.find(s);
+      auto k = bnode.find(static_cast<int>(s));
       if (k != end(bnode)) {
         auto& n = movenodes[ k->first ];        // associate set id
         for (auto g : k->second) {              // node ids on side set
@@ -838,7 +838,7 @@ ALE::meshforce()
   const auto& sbc = g_inputdeck.get< tag::ale, tag::symmetry >();
   for (auto p : m_meshvelsymbcnodes) {
     for (const auto& s : sbc) {
-      auto j = m_bnorm.find(s);
+      auto j = m_bnorm.find(static_cast<int>(s));
       if (j != end(m_bnorm)) {
         auto i = j->second.find(p);
         if (i != end(j->second)) {

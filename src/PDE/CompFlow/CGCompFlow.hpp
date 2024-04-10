@@ -726,7 +726,7 @@ class CompFlow {
         const auto& y = coord[1];
         const auto& z = coord[2];
         for (const auto& b : ubc)
-          if (b == ss.first)
+          if (static_cast<int>(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }
@@ -769,7 +769,7 @@ class CompFlow {
           // for all user-def symbc sets
           for (std::size_t s=0; s<sbc.size(); ++s) {
             // find nodes & normals for side
-            auto j = bnorm.find(sbc[s]);
+            auto j = bnorm.find(static_cast<int>(sbc[s]));
             if (j != end(bnorm)) {
               auto i = j->second.find(p);      // find normal for node
               if (i != end(j->second)) {
@@ -811,7 +811,7 @@ class CompFlow {
       if (fbc.size() > 0)               // use farbcs for this system
         for (auto p : nodes)                   // for all farfieldbc nodes
           for (const auto& s : fbc) {// for all user-def farbc sets
-            auto j = bnorm.find(s);// find nodes & normals for side
+            auto j = bnorm.find(static_cast<int>(s));// find nodes & normals for side
             if (j != end(bnorm)) {
               auto i = j->second.find(p);      // find normal for node
               if (i != end(j->second)) {

@@ -195,7 +195,7 @@ OversetFE::getBCNodes()
     for (const auto& bndry : timedep) {
       std::unordered_set< std::size_t > nodes;
       for (const auto& s : bndry.template get< tag::sideset >()) {
-        auto k = m_bnode.find(s);
+        auto k = m_bnode.find(static_cast<int>(s));
         if (k != end(m_bnode)) {
           for (auto g : k->second) {      // global node ids on side set
             nodes.insert( tk::cref_find(d->Lid(),g) );
@@ -239,7 +239,7 @@ OversetFE::norm()
   // Query nodes at which mesh velocity symmetry BCs are specified
   std::unordered_map<int, std::unordered_set< std::size_t >> ms;
   for (const auto& s : g_inputdeck.get< tag::ale, tag::symmetry >()) {
-    auto k = m_bface.find(s);
+    auto k = m_bface.find(static_cast<int>(s));
     if (k != end(m_bface)) {
       auto& n = ms[ k->first ];
       for (auto f : k->second) {

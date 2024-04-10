@@ -379,7 +379,7 @@ class Transport {
         const auto& y = coord[1];
         const auto& z = coord[2];
         for (const auto& b : ubc)
-          if (b == ss.first)
+          if (static_cast<int>(b) == ss.first)
             for (auto n : ss.second) {
               Assert( x.size() > n, "Indexing out of coordinate array" );
               if (steady) { t = tp[n]; deltat = dtp[n]; }

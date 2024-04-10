@@ -378,7 +378,7 @@ class Discretization : public CBase_Discretization {
           }
         }
         for (const auto& s : ss) {
-          auto k = m_bface.find(s);
+          auto k = m_bface.find(static_cast<int>(s));
           if (k != end(m_bface)) {
             auto& n = m_nodes[ k->first ];  // associate set id
             for (auto f : k->second) {      // face ids on side set

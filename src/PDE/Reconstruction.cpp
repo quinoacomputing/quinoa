@@ -219,7 +219,7 @@ bndLeastSqConservedVar_P0P1(
   const auto& esuf = fd.Esuf();
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
-    auto bc = bface.find(s);// faces for side set
+    auto bc = bface.find(static_cast<int>(s));// faces for side set
     if (bc != end(bface))
     {
       // Compute boundary face contributions

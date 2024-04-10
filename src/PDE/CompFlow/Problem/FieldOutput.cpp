@@ -81,7 +81,7 @@ CompFlowSurfOutput( const std::vector< EOS >& mat_blk,
   // extract field output along side sets requested
   for (auto s : g_inputdeck.get< tag::field_output, tag::sideset >()) {
     // get node list for side set requested
-    auto b = bnd.find(s);
+    auto b = bnd.find(static_cast<int>(s));
     if (b == end(bnd)) continue;
     const auto& nodes = b->second;
     std::vector< tk::real > surfaceSol( nodes.size() );
@@ -125,7 +125,7 @@ CompFlowElemSurfOutput(
   // extract field output along side sets requested
   for (auto s : g_inputdeck.get< tag::field_output, tag::sideset >()) {
     // get face list for side set requested
-    auto b = bface.find(s);
+    auto b = bface.find(static_cast<int>(s));
     if (b == end(bface)) continue;
     const auto& faces = b->second;
     std::vector< tk::real > surfaceSol( faces.size() );
