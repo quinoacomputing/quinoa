@@ -16,7 +16,6 @@
 #include <cmath>
 #include <vector>
 #include <cblas.h>
-#include <lapacke.h>
 
 #include "Types.hpp"
 #include "Exception.hpp"
@@ -25,6 +24,21 @@
 #if defined(__clang__)
   #pragma clang diagnostic ignored "-Wold-style-cast"
 #endif
+
+// Lapacke forward declarations
+extern "C" {
+
+using lapack_int = long;
+
+#define LAPACK_ROW_MAJOR 101
+#define LAPACK_COL_MAJOR 102
+
+extern lapack_int LAPACKE_dgetrf( int, lapack_int, lapack_int, double*,
+  lapack_int, lapack_int* );
+extern lapack_int LAPACKE_dgetri( int, lapack_int, double*, lapack_int,
+  const lapack_int* );
+
+}
 
 namespace tk {
 

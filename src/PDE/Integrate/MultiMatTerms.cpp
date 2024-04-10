@@ -16,8 +16,6 @@
 
 #include "QuinoaConfig.hpp"
 
-#include <lapacke.h>
-
 #include "MultiMatTerms.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
@@ -28,6 +26,18 @@
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
+}
+
+// Lapacke forward declarations
+extern "C" {
+
+using lapack_int = long;
+
+#define LAPACK_ROW_MAJOR 101
+
+lapack_int LAPACKE_dsysv( int, char, lapack_int, lapack_int, double*,
+    lapack_int, lapack_int*, double*, lapack_int );
+
 }
 
 namespace tk {

@@ -20,9 +20,8 @@
 #include <array>
 #include "QuinoaConfig.hpp"
 
-#include <lapacke.h>
-
 #include "Basis.hpp"
+#include "Vector.hpp"
 #include "Mass.hpp"
 
 std::array< tk::real, 3 >

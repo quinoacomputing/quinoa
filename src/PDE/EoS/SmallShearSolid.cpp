@@ -18,9 +18,20 @@
 
 #include <cmath>
 #include <iostream>
-#include <lapacke.h>
 #include "Vector.hpp"
 #include "EoS/SmallShearSolid.hpp"
+
+// Lapacke forward declarations
+extern "C" {
+
+using lapack_int = long;
+
+#define LAPACK_ROW_MAJOR 101
+
+lapack_int LAPACKE_dgeev(int, char, char, lapack_int, double*, lapack_int,
+  double*, double*, double*, lapack_int, double*, lapack_int );
+
+}
 
 using inciter::SmallShearSolid;
 
