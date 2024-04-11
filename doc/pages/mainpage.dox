@@ -29,8 +29,7 @@ why "Philosophy" page.
 - @ref easybuild "Build and test Quinoa"
 - @ref running_inciter "Running Inciter"
 - @ref running_meshconv "Running MeshConv"
-
-Useful references for developers can be found @ref devpage "here".
+- @ref devpage "Developer Resources"
 
 @section mainpage_tools Tools
 

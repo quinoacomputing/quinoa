@@ -16,7 +16,10 @@ optional libraries, defaults, and build system options. See
 @section build_supported Routinely tested compilers
  - GNU
  - Clang
- - Intel
+
+@note Intel compilers are not supported. [Sol2](https://github.com/ThePhD/sol2)
+and Intel compilers are not compatible. For more information, see
+https://github.com/ThePhD/sol2/issues/548.
 
 @section build_default Build using the defaults
 

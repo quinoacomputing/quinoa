@@ -3,11 +3,14 @@
 
 This page is for Quinoa developers.
 
-See @ref inciter_design "page on inciter design" for high-level software design
-and some implementation aspects. Specifically, see the
-@ref inciter_setup "section on setup" for details of how inciter starts up.
+@section dev_resc Developer resources
 
-See @ref build "advanced build options".
+- @ref inciter_design "Software design"
+- @ref inciter_newscheme "How to add a new scheme"
+- @ref inciter_newpde "How to add a new PDE type"
+- @ref layout "Data layout"
+- @ref inciter_setup "How does inciter start up?"
+- @ref build "Advanced build options"
 
 We roughly follow the development model described
 [here](http://nvie.com/posts/a-successful-git-branching-model). As a
