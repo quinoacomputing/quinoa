@@ -209,10 +209,14 @@ DEFTAG(matidx);
 DEFTAG(solidx);
 
 DEFTAG(field_output);
-DEFTAG(iter_interval);
+DEFTAG(interval);
 DEFTAG(time_interval);
 DEFTAG(time_range);
 DEFTAG(refined);
+DEFTAG(elemvar);
+DEFTAG(elemalias);
+DEFTAG(nodevar);
+DEFTAG(nodealias);
 DEFTAG(filetype);
 DEFTAG(sideset);
 DEFTAG(outvar);

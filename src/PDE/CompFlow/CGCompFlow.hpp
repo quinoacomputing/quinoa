@@ -238,7 +238,7 @@ class CompFlow {
                 b.template get< tag::zmin >(), b.template get< tag::zmax >() };
               auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
               if (V_ex < eps) V = 1.0;
-              initializeBox<ctr::newbox>( m_mat_blk, V_ex/V,
+              initializeBox<ctr::boxList>( m_mat_blk, V_ex/V,
                 V_ex, t, b, bgpre, c_v, s );
             }
             ++bcnt;
@@ -253,7 +253,7 @@ class CompFlow {
           if (nodeblkid.find(blid) != nodeblkid.end()) {
             const auto& ndset = tk::cref_find(nodeblkid, blid);
             if (ndset.find(i) != ndset.end()) {
-              initializeBox<ctr::newmeshblock>( m_mat_blk,
+              initializeBox<ctr::meshblockList>( m_mat_blk,
                 V_ex/blkvols[blid], V_ex, t, b, bgpre, c_v, s );
             }
           }

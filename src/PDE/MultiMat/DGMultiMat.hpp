@@ -198,7 +198,7 @@ class MultiMat {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i) = 0.0;
               }
-              initializeBox<ctr::newbox>( m_mat_blk, V_ex, t, b, bgpre,
+              initializeBox<ctr::boxList>( m_mat_blk, V_ex, t, b, bgpre,
                 bgtemp, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
@@ -218,7 +218,7 @@ class MultiMat {
             if (elemblkid.find(blid) != elemblkid.end()) {
               const auto& elset = tk::cref_find(elemblkid, blid);
               if (elset.find(e) != elset.end()) {
-                initializeBox<ctr::newmeshblock>( m_mat_blk, V_ex, t, b,
+                initializeBox<ctr::meshblockList>( m_mat_blk, V_ex, t, b,
                   bgpre, bgtemp, s );
                 // store initialization in solution vector
                 for (std::size_t c=0; c<m_ncomp; ++c) {

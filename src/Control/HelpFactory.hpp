@@ -110,7 +110,7 @@ struct Info {
   }
 
   //! Fill map in a simpler way passing a string rather than a brigand-type
-  void fill( tk::entry_t& kw )
+  void fill( const tk::entry_t& kw )
   {
     m_factory[kw.string()] = { kw.shortDescription(),
                                kw.longDescription(),

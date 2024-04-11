@@ -148,6 +148,40 @@ class LuaParser {
       else
         storage = dflt;
     }
+
+    //! \brief Check validity of keywords within a particular block
+    //! \tparam tags Tags addressing the said block in the input deck
+    //! \param[in] block Sol table of the input deck block read in from the
+    //!   lua file
+    template< typename... tags >
+    void checkBlock(const sol::table& block) const
+    {
+      for (const auto& kvp : block) {
+        bool is_valid(false);
+        auto ukw = kvp.first.as<std::string>();
+        brigand::for_each< tags... >( checkKw(ukw, is_valid) );
+        if (!is_valid) Throw("Invalid keyword " + ukw);
+      }
+    }
+
+    // Check if a keyword matches the existing ones
+    struct checkKw {
+      std::string user_kw;
+      // reference to bool keeping track of kw-match
+      bool& is_valid;
+      // Constructor
+      checkKw( const std::string& ukw, bool& isv ) :
+        user_kw(ukw), is_valid(isv) {}
+      //! Function to call for each keyword type
+      template< typename U > void operator()( brigand::type_<U> ) {
+        auto spec_key = U::name();
+        // only check if not previously matched
+        if (!is_valid) {
+          if (user_kw == spec_key) is_valid = true;
+          else is_valid = false;
+        }
+      }
+    };
 };
 
 } // namespace inciter

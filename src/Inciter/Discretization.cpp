@@ -1067,7 +1067,7 @@ Discretization::fielditer() const
 {
   if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
 
-  return m_it % g_inputdeck.get< tag::field_output, tag::iter_interval >() == 0;
+  return m_it % g_inputdeck.get< tag::field_output, tag::interval >() == 0;
 }
 
 bool
@@ -1116,7 +1116,7 @@ Discretization::histiter() const
 //! \return True if history output iteration count interval is hit
 // *****************************************************************************
 {
-  const auto hist = g_inputdeck.get< tag::history_output, tag::iter_interval >();
+  const auto hist = g_inputdeck.get< tag::history_output, tag::interval >();
   const auto& hist_points = g_inputdeck.get< tag::history_output, tag::point >();
 
   return m_it % hist == 0 and not hist_points.empty();
@@ -1196,7 +1196,7 @@ Discretization::status()
     const auto term = g_inputdeck.get< tag::term >();
     const auto t0 = g_inputdeck.get< tag::t0 >();
     const auto nstep = g_inputdeck.get< tag::nstep >();
-    const auto diag = g_inputdeck.get< tag::diagnostics, tag::iter_interval >();
+    const auto diag = g_inputdeck.get< tag::diagnostics, tag::interval >();
     const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();

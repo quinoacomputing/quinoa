@@ -79,7 +79,7 @@ ElemDiagnostics::compute( Discretization& d,
   // Optionally collect diagnostics and send for aggregation across all workers
 
   // Query after how many time steps user wants to dump diagnostics
-  auto diagfreq = g_inputdeck.get< tag::diagnostics, tag::iter_interval >();
+  auto diagfreq = g_inputdeck.get< tag::diagnostics, tag::interval >();
 
   if ( !((d.It()+1) % diagfreq) || d.finished() ) {  // if remainder, don't compute diagnostics
 

@@ -399,11 +399,11 @@ Transporter::info( const InciterPrint& print )
   print.section( "Output intervals (in units of iteration count)" );
   print.item( "TTY", g_inputdeck.get< tag::ttyi>() );
   print.item( "Field and surface",
-              g_inputdeck.get< tag::field_output, tag::iter_interval >() );
+              g_inputdeck.get< tag::field_output, tag::interval >() );
   print.item( "History",
-              g_inputdeck.get< tag::history_output, tag::iter_interval >() );
+              g_inputdeck.get< tag::history_output, tag::interval >() );
   print.item( "Diagnostics",
-              g_inputdeck.get< tag::diagnostics, tag::iter_interval >() );
+              g_inputdeck.get< tag::diagnostics, tag::interval >() );
   print.item( "Checkpoint/restart",
               g_inputdeck.get< tag::cmd, tag::rsfreq >() );
   auto tf = g_inputdeck.get< tag::field_output, tag::time_interval >();

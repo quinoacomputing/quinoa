@@ -66,28 +66,28 @@ struct entry_t {
 
   //! Accessor to keyword as std::string
   //! \return Keyword as std::string
-  const std::string string() { return info.keyword(); }
+  const std::string string() const { return info.keyword(); }
 
   //! Accessor to required short name of a keyword
   //! \return Name of keyword as std::string
-  const std::string name() { return info.keyword(); }
+  const std::string name() const { return info.keyword(); }
 
   //! Accessor to required short description of a keyword
   //! \return Short help as std::string
-  const std::string shortDescription() { return info.shortDescription(); }
+  const std::string shortDescription() const { return info.shortDescription(); }
 
   //! Accessor to required long description of a keyword
   //! \return Long help as std::string
-  const std::string longDescription() { return info.longDescription(); }
+  const std::string longDescription() const { return info.longDescription(); }
 
   //! Alias accessor for keyword
   //! \return Null. This is a punt to fit in the existing HelpFactory
   //!   infrastructure; needs to be removed.
-  const std::optional< std::string > alias() { return std::nullopt; }
+  const std::optional< std::string > alias() const { return std::nullopt; }
 
   //! Expected type description accessor for keyword
   //! \return Type description for keyword
-  const std::optional< std::string > expt() {
+  const std::optional< std::string > expt() const {
     if (!info.typeDescription().empty())
       return info.typeDescription();
     else
@@ -96,15 +96,25 @@ struct entry_t {
 
   //! Expected lower bound accessor for a keyword
   //! \return Null.
-  const std::optional< std::string > lower() { return std::nullopt; }
+  const std::optional< std::string > lower() const { return std::nullopt; }
 
   //! Expected upper bound accessor for a keyword
   //! \return Null.
-  const std::optional< std::string > upper() { return std::nullopt; }
+  const std::optional< std::string > upper() const { return std::nullopt; }
 
   //! Expected choices description accessor for a keyword
   //! \return Null.
-  const std::optional< std::string > choices() { return std::nullopt; }
+  const std::optional< std::string > choices() const { return std::nullopt; }
+
+  //! \brief Less-than operator for ordering, used by, e.g., std::set::insert
+  //! \param[in] en entry_t to compare
+  //! \return Boolean indicating if en is less than 'this'
+  bool operator< ( const entry_t& en ) const {
+    if (info.kw < en.info.kw)
+      return true;
+    else
+      return false;
+  }
 };
 
 } // tk::

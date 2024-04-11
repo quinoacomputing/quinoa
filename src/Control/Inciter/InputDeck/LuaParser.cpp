@@ -203,6 +203,9 @@ LuaParser::storeInputDeck(
 
   // check transport
   if (lua_ideck["transport"].valid()) {
+
+    checkBlock< inciter::ctr::transportList::Keys >(lua_ideck["transport"]);
+
     gideck.get< tag::pde >() = inciter::ctr::PDEType::TRANSPORT;
     storeIfSpecd< std::size_t >(
       lua_ideck["transport"], "ncomp",
@@ -242,6 +245,9 @@ LuaParser::storeInputDeck(
 
   // check compflow
   if (lua_ideck["compflow"].valid()) {
+
+    checkBlock< inciter::ctr::compflowList::Keys >(lua_ideck["compflow"]);
+
     gideck.get< tag::pde >() = inciter::ctr::PDEType::COMPFLOW;
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["compflow"], "problem",
@@ -283,6 +289,9 @@ LuaParser::storeInputDeck(
 
   // check multimat
   if (lua_ideck["multimat"].valid()) {
+
+    checkBlock< inciter::ctr::multimatList::Keys >(lua_ideck["multimat"]);
+
     gideck.get< tag::pde >() = inciter::ctr::PDEType::MULTIMAT;
     storeIfSpecd< std::size_t >(
       lua_ideck["multimat"], "nmat",
@@ -344,6 +353,9 @@ LuaParser::storeInputDeck(
 
     // store material properties
     for (std::size_t i=0; i<gideck.get< tag::material >().size(); ++i) {
+
+      checkBlock< inciter::ctr::materialList::Keys >(sol_mat[i+1]);
+
       auto& mati_deck = gideck.get< tag::material >()[i];
       // eos
       storeOptIfSpecd< inciter::ctr::MaterialType, inciter::ctr::Material >(
@@ -520,6 +532,9 @@ LuaParser::storeInputDeck(
     mesh_deck.resize(lua_mesh.size());
 
     for (std::size_t i=0; i<mesh_deck.size(); ++i) {
+
+      checkBlock< inciter::ctr::meshList::Keys >(lua_mesh[i+1]);
+
       // filename
       storeIfSpecd< std::string >(lua_mesh[i+1], "filename",
         mesh_deck[i].get< tag::filename >(), "");
@@ -572,12 +587,15 @@ LuaParser::storeInputDeck(
   // Field output block
   // ---------------------------------------------------------------------------
   if (lua_ideck["field_output"].valid()) {
+
+    checkBlock< inciter::ctr::fieldOutputList::Keys >(lua_ideck["field_output"]);
+
     auto& fo_deck = gideck.get< tag::field_output >();
 
     // interval iteration
     storeIfSpecd< uint32_t >(
       lua_ideck["field_output"], "interval",
-      fo_deck.get< tag::iter_interval >(),
+      fo_deck.get< tag::interval >(),
       std::numeric_limits< uint32_t >::max());
 
     // interval physical time
@@ -661,7 +679,7 @@ LuaParser::storeInputDeck(
   else {
     // TODO: remove double-specification of defaults
     auto& fo_deck = gideck.get< tag::field_output >();
-    fo_deck.get< tag::iter_interval >() =
+    fo_deck.get< tag::interval >() =
       std::numeric_limits< uint32_t >::max();
     fo_deck.get< tag::time_interval >() =
       std::numeric_limits< tk::real >::max();
@@ -674,12 +692,15 @@ LuaParser::storeInputDeck(
   // Diagnostics output block
   // ---------------------------------------------------------------------------
   if (lua_ideck["diagnostics"].valid()) {
+
+    checkBlock< inciter::ctr::diagnosticsList::Keys >(lua_ideck["diagnostics"]);
+
     auto& diag_deck = gideck.get< tag::diagnostics >();
 
     // interval iteration
     storeIfSpecd< uint32_t >(
       lua_ideck["diagnostics"], "interval",
-      diag_deck.get< tag::iter_interval >(), 1);
+      diag_deck.get< tag::interval >(), 1);
 
     // error norm
     storeOptIfSpecd< tk::ctr::ErrorType, tk::ctr::Error >(
@@ -699,7 +720,7 @@ LuaParser::storeInputDeck(
   else {
     // TODO: remove double-specification of defaults
     auto& diag_deck = gideck.get< tag::diagnostics >();
-    diag_deck.get< tag::iter_interval >() = 1;
+    diag_deck.get< tag::interval >() = 1;
     diag_deck.get< tag::error >() = tk::ctr::ErrorType::L2;
     diag_deck.get< tag::format >() = tk::ctr::TxtFloatFormatType::DEFAULT;
     diag_deck.get< tag::precision >() = std::cout.precision();
@@ -708,12 +729,16 @@ LuaParser::storeInputDeck(
   // History output block
   // ---------------------------------------------------------------------------
   if (lua_ideck["history_output"].valid()) {
+
+    checkBlock< inciter::ctr::historyOutputList::Keys >(
+      lua_ideck["history_output"]);
+
     auto& hist_deck = gideck.get< tag::history_output >();
 
     // interval iteration
     storeIfSpecd< uint32_t >(
       lua_ideck["history_output"], "interval",
-      hist_deck.get< tag::iter_interval >(),
+      hist_deck.get< tag::interval >(),
       std::numeric_limits< uint32_t >::max());
 
     // interval time
@@ -760,7 +785,7 @@ LuaParser::storeInputDeck(
   else {
     // TODO: remove double-specification of defaults
     auto& hist_deck = gideck.get< tag::history_output >();
-    hist_deck.get< tag::iter_interval >() =
+    hist_deck.get< tag::interval >() =
       std::numeric_limits< uint32_t >::max();
     hist_deck.get< tag::time_interval >() =
       std::numeric_limits< tk::real >::max();
@@ -951,6 +976,9 @@ LuaParser::storeInputDeck(
     bc_deck.resize(sol_bc.size());
 
     for (std::size_t i=0; i<bc_deck.size(); ++i) {
+
+      checkBlock< inciter::ctr::bcList::Keys >(sol_bc[i+1]);
+
       storeVecIfSpecd< std::size_t >(sol_bc[i+1], "mesh",
         bc_deck[i].get< tag::mesh >(), {1});
       // collect meshes for error checking
@@ -1048,6 +1076,8 @@ LuaParser::storeInputDeck(
   if (lua_ideck["ic"].valid()) {
     auto& ic_deck = gideck.get< tag::ic >();
 
+    checkBlock< inciter::ctr::icList::Keys >(lua_ideck["ic"]);
+
     // background IC values
     storeIfSpecd< std::size_t >(lua_ideck["ic"], "materialid",
       ic_deck.get< tag::materialid >(), 1);
@@ -1076,6 +1106,9 @@ LuaParser::storeInputDeck(
       box_deck.resize(lua_box.size());
 
       for (std::size_t i=0; i<box_deck.size(); ++i) {
+
+        checkBlock< inciter::ctr::boxList::Keys >(lua_box[i+1]);
+
         storeIfSpecd< std::size_t >(lua_box[i+1], "materialid",
           box_deck[i].get< tag::materialid >(), 1);
 
@@ -1155,6 +1188,9 @@ LuaParser::storeInputDeck(
       mblk_deck.resize(lua_meshblock.size());
 
       for (std::size_t i=0; i<mblk_deck.size(); ++i) {
+
+        checkBlock< inciter::ctr::meshblockList::Keys >(lua_meshblock[i+1]);
+
         storeIfSpecd< std::size_t >(lua_meshblock[i+1], "blockid",
           mblk_deck[i].get< tag::blockid >(), 0);
         if (mblk_deck[i].get< tag::blockid >() == 0)
