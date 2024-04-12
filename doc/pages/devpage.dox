@@ -1,16 +1,21 @@
 /*!
   @page      devpage References for developers
 
-This page is for Quinoa developers.
+This page provides links to resources for Quinoa developers.
 
 @section dev_resc Developer resources
 
+- @ref build "Advanced build options"
 - @ref inciter_design "Software design"
+- @ref inciter_setup "How does inciter start up?"
+- @ref layout "Data layout"
+- Contributing:
+  - @ref styling
+  - @ref contributing_members
+  - @ref contributing_new
 - @ref inciter_newscheme "How to add a new scheme"
 - @ref inciter_newpde "How to add a new PDE type"
-- @ref layout "Data layout"
-- @ref inciter_setup "How does inciter start up?"
-- @ref build "Advanced build options"
+- @ref inciter_newparse "How to parse a new block in the control file"
 
 We roughly follow the development model described
 [here](http://nvie.com/posts/a-successful-git-branching-model). As a

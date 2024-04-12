@@ -363,7 +363,7 @@ The basic steps for those who are _not_ members of GitHub's [QuinoaComputing](ht
 
 @subsection contributing_members For members of GitHub's QuinoaComputing organization
 
-1. Clone the repo and create a branch, forking `develop`
+1. Clone the repo and create your feature branch, forking `develop`
 
        git clone https://github.com/quinoacomputing/<repo-name>
        cd <repo-name>
@@ -374,15 +374,18 @@ The basic steps for those who are _not_ members of GitHub's [QuinoaComputing](ht
    features will not be accepted without passing the existing tests. See also
    the section on @ref contributing_test "how to run the tests".
 
-3. Push your topic branch up to our repo
+3. Push your feature branch up to our repo
 
        git push origin <topic-branch-name>
 
-4. Once a pull request is good to go, you can tidy up your commit messages using
-   Git's [interactive
-   rebase](https://help.github.com/en/articles/about-git-rebase).
+4. Open a pull request for your feature branch with `develop` as base, with a
+   clear title and description.
 
-5. Open a pull request with a clear title and description.
+5. Once a pull request is approved, update your feature branch with latest
+   changes from `develop` (if any)
+
+       git checkout <topic-branch-name>
+       git merge develop
 
 @note If any of the above is unclear, please do not hesitate to @ref
 resources_contact "contact us".
