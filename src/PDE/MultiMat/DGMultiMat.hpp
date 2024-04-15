@@ -650,8 +650,7 @@ class MultiMat {
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      const auto& solidx = g_inputdeck.get<
-        tag::matidxmap, tag::solidx >();
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
       std::array< std::vector< tk::real >, 9 > gb;
       if (inciter::haveSolid(nmat, solidx)) {
@@ -662,8 +661,7 @@ class MultiMat {
             if (solidx[k] > 0) {
               for (std::size_t i=0; i<3; ++i)
                 for (std::size_t j=0; j<3; ++j)
-                  gb[3*i+j][e] +=
-                    unk(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+                  gb[3*i+j][e] += unk(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0));
             }
           }
         }
