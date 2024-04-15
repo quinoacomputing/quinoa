@@ -1,12 +1,13 @@
 namespace inciter {
 /*!
-  \page      inciter_diagcg DiagCG hydrodynamics
+  \page      inciter_diagcg DiagCG hydrodynamics (obsolete)
 
 @tableofcontents{xml}
 
 @ref inciter_main supports multiple hydrodynamics schemes. This page describes
 the `DiagCG` method at a high level, for more details, see @ref papers_inciter
-"Inciter papers".
+"Inciter papers". The `DiagCG` scheme in Quinoa is not supported since
+[v0.5](https://github.com/quinoacomputing/quinoa/releases/tag/Quinoa_v0.5).
 
 @section diagcg_euler The equations of compressible flow
 

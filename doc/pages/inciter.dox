@@ -50,7 +50,7 @@ Inciter currently has three different families of fluid dynamics algorithms:
    for more details. `FV` methods are considered a part of the `DG`
    family of methods.
 
-4. `DiagCG`, a node-centered continuous Galerkin finite element method,
+4. _OBSOLETE:_ `DiagCG`, a node-centered continuous Galerkin finite element method,
    combining flux-corrected transport with Lax-Wendroff time
    stepping, see @ref inciter_diagcg for a high-level description and
    @ref papers_inciter "Inciter papers" for more details.
