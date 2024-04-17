@@ -153,14 +153,16 @@ class LuaParser {
     //! \tparam tags Tags addressing the said block in the input deck
     //! \param[in] block Sol table of the input deck block read in from the
     //!   lua file
+    //! \param[in] blk_name Name of the block, for error clarity
     template< typename... tags >
-    void checkBlock(const sol::table& block) const
+    void checkBlock(const sol::table& block, const std::string& blk_name) const
     {
       for (const auto& kvp : block) {
         bool is_valid(false);
         auto ukw = kvp.first.as<std::string>();
         brigand::for_each< tags... >( checkKw(ukw, is_valid) );
-        if (!is_valid) Throw("Invalid keyword " + ukw);
+        if (!is_valid)
+          Throw("Invalid keyword '" + ukw + "' in '" + blk_name + "' block.");
       }
     }
 

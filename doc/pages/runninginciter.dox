@@ -19,7 +19,9 @@ Other options and help can be accessed by passing the `--help` argument to
 
 @section control_files Control files
 
-Quinoa uses the [Lua](https://www.lua.org/) file format for control files.
+Quinoa uses the [Lua](https://www.lua.org/) file format for control files
+(tips to convert the now-obsolete `.q` control files to lua can be found
+[here](https://github.com/quinoacomputing/quinoa/issues/555)).
 Example control files can be found on the following pages:
 - @ref inciter_example_gasimpact_4mat "Multi-material gas impact problem"
 - @ref inciter_example_f16 "Steady-state transonic flow over an aircraft"
