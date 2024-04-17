@@ -204,7 +204,8 @@ LuaParser::storeInputDeck(
   // check transport
   if (lua_ideck["transport"].valid()) {
 
-    checkBlock< inciter::ctr::transportList::Keys >(lua_ideck["transport"]);
+    checkBlock< inciter::ctr::transportList::Keys >(lua_ideck["transport"],
+      "transport");
 
     gideck.get< tag::pde >() = inciter::ctr::PDEType::TRANSPORT;
     storeIfSpecd< std::size_t >(
@@ -246,7 +247,8 @@ LuaParser::storeInputDeck(
   // check compflow
   if (lua_ideck["compflow"].valid()) {
 
-    checkBlock< inciter::ctr::compflowList::Keys >(lua_ideck["compflow"]);
+    checkBlock< inciter::ctr::compflowList::Keys >(lua_ideck["compflow"],
+      "compflow");
 
     gideck.get< tag::pde >() = inciter::ctr::PDEType::COMPFLOW;
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
@@ -290,7 +292,8 @@ LuaParser::storeInputDeck(
   // check multimat
   if (lua_ideck["multimat"].valid()) {
 
-    checkBlock< inciter::ctr::multimatList::Keys >(lua_ideck["multimat"]);
+    checkBlock< inciter::ctr::multimatList::Keys >(lua_ideck["multimat"],
+      "multimat");
 
     gideck.get< tag::pde >() = inciter::ctr::PDEType::MULTIMAT;
     storeIfSpecd< std::size_t >(
@@ -354,7 +357,7 @@ LuaParser::storeInputDeck(
     // store material properties
     for (std::size_t i=0; i<gideck.get< tag::material >().size(); ++i) {
 
-      checkBlock< inciter::ctr::materialList::Keys >(sol_mat[i+1]);
+      checkBlock< inciter::ctr::materialList::Keys >(sol_mat[i+1], "material");
 
       auto& mati_deck = gideck.get< tag::material >()[i];
       // eos
@@ -533,7 +536,7 @@ LuaParser::storeInputDeck(
 
     for (std::size_t i=0; i<mesh_deck.size(); ++i) {
 
-      checkBlock< inciter::ctr::meshList::Keys >(lua_mesh[i+1]);
+      checkBlock< inciter::ctr::meshList::Keys >(lua_mesh[i+1], "mesh");
 
       // filename
       storeIfSpecd< std::string >(lua_mesh[i+1], "filename",
@@ -588,7 +591,8 @@ LuaParser::storeInputDeck(
   // ---------------------------------------------------------------------------
   if (lua_ideck["field_output"].valid()) {
 
-    checkBlock< inciter::ctr::fieldOutputList::Keys >(lua_ideck["field_output"]);
+    checkBlock< inciter::ctr::fieldOutputList::Keys >(lua_ideck["field_output"],
+      "field_output");
 
     auto& fo_deck = gideck.get< tag::field_output >();
 
@@ -693,7 +697,8 @@ LuaParser::storeInputDeck(
   // ---------------------------------------------------------------------------
   if (lua_ideck["diagnostics"].valid()) {
 
-    checkBlock< inciter::ctr::diagnosticsList::Keys >(lua_ideck["diagnostics"]);
+    checkBlock< inciter::ctr::diagnosticsList::Keys >(lua_ideck["diagnostics"],
+      "diagnostics");
 
     auto& diag_deck = gideck.get< tag::diagnostics >();
 
@@ -731,7 +736,7 @@ LuaParser::storeInputDeck(
   if (lua_ideck["history_output"].valid()) {
 
     checkBlock< inciter::ctr::historyOutputList::Keys >(
-      lua_ideck["history_output"]);
+      lua_ideck["history_output"], "history_output");
 
     auto& hist_deck = gideck.get< tag::history_output >();
 
@@ -977,7 +982,7 @@ LuaParser::storeInputDeck(
 
     for (std::size_t i=0; i<bc_deck.size(); ++i) {
 
-      checkBlock< inciter::ctr::bcList::Keys >(sol_bc[i+1]);
+      checkBlock< inciter::ctr::bcList::Keys >(sol_bc[i+1], "bc");
 
       storeVecIfSpecd< std::size_t >(sol_bc[i+1], "mesh",
         bc_deck[i].get< tag::mesh >(), {1});
@@ -1076,7 +1081,7 @@ LuaParser::storeInputDeck(
   if (lua_ideck["ic"].valid()) {
     auto& ic_deck = gideck.get< tag::ic >();
 
-    checkBlock< inciter::ctr::icList::Keys >(lua_ideck["ic"]);
+    checkBlock< inciter::ctr::icList::Keys >(lua_ideck["ic"], "ic");
 
     // background IC values
     storeIfSpecd< std::size_t >(lua_ideck["ic"], "materialid",
@@ -1107,7 +1112,7 @@ LuaParser::storeInputDeck(
 
       for (std::size_t i=0; i<box_deck.size(); ++i) {
 
-        checkBlock< inciter::ctr::boxList::Keys >(lua_box[i+1]);
+        checkBlock< inciter::ctr::boxList::Keys >(lua_box[i+1], "box");
 
         storeIfSpecd< std::size_t >(lua_box[i+1], "materialid",
           box_deck[i].get< tag::materialid >(), 1);
@@ -1189,7 +1194,8 @@ LuaParser::storeInputDeck(
 
       for (std::size_t i=0; i<mblk_deck.size(); ++i) {
 
-        checkBlock< inciter::ctr::meshblockList::Keys >(lua_meshblock[i+1]);
+        checkBlock< inciter::ctr::meshblockList::Keys >(lua_meshblock[i+1],
+          "meshblock");
 
         storeIfSpecd< std::size_t >(lua_meshblock[i+1], "blockid",
           mblk_deck[i].get< tag::blockid >(), 0);
