@@ -282,7 +282,7 @@ class MultiMat {
                 for (std::size_t i=0; i<3; ++i)
                   for (std::size_t j=0; j<3; ++j)
                     for (std::size_t idof=1; idof<rdof; ++idof) {
-                      unk(e, deformDofIdx(nmat,k,i,j,rdof,idof)) = 0.0;
+                      unk(e, deformDofIdx(nmat,solidx[k],i,j,rdof,idof)) = 0.0;
                     }
               }
             }
@@ -316,8 +316,7 @@ class MultiMat {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto ndof = g_inputdeck.get< tag::ndof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      const auto& solidx = g_inputdeck.get<
-        tag::matidxmap, tag::solidx >();
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
       Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -373,10 +372,10 @@ class MultiMat {
             auto alphamat = state[volfracIdx(nmat, imat)];
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
-            auto agmat = getDeformGrad(nmat, imat, state);
+            auto gmat = getDeformGrad(nmat, imat, state);
             pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
-              alphamat, imat, agmat );
+              alphamat, imat, gmat );
 
             pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
@@ -384,7 +383,7 @@ class MultiMat {
             if (solidx[imat] > 0) {
               auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(
               arhomat, vel[0], vel[1], vel[2], arhoemat,
-              alphamat, imat, agmat );
+              alphamat, imat, gmat );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
               pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
@@ -661,7 +660,8 @@ class MultiMat {
             if (solidx[k] > 0) {
               for (std::size_t i=0; i<3; ++i)
                 for (std::size_t j=0; j<3; ++j)
-                  gb[3*i+j][e] += unk(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+                  gb[3*i+j][e] += unk(e, volfracDofIdx(nmat,k,rdof,0)) *
+                    unk(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0));
             }
           }
         }
@@ -734,8 +734,7 @@ class MultiMat {
       // 4) 3*nsld terms: 3 derivatives of \alpha \sigma_ij for each solid
       //    material, for the energy equations.
       std::vector< std::vector< tk::real > >
-        riemannDeriv(3*nmat+ndof+3*3*9*nmat+3*nsld,
-        std::vector<tk::real>(U.nunk(),0.0));
+        riemannDeriv(3*nmat+ndof+3*nsld, std::vector<tk::real>(U.nunk(),0.0));
 
       // vectors to store the data of riemann velocity used for reconstruction
       // in volume fraction equation
@@ -768,7 +767,7 @@ class MultiMat {
                         m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
 
-      Assert( riemannDeriv.size() == 3*nmat+ndof+3*3*9*nmat+3*nsld, "Size of "
+      Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld, "Size of "
               "Riemann derivative vector incorrect" );
 
       // get derivatives from riemannDeriv
@@ -1129,11 +1128,11 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
-        auto agk = getDeformGrad(nmat, k, ur);
+        auto gk = getDeformGrad(nmat, k, ur);
         ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k, agk );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k, gk );
       }
 
       Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "

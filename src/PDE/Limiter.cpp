@@ -1581,10 +1581,8 @@ void consistentMultiMatLimiting_P1(
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
           {
-            auto gij = U(e,deformDofIdx(nmat,solidx[k],i,j,rdof,0)) / alk;
             for (std::size_t idof=1; idof<rdof; ++idof)
-              U(e,deformDofIdx(nmat,solidx[k],i,j,rdof,idof)) = gij *
-                U(e,volfracDofIdx(nmat,k,rdof,idof));
+              U(e,deformDofIdx(nmat,solidx[k],i,j,rdof,idof)) = 0.0;
           }
     }
 
@@ -2498,9 +2496,6 @@ correctLimConservMultiMat(
         auto rhomat = state[densityIdx(nmat, imat)]/alphamat;
         auto premat = state[ncomp+pressureIdx(nmat, imat)]/alphamat;
         auto gmat = getDeformGrad(nmat, imat, state);
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            gmat[i][j] /= alphamat;
         s[pressureIdx(nmat,imat)] = alphamat *
           mat_blk[imat].compute< EOS::totalenergy >( rhomat, vel[0], vel[1],
           vel[2], premat, gmat );

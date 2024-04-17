@@ -164,9 +164,6 @@ namespace inciter {
     if(Ma >= 0 && Ma < 1) {         // Subsonic outflow
       for (std::size_t k=0; k<nmat; ++k) {
         auto gk = getDeformGrad(nmat, k, ul);
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            gk[i][j] /= ul[volfracIdx(nmat, k)];
         ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
         mat_blk[k].compute< EOS::totalenergy >(
           ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp,

@@ -82,7 +82,7 @@ SmallShearSolid::pressure(
   tk::real arhoE,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
 //!   and the inverse deformation gradient tensor using the SmallShearSolid
@@ -98,20 +98,13 @@ SmallShearSolid::pressure(
 //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
 //!   for the single-material system, this argument can be left unspecified
 //!   by the calling code
-//! \param[in] adefgrad Material inverse deformation gradient tensor
-//!   (alpha_k * g_k). Default is 0, so that for the single-material system,
+//! \param[in] defgrad Material inverse deformation gradient tensor
+//!   (g_k). Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
 //! \return Material partial pressure (alpha_k * p_k) calculated using the
 //!   SmallShearSolid EoS
 // *************************************************************************
 {
-  // deformation gradient
-  auto defgrad = adefgrad;
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      defgrad[i][j] /= alpha;
-  }
-
   // obtain elastic contribution to energy
   tk::real eps2;
   auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
@@ -149,7 +142,7 @@ SmallShearSolid::CauchyStress(
   tk::real,
   tk::real alpha,
   std::size_t /*imat*/,
-  const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate the elastic Cauchy stress tensor from the material density,
 //!   momentum, total energy, and inverse deformation gradient tensor using the
@@ -160,20 +153,12 @@ SmallShearSolid::CauchyStress(
 // //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
 // //!   for the single-material system, this argument can be left unspecified
 // //!   by the calling code
-//! \param[in] adefgrad Material inverse deformation gradient tensor
-//!   (alpha_k * g_k).
+//! \param[in] defgrad Material inverse deformation gradient tensor (g_k).
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k) calculated using
 //!   the SmallShearSolid EoS
 // *************************************************************************
 {
   std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
-
-  // deformation gradient
-  auto defgrad = adefgrad;
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      defgrad[i][j] /= alpha;
-  }
 
   // obtain elastic contribution to energy
   tk::real eps2;
@@ -214,7 +199,7 @@ SmallShearSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& adefgrad,
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
   const std::array< tk::real, 3 >& /*adefgradn*/,
   const std::array< tk::real, 3 >& /*asigman*/ ) const
 // *************************************************************************
@@ -230,8 +215,8 @@ SmallShearSolid::soundspeed(
 //!   (alpha * sigma_ij * n_j) projected onto the normal vector. Default is 0,
 //!   so that for the single-material system, this argument can be left
 //!   unspecified by the calling code
-//! \param[in] adefgrad Material inverse deformation gradient tensor
-//!   (alpha_k * g_k) with the first dimension aligned to direction in which
+//! \param[in] defgrad Material inverse deformation gradient tensor
+//!   (g_k) with the first dimension aligned to direction in which
 //!   wave speeds are required. Default is 0, so that for the single-material
 //!   system, this argument can be left unspecified by the calling code
 //  //! \param[in] adefgradn Material inverse deformation gradient tensor in
@@ -245,21 +230,15 @@ SmallShearSolid::soundspeed(
 // *************************************************************************
 {
   // deformation gradient
-  auto g = adefgrad;
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      g[i][j] /= alpha;
-  }
-
-  tk::real g__11 = g[0][0];
-  tk::real g__12 = g[0][1];
-  tk::real g__13 = g[0][2];
-  tk::real g__21 = g[1][0];
-  tk::real g__22 = g[1][1];
-  tk::real g__23 = g[1][2];
-  tk::real g__31 = g[2][0];
-  tk::real g__32 = g[2][1];
-  tk::real g__33 = g[2][2];
+  tk::real g__11 = defgrad[0][0];
+  tk::real g__12 = defgrad[0][1];
+  tk::real g__13 = defgrad[0][2];
+  tk::real g__21 = defgrad[1][0];
+  tk::real g__22 = defgrad[1][1];
+  tk::real g__23 = defgrad[1][2];
+  tk::real g__31 = defgrad[2][0];
+  tk::real g__32 = defgrad[2][1];
+  tk::real g__33 = defgrad[2][2];
 
   std::array< std::array< tk::real, 3 >, 3> dsigdg;
 
@@ -536,9 +515,9 @@ SmallShearSolid::soundspeed(
       amat[i*3+j] = 0.0;
       for (std::size_t k=0; k<3; ++k)
       {
-        amat[i*3+j] -= adefgrad[k][j]*dsigdg[i][k];
+        amat[i*3+j] -= defgrad[k][j]*dsigdg[i][k];
       }
-      amat[i*3+j] /= arho;
+      amat[i*3+j] /= (arho/alpha);
     }
 
   double eig_real[3], eig_imag[3];
@@ -615,7 +594,7 @@ SmallShearSolid::temperature(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy
@@ -628,18 +607,11 @@ SmallShearSolid::temperature(
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
 //! \param[in] defgrad Material inverse deformation gradient tensor
-//!   (alpha_k * g_k). Default is 0, so that for the single-material system,
+//!   (g_k). Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
 //! \return Material temperature using the SmallShearSolid EoS
 // *************************************************************************
 {
-  // deformation gradient
-  auto defgrad = adefgrad;
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      defgrad[i][j] /= alpha;
-  }
-
   // obtain elastic contribution to energy
   tk::real eps2;
   auto arhoEe = alpha*elasticEnergy(defgrad, eps2);

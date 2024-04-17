@@ -339,33 +339,17 @@ update_rhs_fa( ncomp_t ncomp,
       riemannDeriv[3*nmat+idof][er] -= wt * fl[ncomp+nmat] * B_r[idof];
     }
 
-    // Gradient of u*g
-    for (std::size_t k=0; k<nmat; ++k)
-      if (solidx[k] > 0)
-      {
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            for (std::size_t l=0; l<3; ++l)
-              for (std::size_t idir=0; idir<3; ++idir)
-              {
-                riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+idir][el] +=
-                  wt * fl[ncomp+nmat+1+newSolidsAccFn(k,i,j,l)] * fn[idir];
-                riemannDeriv[3*nmat+ndof+3*newSolidsAccFn(k,i,j,l)+idir][er] -=
-                  wt * fl[ncomp+nmat+1+newSolidsAccFn(k,i,j,l)] * fn[idir];
-              }
-      }
-
     // Divergence of asigma: d(asig_ij)/dx_j
     for (std::size_t k=0; k<nmat; ++k)
       if (solidx[k] > 0)
       {
-        std::size_t mark = ncomp+nmat+1+3*9*nmat+3*(solidx[k]-1);
+        std::size_t mark = ncomp+nmat+1+3*(solidx[k]-1);
 
         for (std::size_t i=0; i<3; ++i)
         {
-          riemannDeriv[3*nmat+ndof+3*3*9*nmat+3*(solidx[k]-1)+i][el] -=
+          riemannDeriv[3*nmat+ndof+3*(solidx[k]-1)+i][el] -=
             wt * fl[mark+i];
-          riemannDeriv[3*nmat+ndof+3*3*9*nmat+3*(solidx[k]-1)+i][er] +=
+          riemannDeriv[3*nmat+ndof+3*(solidx[k]-1)+i][er] +=
             wt * fl[mark+i];
         }
       }

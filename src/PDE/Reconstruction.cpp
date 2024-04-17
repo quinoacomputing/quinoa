@@ -569,8 +569,8 @@ THINCReco( std::size_t rdof,
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
-              state[deformIdx(nmat,solidx[k],i,j)] = alReco[k]
-                * U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0))/alCC;
+              state[deformIdx(nmat,solidx[k],i,j)] =
+                U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0));
 
           for (std::size_t i=0; i<6; ++i)
             state[ncomp+stressIdx(nmat,solidx[k],i)] = alReco[k]
