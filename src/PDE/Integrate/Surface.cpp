@@ -36,7 +36,7 @@ surfInt( std::size_t nmat,
          const std::size_t ndof,
          const std::size_t rdof,
          const std::vector< std::size_t >& inpoel,
-         const std::vector< std::size_t >& /*solidx*/,
+         const std::vector< std::size_t >& solidx,
          const UnsMesh::Coords& coord,
          const inciter::FaceData& fd,
          const Fields& geoFace,
@@ -46,7 +46,7 @@ surfInt( std::size_t nmat,
          const Fields& U,
          const Fields& P,
          const std::vector< std::size_t >& ndofel,
-         const tk::real /*dt*/,
+         const tk::real dt,
          Fields& R,
          std::vector< std::vector< tk::real > >&,
          std::vector< std::vector< tk::real > >&,
@@ -93,8 +93,8 @@ surfInt( std::size_t nmat,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
-  //// Determine if we have solids in our problem
-  //bool haveSolid = inciter::haveSolid(nmat, solidx);
+  // Determine if we have solids in our problem
+  bool haveSolid = inciter::haveSolid(nmat, solidx);
 
   //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
   //        "derivative vector for single material compflow" );
@@ -222,10 +222,10 @@ surfInt( std::size_t nmat,
 
       // Code below commented until details about the form of these terms in the
       // \alpha_k g_k equations are sorted out.
-      // // Add RHS inverse deformation terms if necessary
+      // Add RHS inverse deformation terms if necessary
       // if (haveSolid)
-      //   solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
-      //                      coordel_l, coordel_r, igp, coordgp, dt, fl );
+      //  solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
+      //                     coordel_l, coordel_r, igp, coordgp, dt, fl );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,

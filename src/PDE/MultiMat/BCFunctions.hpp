@@ -108,6 +108,50 @@ namespace inciter {
     return {{ std::move(ul), std::move(ur) }};
   }
 
+  //! \brief Boundary state function providing the left and right  derivative of
+  //!   the state of a face at symmetry boundaries
+  //! \param[in] ncomp Number of scalar components in this PDE system
+  //! \param[in] dg_l derivatives of g tensor organized as:
+  //!   0:8   -> x derivatives of all gij components
+  //!   9:17  -> y derivatives of all gij components
+  //!   18:26 -> z derivatives of all gij components
+  //! \param[in] fn Unit face normal
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \note The function signature must follow tk::StateFn. For multimat, the
+  //!   left or right state is the vector of conserved quantities, followed by
+  //!   the vector of primitive quantities appended to it.
+  static tk::StateFn::result_type
+  symmetryDeriv( ncomp_t,
+                 const std::vector< EOS >&,
+                 const std::vector< tk::real >& dg_l,
+                 tk::real, tk::real, tk::real, tk::real,
+                 const std::array< tk::real, 3 >& fn )
+  {
+    auto dg_r = dg_l;
+    for (std::size_t idir=0; idir<3; ++idir)
+    {
+      // Make reflection matrix
+      std::array< std::array< tk::real, 3 >, 3 >
+        reflectionMat{{{1,0,0}, {0,1,0}, {0,0,1}}};
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+          reflectionMat[i][j] -= 2*fn[i]*fn[j];
+      // Make auxiliary matrix
+      std::array< std::array< tk::real, 3 >, 3 > dg;
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+          dg[i][j] = dg_l[9*idir+3*i+j];
+      // Reflect deriv_g
+      dg = tk::reflectTensor(dg, reflectionMat);
+      // Put result into dg_r
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+          dg_r[9*idir+3*i+j] = dg[i][j];
+    }
+    return {{ std::move(dg_l), std::move(dg_r) }};;
+  }
+
   //! \brief Boundary state function providing the left and right state of a
   //!   face at farfield outlet boundaries
   //! \param[in] ncomp Number of scalar components in this PDE system
@@ -206,6 +250,24 @@ namespace inciter {
                const std::array< tk::real, 3 >& )
   {
     return {{ ul, ul }};
+  }
+
+  //! \brief Boundary state function providing the left and right derivative 
+  //!  state of a face at extrapolation boundaries
+  //! \param[in] dg_l derivative of deformation tensor
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \note The function signature must follow tk::StateFn. For multimat, the
+  //!   left or right state is the vector of conserved quantities, followed by
+  //!   the vector of primitive quantities appended to it.
+  static tk::StateFn::result_type
+  extrapolateDeriv( ncomp_t,
+                    const std::vector< EOS >&,
+                    const std::vector< tk::real >& dg_l,
+                    tk::real, tk::real, tk::real, tk::real,
+                    const std::array< tk::real, 3 >& )
+  {
+    return {{ dg_l, dg_l }};
   }
 
 } // inciter::

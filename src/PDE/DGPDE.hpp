@@ -41,7 +41,7 @@ extern ctr::InputDeck g_inputdeck;
 using ncomp_t = kw::ncomp::info::expect::type;
 using bcconf_t = kw::sideset::info::expect::type;
 using BCStateFn =
-  std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
+  std::vector< std::tuple< std::vector< bcconf_t >, tk::StateFn,tk::StateFn > >;
 
 //! Extract BC configuration ignoring if BC not specified
 //! \note A more preferable way of catching errors such as this function
@@ -51,18 +51,23 @@ using BCStateFn =
 template< class Eq > struct ConfigBC {
   BCStateFn& state;    //!< BC state config: sidesets + statefn
   const std::vector< tk::StateFn >& fn;    //!< BC state functions
+  const std::vector< tk::StateFn >& dfn;
   std::size_t c;       //!< Counts BC types configured
   //! Constructor
   ConfigBC( BCStateFn& s,
-            const std::vector< tk::StateFn >& f ) :
-    state(s), fn(f), c(0) {}
+            const std::vector< tk::StateFn >& f,
+            const std::vector< tk::StateFn >& df ) :
+    state(s), fn(f), dfn(df), c(0) {}
   //! Function to call for each BC type
   template< typename U > void operator()( brigand::type_<U> ) {
     std::vector< bcconf_t > cfg;
     const auto& v = g_inputdeck.get< tag::param, Eq, tag::bc, U >();
     if (v.size() > 0) cfg = v;
     Assert( fn.size() > c, "StateFn missing for BC type" );
-    state.push_back( { cfg, fn[c++] } );
+    Assert( dfn.size() > c, "DerivStateFn missing for BC type" );
+    state.push_back( std::tuple< std::vector< bcconf_t >,
+      tk::StateFn,tk::StateFn > ( cfg, fn[c], dfn[c] ) );
+    c++;
   }
 };
 

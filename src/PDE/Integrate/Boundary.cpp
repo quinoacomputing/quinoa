@@ -22,6 +22,7 @@
 #include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
+#include "Integrate/SolidTerms.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
@@ -40,14 +41,17 @@ bndSurfInt( std::size_t nmat,
             const Fields& geoFace,
             const Fields& geoElem,
             const std::vector< std::size_t >& inpoel,
+            const std::vector< std::size_t >& solidx,
             const UnsMesh::Coords& coord,
             real t,
             const RiemannFluxFn& flux,
             const VelFn& vel,
             const StateFn& state,
+            const StateFn& derivState,
             const Fields& U,
             const Fields& P,
             const std::vector< std::size_t >& ndofel,
+            const tk::real dt,
             Fields& R,
             std::vector< std::vector< tk::real > >&,
             std::vector< std::vector< tk::real > >&,
@@ -98,6 +102,9 @@ bndSurfInt( std::size_t nmat,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+
+  // Determine if we have solids in our problem
+  bool haveSolid = inciter::haveSolid(nmat, solidx);
 
   //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
   //        "derivative vector for single material compflow" );
@@ -191,9 +198,10 @@ bndSurfInt( std::size_t nmat,
           // Code below commented until details about the form of these terms in
           // the \alpha_k g_k equations are sorted out.
           // // Add RHS inverse deformation terms if necessary
-          // if (haveSolid)
-          //   solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
-          //                      coordel_l, coordel_r, igp, coordgp, dt, fl );
+          //if (haveSolid)
+          //  solidTermsBndSurfInt( nmat, ndof, rdof, fn, el, solidx, geoElem, U,
+          //                        var, coordel_l, igp, coordgp, dt,
+          //                        derivState, fl );
 
           // Add the surface integration term to the rhs
           update_rhs_bc( ncomp, nmat, ndof, ndofel[el], wt, fn, el, fl,

@@ -87,8 +87,9 @@ solidTermsVolInt(
 
     // Relaxation and diffusion coefficients
     tk::real dx = geoElem(0,4);
-    tk::real D = dx*dx/(12.0*dt) * 1.0e-00;
-    tk::real eta = 1.0/(6.0*dt) * 1.0e+00;
+    tk::real D = dx*dx/(12.0*dt) * 0.0e-00;
+    tk::real C = 0.0e-00;
+    tk::real eta = 1.0/(6.0*dt) * 1.0e-00;
 
     auto ng = tk::NGvol(ndofel[e]);
 
@@ -160,10 +161,11 @@ solidTermsVolInt(
 
           // ** HARDCODED **
           // Should be able to store rho_0 for every cell at every Gauss point.
-          tk::real rho = state[inciter::densityIdx(nmat, k)];
+          tk::real rho = state[inciter::densityIdx(nmat, k)]/alpha;
           tk::real rho0;
-          if (k==0) rho0 = 8900.0;
-          else rho0 = 2700.0;
+          if (k==0) rho0 = 8899.91;
+          else rho0 = 1.16144;
+          //printf("k,solidx,rho,rho0 = %d, %d, %e, %e \n", k, solidx[k], rho, rho0);
           tk::real rfact = eta*(rho/(rho0*tk::determinant(g))-1.0);
 
           // Compute the source terms
@@ -194,12 +196,13 @@ solidTermsVolInt(
                   deriv[5]  += U(e,defIdx[5]) *dBdx[(j+2)%3][jdof];
                 }
                 s[(i*3+j)*ndof+idof] = B[idof]*rfact*alpha*g[i][j]
-                  + alpha*B[idof]*(v[(j+1)%3]*(deriv[0]-deriv[1])
-                                  -v[(j+2)%3]*(deriv[2]-deriv[3]))
+                  + alpha*C*B[idof]*(v[(j+1)%3]*(deriv[0]-deriv[1])
+                                    -v[(j+2)%3]*(deriv[2]-deriv[3]))
                   + D*((alpha*dBdx[(j+1)%3][idof]+B[idof]*deriv[4])
                        *(deriv[0]-deriv[1])
                       -(alpha*dBdx[(j+2)%3][idof]+B[idof]*deriv[5])
                        *(deriv[2]-deriv[3]));
+                // printf("i,j,s = %d, %d, %e \n", i, j, s[(i*3+j)*ndof+idof]);
               }
 
         auto wt = wgp[igp] * geoElem(e, 0);
@@ -259,7 +262,7 @@ solidTermsSurfInt( std::size_t nmat,
   // Diffusion coefficient
   //tk::real dx = std::min(geoElem(el,4),geoElem(er,4));
   tk::real dx = geoElem(0,4);
-  tk::real D = dx*dx/(12.0*dt) * 1.0e-00;
+  tk::real D = dx*dx/(12.0*dt) * 0.0e-00;
   // Compute the inverse of the Jacobian
   auto jacInv_l =
     tk::inverseJacobian(coordel_l[0],coordel_l[1],coordel_l[2],coordel_l[3]);
@@ -336,6 +339,130 @@ solidTermsSurfInt( std::size_t nmat,
                                       -deriv_r[j][i][(j+2)%3]));
           // Add to flux
           fl[deformIdx(nmat,solidx[k],i,j)] += 0.5*(sl+sr);
+          //fl[deformIdx(nmat,solidx[k],i,j)] += 0.0;
+          //printf("i,j,flux = %d, %d, %e \n", i, j, 0.5*(sl+sr));
+        }
+    }
+  }
+}
+
+void
+solidTermsBndSurfInt( std::size_t nmat,
+                      const std::size_t ndof,
+                      const std::size_t rdof,
+                      const std::array< tk::real, 3 >& fn,
+                      const std::size_t el,
+                      const std::vector< std::size_t >& solidx,
+                      const Fields& geoElem,
+                      const Fields& U,
+                      const std::array< std::vector< real >, 2 > uvar,
+                      const std::array< std::array< tk::real, 3>, 4 > coordel_l,
+                      const std::size_t igp,
+                      const std::array< std::vector< tk::real >, 2 >& coordgp,
+                      const tk::real dt,
+                      const StateFn& derivState,
+                      std::vector< tk::real >& fl )
+// *****************************************************************************
+//  Compute all RHS surface terms in the inverse deformation equations to
+//  satisfy the condition curl(g) = 0.
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] bcconfig BC configuration vector for multiple side sets
+//! \param[in] fn Face/Surface normal
+//! \param[in] el Left element index
+//! \param[in] solidx Solid material indicator
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] coordel_l Coordinates of left elements' nodes
+//! \param[in] igp Index of quadrature points
+//! \param[in] coordgp Gauss point coordinates for tetrahedron element
+//! \param[in] dt Delta time
+//! \param[in,out] fl Surface flux
+// *****************************************************************************
+{
+
+  using inciter::deformIdx;
+  using inciter::volfracIdx;
+  using inciter::deformDofIdx;
+
+  // Diffusion coefficient
+  //tk::real dx = std::min(geoElem(el,4),geoElem(er,4));
+  tk::real dx = geoElem(0,4);
+  tk::real D = dx*dx/(12.0*dt) * 0.0e-00;
+  // Compute the inverse of the Jacobian
+  auto jacInv_l =
+    tk::inverseJacobian(coordel_l[0],coordel_l[1],coordel_l[2],coordel_l[3]);
+  // Compute derivatives
+  std::array< std::vector<tk::real>, 3 > dBdx_l, dBdx_r;
+  dBdx_l[0].resize( ndof, 0 );
+  dBdx_l[1].resize( ndof, 0 );
+  dBdx_l[2].resize( ndof, 0 );
+  if (rdof > 1)
+  {
+    dBdx_l = tk::eval_dBdx_p1( rdof, jacInv_l );
+    if(ndof > 4) {
+      // Since eval_dBdx_p2 takes a coordgp of dimension ng by 3
+      // I need to add a row of zeros to my coordgp (UNTESTED)
+      std::array< std::vector< tk::real >, 3 > coordgp_aux;
+      coordgp_aux[0][igp] = coordgp[0][igp];
+      coordgp_aux[1][igp] = coordgp[1][igp];
+      coordgp_aux[2][igp] = 0.0;
+      tk::eval_dBdx_p2(igp, coordgp_aux, jacInv_l, dBdx_l);
+    }
+  }
+  // Loop through materials
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    if (solidx[k] > 0)
+    {
+      // Compute all derivatives
+      std::array< std::array< std::array< tk::real, 3 >, 3 >, 3 >
+        deriv_l;
+      std::size_t defIdx;
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+        {
+          deriv_l[0][i][j] = 0.0;
+          deriv_l[1][i][j] = 0.0;
+          deriv_l[2][i][j] = 0.0;
+          for (std::size_t jdof=0; jdof<rdof; ++jdof)
+          {
+            defIdx = deformDofIdx(nmat,solidx[k],i,j,rdof,jdof);
+            deriv_l[0][i][j] += U(el,defIdx)*dBdx_l[0][jdof];
+            deriv_l[1][i][j] += U(el,defIdx)*dBdx_l[1][jdof];
+            deriv_l[2][i][j] += U(el,defIdx)*dBdx_l[2][jdof];
+          }
+        }
+
+      std::vector< tk::real > dg_l(27, 0.0);
+      for (std::size_t idir=0; idir<3; ++idir)
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            dg_l[9*idir+3*i+j] = deriv_l[idir][i][j];
+      
+      auto deriv = derivState(0, {}, dg_l, 0.0, 0.0, 0.0, 0.0, fn);
+
+      // Compute the source terms
+      tk::real alpha_l = uvar[0][volfracIdx(nmat,k)];
+      tk::real alpha_r = uvar[1][volfracIdx(nmat,k)];
+      tk::real sl, sr;
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+        {
+          // Compute source
+          sl = alpha_l*D*(fn[(j+1)%3]*(deriv[0][9*j       + 3*i + (j+1)%3]
+                                      -deriv[0][9*(j+1)%3 + 3*i +       j])
+                         -fn[(j+2)%3]*(deriv[0][9*(j+2)%3 + 3*i +       j]
+                                      -deriv[0][9*j       + 3*i + (j+2)%3]));
+          sr = alpha_r*D*(fn[(j+1)%3]*(deriv[1][9*j       + 3*i + (j+1)%3]
+                                      -deriv[1][9*(j+1)%3 + 3*i +       j])
+                         -fn[(j+2)%3]*(deriv[1][9*(j+2)%3 + 3*i +       j]
+                                      -deriv[1][9*j       + 3*i + (j+2)%3]));
+          // Add to flux
+          fl[deformIdx(nmat,solidx[k],i,j)] += 0.5*(sl+sr);
+          //fl[deformIdx(nmat,solidx[k],i,j)] += 0.0;
+          //printf("i,j,flux = %d, %d, %e \n", i, j, 0.5*(sl+sr));
         }
     }
   }

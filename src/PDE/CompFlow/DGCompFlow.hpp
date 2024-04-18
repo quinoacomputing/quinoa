@@ -77,7 +77,13 @@ class CompFlow {
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
         , farfield
-        , extrapolate } ) );
+        , extrapolate },
+        { invalidBC         // Dirichlet BC not implemented
+        , invalidBC         // Symmetry BC not implemented
+        , invalidBC         // Inlet BC not implemented
+        , invalidBC         // Outlet BC not implemented
+        , invalidBC         // Farfield BC not implemented
+        , invalidBC  }) );
 
       // EoS initialization
       const auto& matprop =
@@ -279,8 +285,8 @@ class CompFlow {
         // 2. boundary face contributions
         for (const auto& b : m_bc)
           tk::bndLeastSqConservedVar_P0P1( m_ncomp,
-            m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second,
-            P, U, rhs_ls, vars );
+            m_mat_blk, rdof, std::get<0>(b), fd, geoFace, geoElem, t,
+            std::get<1>(b), P, U, rhs_ls, vars );
 
         // 3. solve 3x3 least-squares system
         tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U, vars );
@@ -440,10 +446,10 @@ class CompFlow {
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( 1, m_mat_blk, ndof, rdof, b.first,
-                        fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                        velfn, b.second, U, P, ndofel, R, vriem, riemannLoc,
-                        riemannDeriv );
+        tk::bndSurfInt( 1, m_mat_blk, ndof, rdof, std::get<0>(b),
+                        fd, geoFace, geoElem, inpoel, solidx, coord, t,
+                        m_riemann, velfn, std::get<1>(b), std::get<2>(b), U,
+                        P, ndofel, dt, R, vriem, riemannLoc, riemannDeriv );
 
      // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();

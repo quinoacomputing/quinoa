@@ -72,7 +72,13 @@ class Transport {
         , inlet
         , outlet
         , invalidBC  // Characteristic BC not implemented
-        , extrapolate } ) );
+        , extrapolate },
+        { invalidBC         // Dirichlet BC not implemented
+        , invalidBC         // Symmetry BC not implemented
+        , invalidBC         // Inlet BC not implemented
+        , invalidBC         // Outlet BC not implemented
+        , invalidBC         // Farfield BC not implemented
+        , invalidBC  }) );
       m_problem.errchk( m_ncomp );
     }
 
@@ -222,8 +228,8 @@ class Transport {
         // 2. boundary face contributions
         for (const auto& b : m_bc)
           tk::bndLeastSqConservedVar_P0P1( m_ncomp, 
-            m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second, 
-            P, U, rhs_ls, vars );
+            m_mat_blk, rdof, std::get<0>(b), fd, geoFace, geoElem, t,
+            std::get<1>(b), P, U, rhs_ls, vars );
 
         // 3. solve 3x3 least-squares system
         tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U, vars );
@@ -381,9 +387,9 @@ class Transport {
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( m_ncomp, m_mat_blk, ndof, rdof,
-          b.first, fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
-          Problem::prescribedVelocity, b.second, U, P, ndofel, R, vriem,
-          riemannLoc, riemannDeriv, intsharp );
+          std::get<0>(b), fd, geoFace, geoElem, inpoel, solidx, coord, t, Upwind::flux,
+          Problem::prescribedVelocity, std::get<1>(b), std::get<2>(b), U, P,
+          ndofel, dt, R, vriem, riemannLoc, riemannDeriv, intsharp );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element

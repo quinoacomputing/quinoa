@@ -77,7 +77,13 @@ class MultiMat {
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
         , farfieldOutlet
-        , extrapolate } ) );
+        , extrapolate },
+        { invalidBC         // Dirichlet BC not implemented
+        , symmetryDeriv
+        , invalidBC         // Inlet BC not implemented
+        , invalidBC         // Outlet BC not implemented
+        , invalidBC         // Farfield BC not implemented
+        , extrapolateDeriv }) );
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
@@ -507,9 +513,9 @@ class MultiMat {
 
       // compute boundary surface flux (including non-conservative) integrals
       for (const auto& b : m_bc)
-        tk::bndSurfIntFV( nmat, m_mat_blk, rdof, b.first,
+        tk::bndSurfIntFV( nmat, m_mat_blk, rdof, std::get<0>(b),
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, b.second, U, P, srcFlag, R, intsharp );
+                          velfn, std::get<1>(b), U, P, srcFlag, R, intsharp );
 
       // compute optional source term
       tk::srcIntFV( m_mat_blk, t, fd.Esuel().size()/4,

@@ -80,7 +80,13 @@ class MultiMat {
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
         , farfieldOutlet
-        , extrapolate } ) );
+        , extrapolate },
+        { invalidBC         // Dirichlet BC not implemented
+        , symmetryDeriv
+        , invalidBC         // Inlet BC not implemented
+        , invalidBC         // Outlet BC not implemented
+        , invalidBC         // Farfield BC not implemented
+        , extrapolateDeriv }) );
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
@@ -769,10 +775,10 @@ class MultiMat {
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( nmat, m_mat_blk, ndof, rdof,
-                        b.first, fd, geoFace, geoElem, inpoel, coord, t,
-                        m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
-                        riemannLoc, riemannDeriv, intsharp );
+        tk::bndSurfInt( nmat, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
+                        geoFace, geoElem, inpoel, solidx, coord, t,
+                        m_riemann, velfn, std::get<1>(b), std::get<2>(b), U, P,
+                        ndofel, dt, R, vriem, riemannLoc, riemannDeriv, intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*3*9*nmat+3*nsld, "Size of "
               "Riemann derivative vector incorrect" );
@@ -794,9 +800,9 @@ class MultiMat {
       // Code below commented until details about the form of these terms in the
       // \alpha_k g_k equations are sorted out.
       // // Compute integrals for inverse deformation in solid materials
-      // if (inciter::haveSolid(nmat, solidx))
-      //   tk::solidTermsVolInt( nmat, m_mat_blk, ndof, rdof, nelem,
-      //                         inpoel, coord, geoElem, U, P, ndofel, dt, R);
+      if (inciter::haveSolid(nmat, solidx))
+         tk::solidTermsVolInt( nmat, m_mat_blk, ndof, rdof, nelem,
+                               inpoel, coord, geoElem, U, P, ndofel, dt, R);
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::param, tag::multimat, tag::prelax >())

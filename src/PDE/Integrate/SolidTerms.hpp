@@ -20,6 +20,7 @@
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "EoS/EOS.hpp"
+#include "Reconstruction.hpp"
 
 namespace tk {
 
@@ -59,6 +60,24 @@ solidTermsSurfInt( std::size_t nmat,
                    const std::array< std::vector< tk::real >, 2 >& coordgp,
                    const tk::real dt,
                    std::vector< tk::real >& fl );
+
+//! Compute Solid Terms with boundary surface integrals
+void
+solidTermsBndSurfInt( std::size_t nmat,
+                      const std::size_t ndof,
+                      const std::size_t rdof,
+                      const std::array< tk::real, 3 >& fn,
+                      const std::size_t el,
+                      const std::vector< std::size_t >& solidx,
+                      const Fields& geoElem,
+                      const Fields& U,
+                      const std::array< std::vector< real >, 2 > uvar,
+                      const std::array< std::array< tk::real, 3>, 4 > coordel_l,
+                      const std::size_t igp,
+                      const std::array< std::vector< tk::real >, 2 >& coordgp,
+                      const tk::real dt,
+                      const StateFn& derivState,
+                      std::vector< tk::real >& fl );
 
 // Update the rhs by adding volume integration terms
 void
