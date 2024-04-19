@@ -859,7 +859,7 @@ fluxTerms(
   const auto& solidx =
     inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
-  std::vector< std::array< tk::real, 3 > > fl( ncomp );
+  std::vector< std::array< tk::real, 3 > > fl( ncomp, {{0, 0, 0}} );
 
   tk::real rho(0.0);
   for (std::size_t k=0; k<nmat; ++k)
@@ -922,19 +922,17 @@ fluxTerms(
         - u * asig[k][0][2] - v * asig[k][1][2] - w * asig[k][2][2];
 
       // conservative part of material inverse deformation gradient
+      // g_ij: \partial (g_il u_l) / \partial (x_j)
       if (solidx[k] > 0)
       {
         for (std::size_t i=0; i<3; ++i)
         {
-          fl[deformIdx(nmat,solidx[k],i,0)][0] = u*g[k][i][0];
-          fl[deformIdx(nmat,solidx[k],i,0)][1] = u*g[k][i][1];
-          fl[deformIdx(nmat,solidx[k],i,0)][2] = u*g[k][i][2];
-          fl[deformIdx(nmat,solidx[k],i,1)][0] = v*g[k][i][0];
-          fl[deformIdx(nmat,solidx[k],i,1)][1] = v*g[k][i][1];
-          fl[deformIdx(nmat,solidx[k],i,1)][2] = v*g[k][i][2];
-          fl[deformIdx(nmat,solidx[k],i,2)][0] = w*g[k][i][0];
-          fl[deformIdx(nmat,solidx[k],i,2)][1] = w*g[k][i][1];
-          fl[deformIdx(nmat,solidx[k],i,2)][2] = w*g[k][i][2];
+          for (std::size_t j=0; j<3; ++j)
+          {
+            fl[deformIdx(nmat,solidx[k],i,j)][j] =
+              u*g[k][i][0] + v*g[k][i][1] + w*g[k][i][2];
+          }
+          // other components are zero
         }
       }
     }

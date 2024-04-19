@@ -55,6 +55,16 @@ timeStepSizeMultiMatFV(
   const tk::Fields& P,
   std::vector< tk::real >& local_dte );
 
+//! Reset the solid tensors
+void
+resetSolidTensors(
+  std::size_t nmat,
+  std::size_t k,
+  std::size_t e,
+  tk::real apr_target,
+  tk::Fields& U,
+  tk::Fields& P );
+
 //! Get the inverse deformation gradient tensor for a material at given location
 std::array< std::array< tk::real, 3 >, 3 >
 getDeformGrad(
