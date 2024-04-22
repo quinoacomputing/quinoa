@@ -4,7 +4,89 @@ namespace inciter {
 
 @tableofcontents{xml}
 
-Under construction.
+This page describes the basic steps required to add parsing for a new control
+file keyword or block.
+
+This example adds a keyword `rho0` to the inputdeck:
+
+1. Add a tag in `Control/Tags.hpp`. This will be used to address `rho0`.
+@code{.diff}
+--- a/src/Control/Tags.hpp
++++ b/src/Control/Tags.hpp
+@@ -201,6 +201,7 @@ DEFTAG(rhor_jwl);
+ DEFTAG(Tr_jwl);
+ DEFTAG(Pr_jwl);
+ DEFTAG(mu);
++DEFTAG(rho0);
+ DEFTAG(cv);
+ DEFTAG(k);
+ DEFTAG(matidxmap);
+@endcode
+
+2. Add storage for `rho0` in the InputDeck. The InputDeck is defined in
+   `Control/Inciter/InputDeck/InputDeck.hpp`. The storage (tag and type) are
+   added in the required location.
+@code{.diff}
+--- a/src/Control/Inciter/InputDeck/InputDeck.hpp
++++ b/src/Control/Inciter/InputDeck/InputDeck.hpp
+@@ -109,6 +109,7 @@ using materialList = tk::TaggedTuple< brigand::list<
+   tag::Tr_jwl,   std::vector< tk::real >,
+   tag::Pr_jwl,   std::vector< tk::real >,
+   tag::mu,       std::vector< tk::real >,
++  tag::rho0,     std::vector< tk::real >,
+   tag::cv,       std::vector< tk::real >,
+   tag::k,        std::vector< tk::real >
+ > >;
+@endcode
+
+3. Add entry in the set of keywords in `Control/Inciter/InputDeck/InputDeck.hpp`
+   for documentation and user-help purposes.
+@code{.diff}
+--- a/src/Control/Inciter/InputDeck/InputDeck.hpp
++++ b/src/Control/Inciter/InputDeck/InputDeck.hpp
+@@ -913,6 +914,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
+         R"(This keyword is used to specify the material property, shear modulus
+         for solids, or dynamic viscosity for fluids.)", "vector of reals"});
+
++      keywords.insert({"rho0", "EoS rho0 parameter",
++        R"(This keyword is used to specify the material property rho0, which is
++        the density of initial state (units: kg/m3) of the material.)",
++        "vector of reals"});
++
+       keywords.insert({"cv", "specific heat at constant volume",
+         R"(This keyword is used to specify the material property, specific heat at
+         constant volume.)", "vector of reals"})
+@endcode
+
+4. Store lua-parsed value of `rho0` into the InputDeck. This is done in
+   `Control/Inciter/InputDeck/LuaParsing.cpp`. Use appropriate functions for this
+   purpose:
+    - `checkStoreMatProp()`
+    - `storeIfSpecd()`
+    - `storeOptIfSpecd()`
+    - `storeVecIfSpecd()`
+    - `storeOptVecIfSpecd()`
+
+   These functions provide basic error-checking. For this example we will use
+   `checkStoreMatProp()`
+@code{.diff}
+--- a/src/Control/Inciter/InputDeck/LuaParser.cpp
++++ b/src/Control/Inciter/InputDeck/LuaParser.cpp
+@@ -420,6 +420,10 @@ LuaParser::storeInputDeck(
+         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
+           mati_deck.get< tag::mu >());
+
++        // rho0
++        checkStoreMatProp(sol_mat[i+1], "rho0", ntype,
++          mati_deck.get< tag::rho0 >());
++
+         // assign solid
+         is_solid = true;
+       }
+@endcode
+
+5. Add further error-handling if required. This example does not require any
+   error-handling in addition to what is provided by `checkStoreMatProp()`.
 
 */
 } // inciter::
