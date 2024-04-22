@@ -24,10 +24,10 @@ disallow_in_source_builds()
 
 # Set version number: major.minor
 set(MAJOR_VER 0)
-set(MINOR_VER 3)
+set(MINOR_VER 5)
 
 # Set LA-CC number
-set(LACC "20072")
+set(LACC "4694")
 
 # Sets CMAKE_INSTALL_{BIN,LIB}DIR needed for multilib support
 include(GNUInstallDirs)
