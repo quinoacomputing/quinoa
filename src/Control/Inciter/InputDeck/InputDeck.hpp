@@ -109,6 +109,7 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::Tr_jwl,   std::vector< tk::real >,
   tag::Pr_jwl,   std::vector< tk::real >,
   tag::mu,       std::vector< tk::real >,
+  tag::rho0,     std::vector< tk::real >,
   tag::cv,       std::vector< tk::real >,
   tag::k,        std::vector< tk::real >
 > >;
@@ -912,6 +913,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"mu", "shear modulus/dynamic viscosity",
         R"(This keyword is used to specify the material property, shear modulus
         for solids, or dynamic viscosity for fluids.)", "vector of reals"});
+
+      keywords.insert({"rho0", "EoS rho0 parameter",
+        R"(This keyword is used to specify the material property rho0, which is
+        the density of initial state (units: kg/m3) of the material.)",
+        "vector of reals"});
 
       keywords.insert({"cv", "specific heat at constant volume",
         R"(This keyword is used to specify the material property, specific heat at

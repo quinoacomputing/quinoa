@@ -420,6 +420,10 @@ LuaParser::storeInputDeck(
         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
           mati_deck.get< tag::mu >());
 
+        // rho0
+        checkStoreMatProp(sol_mat[i+1], "rho0", ntype,
+          mati_deck.get< tag::rho0 >());
+
         // assign solid
         is_solid = true;
       }
@@ -1275,9 +1279,9 @@ LuaParser::checkStoreMatProp(
 {
   // check validity of table
   if (!table[key].valid())
-    Throw("Material property " + key + " not specified");
+    Throw("Material property '" + key + "' not specified");
   if (sol::table(table[key]).size() != vecsize)
-    Throw("Incorrect number of " + key + "'s specified. Expected " +
+    Throw("Incorrect number of '" + key + "'s specified. Expected " +
       std::to_string(vecsize));
 
   // store values from table to inputdeck
