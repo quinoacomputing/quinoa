@@ -76,7 +76,8 @@ inciter = {
       "specific_total_energy",
       "x-velocity",
       "y-velocity",
-      "z-velocity"
+      "z-velocity",
+      "g_tensor"
     }
   }
 

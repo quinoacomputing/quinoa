@@ -1691,17 +1691,6 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
-  // Add inverse deformation gradient tensor to element-centered field output
-  auto defgrad = g_dgpde[d->MeshId()].cellAvgDeformGrad(m_u,
-    myGhosts()->m_fd.Esuel().size()/4);
-  if (!defgrad[0].empty()) {
-    for (const auto& [child,parent] : addedTets)
-      for (auto& gij : defgrad)
-        gij[child] = static_cast< tk::real >(gij[parent]);
-    for (const auto& gij : defgrad)
-      elemfields.push_back(gij);
-  }
-
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
   auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
@@ -1714,12 +1703,6 @@ DG::writeFields(
     elemfieldnames.push_back( "NDOF" );
 
   elemfieldnames.push_back( "shock_marker" );
-
-  if (!defgrad[0].empty()) {
-    for (std::size_t i=1; i<=3; ++i)
-      for (std::size_t j=1; j<=3; ++j)
-        elemfieldnames.push_back("g"+std::to_string(i)+std::to_string(j));
-  }
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );

@@ -81,7 +81,8 @@ inciter = {
       "specific_total_energy",
       "x-velocity",
       "y-velocity",
-      "z-velocity"
+      "z-velocity",
+      "g_tensor"
     },
     elemalias = {
       "volfrac1",
@@ -90,7 +91,8 @@ inciter = {
       "total_energy_density",
       "x-velocity",
       "y-velocity",
-      "z-velocity"
+      "z-velocity",
+      ""
     }
   }
 
