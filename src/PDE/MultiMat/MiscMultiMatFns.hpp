@@ -61,7 +61,6 @@ resetSolidTensors(
   std::size_t nmat,
   std::size_t k,
   std::size_t e,
-  tk::real apr_target,
   tk::Fields& U,
   tk::Fields& P );
 

@@ -333,6 +333,7 @@ std::vector< std::string > MultiMatDiagNames(std::size_t nmat)
 // *****************************************************************************
 {
   std::vector< std::string > n;
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   for (std::size_t k=0; k<nmat; ++k)
     n.push_back( "f"+std::to_string(k+1) );
@@ -343,6 +344,14 @@ std::vector< std::string > MultiMatDiagNames(std::size_t nmat)
   n.push_back( "frw" );
   for (std::size_t k=0; k<nmat; ++k)
     n.push_back( "fre"+std::to_string(k+1) );
+  for (std::size_t k=0; k<nmat; ++k) {
+    if (solidx[k]) {
+      for (std::size_t i=1; i<=3; ++i)
+        for (std::size_t j=1; j<=3; ++j)
+          n.push_back( "g"+std::to_string(k+1)+
+            "_"+std::to_string(i)+std::to_string(j) );
+    }
+  }
 
   return n;
 }
