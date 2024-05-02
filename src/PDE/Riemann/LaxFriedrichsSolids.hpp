@@ -198,31 +198,10 @@ struct LaxFriedrichsSolids {
     l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
 
     // Store Riemann asign_ij (3*nsld)
-    if (std::fabs(l_plus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (solidx[k] > 0) {
-          for (std::size_t i=0; i<3; ++i)
-            flx.push_back( asign_l[k][i] );
-        }
-      }
-    }
-    else if (std::fabs(l_minus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (solidx[k] > 0) {
-          for (std::size_t i=0; i<3; ++i)
-            flx.push_back( asign_r[k][i] );
-        }
-      }
-    }
-    else
-    {
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (solidx[k] > 0) {
-          for (std::size_t i=0; i<3; ++i)
-            flx.push_back( 0.5 * (asign_l[k][i] + asign_r[k][i]) );
-        }
+    for (std::size_t k=0; k<nmat; ++k) {
+      if (solidx[k] > 0) {
+        for (std::size_t i=0; i<3; ++i)
+          flx.push_back( 0.5 * (asign_l[k][i] + asign_r[k][i]) );
       }
     }
 
