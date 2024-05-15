@@ -37,6 +37,26 @@ std::map< std::string, tk::GetVarFn > MultiMatOutVarFn()
   OutFnMap["y-velocity"] = multimat::velocityOutVar<1>;
   OutFnMap["z-velocity"] = multimat::velocityOutVar<2>;
   OutFnMap["material_indicator"] = multimat::matIndicatorOutVar;
+  // Cauchy stress tensor
+  OutFnMap["stress11"] = multimat::stressOutVar<0,0>;
+  OutFnMap["stress12"] = multimat::stressOutVar<0,1>;
+  OutFnMap["stress13"] = multimat::stressOutVar<0,2>;
+  OutFnMap["stress21"] = multimat::stressOutVar<1,0>;
+  OutFnMap["stress22"] = multimat::stressOutVar<1,1>;
+  OutFnMap["stress23"] = multimat::stressOutVar<1,2>;
+  OutFnMap["stress31"] = multimat::stressOutVar<2,0>;
+  OutFnMap["stress32"] = multimat::stressOutVar<2,1>;
+  OutFnMap["stress33"] = multimat::stressOutVar<2,2>;
+  // Inverse deformation gradient tensor
+  OutFnMap["g11"] = multimat::defGradOutVar<0,0>;
+  OutFnMap["g12"] = multimat::defGradOutVar<0,1>;
+  OutFnMap["g13"] = multimat::defGradOutVar<0,2>;
+  OutFnMap["g21"] = multimat::defGradOutVar<1,0>;
+  OutFnMap["g22"] = multimat::defGradOutVar<1,1>;
+  OutFnMap["g23"] = multimat::defGradOutVar<1,2>;
+  OutFnMap["g31"] = multimat::defGradOutVar<2,0>;
+  OutFnMap["g32"] = multimat::defGradOutVar<2,1>;
+  OutFnMap["g33"] = multimat::defGradOutVar<2,2>;
 
   return OutFnMap;
 }
@@ -313,6 +333,7 @@ std::vector< std::string > MultiMatDiagNames(std::size_t nmat)
 // *****************************************************************************
 {
   std::vector< std::string > n;
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   for (std::size_t k=0; k<nmat; ++k)
     n.push_back( "f"+std::to_string(k+1) );
@@ -323,6 +344,14 @@ std::vector< std::string > MultiMatDiagNames(std::size_t nmat)
   n.push_back( "frw" );
   for (std::size_t k=0; k<nmat; ++k)
     n.push_back( "fre"+std::to_string(k+1) );
+  for (std::size_t k=0; k<nmat; ++k) {
+    if (solidx[k]) {
+      for (std::size_t i=1; i<=3; ++i)
+        for (std::size_t j=1; j<=3; ++j)
+          n.push_back( "g"+std::to_string(k+1)+
+            "_"+std::to_string(i)+std::to_string(j) );
+    }
+  }
 
   return n;
 }

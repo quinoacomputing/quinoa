@@ -68,7 +68,8 @@ struct OutVar {
     bool is_prim(false);
 
     if (varFnIdx.find("pressure") != std::string::npos ||
-        varFnIdx.find("velocity") != std::string::npos )
+        varFnIdx.find("velocity") != std::string::npos ||
+        varFnIdx.find("stress") != std::string::npos )
     { is_prim = true; }
     else if ( name.length() == 2 &&
       (name.find('u') != std::string::npos ||

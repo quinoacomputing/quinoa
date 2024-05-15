@@ -127,6 +127,67 @@ matIndicatorOutVar( const tk::Fields& U, std::size_t rdof )
   return m;
 }
 
+//! Compute Cauchy stress component for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \tparam idir Physical direction, encoded as 0:x, 1:y, 2:z
+//! \tparam jdir Physical direction, encoded as 0:x, 1:y, 2:z
+//! \param[in] U Numerical solution
+//! \param[in] rdof Number of reconstructed solution DOFs
+//! \return Cauchy stress component ready to be output to file
+template< tk::ncomp_t idir, tk::ncomp_t jdir >
+tk::GetVarFn::result_type
+stressOutVar( const tk::Fields& U, std::size_t rdof )
+{
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+
+  std::vector< tk::real > cs(U.nunk(), 0.0);
+  for (std::size_t e=0; e<cs.size(); ++e) {
+    for (std::size_t k=0; k<nmat; ++k) {
+      tk::real asigij(0.0);
+
+      if (solidx[k] > 0) asigij =
+        U(e, stressDofIdx(nmat,solidx[k],stressCmp[idir][jdir],rdof,0));
+
+      if (idir == jdir)
+        asigij -= U(e, pressureDofIdx(nmat,k,rdof,0));
+
+      cs[e] += asigij;
+    }
+  }
+
+  return cs;
+}
+
+//! Compute inverse deformation gradient tensor component for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \tparam idir Physical direction, encoded as 0:x, 1:y, 2:z
+//! \tparam jdir Physical direction, encoded as 0:x, 1:y, 2:z
+//! \param[in] U Numerical solution
+//! \param[in] rdof Number of reconstructed solution DOFs
+//! \return Inverse deformation gradient tensor component to be output to file
+template< tk::ncomp_t idir, tk::ncomp_t jdir >
+tk::GetVarFn::result_type
+defGradOutVar( const tk::Fields& U, std::size_t rdof )
+{
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+
+  std::vector< tk::real > g(U.nunk(), 0.0);
+  for (std::size_t e=0; e<g.size(); ++e) {
+    for (std::size_t k=0; k<nmat; ++k) {
+      tk::real agij(0.0);
+
+      if (solidx[k] > 0) agij = U(e, volfracDofIdx(nmat,k,rdof,0)) *
+        U(e, deformDofIdx(nmat,solidx[k],idir,jdir,rdof,0));
+
+      g[e] += agij;
+    }
+  }
+
+  return g;
+}
+
 } // multimat::
 
 #if defined(__clang__)

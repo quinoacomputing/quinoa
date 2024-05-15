@@ -634,7 +634,7 @@ LuaParser::storeInputDeck(
 
     // Assign outvar
     auto& foutvar = fo_deck.get< tag::outvar >();
-    std::size_t nevar(0), nnvar(0);
+    std::size_t nevar(0), nnvar(0), tensorcompvar(0);
     std::size_t nmat(1);
     if (gideck.get< tag::pde >() == inciter::ctr::PDEType::MULTIMAT)
       nmat = gideck.get< tag::multimat, tag::nmat >();
@@ -666,6 +666,8 @@ LuaParser::storeInputDeck(
       for (std::size_t i=0; i<nevar; ++i) {
         std::string varname(lua_ideck["field_output"]["elemvar"][i+1]);
         std::string alias(elemalias[i]);
+        // add extra outvars for tensor components
+        if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
         addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
           gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
       }
@@ -676,12 +678,14 @@ LuaParser::storeInputDeck(
       for (std::size_t i=0; i<nnvar; ++i) {
         std::string varname(lua_ideck["field_output"]["nodevar"][i+1]);
         std::string alias(nodealias[i]);
+        // add extra outvars for tensor components
+        if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
         addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
           gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
       }
     }
 
-    Assert(foutvar.size() == (nevar + nnvar),
+    Assert(foutvar.size() == (nevar + nnvar + tensorcompvar),
       "Incorrectly sized outvar vector.");
   }
   else {
@@ -1358,6 +1362,20 @@ LuaParser::addOutVar(
   // -------------------------------
   else if (varname.find("analytic") != std::string::npos) {
     foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, 0) );
+  }
+  // name-based tensor quantity specification
+  // ----------------------------------------
+  else if (varname.find("_tensor") != std::string::npos) {
+    std::string namet(varname);
+    // remove the "_tensor" from the varname
+    for (std::size_t i=0; i<7; ++i) namet.pop_back();
+
+    for (std::size_t i=1; i<=3; ++i) {
+      for (std::size_t j=1; j<=3; ++j) {
+        std::string tij(namet + std::to_string(i) + std::to_string(j));
+        foutvar.emplace_back( inciter::ctr::OutVar(c, tij, alias, 0, tij) );
+      }
+    }
   }
   // name-based quantity specification
   // ---------------------------------

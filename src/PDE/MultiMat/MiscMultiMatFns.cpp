@@ -183,7 +183,7 @@ cleanTraceMultiMat(
           U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk_new;
           U(e, energyDofIdx(nmat, k, rdof, 0)) = alk_new*rhoEmat;
           P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new*prelax;
-          resetSolidTensors(nmat, k, e, alk_new*prelax, U, P);
+          resetSolidTensors(nmat, k, e, U, P);
         }
       }
       // check for unbounded volume fractions
@@ -200,7 +200,7 @@ cleanTraceMultiMat(
           gmax);
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = 1e-14 *
           p_target;
-        resetSolidTensors(nmat, k, e, 1e-14*p_target, U, P);
+        resetSolidTensors(nmat, k, e, U, P);
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, volfracDofIdx(nmat, k, rdof, i)) = 0.0;
           U(e, densityDofIdx(nmat, k, rdof, i)) = 0.0;
@@ -220,7 +220,7 @@ cleanTraceMultiMat(
           * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, prelax, gk );
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
           prelax;
-        resetSolidTensors(nmat, k, e, alk*prelax, U, P);
+        resetSolidTensors(nmat, k, e, U, P);
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
           P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
@@ -548,7 +548,6 @@ resetSolidTensors(
   std::size_t nmat,
   std::size_t k,
   std::size_t e,
-  tk::real apr_target,
   tk::Fields& U,
   tk::Fields& P )
 // *****************************************************************************
@@ -556,7 +555,6 @@ resetSolidTensors(
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] k Material id whose deformation gradient is required
 //! \param[in] e Id of element whose solution is to be limited
-//! \param[in] apr_target Target partial pressure (alpha_k * p_k)
 //! \param[in/out] U High-order solution vector which gets modified
 //! \param[in/out] P High-order vector of primitives which gets modified
 // *****************************************************************************
@@ -571,10 +569,8 @@ resetSolidTensors(
         if (i==j) U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = 1.0;
         else U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = 0.0;
 
-        // Cauchy-stress reset
-        if (i==j) P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0))
-          = -apr_target;
-        else P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
+        // elastic Cauchy-stress reset
+        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
 
         // high-order reset
         for (std::size_t l=1; l<rdof; ++l) {

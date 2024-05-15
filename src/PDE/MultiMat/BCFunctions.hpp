@@ -71,6 +71,11 @@ namespace inciter {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             g[i][j] = ul[deformIdx(nmat,solidx[k],i,j)];
+        // Internal Cauchy stress tensor
+        std::array< std::array< tk::real, 3 >, 3 > s;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            s[i][j] = ul[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])];
         // Make reflection matrix
         std::array< std::array< tk::real, 3 >, 3 >
         reflectionMat{{{1,0,0}, {0,1,0}, {0,0,1}}};
@@ -79,10 +84,14 @@ namespace inciter {
             reflectionMat[i][j] -= 2*fn[i]*fn[j];
         // Reflect g
         g = tk::reflectTensor(g, reflectionMat);
-        // Copy g into ur
+        // Reflect s
+        s = tk::reflectTensor(s, reflectionMat);
+        // Copy g and s into ur
         for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
+          for (std::size_t j=0; j<3; ++j) {
             ur[deformIdx(nmat,solidx[k],i,j)] = g[i][j];
+            ur[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])] = s[i][j];
+          }
       }
     }
     ur[momentumIdx(nmat, 0)] = rho * v1r;
