@@ -120,6 +120,7 @@ JWL::pressure(
   //// reference energy (input quantity, might need for calculation)
   //tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
 
+  alpha = std::max(1e-14,alpha);
   tk::real partpressure =
     m_a*(alpha - m_w*arho/(m_rho0*m_r1))*exp(-m_r1*alpha*m_rho0/arho) +
     m_b*(alpha - m_w*arho/(m_rho0*m_r2))*exp(-m_r2*alpha*m_rho0/arho) +
@@ -186,6 +187,7 @@ JWL::soundspeed(
 //! \return Material speed of sound using the stiffened-gas EoS
 // *************************************************************************
 {
+  alpha = std::max(1e-14,alpha);
   // limiting pressure to near-zero
   auto apr_eff = std::max(alpha*
     min_eff_pressure(1e-4*std::abs(apr/alpha), arho, alpha), apr);
@@ -267,6 +269,7 @@ JWL::temperature(
 //! \return Material temperature using the stiffened-gas EoS
 // *************************************************************************
 {
+  alpha = std::max(1e-14,alpha);
   tk::real rho = arho/alpha;
 
   //// reference energy (input quantity, might need for calculation)
@@ -294,6 +297,7 @@ JWL::min_eff_pressure(
 //! \return Minimum pressure allowed by physical constraints
 // *************************************************************************
 {
+  alpha = std::max(1e-14,alpha);
   auto co1 = m_rho0*alpha*alpha/(arho*arho);
   auto co2 = alpha*(1.0+m_w)/arho;
 
