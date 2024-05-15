@@ -663,13 +663,36 @@ pressureRelaxationIntFV(
 
     // compute pressure relaxation terms
     std::vector< real > s_prelax(ncomp, 0.0);
+
+    // terms to ensure only existing materials are relaxed
+    real e_leftover(0), vf_leftover(0);
+    auto almax(0.0);
+    std::size_t kmax = 0;
     for (std::size_t k=0; k<nmat; ++k)
     {
+      real alphamat = state[volfracIdx(nmat, k)];
       auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
         * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
-      s_prelax[volfracIdx(nmat, k)] = s_alpha;
-      s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+
+      // only perform prelax on existing quantities
+      if (inciter::matExists(state[volfracIdx(nmat,k)])) {
+        s_prelax[volfracIdx(nmat, k)] = s_alpha;
+        s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+      } else {
+        vf_leftover += s_alpha;
+        e_leftover  += - pb*s_alpha;
+      }
+      // get material that takes up most volume
+      if (alphamat > almax)
+      {
+        almax = alphamat;
+        kmax = k;
+      }
     }
+
+    // add leftovers of non-existent mat to mat with most volume
+    s_prelax[volfracIdx(nmat, kmax)] += vf_leftover;
+    s_prelax[energyIdx(nmat, kmax)] += e_leftover;
 
     for (ncomp_t c=0; c<ncomp; ++c)
     {
