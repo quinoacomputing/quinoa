@@ -88,6 +88,7 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::prelax_timescale, tk::real,
   tag::intsharp,         int,
   tag::intsharp_param,   tk::real,
+  tag::sos_mass_avg,     int,
   tag::problem,          ProblemType
 > >;
 
@@ -787,6 +788,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         sharpening. This parameter affects how many cells the material interfaces
         span, after the use of sharpening. It is used for multimat and transport,
         and has no effect for the other PDE types.)", "real" });
+
+      keywords.insert({"sos_mass_avg",
+        "Toggle method for calculating speed of sound in a cell",
+        R"(This keyword is used to specify if the speed of sound should be 
+        calculated using a mass average of materials in the cell, rather than
+        the maximum speed of sound across materials. It is used for multimat,
+        and has no effect for the other PDE types.)", "uint 0/1" });
 
       // Dependent variable name
       keywords.insert({"depvar",

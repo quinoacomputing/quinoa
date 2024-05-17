@@ -304,13 +304,16 @@ LuaParser::storeInputDeck(
       gideck.get< tag::multimat, tag::prelax >(), 1);
     storeIfSpecd< tk::real >(
       lua_ideck["multimat"], "prelax_timescale",
-      gideck.get< tag::multimat, tag::prelax_timescale >(), 0.25);
+      gideck.get< tag::multimat, tag::prelax_timescale >(), 0.25); 
     storeIfSpecd< int >(
       lua_ideck["multimat"], "intsharp",
       gideck.get< tag::multimat, tag::intsharp >(), 0);
     storeIfSpecd< tk::real >(
       lua_ideck["multimat"], "intsharp_param",
       gideck.get< tag::multimat, tag::intsharp_param >(), 1.8);
+    storeIfSpecd< int >(
+      lua_ideck["multimat"], "sos_mass_avg",
+      gideck.get< tag::multimat, tag::sos_mass_avg >(), 0);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["multimat"], "problem",
       gideck.get< tag::multimat, tag::problem >(),

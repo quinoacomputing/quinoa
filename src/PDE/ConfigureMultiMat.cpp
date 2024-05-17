@@ -97,6 +97,10 @@ infoMultiMat( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
   auto intsharp = g_inputdeck.get< eq, tag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
+  auto sos_mass_avg = g_inputdeck.get< eq, tag::sos_mass_avg >();
+  nfo.emplace_back( "mass average speed of sound",
+                    std::to_string( sos_mass_avg ) );
+
   auto ncomp = g_inputdeck.get< tag::ncomp >();
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
