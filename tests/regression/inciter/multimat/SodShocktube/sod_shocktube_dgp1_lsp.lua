@@ -9,6 +9,7 @@ inciter = {
   limiter = "vertexbasedp1",
   limsol_projection = true,
   shock_detector_coeff = 0.0,
+  lowspeed_kp = 1.0,
 
   partitioning = "mj",
 

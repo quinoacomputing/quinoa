@@ -7,6 +7,7 @@ inciter = {
   ttyi = 1,    -- TTY output interval
   scheme = "dg",
   limsol_projection = false,
+  lowspeed_kp = 1.0,
 
   multimat = {
     physics = "euler",

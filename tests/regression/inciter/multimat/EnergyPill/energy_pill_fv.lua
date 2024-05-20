@@ -7,6 +7,7 @@ inciter = {
   cfl = 0.9,
 
   scheme = "fv",
+  lowspeed_kp = 1.0,
   limiter = "vertexbasedp1",
 
   partitioning = "mj",
