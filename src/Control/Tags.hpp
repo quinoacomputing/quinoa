@@ -180,6 +180,7 @@ DEFTAG(prelax);
 DEFTAG(prelax_timescale);
 DEFTAG(intsharp);
 DEFTAG(intsharp_param);
+DEFTAG(dt_sos_massavg);
 DEFTAG(depvar);
 DEFTAG(sys);
 DEFTAG(physics);
