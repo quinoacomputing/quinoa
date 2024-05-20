@@ -775,28 +775,27 @@ class MultiMat {
 
         // acoustic speed (this should be consistent with time-step calculation)
         ss[e] = 0.0;
-        const auto use_mass_avg = 
+        const auto use_mass_avg =
           g_inputdeck.get< tag::multimat, tag::sos_mass_avg >();
         tk::real mixtureDensity = 0.0;
         for (std::size_t k=0; k<nmat; ++k)
         {
-        if (use_mass_avg > 0)
+          if (use_mass_avg > 0)
           {
-            if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-              // mass averaging SoS
-              auto densXVolFrac =
-                ugp[volfracIdx(nmat,k)]*ugp[densityIdx(nmat,k)];
+            // mass averaging SoS
+            auto densXVolFrac =
+              ugp[volfracIdx(nmat,k)]*ugp[densityIdx(nmat,k)];
 
-              ss[e] += densXVolFrac*m_mat_blk[k].compute< EOS::soundspeed >(
-                ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-                ugp[volfracIdx(nmat, k)], k );
+            ss[e] += densXVolFrac*m_mat_blk[k].compute< EOS::soundspeed >(
+              ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+              ugp[volfracIdx(nmat, k)], k );
 
-              mixtureDensity += densXVolFrac;
-            }
+            mixtureDensity += densXVolFrac;
           }
           else
           {
-            if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+            if (ugp[volfracIdx(nmat, k)] > 1.0e-04)
+            {
               ss[e] = std::max( ss[e], m_mat_blk[k].compute< EOS::soundspeed >(
                 ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
                 ugp[volfracIdx(nmat, k)], k ) );
