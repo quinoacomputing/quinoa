@@ -264,10 +264,10 @@ using ConfigMembers = brigand::list<
   tag::operator_reorder, bool,
 
   // discretization scheme choices
-  tag::scheme, SchemeType,
-  tag::ndof,   std::size_t,
-  tag::rdof,   std::size_t,
-  tag::flux,   FluxType,
+  tag::scheme,      SchemeType,
+  tag::ndof,        std::size_t,
+  tag::rdof,        std::size_t,
+  tag::flux,        FluxType,
   tag::lowspeed_kp, tk::real,
 
   // limiter options
