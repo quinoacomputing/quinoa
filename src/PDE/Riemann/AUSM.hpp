@@ -41,6 +41,7 @@ struct AUSM {
         const std::vector< std::array< tk::real, 3 > >& = {} )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+    auto k_p = g_inputdeck.get< tag::lowspeed_kp >();
 
     auto ncomp = u[0].size()-(3+nmat);
     std::vector< tk::real > flx( ncomp, 0 );
@@ -115,7 +116,7 @@ struct AUSM {
     // 137-170" for more mathematical explanation. k_u is the velocity diffusion
     // term and k_p is the pressure diffusion term. These two terms reduce
     // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
-    tk::real k_u(1.0), k_p(1.0), f_a(1.0);
+    tk::real k_u(1.0), f_a(1.0);
 
     // Split Mach polynomials
     auto msl = splitmach_ausm( f_a, ml );

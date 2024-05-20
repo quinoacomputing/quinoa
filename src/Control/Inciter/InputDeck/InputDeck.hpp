@@ -268,6 +268,7 @@ using ConfigMembers = brigand::list<
   tag::ndof,   std::size_t,
   tag::rdof,   std::size_t,
   tag::flux,   FluxType,
+  tag::lowspeed_kp, tk::real,
 
   // limiter options
   tag::limiter,              LimiterType,
@@ -711,6 +712,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         function used for discontinuous Galerkin (DG) spatial discretization
         used in inciter. It is only set up for for multi-material hydro, and
         not selectable for anything else.)"});
+
+      keywords.insert({"lowspeed_kp",
+        "Select the low-speed coefficient K_p in the AUSM+up flux function",
+        R"(This keyword is used to select the low-speed coefficient K_p in the
+        AUSM+up flux function used for the DG or FV spatial discretization for
+        multi-material hydro, and not used for anything else. The default
+        value is 0, and recommended value for low speed flows (Mach < 0.1) is
+        1.)"});
 
       keywords.insert({"hll",
         "Select the Harten-Lax-vanLeer (HLL) flux function",
