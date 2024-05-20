@@ -493,6 +493,8 @@ timeStepSizeMultiMatFV(
 {
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto use_mass_avg =
+    g_inputdeck.get< tag::multimat, tag::dt_sos_massavg >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -519,14 +521,29 @@ timeStepSizeMultiMatFV(
 
     // acoustic speed
     tk::real a = 0.0;
+    tk::real mixtureDensity = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
     {
-      if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
+      if (use_mass_avg > 0)
+      {
+        // mass averaging SoS
+        a += ugp[densityIdx(nmat,k)]*mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-          ugp[volfracIdx(nmat, k)], k ) );
+          ugp[volfracIdx(nmat, k)], k );
+
+        mixtureDensity += ugp[densityIdx(nmat,k)];
+      }
+      else
+      {
+        if (ugp[volfracIdx(nmat, k)] > 1.0e-04)
+        {
+          a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
+            ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+            ugp[volfracIdx(nmat, k)], k ) );
+        }
       }
     }
+    if (use_mass_avg > 0) a /= mixtureDensity;
 
     // characteristic wave speed
     auto v_char = vmag + a;
