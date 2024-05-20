@@ -757,6 +757,8 @@ class MultiMat {
 
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto use_mass_avg =
+        g_inputdeck.get< tag::multimat, tag::dt_sos_massavg >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       std::size_t ncomp = U.nprop()/rdof;
       std::size_t nprim = P.nprop()/rdof;
@@ -775,22 +777,18 @@ class MultiMat {
 
         // acoustic speed (this should be consistent with time-step calculation)
         ss[e] = 0.0;
-        const auto use_mass_avg =
-          g_inputdeck.get< tag::multimat, tag::sos_mass_avg >();
         tk::real mixtureDensity = 0.0;
         for (std::size_t k=0; k<nmat; ++k)
         {
           if (use_mass_avg > 0)
           {
             // mass averaging SoS
-            auto densXVolFrac =
-              ugp[volfracIdx(nmat,k)]*ugp[densityIdx(nmat,k)];
-
-            ss[e] += densXVolFrac*m_mat_blk[k].compute< EOS::soundspeed >(
+            ss[e] += ugp[densityIdx(nmat,k)]*
+              m_mat_blk[k].compute< EOS::soundspeed >(
               ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
               ugp[volfracIdx(nmat, k)], k );
 
-            mixtureDensity += densXVolFrac;
+            mixtureDensity += ugp[densityIdx(nmat,k)];
           }
           else
           {

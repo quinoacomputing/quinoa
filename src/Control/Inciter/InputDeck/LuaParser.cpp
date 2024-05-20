@@ -312,8 +312,8 @@ LuaParser::storeInputDeck(
       lua_ideck["multimat"], "intsharp_param",
       gideck.get< tag::multimat, tag::intsharp_param >(), 1.8);
     storeIfSpecd< int >(
-      lua_ideck["multimat"], "sos_mass_avg",
-      gideck.get< tag::multimat, tag::sos_mass_avg >(), 0);
+      lua_ideck["multimat"], "dt_sos_massavg",
+      gideck.get< tag::multimat, tag::dt_sos_massavg >(), 0);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["multimat"], "problem",
       gideck.get< tag::multimat, tag::problem >(),
