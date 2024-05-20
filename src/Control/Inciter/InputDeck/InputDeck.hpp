@@ -791,10 +791,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"dt_sos_massavg",
         "Toggle method for calculating speed of sound used for time step in a cell",
-        R"(This keyword is used to specify the method to calculate the speed of 
-        sound in a cell used for the time step. If set to 1, the speed of sound 
+        R"(This keyword is used to specify the method to calculate the speed of
+        sound in a cell used for the time step. If set to 1, the speed of sound
         will be calculated using the mass average, rather than the maximum value
-        across materials. It is used for multimat, and has no effect for the 
+        across materials. It is used for multimat, and has no effect for the
         other PDE types.)", "uint 0/1" });
 
       // Dependent variable name
