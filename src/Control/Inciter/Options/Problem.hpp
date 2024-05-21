@@ -39,6 +39,7 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    SEDOV_BLASTWAVE,
                                    INTERFACE_ADVECTION,
                                    GAUSS_HUMP_COMPFLOW,
+                                   ISENTROPIC_VORTEX,
                                    WATERAIR_SHOCKTUBE,
                                    SHOCK_HEBUBBLE,
                                    UNDERWATER_EX,
@@ -71,6 +72,7 @@ class Problem : public tk::Toggle< ProblemType > {
                                   , kw::sedov_blastwave
                                   , kw::interface_advection
                                   , kw::gauss_hump_compflow
+                                  , kw::isentropic_vortex
                                   , kw::waterair_shocktube
                                   , kw::shock_hebubble
                                   , kw::underwater_ex
@@ -107,6 +109,8 @@ class Problem : public tk::Toggle< ProblemType > {
             kw::interface_advection::name() },
           { ProblemType::GAUSS_HUMP_COMPFLOW,
             kw::gauss_hump_compflow::name() },
+          { ProblemType::ISENTROPIC_VORTEX,
+            kw::isentropic_vortex::name() },
           { ProblemType::WATERAIR_SHOCKTUBE, kw::waterair_shocktube::name() },
           { ProblemType::SHOCK_HEBUBBLE, kw::shock_hebubble::name() },
           { ProblemType::UNDERWATER_EX, kw::underwater_ex::name() },
@@ -136,6 +140,8 @@ class Problem : public tk::Toggle< ProblemType > {
             ProblemType::INTERFACE_ADVECTION },
           { kw::gauss_hump_compflow::string(),
             ProblemType::GAUSS_HUMP_COMPFLOW },
+          { kw::isentropic_vortex::string(),
+            ProblemType::ISENTROPIC_VORTEX },
           { kw::waterair_shocktube::string(),
             ProblemType::WATERAIR_SHOCKTUBE },
           { kw::shock_hebubble::string(),

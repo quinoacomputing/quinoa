@@ -306,6 +306,7 @@ class InputDeck : public tk::TaggedTuple< InputDeckMembers > {
                                  , kw::interface_advection
                                  , kw::gauss_hump_compflow
                                  , kw::waterair_shocktube
+                                 , kw::isentropic_vortex
                                  , kw::shock_hebubble
                                  , kw::underwater_ex
                                  , kw::shockdensity_wave

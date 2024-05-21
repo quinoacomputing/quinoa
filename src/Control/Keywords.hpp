@@ -2334,6 +2334,23 @@ struct gauss_hump_compflow_info {
 using gauss_hump_compflow = keyword< gauss_hump_compflow_info,
                             TAOCPP_PEGTL_STRING("gauss_hump_compflow") >;
 
+struct isentropic_vortex_info {
+  static std::string name()
+  { return "Advection of an isentropic vortex for Euler equations"; }
+  static std::string shortDescription()
+  { return "Select advection of an isentropic vortex test problem"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select an isentropic vortex advection test
+    problem. The initial and boundary conditions are specified to set up the
+    test problem suitable to exercise and test the discretization of the
+    Euler equations. Example: "problem isentropic_vortex".)"; }
+  struct expect {
+    static std::string description() { return "string"; }
+  };
+};
+using isentropic_vortex = keyword< isentropic_vortex_info,
+                            TAOCPP_PEGTL_STRING("isentropic_vortex") >;
+
 struct waterair_shocktube_info {
   static std::string name() { return "Water-air shock-tube"; }
   static std::string shortDescription() { return
@@ -2487,6 +2504,7 @@ struct problem_info {
                   + equilinterface_advect::string() + "\' | \'"
                   + richtmyer_meshkov::string() + "\' | \'"
                   + sinewave_packet::string() + "\' | \'"
+                  + isentropic_vortex::string() + "\' | \'"
                   + gauss_hump_compflow::string() + '\'';
     }
   };
