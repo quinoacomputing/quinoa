@@ -18,11 +18,10 @@
 namespace inciter {
 
 std::vector< std::string >
-numericFieldNames( tk::Centering c, char /*depvar*/ )
+numericFieldNames( tk::Centering c )
 // *****************************************************************************
 // Collect field output names from numerical solution based on user input
 //! \param[in] c Extract variable names only with this centering
-// //! \param[in] depvar Consider this depvar (mesh) only, ignore if 0
 //! \return Output field names requested by user
 // *****************************************************************************
 {
@@ -42,15 +41,13 @@ std::vector< std::vector< tk::real > >
 numericFieldOutput( const tk::Fields& U,
                     tk::Centering c,
                     const std::map< std::string, tk::GetVarFn >& outvarfn,
-                    const tk::Fields& P,
-                    char /*depvar*/ )
+                    const tk::Fields& P )
 // *****************************************************************************
 // Collect field output from numerical solution based on user input
 //! \param[in] U Solution data to extract from
 //! \param[in] c Extract variables only with this centering
 //! \param[in] outvarfn Map of outvar functions
 //! \param[in] P Optional primitive variable solution data to extract from
-// //! \param[in] depvar Consider this depvar (mesh) only, ignore if 0
 //! \return Output fields requested by user
 // *****************************************************************************
 {

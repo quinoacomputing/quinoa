@@ -1417,19 +1417,13 @@ ALECG::writeFields( CkCallback c )
     auto d = Disc();
     const auto& coord = d->Coord();
 
-    // if coupled: depvars: src:'a', dst:'b','c',...
-    char depvar = 0;
-    if (not d->Transfers().empty()) {
-      depvar = 'a' + static_cast< char >( d->MeshId() );
-    }
-
     // Query fields names requested by user
-    auto nodefieldnames = numericFieldNames( tk::Centering::NODE, depvar );
+    auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
 
     // Collect field output from numerical solution requested by user
     conserved( m_u, Disc()->Vol() );
     auto nodefields = numericFieldOutput( m_u, tk::Centering::NODE,
-      g_cgpde[Disc()->MeshId()].OutVarFn(), m_u, depvar );
+      g_cgpde[Disc()->MeshId()].OutVarFn(), m_u );
     volumetric( m_u, Disc()->Vol() );
 
     //! Lambda to put in a field for output if not empty
