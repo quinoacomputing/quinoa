@@ -1421,9 +1421,9 @@ DG::solve( tk::real newdt )
         {
           auto rmark = c*rdof+k;
           auto mark = c*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark)
-            + d->Dt() * ( rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-             + rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark) );
+          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
+               expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
+             + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark) );
         }
       }
   }
