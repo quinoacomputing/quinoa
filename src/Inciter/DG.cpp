@@ -42,9 +42,9 @@ extern std::vector< DGPDE > g_dgpde;
 static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 static const tk::real rk_gamma = (2.0-std::sqrt(2.0))/2.0;
-static const tk::real rk_delta = 1.0-1.0/(2.0*rk_gamma);
+static const tk::real rk_delta = -2.0*std::sqrt(2.0)/3.0;;
 static const std::array< std::array< tk::real, 3 >, 2 >
-  expl_rkcoef{{ {{ 0.0, rk_delta, 1.0-rk_delta }},
+  expl_rkcoef{{ {{ 0.0, rk_delta, 1.0-rk_gamma }},
                 {{ rk_gamma, 1.0-rk_delta, rk_gamma }} }};
 
 } // inciter::
