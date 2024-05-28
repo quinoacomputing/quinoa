@@ -137,6 +137,8 @@ LuaParser::storeInputDeck(
     lua_ideck, "residual", gideck.get< tag::residual >(), 1.0e-8);
   storeIfSpecd< uint32_t >(
     lua_ideck, "rescomp", gideck.get< tag::rescomp >(), 1);
+  storeIfSpecd< uint32_t >(
+    lua_ideck, "imex_runge_kutta", gideck.get< tag::imex_runge_kutta >(), 0);
 
   if (gideck.get< tag::dt >() < 1e-12 && gideck.get< tag::cfl >() < 1e-12)
     Throw("No time step calculation policy has been selected in the "
@@ -328,9 +330,6 @@ LuaParser::storeInputDeck(
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< tag::flux >(),
       inciter::ctr::FluxType::AUSM);
-    storeIfSpecd< int >(
-      lua_ideck["multimat"], "plasticity",
-      gideck.get< tag::multimat, tag::plasticity >(), 0);
 
     // number of equations in PDE system are determined based on materials
   }

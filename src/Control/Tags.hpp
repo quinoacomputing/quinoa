@@ -157,6 +157,7 @@ DEFTAG(cweight);
 DEFTAG(shock_detector_coeff);
 DEFTAG(accuracy_test);
 DEFTAG(limsol_projection);
+DEFTAG(imex_runge_kutta);
 
 DEFTAG(ncomp);
 DEFTAG(pde);
@@ -185,7 +186,6 @@ DEFTAG(dt_sos_massavg);
 DEFTAG(depvar);
 DEFTAG(sys);
 DEFTAG(physics);
-DEFTAG(plasticity);
 
 DEFTAG(material);
 DEFTAG(eos);

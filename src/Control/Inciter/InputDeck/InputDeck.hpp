@@ -89,8 +89,7 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::intsharp,         int,
   tag::intsharp_param,   tk::real,
   tag::dt_sos_massavg,   int,
-  tag::problem,          ProblemType,
-  tag::plasticity,       int
+  tag::problem,          ProblemType
 > >;
 
 // Material/EOS object
@@ -254,6 +253,7 @@ using ConfigMembers = brigand::list<
   tag::dt,    tk::real,
   tag::cfl,   tk::real,
   tag::ttyi,  uint32_t,
+  tag::imex_runge_kutta, uint32_t,
 
   // steady-state solver options
   tag::steady_state, bool,
@@ -453,6 +453,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"ttyi", "Set screen output interval",
         R"(This keyword is used to specify the interval in time steps for screen
         output during a simulation.)", "uint"});
+
+      keywords.insert({"imex_runge_kutta",
+        "Toggle use of IMplicit-EXplicit Runge-Kutta scheme",
+        R"(This keywords is used to turn IMEX integrator on/off for solid materials
+        in a multimat run. Plastic terms are integrated implicitly in time. This
+        flag will activate an Implicit-Explicit Runge-Kutta scheme to replace the
+        explicit one that is usually used.)", "uint 0/1"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options
@@ -806,13 +813,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         will be calculated using the mass average, rather than the maximum value
         across materials. It is used for multimat, and has no effect for the
         other PDE types.)", "uint 0/1" });
-
-      keywords.insert({"plasticity",
-        "Toggle plasticity for solid materials. Triggers use of IMEX Runge-Kutta",
-        R"(This keywords is used to turn plasticity on/off for solid materials
-        in a multimat run. Plastic terms are integrated implicitly in time. This
-        flag will activate an Implicit-Explicit Runge-Kutta scheme to replace the
-        explicit one that is usually used.)", "uint 0/1"});
 
       // Dependent variable name
       keywords.insert({"depvar",

@@ -1377,7 +1377,7 @@ DG::solve( tk::real newdt )
   if (m_stage == 0) m_un = m_u;
 
   // Explicit or IMEX
-  const auto plasticity = g_inputdeck.get< tag::multimat, tag::plasticity >();
+  const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
 
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
@@ -1388,7 +1388,7 @@ DG::solve( tk::real newdt )
     physT += 0.5*d->Dt();
   }
 
-  if (plasticity) {
+  if (imex_runge_kutta) {
     // Save previous rhs
     m_rhsprev = m_rhs;
   }
@@ -1397,7 +1397,7 @@ DG::solve( tk::real newdt )
     myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
     m_u, m_p, m_ndof, d->Dt(), m_rhs );
 
-  if (plasticity == 0) {
+  if (!imex_runge_kutta) {
     // Explicit time-stepping using RK3 to discretize time-derivative
     for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
       for(std::size_t c=0; c<neq; ++c)
