@@ -1377,7 +1377,7 @@ DG::solve( tk::real newdt )
   if (m_stage == 0) m_un = m_u;
 
   // Explicit or IMEX
-  const auto plasticity = g_inputdeck.get< tar::multimat, tag::plasticity >();
+  const auto plasticity = g_inputdeck.get< tag::multimat, tag::plasticity >();
 
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
@@ -1397,27 +1397,40 @@ DG::solve( tk::real newdt )
     myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
     m_u, m_p, m_ndof, d->Dt(), m_rhs );
 
-  // Explicit time-stepping using RK3 to discretize time-derivative
+  if (plasticity == 0) {
+    // Explicit time-stepping using RK3 to discretize time-derivative
+    for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+      for(std::size_t c=0; c<neq; ++c)
+      {
+        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+        {
+          auto rmark = c*rdof+k;
+          auto mark = c*ndof+k;
+          m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
+            + rkcoef[1][m_stage] * ( m_u(e, rmark)
+              + d->Dt() * m_rhs(e, mark)/m_lhs(e, mark) );
+        }
+      }
+  }
+  else {
+    // Implicit-Explicit time-stepping using RK2 to discretize time-derivative
+    for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+      for(std::size_t c=0; c<neq; ++c)
+      {
+        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+        {
+          auto rmark = c*rdof+k;
+          auto mark = c*ndof+k;
+          m_u(e, rmark) =  m_un(e, rmark)
+            + d->Dt() * ( rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
+             + rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark) );
+        }
+      }
+  }
+
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
     for(std::size_t c=0; c<neq; ++c)
     {
-      for (std::size_t k=0; k<m_numEqDof[c]; ++k)
-      {
-        auto rmark = c*rdof+k;
-        auto mark = c*ndof+k;
-        if (plasticity == 0) {
-          m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
-          + rkcoef[1][m_stage] * ( m_u(e, rmark)
-            + d->Dt() * m_rhs(e, mark)/m_lhs(e, mark) );
-        }
-        else {
-          m_u(e, rmark) =  m_un(e, rmark)
-            + d->Dt() * ( rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-              + rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark) );
-        }
-        if(fabs(m_u(e, rmark)) < 1e-16)
-          m_u(e, rmark) = 0;
-      }
       // zero out unused/reconstructed dofs of equations using reduced dofs
       // (see DGMultiMat::numEquationDofs())
       if (m_numEqDof[c] < rdof) {
@@ -1440,7 +1453,7 @@ DG::solve( tk::real newdt )
   }
 
   if (m_stage < 2) {
-    
+
     // continue with next time step stage
     stage();
 

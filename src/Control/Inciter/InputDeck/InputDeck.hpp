@@ -90,7 +90,7 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::intsharp_param,   tk::real,
   tag::dt_sos_massavg,   int,
   tag::problem,          ProblemType,
-  tag::plasticity,       int,
+  tag::plasticity,       int
 > >;
 
 // Material/EOS object
