@@ -41,6 +41,11 @@ extern std::vector< DGPDE > g_dgpde;
 //! Runge-Kutta coefficients
 static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+static const tk::real rk_gamma = (2.0-std::sqrt(2.0))/2.0;
+static const tk::real rk_delta = 1.0-1.0/(2.0*rk_gamma);
+static const std::array< std::array< tk::real, 3 >, 2 >
+  expl_rkcoef{{ {{ 0.0, rk_delta, 1.0-rk_delta }},
+                {{ rk_gamma, 1.0-rk_delta, rk_gamma }} }};
 
 } // inciter::
 
@@ -74,6 +79,7 @@ DG::DG( const CProxy_Discretization& disc,
          g_inputdeck.get< tag::ndof >()*
          g_inputdeck.get< tag::ncomp >() ),
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
+  m_rhsprev( m_u.nunk(), m_lhs.nprop() ),
   m_mtInv(
     tk::invMassMatTaylorRefEl(g_inputdeck.get< tag::rdof >()) ),
   m_uNodalExtrm(),
@@ -1370,6 +1376,9 @@ DG::solve( tk::real newdt )
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
+  // Explicit or IMEX
+  const auto plasticity = g_inputdeck.get< tar::multimat, tag::plasticity >();
+
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
   if (m_stage == 1) {
@@ -1377,6 +1386,11 @@ DG::solve( tk::real newdt )
   }
   else if (m_stage == 2) {
     physT += 0.5*d->Dt();
+  }
+
+  if (plasticity) {
+    // Save previous rhs
+    m_rhsprev = m_rhs;
   }
 
   g_dgpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
@@ -1391,9 +1405,16 @@ DG::solve( tk::real newdt )
       {
         auto rmark = c*rdof+k;
         auto mark = c*ndof+k;
-        m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
+        if (plasticity == 0) {
+          m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
           + rkcoef[1][m_stage] * ( m_u(e, rmark)
             + d->Dt() * m_rhs(e, mark)/m_lhs(e, mark) );
+        }
+        else {
+          m_u(e, rmark) =  m_un(e, rmark)
+            + d->Dt() * ( rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
+              + rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark) );
+        }
         if(fabs(m_u(e, rmark)) < 1e-16)
           m_u(e, rmark) = 0;
       }
@@ -1419,7 +1440,7 @@ DG::solve( tk::real newdt )
   }
 
   if (m_stage < 2) {
-
+    
     // continue with next time step stage
     stage();
 

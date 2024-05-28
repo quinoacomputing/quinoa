@@ -89,7 +89,8 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::intsharp,         int,
   tag::intsharp_param,   tk::real,
   tag::dt_sos_massavg,   int,
-  tag::problem,          ProblemType
+  tag::problem,          ProblemType,
+  tag::plasticity,       int,
 > >;
 
 // Material/EOS object
@@ -805,6 +806,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         will be calculated using the mass average, rather than the maximum value
         across materials. It is used for multimat, and has no effect for the
         other PDE types.)", "uint 0/1" });
+
+      keywords.insert({"plasticity",
+        "Toggle plasticity for solid materials. Triggers use of IMEX Runge-Kutta",
+        R"(This keywords is used to turn plasticity on/off for solid materials
+        in a multimat run. Plastic terms are integrated implicitly in time. This
+        flag will activate an Implicit-Explicit Runge-Kutta scheme to replace the
+        explicit one that is usually used.)", "uint 0/1"});
 
       // Dependent variable name
       keywords.insert({"depvar",

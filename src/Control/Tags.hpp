@@ -185,6 +185,7 @@ DEFTAG(dt_sos_massavg);
 DEFTAG(depvar);
 DEFTAG(sys);
 DEFTAG(physics);
+DEFTAG(plasticity);
 
 DEFTAG(material);
 DEFTAG(eos);

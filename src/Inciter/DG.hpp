@@ -248,6 +248,7 @@ class DG : public CBase_DG {
       p | m_uNodalExtrmc;
       p | m_pNodalExtrmc;
       p | m_rhs;
+      p | m_rhsprev;
       p | m_npoin;
       p | m_diag;
       p | m_stage;
@@ -315,6 +316,8 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
+    //! Vector of previous right-hand side values
+    tk::Fields m_rhsprev;
     //! Inverse of Taylor mass-matrix
     std::vector< std::vector< tk::real > > m_mtInv;
     //! Vector of nodal extrema for conservative variables

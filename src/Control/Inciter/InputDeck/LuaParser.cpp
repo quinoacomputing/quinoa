@@ -328,6 +328,9 @@ LuaParser::storeInputDeck(
     storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
       lua_ideck, "flux", gideck.get< tag::flux >(),
       inciter::ctr::FluxType::AUSM);
+    storeIfSpecd< int >(
+      lua_ideck["multimat"], "plasticity",
+      gideck.get< tag::multimat, tag::plasticity >(), 0);
 
     // number of equations in PDE system are determined based on materials
   }
