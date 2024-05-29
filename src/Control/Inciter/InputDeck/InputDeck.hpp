@@ -459,7 +459,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to turn IMEX integrator on/off for solid materials
         in a multimat run. Plastic terms are integrated implicitly in time. This
         flag will activate an Implicit-Explicit Runge-Kutta scheme to replace the
-        explicit one that is usually used.)", "uint 0/1"});
+        explicit one that is usually used with scheme from Sec. (2.5) of
+        Ascher, U. M., Ruuth, S. J., & Spiteri, R. J. (1997). Implicit-explicit 
+        Runge-Kutta methods for time-dependent partial differential equations. 
+        Applied Numerical Mathematics, 25(2-3), 151-167.)", "uint 0/1"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options

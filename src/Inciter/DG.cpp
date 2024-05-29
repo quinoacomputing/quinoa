@@ -1416,6 +1416,9 @@ DG::solve( tk::real newdt )
   }
   else {
     // Implicit-Explicit time-stepping using RK2 to discretize time-derivative
+    // From Sec. (2.5) of Ascher, U. M., Ruuth, S. J., & Spiteri, R. J. (1997).
+    // Implicit-explicit Runge-Kutta methods for time-dependent partial
+    // differential equations. Applied Numerical Mathematics, 25(2-3), 151-167.
     for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
       for(std::size_t c=0; c<neq; ++c)
       {
