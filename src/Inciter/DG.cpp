@@ -32,6 +32,7 @@
 #include "Integrate/Basis.hpp"
 #include "FieldOutput.hpp"
 #include "ChareStateCollector.hpp"
+#include "PDE/MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
@@ -42,10 +43,26 @@ extern std::vector< DGPDE > g_dgpde;
 static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 static const tk::real rk_gamma = (2.0-std::sqrt(2.0))/2.0;
-static const tk::real rk_delta = -2.0*std::sqrt(2.0)/3.0;;
+static const tk::real rk_delta = -2.0*std::sqrt(2.0)/3.0;
+static const tk::real c2 =
+  (27.0 + std::pow(2187.0-1458.0*std::sqrt(2.0),1.0/3.0)
+   + 9.0*std::pow(3.0+2.0*std::sqrt(2.0),1.0/3.0))/54.0;
+static const tk::real c3 = c2/(6.0*std::pow(c2,2.0)-3.0*c2+1.0);
+static const tk::real b2 = (3.0*c2-1.0)/(6.0*std::pow(c2,2.0));
+static const tk::real b3 =
+  (6.0*std::pow(c2,2.0)-3.0*c2+1.0)/(6.0*std::pow(c2,2.0));
+static const tk::real a22_impl = c2;
+static const tk::real a21_expl = c2;
+static const tk::real a32_expl = c3;
+static const tk::real a33_impl =
+  (1.0/6.0-b2*std::pow(c2,2.0)-b3*c2*c3)/(b3*(c3-c2));
+static const tk::real a32_impl = a33_impl-c3;
 static const std::array< std::array< tk::real, 3 >, 2 >
-  expl_rkcoef{{ {{ 0.0, rk_delta, 1.0-rk_gamma }},
-                {{ rk_gamma, 1.0-rk_delta, rk_gamma }} }};
+  expl_rkcoef{{ {{ 0.0, 0.0, b2 }},
+                {{ a21_expl, a32_expl, b3 }} }};
+static const std::array< std::array< tk::real, 3 >, 2>
+  impl_rkcoef{{ {{ 0.0, a32_impl, b2 }},
+                {{ a22_impl, a33_impl, b3}} }};
 
 } // inciter::
 
@@ -1389,8 +1406,14 @@ DG::solve( tk::real newdt )
   }
 
   if (imex_runge_kutta) {
-    // Save previous rhs
-    m_rhsprev = m_rhs;
+    if (m_stage == 0)
+    {
+      // Save previous rhs
+      m_rhsprev = m_rhs;
+    }
+    else {
+      // Get
+    }
   }
 
   g_dgpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
@@ -1415,21 +1438,46 @@ DG::solve( tk::real newdt )
       }
   }
   else {
-    // Implicit-Explicit time-stepping using RK2 to discretize time-derivative
-    for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
-      for(std::size_t c=0; c<neq; ++c)
-      {
-        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+    g_dgpde[d->MeshId()].plastic_rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
+      myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
+      m_u, m_p, m_ndof, d->Dt(), m_rhs );
+    // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
+    if (m_stage < 2) {
+      DG::imex_integrate(m_lhs, m_rhsprev, m_rhs, m_stiffrhsprev);
+    }
+    else {
+      for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+        for(std::size_t c=0; c<neq; ++c)
         {
-          auto rmark = c*rdof+k;
-          auto mark = c*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-               expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-               + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
-          if(fabs(m_u(e, rmark)) < 1e-16)
-            m_u(e, rmark) = 0;
+          for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+          {
+            auto rmark = c*rdof+k;
+            auto mark = c*ndof+k;
+            m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
+                expl_rkcoef[0][m_stage] * m_rhsprev(e,mark)/m_lhs(e,mark)
+                + expl_rkcoef[1][m_stage] * m_rhs(e,mark)/m_lhs(e,mark)
+                + impl_rkcoef[0][m_stage] * m_stiffrhsprev(e,mark)/m_lhs(e,mark)
+                + impl_rkcoef[1][m_stage] * m_stiffrhs(e,mark)/m_lhs(e,mark) );
+            if(fabs(m_u(e, rmark)) < 1e-16)
+              m_u(e, rmark) = 0;
+          }
         }
-      }
+    }
+    
+    // for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+    //   for(std::size_t c=0; c<neq; ++c)
+    //   {
+    //     for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+    //     {
+    //       auto rmark = c*rdof+k;
+    //       auto mark = c*ndof+k;
+    //       m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
+    //            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
+    //            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
+    //       if(fabs(m_u(e, rmark)) < 1e-16)
+    //         m_u(e, rmark) = 0;
+    //     }
+    //   }
   }
 
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
@@ -1903,6 +1951,50 @@ DG::step()
     d->contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
                    CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
+  }
+}
+
+void
+DG::imex_integrate()
+{
+  for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+  {
+    // Non-linear system F(u) = 0 to be solved
+    std::size_t max_iter = 100;
+    std::size_t iter = 0;
+    tk::real tol = 1.0e-06;
+    tk::real err = tol+1;
+    std::array< std::array< tk::real, 3 >, 3 > approx_jacob;
+    // Initialize Jacobian to be the identity
+    for (std::size_t i=0; i<3; ++i)
+      for (std::size_t j=0; j<3; ++j)
+      {
+        if (i == j)
+          approx_jacob[i][j] = 1.0;
+        else
+          approx_jacob[i][j] = 0.0;
+      }
+    // Find array of interest x from whole state u
+    // Flag 'stiff_dofs' which are the ones corresponding to the
+    // inverse deformation tensor
+    for (std::size_t
+    for (std::size_t c=0; c<neq; ++c)
+      for (std::size_t k=0; k<m_numEqDof[x]; ++k)
+      {
+        auto rmark = c*rdof+k;
+        if 
+      }
+        
+    
+    // Iterate for the solution
+    auto x = 
+    while (err > tol)
+    {
+      
+      xold = x
+      iter++;
+      if (iter => max_iter) break
+    }
   }
 }
 
