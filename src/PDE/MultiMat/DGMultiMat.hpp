@@ -46,6 +46,7 @@
 #include "PrefIndicator.hpp"
 #include "MultiMat/BCFunctions.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
+#include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
@@ -880,6 +881,201 @@ class MultiMat {
       // where p is the order of the DG polynomial by linear stability theory.
       mindt /= (2.0*dgp + 1.0);
       return mindt;
+    }
+
+
+    //! Compute plasticity terms for a single element
+    //! \param[in] e Element number
+    //! \param[in] t Physical time
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive vector at recent time step
+    //! \param[in] ndofel Vector of local number of degrees of freedom
+    //! \param[in] dt Delta time
+    //! \param[in,out] R Right-hand side vector computed
+    void plastic_rhs( std::size_t e,
+                      tk::real t,
+                      const tk::Fields& geoFace,
+                      const tk::Fields& geoElem,
+                      const inciter::FaceData& fd,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      const tk::Fields& U,
+                      const tk::Fields& P,
+                      const std::vector< std::size_t >& ndofel,
+                      const tk::real dt,
+                      tk::Fields& R ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      const auto intsharp =
+        g_inputdeck.get< tag::multimat, tag::intsharp >();
+      const auto& solidx = inciter::g_inputdeck.get<
+        tag::matidxmap, tag::solidx >();
+      auto nsld = numSolids(nmat, solidx);
+
+      const auto nelem = fd.Esuel().size()/4;
+
+      Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
+              "vector and right-hand side at recent time step incorrect" );
+      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
+              "vector must equal "+ std::to_string(rdof*m_nprim) );
+      Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
+              "side vector must equal "+ std::to_string(ndof*m_ncomp) );
+      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
+              "Mismatch in inpofa size" );
+
+      // set rhs to zero
+      R.fill(0.0);
+      
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      auto ncomp = U.nprop()/rdof;
+      auto nprim = P.nprop()/rdof;
+
+      auto ng = tk::NGvol(ndofel[e]);
+
+      // arrays for quadrature points
+      std::array< std::vector< tk::real >, 3 > coordgp;
+      std::vector< tk::real > wgp;
+
+      coordgp[0].resize( ng );
+      coordgp[1].resize( ng );
+      coordgp[2].resize( ng );
+      wgp.resize( ng );
+
+      tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+      // Extract the element coordinates
+      std::array< std::array< tk::real, 3>, 4 > coordel {{
+        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+      }};
+
+      auto jacInv =
+        tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+    
+      // Gaussian quadrature
+      for (std::size_t igp=0; igp<ng; ++igp)
+      {
+        // Compute the coordinates of quadrature point at physical domain
+        auto gp = tk::eval_gp( igp, coordel, coordgp );
+
+        // Compute the basis function
+        auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+                             coordgp[2][igp] );
+
+        auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
+          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
+          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
+        
+        // compute source
+        // Loop through materials
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (solidx[k] > 0)
+          {
+            tk::real alpha = state[inciter::volfracIdx(nmat, k)];
+            std::array< std::array< tk::real, 3 >, 3 > g;
+            // Compute the source terms
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                g[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)];
+
+            // Compute Lp
+            std::array< std::array< tk::real, 3 >, 3 > Lp;
+            // 1. Compute dev(sigma)
+            auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
+              0.0, 0.0, 0.0, 0.0, 0.0, alpha, k, g );
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                sigma_dev[i][j] /= alpha;
+            tk::real sigma_trace =
+              sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
+            for (std::size_t i=0; i<3; ++i)
+              sigma_dev[i][i] -= sigma_trace/3.0;
+            // 2. Compute inv(g)
+            double ginv[9];
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                ginv[3*i+j] = g[i][j];
+            lapack_int ipiv[9];
+            #ifndef NDEBUG
+            lapack_int ierr =
+            #endif
+              LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, ginv, 3, ipiv);
+            Assert(ierr==0, "Lapack error in LU factorization of g");
+            #ifndef NDEBUG
+            lapack_int jerr =
+            #endif
+              LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, ginv, 3, ipiv);
+            Assert(jerr==0, "Lapack error in inverting g");
+            // 3. Compute dev(sigma)*inv(g)
+            std::array< std::array< tk::real, 3 >, 3 > aux_mat;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+              {
+                tk::real sum = 0.0;
+                for (std::size_t l=0; l<3; ++l)
+                  sum += sigma_dev[i][l]*ginv[3*l+j];
+                aux_mat[i][j] = sum;
+              }
+            // 4. Compute g*(dev(sigma)*inv(g))
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+              {
+                tk::real sum = 0.0;
+                for (std::size_t l=0; l<3; ++l)
+                  sum += g[i][l]*aux_mat[l][j];
+                Lp[i][j] = sum;
+              }
+            // 5. Divide by 2*mu*tau
+            tk::real rel_time = 1.0; // temp
+            tk::real mu = getmatprop< tag::mu >(k);
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                Lp[i][j] /= 2.0*mu*rel_time;
+          
+            // Compute the source terms
+            std::vector< tk::real > s(9*ndof, 0.0);
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                for (std::size_t idof=0; idof<ndof; ++idof)
+                {
+                  s[(i*3+j)*ndof+idof] = B[idof] * (Lp[i][0]*g[0][j]
+                                                   +Lp[i][1]*g[1][j]
+                                                   +Lp[i][2]*g[2][j]);
+                }
+
+            auto wt = wgp[igp] * geoElem(e, 0);
+
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                for (std::size_t idof=0; idof<ndof; ++idof)
+                {
+                  std::size_t dofId =
+                    inciter::deformDofIdx(nmat,solidx[k],i,j,ndof,idof);
+                  std::size_t srcId = (i*3+j)*ndof+idof;
+                  R(e, dofId) += wt * s[srcId];
+                }
+
+          }
+        }
+        
+      }
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.

@@ -1425,7 +1425,7 @@ DG::solve( tk::real newdt )
           auto mark = c*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
                expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-             + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark) );
+               + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
