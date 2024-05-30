@@ -146,6 +146,33 @@ class MultiMat {
       tk::BoxElems< eq >(geoElem, nielem, inbox);
     }
 
+    //! Find how 'stiff equations', which are the inverse
+    //! deformation equations because of plasticity
+    //! \param[out] nstiffeq number of stiff equations
+    std::size_t nstiffeq() const
+    { return 9*g_inputdeck.get< tag::multimat, tag::nmat >(); }
+
+    //! Locate the stiff equations within the list of all
+    //! equations. Places a 1 if equation is stiff, 0 otherwise.
+    //! \param[out] stiffeq list with pointers to stiff equations
+    void stiffeq( std::vector< std::size_t >& stiffeq ) const
+    {
+      stiffeq.resize(nstiffeq(), 0);
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      std::size_t ndof = g_inputdeck.get< tag::ndof >();
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      std::size_t icnt = 0;
+      for (std::size_t k=0; k<nmat; ++k)
+        if (solidx[k] > 0)
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+            {
+              stiffeq[icnt] =
+                inciter::deformDofIdx(nmat, solidx[k], i, j, ndof, 0);
+              icnt++;
+            }
+    }
+
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
@@ -883,32 +910,23 @@ class MultiMat {
       return mindt;
     }
 
-
-    //! Compute plasticity terms for a single element
+    //! Compute stiff terms for a single element
     //! \param[in] e Element number
-    //! \param[in] t Physical time
-    //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
-    //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
-    //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
-    void plastic_rhs( std::size_t e,
-                      tk::real t,
-                      const tk::Fields& geoFace,
-                      const tk::Fields& geoElem,
-                      const inciter::FaceData& fd,
-                      const std::vector< std::size_t >& inpoel,
-                      const tk::UnsMesh::Coords& coord,
-                      const tk::Fields& U,
-                      const tk::Fields& P,
-                      const std::vector< std::size_t >& ndofel,
-                      const tk::real dt,
-                      tk::Fields& R ) const
+    void stiff_rhs( std::size_t e,
+                    const tk::Fields& geoElem,
+                    const std::vector< std::size_t >& inpoel,
+                    const tk::UnsMesh::Coords& coord,
+                    const tk::Fields& U,
+                    const tk::Fields& P,
+                    const std::vector< std::size_t >& ndofel,
+                    tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -917,9 +935,6 @@ class MultiMat {
         g_inputdeck.get< tag::multimat, tag::intsharp >();
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
-      auto nsld = numSolids(nmat, solidx);
-
-      const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -964,9 +979,6 @@ class MultiMat {
         {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
         {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
       }};
-
-      auto jacInv =
-        tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
     
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)
@@ -979,8 +991,7 @@ class MultiMat {
                              coordgp[2][igp] );
 
         auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
-          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
-          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
+          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P);
         
         // compute source
         // Loop through materials

@@ -104,6 +104,21 @@ class Transport {
       }
     }
 
+    //! Find how 'stiff equations', which we currently
+    //! have none for Transport
+    //! \param[out] nstiffeq number of stiff equations
+    std::size_t nstiffeq() const
+    { return 0; }
+
+    //! Locate the stiff equations within the list of all
+    //! equations. Places a 1 if equation is stiff, 0 otherwise.
+    //! \param[in] neq number of equations
+    //! \param[out] stiffeq list with 0s and 1s
+    void stiffeq( std::vector< std::size_t >& stiffeq ) const
+    {
+      stiffeq.resize(0);
+    }
+
     //! Determine elements that lie inside the user-defined IC box
     void IcBoxElems( const tk::Fields&,
       std::size_t,
@@ -439,6 +454,25 @@ class Transport {
       return mindt;
     }
 
+    //! Compute stiff terms for a single element, not implemented here
+    //! \param[in] e Element number
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive vector at recent time step
+    //! \param[in] ndofel Vector of local number of degrees of freedom
+    //! \param[in,out] R Right-hand side vector computed
+    void stiff_rhs( std::size_t /*e*/,
+                    const tk::Fields& /*geoElem*/,
+                    const std::vector< std::size_t >& /*inpoel*/,
+                    const tk::UnsMesh::Coords& /*coord*/,
+                    const tk::Fields& /*U*/,
+                    const tk::Fields& /*P*/,
+                    const std::vector< std::size_t >& /*ndofel*/,
+                    tk::Fields& /*R*/ ) const
+    {}
+  
     //! Return a map that associates user-specified strings to functions
     //! \return Map that associates user-specified strings to functions that
     //!  compute relevant quantities to be output to file

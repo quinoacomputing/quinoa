@@ -133,6 +133,16 @@ class DGPDE {
     void numEquationDofs(std::vector< std::size_t >& numEqDof) const
     { return self->numEquationDofs(numEqDof); }
 
+    //! Public interface to find how 'stiff equations', which are the inverse
+    //! deformation equations because of plasticity
+    std::size_t nstiffeq() const
+    { return self->nstiffeq(); }
+
+    //! Public function to locate the stiff equations within the list of all
+    //! equations. Places a 1 if equation is stiff, 0 otherwise.
+    void stiffeq( std::vector< std::size_t >& stiffeq ) const
+    { return self->stiffeq( stiffeq ); }
+  
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
@@ -282,6 +292,17 @@ class DGPDE {
     { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U,
                        P, nielem ); }
 
+    //! Public interface for computing stiff terms for an element
+    void stiff_rhs( std::size_t e,
+                    const tk::Fields& geoElem,
+                    const std::vector< std::size_t >& inpoel,
+                    const tk::UnsMesh::Coords& coord,
+                    const tk::Fields& U,
+                    const tk::Fields& P,
+                    const std::vector< std::size_t >& ndofel,
+                    tk::Fields& R ) const
+    { return self->stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R); }
+  
     //! Public interface to returning maps of output var functions
     std::map< std::string, tk::GetVarFn > OutVarFn() const
     { return self->OutVarFn(); }
@@ -347,6 +368,8 @@ class DGPDE {
       virtual std::size_t nprim() const = 0;
       virtual std::size_t nmat() const = 0;
       virtual void numEquationDofs(std::vector< std::size_t >&) const = 0;
+      virtual std::size_t nstiffeq() const = 0;
+      virtual void stiffeq( std::vector< std::size_t >& ) const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
         std::vector< std::unordered_set< std::size_t > >& ) const = 0;
@@ -441,6 +464,14 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t ) const = 0;
+      virtual void stiff_rhs( std::size_t,
+                              const tk::Fields&,
+                              const std::vector< std::size_t >&,
+                              const tk::UnsMesh::Coords&,
+                              const tk::Fields&,
+                              const tk::Fields&,
+                              const std::vector< std::size_t >&,
+                              tk::Fields& ) const = 0;
       virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -474,6 +505,10 @@ class DGPDE {
       { return data.nmat(); }
       void numEquationDofs(std::vector< std::size_t >& numEqDof) const override
       { data.numEquationDofs(numEqDof); }
+      std::size_t nstiffeq() const override
+      { return data.nstiffeq(); }
+      void stiffeq( std::vector< std::size_t >& stiffeq ) const override
+      { data.stiffeq(stiffeq); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
         std::vector< std::unordered_set< std::size_t > >& inbox )
@@ -598,6 +633,15 @@ class DGPDE {
                    const std::size_t nielem ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
                         U, P, nielem ); }
+      void stiff_rhs( std::size_t e,
+                      const tk::Fields& geoElem,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      const tk::Fields& U,
+                      const tk::Fields& P,
+                      const std::vector< std::size_t >& ndofel,
+                      tk::Fields& R ) const override
+      { return data.stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R ); }
       std::map< std::string, tk::GetVarFn > OutVarFn() const override
       { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override
