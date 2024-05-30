@@ -1054,6 +1054,9 @@ class MultiMat {
                 Lp[i][j] = sum;
               }
             // 5. Divide by 2*mu*tau
+            // 'Perfect' plasticity
+            // HARDCODED: Yield Stress 2e11
+            //if (sigma ..
             tk::real rel_time = 1.0; // temp
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)

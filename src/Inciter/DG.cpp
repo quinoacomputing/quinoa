@@ -1420,9 +1420,8 @@ DG::solve( tk::real newdt )
     {
       // Save previous rhs
       m_rhsprev = m_rhs;
-    }
-    else {
-      // Get
+      // Initialize m_stiffrhs to zero
+      m_stiffrhs = { 0.0 };
     }
   }
 
@@ -1448,46 +1447,61 @@ DG::solve( tk::real newdt )
       }
   }
   else {
-    // g_dgpde[d->MeshId()].plastic_rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
-    //   myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
-    //   m_u, m_p, m_ndof, d->Dt(), m_rhs );
-    // // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
-    // if (m_stage < 2) {
-    //   DG::imex_integrate(m_lhs, m_rhsprev, m_rhs, m_stiffrhsprev);
-    // }
-    // else {
-    //   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
-    //     for(std::size_t c=0; c<neq; ++c)
-    //     {
-    //       for (std::size_t k=0; k<m_numEqDof[c]; ++k)
-    //       {
-    //         auto rmark = c*rdof+k;
-    //         auto mark = c*ndof+k;
-    //         m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-    //             expl_rkcoef[0][m_stage] * m_rhsprev(e,mark)/m_lhs(e,mark)
-    //             + expl_rkcoef[1][m_stage] * m_rhs(e,mark)/m_lhs(e,mark)
-    //             + impl_rkcoef[0][m_stage] * m_stiffrhsprev(e,mark)/m_lhs(e,mark)
-    //             + impl_rkcoef[1][m_stage] * m_stiffrhs(e,mark)/m_lhs(e,mark) );
-    //         if(fabs(m_u(e, rmark)) < 1e-16)
-    //           m_u(e, rmark) = 0;
-    //       }
-    //     }
-    // }
-    
-    for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
-      for(std::size_t c=0; c<neq; ++c)
+    // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
+    if (m_stage < 2) {
+      // Save previous stiff_rhs
+      m_stiffrhsprev = m_stiffrhs;
+      DG::imex_integrate();
+    }
+    else {
+      for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
       {
-        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+        // First integrate explicitly on all equations
+        for (std::size_t c=0; c<neq; ++c)
         {
-          auto rmark = c*rdof+k;
-          auto mark = c*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-               expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-               + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
-          if(fabs(m_u(e, rmark)) < 1e-16)
-            m_u(e, rmark) = 0;
+          for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+          {
+            auto rmark = c*rdof+k;
+            auto mark = c*ndof+k;
+            m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
+              expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
+              + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
+          }
         }
+        // Then, re-integrate the imex-equations
+        for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+          for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+          {
+            auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
+            auto stiffmark = m_stiffeq[ieq]*ndof+idof;
+            m_u(e, stiffrmark) = m_un(e, stiffrmark)
+              + d->Dt() * (
+                           expl_rkcoef[0][m_stage]
+                           * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+                           + expl_rkcoef[1][m_stage]
+                           * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
+                           + impl_rkcoef[0][m_stage]
+                           * m_stiffrhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+                           + impl_rkcoef[1][m_stage]
+                           * m_stiffrhs(e,stiffmark)/m_lhs(e,stiffmark) );
+          }
       }
+    }
+    
+    // for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+    //   for(std::size_t c=0; c<neq; ++c)
+    //   {
+    //     for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+    //     {
+    //       auto rmark = c*rdof+k;
+    //       auto mark = c*ndof+k;
+    //       m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
+    //            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
+    //            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
+    //       if(fabs(m_u(e, rmark)) < 1e-16)
+    //         m_u(e, rmark) = 0;
+    //     }
+    //   }
   }
 
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
@@ -2012,8 +2026,19 @@ DG::imex_integrate()
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
+          auto stiffmark = m_stiffeq[ieq]*ndof+idof;
+          auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
           u_old[ieq*rdof+idof] = m_u(e, m_stiffeq[ieq]*rdof+idof);
-          rhs_old[ieq*ndof+idof] = m_stiffrhs(e, m_stiffeq[ieq]*ndof+idof);
+          rhs_old[ieq*ndof+idof] = (m_u(e, stiffrmark) - m_un(e, stiffrmark)
+            + d->Dt() * (
+            expl_rkcoef[0][m_stage]
+            * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+            + expl_rkcoef[1][m_stage]
+            * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
+            + impl_rkcoef[0][m_stage]
+            * m_stiffrhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+            + impl_rkcoef[1][m_stage]
+            * m_stiffrhs(e,stiffmark)/m_lhs(e,stiffmark) ));
         }
       // Compute new rhs
       g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
@@ -2027,13 +2052,32 @@ DG::imex_integrate()
           delta = 0.0;
           for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
             for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
+            {
+              auto stiffrmark = m_stiffeq[jeq]*rdof+jdof;
+              auto stiffmark = m_stiffeq[jeq]*ndof+jdof;
               delta += approx_jacob[ieq*rdof+idof][jeq*rdof+jdof]
-                * m_stiffrhs(e, m_stiffeq[jeq]*ndof+jdof);
+                * (m_u(e, stiffrmark) - m_un(e, stiffrmark) + d->Dt() * (
+                expl_rkcoef[0][m_stage]
+                * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+                + expl_rkcoef[1][m_stage]
+                * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
+                + impl_rkcoef[0][m_stage]
+                * m_stiffrhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+                + impl_rkcoef[1][m_stage]
+                * m_stiffrhs(e,stiffmark)/m_lhs(e,stiffmark) ));
+            }
           m_u(e, m_stiffeq[ieq]*ndof+idof) -= delta;
           delta_u[ieq*rdof+idof] =
             m_u(e, m_stiffeq[ieq]*rdof+idof) - u_old[ieq*rdof+idof];
+          auto stiffmark = m_stiffeq[ieq]*ndof+idof;
+          auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
           delta_rhs[ieq*ndof+idof] =
-            m_stiffrhs(e, m_stiffeq[ieq]*ndof+idof) - rhs_old[ieq*ndof+idof];
+            (m_u(e, stiffrmark) - m_un(e, stiffrmark) + d->Dt() * (
+            expl_rkcoef[0][m_stage] * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+            + expl_rkcoef[1][m_stage] * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
+            + impl_rkcoef[0][m_stage] * m_stiffrhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+            + impl_rkcoef[1][m_stage] * m_stiffrhs(e,stiffmark)/m_lhs(e,stiffmark) ))
+            - rhs_old[ieq*ndof+idof];
         }
       // Update Jacobian approximation
       // 1. Compute approx_jacob*delta_rhs and delta_u*jacob_approx
