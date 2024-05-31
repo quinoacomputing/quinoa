@@ -344,6 +344,32 @@ determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
          + a[0][2] * (a[1][0]*a[2][1]-a[1][1]*a[2][0]) );
 }
 
+//! Compute the inverse of 3x3 matrix
+//!  \param[in] a 3x3 matrix
+//!  \return Inverse of the 3x3 matrix
+inline std::array< std::array< tk::real, 3 >, 3 >
+inverse( const std::array< std::array< tk::real, 3 >, 3 >& m )
+{
+  tk::real det = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
+                 m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+                 m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+
+  tk::real invdet = 1.0 / det;
+
+  std::array< std::array< tk::real, 3 >, 3 > minv;
+  minv[0][0] = (m[1][1] * m[2][2] - m[2][1] * m[1][2]) * invdet;
+  minv[0][1] = (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * invdet;
+  minv[0][2] = (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * invdet;
+  minv[1][0] = (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * invdet;
+  minv[1][1] = (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * invdet;
+  minv[1][2] = (m[1][0] * m[0][2] - m[0][0] * m[1][2]) * invdet;
+  minv[2][0] = (m[1][0] * m[2][1] - m[2][0] * m[1][1]) * invdet;
+  minv[2][1] = (m[2][0] * m[0][1] - m[0][0] * m[2][1]) * invdet;
+  minv[2][2] = (m[0][0] * m[1][1] - m[1][0] * m[0][1]) * invdet;
+
+  return minv;
+}
+
 //! Solve a 3x3 system of equations using Cramer's rule
 //!  \param[in] a 3x3 lhs matrix
 //!  \param[in] b 3x1 rhs matrix
@@ -447,7 +473,7 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     3, 3, 3, 1.0, G, 3, G, 3, 0.0, C, 3);
 
   // get inv(g.g^T)
-  lapack_int ipiv[9];
+  lapack_int ipiv[3];
 
   #ifndef NDEBUG
   lapack_int ierr =
@@ -488,7 +514,7 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     3, 3, 3, 1.0, G, 3, G, 3, 0.0, b, 3);
 
   // get inv(g^T.g)
-  lapack_int ipiv[9];
+  lapack_int ipiv[3];
 
   #ifndef NDEBUG
   lapack_int ierr =

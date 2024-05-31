@@ -1421,7 +1421,7 @@ DG::solve( tk::real newdt )
       // Save previous rhs
       m_rhsprev = m_rhs;
       // Initialize m_stiffrhs to zero
-      m_stiffrhs = { 0.0 };
+      m_stiffrhs.fill(0.0);
     }
   }
 
@@ -1481,9 +1481,9 @@ DG::solve( tk::real newdt )
                            + expl_rkcoef[1][m_stage]
                            * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
                            + impl_rkcoef[0][m_stage]
-                           * m_stiffrhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+                           * m_stiffrhsprev(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
                            + impl_rkcoef[1][m_stage]
-                           * m_stiffrhs(e,stiffmark)/m_lhs(e,stiffmark) );
+                           * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark) );
           }
       }
     }
@@ -1987,6 +1987,8 @@ DG::imex_integrate()
   const auto neq = m_u.nprop()/rdof;
 
   // First integrate explicitly on all equations
+  // stiff equations are also integrated but rewritten
+  // on the next loop
   for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
     for (std::size_t c=0; c<neq; ++c)
     {
@@ -2004,47 +2006,65 @@ DG::imex_integrate()
   // Then, solve for implicit-explicit ones
   for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
   {
-    // Non-linear system F(u) = 0 to be solved
+    // Non-linear system f(u) = 0 to be solved
+    // Currently taken from https://en.wikipedia.org/wiki/Broyden%27s_method
+    
     std::size_t max_iter = 100;
-    std::size_t iter = 0;
     tk::real tol = 1.0e-06;
     tk::real err = tol+1;
     std::size_t nstiff = m_nstiffeq*ndof;
+    std::size_t rstiff = m_nstiffeq*rdof;
+    
+    // Initialize Jacobian to be the identity
     std::vector< std::vector< tk::real > >
       approx_jacob(nstiff, std::vector< tk::real >(nstiff, 0.0));
-    // Initialize Jacobian to be the identity
     for (std::size_t i=0; i<nstiff; ++i)
       approx_jacob[i][i] = 1.0;
-    // Make auxiliary u_old and rhs_old to store previous values
-    std::vector< tk::real > u_old(nstiff, 0.0), rhs_old(nstiff, 0.0);
-    // Make delta_u and delta_rhs
-    std::vector< tk::real > delta_u(nstiff, 0.0), delta_rhs(nstiff, 0.0);
+    
+    // Save explicit terms to be re-used
+    std::vector< tk::real > expl_terms(nstiff, 0.0);
+    for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      {
+        auto stiffmark = m_stiffeq[ieq]*ndof+idof;
+        auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
+        expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
+          + d->Dt() * ( expl_rkcoef[0][m_stage]
+          * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+          + expl_rkcoef[1][m_stage]
+          * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
+          + impl_rkcoef[0][m_stage]
+          * m_stiffrhsprev(e,ieq*ndof+idof)/m_lhs(e,stiffmark) );
+      }
+  
+    // Make auxiliary u_old and f_old to store previous values
+    std::vector< tk::real > u_old(rstiff, 0.0), f_old(nstiff, 0.0);
+    // Make delta_u and delta_f
+    std::vector< tk::real > delta_u(rstiff, 0.0), delta_f(nstiff, 0.0);
+    
     // Iterate for the solution
-    while (err > tol)
+    for (size_t iter=0; iter<max_iter; ++iter)
     {
-      // Save solution and rhs
+      
+      // Save previous solution and f
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
           auto stiffmark = m_stiffeq[ieq]*ndof+idof;
           auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
           u_old[ieq*rdof+idof] = m_u(e, m_stiffeq[ieq]*rdof+idof);
-          rhs_old[ieq*ndof+idof] = (m_u(e, stiffrmark) - m_un(e, stiffrmark)
-            + d->Dt() * (
-            expl_rkcoef[0][m_stage]
-            * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
-            + expl_rkcoef[1][m_stage]
-            * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
-            + impl_rkcoef[0][m_stage]
-            * m_stiffrhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+          f_old[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
             + impl_rkcoef[1][m_stage]
-            * m_stiffrhs(e,stiffmark)/m_lhs(e,stiffmark) ));
+            * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
+            - m_u(e, stiffrmark);
         }
-      // Compute new rhs
+
+      // Compute new stiff_rhs
       g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
         myGhosts()->m_inpoel, myGhosts()->m_coord,
         m_u, m_p, m_ndof, m_stiffrhs );
-      // Compute new solution and update deltas
+
+      // Compute new solution and update deltas simultaneously
       tk::real delta;
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
@@ -2055,32 +2075,27 @@ DG::imex_integrate()
             {
               auto stiffrmark = m_stiffeq[jeq]*rdof+jdof;
               auto stiffmark = m_stiffeq[jeq]*ndof+jdof;
-              delta += approx_jacob[ieq*rdof+idof][jeq*rdof+jdof]
-                * (m_u(e, stiffrmark) - m_un(e, stiffrmark) + d->Dt() * (
-                expl_rkcoef[0][m_stage]
-                * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
-                + expl_rkcoef[1][m_stage]
-                * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
-                + impl_rkcoef[0][m_stage]
-                * m_stiffrhsprev(e,stiffmark)/m_lhs(e,stiffmark)
-                + impl_rkcoef[1][m_stage]
-                * m_stiffrhs(e,stiffmark)/m_lhs(e,stiffmark) ));
+              delta += approx_jacob[ieq*ndof+idof][jeq*ndof+jdof]
+                * ( expl_terms[ieq*ndof+idof]
+                  + impl_rkcoef[1][m_stage]
+                  * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
+                  - m_u(e, stiffrmark) );
             }
           m_u(e, m_stiffeq[ieq]*ndof+idof) -= delta;
-          delta_u[ieq*rdof+idof] =
-            m_u(e, m_stiffeq[ieq]*rdof+idof) - u_old[ieq*rdof+idof];
           auto stiffmark = m_stiffeq[ieq]*ndof+idof;
           auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
-          delta_rhs[ieq*ndof+idof] =
-            (m_u(e, stiffrmark) - m_un(e, stiffrmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
-            + expl_rkcoef[1][m_stage] * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
-            + impl_rkcoef[0][m_stage] * m_stiffrhsprev(e,stiffmark)/m_lhs(e,stiffmark)
-            + impl_rkcoef[1][m_stage] * m_stiffrhs(e,stiffmark)/m_lhs(e,stiffmark) ))
-            - rhs_old[ieq*ndof+idof];
+          delta_u[ieq*rdof+idof] = m_u(e, stiffrmark) - u_old[ieq*rdof+idof];
+          delta_f[ieq*ndof+idof] =
+            ( expl_terms[ieq*ndof+idof]
+            + impl_rkcoef[1][m_stage]
+            * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
+            - m_u(e, stiffrmark) )
+            - f_old[ieq*ndof+idof];
         }
-      // Update Jacobian approximation
-      // 1. Compute approx_jacob*delta_rhs and delta_u*jacob_approx
+
+      // Update inverse Jacobian approximation
+
+      // 1. Compute approx_jacob*delta_f and delta_u*jacob_approx
       tk::real sum1, sum2;
       std::vector< tk::real > auxvec1(nstiff, 0.0), auxvec2(nstiff, 0.0);
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
@@ -2091,16 +2106,17 @@ DG::imex_integrate()
           for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
             for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
             {
-              sum1 += approx_jacob[ieq*rdof+idof][jeq*rdof+jdof] *
-                delta_rhs[jeq*ndof+jdof];
+              sum1 += approx_jacob[ieq*ndof+idof][jeq*ndof+jdof] *
+                delta_f[jeq*ndof+jdof];
               sum2 += delta_u[jeq*ndof+jdof] *
-                approx_jacob[jeq*rdof+jdof][ieq*rdof+idof];
+                approx_jacob[jeq*ndof+jdof][ieq*ndof+idof];
             }
-          auxvec1[ieq*rdof+idof] = sum1;
-          auxvec2[ieq*rdof+idof] = sum2;
+          auxvec1[ieq*ndof+idof] = sum1;
+          auxvec2[ieq*ndof+idof] = sum2;
         }
-      // 2. Compute delta_u*approx_jacob*delta_rhs
-      // and delta_u+approx_jacob*delta_rhs
+
+      // 2. Compute delta_u*approx_jacob*delta_f
+      // and delta_u+approx_jacob*delta_f
       tk::real denom = 0.0;
       for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
         for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
@@ -2109,11 +2125,13 @@ DG::imex_integrate()
           auxvec1[jeq*ndof+jdof] =
             delta_u[jeq*ndof+jdof]-auxvec1[jeq*ndof+jdof];
         }
-      // 3. Divide delta_u+approx_jacob*delta_rh
-      // by delta_u*approx_jacob*delta_rhs
+
+      // 3. Divide delta_u+approx_jacob*delta_f
+      // by delta_u*(approx_jacob*delta_f)
       for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
         for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-          auxvec1[jeq*ndof+jdof] /= denom;
+          auxvec1[jeq*ndof+jdof] /= std::max(denom,1.0e-08);
+
       // 4. Perform outter product between the two arrays and
       // add that quantity to the new jacobian approximation
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
@@ -2122,15 +2140,16 @@ DG::imex_integrate()
             for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
               approx_jacob[ieq*ndof+idof][jeq*ndof+jdof] +=
                 auxvec1[ieq*ndof+idof] * auxvec2[jeq*ndof+idof];
+
       // Compute a measure of error, use norm of delta_u
       err = 0.0;
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
           err += delta_u[ieq*ndof+idof]*delta_u[ieq*ndof+idof];
       err = std::sqrt(err);
-      // Increase the iteration counter and loop back
-      iter++;
-      if (iter >= max_iter) break;
+
+      // Check if error condition is met and loop back
+      if (iter == 0 || err < tol) break;
     }
   }
 }

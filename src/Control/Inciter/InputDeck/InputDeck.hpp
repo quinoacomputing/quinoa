@@ -459,7 +459,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to turn IMEX integrator on/off for solid materials
         in a multimat run. Plastic terms are integrated implicitly in time. This
         flag will activate an Implicit-Explicit Runge-Kutta scheme to replace the
-        explicit one that is usually used.)", "uint 0/1"});
+        explicit one that is usually used. Scheme taken from Cavaglieri, D., & 
+        Bewley, T. (2015). Low-storage implicit/explicit Runge–Kutta schemes for
+        the simulation of stiff high-dimensional ODE systems. Journal of 
+        Computational Physics, 286, 172-193.)", "uint 0/1"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options

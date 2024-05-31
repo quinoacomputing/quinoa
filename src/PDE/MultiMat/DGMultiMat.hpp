@@ -944,13 +944,12 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
               "vector must equal "+ std::to_string(rdof*m_nprim) );
-      Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
-              "side vector must equal "+ std::to_string(ndof*m_ncomp) );
-      Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
-              "Mismatch in inpofa size" );
+      Assert( R.nprop() == ndof*nstiffeq(), "Number of components in "
+              "right-hand side must equal "+ std::to_string(ndof*nstiffeq()) );
 
-      // set rhs to zero
-      R.fill(0.0);
+      // set rhs to zero for element e
+      for (std::size_t i=0; i<ndof*nstiffeq(); ++i)
+        R(e, i) = 0.0;
       
       const auto& cx = coord[0];
       const auto& cy = coord[1];
@@ -979,7 +978,7 @@ class MultiMat {
         {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
         {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
       }};
-    
+
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)
       {
@@ -1008,6 +1007,7 @@ class MultiMat {
 
             // Compute Lp
             std::array< std::array< tk::real, 3 >, 3 > Lp;
+
             // 1. Compute dev(sigma)
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
               0.0, 0.0, 0.0, 0.0, 0.0, alpha, k, g );
@@ -1018,6 +1018,7 @@ class MultiMat {
               sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
             for (std::size_t i=0; i<3; ++i)
               sigma_dev[i][i] -= sigma_trace/3.0;
+
             // 2. Compute inv(g)
             double ginv[9];
             for (std::size_t i=0; i<3; ++i)
@@ -1034,6 +1035,7 @@ class MultiMat {
             #endif
               LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, ginv, 3, ipiv);
             Assert(jerr==0, "Lapack error in inverting g");
+
             // 3. Compute dev(sigma)*inv(g)
             std::array< std::array< tk::real, 3 >, 3 > aux_mat;
             for (std::size_t i=0; i<3; ++i)
@@ -1044,6 +1046,7 @@ class MultiMat {
                   sum += sigma_dev[i][l]*ginv[3*l+j];
                 aux_mat[i][j] = sum;
               }
+
             // 4. Compute g*(dev(sigma)*inv(g))
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -1053,16 +1056,17 @@ class MultiMat {
                   sum += g[i][l]*aux_mat[l][j];
                 Lp[i][j] = sum;
               }
+
             // 5. Divide by 2*mu*tau
             // 'Perfect' plasticity
             // HARDCODED: Yield Stress 2e11
-            //if (sigma ..
+            //if (sigma ..?
             tk::real rel_time = 1.0; // temp
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 Lp[i][j] /= 2.0*mu*rel_time;
-          
+
             // Compute the source terms
             std::vector< tk::real > s(9*ndof, 0.0);
             for (std::size_t i=0; i<3; ++i)
@@ -1080,15 +1084,13 @@ class MultiMat {
               for (std::size_t j=0; j<3; ++j)
                 for (std::size_t idof=0; idof<ndof; ++idof)
                 {
-                  std::size_t dofId =
-                    inciter::deformDofIdx(nmat,solidx[k],i,j,ndof,idof);
-                  std::size_t srcId = (i*3+j)*ndof+idof;
-                  R(e, dofId) += wt * s[srcId];
+                  std::size_t dofId = (i*3+j)*ndof+idof;
+                  R(e, dofId) += wt * s[dofId];
                 }
 
           }
         }
-        
+
       }
     }
 
