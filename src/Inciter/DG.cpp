@@ -2149,7 +2149,7 @@ DG::imex_integrate()
       err = std::sqrt(err);
 
       // Check if error condition is met and loop back
-      if (iter == 0 || err < tol) break;
+      if (iter > 0 && err < tol) break;
     }
   }
 }

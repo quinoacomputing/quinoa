@@ -1061,11 +1061,11 @@ class MultiMat {
             // 'Perfect' plasticity
             // HARDCODED: Yield Stress 2e11
             //if (sigma ..?
-            tk::real rel_time = 1.0; // temp
+            tk::real rel_factor = 1.0e-12; // temp
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
-                Lp[i][j] /= 2.0*mu*rel_time;
+                Lp[i][j] *= rel_factor/2.0*mu;
 
             // Compute the source terms
             std::vector< tk::real > s(9*ndof, 0.0);
