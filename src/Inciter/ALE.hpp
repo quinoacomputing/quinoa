@@ -72,7 +72,7 @@ class ALE : public CBase_ALE {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit ALE( CkMigrateMessage* ) {}
+    explicit ALE( CkMigrateMessage* m ) : CBase_ALE(m) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

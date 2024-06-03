@@ -82,7 +82,7 @@ class Sorter : public CBase_Sorter {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVarPrivate
-    explicit Sorter( CkMigrateMessage* ) {}
+    explicit Sorter( CkMigrateMessage* m ) : CBase_Sorter(m) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

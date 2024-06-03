@@ -27,6 +27,7 @@ class PotentialCollision {
     std::size_t source_index, dest_index;
     CkVector3d point;
     void pup(PUP::er& p) { p | source_index; p | dest_index; p | point; }
+    friend void operator|( PUP::er& p, PotentialCollision& t ) { t.pup(p); }
 };
 
 class SolutionData {
@@ -34,6 +35,7 @@ class SolutionData {
     std::size_t dest_index;
     std::vector< tk::real > solution;
     void pup(PUP::er& p) { p | dest_index; p | solution; }
+    friend void operator|( PUP::er& p, SolutionData& t ) { t.pup(p); }
 };
 
 //! TransferDetails chare array holding part of a mesh
@@ -49,7 +51,7 @@ class TransferDetails : public CBase_TransferDetails {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit TransferDetails( CkMigrateMessage* ) {}
+    explicit TransferDetails( CkMigrateMessage* m ) : CBase_TransferDetails(m) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -86,6 +88,9 @@ class TransferDetails : public CBase_TransferDetails {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_firstchunk;
+      p | m_numsent;
+      p | m_numreceived;
+      p | m_donecb;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

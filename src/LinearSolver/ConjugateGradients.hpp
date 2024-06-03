@@ -76,7 +76,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
                           gid, lid, nodecommmap ) {}
 
     //! Migrate constructor
-    explicit ConjugateGradients( CkMigrateMessage* ) {}
+    explicit ConjugateGradients( CkMigrateMessage* m ) :
+      CBase_ConjugateGradients(m) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

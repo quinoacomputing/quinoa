@@ -90,7 +90,7 @@ class Refiner : public CBase_Refiner {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit Refiner( CkMigrateMessage* ) {}
+    explicit Refiner( CkMigrateMessage* m ) : CBase_Refiner(m) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

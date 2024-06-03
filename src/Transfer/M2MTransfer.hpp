@@ -7,14 +7,13 @@
 
 namespace exam2m {
 
+void collisionHandler(
+  [[maybe_unused]] void *param,
+  int nColl,
+  Collision *colls );
 void addMesh(CkArrayID p, int elem, CkCallback cb);
 void setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u);
 void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb);
-
-class LibMain : public CBase_LibMain {
-public:
-  LibMain(CkArgMsg* msg);
-};
 
 class MeshData {
   public:
@@ -26,6 +25,7 @@ class MeshData {
       p | m_firstchunk;
       p | m_nchare;
     }
+    friend void operator|( PUP::er& p, MeshData& t ) { t.pup(p); }
 };
 
 class M2MTransfer : public CBase_M2MTransfer {
@@ -51,6 +51,24 @@ class M2MTransfer : public CBase_M2MTransfer {
     void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords,
                        tk::Fields& u, CkCallback cb);
     void distributeCollisions(int nColl, Collision* colls);
+
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \note This is a Charm++ mainchare, pup() is thus only for
+    //!    checkpoint/restart.
+    void pup( PUP::er &p ) override {
+      p | proxyMap;
+      p | current_chunk;
+      p | m_sourcemesh;
+      p | m_destmesh;
+    }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] t M2MTransfer object reference
+    friend void operator|( PUP::er& p, M2MTransfer& t ) { t.pup(p); }
+    //@}
 };
 
 }
