@@ -585,11 +585,17 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   d->Voln() = d->Vol();
 
   // Initiate solution transfer (if coupled)
-  transferSol();
+  transferSolNEM();
 }
 
 void
 OversetFE::transferSol()
+{
+  transferSolNEM();
+}
+
+void
+OversetFE::transferSolNEM()
 // *****************************************************************************
 // Transfer solution to other solver and mesh if coupled
 // *****************************************************************************
@@ -1226,6 +1232,10 @@ OversetFE::solve()
   // Apply boundary-conditions
   BC();
 
+  std::cout << "------ {{" << thisIndex << "}} stage complete " << m_stage
+    << " ixfer=" << m_ixfer
+    << " -------" << std::endl;
+
   // Increment Runge-Kutta stage counter
   ++m_stage;
 
@@ -1291,7 +1301,7 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
   }
 
   // Start solution transfer
-  transferSol();
+  transferSolNEM();
 }
 //! [Refine]
 

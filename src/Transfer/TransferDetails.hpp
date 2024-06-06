@@ -57,12 +57,12 @@ class TransferDetails : public CBase_TransferDetails {
     #endif
 
     //! Set the source mesh data
-    void setSourceTets( std::vector< std::size_t>* inpoel,
-                        tk::UnsMesh::Coords* coords,
+    void setSourceTets( std::vector< std::size_t>& inpoel,
+                        tk::UnsMesh::Coords& coords,
                         const tk::Fields& u );
 
     //! Set the destination mesh data
-    void setDestPoints( tk::UnsMesh::Coords* coords,
+    void setDestPoints( tk::UnsMesh::Coords& coords,
                         tk::Fields& u,
                         CkCallback cb );
 
@@ -77,7 +77,7 @@ class TransferDetails : public CBase_TransferDetails {
     void determineActualCollisions( CProxy_TransferDetails proxy,
                                     int index,
                                     int nColls,
-                                    PotentialCollision* colls ) const;
+                                    PotentialCollision* colls );
 
     //! Transfer the interpolated solution data back to destination mesh
     void transferSolution( const std::vector< SolutionData >& soln );
@@ -88,6 +88,9 @@ class TransferDetails : public CBase_TransferDetails {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
       p | m_firstchunk;
+      p | m_inpoel;
+      p | m_coord;
+      p | m_u;
       p | m_numsent;
       p | m_numreceived;
       p | m_donecb;
@@ -102,11 +105,11 @@ class TransferDetails : public CBase_TransferDetails {
     //! The ID of my first chunk (used for collision detection library)
     int m_firstchunk;
     //! Pointer to element connectivity
-    std::vector< std::size_t >* m_inpoel;
+    std::vector< std::size_t > m_inpoel;
     //! Pointer to point coordinates
-    tk::UnsMesh::Coords* m_coord;
+    tk::UnsMesh::Coords m_coord;
     //! Pointer to solution in mesh nodes
-    tk::Fields* m_u;
+    tk::Fields m_u;
 
     //! The number of messages sent by the dest mesh
     int m_numsent;

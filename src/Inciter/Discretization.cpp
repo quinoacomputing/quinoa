@@ -341,15 +341,17 @@ Discretization::transfer(
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (fromMesh == m_meshid) {
-      exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
+      exam2m::setSourceTets( thisProxy, thisIndex, m_inpoel, m_coord, u );
+      //std::cout << "{{" << thisIndex << "}} mesh " << m_meshid << " SRC; dir " << dirn << std::endl;
       ++m_nsrc;
     } else {
       m_nsrc = 0;
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
     if (toMesh == m_meshid) {
-      exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
+      exam2m::setDestPoints( thisProxy, thisIndex, m_coord, u,
         cb_xfer );
+      //std::cout << "{{" << thisIndex << "}} mesh " << m_meshid << " DEST; dir " << dirn << std::endl;
       ++m_ndst;
     } else {
       m_ndst = 0;
@@ -369,6 +371,8 @@ void Discretization::to_complete()
 //!   and notify the corresponding source of the completion.
 // *****************************************************************************
 {
+  std::cout << "{{" << thisIndex << "}} mesh " << m_meshid << " in to_complete() " << std::endl;
+
   // Lookup the source disc and notify it of completion
   for (auto& t : m_transfer) {
     if (m_meshid == t.dst) {
@@ -387,6 +391,8 @@ void Discretization::from_complete()
 //!   and notify the corresponding source of the completion.
 // *****************************************************************************
 {
+  std::cout << "{{" << thisIndex << "}} mesh " << m_meshid << " in from_complete() " << std::endl;
+
   // Lookup the source disc and notify it of completion
   for (auto& t : m_transfer) {
     if (m_meshid == t.src) {
@@ -413,6 +419,7 @@ void Discretization::transfer_complete()
 //! \note Single exit point after solution transfer between meshes
 // *****************************************************************************
 {
+  std::cout << "{{" << thisIndex << "}} mesh " << m_meshid << " in transfer_complete() " << std::endl;
   contribute( sizeof(nullptr), nullptr, CkReduction::nop,
     CkCallback(CkReductionTarget(Transporter,solutionTransferred),
     m_transporter) );

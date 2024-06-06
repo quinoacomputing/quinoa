@@ -14,6 +14,7 @@
 #include "Reorder.hpp"
 #include "DerivedData.hpp"
 #include "M2MTransfer.hpp"
+#include <iostream>
 
 #include "collidecharm.h"
 
@@ -49,8 +50,8 @@ TransferDetails::TransferDetails( CkArrayID p, MeshData d, CkCallback cb ) :
 
 void
 TransferDetails::setSourceTets(
-    std::vector< std::size_t>* inpoel,
-    tk::UnsMesh::Coords* coords,
+    std::vector< std::size_t>& inpoel,
+    tk::UnsMesh::Coords& coords,
     const tk::Fields& u )
 // *****************************************************************************
 //  Set the data for the source tetrahedrons to be collided
@@ -60,7 +61,7 @@ TransferDetails::setSourceTets(
 // *****************************************************************************
 {
   m_coord = coords;
-  m_u = const_cast< tk::Fields* >( &u );
+  m_u = u;
   m_inpoel = inpoel;
 
   // Send tetrahedron data to the collision detection library
@@ -69,7 +70,7 @@ TransferDetails::setSourceTets(
 
 void
 TransferDetails::setDestPoints(
-    tk::UnsMesh::Coords* coords,
+    tk::UnsMesh::Coords& coords,
     tk::Fields& u,
     CkCallback cb )
 // *****************************************************************************
@@ -80,7 +81,7 @@ TransferDetails::setDestPoints(
 // *****************************************************************************
 {
   m_coord = coords;
-  m_u = static_cast< tk::Fields* >( &u );
+  m_u = u;
   m_donecb = cb;
 
   // Initialize msg counters, callback, and background solution data
@@ -99,7 +100,7 @@ TransferDetails::background()
 //! \details This is useful to see what points did not receive solution.
 // *****************************************************************************
 {
-  tk::Fields& u = *m_u;
+  tk::Fields& u = m_u;
   for (std::size_t i = 0; i < u.nunk(); ++i) u(i,0) = -1.0;
 }
 
@@ -109,7 +110,7 @@ TransferDetails::collideVertices()
 // Pass vertex information to the collision detection library
 // *****************************************************************************
 {
-  const tk::UnsMesh::Coords& coord = *m_coord;
+  const tk::UnsMesh::Coords& coord = m_coord;
   auto nVertices = coord[0].size();
   std::size_t nBoxes = 0;
   std::vector< bbox3d > boxes( nVertices );
@@ -131,8 +132,8 @@ TransferDetails::collideTets() const
 // Pass tet information to the collision detection library
 // *****************************************************************************
 {
-  const std::vector< std::size_t >& inpoel = *m_inpoel;
-  const tk::UnsMesh::Coords& coord = *m_coord;
+  const std::vector< std::size_t >& inpoel = m_inpoel;
+  const tk::UnsMesh::Coords& coord = m_coord;
   auto nBoxes = inpoel.size() / 4;
   std::vector< bbox3d > boxes( nBoxes );
   std::vector< int > prio( nBoxes );
@@ -147,6 +148,10 @@ TransferDetails::collideTets() const
       boxes[i].add(CkVector3d(coord[0][p], coord[1][p], coord[2][p]));
     }
   }
+
+  std::cout << "{{" << thisIndex << "}} in TD::collideTets, counters "
+    << m_numreceived << ", "
+    << m_numsent << std::endl;
   CollideBoxesPrio( collideHandle, firstchunk + thisIndex,
                     static_cast<int>(nBoxes), boxes.data(), prio.data() );
 }
@@ -168,7 +173,7 @@ TransferDetails::processCollisions(
 //! \param[in] colls List of potential collisions
 // *****************************************************************************
 {
-  const tk::UnsMesh::Coords& coord = *m_coord;
+  const tk::UnsMesh::Coords& coord = m_coord;
   int mychunk = thisIndex + m_firstchunk;
 
   std::vector< std::vector< PotentialCollision > >
@@ -203,6 +208,10 @@ TransferDetails::processCollisions(
     pColls[ static_cast<std::size_t>(chareindex) ].push_back( pColl );
   }
 
+  std::cout << "{{" << thisIndex << "}} in TD::processCollisions, counters "
+    << m_numreceived << ", "
+    << m_numsent << std::endl;
+
   // Send out the lists of potential collisions to the source mesh chares
   for (int i = 0; i < numchares; i++) {
     auto I = static_cast< std::size_t >( i );
@@ -219,7 +228,7 @@ TransferDetails::determineActualCollisions(
     CProxy_TransferDetails proxy,
     int index,
     int nColls,
-    PotentialCollision* colls ) const
+    PotentialCollision* colls )
 // *****************************************************************************
 //  Identify actual collisions by calling intet on all possible collisions, and
 //  interpolate solution values to send back to the destination mesh.
@@ -229,8 +238,8 @@ TransferDetails::determineActualCollisions(
 //! \param[in] colls List of potential collisions
 // *****************************************************************************
 {
-  const std::vector< std::size_t >& inpoel = *m_inpoel;
-  tk::Fields& u = *m_u;
+  const std::vector< std::size_t >& inpoel = m_inpoel;
+  tk::Fields& u = m_u;
   //CkPrintf("Source chare %i received data for %i potential collisions\n",
   //    thisIndex, nColls);
 
@@ -243,7 +252,7 @@ TransferDetails::determineActualCollisions(
   for (int i = 0; i < nColls; i++) {
     std::vector< tk::real > point
       {colls[i].point.x, colls[i].point.y, colls[i].point.z};
-    if (tk::intet(*m_coord, *m_inpoel, point, colls[i].source_index, N))
+    if (tk::intet(m_coord, m_inpoel, point, colls[i].source_index, N))
     {
       numInTet++;
       SolutionData data;
@@ -274,7 +283,7 @@ TransferDetails::transferSolution( const std::vector< SolutionData >& soln )
 //! \param[in] soln List of solutions
 // *****************************************************************************
 {
-  tk::Fields& u = *m_u;
+  tk::Fields& u = m_u;
 
   for (std::size_t i=0; i<soln.size(); ++i) {
     for (std::size_t c=0; c<u.nprop(); ++c) {
@@ -284,6 +293,9 @@ TransferDetails::transferSolution( const std::vector< SolutionData >& soln )
 
   // Inform the caller if we've received all solution data
   m_numreceived++;
+  std::cout << "{{" << thisIndex << "}} in TD::transferSolution, counters "
+    << m_numreceived << ", "
+    << m_numsent << std::endl;
   if (m_numreceived == m_numsent) {
     m_donecb.send();
   }

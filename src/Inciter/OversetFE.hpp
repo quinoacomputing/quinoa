@@ -97,6 +97,9 @@ class OversetFE : public CBase_OversetFE {
     //! Transfer solution to other solver and mesh if coupled
     void transferSol();
 
+    //! Transfer solution to other solver and mesh if coupled
+    void transferSolNEM();
+
     // Start time stepping
     void start();
 

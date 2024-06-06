@@ -40,11 +40,11 @@ void addMesh(CkArrayID p, int elem, CkCallback cb) {
   m2mtransferProxy[0].addMesh(p, elem, cb);
 }
 
-void setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u) {
+void setSourceTets(CkArrayID p, int index, std::vector< std::size_t >& inpoel, tk::UnsMesh::Coords& coords, const tk::Fields& u) {
   m2mtransferProxy.ckLocalBranch()->setSourceTets(p, index, inpoel, coords, u);
 }
 
-void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb) {
+void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords& coords, tk::Fields& u, CkCallback cb) {
   m2mtransferProxy.ckLocalBranch()->setDestPoints(p, index, coords, u, cb);
 }
 
@@ -70,14 +70,14 @@ void M2MTransfer::setMesh( CkArrayID p, MeshData d ) {
   proxyMap[static_cast<std::size_t>(CkGroupID(p).idx)] = d;
 }
 
-void M2MTransfer::setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb) {
+void M2MTransfer::setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords& coords, tk::Fields& u, CkCallback cb) {
   m_destmesh = static_cast<std::size_t>(CkGroupID(p).idx);
   TransferDetails* w = proxyMap[m_destmesh].m_proxy[index].ckLocal();
   assert(w);
   w->setDestPoints(coords, u, cb);
 }
 
-void M2MTransfer::setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u) {
+void M2MTransfer::setSourceTets(CkArrayID p, int index, std::vector< std::size_t >& inpoel, tk::UnsMesh::Coords& coords, const tk::Fields& u) {
   m_sourcemesh = static_cast<std::size_t>(CkGroupID(p).idx);
   TransferDetails* w = proxyMap[m_sourcemesh].m_proxy[index].ckLocal();
   assert(w);
