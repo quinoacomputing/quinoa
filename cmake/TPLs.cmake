@@ -21,7 +21,9 @@ include(GNUInstallDirs)
 message(STATUS "------------------------------------------")
 
 #### Charm++
-set(CHARM_ROOT ${TPL_DIR}/charm)
+if (NOT CHARM_ROOT)
+  set(CHARM_ROOT ${TPL_DIR}/charm)
+endif()
 find_package(Charm)
 
 #### BLAS/LAPACK library with LAPACKE C-interface
