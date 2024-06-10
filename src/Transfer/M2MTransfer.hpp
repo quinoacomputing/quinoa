@@ -7,14 +7,13 @@
 
 namespace exam2m {
 
+void collisionHandler(
+  [[maybe_unused]] void *param,
+  int nColl,
+  Collision *colls );
 void addMesh(CkArrayID p, int elem, CkCallback cb);
 void setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u);
 void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb);
-
-class LibMain : public CBase_LibMain {
-public:
-  LibMain(CkArgMsg* msg);
-};
 
 class MeshData {
   public:

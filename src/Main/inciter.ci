@@ -32,6 +32,8 @@ mainmodule inciter {
   readonly tk::CProxy_ChareStateCollector stateProxy;
   readonly tk::CProxy_LBSwitch LBSwitchProxy;
   readonly bool g_trace;
+  readonly exam2m::CProxy_M2MTransfer m2mtransferProxy;
+  readonly CollideHandle collideHandle;
 
   namespace inciter {
 
