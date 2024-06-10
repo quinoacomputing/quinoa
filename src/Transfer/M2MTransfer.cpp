@@ -5,6 +5,10 @@
 
 #include <cassert>
 
+extern exam2m::CProxy_M2MTransfer m2mtransferProxy;
+//! \brief Charm handle to the collision detection library instance
+extern CollideHandle collideHandle;
+
 namespace exam2m {
 
 #if defined(__clang__)
@@ -12,10 +16,6 @@ namespace exam2m {
   #pragma clang diagnostic ignored "-Wmissing-prototypes"
   #pragma clang diagnostic ignored "-Wmissing-variable-declarations"
 #endif
-
-/* readonly */ CProxy_M2MTransfer m2mtransferProxy;
-//! \brief Charm handle to the collision detection library instance
-/* readonly */ CollideHandle collideHandle;
 
 void collisionHandler( [[maybe_unused]] void *param,
                         int nColl,
@@ -46,16 +46,6 @@ void setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, t
 
 void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb) {
   m2mtransferProxy.ckLocalBranch()->setDestPoints(p, index, coords, u, cb);
-}
-
-LibMain::LibMain(CkArgMsg* msg) {
-  delete msg;
-  m2mtransferProxy = CProxy_M2MTransfer::ckNew();
-
-  // TODO: Need to make sure this is actually correct
-  CollideGrid3d gridMap(CkVector3d(0, 0, 0),CkVector3d(2, 100, 2));
-  collideHandle = CollideCreate(gridMap,
-      CollideSerialClient(collisionHandler, 0));
 }
 
 M2MTransfer::M2MTransfer() : current_chunk(0) {}

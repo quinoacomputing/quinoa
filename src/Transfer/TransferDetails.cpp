@@ -28,10 +28,8 @@ PUPbytes(Collision);
   #pragma clang diagnostic pop
 #endif
 
-namespace exam2m {
 extern CollideHandle collideHandle;
-extern CProxy_M2MTransfer m2mtransferProxy;
-}
+extern exam2m::CProxy_M2MTransfer m2mtransferProxy;
 
 using exam2m::TransferDetails;
 

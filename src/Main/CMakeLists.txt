@@ -35,6 +35,7 @@ if (BRIGAND_FOUND)
                              ${QUINOA_SOURCE_DIR}
                              ${QUINOA_SOURCE_DIR}/Base
                              ${QUINOA_SOURCE_DIR}/Control
+                             ${QUINOA_SOURCE_DIR}/Transfer
                              ${QUINOA_TPL_DIR}
                              ${PEGTL_INCLUDE_DIRS}
                              ${CHARM_INCLUDE_DIRS}
