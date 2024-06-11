@@ -465,6 +465,8 @@ Discretization::setupHoles( CkCallback cont )
 //! \param[in] cont Callback to continue with after holes have been aggregated
 // *****************************************************************************
 {
+  if (m_disc.size() == 1 || m_transfer.empty()) { cont.send(); return; }
+
   m_holcont = cont;
 
   std::unordered_map< std::size_t, std::vector< tk::real > > hol;
