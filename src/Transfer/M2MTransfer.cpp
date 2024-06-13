@@ -6,8 +6,6 @@
 #include <cassert>
 
 extern exam2m::CProxy_M2MTransfer m2mtransferProxy;
-//! \brief Charm handle to the collision detection library instance
-extern CollideHandle collideHandle;
 
 namespace exam2m {
 

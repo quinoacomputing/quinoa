@@ -28,6 +28,7 @@ PUPbytes(Collision);
   #pragma clang diagnostic pop
 #endif
 
+//! \brief Charm handle to the collision detection library instance
 extern CollideHandle collideHandle;
 extern exam2m::CProxy_M2MTransfer m2mtransferProxy;
 

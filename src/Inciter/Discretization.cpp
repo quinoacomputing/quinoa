@@ -166,6 +166,15 @@ Discretization::Discretization(
   }
 
   // Register mesh with mesh-transfer lib
+  addMesh();
+}
+
+void
+Discretization::addMesh()
+// *****************************************************************************
+// Register mesh with mesh-transfer lib
+// *****************************************************************************
+{
   if (m_disc.size() == 1 || m_transfer.empty()) {
     // skip transfer if single mesh or if not involved in coupling
     transferInit();

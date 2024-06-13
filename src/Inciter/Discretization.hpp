@@ -92,6 +92,9 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
+    //! Register mesh with mesh-transfer lib
+    void addMesh();
+
     //! Start computing new mesh veloctity for ALE mesh motion
     void meshvelStart(
       const tk::UnsMesh::Coords vel,
