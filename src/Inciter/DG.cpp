@@ -99,9 +99,9 @@ DG::DG( const CProxy_Discretization& disc,
   m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_rhsprev( m_u.nunk(), m_lhs.nprop() ),
   m_stiffrhs( m_u.nunk(), g_inputdeck.get< tag::ndof >()*
-              g_dgpde[Disc()->MeshId()].nstiffeq()),
+              g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_stiffrhsprev( m_u.nunk(), g_inputdeck.get< tag::ndof >()*
-              g_dgpde[Disc()->MeshId()].nstiffeq()),
+                  g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_stiffeq( g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_mtInv(
     tk::invMassMatTaylorRefEl(g_inputdeck.get< tag::rdof >()) ),
@@ -2027,7 +2027,7 @@ DG::imex_integrate()
       for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
       {
         auto stiffmark = m_stiffeq[ieq]*ndof+idof;
-        auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
+        auto stiffrmark = m_stiffeq[ieq]*rdof+idof;;
         expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
           + d->Dt() * ( expl_rkcoef[0][m_stage]
           * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
@@ -2082,6 +2082,15 @@ DG::imex_integrate()
                   - m_u(e, stiffrmark) );
             }
           m_u(e, m_stiffeq[ieq]*ndof+idof) -= delta;
+          /// / Hardcoded bounds (temp)
+          // if (m_u(e, m_stiffeq[ieq]*ndof+idof) > 1.0e+04)
+          // {
+          //   m_u(e, m_stiffeq[ieq]*ndof+idof) = 1.0e+04;
+          // }
+          // else if (m_u(e, m_stiffeq[ieq]*ndof+idof) < -1.0e-04)
+          // {
+          //   m_u(e, m_stiffeq[ieq]*ndof+idof) = -1.0e+04;
+          // }
           auto stiffmark = m_stiffeq[ieq]*ndof+idof;
           auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
           delta_u[ieq*rdof+idof] = m_u(e, stiffrmark) - u_old[ieq*rdof+idof];
@@ -2148,6 +2157,9 @@ DG::imex_integrate()
           err += delta_u[ieq*ndof+idof]*delta_u[ieq*ndof+idof];
       err = std::sqrt(err);
 
+      if (err > tol)
+        printf("In nonlinear solver: iter, err = %d, %e \n", iter, err);
+      
       // Check if error condition is met and loop back
       if (iter > 0 && err < tol) break;
     }

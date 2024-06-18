@@ -152,14 +152,12 @@ class MultiMat {
     std::size_t nstiffeq() const
     { return 9*g_inputdeck.get< tag::multimat, tag::nmat >(); }
 
-    //! Locate the stiff equations within the list of all
-    //! equations. Places a 1 if equation is stiff, 0 otherwise.
+    //! Locate the stiff equations.
     //! \param[out] stiffeq list with pointers to stiff equations
     void stiffeq( std::vector< std::size_t >& stiffeq ) const
     {
       stiffeq.resize(nstiffeq(), 0);
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
-      std::size_t ndof = g_inputdeck.get< tag::ndof >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       std::size_t icnt = 0;
       for (std::size_t k=0; k<nmat; ++k)
@@ -168,7 +166,7 @@ class MultiMat {
             for (std::size_t j=0; j<3; ++j)
             {
               stiffeq[icnt] =
-                inciter::deformDofIdx(nmat, solidx[k], i, j, ndof, 0);
+                inciter::deformIdx(nmat, solidx[k], i, j);
               icnt++;
             }
     }
@@ -938,8 +936,6 @@ class MultiMat {
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
-      Assert( U.nunk() == R.nunk(), "Number of unknowns in solution "
-              "vector and right-hand side at recent time step incorrect" );
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
@@ -989,6 +985,13 @@ class MultiMat {
         auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
+        // printf("DEBUG\n");
+        // for (std::size_t k=0; k<nmat; ++k)
+        //   for (std::size_t i=0; i<3; ++i)
+        //     for (std::size_t j=0; j<3; ++j)
+        //       printf("g[%d][%d][%d] = %e \n", k, i, j,
+        //              U(e, inciter::deformDofIdx(nmat, solidx[k], i, j, rdof, 0)));
+        
         auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
           rdof, nmat, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P);
         
@@ -1059,13 +1062,22 @@ class MultiMat {
 
             // 5. Divide by 2*mu*tau
             // 'Perfect' plasticity
-            // HARDCODED: Yield Stress 2e11
-            //if (sigma ..?
-            tk::real rel_factor = 1.0e-12; // temp
+            // HARDCODED: Yield Stress
+            tk::real yield_stress = 297.6e19;
+            tk::real equiv_stress = 0.0;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
+            equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
+            tk::real rel_factor = 0.0;
+            if (equiv_stress >= yield_stress)
+              rel_factor = 1.0;
+            else
+              rel_factor = 0.0;
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
-                Lp[i][j] *= rel_factor/2.0*mu;
+                Lp[i][j] *= rel_factor/(2.0*mu);
 
             // Compute the source terms
             std::vector< tk::real > s(9*ndof, 0.0);
