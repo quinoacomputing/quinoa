@@ -997,6 +997,7 @@ class MultiMat {
         
         // compute source
         // Loop through materials
+        std::size_t ksld = 0;
         for (std::size_t k=0; k<nmat; ++k)
         {
           if (solidx[k] > 0)
@@ -1063,7 +1064,7 @@ class MultiMat {
             // 5. Divide by 2*mu*tau
             // 'Perfect' plasticity
             // HARDCODED: Yield Stress
-            tk::real yield_stress = 297.6e19;
+            tk::real yield_stress = 297.6e06;
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -1092,14 +1093,17 @@ class MultiMat {
 
             auto wt = wgp[igp] * geoElem(e, 0);
 
+            // Contribute to the right-hand-side
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 for (std::size_t idof=0; idof<ndof; ++idof)
                 {
-                  std::size_t dofId = (i*3+j)*ndof+idof;
-                  R(e, dofId) += wt * s[dofId];
+                  std::size_t srcId = (i*3+j)*ndof+idof;
+                  std::size_t dofId = 9*ndof*ksld+(i*3+j)*ndof+idof;
+                  R(e, dofId) += wt * s[srcId];
                 }
 
+            ksld++;
           }
         }
 
