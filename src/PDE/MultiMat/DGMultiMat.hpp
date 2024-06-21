@@ -150,7 +150,11 @@ class MultiMat {
     //! deformation equations because of plasticity
     //! \param[out] nstiffeq number of stiff equations
     std::size_t nstiffeq() const
-    { return 9*g_inputdeck.get< tag::multimat, tag::nmat >(); }
+    {
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      return 9*numSolids(nmat, solidx);
+    }
 
     //! Locate the stiff equations.
     //! \param[out] stiffeq list with pointers to stiff equations
@@ -985,12 +989,16 @@ class MultiMat {
         auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
-        // printf("DEBUG\n");
-        // for (std::size_t k=0; k<nmat; ++k)
-        //   for (std::size_t i=0; i<3; ++i)
-        //     for (std::size_t j=0; j<3; ++j)
-        //       printf("g[%d][%d][%d] = %e \n", k, i, j,
-        //              U(e, inciter::deformDofIdx(nmat, solidx[k], i, j, rdof, 0)));
+        // if (e == 703)
+        // {
+        //   printf("DEBUG\n");
+        //   for (std::size_t k=0; k<nmat; ++k)
+        //     if (solidx[k] > 0)
+        //       for (std::size_t i=0; i<3; ++i)
+        //         for (std::size_t j=0; j<3; ++j)
+        //           printf("g[%d][%d][%d] = %e \n", k, i, j,
+        //                  U(e, inciter::deformDofIdx(nmat, solidx[k], i, j, rdof, 0)));
+        // }
         
         auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
           rdof, nmat, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P);
@@ -1072,7 +1080,7 @@ class MultiMat {
             equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
             tk::real rel_factor = 0.0;
             if (equiv_stress >= yield_stress)
-              rel_factor = 1.0;
+              rel_factor = 1.0e+04;
             else
               rel_factor = 0.0;
             tk::real mu = getmatprop< tag::mu >(k);
