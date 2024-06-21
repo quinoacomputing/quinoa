@@ -1080,7 +1080,7 @@ class MultiMat {
             equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
             tk::real rel_factor = 0.0;
             if (equiv_stress >= yield_stress)
-              rel_factor = 1.0e+04;
+              rel_factor = 1.0e+00;
             else
               rel_factor = 0.0;
             tk::real mu = getmatprop< tag::mu >(k);
@@ -1115,7 +1115,7 @@ class MultiMat {
           }
         }
 
-      }
+        }
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.

@@ -2015,14 +2015,16 @@ DG::imex_integrate()
           m_u(e, rmark) = 0;
       }
     }
+
   // Then, solve for implicit-explicit ones
-  for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  for (std::size_t e=0; e<nelem; ++e)
   {
     // Non-linear system f(u) = 0 to be solved
     // Broyden's method
     // Control parameters
-    std::size_t max_iter = 100;
-    tk::real tol = 1.0e-16;
+    std::size_t max_iter = 1000;
+    tk::real tol = 1.0e-10;
     tk::real err = tol+1;
     std::size_t nstiff = m_nstiffeq*ndof;
     
@@ -2030,7 +2032,7 @@ DG::imex_integrate()
     std::vector< std::vector< tk::real > >
       approx_jacob(nstiff, std::vector< tk::real >(nstiff, 0.0));
     for (std::size_t i=0; i<nstiff; ++i)
-      approx_jacob[i][i] = 1.0e+02;
+      approx_jacob[i][i] = 1.0e-00;
     
     // Save explicit terms to be re-used
     std::vector< tk::real > expl_terms(nstiff, 0.0);
@@ -2047,7 +2049,7 @@ DG::imex_integrate()
           + impl_rkcoef[0][m_stage]
           * m_stiffrhsprev(e,ieq*ndof+idof)/m_lhs(e,stiffmark) );
       }
-
+    
     // Compute stiff_rhs with initial u
     g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
       myGhosts()->m_inpoel, myGhosts()->m_coord,
@@ -2239,6 +2241,8 @@ DG::imex_integrate()
       // {
       //   printf("In nonlinear solver: e, iter, err = %d, %d, %e \n", e, iter, err);
       // }
+      if (9999 < iter)
+        printf("In nonlinear solver: e, iter, err = %d, %d, %e \n", e, iter, err);
       
       // Check if error condition is met and loop back
       if (err < tol) break;
