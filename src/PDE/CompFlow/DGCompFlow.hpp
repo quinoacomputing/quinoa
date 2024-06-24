@@ -135,12 +135,26 @@ class CompFlow {
     std::size_t nstiffeq() const
     { return 0; }
 
-    //! Locate the stiff equations within the list of all
-    //! equations. Places a 1 if equation is stiff, 0 otherwise.
+    //! Find how 'nonstiff equations', which we currently
+    //! don't use for Compflow
+    //! \param[out] nnonstiffeq number of stiff equations
+    std::size_t nnonstiffeq() const
+    { return 0; }
+  
+    //! Locate the stiff equations. Unused for compflow.
+    //! \param[in] neq number of equations
     //! \param[out] stiffeq list with 0s and 1s
     void stiffeq( std::vector< std::size_t >& stiffeq ) const
     {
       stiffeq.resize(0);
+    }
+
+    //! Locate the nonstiff equations. Unused for compflow.
+    //! \param[in] neq number of equations
+    //! \param[out] nonstiffeq list with 0s and 1s
+    void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
+    {
+      nonstiffeq.resize(0);
     }
 
     //! Initalize the compressible flow equations, prepare for time integration

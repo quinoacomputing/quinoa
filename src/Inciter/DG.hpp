@@ -255,7 +255,9 @@ class DG : public CBase_DG {
       p | m_stiffrhs;
       p | m_stiffrhsprev;
       p | m_stiffeq;
+      p | m_nonstiffeq;
       p | m_nstiffeq;
+      p | m_nnonstiffeq;
       p | m_npoin;
       p | m_diag;
       p | m_stage;
@@ -311,8 +313,8 @@ class DG : public CBase_DG {
     //! \brief Counter signaling that we have received all our nodal extrema from
     //!   ghost chare partitions
     std::size_t m_nnodalExtrema;
-    //! Counter signaling how many stiff equations are in the system
-    std::size_t m_nstiffeq;
+    //! Counters signaling how many stiff and non-stiff equations in the system
+    std::size_t m_nstiffeq, m_nnonstiffeq;;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
@@ -331,8 +333,8 @@ class DG : public CBase_DG {
     tk::Fields m_stiffrhs;
     //! Vector of previous right-hand side values for stiff equations
     tk::Fields m_stiffrhsprev;
-    //! Vector that indicates which equations are stiff
-    std::vector< std::size_t > m_stiffeq;
+    //! Vectors that indicates which equations are stiff and non-stiff
+  std::vector< std::size_t > m_stiffeq, m_nonstiffeq;
     //! Inverse of Taylor mass-matrix
     std::vector< std::vector< tk::real > > m_mtInv;
     //! Vector of nodal extrema for conservative variables

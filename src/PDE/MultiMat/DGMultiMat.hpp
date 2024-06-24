@@ -146,7 +146,7 @@ class MultiMat {
       tk::BoxElems< eq >(geoElem, nielem, inbox);
     }
 
-    //! Find how 'stiff equations', which are the inverse
+    //! Find how many 'stiff equations', which are the inverse
     //! deformation equations because of plasticity
     //! \param[out] nstiffeq number of stiff equations
     std::size_t nstiffeq() const
@@ -156,6 +156,15 @@ class MultiMat {
       return 9*numSolids(nmat, solidx);
     }
 
+    //! Find how many 'non-stiff equations', which are the inverse
+    //! deformation equations because of plasticity
+    //! \param[out] nnonstiffeq number of stiff equations
+    std::size_t nnonstiffeq() const
+    {
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      return 2*nmat+3+nmat;
+    }
+  
     //! Locate the stiff equations.
     //! \param[out] stiffeq list with pointers to stiff equations
     void stiffeq( std::vector< std::size_t >& stiffeq ) const
@@ -173,6 +182,16 @@ class MultiMat {
                 inciter::deformIdx(nmat, solidx[k], i, j);
               icnt++;
             }
+    }
+  
+    //! Locate the nonstiff equations.
+    //! \param[out] nonstiffeq list with pointers to nonstiff equations
+    void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
+    {
+      nonstiffeq.resize(nstiffeq(), 0);
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      for (std::size_t icomp=0; icomp<2*nmat+3+nmat; icomp++)
+        nonstiffeq[icomp] = icomp;
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -989,17 +1008,6 @@ class MultiMat {
         auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
-        // if (e == 703)
-        // {
-        //   printf("DEBUG\n");
-        //   for (std::size_t k=0; k<nmat; ++k)
-        //     if (solidx[k] > 0)
-        //       for (std::size_t i=0; i<3; ++i)
-        //         for (std::size_t j=0; j<3; ++j)
-        //           printf("g[%d][%d][%d] = %e \n", k, i, j,
-        //                  U(e, inciter::deformDofIdx(nmat, solidx[k], i, j, rdof, 0)));
-        // }
-        
         auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
           rdof, nmat, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P);
         

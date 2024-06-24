@@ -138,10 +138,18 @@ class DGPDE {
     std::size_t nstiffeq() const
     { return self->nstiffeq(); }
 
-    //! Public function to locate the stiff equations within the list of all
-    //! equations. Places a 1 if equation is stiff, 0 otherwise.
+    //! Public interface to find how 'nonstiff equations', which are the inverse
+    //! deformation equations because of plasticity
+    std::size_t nnonstiffeq() const
+    { return self->nnonstiffeq(); }
+
+    //! Public function to locate the stiff equations
     void stiffeq( std::vector< std::size_t >& stiffeq ) const
     { return self->stiffeq( stiffeq ); }
+
+    //! Public function to locate the nonstiff equations
+    void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
+    { return self->nonstiffeq( nonstiffeq ); }
   
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
@@ -369,7 +377,9 @@ class DGPDE {
       virtual std::size_t nmat() const = 0;
       virtual void numEquationDofs(std::vector< std::size_t >&) const = 0;
       virtual std::size_t nstiffeq() const = 0;
+      virtual std::size_t nnonstiffeq() const = 0;
       virtual void stiffeq( std::vector< std::size_t >& ) const = 0;
+      virtual void nonstiffeq( std::vector< std::size_t >& ) const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
         std::vector< std::unordered_set< std::size_t > >& ) const = 0;
@@ -507,8 +517,12 @@ class DGPDE {
       { data.numEquationDofs(numEqDof); }
       std::size_t nstiffeq() const override
       { return data.nstiffeq(); }
+      std::size_t nnonstiffeq() const override
+      { return data.nnonstiffeq(); }
       void stiffeq( std::vector< std::size_t >& stiffeq ) const override
       { data.stiffeq(stiffeq); }
+      void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const override
+      { data.nonstiffeq(nonstiffeq); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
         std::vector< std::unordered_set< std::size_t > >& inbox )
