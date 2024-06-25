@@ -1975,7 +1975,7 @@ DG::imex_integrate()
       // Non-linear system f(u) = 0 to be solved
       // Broyden's method
       // Control parameters
-      std::size_t max_iter = 1000;
+      std::size_t max_iter = 100;
       tk::real tol = 1.0e-10;
       tk::real err = tol+1;
       std::size_t nstiff = m_nstiffeq*ndof;
@@ -2183,7 +2183,7 @@ DG::imex_integrate()
       }
   }
   else {
-    // For last stage there just use all previously computed stages
+    // For last stage just use all previously computed stages
     const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
     for (std::size_t e=0; e<nelem; ++e)
     {

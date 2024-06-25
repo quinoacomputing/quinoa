@@ -345,7 +345,7 @@ determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
 }
 
 //! Compute the inverse of 3x3 matrix
-//!  \param[in] a 3x3 matrix
+//!  \param[in] m 3x3 matrix
 //!  \return Inverse of the 3x3 matrix
 inline std::array< std::array< tk::real, 3 >, 3 >
 inverse( const std::array< std::array< tk::real, 3 >, 3 >& m )
