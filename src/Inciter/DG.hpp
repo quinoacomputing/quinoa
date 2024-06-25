@@ -327,7 +327,7 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of previous right-hand side values
+    //! Vector of previous right-hand side values used in the IMEX-RK scheme
     tk::Fields m_rhsprev;
     //! Vector of right-hand side for stiff equations
     tk::Fields m_stiffrhs;
