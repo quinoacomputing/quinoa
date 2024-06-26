@@ -1976,7 +1976,7 @@ DG::imex_integrate()
       // Broyden's method
       // Control parameters
       std::size_t max_iter = 100;
-      tk::real tol = 1.0e-10;
+      tk::real tol = 1.0e-06;
       tk::real err = tol+1;
       std::size_t nstiff = m_nstiffeq*ndof;
 
@@ -1984,7 +1984,7 @@ DG::imex_integrate()
       std::vector< std::vector< tk::real > >
         approx_jacob(nstiff, std::vector< tk::real >(nstiff, 0.0));
       for (std::size_t i=0; i<nstiff; ++i)
-        approx_jacob[i][i] = 1.0e-00;
+        approx_jacob[i][i] = 1.0e+00;
 
       // Save explicit terms to be re-used
       std::vector< tk::real > expl_terms(nstiff, 0.0);
@@ -2028,7 +2028,7 @@ DG::imex_integrate()
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
-          u_old[ieq*ndof+idof] = m_u(e, m_stiffeq[ieq]*ndof+idof);
+          u_old[ieq*ndof+idof] = m_u(e, m_stiffeq[ieq]*rdof+idof);
           f_old[ieq*ndof+idof] = f[ieq*ndof+idof];
         }
 
@@ -2112,19 +2112,19 @@ DG::imex_integrate()
 
         // 3. Divide delta_u+approx_jacob*delta_f
         // by delta_u*(approx_jacob*delta_f)
-        if (std::abs(denom) < 1.0e-12)
+        if (std::abs(denom) < 1.0e-18)
         {
           if (denom < 0.0)
           {
             for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
               for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-                auxvec1[jeq*ndof+jdof] /= -1.0e-12;
+                auxvec1[jeq*ndof+jdof] /= -1.0e-18;
           }
           else
           {
             for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
               for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-                auxvec1[jeq*ndof+jdof] /= 1.0e-12; 
+                auxvec1[jeq*ndof+jdof] /= 1.0e-18; 
           }
         }
         else
@@ -2147,7 +2147,7 @@ DG::imex_integrate()
         for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
           for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
           {
-            u_old[ieq*ndof+idof] = m_u(e, m_stiffeq[ieq]*ndof+idof);
+            u_old[ieq*ndof+idof] = m_u(e, m_stiffeq[ieq]*rdof+idof);
             f_old[ieq*ndof+idof] = f[ieq*ndof+idof];
           }
 
@@ -2158,11 +2158,17 @@ DG::imex_integrate()
             err += f[ieq*ndof+idof]*f[ieq*ndof+idof];
         err = std::sqrt(err);
 
-        if (max_iter-1 == iter)
-          printf("In nonlinear solver: e, iter, err = %d, %d, %e \n", e, iter, err);
+        //if (max_iter-1 == iter)
+        if (iter > 1)
+          printf("(1) In nonlinear solver: e, iter, err = %d, %d, %e \n", e, iter, err);
       
         // Check if error condition is met and loop back
-        if (err < tol) break;
+        if (err < tol)
+        {
+          if (iter > 1)
+            printf("(2) In nonlinear solver: e, iter, err = %d, %d, %e \n", e, iter, err);
+          break;
+        }
       }
     }
 

@@ -1044,7 +1044,7 @@ class MultiMat {
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 ginv[3*i+j] = g[i][j];
-            lapack_int ipiv[9];
+            lapack_int ipiv[3];
             #ifndef NDEBUG
             lapack_int ierr =
             #endif
@@ -1088,9 +1088,7 @@ class MultiMat {
             equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
             tk::real rel_factor = 0.0;
             if (equiv_stress >= yield_stress)
-              rel_factor = 1.0e+00;
-            else
-              rel_factor = 0.0;
+              rel_factor = 1.0e+08;
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
