@@ -111,6 +111,7 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::Pr_jwl,   std::vector< tk::real >,
   tag::mu,       std::vector< tk::real >,
   tag::rho0,     std::vector< tk::real >,
+  tag::yield,    std::vector< tk::real >,
   tag::cv,       std::vector< tk::real >,
   tag::k,        std::vector< tk::real >
 > >;
@@ -247,13 +248,16 @@ using ConfigMembers = brigand::list<
   tag::cmd, CmdLine,
 
   // time stepping options
-  tag::nstep, uint64_t,
-  tag::term,  tk::real,
-  tag::t0,    tk::real,
-  tag::dt,    tk::real,
-  tag::cfl,   tk::real,
-  tag::ttyi,  uint32_t,
+  tag::nstep,            uint64_t,
+  tag::term,             tk::real,
+  tag::t0,               tk::real,
+  tag::dt,               tk::real,
+  tag::cfl,              tk::real,
+  tag::ttyi,             uint32_t,
   tag::imex_runge_kutta, uint32_t,
+  tag::imex_maxiter,     uint32_t,
+  tag::imex_reltol,      tk::real,
+  tag::imex_abstol,      tk::real,
 
   // steady-state solver options
   tag::steady_state, bool,
@@ -459,10 +463,28 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to turn IMEX integrator on/off for solid materials
         in a multimat run. Plastic terms are integrated implicitly in time. This
         flag will activate an Implicit-Explicit Runge-Kutta scheme to replace the
-        explicit one that is usually used. Scheme taken from Cavaglieri, D., & 
+        explicit one that is usually used. Scheme taken from Cavaglieri, D., &
         Bewley, T. (2015). Low-storage implicit/explicit Runge–Kutta schemes for
-        the simulation of stiff high-dimensional ODE systems. Journal of 
+        the simulation of stiff high-dimensional ODE systems. Journal of
         Computational Physics, 286, 172-193.)", "uint 0/1"});
+
+      keywords.insert({"imex_maxiter",
+        "Set maximum number of iterations for non-linear solver with IMEX-RK scheme",
+        R"(This keywords is used to specify the maximum number of iterations that
+        the non-linear solver uses to obtain the implicit unknowns within the
+        Implicit-Explicit Runge-Kutta scheme.)", "uint"});
+
+      keywords.insert({"imex_reltol",
+        "Set relative tolerance for non-linear solver with IMEX-RK scheme",
+        R"(This keywords is used to specify the relative tolerance that
+        the non-linear solver uses to obtain the implicit unknowns within the
+        Implicit-Explicit Runge-Kutta scheme.)", "real"});
+
+      keywords.insert({"imex_abstol",
+        "Set absolute tolerance for non-linear solver with IMEX-RK scheme",
+        R"(This keywords is used to specify the absolute tolerance that
+        the non-linear solver uses to obtain the implicit unknowns within the
+        Implicit-Explicit Runge-Kutta scheme.)", "real"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options
@@ -946,6 +968,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"rho0", "EoS rho0 parameter",
         R"(This keyword is used to specify the material property rho0, which is
         the density of initial state (units: kg/m3) of the material.)",
+        "vector of reals"});
+
+      keywords.insert({"yield", "Yield stress of solid material",
+        R"(This keyword is used to specify the material property yield stress,
+        which indicates the stress after which the material begins plastic flow.)",
         "vector of reals"});
 
       keywords.insert({"cv", "specific heat at constant volume",

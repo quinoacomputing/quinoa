@@ -139,6 +139,12 @@ LuaParser::storeInputDeck(
     lua_ideck, "rescomp", gideck.get< tag::rescomp >(), 1);
   storeIfSpecd< uint32_t >(
     lua_ideck, "imex_runge_kutta", gideck.get< tag::imex_runge_kutta >(), 0);
+  storeIfSpecd< uint32_t >(
+    lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 50);
+  storeIfSpecd< tk::real >(
+    lua_ideck, "imex_reltol", gideck.get< tag::imex_reltol >(), 1.0e-02);
+  storeIfSpecd< tk::real >(
+    lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-04);
 
   if (gideck.get< tag::dt >() < 1e-12 && gideck.get< tag::cfl >() < 1e-12)
     Throw("No time step calculation policy has been selected in the "
@@ -428,8 +434,16 @@ LuaParser::storeInputDeck(
           mati_deck.get< tag::mu >());
 
         // rho0
+        if (!sol_mat[i+1]["rho0"].valid())
+          sol_mat[i+1]["rho0"] = std::vector< tk::real >(ntype, 0.0);
         checkStoreMatProp(sol_mat[i+1], "rho0", ntype,
           mati_deck.get< tag::rho0 >());
+
+        // yield
+        if (!sol_mat[i+1]["yield"].valid())
+          sol_mat[i+1]["yield"] = std::vector< tk::real >(ntype, 300.0e+06);
+        checkStoreMatProp(sol_mat[i+1], "yield", ntype,
+          mati_deck.get< tag::yield >());
 
         // assign solid
         is_solid = true;

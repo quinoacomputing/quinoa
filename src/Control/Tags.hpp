@@ -158,6 +158,9 @@ DEFTAG(shock_detector_coeff);
 DEFTAG(accuracy_test);
 DEFTAG(limsol_projection);
 DEFTAG(imex_runge_kutta);
+DEFTAG(imex_maxiter);
+DEFTAG(imex_reltol);
+DEFTAG(imex_abstol);
 
 DEFTAG(ncomp);
 DEFTAG(pde);
@@ -211,6 +214,7 @@ DEFTAG(matidxmap);
 DEFTAG(eosidx);
 DEFTAG(matidx);
 DEFTAG(solidx);
+DEFTAG(yield);
 
 DEFTAG(field_output);
 DEFTAG(interval);
