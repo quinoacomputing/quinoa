@@ -1079,7 +1079,6 @@ class MultiMat {
 
             // 5. Divide by 2*mu*tau
             // 'Perfect' plasticity
-            // HARDCODED: Yield Stress
             tk::real yield_stress = getmatprop< tag::yield >(k);
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)

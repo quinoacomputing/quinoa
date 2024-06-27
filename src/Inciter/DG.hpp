@@ -314,7 +314,7 @@ class DG : public CBase_DG {
     //!   ghost chare partitions
     std::size_t m_nnodalExtrema;
     //! Counters signaling how many stiff and non-stiff equations in the system
-    std::size_t m_nstiffeq, m_nnonstiffeq;;
+    std::size_t m_nstiffeq, m_nnonstiffeq;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
     //! Vector of unknown at previous time-step

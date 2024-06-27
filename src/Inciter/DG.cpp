@@ -1996,7 +1996,7 @@ DG::imex_integrate()
         for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
           auto stiffmark = m_stiffeq[ieq]*ndof+idof;
-          auto stiffrmark = m_stiffeq[ieq]*rdof+idof;;
+          auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
           expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
             + d->Dt() * ( expl_rkcoef[0][m_stage]
             * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
@@ -2178,8 +2178,8 @@ DG::imex_integrate()
           // If we did not converge, print a message
           if (iter == max_iter-1)
           {
-            printf("\nIMEX-RK: Non-linear solver did not converge in %d iterations\n", max_iter);
-            printf("Element #%d\n", e);
+            printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
+            printf("Element #%lu\n", e);
             printf("Relative error: %e\n", rel_err);
             printf("Absolute error: %e\n\n", abs_err);
           }
