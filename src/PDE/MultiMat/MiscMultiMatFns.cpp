@@ -61,6 +61,7 @@ cleanTraceMultiMat(
 {
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
   std::size_t ncomp = U.nprop()/rdof;
   auto al_eps = 1.0e-02;
   auto neg_density = false;
@@ -167,10 +168,7 @@ cleanTraceMultiMat(
           // energy change
           auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0))
             / alk_new;
-          std::array< std::array< tk::real, 3 >, 3 > gmat {{
-            {{1, 0, 0}},
-            {{0, 1, 0}},
-            {{0, 0, 1}} }};
+          auto gmat = getDeformGrad(nmat, k, ugp);
           auto rhoEmat = mat_blk[k].compute< EOS::totalenergy >(rhomat, u, v, w,
             prelax, gmat);
 
@@ -183,7 +181,6 @@ cleanTraceMultiMat(
           U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk_new;
           U(e, energyDofIdx(nmat, k, rdof, 0)) = alk_new*rhoEmat;
           P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new*prelax;
-          resetSolidTensors(nmat, k, e, U, P);
         }
       }
       // check for unbounded volume fractions
@@ -220,7 +217,6 @@ cleanTraceMultiMat(
           * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, prelax, gk );
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
           prelax;
-        resetSolidTensors(nmat, k, e, U, P);
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
           P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
@@ -259,6 +255,10 @@ cleanTraceMultiMat(
       U(e, densityDofIdx(nmat, k, rdof, 0)) /= alsum;
       U(e, energyDofIdx(nmat, k, rdof, 0)) /= alsum;
       P(e, pressureDofIdx(nmat, k, rdof, 0)) /= alsum;
+      if (solidx[k] > 0) {
+        for (std::size_t i=0; i<6; ++i)
+          P(e, stressDofIdx(nmat, solidx[k], i, rdof, 0)) /= alsum;
+      }
     }
 
     //// bulk quantities
