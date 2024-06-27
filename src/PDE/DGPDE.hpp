@@ -150,7 +150,7 @@ class DGPDE {
     //! Public function to locate the nonstiff equations
     void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
     { return self->nonstiffeq( nonstiffeq ); }
-  
+
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
@@ -310,7 +310,7 @@ class DGPDE {
                     const std::vector< std::size_t >& ndofel,
                     tk::Fields& R ) const
     { return self->stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R); }
-  
+
     //! Public interface to returning maps of output var functions
     std::map< std::string, tk::GetVarFn > OutVarFn() const
     { return self->OutVarFn(); }

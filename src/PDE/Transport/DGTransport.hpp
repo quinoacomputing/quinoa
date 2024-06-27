@@ -115,7 +115,7 @@ class Transport {
     //! \return number of non-stiff equations
     std::size_t nnonstiffeq() const
     { return 0; }
-  
+
     //! Locate the stiff equations. Unused for transport.
     //! \param[out] stiffeq list
     void stiffeq( std::vector< std::size_t >& stiffeq ) const
@@ -483,7 +483,7 @@ class Transport {
                     const std::vector< std::size_t >& /*ndofel*/,
                     tk::Fields& /*R*/ ) const
     {}
-  
+
     //! Return a map that associates user-specified strings to functions
     //! \return Map that associates user-specified strings to functions that
     //!  compute relevant quantities to be output to file

@@ -164,7 +164,7 @@ class MultiMat {
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       return 2*nmat+3+nmat;
     }
-  
+
     //! Locate the stiff equations.
     //! \param[out] stiffeq list with pointers to stiff equations
     void stiffeq( std::vector< std::size_t >& stiffeq ) const
@@ -183,7 +183,7 @@ class MultiMat {
               icnt++;
             }
     }
-  
+
     //! Locate the nonstiff equations.
     //! \param[out] nonstiffeq list with pointers to nonstiff equations
     void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
@@ -969,7 +969,7 @@ class MultiMat {
       // set rhs to zero for element e
       for (std::size_t i=0; i<ndof*nstiffeq(); ++i)
         R(e, i) = 0.0;
-      
+
       const auto& cx = coord[0];
       const auto& cy = coord[1];
       const auto& cz = coord[2];
@@ -1010,7 +1010,7 @@ class MultiMat {
 
         auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
           rdof, nmat, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P);
-        
+
         // compute source
         // Loop through materials
         std::size_t ksld = 0;
