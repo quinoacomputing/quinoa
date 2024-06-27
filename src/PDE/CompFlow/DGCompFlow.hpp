@@ -131,27 +131,25 @@ class CompFlow {
 
     //! Find how 'stiff equations', which we currently
     //! have none for Compflow
-    //! \param[out] nstiffeq number of stiff equations
+    //! \return number of stiff equations
     std::size_t nstiffeq() const
     { return 0; }
 
     //! Find how 'nonstiff equations', which we currently
     //! don't use for Compflow
-    //! \param[out] nnonstiffeq number of stiff equations
+    //! \return number of non-stiff equations
     std::size_t nnonstiffeq() const
     { return 0; }
   
     //! Locate the stiff equations. Unused for compflow.
-    //! \param[in] neq number of equations
-    //! \param[out] stiffeq list with 0s and 1s
+    //! \param[out] stiffeq list
     void stiffeq( std::vector< std::size_t >& stiffeq ) const
     {
       stiffeq.resize(0);
     }
 
     //! Locate the nonstiff equations. Unused for compflow.
-    //! \param[in] neq number of equations
-    //! \param[out] nonstiffeq list with 0s and 1s
+    //! \param[out] nonstiffeq list
     void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
     {
       nonstiffeq.resize(0);
@@ -755,14 +753,14 @@ class CompFlow {
     }
 
     //! Compute stiff terms for a single element, not implemented here
-    //! \param[in] e Element number
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] P Primitive vector at recent time step
-    //! \param[in] ndofel Vector of local number of degrees of freedom
-    //! \param[in,out] R Right-hand side vector computed
+    // //! \param[in] e Element number
+    // //! \param[in] geoElem Element geometry array
+    // //! \param[in] inpoel Element-node connectivity
+    // //! \param[in] coord Array of nodal coordinates
+    // //! \param[in] U Solution vector at recent time step
+    // //! \param[in] P Primitive vector at recent time step
+    // //! \param[in] ndofel Vector of local number of degrees of freedom
+    // //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t /*e*/,
                     const tk::Fields& /*geoElem*/,
                     const std::vector< std::size_t >& /*inpoel*/,

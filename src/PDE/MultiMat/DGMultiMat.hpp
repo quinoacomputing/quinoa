@@ -148,7 +148,7 @@ class MultiMat {
 
     //! Find how many 'stiff equations', which are the inverse
     //! deformation equations because of plasticity
-    //! \param[out] nstiffeq number of stiff equations
+    //! \return number of stiff equations
     std::size_t nstiffeq() const
     {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -158,7 +158,7 @@ class MultiMat {
 
     //! Find how many 'non-stiff equations', which are the inverse
     //! deformation equations because of plasticity
-    //! \param[out] nnonstiffeq number of stiff equations
+    //! \return number of stiff equations
     std::size_t nnonstiffeq() const
     {
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
