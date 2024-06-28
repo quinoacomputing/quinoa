@@ -117,17 +117,17 @@ class Transport {
     { return 0; }
 
     //! Locate the stiff equations. Unused for transport.
-    //! \param[out] stiffeq list
-    void stiffeq( std::vector< std::size_t >& stiffeq ) const
+    //! \param[out] stiffEqIdx list
+    void setStiffEqIdx( std::vector< std::size_t >& stiffEqIdx ) const
     {
-      stiffeq.resize(0);
+      stiffEqIdx.resize(0);
     }
 
     //! Locate the nonstiff equations. Unused for transport.
-    //! \param[out] nonstiffeq list
-    void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
+    //! \param[out] nonStiffEqIdx list
+    void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
     {
-      nonstiffeq.resize(0);
+      nonStiffEqIdx.resize(0);
     }
 
     //! Determine elements that lie inside the user-defined IC box

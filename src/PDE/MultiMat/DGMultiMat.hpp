@@ -161,15 +161,14 @@ class MultiMat {
     //! \return number of stiff equations
     std::size_t nnonstiffeq() const
     {
-      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      return 2*nmat+3+nmat;
+      return m_ncomp-nstiffeq();
     }
 
     //! Locate the stiff equations.
-    //! \param[out] stiffeq list with pointers to stiff equations
-    void stiffeq( std::vector< std::size_t >& stiffeq ) const
+    //! \param[out] stiffEqIdx list with pointers to stiff equations
+    void setStiffEqIdx( std::vector< std::size_t >& stiffEqIdx ) const
     {
-      stiffeq.resize(nstiffeq(), 0);
+      stiffEqIdx.resize(nstiffeq(), 0);
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       std::size_t icnt = 0;
@@ -178,20 +177,19 @@ class MultiMat {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
             {
-              stiffeq[icnt] =
+              stiffEqIdx[icnt] =
                 inciter::deformIdx(nmat, solidx[k], i, j);
               icnt++;
             }
     }
 
     //! Locate the nonstiff equations.
-    //! \param[out] nonstiffeq list with pointers to nonstiff equations
-    void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
+    //! \param[out] nonStiffEqIdx list with pointers to nonstiff equations
+    void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
     {
-      nonstiffeq.resize(nstiffeq(), 0);
-      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      for (std::size_t icomp=0; icomp<2*nmat+3+nmat; icomp++)
-        nonstiffeq[icomp] = icomp;
+      nonStiffEqIdx.resize(nnonstiffeq(), 0);
+      for (std::size_t icomp=0; icomp<nnonstiffeq(); icomp++)
+        nonStiffEqIdx[icomp] = icomp;
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
@@ -1026,6 +1024,11 @@ class MultiMat {
                 g[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)];
 
             // Compute Lp
+            // Reference: Ortega, A. L., Lombardini, M., Pullin, D. I., &
+            // Meiron, D. I. (2014). Numerical simulation of elastic–plastic
+            // solid mechanics using an Eulerian stretch tensor approach and
+            // HLLD Riemann solver. Journal of Computational Physics, 257,
+            // 414-441
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
@@ -1079,7 +1082,7 @@ class MultiMat {
 
             // 5. Divide by 2*mu*tau
             // 'Perfect' plasticity
-            tk::real yield_stress = getmatprop< tag::yield >(k);
+            tk::real yield_stress = getmatprop< tag::yield_stress >(k);
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -1113,7 +1116,7 @@ class MultiMat {
                 for (std::size_t idof=0; idof<ndof; ++idof)
                 {
                   std::size_t srcId = (i*3+j)*ndof+idof;
-                  std::size_t dofId = 9*ndof*ksld+(i*3+j)*ndof+idof;
+                  std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
                   R(e, dofId) += wt * s[srcId];
                 }
 

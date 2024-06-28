@@ -221,9 +221,6 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step
     void step();
 
-    //! Compute the integration step for IMEX-RK
-    void imex_integrate();
-
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -254,8 +251,8 @@ class DG : public CBase_DG {
       p | m_rhsprev;
       p | m_stiffrhs;
       p | m_stiffrhsprev;
-      p | m_stiffeq;
-      p | m_nonstiffeq;
+      p | m_stiffEqIdx;
+      p | m_nonStiffEqIdx;
       p | m_nstiffeq;
       p | m_nnonstiffeq;
       p | m_npoin;
@@ -334,7 +331,7 @@ class DG : public CBase_DG {
     //! Vector of previous right-hand side values for stiff equations
     tk::Fields m_stiffrhsprev;
     //! Vectors that indicates which equations are stiff and non-stiff
-  std::vector< std::size_t > m_stiffeq, m_nonstiffeq;
+    std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
     //! Inverse of Taylor mass-matrix
     std::vector< std::vector< tk::real > > m_mtInv;
     //! Vector of nodal extrema for conservative variables
@@ -444,6 +441,9 @@ class DG : public CBase_DG {
 
     //! Start preparing fields for output to file
     void startFieldOutput( CkCallback c );
+
+    //! Compute the integration step for IMEX-RK
+    void imex_integrate();
 };
 
 } // inciter::

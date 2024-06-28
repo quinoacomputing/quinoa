@@ -94,26 +94,26 @@ using multimatList = tk::TaggedTuple< brigand::list<
 
 // Material/EOS object
 using materialList = tk::TaggedTuple< brigand::list<
-  tag::eos,      MaterialType,
-  tag::id,       std::vector< uint64_t >,
-  tag::gamma,    std::vector< tk::real >,
-  tag::pstiff,   std::vector< tk::real >,
-  tag::w_gru,    std::vector< tk::real >,
-  tag::A_jwl,    std::vector< tk::real >,
-  tag::B_jwl,    std::vector< tk::real >,
-  tag::C_jwl,    std::vector< tk::real >,
-  tag::R1_jwl,   std::vector< tk::real >,
-  tag::R2_jwl,   std::vector< tk::real >,
-  tag::rho0_jwl, std::vector< tk::real >,
-  tag::de_jwl,   std::vector< tk::real >,
-  tag::rhor_jwl, std::vector< tk::real >,
-  tag::Tr_jwl,   std::vector< tk::real >,
-  tag::Pr_jwl,   std::vector< tk::real >,
-  tag::mu,       std::vector< tk::real >,
-  tag::rho0,     std::vector< tk::real >,
-  tag::yield,    std::vector< tk::real >,
-  tag::cv,       std::vector< tk::real >,
-  tag::k,        std::vector< tk::real >
+  tag::eos,          MaterialType,
+  tag::id,           std::vector< uint64_t >,
+  tag::gamma,        std::vector< tk::real >,
+  tag::pstiff,       std::vector< tk::real >,
+  tag::w_gru,        std::vector< tk::real >,
+  tag::A_jwl,        std::vector< tk::real >,
+  tag::B_jwl,        std::vector< tk::real >,
+  tag::C_jwl,        std::vector< tk::real >,
+  tag::R1_jwl,       std::vector< tk::real >,
+  tag::R2_jwl,       std::vector< tk::real >,
+  tag::rho0_jwl,     std::vector< tk::real >,
+  tag::de_jwl,       std::vector< tk::real >,
+  tag::rhor_jwl,     std::vector< tk::real >,
+  tag::Tr_jwl,       std::vector< tk::real >,
+  tag::Pr_jwl,       std::vector< tk::real >,
+  tag::mu,           std::vector< tk::real >,
+  tag::rho0,         std::vector< tk::real >,
+  tag::yield_stress, std::vector< tk::real >,
+  tag::cv,           std::vector< tk::real >,
+  tag::k,            std::vector< tk::real >
 > >;
 
 // Boundary conditions block
@@ -970,10 +970,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         the density of initial state (units: kg/m3) of the material.)",
         "vector of reals"});
 
-      keywords.insert({"yield", "Yield stress of solid material",
+      keywords.insert({"yield_stress", "Yield stress of solid material",
         R"(This keyword is used to specify the material property yield stress,
-        which indicates the stress after which the material begins plastic flow.)",
-        "vector of reals"});
+        which indicates the stress (units: Pa) after which the material begins
+        plastic flow.)", "vector of reals"});
 
       keywords.insert({"cv", "specific heat at constant volume",
         R"(This keyword is used to specify the material property, specific heat at

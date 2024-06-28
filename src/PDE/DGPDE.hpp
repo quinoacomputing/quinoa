@@ -144,12 +144,12 @@ class DGPDE {
     { return self->nnonstiffeq(); }
 
     //! Public function to locate the stiff equations
-    void stiffeq( std::vector< std::size_t >& stiffeq ) const
-    { return self->stiffeq( stiffeq ); }
+    void setStiffEqIdx( std::vector< std::size_t >& stiffEqIdx ) const
+    { return self->setStiffEqIdx( stiffEqIdx ); }
 
     //! Public function to locate the nonstiff equations
-    void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
-    { return self->nonstiffeq( nonstiffeq ); }
+    void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
+    { return self->setNonStiffEqIdx( nonStiffEqIdx ); }
 
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
@@ -378,8 +378,8 @@ class DGPDE {
       virtual void numEquationDofs(std::vector< std::size_t >&) const = 0;
       virtual std::size_t nstiffeq() const = 0;
       virtual std::size_t nnonstiffeq() const = 0;
-      virtual void stiffeq( std::vector< std::size_t >& ) const = 0;
-      virtual void nonstiffeq( std::vector< std::size_t >& ) const = 0;
+      virtual void setStiffEqIdx( std::vector< std::size_t >& ) const = 0;
+      virtual void setNonStiffEqIdx( std::vector< std::size_t >& ) const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
         std::vector< std::unordered_set< std::size_t > >& ) const = 0;
@@ -519,10 +519,10 @@ class DGPDE {
       { return data.nstiffeq(); }
       std::size_t nnonstiffeq() const override
       { return data.nnonstiffeq(); }
-      void stiffeq( std::vector< std::size_t >& stiffeq ) const override
-      { data.stiffeq(stiffeq); }
-      void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const override
-      { data.nonstiffeq(nonstiffeq); }
+      void setStiffEqIdx( std::vector< std::size_t >& stiffEqIdx ) const override
+      { data.setStiffEqIdx(stiffEqIdx); }
+      void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const override
+      { data.setNonStiffEqIdx(nonStiffEqIdx); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
         std::vector< std::unordered_set< std::size_t > >& inbox )

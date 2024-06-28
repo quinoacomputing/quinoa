@@ -214,7 +214,7 @@ DEFTAG(matidxmap);
 DEFTAG(eosidx);
 DEFTAG(matidx);
 DEFTAG(solidx);
-DEFTAG(yield);
+DEFTAG(yield_stress);
 
 DEFTAG(field_output);
 DEFTAG(interval);

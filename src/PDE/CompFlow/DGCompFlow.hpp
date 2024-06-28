@@ -142,17 +142,17 @@ class CompFlow {
     { return 0; }
 
     //! Locate the stiff equations. Unused for compflow.
-    //! \param[out] stiffeq list
-    void stiffeq( std::vector< std::size_t >& stiffeq ) const
+    //! \param[out] stiffEqIdx list
+    void setStiffEqIdx( std::vector< std::size_t >& stiffEqIdx ) const
     {
-      stiffeq.resize(0);
+      stiffEqIdx.resize(0);
     }
 
     //! Locate the nonstiff equations. Unused for compflow.
-    //! \param[out] nonstiffeq list
-    void nonstiffeq( std::vector< std::size_t >& nonstiffeq ) const
+    //! \param[out] nonStiffEqIdx list
+    void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
     {
-      nonstiffeq.resize(0);
+      nonStiffEqIdx.resize(0);
     }
 
     //! Initalize the compressible flow equations, prepare for time integration

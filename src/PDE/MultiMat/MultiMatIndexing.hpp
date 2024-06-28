@@ -224,6 +224,19 @@ const std::array< std::array< std::size_t, 3 >, 3 > stressCmp{{
   {{3, 1, 5}},
   {{4, 5, 2}} }};
 
+//! Get the index of the required material deformation gradient equation
+//! in the context of a list where only the g's of solid materials are present.
+//! If one needs to access the deformation tensor within the state array one
+//! should use deformIdx instead!
+//! \param[in] ksld Index of required solid
+//! \param[in] i Row-index of required tensor component
+//! \param[in] j Column-index of required tensor component
+//! \return Index of the required material deformation gradient equation
+//! in the context of a list where only the g's of solid materials are present.
+inline std::size_t solidTensorIdx( std::size_t ksld, std::size_t i, std::size_t j )
+{ return 9*ksld+(3*i+j); }
+
+
 //@}
 
 } //inciter::

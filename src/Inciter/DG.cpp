@@ -42,6 +42,8 @@ extern std::vector< DGPDE > g_dgpde;
 //! Runge-Kutta coefficients
 static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
+
+//! Implicit-Explicit Runge-Kutta Coefficients
 static const tk::real rk_gamma = (2.0-std::sqrt(2.0))/2.0;
 static const tk::real rk_delta = -2.0*std::sqrt(2.0)/3.0;
 static const tk::real c2 =
@@ -103,8 +105,8 @@ DG::DG( const CProxy_Discretization& disc,
               g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_stiffrhsprev( m_u.nunk(), g_inputdeck.get< tag::ndof >()*
                   g_dgpde[Disc()->MeshId()].nstiffeq() ),
-  m_stiffeq( g_dgpde[Disc()->MeshId()].nstiffeq() ),
-  m_nonstiffeq( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
+  m_stiffEqIdx( g_dgpde[Disc()->MeshId()].nstiffeq() ),
+  m_nonStiffEqIdx( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
   m_mtInv(
     tk::invMassMatTaylorRefEl(g_inputdeck.get< tag::rdof >()) ),
   m_uNodalExtrm(),
@@ -290,13 +292,11 @@ DG::setup()
     d->histheader( std::move(histnames) );
   }
 
-  // If working with IMEX-RK, Store stiff equations into m_stiffeq
+  // If working with IMEX-RK, Store stiff equations into m_stiffEqIdx
   if (g_inputdeck.get< tag::imex_runge_kutta >())
   {
-    m_nstiffeq = g_dgpde[Disc()->MeshId()].nstiffeq();
-    m_nnonstiffeq = g_dgpde[Disc()->MeshId()].nnonstiffeq();
-    g_dgpde[Disc()->MeshId()].stiffeq(m_stiffeq);
-    g_dgpde[Disc()->MeshId()].nonstiffeq(m_nonstiffeq);
+    g_dgpde[Disc()->MeshId()].setStiffEqIdx(m_stiffEqIdx);
+    g_dgpde[Disc()->MeshId()].setNonStiffEqIdx(m_nonStiffEqIdx);
   }
 }
 
@@ -1943,12 +1943,12 @@ void
 DG::imex_integrate()
 {
   /*****************************************************************************
-  imex_integrate:
+  Performs the Implicit-Explicit Runge-Kutta step.
 
-  Performs the Implicit-Explicit Runge-Kutta step. Scheme taken from Cavaglieri,
-   D., & Bewley, T. (2015). Low-storage implicit/explicit Runge–Kutta schemes
-   for the simulation of stiff high-dimensional ODE systems. Journal of
-   Computational Physics, 286, 172-193.
+  \details Performs the Implicit-Explicit Runge-Kutta step. Scheme taken from
+  Cavaglieri, D., & Bewley, T. (2015). Low-storage implicit/explicit Runge–Kutta
+  schemes for the simulation of stiff high-dimensional ODE systems. Journal of
+  Computational Physics, 286, 172-193.
 
   Scheme given by equations (25a,b):
 
@@ -2033,8 +2033,8 @@ DG::imex_integrate()
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
-          auto rmark = m_stiffeq[c]*rdof+k;
-          auto mark = m_stiffeq[c]*ndof+k;
+          auto rmark = m_stiffEqIdx[c]*rdof+k;
+          auto mark = m_stiffEqIdx[c]*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
             expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
             + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark)
@@ -2070,8 +2070,8 @@ DG::imex_integrate()
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
-          auto stiffmark = m_stiffeq[ieq]*ndof+idof;
-          auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
+          auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
+          auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
           expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
             + d->Dt() * ( expl_rkcoef[0][m_stage]
             * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
@@ -2095,8 +2095,8 @@ DG::imex_integrate()
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
-          auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
-          auto stiffmark = m_stiffeq[ieq]*ndof+idof;
+          auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+          auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
           f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
             + d->Dt() * impl_rkcoef[1][m_stage]
             * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
@@ -2107,7 +2107,7 @@ DG::imex_integrate()
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
-          u_old[ieq*ndof+idof] = m_u(e, m_stiffeq[ieq]*rdof+idof);
+          u_old[ieq*ndof+idof] = m_u(e, m_stiffEqIdx[ieq]*rdof+idof);
           f_old[ieq*ndof+idof] = f[ieq*ndof+idof];
         }
 
@@ -2134,7 +2134,7 @@ DG::imex_integrate()
                   delta +=
                     approx_jacob[ieq*ndof+idof][jeq*ndof+jdof] * f[jeq*ndof+jdof];
               // Update u
-              auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
+              auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
               m_u(e, stiffrmark) -= delta;
             }
 
@@ -2147,8 +2147,8 @@ DG::imex_integrate()
           for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
             for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
             {
-              auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
-              auto stiffmark = m_stiffeq[ieq]*ndof+idof;
+              auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+              auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
               f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
                 + d->Dt() * impl_rkcoef[1][m_stage]
                 * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
@@ -2159,7 +2159,7 @@ DG::imex_integrate()
           for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
             for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
             {
-              auto stiffrmark = m_stiffeq[ieq]*rdof+idof;
+              auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
               delta_u[ieq*ndof+idof] = m_u(e, stiffrmark) - u_old[ieq*ndof+idof];
               delta_f[ieq*ndof+idof] = f[ieq*ndof+idof] - f_old[ieq*ndof+idof];
             }
@@ -2234,7 +2234,7 @@ DG::imex_integrate()
           for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
             for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
             {
-              u_old[ieq*ndof+idof] = m_u(e, m_stiffeq[ieq]*rdof+idof);
+              u_old[ieq*ndof+idof] = m_u(e, m_stiffEqIdx[ieq]*rdof+idof);
               f_old[ieq*ndof+idof] = f[ieq*ndof+idof];
             }
 
@@ -2267,8 +2267,8 @@ DG::imex_integrate()
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
-          auto rmark = m_nonstiffeq[c]*rdof+k;
-          auto mark = m_nonstiffeq[c]*ndof+k;
+          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
+          auto mark = m_nonStiffEqIdx[c]*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
             expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
             + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
@@ -2287,8 +2287,8 @@ DG::imex_integrate()
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
-          auto rmark = m_nonstiffeq[c]*rdof+k;
-          auto mark = m_nonstiffeq[c]*ndof+k;
+          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
+          auto mark = m_nonStiffEqIdx[c]*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
             expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
             + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
@@ -2300,8 +2300,8 @@ DG::imex_integrate()
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
-          auto rmark = m_stiffeq[ieq]*rdof+idof;
-          auto mark = m_stiffeq[ieq]*ndof+idof;
+          auto rmark = m_stiffEqIdx[ieq]*rdof+idof;
+          auto mark = m_stiffEqIdx[ieq]*ndof+idof;
           m_u(e, rmark) = m_un(e, rmark)
             + d->Dt() * (expl_rkcoef[0][m_stage]
                          * m_rhsprev(e,mark)/m_lhs(e,mark)

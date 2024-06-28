@@ -439,11 +439,12 @@ LuaParser::storeInputDeck(
         checkStoreMatProp(sol_mat[i+1], "rho0", ntype,
           mati_deck.get< tag::rho0 >());
 
-        // yield
-        if (!sol_mat[i+1]["yield"].valid())
-          sol_mat[i+1]["yield"] = std::vector< tk::real >(ntype, 300.0e+06);
-        checkStoreMatProp(sol_mat[i+1], "yield", ntype,
-          mati_deck.get< tag::yield >());
+        // yield_stress
+        if (!sol_mat[i+1]["yield_stress"].valid())
+          sol_mat[i+1]["yield_stress"] =
+            std::vector< tk::real >(ntype, 300.0e+06);
+        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
+          mati_deck.get< tag::yield_stress >());
 
         // assign solid
         is_solid = true;
