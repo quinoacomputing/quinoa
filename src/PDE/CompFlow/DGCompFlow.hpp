@@ -140,7 +140,7 @@ class CompFlow {
     //! \return number of non-stiff equations
     std::size_t nnonstiffeq() const
     { return 0; }
-  
+
     //! Locate the stiff equations. Unused for compflow.
     //! \param[out] stiffeq list
     void stiffeq( std::vector< std::size_t >& stiffeq ) const
