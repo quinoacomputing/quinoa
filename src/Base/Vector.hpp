@@ -534,6 +534,112 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
             {b[6], b[7], b[8]} }};
 }
 
+//! \brief Rotate a vector (e.g. a velocity) from
+//! the (x,y,z) to a new (r,s,t) coordinate system.
+//! The first direction is given by a unit vector r = (rx,ry,rz).
+//! Then, the second is chosen to be:
+//! if |rx| > 0 or |ry| > 0:
+//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0)
+//! else:
+//! - s = (1,0,0)
+//! Then, third basis vector is obtained from
+//! the cross-product between the first two.
+//! \param[in] v Vector to be rotated.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return rotated vector
+inline std::array< tk::real, 3 >
+rotateVectorToN( const std::array< tk::real, 3 >& v,
+  const std::array< tk::real, 3 >& r )
+{
+  // define rotation matrix
+  tk::real eps = 1.0e-04;
+  std::array< std::array< tk::real, 3 >, 3 > rotMat;
+  tk::real rx = r[0];
+  tk::real ry = r[1];
+  tk::real rz = r[2];
+  if (std::abs(rx) > eps || std::abs(ry) > eps)
+  {
+    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+    rotMat[0][0] = rx;
+    rotMat[0][1] = ry;
+    rotMat[0][2] = rz;
+    rotMat[1][0] = ry/rxryNorm;
+    rotMat[1][1] = -rx/rxryNorm;
+    rotMat[1][2] = 0.0;
+    rotMat[2][0] = rx*rz/rxryNorm;
+    rotMat[2][1] = ry*rz/rxryNorm;
+    rotMat[2][2] = -rxryNorm;
+  }
+  else
+  {
+    rotMat[0][0] = rx;
+    rotMat[0][1] = ry;
+    rotMat[0][2] = rz;
+    rotMat[1][0] = 1.0;
+    rotMat[1][1] = 0.0;
+    rotMat[1][2] = 0.0;
+    rotMat[2][0] = 0.0;
+    rotMat[2][1] = 1.0;
+    rotMat[2][2] = 0.0;
+  }
+
+  // return rotMat*v
+  return matvec(rotMat,v);
+}
+
+//! \brief Rotate a vector (e.g. a velocity) back from
+//! the (r,s,t) to the (x,y,z) coordinate system.
+//! The first direction is given by a unit vector r = (rx,ry,rz).
+//! Then, the second is chosen to be:
+//! if |rx| > 0 or |ry| > 0:
+//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0)
+//! else:
+//! - s = (1,0,0)
+//! Then, third basis vector is obtained from
+//! the cross-product between the first two.
+//! \param[in] v Vector to be rotated.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return rotated vector
+inline std::array< tk::real, 3 >
+rotateVectorBackFromN( const std::array< tk::real, 3 >& v,
+  const std::array< tk::real, 3 >& r )
+{
+  // define rotation matrix
+  tk::real eps = 1.0e-04;
+  std::array< std::array< tk::real, 3 >, 3 > rotMat;
+  tk::real rx = r[0];
+  tk::real ry = r[1];
+  tk::real rz = r[2];
+  if (std::abs(rx) > eps || std::abs(ry) > eps)
+  {
+    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+    rotMat[0][0] = rx;
+    rotMat[1][0] = ry;
+    rotMat[2][0] = rz;
+    rotMat[0][1] = ry/rxryNorm;
+    rotMat[1][1] = -rx/rxryNorm;
+    rotMat[2][1] = 0.0;
+    rotMat[0][2] = rx*rz/rxryNorm;
+    rotMat[1][2] = ry*rz/rxryNorm;
+    rotMat[2][2] = -rxryNorm;
+  }
+  else
+  {
+    rotMat[0][0] = rx;
+    rotMat[1][0] = ry;
+    rotMat[2][0] = rz;
+    rotMat[0][1] = 1.0;
+    rotMat[1][1] = 0.0;
+    rotMat[2][1] = 0.0;
+    rotMat[0][2] = 0.0;
+    rotMat[1][2] = 1.0;
+    rotMat[2][2] = 0.0;
+  }
+
+  // return rotMat*v
+  return matvec(rotMat,v);
+}
+
 //! \brief Rotate a second order tensor (e.g. a Strain/Stress matrix) from
 //! the (x,y,z) to a new (r,s,t) coordinate system.
 //! The first direction is given by a unit vector r = (rx,ry,rz).
@@ -550,6 +656,82 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 inline std::array< std::array< tk::real, 3 >, 3 >
 rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
              const std::array< tk::real, 3 >& r )
+{
+  // define rotation matrix
+  tk::real eps = 1.0e-04;
+  double rotMat[9];
+  tk::real rx = r[0];
+  tk::real ry = r[1];
+  tk::real rz = r[2];
+  if (std::abs(rx) > eps || std::abs(ry) > eps)
+  {
+    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+    rotMat[0] = rx;
+    rotMat[1] = ry;
+    rotMat[2] = rz;
+    rotMat[3] = ry/rxryNorm;
+    rotMat[4] = -rx/rxryNorm;
+    rotMat[5] = 0.0;
+    rotMat[6] = rx*rz/rxryNorm;
+    rotMat[7] = ry*rz/rxryNorm;
+    rotMat[8] = -rxryNorm;
+  }
+  else
+  {
+    rotMat[0] = rx;
+    rotMat[1] = ry;
+    rotMat[2] = rz;
+    rotMat[3] = 1.0;
+    rotMat[4] = 0.0;
+    rotMat[5] = 0.0;
+    rotMat[6] = 0.0;
+    rotMat[7] = 1.0;
+    rotMat[8] = 0.0;
+  }
+
+  // define matrices
+  double matAuxIn[9], matAuxOut[9];
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      matAuxIn[i*3+j] = mat[i][j];
+
+  // compute matAuxIn*rotMat^T and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+    3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
+
+  // matAuxOut -> matAuxIn
+  for (std::size_t i=0; i<9; i++)
+  {
+    matAuxIn[i]  = matAuxOut[i];
+    matAuxOut[i] = 0.0;
+  }
+
+  // compute rotMat*matAuxIn and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+    3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
+
+  // return matAuxOut as a 2D array
+  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
+            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+}
+
+//! \brief Rotate a second order tensor (e.g. a Strain/Stress matrix) back from
+//! the (r,s,t) to the (x,y,z) coordinate system.
+//! The first direction is given by a unit vector r = (rx,ry,rz).
+//! Then, the second is chosen to be:
+//! if |rx| > 0 or |ry| > 0:
+//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0)
+//! else:
+//! - s = (1,0,0)
+//! Then, third basis vector is obtained from
+//! the cross-product between the first two.
+//! \param[in] mat matrix to be rotated.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return rotated tensor
+inline std::array< std::array< tk::real, 3 >, 3 >
+rotateTensorBack(const std::array< std::array< tk::real, 3 >, 3 >& mat,
+  const std::array< tk::real, 3 >& r )
 {
   // define rotation matrix
   tk::real eps = 1.0e-04;
