@@ -207,7 +207,6 @@ DEFTAG(rhor_jwl);
 DEFTAG(Tr_jwl);
 DEFTAG(Pr_jwl);
 DEFTAG(mu);
-DEFTAG(rho0);
 DEFTAG(cv);
 DEFTAG(k);
 DEFTAG(matidxmap);

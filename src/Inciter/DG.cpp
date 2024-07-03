@@ -134,7 +134,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
-  m_shockmarker(m_u.nunk(), 1)
+  m_shockmarker(m_u.nunk(), 1),
+  m_rho0mat()
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -318,6 +319,8 @@ DG::box( tk::real v, const std::vector< tk::real >& )
     myGhosts()->m_fd.Esuel().size()/4 );
   g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4 );
+  // Save initial densities of all materials
+  g_dgpde[d->MeshId()].setRho0mat( m_rho0mat );
 
   m_un = m_u;
 

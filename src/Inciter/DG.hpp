@@ -273,6 +273,7 @@ class DG : public CBase_DG {
       p | m_outmesh;
       p | m_boxelems;
       p | m_shockmarker;
+      p | m_rho0mat;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -385,6 +386,8 @@ class DG : public CBase_DG {
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
     //! Shock detection marker for field output
     std::vector< std::size_t > m_shockmarker;
+    //! Initial densities of each material
+    std::vector< tk::real > m_rho0mat;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

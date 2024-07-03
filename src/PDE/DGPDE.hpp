@@ -170,6 +170,10 @@ class DGPDE {
       const std::size_t nielem ) const
     { self->initialize( L, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
+    //! Public interface for saving initial densities of materials
+    void setRho0mat( std::vector< tk::real >& rho0mat) const
+    { return self->setRho0mat( rho0mat ); }
+
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
@@ -392,6 +396,7 @@ class DGPDE {
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
+      virtual void setRho0mat( std::vector< tk::real >& ) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
@@ -539,6 +544,8 @@ class DGPDE {
         const std::size_t nielem )
       const override { data.initialize( L, inpoel, coord, inbox, elemblkid, unk,
         t, nielem ); }
+      void setRho0mat( std::vector< tk::real >& rho0mat ) const override
+      { data.setRho0mat( rho0mat ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updateInterfaceCells( tk::Fields& unk,
