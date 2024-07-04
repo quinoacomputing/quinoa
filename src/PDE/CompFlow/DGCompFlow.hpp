@@ -219,7 +219,7 @@ class CompFlow {
     }
 
     //! Save initial densities for all materials
-    //! \param[out] rho0mat
+    //! \param[out] rho0mat List of initial densities
     void setRho0mat( std::vector< tk::real >& rho0mat ) const
     {
       rho0mat.resize(0);

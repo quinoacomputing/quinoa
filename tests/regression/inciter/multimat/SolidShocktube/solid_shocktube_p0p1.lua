@@ -28,8 +28,7 @@ inciter = {
       gamma = { 4.22, 4.22 }, -- ratio of specific heats
       cv = { 3978.0, 3978.0 }, -- specific heat at const volume
       pstiff = { 342.0e8, 342.0e8 },  -- sg-eos stiffness parameter
-      mu = { 9.2e10, 9.2e10 },  -- shear modulus
-      rho0 = { 8900.0, 8900.0 }  -- initial density
+      mu = { 9.2e10, 9.2e10 }  -- shear modulus
     }
   },
 

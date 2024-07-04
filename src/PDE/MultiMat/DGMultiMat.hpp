@@ -280,7 +280,7 @@ class MultiMat {
     }
 
     //! Save initial densities for all materials
-    //! \param[out] rho0mat
+    //! \param[out] rho0mat List of initial densities
     void setRho0mat( std::vector< tk::real >& rho0mat ) const
     {
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
