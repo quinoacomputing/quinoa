@@ -534,6 +534,42 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
             {b[6], b[7], b[8]} }};
 }
 
+//! \brief Get the deviatoric Hencky strain tensor from the inverse deformation
+//! gradient tensor.
+//! \param[in] g Inverse deformation gradient tensor
+//! \return Deviatoric Hencky strain tensor
+inline std::array< std::array< real, 3 >, 3 >
+getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
+{
+  // Get right Cauchy-Green strain tensor
+  auto C = getRightCauchyGreen(g);
+
+  // Apply natural logarithm to C, using taylor expansion of order 2
+  auto CMinusI = C;
+  for (std::size_t i=0; i<3; ++i)
+    CMinusI[i][i] -= 1.0;
+
+  std::array< std::array< real, 3 >, 3 > devH{{{0,0,0}, {0,0,0}, {0,0,0}}};
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+    {
+      tk::real sqTerm = 0.0;
+      for (std::size_t k=0; k<3; ++k)
+        sqTerm += CMinusI[i][k]*CMinusI[k][j];
+      devH[i][j] = CMinusI[i][j] - sqTerm/2.0;
+    }
+
+  // get trace of H
+  tk::real trH = devH[0][0] + devH[1][1] + devH[2][2];
+
+  // Substract trH/3 from diagonal
+  for (std::size_t i=0; i<3; ++i)
+    devH[i][i] -= trH/3.0;
+
+  // Output devH
+  return devH;
+}
+
 //! \brief Rotate a second order tensor (e.g. a Strain/Stress matrix) from
 //! the (x,y,z) to a new (r,s,t) coordinate system.
 //! The first direction is given by a unit vector r = (rx,ry,rz).

@@ -19,6 +19,7 @@
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/JWL.hpp"
 #include "EoS/SmallShearSolid.hpp"
+#include "EoS/GodunovRomenskiSolid.hpp"
 
 namespace inciter {
 
@@ -35,6 +36,7 @@ class EOS {
     std::variant< StiffenedGas
                 , JWL
                 , SmallShearSolid
+                , GodunovRomenskiSolid
                 > m_material;
 
   public:

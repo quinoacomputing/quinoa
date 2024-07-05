@@ -2,7 +2,8 @@ add_library(EOS
             EOS.cpp
             StiffenedGas.cpp
             JWL.cpp
-            SmallShearSolid.cpp)
+            SmallShearSolid.cpp
+            GodunovRomenskiSolid.cpp)
 
 target_include_directories(EOS PUBLIC
                            ${QUINOA_SOURCE_DIR}

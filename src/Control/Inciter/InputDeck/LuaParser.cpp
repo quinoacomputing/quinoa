@@ -449,6 +449,39 @@ LuaParser::storeInputDeck(
         // assign solid
         is_solid = true;
       }
+      // Godunov-Romenski solid materials
+      else if (mati_deck.get< tag::eos >() ==
+        inciter::ctr::MaterialType::GODUNOVROMENSKISOLID) {
+        // gamma
+        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
+          mati_deck.get< tag::gamma >());
+
+        // pstiff
+        if (!sol_mat[i+1]["pstiff"].valid())
+          sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
+        checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
+          mati_deck.get< tag::pstiff >());
+
+        // mu
+        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
+          mati_deck.get< tag::mu >());
+
+        // rho0
+        if (!sol_mat[i+1]["rho0"].valid())
+          sol_mat[i+1]["rho0"] = std::vector< tk::real >(ntype, 0.0);
+        checkStoreMatProp(sol_mat[i+1], "rho0", ntype,
+          mati_deck.get< tag::rho0 >());
+
+        // yield_stress
+        if (!sol_mat[i+1]["yield_stress"].valid())
+          sol_mat[i+1]["yield_stress"] =
+            std::vector< tk::real >(ntype, 300.0e+06);
+        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
+          mati_deck.get< tag::yield_stress >());
+
+        // assign solid
+        is_solid = true;
+      }
       // JWL materials
       else if (mati_deck.get< tag::eos >() == inciter::ctr::MaterialType::JWL) {
         // w_gru
