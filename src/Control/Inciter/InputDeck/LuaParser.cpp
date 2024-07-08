@@ -1279,6 +1279,16 @@ LuaParser::storeInputDeck(
       }
     }
   }
+  else {
+    // TODO: remove double-specification of defaults
+    auto& ic_deck = gideck.get< tag::ic >();
+    ic_deck.get< tag::materialid >() = 1;
+    ic_deck.get< tag::pressure >() = 0.0;
+    ic_deck.get< tag::temperature >() = 1.0;
+    ic_deck.get< tag::density >() = 0.0;
+    ic_deck.get< tag::energy >() = 0.0;
+    ic_deck.get< tag::velocity >() = {0.0, 0.0, 0.0};
+  }
 }
 
 void
