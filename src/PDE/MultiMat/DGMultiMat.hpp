@@ -293,6 +293,7 @@ class MultiMat {
       tk::real pr = ic.get< tag::pressure >();
       tk::real tmp = ic.get< tag::temperature >();
       rho0mat[k] = m_mat_blk[k].compute< EOS::density >(pr, tmp);
+
       // Check inside used defined box
       if (!icbox.empty())
       {
@@ -303,6 +304,7 @@ class MultiMat {
           rho0mat[k] = m_mat_blk[k].compute< EOS::density >(pr, tmp);
         }
       }
+
       // Check inside user-specified mesh blocks
       if (!icmbk.empty())
       {
@@ -312,7 +314,7 @@ class MultiMat {
           tmp = b.template get< tag::temperature >();
           rho0mat[k] = m_mat_blk[k].compute< EOS::density >(pr, tmp);
         }
-      }  
+      }
     }
 
     //! Compute the left hand side block-diagonal mass matrix
