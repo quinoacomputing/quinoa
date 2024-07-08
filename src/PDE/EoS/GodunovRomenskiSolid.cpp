@@ -20,6 +20,7 @@
 #include <iostream>
 #include "Vector.hpp"
 #include "EoS/GodunovRomenskiSolid.hpp"
+#include "EoS/GetMatProp.hpp"
 
 // Lapacke forward declarations
 extern "C" {
@@ -106,8 +107,8 @@ GodunovRomenskiSolid::pressure(
 // *************************************************************************
 {
   // obtain elastic contribution to energy
-  tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  std::array< std::array< tk::real, 3 >, 3 > devH;
+  auto arhoEe = alpha*elasticEnergy(defgrad, devH);
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -161,31 +162,17 @@ GodunovRomenskiSolid::CauchyStress(
   std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
 
   // obtain elastic contribution to energy
-  tk::real eps2;
-  elasticEnergy(defgrad, eps2);
+  std::array< std::array< tk::real, 3 >, 3 > devH;
 
   // p_mean
-  auto pmean = - alpha * m_mu * eps2;
+  auto pmean = - alpha * elasticEnergy(defgrad, devH);;
 
   // Volumetric component of Cauchy stress tensor
   asig[0][0] = -pmean;
   asig[1][1] = -pmean;
   asig[2][2] = -pmean;
 
-  // Deviatoric (trace-free) part of volume-preserving left Cauchy-Green tensor
-  auto devbt = tk::getLeftCauchyGreen(defgrad);
-  auto detb = std::pow(tk::determinant(devbt), 1.0/3.0);
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      devbt[i][j] /= detb;
-  }
-  auto trbt = (devbt[0][0]+devbt[1][1]+devbt[2][2])/3.0;
-  devbt[0][0] -= trbt;
-  devbt[1][1] -= trbt;
-  devbt[2][2] -= trbt;
-
   // Add deviatoric component of Cauchy stress tensor
-  auto devH = tk::getDevHencky(defgrad);
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
       asig[i][j] += 2.0*m_mu*alpha*devH[i][j];
@@ -247,8 +234,9 @@ GodunovRomenskiSolid::soundspeed(
   auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
   a += m_gamma * p_eff / arho;
 
-  // Other pressure contributions
-  a += 
+  // Other contributions
+  tk::real rho0 = getmatprop< tag::rho0 >(imat);
+  tk::real rho = arho/alpha;
 
   // Shear contribution
   a += (4.0/3.0) * m_mu / (arho/alpha);
@@ -296,8 +284,8 @@ GodunovRomenskiSolid::totalenergy(
   tk::real rhoEh = (pr + m_pstiff) / (m_gamma-1.0) + 0.5 * rho *
     (u*u + v*v + w*w) + m_pstiff;
   // obtain elastic contribution to energy
-  tk::real eps2;
-  tk::real rhoEe = elasticEnergy(defgrad, eps2);
+  std::array< std::array< tk::real, 3 >, 3 > devH;
+  tk::real rhoEe = elasticEnergy(defgrad, devH);
 
   return (rhoEh + rhoEe);
 }
@@ -329,8 +317,8 @@ GodunovRomenskiSolid::temperature(
 // *************************************************************************
 {
   // obtain elastic contribution to energy
-  tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  std::array< std::array< tk::real, 3 >, 3 > devH;
+  auto arhoEe = alpha*elasticEnergy(defgrad, devH);
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -357,28 +345,25 @@ GodunovRomenskiSolid::min_eff_pressure(
 tk::real
 GodunovRomenskiSolid::elasticEnergy(
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
-  tk::real& eps2 ) const
+  std::array< std::array< tk::real, 3 >, 3 >& devH ) const
 // *************************************************************************
 //! \brief Calculate elastic contribution to material energy from the material
 //!   density, and deformation gradient tensor
 //! \param[in] defgrad Material inverse deformation gradient tensor
-//! \param[in/out] eps2 Elastic shear distortion
+//! \param[in/out] devH Deviatoric part of the Hensky tensor
 //! \return Material elastic energy using the GodunovRomenskiSolid EoS
 //! \details This function returns the material elastic energy, and also stores
 //!   the elastic shear distortion for further use
 // *************************************************************************
 {
   // Compute deviatoric part of Hencky tensor
-  auto devH = tk::getDevHencky(defgrad);
+  devH = tk::getDevHencky(defgrad);
 
-  // Compute elastic shear distortion
-  eps2 = 0.0;
+  // Compute elastic energy
+  tk::real rhoEe = 0.0;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
-      eps2 += devH[i][j]*devH[i][j];
-
-  // compute elastic energy
-  auto rhoEe = m_mu * eps2;
+      rhoEe += m_mu*devH[i][j]*devH[i][j];
 
   return rhoEe;
 }

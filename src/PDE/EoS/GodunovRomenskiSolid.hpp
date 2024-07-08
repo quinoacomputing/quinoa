@@ -31,7 +31,7 @@ class GodunovRomenskiSolid {
     //!   material density, and deformation gradient tensor
     tk::real elasticEnergy(
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
-      tk::real& eps2 ) const;
+      std::array< std::array< tk::real, 3 >, 3 >& devH ) const;
 
   public:
     //! Default constructor
