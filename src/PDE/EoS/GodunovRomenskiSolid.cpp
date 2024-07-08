@@ -235,7 +235,6 @@ GodunovRomenskiSolid::soundspeed(
   a += m_gamma * p_eff / arho;
 
   // Other contributions
-  tk::real rho0 = getmatprop< tag::rho0 >(imat);
   tk::real rho = arho/alpha;
 
   // Shear contribution
