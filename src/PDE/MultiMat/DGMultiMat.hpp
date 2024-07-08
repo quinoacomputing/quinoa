@@ -192,7 +192,7 @@ class MultiMat {
         nonStiffEqIdx[icomp] = icomp;
     }
 
-    //! Initalize the compressible flow equations, prepare for time integration
+    //! Initialize the compressible flow equations, prepare for time integration
     //! \param[in] L Block diagonal mass matrix
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
@@ -275,6 +275,44 @@ class MultiMat {
               }
             }
           }
+        }
+      }
+    }
+
+    //! Save initial densities for all materials
+    //! \param[out] rho0mat List of initial densities
+    void setRho0mat( std::vector< tk::real >& rho0mat ) const
+    {
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      rho0mat.resize( nmat, 0.0 );
+      const auto& ic = g_inputdeck.get< tag::ic >();
+      const auto& icbox = ic.get< tag::box >();
+      const auto& icmbk = ic.get< tag::meshblock >();
+      // Get background properties
+      std::size_t k = ic.get< tag::materialid >() - 1;
+      tk::real pr = ic.get< tag::pressure >();
+      tk::real tmp = ic.get< tag::temperature >();
+      rho0mat[k] = m_mat_blk[k].compute< EOS::density >(pr, tmp);
+
+      // Check inside used defined box
+      if (!icbox.empty())
+      {
+        for (const auto& b : icbox) {   // for all boxes
+          k = b.template get< tag::materialid >() - 1;
+          pr = b.template get< tag::pressure >();
+          tmp = b.template get< tag::temperature >();
+          rho0mat[k] = m_mat_blk[k].compute< EOS::density >(pr, tmp);
+        }
+      }
+
+      // Check inside user-specified mesh blocks
+      if (!icmbk.empty())
+      {
+        for (const auto& b : icmbk) { // for all blocks
+          k = b.template get< tag::materialid >() - 1;
+          pr = b.template get< tag::pressure >();
+          tmp = b.template get< tag::temperature >();
+          rho0mat[k] = m_mat_blk[k].compute< EOS::density >(pr, tmp);
         }
       }
     }

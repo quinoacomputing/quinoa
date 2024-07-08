@@ -433,12 +433,6 @@ LuaParser::storeInputDeck(
         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
           mati_deck.get< tag::mu >());
 
-        // rho0
-        if (!sol_mat[i+1]["rho0"].valid())
-          sol_mat[i+1]["rho0"] = std::vector< tk::real >(ntype, 0.0);
-        checkStoreMatProp(sol_mat[i+1], "rho0", ntype,
-          mati_deck.get< tag::rho0 >());
-
         // yield_stress
         if (!sol_mat[i+1]["yield_stress"].valid())
           sol_mat[i+1]["yield_stress"] =
@@ -1317,6 +1311,16 @@ LuaParser::storeInputDeck(
           mblk_deck[i].get< tag::front_speed >(), 0.0);
       }
     }
+  }
+  else {
+    // TODO: remove double-specification of defaults
+    auto& ic_deck = gideck.get< tag::ic >();
+    ic_deck.get< tag::materialid >() = 1;
+    ic_deck.get< tag::pressure >() = 0.0;
+    ic_deck.get< tag::temperature >() = 1.0;
+    ic_deck.get< tag::density >() = 0.0;
+    ic_deck.get< tag::energy >() = 0.0;
+    ic_deck.get< tag::velocity >() = {0.0, 0.0, 0.0};
   }
 }
 

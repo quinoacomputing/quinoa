@@ -158,6 +158,13 @@ class Transport {
                       Problem::initialize, unk, t, nielem );
     }
 
+    //! Save initial densities for all materials
+    //! \param[out] rho0mat List of initial densities
+    void setRho0mat( std::vector< tk::real >& rho0mat ) const
+    {
+      rho0mat.resize(0);
+    }
+
     //! Compute the left hand side mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
