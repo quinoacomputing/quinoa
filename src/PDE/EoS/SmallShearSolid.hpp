@@ -80,6 +80,12 @@ class SmallShearSolid {
       const std::array< tk::real, 3 >& adefgradn={{}},
       const std::array< tk::real, 3 >& asigman={{}} ) const;
 
+    //! Calculate speed of shear waves
+    tk::real shearspeed(
+      tk::real arho,
+      tk::real alpha=1.0,
+      std::size_t imat=0 ) const;
+
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
     tk::real totalenergy(

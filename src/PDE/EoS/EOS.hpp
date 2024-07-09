@@ -48,6 +48,7 @@ class EOS {
     struct density {};
     struct pressure {};
     struct soundspeed {};
+    struct shearspeed {};
     struct totalenergy {};
     struct temperature {};
     struct min_eff_pressure {};
@@ -70,6 +71,9 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, soundspeed > )
             return m.soundspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, shearspeed > )
+            return m.shearspeed( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, totalenergy > )
             return m.totalenergy( std::forward< Args >( args )... );
