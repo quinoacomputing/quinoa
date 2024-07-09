@@ -56,10 +56,11 @@ struct AUSM {
       rhor += u[1][densityIdx(nmat, k)];
     }
 
-    tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0);
+    tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0), asmatl(0.0), asmatr(0.0);
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             pml(nmat, 0.0), pmr(nmat, 0.0),
                             arhom12(nmat, 0.0),
+                            asecmat12(nmat, 0.0),
                             amat12(nmat, 0.0);
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > g_l, g_r,
       asig_l, asig_r;
@@ -88,6 +89,8 @@ struct AUSM {
       gn_l.push_back(tk::rotateTensor(g_l[k], fn));
       amatl = mat_blk[k].compute< EOS::soundspeed >(
         u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, gn_l[k] );
+      asmatl = mat_blk[k].compute< EOS::shearspeed >(
+        u[0][densityIdx(nmat, k)], al_l[k], k );
 
       // Right state
       // -----------------------------------------------------------------------
@@ -109,21 +112,26 @@ struct AUSM {
       gn_r.push_back(tk::rotateTensor(g_r[k], fn));
       amatr = mat_blk[k].compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, gn_r[k] );
+      asmatr = mat_blk[k].compute< EOS::shearspeed >(
+        u[1][densityIdx(nmat, k)], al_r[k], k );
 
       // Average states for mixture speed of sound
       arhom12[k] = 0.5*(u[0][densityIdx(nmat, k)] + u[1][densityIdx(nmat, k)]);
       amat12[k] = 0.5*(amatl+amatr);
+      asecmat12[k] = 0.5*(asmatl+asmatr);
     }
 
     auto rho12 = 0.5*(rhol+rhor);
 
     // mixture speed of sound
-    tk::real ac12(0.0);
+    tk::real ac12(0.0), acsec12(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
       ac12 += (arhom12[k]*amat12[k]*amat12[k]);
+      acsec12 += (arhom12[k]*asecmat12[k]*asecmat12[k]);
     }
     ac12 = std::sqrt( ac12/rho12 );
+    acsec12 = std::max(1e-8, std::sqrt( acsec12/rho12 ));
 
     // Independently limited velocities for advection
     auto ul = u[0][ncomp+velocityIdx(nmat, 0)];
@@ -144,10 +152,14 @@ struct AUSM {
       utl = tk::rotateVectorToN({{ul, vl, wl}}, fn);
       utr = tk::rotateVectorToN({{ur, vr, wr}}, fn);
     }
+    auto vtl = std::max(utl[1], utl[2]);
+    auto vtr = std::max(utr[1], utr[2]);
 
     // Mach numbers
     auto ml = vnl/ac12;
     auto mr = vnr/ac12;
+    auto mtl = vtl/acsec12;
+    auto mtr = vtr/acsec12;
 
     // All-speed parameters
     // These parameters control the amount of all-speed diffusion necessary for
@@ -163,12 +175,16 @@ struct AUSM {
     // Split Mach polynomials
     auto msl = splitmach_ausm( f_a, ml );
     auto msr = splitmach_ausm( f_a, mr );
+    auto mtsl = splitmach_ausm( f_a, mtl );  // shear-left
+    auto mtsr = splitmach_ausm( f_a, mtr );  // shear-right
 
     // Riemann Mach number
     auto m0 = 1.0 - (0.5*(vnl*vnl + vnr*vnr)/(ac12*ac12));
     auto mp = -k_p* std::max(m0, 0.0) * (pr-pl) / (f_a*rho12*ac12*ac12);
     auto m12 = msl[0] + msr[1] + mp;
     auto vriem = ac12 * m12;
+    auto mt12 = mtsl[0] + mtsr[1];  // shear
+    auto vtriem = acsec12 * mt12;  // shear
 
     // Pressure correction
     auto pu = -k_u* msl[2] * msr[3] * f_a * rho12 * ac12 * (vnr-vnl);
@@ -176,10 +192,14 @@ struct AUSM {
     // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem));
     auto l_minus = 0.5 * (vriem - std::fabs(vriem));
+    auto lt_plus = 0.5 * (vtriem + std::fabs(vtriem));  // shear-left
+    auto lt_minus = 0.5 * (vtriem - std::fabs(vtriem));  // shear-right
 
     // Normalized flux vectors
     auto l_p = l_plus/( vriem + std::copysign(1.0e-12, vriem) );
     auto l_m = l_minus/( vriem + std::copysign(1.0e-12, vriem) );
+    auto lt_p = lt_plus/( vtriem + std::copysign(1.0e-12, vtriem) );  // Lshear
+    auto lt_m = lt_minus/( vtriem + std::copysign(1.0e-12, vtriem) );  // Rshear
 
     // Conservative fluxes
     for (std::size_t k=0; k<nmat; ++k)
@@ -206,8 +226,8 @@ struct AUSM {
         for (std::size_t i=0; i<3; ++i) {
           // get fluxes for g_k in rotated frame
           flxn[i][0] = l_plus*gn_l[k][i][0] + l_minus*gn_r[k][i][0]
-            + l_p * gn_l[k][i][1]*utl[1] + l_m * gn_r[k][i][1]*utr[1]
-            + l_p * gn_l[k][i][2]*utl[2] + l_m * gn_r[k][i][2]*utr[2];
+            + mtsl[2] * gn_l[k][i][1]*utl[1] + mtsr[3] * gn_r[k][i][1]*utr[1]
+            + mtsl[2] * gn_l[k][i][2]*utl[2] + mtsr[3] * gn_r[k][i][2]*utr[2];
           // flux second component (j) is always zero for j /= 0, since rotated
           // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
         }
@@ -235,6 +255,22 @@ struct AUSM {
         //for (std::size_t i=0; i<3; ++i)
         //  for (std::size_t j=0; j<3; ++j)
         //    flx[deformIdx(nmat,solidx[k],i,j)] = g_dot_u[i] * fn[j];
+        //// -------------------------------------------------------------------
+
+        //// 3. Pressure splitting
+        //// -------------------------------------------------------------------
+        //for (std::size_t i=0; i<3; ++i)
+        //  for (std::size_t j=0; j<3; ++j) {
+        //    flx[deformIdx(nmat,solidx[k],i,j)] =
+        //      msl[2] * (
+        //      g_l[k][i][0] * ul +
+        //      g_l[k][i][1] * vl +
+        //      g_l[k][i][2] * wl ) * fn[j] +
+        //      msr[3] * (
+        //      g_r[k][i][0] * ur +
+        //      g_r[k][i][1] * vr +
+        //      g_r[k][i][2] * wr ) * fn[j];
+        //  }
         //// -------------------------------------------------------------------
 
         //// . upwind everything
