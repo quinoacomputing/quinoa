@@ -330,7 +330,6 @@ class MultiMat {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t rdof = g_inputdeck.get< tag::rdof >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      std::size_t ksld = 0;
       for (std::size_t e=0; e<nelem; ++e)
         densityConstr[e] = 0.0;
       for (std::size_t imat=0; imat<nmat; ++imat)
@@ -340,7 +339,7 @@ class MultiMat {
           {
             // Retrieve unknowns
             tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
-            tk::real rho = unk(e, densityDofIdx(nmat, imat, rdof, 0))/alpha;
+            tk::real arho = unk(e, densityDofIdx(nmat, imat, rdof, 0));
             std::array< std::array< tk::real, 3 >, 3 > g;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -348,12 +347,18 @@ class MultiMat {
             // Compute determinant of g
             tk::real detg = tk::determinant(g);
             // Compute constraint measure
-            densityConstr[e] += rho/(rho0mat[imat]*detg);
+            densityConstr[e] += arho/(rho0mat[imat]*detg);
           }
-          ksld++;
         }
-      for (std::size_t e=0; e<nelem; ++e)
-        densityConstr[e] /= ksld;
+        else
+        {
+          for (std::size_t e=0; e<nelem; ++e)
+          {
+            // Retrieve alpha and add it to the constraint measure
+            tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
+            densityConstr[e] += alpha;
+          }
+        }
     }
 
     //! Compute the left hand side block-diagonal mass matrix

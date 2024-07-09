@@ -166,9 +166,9 @@ class Transport {
     }
 
     //! Compute density constraint for a given material
-    //! \param[in] nelem Number of elements
-    //! \param[in] unk Array of unknowns
-    //! \param[in] rho0mat List of initial densities
+    // //! \param[in] nelem Number of elements
+    // //! \param[in] unk Array of unknowns
+    // //! \param[in] rho0mat List of initial densities
     //! \param[out] densityConstr Density Constraint: rho/(rho0*det(g))
     void computeDensityConstr( std::size_t /*nelem*/,
                                tk::Fields& /*unk*/,

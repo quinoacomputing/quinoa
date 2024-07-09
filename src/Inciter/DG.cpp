@@ -1787,7 +1787,8 @@ DG::writeFields(
 
   elemfieldnames.push_back( "shock_marker" );
 
-  elemfieldnames.push_back( "densityConstr" );
+  if (densityConstr.size() > 0)
+    elemfieldnames.push_back( "density_constraint" );
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
