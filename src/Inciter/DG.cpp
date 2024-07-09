@@ -1441,7 +1441,7 @@ DG::solve( tk::real newdt )
 
   g_dgpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
-    m_u, m_p, m_ndof, d->Dt(), m_rhs );
+    m_u, m_p, m_ndof, m_rho0mat, d->Dt(), m_rhs );
 
   if (!imex_runge_kutta) {
     // Explicit time-stepping using RK3 to discretize time-derivative
@@ -1765,6 +1765,15 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
+  // Add rho0*det(g)/rho to make sure it is staying close to 1,
+  // averaged for all materials
+  std::vector< tk::real > densityConstr(nelem);
+  g_dgpde[d->MeshId()].computeDensityConstr(nelem, m_u, m_rho0mat,
+                                            densityConstr);
+  for (const auto& [child,parent] : addedTets)
+    densityConstr[child] = 0.0;
+  elemfields.push_back( densityConstr );
+
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
   auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
@@ -1777,6 +1786,9 @@ DG::writeFields(
     elemfieldnames.push_back( "NDOF" );
 
   elemfieldnames.push_back( "shock_marker" );
+
+  if (densityConstr.size() > 0)
+    elemfieldnames.push_back( "density_constraint" );
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );

@@ -317,6 +317,50 @@ class MultiMat {
       }
     }
 
+    //! Compute density constraint for a given material
+    //! \param[in] nelem Number of elements
+    //! \param[in] unk Array of unknowns
+    //! \param[in] rho0mat List of initial densities
+    //! \param[out] densityConstr Density Constraint: rho/(rho0*det(g))
+    void computeDensityConstr( std::size_t nelem,
+                               tk::Fields& unk,
+                               std::vector< tk::real >& rho0mat,
+                               std::vector< tk::real >& densityConstr) const
+    {
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      std::size_t rdof = g_inputdeck.get< tag::rdof >();
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      for (std::size_t e=0; e<nelem; ++e)
+        densityConstr[e] = 0.0;
+      for (std::size_t imat=0; imat<nmat; ++imat)
+        if (solidx[imat] > 0)
+        {
+          for (std::size_t e=0; e<nelem; ++e)
+          {
+            // Retrieve unknowns
+            tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
+            tk::real arho = unk(e, densityDofIdx(nmat, imat, rdof, 0));
+            std::array< std::array< tk::real, 3 >, 3 > g;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                g[i][j] = unk(e, deformDofIdx(nmat, solidx[imat], i, j, rdof, 0));
+            // Compute determinant of g
+            tk::real detg = tk::determinant(g);
+            // Compute constraint measure
+            densityConstr[e] += arho/(rho0mat[imat]*detg);
+          }
+        }
+        else
+        {
+          for (std::size_t e=0; e<nelem; ++e)
+          {
+            // Retrieve alpha and add it to the constraint measure
+            tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
+            densityConstr[e] += alpha;
+          }
+        }
+    }
+
     //! Compute the left hand side block-diagonal mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] l Block diagonal mass matrix
@@ -766,6 +810,7 @@ class MultiMat {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
+    //! \param[in] rho0mat Initial densities of all materials
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
@@ -778,6 +823,7 @@ class MultiMat {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const std::vector< tk::real >& rho0mat,
               const tk::real dt,
               tk::Fields& R ) const
     {
@@ -870,11 +916,12 @@ class MultiMat {
                               ndofel, R, intsharp );
 
       // Code below commented until details about the form of these terms in the
-      // \alpha_k g_k equations are sorted out.
-      // // Compute integrals for inverse deformation in solid materials
-      // if (inciter::haveSolid(nmat, solidx))
-      //   tk::solidTermsVolInt( nmat, m_mat_blk, ndof, rdof, nelem,
-      //                         inpoel, coord, geoElem, U, P, ndofel, dt, R);
+      // g_k equations are sorted out.
+      // Compute integrals for inverse deformation in solid materials
+      if (inciter::haveSolid(nmat, solidx))
+        tk::solidTermsVolInt( nmat, m_mat_blk, ndof, rdof, nelem,
+                              inpoel, coord, geoElem, U, P, ndofel,
+                              rho0mat, dt, R);
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::multimat, tag::prelax >())
