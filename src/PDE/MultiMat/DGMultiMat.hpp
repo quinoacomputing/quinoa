@@ -911,7 +911,7 @@ class MultiMat {
                               ndofel, R, intsharp );
 
       // Code below commented until details about the form of these terms in the
-      // \alpha_k g_k equations are sorted out.
+      // g_k equations are sorted out.
       // Compute integrals for inverse deformation in solid materials
       if (inciter::haveSolid(nmat, solidx))
         tk::solidTermsVolInt( nmat, m_mat_blk, ndof, rdof, nelem,

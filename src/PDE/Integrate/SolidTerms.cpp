@@ -143,12 +143,10 @@ solidTermsVolInt(
 
           // Compute the source terms
           std::vector< real > s(9*ndof, 0.0);
-          std::vector< real > deriv(6, 0.0);
-          std::vector< std::size_t > defIdx(6, 0);
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
               for (std::size_t idof=0; idof<ndof; ++idof)
-                s[(i*3+j)*ndof+idof] = B[idof]*rfact*alpha*g[i][j];
+                s[(i*3+j)*ndof+idof] = B[idof]*rfact*g[i][j];
 
           auto wt = wgp[igp] * geoElem(e, 0);
 
