@@ -19,6 +19,7 @@
 #include "Riemann/HLL.hpp"
 #include "Riemann/AUSM.hpp"
 #include "Riemann/LaxFriedrichsSolids.hpp"
+#include "Riemann/HLLDSolids.hpp"
 
 namespace inciter {
 
@@ -30,11 +31,16 @@ namespace inciter {
   {
     tk::RiemannFluxFn fluxfn;
 
+    auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+    const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+    auto nsld = numSolids(nmat, solidx);
+
     if (flux == ctr::FluxType::AUSM) {
       fluxfn = AUSM::flux;
     }
     else if (flux == ctr::FluxType::HLL) {
-      fluxfn = HLL::flux;
+      if (nsld == 0) fluxfn = HLL::flux;
+      else fluxfn = HLLDSolids::flux;
     }
     else if (flux == ctr::FluxType::LaxFriedrichs) {
       fluxfn = LaxFriedrichsSolids::flux;
