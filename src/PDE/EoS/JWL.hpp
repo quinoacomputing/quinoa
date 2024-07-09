@@ -79,6 +79,12 @@ class JWL {
       const std::array< tk::real, 3 >& adefgradn={{}},
       const std::array< tk::real, 3 >& asigman={{}} ) const;
 
+    //! Calculate speed of shear waves
+    tk::real shearspeed(
+      tk::real,
+      tk::real,
+      std::size_t ) const { return 0.0; }
+
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
     tk::real totalenergy( tk::real rho,
