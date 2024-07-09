@@ -161,11 +161,11 @@ GodunovRomenskiSolid::CauchyStress(
 {
   std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
 
-  // obtain elastic contribution to energy
+  // obtain elastic contribution to energy and substract it from pmean
   std::array< std::array< tk::real, 3 >, 3 > devH;
 
   // p_mean
-  auto pmean = - alpha * elasticEnergy(defgrad, devH);;
+  auto pmean = - alpha * elasticEnergy(defgrad, devH);
 
   // Volumetric component of Cauchy stress tensor
   asig[0][0] = -pmean;
@@ -217,32 +217,18 @@ GodunovRomenskiSolid::soundspeed(
 //! \return Material speed of sound using the GodunovRomenskiSolid EoS
 // *************************************************************************
 {
-  // deformation gradient
-  tk::real g__11 = defgrad[0][0];
-  tk::real g__12 = defgrad[0][1];
-  tk::real g__13 = defgrad[0][2];
-  tk::real g__21 = defgrad[1][0];
-  tk::real g__22 = defgrad[1][1];
-  tk::real g__23 = defgrad[1][2];
-  tk::real g__31 = defgrad[2][0];
-  tk::real g__32 = defgrad[2][1];
-  tk::real g__33 = defgrad[2][2];
-
   tk::real a = 0.0;
-  
+
   // hydrodynamic contribution
   auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
   a += m_gamma * p_eff / arho;
-
-  // Other contributions
-  tk::real rho = arho/alpha;
 
   // Shear contribution
   a += (4.0/3.0) * m_mu / (arho/alpha);
 
   // Compute square root
   a = std::sqrt(a);
-  
+
   // check sound speed divergence
   if (!std::isfinite(a)) {
     std::cout << "Material-id:      " << imat << std::endl;
