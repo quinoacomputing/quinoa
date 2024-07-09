@@ -37,27 +37,10 @@ solidTermsVolInt( std::size_t nmat,
                   const Fields& U,
                   const Fields& P,
                   const std::vector< std::size_t >& ndofel,
+                  const std::vector< tk::real >& rho0mat,
                   const tk::real dt,
                   Fields& R,
                   int intcompr=0 );
-
-//! Compute Solid Terms with surface integrals
-void
-solidTermsSurfInt( std::size_t nmat,
-                   const std::size_t ndof,
-                   const std::size_t rdof,
-                   const std::array< tk::real, 3 >& fn,
-                   const std::size_t el,
-                   const std::size_t er,
-                   const std::vector< std::size_t >& solidx,
-                   const Fields& geoElem,
-                   const Fields& U,
-                   const std::array< std::array< tk::real, 3>, 4 > coordel_l,
-                   const std::array< std::array< tk::real, 3>, 4 > coordel_r,
-                   const std::size_t igp,
-                   const std::array< std::vector< tk::real >, 2 >& coordgp,
-                   const tk::real dt,
-                   std::vector< tk::real >& fl );
 
 // Update the rhs by adding volume integration terms
 void

@@ -174,6 +174,13 @@ class DGPDE {
     void setRho0mat( std::vector< tk::real >& rho0mat) const
     { return self->setRho0mat( rho0mat ); }
 
+    //! Public interface for computing density constraint
+    void computeDensityConstr( std::size_t nelem,
+                               tk::Fields& unk,
+                               std::vector< tk::real >& rho0mat,
+                               std::vector< tk::real >& densityConstr) const
+    { self->computeDensityConstr( nelem, unk, rho0mat, densityConstr); }
+
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
     { self->lhs( geoElem, l ); }
@@ -267,11 +274,12 @@ class DGPDE {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const std::vector< tk::real >& rho0mat,
               const tk::real dt,
               tk::Fields& R ) const
     {
       self->rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                 ndofel, dt, R );
+                 ndofel, rho0mat, dt, R );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -397,6 +405,11 @@ class DGPDE {
         tk::real,
         const std::size_t nielem ) const = 0;
       virtual void setRho0mat( std::vector< tk::real >& ) const = 0;
+      virtual void computeDensityConstr( std::size_t nelem,
+                                         tk::Fields& unk,
+                                         std::vector< tk::real >& rho0mat,
+                                         std::vector< tk::real >& densityConstr)
+                                         const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
@@ -457,6 +470,7 @@ class DGPDE {
                         const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
+                        const std::vector< tk::real >&,
                         const tk::real,
                         tk::Fields& ) const = 0;
       virtual void eval_ndof( std::size_t,
@@ -546,6 +560,12 @@ class DGPDE {
         t, nielem ); }
       void setRho0mat( std::vector< tk::real >& rho0mat ) const override
       { data.setRho0mat( rho0mat ); }
+      void computeDensityConstr( std::size_t nelem,
+                                 tk::Fields& unk,
+                                 std::vector< tk::real >& rho0mat,
+                                 std::vector< tk::real >& densityConstr)
+                                 const override
+      { data.computeDensityConstr( nelem, unk, rho0mat, densityConstr ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updateInterfaceCells( tk::Fields& unk,
@@ -624,11 +644,12 @@ class DGPDE {
         const tk::Fields& U,
         const tk::Fields& P,
         const std::vector< std::size_t >& ndofel,
+        const std::vector< tk::real >& rho0mat,
         const tk::real dt,
         tk::Fields& R ) const override
       {
         data.rhs( t, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                  ndofel, dt, R );
+                  ndofel, rho0mat, dt, R );
       }
       void eval_ndof( std::size_t nunk,
                       const tk::UnsMesh::Coords& coord,
