@@ -368,7 +368,7 @@ class Transport {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
-    //! \param[in] rho0mat Initial densities of all materials
+    // //! \param[in] rho0mat Initial densities of all materials
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,

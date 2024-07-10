@@ -1772,7 +1772,7 @@ DG::writeFields(
                                             densityConstr);
   for (const auto& [child,parent] : addedTets)
     densityConstr[child] = 0.0;
-  elemfields.push_back( densityConstr );
+  if (densityConstr.size() > 0) elemfields.push_back( densityConstr );
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
