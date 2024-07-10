@@ -187,7 +187,7 @@ GodunovRomenskiSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/,
   const std::array< tk::real, 3 >& /*adefgradn*/,
   const std::array< tk::real, 3 >& /*asigman*/ ) const
 // *************************************************************************

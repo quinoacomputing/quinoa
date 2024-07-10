@@ -566,10 +566,10 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
     LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, CInv, 3, ipiv);
   Assert(jerr==0, "Lapack error in inverting C");
 
-  // Compute (C-CInv)/2
+  // Compute (C-CInv)/4
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
-      devH[i][j] = 0.5*(C[i][j]-CInv[3*i+j]);
+      devH[i][j] = 0.25*(C[i][j]-CInv[3*i+j]);
 
   // Compute deviatoric part
   tk::real trH = devH[0][0] + devH[1][1] + devH[2][2];
