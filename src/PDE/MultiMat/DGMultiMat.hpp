@@ -338,7 +338,6 @@ class MultiMat {
           for (std::size_t e=0; e<nelem; ++e)
           {
             // Retrieve unknowns
-            tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
             tk::real arho = unk(e, densityDofIdx(nmat, imat, rdof, 0));
             std::array< std::array< tk::real, 3 >, 3 > g;
             for (std::size_t i=0; i<3; ++i)
