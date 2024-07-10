@@ -88,6 +88,7 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::prelax_timescale, tk::real,
   tag::intsharp,         int,
   tag::intsharp_param,   tk::real,
+  tag::rho0constraint,   uint64_t,
   tag::dt_sos_massavg,   int,
   tag::problem,          ProblemType
 > >;
@@ -829,6 +830,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         sharpening. This parameter affects how many cells the material interfaces
         span, after the use of sharpening. It is used for multimat and transport,
         and has no effect for the other PDE types.)", "real" });
+
+      keywords.insert({"rho0constraint",
+        "Toggle the density constraint correction",
+        R"(This keyword is used to toggle the density constraint in solid
+        dynamics on/off. It is used only for the multi-material solver in the
+        presence of solids. The default is 1 (on).)", "uint 0/1"});
 
       keywords.insert({"dt_sos_massavg",
         "Toggle method for calculating speed of sound used for time step in a cell",

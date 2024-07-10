@@ -914,10 +914,9 @@ class MultiMat {
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
-      // Code below commented until details about the form of these terms in the
-      // g_k equations are sorted out.
-      // Compute integrals for inverse deformation in solid materials
-      if (inciter::haveSolid(nmat, solidx))
+      // Compute integrals for inverse deformation correction in solid materials
+      if (inciter::haveSolid(nmat, solidx) &&
+        g_inputdeck.get< tag::multimat, tag::rho0constraint >())
         tk::solidTermsVolInt( nmat, m_mat_blk, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, ndofel,
                               rho0mat, dt, R);

@@ -321,6 +321,9 @@ LuaParser::storeInputDeck(
     storeIfSpecd< tk::real >(
       lua_ideck["multimat"], "intsharp_param",
       gideck.get< tag::multimat, tag::intsharp_param >(), 1.8);
+    storeIfSpecd< uint64_t >(
+      lua_ideck["multimat"], "rho0constraint",
+      gideck.get< tag::multimat, tag::rho0constraint >(), 1);
     storeIfSpecd< int >(
       lua_ideck["multimat"], "dt_sos_massavg",
       gideck.get< tag::multimat, tag::dt_sos_massavg >(), 0);
