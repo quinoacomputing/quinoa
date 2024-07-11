@@ -177,6 +177,9 @@ struct HLL {
     // Signal velocities
     auto Sl = std::min((vnl-ac_l), (vnr-ac_r));
     auto Sr = std::max((vnl+ac_l), (vnr+ac_r));
+    //// Signal velocities by Einfeldt (HLLE)
+    //auto Sl = std::min( 0.0, std::min((vnl-ac_l), 0.5*((vnl+vnr)-(ac_l+ac_r))) );
+    //auto Sr = std::max( 0.0, std::max((vnr+ac_r), 0.5*((vnl+vnr)+(ac_l+ac_r))) );
 
     // Numerical flux functions and wave-speeds
     auto c_plus(0.0), c_minus(0.0), p_plus(0.0), p_minus(0.0);
@@ -184,13 +187,13 @@ struct HLL {
     {
       flx = fl;
       c_plus = vnl;
-      p_plus = vnl;
+      p_plus = 1.0;
     }
     else if (Sr <= 0.0)
     {
       flx = fr;
       c_minus = vnr;
-      p_minus = vnr;
+      p_minus = 1.0;
     }
     else
     {
@@ -198,17 +201,14 @@ struct HLL {
         flx[k] = (Sr*fl[k] - Sl*fr[k] + Sl*Sr*(u[1][k]-u[0][k])) / (Sr-Sl);
       c_plus = (Sr*vnl - Sr*Sl) / (Sr-Sl);
       c_minus = (Sr*Sl - Sl*vnr) / (Sr-Sl);
-      p_plus = Sr * vnl / (Sr-Sl);
-      p_minus = -Sl * vnr / (Sr-Sl);
+      p_plus = Sr / (Sr-Sl);
+      p_minus = -Sl / (Sr-Sl);
     }
 
     // Quantities for non-conservative terms
     // -------------------------------------------------------------------------
 
     auto vriem = c_plus+c_minus;
-
-    p_plus = p_plus/( vriem + std::copysign(1.0e-16,vriem) );
-    p_minus = p_minus/( vriem + std::copysign(1.0e-16,vriem) );
 
     // Store Riemann-advected partial pressures
     for (std::size_t k=0; k<nmat; ++k)
