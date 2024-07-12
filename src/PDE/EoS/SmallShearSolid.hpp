@@ -43,7 +43,8 @@ class SmallShearSolid {
 
     //! Calculate density from the material pressure and temperature
     tk::real density( tk::real pr,
-                      tk::real temp ) const;
+                      tk::real temp,
+                      tk::real rho0=1.0 ) const;
 
     //! Calculate pressure from the material density, momentum and total energy
     tk::real pressure(
@@ -54,7 +55,8 @@ class SmallShearSolid {
       tk::real arhoE,
       tk::real alpha=1.0,
       std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+      tk::real rho0=1.0 ) const;
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
     //!   density, momentum, total energy, and inverse deformation gradient
@@ -78,7 +80,8 @@ class SmallShearSolid {
       std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
       const std::array< tk::real, 3 >& adefgradn={{}},
-      const std::array< tk::real, 3 >& asigman={{}} ) const;
+      const std::array< tk::real, 3 >& asigman={{}},
+      tk::real rho0=1.0 ) const;
 
     //! Calculate speed of shear waves
     tk::real shearspeed(
@@ -94,7 +97,8 @@ class SmallShearSolid {
       tk::real v,
       tk::real w,
       tk::real pr,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+      tk::real rho0=1.0 ) const;
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
@@ -121,7 +125,7 @@ class SmallShearSolid {
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
-    //! \brief Pack/Unpack serialize member function
+    //! \brief Pack/Unp\ack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) /*override*/ {
       p | m_gamma;

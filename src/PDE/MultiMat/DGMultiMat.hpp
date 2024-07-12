@@ -1118,6 +1118,8 @@ class MultiMat {
             // 1. Compute dev(sigma)
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
               0.0, 0.0, 0.0, 0.0, 0.0, alpha, k, g );
+            tk::real apr = state[ncomp+inciter::pressureIdx(nmat, k)];
+            for (std::size_t i=0; i<3; ++i) sigma_dev[i][i] -= apr;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
@@ -1175,7 +1177,7 @@ class MultiMat {
             // rel_factor = 1/tau <- Perfect plasticity for now.
             tk::real rel_factor = 0.0;
             if (equiv_stress >= yield_stress)
-              rel_factor = yield_stress;
+              rel_factor = 1.0e07;
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)

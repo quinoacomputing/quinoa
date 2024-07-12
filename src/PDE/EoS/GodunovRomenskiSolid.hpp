@@ -43,7 +43,8 @@ class GodunovRomenskiSolid {
 
     //! Calculate density from the material pressure and temperature
     tk::real density( tk::real pr,
-                      tk::real temp ) const;
+                      tk::real temp,
+                      tk::real rho0=1.0 ) const;
 
     //! Calculate pressure from the material density, momentum and total energy
     tk::real pressure(
@@ -54,7 +55,8 @@ class GodunovRomenskiSolid {
       tk::real arhoE,
       tk::real alpha=1.0,
       std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+      tk::real rho0=1.0 ) const;
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
     //!   density, momentum, total energy, and inverse deformation gradient
@@ -78,7 +80,8 @@ class GodunovRomenskiSolid {
       std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
       const std::array< tk::real, 3 >& adefgradn={{}},
-      const std::array< tk::real, 3 >& asigman={{}} ) const;
+      const std::array< tk::real, 3 >& asigman={{}},
+      tk::real rho0=1.0 ) const;
 
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
@@ -88,7 +91,8 @@ class GodunovRomenskiSolid {
       tk::real v,
       tk::real w,
       tk::real pr,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+      tk::real rho0=1.0 ) const;
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy

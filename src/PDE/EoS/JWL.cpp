@@ -66,7 +66,8 @@ JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
 tk::real
 JWL::density(
   tk::real pr,
-  tk::real temp ) const
+  tk::real temp,
+  tk::real ) const
 // *************************************************************************
 //! \brief Calculate density from the material pressure and temperature
 //!   using the stiffened-gas equation of state
@@ -94,7 +95,8 @@ JWL::pressure(
   tk::real arhoE,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+  const std::array< std::array< tk::real, 3 >, 3 >&,
+  tk::real ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the stiffened-gas equation of state
@@ -173,7 +175,8 @@ JWL::soundspeed(
   std::size_t imat,
   const std::array< std::array< tk::real, 3 >, 3 >&,
   const std::array< tk::real, 3 >&,
-  const std::array< tk::real, 3 >& ) const
+  const std::array< tk::real, 3 >&,
+  tk::real ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -225,7 +228,8 @@ JWL::totalenergy(
   tk::real v,
   tk::real w,
   tk::real pr,
-  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+  const std::array< std::array< tk::real, 3 >, 3 >&,
+  tk::real ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure

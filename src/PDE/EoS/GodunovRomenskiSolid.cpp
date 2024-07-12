@@ -1,3 +1,4 @@
+
 // *****************************************************************************
 /*!
   \file      src/PDE/EoS/GodunovRomenskiSolid.hpp
@@ -57,20 +58,47 @@ GodunovRomenskiSolid::GodunovRomenskiSolid(
 tk::real
 GodunovRomenskiSolid::density(
   tk::real pr,
-  tk::real temp ) const
+  tk::real temp,
+  tk::real rho0 ) const
 // *************************************************************************
 //! \brief Calculate density from the material pressure and temperature 
 //!   using the GodunovRomenskiSolid equation of state
 //! \param[in] pr Material pressure
 //! \param[in] temp Material temperature
+//! \param[in] rho0 Material initial density
 //! \return Material density calculated using the GodunovRomenskiSolid EoS
 // *************************************************************************
 {
-  tk::real g = m_gamma;
-  tk::real p_c = m_pstiff;
-  tk::real c_v = m_cv;
+  // tk::real g = m_gamma;
+  // tk::real p_c = m_pstiff;
+  // tk::real c_v = m_cv;
+  // tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
 
-  tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
+  // Temp: Hardcode coefficients
+  tk::real e2 = 20.0e+09;
+  tk::real e3 = 52.0e+09;
+  tk::real e4 = -59.0e+09;
+  tk::real e5 = 151.0e+09;
+
+  // Quick Newton (overkill)
+  rho0 = 2700.0;
+  tk::real rho = rho0;
+  std::size_t maxiter = 50;
+  tk::real tol = 1.0e-02;
+  tk::real err = tol + 1;
+  for (std::size_t iter=0; iter<maxiter; ++iter)
+  {
+    tk::real p = 2*e2*std::pow(rho/rho0,3.0)
+               + e3*std::pow(rho/rho0,2.0)
+               - e5*rho/rho0 - e4;
+    tk::real dpdrho = 6*e2*std::pow(rho/rho0,2.0)/rho0
+                    + 2*e3*rho/(rho0*rho0) - e5/rho0;
+    tk::real delta = p/dpdrho;
+    rho = rho - delta;
+    err = std::sqrt(std::pow(delta,2.0));
+    if (err < tol) break;
+  }
+
   return rho;
 }
 
@@ -83,7 +111,8 @@ GodunovRomenskiSolid::pressure(
   tk::real arhoE,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real rho0 ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
 //!   and the inverse deformation gradient tensor using the GodunovRomenskiSolid
@@ -102,6 +131,7 @@ GodunovRomenskiSolid::pressure(
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   (g_k). Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
+//! \param[in] rho0 Material initial density
 //! \return Material partial pressure (alpha_k * p_k) calculated using the
 //!   GodunovRomenskiSolid EoS
 // *************************************************************************
@@ -112,9 +142,20 @@ GodunovRomenskiSolid::pressure(
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
-  // use stiffened gas eos to get pressure
-  tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) -
-    alpha*m_pstiff) * (m_gamma-1.0) - alpha*m_pstiff;
+  // // use stiffened gas eos to get pressure
+  // tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) -
+  //   alpha*m_pstiff) * (m_gamma-1.0) - alpha*m_pstiff;
+
+  // Temp: Hardcode coefficients
+  rho0 = 2700.0;
+  tk::real e2 = 20.0e+09;
+  tk::real e3 = 52.0e+09;
+  tk::real e4 = -59.0e+09;
+  tk::real e5 = 151.0e+09;
+  tk::real rho = arho/alpha;
+  tk::real partpressure = alpha*(2*e2*std::pow(rho/rho0,3.0)
+                                 + e3*std::pow(rho/rho0,2.0)
+                                 - e5*rho/rho0 - e4 );
 
   // check partial pressure divergence
   if (!std::isfinite(partpressure)) {
@@ -189,7 +230,8 @@ GodunovRomenskiSolid::soundspeed(
   std::size_t imat,
   const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/,
   const std::array< tk::real, 3 >& /*adefgradn*/,
-  const std::array< tk::real, 3 >& /*asigman*/ ) const
+  const std::array< tk::real, 3 >& /*asigman*/,
+  tk::real rho0 ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -214,14 +256,24 @@ GodunovRomenskiSolid::soundspeed(
 //  //! \param[in] asigman Material traction vector in normal direction
 //  //!   (alpha * sigma_ij * n_j ). Default is 0, so that for the single-material
 //  //!   system, this argument can be left unspecified by the calling code
+//! \param[in] rho0 Material initial density
 //! \return Material speed of sound using the GodunovRomenskiSolid EoS
 // *************************************************************************
 {
   tk::real a = 0.0;
 
   // hydrodynamic contribution
-  auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
-  a += m_gamma * p_eff / arho;
+  // auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
+  // a += m_gamma * p_eff / arho;
+
+  // Temp: Hardcode coefficients
+  rho0 = 2700.0;
+  tk::real e2 = 20.0e+09;
+  tk::real e3 = 52.0e+09;
+  tk::real e5 = 151.0e+09;
+  tk::real rho = arho/alpha;
+  a += std::max( 1.0e-15, 6*e2*std::pow(rho/rho0,2.0)/rho0
+                 + 2*e3*rho/(rho0*rho0) - e5/rho0 );
 
   // Shear contribution
   a += (4.0/3.0) * m_mu / (arho/alpha);
@@ -250,7 +302,8 @@ GodunovRomenskiSolid::totalenergy(
   tk::real v,
   tk::real w,
   tk::real pr,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real rho0 ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -262,12 +315,23 @@ GodunovRomenskiSolid::totalenergy(
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   g_k. Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
+//! \param[in] rho0 Material initial density
 //! \return Material specific total energy using the GodunovRomenskiSolid EoS
 // *************************************************************************
 {
   // obtain hydro contribution to energy
-  tk::real rhoEh = (pr + m_pstiff) / (m_gamma-1.0) + 0.5 * rho *
-    (u*u + v*v + w*w) + m_pstiff;
+  // tk::real rhoEh = (pr + m_pstiff) / (m_gamma-1.0) + 0.5 * rho *
+  //   (u*u + v*v + w*w) + m_pstiff;
+  // new hydro
+  // Temp: Hardcode coefficients
+  rho0 = 2700.0;
+  tk::real e1 = -13.0e+09;
+  tk::real e2 = 20.0e+09;
+  tk::real e3 = 52.0e+09;
+  tk::real e4 = -59.0e+09;
+  tk::real e5 = 151.0e+09;
+  tk::real rhoEh = (e1+e2*std::pow(rho/rho0,2.0)+e3*(rho/rho0)
+                    +e4*std::pow(rho/rho0,-1.0)-e5*std::log(rho/rho0))/rho0;
   // obtain elastic contribution to energy
   std::array< std::array< tk::real, 3 >, 3 > devH;
   tk::real rhoEe = elasticEnergy(defgrad, devH);
@@ -301,14 +365,16 @@ GodunovRomenskiSolid::temperature(
 //! \return Material temperature using the GodunovRomenskiSolid EoS
 // *************************************************************************
 {
-  // obtain elastic contribution to energy
-  std::array< std::array< tk::real, 3 >, 3 > devH;
-  auto arhoEe = alpha*elasticEnergy(defgrad, devH);
-  // obtain hydro contribution to energy
-  auto arhoEh = arhoE - arhoEe;
+  // // obtain elastic contribution to energy
+  // std::array< std::array< tk::real, 3 >, 3 > devH;
+  // auto arhoEe = alpha*elasticEnergy(defgrad, devH);
+  // // obtain hydro contribution to energy
+  // auto arhoEh = arhoE - arhoEe;
 
-  tk::real t = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) - alpha*m_pstiff)
-               / (arho*m_cv);
+  // tk::real t = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) - alpha*m_pstiff)
+  //              / (arho*m_cv);
+  tk::real t = 300.0;
+
   return t;
 }
 
