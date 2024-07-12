@@ -84,18 +84,18 @@ GodunovRomenskiSolid::density(
   rho0 = 2700.0;
   tk::real rho = rho0;
   std::size_t maxiter = 50;
-  tk::real tol = 1.0e-02;
+  tk::real tol = 1.0e-04;
   tk::real err = tol + 1;
   for (std::size_t iter=0; iter<maxiter; ++iter)
   {
     tk::real p = 2*e2*std::pow(rho/rho0,3.0)
                + e3*std::pow(rho/rho0,2.0)
-               - e5*rho/rho0 - e4;
+               - e5*rho/rho0 - e4 - pr;
     tk::real dpdrho = 6*e2*std::pow(rho/rho0,2.0)/rho0
                     + 2*e3*rho/(rho0*rho0) - e5/rho0;
     tk::real delta = p/dpdrho;
     rho = rho - delta;
-    err = std::sqrt(std::pow(delta,2.0));
+    err = std::sqrt(std::pow(p,2.0));
     if (err < tol) break;
   }
 
