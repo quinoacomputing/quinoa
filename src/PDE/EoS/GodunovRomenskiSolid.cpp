@@ -55,6 +55,17 @@ GodunovRomenskiSolid::GodunovRomenskiSolid(
 // *************************************************************************
 { }
 
+void
+GodunovRomenskiSolid::setRho0Mat( std::vector< tk::real >& rho0mat )
+// *************************************************************************
+//! \brief Save initial material densities for later use
+//! \param[in] rho0mat Initial densities of all materials
+// *************************************************************************
+{
+  for (std::size_t i=0; i<rho0mat.size(); ++i)
+    m_rho0mat[i] = rho0mat[i];
+}
+
 tk::real
 GodunovRomenskiSolid::density(
   tk::real pr,

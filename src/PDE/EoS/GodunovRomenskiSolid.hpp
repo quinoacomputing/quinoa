@@ -26,6 +26,7 @@ class GodunovRomenskiSolid {
 
   private:
     tk::real m_gamma, m_pstiff, m_cv, m_mu;
+    std::vector< tk::real > m_rho0mat;
 
     //! \brief Calculate elastic contribution to material energy from the
     //!   material density, and deformation gradient tensor
@@ -40,6 +41,8 @@ class GodunovRomenskiSolid {
     //! Constructor
     GodunovRomenskiSolid(tk::real gamma, tk::real pstiff, tk::real cv, tk::real mu );
 
+    //! Provide rho0mat to this clase for later use
+    void setRho0Mat( std::vector< tk::real >& rho0mat );
 
     //! Calculate density from the material pressure and temperature
     tk::real density( tk::real pr,
