@@ -37,7 +37,6 @@ solidTermsVolInt( std::size_t nmat,
                   const Fields& U,
                   const Fields& P,
                   const std::vector< std::size_t >& ndofel,
-                  const std::vector< tk::real >& rho0mat,
                   const tk::real dt,
                   Fields& R,
                   int intcompr=0 );

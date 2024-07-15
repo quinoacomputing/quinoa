@@ -45,7 +45,6 @@ solidTermsVolInt(
                const Fields& U,
                const Fields& P,
                const std::vector< std::size_t >& ndofel,
-               const std::vector< tk::real >& rho0mat,
                const tk::real dt,
                Fields& R,
                int intsharp )
@@ -63,7 +62,6 @@ solidTermsVolInt(
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
-//! \param[in] rho0mat Initial densities of all materials
 //! \param[in] dt Delta time
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in] intsharp Interface compression tag, an optional argument, with
@@ -138,7 +136,7 @@ solidTermsVolInt(
 
           // Compute rhs factor
           tk::real rho = state[inciter::densityIdx(nmat, k)]/alpha;
-          tk::real rho0 = rho0mat[k];
+          tk::real rho0 = mat_blk[k].compute< inciter::EOS::rho0 >();
           tk::real rfact = eta*(rho/(rho0*tk::determinant(g))-1.0);
 
           // Compute the source terms

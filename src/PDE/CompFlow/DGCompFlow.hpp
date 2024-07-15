@@ -218,21 +218,12 @@ class CompFlow {
       }
     }
 
-    //! Save initial densities for all materials
-    //! \param[out] rho0mat List of initial densities
-    void setRho0mat( std::vector< tk::real >& rho0mat ) const
-    {
-      rho0mat.resize(0);
-    }
-
     //! Compute density constraint for a given material
     // //! \param[in] nelem Number of elements
     // //! \param[in] unk Array of unknowns
-    // //! \param[in] rho0mat List of initial densities
     //! \param[out] densityConstr Density Constraint: rho/(rho0*det(g))
     void computeDensityConstr( std::size_t /*nelem*/,
                                tk::Fields& /*unk*/,
-                               std::vector< tk::real >& /*rho0mat*/,
                                std::vector< tk::real >& densityConstr) const
     {
       densityConstr.resize(0);
@@ -419,7 +410,6 @@ class CompFlow {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
-    // //! \param[in] rho0mat Initial densities of all materials
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
     void rhs( tk::real t,
@@ -432,7 +422,6 @@ class CompFlow {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
-              const std::vector< tk::real >& /*rho0mat*/,
               const tk::real dt,
               tk::Fields& R ) const
     {
