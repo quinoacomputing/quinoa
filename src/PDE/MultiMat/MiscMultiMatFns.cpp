@@ -205,18 +205,22 @@ cleanTraceMultiMat(
           P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
-      else {
+      else {  /* else if (!matExists(alk) && alk > 0.0) */
         // determine target relaxation pressure
         auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
         prelax = std::max(prelax, p_target);
         auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0)) / alk;
-        auto gk = getDeformGrad(nmat, k, ugp);
+        auto gk = std::array< std::array< tk::real, 3 >, 3 >
+          {{ {{1, 0, 0}},
+             {{0, 1, 0}},
+             {{0, 0, 1}} }};
         // update state of trace material
         U(e, energyDofIdx(nmat, k, rdof, 0)) = alk
           * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, prelax, gk );
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
           prelax;
+        resetSolidTensors(nmat, k, e, U, P);
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
           P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
