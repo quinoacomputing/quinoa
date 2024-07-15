@@ -185,6 +185,7 @@ DEFTAG(prelax);
 DEFTAG(prelax_timescale);
 DEFTAG(intsharp);
 DEFTAG(intsharp_param);
+DEFTAG(rho0constraint);
 DEFTAG(dt_sos_massavg);
 DEFTAG(depvar);
 DEFTAG(sys);

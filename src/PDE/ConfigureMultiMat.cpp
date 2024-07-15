@@ -97,6 +97,9 @@ infoMultiMat( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
   auto intsharp = g_inputdeck.get< eq, tag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
+  auto rho0cn = g_inputdeck.get< eq, tag::rho0constraint >();
+  nfo.emplace_back( "density constraint correction", std::to_string( rho0cn ) );
+
   auto ncomp = g_inputdeck.get< tag::ncomp >();
   nfo.emplace_back( "number of components", std::to_string( ncomp ) );
 
