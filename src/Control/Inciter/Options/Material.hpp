@@ -24,7 +24,7 @@ namespace ctr {
 enum class MaterialType : uint8_t { STIFFENEDGAS
                                   , JWL
                                   , SMALLSHEARSOLID
-                                  , GODUNOVROMENSKISOLID
+                                  , GODUNOVROMENSKIALUMINUM
                                   };
 
 //! Pack/Unpack MaterialType: forward overload to generic enum class packer
@@ -45,13 +45,13 @@ class Material : public tk::Toggle< MaterialType > {
         { { MaterialType::STIFFENEDGAS, "stiffenedgas" }
         , { MaterialType::JWL, "jwl" }
         , { MaterialType::SMALLSHEARSOLID, "smallshearsolid" }
-        , { MaterialType::GODUNOVROMENSKISOLID, "godunovromenskisolid" }
+        , { MaterialType::GODUNOVROMENSKIALUMINUM, "godunovromenskialuminum" }
         },
         //! keywords -> Enums
         { { "stiffenedgas", MaterialType::STIFFENEDGAS }
         , { "jwl", MaterialType::JWL }
         , { "smallshearsolid", MaterialType::SMALLSHEARSOLID }
-        , { "godunovromenskisolid", MaterialType::GODUNOVROMENSKISOLID }
+        , { "godunovromenskialuminum", MaterialType::GODUNOVROMENSKIALUMINUM }
         } )
     {}
 

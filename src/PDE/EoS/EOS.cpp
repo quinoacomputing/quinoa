@@ -59,15 +59,15 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto mu = getmatprop< tag::mu >(k);
     m_material = SmallShearSolid(g, ps, c_v, mu);
   }
-  else if (mattype == ctr::MaterialType::GODUNOVROMENSKISOLID) {
+  else if (mattype == ctr::MaterialType::GODUNOVROMENSKIALUMINUM) {
     if (eq == EqType::compflow)
-      Throw("GodunovRomenskiSolid not set up for PDE type");
+      Throw("GodunovRomenskiAluminum not set up for PDE type");
     // query input deck for GodunovRomenski parameters
     auto g = getmatprop< tag::gamma >(k);
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
-    m_material = GodunovRomenskiSolid(g, ps, c_v, mu);
+    m_material = GodunovRomenskiAluminum(g, ps, c_v, mu);
   }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
 }

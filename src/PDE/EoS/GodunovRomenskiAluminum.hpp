@@ -1,31 +1,32 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/GodunovRomenskiSolid.hpp
+  \file      src/PDE/EoS/GodunovRomenskiAluminum.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
   \brief     Godunov-Romenski equation of state for solids
   \details   This file declares functions for the Godunov-Romenski equation of
-             state for solids. These function were mostly taken from Barton,
-             Philip T. "An interface-capturing Godunov method for the simulation
-             of compressible solid-fluid problems." Journal of Computational
-             Physics 390 (2019): 25-50. The elastic energy and stress is
-             obtained from a the deviatoric part of the Hencky strain, while the
-             hydrodynamics contributions are obtained from a stiffened gas EOS.
+             state for solids and a hydro EoS for aluminum. These function were
+             taken from Barton, Philip T. "An interface-capturing Godunov method
+             for the simulation of compressible solid-fluid problems." Journal
+             of Computational Physics 390 (2019): 25-50. The elastic energy and
+             stress is obtained from a the deviatoric part of the Hencky strain,
+             while the hydrodynamics contributions are obtained from a stiffened
+             gas EOS.
 */
 // *****************************************************************************
-#ifndef GodunovRomenskiSolid_h
-#define GodunovRomenskiSolid_h
+#ifndef GodunovRomenskiAluminum_h
+#define GodunovRomenskiAluminum_h
 
 #include "Data.hpp"
 
 namespace inciter {
 
-class GodunovRomenskiSolid {
+class GodunovRomenskiAluminum {
 
   private:
-    tk::real m_gamma, m_pstiff, m_cv, m_mu;
+    tk::real m_gamma, m_pstiff, m_cv, m_mu, m_rho0;
     std::vector< tk::real > m_rho0mat;
 
     //! \brief Calculate elastic contribution to material energy from the
@@ -36,18 +37,17 @@ class GodunovRomenskiSolid {
 
   public:
     //! Default constructor
-    GodunovRomenskiSolid() = default;
+    GodunovRomenskiAluminum() = default;
 
     //! Constructor
-    GodunovRomenskiSolid(tk::real gamma, tk::real pstiff, tk::real cv, tk::real mu );
+    GodunovRomenskiAluminum(tk::real gamma, tk::real pstiff, tk::real cv, tk::real mu );
 
-    //! Provide rho0mat to this clase for later use
-    void setRho0Mat( std::vector< tk::real >& rho0mat );
+    //! Set rho0 EOS parameter; i.e. the initial density
+    void setRho0(tk::real rho0);
 
     //! Calculate density from the material pressure and temperature
     tk::real density( tk::real pr,
-                      tk::real temp,
-                      tk::real rho0=1.0 ) const;
+                      tk::real temp ) const;
 
     //! Calculate pressure from the material density, momentum and total energy
     tk::real pressure(
@@ -58,12 +58,11 @@ class GodunovRomenskiSolid {
       tk::real arhoE,
       tk::real alpha=1.0,
       std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
-      tk::real rho0=1.0 ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
     //!   density, momentum, total energy, and inverse deformation gradient
-    //!   tensor using the GodunovRomenskiSolid equation of state
+    //!   tensor using the GodunovRomenskiAluminum equation of state
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
       tk::real,
@@ -83,8 +82,7 @@ class GodunovRomenskiSolid {
       std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
       const std::array< tk::real, 3 >& adefgradn={{}},
-      const std::array< tk::real, 3 >& asigman={{}},
-      tk::real rho0=1.0 ) const;
+      const std::array< tk::real, 3 >& asigman={{}} ) const;
 
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
@@ -94,8 +92,7 @@ class GodunovRomenskiSolid {
       tk::real v,
       tk::real w,
       tk::real pr,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
-      tk::real rho0=1.0 ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
@@ -120,6 +117,9 @@ class GodunovRomenskiSolid {
     //! Compute the reference pressure
     tk::real refPressure() const { return 1.0e5; }
 
+    //! Return initial density
+    tk::real rho0() const { return m_rho0; }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -132,11 +132,11 @@ class GodunovRomenskiSolid {
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i GodunovRomenskiSolid object reference
-    friend void operator|( PUP::er& p, GodunovRomenskiSolid& i ) { i.pup(p); }
+    //! \param[in,out] i GodunovRomenskiAluminum object reference
+    friend void operator|( PUP::er& p, GodunovRomenskiAluminum& i ) { i.pup(p); }
     //@}
 };
 
 } //inciter::
 
-#endif // GodunovRomenskiSolid_h
+#endif // GodunovRomenskiAluminum_h

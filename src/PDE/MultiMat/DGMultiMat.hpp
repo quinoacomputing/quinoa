@@ -1134,7 +1134,7 @@ class MultiMat {
             // rel_factor = 1/tau <- Perfect plasticity for now.
             tk::real rel_factor = 0.0;
             if (equiv_stress >= yield_stress)
-              rel_factor = 1.0e07;
+              rel_factor = 1.0e06;
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
