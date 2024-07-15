@@ -54,10 +54,23 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
   if (!icbox.empty())
   {
     for (const auto& b : icbox) {   // for all boxes
-      k = b.template get< tag::materialid >() - 1;
-      pr = b.template get< tag::pressure >();
-      tmp = b.template get< tag::temperature >();
-      rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+      k = b.get< tag::materialid >() - 1;
+      auto boxmas = b.get< tag::mass >();
+      // if mass and volume are given, compute density as mass/volume
+      if (boxmas > 0.0) {
+        std::vector< tk::real > box
+          { b.get< tag::xmin >(), b.get< tag::xmax >(),
+            b.get< tag::ymin >(), b.get< tag::ymax >(),
+            b.get< tag::zmin >(), b.get< tag::zmax >() };
+        auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
+        rho0mat[k] = boxmas / V_ex;
+      }
+      // else compute density from eos
+      else {
+        pr = b.get< tag::pressure >();
+        tmp = b.get< tag::temperature >();
+        rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+      }
     }
   }
 
@@ -65,13 +78,23 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
   if (!icmbk.empty())
   {
     for (const auto& b : icmbk) { // for all blocks
-      k = b.template get< tag::materialid >() - 1;
-      pr = b.template get< tag::pressure >();
-      tmp = b.template get< tag::temperature >();
-      rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+      k = b.get< tag::materialid >() - 1;
+      auto boxmas = b.get< tag::mass >();
+      // if mass and volume are given, compute density as mass/volume
+      if (boxmas > 0.0) {
+        auto V_ex = b.get< tag::volume >();
+        rho0mat[k] = boxmas / V_ex;
+      }
+      // else compute density from eos
+      else {
+        pr = b.get< tag::pressure >();
+        tmp = b.get< tag::temperature >();
+        rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+      }
     }
   }
 
+  // Store computed rho0's in the EOS-block
   for (std::size_t i=0; i<nmat; ++i) {
     mat_blk[i].set< EOS::setRho0 >(rho0mat[i]);
   }

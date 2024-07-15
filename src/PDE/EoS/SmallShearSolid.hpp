@@ -133,6 +133,7 @@ class SmallShearSolid {
       p | m_pstiff;
       p | m_cv;
       p | m_mu;
+      p | m_rho0;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
