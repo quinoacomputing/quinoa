@@ -946,7 +946,9 @@ Discretization::next()
   if (!rf.empty()) {
     if (m_t > rf[0] and m_t < rf[1])
       m_rangeFieldFloor = std::floor( m_t / rf[2] );
-    const auto& rh = g_inputdeck.get< tag::history_output, tag::time_range >();
+  }
+  const auto& rh = g_inputdeck.get< tag::history_output, tag::time_range >();
+  if (!rh.empty()) {
     if (m_t > rh[0] and m_t < rh[1])
       m_rangeHistFloor = std::floor( m_t / rh[2] );
   }
