@@ -76,15 +76,15 @@ GodunovRomenskiAluminum::density(
   tk::real pr,
   tk::real ) const
 // *************************************************************************
-//! \brief Calculate density from the material pressure and temperature 
+//! \brief Calculate density from the material pressure and temperature
 //!   using the GodunovRomenskiAluminum equation of state
-// //! \param[in] pr Material pressure
+//! \param[in] pr Material pressure
 // //! \param[in] temp Material temperature
 //! \return Material density calculated using the GodunovRomenskiAluminum EoS
 // *************************************************************************
 {
   // Since this is only for aluminum we hard set rho0
-  tk::real rho0 = 2700;
+  tk::real rho0 = 2700.0;
   // Quick Newton
   tk::real rho = rho0;
   std::size_t maxiter = 50;

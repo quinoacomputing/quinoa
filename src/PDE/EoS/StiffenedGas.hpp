@@ -44,7 +44,7 @@ class StiffenedGas {
                        tk::real arhoE,
                        tk::real alpha=1.0,
                        std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}}) const;
 
     //! \brief Calculate the Cauchy stress tensor from the material density,
     //!   momentum, and total energy

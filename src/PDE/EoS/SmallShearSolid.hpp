@@ -126,7 +126,7 @@ class SmallShearSolid {
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
-    //! \brief Pack/Unp\ack serialize member function
+    //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) /*override*/ {
       p | m_gamma;

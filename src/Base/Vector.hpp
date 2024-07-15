@@ -576,7 +576,7 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
 
   for (std::size_t i=0; i<3; ++i)
     devH[i][i] -= trH/3.0;
-  
+
   // Output devH
   return devH;
 }

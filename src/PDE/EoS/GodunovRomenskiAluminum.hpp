@@ -27,7 +27,6 @@ class GodunovRomenskiAluminum {
 
   private:
     tk::real m_gamma, m_pstiff, m_cv, m_mu, m_rho0;
-    std::vector< tk::real > m_rho0mat;
 
     //! \brief Calculate elastic contribution to material energy from the
     //!   material density, and deformation gradient tensor
@@ -129,6 +128,7 @@ class GodunovRomenskiAluminum {
       p | m_pstiff;
       p | m_cv;
       p | m_mu;
+      p | m_rho0;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
