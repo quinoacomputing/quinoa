@@ -53,6 +53,16 @@ SmallShearSolid::SmallShearSolid(
 // *************************************************************************
 { }
 
+void
+SmallShearSolid::setRho0( tk::real rho0 )
+// *************************************************************************
+//  Set rho0 EOS parameter; i.e. the initial density
+//! \param[in] rho0 Initial material density that needs to be stored
+// *************************************************************************
+{
+  m_rho0 = rho0;
+}
+
 tk::real
 SmallShearSolid::density(
   tk::real pr,

@@ -29,6 +29,8 @@ class StiffenedGas {
     //! Constructor
     StiffenedGas(tk::real gamma, tk::real pstiff, tk::real cv );
 
+    //! Set rho0 EOS parameter. No-op.
+    void setRho0(tk::real) {}
 
     //! Calculate density from the material pressure and temperature
     tk::real density( tk::real pr,
@@ -106,6 +108,9 @@ class StiffenedGas {
 
     //! Compute the reference pressure
     tk::real refPressure() const { return 1.0e5; }
+
+    //! Return initial density
+    tk::real rho0() const { return density(1.0e5, 300.0); }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

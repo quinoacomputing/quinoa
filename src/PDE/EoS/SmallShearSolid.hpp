@@ -25,7 +25,7 @@ namespace inciter {
 class SmallShearSolid {
 
   private:
-    tk::real m_gamma, m_pstiff, m_cv, m_mu;
+    tk::real m_gamma, m_pstiff, m_cv, m_mu, m_rho0;
 
     //! \brief Calculate elastic contribution to material energy from the
     //!   material density, and deformation gradient tensor
@@ -40,6 +40,8 @@ class SmallShearSolid {
     //! Constructor
     SmallShearSolid(tk::real gamma, tk::real pstiff, tk::real cv, tk::real mu );
 
+    //! Set rho0 EOS parameter; i.e. the initial density
+    void setRho0(tk::real rho0);
 
     //! Calculate density from the material pressure and temperature
     tk::real density( tk::real pr,
@@ -122,6 +124,9 @@ class SmallShearSolid {
 
     //! Compute the reference pressure
     tk::real refPressure() const { return 1.0e5; }
+
+    //! Return initial density
+    tk::real rho0() const { return m_rho0; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

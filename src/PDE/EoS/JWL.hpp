@@ -43,6 +43,9 @@ class JWL {
          tk::real tr, tk::real pr, tk::real A, tk::real B, tk::real R1,
          tk::real R2 );
 
+    //! Set rho0 EOS parameter. No-op since rho0 is set in JWL ctor
+    void setRho0(tk::real) {}
+
     //! Calculate density from the material pressure and temperature
     tk::real density( tk::real pr,
                       tk::real temp,
@@ -121,6 +124,9 @@ class JWL {
     //! Compute the reference pressure
     //! \details Returns the reference pressure
     tk::real refPressure() const { return m_pr; }
+
+    //! Return initial density
+    tk::real rho0() const { return m_rho0; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

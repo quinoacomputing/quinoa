@@ -134,8 +134,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
-  m_shockmarker(m_u.nunk(), 1),
-  m_rho0mat()
+  m_shockmarker(m_u.nunk(), 1)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -319,8 +318,6 @@ DG::box( tk::real v, const std::vector< tk::real >& )
     myGhosts()->m_fd.Esuel().size()/4 );
   g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4 );
-  // Save initial densities of all materials
-  g_dgpde[d->MeshId()].setRho0mat( m_rho0mat );
 
   m_un = m_u;
 
@@ -1441,7 +1438,7 @@ DG::solve( tk::real newdt )
 
   g_dgpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems, myGhosts()->m_coord,
-    m_u, m_p, m_ndof, m_rho0mat, d->Dt(), m_rhs );
+    m_u, m_p, m_ndof, d->Dt(), m_rhs );
 
   if (!imex_runge_kutta) {
     // Explicit time-stepping using RK3 to discretize time-derivative
@@ -1768,8 +1765,7 @@ DG::writeFields(
   // Add rho0*det(g)/rho to make sure it is staying close to 1,
   // averaged for all materials
   std::vector< tk::real > densityConstr(nelem);
-  g_dgpde[d->MeshId()].computeDensityConstr(nelem, m_u, m_rho0mat,
-                                            densityConstr);
+  g_dgpde[d->MeshId()].computeDensityConstr(nelem, m_u, densityConstr);
   for (const auto& [child,parent] : addedTets)
     densityConstr[child] = 0.0;
   if (densityConstr.size() > 0) elemfields.push_back( densityConstr );

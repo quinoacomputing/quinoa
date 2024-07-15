@@ -29,12 +29,51 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 // *****************************************************************************
 {
   // EoS initialization
+  // ---------------------------------------------------------------------------
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
   const auto& matprop = g_inputdeck.get< tag::material >();
   const auto& matidxmap = g_inputdeck.get< tag::matidxmap >();
   for (std::size_t k=0; k<nmat; ++k) {
     auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get<tag::eos>();
     mat_blk.emplace_back(mateos, EqType::multimat, k);
+  }
+
+  // set rho0 for all materials
+  // ---------------------------------------------------------------------------
+  std::vector< tk::real > rho0mat( nmat, 0.0 );
+  const auto& ic = g_inputdeck.get< tag::ic >();
+  const auto& icbox = ic.get< tag::box >();
+  const auto& icmbk = ic.get< tag::meshblock >();
+  // Get background properties
+  std::size_t k = ic.get< tag::materialid >() - 1;
+  tk::real pr = ic.get< tag::pressure >();
+  tk::real tmp = ic.get< tag::temperature >();
+  rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+
+  // Check inside used defined box
+  if (!icbox.empty())
+  {
+    for (const auto& b : icbox) {   // for all boxes
+      k = b.template get< tag::materialid >() - 1;
+      pr = b.template get< tag::pressure >();
+      tmp = b.template get< tag::temperature >();
+      rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+    }
+  }
+
+  // Check inside user-specified mesh blocks
+  if (!icmbk.empty())
+  {
+    for (const auto& b : icmbk) { // for all blocks
+      k = b.template get< tag::materialid >() - 1;
+      pr = b.template get< tag::pressure >();
+      tmp = b.template get< tag::temperature >();
+      rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+    }
+  }
+
+  for (std::size_t i=0; i<nmat; ++i) {
+    mat_blk[i].set< EOS::setRho0 >(rho0mat[i]);
   }
 }
 
