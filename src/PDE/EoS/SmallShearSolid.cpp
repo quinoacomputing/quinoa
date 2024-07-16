@@ -209,7 +209,7 @@ SmallShearSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/,
   const std::array< tk::real, 3 >& /*adefgradn*/,
   const std::array< tk::real, 3 >& /*asigman*/ ) const
 // *************************************************************************
@@ -239,6 +239,8 @@ SmallShearSolid::soundspeed(
 //! \return Material speed of sound using the SmallShearSolid EoS
 // *************************************************************************
 {
+  /* Rigorous approach: Eigenvalues of full elastic tensor
+
   // deformation gradient
   tk::real g__11 = defgrad[0][0];
   tk::real g__12 = defgrad[0][1];
@@ -545,10 +547,19 @@ SmallShearSolid::soundspeed(
     if (eig_real[i] > eig_max)
       eig_max = eig_real[i];
 
+  */
+
+  // Approximated elastic contribution, from Barton, P. T. (2019).
+  // An interface-capturing Godunov method for the simulation of compressible
+  // solid-fluid problems. Journal of Computational Physics, 390, 25-50
+  tk::real a = (4.0/3.0) * m_mu / (arho/alpha);
+
   // hydrodynamic contribution
   auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
-  tk::real a = std::sqrt( eig_max
-    + (m_gamma * p_eff / arho) );
+  a += m_gamma * p_eff / arho;
+
+  // Compute square root
+  a = std::sqrt(a);
 
   // check sound speed divergence
   if (!std::isfinite(a)) {
