@@ -210,7 +210,6 @@ SmallShearSolid::soundspeed(
   tk::real alpha,
   std::size_t imat,
   const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/,
-  const std::array< tk::real, 3 >& /*adefgradn*/,
   const std::array< tk::real, 3 >& /*asigman*/ ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
@@ -225,14 +224,10 @@ SmallShearSolid::soundspeed(
 //!   (alpha * sigma_ij * n_j) projected onto the normal vector. Default is 0,
 //!   so that for the single-material system, this argument can be left
 //!   unspecified by the calling code
-//! \param[in] defgrad Material inverse deformation gradient tensor
-//!   (g_k) with the first dimension aligned to direction in which
-//!   wave speeds are required. Default is 0, so that for the single-material
-//!   system, this argument can be left unspecified by the calling code
-//  //! \param[in] adefgradn Material inverse deformation gradient tensor in
-//  //!   direction of vector n (alpha_k * g_ij * n_j). Default is 0, so that for
-//  //!   the single-material system, this argument can be left unspecified by the
-//  //!   calling code
+//  //! \param[in] defgrad Material inverse deformation gradient tensor
+//  //!   (g_k) with the first dimension aligned to direction in which
+//  //!   wave speeds are required. Default is 0, so that for the single-material
+//  //!   system, this argument can be left unspecified by the calling code
 //  //! \param[in] asigman Material traction vector in normal direction
 //  //!   (alpha * sigma_ij * n_j ). Default is 0, so that for the single-material
 //  //!   system, this argument can be left unspecified by the calling code
@@ -552,7 +547,7 @@ SmallShearSolid::soundspeed(
   // Approximated elastic contribution, from Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
-  tk::real a = (4.0/3.0) * m_mu / (arho/alpha);
+  tk::real a = (4.0/3.0) * m_mu * alpha / arho;
 
   // hydrodynamic contribution
   auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
