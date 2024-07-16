@@ -10,10 +10,7 @@
              state for solids and a hydro EoS for aluminum. These function were
              taken from Barton, Philip T. "An interface-capturing Godunov method
              for the simulation of compressible solid-fluid problems." Journal
-             of Computational Physics 390 (2019): 25-50. The elastic energy and
-             stress is obtained from a the deviatoric part of the Hencky strain,
-             while the hydrodynamics contributions are obtained from a stiffened
-             gas EOS.
+             of Computational Physics 390 (2019): 25-50.
 */
 // *****************************************************************************
 #ifndef GodunovRomenskiAluminum_h
@@ -26,7 +23,7 @@ namespace inciter {
 class GodunovRomenskiAluminum {
 
   private:
-    tk::real m_gamma, m_pstiff, m_cv, m_mu, m_rho0;
+    tk::real m_gamma, m_cv, m_mu, m_rho0;
 
     //! \brief Calculate elastic contribution to material energy from the
     //!   material density, and deformation gradient tensor
@@ -39,7 +36,7 @@ class GodunovRomenskiAluminum {
     GodunovRomenskiAluminum() = default;
 
     //! Constructor
-    GodunovRomenskiAluminum(tk::real gamma, tk::real pstiff, tk::real cv, tk::real mu );
+    GodunovRomenskiAluminum(tk::real gamma, tk::real cv, tk::real mu );
 
     //! Set rho0 EOS parameter; i.e. the initial density
     void setRho0(tk::real rho0);
@@ -125,7 +122,6 @@ class GodunovRomenskiAluminum {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) /*override*/ {
       p | m_gamma;
-      p | m_pstiff;
       p | m_cv;
       p | m_mu;
       p | m_rho0;

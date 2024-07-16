@@ -546,6 +546,11 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
 
   std::array< std::array< real, 3 >, 3 > devH{{{0,0,0}, {0,0,0}, {0,0,0}}};
 
+  // Compute approximation of Hencky strain tensor from section 3.4 of
+  // Barton, P. T. (2019). An interface-capturing Godunov method for the
+  // simulation of compressible solid-fluid problems. Journal of Computational
+  // Physics, 390, 25-50.
+
   // get inv(C)
   double CInv[9];
   for (std::size_t i=0; i<3; ++i) {

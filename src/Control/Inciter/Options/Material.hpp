@@ -45,13 +45,13 @@ class Material : public tk::Toggle< MaterialType > {
         { { MaterialType::STIFFENEDGAS, "stiffenedgas" }
         , { MaterialType::JWL, "jwl" }
         , { MaterialType::SMALLSHEARSOLID, "smallshearsolid" }
-        , { MaterialType::GODUNOVROMENSKIALUMINUM, "godunovromenskialuminum" }
+        , { MaterialType::GODUNOVROMENSKIALUMINUM, "godunovromenski_aluminum" }
         },
         //! keywords -> Enums
         { { "stiffenedgas", MaterialType::STIFFENEDGAS }
         , { "jwl", MaterialType::JWL }
         , { "smallshearsolid", MaterialType::SMALLSHEARSOLID }
-        , { "godunovromenskialuminum", MaterialType::GODUNOVROMENSKIALUMINUM }
+        , { "godunovromenski_aluminum", MaterialType::GODUNOVROMENSKIALUMINUM }
         } )
     {}
 

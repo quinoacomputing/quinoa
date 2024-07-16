@@ -453,12 +453,6 @@ LuaParser::storeInputDeck(
         checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
           mati_deck.get< tag::gamma >());
 
-        // pstiff
-        if (!sol_mat[i+1]["pstiff"].valid())
-          sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
-        checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
-          mati_deck.get< tag::pstiff >());
-
         // mu
         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
           mati_deck.get< tag::mu >());

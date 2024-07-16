@@ -10,10 +10,7 @@
              state for solids and a hydro EoS for aluminum. These function were
              taken from Barton, Philip T. "An interface-capturing Godunov method
              for the simulation of compressible solid-fluid problems." Journal
-             of Computational Physics 390 (2019): 25-50. The elastic energy and
-             stress is obtained from a the deviatoric part of the Hencky strain,
-             while the hydrodynamics contributions are obtained from a stiffened
-             gas EOS.
+             of Computational Physics 390 (2019): 25-50.
 */
 // *****************************************************************************
 
@@ -23,17 +20,17 @@
 #include "EoS/GodunovRomenskiAluminum.hpp"
 #include "EoS/GetMatProp.hpp"
 
-// Lapacke forward declarations
-extern "C" {
+// // Lapacke forward declarations
+// extern "C" {
 
-using lapack_int = long;
+// using lapack_int = long;
 
-#define LAPACK_ROW_MAJOR 101
+// #define LAPACK_ROW_MAJOR 101
 
-lapack_int LAPACKE_dgeev(int, char, char, lapack_int, double*, lapack_int,
-  double*, double*, double*, lapack_int, double*, lapack_int );
+// lapack_int LAPACKE_dgeev(int, char, char, lapack_int, double*, lapack_int,
+//   double*, double*, double*, lapack_int, double*, lapack_int );
 
-}
+// }
 
 static const tk::real e1 = -13.0e+09;
 static const tk::real e2 = 20.0e+09;
@@ -45,21 +42,21 @@ using inciter::GodunovRomenskiAluminum;
 
 GodunovRomenskiAluminum::GodunovRomenskiAluminum(
   tk::real gamma,
-  tk::real pstiff,
   tk::real cv,
   tk::real mu ) :
   m_gamma(gamma),
-  m_pstiff(pstiff),
   m_cv(cv),
   m_mu(mu)
 // *************************************************************************
 //  Constructor
 //! \param[in] gamma Ratio of specific heats
-//! \param[in] pstiff Stiffness pressure term
 //! \param[in] cv Specific heat at constant volume
 //! \param[in] mu Constant shear modulus
 // *************************************************************************
-{ }
+{
+  // Since this is only for aluminum we hard set rho0
+  m_rho0 = 2700.0;
+}
 
 void
 GodunovRomenskiAluminum::setRho0( tk::real rho0 )
@@ -83,8 +80,7 @@ GodunovRomenskiAluminum::density(
 //! \return Material density calculated using the GodunovRomenskiAluminum EoS
 // *************************************************************************
 {
-  // Since this is only for aluminum we hard set rho0
-  tk::real rho0 = 2700.0;
+  tk::real rho0 = m_rho0;
   // Quick Newton
   tk::real rho = rho0;
   std::size_t maxiter = 50;
@@ -345,7 +341,7 @@ GodunovRomenskiAluminum::min_eff_pressure(
 // *************************************************************************
 {
   // minimum pressure is constrained by zero soundspeed.
-  return (min - m_pstiff);
+  return min;
 }
 
 tk::real
