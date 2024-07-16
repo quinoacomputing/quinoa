@@ -132,7 +132,6 @@ StiffenedGas::soundspeed(
   tk::real alpha,
   std::size_t imat,
   const std::array< std::array< tk::real, 3 >, 3 >&,
-  const std::array< tk::real, 3 >&,
   const std::array< tk::real, 3 >& ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure

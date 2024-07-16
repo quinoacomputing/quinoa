@@ -79,7 +79,6 @@ class SmallShearSolid {
       tk::real alpha=1.0,
       std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
-      const std::array< tk::real, 3 >& adefgradn={{}},
       const std::array< tk::real, 3 >& asigman={{}} ) const;
 
     //! Calculate speed of shear waves
