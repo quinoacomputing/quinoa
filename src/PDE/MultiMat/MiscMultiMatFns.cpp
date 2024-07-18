@@ -254,9 +254,13 @@ cleanTraceMultiMat(
         // update state of trace material
         U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
         U(e, densityDofIdx(nmat, k, rdof, 0)) = 1e-14 * rhok;
+        auto gk = std::array< std::array< tk::real, 3 >, 3 >
+          {{ {{1, 0, 0}},
+             {{0, 1, 0}},
+             {{0, 0, 1}} }};
         U(e, energyDofIdx(nmat, k, rdof, 0)) = 1e-14
           * mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, p_target,
-          gmax);
+          gk);
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = 1e-14 *
           p_target;
         resetSolidTensors(nmat, k, e, U, P);
