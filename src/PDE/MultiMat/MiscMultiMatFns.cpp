@@ -132,11 +132,8 @@ cleanTraceMultiMat(
 
   for (std::size_t e=0; e<nelem; ++e)
   {
-    // find material in largest quantity, and determine if pressure
-    // relaxation is needed. If it is, determine materials that need
-    // relaxation, and the total volume of these materials.
-    std::vector< int > relaxInd(nmat, 0);
-    auto almax(0.0), relaxVol(0.0);
+    // find material in largest quantity.
+    auto almax(0.0);
     std::size_t kmax = 0;
     for (std::size_t k=0; k<nmat; ++k)
     {
@@ -146,14 +143,7 @@ cleanTraceMultiMat(
         almax = al;
         kmax = k;
       }
-      else if (al < al_eps)
-      {
-        relaxInd[k] = 1;
-        relaxVol += al;
-      }
     }
-    relaxInd[kmax] = 1;
-    relaxVol += almax;
 
     // get conserved quantities
     std::vector< tk::real > B(rdof, 0.0);
@@ -285,7 +275,7 @@ cleanTraceMultiMat(
       U(e, energyDofIdx(nmat, kmax, rdof, 0)),
       U(e, volfracDofIdx(nmat, kmax, rdof, 0)), kmax, gmax );
 
-    // enforce unit sum of volume fractions
+    // 3. enforce unit sum of volume fractions
     auto alsum = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
       alsum += U(e, volfracDofIdx(nmat, k, rdof, 0));
