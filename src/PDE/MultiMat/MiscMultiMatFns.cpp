@@ -204,45 +204,26 @@ cleanTraceMultiMat(
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
           /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
         {
-          //auto gk = gamma< tag::multimat >(0, k);
-
-          tk::real alk_new(0.0);
-          //// volume change based on polytropic expansion/isentropic compression
-          //if (pk > p_target)
-          //{
-          //  alk_new = std::pow((pk/p_target), (1.0/gk)) * alk;
-          //}
-          //else
-          //{
-          //  auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
-          //  auto ck = eos_soundspeed< tag::multimat >(0, arhok, alk*pk,
-          //    alk, k);
-          //  auto kk = arhok * ck * ck;
-          //  alk_new = alk - (alk*alk/kk) * (p_target-pk);
-          //}
-          alk_new = alk;
-
           // determine target relaxation pressure
           auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-            U(e, densityDofIdx(nmat, k, rdof, 0)), alk_new);
+            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
           prelax = std::max(prelax, p_target);
 
           // energy change
           auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0))
-            / alk_new;
+            / alk;
           auto gmat = getDeformGrad(nmat, k, ugp);
           auto rhoEmat = mat_blk[k].compute< EOS::totalenergy >(rhomat, u, v, w,
             prelax, gmat);
 
-          // volume-fraction and total energy flux into majority material
-          d_al += (alk - alk_new);
+          // total energy flux into majority material
           d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
-            - alk_new * rhoEmat);
+            - alk * rhoEmat);
 
           // update state of trace material
-          U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk_new;
-          U(e, energyDofIdx(nmat, k, rdof, 0)) = alk_new*rhoEmat;
-          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new*prelax;
+          U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk;
+          U(e, energyDofIdx(nmat, k, rdof, 0)) = alk*rhoEmat;
+          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
         }
       }
       // check for unbounded volume fractions
@@ -294,18 +275,7 @@ cleanTraceMultiMat(
       }
     }
 
-    // 2. Based on volume change in majority material, compute energy change
-    //auto gmax = gamma< tag::multimat >(0, kmax);
-    //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
-    //auto rhomax_new = U(e, densityDofIdx(nmat, kmax, rdof, 0))
-    //  / (almax+d_al);
-    //auto rhoEmax_new = eos_totalenergy< tag::multimat >(0, rhomax_new, u,
-    //  v, w, pmax_new, kmax);
-    //auto d_arEmax_new = (almax+d_al) * rhoEmax_new
-    //  - U(e, energyDofIdx(nmat, kmax, rdof, 0));
-
     U(e, volfracDofIdx(nmat, kmax, rdof, 0)) += d_al;
-    //U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arEmax_new;
 
     // 2. Flux energy change into majority material
     U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arE;
@@ -330,46 +300,6 @@ cleanTraceMultiMat(
           P(e, stressDofIdx(nmat, solidx[k], i, rdof, 0)) /= alsum;
       }
     }
-
-    //// bulk quantities
-    //auto rhoEb(0.0), rhob(0.0), volb(0.0);
-    //for (std::size_t k=0; k<nmat; ++k)
-    //{
-    //  if (relaxInd[k] > 0.0)
-    //  {
-    //    rhoEb += U(e, energyDofIdx(nmat,k,rdof,0));
-    //    volb += U(e, volfracDofIdx(nmat,k,rdof,0));
-    //    rhob += U(e, densityDofIdx(nmat,k,rdof,0));
-    //  }
-    //}
-
-    //// 2. find mixture-pressure
-    //tk::real pmix(0.0), den(0.0);
-    //pmix = rhoEb - 0.5*rhob*(u*u+v*v+w*w);
-    //for (std::size_t k=0; k<nmat; ++k)
-    //{
-    //  auto gk = gamma< tag::multimat >(0, k);
-    //  auto Pck = pstiff< tag::multimat >(0, k);
-
-    //  pmix -= U(e, volfracDofIdx(nmat,k,rdof,0)) * gk * Pck *
-    //    relaxInd[k] / (gk-1.0);
-    //  den += U(e, volfracDofIdx(nmat,k,rdof,0)) * relaxInd[k]
-    //    / (gk-1.0);
-    //}
-    //pmix /= den;
-
-    //// 3. correct energies
-    //for (std::size_t k=0; k<nmat; ++k)
-    //{
-    //  if (relaxInd[k] > 0.0)
-    //  {
-    //    auto alk_new = U(e, volfracDofIdx(nmat,k,rdof,0));
-    //    U(e, energyDofIdx(nmat,k,rdof,0)) = alk_new *
-    //      eos_totalenergy< tag::multimat >(0, rhomat[k], u, v, w, pmix,
-    //      k);
-    //    P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new * pmix;
-    //  }
-    //}
 
     pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0)) /
       U(e, volfracDofIdx(nmat, kmax, rdof, 0));
