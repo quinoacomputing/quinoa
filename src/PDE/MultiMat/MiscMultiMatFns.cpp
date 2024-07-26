@@ -125,7 +125,6 @@ cleanTraceMultiMat(
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
   std::size_t ncomp = U.nprop()/rdof;
-  auto al_eps = 1.0e-02;
   auto neg_density = false;
 
   std::vector< tk::real > ugp(ncomp, 0.0);
@@ -186,10 +185,10 @@ cleanTraceMultiMat(
       // for positive volume fractions
       if (matExists(alk))
       {
-        // check if volume fraction is lesser than threshold (al_eps) and
-        // if the material (effective) pressure is negative. If either of
+        // check if volume fraction is lesser than threshold (volfracPRelaxLim)
+        // and if the material (effective) pressure is negative. If either of
         // these conditions is true, perform pressure relaxation.
-        if ((alk < al_eps) ||
+        if ((alk < volfracPRelaxLim()) ||
           (pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
           /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
