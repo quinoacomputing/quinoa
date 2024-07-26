@@ -497,28 +497,9 @@ pressureRelaxationInt( std::size_t nmat,
         real alphamat = state[volfracIdx(nmat, k)];
         apmat[k] = state[ncomp+pressureIdx(nmat, k)];
         real amat = 0.0;
-        if (alphamat >= inciter::volfracPRelaxLim()) {
-          if (solidx[k] > 0)
-          {
-            std::array< std::array< tk::real, 3 >, 3 > g;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                g[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
-            auto grot = tk::rotateTensor(g, {{1.0, 0.0, 0.0}});
-            amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
-              apmat[k], alphamat, k, grot);
-            grot = tk::rotateTensor(g, {{0.0, 1.0, 0.0}});
-            amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-              arhomat, apmat[k], alphamat, k, grot));
-            grot = tk::rotateTensor(g, {{0.0, 0.0, 1.0}});
-            amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-              arhomat, apmat[k], alphamat, k, grot));
-          }
-          else
-          {
+        if (solidx[k] == 0 && alphamat >= inciter::volfracPRelaxLim()) {
             amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
               apmat[k], alphamat, k );
-          }
           kmat[k] = arhomat * amat * amat;
           pb += apmat[k];
 

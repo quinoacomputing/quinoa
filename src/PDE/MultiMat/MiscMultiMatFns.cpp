@@ -183,7 +183,7 @@ cleanTraceMultiMat(
       auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
       auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
       // for positive volume fractions
-      if (matExists(alk))
+      if (solidx[k] == 0 && solidx[kmax] == 0 && matExists(alk))
       {
         // check if volume fraction is lesser than threshold (volfracPRelaxLim)
         // and if the material (effective) pressure is negative. If either of
@@ -241,7 +241,7 @@ cleanTraceMultiMat(
           P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
-      else {  /* else if (!matExists(alk) && alk > 0.0) */
+      else if (!matExists(alk)) {  // condition so that else-branch not exec'ed for solids
         // determine target relaxation pressure
         auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
