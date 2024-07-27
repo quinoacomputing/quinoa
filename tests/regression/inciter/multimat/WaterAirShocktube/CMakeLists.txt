@@ -13,7 +13,7 @@ add_regression_test(multimat_waterair_shocktube_p0p1 ${INCITER_EXECUTABLE}
                     TEXT_BASELINE diag_p0p1.std
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF waterair_shocktube_diag.ndiff.cfg
-                    LABELS dg multimat)
+                    LABELS fv multimat)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   set(multimat_waterair_shocktube_dgp1_BIN_DIFF_PROG_CONF exodiff_dg_intel.cfg)
