@@ -17,6 +17,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
@@ -544,6 +545,54 @@ timeStepSizeMultiMatFV(
     // element dt
     local_dte[e] = dx/v_char;
     mindt = std::min(mindt, local_dte[e]);
+  }
+
+  return mindt;
+}
+
+tk::real
+timeStepSizeViscousFV(
+  const tk::Fields& geoElem,
+  std::size_t nelem,
+  std::size_t nmat,
+  const tk::Fields& U )
+// *****************************************************************************
+//  Compute the time step size restriction based on this physics
+//! \param[in] geoElem Element geometry array
+//! \param[in] nelem Number of elements
+//! \param[in] nmat Number of materials
+//! \param[in] U Solution vector
+//! \return Maximum allowable time step based on viscosity
+// *****************************************************************************
+{
+  const auto& ndof = g_inputdeck.get< tag::ndof >();
+  const auto& rdof = g_inputdeck.get< tag::rdof >();
+  std::size_t ncomp = U.nprop()/rdof;
+
+  auto mindt = std::numeric_limits< tk::real >::max();
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // get conserved quantities at centroid
+    std::vector< tk::real > B(rdof, 0.0);
+    B[0] = 1.0;
+    auto ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+
+    // Kinematic viscosity
+    tk::real nu(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto alk = ugp[volfracIdx(nmat, k)];
+      auto mu = getmatprop< tag::mu >(k);
+      if (alk > 1.0e-04) nu = std::max(nu, alk*mu/ugp[densityIdx(nmat,k)]);
+    }
+
+    // characteristic length (radius of insphere)
+    auto dx = std::min(std::cbrt(geoElem(e,0)), geoElem(e,4))
+      /std::sqrt(24.0);
+
+    // element dt
+    mindt = std::min(mindt, dx*dx/nu);
   }
 
   return mindt;

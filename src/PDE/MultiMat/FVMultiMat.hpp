@@ -551,10 +551,13 @@ class MultiMat {
                  std::vector< tk::real >& local_dte ) const
     {
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      auto viscous = g_inputdeck.get< tag::multimat, tag::viscous >();
 
       // obtain dt restrictions from all physics
       auto dt_e = timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, nmat, U,
         P, local_dte);
+      if (viscous)
+        dt_e = std::min(dt_e, timeStepSizeViscousFV(geoElem, nielem, nmat, U));
       auto dt_p = m_physics.dtRestriction(geoElem, nielem, srcFlag);
 
       return std::min(dt_e, dt_p);
