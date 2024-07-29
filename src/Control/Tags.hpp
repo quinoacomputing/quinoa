@@ -187,6 +187,7 @@ DEFTAG(intsharp);
 DEFTAG(intsharp_param);
 DEFTAG(rho0constraint);
 DEFTAG(dt_sos_massavg);
+DEFTAG(viscous);
 DEFTAG(depvar);
 DEFTAG(sys);
 DEFTAG(physics);

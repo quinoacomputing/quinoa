@@ -41,7 +41,6 @@ add_subdirectory(Integrate)
 # Configure targets for physics and problem types
 add_subdirectory(Transport/Physics)
 add_subdirectory(Transport/Problem)
-add_subdirectory(CompFlow/Physics)
 add_subdirectory(CompFlow/Problem)
 add_subdirectory(MultiMat/Physics)
 add_subdirectory(MultiMat/Problem)

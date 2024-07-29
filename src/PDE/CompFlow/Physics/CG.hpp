@@ -42,14 +42,12 @@
 #include <brigand/sequences/list.hpp>
 
 #include "CGEuler.hpp"
-#include "CGNavierStokes.hpp"
 
 namespace inciter {
 namespace cg {
 
 //! CompFlow Physics policies implemented using continuous Galerkin
-using CompFlowPhysics = brigand::list< CompFlowPhysicsEuler
-                                     , CompFlowPhysicsNavierStokes >;
+using CompFlowPhysics = brigand::list< CompFlowPhysicsEuler >;
 
 } // cg::
 } // inciter::

@@ -1436,7 +1436,7 @@ Transporter::inthead( const InciterPrint& print )
     refined = false;
   }
 
-  print.inthead( "Time integration", "Navier-Stokes solver",
+  print.inthead( "Time integration", "Euler/Navier-Stokes solver",
   "Legend: it - iteration count\n"
   "         t - physics time\n"
   "        dt - physics time step size\n"

@@ -90,7 +90,8 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::intsharp_param,   tk::real,
   tag::rho0constraint,   uint64_t,
   tag::dt_sos_massavg,   int,
-  tag::problem,          ProblemType
+  tag::problem,          ProblemType,
+  tag::viscous,          bool
 > >;
 
 // Material/EOS object
@@ -869,11 +870,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "Specify the advection + diffusion physics",
         R"(This keyword is used to select the advection + diffusion physics
         for transport PDEs. Only usable for 'transport'.)"});
-
-      keywords.insert({"navierstokes",
-        "Specify the Navier-Stokes (viscous) compressible flow physics",
-        R"(This keyword is used to select the Navier-Stokes (viscous) compressible
-        flow physics configuration. Currently setup only for 'compflow'.)"});
 
       keywords.insert({"euler",
         "Specify the Euler (inviscid) compressible flow physics",

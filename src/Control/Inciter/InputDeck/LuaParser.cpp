@@ -418,6 +418,12 @@ LuaParser::storeInputDeck(
           sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
         checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
           mati_deck.get< tag::pstiff >());
+
+        // mu (dynamic viscosity) and 'viscous' keyword
+        if (!sol_mat[i+1]["mu"].valid())
+          sol_mat[i+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+        else gideck.get< tag::multimat, tag::viscous >() = true;
+        checkStoreMatProp(sol_mat[i+1], "mu", ntype, mati_deck.get< tag::mu >());
       }
       // Small-shear solid materials
       else if (mati_deck.get< tag::eos >() ==
