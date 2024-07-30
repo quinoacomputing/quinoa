@@ -264,6 +264,41 @@ GodunovRomenskiAluminum::soundspeed(
 }
 
 tk::real
+GodunovRomenskiAluminum::shearspeed(
+  tk::real arho,
+  tk::real alpha,
+  std::size_t imat ) const
+// *************************************************************************
+//! Calculate speed of sound from the material density and material pressure
+//! \param[in] arho Material partial density (alpha_k * rho_k)
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
+//!   the single-material system, this argument can be left unspecified by
+//!   the calling code
+//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+//!   for the single-material system, this argument can be left unspecified
+//!   by the calling code
+//! \return Material shear-wave speed speed using the SmallShearSolid EoS
+// *************************************************************************
+{
+  // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
+  // An interface-capturing Godunov method for the simulation of compressible
+  // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
+  tk::real a = std::sqrt(alpha*m_mu/arho);
+
+  // check shear-wave speed divergence
+  if (!std::isfinite(a)) {
+    std::cout << "Material-id:      " << imat << std::endl;
+    std::cout << "Volume-fraction:  " << alpha << std::endl;
+    std::cout << "Partial density:  " << arho << std::endl;
+    Throw("Material-" + std::to_string(imat) + " has nan/inf shear-wave speed: "
+      + std::to_string(a) + ", material volume fraction: " +
+      std::to_string(alpha));
+  }
+
+  return a;
+}
+
+tk::real
 GodunovRomenskiAluminum::totalenergy(
   tk::real rho,
   tk::real,

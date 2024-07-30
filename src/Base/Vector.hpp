@@ -662,6 +662,59 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
             {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
 }
 
+//! \brief Rotate a vector (e.g. a velocity) from
+//! the (x,y,z) to a new (r,s,t) coordinate system.
+//! The first direction is given by a unit vector r = (rx,ry,rz).
+//! Then, the second is chosen to be:
+//! if |rx| > 0 or |ry| > 0:
+//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0)
+//! else:
+//! - s = (1,0,0)
+//! Then, third basis vector is obtained from
+//! the cross-product between the first two.
+//! \param[in] v Vector to be rotated.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return rotated vector
+inline std::array< tk::real, 3 >
+rotateVector( const std::array< tk::real, 3 >& v,
+  const std::array< tk::real, 3 >& r )
+{
+  // define rotation matrix
+  tk::real eps = 1.0e-04;
+  std::array< std::array< tk::real, 3 >, 3 > rotMat;
+  tk::real rx = r[0];
+  tk::real ry = r[1];
+  tk::real rz = r[2];
+  if (std::abs(rx) > eps || std::abs(ry) > eps)
+  {
+    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+    rotMat[0][0] = rx;
+    rotMat[0][1] = ry;
+    rotMat[0][2] = rz;
+    rotMat[1][0] = ry/rxryNorm;
+    rotMat[1][1] = -rx/rxryNorm;
+    rotMat[1][2] = 0.0;
+    rotMat[2][0] = rx*rz/rxryNorm;
+    rotMat[2][1] = ry*rz/rxryNorm;
+    rotMat[2][2] = -rxryNorm;
+  }
+  else
+  {
+    rotMat[0][0] = rx;
+    rotMat[0][1] = ry;
+    rotMat[0][2] = rz;
+    rotMat[1][0] = 1.0;
+    rotMat[1][1] = 0.0;
+    rotMat[1][2] = 0.0;
+    rotMat[2][0] = 0.0;
+    rotMat[2][1] = 1.0;
+    rotMat[2][2] = 0.0;
+  }
+
+  // return rotMat*v
+  return matvec(rotMat,v);
+}
+
 //! \brief Reflect a second order tensor (e.g. a Strain/Stress matrix)
 //! \param[in] mat matrix to be rotated.
 //! \param[in] reflectMat Reflection matrix
