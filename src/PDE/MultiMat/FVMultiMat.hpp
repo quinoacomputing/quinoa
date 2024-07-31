@@ -475,6 +475,7 @@ class MultiMat {
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       const auto intsharp =
         g_inputdeck.get< tag::multimat, tag::intsharp >();
+      auto viscous = g_inputdeck.get< tag::multimat, tag::viscous >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -500,12 +501,22 @@ class MultiMat {
       tk::surfIntFV( nmat, m_mat_blk, t, rdof, inpoel,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
                      srcFlag, R, intsharp );
+      // compute internal surface viscous flux integrals
+      if (viscous)
+        tk::surfIntViscousFV( nmat, m_mat_blk, rdof, inpoel,
+                              coord, fd, geoFace, geoElem, U, P,
+                              srcFlag, R, intsharp );
 
       // compute boundary surface flux (including non-conservative) integrals
-      for (const auto& b : m_bc)
+      for (const auto& b : m_bc) {
         tk::bndSurfIntFV( nmat, m_mat_blk, rdof, b.first,
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                           velfn, b.second, U, P, srcFlag, R, intsharp );
+        if (viscous)
+          tk::bndSurfIntViscousFV( nmat, m_mat_blk, rdof, b.first,
+                                   fd, geoFace, geoElem, inpoel, coord, t,
+                                   b.second, U, P, srcFlag, R, intsharp );
+      }
 
       // compute optional source term
       tk::srcIntFV( m_mat_blk, t, fd.Esuel().size()/4,
