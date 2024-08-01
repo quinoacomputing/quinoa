@@ -212,6 +212,102 @@ namespace inciter {
     return {{ ul, ul }};
   }
 
+  //! \brief Boundary state function providing the left and right state of a
+  //!   face at no-slip wall boundaries
+  //! \param[in] ncomp Number of scalar components in this PDE system
+  //! \param[in] ul Left (domain-internal) state
+  //! \param[in] fn Unit face normal
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \note The function signature must follow tk::StateFn. For multimat, the
+  //!   left or right state is the vector of conserved quantities, followed by
+  //!   the vector of primitive quantities appended to it.
+  static tk::StateFn::result_type
+  noslipwall( ncomp_t ncomp,
+              const std::vector< EOS >&,
+              const std::vector< tk::real >& ul,
+              tk::real, tk::real, tk::real, tk::real,
+              const std::array< tk::real, 3 >& fn )
+  {
+    auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+    const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+
+    [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
+
+    Assert( ul.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
+            "internal state vector" );
+
+    tk::real rho(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      rho += ul[densityIdx(nmat, k)];
+
+    auto ur = ul;
+
+    // Internal cell velocity components
+    auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
+    auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
+    auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
+    // Ghost state velocity components
+    auto v1r = -v1l;
+    auto v2r = -v2l;
+    auto v3r = -v3l;
+    // Boundary condition
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      ur[volfracIdx(nmat, k)] = ul[volfracIdx(nmat, k)];
+      ur[densityIdx(nmat, k)] = ul[densityIdx(nmat, k)];
+      ur[energyIdx(nmat, k)] = ul[energyIdx(nmat, k)];
+      if (solidx[k] > 0) {
+        // Internal inverse deformation tensor
+        std::array< std::array< tk::real, 3 >, 3 > g;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            g[i][j] = ul[deformIdx(nmat,solidx[k],i,j)];
+        // Internal Cauchy stress tensor
+        std::array< std::array< tk::real, 3 >, 3 > s;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            s[i][j] = ul[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])];
+        // Make reflection matrix
+        std::array< std::array< tk::real, 3 >, 3 >
+        reflectionMat{{{1,0,0}, {0,1,0}, {0,0,1}}};
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            reflectionMat[i][j] -= 2*fn[i]*fn[j];
+        // Reflect g
+        g = tk::reflectTensor(g, reflectionMat);
+        // Reflect s
+        s = tk::reflectTensor(s, reflectionMat);
+        // Copy g and s into ur
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j) {
+            ur[deformIdx(nmat,solidx[k],i,j)] = g[i][j];
+            ur[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])] = s[i][j];
+          }
+      }
+    }
+    ur[momentumIdx(nmat, 0)] = rho * v1r;
+    ur[momentumIdx(nmat, 1)] = rho * v2r;
+    ur[momentumIdx(nmat, 2)] = rho * v3r;
+
+    // Internal cell primitive quantities using the separately reconstructed
+    // primitive quantities. This is used to get ghost state for primitive
+    // quantities
+
+    // velocity
+    ur[ncomp+velocityIdx(nmat, 0)] = v1r;
+    ur[ncomp+velocityIdx(nmat, 1)] = v2r;
+    ur[ncomp+velocityIdx(nmat, 2)] = v3r;
+    // material pressures
+    for (std::size_t k=0; k<nmat; ++k)
+      ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
+
+    Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
+            "boundary state vector" );
+
+    return {{ std::move(ul), std::move(ur) }};
+  }
+
 } // inciter::
 
 #endif // BCFunctions_h

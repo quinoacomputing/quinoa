@@ -77,7 +77,8 @@ class CompFlow {
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
         , farfield
-        , extrapolate } ) );
+        , extrapolate
+        , invalidBC } ) );  // No slip wall BC not implemented
 
       // EoS initialization
       const auto& matprop =

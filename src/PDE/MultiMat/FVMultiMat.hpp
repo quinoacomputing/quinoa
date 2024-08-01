@@ -77,7 +77,8 @@ class MultiMat {
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
         , farfieldOutlet
-        , extrapolate } ) );
+        , extrapolate
+        , noslipwall } ) );
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );

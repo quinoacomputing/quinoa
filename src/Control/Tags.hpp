@@ -281,6 +281,7 @@ DEFTAG(inlet);
 DEFTAG(outlet);
 DEFTAG(farfield);
 DEFTAG(extrapolate);
+DEFTAG(noslipwall);
 DEFTAG(stag_point);
 DEFTAG(radius);
 DEFTAG(timedep);

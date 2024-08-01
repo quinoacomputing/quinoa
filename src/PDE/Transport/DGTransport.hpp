@@ -73,7 +73,8 @@ class Transport {
         , inlet
         , outlet
         , invalidBC  // Characteristic BC not implemented
-        , extrapolate } ) );
+        , extrapolate
+        , invalidBC } ) );  // No slip wall BC not implemented
       m_problem.errchk( m_ncomp );
     }
 
