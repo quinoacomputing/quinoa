@@ -152,6 +152,11 @@ cleanTraceMultiMat(
     auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
     auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
+    // printf("DEBUG\n");
+    // printf("el = %lu\n", e);
+    // printf("kmax = %lu\n", kmax);
+    // printf("almax = %e\n", almax);
+    // printf("pressure = %e\n", P(e, pressureDofIdx(nmat, kmax, rdof, 0)));
     auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0))/almax;
     auto gmax = getDeformGrad(nmat, kmax, ugp);
     auto tmax = mat_blk[kmax].compute< EOS::temperature >(
