@@ -218,11 +218,10 @@ struct HLLDSolids {
       // compute pressure
       //pm_t_l[k] = pml[k] + u[0][densityIdx(nmat, k)]*(Sl-vn_l[0])*(Si-vn_l[0]);
       // compute sigma
-      
 
       amatl = mat_blk[k].compute< EOS::shearspeed >(
         arho_t_l[k], al_t_l[k], k );
-      
+
       // arhoe_t_l[k] = u[0][energyIdx(nmat, k)]
       //   + (Si-vn_l[0])*(Si-asignn_l[k][0][0]/(u[0][densityIdx(nmat, k)]*(Sl-vn_l[0])));
       arhoe_t_l[k] = u[0][energyIdx(nmat, k)] * (Sl-vn_l[0])/(Sl-Si)
@@ -252,7 +251,7 @@ struct HLLDSolids {
       for (std::size_t i=0; i<3; ++i) asig_t_r[i][i] -= pm_t_r[k];
       asign_t_r.push_back(tk::matvec(asig_t_r, fn));
 
-      amatl = mat_blk[k].compute< EOS::shearspeed >(
+      amatr = mat_blk[k].compute< EOS::shearspeed >(
         arho_t_r[k], al_t_r[k], k );
 
       // arhoe_t_r[k] = u[1][energyIdx(nmat, k)]
@@ -312,66 +311,44 @@ struct HLLDSolids {
       }
 
       // Left tilde fluxes
-      ftl[volfracIdx(nmat, k)] = vn_l[0] * al_l[k]
-        + Sl * (al_t_l[k] - al_l[k]);
-      ftl[densityIdx(nmat, k)] = vn_l[0] * u[0][densityIdx(nmat, k)]
-        + Sl * (arho_t_l[k] - u[0][densityIdx(nmat, k)]);
-      ftl[energyIdx(nmat, k)] = vn_l[0] * u[0][energyIdx(nmat, k)]
-        + Sl * (arhoe_t_l[k] - u[0][energyIdx(nmat, k)]);
-      for (std::size_t i=0; i<3; ++i) {
-        ftl[energyIdx(nmat, k)] -= u[0][ncomp+velocityIdx(nmat,i)] *
-          asign_l[k][i];
-      }
+      ftl = fl;
+      ftl[volfracIdx(nmat, k)] += Sl * (al_t_l[k] - al_l[k]);
+      ftl[densityIdx(nmat, k)] += Sl * (arho_t_l[k] - u[0][densityIdx(nmat, k)]);
+      ftl[energyIdx(nmat, k)] += Sl * (arhoe_t_l[k] - u[0][energyIdx(nmat, k)]);
 
       // inv deformation gradient tensor
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            ftl[deformIdx(nmat,solidx[k],i,j)] = (
-              g_l[k][i][0] * ul +
-              g_l[k][i][1] * vl +
-              g_l[k][i][2] * wl ) * fn[j]
-              + Sl * (g_t_l[k][i][j] - g_l[k][i][j]);
+            ftl[deformIdx(nmat,solidx[k],i,j)] +=
+              Sl * (g_t_l[k][i][j] - g_l[k][i][j]);
       }
 
       // Right tilde fluxes
-      ftr[volfracIdx(nmat, k)] = vn_r[0] * al_r[k]
-        + Sr * (al_t_r[k] - al_r[k]);
-      ftr[densityIdx(nmat, k)] = vn_r[0] * u[1][densityIdx(nmat, k)]
-        + Sr * (arho_t_r[k] - u[1][densityIdx(nmat, k)]);
-      ftr[energyIdx(nmat, k)] = vn_r[0] * u[1][energyIdx(nmat, k)]
-        + Sr * (arhoe_t_r[k] - u[1][energyIdx(nmat, k)]);
-      for (std::size_t i=0; i<3; ++i) {
-        ftr[energyIdx(nmat, k)] -= u[1][ncomp+velocityIdx(nmat,i)] *
-          asign_r[k][i];
-      }
+      ftr = fr;
+      ftr[volfracIdx(nmat, k)] += Sr * (al_t_r[k] - al_r[k]);
+      ftr[densityIdx(nmat, k)] += Sr * (arho_t_r[k] - u[1][densityIdx(nmat, k)]);
+      ftr[energyIdx(nmat, k)] += Sr * (arhoe_t_r[k] - u[1][energyIdx(nmat, k)]);
 
       // inv deformation gradient tensor
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            ftr[deformIdx(nmat,solidx[k],i,j)] = (
-              g_r[k][i][0] * ul +
-              g_r[k][i][1] * vl +
-              g_r[k][i][2] * wl ) * fn[j]
-              + Sr * (g_t_r[k][i][j] - g_r[k][i][j]);
+            ftr[deformIdx(nmat,solidx[k],i,j)] +=
+              Sr * (g_t_r[k][i][j] - g_r[k][i][j]);
       }
     }
 
-    if (std::sqrt((ul-ur)*(ul-ur)+(vl-vr)*(vl-vr)+(wl-wr)*(wl-wr)) > 1.0e-06)
-    {
-      printf("\nDEBUG\n");
-      printf("u_l = %e, %e, %e\n", ul, vl, wl);
-      printf("u_r = %e, %e, %e\n", ur, vr, wr);
-      // printf("vn_t_l = %e, %e, %e\n", vn_t_l[0], vn_t_l[1], vn_t_l[2]);
-      // printf("v_t_l = %e, %e, %e\n", v_t_l[0], v_t_l[1], v_t_l[2]);
-      // printf("vn_t_r = %e, %e, %e\n", vn_t_r[0], vn_t_r[1], vn_t_r[2]);
-      // printf("v_t_r = %e, %e, %e\n", v_t_r[0], v_t_r[1], v_t_r[2]);
-      printf("pml, pmr = %e, %e\n", pml[0], pmr[0]);
-      printf("pm_t_l, pm_t_r = %e, %e\n", pm_t_l[0], pm_t_l[0]);
-      printf("Sl,Sr,Si = %e, %e, %e\n", Sl, Sr, Si);
-      printf("rho_t_l, rho_t_r = %e, %e\n", rho_t_l, rho_t_r);
-    }
+    // if (std::sqrt((ul-ur)*(ul-ur)+(vl-vr)*(vl-vr)+(wl-wr)*(wl-wr)) > 1.0e-06)
+    // {
+    //   printf("\nDEBUG\n");
+    //   printf("u_l = %e, %e, %e\n", ul, vl, wl);
+    //   printf("u_r = %e, %e, %e\n", ur, vr, wr);
+    //   printf("pml, pmr = %e, %e\n", pml[0], pmr[0]);
+    //   printf("pm_t_l, pm_t_r = %e, %e\n", pm_t_l[0], pm_t_l[0]);
+    //   printf("Sl,Sr,Si = %e, %e, %e\n", Sl, Sr, Si);
+    //   printf("rho_t_l, rho_t_r = %e, %e\n", rho_t_l, rho_t_r);
+    // }
     // bulk momentum
     for (std::size_t idir=0; idir<3; ++idir)
     {
@@ -379,10 +356,10 @@ struct HLLDSolids {
         - sign_l[idir];
       fr[momentumIdx(nmat, idir)] = vn_r[0]*u[1][momentumIdx(nmat, idir)]
         - sign_r[idir];
-      ftl[momentumIdx(nmat, idir)] = vn_l[0]*u[0][momentumIdx(nmat, idir)]
-        - sign_l[idir] + Sl * (rho_t_l*v_t_l[idir] - u[0][momentumIdx(nmat, idir)]);
-      ftr[momentumIdx(nmat, idir)] = vn_r[0]*u[1][momentumIdx(nmat, idir)]
-        - sign_r[idir] + Sr * (rho_t_r*v_t_r[idir] - u[1][momentumIdx(nmat, idir)]);
+      ftl[momentumIdx(nmat, idir)] = fl[momentumIdx(nmat, idir)]
+        + Sl * (rho_t_l*v_t_l[idir] - u[0][momentumIdx(nmat, idir)]);
+      ftr[momentumIdx(nmat, idir)] = fr[momentumIdx(nmat, idir)]
+        + Sr * (rho_t_r*v_t_r[idir] - u[1][momentumIdx(nmat, idir)]);
     }
 
     // Numerical fluxes
@@ -409,12 +386,27 @@ struct HLLDSolids {
     else if (Sl <= 0.0 && 0.0 <= Si)
     {
       flx = ftl;
-      // Quantities for non-conservative terms
+      // for (std::size_t k=1; k<2; ++k)
+      //   flx[k] = (Sr*fl[k] - Sl*fr[k] + Sl*Sr*(u[1][k]-u[0][k])) / (Sr-Sl);
+      for (std::size_t k=6; k<flx.size(); ++k)
+        flx[k] = (Sr*fl[k] - Sl*fr[k] + Sl*Sr*(u[1][k]-u[0][k])) / (Sr-Sl);
+      // // Quantities for non-conservative terms
+      auto c_plus(0.0), c_minus(0.0), p_plus(0.0), p_minus(0.0);
+      c_plus = (Sr*vn_l[0] - Sr*Sl) / (Sr-Sl);
+      c_minus = (Sr*Sl - Sl*vn_r[0]) / (Sr-Sl);
+      p_plus = Sr / (Sr-Sl);
+      p_minus = -Sl / (Sr-Sl);
+      auto vriem = c_plus+c_minus;
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back( 0.5*(pm_t_l[k]+pm_t_r[k]) );
+      // // Store Riemann-advected partial pressures
+      // for (std::size_t k=0; k<nmat; ++k)
+      //   flx.push_back(p_plus*pml[k] + p_minus*pmr[k]);
       // Store Riemann velocity
       flx.push_back( vn_t_l[0] );
+      // // Store Riemann velocity
+      // flx.push_back( vriem );
       // Store Riemann asign_ij (3*nsld)
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
@@ -422,16 +414,38 @@ struct HLLDSolids {
             flx.push_back( asign_t_l[k][i] );
         }
       }
+      // // Store Riemann asign_ij (3*nsld)
+      // for (std::size_t k=0; k<nmat; ++k) {
+      //   if (solidx[k] > 0) {
+      //     for (std::size_t i=0; i<3; ++i)
+      //       flx.push_back(p_plus*asign_l[k][i] + p_minus*asign_r[k][i]);
+      //   }
+      // }
     }
     else if (Si <= 0.0 && 0.0 <= Sr)
     {
       flx = ftr;
+      // for (std::size_t k=1; k<2; ++k)
+      //   flx[k] = (Sr*fl[k] - Sl*fr[k] + Sl*Sr*(u[1][k]-u[0][k])) / (Sr-Sl);
+      for (std::size_t k=6; k<flx.size(); ++k)
+        flx[k] = (Sr*fl[k] - Sl*fr[k] + Sl*Sr*(u[1][k]-u[0][k])) / (Sr-Sl);
       // Quantities for non-conservative terms
+      auto c_plus(0.0), c_minus(0.0), p_plus(0.0), p_minus(0.0);
+      c_plus = (Sr*vn_l[0] - Sr*Sl) / (Sr-Sl);
+      c_minus = (Sr*Sl - Sl*vn_r[0]) / (Sr-Sl);
+      p_plus = Sr / (Sr-Sl);
+      p_minus = -Sl / (Sr-Sl);
+      auto vriem = c_plus+c_minus;
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back( 0.5*(pm_t_l[k]+pm_t_r[k]) );
+      // // Store Riemann-advected partial pressures
+      // for (std::size_t k=0; k<nmat; ++k)
+      //   flx.push_back(p_plus*pml[k] + p_minus*pmr[k]);
       // Store Riemann velocity
       flx.push_back( vn_t_r[0] );
+      // // Store Riemann velocity
+      // flx.push_back( vriem );
       // Store Riemann asign_ij (3*nsld)
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
@@ -439,8 +453,15 @@ struct HLLDSolids {
             flx.push_back( asign_t_r[k][i] );
         }
       }
+      // // Store Riemann asign_ij (3*nsld)
+      // for (std::size_t k=0; k<nmat; ++k) {
+      //   if (solidx[k] > 0) {
+      //     for (std::size_t i=0; i<3; ++i)
+      //       flx.push_back(p_plus*asign_l[k][i] + p_minus*asign_r[k][i]);
+      //   }
+      // }
     }
-    else if (Sr <= 0.0)
+    else
     {
       flx = fr;
       // Quantities for non-conservative terms
@@ -457,15 +478,6 @@ struct HLLDSolids {
         }
       }
     }
-    // else
-    // {
-    //   for (std::size_t k=0; k<flx.size(); ++k)
-    //     flx[k] = (Sr*fl[k] - Sl*fr[k] + Sl*Sr*(u[1][k]-u[0][k])) / (Sr-Sl);
-    //   c_plus = (Sr*vn_l[0] - Sr*Sl) / (Sr-Sl);
-    //   c_minus = (Sr*Sl - Sl*vn_r[0]) / (Sr-Sl);
-    //   p_plus = Sr / (Sr-Sl);
-    //   p_minus = -Sl / (Sr-Sl);
-    // }
 
     Assert( flx.size() == (ncomp+nmat+1+3*nsld), "Size of "
             "multi-material flux vector incorrect" );
