@@ -725,8 +725,8 @@ modifiedGradientViscousFlux(
     mu += alLR[k] * inciter::getmatprop< tag::mu >(k);
 
   tau[0] = mu * ( 4.0 * dudx_m[0][0] - 2.0*(dudx_m[1][1] + dudx_m[2][2]) ) / 3.0;
-  tau[1] = mu * ( 4.0 * dudx_m[0][0] - 2.0*(dudx_m[1][1] + dudx_m[2][2]) ) / 3.0;
-  tau[2] = mu * ( 4.0 * dudx_m[0][0] - 2.0*(dudx_m[1][1] + dudx_m[2][2]) ) / 3.0;
+  tau[1] = mu * ( 4.0 * dudx_m[1][1] - 2.0*(dudx_m[0][0] + dudx_m[2][2]) ) / 3.0;
+  tau[2] = mu * ( 4.0 * dudx_m[2][2] - 2.0*(dudx_m[0][0] + dudx_m[1][1]) ) / 3.0;
   tau[3] = mu * ( dudx_m[0][1] + dudx_m[1][0] );
   tau[4] = mu * ( dudx_m[0][2] + dudx_m[2][0] );
   tau[5] = mu * ( dudx_m[1][2] + dudx_m[2][1] );
