@@ -528,7 +528,14 @@ bndSurfIntViscousFV(
         Assert( ucc.size() == ncomp+nprim, "Incorrect size for "
                 "appended cell-averaged state vector" );
 
-        // cell centroids. [0]: left cell, [1]: ghost cell
+        // Cell centroids- [0]: left cell, [1]: ghost cell
+        // The ghost-cell is a 'reflection' of the boundary cell about the
+        // boundary-face. i.e. the vector pointing from the internal-cell
+        // centroid to the ghost-cell centroid is normal to the face (aligned
+        // with the face-normal), and has length 2*d. d is the distance between
+        // the internal-cell centroid and the boundary-face. Based on this
+        // information, the centroid of the ghost-cell can be computed using
+        // vector algebra.
         std::array< std::array< tk::real, 3 >, 2 > centroids;
         centroids[0] = {{geoElem(el,1), geoElem(el,2), geoElem(el,3)}};
         tk::real d = std::abs( tk::dot(fn,centroids[0]) + tk::dot(fn,gp) ) /

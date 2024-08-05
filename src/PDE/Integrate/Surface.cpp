@@ -682,6 +682,12 @@ modifiedGradientViscousFlux(
 //! \param[in] cellAvgState Left and right cell-averaged unknown/state vector
 //! \param[in] dudx Average velocity gradient tensor
 //! \return Numerical viscous flux using the Modified Gradient approach.
+//! \details The average gradient is modified according to Weiss et al. to
+//!   obtain a stable discretization (average results in unstable central
+//!   central difference).
+//!   Ref: Weiss, J. M., Maruszewski, J. P., & Smith, W. A. (1999). Implicit
+//!   solution of preconditioned Navier-Stokes equations using algebraic
+//!   multigrid. AIAA journal, 37(1), 29-36.
 // *****************************************************************************
 {
   using inciter::velocityDofIdx;
