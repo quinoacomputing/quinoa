@@ -117,32 +117,34 @@ namespace inciter {
   }
 
   //! \brief Boundary state function providing the left and right state of a
-  //!   face at farfield outlet boundaries
+  //!   face at farfield boundaries
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
   //! \param[in] fn Unit face normal
   //! \return Left and right states for all scalar components in this PDE
   //!   system
-  //! \details The farfield outlet boudary calculation, implemented here, is
-  //!   based on the characteristic theory of hyperbolic systems. For subsonic
-  //!   outlet flow, there is 1 incoming characteristic per material.
-  //!   Therefore, we calculate the ghost cell state by taking material
-  //!   pressure from the outside and other quantities from the internal cell.
-  //!   For supersonic outlet flow, all the characteristics are from internal
-  //!   cell and we obtain the ghost cell state from the internal cell.
+  //! \details The farfield boudary calculation, implemented here, is
+  //!   based on the characteristic theory of hyperbolic systems.
   //! \note The function signature must follow tk::StateFn
   static tk::StateFn::result_type
-  farfieldOutlet( ncomp_t ncomp,
-                  const std::vector< EOS >& mat_blk,
-                  const std::vector< tk::real >& ul,
-                  tk::real, tk::real, tk::real, tk::real,
-                  const std::array< tk::real, 3 >& fn )
+  farfield( ncomp_t ncomp,
+            const std::vector< EOS >& mat_blk,
+            const std::vector< tk::real >& ul,
+            tk::real, tk::real, tk::real, tk::real,
+            const std::array< tk::real, 3 >& fn )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
+    // Farfield primitive quantities
     auto fp =
       g_inputdeck.get< tag::bc >()[0].get< tag::pressure >();
+    auto ft =
+      g_inputdeck.get< tag::bc >()[0].get< tag::temperature >();
+    auto fu =
+      g_inputdeck.get< tag::bc >()[0].get< tag::velocity >();
+    auto fmat =
+      g_inputdeck.get< tag::bc >()[0].get< tag::materialid >() - 1;
 
     [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
 
@@ -170,23 +172,82 @@ namespace inciter {
     // Mach number
     auto Ma = vn / a;
 
-    if(Ma >= 0 && Ma < 1) {         // Subsonic outflow
+    tk::real alphamin = 1e-12;
+
+    if (Ma <= -1) {  // Supersonic inflow
+      // For supersonic inflow, all the characteristics are from outside.
+      // Therefore, we calculate the ghost cell state using the primitive
+      // variables from outside.
+      tk::real rho(0.0);
       for (std::size_t k=0; k<nmat; ++k) {
-        auto gk = getDeformGrad(nmat, k, ul);
-        ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
-        mat_blk[k].compute< EOS::totalenergy >(
-          ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp,
-          gk );
+        if (k == fmat)
+          ur[volfracIdx(nmat,k)] = 1.0 -
+            (static_cast< tk::real >(nmat-1))*alphamin;
+        else
+          ur[volfracIdx(nmat,k)] = alphamin;
+        auto rhok = mat_blk[k].compute< EOS::density >(fp, ft);
+        ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
+        ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
+          mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], fp);
+
+        // material pressures
+        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
+
+        rho += ur[densityIdx(nmat,k)];
+      }
+      for (std::size_t i=0; i<3; ++i) {
+        ur[momentumIdx(nmat,i)] = rho * fu[i];
+        ur[ncomp+velocityIdx(nmat, i)] = fu[i];
       }
 
-      // Internal cell primitive quantities using the separately reconstructed
-      // primitive quantities. This is used to get ghost state for primitive
-      // quantities
+    } else if (Ma > -1 && Ma < 0) {  // Subsonic inflow
+      // For subsonic inflow, there is 1 outgoing characteristic and 4
+      // incoming characteristics. Therefore, we calculate the ghost cell state
+      // by taking pressure from the internal cell and other quantities from
+      // the outside.
+      tk::real rho(0.0);
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (k == fmat)
+          ur[volfracIdx(nmat,k)] = 1.0 -
+            (static_cast< tk::real >(nmat-1))*alphamin;
+        else
+          ur[volfracIdx(nmat,k)] = alphamin;
+        auto p = ul[ncomp+pressureIdx(nmat,k)] / ul[volfracIdx(nmat,k)];
+        auto rhok = mat_blk[k].compute< EOS::density >(p, ft);
+        ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
+        ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
+          mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], p);
 
-      // material pressures
-      for (std::size_t k=0; k<nmat; ++k)
+        // material pressures
+        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * p;
+
+        rho += ur[densityIdx(nmat,k)];
+      }
+      for (std::size_t i=0; i<3; ++i) {
+        ur[momentumIdx(nmat,i)] = rho * fu[i];
+        ur[ncomp+velocityIdx(nmat, i)] = fu[i];
+      }
+
+    } else if (Ma >= 0 && Ma < 1) {  // Subsonic outflow
+      // For subsonic outflow, there is 1 incoming characteristic and 4
+      // outgoing characteristics. Therefore, we calculate the ghost cell state
+      // by taking pressure from the outside and other quantities from the
+      // internal cell.
+      for (std::size_t k=0; k<nmat; ++k) {
+        auto rhok = mat_blk[k].compute< EOS::density >(fp, ft);
+        ur[densityIdx(nmat,k)] = ul[volfracIdx(nmat,k)] * rhok;
+        ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
+        mat_blk[k].compute< EOS::totalenergy >(
+          ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
+
+        // material pressures
         ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
+      }
     }
+    // Otherwise, for supersonic outflow, all the characteristics are from
+    // internal cell. Therefore, we calculate the ghost cell state using the
+    // conservative variables from internal cell (which is what ur is
+    // initialized to).
 
     Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
             "boundary state vector" );

@@ -1111,6 +1111,14 @@ LuaParser::storeInputDeck(
       // Density for inlet/outlet/farfield
       storeIfSpecd< tk::real >(sol_bc[i+1], "density",
         bc_deck[i].get< tag::density >(), 0.0);
+
+      // Temperature for inlet/outlet/farfield
+      storeIfSpecd< tk::real >(sol_bc[i+1], "temperature",
+        bc_deck[i].get< tag::temperature >(), 0.0);
+
+      // Material-id for inlet/outlet/farfield
+      storeIfSpecd< std::size_t >(sol_bc[i+1], "materialid",
+        bc_deck[i].get< tag::materialid >(), 1);
     }
 
     // error checking on number of meshes

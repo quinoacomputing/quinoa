@@ -133,6 +133,8 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::velocity,    std::vector< tk::real >,
   tag::pressure,    tk::real,
   tag::density,     tk::real,
+  tag::temperature, tk::real,
+  tag::materialid,  std::size_t,
   tag::timedep,     std::vector<
     tk::TaggedTuple< brigand::list<
       tag::sideset,   std::vector< uint64_t >,
@@ -1648,9 +1650,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         conditions.)", "block-title"});
 
       keywords.insert({"materialid", "Specify material id",
-        R"(This keyword is used to configure the material id within an IC box, IC
-        mesh-block, or in the background as a part of the initialization.)",
-        "uint"});
+        R"(This keyword is used to configure the material id within an IC box,
+        IC mesh-block, farfield BC, or in the background as a part of the
+        initialization.)", "uint"});
 
       keywords.insert({"temperature", "Specify temperature",
         R"(This keyword is used to configure temperature, used for, e.g.,

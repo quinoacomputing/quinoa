@@ -76,7 +76,7 @@ class MultiMat {
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
-        , farfieldOutlet
+        , farfield
         , extrapolate
         , noslipwall } ) );
 
