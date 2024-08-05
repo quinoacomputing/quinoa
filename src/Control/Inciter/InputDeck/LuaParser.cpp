@@ -1063,7 +1063,7 @@ LuaParser::storeInputDeck(
         bc_deck[i].get< tag::extrapolate >(), {});
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "noslipwall",
-        bc_deck[i].get< tag::extrapolate >(), {});
+        bc_deck[i].get< tag::noslipwall >(), {});
 
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
