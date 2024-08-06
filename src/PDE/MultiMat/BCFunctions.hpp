@@ -234,8 +234,6 @@ namespace inciter {
       // by taking pressure from the outside and other quantities from the
       // internal cell.
       for (std::size_t k=0; k<nmat; ++k) {
-        auto rhok = mat_blk[k].compute< EOS::density >(fp, ft);
-        ur[densityIdx(nmat,k)] = ul[volfracIdx(nmat,k)] * rhok;
         ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
         mat_blk[k].compute< EOS::totalenergy >(
           ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
