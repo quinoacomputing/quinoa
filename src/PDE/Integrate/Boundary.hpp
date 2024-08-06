@@ -102,6 +102,7 @@ bndSurfIntViscousFV(
   const UnsMesh::Coords& coord,
   real t,
   const StateFn& state,
+  const StateFn& gradFn,
   const Fields& U,
   const Fields& P,
   const std::vector< int >& srcFlag,

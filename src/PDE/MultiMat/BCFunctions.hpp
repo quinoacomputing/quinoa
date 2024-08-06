@@ -369,6 +369,51 @@ namespace inciter {
     return {{ std::move(ul), std::move(ur) }};
   }
 
+  //----------------------------------------------------------------------------
+  // Boundary Gradient functions
+  //----------------------------------------------------------------------------
+
+  //! \brief Boundary gradient function copying the left gradient to the right
+  //!   gradient at a face
+  //! \param[in] dul Left (domain-internal) state
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \note The function signature must follow tk::StateFn. For multimat, the
+  //!   left or right state is the vector of gradients of primitive quantities.
+  static tk::StateFn::result_type
+  noOpGrad( ncomp_t,
+            const std::vector< EOS >&,
+            const std::vector< tk::real >& dul,
+            tk::real, tk::real, tk::real, tk::real,
+            const std::array< tk::real, 3 >& )
+  {
+    return {{ dul, dul }};
+  }
+
+  //! \brief Boundary gradient function for the symmetry boundary condition
+  //! \param[in] ncomp Number of variables whos gradients are needed
+  //! \param[in] dul Left (domain-internal) gradients
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \note The function signature must follow tk::StateFn. For multimat, the
+  //!   left or right state is the vector of gradients of primitive quantities.
+  static tk::StateFn::result_type
+  symmetryGrad( ncomp_t ncomp,
+                const std::vector< EOS >&,
+                const std::vector< tk::real >& dul,
+                tk::real, tk::real, tk::real, tk::real,
+                const std::array< tk::real, 3 >& )
+  {
+    Assert(dul.size() == 3*ncomp, "Incorrect size of boundary gradient vector");
+
+    auto dur = dul;
+
+    for (std::size_t i=0; i<3*ncomp; ++i)
+      dur[i] = -dul[i];
+
+    return {{ std::move(dul), std::move(dur) }};
+  }
+
 } // inciter::
 
 #endif // BCFunctions_h

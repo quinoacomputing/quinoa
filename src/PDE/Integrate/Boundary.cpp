@@ -428,6 +428,7 @@ bndSurfIntViscousFV(
   const UnsMesh::Coords& coord,
   real t,
   const StateFn& state,
+  const StateFn& gradFn,
   const Fields& U,
   const Fields& P,
   const std::vector< int >& srcFlag,
@@ -450,6 +451,8 @@ bndSurfIntViscousFV(
 //! \param[in] t Physical time
 //! \param[in] state Function to evaluate the left and right solution state at
 //!   boundaries
+//! \param[in] gradFn Function to evaluate the left and right solution gradients
+//!   at boundaries
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] srcFlag Whether the energy source was added
@@ -555,15 +558,20 @@ bndSurfIntViscousFV(
           coordel_l[2], coordel_l[3] );
         auto dBdx_l = tk::eval_dBdx_p1( rdof, jacInv_l );
 
-        std::array< std::array< real, 3 >, 3 > dudx;
-
-        // 2. Average du_i/dx_j (only left gradient on boundaries)
+        std::vector< real > dudx_l(9,0.0);
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            dudx[i][j] =
+            dudx_l[3*i+j] =
                 dBdx_l[j][1] * P(el, velocityDofIdx(nmat,i,rdof,1))
               + dBdx_l[j][2] * P(el, velocityDofIdx(nmat,i,rdof,2))
               + dBdx_l[j][3] * P(el, velocityDofIdx(nmat,i,rdof,3));
+
+        // 2. Average du_i/dx_j
+        auto grad = gradFn( 3, mat_blk, dudx_l, gp[0], gp[2], gp[2], t, fn );
+        std::array< std::array< tk::real, 3 >, 3 > dudx;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            dudx[i][j] = 0.5 * (grad[0][3*i+j] + grad[1][3*i+j]);
 
         // 3. Compute flux
         auto fl = modifiedGradientViscousFlux(nmat, ncomp, fn, centroids, var,

@@ -72,13 +72,23 @@ class CompFlow {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
       brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
+        // BC State functions
         { dirichlet
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , invalidBC } ) );  // No slip wall BC not implemented
+        , invalidBC },      // No slip wall BC not implemented
+        // BC Gradient functions
+        { noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad }
+        ) );
 
       // EoS initialization
       const auto& matprop =
@@ -317,8 +327,8 @@ class CompFlow {
         // 2. boundary face contributions
         for (const auto& b : m_bc)
           tk::bndLeastSqConservedVar_P0P1( m_ncomp,
-            m_mat_blk, rdof, b.first, fd, geoFace, geoElem, t, b.second,
-            P, U, rhs_ls, vars );
+            m_mat_blk, rdof, std::get<0>(b), fd, geoFace, geoElem, t,
+            std::get<1>(b), P, U, rhs_ls, vars );
 
         // 3. solve 3x3 least-squares system
         tk::solveLeastSq_P0P1( rdof, lhs_ls, rhs_ls, U, vars );
@@ -476,9 +486,9 @@ class CompFlow {
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
-        tk::bndSurfInt( 1, m_mat_blk, ndof, rdof, b.first,
+        tk::bndSurfInt( 1, m_mat_blk, ndof, rdof, std::get<0>(b),
                         fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                        velfn, b.second, U, P, ndofel, R, vriem, riemannLoc,
+                        velfn, std::get<1>(b), U, P, ndofel, R, vriem, riemannLoc,
                         riemannDeriv );
 
      // compute external (energy) sources
@@ -1121,6 +1131,22 @@ class CompFlow {
                  tk::real, tk::real, const std::array< tk::real, 3 >& )
     {
       return {{ ul, ul }};
+    }
+
+    //! \brief Boundary gradient function copying the left gradient to the right
+    //!   gradient at a face
+    //! \param[in] dul Left (domain-internal) state
+    //! \return Left and right states for all scalar components in this PDE
+    //!   system
+    //! \note The function signature must follow tk::StateFn.
+    static tk::StateFn::result_type
+    noOpGrad( ncomp_t,
+              const std::vector< EOS >&,
+              const std::vector< tk::real >& dul,
+              tk::real, tk::real, tk::real, tk::real,
+              const std::array< tk::real, 3 >& )
+    {
+      return {{ dul, dul }};
     }
 
     //! Compute sources corresponding to a propagating front in user-defined box

@@ -76,13 +76,23 @@ class MultiMat {
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
+        // BC State functions
         { dirichlet
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall } ) );
+        , noslipwall },
+        // BC Gradient functions
+        { noOpGrad
+        , symmetryGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad }
+        ) );
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
@@ -852,8 +862,8 @@ class MultiMat {
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( nmat, m_mat_blk, ndof, rdof,
-                        b.first, fd, geoFace, geoElem, inpoel, coord, t,
-                        m_riemann, velfn, b.second, U, P, ndofel, R, vriem,
+                        std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+                        m_riemann, velfn, std::get<1>(b), U, P, ndofel, R, vriem,
                         riemannLoc, riemannDeriv, intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld, "Size of "

@@ -72,13 +72,23 @@ class MultiMat {
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
+        // BC State functions
         { dirichlet
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall } ) );
+        , noslipwall },
+        // BC Gradient functions
+        { noOpGrad
+        , symmetryGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad }
+        ) );
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
@@ -510,13 +520,14 @@ class MultiMat {
 
       // compute boundary surface flux (including non-conservative) integrals
       for (const auto& b : m_bc) {
-        tk::bndSurfIntFV( nmat, m_mat_blk, rdof, b.first,
+        tk::bndSurfIntFV( nmat, m_mat_blk, rdof, std::get<0>(b),
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, b.second, U, P, srcFlag, R, intsharp );
+                          velfn, std::get<1>(b), U, P, srcFlag, R, intsharp );
         if (viscous)
-          tk::bndSurfIntViscousFV( nmat, m_mat_blk, rdof, b.first,
+          tk::bndSurfIntViscousFV( nmat, m_mat_blk, rdof, std::get<0>(b),
                                    fd, geoFace, geoElem, inpoel, coord, t,
-                                   b.second, U, P, srcFlag, R, intsharp );
+                                   std::get<1>(b), std::get<2>(b), U, P,
+                                   srcFlag, R, intsharp );
       }
 
       // compute optional source term
