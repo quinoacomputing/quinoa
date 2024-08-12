@@ -351,6 +351,17 @@ JWL::bisection(
   tk::real c;
   tk::real root(0);
   std::size_t idebug = 0;
+
+  // Ensure that original bounds contain root
+  while ( p_known < PfromRT( a, t_known)) {
+    b = a;
+    a *= 1e-6;
+  }
+  while ( p_known > PfromRT( b, t_known)) {
+    a = b;
+    b *= 1e6;
+  }
+
   auto a_o = a;
   auto b_o = b;
 
