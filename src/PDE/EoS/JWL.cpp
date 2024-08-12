@@ -351,8 +351,16 @@ JWL::bisection(
   tk::real c;
   tk::real root(0);
   std::size_t idebug = 0;
-  auto a_o = a;
-  auto b_o = b;
+
+  // Ensure that original bounds contain root
+  while ( p_known < PfromRT( a, t_known)) {
+    b = a;
+    a *= 1e-6;
+  }
+  while ( p_known > PfromRT( b, t_known)) {
+    a = b;
+    b *= 1e6;
+  }
 
   // function to minimize: fcn = p_known - PfromRT
   // bounds b > a
@@ -389,11 +397,6 @@ JWL::bisection(
     {
       Throw("JWL Bisection for density failed to converge after iterations "
       + std::to_string(i));
-    }
-    if (std::abs(root-a_o) < 1e-16 || std::abs(root-b_o) < 1e-16)
-    {
-      Throw("JWL bisection for density resulted in left/right bound as "
-      "solution. Extend bounds for correctness");
     }
 
   }
