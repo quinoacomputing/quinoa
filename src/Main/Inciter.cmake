@@ -18,7 +18,6 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       CGTransportPhysics
                       CompFlowProblem
                       MultiMatProblem
-                      CGCompFlowPhysics
                       FVMultiMatPhysics
                       Integrate
                       MeshRefinement

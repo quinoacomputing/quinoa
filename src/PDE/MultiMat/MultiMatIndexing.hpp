@@ -203,6 +203,9 @@ inline std::size_t stressDofIdx( std::size_t nmat, std::size_t ksld,
 inline bool matExists( tk::real volfrac )
 { return (volfrac > 1e-10) ? true : false; }
 
+inline tk::real volfracPRelaxLim()
+{ return 1.0e-02; }
+
 //! \brief Get the index of the quantity vel[l]*g[i][j] computed inside the
 //!   Riemann flux solver.
 //! \param[in] kmat Index of required material

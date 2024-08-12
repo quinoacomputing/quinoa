@@ -489,51 +489,43 @@ pressureRelaxationInt( std::size_t nmat,
       // get pressures and bulk modulii
       real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
       std::vector< real > apmat(nmat, 0.0), kmat(nmat, 0.0);
+      std::vector< int > do_relax(nmat, 1);
+      bool is_relax(false);
       for (std::size_t k=0; k<nmat; ++k)
       {
         real arhomat = state[densityIdx(nmat, k)];
         real alphamat = state[volfracIdx(nmat, k)];
         apmat[k] = state[ncomp+pressureIdx(nmat, k)];
         real amat = 0.0;
-        if (solidx[k] > 0)
-        {
-          std::array< std::array< tk::real, 3 >, 3 > g;
-          for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-              g[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
-          auto grot = tk::rotateTensor(g, {{1.0, 0.0, 0.0}});
-          amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
-            apmat[k], alphamat, k, grot);
-          grot = tk::rotateTensor(g, {{0.0, 1.0, 0.0}});
-          amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-            arhomat, apmat[k], alphamat, k, grot));
-          grot = tk::rotateTensor(g, {{0.0, 0.0, 1.0}});
-          amat = std::max(amat, mat_blk[k].compute< inciter::EOS::soundspeed >(
-            arhomat, apmat[k], alphamat, k, grot));
-        }
-        else
-        {
-          amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
-            apmat[k], alphamat, k );
-        }
-        kmat[k] = arhomat * amat * amat;
-        pb += apmat[k];
+        if (solidx[k] == 0 && alphamat >= inciter::volfracPRelaxLim()) {
+            amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
+              apmat[k], alphamat, k );
+          kmat[k] = arhomat * amat * amat;
+          pb += apmat[k];
 
-        // relaxation parameters
-        trelax = std::max(trelax, ct*dx/amat);
-        nume += alphamat * apmat[k] / kmat[k];
-        deno += alphamat * alphamat / kmat[k];
+          // relaxation parameters
+          trelax = std::max(trelax, ct*dx/amat);
+          nume += alphamat * apmat[k] / kmat[k];
+          deno += alphamat * alphamat / kmat[k];
+
+          is_relax = true;
+        }
+        else do_relax[k] = 0;
       }
-      auto p_relax = nume/deno;
+      real p_relax(0.0);
+      if (is_relax) p_relax = nume/deno;
 
       // compute pressure relaxation terms
       std::vector< real > s_prelax(ncomp, 0.0);
       for (std::size_t k=0; k<nmat; ++k)
       {
-        auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
-          * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
-        s_prelax[volfracIdx(nmat, k)] = s_alpha;
-        s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+        // only perform prelax on existing quantities
+        if (do_relax[k] == 1) {
+          auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
+            * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
+          s_prelax[volfracIdx(nmat, k)] = s_alpha;
+          s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+        }
       }
 
       updateRhsPre( ncomp, ndof, dof_el, wt, e, B, s_prelax, R );
@@ -644,55 +636,44 @@ pressureRelaxationIntFV(
     // get pressures and bulk modulii
     real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
     std::vector< real > apmat(nmat, 0.0), kmat(nmat, 0.0);
+    std::vector< int > do_relax(nmat, 1);
+    bool is_relax(false);
     for (std::size_t k=0; k<nmat; ++k)
     {
       real arhomat = state[densityIdx(nmat, k)];
       real alphamat = state[volfracIdx(nmat, k)];
-      apmat[k] = state[ncomp+pressureIdx(nmat, k)];
-      real amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
-        apmat[k], alphamat, k );
-      kmat[k] = arhomat * amat * amat;
-      pb += apmat[k];
+      if (alphamat >= inciter::volfracPRelaxLim()) {
+        apmat[k] = state[ncomp+pressureIdx(nmat, k)];
+        real amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
+          apmat[k], alphamat, k );
+        kmat[k] = arhomat * amat * amat;
+        pb += apmat[k];
 
-      // relaxation parameters
-      trelax = std::max(trelax, ct*dx/amat);
-      nume += alphamat * apmat[k] / kmat[k];
-      deno += alphamat * alphamat / kmat[k];
+        // relaxation parameters
+        trelax = std::max(trelax, ct*dx/amat);
+        nume += alphamat * apmat[k] / kmat[k];
+        deno += alphamat * alphamat / kmat[k];
+
+        is_relax = true;
+      }
+      else do_relax[k] = 0;
     }
-    auto p_relax = nume/deno;
+    real p_relax(0.0);
+    if (is_relax) p_relax = nume/deno;
 
     // compute pressure relaxation terms
     std::vector< real > s_prelax(ncomp, 0.0);
 
-    // terms to ensure only existing materials are relaxed
-    real e_leftover(0), vf_leftover(0);
-    auto almax(0.0);
-    std::size_t kmax = 0;
     for (std::size_t k=0; k<nmat; ++k)
     {
-      real alphamat = state[volfracIdx(nmat, k)];
-      auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
-        * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
-
       // only perform prelax on existing quantities
-      if (inciter::matExists(state[volfracIdx(nmat,k)])) {
+      if (do_relax[k] == 1) {
+        auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
+          * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
         s_prelax[volfracIdx(nmat, k)] = s_alpha;
         s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
-      } else {
-        vf_leftover += s_alpha;
-        e_leftover  += - pb*s_alpha;
-      }
-      // get material that takes up most volume
-      if (alphamat > almax)
-      {
-        almax = alphamat;
-        kmax = k;
       }
     }
-
-    // add leftovers of non-existent mat to mat with most volume
-    s_prelax[volfracIdx(nmat, kmax)] += vf_leftover;
-    s_prelax[energyIdx(nmat, kmax)] += e_leftover;
 
     for (ncomp_t c=0; c<ncomp; ++c)
     {

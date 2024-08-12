@@ -72,12 +72,23 @@ class MultiMat {
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
+        // BC State functions
         { dirichlet
         , symmetry
         , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
-        , farfieldOutlet
-        , extrapolate } ) );
+        , farfield
+        , extrapolate
+        , noslipwall },
+        // BC Gradient functions
+        { noOpGrad
+        , symmetryGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad
+        , noOpGrad }
+        ) );
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
@@ -475,6 +486,7 @@ class MultiMat {
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       const auto intsharp =
         g_inputdeck.get< tag::multimat, tag::intsharp >();
+      auto viscous = g_inputdeck.get< tag::multimat, tag::viscous >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -500,12 +512,23 @@ class MultiMat {
       tk::surfIntFV( nmat, m_mat_blk, t, rdof, inpoel,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
                      srcFlag, R, intsharp );
+      // compute internal surface viscous flux integrals
+      if (viscous)
+        tk::surfIntViscousFV( nmat, m_mat_blk, rdof, inpoel,
+                              coord, fd, geoFace, geoElem, U, P,
+                              srcFlag, R, intsharp );
 
       // compute boundary surface flux (including non-conservative) integrals
-      for (const auto& b : m_bc)
-        tk::bndSurfIntFV( nmat, m_mat_blk, rdof, b.first,
+      for (const auto& b : m_bc) {
+        tk::bndSurfIntFV( nmat, m_mat_blk, rdof, std::get<0>(b),
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, b.second, U, P, srcFlag, R, intsharp );
+                          velfn, std::get<1>(b), U, P, srcFlag, R, intsharp );
+        if (viscous)
+          tk::bndSurfIntViscousFV( nmat, m_mat_blk, rdof, std::get<0>(b),
+                                   fd, geoFace, geoElem, inpoel, coord, t,
+                                   std::get<1>(b), std::get<2>(b), U, P,
+                                   srcFlag, R, intsharp );
+      }
 
       // compute optional source term
       tk::srcIntFV( m_mat_blk, t, fd.Esuel().size()/4,
@@ -551,10 +574,13 @@ class MultiMat {
                  std::vector< tk::real >& local_dte ) const
     {
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      auto viscous = g_inputdeck.get< tag::multimat, tag::viscous >();
 
       // obtain dt restrictions from all physics
       auto dt_e = timeStepSizeMultiMatFV(m_mat_blk, geoElem, nielem, nmat, U,
         P, local_dte);
+      if (viscous)
+        dt_e = std::min(dt_e, timeStepSizeViscousFV(geoElem, nielem, nmat, U));
       auto dt_p = m_physics.dtRestriction(geoElem, nielem, srcFlag);
 
       return std::min(dt_e, dt_p);
