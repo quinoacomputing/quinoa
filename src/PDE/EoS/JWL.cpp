@@ -362,9 +362,6 @@ JWL::bisection(
     b *= 1e6;
   }
 
-  auto a_o = a;
-  auto b_o = b;
-
   // function to minimize: fcn = p_known - PfromRT
   // bounds b > a
 
