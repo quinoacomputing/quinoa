@@ -401,11 +401,6 @@ JWL::bisection(
       Throw("JWL Bisection for density failed to converge after iterations "
       + std::to_string(i));
     }
-    if (std::abs(root-a_o) < 1e-16 || std::abs(root-b_o) < 1e-16)
-    {
-      Throw("JWL bisection for density resulted in left/right bound as "
-      "solution. Extend bounds for correctness");
-    }
 
   }
   return root;
