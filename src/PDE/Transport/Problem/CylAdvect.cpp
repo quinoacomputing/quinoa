@@ -16,23 +16,15 @@
 // *****************************************************************************
 
 #include "CylAdvect.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
 
 using inciter::TransportProblemCylAdvect;
 
 std::vector< tk::real >
-TransportProblemCylAdvect::initialize( ncomp_t system, ncomp_t ncomp,
+TransportProblemCylAdvect::initialize( ncomp_t ncomp,
           const std::vector< EOS >&, tk::real x, tk::real y,
           tk::real, tk::real t )
 // *****************************************************************************
 //  Evaluate analytical solution at (x,y,t) for all components
-//! \param[in] system Equation system index
 //! \param[in] ncomp Number of components in this transport equation system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
@@ -40,7 +32,7 @@ TransportProblemCylAdvect::initialize( ncomp_t system, ncomp_t ncomp,
 //! \return Values of all components evaluated at (x,y,t)
 // *****************************************************************************
 {
-  const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0, t );
+  const auto vel = prescribedVelocity( ncomp, x, y, 0.0, t );
 
   std::vector< tk::real > s( ncomp, 0.0 );
   for (ncomp_t c=0; c<ncomp; ++c)
@@ -61,7 +53,7 @@ TransportProblemCylAdvect::initialize( ncomp_t system, ncomp_t ncomp,
 }
 
 std::vector< std::array< tk::real, 3 > >
-TransportProblemCylAdvect::prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real,
+TransportProblemCylAdvect::prescribedVelocity( ncomp_t ncomp, tk::real,
                                                tk::real, tk::real, tk::real )
 // *****************************************************************************
 //! Assign prescribed velocity at a point

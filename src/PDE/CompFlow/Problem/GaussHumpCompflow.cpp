@@ -13,20 +13,12 @@
 // *****************************************************************************
 
 #include "GaussHumpCompflow.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
 
 using inciter::CompFlowProblemGaussHump;
 
 tk::InitializeFn::result_type
-CompFlowProblemGaussHump::initialize( ncomp_t system,
-                                      ncomp_t ncomp,
+CompFlowProblemGaussHump::initialize( ncomp_t ncomp,
                                       const std::vector< EOS >& mat_blk,
                                       tk::real x,
                                       tk::real y,
@@ -34,8 +26,6 @@ CompFlowProblemGaussHump::initialize( ncomp_t system,
                                       tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
@@ -46,9 +36,7 @@ CompFlowProblemGaussHump::initialize( ncomp_t system,
 {
   Assert( ncomp == 5, "Number of scalar components must be 5" );
 
-  using tag::param;
-
-  const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0 );
+  const auto vel = prescribedVelocity( ncomp, x, y, 0.0 );
 
   tk::real r, p, u, v, w, rE;
 
@@ -72,8 +60,7 @@ CompFlowProblemGaussHump::initialize( ncomp_t system,
 }
 
 tk::InitializeFn::result_type
-CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
-                                            ncomp_t ncomp,
+CompFlowProblemGaussHump::analyticSolution( ncomp_t ncomp,
                                             const std::vector< EOS >& mat_blk,
                                             tk::real x,
                                             tk::real y,
@@ -81,8 +68,6 @@ CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
                                             tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
@@ -93,9 +78,7 @@ CompFlowProblemGaussHump::analyticSolution( ncomp_t system,
 {
   Assert( ncomp == 5, "Number of scalar components must be 5" );
 
-  using tag::param;
-
-  const auto vel = prescribedVelocity( system, ncomp, x, y, 0.0 );
+  const auto vel = prescribedVelocity( ncomp, x, y, 0.0 );
 
   // center of the hump
   auto x0 = 0.25 + vel[0][0]*t;
@@ -144,7 +127,7 @@ CompFlowProblemGaussHump::names( ncomp_t ) const
 }
 
 std::vector< std::array< tk::real, 3 > >
-CompFlowProblemGaussHump::prescribedVelocity( ncomp_t, ncomp_t ncomp, tk::real,
+CompFlowProblemGaussHump::prescribedVelocity( ncomp_t ncomp, tk::real,
                                              tk::real, tk::real )
 // *****************************************************************************
 //! Assign prescribed velocity at a point

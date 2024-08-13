@@ -15,17 +15,15 @@
 
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
-#include "Control/Inciter/Types.hpp"
 #include "ContainerUtil.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 template< class B >
-void initializeBox( std::size_t system,
-                    const std::vector< EOS >& mat_blk,
+void initializeBox( const std::vector< EOS >& mat_blk,
                     tk::real V_ex,
                     tk::real t,
                     const B& b,
@@ -35,7 +33,6 @@ void initializeBox( std::size_t system,
 // *****************************************************************************
 // Set the solution in the user-defined IC box/mesh block
 //! \tparam B IC-block type to operate, ctr::box, or ctr::meshblock
-//! \param[in] system Equation system index
 //! \param[in] V_ex Exact box volume
 //! \param[in] t Physical time
 //! \param[in] b IC box configuration to use
@@ -55,11 +52,11 @@ void initializeBox( std::size_t system,
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
-  auto nmat =
-    g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   const auto& initiate = b.template get< tag::initiate >();
-  auto inittype = initiate.template get< tag::init >();
 
   // get material id in box (offset by 1, since input deck uses 1-based ids)
   std::size_t boxmatid = b.template get< tag::materialid >() - 1;
@@ -101,7 +98,7 @@ void initializeBox( std::size_t system,
     // nodes within a box at initialization (followed by adding a time-dependent
     // energy source term representing a propagating wave-front), the pressure
     // in the box needs to be set to background pressure.
-    if (inittype == ctr::InitiateType::LINEAR && t < 1e-12) {
+    if (initiate == ctr::InitiateType::LINEAR && t < 1e-12) {
       if (boxmas <= 1e-12 || boxenc <= 1e-12 || bgpreic <= 1e-12 ||
         bgtempic <= 1e-12)
         Throw("Box mass, energy content, background pressure and background "
@@ -124,7 +121,7 @@ void initializeBox( std::size_t system,
     }
     // For initiate type 'impulse', pressure and temperature are determined from
     // energy content that needs to be dumped into the box at IC.
-    else if (inittype == ctr::InitiateType::IMPULSE) {
+    else if (initiate == ctr::InitiateType::IMPULSE) {
       pr = mat_blk[boxmatid].compute< EOS::pressure >(
         boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*rhok[boxmatid]*spi,
         boxmat_vf, boxmatid );
@@ -167,12 +164,26 @@ void initializeBox( std::size_t system,
     s[densityIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k];
     // total specific energy
     if (boxmas > 0.0 && k == boxmatid &&
-      inittype == ctr::InitiateType::IMPULSE) {
+      initiate == ctr::InitiateType::IMPULSE) {
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] * rhok[k] * spi;
     }
     else {
+      // TEMP: Eventually we would need to initialize gk from control file
+      std::array< std::array< tk::real, 3 >, 3 > gk;
+      if (solidx[k] > 0) {
+        for (std::size_t i=0; i<3; ++i) {
+          for (std::size_t j=0; j<3; ++j) {
+            if (i==j) gk[i][j] = 1.0;
+            else gk[i][j] = 0.0;
+            s[deformIdx(nmat,solidx[k],i,j)] = gk[i][j];
+          }
+        }
+      }
+      else {
+        gk = {{}};
+      }
       s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-        mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr );
+        mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr, gk );
     }
   }
   // bulk momentum

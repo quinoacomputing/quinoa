@@ -182,8 +182,8 @@ ALE::meshvelBnd(
   // Prepare unique set of mesh velocity Dirichlet BC nodes
   tk::destroy( m_meshveldirbcnodes );
   std::unordered_map<int, std::unordered_set< std::size_t >> meshveldirbcnodes;
-  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcdir >()) {
-    auto k = bface.find( std::stoi(s) );
+  for (const auto& s : g_inputdeck.template get< tag::ale, tag::dirichlet >()) {
+    auto k = bface.find(static_cast<int>(s));
     if (k != end(bface)) {
       auto& n = meshveldirbcnodes[ k->first ];  // associate set id
       for (auto f : k->second) {                // face ids on side set
@@ -210,8 +210,8 @@ ALE::meshvelBnd(
   // only partial due to domain decomposition.
   tk::destroy( m_meshvelsymbcnodes );
   std::unordered_map<int, std::unordered_set< std::size_t >> meshvelsymbcnodes;
-  for (const auto& s : g_inputdeck.template get< tag::ale, tag::bcsym >()) {
-    auto k = bnode.find( std::stoi(s) );
+  for (const auto& s : g_inputdeck.template get< tag::ale, tag::symmetry >()) {
+    auto k = bnode.find(static_cast<int>(s));
     if (k != end(bnode)) {
       auto& n = meshvelsymbcnodes[ k->first ];  // associate set id
       for (auto g : k->second) {                // node ids on side set
@@ -228,7 +228,7 @@ ALE::meshvelBnd(
   std::size_t i = 0;
   for (const auto& m : g_inputdeck.get< tag::ale, tag::move >()) {
     for (const auto& s : m.get< tag::sideset >()) {
-      auto k = bnode.find( std::stoi(s) );
+      auto k = bnode.find(static_cast<int>(s));
       if (k != end(bnode)) {
         auto& n = movenodes[ k->first ];        // associate set id
         for (auto g : k->second) {              // node ids on side set
@@ -314,7 +314,7 @@ ALE::start(
   m_adt = adt;
 
   // assign mesh velocity
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::meshvelocity >();
+  auto meshveltype = g_inputdeck.get< tag::ale, tag::mesh_velocity >();
   if (meshveltype == ctr::MeshVelocityType::SINE) {
 
     // prescribe mesh velocity with a sine function during setup
@@ -835,10 +835,10 @@ ALE::meshforce()
     if (not move(i)) m_w(i,0) = m_w(i,1) = m_w(i,2) = 0.0;
 
   // On meshvel symmetry BCs remove normal component of mesh velocity
-  const auto& sbc = g_inputdeck.get< tag::ale, tag::bcsym >();
+  const auto& sbc = g_inputdeck.get< tag::ale, tag::symmetry >();
   for (auto p : m_meshvelsymbcnodes) {
     for (const auto& s : sbc) {
-      auto j = m_bnorm.find(std::stoi(s));
+      auto j = m_bnorm.find(static_cast<int>(s));
       if (j != end(m_bnorm)) {
         auto i = j->second.find(p);
         if (i != end(j->second)) {

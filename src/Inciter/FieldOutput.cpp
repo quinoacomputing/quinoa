@@ -26,10 +26,10 @@ numericFieldNames( tk::Centering c )
 // *****************************************************************************
 {
   std::vector< std::string > f;
-  for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
+  for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
     if (v.centering == c && !v.analytic()) {
       std::stringstream s;
-      if (v.alias.empty()) s << v; else s << v.alias;
+      if (v.alias.empty()) s << v.name; else s << v.alias;
       f.push_back( s.str() );
     }
   }
@@ -40,11 +40,13 @@ numericFieldNames( tk::Centering c )
 std::vector< std::vector< tk::real > >
 numericFieldOutput( const tk::Fields& U,
                     tk::Centering c,
+                    const std::map< std::string, tk::GetVarFn >& outvarfn,
                     const tk::Fields& P )
 // *****************************************************************************
 // Collect field output from numerical solution based on user input
 //! \param[in] U Solution data to extract from
 //! \param[in] c Extract variables only with this centering
+//! \param[in] outvarfn Map of outvar functions
 //! \param[in] P Optional primitive variable solution data to extract from
 //! \return Output fields requested by user
 // *****************************************************************************
@@ -53,18 +55,19 @@ numericFieldOutput( const tk::Fields& U,
   const auto& p = P.empty() ? U : P;
 
   //auto rdof =
-  //  c == tk::Centering::NODE ? 1 : g_inputdeck.get< tag::discr, tag::rdof >();
+  //  c == tk::Centering::NODE ? 1 : g_inputdeck.get< tag::rdof >();
   std::size_t rdof = 1;
 
   std::vector< std::vector< tk::real > > f;
-  for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
-    if (v.centering == c) {
+  for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
+    if (v.centering == c && !v.analytic()) {
       const auto& F = v.primitive() ? p : U;
-      if (v.name.empty()) {        // depvar-based direct access
+      if (v.varFnIdx == "null") {        // depvar-based direct access
         f.push_back( F.extract_comp( v.field*rdof ) );
-      } else if (!v.analytic()) {  // human-readable non-analytic via custom fn
-        Assert( v.getvar, "getvar() not configured for " + v.name );
-        f.push_back( v.getvar( F, rdof ) );
+      } else {  // human-readable non-analytic via custom fn
+        Assert(outvarfn.find(v.varFnIdx) != outvarfn.end(),
+          "getvar() not configured for " + v.name );
+        f.push_back( outvarfn.at(v.varFnIdx)( F, rdof ) );
       }
     }
   }
@@ -114,7 +117,7 @@ evalSolution(
   using tk::real;
 
   const auto nelem = inpoel.size()/4;
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto uncomp = U.nprop() / rdof;
   const auto pncomp = P.nprop() / rdof;
 
@@ -169,8 +172,8 @@ evalSolution(
            h{{ce[j][0]-ce[0][0], ce[j][1]-ce[0][1], ce[j][2]-ce[0][2] }};
         auto Bn = tk::eval_basis( dofe,
                                   dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-        auto u = eval_state( uncomp, rdof, dofe, e, U, Bn, {0, uncomp-1} );
-        auto p = eval_state( pncomp, rdof, dofe, e, P, Bn, {0, pncomp-1} );
+        auto u = eval_state( uncomp, rdof, dofe, e, U, Bn );
+        auto p = eval_state( pncomp, rdof, dofe, e, P, Bn );
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[e4+j],i) += u[i];
         for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[e4+j],i) += p[i];
@@ -214,8 +217,8 @@ evalSolution(
       // Compute solution in child centroid
       std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
       auto B = tk::eval_basis( dofe, dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
-      auto u = eval_state( uncomp, rdof, dofe, parent, U, B, {0, uncomp-1} );
-      auto p = eval_state( pncomp, rdof, dofe, parent, P, B, {0, pncomp-1} );
+      auto u = eval_state( uncomp, rdof, dofe, parent, U, B );
+      auto p = eval_state( pncomp, rdof, dofe, parent, P, B );
       // Assign cell center solution from parent to child
       for (std::size_t i=0; i<uncomp; ++i) uElemfields(child,i) = u[i];
       for (std::size_t i=0; i<pncomp; ++i) pElemfields(child,i) = p[i];
@@ -231,8 +234,8 @@ evalSolution(
            hn{{cc[j][0]-cp[0][0], cc[j][1]-cp[0][1], cc[j][2]-cp[0][2] }};
         auto Bn = tk::eval_basis( dofe,
                                   dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
-        auto cnu = eval_state(uncomp, rdof, dofe, parent, U, Bn, {0, uncomp-1});
-        auto cnp = eval_state(pncomp, rdof, dofe, parent, P, Bn, {0, pncomp-1});
+        auto cnu = eval_state(uncomp, rdof, dofe, parent, U, Bn);
+        auto cnp = eval_state(pncomp, rdof, dofe, parent, P, Bn);
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[c4+j],i) += cnu[i];
         for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[c4+j],i) += cnp[i];

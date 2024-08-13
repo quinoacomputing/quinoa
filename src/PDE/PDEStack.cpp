@@ -16,7 +16,6 @@
 // *****************************************************************************
 
 #include "PDEStack.hpp"
-#include "Tags.hpp"
 
 #include "ConfigureTransport.hpp"
 #include "ConfigureCompFlow.hpp"
@@ -113,10 +112,11 @@ PDEStack::selectedCG() const
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< CGPDE > pdes;                // will store instantiated PDEs
 
-  const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  if (sch == ctr::SchemeType::DiagCG || sch == ctr::SchemeType::ALECG) {
+  const auto sch = g_inputdeck.get< tag::scheme >();
+  if (sch == ctr::SchemeType::ALECG || sch == ctr::SchemeType::OversetFE) {
 
-    for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+    const auto& d = g_inputdeck.get< tag::pde >();
+    for (std::size_t i=0; i<g_inputdeck.get< tag::mesh >().size(); ++i) {
       if (d == ctr::PDEType::TRANSPORT)
         pdes.push_back( createCG< tag::transport >( d, cnt ) );
       else if (d == ctr::PDEType::COMPFLOW)
@@ -139,13 +139,14 @@ PDEStack::selectedDG() const
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< DGPDE > pdes;                // will store instantiated PDEs
 
-  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
+  auto sch = g_inputdeck.get< tag::scheme >();
   if (sch == ctr::SchemeType::DG ||
       sch == ctr::SchemeType::P0P1 || sch == ctr::SchemeType::DGP1 ||
       sch == ctr::SchemeType::DGP2 || sch == ctr::SchemeType::PDG ||
       sch == ctr::SchemeType::FV) {
 
-    for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+    const auto& d = g_inputdeck.get< tag::pde >();
+    for (std::size_t i=0; i<g_inputdeck.get< tag::mesh >().size(); ++i) {
       if (d == ctr::PDEType::TRANSPORT)
         pdes.push_back( createDG< tag::transport >( d, cnt ) );
       else if (d == ctr::PDEType::COMPFLOW)
@@ -170,10 +171,11 @@ PDEStack::selectedFV() const
   std::map< ctr::PDEType, ncomp_t > cnt;    // count PDEs per type
   std::vector< FVPDE > pdes;                // will store instantiated PDEs
 
-  auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
+  auto sch = g_inputdeck.get< tag::scheme >();
   if (sch == ctr::SchemeType::FV) {
 
-    for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
+    const auto& d = g_inputdeck.get< tag::pde >();
+    for (std::size_t i=0; i<g_inputdeck.get< tag::mesh >().size(); ++i) {
       if (d == ctr::PDEType::MULTIMAT)
         pdes.push_back( createFV< tag::multimat >( d, cnt ) );
       else Throw( "Can't find selected FVPDE" );
@@ -196,15 +198,14 @@ PDEStack::info() const
   // will store info on all differential equations selected
   std::vector< std::vector< std::pair< std::string, std::string > > > nfo;
 
-  for (const auto& d : g_inputdeck.get< tag::selected, tag::pde >()) {
-    if (d == ctr::PDEType::TRANSPORT)
-      nfo.emplace_back( infoTransport( cnt ) );
-    else if (d == ctr::PDEType::COMPFLOW)
-      nfo.emplace_back( infoCompFlow( cnt ) );
-    else if (d == ctr::PDEType::MULTIMAT)
-      nfo.emplace_back( infoMultiMat( cnt ) );
-    else Throw( "Can't find selected PDE" );
-  }
+  const auto& d = g_inputdeck.get< tag::pde >();
+  if (d == ctr::PDEType::TRANSPORT)
+    nfo.emplace_back( infoTransport( cnt ) );
+  else if (d == ctr::PDEType::COMPFLOW)
+    nfo.emplace_back( infoCompFlow( cnt ) );
+  else if (d == ctr::PDEType::MULTIMAT)
+    nfo.emplace_back( infoMultiMat( cnt ) );
+  else Throw( "Can't find selected PDE" );
 
   return nfo;
 }

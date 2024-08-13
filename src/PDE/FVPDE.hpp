@@ -38,7 +38,7 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! \brief Partial differential equation base for discontinuous Galerkin PDEs
 //! \details This class uses runtime polymorphism without client-side
@@ -51,7 +51,7 @@ using ncomp_t = kw::ncomp::info::expect::type;
 class FVPDE {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
 
   public:
     //! Default constructor taking no arguments for Charm++
@@ -125,11 +125,12 @@ class FVPDE {
     { self->updatePrimitives( unk, prim, nielem ); }
 
     //! Public interface to cleaning up trace materials for the diff eq
-    void cleanTraceMaterial( const tk::Fields& geoElem,
+    void cleanTraceMaterial( tk::real t,
+                             const tk::Fields& geoElem,
                              tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem ) const
-    { self->cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+    { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
 
     //! Public interface to reconstructing the second-order solution
     void reconstruct( const tk::Fields& geoElem,
@@ -150,19 +151,11 @@ class FVPDE {
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
+                const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
-      self->limit( geoFace, fd, esup, inpoel, coord, U, P );
-    }
-
-    //! Public interface to update the conservative variable solution
-    void Correct_Conserv( const tk::Fields& prim,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const
-    {
-      self->Correct_Conserv( prim, geoElem, unk, nielem );
+      self->limit( geoFace, fd, esup, inpoel, coord, srcFlag, U, P );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -177,10 +170,10 @@ class FVPDE {
               const tk::Fields& U,
               const tk::Fields& P,
               tk::Fields& R,
-              int& engSrcAd ) const
+              std::vector< int >& srcFlag ) const
     {
       self->rhs( t, geoFace, geoElem, fd, inpoel, coord, elemblkid, U, P, R,
-        engSrcAd );
+        srcFlag );
     }
 
     //! Public interface for computing the minimum time step size
@@ -190,8 +183,14 @@ class FVPDE {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
-                 const int engSrcAd ) const
-    { return self->dt( fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
+                 const std::vector< int >& srcFlag,
+                 std::vector< tk::real >& local_dte ) const
+    { return self->dt( fd, geoFace, geoElem, U, P, nielem, srcFlag, local_dte );
+    }
+
+    //! Public interface to returning maps of output var functions
+    std::map< std::string, tk::GetVarFn > OutVarFn() const
+    { return self->OutVarFn(); }
 
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
@@ -237,6 +236,15 @@ class FVPDE {
     sp_totalenergy( std::size_t e, const tk::Fields& unk ) const
     { return self->sp_totalenergy( e, unk ); }
 
+    //! Public interface to returning the relevant sound speed in each cell
+    void
+    soundspeed(
+      std::size_t nielem,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      std::vector< tk::real >& ss ) const
+    { return self->soundspeed( nielem, U, P, ss ); }
+
     //! Copy assignment
     FVPDE& operator=( const FVPDE& x )
     { FVPDE tmp(x); *this = std::move(tmp); return *this; }
@@ -273,7 +281,8 @@ class FVPDE {
       virtual void updatePrimitives( const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t ) const = 0;
-      virtual void cleanTraceMaterial( const tk::Fields&,
+      virtual void cleanTraceMaterial( tk::real,
+                                       const tk::Fields&,
                                        tk::Fields&,
                                        tk::Fields&,
                                        std::size_t ) const = 0;
@@ -291,12 +300,9 @@ class FVPDE {
                             std::vector< std::size_t > >&,
                           const std::vector< std::size_t >&,
                           const tk::UnsMesh::Coords&,
+                          const std::vector< int >&,
                           tk::Fields&,
                           tk::Fields& ) const = 0;
-      virtual void Correct_Conserv( const tk::Fields&,
-                                    const tk::Fields&,
-                                    tk::Fields&,
-                                    std::size_t ) const = 0;
       virtual void rhs( tk::real,
         const tk::Fields&,
         const tk::Fields&,
@@ -307,14 +313,16 @@ class FVPDE {
         const tk::Fields&,
         const tk::Fields&,
         tk::Fields&,
-        int& ) const = 0;
+        std::vector< int >& ) const = 0;
       virtual tk::real dt( const inciter::FaceData&,
                            const tk::Fields&,
                            const tk::Fields&,
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t,
-                           const int ) const = 0;
+                           const std::vector< int >&,
+                           std::vector< tk::real >& ) const = 0;
+      virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -335,6 +343,11 @@ class FVPDE {
         tk::real xi, tk::real yi, tk::real zi, tk::real t ) const = 0;
       virtual tk::real sp_totalenergy(
         std::size_t, const tk::Fields& ) const = 0;
+      virtual void soundspeed(
+        std::size_t,
+        const tk::Fields&,
+        const tk::Fields&,
+        std::vector< tk::real >& ) const = 0;
     };
 
     //! \brief Model models the Concept above by deriving from it and overriding
@@ -369,11 +382,12 @@ class FVPDE {
                              tk::Fields& prim,
                              std::size_t nielem )
       const override { data.updatePrimitives( unk, prim, nielem ); }
-      void cleanTraceMaterial( const tk::Fields& geoElem,
+      void cleanTraceMaterial( tk::real t,
+                               const tk::Fields& geoElem,
                                tk::Fields& unk,
                                tk::Fields& prim,
                                std::size_t nielem )
-      const override { data.cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+      const override { data.cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
       void reconstruct( const tk::Fields& geoElem,
                         const inciter::FaceData& fd,
                         const std::map< std::size_t,
@@ -391,17 +405,11 @@ class FVPDE {
                     esup,
                   const std::vector< std::size_t >& inpoel,
                   const tk::UnsMesh::Coords& coord,
+                  const std::vector< int >& srcFlag,
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {
-        data.limit( geoFace, fd, esup, inpoel, coord, U, P );
-      }
-      void Correct_Conserv( const tk::Fields& prim,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const override
-      {
-        data.Correct_Conserv( prim, geoElem, unk, nielem );
+        data.limit( geoFace, fd, esup, inpoel, coord, srcFlag, U, P );
       }
       void rhs(
         tk::real t,
@@ -415,10 +423,10 @@ class FVPDE {
         const tk::Fields& U,
         const tk::Fields& P,
         tk::Fields& R,
-        int& engSrcAd ) const override
+        std::vector< int >& srcFlag ) const override
       {
         data.rhs( t, geoFace, geoElem, fd, inpoel, coord, elemblkid, U, P, R,
-          engSrcAd );
+          srcFlag );
       }
       tk::real dt( const inciter::FaceData& fd,
                    const tk::Fields& geoFace,
@@ -426,8 +434,12 @@ class FVPDE {
                    const tk::Fields& U,
                    const tk::Fields& P,
                    const std::size_t nielem,
-                   const int engSrcAd ) const override
-      { return data.dt( fd, geoFace, geoElem, U, P, nielem, engSrcAd ); }
+                   const std::vector< int >& srcFlag,
+                   std::vector< tk::real >& local_dte ) const override
+      { return data.dt( fd, geoFace, geoElem, U, P, nielem, srcFlag,
+          local_dte ); }
+      std::map< std::string, tk::GetVarFn > OutVarFn() const override
+      { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > surfNames() const override
@@ -456,6 +468,12 @@ class FVPDE {
        const override { return data.solution( xi, yi, zi, t ); }
       tk::real sp_totalenergy( std::size_t e, const tk::Fields& unk )
        const override { return data.sp_totalenergy( e, unk ); }
+      void soundspeed(
+        std::size_t nielem,
+        const tk::Fields& U,
+        const tk::Fields& P,
+        std::vector< tk::real >& ss )
+       const override { return data.soundspeed( nielem, U, P, ss ); }
       T data;
     };
 

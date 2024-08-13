@@ -163,7 +163,7 @@ Partitioner::partition( int nchare )
   std::iota( begin(gelemid), end(gelemid), 0 );
 
   m_nchare = nchare;
-  const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
+  const auto alg = g_inputdeck.get< tag::partitioning >();
   const auto che = tk::zoltan::geomPartMesh( alg,
                                              centroids( m_inpoel, m_coord ),
                                              gelemid,

@@ -20,8 +20,7 @@
 #include <vector>
 #include <array>
 
-#include "Types.hpp"
-#include "SystemComponents.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "EoS/EOS.hpp"
 
@@ -64,30 +63,29 @@ namespace inciter {
 */
 class TransportProblemShearDiff {
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
     using eq = tag::transport;
 
   public:
     //! Initialize numerical solution
     static std::vector< tk::real >
-    initialize( ncomp_t system, ncomp_t ncomp,
+    initialize( ncomp_t ncomp,
                 const std::vector< EOS >& mat_blk, tk::real x, tk::real y,
                 tk::real z, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static std::vector< tk::real >
-    analyticSolution( ncomp_t system, ncomp_t ncomp,
+    analyticSolution( ncomp_t ncomp,
                       const std::vector< EOS >& mat_blk, tk::real x,
                       tk::real y, tk::real z, tk::real t )
-    { return initialize( system, ncomp, mat_blk, x, y, z, t ); }
+    { return initialize( ncomp, mat_blk, x, y, z, t ); }
 
     //! Do error checking on PDE parameters
-    void errchk( ncomp_t system, ncomp_t ncomp ) const;
+    void errchk( ncomp_t ncomp ) const;
 
     //! Assign prescribed shear velocity at a point
     static std::vector< std::array< tk::real, 3 > >
-    prescribedVelocity( ncomp_t system,
-                        ncomp_t ncomp,
+    prescribedVelocity( ncomp_t ncomp,
                         tk::real,
                         tk::real y,
                         tk::real z,

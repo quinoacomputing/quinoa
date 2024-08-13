@@ -16,9 +16,8 @@
     from the parser to an internal data structure in a type-save manner, which
     is a tagged tuple containing a hierarchy of various containers. As an
     example on how tagged tuples are used for parsing an input file, see
-    Control/Walker/InputDeck/InputDeck.h. Another way to use a tagged tuple is a
-    compile-time associated container between tags and an arbitrary type. As an
-    example, see rngtest::TestU01Stack::runner.
+    Control/Inciter/InputDeck/InputDeck.h. Another way to use a tagged tuple is
+    a compile-time associated container between tags and an arbitrary type.
 */
 // *****************************************************************************
 #ifndef TaggedTuple_h
@@ -35,6 +34,11 @@
 
 #include "PUPUtil.hpp"
 #include "Exception.hpp"
+
+namespace tag {
+//! Printable tag for TaggedTuple that returns its name
+#define DEFTAG(n) struct n { static const char* name() { return #n; } }
+} // tag::
 
 namespace tk {
 
@@ -136,90 +140,6 @@ class TaggedTuple{
       }
     }
 
-    //! Convert and push back value, converting from string, to vector
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename... Tags >
-    void store_back( const std::string& value ) noexcept {
-      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
-      {
-        using T = typename std::remove_reference_t<
-                    decltype( get<Tag,Tags...>() ) >::value_type;
-        get< Tag, Tags... >().push_back( convert< T >( value ) );
-      } else {
-        using T = typename std::remove_reference_t<
-                    decltype( get<Tag>() ) >::value_type;
-        get< Tag >().push_back( convert< T >( value ) );
-      }
-    }
-
-    //! Convert bool and push back, converting from string, to vector of ints
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename... Tags >
-    void store_back_bool( const std::string& value ) noexcept {
-      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
-      {
-        get< Tag, Tags... >().push_back( convert_bool( value ) );
-      } else {
-        get< Tag >().push_back( convert_bool( value ) );
-      }
-    }
-
-    //! \brief Convert and push back value, converting from string, to back of
-    //!   a nested vector
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename... Tags >
-    void store_back_back( const std::string& value ) noexcept {
-      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
-      {
-        using T = typename std::remove_reference_t<
-                    decltype( get<Tag,Tags...>() ) >::value_type::value_type;
-        get< Tag, Tags... >().back().push_back( convert< T >( value ) );
-      } else {
-        using T = typename std::remove_reference_t<
-                    decltype( get<Tag>() ) >::value_type::value_type;
-        get< Tag >().back().push_back( convert< T >( value ) );
-      }
-    }
-
-    //! \brief Convert and push back value, converting from string, to back of
-    //!   a doubly nested vector
-    //! \param[in] value Value to convert and store
-    template< typename Tag, typename... Tags >
-    void store_back_back_back( const std::string& value ) noexcept {
-      if constexpr( is_tagged_tuple<Tag>::value and sizeof...(Tags) != 0 )
-      {
-        using T = typename std::remove_reference_t<
-          decltype( get<Tag,Tags...>() ) >::value_type::value_type::value_type;
-        get< Tag, Tags... >().back().back().push_back( convert< T >( value ) );
-      } else {
-        using T = typename std::remove_reference_t<
-          decltype( get<Tag>() ) >::value_type::value_type::value_type;
-        get< Tag >().back().back().push_back( convert< T >( value ) );
-      }
-    }
-
-    //! Insert key-value pair, converting value from string, to map
-    template< typename Tag, typename... Tags, typename Key, typename Value >
-    void insert( const Key& key, const Value& value ) {
-      get< Tag, Tags... >()[ key ] = value;
-    }
-
-    //! Insert key-value pair to map of nested TaggedTuple
-    template< typename FieldTag, typename FieldType,
-              typename Tag, typename... Tags, typename Key >
-    void insert_field( const Key& key, const FieldType& value ) {
-      get< Tag, Tags... >()[ key ].template get< FieldTag >() = value;
-    }
-
-    //! \brief Insert key-value pair, converting value from string, to map of
-    //!   nested TaggedTuple
-    template< typename FieldTag, typename FieldType,
-              typename Tag, typename... Tags, typename Key >
-    void insert_field( const Key& key, const std::string& value ) {
-      get< Tag, Tags... >()[ key ].template get< FieldTag >() =
-        convert< FieldType >( value );
-    }
-
     //! Operator == between two TaggedTuple objects
     //! \tparam L Type list as brigand::list for other TaggedTuple
     //! \return True if the lhs and rhs equal
@@ -265,28 +185,6 @@ class TaggedTuple{
     type convert( const std::string& str ) {
       std::stringstream ss( str );
       type num;
-      ss >> std::boolalpha >> num;
-      if (ss.fail())
-        Throw( "Failed to convert '" + str +
-               "' to typeid " + typeid(num).name() );
-      return num;
-    }
-
-    //! Convert/parse string to bool and return as int
-    //! \param[in] str String to convert
-    //! \return Bool parsed from str returned as an int
-    //! \details Parsing a bool from a string, e.g., "true" or "false" is
-    //!   special compared to the above convert template, because the type into
-    //!   which we parse to (from stringstream) must be bool, but its value must
-    //!   be returned as an int. Input data stored this way ensures that the
-    //!   data is stored as an int and not a bool, which could be problematic if
-    //!   stored in a std::vector. Using this function via store_back_bool is a
-    //!   better way to achieve type-safety of the user input and ensures data
-    //!   does not get corrupted during Charm++ serialization as distributed to
-    //!   multiple PEs.
-    int convert_bool( const std::string& str ) {
-      std::stringstream ss( str );
-      bool num;
       ss >> std::boolalpha >> num;
       if (ss.fail())
         Throw( "Failed to convert '" + str +

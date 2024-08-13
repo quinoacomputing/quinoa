@@ -16,6 +16,6 @@
 #        - d : uniform de-refinement (keyword: uniform_derefine)
 # * trans - type of physics, e.g., compflow, transport
 # * reord - perform PE-locality mesh node reordering during setup
-# * dg - discontinuous Galerkin discretization, e.g., dg, diagcg, dpg2, ...
+# * dg - discontinuous Galerkin discretization, e.g., dg, dpg2, ...
 # * u0.8 - Non-zero virtualization u = 0.8
 # * migr - Use migration

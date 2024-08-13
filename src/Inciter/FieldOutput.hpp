@@ -19,6 +19,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "UnsMesh.hpp"
 #include "Discretization.hpp"
+#include "FunctionPrototypes.hpp"
 
 namespace inciter {
 
@@ -31,6 +32,7 @@ numericFieldNames( tk::Centering c );
 //! Collect field output from numerical solution based on user input
 std::vector< std::vector< tk::real > >
 numericFieldOutput( const tk::Fields& U, tk::Centering c,
+                    const std::map< std::string, tk::GetVarFn >& outvarfn,
                     const tk::Fields& P = tk::Fields() );
 
 //! Evaluate solution on incoming (a potentially refined) mesh
@@ -59,7 +61,7 @@ analyticFieldNames( const PDE& eq,
                     tk::Centering c,
                     std::vector< std::string >& f )
 {
-  for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >())
+  for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >())
     if (v.centering == c && v.analytic())
       tk::concat( eq.analyticFieldNames(), f );
 }
@@ -83,7 +85,7 @@ analyticFieldOutput( const PDE& eq,
                      tk::real t,
                      std::vector< std::vector< tk::real > >& f )
 {
-  for (const auto& v : g_inputdeck.get< tag::cmd, tag::io, tag::outvar >()) {
+  for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
     if (v.centering == c && v.analytic()) {
       auto ncomp = eq.analyticSolution( x[0], y[0], z[0], t ).size();
       f.resize( f.size() + ncomp, std::vector< tk::real >( x.size() ) );

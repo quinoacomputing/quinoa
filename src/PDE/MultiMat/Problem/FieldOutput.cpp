@@ -14,10 +14,52 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Vector.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "ConfigureMultiMat.hpp"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+
+std::map< std::string, tk::GetVarFn > MultiMatOutVarFn()
+// *****************************************************************************
+// Return a map that associates user-specified strings to functions
+//! \return Map that associates user-specified strings to functions that compute
+//!   relevant quantities to be output to file
+// *****************************************************************************
+{
+  std::map< std::string, tk::GetVarFn > OutFnMap;
+
+  // Allowed strings for user-def field output vars
+  OutFnMap["density"] = multimat::bulkDensityOutVar;
+  OutFnMap["pressure"] = multimat::bulkPressureOutVar;
+  OutFnMap["specific_total_energy"] = multimat::bulkSpecificTotalEnergyOutVar;
+  OutFnMap["x-velocity"] = multimat::velocityOutVar<0>;
+  OutFnMap["y-velocity"] = multimat::velocityOutVar<1>;
+  OutFnMap["z-velocity"] = multimat::velocityOutVar<2>;
+  OutFnMap["material_indicator"] = multimat::matIndicatorOutVar;
+  // Cauchy stress tensor
+  OutFnMap["stress11"] = multimat::stressOutVar<0,0>;
+  OutFnMap["stress12"] = multimat::stressOutVar<0,1>;
+  OutFnMap["stress13"] = multimat::stressOutVar<0,2>;
+  OutFnMap["stress21"] = multimat::stressOutVar<1,0>;
+  OutFnMap["stress22"] = multimat::stressOutVar<1,1>;
+  OutFnMap["stress23"] = multimat::stressOutVar<1,2>;
+  OutFnMap["stress31"] = multimat::stressOutVar<2,0>;
+  OutFnMap["stress32"] = multimat::stressOutVar<2,1>;
+  OutFnMap["stress33"] = multimat::stressOutVar<2,2>;
+  // Inverse deformation gradient tensor
+  OutFnMap["g11"] = multimat::defGradOutVar<0,0>;
+  OutFnMap["g12"] = multimat::defGradOutVar<0,1>;
+  OutFnMap["g13"] = multimat::defGradOutVar<0,2>;
+  OutFnMap["g21"] = multimat::defGradOutVar<1,0>;
+  OutFnMap["g22"] = multimat::defGradOutVar<1,1>;
+  OutFnMap["g23"] = multimat::defGradOutVar<1,2>;
+  OutFnMap["g31"] = multimat::defGradOutVar<2,0>;
+  OutFnMap["g32"] = multimat::defGradOutVar<2,1>;
+  OutFnMap["g33"] = multimat::defGradOutVar<2,2>;
+
+  return OutFnMap;
+}
 
 std::vector< std::string >
 MultiMatFieldNames( std::size_t nmat )
@@ -205,7 +247,7 @@ std::vector< std::string > MultiMatSurfNames()
 }
 
 std::vector< std::vector< tk::real > >
-MultiMatSurfOutput( ncomp_t,
+MultiMatSurfOutput(
   const std::size_t nmat,
   const std::size_t rdof,
   const FaceData& fd,
@@ -213,7 +255,6 @@ MultiMatSurfOutput( ncomp_t,
   const tk::Fields& P )
 // *****************************************************************************
 //  Return element surface field output (on triangle faces) going to file
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] fd Face connectivity and boundary conditions object
@@ -228,9 +269,9 @@ MultiMatSurfOutput( ncomp_t,
   const auto& esuf = fd.Esuf();
 
   // extract field output along side sets requested
-  for (auto s : g_inputdeck.outsets()) {
+  for (auto s : g_inputdeck.get< tag::field_output, tag::sideset >()) {
     // get face list for side set requested
-    auto b = bface.find(s);
+    auto b = bface.find(static_cast<int>(s));
     if (b == end(bface)) continue;
     const auto& faces = b->second;
     std::vector< tk::real > surfaceSol( faces.size() );
@@ -270,6 +311,7 @@ std::vector< std::string > MultiMatHistNames()
 // *****************************************************************************
 {
   std::vector< std::string > n;
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
   n.push_back( "density" );
   n.push_back( "x-velocity" );
@@ -277,6 +319,8 @@ std::vector< std::string > MultiMatHistNames()
   n.push_back( "z-velocity" );
   n.push_back( "energy" );
   n.push_back( "pressure" );
+  for (std::size_t k=0; k<nmat; ++k)
+    n.push_back( "volfrac"+std::to_string(k+1) );
 
   return n;
 }
@@ -289,6 +333,7 @@ std::vector< std::string > MultiMatDiagNames(std::size_t nmat)
 // *****************************************************************************
 {
   std::vector< std::string > n;
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   for (std::size_t k=0; k<nmat; ++k)
     n.push_back( "f"+std::to_string(k+1) );
@@ -299,6 +344,14 @@ std::vector< std::string > MultiMatDiagNames(std::size_t nmat)
   n.push_back( "frw" );
   for (std::size_t k=0; k<nmat; ++k)
     n.push_back( "fre"+std::to_string(k+1) );
+  for (std::size_t k=0; k<nmat; ++k) {
+    if (solidx[k]) {
+      for (std::size_t i=1; i<=3; ++i)
+        for (std::size_t j=1; j<=3; ++j)
+          n.push_back( "g"+std::to_string(k+1)+
+            "_"+std::to_string(i)+std::to_string(j) );
+    }
+  }
 
   return n;
 }

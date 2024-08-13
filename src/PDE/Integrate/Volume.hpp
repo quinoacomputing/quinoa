@@ -16,7 +16,6 @@
 #define Volume_h
 
 #include "Basis.hpp"
-#include "Types.hpp"
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
@@ -24,12 +23,11 @@
 
 namespace tk {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Compute volume integrals for DG
 void
-volInt( ncomp_t system,
-        std::size_t nmat,
+volInt( std::size_t nmat,
         real t,
         const std::vector< inciter::EOS >& mat_blk,
         const std::size_t ndof,

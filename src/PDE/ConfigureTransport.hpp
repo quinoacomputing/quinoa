@@ -17,7 +17,6 @@
 #include <vector>
 
 #include "PDEFactory.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/PDE.hpp"
 
 namespace inciter {
@@ -31,12 +30,7 @@ registerTransport( CGFactory& cf,
 
 //! Return information on the transport PDE
 std::vector< std::pair< std::string, std::string > >
-infoTransport( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt );
-
-//! \brief Assign function that computes physics variables from the
-//!   numerical solution for MultiMat
-void
-assignTransportGetVars( const std::string& name, tk::GetVarFn& f );
+infoTransport( std::map< ctr::PDEType, tk::ncomp_t >& cnt );
 
 /** @name Functions that compute physics variables from the numerical solution for Transport */
 ///@{

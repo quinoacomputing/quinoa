@@ -95,7 +95,7 @@ void echoBuildEnv( const Print& print, const std::string& executable )
   print.section( "Build environment" );
   print.item( "Hostname", build_hostname() );
   print.item( "Executable", executable );
-  print.item( "Version", quinoa_version() );
+  //print.item( "Version", quinoa_version() );  // needs manual upkeep
   auto sha1 = git_commit();
   if (sha1.find("NOTFOUND") == std::string::npos)
     print.item( "Revision SHA1", sha1 );

@@ -15,7 +15,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace tk {
@@ -35,12 +34,6 @@ inline void operator|( PUP::er& p, UserTableType& e ) { PUP::pup( p, e ); }
 class UserTable : public tk::Toggle< UserTableType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::position
-                                  , kw::velocity
-                                  , kw::acceleration
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
@@ -49,13 +42,13 @@ class UserTable : public tk::Toggle< UserTableType > {
         //! Group, i.e., options, name
         "User-defined table",
         //! Enums -> names
-        { { UserTableType::POSITION, kw::position::name() },
-          { UserTableType::VELOCITY, kw::velocity::name() },
-          { UserTableType::ACCELERATION, kw::acceleration::name() } },
+        { { UserTableType::POSITION, "position" },
+          { UserTableType::VELOCITY, "velocity" },
+          { UserTableType::ACCELERATION, "acceleration" } },
         //! keywords -> Enums
-        { { kw::position::string(), UserTableType::POSITION },
-          { kw::velocity::string(), UserTableType::VELOCITY },
-          { kw::acceleration::string(), UserTableType::ACCELERATION } } ) {}
+        { { "position", UserTableType::POSITION },
+          { "velocity", UserTableType::VELOCITY },
+          { "acceleration", UserTableType::ACCELERATION } } ) {}
 };
 
 } // ctr::

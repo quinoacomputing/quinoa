@@ -9,7 +9,6 @@ add_library(PDE
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
             ConfigureMultiMat.cpp
-            ConfigureOutVar.cpp
             CGPDE.cpp
             FVPDE.cpp
             DGPDE.cpp)
@@ -25,8 +24,8 @@ target_include_directories(PDE PUBLIC
                            ${PEGTL_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS}
-                           ${MKL_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
+                           ${CBLAS_INCLUDE_DIRS}
                            ${PROJECT_BINARY_DIR}/../Main)
 
 set_target_properties(PDE PROPERTIES LIBRARY_OUTPUT_NAME quinoa_pde)
@@ -42,7 +41,6 @@ add_subdirectory(Integrate)
 # Configure targets for physics and problem types
 add_subdirectory(Transport/Physics)
 add_subdirectory(Transport/Problem)
-add_subdirectory(CompFlow/Physics)
 add_subdirectory(CompFlow/Problem)
 add_subdirectory(MultiMat/Physics)
 add_subdirectory(MultiMat/Problem)

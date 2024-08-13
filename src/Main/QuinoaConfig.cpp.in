@@ -21,7 +21,7 @@ namespace tk {
 #define INCITER_EXECUTABLE           "@INCITER_EXECUTABLE@"
 #define MESHCONV_EXECUTABLE          "@MESHCONV_EXECUTABLE@"
 
-#define QUINOA_VERSION               "@MAJOR_VER@.@MINOR_VER@ (C@LACC@)"
+#define QUINOA_VERSION               "@MAJOR_VER@.@MINOR_VER@ (O@LACC@)"
 #define COPYRIGHT                    "@COPYRIGHT@"
 #define LICENSE                      "@LICENSE@"
 #define GIT_COMMIT                   "@GIT_SHA1@"

@@ -48,6 +48,7 @@
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
   #pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
   #pragma clang diagnostic ignored "-Wunused-template"
+  #pragma clang diagnostic ignored "-Wsuggest-destructor-override"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"

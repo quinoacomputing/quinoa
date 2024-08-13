@@ -16,7 +16,6 @@
 #include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace inciter {
@@ -37,36 +36,25 @@ inline void operator|( PUP::er& p, AMRInitialType& e )
 class AMRInitial : public tk::Toggle< AMRInitialType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::amr_uniform
-                                  , kw::amr_uniform_derefine
-                                  , kw::amr_initial_conditions
-                                  , kw::amr_edgelist
-                                  , kw::amr_coords >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
     explicit AMRInitial() :
       tk::Toggle< AMRInitialType >(
         //! Group, i.e., options, name
-        kw::amr_initial::name(),
+        "amr_initial",
         //! Enums -> names
-        { { AMRInitialType::UNIFORM, kw::amr_uniform::name() },
-          { AMRInitialType::UNIFORM_DEREFINE,
-            kw::amr_uniform_derefine::name() },
-          { AMRInitialType::INITIAL_CONDITIONS,
-            kw::amr_initial_conditions::name() },
-          { AMRInitialType::EDGELIST, kw::amr_edgelist::name() },
-          { AMRInitialType::COORDINATES, kw::amr_coords::name() } },
+        { { AMRInitialType::UNIFORM, "uniform" },
+          { AMRInitialType::UNIFORM_DEREFINE, "uniform_derefine" },
+          { AMRInitialType::INITIAL_CONDITIONS, "initial_conditions" },
+          { AMRInitialType::EDGELIST, "edgelist" },
+          { AMRInitialType::COORDINATES, "coords" } },
         //! keywords -> Enums
-        { { kw::amr_uniform::string(), AMRInitialType::UNIFORM },
-          { kw::amr_uniform_derefine::string(),
-            AMRInitialType::UNIFORM_DEREFINE },
-          { kw::amr_initial_conditions::string(),
-            AMRInitialType::INITIAL_CONDITIONS },
-          { kw::amr_edgelist::string(), AMRInitialType::EDGELIST },
-          { kw::amr_coords::string(), AMRInitialType::COORDINATES } } )
+        { { "uniform", AMRInitialType::UNIFORM },
+          { "uniform_derefine", AMRInitialType::UNIFORM_DEREFINE },
+          { "initial_conditions", AMRInitialType::INITIAL_CONDITIONS },
+          { "edgelist", AMRInitialType::EDGELIST },
+          { "coords", AMRInitialType::COORDINATES } } )
     {}
 };
 

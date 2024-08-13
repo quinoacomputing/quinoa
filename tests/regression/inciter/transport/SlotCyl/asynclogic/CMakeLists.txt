@@ -27,8 +27,8 @@ function(add_async_test scheme virt npes ppn migr)
     asynclogic_${scheme}_u${virt}${migr_append_name}
     ${INCITER_EXECUTABLE}
     NUMPES ${npes} PPN ${ppn}
-    INPUTFILES slot_cyl_${scheme}.q unitcube_1k.exo
-    ARGS -c slot_cyl_${scheme}.q -i unitcube_1k.exo -v -u ${virt} -b
+    INPUTFILES slot_cyl_${scheme}.lua unitcube_1k.exo
+    ARGS -c slot_cyl_${scheme}.lua -i unitcube_1k.exo -v -u ${virt} -b
          ${migr_cmd}
     TEXT_BASELINE noop.ndiff.cfg
     TEXT_RESULT diag
@@ -37,7 +37,7 @@ function(add_async_test scheme virt npes ppn migr)
     LABELS ${scheme} ${migr_label})
 endfunction()
 
-foreach(scheme diagcg dg alecg fv)
+foreach(scheme dg alecg fv oversetfe)
   foreach(virt 0.0 0.5 0.9)
     foreach(migr 0 1)
 

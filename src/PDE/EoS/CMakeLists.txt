@@ -1,7 +1,9 @@
 add_library(EOS
             EOS.cpp
             StiffenedGas.cpp
-            JWL.cpp)
+            JWL.cpp
+            SmallShearSolid.cpp
+            GodunovRomenskiAluminum.cpp)
 
 target_include_directories(EOS PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -13,6 +15,8 @@ target_include_directories(EOS PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${LAPACKE_INCLUDE_DIRS}
+                           ${CBLAS_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 
 set_target_properties(EOS

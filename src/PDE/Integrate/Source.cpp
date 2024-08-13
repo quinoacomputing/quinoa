@@ -20,8 +20,7 @@
 #include "Quadrature.hpp"
 
 void
-tk::srcInt( ncomp_t system,
-            const std::vector< inciter::EOS >& mat_blk,
+tk::srcInt( const std::vector< inciter::EOS >& mat_blk,
             real t,
             const std::size_t ndof,
             const std::size_t nelem,
@@ -34,7 +33,6 @@ tk::srcInt( ncomp_t system,
             std::size_t nmat )
 // *****************************************************************************
 //  Compute source term integrals for DG
-//! \param[in] system Equation system index
 //! \param[in] mat_blk Material block EOS
 //! \param[in] t Physical time
 //! \param[in] ndof Maximum number of degrees of freedom
@@ -88,7 +86,7 @@ tk::srcInt( ncomp_t system,
 
       // Compute the source term variable
       std::vector< real > s(ncomp, 0.0);
-      src( system, nmat, mat_blk, gp[0], gp[1], gp[2], t, s );
+      src( nmat, mat_blk, gp[0], gp[1], gp[2], t, s );
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
@@ -143,8 +141,7 @@ tk::update_rhs( const std::size_t ndof,
 }
 
 void
-tk::srcIntFV( ncomp_t system,
-              const std::vector< inciter::EOS >& mat_blk,
+tk::srcIntFV( const std::vector< inciter::EOS >& mat_blk,
               real t,
               const std::size_t nelem,
               const Fields& geoElem,
@@ -153,7 +150,6 @@ tk::srcIntFV( ncomp_t system,
               std::size_t nmat )
 // *****************************************************************************
 //  Compute source term integrals for DG
-//! \param[in] system Equation system index
 //! \param[in] mat_blk Material block EOS
 //! \param[in] t Physical time
 //! \param[in] nelem Maximum number of elements
@@ -171,7 +167,7 @@ tk::srcIntFV( ncomp_t system,
   {
     // Compute the source term variable
     std::vector< real > s(ncomp, 0.0);
-    src( system, nmat, mat_blk, geoElem(e,1), geoElem(e,2), geoElem(e,3), t, s );
+    src( nmat, mat_blk, geoElem(e,1), geoElem(e,2), geoElem(e,3), t, s );
 
     // Add the source term to the rhs
     for (ncomp_t c=0; c<ncomp; ++c)

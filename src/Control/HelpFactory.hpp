@@ -19,6 +19,7 @@
 #include "PUPUtil.hpp"
 #include "Factory.hpp"
 #include "Has.hpp"
+#include "Types.hpp"
 
 namespace tk {
 namespace ctr {
@@ -106,6 +107,18 @@ struct Info {
                                  U::lower(),
                                  U::upper(),
                                  U::choices() };
+  }
+
+  //! Fill map in a simpler way passing a string rather than a brigand-type
+  void fill( const tk::entry_t& kw )
+  {
+    m_factory[kw.string()] = { kw.shortDescription(),
+                               kw.longDescription(),
+                               kw.alias(),
+                               kw.expt(),
+                               kw.lower(),
+                               kw.upper(),
+                               kw.choices() };
   }
 };
 

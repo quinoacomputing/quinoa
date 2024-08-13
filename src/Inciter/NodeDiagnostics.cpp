@@ -78,7 +78,7 @@ NodeDiagnostics::compute(
   // Optionally collect diagnostics and send for aggregation across all workers
 
   // Query after how many time steps user wants to dump diagnostics
-  auto diagfreq = g_inputdeck.get< tag::output, tag::iter, tag::diag >();
+  auto diagfreq = g_inputdeck.get< tag::diagnostics, tag::interval >();
 
   if ( !((d.It()+1) % diagfreq) ) {     // if remainder, don't dump
 
@@ -138,7 +138,7 @@ NodeDiagnostics::compute(
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
-    auto stream = serialize( d.MeshId(), diag );
+    auto stream = serialize( d.MeshId(), u.nprop(), diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 

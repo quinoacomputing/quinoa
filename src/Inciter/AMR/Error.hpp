@@ -13,7 +13,6 @@
 #define Error_h
 
 #include "Fields.hpp"
-#include "Keywords.hpp"
 #include "Inciter/Options/AMRError.hpp"
 #include "AMR/edge.hpp"
 
@@ -23,7 +22,7 @@ namespace AMR {
 class Error {
 
  private:
-   using ncomp_t = kw::ncomp::info::expect::type;
+   using ncomp_t = tk::ncomp_t;
 
   public:
     //! Compute error estimate for a scalar quantity

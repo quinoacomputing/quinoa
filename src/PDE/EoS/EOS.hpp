@@ -18,6 +18,8 @@
 #include "Inciter/Options/Material.hpp"
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/JWL.hpp"
+#include "EoS/SmallShearSolid.hpp"
+#include "EoS/GodunovRomenskiAluminum.hpp"
 
 namespace inciter {
 
@@ -33,6 +35,8 @@ class EOS {
     //! Variant type listing all eos types modeling the same concept
     std::variant< StiffenedGas
                 , JWL
+                , SmallShearSolid
+                , GodunovRomenskiAluminum
                 > m_material;
 
   public:
@@ -40,18 +44,19 @@ class EOS {
     explicit EOS() {}
 
     //! Constructor
-    explicit EOS( ctr::MaterialType mattype,
-      EqType eq,
-      std::size_t system,
-      std::size_t k );
+    explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k );
 
     //! Entry method tags for specific EOS classes to use with compute()
     struct density {};
     struct pressure {};
     struct soundspeed {};
+    struct shearspeed {};
     struct totalenergy {};
     struct temperature {};
     struct min_eff_pressure {};
+    struct refDensity {};
+    struct refPressure {};
+    struct rho0 {};
     //! Call EOS function
     //! \tparam Fn Function tag identifying the function to call
     //! \tparam Args Types of arguments to pass to function
@@ -70,6 +75,9 @@ class EOS {
           else if constexpr( std::is_same_v< Fn, soundspeed > )
             return m.soundspeed( std::forward< Args >( args )... );
 
+          else if constexpr( std::is_same_v< Fn, shearspeed > )
+            return m.shearspeed( std::forward< Args >( args )... );
+
           else if constexpr( std::is_same_v< Fn, totalenergy > )
             return m.totalenergy( std::forward< Args >( args )... );
 
@@ -78,6 +86,50 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
             return m.min_eff_pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refDensity > )
+            return m.refDensity( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refPressure > )
+            return m.refPressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, rho0 > )
+            return m.rho0( std::forward< Args >( args )... );
+        }, m_material );
+    }
+
+    //! Entry method tags for specific EOS classes to use with computeTensor()
+    struct CauchyStress {};
+    //! Call EOS function returning a tensor
+    //! \tparam Fn Function tag identifying the function to call
+    //! \tparam Args Types of arguments to pass to function
+    //! \param[in] args Arguments to member function to be called
+    //! \details This function issues a call to a member function of the
+    //!   EOS vector and is thus equivalent to mat_blk[imat].Fn(...).
+    template< typename Fn, typename... Args >
+    std::array< std::array< tk::real, 3 >, 3 > computeTensor( Args&&... args )
+    const {
+      return std::visit( [&]( const auto& m )->
+        std::array< std::array< tk::real, 3 >, 3 > {
+          if constexpr( std::is_same_v< Fn, CauchyStress > )
+            return m.CauchyStress( std::forward< Args >( args )... );
+
+        }, m_material );
+    }
+
+    //! Entry method tags for specific EOS classes to use with set()
+    struct setRho0 {};
+    //! Call EOS function
+    //! \tparam Fn Function tag identifying the function to call
+    //! \tparam Args Types of arguments to pass to function
+    //! \param[in] args Arguments to member function to be called
+    //! \details This function issues a call to a member function of the
+    //!   EOS vector and is thus equivalent to mat_blk[imat].Fn(...).
+    template< typename Fn, typename... Args >
+    void set( Args&&... args ) {
+      std::visit( [&]( auto& m )-> void {
+          if constexpr( std::is_same_v< Fn, setRho0 > )
+            m.setRho0( std::forward< Args >( args )... );
         }, m_material );
     }
 

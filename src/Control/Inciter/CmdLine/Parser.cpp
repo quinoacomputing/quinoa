@@ -18,7 +18,6 @@
 #include "Exception.hpp"
 #include "Print.hpp"
 #include "Keywords.hpp"
-#include "Inciter/Types.hpp"
 #include "Inciter/CmdLine/Parser.hpp"
 #include "Inciter/CmdLine/Grammar.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"

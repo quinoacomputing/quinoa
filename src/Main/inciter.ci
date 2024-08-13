@@ -20,15 +20,13 @@ mainmodule inciter {
   extern module conjugategradients;
   extern module ale;
   extern module ghosts;
-  extern module diagcg;
   extern module alecg;
+  extern module oversetfe;
   extern module dg;
   extern module fv;
   extern module charestatecollector;
   extern module lbswitch;
-  #ifdef HAS_EXAM2M
-  extern module controller;
-  #endif
+  extern module m2mtransfer;
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;

@@ -17,7 +17,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace tk {
@@ -42,14 +41,6 @@ class PartitioningAlgorithm : public tk::Toggle< PartitioningAlgorithmType > {
   public:
     using ParamType = std::string;
 
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::rcb
-                                  , kw::rib
-                                  , kw::hsfc
-                                  , kw::mj
-                                  , kw::phg
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
@@ -58,17 +49,17 @@ class PartitioningAlgorithm : public tk::Toggle< PartitioningAlgorithmType > {
         //! Group, i.e., options, name
         "Mesh partitioning algorithm",
         //! Enums -> names
-        { { PartitioningAlgorithmType::RCB, kw::rcb::name() },
-          { PartitioningAlgorithmType::RIB, kw::rib::name() },
-          { PartitioningAlgorithmType::HSFC, kw::hsfc::name() },
-          { PartitioningAlgorithmType::MJ, kw::mj::name() },
-          { PartitioningAlgorithmType::PHG, kw::phg::name() } },
+        { { PartitioningAlgorithmType::RCB, "rcb" },
+          { PartitioningAlgorithmType::RIB, "rib" },
+          { PartitioningAlgorithmType::HSFC, "hsfc" },
+          { PartitioningAlgorithmType::MJ, "mj" },
+          { PartitioningAlgorithmType::PHG, "phg" } },
         //! keywords -> Enums
-        { { kw::rcb::string(), PartitioningAlgorithmType::RCB },
-          { kw::rib::string(), PartitioningAlgorithmType::RIB },
-          { kw::hsfc::string(), PartitioningAlgorithmType::HSFC },
-          { kw::mj::string(), PartitioningAlgorithmType::MJ },
-          { kw::phg::string(), PartitioningAlgorithmType::PHG } } ) {}
+        { { "rcb", PartitioningAlgorithmType::RCB },
+          { "rib", PartitioningAlgorithmType::RIB },
+          { "hsfc", PartitioningAlgorithmType::HSFC },
+          { "mj", PartitioningAlgorithmType::MJ },
+          { "phg", PartitioningAlgorithmType::PHG } } ) {}
 
     //! \brief Return parameter based on Enum
     //! \details Here 'parameter' is the library-specific identifier of the

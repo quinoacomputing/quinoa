@@ -25,9 +25,7 @@
 #include "ConjugateGradients.hpp"
 #include "ALE.hpp"
 
-#ifdef HAS_EXAM2M
-  #include "Controller.hpp"
-#endif
+#include "M2MTransfer.hpp"
 
 namespace inciter {
 
@@ -42,7 +40,6 @@ using inciter::Discretization;
 Discretization::Discretization(
   std::size_t meshid,
   const std::vector< CProxy_Discretization >& disc,
-  const CProxy_DistFCT& fctproxy,
   const CProxy_ALE& aleproxy,
   const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   const CProxy_Transporter& transporter,
@@ -55,26 +52,23 @@ Discretization::Discretization(
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid,
   int nc ) :
   m_meshid( meshid ),
-  m_transfer_complete(),
-  m_transfer( g_inputdeck.get< tag::couple, tag::transfer >() ),
+  m_transfer( g_inputdeck.get< tag::transfer >() ),
   m_disc( disc ),
   m_nchare( nc ),
   m_it( 0 ),
   m_itr( 0 ),
   m_itf( 0 ),
   m_initial( 1 ),
-  m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
+  m_t( g_inputdeck.get< tag::t0 >() ),
   m_lastDumpTime( -std::numeric_limits< tk::real >::max() ),
   m_physFieldFloor( 0.0 ),
   m_physHistFloor( 0.0 ),
-  m_rangeFieldFloor(
-    g_inputdeck.get< tag::output, tag::range, tag::field >().size(), 0.0 ),
-  m_rangeHistFloor(
-    g_inputdeck.get< tag::output, tag::range, tag::history >().size(), 0.0 ),
-  m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
+  m_rangeFieldFloor( 0.0 ),
+  m_rangeHistFloor( 0.0 ),
+  m_dt( g_inputdeck.get< tag::dt >() ),
   m_dtn( m_dt ),
   m_nvol( 0 ),
-  m_fct( fctproxy ),
+  m_nxfer( 0 ),
   m_ale( aleproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
@@ -106,7 +100,6 @@ Discretization::Discretization(
 //  Constructor
 //! \param[in] meshid Mesh ID
 //! \param[in] disc All Discretization proxies (one per mesh)
-//! \param[in] fctproxy Distributed FCT proxy
 //! \param[in] aleproxy Distributed ALE proxy
 //! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
 //!   solver proxy
@@ -150,27 +143,18 @@ Discretization::Discretization(
 
   // Find host elements of user-specified points where time histories are
   // saved, and save the shape functions evaluated at the point locations
-  const auto& pt = g_inputdeck.get< tag::history, tag::point >();
-  const auto& id = g_inputdeck.get< tag::history, tag::id >();
+  const auto& pt = g_inputdeck.get< tag::history_output, tag::point >();
   for (std::size_t p=0; p<pt.size(); ++p) {
     std::array< tk::real, 4 > N;
-    const auto& l = pt[p];
+    const auto& l = pt[p].get< tag::coord >();
+    const auto& id = pt[p].get< tag::id >();
     for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
       if (tk::intet( m_coord, m_inpoel, l, e, N )) {
-        m_histdata.push_back( HistData{{ id[p], e, {l[0],l[1],l[2]}, N }} );
+        m_histdata.push_back( HistData{{ id, e, {l[0],l[1],l[2]}, N }} );
         break;
       }
     }
   }
-
-  // Insert DistFCT chare array element if FCT is needed. Note that even if FCT
-  // is configured false in the input deck, at this point, we still need the FCT
-  // object as FCT is still being performed, only its results are ignored.
-  const auto sch = g_inputdeck.get< tag::discr, tag::scheme >();
-  const auto nprop = g_inputdeck.get< tag::component >().nprop();
-  if (sch == ctr::SchemeType::DiagCG)
-    m_fct[ thisIndex ].insert( m_nchare, m_gid.size(), nprop,
-                               m_nodeCommMap, m_bid, m_lid, m_inpoel );
 
   // Insert ConjugrateGradients solver chare array element if needed
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
@@ -186,15 +170,11 @@ Discretization::Discretization(
     // skip transfer if single mesh or if not involved in coupling
     transferInit();
   } else {
-    #ifdef HAS_EXAM2M
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
-      std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+      //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
     }
-    #else
-    transferInit();
-    #endif
   }
 }
 
@@ -300,147 +280,142 @@ Discretization::meshvelConv()
 }
 
 void
-Discretization::transferCallback( std::vector< CkCallback >& cb )
-// *****************************************************************************
-// Receive a list of callbacks from our own child solver
-//! \param[in] cb List of callbacks
-//! \details This is called by our child solver, either when it is coupled to
-//!    another solver or not.
-// *****************************************************************************
-{
-  // Store callback for when there is no transfer we are involved in
-  m_transfer_complete = cb.back();
-  cb.pop_back();
-
-  // Distribute callbacks
-  for (auto& t : m_transfer) {
-    // If we are a source of a transfer, send callback to the destination solver
-    if (m_meshid == t.src) {
-      Assert( !cb.empty(), "Insufficient number of src callbacks, meshid: " +
-                           std::to_string(m_meshid) );
-      m_disc[ t.dst ][ thisIndex ].comcb( m_meshid, cb.back() );
-      cb.pop_back();
-    // If we are a destination of a callback, store it
-    } else if (m_meshid == t.dst) {
-      Assert( !cb.empty(), "Insufficient number of dst callbacks, meshid: " +
-                           std::to_string(m_meshid) );
-      t.cb.push_back( cb.back() );
-      cb.pop_back();
-      //t.cbs.push_back( m_meshid );    // only for debugging
-    }
-  }
-  Assert( cb.empty(), "Not all callbacks have been processed" );
-
-  if (transferCallbacksComplete()) comfinal();
-}
-
-void
-Discretization::comcb( std::size_t srcmeshid, CkCallback c )
-// *****************************************************************************
-// Receive mesh transfer callbacks from source mesh/solver
-//! \param[in] srcmeshid Source mesh (solver) id
-//! \param[in] c Callback received
-// *****************************************************************************
-{
-  // Store received mesh transfer callback from source mesh/solver
-  for (auto& t : m_transfer)
-    if (srcmeshid == t.src && m_meshid == t.dst) {
-      t.cb.push_back( c );
-      //t.cbs.push_back( srcmeshid );   // only for debugging
-    }
-
-  if (transferCallbacksComplete()) comfinal();
-}
-
-bool
-Discretization::transferCallbacksComplete() const
-// *****************************************************************************
-// Determine if communication of mesh transfer callbacks is complete
-//! \return True if communication of mesh transfer callbacks have been
-//!   completed on this solver
-// *****************************************************************************
-{
-  bool c = true;
-
-  // Our callbacks are complete if all transfers we are involved in as a
-  // destination have exactly two callbacks.
-  for (const auto& t : m_transfer)
-    if (m_meshid == t.dst && t.cb.size() != 2)
-      c = false;
-
-  return c;
-}
-
-void
 Discretization::comfinal()
 // *****************************************************************************
 // Finish setting up communication maps and solution transfer callbacks
 // *****************************************************************************
 {
-//  std::cout << "m:" << m_meshid << ": transfer: ";
-//  for (const auto& t : m_transfer) {
-//    std::cout << t.src << "->" << t.dst << ' ';
-//    if (t.cb.size() > 0) {
-//      std::cout << "cb: ";
-//      for (auto m : t.cbs) std::cout << m << ' ';
-//    }
-//  }
-//  std::cout << '\n';
-
   // Generate own subset of solver/mesh transfer list
-  for (const auto& t : m_transfer)
-    if (t.src == m_meshid || t.dst == m_meshid)
+  for (const auto& t : m_transfer) {
+    if (t.src == m_meshid || t.dst == m_meshid) {
       m_mytransfer.push_back( t );
-
-//  std::cout << "m:" << m_meshid << ": mytransfer: ";
-//  for (const auto& t : m_mytransfer) {
-//    std::cout << t.src << "->" << t.dst << ' ';
-//    if (t.cb.size() > 0) {
-//      std::cout << "cb: ";
-//      for (auto m : t.cbs) std::cout << m << ' ';
-//    }
-//  }
-//  std::cout << '\n';
+    }
+  }
 
   // Signal the runtime system that the workers have been created
-  std::vector< std::size_t > meshdata{ /* initial */ 1, m_meshid };
+  std::vector< std::size_t > meshdata{ /* initial = */ 1, m_meshid };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), m_transporter) );
 }
 
 void
-Discretization::transfer( [[maybe_unused]] const tk::Fields& u )
+Discretization::transfer(
+  tk::Fields& u,
+  std::size_t dirn,
+  CkCallback cb )
 // *****************************************************************************
 //  Start solution transfer (if coupled)
-//! \param[in] u Solution to transfer from/to
+//! \param[in,out] u Solution to transfer from/to
+//! \param[in] dirn Direction of solution transfer. 0: from background to
+//!   overset, 1: from overset to background
+//! \param[in] cb Callback to call when back and forth transfers complete.
+//! \details This function initiates the solution transfer (direction dependent
+//!   on 'dirn') between meshes. It invokes a reduction to Transporter when the
+//!   transfer in one direction is complete (dirn == 0), or calls back the
+//!   'cb' function in Scheme when transfers both directions are complete.
+//!   The function relies on 'dirn' to make this decision.
 // *****************************************************************************
 {
   if (m_mytransfer.empty()) {   // skip transfer if not involved in coupling
-    m_transfer_complete.send();
+
+    cb.send();
+
   } else {
+
+    m_transfer_complete = cb;
+
+    // determine source and destination mesh depending on direction of transfer
+    std::size_t fromMesh(0), toMesh(0);
+    CkCallback cb_xfer;
+    if (dirn == 0) {
+      fromMesh = m_mytransfer[m_nsrc].src;
+      toMesh = m_mytransfer[m_ndst].dst;
+      cb_xfer = CkCallback( CkIndex_Discretization::to_complete(), thisProxy[thisIndex] );
+    }
+    else {
+      fromMesh = m_mytransfer[m_nsrc].dst;
+      toMesh = m_mytransfer[m_ndst].src;
+      cb_xfer = CkCallback( CkIndex_Discretization::from_complete(), thisProxy[thisIndex] );
+    }
+
     // Pass source and destination meshes to mesh transfer lib (if coupled)
-    #ifdef HAS_EXAM2M
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
-    if (m_mytransfer[m_nsrc].src == m_meshid) {
+    if (fromMesh == m_meshid) {
       exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
       ++m_nsrc;
-      //std::cout << m_meshid << " src\n";
     } else {
       m_nsrc = 0;
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
-    if (m_mytransfer[m_ndst].dst == m_meshid) {
+    if (toMesh == m_meshid) {
       exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
-                             m_mytransfer[m_ndst].cb );
+        cb_xfer );
       ++m_ndst;
-      //std::cout << m_meshid << " dst\n";
     } else {
       m_ndst = 0;
     }
-    #else
-    m_transfer_complete.send();
-    #endif
+
   }
+
+  m_nsrc = 0;
+  m_ndst = 0;
+}
+
+void Discretization::to_complete()
+// *****************************************************************************
+//! Solution transfer from background to overset mesh completed (from ExaM2M)
+//! \brief This is called by ExaM2M on the destination mesh when the
+//!   transfer completes. Since this is called only on the destination, we find
+//!   and notify the corresponding source of the completion.
+// *****************************************************************************
+{
+  // Lookup the source disc and notify it of completion
+  for (auto& t : m_transfer) {
+    if (m_meshid == t.dst) {
+      m_disc[ t.src ][ thisIndex ].transfer_complete();
+    }
+  }
+
+  thisProxy[ thisIndex ].transfer_complete();
+}
+
+void Discretization::from_complete()
+// *****************************************************************************
+//! Solution transfer from overset to background mesh completed (from ExaM2M)
+//! \brief This is called by ExaM2M on the destination mesh when the
+//!   transfer completes. Since this is called only on the destination, we find
+//!   and notify the corresponding source of the completion.
+// *****************************************************************************
+{
+  // Lookup the source disc and notify it of completion
+  for (auto& t : m_transfer) {
+    if (m_meshid == t.src) {
+      m_disc[ t.dst ][ thisIndex ].transfer_complete_from_dest();
+    }
+  }
+
+  m_transfer_complete.send();
+}
+
+void Discretization::transfer_complete_from_dest()
+// *****************************************************************************
+//! Solution transfer completed (from dest Discretization)
+//! \details Called on the source only by the destination when a back and forth
+//!   transfer step completes.
+// *****************************************************************************
+{
+  m_transfer_complete.send();
+}
+
+void Discretization::transfer_complete()
+// *****************************************************************************
+//! Solution transfer completed (one-way)
+//! \note Single exit point after solution transfer between meshes
+// *****************************************************************************
+{
+  contribute( sizeof(nullptr), nullptr, CkReduction::nop,
+    CkCallback(CkReductionTarget(Transporter,solutionTransferred),
+    m_transporter) );
 }
 
 std::vector< std::size_t >
@@ -925,12 +900,17 @@ Discretization::write(
     fieldoutput = true;
   }
 
+  // set of sidesets where fieldoutput is required
+  std::set< int > outsets;
+  const auto& osv = g_inputdeck.get< tag::field_output, tag::sideset >();
+  outsets.insert(osv.begin(), osv.end());
+
   m_meshwriter[ CkNodeFirst( CkMyNode() ) ].
     write( m_meshid, meshoutput, fieldoutput, m_itr, m_itf, m_t, thisIndex,
            g_inputdeck.get< tag::cmd, tag::io, tag::output >(),
            inpoel, coord, bface, bnode, triinpoel, elemfieldnames,
            nodefieldnames, elemsurfnames, nodesurfnames, elemfields, nodefields,
-           elemsurfs, nodesurfs, g_inputdeck.outsets(), c );
+           elemsurfs, nodesurfs, outsets, c );
 }
 
 void
@@ -944,7 +924,7 @@ Discretization::setdt( tk::real newdt )
   m_dt = newdt;
 
   // Truncate the size of last time step
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto term = g_inputdeck.get< tag::term >();
   if (m_t+m_dt > term) m_dt = term - m_t;
 }
 
@@ -956,20 +936,22 @@ Discretization::next()
 {
   // Update floor of physics time divided by output interval times
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto ft = g_inputdeck.get< tag::output, tag::time, tag::field >();
+  const auto ft = g_inputdeck.get< tag::field_output, tag::time_interval >();
   if (ft > eps) m_physFieldFloor = std::floor( m_t / ft );
-  const auto ht = g_inputdeck.get< tag::output, tag::time, tag::history >();
+  const auto ht = g_inputdeck.get< tag::history_output, tag::time_interval >();
   if (ht > eps) m_physHistFloor = std::floor( m_t / ht );
 
   // Update floors of physics time divided by output interval times for ranges
-  const auto& rf = g_inputdeck.get< tag::output, tag::range, tag::field >();
-  for (std::size_t i=0; i<rf.size(); ++i)
-    if (m_t > rf[i][0] and m_t < rf[i][1])
-      m_rangeFieldFloor[i] = std::floor( m_t / rf[i][2] );
-  const auto& rh = g_inputdeck.get< tag::output, tag::range, tag::history >();
-  for (std::size_t i=0; i<rh.size(); ++i)
-    if (m_t > rh[i][0] and m_t < rh[i][1])
-      m_rangeHistFloor[i] = std::floor( m_t / rh[i][2] );
+  const auto& rf = g_inputdeck.get< tag::field_output, tag::time_range >();
+  if (!rf.empty()) {
+    if (m_t > rf[0] and m_t < rf[1])
+      m_rangeFieldFloor = std::floor( m_t / rf[2] );
+  }
+  const auto& rh = g_inputdeck.get< tag::history_output, tag::time_range >();
+  if (!rh.empty()) {
+    if (m_t > rh[0] and m_t < rh[1])
+      m_rangeHistFloor = std::floor( m_t / rh[2] );
+  }
 
   ++m_it;
   m_t += m_dt;
@@ -1023,7 +1005,7 @@ Discretization::restarted( int nrestart )
 
 std::string
 Discretization::histfilename( const std::string& id,
-                              kw::precision::info::expect::type precision )
+                              std::streamsize precision )
 // *****************************************************************************
 //  Construct history output filename
 //! \param[in] id History point id
@@ -1034,7 +1016,9 @@ Discretization::histfilename( const std::string& id,
   auto of = g_inputdeck.get< tag::cmd, tag::io, tag::output >();
   std::stringstream ss;
 
-  ss << std::setprecision(static_cast<int>(precision)) << of << ".hist." << id;
+  auto mid =
+    m_disc.size() > 1 ? std::string( '.' + std::to_string(m_meshid) ) : "";
+  ss << std::setprecision(static_cast<int>(precision)) << of << mid << ".hist." << id;
 
   return ss.str();
 }
@@ -1047,9 +1031,9 @@ Discretization::histheader( std::vector< std::string >&& names )
 // *****************************************************************************
 {
   for (const auto& h : m_histdata) {
-    auto prec = g_inputdeck.get< tag::prec, tag::history >();
+    auto prec = g_inputdeck.get< tag::history_output, tag::precision >();
     tk::DiagWriter hw( histfilename( h.get< tag::id >(), prec ),
-                       g_inputdeck.get< tag::flformat, tag::history >(),
+                       g_inputdeck.get< tag::history_output, tag::format >(),
                        prec );
     hw.header( names );
   }
@@ -1066,9 +1050,9 @@ Discretization::history( std::vector< std::vector< tk::real > >&& data )
 
   std::size_t i = 0;
   for (const auto& h : m_histdata) {
-    auto prec = g_inputdeck.get< tag::prec, tag::history >();
+    auto prec = g_inputdeck.get< tag::history_output, tag::precision >();
     tk::DiagWriter hw( histfilename( h.get< tag::id >(), prec ),
-                       g_inputdeck.get< tag::flformat, tag::history >(),
+                       g_inputdeck.get< tag::history_output, tag::format >(),
                        prec,
                        std::ios_base::app );
     hw.diag( m_it, m_t, m_dt, data[i] );
@@ -1085,7 +1069,7 @@ Discretization::fielditer() const
 {
   if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
 
-  return m_it % g_inputdeck.get< tag::output, tag::iter, tag::field >() == 0;
+  return m_it % g_inputdeck.get< tag::field_output, tag::interval >() == 0;
 }
 
 bool
@@ -1098,7 +1082,7 @@ Discretization::fieldtime() const
   if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
 
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto ft = g_inputdeck.get< tag::output, tag::time, tag::field >();
+  const auto ft = g_inputdeck.get< tag::field_output, tag::time_interval >();
 
   if (ft < eps) return false;
 
@@ -1118,10 +1102,11 @@ Discretization::fieldrange() const
 
   bool output = false;
 
-  const auto& rf = g_inputdeck.get< tag::output, tag::range, tag::field >();
-  for (std::size_t i=0; i<rf.size(); ++i)
-    if (m_t > rf[i][0] and m_t < rf[i][1])
-      output |= std::floor(m_t/rf[i][2]) - m_rangeFieldFloor[i] > eps;
+  const auto& rf = g_inputdeck.get< tag::field_output, tag::time_range >();
+  if (!rf.empty()) {
+    if (m_t > rf[0] and m_t < rf[1])
+      output |= std::floor(m_t/rf[2]) - m_rangeFieldFloor > eps;
+  }
 
   return output;
 }
@@ -1133,8 +1118,8 @@ Discretization::histiter() const
 //! \return True if history output iteration count interval is hit
 // *****************************************************************************
 {
-  const auto hist = g_inputdeck.get< tag::output, tag::iter, tag::history >();
-  const auto& hist_points = g_inputdeck.get< tag::history, tag::point >();
+  const auto hist = g_inputdeck.get< tag::history_output, tag::interval >();
+  const auto& hist_points = g_inputdeck.get< tag::history_output, tag::point >();
 
   return m_it % hist == 0 and not hist_points.empty();
 }
@@ -1149,7 +1134,7 @@ Discretization::histtime() const
   if (g_inputdeck.get< tag::cmd, tag::benchmark >()) return false;
 
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto ht = g_inputdeck.get< tag::output, tag::time, tag::history >();
+  const auto ht = g_inputdeck.get< tag::history_output, tag::time_interval >();
 
   if (ht < eps) return false;
 
@@ -1169,10 +1154,11 @@ Discretization::histrange() const
 
   bool output = false;
 
-  const auto& rh = g_inputdeck.get< tag::output, tag::range, tag::history >();
-  for (std::size_t i=0; i<rh.size(); ++i)
-    if (m_t > rh[i][0] and m_t < rh[i][1])
-      output |= std::floor(m_t/rh[i][2]) - m_rangeHistFloor[i] > eps;
+  const auto& rh = g_inputdeck.get< tag::history_output, tag::time_range >();
+  if (!rh.empty()) {
+    if (m_t > rh[0] and m_t < rh[1])
+      output |= std::floor(m_t/rh[2]) - m_rangeHistFloor > eps;
+  }
 
   return output;
 }
@@ -1185,8 +1171,8 @@ Discretization::finished() const
 // *****************************************************************************
 {
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+  const auto nstep = g_inputdeck.get< tag::nstep >();
+  const auto term = g_inputdeck.get< tag::term >();
 
   return std::abs(m_t-term) < eps or m_it >= nstep;
 }
@@ -1198,7 +1184,7 @@ Discretization::status()
 // *****************************************************************************
 {
   // Query after how many time steps user wants TTY dump
-  const auto tty = g_inputdeck.get< tag::output, tag::iter, tag::tty >();
+  const auto tty = g_inputdeck.get< tag::ttyi >();
 
   // estimate grind time (taken between this and the previous time step)
   using std::chrono::duration_cast;
@@ -1209,15 +1195,15 @@ Discretization::status()
 
   if (thisIndex==0 and m_meshid == 0 and not (m_it%tty)) {
 
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    const auto t0 = g_inputdeck.get< tag::discr, tag::t0 >();
-    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    const auto diag = g_inputdeck.get< tag::output, tag::iter, tag::diag >();
+    const auto term = g_inputdeck.get< tag::term >();
+    const auto t0 = g_inputdeck.get< tag::t0 >();
+    const auto nstep = g_inputdeck.get< tag::nstep >();
+    const auto diag = g_inputdeck.get< tag::diagnostics, tag::interval >();
     const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
     const auto rsfreq = g_inputdeck.get< tag::cmd, tag::rsfreq >();
     const auto verbose = g_inputdeck.get< tag::cmd, tag::verbose >();
     const auto benchmark = g_inputdeck.get< tag::cmd, tag::benchmark >();
-    const auto steady = g_inputdeck.get< tag::discr, tag::steady_state >();
+    const auto steady = g_inputdeck.get< tag::steady_state >();
 
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;

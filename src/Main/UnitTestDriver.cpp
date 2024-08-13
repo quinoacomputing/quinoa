@@ -14,7 +14,6 @@
 #include "UnitTest/CmdLine/CmdLine.hpp"
 #include "QuinoaConfig.hpp"
 #include "NoWarning/tutsuite.decl.h"
-#include "TaggedTupleDeepPrint.hpp"
 #include "Writer.hpp"
 
 using unittest::UnitTestDriver;
@@ -32,11 +31,6 @@ UnitTestDriver::UnitTestDriver( const ctr::CmdLine& cmdline, int )
 //!   line arguments
 // *****************************************************************************
 {
-  // Output command line object to file
-  auto logfilename = tk::unittest_executable() + "_input.log";
-  tk::Writer log( logfilename );
-  tk::print( log.stream(), "cmdline", cmdline );
-
   // Instantiate (on PE 0 ) and run unit test suite. We only support Template
   // Unit Test suites at this point, so no factory instantiation, simply fire up
   // a Charm++ chare TUTSuite, which fires up and evaluates all unit tests

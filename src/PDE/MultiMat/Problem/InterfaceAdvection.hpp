@@ -21,14 +21,11 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/EOS.hpp"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 //! MultiMat system of PDEs problem: interface advection
 //! \see Waltz, et. al, "Manufactured solutions for the three-dimensional Euler
@@ -37,14 +34,13 @@ extern ctr::InputDeck g_inputdeck;
 class MultiMatProblemInterfaceAdvection {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
     using eq = tag::multimat;
 
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system,
-                ncomp_t ncomp,
+    initialize( ncomp_t ncomp,
                 const std::vector< EOS >&,
                 tk::real x,
                 tk::real y,
@@ -53,14 +49,14 @@ class MultiMatProblemInterfaceAdvection {
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static std::vector< tk::real >
-    analyticSolution( ncomp_t system, ncomp_t ncomp,
+    analyticSolution( ncomp_t ncomp,
                       const std::vector< EOS >& mat_blk, tk::real x,
                       tk::real y, tk::real z, tk::real t )
-    { return initialize( system, ncomp, mat_blk, x, y, z, t ); }
+    { return initialize( ncomp, mat_blk, x, y, z, t ); }
 
     //! Compute and return source term for interface advection
     static tk::SrcFn::result_type
-    src( ncomp_t, ncomp_t, const std::vector< EOS >&, tk::real, tk::real,
+    src( ncomp_t, const std::vector< EOS >&, tk::real, tk::real,
          tk::real, tk::real, std::vector< tk::real >& sv )
     {
       for (std::size_t i=0; i<sv.size(); ++i) {

@@ -16,19 +16,11 @@
 // *****************************************************************************
 
 #include "SlotCyl.hpp"
-#include "SystemComponents.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-
-namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
-
-} // ::inciter
 
 using inciter::TransportProblemSlotCyl;
 
 std::vector< tk::real >
-TransportProblemSlotCyl::initialize( ncomp_t, ncomp_t ncomp,
+TransportProblemSlotCyl::initialize( ncomp_t ncomp,
   const std::vector< EOS >&, tk::real x, tk::real y, tk::real,
   tk::real t )
 // *****************************************************************************
@@ -112,7 +104,7 @@ TransportProblemSlotCyl::initialize( ncomp_t, ncomp_t ncomp,
 }
 
 std::vector< std::array< tk::real, 3 > >
-TransportProblemSlotCyl::prescribedVelocity( ncomp_t, ncomp_t ncomp,
+TransportProblemSlotCyl::prescribedVelocity( ncomp_t ncomp,
                                              tk::real x, tk::real y, tk::real,
                                              tk::real )
 // *****************************************************************************

@@ -169,7 +169,7 @@ FUNCTION(SETUP_TARGET_FOR_ALL_COVERAGE suite path targetname unittestrunner
     COMMAND ${FASTCOV} --zerocounters
     # Run all test suites
     COMMAND ${unittestrunner} ${unittestrunner_ncpus_arg} ${PROCESSOR_COUNT} Main/${UNITTEST_EXECUTABLE} -v
-    COMMAND ${CMAKE_CTEST_COMMAND} -j${PROCESSOR_COUNT}
+    COMMAND ${CMAKE_CTEST_COMMAND} -j${PROCESSOR_COUNT} --output-on-failure
     # Process gcov output for genhtml
     COMMAND ${FASTCOV} --branch-coverage --exceptional-branch-coverage --lcov -o ${OUTPUT}.info --exclude tests/ c++/ include/ boost/ charm/ decl.h def.h openmpi pegtl tut/ highwayhash/ sol2/ moduleinit
     # Copy over report customization files for genhtml

@@ -15,7 +15,6 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace tk {
@@ -34,11 +33,6 @@ inline void operator|( PUP::er& p, PDFCenteringType& e ) { PUP::pup( p, e ); }
 class PDFCentering : public tk::Toggle< PDFCenteringType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::elem
-                                  , kw::node
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
@@ -47,11 +41,11 @@ class PDFCentering : public tk::Toggle< PDFCenteringType > {
         //! Group, i.e., options, name
         "PDF output file centering",
         //! Enums -> names
-        { { PDFCenteringType::ELEM, kw::elem::name() },
-          { PDFCenteringType::NODE, kw::node::name() } },
+        { { PDFCenteringType::ELEM, "elem" },
+          { PDFCenteringType::NODE, "node" } },
         //! keywords -> Enums
-        { { kw::elem::string(), PDFCenteringType::ELEM },
-          { kw::node::string(), PDFCenteringType::NODE } } ) {}
+        { { "elem", PDFCenteringType::ELEM },
+          { "node", PDFCenteringType::NODE } } ) {}
 };
 
 } // ctr::

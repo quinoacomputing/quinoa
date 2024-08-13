@@ -20,11 +20,9 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
-#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -37,7 +35,7 @@ extern ctr::InputDeck g_inputdeck;
 class CompFlowProblemNLEnergyGrowth {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
     using eq = tag::compflow;
 
     //! Compute internal energy parameter
@@ -51,18 +49,15 @@ class CompFlowProblemNLEnergyGrowth {
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t, const std::vector< EOS >&,
+    initialize( ncomp_t, const std::vector< EOS >&,
                 tk::real x, tk::real y, tk::real z, tk::real t );
 
     //! Evaluate analytical solution at (x,y,z,t) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t,
-                      const std::vector< EOS >&, tk::real x, tk::real y,
+    analyticSolution( ncomp_t, const std::vector< EOS >&, tk::real x, tk::real y,
                       tk::real z, tk::real t );
 
     //! Compute and return source term for NLEG manufactured solution
-    //! \param[in] system Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
@@ -70,21 +65,21 @@ class CompFlowProblemNLEnergyGrowth {
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, const std::vector< EOS >&, tk::real x,
+    src( ncomp_t, const std::vector< EOS >&, tk::real x,
          tk::real y, tk::real z, tk::real t, std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");
-      using tag::param; using std::sin; using std::cos;
+      using std::sin; using std::cos;
       // manufactured solution parameters
-      const auto a = g_inputdeck.get< param, eq, tag::alpha >()[system];
-      const auto bx = g_inputdeck.get< param, eq, tag::betax >()[system];
-      const auto by = g_inputdeck.get< param, eq, tag::betay >()[system];
-      const auto bz = g_inputdeck.get< param, eq, tag::betaz >()[system];
-      const auto ce = g_inputdeck.get< param, eq, tag::ce >()[system];
-      const auto kappa = g_inputdeck.get< param, eq, tag::kappa >()[system];
-      const auto r0 = g_inputdeck.get< param, eq, tag::r0 >()[system];
+      const auto a = g_inputdeck.get< eq, tag::alpha >();
+      const auto bx = g_inputdeck.get< eq, tag::betax >();
+      const auto by = g_inputdeck.get< eq, tag::betay >();
+      const auto bz = g_inputdeck.get< eq, tag::betaz >();
+      const auto ce = g_inputdeck.get< eq, tag::ce >();
+      const auto kappa = g_inputdeck.get< eq, tag::kappa >();
+      const auto r0 = g_inputdeck.get< eq, tag::r0 >();
       // ratio of specific heats
-      const auto g = gamma< tag::compflow >(system);
+      const auto g = getmatprop< tag::gamma >();
       // spatial component of density field
       const auto gx = 1.0 - x*x - y*y - z*z;
       // derivative of spatial component of density field

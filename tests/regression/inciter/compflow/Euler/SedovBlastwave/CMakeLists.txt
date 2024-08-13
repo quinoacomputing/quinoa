@@ -5,8 +5,8 @@
 
 add_regression_test(compflow_euler_sedovblastwave_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES sedov_blastwave_dgp1.q unitsquare_01_3.6k.exo
-                    ARGS -c sedov_blastwave_dgp1.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES sedov_blastwave_dgp1.lua unitsquare_01_3.6k.exo
+                    ARGS -c sedov_blastwave_dgp1.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE sedov_blastwave_dgp1.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
@@ -18,8 +18,8 @@ add_regression_test(compflow_euler_sedovblastwave_dgp1 ${INCITER_EXECUTABLE}
 
 #add_regression_test(compflow_euler_sedovblastwave_dgp2 ${INCITER_EXECUTABLE}
 #                    NUMPES 1
-#                    INPUTFILES sedov_blastwave_dgp2.q unitsquare_01_3.6k.exo
-#                    ARGS -c sedov_blastwave_dgp2.q -i unitsquare_01_3.6k.exo -v
+#                    INPUTFILES sedov_blastwave_dgp2.lua unitsquare_01_3.6k.exo
+#                    ARGS -c sedov_blastwave_dgp2.lua -i unitsquare_01_3.6k.exo -v
 #                    BIN_BASELINE sedov_blastwave_dgp2.std.exo
 #                    BIN_RESULT out.e-s.0.1.0
 #                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
@@ -31,8 +31,8 @@ add_regression_test(compflow_euler_sedovblastwave_dgp1 ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_sedovblastwave_pdg ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES sedov_blastwave_pdg.q unitsquare_01_3.6k.exo
-                    ARGS -c sedov_blastwave_pdg.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES sedov_blastwave_pdg.lua unitsquare_01_3.6k.exo
+                    ARGS -c sedov_blastwave_pdg.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE sedov_blastwave_pdg.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
@@ -46,8 +46,8 @@ add_regression_test(compflow_euler_sedovblastwave_pdg ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_sedovblastwave_dgp1 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES sedov_blastwave_dgp1.q unitsquare_01_3.6k.exo
-                    ARGS -c sedov_blastwave_dgp1.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES sedov_blastwave_dgp1.lua unitsquare_01_3.6k.exo
+                    ARGS -c sedov_blastwave_dgp1.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE sedov_blastwave_dgp1_pe4.std.exo.0
                                  sedov_blastwave_dgp1_pe4.std.exo.1
                                  sedov_blastwave_dgp1_pe4.std.exo.2
@@ -65,8 +65,8 @@ add_regression_test(compflow_euler_sedovblastwave_dgp1 ${INCITER_EXECUTABLE}
 
 #add_regression_test(compflow_euler_sedovblastwave_dgp2 ${INCITER_EXECUTABLE}
 #                    NUMPES 4
-#                    INPUTFILES sedov_blastwave_dgp2.q unitsquare_01_3.6k.exo
-#                    ARGS -c sedov_blastwave_dgp2.q -i unitsquare_01_3.6k.exo -v
+#                    INPUTFILES sedov_blastwave_dgp2.lua unitsquare_01_3.6k.exo
+#                    ARGS -c sedov_blastwave_dgp2.lua -i unitsquare_01_3.6k.exo -v
 #                    BIN_BASELINE sedov_blastwave_dgp2_pe4.std.exo.0
 #                                 sedov_blastwave_dgp2_pe4.std.exo.1
 #                                 sedov_blastwave_dgp2_pe4.std.exo.2
@@ -84,8 +84,8 @@ add_regression_test(compflow_euler_sedovblastwave_dgp1 ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_sedovblastwave_pdg ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES sedov_blastwave_pdg.q unitsquare_01_3.6k.exo
-                    ARGS -c sedov_blastwave_pdg.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES sedov_blastwave_pdg.lua unitsquare_01_3.6k.exo
+                    ARGS -c sedov_blastwave_pdg.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE sedov_blastwave_pdg_pe4_u0.0.std.exo.0
                                  sedov_blastwave_pdg_pe4_u0.0.std.exo.1
                                  sedov_blastwave_pdg_pe4_u0.0.std.exo.2
@@ -105,8 +105,8 @@ add_regression_test(compflow_euler_sedovblastwave_pdg ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_sedovblastwave_pdg_u0.9_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES sedov_blastwave_pdg.q unitsquare_01_3.6k.exo
-                    ARGS -c sedov_blastwave_pdg.q -i unitsquare_01_3.6k.exo -v -u 0.9
+                    INPUTFILES sedov_blastwave_pdg.lua unitsquare_01_3.6k.exo
+                    ARGS -c sedov_blastwave_pdg.lua -i unitsquare_01_3.6k.exo -v -u 0.9
                          +balancer RandCentLB +LBDebug 1
                     BIN_BASELINE sedov_blastwave_pdg_pe4_u0.9.std.exo.0
                                  sedov_blastwave_pdg_pe4_u0.9.std.exo.1

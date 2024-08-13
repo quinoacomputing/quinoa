@@ -210,6 +210,12 @@ class DG : public CBase_DG {
     //! Unused in DG
     void resized() {}
 
+    //! (no-op)
+    void transferSol() {}
+
+    //! (no-op)
+    void advance( tk::real, tk::real ) {}
+
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 
@@ -243,6 +249,13 @@ class DG : public CBase_DG {
       p | m_uNodalExtrmc;
       p | m_pNodalExtrmc;
       p | m_rhs;
+      p | m_rhsprev;
+      p | m_stiffrhs;
+      p | m_stiffrhsprev;
+      p | m_stiffEqIdx;
+      p | m_nonStiffEqIdx;
+      p | m_nstiffeq;
+      p | m_nnonstiffeq;
       p | m_npoin;
       p | m_diag;
       p | m_stage;
@@ -300,6 +313,8 @@ class DG : public CBase_DG {
     //! \brief Counter signaling that we have received all our nodal extrema from
     //!   ghost chare partitions
     std::size_t m_nnodalExtrema;
+    //! Counters signaling how many stiff and non-stiff equations in the system
+    std::size_t m_nstiffeq, m_nnonstiffeq;
     //! Vector of unknown/solution average over each mesh element
     tk::Fields m_u;
     //! Vector of unknown at previous time-step
@@ -312,6 +327,14 @@ class DG : public CBase_DG {
     tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
+    //! Vector of previous right-hand side values used in the IMEX-RK scheme
+    tk::Fields m_rhsprev;
+    //! Vector of right-hand side for stiff equations
+    tk::Fields m_stiffrhs;
+    //! Vector of previous right-hand side values for stiff equations
+    tk::Fields m_stiffrhsprev;
+    //! Vectors that indicates which equations are stiff and non-stiff
+    std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
     //! Inverse of Taylor mass-matrix
     std::vector< std::vector< tk::real > > m_mtInv;
     //! Vector of nodal extrema for conservative variables
@@ -425,6 +448,9 @@ class DG : public CBase_DG {
 
     //! Start preparing fields for output to file
     void startFieldOutput( CkCallback c );
+
+    //! Compute the integration step for IMEX-RK
+    void imex_integrate();
 };
 
 } // inciter::

@@ -39,13 +39,13 @@ namespace inciter {
 
 namespace cg {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! \brief Evaluate the increment from t to t+dt of an analytical solution at
 //!   (x,y,z) for all components
 std::vector< tk::real >
-solinc( tk::ncomp_t system, tk::ncomp_t ncomp, const std::vector< EOS >&,
-        tk::real x, tk::real y, tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution );
+solinc( tk::ncomp_t ncomp, const std::vector< EOS >&, tk::real x, tk::real y,
+        tk::real z, tk::real t, tk::real dt, tk::InitializeFn solution );
 
 //! Compute boundary point normals
 std::unordered_map< int,
@@ -70,7 +70,7 @@ bnorm( const std::map< int, std::vector< std::size_t > >& bface,
 class CGPDE {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
     using real = tk::real;
 
   public:
@@ -147,16 +147,6 @@ class CGPDE {
       tk::Fields& G ) const
     { self->chBndGrad( coord, inpoel, bndel, gid, bid, U, G ); }
 
-    //! Public interface to computing the right-hand side vector for DiagCG
-    void rhs( real t,
-              real deltat,
-              const std::array< std::vector< real >, 3 >& coord,
-              const std::vector< std::size_t >& inpoel,
-              const tk::Fields& U,
-              tk::Fields& Ue,
-              tk::Fields& R ) const
-    { self->rhs( t, deltat, coord, inpoel, U, Ue, R ); }
-
     //! Public interface to computing the right-hand side vector for ALECG
     void rhs(
       real t,
@@ -172,7 +162,6 @@ class CGPDE {
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbctri,
-      const std::unordered_set< std::size_t >& spongenodes,
       const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
@@ -184,8 +173,22 @@ class CGPDE {
       real V,
       tk::Fields& R ) const
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
-        esup, symbctri, spongenodes, vol, edgenode, edgeid,
+        esup, symbctri, vol, edgenode, edgeid,
         boxnodes, G, U, W, tp, V, R ); }
+
+    //! Public interface to compute the mesh velocity for OversetFE
+    void getMeshVel(
+      real t,
+      const std::array< std::vector< real >, 3 >& coord,
+      const std::pair< std::vector< std::size_t >,
+                       std::vector< std::size_t > >& psup,
+      const std::unordered_set< std::size_t >& symbcnodes,
+      const std::array< tk::real, 3 >& uservel,
+      const tk::Fields& U,
+      tk::Fields& meshvel,
+      int& movedmesh ) const
+    { self->getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
+        movedmesh ); }
 
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
@@ -236,13 +239,6 @@ class CGPDE {
                 const std::unordered_set< std::size_t >& nodes ) const
     { self->farfieldbc( U, coord, bnorm, nodes ); }
 
-    //! Public interface to applying sponge conditions at nodes
-    void
-    sponge( tk::Fields& U,
-            const std::array< std::vector< real >, 3 >& coord,
-            const std::unordered_set< std::size_t >& nodes ) const
-    { self->sponge( U, coord, nodes ); }
-
     //! Public interface to applying time dependent boundary conditions at nodes
     void
     timedepbc( tk::real t,
@@ -250,6 +246,10 @@ class CGPDE {
       const std::vector< std::unordered_set< std::size_t > >& nodes,
       const std::vector< tk::Table<5> >& timedepfn ) const
     { self->timedepbc( t, U, nodes, timedepfn ); }
+
+    //! Public interface to returning maps of output var functions
+    std::map< std::string, tk::GetVarFn > OutVarFn() const
+    { return self->OutVarFn(); }
 
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
@@ -337,13 +337,6 @@ class CGPDE {
         const std::unordered_map< std::size_t, std::size_t >&,
         const tk::Fields&,
         tk::Fields& ) const = 0;
-      virtual void rhs( real,
-                        real,
-                        const std::array< std::vector< real >, 3 >&,
-                        const std::vector< std::size_t >&,
-                        const tk::Fields&,
-                        tk::Fields&,
-                        tk::Fields& ) const = 0;
       virtual void rhs(
         real,
         const std::array< std::vector< real >, 3 >&,
@@ -358,7 +351,6 @@ class CGPDE {
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >&,
         const std::vector< int >&,
-        const std::unordered_set< std::size_t >&,
         const std::vector< real >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -369,6 +361,16 @@ class CGPDE {
         const std::vector< real >&,
         real,
         tk::Fields& ) const = 0;
+      virtual void getMeshVel(
+        real,
+        const std::array< std::vector< real >, 3 >&,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >&,
+        const std::unordered_set< std::size_t >&,
+        const std::array< tk::real, 3 >&,
+        const tk::Fields&,
+        tk::Fields&,
+        int& ) const = 0;
       virtual real dt( const std::array< std::vector< real >, 3 >&,
                        const std::vector< std::size_t >&,
                        tk::real,
@@ -402,15 +404,12 @@ class CGPDE {
                 std::unordered_map< std::size_t,
                   std::array< real, 4 > > >&,
         const std::unordered_set< std::size_t >& ) const = 0;
-      virtual void sponge(
-        tk::Fields&,
-        const std::array< std::vector< real >, 3 >&,
-        const std::unordered_set< std::size_t >& ) const = 0;
       virtual void timedepbc(
         tk::real,
         tk::Fields&,
         const std::vector< std::unordered_set< std::size_t > >&,
         const std::vector< tk::Table<5> >& ) const = 0;
+      virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -468,14 +467,6 @@ class CGPDE {
         const tk::Fields& U,
         tk::Fields& G ) const override
       { data.chBndGrad( coord, inpoel, bndel, gid, bid, U, G ); }
-      void rhs( real t,
-                real deltat,
-                const std::array< std::vector< real >, 3 >& coord,
-                const std::vector< std::size_t >& inpoel,
-                const tk::Fields& U,
-                tk::Fields& Ue,
-                tk::Fields& R ) const override
-      { data.rhs( t, deltat, coord, inpoel, U, Ue, R ); }
       void rhs(
         real t,
         const std::array< std::vector< real >, 3 >& coord,
@@ -490,7 +481,6 @@ class CGPDE {
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >& esup,
         const std::vector< int >& symbctri,
-        const std::unordered_set< std::size_t >& spongenodes,
         const std::vector< real >& vol,
         const std::vector< std::size_t >& edgenode,
         const std::vector< std::size_t >& edgeid,
@@ -502,8 +492,20 @@ class CGPDE {
         real V,
         tk::Fields& R ) const override
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
-                  esup, symbctri, spongenodes, vol, edgenode,
+                  esup, symbctri, vol, edgenode,
                   edgeid, boxnodes, G, U, W, tp, V, R ); }
+      void getMeshVel(
+        real t,
+        const std::array< std::vector< real >, 3 >& coord,
+        const std::pair< std::vector< std::size_t >,
+                         std::vector< std::size_t > >& psup,
+        const std::unordered_set< std::size_t >& symbcnodes,
+        const std::array< tk::real, 3 >& uservel,
+        const tk::Fields& U,
+        tk::Fields& meshvel,
+        int& movedmesh ) const override
+      { data.getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
+          movedmesh ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                tk::real t,
@@ -543,11 +545,6 @@ class CGPDE {
                   std::array< real, 4 > > >& bnorm,
         const std::unordered_set< std::size_t >& nodes ) const override
       { data.farfieldbc( U, coord, bnorm, nodes ); }
-      void sponge(
-        tk::Fields& U,
-        const std::array< std::vector< real >, 3 >& coord,
-        const std::unordered_set< std::size_t >& nodes ) const override
-      { data.sponge( U, coord, nodes ); }
       void
       timedepbc(
         tk::real t,
@@ -555,6 +552,8 @@ class CGPDE {
         const std::vector< std::unordered_set< std::size_t > >& nodes,
         const std::vector< tk::Table<5> >& timedepfn ) const override
       { data.timedepbc( t, U, nodes, timedepfn ); }
+      std::map< std::string, tk::GetVarFn > OutVarFn() const override
+      { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > surfNames() const override

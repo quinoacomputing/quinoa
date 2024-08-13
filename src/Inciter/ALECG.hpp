@@ -37,16 +37,12 @@
 #include "Fields.hpp"
 #include "Table.hpp"
 #include "DerivedData.hpp"
-#include "FluxCorrector.hpp"
 #include "NodeDiagnostics.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Ghosts.hpp"
 
 #include "NoWarning/alecg.decl.h"
 
 namespace inciter {
-
-extern ctr::InputDeck g_inputdeck;
 
 //! ALECG Charm++ chare array used to advance PDEs in time with ALECG+RK
 class ALECG : public CBase_ALECG {
@@ -105,6 +101,9 @@ class ALECG : public CBase_ALECG {
     //! Setup node-neighborhood (no-op)
     void nodeNeighSetup() {}
 
+    //! (no-op)
+    void transferSol() {}
+
     //! Start setup for solution
     void setup();
 
@@ -115,7 +114,7 @@ class ALECG : public CBase_ALECG {
     void start();
 
     //! Advance equations to next time step
-    void advance( tk::real newdt );
+    void advance( tk::real newdt, tk::real );
 
     //! Compute left-hand side of transport equations
     void lhs();
@@ -236,7 +235,6 @@ class ALECG : public CBase_ALECG {
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
       p | m_symbctri;
-      p | m_spongenodes;
       p | m_timedepbcnodes;
       p | m_timedepbcFn;
       p | m_stage;
@@ -259,7 +257,7 @@ class ALECG : public CBase_ALECG {
     //@}
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
 
     //! Discretization proxy
     CProxy_Discretization m_disc;
@@ -338,8 +336,6 @@ class ALECG : public CBase_ALECG {
     std::unordered_set< std::size_t > m_farfieldbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
-    //! Unique set of nodes at which sponge parameters are set
-    std::unordered_set< std::size_t > m_spongenodes;
     //! \brief Unique set of nodes at which time dependent BCs are set
     //    for each time dependent BC
     std::vector< std::unordered_set< std::size_t > > m_timedepbcnodes;

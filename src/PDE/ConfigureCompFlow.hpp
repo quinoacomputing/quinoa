@@ -17,10 +17,10 @@
 #include <vector>
 
 #include "PDEFactory.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "FunctionPrototypes.hpp"
 #include "ContainerUtil.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
@@ -36,12 +36,7 @@ registerCompFlow( CGFactory& cf,
 
 //! Return information on the compressible flow PDE
 std::vector< std::pair< std::string, std::string > >
-infoCompFlow( std::map< ctr::PDEType, tk::ctr::ncomp_t >& cnt );
-
-//! \brief Assign function that computes physics variables from the
-//!   numerical solution for CompFlow
-void
-assignCompFlowGetVars( const std::string& name, tk::GetVarFn& f );
+infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt );
 
 /** @name Functions that compute physics variables from the numerical solution for CompFlow */
 ///@{
@@ -69,7 +64,7 @@ densityOutVar( const tk::Fields& U, std::size_t )
 //! \param[in] U Numerical solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Velocity component ready to be output to file
-template< tk::ctr::ncomp_t dir >
+template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
 velocityOutVar( const tk::Fields& U, std::size_t rdof )
 {
@@ -110,7 +105,7 @@ specificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 //! \param[in] U Numerical solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Momentum component ready to be output to file
-template< tk::ctr::ncomp_t dir >
+template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
 momentumOutVar( const tk::Fields& U, std::size_t rdof )
 {
@@ -135,14 +130,13 @@ pressureOutVar( const tk::Fields& U, std::size_t rdof )
   v /= r;
   w /= r;
   auto p = r;
-  auto sys = tk::cref_find( g_inputdeck.get< tag::sys >(), 0 );
   for (std::size_t i=0; i<U.nunk(); ++i) {
     // \brief This uses the old eos_pressure call for now, because we didn't 
     // want to change the GetVarFn function signature right now. It's only in
     // the single material CompFlow class, so it shouldn't need multi-material
     // EOSs anyway.
-    auto g = gamma< tag::compflow >(sys);
-    auto p_c = pstiff< tag::compflow >(sys);
+    auto g = getmatprop< tag::gamma >();
+    auto p_c = getmatprop< tag::pstiff >();
     p[i] = (re[i] - 0.5 * r[i] * (u[i]*u[i] + v[i]*v[i] + w[i]*w[i]) - p_c)
                             * (g-1.0) - p_c;
 //    p[i] = m_mat_blk[0]->eos_pressure( sys, r[i], u[i], v[i], w[i], re[i] );

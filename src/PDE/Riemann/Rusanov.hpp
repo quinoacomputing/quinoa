@@ -14,9 +14,7 @@
 
 #include <vector>
 
-#include "Types.hpp"
 #include "Fields.hpp"
-#include "Tags.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
 #include "EoS/EOS.hpp"

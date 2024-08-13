@@ -124,7 +124,7 @@ Sorter::setup( std::size_t npoin )
   std::array< std::size_t, 2 > chunksize{{
      npoin / N, std::numeric_limits< std::size_t >::max() / N }};
 
-  const auto scheme = g_inputdeck.get< tag::discr, tag::scheme >();
+  const auto scheme = g_inputdeck.get< tag::scheme >();
 
   // Find chare-boundary nodes and edges of our mesh chunk. This algorithm
   // collects the global mesh node ids and edges on the chare boundary. A node
@@ -153,7 +153,8 @@ Sorter::setup( std::size_t npoin )
           Assert( bin < N, "Will index out of number of chares" );
           auto& b = chbnd[ static_cast< int >( bin ) ];
           b.get< tag::node >().insert( g );
-          if (scheme == ctr::SchemeType::ALECG) {
+          if (scheme == ctr::SchemeType::ALECG ||
+            scheme == ctr::SchemeType::OversetFE) {
             auto h = m_ginpoel[ mark + tk::lpofa[ f ][ tk::lpoet[n][1] ] ];
             b.get< tag::edge >().insert( { std::min(g,h), std::max(g,h) } );
           }
@@ -304,7 +305,7 @@ Sorter::start()
   tk::destroy( m_nodech );
   tk::destroy( m_chnode );
 
-  if (g_inputdeck.get< tag::discr, tag::pelocal_reorder >())
+  if (g_inputdeck.get< tag::pelocal_reorder >())
     mask();   // continue with mesh node reordering if requested (or required)
   else
     createDiscWorkers();  // skip mesh node reordering
@@ -573,7 +574,7 @@ Sorter::createDiscWorkers()
   // "Dynamic Insertion".
 
   m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, disc,
-    m_scheme[m_meshid].fct(), m_scheme[m_meshid].ale(),
+    m_scheme[m_meshid].ale(),
     m_scheme[m_meshid].conjugategradients(), m_host, m_meshwriter, m_coordmap,
     m_el, m_msum, m_bface, m_triinpoel, m_elemblockid, m_nchare );
 

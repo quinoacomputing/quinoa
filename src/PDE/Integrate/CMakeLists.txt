@@ -7,7 +7,8 @@ add_library(Integrate
             Volume.cpp
             MultiMatTerms.cpp
             Source.cpp
-            Basis.cpp)
+            Basis.cpp
+            SolidTerms.cpp)
 
 target_include_directories(Integrate PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -19,8 +20,8 @@ target_include_directories(Integrate PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
-                           ${MKL_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
+                           ${CBLAS_INCLUDE_DIRS}
                            ${HIGHWAYHASH_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 

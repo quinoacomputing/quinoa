@@ -27,53 +27,7 @@
 
 namespace tk {
 
-using ncomp_t = kw::ncomp::info::expect::type;
-
-//! Compute lhs matrix for the least-squares reconstruction
-void
-lhsLeastSq_P0P1(
-  const inciter::FaceData& fd,
-  const Fields& geoElem,
-  const Fields& geoFace,
-  std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls );
-
-//! Compute internal surface contributions to the least-squares reconstruction
-void
-intLeastSq_P0P1( const std::size_t rdof,
-                 const inciter::FaceData& fd,
-                 const Fields& geoElem,
-                 const Fields& W,
-                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                 const std::vector< std::vector< std::size_t > >& varRange );
-
-//! \brief Compute boundary surface contributions to rhs vector of the
-//!   least-squares reconstruction of conserved quantities of the PDE system
-void
-bndLeastSqConservedVar_P0P1(
-  ncomp_t system,
-  ncomp_t ncomp,
-  const std::vector< inciter::EOS >& mat_blk,
-  std::size_t rdof,
-  const std::vector< bcconf_t >& bcconfig,
-  const inciter::FaceData& fd,
-  const Fields& geoFace,
-  const Fields& geoElem,
-  real t,
-  const StateFn& state,
-  const Fields& P,
-  const Fields& U,
-  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-  const std::vector< std::vector< std::size_t > >& varRange,
-  std::size_t nprim=0 );
-
-//! Solve 3x3 system for least-squares reconstruction
-void
-solveLeastSq_P0P1(
-  const std::size_t rdof,
-  const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
-  const std::vector< std::vector< std::array< real, 3 > > >& rhs,
-  Fields& W,
-  const std::vector< std::vector< std::size_t > >& varRange );
+using ncomp_t = tk::ncomp_t;
 
 //! \brief Reconstruct the second-order solution using least-squares approach
 //!   from an extended stencil involving the node-neighbors
@@ -85,7 +39,7 @@ recoLeastSqExtStencil(
   const std::vector< std::size_t >& inpoel,
   const Fields& geoElem,
   Fields& W,
-  const std::vector< std::size_t >& varRange );
+  const std::vector< std::size_t >& varList );
 
 //! Transform the reconstructed P1-derivatives to the Dubiner dofs
 void
@@ -94,11 +48,11 @@ transform_P0P1( std::size_t rdof,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& W,
-                const std::vector< std::size_t >& varRange );
+                const std::vector< std::size_t >& varList );
 
 //! Compute THINC reconstructions near material interfaces
 void
-THINCReco( std::size_t system,
+THINCReco(
   std::size_t rdof,
   std::size_t nmat,
   std::size_t e,
@@ -108,13 +62,15 @@ THINCReco( std::size_t system,
   const std::array< real, 3 >& xp,
   const Fields& U,
   const Fields& P,
+  bool intInd,
+  const std::vector< std::size_t >& matInt,
   const std::vector< real >& vfmin,
   const std::vector< real >& vfmax,
   std::vector< real >& state );
 
 //! Compute THINC reconstructions for linear advection (transport)
 void
-THINCRecoTransport( std::size_t system,
+THINCRecoTransport(
   std::size_t rdof,
   std::size_t,
   std::size_t e,
@@ -160,7 +116,7 @@ THINCFunction_new( std::size_t rdof,
 
 //! Evaluate polynomial solution at quadrature point
 std::vector< tk::real >
-evalPolynomialSol(std::size_t system,
+evalPolynomialSol(
   const std::vector< inciter::EOS >& mat_blk,
   int intsharp,
   std::size_t ncomp,
@@ -176,6 +132,25 @@ evalPolynomialSol(std::size_t system,
   const std::vector< real >& B,
   const Fields& U,
   const Fields& P);
+
+//! Evaluate second-order FV solution at quadrature point
+std::vector< tk::real >
+evalFVSol(
+  const std::vector< inciter::EOS >& mat_blk,
+  int intsharp,
+  std::size_t ncomp,
+  std::size_t nprim,
+  std::size_t rdof,
+  std::size_t nmat,
+  std::size_t e,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const std::array< real, 3 >& ref_gp,
+  const std::vector< real >& B,
+  const Fields& U,
+  const Fields& P,
+  int srcFlag );
 
 //! Compute safe reconstructions near material interfaces
 void

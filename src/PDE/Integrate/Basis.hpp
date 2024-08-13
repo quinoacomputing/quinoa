@@ -20,7 +20,6 @@
 #ifndef Basis_h
 #define Basis_h
 
-#include "Types.hpp"
 #include "Vector.hpp"
 #include "Fields.hpp"
 #include "FaceData.hpp"
@@ -30,8 +29,7 @@
 
 namespace tk {
 
-using ncomp_t = kw::ncomp::info::expect::type;
-using bcconf_t = kw::sideset::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Compute the coordinates of quadrature points for face integral
 std::array< tk::real, 3 >
@@ -76,8 +74,7 @@ eval_state ( ncomp_t ncomp,
              const std::size_t ndof_el,
              const std::size_t e,
              const Fields& U,
-             const std::vector< tk::real >& B,
-             const std::array< std::size_t, 2 >& VarRange );
+             const std::vector< tk::real >& B );
 
 //! Transform the solution with Dubiner basis to the solution with Taylor basis
 std::vector< std::vector< tk::real > >

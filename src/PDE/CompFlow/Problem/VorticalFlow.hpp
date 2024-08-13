@@ -22,11 +22,9 @@
 #include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/Problem.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "EoS/GetMatProp.hpp"
-#include "EoS/EOS.hpp"
 
 namespace inciter {
 
@@ -39,44 +37,40 @@ extern ctr::InputDeck g_inputdeck;
 class CompFlowProblemVorticalFlow {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
     using eq = tag::compflow;
 
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t, const std::vector< EOS >&,
+    initialize( ncomp_t, const std::vector< EOS >&,
                 tk::real x, tk::real y, tk::real z, tk::real );
 
     //! Evaluate analytical solution at (x,y,z) for all components
     static tk::InitializeFn::result_type
-    analyticSolution( ncomp_t system, ncomp_t, const std::vector< EOS >&,
+    analyticSolution( ncomp_t, const std::vector< EOS >&,
                       tk::real x, tk::real y, tk::real z, tk::real );
 
     //! Compute and return source term for vortical flow manufactured solution
-    //! \param[in] system Equation system index, i.e., which compressible
-    //!   flow equation system we operate on among the systems of PDEs
     //! \param[in] x X coordinate where to evaluate the solution
     //! \param[in] y Y coordinate where to evaluate the solution
     //! \param[in] z Z coordinate where to evaluate the solution
     //! \param[in,out] sv Source term vector
     //! \note The function signature must follow tk::SrcFn
     static tk::SrcFn::result_type
-    src( ncomp_t system, ncomp_t, const std::vector< EOS >& mat_blk,
+    src( ncomp_t, const std::vector< EOS >& mat_blk,
          tk::real x, tk::real y, tk::real z, tk::real,
          std::vector< tk::real >& sv )
     {
       Assert(sv.size() == 5, "Incorrect source vector size");
-      using tag::param; using tag::compflow;
 
       // manufactured solution parameters
-      const auto& a =
-        g_inputdeck.get< param, compflow, tag::alpha >()[ system ];
-      const auto& b = g_inputdeck.get< param, compflow, tag::beta >()[ system ];
+      auto a = g_inputdeck.get< eq, tag::alpha >();
+      auto b = g_inputdeck.get< eq, tag::beta >();
       // ratio of specific heats
-      tk::real g = gamma< tag::compflow >(system);
+      tk::real g = getmatprop< tag::gamma >();
       // evaluate solution at x,y,z
-      auto s = initialize( system, 5, mat_blk, x, y, z, 0.0 );
+      auto s = initialize( 5, mat_blk, x, y, z, 0.0 );
 
       // density source
       sv[0] = 0.0;

@@ -106,13 +106,6 @@ class InciterPrint : public tk::Print {
     void inthead( const std::string& t, const std::string& name,
                   const std::string& legend, const std::string& head ) const;
 
-    //! Print mesh refinement variables and their indices in the unknown vector
-    void refvar( const std::vector< std::string >& rvar,
-                 const std::vector< std::size_t >& refidx ) const;
-
-    //! Print initial mesh refinement edge-node pairs
-    void edgeref( const std::vector< std::size_t >& edgenodes ) const;
-
   private:
     //! Return partial differential equation name
     //! \param[in] key Equation key

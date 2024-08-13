@@ -17,7 +17,6 @@
 
 #include "Basis.hpp"
 #include "Surface.hpp"
-#include "Types.hpp"
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
@@ -26,18 +25,16 @@
 
 namespace tk {
 
-using ncomp_t = kw::ncomp::info::expect::type;
-using bcconf_t = kw::sideset::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Compute boundary surface flux integrals for a given boundary type for DG
 void
-bndSurfInt( ncomp_t system,
-            const bool pref,
+bndSurfInt( const bool pref,
             std::size_t nmat,
             const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
             const std::size_t rdof,
-            const std::vector< bcconf_t >& bcconfig,
+            const std::vector< std::size_t >& bcconfig,
             const inciter::FaceData& fd,
             const Fields& geoFace,
             const Fields& geoElem,
@@ -72,11 +69,11 @@ update_rhs_bc ( ncomp_t ncomp,
 
 //! Compute boundary surface flux integrals for a given boundary type for FV
 void
-bndSurfIntFV( ncomp_t system,
+bndSurfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t rdof,
-  const std::vector< bcconf_t >& bcconfig,
+  const std::vector< std::size_t >& bcconfig,
   const inciter::FaceData& fd,
   const Fields& geoFace,
   const Fields& geoElem,
@@ -88,8 +85,29 @@ bndSurfIntFV( ncomp_t system,
   const StateFn& state,
   const Fields& U,
   const Fields& P,
+  const std::vector< int >& srcFlag,
   Fields& R,
-  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp );
+
+//! Compute boundary surface flux integrals for a given boundary type for FV
+void
+bndSurfIntViscousFV(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t rdof,
+  const std::vector< std::size_t >& bcconfig,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  real t,
+  const StateFn& state,
+  const StateFn& gradFn,
+  const Fields& U,
+  const Fields& P,
+  const std::vector< int >& srcFlag,
+  Fields& R,
   int intsharp );
 } // tk::
 

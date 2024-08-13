@@ -1,0 +1,58 @@
+/*!
+  @page      running_meshconv Running MeshConv
+
+This page is a quick-reference guide to running MeshConv, the mesh format
+converter. See the @ref meshconv_main "MeshConv page" for more details about
+MeshConv itself.
+
+MeshConv can be run using the executable in `<build-dir>/Main/meshconv`.
+For example,
+
+@code{.bash}
+meshconv -i inp.msh -o out.exo
+@endcode
+
+will read data from 'inp.msh' in Gmsh format, and output it to 'out.exo' in
+[ExodusII format](https://github.com/gsjaardema/seacas).
+Help can be accessed by passing the `--help` argument to
+`meshconv`. The full list can also be found @ref meshconv_cmd "here".
+
+@section surf_stitch Surface outputs
+
+Surface outputs from a parallel simulation need to be stitched before
+visualization. MeshConv is used for stitching such surface output files.
+For example, if the surface output is from a parallel simulation (say using 30
+partitions/chares), stitch the surface outputs (say for sideset 2) using
+MeshConv as follows:
+
+@code{.bash}
+meshconv -i out-surf.2.e-s.0.30.% -o out-surf2.exo -v
+@endcode
+
+This takes a single sideset saved by multiple chares and combines them to a
+single file which can be loaded into [ParaView](https://www.paraview.org).
+
+@section overset_surf_stitch Surface outputs for moving overset meshes
+
+@warning The overset mesh solver in Quinoa is experimental and WIP.
+
+Quinoa outputs a different field output (surface and volume) every time the mesh
+changes. For a moving overset mesh, this complicates the stitching process.
+Assume three time-stamps- 0, 13, 38 for the sideset 101, from a 22-core simulation.
+The steps to stitch the surface output for sideset 101 are as follows.
+
+Stitch each time-stamp output together using:
+
+      <build-dir>/Main/meshconv -i out-surf.101.1.e-s.<TS>.22.% -o sideset101.<TS>.exo
+
+where `<TS>` should be replaced by 0, 13, and 38 for each time-stamp. This will
+result in 3 files: `sideset101.<TS>.exo`, for `<TS>`=0,13,38. Next, rename these
+`sideset101.<TS>.exo`'s using:
+
+      mv sideset101.<TS>.exo sideset101.e-s.<TS>
+
+where again `<TS>` should be replaced by the specific time-stamp.
+Load `sideset101.e-s.0` into ParaView. This will load the surface output time
+series correctly.
+
+*/

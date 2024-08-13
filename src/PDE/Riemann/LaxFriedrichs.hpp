@@ -14,7 +14,6 @@
 
 #include <vector>
 
-#include "Types.hpp"
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"

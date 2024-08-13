@@ -14,12 +14,11 @@
 #ifndef Mass_h
 #define Mass_h
 
-#include "Types.hpp"
 #include "Fields.hpp"
 
 namespace tk {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Compute the block-diagnoal mass matrix for DG
 void

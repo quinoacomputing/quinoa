@@ -16,7 +16,6 @@
 #define Surface_h
 
 #include "Basis.hpp"
-#include "Types.hpp"
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
@@ -26,19 +25,18 @@
 
 namespace tk {
 
-using ncomp_t = kw::ncomp::info::expect::type;
-using bcconf_t = kw::sideset::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Compute internal surface flux integrals for DG
 void
-surfInt( ncomp_t system,
-         const bool pref,
+surfInt( const bool pref,
          std::size_t nmat,
          const std::vector< inciter::EOS >& mat_blk,
          real t,
          const std::size_t ndof,
          const std::size_t rdof,
          const std::vector< std::size_t >& inpoel,
+         const std::vector< std::size_t >& solidx,
          const UnsMesh::Coords& coord,
          const inciter::FaceData& fd,
          const Fields& geoFace,
@@ -48,6 +46,7 @@ surfInt( ncomp_t system,
          const Fields& U,
          const Fields& P,
          const std::vector< std::size_t >& ndofel,
+         const tk::real dt,
          Fields& R,
          std::vector< std::vector< tk::real > >& vriem,
          std::vector< std::vector< tk::real > >& xcoord,
@@ -73,7 +72,7 @@ update_rhs_fa ( ncomp_t ncomp,
 
 // Compute internal surface flux integrals for second order FV
 void
-surfIntFV( ncomp_t system,
+surfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   real t,
@@ -87,9 +86,37 @@ surfIntFV( ncomp_t system,
   const VelFn& vel,
   const Fields& U,
   const Fields& P,
+  const std::vector< int >& srcFlag,
   Fields& R,
-  std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp );
+
+// Compute internal surface viscous flux integrals for second order FV
+void
+surfIntViscousFV(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t rdof,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const std::vector< int >& srcFlag,
+  Fields& R,
+  int intsharp );
+
+// Compute the viscous fluxes from the left and right states
+std::vector< real >
+modifiedGradientViscousFlux(
+  std::size_t nmat,
+  std::size_t ncomp,
+  const std::array< tk::real, 3 >& fn,
+  const std::array< std::array< tk::real, 3 >, 2 >& centroids,
+  const std::array< std::vector< tk::real >, 2 >& state,
+  const std::array< std::vector< tk::real >, 2 >& cellAvgState,
+  const std::array< std::array< real, 3 >, 3 > dudx );
 
 } // tk::
 

@@ -7,7 +7,7 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Boundary conditions for nodal discretizations
   \details   Boundary conditions for nodal discretizations, such as continuous
-    Galerkin finite elements, e.g., DiagCG.
+    Galerkin finite elements.
 */
 // *****************************************************************************
 #ifndef NodeBC_h
@@ -17,7 +17,7 @@
 #include <map>
 #include <unordered_map>
 
-#include "SystemComponents.hpp"
+#include "Types.hpp"
 #include "UnsMesh.hpp"
 #include "Fields.hpp"
 
@@ -26,7 +26,7 @@ namespace inciter {
 //! Match user-specified boundary conditions at nodes for side sets
 std::unordered_map< std::size_t, std::vector< std::pair< bool, tk::real > > >
 match( std::size_t meshid,
-       tk::ctr::ncomp_t ncomp,
+       tk::ncomp_t ncomp,
        tk::real t,
        tk::real dt,
        const std::vector< tk::real >& tp,
@@ -35,15 +35,6 @@ match( std::size_t meshid,
        const std::unordered_map< std::size_t, std::size_t >& lid,
        const std::map< int, std::vector< std::size_t > >& sidenodes,
        bool increment );
-
-//! \brief Verify that the change in the solution at those nodes where
-//!   Dirichlet boundary conditions are set is exactly the amount the BCs
-//!   prescribe
-bool
-correctBC( const tk::Fields& a,
-           const tk::Fields& dul,
-           const std::unordered_map< std::size_t,
-                   std::vector< std::pair< bool, tk::real > > >& bc );
 
 } // inciter::
 

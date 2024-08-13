@@ -27,10 +27,8 @@
 #cmakedefine FIELD_DATA_LAYOUT_AS_EQUATION_MAJOR
 
 // Optional TPLs
-#cmakedefine HAS_MKL
 #cmakedefine HAS_BACKWARD
 #cmakedefine HAS_LUA
-#cmakedefine HAS_EXAM2M
 
 // Executables optional
 #cmakedefine ENABLE_INCITER

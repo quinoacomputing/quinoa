@@ -15,6 +15,7 @@
 #include <array>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 #include "Vector.hpp"
 #include "Around.hpp"
@@ -31,283 +32,6 @@ extern ctr::InputDeck g_inputdeck;
 namespace tk {
 
 void
-lhsLeastSq_P0P1( const inciter::FaceData& fd,
-                 const Fields& geoElem,
-                 const Fields& geoFace,
-                 std::vector< std::array< std::array< real, 3 >, 3 > >& lhs_ls )
-// *****************************************************************************
-//  Compute lhs matrix for the least-squares reconstruction
-//! \param[in] fd Face connectivity and boundary conditions object
-//! \param[in] geoElem Element geometry array
-//! \param[in] geoFace Face geometry array
-//! \param[in,out] lhs_ls LHS reconstruction matrix
-//! \details This function computing the lhs matrix for reconstruction, is
-//!   common for primitive and conserved quantities.
-// *****************************************************************************
-{
-  const auto& esuf = fd.Esuf();
-  const auto nelem = fd.Esuel().size()/4;
-
-  // Compute internal and boundary face contributions
-  for (std::size_t f=0; f<esuf.size()/2; ++f)
-  {
-    Assert( esuf[2*f] > -1, "Left-side element detected as -1" );
-
-    auto el = static_cast< std::size_t >(esuf[2*f]);
-    auto er = esuf[2*f+1];
-
-    std::array< real, 3 > geoElemR;
-    std::size_t eR(0);
-
-    // A second-order (piecewise linear) solution polynomial can be obtained
-    // from the first-order (piecewise constant) FV solutions by using a
-    // least-squares (LS) reconstruction process. LS uses the first-order
-    // solutions from the cell being processed, and the cells surrounding it.
-    // The LS system is obtaining by requiring the following to hold:
-    // 'Taylor expansions of solution from cell-i to the centroids of each of
-    // its neighboring cells should be equal to the cell average solution on
-    // that neighbor cell.'
-    // This gives a system of equations for the three second-order DOFs that are
-    // to be determined. In 3D tetrahedral meshes, this would give four
-    // equations (one for each neighbor )for the three unknown DOFs. This
-    // overdetermined system is solved in the least-squares sense using the
-    // normal equations approach. The normal equations approach involves
-    // pre-multiplying the overdetermined system by the transpose of the system
-    // matrix to obtain a square matrix (3x3 in this case).
-
-    // get a 3x3 system by applying the normal equation approach to the
-    // least-squares overdetermined system
-
-    if (er > -1) {
-    // internal face contribution
-      eR = static_cast< std::size_t >(er);
-      // Put in cell-centroid coordinates
-      geoElemR = {{ geoElem(eR,1), geoElem(eR,2), geoElem(eR,3) }};
-    }
-    else {
-    // boundary face contribution
-      // Put in face-centroid coordinates
-      geoElemR = {{ geoFace(f,4), geoFace(f,5), geoFace(f,6) }};
-    }
-
-    std::array< real, 3 > wdeltax{{ geoElemR[0]-geoElem(el,1),
-                                    geoElemR[1]-geoElem(el,2),
-                                    geoElemR[2]-geoElem(el,3) }};
-
-    // define a lambda for contributing to lhs matrix
-    auto lhs = [&]( std::size_t e ){
-    for (std::size_t idir=0; idir<3; ++idir)
-      for (std::size_t jdir=0; jdir<3; ++jdir)
-        lhs_ls[e][idir][jdir] += wdeltax[idir] * wdeltax[jdir];
-    };
-
-    // always add left element contribution (at a boundary face, the internal
-    // element is always the left element)
-    lhs(el);
-    // add right element contribution for internal faces only
-    if (er > -1)
-      if (eR < nelem) lhs(eR);
-
-  }
-}
-
-void
-intLeastSq_P0P1( const std::size_t rdof,
-                 const inciter::FaceData& fd,
-                 const Fields& geoElem,
-                 const Fields& W,
-                 std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-                 const std::vector< std::vector< std::size_t > >& varRange )
-// *****************************************************************************
-//  \brief Compute internal surface contributions to rhs vector of the
-//    least-squares reconstruction
-//! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] fd Face connectivity and boundary conditions object
-//! \param[in] geoElem Element geometry array
-//! \param[in] W Solution vector to be reconstructed at recent time step
-//! \param[in,out] rhs_ls RHS reconstruction vector
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
-//! \details This function computing the internal face contributions to the rhs
-//!   vector for reconstruction, is common for primitive and conserved
-//!   quantities. If `W` == `U`, compute internal face contributions for the
-//!   conserved variables. If `W` == `P`, compute internal face contributions
-//!   for the primitive variables.
-// *****************************************************************************
-{
-  const auto& esuf = fd.Esuf();
-  const auto nelem = fd.Esuel().size()/4;
-
-  // Compute internal face contributions
-  for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
-  {
-    Assert( esuf[2*f] > -1 && esuf[2*f+1] > -1, "Interior element detected "
-            "as -1" );
-
-    auto el = static_cast< std::size_t >(esuf[2*f]);
-    auto er = static_cast< std::size_t >(esuf[2*f+1]);
-
-    // get a 3x3 system by applying the normal equation approach to the
-    // least-squares overdetermined system
-
-    // 'wdeltax' is the distance vector between the centroids of this element
-    // and its neighbor
-    std::array< real, 3 > wdeltax{{ geoElem(er,1)-geoElem(el,1),
-                                    geoElem(er,2)-geoElem(el,2),
-                                    geoElem(er,3)-geoElem(el,3) }};
-
-    for (std::size_t idir=0; idir<3; ++idir)
-    {
-      // rhs vector
-      for (std::size_t c=varRange[el][0]; c<=varRange[el][1]; ++c)
-      {
-        auto mark = c*rdof;
-        rhs_ls[el][c][idir] +=
-          wdeltax[idir] * (W(er,mark)-W(el,mark));
-      }
-      if (er < nelem)
-        for (std::size_t c=varRange[er][0]; c<=varRange[er][1]; ++c) {
-          auto mark = c*rdof;
-          rhs_ls[er][c][idir] +=
-            wdeltax[idir] * (W(er,mark)-W(el,mark));
-        }
-    }
-  }
-}
-
-void
-bndLeastSqConservedVar_P0P1(
-  ncomp_t system,
-  ncomp_t ncomp,
-  const std::vector< inciter::EOS >& mat_blk,
-  std::size_t rdof,
-  const std::vector< bcconf_t >& bcconfig,
-  const inciter::FaceData& fd,
-  const Fields& geoFace,
-  const Fields& geoElem,
-  real t,
-  const StateFn& state,
-  const Fields& P,
-  const Fields& U,
-  std::vector< std::vector< std::array< real, 3 > > >& rhs_ls,
-  const std::vector< std::vector< std::size_t > >& varRange,
-  std::size_t nprim )
-// *****************************************************************************
-//  \brief Compute boundary surface contributions to rhs vector of the
-//    least-squares reconstruction of conserved quantities of the PDE system
-//! \param[in] system Equation system index
-//! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] mat_blk EOS material block
-//! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] bcconfig BC configuration vector for multiple side sets
-//! \param[in] fd Face connectivity and boundary conditions object
-//! \param[in] geoFace Face geometry array
-//! \param[in] geoElem Element geometry array
-//! \param[in] t Physical time
-//! \param[in] state Function to evaluate the left and right solution state at
-//!   boundaries
-//! \param[in] P Primitive vector to be reconstructed at recent time step
-//! \param[in] U Solution vector to be reconstructed at recent time step
-//! \param[in,out] rhs_ls RHS reconstruction vector
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
-//! \param[in] nprim This is the number of primitive quantities stored for this
-//!   PDE system. This is necessary to extend the state vector to the right
-//!   size, so that correct boundary conditions are obtained.
-//!   A default is set to 0, so that calling code for systems that do not store
-//!   primitive quantities does not need to specify this argument.
-//! \details This function computing the boundary face contributions to the rhs
-//!   vector for reconstruction, is used for conserved quantities only.
-// *****************************************************************************
-{
-  const auto& bface = fd.Bface();
-  const auto& esuf = fd.Esuf();
-
-  for (const auto& s : bcconfig) {       // for all bc sidesets
-    auto bc = bface.find( std::stoi(s) );// faces for side set
-    if (bc != end(bface))
-    {
-      // Compute boundary face contributions
-      for (const auto& f : bc->second)
-      {
-        Assert( esuf[2*f+1] == -1, "physical boundary element not -1" );
-
-        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
-
-        // arrays for quadrature points
-        std::array< real, 3 >
-          fc{{ geoFace(f,4), geoFace(f,5), geoFace(f,6) }};
-        std::array< real, 3 >
-          fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
-
-        // Compute the state variables at the left element
-        std::vector< real >B(1,1.0);
-        auto ul = eval_state( ncomp, rdof, 1, el, U, B, {0, ncomp-1} );
-        auto uprim = eval_state( nprim, rdof, 1, el, P, B, {0, nprim-1} );
-
-        // consolidate primitives into state vector
-        ul.insert(ul.end(), uprim.begin(), uprim.end());
-
-        Assert( ul.size() == ncomp+nprim, "Incorrect size for "
-                "appended state vector" );
-
-        // Compute the state at the face-center using BC
-        auto ustate = state( system, ncomp, mat_blk, ul, fc[0], fc[1], fc[2], t,
-                             fn );
-
-        std::array< real, 3 > wdeltax{{ fc[0]-geoElem(el,1),
-                                        fc[1]-geoElem(el,2),
-                                        fc[2]-geoElem(el,3) }};
-
-        for (std::size_t idir=0; idir<3; ++idir)
-        {
-          // rhs vector
-          for (std::size_t c=varRange[el][0]; c<=varRange[el][1]; ++c)
-            rhs_ls[el][c][idir] +=
-              wdeltax[idir] * (ustate[1][c]-ustate[0][c]);
-        }
-      }
-    }
-  }
-}
-
-void
-solveLeastSq_P0P1(
-  const std::size_t rdof,
-  const std::vector< std::array< std::array< real, 3 >, 3 > >& lhs,
-  const std::vector< std::vector< std::array< real, 3 > > >& rhs,
-  Fields& W,
-  const std::vector< std::vector< std::size_t > >& varRange )
-// *****************************************************************************
-//  Solve the 3x3 linear system for least-squares reconstruction
-//! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] lhs LHS reconstruction matrix
-//! \param[in] rhs RHS reconstruction vector
-//! \param[in,out] W Solution vector to be reconstructed at recent time step
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
-//! \details Solves the 3x3 linear system for each element, individually. For
-//!   systems that require reconstructions of primitive quantities, this should
-//!   be called twice, once with the argument 'W' as U (conserved), and again
-//!   with 'W' as P (primitive).
-// *****************************************************************************
-{
-  auto nelem = lhs.size();
-
-  for (std::size_t e=0; e<nelem; ++e)
-  {
-    for (std::size_t c=varRange[e][0]; c<=varRange[e][1]; ++c)
-    {
-      auto mark = c*rdof;
-
-      // solve system using Cramer's rule
-      auto ux = tk::cramer( lhs[e], rhs[e][c] );
-
-      W(e,mark+1) = ux[0];
-      W(e,mark+2) = ux[1];
-      W(e,mark+3) = ux[2];
-    }
-  }
-}
-
-void
 recoLeastSqExtStencil(
   std::size_t rdof,
   std::size_t e,
@@ -315,7 +39,7 @@ recoLeastSqExtStencil(
   const std::vector< std::size_t >& inpoel,
   const Fields& geoElem,
   Fields& W,
-  const std::vector< std::size_t >& varRange )
+  const std::vector< std::size_t >& varList )
 // *****************************************************************************
 //  \brief Reconstruct the second-order solution using least-squares approach
 //    from an extended stencil involving the node-neighbors
@@ -325,7 +49,7 @@ recoLeastSqExtStencil(
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] geoElem Element geometry array
 //! \param[in,out] W Solution vector to be reconstructed at recent time step
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
+//! \param[in] varList List of indices in W, that need to be reconstructed
 //! \details A second-order (piecewise linear) solution polynomial is obtained
 //!   from the first-order (piecewise constant) FV solutions by using a
 //!   least-squares (LS) reconstruction process. This LS reconstruction function
@@ -340,9 +64,8 @@ recoLeastSqExtStencil(
                {{0.0, 0.0, 0.0}},
                {{0.0, 0.0, 0.0}} }} );
   // rhs matrix
-  Assert( varRange[0] <= varRange[1], "Incorrect variable range detected" );
   std::vector< std::array< tk::real, 3 > >
-  rhs_ls( varRange[1]-varRange[0]+1, {{ 0.0, 0.0, 0.0 }} );
+  rhs_ls( varList.size(), {{ 0.0, 0.0, 0.0 }} );
 
   // loop over all nodes of the element e
   for (std::size_t lp=0; lp<4; ++lp)
@@ -364,24 +87,23 @@ recoLeastSqExtStencil(
           lhs_ls[idir][jdir] += wdeltax[idir] * wdeltax[jdir];
 
       // compute rhs matrix
-      for (std::size_t c=varRange[0]; c<=varRange[1]; ++c)
+      for (std::size_t i=0; i<varList.size(); i++)
       {
-        auto mark = c*rdof;
-        auto cmark = c - varRange[0];
+        auto mark = varList[i]*rdof;
         for (std::size_t idir=0; idir<3; ++idir)
-          rhs_ls[cmark][idir] +=
+          rhs_ls[i][idir] +=
             wdeltax[idir] * (W(er,mark)-W(e,mark));
+
       }
     }
   }
 
   // solve least-square normal equation system using Cramer's rule
-  for (ncomp_t c=varRange[0]; c<=varRange[1]; ++c)
+  for (std::size_t i=0; i<varList.size(); i++)
   {
-    auto mark = c*rdof;
-    auto cmark = c - varRange[0];
+    auto mark = varList[i]*rdof;
 
-    auto ux = tk::cramer( lhs_ls, rhs_ls[cmark] );
+    auto ux = tk::cramer( lhs_ls, rhs_ls[i] );
 
     // Update the P1 dofs with the reconstructioned gradients.
     // Since this reconstruction does not affect the cell-averaged solution,
@@ -398,7 +120,7 @@ transform_P0P1( std::size_t rdof,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 Fields& W,
-                const std::vector< std::size_t >& varRange )
+                const std::vector< std::size_t >& varList )
 // *****************************************************************************
 //  Transform the reconstructed P1-derivatives to the Dubiner dofs
 //! \param[in] rdof Total number of reconstructed dofs
@@ -407,7 +129,7 @@ transform_P0P1( std::size_t rdof,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in,out] W Second-order reconstructed vector which gets transformed to
 //!   the Dubiner reference space
-//! \param[in] varRange Range of indices in W, that need to be reconstructed
+//! \param[in] varList List of indices in W, that need to be reconstructed
 //! \details Since the DG solution (and the primitive quantities) are assumed to
 //!   be stored in the Dubiner space, this transformation from Taylor
 //!   coefficients to Dubiner coefficients is necessary.
@@ -431,9 +153,9 @@ transform_P0P1( std::size_t rdof,
   // Compute the derivatives of basis function for DG(P1)
   auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
 
-  for (ncomp_t c=varRange[0]; c<=varRange[1]; ++c)
+  for (std::size_t i=0; i<varList.size(); ++i)
   {
-    auto mark = c*rdof;
+    auto mark = varList[i]*rdof;
 
     // solve system using Cramer's rule
     auto ux = tk::cramer( {{ {{dBdx[0][1], dBdx[0][2], dBdx[0][3]}},
@@ -451,8 +173,7 @@ transform_P0P1( std::size_t rdof,
 }
 
 void
-THINCReco( std::size_t system,
-           std::size_t rdof,
+THINCReco( std::size_t rdof,
            std::size_t nmat,
            std::size_t e,
            const std::vector< std::size_t >& inpoel,
@@ -461,12 +182,13 @@ THINCReco( std::size_t system,
            const std::array< real, 3 >& ref_xp,
            const Fields& U,
            const Fields& P,
+           bool intInd,
+           const std::vector< std::size_t >& matInt,
            [[maybe_unused]] const std::vector< real >& vfmin,
            [[maybe_unused]] const std::vector< real >& vfmax,
            std::vector< real >& state )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for multi-material flows
-//! \param[in] system Equation system index
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of materials
 //! \param[in] e Element for which interface reconstruction is being calculated
@@ -476,6 +198,9 @@ THINCReco( std::size_t system,
 //! \param[in] ref_xp Quadrature point in reference space
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
+//! \param[in] intInd Boolean which indicates if the element contains a
+//!   material interface
+//! \param[in] matInt Array indicating which material has an interface
 //! \param[in] vfmin Vector containing min volume fractions for each material
 //!   in this cell
 //! \param[in] vfmax Vector containing max volume fractions for each material
@@ -493,23 +218,22 @@ THINCReco( std::size_t system,
   using inciter::energyDofIdx;
   using inciter::pressureDofIdx;
   using inciter::velocityDofIdx;
+  using inciter::deformDofIdx;
+  using inciter::stressDofIdx;
   using inciter::volfracIdx;
   using inciter::densityIdx;
   using inciter::momentumIdx;
   using inciter::energyIdx;
   using inciter::pressureIdx;
   using inciter::velocityIdx;
+  using inciter::deformIdx;
+  using inciter::stressIdx;
 
-  auto bparam = inciter::g_inputdeck.get< tag::param, tag::multimat,
-    tag::intsharp_param >()[system];
+  auto bparam = inciter::g_inputdeck.get< tag::multimat,
+    tag::intsharp_param >();
   const auto ncomp = U.nprop()/rdof;
-
-  // interface detection
-  std::vector< std::size_t > matInt(nmat, 0);
-  std::vector< tk::real > alAvg(nmat, 0.0);
-  for (std::size_t k=0; k<nmat; ++k)
-    alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
-  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+  const auto& solidx = inciter::g_inputdeck.get< tag::matidxmap,
+    tag::solidx >();
 
   // Step-1: Perform THINC reconstruction
   // create a vector of volume-fractions and pass it to the THINC function
@@ -537,8 +261,8 @@ THINCReco( std::size_t system,
       std::cout << "Material-id:        " << k << std::endl;
       std::cout << "Volume-fraction:    " << std::setprecision(18) << alReco[k]
         << std::endl;
-      std::cout << "Cell-avg vol-frac:  " << std::setprecision(18) << alAvg[k]
-        << std::endl;
+      std::cout << "Cell-avg vol-frac:  " << std::setprecision(18) <<
+        U(e,volfracDofIdx(nmat,k,rdof,0)) << std::endl;
       std::cout << "Material-interface? " << intInd << std::endl;
       std::cout << "Mat-k-involved?     " << matInt[k] << std::endl;
     }
@@ -564,6 +288,16 @@ THINCReco( std::size_t system,
           * U(e, energyDofIdx(nmat,k,rdof,0))/alCC;
         state[ncomp+pressureIdx(nmat,k)] = alReco[k]
           * P(e, pressureDofIdx(nmat,k,rdof,0))/alCC;
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              state[deformIdx(nmat,solidx[k],i,j)] =
+                U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+
+          for (std::size_t i=0; i<6; ++i)
+            state[ncomp+stressIdx(nmat,solidx[k],i)] = alReco[k]
+              * P(e, stressDofIdx(nmat,solidx[k],i,rdof,0))/alCC;
+        }
       }
 
       rhobCC += U(e, densityDofIdx(nmat,k,rdof,0));
@@ -582,8 +316,7 @@ THINCReco( std::size_t system,
 }
 
 void
-THINCRecoTransport( std::size_t system,
-                    std::size_t rdof,
+THINCRecoTransport( std::size_t rdof,
                     std::size_t,
                     std::size_t e,
                     const std::vector< std::size_t >& inpoel,
@@ -597,7 +330,6 @@ THINCRecoTransport( std::size_t system,
                     std::vector< real >& state )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for transport
-//! \param[in] system Equation system index
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] e Element for which interface reconstruction is being calculated
 //! \param[in] inpoel Element-node connectivity
@@ -616,8 +348,8 @@ THINCRecoTransport( std::size_t system,
 //!   should only be called for transport.
 // *****************************************************************************
 {
-  auto bparam = inciter::g_inputdeck.get< tag::param, tag::transport,
-    tag::intsharp_param >()[system];
+  auto bparam = inciter::g_inputdeck.get< tag::transport,
+    tag::intsharp_param >();
   auto ncomp = U.nprop()/rdof;
 
   // interface detection
@@ -988,8 +720,7 @@ THINCFunction_new( std::size_t rdof,
 }
 
 std::vector< tk::real >
-evalPolynomialSol( std::size_t system,
-                   const std::vector< inciter::EOS >& mat_blk,
+evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    int intsharp,
                    std::size_t ncomp,
                    std::size_t nprim,
@@ -1006,7 +737,6 @@ evalPolynomialSol( std::size_t system,
                    const Fields& P )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
-//! \param[in] system Equation system index
 //! \param[in] mat_blk EOS material block
 //! \param[in] intsharp Interface reconstruction indicator
 //! \param[in] ncomp Number of components in the PDE system
@@ -1029,8 +759,18 @@ evalPolynomialSol( std::size_t system,
   std::vector< real > state;
   std::vector< real > sprim;
 
-  state = eval_state( ncomp, rdof, dof_e, e, U, B, {0, ncomp-1} );
-  sprim = eval_state( nprim, rdof, dof_e, e, P, B, {0, nprim-1} );
+  state = eval_state( ncomp, rdof, dof_e, e, U, B );
+  sprim = eval_state( nprim, rdof, dof_e, e, P, B );
+
+  // interface detection
+  std::vector< std::size_t > matInt(nmat, 0);
+  bool intInd(false);
+  if (nmat > 1) {
+    std::vector< tk::real > alAvg(nmat, 0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
+    intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+  }
 
   // consolidate primitives into state vector
   state.insert(state.end(), sprim.begin(), sprim.end());
@@ -1046,13 +786,13 @@ evalPolynomialSol( std::size_t system,
     //  vfmin[k] = VolFracMax(el, 2*k, 0);
     //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
     //}
-    tk::THINCReco(system, rdof, nmat, e, inpoel, coord, geoElem,
-      ref_gp, U, P, vfmin, vfmax, state);
+    tk::THINCReco(rdof, nmat, e, inpoel, coord, geoElem,
+      ref_gp, U, P, intInd, matInt, vfmin, vfmax, state);
 
     // Until the appropriate setup for activating THINC with Transport
     // is ready, the following lines will need to be uncommented for
     // using THINC with Transport
-    //tk::THINCRecoTransport(system, rdof, nmat, el, inpoel, coord,
+    //tk::THINCRecoTransport(rdof, nmat, el, inpoel, coord,
     //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
   }
 
@@ -1062,6 +802,106 @@ evalPolynomialSol( std::size_t system,
     using inciter::volfracIdx;
     using inciter::densityIdx;
 
+    for (std::size_t k=0; k<nmat; ++k) {
+      state[ncomp+pressureIdx(nmat,k)] = constrain_pressure( mat_blk,
+        state[ncomp+pressureIdx(nmat,k)], state[densityIdx(nmat,k)],
+        state[volfracIdx(nmat,k)], k );
+    }
+  }
+
+  return state;
+}
+
+std::vector< tk::real >
+evalFVSol( const std::vector< inciter::EOS >& mat_blk,
+           int intsharp,
+           std::size_t ncomp,
+           std::size_t nprim,
+           std::size_t rdof,
+           std::size_t nmat,
+           std::size_t e,
+           const std::vector< std::size_t >& inpoel,
+           const UnsMesh::Coords& coord,
+           const Fields& geoElem,
+           const std::array< real, 3 >& ref_gp,
+           const std::vector< real >& B,
+           const Fields& U,
+           const Fields& P,
+           int srcFlag )
+// *****************************************************************************
+//  Evaluate second-order FV solution at quadrature point
+//! \param[in] mat_blk EOS material block
+//! \param[in] intsharp Interface reconstruction indicator
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] nprim Number of primitive quantities
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which polynomial solution is being evaluated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_gp Quadrature point in reference space
+//! \param[in] B Basis function at given quadrature point
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \param[in] srcFlag Whether the energy source was added to element e
+//! \return High-order unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+// *****************************************************************************
+{
+  using inciter::pressureIdx;
+  using inciter::velocityIdx;
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::energyIdx;
+  using inciter::momentumIdx;
+
+  std::vector< real > state;
+  std::vector< real > sprim;
+
+  state = eval_state( ncomp, rdof, rdof, e, U, B );
+  sprim = eval_state( nprim, rdof, rdof, e, P, B );
+
+  // interface detection so that eos is called on the appropriate quantities
+  std::vector< std::size_t > matInt(nmat, 0);
+  std::vector< tk::real > alAvg(nmat, 0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
+  auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
+
+  // get mat-energy from reconstructed mat-pressure
+  auto rhob(0.0);
+  for (std::size_t k=0; k<nmat; ++k) {
+    auto alk = state[volfracIdx(nmat,k)];
+    if (matInt[k]) {
+      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*1e-12),
+        1e-12);
+    }
+    state[energyIdx(nmat,k)] = alk *
+      mat_blk[k].compute< inciter::EOS::totalenergy >(
+      state[densityIdx(nmat,k)]/alk, sprim[velocityIdx(nmat,0)],
+      sprim[velocityIdx(nmat,1)], sprim[velocityIdx(nmat,2)],
+      sprim[pressureIdx(nmat,k)]/alk);
+    rhob += state[densityIdx(nmat,k)];
+  }
+  // get momentum from reconstructed velocity and bulk density
+  for (std::size_t i=0; i<3; ++i) {
+    state[momentumIdx(nmat,i)] = rhob * sprim[velocityIdx(nmat,i)];
+  }
+
+  // consolidate primitives into state vector
+  state.insert(state.end(), sprim.begin(), sprim.end());
+
+  if (intsharp > 0 && srcFlag == 0)
+  {
+    std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
+
+    tk::THINCReco(rdof, nmat, e, inpoel, coord, geoElem,
+      ref_gp, U, P, intInd, matInt, vfmin, vfmax, state);
+  }
+
+  // physical constraints
+  if (state.size() > ncomp) {
     for (std::size_t k=0; k<nmat; ++k) {
       state[ncomp+pressureIdx(nmat,k)] = constrain_pressure( mat_blk,
         state[ncomp+pressureIdx(nmat,k)], state[densityIdx(nmat,k)],

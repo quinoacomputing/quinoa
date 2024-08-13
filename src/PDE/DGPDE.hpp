@@ -38,39 +38,42 @@ namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-using ncomp_t = kw::ncomp::info::expect::type;
-using bcconf_t = kw::sideset::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 using BCStateFn =
-  std::vector< std::pair< std::vector< bcconf_t >, tk::StateFn > >;
+  std::vector< std::tuple< std::vector< std::size_t >, tk::StateFn, tk::StateFn > >;
 
 //! Extract BC configuration ignoring if BC not specified
 //! \note A more preferable way of catching errors such as this function
 //!   hides is during parsing, so that we don't even get here if BCs are
 //!   not correctly specified. For now we simply ignore if BCs are not
 //!   specified by allowing empty BC vectors from the user input.
-template< class Eq > struct ConfigBC {
-  std::size_t system;  //! Compflow system id
+struct ConfigBC {
   BCStateFn& state;    //!< BC state config: sidesets + statefn
   const std::vector< tk::StateFn >& fn;    //!< BC state functions
+  const std::vector< tk::StateFn >& gfn;   //!< BC gradient functions
   std::size_t c;       //!< Counts BC types configured
   //! Constructor
-  ConfigBC( std::size_t sys,
-            BCStateFn& s,
-            const std::vector< tk::StateFn >& f ) :
-    system(sys), state(s), fn(f), c(0) {}
+  ConfigBC( BCStateFn& s,
+            const std::vector< tk::StateFn >& f,
+            const std::vector< tk::StateFn >& gf ) :
+    state(s), fn(f), gfn(gf), c(0) {}
   //! Function to call for each BC type
   template< typename U > void operator()( brigand::type_<U> ) {
-    std::vector< bcconf_t > cfg;
-    const auto& v = g_inputdeck.get< tag::param, Eq, tag::bc, U >();
-    if (v.size() > system) cfg = v[system];
+    std::vector< std::size_t > cfg, v;
+    // collect sidesets across all meshes
+    for (const auto& ibc : g_inputdeck.get< tag::bc >()) {
+      v.insert(v.end(), ibc.get< U >().begin(), ibc.get< U >().end());
+    }
+    if (v.size() > 0) cfg = v;
     Assert( fn.size() > c, "StateFn missing for BC type" );
-    state.push_back( { cfg, fn[c++] } );
+    state.push_back( { cfg, fn[c], gfn[c] } );
+    ++c;
   }
 };
 
 //! State function for invalid/un-configured boundary conditions
 [[noreturn]] tk::StateFn::result_type
-invalidBC( ncomp_t, ncomp_t, const std::vector< EOS >&,
+invalidBC( ncomp_t, const std::vector< EOS >&,
            const std::vector< tk::real >&, tk::real, tk::real, tk::real,
            tk::real, const std::array< tk::real, 3> & );
 
@@ -85,7 +88,7 @@ invalidBC( ncomp_t, ncomp_t, const std::vector< EOS >&,
 class DGPDE {
 
   private:
-    using ncomp_t = kw::ncomp::info::expect::type;
+    using ncomp_t = tk::ncomp_t;
 
   public:
     //! Default constructor taking no arguments for Charm++
@@ -133,6 +136,24 @@ class DGPDE {
     void numEquationDofs(std::vector< std::size_t >& numEqDof) const
     { return self->numEquationDofs(numEqDof); }
 
+    //! Public interface to find how 'stiff equations', which are the inverse
+    //! deformation equations because of plasticity
+    std::size_t nstiffeq() const
+    { return self->nstiffeq(); }
+
+    //! Public interface to find how 'nonstiff equations', which are the inverse
+    //! deformation equations because of plasticity
+    std::size_t nnonstiffeq() const
+    { return self->nnonstiffeq(); }
+
+    //! Public function to locate the stiff equations
+    void setStiffEqIdx( std::vector< std::size_t >& stiffEqIdx ) const
+    { return self->setStiffEqIdx( stiffEqIdx ); }
+
+    //! Public function to locate the nonstiff equations
+    void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
+    { return self->setNonStiffEqIdx( nonStiffEqIdx ); }
+
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
@@ -151,6 +172,12 @@ class DGPDE {
       tk::real t,
       const std::size_t nielem ) const
     { self->initialize( L, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
+
+    //! Public interface for computing density constraint
+    void computeDensityConstr( std::size_t nelem,
+                               tk::Fields& unk,
+                               std::vector< tk::real >& densityConstr) const
+    { self->computeDensityConstr( nelem, unk, densityConstr); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -173,11 +200,12 @@ class DGPDE {
     { self->updatePrimitives( unk, L, geoElem, prim, nielem, ndofel ); }
 
     //! Public interface to cleaning up trace materials for the diff eq
-    void cleanTraceMaterial( const tk::Fields& geoElem,
+    void cleanTraceMaterial( tk::real t,
+                             const tk::Fields& geoElem,
                              tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem ) const
-    { self->cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+    { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
 
     //! Public interface to reconstructing the second-order solution
     void reconstruct( tk::real t,
@@ -221,14 +249,14 @@ class DGPDE {
     }
 
     //! Public interface to update the conservative variable solution
-    void Correct_Conserv( const bool pref,
-                          const tk::Fields& prim,
-                          const std::vector< std::size_t >& ndofel,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const
+    void CPL( const tk::Fields& prim,
+              const tk::Fields& geoElem,
+              const std::vector< std::size_t >& inpoel,
+              const tk::UnsMesh::Coords& coord,
+              tk::Fields& unk,
+              std::size_t nielem ) const
     {
-      self->Correct_Conserv( pref, prim, ndofel, geoElem, unk, nielem );
+      self->CPL( prim, geoElem, inpoel, coord, unk, nielem );
     }
 
     //! Public interface to reset the high order solution for p-adaptive scheme
@@ -238,6 +266,14 @@ class DGPDE {
                        const std::vector< std::size_t >& ndofel ) const
     {
       self->resetAdapSol( fd, unk, prim, ndofel );
+    }
+
+    //! Public interface to getting the cell-averaged deformation gradients
+    std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+      const tk::Fields& U,
+      std::size_t nielem ) const
+    {
+      return self->cellAvgDeformGrad( U, nielem );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -252,10 +288,11 @@ class DGPDE {
               const tk::Fields& U,
               const tk::Fields& P,
               const std::vector< std::size_t >& ndofel,
+              const tk::real dt,
               tk::Fields& R ) const
     {
       self->rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                 ndofel, R );
+                 ndofel, dt, R );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -287,6 +324,21 @@ class DGPDE {
                  const std::size_t nielem ) const
     { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U,
                        P, nielem ); }
+
+    //! Public interface for computing stiff terms for an element
+    void stiff_rhs( std::size_t e,
+                    const tk::Fields& geoElem,
+                    const std::vector< std::size_t >& inpoel,
+                    const tk::UnsMesh::Coords& coord,
+                    const tk::Fields& U,
+                    const tk::Fields& P,
+                    const std::vector< std::size_t >& ndofel,
+                    tk::Fields& R ) const
+    { return self->stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R); }
+
+    //! Public interface to returning maps of output var functions
+    std::map< std::string, tk::GetVarFn > OutVarFn() const
+    { return self->OutVarFn(); }
 
     //! Public interface to returning analytic field output labels
     std::vector< std::string > analyticFieldNames() const
@@ -349,6 +401,10 @@ class DGPDE {
       virtual std::size_t nprim() const = 0;
       virtual std::size_t nmat() const = 0;
       virtual void numEquationDofs(std::vector< std::size_t >&) const = 0;
+      virtual std::size_t nstiffeq() const = 0;
+      virtual std::size_t nnonstiffeq() const = 0;
+      virtual void setStiffEqIdx( std::vector< std::size_t >& ) const = 0;
+      virtual void setNonStiffEqIdx( std::vector< std::size_t >& ) const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
         std::vector< std::unordered_set< std::size_t > >& ) const = 0;
@@ -361,6 +417,10 @@ class DGPDE {
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
+      virtual void computeDensityConstr( std::size_t nelem,
+                                         tk::Fields& unk,
+                                         std::vector< tk::real >& densityConstr)
+                                         const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
@@ -372,7 +432,8 @@ class DGPDE {
                                      tk::Fields&,
                                      std::size_t,
                                      std::vector< std::size_t >& ) const = 0;
-      virtual void cleanTraceMaterial( const tk::Fields&,
+      virtual void cleanTraceMaterial( tk::real,
+                                       const tk::Fields&,
                                        tk::Fields&,
                                        tk::Fields&,
                                        std::size_t ) const = 0;
@@ -406,12 +467,15 @@ class DGPDE {
                           tk::Fields&,
                           tk::Fields&,
                           std::vector< std::size_t >& ) const = 0;
-      virtual void Correct_Conserv( const bool,
-                                    const tk::Fields&,
-                                    const std::vector< std::size_t >&,
-                                    const tk::Fields&,
-                                    tk::Fields&,
-                                    std::size_t ) const = 0;
+      virtual void CPL( const tk::Fields&,
+                        const tk::Fields&,
+                        const std::vector< std::size_t >&,
+                        const tk::UnsMesh::Coords&,
+                        tk::Fields&,
+                        std::size_t ) const = 0;
+      virtual std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+        const tk::Fields&,
+        std::size_t ) const = 0;
       virtual void rhs( tk::real,
                         const bool,
                         const tk::Fields&,
@@ -423,6 +487,7 @@ class DGPDE {
                         const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
+                        const tk::real,
                         tk::Fields& ) const = 0;
       virtual void resetAdapSol( const inciter::FaceData&,
                                  tk::Fields&,
@@ -449,6 +514,15 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t ) const = 0;
+      virtual void stiff_rhs( std::size_t,
+                              const tk::Fields&,
+                              const std::vector< std::size_t >&,
+                              const tk::UnsMesh::Coords&,
+                              const tk::Fields&,
+                              const tk::Fields&,
+                              const std::vector< std::size_t >&,
+                              tk::Fields& ) const = 0;
+      virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
@@ -481,6 +555,14 @@ class DGPDE {
       { return data.nmat(); }
       void numEquationDofs(std::vector< std::size_t >& numEqDof) const override
       { data.numEquationDofs(numEqDof); }
+      std::size_t nstiffeq() const override
+      { return data.nstiffeq(); }
+      std::size_t nnonstiffeq() const override
+      { return data.nnonstiffeq(); }
+      void setStiffEqIdx( std::vector< std::size_t >& stiffEqIdx ) const override
+      { data.setStiffEqIdx(stiffEqIdx); }
+      void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const override
+      { data.setNonStiffEqIdx(nonStiffEqIdx); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
         std::vector< std::unordered_set< std::size_t > >& inbox )
@@ -497,6 +579,11 @@ class DGPDE {
         const std::size_t nielem )
       const override { data.initialize( L, inpoel, coord, inbox, elemblkid, unk,
         t, nielem ); }
+      void computeDensityConstr( std::size_t nelem,
+                                 tk::Fields& unk,
+                                 std::vector< tk::real >& densityConstr)
+                                 const override
+      { data.computeDensityConstr( nelem, unk, densityConstr ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updateInterfaceCells( tk::Fields& unk,
@@ -513,11 +600,12 @@ class DGPDE {
       const override {
         data.updatePrimitives( unk, L, geoElem, prim, nielem, ndofel );
       }
-      void cleanTraceMaterial( const tk::Fields& geoElem,
+      void cleanTraceMaterial( tk::real t,
+                               const tk::Fields& geoElem,
                                tk::Fields& unk,
                                tk::Fields& prim,
                                std::size_t nielem )
-      const override { data.cleanTraceMaterial( geoElem, unk, prim, nielem ); }
+      const override { data.cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
       void reconstruct( tk::real t,
                         const tk::Fields& geoFace,
                         const tk::Fields& geoElem,
@@ -556,14 +644,14 @@ class DGPDE {
         data.limit( t, pref, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
                     bid, uNodalExtrm, pNodalExtrm, mtInv, U, P, shockmarker );
       }
-      void Correct_Conserv( const bool pref,
-                          const tk::Fields& prim,
-                          const std::vector< std::size_t >& ndofel,
-                          const tk::Fields& geoElem,
-                          tk::Fields& unk,
-                          std::size_t nielem ) const override
+      void CPL( const tk::Fields& prim,
+                const tk::Fields& geoElem,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
+                tk::Fields& unk,
+                std::size_t nielem ) const override
       {
-        data.Correct_Conserv( pref, prim, ndofel, geoElem, unk, nielem );
+        data.CPL( prim, geoElem, inpoel, coord, unk, nielem );
       }
       void resetAdapSol( const inciter::FaceData& fd,
                          tk::Fields& unk,
@@ -571,6 +659,12 @@ class DGPDE {
                          const std::vector< std::size_t >& ndofel ) const override
       {
         data.resetAdapSol( fd, unk, prim, ndofel );
+      }
+      std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
+        const tk::Fields& U,
+        std::size_t nielem ) const override
+      {
+        return data.cellAvgDeformGrad( U, nielem );
       }
       void rhs(
         tk::real t,
@@ -584,10 +678,11 @@ class DGPDE {
         const tk::Fields& U,
         const tk::Fields& P,
         const std::vector< std::size_t >& ndofel,
+        const tk::real dt,
         tk::Fields& R ) const override
       {
         data.rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                  ndofel, R );
+                  ndofel, dt, R );
       }
       void eval_ndof( std::size_t nunk,
                       const tk::UnsMesh::Coords& coord,
@@ -613,6 +708,17 @@ class DGPDE {
                    const std::size_t nielem ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
                         U, P, nielem ); }
+      void stiff_rhs( std::size_t e,
+                      const tk::Fields& geoElem,
+                      const std::vector< std::size_t >& inpoel,
+                      const tk::UnsMesh::Coords& coord,
+                      const tk::Fields& U,
+                      const tk::Fields& P,
+                      const std::vector< std::size_t >& ndofel,
+                      tk::Fields& R ) const override
+      { return data.stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R ); }
+      std::map< std::string, tk::GetVarFn > OutVarFn() const override
+      { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override
       { return data.analyticFieldNames(); }
       std::vector< std::string > histNames() const override

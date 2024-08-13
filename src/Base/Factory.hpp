@@ -141,17 +141,14 @@ void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
 //!   semantics)
 //! \param[in] key Key used to identify the entry in the factory
 //! \warning Only works with a single constructor argument
-template< class Host, class ModelConstructor, class Factory, class Key,
-          typename ModelConstrArg >
-void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
+template< class Host, class ModelConstructor, class Factory, class Key >
+void recordModelLate( Factory& f, const Key& key ) {
   // Prescribe late binding the model constructor to its single argument
-  std::function< ModelConstructor(const ModelConstrArg&) > c =
-    std::bind( boost::value_factory< ModelConstructor >(),
-               std::placeholders::_1 );
+  std::function< ModelConstructor() > c =
+    std::bind( boost::value_factory< ModelConstructor >() );
   // Bind host to std::function of model constructor and place in factory and
   // also explicitly bind single model constructor argument to host constructor
-  f.emplace( key, std::bind( boost::value_factory< Host >(), std::move(c),
-                             std::placeholders::_1 ) );
+  f.emplace( key, std::bind( boost::value_factory< Host >(), std::move(c) ) );
 }
 
 //! Register Charm++ model class of host into factory with given key. We bind a

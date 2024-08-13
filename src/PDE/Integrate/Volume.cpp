@@ -19,8 +19,7 @@
 #include "Reconstruction.hpp"
 
 void
-tk::volInt( ncomp_t system,
-            std::size_t nmat,
+tk::volInt( std::size_t nmat,
             real t,
             const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
@@ -38,7 +37,6 @@ tk::volInt( ncomp_t system,
             int intsharp )
 // *****************************************************************************
 //  Compute volume integrals for DG
-//! \param[in] system Equation system index
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] t Physical time
 //! \param[in] mat_blk EOS material block
@@ -114,15 +112,15 @@ tk::volInt( ncomp_t system,
 
         auto wt = wgp[igp] * geoElem(e, 0);
 
-        auto state = evalPolynomialSol(system, mat_blk, intsharp, ncomp, nprim,
+        auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
           rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
           {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
         // evaluate prescribed velocity (if any)
-        auto v = vel( system, ncomp, gp[0], gp[1], gp[2], t );
+        auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
         // comput flux
-        auto fl = flux( system, ncomp, mat_blk, state, v );
+        auto fl = flux( ncomp, mat_blk, state, v );
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );
       }

@@ -15,7 +15,6 @@ module discretization {
 
   extern module transporter;
   extern module meshwriter;
-  extern module distfct;
   extern module ale;
   extern module conjugategradients;
 
@@ -28,7 +27,6 @@ module discretization {
       entry Discretization(
         std::size_t meshid,
         const std::vector< CProxy_Discretization >& disc,
-        const CProxy_DistFCT& fctproxy,
         const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
@@ -47,7 +45,10 @@ module discretization {
                          const std::vector< tk::real >& nodevol );
       entry void stat( tk::real mesh_volume );
       entry void transferInit();
-      entry void comcb( std::size_t srcmeshid, CkCallback c );
+      entry void transfer_complete();
+      entry void to_complete();
+      entry void from_complete();
+      entry void transfer_complete_from_dest();
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

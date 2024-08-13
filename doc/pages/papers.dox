@@ -7,6 +7,21 @@ implemented in Quinoa. The papers are grouped by executables.
 @section papers_inciter Inciter
 
 - @m_div{m-text m-strong}
+  A. Pandare, J. Waltz, W. Li, H. Luo, J. Bakosi, **[On the Design of Stable, Consistent, and Conservative High-Order Methods for Multi-Material Hydrodynamics](https://doi.org/10.1016/j.jcp.2023.112313)**, Journal of Computational Physics, 490: 112313, 2023.
+  @m_enddiv
+
+  This paper describes the consistent and conservative discontinuous Galerkin
+  method for @ref inciter_mm "multi-material flows", which is implemented in
+  Quinoa's @ref inciter_main "Inciter".
+
+- @m_div{m-text m-strong}
+  W. Li, A. Pandare, H. Luo, J. Bakosi, J. Waltz, **[A parallel p-adaptive discontinuous Galerkin method for the Euler equations with dynamic load-balancing on tetrahedral grids](https://doi.org/10.1002/fld.5231)**, International Journal for Numerical Methods in Fluids, 2023.
+  @m_enddiv
+
+  This paper describes the discontinuous Galerkin method for implemented in Quinoa's @ref inciter_main
+  under the @ref inciter_dg "DG" hydro scheme.
+
+- @m_div{m-text m-strong}
   J. Bakosi, R. Bird, F.Gonzalez, C. Junghans, W. Li, H. Luo, A. Pandare, J. Waltz, **[Asynchronous distributed-memory task-parallel algorithm for compressible flows on unstructured 3D Eulerian grids](https://doi.org/10.1016/j.advengsoft.2020.102962)**, Advances in Engineering Software, 102962, 2021.
   @m_enddiv
 
@@ -53,8 +68,7 @@ implemented in Quinoa. The papers are grouped by executables.
 @section papers_walker Walker
 
 @note Walker is no longer in active development and not part of Quinoa. But you
-can still browsse the documentation at https:///quinoacomputing.org/archive and
-go back in the Quinoa git repository to checkout the code.
+can checkout the code from Quinoa's git history.
 
 - @m_div{m-text m-strong}
   J.R. Ristorcelli, J. Bakosi, **[A Fokker–Planck approach to a moment closure for mixing in variable-density turbulence](https://doi.org/10.1080/14685248.2019.1662030)**, Journal of Turbulence, vol. 20, issue 7, Pages 393-423, 2019.

@@ -24,7 +24,7 @@
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Evaluate the spectral-decay indicator and mark the ndof for each element
 void spectral_decay( std::size_t nmat,

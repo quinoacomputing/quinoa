@@ -16,18 +16,17 @@
 #include <brigand/algorithms/for_each.hpp>
 
 #include "Toggle.hpp"
-#include "Keywords.hpp"
 #include "PUPUtil.hpp"
 
 namespace inciter {
 namespace ctr {
 
 //! Physics types
-enum class PhysicsType : uint8_t { ADVECTION,
-                                   ADVDIFF,
-                                   EULER,
-                                   NAVIERSTOKES,
-                                   ENERGYPILL };
+enum class PhysicsType : uint8_t { ADVECTION
+                                 , ADVDIFF
+                                 , EULER
+                                 , ENERGYPILL
+                                 };
 
 //! Pack/Unpack PhysicsType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PhysicsType& e ) { PUP::pup( p, e ); }
@@ -36,34 +35,24 @@ inline void operator|( PUP::er& p, PhysicsType& e ) { PUP::pup( p, e ); }
 class Physics : public tk::Toggle< PhysicsType > {
 
   public:
-    //! Valid expected choices to make them also available at compile-time
-    using keywords = brigand::list< kw::advection
-                                  , kw::advdiff
-                                  , kw::euler
-                                  , kw::navierstokes
-                                  , kw::energy_pill
-                                  >;
-
     //! \brief Options constructor
     //! \details Simply initialize in-line and pass associations to base, which
     //!    will handle client interactions
     explicit Physics() :
       tk::Toggle< PhysicsType >(
         //! Group, i.e., options, name
-        kw::physics::name(),
+        "Physics",
         //! Enums -> names (if defined, policy codes, if not, name)
-        { { PhysicsType::ADVECTION, kw::advection::name() },
-          { PhysicsType::ADVDIFF, kw::advdiff::name() },
-          { PhysicsType::EULER, kw::euler::name() },
-          { PhysicsType::NAVIERSTOKES, kw::navierstokes::name() },
-          { PhysicsType::ENERGYPILL, kw::energy_pill::name() }
+        { { PhysicsType::ADVECTION, "advection" }
+        , { PhysicsType::ADVDIFF, "advdiff" }
+        , { PhysicsType::EULER, "euler" }
+        , { PhysicsType::ENERGYPILL, "energy_pill" }
         },
         //! keywords -> Enums
-        { { kw::advection::string(), PhysicsType::ADVECTION },
-          { kw::advdiff::string(), PhysicsType::ADVDIFF },
-          { kw::euler::string(), PhysicsType::EULER },
-          { kw::navierstokes::string(), PhysicsType::NAVIERSTOKES },
-          { kw::energy_pill::string(), PhysicsType::ENERGYPILL }
+        { { "advection", PhysicsType::ADVECTION }
+        , { "advdiff", PhysicsType::ADVDIFF }
+        , { "euler", PhysicsType::EULER }
+        , { "energy_pill", PhysicsType::ENERGYPILL }
         } )
     {}
 };

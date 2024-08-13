@@ -24,7 +24,7 @@
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Weighted Essentially Non-Oscillatory (WENO) limiter for DGP1
 void
@@ -45,8 +45,8 @@ SuperbeeMultiMat_P1(
   const std::vector< int >& esuel,
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
-  std::size_t system,
   const tk::UnsMesh::Coords& coord,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat );
@@ -58,7 +58,6 @@ VertexBasedTransport_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const tk::UnsMesh::Coords& coord,
   tk::Fields& U );
 
@@ -69,13 +68,13 @@ VertexBasedCompflow_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const std::vector< EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker );
 
@@ -86,7 +85,6 @@ VertexBasedCompflow_P2(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const std::vector< EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -97,6 +95,7 @@ VertexBasedCompflow_P2(
   const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker );
 
@@ -107,13 +106,13 @@ VertexBasedMultiMat_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const std::vector< EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -127,7 +126,6 @@ VertexBasedMultiMat_P2(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  std::size_t system,
   const std::vector< EOS >& mat_blk,
   const inciter::FaceData& fd,
   const tk::Fields& geoFace,
@@ -139,6 +137,7 @@ VertexBasedMultiMat_P2(
   const std::vector< std::vector<tk::real> >& pNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -150,8 +149,9 @@ VertexBasedMultiMat_FV(
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
-  std::size_t system,
   const tk::UnsMesh::Coords& coord,
+  const std::vector< int >& srcFlag,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat );
@@ -191,7 +191,7 @@ VertexBasedLimiting(
   std::size_t ,
   std::size_t ncomp,
   std::vector< tk::real >& phi,
-  const std::array< std::size_t, 2 >& VarRange );
+  const std::vector< std::size_t >& VarList );
 
 //! Kuzmin's vertex-based limiter function calculation for P2 dofs
 void
@@ -207,13 +207,14 @@ VertexBasedLimiting_P2(
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
   const std::vector< std::vector<tk::real> >& NodalExtrm,
-  const std::array< std::size_t, 2 >& VarRange,
+  const std::vector< std::size_t >& VarList,
   std::vector< tk::real >& phi );
 
 //! Consistent limiter modifications for P1 dofs
 void consistentMultiMatLimiting_P1( const std::size_t nmat,
   const std::size_t rdof,
   const std::size_t e,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::vector< tk::real >& phic_p1,
@@ -280,7 +281,6 @@ interfaceIndicator( std::size_t nmat,
 void MarkShockCells ( const bool pref,
                       const std::size_t nelem,
                       const std::size_t nmat,
-                      const std::size_t system,
                       const std::size_t ndof,
                       const std::size_t rdof,
                       const std::vector< EOS >& mat_blk,
@@ -291,6 +291,7 @@ void MarkShockCells ( const bool pref,
                       const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const tk::FluxFn& flux,
+                      const std::vector< std::size_t >& solidx,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker );
@@ -298,11 +299,11 @@ void MarkShockCells ( const bool pref,
 //! Update the conservative quantities after limiting for multi-material systems
 void
 correctLimConservMultiMat(
-  const bool pref,
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   std::size_t nmat,
-  const std::vector< std::size_t >& ndofel,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
   const tk::Fields& geoElem,
   const tk::Fields& prim,
   tk::Fields& unk );

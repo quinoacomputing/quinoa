@@ -1,14 +1,11 @@
 /*!
-  @page      build Build
+  @page      build Advanced build options
 
 @tableofcontents{xml}
 
-This page discusses various ways of building Quinoa, including requirements,
-optional libraries, defaults, and build system options.
-
-@section build_quick Quick start
-
-See section @ref mainpage_build on the main page.
+This page discusses various advanced Quinoa build options, including requirements,
+optional libraries, defaults, and build system options. See
+@ref easybuild "Quick build" for the default build.
 
 @section build_requirements Minimum requirements
 
@@ -16,29 +13,17 @@ See section @ref mainpage_build on the main page.
  - C and C++ compilers, the latter implementing the C++17 standard
  - Message Passing Interface library, e.g., [OpenMPI](https://www.open-mpi.org)
 
-@section build_supported Routinely tested
-
- Compilers:
+@section build_supported Routinely tested compilers
  - GNU
  - Clang
- - Intel
 
- C++ standard library:
- - libc++
- - libstdc++
+@note Intel compilers are not supported. [Sol2](https://github.com/ThePhD/sol2)
+and Intel compilers are not compatible. For more information, see
+https://github.com/ThePhD/sol2/issues/548.
 
- MPI:
- - OpenMPI
- - Intel MPI
+@section build_default Build using the defaults
 
- Operating systems:
- - Debian Linux
- - Alpine Linux
- - RedHat Enterprise Linux
-
-@section build_stages Two-stage build
-
-Quinoa is built in two stages, of which the first one may be optional:
+Quinoa is built in two stages:
 
  1. Build third-party libraries (TPLs)
  2. Build Quinoa
@@ -48,7 +33,7 @@ Both stages consist of the following two steps
  - Use cmake to configure the build
  - Perform the build
 
-The first step may be optional if all TPLs are found on the system or are
+The first stage may be optional if all TPLs are found on the system or are
 pre-installed and/or configured, e.g., via environment modules.
 
 @note If some libraries are not found by the Quinoa cmake step, not all
@@ -57,28 +42,32 @@ single executable, see @ref build_specific_executables, or a build
 configured for only building the documentation, see
 https://github.com/quinoacomputing/buildenv/blob/master/debian-doc.
 
-@section build_default Build using the defaults
+The easiest way to build Quinoa is to use the defaults.
 
-The easiest, but not necessarily the quickest, way to build Quinoa is to use the
-defaults.
-
-Install the prerequisites on a Debian-based Linux do
+Install the prerequisites (instructions for a Debian-based Linux):
 
        sudo apt-get install cmake gfortran gcc g++ openmpi-bin libopenmpi-dev
 
-Clone the code with the external packages (third party libraries, TPLs):
+Clone the third-party libraries (TPLs):
 
-       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa.git
+       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa-tpl.git
 
 Build the TPLs in an empty directory:
 
-       cd quinoa
-       mkdir external/build
-       cd external/build
+       cd quinoa-tpl
+       mkdir build
+       cd build
        cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..
        make -sj$(grep -c processor /proc/cpuinfo)
 
-If the above went fine, we build the code, in a new empty build directory:
+By default, this will install all TPLs in
+`quinoa-tpl/install/<compiler>-<arch>/`, e.g., `quinoa-tpl/install/gnu-x86_64/`.
+Next, clone Quinoa in a directory "adjacent" to `quinoa-tpl/`
+
+       cd ../..
+       git clone https://github.com/quinoacomputing/quinoa.git
+
+Now, build the code, in a new empty build directory.:
 
        cd quinoa
        mkdir build
@@ -86,8 +75,10 @@ If the above went fine, we build the code, in a new empty build directory:
        cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc ../src
        make -sj$(grep -c processor /proc/cpuinfo)
 
-If this also went fine, let's run the unit-, and regression tests in the build
-directory:
+If the TPLs have been built in a non-adjacent directory, we tell that location
+to cmake using the cmake variable `TPL_DIR` in the above cmake command (For
+example: `-DTPL_DIR=<path-to-quinoa-tpl>/install/gnu-x86_64/`). Once the code is
+built, run the unit-, and regression tests in the build directory:
 
        cd quinoa/build
        ./charmrun +p$(grep -c processor /proc/cpuinfo) Main/unittest -v -q
@@ -103,72 +94,6 @@ The default install directory is `/usr/local`, which usually needs root
 permissions. You can change that by configuring a different path in the
 `CMAKE_INSTALL_PREFIX` cmake variable.
 
-@section build_nonrecursive Working with a non-recursive clone
-
-The default build process, described in section @ref build_default, instructs
-you to do a _recursive_ clone, which clones not only the source code for Quinoa
-but also all external packages (third-party libraries, TPLs). The TPLs are
-pulled in to directory `external/` as git submodules and contain significantly
-more data and files than the Quinoa source. If you plan to do code development,
-it is quicker to work with the repository (changing branches, stashing, etc.)
-if you work with a _non-recursive_ clone.
-
-To make this work, we need to clone the TPLs separately:
-
-       git clone --recurse-submodules https://github.com/quinoacomputing/quinoa-tpl.git
-
-Then build the TPLs using a similar process as in @ref build_default :
-
-       cd quinoa-tpl
-       mkdir build
-       cd build
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 ..
-       make -sj$(grep -c processor /proc/cpuinfo)
-
-By default, this will install all TPLs in
-`quinoa-tpl/install/<compiler>-<arch>/`, e.g., `quinoa-tpl/install/gnu-x86_64/`.
-Now we can clone Quinoa without cloning the TPLs:
-
-       git clone https://github.com/quinoacomputing/quinoa.git
-
-To build the code using the TPLs installed above, we tell that location to
-cmake using the cmake variable `TPL_DIR`:
-
-       cd quinoa
-       mkdir build
-       cd build
-       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DTPL_DIR=<path-to-quinoa-tpl>/install/gnu-x86_64/ ../src
-       make -sj$(grep -c processor /proc/cpuinfo)
-
-Since the Quinoa clone no longer contains initialized submodules, git
-operations are faster. This difference can be significant on network-mounted or
-shared drives.
-
-If the need arises, e.g., to pull in changes from the TPL submodules into such a
-non-recursive clone, the `external/` directory can still be populated under the
-quinoa clone by initializing the submodules:
-
-       cd quinoa
-       git submodule init
-       git submodule update --recursive
-       cd external
-       git submodule init
-       git submodule update --recursive
-       cd ..
-       git submodule status --recursive
-
-As you can see form the output of the commands above, there are two layers of
-git submodules. You can also just use the above as a single, chained command:
-
-       cd quinoa
-       git submodule init && git submodule update --recursive && cd external && git submodule init && git submodule update --recursive && cd .. && git submodule status --recursive
-
-After this under `quinoa/external/` the TPLs can be updated, e.g., `git pull`,
-etc.  When the TPL sources are, again, no longer needed, we de-populate it:
-
-       cd quinoa
-       git submodule deinit --all
-
 @note To effect code-reuse between
 [quinoa](https://github.com/quinoacomputing/quinoa) and
 [quinoa-tpl](https://github.com/quinoacomputing/quinoa-tpl) the `cmake/`
@@ -176,7 +101,7 @@ directory is pulled into _quinoa_ as a git subtree, (and as a submodule into
 _quinoa-tpl_) whose origin is https://github.com/quinoacomputing/cmake-modules.
 Therefore changes to files under `cmake/` should be made to the
 [cmake-modules](https://github.com/quinoacomputing/cmake-modules) repository
-and then pulled in to _quinoa_ and _quinoa-tpl_. See also the page on on @ref
+and then pulled in to _quinoa_ and _quinoa-tpl_. See also the page on @ref
 git_submodules_subtrees.
 
 @section build_specific_executables Build specific executables only
@@ -188,14 +113,14 @@ about a particular tool, e.g., @ref inciter_main, you can
  1. Clone only those TPLs that are required for the given tool (instead of
     cloning them all), e.g.,
 
-         git clone https://github.com/quinoacomputing/quinoa.git && cd quinoa
-         git submodule init && git submodule update && cd external
-         git -c submodule."src/pugixml".update=none -c submodule."src/rngsse2".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/root".update=none -c submodule."src/aec".update=none submodule update --init --recursive
+         git clone https://github.com/quinoacomputing/quinoa-tpl.git && cd quinoa-tpl
+         git submodule init
+         git -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none submodule update --init --recursive --progress
 
  2. Build only those TPLs that are required for the given executable by setting
     the `<executable>_ONLY` cmake variable to `true`, e.g.,
 
-         cd quinoa && mkdir external/build && cd external/build
+         cd quinoa-tpl && mkdir build && cd build
          cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc -DCMAKE_Fortran_COMPILER=mpif90 -DINCITER_ONLY=true ..
          make -sj$(grep -c processor /proc/cpuinfo)
 
@@ -213,15 +138,15 @@ required for the given tool for each executable:
 
 @ref inciter_main
 
-       git -c submodule."src/pugixml".update=none -c submodule."src/rngsse2".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/root".update=none -c submodule."src/aec".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
+       git -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
 
 @ref unittest_main
 
-       git -c submodule."src/rngsse2".update=none -c submodule."src/testu01".update=none -c submodule."src/numdiff".update=none -c submodule."src/root".update=none  -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none  -c submodule."src/m.css".update=none -c submodule."src/aec".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
+       git -c submodule."src/numdiff".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
 
 @ref meshconv_main
 
-       git -c submodule."src/random123".update=none -c submodule."src/rngsse2".update=none -c submodule."src/lapack".update=none -c submodule."src/aec".update=none -c submodule."src/h5part".update=none -c submodule."src/testu01".update=none -c submodule."src/tut".update=none -c submodule."src/root".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/omega_h".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
+       git -c submodule."src/lapack".update=none -c submodule."src/h5part".update=none -c submodule."src/tut".update=none -c submodule."src/backward-cpp".update=none -c submodule."src/doxygen".update=none -c submodule."src/m.css".update=none -c submodule."src/sol2".update=none submodule update --init --recursive
 
 @section build_systemlibs Using system-wide packages
 
@@ -294,12 +219,6 @@ also the Charm++ manual on how to run in SMP mode.
 @note SMP mode configures more regression tests, specifically exercising SMP,
 compared to non-SMP mode, thus enables a more thorough testing.
 
-@section build_static Static build
-
-Some machines, e.g., Crays, prefer builds using static libraries. This can be
-done by passing the cmake argument `-DBUILD_SHARED_LIBS=off` to _both_ TPL and
-Quinoa configure steps. See also section @ref build_default.
-
 @section build_projections Build with Charm++'s Projections enabled
 
 To use Charm++'s performance analysis tool, Projections, you can build Charm++
@@ -348,8 +267,7 @@ the TPL build by passing to cmake, e.g.,
 
 @section build_cpplibrary Configuring the C++ standard library
 
-We routinely use and test _libc++_ and _libstdc++_.  Which one to use can be
-configured by the cmake variable `STDLIBCPP`, as
+_libc++_ or _libstdc++_ can be configured by the cmake variable `STDLIBCPP`, as
 
        -DSTDLIBCPP=libc++
 
@@ -361,8 +279,7 @@ or
 With the gnu compilers _libstdc++_ is the only option.
 
 @warning The configuration for the standard library must be specified so that
-_both_ the TPL and the Quinoa builds use the same implementation. See the
-section on @ref build_stages.
+_both_ the TPL and the Quinoa builds use the same implementation.
 
 @section build_system_specs Build system features, requirements, and defaults
 
@@ -383,14 +300,13 @@ General requirements for configuring the TPL as well as Quinoa builds:
 - If unspecified, the default install directory, configured by the cmake
   variable `CMAKE_INSTALL_PREFIX`, for the TPL build is
   `<root>/install/<compiler>-<architecture>/`, where `<root>` is the root of the
-  TPL repository clone. In a recursive clone `<root>` is `quinoa/external`. See
-  also the section on @ref build_nonrecursive.
+  TPL repository clone.
 
 - If unspecified, the default TPL directory, configured by the cmake variable
   `TPL_DIR`, for the Quinoa build is
-  `<root>/external/install/<compiler>-architecture>/`, where `<root>` is the
-  root of the Quinoa repository clone. See also the section on @ref
-  build_nonrecursive.
+  `<root>/../quinoa-tpl/install/<compiler>-architecture>/`, where `<root>` is the
+  root of the Quinoa repository clone; i.e. a directory "adjacent" to the Quinoa
+  clone.
 
 - For the list of TPLs searched (and if not found, built) by default, see
   [<quinoa-tpl>/CMakeLists.txt](https://github.com/quinoacomputing/quinoa-tpl/blob/master/CMakeLists.txt), section starting with the comment line
@@ -416,7 +332,6 @@ docker images:
 The most important (top-level) files responsible for configuring the build
 system are
 
-- [external/CMakeLists.txt](https://github.com/quinoacomputing/quinoa-tpl/blob/master/CMakeLists.txt)
 - [cmake/TPLs.cmake](https://github.com/quinoacomputing/quinoa/blob/develop/cmake/TPLs.cmake)
 - [src/CMakeLists.txt](https://github.com/quinoacomputing/quinoa/blob/develop/src/CMakeLists.txt)
 

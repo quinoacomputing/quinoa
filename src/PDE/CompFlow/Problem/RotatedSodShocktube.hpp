@@ -25,10 +25,13 @@ namespace inciter {
 //!   Nonlinear Hyperbolic Conservation Laws. J. Comput. Phys., 27:1–31, 1978.
 class CompFlowProblemRotatedSodShocktube : public CompFlowProblemSodShocktube {
 
+  private:
+    using ncomp_t = tk::ncomp_t;
+
   public:
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
-    initialize( ncomp_t system, ncomp_t ncomp, const std::vector< EOS >&,
+    initialize( ncomp_t ncomp, const std::vector< EOS >&,
                 tk::real x, tk::real y, tk::real z, tk::real t );
 
     //! Return problem type

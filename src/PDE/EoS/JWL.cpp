@@ -19,12 +19,13 @@
 using inciter::JWL;
 
 JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
-  tk::real pr, tk::real A, tk::real B, tk::real R1, tk::real R2 ) :
+  tk::real tr, tk::real pr, tk::real A, tk::real B, tk::real R1, tk::real R2 ) :
   m_w(w),
   m_cv(cv),
   m_rho0(rho0),
   m_de(de),
   m_rhor(rhor),
+  m_tr(tr),
   m_pr(pr),
   m_a(A),
   m_b(B),
@@ -38,6 +39,7 @@ JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
 //! \param[in] de Heat of detonation for products. For reactants, it is
 //!   chosen such that the ambient internal energy (e0) is 0.
 //! \param[in] rhor Density of reference state
+//! \param[in] tr Temperature of reference state
 //! \param[in] pr Pressure of reference state
 //! \param[in] A Parameter A
 //! \param[in] B Parameter B
@@ -45,12 +47,20 @@ JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
 //! \param[in] R2 Parameter R2
 // *************************************************************************
 {
-  // reference internal energy
-  auto er = intEnergy(rhor, pr);
-  // reference temperature from Eqn (15)
-  m_tr = 1.0/m_cv * (er + de -
-    (m_a/m_r1*exp(-m_r1*m_rho0/m_rhor) +
-     m_b/m_r2*exp(-m_r2*m_rho0/m_rhor)) / m_rho0);
+  // reference density provided
+  if (m_tr < 1e-8) {
+    // reference internal energy
+    auto er = intEnergy(rhor, pr);
+    // reference temperature from Eqn (15)
+    m_tr = 1.0/m_cv * (er + de -
+      (m_a/m_r1*exp(-m_r1*m_rho0/m_rhor) +
+       m_b/m_r2*exp(-m_r2*m_rho0/m_rhor)) / m_rho0);
+  }
+  // reference temperature provided
+  else
+  {
+    m_rhor = density(m_pr, m_tr);
+  }
 }
 
 tk::real
@@ -83,7 +93,8 @@ JWL::pressure(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the stiffened-gas equation of state
@@ -109,6 +120,7 @@ JWL::pressure(
   //// reference energy (input quantity, might need for calculation)
   //tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
 
+  alpha = std::max(1e-14,alpha);
   tk::real partpressure =
     m_a*(alpha - m_w*arho/(m_rho0*m_r1))*exp(-m_r1*alpha*m_rho0/arho) +
     m_b*(alpha - m_w*arho/(m_rho0*m_r2))*exp(-m_r2*alpha*m_rho0/arho) +
@@ -130,12 +142,37 @@ JWL::pressure(
   return partpressure;
 }
 
+std::array< std::array< tk::real, 3 >, 3 >
+JWL::CauchyStress(
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  tk::real,
+  std::size_t,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+// *************************************************************************
+//! \brief Calculate the Cauchy stress tensor from the material density,
+//!   momentum, and total energy
+//! \return Material Cauchy stress tensor (alpha_k * sigma_k)
+// *************************************************************************
+{
+  std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
+
+  // No elastic contribution
+
+  return asig;
+}
+
 tk::real
 JWL::soundspeed(
   tk::real arho,
   tk::real apr,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  const std::array< std::array< tk::real, 3 >, 3 >&,
+  const std::array< tk::real, 3 >& ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -149,8 +186,10 @@ JWL::soundspeed(
 //! \return Material speed of sound using the stiffened-gas EoS
 // *************************************************************************
 {
+  alpha = std::max(1e-14,alpha);
   // limiting pressure to near-zero
-  auto apr_eff = std::max( 1.0e-15, apr );
+  auto apr_eff = std::max(alpha*
+    min_eff_pressure(1e-4*std::abs(apr/alpha), arho, alpha), apr);
 
   auto co1 = m_rho0*alpha*alpha/(arho*arho);
   auto co2 = alpha*(1.0+m_w)/arho;
@@ -159,6 +198,7 @@ JWL::soundspeed(
               + m_b*(m_r2*co1 - co2) * exp(-m_r2*alpha*m_rho0/arho)
               + (1.0+m_w)*apr_eff/arho;
 
+  auto ss2 = ss;
   ss = std::sqrt(ss);
 
   // check sound speed divergence
@@ -170,7 +210,7 @@ JWL::soundspeed(
     std::cout << "Min allowed pres: " << alpha*min_eff_pressure(0.0, arho,
       alpha) << std::endl;
     Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed. "
-      "ss^2: " + std::to_string(ss) + ", material volume fraction: " +
+      "ss^2: " + std::to_string(ss2) + ", material volume fraction: " +
       std::to_string(alpha));
   }
 
@@ -183,7 +223,8 @@ JWL::totalenergy(
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real pr ) const
+  tk::real pr,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -211,7 +252,8 @@ JWL::temperature(
   tk::real v,
   tk::real w,
   tk::real arhoE,
-  tk::real alpha ) const
+  tk::real alpha,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy
@@ -226,6 +268,7 @@ JWL::temperature(
 //! \return Material temperature using the stiffened-gas EoS
 // *************************************************************************
 {
+  alpha = std::max(1e-14,alpha);
   tk::real rho = arho/alpha;
 
   //// reference energy (input quantity, might need for calculation)
@@ -253,6 +296,7 @@ JWL::min_eff_pressure(
 //! \return Minimum pressure allowed by physical constraints
 // *************************************************************************
 {
+  alpha = std::max(1e-14,alpha);
   auto co1 = m_rho0*alpha*alpha/(arho*arho);
   auto co2 = alpha*(1.0+m_w)/arho;
 
@@ -307,8 +351,16 @@ JWL::bisection(
   tk::real c;
   tk::real root(0);
   std::size_t idebug = 0;
-  auto a_o = a;
-  auto b_o = b;
+
+  // Ensure that original bounds contain root
+  while ( p_known < PfromRT( a, t_known)) {
+    b = a;
+    a *= 1e-6;
+  }
+  while ( p_known > PfromRT( b, t_known)) {
+    a = b;
+    b *= 1e6;
+  }
 
   // function to minimize: fcn = p_known - PfromRT
   // bounds b > a
@@ -345,11 +397,6 @@ JWL::bisection(
     {
       Throw("JWL Bisection for density failed to converge after iterations "
       + std::to_string(i));
-    }
-    if (std::abs(root-a_o) < 1e-16 || std::abs(root-b_o) < 1e-16)
-    {
-      Throw("JWL bisection for density resulted in left/right bound as "
-      "solution. Extend bounds for correctness");
     }
 
   }

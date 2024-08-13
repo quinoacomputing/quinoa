@@ -18,6 +18,7 @@
 #include "Inciter/Options/Flux.hpp"
 #include "Riemann/HLL.hpp"
 #include "Riemann/AUSM.hpp"
+#include "Riemann/LaxFriedrichsSolids.hpp"
 
 namespace inciter {
 
@@ -34,6 +35,9 @@ namespace inciter {
     }
     else if (flux == ctr::FluxType::HLL) {
       fluxfn = HLL::flux;
+    }
+    else if (flux == ctr::FluxType::LaxFriedrichs) {
+      fluxfn = LaxFriedrichsSolids::flux;
     }
     else {
       Throw("Riemann solver not set up for multi-material PDEs.");

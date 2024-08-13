@@ -5,8 +5,8 @@
 
 add_regression_test(compflow_euler_gauss_hump_pdg ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES gauss_hump_pdg.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_pdg.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES gauss_hump_pdg.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_pdg.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_pdg.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
@@ -18,8 +18,8 @@ add_regression_test(compflow_euler_gauss_hump_pdg ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_gauss_hump_pdg_outref ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES gauss_hump_pdg_outref.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_pdg_outref.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES gauss_hump_pdg_outref.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_pdg_outref.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_pdg_outref.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff.cfg
@@ -33,8 +33,8 @@ add_regression_test(compflow_euler_gauss_hump_pdg_outref ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_gauss_hump_pdg ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_pdg.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_pdg.q -i unitsquare_01_3.6k.exo -v
+                    INPUTFILES gauss_hump_pdg.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_pdg.lua -i unitsquare_01_3.6k.exo -v
                     BIN_BASELINE gauss_hump_pdg_pe4.std.exo.0
                                  gauss_hump_pdg_pe4.std.exo.1
                                  gauss_hump_pdg_pe4.std.exo.2
@@ -54,8 +54,8 @@ add_regression_test(compflow_euler_gauss_hump_pdg ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_gauss_hump_pdg_u0.8 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_pdg.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_pdg.q -i unitsquare_01_3.6k.exo -v -u 0.8
+                    INPUTFILES gauss_hump_pdg.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_pdg.lua -i unitsquare_01_3.6k.exo -v -u 0.8
                     BIN_BASELINE gauss_hump_pdg_pe4_u0.8.std.exo.0
                                  gauss_hump_pdg_pe4_u0.8.std.exo.1
                                  gauss_hump_pdg_pe4_u0.8.std.exo.2
@@ -107,8 +107,8 @@ add_regression_test(compflow_euler_gauss_hump_pdg_u0.8 ${INCITER_EXECUTABLE}
 
 add_regression_test(compflow_euler_gauss_hump_pdg_u0.8_migr ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES gauss_hump_pdg.q unitsquare_01_3.6k.exo
-                    ARGS -c gauss_hump_pdg.q -i unitsquare_01_3.6k.exo -v -u 0.8
+                    INPUTFILES gauss_hump_pdg.lua unitsquare_01_3.6k.exo
+                    ARGS -c gauss_hump_pdg.lua -i unitsquare_01_3.6k.exo -v -u 0.8
                          +balancer GreedyRefineLB +LBDebug 1
                     BIN_BASELINE gauss_hump_pdg_pe4_u0.8.std.exo.0
                                  gauss_hump_pdg_pe4_u0.8.std.exo.1

@@ -15,14 +15,10 @@ add_executable(${UNITTEST_EXECUTABLE}
                ../../tests/unit/Base/TestReader.cpp
                ../../tests/unit/Base/TestPrintUtil.cpp
                ../../tests/unit/Base/TestTaggedTuple.cpp
-               ../../tests/unit/Base/TestTaggedTuplePrint.cpp
-               ../../tests/unit/Base/TestTaggedTupleDeepPrint.cpp
                ../../tests/unit/Base/TestTimer.cpp
                ../../tests/unit/Base/TestVector.cpp
                ../../tests/unit/Base/TestWriter.cpp
-               ../../tests/unit/Control/TestFileParser.cpp
                ../../tests/unit/Control/TestStringParser.cpp
-               ../../tests/unit/Control/TestSystemComponents.cpp
                ../../tests/unit/Control/TestToggle.cpp
                ../../tests/unit/${TestScheme}
                ../../tests/unit/${TestError}
@@ -69,14 +65,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       HyperMeshIO
                       ${PUGIXML_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${NETCDF_LIBRARIES}       # only for static link
-                      ${HDF5_HL_LIBRARIES}      # only for static link
-                      ${HDF5_C_LIBRARIES}
                       ${BACKWARD_LIBRARIES}
                       ${LIBCXX_LIBRARIES}       # only for static link with libc++
                       ${LIBCXXABI_LIBRARIES})   # only for static link with libc++

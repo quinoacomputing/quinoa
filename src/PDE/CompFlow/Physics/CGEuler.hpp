@@ -20,9 +20,7 @@
 #include <array>
 #include <limits>
 
-#include "Types.hpp"
 #include "Inciter/Options/Physics.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
 

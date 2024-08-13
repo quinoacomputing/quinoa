@@ -80,9 +80,8 @@
 #include "Inciter/Options/Scheme.hpp"
 
 #include "NoWarning/discretization.decl.h"
-#include "NoWarning/diagcg.decl.h"
 #include "NoWarning/alecg.decl.h"
-#include "NoWarning/distfct.decl.h"
+#include "NoWarning/oversetfe.decl.h"
 #include "NoWarning/dg.decl.h"
 #include "NoWarning/fv.decl.h"
 #include "NoWarning/ale.decl.h"
@@ -96,16 +95,16 @@ class Scheme {
 
   private:
     //! Variant type listing all chare proxy types modeling the same concept
-    using Proxy = std::variant< CProxy_DiagCG
-                              , CProxy_DG
+    using Proxy = std::variant< CProxy_DG
                               , CProxy_ALECG
+                              , CProxy_OversetFE
                               , CProxy_FV >;
 
   public:
     //! Variant type listing all chare element proxy types
-    using ProxyElem = std::variant< CProxy_DiagCG::element_t
-                                  , CProxy_DG::element_t
+    using ProxyElem = std::variant< CProxy_DG::element_t
                                   , CProxy_ALECG::element_t
+                                  , CProxy_OversetFE::element_t
                                   , CProxy_FV::element_t >;
 
     //! Empty constructor for Charm++
@@ -129,10 +128,7 @@ class Scheme {
       discproxy( CProxy_Discretization::ckNew() )
     {
       bound.bindTo( discproxy );
-      if (scheme == ctr::SchemeType::DiagCG) {
-        proxy = static_cast< CProxy_DiagCG >( CProxy_DiagCG::ckNew(bound) );
-        fctproxy = CProxy_DistFCT::ckNew(bound);
-      } else if (scheme == ctr::SchemeType::DG ||
+      if (scheme == ctr::SchemeType::DG ||
                  scheme == ctr::SchemeType::P0P1 ||
                  scheme == ctr::SchemeType::DGP1 ||
                  scheme == ctr::SchemeType::DGP2 ||
@@ -141,6 +137,8 @@ class Scheme {
         proxy = static_cast< CProxy_DG >( CProxy_DG::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::ALECG) {
         proxy = static_cast< CProxy_ALECG >( CProxy_ALECG::ckNew(bound) );
+      } else if (scheme == ctr::SchemeType::OversetFE) {
+        proxy = static_cast< CProxy_OversetFE >( CProxy_OversetFE::ckNew(bound) );
       } else if (scheme == ctr::SchemeType::FV) {
         proxy = static_cast< CProxy_FV >( CProxy_FV::ckNew(bound) );
       } else Throw( "Unknown discretization scheme" );
@@ -154,6 +152,7 @@ class Scheme {
     //! Entry method tags for specific Scheme classes to use with bcast()
     struct setup {};
     struct box {};
+    struct transferSol {};
     struct advance {};
     struct resized {};
     struct resizeComm {};
@@ -177,6 +176,8 @@ class Scheme {
             p.setup( std::forward< Args >( args )... );
           if constexpr( std::is_same_v< Fn, box > )
             p.box( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, transferSol > )
+            p.transferSol( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, advance > )
             p.advance( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, resized > )
@@ -240,10 +241,6 @@ class Scheme {
     //! \return Discretization Charm++ chare array proxy
     CProxy_Discretization& disc() noexcept { return discproxy; }
 
-    //! Get reference to DistFCT proxy
-    //! \return DistFCT Charm++ chare array proxy
-    CProxy_DistFCT& fct() noexcept { return fctproxy; }
-
     //! Get reference to ALE proxy
     //! \return ALE Charm++ chare array proxy
     CProxy_ALE& ale() noexcept { return aleproxy; }
@@ -282,7 +279,6 @@ class Scheme {
     void pup( PUP::er &p ) {
       p | proxy;
       p | discproxy;
-      p | fctproxy;
       p | aleproxy;
       p | conjugategradientsproxy;
       p | ghostsproxy;
@@ -299,8 +295,6 @@ class Scheme {
     Proxy proxy;
     //! Charm++ proxy to data and code common to all discretizations
     CProxy_Discretization discproxy;
-    //! Charm++ proxy to flux-corrected transport (FCT) driver class
-    CProxy_DistFCT fctproxy;
     //! Charm++ proxy to ALE class
     CProxy_ALE aleproxy;
     //! Charm++ proxy to conjugate gradients linear solver class

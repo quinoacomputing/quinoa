@@ -28,7 +28,6 @@ using inciter::cg::TransportPhysicsAdvDiff;
 
 void
 TransportPhysicsAdvDiff::diffusionRhs(
-  ncomp_t system,
   ncomp_t ncomp,
   tk::real deltat,
   tk::real J,
@@ -39,8 +38,6 @@ TransportPhysicsAdvDiff::diffusionRhs(
   tk::Fields& R ) const
 // *****************************************************************************
 //  Add diffusion contribution to rhs
-//! \param[in] system Equation system index, i.e., which transport equation
-//!   system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of components in this PDE
 //! \param[in] deltat Size of time step
 //! \param[in] J Element Jacobi determinant
@@ -52,8 +49,7 @@ TransportPhysicsAdvDiff::diffusionRhs(
 // *****************************************************************************
 {
   // diffusivities for all components
-  const auto& diff =
-    g_inputdeck.get< tag::param, eq, tag::diffusivity >()[ system ];
+  auto diff = g_inputdeck.get< eq, tag::diffusivity >();
 
   // add diffusion contribution to right hand side
   const auto d = deltat * J/6.0;
@@ -68,22 +64,18 @@ TransportPhysicsAdvDiff::diffusionRhs(
 
 tk::real
 TransportPhysicsAdvDiff::diffusion_dt(
-  ncomp_t system,
   ncomp_t ncomp,
   tk::real L,
   const std::vector< std::array< tk::real, 4 > >& ) const
 // *****************************************************************************
 //! Compute the minimum time step size based on the diffusion
-//! \param[in] system Equation system index, i.e., which transport equation
-//!   system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of components in this PDE
 //! \param[in] L Characteristic length scale
 //! \return Minimum time step size based on diffusion
 // *****************************************************************************
 {
   // diffusivities for all components
-  const auto& df =
-    g_inputdeck.get< tag::param, eq, tag::diffusivity >()[ system ];
+  auto df = g_inputdeck.get< eq, tag::diffusivity >();
 
   // compute the minimum diffusion time step size across the four nodes
   tk::real mindt = std::numeric_limits< tk::real >::max();

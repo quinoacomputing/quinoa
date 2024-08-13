@@ -16,20 +16,24 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
+namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
+
+} // ::inciter
+
 using inciter::MultiMatProblemInterfaceAdvection;
 
 tk::InitializeFn::result_type
-MultiMatProblemInterfaceAdvection::initialize( ncomp_t system,
-                                               ncomp_t ncomp,
-                                              const std::vector< EOS >& mat_blk,
-                                               tk::real x,
-                                               tk::real y,
-                                               tk::real /*z*/,
-                                               tk::real t )
+MultiMatProblemInterfaceAdvection::initialize(
+  ncomp_t ncomp,
+  const std::vector< EOS >& mat_blk,
+  tk::real x,
+  tk::real y,
+  tk::real /*z*/,
+  tk::real t )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] x X coordinate where to evaluate the solution
 //! \param[in] y Y coordinate where to evaluate the solution
@@ -39,7 +43,7 @@ MultiMatProblemInterfaceAdvection::initialize( ncomp_t system,
 // *****************************************************************************
 {
   auto nmat =
-    g_inputdeck.get< tag::param, eq, tag::nmat >()[system];
+    g_inputdeck.get< eq, tag::nmat >();
 
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Incorrect number of components in multi-material "

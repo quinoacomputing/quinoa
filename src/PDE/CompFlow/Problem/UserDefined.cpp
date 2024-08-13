@@ -16,8 +16,8 @@
 
 #include "UserDefined.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "EoS/GetMatProp.hpp"
 #include "FieldOutput.hpp"
+#include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
@@ -28,8 +28,7 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::CompFlowProblemUserDefined;
 
 tk::InitializeFn::result_type
-CompFlowProblemUserDefined::initialize( ncomp_t system,
-                                        ncomp_t ncomp,
+CompFlowProblemUserDefined::initialize( ncomp_t ncomp,
                                         const std::vector< EOS >& mat_blk,
                                         tk::real,
                                         tk::real,
@@ -37,8 +36,6 @@ CompFlowProblemUserDefined::initialize( ncomp_t system,
                                         tk::real )
 // *****************************************************************************
 //! Set initial conditions
-//! \param[in] system Equation system index, i.e., which compressible
-//!   flow equation system we operate on among the systems of PDEs
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \return Values of all components
 //! \note The function signature must follow tk::InitializeFn
@@ -47,29 +44,26 @@ CompFlowProblemUserDefined::initialize( ncomp_t system,
   tk::InitializeFn::result_type u( ncomp, 0.0 );
 
   // Set background ICs
-  const auto& ic = g_inputdeck.get< tag::param, eq, tag::ic >();
+  const auto& ic = g_inputdeck.get< tag::ic >();
   const auto& bgrhoic = ic.get< tag::density >();
   const auto& bgvelic = ic.get< tag::velocity >();
   const auto& bgpreic = ic.get< tag::pressure >();
   const auto& bgenic = ic.get< tag::energy >();
   const auto& bgtempic = ic.get< tag::temperature >();
 
-  Assert( bgrhoic.size() > system, "No background density IC" );
-  Assert( bgvelic.size() > 3*system, "No background velocity IC" );
+  u[0] = bgrhoic;
+  u[1] = u[0] * bgvelic[0];
+  u[2] = u[0] * bgvelic[1];
+  u[3] = u[0] * bgvelic[2];
 
-  u[0] = bgrhoic.at(system).at(0);
-  u[1] = u[0] * bgvelic.at(system).at(0);
-  u[2] = u[0] * bgvelic.at(system).at(1);
-  u[3] = u[0] * bgvelic.at(system).at(2);
-
-  if (bgpreic.size() > system && !bgpreic[system].empty()) {
+  if (bgpreic > 1e-12) {
     u[4] = mat_blk[0].compute< EOS::totalenergy >( u[0], u[1]/u[0], u[2]/u[0],
-      u[3]/u[0], bgpreic.at(system).at(0) );
-  } else if (bgenic.size() > system && !bgenic[system].empty()) {
-    u[4] = u[0] * bgenic[system][0];
-  } else if (bgtempic.size() > system && !bgtempic[system].empty()) {
-    const auto& c_v = cv< tag::compflow >(system);
-    u[4] = u[0] * bgtempic[system][0] * c_v;
+      u[3]/u[0], bgpreic );
+  } else if (bgenic > 1e-12) {
+    u[4] = u[0] * bgenic;
+  } else if (bgtempic > 1e-12) {
+    const auto& c_v = getmatprop< tag::cv >();
+    u[4] = u[0] * bgtempic * c_v;
   } else Throw( "IC background energy cannot be computed. User must specify "
                 "one of background pressure, energy, or temperature." );
 

@@ -20,13 +20,8 @@
 #include <array>
 #include "QuinoaConfig.hpp"
 
-#ifdef HAS_MKL
-  #include <mkl_lapacke.h>
-#else
-  #include <lapacke.h>
-#endif
-
 #include "Basis.hpp"
+#include "Vector.hpp"
 #include "Mass.hpp"
 
 std::array< tk::real, 3 >
@@ -390,8 +385,7 @@ tk::eval_state ( ncomp_t ncomp,
                  const std::size_t ndof_el,
                  const std::size_t e,
                  const Fields& U,
-                 const std::vector< tk::real >& B,
-                 const std::array< std::size_t, 2 >& VarRange )
+                 const std::vector< tk::real >& B )
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -400,7 +394,6 @@ tk::eval_state ( ncomp_t ncomp,
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] U Solution vector at recent time step
 //! \param[in] B Vector of basis functions
-//! \param[in] VarRange Range of the variables to be evaluated
 //! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
 {
@@ -414,7 +407,7 @@ tk::eval_state ( ncomp_t ncomp,
   // Array of state variable for tetrahedron element
   std::vector< tk::real > state( ncomp, 0.0 );
 
-  for (ncomp_t c=VarRange[0]; c<=VarRange[1]; ++c)
+  for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
     state[c] = U( e, mark );
@@ -841,8 +834,7 @@ tk::DubinerToTaylorRefEl( ncomp_t ncomp,
     auto Bt = eval_TaylorBasisRefEl(ndof_el, coordgp[0][igp], coordgp[1][igp],
       coordgp[2][igp]);
 
-    auto state = tk::eval_state(ncomp, ndof, ndof_el, e, U, B,
-      {0,ncomp-1});
+    auto state = tk::eval_state(ncomp, ndof, ndof_el, e, U, B);
 
     for (std::size_t c=0; c<ncomp; ++c) {
       for (std::size_t id=0; id<ndof_el; ++id) {

@@ -11,38 +11,99 @@
 */
 // *****************************************************************************
 
+#include <iostream>
+
 #include "MiscMultiMatFns.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "EoS/GetMatProp.hpp"
 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-void initializeMaterialEoS( std::size_t system,
-  std::vector< EOS >& mat_blk )
+void initializeMaterialEoS( std::vector< EOS >& mat_blk )
 // *****************************************************************************
 //  Initialize the material block with configured EOS
-//! \param[in] system Index of system being solved
 //! \param[in,out] mat_blk Material block that gets initialized
 // *****************************************************************************
 {
   // EoS initialization
-  auto nmat =
-    g_inputdeck.get< tag::param, tag::multimat, tag::nmat >()[system];
-  const auto& matprop = g_inputdeck.get< tag::param, tag::multimat,
-    tag::material >()[system];
-  const auto& matidxmap = g_inputdeck.get< tag::param, tag::multimat,
-    tag::matidxmap >();
+  // ---------------------------------------------------------------------------
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+  const auto& matprop = g_inputdeck.get< tag::material >();
+  const auto& matidxmap = g_inputdeck.get< tag::matidxmap >();
   for (std::size_t k=0; k<nmat; ++k) {
     auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get<tag::eos>();
-    mat_blk.emplace_back(mateos, EqType::multimat, system, k);
+    mat_blk.emplace_back(mateos, EqType::multimat, k);
+  }
+
+  // set rho0 for all materials
+  // ---------------------------------------------------------------------------
+  std::vector< tk::real > rho0mat( nmat, 0.0 );
+  const auto& ic = g_inputdeck.get< tag::ic >();
+  const auto& icbox = ic.get< tag::box >();
+  const auto& icmbk = ic.get< tag::meshblock >();
+  // Get background properties
+  std::size_t k = ic.get< tag::materialid >() - 1;
+  tk::real pr = ic.get< tag::pressure >();
+  tk::real tmp = ic.get< tag::temperature >();
+  rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+
+  // Check inside used defined box
+  if (!icbox.empty())
+  {
+    for (const auto& b : icbox) {   // for all boxes
+      k = b.get< tag::materialid >() - 1;
+      auto boxmas = b.get< tag::mass >();
+      // if mass and volume are given, compute density as mass/volume
+      if (boxmas > 0.0) {
+        std::vector< tk::real > box
+          { b.get< tag::xmin >(), b.get< tag::xmax >(),
+            b.get< tag::ymin >(), b.get< tag::ymax >(),
+            b.get< tag::zmin >(), b.get< tag::zmax >() };
+        auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
+        rho0mat[k] = boxmas / V_ex;
+      }
+      // else compute density from eos
+      else {
+        pr = b.get< tag::pressure >();
+        tmp = b.get< tag::temperature >();
+        rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+      }
+    }
+  }
+
+  // Check inside user-specified mesh blocks
+  if (!icmbk.empty())
+  {
+    for (const auto& b : icmbk) { // for all blocks
+      k = b.get< tag::materialid >() - 1;
+      auto boxmas = b.get< tag::mass >();
+      // if mass and volume are given, compute density as mass/volume
+      if (boxmas > 0.0) {
+        auto V_ex = b.get< tag::volume >();
+        rho0mat[k] = boxmas / V_ex;
+      }
+      // else compute density from eos
+      else {
+        pr = b.get< tag::pressure >();
+        tmp = b.get< tag::temperature >();
+        rho0mat[k] = mat_blk[k].compute< EOS::density >(pr, tmp);
+      }
+    }
+  }
+
+  // Store computed rho0's in the EOS-block
+  for (std::size_t i=0; i<nmat; ++i) {
+    mat_blk[i].set< EOS::setRho0 >(rho0mat[i]);
   }
 }
 
 bool
 cleanTraceMultiMat(
+  tk::real t,
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
@@ -51,6 +112,7 @@ cleanTraceMultiMat(
   tk::Fields& P )
 // *****************************************************************************
 //  Clean up the state of trace materials for multi-material PDE system
+//! \param[in] t Physical time
 //! \param[in] nelem Number of elements
 //! \param[in] mat_blk EOS material block
 //! \param[in] geoElem Element geometry array
@@ -60,17 +122,18 @@ cleanTraceMultiMat(
 //! \return Boolean indicating if an unphysical material state was found
 // *****************************************************************************
 {
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
-  auto al_eps = 1.0e-02;
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  std::size_t ncomp = U.nprop()/rdof;
   auto neg_density = false;
+
+  std::vector< tk::real > ugp(ncomp, 0.0);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
-    // find material in largest quantity, and determine if pressure
-    // relaxation is needed. If it is, determine materials that need
-    // relaxation, and the total volume of these materials.
-    std::vector< int > relaxInd(nmat, 0);
-    auto almax(0.0), relaxVol(0.0);
+    // find material in largest quantity.
+    auto almax(0.0);
     std::size_t kmax = 0;
     for (std::size_t k=0; k<nmat; ++k)
     {
@@ -80,22 +143,21 @@ cleanTraceMultiMat(
         almax = al;
         kmax = k;
       }
-      else if (al < al_eps)
-      {
-        relaxInd[k] = 1;
-        relaxVol += al;
-      }
     }
-    relaxInd[kmax] = 1;
-    relaxVol += almax;
+
+    // get conserved quantities
+    std::vector< tk::real > B(rdof, 0.0);
+    B[0] = 1.0;
+    ugp = eval_state(ncomp, rdof, ndof, e, U, B);
 
     auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
     auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
     auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0))/almax;
+    auto gmax = getDeformGrad(nmat, kmax, ugp);
     auto tmax = mat_blk[kmax].compute< EOS::temperature >(
       U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
-      U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax );
+      U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax, gmax );
 
     tk::real p_target(0.0), d_al(0.0), d_arE(0.0);
     //// get equilibrium pressure
@@ -105,7 +167,7 @@ cleanTraceMultiMat(
     //{
     //  auto arhok = U(e, densityDofIdx(nmat,k,rdof,0));
     //  auto alk = U(e, volfracDofIdx(nmat,k,rdof,0));
-    //  auto apk = P(e, pressureDofIdx(nmat,k,rdof,0));
+    //  auto apk = P(e, pressureDofIdx(nmat,k,rdof,0)3);
     //  auto ak = mat_blk[k].compute< EOS::soundspeed >(arhok, apk, alk, k);
     //  kmat[k] = arhok * ak * ak;
 
@@ -122,68 +184,57 @@ cleanTraceMultiMat(
       auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
       auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
       // for positive volume fractions
-      if (matExists(alk))
+      if (solidx[k] == 0 && solidx[kmax] == 0 && matExists(alk))
       {
-        // check if volume fraction is lesser than threshold (al_eps) and
-        // if the material (effective) pressure is negative. If either of
+        // check if volume fraction is lesser than threshold (volfracPRelaxLim)
+        // and if the material (effective) pressure is negative. If either of
         // these conditions is true, perform pressure relaxation.
-        if ((alk < al_eps) ||
+        if ((alk < volfracPRelaxLim()) ||
           (pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
           /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
         {
-          //auto gk = gamma< tag::multimat >(system, k);
-
-          tk::real alk_new(0.0);
-          //// volume change based on polytropic expansion/isentropic compression
-          //if (pk > p_target)
-          //{
-          //  alk_new = std::pow((pk/p_target), (1.0/gk)) * alk;
-          //}
-          //else
-          //{
-          //  auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
-          //  auto ck = eos_soundspeed< tag::multimat >(system, arhok, alk*pk,
-          //    alk, k);
-          //  auto kk = arhok * ck * ck;
-          //  alk_new = alk - (alk*alk/kk) * (p_target-pk);
-          //}
-          alk_new = alk;
-
           // determine target relaxation pressure
           auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-            U(e, densityDofIdx(nmat, k, rdof, 0)), alk_new);
+            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
           prelax = std::max(prelax, p_target);
 
           // energy change
           auto rhomat = U(e, densityDofIdx(nmat, k, rdof, 0))
-            / alk_new;
+            / alk;
+          auto gmat = getDeformGrad(nmat, k, ugp);
           auto rhoEmat = mat_blk[k].compute< EOS::totalenergy >(rhomat, u, v, w,
-            prelax);
+            prelax, gmat);
 
-          // volume-fraction and total energy flux into majority material
-          d_al += (alk - alk_new);
+          // total energy flux into majority material
           d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
-            - alk_new * rhoEmat);
+            - alk * rhoEmat);
 
           // update state of trace material
-          U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk_new;
-          U(e, energyDofIdx(nmat, k, rdof, 0)) = alk_new*rhoEmat;
-          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new*prelax;
+          U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk;
+          U(e, energyDofIdx(nmat, k, rdof, 0)) = alk*rhoEmat;
+          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
         }
       }
       // check for unbounded volume fractions
-      else if (alk < 0.0)
+      else if (alk < 0.0 || !std::isfinite(alk))
       {
-        auto rhok = mat_blk[k].compute< EOS::density >(p_target, tmax);
-        d_al += (alk - 1e-14);
+        auto rhok = mat_blk[k].compute< EOS::density >(p_target,
+          std::max(1e-8,tmax));
+        if (std::isfinite(alk)) d_al += (alk - 1e-14);
         // update state of trace material
         U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
         U(e, densityDofIdx(nmat, k, rdof, 0)) = 1e-14 * rhok;
+        auto gk = std::array< std::array< tk::real, 3 >, 3 >
+          {{ {{1, 0, 0}},
+             {{0, 1, 0}},
+             {{0, 0, 1}} }};
         U(e, energyDofIdx(nmat, k, rdof, 0)) = 1e-14
-          * mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, p_target );
+          * mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, p_target,
+          gk);
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = 1e-14 *
           p_target;
+        resetSolidTensors(nmat, k, e, U, P);
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, volfracDofIdx(nmat, k, rdof, i)) = 0.0;
           U(e, densityDofIdx(nmat, k, rdof, i)) = 0.0;
@@ -191,17 +242,22 @@ cleanTraceMultiMat(
           P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
-      else {
+      else if (!matExists(alk)) {  // condition so that else-branch not exec'ed for solids
         // determine target relaxation pressure
         auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
         prelax = std::max(prelax, p_target);
         auto rhok = U(e, densityDofIdx(nmat, k, rdof, 0)) / alk;
+        auto gk = std::array< std::array< tk::real, 3 >, 3 >
+          {{ {{1, 0, 0}},
+             {{0, 1, 0}},
+             {{0, 0, 1}} }};
         // update state of trace material
         U(e, energyDofIdx(nmat, k, rdof, 0)) = alk
-          * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, prelax );
+          * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, prelax, gk );
         P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
           prelax;
+        resetSolidTensors(nmat, k, e, U, P);
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
           P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
@@ -209,18 +265,7 @@ cleanTraceMultiMat(
       }
     }
 
-    // 2. Based on volume change in majority material, compute energy change
-    //auto gmax = gamma< tag::multimat >(system, kmax);
-    //auto pmax_new = pmax * std::pow(almax/(almax+d_al), gmax);
-    //auto rhomax_new = U(e, densityDofIdx(nmat, kmax, rdof, 0))
-    //  / (almax+d_al);
-    //auto rhoEmax_new = eos_totalenergy< tag::multimat >(system, rhomax_new, u,
-    //  v, w, pmax_new, kmax);
-    //auto d_arEmax_new = (almax+d_al) * rhoEmax_new
-    //  - U(e, energyDofIdx(nmat, kmax, rdof, 0));
-
     U(e, volfracDofIdx(nmat, kmax, rdof, 0)) += d_al;
-    //U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arEmax_new;
 
     // 2. Flux energy change into majority material
     U(e, energyDofIdx(nmat, kmax, rdof, 0)) += d_arE;
@@ -228,9 +273,9 @@ cleanTraceMultiMat(
       mat_blk[kmax].compute< EOS::pressure >(
       U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0)),
-      U(e, volfracDofIdx(nmat, kmax, rdof, 0)), kmax );
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0)), kmax, gmax );
 
-    // enforce unit sum of volume fractions
+    // 3. enforce unit sum of volume fractions
     auto alsum = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
       alsum += U(e, volfracDofIdx(nmat, k, rdof, 0));
@@ -240,47 +285,11 @@ cleanTraceMultiMat(
       U(e, densityDofIdx(nmat, k, rdof, 0)) /= alsum;
       U(e, energyDofIdx(nmat, k, rdof, 0)) /= alsum;
       P(e, pressureDofIdx(nmat, k, rdof, 0)) /= alsum;
+      if (solidx[k] > 0) {
+        for (std::size_t i=0; i<6; ++i)
+          P(e, stressDofIdx(nmat, solidx[k], i, rdof, 0)) /= alsum;
+      }
     }
-
-    //// bulk quantities
-    //auto rhoEb(0.0), rhob(0.0), volb(0.0);
-    //for (std::size_t k=0; k<nmat; ++k)
-    //{
-    //  if (relaxInd[k] > 0.0)
-    //  {
-    //    rhoEb += U(e, energyDofIdx(nmat,k,rdof,0));
-    //    volb += U(e, volfracDofIdx(nmat,k,rdof,0));
-    //    rhob += U(e, densityDofIdx(nmat,k,rdof,0));
-    //  }
-    //}
-
-    //// 2. find mixture-pressure
-    //tk::real pmix(0.0), den(0.0);
-    //pmix = rhoEb - 0.5*rhob*(u*u+v*v+w*w);
-    //for (std::size_t k=0; k<nmat; ++k)
-    //{
-    //  auto gk = gamma< tag::multimat >(system, k);
-    //  auto Pck = pstiff< tag::multimat >(system, k);
-
-    //  pmix -= U(e, volfracDofIdx(nmat,k,rdof,0)) * gk * Pck *
-    //    relaxInd[k] / (gk-1.0);
-    //  den += U(e, volfracDofIdx(nmat,k,rdof,0)) * relaxInd[k]
-    //    / (gk-1.0);
-    //}
-    //pmix /= den;
-
-    //// 3. correct energies
-    //for (std::size_t k=0; k<nmat; ++k)
-    //{
-    //  if (relaxInd[k] > 0.0)
-    //  {
-    //    auto alk_new = U(e, volfracDofIdx(nmat,k,rdof,0));
-    //    U(e, energyDofIdx(nmat,k,rdof,0)) = alk_new *
-    //      eos_totalenergy< tag::multimat >(system, rhomat[k], u, v, w, pmix,
-    //      k);
-    //    P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk_new * pmix;
-    //  }
-    //}
 
     pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0)) /
       U(e, volfracDofIdx(nmat, kmax, rdof, 0));
@@ -295,15 +304,18 @@ cleanTraceMultiMat(
       // lambda for screen outputs
       auto screenout = [&]()
       {
-        std::cout << "Element centroid: " << geoElem(e,1) << ", "
+        std::cout << "Physical time:     " << t << std::endl;
+        std::cout << "Element centroid:  " << geoElem(e,1) << ", "
           << geoElem(e,2) << ", " << geoElem(e,3) << std::endl;
-        std::cout << "Material-id:      " << k << std::endl;
-        std::cout << "Volume-fraction:  " << alpha << std::endl;
-        std::cout << "Partial density:  " << arho << std::endl;
-        std::cout << "Partial pressure: " << apr << std::endl;
-        std::cout << "Major pressure:   " << pmax << std::endl;
-        std::cout << "Major temperature:" << tmax << std::endl;
-        std::cout << "Velocity:         " << u << ", " << v << ", " << w
+        std::cout << "Material-id:       " << k << std::endl;
+        std::cout << "Volume-fraction:   " << alpha << std::endl;
+        std::cout << "Partial density:   " << arho << std::endl;
+        std::cout << "Partial pressure:  " << apr << std::endl;
+        std::cout << "Major pressure:    " << pmax << " (mat " << kmax << ")"
+          << std::endl;
+        std::cout << "Major temperature: " << tmax << " (mat " << kmax << ")"
+          << std::endl;
+        std::cout << "Velocity:          " << u << ", " << v << ", " << w
           << std::endl;
       };
 
@@ -340,8 +352,8 @@ timeStepSizeMultiMat(
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
-  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -355,6 +367,11 @@ timeStepSizeMultiMat(
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     auto er = esuf[2*f+1];
 
+    std::array< tk::real, 3 > fn;
+    fn[0] = geoFace(f,1);
+    fn[1] = geoFace(f,2);
+    fn[2] = geoFace(f,3);
+
     // left element
 
     // Compute the basis function for the left element
@@ -362,9 +379,9 @@ timeStepSizeMultiMat(
     B_l[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, rdof, ndof, el, U, B_l, {0, ncomp-1});
+    ugp = eval_state(ncomp, rdof, ndof, el, U, B_l);
     // get primitive quantities
-    pgp = eval_state(nprim, rdof, ndof, el, P, B_l, {0, nprim-1});
+    pgp = eval_state(nprim, rdof, ndof, el, P, B_l);
 
     // advection velocity
     u = pgp[velocityIdx(nmat, 0)];
@@ -378,9 +395,11 @@ timeStepSizeMultiMat(
     for (std::size_t k=0; k<nmat; ++k)
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+        auto gk = getDeformGrad(nmat, k, ugp);
+        gk = tk::rotateTensor(gk, fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
-          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k ) );
+          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk ) );
       }
     }
 
@@ -395,9 +414,9 @@ timeStepSizeMultiMat(
       B_r[0] = 1.0;
 
       // get conserved quantities
-      ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r, {0, ncomp-1});
+      ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r);
       // get primitive quantities
-      pgp = eval_state( nprim, rdof, ndof, eR, P, B_r, {0, nprim-1});
+      pgp = eval_state( nprim, rdof, ndof, eR, P, B_r);
 
       // advection velocity
       u = pgp[velocityIdx(nmat, 0)];
@@ -411,9 +430,11 @@ timeStepSizeMultiMat(
       for (std::size_t k=0; k<nmat; ++k)
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+          auto gk = getDeformGrad(nmat, k, ugp);
+          gk = tk::rotateTensor(gk, fn);
           a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
-            ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-            ugp[volfracIdx(nmat, k)], k ) );
+            ugp[densityIdx(nmat, k)],
+            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk ) );
         }
       }
 
@@ -445,7 +466,8 @@ timeStepSizeMultiMatFV(
   std::size_t nelem,
   std::size_t nmat,
   const tk::Fields& U,
-  const tk::Fields& P )
+  const tk::Fields& P,
+  std::vector< tk::real >& local_dte )
 // *****************************************************************************
 //  Time step restriction for multi material cell-centered FV scheme
 //! \param[in] mat_blk Material EOS block
@@ -454,11 +476,15 @@ timeStepSizeMultiMatFV(
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] U High-order solution vector
 //! \param[in] P High-order vector of primitives
+//! \param[in,out] local_dte Time step size for each element (for local
+//!   time stepping)
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
-  const auto ndof = g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto rdof = g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto use_mass_avg =
+    g_inputdeck.get< tag::multimat, tag::dt_sos_massavg >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -473,9 +499,9 @@ timeStepSizeMultiMatFV(
     B[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, rdof, ndof, e, U, B, {0, ncomp-1});
+    ugp = eval_state(ncomp, rdof, ndof, e, U, B);
     // get primitive quantities
-    pgp = eval_state(nprim, rdof, ndof, e, P, B, {0, nprim-1});
+    pgp = eval_state(nprim, rdof, ndof, e, P, B);
 
     // magnitude of advection velocity
     auto u = pgp[velocityIdx(nmat, 0)];
@@ -485,14 +511,29 @@ timeStepSizeMultiMatFV(
 
     // acoustic speed
     tk::real a = 0.0;
+    tk::real mixtureDensity = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
     {
-      if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
+      if (use_mass_avg > 0)
+      {
+        // mass averaging SoS
+        a += ugp[densityIdx(nmat,k)]*mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-          ugp[volfracIdx(nmat, k)], k ) );
+          ugp[volfracIdx(nmat, k)], k );
+
+        mixtureDensity += ugp[densityIdx(nmat,k)];
+      }
+      else
+      {
+        if (ugp[volfracIdx(nmat, k)] > 1.0e-04)
+        {
+          a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
+            ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+            ugp[volfracIdx(nmat, k)], k ) );
+        }
       }
     }
+    if (use_mass_avg > 0) a /= mixtureDensity;
 
     // characteristic wave speed
     auto v_char = vmag + a;
@@ -502,10 +543,196 @@ timeStepSizeMultiMatFV(
       /std::sqrt(24.0);
 
     // element dt
-    mindt = std::min(mindt, dx/v_char);
+    local_dte[e] = dx/v_char;
+    mindt = std::min(mindt, local_dte[e]);
   }
 
   return mindt;
+}
+
+tk::real
+timeStepSizeViscousFV(
+  const tk::Fields& geoElem,
+  std::size_t nelem,
+  std::size_t nmat,
+  const tk::Fields& U )
+// *****************************************************************************
+//  Compute the time step size restriction based on this physics
+//! \param[in] geoElem Element geometry array
+//! \param[in] nelem Number of elements
+//! \param[in] nmat Number of materials
+//! \param[in] U Solution vector
+//! \return Maximum allowable time step based on viscosity
+// *****************************************************************************
+{
+  const auto& ndof = g_inputdeck.get< tag::ndof >();
+  const auto& rdof = g_inputdeck.get< tag::rdof >();
+  std::size_t ncomp = U.nprop()/rdof;
+
+  auto mindt = std::numeric_limits< tk::real >::max();
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // get conserved quantities at centroid
+    std::vector< tk::real > B(rdof, 0.0);
+    B[0] = 1.0;
+    auto ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+
+    // Kinematic viscosity
+    tk::real nu(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto alk = ugp[volfracIdx(nmat, k)];
+      auto mu = getmatprop< tag::mu >(k);
+      if (alk > 1.0e-04) nu = std::max(nu, alk*mu/ugp[densityIdx(nmat,k)]);
+    }
+
+    // characteristic length (radius of insphere)
+    auto dx = std::min(std::cbrt(geoElem(e,0)), geoElem(e,4))
+      /std::sqrt(24.0);
+
+    // element dt
+    mindt = std::min(mindt, dx*dx/nu);
+  }
+
+  return mindt;
+}
+
+void
+resetSolidTensors(
+  std::size_t nmat,
+  std::size_t k,
+  std::size_t e,
+  tk::Fields& U,
+  tk::Fields& P )
+// *****************************************************************************
+//  Reset the solid tensors
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] k Material id whose deformation gradient is required
+//! \param[in] e Id of element whose solution is to be limited
+//! \param[in/out] U High-order solution vector which gets modified
+//! \param[in/out] P High-order vector of primitives which gets modified
+// *****************************************************************************
+{
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+
+  if (solidx[k] > 0) {
+    for (std::size_t i=0; i<3; ++i) {
+      for (std::size_t j=0; j<3; ++j) {
+        // deformation gradient reset
+        if (i==j) U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = 1.0;
+        else U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = 0.0;
+
+        // elastic Cauchy-stress reset
+        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
+
+        // high-order reset
+        for (std::size_t l=1; l<rdof; ++l) {
+          U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l)) = 0.0;
+          P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) = 0.0;
+        }
+      }
+    }
+  }
+}
+
+std::array< std::array< tk::real, 3 >, 3 >
+getDeformGrad(
+  std::size_t nmat,
+  std::size_t k,
+  const std::vector< tk::real >& state )
+// *****************************************************************************
+//  Get the inverse deformation gradient tensor for a material at given location
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] k Material id whose deformation gradient is required
+//! \param[in] state State vector at location
+//! \return Inverse deformation gradient tensor (g_k) of material k
+// *****************************************************************************
+{
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  std::array< std::array< tk::real, 3 >, 3 > gk;
+
+  if (solidx[k] > 0) {
+    // deformation gradient for solids
+    for (std::size_t i=0; i<3; ++i) {
+      for (std::size_t j=0; j<3; ++j)
+        gk[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
+    }
+  }
+  else {
+    // empty vector for fluids
+    gk = {{}};
+  }
+
+  return gk;
+}
+
+std::array< std::array< tk::real, 3 >, 3 >
+getCauchyStress(
+  std::size_t nmat,
+  std::size_t k,
+  std::size_t ncomp,
+  const std::vector< tk::real >& state )
+// *****************************************************************************
+//  Get the elastic Cauchy stress tensor for a material at given location
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] k Material id whose deformation gradient is required
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] state State vector at location
+//! \return Elastic Cauchy stress tensor (alpha * \sigma_ij) of material k
+// *****************************************************************************
+{
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  std::array< std::array< tk::real, 3 >, 3 >
+    asigk{{ {{0,0,0}}, {{0,0,0}}, {{0,0,0}} }};
+
+  // elastic Cauchy stress for solids
+  if (solidx[k] > 0) {
+    for (std::size_t i=0; i<3; ++i) {
+      for (std::size_t j=0; j<3; ++j)
+        asigk[i][j] = state[ncomp +
+          stressIdx(nmat, solidx[k], stressCmp[i][j])];
+    }
+  }
+
+  return asigk;
+}
+
+bool
+haveSolid(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx )
+// *****************************************************************************
+//  Check whether we have solid materials in our problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return true if we have at least one solid, false otherwise.
+// *****************************************************************************
+{
+  bool haveSolid = false;
+  for (std::size_t k=0; k<nmat; ++k)
+    if (solidx[k] > 0) haveSolid = true;
+
+  return haveSolid;
+}
+
+std::size_t numSolids(
+  std::size_t nmat,
+  const std::vector< std::size_t >& solidx )
+// *****************************************************************************
+//  Count total number of solid materials in the problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return Total number of solid materials in the problem
+// *****************************************************************************
+{
+  // count number of solid materials
+  std::size_t nsld(0);
+  for (std::size_t k=0; k<nmat; ++k)
+    if (solidx[k] > 0) ++nsld;
+
+  return nsld;
 }
 
 } //inciter::

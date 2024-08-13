@@ -16,17 +16,13 @@
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 #include "ContainerUtil.hpp"
-#include "Control/Inciter/Types.hpp"
 
 namespace inciter {
-
-using ncomp_t = kw::ncomp::info::expect::type;
 
 //! Set the solution in the user-defined IC box
 
 template< class B >
-void initializeBox( std::size_t,
-                    const std::vector< EOS >& mat_blk,
+void initializeBox( const std::vector< EOS >& mat_blk,
                     tk::real VRatio,
                     tk::real V_ex,
                     tk::real t,
@@ -37,7 +33,6 @@ void initializeBox( std::size_t,
 // *****************************************************************************
 // Set the solution in the user-defined IC box/block
 //! \tparam B IC-block type to operate, ctr::box, or ctr::meshblock
-//! \param[in] system Equation system index
 //! \param[in] VRatio Ratio of exact box volume to discrete box volume
 //! \param[in] V_ex Exact box volume
 //! \param[in] t Physical time
@@ -59,7 +54,6 @@ void initializeBox( std::size_t,
 // *****************************************************************************
 {
   const auto& initiate = b.template get< tag::initiate >();
-  auto inittype = initiate.template get< tag::init >();
 
   auto boxrho = b.template get< tag::density >();
   const auto& boxvel = b.template get< tag::velocity >();
@@ -97,7 +91,7 @@ void initializeBox( std::size_t,
 
   // Initiate type 'impulse' simply assigns the prescribed values to all
   // nodes within a box.
-  if (inittype == ctr::InitiateType::IMPULSE) {
+  if (initiate == ctr::InitiateType::IMPULSE) {
     // superimpose on existing velocity field
     auto u = s[1]/s[0], v = s[2]/s[0], w = s[3]/s[0];
     auto ke = 0.5*(u*u + v*v + w*w);
@@ -120,7 +114,7 @@ void initializeBox( std::size_t,
   // z-direction with a velocity specified in the IC linear...end block.
   // The wave front is smoothed out to include a couple of mesh nodes.
   // see boxSrc() for further details.
-  else if (inittype == ctr::InitiateType::LINEAR && t < 1e-12) {
+  else if (initiate == ctr::InitiateType::LINEAR && t < 1e-12) {
 
     // superimpose on existing velocity field
     const auto u = s[1]/s[0],

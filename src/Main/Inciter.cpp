@@ -83,7 +83,7 @@ namespace inciter {
 //!   convenience reasons. The runtime system distributes it to all PEs during
 //!   initialization. Once distributed, the object does not change.
 ctr::InputDeck g_inputdeck_defaults;
-//! Input deck filled by parser, containing all input data
+//! Lua Input deck filled by LuaParser, containing all input data
 //! \details This object is in global scope, it contains all of user input, and
 //!   thus it is made available to all PEs for convenience reasons. The runtime
 //!   system distributes it to all PEs during initialization. Once distributed,

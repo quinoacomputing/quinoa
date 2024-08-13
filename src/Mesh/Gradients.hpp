@@ -20,11 +20,10 @@
 
 #include "Fields.hpp"
 #include "Types.hpp"
-#include "Keywords.hpp"
 
 namespace tk {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
 
 //! Compute gradient at a mesh node
 std::array< tk::real, 3 >

@@ -16,9 +16,8 @@
 #ifndef TransportPhysicsCGAdvDiff_h
 #define TransportPhysicsCGAdvDiff_h
 
-#include "Types.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 #include "Fields.hpp"
-#include "SystemComponents.hpp"
 #include "Inciter/Options/Physics.hpp"
 
 namespace inciter {
@@ -28,14 +27,13 @@ namespace cg {
 class TransportPhysicsAdvDiff {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_t;
+    using ncomp_t = tk::ncomp_t;
     using eq = tag::transport;
 
   public:
     //! Add diffusion contribution to rhs
     void
-    diffusionRhs( ncomp_t system,
-                  ncomp_t ncomp,
+    diffusionRhs( ncomp_t ncomp,
                   tk::real deltat,
                   tk::real J,
                   const std::array< std::array< tk::real, 3 >, 4 >& grad,
@@ -46,8 +44,7 @@ class TransportPhysicsAdvDiff {
 
     //! Compute the minimum time step size based on the diffusion
     tk::real
-    diffusion_dt( ncomp_t system,
-                  ncomp_t ncomp,
+    diffusion_dt( ncomp_t ncomp,
                   tk::real L,
                   const std::vector< std::array< tk::real, 4 > >& ) const;
 

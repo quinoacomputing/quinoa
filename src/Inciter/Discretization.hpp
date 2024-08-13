@@ -17,7 +17,6 @@
 
 #include "Types.hpp"
 #include "Timer.hpp"
-#include "Keywords.hpp"
 #include "Fields.hpp"
 #include "PUPUtil.hpp"
 #include "PDFReducer.hpp"
@@ -66,7 +65,6 @@ class Discretization : public CBase_Discretization {
       Discretization(
         std::size_t meshid,
         const std::vector< CProxy_Discretization >& disc,
-        const CProxy_DistFCT& fctproxy,
         const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
         const CProxy_Transporter& transporter,
@@ -120,14 +118,26 @@ class Discretization : public CBase_Discretization {
     //!   library (if coupled to other solver)
     void transferInit();
 
-    //! Receive a list of callbacks from our own child solver
-    void transferCallback( std::vector< CkCallback >& cb );
-
-    //! Receive mesh transfer callbacks from source mesh/solver
-    void comcb( std::size_t srcmeshid, CkCallback c );
+    //! Finish setting up communication maps and solution transfer callbacks
+    void comfinal();
 
     //! Start solution transfer (if coupled)
-    void transfer( const tk::Fields& u );
+    void transfer(
+      tk::Fields& u,
+      std::size_t dirn,
+      CkCallback cb );
+
+    //! Solution transfer from background to overset mesh completed (from ExaM2M)
+    void to_complete();
+
+    //! Solution transfer from overset to background mesh completed (from ExaM2M)
+    void from_complete();
+
+    //! Solution transfer completed (from dest Discretization)
+    void transfer_complete_from_dest();
+
+    //! Solution transfer completed (one-way)
+    void transfer_complete();
 
     //! Resize mesh data structures after mesh refinement
     void resizePostAMR(
@@ -204,6 +214,10 @@ class Discretization : public CBase_Discretization {
     std::vector< tk::real >& Voln() { return m_voln; }
     //! Element mesh volumes at t=t0 accessors as const-ref
     const std::vector< tk::real >& Vol0() const { return m_vol0; }
+    //! Element mesh velocity accessor as const-ref
+    const tk::Fields& MeshVel() const { return m_meshvel; }
+    //! Element mesh velocity accessor as ref
+    tk::Fields& MeshVel() { return m_meshvel; }
 
     //! Set 'initial' flag
     //! \param[in] i Value to put in 'initial'
@@ -266,12 +280,6 @@ class Discretization : public CBase_Discretization {
       return m_refiner[ thisIndex ].ckLocal();
     }
 
-    //! Access bound DistFCT class pointer
-    DistFCT* FCT() const {
-      Assert(m_fct[ thisIndex ].ckLocal() != nullptr, "DistFCT ckLocal() null");
-      return m_fct[ thisIndex ].ckLocal();
-    }
-
     //! Access Discretization proxy for a mesh
     CProxy_Discretization coupled( std::size_t meshid ) const {
       Assert( meshid < m_disc.size(),
@@ -304,7 +312,7 @@ class Discretization : public CBase_Discretization {
 
     //! Construct history output filename
     std::string histfilename( const std::string& id,
-                              kw::precision::info::expect::type precision );
+                              std::streamsize precision );
 
     //! Output headers for time history files (one for each point)
     void histheader( std::vector< std::string >&& names );
@@ -345,27 +353,38 @@ class Discretization : public CBase_Discretization {
       const std::map< int, std::vector< std::size_t > >& m_bface;
       const std::vector< std::size_t >& m_triinpoel;
       std::unordered_map< int, std::unordered_set< std::size_t > >& m_nodes;
+      std::size_t m_mid;
 
       explicit
         SidesetNodes( const std::map< int, std::vector< std::size_t > >& bface,
                       const std::vector< std::size_t >& triinpoel,
                       std::unordered_map< int,
-                        std::unordered_set< std::size_t > >& nodes )
-        : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes) {}
-
-      template< typename Eq > void operator()( brigand::type_<Eq> ) {
-        const auto& ss =
-          g_inputdeck.template get< tag::param, Eq, tags... >();
-        for (const auto& eq : ss) {
-          for (const auto& s : eq) {
-            auto k = m_bface.find( std::stoi(s) );
-            if (k != end(m_bface)) {
-              auto& n = m_nodes[ k->first ];  // associate set id
-              for (auto f : k->second) {      // face ids on side set
-                n.insert( m_triinpoel[f*3+0] );
-                n.insert( m_triinpoel[f*3+1] );
-                n.insert( m_triinpoel[f*3+2] );
-              }
+                        std::unordered_set< std::size_t > >& nodes,
+                      std::size_t mid )
+        : m_bface(bface), m_triinpoel(triinpoel), m_nodes(nodes), m_mid(mid)
+      {
+        const auto& bc =
+          g_inputdeck.template get< tag::bc >();
+        std::vector< std::size_t > ss;
+        for (const auto& bci : bc) {
+          const auto& bcm = bci.get< tag::mesh >();
+          for (const auto& im : bcm) {
+            // only if this bc is meant for current mesh
+            // collect sidesets for this mesh with this bc type
+            if (im-1 == m_mid) {
+              ss.insert( ss.end(), bci.template get< tags... >().begin(),
+                bci.template get< tags... >().end() );
+            }
+          }
+        }
+        for (const auto& s : ss) {
+          auto k = m_bface.find(static_cast<int>(s));
+          if (k != end(m_bface)) {
+            auto& n = m_nodes[ k->first ];  // associate set id
+            for (auto f : k->second) {      // face ids on side set
+              n.insert( m_triinpoel[f*3+0] );
+              n.insert( m_triinpoel[f*3+1] );
+              n.insert( m_triinpoel[f*3+2] );
             }
           }
         }
@@ -385,10 +404,8 @@ class Discretization : public CBase_Discretization {
     bcnodes( const std::map< int, std::vector< std::size_t > >& bface,
              const std::vector< std::size_t >& triinpoel ) const
     {
-      using PDETypes = ctr::parameters::Keys;
       std::unordered_map< int, std::unordered_set< std::size_t > > nodes;
-      brigand::for_each< PDETypes >(
-        SidesetNodes< tags... >( bface, triinpoel, nodes ) );
+      SidesetNodes< tags... >( bface, triinpoel, nodes, this->MeshId() );
       return nodes;
     }
 
@@ -440,7 +457,7 @@ class Discretization : public CBase_Discretization {
       p | m_dt;
       p | m_dtn;
       p | m_nvol;
-      p | m_fct;
+      p | m_nxfer;
       p | m_ale;
       p | m_transporter;
       p | m_meshwriter;
@@ -489,9 +506,10 @@ class Discretization : public CBase_Discretization {
 
     //! Mesh ID
     std::size_t m_meshid;
-    //! Function to continue with if not coupled to any other solver
+    //! \brief Charm++ callback of the function to call after a mesh-to-mesh
+    //!   solution transfer (to-and-fro) is complete
     CkCallback m_transfer_complete;
-    //! Solution/mesh transfer (coupling) information
+    //! Solution/mesh transfer (coupling) information coordination propagation
     //! \details This has the same size with the same src/dst information on
     //!   all solvers.
     std::vector< Transfer > m_transfer;
@@ -525,9 +543,9 @@ class Discretization : public CBase_Discretization {
     //! Recent floor of physics time divided by history output interval time
     tk::real m_physHistFloor;
     //! Recent floors of physics time divided by field output time for ranges
-    std::vector< tk::real > m_rangeFieldFloor;
+    tk::real m_rangeFieldFloor;
     //! Recent floors of physics time divided by history output time for ranges
-    std::vector< tk::real > m_rangeHistFloor;
+    tk::real m_rangeHistFloor;
     //! Physical time step size
     tk::real m_dt;
     //! Physical time step size at the previous time step
@@ -535,8 +553,9 @@ class Discretization : public CBase_Discretization {
     //! \brief Number of chares from which we received nodal volume
     //!   contributions on chare boundaries
     std::size_t m_nvol;
-    //! Distributed FCT proxy
-    CProxy_DistFCT m_fct;
+    //! \brief Number of chares from which we received solution transfers
+    //!   contributions on chare boundaries
+    std::size_t m_nxfer;
     //! Distributed ALE proxy
     CProxy_ALE m_ale;
     //! Transporter proxy
@@ -639,9 +658,6 @@ class Discretization : public CBase_Discretization {
 
     //! Determine if communication of mesh transfer callbacks is complete
     bool transferCallbacksComplete() const;
-
-    //! Finish setting up communication maps and solution transfer callbacks
-    void comfinal();
 };
 
 } // inciter::

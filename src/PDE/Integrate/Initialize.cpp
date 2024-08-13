@@ -27,8 +27,7 @@ extern ctr::InputDeck g_inputdeck;
 } // inciter::
 
 void
-tk::initialize( ncomp_t system,
-                ncomp_t ncomp,
+tk::initialize( ncomp_t ncomp,
                 const std::vector< inciter::EOS >& mat_blk,
                 const Fields& L,
                 const std::vector< std::size_t >& inpoel,
@@ -41,7 +40,6 @@ tk::initialize( ncomp_t system,
 //! Initalize a system of DGPDEs by projecting the exact solution in the DG
 //! solution space
 //! \details This is the public interface exposed to client code.
-//! \param[in] system Equation system index
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] L Block diagonal mass matrix
 //! \param[in] inpoel Element-node connectivity
@@ -53,8 +51,8 @@ tk::initialize( ncomp_t system,
 //! \param[in] nielem Number of internal elements
 // *****************************************************************************
 {
-  const auto ndof = inciter::g_inputdeck.get< tag::discr, tag::ndof >();
-  const auto rdof = inciter::g_inputdeck.get< tag::discr, tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::ndof >();
+  const auto rdof = inciter::g_inputdeck.get< tag::rdof >();
 
   // Number of quadrature points for volume integration
   auto ng = tk::NGinit(ndof);
@@ -99,7 +97,7 @@ tk::initialize( ncomp_t system,
       auto B =
         eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
 
-      const auto s = solution( system, ncomp, mat_blk, gp[0], gp[1], gp[2], t );
+      const auto s = solution( ncomp, mat_blk, gp[0], gp[1], gp[2], t );
 
       auto wt = wgp[igp] * vole;
 

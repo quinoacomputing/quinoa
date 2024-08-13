@@ -15,7 +15,6 @@
 #define Initialize_h
 
 #include "Basis.hpp"
-#include "Types.hpp"
 #include "Fields.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
@@ -33,8 +32,7 @@ namespace tk {
 //! Initalize a PDE system for DG by projecting the exact solution
 //! in the DG solution space
 void
-initialize( ncomp_t system,
-            ncomp_t ncomp,
+initialize( ncomp_t ncomp,
             const std::vector< inciter::EOS >& mat_blk,
             const Fields& L,
             const std::vector< std::size_t >& inpoel,
@@ -66,14 +64,13 @@ eval_init( ncomp_t ncomp,
 
 template< class eq >
 void
-BoxElems( std::size_t system,
+BoxElems(
   const tk::Fields& geoElem,
   std::size_t nielem,
   std::vector< std::unordered_set< std::size_t > >& inbox )
 // *****************************************************************************
 //! Determine if elements lie inside user defined IC boxes
 //! \tparam eq Equation type to operate on, e.g., tag::compflow, tag::multimat
-//! \param[in] system Equation system index
 //! \param[in] geoElem Element geometry array
 //! \param[in] nielem Number of internal elements
 //! \param[in,out] inbox List of nodes at which box user ICs are set for
@@ -81,11 +78,10 @@ BoxElems( std::size_t system,
 // *****************************************************************************
 {
   // Detect if user has configured IC boxes
-  const auto& icbox = inciter::g_inputdeck.get<tag::param, eq, tag::ic,
-    tag::box>();
-  if (icbox.size() > system) {
+  const auto& icbox = inciter::g_inputdeck.get<tag::ic, tag::box>();
+  if (!icbox.empty()) {
     std::size_t bcnt = 0;
-    for (const auto& b : icbox[system]) {   // for all boxes for this eq
+    for (const auto& b : icbox) {   // for all boxes for this eq
      inbox.emplace_back();
       std::vector< tk::real > box
         { b.template get< tag::xmin >(), b.template get< tag::xmax >(),

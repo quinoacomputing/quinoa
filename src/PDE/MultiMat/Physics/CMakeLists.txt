@@ -11,6 +11,7 @@ target_include_directories(FVMultiMatPhysics PUBLIC
                            ${PROJECT_BINARY_DIR}/../Main
                            ${BRIGAND_INCLUDE_DIRS}
                            ${PEGTL_INCLUDE_DIRS}
+                           ${CBLAS_INCLUDE_DIRS}
                            ${CHARM_INCLUDE_DIRS})
 
 set_target_properties(FVMultiMatPhysics

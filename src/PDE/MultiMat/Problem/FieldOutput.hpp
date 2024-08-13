@@ -13,13 +13,18 @@
 #ifndef FieldOutput_h
 #define FieldOutput_h
 
+#include "Types.hpp"
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 #include "FaceData.hpp"
+#include "FunctionPrototypes.hpp"
 
 namespace inciter {
 
-using ncomp_t = kw::ncomp::info::expect::type;
+using ncomp_t = tk::ncomp_t;
+
+//! Return a map that associates user-specified strings to functions
+std::map< std::string, tk::GetVarFn > MultiMatOutVarFn();
 
 //! Return multi-material field names to be output to file
 std::vector< std::string >
@@ -28,7 +33,7 @@ MultiMatFieldNames( std::size_t nmat );
 //! Return field output going to file
 std::vector< std::vector< tk::real > >
 MultiMatFieldOutput(
-  ncomp_t system,
+  ncomp_t,
   std::size_t nmat,
   const std::vector< EOS >& mat_blk,
   std::size_t nunk,
@@ -38,12 +43,13 @@ MultiMatFieldOutput(
   const tk::Fields& U,
   const tk::Fields& P );
 
+
 //! Return surface field names to be output to file
 std::vector< std::string > MultiMatSurfNames();
 
 //! Return element surface field output (on triangle faces) going to file
 std::vector< std::vector< tk::real > >
-MultiMatSurfOutput( ncomp_t,
+MultiMatSurfOutput(
   const std::size_t nmat,
   const std::size_t rdof,
   const FaceData& fd,
