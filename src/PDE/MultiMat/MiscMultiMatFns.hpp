@@ -55,6 +55,14 @@ timeStepSizeMultiMatFV(
   const tk::Fields& P,
   std::vector< tk::real >& local_dte );
 
+//! Compute the time step size restriction based on viscosity
+tk::real
+timeStepSizeViscousFV(
+  const tk::Fields& geoElem,
+  std::size_t nelem,
+  std::size_t nmat,
+  const tk::Fields& U );
+
 //! Reset the solid tensors
 void
 resetSolidTensors(

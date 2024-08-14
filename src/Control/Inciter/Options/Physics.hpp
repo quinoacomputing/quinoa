@@ -25,7 +25,6 @@ namespace ctr {
 enum class PhysicsType : uint8_t { ADVECTION
                                  , ADVDIFF
                                  , EULER
-                                 , NAVIERSTOKES
                                  , ENERGYPILL
                                  };
 
@@ -47,14 +46,12 @@ class Physics : public tk::Toggle< PhysicsType > {
         { { PhysicsType::ADVECTION, "advection" }
         , { PhysicsType::ADVDIFF, "advdiff" }
         , { PhysicsType::EULER, "euler" }
-        , { PhysicsType::NAVIERSTOKES, "navierstokes" }
         , { PhysicsType::ENERGYPILL, "energy_pill" }
         },
         //! keywords -> Enums
         { { "advection", PhysicsType::ADVECTION }
         , { "advdiff", PhysicsType::ADVDIFF }
         , { "euler", PhysicsType::EULER }
-        , { "navierstokes", PhysicsType::NAVIERSTOKES }
         , { "energy_pill", PhysicsType::ENERGYPILL }
         } )
     {}

@@ -50,7 +50,8 @@ using bclist = tk::TaggedTuple< brigand::list<
   tag::inlet,       std::vector< std::size_t >,
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
-  tag::extrapolate, std::vector< std::size_t >
+  tag::extrapolate, std::vector< std::size_t >,
+  tag::noslipwall,  std::vector< std::size_t >
 > >;
 
 // Transport
@@ -90,7 +91,8 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::intsharp_param,   tk::real,
   tag::rho0constraint,   uint64_t,
   tag::dt_sos_massavg,   int,
-  tag::problem,          ProblemType
+  tag::problem,          ProblemType,
+  tag::viscous,          bool
 > >;
 
 // Material/EOS object
@@ -125,11 +127,14 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
+  tag::noslipwall,  std::vector< std::size_t >,
   tag::stag_point,  std::vector< tk::real >,
   tag::radius,      tk::real,
   tag::velocity,    std::vector< tk::real >,
   tag::pressure,    tk::real,
   tag::density,     tk::real,
+  tag::temperature, tk::real,
+  tag::materialid,  std::size_t,
   tag::timedep,     std::vector<
     tk::TaggedTuple< brigand::list<
       tag::sideset,   std::vector< uint64_t >,
@@ -870,11 +875,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to select the advection + diffusion physics
         for transport PDEs. Only usable for 'transport'.)"});
 
-      keywords.insert({"navierstokes",
-        "Specify the Navier-Stokes (viscous) compressible flow physics",
-        R"(This keyword is used to select the Navier-Stokes (viscous) compressible
-        flow physics configuration. Currently setup only for 'compflow'.)"});
-
       keywords.insert({"euler",
         "Specify the Euler (inviscid) compressible flow physics",
         R"(This keyword is used to select the Euler (inviscid) compressible
@@ -1610,6 +1610,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to list (multiple) extrapolate BC sidesets.)",
         "vector of uint(s)"});
 
+      keywords.insert({"noslipwall",
+        "List sidesets with no-slip wall boundary conditions",
+        R"(This keyword is used to list (multiple) no-slip wall BC sidesets.)",
+        "vector of uint(s)"});
+
       keywords.insert({"stag",
         "List sidesets with stagnation boundary conditions",
         R"(This keyword is used to list (multiple) stagnation BC sidesets.)",
@@ -1645,9 +1650,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         conditions.)", "block-title"});
 
       keywords.insert({"materialid", "Specify material id",
-        R"(This keyword is used to configure the material id within an IC box, IC
-        mesh-block, or in the background as a part of the initialization.)",
-        "uint"});
+        R"(This keyword is used to configure the material id within an IC box,
+        IC mesh-block, farfield BC, or in the background as a part of the
+        initialization.)", "uint"});
 
       keywords.insert({"temperature", "Specify temperature",
         R"(This keyword is used to configure temperature, used for, e.g.,

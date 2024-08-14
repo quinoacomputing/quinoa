@@ -89,6 +89,34 @@ surfIntFV(
   Fields& R,
   int intsharp );
 
+// Compute internal surface viscous flux integrals for second order FV
+void
+surfIntViscousFV(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t rdof,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const std::vector< int >& srcFlag,
+  Fields& R,
+  int intsharp );
+
+// Compute the viscous fluxes from the left and right states
+std::vector< real >
+modifiedGradientViscousFlux(
+  std::size_t nmat,
+  std::size_t ncomp,
+  const std::array< tk::real, 3 >& fn,
+  const std::array< std::array< tk::real, 3 >, 2 >& centroids,
+  const std::array< std::vector< tk::real >, 2 >& state,
+  const std::array< std::vector< tk::real >, 2 >& cellAvgState,
+  const std::array< std::array< real, 3 >, 3 > dudx );
+
 } // tk::
 
 #endif // Surface_h

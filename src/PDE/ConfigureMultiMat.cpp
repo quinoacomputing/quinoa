@@ -97,6 +97,9 @@ infoMultiMat( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
   auto intsharp = g_inputdeck.get< eq, tag::intsharp >();
   nfo.emplace_back( "interface sharpening", std::to_string( intsharp ) );
 
+  auto viscous = g_inputdeck.get< eq, tag::viscous >();
+  nfo.emplace_back( "viscosity", std::to_string( viscous ) );
+
   auto rho0cn = g_inputdeck.get< eq, tag::rho0constraint >();
   nfo.emplace_back( "density constraint correction", std::to_string( rho0cn ) );
 

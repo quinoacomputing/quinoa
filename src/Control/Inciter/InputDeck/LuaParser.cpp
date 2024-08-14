@@ -418,6 +418,12 @@ LuaParser::storeInputDeck(
           sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
         checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
           mati_deck.get< tag::pstiff >());
+
+        // mu (dynamic viscosity) and 'viscous' keyword
+        if (!sol_mat[i+1]["mu"].valid())
+          sol_mat[i+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+        else gideck.get< tag::multimat, tag::viscous >() = true;
+        checkStoreMatProp(sol_mat[i+1], "mu", ntype, mati_deck.get< tag::mu >());
       }
       // Small-shear solid materials
       else if (mati_deck.get< tag::eos >() ==
@@ -1056,6 +1062,9 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "extrapolate",
         bc_deck[i].get< tag::extrapolate >(), {});
 
+      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "noslipwall",
+        bc_deck[i].get< tag::noslipwall >(), {});
+
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
         const sol::table& sol_tdbc = sol_bc[i+1]["timedep"];
@@ -1102,6 +1111,14 @@ LuaParser::storeInputDeck(
       // Density for inlet/outlet/farfield
       storeIfSpecd< tk::real >(sol_bc[i+1], "density",
         bc_deck[i].get< tag::density >(), 0.0);
+
+      // Temperature for inlet/outlet/farfield
+      storeIfSpecd< tk::real >(sol_bc[i+1], "temperature",
+        bc_deck[i].get< tag::temperature >(), 0.0);
+
+      // Material-id for inlet/outlet/farfield
+      storeIfSpecd< std::size_t >(sol_bc[i+1], "materialid",
+        bc_deck[i].get< tag::materialid >(), 1);
     }
 
     // error checking on number of meshes

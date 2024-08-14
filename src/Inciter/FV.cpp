@@ -592,6 +592,9 @@ FV::dt()
       if (!g_inputdeck.get< tag::steady_state >()) {
         if (d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It());
       }
+      else {
+        for (auto& edt : m_dte) edt *= g_inputdeck.get< tag::cfl >();
+      }
 
       mindt *= coeff * g_inputdeck.get< tag::cfl >();
     }
