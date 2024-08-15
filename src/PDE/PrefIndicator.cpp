@@ -88,6 +88,9 @@ void spectral_decay( std::size_t nmat,
 
   auto epsH = std::pow(10, -4 - tolref * 4.0);
   auto epsL = std::pow(10, -6 - tolref * 8.0);
+  // The epsL_p2 as well as the 'else if' code below are kept, since sometimes
+  // just using a common epsL for both DGP2 and DGP1 might not produce good ndof
+  // distributions. Further testing required by manupulating these 3 thresholds.
   //auto epsL_p2 = std::pow(10, -7 - tolref * 8.0);
 
   // Marke the ndof according to the adaptive indicator
