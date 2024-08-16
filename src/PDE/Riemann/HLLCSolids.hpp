@@ -164,7 +164,7 @@ struct HLLCSolids {
                -rhor*vn_r[0]*(Sr-vn_r[0])
                +signn_l[0][0]-signn_r[0][0])
       / (rhol*(Sl-vn_l[0]) - rhor*(Sr-vn_r[0]));
-
+    
     // Star states (naming convention: _t_)
     // -------------------------------------------------------------------------
 
@@ -173,7 +173,7 @@ struct HLLCSolids {
     for (std::size_t j=0; j<3; ++j)
       sig_t[j] = ( (vn_r[0]-Sr)*rhor*signn_l[0][j]
                  - (vn_l[0]-Sl)*rhol*signn_r[0][j]
-        + (vn_l[0]-Sl)*rhol*(vn_r[0]-Sr)*rhor*(vn_r[j]-vn_l[j]) ) /
+                 + (vn_l[0]-Sl)*rhol*(vn_r[0]-Sr)*rhor*(vn_r[j]-vn_l[j]) ) /
         ( (vn_r[0]-Sr)*rhor - (vn_l[0]-Sl)*rhol );
 
     // u*_L
@@ -188,6 +188,17 @@ struct HLLCSolids {
       / ((vn_r[0]-Sr)*rhor);
     vn_t_r[2] = vn_r[2] + (sig_t[2] - signn_r[0][2])
       / ((vn_r[0]-Sr)*rhor);
+
+    // auto w_l = (Sl-vn_l[0])/(Sl-Si);
+    // auto w_r = (Sr-vn_r[0])/(Sr-Si);
+    // if (std::abs(w_l-w_r) > 1.0e-04)
+    // {
+    //   printf("dbg\n");
+    //   printf("Sl,Sr,Si = %e, %e, %e\n", Sl, Sr, Si);
+    //   printf("vn_l[0], vn_r[0] = %e, %e\n", vn_l[0], vn_r[0]);
+    //   printf("vn_t_l[0], vn_t_r[0] = %e, %e\n", vn_t_l[0], vn_t_r[0]);
+    //   printf("wl, wr = %e, %e\n", (Sl-vn_l[0])/(Sl-Si), (Sr-vn_r[0])/(Sr-Si));
+    // }
 
     // Material star states
     std::vector< std::array< tk::real, 3 > > asig_t;
@@ -206,7 +217,7 @@ struct HLLCSolids {
       // Left star state
       // -----------------------------------------------------------------------
       auto w_l = (Sl-vn_l[0])/(Sl-Si);
-      al_t_l[k] = al_l[k]*w_l;
+      al_t_l[k] = al_l[k];
       arho_t_l[k] = u[0][densityIdx(nmat, k)]*w_l;
       rho_t_l += arho_t_l[k];
 
@@ -228,7 +239,7 @@ struct HLLCSolids {
       // Right star state
       // -----------------------------------------------------------------------
       auto w_r = (Sr-vn_r[0])/(Sr-Si);
-      al_t_r[k] = al_r[k]*w_r;
+      al_t_r[k] = al_r[k];
       arho_t_r[k] = u[1][densityIdx(nmat, k)]*w_r;
       rho_t_r += arho_t_r[k];
 
@@ -246,6 +257,9 @@ struct HLLCSolids {
         - asignn_r[k][0][0]*vn_r[0] - asignn_r[k][0][1]*vn_r[1] - asignn_r[k][0][2]*vn_r[2]
         + asig_t[k][0]*vn_t_r[0] + asig_t[k][1]*vn_t_r[1] + asig_t[k][2]*vn_t_r[2]
         ) / (Si-Sr);
+
+      // if (std::abs(w_l-w_r) > 1.0e-04)
+      //   printf("arho_t_l, arho_t_r = %e, %e\n", arho_t_l[k], arho_t_r[k]);
     }
     // Rotate velocity back
     v_t_l = tk::unrotateVector(vn_t_l, fn);
@@ -373,15 +387,30 @@ struct HLLCSolids {
     else if (Sl < 0.0 && 0.0 <= Si)
     {
       flx = ftl;
+      
+      // following commented code reduces g-fluxes to HLL (which is stable)
+      for (std::size_t k=0; k<nmat; ++k) {
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j) {
+            auto e = deformIdx(nmat, solidx[k], i, j);
+            flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+          }
+      }
 
-      //// following commented code reduces g-fluxes to HLL (which is stable)
-      //for (std::size_t k=0; k<nmat; ++k) {
-      //  for (std::size_t i=0; i<3; ++i)
-      //    for (std::size_t j=0; j<3; ++j) {
-      //      auto e = deformIdx(nmat, solidx[k], i, j);
-      //      flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
-      //    }
-      //}
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        // auto e = densityIdx(nmat, k);
+        // flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+        auto e = volfracIdx(nmat, k);
+        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+        e = energyIdx(nmat, k);
+        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+      }
+      for (std::size_t idir=0; idir<3; ++idir)
+      {
+        auto e = momentumIdx(nmat, idir);
+        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+      }
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
@@ -402,14 +431,29 @@ struct HLLCSolids {
     {
       flx = ftr;
 
-      //// following commented code reduces g-fluxes to HLL (which is stable)
-      //for (std::size_t k=0; k<nmat; ++k) {
-      //  for (std::size_t i=0; i<3; ++i)
-      //    for (std::size_t j=0; j<3; ++j) {
-      //      auto e = deformIdx(nmat, solidx[k], i, j);
-      //      flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
-      //    }
-      //}
+      // following commented code reduces g-fluxes to HLL (which is stable)
+      for (std::size_t k=0; k<nmat; ++k) {
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j) {
+            auto e = deformIdx(nmat, solidx[k], i, j);
+            flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+          }
+      }
+
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        // auto e = densityIdx(nmat, k);
+        // flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+        auto e = volfracIdx(nmat, k);
+        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+        e = energyIdx(nmat, k);
+        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+      }
+      for (std::size_t idir=0; idir<3; ++idir)
+      {
+        auto e = momentumIdx(nmat, idir);
+        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+      }
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
