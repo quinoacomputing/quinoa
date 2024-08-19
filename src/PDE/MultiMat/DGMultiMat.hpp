@@ -1016,7 +1016,6 @@ class MultiMat {
     //! \param[in] ndofmax Max number of degrees of freedom for p-refinement
     //! \param[in] tolref Tolerance for p-refinement
     //! \param[in,out] ndofel Vector of local number of degrees of freedome
-    //! \param[in] interface Vector of interface marker
     void eval_ndof( std::size_t nunk,
                     [[maybe_unused]] const tk::UnsMesh::Coords& coord,
                     [[maybe_unused]] const std::vector< std::size_t >& inpoel,

@@ -1679,7 +1679,7 @@ void BoundPreservingLimiting( std::size_t nmat,
 
   // Compute the upper and lower bound for volume fraction
   const tk::real min = 1e-14;
-  const tk::real max = 1.0 - min * (nmat - 1);
+  const tk::real max = 1.0 - min * static_cast<tk::real>(nmat - 1);
 
   // loop over all faces of the element e
   for (std::size_t lf=0; lf<4; ++lf)
