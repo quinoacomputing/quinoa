@@ -156,15 +156,15 @@ struct HLLCSolids {
 
     ac_l = std::sqrt(ac_l/rhol);
     ac_r = std::sqrt(ac_r/rhor);
-    
+
     // Signal velocities
-    auto Sl = std::min((vn_l[0]-ac_l), (vn_r[0]-ac_r));
-    auto Sr = std::max((vn_l[0]+ac_l), (vn_r[0]+ac_r));
+    auto Sl = std::min((vn_l[0]-ac_l), (0.5*(vn_r[0]+vn_l[0]-ac_r-ac_l)));
+    auto Sr = std::max((vn_l[0]+ac_l), (0.5*(vn_r[0]+vn_l[0]+ac_r+ac_l)));
     auto Si = (rhol*vn_l[0]*(Sl-vn_l[0])
                -rhor*vn_r[0]*(Sr-vn_r[0])
                +signn_l[0][0]-signn_r[0][0])
       / (rhol*(Sl-vn_l[0]) - rhor*(Sr-vn_r[0]));
-    
+
     // Star states (naming convention: _t_)
     // -------------------------------------------------------------------------
 
@@ -223,18 +223,29 @@ struct HLLCSolids {
 
       // inv deformation gradient
       gn_t_l = gn_l[k];
+      // for (std::size_t i=0; i<3; ++i)
+      //   gn_t_l[i][0] = w_l*gn_l[k][i][0] + (
+      //     gn_l[k][i][1]*(vn_l[1]-vn_t_l[1]) + gn_l[k][i][2]*(vn_l[2]-vn_t_l[2])
+      //     )/(Si-Sl);
       for (std::size_t i=0; i<3; ++i)
-        gn_t_l[i][0] = w_l*gn_l[k][i][0] + (
-          gn_l[k][i][1]*(vn_l[1]-vn_t_l[1]) + gn_l[k][i][2]*(vn_l[2]-vn_t_l[2])
-          )/(Si-Sl);
+        gn_t_l[i][0] *= (Sl-vn_l[0])/(Sl-Si);
 
       // rotate g back to original frame of reference
       g_t_l.push_back(tk::unrotateTensor(gn_t_l, fn));
 
-      arhoe_t_l[k] = u[0][energyIdx(nmat, k)] * w_l + (
-        - asignn_l[k][0][0]*vn_l[0] - asignn_l[k][0][1]*vn_l[1] - asignn_l[k][0][2]*vn_l[2]
-        + asig_t[k][0]*vn_t_l[0] + asig_t[k][1]*vn_t_l[1] + asig_t[k][2]*vn_t_l[2]
-        ) / (Si-Sl);
+      // arhoe_t_l[k] = u[0][energyIdx(nmat, k)] * w_l + (
+      //   - asignn_l[k][0][0]*vn_l[0] - asignn_l[k][0][1]*vn_l[1] - asignn_l[k][0][2]*vn_l[2]
+      //   + asig_t[k][0]*vn_t_l[0] + asig_t[k][1]*vn_t_l[1] + asig_t[k][2]*vn_t_l[2]
+      //   ) / (Si-Sl);
+      arhoe_t_l[k] = u[0][energyIdx(nmat, k)] * Sl/(Sl-Si)
+        - (u[0][energyIdx(nmat, k)]*vn_l[0]
+           - asignn_l[k][0][0]*vn_l[0]
+           - asignn_l[k][0][1]*vn_l[1]
+           - asignn_l[k][0][2]*vn_l[2]
+           + asig_t[k][0]*vn_t_l[0]
+           + asig_t[k][1]*vn_t_l[1]
+           + asig_t[k][2]*vn_t_l[2])/(Sl-Si);
+           
 
       // Right star state
       // -----------------------------------------------------------------------
@@ -245,21 +256,29 @@ struct HLLCSolids {
 
       // inv deformation gradient
       gn_t_r = gn_r[k];
+      // for (std::size_t i=0; i<3; ++i)
+      //   gn_t_r[i][0] = w_r*gn_r[k][i][0] + (
+      //     gn_r[k][i][1]*(vn_r[1]-vn_t_r[1]) + gn_r[k][i][2]*(vn_r[2]-vn_t_r[2])
+      //     )/(Si-Sr);
       for (std::size_t i=0; i<3; ++i)
-        gn_t_r[i][0] = w_r*gn_r[k][i][0] + (
-          gn_r[k][i][1]*(vn_r[1]-vn_t_r[1]) + gn_r[k][i][2]*(vn_r[2]-vn_t_r[2])
-          )/(Si-Sr);
+        gn_t_r[i][0] *= (Sr-vn_r[0])/(Sr-Si);
 
       // rotate g back to original frame of reference
       g_t_r.push_back(tk::unrotateTensor(gn_t_r, fn));
 
-      arhoe_t_r[k] = u[1][energyIdx(nmat, k)] * w_r + (
-        - asignn_r[k][0][0]*vn_r[0] - asignn_r[k][0][1]*vn_r[1] - asignn_r[k][0][2]*vn_r[2]
-        + asig_t[k][0]*vn_t_r[0] + asig_t[k][1]*vn_t_r[1] + asig_t[k][2]*vn_t_r[2]
-        ) / (Si-Sr);
+      // arhoe_t_r[k] = u[1][energyIdx(nmat, k)] * w_r + (
+      //   - asignn_r[k][0][0]*vn_r[0] - asignn_r[k][0][1]*vn_r[1] - asignn_r[k][0][2]*vn_r[2]
+      //   + asig_t[k][0]*vn_t_r[0] + asig_t[k][1]*vn_t_r[1] + asig_t[k][2]*vn_t_r[2]
+      //   ) / (Si-Sr);
+      arhoe_t_r[k] = u[1][energyIdx(nmat, k)] * Sr/(Sr-Si)
+        - (u[1][energyIdx(nmat, k)]*vn_r[0]
+           - asignn_r[k][0][0]*vn_r[0]
+           - asignn_r[k][0][1]*vn_r[1]
+           - asignn_r[k][0][2]*vn_r[2]
+           + asig_t[k][0]*vn_t_r[0]
+           + asig_t[k][1]*vn_t_r[1]
+           + asig_t[k][2]*vn_t_r[2])/(Sr-Si);
 
-      // if (std::abs(w_l-w_r) > 1.0e-04)
-      //   printf("arho_t_l, arho_t_r = %e, %e\n", arho_t_l[k], arho_t_r[k]);
     }
     // Rotate velocity back
     v_t_l = tk::unrotateVector(vn_t_l, fn);
@@ -365,6 +384,21 @@ struct HLLCSolids {
     // Numerical fluxes
     // -------------------------------------------------------------------------
 
+    // auto e = densityIdx(nmat,0);
+    // if (std::abs(fl[e]-fr[e]) > 1.0e-04)
+    // {
+    //   printf("DEBUG\n");
+    //   printf("arhol = %e\n", u[0][densityIdx(nmat, 0)]);
+    //   printf("arhor = %e\n", u[1][densityIdx(nmat, 0)]);
+    //   printf("arho_t_l = %e\n", arho_t_l[0]);
+    //   printf("arho_t_r = %e\n", arho_t_r[0]);
+    //   printf("fl = %e\n", fl[e]);
+    //   printf("fr = %e\n", fr[e]);
+    //   printf("fl_hll = %e\n", (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl));
+    //   printf("ftl = %e\n", ftl[e]);
+    //   printf("ftr = %e\n", ftr[e]);
+    // }
+
     if (Sl >= 0.0)
     {
       flx = fl;
@@ -399,18 +433,18 @@ struct HLLCSolids {
 
       for (std::size_t k=0; k<nmat; ++k)
       {
-        // auto e = densityIdx(nmat, k);
+      //   // auto e = densityIdx(nmat, k);
+      //   // flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+        // auto e = volfracIdx(nmat, k);
         // flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
-        auto e = volfracIdx(nmat, k);
-        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
-        e = energyIdx(nmat, k);
+        auto e = energyIdx(nmat, k);
         flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
       }
-      for (std::size_t idir=0; idir<3; ++idir)
-      {
-        auto e = momentumIdx(nmat, idir);
-        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
-      }
+      // for (std::size_t idir=0; idir<3; ++idir)
+      // {
+      //   auto e = momentumIdx(nmat, idir);
+      //   flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+      // }
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
@@ -442,18 +476,18 @@ struct HLLCSolids {
 
       for (std::size_t k=0; k<nmat; ++k)
       {
-        // auto e = densityIdx(nmat, k);
+      //   // auto e = densityIdx(nmat, k);
+      //   // flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+        // auto e = volfracIdx(nmat, k);
         // flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
-        auto e = volfracIdx(nmat, k);
-        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
-        e = energyIdx(nmat, k);
+        auto e = energyIdx(nmat, k);
         flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
       }
-      for (std::size_t idir=0; idir<3; ++idir)
-      {
-        auto e = momentumIdx(nmat, idir);
-        flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
-      }
+      // for (std::size_t idir=0; idir<3; ++idir)
+      // {
+      //   auto e = momentumIdx(nmat, idir);
+      //   flx[e] = (Sr*fl[e] - Sl*fr[e] + Sl*Sr*(u[1][e]-u[0][e])) / (Sr-Sl);
+      // }
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
