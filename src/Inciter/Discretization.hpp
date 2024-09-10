@@ -24,6 +24,7 @@
 #include "CommMap.hpp"
 #include "History.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "M2MTransfer.hpp"
 
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"

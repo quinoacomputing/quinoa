@@ -9,7 +9,7 @@ module m2mtransfer {
 
     class MeshData;
 
-    mainchare LibMain {
+    mainchare [migratable] LibMain {
       entry LibMain(CkArgMsg* msg);
     };
 

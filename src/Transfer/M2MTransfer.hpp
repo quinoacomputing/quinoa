@@ -1,4 +1,6 @@
 // Controller for the library
+#ifndef M2MTransfer_hpp
+#define M2MTransfer_hpp
 
 #include "NoWarning/m2mtransfer.decl.h"
 
@@ -17,6 +19,9 @@ void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fiel
 class LibMain : public CBase_LibMain {
 public:
   LibMain(CkArgMsg* msg);
+  explicit LibMain(CkMigrateMessage* msg) : CBase_LibMain(msg) {}
+  void pup(PUP::er&) {}
+  friend void operator|( PUP::er& p, LibMain& m ) { m.pup(p); }
 };
 
 class MeshData {
@@ -57,3 +62,5 @@ class M2MTransfer : public CBase_M2MTransfer {
 };
 
 }
+
+#endif // M2MTransfer_hpp
