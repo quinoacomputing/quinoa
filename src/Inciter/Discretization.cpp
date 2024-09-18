@@ -35,6 +35,12 @@ extern ctr::InputDeck g_inputdeck_defaults;
 
 } // inciter::
 
+namespace exam2m {
+
+extern CollideHandle collideHandle;
+
+} // exam2m::
+
 using inciter::Discretization;
 
 Discretization::Discretization(
@@ -166,15 +172,6 @@ Discretization::Discretization(
   }
 
   // Register mesh with mesh-transfer lib
-  addMesh();
-}
-
-void
-Discretization::addMesh()
-// *****************************************************************************
-// Register mesh with mesh-transfer lib
-// *****************************************************************************
-{
   if (m_disc.size() == 1 || m_transfer.empty()) {
     // skip transfer if single mesh or if not involved in coupling
     transferInit();
@@ -182,7 +179,27 @@ Discretization::addMesh()
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
-      //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+      std::cout << "Disc: " << m_meshid << " called addMesh(). \n";
+    }
+  }
+}
+
+void
+Discretization::addRestartedMesh( CkCallback cb )
+// *****************************************************************************
+// Register mesh with mesh-transfer lib on restart
+//! \param[in] cb Callback to call when mesh-registration is complete.
+// *****************************************************************************
+{
+  if (m_disc.size() == 1 || m_transfer.empty()) {
+    // skip transfer if single mesh or if not involved in coupling
+    cb.send();
+  } else {
+    CollideSerialClientRestart(exam2m::collideHandle, exam2m::collisionHandler,
+      0);
+    if (thisIndex == 0) {
+      exam2m::addMesh( thisProxy, m_nchare, cb );
+      std::cout << "Disc: on restart " << m_meshid << " called addMesh(). \n";
     }
   }
 }
@@ -209,6 +226,7 @@ Discretization::transferInit()
 // coupled to other solver)
 // *****************************************************************************
 {
+  std::cout << "Disc: " << m_meshid << " completed addMesh(). \n";
   // Compute number of mesh points owned
   std::size_t npoin = m_gid.size();
   for (auto g : m_gid) if (tk::slave(m_nodeCommMap,g,thisIndex)) --npoin;
@@ -350,6 +368,7 @@ Discretization::transfer(
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (fromMesh == m_meshid) {
+      std::cout << "Disc: " << m_meshid << " setting source tets. \n";
       exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
       ++m_nsrc;
     } else {
@@ -357,6 +376,7 @@ Discretization::transfer(
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
     if (toMesh == m_meshid) {
+      std::cout << "Disc: " << m_meshid << " setting destination pts. \n";
       exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
         cb_xfer );
       ++m_ndst;

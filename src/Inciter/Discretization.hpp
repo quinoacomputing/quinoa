@@ -24,7 +24,6 @@
 #include "CommMap.hpp"
 #include "History.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
-#include "M2MTransfer.hpp"
 
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
@@ -94,7 +93,7 @@ class Discretization : public CBase_Discretization {
     static void registerReducers();
 
     //! Register mesh with mesh-transfer lib
-    void addMesh();
+    void addRestartedMesh( CkCallback cb );
 
     //! Start computing new mesh veloctity for ALE mesh motion
     void meshvelStart(

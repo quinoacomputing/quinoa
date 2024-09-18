@@ -7,6 +7,8 @@
 #include "collidecharm.h"
 #include "Fields.hpp"
 
+#include <iostream>
+
 namespace exam2m {
 
 void collisionHandler( [[maybe_unused]] void *param,
@@ -19,9 +21,18 @@ void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fiel
 class LibMain : public CBase_LibMain {
 public:
   LibMain(CkArgMsg* msg);
-  explicit LibMain(CkMigrateMessage* msg) : CBase_LibMain(msg) {}
+  explicit LibMain(CkMigrateMessage* msg) : CBase_LibMain(msg) {
+    std::cout << "LibMain() migrate ctor called..." << std::endl;
+
+    //setProxies();
+
+    std::cout << "LibMain() migrate ctor cmplt." << std::endl;
+  }
   void pup(PUP::er&) {}
   friend void operator|( PUP::er& p, LibMain& m ) { m.pup(p); }
+
+private:
+  void setProxies();
 };
 
 class MeshData {
@@ -59,6 +70,10 @@ class M2MTransfer : public CBase_M2MTransfer {
     void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords,
                        tk::Fields& u, CkCallback cb);
     void distributeCollisions(int nColl, Collision* colls);
+
+    void pup(PUP::er& p) {
+    }
+    friend void operator|( PUP::er& p, M2MTransfer& m ) { m.pup(p); }
 };
 
 }

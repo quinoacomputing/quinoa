@@ -16,6 +16,7 @@
 #include "M2MTransfer.hpp"
 
 #include "collidecharm.h"
+#include <iostream>
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -43,10 +44,12 @@ TransferDetails::TransferDetails( CkArrayID p, MeshData d, CkCallback cb ) :
 //! \param[in] cb Callback to inform application that the library is ready
 // *****************************************************************************
 {
+  std::cout << "TransferDetails() ctor beginning... " << thisIndex << std::endl;
   CollideRegister(collideHandle, m_firstchunk + thisIndex);
   d.m_proxy = thisProxy;
   m2mtransferProxy.ckLocalBranch()->setMesh( p, d );
   contribute(cb);
+  std::cout << "TransferDetails() ctor complete. " << thisIndex << std::endl;
 }
 
 void
@@ -123,6 +126,9 @@ TransferDetails::collideVertices()
     prio[nBoxes] = firstchunk;
     ++nBoxes;
   }
+
+  std::cout << "colliding vertices " << nBoxes << std::endl;
+
   CollideBoxesPrio( collideHandle, firstchunk + thisIndex,
                     static_cast<int>(nBoxes), boxes.data(), prio.data() );
 }
@@ -149,6 +155,9 @@ TransferDetails::collideTets() const
       boxes[i].add(CkVector3d(coord[0][p], coord[1][p], coord[2][p]));
     }
   }
+
+  std::cout << "colliding tets " << nBoxes << std::endl;
+
   CollideBoxesPrio( collideHandle, firstchunk + thisIndex,
                     static_cast<int>(nBoxes), boxes.data(), prio.data() );
 }

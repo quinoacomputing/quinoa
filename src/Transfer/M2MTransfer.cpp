@@ -4,6 +4,7 @@
 #include "TransferDetails.hpp"
 
 #include <cassert>
+#include <iostream>
 
 namespace exam2m {
 
@@ -49,13 +50,22 @@ void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fiel
 }
 
 LibMain::LibMain(CkArgMsg* msg) {
+  std::cout << "LibMain() called..." << std::endl;
   delete msg;
   m2mtransferProxy = CProxy_M2MTransfer::ckNew();
+  setProxies();
+  std::cout << "LibMain() cmplt." << std::endl;
+}
 
+void LibMain::setProxies()
+{
+  std::cout << "  in setProxies..." << std::endl;
   // TODO: Need to make sure this is actually correct
   CollideGrid3d gridMap(CkVector3d(0, 0, 0),CkVector3d(2, 100, 2));
+  std::cout << "  gridMap initialized..." << std::endl;
   collideHandle = CollideCreate(gridMap,
       CollideSerialClient(collisionHandler, 0));
+  std::cout << "  setProxies cmplt." << std::endl;
 }
 
 M2MTransfer::M2MTransfer() : current_chunk(0) {}
@@ -72,6 +82,7 @@ void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb) {
     mesh.m_proxy = CProxy_TransferDetails::ckNew(p, mesh, cb, opts);
     proxyMap[id] = mesh;
     current_chunk += elem;
+    std::cout << "M2MTransfer::addMesh() cmplt. " << thisIndex << std::endl;
   } else {
     CkAbort("Uhoh...\n");
   }
