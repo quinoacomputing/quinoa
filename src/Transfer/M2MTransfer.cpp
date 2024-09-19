@@ -53,19 +53,12 @@ LibMain::LibMain(CkArgMsg* msg) {
   std::cout << "LibMain() called..." << std::endl;
   delete msg;
   m2mtransferProxy = CProxy_M2MTransfer::ckNew();
-  setProxies();
-  std::cout << "LibMain() cmplt." << std::endl;
-}
 
-void LibMain::setProxies()
-{
-  std::cout << "  in setProxies..." << std::endl;
   // TODO: Need to make sure this is actually correct
   CollideGrid3d gridMap(CkVector3d(0, 0, 0),CkVector3d(2, 100, 2));
-  std::cout << "  gridMap initialized..." << std::endl;
   collideHandle = CollideCreate(gridMap,
       CollideSerialClient(collisionHandler, 0));
-  std::cout << "  setProxies cmplt." << std::endl;
+  std::cout << "LibMain() cmplt." << std::endl;
 }
 
 M2MTransfer::M2MTransfer() : current_chunk(0) {}

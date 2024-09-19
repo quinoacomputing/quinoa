@@ -22,17 +22,10 @@ class LibMain : public CBase_LibMain {
 public:
   LibMain(CkArgMsg* msg);
   explicit LibMain(CkMigrateMessage* msg) : CBase_LibMain(msg) {
-    std::cout << "LibMain() migrate ctor called..." << std::endl;
-
-    //setProxies();
-
     std::cout << "LibMain() migrate ctor cmplt." << std::endl;
   }
   void pup(PUP::er&) {}
   friend void operator|( PUP::er& p, LibMain& m ) { m.pup(p); }
-
-private:
-  void setProxies();
 };
 
 class MeshData {
