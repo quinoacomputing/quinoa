@@ -63,7 +63,16 @@ LibMain::LibMain(CkArgMsg* msg) {
 
 M2MTransfer::M2MTransfer() : current_chunk(0) {}
 
-void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb) {
+void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb)
+// *****************************************************************************
+//  Register mesh with the mesh-to-mesh transfer library
+//! \param[in] p Proxy from which this function call originated
+//! \param[in] elem Total number of chares in the application
+//! \param[in] cb Callback to inform application that the library is ready
+//! \details This function registers a mesh with M2MTransfer. This needs to
+//!   be called during normal execution and when restarting from checkpoint.
+// *****************************************************************************
+{
   auto id = static_cast<std::size_t>(CkGroupID(p).idx);
   if (proxyMap.count(id) == 0) {
     CkArrayOptions opts;
