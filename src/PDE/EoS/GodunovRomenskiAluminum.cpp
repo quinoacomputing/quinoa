@@ -154,7 +154,7 @@ GodunovRomenskiAluminum::pressure(
 
 std::array< std::array< tk::real, 3 >, 3 >
 GodunovRomenskiAluminum::CauchyStress(
-  tk::real,
+  tk::real arho,
   tk::real,
   tk::real,
   tk::real,
@@ -185,7 +185,7 @@ GodunovRomenskiAluminum::CauchyStress(
   // p_mean
   auto pmean = - alpha * elasticEnergy(defgrad, devH);
 
-  // Volumetric component of Cauchy stress tensor
+  // Pressure due to shear
   asig[0][0] = -pmean;
   asig[1][1] = -pmean;
   asig[2][2] = -pmean;

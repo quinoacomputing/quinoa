@@ -609,31 +609,57 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   tk::real rx = r[0];
   tk::real ry = r[1];
   tk::real rz = r[2];
-  if (std::abs(rx) > eps || std::abs(ry) > eps)
+  if (std::abs(ry+rz) <= std::abs(ry-rz))
   {
-    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+    tk::real norm = std::sqrt(2*(1-rx*ry-rx*rz-ry*rz));
     rotMat[0] = rx;
     rotMat[1] = ry;
     rotMat[2] = rz;
-    rotMat[3] = ry/rxryNorm;
-    rotMat[4] = -rx/rxryNorm;
-    rotMat[5] = 0.0;
-    rotMat[6] = rx*rz/rxryNorm;
-    rotMat[7] = ry*rz/rxryNorm;
-    rotMat[8] = -rxryNorm;
+    rotMat[3] = (ry-rz)/norm;
+    rotMat[4] = (rz-rx)/norm;
+    rotMat[5] = (rx-ry)/norm;
+    rotMat[6] = (rx*(ry+rz)-ry*ry-rz*rz)/norm;
+    rotMat[7] = (ry*(rx+rz)-rx*rx-rz*rz)/norm;
+    rotMat[8] = (rz*(rx+ry)-rx*rx-ry*ry)/norm;
   }
   else
   {
+    tk::real norm = std::sqrt(2*(1+rz*(ry-rx)+rx*ry));
     rotMat[0] = rx;
     rotMat[1] = ry;
     rotMat[2] = rz;
-    rotMat[3] = 1.0;
-    rotMat[4] = 0.0;
-    rotMat[5] = 0.0;
-    rotMat[6] = 0.0;
-    rotMat[7] = 1.0;
-    rotMat[8] = 0.0;
+    rotMat[3] = (ry+rz)/norm;
+    rotMat[4] = (rz-rx)/norm;
+    rotMat[5] = (-rx-ry)/norm;
+    rotMat[6] = (rx*(rz-ry)-ry*ry-rz*rz)/norm;
+    rotMat[7] = (ry*(rx+rz)+rx*rx+rz*rz)/norm;
+    rotMat[8] = (rz*(rx-ry)-rx*rx-ry*ry)/norm;
   }
+  // if (std::abs(rx) > eps || std::abs(ry) > eps)
+  // {
+  //   tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+  //   rotMat[0] = rx;
+  //   rotMat[1] = ry;
+  //   rotMat[2] = rz;
+  //   rotMat[3] = ry/rxryNorm;
+  //   rotMat[4] = -rx/rxryNorm;
+  //   rotMat[5] = 0.0;
+  //   rotMat[6] = rx*rz/rxryNorm;
+  //   rotMat[7] = ry*rz/rxryNorm;
+  //   rotMat[8] = -rxryNorm;
+  // }
+  // else
+  // {
+  //   rotMat[0] = rx;
+  //   rotMat[1] = ry;
+  //   rotMat[2] = rz;
+  //   rotMat[3] = 1.0;
+  //   rotMat[4] = 0.0;
+  //   rotMat[5] = 0.0;
+  //   rotMat[6] = 0.0;
+  //   rotMat[7] = 1.0;
+  //   rotMat[8] = 0.0;
+  // }
 
   // define matrices
   double matAuxIn[9], matAuxOut[9];
@@ -641,8 +667,8 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
     for (std::size_t j=0; j<3; ++j)
       matAuxIn[i*3+j] = mat[i][j];
 
-  // compute matAuxIn*rotMat and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+  // compute matAuxIn*rotMat^T and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
     3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
 
   // matAuxOut -> matAuxIn
@@ -652,8 +678,8 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
     matAuxOut[i] = 0.0;
   }
 
-  // compute rotMat^T*matAuxIn and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+  // compute rotMat*matAuxIn and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
     3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
   // return matAuxOut as a 2D array
@@ -685,31 +711,57 @@ unrotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   tk::real rx = r[0];
   tk::real ry = r[1];
   tk::real rz = r[2];
-  if (std::abs(rx) > eps || std::abs(ry) > eps)
+  if (std::abs(ry+rz) <= std::abs(ry-rz))
   {
-    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+    tk::real norm = std::sqrt(2*(1-rx*ry-rx*rz-ry*rz));
     rotMat[0] = rx;
     rotMat[1] = ry;
     rotMat[2] = rz;
-    rotMat[3] = ry/rxryNorm;
-    rotMat[4] = -rx/rxryNorm;
-    rotMat[5] = 0.0;
-    rotMat[6] = rx*rz/rxryNorm;
-    rotMat[7] = ry*rz/rxryNorm;
-    rotMat[8] = -rxryNorm;
+    rotMat[3] = (ry-rz)/norm;
+    rotMat[4] = (rz-rx)/norm;
+    rotMat[5] = (rx-ry)/norm;
+    rotMat[6] = (rx*(ry+rz)-ry*ry-rz*rz)/norm;
+    rotMat[7] = (ry*(rx+rz)-rx*rx-rz*rz)/norm;
+    rotMat[8] = (rz*(rx+ry)-rx*rx-ry*ry)/norm;
   }
   else
   {
+    tk::real norm = std::sqrt(2*(1+rz*(ry-rx)+rx*ry));
     rotMat[0] = rx;
     rotMat[1] = ry;
     rotMat[2] = rz;
-    rotMat[3] = 1.0;
-    rotMat[4] = 0.0;
-    rotMat[5] = 0.0;
-    rotMat[6] = 0.0;
-    rotMat[7] = 1.0;
-    rotMat[8] = 0.0;
+    rotMat[3] = (ry+rz)/norm;
+    rotMat[4] = (rz-rx)/norm;
+    rotMat[5] = (-rx-ry)/norm;
+    rotMat[6] = (rx*(rz-ry)-ry*ry-rz*rz)/norm;
+    rotMat[7] = (ry*(rx+rz)+rx*rx+rz*rz)/norm;
+    rotMat[8] = (rz*(rx-ry)-rx*rx-ry*ry)/norm;
   }
+  // if (std::abs(rx) > eps || std::abs(ry) > eps)
+  // {
+  //   tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+  //   rotMat[0] = rx;
+  //   rotMat[1] = ry;
+  //   rotMat[2] = rz;
+  //   rotMat[3] = ry/rxryNorm;
+  //   rotMat[4] = -rx/rxryNorm;
+  //   rotMat[5] = 0.0;
+  //   rotMat[6] = rx*rz/rxryNorm;
+  //   rotMat[7] = ry*rz/rxryNorm;
+  //   rotMat[8] = -rxryNorm;
+  // }
+  // else
+  // {
+  //   rotMat[0] = rx;
+  //   rotMat[3] = ry;
+  //   rotMat[6] = rz;
+  //   rotMat[1] = 1.0;
+  //   rotMat[4] = 0.0;
+  //   rotMat[7] = 0.0;
+  //   rotMat[2] = 0.0;
+  //   rotMat[5] = 1.0;
+  //   rotMat[8] = 0.0;
+  // }
 
   // define matrices
   double matAuxIn[9], matAuxOut[9];
@@ -717,8 +769,8 @@ unrotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
     for (std::size_t j=0; j<3; ++j)
       matAuxIn[i*3+j] = mat[i][j];
 
-  // compute matAuxIn*rotMat^T and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+  // compute matAuxIn*rotMat and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
     3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
 
   // matAuxOut -> matAuxIn
@@ -728,8 +780,8 @@ unrotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
     matAuxOut[i] = 0.0;
   }
 
-  // compute rotMat*matAuxIn and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+  // compute rotMat^T*matAuxIn and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
     3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
   // return matAuxOut as a 2D array
@@ -761,31 +813,57 @@ rotateVector( const std::array< tk::real, 3 >& v,
   tk::real rx = r[0];
   tk::real ry = r[1];
   tk::real rz = r[2];
-  if (std::abs(rx) > eps || std::abs(ry) > eps)
+  if (std::abs(ry+rz) <= std::abs(ry-rz))
   {
-    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+    tk::real norm = std::sqrt(2*(1-rx*ry-rx*rz-ry*rz));
     rotMat[0][0] = rx;
     rotMat[0][1] = ry;
     rotMat[0][2] = rz;
-    rotMat[1][0] = ry/rxryNorm;
-    rotMat[1][1] = -rx/rxryNorm;
-    rotMat[1][2] = 0.0;
-    rotMat[2][0] = rx*rz/rxryNorm;
-    rotMat[2][1] = ry*rz/rxryNorm;
-    rotMat[2][2] = -rxryNorm;
+    rotMat[1][0] = (ry-rz)/norm;
+    rotMat[1][1] = (rz-rx)/norm;
+    rotMat[1][2] = (rx-ry)/norm;
+    rotMat[2][0] = (rx*(ry+rz)-ry*ry-rz*rz)/norm;
+    rotMat[2][1] = (ry*(rx+rz)-rx*rx-rz*rz)/norm;
+    rotMat[2][2] = (rz*(rx+ry)-rx*rx-ry*ry)/norm;
   }
   else
   {
+    tk::real norm = std::sqrt(2*(1+rz*(ry-rx)+rx*ry));
     rotMat[0][0] = rx;
     rotMat[0][1] = ry;
     rotMat[0][2] = rz;
-    rotMat[1][0] = 1.0;
-    rotMat[1][1] = 0.0;
-    rotMat[1][2] = 0.0;
-    rotMat[2][0] = 0.0;
-    rotMat[2][1] = 1.0;
-    rotMat[2][2] = 0.0;
+    rotMat[1][0] = (ry+rz)/norm;
+    rotMat[1][1] = (rz-rx)/norm;
+    rotMat[1][2] = (-rx-ry)/norm;
+    rotMat[2][0] = (rx*(rz-ry)-ry*ry-rz*rz)/norm;
+    rotMat[2][1] = (ry*(rx+rz)+rx*rx+rz*rz)/norm;
+    rotMat[2][2] = (rz*(rx-ry)-rx*rx-ry*ry)/norm;
   }
+  // if (std::abs(rx) > eps || std::abs(ry) > eps)
+  // {
+  //   tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+  //   rotMat[0][0] = rx;
+  //   rotMat[0][1] = ry;
+  //   rotMat[0][2] = rz;
+  //   rotMat[1][0] = ry/rxryNorm;
+  //   rotMat[1][1] = -rx/rxryNorm;
+  //   rotMat[1][2] = 0.0;
+  //   rotMat[2][0] = rx*rz/rxryNorm;
+  //   rotMat[2][1] = ry*rz/rxryNorm;
+  //   rotMat[2][2] = -rxryNorm;
+  // }
+  // else
+  // {
+  //   rotMat[0][0] = rx;
+  //   rotMat[0][1] = ry;
+  //   rotMat[0][2] = rz;
+  //   rotMat[1][0] = 1.0;
+  //   rotMat[1][1] = 0.0;
+  //   rotMat[1][2] = 0.0;
+  //   rotMat[2][0] = 0.0;
+  //   rotMat[2][1] = 1.0;
+  //   rotMat[2][2] = 0.0;
+  // }
 
   // return rotMat*v
   return matvec(rotMat,v);
@@ -814,31 +892,57 @@ unrotateVector( const std::array< tk::real, 3 >& v,
   tk::real rx = r[0];
   tk::real ry = r[1];
   tk::real rz = r[2];
-  if (std::abs(rx) > eps || std::abs(ry) > eps)
+  if (std::abs(ry+rz) <= std::abs(ry-rz))
   {
-    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+    tk::real norm = std::sqrt(2*(1-rx*ry-rx*rz-ry*rz));
     rotMat[0][0] = rx;
     rotMat[1][0] = ry;
     rotMat[2][0] = rz;
-    rotMat[0][1] = ry/rxryNorm;
-    rotMat[1][1] = -rx/rxryNorm;
-    rotMat[2][1] = 0.0;
-    rotMat[0][2] = rx*rz/rxryNorm;
-    rotMat[1][2] = ry*rz/rxryNorm;
-    rotMat[2][2] = -rxryNorm;
+    rotMat[0][1] = (ry-rz)/norm;
+    rotMat[1][1] = (rz-rx)/norm;
+    rotMat[2][1] = (rx-ry)/norm;
+    rotMat[0][2] = (rx*(ry+rz)-ry*ry-rz*rz)/norm;
+    rotMat[1][2] = (ry*(rx+rz)-rx*rx-rz*rz)/norm;
+    rotMat[2][2] = (rz*(rx+ry)-rx*rx-ry*ry)/norm;
   }
   else
   {
+    tk::real norm = std::sqrt(2*(1+rz*(ry-rx)+rx*ry));
     rotMat[0][0] = rx;
     rotMat[1][0] = ry;
     rotMat[2][0] = rz;
-    rotMat[0][1] = 1.0;
-    rotMat[1][1] = 0.0;
-    rotMat[2][1] = 0.0;
-    rotMat[0][2] = 0.0;
-    rotMat[1][2] = 1.0;
-    rotMat[2][2] = 0.0;
+    rotMat[0][1] = (ry+rz)/norm;
+    rotMat[1][1] = (rz-rx)/norm;
+    rotMat[2][1] = (-rx-ry)/norm;
+    rotMat[0][2] = (rx*(rz-ry)-ry*ry-rz*rz)/norm;
+    rotMat[1][2] = (ry*(rx+rz)+rx*rx+rz*rz)/norm;
+    rotMat[2][2] = (rz*(rx-ry)-rx*rx-ry*ry)/norm;
   }
+  // if (std::abs(rx) > eps || std::abs(ry) > eps)
+  // {
+  //   tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
+  //   rotMat[0][0] = rx;
+  //   rotMat[1][0] = ry;
+  //   rotMat[2][0] = rz;
+  //   rotMat[0][1] = ry/rxryNorm;
+  //   rotMat[1][1] = -rx/rxryNorm;
+  //   rotMat[2][1] = 0.0;
+  //   rotMat[0][2] = rx*rz/rxryNorm;
+  //   rotMat[1][2] = ry*rz/rxryNorm;
+  //   rotMat[2][2] = -rxryNorm;
+  // }
+  // else
+  // {
+  //   rotMat[0][0] = rx;
+  //   rotMat[1][0] = ry;
+  //   rotMat[2][0] = rz;
+  //   rotMat[0][1] = 1.0;
+  //   rotMat[1][1] = 0.0;
+  //   rotMat[2][1] = 0.0;
+  //   rotMat[0][2] = 0.0;
+  //   rotMat[1][2] = 1.0;
+  //   rotMat[2][2] = 0.0;
+  // }
 
   // return rotMat*v
   return matvec(rotMat,v);
