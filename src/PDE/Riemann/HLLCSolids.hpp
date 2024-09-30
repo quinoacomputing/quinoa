@@ -54,8 +54,7 @@ struct HLLCSolids {
     tk::real rhol(0.0), rhor(0.0);
     tk::real amatl(0.0), amatr(0.0), ac_l(0.0), ac_r(0.0);
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
-                            pml(nmat, 0.0), pmr(nmat, 0.0),
-                            pm_t_l(nmat, 0.0), pm_t_r(nmat, 0.0);
+      pml(nmat, 0.0), pmr(nmat, 0.0);
     std::array< tk::real, 3 > vn_l, vn_r;
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > g_l, g_r,
       asig_l, asig_r;
