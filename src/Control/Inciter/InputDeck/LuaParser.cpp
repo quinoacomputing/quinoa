@@ -343,6 +343,37 @@ LuaParser::storeInputDeck(
     // number of equations in PDE system are determined based on materials
   }
 
+  // check multispecies
+  if (lua_ideck["multispecies"].valid()) {
+
+    checkBlock< inciter::ctr::multispeciesList::Keys >(lua_ideck["multispecies"],
+      "multispecies");
+
+    gideck.get< tag::pde >() = inciter::ctr::PDEType::MULTISPECIES;
+    storeIfSpecd< std::size_t >(
+      lua_ideck["multispecies"], "nspec",
+      gideck.get< tag::multispecies, tag::nspec >(), 1);
+    storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
+      lua_ideck["multispecies"], "problem",
+      gideck.get< tag::multispecies, tag::problem >(),
+      inciter::ctr::ProblemType::USER_DEFINED);
+    storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
+      lua_ideck["multispecies"], "physics",
+      gideck.get< tag::multispecies, tag::physics >(),
+      inciter::ctr::PhysicsType::EULER);
+    gideck.get< tag::depvar >()[0] = 'a';
+    storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
+      lua_ideck, "flux", gideck.get< tag::flux >(),
+      inciter::ctr::FluxType::AUSM);
+
+    // store number of equations in PDE system
+    // nspec: species mass conservation equations,
+    // 3: momentum equations,
+    // 1: total energy equation.
+    gideck.get< tag::ncomp >() =
+      gideck.get< tag::multispecies, tag::nspec >() + 3 + 1;
+  }
+
   // add depvar to deck::depvars so it can be selected as outvar later
   tk::grm::depvars.insert( gideck.get< tag::depvar >()[0] );
 

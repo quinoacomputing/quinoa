@@ -95,6 +95,14 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::viscous,          bool
 > >;
 
+// MultiSpecies
+using multispeciesList = tk::TaggedTuple< brigand::list<
+  tag::physics,          PhysicsType,
+  tag::nspec,            std::size_t,
+  tag::problem,          ProblemType,
+  tag::viscous,          bool
+> >;
+
 // Material/EOS object
 using materialList = tk::TaggedTuple< brigand::list<
   tag::eos,          MaterialType,
@@ -289,11 +297,12 @@ using ConfigMembers = brigand::list<
   tag::limsol_projection,    bool,
 
   // PDE options
-  tag::ncomp,     std::size_t,
-  tag::pde,       PDEType,
-  tag::transport, transportList,
-  tag::compflow,  compflowList,
-  tag::multimat,  multimatList,
+  tag::ncomp,        std::size_t,
+  tag::pde,          PDEType,
+  tag::transport,    transportList,
+  tag::compflow,     compflowList,
+  tag::multimat,     multimatList,
+  tag::multispecies, multispeciesList,
 
   // Dependent variable name
   tag::depvar, std::vector< char >,
@@ -800,10 +809,22 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         equations, governing compressible multi-material hydrodynamics assuming
         velocity equilibrium (single velocity).)", "block-title"});
 
+      keywords.insert({"multispecies",
+        "Start configuration block for the compressible multi-species equations",
+        R"(This keyword is used to introduce the multispecies block,
+        used to specify the configuration for a system of partial differential
+        equations, governing compressible multi-species fluid dynamics.)",
+        "block-title"});
+
       keywords.insert({"nmat",
         "Set number of materials for the multi-material system",
         R"(This keyword is used to specify the number of materials for
         multi-material flow, see also the keyword 'multimat'.)", "uint"});
+
+      keywords.insert({"nspec",
+        "Set number of species for the multi-species system",
+        R"(This keyword is used to specify the number of species for
+        multi-species flow, see also the keyword 'multispecies'.)", "uint"});
 
       keywords.insert({"prelax",
         "Toggle multi-material finite pressure relaxation",
