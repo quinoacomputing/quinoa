@@ -394,7 +394,7 @@ struct HLLCSolids {
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back(-(aTn_l[k][0]+Sl/(Si-Sl)*(aTn_l[k][0]-asig_t[k][0])));
       // Store Riemann velocity
-      flx.push_back( Si*(Sl-vn_l[0])/(Sl-Si) );
+      flx.push_back( vn_l[0] );
       // Store Riemann aTn_ij (3*nsld)
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
@@ -413,7 +413,7 @@ struct HLLCSolids {
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back(-(aTn_r[k][0]+Sr/(Si-Sr)*(aTn_r[k][0]-asig_t[k][0])));
       // Store Riemann velocity
-      flx.push_back( Si*(Sr-vn_r[0])/(Sr-Si) );
+      flx.push_back( vn_r[0] );
       // Store Riemann aTn_ij (3*nsld)
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
