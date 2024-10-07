@@ -231,21 +231,25 @@ struct AUSM {
         std::array< std::array< tk::real, 3 >, 3 > flxn{{
           {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }};
 
+        //// (a)
         //for (std::size_t i=0; i<3; ++i) {
         //  // get fluxes for g_k in rotated frame
         //  flxn[i][0] = l_plus*gn_l[k][i][0] + l_minus*gn_r[k][i][0]
-        //    + l_p * gn_l[k][i][1]*utl[1] + l_m * gn_r[k][i][1]*utr[1]
-        //    + l_p * gn_l[k][i][2]*utl[2] + l_m * gn_r[k][i][2]*utr[2];
+        //    + lt_plus[1] * gn_l[k][i][1] + lt_minus[1] * gn_r[k][i][1]
+        //    + lt_plus[2] * gn_l[k][i][2] + lt_minus[2] * gn_r[k][i][2];
         //  // flux second component (j) is always zero for j /= 0, since rotated
         //  // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
         //}
 
-        // more formal upwinding based on shear waves
+        // (b)
         for (std::size_t i=0; i<3; ++i) {
           // get fluxes for g_k in rotated frame
-          flxn[i][0] = l_plus*gn_l[k][i][0] + l_minus*gn_r[k][i][0]
-            + lt_plus[1] * gn_l[k][i][1] + lt_minus[1] * gn_r[k][i][1]
-            + lt_plus[2] * gn_l[k][i][2] + lt_minus[2] * gn_r[k][i][2];
+          flxn[i][0] = l_p * (gn_l[k][i][0]*utl[0]
+                            + gn_l[k][i][1]*utl[1]
+                            + gn_l[k][i][2]*utl[2])
+                     + l_m * (gn_r[k][i][0]*utr[0]
+                            + gn_r[k][i][1]*utr[1]
+                            + gn_r[k][i][2]*utr[2]);
           // flux second component (j) is always zero for j /= 0, since rotated
           // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
         }
