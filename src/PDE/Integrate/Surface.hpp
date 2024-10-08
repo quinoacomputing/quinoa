@@ -48,8 +48,6 @@ surfInt( const bool pref,
          const std::vector< std::size_t >& ndofel,
          const tk::real dt,
          Fields& R,
-         std::vector< std::vector< tk::real > >& vriem,
-         std::vector< std::vector< tk::real > >& xcoord,
          std::vector< std::vector< tk::real > >& riemannDeriv,
          int intcompr=0 );
 
