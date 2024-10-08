@@ -50,8 +50,6 @@ bndSurfInt( const bool pref,
             const Fields& P,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
-            std::vector< std::vector< tk::real > >&,
-            std::vector< std::vector< tk::real > >&,
             std::vector< std::vector< tk::real > >& riemannDeriv,
             int intsharp )
 // *****************************************************************************
@@ -79,9 +77,6 @@ bndSurfInt( const bool pref,
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
-//! \param[in,out] vriem Vector of the riemann velocity
-//! \param[in,out] riemannLoc Vector of coordinates where Riemann velocity data
-//!   is available
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
 //!   These derivatives are used only for multi-material hydro and unused for

@@ -367,15 +367,12 @@ class Transport {
       // system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
-      std::vector< std::vector< tk::real > > vriem;
-      std::vector< std::vector< tk::real > > riemannLoc;
-
       // compute internal surface flux integrals
       std::vector< std::size_t > solidx(1, 0);
       tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
                    inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, ndofel, dt, R, vriem,
-                   riemannLoc, riemannDeriv, intsharp );
+                   Problem::prescribedVelocity, U, P, ndofel, dt, R,
+                   riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
@@ -387,8 +384,8 @@ class Transport {
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, m_ncomp, m_mat_blk, ndof, rdof,
           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
-          Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R, vriem,
-          riemannLoc, riemannDeriv, intsharp );
+          Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
+          riemannDeriv, intsharp );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
