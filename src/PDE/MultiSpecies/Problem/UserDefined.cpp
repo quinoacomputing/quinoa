@@ -47,7 +47,7 @@ MultiSpeciesProblemUserDefined::initialize( ncomp_t ncomp,
 
   // Set background ICs
   const auto& ic = g_inputdeck.get< tag::ic >();
-  const auto& bgspecid = ic.get< tag::materialid >();
+  const auto& bgmassfrac = ic.get< tag::mass_fractions >();
   const auto& bgvelic = ic.get< tag::velocity >();
   const auto& bgpreic = ic.get< tag::pressure >();
   const auto& bgtempic = ic.get< tag::temperature >();
@@ -58,12 +58,13 @@ MultiSpeciesProblemUserDefined::initialize( ncomp_t ncomp,
   auto alphamin = 1.0e-12;
 
   // initialize background species states
-  std::vector< tk::real > alphas(nspec, alphamin);
+  auto alphas = bgmassfrac;
+  tk::real total_al(0.0);
   for (std::size_t k=0; k<nspec; ++k) {
-    if (k == bgspecid-1) {
-      alphas[k] = 1.0 - (static_cast< tk::real >(nspec-1))*alphamin;
-    }
+    alphas[k] = std::max(alphas[k], alphamin);
+    total_al += alphas[k];
   }
+  for (std::size_t k=0; k<nspec; ++k) alphas[k] /= total_al;
 
   tk::real u = bgvelic[0];
   tk::real v = bgvelic[1];

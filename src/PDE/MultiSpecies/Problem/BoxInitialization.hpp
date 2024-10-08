@@ -27,8 +27,6 @@ void initializeBox( const std::vector< EOS >& mat_blk,
                     tk::real V_ex,
                     tk::real t,
                     const B& b,
-                    tk::real bgpreic,
-                    tk::real bgtempic,
                     std::vector< tk::real >& s )
 // *****************************************************************************
 // Set the solution in the user-defined IC box/mesh block
@@ -36,8 +34,6 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 //! \param[in] V_ex Exact box volume
 //! \param[in] t Physical time
 //! \param[in] b IC box configuration to use
-//! \param[in] bgpreic Background pressure user input
-//! \param[in] bgtempic Background temperature user input
 //! \param[in,out] s Solution vector that is set to box ICs
 //! \details This function sets the fluid density and total specific energy
 //!   within a box initial condition, configured by the user. If the user
@@ -52,12 +48,13 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 //!    * specific energy (internal energy per unit mass): J/kg
 // *****************************************************************************
 {
+
   auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
   const auto& initiate = b.template get< tag::initiate >();
 
   // get species id in box (offset by 1, since input deck uses 1-based ids)
-  std::size_t boxspecid = b.template get< tag::materialid >() - 1;
+  const auto& boxmassfrac = b.template get< tag::mass_fractions >();
   const auto& boxvel = b.template get< tag::velocity >();
   auto boxpre = b.template get< tag::pressure >();
   auto boxene = b.template get< tag::energy >();
@@ -71,47 +68,27 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   // input.
 
   // species volume fractions
-  std::vector< tk::real > alphas(nspec, alphamin);
-
+  auto alphas = boxmassfrac;
+  tk::real total_al(0.0);
   for (std::size_t k=0; k<nspec; ++k) {
-    if (k == boxspecid) {
-      alphas[k] = 1.0 - (static_cast< tk::real >(nspec-1))*alphamin;
-    }
+    alphas[k] = std::max(alphas[k], alphamin);
+    total_al += alphas[k];
   }
+  for (std::size_t k=0; k<nspec; ++k) alphas[k] /= total_al;
+
   // material states (density, pressure, velocity)
-  tk::real u = 0.0, v = 0.0, w = 0.0, spi(0.0), pr(0.0), tmp(0.0), rbulk(0.0);
+  tk::real u = 0.0, v = 0.0, w = 0.0, spi(0.0), pr(0.0), rbulk(0.0);
   std::vector< tk::real > rhok(nspec, 0.0);
 
   // 1. User-specified mass, specific energy (J/m^3) and volume of box
-  if (boxmas > 0.0) {
-    if (boxenc <= 1e-12) Throw( "Box energy content must be nonzero" );
-    // determine density and energy of species in the box
-    rhok[boxspecid] = boxmas / V_ex;
-    spi = boxenc / rhok[boxspecid];
-
-    // Determine pressure and temperature
-
-    // For initiate type 'impulse', pressure and temperature are determined from
-    // energy content that needs to be dumped into the box at IC.
-    if (initiate == ctr::InitiateType::IMPULSE) {
-      pr = mat_blk[0].compute< EOS::pressure >(
-        rhok[boxspecid], u, v, w, rhok[boxspecid]*spi );
-      tmp = mat_blk[0].compute< EOS::temperature >(
-        rhok[boxspecid], u, v, w, rhok[boxspecid]*spi );
-    }
-    else Throw( "IC box initiate type not implemented for multispecies" );
-
-    // find density of trace species quantities in the box based on pressure
-    for (std::size_t k=0; k<nspec; ++k) {
-      if (k != boxspecid) {
-        rhok[k] = mat_blk[0].compute< EOS::density >(pr, tmp);
-      }
-    }
+  if (boxmas > 0.0 || initiate != ctr::InitiateType::IMPULSE) {
+    Throw( "IC-box initialization type not supported in multispecies" );
   }
   // 2. User-specified temperature, pressure and velocity in box
   else {
     for (std::size_t k=0; k<nspec; ++k) {
       rhok[k] = mat_blk[0].compute< EOS::density >(boxpre, boxtemp);
+      rbulk += alphas[k]*rhok[k];
     }
     if (boxvel.size() == 3) {
       u = boxvel[0];
@@ -122,11 +99,11 @@ void initializeBox( const std::vector< EOS >& mat_blk,
       pr = boxpre;
     }
     if (boxene > 0.0) {
-      Throw("IC-box with specified energy not set up for multispec");
+      Throw("IC-box with specified energy not set up for multispecies");
     }
+
+    spi = mat_blk[0].compute< EOS::totalenergy >(rbulk, u, v, w, pr) / rbulk;
   }
-  // bulk density
-  for (std::size_t k=0; k<nspec; ++k) rbulk += alphas[k]*rhok[k];
 
   // [II] Finally initialize the solution vector
   // partial density

@@ -94,7 +94,7 @@ class MultiSpecies {
         ) );
 
       // EoS initialization
-      initializeMaterialEoS( m_mat_blk );
+      initializeSpeciesEoS( m_mat_blk );
     }
 
     //! Find the number of primitive quantities required for this PDE system
@@ -188,9 +188,6 @@ class MultiSpecies {
       const auto& icbox = ic.get< tag::box >();
       const auto& icmbk = ic.get< tag::meshblock >();
 
-      const auto& bgpre = ic.get< tag::pressure >();
-      const auto& bgtemp = ic.get< tag::temperature >();
-
       // Set initial conditions inside user-defined IC boxes and mesh blocks
       std::vector< tk::real > s(m_ncomp, 0.0);
       for (std::size_t e=0; e<nielem; ++e) {
@@ -212,8 +209,7 @@ class MultiSpecies {
                 for (std::size_t i=1; i<rdof; ++i)
                   unk(e,mark+i) = 0.0;
               }
-              initializeBox<ctr::boxList>( m_mat_blk, V_ex, t, b, bgpre,
-                bgtemp, s );
+              initializeBox<ctr::boxList>( m_mat_blk, V_ex, t, b, s );
               // store box-initialization in solution vector
               for (std::size_t c=0; c<m_ncomp; ++c) {
                 auto mark = c*rdof;
@@ -232,8 +228,7 @@ class MultiSpecies {
             if (elemblkid.find(blid) != elemblkid.end()) {
               const auto& elset = tk::cref_find(elemblkid, blid);
               if (elset.find(e) != elset.end()) {
-                initializeBox<ctr::meshblockList>( m_mat_blk, V_ex, t, b,
-                  bgpre, bgtemp, s );
+                initializeBox<ctr::meshblockList>( m_mat_blk, V_ex, t, b, s );
                 // store initialization in solution vector
                 for (std::size_t c=0; c<m_ncomp; ++c) {
                   auto mark = c*rdof;

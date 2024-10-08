@@ -101,6 +101,7 @@ PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_fvfactory(),
   registerTransport( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
   registerCompFlow( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
   registerMultiMat( m_dgfactory, m_fvfactory, m_dgEqTypes, m_fvEqTypes );
+  registerMultiSpecies( m_dgfactory, m_fvfactory, m_dgEqTypes, m_fvEqTypes );
 }
 
 std::vector< inciter::CGPDE >

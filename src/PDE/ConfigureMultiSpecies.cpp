@@ -108,8 +108,8 @@ infoMultiSpecies( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
       nfo.emplace_back( boxname + " orientation",
         parameters(b.get< tag::orientation >()) );
 
-      nfo.emplace_back( boxname + " material id",
-                        parameter( b.get< tag::materialid >() ) );
+      nfo.emplace_back( boxname + " mass fractions",
+        parameters(b.get< tag::mass_fractions >()) );
 
       const auto& initiate = b.get< tag::initiate >();
       auto opt = ctr::Initiate();

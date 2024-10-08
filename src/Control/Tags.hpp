@@ -293,6 +293,7 @@ DEFTAG(materialid);
 DEFTAG(pressure);
 DEFTAG(temperature);
 DEFTAG(velocity);
+DEFTAG(mass_fractions);
 DEFTAG(box);
 DEFTAG(meshblock);
 DEFTAG(blockid);

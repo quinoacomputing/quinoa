@@ -128,25 +128,26 @@ using materialList = tk::TaggedTuple< brigand::list<
 
 // Boundary conditions block
 using bcList = tk::TaggedTuple< brigand::list<
-  tag::mesh,        std::vector< std::size_t >,
-  tag::dirichlet,   std::vector< std::size_t >,
-  tag::symmetry,    std::vector< std::size_t >,
-  tag::inlet,       std::vector< std::size_t >,
-  tag::outlet,      std::vector< std::size_t >,
-  tag::farfield,    std::vector< std::size_t >,
-  tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >,
-  tag::stag_point,  std::vector< tk::real >,
-  tag::radius,      tk::real,
-  tag::velocity,    std::vector< tk::real >,
-  tag::pressure,    tk::real,
-  tag::density,     tk::real,
-  tag::temperature, tk::real,
-  tag::materialid,  std::size_t,
-  tag::timedep,     std::vector<
+  tag::mesh,           std::vector< std::size_t >,
+  tag::dirichlet,      std::vector< std::size_t >,
+  tag::symmetry,       std::vector< std::size_t >,
+  tag::inlet,          std::vector< std::size_t >,
+  tag::outlet,         std::vector< std::size_t >,
+  tag::farfield,       std::vector< std::size_t >,
+  tag::extrapolate,    std::vector< std::size_t >,
+  tag::noslipwall,     std::vector< std::size_t >,
+  tag::stag_point,     std::vector< tk::real >,
+  tag::radius,         tk::real,
+  tag::velocity,       std::vector< tk::real >,
+  tag::pressure,       tk::real,
+  tag::density,        tk::real,
+  tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
+  tag::materialid,     std::size_t,
+  tag::timedep,        std::vector<
     tk::TaggedTuple< brigand::list<
-      tag::sideset,   std::vector< uint64_t >,
-      tag::fn,        std::vector< tk::real >
+      tag::sideset,    std::vector< uint64_t >,
+      tag::fn,         std::vector< tk::real >
     > >
   >
 > >;
@@ -162,6 +163,7 @@ using boxList = tk::TaggedTuple< brigand::list<
   tag::energy,         tk::real,
   tag::energy_content, tk::real,
   tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
   tag::xmin,           tk::real,
   tag::xmax,           tk::real,
   tag::ymin,           tk::real,
@@ -188,6 +190,7 @@ using meshblockList = tk::TaggedTuple< brigand::list<
   tag::energy,         tk::real,
   tag::energy_content, tk::real,
   tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
   tag::initiate,       inciter::ctr::InitiateType,
   tag::point,          std::vector< tk::real >,
   tag::init_time,      tk::real,
@@ -197,14 +200,15 @@ using meshblockList = tk::TaggedTuple< brigand::list<
 
 // Initial conditions (ic) block
 using icList = tk::TaggedTuple< brigand::list<
-  tag::materialid,  std::size_t,
-  tag::pressure,    tk::real,
-  tag::temperature, tk::real,
-  tag::density,     tk::real,
-  tag::energy,      tk::real,
-  tag::velocity,    std::vector< tk::real >,
-  tag::box,         std::vector< boxList >,
-  tag::meshblock,   std::vector< meshblockList >
+  tag::materialid,     std::size_t,
+  tag::pressure,       tk::real,
+  tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
+  tag::density,        tk::real,
+  tag::energy,         tk::real,
+  tag::velocity,       std::vector< tk::real >,
+  tag::box,            std::vector< boxList >,
+  tag::meshblock,      std::vector< meshblockList >
 > >;
 
 // Overset mesh block
@@ -1678,6 +1682,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"temperature", "Specify temperature",
         R"(This keyword is used to configure temperature, used for, e.g.,
         boundary or initial conditions.)" , "real"});
+
+      keywords.insert({"mass_fractions", "Specify species mass fractions",
+        R"(This keyword is used to configure species mass fractions, used for,
+        e.g., boundary or initial conditions.)" , "vector of reals"});
 
       keywords.insert({"box",
         "Introduce a box block used to assign initial conditions",
