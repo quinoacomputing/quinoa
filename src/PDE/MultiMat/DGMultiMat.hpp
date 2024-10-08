@@ -938,11 +938,6 @@ class MultiMat {
       std::vector< std::vector< tk::real > >
         riemannDeriv(3*nmat+ndof+3*nsld, std::vector<tk::real>(U.nunk(),0.0));
 
-      // vectors to store the data of riemann velocity used for reconstruction
-      // in volume fraction equation
-      std::vector< std::vector< tk::real > > vriem( U.nunk() );
-      std::vector< std::vector< tk::real > > riemannLoc( U.nunk() );
-
       // configure a no-op lambda for prescribed velocity
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
@@ -950,7 +945,7 @@ class MultiMat {
       // compute internal surface flux integrals
       tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, vriem, riemannLoc, riemannDeriv, intsharp );
+                   dt, R, riemannDeriv, intsharp );
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
@@ -966,8 +961,8 @@ class MultiMat {
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
                         std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-                        m_riemann, velfn, std::get<1>(b), U, P, ndofel, R, vriem,
-                        riemannLoc, riemannDeriv, intsharp );
+                        m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
+                        riemannDeriv, intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld, "Size of "
               "Riemann derivative vector incorrect" );
