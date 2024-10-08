@@ -353,7 +353,7 @@ class MultiSpecies {
     }
 
     //! Limit second-order solution, and primitive quantities separately
-    //! \param[in] pref Indicator for p-adaptive algorithm
+    // //! \param[in] pref Indicator for p-adaptive algorithm
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
@@ -361,19 +361,19 @@ class MultiSpecies {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] ndofel Vector of local number of degrees of freedome
-    //! \param[in] gid Local->global node id map
-    //! \param[in] bid Local chare-boundary node ids (value) associated to
-    //!   global node ids (key)
-    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-    //!   variables
-    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-    //!   variables
-    //! \param[in] mtInv Inverse of Taylor mass matrix
+    // //! \param[in] gid Local->global node id map
+    // //! \param[in] bid Local chare-boundary node ids (value) associated to
+    // //!   global node ids (key)
+    // //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
+    // //!   variables
+    // //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
+    // //!   variables
+    // //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
-    //! \param[in,out] P Vector of primitives at recent time step
+    // //! \param[in,out] P Vector of primitives at recent time step
     //! \param[in,out] shockmarker Vector of shock-marker values
     void limit( [[maybe_unused]] tk::real,
-                const bool pref,
+                const bool /*pref*/,
                 const tk::Fields& geoFace,
                 const tk::Fields& geoElem,
                 const inciter::FaceData& fd,
@@ -381,18 +381,15 @@ class MultiSpecies {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::size_t >& ndofel,
-                const std::vector< std::size_t >& gid,
-                const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                const std::vector< std::vector<tk::real> >& pNodalExtrm,
-                const std::vector< std::vector<tk::real> >& mtInv,
+                const std::vector< std::size_t >& /*gid*/,
+                const std::unordered_map< std::size_t, std::size_t >& /*bid*/,
+                const std::vector< std::vector<tk::real> >& /*uNodalExtrm*/,
+                const std::vector< std::vector<tk::real> >& /*pNodalExtrm*/,
+                const std::vector< std::vector<tk::real> >& /*mtInv*/,
                 tk::Fields& U,
-                tk::Fields& P,
+                tk::Fields& /*P*/,
                 std::vector< std::size_t >& shockmarker ) const
     {
-      Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
-              "vector and primitive vector at recent time step incorrect" );
-
       const auto limiter = g_inputdeck.get< tag::limiter >();
       auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -517,7 +514,6 @@ class MultiSpecies {
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
-      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
       const auto nelem = fd.Esuel().size()/4;
@@ -841,15 +837,51 @@ class MultiSpecies {
     //! \return Flux vectors for all components in this PDE system
     //! \note The function signature must follow tk::FluxFn
     static tk::FluxFn::result_type
-    flux( ncomp_t ncomp,
+    flux( [[maybe_unused]] ncomp_t ncomp,
           const std::vector< EOS >& mat_blk,
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
       Assert( ugp.size() == ncomp, "Size mismatch" );
 
+      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
-      // TODO: code flux here
+
+      tk::real rhob(0.0);
+      for (std::size_t k=0; k<nspec; ++k)
+        rhob += ugp[multispecies::densityIdx(nspec, k)];
+
+      std::array< tk::real, 3 > u{{
+        ugp[multispecies::momentumIdx(nspec,1)] / rhob,
+        ugp[multispecies::momentumIdx(nspec,2)] / rhob,
+        ugp[multispecies::momentumIdx(nspec,3)] / rhob }};
+      auto rhoE0 = ugp[multispecies::energyIdx(nspec,0)];
+      auto p = mat_blk[0].compute< EOS::pressure >( rhob, u[0], u[1], u[2],
+        rhoE0 );
+
+      // density flux
+      for (std::size_t k=0; k<nspec; ++k) {
+        auto idx = multispecies::densityIdx(nspec, k);
+        for (std::size_t j=0; j<3; ++j) {
+          fl[idx][j] = ugp[idx] * u[j];
+        }
+      }
+
+      // momentum flux
+      for (std::size_t i=0; i<3; ++i) {
+        auto idx = multispecies::momentumIdx(nspec,i);
+        for (std::size_t j=0; j<3; ++j) {
+          fl[idx][j] = ugp[idx] * u[j];
+          if (i == j) fl[idx][j] += p;
+        }
+      }
+
+      // energy flux
+      auto idx = multispecies::energyIdx(nspec,0);
+      for (std::size_t j=0; j<3; ++j) {
+        fl[idx][j] = u[j] * (ugp[idx] + p);
+      }
 
       return fl;
     }

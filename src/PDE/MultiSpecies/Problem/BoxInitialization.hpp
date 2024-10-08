@@ -24,15 +24,15 @@ using ncomp_t = tk::ncomp_t;
 
 template< class B >
 void initializeBox( const std::vector< EOS >& mat_blk,
-                    tk::real V_ex,
-                    tk::real t,
+                    tk::real /*V_ex*/,
+                    tk::real /*t*/,
                     const B& b,
                     std::vector< tk::real >& s )
 // *****************************************************************************
 // Set the solution in the user-defined IC box/mesh block
 //! \tparam B IC-block type to operate, ctr::box, or ctr::meshblock
-//! \param[in] V_ex Exact box volume
-//! \param[in] t Physical time
+// //! \param[in] V_ex Exact box volume
+// //! \param[in] t Physical time
 //! \param[in] b IC box configuration to use
 //! \param[in,out] s Solution vector that is set to box ICs
 //! \details This function sets the fluid density and total specific energy
@@ -60,7 +60,6 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   auto boxene = b.template get< tag::energy >();
   auto boxtemp = b.template get< tag::temperature >();
   auto boxmas = b.template get< tag::mass >();
-  auto boxenc = b.template get< tag::energy_content >();
 
   auto alphamin = 1.0e-12;
 

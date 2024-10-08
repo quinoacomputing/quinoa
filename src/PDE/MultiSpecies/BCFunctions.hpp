@@ -27,7 +27,7 @@ namespace inciter {
   //!   system
   //! \note The function signature must follow tk::StateFn.
   static tk::StateFn::result_type
-  symmetry( ncomp_t ncomp,
+  symmetry( [[maybe_unused]] ncomp_t ncomp,
             const std::vector< EOS >&,
             const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
@@ -76,7 +76,7 @@ namespace inciter {
   //!   based on the characteristic theory of hyperbolic systems.
   //! \note The function signature must follow tk::StateFn
   static tk::StateFn::result_type
-  farfield( ncomp_t ncomp,
+  farfield( [[maybe_unused]] ncomp_t ncomp,
             const std::vector< EOS >& mat_blk,
             const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
@@ -200,16 +200,16 @@ namespace inciter {
   //!   face at no-slip wall boundaries
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
-  //! \param[in] fn Unit face normal
+//  //! \param[in] fn Unit face normal
   //! \return Left and right states for all scalar components in this PDE
   //!   system
   //! \note The function signature must follow tk::StateFn.
   static tk::StateFn::result_type
-  noslipwall( ncomp_t ncomp,
+  noslipwall( [[maybe_unused]] ncomp_t ncomp,
               const std::vector< EOS >&,
               const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& fn )
+              const std::array< tk::real, 3 >& /*fn*/ )
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 

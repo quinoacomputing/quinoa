@@ -31,14 +31,14 @@
 namespace inciter {
 
 void
-registerMultiSpecies( DGFactory& df, FVFactory& ff,
-  std::set< ctr::PDEType >& fvt, std::set< ctr::PDEType >& dgt )
+registerMultiSpecies( DGFactory& df, FVFactory& /*ff*/,
+  std::set< ctr::PDEType >& /*fvt*/, std::set< ctr::PDEType >& dgt )
 // *****************************************************************************
 // Register multi-material compressible flow PDE into PDE factory
 //! \param[in,out] df Discontinuous Galerkin PDE factory to register to
-//! \param[in,out] ff Finite volume PDE factory to register to
+// //! \param[in,out] ff Finite volume PDE factory to register to
 //! \param[in,out] dgt Counters for equation types registered into DG factory
-//! \param[in,out] fvt Counters for equation types registered into FV factory
+// //! \param[in,out] fvt Counters for equation types registered into FV factory
 // *****************************************************************************
 {
   // Construct vector of vectors for all possible policies
