@@ -16,7 +16,7 @@
 
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
-#include "Riemann/AUSM.hpp"
+#include "Riemann/AUSMMultiSpecies.hpp"
 
 namespace inciter {
 
@@ -29,7 +29,7 @@ namespace inciter {
     tk::RiemannFluxFn fluxfn;
 
     if (flux == ctr::FluxType::AUSM) {
-      fluxfn = AUSM::flux;
+      fluxfn = AUSMMultiSpecies::flux;
     }
     else {
       Throw("Riemann solver not set up for multi-material PDEs.");
