@@ -1030,7 +1030,7 @@ VertexBasedMultiSpecies_P1(
         for(std::size_t k=0; k<nspec; ++k)
           rhob += U(e, multispecies::densityDofIdx(nspec,k,rdof,0));
         for(std::size_t k=0; k<nspec; ++k) {
-          if(U(e, multispecies::densityDofIdx(nspec,k,rdof,0)/rhob) < 1e-4) {
+          if (U(e, multispecies::densityDofIdx(nspec,k,rdof,0))/rhob < 1e-4) {
             // limit the density of minor species
             vars.push_back(multispecies::densityIdx(nspec, k));
           }
