@@ -393,19 +393,16 @@ class MultiSpecies {
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
 
-      //const auto limiter = g_inputdeck.get< tag::limiter >();
-      //auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
-      //const auto rdof = g_inputdeck.get< tag::rdof >();
-      //const auto& solidx = g_inputdeck.get<
-      //  tag::matidxmap, tag::solidx >();
+      const auto limiter = g_inputdeck.get< tag::limiter >();
+      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
 
-      //// limit vectors of conserved and primitive quantities
-      //if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
-      //{
-      //  VertexBasedMultiSpecies_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-      //    m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, P,
-      //    nmat, shockmarker );
-      //}
+      // limit vectors of conserved and primitive quantities
+      if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
+      {
+        VertexBasedMultiSpecies_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, U, nspec, shockmarker );
+      }
       //else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
       //{
       //  VertexBasedMultiSpecies_P2( pref, esup, inpoel, ndofel, fd.Esuel().size()/4,
@@ -413,10 +410,10 @@ class MultiSpecies {
       //    uNodalExtrm, pNodalExtrm, mtInv, flux, solidx, U, P, nmat,
       //    shockmarker );
       //}
-      //else if (limiter != ctr::LimiterType::NOLIMITER)
-      //{
-      //  Throw("Limiter type not configured for multispecies.");
-      //}
+      else if (limiter != ctr::LimiterType::NOLIMITER)
+      {
+        Throw("Limiter type not configured for multispecies.");
+      }
     }
 
     //! Apply CPL to the conservative variable solution for this PDE system

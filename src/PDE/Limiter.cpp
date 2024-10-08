@@ -26,6 +26,7 @@
 #include "Reconstruction.hpp"
 #include "Integrate/Mass.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
+#include "MultiSpecies/MultiSpeciesIndexing.hpp"
 
 namespace inciter {
 
@@ -946,6 +947,125 @@ VertexBasedMultiMat_FV(
       P(e, mark+1) = phip[c] * P(e, mark+1);
       P(e, mark+2) = phip[c] * P(e, mark+2);
       P(e, mark+3) = phip[c] * P(e, mark+3);
+    }
+  }
+}
+
+void
+VertexBasedMultiSpecies_P1(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  const std::vector< inciter::EOS >& /*mat_blk*/,
+  const inciter::FaceData& /*fd*/,
+  const tk::Fields& /*geoFace*/,
+  const tk::Fields& /*geoElem*/,
+  const tk::UnsMesh::Coords& coord,
+  const tk::FluxFn& /*flux*/,
+  tk::Fields& U,
+  std::size_t nspec,
+  std::vector< std::size_t >& shockmarker )
+// *****************************************************************************
+//  Kuzmin's vertex-based limiter for multi-species DGP1
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element connectivity
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] nelem Number of elements
+// //! \param[in] mat_blk EOS material block
+// //! \param[in] fd Face connectivity and boundary conditions object
+// //! \param[in] geoFace Face geometry array
+// //! \param[in] geoElem Element geometry array
+//! \param[in] coord Array of nodal coordinates
+// //! \param[in] flux Riemann flux function to use
+//! \param[in,out] U High-order solution vector which gets limited
+//! \param[in] nspec Number of species in this PDE system
+//! \param[in,out] shockmarker Shock detection marker array
+//! \details This vertex-based limiter function should be called for
+//!   multispecies. For details see: Kuzmin, D. (2010). A vertex-based
+//!   hierarchical slope limiter for p-adaptive discontinuous Galerkin methods.
+//!   Journal of computational and applied mathematics, 233(12), 3077-3085.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::ndof >();
+  std::size_t ncomp = U.nprop()/rdof;
+
+  //// Evaluate the interface condition and mark the shock cells
+  //if (inciter::g_inputdeck.get< tag::shock_detector_coeff >()
+  //  > 1e-6 && ndof > 1)
+  //  MarkShockCells(false, nelem, nmat, ndof, rdof, mat_blk, ndofel,
+  //    inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+    // have rdofel, which is needed to distinguish between ndofs and rdofs per
+    // element for pDG.
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
+    if (dof_el > 1)
+    {
+      std::vector< std::size_t > vars;
+      if(shockmarker[e]) {
+        // When shockmarker is 1, there is discontinuity within the element.
+        // Hence, the vertex-based limiter will be applied.
+
+        for (std::size_t c=0; c<ncomp; ++c) vars.push_back(c);
+      } else {
+        // When shockmarker is 0, the density of minor species will still be
+        // limited to ensure a stable solution.
+
+        tk::real rhob(0.0);
+        for(std::size_t k=0; k<nspec; ++k)
+          rhob += U(e, multispecies::densityDofIdx(nspec,k,rdof,0));
+        for(std::size_t k=0; k<nspec; ++k) {
+          if(U(e, multispecies::densityDofIdx(nspec,k,rdof,0)/rhob) < 1e-4) {
+            // limit the density of minor species
+            vars.push_back(multispecies::densityIdx(nspec, k));
+          }
+        }
+      }
+
+      std::vector< tk::real > phic(ncomp, 1.0);
+      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
+        ncomp, phic, vars);
+
+      //std::vector< tk::real > phic_p2, phip_p2;
+
+      //PositivityLimitingMultiMat(nmat, mat_blk, rdof, dof_el, ndofel, e, inpoel,
+      //  coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
+
+      // TODO: Unit sum of mass fractions is maintained by using common limiter
+      // for all species densities. Investigate better approaches.
+      if (!g_inputdeck.get< tag::accuracy_test >()) {
+        tk::real phi_rhos_p1(1.0);
+        for (std::size_t k=0; k<nspec; ++k)
+          phi_rhos_p1 = std::min( phi_rhos_p1,
+            phic[multispecies::densityIdx(nspec, k)] );
+        // same limiter for all densities
+        for (std::size_t k=0; k<nspec; ++k)
+          phic[multispecies::densityIdx(nspec, k)] = phi_rhos_p1;
+      }
+
+      // apply limiter function
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c*rdof;
+        U(e, mark+1) = phic[c] * U(e, mark+1);
+        U(e, mark+2) = phic[c] * U(e, mark+2);
+        U(e, mark+3) = phic[c] * U(e, mark+3);
+      }
     }
   }
 }
