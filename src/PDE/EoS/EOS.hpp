@@ -26,6 +26,7 @@ namespace inciter {
 //! Equation types
 enum class EqType : uint8_t { compflow
                             , multimat
+                            , multispecies
                             };
 
 //! Base class for generic forwarding interface to eos types

@@ -20,6 +20,7 @@
 #include "ConfigureTransport.hpp"
 #include "ConfigureCompFlow.hpp"
 #include "ConfigureMultiMat.hpp"
+#include "ConfigureMultiSpecies.hpp"
 
 using inciter::PDEStack;
 
@@ -100,6 +101,7 @@ PDEStack::PDEStack() : m_cgfactory(), m_dgfactory(), m_fvfactory(),
   registerTransport( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
   registerCompFlow( m_cgfactory, m_dgfactory, m_cgEqTypes, m_dgEqTypes );
   registerMultiMat( m_dgfactory, m_fvfactory, m_dgEqTypes, m_fvEqTypes );
+  registerMultiSpecies( m_dgfactory, m_fvfactory, m_dgEqTypes, m_fvEqTypes );
 }
 
 std::vector< inciter::CGPDE >
@@ -153,6 +155,8 @@ PDEStack::selectedDG() const
         pdes.push_back( createDG< tag::compflow >( d, cnt ) );
       else if (d == ctr::PDEType::MULTIMAT)
         pdes.push_back( createDG< tag::multimat >( d, cnt ) );
+      else if (d == ctr::PDEType::MULTISPECIES)
+        pdes.push_back( createDG< tag::multispecies >( d, cnt ) );
       else Throw( "Can't find selected DGPDE" );
     }
 
@@ -205,6 +209,8 @@ PDEStack::info() const
     nfo.emplace_back( infoCompFlow( cnt ) );
   else if (d == ctr::PDEType::MULTIMAT)
     nfo.emplace_back( infoMultiMat( cnt ) );
+  else if (d == ctr::PDEType::MULTISPECIES)
+    nfo.emplace_back( infoMultiSpecies( cnt ) );
   else Throw( "Can't find selected PDE" );
 
   return nfo;
