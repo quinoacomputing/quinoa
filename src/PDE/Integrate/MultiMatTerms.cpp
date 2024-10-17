@@ -199,6 +199,14 @@ nonConservativeInt( const bool pref,
         for(std::size_t idof=0; idof<ndofel[e]; ++idof)
           ncf[momentumIdx(nmat, idir)][idof] = 0.0;
 
+      // for (std::size_t k=0; k<nmat; ++k)
+      //   for (std::size_t idof=0; idof<ndofel[e]; ++idof)
+      //     for (std::size_t i=0; i<3; ++i)
+      //       for (std::size_t j=0; j<3; ++j)
+      //       {
+      //         ncf[deformIdx(nmat, solidx[k], i, j)][idof] = 0.0;
+      //       }
+
       for (std::size_t k=0; k<nmat; ++k)
       {
         // evaluate non-conservative term for energy equation
@@ -248,6 +256,22 @@ nonConservativeInt( const bool pref,
             ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)]
                                             * vel[idir] * dBdx[idir][idof];
         }
+
+        // Non-conservative terms for g equation
+        auto nsld = inciter::numSolids(nmat, solidx);
+        if (solidx[k] > 0)
+        {
+          for (std::size_t idof=0; idof<ndofel[e]; ++idof)
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+              {
+                std::size_t mark = 3*nmat+ndof+3*nsld+9*(solidx[k]-1)+3*i+j;
+                ncf[deformIdx(nmat, solidx[k], i, j)][idof] =
+                  - state[deformIdx(nmat, solidx[k], i, j)] *
+                  riemannDeriv[3*nmat][e];
+                + riemannDeriv[mark][e];
+              }
+        }
       }
 
       updateRhsNonCons( ncomp, nmat, ndof, ndofel[e], wt, e, B, dBdx, ncf, R );
@@ -283,8 +307,13 @@ updateRhsNonCons(
 {
   using inciter::volfracIdx;
   using inciter::energyIdx;
+  using inciter::deformIdx;
   using inciter::volfracDofIdx;
   using inciter::energyDofIdx;
+  using inciter::deformDofIdx;
+
+  const auto& solidx =
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   //Assert( dBdx[0].size() == ndof_el,
   //        "Size mismatch for basis function derivatives" );
@@ -313,6 +342,11 @@ updateRhsNonCons(
           wt * ncf[volfracIdx(nmat,k)][idof];
         R(e, energyDofIdx(nmat,k,ndof,idof)) +=
           wt * ncf[energyIdx(nmat,k)][idof] * B[idof];
+        if (solidx[k] > 0)
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              R(e, deformDofIdx(nmat,solidx[k],i,j,ndof,idof)) +=
+                wt * ncf[deformIdx(nmat,solidx[k],i,j)][idof] * B[idof];
       }
     }
   }

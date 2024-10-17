@@ -355,6 +355,20 @@ update_rhs_fa( ncomp_t ncomp,
             wt * fl[mark+i];
         }
       }
+
+    // Gradients of ?
+    auto nsld = inciter::numSolids(nmat, solidx);
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+      {
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+          {
+            std::size_t mark = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+j;
+            riemannDeriv[3*nmat+ndof+3*nsld+3*i+j][el] -= wt * fl[mark];
+            riemannDeriv[3*nmat+ndof+3*nsld+3*i+j][er] += wt * fl[mark];
+          }
+      }
   }
 }
 

@@ -145,10 +145,7 @@ struct LaxFriedrichsSolids {
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            fluxl[deformIdx(nmat,solidx[k],i,j)] = (
-              g_l[k][i][0] * ul +
-              g_l[k][i][1] * vl +
-              g_l[k][i][2] * wl ) * fn[j];
+            fluxl[deformIdx(nmat,solidx[k],i,j)] = vnl*g_l[k][i][j];
       }
 
       // Right fluxes
@@ -164,10 +161,7 @@ struct LaxFriedrichsSolids {
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            fluxr[deformIdx(nmat,solidx[k],i,j)] = (
-              g_r[k][i][0] * ur +
-              g_r[k][i][1] * vr +
-              g_r[k][i][2] * wr ) * fn[j];
+            fluxr[deformIdx(nmat,solidx[k],i,j)] = vnr*g_r[k][i][j];
       }
     }
 
@@ -205,7 +199,17 @@ struct LaxFriedrichsSolids {
       }
     }
 
-    Assert( flx.size() == (ncomp+nmat+1+3*nsld), "Size of "
+    // Store Riemann g_il*u_l*n_j (9*nsld)
+    for (std::size_t k=0; k<nmat; ++k) {
+      if (solidx[k] > 0)
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            flx.push_back( 0.5*(ul*g_l[k][i][0]*fn[j]+ur*g_r[k][i][0]*fn[j]
+                               +vl*g_l[k][i][1]*fn[j]+vr*g_r[k][i][1]*fn[j]
+                               +wl*g_l[k][i][2]*fn[j]+wr*g_r[k][i][2]*fn[j]) );
+    }
+
+    Assert( flx.size() == (ncomp+nmat+1+3*nsld+9*nsld), "Size of "
             "multi-material flux vector incorrect" );
 
     return flx;
