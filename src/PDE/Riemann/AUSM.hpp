@@ -218,49 +218,65 @@ struct AUSM {
       flx[energyIdx(nmat, k)] = l_plus*u[0][energyIdx(nmat, k)]
         + l_minus*u[1][energyIdx(nmat, k)];
       // stress-work term in energy fluxes
-      for (std::size_t i=0; i<3; ++i) {
-        flx[energyIdx(nmat, k)] -= (
-          lt_plus[i]*asigrot_l[k][i][0] + lt_minus[i]*asigrot_r[k][i][0] );
-      }
+      //for (std::size_t i=0; i<3; ++i) {
+      //  flx[energyIdx(nmat, k)] -= (
+      //    lt_plus[i]*asigrot_l[k][i][0] + lt_minus[i]*asigrot_r[k][i][0] );
+      //}
+      flx[energyIdx(nmat, k)] -= (
+        lt_plus[0]*asigrot_l[k][0][0] + lt_minus[0]*asigrot_r[k][0][0] +
+        msl[1][2]*asigrot_l[k][1][0]*utl[1] + msr[1][3]*asigrot_r[k][1][0]*utr[1] +
+        msl[2][2]*asigrot_l[k][2][0]*utl[2] + msr[2][3]*asigrot_r[k][2][0]*utr[2]
+        );
 
       // inv deformation gradient tensor fluxes
       if (solidx[k] > 0) {
 
-        // 1. rotate entire flux vector (with the partial deriv)
-        // -------------------------------------------------------------------
-        std::array< std::array< tk::real, 3 >, 3 > flxn{{
-          {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }};
+        //// 1. rotate entire flux vector (with the partial deriv)
+        //// -------------------------------------------------------------------
+        //std::array< std::array< tk::real, 3 >, 3 > flxn{{
+        //  {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }};
 
-        //// (a)
+        ////// (a) Mach number splitting
+        ////for (std::size_t i=0; i<3; ++i) {
+        ////  // get fluxes for g_k in rotated frame
+        ////  flxn[i][0] =
+        ////      lt_plus[0] * gn_l[k][i][0] + lt_minus[0] * gn_r[k][i][0]
+        ////    + lt_plus[1] * gn_l[k][i][1] + lt_minus[1] * gn_r[k][i][1]
+        ////    + lt_plus[2] * gn_l[k][i][2] + lt_minus[2] * gn_r[k][i][2];
+        ////  // flux second component (j) is always zero for j /= 0, since rotated
+        ////  // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
+        ////}
+
+        //// (b) Mach number splitting in normal dir; pressure split in tangential
         //for (std::size_t i=0; i<3; ++i) {
         //  // get fluxes for g_k in rotated frame
-        //  flxn[i][0] = l_plus*gn_l[k][i][0] + l_minus*gn_r[k][i][0]
-        //    + lt_plus[1] * gn_l[k][i][1] + lt_minus[1] * gn_r[k][i][1]
-        //    + lt_plus[2] * gn_l[k][i][2] + lt_minus[2] * gn_r[k][i][2];
+        //  flxn[i][0] =
+        //    lt_plus[0] * gn_l[k][i][0] + lt_minus[0] * gn_r[k][i][0] +
+        //    msl[1][2] * gn_l[k][i][1] * utl[1] +
+        //    msl[2][2] * gn_l[k][i][2] * utl[2] +
+        //    msr[1][3] * gn_r[k][i][1] * utr[1] +
+        //    msr[2][3] * gn_r[k][i][2] * utr[2] ;
         //  // flux second component (j) is always zero for j /= 0, since rotated
         //  // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
         //}
 
-        // (b)
-        for (std::size_t i=0; i<3; ++i) {
-          // get fluxes for g_k in rotated frame
-          flxn[i][0] = l_p * (gn_l[k][i][0]*utl[0]
-                            + gn_l[k][i][1]*utl[1]
-                            + gn_l[k][i][2]*utl[2])
-                     + l_m * (gn_r[k][i][0]*utr[0]
-                            + gn_r[k][i][1]*utr[1]
-                            + gn_r[k][i][2]*utr[2]);
-          // flux second component (j) is always zero for j /= 0, since rotated
-          // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
-        }
+        ////// (c) Non-conservative form with the complete normal velocity:
+        //////     Mach number splitting in normal dir
+        ////for (std::size_t i=0; i<3; ++i) {
+        ////  for (std::size_t j=0; j<3; ++j) {
+        ////    // get fluxes for g_k in rotated frame
+        ////    flxn[i][j] =
+        ////      l_plus * gn_l[k][i][j] + l_minus * gn_r[k][i][j];
+        ////  }
+        ////}
 
-        // rotate fluxes back to Cartesian frame
-        auto flxx = tk::unrotateTensor(flxn, fn);
+        //// rotate fluxes back to Cartesian frame
+        //auto flxx = tk::unrotateTensor(flxn, fn);
 
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            flx[deformIdx(nmat,solidx[k],i,j)] = flxx[i][j];
-        // -------------------------------------------------------------------
+        //for (std::size_t i=0; i<3; ++i)
+        //  for (std::size_t j=0; j<3; ++j)
+        //    flx[deformIdx(nmat,solidx[k],i,j)] = flxx[i][j];
+        //// -------------------------------------------------------------------
 
         //// 2. rotate only g_il.u_l
         //// -------------------------------------------------------------------
@@ -281,35 +297,48 @@ struct AUSM {
 
         //// 3. Pressure splitting
         //// -------------------------------------------------------------------
+        //std::array< std::array< tk::real, 3 >, 3 > flxn{{
+        //  {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }};
+        //for (std::size_t i=0; i<3; ++i) {
+        //  std::size_t j=0;
+        //  flxn[i][j] =
+        //    msl[0][2] * (
+        //    gn_l[k][i][0] * utl[0] +
+        //    gn_l[k][i][1] * utl[1] +
+        //    gn_l[k][i][2] * utl[2] ) +
+        //    msr[0][3] * (
+        //    gn_r[k][i][0] * utr[0] +
+        //    gn_r[k][i][1] * utr[1] +
+        //    gn_r[k][i][2] * utr[2] );
+        //}
+
+        //// rotate fluxes back to Cartesian frame
+        //auto flxx = tk::unrotateTensor(flxn, fn);
+
         //for (std::size_t i=0; i<3; ++i)
-        //  for (std::size_t j=0; j<3; ++j) {
-        //    flx[deformIdx(nmat,solidx[k],i,j)] =
-        //      msl[2] * (
-        //      g_l[k][i][0] * ul +
-        //      g_l[k][i][1] * vl +
-        //      g_l[k][i][2] * wl ) * fn[j] +
-        //      msr[3] * (
-        //      g_r[k][i][0] * ur +
-        //      g_r[k][i][1] * vr +
-        //      g_r[k][i][2] * wr ) * fn[j];
-        //  }
+        //  for (std::size_t j=0; j<3; ++j)
+        //    flx[deformIdx(nmat,solidx[k],i,j)] = flxx[i][j];
         //// -------------------------------------------------------------------
 
-        //// . upwind everything
-        //// -------------------------------------------------------------------
-        //for (std::size_t i=0; i<3; ++i)
-        //  for (std::size_t j=0; j<3; ++j) {
-        //    flx[deformIdx(nmat,solidx[k],i,j)] =
-        //      l_p * (
-        //      g_l[k][i][0] * ul +
-        //      g_l[k][i][1] * vl +
-        //      g_l[k][i][2] * wl ) * fn[j] +
-        //      l_m * (
-        //      g_r[k][i][0] * ur +
-        //      g_r[k][i][1] * vr +
-        //      g_r[k][i][2] * wr ) * fn[j];
-        //  }
-        //// -------------------------------------------------------------------
+        // 4. Lax Friedrichs
+        // -------------------------------------------------------------------
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j) {
+            auto fl = (
+              g_l[k][i][0] * ul +
+              g_l[k][i][1] * vl +
+              g_l[k][i][2] * wl ) * fn[j];
+            auto fr = (
+              g_r[k][i][0] * ur +
+              g_r[k][i][1] * vr +
+              g_r[k][i][2] * wr ) * fn[j];
+
+            auto ll = ac12 + std::max(std::abs(utl[0]), std::abs(utr[0]));
+
+            flx[deformIdx(nmat,solidx[k],i,j)] =
+              0.5 * (fl + fr - ll*(g_r[k][i][j] - g_l[k][i][j]));
+          }
+        // -------------------------------------------------------------------
       }
     }
 
