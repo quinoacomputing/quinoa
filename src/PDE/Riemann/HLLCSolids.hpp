@@ -451,7 +451,6 @@ struct HLLCSolids {
     }
 
     // Store Riemann velocity componentwise (3)
-    //vriem = tk::unrotateVector(vriem, fn);
     for (const auto vi : vriem) flx.push_back(vi);
 
     Assert( flx.size() == (ncomp+nmat+1+3*nsld+3), "Size of "

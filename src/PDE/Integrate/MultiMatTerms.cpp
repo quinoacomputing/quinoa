@@ -157,16 +157,6 @@ nonConservativeInt( const bool pref,
 
     // derivatives of the velocity
     std::array< std::array< tk::real, 3 >, 3 > dvdx;
-
-    //// using DG basis and solution
-    //for (std::size_t idir=0; idir<3; ++idir) {
-    //  for (std::size_t i=0; i<3; ++i)
-    //    dvdx[idir][i] =
-    //        dBdx[i][1] * P(e, velocityDofIdx(nmat,idir,rdof,1))
-    //      + dBdx[i][2] * P(e, velocityDofIdx(nmat,idir,rdof,2))
-    //      + dBdx[i][3] * P(e, velocityDofIdx(nmat,idir,rdof,3));
-    //}
-
     // using riemann derivatives
     auto vmark = 3*nmat+ndof+3*inciter::numSolids(nmat,solidx);
     for (std::size_t i=0; i<3; ++i) {
@@ -242,42 +232,23 @@ nonConservativeInt( const bool pref,
 
           std::size_t idof = 0;
 
-          // 1. (A) negative terms resulting from casting equation in
+          // 1. negative terms resulting from casting equation in
           //    flux-conservative form using riemann derivatives
-          .. USE dvdx here instead of riemann velocity for ease of reading
 
           // first column of g
           for (std::size_t j=0; j<3; ++j)
             ncf[deformIdx(nmat,solidx[k],j,0)][idof] =
-              gk[j][0] * (riemannDeriv[vmark+1*3+1][e] + riemannDeriv[vmark+2*3+2][e]);
+              gk[j][0] * (dvdx[1][1] + dvdx[2][2]);
 
           // second column of g
           for (std::size_t j=0; j<3; ++j)
             ncf[deformIdx(nmat,solidx[k],j,1)][idof] =
-              gk[j][1] * (riemannDeriv[vmark+0*3+0][e] + riemannDeriv[vmark+2*3+2][e]);
+              gk[j][1] * (dvdx[0][0] + dvdx[2][2]);
 
           // third column of g
           for (std::size_t j=0; j<3; ++j)
             ncf[deformIdx(nmat,solidx[k],j,2)][idof] =
-              gk[j][2] * (riemannDeriv[vmark+0*3+0][e] + riemannDeriv[vmark+1*3+1][e]);
-
-          //// 1. (B) negative terms resulting from casting equation in
-          ////    flux-conservative form without riemann derivatives
-
-          //// first column of g
-          //for (std::size_t j=0; j<3; ++j)
-          //  ncf[deformIdx(nmat,solidx[k],j,0)][idof] =
-          //    gk[j][0] * (dvdx[1][1] + dvdx[2][2]);
-
-          //// second column of g
-          //for (std::size_t j=0; j<3; ++j)
-          //  ncf[deformIdx(nmat,solidx[k],j,1)][idof] =
-          //    gk[j][1] * (dvdx[0][0] + dvdx[2][2]);
-
-          //// third column of g
-          //for (std::size_t j=0; j<3; ++j)
-          //  ncf[deformIdx(nmat,solidx[k],j,2)][idof] =
-          //    gk[j][2] * (dvdx[0][0] + dvdx[1][1]);
+              gk[j][2] * (dvdx[0][0] + dvdx[1][1]);
 
           // 2. positive non-conservative terms that are not related to the
           //    conservative flux
