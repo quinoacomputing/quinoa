@@ -936,7 +936,7 @@ class MultiMat {
       // 4) 3*nsld terms: 3 derivatives of \alpha \sigma_ij for each solid
       //    material, for the energy equations.
       std::vector< std::vector< tk::real > >
-        riemannDeriv(3*nmat+ndof+3*nsld+9*nsld, std::vector<tk::real>(U.nunk(),0.0));
+        riemannDeriv(3*nmat+ndof+3*nsld+18*nsld, std::vector<tk::real>(U.nunk(),0.0));
 
       // configure a no-op lambda for prescribed velocity
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){

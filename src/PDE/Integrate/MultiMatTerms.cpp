@@ -265,11 +265,17 @@ nonConservativeInt( const bool pref,
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
               {
-                std::size_t mark = 3*nmat+ndof+3*nsld+9*(solidx[k]-1)+3*i+j;
-                ncf[deformIdx(nmat, solidx[k], i, j)][idof] =
-                  - state[deformIdx(nmat, solidx[k], i, j)] *
-                  riemannDeriv[3*nmat][e];
-                + riemannDeriv[mark][e];
+                ncf[deformIdx(nmat, solidx[k], i, j)][idof] = 0.0;
+                for (std::size_t l=0; l<3; ++l)
+                {
+                  std::size_t mark1 = 3*nmat+ndof+3*nsld+9*(solidx[k]-1)+3*l+l;
+                  std::size_t mark2 = 3*nmat+ndof+3*nsld+9*(solidx[k]-1)+3*l+j;
+                  ncf[deformIdx(nmat, solidx[k], i, j)][idof] +=
+                    + state[deformIdx(nmat, solidx[k], i, j)]
+                    * riemannDeriv[mark1][e]
+                    - state[deformIdx(nmat, solidx[k], i, l)]
+                    * riemannDeriv[mark2][e];
+                }
               }
         }
       }

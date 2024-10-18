@@ -285,10 +285,7 @@ struct HLLCSolids {
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            fl[deformIdx(nmat,solidx[k],i,j)] = (
-              g_l[k][i][0] * ul +
-              g_l[k][i][1] * vl +
-              g_l[k][i][2] * wl ) * fn[j];
+            fl[deformIdx(nmat,solidx[k],i,j)] = vn_l[0] * g_l[k][i][j];
       }
 
       // Right fluxes
@@ -304,10 +301,7 @@ struct HLLCSolids {
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            fr[deformIdx(nmat,solidx[k],i,j)] = (
-              g_r[k][i][0] * ur +
-              g_r[k][i][1] * vr +
-              g_r[k][i][2] * wr ) * fn[j];
+            fr[deformIdx(nmat,solidx[k],i,j)] = vn_r[0] * g_r[k][i][j];
       }
     }
     // bulk momentum
@@ -383,6 +377,21 @@ struct HLLCSolids {
             flx.push_back(aTn_l[k][i]);
         }
       }
+      // Store Riemann u_i*n_j (9*nsld)
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0)
+        {
+          flx.push_back( ul*fn[0] );
+          flx.push_back( ul*fn[1] );
+          flx.push_back( ul*fn[2] );
+          flx.push_back( vl*fn[0] );
+          flx.push_back( vl*fn[1] );
+          flx.push_back( vl*fn[2] );
+          flx.push_back( wl*fn[0] );
+          flx.push_back( wl*fn[1] );
+          flx.push_back( wl*fn[2] );
+        }
+      }
     }
 
     else if (Sl < 0.0 && 0.0 <= Si)
@@ -400,7 +409,26 @@ struct HLLCSolids {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             flx.push_back(aTn_l[k][i]+Sl/(Si-Sl)*(aTn_l[k][i]-asig_t[k][i]));
+            //flx.push_back(aTn_l[k][i]);
         }
+      }
+      // Store Riemann u_i*n_j (9*nsld)
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0)
+        {
+          flx.push_back( ul*fn[0] );
+          flx.push_back( ul*fn[1] );
+          flx.push_back( ul*fn[2] );
+          flx.push_back( vl*fn[0] );
+          flx.push_back( vl*fn[1] );
+          flx.push_back( vl*fn[2] );
+          flx.push_back( wl*fn[0] );
+          flx.push_back( wl*fn[1] );
+          flx.push_back( wl*fn[2] );
+        }
+          // for (std::size_t i=0; i<3; ++i)
+          //   for (std::size_t j=0; j<3; ++j)
+          //     flx.push_back( v_t_l[i]*fn[j] );
       }
     }
 
@@ -419,7 +447,26 @@ struct HLLCSolids {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             flx.push_back(aTn_r[k][i]+Sr/(Si-Sr)*(aTn_r[k][i]-asig_t[k][i]));
+          //flx.push_back(aTn_r[k][i]);
         }
+      }
+      // Store Riemann u_i*n_j (9*nsld)
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0)
+        {
+          flx.push_back( ur*fn[0] );
+          flx.push_back( ur*fn[1] );
+          flx.push_back( ur*fn[2] );
+          flx.push_back( vr*fn[0] );
+          flx.push_back( vr*fn[1] );
+          flx.push_back( vr*fn[2] );
+          flx.push_back( wr*fn[0] );
+          flx.push_back( wr*fn[1] );
+          flx.push_back( wr*fn[2] );
+        }
+          // for (std::size_t i=0; i<3; ++i)
+          //   for (std::size_t j=0; j<3; ++j)
+          //     flx.push_back( v_t_r[i]*fn[j] );
       }
     }
     else
@@ -439,9 +486,24 @@ struct HLLCSolids {
             flx.push_back(aTn_r[k][i]);
         }
       }
+      // Store Riemann u_i*n_j (9*nsld)
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0)
+        {
+          flx.push_back( ur*fn[0] );
+          flx.push_back( ur*fn[1] );
+          flx.push_back( ur*fn[2] );
+          flx.push_back( vr*fn[0] );
+          flx.push_back( vr*fn[1] );
+          flx.push_back( vr*fn[2] );
+          flx.push_back( wr*fn[0] );
+          flx.push_back( wr*fn[1] );
+          flx.push_back( wr*fn[2] );
+        }
+      }
     }
 
-    Assert( flx.size() == (ncomp+nmat+1+3*nsld), "Size of "
+    Assert( flx.size() == (ncomp+nmat+1+3*nsld+9*nsld), "Size of "
             "multi-material flux vector incorrect" );
 
     return flx;

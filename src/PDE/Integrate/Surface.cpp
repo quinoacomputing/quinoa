@@ -365,8 +365,8 @@ update_rhs_fa( ncomp_t ncomp,
           for (std::size_t j=0; j<3; ++j)
           {
             std::size_t mark = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+j;
-            riemannDeriv[3*nmat+ndof+3*nsld+3*i+j][el] -= wt * fl[mark];
-            riemannDeriv[3*nmat+ndof+3*nsld+3*i+j][er] += wt * fl[mark];
+            riemannDeriv[3*nmat+ndof+3*nsld+9*(solidx[k]-1)+3*i+j][el] += wt * fl[mark];
+            riemannDeriv[3*nmat+ndof+3*nsld+9*(solidx[k]-1)+3*i+j][er] -= wt * fl[mark];
           }
       }
   }
