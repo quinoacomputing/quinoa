@@ -285,10 +285,7 @@ struct HLLCSolids {
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            fl[deformIdx(nmat,solidx[k],i,j)] = (
-              g_l[k][i][0] * ul +
-              g_l[k][i][1] * vl +
-              g_l[k][i][2] * wl ) * fn[j];
+            fl[deformIdx(nmat,solidx[k],i,j)] = g_l[k][i][j] * vn_l[0];
       }
 
       // Right fluxes
@@ -304,10 +301,7 @@ struct HLLCSolids {
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            fr[deformIdx(nmat,solidx[k],i,j)] = (
-              g_r[k][i][0] * ur +
-              g_r[k][i][1] * vr +
-              g_r[k][i][2] * wr ) * fn[j];
+            fr[deformIdx(nmat,solidx[k],i,j)] = g_r[k][i][j] * vn_r[0];
       }
     }
     // bulk momentum
@@ -366,6 +360,9 @@ struct HLLCSolids {
     // Numerical fluxes
     // -------------------------------------------------------------------------
 
+    // Riemann velocity components
+    std::array< tk::real, 3 > vriem;
+
     if (Sl >= 0.0)
     {
       flx = fl;
@@ -383,6 +380,10 @@ struct HLLCSolids {
             flx.push_back(aTn_l[k][i]);
         }
       }
+      //for (std::size_t i=0; i<3; ++i) vriem[i] = vn_l[i];
+      vriem[0] = ul;
+      vriem[1] = vl;
+      vriem[2] = wl;
     }
 
     else if (Sl < 0.0 && 0.0 <= Si)
@@ -402,6 +403,8 @@ struct HLLCSolids {
             flx.push_back(aTn_l[k][i]+Sl/(Si-Sl)*(aTn_l[k][i]-asig_t[k][i]));
         }
       }
+      //for (std::size_t i=0; i<3; ++i) vriem[i] = vn_l[i];
+      vriem = v_t_l;
     }
 
     else if (Si < 0.0 && 0.0 <= Sr)
@@ -421,6 +424,8 @@ struct HLLCSolids {
             flx.push_back(aTn_r[k][i]+Sr/(Si-Sr)*(aTn_r[k][i]-asig_t[k][i]));
         }
       }
+      //for (std::size_t i=0; i<3; ++i) vriem[i] = vn_r[i];
+      vriem = v_t_r;
     }
     else
     {
@@ -439,9 +444,17 @@ struct HLLCSolids {
             flx.push_back(aTn_r[k][i]);
         }
       }
+      //for (std::size_t i=0; i<3; ++i) vriem[i] = vn_r[i];
+      vriem[0] = ur;
+      vriem[1] = vr;
+      vriem[2] = wr;
     }
 
-    Assert( flx.size() == (ncomp+nmat+1+3*nsld), "Size of "
+    // Store Riemann velocity componentwise (3)
+    //vriem = tk::unrotateVector(vriem, fn);
+    for (const auto vi : vriem) flx.push_back(vi);
+
+    Assert( flx.size() == (ncomp+nmat+1+3*nsld+3), "Size of "
             "multi-material flux vector incorrect" );
 
     return flx;
