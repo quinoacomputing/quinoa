@@ -45,6 +45,7 @@ static std::array< tk::real, 4 > splitmach_ausm( tk::real fa,
   msminus[1]= -0.25*(mach - 1.0)*(mach - 1.0);
 
   auto alph_fa = (3.0/16.0) * (-4.0 + 5.0*fa*fa);
+  auto beta = 1.0/8.0;
 
   if (std::fabs(mach) >= 1.0)
   {
@@ -55,8 +56,8 @@ static std::array< tk::real, 4 > splitmach_ausm( tk::real fa,
   }
   else
   {
-      msplus[2] = msplus[1]* (1.0 - 2.0*msminus[1]);
-      msminus[2]= msminus[1]* (1.0 + 2.0*msplus[1]);
+      msplus[2] = msplus[1]* (1.0 - 16.0*beta*msminus[1]);
+      msminus[2]= msminus[1]* (1.0 + 16.0*beta*msplus[1]);
       psplus    = msplus[1]*
                   ((+2.0 - mach) - (16.0 * alph_fa)*mach*msminus[1]);
       psminus   = msminus[1]*
