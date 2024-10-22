@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "Fields.hpp"
+#include "SplitMachFns.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
 #include "SplitMachFns.hpp"

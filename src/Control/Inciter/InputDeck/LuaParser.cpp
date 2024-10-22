@@ -21,6 +21,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
+#include "PDE/MultiSpecies/MultiSpeciesIndexing.hpp"
 
 namespace tk {
 namespace grm {
@@ -342,6 +343,42 @@ LuaParser::storeInputDeck(
 
     // number of equations in PDE system are determined based on materials
   }
+
+  // check multispecies
+  if (lua_ideck["multispecies"].valid()) {
+
+    checkBlock< inciter::ctr::multispeciesList::Keys >(lua_ideck["multispecies"],
+      "multispecies");
+
+    gideck.get< tag::pde >() = inciter::ctr::PDEType::MULTISPECIES;
+    storeIfSpecd< std::size_t >(
+      lua_ideck["multispecies"], "nspec",
+      gideck.get< tag::multispecies, tag::nspec >(), 1);
+    storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
+      lua_ideck["multispecies"], "problem",
+      gideck.get< tag::multispecies, tag::problem >(),
+      inciter::ctr::ProblemType::USER_DEFINED);
+    storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
+      lua_ideck["multispecies"], "physics",
+      gideck.get< tag::multispecies, tag::physics >(),
+      inciter::ctr::PhysicsType::EULER);
+    gideck.get< tag::depvar >()[0] = 'a';
+    storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
+      lua_ideck, "flux", gideck.get< tag::flux >(),
+      inciter::ctr::FluxType::AUSM);
+
+    // store number of equations in PDE system
+    // nspec: species mass conservation equations,
+    // 3: momentum equations,
+    // 1: total energy equation.
+    gideck.get< tag::ncomp >() =
+      gideck.get< tag::multispecies, tag::nspec >() + 3 + 1;
+  }
+
+  // number of species, for future use
+  std::size_t nspec(1);
+  if (gideck.get< tag::pde >() == inciter::ctr::PDEType::MULTISPECIES)
+    nspec = gideck.get< tag::multispecies, tag::nspec >();
 
   // add depvar to deck::depvars so it can be selected as outvar later
   tk::grm::depvars.insert( gideck.get< tag::depvar >()[0] );
@@ -715,7 +752,7 @@ LuaParser::storeInputDeck(
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
         addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
-          gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
+          nspec, gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
       }
     }
 
@@ -727,7 +764,7 @@ LuaParser::storeInputDeck(
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
         addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
-          gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
+          nspec, gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
       }
     }
 
@@ -1116,6 +1153,14 @@ LuaParser::storeInputDeck(
       storeIfSpecd< tk::real >(sol_bc[i+1], "temperature",
         bc_deck[i].get< tag::temperature >(), 0.0);
 
+      // Mass fractions for inlet/farfield
+      storeVecIfSpecd< tk::real >(sol_bc[i+1], "mass_fractions",
+        bc_deck[i].get< tag::mass_fractions >(),
+        std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec)));
+      if (bc_deck[i].get< tag::mass_fractions >().size() != nspec)
+        Throw("BC mass fraction has incorrect number of species. "
+          "Expected " + std::to_string(nspec));
+
       // Material-id for inlet/outlet/farfield
       storeIfSpecd< std::size_t >(sol_bc[i+1], "materialid",
         bc_deck[i].get< tag::materialid >(), 1);
@@ -1157,6 +1202,13 @@ LuaParser::storeInputDeck(
 
     storeIfSpecd< tk::real >(lua_ideck["ic"], "temperature",
       ic_deck.get< tag::temperature >(), 0.0);
+
+    storeVecIfSpecd< tk::real >(lua_ideck["ic"], "mass_fractions",
+      ic_deck.get< tag::mass_fractions >(),
+      std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec)));
+    if (ic_deck.get< tag::mass_fractions >().size() != nspec)
+      Throw("IC mass fraction has incorrect number of species. "
+        "Expected " + std::to_string(nspec));
 
     storeIfSpecd< tk::real >(lua_ideck["ic"], "density",
       ic_deck.get< tag::density >(), 0.0);
@@ -1207,6 +1259,13 @@ LuaParser::storeInputDeck(
 
         storeIfSpecd< tk::real >(lua_box[i+1], "temperature",
           box_deck[i].get< tag::temperature >(), 0.0);
+
+        storeVecIfSpecd< tk::real >(lua_box[i+1], "mass_fractions",
+          box_deck[i].get< tag::mass_fractions >(),
+          std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec)));
+        if (box_deck[i].get< tag::mass_fractions >().size() != nspec)
+          Throw("IC box mass fraction has incorrect number of species. "
+            "Expected " + std::to_string(nspec));
 
         storeIfSpecd< tk::real >(lua_box[i+1], "xmin",
           box_deck[i].get< tag::xmin >(), 0.0);
@@ -1300,6 +1359,13 @@ LuaParser::storeInputDeck(
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "temperature",
           mblk_deck[i].get< tag::temperature >(), 0.0);
 
+        storeVecIfSpecd< tk::real >(lua_meshblock[i+1], "mass_fractions",
+          mblk_deck[i].get< tag::mass_fractions >(),
+          std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec)));
+        if (mblk_deck[i].get< tag::mass_fractions >().size() != nspec)
+          Throw("IC meshblock mass fraction has incorrect number of species. "
+            "Expected " + std::to_string(nspec));
+
         storeOptIfSpecd< inciter::ctr::InitiateType, inciter::ctr::Initiate >(
           lua_meshblock[i+1], "initiate", mblk_deck[i].get< tag::initiate >(),
           inciter::ctr::InitiateType::IMPULSE);
@@ -1329,6 +1395,8 @@ LuaParser::storeInputDeck(
     ic_deck.get< tag::density >() = 0.0;
     ic_deck.get< tag::energy >() = 0.0;
     ic_deck.get< tag::velocity >() = {0.0, 0.0, 0.0};
+    ic_deck.get< tag::mass_fractions >() =
+      std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec));
   }
 }
 
@@ -1366,6 +1434,7 @@ LuaParser::addOutVar(
   const std::string& alias,
   std::vector< char >& depv,
   std::size_t nmat,
+  std::size_t nspec,
   inciter::ctr::PDEType pde,
   tk::Centering c,
   std::vector< inciter::ctr::OutVar >& foutvar )
@@ -1375,6 +1444,7 @@ LuaParser::addOutVar(
 //! \param[in] alias User specified alias for output
 //! \param[in] depv List of depvars
 //! \param[in] nmat Number of materials configured
+//! \param[in] nspec Number of species configured
 //! \param[in] pde Type of PDE configured
 //! \param[in] c Variable centering requested
 //! \param[in,out] foutvar Input deck storage where output vars are stored
@@ -1411,6 +1481,28 @@ LuaParser::addOutVar(
       else if (qty == 'P') {  // material pressure (primitive)
         foutvar.emplace_back(
           inciter::ctr::OutVar(c, varname, alias, inciter::pressureIdx(nmat,j)) );
+      }
+      else {
+        // error out if incorrect matvar used
+        Throw("field_output: matvar " + varname + " not found");
+      }
+    }
+    else if (pde == inciter::ctr::PDEType::MULTISPECIES) {
+    // multispecies/matvar quantities
+      if (qty == 'D') {  // density
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(c, varname, alias,
+            inciter::multispecies::densityIdx(nspec,j)) );
+      }
+      else if (qty == 'M') {  // momentum
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(c, varname, alias,
+            inciter::multispecies::momentumIdx(nspec,j)) );
+      }
+      else if (qty == 'E') {  // specific total energy
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(c, varname, alias,
+            inciter::multispecies::energyIdx(nspec,j)) );
       }
       else {
         // error out if incorrect matvar used

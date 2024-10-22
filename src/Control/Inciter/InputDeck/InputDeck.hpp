@@ -95,6 +95,14 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::viscous,          bool
 > >;
 
+// MultiSpecies
+using multispeciesList = tk::TaggedTuple< brigand::list<
+  tag::physics,          PhysicsType,
+  tag::nspec,            std::size_t,
+  tag::problem,          ProblemType,
+  tag::viscous,          bool
+> >;
+
 // Material/EOS object
 using materialList = tk::TaggedTuple< brigand::list<
   tag::eos,          MaterialType,
@@ -120,25 +128,26 @@ using materialList = tk::TaggedTuple< brigand::list<
 
 // Boundary conditions block
 using bcList = tk::TaggedTuple< brigand::list<
-  tag::mesh,        std::vector< std::size_t >,
-  tag::dirichlet,   std::vector< std::size_t >,
-  tag::symmetry,    std::vector< std::size_t >,
-  tag::inlet,       std::vector< std::size_t >,
-  tag::outlet,      std::vector< std::size_t >,
-  tag::farfield,    std::vector< std::size_t >,
-  tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >,
-  tag::stag_point,  std::vector< tk::real >,
-  tag::radius,      tk::real,
-  tag::velocity,    std::vector< tk::real >,
-  tag::pressure,    tk::real,
-  tag::density,     tk::real,
-  tag::temperature, tk::real,
-  tag::materialid,  std::size_t,
-  tag::timedep,     std::vector<
+  tag::mesh,           std::vector< std::size_t >,
+  tag::dirichlet,      std::vector< std::size_t >,
+  tag::symmetry,       std::vector< std::size_t >,
+  tag::inlet,          std::vector< std::size_t >,
+  tag::outlet,         std::vector< std::size_t >,
+  tag::farfield,       std::vector< std::size_t >,
+  tag::extrapolate,    std::vector< std::size_t >,
+  tag::noslipwall,     std::vector< std::size_t >,
+  tag::stag_point,     std::vector< tk::real >,
+  tag::radius,         tk::real,
+  tag::velocity,       std::vector< tk::real >,
+  tag::pressure,       tk::real,
+  tag::density,        tk::real,
+  tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
+  tag::materialid,     std::size_t,
+  tag::timedep,        std::vector<
     tk::TaggedTuple< brigand::list<
-      tag::sideset,   std::vector< uint64_t >,
-      tag::fn,        std::vector< tk::real >
+      tag::sideset,    std::vector< uint64_t >,
+      tag::fn,         std::vector< tk::real >
     > >
   >
 > >;
@@ -154,6 +163,7 @@ using boxList = tk::TaggedTuple< brigand::list<
   tag::energy,         tk::real,
   tag::energy_content, tk::real,
   tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
   tag::xmin,           tk::real,
   tag::xmax,           tk::real,
   tag::ymin,           tk::real,
@@ -180,6 +190,7 @@ using meshblockList = tk::TaggedTuple< brigand::list<
   tag::energy,         tk::real,
   tag::energy_content, tk::real,
   tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
   tag::initiate,       inciter::ctr::InitiateType,
   tag::point,          std::vector< tk::real >,
   tag::init_time,      tk::real,
@@ -189,14 +200,15 @@ using meshblockList = tk::TaggedTuple< brigand::list<
 
 // Initial conditions (ic) block
 using icList = tk::TaggedTuple< brigand::list<
-  tag::materialid,  std::size_t,
-  tag::pressure,    tk::real,
-  tag::temperature, tk::real,
-  tag::density,     tk::real,
-  tag::energy,      tk::real,
-  tag::velocity,    std::vector< tk::real >,
-  tag::box,         std::vector< boxList >,
-  tag::meshblock,   std::vector< meshblockList >
+  tag::materialid,     std::size_t,
+  tag::pressure,       tk::real,
+  tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
+  tag::density,        tk::real,
+  tag::energy,         tk::real,
+  tag::velocity,       std::vector< tk::real >,
+  tag::box,            std::vector< boxList >,
+  tag::meshblock,      std::vector< meshblockList >
 > >;
 
 // Overset mesh block
@@ -289,11 +301,12 @@ using ConfigMembers = brigand::list<
   tag::limsol_projection,    bool,
 
   // PDE options
-  tag::ncomp,     std::size_t,
-  tag::pde,       PDEType,
-  tag::transport, transportList,
-  tag::compflow,  compflowList,
-  tag::multimat,  multimatList,
+  tag::ncomp,        std::size_t,
+  tag::pde,          PDEType,
+  tag::transport,    transportList,
+  tag::compflow,     compflowList,
+  tag::multimat,     multimatList,
+  tag::multispecies, multispeciesList,
 
   // Dependent variable name
   tag::depvar, std::vector< char >,
@@ -800,10 +813,22 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         equations, governing compressible multi-material hydrodynamics assuming
         velocity equilibrium (single velocity).)", "block-title"});
 
+      keywords.insert({"multispecies",
+        "Start configuration block for the compressible multi-species equations",
+        R"(This keyword is used to introduce the multispecies block,
+        used to specify the configuration for a system of partial differential
+        equations, governing compressible multi-species fluid dynamics.)",
+        "block-title"});
+
       keywords.insert({"nmat",
         "Set number of materials for the multi-material system",
         R"(This keyword is used to specify the number of materials for
         multi-material flow, see also the keyword 'multimat'.)", "uint"});
+
+      keywords.insert({"nspec",
+        "Set number of species for the multi-species system",
+        R"(This keyword is used to specify the number of species for
+        multi-species flow, see also the keyword 'multispecies'.)", "uint"});
 
       keywords.insert({"prelax",
         "Toggle multi-material finite pressure relaxation",
@@ -1657,6 +1682,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"temperature", "Specify temperature",
         R"(This keyword is used to configure temperature, used for, e.g.,
         boundary or initial conditions.)" , "real"});
+
+      keywords.insert({"mass_fractions", "Specify species mass fractions",
+        R"(This keyword is used to configure species mass fractions, used for,
+        e.g., boundary or initial conditions.)" , "vector of reals"});
 
       keywords.insert({"box",
         "Introduce a box block used to assign initial conditions",
