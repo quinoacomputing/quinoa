@@ -106,7 +106,8 @@ struct HLLCMultiMat {
     tk::real pStar(0.0);
     std::vector< tk::real > apStar(nmat, 0.0);
     for (std::size_t k=0; k<nmat; ++k) {
-      apStar[k] = u[0][densityIdx(nmat, k)]*(vnl-Sl)*(vnl-Sm) + apl[k];
+      apStar[k] = 0.5 * (apl[k] + u[0][densityIdx(nmat, k)]*(vnl-Sl)*(vnl-Sm)
+                         + apr[k] + u[1][densityIdx(nmat, k)]*(vnr-Sr)*(vnr-Sm));
       pStar += apStar[k];
     }
     auto uStar = u;
@@ -129,13 +130,17 @@ struct HLLCMultiMat {
       uStar[0][densityIdx(nmat, k)] =
         (Sl-vnl) * u[0][densityIdx(nmat, k)] / (Sl-Sm);
       uStar[0][energyIdx(nmat, k)] =
-        ((Sl-vnl) * u[0][energyIdx(nmat, k)] - apl[k]*vnl + apStar[k]*Sm) / (Sl-Sm);
+        ((Sl-vnl)*u[0][energyIdx(nmat,k)]
+         + u[0][densityIdx(nmat,k)]*(Sl-vnl)*(Sm-vnl)*Sm
+         + (Sm-vnl)*apl[k]) / (Sl-Sm);
 
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] =
         (Sr-vnr) * u[1][densityIdx(nmat, k)] / (Sr-Sm);
       uStar[1][energyIdx(nmat, k)] =
-         ((Sr-vnr) * u[1][energyIdx(nmat, k)] - apr[k]*vnr + apStar[k]*Sm) / (Sr-Sm);
+        ((Sr-vnr)*u[1][energyIdx(nmat,k)]
+         + u[1][densityIdx(nmat,k)]*(Sr-vnr)*(Sm-vnr)*Sm
+         + (Sm-vnr)*apr[k]) / (Sr-Sm);
     }
 
     // Numerical fluxes
