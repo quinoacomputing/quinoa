@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/Riemann/AUSM.hpp
+  \file      src/PDE/Riemann/AUSMCompFlow.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -12,8 +12,8 @@
              all speeds. Journal of computational physics, 214(1), 137-170.
 */
 // *****************************************************************************
-#ifndef AUSM_h
-#define AUSM_h
+#ifndef AUSMCompFlow_h
+#define AUSMCompFlow_h
 
 #include <vector>
 
@@ -22,12 +22,11 @@
 #include "Inciter/Options/Flux.hpp"
 #include "SplitMachFns.hpp"
 #include "EoS/EOS.hpp"
-#include "MultiMat/MultiMatIndexing.hpp"
 
 namespace inciter {
 
 //! AUSM+up approximate Riemann solver
-struct AUSM {
+struct AUSMCompFlow {
 
   //! AUSM+up approximate Riemann solver flux function
   //! \param[in] fn Face/Surface normal
@@ -41,64 +40,32 @@ struct AUSM {
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {} )
   {
-    auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     auto k_p = g_inputdeck.get< tag::lowspeed_kp >();
 
-    auto ncomp = u[0].size()-(3+nmat);
+    auto ncomp = u[0].size();
     std::vector< tk::real > flx( ncomp, 0 );
 
     // Primitive variables
-    tk::real rhol(0.0), rhor(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      rhol += u[0][densityIdx(nmat, k)];
-      rhor += u[1][densityIdx(nmat, k)];
-    }
+    auto rhol = u[0][0];
+    auto ul = u[0][1]/rhol;
+    auto vl = u[0][2]/rhol;
+    auto wl = u[0][3]/rhol;
+    auto rhor = u[1][0];
+    auto ur = u[1][1]/rhor;
+    auto vr = u[1][2]/rhor;
+    auto wr = u[1][3]/rhor;
 
     tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0);
-    std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
-                            hml(nmat, 0.0), hmr(nmat, 0.0),
-                            pml(nmat, 0.0), pmr(nmat, 0.0),
-                            arhom12(nmat, 0.0),
-                            amat12(nmat, 0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      al_l[k] = u[0][volfracIdx(nmat, k)];
-      pml[k] = u[0][ncomp+pressureIdx(nmat, k)];
-      pl += pml[k];
-      hml[k] = u[0][energyIdx(nmat, k)] + pml[k];
-      amatl = mat_blk[k].compute< EOS::soundspeed >(
-        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k );
 
-      al_r[k] = u[1][volfracIdx(nmat, k)];
-      pmr[k] = u[1][ncomp+pressureIdx(nmat, k)];
-      pr += pmr[k];
-      hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
-      amatr = mat_blk[k].compute< EOS::soundspeed >(
-        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k );
+    pl = mat_blk[0].compute< EOS::pressure >(rhol, ul, vl, wl, u[0][4]);
+    amatl = mat_blk[0].compute< EOS::soundspeed >( rhol, pl );
 
-      // Average states for mixture speed of sound
-      arhom12[k] = 0.5*(u[0][densityIdx(nmat, k)] + u[1][densityIdx(nmat, k)]);
-      amat12[k] = 0.5*(amatl+amatr);
-    }
+    pr = mat_blk[0].compute< EOS::pressure >(rhor, ur, vr, wr, u[1][4]);
+    amatr = mat_blk[0].compute< EOS::soundspeed >( rhor, pr );
 
+    // Average states for mixture speed of sound
+    auto ac12 = 0.5*(amatl+amatr);
     auto rho12 = 0.5*(rhol+rhor);
-
-    // mixture speed of sound
-    tk::real ac12(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      ac12 += (arhom12[k]*amat12[k]*amat12[k]);
-    }
-    ac12 = std::sqrt( ac12/rho12 );
-
-    // Independently limited velocities for advection
-    auto ul = u[0][ncomp+velocityIdx(nmat, 0)];
-    auto vl = u[0][ncomp+velocityIdx(nmat, 1)];
-    auto wl = u[0][ncomp+velocityIdx(nmat, 2)];
-    auto ur = u[1][ncomp+velocityIdx(nmat, 0)];
-    auto vr = u[1][ncomp+velocityIdx(nmat, 1)];
-    auto wr = u[1][ncomp+velocityIdx(nmat, 2)];
 
     // Face-normal velocities from advective velocities
     auto vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
@@ -138,46 +105,13 @@ struct AUSM {
     auto l_minus = 0.5 * (vriem - std::fabs(vriem));
 
     // Conservative fluxes
-    for (std::size_t k=0; k<nmat; ++k)
-    {
-      flx[volfracIdx(nmat, k)] = l_plus*al_l[k] + l_minus*al_r[k];
-      flx[densityIdx(nmat, k)] = l_plus*u[0][densityIdx(nmat, k)]
-                              + l_minus*u[1][densityIdx(nmat, k)];
-      flx[energyIdx(nmat, k)] = l_plus*hml[k] + l_minus*hmr[k];
-    }
+    flx[0] = l_plus*u[0][0] + l_minus*u[1][0];
 
-    for (std::size_t idir=0; idir<3; ++idir)
-    {
-    flx[momentumIdx(nmat, idir)] = l_plus*u[0][momentumIdx(nmat, idir)]
-                                 + l_minus*u[1][momentumIdx(nmat, idir)]
-                                 + p12*fn[idir];
-    }
+    flx[1] = l_plus*u[0][1] + l_minus*u[1][1] + p12*fn[0];
+    flx[2] = l_plus*u[0][2] + l_minus*u[1][2] + p12*fn[1];
+    flx[3] = l_plus*u[0][3] + l_minus*u[1][3] + p12*fn[2];
 
-    l_plus = l_plus/( std::fabs(vriem) + 1.0e-12 );
-    l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
-
-    // Store Riemann-advected partial pressures
-    if (std::fabs(l_plus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( pml[k] );
-    }
-    else if (std::fabs(l_minus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( pmr[k] );
-    }
-    else
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( 0.5*(pml[k] + pmr[k]) );
-    }
-
-    // Store Riemann velocity
-    flx.push_back( vriem );
-
-    Assert( flx.size() == (3*nmat+3+nmat+1), "Size of multi-material flux "
-            "vector incorrect" );
+    flx[4] = l_plus*(u[0][4] + pl) + l_minus*(u[1][4] + pr);
 
     return flx;
   }
@@ -189,4 +123,4 @@ struct AUSM {
 
 } // inciter::
 
-#endif // AUSM_h
+#endif // AUSMCompFlow_h
