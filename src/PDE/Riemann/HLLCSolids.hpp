@@ -27,8 +27,7 @@
 
 namespace inciter {
 
-//! HLLC approximate Riemann solver for solids (SHOULD ONLY WORK FOR SINGLE
-//! MATERIAL FLUIDS CURRENTLY)
+//! HLLC approximate Riemann solver for solids
 struct HLLCSolids {
 
 //! HLLC approximate Riemann solver flux function
@@ -51,24 +50,40 @@ struct HLLCSolids {
       ftl(ncomp, 0), ftr(ncomp, 0);
 
     // Primitive variables
-    auto rhol = u[0][1]/u[0][0];
-    auto rhor = u[1][1]/u[1][0];
+    tk::real rhol(0.0), rhor(0.0);
+    for (size_t k=0; k<nmat; ++k) {
+      rhol += u[0][densityIdx(nmat, k)];
+      rhor += u[1][densityIdx(nmat, k)];
+    }
 
-    auto ul = u[0][2]/rhol;
-    auto vl = u[0][3]/rhol;
-    auto wl = u[0][4]/rhol;
+    auto ul = u[0][ncomp+velocityIdx(nmat, 0)];
+    auto vl = u[0][ncomp+velocityIdx(nmat, 1)];
+    auto wl = u[0][ncomp+velocityIdx(nmat, 2)];
+    auto ur = u[1][ncomp+velocityIdx(nmat, 0)];
+    auto vr = u[1][ncomp+velocityIdx(nmat, 1)];
+    auto wr = u[1][ncomp+velocityIdx(nmat, 2)];
 
-    auto ur = u[1][2]/rhor;
-    auto vr = u[1][3]/rhor;
-    auto wr = u[1][4]/rhor;
-
-    auto pl = mat_blk[0].compute< EOS::pressure >( rhol, ul, vl, wl,
-      u[0][5] );
-    auto pr = mat_blk[0].compute< EOS::pressure >( rhor, ur, vr, wr,
-      u[1][5] );
-
-    auto al = mat_blk[0].compute< EOS::soundspeed >( rhol, pl );
-    auto ar = mat_blk[0].compute< EOS::soundspeed >( rhor, pr );
+    tk::real pl(0.0), pr(0.0);
+    std::vector< tk::real > apl(nmat, 0.0), apr(nmat, 0.0);
+    tk::real acl(0.0), acr(0.0);
+    for (std::size_t k=0; k<nmat; ++k) {
+      apl[k] = mat_blk[k].compute< EOS::pressure >( u[0][densityIdx(nmat, k)],
+                                                    ul, vl, wl,
+                                                    u[0][energyIdx(nmat, k)] );
+      apr[k] = mat_blk[k].compute< EOS::pressure >( u[1][densityIdx(nmat, k)],
+                                                    ur, vr, wr,
+                                                    u[1][energyIdx(nmat, k)] );
+      pl += apl[k];
+      pr += apr[k];
+      auto amatl = mat_blk[k].compute< EOS::soundspeed >(
+        u[0][densityIdx(nmat, k)], apl[k], u[0][volfracIdx(nmat, k)], k );
+      auto amatr = mat_blk[k].compute< EOS::soundspeed >(
+        u[1][densityIdx(nmat, k)], apr[k], u[1][volfracIdx(nmat, k)], k );
+      acl += u[0][densityIdx(nmat, k)] * amatl * amatl;
+      acr += u[1][densityIdx(nmat, k)] * amatr * amatr;
+    }
+    acl = std::sqrt(acl/rhol);
+    acr = std::sqrt(acr/rhor);
 
     // Face-normal velocities
     tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
@@ -79,71 +94,113 @@ struct HLLCSolids {
     auto rlr1 = 1.0 + rlr;
 
     auto vnroe = (vnr*rlr + vnl)/rlr1 ;
-    auto aroe = (ar*rlr + al)/rlr1 ;
+    auto aroe = (acr*rlr + acl)/rlr1 ;
 
     // Signal velocities
-    auto Sl = fmin(vnl-al, vnroe-aroe);
-    auto Sr = fmax(vnr+ar, vnroe+aroe);
+    auto Sl = fmin(vnl-acl, vnroe-aroe);
+    auto Sr = fmax(vnr+acr, vnroe+aroe);
     auto Sm = ( rhor*vnr*(Sr-vnr) - rhol*vnl*(Sl-vnl) + pl-pr )
              /( rhor*(Sr-vnr) - rhol*(Sl-vnl) );
 
     // Middle-zone (star) variables
-    auto pStar = rhol*(vnl-Sl)*(vnl-Sm) + pl;
+    tk::real pStar(0.0);
+    std::vector< tk::real > apStar(nmat, 0.0);
+    for (std::size_t k=0; k<nmat; ++k) {
+      apStar[k] = u[0][densityIdx(nmat, k)]*(vnl-Sl)*(vnl-Sm) + apl[k];
+      pStar += apStar[k];
+    }
     auto uStar = u;
 
-    uStar[0][0] = u[0][0];
-    uStar[0][1] = (Sl-vnl) * rhol / (Sl-Sm);
-    uStar[0][2] = ((Sl-vnl) * u[0][2] + (pStar-pl)*fn[0]) / (Sl-Sm);
-    uStar[0][3] = ((Sl-vnl) * u[0][3] + (pStar-pl)*fn[1]) / (Sl-Sm);
-    uStar[0][4] = ((Sl-vnl) * u[0][4] + (pStar-pl)*fn[2]) / (Sl-Sm);
-    uStar[0][5] = ((Sl-vnl) * u[0][5] - pl*vnl + pStar*Sm) / (Sl-Sm);
+    uStar[0][ncomp+velocityIdx(nmat, 0)] =
+      ((Sl-vnl)*u[0][ncomp+velocityIdx(nmat, 0)] + (pStar-pl)*fn[0])/(Sl-Sm);
+    uStar[0][ncomp+velocityIdx(nmat, 1)] =
+      ((Sl-vnl)*u[0][ncomp+velocityIdx(nmat, 1)] + (pStar-pl)*fn[1])/(Sl-Sm);
+    uStar[0][ncomp+velocityIdx(nmat, 2)] =
+      ((Sl-vnl)*u[0][ncomp+velocityIdx(nmat, 2)] + (pStar-pl)*fn[2])/(Sl-Sm);
+    uStar[1][ncomp+velocityIdx(nmat, 0)] =
+      ((Sr-vnr)*u[1][ncomp+velocityIdx(nmat, 0)] + (pStar-pr)*fn[0])/(Sr-Sm);
+    uStar[1][ncomp+velocityIdx(nmat, 1)] =
+      ((Sr-vnr)*u[1][ncomp+velocityIdx(nmat, 1)] + (pStar-pr)*fn[1])/(Sr-Sm);
+    uStar[1][ncomp+velocityIdx(nmat, 2)] =
+      ((Sr-vnr)*u[1][ncomp+velocityIdx(nmat, 2)] + (pStar-pr)*fn[2])/(Sr-Sm);
 
-    uStar[1][0] = u[1][0];
-    uStar[1][1] = (Sr-vnr) * rhor / (Sr-Sm);
-    uStar[1][2] = ((Sr-vnr) * u[1][2] + (pStar-pr)*fn[0]) / (Sr-Sm);
-    uStar[1][3] = ((Sr-vnr) * u[1][3] + (pStar-pr)*fn[1]) / (Sr-Sm);
-    uStar[1][4] = ((Sr-vnr) * u[1][4] + (pStar-pr)*fn[2]) / (Sr-Sm);
-    uStar[1][5] = ((Sr-vnr) * u[1][5] - pr*vnr + pStar*Sm) / (Sr-Sm);
+    for (std::size_t k=0; k<nmat; ++k) {
+      uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
+      uStar[0][densityIdx(nmat, k)] =
+        (Sl-vnl) * u[0][densityIdx(nmat, k)] / (Sl-Sm);
+      uStar[0][energyIdx(nmat, k)] =
+        ((Sl-vnl) * u[0][energyIdx(nmat, k)] - apl[k]*vnl + apStar[k]*Sm) / (Sl-Sm);
+
+      uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
+      uStar[1][densityIdx(nmat, k)] =
+        (Sr-vnr) * u[1][densityIdx(nmat, k)] / (Sr-Sm);
+      uStar[1][energyIdx(nmat, k)] =
+         ((Sr-vnr) * u[1][energyIdx(nmat, k)] - apr[k]*vnr + apStar[k]*Sm) / (Sr-Sm);
+    }
 
     // Numerical fluxes
     if (Sl > 0.0) {
-      flx[0] = u[0][0] * vnl;
-      flx[1] = u[0][1] * vnl;
-      flx[2] = u[0][2] * vnl + pl*fn[0];
-      flx[3] = u[0][3] * vnl + pl*fn[1];
-      flx[4] = u[0][4] * vnl + pl*fn[2];
-      flx[5] = ( u[0][5] + pl ) * vnl;
-      flx.push_back(pl);
+
+      for (std::size_t idir=0; idir<3; ++idir)
+        flx[momentumIdx(nmat, idir)] =
+          u[0][ncomp+velocityIdx(nmat, idir)] * vnl + pl*fn[idir];
+
+      for (std::size_t k=0; k<nmat; ++k) {
+        flx[volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)] * vnl;
+        flx[densityIdx(nmat, k)] = u[0][densityIdx(nmat, k)] * vnl;
+        flx[energyIdx(nmat, k)] = (u[0][energyIdx(nmat, k)] + apl[k]) * vnl;
+      }
+
+      for (std::size_t k=0; k<nmat; ++k)
+        flx.push_back(apl[k]);
       flx.push_back(vnl);
     }
     else if (Sl <= 0.0 && Sm > 0.0) {
-      flx[0] = uStar[0][0] * Sm;
-      flx[1] = uStar[0][1] * Sm;
-      flx[2] = uStar[0][2] * Sm + pStar*fn[0];
-      flx[3] = uStar[0][3] * Sm + pStar*fn[1];
-      flx[4] = uStar[0][4] * Sm + pStar*fn[2];
-      flx[5] = ( uStar[0][5] + pStar ) * Sm;
-      flx.push_back(pStar);
+      
+      for (std::size_t idir=0; idir<3; ++idir)
+        flx[momentumIdx(nmat, idir)] =
+          uStar[0][ncomp+velocityIdx(nmat, idir)] * Sm + pStar*fn[idir];
+
+      for (std::size_t k=0; k<nmat; ++k) {
+        flx[volfracIdx(nmat, k)] = uStar[0][volfracIdx(nmat, k)] * Sm;
+        flx[densityIdx(nmat, k)] = uStar[0][densityIdx(nmat, k)] * Sm;
+        flx[energyIdx(nmat, k)] = (uStar[0][energyIdx(nmat, k)] + apStar[k]) * Sm;
+      }
+
+      for (std::size_t k=0; k<nmat; ++k)
+        flx.push_back(apStar[k]);
       flx.push_back(Sm);
     }
     else if (Sm <= 0.0 && Sr >= 0.0) {
-      flx[0] = uStar[1][0] * Sm;
-      flx[1] = uStar[1][1] * Sm;
-      flx[2] = uStar[1][2] * Sm + pStar*fn[0];
-      flx[3] = uStar[1][3] * Sm + pStar*fn[1];
-      flx[4] = uStar[1][4] * Sm + pStar*fn[2];
-      flx[5] = ( uStar[1][5] + pStar ) * Sm;
-      flx.push_back(pStar);
+      
+      for (std::size_t idir=0; idir<3; ++idir)
+        flx[momentumIdx(nmat, idir)] =
+          uStar[1][ncomp+velocityIdx(nmat, idir)] * Sm + pStar*fn[idir];
+
+      for (std::size_t k=0; k<nmat; ++k) {
+        flx[volfracIdx(nmat, k)] = uStar[1][volfracIdx(nmat, k)] * Sm;
+        flx[densityIdx(nmat, k)] = uStar[1][densityIdx(nmat, k)] * Sm;
+        flx[energyIdx(nmat, k)] = (uStar[1][energyIdx(nmat, k)] + apStar[k]) * Sm;
+      }
+
+      for (std::size_t k=0; k<nmat; ++k)
+        flx.push_back(apStar[k]);
       flx.push_back(Sm);
     }
     else {
-      flx[0] = u[1][0] * vnr;
-      flx[1] = u[1][1] * vnr;
-      flx[2] = u[1][2] * vnr + pr*fn[0];
-      flx[3] = u[1][3] * vnr + pr*fn[1];
-      flx[4] = u[1][4] * vnr + pr*fn[2];
-      flx[5] = ( u[1][5] + pr ) * vnr;
-      flx.push_back(pr);
+      
+      for (std::size_t idir=0; idir<3; ++idir)
+        flx[momentumIdx(nmat, idir)] =
+          u[1][ncomp+velocityIdx(nmat, idir)] * vnr + pr*fn[idir];
+
+      for (std::size_t k=0; k<nmat; ++k) {
+        flx[volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)] * vnr;
+        flx[densityIdx(nmat, k)] = u[1][densityIdx(nmat, k)] * vnr;
+        flx[energyIdx(nmat, k)] = (u[1][energyIdx(nmat, k)] + apr[k]) * vnr;
+      }
+
+      for (std::size_t k=0; k<nmat; ++k)
+        flx.push_back(apr[k]);
       flx.push_back(vnr);
     }
 
