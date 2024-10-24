@@ -50,6 +50,7 @@ struct HLLCMultiMat {
       ftl(ncomp, 0), ftr(ncomp, 0);
 
     // Primitive variables
+    // -------------------------------------------------------------------------
     tk::real rhol(0.0), rhor(0.0);
     for (size_t k=0; k<nmat; ++k) {
       rhol += u[0][densityIdx(nmat, k)];
@@ -63,22 +64,26 @@ struct HLLCMultiMat {
     auto vr = u[1][ncomp+velocityIdx(nmat, 1)];
     auto wr = u[1][ncomp+velocityIdx(nmat, 2)];
 
+    // Outer states
+    // -------------------------------------------------------------------------
     tk::real pl(0.0), pr(0.0);
     std::vector< tk::real > apl(nmat, 0.0), apr(nmat, 0.0);
     tk::real acl(0.0), acr(0.0);
+
     for (std::size_t k=0; k<nmat; ++k) {
-      apl[k] = mat_blk[k].compute< EOS::pressure >( u[0][densityIdx(nmat, k)],
-                                                    ul, vl, wl,
-                                                    u[0][energyIdx(nmat, k)] );
-      apr[k] = mat_blk[k].compute< EOS::pressure >( u[1][densityIdx(nmat, k)],
-                                                    ur, vr, wr,
-                                                    u[1][energyIdx(nmat, k)] );
+      // Left state
+      apl[k] = u[0][ncomp+pressureIdx(nmat, k)];
       pl += apl[k];
-      pr += apr[k];
       auto amatl = mat_blk[k].compute< EOS::soundspeed >(
         u[0][densityIdx(nmat, k)], apl[k], u[0][volfracIdx(nmat, k)], k );
+
+      // Right state
+      apr[k] = u[1][ncomp+pressureIdx(nmat, k)];
+      pr += apr[k];
       auto amatr = mat_blk[k].compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], apr[k], u[1][volfracIdx(nmat, k)], k );
+
+      // Mixture speed of sound
       acl += u[0][densityIdx(nmat, k)] * amatl * amatl;
       acr += u[1][densityIdx(nmat, k)] * amatr * amatr;
     }
@@ -89,20 +94,14 @@ struct HLLCMultiMat {
     tk::real vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
     tk::real vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 
-    // Roe-averaged variables
-    auto rlr = sqrt(rhor/rhol);
-    auto rlr1 = 1.0 + rlr;
-
-    auto vnroe = (vnr*rlr + vnl)/rlr1 ;
-    auto aroe = (acr*rlr + acl)/rlr1 ;
-
     // Signal velocities
-    auto Sl = fmin(vnl-acl, vnroe-aroe);
-    auto Sr = fmax(vnr+acr, vnroe+aroe);
+    auto Sl = std::min((vnl-acl), (vnr-acr));
+    auto Sr = std::max((vnl+acl), (vnr+acr));
     auto Sm = ( rhor*vnr*(Sr-vnr) - rhol*vnl*(Sl-vnl) + pl-pr )
              /( rhor*(Sr-vnr) - rhol*(Sl-vnl) );
 
     // Middle-zone (star) variables
+    // -------------------------------------------------------------------------
     tk::real pStar(0.0);
     std::vector< tk::real > apStar(nmat, 0.0);
     for (std::size_t k=0; k<nmat; ++k) {
@@ -112,20 +111,15 @@ struct HLLCMultiMat {
     }
     auto uStar = u;
 
-    uStar[0][momentumIdx(nmat, 0)] =
-      ((Sl-vnl)*u[0][momentumIdx(nmat, 0)] + (pStar-pl)*fn[0])/(Sl-Sm);
-    uStar[0][momentumIdx(nmat, 1)] =
-      ((Sl-vnl)*u[0][momentumIdx(nmat, 1)] + (pStar-pl)*fn[1])/(Sl-Sm);
-    uStar[0][momentumIdx(nmat, 2)] =
-      ((Sl-vnl)*u[0][momentumIdx(nmat, 2)] + (pStar-pl)*fn[2])/(Sl-Sm);
-    uStar[1][momentumIdx(nmat, 0)] =
-      ((Sr-vnr)*u[1][momentumIdx(nmat, 0)] + (pStar-pr)*fn[0])/(Sr-Sm);
-    uStar[1][momentumIdx(nmat, 1)] =
-      ((Sr-vnr)*u[1][momentumIdx(nmat, 1)] + (pStar-pr)*fn[1])/(Sr-Sm);
-    uStar[1][momentumIdx(nmat, 2)] =
-      ((Sr-vnr)*u[1][momentumIdx(nmat, 2)] + (pStar-pr)*fn[2])/(Sr-Sm);
+    for (std::size_t i=0; i<3; ++i) {
+      uStar[0][momentumIdx(nmat, i)] =
+        ((Sl-vnl)*u[0][momentumIdx(nmat, i)] + (pStar-pl)*fn[i])/(Sl-Sm);
+      uStar[1][momentumIdx(nmat, i)] =
+        ((Sr-vnr)*u[1][momentumIdx(nmat, i)] + (pStar-pr)*fn[i])/(Sr-Sm);
+    }
 
     for (std::size_t k=0; k<nmat; ++k) {
+      // Left
       uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] =
         (Sl-vnl) * u[0][densityIdx(nmat, k)] / (Sl-Sm);
@@ -134,6 +128,7 @@ struct HLLCMultiMat {
          + u[0][densityIdx(nmat,k)]*(Sl-vnl)*(Sm-vnl)*Sm
          + (Sm-vnl)*apl[k]) / (Sl-Sm);
 
+      // Right
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] =
         (Sr-vnr) * u[1][densityIdx(nmat, k)] / (Sr-Sm);
@@ -144,6 +139,7 @@ struct HLLCMultiMat {
     }
 
     // Numerical fluxes
+    // -------------------------------------------------------------------------
     if (Sl > 0.0) {
 
       for (std::size_t idir=0; idir<3; ++idir)
@@ -156,10 +152,14 @@ struct HLLCMultiMat {
         flx[energyIdx(nmat, k)] = (u[0][energyIdx(nmat, k)] + apl[k]) * vnl;
       }
 
+      // Quantities for non-conservative terms
+      // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back(apl[k]);
+      // Store Riemann velocity
       flx.push_back(vnl);
     }
+
     else if (Sl <= 0.0 && Sm > 0.0) {
 
       for (std::size_t idir=0; idir<3; ++idir)
@@ -172,10 +172,14 @@ struct HLLCMultiMat {
         flx[energyIdx(nmat, k)] = (uStar[0][energyIdx(nmat, k)] + apStar[k]) * Sm;
       }
 
+      // Quantities for non-conservative terms
+      // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back(apStar[k]);
+      // Store Riemann velocity
       flx.push_back(Sm);
     }
+
     else if (Sm <= 0.0 && Sr >= 0.0) {
 
       for (std::size_t idir=0; idir<3; ++idir)
@@ -188,10 +192,14 @@ struct HLLCMultiMat {
         flx[energyIdx(nmat, k)] = (uStar[1][energyIdx(nmat, k)] + apStar[k]) * Sm;
       }
 
+      // Quantities for non-conservative terms
+      // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back(apStar[k]);
+      // Store Riemann velocity
       flx.push_back(Sm);
     }
+
     else {
 
       for (std::size_t idir=0; idir<3; ++idir)
@@ -204,10 +212,16 @@ struct HLLCMultiMat {
         flx[energyIdx(nmat, k)] = (u[1][energyIdx(nmat, k)] + apr[k]) * vnr;
       }
 
+      // Quantities for non-conservative terms
+      // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back(apr[k]);
+      // Store Riemann velocity
       flx.push_back(vnr);
     }
+
+    Assert( flx.size() == (ncomp+nmat+1+3*nsld), "Size of "
+            "multi-material flux vector incorrect" );
 
     return flx;
   }
