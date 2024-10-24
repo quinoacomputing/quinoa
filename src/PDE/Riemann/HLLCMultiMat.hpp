@@ -112,18 +112,18 @@ struct HLLCMultiMat {
     }
     auto uStar = u;
 
-    uStar[0][ncomp+velocityIdx(nmat, 0)] =
-      ((Sl-vnl)*u[0][ncomp+velocityIdx(nmat, 0)] + (pStar-pl)*fn[0])/(Sl-Sm);
-    uStar[0][ncomp+velocityIdx(nmat, 1)] =
-      ((Sl-vnl)*u[0][ncomp+velocityIdx(nmat, 1)] + (pStar-pl)*fn[1])/(Sl-Sm);
-    uStar[0][ncomp+velocityIdx(nmat, 2)] =
-      ((Sl-vnl)*u[0][ncomp+velocityIdx(nmat, 2)] + (pStar-pl)*fn[2])/(Sl-Sm);
-    uStar[1][ncomp+velocityIdx(nmat, 0)] =
-      ((Sr-vnr)*u[1][ncomp+velocityIdx(nmat, 0)] + (pStar-pr)*fn[0])/(Sr-Sm);
-    uStar[1][ncomp+velocityIdx(nmat, 1)] =
-      ((Sr-vnr)*u[1][ncomp+velocityIdx(nmat, 1)] + (pStar-pr)*fn[1])/(Sr-Sm);
-    uStar[1][ncomp+velocityIdx(nmat, 2)] =
-      ((Sr-vnr)*u[1][ncomp+velocityIdx(nmat, 2)] + (pStar-pr)*fn[2])/(Sr-Sm);
+    uStar[0][momentumIdx(nmat, 0)] =
+      ((Sl-vnl)*u[0][momentumIdx(nmat, 0)] + (pStar-pl)*fn[0])/(Sl-Sm);
+    uStar[0][momentumIdx(nmat, 1)] =
+      ((Sl-vnl)*u[0][momentumIdx(nmat, 1)] + (pStar-pl)*fn[1])/(Sl-Sm);
+    uStar[0][momentumIdx(nmat, 2)] =
+      ((Sl-vnl)*u[0][momentumIdx(nmat, 2)] + (pStar-pl)*fn[2])/(Sl-Sm);
+    uStar[1][momentumIdx(nmat, 0)] =
+      ((Sr-vnr)*u[1][momentumIdx(nmat, 0)] + (pStar-pr)*fn[0])/(Sr-Sm);
+    uStar[1][momentumIdx(nmat, 1)] =
+      ((Sr-vnr)*u[1][momentumIdx(nmat, 1)] + (pStar-pr)*fn[1])/(Sr-Sm);
+    uStar[1][momentumIdx(nmat, 2)] =
+      ((Sr-vnr)*u[1][momentumIdx(nmat, 2)] + (pStar-pr)*fn[2])/(Sr-Sm);
 
     for (std::size_t k=0; k<nmat; ++k) {
       uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
@@ -148,7 +148,7 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          u[0][ncomp+velocityIdx(nmat, idir)] * vnl + pl*fn[idir];
+          u[0][momentumIdx(nmat, idir)] * vnl + pl*fn[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)] * vnl;
@@ -164,7 +164,7 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          uStar[0][ncomp+velocityIdx(nmat, idir)] * Sm + pStar*fn[idir];
+          uStar[0][momentumIdx(nmat, idir)] * Sm + pStar*fn[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[0][volfracIdx(nmat, k)] * Sm;
@@ -180,7 +180,7 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          uStar[1][ncomp+velocityIdx(nmat, idir)] * Sm + pStar*fn[idir];
+          uStar[1][momentumIdx(nmat, idir)] * Sm + pStar*fn[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[1][volfracIdx(nmat, k)] * Sm;
@@ -196,7 +196,7 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          u[1][ncomp+velocityIdx(nmat, idir)] * vnr + pr*fn[idir];
+          u[1][momentumIdx(nmat, idir)] * vnr + pr*fn[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)] * vnr;
