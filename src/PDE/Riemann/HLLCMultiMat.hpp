@@ -98,24 +98,23 @@ struct HLLCMultiMat {
     auto Sl = std::min((vnl-acl), (vnr-acr));
     auto Sr = std::max((vnl+acl), (vnr+acr));
     auto Sm = ( rhor*vnr*(Sr-vnr) - rhol*vnl*(Sl-vnl) + pl-pr )
-             /( rhor*(Sr-vnr) - rhol*(Sl-vnl) );
+      /( rhor*(Sr-vnr) - rhol*(Sl-vnl) );
 
     // Middle-zone (star) variables
     // -------------------------------------------------------------------------
     tk::real pStar(0.0);
     std::vector< tk::real > apStar(nmat, 0.0);
     for (std::size_t k=0; k<nmat; ++k) {
-      apStar[k] = 0.5 * (apl[k] + u[0][densityIdx(nmat, k)]*(vnl-Sl)*(vnl-Sm)
-                         + apr[k] + u[1][densityIdx(nmat, k)]*(vnr-Sr)*(vnr-Sm));
+      apStar[k] = apl[k] + u[0][densityIdx(nmat, k)]*(vnl-Sl)*(vnl-Sm);
       pStar += apStar[k];
     }
     auto uStar = u;
 
-    for (std::size_t i=0; i<3; ++i) {
-      uStar[0][momentumIdx(nmat, i)] =
-        ((Sl-vnl)*u[0][momentumIdx(nmat, i)] + (pStar-pl)*fn[i])/(Sl-Sm);
-      uStar[1][momentumIdx(nmat, i)] =
-        ((Sr-vnr)*u[1][momentumIdx(nmat, i)] + (pStar-pr)*fn[i])/(Sr-Sm);
+    for (std::size_t idir=0; idir<3; ++idir) {
+      uStar[0][momentumIdx(nmat, idir)] =
+        ((Sl-vnl)*u[0][momentumIdx(nmat, idir)] + (pStar-pl)*fn[idir])/(Sl-Sm);
+      uStar[1][momentumIdx(nmat, idir)] =
+        ((Sr-vnr)*u[1][momentumIdx(nmat, idir)] + (pStar-pr)*fn[idir])/(Sr-Sm);
     }
 
     for (std::size_t k=0; k<nmat; ++k) {
@@ -124,18 +123,14 @@ struct HLLCMultiMat {
       uStar[0][densityIdx(nmat, k)] =
         (Sl-vnl) * u[0][densityIdx(nmat, k)] / (Sl-Sm);
       uStar[0][energyIdx(nmat, k)] =
-        ((Sl-vnl)*u[0][energyIdx(nmat,k)]
-         + u[0][densityIdx(nmat,k)]*(Sl-vnl)*(Sm-vnl)*Sm
-         + (Sm-vnl)*apl[k]) / (Sl-Sm);
+        ((Sl-vnl) * u[0][energyIdx(nmat, k)] - apl[k]*vnl + apStar[k]*Sm) / (Sl-Sm);
 
       // Right
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] =
         (Sr-vnr) * u[1][densityIdx(nmat, k)] / (Sr-Sm);
       uStar[1][energyIdx(nmat, k)] =
-        ((Sr-vnr)*u[1][energyIdx(nmat,k)]
-         + u[1][densityIdx(nmat,k)]*(Sr-vnr)*(Sm-vnr)*Sm
-         + (Sm-vnr)*apr[k]) / (Sr-Sm);
+        ((Sr-vnr) * u[1][energyIdx(nmat, k)] - apr[k]*vnr + apStar[k]*Sm) / (Sr-Sm);
     }
 
     // Numerical fluxes
