@@ -475,14 +475,22 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
 // *****************************************************************************
 {
   // Query side set ids at which BCs assigned for all BC types for all PDEs
-  using bclist = ctr::bclist::Keys;
   std::unordered_set< int > usedsets;
-  brigand::for_each< bclist >( UserBC( g_inputdeck, usedsets ) );
 
   // Query side sets of time dependent BCs (since tag::bctimedep is not a part
   // of tag::bc)
   const auto& bcs = g_inputdeck.get< tag::bc >();
   for (const auto& bci : bcs) {
+    usedsets.insert( bci.get< tag::dirichlet >().begin(), bci.get< tag::dirichlet >().end() );
+    usedsets.insert( bci.get< tag::symmetry >().begin(), bci.get< tag::symmetry >().end() );
+    usedsets.insert( bci.get< tag::outlet >().begin(), bci.get< tag::outlet >().end() );
+    usedsets.insert( bci.get< tag::farfield >().begin(), bci.get< tag::farfield >().end() );
+    usedsets.insert( bci.get< tag::extrapolate >().begin(), bci.get< tag::extrapolate >().end() );
+    usedsets.insert( bci.get< tag::noslipwall >().begin(), bci.get< tag::noslipwall >().end() );
+    for (const auto& b : bci.get< tag::inlet >()) {
+      for (auto i : b.get< tag::sideset >())
+        usedsets.insert(static_cast<int>(i));
+    }
     for (const auto& b : bci.get< tag::timedep >()) {
       for (auto i : b.get< tag::sideset >())
         usedsets.insert(static_cast<int>(i));

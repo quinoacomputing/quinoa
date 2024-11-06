@@ -92,9 +92,12 @@ class MultiMat {
 
         const auto& in = ib.get< tag::inlet >();
         if (!in.empty()) {
-          v.clear();
-          v.insert(v.end(), in.begin(), in.end());
-          m_bc.push_back( { v, inlet, noOpGrad } );
+          for (const auto& bndry : in) {
+            const auto& sideset = bndry.get< tag::sideset >();
+            v.clear();
+            v.insert(v.end(), sideset.begin(), sideset.end());
+            m_bc.push_back( { v, inlet, noOpGrad } );
+          }
         };
 
         const auto& fs = ib.get< tag::farfield >();

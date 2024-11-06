@@ -1050,8 +1050,24 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "symmetry",
         bc_deck[i].get< tag::symmetry >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "inlet",
-        bc_deck[i].get< tag::inlet >(), {});
+      if (sol_bc[i+1]["inlet"].valid()) {
+        const sol::table& sol_inbc = sol_bc[i+1]["inlet"];
+        auto& inbc_deck = bc_deck[i].get< tag::inlet >();
+        inbc_deck.resize(sol_inbc.size());
+
+        for (std::size_t j=0; j<inbc_deck.size(); ++j) {
+          storeVecIfSpecd< uint64_t >(sol_inbc[j+1], "sideset",
+            inbc_deck[j].get< tag::sideset >(), {});
+          storeVecIfSpecd< tk::real >(sol_inbc[j+1], "velocity",
+            inbc_deck[j].get< tag::velocity >(), {0.0, 0.0, 0.0});
+          if (inbc_deck[j].get< tag::velocity >().size() != 3)
+            Throw("Inlet velocity requires 3 components.");
+          storeIfSpecd< tk::real >(sol_inbc[j+1], "pressure",
+            inbc_deck[j].get< tag::pressure >(), 0.0);
+          storeIfSpecd< tk::real >(sol_inbc[j+1], "temperature",
+            inbc_deck[j].get< tag::temperature >(), 0.0);
+        }
+      }
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "outlet",
         bc_deck[i].get< tag::outlet >(), {});

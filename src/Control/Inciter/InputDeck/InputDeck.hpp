@@ -47,7 +47,14 @@ using ncomp_t = std::size_t;
 using bclist = tk::TaggedTuple< brigand::list<
   tag::dirichlet,   std::vector< std::size_t >,
   tag::symmetry,    std::vector< std::size_t >,
-  tag::inlet,       std::vector< std::size_t >,
+  tag::inlet,       std::vector<
+    tk::TaggedTuple< brigand::list<
+      tag::sideset,      std::vector< uint64_t >,
+      tag::velocity,     std::vector< tk::real >,
+      tag::pressure,     tk::real,
+      tag::temperature,  tk::real
+    > >
+  >,
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
@@ -123,7 +130,14 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::mesh,        std::vector< std::size_t >,
   tag::dirichlet,   std::vector< std::size_t >,
   tag::symmetry,    std::vector< std::size_t >,
-  tag::inlet,       std::vector< std::size_t >,
+  tag::inlet,       std::vector<
+    tk::TaggedTuple< brigand::list<
+      tag::sideset,      std::vector< uint64_t >,
+      tag::velocity,     std::vector< tk::real >,
+      tag::pressure,     tk::real,
+      tag::temperature,  tk::real
+    > >
+  >,
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,

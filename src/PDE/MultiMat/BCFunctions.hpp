@@ -138,12 +138,22 @@ namespace inciter {
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
     // Farfield primitive quantities
+    // how do we make sure we have called the proper sideset for this input?
+    // This is necessary for multiple independent inputs, but I can't quite
+    // figure out how to get it to work considering all function signatures
+    // must follow the same signature, so I can't just put it in as an input.
+    // For now, leave it so it just takes the first block, but maybe there's a
+    // way to do this a bit more intelligently.
+    auto& inbc = g_inputdeck.get< tag::bc >()[0].get< tag::inlet >();
     auto fp =
-      g_inputdeck.get< tag::bc >()[0].get< tag::pressure >();
+      // g_inputdeck.get< tag::bc >()[0].get< tag::pressure >();
+      inbc[0].get< tag::pressure >();
     auto ft =
-      g_inputdeck.get< tag::bc >()[0].get< tag::temperature >();
+      // g_inputdeck.get< tag::bc >()[0].get< tag::temperature >();
+      inbc[0].get< tag::temperature >();
     auto fu =
-      g_inputdeck.get< tag::bc >()[0].get< tag::velocity >();
+      // g_inputdeck.get< tag::bc >()[0].get< tag::velocity >();
+      inbc[0].get< tag::velocity >();
     auto fmat =
       g_inputdeck.get< tag::bc >()[0].get< tag::materialid >() - 1;
 

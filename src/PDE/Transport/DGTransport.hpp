@@ -65,26 +65,38 @@ class Transport {
       m_problem( Problem() ),
       m_ncomp( g_inputdeck.get< tag::ncomp >() )
     {
-      // associate boundary condition configurations with state functions, the
-      // order in which the state functions listed matters, see ctr::bc::Keys
-      brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
-        // BC State functions
-        { dirichlet
-        , invalidBC  // Symmetry BC not implemented
-        , inlet
-        , outlet
-        , invalidBC  // Characteristic BC not implemented
-        , extrapolate
-        , invalidBC },      // No slip wall BC not implemented
-        // BC Gradient functions
-        { noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad }
-        ) );
+      // associate boundary condition configurations with state functions,
+      // manually looping through all BCs and state functions
+      const auto& bc = g_inputdeck.get< tag::bc >();
+      std::vector< std::size_t > v;
+      for (const auto& ib : bc) {
+        const auto& dir = ib.get< tag::dirichlet >();
+        if (!dir.empty()) {
+          v.insert(v.end(), dir.begin(), dir.end());
+          m_bc.push_back( { v, dirichlet, noOpGrad } );
+        };
+
+        const auto& in = ib.get< tag::inlet >();
+        if (!in.empty()) {
+          for (const auto& bndry : in) {
+            const auto& sideset = bndry.get< tag::sideset >();
+            v.insert(v.end(), sideset.begin(), sideset.end());
+            m_bc.push_back( { v, inlet, noOpGrad } );
+          }
+        };
+
+        const auto& out = ib.get< tag::outlet >();
+        if (!out.empty()) {
+          v.insert(v.end(), out.begin(), out.end());
+          m_bc.push_back( { v, outlet, noOpGrad } );
+        };
+
+        const auto& ext = ib.get< tag::extrapolate >();
+        if (!ext.empty()) {
+          v.insert(v.end(), ext.begin(), ext.end());
+          m_bc.push_back( { v, extrapolate, noOpGrad } );
+        };
+      };
       m_problem.errchk( m_ncomp );
     }
 
