@@ -78,46 +78,45 @@ class MultiMat {
       for (const auto& ib : bc) {
         const auto& dir = ib.get< tag::dirichlet >();
         if (!dir.empty()) {
+          v.clear();
           v.insert(v.end(), dir.begin(), dir.end());
           m_bc.push_back( { v, dirichlet, noOpGrad } );
         };
 
         const auto& sym = ib.get< tag::symmetry >();
         if (!sym.empty()) {
+          v.clear();
           v.insert(v.end(), sym.begin(), sym.end());
           m_bc.push_back( { v, symmetry, symmetryGrad } );
         };
 
         const auto& in = ib.get< tag::inlet >();
         if (!in.empty()) {
+          v.clear();
           v.insert(v.end(), in.begin(), in.end());
           m_bc.push_back( { v, inlet, noOpGrad } );
         };
 
         const auto& fs = ib.get< tag::farfield >();
         if (!fs.empty()) {
+          v.clear();
           v.insert(v.end(), fs.begin(), fs.end());
           m_bc.push_back( { v, farfield, noOpGrad } );
         };
 
         const auto& ext = ib.get< tag::extrapolate >();
         if (!ext.empty()) {
+          v.clear();
           v.insert(v.end(), ext.begin(), ext.end());
           m_bc.push_back( { v, extrapolate, noOpGrad } );
         };
 
         const auto& nsw = ib.get< tag::noslipwall >();
         if (!nsw.empty()) {
+          v.clear();
           v.insert(v.end(), nsw.begin(), nsw.end());
           m_bc.push_back( { v, noslipwall, noOpGrad } );
         };
-
-        // const auto& timedep = ib.get< tag::timedep >();
-        // if (!timedep.empty()) {
-        //   for (const auto& bndry : timedep) {
-        //     nfo.emplace_back( "Time dependent BC sideset(s)",
-        //       parameters(bndry.get< tag::sideset >()) );
-        //   }
     }
 
       // EoS initialization
