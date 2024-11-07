@@ -123,7 +123,9 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::mu,           std::vector< tk::real >,
   tag::yield_stress, std::vector< tk::real >,
   tag::cv,           std::vector< tk::real >,
-  tag::k,            std::vector< tk::real >
+  tag::k,            std::vector< tk::real >,
+  tag::R,            std::vector< tk::real >,
+  tag::cp_TPG,       std::vector< std::vector< tk::real > >
 > >;
 
 // Boundary conditions block

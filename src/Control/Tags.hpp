@@ -218,6 +218,8 @@ DEFTAG(eosidx);
 DEFTAG(matidx);
 DEFTAG(solidx);
 DEFTAG(yield_stress);
+DEFTAG(R);
+DEFTAG(cp_TPG);
 
 DEFTAG(field_output);
 DEFTAG(interval);

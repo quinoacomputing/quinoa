@@ -558,6 +558,21 @@ LuaParser::storeInputDeck(
           Throw("Either reference density or reference temperature must be "
             "specified for JWL equation of state (EOS).");
       }
+      // TPG materials
+      else if (mati_deck.get< tag::eos >() == inciter::ctr::MaterialType::TPG) {
+        // We have assumed that nmat == 1 always for multi species
+        for (std::size_t j=0; j<nspec; ++j) {
+          // gamma
+          checkStoreMatProp(sol_mat[j+1], "gamma", nspec,
+            mati_deck.get< tag::gamma >());
+          // R
+          checkStoreMatProp(sol_mat[j+1], "R", nspec,
+            mati_deck.get< tag::R >());
+          // cp_TPG
+          checkStoreMatPropVec(
+            sol_mat[j+1], "cp_TPG", nspec, 8, mati_deck.get< tag::cp_TPG >());
+        }
+      }
 
       // Generate mapping between material index and eos parameter index
       auto& eosmap = gideck.get< tag::matidxmap, tag::eosidx >();
@@ -1426,6 +1441,41 @@ LuaParser::checkStoreMatProp(
   // store values from table to inputdeck
   storeVecIfSpecd< tk::real >(table, key, storage,
     std::vector< tk::real >(vecsize, 0.0));
+}
+
+void
+LuaParser::checkStoreMatPropVec(
+  const sol::table table,
+  const std::string key,
+  std::size_t nspec,
+  std::size_t vecsize,
+  std::vector<std::vector< tk::real >>& storage )
+// *****************************************************************************
+//  Check and store material property into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] nspec Number of species
+//! \param[in] vecsize Number of said property in Sol-table (based on number of
+//!   coefficients for the defined species)
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != nspec)
+    Throw("Incorrect number of '" + key + "'s specified. Expected " +
+      std::to_string(nspec));
+  //for (std::size_t k=0; k < nspec; k++) {
+  //  if (sol::table(table[key]).size() != vecsize)
+  //    Throw("Incorrect number of '" + key + "'s specified. Expected " +
+  //      std::to_string(vecsize));
+  //}
+
+  // store values from table to inputdeck
+  //storeVecIfSpecd< tk::real >(table, key, storage,
+  //  std::vector< tk::real >(vecsize, 0.0));
 }
 
 void
