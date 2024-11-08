@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/TPG.cpp
+  \file      src/PDE/EoS/ThermallyPerfectGas.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -13,27 +13,27 @@
 
 #include <cmath>
 #include <iostream>
-#include "EoS/TPG.hpp"
+#include "EoS/ThermallyPerfectGas.hpp"
 
-using inciter::TPG;
+using inciter::ThermallyPerfectGas;
 
-TPG::TPG(
+ThermallyPerfectGas::ThermallyPerfectGas(
   tk::real gamma,
   tk::real R,
-  std::vector< tk::real > cp_TPG) :
+  std::vector< tk::real > cp_coeff) :
   m_gamma(gamma),
   m_R(R),
-  m_cp_TPG(cp_TPG)
+  m_cp_coeff(cp_coeff)
 // *************************************************************************
 //  Constructor
 //! \param[in] gamma Ratio of specific heats
 //! \param[in] R gas constant
-//! \param[in] cp_TPG NASA Glenn polynomials coefficients for cp fit
+//! \param[in] cp_coeff NASA Glenn polynomials coefficients for cp fit
 // *************************************************************************
 { }
 
 tk::real
-TPG::density(
+ThermallyPerfectGas::density(
   tk::real pr,
   tk::real temp ) const
 // *************************************************************************
@@ -51,7 +51,7 @@ TPG::density(
 }
 
 tk::real
-TPG::pressure(
+ThermallyPerfectGas::pressure(
   tk::real rho,
   tk::real u,
   tk::real v,
@@ -80,7 +80,7 @@ TPG::pressure(
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
-TPG::CauchyStress(
+ThermallyPerfectGas::CauchyStress(
   tk::real,
   tk::real,
   tk::real,
@@ -103,7 +103,7 @@ TPG::CauchyStress(
 }
 
 tk::real
-TPG::soundspeed(
+ThermallyPerfectGas::soundspeed(
   tk::real rho,
   tk::real pr,
   tk::real,
@@ -125,7 +125,7 @@ TPG::soundspeed(
 }
 
 tk::real
-TPG::totalenergy(
+ThermallyPerfectGas::totalenergy(
   tk::real rho,
   tk::real u,
   tk::real v,
@@ -143,25 +143,21 @@ TPG::totalenergy(
 //! \return specific total energy using the thermally perfect gas EoS
 // *************************************************************************
 {
-  auto g = m_gamma;
   auto R = m_R;
 
   tk::real temp = pr / (rho * R);
-  tk::real e = R * (-cp_TPG[0] * pow(temp, -1) +
-      cp_TPG[1] * log(temp) + (cp_TPG[2] - 1) * temp +
-      cp_TPG[3] * pow(temp, 2) / 2 +
-      cp_TPG[4] * pow(temp, 3) / 3 +
-      cp_TPG[5] * pow(temp, 4) / 4 +
-      cp_TPG[6] * pow(temp, 5) / 5 + cp_TPG[7]);
+  tk::real e = R * (-m_cp_coeff[0] * pow(temp, -1) +
+      m_cp_coeff[1] * log(temp) + (m_cp_coeff[2] - 1) * temp +
+      m_cp_coeff[3] * pow(temp, 2) / 2 +
+      m_cp_coeff[4] * pow(temp, 3) / 3 +
+      m_cp_coeff[5] * pow(temp, 4) / 4 +
+      m_cp_coeff[6] * pow(temp, 5) / 5 + m_cp_coeff[7]);
 
-  tk::real rhoE = e + 0.5 * rho * (u*u + v*v + w*w)
-
-  tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * rho * (u*u + v*v + w*w) + p_c;
-  return rhoE;
+  return (e + 0.5 * rho * (u*u + v*v + w*w));
 }
 
 tk::real
-TPG::temperature(
+ThermallyPerfectGas::temperature(
   tk::real rho,
   tk::real u,
   tk::real v,
@@ -180,7 +176,6 @@ TPG::temperature(
 // *************************************************************************
 {
   auto R = m_R;
-  auto cp_TPG = m_cp_TPG;
 
   // Solve for internal energy
   tk::real e = rhoE - 0.5 * rho * (u*u + v*v + w*w);
@@ -190,20 +185,20 @@ TPG::temperature(
   tk::real tol = 1e-8; // Stopping condition
   tk::real err = 1e8;
   while (err > tol) {
-    tk::real f_T = R * (-cp_TPG[0] * pow(temp, -1) +
-      cp_TPG[1] * log(temp) + (cp_TPG[2] - 1) * temp +
-      cp_TPG[3] * pow(temp, 2) / 2 +
-      cp_TPG[4] * pow(temp, 3) / 3 +
-      cp_TPG[5] * pow(temp, 4) / 4 +
-      cp_TPG[6] * pow(temp, 5) / 5 + cp_TPG[7]) - e;
+    tk::real f_T = R * (-m_cp_coeff[0] * pow(temp, -1) +
+      m_cp_coeff[1] * log(temp) + (m_cp_coeff[2] - 1) * temp +
+      m_cp_coeff[3] * pow(temp, 2) / 2 +
+      m_cp_coeff[4] * pow(temp, 3) / 3 +
+      m_cp_coeff[5] * pow(temp, 4) / 4 +
+      m_cp_coeff[6] * pow(temp, 5) / 5 + m_cp_coeff[7]) - e;
 
     err = abs(f_T);
 
     tk::real fp_T = 0;
     tk::real power = -2;
-    for (std::size_t k=0; k<cp_TPG.size()-1; ++k)
+    for (std::size_t k=0; k<m_cp_coeff.size()-1; ++k)
     {
-      fp_T += cp_TPG[k] * pow(temp, power);
+      fp_T += m_cp_coeff[k] * pow(temp, power);
       if (k == 2) fp_T += -1;
       power += 1;
     }

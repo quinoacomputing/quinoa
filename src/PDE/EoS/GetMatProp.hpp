@@ -49,6 +49,31 @@ getmatprop( std::size_t imat=0 ) {
   return mp;
 }
 
+//! Get a property for a species
+//! \tparam Prop Tag of property required
+//! \param[in] ispec Species-id who's property is required. Default is 0, so
+//!   that for the single-material system, this argument can be left unspecified
+//!   by the calling code
+//! \return Species property Prop
+//! \note This function returns a zero if the vector for the property required
+//!   is empty. This will happen if the user has not specified that property
+//!   in the control file, hence the inputdeck has not allocated that property
+//!   vector.
+template< class Prop >
+tk::real
+getspecprop( std::size_t ispec=0 ) {
+  const auto& specprop = g_inputdeck.get< tag::species >();
+  // assume only one type of species
+  auto pvec = specprop[ 0 ].template get< Prop >();
+
+  tk::real sp;
+  if (!pvec.empty())
+    sp = pvec[ ispec ];
+  else
+    sp = 0.0;
+  return sp;
+}
+
 } //inciter::
 
 #endif // GetMatProp_h
