@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/TPG.hpp
+  \file      src/PDE/EoS/ThermallyPerfectGas.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -10,26 +10,29 @@
              of state for the compressible flow equations.
 */
 // *****************************************************************************
-#ifndef TPG_h
-#define TPG_h
+#ifndef ThermallyPerfectGas_h
+#define ThermallyPerfectGas_h
 
 #include "Data.hpp"
 
 namespace inciter {
 
-class TPG {
+class ThermallyPerfectGas {
 
   private:
     tk::real m_gamma;
     tk::real m_R;
-    std::vector< tk::real > m_cp_TPG{std::vector< tk::real >(8)};
+    std::vector< tk::real > m_cp_coeff{std::vector< tk::real >(8)};
 
   public:
     //! Default constructor
-    TPG() = default;
+    ThermallyPerfectGas() = default;
 
     //! Constructor
-    TPG(tk::real gamma, tk::real R, std::vector< tk::real > cp_TPG);
+    ThermallyPerfectGas(
+      tk::real gamma,
+      tk::real R,
+      std::vector< tk::real > cp_coeff );
 
     //! Set rho0 EOS parameter. No-op.
     void setRho0(tk::real) {}
@@ -44,8 +47,8 @@ class TPG {
                        tk::real v,
                        tk::real w,
                        tk::real rhoE,
-                       tk::real,
-                       std::size_t,
+                       tk::real alpha=1.0,
+                       std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}}) const;
 
     //! \brief Calculate the Cauchy stress tensor from the material density,
@@ -64,8 +67,8 @@ class TPG {
     //! Calculate speed of sound from the material density and material pressure
     tk::real soundspeed( tk::real rho,
                          tk::real pr,
-                         tk::real,
-                         std::size_t,
+                         tk::real alpha=1.0,
+                         std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
       const std::array< tk::real, 3 >& asigman={{}} ) const;
 
@@ -91,14 +94,15 @@ class TPG {
                           tk::real v,
                           tk::real w,
                           tk::real rhoE,
-                          tk::real,
+                          tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(
       tk::real min,
       tk::real,
-      tk::real ) const;
+      tk::real ) const
+    { return min; }
 
     //! Compute the reference density
     tk::real refDensity() const { return density(refPressure(), 300.0); }
@@ -116,15 +120,15 @@ class TPG {
     void pup( PUP::er &p ) /*override*/ {
       p | m_gamma;
       p | m_R;
-      p | m_cp_TPG;
+      p | m_cp_coeff;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i TPG object reference
-    friend void operator|( PUP::er& p, TPG& i ) { i.pup(p); }
+    //! \param[in,out] i ThermallyPerfectGas object reference
+    friend void operator|( PUP::er& p, ThermallyPerfectGas& i ) { i.pup(p); }
     //@}
 };
 
 } //inciter::
 
-#endif // TPG_h
+#endif // ThermallyPerfectGas_h

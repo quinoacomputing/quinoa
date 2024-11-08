@@ -25,7 +25,7 @@ enum class MaterialType : uint8_t { STIFFENEDGAS
                                   , JWL
                                   , SMALLSHEARSOLID
                                   , GODUNOVROMENSKIALUMINUM
-                                  , TPG
+                                  , THERMALLYPERFECTGAS
                                   };
 
 //! Pack/Unpack MaterialType: forward overload to generic enum class packer
@@ -47,14 +47,14 @@ class Material : public tk::Toggle< MaterialType > {
         , { MaterialType::JWL, "jwl" }
         , { MaterialType::SMALLSHEARSOLID, "smallshearsolid" }
         , { MaterialType::GODUNOVROMENSKIALUMINUM, "godunovromenski_aluminum" }
-        , { MaterialType::TPG, "thermallyperfectgas" }
+        , { MaterialType::THERMALLYPERFECTGAS, "thermallyperfectgas" }
         },
         //! keywords -> Enums
         { { "stiffenedgas", MaterialType::STIFFENEDGAS }
         , { "jwl", MaterialType::JWL }
         , { "smallshearsolid", MaterialType::SMALLSHEARSOLID }
         , { "godunovromenski_aluminum", MaterialType::GODUNOVROMENSKIALUMINUM }
-        , { "thermallyperfectgas", MaterialType::TPG }
+        , { "thermallyperfectgas", MaterialType::THERMALLYPERFECTGAS }
         } )
     {}
 

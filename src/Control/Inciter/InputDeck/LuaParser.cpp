@@ -560,8 +560,9 @@ LuaParser::storeInputDeck(
           Throw("Either reference density or reference temperature must be "
             "specified for JWL equation of state (EOS).");
       }
-      // TPG materials
-      else if (mati_deck.get< tag::eos >() == inciter::ctr::MaterialType::TPG) {
+      // Thermally-perfect gas materials
+      else if (mati_deck.get< tag::eos >() ==
+        inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
 
         if (!lua_ideck["species"].valid())
           Throw("Species block must be specified for thermally perfect gas");
