@@ -19,7 +19,7 @@
 #include "Riemann/HLL.hpp"
 #include "Riemann/AUSM.hpp"
 #include "Riemann/LaxFriedrichsSolids.hpp"
-#include "Riemann/HLLCSolids.hpp"
+#include "Riemann/HLLCMultiMat.hpp"
 
 namespace inciter {
 
@@ -41,7 +41,7 @@ namespace inciter {
       fluxfn = LaxFriedrichsSolids::flux;
     }
     else if (flux == ctr::FluxType::HLLC) {
-      fluxfn = HLLCSolids::flux;
+      fluxfn = HLLCMultiMat::flux;
     }
     else {
       Throw("Riemann solver not set up for multi-material PDEs.");
