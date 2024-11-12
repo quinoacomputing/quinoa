@@ -25,7 +25,8 @@ namespace ctr {
 //! Differential equation types
 enum class PDEType : uint8_t { TRANSPORT,
                                COMPFLOW,
-                               MULTIMAT };
+                               MULTIMAT,
+                               MULTISPECIES };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PDEType& e ) { PUP::pup( p, e ); }
@@ -49,11 +50,15 @@ class PDE : public tk::Toggle< PDEType > {
         //! Enums -> names
         { { PDEType::TRANSPORT, "transport" },
           { PDEType::COMPFLOW, "compflow" },
-          { PDEType::MULTIMAT, "multimat" } },
+          { PDEType::MULTIMAT, "multimat" },
+          { PDEType::MULTISPECIES, "multispecies" }
+        },
         //! keywords -> Enums
         { { "transport", PDEType::TRANSPORT },
           { "compflow", PDEType::COMPFLOW },
-          { "multimat", PDEType::MULTIMAT } } ) {}
+          { "multimat", PDEType::MULTIMAT },
+          { "multispecies", PDEType::MULTISPECIES }
+        } ) {}
 };
 
 } // ctr::

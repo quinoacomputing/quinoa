@@ -21,6 +21,8 @@ optional libraries, defaults, and build system options. See
 and Intel compilers are not compatible. For more information, see
 https://github.com/ThePhD/sol2/issues/548.
 
+@note Building on MacOS is currently not supported.
+
 @section build_default Build using the defaults
 
 Quinoa is built in two stages:
@@ -164,26 +166,11 @@ On Alpine Linux you can pre-install the packages given in
 
        quinoa/tools/docker/Dockerfile.quinoa-build-alpine
 
-@section build_mac Build on Mac OS
-
-On Mac OS we do _not_ recommend using the system-wide compilers. Instead, we
-use [spack](https://spack.readthedocs.io) to install compilers and OpenMPI:
-
-       spack install cmake libtool autoconf automake
-       spack install environment-modules cmake gcc openmpi%gcc hdf5%gcc+hl
-
-The above will use install gcc and OpenMPI on top of it. You will have to load
-the environment modules as, e.g.,
-
-       module load gcc-9.2.0-clang-10.0.0-apple-vcpkolh openmpi-3.1.4-gcc-9.2.0-my2rkcv hdf5-1.10.5-gcc-9.2.0-prdkirn
-
-Then follow @ref build_default.
-
-@section build_clang Build using Clang or Intel compilers
+@section build_clang Build using Clang compilers
 
 The default build process on Linux, described in section @ref build_default,
-uses the system-wide gnu compiler suite. You can also use the clang or the
-Intel compilers. We do this by either building OpenMPI using clang or Intel or
+uses the system-wide gnu compiler suite. You can also use the clang compiler.
+We do this by either building OpenMPI using clang or
 by using the machine-specific MPI wrappers pointing to the compiler and then
 use the build process given in section @ref build_default.
 

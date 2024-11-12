@@ -7,6 +7,14 @@ implemented in Quinoa. The papers are grouped by executables.
 @section papers_inciter Inciter
 
 - @m_div{m-text m-strong}
+  W. Li, A. Pandare, H. Luo, J. Bakosi, J. Waltz, **[Robust 3D multi-material hydrodynamics using discontinuous Galerkin methods](https://doi.org/10.1002/fld.5340)**, International Journal for Numerical Methods in Fluids, 2024.
+  @m_enddiv
+
+  This paper includes the complete description of the discontinuous Galerkin
+  method for @ref inciter_mm "multi-material flows" and associated numerical
+  details implemented in Quinoa's @ref inciter_main.
+
+- @m_div{m-text m-strong}
   A. Pandare, J. Waltz, W. Li, H. Luo, J. Bakosi, **[On the Design of Stable, Consistent, and Conservative High-Order Methods for Multi-Material Hydrodynamics](https://doi.org/10.1016/j.jcp.2023.112313)**, Journal of Computational Physics, 490: 112313, 2023.
   @m_enddiv
 
@@ -15,7 +23,7 @@ implemented in Quinoa. The papers are grouped by executables.
   Quinoa's @ref inciter_main "Inciter".
 
 - @m_div{m-text m-strong}
-  W. Li, A. Pandare, H. Luo, J. Bakosi, J. Waltz, **[A parallel p-adaptive discontinuous Galerkin method for the Euler equations with dynamic load-balancing on tetrahedral grids](https://doi.org/10.1002/fld.5231)**, International Journal for Numerical Methods in Fluids, 2023.
+  W. Li, A. Pandare, H. Luo, J. Bakosi, J. Waltz, **[A parallel p-adaptive discontinuous Galerkin method for the Euler equations with dynamic load-balancing on tetrahedral grids](https://doi.org/10.1002/fld.5231)**, International Journal for Numerical Methods in Fluids, 95(12), 2023.
   @m_enddiv
 
   This paper describes the discontinuous Galerkin method for implemented in Quinoa's @ref inciter_main

@@ -50,6 +50,7 @@ class LuaParser {
       const std::string& alias,
       std::vector< char >& depv,
       std::size_t nmat,
+      std::size_t nspec,
       inciter::ctr::PDEType pde,
       tk::Centering c,
       std::vector< inciter::ctr::OutVar >& foutvar );
