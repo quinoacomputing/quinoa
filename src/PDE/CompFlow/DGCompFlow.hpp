@@ -71,37 +71,22 @@ class CompFlow {
     {
       // associate boundary condition configurations with state functions,
       // manually looping through all BCs and state functions
-      const auto& bc = g_inputdeck.get< tag::bc >();
-      std::vector< std::size_t > v;
-      for (const auto& ib : bc) {
-        const auto& dir = ib.get< tag::dirichlet >();
-        if (!dir.empty()) {
-          v.clear();
-          v.insert(v.end(), dir.begin(), dir.end());
-          m_bc.push_back( { v, dirichlet, noOpGrad } );
-        };
-
-        const auto& sym = ib.get< tag::symmetry >();
-        if (!sym.empty()) {
-          v.clear();
-          v.insert(v.end(), sym.begin(), sym.end());
-          m_bc.push_back( { v, symmetry, noOpGrad } );
-        };
-
-        const auto& fs = ib.get< tag::farfield >();
-        if (!fs.empty()) {
-          v.clear();
-          v.insert(v.end(), fs.begin(), fs.end());
-          m_bc.push_back( { v, farfield, noOpGrad } );
-        };
-
-        const auto& ext = ib.get< tag::extrapolate >();
-        if (!ext.empty()) {
-          v.clear();
-          v.insert(v.end(), ext.begin(), ext.end());
-          m_bc.push_back( { v, extrapolate, noOpGrad } );
-        };
-      };
+      brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
+      // BC State functions
+      { dirichlet
+      , symmetry
+      , invalidBC         // Outlet BC not implemented
+      , farfield
+      , extrapolate
+      , invalidBC },      // No slip wall BC not implemented
+      // BC Gradient functions
+      { noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad }
+      ) );
 
       // EoS initialization
       const auto& matprop =

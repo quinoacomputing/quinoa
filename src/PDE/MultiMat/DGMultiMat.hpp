@@ -74,23 +74,29 @@ class MultiMat {
       m_riemann( multimatRiemannSolver(
         g_inputdeck.get< tag::flux >() ) )
     {
-      // associate boundary condition configurations with state functions,
-      // manually looping through all BCs and state functions
+      // associate boundary condition configurations with state functions
+      brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
+      // BC State functions
+      { dirichlet
+      , symmetry
+      , invalidBC         // Outlet BC not implemented
+      , farfield
+      , extrapolate
+      , noslipwall },
+      // BC Gradient functions
+      { noOpGrad
+      , symmetryGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad }
+      ) );
+
+      // Inlet BC has a different structure than above BCs, so it must be 
+      // handled differently than with ConfigBC
       const auto& bc = g_inputdeck.get< tag::bc >();
       std::vector< std::size_t > v;
       for (const auto& ib : bc) {
-        const auto& dir = ib.get< tag::dirichlet >();
-        if (!dir.empty()) {
-          v.insert(v.end(), dir.begin(), dir.end());
-          m_bc.push_back( { v, dirichlet, noOpGrad } );
-        };
-
-        const auto& sym = ib.get< tag::symmetry >();
-        if (!sym.empty()) {
-          v.insert(v.end(), sym.begin(), sym.end());
-          m_bc.push_back( { v, symmetry, symmetryGrad } );
-        };
-
         const auto& in = ib.get< tag::inlet >();
         if (!in.empty()) {
           for (const auto& bndry : in) {
@@ -98,24 +104,6 @@ class MultiMat {
             v.insert(v.end(), sideset.begin(), sideset.end());
             m_bc.push_back( { v, inlet, noOpGrad } );
           }
-        };
-
-        const auto& fs = ib.get< tag::farfield >();
-        if (!fs.empty()) {
-          v.insert(v.end(), fs.begin(), fs.end());
-          m_bc.push_back( { v, farfield, noOpGrad } );
-        };
-
-        const auto& ext = ib.get< tag::extrapolate >();
-        if (!ext.empty()) {
-          v.insert(v.end(), ext.begin(), ext.end());
-          m_bc.push_back( { v, extrapolate, noOpGrad } );
-        };
-
-        const auto& nsw = ib.get< tag::noslipwall >();
-        if (!nsw.empty()) {
-          v.insert(v.end(), nsw.begin(), nsw.end());
-          m_bc.push_back( { v, noslipwall, noOpGrad } );
         };
       }
 
