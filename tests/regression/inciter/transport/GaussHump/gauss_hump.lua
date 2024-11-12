@@ -17,7 +17,9 @@ inciter = {
     {
       extrapolate = {1},
       inlet = {
-        sideset = { 2 }
+        {
+          sideset = { 2 }
+        }
       },
       outlet = {3}
     }

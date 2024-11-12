@@ -93,6 +93,7 @@ class Transport {
         if (!in.empty()) {
           for (const auto& bndry : in) {
             const auto& sideset = bndry.get< tag::sideset >();
+            v.clear();
             v.insert(v.end(), sideset.begin(), sideset.end());
             m_bc.push_back( { v, inlet, noOpGrad } );
           }
