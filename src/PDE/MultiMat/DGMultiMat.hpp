@@ -104,7 +104,7 @@ class MultiMat {
             v.insert(v.end(), sideset.begin(), sideset.end());
             m_bc.push_back( { v, inlet, noOpGrad } );
           }
-        };
+        }
       }
 
       // EoS initialization
