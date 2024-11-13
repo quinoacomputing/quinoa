@@ -4,11 +4,13 @@ add_library(PDE
             PDEStack.cpp
             Limiter.cpp
             MultiMat/MiscMultiMatFns.cpp
+            MultiSpecies/MiscMultiSpeciesFns.cpp
             PrefIndicator.cpp
             Reconstruction.cpp
             ConfigureTransport.cpp
             ConfigureCompFlow.cpp
             ConfigureMultiMat.cpp
+            ConfigureMultiSpecies.cpp
             CGPDE.cpp
             FVPDE.cpp
             DGPDE.cpp)
@@ -44,4 +46,5 @@ add_subdirectory(Transport/Problem)
 add_subdirectory(CompFlow/Problem)
 add_subdirectory(MultiMat/Physics)
 add_subdirectory(MultiMat/Problem)
+add_subdirectory(MultiSpecies/Problem)
 add_subdirectory(EoS)

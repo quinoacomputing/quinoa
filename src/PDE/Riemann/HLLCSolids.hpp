@@ -158,8 +158,8 @@ struct HLLCSolids {
     ac_r = std::sqrt(ac_r/rhor);
 
     // Signal velocities
-    auto Sl = std::min((vn_l[0]-ac_l), (0.5*(vn_r[0]+vn_l[0]-ac_r-ac_l)));
-    auto Sr = std::max((vn_l[0]+ac_l), (0.5*(vn_r[0]+vn_l[0]+ac_r+ac_l)));
+    auto Sl = std::min((vn_l[0]-ac_l), (vn_r[0]-ac_r));
+    auto Sr = std::max((vn_l[0]+ac_l), (vn_r[0]+ac_r));
     auto Si = (rhol*vn_l[0]*(Sl-vn_l[0])
                -rhor*vn_r[0]*(Sr-vn_r[0])
                +signn_l[0][0]-signn_r[0][0])
@@ -200,7 +200,7 @@ struct HLLCSolids {
         asig_t[k][j] = ( (vn_r[0]-Sr)*u[1][densityIdx(nmat,k)]*asignn_l[k][0][j]
                        - (vn_l[0]-Sl)*u[0][densityIdx(nmat,k)]*asignn_r[k][0][j]
                          + (vn_l[0]-Sl)*u[0][densityIdx(nmat,k)]
-                         *(vn_r[0]-Sr)*u[1][densityIdx(nmat,k)]
+                         * (vn_r[0]-Sr)*u[1][densityIdx(nmat,k)]
                          * (vn_r[j]-vn_l[j]) ) /
           ( (vn_r[0]-Sr)*u[1][densityIdx(nmat,k)] -
             (vn_l[0]-Sl)*u[0][densityIdx(nmat,k)]);
@@ -213,6 +213,7 @@ struct HLLCSolids {
       rho_t_l += arho_t_l[k];
 
       // inv deformation gradient
+      if (solidx[k] > 0) {
       gn_t_l = gn_l[k];
       for (std::size_t i=0; i<3; ++i)
         gn_t_l[i][0] = w_l*gn_l[k][i][0] + (
@@ -221,6 +222,7 @@ struct HLLCSolids {
 
       // rotate g back to original frame of reference
       g_t_l.push_back(tk::unrotateTensor(gn_t_l, fn));
+      }
 
       // energy
       arhoe_t_l[k] = u[0][energyIdx(nmat, k)] * w_l + (
@@ -240,6 +242,7 @@ struct HLLCSolids {
       rho_t_r += arho_t_r[k];
 
       // inv deformation gradient
+      if (solidx[k] > 0) {
       gn_t_r = gn_r[k];
       for (std::size_t i=0; i<3; ++i)
         gn_t_r[i][0] = w_r*gn_r[k][i][0] + (
@@ -248,6 +251,7 @@ struct HLLCSolids {
 
       // rotate g back to original frame of reference
       g_t_r.push_back(tk::unrotateTensor(gn_t_r, fn));
+      }
 
       // energy
       arhoe_t_r[k] = u[1][energyIdx(nmat, k)] * w_r + (
@@ -263,6 +267,8 @@ struct HLLCSolids {
     // Rotate velocity back
     v_t_l = tk::unrotateVector(vn_t_l, fn);
     v_t_r = tk::unrotateVector(vn_t_r, fn);
+
+    sig_t = tk::unrotateVector(sig_t, fn);
 
     // -------------------------------------------------------------------------
 
@@ -320,15 +326,15 @@ struct HLLCSolids {
     }
 
     // Star state fluxes
-    ftl = fl;
-    ftr = fr;
     for (std::size_t k=0; k<nmat; ++k)
     {
       // Left fluxes
-      ftl[volfracIdx(nmat, k)] += Sl * (al_t_l[k] - al_l[k]);
-      ftl[densityIdx(nmat, k)] +=
-        Sl * (arho_t_l[k] - u[0][densityIdx(nmat, k)]);
-      ftl[energyIdx(nmat, k)] += Sl * (arhoe_t_l[k] - u[0][energyIdx(nmat, k)]);
+      ftl[volfracIdx(nmat, k)] = vn_t_l[0] * al_t_l[k];
+      ftl[densityIdx(nmat, k)] = vn_t_l[0] * arho_t_l[k];
+      ftl[energyIdx(nmat, k)] = vn_t_l[0] * arhoe_t_l[k] - (//(sig_11*u + sig_12*v + sig_13*w);
+        + asig_t[k][0]*vn_t_l[0]
+        + asig_t[k][1]*vn_t_l[1]
+        + asig_t[k][2]*vn_t_l[2] );
 
       // inv deformation gradient tensor
       if (solidx[k] > 0) {
@@ -339,10 +345,12 @@ struct HLLCSolids {
       }
 
       // Right fluxes
-      ftr[volfracIdx(nmat, k)] += Sr * (al_t_r[k] - al_r[k]);
-      ftr[densityIdx(nmat, k)] +=
-        Sr * (arho_t_r[k] - u[1][densityIdx(nmat, k)]);
-      ftr[energyIdx(nmat, k)] += Sr * (arhoe_t_r[k] - u[1][energyIdx(nmat, k)]);
+      ftr[volfracIdx(nmat, k)] = vn_t_r[0] * al_t_r[k];
+      ftr[densityIdx(nmat, k)] = vn_t_r[0] * arho_t_r[k];
+      ftr[energyIdx(nmat, k)] = vn_t_r[0] * arhoe_t_r[k] - (//(sig_11*u + sig_12*v + sig_13*w);
+        + asig_t[k][0]*vn_t_r[0]
+        + asig_t[k][1]*vn_t_r[1]
+        + asig_t[k][2]*vn_t_r[2] );
 
       // inv deformation gradient tensor
       if (solidx[k] > 0) {
@@ -355,10 +363,10 @@ struct HLLCSolids {
     // bulk momentum
     for (std::size_t idir=0; idir<3; ++idir)
     {
-      ftl[momentumIdx(nmat, idir)] +=
-        Sl * (rho_t_l*v_t_l[idir] - u[0][momentumIdx(nmat, idir)]);
-      ftr[momentumIdx(nmat, idir)] +=
-        Sr * (rho_t_r*v_t_r[idir] - u[1][momentumIdx(nmat, idir)]);
+      ftl[momentumIdx(nmat, idir)] =
+        rho_t_l*v_t_l[idir]*Si - sig_t[idir];
+      ftr[momentumIdx(nmat, idir)] =
+        rho_t_r*v_t_r[idir]*Si - sig_t[idir];
     }
 
     // -------------------------------------------------------------------------
@@ -394,7 +402,7 @@ struct HLLCSolids {
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back(-(aTn_l[k][0]+Sl/(Si-Sl)*(aTn_l[k][0]-asig_t[k][0])));
       // Store Riemann velocity
-      flx.push_back( vn_l[0] );
+      flx.push_back( vn_t_l[0] );
       // Store Riemann aTn_ij (3*nsld)
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
@@ -413,7 +421,7 @@ struct HLLCSolids {
       for (std::size_t k=0; k<nmat; ++k)
         flx.push_back(-(aTn_r[k][0]+Sr/(Si-Sr)*(aTn_r[k][0]-asig_t[k][0])));
       // Store Riemann velocity
-      flx.push_back( vn_r[0] );
+      flx.push_back( vn_t_r[0] );
       // Store Riemann aTn_ij (3*nsld)
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {

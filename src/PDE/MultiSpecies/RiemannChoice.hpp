@@ -1,14 +1,14 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/RiemannChoice.hpp
+  \file      src/PDE/MultiSpecies/RiemannChoice.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Register available Riemann solvers for multimaterial compressible
-             hydrodynamics.
-  \details   Register available Riemann solvers for multimaterial compressible
-             hydrodynamics.
+  \brief     Register available Riemann solvers for multi-species compressible
+             fluid dynamics.
+  \details   Register available Riemann solvers for multi-species compressible
+             fluid dynamics.
 */
 // *****************************************************************************
 #ifndef RiemannChoice_h
@@ -16,10 +16,7 @@
 
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
-#include "Riemann/HLL.hpp"
-#include "Riemann/AUSM.hpp"
-#include "Riemann/LaxFriedrichsSolids.hpp"
-#include "Riemann/HLLCMultiMat.hpp"
+#include "Riemann/AUSMMultiSpecies.hpp"
 
 namespace inciter {
 
@@ -27,21 +24,12 @@ namespace inciter {
   //! \param[in] flux Riemann solver from input deck
   //! \return Function pointer to the Riemann solver, must be of type
   //!   tk::RiemannFluxFn
-  const static tk::RiemannFluxFn multimatRiemannSolver(ctr::FluxType flux)
+  const static tk::RiemannFluxFn multispeciesRiemannSolver(ctr::FluxType flux)
   {
     tk::RiemannFluxFn fluxfn;
 
     if (flux == ctr::FluxType::AUSM) {
-      fluxfn = AUSM::flux;
-    }
-    else if (flux == ctr::FluxType::HLL) {
-      fluxfn = HLL::flux;
-    }
-    else if (flux == ctr::FluxType::LaxFriedrichs) {
-      fluxfn = LaxFriedrichsSolids::flux;
-    }
-    else if (flux == ctr::FluxType::HLLC) {
-      fluxfn = HLLCMultiMat::flux;
+      fluxfn = AUSMMultiSpecies::flux;
     }
     else {
       Throw("Riemann solver not set up for multi-material PDEs.");
