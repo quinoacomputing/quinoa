@@ -148,6 +148,7 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::pressure,    tk::real,
   tag::density,     tk::real,
   tag::temperature, tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
   tag::materialid,  std::size_t,
   tag::timedep,     std::vector<
     tk::TaggedTuple< brigand::list<
