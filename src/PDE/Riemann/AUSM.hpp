@@ -206,10 +206,6 @@ struct AUSM {
       lt_minus[i] = 0.5 * (vwave - std::fabs(vwave));
     }
 
-    // Normalized flux vectors
-    auto l_p = l_plus/( vriem + std::copysign(1.0e-12, vriem) );
-    auto l_m = l_minus/( vriem + std::copysign(1.0e-12, vriem) );
-
     // Conservative fluxes
     for (std::size_t k=0; k<nmat; ++k)
     {
