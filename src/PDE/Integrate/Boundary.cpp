@@ -433,6 +433,7 @@ bndSurfIntViscousFV(
   const StateFn& gradFn,
   const Fields& U,
   const Fields& P,
+  const Fields& T,
   const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp )
@@ -457,6 +458,7 @@ bndSurfIntViscousFV(
 //!   at boundaries
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] T Vector of temperatures at recent time step
 //! \param[in] srcFlag Whether the energy source was added
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in] intsharp Interface compression tag, an optional argument, with
@@ -551,6 +553,14 @@ bndSurfIntViscousFV(
         // Get BC for cell-averaged state
         auto varcc = state( ncomp, mat_blk, ucc,
           centroids[1][0], centroids[1][1], centroids[1][2], t, fn );
+        // Hard-coded temperature BC- only works for adiabatic 'noslipwall',
+        // 'symmetry', 'extrapolate' bc
+        std::array< std::vector< real >, 2 > Tcc{{
+          std::vector<real>(nmat), std::vector<real>(nmat) }};
+        for (std::size_t k=0; k<nmat; ++k) {
+          Tcc[0][k] = T(el, k*rdof);
+          Tcc[1][k] = Tcc[0][k];  // actual bc
+        }
 
         // Numerical viscous flux
         // ---------------------------------------------------------------------
@@ -575,9 +585,22 @@ bndSurfIntViscousFV(
           for (std::size_t j=0; j<3; ++j)
             dudx[i][j] = 0.5 * (grad[0][3*i+j] + grad[1][3*i+j]);
 
-        // 3. Compute flux
+        // 3. average dT/dx_j
+        std::vector< std::array< real, 3 > > dTdx(nmat,
+          std::array< real, 3 >{{0, 0, 0}});
+        for (std::size_t k=0; k<nmat; ++k) {
+          auto mark = k*rdof;
+          for (std::size_t j=0; j<3; ++j) {
+            dTdx[k][j] =
+                dBdx_l[j][1] * T(el, mark+1)
+              + dBdx_l[j][2] * T(el, mark+2)
+              + dBdx_l[j][3] * T(el, mark+3);
+          }
+        }
+
+        // 4. Compute flux
         auto fl = modifiedGradientViscousFlux(nmat, ncomp, fn, centroids, var,
-          varcc, dudx);
+          varcc, Tcc, dudx, dTdx);
 
         // Add the surface integration term to the rhs
         for (ncomp_t c=0; c<ncomp; ++c)

@@ -24,6 +24,7 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
+#include "Integrate/Mass.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
@@ -717,6 +718,102 @@ THINCFunction_new( std::size_t rdof,
 
   // balance out errors
   alReco[kmax] -= err;
+}
+
+void
+computeTemperaturesFV(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t nmat,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
+  const tk::Fields& unk,
+  const tk::Fields& prim,
+  const std::vector< int >& srcFlag,
+  tk::Fields& T )
+// *****************************************************************************
+//  Compute the temperatures based on FV conserved quantities
+//! \param[in] mat_blk EOS material block
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] unk Array of conservative variables
+//! \param[in] prim Array of primitive variables
+//! \param[in] srcFlag Whether the energy source was added
+//! \param[in,out] T Array of material temperature dofs
+//! \details This function computes the dofs of material temperatures based on
+//!   conservative quantities from an FV scheme, using EOS calls. It uses the
+//!   weak form m_{ij} T_i = \int T_{EOS}(rho, rhoE, u) B_j.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::rdof >();
+  std::size_t ncomp = unk.nprop()/rdof;
+  std::size_t nprim = prim.nprop()/rdof;
+  const auto intsharp = inciter::g_inputdeck.get< tag::multimat,
+    tag::intsharp >();
+  auto nelem = unk.nunk();
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    // Here we pre-compute the left-hand-side (mass) matrix. The lhs in
+    // DG.cpp is not used here because the size of the mass matrix in this
+    // projection procedure should be rdof instead of ndof.
+    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
+
+    std::vector< tk::real > R(nmat*rdof, 0.0);
+
+    auto ng = tk::NGvol(rdof);
+
+    // Arrays for quadrature points
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+    // Loop over quadrature points in element e
+    for (std::size_t igp=0; igp<ng; ++igp) {
+      // Compute the basis function
+      auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+                               coordgp[2][igp] );
+
+      auto w = wgp[igp] * geoElem(e, 0);
+
+      // Evaluate the solution at quadrature point
+      auto state = evalFVSol(mat_blk, intsharp, ncomp, nprim, rdof,
+        nmat, e, inpoel, coord, geoElem,
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim,
+        srcFlag[e]);
+
+      // Velocity vector at quadrature point
+      std::array< tk::real, 3 >
+        vel{ state[ncomp+inciter::velocityIdx(nmat, 0)],
+             state[ncomp+inciter::velocityIdx(nmat, 1)],
+             state[ncomp+inciter::velocityIdx(nmat, 2)] };
+
+      // Evaluate the right-hand-side vector (for temperature)
+      for(std::size_t k=0; k<nmat; k++) {
+        auto tk = mat_blk[k].compute< inciter::EOS::temperature >(
+          state[inciter::densityIdx(nmat, k)], vel[0], vel[1], vel[2],
+          state[inciter::energyIdx(nmat, k)],
+          state[inciter::volfracIdx(nmat, k)] );
+        auto mark = k * rdof;
+        for(std::size_t idof=0; idof<rdof; idof++)
+          R[mark+idof] += w * tk * B[idof];
+      }
+    }
+
+    // Update the high order dofs of the temperature
+    for(std::size_t k=0; k<nmat; k++) {
+      auto mark = k * rdof;
+      for(std::size_t idof=1; idof<rdof; idof++)
+        T(e, mark+idof) = R[mark+idof] / L[idof];
+    }
+  }
 }
 
 std::vector< tk::real >
