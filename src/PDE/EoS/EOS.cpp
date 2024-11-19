@@ -68,5 +68,12 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto mu = getmatprop< tag::mu >(k);
     m_material = GodunovRomenskiAluminum(g, c_v, mu);
   }
+  //else if (mattype == ctr::MaterialType::TPG) {
+  //  // query input deck for gamma, R
+  //  auto g = getmatprop< tag::gamma >(k);
+  //  auto R = getmatprop< tag::R >(k);
+  //  auto cp_TPG = getmatprop< tag::cp_TPG >(k);
+  //  m_material = TPG(g, R, cp_TPG);
+  //}
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
 }

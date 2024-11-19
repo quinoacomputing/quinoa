@@ -4,6 +4,7 @@ add_library(EOS
             JWL.cpp
             SmallShearSolid.cpp
             GodunovRomenskiAluminum.cpp)
+            #TPG.cpp)
 
 target_include_directories(EOS PUBLIC
                            ${QUINOA_SOURCE_DIR}
