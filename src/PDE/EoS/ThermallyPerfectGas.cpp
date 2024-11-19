@@ -153,7 +153,7 @@ ThermallyPerfectGas::totalenergy(
       m_cp_coeff[5] * pow(temp, 4) / 4 +
       m_cp_coeff[6] * pow(temp, 5) / 5 + m_cp_coeff[7]);
 
-  return (e + 0.5 * rho * (u*u + v*v + w*w));
+  return (rho * e + 0.5 * rho * (u*u + v*v + w*w));
 }
 
 tk::real
@@ -178,7 +178,7 @@ ThermallyPerfectGas::temperature(
   auto R = m_R;
 
   // Solve for internal energy
-  tk::real e = rhoE - 0.5 * rho * (u*u + v*v + w*w);
+  tk::real e = rhoE / rho - 0.5 * (u*u + v*v + w*w);
 
   // Solve for temperature
   tk::real temp = 1000; // Starting guess
