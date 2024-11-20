@@ -588,15 +588,6 @@ bndSurfIntViscousFV(
         // 3. average dT/dx_j
         std::vector< std::array< real, 3 > > dTdx(nmat,
           std::array< real, 3 >{{0, 0, 0}});
-        for (std::size_t k=0; k<nmat; ++k) {
-          auto mark = k*rdof;
-          for (std::size_t j=0; j<3; ++j) {
-            dTdx[k][j] =
-                dBdx_l[j][1] * T(el, mark+1)
-              + dBdx_l[j][2] * T(el, mark+2)
-              + dBdx_l[j][3] * T(el, mark+3);
-          }
-        }
 
         // 4. Compute flux
         auto fl = modifiedGradientViscousFlux(nmat, ncomp, fn, centroids, var,
