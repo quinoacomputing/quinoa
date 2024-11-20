@@ -116,7 +116,6 @@ namespace inciter {
     return {{ std::move(ul), std::move(ur) }};
   }
 
-  //! \todo Fix all of this for inlet. Just trying to get this working
   //! \brief Boundary state function providing the left and right state of a
   //!   face at farfield boundaries
   //! \param[in] ncomp Number of scalar components in this PDE system
@@ -132,7 +131,7 @@ namespace inciter {
             const std::vector< EOS >& mat_blk,
             const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
-            const std::array< tk::real, 3 >& fn )
+            const std::array< tk::real, 3 >&  )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -144,16 +143,13 @@ namespace inciter {
     // must follow the same signature, so I can't just put it in as an input.
     // For now, leave it so it just takes the first block, but maybe there's a
     // way to do this a bit more intelligently.
+
     auto& inbc = g_inputdeck.get< tag::bc >()[0].get< tag::inlet >();
-    auto fp =
-      // g_inputdeck.get< tag::bc >()[0].get< tag::pressure >();
-      inbc[0].get< tag::pressure >();
-    auto ft =
-      // g_inputdeck.get< tag::bc >()[0].get< tag::temperature >();
-      inbc[0].get< tag::temperature >();
-    auto fu =
-      // g_inputdeck.get< tag::bc >()[0].get< tag::velocity >();
-      inbc[0].get< tag::velocity >();
+    //! \todo With changes, ft and fp are not used, since interior cell is used
+    //! instead. Remove, and also add matid tag
+    auto fp = inbc[0].get< tag::pressure >();
+    auto ft = inbc[0].get< tag::temperature >();
+    auto fu = inbc[0].get< tag::velocity >();
     auto fmat =
       g_inputdeck.get< tag::bc >()[0].get< tag::materialid >() - 1;
 
@@ -169,78 +165,40 @@ namespace inciter {
     auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
     auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
 
-    // Normal velocity
-    auto vn = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
-
-    // Acoustic speed
-    tk::real a(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-      if (ul[volfracIdx(nmat, k)] > 1.0e-04)
-        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
-          ul[densityIdx(nmat, k)], ul[ncomp+pressureIdx(nmat, k)],
-          ul[volfracIdx(nmat, k)], k ) );
-
-    // Mach number
-    auto Ma = vn / a;
+    // External cell velocity, such that velocity = fu at face
+    auto v1r = 2.0*fu[0] - v1l;
+    auto v2r = 2.0*fu[1] - v2l;
+    auto v3r = 2.0*fu[2] - v3l;
 
     tk::real alphamin = 1e-12;
+    tk::real rho(0.0);
+    for (std::size_t k=0; k<nmat; ++k) {
+      if (k == fmat)
+        ur[volfracIdx(nmat,k)] = 1.0 -
+          (static_cast< tk::real >(nmat-1))*alphamin;
+      else
+        ur[volfracIdx(nmat,k)] = alphamin;
 
-    //! \note: it seems that using internal pressure does not lead to the
-    //! correct behavior (!)
-    if (true) {  // Supersonic inflow
-      // For supersonic inflow, all the characteristics are from outside.
-      // Therefore, we calculate the ghost cell state using the primitive
-      // variables from outside.
-      tk::real rho(0.0);
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (k == fmat)
-          ur[volfracIdx(nmat,k)] = 1.0 -
-            (static_cast< tk::real >(nmat-1))*alphamin;
-        else
-          ur[volfracIdx(nmat,k)] = alphamin;
-        auto rhok = mat_blk[k].compute< EOS::density >(fp, ft);
-        ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
-        ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
-          mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], fp);
+      auto p = ul[ncomp+pressureIdx(nmat,k)] / ul[volfracIdx(nmat,k)];
+      auto rhok = ul[densityIdx(nmat, k)];
 
-        // material pressures
-        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
+      ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
+      ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
+        mat_blk[k].compute< EOS::totalenergy >(rhok, v1r, v2r, v3r, p);
+      // material pressures
+      ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * p;
 
-        rho += ur[densityIdx(nmat,k)];
-      }
-      for (std::size_t i=0; i<3; ++i) {
-        ur[momentumIdx(nmat,i)] = rho * fu[i];
-        ur[ncomp+velocityIdx(nmat, i)] = fu[i];
-      }
-
-    } else if (Ma > -1) {  // Subsonic inflow
-      // For subsonic inflow, there is 1 outgoing characteristic and 4
-      // incoming characteristics. Therefore, we calculate the ghost cell state
-      // by taking pressure from the internal cell and other quantities from
-      // the outside.
-      tk::real rho(0.0);
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (k == fmat)
-          ur[volfracIdx(nmat,k)] = 1.0 -
-            (static_cast< tk::real >(nmat-1))*alphamin;
-        else
-          ur[volfracIdx(nmat,k)] = alphamin;
-        auto p = ul[ncomp+pressureIdx(nmat,k)] / ul[volfracIdx(nmat,k)];
-        auto rhok = mat_blk[k].compute< EOS::density >(p, ft);
-        ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
-        ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
-          mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], p);
-
-        // material pressures
-        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * p;
-
-        rho += ur[densityIdx(nmat,k)];
-      }
-      for (std::size_t i=0; i<3; ++i) {
-        ur[momentumIdx(nmat,i)] = rho * fu[i];
-        ur[ncomp+velocityIdx(nmat, i)] = fu[i];
-      }
+      rho += ur[densityIdx(nmat,k)];
     }
+
+    ur[momentumIdx(nmat, 0)] = rho * v1r;
+    ur[momentumIdx(nmat, 1)] = rho * v2r;
+    ur[momentumIdx(nmat, 2)] = rho * v3r;
+
+    // velocity
+    ur[ncomp+velocityIdx(nmat, 0)] = v1r;
+    ur[ncomp+velocityIdx(nmat, 1)] = v2r;
+    ur[ncomp+velocityIdx(nmat, 2)] = v3r;
 
     Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
             "boundary state vector" );
