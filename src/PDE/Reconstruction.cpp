@@ -762,7 +762,7 @@ computeTemperaturesFV(
 
     std::vector< tk::real > R(nmat*rdof, 0.0);
 
-    auto ng = 11;
+    std::size_t ng = 11;
 
     // Arrays for quadrature points
     std::array< std::vector< tk::real >, 3 > coordgp;
