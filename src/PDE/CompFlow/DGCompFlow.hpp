@@ -69,8 +69,8 @@ class CompFlow {
       m_riemann( compflowRiemannSolver(
         g_inputdeck.get< tag::flux >() ) )
     {
-      // associate boundary condition configurations with state functions,
-      // manually looping through all BCs and state functions
+      // associate boundary condition configurations with state functions, the
+      // order in which the state functions listed matters, see ctr::bc::Keys
       brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
       // BC State functions
       { dirichlet
