@@ -104,6 +104,7 @@ bndSurfIntViscousFV(
   const StateFn& gradFn,
   const Fields& U,
   const Fields& P,
+  const Fields& T,
   const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp );
