@@ -13,6 +13,7 @@
 #ifndef BCFunctions_h
 #define BCFunctions_h
 
+#include <iostream>
 #include "FunctionPrototypes.hpp"
 #include "MiscMultiMatFns.hpp"
 
@@ -117,14 +118,13 @@ namespace inciter {
   }
 
   //! \brief Boundary state function providing the left and right state of a
-  //!   face at farfield boundaries
+  //!   face at inlet boundaries
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
-  //! \param[in] fn Unit face normal
   //! \return Left and right states for all scalar components in this PDE
   //!   system
-  //! \details The farfield boudary calculation, implemented here, is
-  //!   based on the characteristic theory of hyperbolic systems.
+  //! \details The inlet boundary condition specifies a velocity at a
+  //!   sideset and assumes a zero bulk pressure and density gradient
   //! \note The function signature must follow tk::StateFn
   static tk::StateFn::result_type
   inlet( ncomp_t ncomp,
@@ -135,23 +135,11 @@ namespace inciter {
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
-
-    // Farfield primitive quantities
-    // how do we make sure we have called the proper sideset for this input?
-    // This is necessary for multiple independent inputs, but I can't quite
-    // figure out how to get it to work considering all function signatures
-    // must follow the same signature, so I can't just put it in as an input.
-    // For now, leave it so it just takes the first block, but maybe there's a
-    // way to do this a bit more intelligently.
-
     auto& inbc = g_inputdeck.get< tag::bc >()[0].get< tag::inlet >();
-    //! \todo With changes, ft and fp are not used, since interior cell is used
-    //! instead. Remove, and also add matid tag
-    auto fp = inbc[0].get< tag::pressure >();
-    auto ft = inbc[0].get< tag::temperature >();
-    auto fu = inbc[0].get< tag::velocity >();
-    auto fmat =
-      g_inputdeck.get< tag::bc >()[0].get< tag::materialid >() - 1;
+
+    // inlet velocity and material
+    auto u_in = inbc[0].get< tag::velocity >();
+    auto mat_in = inbc[0].get< tag::materialid >() - 1;
 
     [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
 
@@ -165,30 +153,32 @@ namespace inciter {
     auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
     auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
 
-    // External cell velocity, such that velocity = fu at face
-    auto v1r = 2.0*fu[0] - v1l;
-    auto v2r = 2.0*fu[1] - v2l;
-    auto v3r = 2.0*fu[2] - v3l;
+    // External cell velocity, such that velocity = v_in at face
+    auto v1r = 2.0*u_in[0] - v1l;
+    auto v2r = 2.0*u_in[1] - v2l;
+    auto v3r = 2.0*u_in[2] - v3l;
 
-    tk::real alphamin = 1e-12;
+    // Calculate bulk pressure/density to ensure zero gradient
+    tk::real p(0.0);
     tk::real rho(0.0);
     for (std::size_t k=0; k<nmat; ++k) {
-      if (k == fmat)
+      p += ul[ncomp+pressureIdx(nmat,k)];
+      rho += ul[densityIdx(nmat,k)];
+    }
+
+    tk::real alphamin = 1e-12;
+    for (std::size_t k=0; k<nmat; ++k) {
+      if (k == mat_in)
         ur[volfracIdx(nmat,k)] = 1.0 -
           (static_cast< tk::real >(nmat-1))*alphamin;
       else
         ur[volfracIdx(nmat,k)] = alphamin;
 
-      auto p = ul[ncomp+pressureIdx(nmat,k)] / ul[volfracIdx(nmat,k)];
-      auto rhok = ul[densityIdx(nmat, k)];
-
-      ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
+      // zero bulk pressure and density gradient
+      ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * p;
+      ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rho;
       ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
-        mat_blk[k].compute< EOS::totalenergy >(rhok, v1r, v2r, v3r, p);
-      // material pressures
-      ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * p;
-
-      rho += ur[densityIdx(nmat,k)];
+        mat_blk[k].compute< EOS::totalenergy >(rho, v1r, v2r, v3r, p);
     }
 
     ur[momentumIdx(nmat, 0)] = rho * v1r;
