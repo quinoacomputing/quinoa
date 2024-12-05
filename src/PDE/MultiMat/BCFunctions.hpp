@@ -13,7 +13,6 @@
 #ifndef BCFunctions_h
 #define BCFunctions_h
 
-#include <iostream>
 #include "FunctionPrototypes.hpp"
 #include "MiscMultiMatFns.hpp"
 
