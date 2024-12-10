@@ -73,15 +73,6 @@ inciter = {
       "y-velocity",
       "z-velocity"
     },
-    elemalias = {
-      "spec1_density_numerical",
-      "spec2_density_numerical",
-      "density_numerical",
-      "total_energy_density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical"
-    },
   }
 
 }
