@@ -146,12 +146,12 @@ ThermallyPerfectGas::totalenergy(
   auto R = m_R;
 
   tk::real temp = pr / (rho * R);
-  tk::real e = R * (-m_cp_coeff[0] * pow(temp, -1) +
-      m_cp_coeff[1] * log(temp) + (m_cp_coeff[2] - 1) * temp +
-      m_cp_coeff[3] * pow(temp, 2) / 2 +
-      m_cp_coeff[4] * pow(temp, 3) / 3 +
-      m_cp_coeff[5] * pow(temp, 4) / 4 +
-      m_cp_coeff[6] * pow(temp, 5) / 5 + m_cp_coeff[7]);
+  tk::real e = R * (-m_cp_coeff[0] * std::pow(temp, -1) +
+      m_cp_coeff[1] * std::log(temp) + (m_cp_coeff[2] - 1) * temp +
+      m_cp_coeff[3] * std::pow(temp, 2) / 2 +
+      m_cp_coeff[4] * std::pow(temp, 3) / 3 +
+      m_cp_coeff[5] * std::pow(temp, 4) / 4 +
+      m_cp_coeff[6] * std::pow(temp, 5) / 5 + m_cp_coeff[7]);
 
   return (rho * e + 0.5 * rho * (u*u + v*v + w*w));
 }
@@ -180,31 +180,41 @@ ThermallyPerfectGas::temperature(
   // Solve for internal energy
   tk::real e = rhoE / rho - 0.5 * (u*u + v*v + w*w);
 
-  // Solve for temperature
+  // Solve for temperature - Newton's method
   tk::real temp = 1000; // Starting guess
   tk::real tol = 1e-8; // Stopping condition
   tk::real err = 1e8;
-  while (err > tol) {
-    tk::real f_T = R * (-m_cp_coeff[0] * pow(temp, -1) +
-      m_cp_coeff[1] * log(temp) + (m_cp_coeff[2] - 1) * temp +
-      m_cp_coeff[3] * pow(temp, 2) / 2 +
-      m_cp_coeff[4] * pow(temp, 3) / 3 +
-      m_cp_coeff[5] * pow(temp, 4) / 4 +
-      m_cp_coeff[6] * pow(temp, 5) / 5 + m_cp_coeff[7]) - e;
+  std::size_t maxiter = 1000;
+  std::size_t i(0);
+  while (i < maxiter) {
+    tk::real f_T = R * (-m_cp_coeff[0] * std::pow(temp, -1) +
+      m_cp_coeff[1] * std::log(temp) + (m_cp_coeff[2] - 1) * temp +
+      m_cp_coeff[3] * std::pow(temp, 2) / 2 +
+      m_cp_coeff[4] * std::pow(temp, 3) / 3 +
+      m_cp_coeff[5] * std::pow(temp, 4) / 4 +
+      m_cp_coeff[6] * std::pow(temp, 5) / 5 + m_cp_coeff[7]) - e;
 
     err = abs(f_T);
 
+    // Get derivative - df/dT. For loop is working through polynomial.
     tk::real fp_T = 0;
     tk::real power = -2;
     for (std::size_t k=0; k<m_cp_coeff.size()-1; ++k)
     {
-      fp_T += m_cp_coeff[k] * pow(temp, power);
+      fp_T += m_cp_coeff[k] * std::pow(temp, power);
       if (k == 2) fp_T += -1;
       power += 1;
     }
     fp_T = fp_T * R;
 
     temp = temp - f_T / fp_T;
+
+    if (err <= tol) break;
+    i++;
+    if ( i == maxiter ) {
+      Throw("ThermallyPerfectGas Newton's Method for temperature failed to converge after iterations "
+      + std::to_string(i));
+    }
   }
 
   return temp;
