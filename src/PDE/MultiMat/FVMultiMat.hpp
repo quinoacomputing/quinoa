@@ -513,10 +513,15 @@ class MultiMat {
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
                      srcFlag, R, intsharp );
       // compute internal surface viscous flux integrals
-      if (viscous)
+      tk::Fields T( U.nunk(), rdof*nmat );
+      if (viscous) {
+        computeTemperaturesFV( m_mat_blk, nmat, inpoel, coord, geoElem,
+                               U, P, srcFlag, T );
+
         tk::surfIntViscousFV( nmat, m_mat_blk, rdof, inpoel,
-                              coord, fd, geoFace, geoElem, U, P,
+                              coord, fd, geoFace, geoElem, U, P, T,
                               srcFlag, R, intsharp );
+      }
 
       // compute boundary surface flux (including non-conservative) integrals
       for (const auto& b : m_bc) {
@@ -526,7 +531,7 @@ class MultiMat {
         if (viscous)
           tk::bndSurfIntViscousFV( nmat, m_mat_blk, rdof, std::get<0>(b),
                                    fd, geoFace, geoElem, inpoel, coord, t,
-                                   std::get<1>(b), std::get<2>(b), U, P,
+                                   std::get<1>(b), std::get<2>(b), U, P, T,
                                    srcFlag, R, intsharp );
       }
 
