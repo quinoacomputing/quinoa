@@ -28,6 +28,7 @@ enum class FluxType : uint8_t { LaxFriedrichs
                               , HLL
                               , Rusanov
                               , LDFSS
+                              , SLAU
                               };
 
 //! Pack/Unpack FluxType: forward overload to generic enum class packer
@@ -51,6 +52,7 @@ class Flux : public tk::Toggle< FluxType > {
         , { FluxType::AUSM, "ausm" }
         , { FluxType::HLL, "hll" }
         , { FluxType::LDFSS, "ldfss" }
+        , { FluxType::SLAU, "slau" }
         },
         //! keywords -> Enums
         { { "laxfriedrichs", FluxType::LaxFriedrichs }
@@ -59,6 +61,7 @@ class Flux : public tk::Toggle< FluxType > {
         , { "ausm", FluxType::AUSM }
         , { "hll", FluxType::HLL }
         , { "ldfss", FluxType::LDFSS }
+        , { "slau", FluxType::SLAU }
         } )
     {}
 

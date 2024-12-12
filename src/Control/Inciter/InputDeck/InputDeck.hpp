@@ -782,6 +782,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         used in inciter. It is only set up for for multi-material hydro, and
         not selectable for anything else.)"});
 
+      keywords.insert({"slau",
+        "Select the Simple Low-dissipation AUSM (SLAU) flux function",
+        R"(This keyword is used to select the Simple Low-dissipation AUSM flux
+        function used for discontinuous Galerkin (DG) spatial discretization
+        used in inciter. It is only set up for for multi-material hydro, and
+        not selectable for anything else.)"});
+
       keywords.insert({"lowspeed_kp",
         "Select the low-speed coefficient K_p in the AUSM+up flux function",
         R"(This keyword is used to select the low-speed coefficient K_p in the
