@@ -25,7 +25,9 @@ inciter = {
       id       = { 1, 2 },
       gamma    = { 1.4, 1.4 },  -- ratio of specific heats
       R        = { 2.870025066673538e+02, 2.870025066673538e+02 },  -- specific gas constant
-      cp_coeff = { {0, 0, 3.5, 0, 0, 0, 0, 0}, {0, 0, 3.5, 0, 0, 0, 0, 0} } -- Coefficients for cP / R (NASA GLENN polynomial)
+      cp_coeff = { { {0, 0, 3.5, 0, 0, 0, 0, 0}, {0, 0, 3.5, 0, 0, 0, 0, 0}, {0, 0, 3.5, 0, 0, 0, 0, 0} },
+                 { {0, 0, 3.5, 0, 0, 0, 0, 0}, {0, 0, 3.5, 0, 0, 0, 0, 0}, {0, 0, 3.5, 0, 0, 0, 0, 0} } }, -- Coefficients for cP / R (NASA GLENN polynomial)
+      t_range = { {1e-8, 1000, 6000, 20000}, {1e-8, 1000, 6000, 20000}} -- Temperature range (K) over which the polynomials are valid
     }
   },
 

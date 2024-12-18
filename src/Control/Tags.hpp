@@ -221,6 +221,7 @@ DEFTAG(solidx);
 DEFTAG(yield_stress);
 DEFTAG(R);
 DEFTAG(cp_coeff);
+DEFTAG(t_range);
 
 DEFTAG(field_output);
 DEFTAG(interval);

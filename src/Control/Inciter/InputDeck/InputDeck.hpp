@@ -131,7 +131,8 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::id,       std::vector< uint64_t >,
   tag::gamma,    std::vector< tk::real >,
   tag::R,        std::vector< tk::real >,
-  tag::cp_coeff, std::vector< std::vector< tk::real > >
+  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,  std::vector< std::vector< tk::real > >
 > >;
 
 // Boundary conditions block

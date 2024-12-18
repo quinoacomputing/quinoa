@@ -20,15 +20,18 @@ using inciter::ThermallyPerfectGas;
 ThermallyPerfectGas::ThermallyPerfectGas(
   tk::real gamma,
   tk::real R,
-  std::vector< tk::real > cp_coeff) :
+  std::vector< std::vector< tk::real > > cp_coeff,
+  std::vector< tk::real > t_range) :
   m_gamma(gamma),
   m_R(R),
-  m_cp_coeff(cp_coeff)
+  m_cp_coeff(cp_coeff),
+  m_t_range(t_range)
 // *************************************************************************
 //  Constructor
 //! \param[in] gamma Ratio of specific heats
 //! \param[in] R gas constant
 //! \param[in] cp_coeff NASA Glenn polynomials coefficients for cp fit
+//! \param[in] t_range temperature range where polynomial coeffs are valid
 // *************************************************************************
 { }
 
@@ -146,12 +149,25 @@ ThermallyPerfectGas::totalenergy(
   auto R = m_R;
 
   tk::real temp = pr / (rho * R);
-  tk::real e = R * (-m_cp_coeff[0] * std::pow(temp, -1) +
-      m_cp_coeff[1] * std::log(temp) + (m_cp_coeff[2] - 1) * temp +
-      m_cp_coeff[3] * std::pow(temp, 2) / 2 +
-      m_cp_coeff[4] * std::pow(temp, 3) / 3 +
-      m_cp_coeff[5] * std::pow(temp, 4) / 4 +
-      m_cp_coeff[6] * std::pow(temp, 5) / 5 + m_cp_coeff[7]);
+  // Identify what temperature range this falls in
+  std::size_t t_rng_idx = -1;
+  for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
+    if (temp >= m_t_range[k] && temp < m_t_range[k+1]) {
+      t_rng_idx = k;
+      break;
+    }
+  }
+  if (t_rng_idx == -1) {
+    Throw("ThermallyPerfectGas totalenergy temperature outside t_range bounds: "
+    + std::to_string(temp));
+  }
+
+  tk::real e = R * (-m_cp_coeff[t_rng_idx][0] * std::pow(temp, -1) +
+      m_cp_coeff[t_rng_idx][1] * std::log(temp) + (m_cp_coeff[t_rng_idx][2] - 1) * temp +
+      m_cp_coeff[t_rng_idx][3] * std::pow(temp, 2) / 2 +
+      m_cp_coeff[t_rng_idx][4] * std::pow(temp, 3) / 3 +
+      m_cp_coeff[t_rng_idx][5] * std::pow(temp, 4) / 4 +
+      m_cp_coeff[t_rng_idx][6] * std::pow(temp, 5) / 5 + m_cp_coeff[t_rng_idx][7]);
 
   return (rho * e + 0.5 * rho * (u*u + v*v + w*w));
 }
@@ -181,32 +197,47 @@ ThermallyPerfectGas::temperature(
   tk::real e = rhoE / rho - 0.5 * (u*u + v*v + w*w);
 
   // Solve for temperature - Newton's method
-  tk::real temp = 1000; // Starting guess
-  tk::real tol = 1e-8; // Stopping condition
-  tk::real err = 1e8;
+  tk::real temp = 1500;     // Starting guess
+  tk::real tol = 1e-12 * e; // Stopping condition
+  tk::real err;
   std::size_t maxiter = 1000;
   std::size_t i(0);
   while (i < maxiter) {
-    tk::real f_T = R * (-m_cp_coeff[0] * std::pow(temp, -1) +
-      m_cp_coeff[1] * std::log(temp) + (m_cp_coeff[2] - 1) * temp +
-      m_cp_coeff[3] * std::pow(temp, 2) / 2 +
-      m_cp_coeff[4] * std::pow(temp, 3) / 3 +
-      m_cp_coeff[5] * std::pow(temp, 4) / 4 +
-      m_cp_coeff[6] * std::pow(temp, 5) / 5 + m_cp_coeff[7]) - e;
+    // Identify what temperature range the current guess is in
+    std::size_t t_rng_idx = -1;
+    for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
+      if (temp >= m_t_range[k] && temp < m_t_range[k+1]) {
+        t_rng_idx = k;
+        break;
+      }
+    }
+    if (t_rng_idx == -1) {
+      Throw("ThermallyPerfectGas Newton's Method temperature guess outside t_range bounds: "
+      + std::to_string(temp));
+    }
+
+    // With correct polynomial coefficients, construct e(temp) and de(temp)/dT
+    tk::real f_T = R * (-m_cp_coeff[t_rng_idx][0] * std::pow(temp, -1) +
+      m_cp_coeff[t_rng_idx][1] * std::log(temp) + (m_cp_coeff[t_rng_idx][2] - 1) * temp +
+      m_cp_coeff[t_rng_idx][3] * std::pow(temp, 2) / 2 +
+      m_cp_coeff[t_rng_idx][4] * std::pow(temp, 3) / 3 +
+      m_cp_coeff[t_rng_idx][5] * std::pow(temp, 4) / 4 +
+      m_cp_coeff[t_rng_idx][6] * std::pow(temp, 5) / 5 + m_cp_coeff[t_rng_idx][7]) - e;
 
     err = abs(f_T);
 
     // Get derivative - df/dT. For loop is working through polynomial.
     tk::real fp_T = 0;
     tk::real power = -2;
-    for (std::size_t k=0; k<m_cp_coeff.size()-1; ++k)
+    for (std::size_t k=0; k<m_cp_coeff[t_rng_idx].size()-1; ++k)
     {
-      fp_T += m_cp_coeff[k] * std::pow(temp, power);
+      fp_T += m_cp_coeff[t_rng_idx][k] * std::pow(temp, power);
       if (k == 2) fp_T += -1;
       power += 1;
     }
     fp_T = fp_T * R;
 
+    // Calculate next guess
     temp = temp - f_T / fp_T;
 
     if (err <= tol) break;
