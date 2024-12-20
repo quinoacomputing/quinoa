@@ -21,17 +21,20 @@ ThermallyPerfectGas::ThermallyPerfectGas(
   tk::real gamma,
   tk::real R,
   std::vector< std::vector< tk::real > > cp_coeff,
-  std::vector< tk::real > t_range) :
+  std::vector< tk::real > t_range,
+  tk::real dH_ref) :
   m_gamma(gamma),
   m_R(R),
   m_cp_coeff(cp_coeff),
-  m_t_range(t_range)
+  m_t_range(t_range),
+  m_dH_ref(dH_ref)
 // *************************************************************************
 //  Constructor
 //! \param[in] gamma Ratio of specific heats
 //! \param[in] R gas constant
 //! \param[in] cp_coeff NASA Glenn polynomials coefficients for cp fit
 //! \param[in] t_range temperature range where polynomial coeffs are valid
+//! \param[in] dH_ref reference enthalpy, h(t = 298.15 K) - h(t = 0 K)
 // *************************************************************************
 { }
 
@@ -162,12 +165,14 @@ ThermallyPerfectGas::totalenergy(
     + std::to_string(temp));
   }
 
+  // h = h_poly(T) + h_ref = e + R T (perfect gas)
   tk::real e = R * (-m_cp_coeff[t_rng_idx][0] * std::pow(temp, -1) +
       m_cp_coeff[t_rng_idx][1] * std::log(temp) + (m_cp_coeff[t_rng_idx][2] - 1) * temp +
       m_cp_coeff[t_rng_idx][3] * std::pow(temp, 2) / 2 +
       m_cp_coeff[t_rng_idx][4] * std::pow(temp, 3) / 3 +
       m_cp_coeff[t_rng_idx][5] * std::pow(temp, 4) / 4 +
-      m_cp_coeff[t_rng_idx][6] * std::pow(temp, 5) / 5 + m_cp_coeff[t_rng_idx][7]);
+      m_cp_coeff[t_rng_idx][6] * std::pow(temp, 5) / 5 + m_cp_coeff[t_rng_idx][7]) +
+      m_dH_ref;
 
   return (rho * e + 0.5 * rho * (u*u + v*v + w*w));
 }
@@ -198,9 +203,9 @@ ThermallyPerfectGas::temperature(
 
   // Solve for temperature - Newton's method
   tk::real temp = 1500;     // Starting guess
-  tk::real tol = 1e-12 * e; // Stopping condition
+  tk::real tol = 1e-8 * e; // Stopping condition
   tk::real err;
-  std::size_t maxiter = 1000;
+  std::size_t maxiter = 10;
   std::size_t i(0);
   while (i < maxiter) {
     // Identify what temperature range the current guess is in
@@ -222,7 +227,8 @@ ThermallyPerfectGas::temperature(
       m_cp_coeff[t_rng_idx][3] * std::pow(temp, 2) / 2 +
       m_cp_coeff[t_rng_idx][4] * std::pow(temp, 3) / 3 +
       m_cp_coeff[t_rng_idx][5] * std::pow(temp, 4) / 4 +
-      m_cp_coeff[t_rng_idx][6] * std::pow(temp, 5) / 5 + m_cp_coeff[t_rng_idx][7]) - e;
+      m_cp_coeff[t_rng_idx][6] * std::pow(temp, 5) / 5 + m_cp_coeff[t_rng_idx][7]) +
+      m_dH_ref - e;
 
     err = abs(f_T);
 

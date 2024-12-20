@@ -22,9 +22,9 @@ class ThermallyPerfectGas {
   private:
     tk::real m_gamma;
     tk::real m_R;
-    //std::vector< std::vector< tk::real > > m_cp_coeff{std::vector< std::vector< tk::real >(8) >(3)};
     std::vector< std::vector< tk::real > > m_cp_coeff{3, std::vector< tk::real >(8)};
     std::vector< tk::real > m_t_range{std::vector< tk::real >(4)};
+    tk::real m_dH_ref;
 
   public:
     //! Default constructor
@@ -35,7 +35,8 @@ class ThermallyPerfectGas {
       tk::real gamma,
       tk::real R,
       std::vector< std::vector< tk::real > > cp_coeff,
-      std::vector< tk::real > t_range );
+      std::vector< tk::real > t_range,
+      tk::real dH_ref);
 
     //! Set rho0 EOS parameter. No-op.
     void setRho0(tk::real) {}
@@ -125,6 +126,7 @@ class ThermallyPerfectGas {
       p | m_R;
       p | m_cp_coeff;
       p | m_t_range;
+      p | m_dH_ref;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

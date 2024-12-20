@@ -593,6 +593,9 @@ LuaParser::storeInputDeck(
         // t_range
         checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
           spci_deck.get< tag::t_range >());
+        // dH_ref
+        checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
+          spci_deck.get< tag::dH_ref >());
       }
 
       // Generate mapping between material index and eos parameter index

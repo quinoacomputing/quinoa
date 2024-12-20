@@ -77,7 +77,8 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       g_inputdeck.get< tag::species >()[0].get< tag::cp_coeff >()[k];
     auto t_range =
       g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
-    m_material = ThermallyPerfectGas(g, R, cp_coeff, t_range);
+    auto dH_ref = getspecprop< tag::dH_ref >(k);
+    m_material = ThermallyPerfectGas(g, R, cp_coeff, t_range, dH_ref);
   }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
 }
