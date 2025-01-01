@@ -117,7 +117,7 @@ struct AUSM {
     // 137-170" for more mathematical explanation. k_u is the velocity diffusion
     // term and k_p is the pressure diffusion term. These two terms reduce
     // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
-    tk::real k_u(1.0), f_a(1.0);
+    tk::real k_u(0.0), f_a(1.0);
 
     // Split Mach polynomials
     auto msl = splitmach_ausm( f_a, ml );
@@ -133,9 +133,14 @@ struct AUSM {
     auto pu = -k_u* msl[2] * msr[3] * f_a * rho12 * ac12 * (vnr-vnl);
     auto p12 = msl[2]*pl + msr[3]*pr + pu;
 
+    // Additional diffusion
+    auto delta = 4.0;
+    //auto md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * ac12);
+    auto md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
+
     // Flux vector splitting
-    auto l_plus = 0.5 * (vriem + std::fabs(vriem));
-    auto l_minus = 0.5 * (vriem - std::fabs(vriem));
+    auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
+    auto l_minus = 0.5 * (vriem - std::fabs(vriem) - 2.0*md);
 
     // Conservative fluxes
     for (std::size_t k=0; k<nmat; ++k)
@@ -153,25 +158,32 @@ struct AUSM {
                                  + p12*fn[idir];
     }
 
-    l_plus = l_plus/( std::fabs(vriem) + 1.0e-12 );
-    l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
+    //l_plus = l_plus/( std::fabs(vriem) + 1.0e-12 );
+    //l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
+
+    //// Store Riemann-advected partial pressures
+    //if (std::fabs(l_plus) > 1.0e-10)
+    //{
+    //  for (std::size_t k=0; k<nmat; ++k)
+    //    flx.push_back( pml[k] );
+    //}
+    //else if (std::fabs(l_minus) > 1.0e-10)
+    //{
+    //  for (std::size_t k=0; k<nmat; ++k)
+    //    flx.push_back( pmr[k] );
+    //}
+    //else
+    //{
+    //  for (std::size_t k=0; k<nmat; ++k)
+    //    flx.push_back( 0.5*(pml[k] + pmr[k]) );
+    //}
+
+    l_plus /= (vriem + std::copysign(1e-12, vriem));
+    l_minus /= (vriem + std::copysign(1e-12, vriem));
 
     // Store Riemann-advected partial pressures
-    if (std::fabs(l_plus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( pml[k] );
-    }
-    else if (std::fabs(l_minus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( pmr[k] );
-    }
-    else
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( 0.5*(pml[k] + pmr[k]) );
-    }
+    for (std::size_t k=0; k<nmat; ++k)
+      flx.push_back(l_plus*pml[k] + l_minus*pmr[k]);
 
     // Store Riemann velocity
     flx.push_back( vriem );

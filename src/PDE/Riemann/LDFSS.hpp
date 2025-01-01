@@ -119,11 +119,31 @@ struct LDFSS {
     // mtilde for general-order Mach polys (AUSM+)
     auto mtilde  = 0.5*(msl[0] - std::max(0.0,ml) - msr[1] + std::min(0.0,mr));
     auto dp = pl - pr;
-    auto delta = 1.0;
+    auto delta = 4.0;
+
+    // LDFSS-2001
+    // Additional diffusion
+    auto dpplus = std::abs(dp)
+      //+ 8.0*rhol*ac12*std::sqrt(std::abs(vnl - vnr)*ac12);
+      + 8.0*rhol*ac12*std::sqrt(std::abs(dp)/rho12);
+    auto dpminus = std::abs(dp)
+      //+ 8.0*rhor*ac12*std::sqrt(std::abs(vnl - vnr)*ac12);
+      + 8.0*rhor*ac12*std::sqrt(std::abs(dp)/rho12);
     auto mtilde_plus = mtilde*
-      std::max( 0.0, 1.0 - (dp+delta*std::abs(dp))/(2.0*rhol*ac12*ac12) );
+      std::max( 0.0, 1.0 - (dp+delta*dpplus)/(2.0*rhol*ac12*ac12) );
     auto mtilde_minus = mtilde*
-      std::max( 0.0, 1.0 + (dp-delta*std::abs(dp))/(2.0*rhor*ac12*ac12) );
+      std::max( 0.0, 1.0 + (dp-delta*dpminus)/(2.0*rhor*ac12*ac12) );
+
+    //// LDFSS(2)
+    //auto dpplus = std::abs(dp)
+    //  + 4.0*pl*std::sqrt(2.0*std::abs(dp)/(pl+pr));
+    //auto dpminus = std::abs(dp)
+    //  + 4.0*pr*std::sqrt(2.0*std::abs(dp)/(pl+pr));
+    //auto mtilde_plus = mtilde*
+    //  std::max( 0.0, 1.0 - dp/(pl+pr) - delta*dpplus/pl );
+    //auto mtilde_minus = mtilde*
+    //  std::max( 0.0, 1.0 + dp/(pl+pr) - delta*dpminus/pr );
+
     auto C_plus = msl[0] - mtilde_plus;
     auto C_minus = msr[1] + mtilde_minus;
 
