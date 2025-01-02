@@ -68,5 +68,14 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto mu = getmatprop< tag::mu >(k);
     m_material = GodunovRomenskiAluminum(g, c_v, mu);
   }
+  else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
+    // query input deck for ThermallyPerfectGas parameters
+    auto g = getspecprop< tag::gamma >(k);
+    auto R = getspecprop< tag::R >(k);
+    // assume only one type of species
+    auto cp_coeff =
+      g_inputdeck.get< tag::species >()[0].get< tag::cp_coeff >()[k];
+    m_material = ThermallyPerfectGas(g, R, cp_coeff);
+  }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
 }
