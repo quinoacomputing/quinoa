@@ -161,19 +161,22 @@ struct HLLDMultiMat {
         for (std::size_t j=0; j<3; ++j)
           asignnStar[k][i][j] = asignnl[k][i][j];
 
-      for (std::size_t i=0; i<3; ++i)
-        asignnStar[k][i][0] =
-          ( (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]*asignnl[k][i][0]
-          - (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]*asignnr[k][i][0]
-          + (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]
-          * (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]
-          * (vnr[i]-vnl[i]) ) /
-          ( (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]
-          - (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]);
-      // Symmetry????
-      asignnStar[k][0][1] = asignnStar[k][1][0];
-      asignnStar[k][0][2] = asignnStar[k][2][0];
-
+      if (solidx[k] > 0)
+      {
+        for (std::size_t i=0; i<3; ++i)
+          asignnStar[k][i][0] =
+            ( (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]*asignnl[k][i][0]
+            - (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]*asignnr[k][i][0]
+            + (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]
+            * (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]
+            * (vnr[i]-vnl[i]) ) /
+            ( (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]
+            - (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]);
+        // Symmetry????
+        asignnStar[k][0][1] = asignnStar[k][1][0];
+        asignnStar[k][0][2] = asignnStar[k][2][0];
+      }
+ 
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
           signnStar[i][j] += asignnStar[k][i][j];
@@ -280,18 +283,21 @@ struct HLLDMultiMat {
           for (std::size_t j=0; j<3; ++j)
             asignnStarStar[k][i][j] = asignnStar[k][i][j];
 
-        for (std::size_t i=1; i<3; ++i)
-          asignnStarStar[k][i][0] =
-            ( (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]*asignnl[k][i][0]
-            - (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]*asignnr[k][i][0]
-            + (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]
-            * (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]
-            * (vnl[i]-vnr[i]) ) /
-            ( (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]
-            - (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]);
-        // Symmetry????
-        asignnStarStar[k][0][1] = asignnStarStar[k][1][0];
-        asignnStarStar[k][0][2] = asignnStarStar[k][2][0];
+        if (solidx[k] > 0)
+        {
+          for (std::size_t i=1; i<3; ++i)
+            asignnStarStar[k][i][0] =
+              ( (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]*asignnl[k][i][0]
+              - (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]*asignnr[k][i][0]
+              + (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]
+              * (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]
+              * (vnl[i]-vnr[i]) ) /
+              ( (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]
+              - (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]);
+          // Symmetry????
+          asignnStarStar[k][0][1] = asignnStarStar[k][1][0];
+          asignnStarStar[k][0][2] = asignnStarStar[k][2][0];
+        }
 
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
