@@ -130,13 +130,6 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::mesh,        std::vector< std::size_t >,
   tag::dirichlet,   std::vector< std::size_t >,
   tag::symmetry,    std::vector< std::size_t >,
-  tag::inlet,       std::vector<
-    tk::TaggedTuple< brigand::list<
-      tag::sideset,      std::vector< uint64_t >,
-      tag::velocity,     std::vector< tk::real >,
-      tag::materialid,   std::size_t
-    > >
-  >,
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
@@ -149,6 +142,13 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::temperature, tk::real,
   tag::mass_fractions, std::vector< tk::real >,
   tag::materialid,  std::size_t,
+  tag::inlet,       std::vector<
+    tk::TaggedTuple< brigand::list<
+      tag::sideset,      std::vector< uint64_t >,
+      tag::velocity,     std::vector< tk::real >,
+      tag::materialid,   std::size_t
+    > >
+  >,
   tag::timedep,     std::vector<
     tk::TaggedTuple< brigand::list<
       tag::sideset,    std::vector< uint64_t >,

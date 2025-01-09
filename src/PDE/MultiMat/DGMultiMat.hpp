@@ -94,18 +94,7 @@ class MultiMat {
 
       // Inlet BC has a different structure than above BCs, so it must be 
       // handled differently than with ConfigBC
-      const auto& bc = g_inputdeck.get< tag::bc >();
-      std::vector< std::size_t > v;
-      for (const auto& ib : bc) {
-        const auto& in = ib.get< tag::inlet >();
-        if (!in.empty()) {
-          for (const auto& bndry : in) {
-            const auto& sideset = bndry.get< tag::sideset >();
-            v.insert(v.end(), sideset.begin(), sideset.end());
-            m_bc.push_back( { v, inlet, noOpGrad } );
-          }
-        }
-      }
+      ConfigInletBC(m_bc, inlet, noOpGrad);
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );

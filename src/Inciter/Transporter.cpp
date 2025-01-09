@@ -477,11 +477,12 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
   // Query side set ids at which BCs assigned for all BC types for all PDEs
   std::unordered_set< int > usedsets;
 
-  // Query side sets of time dependent and inlet BCs (since these are not a part
-  // of tag::bc)
   using bclist = ctr::bclist::Keys;
   const auto& bcs = g_inputdeck.get< tag::bc >();
   brigand::for_each< bclist >( UserBC( g_inputdeck, usedsets ) );
+
+  // Query side sets of time dependent and inlet BCs (since these are not a part
+  // of tag::bc)
   for (const auto& bci : bcs) {
     for (const auto& b : bci.get< tag::inlet >()) {
       for (auto i : b.get< tag::sideset >())
