@@ -73,9 +73,9 @@ struct ConfigBC {
 
 //! \brief Extract information on inlet BCs, which have a different structure
 //! than other BCs
-void ConfigInletBC( BCStateFn& ,
-                          const tk::StateFn& ,
-                          const tk::StateFn& );
+void ConfigInletBC( BCStateFn&,
+                    const tk::StateFn&,
+                    const tk::StateFn& );
 
 //! State function for invalid/un-configured boundary conditions
 [[noreturn]] tk::StateFn::result_type

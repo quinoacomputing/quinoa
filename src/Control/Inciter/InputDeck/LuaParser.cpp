@@ -1099,6 +1099,8 @@ LuaParser::storeInputDeck(
             inbc_deck[j].get< tag::velocity >(), {0.0, 0.0, 0.0});
           if (inbc_deck[j].get< tag::velocity >().size() != 3)
             Throw("Inlet velocity requires 3 components.");
+          storeIfSpecd< tk::real >(sol_inbc[j+1], "pressure",
+            inbc_deck[j].get< tag::pressure >(), 0.0);
           storeIfSpecd< std::size_t >(sol_inbc[j+1], "materialid",
             inbc_deck[j].get< tag::materialid >(), 1);
         }
