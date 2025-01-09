@@ -1095,14 +1095,18 @@ LuaParser::storeInputDeck(
         for (std::size_t j=0; j<inbc_deck.size(); ++j) {
           storeVecIfSpecd< uint64_t >(sol_inbc[j+1], "sideset",
             inbc_deck[j].get< tag::sideset >(), {});
+
           storeVecIfSpecd< tk::real >(sol_inbc[j+1], "velocity",
             inbc_deck[j].get< tag::velocity >(), {0.0, 0.0, 0.0});
           if (inbc_deck[j].get< tag::velocity >().size() != 3)
             Throw("Inlet velocity requires 3 components.");
+
           storeIfSpecd< tk::real >(sol_inbc[j+1], "pressure",
             inbc_deck[j].get< tag::pressure >(), 0.0);
+
           storeIfSpecd< tk::real >(sol_inbc[j+1], "temperature",
             inbc_deck[j].get< tag::temperature >(), 0.0);
+            
           storeIfSpecd< std::size_t >(sol_inbc[j+1], "materialid",
             inbc_deck[j].get< tag::materialid >(), 1);
         }

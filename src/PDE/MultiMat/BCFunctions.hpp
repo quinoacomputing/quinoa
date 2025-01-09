@@ -120,6 +120,7 @@ namespace inciter {
   //!   face at inlet boundaries
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
+  //! \param[in] fn Unit face normal
   //! \return Left and right states for all scalar components in this PDE
   //!   system
   //! \details The inlet boundary condition specifies a velocity at a
@@ -130,7 +131,7 @@ namespace inciter {
             const std::vector< EOS >& mat_blk,
             const std::vector< tk::real >& ul,
             tk::real, tk::real, tk::real, tk::real,
-            const std::array< tk::real, 3 >&  )
+            const std::array< tk::real, 3 >& fn )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -139,6 +140,8 @@ namespace inciter {
     // inlet velocity and material
     auto u_in = inbc[0].get< tag::velocity >();
     auto mat_in = inbc[0].get< tag::materialid >() - 1;
+    auto p_in = inbc[0].get< tag::pressure >();
+    auto t_in = inbc[0].get< tag::temperature >();
 
     [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
 
@@ -157,15 +160,23 @@ namespace inciter {
     auto v2r = 2.0*u_in[1] - v2l;
     auto v3r = 2.0*u_in[2] - v3l;
 
-    // Calculate bulk pressure/density to ensure zero gradient
-    tk::real p(0.0);
-    tk::real rho(0.0);
-    for (std::size_t k=0; k<nmat; ++k) {
-      p += ul[ncomp+pressureIdx(nmat,k)];
-      rho += ul[densityIdx(nmat,k)];
-    }
+    // Normal inlet velocity
+    auto vn = u_in[0]*fn[0] + u_in[1]*fn[1] + u_in[2]*fn[2];
+
+    // Acoustic speed
+    tk::real a(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      if (ul[volfracIdx(nmat, k)] > 1.0e-04)
+        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
+          ul[densityIdx(nmat, k)], ul[ncomp+pressureIdx(nmat, k)],
+          ul[volfracIdx(nmat, k)], k ) );
+
+    // Mach number
+    auto Ma = vn / a;
 
     tk::real alphamin = 1e-12;
+    tk::real pk(0.0);
+    tk::real rho(0.0);
     for (std::size_t k=0; k<nmat; ++k) {
       if (k == mat_in)
         ur[volfracIdx(nmat,k)] = 1.0 -
@@ -173,11 +184,21 @@ namespace inciter {
       else
         ur[volfracIdx(nmat,k)] = alphamin;
 
-      // zero bulk pressure and density gradient
-      ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * p;
-      ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rho;
+      // Material pressure, which, for supersonic inflow, is the exterior
+      // pressure and the interior pressure for subsonic
+      if(Ma <= -1)
+        pk = p_in;
+      else
+        pk = ul[ncomp+pressureIdx(nmat,k)]/ul[volfracIdx(nmat,k)];
+      auto rhok = mat_blk[k].compute< EOS::density >(pk, t_in);
+
+      ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat,k)] * pk;
+      ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
       ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
-        mat_blk[k].compute< EOS::totalenergy >(rho, v1r, v2r, v3r, p);
+        mat_blk[k].compute< EOS::totalenergy >(rhok, v1r, v2r, v3r, pk);
+
+      // bulk density
+      rho += ur[densityIdx(nmat,k)];
     }
 
     ur[momentumIdx(nmat, 0)] = rho * v1r;
