@@ -153,25 +153,12 @@ struct AUSM {
                                  + p12*fn[idir];
     }
 
-    l_plus = l_plus/( std::fabs(vriem) + 1.0e-12 );
-    l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
+    l_plus = l_plus/( vriem + std::copysign(1.0e-12,vriem) );
+    l_minus = l_minus/( vriem + std::copysign(1.0e-12,vriem) );
 
     // Store Riemann-advected partial pressures
-    if (std::fabs(l_plus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( pml[k] );
-    }
-    else if (std::fabs(l_minus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( pmr[k] );
-    }
-    else
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( 0.5*(pml[k] + pmr[k]) );
-    }
+    for (std::size_t k=0; k<nmat; ++k)
+      flx.push_back( l_plus*pml[k] + l_minus*pmr[k] );
 
     // Store Riemann velocity
     flx.push_back( vriem );
