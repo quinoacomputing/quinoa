@@ -23,6 +23,7 @@
 #include "SplitMachFns.hpp"
 #include "EoS/EOS.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "Limiter.hpp"
 
 namespace inciter {
 
@@ -176,6 +177,7 @@ struct AUSM {
     // term and k_p is the pressure diffusion term. These two terms reduce
     // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
     tk::real k_u(1.0), f_a(1.0);
+    if (nsld > 0) k_u = 0.0;
 
     // Split Mach polynomials
     std::array< std::array< tk::real, 4 >, 3 > msl, msr;
@@ -215,15 +217,15 @@ struct AUSM {
       flx[energyIdx(nmat, k)] = l_plus*u[0][energyIdx(nmat, k)]
         + l_minus*u[1][energyIdx(nmat, k)];
       // stress-work term in energy fluxes
-      //for (std::size_t i=0; i<3; ++i) {
-      //  flx[energyIdx(nmat, k)] -= (
-      //    lt_plus[i]*asigrot_l[k][i][0] + lt_minus[i]*asigrot_r[k][i][0] );
-      //}
-      flx[energyIdx(nmat, k)] -= (
-        lt_plus[0]*asigrot_l[k][0][0] + lt_minus[0]*asigrot_r[k][0][0] +
-        msl[1][2]*asigrot_l[k][1][0]*utl[1] + msr[1][3]*asigrot_r[k][1][0]*utr[1] +
-        msl[2][2]*asigrot_l[k][2][0]*utl[2] + msr[2][3]*asigrot_r[k][2][0]*utr[2]
-        );
+      for (std::size_t i=0; i<3; ++i) {
+        flx[energyIdx(nmat, k)] -= (
+          lt_plus[i]*asigrot_l[k][i][0] + lt_minus[i]*asigrot_r[k][i][0] );
+      }
+      //flx[energyIdx(nmat, k)] -= (
+      //  lt_plus[0]*asigrot_l[k][0][0] + lt_minus[0]*asigrot_r[k][0][0] +
+      //  msl[1][2]*asigrot_l[k][1][0]*utl[1] + msr[1][3]*asigrot_r[k][1][0]*utr[1] +
+      //  msl[2][2]*asigrot_l[k][2][0]*utl[2] + msr[2][3]*asigrot_r[k][2][0]*utr[2]
+      //  );
 
       // inv deformation gradient tensor fluxes
       if (solidx[k] > 0) {
@@ -355,55 +357,28 @@ struct AUSM {
         - (T12[idir] - pu*fn[idir]);
     }
 
-    l_plus = l_plus/( std::fabs(vriem) + 1.0e-12 );
-    l_minus = l_minus/( std::fabs(vriem) + 1.0e-12 );
+    l_plus = l_plus/( vriem + std::copysign(1.0e-12,vriem) );
+    l_minus = l_minus/( vriem + std::copysign(1.0e-12,vriem) );
+    for (std::size_t i=0; i<3; ++i) {
+      auto vwave = acboth[i] * mt12[i];
+      lt_plus[i] /= ( vwave + std::copysign(1.0e-12,vwave) );
+      lt_minus[i] /= ( vwave + std::copysign(1.0e-12,vwave) );
+    }
 
     // Store Riemann-advected partial pressures (nmat)
-    if (std::fabs(l_plus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( pml[k] );
-    }
-    else if (std::fabs(l_minus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( pmr[k] );
-    }
-    else
-    {
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back( 0.5*(pml[k] + pmr[k]) );
-    }
+    for (std::size_t k=0; k<nmat; ++k)
+      flx.push_back( l_plus*pml[k] + l_minus*pmr[k] );
 
     // Store Riemann velocity (1)
     flx.push_back( vriem );
 
     // Store Riemann aTn_ij (3*nsld)
-    if (std::fabs(l_plus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (solidx[k] > 0) {
-          for (std::size_t i=0; i<3; ++i)
-            flx.push_back(aTn_l[k][i]);
-        }
-      }
-    }
-    else if (std::fabs(l_minus) > 1.0e-10)
-    {
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (solidx[k] > 0) {
-          for (std::size_t i=0; i<3; ++i)
-            flx.push_back(aTn_r[k][i]);
-        }
-      }
-    }
-    else
-    {
-      for (std::size_t k=0; k<nmat; ++k) {
-        if (solidx[k] > 0) {
-          for (std::size_t i=0; i<3; ++i)
-            flx.push_back( 0.5 * (aTn_l[k][i] + aTn_r[k][i]) );
-        }
+    for (std::size_t k=0; k<nmat; ++k) {
+      auto aTs_l = tk::unrotateVector(asigrot_l[k][0], fn);
+      auto aTs_r = tk::unrotateVector(asigrot_r[k][0], fn);
+      if (solidx[k] > 0) {
+        for (std::size_t i=0; i<3; ++i)
+          flx.push_back( lt_plus[i]*aTs_l[i] + lt_minus[i]*aTs_r[i] );
       }
     }
 
