@@ -374,9 +374,9 @@ struct AUSM {
 
     // Store Riemann aTn_ij (3*nsld)
     for (std::size_t k=0; k<nmat; ++k) {
-      auto aTs_l = tk::unrotateVector(asigrot_l[k][0], fn);
-      auto aTs_r = tk::unrotateVector(asigrot_r[k][0], fn);
       if (solidx[k] > 0) {
+        auto aTs_l = tk::unrotateVector(asigrot_l[k][0], fn);
+        auto aTs_r = tk::unrotateVector(asigrot_r[k][0], fn);
         for (std::size_t i=0; i<3; ++i)
           flx.push_back( lt_plus[i]*aTs_l[i] + lt_minus[i]*aTs_r[i] );
       }
