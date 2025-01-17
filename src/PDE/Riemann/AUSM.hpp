@@ -157,14 +157,14 @@ struct AUSM {
 
     // Coordinate transform velocities to r,s,t coordinate system where the
     // first coordinate (r) aligns with face-normal (fn)
-    auto utl = tk::rotateVector({ul, vl, wl}, fn);
-    auto utr = tk::rotateVector({ur, vr, wr}, fn);
+    auto urot_l = tk::rotateVector({ul, vl, wl}, fn);
+    auto urot_r = tk::rotateVector({ur, vr, wr}, fn);
 
     // Mach numbers
     std::array< tk::real, 3 > ml, mr;
     for (std::size_t i=0; i<3; ++i) {
-      ml[i] = utl[i]/acboth[i];
-      mr[i] = utr[i]/acboth[i];
+      ml[i] = urot_l[i]/acboth[i];
+      mr[i] = urot_r[i]/acboth[i];
     }
 
     // All-speed parameters
@@ -187,13 +187,13 @@ struct AUSM {
     }
 
     // Riemann Mach number
-    auto m0 = 1.0 - (0.5*(utl[0]*utl[0] + utr[0]*utr[0])/(ac12*ac12));
+    auto m0 = 1.0 - (0.5*(urot_l[0]*urot_l[0] + urot_r[0]*urot_r[0])/(ac12*ac12));
     auto mp = -k_p* std::max(m0, 0.0) * (pr-pl) / (f_a*rho12*ac12*ac12);
     auto m12 = msl[0][0] + msr[0][1] + mp;
     auto vriem = ac12 * m12;
 
     // Pressure correction
-    auto pu = -k_u* msl[0][2] * msr[0][3] * f_a * rho12 * ac12 * (utr[0]-utl[0]);
+    auto pu = -k_u* msl[0][2] * msr[0][3] * f_a * rho12 * ac12 * (urot_r[0]-urot_l[0]);
 
     // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem));
@@ -223,8 +223,8 @@ struct AUSM {
       }
       //flx[energyIdx(nmat, k)] -= (
       //  lt_plus[0]*asigrot_l[k][0][0] + lt_minus[0]*asigrot_r[k][0][0] +
-      //  msl[1][2]*asigrot_l[k][1][0]*utl[1] + msr[1][3]*asigrot_r[k][1][0]*utr[1] +
-      //  msl[2][2]*asigrot_l[k][2][0]*utl[2] + msr[2][3]*asigrot_r[k][2][0]*utr[2]
+      //  msl[1][2]*asigrot_l[k][1][0]*urot_l[1] + msr[1][3]*asigrot_r[k][1][0]*urot_r[1] +
+      //  msl[2][2]*asigrot_l[k][2][0]*urot_l[2] + msr[2][3]*asigrot_r[k][2][0]*urot_r[2]
       //  );
 
       // inv deformation gradient tensor fluxes
@@ -251,10 +251,10 @@ struct AUSM {
         //  // get fluxes for g_k in rotated frame
         //  flxn[i][0] =
         //    lt_plus[0] * gn_l[k][i][0] + lt_minus[0] * gn_r[k][i][0] +
-        //    msl[1][2] * gn_l[k][i][1] * utl[1] +
-        //    msl[2][2] * gn_l[k][i][2] * utl[2] +
-        //    msr[1][3] * gn_r[k][i][1] * utr[1] +
-        //    msr[2][3] * gn_r[k][i][2] * utr[2] ;
+        //    msl[1][2] * gn_l[k][i][1] * urot_l[1] +
+        //    msl[2][2] * gn_l[k][i][2] * urot_l[2] +
+        //    msr[1][3] * gn_r[k][i][1] * urot_r[1] +
+        //    msr[2][3] * gn_r[k][i][2] * urot_r[2] ;
         //  // flux second component (j) is always zero for j /= 0, since rotated
         //  // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
         //}
@@ -283,8 +283,8 @@ struct AUSM {
         //for (std::size_t i=0; i<3; ++i) {
         //  gn_dot_un[i] =
         //    l_plus*gn_l[k][i][0] + l_minus*gn_r[k][i][0]
-        //    + l_p * gn_l[k][i][1]*utl[1] + l_m * gn_r[k][i][1]*utr[1]
-        //    + l_p * gn_l[k][i][2]*utl[2] + l_m * gn_r[k][i][2]*utr[2];
+        //    + l_p * gn_l[k][i][1]*urot_l[1] + l_m * gn_r[k][i][1]*urot_r[1]
+        //    + l_p * gn_l[k][i][2]*urot_l[2] + l_m * gn_r[k][i][2]*urot_r[2];
         //}
 
         //auto g_dot_u = tk::unrotateVector(gn_dot_un, fn);
@@ -302,13 +302,13 @@ struct AUSM {
         //  std::size_t j=0;
         //  flxn[i][j] =
         //    msl[0][2] * (
-        //    gn_l[k][i][0] * utl[0] +
-        //    gn_l[k][i][1] * utl[1] +
-        //    gn_l[k][i][2] * utl[2] ) +
+        //    gn_l[k][i][0] * urot_l[0] +
+        //    gn_l[k][i][1] * urot_l[1] +
+        //    gn_l[k][i][2] * urot_l[2] ) +
         //    msr[0][3] * (
-        //    gn_r[k][i][0] * utr[0] +
-        //    gn_r[k][i][1] * utr[1] +
-        //    gn_r[k][i][2] * utr[2] );
+        //    gn_r[k][i][0] * urot_r[0] +
+        //    gn_r[k][i][1] * urot_r[1] +
+        //    gn_r[k][i][2] * urot_r[2] );
         //}
 
         //// rotate fluxes back to Cartesian frame
@@ -332,7 +332,7 @@ struct AUSM {
               g_r[k][i][1] * vr +
               g_r[k][i][2] * wr ) * fn[j];
 
-            auto ll = ac12 + std::max(std::abs(utl[0]), std::abs(utr[0]));
+            auto ll = ac12 + std::max(std::abs(urot_l[0]), std::abs(urot_r[0]));
 
             flx[deformIdx(nmat,solidx[k],i,j)] =
               0.5 * (fl + fr - ll*(g_r[k][i][j] - g_l[k][i][j]));
