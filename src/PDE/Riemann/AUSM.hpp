@@ -230,21 +230,21 @@ struct AUSM {
       // inv deformation gradient tensor fluxes
       if (solidx[k] > 0) {
 
-        //// 1. rotate entire flux vector (with the partial deriv)
-        //// -------------------------------------------------------------------
-        //std::array< std::array< tk::real, 3 >, 3 > flxn{{
-        //  {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }};
+        // 1. rotate entire flux vector (with the partial deriv)
+        // -------------------------------------------------------------------
+        std::array< std::array< tk::real, 3 >, 3 > flxn{{
+          {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }};
 
-        ////// (a) Mach number splitting
-        ////for (std::size_t i=0; i<3; ++i) {
-        ////  // get fluxes for g_k in rotated frame
-        ////  flxn[i][0] =
-        ////      lt_plus[0] * gn_l[k][i][0] + lt_minus[0] * gn_r[k][i][0]
-        ////    + lt_plus[1] * gn_l[k][i][1] + lt_minus[1] * gn_r[k][i][1]
-        ////    + lt_plus[2] * gn_l[k][i][2] + lt_minus[2] * gn_r[k][i][2];
-        ////  // flux second component (j) is always zero for j /= 0, since rotated
-        ////  // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
-        ////}
+        //// (a) Mach number splitting
+        //for (std::size_t i=0; i<3; ++i) {
+        //  // get fluxes for g_k in rotated frame
+        //  flxn[i][0] =
+        //      lt_plus[0] * gn_l[k][i][0] + lt_minus[0] * gn_r[k][i][0]
+        //    + lt_plus[1] * gn_l[k][i][1] + lt_minus[1] * gn_r[k][i][1]
+        //    + lt_plus[2] * gn_l[k][i][2] + lt_minus[2] * gn_r[k][i][2];
+        //  // flux second component (j) is always zero for j /= 0, since rotated
+        //  // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
+        //}
 
         //// (b) Mach number splitting in normal dir; pressure split in tangential
         //for (std::size_t i=0; i<3; ++i) {
@@ -259,23 +259,37 @@ struct AUSM {
         //  // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
         //}
 
-        ////// (c) Non-conservative form with the complete normal velocity:
-        //////     Mach number splitting in normal dir
-        ////for (std::size_t i=0; i<3; ++i) {
-        ////  for (std::size_t j=0; j<3; ++j) {
-        ////    // get fluxes for g_k in rotated frame
-        ////    flxn[i][j] =
-        ////      l_plus * gn_l[k][i][j] + l_minus * gn_r[k][i][j];
-        ////  }
-        ////}
+        //// (c) Non-conservative form with the complete normal velocity:
+        ////     Mach number splitting in normal dir
+        //for (std::size_t i=0; i<3; ++i) {
+        //  for (std::size_t j=0; j<3; ++j) {
+        //    // get fluxes for g_k in rotated frame
+        //    flxn[i][j] =
+        //      l_plus * gn_l[k][i][j] + l_minus * gn_r[k][i][j];
+        //  }
+        //}
 
-        //// rotate fluxes back to Cartesian frame
-        //auto flxx = tk::unrotateTensor(flxn, fn);
+        // (d) Mach number splitting in normal dir; LF in tangential
+        auto ll = ac12 + std::max(std::abs(urot_l[0]), std::abs(urot_r[0]));
+        for (std::size_t i=0; i<3; ++i) {
+          // get fluxes for g_k in rotated frame
+          flxn[i][0] =
+              lt_plus[0] * gn_l[k][i][0] + lt_minus[0] * gn_r[k][i][0]
+            + 0.5*( urot_l[1] * gn_l[k][i][1] + urot_r[1] * gn_r[k][i][1]
+              - ll*(gn_r[k][i][0]-gn_l[k][i][0])/3.0 )
+            + 0.5*( urot_l[2] * gn_l[k][i][2] + urot_r[2] * gn_r[k][i][2]
+              - ll*(gn_r[k][i][0]-gn_l[k][i][0])/3.0 );
+          // flux second component (j) is always zero for j /= 0, since rotated
+          // frame is aligned to face-normal, i.e. fnt = (1, 0, 0)
+        }
 
-        //for (std::size_t i=0; i<3; ++i)
-        //  for (std::size_t j=0; j<3; ++j)
-        //    flx[deformIdx(nmat,solidx[k],i,j)] = flxx[i][j];
-        //// -------------------------------------------------------------------
+        // rotate fluxes back to Cartesian frame
+        auto flxx = tk::unrotateTensor(flxn, fn);
+
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            flx[deformIdx(nmat,solidx[k],i,j)] = flxx[i][j];
+        // -------------------------------------------------------------------
 
         //// 2. rotate only g_il.u_l
         //// -------------------------------------------------------------------
@@ -319,25 +333,25 @@ struct AUSM {
         //    flx[deformIdx(nmat,solidx[k],i,j)] = flxx[i][j];
         //// -------------------------------------------------------------------
 
-        // 4. Lax Friedrichs
-        // -------------------------------------------------------------------
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j) {
-            auto fl = (
-              g_l[k][i][0] * ul +
-              g_l[k][i][1] * vl +
-              g_l[k][i][2] * wl ) * fn[j];
-            auto fr = (
-              g_r[k][i][0] * ur +
-              g_r[k][i][1] * vr +
-              g_r[k][i][2] * wr ) * fn[j];
+        //// 4. Lax Friedrichs
+        //// -------------------------------------------------------------------
+        //for (std::size_t i=0; i<3; ++i)
+        //  for (std::size_t j=0; j<3; ++j) {
+        //    auto fl = (
+        //      g_l[k][i][0] * ul +
+        //      g_l[k][i][1] * vl +
+        //      g_l[k][i][2] * wl ) * fn[j];
+        //    auto fr = (
+        //      g_r[k][i][0] * ur +
+        //      g_r[k][i][1] * vr +
+        //      g_r[k][i][2] * wr ) * fn[j];
 
-            auto ll = ac12 + std::max(std::abs(urot_l[0]), std::abs(urot_r[0]));
+        //    auto ll = ac12 + std::max(std::abs(urot_l[0]), std::abs(urot_r[0]));
 
-            flx[deformIdx(nmat,solidx[k],i,j)] =
-              0.5 * (fl + fr - ll*(g_r[k][i][j] - g_l[k][i][j]));
-          }
-        // -------------------------------------------------------------------
+        //    flx[deformIdx(nmat,solidx[k],i,j)] =
+        //      0.5 * (fl + fr - ll*(g_r[k][i][j] - g_l[k][i][j]));
+        //  }
+        //// -------------------------------------------------------------------
       }
     }
 
@@ -375,10 +389,13 @@ struct AUSM {
     // Store Riemann aTn_ij (3*nsld)
     for (std::size_t k=0; k<nmat; ++k) {
       if (solidx[k] > 0) {
-        auto aTs_l = tk::unrotateVector(asigrot_l[k][0], fn);
-        auto aTs_r = tk::unrotateVector(asigrot_r[k][0], fn);
+        std::array< tk::real, 3 > aTn_riem;
         for (std::size_t i=0; i<3; ++i)
-          flx.push_back( lt_plus[i]*aTs_l[i] + lt_minus[i]*aTs_r[i] );
+          aTn_riem[i] = lt_plus[i]*asigrot_l[k][i][0] +
+                       lt_minus[i]*asigrot_r[k][i][0];
+        auto aT_riem = tk::unrotateVector(aTn_riem, fn);
+        for (std::size_t i=0; i<3; ++i)
+          flx.push_back( aT_riem[i] );
       }
     }
 
