@@ -5,9 +5,9 @@
 
 add_regression_test(multispec_tpg_shock_1D_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 1
-                    INPUTFILES tpg_shock_1D_dirBCs_regr.lua rectangle_01_1.5k.exo
-                    ARGS -c tpg_shock_1D_dirBCs_regr.lua -i rectangle_01_1.5k.exo -v
-                    BIN_BASELINE tpg_shock_1D_dirBCs_regr.std.exo
+                    INPUTFILES tpg_statshock_1D.lua rectangle_01_1.5k.exo
+                    ARGS -c tpg_statshock_1D.lua -i rectangle_01_1.5k.exo -v
+                    BIN_BASELINE tpg_statshock_1D.std.exo
                     BIN_RESULT out.e-s.0.1.0
                     BIN_DIFF_PROG_CONF exodiff_dg.cfg
                     TEXT_BASELINE diag_p0p1.std
@@ -19,12 +19,12 @@ add_regression_test(multispec_tpg_shock_1D_p0p1 ${INCITER_EXECUTABLE}
 
 add_regression_test(multispec_tpg_shock_1D_p0p1 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES tpg_shock_1D_dirBCs_regr.lua rectangle_01_1.5k.exo
-                    ARGS -c tpg_shock_1D_dirBCs_regr.lua -i rectangle_01_1.5k.exo -v
-                    BIN_BASELINE tpg_shock_1D_dirBCs_regr_pe4_u0.0.std.exo.0
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.0.std.exo.1
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.0.std.exo.2
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.0.std.exo.3
+                    INPUTFILES tpg_statshock_1D.lua rectangle_01_1.5k.exo
+                    ARGS -c tpg_statshock_1D.lua -i rectangle_01_1.5k.exo -v
+                    BIN_BASELINE tpg_statshock_1D_pe4_u0.0.std.exo.0
+                                 tpg_statshock_1D_pe4_u0.0.std.exo.1
+                                 tpg_statshock_1D_pe4_u0.0.std.exo.2
+                                 tpg_statshock_1D_pe4_u0.0.std.exo.3
                     BIN_RESULT out.e-s.0.4.0
                                out.e-s.0.4.1
                                out.e-s.0.4.2
@@ -40,47 +40,47 @@ add_regression_test(multispec_tpg_shock_1D_p0p1 ${INCITER_EXECUTABLE}
 
 add_regression_test(multispec_tpg_shock_1D_p0p1_u0.9 ${INCITER_EXECUTABLE}
                     NUMPES 4
-                    INPUTFILES tpg_shock_1D_dirBCs_regr.lua rectangle_01_1.5k.exo
-                    ARGS -c tpg_shock_1D_dirBCs_regr.lua -i rectangle_01_1.5k.exo -u 0.9 -v
-                    BIN_BASELINE tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.0
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.1
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.2
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.3
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.4
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.5
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.6
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.7
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.8
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.9
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.10
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.11
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.12
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.13
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.14
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.15
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.16
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.17
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.18
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.19
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.20
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.21
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.22
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.23
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.24
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.25
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.26
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.27
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.28
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.29
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.30
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.31
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.32
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.33
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.34
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.35
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.36
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.37
-                                 tpg_shock_1D_dirBCs_regr_pe4_u0.9.std.exo.38
+                    INPUTFILES tpg_statshock_1D.lua rectangle_01_1.5k.exo
+                    ARGS -c tpg_statshock_1D.lua -i rectangle_01_1.5k.exo -u 0.9 -v
+                    BIN_BASELINE tpg_statshock_1D_pe4_u0.9.std.exo.0
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.1
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.2
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.3
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.4
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.5
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.6
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.7
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.8
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.9
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.10
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.11
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.12
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.13
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.14
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.15
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.16
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.17
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.18
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.19
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.20
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.21
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.22
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.23
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.24
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.25
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.26
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.27
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.28
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.29
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.30
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.31
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.32
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.33
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.34
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.35
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.36
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.37
+                                 tpg_statshock_1D_pe4_u0.9.std.exo.38
                     BIN_RESULT out.e-s.0.39.0
                                out.e-s.0.39.1
                                out.e-s.0.39.2
