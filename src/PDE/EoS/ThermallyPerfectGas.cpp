@@ -153,17 +153,7 @@ ThermallyPerfectGas::totalenergy(
 
   tk::real temp = pr / (rho * R);
   // Identify what temperature range this falls in
-  std::size_t t_rng_idx = -1;
-  for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
-    if (temp >= m_t_range[k] && temp < m_t_range[k+1]) {
-      t_rng_idx = k;
-      break;
-    }
-  }
-  if (t_rng_idx == -1) {
-    Throw("ThermallyPerfectGas totalenergy temperature outside t_range bounds: "
-    + std::to_string(temp));
-  }
+  std::size_t t_rng_idx = get_t_range(temp);
 
   // h = h_poly(T) + h_ref = e + R T (perfect gas)
   tk::real e = R * (-m_cp_coeff[t_rng_idx][0] * std::pow(temp, -1) +
@@ -209,17 +199,7 @@ ThermallyPerfectGas::temperature(
   std::size_t i(0);
   while (i < maxiter) {
     // Identify what temperature range the current guess is in
-    std::size_t t_rng_idx = -1;
-    for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
-      if (temp >= m_t_range[k] && temp < m_t_range[k+1]) {
-        t_rng_idx = k;
-        break;
-      }
-    }
-    if (t_rng_idx == -1) {
-      Throw("ThermallyPerfectGas Newton's Method temperature guess outside t_range bounds: "
-      + std::to_string(temp));
-    }
+    std::size_t t_rng_idx = get_t_range(temp);
 
     // With correct polynomial coefficients, construct e(temp) and de(temp)/dT
     tk::real f_T = R * (-m_cp_coeff[t_rng_idx][0] * std::pow(temp, -1) +
