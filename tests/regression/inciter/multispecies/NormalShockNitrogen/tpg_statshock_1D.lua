@@ -36,22 +36,22 @@ inciter = {
   },
 
   ic = {
-    -- background (right-side conditions)
-    pressure = 8.602273326645358e+06,
-    temperature = 3.447516576090411e+03,
-    velocity = { 4.200006676318108e+02, 0.0, 0.0 },
+    -- background (left-side conditions)
     mass_fractions = { 1.0 },
+    pressure = 1.113011445168193e+05,
+    temperature = 300,
+    velocity = { 2.82474e+3, 0.0, 0.0 },
 
-    -- left-side conditions
+    -- right-side conditions
     box = {
       {
         mass_fractions = { 1.0 },
-        xmin = -1e-10, xmax = 0.5,
+        xmin = 0.5, xmax = 1.0,
         ymin = -1.0, ymax = 1.0,
         zmin = -1.0, zmax = 1.0,
-        pressure = 1.113011445168193e+05,
-        temperature = 300,
-        velocity = { 2.82474e+3, 0.0, 0.0 }
+        pressure = 8.602273326645358e+06,
+        temperature = 3.447516576090411e+03,
+        velocity = { 4.200006676318108e+02, 0.0, 0.0 }
       }
     }
   },
@@ -59,10 +59,7 @@ inciter = {
   bc = {
     {
       extrapolate = { 3 },
-      farfield = { 1 },
-      pressure = 1.113011445168193e+05,
-      temperature = 300,
-      velocity = { 2.82474e+3, 0.0, 0.0 },
+      dirichlet = { 1 },
       symmetry = { 2, 4, 5, 6 }
     }
   },
