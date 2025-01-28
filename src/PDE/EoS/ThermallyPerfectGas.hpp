@@ -28,16 +28,16 @@ class ThermallyPerfectGas {
 
     //! Function to check what temperature range, if any, the given temperature is in.
     std::size_t get_t_range(tk::real temp) const {
-      std::size_t t_rng_idx = -1;
+      if (temp < m_t_range[0] || temp > m_t_range.back()) {
+        Throw("ThermallyPerfectGas totalenergy temperature outside t_range bounds: "
+        + std::to_string(temp));
+      }
+      std::size_t t_rng_idx;
       for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
         if (temp >= m_t_range[k] && temp < m_t_range[k+1]) {
           t_rng_idx = k;
           break;
         }
-      }
-      if (t_rng_idx == -1) {
-        Throw("ThermallyPerfectGas totalenergy temperature outside t_range bounds: "
-        + std::to_string(temp));
       }
       return t_rng_idx;
     }
