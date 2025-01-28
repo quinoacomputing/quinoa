@@ -1036,8 +1036,24 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
         R"(This keyword is used to specify species' coefficients in the
-        thermally perfect gas polynomial fit for specific heat at constant
-        volume.)", "vector of reals"});
+        thermally perfect gas polynomial fit (per temperature range)
+        for specific heat at constant volume. The outer vector is per
+        species, the middle vector is per temperature range, and the
+        inner vector contains 8 coefficients to describe the polynomial.)",
+        "vector of vector of vector of reals"});
+
+      keywords.insert({"t_range", "temperature range for TPG specific heat polynomials",
+        R"(This keyword is used to specify the temperature range for each specific
+        heat polynomial given in cp_coeff. The outer vector is per species,
+        and the inner vector gives the temperature ranges. The inner vector must
+        be sized 1 larger than the number of temperature ranges, as the ranges
+        are read as [T0, T1],[T1, T2],...)", "vector of vector of reals"});
+
+      keywords.insert({"dH_ref", "reference enthalpy for TPG specific heat polynomials",
+        R"(This keyword is used to specify the reference enthalpy at 298.15 K so that
+        the reference temperature in the enthalpy calculations is 0 K. This number
+        is taken from the NASA Glenn 2002 report, and is the heat of formation
+        divided by the species molar mass.)", "vector of reals"});
 
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas
