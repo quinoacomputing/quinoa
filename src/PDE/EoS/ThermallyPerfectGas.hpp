@@ -28,13 +28,22 @@ class ThermallyPerfectGas {
 
     //! Function to check what temperature range, if any, the given temperature is in.
     std::size_t get_t_range(tk::real temp) const {
-      if (temp < m_t_range[0] || temp > m_t_range.back()) {
+      tk::real fdg = 0.1; // Fudge factor to accomodate numerical overshoot
+      if (temp < m_t_range[0] * (1 - fdg) || temp > m_t_range.back() * (1 + fdg)) {
         Throw("ThermallyPerfectGas totalenergy temperature outside t_range bounds: "
         + std::to_string(temp));
       }
+
       std::size_t t_rng_idx;
       for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
-        if (temp >= m_t_range[k] && temp < m_t_range[k+1]) {
+        // Apply fudge factor to max/min bounds
+        tk::real fdgl = 1., fdgu = 1.;
+        if (k == 0) {
+            fdgl = 1 - fdg;
+        } else if (k == m_t_range.size() - 2) {
+            fdgu = 1 + fdg;
+        }
+        if (temp >= m_t_range[k] * fdgl && temp < m_t_range[k+1] * fdgu) {
           t_rng_idx = k;
           break;
         }
