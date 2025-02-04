@@ -150,11 +150,6 @@ namespace inciter {
 
     auto ur = ul;
 
-    // Internal cell velocity components
-    auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
-    auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
-    auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
-
     // External cell velocity, such that velocity = v_in at face
     auto v1r = u_in[0];
     auto v2r = u_in[1];
@@ -528,10 +523,7 @@ namespace inciter {
   {
     Assert(dul.size() == 3*ncomp, "Incorrect size of boundary gradient vector");
 
-    auto dur = dul;
-
-    for (std::size_t i=0; i<3*ncomp; ++i)
-      dur[i] = 0.0;
+    std::vector< tk::real > dur(3*ncomp, 0.0);
 
     return {{ std::move(dul), std::move(dur) }};
   }
