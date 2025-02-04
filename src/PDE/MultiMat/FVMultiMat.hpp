@@ -90,7 +90,7 @@ class MultiMat {
 
       // Inlet BC has a different structure than above BCs, so it must be 
       // handled differently than with ConfigBC
-      ConfigInletBC(m_bc, inlet, noOpGrad);
+      ConfigInletBC(m_bc, inlet, zeroGrad);
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );

@@ -156,9 +156,9 @@ namespace inciter {
     auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
 
     // External cell velocity, such that velocity = v_in at face
-    auto v1r = 2.0*u_in[0] - v1l;
-    auto v2r = 2.0*u_in[1] - v2l;
-    auto v3r = 2.0*u_in[2] - v3l;
+    auto v1r = u_in[0];
+    auto v2r = u_in[1];
+    auto v3r = u_in[2];
 
     // Normal inlet velocity
     auto vn = u_in[0]*fn[0] + u_in[1]*fn[1] + u_in[2]*fn[2];
@@ -508,6 +508,30 @@ namespace inciter {
 
     for (std::size_t i=0; i<3*ncomp; ++i)
       dur[i] = -dul[i];
+
+    return {{ std::move(dul), std::move(dur) }};
+  }
+
+  //! \brief Boundary gradient function for zero gradient cells
+  //! \param[in] ncomp Number of variables whos gradients are needed
+  //! \param[in] dul Left (domain-internal) gradients
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \note The function signature must follow tk::StateFn. For multimat, the
+  //!   left or right state is the vector of gradients of primitive quantities.
+  static tk::StateFn::result_type
+  zeroGrad( ncomp_t ncomp,
+                const std::vector< EOS >&,
+                const std::vector< tk::real >& dul,
+                tk::real, tk::real, tk::real, tk::real,
+                const std::array< tk::real, 3 >& )
+  {
+    Assert(dul.size() == 3*ncomp, "Incorrect size of boundary gradient vector");
+
+    auto dur = dul;
+
+    for (std::size_t i=0; i<3*ncomp; ++i)
+      dur[i] = 0.0;
 
     return {{ std::move(dul), std::move(dur) }};
   }
