@@ -161,21 +161,15 @@ struct HLLDMultiMat {
         for (std::size_t j=0; j<3; ++j)
           asignnStar[k][i][j] = asignnl[k][i][j];
 
-      if (solidx[k] > 0)
-      {
-        for (std::size_t i=0; i<3; ++i)
-          asignnStar[k][i][0] =
-            ( (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]*asignnl[k][i][0]
-            - (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]*asignnr[k][i][0]
-            + (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]
-            * (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]
-            * (vnr[i]-vnl[i]) ) /
-            ( (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]
-            - (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]);
-        // Symmetry????
-        asignnStar[k][0][1] = asignnStar[k][1][0];
-        asignnStar[k][0][2] = asignnStar[k][2][0];
-      }
+      for (std::size_t i=0; i<1; ++i)
+        asignnStar[k][i][i] =
+          ( (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]*asignnl[k][i][i]
+          - (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]*asignnr[k][i][i]
+          + (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]
+          * (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]
+          * (vnr[0]-vnl[0]) ) /
+          ( (vnr[0]-Sr)*u[1][densityIdx(nmat,k)]
+          - (vnl[0]-Sl)*u[0][densityIdx(nmat,k)]);
  
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
@@ -224,8 +218,10 @@ struct HLLDMultiMat {
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
         + (Sm-vnl[0]) * (u[0][densityIdx(nmat, k)]*Sm - asignnStar[k][0][0]/(Sl-vnl[0]));
+      // uStar[0][energyIdx(nmat, k)] = u[0][energyIdx(nmat, k)]
+      //   + (Sm-vnl[0])*(Sm-asignnl[k][0][0]/(u[0][densityIdx(nmat, k)]*(Sl-vnl[0])));
       rholStar += uStar[0][densityIdx(nmat, k)];
-      
+
       auto amatl = mat_blk[k].compute< EOS::shearspeed >(
         uStar[0][densityIdx(nmat, k)], uStar[0][volfracIdx(nmat, k)], k );
 
@@ -244,8 +240,10 @@ struct HLLDMultiMat {
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
         + (Sm-vnr[0]) * (u[1][densityIdx(nmat, k)]*Sm - asignnStar[k][0][0]/(Sr-vnr[0]));
+      // uStar[1][energyIdx(nmat, k)] = u[1][energyIdx(nmat, k)]
+      //   + (Sm-vnr[0])*(Sm-asignnr[k][0][0]/(u[1][densityIdx(nmat, k)]*(Sr-vnr[0])));
       rhorStar += uStar[1][densityIdx(nmat, k)];
-      
+
       auto amatr = mat_blk[k].compute< EOS::shearspeed >(
         uStar[1][densityIdx(nmat, k)], uStar[1][volfracIdx(nmat, k)], k );
 
@@ -287,14 +285,14 @@ struct HLLDMultiMat {
         {
           for (std::size_t i=1; i<3; ++i)
             asignnStarStar[k][i][0] =
-              ( (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]*asignnl[k][i][0]
-              - (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]*asignnr[k][i][0]
+              ( (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]*asignnr[k][i][0]
+              - (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]*asignnl[k][i][0]
               + (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]
               * (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]
               * (vnl[i]-vnr[i]) ) /
               ( (Sm-Ssl)*uStar[0][densityIdx(nmat,k)]
               - (Sm-Ssr)*uStar[1][densityIdx(nmat,k)]);
-          // Symmetry????
+          // Symmetry
           asignnStarStar[k][0][1] = asignnStarStar[k][1][0];
           asignnStarStar[k][0][2] = asignnStarStar[k][2][0];
         }
@@ -315,15 +313,31 @@ struct HLLDMultiMat {
       // u*_L
       vnlStarStar[0] = Sm;
       vnlStarStar[1] = vnlStar[1]
-        + (signnStarStar[1][0] - signnl[1][0]) / (rholStar*(Sm-Ssl));
+       + (signnStarStar[1][0] - signnl[1][0]) / (rholStar*(Sm-Ssl));
       vnlStarStar[2] = vnlStar[2]
-        + (signnStarStar[2][0] - signnl[2][0]) / (rholStar*(Sm-Ssl));
+       + (signnStarStar[2][0] - signnl[2][0]) / (rholStar*(Sm-Ssl));
+      // vnlStarStar[1] = (signnl[1][0] - signnr[1][0]
+      //                  + rholStar*(Ssl-Sm)*vnlStar[1]
+      //                  - rhorStar*(Ssr-Sm)*vnrStar[1])
+      //                  / (rholStar*(Ssl-Sm) - rhorStar*(Ssr-Sm));
+      // vnlStarStar[2] = (signnl[2][0] - signnr[2][0]
+      //                  + rholStar*(Ssl-Sm)*vnlStar[2]
+      //                  - rhorStar*(Ssr-Sm)*vnrStar[2])
+      //                  / (rholStar*(Ssl-Sm) - rhorStar*(Ssr-Sm));
       // u*_R
       vnrStarStar[0] = Sm;
       vnrStarStar[1] = vnrStar[1]
-        + (signnStarStar[1][0] - signnr[1][0]) / (rhorStar*(Sm-Ssr));
+       + (signnStarStar[1][0] - signnr[1][0]) / (rhorStar*(Sm-Ssr));
       vnrStarStar[2] = vnrStar[2]
-        + (signnStarStar[2][0] - signnr[2][0]) / (rhorStar*(Sm-Ssr));
+       + (signnStarStar[2][0] - signnr[2][0]) / (rhorStar*(Sm-Ssr));
+      // vnrStarStar[1] = (signnl[1][0] - signnr[1][0]
+      //                  + rholStar*(Ssl-Sm)*vnlStar[1]
+      //                  - rhorStar*(Ssr-Sm)*vnrStar[1])
+      //                  / (rholStar*(Ssl-Sm) - rhorStar*(Ssr-Sm));
+      // vnrStarStar[2] = (signnl[2][0] - signnr[2][0]
+      //                  + rholStar*(Ssl-Sm)*vnlStar[2]
+      //                  - rhorStar*(Ssr-Sm)*vnrStar[2])
+      //                  / (rholStar*(Ssl-Sm) - rhorStar*(Ssr-Sm));
 
       vlStarStar = tk::unrotateVector(vnlStarStar, fn);
       vrStarStar = tk::unrotateVector(vnrStarStar, fn);
@@ -401,7 +415,9 @@ struct HLLDMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(aTnl[k][0]+aTnl[k][1]+aTnl[k][2]);
+        flx.push_back(std::sqrt((aTnl[k][0]*aTnl[k][0]
+                                +aTnl[k][1]*aTnl[k][1]
+                                +aTnl[k][2]*aTnl[k][2])));
       // Store Riemann velocity
       flx.push_back(vnl[0]);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -439,9 +455,11 @@ struct HLLDMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(aTnStar[k][0]+aTnStar[k][1]+aTnStar[k][2]);
+        flx.push_back(std::sqrt(aTnStar[k][0]*aTnStar[k][0]
+                               +aTnStar[k][1]*aTnStar[k][1]
+                               +aTnStar[k][2]*aTnStar[k][2]));
       // Store Riemann velocity
-      flx.push_back(Sm);
+      flx.push_back(Sm); //(vnl[0] + Sl*((Sl-vnl[0])/(Sl-Sm)-1.0)); //(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
@@ -477,9 +495,11 @@ struct HLLDMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(aTnStarStar[k][0]+aTnStarStar[k][1]+aTnStarStar[k][2]);
+        flx.push_back(std::sqrt(aTnStarStar[k][0]*aTnStarStar[k][0]
+                               +aTnStarStar[k][1]*aTnStarStar[k][1]
+                               +aTnStarStar[k][2]*aTnStarStar[k][2]));
       // Store Riemann velocity
-      flx.push_back(Sm);
+      flx.push_back(Sm); //(vnl[0] + Sl*((Sl-vnl[0])/(Sl-Sm)-1.0)); //(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
@@ -515,9 +535,11 @@ struct HLLDMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(aTnStarStar[k][0]+aTnStarStar[k][1]+aTnStarStar[k][2]);
+        flx.push_back(std::sqrt(aTnStarStar[k][0]*aTnStarStar[k][0]
+                               +aTnStarStar[k][1]*aTnStarStar[k][1]
+                               +aTnStarStar[k][2]*aTnStarStar[k][2]));
       // Store Riemann velocity
-      flx.push_back(Sm);
+      flx.push_back(Sm); //vnr[0] + Sr*((Sr-vnr[0])/(Sr-Sm)-1.0)); //(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
@@ -553,9 +575,11 @@ struct HLLDMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(aTnStar[k][0]+aTnStar[k][1]+aTnStar[k][2]);
+        flx.push_back(std::sqrt(aTnStar[k][0]*aTnStar[k][0]
+                               +aTnStar[k][1]*aTnStar[k][1]
+                               +aTnStar[k][2]*aTnStar[k][2]));
       // Store Riemann velocity
-      flx.push_back(Sm);
+      flx.push_back(Sm); //(vnr[0] + Sr*((Sr-vnr[0])/(Sr-Sm)-1.0)); //(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
@@ -591,7 +615,9 @@ struct HLLDMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(aTnr[k][0]+aTnr[k][1]+aTnr[k][2]);
+        flx.push_back(std::sqrt(aTnr[k][0]*aTnr[k][0]
+                               +aTnr[k][1]*aTnr[k][1]
+                               +aTnr[k][2]*aTnr[k][2]));
       // Store Riemann velocity
       flx.push_back(vnr[0]);
       for (std::size_t k=0; k<nmat; ++k) {
