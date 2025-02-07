@@ -26,15 +26,20 @@ class ThermallyPerfectGas {
     std::vector< tk::real > m_t_range{std::vector< tk::real >(4)};
     tk::real m_dH_ref;
 
-    //! Function to check what temperature range, if any, the given temperature is in.
-    std::size_t get_t_range(tk::real temp) const {
+    std::size_t get_t_range(tk::real temp) const
+    // *************************************************************************
+    //! Check what temperature range, if any, the given temperature is in
+    //! \param[in] temp Given temperature to be checked for range
+    //! \return Index of temperature range the given temperature is in
+    // *************************************************************************
+    {
       tk::real fdg = 0.1; // Fudge factor to accomodate numerical overshoot
       if (temp < m_t_range[0] * (1 - fdg) || temp > m_t_range.back() * (1 + fdg)) {
         Throw("ThermallyPerfectGas totalenergy temperature outside t_range bounds: "
         + std::to_string(temp));
       }
 
-      std::size_t t_rng_idx;
+      std::size_t t_rng_idx(0);
       for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
         // Apply fudge factor to max/min bounds
         tk::real fdgl = 1., fdgu = 1.;
