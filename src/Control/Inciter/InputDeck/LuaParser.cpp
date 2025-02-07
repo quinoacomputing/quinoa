@@ -588,8 +588,14 @@ LuaParser::storeInputDeck(
         checkStoreMatProp(sol_spc[i+1], "R", nspec,
           spci_deck.get< tag::R >());
         // cp_coeff
-        checkStoreMatPropVec(sol_spc[i+1], "cp_coeff", nspec, 8,
+        checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
           spci_deck.get< tag::cp_coeff >());
+        // t_range
+        checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
+          spci_deck.get< tag::t_range >());
+        // dH_ref
+        checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
+          spci_deck.get< tag::dH_ref >());
       }
 
       // Generate mapping between material index and eos parameter index
@@ -1498,6 +1504,57 @@ LuaParser::checkStoreMatPropVec(
     // store values from table to inputdeck
     for (std::size_t i=0; i<vecsize; ++i)
       storage[k].push_back(tableentry[k+1][i+1]);
+  }
+}
+
+void
+LuaParser::checkStoreMatPropVecVec(
+  const sol::table table,
+  const std::string key,
+  std::size_t nspec,
+  std::size_t vecsize1,
+  std::size_t vecsize2,
+  std::vector<std::vector<std::vector< tk::real >>>& storage )
+// *****************************************************************************
+//  Check and store material property vector into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] nspec Number of species
+//! \param[in] vecsize1 Outer number of said property in Sol-table (based on
+//!   number of coefficients for the defined species)
+//! \param[in] vecsize2 Inner number of said property in Sol-table (based on
+//!   number of coefficients for the defined species)
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != nspec)
+    Throw("Incorrect number of '" + key + "' vectors specified. Expected " +
+      std::to_string(nspec) + " vectors");
+
+  storage.resize(nspec);
+
+  const auto& tableentry = table[key];
+  for (std::size_t k=0; k < nspec; k++) {
+    if (sol::table(tableentry[k+1]).size() != vecsize1)
+      Throw("Incorrect outer number of '" + key + "' entries in vector of species "
+        + std::to_string(k+1) + " specified. Expected " +
+        std::to_string(vecsize1));
+
+    // store values from table to inputdeck
+    for (std::size_t i=0; i<vecsize1; ++i) {
+      if (sol::table(tableentry[k+1][i+1]).size() != vecsize2)
+        Throw("Incorrect inner number of '" + key + "' entries in vector of species "
+          + std::to_string(k+1) + " specified. Expected " +
+          std::to_string(vecsize2));
+      std::vector< tk::real > temp_storage;
+      for (std::size_t j=0; j<vecsize2; j++)
+        temp_storage.push_back(tableentry[k+1][i+1][j+1]);
+      storage[k].push_back(temp_storage);
+    }
   }
 }
 
