@@ -199,6 +199,9 @@ struct HLLDMultiMat {
       }
     }
 
+    auto w_l = (vnl[0]-Sl)/(Sm-Sl);
+    auto w_r = (vnr[0]-Sr)/(Sm-Sr);
+
     std::array< tk::real, 3 > vnlStar, vnrStar;
     // u*_L
     vnlStar[0] = Sm;
@@ -208,9 +211,6 @@ struct HLLDMultiMat {
     vnrStar[0] = Sm;
     vnrStar[1] = vnr[1];
     vnrStar[2] = vnr[2];
-
-    auto w_l = (vnl[0]-Sl)/(Sm-Sl);
-    auto w_r = (vnr[0]-Sr)/(Sm-Sr);
 
     auto vlStar = tk::unrotateVector(vnlStar, fn);
     auto vrStar = tk::unrotateVector(vnrStar, fn);
@@ -225,13 +225,16 @@ struct HLLDMultiMat {
       if (solidx[k] > 0)
       {
         gnlStar.push_back(gnl[k]);
-        for (std::size_t i=1; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            gnlStar[k][i][j] *= w_l;
+        // for (std::size_t i=1; i<3; ++i)
+        //   for (std::size_t j=0; j<3; ++j)
+        //     gnlStar[k][i][j] *= w_l;
+        gnlStar[k][0][0] *= w_l;
+        gnlStar[k][1][0] *= w_l;
+        gnlStar[k][2][0] *= w_l;
         // rotate g back to original frame of reference
         glStar.push_back(tk::unrotateTensor(gnlStar[k], fn));
       }
-      uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
+      uStar[0][volfracIdx(nmat, k)] = w_l * u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
         + (Sm-vnl[0]) * (u[0][densityIdx(nmat, k)]*Sm - asignnlStar[k][0][0]/(Sl-vnl[0]));
@@ -244,13 +247,16 @@ struct HLLDMultiMat {
       if (solidx[k] > 0)
       {
         gnrStar.push_back(gnr[k]);
-        for (std::size_t i=1; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            gnrStar[k][i][j] *= w_r;
+        // for (std::size_t i=1; i<3; ++i)
+        //   for (std::size_t j=0; j<3; ++j)
+        //     gnrStar[k][i][j] *= w_r;
+        gnrStar[k][0][0] *= w_r;
+        gnrStar[k][1][0] *= w_r;
+        gnrStar[k][2][0] *= w_r;
         // rotate g back to original frame of reference
         grStar.push_back(tk::unrotateTensor(gnrStar[k], fn));
       }
-      uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
+      uStar[1][volfracIdx(nmat, k)] = w_r * u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
         + (Sm-vnr[0]) * (u[1][densityIdx(nmat, k)]*Sm - asignnrStar[k][0][0]/(Sr-vnr[0]));
@@ -373,18 +379,24 @@ struct HLLDMultiMat {
         if (solidx[k] > 0)
         {
           gnlStarStar = gnlStar[k];
-          gnlStarStar[1][0] +=
-            gnlStar[k][0][0] * (vnlStarStar[1]-vnl[1])/(Sm-Ssl);
-          gnlStarStar[2][0] +=
-            gnlStar[k][0][0] * (vnlStarStar[2]-vnl[2])/(Sm-Ssl);
-          gnlStarStar[1][1] +=
-            gnlStar[k][0][1] * (vnlStarStar[1]-vnl[1])/(Sm-Ssl);
-          gnlStarStar[2][1] +=
-            gnlStar[k][0][1] * (vnlStarStar[2]-vnl[2])/(Sm-Ssl);
-          gnlStarStar[1][2] +=
-            gnlStar[k][0][2] * (vnlStarStar[1]-vnl[1])/(Sm-Ssl);
-          gnlStarStar[2][2] +=
-            gnlStar[k][0][2] * (vnlStarStar[2]-vnl[2])/(Sm-Ssl);
+          // gnlStarStar[1][0] +=
+          //   gnlStar[k][0][0] * (vnlStarStar[1]-vnl[1])/(Sm-Ssl);
+          // gnlStarStar[2][0] +=
+          //   gnlStar[k][0][0] * (vnlStarStar[2]-vnl[2])/(Sm-Ssl);
+          // gnlStarStar[1][1] +=
+          //   gnlStar[k][0][1] * (vnlStarStar[1]-vnl[1])/(Sm-Ssl);
+          // gnlStarStar[2][1] +=
+          //   gnlStar[k][0][1] * (vnlStarStar[2]-vnl[2])/(Sm-Ssl);
+          // gnlStarStar[1][2] +=
+          //   gnlStar[k][0][2] * (vnlStarStar[1]-vnl[1])/(Sm-Ssl);
+          // gnlStarStar[2][2] +=
+          //   gnlStar[k][0][2] * (vnlStarStar[2]-vnl[2])/(Sm-Ssl);
+          gnlStar[k][0][0] += gnlStar[k][0][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
+                            + gnlStar[k][0][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
+          gnlStar[k][1][0] += gnlStar[k][1][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
+                            + gnlStar[k][1][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
+          gnlStar[k][2][0] += gnlStar[k][2][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
+                            + gnlStar[k][2][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
           // rotate g back to original frame of reference
           glStarStar.push_back(tk::unrotateTensor(gnlStarStar, fn));
         }
@@ -402,18 +414,24 @@ struct HLLDMultiMat {
         if (solidx[k] > 0)
         {
           gnrStarStar = gnrStar[k];
-          gnrStarStar[1][0] +=
-            gnrStar[k][0][0] * (vnrStarStar[1]-vnr[1])/(Sm-Ssr);
-          gnrStarStar[2][0] +=
-            gnrStar[k][0][0] * (vnrStarStar[2]-vnr[2])/(Sm-Ssr);
-          gnrStarStar[1][1] +=
-            gnrStar[k][0][1] * (vnrStarStar[1]-vnr[1])/(Sm-Ssr);
-          gnrStarStar[2][1] +=
-            gnrStar[k][0][1] * (vnrStarStar[2]-vnr[2])/(Sm-Ssr);
-          gnrStarStar[1][2] +=
-            gnrStar[k][0][2] * (vnrStarStar[1]-vnr[1])/(Sm-Ssr);
-          gnrStarStar[2][2] +=
-            gnrStar[k][0][2] * (vnrStarStar[2]-vnr[2])/(Sm-Ssr);
+          // gnrStarStar[1][0] +=
+          //   gnrStar[k][0][0] * (vnrStarStar[1]-vnr[1])/(Sm-Ssr);
+          // gnrStarStar[2][0] +=
+          //   gnrStar[k][0][0] * (vnrStarStar[2]-vnr[2])/(Sm-Ssr);
+          // gnrStarStar[1][1] +=
+          //   gnrStar[k][0][1] * (vnrStarStar[1]-vnr[1])/(Sm-Ssr);
+          // gnrStarStar[2][1] +=
+          //   gnrStar[k][0][1] * (vnrStarStar[2]-vnr[2])/(Sm-Ssr);
+          // gnrStarStar[1][2] +=
+          //   gnrStar[k][0][2] * (vnrStarStar[1]-vnr[1])/(Sm-Ssr);
+          // gnrStarStar[2][2] +=
+          //   gnrStar[k][0][2] * (vnrStarStar[2]-vnr[2])/(Sm-Ssr);
+          gnrStar[k][0][0] += gnrStar[k][0][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
+                            + gnrStar[k][0][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
+          gnrStar[k][1][0] += gnrStar[k][1][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
+                            + gnrStar[k][1][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
+          gnrStar[k][2][0] += gnrStar[k][2][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
+                            + gnrStar[k][2][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
           // rotate g back to original frame of reference
           grStarStar.push_back(tk::unrotateTensor(gnrStarStar, fn));
         }
