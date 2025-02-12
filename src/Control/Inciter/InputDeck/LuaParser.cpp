@@ -406,6 +406,8 @@ LuaParser::storeInputDeck(
     // size of the material vector is the number of distinct types of materials
     sol::table sol_mat = lua_ideck["material"];
     gideck.get< tag::material >().resize(sol_mat.size());
+    // species vector size is one, since all species are only of one type for now
+    gideck.get< tag::species >().resize(1);
 
     // store material properties
     for (std::size_t i=0; i<gideck.get< tag::material >().size(); ++i) {
@@ -557,6 +559,43 @@ LuaParser::storeInputDeck(
         else
           Throw("Either reference density or reference temperature must be "
             "specified for JWL equation of state (EOS).");
+      }
+      // Thermally-perfect gas materials
+      else if (mati_deck.get< tag::eos >() ==
+        inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
+
+        if (!lua_ideck["species"].valid())
+          Throw("Species block must be specified for thermally perfect gas");
+        sol::table sol_spc = lua_ideck["species"];
+
+        // We have assumed that nmat == 1 always for multi species, and that
+        // all species are of a single type, so that the outer species vector
+        // is of size one
+        auto& spci_deck = gideck.get< tag::species >()[0];
+
+        // species ids (default is for single species)
+        storeVecIfSpecd< uint64_t >(
+          sol_spc[i+1], "id", spci_deck.get< tag::id >(),
+          std::vector< uint64_t >(1,1));
+
+        Assert(nspec == spci_deck.get< tag::id >().size(),
+          "Number of ids in species-block not equal to number of species");
+
+        // gamma
+        checkStoreMatProp(sol_spc[i+1], "gamma", nspec,
+          spci_deck.get< tag::gamma >());
+        // R
+        checkStoreMatProp(sol_spc[i+1], "R", nspec,
+          spci_deck.get< tag::R >());
+        // cp_coeff
+        checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
+          spci_deck.get< tag::cp_coeff >());
+        // t_range
+        checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
+          spci_deck.get< tag::t_range >());
+        // dH_ref
+        checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
+          spci_deck.get< tag::dH_ref >());
       }
 
       // Generate mapping between material index and eos parameter index
@@ -1448,6 +1487,97 @@ LuaParser::checkStoreMatProp(
   // store values from table to inputdeck
   storeVecIfSpecd< tk::real >(table, key, storage,
     std::vector< tk::real >(vecsize, 0.0));
+}
+
+void
+LuaParser::checkStoreMatPropVec(
+  const sol::table table,
+  const std::string key,
+  std::size_t nspec,
+  std::size_t vecsize,
+  std::vector<std::vector< tk::real >>& storage )
+// *****************************************************************************
+//  Check and store material property vector into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] nspec Number of species
+//! \param[in] vecsize Number of said property in Sol-table (based on number of
+//!   coefficients for the defined species)
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != nspec)
+    Throw("Incorrect number of '" + key + "' vectors specified. Expected " +
+      std::to_string(nspec) + " vectors");
+
+  storage.resize(nspec);
+
+  const auto& tableentry = table[key];
+  for (std::size_t k=0; k < nspec; k++) {
+    if (sol::table(tableentry[k+1]).size() != vecsize)
+      Throw("Incorrect number of '" + key + "' entries in vector of species "
+        + std::to_string(k+1) + " specified. Expected " +
+        std::to_string(vecsize));
+
+    // store values from table to inputdeck
+    for (std::size_t i=0; i<vecsize; ++i)
+      storage[k].push_back(tableentry[k+1][i+1]);
+  }
+}
+
+void
+LuaParser::checkStoreMatPropVecVec(
+  const sol::table table,
+  const std::string key,
+  std::size_t nspec,
+  std::size_t vecsize1,
+  std::size_t vecsize2,
+  std::vector<std::vector<std::vector< tk::real >>>& storage )
+// *****************************************************************************
+//  Check and store material property vector into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] nspec Number of species
+//! \param[in] vecsize1 Outer number of said property in Sol-table (based on
+//!   number of coefficients for the defined species)
+//! \param[in] vecsize2 Inner number of said property in Sol-table (based on
+//!   number of coefficients for the defined species)
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != nspec)
+    Throw("Incorrect number of '" + key + "' vectors specified. Expected " +
+      std::to_string(nspec) + " vectors");
+
+  storage.resize(nspec);
+
+  const auto& tableentry = table[key];
+  for (std::size_t k=0; k < nspec; k++) {
+    if (sol::table(tableentry[k+1]).size() != vecsize1)
+      Throw("Incorrect outer number of '" + key + "' entries in vector of species "
+        + std::to_string(k+1) + " specified. Expected " +
+        std::to_string(vecsize1));
+
+    // store values from table to inputdeck
+    for (std::size_t i=0; i<vecsize1; ++i) {
+      if (sol::table(tableentry[k+1][i+1]).size() != vecsize2)
+        Throw("Incorrect inner number of '" + key + "' entries in vector of species "
+          + std::to_string(k+1) + " specified. Expected " +
+          std::to_string(vecsize2));
+      std::vector< tk::real > temp_storage;
+      for (std::size_t j=0; j<vecsize2; j++)
+        temp_storage.push_back(tableentry[k+1][i+1][j+1]);
+      storage[k].push_back(temp_storage);
+    }
+  }
 }
 
 void

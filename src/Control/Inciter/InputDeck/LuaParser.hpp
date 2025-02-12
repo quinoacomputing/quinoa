@@ -44,6 +44,23 @@ class LuaParser {
       std::size_t vecsize,
       std::vector< tk::real >& storage );
 
+    //! Check and store material property vector into inpudeck storage
+    void checkStoreMatPropVec(
+      const sol::table table,
+      const std::string key,
+      std::size_t nspec,
+      std::size_t vecsize,
+      std::vector<std::vector< tk::real >>& storage );
+
+    //! Check and store material property vector of vectors into inpudeck storage
+    void checkStoreMatPropVecVec(
+      const sol::table table,
+      const std::string key,
+      std::size_t nspec,
+      std::size_t vecsize1,
+      std::size_t vecsize2,
+      std::vector<std::vector<std::vector< tk::real >>>& storage );
+
     //! Check and store field output variables
     void addOutVar(
       const std::string& varname,

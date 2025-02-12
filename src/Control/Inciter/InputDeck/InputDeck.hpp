@@ -125,6 +125,16 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::k,            std::vector< tk::real >
 > >;
 
+// Species/EOS object
+using speciesList = tk::TaggedTuple< brigand::list<
+  tag::id,       std::vector< uint64_t >,
+  tag::gamma,    std::vector< tk::real >,
+  tag::R,        std::vector< tk::real >,
+  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,  std::vector< std::vector< tk::real > >,
+  tag::dH_ref,   std::vector< tk::real >
+> >;
+
 // Boundary conditions block
 using bcList = tk::TaggedTuple< brigand::list<
   tag::mesh,        std::vector< std::size_t >,
@@ -321,6 +331,8 @@ using ConfigMembers = brigand::list<
   tag::sys, std::map< std::size_t, std::size_t >,
 
   tag::material, std::vector< materialList >,
+
+  tag::species, std::vector< speciesList >,
 
   tag::matidxmap, tk::TaggedTuple< brigand::list<
     tag::eosidx, std::vector< std::size_t >,
@@ -936,6 +948,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to introduce a material block, used to
         specify material properties.)", "vector block-title"});
 
+      keywords.insert({"species",
+        "Start configuration block for species (eos) properties",
+        R"(This keyword is used to introduce a species block, used to
+        specify species properties in the multi species solver.)",
+        "vector block-title"});
+
       keywords.insert({"id", "ID",
         R"(This keyword is used to specify an ID, a positive integer. Usage is
         context specific, i.e. what block it is specified in. E.g. Inside the
@@ -1022,6 +1040,31 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"k", "heat conductivity",
         R"(This keyword is used to specify the material property, heat
         conductivity.)", "vector of reals"});
+
+      keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
+        R"(This keyword is used to specify species' coefficients in the
+        thermally perfect gas polynomial fit (per temperature range)
+        for specific heat at constant volume. The outer vector is per
+        species, the middle vector is per temperature range, and the
+        inner vector contains 8 coefficients to describe the polynomial.)",
+        "vector of vector of vector of reals"});
+
+      keywords.insert({"t_range", "temperature range for TPG specific heat polynomials",
+        R"(This keyword is used to specify the temperature range for each specific
+        heat polynomial given in cp_coeff. The outer vector is per species,
+        and the inner vector gives the temperature ranges. The inner vector must
+        be sized 1 larger than the number of temperature ranges, as the ranges
+        are read as [T0, T1],[T1, T2],...)", "vector of vector of reals"});
+
+      keywords.insert({"dH_ref", "reference enthalpy for TPG specific heat polynomials",
+        R"(This keyword is used to specify the reference enthalpy at 298.15 K so that
+        the reference temperature in the enthalpy calculations is 0 K. This number
+        is taken from the NASA Glenn 2002 report, and is the heat of formation
+        divided by the species molar mass.)", "vector of reals"});
+
+      keywords.insert({"R", "Specific gas constant",
+        R"(This keyword is used to specify the species property, specific gas
+        constant, in units J/kg.K.)", "vector of reals"});
 
       keywords.insert({"stiffenedgas",
         "Select the stiffened gas equation of state",

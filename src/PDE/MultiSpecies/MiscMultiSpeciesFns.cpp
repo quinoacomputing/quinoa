@@ -31,10 +31,14 @@ void initializeSpeciesEoS( std::vector< EOS >& mat_blk )
 {
   // EoS initialization
   // ---------------------------------------------------------------------------
+  auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
   const auto& matprop = g_inputdeck.get< tag::material >();
   const auto& matidxmap = g_inputdeck.get< tag::matidxmap >();
+  // assume only one type of species
   auto mateos = matprop[matidxmap.get< tag::eosidx >()[0]].get<tag::eos>();
-  mat_blk.emplace_back(mateos, EqType::multispecies, 0);
+  for (std::size_t k=0; k<nspec; ++k) {
+    mat_blk.emplace_back(mateos, EqType::multispecies, k);
+  }
 }
 
 tk::real

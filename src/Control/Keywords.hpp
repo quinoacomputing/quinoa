@@ -619,12 +619,14 @@ struct screen_info {
 using screen = keyword< screen_info, TAOCPP_PEGTL_STRING("screen") >;
 
 struct restart_info {
-  static std::string name() { return "checkpoint/restart directory name"; }
+  static std::string name()
+    { return "directory to save checkpoint/restart files"; }
   static std::string shortDescription()
-    { return "Specify the directory for restart files"; }
+    { return "Specify the directory for saving restart files"; }
   static std::string longDescription() { return
     R"(This option is used to specify the directory name in which to save
-    checkpoint/restart files.)";
+    checkpoint/restart files. Caution: Contents of this directory will be
+    overwritten.)";
   }
   using alias = Alias< R >;
   struct expect {

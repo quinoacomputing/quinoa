@@ -195,6 +195,7 @@ DEFTAG(sys);
 DEFTAG(physics);
 
 DEFTAG(material);
+DEFTAG(species);
 DEFTAG(eos);
 DEFTAG(id);
 DEFTAG(gamma);
@@ -218,6 +219,10 @@ DEFTAG(eosidx);
 DEFTAG(matidx);
 DEFTAG(solidx);
 DEFTAG(yield_stress);
+DEFTAG(R);
+DEFTAG(cp_coeff);
+DEFTAG(t_range);
+DEFTAG(dH_ref);
 
 DEFTAG(field_output);
 DEFTAG(interval);
