@@ -1106,7 +1106,7 @@ LuaParser::storeInputDeck(
 
           storeIfSpecd< tk::real >(sol_inbc[j+1], "temperature",
             inbc_deck[j].get< tag::temperature >(), 0.0);
-            
+
           storeIfSpecd< std::size_t >(sol_inbc[j+1], "materialid",
             inbc_deck[j].get< tag::materialid >(), 1);
         }

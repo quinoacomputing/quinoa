@@ -286,7 +286,7 @@ namespace inciter {
           mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], fp);
 
         // material pressures
-        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
+        ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * fp;
 
         rho += ur[densityIdx(nmat,k)];
       }
@@ -314,7 +314,7 @@ namespace inciter {
           mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], p);
 
         // material pressures
-        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * p;
+        ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * p;
 
         rho += ur[densityIdx(nmat,k)];
       }
