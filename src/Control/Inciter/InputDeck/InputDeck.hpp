@@ -47,7 +47,6 @@ using ncomp_t = std::size_t;
 using bclist = tk::TaggedTuple< brigand::list<
   tag::dirichlet,   std::vector< std::size_t >,
   tag::symmetry,    std::vector< std::size_t >,
-  tag::inlet,       std::vector< std::size_t >,
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
@@ -138,23 +137,31 @@ using speciesList = tk::TaggedTuple< brigand::list<
 
 // Boundary conditions block
 using bcList = tk::TaggedTuple< brigand::list<
-  tag::mesh,           std::vector< std::size_t >,
-  tag::dirichlet,      std::vector< std::size_t >,
-  tag::symmetry,       std::vector< std::size_t >,
-  tag::inlet,          std::vector< std::size_t >,
-  tag::outlet,         std::vector< std::size_t >,
-  tag::farfield,       std::vector< std::size_t >,
-  tag::extrapolate,    std::vector< std::size_t >,
-  tag::noslipwall,     std::vector< std::size_t >,
-  tag::stag_point,     std::vector< tk::real >,
-  tag::radius,         tk::real,
-  tag::velocity,       std::vector< tk::real >,
-  tag::pressure,       tk::real,
-  tag::density,        tk::real,
-  tag::temperature,    tk::real,
+  tag::mesh,        std::vector< std::size_t >,
+  tag::dirichlet,   std::vector< std::size_t >,
+  tag::symmetry,    std::vector< std::size_t >,
+  tag::outlet,      std::vector< std::size_t >,
+  tag::farfield,    std::vector< std::size_t >,
+  tag::extrapolate, std::vector< std::size_t >,
+  tag::noslipwall,  std::vector< std::size_t >,
+  tag::stag_point,  std::vector< tk::real >,
+  tag::radius,      tk::real,
+  tag::velocity,    std::vector< tk::real >,
+  tag::pressure,    tk::real,
+  tag::density,     tk::real,
+  tag::temperature, tk::real,
   tag::mass_fractions, std::vector< tk::real >,
-  tag::materialid,     std::size_t,
-  tag::timedep,        std::vector<
+  tag::materialid,  std::size_t,
+  tag::inlet,       std::vector<
+    tk::TaggedTuple< brigand::list<
+      tag::sideset,      std::vector< uint64_t >,
+      tag::velocity,     std::vector< tk::real >,
+      tag::pressure,     tk::real,
+      tag::temperature,     tk::real,
+      tag::materialid,   std::size_t
+    > >
+  >,
+  tag::timedep,     std::vector<
     tk::TaggedTuple< brigand::list<
       tag::sideset,    std::vector< uint64_t >,
       tag::fn,         std::vector< tk::real >
