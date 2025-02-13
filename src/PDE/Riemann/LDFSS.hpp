@@ -115,7 +115,7 @@ struct LDFSS {
     //// mtilde for 2nd order Mach polys (vanLeer)
     //auto beta_l = -std::max(0.0, 1.0 - std::floor(std::abs(ml)));
     //auto beta_r = -std::max(0.0, 1.0 - std::floor(std::abs(mr)));
-    //auto mtilde = 0.25*beta_l*beta_r*std::pow((std::sqrt(0.5*(ml*ml+mr*mr)) - 1.0), 2.0);
+    //auto mtilde = 0.25*beta_l*beta_r*std::pow((std::pow(0.5*(ml*ml+mr*mr),0.25) - 1.0), 2.0);
     // mtilde for general-order Mach polys (AUSM+)
     auto mtilde  = 0.5*(msl[0] - std::max(0.0,ml) - msr[1] + std::min(0.0,mr));
     auto dp = pl - pr;
@@ -126,9 +126,11 @@ struct LDFSS {
     auto dpplus = std::abs(dp)
       //+ 8.0*rhol*ac12*std::sqrt(std::abs(vnl - vnr)*ac12);
       + 8.0*rhol*ac12*std::sqrt(std::abs(dp)/rho12);
+      //;
     auto dpminus = std::abs(dp)
       //+ 8.0*rhor*ac12*std::sqrt(std::abs(vnl - vnr)*ac12);
       + 8.0*rhor*ac12*std::sqrt(std::abs(dp)/rho12);
+      //;
     auto mtilde_plus = mtilde*
       std::max( 0.0, 1.0 - (dp+delta*dpplus)/(2.0*rhol*ac12*ac12) );
     auto mtilde_minus = mtilde*
