@@ -101,8 +101,10 @@ infoTransport( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
     const auto& bcinlet =
       ib.get< tag::inlet >();
     if (!bcinlet.empty())
-      nfo.emplace_back( "Inlet boundary [" + std::to_string( ncomp ) + "]",
-        parameters( bcinlet ) );
+      for (const auto& bndry : bcinlet) {
+        nfo.emplace_back( "Inlet boundary [" + std::to_string( ncomp ) + "]",
+          parameters(bndry.get< tag::sideset >()) );
+    }
 
     const auto& bcoutlet =
       ib.get< tag::outlet >();

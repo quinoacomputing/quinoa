@@ -48,8 +48,6 @@ bndSurfInt( const bool pref,
             const Fields& P,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
-            std::vector< std::vector< tk::real > >& vriem,
-            std::vector< std::vector< tk::real > >& xcoord,
             std::vector< std::vector< tk::real > >& riemannDeriv,
             int intcompr=0 );
 
@@ -106,6 +104,7 @@ bndSurfIntViscousFV(
   const StateFn& gradFn,
   const Fields& U,
   const Fields& P,
+  const Fields& T,
   const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp );

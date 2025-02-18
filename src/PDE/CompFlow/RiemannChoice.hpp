@@ -15,6 +15,7 @@
 #include "Inciter/Options/Flux.hpp"
 #include "Riemann/HLLC.hpp"
 #include "Riemann/LaxFriedrichs.hpp"
+#include "Riemann/AUSMCompFlow.hpp"
 
 namespace inciter {
 
@@ -31,6 +32,9 @@ namespace inciter {
     }
     else if (flux == ctr::FluxType::LaxFriedrichs) {
       fluxfn = LaxFriedrichs::flux;
+    }
+    else if (flux == ctr::FluxType::AUSM) {
+      fluxfn = AUSMCompFlow::flux;
     }
     else {
       Throw("Riemann solver not set up for compressible flow PDEs.");

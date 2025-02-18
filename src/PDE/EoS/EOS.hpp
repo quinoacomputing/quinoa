@@ -20,12 +20,14 @@
 #include "EoS/JWL.hpp"
 #include "EoS/SmallShearSolid.hpp"
 #include "EoS/GodunovRomenskiAluminum.hpp"
+#include "EoS/ThermallyPerfectGas.hpp"
 
 namespace inciter {
 
 //! Equation types
 enum class EqType : uint8_t { compflow
                             , multimat
+                            , multispecies
                             };
 
 //! Base class for generic forwarding interface to eos types
@@ -37,6 +39,7 @@ class EOS {
                 , JWL
                 , SmallShearSolid
                 , GodunovRomenskiAluminum
+                , ThermallyPerfectGas
                 > m_material;
 
   public:
