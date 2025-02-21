@@ -586,16 +586,68 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
   return devH;
 }
 
+//! \brief Get transpose of a 3 by 3 matrix
+//! \param[in] mat matrix to be transposed
+//! \return transposed matrix
+inline std::array< std::array< tk::real, 3 >, 3 >
+transpose3by3(std::array< std::array< tk::real, 3 >, 3 > mat)
+{
+  std::array< std::array< tk::real, 3 >, 3 > transMat;
+  for (size_t i=0; i<3; ++i)
+    for (size_t j=0; j<3; ++j)
+      transMat[i][j] = mat[j][i];
+  return transMat;
+}
+
+//! \brief Get rotation matrix in 2D array form given a normal
+//! direction. The remaining directions are given by section 5.3.1 of
+//! Miller, G. H., and P. Colella. "A conservative three-dimensional
+//! Eulerian method for coupled solid–fluid shock capturing."
+//! Journal of Computational Physics 183.1 (2002): 26-82.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return rotation matrix
+inline std::array< std::array< tk::real, 3 >, 3 >
+getRotationMatrix(const std::array< tk::real, 3 >& r)
+{
+  std::array< std::array< tk::real, 3 >, 3 > rotMat;
+  tk::real rx = r[0];
+  tk::real ry = r[1];
+  tk::real rz = r[2];
+  if (std::abs(ry+rz) <= std::abs(ry-rz))
+  {
+    tk::real norm = std::sqrt(2*(1-rx*ry-rx*rz-ry*rz));
+    rotMat[0][0] = rx;
+    rotMat[0][1] = ry;
+    rotMat[0][2] = rz;
+    rotMat[1][0] = (ry-rz)/norm;
+    rotMat[1][1] = (rz-rx)/norm;
+    rotMat[1][2] = (rx-ry)/norm;
+    rotMat[2][0] = (rx*(ry+rz)-ry*ry-rz*rz)/norm;
+    rotMat[2][1] = (ry*(rx+rz)-rx*rx-rz*rz)/norm;
+    rotMat[2][2] = (rz*(rx+ry)-rx*rx-ry*ry)/norm;
+  }
+  else
+  {
+    tk::real norm = std::sqrt(2*(1+rz*(ry-rx)+rx*ry));
+    rotMat[0][0] = rx;
+    rotMat[0][1] = ry;
+    rotMat[0][2] = rz;
+    rotMat[1][0] = (ry+rz)/norm;
+    rotMat[1][1] = (rz-rx)/norm;
+    rotMat[1][2] = (-rx-ry)/norm;
+    rotMat[2][0] = (rx*(rz-ry)-ry*ry-rz*rz)/norm;
+    rotMat[2][1] = (ry*(rx+rz)+rx*rx+rz*rz)/norm;
+    rotMat[2][2] = (rz*(rx-ry)-rx*rx-ry*ry)/norm;
+  }
+  return rotMat;
+}
+
 //! \brief Rotate a second order tensor (e.g. a Strain/Stress matrix) from
 //! the (x,y,z) to a new (r,s,t) coordinate system.
-//! The first direction is given by a unit vector r = (rx,ry,rz).
-//! Then, the second is chosen to be:
-//! if |rx| > 0 or |ry| > 0:
-//! - s = (ry/sqrt(rx*rx+ry*ry),-rx/sqrt(rx*rx+ry*ry),0)
-//! else:
-//! - s = (1,0,0)
-//! Then, third basis vector is obtained from
-//! the cross-product between the first two.
+//! The directions are given by section 5.3.1 of
+//! Miller, G. H., and P. Colella. "A conservative three-dimensional
+//! Eulerian method for coupled solid–fluid shock capturing."
+//! Journal of Computational Physics 183.1 (2002): 26-82.
 //! \param[in] mat matrix to be rotated.
 //! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
 //! \return rotated tensor
@@ -604,45 +656,20 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
              const std::array< tk::real, 3 >& r )
 {
   // define rotation matrix
-  tk::real eps = 1.0e-04;
+  std::array< std::array< tk::real, 3 >, 3 > rotMatrix = getRotationMatrix(r);
   double rotMat[9];
-  tk::real rx = r[0];
-  tk::real ry = r[1];
-  tk::real rz = r[2];
-  if (std::abs(rx) > eps || std::abs(ry) > eps)
-  {
-    tk::real rxryNorm = std::sqrt(rx*rx+ry*ry);
-    rotMat[0] = rx;
-    rotMat[1] = ry;
-    rotMat[2] = rz;
-    rotMat[3] = ry/rxryNorm;
-    rotMat[4] = -rx/rxryNorm;
-    rotMat[5] = 0.0;
-    rotMat[6] = rx*rz/rxryNorm;
-    rotMat[7] = ry*rz/rxryNorm;
-    rotMat[8] = -rxryNorm;
-  }
-  else
-  {
-    rotMat[0] = rx;
-    rotMat[1] = ry;
-    rotMat[2] = rz;
-    rotMat[3] = 1.0;
-    rotMat[4] = 0.0;
-    rotMat[5] = 0.0;
-    rotMat[6] = 0.0;
-    rotMat[7] = 1.0;
-    rotMat[8] = 0.0;
-  }
 
   // define matrices
   double matAuxIn[9], matAuxOut[9];
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
+    {
       matAuxIn[i*3+j] = mat[i][j];
+      rotMat[i*3+j] = rotMatrix[i][j];
+    }
 
   // compute matAuxIn*rotMat and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
     3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
 
   // matAuxOut -> matAuxIn
@@ -653,13 +680,96 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   }
 
   // compute rotMat^T*matAuxIn and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
     3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
   // return matAuxOut as a 2D array
   return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
             {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
             {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+}
+
+//! \brief Rotate a second order tensor (e.g. a Strain/Stress matrix) from
+//! the (x,y,z) to a new (r,s,t) coordinate system.
+//! The directions are given by section 5.3.1 of
+//! Miller, G. H., and P. Colella. "A conservative three-dimensional
+//! Eulerian method for coupled solid–fluid shock capturing."
+//! Journal of Computational Physics 183.1 (2002): 26-82.
+//! \param[in] mat matrix to be rotated.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return rotated tensor
+inline std::array< std::array< tk::real, 3 >, 3 >
+unrotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
+               const std::array< tk::real, 3 >& r )
+{
+  // define rotation matrix
+  std::array< std::array< tk::real, 3 >, 3 > rotMatrix = getRotationMatrix(r);
+  double rotMat[9];
+
+  // define matrices
+  double matAuxIn[9], matAuxOut[9];
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+    {
+      matAuxIn[i*3+j] = mat[i][j];
+      rotMat[i*3+j] = rotMatrix[i][j];
+    }
+  // compute matAuxIn*rotMat and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+    3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
+  // matAuxOut -> matAuxIn
+  for (std::size_t i=0; i<9; i++)
+  {
+    matAuxIn[i]  = matAuxOut[i];
+    matAuxOut[i] = 0.0;
+  }
+  // compute rotMat^T*matAuxIn and store it into matAuxOut
+  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+    3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
+  // return matAuxOut as a 2D array
+  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
+            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
+            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+}
+
+//! \brief Rotate a vector (e.g. a velocity) from
+//! the (x,y,z) to a new (r,s,t) coordinate system.
+//! The directions are given by section 5.3.1 of
+//! Miller, G. H., and P. Colella. "A conservative three-dimensional
+//! Eulerian method for coupled solid–fluid shock capturing."
+//! Journal of Computational Physics 183.1 (2002): 26-82.
+//! \param[in] v Vector to be rotated.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return rotated vector
+inline std::array< tk::real, 3 >
+rotateVector( const std::array< tk::real, 3 >& v,
+  const std::array< tk::real, 3 >& r )
+{
+  // define rotation matrix
+  std::array< std::array< tk::real, 3 >, 3 > rotMat = getRotationMatrix(r);
+
+  // return rotMat*v
+  return matvec(rotMat,v);
+}
+
+//! \brief Unrotate a vector (e.g. a velocity) from
+//! the (x,y,z) to a new (r,s,t) coordinate system.
+//! The directions are given by section 5.3.1 of
+//! Miller, G. H., and P. Colella. "A conservative three-dimensional
+//! Eulerian method for coupled solid–fluid shock capturing."
+//! Journal of Computational Physics 183.1 (2002): 26-82.
+//! \param[in] v Vector to be rotated.
+//! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
+//! \return rotated vector
+inline std::array< tk::real, 3 >
+unrotateVector( const std::array< tk::real, 3 >& v,
+  const std::array< tk::real, 3 >& r )
+{
+  // define rotation matrix
+  std::array< std::array< tk::real, 3 >, 3 > rotMat = getRotationMatrix(r);
+
+  // return rotMat^T*v
+  return matvec(transpose3by3(rotMat),v);
 }
 
 //! \brief Reflect a second order tensor (e.g. a Strain/Stress matrix)

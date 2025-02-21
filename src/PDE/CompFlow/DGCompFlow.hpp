@@ -72,23 +72,21 @@ class CompFlow {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
       brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
-        // BC State functions
-        { dirichlet
-        , symmetry
-        , invalidBC         // Inlet BC not implemented
-        , invalidBC         // Outlet BC not implemented
-        , farfield
-        , extrapolate
-        , invalidBC },      // No slip wall BC not implemented
-        // BC Gradient functions
-        { noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad }
-        ) );
+      // BC State functions
+      { dirichlet
+      , symmetry
+      , invalidBC         // Outlet BC not implemented
+      , farfield
+      , extrapolate
+      , invalidBC },      // No slip wall BC not implemented
+      // BC Gradient functions
+      { noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad }
+      ) );
 
       // EoS initialization
       const auto& matprop =
@@ -472,9 +470,6 @@ class CompFlow {
       // terms in the system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
-      std::vector< std::vector< tk::real > > vriem;
-      std::vector< std::vector< tk::real > > riemannLoc;
-
       // configure a no-op lambda for prescribed velocity
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
@@ -482,7 +477,7 @@ class CompFlow {
       // compute internal surface flux integrals
       tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                    coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, vriem, riemannLoc, riemannDeriv );
+                   dt, R, riemannDeriv );
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4,
@@ -498,8 +493,7 @@ class CompFlow {
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b),
                         fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                        velfn, std::get<1>(b), U, P, ndofel, R, vriem, riemannLoc,
-                        riemannDeriv );
+                        velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv );
 
      // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::ic >();

@@ -21,6 +21,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
+#include "PDE/MultiSpecies/MultiSpeciesIndexing.hpp"
 
 namespace tk {
 namespace grm {
@@ -343,6 +344,42 @@ LuaParser::storeInputDeck(
     // number of equations in PDE system are determined based on materials
   }
 
+  // check multispecies
+  if (lua_ideck["multispecies"].valid()) {
+
+    checkBlock< inciter::ctr::multispeciesList::Keys >(lua_ideck["multispecies"],
+      "multispecies");
+
+    gideck.get< tag::pde >() = inciter::ctr::PDEType::MULTISPECIES;
+    storeIfSpecd< std::size_t >(
+      lua_ideck["multispecies"], "nspec",
+      gideck.get< tag::multispecies, tag::nspec >(), 1);
+    storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
+      lua_ideck["multispecies"], "problem",
+      gideck.get< tag::multispecies, tag::problem >(),
+      inciter::ctr::ProblemType::USER_DEFINED);
+    storeOptIfSpecd< inciter::ctr::PhysicsType, inciter::ctr::Physics >(
+      lua_ideck["multispecies"], "physics",
+      gideck.get< tag::multispecies, tag::physics >(),
+      inciter::ctr::PhysicsType::EULER);
+    gideck.get< tag::depvar >()[0] = 'a';
+    storeOptIfSpecd< inciter::ctr::FluxType, inciter::ctr::Flux >(
+      lua_ideck, "flux", gideck.get< tag::flux >(),
+      inciter::ctr::FluxType::AUSM);
+
+    // store number of equations in PDE system
+    // nspec: species mass conservation equations,
+    // 3: momentum equations,
+    // 1: total energy equation.
+    gideck.get< tag::ncomp >() =
+      gideck.get< tag::multispecies, tag::nspec >() + 3 + 1;
+  }
+
+  // number of species, for future use
+  std::size_t nspec(1);
+  if (gideck.get< tag::pde >() == inciter::ctr::PDEType::MULTISPECIES)
+    nspec = gideck.get< tag::multispecies, tag::nspec >();
+
   // add depvar to deck::depvars so it can be selected as outvar later
   tk::grm::depvars.insert( gideck.get< tag::depvar >()[0] );
 
@@ -369,6 +406,8 @@ LuaParser::storeInputDeck(
     // size of the material vector is the number of distinct types of materials
     sol::table sol_mat = lua_ideck["material"];
     gideck.get< tag::material >().resize(sol_mat.size());
+    // species vector size is one, since all species are only of one type for now
+    gideck.get< tag::species >().resize(1);
 
     // store material properties
     for (std::size_t i=0; i<gideck.get< tag::material >().size(); ++i) {
@@ -520,6 +559,43 @@ LuaParser::storeInputDeck(
         else
           Throw("Either reference density or reference temperature must be "
             "specified for JWL equation of state (EOS).");
+      }
+      // Thermally-perfect gas materials
+      else if (mati_deck.get< tag::eos >() ==
+        inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
+
+        if (!lua_ideck["species"].valid())
+          Throw("Species block must be specified for thermally perfect gas");
+        sol::table sol_spc = lua_ideck["species"];
+
+        // We have assumed that nmat == 1 always for multi species, and that
+        // all species are of a single type, so that the outer species vector
+        // is of size one
+        auto& spci_deck = gideck.get< tag::species >()[0];
+
+        // species ids (default is for single species)
+        storeVecIfSpecd< uint64_t >(
+          sol_spc[i+1], "id", spci_deck.get< tag::id >(),
+          std::vector< uint64_t >(1,1));
+
+        Assert(nspec == spci_deck.get< tag::id >().size(),
+          "Number of ids in species-block not equal to number of species");
+
+        // gamma
+        checkStoreMatProp(sol_spc[i+1], "gamma", nspec,
+          spci_deck.get< tag::gamma >());
+        // R
+        checkStoreMatProp(sol_spc[i+1], "R", nspec,
+          spci_deck.get< tag::R >());
+        // cp_coeff
+        checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
+          spci_deck.get< tag::cp_coeff >());
+        // t_range
+        checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
+          spci_deck.get< tag::t_range >());
+        // dH_ref
+        checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
+          spci_deck.get< tag::dH_ref >());
       }
 
       // Generate mapping between material index and eos parameter index
@@ -715,7 +791,7 @@ LuaParser::storeInputDeck(
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
         addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
-          gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
+          nspec, gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
       }
     }
 
@@ -727,7 +803,7 @@ LuaParser::storeInputDeck(
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
         addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
-          gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
+          nspec, gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
       }
     }
 
@@ -1050,8 +1126,30 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "symmetry",
         bc_deck[i].get< tag::symmetry >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "inlet",
-        bc_deck[i].get< tag::inlet >(), {});
+      if (sol_bc[i+1]["inlet"].valid()) {
+        const sol::table& sol_inbc = sol_bc[i+1]["inlet"];
+        auto& inbc_deck = bc_deck[i].get< tag::inlet >();
+        inbc_deck.resize(sol_inbc.size());
+
+        for (std::size_t j=0; j<inbc_deck.size(); ++j) {
+          storeVecIfSpecd< uint64_t >(sol_inbc[j+1], "sideset",
+            inbc_deck[j].get< tag::sideset >(), {});
+
+          storeVecIfSpecd< tk::real >(sol_inbc[j+1], "velocity",
+            inbc_deck[j].get< tag::velocity >(), {0.0, 0.0, 0.0});
+          if (inbc_deck[j].get< tag::velocity >().size() != 3)
+            Throw("Inlet velocity requires 3 components.");
+
+          storeIfSpecd< tk::real >(sol_inbc[j+1], "pressure",
+            inbc_deck[j].get< tag::pressure >(), 0.0);
+
+          storeIfSpecd< tk::real >(sol_inbc[j+1], "temperature",
+            inbc_deck[j].get< tag::temperature >(), 0.0);
+
+          storeIfSpecd< std::size_t >(sol_inbc[j+1], "materialid",
+            inbc_deck[j].get< tag::materialid >(), 1);
+        }
+      }
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "outlet",
         bc_deck[i].get< tag::outlet >(), {});
@@ -1116,6 +1214,14 @@ LuaParser::storeInputDeck(
       storeIfSpecd< tk::real >(sol_bc[i+1], "temperature",
         bc_deck[i].get< tag::temperature >(), 0.0);
 
+      // Mass fractions for inlet/farfield
+      storeVecIfSpecd< tk::real >(sol_bc[i+1], "mass_fractions",
+        bc_deck[i].get< tag::mass_fractions >(),
+        std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec)));
+      if (bc_deck[i].get< tag::mass_fractions >().size() != nspec)
+        Throw("BC mass fraction has incorrect number of species. "
+          "Expected " + std::to_string(nspec));
+
       // Material-id for inlet/outlet/farfield
       storeIfSpecd< std::size_t >(sol_bc[i+1], "materialid",
         bc_deck[i].get< tag::materialid >(), 1);
@@ -1157,6 +1263,13 @@ LuaParser::storeInputDeck(
 
     storeIfSpecd< tk::real >(lua_ideck["ic"], "temperature",
       ic_deck.get< tag::temperature >(), 0.0);
+
+    storeVecIfSpecd< tk::real >(lua_ideck["ic"], "mass_fractions",
+      ic_deck.get< tag::mass_fractions >(),
+      std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec)));
+    if (ic_deck.get< tag::mass_fractions >().size() != nspec)
+      Throw("IC mass fraction has incorrect number of species. "
+        "Expected " + std::to_string(nspec));
 
     storeIfSpecd< tk::real >(lua_ideck["ic"], "density",
       ic_deck.get< tag::density >(), 0.0);
@@ -1207,6 +1320,13 @@ LuaParser::storeInputDeck(
 
         storeIfSpecd< tk::real >(lua_box[i+1], "temperature",
           box_deck[i].get< tag::temperature >(), 0.0);
+
+        storeVecIfSpecd< tk::real >(lua_box[i+1], "mass_fractions",
+          box_deck[i].get< tag::mass_fractions >(),
+          std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec)));
+        if (box_deck[i].get< tag::mass_fractions >().size() != nspec)
+          Throw("IC box mass fraction has incorrect number of species. "
+            "Expected " + std::to_string(nspec));
 
         storeIfSpecd< tk::real >(lua_box[i+1], "xmin",
           box_deck[i].get< tag::xmin >(), 0.0);
@@ -1300,6 +1420,13 @@ LuaParser::storeInputDeck(
         storeIfSpecd< tk::real >(lua_meshblock[i+1], "temperature",
           mblk_deck[i].get< tag::temperature >(), 0.0);
 
+        storeVecIfSpecd< tk::real >(lua_meshblock[i+1], "mass_fractions",
+          mblk_deck[i].get< tag::mass_fractions >(),
+          std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec)));
+        if (mblk_deck[i].get< tag::mass_fractions >().size() != nspec)
+          Throw("IC meshblock mass fraction has incorrect number of species. "
+            "Expected " + std::to_string(nspec));
+
         storeOptIfSpecd< inciter::ctr::InitiateType, inciter::ctr::Initiate >(
           lua_meshblock[i+1], "initiate", mblk_deck[i].get< tag::initiate >(),
           inciter::ctr::InitiateType::IMPULSE);
@@ -1329,6 +1456,8 @@ LuaParser::storeInputDeck(
     ic_deck.get< tag::density >() = 0.0;
     ic_deck.get< tag::energy >() = 0.0;
     ic_deck.get< tag::velocity >() = {0.0, 0.0, 0.0};
+    ic_deck.get< tag::mass_fractions >() =
+      std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec));
   }
 }
 
@@ -1361,11 +1490,103 @@ LuaParser::checkStoreMatProp(
 }
 
 void
+LuaParser::checkStoreMatPropVec(
+  const sol::table table,
+  const std::string key,
+  std::size_t nspec,
+  std::size_t vecsize,
+  std::vector<std::vector< tk::real >>& storage )
+// *****************************************************************************
+//  Check and store material property vector into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] nspec Number of species
+//! \param[in] vecsize Number of said property in Sol-table (based on number of
+//!   coefficients for the defined species)
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != nspec)
+    Throw("Incorrect number of '" + key + "' vectors specified. Expected " +
+      std::to_string(nspec) + " vectors");
+
+  storage.resize(nspec);
+
+  const auto& tableentry = table[key];
+  for (std::size_t k=0; k < nspec; k++) {
+    if (sol::table(tableentry[k+1]).size() != vecsize)
+      Throw("Incorrect number of '" + key + "' entries in vector of species "
+        + std::to_string(k+1) + " specified. Expected " +
+        std::to_string(vecsize));
+
+    // store values from table to inputdeck
+    for (std::size_t i=0; i<vecsize; ++i)
+      storage[k].push_back(tableentry[k+1][i+1]);
+  }
+}
+
+void
+LuaParser::checkStoreMatPropVecVec(
+  const sol::table table,
+  const std::string key,
+  std::size_t nspec,
+  std::size_t vecsize1,
+  std::size_t vecsize2,
+  std::vector<std::vector<std::vector< tk::real >>>& storage )
+// *****************************************************************************
+//  Check and store material property vector into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] nspec Number of species
+//! \param[in] vecsize1 Outer number of said property in Sol-table (based on
+//!   number of coefficients for the defined species)
+//! \param[in] vecsize2 Inner number of said property in Sol-table (based on
+//!   number of coefficients for the defined species)
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != nspec)
+    Throw("Incorrect number of '" + key + "' vectors specified. Expected " +
+      std::to_string(nspec) + " vectors");
+
+  storage.resize(nspec);
+
+  const auto& tableentry = table[key];
+  for (std::size_t k=0; k < nspec; k++) {
+    if (sol::table(tableentry[k+1]).size() != vecsize1)
+      Throw("Incorrect outer number of '" + key + "' entries in vector of species "
+        + std::to_string(k+1) + " specified. Expected " +
+        std::to_string(vecsize1));
+
+    // store values from table to inputdeck
+    for (std::size_t i=0; i<vecsize1; ++i) {
+      if (sol::table(tableentry[k+1][i+1]).size() != vecsize2)
+        Throw("Incorrect inner number of '" + key + "' entries in vector of species "
+          + std::to_string(k+1) + " specified. Expected " +
+          std::to_string(vecsize2));
+      std::vector< tk::real > temp_storage;
+      for (std::size_t j=0; j<vecsize2; j++)
+        temp_storage.push_back(tableentry[k+1][i+1][j+1]);
+      storage[k].push_back(temp_storage);
+    }
+  }
+}
+
+void
 LuaParser::addOutVar(
   const std::string& varname,
   const std::string& alias,
   std::vector< char >& depv,
   std::size_t nmat,
+  std::size_t nspec,
   inciter::ctr::PDEType pde,
   tk::Centering c,
   std::vector< inciter::ctr::OutVar >& foutvar )
@@ -1375,6 +1596,7 @@ LuaParser::addOutVar(
 //! \param[in] alias User specified alias for output
 //! \param[in] depv List of depvars
 //! \param[in] nmat Number of materials configured
+//! \param[in] nspec Number of species configured
 //! \param[in] pde Type of PDE configured
 //! \param[in] c Variable centering requested
 //! \param[in,out] foutvar Input deck storage where output vars are stored
@@ -1411,6 +1633,28 @@ LuaParser::addOutVar(
       else if (qty == 'P') {  // material pressure (primitive)
         foutvar.emplace_back(
           inciter::ctr::OutVar(c, varname, alias, inciter::pressureIdx(nmat,j)) );
+      }
+      else {
+        // error out if incorrect matvar used
+        Throw("field_output: matvar " + varname + " not found");
+      }
+    }
+    else if (pde == inciter::ctr::PDEType::MULTISPECIES) {
+    // multispecies/matvar quantities
+      if (qty == 'D') {  // density
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(c, varname, alias,
+            inciter::multispecies::densityIdx(nspec,j)) );
+      }
+      else if (qty == 'M') {  // momentum
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(c, varname, alias,
+            inciter::multispecies::momentumIdx(nspec,j)) );
+      }
+      else if (qty == 'E') {  // specific total energy
+        foutvar.emplace_back(
+          inciter::ctr::OutVar(c, varname, alias,
+            inciter::multispecies::energyIdx(nspec,j)) );
       }
       else {
         // error out if incorrect matvar used

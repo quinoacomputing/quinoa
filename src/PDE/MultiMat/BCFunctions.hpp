@@ -117,6 +117,101 @@ namespace inciter {
   }
 
   //! \brief Boundary state function providing the left and right state of a
+  //!   face at inlet boundaries
+  //! \param[in] ncomp Number of scalar components in this PDE system
+  //! \param[in] ul Left (domain-internal) state
+  //! \param[in] fn Unit face normal
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \details The inlet boundary condition specifies a velocity at a
+  //!   sideset and assumes a zero bulk pressure and density gradient
+  //! \note The function signature must follow tk::StateFn
+  static tk::StateFn::result_type
+  inlet( ncomp_t ncomp,
+            const std::vector< EOS >& mat_blk,
+            const std::vector< tk::real >& ul,
+            tk::real, tk::real, tk::real, tk::real,
+            const std::array< tk::real, 3 >& fn )
+  {
+    auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+    const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+    auto& inbc = g_inputdeck.get< tag::bc >()[0].get< tag::inlet >();
+
+    // inlet velocity and material
+    auto u_in = inbc[0].get< tag::velocity >();
+    auto mat_in = inbc[0].get< tag::materialid >() - 1;
+    auto p_in = inbc[0].get< tag::pressure >();
+    auto t_in = inbc[0].get< tag::temperature >();
+
+    [[maybe_unused]] auto nsld = numSolids(nmat, solidx);
+
+    Assert( ul.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
+            "internal state vector" );
+
+    auto ur = ul;
+
+    // External cell velocity, such that velocity = v_in at face
+    auto v1r = u_in[0];
+    auto v2r = u_in[1];
+    auto v3r = u_in[2];
+
+    // Normal inlet velocity
+    auto vn = u_in[0]*fn[0] + u_in[1]*fn[1] + u_in[2]*fn[2];
+
+    // Acoustic speed
+    tk::real a(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      if (ul[volfracIdx(nmat, k)] > 1.0e-04)
+        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
+          ul[densityIdx(nmat, k)], ul[ncomp+pressureIdx(nmat, k)],
+          ul[volfracIdx(nmat, k)], k ) );
+
+    // Mach number
+    auto Ma = vn / a;
+
+    tk::real alphamin = 1e-12;
+    tk::real pk(0.0);
+    tk::real rho(0.0);
+    for (std::size_t k=0; k<nmat; ++k) {
+      if (k == mat_in)
+        ur[volfracIdx(nmat,k)] = 1.0 -
+          (static_cast< tk::real >(nmat-1))*alphamin;
+      else
+        ur[volfracIdx(nmat,k)] = alphamin;
+
+      // Material pressure, which, for supersonic inflow, is the exterior
+      // pressure and the interior pressure for subsonic
+      if(Ma <= -1)
+        pk = p_in;
+      else
+        pk = ul[ncomp+pressureIdx(nmat,k)]/ul[volfracIdx(nmat,k)];
+      auto rhok = mat_blk[k].compute< EOS::density >(pk, t_in);
+
+      ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat,k)] * pk;
+      ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
+      ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
+        mat_blk[k].compute< EOS::totalenergy >(rhok, v1r, v2r, v3r, pk);
+
+      // bulk density
+      rho += ur[densityIdx(nmat,k)];
+    }
+
+    ur[momentumIdx(nmat, 0)] = rho * v1r;
+    ur[momentumIdx(nmat, 1)] = rho * v2r;
+    ur[momentumIdx(nmat, 2)] = rho * v3r;
+
+    // velocity
+    ur[ncomp+velocityIdx(nmat, 0)] = v1r;
+    ur[ncomp+velocityIdx(nmat, 1)] = v2r;
+    ur[ncomp+velocityIdx(nmat, 2)] = v3r;
+
+    Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
+            "boundary state vector" );
+
+    return {{ std::move(ul), std::move(ur) }};
+  }
+
+  //! \brief Boundary state function providing the left and right state of a
   //!   face at farfield boundaries
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
@@ -191,7 +286,7 @@ namespace inciter {
           mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], fp);
 
         // material pressures
-        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
+        ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * fp;
 
         rho += ur[densityIdx(nmat,k)];
       }
@@ -219,7 +314,7 @@ namespace inciter {
           mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], p);
 
         // material pressures
-        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * p;
+        ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * p;
 
         rho += ur[densityIdx(nmat,k)];
       }
@@ -408,6 +503,27 @@ namespace inciter {
 
     for (std::size_t i=0; i<3*ncomp; ++i)
       dur[i] = -dul[i];
+
+    return {{ std::move(dul), std::move(dur) }};
+  }
+
+  //! \brief Boundary gradient function for zero gradient cells
+  //! \param[in] ncomp Number of variables whos gradients are needed
+  //! \param[in] dul Left (domain-internal) gradients
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \note The function signature must follow tk::StateFn. For multimat, the
+  //!   left or right state is the vector of gradients of primitive quantities.
+  static tk::StateFn::result_type
+  zeroGrad( ncomp_t ncomp,
+                const std::vector< EOS >&,
+                const std::vector< tk::real >& dul,
+                tk::real, tk::real, tk::real, tk::real,
+                const std::array< tk::real, 3 >& )
+  {
+    Assert(dul.size() == 3*ncomp, "Incorrect size of boundary gradient vector");
+
+    std::vector< tk::real > dur(3*ncomp, 0.0);
 
     return {{ std::move(dul), std::move(dur) }};
   }

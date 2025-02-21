@@ -48,8 +48,6 @@ surfInt( const bool pref,
          const std::vector< std::size_t >& ndofel,
          const tk::real dt,
          Fields& R,
-         std::vector< std::vector< tk::real > >& vriem,
-         std::vector< std::vector< tk::real > >& xcoord,
          std::vector< std::vector< tk::real > >& riemannDeriv,
          int intcompr=0 );
 
@@ -103,6 +101,7 @@ surfIntViscousFV(
   const Fields& geoElem,
   const Fields& U,
   const Fields& P,
+  const Fields& T,
   const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp );
@@ -116,7 +115,9 @@ modifiedGradientViscousFlux(
   const std::array< std::array< tk::real, 3 >, 2 >& centroids,
   const std::array< std::vector< tk::real >, 2 >& state,
   const std::array< std::vector< tk::real >, 2 >& cellAvgState,
-  const std::array< std::array< real, 3 >, 3 > dudx );
+  const std::array< std::vector< tk::real >, 2 >& cellAvgT,
+  const std::array< std::array< real, 3 >, 3 > dudx,
+  const std::vector< std::array< real, 3 > >& dTdx );
 
 } // tk::
 
