@@ -32,9 +32,6 @@
 #include "Around.hpp"
 #include "CGPDE.hpp"
 #include "FieldOutput.hpp"
-#include "M2MTransfer.hpp"
-
-CollideHandle collideHandle;
 
 namespace inciter {
 
@@ -1419,10 +1416,7 @@ OversetFE::evalLB( int nrestart )
   // Detect if just returned from a checkpoint and if so, zero timers and
   // finished flag
   if (d->restarted( nrestart )) {
-    // TODO: Need to make sure this is actually correct
-    CollideGrid3d gridMap(CkVector3d(0, 0, 0),CkVector3d(2, 100, 2));
-    collideHandle = CollideCreate(gridMap,
-      CollideSerialClient(exam2m::collisionHandler, 0));
+    std::cout << d->MeshId() << " adding mesh" << std::endl;
     d->addMesh();
     m_finished = 0;
   }

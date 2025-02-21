@@ -141,6 +141,30 @@ Transporter::Transporter( CkMigrateMessage* m ) :
    inthead( print );
 }
 
+CollideHandle
+Transporter::initCollideHandle()
+// *****************************************************************************
+// Initialize charm's collision detection library for overset solution transfer
+//! \return The handle to charm-collide
+// *****************************************************************************
+{
+  // The M2MTransfer object is not checkpointed to disk (no PUPs for class).
+  // Thus, it needs to be re-evaluated when in a restarted execution.
+  // 1) The CollideHandle 'readonly' object needs to be initialized in the
+  //    mainchare's ctor Main::Main() so that it is made available on all
+  //    PEs after initialization.
+  // 2) addMesh() needs to be called on each chare array element, therefore
+  //    called in Scheme::evalLB().
+  // 3) m2mtransferProxy is a 'readonly' global proxy-var that is written to
+  //    disk separately, and will be restored along with other global
+  //    variables, even without a PUP for the group. So no need to
+  //    initialize the m2mtransferProxy object.
+  // TODO: Need to make sure this is actually correct
+  CollideGrid3d gridMap(CkVector3d(0, 0, 0),CkVector3d(2, 100, 2));
+  return CollideCreate(gridMap,
+    CollideSerialClient(exam2m::collisionHandler, 0));
+}
+
 std::vector< std::string >
 Transporter::input()
 // *****************************************************************************

@@ -25,8 +25,6 @@
 #include "ConjugateGradients.hpp"
 #include "ALE.hpp"
 
-#include "M2MTransfer.hpp"
-
 namespace inciter {
 
 static CkReduction::reducerType PDFMerger;
@@ -50,7 +48,8 @@ Discretization::Discretization(
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::vector< std::size_t >& triinpoel,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid,
-  int nc ) :
+  int nc,
+  CollideHandle ch ) :
   m_meshid( meshid ),
   m_transfer( g_inputdeck.get< tag::transfer >() ),
   m_disc( disc ),
@@ -95,7 +94,8 @@ Discretization::Discretization(
   m_meshvel_converged( true ),
   m_bface( bface ),
   m_triinpoel( triinpoel ),
-  m_elemblockid( elemblockid )
+  m_elemblockid( elemblockid ),
+  m_collideHandle( ch )
 // *****************************************************************************
 //  Constructor
 //! \param[in] meshid Mesh ID
@@ -180,7 +180,7 @@ Discretization::addMesh()
     transferInit();
   } else {
     if (thisIndex == 0) {
-      exam2m::addMesh( thisProxy, m_nchare,
+      exam2m::addMesh( thisProxy, m_nchare, m_collideHandle,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
       //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
     }

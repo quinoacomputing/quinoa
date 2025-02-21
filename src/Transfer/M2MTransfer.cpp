@@ -34,8 +34,8 @@ void collisionHandler( [[maybe_unused]] void *param,
   #pragma clang diagnostic ignored "-Wvla-extension"
 #endif
 
-void addMesh(CkArrayID p, int elem, CkCallback cb) {
-  m2mtransferProxy[0].addMesh(p, elem, cb);
+void addMesh(CkArrayID p, int elem, CollideHandle ch, CkCallback cb) {
+  m2mtransferProxy[0].addMesh(p, elem, ch, cb);
 }
 
 void setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u) {
@@ -48,7 +48,12 @@ void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fiel
 
 M2MTransfer::M2MTransfer() : current_chunk(0) {}
 
-void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb) {
+void M2MTransfer::addMesh(
+  CkArrayID p,
+  int elem,
+  CollideHandle ch,
+  CkCallback cb)
+{
   auto id = static_cast<std::size_t>(CkGroupID(p).idx);
   if (proxyMap.count(id) == 0) {
     CkArrayOptions opts;
@@ -57,7 +62,7 @@ void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb) {
     MeshData mesh;
     mesh.m_nchare = elem;
     mesh.m_firstchunk = current_chunk;
-    mesh.m_proxy = CProxy_TransferDetails::ckNew(p, mesh, cb, opts);
+    mesh.m_proxy = CProxy_TransferDetails::ckNew(p, mesh, ch, cb, opts);
     proxyMap[id] = mesh;
     current_chunk += elem;
   } else {

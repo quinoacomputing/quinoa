@@ -24,6 +24,7 @@
 #include "CommMap.hpp"
 #include "History.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "M2MTransfer.hpp"
 
 #include "NoWarning/discretization.decl.h"
 #include "NoWarning/refiner.decl.h"
@@ -84,7 +85,12 @@ class Discretization : public CBase_Discretization {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit Discretization( CkMigrateMessage* ) {}
+    explicit Discretization( CkMigrateMessage* )
+    {
+      CollideGrid3d gridMap(CkVector3d(0, 0, 0),CkVector3d(2, 100, 2));
+      m_collideHandle = CollideCreate(gridMap,
+        CollideSerialClient(exam2m::collisionHandler, 0));
+    }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -648,6 +654,8 @@ class Discretization : public CBase_Discretization {
     std::vector< std::size_t > m_triinpoel;
     //! Local tet ids associated with mesh block ids
     std::unordered_map< std::size_t, std::set< std::size_t > > m_elemblockid;
+    //! Collider handle (not in PUP since it is not migratable)
+    CollideHandle m_collideHandle;
 
     //! Generate the Bid data-structure based on the node communication-map
     std::unordered_map< std::size_t, std::size_t > genBid();

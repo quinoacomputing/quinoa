@@ -28,14 +28,17 @@ PUPbytes(Collision);
   #pragma clang diagnostic pop
 #endif
 
-//! \brief Charm handle to the collision detection library instance
-extern CollideHandle collideHandle;
 extern exam2m::CProxy_M2MTransfer m2mtransferProxy;
 
 using exam2m::TransferDetails;
 
-TransferDetails::TransferDetails( CkArrayID p, MeshData d, CkCallback cb ) :
-    m_firstchunk(d.m_firstchunk)
+TransferDetails::TransferDetails(
+  CkArrayID p,
+  MeshData d,
+  CollideHandle ch,
+  CkCallback cb ) :
+    m_firstchunk(d.m_firstchunk),
+    collideHandle(ch)
 // *****************************************************************************
 //  Constructor
 //! \param[in] firstchunk Chunk ID used for the collision detection library

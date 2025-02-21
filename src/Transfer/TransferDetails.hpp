@@ -41,7 +41,11 @@ class TransferDetails : public CBase_TransferDetails {
 
   public:
     //! Constructor
-    explicit TransferDetails( CkArrayID p, MeshData d, CkCallback cb );
+    explicit TransferDetails(
+      CkArrayID p,
+      MeshData d,
+      CollideHandle ch,
+      CkCallback cb );
 
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -89,6 +93,8 @@ class TransferDetails : public CBase_TransferDetails {
     tk::UnsMesh::Coords* m_coord;
     //! Pointer to solution in mesh nodes
     tk::Fields* m_u;
+    //! Collide handle
+    CollideHandle collideHandle;
 
     //! The number of messages sent by the dest mesh
     int m_numsent;

@@ -27,7 +27,7 @@ module transferdetails {
     class MeshData;
 
     array [1D] TransferDetails {
-      entry TransferDetails( CkArrayID p, MeshData d, CkCallback cb );
+      entry TransferDetails( CkArrayID p, MeshData d, CollideHandle ch, CkCallback cb );
       entry void processCollisions( CProxy_TransferDetails proxy,
                                     int nchares,
                                     int offset,

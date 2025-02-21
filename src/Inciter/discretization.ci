@@ -20,6 +20,7 @@ module discretization {
 
   include "UnsMesh.hpp";
   include "CommMap.hpp";
+  include "NoWarning/collidecharm.hpp";
 
   namespace inciter {
 
@@ -38,7 +39,8 @@ module discretization {
         const std::vector< std::size_t >& triinpoel,
         const std::unordered_map< std::size_t, std::set< std::size_t > >&
           elemblockid,
-        int nchare );
+        int nchare,
+        CollideHandle ch );
       initnode void registerReducers();
       entry void vol();
       entry void comvol( const std::vector< std::size_t >& gid,

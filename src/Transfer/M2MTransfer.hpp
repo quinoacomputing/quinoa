@@ -1,5 +1,8 @@
 // Controller for the library
 
+#ifndef M2MTransfer_hpp
+#define M2MTransfer_hpp
+
 #include "NoWarning/m2mtransfer.decl.h"
 
 #include "collidecharm.h"
@@ -11,7 +14,7 @@ void collisionHandler(
   [[maybe_unused]] void *param,
   int nColl,
   Collision *colls );
-void addMesh(CkArrayID p, int elem, CkCallback cb);
+void addMesh(CkArrayID p, int elem, CollideHandle ch, CkCallback cb);
 void setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel, tk::UnsMesh::Coords* coords, const tk::Fields& u);
 void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fields& u, CkCallback cb);
 
@@ -43,7 +46,7 @@ class M2MTransfer : public CBase_M2MTransfer {
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
-    void addMesh(CkArrayID p, int elem, CkCallback cb);
+    void addMesh(CkArrayID p, int elem, CollideHandle ch, CkCallback cb);
     void setMesh(CkArrayID p, MeshData d);
     void setSourceTets(CkArrayID p, int index, std::vector< std::size_t >* inpoel,
                        tk::UnsMesh::Coords* coords, const tk::Fields& u);
@@ -53,3 +56,5 @@ class M2MTransfer : public CBase_M2MTransfer {
 };
 
 }
+
+#endif // M2MTransfer_hpp

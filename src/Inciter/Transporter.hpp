@@ -26,6 +26,8 @@
 #include "ContainerUtil.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
+#include "NoWarning/collidecharm.hpp"
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -386,6 +388,9 @@ class Transporter : public CBase_Transporter {
 
     //! Print out mesh statistics
     void meshstat( const std::string& header ) const;
+
+    //! Initialize charm's collision library for overset solution transfer
+    CollideHandle initCollideHandle();
 
     //! Generate list of input mesh filenames configured by the user
     std::vector< std::string > input();

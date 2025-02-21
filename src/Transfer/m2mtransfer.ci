@@ -9,7 +9,7 @@ module m2mtransfer {
     group [migratable] M2MTransfer {
       entry M2MTransfer();
 
-      entry void addMesh(CkArrayID p, int elem, CkCallback cb);
+      entry void addMesh(CkArrayID p, int elem, CollideHandle ch, CkCallback cb);
     };
   }
 };

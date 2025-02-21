@@ -60,7 +60,6 @@ tk::CProxy_LBSwitch LBSwitchProxy;
 bool g_trace = true;
 
 exam2m::CProxy_M2MTransfer m2mtransferProxy;
-CollideHandle collideHandle;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -240,10 +239,6 @@ class Main : public CBase_Main {
         stateProxy = tk::CProxy_ChareStateCollector::ckNew();
       // Initialize m2m transfer proxy
       m2mtransferProxy = exam2m::CProxy_M2MTransfer::ckNew();
-      // TODO: Need to make sure this is actually correct
-      CollideGrid3d gridMap(CkVector3d(0, 0, 0),CkVector3d(2, 100, 2));
-      collideHandle = CollideCreate(gridMap,
-        CollideSerialClient(exam2m::collisionHandler, 0));
       // Fire up an asynchronous execute object, which when created at some
       // future point in time will call back to this->execute(). This is
       // necessary so that this->execute() can access already migrated
