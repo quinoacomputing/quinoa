@@ -346,6 +346,13 @@ using ConfigMembers = brigand::list<
   tag::mesh, std::vector< meshList >,
   tag::transfer, std::vector< Transfer >,
 
+  // Rigid-body motion solver
+  tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
+    tag::rigid_body_movt, bool,
+    tag::rigid_body_dof,  std::size_t,
+    tag::symmetry_plane,  std::size_t
+  > >,
+
   // ALE block
   // ---------------------------------------------------------------------------
   tag::ale, tk::TaggedTuple< brigand::list<
@@ -1721,6 +1728,29 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to configure a velocity vector used in a
         context-specific way, e.g., for boundary or initial conditions, or
         specifying overset mesh velocity.)", "vector of 3 reals"});
+
+      // -----------------------------------------------------------------------
+      // Rigid-body motion solver
+      // -----------------------------------------------------------------------
+
+      keywords.insert({"rigid_body_motion", "Specify a rigid body motion block",
+        R"(This keyword is used to specify a rigid body motion block, to move an
+        overset mesh as a rigid body. Number of degrees of freedom and the
+        symmetry plane (if any) are specified within this block.)",
+        "block-title"});
+
+      keywords.insert({"rigid_body_dof",
+        "Number of rigid body degrees of freedom", R"(This keyword is used to
+        specify the number of degrees of freedom the rigid body has. Valid
+        options are 3 and 6. 3 DOFs indicate translation in two dimensions and
+        rotation about symmetry plane axis; 6 DOFs indication translation in
+        three dimensions and rotation about three axes. If 3 DOFs is specified,
+        symmetry plane is required; if 6 DOFs is specified symmetry plane is not
+        used.)", "uint"});
+
+      keywords.insert({"symmetry_plane", "Symmetry plane for rigid body motion",
+        R"(This keyword is used to specify the symmetry plane for a 3 DOF rigid
+        body motion solver. 1: x-plane, 2: y-plane, 3: z-plane.)", "uint"});
 
       // -----------------------------------------------------------------------
       // IC object

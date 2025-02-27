@@ -713,6 +713,46 @@ LuaParser::storeInputDeck(
   Assert(gideck.get< tag::mesh >().size() == gideck.get< tag::depvar >().size(),
     "Number of depvar not equal to the number of meshes.");
 
+  // Rigid body motion block for overset meshes
+  // ---------------------------------------------------------------------------
+  if (lua_ideck["rigid_body_motion"].valid()) {
+
+    Assert(gideck.get< tag::mesh >().size() > 1,
+      "Multiple meshes (overset) needed for rigid body motion.");
+
+    auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
+
+    rbm_deck.get< tag::rigid_body_movt >() = true;
+
+    // degrees of freedom
+    storeIfSpecd< std::size_t >(
+      lua_ideck["rigid_body_motion"], "rigid_body_dof",
+      rbm_deck.get< tag::rigid_body_dof >(), 3);
+    if (rbm_deck.get< tag::rigid_body_dof >() != 3 &&
+      rbm_deck.get< tag::rigid_body_dof >() != 6)
+      Throw("Only 3 or 6 rigid body DOFs supported.");
+
+    // symmetry plane
+    storeIfSpecd< std::size_t >(
+      lua_ideck["rigid_body_motion"], "symmetry_plane",
+      rbm_deck.get< tag::symmetry_plane >(), 0);
+    if (rbm_deck.get< tag::symmetry_plane >() > 3)
+      Throw("Rigid body motion symmetry plane must be 1(x), 2(y), or 3(z).");
+    if (rbm_deck.get< tag::symmetry_plane >() == 0 &&
+      rbm_deck.get< tag::rigid_body_dof >() == 3)
+      Throw(
+        "Rigid body motion symmetry plane must be specified for 3 DOF motion.");
+    // reset to 0-based indexing
+    rbm_deck.get< tag::symmetry_plane >() -= 1;
+  }
+  else {
+    // TODO: remove double-specification of defaults
+    auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
+    rbm_deck.get< tag::rigid_body_movt >() = false;
+    rbm_deck.get< tag::rigid_body_dof >() = 0;
+    rbm_deck.get< tag::symmetry_plane >() = 0;
+  }
+
   // Field output block
   // ---------------------------------------------------------------------------
   if (lua_ideck["field_output"].valid()) {

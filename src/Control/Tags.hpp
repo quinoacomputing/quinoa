@@ -293,6 +293,11 @@ DEFTAG(stag_point);
 DEFTAG(radius);
 DEFTAG(timedep);
 
+DEFTAG(rigid_body_motion);
+DEFTAG(rigid_body_movt);
+DEFTAG(rigid_body_dof);
+DEFTAG(symmetry_plane);
+
 DEFTAG(ic);
 DEFTAG(materialid);
 DEFTAG(pressure);
