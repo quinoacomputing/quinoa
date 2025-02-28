@@ -46,7 +46,8 @@ struct HLLCMultiMat {
 
     auto nsld = numSolids(nmat, solidx);
     auto ncomp = u[0].size()-(3+nmat+nsld*6);
-    std::vector< tk::real > flx(ncomp, 0);
+    std::vector< tk::real > flx(ncomp, 0), fl(ncomp, 0), fr(ncomp, 0),
+      ftl(ncomp, 0), ftr(ncomp, 0);
 
     // Primitive variables
     // -------------------------------------------------------------------------
