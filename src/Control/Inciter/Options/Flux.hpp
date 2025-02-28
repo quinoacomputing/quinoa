@@ -23,6 +23,7 @@ namespace ctr {
 //! Flux types
 enum class FluxType : uint8_t { LaxFriedrichs
                               , HLLC
+                              , HLLD
                               , UPWIND
                               , AUSM
                               , HLL
@@ -46,6 +47,7 @@ class Flux : public tk::Toggle< FluxType > {
         //! Enums -> names (if defined, policy codes, if not, name)
         { { FluxType::LaxFriedrichs, "laxfriedrichs" }
         , { FluxType::HLLC, "hllc" }
+        , { FluxType::HLLD, "hlld" }
         , { FluxType::UPWIND, "upwind" }
         , { FluxType::AUSM, "ausm" }
         , { FluxType::HLL, "hll" }
@@ -53,6 +55,7 @@ class Flux : public tk::Toggle< FluxType > {
         //! keywords -> Enums
         { { "laxfriedrichs", FluxType::LaxFriedrichs }
         , { "hllc", FluxType::HLLC }
+        , { "hlld", FluxType::HLLD }
         , { "upwind", FluxType::UPWIND }
         , { "ausm", FluxType::AUSM }
         , { "hll", FluxType::HLL }

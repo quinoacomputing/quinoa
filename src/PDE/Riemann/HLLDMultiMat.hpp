@@ -71,8 +71,10 @@ struct HLLDMultiMat {
     std::array< tk::real, 3 > Tnl{{0, 0, 0}}, Tnr{{0, 0, 0}};
     std::vector< std::array< tk::real, 3 > > aTnl, aTnr;
     std::array< std::array< tk::real, 3 >, 3 > asigl, asigr;
-    std::array< std::array< tk::real, 3 >, 3 > signnl{{{0,0,0},{0,0,0},{0,0,0}}};
-    std::array< std::array< tk::real, 3 >, 3 > signnr{{{0,0,0},{0,0,0},{0,0,0}}};
+    std::array< std::array< tk::real, 3 >, 3 >
+      signnl{{{0,0,0},{0,0,0},{0,0,0}}};
+    std::array< std::array< tk::real, 3 >, 3 >
+      signnr{{{0,0,0},{0,0,0},{0,0,0}}};
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > gl, gr;
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > gnl, gnr;
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > asignnl, asignnr;
@@ -101,7 +103,8 @@ struct HLLDMultiMat {
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnl.push_back(tk::rotateTensor(gl[k], fn));
       auto amatl = mat_blk[k].compute< EOS::soundspeed >(
-        u[0][densityIdx(nmat, k)], apl[k], u[0][volfracIdx(nmat, k)], k, gnl[k] );
+        u[0][densityIdx(nmat, k)], apl[k],
+        u[0][volfracIdx(nmat, k)], k, gnl[k] );
 
       // Right state
       apr[k] = u[1][ncomp+pressureIdx(nmat, k)];
@@ -126,7 +129,8 @@ struct HLLDMultiMat {
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnr.push_back(tk::rotateTensor(gr[k], fn));
       auto amatr = mat_blk[k].compute< EOS::soundspeed >(
-        u[1][densityIdx(nmat, k)], apr[k], u[1][volfracIdx(nmat, k)], k, gnr[k] );
+        u[1][densityIdx(nmat, k)], apr[k],
+        u[1][volfracIdx(nmat, k)], k, gnr[k] );
 
       // Mixture speed of sound
       acl += u[0][densityIdx(nmat, k)] * amatl * amatl;
@@ -152,7 +156,8 @@ struct HLLDMultiMat {
     std::vector< std::array< std::array< tk::real, 3 >, 3 > >
       asignnlStar, asignnrStar;
     std::array< std::array< tk::real, 3 >, 3 >
-      signnlStar{{{0,0,0},{0,0,0},{0,0,0}}}, signnrStar{{{0,0,0},{0,0,0},{0,0,0}}};
+      signnlStar{{{0,0,0},{0,0,0},{0,0,0}}},
+      signnrStar{{{0,0,0},{0,0,0},{0,0,0}}};
     std::array< std::array< tk::real, 3 >, 3 >
       siglStar{{{0,0,0},{0,0,0},{0,0,0}}}, sigrStar{{{0,0,0},{0,0,0},{0,0,0}}};
     asignnlStar.resize(nmat);
@@ -174,7 +179,7 @@ struct HLLDMultiMat {
         asignnrStar[k][i][i] -=
           u[1][densityIdx(nmat,k)]*(Sr-vnr[0])*(Sm-vnr[0]);
       }
- 
+
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
         {
@@ -225,9 +230,6 @@ struct HLLDMultiMat {
       if (solidx[k] > 0)
       {
         gnlStar.push_back(gnl[k]);
-        // for (std::size_t i=1; i<3; ++i)
-        //   for (std::size_t j=0; j<3; ++j)
-        //     gnlStar[k][i][j] *= w_l;
         gnlStar[k][0][0] *= w_l;
         gnlStar[k][1][0] *= w_l;
         gnlStar[k][2][0] *= w_l;
@@ -237,7 +239,8 @@ struct HLLDMultiMat {
       uStar[0][volfracIdx(nmat, k)] = w_l * u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
-        + (Sm-vnl[0]) * (u[0][densityIdx(nmat, k)]*Sm - asignnlStar[k][0][0]/(Sl-vnl[0]));
+        + (Sm-vnl[0]) * (u[0][densityIdx(nmat, k)]*Sm
+                        - asignnlStar[k][0][0]/(Sl-vnl[0]));
       rholStar += uStar[0][densityIdx(nmat, k)];
 
       auto amatl = mat_blk[k].compute< EOS::shearspeed >(
@@ -247,9 +250,6 @@ struct HLLDMultiMat {
       if (solidx[k] > 0)
       {
         gnrStar.push_back(gnr[k]);
-        // for (std::size_t i=1; i<3; ++i)
-        //   for (std::size_t j=0; j<3; ++j)
-        //     gnrStar[k][i][j] *= w_r;
         gnrStar[k][0][0] *= w_r;
         gnrStar[k][1][0] *= w_r;
         gnrStar[k][2][0] *= w_r;
@@ -259,7 +259,8 @@ struct HLLDMultiMat {
       uStar[1][volfracIdx(nmat, k)] = w_r * u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
-        + (Sm-vnr[0]) * (u[1][densityIdx(nmat, k)]*Sm - asignnrStar[k][0][0]/(Sr-vnr[0]));
+        + (Sm-vnr[0]) * (u[1][densityIdx(nmat, k)]*Sm
+                        - asignnrStar[k][0][0]/(Sr-vnr[0]));
       rhorStar += uStar[1][densityIdx(nmat, k)];
 
       auto amatr = mat_blk[k].compute< EOS::shearspeed >(
@@ -293,9 +294,12 @@ struct HLLDMultiMat {
     std::array< tk::real, 3 > vnlStarStar, vnrStarStar;
     std::array< tk::real, 3 > vlStarStar, vrStarStar;
     tk::real rholStarStar(0.0), rhorStarStar(0.0);
-    std::array< std::array< tk::real, 3 >, 3 > gnlStarStar{{{0,0,0},{0,0,0},{0,0,0}}};
-    std::array< std::array< tk::real, 3 >, 3 > gnrStarStar{{{0,0,0},{0,0,0},{0,0,0}}};
-    std::vector< std::array< std::array< tk::real, 3 >, 3 > > glStarStar, grStarStar;
+    std::array< std::array< tk::real, 3 >, 3 >
+      gnlStarStar{{{0,0,0},{0,0,0},{0,0,0}}};
+    std::array< std::array< tk::real, 3 >, 3 >
+      gnrStarStar{{{0,0,0},{0,0,0},{0,0,0}}};
+    std::vector< std::array< std::array< tk::real, 3 >, 3 > >
+      glStarStar, grStarStar;
     auto uStarStar = uStar;
     if (nsld > 0) {
       for (std::size_t k=0; k<nmat; ++k) {
@@ -379,18 +383,6 @@ struct HLLDMultiMat {
         if (solidx[k] > 0)
         {
           gnlStarStar = gnlStar[k];
-          // gnlStarStar[1][0] +=
-          //   gnlStar[k][0][0] * (vnlStarStar[1]-vnl[1])/(Sm-Ssl);
-          // gnlStarStar[2][0] +=
-          //   gnlStar[k][0][0] * (vnlStarStar[2]-vnl[2])/(Sm-Ssl);
-          // gnlStarStar[1][1] +=
-          //   gnlStar[k][0][1] * (vnlStarStar[1]-vnl[1])/(Sm-Ssl);
-          // gnlStarStar[2][1] +=
-          //   gnlStar[k][0][1] * (vnlStarStar[2]-vnl[2])/(Sm-Ssl);
-          // gnlStarStar[1][2] +=
-          //   gnlStar[k][0][2] * (vnlStarStar[1]-vnl[1])/(Sm-Ssl);
-          // gnlStarStar[2][2] +=
-          //   gnlStar[k][0][2] * (vnlStarStar[2]-vnl[2])/(Sm-Ssl);
           gnlStar[k][0][0] += gnlStar[k][0][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
                             + gnlStar[k][0][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
           gnlStar[k][1][0] += gnlStar[k][1][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
@@ -414,18 +406,6 @@ struct HLLDMultiMat {
         if (solidx[k] > 0)
         {
           gnrStarStar = gnrStar[k];
-          // gnrStarStar[1][0] +=
-          //   gnrStar[k][0][0] * (vnrStarStar[1]-vnr[1])/(Sm-Ssr);
-          // gnrStarStar[2][0] +=
-          //   gnrStar[k][0][0] * (vnrStarStar[2]-vnr[2])/(Sm-Ssr);
-          // gnrStarStar[1][1] +=
-          //   gnrStar[k][0][1] * (vnrStarStar[1]-vnr[1])/(Sm-Ssr);
-          // gnrStarStar[2][1] +=
-          //   gnrStar[k][0][1] * (vnrStarStar[2]-vnr[2])/(Sm-Ssr);
-          // gnrStarStar[1][2] +=
-          //   gnrStar[k][0][2] * (vnrStarStar[1]-vnr[1])/(Sm-Ssr);
-          // gnrStarStar[2][2] +=
-          //   gnrStar[k][0][2] * (vnrStarStar[2]-vnr[2])/(Sm-Ssr);
           gnrStar[k][0][0] += gnrStar[k][0][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
                             + gnrStar[k][0][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
           gnrStar[k][1][0] += gnrStar[k][1][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
@@ -446,7 +426,7 @@ struct HLLDMultiMat {
         rhorStarStar += uStarStar[1][densityIdx(nmat, k)];
       }
     }
-    
+
     // Numerical fluxes
     // -------------------------------------------------------------------------
     if (Sl > 0.0) {

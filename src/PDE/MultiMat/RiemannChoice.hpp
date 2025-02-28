@@ -42,6 +42,9 @@ namespace inciter {
       fluxfn = LaxFriedrichsSolids::flux;
     }
     else if (flux == ctr::FluxType::HLLC) {
+      fluxfn = HLLCMultiMat::flux;
+    }
+    else if (flux == ctr::FluxType::HLLD) {
       fluxfn = HLLDMultiMat::flux;
     }
     else {
