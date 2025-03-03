@@ -190,6 +190,15 @@ class CGPDE {
     { self->getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
         movedmesh ); }
 
+    //! Public interface to compute boundary surface integrals of pressure
+    void bndPressureInt(
+      const std::array< std::vector< real >, 3 >& coord,
+      const std::vector< std::size_t >& triinpoel,
+      const std::vector< int >& symbctri,
+      const tk::Fields& U,
+      std::vector< real >& F ) const
+    { self->bndPressureInt( coord, triinpoel, symbctri, U, F ); }
+
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
@@ -371,6 +380,12 @@ class CGPDE {
         const tk::Fields&,
         tk::Fields&,
         int& ) const = 0;
+      virtual void bndPressureInt(
+        const std::array< std::vector< real >, 3 >&,
+        const std::vector< std::size_t >&,
+        const std::vector< int >&,
+        const tk::Fields&,
+        std::vector< real >& ) const = 0;
       virtual real dt( const std::array< std::vector< real >, 3 >&,
                        const std::vector< std::size_t >&,
                        tk::real,
@@ -506,6 +521,13 @@ class CGPDE {
         int& movedmesh ) const override
       { data.getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
           movedmesh ); }
+      void bndPressureInt(
+        const std::array< std::vector< real >, 3 >& coord,
+        const std::vector< std::size_t >& triinpoel,
+        const std::vector< int >& symbctri,
+        const tk::Fields& U,
+        std::vector< real >& F ) const override
+      { data.bndPressureInt( coord, triinpoel, symbctri, U, F ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                tk::real t,

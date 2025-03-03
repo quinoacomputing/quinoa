@@ -550,6 +550,71 @@ class CompFlow {
       }
     }
 
+    //! Compute boundary pressure integrals (force) for rigid body motion
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
+    //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] F Force vector computed
+    void bndPressureInt(
+      const std::array< std::vector< real >, 3 >& coord,
+      const std::vector< std::size_t >& triinpoel,
+      const std::vector< int >& symbctri,
+      const tk::Fields& U,
+      std::vector< real >& F ) const
+    {
+
+      // access node coordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      // boundary integrals: compute surface integral of pressure (=force)
+      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
+        if (symbctri[e]) {
+        // access node IDs
+        std::size_t N[3] =
+          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+        // access solution at element nodes
+        real rA  = U(N[0],0);
+        real rB  = U(N[1],0);
+        real rC  = U(N[2],0);
+        real ruA = U(N[0],1);
+        real ruB = U(N[1],1);
+        real ruC = U(N[2],1);
+        real rvA = U(N[0],2);
+        real rvB = U(N[1],2);
+        real rvC = U(N[2],2);
+        real rwA = U(N[0],3);
+        real rwB = U(N[1],3);
+        real rwC = U(N[2],3);
+        real reA = U(N[0],4);
+        real reB = U(N[1],4);
+        real reC = U(N[2],4);
+        // compute face normal
+        real nx, ny, nz;
+        tk::normal( x[N[0]], x[N[1]], x[N[2]],
+                    y[N[0]], y[N[1]], y[N[2]],
+                    z[N[0]], z[N[1]], z[N[2]],
+                    nx, ny, nz );
+        // compute boundary pressures
+        auto p = (
+          m_mat_blk[0].compute< EOS::pressure >(rA, ruA/rA, rvA/rA, rwA/rA, reA) +
+          m_mat_blk[0].compute< EOS::pressure >(rB, ruB/rB, rvB/rB, rwB/rB, reB) +
+          m_mat_blk[0].compute< EOS::pressure >(rC, ruC/rC, rvC/rC, rwC/rC, reC)
+          ) / 3.0;
+        // compute face area
+        auto Ae = tk::area( x[N[0]], x[N[1]], x[N[2]],
+                            y[N[0]], y[N[1]], y[N[2]],
+                            z[N[0]], z[N[1]], z[N[2]] );
+        // store contribute to force vector
+        F[0] += p * Ae * nx;
+        F[1] += p * Ae * ny;
+        F[2] += p * Ae * nz;
+      }
+      }
+    }
+
     //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity

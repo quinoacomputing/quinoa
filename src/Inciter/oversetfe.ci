@@ -42,7 +42,8 @@ module oversetfe {
       entry void nodeNeighSetup();
       entry void start();
       entry void refine( const std::vector< tk::real >& l2ref );
-      entry [reductiontarget] void advance( tk::real newdt, tk::real nmovedmesh );
+      entry [reductiontarget] void advance( tk::real newdt );
+      entry [reductiontarget] void computeMeshMotion( tk::real F[3] );
       entry void comdfnorm(
               const std::unordered_map< tk::UnsMesh::Edge,
               std::array< tk::real, 3 >,

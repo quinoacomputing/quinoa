@@ -984,41 +984,30 @@ OversetFE::dt()
 
   }
 
-  // Determine if this chunk of mesh needs to be moved
-  g_cgpde[d->MeshId()].getMeshVel(d->T(), d->Coord(), m_psup, m_symbcnodes,
-    m_uservel, m_u, d->MeshVel(), m_movedmesh);
-
   //! [Advance]
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
 
-  // TODO: this is a hacky way to know if any chunk moved. redesign it
-  std::vector < tk::real > reducndata(d->Transfers().size()+2, 0.0);
-
-  reducndata[0] = mindt;
-  reducndata[d->MeshId()+1] = static_cast< tk::real >(-m_movedmesh);
-
   // Contribute to minimum dt across all chares and advance to next step
   if (g_inputdeck.get< tag::steady_state >()) {
-    contribute( reducndata, CkReduction::min_double,
+    contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
                 CkCallback(CkReductionTarget(OversetFE,advance), thisProxy) );
   }
   else {
     // if solving a time-accurate problem, find minimum dt across all meshes
     // and eventually broadcast to OversetFE::advance()
-    contribute( reducndata, CkReduction::min_double,
+    contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
       CkCallback(CkReductionTarget(Transporter,minDtAcrossMeshes), d->Tr()) );
   }
   //! [Advance]
 }
 
 void
-OversetFE::advance( tk::real newdt, tk::real nmovedmesh )
+OversetFE::advance( tk::real newdt )
 // *****************************************************************************
-// Advance equations to next time step
+// Advance in the time step by computing force vector for rigid body motion
 //! \param[in] newdt The smallest dt across the whole problem
-//! \param[in] nmovedmesh (negative of) if any chunk of this mesh moved
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1026,9 +1015,29 @@ OversetFE::advance( tk::real newdt, tk::real nmovedmesh )
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  // TODO: this is a hacky way to know if any chunk moved. redesign it
-  if (nmovedmesh < -0.1) m_movedmesh = 1;
+  // Compute own portion of force on boundary for overset mesh rigid body motion
+  std::vector< tk::real > F(3, 0.0);
+  if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
+    && d->MeshId() > 0) {
+    g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_symbctri,
+      m_u, F );
+  }
 
+  tk::real FRedn[3];
+  for (std::size_t i=0; i<3; ++i) F[i] = FRedn[i];
+
+  contribute(3*sizeof(tk::real), FRedn, CkReduction::sum_double,
+    CkCallback(CkReductionTarget(OversetFE,computeMeshMotion), thisProxy) );
+}
+
+void
+OversetFE::computeMeshMotion( tk::real F[3] )
+// *****************************************************************************
+// Compute mesh motion based on surface forces
+//! \param[in] F Total force (across all mesh partitions) on surface of the
+//!   overset mesh, used to compute mesh movement.
+// *****************************************************************************
+{
   // Compute gradients for next time step
   chBndGrad();
 }

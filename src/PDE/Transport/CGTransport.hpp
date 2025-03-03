@@ -272,6 +272,16 @@ class Transport {
       int& ) const
     { }
 
+    //! Compute boundary pressure integrals (force) (no-op for transport)
+    void bndPressureInt(
+      const std::array< std::vector< real >, 3 >&,
+      const std::vector< std::size_t >&,
+      const std::vector< int >&,
+      const tk::Fields&,
+      std::vector< real >& ) const
+    { }
+
+
     //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] U Solution vector at recent time step
     //! \param[in] coord Mesh node coordinates

@@ -101,7 +101,10 @@ class OversetFE : public CBase_OversetFE {
     void start();
 
     //! Advance equations to next time step
-    void advance( tk::real newdt, tk::real nmovedmesh );
+    void advance( tk::real newdt );
+
+    //! Compute mesh motion based on surface forces
+    void computeMeshMotion( tk::real F[3] );
 
     //! Compute left-hand side of transport equations
     void lhs();

@@ -1395,17 +1395,13 @@ Transporter::solutionTransferred()
 }
 
 void
-Transporter::minDtAcrossMeshes( tk::real* reducndata, [[maybe_unused]] int n )
+Transporter::minDtAcrossMeshes( tk::real mindt )
 // *****************************************************************************
 // Reduction target that computes minimum timestep across all meshes
-//! \param[in] reducndata Vector containing minimum values of dt and mesh-moved
-//!   flags, collected across all meshes
-//! \param[in] n Size of vector, automatically computed by Charm
+//! \param[in] mindt Minimum value of dt collected across all meshes
 // *****************************************************************************
 {
-  Assert(static_cast<std::size_t>(n-1) == m_nelem.size(),
-    "Incorrectly sized reduction vector");
-  m_dtmsh.push_back(reducndata[0]);
+  m_dtmsh.push_back(mindt);
 
   if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
     Assert(m_dtmsh.size() == m_nelem.size(), "Incorrect size of dtmsh");
@@ -1419,10 +1415,8 @@ Transporter::minDtAcrossMeshes( tk::real* reducndata, [[maybe_unused]] int n )
     m_ndtmsh = 0;
 
     // broadcast to advance time step
-    std::size_t ic(0);
     for (auto& m : m_scheme) {
-      m.bcast< Scheme::advance >( dt, reducndata[ic+1] );
-      ++ic;
+      m.bcast< Scheme::advance >( dt );
     }
   }
 }
