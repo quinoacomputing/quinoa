@@ -240,7 +240,7 @@ class OversetFE : public CBase_OversetFE {
       p | m_nodeblockid;
       p | m_nodeblockidc;
       p | m_ixfer;
-      p | m_uservel;
+      p | m_surfForce;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -370,8 +370,8 @@ class OversetFE : public CBase_OversetFE {
     std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockidc;
     //! Counter for two-way transfer
     std::size_t m_ixfer;
-    //! User-specified mesh velocity
-    std::array< tk::real, 3 > m_uservel;
+    //! Surface force on mesh for rigid body motion
+    std::array< tk::real, 3 > m_surfForce;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

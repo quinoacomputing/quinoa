@@ -121,13 +121,14 @@ class CGPDE {
     void initialize(
       const std::array< std::vector< real >, 3 >& coord,
       tk::Fields& unk,
+      tk::Fields& W,
       real t,
       real V,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
       const std::vector< tk::real >& blkvols,
       const std::unordered_map< std::size_t, std::set< std::size_t > >&
         nodeblkid )
-    { self->initialize( coord, unk, t, V, inbox, blkvols, nodeblkid ); }
+    { self->initialize( coord, unk, W, t, V, inbox, blkvols, nodeblkid ); }
 
     //! Public interface to querying a velocity
     void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
@@ -330,6 +331,7 @@ class CGPDE {
       virtual void initialize(
         const std::array< std::vector< real >, 3 >&,
         tk::Fields&,
+        tk::Fields&,
         real,
         real,
         const std::vector< std::unordered_set< std::size_t > >&,
@@ -463,13 +465,14 @@ class CGPDE {
       void initialize(
         const std::array< std::vector< real >, 3 >& coord,
         tk::Fields& unk,
+        tk::Fields& W,
         real t,
         real V,
         const std::vector< std::unordered_set< std::size_t > >& inbox,
         const std::vector< tk::real >& blkvols,
         const std::unordered_map< std::size_t, std::set< std::size_t > >&
           nodeblkid)
-      override { data.initialize( coord, unk, t, V, inbox, blkvols, nodeblkid ); }
+      override { data.initialize( coord, unk, W, t, V, inbox, blkvols, nodeblkid ); }
       void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
       override { data.velocity(u,v); }
       void soundspeed( const tk::Fields& u, std::vector< tk::real >& s ) const

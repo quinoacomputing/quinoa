@@ -81,6 +81,7 @@ class Transport {
     void
     initialize( const std::array< std::vector< real >, 3 >& coord,
                 tk::Fields& unk,
+                tk::Fields&,
                 real t,
                 real,
                 const std::vector< std::unordered_set< std::size_t > >&,

@@ -188,6 +188,7 @@ class CompFlow {
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
+    //! \param[in,out] W Mesh velocity
     //! \param[in] t Physical time
     //! \param[in] V Discrete volume of user-defined IC box
     //! \param[in] inbox List of nodes at which box user ICs are set (for each
@@ -199,6 +200,7 @@ class CompFlow {
     void initialize(
       const std::array< std::vector< real >, 3 >& coord,
       tk::Fields& unk,
+      tk::Fields& W,
       real t,
       real V,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
@@ -207,6 +209,7 @@ class CompFlow {
         nodeblkid ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
+      Assert( coord[0].size() == W.nunk(), "Size mismatch" );
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -224,6 +227,9 @@ class CompFlow {
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
+        // initialize mesh velocity to zero
+        for (std::size_t j=0; j<3; ++j) W(i,j) = 0.0;
+
         auto s = Problem::initialize( m_ncomp, m_mat_blk, x[i], y[i], z[i], t );
 
         // initialize the user-defined box IC

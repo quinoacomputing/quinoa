@@ -233,7 +233,7 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::filename,    std::string,
   tag::location,    std::vector< tk::real >,
   tag::orientation, std::vector< tk::real >,
-  tag::velocity,    std::vector< tk::real >
+  tag::mass,        tk::real
 > >;
 
 // Field output block
@@ -1726,8 +1726,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"velocity", "Specify velocity",
         R"(This keyword is used to configure a velocity vector used in a
-        context-specific way, e.g., for boundary or initial conditions, or
-        specifying overset mesh velocity.)", "vector of 3 reals"});
+        context-specific way, e.g., for boundary or initial conditions.)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // Rigid-body motion solver
@@ -1797,8 +1797,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "real"});
 
       keywords.insert({"mass", "Specify mass",
-        R"(This keyword is used to configure the mass within a box/meshblock.)",
-        "real"});
+        R"(This keyword is used to configure the mass within a box/meshblock,
+        or mass of the rigid body which is conformally meshed using the overset
+        mesh.)", "real"});
 
       keywords.insert({"energy", "Specify energy per unit mass",
         R"(This keyword is used to configure energy per unit mass, used for, e.g.,

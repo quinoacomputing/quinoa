@@ -95,7 +95,8 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
   m_nodeblockidc(),
-  m_ixfer(0)
+  m_ixfer(0),
+  m_surfForce({{0, 0, 0}})
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -142,14 +143,9 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4meshblk();
 
-  // Determine user-specified mesh velocity
-  const auto& uservelvec =
-    g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::velocity >();
-  m_uservel = {uservelvec[0], uservelvec[1], uservelvec[2]};
-
   if (g_inputdeck.get< tag::steady_state >() &&
-    std::sqrt(tk::dot(m_uservel, m_uservel)) > 1e-8)
-    Throw("Mesh motion cannot be activated for steady state problem");
+    g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >())
+    Throw("Rigid body motion cannot be activated for steady state problem");
 
   d->comfinal();
 
@@ -578,8 +574,8 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   d->MeshBlkVol() = blkvols;
 
   // Set initial conditions for all PDEs
-  g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
-    m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
+  g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->MeshVel(), d->T(),
+    d->Boxvol(), m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
 
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
@@ -1024,7 +1020,7 @@ OversetFE::advance( tk::real newdt )
   }
 
   tk::real FRedn[3];
-  for (std::size_t i=0; i<3; ++i) F[i] = FRedn[i];
+  for (std::size_t i=0; i<3; ++i) FRedn[i] = F[i];
 
   contribute(3*sizeof(tk::real), FRedn, CkReduction::sum_double,
     CkCallback(CkReductionTarget(OversetFE,computeMeshMotion), thisProxy) );
@@ -1038,6 +1034,8 @@ OversetFE::computeMeshMotion( tk::real F[3] )
 //!   overset mesh, used to compute mesh movement.
 // *****************************************************************************
 {
+  for (std::size_t i=0; i<3; ++i) m_surfForce[i] = F[i];
+
   // Compute gradients for next time step
   chBndGrad();
 }
@@ -1114,16 +1112,6 @@ OversetFE::rhs()
   tk::destroy(m_chBndGradc);
 
   const auto steady = g_inputdeck.get< tag::steady_state >();
-
-  // Assign mesh velocity
-  if (m_movedmesh) {
-    const auto& coord = d->Coord();
-    auto& mvel = d->MeshVel();
-    for (std::size_t p=0; p<coord[0].size(); ++p) {
-      for (std::size_t i=0; i<3; ++i)
-        mvel(p, i) = m_uservel[i];
-    }
-  }
 
   // Compute own portion of right-hand side for all equations
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
@@ -1212,25 +1200,48 @@ OversetFE::solve()
         / d->Vol()[i];
   }
 
-  // Move overset mesh
-  if (m_movedmesh) {
-    auto& x = d->Coord()[0];
-    auto& y = d->Coord()[1];
-    auto& z = d->Coord()[2];
-    const auto& w = d->MeshVel();
-    for (std::size_t i=0; i<w.nunk(); ++i) {
-      // time-step
-      auto dtp = d->Dt();
-      if (steady) dtp = m_dtp[i];
+  // Kinematics for rigid body motion of overset meshes
+  if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
+    && d->MeshId() > 0) {
 
-      x[i] += rkcoef[m_stage] * dtp * w(i,0);
-      y[i] += rkcoef[m_stage] * dtp * w(i,1);
-      z[i] += rkcoef[m_stage] * dtp * w(i,2);
+    // Remove symmetry directions if 3 DOF motion
+    if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_dof >()
+      == 3) {
+
+      auto sym_dir =
+        g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
+
+      m_surfForce[sym_dir] = 0.0;
     }
+
+    auto mass_mesh =
+      g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
+    auto dtp = rkcoef[m_stage] * d->Dt();
+
+    // Mark if mesh moved
+    if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12)
+      m_movedmesh = 1;
+    else
+      m_movedmesh = 0;
+
+    if (m_movedmesh == 1) {
+      auto& u_mesh = d->MeshVel();
+
+      for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
+
+        // rectilinear motion
+        for (std::size_t i=0; i<3; ++i) {
+          // mesh acceleration
+          auto a_mesh = m_surfForce[i] / mass_mesh;
+          // mesh displacement
+          d->Coord()[i][p] += u_mesh(p,i)*dtp + 0.5*a_mesh*dtp*dtp;
+          // mesh velocity
+          u_mesh(p,i) += a_mesh*dtp;
+        }
+      }
+    }
+
   }
-  // the following line will be needed for situations where the mesh stops
-  // moving after its initial motion
-  // else m_movedmesh = 0;
 
   // Apply boundary-conditions
   BC();

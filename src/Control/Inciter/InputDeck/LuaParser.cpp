@@ -680,11 +680,9 @@ LuaParser::storeInputDeck(
       if (mesh_deck[i].get< tag::orientation >().size() != 3)
         Throw("Mesh orientation requires 3 rotation angles.");
 
-      // velocity
-      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "velocity",
-        mesh_deck[i].get< tag::velocity >(), {0.0, 0.0, 0.0});
-      if (mesh_deck[i].get< tag::velocity >().size() != 3)
-        Throw("Mesh velocity requires 3 components.");
+      // mass
+      storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
+        mesh_deck[i].get< tag::mass >(), 0.0);
 
       // Transfer object
       if (i > 0) {
@@ -707,7 +705,7 @@ LuaParser::storeInputDeck(
       gideck.get< tag::cmd, tag::io, tag::input >();
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
-    mesh_deck[0].get< tag::velocity >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< tag::mass >() = 0.0;
   }
 
   Assert(gideck.get< tag::mesh >().size() == gideck.get< tag::depvar >().size(),
@@ -719,6 +717,13 @@ LuaParser::storeInputDeck(
 
     Assert(gideck.get< tag::mesh >().size() > 1,
       "Multiple meshes (overset) needed for rigid body motion.");
+
+    // check that rigid body mass is provided
+    const auto mesh_deck = gideck.get< tag::mesh >();
+    for (std::size_t i=1; i<mesh_deck.size(); ++i) {
+      Assert(mesh_deck[i].get< tag::mass >() > 1e-10,
+        "Mass of body required for overset meshes with rigid body motion.");
+    }
 
     auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
 
