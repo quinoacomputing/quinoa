@@ -617,7 +617,7 @@ class CompFlow {
         F[0] += p * Ae * nx;
         F[1] += p * Ae * ny;
         F[2] += p * Ae * nz;
-      }
+        }
       }
     }
 

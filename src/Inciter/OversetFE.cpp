@@ -1214,10 +1214,6 @@ OversetFE::solve()
       m_surfForce[sym_dir] = 0.0;
     }
 
-    auto mass_mesh =
-      g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
-    auto dtp = rkcoef[m_stage] * d->Dt();
-
     // Mark if mesh moved
     if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12)
       m_movedmesh = 1;
@@ -1225,6 +1221,9 @@ OversetFE::solve()
       m_movedmesh = 0;
 
     if (m_movedmesh == 1) {
+      auto mass_mesh =
+        g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
+      auto dtp = rkcoef[m_stage] * d->Dt();
       auto& u_mesh = d->MeshVel();
 
       for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
