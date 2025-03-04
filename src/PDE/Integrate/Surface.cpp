@@ -510,6 +510,7 @@ surfIntViscousFV(
   const Fields& geoElem,
   const Fields& U,
   const Fields& P,
+  const Fields& T,
   const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp )
@@ -525,6 +526,7 @@ surfIntViscousFV(
 //! \param[in] geoElem Element geometry array
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] T Vector of temperatures at recent time step
 //! \param[in] srcFlag Whether the energy source was added
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in] intsharp Interface compression tag, an optional argument, with
@@ -628,6 +630,13 @@ surfIntViscousFV(
     Assert( cellAvgState[1].size() == ncomp+nprim, "Incorrect size for "
             "appended cell-averaged state vector" );
 
+    std::array< std::vector< real >, 2 > cellAvgT{{
+      std::vector<real>(nmat), std::vector<real>(nmat) }};
+    for (std::size_t k=0; k<nmat; ++k) {
+      cellAvgT[0][k] = T(el, k*rdof);
+      cellAvgT[1][k] = T(er, k*rdof);
+    }
+
     std::array< std::array< real, 3 >, 2 > centroids{{
       {{geoElem(el,1), geoElem(el,2), geoElem(el,3)}},
       {{geoElem(er,1), geoElem(er,2), geoElem(er,3)}} }};
@@ -643,9 +652,8 @@ surfIntViscousFV(
       tk::inverseJacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
     auto dBdx_r = tk::eval_dBdx_p1( rdof, jacInv_r );
 
-    std::array< std::array< real, 3 >, 3 > dudx;
-
     // 2. Average du_i/dx_j
+    std::array< std::array< real, 3 >, 3 > dudx;
     for (std::size_t i=0; i<3; ++i)
       for (std::size_t j=0; j<3; ++j)
         dudx[i][j] = 0.5 * (
@@ -656,9 +664,25 @@ surfIntViscousFV(
           + dBdx_r[j][2] * P(er, velocityDofIdx(nmat,i,rdof,2))
           + dBdx_r[j][3] * P(er, velocityDofIdx(nmat,i,rdof,3)) );
 
-    // 3. Compute flux
+    // 3. average dT/dx_j
+    std::vector< std::array< real, 3 > > dTdx(nmat,
+      std::array< real, 3 >{{0, 0, 0}});
+    for (std::size_t k=0; k<nmat; ++k) {
+      auto mark = k*rdof;
+      for (std::size_t j=0; j<3; ++j) {
+        dTdx[k][j] = 0.5 * (
+            dBdx_l[j][1] * T(el, mark+1)
+          + dBdx_l[j][2] * T(el, mark+2)
+          + dBdx_l[j][3] * T(el, mark+3)
+          + dBdx_r[j][1] * T(er, mark+1)
+          + dBdx_r[j][2] * T(er, mark+2)
+          + dBdx_r[j][3] * T(er, mark+3) );
+      }
+    }
+
+    // 4. Compute flux
     auto fl = modifiedGradientViscousFlux(nmat, ncomp, fn, centroids, state,
-      cellAvgState, dudx);
+      cellAvgState, cellAvgT, dudx, dTdx);
 
     // -------------------------------------------------------------------------
 
@@ -679,7 +703,9 @@ modifiedGradientViscousFlux(
   const std::array< std::array< tk::real, 3 >, 2 >& centroids,
   const std::array< std::vector< tk::real >, 2 >& state,
   const std::array< std::vector< tk::real >, 2 >& cellAvgState,
-  const std::array< std::array< real, 3 >, 3 > dudx )
+  const std::array< std::vector< tk::real >, 2 >& cellAvgT,
+  const std::array< std::array< real, 3 >, 3 > dudx,
+  const std::vector< std::array< real, 3 > >& dTdx )
 // *****************************************************************************
 //  Compute the viscous fluxes from the left and right states
 //! \param[in] nmat Number of materials
@@ -688,7 +714,9 @@ modifiedGradientViscousFlux(
 //! \param[in] centroids Left and right cell centroids
 //! \param[in] state Left and right unknown/state vector
 //! \param[in] cellAvgState Left and right cell-averaged unknown/state vector
+//! \param[in] cellAvgT Left and right cell-averaged temperature vector
 //! \param[in] dudx Average velocity gradient tensor
+//! \param[in] dTdx Average temperature gradient tensor
 //! \return Numerical viscous flux using the Modified Gradient approach.
 //! \details The average gradient is modified according to Weiss et al. to
 //!   obtain a stable discretization (average results in unstable central
@@ -716,21 +744,33 @@ modifiedGradientViscousFlux(
   for (std::size_t i=0; i<3; ++i)
     r_f[i] /= r_mag;
 
+  // velocity gradient
   auto dudx_m = dudx;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       dudx_m[i][j] -= ( tk::dot(dudx_m[i], r_f) -
         (cellAvgState[1][ncomp+velocityIdx(nmat,i)]
         - cellAvgState[0][ncomp+velocityIdx(nmat,i)])/r_mag ) * r_f[j];
+  // temperature gradient
+  auto dTdx_m = dTdx;
+  for (std::size_t k=0; k<nmat; ++k) {
+    for (std::size_t j=0; j<3; ++j)
+      dTdx_m[k][j] -= ( tk::dot(dTdx_m[k], r_f) -
+        (cellAvgT[1][k] - cellAvgT[0][k])/r_mag ) * r_f[j];
+  }
 
   // 2. Compute viscous stress tensor
   std::array< real, 6 > tau;
   real mu(0.0);
-  std::vector< real > alLR(nmat, 0);
+  std::vector< real > alLR(nmat, 0), conduct_mat(nmat, 0);
   for (std::size_t k=0; k<nmat; ++k)
     alLR[k] = 0.5*( state[0][volfracIdx(nmat,k)] + state[1][volfracIdx(nmat,k)] );
-  for (std::size_t k=0; k<nmat; ++k)
+  for (std::size_t k=0; k<nmat; ++k) {
     mu += alLR[k] * inciter::getmatprop< tag::mu >(k);
+    conduct_mat[k] = inciter::getmatprop< tag::mu >(k) *
+      inciter::getmatprop< tag::cv >(k) * inciter::getmatprop< tag::gamma >(k)
+      / 0.71;
+  }
 
   tau[0] = mu * ( 4.0 * dudx_m[0][0] - 2.0*(dudx_m[1][1] + dudx_m[2][2]) ) / 3.0;
   tau[1] = mu * ( 4.0 * dudx_m[1][1] - 2.0*(dudx_m[0][0] + dudx_m[2][2]) ) / 3.0;
@@ -744,19 +784,23 @@ modifiedGradientViscousFlux(
     for (std::size_t j=0; j<3; ++j)
       fl[momentumIdx(nmat, i)] += tau[inciter::stressCmp[i][j]] * fn[j];
 
-  std::array< real, 3 > energyFlux{{0.0, 0.0, 0.0}},
-    uAvg{{
+  std::vector< std::array< real, 3 > > energyFlux(nmat, {{0.0, 0.0, 0.0}});
+  std::array< real, 3 > uAvg{{
     0.5*(state[0][ncomp+velocityIdx(nmat,0)] + state[1][ncomp+velocityIdx(nmat,0)]),
     0.5*(state[0][ncomp+velocityIdx(nmat,1)] + state[1][ncomp+velocityIdx(nmat,1)]),
     0.5*(state[0][ncomp+velocityIdx(nmat,2)] + state[1][ncomp+velocityIdx(nmat,2)])
     }};
-  for (std::size_t j=0; j<3; ++j)
-    for (std::size_t i=0; i<3; ++i)
-      energyFlux[j] += uAvg[i] * tau[inciter::stressCmp[i][j]];
+
+  for (std::size_t k=0; k<nmat; ++k) {
+    for (std::size_t j=0; j<3; ++j)
+      for (std::size_t i=0; i<3; ++i)
+        energyFlux[k][j] += uAvg[i] * tau[inciter::stressCmp[i][j]] +
+          conduct_mat[k] * dTdx_m[k][j];
+  }
 
   for (std::size_t k=0; k<nmat; ++k) {
     fl[energyIdx(nmat, k)] = alLR[k]
-      * tk::dot(energyFlux, fn);
+      * tk::dot(energyFlux[k], fn);
   }
 
   return fl;

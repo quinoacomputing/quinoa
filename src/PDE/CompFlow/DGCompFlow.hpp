@@ -72,23 +72,21 @@ class CompFlow {
       // associate boundary condition configurations with state functions, the
       // order in which the state functions listed matters, see ctr::bc::Keys
       brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
-        // BC State functions
-        { dirichlet
-        , symmetry
-        , invalidBC         // Inlet BC not implemented
-        , invalidBC         // Outlet BC not implemented
-        , farfield
-        , extrapolate
-        , invalidBC },      // No slip wall BC not implemented
-        // BC Gradient functions
-        { noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad
-        , noOpGrad }
-        ) );
+      // BC State functions
+      { dirichlet
+      , symmetry
+      , invalidBC         // Outlet BC not implemented
+      , farfield
+      , extrapolate
+      , invalidBC },      // No slip wall BC not implemented
+      // BC Gradient functions
+      { noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad
+      , noOpGrad }
+      ) );
 
       // EoS initialization
       const auto& matprop =

@@ -114,6 +114,19 @@ THINCFunction_new( std::size_t rdof,
   const std::vector< std::size_t >& matInt,
   std::vector< real >& alReco );
 
+//! Compute the temperatures based on FV conserved quantities
+void
+computeTemperaturesFV(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t nmat,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
+  const tk::Fields& unk,
+  const tk::Fields& prim,
+  const std::vector< int >& srcFlag,
+  tk::Fields& T );
+
 //! Evaluate polynomial solution at quadrature point
 std::vector< tk::real >
 evalPolynomialSol(

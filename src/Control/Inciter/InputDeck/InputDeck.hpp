@@ -47,7 +47,6 @@ using ncomp_t = std::size_t;
 using bclist = tk::TaggedTuple< brigand::list<
   tag::dirichlet,   std::vector< std::size_t >,
   tag::symmetry,    std::vector< std::size_t >,
-  tag::inlet,       std::vector< std::size_t >,
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
@@ -95,6 +94,14 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::viscous,          bool
 > >;
 
+// MultiSpecies
+using multispeciesList = tk::TaggedTuple< brigand::list<
+  tag::physics,          PhysicsType,
+  tag::nspec,            std::size_t,
+  tag::problem,          ProblemType,
+  tag::viscous,          bool
+> >;
+
 // Material/EOS object
 using materialList = tk::TaggedTuple< brigand::list<
   tag::eos,          MaterialType,
@@ -118,12 +125,21 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::k,            std::vector< tk::real >
 > >;
 
+// Species/EOS object
+using speciesList = tk::TaggedTuple< brigand::list<
+  tag::id,       std::vector< uint64_t >,
+  tag::gamma,    std::vector< tk::real >,
+  tag::R,        std::vector< tk::real >,
+  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,  std::vector< std::vector< tk::real > >,
+  tag::dH_ref,   std::vector< tk::real >
+> >;
+
 // Boundary conditions block
 using bcList = tk::TaggedTuple< brigand::list<
   tag::mesh,        std::vector< std::size_t >,
   tag::dirichlet,   std::vector< std::size_t >,
   tag::symmetry,    std::vector< std::size_t >,
-  tag::inlet,       std::vector< std::size_t >,
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
@@ -134,11 +150,21 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::pressure,    tk::real,
   tag::density,     tk::real,
   tag::temperature, tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
   tag::materialid,  std::size_t,
+  tag::inlet,       std::vector<
+    tk::TaggedTuple< brigand::list<
+      tag::sideset,      std::vector< uint64_t >,
+      tag::velocity,     std::vector< tk::real >,
+      tag::pressure,     tk::real,
+      tag::temperature,     tk::real,
+      tag::materialid,   std::size_t
+    > >
+  >,
   tag::timedep,     std::vector<
     tk::TaggedTuple< brigand::list<
-      tag::sideset,   std::vector< uint64_t >,
-      tag::fn,        std::vector< tk::real >
+      tag::sideset,    std::vector< uint64_t >,
+      tag::fn,         std::vector< tk::real >
     > >
   >
 > >;
@@ -154,6 +180,7 @@ using boxList = tk::TaggedTuple< brigand::list<
   tag::energy,         tk::real,
   tag::energy_content, tk::real,
   tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
   tag::xmin,           tk::real,
   tag::xmax,           tk::real,
   tag::ymin,           tk::real,
@@ -180,6 +207,7 @@ using meshblockList = tk::TaggedTuple< brigand::list<
   tag::energy,         tk::real,
   tag::energy_content, tk::real,
   tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
   tag::initiate,       inciter::ctr::InitiateType,
   tag::point,          std::vector< tk::real >,
   tag::init_time,      tk::real,
@@ -189,14 +217,15 @@ using meshblockList = tk::TaggedTuple< brigand::list<
 
 // Initial conditions (ic) block
 using icList = tk::TaggedTuple< brigand::list<
-  tag::materialid,  std::size_t,
-  tag::pressure,    tk::real,
-  tag::temperature, tk::real,
-  tag::density,     tk::real,
-  tag::energy,      tk::real,
-  tag::velocity,    std::vector< tk::real >,
-  tag::box,         std::vector< boxList >,
-  tag::meshblock,   std::vector< meshblockList >
+  tag::materialid,     std::size_t,
+  tag::pressure,       tk::real,
+  tag::temperature,    tk::real,
+  tag::mass_fractions, std::vector< tk::real >,
+  tag::density,        tk::real,
+  tag::energy,         tk::real,
+  tag::velocity,       std::vector< tk::real >,
+  tag::box,            std::vector< boxList >,
+  tag::meshblock,      std::vector< meshblockList >
 > >;
 
 // Overset mesh block
@@ -289,11 +318,12 @@ using ConfigMembers = brigand::list<
   tag::limsol_projection,    bool,
 
   // PDE options
-  tag::ncomp,     std::size_t,
-  tag::pde,       PDEType,
-  tag::transport, transportList,
-  tag::compflow,  compflowList,
-  tag::multimat,  multimatList,
+  tag::ncomp,        std::size_t,
+  tag::pde,          PDEType,
+  tag::transport,    transportList,
+  tag::compflow,     compflowList,
+  tag::multimat,     multimatList,
+  tag::multispecies, multispeciesList,
 
   // Dependent variable name
   tag::depvar, std::vector< char >,
@@ -301,6 +331,8 @@ using ConfigMembers = brigand::list<
   tag::sys, std::map< std::size_t, std::size_t >,
 
   tag::material, std::vector< materialList >,
+
+  tag::species, std::vector< speciesList >,
 
   tag::matidxmap, tk::TaggedTuple< brigand::list<
     tag::eosidx, std::vector< std::size_t >,
@@ -752,6 +784,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         used in inciter. It is only set up for for multi-material hydro, and
         not selectable for anything else.)"});
 
+      keywords.insert({"ldfss",
+        "Select the Low Diffusion Flux Splitting Scheme (LDFSS)",
+        R"(This keyword is used to select the LDFSS flux
+        function used for discontinuous Galerkin (DG) spatial discretization
+        used in inciter. It is only set up for for multi-material hydro, and
+        not selectable for anything else.)"});
+
       keywords.insert({"lowspeed_kp",
         "Select the low-speed coefficient K_p in the AUSM+up flux function",
         R"(This keyword is used to select the low-speed coefficient K_p in the
@@ -808,10 +847,22 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         equations, governing compressible multi-material hydrodynamics assuming
         velocity equilibrium (single velocity).)", "block-title"});
 
+      keywords.insert({"multispecies",
+        "Start configuration block for the compressible multi-species equations",
+        R"(This keyword is used to introduce the multispecies block,
+        used to specify the configuration for a system of partial differential
+        equations, governing compressible multi-species fluid dynamics.)",
+        "block-title"});
+
       keywords.insert({"nmat",
         "Set number of materials for the multi-material system",
         R"(This keyword is used to specify the number of materials for
         multi-material flow, see also the keyword 'multimat'.)", "uint"});
+
+      keywords.insert({"nspec",
+        "Set number of species for the multi-species system",
+        R"(This keyword is used to specify the number of species for
+        multi-species flow, see also the keyword 'multispecies'.)", "uint"});
 
       keywords.insert({"prelax",
         "Toggle multi-material finite pressure relaxation",
@@ -905,6 +956,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to introduce a material block, used to
         specify material properties.)", "vector block-title"});
 
+      keywords.insert({"species",
+        "Start configuration block for species (eos) properties",
+        R"(This keyword is used to introduce a species block, used to
+        specify species properties in the multi species solver.)",
+        "vector block-title"});
+
       keywords.insert({"id", "ID",
         R"(This keyword is used to specify an ID, a positive integer. Usage is
         context specific, i.e. what block it is specified in. E.g. Inside the
@@ -991,6 +1048,31 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"k", "heat conductivity",
         R"(This keyword is used to specify the material property, heat
         conductivity.)", "vector of reals"});
+
+      keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
+        R"(This keyword is used to specify species' coefficients in the
+        thermally perfect gas polynomial fit (per temperature range)
+        for specific heat at constant volume. The outer vector is per
+        species, the middle vector is per temperature range, and the
+        inner vector contains 8 coefficients to describe the polynomial.)",
+        "vector of vector of vector of reals"});
+
+      keywords.insert({"t_range", "temperature range for TPG specific heat polynomials",
+        R"(This keyword is used to specify the temperature range for each specific
+        heat polynomial given in cp_coeff. The outer vector is per species,
+        and the inner vector gives the temperature ranges. The inner vector must
+        be sized 1 larger than the number of temperature ranges, as the ranges
+        are read as [T0, T1],[T1, T2],...)", "vector of vector of reals"});
+
+      keywords.insert({"dH_ref", "reference enthalpy for TPG specific heat polynomials",
+        R"(This keyword is used to specify the reference enthalpy at 298.15 K so that
+        the reference temperature in the enthalpy calculations is 0 K. This number
+        is taken from the NASA Glenn 2002 report, and is the heat of formation
+        divided by the species molar mass.)", "vector of reals"});
+
+      keywords.insert({"R", "Specific gas constant",
+        R"(This keyword is used to specify the species property, specific gas
+        constant, in units J/kg.K.)", "vector of reals"});
 
       keywords.insert({"stiffenedgas",
         "Select the stiffened gas equation of state",
@@ -1665,6 +1747,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"temperature", "Specify temperature",
         R"(This keyword is used to configure temperature, used for, e.g.,
         boundary or initial conditions.)" , "real"});
+
+      keywords.insert({"mass_fractions", "Specify species mass fractions",
+        R"(This keyword is used to configure species mass fractions, used for,
+        e.g., boundary or initial conditions.)" , "vector of reals"});
 
       keywords.insert({"box",
         "Introduce a box block used to assign initial conditions",

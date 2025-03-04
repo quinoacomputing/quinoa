@@ -3,7 +3,8 @@ add_library(EOS
             StiffenedGas.cpp
             JWL.cpp
             SmallShearSolid.cpp
-            GodunovRomenskiAluminum.cpp)
+            GodunovRomenskiAluminum.cpp
+            ThermallyPerfectGas.cpp)
 
 target_include_directories(EOS PUBLIC
                            ${QUINOA_SOURCE_DIR}

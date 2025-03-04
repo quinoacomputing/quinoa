@@ -71,7 +71,6 @@ class Transport {
         // BC State functions
         { dirichlet
         , invalidBC  // Symmetry BC not implemented
-        , inlet
         , outlet
         , invalidBC  // Characteristic BC not implemented
         , extrapolate
@@ -82,9 +81,13 @@ class Transport {
         , noOpGrad
         , noOpGrad
         , noOpGrad
-        , noOpGrad
         , noOpGrad }
         ) );
+
+      // Inlet BC has a different structure than above BCs, so it must be 
+      // handled differently than with ConfigBC
+      ConfigInletBC(m_bc, inlet, noOpGrad);
+
       m_problem.errchk( m_ncomp );
     }
 

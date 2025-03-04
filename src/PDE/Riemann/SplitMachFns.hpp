@@ -18,8 +18,10 @@
 namespace inciter {
 
 //! Split Mach polynomials for AUSM+ flux
-//! \param[in] fa All-speed parameter
-//! \param[in] mach Local Mach numner
+//! \param[in] mach Local Mach number
+//! \param[in] fa All-speed parameter. Default is 1
+//! \param[in] alpha High-order pressure polynomial coefficient. Default is 3/16
+//! \param[in] beta High-order Mach polynomial coefficient. Default is 1/8
 //! \return Values of the positive and negative split Mach and pressure
 //!   polynomials.
 //! \details This function returns a vector with positive and negative Mach
@@ -30,8 +32,10 @@ namespace inciter {
 //!   ms[3] = P_5(-).
 //!   For more details, ref. Liou, M. S. (2006). A sequel to AUSM, Part II:
 //!   AUSM+-up for all speeds. J. Comp. Phys., 214(1), 137-170.
-static std::array< tk::real, 4 > splitmach_ausm( tk::real fa,
-                                                 tk::real mach )
+static std::array< tk::real, 4 > splitmach_ausm( tk::real mach,
+                                                 tk::real fa = 1.0,
+                                                 tk::real alpha = 3.0/16.0,
+                                                 tk::real beta = 1.0/8.0 )
 {
   std::array< tk::real, 4 > ms;
 
@@ -44,8 +48,7 @@ static std::array< tk::real, 4 > splitmach_ausm( tk::real fa,
   msplus[1] = +0.25*(mach + 1.0)*(mach + 1.0);
   msminus[1]= -0.25*(mach - 1.0)*(mach - 1.0);
 
-  auto alph_fa = (3.0/16.0) * (-4.0 + 5.0*fa*fa);
-  auto beta = 1.0/8.0;
+  auto alph_fa = alpha * (-4.0 + 5.0*fa*fa);
 
   if (std::fabs(mach) >= 1.0)
   {
