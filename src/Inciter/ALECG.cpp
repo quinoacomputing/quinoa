@@ -612,8 +612,8 @@ ALECG::box( tk::real v, const std::vector< tk::real >& blkvols )
   d->MeshBlkVol() = blkvols;
 
   // Set initial conditions for all PDEs
-  g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->MeshVel(), d->T(),
-    d->Boxvol(), m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
+  g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
+    m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
 
   // Multiply conserved variables with mesh volume
   volumetric( m_u, Disc()->Vol() );

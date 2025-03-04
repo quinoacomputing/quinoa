@@ -81,7 +81,6 @@ class Transport {
     void
     initialize( const std::array< std::vector< real >, 3 >& coord,
                 tk::Fields& unk,
-                tk::Fields&,
                 real t,
                 real,
                 const std::vector< std::unordered_set< std::size_t > >&,
@@ -259,19 +258,6 @@ class Transport {
       // compute boundary integrals
       bndint( coord, triinpoel, symbctri, U, R );
     }
-
-    //! Compute overset mesh motion for OversetFE (no-op for transport)
-    void getMeshVel(
-      real,
-      const std::array< std::vector< real >, 3 >&,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >&,
-      const std::unordered_set< std::size_t >&,
-      const std::array< tk::real, 3 >&,
-      const tk::Fields&,
-      tk::Fields&,
-      int& ) const
-    { }
 
     //! Compute boundary pressure integrals (force) (no-op for transport)
     void bndPressureInt(

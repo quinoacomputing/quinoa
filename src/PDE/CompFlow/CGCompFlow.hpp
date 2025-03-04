@@ -188,7 +188,6 @@ class CompFlow {
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] coord Mesh node coordinates
     //! \param[in,out] unk Array of unknowns
-    //! \param[in,out] W Mesh velocity
     //! \param[in] t Physical time
     //! \param[in] V Discrete volume of user-defined IC box
     //! \param[in] inbox List of nodes at which box user ICs are set (for each
@@ -200,7 +199,6 @@ class CompFlow {
     void initialize(
       const std::array< std::vector< real >, 3 >& coord,
       tk::Fields& unk,
-      tk::Fields& W,
       real t,
       real V,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
@@ -209,7 +207,6 @@ class CompFlow {
         nodeblkid ) const
     {
       Assert( coord[0].size() == unk.nunk(), "Size mismatch" );
-      Assert( coord[0].size() == W.nunk(), "Size mismatch" );
 
       const auto& x = coord[0];
       const auto& y = coord[1];
@@ -227,9 +224,6 @@ class CompFlow {
 
       // Set initial and boundary conditions using problem policy
       for (ncomp_t i=0; i<x.size(); ++i) {
-        // initialize mesh velocity to zero
-        for (std::size_t j=0; j<3; ++j) W(i,j) = 0.0;
-
         auto s = Problem::initialize( m_ncomp, m_mat_blk, x[i], y[i], z[i], t );
 
         // initialize the user-defined box IC
@@ -499,61 +493,6 @@ class CompFlow {
 
       // compute optional source integral
       src( coord, inpoel, t, tp, R );
-    }
-
-    //! Compute overset mesh motion for OversetFE
-//    //! \param[in] t Physical time
-//    //! \param[in] coord Mesh node coordinates
-    //! \param[in] psup Points surrounding points
-    //! \param[in] symbcnodes Symmetry BC node list
-    //! \param[in] uservel User specified constant mesh velocity
-    //! \param[in] U Solution vector at recent time step
-//    //! \param[in,out] meshvel Velocity of each mesh node based on user input
-    //! \param[in,out] movedmesh True/false if mesh moved
-    void getMeshVel(
-      real /*t*/,
-      const std::array< std::vector< real >, 3 >& /*coord*/,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >& psup,
-      const std::unordered_set< std::size_t >& symbcnodes,
-      const std::array< tk::real, 3 >& uservel,
-      const tk::Fields& U,
-      tk::Fields& /*meshvel*/,
-      int& movedmesh ) const
-    {
-      //Assert( meshvel.nunk() == U.nunk(),
-      //  "Mesh-velocity vector has incorrect size" );
-
-      auto uvelmag = std::sqrt(tk::dot(uservel, uservel));
-
-      // Check for pressure differential only if mesh has not moved before
-      if (movedmesh == 0 && uvelmag > 1e-8) {
-        for (auto p : symbcnodes) {
-          for (auto q : tk::Around(psup,p)) {
-            // compute pressure difference
-            real rL  = U(p,0);
-            real ruL = U(p,1) / rL;
-            real rvL = U(p,2) / rL;
-            real rwL = U(p,3) / rL;
-            real reL = U(p,4) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
-            real rR  = U(q,0);
-            real ruR = U(q,1) / rR;
-            real rvR = U(q,2) / rR;
-            real rwR = U(q,3) / rR;
-            real reR = U(q,4) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
-            real pL = m_mat_blk[0].compute< EOS::pressure >( rL, ruL/rL, rvL/rL,
-              rwL/rL, reL );
-            real pR = m_mat_blk[0].compute< EOS::pressure >( rR, ruR/rR, rvR/rR,
-              rwR/rR, reR );
-
-            if (std::abs(pR/pL) > 2.0) {
-              movedmesh = 1;
-              break;
-            }
-          }
-          if (movedmesh) break;
-        }
-      }
     }
 
     //! Compute boundary pressure integrals (force) for rigid body motion

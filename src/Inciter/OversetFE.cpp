@@ -574,8 +574,13 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   d->MeshBlkVol() = blkvols;
 
   // Set initial conditions for all PDEs
-  g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->MeshVel(), d->T(),
-    d->Boxvol(), m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
+  g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
+    m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
+  // Initialize overset mesh velocity to zero
+  auto& u_mesh = d->MeshVel();
+  for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
+    for (std::size_t i=0; i<3; ++i) u_mesh(p,i) = 0.0;
+  }
 
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();

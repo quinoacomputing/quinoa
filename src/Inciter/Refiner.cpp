@@ -1000,8 +1000,7 @@ Refiner::writeMesh( const std::string& basefilename,
 
     // Evaluate initial conditions on current mesh at t0
     tk::Fields u( m_coord[0].size(), nprop );
-    tk::Fields w( m_coord[0].size(), 3 );
-    g_cgpde[m_meshid].initialize( m_coord, u, w, t0, V, inbox, blkvols,
+    g_cgpde[m_meshid].initialize( m_coord, u, t0, V, inbox, blkvols,
       nodeblockid );
 
     // Extract all scalar components from solution for output to file
@@ -1524,7 +1523,6 @@ Refiner::nodeinit( std::size_t npoin,
 
   // Will store nodal ICs
   tk::Fields u( m_coord[0].size(), nprop );
-  tk::Fields w( m_coord[0].size(), 3 );
 
   // Evaluate ICs differently depending on nodal or cell-centered discretization
   const auto scheme = g_inputdeck.get< tag::scheme >();
@@ -1539,7 +1537,7 @@ Refiner::nodeinit( std::size_t npoin,
   if (centering == tk::Centering::NODE) {
 
     // Evaluate ICs for all scalar components integrated
-    g_cgpde[m_meshid].initialize( m_coord, u, w, t0, V, inbox, blkvols,
+    g_cgpde[m_meshid].initialize( m_coord, u, t0, V, inbox, blkvols,
       nodeblockid );
 
   } else if (centering == tk::Centering::ELEM) {

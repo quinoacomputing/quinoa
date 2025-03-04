@@ -121,14 +121,13 @@ class CGPDE {
     void initialize(
       const std::array< std::vector< real >, 3 >& coord,
       tk::Fields& unk,
-      tk::Fields& W,
       real t,
       real V,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
       const std::vector< tk::real >& blkvols,
       const std::unordered_map< std::size_t, std::set< std::size_t > >&
         nodeblkid )
-    { self->initialize( coord, unk, W, t, V, inbox, blkvols, nodeblkid ); }
+    { self->initialize( coord, unk, t, V, inbox, blkvols, nodeblkid ); }
 
     //! Public interface to querying a velocity
     void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
@@ -176,20 +175,6 @@ class CGPDE {
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
         esup, symbctri, vol, edgenode, edgeid,
         boxnodes, G, U, W, tp, V, R ); }
-
-    //! Public interface to compute the mesh velocity for OversetFE
-    void getMeshVel(
-      real t,
-      const std::array< std::vector< real >, 3 >& coord,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >& psup,
-      const std::unordered_set< std::size_t >& symbcnodes,
-      const std::array< tk::real, 3 >& uservel,
-      const tk::Fields& U,
-      tk::Fields& meshvel,
-      int& movedmesh ) const
-    { self->getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
-        movedmesh ); }
 
     //! Public interface to compute boundary surface integrals of pressure
     void bndPressureInt(
@@ -331,7 +316,6 @@ class CGPDE {
       virtual void initialize(
         const std::array< std::vector< real >, 3 >&,
         tk::Fields&,
-        tk::Fields&,
         real,
         real,
         const std::vector< std::unordered_set< std::size_t > >&,
@@ -372,16 +356,6 @@ class CGPDE {
         const std::vector< real >&,
         real,
         tk::Fields& ) const = 0;
-      virtual void getMeshVel(
-        real,
-        const std::array< std::vector< real >, 3 >&,
-        const std::pair< std::vector< std::size_t >,
-                         std::vector< std::size_t > >&,
-        const std::unordered_set< std::size_t >&,
-        const std::array< tk::real, 3 >&,
-        const tk::Fields&,
-        tk::Fields&,
-        int& ) const = 0;
       virtual void bndPressureInt(
         const std::array< std::vector< real >, 3 >&,
         const std::vector< std::size_t >&,
@@ -465,14 +439,13 @@ class CGPDE {
       void initialize(
         const std::array< std::vector< real >, 3 >& coord,
         tk::Fields& unk,
-        tk::Fields& W,
         real t,
         real V,
         const std::vector< std::unordered_set< std::size_t > >& inbox,
         const std::vector< tk::real >& blkvols,
         const std::unordered_map< std::size_t, std::set< std::size_t > >&
           nodeblkid)
-      override { data.initialize( coord, unk, W, t, V, inbox, blkvols, nodeblkid ); }
+      override { data.initialize( coord, unk, t, V, inbox, blkvols, nodeblkid ); }
       void velocity( const tk::Fields& u, tk::UnsMesh::Coords& v ) const
       override { data.velocity(u,v); }
       void soundspeed( const tk::Fields& u, std::vector< tk::real >& s ) const
@@ -512,18 +485,6 @@ class CGPDE {
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
                   esup, symbctri, vol, edgenode,
                   edgeid, boxnodes, G, U, W, tp, V, R ); }
-      void getMeshVel(
-        real t,
-        const std::array< std::vector< real >, 3 >& coord,
-        const std::pair< std::vector< std::size_t >,
-                         std::vector< std::size_t > >& psup,
-        const std::unordered_set< std::size_t >& symbcnodes,
-        const std::array< tk::real, 3 >& uservel,
-        const tk::Fields& U,
-        tk::Fields& meshvel,
-        int& movedmesh ) const override
-      { data.getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
-          movedmesh ); }
       void bndPressureInt(
         const std::array< std::vector< real >, 3 >& coord,
         const std::vector< std::size_t >& triinpoel,
