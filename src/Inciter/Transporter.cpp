@@ -270,6 +270,15 @@ Transporter::info( const InciterPrint& print )
       + " - " + meshes[i].get< tag::filename >() );
   }
 
+  const auto& rbmotion = g_inputdeck.get< tag::rigid_body_motion >();
+  if (rbmotion.get< tag::rigid_body_movt >()) {
+    const auto& rbdof = rbmotion.get< tag::rigid_body_dof >();
+    print.item( "Rigid body motion DOF", rbdof );
+    if (rbdof == 3)
+      print.item( "Rigid body 3-DOF symmetry plane",
+        rbmotion.get< tag::symmetry_plane >() );
+  }
+
   // Print out info on settings of selected partial differential equations
   print.pdes( "Partial differential equations integrated", stack.info() );
 
