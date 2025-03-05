@@ -1409,9 +1409,9 @@ Transporter::minDtAcrossMeshes( CkReductionMsg* advMsg )
 
   tk::real mindt = *(tk::real*)results[0].data;
   std::array< tk::real, 3 > F;
-  F[1] = *(tk::real*)results[1].data;
-  F[2] = *(tk::real*)results[2].data;
-  F[3] = *(tk::real*)results[3].data;
+  F[0] = *(tk::real*)results[1].data;
+  F[1] = *(tk::real*)results[2].data;
+  F[2] = *(tk::real*)results[3].data;
 
   m_dtmsh.push_back(mindt);
 
