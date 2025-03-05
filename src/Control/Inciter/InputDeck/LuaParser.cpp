@@ -684,6 +684,16 @@ LuaParser::storeInputDeck(
       storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
         mesh_deck[i].get< tag::mass >(), 0.0);
 
+      // moment of inertia. this is currently only configured for planar motion
+      storeIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
+        mesh_deck[i].get< tag::moment_of_inertia >(), 0.0);
+
+      // center of mass
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
+        mesh_deck[i].get< tag::center_of_mass >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::center_of_mass >().size() != 3)
+        Throw("Mesh center of mass requires 3 coordinates.");
+
       // Transfer object
       if (i > 0) {
         gideck.get< tag::transfer >().emplace_back( 0, i );
@@ -706,6 +716,8 @@ LuaParser::storeInputDeck(
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::mass >() = 0.0;
+    mesh_deck[0].get< tag::moment_of_inertia >() = 0.0;
+    mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
   }
 
   Assert(gideck.get< tag::mesh >().size() == gideck.get< tag::depvar >().size(),

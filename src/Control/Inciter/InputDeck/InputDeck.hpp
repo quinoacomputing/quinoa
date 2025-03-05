@@ -230,10 +230,12 @@ using icList = tk::TaggedTuple< brigand::list<
 
 // Overset mesh block
 using meshList = tk::TaggedTuple< brigand::list<
-  tag::filename,    std::string,
-  tag::location,    std::vector< tk::real >,
-  tag::orientation, std::vector< tk::real >,
-  tag::mass,        tk::real
+  tag::filename,          std::string,
+  tag::location,          std::vector< tk::real >,
+  tag::orientation,       std::vector< tk::real >,
+  tag::mass,              tk::real,
+  tag::moment_of_inertia, tk::real,
+  tag::center_of_mass,    std::vector< tk::real >
 > >;
 
 // Field output block
@@ -1834,7 +1836,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         a box.)", "real"});
 
       keywords.insert({"orientation", "Configure orientation",
-        R"(Configure orientation of an IC box for rotation about centroid of box.)",
+        R"(Configure orientation of an IC box for rotation about centroid of
+        box; or configure orientation of a mesh relative to another.)",
         "vector of 3 reals"});
 
       keywords.insert({"initiate", "Initiation type",
@@ -1898,9 +1901,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(Configure location of a mesh relative to another.)",
         "vector of 3 reals"});
 
-      keywords.insert({"orientation", "Configure orientation",
-        R"(Configure orientation of a mesh relative to another.)",
-        "vector of 3 reals"});
+      keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
+        R"(Moment of inertia of rigid body for rotational motion)", "real"});
+
+      keywords.insert({"center_of_mass", "Center of mass of rigid body",
+        R"(Center of mass of rigid body used to compute torque for rotational
+        motion)", "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // pre-configured problems

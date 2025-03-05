@@ -327,6 +327,8 @@ DEFTAG(front_speed);
 DEFTAG(filename);
 DEFTAG(location);
 DEFTAG(transfer);
+DEFTAG(moment_of_inertia);
+DEFTAG(center_of_mass);
 
 struct BirthdaySpacings {};
 
