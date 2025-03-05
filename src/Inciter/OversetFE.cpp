@@ -990,32 +990,6 @@ OversetFE::dt()
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
 
-  // Contribute to minimum dt across all chares and advance to next step
-  if (g_inputdeck.get< tag::steady_state >()) {
-    contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-                CkCallback(CkReductionTarget(OversetFE,advance), thisProxy) );
-  }
-  else {
-    // if solving a time-accurate problem, find minimum dt across all meshes
-    // and eventually broadcast to OversetFE::advance()
-    contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-      CkCallback(CkReductionTarget(Transporter,minDtAcrossMeshes), d->Tr()) );
-  }
-  //! [Advance]
-}
-
-void
-OversetFE::advance( tk::real newdt )
-// *****************************************************************************
-// Advance in the time step by computing force vector for rigid body motion
-//! \param[in] newdt The smallest dt across the whole problem
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Set new time step size
-  if (m_stage == 0) d->setdt( newdt );
-
   // Compute own portion of force on boundary for overset mesh rigid body motion
   std::vector< tk::real > F(3, 0.0);
   if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
@@ -1024,21 +998,38 @@ OversetFE::advance( tk::real newdt )
       m_u, F );
   }
 
-  tk::real FRedn[3];
-  for (std::size_t i=0; i<3; ++i) FRedn[i] = F[i];
+  // Tuple-reduction for min-dt and sum-F
+  int tupleSize = 4;
+  CkReduction::tupleElement advancingData[] = {
+    CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[1], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double)
+  };
+  CkReductionMsg* advMsg =
+    CkReductionMsg::buildFromTuple(advancingData, tupleSize);
 
-  contribute(3*sizeof(tk::real), FRedn, CkReduction::sum_double,
-    CkCallback(CkReductionTarget(OversetFE,computeMeshMotion), thisProxy) );
+  // Contribute to minimum dt across all chares, find minimum dt across all
+  // meshes, and eventually broadcast to OversetFE::advance()
+  CkCallback cb(CkReductionTarget(Transporter,minDtAcrossMeshes), d->Tr());
+  advMsg->setCallback(cb);
+  contribute(advMsg);
+  //! [Advance]
 }
 
 void
-OversetFE::computeMeshMotion( tk::real F[3] )
+OversetFE::advance( tk::real newdt, std::array< tk::real, 3 > F )
 // *****************************************************************************
-// Compute mesh motion based on surface forces
-//! \param[in] F Total force (across all mesh partitions) on surface of the
-//!   overset mesh, used to compute mesh movement.
+// Advance equations to next time step
+//! \param[in] newdt The smallest dt across the whole problem
+//! \param[in] F Total surface force on this mesh
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  // Set new time step size
+  if (m_stage == 0) d->setdt( newdt );
+
   for (std::size_t i=0; i<3; ++i) m_surfForce[i] = F[i];
 
   // Compute gradients for next time step

@@ -67,7 +67,7 @@ module transporter {
       entry [reductiontarget] void pdfstat( CkReductionMsg* msg );
       entry [reductiontarget] void boxvol( tk::real meshdata[n], int n );
       entry [reductiontarget] void solutionTransferred();
-      entry [reductiontarget] void minDtAcrossMeshes( tk::real mindt );
+      entry [reductiontarget] void minDtAcrossMeshes( CkReductionMsg* advMsg );
       entry [reductiontarget] void diagnostics( CkReductionMsg* msg );
       entry void resume();
       entry [reductiontarget] void checkpoint( std::size_t finished,

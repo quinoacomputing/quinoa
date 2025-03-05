@@ -198,7 +198,7 @@ class Transporter : public CBase_Transporter {
     void solutionTransferred();
 
     //! Reduction target that computes minimum timestep across meshes
-    void minDtAcrossMeshes( tk::real mindt );
+    void minDtAcrossMeshes( CkReductionMsg* advMsg );
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares

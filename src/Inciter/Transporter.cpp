@@ -1395,12 +1395,24 @@ Transporter::solutionTransferred()
 }
 
 void
-Transporter::minDtAcrossMeshes( tk::real mindt )
+Transporter::minDtAcrossMeshes( CkReductionMsg* advMsg )
 // *****************************************************************************
 // Reduction target that computes minimum timestep across all meshes
-//! \param[in] mindt Minimum value of dt collected across all meshes
+//! \param[in] advMsg Reduction msg containing minimum timestep and total
+//!   surface force information
 // *****************************************************************************
 {
+  // obtain results of reduction from reduction-msg
+  CkReduction::tupleElement* results = NULL;
+  int num_reductions = 0;
+  advMsg->toTuple(&results, &num_reductions);
+
+  tk::real mindt = *(tk::real*)results[0].data;
+  std::array< tk::real, 3 > F;
+  F[1] = *(tk::real*)results[1].data;
+  F[2] = *(tk::real*)results[2].data;
+  F[3] = *(tk::real*)results[3].data;
+
   m_dtmsh.push_back(mindt);
 
   if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
@@ -1416,7 +1428,7 @@ Transporter::minDtAcrossMeshes( tk::real mindt )
 
     // broadcast to advance time step
     for (auto& m : m_scheme) {
-      m.bcast< Scheme::advance >( dt );
+      m.bcast< Scheme::advance >( dt, F );
     }
   }
 }

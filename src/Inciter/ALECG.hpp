@@ -114,7 +114,7 @@ class ALECG : public CBase_ALECG {
     void start();
 
     //! Advance equations to next time step
-    void advance( tk::real newdt );
+    void advance( tk::real newdt, std::array< tk::real, 3 > );
 
     //! Compute left-hand side of transport equations
     void lhs();
