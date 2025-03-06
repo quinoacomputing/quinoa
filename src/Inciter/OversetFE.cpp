@@ -96,7 +96,10 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_nodeblockid(),
   m_nodeblockidc(),
   m_ixfer(0),
-  m_surfForce({{0, 0, 0}})
+  m_surfForce({{0, 0, 0}}),
+  m_surfTorque({{0, 0, 0}}),
+  m_centMass({{0, 0, 0}}),
+  m_centMassVel({{0, 0, 0}})
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -991,20 +994,23 @@ OversetFE::dt()
   thisProxy[ thisIndex ].wait4rhs();
 
   // Compute own portion of force on boundary for overset mesh rigid body motion
-  std::vector< tk::real > F(3, 0.0);
+  std::vector< tk::real > F(6, 0.0);
   if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
     && d->MeshId() > 0) {
     g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_symbctri,
-      m_u, F );
+      m_u, m_centMass, F );
   }
 
   // Tuple-reduction for min-dt and sum-F
-  int tupleSize = 4;
+  int tupleSize = 7;
   CkReduction::tupleElement advancingData[] = {
     CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[1], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double)
+    CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[3], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[4], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double),
   };
   CkReductionMsg* advMsg =
     CkReductionMsg::buildFromTuple(advancingData, tupleSize);
@@ -1018,7 +1024,7 @@ OversetFE::dt()
 }
 
 void
-OversetFE::advance( tk::real newdt, std::array< tk::real, 3 > F )
+OversetFE::advance( tk::real newdt, std::array< tk::real, 6 > F )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt The smallest dt across the whole problem
@@ -1031,6 +1037,7 @@ OversetFE::advance( tk::real newdt, std::array< tk::real, 3 > F )
   if (m_stage == 0) d->setdt( newdt );
 
   for (std::size_t i=0; i<3; ++i) m_surfForce[i] = F[i];
+  for (std::size_t i=0; i<3; ++i) m_surfTorque[i] = F[i+3];
 
   // Compute gradients for next time step
   chBndGrad();
@@ -1208,6 +1215,9 @@ OversetFE::solve()
         g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
 
       m_surfForce[sym_dir] = 0.0;
+      for (std::size_t i=0; i<3; ++i) {
+        if (i != sym_dir) m_surfTorque[i] = 0.0;
+      }
     }
 
     // Mark if mesh moved
@@ -1220,20 +1230,27 @@ OversetFE::solve()
       auto mass_mesh =
         g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
       auto dtp = rkcoef[m_stage] * d->Dt();
+
+      // mesh linear acceleration
+      std::array< tk::real, 3 > a_mesh;
+      for (std::size_t i=0; i<3; ++i) a_mesh[i] = m_surfForce[i] / mass_mesh;
+
       auto& u_mesh = d->MeshVel();
 
       for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
 
         // rectilinear motion
         for (std::size_t i=0; i<3; ++i) {
-          // mesh acceleration
-          auto a_mesh = m_surfForce[i] / mass_mesh;
           // mesh displacement
-          d->Coord()[i][p] += u_mesh(p,i)*dtp + 0.5*a_mesh*dtp*dtp;
+          d->Coord()[i][p] += u_mesh(p,i)*dtp + 0.5*a_mesh[i]*dtp*dtp;
           // mesh velocity
-          u_mesh(p,i) += a_mesh*dtp;
+          u_mesh(p,i) += a_mesh[i]*dtp;
         }
       }
+
+      // move center of mass
+      for (std::size_t i=0; i<3; ++i)
+        m_centMass[i] += m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
     }
 
   }

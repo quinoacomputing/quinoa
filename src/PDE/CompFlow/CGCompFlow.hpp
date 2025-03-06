@@ -500,12 +500,14 @@ class CompFlow {
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
-    //! \param[in,out] F Force vector computed
+    //! \param[in] CM Center of mass
+    //! \param[in,out] F Force vector (appended with torque vector) computed
     void bndPressureInt(
       const std::array< std::vector< real >, 3 >& coord,
       const std::vector< std::size_t >& triinpoel,
       const std::vector< int >& symbctri,
       const tk::Fields& U,
+      const std::array< tk::real, 3 >& CM,
       std::vector< real >& F ) const
     {
 
@@ -552,10 +554,19 @@ class CompFlow {
         auto Ae = tk::area( x[N[0]], x[N[1]], x[N[2]],
                             y[N[0]], y[N[1]], y[N[2]],
                             z[N[0]], z[N[1]], z[N[2]] );
-        // store contribute to force vector
+        // contribute to force vector
         F[0] += p * Ae * nx;
         F[1] += p * Ae * ny;
         F[2] += p * Ae * nz;
+
+        // contribute to torque vector
+        std::array< tk::real, 3 > rCM{{
+          (x[N[0]]+x[N[1]]+x[N[2]])/3.0 - CM[0],
+          (y[N[0]]+y[N[1]]+y[N[2]])/3.0 - CM[1],
+          (z[N[0]]+z[N[1]]+z[N[2]])/3.0 - CM[2] }};
+
+        auto torque = tk::cross(rCM, {{p*Ae*nx, p*Ae*ny, p*Ae*nz}});
+        for (std::size_t i=0; i<3; ++i) F[i+3] += torque[i];
         }
       }
     }
