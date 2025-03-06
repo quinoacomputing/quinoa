@@ -1420,6 +1420,7 @@ Transporter::minDtAcrossMeshes( CkReductionMsg* advMsg )
 #if defined(__clang__)
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wcast-align"
 #endif
 
   tk::real mindt = *(tk::real*)results[0].data;
