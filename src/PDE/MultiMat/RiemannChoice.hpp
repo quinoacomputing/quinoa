@@ -47,6 +47,7 @@ namespace inciter {
     }
     else if (flux == ctr::FluxType::HLLD) {
       fluxfn = HLLDMultiMat::flux;
+    }
     else if (flux == ctr::FluxType::LDFSS) {
       fluxfn = LDFSS::flux;
     }
