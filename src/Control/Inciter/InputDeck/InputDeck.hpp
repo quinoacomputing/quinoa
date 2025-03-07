@@ -813,6 +813,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         used in inciter. It is only set up for for multi-material hydro, and
         not selectable for anything else.)"});
 
+      keywords.insert({"hlld",
+        "Select the Harten-Lax-vanLeer-Discontinuities (HLLD) flux function",
+        R"(This keyword is used to select the HLLD flux
+        function used for discontinuous Galerkin (DG) spatial discretization
+        used in inciter. It is only set up for for multi-material runs. This
+        flux is designed to handle normal and shear waves within solid
+        materials)"});
+
       // -----------------------------------------------------------------------
       // PDE keywords
       // -----------------------------------------------------------------------
