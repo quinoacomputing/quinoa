@@ -1011,7 +1011,7 @@ OversetFE::dt()
 
   // Contribute to minimum dt across all chares, find minimum dt across all
   // meshes, and eventually broadcast to OversetFE::advance()
-  CkCallback cb(CkReductionTarget(Transporter,minDtAcrossMeshes), d->Tr());
+  CkCallback cb(CkReductionTarget(Transporter,collectDtAndForces), d->Tr());
   advMsg->setCallback(cb);
   contribute(advMsg);
   //! [Advance]
