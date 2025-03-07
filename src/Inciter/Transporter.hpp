@@ -197,8 +197,9 @@ class Transporter : public CBase_Transporter {
     //! Reduction target broadcasting to Schemes after mesh transfer
     void solutionTransferred();
 
-    //! Reduction target that computes minimum timestep across meshes
-    void minDtAcrossMeshes( CkReductionMsg* advMsg );
+    // \brief Reduction target that computes minimum timestep across all meshes
+    //    and sums up the forces on each mesh
+    void collectDtAndForces( CkReductionMsg* advMsg );
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
