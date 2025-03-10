@@ -1010,7 +1010,7 @@ OversetFE::dt()
     CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[3], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[4], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double)
   };
   CkReductionMsg* advMsg =
     CkReductionMsg::buildFromTuple(advancingData, tupleSize);
@@ -1036,8 +1036,10 @@ OversetFE::advance( tk::real newdt, std::array< tk::real, 6 > F )
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  for (std::size_t i=0; i<3; ++i) m_surfForce[i] = F[i];
-  for (std::size_t i=0; i<3; ++i) m_surfTorque[i] = F[i+3];
+  for (std::size_t i=0; i<3; ++i) {
+    m_surfForce[i] = F[i];
+    m_surfTorque[i] = F[i+3];
+  }
 
   // Compute gradients for next time step
   chBndGrad();
@@ -1221,7 +1223,8 @@ OversetFE::solve()
     }
 
     // Mark if mesh moved
-    if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12)
+    if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12 ||
+      std::sqrt(tk::dot(m_surfTorque, m_surfTorque)) > 1e-12)
       m_movedmesh = 1;
     else
       m_movedmesh = 0;
@@ -1229,28 +1232,74 @@ OversetFE::solve()
     if (m_movedmesh == 1) {
       auto mass_mesh =
         g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
+      auto mI_mesh = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
+        tag::moment_of_inertia >();
       auto dtp = rkcoef[m_stage] * d->Dt();
+      auto sym_dir =
+        g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
 
-      // mesh linear acceleration
+      // mesh acceleration
       std::array< tk::real, 3 > a_mesh;
       for (std::size_t i=0; i<3; ++i) a_mesh[i] = m_surfForce[i] / mass_mesh;
+      auto alpha_mesh = m_surfTorque[sym_dir]/mI_mesh; // angular acceleration
 
       auto& u_mesh = d->MeshVel();
 
       for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
 
         // rectilinear motion
+        // ---------------------------------------------------------------------
         for (std::size_t i=0; i<3; ++i) {
-          // mesh displacement
-          d->Coord()[i][p] += u_mesh(p,i)*dtp + 0.5*a_mesh[i]*dtp*dtp;
           // mesh velocity
           u_mesh(p,i) += a_mesh[i]*dtp;
         }
+
+        // rotation (this is currently only configured for planar motion)
+        // ---------------------------------------------------------------------
+        std::array< tk::real, 3 > rCM{{
+          d->Coord()[0][p] - m_centMass[0],
+          d->Coord()[1][p] - m_centMass[1],
+          d->Coord()[2][p] - m_centMass[2] }};
+
+        // obtain tangential velocity
+        tk::real r_mag(0.0);
+        for (std::size_t i=0; i<3; ++i) {
+          if (i != sym_dir) r_mag += rCM[i]*rCM[i];
+        }
+        r_mag = std::sqrt(r_mag);
+        auto a_tgt = alpha_mesh*r_mag;
+
+        // get the other two directions
+        auto i1 = (sym_dir+1)%3;
+        auto i2 = (sym_dir+2)%3;
+
+        // project tangential velocity to these two directions
+        auto theta = std::acos(rCM[i2]/r_mag);
+        auto a1 = a_tgt*std::cos(theta);
+        auto a2 = a_tgt*std::sin(theta);
+
+        // move mesh based on above kinematics
+        // ---------------------------------------------------------------------
+
+        // rectilinear mesh displacement
+        for (std::size_t i=0; i<3; ++i) {
+          d->Coord()[i][p] += u_mesh(p,i)*dtp + 0.5*a_mesh[i]*dtp*dtp;
+        }
+
+        // add contribution of rotation to mesh velocity
+        u_mesh(p,i1) += a1*dtp;
+        u_mesh(p,i2) += a2*dtp;
+
+        // add contribution of rotation to mesh displacement
+        d->Coord()[i1][p] += 0.5*a1*dtp*dtp;
+        d->Coord()[i2][p] += 0.5*a2*dtp*dtp;
       }
 
       // move center of mass
-      for (std::size_t i=0; i<3; ++i)
+      for (std::size_t i=0; i<3; ++i) {
         m_centMass[i] += m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+        m_centMassVel[i] += a_mesh[i]*dtp;  // no rotational component
+      }
     }
 
   }
