@@ -1247,13 +1247,6 @@ OversetFE::solve()
 
       for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
 
-        // rectilinear motion
-        // ---------------------------------------------------------------------
-        for (std::size_t i=0; i<3; ++i) {
-          // mesh velocity
-          u_mesh(p,i) += a_mesh[i]*dtp;
-        }
-
         // rotation (this is currently only configured for planar motion)
         // ---------------------------------------------------------------------
         std::array< tk::real, 3 > rCM{{
@@ -1281,9 +1274,13 @@ OversetFE::solve()
         // move mesh based on above kinematics
         // ---------------------------------------------------------------------
 
-        // rectilinear mesh displacement
+        // rectilinear motion
+        // ---------------------------------------------------------------------
         for (std::size_t i=0; i<3; ++i) {
+          // mesh displacement
           d->Coord()[i][p] += u_mesh(p,i)*dtp + 0.5*a_mesh[i]*dtp*dtp;
+          // mesh velocity
+          u_mesh(p,i) += a_mesh[i]*dtp;
         }
 
         // add contribution of rotation to mesh velocity
