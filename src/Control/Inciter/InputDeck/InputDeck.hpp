@@ -144,8 +144,6 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
   tag::noslipwall,  std::vector< std::size_t >,
-  tag::stag_point,  std::vector< tk::real >,
-  tag::radius,      tk::real,
   tag::velocity,    std::vector< tk::real >,
   tag::pressure,    tk::real,
   tag::density,     tk::real,
@@ -1714,11 +1712,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to list (multiple) no-slip wall BC sidesets.)",
         "vector of uint(s)"});
 
-      keywords.insert({"stag",
-        "List sidesets with stagnation boundary conditions",
-        R"(This keyword is used to list (multiple) stagnation BC sidesets.)",
-        "vector of uint(s)"});
-
       keywords.insert({"timedep",
         "Start configuration block describing time dependent boundary conditions",
         R"(This keyword is used to introduce a bc_timedep block, used to
@@ -1728,11 +1721,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         is expected inside a fn ... end block, specified within the bc_timedep
         block. Multiple such bc_timedep blocks can be specified for different
         time dependent BCs on different groups of side sets.)", "block-title"});
-
-      keywords.insert({"radius", "Specify a radius",
-        R"(This keyword is used to specify a radius, used, e.g., in specifying a
-        point in 3D space for setting a stagnation (velocity vector = 0).)",
-        "real"});
 
       keywords.insert({"velocity", "Specify velocity",
         R"(This keyword is used to configure a velocity vector used in a

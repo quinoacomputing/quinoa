@@ -134,13 +134,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
 
   const auto& bc = g_inputdeck.get< tag::bc >();
   for (const auto& ib : bc) {
-    const auto& stag = ib.get< tag::stag_point >();
-    const auto& radius = ib.get< tag::radius >();
-    if (!stag.empty()) {
-      nfo.emplace_back( "Stagnation point(s)", parameters( stag ) );
-      nfo.emplace_back( "Stagnation point(s) radii", parameter( radius ) );
-    }
-
     const auto& fs = ib.get< tag::farfield >();
     if (!fs.empty())
       nfo.emplace_back( "Farfield BC sideset(s)", parameters( fs ) );
