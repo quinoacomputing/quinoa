@@ -99,7 +99,8 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_surfForce({{0, 0, 0}}),
   m_surfTorque({{0, 0, 0}}),
   m_centMass({{0, 0, 0}}),
-  m_centMassVel({{0, 0, 0}})
+  m_centMassVel({{0, 0, 0}}),
+  m_angVelMesh(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -1271,14 +1272,14 @@ OversetFE::solve()
         auto a1 = a_tgt*std::cos(theta);
         auto a2 = a_tgt*std::sin(theta);
 
-        // move mesh based on above kinematics
-        // ---------------------------------------------------------------------
+        // angle of rotation
+        auto dtheta = m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp;
 
         // rectilinear motion
         // ---------------------------------------------------------------------
         for (std::size_t i=0; i<3; ++i) {
           // mesh displacement
-          d->Coord()[i][p] += u_mesh(p,i)*dtp + 0.5*a_mesh[i]*dtp*dtp;
+          d->Coord()[i][p] += m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
           // mesh velocity
           u_mesh(p,i) += a_mesh[i]*dtp;
         }
@@ -1288,9 +1289,15 @@ OversetFE::solve()
         u_mesh(p,i2) += a2*dtp;
 
         // add contribution of rotation to mesh displacement
-        d->Coord()[i1][p] += 0.5*a1*dtp*dtp;
-        d->Coord()[i2][p] += 0.5*a2*dtp*dtp;
+        std::array< tk::real, 3 > angles{{ 0, 0, 0 }},
+          point{{d->Coord()[0][p], d->Coord()[1][p], d->Coord()[2][p]}};
+        angles[sym_dir] = dtheta * 180.0/(4.0*std::atan(1.0));
+        tk::rotatePoint(angles, point);
+        for (std::size_t i=0; i<3; ++i) d->Coord()[i][p] = point[i];
       }
+
+      // update angular velocity
+      m_angVelMesh += alpha_mesh*dtp;
 
       // move center of mass
       for (std::size_t i=0; i<3; ++i) {

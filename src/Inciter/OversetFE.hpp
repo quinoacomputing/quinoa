@@ -241,6 +241,7 @@ class OversetFE : public CBase_OversetFE {
       p | m_surfTorque;
       p | m_centMass;
       p | m_centMassVel;
+      p | m_angVelMesh;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -378,6 +379,8 @@ class OversetFE : public CBase_OversetFE {
     std::array< tk::real, 3 > m_centMass;
     //! Velocity of the center of mass of rigid body
     std::array< tk::real, 3 > m_centMassVel;
+    //! Angular velocity of the rigid body
+    tk::real m_angVelMesh;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
