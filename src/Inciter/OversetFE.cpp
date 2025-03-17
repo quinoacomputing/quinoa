@@ -1239,6 +1239,8 @@ OversetFE::solve()
       auto sym_dir =
         g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
 
+      auto pi = 4.0*std::atan(1.0);
+
       // mesh acceleration
       std::array< tk::real, 3 > a_mesh;
       for (std::size_t i=0; i<3; ++i) a_mesh[i] = m_surfForce[i] / mass_mesh;
@@ -1268,9 +1270,10 @@ OversetFE::solve()
         auto i2 = (sym_dir+2)%3;
 
         // project tangential velocity to these two directions
-        auto theta = std::acos(rCM[i2]/r_mag);
-        auto a1 = a_tgt*std::cos(theta);
-        auto a2 = a_tgt*std::sin(theta);
+        auto theta = std::atan2(rCM[i2],rCM[i1]);
+        if (theta < 0.0) theta = (2*pi + theta);
+        auto a1 = a_tgt*std::cos((pi/2.0)+theta);
+        auto a2 = a_tgt*std::sin((pi/2.0)+theta);
 
         // angle of rotation
         auto dtheta = m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp;
@@ -1289,11 +1292,11 @@ OversetFE::solve()
         u_mesh(p,i2) += a2*dtp;
 
         // add contribution of rotation to mesh displacement
-        std::array< tk::real, 3 > angles{{ 0, 0, 0 }},
-          point{{d->Coord()[0][p], d->Coord()[1][p], d->Coord()[2][p]}};
-        angles[sym_dir] = dtheta * 180.0/(4.0*std::atan(1.0));
-        tk::rotatePoint(angles, point);
-        for (std::size_t i=0; i<3; ++i) d->Coord()[i][p] = point[i];
+        std::array< tk::real, 3 > angles{{ 0, 0, 0 }};
+        angles[sym_dir] = dtheta * 180.0/pi;
+        tk::rotatePoint(angles, rCM);
+        for (std::size_t i=0; i<3; ++i)
+          d->Coord()[i][p] = rCM[i] + m_centMass[i];
       }
 
       // update angular velocity
