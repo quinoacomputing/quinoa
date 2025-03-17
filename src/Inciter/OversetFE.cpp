@@ -140,6 +140,10 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
     tk::remap( m_triinpoel, map );
   }
 
+  for (std::size_t i=0; i<3; ++i)
+    m_centMass[i] = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
+      tag::center_of_mass >()[i];
+
   // Query/update boundary-conditions-related data structures from user input
   getBCNodes();
 
