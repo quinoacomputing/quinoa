@@ -1284,9 +1284,10 @@ OversetFE::solve()
 
         // rectilinear motion
         // ---------------------------------------------------------------------
+        std::array< tk::real, 3 > ds{{ 0, 0, 0 }};
         for (std::size_t i=0; i<3; ++i) {
           // mesh displacement
-          d->Coord()[i][p] += m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+          ds[i] = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
           // mesh velocity
           u_mesh(p,i) += a_mesh[i]*dtp;
         }
@@ -1299,8 +1300,12 @@ OversetFE::solve()
         std::array< tk::real, 3 > angles{{ 0, 0, 0 }};
         angles[sym_dir] = dtheta * 180.0/pi;
         tk::rotatePoint(angles, rCM);
-        for (std::size_t i=0; i<3; ++i)
+
+        // combine both contributions
+        for (std::size_t i=0; i<3; ++i) {
           d->Coord()[i][p] = rCM[i] + m_centMass[i];
+          d->Coord()[i][p] += ds[i];
+        }
       }
 
       // update angular velocity
