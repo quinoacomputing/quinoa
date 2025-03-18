@@ -265,6 +265,7 @@ class Transport {
       const std::vector< std::size_t >&,
       const std::vector< int >&,
       const tk::Fields&,
+      const std::array< tk::real, 3 >&,
       std::vector< real >& ) const
     { }
 

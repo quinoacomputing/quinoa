@@ -1425,10 +1425,13 @@ Transporter::collectDtAndForces( CkReductionMsg* advMsg )
 #endif
 
   tk::real mindt = *(tk::real*)results[0].data;
-  std::array< tk::real, 3 > F;
+  std::array< tk::real, 6 > F;
   F[0] = *(tk::real*)results[1].data;
   F[1] = *(tk::real*)results[2].data;
   F[2] = *(tk::real*)results[3].data;
+  F[3] = *(tk::real*)results[4].data;
+  F[4] = *(tk::real*)results[5].data;
+  F[5] = *(tk::real*)results[6].data;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
