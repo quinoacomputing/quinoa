@@ -1275,7 +1275,6 @@ OversetFE::solve()
 
         // project tangential velocity to these two directions
         auto theta = std::atan2(rCM[i2],rCM[i1]);
-        if (theta < 0.0) theta = (2*pi + theta);
         auto a1 = a_tgt*std::cos((pi/2.0)+theta);
         auto a2 = a_tgt*std::sin((pi/2.0)+theta);
 
