@@ -1229,18 +1229,6 @@ LuaParser::storeInputDeck(
         }
       }
 
-      // Stagnation point
-      storeVecIfSpecd< tk::real >(sol_bc[i+1], "stag_point",
-        bc_deck[i].get< tag::stag_point >(), {});
-      if (!bc_deck[i].get< tag::stag_point >().empty() &&
-        bc_deck[i].get< tag::stag_point >().size() % 3 != 0)
-        Throw("BC stagnation point requires 3 coordinate values for each "
-          "point. Thus, this vector must be divisible by 3.");
-
-      // Stagnation radius
-      storeIfSpecd< tk::real >(sol_bc[i+1], "radius",
-        bc_deck[i].get< tag::radius >(), 0.0);
-
       // Velocity for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "velocity",
         bc_deck[i].get< tag::velocity >(), {0.0, 0.0, 0.0});
