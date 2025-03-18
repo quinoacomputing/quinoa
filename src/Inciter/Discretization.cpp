@@ -322,34 +322,33 @@ Discretization::transfer(
 
   } else {
 
-    m_transfer_complete = cb;
-
     // determine source and destination mesh depending on direction of transfer
     std::size_t fromMesh(0), toMesh(0);
     CkCallback cb_xfer;
     if (dirn == 0) {
       fromMesh = m_mytransfer[m_nsrc].src;
       toMesh = m_mytransfer[m_ndst].dst;
-      cb_xfer = CkCallback( CkIndex_Discretization::to_complete(), thisProxy[thisIndex] );
+      cb_xfer = CkCallback(
+        CkIndex_Discretization::transfer_complete(), thisProxy[thisIndex] );
     }
     else {
       fromMesh = m_mytransfer[m_nsrc].dst;
       toMesh = m_mytransfer[m_ndst].src;
-      cb_xfer = CkCallback( CkIndex_Discretization::from_complete(), thisProxy[thisIndex] );
+      cb_xfer = cb;
     }
 
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (fromMesh == m_meshid) {
-      exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
+      exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u,
+        cb_xfer );
       ++m_nsrc;
     } else {
       m_nsrc = 0;
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
     if (toMesh == m_meshid) {
-      exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
-        cb_xfer );
+      exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u, cb_xfer );
       ++m_ndst;
     } else {
       m_ndst = 0;
@@ -361,7 +360,7 @@ Discretization::transfer(
   m_ndst = 0;
 }
 
-void Discretization::to_complete()
+void Discretization::transfer_complete()
 // *****************************************************************************
 //! Solution transfer from background to overset mesh completed (from ExaM2M)
 //! \brief This is called by ExaM2M on the destination mesh when the
@@ -369,53 +368,8 @@ void Discretization::to_complete()
 //!   and notify the corresponding source of the completion.
 // *****************************************************************************
 {
-  // Lookup the source disc and notify it of completion
-  for (auto& t : m_transfer) {
-    if (m_meshid == t.dst) {
-      m_disc[ t.src ][ thisIndex ].transfer_complete();
-    }
-  }
-
-  thisProxy[ thisIndex ].transfer_complete();
-}
-
-void Discretization::from_complete()
-// *****************************************************************************
-//! Solution transfer from overset to background mesh completed (from ExaM2M)
-//! \brief This is called by ExaM2M on the destination mesh when the
-//!   transfer completes. Since this is called only on the destination, we find
-//!   and notify the corresponding source of the completion.
-// *****************************************************************************
-{
-  // Lookup the source disc and notify it of completion
-  for (auto& t : m_transfer) {
-    if (m_meshid == t.src) {
-      m_disc[ t.dst ][ thisIndex ].transfer_complete_from_dest();
-    }
-  }
-
-  m_transfer_complete.send();
-}
-
-void Discretization::transfer_complete_from_dest()
-// *****************************************************************************
-//! Solution transfer completed (from dest Discretization)
-//! \details Called on the source only by the destination when a back and forth
-//!   transfer step completes.
-// *****************************************************************************
-{
-  m_transfer_complete.send();
-}
-
-void Discretization::transfer_complete()
-// *****************************************************************************
-//! Solution transfer completed (one-way)
-//! \note Single exit point after solution transfer between meshes
-// *****************************************************************************
-{
-  contribute( sizeof(nullptr), nullptr, CkReduction::nop,
-    CkCallback(CkReductionTarget(Transporter,solutionTransferred),
-    m_transporter) );
+  contribute( CkCallback( CkReductionTarget(Transporter,solutionTransferred),
+                           m_transporter) );
 }
 
 std::vector< std::size_t >
