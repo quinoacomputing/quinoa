@@ -108,8 +108,8 @@ struct LDFSS {
     auto mr = vnr/ac12;
 
     // Split Mach polynomials
-    auto msl = splitmach_ausm( 1.0, ml );
-    auto msr = splitmach_ausm( 1.0, mr );
+    auto msl = splitmach_ausm( ml );
+    auto msr = splitmach_ausm( mr );
 
     // Modified Mach polynomials
     //// mtilde for 2nd order Mach polys (vanLeer)

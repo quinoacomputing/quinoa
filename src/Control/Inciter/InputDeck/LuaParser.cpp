@@ -588,8 +588,14 @@ LuaParser::storeInputDeck(
         checkStoreMatProp(sol_spc[i+1], "R", nspec,
           spci_deck.get< tag::R >());
         // cp_coeff
-        checkStoreMatPropVec(sol_spc[i+1], "cp_coeff", nspec, 8,
+        checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
           spci_deck.get< tag::cp_coeff >());
+        // t_range
+        checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
+          spci_deck.get< tag::t_range >());
+        // dH_ref
+        checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
+          spci_deck.get< tag::dH_ref >());
       }
 
       // Generate mapping between material index and eos parameter index
@@ -674,11 +680,19 @@ LuaParser::storeInputDeck(
       if (mesh_deck[i].get< tag::orientation >().size() != 3)
         Throw("Mesh orientation requires 3 rotation angles.");
 
-      // velocity
-      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "velocity",
-        mesh_deck[i].get< tag::velocity >(), {0.0, 0.0, 0.0});
-      if (mesh_deck[i].get< tag::velocity >().size() != 3)
-        Throw("Mesh velocity requires 3 components.");
+      // mass
+      storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
+        mesh_deck[i].get< tag::mass >(), 0.0);
+
+      // moment of inertia. this is currently only configured for planar motion
+      storeIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
+        mesh_deck[i].get< tag::moment_of_inertia >(), 0.0);
+
+      // center of mass
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
+        mesh_deck[i].get< tag::center_of_mass >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::center_of_mass >().size() != 3)
+        Throw("Mesh center of mass requires 3 coordinates.");
 
       // Transfer object
       if (i > 0) {
@@ -701,11 +715,60 @@ LuaParser::storeInputDeck(
       gideck.get< tag::cmd, tag::io, tag::input >();
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
-    mesh_deck[0].get< tag::velocity >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< tag::mass >() = 0.0;
+    mesh_deck[0].get< tag::moment_of_inertia >() = 0.0;
+    mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
   }
 
   Assert(gideck.get< tag::mesh >().size() == gideck.get< tag::depvar >().size(),
     "Number of depvar not equal to the number of meshes.");
+
+  // Rigid body motion block for overset meshes
+  // ---------------------------------------------------------------------------
+  if (lua_ideck["rigid_body_motion"].valid()) {
+
+    Assert(gideck.get< tag::mesh >().size() > 1,
+      "Multiple meshes (overset) needed for rigid body motion.");
+
+    // check that rigid body mass is provided
+    const auto mesh_deck = gideck.get< tag::mesh >();
+    for (std::size_t i=1; i<mesh_deck.size(); ++i) {
+      Assert(mesh_deck[i].get< tag::mass >() > 1e-10,
+        "Mass of body required for overset meshes with rigid body motion.");
+    }
+
+    auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
+
+    rbm_deck.get< tag::rigid_body_movt >() = true;
+
+    // degrees of freedom
+    storeIfSpecd< std::size_t >(
+      lua_ideck["rigid_body_motion"], "rigid_body_dof",
+      rbm_deck.get< tag::rigid_body_dof >(), 3);
+    if (rbm_deck.get< tag::rigid_body_dof >() != 3 &&
+      rbm_deck.get< tag::rigid_body_dof >() != 6)
+      Throw("Only 3 or 6 rigid body DOFs supported.");
+
+    // symmetry plane
+    storeIfSpecd< std::size_t >(
+      lua_ideck["rigid_body_motion"], "symmetry_plane",
+      rbm_deck.get< tag::symmetry_plane >(), 0);
+    if (rbm_deck.get< tag::symmetry_plane >() > 3)
+      Throw("Rigid body motion symmetry plane must be 1(x), 2(y), or 3(z).");
+    if (rbm_deck.get< tag::symmetry_plane >() == 0 &&
+      rbm_deck.get< tag::rigid_body_dof >() == 3)
+      Throw(
+        "Rigid body motion symmetry plane must be specified for 3 DOF motion.");
+    // reset to 0-based indexing
+    rbm_deck.get< tag::symmetry_plane >() -= 1;
+  }
+  else {
+    // TODO: remove double-specification of defaults
+    auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
+    rbm_deck.get< tag::rigid_body_movt >() = false;
+    rbm_deck.get< tag::rigid_body_dof >() = 0;
+    rbm_deck.get< tag::symmetry_plane >() = 0;
+  }
 
   // Field output block
   // ---------------------------------------------------------------------------
@@ -1120,8 +1183,30 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "symmetry",
         bc_deck[i].get< tag::symmetry >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "inlet",
-        bc_deck[i].get< tag::inlet >(), {});
+      if (sol_bc[i+1]["inlet"].valid()) {
+        const sol::table& sol_inbc = sol_bc[i+1]["inlet"];
+        auto& inbc_deck = bc_deck[i].get< tag::inlet >();
+        inbc_deck.resize(sol_inbc.size());
+
+        for (std::size_t j=0; j<inbc_deck.size(); ++j) {
+          storeVecIfSpecd< uint64_t >(sol_inbc[j+1], "sideset",
+            inbc_deck[j].get< tag::sideset >(), {});
+
+          storeVecIfSpecd< tk::real >(sol_inbc[j+1], "velocity",
+            inbc_deck[j].get< tag::velocity >(), {0.0, 0.0, 0.0});
+          if (inbc_deck[j].get< tag::velocity >().size() != 3)
+            Throw("Inlet velocity requires 3 components.");
+
+          storeIfSpecd< tk::real >(sol_inbc[j+1], "pressure",
+            inbc_deck[j].get< tag::pressure >(), 0.0);
+
+          storeIfSpecd< tk::real >(sol_inbc[j+1], "temperature",
+            inbc_deck[j].get< tag::temperature >(), 0.0);
+
+          storeIfSpecd< std::size_t >(sol_inbc[j+1], "materialid",
+            inbc_deck[j].get< tag::materialid >(), 1);
+        }
+      }
 
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "outlet",
         bc_deck[i].get< tag::outlet >(), {});
@@ -1155,18 +1240,6 @@ LuaParser::storeInputDeck(
             "ordinate.");
         }
       }
-
-      // Stagnation point
-      storeVecIfSpecd< tk::real >(sol_bc[i+1], "stag_point",
-        bc_deck[i].get< tag::stag_point >(), {});
-      if (!bc_deck[i].get< tag::stag_point >().empty() &&
-        bc_deck[i].get< tag::stag_point >().size() % 3 != 0)
-        Throw("BC stagnation point requires 3 coordinate values for each "
-          "point. Thus, this vector must be divisible by 3.");
-
-      // Stagnation radius
-      storeIfSpecd< tk::real >(sol_bc[i+1], "radius",
-        bc_deck[i].get< tag::radius >(), 0.0);
 
       // Velocity for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "velocity",
@@ -1498,6 +1571,57 @@ LuaParser::checkStoreMatPropVec(
     // store values from table to inputdeck
     for (std::size_t i=0; i<vecsize; ++i)
       storage[k].push_back(tableentry[k+1][i+1]);
+  }
+}
+
+void
+LuaParser::checkStoreMatPropVecVec(
+  const sol::table table,
+  const std::string key,
+  std::size_t nspec,
+  std::size_t vecsize1,
+  std::size_t vecsize2,
+  std::vector<std::vector<std::vector< tk::real >>>& storage )
+// *****************************************************************************
+//  Check and store material property vector into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] nspec Number of species
+//! \param[in] vecsize1 Outer number of said property in Sol-table (based on
+//!   number of coefficients for the defined species)
+//! \param[in] vecsize2 Inner number of said property in Sol-table (based on
+//!   number of coefficients for the defined species)
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != nspec)
+    Throw("Incorrect number of '" + key + "' vectors specified. Expected " +
+      std::to_string(nspec) + " vectors");
+
+  storage.resize(nspec);
+
+  const auto& tableentry = table[key];
+  for (std::size_t k=0; k < nspec; k++) {
+    if (sol::table(tableentry[k+1]).size() != vecsize1)
+      Throw("Incorrect outer number of '" + key + "' entries in vector of species "
+        + std::to_string(k+1) + " specified. Expected " +
+        std::to_string(vecsize1));
+
+    // store values from table to inputdeck
+    for (std::size_t i=0; i<vecsize1; ++i) {
+      if (sol::table(tableentry[k+1][i+1]).size() != vecsize2)
+        Throw("Incorrect inner number of '" + key + "' entries in vector of species "
+          + std::to_string(k+1) + " specified. Expected " +
+          std::to_string(vecsize2));
+      std::vector< tk::real > temp_storage;
+      for (std::size_t j=0; j<vecsize2; j++)
+        temp_storage.push_back(tableentry[k+1][i+1][j+1]);
+      storage[k].push_back(temp_storage);
+    }
   }
 }
 

@@ -78,7 +78,6 @@ class MultiSpecies {
         // BC State functions
         { dirichlet
         , symmetry
-        , invalidBC         // Inlet BC not implemented
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
@@ -86,7 +85,6 @@ class MultiSpecies {
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
-        , noOpGrad
         , noOpGrad
         , noOpGrad
         , noOpGrad

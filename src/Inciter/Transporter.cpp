@@ -270,6 +270,15 @@ Transporter::info( const InciterPrint& print )
       + " - " + meshes[i].get< tag::filename >() );
   }
 
+  const auto& rbmotion = g_inputdeck.get< tag::rigid_body_motion >();
+  if (rbmotion.get< tag::rigid_body_movt >()) {
+    const auto& rbdof = rbmotion.get< tag::rigid_body_dof >();
+    print.item( "Rigid body motion DOF", rbdof );
+    if (rbdof == 3)
+      print.item( "Rigid body 3-DOF symmetry plane",
+        rbmotion.get< tag::symmetry_plane >() );
+  }
+
   // Print out info on settings of selected partial differential equations
   print.pdes( "Partial differential equations integrated", stack.info() );
 
@@ -475,14 +484,19 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
 // *****************************************************************************
 {
   // Query side set ids at which BCs assigned for all BC types for all PDEs
-  using bclist = ctr::bclist::Keys;
   std::unordered_set< int > usedsets;
+
+  using bclist = ctr::bclist::Keys;
+  const auto& bcs = g_inputdeck.get< tag::bc >();
   brigand::for_each< bclist >( UserBC( g_inputdeck, usedsets ) );
 
-  // Query side sets of time dependent BCs (since tag::bctimedep is not a part
+  // Query side sets of time dependent and inlet BCs (since these are not a part
   // of tag::bc)
-  const auto& bcs = g_inputdeck.get< tag::bc >();
   for (const auto& bci : bcs) {
+    for (const auto& b : bci.get< tag::inlet >()) {
+      for (auto i : b.get< tag::sideset >())
+        usedsets.insert(static_cast<int>(i));
+    }
     for (const auto& b : bci.get< tag::timedep >()) {
       for (auto i : b.get< tag::sideset >())
         usedsets.insert(static_cast<int>(i));
@@ -1390,17 +1404,40 @@ Transporter::solutionTransferred()
 }
 
 void
-Transporter::minDtAcrossMeshes( tk::real* reducndata, [[maybe_unused]] int n )
+Transporter::collectDtAndForces( CkReductionMsg* advMsg )
 // *****************************************************************************
-// Reduction target that computes minimum timestep across all meshes
-//! \param[in] reducndata Vector containing minimum values of dt and mesh-moved
-//!   flags, collected across all meshes
-//! \param[in] n Size of vector, automatically computed by Charm
+// \brief Reduction target that computes minimum timestep across all meshes and
+//    sums up the forces on each mesh
+//! \param[in] advMsg Reduction msg containing minimum timestep and total
+//!   surface force information
 // *****************************************************************************
 {
-  Assert(static_cast<std::size_t>(n-1) == m_nelem.size(),
-    "Incorrectly sized reduction vector");
-  m_dtmsh.push_back(reducndata[0]);
+  // obtain results of reduction from reduction-msg
+  CkReduction::tupleElement* results = nullptr;
+  int num_reductions = 0;
+  advMsg->toTuple(&results, &num_reductions);
+
+// ignore the old-style-cast warning from clang for this code
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wcast-align"
+#endif
+
+  tk::real mindt = *(tk::real*)results[0].data;
+  std::array< tk::real, 6 > F;
+  F[0] = *(tk::real*)results[1].data;
+  F[1] = *(tk::real*)results[2].data;
+  F[2] = *(tk::real*)results[3].data;
+  F[3] = *(tk::real*)results[4].data;
+  F[4] = *(tk::real*)results[5].data;
+  F[5] = *(tk::real*)results[6].data;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
+
+  m_dtmsh.push_back(mindt);
 
   if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
     Assert(m_dtmsh.size() == m_nelem.size(), "Incorrect size of dtmsh");
@@ -1414,10 +1451,8 @@ Transporter::minDtAcrossMeshes( tk::real* reducndata, [[maybe_unused]] int n )
     m_ndtmsh = 0;
 
     // broadcast to advance time step
-    std::size_t ic(0);
     for (auto& m : m_scheme) {
-      m.bcast< Scheme::advance >( dt, reducndata[ic+1] );
-      ++ic;
+      m.bcast< Scheme::advance >( dt, F );
     }
   }
 }

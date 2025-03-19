@@ -317,7 +317,9 @@ a lot of time working on something that we might not want to merge in.
 
 If you have never created a pull request on GitHub before, [here is a great
 tutorial](https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github)
-on how it works.
+on how it works. Once a pull request is posted, the code review is done on
+[Reviewable](https://reviewable.io). Reviewable lets us look at comments in
+context of the code, retains history, and has an intuitive GUI.
 
 The basic steps for those who are _not_ members of GitHub's [QuinoaComputing](https://github.com/quinoacomputing) organization are as follows.
 

@@ -87,8 +87,8 @@ struct AUSMCompFlow {
     tk::real k_u(1.0), f_a(1.0);
 
     // Split Mach polynomials
-    auto msl = splitmach_ausm( f_a, ml );
-    auto msr = splitmach_ausm( f_a, mr );
+    auto msl = splitmach_ausm( ml, f_a );
+    auto msr = splitmach_ausm( mr, f_a );
 
     // Riemann Mach number
     auto m0 = 1.0 - (0.5*(vnl*vnl + vnr*vnr)/(ac12*ac12));

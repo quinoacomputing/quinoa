@@ -47,7 +47,6 @@ using ncomp_t = std::size_t;
 using bclist = tk::TaggedTuple< brigand::list<
   tag::dirichlet,   std::vector< std::size_t >,
   tag::symmetry,    std::vector< std::size_t >,
-  tag::inlet,       std::vector< std::size_t >,
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
@@ -131,28 +130,36 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::id,       std::vector< uint64_t >,
   tag::gamma,    std::vector< tk::real >,
   tag::R,        std::vector< tk::real >,
-  tag::cp_coeff, std::vector< std::vector< tk::real > >
+  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,  std::vector< std::vector< tk::real > >,
+  tag::dH_ref,   std::vector< tk::real >
 > >;
 
 // Boundary conditions block
 using bcList = tk::TaggedTuple< brigand::list<
-  tag::mesh,           std::vector< std::size_t >,
-  tag::dirichlet,      std::vector< std::size_t >,
-  tag::symmetry,       std::vector< std::size_t >,
-  tag::inlet,          std::vector< std::size_t >,
-  tag::outlet,         std::vector< std::size_t >,
-  tag::farfield,       std::vector< std::size_t >,
-  tag::extrapolate,    std::vector< std::size_t >,
-  tag::noslipwall,     std::vector< std::size_t >,
-  tag::stag_point,     std::vector< tk::real >,
-  tag::radius,         tk::real,
-  tag::velocity,       std::vector< tk::real >,
-  tag::pressure,       tk::real,
-  tag::density,        tk::real,
-  tag::temperature,    tk::real,
+  tag::mesh,        std::vector< std::size_t >,
+  tag::dirichlet,   std::vector< std::size_t >,
+  tag::symmetry,    std::vector< std::size_t >,
+  tag::outlet,      std::vector< std::size_t >,
+  tag::farfield,    std::vector< std::size_t >,
+  tag::extrapolate, std::vector< std::size_t >,
+  tag::noslipwall,  std::vector< std::size_t >,
+  tag::velocity,    std::vector< tk::real >,
+  tag::pressure,    tk::real,
+  tag::density,     tk::real,
+  tag::temperature, tk::real,
   tag::mass_fractions, std::vector< tk::real >,
-  tag::materialid,     std::size_t,
-  tag::timedep,        std::vector<
+  tag::materialid,  std::size_t,
+  tag::inlet,       std::vector<
+    tk::TaggedTuple< brigand::list<
+      tag::sideset,      std::vector< uint64_t >,
+      tag::velocity,     std::vector< tk::real >,
+      tag::pressure,     tk::real,
+      tag::temperature,     tk::real,
+      tag::materialid,   std::size_t
+    > >
+  >,
+  tag::timedep,     std::vector<
     tk::TaggedTuple< brigand::list<
       tag::sideset,    std::vector< uint64_t >,
       tag::fn,         std::vector< tk::real >
@@ -221,10 +228,12 @@ using icList = tk::TaggedTuple< brigand::list<
 
 // Overset mesh block
 using meshList = tk::TaggedTuple< brigand::list<
-  tag::filename,    std::string,
-  tag::location,    std::vector< tk::real >,
-  tag::orientation, std::vector< tk::real >,
-  tag::velocity,    std::vector< tk::real >
+  tag::filename,          std::string,
+  tag::location,          std::vector< tk::real >,
+  tag::orientation,       std::vector< tk::real >,
+  tag::mass,              tk::real,
+  tag::moment_of_inertia, tk::real,
+  tag::center_of_mass,    std::vector< tk::real >
 > >;
 
 // Field output block
@@ -336,6 +345,13 @@ using ConfigMembers = brigand::list<
   tag::ic, icList,
   tag::mesh, std::vector< meshList >,
   tag::transfer, std::vector< Transfer >,
+
+  // Rigid-body motion solver
+  tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
+    tag::rigid_body_movt, bool,
+    tag::rigid_body_dof,  std::size_t,
+    tag::symmetry_plane,  std::size_t
+  > >,
 
   // ALE block
   // ---------------------------------------------------------------------------
@@ -797,6 +813,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         used in inciter. It is only set up for for multi-material hydro, and
         not selectable for anything else.)"});
 
+      keywords.insert({"hlld",
+        "Select the Harten-Lax-vanLeer-Discontinuities (HLLD) flux function",
+        R"(This keyword is used to select the HLLD flux
+        function used for discontinuous Galerkin (DG) spatial discretization
+        used in inciter. It is only set up for for multi-material runs. This
+        flux is designed to handle normal and shear waves within solid
+        materials)"});
+
       // -----------------------------------------------------------------------
       // PDE keywords
       // -----------------------------------------------------------------------
@@ -1034,8 +1058,24 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
         R"(This keyword is used to specify species' coefficients in the
-        thermally perfect gas polynomial fit for specific heat at constant
-        volume.)", "vector of reals"});
+        thermally perfect gas polynomial fit (per temperature range)
+        for specific heat at constant volume. The outer vector is per
+        species, the middle vector is per temperature range, and the
+        inner vector contains 8 coefficients to describe the polynomial.)",
+        "vector of vector of vector of reals"});
+
+      keywords.insert({"t_range", "temperature range for TPG specific heat polynomials",
+        R"(This keyword is used to specify the temperature range for each specific
+        heat polynomial given in cp_coeff. The outer vector is per species,
+        and the inner vector gives the temperature ranges. The inner vector must
+        be sized 1 larger than the number of temperature ranges, as the ranges
+        are read as [T0, T1],[T1, T2],...)", "vector of vector of reals"});
+
+      keywords.insert({"dH_ref", "reference enthalpy for TPG specific heat polynomials",
+        R"(This keyword is used to specify the reference enthalpy at 298.15 K so that
+        the reference temperature in the enthalpy calculations is 0 K. This number
+        is taken from the NASA Glenn 2002 report, and is the heat of formation
+        divided by the species molar mass.)", "vector of reals"});
 
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas
@@ -1672,11 +1712,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to list (multiple) no-slip wall BC sidesets.)",
         "vector of uint(s)"});
 
-      keywords.insert({"stag",
-        "List sidesets with stagnation boundary conditions",
-        R"(This keyword is used to list (multiple) stagnation BC sidesets.)",
-        "vector of uint(s)"});
-
       keywords.insert({"timedep",
         "Start configuration block describing time dependent boundary conditions",
         R"(This keyword is used to introduce a bc_timedep block, used to
@@ -1687,15 +1722,33 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         block. Multiple such bc_timedep blocks can be specified for different
         time dependent BCs on different groups of side sets.)", "block-title"});
 
-      keywords.insert({"radius", "Specify a radius",
-        R"(This keyword is used to specify a radius, used, e.g., in specifying a
-        point in 3D space for setting a stagnation (velocity vector = 0).)",
-        "real"});
-
       keywords.insert({"velocity", "Specify velocity",
         R"(This keyword is used to configure a velocity vector used in a
-        context-specific way, e.g., for boundary or initial conditions, or
-        specifying overset mesh velocity.)", "vector of 3 reals"});
+        context-specific way, e.g., for boundary or initial conditions.)",
+        "vector of 3 reals"});
+
+      // -----------------------------------------------------------------------
+      // Rigid-body motion solver
+      // -----------------------------------------------------------------------
+
+      keywords.insert({"rigid_body_motion", "Specify a rigid body motion block",
+        R"(This keyword is used to specify a rigid body motion block, to move an
+        overset mesh as a rigid body. Number of degrees of freedom and the
+        symmetry plane (if any) are specified within this block.)",
+        "block-title"});
+
+      keywords.insert({"rigid_body_dof",
+        "Number of rigid body degrees of freedom", R"(This keyword is used to
+        specify the number of degrees of freedom the rigid body has. Valid
+        options are 3 and 6. 3 DOFs indicate translation in two dimensions and
+        rotation about symmetry plane axis; 6 DOFs indication translation in
+        three dimensions and rotation about three axes. If 3 DOFs is specified,
+        symmetry plane is required; if 6 DOFs is specified symmetry plane is not
+        used.)", "uint"});
+
+      keywords.insert({"symmetry_plane", "Symmetry plane for rigid body motion",
+        R"(This keyword is used to specify the symmetry plane for a 3 DOF rigid
+        body motion solver. 1: x-plane, 2: y-plane, 3: z-plane.)", "uint"});
 
       // -----------------------------------------------------------------------
       // IC object
@@ -1742,8 +1795,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "real"});
 
       keywords.insert({"mass", "Specify mass",
-        R"(This keyword is used to configure the mass within a box/meshblock.)",
-        "real"});
+        R"(This keyword is used to configure the mass within a box/meshblock,
+        or mass of the rigid body which is conformally meshed using the overset
+        mesh.)", "real"});
 
       keywords.insert({"energy", "Specify energy per unit mass",
         R"(This keyword is used to configure energy per unit mass, used for, e.g.,
@@ -1778,7 +1832,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         a box.)", "real"});
 
       keywords.insert({"orientation", "Configure orientation",
-        R"(Configure orientation of an IC box for rotation about centroid of box.)",
+        R"(Configure orientation of an IC box for rotation about centroid of
+        box; or configure orientation of a mesh relative to another.)",
         "vector of 3 reals"});
 
       keywords.insert({"initiate", "Initiation type",
@@ -1842,9 +1897,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(Configure location of a mesh relative to another.)",
         "vector of 3 reals"});
 
-      keywords.insert({"orientation", "Configure orientation",
-        R"(Configure orientation of a mesh relative to another.)",
-        "vector of 3 reals"});
+      keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
+        R"(Moment of inertia of rigid body for rotational motion)", "real"});
+
+      keywords.insert({"center_of_mass", "Center of mass of rigid body",
+        R"(Center of mass of rigid body used to compute torque for rotational
+        motion)", "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // pre-configured problems

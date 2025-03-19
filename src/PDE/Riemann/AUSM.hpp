@@ -182,8 +182,8 @@ struct AUSM {
     // Split Mach polynomials
     std::array< std::array< tk::real, 4 >, 3 > msl, msr;
     for (std::size_t i=0; i<3; ++i) {
-      msl[i] = splitmach_ausm( f_a, ml[i] );
-      msr[i] = splitmach_ausm( f_a, mr[i] );
+      msl[i] = splitmach_ausm( ml[i], f_a );
+      msr[i] = splitmach_ausm( mr[i], f_a );
     }
 
     // Riemann Mach number

@@ -95,7 +95,12 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
   m_nodeblockidc(),
-  m_ixfer(0)
+  m_ixfer(0),
+  m_surfForce({{0, 0, 0}}),
+  m_surfTorque({{0, 0, 0}}),
+  m_centMass({{0, 0, 0}}),
+  m_centMassVel({{0, 0, 0}}),
+  m_angVelMesh(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -135,6 +140,10 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
     tk::remap( m_triinpoel, map );
   }
 
+  for (std::size_t i=0; i<3; ++i)
+    m_centMass[i] = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
+      tag::center_of_mass >()[i];
+
   // Query/update boundary-conditions-related data structures from user input
   getBCNodes();
 
@@ -142,14 +151,9 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4meshblk();
 
-  // Determine user-specified mesh velocity
-  const auto& uservelvec =
-    g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::velocity >();
-  m_uservel = {uservelvec[0], uservelvec[1], uservelvec[2]};
-
   if (g_inputdeck.get< tag::steady_state >() &&
-    std::sqrt(tk::dot(m_uservel, m_uservel)) > 1e-8)
-    Throw("Mesh motion cannot be activated for steady state problem");
+    g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >())
+    Throw("Rigid body motion cannot be activated for steady state problem");
 
   d->comfinal();
 
@@ -580,6 +584,11 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Set initial conditions for all PDEs
   g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
     m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
+  // Initialize overset mesh velocity to zero
+  auto& u_mesh = d->MeshVel();
+  for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
+    for (std::size_t i=0; i<3; ++i) u_mesh(p,i) = 0.0;
+  }
 
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
@@ -984,41 +993,47 @@ OversetFE::dt()
 
   }
 
-  // Determine if this chunk of mesh needs to be moved
-  g_cgpde[d->MeshId()].getMeshVel(d->T(), d->Coord(), m_psup, m_symbcnodes,
-    m_uservel, m_u, d->MeshVel(), m_movedmesh);
-
   //! [Advance]
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
 
-  // TODO: this is a hacky way to know if any chunk moved. redesign it
-  std::vector < tk::real > reducndata(d->Transfers().size()+2, 0.0);
-
-  reducndata[0] = mindt;
-  reducndata[d->MeshId()+1] = static_cast< tk::real >(-m_movedmesh);
-
-  // Contribute to minimum dt across all chares and advance to next step
-  if (g_inputdeck.get< tag::steady_state >()) {
-    contribute( reducndata, CkReduction::min_double,
-                CkCallback(CkReductionTarget(OversetFE,advance), thisProxy) );
+  // Compute own portion of force on boundary for overset mesh rigid body motion
+  std::vector< tk::real > F(6, 0.0);
+  if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
+    && d->MeshId() > 0) {
+    g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_symbctri,
+      m_u, m_centMass, F );
   }
-  else {
-    // if solving a time-accurate problem, find minimum dt across all meshes
-    // and eventually broadcast to OversetFE::advance()
-    contribute( reducndata, CkReduction::min_double,
-      CkCallback(CkReductionTarget(Transporter,minDtAcrossMeshes), d->Tr()) );
-  }
+
+  // Tuple-reduction for min-dt and sum-F
+  int tupleSize = 7;
+  CkReduction::tupleElement advancingData[] = {
+    CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[1], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[3], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[4], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double)
+  };
+  CkReductionMsg* advMsg =
+    CkReductionMsg::buildFromTuple(advancingData, tupleSize);
+
+  // Contribute to minimum dt across all chares, find minimum dt across all
+  // meshes, and eventually broadcast to OversetFE::advance()
+  CkCallback cb(CkReductionTarget(Transporter,collectDtAndForces), d->Tr());
+  advMsg->setCallback(cb);
+  contribute(advMsg);
   //! [Advance]
 }
 
 void
-OversetFE::advance( tk::real newdt, tk::real nmovedmesh )
+OversetFE::advance( tk::real newdt, std::array< tk::real, 6 > F )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt The smallest dt across the whole problem
-//! \param[in] nmovedmesh (negative of) if any chunk of this mesh moved
+//! \param[in] F Total surface force on this mesh
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1026,8 +1041,10 @@ OversetFE::advance( tk::real newdt, tk::real nmovedmesh )
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  // TODO: this is a hacky way to know if any chunk moved. redesign it
-  if (nmovedmesh < -0.1) m_movedmesh = 1;
+  for (std::size_t i=0; i<3; ++i) {
+    m_surfForce[i] = F[i];
+    m_surfTorque[i] = F[i+3];
+  }
 
   // Compute gradients for next time step
   chBndGrad();
@@ -1105,16 +1122,6 @@ OversetFE::rhs()
   tk::destroy(m_chBndGradc);
 
   const auto steady = g_inputdeck.get< tag::steady_state >();
-
-  // Assign mesh velocity
-  if (m_movedmesh) {
-    const auto& coord = d->Coord();
-    auto& mvel = d->MeshVel();
-    for (std::size_t p=0; p<coord[0].size(); ++p) {
-      for (std::size_t i=0; i<3; ++i)
-        mvel(p, i) = m_uservel[i];
-    }
-  }
 
   // Compute own portion of right-hand side for all equations
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
@@ -1203,25 +1210,114 @@ OversetFE::solve()
         / d->Vol()[i];
   }
 
-  // Move overset mesh
-  if (m_movedmesh) {
-    auto& x = d->Coord()[0];
-    auto& y = d->Coord()[1];
-    auto& z = d->Coord()[2];
-    const auto& w = d->MeshVel();
-    for (std::size_t i=0; i<w.nunk(); ++i) {
-      // time-step
-      auto dtp = d->Dt();
-      if (steady) dtp = m_dtp[i];
+  // Kinematics for rigid body motion of overset meshes
+  if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
+    && d->MeshId() > 0) {
 
-      x[i] += rkcoef[m_stage] * dtp * w(i,0);
-      y[i] += rkcoef[m_stage] * dtp * w(i,1);
-      z[i] += rkcoef[m_stage] * dtp * w(i,2);
+    // Remove symmetry directions if 3 DOF motion
+    if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_dof >()
+      == 3) {
+
+      auto sym_dir =
+        g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
+
+      m_surfForce[sym_dir] = 0.0;
+      for (std::size_t i=0; i<3; ++i) {
+        if (i != sym_dir) m_surfTorque[i] = 0.0;
+      }
     }
+
+    // Mark if mesh moved
+    if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12 ||
+      std::sqrt(tk::dot(m_surfTorque, m_surfTorque)) > 1e-12)
+      m_movedmesh = 1;
+    else
+      m_movedmesh = 0;
+
+    if (m_movedmesh == 1) {
+      auto mass_mesh =
+        g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
+      auto mI_mesh = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
+        tag::moment_of_inertia >();
+      auto dtp = rkcoef[m_stage] * d->Dt();
+      auto sym_dir =
+        g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
+
+      auto pi = 4.0*std::atan(1.0);
+
+      // mesh acceleration
+      std::array< tk::real, 3 > a_mesh;
+      for (std::size_t i=0; i<3; ++i) a_mesh[i] = m_surfForce[i] / mass_mesh;
+      auto alpha_mesh = m_surfTorque[sym_dir]/mI_mesh; // angular acceleration
+
+      auto& u_mesh = d->MeshVel();
+
+      for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
+
+        // rotation (this is currently only configured for planar motion)
+        // ---------------------------------------------------------------------
+        std::array< tk::real, 3 > rCM{{
+          d->Coord()[0][p] - m_centMass[0],
+          d->Coord()[1][p] - m_centMass[1],
+          d->Coord()[2][p] - m_centMass[2] }};
+
+        // obtain tangential velocity
+        tk::real r_mag(0.0);
+        for (std::size_t i=0; i<3; ++i) {
+          if (i != sym_dir) r_mag += rCM[i]*rCM[i];
+        }
+        r_mag = std::sqrt(r_mag);
+        auto a_tgt = alpha_mesh*r_mag;
+
+        // get the other two directions
+        auto i1 = (sym_dir+1)%3;
+        auto i2 = (sym_dir+2)%3;
+
+        // project tangential velocity to these two directions
+        auto theta = std::atan2(rCM[i2],rCM[i1]);
+        auto a1 = a_tgt*std::cos((pi/2.0)+theta);
+        auto a2 = a_tgt*std::sin((pi/2.0)+theta);
+
+        // angle of rotation
+        auto dtheta = m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp;
+
+        // rectilinear motion
+        // ---------------------------------------------------------------------
+        std::array< tk::real, 3 > ds{{ 0, 0, 0 }};
+        for (std::size_t i=0; i<3; ++i) {
+          // mesh displacement
+          ds[i] = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+          // mesh velocity
+          u_mesh(p,i) += a_mesh[i]*dtp;
+        }
+
+        // add contribution of rotation to mesh velocity
+        u_mesh(p,i1) += a1*dtp;
+        u_mesh(p,i2) += a2*dtp;
+
+        // add contribution of rotation to mesh displacement
+        std::array< tk::real, 3 > angles{{ 0, 0, 0 }};
+        angles[sym_dir] = dtheta * 180.0/pi;
+        tk::rotatePoint(angles, rCM);
+
+        // combine both contributions
+        for (std::size_t i=0; i<3; ++i) {
+          d->Coord()[i][p] = rCM[i] + m_centMass[i];
+          d->Coord()[i][p] += ds[i];
+        }
+      }
+
+      // update angular velocity
+      m_angVelMesh += alpha_mesh*dtp;
+
+      // move center of mass
+      for (std::size_t i=0; i<3; ++i) {
+        m_centMass[i] += m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+        m_centMassVel[i] += a_mesh[i]*dtp;  // no rotational component
+      }
+    }
+
   }
-  // the following line will be needed for situations where the mesh stops
-  // moving after its initial motion
-  // else m_movedmesh = 0;
 
   // Apply boundary-conditions
   BC();

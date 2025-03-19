@@ -22,7 +22,40 @@ class ThermallyPerfectGas {
   private:
     tk::real m_gamma;
     tk::real m_R;
-    std::vector< tk::real > m_cp_coeff{std::vector< tk::real >(8)};
+    std::vector< std::vector< tk::real > > m_cp_coeff{3, std::vector< tk::real >(8)};
+    std::vector< tk::real > m_t_range{std::vector< tk::real >(4)};
+    tk::real m_dH_ref;
+
+    std::size_t get_t_range(tk::real temp) const
+    // *************************************************************************
+    //! Check what temperature range, if any, the given temperature is in
+    //! \param[in] temp Given temperature to be checked for range
+    //! \return Index of temperature range the given temperature is in
+    // *************************************************************************
+    {
+      tk::real fdg = 0.1; // Fudge factor to accomodate numerical overshoot
+      if (temp < m_t_range[0] * (1 - fdg) || temp > m_t_range.back() * (1 + fdg)) {
+        Throw("ThermallyPerfectGas totalenergy temperature outside t_range bounds: "
+        + std::to_string(temp));
+      }
+
+      std::size_t t_rng_idx(0);
+      for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
+        // Apply fudge factor to max/min bounds
+        tk::real fdgl = 1., fdgu = 1.;
+        if (k == 0) {
+            fdgl = 1 - fdg;
+        } else if (k == m_t_range.size() - 2) {
+            fdgu = 1 + fdg;
+        }
+        if (temp >= m_t_range[k] * fdgl && temp < m_t_range[k+1] * fdgu) {
+          t_rng_idx = k;
+          break;
+        }
+      }
+      return t_rng_idx;
+    }
+
 
   public:
     //! Default constructor
@@ -32,7 +65,9 @@ class ThermallyPerfectGas {
     ThermallyPerfectGas(
       tk::real gamma,
       tk::real R,
-      std::vector< tk::real > cp_coeff );
+      std::vector< std::vector< tk::real > > cp_coeff,
+      std::vector< tk::real > t_range,
+      tk::real dH_ref);
 
     //! Set rho0 EOS parameter. No-op.
     void setRho0(tk::real) {}
@@ -121,6 +156,8 @@ class ThermallyPerfectGas {
       p | m_gamma;
       p | m_R;
       p | m_cp_coeff;
+      p | m_t_range;
+      p | m_dH_ref;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

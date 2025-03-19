@@ -101,7 +101,7 @@ class OversetFE : public CBase_OversetFE {
     void start();
 
     //! Advance equations to next time step
-    void advance( tk::real newdt, tk::real nmovedmesh );
+    void advance( tk::real newdt, std::array< tk::real, 6 > F );
 
     //! Compute left-hand side of transport equations
     void lhs();
@@ -237,7 +237,11 @@ class OversetFE : public CBase_OversetFE {
       p | m_nodeblockid;
       p | m_nodeblockidc;
       p | m_ixfer;
-      p | m_uservel;
+      p | m_surfForce;
+      p | m_surfTorque;
+      p | m_centMass;
+      p | m_centMassVel;
+      p | m_angVelMesh;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -367,8 +371,16 @@ class OversetFE : public CBase_OversetFE {
     std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockidc;
     //! Counter for two-way transfer
     std::size_t m_ixfer;
-    //! User-specified mesh velocity
-    std::array< tk::real, 3 > m_uservel;
+    //! Surface force on mesh for rigid body motion
+    std::array< tk::real, 3 > m_surfForce;
+    //! Surface torque on mesh for rigid body motion
+    std::array< tk::real, 3 > m_surfTorque;
+    //! Center of mass of rigid body
+    std::array< tk::real, 3 > m_centMass;
+    //! Velocity of the center of mass of rigid body
+    std::array< tk::real, 3 > m_centMassVel;
+    //! Angular velocity of the rigid body
+    tk::real m_angVelMesh;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
