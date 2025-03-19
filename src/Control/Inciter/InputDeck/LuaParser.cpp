@@ -680,11 +680,19 @@ LuaParser::storeInputDeck(
       if (mesh_deck[i].get< tag::orientation >().size() != 3)
         Throw("Mesh orientation requires 3 rotation angles.");
 
-      // velocity
-      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "velocity",
-        mesh_deck[i].get< tag::velocity >(), {0.0, 0.0, 0.0});
-      if (mesh_deck[i].get< tag::velocity >().size() != 3)
-        Throw("Mesh velocity requires 3 components.");
+      // mass
+      storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
+        mesh_deck[i].get< tag::mass >(), 0.0);
+
+      // moment of inertia. this is currently only configured for planar motion
+      storeIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
+        mesh_deck[i].get< tag::moment_of_inertia >(), 0.0);
+
+      // center of mass
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
+        mesh_deck[i].get< tag::center_of_mass >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::center_of_mass >().size() != 3)
+        Throw("Mesh center of mass requires 3 coordinates.");
 
       // Transfer object
       if (i > 0) {
@@ -707,11 +715,60 @@ LuaParser::storeInputDeck(
       gideck.get< tag::cmd, tag::io, tag::input >();
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
-    mesh_deck[0].get< tag::velocity >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< tag::mass >() = 0.0;
+    mesh_deck[0].get< tag::moment_of_inertia >() = 0.0;
+    mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
   }
 
   Assert(gideck.get< tag::mesh >().size() == gideck.get< tag::depvar >().size(),
     "Number of depvar not equal to the number of meshes.");
+
+  // Rigid body motion block for overset meshes
+  // ---------------------------------------------------------------------------
+  if (lua_ideck["rigid_body_motion"].valid()) {
+
+    Assert(gideck.get< tag::mesh >().size() > 1,
+      "Multiple meshes (overset) needed for rigid body motion.");
+
+    // check that rigid body mass is provided
+    const auto mesh_deck = gideck.get< tag::mesh >();
+    for (std::size_t i=1; i<mesh_deck.size(); ++i) {
+      Assert(mesh_deck[i].get< tag::mass >() > 1e-10,
+        "Mass of body required for overset meshes with rigid body motion.");
+    }
+
+    auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
+
+    rbm_deck.get< tag::rigid_body_movt >() = true;
+
+    // degrees of freedom
+    storeIfSpecd< std::size_t >(
+      lua_ideck["rigid_body_motion"], "rigid_body_dof",
+      rbm_deck.get< tag::rigid_body_dof >(), 3);
+    if (rbm_deck.get< tag::rigid_body_dof >() != 3 &&
+      rbm_deck.get< tag::rigid_body_dof >() != 6)
+      Throw("Only 3 or 6 rigid body DOFs supported.");
+
+    // symmetry plane
+    storeIfSpecd< std::size_t >(
+      lua_ideck["rigid_body_motion"], "symmetry_plane",
+      rbm_deck.get< tag::symmetry_plane >(), 0);
+    if (rbm_deck.get< tag::symmetry_plane >() > 3)
+      Throw("Rigid body motion symmetry plane must be 1(x), 2(y), or 3(z).");
+    if (rbm_deck.get< tag::symmetry_plane >() == 0 &&
+      rbm_deck.get< tag::rigid_body_dof >() == 3)
+      Throw(
+        "Rigid body motion symmetry plane must be specified for 3 DOF motion.");
+    // reset to 0-based indexing
+    rbm_deck.get< tag::symmetry_plane >() -= 1;
+  }
+  else {
+    // TODO: remove double-specification of defaults
+    auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
+    rbm_deck.get< tag::rigid_body_movt >() = false;
+    rbm_deck.get< tag::rigid_body_dof >() = 0;
+    rbm_deck.get< tag::symmetry_plane >() = 0;
+  }
 
   // Field output block
   // ---------------------------------------------------------------------------
@@ -1183,18 +1240,6 @@ LuaParser::storeInputDeck(
             "ordinate.");
         }
       }
-
-      // Stagnation point
-      storeVecIfSpecd< tk::real >(sol_bc[i+1], "stag_point",
-        bc_deck[i].get< tag::stag_point >(), {});
-      if (!bc_deck[i].get< tag::stag_point >().empty() &&
-        bc_deck[i].get< tag::stag_point >().size() % 3 != 0)
-        Throw("BC stagnation point requires 3 coordinate values for each "
-          "point. Thus, this vector must be divisible by 3.");
-
-      // Stagnation radius
-      storeIfSpecd< tk::real >(sol_bc[i+1], "radius",
-        bc_deck[i].get< tag::radius >(), 0.0);
 
       // Velocity for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "velocity",

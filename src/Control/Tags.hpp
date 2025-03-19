@@ -289,9 +289,12 @@ DEFTAG(outlet);
 DEFTAG(farfield);
 DEFTAG(extrapolate);
 DEFTAG(noslipwall);
-DEFTAG(stag_point);
-DEFTAG(radius);
 DEFTAG(timedep);
+
+DEFTAG(rigid_body_motion);
+DEFTAG(rigid_body_movt);
+DEFTAG(rigid_body_dof);
+DEFTAG(symmetry_plane);
 
 DEFTAG(ic);
 DEFTAG(materialid);
@@ -322,6 +325,8 @@ DEFTAG(front_speed);
 DEFTAG(filename);
 DEFTAG(location);
 DEFTAG(transfer);
+DEFTAG(moment_of_inertia);
+DEFTAG(center_of_mass);
 
 struct BirthdaySpacings {};
 

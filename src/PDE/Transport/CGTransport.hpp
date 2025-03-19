@@ -259,18 +259,16 @@ class Transport {
       bndint( coord, triinpoel, symbctri, U, R );
     }
 
-    //! Compute overset mesh motion for OversetFE (no-op for transport)
-    void getMeshVel(
-      real,
+    //! Compute boundary pressure integrals (force) (no-op for transport)
+    void bndPressureInt(
       const std::array< std::vector< real >, 3 >&,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >&,
-      const std::unordered_set< std::size_t >&,
-      const std::array< tk::real, 3 >&,
+      const std::vector< std::size_t >&,
+      const std::vector< int >&,
       const tk::Fields&,
-      tk::Fields&,
-      int& ) const
+      const std::array< tk::real, 3 >&,
+      std::vector< real >& ) const
     { }
+
 
     //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] U Solution vector at recent time step
