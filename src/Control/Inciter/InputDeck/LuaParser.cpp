@@ -491,9 +491,9 @@ LuaParser::storeInputDeck(
         // assign solid
         is_solid = true;
       }
-      // Godunov-Romenski aluminum materials
+      // Wilkins aluminum materials
       else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::GODUNOVROMENSKIALUMINUM) {
+        inciter::ctr::MaterialType::WILKINSALUMINUM) {
         // gamma
         checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
           mati_deck.get< tag::gamma >());

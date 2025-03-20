@@ -1098,11 +1098,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         analysis of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
         Mechanics, 537, 55-89 for further details.)"});
 
-      keywords.insert({"godunovromenski_aluminum",
-        "Select the GODUNOVROMENSKIALUMINUM equation of state",
-        R"(This keyword is used to select the Godunov-Romenski equation of
-        state for solids and a hydro EoS for aluminum. These function were
-        taken from Barton, Philip T. "An interface-capturing Godunov method
+      keywords.insert({"wilkins_aluminum",
+        "Select Wilkins' equation of state for aluminum",
+        R"(This keyword is used to select Wilkin's equation of state for solids
+        and a hydro EoS for aluminum. These functions were taken from Example 4
+        of Barton, Philip T. "An interface-capturing Godunov method
         for the simulation of compressible solid-fluid problems." Journal
         of Computational Physics 390 (2019): 25-50.)"});
 

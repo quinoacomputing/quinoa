@@ -19,7 +19,7 @@
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/JWL.hpp"
 #include "EoS/SmallShearSolid.hpp"
-#include "EoS/GodunovRomenskiAluminum.hpp"
+#include "EoS/WilkinsAluminum.hpp"
 #include "EoS/ThermallyPerfectGas.hpp"
 
 namespace inciter {
@@ -38,7 +38,7 @@ class EOS {
     std::variant< StiffenedGas
                 , JWL
                 , SmallShearSolid
-                , GodunovRomenskiAluminum
+                , WilkinsAluminum
                 , ThermallyPerfectGas
                 > m_material;
 
