@@ -68,6 +68,17 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto mu = getmatprop< tag::mu >(k);
     m_material = WilkinsAluminum(g, c_v, mu);
   }
+  else if (mattype == ctr::MaterialType::GODUNOVROMENSKI) {
+    if (eq == EqType::compflow)
+      Throw("GodunovRomenski not set up for PDE type");
+    // query input deck for Wilkins parameters
+    auto g = getmatprop< tag::gamma >(k);
+    auto mu = getmatprop< tag::mu >(k);
+    auto rho0_gr = getmatprop< tag::rho0_jwl >(k);
+    auto alpha = getmatprop< tag::alpha >(k);
+    auto K0 = getmatprop< tag::K0 >(k);
+    m_material = GodunovRomenski(g, mu, rho0_gr, alpha, K0);
+  }
   else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
     // query input deck for ThermallyPerfectGas parameters
     auto g = getspecprop< tag::gamma >(k);

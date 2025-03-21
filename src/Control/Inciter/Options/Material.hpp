@@ -25,6 +25,7 @@ enum class MaterialType : uint8_t { STIFFENEDGAS
                                   , JWL
                                   , SMALLSHEARSOLID
                                   , WILKINSALUMINUM
+                                  , GODUNOVROMENSKI
                                   , THERMALLYPERFECTGAS
                                   };
 
@@ -47,6 +48,7 @@ class Material : public tk::Toggle< MaterialType > {
         , { MaterialType::JWL, "jwl" }
         , { MaterialType::SMALLSHEARSOLID, "smallshearsolid" }
         , { MaterialType::WILKINSALUMINUM, "wilkins_aluminum" }
+        , { MaterialType::GODUNOVROMENSKI, "godunovromenski" }
         , { MaterialType::THERMALLYPERFECTGAS, "thermallyperfectgas" }
         },
         //! keywords -> Enums
@@ -54,6 +56,7 @@ class Material : public tk::Toggle< MaterialType > {
         , { "jwl", MaterialType::JWL }
         , { "smallshearsolid", MaterialType::SMALLSHEARSOLID }
         , { "wilkins_aluminum", MaterialType::WILKINSALUMINUM }
+        , { "godunovromenski", MaterialType::GODUNOVROMENSKI }
         , { "thermallyperfectgas", MaterialType::THERMALLYPERFECTGAS }
         } )
     {}

@@ -20,6 +20,7 @@
 #include "EoS/JWL.hpp"
 #include "EoS/SmallShearSolid.hpp"
 #include "EoS/WilkinsAluminum.hpp"
+#include "EoS/GodunovRomenski.hpp"
 #include "EoS/ThermallyPerfectGas.hpp"
 
 namespace inciter {
@@ -39,6 +40,7 @@ class EOS {
                 , JWL
                 , SmallShearSolid
                 , WilkinsAluminum
+                , GodunovRomenski
                 , ThermallyPerfectGas
                 > m_material;
 

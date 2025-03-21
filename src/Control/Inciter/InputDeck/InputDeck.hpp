@@ -121,6 +121,8 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::Pr_jwl,       std::vector< tk::real >,
   tag::mu,           std::vector< tk::real >,
   tag::yield_stress, std::vector< tk::real >,
+  tag::alpha,        std::vector< tk::real >,
+  tag::K0,           std::vector< tk::real >,
   tag::cv,           std::vector< tk::real >,
   tag::k,            std::vector< tk::real >
 > >;
@@ -1048,6 +1050,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         which indicates the stress (units: Pa) after which the material begins
         plastic flow.)", "vector of reals"});
 
+      keywords.insert({"alpha", "alpha parameter for Godunov-Romenski EOS",
+        R"(This keyword is used to specify the alpha parameter for
+        Godunov-Romenski EOS for solids.)", "vector of reals"});
+
+      keywords.insert({"K0", "K0 parameter for Godunov-Romenski EOS",
+        R"(This keyword is used to specify the K0 parameter for
+        Godunov-Romenski EOS for solids.)", "vector of reals"});
+
       keywords.insert({"cv", "specific heat at constant volume",
         R"(This keyword is used to specify the material property, specific heat at
         constant volume.)", "vector of reals"});
@@ -1102,6 +1112,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "Select Wilkins' equation of state for aluminum",
         R"(This keyword is used to select Wilkin's equation of state for solids
         and a hydro EoS for aluminum. These functions were taken from Example 4
+        of Barton, Philip T. "An interface-capturing Godunov method
+        for the simulation of compressible solid-fluid problems." Journal
+        of Computational Physics 390 (2019): 25-50.)"});
+
+      keywords.insert({"godunovromenski",
+        "Select godunovromenski equation of state for solids",
+        R"(This keyword is used to select Godunov-Romenski equation of state
+        for solids. These functions were taken from Example 1
         of Barton, Philip T. "An interface-capturing Godunov method
         for the simulation of compressible solid-fluid problems." Journal
         of Computational Physics 390 (2019): 25-50.)"});

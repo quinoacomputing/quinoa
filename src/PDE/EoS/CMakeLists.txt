@@ -4,6 +4,7 @@ add_library(EOS
             JWL.cpp
             SmallShearSolid.cpp
             WilkinsAluminum.cpp
+            GodunovRomenski.cpp
             ThermallyPerfectGas.cpp)
 
 target_include_directories(EOS PUBLIC

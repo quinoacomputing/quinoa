@@ -512,6 +512,39 @@ LuaParser::storeInputDeck(
         // assign solid
         is_solid = true;
       }
+      // Godunov-Romenski materials
+      else if (mati_deck.get< tag::eos >() ==
+        inciter::ctr::MaterialType::GODUNOVROMENSKI) {
+        // gamma
+        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
+          mati_deck.get< tag::gamma >());
+
+        // mu
+        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
+          mati_deck.get< tag::mu >());
+
+        // rho0_jwl
+        checkStoreMatProp(sol_mat[i+1], "rho0_jwl", ntype,
+          mati_deck.get< tag::rho0_jwl >());
+
+        // alpha
+        checkStoreMatProp(sol_mat[i+1], "alpha", ntype,
+          mati_deck.get< tag::alpha >());
+
+        // K0
+        checkStoreMatProp(sol_mat[i+1], "K0", ntype,
+          mati_deck.get< tag::K0 >());
+
+        // yield_stress
+        if (!sol_mat[i+1]["yield_stress"].valid())
+          sol_mat[i+1]["yield_stress"] =
+            std::vector< tk::real >(ntype, 300.0e+06);
+        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
+          mati_deck.get< tag::yield_stress >());
+
+        // assign solid
+        is_solid = true;
+      }
       // JWL materials
       else if (mati_deck.get< tag::eos >() == inciter::ctr::MaterialType::JWL) {
         // w_gru
