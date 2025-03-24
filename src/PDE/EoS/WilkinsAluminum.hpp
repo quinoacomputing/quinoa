@@ -1,26 +1,26 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/GodunovRomenskiAluminum.hpp
+  \file      src/PDE/EoS/WilkinsAluminum.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Godunov-Romenski equation of state for solids
-  \details   This file declares functions for the Godunov-Romenski equation of
-             state for solids and a hydro EoS for aluminum. These function were
-             taken from Barton, Philip T. "An interface-capturing Godunov method
-             for the simulation of compressible solid-fluid problems." Journal
-             of Computational Physics 390 (2019): 25-50.
+  \brief     Wilkins equation of state for aluminum
+  \details   This file declares functions for the Wilkins equation of
+             state for solids and a hydro EoS for aluminum. These functions were
+             taken from Example 4 of Barton, Philip T. "An interface-capturing
+             Godunov method for the simulation of compressible solid-fluid
+             problems." Journal of Computational Physics 390 (2019): 25-50.
 */
 // *****************************************************************************
-#ifndef GodunovRomenskiAluminum_h
-#define GodunovRomenskiAluminum_h
+#ifndef WilkinsAluminum_h
+#define WilkinsAluminum_h
 
 #include "Data.hpp"
 
 namespace inciter {
 
-class GodunovRomenskiAluminum {
+class WilkinsAluminum {
 
   private:
     tk::real m_gamma, m_cv, m_mu, m_rho0;
@@ -33,10 +33,10 @@ class GodunovRomenskiAluminum {
 
   public:
     //! Default constructor
-    GodunovRomenskiAluminum() = default;
+    WilkinsAluminum() = default;
 
     //! Constructor
-    GodunovRomenskiAluminum(tk::real gamma, tk::real cv, tk::real mu );
+    WilkinsAluminum(tk::real gamma, tk::real cv, tk::real mu );
 
     //! Set rho0 EOS parameter; i.e. the initial density
     void setRho0(tk::real rho0);
@@ -58,7 +58,7 @@ class GodunovRomenskiAluminum {
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
     //!   density, momentum, total energy, and inverse deformation gradient
-    //!   tensor using the GodunovRomenskiAluminum equation of state
+    //!   tensor using the WilkinsAluminum equation of state
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
       tk::real,
@@ -134,11 +134,11 @@ class GodunovRomenskiAluminum {
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i GodunovRomenskiAluminum object reference
-    friend void operator|( PUP::er& p, GodunovRomenskiAluminum& i ) { i.pup(p); }
+    //! \param[in,out] i WilkinsAluminum object reference
+    friend void operator|( PUP::er& p, WilkinsAluminum& i ) { i.pup(p); }
     //@}
 };
 
 } //inciter::
 
-#endif // GodunovRomenskiAluminum_h
+#endif // WilkinsAluminum_h
