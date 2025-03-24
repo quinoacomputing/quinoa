@@ -542,7 +542,7 @@ inline std::array< std::array< real, 3 >, 3 >
 getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
 {
   // Get right Cauchy-Green strain tensor
-  auto C = getLeftCauchyGreen(g);
+  auto C = getRightCauchyGreen(g);
 
   std::array< std::array< real, 3 >, 3 > devH{{{0,0,0}, {0,0,0}, {0,0,0}}};
 
