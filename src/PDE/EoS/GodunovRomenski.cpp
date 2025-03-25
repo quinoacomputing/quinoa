@@ -100,6 +100,9 @@ GodunovRomenski::pressure(
 //!   this argument can be left unspecified by the calling code
 //! \return Material partial pressure (alpha_k * p_k) calculated using the
 //!   GodunovRomenski EoS
+//! \details The material pressure consists of the thermal component and the
+//!   cold-compression component. Pressure-effects due to shear are stored in
+//!   the elastic Cauchy stress tensor, not in the pressure.
 // *************************************************************************
 {
   // obtain elastic contribution to energy
@@ -112,7 +115,7 @@ GodunovRomenski::pressure(
   auto arhoEt = arhoE - arhoEe - arhoEc - 0.5*arho*(u*u + v*v + w*w);
 
   // use Mie-Gruneisen form of Godunov-Romenski for pressure
-  auto partpressure = alpha*coldcomprPressure(rho) - arhoEe + m_gamma*arhoEt;
+  auto partpressure = alpha*coldcomprPressure(rho) + m_gamma*arhoEt;
 
   // check partial pressure divergence
   if (!std::isfinite(partpressure)) {
@@ -181,7 +184,7 @@ GodunovRomenski::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -195,24 +198,24 @@ GodunovRomenski::soundspeed(
 //!   (alpha * sigma_ij * n_j) projected onto the normal vector. Default is 0,
 //!   so that for the single-material system, this argument can be left
 //!   unspecified by the calling code
-//! \param[in] defgrad Material inverse deformation gradient tensor
-//!   (g_k) with the first dimension aligned to direction in which
-//!   wave speeds are required. Default is 0, so that for the single-material
-//!   system, this argument can be left unspecified by the calling code
+// //! \param[in] defgrad Material inverse deformation gradient tensor
+// //!   (g_k) with the first dimension aligned to direction in which
+// //!   wave speeds are required. Default is 0, so that for the single-material
+// //!   system, this argument can be left unspecified by the calling code
 //! \return Material speed of sound using the GodunovRomenski EoS
 // *************************************************************************
 {
   tk::real a = 0.0;
 
   // Hydro contribution
-  std::array< std::array< tk::real, 3 >, 3 > devH;
   tk::real rho = arho/alpha;
-  auto p_se = -elasticEnergy(defgrad, devH);
-  auto p_cc = coldcomprPressure(rho);
+  auto p_cc = alpha*coldcomprPressure(rho);
   auto rrho0a = std::pow(rho/m_rho0, m_alpha);
   a += std::max( 1.0e-15,
     m_K0/(m_rho0*m_alpha) * ((2.0*m_alpha+1.0)*(rrho0a*rrho0a) - (m_alpha+1.0)*rrho0a)
-    + (m_gamma+1.0) * (apr - p_cc - p_se)/arho );
+    + (m_gamma+1.0) * (apr - p_cc)/arho );
+  // in the above expression, shear pressure is not included in apr in the first
+  // place, so should not subtract it
 
   // Shear contribution
   a += (4.0/3.0) * alpha * m_mu / arho;
@@ -292,12 +295,13 @@ GodunovRomenski::totalenergy(
 // *************************************************************************
 {
   // obtain thermal and kinetic energy
-  std::array< std::array< tk::real, 3 >, 3 > devH;
-  auto p_se = -elasticEnergy(defgrad, devH);
-  auto pt = pr - coldcomprPressure(rho) - p_se;
+  auto pt = pr - coldcomprPressure(rho);
+  // in the above expression, shear pressure is not included in pr in the first
+  // place, so should not subtract it
   auto rhoEh = pt/m_gamma + 0.5*rho*(u*u + v*v + w*w);
   // obtain elastic contribution to energy
-  auto rhoEe = -p_se;
+  std::array< std::array< tk::real, 3 >, 3 > devH;
+  auto rhoEe = elasticEnergy(defgrad, devH);
   auto rhoEc = coldcomprEnergy(rho);
 
   return (rhoEh + rhoEe + rhoEc);
