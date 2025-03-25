@@ -129,7 +129,7 @@ GodunovRomenski::pressure(
 
 std::array< std::array< tk::real, 3 >, 3 >
 GodunovRomenski::CauchyStress(
-  tk::real arho,
+  tk::real,
   tk::real,
   tk::real,
   tk::real,
@@ -141,7 +141,6 @@ GodunovRomenski::CauchyStress(
 //! \brief Calculate the elastic Cauchy stress tensor from the material density,
 //!   momentum, total energy, and inverse deformation gradient tensor using the
 //!   GodunovRomenski equation of state
-//! \param[in] arho Material partial density (alpha_k * rho_k)
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
@@ -159,10 +158,8 @@ GodunovRomenski::CauchyStress(
   std::array< std::array< tk::real, 3 >, 3 > devH;
 
   // p_mean
-  auto rho = arho/alpha;
-  auto p_cc = coldcomprPressure(rho);
   auto p_se = -elasticEnergy(defgrad, devH);
-  auto pmean = alpha * (p_cc + p_se);
+  auto pmean = alpha * p_se;
 
   // Pressure due to shear
   asig[0][0] = -pmean;
@@ -278,7 +275,7 @@ GodunovRomenski::totalenergy(
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real,
+  tk::real pr,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
@@ -294,11 +291,13 @@ GodunovRomenski::totalenergy(
 //! \return Material specific total energy using the GodunovRomenski EoS
 // *************************************************************************
 {
-  // obtain kinetic energy
-  auto rhoEh = 0.5*rho*(u*u + v*v + w*w);
-  // obtain elastic contribution to energy
+  // obtain thermal and kinetic energy
   std::array< std::array< tk::real, 3 >, 3 > devH;
-  auto rhoEe = elasticEnergy(defgrad, devH);
+  auto p_se = -elasticEnergy(defgrad, devH);
+  auto pt = pr - coldcomprPressure(rho) - p_se;
+  auto rhoEh = pt/m_gamma + 0.5*rho*(u*u + v*v + w*w);
+  // obtain elastic contribution to energy
+  auto rhoEe = -p_se;
   auto rhoEc = coldcomprEnergy(rho);
 
   return (rhoEh + rhoEe + rhoEc);
