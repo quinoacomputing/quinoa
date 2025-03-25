@@ -1184,7 +1184,8 @@ class MultiMat {
 
             // 1. Compute dev(sigma)
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
-              0.0, 0.0, 0.0, 0.0, 0.0, alpha, k, g );
+              state[inciter::densityIdx(nmat, k)], 0.0, 0.0, 0.0, 0.0, alpha, k,
+              g );
             tk::real apr = state[ncomp+inciter::pressureIdx(nmat, k)];
             for (std::size_t i=0; i<3; ++i) sigma_dev[i][i] -= apr;
             for (std::size_t i=0; i<3; ++i)

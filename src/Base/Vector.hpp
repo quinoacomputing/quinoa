@@ -534,6 +534,23 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
             {b[6], b[7], b[8]} }};
 }
 
+//! \brief Get the volume-preserving part of the right Cauchy-Green strain
+//!   tensor from the inverse deformation gradient tensor.
+//! \param[in] g Inverse deformation gradient tensor
+//! \return Volume-preserving part of the right Cauchy-Green strain tensor
+inline std::array< std::array< tk::real, 3 >, 3 >
+getIsochorRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
+{
+  auto Ct = tk::getRightCauchyGreen(g);
+  auto detC = std::pow(tk::determinant(Ct), 1.0/3.0);
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j)
+      Ct[i][j] /= detC;
+  }
+
+  return Ct;
+}
+
 //! \brief Get the deviatoric Hencky strain tensor from the inverse deformation
 //! gradient tensor.
 //! \param[in] g Inverse deformation gradient tensor
@@ -541,8 +558,8 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 inline std::array< std::array< real, 3 >, 3 >
 getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
 {
-  // Get right Cauchy-Green strain tensor
-  auto C = getLeftCauchyGreen(g);
+  // Get right volm-preserving part of Cauchy-Green strain tensor
+  auto C = getIsochorRightCauchyGreen(g);
 
   std::array< std::array< real, 3 >, 3 > devH{{{0,0,0}, {0,0,0}, {0,0,0}}};
 

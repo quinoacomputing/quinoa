@@ -209,8 +209,7 @@ SmallShearSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/,
-  const std::array< tk::real, 3 >& /*asigman*/ ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/ ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -227,9 +226,6 @@ SmallShearSolid::soundspeed(
 //  //! \param[in] defgrad Material inverse deformation gradient tensor
 //  //!   (g_k) with the first dimension aligned to direction in which
 //  //!   wave speeds are required. Default is 0, so that for the single-material
-//  //!   system, this argument can be left unspecified by the calling code
-//  //! \param[in] asigman Material traction vector in normal direction
-//  //!   (alpha * sigma_ij * n_j ). Default is 0, so that for the single-material
 //  //!   system, this argument can be left unspecified by the calling code
 //! \return Material speed of sound using the SmallShearSolid EoS
 // *************************************************************************
@@ -703,13 +699,8 @@ SmallShearSolid::elasticEnergy(
 //!   the elastic shear distortion for further use
 // *************************************************************************
 {
-  // compute Right Cauchy-Green strain tensor
-  auto Ct = tk::getRightCauchyGreen(defgrad);
-  auto detC = std::pow(tk::determinant(Ct), 1.0/3.0);
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      Ct[i][j] /= detC;
-  }
+  // compute volume-preserving part of Right Cauchy-Green strain tensor
+  auto Ct = tk::getIsochorRightCauchyGreen(defgrad);
 
   // compute elastic shear distortion
   eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);

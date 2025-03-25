@@ -1,44 +1,42 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/SmallShearSolid.hpp
+  \file      src/PDE/EoS/WilkinsAluminum.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Small shear strain equation of state for solids
-  \details   This file declares functions for the SmallShearSolid equation of
-             state for the compressible flow equations. These functions are
-             taken from Plohr, J. N., & Plohr, B. J. (2005). Linearized analysis
-             of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
-             Mechanics, 537, 55-89. The SmallShearSolid EOS uses a small-shear
-             approximation for the elastic contribution, and a stiffened gas EOS
-             for the hydrodynamic contribution of the internal energy.
+  \brief     Wilkins equation of state for aluminum
+  \details   This file declares functions for the Wilkins equation of
+             state for solids and a hydro EoS for aluminum. These functions were
+             taken from Example 4 of Barton, Philip T. "An interface-capturing
+             Godunov method for the simulation of compressible solid-fluid
+             problems." Journal of Computational Physics 390 (2019): 25-50.
 */
 // *****************************************************************************
-#ifndef SmallShearSolid_h
-#define SmallShearSolid_h
+#ifndef WilkinsAluminum_h
+#define WilkinsAluminum_h
 
 #include "Data.hpp"
 
 namespace inciter {
 
-class SmallShearSolid {
+class WilkinsAluminum {
 
   private:
-    tk::real m_gamma, m_pstiff, m_cv, m_mu, m_rho0;
+    tk::real m_gamma, m_cv, m_mu, m_rho0;
 
     //! \brief Calculate elastic contribution to material energy from the
     //!   material density, and deformation gradient tensor
     tk::real elasticEnergy(
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
-      tk::real& eps2 ) const;
+      std::array< std::array< tk::real, 3 >, 3 >& devH ) const;
 
   public:
     //! Default constructor
-    SmallShearSolid() = default;
+    WilkinsAluminum() = default;
 
     //! Constructor
-    SmallShearSolid(tk::real gamma, tk::real pstiff, tk::real cv, tk::real mu );
+    WilkinsAluminum(tk::real gamma, tk::real cv, tk::real mu );
 
     //! Set rho0 EOS parameter; i.e. the initial density
     void setRho0(tk::real rho0);
@@ -60,7 +58,7 @@ class SmallShearSolid {
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
     //!   density, momentum, total energy, and inverse deformation gradient
-    //!   tensor using the SmallShearSolid equation of state
+    //!   tensor using the WilkinsAluminum equation of state
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
       tk::real,
@@ -128,18 +126,17 @@ class SmallShearSolid {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) /*override*/ {
       p | m_gamma;
-      p | m_pstiff;
       p | m_cv;
       p | m_mu;
       p | m_rho0;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i SmallShearSolid object reference
-    friend void operator|( PUP::er& p, SmallShearSolid& i ) { i.pup(p); }
+    //! \param[in,out] i WilkinsAluminum object reference
+    friend void operator|( PUP::er& p, WilkinsAluminum& i ) { i.pup(p); }
     //@}
 };
 
 } //inciter::
 
-#endif // SmallShearSolid_h
+#endif // WilkinsAluminum_h
