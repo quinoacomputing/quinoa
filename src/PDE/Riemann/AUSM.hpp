@@ -133,9 +133,16 @@ struct AUSM {
     auto pu = -k_u* msl[2] * msr[3] * f_a * rho12 * ac12 * (vnr-vnl);
     auto p12 = msl[2]*pl + msr[3]*pr + pu;
 
+    auto md = 0.0;
+    //// uncomment code below AND set k_u to zero above for AUSM-2025u/p mods.
+    //// Additional diffusion
+    //auto delta = 4.0;
+    ////auto md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * ac12);
+    //md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
+
     // Flux vector splitting
-    auto l_plus = 0.5 * (vriem + std::fabs(vriem));
-    auto l_minus = 0.5 * (vriem - std::fabs(vriem));
+    auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
+    auto l_minus = 0.5 * (vriem - std::fabs(vriem) - 2.0*md);
 
     // Conservative fluxes
     for (std::size_t k=0; k<nmat; ++k)
