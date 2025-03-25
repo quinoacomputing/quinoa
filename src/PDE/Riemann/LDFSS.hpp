@@ -108,22 +108,44 @@ struct LDFSS {
     auto mr = vnr/ac12;
 
     // Split Mach polynomials
-    auto msl = splitmach_ausm( ml );
-    auto msr = splitmach_ausm( mr );
+    auto msl = splitmach_ausm( ml, 1.0, 0.0, 0.0 );
+    auto msr = splitmach_ausm( mr, 1.0, 0.0, 0.0 );
 
     // Modified Mach polynomials
-    //// mtilde for 2nd order Mach polys (vanLeer)
-    //auto beta_l = -std::max(0.0, 1.0 - std::floor(std::abs(ml)));
-    //auto beta_r = -std::max(0.0, 1.0 - std::floor(std::abs(mr)));
-    //auto mtilde = 0.25*beta_l*beta_r*std::pow((std::sqrt(0.5*(ml*ml+mr*mr)) - 1.0), 2.0);
     // mtilde for general-order Mach polys (AUSM+)
     auto mtilde  = 0.5*(msl[0] - std::max(0.0,ml) - msr[1] + std::min(0.0,mr));
+    //// Uncomment for LDFSS-2025M
+    //// Modified mtilde for 2nd order Mach polys (vanLeer)
+    //auto beta_l = -std::max(0.0, 1.0 - std::floor(std::abs(ml)));
+    //auto beta_r = -std::max(0.0, 1.0 - std::floor(std::abs(mr)));
+    //auto mtilde = 0.25*beta_l*beta_r*std::pow((std::pow(0.5*(ml*ml+mr*mr),0.25) - 1.0), 2.0);
+
     auto dp = pl - pr;
-    auto delta = 1.0;
+    auto delta = 4.0;
+
+    // LDFSS-2001
+    // Additional diffusion
+    auto dpplus = std::abs(dp);
+    //dpplus += 8.0*rhol*ac12*std::sqrt(std::abs(vnl - vnr)*ac12);  // 2025u mod
+    //dpplus += 8.0*rhol*ac12*std::sqrt(std::abs(dp)/rho12);  // 2025p mod
+    auto dpminus = std::abs(dp);
+    //dpminus += 8.0*rhor*ac12*std::sqrt(std::abs(vnl - vnr)*ac12);  // 2025u mod
+    //dpminus += 8.0*rhor*ac12*std::sqrt(std::abs(dp)/rho12);  // 2025p mod
     auto mtilde_plus = mtilde*
-      std::max( 0.0, 1.0 - (dp+delta*std::abs(dp))/(2.0*rhol*ac12*ac12) );
+      std::max( 0.0, 1.0 - (dp+delta*dpplus)/(2.0*rhol*ac12*ac12) );
     auto mtilde_minus = mtilde*
-      std::max( 0.0, 1.0 + (dp-delta*std::abs(dp))/(2.0*rhor*ac12*ac12) );
+      std::max( 0.0, 1.0 + (dp-delta*dpminus)/(2.0*rhor*ac12*ac12) );
+
+    //// LDFSS(2) with the 2025p mod
+    //auto dpplus = std::abs(dp)
+    //  + 4.0*pl*std::sqrt(2.0*std::abs(dp)/(pl+pr));
+    //auto dpminus = std::abs(dp)
+    //  + 4.0*pr*std::sqrt(2.0*std::abs(dp)/(pl+pr));
+    //auto mtilde_plus = mtilde*
+    //  std::max( 0.0, 1.0 - dp/(pl+pr) - delta*dpplus/pl );
+    //auto mtilde_minus = mtilde*
+    //  std::max( 0.0, 1.0 + dp/(pl+pr) - delta*dpminus/pr );
+
     auto C_plus = msl[0] - mtilde_plus;
     auto C_minus = msr[1] + mtilde_minus;
 
