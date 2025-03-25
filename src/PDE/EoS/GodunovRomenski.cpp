@@ -108,11 +108,11 @@ GodunovRomenski::pressure(
   // obtain cold compression contribution to energy
   auto rho = arho/alpha;
   auto arhoEc = alpha*coldcomprEnergy(rho);
-  // obtain hydro contribution to energy
-  auto arhoEh = arhoE - arhoEe - arhoEc - 0.5*arho*(u*u + v*v + w*w);
+  // obtain thermal contribution to energy
+  auto arhoEt = arhoE - arhoEe - arhoEc - 0.5*arho*(u*u + v*v + w*w);
 
   // use Mie-Gruneisen form of Godunov-Romenski for pressure
-  auto partpressure = alpha*coldcomprPressure(rho) - arhoEe + m_gamma*arhoEh;
+  auto partpressure = alpha*coldcomprPressure(rho) - arhoEe + m_gamma*arhoEt;
 
   // check partial pressure divergence
   if (!std::isfinite(partpressure)) {
@@ -294,7 +294,7 @@ GodunovRomenski::totalenergy(
 //! \return Material specific total energy using the GodunovRomenski EoS
 // *************************************************************************
 {
-  // obtain hydro contribution to energy
+  // obtain kinetic energy
   auto rhoEh = 0.5*rho*(u*u + v*v + w*w);
   // obtain elastic contribution to energy
   std::array< std::array< tk::real, 3 >, 3 > devH;
