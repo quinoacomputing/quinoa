@@ -1,23 +1,23 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/GodunovRomenskiAluminum.hpp
+  \file      src/PDE/EoS/WilkinsAluminum.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Godunov-Romenski equation of state for solids
-  \details   This file defines functions for the Godunov-Romenski equation of
-             state for solids and a hydro EoS for aluminum. These function were
-             taken from Barton, Philip T. "An interface-capturing Godunov method
-             for the simulation of compressible solid-fluid problems." Journal
-             of Computational Physics 390 (2019): 25-50.
+  \brief     Wilkins equation of state for aluminum
+  \details   This file defines functions for the Wilkins equation of
+             state for solids and a hydro EoS for aluminum. These functions were
+             taken from Example 4 of Barton, Philip T. "An interface-capturing
+             Godunov method for the simulation of compressible solid-fluid
+             problems." Journal of Computational Physics 390 (2019): 25-50.
 */
 // *****************************************************************************
 
 #include <cmath>
 #include <iostream>
 #include "Vector.hpp"
-#include "EoS/GodunovRomenskiAluminum.hpp"
+#include "EoS/WilkinsAluminum.hpp"
 #include "EoS/GetMatProp.hpp"
 
 // // Lapacke forward declarations
@@ -38,9 +38,9 @@ static const tk::real e3 = 52.0e+09;
 static const tk::real e4 = -59.0e+09;
 static const tk::real e5 = 151.0e+09;
 
-using inciter::GodunovRomenskiAluminum;
+using inciter::WilkinsAluminum;
 
-GodunovRomenskiAluminum::GodunovRomenskiAluminum(
+WilkinsAluminum::WilkinsAluminum(
   tk::real gamma,
   tk::real cv,
   tk::real mu ) :
@@ -59,7 +59,7 @@ GodunovRomenskiAluminum::GodunovRomenskiAluminum(
 }
 
 void
-GodunovRomenskiAluminum::setRho0( tk::real rho0 )
+WilkinsAluminum::setRho0( tk::real rho0 )
 // *************************************************************************
 //  Set rho0 EOS parameter; i.e. the initial density
 //! \param[in] rho0 Initial material density that needs to be stored
@@ -69,15 +69,15 @@ GodunovRomenskiAluminum::setRho0( tk::real rho0 )
 }
 
 tk::real
-GodunovRomenskiAluminum::density(
+WilkinsAluminum::density(
   tk::real pr,
   tk::real ) const
 // *************************************************************************
 //! \brief Calculate density from the material pressure and temperature
-//!   using the GodunovRomenskiAluminum equation of state
+//!   using the WilkinsAluminum equation of state
 //! \param[in] pr Material pressure
 // //! \param[in] temp Material temperature
-//! \return Material density calculated using the GodunovRomenskiAluminum EoS
+//! \return Material density calculated using the WilkinsAluminum EoS
 // *************************************************************************
 {
   tk::real rho0 = m_rho0;
@@ -102,7 +102,7 @@ GodunovRomenskiAluminum::density(
 }
 
 tk::real
-GodunovRomenskiAluminum::pressure(
+WilkinsAluminum::pressure(
   tk::real arho,
   tk::real,
   tk::real,
@@ -113,7 +113,7 @@ GodunovRomenskiAluminum::pressure(
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
-//!   and the inverse deformation gradient tensor using the GodunovRomenskiAluminum
+//!   and the inverse deformation gradient tensor using the WilkinsAluminum
 //!   equation of state
 //! \param[in] arho Material partial density (alpha_k * rho_k)
 // //! \param[in] u X-velocity
@@ -130,7 +130,7 @@ GodunovRomenskiAluminum::pressure(
 // //!   (g_k). Default is 0, so that for the single-material system,
 // //!   this argument can be left unspecified by the calling code
 //! \return Material partial pressure (alpha_k * p_k) calculated using the
-//!   GodunovRomenskiAluminum EoS
+//!   WilkinsAluminum EoS
 // *************************************************************************
 {
   tk::real rho0 = m_rho0;
@@ -153,7 +153,7 @@ GodunovRomenskiAluminum::pressure(
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
-GodunovRomenskiAluminum::CauchyStress(
+WilkinsAluminum::CauchyStress(
   tk::real,
   tk::real,
   tk::real,
@@ -165,7 +165,7 @@ GodunovRomenskiAluminum::CauchyStress(
 // *************************************************************************
 //! \brief Calculate the elastic Cauchy stress tensor from the material density,
 //!   momentum, total energy, and inverse deformation gradient tensor using the
-//!   GodunovRomenskiAluminum equation of state
+//!   WilkinsAluminum equation of state
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
@@ -174,7 +174,7 @@ GodunovRomenskiAluminum::CauchyStress(
 // //!   by the calling code
 //! \param[in] defgrad Material inverse deformation gradient tensor (g_k).
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k) calculated using
-//!   the GodunovRomenskiAluminum EoS
+//!   the WilkinsAluminum EoS
 // *************************************************************************
 {
   std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
@@ -200,7 +200,7 @@ GodunovRomenskiAluminum::CauchyStress(
 }
 
 tk::real
-GodunovRomenskiAluminum::soundspeed(
+WilkinsAluminum::soundspeed(
   tk::real arho,
   tk::real apr,
   tk::real alpha,
@@ -232,7 +232,7 @@ GodunovRomenskiAluminum::soundspeed(
 //  //! \param[in] asigman Material traction vector in normal direction
 //  //!   (alpha * sigma_ij * n_j ). Default is 0, so that for the single-material
 //  //!   system, this argument can be left unspecified by the calling code
-//! \return Material speed of sound using the GodunovRomenskiAluminum EoS
+//! \return Material speed of sound using the WilkinsAluminum EoS
 // *************************************************************************
 {
   tk::real a = 0.0;
@@ -264,7 +264,7 @@ GodunovRomenskiAluminum::soundspeed(
 }
 
 tk::real
-GodunovRomenskiAluminum::shearspeed(
+WilkinsAluminum::shearspeed(
   tk::real arho,
   tk::real alpha,
   std::size_t imat ) const
@@ -299,7 +299,7 @@ GodunovRomenskiAluminum::shearspeed(
 }
 
 tk::real
-GodunovRomenskiAluminum::totalenergy(
+WilkinsAluminum::totalenergy(
   tk::real rho,
   tk::real,
   tk::real,
@@ -317,7 +317,7 @@ GodunovRomenskiAluminum::totalenergy(
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   g_k. Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
-//! \return Material specific total energy using the GodunovRomenskiAluminum EoS
+//! \return Material specific total energy using the WilkinsAluminum EoS
 // *************************************************************************
 {
   // obtain hydro contribution to energy
@@ -332,7 +332,7 @@ GodunovRomenskiAluminum::totalenergy(
 }
 
 tk::real
-GodunovRomenskiAluminum::temperature(
+WilkinsAluminum::temperature(
   tk::real,
   tk::real,
   tk::real,
@@ -354,7 +354,7 @@ GodunovRomenskiAluminum::temperature(
 // //! \param[in] defgrad Material inverse deformation gradient tensor
 // //!   (g_k). Default is 0, so that for the single-material system,
 // //!   this argument can be left unspecified by the calling code
-//! \return Material temperature using the GodunovRomenskiAluminum EoS
+//! \return Material temperature using the WilkinsAluminum EoS
 // *************************************************************************
 {
   // Temperature does not directly contribute to energy
@@ -365,7 +365,7 @@ GodunovRomenskiAluminum::temperature(
 }
 
 tk::real
-GodunovRomenskiAluminum::min_eff_pressure(
+WilkinsAluminum::min_eff_pressure(
   tk::real min,
   tk::real,
   tk::real ) const
@@ -380,7 +380,7 @@ GodunovRomenskiAluminum::min_eff_pressure(
 }
 
 tk::real
-GodunovRomenskiAluminum::elasticEnergy(
+WilkinsAluminum::elasticEnergy(
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
   std::array< std::array< tk::real, 3 >, 3 >& devH ) const
 // *************************************************************************
@@ -388,7 +388,7 @@ GodunovRomenskiAluminum::elasticEnergy(
 //!   density, and deformation gradient tensor
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //! \param[in/out] devH Deviatoric part of the Hensky tensor
-//! \return Material elastic energy using the GodunovRomenskiAluminum EoS
+//! \return Material elastic energy using the WilkinsAluminum EoS
 //! \details This function returns the material elastic energy, and also stores
 //!   the elastic shear distortion for further use
 // *************************************************************************
