@@ -117,7 +117,7 @@ struct AUSM {
     // 137-170" for more mathematical explanation. k_u is the velocity diffusion
     // term and k_p is the pressure diffusion term. These two terms reduce
     // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
-    tk::real k_u(0.0), f_a(1.0);
+    tk::real k_u(1.0), f_a(1.0);
 
     // Split Mach polynomials
     auto msl = splitmach_ausm( ml, f_a );
@@ -133,10 +133,12 @@ struct AUSM {
     auto pu = -k_u* msl[2] * msr[3] * f_a * rho12 * ac12 * (vnr-vnl);
     auto p12 = msl[2]*pl + msr[3]*pr + pu;
 
-    // Additional diffusion
-    auto delta = 4.0;
-    //auto md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * ac12);
-    auto md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
+    auto md = 0.0;
+    //// uncomment code below AND set k_u to zero above for AUSM-2025u/p mods.
+    //// Additional diffusion
+    //auto delta = 4.0;
+    ////auto md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * ac12);
+    //md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
 
     // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
