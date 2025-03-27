@@ -568,25 +568,23 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
   // simulation of compressible solid-fluid problems. Journal of Computational
   // Physics, 390, 25-50.
 
-  // get inv(C)
-  double CInv[9];
+  // get g.g^T (i.e. inv(C))
+  double G[9], CInv[9];
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
-      CInv[i*3+j] = C[i][j];
+      G[i*3+j] = g[i][j];
   }
-  lapack_int ipiv[3];
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+    3, 3, 3, 1.0, G, 3, G, 3, 0.0, CInv, 3);
 
-  #ifndef NDEBUG
-  lapack_int ierr =
-  #endif
-    LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, CInv, 3, ipiv);
-  Assert(ierr==0, "Lapack error in LU factorization of C");
-
-  #ifndef NDEBUG
-  lapack_int jerr =
-  #endif
-    LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, CInv, 3, ipiv);
-  Assert(jerr==0, "Lapack error in inverting C");
+  // volume-preserving part
+  auto detCInv = std::pow(tk::determinant(
+    {{ { CInv[0], CInv[1], CInv[2] },
+       { CInv[3], CInv[4], CInv[5] },
+       { CInv[6], CInv[7], CInv[8] } }} ), 1.0/3.0);
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      CInv[3*i+j] /= detCInv;
 
   // Compute (C-CInv)/4
   for (std::size_t i=0; i<3; ++i)
