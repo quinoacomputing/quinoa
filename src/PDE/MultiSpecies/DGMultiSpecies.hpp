@@ -851,9 +851,9 @@ class MultiSpecies {
         rhob += ugp[multispecies::densityIdx(nspec, k)];
 
       std::array< tk::real, 3 > u{{
+        ugp[multispecies::momentumIdx(nspec,0)] / rhob,
         ugp[multispecies::momentumIdx(nspec,1)] / rhob,
-        ugp[multispecies::momentumIdx(nspec,2)] / rhob,
-        ugp[multispecies::momentumIdx(nspec,3)] / rhob }};
+        ugp[multispecies::momentumIdx(nspec,2)] / rhob }};
       auto rhoE0 = ugp[multispecies::energyIdx(nspec,0)];
       auto p = mat_blk[0].compute< EOS::pressure >( rhob, u[0], u[1], u[2],
         rhoE0 );
