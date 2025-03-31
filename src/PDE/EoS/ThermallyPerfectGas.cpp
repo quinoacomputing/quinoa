@@ -193,7 +193,7 @@ ThermallyPerfectGas::temperature(
 
   // Solve for temperature - Newton's method
   tk::real temp = 1500;     // Starting guess
-  tk::real tol = 1e-8 * e; // Stopping condition
+  tk::real tol = 1e-8 * std::abs(e); // Stopping condition
   tk::real err;
   std::size_t maxiter = 10;
   std::size_t i(0);
