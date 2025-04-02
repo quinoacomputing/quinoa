@@ -35,7 +35,7 @@ class ThermallyPerfectGas {
     {
       tk::real fdg = 0.1; // Fudge factor to accomodate numerical overshoot
       if (temp < m_t_range[0] * (1 - fdg) || temp > m_t_range.back() * (1 + fdg)) {
-        Throw("ThermallyPerfectGas totalenergy temperature outside t_range bounds: "
+        Throw("ThermallyPerfectGas temperature outside t_range bounds: "
         + std::to_string(temp));
       }
 

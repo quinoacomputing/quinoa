@@ -125,7 +125,8 @@ ThermallyPerfectGas::soundspeed(
 {
   auto g = m_gamma;
 
-  tk::real a = std::sqrt( g * pr / rho );
+  auto p_eff = std::max( 1.0e-15, pr );
+  tk::real a = std::sqrt( g * p_eff / rho );
 
   return a;
 }
