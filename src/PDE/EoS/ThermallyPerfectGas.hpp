@@ -56,6 +56,49 @@ class ThermallyPerfectGas {
       return t_rng_idx;
     }
 
+    tk::real calc_h(tk::real temp) const
+    // *************************************************************************
+    //! Calculate dimensionless enthalpy according to the NASA-9 polynomial
+    //! \param[in] temp temperature at which to calculate enthalpy
+    //! \return dimensionless enthalpy, h / (R * T)
+    // *************************************************************************
+    {
+      // Identify what temperature range this falls in
+      std::size_t t_rng_idx = get_t_range(temp);
+
+      // h = h_poly(T) + h_ref
+      tk::real h = -m_cp_coeff[t_rng_idx][0] * std::pow(temp, -2) +
+          m_cp_coeff[t_rng_idx][1] * std::log(temp) / temp +
+          m_cp_coeff[t_rng_idx][2] +
+          m_cp_coeff[t_rng_idx][3] * temp / 2. +
+          m_cp_coeff[t_rng_idx][4] * std::pow(temp, 2) / 3. +
+          m_cp_coeff[t_rng_idx][5] * std::pow(temp, 3) / 4. +
+          m_cp_coeff[t_rng_idx][6] * std::pow(temp, 4) / 5. +
+          m_cp_coeff[t_rng_idx][7] / temp + m_dH_ref;
+
+      return h;
+    }
+
+    tk::real calc_cp(tk::real temp) const
+    // *************************************************************************
+    //! Calculate dimensionless specific heat according to the NASA-9 polynomial
+    //! \param[in] temp temperature at which to calculate specific heat
+    //! \return dimensionless enthalpy, c_p / R
+    // *************************************************************************
+    {
+      // Identify what temperature range this falls in
+      std::size_t t_rng_idx = get_t_range(temp);
+
+      tk::real cp = m_cp_coeff[t_rng_idx][0] * std::pow(temp, -2) +
+          m_cp_coeff[t_rng_idx][1] / temp +
+          m_cp_coeff[t_rng_idx][2] +
+          m_cp_coeff[t_rng_idx][3] * temp +
+          m_cp_coeff[t_rng_idx][4] * std::pow(temp, 2) +
+          m_cp_coeff[t_rng_idx][5] * std::pow(temp, 3) +
+          m_cp_coeff[t_rng_idx][6] * std::pow(temp, 4);
+
+      return cp;
+    }
 
   public:
     //! Default constructor
