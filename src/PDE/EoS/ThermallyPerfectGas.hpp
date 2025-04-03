@@ -77,7 +77,7 @@ class ThermallyPerfectGas {
           m_cp_coeff[t_rng_idx][4] * std::pow(temp_poly, 2) / 3. +
           m_cp_coeff[t_rng_idx][5] * std::pow(temp_poly, 3) / 4. +
           m_cp_coeff[t_rng_idx][6] * std::pow(temp_poly, 4) / 5. +
-          m_cp_coeff[t_rng_idx][7] / temp_poly + m_dH_ref;
+          m_cp_coeff[t_rng_idx][7] / temp_poly;
 
       // If bounds exceeded, apply correction to enthalpy
       if (correction_needed) {

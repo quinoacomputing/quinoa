@@ -155,7 +155,7 @@ ThermallyPerfectGas::totalenergy(
   tk::real temp = pr / (rho * R);
 
   // h = h_poly(T) + h_ref = e + R T (perfect gas)
-  auto h = calc_h(temp) * R * temp; // dimensionalize the results out of the calc_h func
+  auto h = calc_h(temp) * R * temp + m_dH_ref; // dimensionalize the results out of the calc_h func
   tk::real e = h - R * temp;
 
   return (rho * e + 0.5 * rho * (u*u + v*v + w*w));
@@ -194,7 +194,7 @@ ThermallyPerfectGas::temperature(
   std::size_t i(0);
   while (i < maxiter) {
     // Construct e(temp) and de(temp)/dT
-    tk::real h = calc_h(temp) * R * temp;
+    tk::real h = calc_h(temp) * R * temp + m_dH_ref;
     tk::real f_T = h - R * temp - e;
 
     err = abs(f_T);
