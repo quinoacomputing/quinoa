@@ -28,9 +28,9 @@ class ThermallyPerfectGas {
 
     std::size_t get_t_range(tk::real temp) const
     // *************************************************************************
-    //! Check what temperature range the given temperature is in.
-    //! A check should be performed before this to make sure the bounds are not
-    //! violated.
+    //! \brief Check what temperature range the given temperature is in.
+    //!   A check should be performed before this to make sure the bounds
+    //!   are not violated.
     //! \param[in] temp Given temperature to be checked for range
     //! \return Index of temperature range the given temperature is in
     // *************************************************************************
