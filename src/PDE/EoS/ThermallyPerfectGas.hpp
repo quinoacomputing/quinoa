@@ -26,23 +26,31 @@ class ThermallyPerfectGas {
     std::vector< tk::real > m_t_range{std::vector< tk::real >(4)};
     tk::real m_dH_ref;
 
-    std::size_t get_t_range(tk::real temp) const
+    void get_t_range( tk::real &temp_poly,
+                             std::size_t &t_rng_idx ) const
     // *************************************************************************
-    //! \brief Check what temperature range the given temperature is in.
-    //!   A check should be performed before this to make sure the bounds
-    //!   are not violated.
+    //! \brief Check what temperature range the given temperature is in. If it
+    //!   exceeds the bounds, reset the temp to the bounds.
     //! \param[in] temp Given temperature to be checked for range
     //! \return Index of temperature range the given temperature is in
     // *************************************************************************
     {
-      std::size_t t_rng_idx(0);
-      for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
-        if (temp >= m_t_range[k] && temp < m_t_range[k+1]) {
-          t_rng_idx = k;
-          break;
+      // First, bounds check
+      if (temp_poly < m_t_range[0]) {
+        t_rng_idx = 0;
+        temp_poly = m_t_range[0];
+      } else if (temp_poly > m_t_range.back()) {
+        t_rng_idx = m_t_range.size() - 1;
+        temp_poly = m_t_range.back();
+      } else {
+      // Valid bounds
+        for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
+          if (temp_poly >= m_t_range[k] && temp_poly <= m_t_range[k+1]) {
+            t_rng_idx = k;
+            break;
+          }
         }
       }
-      return t_rng_idx;
     }
 
     tk::real calc_h(tk::real temp) const
@@ -54,20 +62,9 @@ class ThermallyPerfectGas {
     {
       // Identify what temperature range this falls in. If it falls outside the
       // bounds, some corrections must be applied.
-      std::size_t t_rng_idx; // Reference the correct polynomial.
+      std::size_t t_rng_idx(0); // Reference the correct polynomial.
       tk::real temp_poly = temp; // temp to use in polynomial expression
-      bool correction_needed = false; // If bounds are violated
-      if (temp < m_t_range[0]) {
-        t_rng_idx = 0;
-        temp_poly = m_t_range[0];
-        correction_needed = true;
-      } else if (temp > m_t_range.back()) {
-        t_rng_idx = m_t_range.size() - 1;
-        temp_poly = m_t_range.back();
-        correction_needed = true;
-      } else {
-        t_rng_idx = get_t_range(temp);
-      }
+      get_t_range(temp_poly, t_rng_idx); // Bounds check performed inside
 
       // h = h_poly(T) + h_ref
       tk::real h = -m_cp_coeff[t_rng_idx][0] * std::pow(temp_poly, -2) +
@@ -79,8 +76,8 @@ class ThermallyPerfectGas {
           m_cp_coeff[t_rng_idx][6] * std::pow(temp_poly, 4) / 5. +
           m_cp_coeff[t_rng_idx][7] / temp_poly;
 
-      // If bounds exceeded, apply correction to enthalpy
-      if (correction_needed) {
+      // If bounds exceeded, temp_poly will be different than temp. Apply correction.
+      if (std::abs(temp_poly - temp) > std::numeric_limits< tk::real >::epsilon()) {
         tk::real cp_star = calc_cp(temp_poly);
         h = h * temp_poly / temp + (temp - temp_poly) / temp * cp_star;
       }
@@ -97,17 +94,9 @@ class ThermallyPerfectGas {
     {
       // Identify what temperature range this falls in. If it falls outside the
       // bounds, some corrections must be applied.
-      std::size_t t_rng_idx; // Reference the correct polynomial.
+      std::size_t t_rng_idx(0); // Reference the correct polynomial.
       tk::real temp_poly = temp; // temp to use in polynomial expression
-      if (temp < m_t_range[0]) {
-        t_rng_idx = 0;
-        temp_poly = m_t_range[0];
-      } else if (temp > m_t_range.back()) {
-        t_rng_idx = m_t_range.size() - 1;
-        temp_poly = m_t_range.back();
-      } else {
-        t_rng_idx = get_t_range(temp);
-      }
+      get_t_range(temp_poly, t_rng_idx); // Bounds check performed inside
 
       tk::real cp = m_cp_coeff[t_rng_idx][0] * std::pow(temp_poly, -2) +
           m_cp_coeff[t_rng_idx][1] / temp_poly +
