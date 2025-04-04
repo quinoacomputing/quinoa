@@ -330,6 +330,24 @@ void MarkShockCells ( const bool pref,
                       const tk::Fields& P,
                       std::vector< std::size_t >& shockmarker );
 
+//! Mark the cells that contain discontinuity according to the interface
+void MarkShockCellsMultiSpecies (
+  const bool pref,
+  const std::size_t nelem,
+  const std::size_t nspec,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::vector< EOS >& mat_blk,
+  const std::vector< std::size_t >& ndofel,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
+  const tk::Fields& geoElem,
+  const tk::FluxFn& flux,
+  const tk::Fields& U,
+  std::vector< std::size_t >& shockmarker );
+
 //! Update the conservative quantities after limiting for multi-material systems
 void
 correctLimConservMultiMat(
