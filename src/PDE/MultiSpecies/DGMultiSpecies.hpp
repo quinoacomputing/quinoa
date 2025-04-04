@@ -398,13 +398,12 @@ class MultiSpecies {
         VertexBasedMultiSpecies_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_mat_blk, fd, geoFace, geoElem, coord, flux, U, nspec, shockmarker );
       }
-      //else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
-      //{
-      //  VertexBasedMultiSpecies_P2( pref, esup, inpoel, ndofel, fd.Esuel().size()/4,
-      //    m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-      //    uNodalExtrm, pNodalExtrm, mtInv, flux, solidx, U, P, nmat,
-      //    shockmarker );
-      //}
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
+      {
+        VertexBasedMultiSpecies_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, U, nspec,
+          shockmarker );
+      }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
         Throw("Limiter type not configured for multispecies.");
