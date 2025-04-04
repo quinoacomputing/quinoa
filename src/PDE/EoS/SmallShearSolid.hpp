@@ -58,6 +58,12 @@ class SmallShearSolid {
       std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
+    //! Calculate cold-compression component of pressure (no-op)
+    tk::real pressure_coldcompr(
+      tk::real,
+      tk::real ) const
+    { return 0.0; }
+
     //! \brief Calculate the elastic Cauchy stress tensor from the material
     //!   density, momentum, total energy, and inverse deformation gradient
     //!   tensor using the SmallShearSolid equation of state

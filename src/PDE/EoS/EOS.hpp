@@ -54,6 +54,7 @@ class EOS {
     //! Entry method tags for specific EOS classes to use with compute()
     struct density {};
     struct pressure {};
+    struct pressure_coldcompr {};
     struct soundspeed {};
     struct shearspeed {};
     struct totalenergy {};
@@ -76,6 +77,9 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, pressure > )
             return m.pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure_coldcompr > )
+            return m.pressure_coldcompr( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, soundspeed > )
             return m.soundspeed( std::forward< Args >( args )... );
