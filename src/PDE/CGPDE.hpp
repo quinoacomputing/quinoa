@@ -218,12 +218,13 @@ class CGPDE {
     //! Public interface to set symmetry boundary conditions at nodes
     void
     symbc( tk::Fields& U,
+           tk::Fields& W,
            const std::array< std::vector< real >, 3 >& coord,
            const std::unordered_map< int,
                    std::unordered_map< std::size_t,
                      std::array< real, 4 > > >& bnorm,
            const std::unordered_set< std::size_t >& nodes ) const
-    { self->symbc( U, coord, bnorm, nodes ); }
+    { self->symbc( U, W, coord, bnorm, nodes ); }
 
     //! Public interface to set farfield boundary conditions at nodes
     void
@@ -385,6 +386,7 @@ class CGPDE {
              bool ) const = 0;
       virtual void symbc(
         tk::Fields& U,
+        tk::Fields& W,
         const std::array< std::vector< real >, 3 >&,
         const std::unordered_map< int,
                 std::unordered_map< std::size_t,
@@ -520,12 +522,13 @@ class CGPDE {
                                       increment ); }
       void symbc(
         tk::Fields& U,
+        tk::Fields& W,
         const std::array< std::vector< real >, 3 >& coord,
         const std::unordered_map< int,
                 std::unordered_map< std::size_t,
                   std::array< real, 4 > > >& bnorm,
         const std::unordered_set< std::size_t >& nodes ) const override
-      { data.symbc( U, coord, bnorm, nodes ); }
+      { data.symbc( U, W, coord, bnorm, nodes ); }
       void farfieldbc(
         tk::Fields& U,
         const std::array< std::vector< real >, 3 >& coord,
