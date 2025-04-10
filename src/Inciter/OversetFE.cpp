@@ -928,7 +928,7 @@ OversetFE::BC()
             if (bc[c].first) m_u(b,c) = bc[c].second;
 
         // Apply symmetry BCs
-        g_cgpde[d->MeshId()].symbc( m_u, coord, m_bnorm, m_symbcnodes );
+        g_cgpde[d->MeshId()].symbc( m_u, d->MeshVel(), coord, m_bnorm, m_symbcnodes );
 
         // Apply farfield BCs
         if (bci.get< tag::farfield >().empty() || (d->MeshId() == 0)) {
