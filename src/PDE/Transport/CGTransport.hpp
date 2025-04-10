@@ -398,6 +398,7 @@ class Transport {
     void
     symbc(
       tk::Fields&,
+      tk::Fields&,
       const std::array< std::vector< real >, 3 >&,
       const std::unordered_map< int,
               std::unordered_map< std::size_t,

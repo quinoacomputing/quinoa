@@ -750,11 +750,13 @@ class CompFlow {
 
     //! Set symmetry boundary conditions at nodes
     //! \param[in] U Solution vector at recent time step
+    //! \param[in] W Mesh velocity
     //! \param[in] bnorm Face normals in boundary points, key local node id,
     //!   first 3 reals of value: unit normal, outer key: side set id
     //! \param[in] nodes Unique set of node ids at which to set symmetry BCs
     void
     symbc( tk::Fields& U,
+           tk::Fields& W,
            const std::array< std::vector< real >, 3 >&,
            const std::unordered_map< int,
              std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
