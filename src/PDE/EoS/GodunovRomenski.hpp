@@ -35,9 +35,8 @@ class GodunovRomenski {
     //!   the material density
     tk::real coldcomprEnergy( tk::real rho ) const;
 
-    //! \brief Calculate cold-compression contribution to material pressure from
-    //!   the material density
-    tk::real coldcomprPressure( tk::real rho ) const;
+    //! Calculate the derivative of the cold compression pressure wrt. density
+    tk::real DpccDrho( tk::real rho ) const;
 
   public:
     //! Default constructor
@@ -68,6 +67,12 @@ class GodunovRomenski {
       tk::real alpha=1.0,
       std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Calculate cold-compression contribution to material pressure from
+    //!   the material density
+    tk::real pressure_coldcompr(
+      tk::real arho,
+      tk::real alpha=1.0 ) const;
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
     //!   density, momentum, total energy, and inverse deformation gradient

@@ -125,7 +125,8 @@ ThermallyPerfectGas::soundspeed(
 {
   auto g = m_gamma;
 
-  tk::real a = std::sqrt( g * pr / rho );
+  auto p_eff = std::max( 1.0e-15, pr );
+  tk::real a = std::sqrt( g * p_eff / rho );
 
   return a;
 }
@@ -152,17 +153,10 @@ ThermallyPerfectGas::totalenergy(
   auto R = m_R;
 
   tk::real temp = pr / (rho * R);
-  // Identify what temperature range this falls in
-  std::size_t t_rng_idx = get_t_range(temp);
 
   // h = h_poly(T) + h_ref = e + R T (perfect gas)
-  tk::real e = R * (-m_cp_coeff[t_rng_idx][0] * std::pow(temp, -1) +
-      m_cp_coeff[t_rng_idx][1] * std::log(temp) + (m_cp_coeff[t_rng_idx][2] - 1) * temp +
-      m_cp_coeff[t_rng_idx][3] * std::pow(temp, 2) / 2 +
-      m_cp_coeff[t_rng_idx][4] * std::pow(temp, 3) / 3 +
-      m_cp_coeff[t_rng_idx][5] * std::pow(temp, 4) / 4 +
-      m_cp_coeff[t_rng_idx][6] * std::pow(temp, 5) / 5 + m_cp_coeff[t_rng_idx][7]) +
-      m_dH_ref;
+  auto h = calc_h(temp) * R * temp + m_dH_ref; // dimensionalize the results out of the calc_h func
+  tk::real e = h - R * temp;
 
   return (rho * e + 0.5 * rho * (u*u + v*v + w*w));
 }
@@ -190,38 +184,24 @@ ThermallyPerfectGas::temperature(
 
   // Solve for internal energy
   tk::real e = rhoE / rho - 0.5 * (u*u + v*v + w*w);
+  if (e < 1e-8) e = 1e-8; // TODO: standin until positivity is implemented
 
   // Solve for temperature - Newton's method
   tk::real temp = 1500;     // Starting guess
-  tk::real tol = 1e-8 * e; // Stopping condition
+  tk::real tol = std::max(1e-8, 1e-8 * e); // Stopping condition
   tk::real err;
   std::size_t maxiter = 10;
   std::size_t i(0);
   while (i < maxiter) {
-    // Identify what temperature range the current guess is in
-    std::size_t t_rng_idx = get_t_range(temp);
-
-    // With correct polynomial coefficients, construct e(temp) and de(temp)/dT
-    tk::real f_T = R * (-m_cp_coeff[t_rng_idx][0] * std::pow(temp, -1) +
-      m_cp_coeff[t_rng_idx][1] * std::log(temp) + (m_cp_coeff[t_rng_idx][2] - 1) * temp +
-      m_cp_coeff[t_rng_idx][3] * std::pow(temp, 2) / 2 +
-      m_cp_coeff[t_rng_idx][4] * std::pow(temp, 3) / 3 +
-      m_cp_coeff[t_rng_idx][5] * std::pow(temp, 4) / 4 +
-      m_cp_coeff[t_rng_idx][6] * std::pow(temp, 5) / 5 + m_cp_coeff[t_rng_idx][7]) +
-      m_dH_ref - e;
+    // Construct e(temp) and de(temp)/dT
+    tk::real h = calc_h(temp) * R * temp + m_dH_ref;
+    tk::real f_T = h - R * temp - e;
 
     err = abs(f_T);
 
-    // Get derivative - df/dT. For loop is working through polynomial.
-    tk::real fp_T = 0;
-    tk::real power = -2;
-    for (std::size_t k=0; k<m_cp_coeff[t_rng_idx].size()-1; ++k)
-    {
-      fp_T += m_cp_coeff[t_rng_idx][k] * std::pow(temp, power);
-      if (k == 2) fp_T += -1;
-      power += 1;
-    }
-    fp_T = fp_T * R;
+    // Get derivative - df/dT.
+    tk::real cp = calc_cp(temp) * R;
+    tk::real fp_T = cp - R;
 
     // Calculate next guess
     temp = temp - f_T / fp_T;
