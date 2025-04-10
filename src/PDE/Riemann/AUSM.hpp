@@ -177,7 +177,6 @@ struct AUSM {
     // term and k_p is the pressure diffusion term. These two terms reduce
     // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
     tk::real k_u(1.0), f_a(1.0);
-    if (nsld > 0) k_u = 0.0;
 
     // Split Mach polynomials
     std::array< std::array< tk::real, 4 >, 3 > msl, msr;
