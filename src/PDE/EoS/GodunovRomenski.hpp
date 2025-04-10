@@ -35,6 +35,9 @@ class GodunovRomenski {
     //!   the material density
     tk::real coldcomprEnergy( tk::real rho ) const;
 
+    //! Calculate the derivative of the cold compression pressure wrt. density
+    tk::real DpccDrho( tk::real rho ) const;
+
   public:
     //! Default constructor
     GodunovRomenski() = default;

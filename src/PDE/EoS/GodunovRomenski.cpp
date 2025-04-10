@@ -57,17 +57,30 @@ GodunovRomenski::GodunovRomenski(
 
 tk::real
 GodunovRomenski::density(
-  tk::real ,
+  tk::real pr,
   tk::real ) const
 // *************************************************************************
 //! \brief Calculate density from the material pressure and temperature
 //!   using the GodunovRomenski equation of state
-//! \return Material density calculated using the density constaint
-//!   rho = rho_0/det(F)
+//! \param[in] pr Material pressure
+//! \return Material density calculated using the cold compression pressure
 // *************************************************************************
 {
-  // punt by returning unstressed density for now
-  return m_rho0;
+  // Quick Newton
+  tk::real rho = m_rho0;
+  std::size_t maxiter = 50;
+  tk::real tol = 1.0e-04;
+  tk::real err = tol + 1;
+  for (std::size_t iter=0; iter<maxiter; ++iter)
+  {
+    tk::real p = pressure_coldcompr(rho) - pr;
+    auto dpdrho = DpccDrho(rho);
+    auto delta = p/dpdrho;
+    rho -= delta;
+    err = std::sqrt(std::pow(p,2.0));
+    if (err < tol) break;
+  }
+  return rho;
 }
 
 tk::real
@@ -210,10 +223,7 @@ GodunovRomenski::soundspeed(
   // Hydro contribution
   tk::real rho = arho/alpha;
   auto p_cc = pressure_coldcompr(arho, alpha);
-  auto rrho0a = std::pow(rho/m_rho0, m_alpha);
-  a += std::max( 1.0e-15,
-    m_K0/(m_rho0*m_alpha) * ((2.0*m_alpha+1.0)*(rrho0a*rrho0a) - (m_alpha+1.0)*rrho0a)
-    + (m_gamma+1.0) * (apr - p_cc)/arho );
+  a += std::max( 1.0e-15, DpccDrho(rho) + (m_gamma+1.0) * (apr - p_cc)/arho );
   // in the above expression, shear pressure is not included in apr in the first
   // place, so should not subtract it
 
@@ -355,10 +365,8 @@ GodunovRomenski::min_eff_pressure(
 {
   // minimum pressure is constrained by zero soundspeed.
   auto rho = arho/alpha;
-  auto rrho0a = std::pow(rho/m_rho0, m_alpha);
   return min
-    - rho/(m_gamma+1.0)
-      * m_K0/(m_rho0*m_alpha) * ((2.0*m_alpha+1.0)*(rrho0a*rrho0a) - (m_alpha+1.0)*rrho0a)
+    - rho/(m_gamma+1.0) * DpccDrho(rho)
     + pressure_coldcompr(arho, alpha)/alpha;
 }
 
@@ -416,4 +424,17 @@ GodunovRomenski::elasticEnergy(
       rhoEe += m_mu*devH[i][j]*devH[i][j];
 
   return rhoEe;
+}
+
+tk::real
+GodunovRomenski::DpccDrho( tk::real rho ) const
+// *************************************************************************
+//! Calculate the derivative of the cold compression pressure wrt. density
+//! \param[in] rho Material partial density (alpha_k * rho_k)
+//! \return Derivative of the cold compression pressure wrt. density
+// *************************************************************************
+{
+  auto rrho0a = std::pow(rho/m_rho0, m_alpha);
+  return m_K0/(m_rho0*m_alpha) *
+    ((2.0*m_alpha+1.0)*(rrho0a*rrho0a) - (m_alpha+1.0)*rrho0a);
 }
