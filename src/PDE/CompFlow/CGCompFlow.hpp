@@ -757,7 +757,7 @@ class CompFlow {
     //! \param[in] nodes Unique set of node ids at which to set symmetry BCs
     void
     symbc( tk::Fields& U,
-           tk::Fields& W,
+           const tk::Fields& W,
            const std::array< std::vector< real >, 3 >&,
            const std::unordered_map< int,
              std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
