@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
+#include <iostream>
 
 #include "DerivedData.hpp"
 #include "Exception.hpp"
@@ -780,12 +781,12 @@ class CompFlow {
               if (i != end(j->second)) {
                 std::array< real, 3 >
                   n{ i->second[0], i->second[1], i->second[2] },
-                  v{ U(p,1), U(p,2), U(p,3) };
-                auto v_dot_n = tk::dot( v, n );
-                // symbc: remove normal component of velocity
-                U(p,1) -= v_dot_n * n[0];
-                U(p,2) -= v_dot_n * n[1];
-                U(p,3) -= v_dot_n * n[2];
+                  rel_v{ U(p,1) - W(p,0), U(p,2) - W(p,1), U(p,3) - W(p,2) };
+                auto rel_v_dot_n = tk::dot( rel_v, n );
+                // symbc: remove normal component of relative velocity
+                U(p,1) -= rel_v_dot_n * n[0];
+                U(p,2) -= rel_v_dot_n * n[1];
+                U(p,3) -= rel_v_dot_n * n[2];
               }
             }
           }
