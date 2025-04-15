@@ -331,7 +331,6 @@ void MarkShockCells ( const bool pref,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       const std::set< std::size_t >& vars,
-                      const bool is_multispec,
                       std::vector< std::size_t >& shockmarker );
 
 //! Update the conservative quantities after limiting for multi-material systems

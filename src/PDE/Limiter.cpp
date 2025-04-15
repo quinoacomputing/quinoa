@@ -360,7 +360,7 @@ VertexBasedCompflow_P1(
     for (std::size_t i=1; i<=3; ++i) vars.insert(i);
     MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
-      vars, false, shockmarker);
+      vars, shockmarker);
   }
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -460,7 +460,7 @@ VertexBasedCompflow_P2(
     for (std::size_t i=1; i<=3; ++i) vars.insert(i);
     MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
-      vars, false, shockmarker);
+      vars, shockmarker);
   }
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -565,7 +565,7 @@ VertexBasedMultiMat_P1(
     for (std::size_t i=0; i<3; ++i) vars.insert(momentumIdx(nmat, i));
     MarkShockCells(false, nelem, nmat, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
-      vars, false, shockmarker);
+      vars, shockmarker);
   }
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -749,7 +749,7 @@ VertexBasedMultiMat_P2(
     for (std::size_t i=0; i<3; ++i) vars.insert(momentumIdx(nmat, i));
     MarkShockCells(pref, nelem, nmat, ndof, rdof, mat_blk, ndofel,
       inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
-      vars, false, shockmarker);
+      vars, shockmarker);
   }
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -1023,7 +1023,7 @@ VertexBasedMultiSpecies_P1(
       vars.insert(multispecies::momentumIdx(nspec, i));
     MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk,
       ndofel, inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
-      vars, true, shockmarker);
+      vars, shockmarker);
   }
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -1151,7 +1151,7 @@ VertexBasedMultiSpecies_P2(
       vars.insert(multispecies::momentumIdx(nspec, i));
     MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk,
       ndofel, inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
-      vars, true, shockmarker);
+      vars, shockmarker);
   }
 
   for (std::size_t e=0; e<nelem; ++e)
@@ -2496,7 +2496,6 @@ void MarkShockCells ( const bool pref,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       const std::set< std::size_t >& vars,
-                      const bool is_multispec,
                       std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
 //  Mark the cells that contain discontinuity according to the interface
@@ -2518,7 +2517,6 @@ void MarkShockCells ( const bool pref,
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] vars Vector of variable indices to evaluate flux jump
-//! \param[in] is_multispec Indicator for multispecies PDE system
 //! \param[in, out] shockmarker Vector of the shock indicator
 //! \details This function computes the discontinuity indicator based on
 //!   interface conditon. It is based on the following paper:
@@ -2621,34 +2619,27 @@ void MarkShockCells ( const bool pref,
 
       // Evaluate the high order solution at the qudrature point
       std::array< std::vector< tk::real >, 2 > state;
-      if (is_multispec) {
-        state[0] = eval_state(ncomp, rdof, ndof, el, U, B_l);
-        state[1] = eval_state(ncomp, rdof, ndof, er, U, B_r);
-      } else {
-        state[0] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
-          nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-        state[1] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
-          nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
-      }
+      state[0] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
+        nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+      state[1] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
+        nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
       Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );
 
-      if (!is_multispec) {
-        // Force deformation unknown to first order
-        for (std::size_t k=0; k<nmat; ++k)
-          if (solidx[k] > 0)
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-              {
-                state[0][deformIdx(nmat, solidx[k], i, j)] = U(el,deformDofIdx(
-                  nmat, solidx[k], i, j, rdof, 0));
-                state[1][deformIdx(nmat, solidx[k], i, j)] = U(er,deformDofIdx(
-                  nmat, solidx[k], i, j, rdof, 0));
-              }
-      }
+      // Force deformation unknown to first order
+      for (std::size_t k=0; k<nmat; ++k)
+        if (solidx[k] > 0)
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+            {
+              state[0][deformIdx(nmat, solidx[k], i, j)] = U(el,deformDofIdx(
+                nmat, solidx[k], i, j, rdof, 0));
+              state[1][deformIdx(nmat, solidx[k], i, j)] = U(er,deformDofIdx(
+                nmat, solidx[k], i, j, rdof, 0));
+            }
 
       // Evaluate the flux
       auto fl = flux( ncomp, mat_blk, state[0], {} );
