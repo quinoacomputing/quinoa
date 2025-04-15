@@ -169,6 +169,7 @@ VertexBasedMultiSpecies_P1(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker );
@@ -186,6 +187,7 @@ VertexBasedMultiSpecies_P2(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker );
@@ -328,25 +330,9 @@ void MarkShockCells ( const bool pref,
                       const std::vector< std::size_t >& solidx,
                       const tk::Fields& U,
                       const tk::Fields& P,
+                      const std::set< std::size_t >& vars,
+                      const bool is_multispec,
                       std::vector< std::size_t >& shockmarker );
-
-//! Mark the cells that contain discontinuity according to the interface
-void MarkShockCellsMultiSpecies (
-  const bool pref,
-  const std::size_t nelem,
-  const std::size_t nspec,
-  const std::size_t ndof,
-  const std::size_t rdof,
-  const std::vector< EOS >& mat_blk,
-  const std::vector< std::size_t >& ndofel,
-  const std::vector< std::size_t >& inpoel,
-  const tk::UnsMesh::Coords& coord,
-  const inciter::FaceData& fd,
-  const tk::Fields& geoFace,
-  const tk::Fields& geoElem,
-  const tk::FluxFn& flux,
-  const tk::Fields& U,
-  std::vector< std::size_t >& shockmarker );
 
 //! Update the conservative quantities after limiting for multi-material systems
 void
