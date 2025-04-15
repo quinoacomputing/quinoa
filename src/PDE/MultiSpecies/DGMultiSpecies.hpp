@@ -391,20 +391,21 @@ class MultiSpecies {
       const auto limiter = g_inputdeck.get< tag::limiter >();
       auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
       // limit vectors of conserved and primitive quantities
       if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiSpecies_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_mat_blk, fd, geoFace, geoElem, coord, flux, U, nspec, shockmarker );
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, nspec,
+          shockmarker );
       }
-      //else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
-      //{
-      //  VertexBasedMultiSpecies_P2( pref, esup, inpoel, ndofel, fd.Esuel().size()/4,
-      //    m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-      //    uNodalExtrm, pNodalExtrm, mtInv, flux, solidx, U, P, nmat,
-      //    shockmarker );
-      //}
+      else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
+      {
+        VertexBasedMultiSpecies_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, nspec,
+          shockmarker );
+      }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
         Throw("Limiter type not configured for multispecies.");
