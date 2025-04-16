@@ -757,8 +757,8 @@ class MultiSpecies {
         auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
 
         // Mixture calculations, initialized
-        Mixture mix(nspec, m_mat_blk);
-        mix.set_state(uhp);
+        Mixture mix(nspec);
+        mix.set_state(uhp, m_mat_blk);
 
         // store solution in history output vector
         Up[j].resize(6+nspec, 0.0);
@@ -768,7 +768,7 @@ class MultiSpecies {
         Up[j][3] = uhp[multispecies::momentumIdx(nspec,2)]/Up[j][0];
         Up[j][4] = uhp[multispecies::energyIdx(nspec,0)];
         Up[j][5] = mix.pressure( Up[j][0], Up[j][1], Up[j][2], Up[j][3],
-          Up[j][4]);
+          Up[j][4], m_mat_blk);
         for (std::size_t k=0; k<nspec; ++k) {
           Up[j][6+k] = uhp[multispecies::densityIdx(nspec,k)]/Up[j][0];
         }
@@ -850,8 +850,8 @@ class MultiSpecies {
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
-      Mixture mix(nspec, mat_blk);
-      mix.set_state(ugp); // Initial calculations
+      Mixture mix(nspec);
+      mix.set_state(ugp, mat_blk); // Initial calculations
       auto rhob = mix.get_mix_density();
 
       std::array< tk::real, 3 > u{{
@@ -859,7 +859,7 @@ class MultiSpecies {
         ugp[multispecies::momentumIdx(nspec,1)] / rhob,
         ugp[multispecies::momentumIdx(nspec,2)] / rhob }};
       auto rhoE0 = ugp[multispecies::energyIdx(nspec,0)];
-      auto p = mix.pressure(rhob, u[0], u[1], u[2], rhoE0);
+      auto p = mix.pressure(rhob, u[0], u[1], u[2], rhoE0, mat_blk);
 
       // density flux
       for (std::size_t k=0; k<nspec; ++k) {

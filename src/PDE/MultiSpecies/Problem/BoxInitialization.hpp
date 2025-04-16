@@ -17,6 +17,7 @@
 #include "EoS/EOS.hpp"
 #include "ContainerUtil.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -85,8 +86,8 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   }
   // 2. User-specified temperature, pressure and velocity in box
   else {
-    Mixture mix(nspec, mat_blk);
-    mix.set_massfrac(alphas, boxpre, boxtemp); // Initialize
+    Mixture mix(nspec);
+    mix.set_massfrac(alphas, boxpre, boxtemp, mat_blk); // Initialize
     rbulk = mix.get_mix_density();
     for (std::size_t k=0; k<nspec; ++k) {
       rhok[k] = alphas[k]*rbulk;
@@ -103,7 +104,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
       Throw("IC-box with specified energy not set up for multispecies");
     }
 
-    spi = mix.totalenergy(rbulk, u, v, w, pr) / rbulk;
+    spi = mix.totalenergy(rbulk, u, v, w, pr, mat_blk) / rbulk;
   }
 
   // [II] Finally initialize the solution vector

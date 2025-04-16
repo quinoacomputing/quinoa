@@ -129,7 +129,7 @@ class JWL {
     tk::real rho0() const { return m_rho0; }
 
     //! Return gas constant (no-op)
-    tk::real gas_constant() { return 0.0; }
+    tk::real gas_constant() const { return 0.0; }
 
     //! Return internal energy (no-op)
     tk::real calc_e( [[maybe_unused]] tk::real temp) const { return 0.0; }

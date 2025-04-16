@@ -125,11 +125,11 @@ class ThermallyPerfectGas {
     void setRho0(tk::real) {}
 
     //! Calculate density from the material pressure and temperature
-    tk::real density( tk::real pr,
+    [[noreturn]] tk::real density( tk::real pr,
                       tk::real temp ) const;
 
     //! Calculate pressure from the material density, momentum and total energy
-    tk::real pressure( tk::real rho,
+    [[noreturn]] tk::real pressure( tk::real rho,
                        tk::real u,
                        tk::real v,
                        tk::real w,
@@ -158,7 +158,7 @@ class ThermallyPerfectGas {
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
 
     //! Calculate speed of sound from the material density and material pressure
-    tk::real soundspeed( tk::real rho,
+    [[noreturn]] tk::real soundspeed( tk::real rho,
                          tk::real pr,
                          tk::real alpha=1.0,
                          std::size_t imat=0,
@@ -173,7 +173,7 @@ class ThermallyPerfectGas {
 
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
-    tk::real totalenergy( tk::real rho,
+    [[noreturn]] tk::real totalenergy( tk::real rho,
                           tk::real u,
                           tk::real v,
                           tk::real w,
@@ -182,7 +182,7 @@ class ThermallyPerfectGas {
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
-    tk::real temperature( tk::real rho,
+    [[noreturn]] tk::real temperature( tk::real rho,
                           tk::real u,
                           tk::real v,
                           tk::real w,
@@ -207,7 +207,7 @@ class ThermallyPerfectGas {
     tk::real rho0() const { return density(1.0e5, 300.0); }
 
     //! Return gas constant (species specific)
-    tk::real gas_constant() { return m_R; }
+    tk::real gas_constant() const { return m_R; }
 
     //! Return species internal energy
     tk::real calc_e(tk::real temp) const;

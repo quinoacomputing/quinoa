@@ -94,8 +94,8 @@ timeStepSizeMultiSpecies(
     ugp = eval_state(ncomp, rdof, ndof, el, U, B_l);
 
     // initialize mixture
-    Mixture mix(nspec, mat_blk);
-    mix.set_state(ugp);
+    Mixture mix(nspec);
+    mix.set_state(ugp, mat_blk);
 
     // mixture density
     auto rhob = mix.get_mix_density();
@@ -109,8 +109,8 @@ timeStepSizeMultiSpecies(
 
     // acoustic speed
     auto p = mix.pressure( rhob, u, v, w,
-      ugp[multispecies::energyIdx(nspec, 0)]);
-    a = mix.frozen_soundspeed( rhob, p );
+      ugp[multispecies::energyIdx(nspec, 0)], mat_blk);
+    a = mix.frozen_soundspeed( rhob, p, mat_blk );
 
     dSV_l = geoFace(f,0) * (std::fabs(vn) + a);
 
@@ -126,8 +126,8 @@ timeStepSizeMultiSpecies(
       ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r);
 
       // initialize mixture
-      Mixture mixr(nspec, mat_blk);
-      mixr.set_state(ugp);
+      Mixture mixr(nspec);
+      mixr.set_state(ugp, mat_blk);
 
       // mixture density
       rhob = mixr.get_mix_density();
@@ -141,8 +141,8 @@ timeStepSizeMultiSpecies(
 
       // acoustic speed
       p = mixr.pressure( rhob, u, v, w,
-        ugp[multispecies::energyIdx(nspec, 0)] );
-      a = mixr.frozen_soundspeed( rhob, p );
+        ugp[multispecies::energyIdx(nspec, 0)], mat_blk );
+      a = mixr.frozen_soundspeed( rhob, p, mat_blk );
 
       dSV_r = geoFace(f,0) * (std::fabs(vn) + a);
 

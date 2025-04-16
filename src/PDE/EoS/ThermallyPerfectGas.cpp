@@ -38,10 +38,10 @@ ThermallyPerfectGas::ThermallyPerfectGas(
 // *************************************************************************
 { }
 
-tk::real
+[[noreturn]] tk::real
 ThermallyPerfectGas::density(
-  tk::real pr,
-  tk::real temp ) const
+  tk::real ,
+  tk::real ) const
 // *************************************************************************
 //! \brief Calculate density from the material pressure and temperature 
 //!   using the stiffened-gas equation of state
@@ -51,16 +51,15 @@ ThermallyPerfectGas::density(
 // *************************************************************************
 {
   Throw("Direct call to TPG density should not occur. Use Mixture class.");
-  return 0.;
 }
 
-tk::real
+[[noreturn]] tk::real
 ThermallyPerfectGas::pressure(
-  tk::real rho,
-  tk::real u,
-  tk::real v,
-  tk::real w,
-  tk::real rhoE,
+  tk::real ,
+  tk::real ,
+  tk::real ,
+  tk::real ,
+  tk::real ,
   tk::real,
   std::size_t,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
@@ -76,7 +75,6 @@ ThermallyPerfectGas::pressure(
 // *************************************************************************
 {
   Throw("Direct call to TPG pressure should not occur. Use Mixture class.");
-  return 0.;
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
@@ -102,10 +100,10 @@ ThermallyPerfectGas::CauchyStress(
   return asig;
 }
 
-tk::real
+[[noreturn]] tk::real
 ThermallyPerfectGas::soundspeed(
-  tk::real rho,
-  tk::real pr,
+  tk::real ,
+  tk::real ,
   tk::real,
   std::size_t,
   const std::array< std::array< tk::real, 3 >, 3 >&,
@@ -118,16 +116,15 @@ ThermallyPerfectGas::soundspeed(
 // *************************************************************************
 {
   Throw("Direct call to TPG soundspeed should not occur. Use Mixture class.");
-  return 0.;
 }
 
-tk::real
+[[noreturn]] tk::real
 ThermallyPerfectGas::totalenergy(
-  tk::real rho,
-  tk::real u,
-  tk::real v,
-  tk::real w,
-  tk::real pr,
+  tk::real ,
+  tk::real ,
+  tk::real ,
+  tk::real ,
+  tk::real ,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
@@ -141,16 +138,15 @@ ThermallyPerfectGas::totalenergy(
 // *************************************************************************
 {
   Throw("Direct call to TPG totalenergy should not occur. Use Mixture class.");
-  return 0.;
 }
 
-tk::real
+[[noreturn]] tk::real
 ThermallyPerfectGas::temperature(
-  tk::real rho,
-  tk::real u,
-  tk::real v,
-  tk::real w,
-  tk::real rhoE,
+  tk::real ,
+  tk::real ,
+  tk::real ,
+  tk::real ,
+  tk::real ,
   tk::real,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
@@ -164,10 +160,10 @@ ThermallyPerfectGas::temperature(
 // *************************************************************************
 {
   Throw("Direct call to TPG temperature should not occur. Use Mixture class.");
-  return 0.;
 }
 
-tk::real calc_e(tk::real temp)
+tk::real
+ThermallyPerfectGas::calc_e(tk::real temp) const
 // *************************************************************************
 //! \brief Calculate species internal energy
 //! \param[in] temp Temperature
@@ -179,7 +175,8 @@ tk::real calc_e(tk::real temp)
   return h - R * temp;
 }
 
-tk::real calc_cv(tk::real temp)
+tk::real
+ThermallyPerfectGas::calc_cv(tk::real temp) const
 // *************************************************************************
 //! \brief Calculate species specific heat (constant volume)
 //! \param[in] temp Temperature

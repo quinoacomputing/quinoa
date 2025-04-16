@@ -10,25 +10,24 @@
 */
 // *****************************************************************************
 
-#include "MultiSpecies/Mixture.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
+#include "MultiSpecies/MultiSpeciesIndexing.hpp"
 
 using inciter::Mixture;
 
 Mixture::Mixture(
-  std::size_t nspec,
-  std::vector< EOS > mat_blk) :
-  m_nspec(nspec),
-  m_mat_blk(mat_blk)
+  std::size_t nspec) :
+  m_nspec(nspec)
 // *************************************************************************
 //  Constructor (use during timestepping)
 //! \brief Initialize a mixture class
 //! \param[in] nspec Number of species in mixture
-//! \param[in] mat_blk material block holding EOS constants
 // *************************************************************************
 {}
 
 void
-Mixture::set_state(std::vector< tk::real > ugp)
+Mixture::set_state(std::vector< tk::real > ugp,
+  const std::vector< EOS >& mat_blk)
 // *************************************************************************
 //! \brief Set commonly used mixture properties based off a given state
 //!   vector (rho_s, rhou, rhov, rhow, rhoE). Used during timestepping
@@ -38,23 +37,24 @@ Mixture::set_state(std::vector< tk::real > ugp)
   // Compute total density
   m_mix_density = 0.;
   for (std::size_t k=0; k<m_nspec; ++k)
-    m_mix_density += m_ugp[multispecies::densityIdx(m_nspec, k)];
+    m_mix_density += ugp[multispecies::densityIdx(m_nspec, k)];
 
   // Compute mass fractions
   for (std::size_t k=0; k<m_nspec; ++k)
-    m_Ys[k] = m_ugp[multispecies::densityIdx(m_nspec, k)] /
+    m_Ys[k] = ugp[multispecies::densityIdx(m_nspec, k)] /
       m_mix_density;
 
   // Compute mixture gas constant
   m_mix_R = 0.;
   for (std::size_t k = 0; k < m_nspec; k++)
-    m_mix_R += Ys[k] * mat_blk[k].compute< EOS::gas_constant >();
+    m_mix_R += m_Ys[k] * mat_blk[k].compute< EOS::gas_constant >();
 }
 
 void
 Mixture::set_massfrac(std::vector< tk::real > Ys,
                   tk::real mix_pressure,
-                  tk::real temperature)
+                  tk::real temperature,
+                  const std::vector< EOS >& mat_blk)
 // *************************************************************************
 //! \brief Set commonly used mixture properties based off a given set of
 //!   mass fractions, a mixture pressure, and a temperature. Used during
@@ -80,7 +80,8 @@ Mixture::set_massfrac(std::vector< tk::real > Ys,
 tk::real
 Mixture::frozen_soundspeed(
   tk::real mix_density,
-  tk::real mix_pressure)
+  tk::real mix_pressure,
+  const std::vector< EOS >& mat_blk) const
 // *************************************************************************
 //! \brief Calculate frozen speed of sound based on the mixture composition
 //!   and species parameters.
@@ -113,8 +114,8 @@ Mixture::totalenergy(
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real mix_pressure
-)
+  tk::real mix_pressure,
+  const std::vector< EOS >& mat_blk) const
 // *************************************************************************
 //! \brief Calculate total energy based on the mixture composition
 //!   and species parameters.
@@ -145,7 +146,8 @@ Mixture::pressure(
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real rhoE)
+  tk::real rhoE,
+  const std::vector< EOS >& mat_blk) const
 // *************************************************************************
 //! \brief Calculate mixture pressure based on the mixture composition
 //!   and species parameters.
@@ -158,10 +160,10 @@ Mixture::pressure(
 // *************************************************************************
 {
   // Compute temperature from the state vector
-  tk::real temp = temperature(mix_density, u, v, w, rhoE);
+  tk::real temp = temperature(mix_density, u, v, w, rhoE, mat_blk);
 
   // Compute pressure based on the ideal gas EOS
-  tk::real mix_pressure = mix_density * mix_R * temp;
+  return mix_density * m_mix_R * temp;
 }
 
 tk::real
@@ -170,8 +172,8 @@ Mixture::temperature(
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real rhoE
-)
+  tk::real rhoE,
+  const std::vector< EOS >& mat_blk) const
 // *************************************************************************
 //! \brief Calculate temperature based on the mixture composition
 //!   and species parameters.
@@ -197,14 +199,14 @@ Mixture::temperature(
     // Construct f(T) = e(temp) - e
     tk::real f_T = 0.;
     for (std::size_t k = 0; k < m_nspec; k++) {
-      f_T += Ys[k] * mat_blk[k].compute< EOS::calc_e >(temp);
+      f_T += m_Ys[k] * mat_blk[k].compute< EOS::calc_e >(temp);
     }
     f_T -= e;
 
     // Construct f'(T) = cv(temp)
     tk::real fp_T = 0.;
     for (std::size_t k = 0; k < m_nspec; k++) {
-      fp_T += Ys[k] * mat_blk[k].compute< EOS::calc_cv >(temp);
+      fp_T += m_Ys[k] * mat_blk[k].compute< EOS::calc_cv >(temp);
     }
 
     // Calculate next guess

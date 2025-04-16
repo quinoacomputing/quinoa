@@ -6,7 +6,9 @@ target_include_directories(MultiSpeciesMixture PUBLIC
                            ${QUINOA_SOURCE_DIR}/Base
                            ${QUINOA_SOURCE_DIR}/Control
                            ${QUINOA_SOURCE_DIR}/PDE
+                           ${QUINOA_SOURCE_DIR}/Inciter
                            ${PROJECT_BINARY_DIR}/../Main
+                           ${CHARM_INCLUDE_DIRS}
                            ${LAPACKE_INCLUDE_DIRS}
                            ${CBLAS_INCLUDE_DIRS})
 
