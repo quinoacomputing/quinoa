@@ -928,7 +928,7 @@ OversetFE::BC()
             if (bc[c].first) m_u(b,c) = bc[c].second;
 
         // Apply symmetry BCs
-        g_cgpde[d->MeshId()].symbc( m_u, d->meshvel(), coord, m_bnorm, m_symbcnodes );
+        g_cgpde[d->MeshId()].symbc( m_u, d->MeshVel(), coord, m_bnorm, m_symbcnodes );
 
         // Apply farfield BCs
         if (bci.get< tag::farfield >().empty() || (d->MeshId() == 0)) {
@@ -1130,7 +1130,7 @@ OversetFE::rhs()
   g_cgpde[d->MeshId()].rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
           m_symbctri, d->Vol(), m_edgenode, m_edgeid,
-          m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
+          m_boxnodes, m_chBndGrad, m_u, d->MeshVel(), m_tp, d->Boxvol(),
           m_rhs );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];

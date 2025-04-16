@@ -95,7 +95,7 @@ NodeDiagnostics::compute(
 
     // Evaluate analytic solution (if exist, if not, IC)
     auto an = u;
-    auto mv = d.meshvel();
+    auto mv = d.MeshVel();
     for (std::size_t i=0; i<an.nunk(); ++i) {
       // Query analytic solution for all components of all PDEs integrated
       std::vector< tk::real > a;
