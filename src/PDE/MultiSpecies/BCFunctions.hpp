@@ -92,7 +92,7 @@ namespace inciter {
     auto fu =
       g_inputdeck.get< tag::bc >()[0].get< tag::velocity >();
     auto fspec =
-      g_inputdeck.get< tag::bc >()[0].get< tag::materialid >() - 1;
+      g_inputdeck.get< tag::bc >()[0].get< tag::mass_fractions >();
 
     Assert( ul.size() == ncomp, "Incorrect size for appended "
             "internal state vector" );
@@ -119,20 +119,14 @@ namespace inciter {
     // Mach number
     auto Ma = vn / a;
 
-    tk::real alphamin = 1e-12;
-    std::vector< tk::real > alphas(nspec, alphamin);
-
     if (Ma <= -1) {  // Supersonic inflow
       // For supersonic inflow, all the characteristics are from outside.
       // Therefore, we calculate the ghost cell state using the primitive
       // variables from outside.
       tk::real rhor(0.0);
       for (std::size_t k=0; k<nspec; ++k) {
-        if (k == fspec)
-          alphas[k] = 1.0 - (static_cast< tk::real >(nspec-1))*alphamin;
-
         auto rhok = mat_blk[0].compute< EOS::density >(fp, ft);
-        ur[multispecies::densityIdx(nspec,k)] = alphas[k] * rhok;
+        ur[multispecies::densityIdx(nspec,k)] = fspec[k] * rhok;
         rhor += ur[multispecies::densityIdx(nspec,k)];
       }
       ur[multispecies::energyIdx(nspec,0)] =
@@ -148,11 +142,8 @@ namespace inciter {
       // the outside.
       tk::real rhor(0.0);
       for (std::size_t k=0; k<nspec; ++k) {
-        if (k == fspec)
-          alphas[k] = 1.0 - (static_cast< tk::real >(nspec-1))*alphamin;
-
         auto rhok = mat_blk[0].compute< EOS::density >(pl, ft);
-        ur[multispecies::densityIdx(nspec,k)] = alphas[k] * rhok;
+        ur[multispecies::densityIdx(nspec,k)] = fspec[k] * rhok;
         rhor += ur[multispecies::densityIdx(nspec,k)];
       }
       ur[multispecies::energyIdx(nspec,0)] =
