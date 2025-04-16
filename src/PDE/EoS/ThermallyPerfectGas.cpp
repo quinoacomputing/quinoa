@@ -50,10 +50,8 @@ ThermallyPerfectGas::density(
 //! \return Material density calculated using the stiffened-gas EoS
 // *************************************************************************
 {
-  tk::real R = m_R;
-
-  tk::real rho = pr / (R * temp);
-  return rho;
+  Throw("Direct call to TPG density should not occur. Use Mixture class.");
+  return 0.;
 }
 
 tk::real
@@ -77,12 +75,8 @@ ThermallyPerfectGas::pressure(
 //! \return Pressure calculated using the thermally perfect gas EOS
 // *************************************************************************
 {
-  tk::real R = m_R;
-
-  tk::real temp = temperature(rho, u, v, w, rhoE);
-  tk::real pres = rho * R * temp;
-
-  return pres;
+  Throw("Direct call to TPG pressure should not occur. Use Mixture class.");
+  return 0.;
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
@@ -123,12 +117,8 @@ ThermallyPerfectGas::soundspeed(
 //! \return Material speed of sound using the ideal gas EoS
 // *************************************************************************
 {
-  auto g = m_gamma;
-
-  auto p_eff = std::max( 1.0e-15, pr );
-  tk::real a = std::sqrt( g * p_eff / rho );
-
-  return a;
+  Throw("Direct call to TPG soundspeed should not occur. Use Mixture class.");
+  return 0.;
 }
 
 tk::real
@@ -150,15 +140,8 @@ ThermallyPerfectGas::totalenergy(
 //! \return specific total energy using the thermally perfect gas EoS
 // *************************************************************************
 {
-  auto R = m_R;
-
-  tk::real temp = pr / (rho * R);
-
-  // h = h_poly(T) + h_ref = e + R T (perfect gas)
-  auto h = calc_h(temp) * R * temp + m_dH_ref; // dimensionalize the results out of the calc_h func
-  tk::real e = h - R * temp;
-
-  return (rho * e + 0.5 * rho * (u*u + v*v + w*w));
+  Throw("Direct call to TPG totalenergy should not occur. Use Mixture class.");
+  return 0.;
 }
 
 tk::real
@@ -180,39 +163,30 @@ ThermallyPerfectGas::temperature(
 //! \return Material temperature using the thermally perfect gas EoS
 // *************************************************************************
 {
+  Throw("Direct call to TPG temperature should not occur. Use Mixture class.");
+  return 0.;
+}
+
+tk::real calc_e(tk::real temp)
+// *************************************************************************
+//! \brief Calculate species internal energy
+//! \param[in] temp Temperature
+//! \return Species internal energy using the thermally perfect gas EoS
+// *************************************************************************
+{
   auto R = m_R;
+  tk::real h = calc_h(temp) * R * temp + m_dH_ref;
+  return h - R * temp;
+}
 
-  // Solve for internal energy
-  tk::real e = rhoE / rho - 0.5 * (u*u + v*v + w*w);
-  if (e < 1e-8) e = 1e-8; // TODO: standin until positivity is implemented
-
-  // Solve for temperature - Newton's method
-  tk::real temp = 1500;     // Starting guess
-  tk::real tol = std::max(1e-8, 1e-8 * e); // Stopping condition
-  tk::real err;
-  std::size_t maxiter = 10;
-  std::size_t i(0);
-  while (i < maxiter) {
-    // Construct e(temp) and de(temp)/dT
-    tk::real h = calc_h(temp) * R * temp + m_dH_ref;
-    tk::real f_T = h - R * temp - e;
-
-    err = abs(f_T);
-
-    // Get derivative - df/dT.
-    tk::real cp = calc_cp(temp) * R;
-    tk::real fp_T = cp - R;
-
-    // Calculate next guess
-    temp = temp - f_T / fp_T;
-
-    if (err <= tol) break;
-    i++;
-    if ( i == maxiter ) {
-      Throw("ThermallyPerfectGas Newton's Method for temperature failed to converge after iterations "
-      + std::to_string(i));
-    }
-  }
-
-  return temp;
+tk::real calc_cv(tk::real temp)
+// *************************************************************************
+//! \brief Calculate species specific heat (constant volume)
+//! \param[in] temp Temperature
+//! \return Species specific heat using the thermally perfect gas EoS
+// *************************************************************************
+{
+  auto R = m_R;
+  tk::real cp = calc_cp(temp) * R;
+  return cp - R;
 }

@@ -206,6 +206,15 @@ class ThermallyPerfectGas {
     //! Return initial density
     tk::real rho0() const { return density(1.0e5, 300.0); }
 
+    //! Return gas constant (species specific)
+    tk::real gas_constant() { return m_R; }
+
+    //! Return species internal energy
+    tk::real calc_e(tk::real temp) const;
+
+    //! Return species specific heat (constant volume)
+    tk::real calc_cv(tk::real temp) const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

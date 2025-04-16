@@ -70,19 +70,19 @@ MultiSpeciesProblemUserDefined::initialize( ncomp_t ncomp,
   tk::real v = bgvelic[1];
   tk::real w = bgvelic[2];
 
-  auto rb = 0.0;
+  // Initialize mixture
+  Mixture mix(nspec, mat_blk);
+  mix.set_massfrac(alphas, bgpreic, bgtempic);
+
+  auto rb = mix.get_mix_density();
   for (std::size_t k=0; k<nspec; ++k) {
-    // density
-    auto rhok = mat_blk[0].compute< EOS::density >(bgpreic, bgtempic);
     // partial density
-    s[multispecies::densityIdx(nspec,k)] = alphas[k] * rhok;
-    // bulk density
-    rb += s[multispecies::densityIdx(nspec,k)];
+    s[multispecies::densityIdx(nspec,k)] = alphas[k] * rb;
   }
 
   // total specific energy
-  s[multispecies::energyIdx(nspec,0)] =
-    mat_blk[0].compute< EOS::totalenergy >(rb, u, v, w, bgpreic);
+  s[multispecies::energyIdx(nspec,0)] = mix.totalenergy(rb,
+    u, v, w, bgpreic);
 
   // bulk momentum
   s[multispecies::momentumIdx(nspec,0)] = rb * u;
