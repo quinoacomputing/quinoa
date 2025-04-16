@@ -1196,6 +1196,7 @@ OversetFE::solve()
   // Update state at time n
   if (m_stage == 0) {
     m_un = m_u;
+    d->UpdateCoordn();
   }
 
   // Explicit time-stepping using RK3
@@ -1283,28 +1284,28 @@ OversetFE::solve()
 
         // rectilinear motion
         // ---------------------------------------------------------------------
-        std::array< tk::real, 3 > ds{{ 0, 0, 0 }};
-        for (std::size_t i=0; i<3; ++i) {
-          // mesh displacement
-          ds[i] = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
-          // mesh velocity
-          u_mesh(p,i) += a_mesh[i]*dtp;
-        }
-
-        // add contribution of rotation to mesh velocity
-        u_mesh(p,i1) += a1*dtp;
-        u_mesh(p,i2) += a2*dtp;
 
         // add contribution of rotation to mesh displacement
         std::array< tk::real, 3 > angles{{ 0, 0, 0 }};
         angles[sym_dir] = dtheta * 180.0/pi;
         tk::rotatePoint(angles, rCM);
 
-        // combine both contributions
+        tk::real dsT, dsR;
+
         for (std::size_t i=0; i<3; ++i) {
-          d->Coord()[i][p] = rCM[i] + m_centMass[i];
-          d->Coord()[i][p] += ds[i];
+          // mesh displacement from translation
+          dsT = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+          // mesh displacement from rotation
+          dsR = rCM[i] + m_centMass[i] - d->Coord()[i][p];
+          // add both contributions
+          d->Coord()[i][p] = d->Coordn()[i][p] + dsT + dsR;
+          // mesh velocity change from translation
+          u_mesh(p,i) += a_mesh[i]*dtp;
         }
+
+        // add contribution of rotation to mesh velocity
+        u_mesh(p,i1) += a1*dtp;
+        u_mesh(p,i2) += a2*dtp;
       }
 
       // update angular velocity
