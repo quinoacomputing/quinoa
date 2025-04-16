@@ -45,7 +45,7 @@
 #include "MultiSpecies/BCFunctions.hpp"
 #include "MultiSpecies/MiscMultiSpeciesFns.hpp"
 #include "EoS/GetMatProp.hpp"
-#include "Mixture.hpp"
+#include "Mixture/Mixture.hpp"
 
 namespace inciter {
 

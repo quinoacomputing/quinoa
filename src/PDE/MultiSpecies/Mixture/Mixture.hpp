@@ -12,15 +12,13 @@
 #ifndef Mixture_h
 #define Mixture_h
 
-#include "PUPUtil.hpp"
-
 namespace inciter {
 
 class Mixture {
 
   private:
-    const std::size_t m_nspec;
-    const std::vector< EOS > m_mat_blk;
+    std::size_t m_nspec;
+    std::vector< EOS > m_mat_blk;
     tk::real m_mix_density;
     tk::real m_mix_R;
     std::vector< tk::real > m_Ys;
