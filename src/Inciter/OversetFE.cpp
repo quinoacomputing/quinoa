@@ -100,7 +100,10 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_surfTorque({{0, 0, 0}}),
   m_centMass({{0, 0, 0}}),
   m_centMassVel({{0, 0, 0}}),
-  m_angVelMesh(0)
+  m_angVelMesh(0),
+  m_centMassn({{0, 0, 0}}),
+  m_centMassVeln({{0, 0, 0}}),
+  m_angVelMeshn(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -944,6 +947,17 @@ OversetFE::BC()
 }
 
 void
+OversetFE::UpdateCenterOfMass()
+// *****************************************************************************
+// Update quantities associated with the center of mass at a new time step
+// *****************************************************************************
+{
+  m_centMassn = m_centMass;
+  m_centMassVeln = m_centMassVel;
+  m_angVelMeshn = m_angVelMesh;
+}
+
+void
 OversetFE::next()
 // *****************************************************************************
 // Continue to next time step
@@ -1197,6 +1211,7 @@ OversetFE::solve()
   if (m_stage == 0) {
     m_un = m_u;
     d->UpdateCoordn();
+    UpdateCenterOfMass();
   }
 
   // Explicit time-stepping using RK3
@@ -1258,9 +1273,9 @@ OversetFE::solve()
         // rotation (this is currently only configured for planar motion)
         // ---------------------------------------------------------------------
         std::array< tk::real, 3 > rCM{{
-          d->Coord()[0][p] - m_centMass[0],
-          d->Coord()[1][p] - m_centMass[1],
-          d->Coord()[2][p] - m_centMass[2] }};
+          d->Coord()[0][p] - m_centMassn[0],
+          d->Coord()[1][p] - m_centMassn[1],
+          d->Coord()[2][p] - m_centMassn[2] }};
 
         // obtain tangential velocity
         tk::real r_mag(0.0);
@@ -1282,13 +1297,13 @@ OversetFE::solve()
         // angle of rotation
         auto dtheta = m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp;
 
-        // rectilinear motion
-        // ---------------------------------------------------------------------
-
         // add contribution of rotation to mesh displacement
         std::array< tk::real, 3 > angles{{ 0, 0, 0 }};
         angles[sym_dir] = dtheta * 180.0/pi;
         tk::rotatePoint(angles, rCM);
+
+        // rectilinear motion
+        // ---------------------------------------------------------------------
 
         tk::real dsT, dsR;
 
@@ -1309,12 +1324,12 @@ OversetFE::solve()
       }
 
       // update angular velocity
-      m_angVelMesh += alpha_mesh*dtp;
+      m_angVelMesh = m_angVelMeshn + alpha_mesh*dtp;
 
       // move center of mass
       for (std::size_t i=0; i<3; ++i) {
-        m_centMass[i] += m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
-        m_centMassVel[i] += a_mesh[i]*dtp;  // no rotational component
+        m_centMass[i] = m_centMassn[i] + m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+        m_centMassVel[i] = m_centMassVeln[i] + a_mesh[i]*dtp;  // no rotational component
       }
     }
 
