@@ -41,8 +41,8 @@ Mixture::set_state(std::vector< tk::real > ugp,
 
   // Compute mass fractions
   for (std::size_t k=0; k<m_nspec; ++k)
-    m_Ys[k] = ugp[multispecies::densityIdx(m_nspec, k)] /
-      m_mix_density;
+    m_Ys.push_back(ugp[multispecies::densityIdx(m_nspec, k)] /
+      m_mix_density);
 
   // Compute mixture gas constant
   m_mix_R = 0.;
@@ -74,7 +74,7 @@ Mixture::set_massfrac(std::vector< tk::real > Ys,
 
   // Store mass fractions
   for (std::size_t k=0; k<m_nspec; ++k)
-    m_Ys[k] = Ys[k];
+    m_Ys.push_back(Ys[k]);
 }
 
 tk::real
@@ -99,7 +99,7 @@ Mixture::frozen_soundspeed(
   // Compute beta, mixture parameters for sound speed calc.
   tk::real mix_Cv = 0.;
   for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_Cv = mat_blk[k].compute< EOS::calc_cv >(temp) * m_Ys[k];
+    mix_Cv += mat_blk[k].compute< EOS::calc_cv >(temp) * m_Ys[k];
   }
   tk::real beta = m_mix_R / mix_Cv;
 
