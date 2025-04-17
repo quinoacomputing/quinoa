@@ -168,7 +168,11 @@ using bcList = tk::TaggedTuple< brigand::list<
       tag::sideset,    std::vector< uint64_t >,
       tag::fn,         std::vector< tk::real >
     > >
-  >
+  >,
+  tag::back_pressure, tk::TaggedTuple< brigand::list<
+    tag::sideset,  std::vector< std::size_t >,
+    tag::pressure, tk::real
+  > >
 > >;
 
 // IC box
@@ -1746,6 +1750,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         is expected inside a fn ... end block, specified within the bc_timedep
         block. Multiple such bc_timedep blocks can be specified for different
         time dependent BCs on different groups of side sets.)", "block-title"});
+
+      keywords.insert({"back_pressure",
+        "Start configuration block describing back pressure boundary conditions",
+        R"(This keyword is used to introduce a back pressure BC block. This
+        block requires a 'sideset' vector and 'pressure' to be specified within
+        it.)", "block-title"});
 
       keywords.insert({"velocity", "Specify velocity",
         R"(This keyword is used to configure a velocity vector used in a

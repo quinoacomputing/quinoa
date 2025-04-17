@@ -1274,6 +1274,21 @@ LuaParser::storeInputDeck(
         }
       }
 
+      // Back pressure BC
+      if (sol_bc[i+1]["back_pressure"].valid()) {
+        const sol::table& sol_bpbc = sol_bc[i+1]["back_pressure"];
+        auto& bpbc_deck = bc_deck[i].get< tag::back_pressure >();
+
+        storeVecIfSpecd< uint64_t >(sol_bpbc, "sideset",
+          bpbc_deck.get< tag::sideset >(), {});
+
+        if (!sol_bpbc["pressure"].valid())
+          Throw("Pressure is required for back pressure BC.");
+
+        storeIfSpecd< tk::real >(sol_bpbc, "pressure",
+          bpbc_deck.get< tag::pressure >(), 0.0);
+      }
+
       // Velocity for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "velocity",
         bc_deck[i].get< tag::velocity >(), {0.0, 0.0, 0.0});
