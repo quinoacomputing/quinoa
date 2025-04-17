@@ -1311,7 +1311,7 @@ OversetFE::solve()
           // mesh displacement from translation
           dsT = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
           // mesh displacement from rotation
-          dsR = rCM[i] + m_centMass[i] - d->Coord()[i][p];
+          dsR = rCM[i] + m_centMass[i] - d->Coordn()[i][p];
           // add both contributions
           d->Coord()[i][p] = d->Coordn()[i][p] + dsT + dsR;
           // mesh velocity change from translation
