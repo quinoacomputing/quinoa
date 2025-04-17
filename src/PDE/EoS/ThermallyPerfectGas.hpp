@@ -20,7 +20,6 @@ namespace inciter {
 class ThermallyPerfectGas {
 
   private:
-    tk::real m_gamma;
     tk::real m_R;
     std::vector< std::vector< tk::real > > m_cp_coeff{3, std::vector< tk::real >(8)};
     std::vector< tk::real > m_t_range{std::vector< tk::real >(4)};
@@ -115,7 +114,6 @@ class ThermallyPerfectGas {
 
     //! Constructor
     ThermallyPerfectGas(
-      tk::real gamma,
       tk::real R,
       std::vector< std::vector< tk::real > > cp_coeff,
       std::vector< tk::real > t_range,
@@ -220,7 +218,6 @@ class ThermallyPerfectGas {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) /*override*/ {
-      p | m_gamma;
       p | m_R;
       p | m_cp_coeff;
       p | m_t_range;

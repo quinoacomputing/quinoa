@@ -18,19 +18,16 @@
 using inciter::ThermallyPerfectGas;
 
 ThermallyPerfectGas::ThermallyPerfectGas(
-  tk::real gamma,
   tk::real R,
   std::vector< std::vector< tk::real > > cp_coeff,
   std::vector< tk::real > t_range,
   tk::real dH_ref) :
-  m_gamma(gamma),
   m_R(R),
   m_cp_coeff(cp_coeff),
   m_t_range(t_range),
   m_dH_ref(dH_ref)
 // *************************************************************************
 //  Constructor
-//! \param[in] gamma Ratio of specific heats
 //! \param[in] R gas constant
 //! \param[in] cp_coeff NASA Glenn polynomials coefficients for cp fit
 //! \param[in] t_range temperature range where polynomial coeffs are valid

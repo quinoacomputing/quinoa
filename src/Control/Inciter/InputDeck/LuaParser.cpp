@@ -614,9 +614,6 @@ LuaParser::storeInputDeck(
         Assert(nspec == spci_deck.get< tag::id >().size(),
           "Number of ids in species-block not equal to number of species");
 
-        // gamma
-        checkStoreMatProp(sol_spc[i+1], "gamma", nspec,
-          spci_deck.get< tag::gamma >());
         // R
         checkStoreMatProp(sol_spc[i+1], "R", nspec,
           spci_deck.get< tag::R >());
