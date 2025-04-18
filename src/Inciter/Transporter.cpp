@@ -1085,7 +1085,7 @@ Transporter::disccreated( std::size_t summeshid, std::size_t npoin )
     m_scheme[meshid].ale().doneInserting();
 
   if (need_linearsolver())
-    m_scheme[meshid].conjugategradients().doneInserting();
+    m_scheme[meshid].bicg().doneInserting();
 
   m_scheme[meshid].disc().vol();
 }
