@@ -22,7 +22,7 @@
 #include "Print.hpp"
 #include "Around.hpp"
 #include "QuinoaBuildConfig.hpp"
-#include "ConjugateGradients.hpp"
+#include "BiCG.hpp"
 #include "ALE.hpp"
 
 #include "M2MTransfer.hpp"
@@ -41,7 +41,7 @@ Discretization::Discretization(
   std::size_t meshid,
   const std::vector< CProxy_Discretization >& disc,
   const CProxy_ALE& aleproxy,
-  const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+  const tk::CProxy_BiCG& bicgproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
   const tk::UnsMesh::CoordMap& coordmap,
@@ -101,7 +101,7 @@ Discretization::Discretization(
 //! \param[in] meshid Mesh ID
 //! \param[in] disc All Discretization proxies (one per mesh)
 //! \param[in] aleproxy Distributed ALE proxy
-//! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
+//! \param[in] bicgproxy Distributed Conjugrate Gradients linear
 //!   solver proxy
 //! \param[in] transporter Host (Transporter) proxy
 //! \param[in] meshwriter Mesh writer proxy
@@ -158,7 +158,7 @@ Discretization::Discretization(
 
   // Insert ConjugrateGradients solver chare array element if needed
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
-    m_ale[ thisIndex ].insert( conjugategradientsproxy,
+    m_ale[ thisIndex ].insert( bicgproxy,
                                m_coord, m_inpoel,
                                m_gid, m_lid, m_nodeCommMap );
   } else {

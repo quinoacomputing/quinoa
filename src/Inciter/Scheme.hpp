@@ -85,7 +85,7 @@
 #include "NoWarning/dg.decl.h"
 #include "NoWarning/fv.decl.h"
 #include "NoWarning/ale.decl.h"
-#include "NoWarning/conjugategradients.decl.h"
+#include "NoWarning/bicg.decl.h"
 #include "NoWarning/ghosts.decl.h"
 
 namespace inciter {
@@ -144,7 +144,7 @@ class Scheme {
       } else Throw( "Unknown discretization scheme" );
       if (ale) aleproxy = CProxy_ALE::ckNew(bound);
       if (linearsolver)
-        conjugategradientsproxy = tk::CProxy_ConjugateGradients::ckNew(bound);
+        bicgproxy = tk::CProxy_BiCG::ckNew(bound);
       if (centering == tk::Centering::ELEM)
         ghostsproxy = CProxy_Ghosts::ckNew(bound);
     }
@@ -245,10 +245,10 @@ class Scheme {
     //! \return ALE Charm++ chare array proxy
     CProxy_ALE& ale() noexcept { return aleproxy; }
 
-    //! Get reference to ConjugateGradients proxy
-    //! \return ConjugateGradients Charm++ chare array proxy
-    tk::CProxy_ConjugateGradients& conjugategradients() noexcept
-    { return conjugategradientsproxy; }
+    //! Get reference to BiCG proxy
+    //! \return BiCG Charm++ chare array proxy
+    tk::CProxy_BiCG& bicg() noexcept
+    { return bicgproxy; }
 
     //! Get reference to Ghosts proxy
     //! \return Ghosts Charm++ chare array proxy
@@ -280,7 +280,7 @@ class Scheme {
       p | proxy;
       p | discproxy;
       p | aleproxy;
-      p | conjugategradientsproxy;
+      p | bicgproxy;
       p | ghostsproxy;
       p | bound;
     }
@@ -298,7 +298,7 @@ class Scheme {
     //! Charm++ proxy to ALE class
     CProxy_ALE aleproxy;
     //! Charm++ proxy to conjugate gradients linear solver class
-    tk::CProxy_ConjugateGradients conjugategradientsproxy;
+    tk::CProxy_BiCG bicgproxy;
     //! Charm++ proxy to Ghosts class
     CProxy_Ghosts ghostsproxy;
     //! Charm++ array options for binding chares

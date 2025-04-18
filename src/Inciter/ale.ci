@@ -14,7 +14,6 @@
 
 module ale {
 
-  extern module conjugategradients;
   extern module bicg;
 
   include "Inciter/Options/MeshVelocitySmoother.hpp";
@@ -22,7 +21,7 @@ module ale {
   namespace inciter {
 
     array [1D] ALE {
-      entry ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+      entry ALE( const tk::CProxy_BiCG& bicgproxy,
                  const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
                  const std::vector< std::size_t >& gid,

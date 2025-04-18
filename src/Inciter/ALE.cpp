@@ -24,13 +24,13 @@ extern ctr::InputDeck g_inputdeck;
 
 using inciter::ALE;
 
-ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+ALE::ALE( const tk::CProxy_BiCG& bicgproxy,
           const std::array< std::vector< tk::real >, 3 >& coord,
           const std::vector< std::size_t >& inpoel,
           const std::vector< std::size_t >& gid,
           const std::unordered_map< std::size_t, std::size_t >& lid,
           const tk::NodeCommMap& nodeCommMap ) :
-  m_conjugategradients( conjugategradientsproxy ),
+  m_bicg( bicgproxy ),
   m_done(),
   m_nvort( 0 ),
   m_ndiv( 0 ),
@@ -58,7 +58,7 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   m_move( moveCfg() )
 // *****************************************************************************
 //  Constructor
-//! \param[in] conjugategradientsproxy Distributed Conjugrate Gradients linear
+//! \param[in] bicgproxy Distributed Conjugrate Gradients linear
 //!   solver proxy (bound to ALE proxy)
 //! \param[in] coord Mesh node coordinates
 //! \param[in] inpoel Mesh element connectivity
@@ -70,10 +70,10 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
 
   if (smoother == ctr::MeshVelocitySmootherType::LAPLACE)
-    m_conjugategradients[ thisIndex ].        // solve for mesh velocity
+    m_bicg[ thisIndex ].        // solve for mesh velocity
       insert( Laplacian( 3, coord ), gid, m_lid, m_nodeCommMap );
   else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
-    m_conjugategradients[ thisIndex ].        // solve for scalar potential
+    m_bicg[ thisIndex ].        // solve for scalar potential
       insert( Laplacian( 1, coord ), gid, m_lid, m_nodeCommMap );
 
   // Zero ALE mesh velocity
@@ -267,7 +267,7 @@ ALE::converged() const
 //! \return Solution to the Conjugate Gradients linear solve
 // *****************************************************************************
 {
-  return m_conjugategradients[ thisIndex ].ckLocal()->converged();
+  return m_bicg[ thisIndex ].ckLocal()->converged();
 }
 
 void
@@ -524,7 +524,7 @@ ALE::meshvelbc( tk::real maxv )
       if (not move(i)) wbc[i] = {{ {true,0}, {true,0}, {true,0} }};
 
     // initialize mesh velocity smoother linear solver
-    m_conjugategradients[ thisIndex ].ckLocal()->
+    m_bicg[ thisIndex ].ckLocal()->
       init( m_w.flat(), {}, wbc, ignorebc,
             CkCallback(CkIndex_ALE::applied(nullptr), thisProxy[thisIndex]) );
 
@@ -542,7 +542,7 @@ ALE::meshvelbc( tk::real maxv )
     for (std::size_t p=0; p<wveldiv.size(); ++p) wveldiv[p] *= m_vol[p];
 
     // initialize Helmholtz decomposition linear solver
-    m_conjugategradients[ thisIndex ].ckLocal()->
+    m_bicg[ thisIndex ].ckLocal()->
       init( {}, wveldiv, pbc, ignorebc,
             CkCallback(CkIndex_ALE::applied(nullptr), thisProxy[thisIndex]) );
 
@@ -569,14 +569,14 @@ ALE::applied( [[maybe_unused]] CkDataMsg* msg )
 
   if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
-    m_conjugategradients[ thisIndex ].ckLocal()->solve(
+    m_bicg[ thisIndex ].ckLocal()->solve(
        g_inputdeck.get< tag::ale, tag::maxit >(),
        g_inputdeck.get< tag::ale, tag::tolerance >(),
        CkCallback(CkIndex_ALE::solved(nullptr), thisProxy[thisIndex]) );
 
   } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
-    m_conjugategradients[ thisIndex ].ckLocal()->solve(
+    m_bicg[ thisIndex ].ckLocal()->solve(
        g_inputdeck.get< tag::ale, tag::maxit >(),
        g_inputdeck.get< tag::ale, tag::tolerance >(),
        CkCallback(CkIndex_ALE::helmholtz(nullptr), thisProxy[thisIndex]) );
@@ -601,7 +601,7 @@ ALE::helmholtz( [[maybe_unused]] CkDataMsg* msg )
 
   // compute gradient of scalar potential for ALE (own portion)
   m_gradpot = tk::grad( m_coord, m_inpoel,
-                 m_conjugategradients[ thisIndex ].ckLocal()->solution() );
+                 m_bicg[ thisIndex ].ckLocal()->solution() );
 
   // communicate scalar potential sums to other chares on chare-boundary
   if (m_nodeCommMap.empty())
@@ -682,7 +682,7 @@ ALE::solved( [[maybe_unused]] CkDataMsg* msg )
   if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
 
     // Read out linear solution
-    auto w = m_conjugategradients[ thisIndex ].ckLocal()->solution();
+    auto w = m_bicg[ thisIndex ].ckLocal()->solution();
 
     // Assign mesh velocity from linear solution skipping dimensions that are
     // not allowed to move
