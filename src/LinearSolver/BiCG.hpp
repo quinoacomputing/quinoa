@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/LinearSolver/ConjugateGradients.hpp
+  \file      src/LinearSolver/BiCG.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -9,7 +9,7 @@
   \details   Charm++ chare array for asynchronous distributed
     conjugate gradients linear solver.
 
-    There are a potentially large number of ConjugateGradients Charm++ chares.
+    There are a potentially large number of BiCG Charm++ chares.
     Each ConjugateGradient chare gets a chunk of the full load, due to partiting
     the mesh, on which the solve is performed.
 
@@ -18,19 +18,19 @@
     utilizes the structured dagger (SDAG) Charm++ functionality.
 */
 // *****************************************************************************
-#ifndef ConjugateGradients_h
-#define ConjugateGradients_h
+#ifndef BiCG_h
+#define BiCG_h
 
 #include "Types.hpp"
 #include "CSR.hpp"
 
-#include "NoWarning/conjugategradients.decl.h"
+#include "NoWarning/bicg.decl.h"
 
 namespace tk {
 
-//! \brief ConjugateGradients Charm++ chare array used to perform a distributed
+//! \brief BiCG Charm++ chare array used to perform a distributed
 //!   linear solve with the conjugate gradients algorithm
-class ConjugateGradients : public CBase_ConjugateGradients {
+class BiCG : public CBase_BiCG {
 
   public:
     #if defined(__clang__)
@@ -42,7 +42,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     #endif
     // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
     // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
-    ConjugateGradients_SDAG_CODE
+    BiCG_SDAG_CODE
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #elif defined(STRICT_GNUC)
@@ -50,7 +50,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     #endif
 
     //! Constructor
-    explicit ConjugateGradients(
+    explicit BiCG(
       const CSR& A,
       const std::vector< tk::real >& x,
       const std::vector< tk::real >& b,
@@ -63,20 +63,20 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       #pragma clang diagnostic ignored "-Wundefined-func-template"
     #endif
     //! Constructor taking a tuple of {A,x,b} by rvalue reference
-    explicit ConjugateGradients(
+    explicit BiCG(
       std::tuple< tk::CSR,
                   std::vector< tk::real >,
                   std::vector< tk::real > >&& system,
       const std::vector< std::size_t >& gid,
       const std::unordered_map< std::size_t, std::size_t >& lid,
       const NodeCommMap& nodecommmap ) :
-      ConjugateGradients( std::move(std::get<0>(system)),
+      BiCG( std::move(std::get<0>(system)),
                           std::move(std::get<1>(system)),
                           std::move(std::get<2>(system)),
                           gid, lid, nodecommmap ) {}
 
     //! Migrate constructor
-    explicit ConjugateGradients( CkMigrateMessage* ) {}
+    explicit BiCG( CkMigrateMessage* ) {}
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -115,12 +115,20 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     void comx( const std::vector< std::size_t >& gid,
                const std::vector< std::vector< tk::real > >& xc );
+    void comt( const std::vector< std::size_t >& gid,
+               const std::vector< std::vector< tk::real > >& tc );
 
     //! Compute the dot product (p,q)
     void pq( tk::real d );
+    //! Compute the dot product (t,s)
+    void ts( tk::real d );
+    //! Compute the dot product (t,t)
+    void tt( tk::real d );
 
     //! Compute the norm of the residual: (r,r)
     void normres( tk::real r );
+    //! Compute the norm of the residual 2nd step: (r,r)
+    void normresomega( tk::real r );
 
     //! Access solution
     std::vector< tk::real > solution() const { return m_x; }
@@ -140,6 +148,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_lid;
       p | m_nodeCommMap;
       p | m_r;
+      p | m_r0;
       p | m_rc;
       p | m_nr;
       p | m_bc;
@@ -148,8 +157,11 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_nb;
       p | m_p;
       p | m_q;
+      p | m_t;
       p | m_qc;
+      p | m_tc;
       p | m_nq;
+      p | m_nt;
       p | m_initres;
       p | m_solved;
       p | m_normb;
@@ -159,14 +171,15 @@ class ConjugateGradients : public CBase_ConjugateGradients {
       p | m_rho;
       p | m_rho0;
       p | m_alpha;
+      p | m_omega;
       p | m_converged;
       p | m_xc;
       p | m_nx;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] c ConjugateGradients object reference
-    friend void operator|( PUP::er& p, ConjugateGradients& c ) { c.pup(p); }
+    //! \param[in,out] c BiCG object reference
+    friend void operator|( PUP::er& p, BiCG& c ) { c.pup(p); }
     ///@}
 
   private:
@@ -184,6 +197,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     NodeCommMap m_nodeCommMap;
     //! Auxiliary vector for CG solve
     std::vector< tk::real > m_r;
+    //! Auxiliary vector for CG solve
+    std::vector< tk::real > m_r0;
     //! Receive buffer for communication of r = b - A * x
     std::unordered_map< std::size_t, std::vector< tk::real > > m_rc;
     //! Counter for assembling m_r
@@ -202,8 +217,14 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     std::vector< tk::real > m_p;
     //! Auxiliary vector for CG solve
     std::vector< tk::real > m_q;
+    //! Auxiliary vector for the CG solve 
+    std::vector< tk::real > m_t;
     //! Receive buffer for communication of q = A * p
     std::unordered_map< std::size_t, std::vector< tk::real > > m_qc;
+    //! Receive buffer for communication of t = A * s
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_tc;
+    //! Counter for assembling m_t
+    std::size_t m_nt;
     //! Counter for assembling m_q
     std::size_t m_nq;
     //! Charm++ callback to continue with when the setup is complete
@@ -224,6 +245,8 @@ class ConjugateGradients : public CBase_ConjugateGradients {
     tk::real m_rho0;
     //! Helper scalar for CG algorithm
     tk::real m_alpha;
+    //! Helper scalar for CG algorithm
+    tk::real m_omega;
     //! Convergence flag: true if linear smoother converged to tolerance
     bool m_converged;
     //! Receive buffer for solution
@@ -254,8 +277,16 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     //! Assemble solution on chare boundaries
     void x();
+
+    // Initiate computing t = A * s
+    void tAs();
+    //! Finish computing t = A * s
+    void t();
+
+    //Assemble solution on chare boundaries
+    void x2();
 };
 
 } // tk::
 
-#endif // ConjugateGradients_h
+#endif // BiCG_h

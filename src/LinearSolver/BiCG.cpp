@@ -1,6 +1,7 @@
 // *****************************************************************************
 /*!
-  \file      src/LinearSolver/ConjugateGradients.cpp
+  \file      src/LinearSolver/BiCG.cpp
+  created 2025, Christopher Long
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -13,12 +14,22 @@
     linear system A * x = b, reproduced here:
 
     Compute r0:=b-A*x0, p0:=r0
+    Pick rhat0 = r0
+    Let rho0 = rhat0^T \dot r0
     For j=0,1,..., until convergence, do
-      alpha_j := (r_j,r_j) / (Ap_j,p_j)
-      x_{j+1} := x_j + alpha_j p_j
-      r_{j+1} := r_j - alpha_j A p_j
-      beta_j := (r_{j+1},r_{j+1}) / (r_j,r_j)
-      p_{j+1} := r_{j+1} + beta_j p_j
+      alpha := rho_j / (rhat0, Ap_j)
+      h := x_j + alpha p_j
+      s := r_j - alpha A p_j
+      Exit if s is sufficient
+      t = As
+      w = (t,s)/(t,t)   //replaces beta
+
+      x_{j+1} := h + ws 
+      r_{j+1} := s - wt 
+      Exit if r_{j+1} is sufficient
+      rho_{j+1} := (rhat0, r_{j+1})  
+      beta := (rho_{j+1}/rho_{j})*(alpha/w)  
+      p_{j+1} := r_{j+1} + beta(p_j - wAp_j)
     end
 */
 // *****************************************************************************
@@ -27,12 +38,12 @@
 #include <iostream>
 
 #include "Exception.hpp"
-#include "ConjugateGradients.hpp"
+#include "BiCG.hpp"
 #include "Vector.hpp"
 
-using tk::ConjugateGradients;
+using tk::BiCG;
 
-ConjugateGradients::ConjugateGradients(
+BiCG::BiCG(
   const CSR& A,
   const std::vector< tk::real >& x,
   const std::vector< tk::real >& b,
@@ -46,6 +57,7 @@ ConjugateGradients::ConjugateGradients(
   m_lid( lid ),
   m_nodeCommMap( nodecommmap ),
   m_r( m_A.rsize(), 0.0 ),
+  m_r0( m_A.rsize(), 0.0 ),
   m_rc(),
   m_nr( 0 ),
   m_bc(),
@@ -54,8 +66,11 @@ ConjugateGradients::ConjugateGradients(
   m_nb( 0 ),
   m_p( m_A.rsize(), 0.0 ),
   m_q( m_A.rsize(), 0.0 ),
+  m_t( m_A.rsize(), 0.0 ),
   m_qc(),
+  m_tc(), //can I reuse this?
   m_nq( 0 ),
+  m_nt( 0 ),
   m_initres(),
   m_solved(),
   m_normb( 0.0 ),
@@ -64,6 +79,7 @@ ConjugateGradients::ConjugateGradients(
   m_rho( 0.0 ),
   m_rho0( 0.0 ),
   m_alpha( 0.0 ),
+  m_omega( 0.0 ),
   m_converged( false ),
   m_xc(),
   m_nx( 0 )
@@ -91,7 +107,7 @@ ConjugateGradients::ConjugateGradients(
 }
 
 void
-ConjugateGradients::setup( CkCallback c )
+BiCG::setup( CkCallback c )
 // *****************************************************************************
 //  Setup solver
 //! \param[in] c Call to continue with after initialization is complete
@@ -107,11 +123,11 @@ ConjugateGradients::setup( CkCallback c )
 
   // initiate computing norm of right hand side
   dot( m_b, m_b,
-       CkCallback( CkReductionTarget(ConjugateGradients,normb), thisProxy ) );
+       CkCallback( CkReductionTarget(BiCG,normb), thisProxy ) );
 }
 
 void
-ConjugateGradients::dot( const std::vector< tk::real >& a,
+BiCG::dot( const std::vector< tk::real >& a,
                          const std::vector< tk::real >& b,
                          CkCallback c )
 // *****************************************************************************
@@ -136,7 +152,7 @@ ConjugateGradients::dot( const std::vector< tk::real >& a,
 }
 
 void
-ConjugateGradients::normb( tk::real n )
+BiCG::normb( tk::real n )
 // *****************************************************************************
 // Compute the norm of the right hand side
 //! \param[in] n Norm of right hand side (aggregated across all chares)
@@ -147,7 +163,7 @@ ConjugateGradients::normb( tk::real n )
 }
 
 void
-ConjugateGradients::residual()
+BiCG::residual()
 // *****************************************************************************
 //  Initiate A * x for computing the initial residual, r = b - A * x
 // *****************************************************************************
@@ -177,7 +193,7 @@ ConjugateGradients::residual()
 }
 
 void
-ConjugateGradients::comres( const std::vector< std::size_t >& gid,
+BiCG::comres( const std::vector< std::size_t >& gid,
                             const std::vector< std::vector< tk::real > >& rc )
 // *****************************************************************************
 //  Receive contributions to A * x on chare-boundaries
@@ -199,7 +215,7 @@ ConjugateGradients::comres( const std::vector< std::size_t >& gid,
 }
 
 void
-ConjugateGradients::initres()
+BiCG::initres()
 // *****************************************************************************
 // Finish computing the initial residual, r = b - A * x
 // *****************************************************************************
@@ -218,14 +234,15 @@ ConjugateGradients::initres()
 
   // Initialize p
   m_p = m_r;
-
+  //Initialize r0
+  m_r0 = m_r;
   // initiate computing the dot product of the initial residual, rho = (r,r)
-  dot( m_r, m_r,
-       CkCallback( CkReductionTarget(ConjugateGradients,rho), thisProxy ) );
+  dot( m_r0, m_r,
+       CkCallback( CkReductionTarget(BiCG,rho), thisProxy ) );
 }
 
 void
-ConjugateGradients::rho( tk::real r )
+BiCG::rho( tk::real r )
 // *****************************************************************************
 // Compute rho = (r,r)
 //! \param[in] r Dot product, rho = (r,r) (aggregated across all chares)
@@ -239,7 +256,7 @@ ConjugateGradients::rho( tk::real r )
 }
 
 void
-ConjugateGradients::init(
+BiCG::init(
   const std::vector< tk::real >& x,
   const std::vector< tk::real >& b,
   const std::unordered_map< std::size_t,
@@ -306,7 +323,7 @@ ConjugateGradients::init(
 }
 
 void
-ConjugateGradients::combc(
+BiCG::combc(
   const std::unordered_map< std::size_t,
      std::vector< std::pair< bool, tk::real > > >& bc )
 // *****************************************************************************
@@ -323,7 +340,7 @@ ConjugateGradients::combc(
 }
 
 void
-ConjugateGradients::apply( CkCallback cb )
+BiCG::apply( CkCallback cb )
 // *****************************************************************************
 //  Apply boundary conditions
 //! \param[in] cb Call to continue with after applying the BCs is complete
@@ -355,7 +372,7 @@ ConjugateGradients::apply( CkCallback cb )
 }
 
 void
-ConjugateGradients::solve( std::size_t maxit, tk::real tol, CkCallback c )
+BiCG::solve( std::size_t maxit, tk::real tol, CkCallback c )
 // *****************************************************************************
 //  Solve linear system
 //! \param[in] maxit Max iteration count
@@ -372,16 +389,22 @@ ConjugateGradients::solve( std::size_t maxit, tk::real tol, CkCallback c )
 }
 
 void
-ConjugateGradients::next()
+BiCG::next()
 // *****************************************************************************
 //  Start next linear solver iteration
 // *****************************************************************************
 {
-  if (m_it == 0) m_alpha = 0.0; else m_alpha = m_rho/m_rho0;
+  if (m_it == 0) {
+     m_alpha = 0.0;
+     m_omega=0.0;
+     
+  }else{
+     m_alpha = m_rho/m_rho0; //alpha functions as Beta??
+  }
   m_rho0 = m_rho;
 
   // compute p = r + alpha * p
-  for (std::size_t i=0; i<m_p.size(); ++i) m_p[i] = m_r[i] + m_alpha * m_p[i];
+  for (std::size_t i=0; i<m_p.size(); ++i) m_p[i] = m_r[i] + m_alpha * ( m_p[i] - m_omega * m_q[i] );
 
   // initiate computing q = A * p
   thisProxy[ thisIndex ].wait4q();
@@ -390,7 +413,7 @@ ConjugateGradients::next()
 
 
 void
-ConjugateGradients::qAp()
+BiCG::qAp()
 // *****************************************************************************
 //  Initiate computing q = A * p
 // *****************************************************************************
@@ -420,7 +443,7 @@ ConjugateGradients::qAp()
 }
 
 void
-ConjugateGradients::comq( const std::vector< std::size_t >& gid,
+BiCG::comq( const std::vector< std::size_t >& gid,
                           const std::vector< std::vector< tk::real > >& qc )
 // *****************************************************************************
 //  Receive contributions to q = A * p on chare-boundaries
@@ -442,7 +465,7 @@ ConjugateGradients::comq( const std::vector< std::size_t >& gid,
 }
 
 void
-ConjugateGradients::q()
+BiCG::q()
 // *****************************************************************************
 // Finish computing q = A * p
 // *****************************************************************************
@@ -456,13 +479,13 @@ ConjugateGradients::q()
   }
   tk::destroy( m_qc );
 
-  // initiate computing (p,q)
-  dot( m_p, m_q,
-       CkCallback( CkReductionTarget(ConjugateGradients,pq), thisProxy ) );
+  //BiCGStab uses (rhat_0,q), initiate here
+  dot( m_r0, m_q,
+       CkCallback( CkReductionTarget(BiCG,pq), thisProxy ) );
 }
 
 void
-ConjugateGradients::pq( tk::real d )
+BiCG::pq( tk::real d )
 // *****************************************************************************
 // Compute the dot product (p,q)
 //! \param[in] d Dot product of (p,q) (aggregated across all chares)
@@ -479,16 +502,16 @@ ConjugateGradients::pq( tk::real d )
     m_alpha = m_rho / d;
   }
 
-  // compute r = r - alpha * q
+  // compute s = r - alpha * q
   for (std::size_t i=0; i<m_r.size(); ++i) m_r[i] -= m_alpha * m_q[i];
 
   // initiate computing norm of residual: (r,r)
   dot( m_r, m_r,
-       CkCallback( CkReductionTarget(ConjugateGradients,normres), thisProxy ) );
+       CkCallback( CkReductionTarget(BiCG,normres), thisProxy ) );
 }
 
 void
-ConjugateGradients::normres( tk::real r )
+BiCG::normres( tk::real r )
 // *****************************************************************************
 // Compute norm of residual: (r,r)
 //! \param[in] r Dot product, (r,r) (aggregated across all chares)
@@ -496,7 +519,7 @@ ConjugateGradients::normres( tk::real r )
 {
   m_rho = r;
 
-  // Advance solution: x = x + alpha * p
+  // Advance solution: h = x + alpha * p
   for (std::size_t i=0; i<m_x.size(); ++i) m_x[i] += m_alpha * m_p[i];
 
   // Communicate solution
@@ -524,7 +547,7 @@ ConjugateGradients::normres( tk::real r )
 }
 
 void
-ConjugateGradients::comx( const std::vector< std::size_t >& gid,
+BiCG::comx( const std::vector< std::size_t >& gid,
                           const std::vector< std::vector< tk::real > >& xc )
 // *****************************************************************************
 //  Receive contributions to final solution on chare-boundaries
@@ -543,7 +566,202 @@ ConjugateGradients::comx( const std::vector< std::size_t >& gid,
 }
 
 void
-ConjugateGradients::x()
+BiCG::x()
+// *****************************************************************************
+// Assemble solution on chare boundaries
+// *****************************************************************************
+{
+  // Assemble solution on chare boundaries by averaging
+  auto ncomp = m_A.Ncomp();
+  for (const auto& [g,x] : m_xc) {
+    auto i = tk::cref_find(m_lid,g);
+    for (std::size_t d=0; d<ncomp; ++d) m_x[i*ncomp+d] += x[d];
+    auto c = tk::count(m_nodeCommMap,g);
+    for (std::size_t d=0; d<ncomp; ++d) m_x[i*ncomp+d] /= c;
+  }
+  tk::destroy( m_xc );
+
+  //++m_it;//Don't iterate counter yet!
+  auto normb = m_normb > 1.0e-14 ? m_normb : 1.0;
+  auto normr = std::sqrt( m_rho );
+
+  if ( m_it < m_maxit && normr > m_tol*normb ) { //If we are not solved, continue, else exit
+                                                 //Here is where we significantly diverge from regular CG as we dont' go to "next()" yet
+    //next();
+  // initiate computing t = A * s  ;
+    thisProxy[ thisIndex ].wait4t();
+    tAs();
+
+  } else {
+
+    m_converged = m_it == m_maxit && normr > m_tol*normb ? false : true;
+    m_solved.send( CkDataMsg::buildNew( sizeof(tk::real), &normr ) );
+
+  }
+}
+
+void
+BiCG::tAs()
+// *****************************************************************************
+//  Initiate computing t = A * s
+// *****************************************************************************
+{
+  // Compute own contribution to t = A * s
+  m_A.mult( m_r, m_t, m_bcmask );
+
+  // Send partial product on chare-boundary nodes to fellow chares
+  if (m_nodeCommMap.empty()) {
+    comt_complete();
+  } else {
+    auto ncomp = m_A.Ncomp();
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::vector< std::vector< tk::real > > tc( n.size() );
+      std::size_t j = 0;
+      for (auto g : n) {
+        std::vector< tk::real > nt( ncomp );
+        auto i = tk::cref_find( m_lid, g );
+        for (std::size_t d=0; d<ncomp; ++d) nt[d] = m_t[ i*ncomp+d ];
+        tc[j++] = std::move(nt);
+      }
+      thisProxy[c].comt( std::vector<std::size_t>(begin(n),end(n)), tc );
+    }
+  }
+
+  ownt_complete();
+}
+
+void
+BiCG::comt( const std::vector< std::size_t >& gid,
+                          const std::vector< std::vector< tk::real > >& tc )
+// *****************************************************************************
+//  Receive contributions to t = A * s on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive contributions
+//! \param[in] tc Partial contributions at chare-boundary nodes
+// *****************************************************************************
+{
+  Assert( tc.size() == gid.size(), "Size mismatch" );
+
+  using tk::operator+=;
+
+  for (std::size_t i=0; i<gid.size(); ++i)
+    m_tc[ gid[i] ] += tc[i];
+
+  if (++m_nt == m_nodeCommMap.size()) {
+    m_nt = 0;
+    comt_complete();
+  }
+}
+
+
+void
+BiCG::t()
+// *****************************************************************************
+// Finish computing t = A * s
+// *****************************************************************************
+{
+  // Combine own and communicated contributions to t = A * s
+  auto ncomp = m_A.Ncomp();
+  for (const auto& [gid,t] : m_tc) {
+    auto i = tk::cref_find( m_lid, gid );
+    for (std::size_t c=0; c<ncomp; ++c)
+      m_t[i*ncomp+c] += t[c];
+  }
+  tk::destroy( m_tc );
+
+  //omega = (t,s)/(t,t).  Compute numerator
+  dot( m_t, m_r,
+       CkCallback( CkReductionTarget(BiCG,ts), thisProxy ) );
+}
+void
+BiCG::ts( tk::real d )
+// *****************************************************************************
+// Compute the dot product (t,s)
+//! \param[in] d Dot product of (t,s) (aggregated across all chares)
+// *****************************************************************************
+{
+  // If (t,s)=0, then p and q are orthogonal and the system either has a trivial
+  // solution, x=x0, or the BCs are incomplete or wrong, in either case the
+  // solve cannot continue.
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  if (std::abs(d) < eps) {
+    m_it = m_maxit;
+    m_alpha = 0.0;
+  }
+  else {
+    m_omega = d; //numerator set
+  }
+  dot( m_t, m_t, //compute denominator
+       CkCallback( CkReductionTarget(BiCG,tt), thisProxy ) );
+
+//  // compute s = r - alpha * q
+//  for (std::size_t i=0; i<m_r.size(); ++i) m_r[i] -= m_alpha * m_q[i];
+
+  // initiate computing norm of residual: (r,r)
+  //dot( m_r, m_r,
+  //     CkCallback( CkReductionTarget(BiCG,normres), thisProxy ) );
+}
+void
+BiCG::tt( tk::real d )
+// *****************************************************************************
+// Compute the dot product (t,t)
+//! \param[in] d Dot product of (t,t) (aggregated across all chares)
+// *****************************************************************************
+{
+  // If (t,t)=0, then p and q are orthogonal and the system either has a trivial
+  // solution, x=x0, or the BCs are incomplete or wrong, in either case the
+  // solve cannot continue.
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  if (std::abs(d) < eps) {
+    m_it = m_maxit;
+    m_alpha = 0.0;
+  }
+  else {
+    m_omega = m_omega/d; //d is denominator
+  }
+
+  //compute x = h + omega * s
+  for (std::size_t i=0; i<m_x.size(); ++i) m_x[i] += m_omega * m_r[i];
+  // Now update r:  compute r = s - omega * t
+  for (std::size_t i=0; i<m_r.size(); ++i) m_r[i] -= m_omega * m_t[i];
+
+  // initiate computing norm of residual: (r0,r) for assigning to new rho
+  dot( m_r0, m_r,
+       CkCallback( CkReductionTarget(BiCG,normresomega), thisProxy ) );
+}
+void
+BiCG::normresomega( tk::real r )
+// *****************************************************************************
+// Compute norm of residual: (r,r) for second half of bicgstab
+//! \param[in] r Dot product, (r,r) (aggregated across all chares)
+// *****************************************************************************
+{
+  m_rho = r;
+
+  // Communicate solution
+  thisProxy[ thisIndex ].wait4x2();
+
+  // Send solution on chare-boundary nodes to fellow chares
+  if (m_nodeCommMap.empty()) {
+    comx2_complete();  //Does this need to be unique?
+  } else {
+    auto ncomp = m_A.Ncomp();
+    for (const auto& [c,n] : m_nodeCommMap) {
+      std::vector< std::vector< tk::real > > xc( n.size() );
+      std::size_t j = 0;
+      for (auto g : n) {
+        std::vector< tk::real > nx( ncomp );
+        auto i = tk::cref_find( m_lid, g );
+        for (std::size_t d=0; d<ncomp; ++d) nx[d] = m_x[ i*ncomp+d ];
+        xc[j++] = std::move(nx);
+      }
+      thisProxy[c].comx( std::vector<std::size_t>(begin(n),end(n)), xc );
+    }
+  }
+
+  ownx2_complete();
+}
+void
+BiCG::x2()
 // *****************************************************************************
 // Assemble solution on chare boundaries
 // *****************************************************************************
@@ -562,7 +780,7 @@ ConjugateGradients::x()
   auto normb = m_normb > 1.0e-14 ? m_normb : 1.0;
   auto normr = std::sqrt( m_rho );
 
-  if ( m_it < m_maxit && normr > m_tol*normb ) {
+  if ( m_it < m_maxit && normr > m_tol*normb ) { //If we are not solved, continue, else exit
 
     next();
 
@@ -574,4 +792,4 @@ ConjugateGradients::x()
   }
 }
 
-#include "NoWarning/conjugategradients.def.h"
+#include "NoWarning/bicg.def.h"

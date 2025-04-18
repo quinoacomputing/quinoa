@@ -15,6 +15,7 @@
 module ale {
 
   extern module conjugategradients;
+  extern module bicg;
 
   include "Inciter/Options/MeshVelocitySmoother.hpp";
 

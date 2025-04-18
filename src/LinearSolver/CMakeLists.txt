@@ -5,7 +5,8 @@ include(charm)
 
 add_library(LinearSolver
             CSR.cpp
-            ConjugateGradients.cpp)
+            ConjugateGradients.cpp
+	    BiCG.cpp)
 
 target_include_directories(LinearSolver PUBLIC
                            ${QUINOA_SOURCE_DIR}
@@ -24,6 +25,7 @@ set_target_properties(LinearSolver PROPERTIES LIBRARY_OUTPUT_NAME
                       quinoa_linearsolver)
 
 addCharmModule( "conjugategradients" "LinearSolver" )
+addCharmModule( "bicg" "LinearSolver" )
 
 INSTALL(TARGETS LinearSolver
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
