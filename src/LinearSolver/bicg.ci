@@ -1,0 +1,110 @@
+// *****************************************************************************
+/*!
+  Created 2025, Christopher Long
+  \file      src/LinearSolver/bicg.ci
+  \copyright 2012-2015 J. Bakosi,
+             2016-2018 Los Alamos National Security, LLC.,
+             2019-2021 Triad National Security, LLC.
+             All rights reserved. See the LICENSE file for details.
+  \brief     Charm++ module interface for distributed conjugate gradients
+  \details   Charm++ module interface file for asynchronous distributed
+    conjugate gradients linear solver.
+  \see       bicg.[ch]pp for more info.
+*/
+// *****************************************************************************
+
+module bicg {
+
+  include "CSR.hpp";
+  include "CommMap.hpp";
+
+  namespace tk {
+
+    array [1D] BiCG {
+      entry BiCG(
+              const CSR& A,
+              const std::vector< tk::real >& x,
+              const std::vector< tk::real >& b,
+              const std::vector< std::size_t >& gid,
+              const std::unordered_map< std::size_t, std::size_t >& lid,
+              const NodeCommMap& nodecommmap );
+      entry BiCG(
+              std::tuple< tk::CSR,
+                          std::vector< tk::real >,
+                          std::vector< tk::real > >&& system,
+              const std::vector< std::size_t >& gid,
+              const std::unordered_map< std::size_t, std::size_t >& lid,
+              const NodeCommMap& nodecommmap );
+      entry void init( const std::vector< tk::real >& x,
+                       const std::vector< tk::real >& b,
+                       const std::unordered_map< std::size_t,
+                         std::vector< std::pair< bool, tk::real > > >& bc,
+                       std::size_t ignorebc,
+                       CkCallback cb );
+      entry void setup( CkCallback cb );
+      entry void solve( std::size_t maxit, tk::real stop_tol, CkCallback c );
+      entry [reductiontarget] void normb( tk::real n );
+      entry [reductiontarget] void rho( tk::real r );
+      entry [reductiontarget] void pq( tk::real n );
+      entry [reductiontarget] void tt( tk::real n );
+      entry [reductiontarget] void ts( tk::real n );
+      entry [reductiontarget] void normres( tk::real r );
+      entry [reductiontarget] void normresomega( tk::real r );
+      entry void comres( const std::vector< std::size_t >& gid,
+                         const std::vector< std::vector< tk::real > >& rc );
+      entry void combc( const std::unordered_map< std::size_t,
+                          std::vector< std::pair< bool, tk::real > > >& bc );
+      entry void comq( const std::vector< std::size_t >& gid,
+                       const std::vector< std::vector< tk::real > >& qc );
+      entry void comx( const std::vector< std::size_t >& gid,
+                       const std::vector< std::vector< tk::real > >& xc );
+      entry void comt( const std::vector< std::size_t >& gid,
+                       const std::vector< std::vector< tk::real > >& tc );
+
+      // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+
+      entry void wait4res() {
+        when ownres_complete(), comres_complete(), normb_complete()
+        serial "res" { initres(); }
+      }
+
+      entry void wait4bc() {
+        when ownbc_complete( CkCallback cb ), combc_complete()
+          serial "bc" { apply( cb ); }
+      }
+
+      entry void wait4q() {
+        when ownq_complete(), comq_complete() serial "q" { q(); }
+      }
+
+      entry void wait4x() {
+        when ownx_complete(), comx_complete() serial "x" { x(); }
+      }
+
+      entry void wait4t() {
+        when ownt_complete(), comt_complete() serial "t" { t(); }
+      }
+
+      entry void wait4x2() {
+        when ownx2_complete(), comx2_complete() serial "x" { x2(); }
+      }
+
+      entry void ownres_complete();
+      entry void comres_complete();
+      entry void normb_complete();
+      entry void ownbc_complete( CkCallback cb );
+      entry void combc_complete();
+      entry void ownq_complete();
+      entry void comq_complete();
+      entry void ownx_complete();
+      entry void comx_complete();
+      entry void ownt_complete();
+      entry void comt_complete();
+      entry void ownx2_complete();
+      entry void comx2_complete();
+    };
+
+  } // tk::
+
+}
