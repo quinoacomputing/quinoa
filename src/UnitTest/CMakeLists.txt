@@ -75,11 +75,11 @@ if (ENABLE_INCITER)
                               "fvCharmModule"
                               "aleCharmModule"
                               "ghostsCharmModule"
-                              "conjugategradientsCharmModule"
+                              "bicgCharmModule"
                               "discretizationCharmModule"
                               "transporterCharmModule")
 else()
-  add_dependencies("UnitTest" "conjugategradientsCharmModule")
+  add_dependencies("UnitTest" "bicgCharmModule")
 endif()
 
 # Add extra dependency of TUTSuite on charm modules testing advanced array

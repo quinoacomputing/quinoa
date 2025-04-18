@@ -47,7 +47,7 @@ module tutsuite {
   extern module linearmap;
   extern module unsmeshmap;
   extern module testarray;
-  extern module conjugategradients;
+  extern module bicg;
   extern module cgreceiver;
 
   namespace unittest {

@@ -66,7 +66,7 @@ class Discretization : public CBase_Discretization {
         std::size_t meshid,
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_ALE& aleproxy,
-        const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+        const tk::CProxy_BiCG& bicgproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const tk::UnsMesh::CoordMap& coordmap,

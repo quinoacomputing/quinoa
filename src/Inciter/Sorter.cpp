@@ -575,7 +575,7 @@ Sorter::createDiscWorkers()
 
   m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, disc,
     m_scheme[m_meshid].ale(),
-    m_scheme[m_meshid].conjugategradients(), m_host, m_meshwriter, m_coordmap,
+    m_scheme[m_meshid].bicg(), m_host, m_meshwriter, m_coordmap,
     m_el, m_msum, m_bface, m_triinpoel, m_elemblockid, m_nchare );
 
   contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,
