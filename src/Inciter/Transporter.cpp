@@ -501,6 +501,9 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
       for (auto i : b.get< tag::sideset >())
         usedsets.insert(static_cast<int>(i));
     }
+    const auto& bp = bci.get< tag::back_pressure >();
+    for (auto i : bp.get< tag::sideset >())
+      usedsets.insert(static_cast<int>(i));
   }
 
   // Query side sets of boundaries prescribed as moving with ALE

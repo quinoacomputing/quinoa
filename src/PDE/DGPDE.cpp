@@ -40,6 +40,28 @@ void ConfigInletBC( BCStateFn& s,
   }
 }
 
+void ConfigBackPressureBC( BCStateFn& s,
+                           const tk::StateFn& f,
+                           const tk::StateFn& gf )
+// *****************************************************************************
+// Extract information from input deck on back pressure boundary conditions,
+// and append to BC configuration vector
+//! \param[inout] s BC configuration vector
+//! \param[in] f Function to evaluate the left and right solution state at
+//!   boundaries
+//! \param[in] gf Function to evaluate the left and right solution gradients
+//!   at boundaries
+// *****************************************************************************
+{
+  const auto& bc = g_inputdeck.get< tag::bc >();
+  std::vector< std::size_t > v;
+  for (const auto& ib : bc) {
+    const auto& sideset = ib.get< tag::back_pressure >().get< tag::sideset >();
+    v.insert(v.end(), sideset.begin(), sideset.end());
+    s.push_back( { v, f, gf } );
+  }
+}
+
 [[noreturn]] tk::StateFn::result_type
 invalidBC( ncomp_t, const std::vector< EOS >&,
            const std::vector< tk::real >&, tk::real, tk::real, tk::real,
