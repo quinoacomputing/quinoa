@@ -50,7 +50,8 @@ using bclist = tk::TaggedTuple< brigand::list<
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >
+  tag::noslipwall,  std::vector< std::size_t >,
+  tag::slipwall,    std::vector< std::size_t >
 > >;
 
 // Transport
@@ -146,6 +147,7 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
   tag::noslipwall,  std::vector< std::size_t >,
+  tag::slipwall,    std::vector< std::size_t >,
   tag::velocity,    std::vector< tk::real >,
   tag::pressure,    tk::real,
   tag::density,     tk::real,
@@ -1728,6 +1730,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"noslipwall",
         "List sidesets with no-slip wall boundary conditions",
         R"(This keyword is used to list (multiple) no-slip wall BC sidesets.)",
+        "vector of uint(s)"});
+
+      keywords.insert({"slipwall",
+        "List sidesets with slip wall boundary conditions",
+        R"(This keyword is used to list (multiple) slip wall BC sidesets.)",
         "vector of uint(s)"});
 
       keywords.insert({"timedep",
