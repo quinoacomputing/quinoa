@@ -236,6 +236,17 @@ class CGPDE {
                 const std::unordered_set< std::size_t >& nodes ) const
     { self->farfieldbc( U, coord, bnorm, nodes ); }
 
+    //! Public interface to set slip wall boundary conditions at nodes
+    void
+    slipwallbc( tk::Fields& U,
+           const tk::Fields& W,
+           const std::array< std::vector< real >, 3 >& coord,
+           const std::unordered_map< int,
+                   std::unordered_map< std::size_t,
+                     std::array< real, 4 > > >& bnorm,
+           const std::unordered_set< std::size_t >& nodes ) const
+    { self->slipwallbc( U, W, coord, bnorm, nodes ); }
+
     //! Public interface to applying time dependent boundary conditions at nodes
     void
     timedepbc( tk::real t,
@@ -399,6 +410,14 @@ class CGPDE {
                 std::unordered_map< std::size_t,
                   std::array< real, 4 > > >&,
         const std::unordered_set< std::size_t >& ) const = 0;
+      virtual void slipwallbc(
+        tk::Fields& U,
+        const tk::Fields& W,
+        const std::array< std::vector< real >, 3 >&,
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< real, 4 > > >&,
+        const std::unordered_set< std::size_t >& ) const = 0;
       virtual void timedepbc(
         tk::real,
         tk::Fields&,
@@ -537,6 +556,15 @@ class CGPDE {
                   std::array< real, 4 > > >& bnorm,
         const std::unordered_set< std::size_t >& nodes ) const override
       { data.farfieldbc( U, coord, bnorm, nodes ); }
+      void slipwallbc(
+        tk::Fields& U,
+        const tk::Fields& W,
+        const std::array< std::vector< real >, 3 >& coord,
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< real, 4 > > >& bnorm,
+        const std::unordered_set< std::size_t >& nodes ) const override
+      { data.slipwallbc( U, W, coord, bnorm, nodes ); }
       void
       timedepbc(
         tk::real t,

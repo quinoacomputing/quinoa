@@ -856,6 +856,51 @@ class CompFlow {
           }
     }
 
+    //! Set slip wall boundary conditions at nodes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] W Mesh velocity
+    //! \param[in] bnorm Face normals in boundary points, key local node id,
+    //!   first 3 reals of value: unit normal, outer key: side set id
+    //! \param[in] nodes Unique set of node ids at which to set slip BCs
+    void
+    slipwallbc( tk::Fields& U,
+           const tk::Fields& W,
+           const std::array< std::vector< real >, 3 >&,
+           const std::unordered_map< int,
+             std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
+           const std::unordered_set< std::size_t >& nodes ) const
+    {
+      // collect sidesets across all meshes
+      std::vector< std::size_t > swbc;
+      for (const auto& ibc : g_inputdeck.get< tag::bc >()) {
+        swbc.insert(swbc.end(), ibc.get< tag::slipwall >().begin(),
+          ibc.get< tag::slipwall >().end());
+      }
+
+      if (swbc.size() > 0) {             // use slip bcs for this system
+        for (auto p : nodes) {                 // for all slipbc nodes
+          // for all user-def slipbc sets
+          for (std::size_t s=0; s<swbc.size(); ++s) {
+            // find nodes & normals for side
+            auto j = bnorm.find(static_cast<int>(swbc[s]));
+            if (j != end(bnorm)) {
+              auto i = j->second.find(p);      // find normal for node
+              if (i != end(j->second)) {
+                std::array< real, 3 >
+                  n{ i->second[0], i->second[1], i->second[2] },
+                  rel_v{ U(p,1) - W(p,0), U(p,2) - W(p,1), U(p,3) - W(p,2) };
+                auto rel_v_dot_n = tk::dot( rel_v, n );
+                // slip wall bc: remove normal component of relative velocity
+                U(p,1) -= rel_v_dot_n * n[0];
+                U(p,2) -= rel_v_dot_n * n[1];
+                U(p,3) -= rel_v_dot_n * n[2];
+              }
+            }
+          }
+        }
+      }
+    }
+
     //! Apply user defined time dependent BCs
     //! \param[in] t Physical time
     //! \param[in,out] U Solution vector at recent time step
