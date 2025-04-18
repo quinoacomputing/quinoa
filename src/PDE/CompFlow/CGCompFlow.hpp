@@ -483,14 +483,14 @@ class CompFlow {
     //! Compute boundary pressure integrals (force) for rigid body motion
     //! \param[in] coord Mesh node coordinates
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
-    //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
+    //! \param[in] slipwallbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in] CM Center of mass
     //! \param[in,out] F Force vector (appended with torque vector) computed
     void bndPressureInt(
       const std::array< std::vector< real >, 3 >& coord,
       const std::vector< std::size_t >& triinpoel,
-      const std::vector< int >& symbctri,
+      const std::vector< int >& slipwallbctri,
       const tk::Fields& U,
       const std::array< tk::real, 3 >& CM,
       std::vector< real >& F ) const
@@ -503,7 +503,7 @@ class CompFlow {
 
       // boundary integrals: compute surface integral of pressure (=force)
       for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
-        if (symbctri[e]) {
+        if (slipwallbctri[e]) {
         // access node IDs
         std::size_t N[3] =
           { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
