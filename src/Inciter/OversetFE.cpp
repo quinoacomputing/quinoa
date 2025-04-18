@@ -81,7 +81,9 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_bnormc(),
   m_symbcnodes(),
   m_farfieldbcnodes(),
+  m_slipwallbcnodes(),
   m_symbctri(),
+  m_slipwallbctri(),
   m_timedepbcnodes(),
   m_timedepbcFn(),
   m_stage( 0 ),
@@ -181,14 +183,36 @@ OversetFE::getBCNodes()
   for (const auto& [s,nodes] : far)
     m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
 
-  // If farfield BC is set on a node, will not also set symmetry BC
-  for (auto fn : m_farfieldbcnodes) m_symbcnodes.erase(fn);
+  // Prepare unique set of slip wall BC nodes
+  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
+  for (const auto& [s,nodes] : slip)
+    m_slipwallbcnodes.insert( begin(nodes), end(nodes) );
 
-  // Prepare boundary nodes contiguously accessible from a triangle-face loop
+  // If farfield BC is set on a node, will not also set symmetry and slip BC
+  for (auto fn : m_farfieldbcnodes) {
+    m_symbcnodes.erase(fn);
+    m_slipwallbcnodes.erase(fn);
+  }
+
+  // If symmetry BC is set on a node, will not also set slip BC
+  for (auto fn : m_symbcnodes) {
+    m_slipwallbcnodes.erase(fn);
+  }
+
+  // Prepare boundary nodes contiguously accessible from a triangle-face loop,
+  // which contain both symmetry and no slip walls
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
+    if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes) ||
+        m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
       m_symbctri[e] = 1;
+
+  // Prepare the above for slip walls, which are needed for pressure integrals
+  // to obtain force on overset walls
+  m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
+  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
+    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+      m_slipwallbctri[e] = 1;
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -938,6 +962,10 @@ OversetFE::BC()
           g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
         }
 
+        // Apply slip wall BCs
+        g_cgpde[d->MeshId()].slipwallbc( m_u, d->MeshVel(), coord, m_bnorm,
+          m_slipwallbcnodes );
+
         // Apply user defined time dependent BCs
         g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
           m_timedepbcFn );
@@ -1016,7 +1044,7 @@ OversetFE::dt()
   std::vector< tk::real > F(6, 0.0);
   if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
     && d->MeshId() > 0) {
-    g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_symbctri,
+    g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_slipwallbctri,
       m_u, m_centMass, F );
   }
 
@@ -1350,7 +1378,8 @@ OversetFE::solve()
   if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
     diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
-                                    m_symbcnodes, m_farfieldbcnodes );
+                                    m_symbcnodes, m_farfieldbcnodes,
+                                    m_slipwallbcnodes );
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping

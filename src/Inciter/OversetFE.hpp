@@ -222,7 +222,9 @@ class OversetFE : public CBase_OversetFE {
       p | m_bnormc;
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
+      p | m_slipwallbcnodes;
       p | m_symbctri;
+      p | m_slipwallbctri;
       p | m_timedepbcnodes;
       p | m_timedepbcFn;
       p | m_stage;
@@ -338,8 +340,12 @@ class OversetFE : public CBase_OversetFE {
     std::unordered_set< std::size_t > m_symbcnodes;
     //! Unique set of nodes at which farfield BCs are set
     std::unordered_set< std::size_t > m_farfieldbcnodes;
+    //! Unique set of nodes at which slip wall BCs are set
+    std::unordered_set< std::size_t > m_slipwallbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
+    //! Vector with 1 at slip wall BC boundary triangles
+    std::vector< int > m_slipwallbctri;
     //! \brief Unique set of nodes at which time dependent BCs are set
     //    for each time dependent BC
     std::vector< std::unordered_set< std::size_t > > m_timedepbcnodes;
