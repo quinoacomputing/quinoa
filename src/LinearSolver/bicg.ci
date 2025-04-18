@@ -87,7 +87,7 @@ module bicg {
       }
 
       entry void wait4x2() {
-        when ownx2_complete(), comx2_complete() serial "x" { x2(); }
+        when ownx2_complete(), comx2_complete() serial "x2" { x2(); }
       }
 
       entry void ownres_complete();
