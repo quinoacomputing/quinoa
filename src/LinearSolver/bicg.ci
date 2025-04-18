@@ -60,6 +60,8 @@ module bicg {
                        const std::vector< std::vector< tk::real > >& xc );
       entry void comt( const std::vector< std::size_t >& gid,
                        const std::vector< std::vector< tk::real > >& tc );
+      entry void comx2( const std::vector< std::size_t >& gid,
+                       const std::vector< std::vector< tk::real > >& xc );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".

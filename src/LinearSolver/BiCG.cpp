@@ -754,7 +754,7 @@ BiCG::normresomega( tk::real r )
         for (std::size_t d=0; d<ncomp; ++d) nx[d] = m_x[ i*ncomp+d ];
         xc[j++] = std::move(nx);
       }
-      thisProxy[c].comx( std::vector<std::size_t>(begin(n),end(n)), xc );
+      thisProxy[c].comx2( std::vector<std::size_t>(begin(n),end(n)), xc );
     }
   }
 
@@ -792,4 +792,22 @@ BiCG::x2()
   }
 }
 
+void
+BiCG::comx2( const std::vector< std::size_t >& gid,
+                          const std::vector< std::vector< tk::real > >& xc )
+// *****************************************************************************
+//  Receive contributions to final solution on chare-boundaries
+//! \param[in] gid Global mesh node IDs at which we receive contributions
+//! \param[in] xc Partial contributions at chare-boundary nodes
+// *****************************************************************************
+{
+  Assert( xc.size() == gid.size(), "Size mismatch" );
+
+  for (std::size_t i=0; i<gid.size(); ++i) m_xc[ gid[i] ] += xc[i];
+
+  if (++m_nx == m_nodeCommMap.size()) {
+    m_nx = 0;
+    comx2_complete();
+  }
+}
 #include "NoWarning/bicg.def.h"
