@@ -291,6 +291,7 @@ DEFTAG(farfield);
 DEFTAG(extrapolate);
 DEFTAG(noslipwall);
 DEFTAG(timedep);
+DEFTAG(slipwall);
 
 DEFTAG(rigid_body_motion);
 DEFTAG(rigid_body_movt);
