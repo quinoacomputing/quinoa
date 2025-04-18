@@ -117,6 +117,8 @@ class BiCG : public CBase_BiCG {
                const std::vector< std::vector< tk::real > >& xc );
     void comt( const std::vector< std::size_t >& gid,
                const std::vector< std::vector< tk::real > >& tc );
+    void comx2( const std::vector< std::size_t >& gid,
+               const std::vector< std::vector< tk::real > >& xc );
 
     //! Compute the dot product (p,q)
     void pq( tk::real d );
