@@ -414,6 +414,17 @@ class Transport {
                 std::array< real, 4 > > >&,
       const std::unordered_set< std::size_t >& ) const {}
 
+    //! Set slip wall boundary conditions at nodes
+    void
+    slipwallbc(
+      tk::Fields&,
+      const tk::Fields&,
+      const std::array< std::vector< real >, 3 >&,
+      const std::unordered_map< int,
+              std::unordered_map< std::size_t,
+                std::array< real, 4 > > >&,
+      const std::unordered_set< std::size_t >& ) const {}
+
     //! Apply user defined time dependent BCs (no-op for transport)
     void
     timedepbc( tk::real,
