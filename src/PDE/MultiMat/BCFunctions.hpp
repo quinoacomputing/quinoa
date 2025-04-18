@@ -466,18 +466,15 @@ namespace inciter {
   //!   face at back pressure boundaries
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
-  //! \param[in] fn Unit face normal
   //! \return Left and right states for all scalar components in this PDE
   //!   system
-  //! \details The back pressure boundary calculation, implemented here, is
-  //!   based on the characteristic theory of hyperbolic systems.
   //! \note The function signature must follow tk::StateFn
   static tk::StateFn::result_type
   back_pressure( ncomp_t ncomp,
                  const std::vector< EOS >& mat_blk,
                  const std::vector< tk::real >& ul,
                  tk::real, tk::real, tk::real, tk::real,
-                 const std::array< tk::real, 3 >& fn )
+                 const std::array< tk::real, 3 >& )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -498,38 +495,16 @@ namespace inciter {
     auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
     auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
 
-    // Normal velocity
-    auto vn = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
+    // The ghost cell state is calculated using the back pressure and other
+    // quantities from the internal cell
+    for (std::size_t k=0; k<nmat; ++k) {
+      ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
+      mat_blk[k].compute< EOS::totalenergy >(
+        ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fbp );
 
-    // Acoustic speed
-    tk::real a(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-      if (ul[volfracIdx(nmat, k)] > 1.0e-04)
-        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
-          ul[densityIdx(nmat, k)], ul[ncomp+pressureIdx(nmat, k)],
-          ul[volfracIdx(nmat, k)], k ) );
-
-    // Mach number
-    auto Ma = vn / a;
-
-    if (Ma < 1) {  // Subsonic outflow
-      // For subsonic outflow, there is 1 incoming characteristic and 4
-      // outgoing characteristics. Therefore, we calculate the ghost cell state
-      // by taking pressure from the outside (i.e. the back pressure) and other
-      // quantities from the internal cell.
-      for (std::size_t k=0; k<nmat; ++k) {
-        ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
-        mat_blk[k].compute< EOS::totalenergy >(
-          ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fbp );
-
-        // material pressures
-        ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fbp;
-      }
+      // material pressures
+      ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fbp;
     }
-    // Otherwise, for supersonic outflow, all the characteristics are from
-    // internal cell. Therefore, we calculate the ghost cell state using the
-    // conservative variables from internal cell (which is what ur is
-    // initialized to).
 
     Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
             "boundary state vector" );
