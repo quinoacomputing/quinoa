@@ -491,20 +491,31 @@ namespace inciter {
     auto ur = ul;
 
     // Internal cell velocity components
-    auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
-    auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
-    auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
+    std::array< tk::real, 3 > vl;
+    for (std::size_t i=0; i<3; ++i)
+      vl[i] = ul[ncomp+velocityIdx(nmat, i)];
 
     // The ghost cell state is calculated using the back pressure and other
     // quantities from the internal cell
+    auto rhor_b(0.0);
     for (std::size_t k=0; k<nmat; ++k) {
+      auto T_k = mat_blk[k].compute< inciter::EOS::temperature >(
+        ul[densityIdx(nmat, k)], vl[0], vl[1], vl[2], ul[energyIdx(nmat, k)],
+        ul[volfracIdx(nmat, k)] );
+      auto rhor_k = mat_blk[k].compute< inciter::EOS::density >( fbp, T_k );
+      ur[densityIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * rhor_k;
       ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
       mat_blk[k].compute< EOS::totalenergy >(
-        ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fbp );
+        rhor_k, vl[0], vl[1], vl[2], fbp );
+      rhor_b += ur[densityIdx(nmat, k)];
 
       // material pressures
       ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fbp;
     }
+
+    // bulk momentum
+    for (std::size_t i=0; i<3; ++i)
+      ur[momentumIdx(nmat,i)] = rhor_b * vl[i];
 
     Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
             "boundary state vector" );
