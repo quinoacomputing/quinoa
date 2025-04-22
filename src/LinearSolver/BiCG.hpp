@@ -118,7 +118,7 @@ class BiCG : public CBase_BiCG {
     void comt( const std::vector< std::size_t >& gid,
                const std::vector< std::vector< tk::real > >& tc );
     void comx2( const std::vector< std::size_t >& gid,
-               const std::vector< std::vector< tk::real > >& xc );
+               const std::vector< std::vector< tk::real > >& x2c );
 
     //! Compute the dot product (p,q)
     void pq( tk::real d );
@@ -176,7 +176,9 @@ class BiCG : public CBase_BiCG {
       p | m_omega;
       p | m_converged;
       p | m_xc;
+      p | m_x2c;
       p | m_nx;
+      p | m_nx2;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -253,8 +255,12 @@ class BiCG : public CBase_BiCG {
     bool m_converged;
     //! Receive buffer for solution
     std::unordered_map< std::size_t, std::vector< tk::real > > m_xc;
+    //! Receive buffer for solution 2
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_x2c;
     //! Counter for assembling the solution on chare boundaries
     std::size_t m_nx;
+    //! Counter for assembling the solution 2 on chare boundaries
+    std::size_t m_nx2;
 
     //! Initiate computationa of dot product of two vectors
     void dot( const std::vector< tk::real >& a,
