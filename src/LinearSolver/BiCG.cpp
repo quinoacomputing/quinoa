@@ -82,7 +82,9 @@ BiCG::BiCG(
   m_omega( 0.0 ),
   m_converged( false ),
   m_xc(),
-  m_nx( 0 )
+  m_x2c(),
+  m_nx( 0 ),
+  m_nx2( 0 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] A Left hand side matrix of the linear system to solve in Ax=b
@@ -399,7 +401,7 @@ BiCG::next()
      m_omega=0.0;
      
   }else{
-     m_alpha = m_rho/m_rho0; //alpha functions as Beta??
+     m_alpha =( m_rho/m_rho0 ) * ( m_alpha/m_omega ) ; //alpha functions as Beta??
   }
   m_rho0 = m_rho;
 
@@ -589,11 +591,13 @@ BiCG::x()
                                                  //Here is where we significantly diverge from regular CG as we dont' go to "next()" yet
     //next();
   // initiate computing t = A * s  ;
+
+   // std::cout << "Tol not met:  "  << normr << " in first pass, going to second stage \n";
     thisProxy[ thisIndex ].wait4t();
     tAs();
 
   } else {
-
+   // std::cout << "Tol Met:  "  << normr << " in first pass \n";
     m_converged = m_it == m_maxit && normr > m_tol*normb ? false : true;
     m_solved.send( CkDataMsg::buildNew( sizeof(tk::real), &normr ) );
 
@@ -714,17 +718,20 @@ BiCG::tt( tk::real d )
   if (std::abs(d) < eps) {
     m_it = m_maxit;
     m_alpha = 0.0;
+   // std::cout << "Uhoh..  bad alpha/omega? \n";
   }
   else {
     m_omega = m_omega/d; //d is denominator
   }
-
+  //std::cout << "Omega is: " << m_omega << "\n";
   //compute x = h + omega * s
   for (std::size_t i=0; i<m_x.size(); ++i) m_x[i] += m_omega * m_r[i];
   // Now update r:  compute r = s - omega * t
   for (std::size_t i=0; i<m_r.size(); ++i) m_r[i] -= m_omega * m_t[i];
-
-  // initiate computing norm of residual: (r0,r) for assigning to new rho
+/*  for (std::size_t i = 0; i < m_r.size(); ++i) {
+	  std::cout << i << "  " << m_r[i] << " " << m_r0[i] << "\n" ;
+  }
+*/	  // initiate computing norm of residual: (r0,r) for assigning to new rho
   dot( m_r0, m_r,
        CkCallback( CkReductionTarget(BiCG,normresomega), thisProxy ) );
 }
@@ -736,7 +743,7 @@ BiCG::normresomega( tk::real r )
 // *****************************************************************************
 {
   m_rho = r;
-
+  
   // Communicate solution
   thisProxy[ thisIndex ].wait4x2();
 
@@ -746,15 +753,15 @@ BiCG::normresomega( tk::real r )
   } else {
     auto ncomp = m_A.Ncomp();
     for (const auto& [c,n] : m_nodeCommMap) {
-      std::vector< std::vector< tk::real > > xc( n.size() );
+      std::vector< std::vector< tk::real > > x2c( n.size() );
       std::size_t j = 0;
       for (auto g : n) {
-        std::vector< tk::real > nx( ncomp );
+        std::vector< tk::real > nx2( ncomp );
         auto i = tk::cref_find( m_lid, g );
-        for (std::size_t d=0; d<ncomp; ++d) nx[d] = m_x[ i*ncomp+d ];
-        xc[j++] = std::move(nx);
+        for (std::size_t d=0; d<ncomp; ++d) nx2[d] = m_x[ i*ncomp+d ];
+        x2c[j++] = std::move(nx2);
       }
-      thisProxy[c].comx2( std::vector<std::size_t>(begin(n),end(n)), xc );
+      thisProxy[c].comx2( std::vector<std::size_t>(begin(n),end(n)), x2c );
     }
   }
 
@@ -768,13 +775,13 @@ BiCG::x2()
 {
   // Assemble solution on chare boundaries by averaging
   auto ncomp = m_A.Ncomp();
-  for (const auto& [g,x] : m_xc) {
+  for (const auto& [g,x] : m_x2c) {
     auto i = tk::cref_find(m_lid,g);
     for (std::size_t d=0; d<ncomp; ++d) m_x[i*ncomp+d] += x[d];
     auto c = tk::count(m_nodeCommMap,g);
     for (std::size_t d=0; d<ncomp; ++d) m_x[i*ncomp+d] /= c;
   }
-  tk::destroy( m_xc );
+  tk::destroy( m_x2c );
 
   ++m_it;
   auto normb = m_normb > 1.0e-14 ? m_normb : 1.0;
@@ -782,10 +789,12 @@ BiCG::x2()
 
   if ( m_it < m_maxit && normr > m_tol*normb ) { //If we are not solved, continue, else exit
 
+    //std::cout << "Tol not met in 2nd pass, iterating:  " << m_it << "  " << normr << " \n";
     next();
 
   } else {
 
+    //std::cout << "Tol met in 2nd pass! Iteration count:  " << m_it << "  " << normr << " \n";
     m_converged = m_it == m_maxit && normr > m_tol*normb ? false : true;
     m_solved.send( CkDataMsg::buildNew( sizeof(tk::real), &normr ) );
 
@@ -794,19 +803,19 @@ BiCG::x2()
 
 void
 BiCG::comx2( const std::vector< std::size_t >& gid,
-                          const std::vector< std::vector< tk::real > >& xc )
+                          const std::vector< std::vector< tk::real > >& x2c )
 // *****************************************************************************
 //  Receive contributions to final solution on chare-boundaries
 //! \param[in] gid Global mesh node IDs at which we receive contributions
 //! \param[in] xc Partial contributions at chare-boundary nodes
 // *****************************************************************************
 {
-  Assert( xc.size() == gid.size(), "Size mismatch" );
+  Assert( x2c.size() == gid.size(), "Size mismatch" );
 
-  for (std::size_t i=0; i<gid.size(); ++i) m_xc[ gid[i] ] += xc[i];
+  for (std::size_t i=0; i<gid.size(); ++i) m_x2c[ gid[i] ] += x2c[i];
 
-  if (++m_nx == m_nodeCommMap.size()) {
-    m_nx = 0;
+  if (++m_nx2 == m_nodeCommMap.size()) {
+    m_nx2 = 0;
     comx2_complete();
   }
 }
