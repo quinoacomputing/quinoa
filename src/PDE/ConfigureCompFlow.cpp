@@ -142,6 +142,10 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
     if (!sym.empty())
       nfo.emplace_back( "Symmetry BC sideset(s)", parameters( sym ) );
 
+    const auto& slip = ib.get< tag::slipwall >();
+    if (!slip.empty())
+      nfo.emplace_back( "Slip wall BC sideset(s)", parameters( slip ) );
+
     const auto& dir = ib.get< tag::dirichlet >();
     if (!dir.empty())
       nfo.emplace_back( "Dirichlet BC sideset(s)", parameters( dir ) );

@@ -50,7 +50,8 @@ using bclist = tk::TaggedTuple< brigand::list<
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >
+  tag::noslipwall,  std::vector< std::size_t >,
+  tag::slipwall,    std::vector< std::size_t >
 > >;
 
 // Transport
