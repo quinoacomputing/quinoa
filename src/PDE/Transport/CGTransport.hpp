@@ -227,6 +227,7 @@ class Transport {
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbctri,
+      const std::vector< int >&,
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,

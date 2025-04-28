@@ -83,6 +83,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_farfieldbcnodes(),
   m_slipwallbcnodes(),
   m_symbctri(),
+  m_slipwallbctri(),
   m_timedepbcnodes(),
   m_timedepbcFn(),
   m_stage( 0 ),
@@ -194,9 +195,15 @@ ALECG::queryBnd()
   // which contain both symmetry and no slip walls
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes) ||
-        m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+    if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
       m_symbctri[e] = 1;
+
+  // Prepare the above for slip walls, which are needed for pressure integrals
+  // to obtain force on overset walls
+  m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
+  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
+    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+      m_slipwallbctri[e] = 1;
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -1064,7 +1071,7 @@ ALECG::rhs()
   conserved( m_u, Disc()->Vol() );
   g_cgpde[d->MeshId()].rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-          m_symbctri, d->Vol(), m_edgenode, m_edgeid,
+          m_symbctri, m_slipwallbctri, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
           m_rhs );
   volumetric( m_u, Disc()->Vol() );
