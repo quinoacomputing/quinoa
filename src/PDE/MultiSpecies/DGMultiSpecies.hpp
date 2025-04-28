@@ -82,7 +82,7 @@ class MultiSpecies {
         , farfield
         , extrapolate
         , noslipwall 
-        , invalidBC },      // Slip wall BC not implemented
+        , symmetry },       // Slip equivalent to symmetry without mesh motion
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
@@ -90,7 +90,7 @@ class MultiSpecies {
         , noOpGrad
         , noOpGrad
         , noOpGrad
-        , noOpGrad }
+        , symmetryGrad }
         ) );
 
       // EoS initialization
