@@ -162,6 +162,7 @@ class CGPDE {
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbctri,
+      const std::vector< int >& slipwallbctri,
       const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
@@ -173,18 +174,18 @@ class CGPDE {
       real V,
       tk::Fields& R ) const
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
-        esup, symbctri, vol, edgenode, edgeid,
+        esup, symbctri, slipwallbctri, vol, edgenode, edgeid,
         boxnodes, G, U, W, tp, V, R ); }
 
     //! Public interface to compute boundary surface integrals of pressure
     void bndPressureInt(
       const std::array< std::vector< real >, 3 >& coord,
       const std::vector< std::size_t >& triinpoel,
-      const std::vector< int >& symbctri,
+      const std::vector< int >& slipwallbctri,
       const tk::Fields& U,
       const std::array< tk::real, 3 >& CM,
       std::vector< real >& F ) const
-    { self->bndPressureInt( coord, triinpoel, symbctri, U, CM, F ); }
+    { self->bndPressureInt( coord, triinpoel, slipwallbctri, U, CM, F ); }
 
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
@@ -358,6 +359,7 @@ class CGPDE {
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >&,
         const std::vector< int >&,
+        const std::vector< int >&,
         const std::vector< real >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -493,6 +495,7 @@ class CGPDE {
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >& esup,
         const std::vector< int >& symbctri,
+        const std::vector< int >& slipwallbctri,
         const std::vector< real >& vol,
         const std::vector< std::size_t >& edgenode,
         const std::vector< std::size_t >& edgeid,
@@ -504,16 +507,16 @@ class CGPDE {
         real V,
         tk::Fields& R ) const override
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
-                  esup, symbctri, vol, edgenode,
+                  esup, symbctri, slipwallbctri, vol, edgenode,
                   edgeid, boxnodes, G, U, W, tp, V, R ); }
       void bndPressureInt(
         const std::array< std::vector< real >, 3 >& coord,
         const std::vector< std::size_t >& triinpoel,
-        const std::vector< int >& symbctri,
+        const std::vector< int >& slipwallbctri,
         const tk::Fields& U,
         const std::array< tk::real, 3 >& CM,
         std::vector< real >& F ) const override
-      { data.bndPressureInt( coord, triinpoel, symbctri, U, CM, F ); }
+      { data.bndPressureInt( coord, triinpoel, slipwallbctri, U, CM, F ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                tk::real t,

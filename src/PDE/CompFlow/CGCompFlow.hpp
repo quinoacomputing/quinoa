@@ -402,6 +402,7 @@ class CompFlow {
     //! \param[in] psup Points surrounding points
     //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
+    //! \param[in] slipwallbctri Vector with 1 at slip BC boundary triangles
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
@@ -425,6 +426,7 @@ class CompFlow {
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup,
               const std::vector< int >& symbctri,
+              const std::vector< int >& slipwallbctri,
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
@@ -455,7 +457,7 @@ class CompFlow {
       domainint( coord, gid, edgenode, edgeid, psup, dfn, U, W, Grad, R );
 
       // compute boundary integrals
-      bndint( coord, triinpoel, symbctri, U, W, R );
+      bndint( coord, triinpoel, symbctri, slipwallbctri, U, W, R );
 
       // compute external (energy) sources
       const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
@@ -1311,12 +1313,14 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
+    //! \param[in] slipwallbctri Vector with 1 at slip wall BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in] W Mesh velocity
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
                  const std::vector< int >& symbctri,
+                 const std::vector< int >& slipwallbctri,
                  const tk::Fields& U,
                  const tk::Fields& W,
                  tk::Fields& R ) const
@@ -1370,30 +1374,34 @@ class CompFlow {
         real f[m_ncomp][3];
         real p, vn;
         int sym = symbctri[e];
+        int slip = slipwallbctri[e];
         p = m_mat_blk[0].compute< EOS::pressure >( rA, ruA/rA, rvA/rA, rwA/rA,
           reA );
-        vn = sym ? 0.0 : (nx*(ruA/rA-w1A) + ny*(rvA/rA-w2A) + nz*(rwA/rA-w3A));
+        vn = (sym || slip) ? 0.0 : (nx*(ruA/rA-w1A) + ny*(rvA/rA-w2A) + nz*(rwA/rA-w3A));
         f[0][0] = rA*vn;
         f[1][0] = ruA*vn + p*nx;
         f[2][0] = rvA*vn + p*ny;
         f[3][0] = rwA*vn + p*nz;
-        f[4][0] = reA*vn + p*(sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA)/rA);
+        f[4][0] = reA*vn + p*((sym || slip)
+                ? 0.0 : (nx*ruA + ny*rvA + nz*rwA)/rA);
         p = m_mat_blk[0].compute< EOS::pressure >( rB, ruB/rB, rvB/rB, rwB/rB,
           reB );
-        vn = sym ? 0.0 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
+        vn = (sym || slip) ? 0.0 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
         f[0][1] = rB*vn;
         f[1][1] = ruB*vn + p*nx;
         f[2][1] = rvB*vn + p*ny;
         f[3][1] = rwB*vn + p*nz;
-        f[4][1] = reB*vn + p*(sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB)/rB);
+        f[4][1] = reB*vn + p*((sym || slip)
+                ? 0.0 : (nx*ruB + ny*rvB + nz*rwB)/rB);
         p = m_mat_blk[0].compute< EOS::pressure >( rC, ruC/rC, rvC/rC, rwC/rC,
           reC );
-        vn = sym ? 0.0 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
+        vn = (sym || slip) ? 0.0 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
         f[0][2] = rC*vn;
         f[1][2] = ruC*vn + p*nx;
         f[2][2] = rvC*vn + p*ny;
         f[3][2] = rwC*vn + p*nz;
-        f[4][2] = reC*vn + p*(sym ? 0.0 : (nx*ruC + ny*rvC + nz*rwC)/rC);
+        f[4][2] = reC*vn + p*((sym || slip)
+                ? 0.0 : (nx*ruC + ny*rvC + nz*rwC)/rC);
         // compute face area
         auto A6 = tk::area( x[N[0]], x[N[1]], x[N[2]],
                             y[N[0]], y[N[1]], y[N[2]],
