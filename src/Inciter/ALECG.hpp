@@ -236,6 +236,7 @@ class ALECG : public CBase_ALECG {
       p | m_farfieldbcnodes;
       p | m_slipwallbcnodes;
       p | m_symbctri;
+      p | m_slipwallbctri;
       p | m_timedepbcnodes;
       p | m_timedepbcFn;
       p | m_stage;
@@ -339,6 +340,8 @@ class ALECG : public CBase_ALECG {
     std::unordered_set< std::size_t > m_slipwallbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
+    //! Vector with 1 at slip wall BC boundary triangles
+    std::vector< int > m_slipwallbctri;
     //! \brief Unique set of nodes at which time dependent BCs are set
     //    for each time dependent BC
     std::vector< std::unordered_set< std::size_t > > m_timedepbcnodes;
