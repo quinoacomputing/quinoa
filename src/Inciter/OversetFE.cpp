@@ -1300,9 +1300,9 @@ OversetFE::solve()
         // rotation (this is currently only configured for planar motion)
         // ---------------------------------------------------------------------
         std::array< tk::real, 3 > rCM{{
-          d->Coord()[0][p] - m_centMassn[0],
-          d->Coord()[1][p] - m_centMassn[1],
-          d->Coord()[2][p] - m_centMassn[2] }};
+          d->Coordn()[0][p] - m_centMassn[0],
+          d->Coordn()[1][p] - m_centMassn[1],
+          d->Coordn()[2][p] - m_centMassn[2] }};
 
         // obtain tangential velocity
         tk::real r_mag(0.0);
