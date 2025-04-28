@@ -162,6 +162,7 @@ class CGPDE {
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbctri,
+      const std::vector< int >& slipwallbctri,
       const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
@@ -173,18 +174,18 @@ class CGPDE {
       real V,
       tk::Fields& R ) const
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
-        esup, symbctri, vol, edgenode, edgeid,
+        esup, symbctri, slipwallbctri, vol, edgenode, edgeid,
         boxnodes, G, U, W, tp, V, R ); }
 
     //! Public interface to compute boundary surface integrals of pressure
     void bndPressureInt(
       const std::array< std::vector< real >, 3 >& coord,
       const std::vector< std::size_t >& triinpoel,
-      const std::vector< int >& symbctri,
+      const std::vector< int >& slipwallbctri,
       const tk::Fields& U,
       const std::array< tk::real, 3 >& CM,
       std::vector< real >& F ) const
-    { self->bndPressureInt( coord, triinpoel, symbctri, U, CM, F ); }
+    { self->bndPressureInt( coord, triinpoel, slipwallbctri, U, CM, F ); }
 
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
@@ -234,6 +235,17 @@ class CGPDE {
                           std::array< real, 4 > > >& bnorm,
                 const std::unordered_set< std::size_t >& nodes ) const
     { self->farfieldbc( U, coord, bnorm, nodes ); }
+
+    //! Public interface to set slip wall boundary conditions at nodes
+    void
+    slipwallbc( tk::Fields& U,
+           const tk::Fields& W,
+           const std::array< std::vector< real >, 3 >& coord,
+           const std::unordered_map< int,
+                   std::unordered_map< std::size_t,
+                     std::array< real, 4 > > >& bnorm,
+           const std::unordered_set< std::size_t >& nodes ) const
+    { self->slipwallbc( U, W, coord, bnorm, nodes ); }
 
     //! Public interface to applying time dependent boundary conditions at nodes
     void
@@ -347,6 +359,7 @@ class CGPDE {
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >&,
         const std::vector< int >&,
+        const std::vector< int >&,
         const std::vector< real >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -392,6 +405,14 @@ class CGPDE {
         const std::unordered_set< std::size_t >& ) const = 0;
       virtual void farfieldbc(
         tk::Fields&,
+        const std::array< std::vector< real >, 3 >&,
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< real, 4 > > >&,
+        const std::unordered_set< std::size_t >& ) const = 0;
+      virtual void slipwallbc(
+        tk::Fields& U,
+        const tk::Fields& W,
         const std::array< std::vector< real >, 3 >&,
         const std::unordered_map< int,
                 std::unordered_map< std::size_t,
@@ -474,6 +495,7 @@ class CGPDE {
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >& esup,
         const std::vector< int >& symbctri,
+        const std::vector< int >& slipwallbctri,
         const std::vector< real >& vol,
         const std::vector< std::size_t >& edgenode,
         const std::vector< std::size_t >& edgeid,
@@ -485,16 +507,16 @@ class CGPDE {
         real V,
         tk::Fields& R ) const override
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
-                  esup, symbctri, vol, edgenode,
+                  esup, symbctri, slipwallbctri, vol, edgenode,
                   edgeid, boxnodes, G, U, W, tp, V, R ); }
       void bndPressureInt(
         const std::array< std::vector< real >, 3 >& coord,
         const std::vector< std::size_t >& triinpoel,
-        const std::vector< int >& symbctri,
+        const std::vector< int >& slipwallbctri,
         const tk::Fields& U,
         const std::array< tk::real, 3 >& CM,
         std::vector< real >& F ) const override
-      { data.bndPressureInt( coord, triinpoel, symbctri, U, CM, F ); }
+      { data.bndPressureInt( coord, triinpoel, slipwallbctri, U, CM, F ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                tk::real t,
@@ -534,6 +556,15 @@ class CGPDE {
                   std::array< real, 4 > > >& bnorm,
         const std::unordered_set< std::size_t >& nodes ) const override
       { data.farfieldbc( U, coord, bnorm, nodes ); }
+      void slipwallbc(
+        tk::Fields& U,
+        const tk::Fields& W,
+        const std::array< std::vector< real >, 3 >& coord,
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< real, 4 > > >& bnorm,
+        const std::unordered_set< std::size_t >& nodes ) const override
+      { data.slipwallbc( U, W, coord, bnorm, nodes ); }
       void
       timedepbc(
         tk::real t,
