@@ -82,10 +82,12 @@ class MultiSpecies {
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall },
+        , noslipwall 
+        , invalidBC },      // Slip wall BC not implemented
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
+        , noOpGrad
         , noOpGrad
         , noOpGrad
         , noOpGrad
