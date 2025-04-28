@@ -94,6 +94,10 @@ class MultiMat {
       // handled differently than with ConfigBC
       ConfigInletBC(m_bc, inlet, zeroGrad);
 
+      // Back pressure BC has a different structure than above BCs, so it must
+      // be handled differently than with ConfigBC
+      ConfigBackPressureBC(m_bc, back_pressure, noOpGrad);
+
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
     }

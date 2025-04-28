@@ -60,6 +60,12 @@ class JWL {
                        std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
+    //! Calculate cold-compression component of pressure (no-op)
+    tk::real pressure_coldcompr(
+      tk::real,
+      tk::real ) const
+    { return 0.0; }
+
     //! \brief Calculate the Cauchy stress tensor from the material density,
     //!   momentum, and total energy
     std::array< std::array< tk::real, 3 >, 3 >

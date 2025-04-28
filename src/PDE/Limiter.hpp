@@ -169,6 +169,25 @@ VertexBasedMultiSpecies_P1(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
+  tk::Fields& U,
+  std::size_t nspec,
+  std::vector< std::size_t >& shockmarker );
+
+//! Kuzmin's vertex-based limiter for multi-species DGP2
+void
+VertexBasedMultiSpecies_P2(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  const std::vector< EOS >& mat_blk,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
+  const tk::Fields& geoElem,
+  const tk::UnsMesh::Coords& coord,
+  const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker );
@@ -311,6 +330,7 @@ void MarkShockCells ( const bool pref,
                       const std::vector< std::size_t >& solidx,
                       const tk::Fields& U,
                       const tk::Fields& P,
+                      const std::set< std::size_t >& vars,
                       std::vector< std::size_t >& shockmarker );
 
 //! Update the conservative quantities after limiting for multi-material systems

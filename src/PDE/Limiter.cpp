@@ -354,10 +354,14 @@ VertexBasedCompflow_P1(
   // Null field for MarkShockCells argument
   tk::Fields P;
 
-  if (inciter::g_inputdeck.get< tag::shock_detector_coeff >()
-    > 1e-6)
+  if (inciter::g_inputdeck.get< tag::shock_detector_coeff >() > 1e-6) {
+    // Indicator based on momentum flux jump
+    std::set< std::size_t > vars;
+    for (std::size_t i=1; i<=3; ++i) vars.insert(i);
     MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+      vars, shockmarker);
+  }
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -450,10 +454,14 @@ VertexBasedCompflow_P2(
   // Null field for MarkShockCells argument
   tk::Fields P;
 
-  if (inciter::g_inputdeck.get< tag::shock_detector_coeff >()
-    > 1e-6)
+  if (inciter::g_inputdeck.get< tag::shock_detector_coeff >() > 1e-6) {
+    // Indicator based on momentum flux jump
+    std::set< std::size_t > vars;
+    for (std::size_t i=1; i<=3; ++i) vars.insert(i);
     MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+      vars, shockmarker);
+  }
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -551,9 +559,14 @@ VertexBasedMultiMat_P1(
 
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::shock_detector_coeff >()
-    > 1e-6 && ndof > 1)
+    > 1e-6 && ndof > 1) {
+    // Indicator based on momentum flux jump
+    std::set< std::size_t > vars;
+    for (std::size_t i=0; i<3; ++i) vars.insert(momentumIdx(nmat, i));
     MarkShockCells(false, nelem, nmat, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+      vars, shockmarker);
+  }
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -730,9 +743,14 @@ VertexBasedMultiMat_P2(
 
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::shock_detector_coeff >()
-    > 1e-6)
+    > 1e-6) {
+    // Indicator based on momentum flux jump
+    std::set< std::size_t > vars;
+    for (std::size_t i=0; i<3; ++i) vars.insert(momentumIdx(nmat, i));
     MarkShockCells(pref, nelem, nmat, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
+      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+      vars, shockmarker);
+  }
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -957,12 +975,13 @@ VertexBasedMultiSpecies_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  const std::vector< inciter::EOS >& /*mat_blk*/,
-  const inciter::FaceData& /*fd*/,
-  const tk::Fields& /*geoFace*/,
-  const tk::Fields& /*geoElem*/,
+  const std::vector< inciter::EOS >& mat_blk,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
+  const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
-  const tk::FluxFn& /*flux*/,
+  const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker )
@@ -972,12 +991,13 @@ VertexBasedMultiSpecies_P1(
 //! \param[in] inpoel Element connectivity
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] nelem Number of elements
-// //! \param[in] mat_blk EOS material block
-// //! \param[in] fd Face connectivity and boundary conditions object
-// //! \param[in] geoFace Face geometry array
-// //! \param[in] geoElem Element geometry array
+//! \param[in] mat_blk EOS material block
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
-// //! \param[in] flux Riemann flux function to use
+//! \param[in] flux Riemann flux function to use
+//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in] nspec Number of species in this PDE system
 //! \param[in,out] shockmarker Shock detection marker array
@@ -991,11 +1011,20 @@ VertexBasedMultiSpecies_P1(
   const auto ndof = inciter::g_inputdeck.get< tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
 
-  //// Evaluate the interface condition and mark the shock cells
-  //if (inciter::g_inputdeck.get< tag::shock_detector_coeff >()
-  //  > 1e-6 && ndof > 1)
-  //  MarkShockCells(false, nelem, nmat, ndof, rdof, mat_blk, ndofel,
-  //    inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P, shockmarker);
+  // Null field for MarkShockCells argument
+  tk::Fields P;
+
+  // Evaluate the interface condition and mark the shock cells
+  if (inciter::g_inputdeck.get< tag::shock_detector_coeff >()
+    > 1e-6 && ndof > 1) {
+    // Indicator based on momentum flux jump
+    std::set< std::size_t > vars;
+    for (std::size_t i=0; i<3; ++i)
+      vars.insert(multispecies::momentumIdx(nspec, i));
+    MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk,
+      ndofel, inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+      vars, shockmarker);
+  }
 
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -1065,6 +1094,137 @@ VertexBasedMultiSpecies_P1(
         U(e, mark+1) = phic[c] * U(e, mark+1);
         U(e, mark+2) = phic[c] * U(e, mark+2);
         U(e, mark+3) = phic[c] * U(e, mark+3);
+      }
+    }
+  }
+}
+
+void
+VertexBasedMultiSpecies_P2(
+  const std::map< std::size_t, std::vector< std::size_t > >& esup,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& ndofel,
+  std::size_t nelem,
+  const std::vector< inciter::EOS >& mat_blk,
+  const inciter::FaceData& fd,
+  const tk::Fields& geoFace,
+  const tk::Fields& geoElem,
+  const tk::UnsMesh::Coords& coord,
+  const tk::FluxFn& flux,
+  const std::vector< std::size_t >& solidx,
+  tk::Fields& U,
+  std::size_t nspec,
+  std::vector< std::size_t >& shockmarker )
+// *****************************************************************************
+//  Kuzmin's vertex-based limiter for multi-species DGP2
+//! \param[in] esup Elements surrounding points
+//! \param[in] inpoel Element connectivity
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] nelem Number of elements
+//! \param[in] mat_blk EOS material block
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] flux Riemann flux function to use
+//! \param[in] solidx Solid material index indicator
+//! \param[in,out] U High-order solution vector which gets limited
+//! \param[in] nspec Number of species in this PDE system
+//! \param[in,out] shockmarker Shock detection marker array
+//! \details This vertex-based limiter function should be called for
+//!   multispecies. For details see: Kuzmin, D. (2010). A vertex-based
+//!   hierarchical slope limiter for p-adaptive discontinuous Galerkin methods.
+//!   Journal of computational and applied mathematics, 233(12), 3077-3085.
+// *****************************************************************************
+{
+  const auto rdof = inciter::g_inputdeck.get< tag::rdof >();
+  const auto ndof = inciter::g_inputdeck.get< tag::ndof >();
+  std::size_t ncomp = U.nprop()/rdof;
+
+  // Null field for MarkShockCells argument
+  tk::Fields P;
+
+  // Evaluate the interface condition and mark the shock cells
+  if (inciter::g_inputdeck.get< tag::shock_detector_coeff >() > 1e-6) {
+    std::set< std::size_t > vars;
+    for (std::size_t i=0; i<3; ++i)
+      vars.insert(multispecies::momentumIdx(nspec, i));
+    MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk,
+      ndofel, inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+      vars, shockmarker);
+  }
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // If an rDG method is set up (P0P1), then, currently we compute the P1
+    // basis functions and solutions by default. This implies that P0P1 is
+    // unsupported in the p-adaptive DG (PDG). This is a workaround until we
+    // have rdofel, which is needed to distinguish between ndofs and rdofs per
+    // element for pDG.
+    std::size_t dof_el;
+    if (rdof > ndof)
+    {
+      dof_el = rdof;
+    }
+    else
+    {
+      dof_el = ndofel[e];
+    }
+
+    if (dof_el > 1)
+    {
+      std::vector< std::size_t > vars;
+      if(shockmarker[e]) {
+        // When shockmarker is 1, there is discontinuity within the element.
+        // Hence, the vertex-based limiter will be applied.
+
+        for (std::size_t c=0; c<ncomp; ++c) vars.push_back(c);
+      } else {
+        // When shockmarker is 0, the density of minor species will still be
+        // limited to ensure a stable solution.
+
+        tk::real rhob(0.0);
+        for(std::size_t k=0; k<nspec; ++k)
+          rhob += U(e, multispecies::densityDofIdx(nspec,k,rdof,0));
+        for(std::size_t k=0; k<nspec; ++k) {
+          if (U(e, multispecies::densityDofIdx(nspec,k,rdof,0))/rhob < 1e-4) {
+            // limit the density of minor species
+            vars.push_back(multispecies::densityIdx(nspec, k));
+          }
+        }
+      }
+
+      // Removing 3rd order DOFs if discontinuity is detected, and applying
+      // limiting to the 2nd order/P1 solution
+      for (std::size_t c=0; c<vars.size(); c++) {
+        for(std::size_t idof = 4; idof < rdof; idof++) {
+          auto mark = vars[c] * rdof + idof;
+          U(e, mark) = 0.0;
+        }
+      }
+
+      std::vector< tk::real > phic_p1(ncomp, 1.0);
+      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
+        ncomp, phic_p1, vars);
+
+      // TODO: Unit sum of mass fractions is maintained by using common limiter
+      // for all species densities. Investigate better approaches.
+      if (!g_inputdeck.get< tag::accuracy_test >()) {
+        tk::real phi_rhos_p1(1.0);
+        for (std::size_t k=0; k<nspec; ++k)
+          phi_rhos_p1 = std::min( phi_rhos_p1,
+            phic_p1[multispecies::densityIdx(nspec, k)] );
+        // same limiter for all densities
+        for (std::size_t k=0; k<nspec; ++k)
+          phic_p1[multispecies::densityIdx(nspec, k)] = phi_rhos_p1;
+      }
+
+      // apply limiter function to the solution
+      for (std::size_t c=0; c<ncomp; ++c)
+      {
+        auto mark = c * rdof;
+        for(std::size_t idof=1; idof<4; idof++)
+          U(e, mark+idof) = phic_p1[c] * U(e, mark+idof);
       }
     }
   }
@@ -2335,6 +2495,7 @@ void MarkShockCells ( const bool pref,
                       const std::vector< std::size_t >& solidx,
                       const tk::Fields& U,
                       const tk::Fields& P,
+                      const std::set< std::size_t >& vars,
                       std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
 //  Mark the cells that contain discontinuity according to the interface
@@ -2355,6 +2516,7 @@ void MarkShockCells ( const bool pref,
 //! \param[in] solidx Solid material index indicator
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] vars Vector of variable indices to evaluate flux jump
 //! \param[in, out] shockmarker Vector of the shock indicator
 //! \details This function computes the discontinuity indicator based on
 //!   interface conditon. It is based on the following paper:
@@ -2376,15 +2538,6 @@ void MarkShockCells ( const bool pref,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
-
-  // The interface-conservation based indicator will only evaluate the flux jump
-  // for the momentum equations
-  std::set< std::size_t > vars;
-  if(nmat > 1) {          // multi-material flow
-    for (std::size_t i=0; i<3; ++i) vars.insert(momentumIdx(nmat, i));
-  } else {                // single-material flow
-    for (std::size_t i=1; i<=3; ++i) vars.insert(i);
-  }
 
   // Loop over faces
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f) {
@@ -2464,9 +2617,8 @@ void MarkShockCells ( const bool pref,
       auto B_l = tk::eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
       auto B_r = tk::eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
 
-      std::array< std::vector< tk::real >, 2 > state;
-
       // Evaluate the high order solution at the qudrature point
+      std::array< std::vector< tk::real >, 2 > state;
       state[0] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
         nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
       state[1] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,

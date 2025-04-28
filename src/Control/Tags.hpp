@@ -292,6 +292,7 @@ DEFTAG(extrapolate);
 DEFTAG(noslipwall);
 DEFTAG(timedep);
 DEFTAG(slipwall);
+DEFTAG(back_pressure);
 
 DEFTAG(rigid_body_motion);
 DEFTAG(rigid_body_movt);
