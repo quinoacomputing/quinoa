@@ -68,13 +68,13 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   // input.
 
   // species volume fractions
-  auto alphas = boxmassfrac;
+  auto Ys = boxmassfrac;
   tk::real total_al(0.0);
   for (std::size_t k=0; k<nspec; ++k) {
-    alphas[k] = std::max(alphas[k], alphamin);
-    total_al += alphas[k];
+    Ys[k] = std::max(Ys[k], alphamin);
+    total_al += Ys[k];
   }
-  for (std::size_t k=0; k<nspec; ++k) alphas[k] /= total_al;
+  for (std::size_t k=0; k<nspec; ++k) Ys[k] /= total_al;
 
   // material states (density, pressure, velocity)
   tk::real u = 0.0, v = 0.0, w = 0.0, spi(0.0), pr(0.0), rbulk(0.0);
@@ -87,10 +87,10 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   // 2. User-specified temperature, pressure and velocity in box
   else {
     Mixture mix(nspec);
-    mix.set_massfrac(alphas, boxpre, boxtemp, mat_blk); // Initialize
+    mix.set_massfrac(Ys, boxpre, boxtemp, mat_blk); // Initialize
     rbulk = mix.get_mix_density();
     for (std::size_t k=0; k<nspec; ++k) {
-      rhok[k] = alphas[k]*rbulk;
+      rhok[k] = Ys[k]*rbulk;
     }
     if (boxvel.size() == 3) {
       u = boxvel[0];
@@ -110,7 +110,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   // [II] Finally initialize the solution vector
   // partial density
   for (std::size_t k=0; k<nspec; ++k) {
-    s[multispecies::densityIdx(nspec,k)] = alphas[k] * rhok[k];
+    s[multispecies::densityIdx(nspec,k)] = Ys[k] * rhok[k];
   }
   // total specific energy
   s[multispecies::energyIdx(nspec,0)] = rbulk * spi;
