@@ -16,8 +16,13 @@
 using inciter::Mixture;
 
 Mixture::Mixture(
-  std::size_t nspec) :
-  m_nspec(nspec)
+  std::size_t nspec,
+  tk::real mix_density,
+  tk::real mix_R) :
+  m_nspec(nspec),
+  m_mix_density(mix_density),
+  m_mix_R(mix_R),
+  m_Ys(nspec, 0.)
 // *************************************************************************
 //  Constructor (use during timestepping)
 //! \brief Initialize a mixture class
@@ -26,7 +31,7 @@ Mixture::Mixture(
 {}
 
 void
-Mixture::set_state(std::vector< tk::real > ugp,
+Mixture::set_state(const std::vector< tk::real > ugp,
   const std::vector< EOS >& mat_blk)
 // *************************************************************************
 //! \brief Set commonly used mixture properties based off a given state
@@ -41,8 +46,8 @@ Mixture::set_state(std::vector< tk::real > ugp,
 
   // Compute mass fractions
   for (std::size_t k=0; k<m_nspec; ++k)
-    m_Ys.push_back(ugp[multispecies::densityIdx(m_nspec, k)] /
-      m_mix_density);
+    m_Ys[k] = ugp[multispecies::densityIdx(m_nspec, k)] /
+        m_mix_density;
 
   // Compute mixture gas constant
   m_mix_R = 0.;
@@ -74,7 +79,7 @@ Mixture::set_massfrac(std::vector< tk::real > Ys,
 
   // Store mass fractions
   for (std::size_t k=0; k<m_nspec; ++k)
-    m_Ys.push_back(Ys[k]);
+    m_Ys[k] = Ys[k];
 }
 
 tk::real

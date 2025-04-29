@@ -30,10 +30,12 @@ class Mixture {
 
   public:
     //! Constructor
-    Mixture(const std::size_t nspec);
+    Mixture(const std::size_t nspec,
+            tk::real mix_density = 0.,
+            tk::real mix_R = 0.);
 
     //! Set mixture properties based off given state vector
-    void set_state(std::vector< tk::real > ugp,
+    void set_state(const std::vector< tk::real > ugp,
                    const std::vector< EOS >& mat_blk);
 
     //! Set mixture properties based off given mass frac, pres, temp
@@ -80,6 +82,9 @@ class Mixture {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) /*override*/ {
       p | m_nspec;
+      p | m_mix_density;
+      p | m_mix_R;
+      p | m_Ys;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
