@@ -35,7 +35,7 @@ class Mixture {
             tk::real mix_R = 0.);
 
     //! Set mixture properties based off given state vector
-    void set_state(const std::vector< tk::real > ugp,
+    void set_state(const std::vector< tk::real >& ugp,
                    const std::vector< EOS >& mat_blk);
 
     //! Set mixture properties based off given mass frac, pres, temp
