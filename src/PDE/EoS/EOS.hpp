@@ -64,8 +64,8 @@ class EOS {
     struct refPressure {};
     struct rho0 {};
     struct gas_constant {};
-    struct calc_e {};
-    struct calc_cv {};
+    struct internalenergy {};
+    struct cv {};
     //! Call EOS function
     //! \tparam Fn Function tag identifying the function to call
     //! \tparam Args Types of arguments to pass to function
@@ -111,11 +111,11 @@ class EOS {
           else if constexpr( std::is_same_v< Fn, gas_constant > )
             return m.gas_constant( std::forward< Args >( args )... );
 
-          else if constexpr( std::is_same_v< Fn, calc_e > )
-            return m.calc_e( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, internalenergy > )
+            return m.internalenergy( std::forward< Args >( args )... );
 
-          else if constexpr( std::is_same_v< Fn, calc_cv > )
-            return m.calc_cv( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, cv > )
+            return m.cv( std::forward< Args >( args )... );
         }, m_material );
     }
 

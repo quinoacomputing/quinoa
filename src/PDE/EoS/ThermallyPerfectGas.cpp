@@ -160,7 +160,7 @@ ThermallyPerfectGas::temperature(
 }
 
 tk::real
-ThermallyPerfectGas::calc_e(tk::real temp) const
+ThermallyPerfectGas::internalenergy(tk::real temp) const
 // *************************************************************************
 //! \brief Calculate species internal energy
 //! \param[in] temp Temperature
@@ -173,7 +173,7 @@ ThermallyPerfectGas::calc_e(tk::real temp) const
 }
 
 tk::real
-ThermallyPerfectGas::calc_cv(tk::real temp) const
+ThermallyPerfectGas::cv(tk::real temp) const
 // *************************************************************************
 //! \brief Calculate species specific heat (constant volume)
 //! \param[in] temp Temperature
