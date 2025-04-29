@@ -99,7 +99,7 @@ Mixture::frozen_soundspeed(
   // Compute beta, mixture parameters for sound speed calc.
   tk::real mix_Cv = 0.;
   for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_Cv += mat_blk[k].compute< EOS::calc_cv >(temp) * m_Ys[k];
+    mix_Cv += mat_blk[k].compute< EOS::cv >(temp) * m_Ys[k];
   }
   tk::real beta = m_mix_R / mix_Cv;
 
@@ -133,7 +133,7 @@ Mixture::totalenergy(
   // Compute mixture internal energy
   tk::real mix_e = 0.;
   for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_e += m_Ys[k] * mat_blk[k].compute< EOS::calc_e >(temp);
+    mix_e += m_Ys[k] * mat_blk[k].compute< EOS::internalenergy >(temp);
   }
 
   // Compute total energy
@@ -199,14 +199,14 @@ Mixture::temperature(
     // Construct f(T) = e(temp) - e
     tk::real f_T = 0.;
     for (std::size_t k = 0; k < m_nspec; k++) {
-      f_T += m_Ys[k] * mat_blk[k].compute< EOS::calc_e >(temp);
+      f_T += m_Ys[k] * mat_blk[k].compute< EOS::internalenergy >(temp);
     }
     f_T -= e;
 
     // Construct f'(T) = cv(temp)
     tk::real fp_T = 0.;
     for (std::size_t k = 0; k < m_nspec; k++) {
-      fp_T += m_Ys[k] * mat_blk[k].compute< EOS::calc_cv >(temp);
+      fp_T += m_Ys[k] * mat_blk[k].compute< EOS::cv >(temp);
     }
 
     // Calculate next guess

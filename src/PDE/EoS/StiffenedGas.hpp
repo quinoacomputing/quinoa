@@ -116,10 +116,10 @@ class StiffenedGas {
     tk::real gas_constant() const { return 0.0; }
 
     //! Return internal energy (no-op)
-    tk::real calc_e( [[maybe_unused]] tk::real temp) const { return 0.0; }
+    tk::real internalenergy(tk::real temp) const { return m_cv * temp; }
 
     //! Return specific heat (no-op)
-    tk::real calc_cv( [[maybe_unused]] tk::real temp) const { return 0.0; }
+    tk::real cv( [[maybe_unused]] tk::real temp) const { return m_cv; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

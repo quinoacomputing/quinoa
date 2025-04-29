@@ -208,10 +208,10 @@ class ThermallyPerfectGas {
     tk::real gas_constant() const { return m_R; }
 
     //! Return species internal energy
-    tk::real calc_e(tk::real temp) const;
+    tk::real internalenergy(tk::real temp) const;
 
     //! Return species specific heat (constant volume)
-    tk::real calc_cv(tk::real temp) const;
+    tk::real cv(tk::real temp) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
