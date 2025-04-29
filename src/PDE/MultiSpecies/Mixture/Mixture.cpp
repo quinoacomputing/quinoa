@@ -31,7 +31,7 @@ Mixture::Mixture(
 {}
 
 void
-Mixture::set_state(const std::vector< tk::real > ugp,
+Mixture::set_state(const std::vector< tk::real >& ugp,
   const std::vector< EOS >& mat_blk)
 // *************************************************************************
 //! \brief Set commonly used mixture properties based off a given state
