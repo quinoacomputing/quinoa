@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "Types.hpp"
-#include "Fields.hpp"
 #include "EoS/EOS.hpp"
 
 namespace inciter {
@@ -36,7 +35,7 @@ class Mixture {
 
     //! Constructor based on mixture thermodynamics, mass fractions
     Mixture(const std::size_t nspec,
-            std::vector< tk::real > Ys,
+            const std::vector< tk::real >& Ys,
             tk::real mix_pressure,
             tk::real temperature,
             const std::vector< EOS >& mat_blk);
