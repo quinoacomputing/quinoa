@@ -17,26 +17,15 @@ using inciter::Mixture;
 
 Mixture::Mixture(
   std::size_t nspec,
-  tk::real mix_density,
-  tk::real mix_R) :
-  m_nspec(nspec),
-  m_mix_density(mix_density),
-  m_mix_R(mix_R),
-  m_Ys(nspec, 0.)
+  const std::vector< tk::real >& ugp,
+  const std::vector< EOS >& mat_blk) :
+  m_nspec(nspec)
 // *************************************************************************
 //  Constructor (use during timestepping)
-//! \brief Initialize a mixture class
+//! \brief Initialize a mixture class using the state vector
 //! \param[in] nspec Number of species in mixture
-// *************************************************************************
-{}
-
-void
-Mixture::set_state(const std::vector< tk::real >& ugp,
-  const std::vector< EOS >& mat_blk)
-// *************************************************************************
-//! \brief Set commonly used mixture properties based off a given state
-//!   vector (rho_s, rhou, rhov, rhow, rhoE). Used during timestepping
 //! \param[in] ugp State vector
+//! \param[in] mat_blk EOS material block
 // *************************************************************************
 {
   // Compute total density
@@ -46,8 +35,8 @@ Mixture::set_state(const std::vector< tk::real >& ugp,
 
   // Compute mass fractions
   for (std::size_t k=0; k<m_nspec; ++k)
-    m_Ys[k] = ugp[multispecies::densityIdx(m_nspec, k)] /
-        m_mix_density;
+    m_Ys.push_back(ugp[multispecies::densityIdx(m_nspec, k)] /
+        m_mix_density);
 
   // Compute mixture gas constant
   m_mix_R = 0.;
@@ -55,31 +44,32 @@ Mixture::set_state(const std::vector< tk::real >& ugp,
     m_mix_R += m_Ys[k] * mat_blk[k].compute< EOS::gas_constant >();
 }
 
-void
-Mixture::set_massfrac(std::vector< tk::real > Ys,
-                  tk::real mix_pressure,
-                  tk::real temperature,
-                  const std::vector< EOS >& mat_blk)
+Mixture::Mixture(
+  std::size_t nspec,
+  std::vector< tk::real > Ys,
+  tk::real mix_pressure,
+  tk::real temperature,
+  const std::vector< EOS >& mat_blk) :
+  m_nspec(nspec),
+  m_Ys(Ys)
 // *************************************************************************
-//! \brief Set commonly used mixture properties based off a given set of
-//!   mass fractions, a mixture pressure, and a temperature. Used during
-//!   initialization, or when setting boundary conditions.
+//  Constructor (use during initialization)
+//! \brief Initialize a mixture class using the mixture thermodynamics and
+//!   known mass fractions.
+//! \param[in] nspec Number of species in mixture
 //! \param[in] Ys Mass fractions
 //! \param[in] mix_pressure Mixture pressure
 //! \param[in] temperature Temperature
+//! \param[in] mat_blk EOS material block
 // *************************************************************************
 {
   // Compute mixture gas constant
   m_mix_R = 0.;
   for (std::size_t k = 0; k < m_nspec; k++)
-    m_mix_R += Ys[k] * mat_blk[k].compute< EOS::gas_constant >();
+    m_mix_R += m_Ys[k] * mat_blk[k].compute< EOS::gas_constant >();
 
   // Compute total density (via ideal gas EOS)
   m_mix_density = mix_pressure / (m_mix_R * temperature);
-
-  // Store mass fractions
-  for (std::size_t k=0; k<m_nspec; ++k)
-    m_Ys[k] = Ys[k];
 }
 
 tk::real
@@ -92,6 +82,7 @@ Mixture::frozen_soundspeed(
 //!   and species parameters.
 //! \param[in] mix_density Mixture density (sum of species density)
 //! \param[in] mix_pressure Mixture pressure (sum of species pressure)
+//! \param[in] mat_blk EOS material block
 //! \return Mixture speed of sound using the ideal gas EoS
 // *************************************************************************
 {
@@ -129,6 +120,7 @@ Mixture::totalenergy(
 //! \param[in] v Velocity component
 //! \param[in] w Velocity component
 //! \param[in] mix_pressure Mixture pressure
+//! \param[in] mat_blk EOS material block
 //! \return Total energy
 // *************************************************************************
 {
@@ -161,6 +153,7 @@ Mixture::pressure(
 //! \param[in] v Velocity component
 //! \param[in] w Velocity component
 //! \param[in] rhoE Total energy of the mixture
+//! \param[in] mat_blk EOS material block
 //! \return Mixture pressure
 // *************************************************************************
 {
@@ -187,6 +180,7 @@ Mixture::temperature(
 //! \param[in] v Velocity component
 //! \param[in] w Velocity component
 //! \param[in] rhoE Total energy of the mixture
+//! \param[in] mat_blk EOS material block
 //! \return Mixture pressure
 // *************************************************************************
 {

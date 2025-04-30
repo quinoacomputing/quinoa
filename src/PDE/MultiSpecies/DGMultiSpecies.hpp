@@ -757,8 +757,7 @@ class MultiSpecies {
         auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
 
         // Mixture calculations, initialized
-        Mixture mix(nspec);
-        mix.set_state(uhp, m_mat_blk);
+        Mixture mix(nspec, uhp, m_mat_blk);
 
         // store solution in history output vector
         Up[j].resize(6+nspec, 0.0);
@@ -850,8 +849,7 @@ class MultiSpecies {
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
-      Mixture mix(nspec);
-      mix.set_state(ugp, mat_blk); // Initial calculations
+      Mixture mix(nspec, ugp, mat_blk);
       auto rhob = mix.get_mix_density();
 
       std::array< tk::real, 3 > u{{

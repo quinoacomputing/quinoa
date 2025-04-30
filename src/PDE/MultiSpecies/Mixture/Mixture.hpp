@@ -29,20 +29,17 @@ class Mixture {
     std::vector< tk::real > m_Ys;
 
   public:
-    //! Constructor
+    //! Constructor based on state vector
     Mixture(const std::size_t nspec,
-            tk::real mix_density = 0.,
-            tk::real mix_R = 0.);
+            const std::vector< tk::real >& ugp,
+            const std::vector< EOS >& mat_blk);
 
-    //! Set mixture properties based off given state vector
-    void set_state(const std::vector< tk::real >& ugp,
-                   const std::vector< EOS >& mat_blk);
-
-    //! Set mixture properties based off given mass frac, pres, temp
-    void set_massfrac(std::vector< tk::real > Ys,
-                      tk::real mix_pressure,
-                      tk::real temperature,
-                      const std::vector< EOS >& mat_blk);
+    //! Constructor based on mixture thermodynamics, mass fractions
+    Mixture(const std::size_t nspec,
+            std::vector< tk::real > Ys,
+            tk::real mix_pressure,
+            tk::real temperature,
+            const std::vector< EOS >& mat_blk);
 
     //! Return mixture density
     tk::real get_mix_density() { return m_mix_density; }
