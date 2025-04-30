@@ -18,6 +18,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -81,7 +82,7 @@ MultiSpeciesProblemUserDefined::initialize( ncomp_t ncomp,
 
   // total specific energy
   s[multispecies::energyIdx(nspec,0)] = mix.totalenergy(rb,
-    u, v, w, bgpreic, mat_blk);
+    u, v, w, bgtempic, mat_blk);
 
   // bulk momentum
   s[multispecies::momentumIdx(nspec,0)] = rb * u;

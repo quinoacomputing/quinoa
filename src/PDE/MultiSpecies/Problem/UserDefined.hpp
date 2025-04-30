@@ -24,7 +24,6 @@
 #include "Inciter/Options/Problem.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "EoS/EOS.hpp"
-#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 

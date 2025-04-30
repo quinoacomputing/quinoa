@@ -47,6 +47,14 @@ inline std::size_t momentumIdx( std::size_t nspec, std::size_t idir )
 inline std::size_t energyIdx( std::size_t nspec, std::size_t kmode )
 { return (nspec+3+kmode); }
 
+//! Get the index of the required mode of the temperature from primitives vector
+// //! \param[in] nspec Number of species
+//! \param[in] kmode Index of required energy mode;
+//!   0: translational-rotational-vibrational
+//! \return Index of the required mode of temperature
+inline std::size_t temperatureIdx( std::size_t /*nspec*/, std::size_t kmode )
+{ return (kmode); }
+
 //! \brief Get the index of the required DOF of species continuity equation
 //!   from the DG solution vector
 //! \param[in] nspec Number of species
@@ -88,6 +96,19 @@ inline std::size_t momentumDofIdx( std::size_t nspec, std::size_t idir,
 inline std::size_t energyDofIdx( std::size_t nspec, std::size_t kmode,
   std::size_t ndof, std::size_t idof )
 { return energyIdx(nspec, kmode)*ndof+idof; }
+
+//! \brief Get the index of the required DOF of temperature from the DG vector
+//!   of primitives
+//! \param[in] nspec Number of species
+//! \param[in] kmode Index of required species
+//! \param[in] ndof Number of solution DOFs stored in DG solution vector
+//! \param[in] idof Index of required solution DOF from DG solution vector
+//! \return Index of the required species total energy equation
+//! \details This function is used to get the index of the required DOF in the
+//!   solution vector, which is of type tk::Fields.
+inline std::size_t temperatureDofIdx( std::size_t nspec, std::size_t kmode,
+  std::size_t ndof, std::size_t idof )
+{ return temperatureIdx(nspec, kmode)*ndof+idof; }
 
 //@}
 
