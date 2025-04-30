@@ -94,8 +94,7 @@ timeStepSizeMultiSpecies(
     ugp = eval_state(ncomp, rdof, ndof, el, U, B_l);
 
     // initialize mixture
-    Mixture mix(nspec);
-    mix.set_state(ugp, mat_blk);
+    Mixture mix(nspec, ugp, mat_blk);
 
     // mixture density
     auto rhob = mix.get_mix_density();
@@ -126,8 +125,7 @@ timeStepSizeMultiSpecies(
       ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r);
 
       // initialize mixture
-      Mixture mixr(nspec);
-      mixr.set_state(ugp, mat_blk);
+      Mixture mixr(nspec, ugp, mat_blk);
 
       // mixture density
       rhob = mixr.get_mix_density();

@@ -86,8 +86,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   }
   // 2. User-specified temperature, pressure and velocity in box
   else {
-    Mixture mix(nspec);
-    mix.set_massfrac(Ys, boxpre, boxtemp, mat_blk); // Initialize
+    Mixture mix(nspec, Ys, boxpre, boxtemp, mat_blk);
     rbulk = mix.get_mix_density();
     for (std::size_t k=0; k<nspec; ++k) {
       rhok[k] = Ys[k]*rbulk;

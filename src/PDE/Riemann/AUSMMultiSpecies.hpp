@@ -53,10 +53,8 @@ struct AUSMMultiSpecies {
       al(0.0), ar(0.0), a12(0.0), rho12(0.0);
 
     // initialize mixtures
-    Mixture mixl(nspec);
-    mixl.set_state(u[0], mat_blk);
-    Mixture mixr(nspec);
-    mixr.set_state(u[1], mat_blk);
+    Mixture mixl(nspec, u[0], mat_blk);
+    Mixture mixr(nspec, u[1], mat_blk);
 
     // Mixture densities
     rhol = mixl.get_mix_density();

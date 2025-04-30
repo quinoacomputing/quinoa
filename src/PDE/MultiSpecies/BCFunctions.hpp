@@ -99,8 +99,7 @@ namespace inciter {
 
     auto ur = ul;
 
-    Mixture mixl(nspec); // Initialize mixture class
-    mixl.set_state(ul, mat_blk);
+    Mixture mixl(nspec, ul, mat_blk); // Initialize mixture class
     tk::real rhol = mixl.get_mix_density();
 
     // Internal cell velocity components
@@ -123,8 +122,7 @@ namespace inciter {
       // For supersonic inflow, all the characteristics are from outside.
       // Therefore, we calculate the ghost cell state using the primitive
       // variables from outside.
-      Mixture mixr(nspec);
-      mixr.set_massfrac(fspec, fp, ft, mat_blk);
+      Mixture mixr(nspec, fspec, fp, ft, mat_blk);
 
       tk::real rhor = mixr.get_mix_density();
       for (std::size_t k=0; k<nspec; ++k) {
@@ -141,8 +139,7 @@ namespace inciter {
       // incoming characteristics. Therefore, we calculate the ghost cell state
       // by taking pressure from the internal cell and other quantities from
       // the outside.
-      Mixture mixr(nspec);
-      mixr.set_massfrac(fspec, pl, ft, mat_blk);
+      Mixture mixr(nspec, fspec, pl, ft, mat_blk);
 
       tk::real rhor = mixr.get_mix_density();
       for (std::size_t k=0; k<nspec; ++k) {
@@ -164,8 +161,7 @@ namespace inciter {
         massfrac_l[k] = ul[multispecies::densityIdx(nspec, k)] / rhol;
       tk::real tl = mixl.temperature(rhol, v1l, v2l, v3l,
         ul[multispecies::energyIdx(nspec,0)], mat_blk);
-      Mixture mixr(nspec);
-      mixr.set_massfrac(massfrac_l, fp, tl, mat_blk);
+      Mixture mixr(nspec, massfrac_l, fp, tl, mat_blk);
 
       ur[multispecies::energyIdx(nspec,0)] = mixr.totalenergy(rhol, v1l,
         v2l, v3l, fp, mat_blk);

@@ -71,8 +71,7 @@ MultiSpeciesProblemUserDefined::initialize( ncomp_t ncomp,
   tk::real w = bgvelic[2];
 
   // Initialize mixture
-  Mixture mix(nspec);
-  mix.set_massfrac(Ys, bgpreic, bgtempic, mat_blk);
+  Mixture mix(nspec, Ys, bgpreic, bgtempic, mat_blk);
 
   auto rb = mix.get_mix_density();
   for (std::size_t k=0; k<nspec; ++k) {
