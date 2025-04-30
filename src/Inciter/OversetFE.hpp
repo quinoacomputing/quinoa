@@ -222,7 +222,9 @@ class OversetFE : public CBase_OversetFE {
       p | m_bnormc;
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
+      p | m_slipwallbcnodes;
       p | m_symbctri;
+      p | m_slipwallbctri;
       p | m_timedepbcnodes;
       p | m_timedepbcFn;
       p | m_stage;
@@ -242,6 +244,9 @@ class OversetFE : public CBase_OversetFE {
       p | m_centMass;
       p | m_centMassVel;
       p | m_angVelMesh;
+      p | m_centMassn;
+      p | m_centMassVeln;
+      p | m_angVelMeshn;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -335,8 +340,12 @@ class OversetFE : public CBase_OversetFE {
     std::unordered_set< std::size_t > m_symbcnodes;
     //! Unique set of nodes at which farfield BCs are set
     std::unordered_set< std::size_t > m_farfieldbcnodes;
+    //! Unique set of nodes at which slip wall BCs are set
+    std::unordered_set< std::size_t > m_slipwallbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
+    //! Vector with 1 at slip wall BC boundary triangles
+    std::vector< int > m_slipwallbctri;
     //! \brief Unique set of nodes at which time dependent BCs are set
     //    for each time dependent BC
     std::vector< std::unordered_set< std::size_t > > m_timedepbcnodes;
@@ -381,6 +390,12 @@ class OversetFE : public CBase_OversetFE {
     std::array< tk::real, 3 > m_centMassVel;
     //! Angular velocity of the rigid body
     tk::real m_angVelMesh;
+    //! Center of mass of rigid body at time n
+    std::array< tk::real, 3 > m_centMassn;
+    //! Velocity of the center of mass of rigid body at time n
+    std::array< tk::real, 3 > m_centMassVeln;
+    //! Angular velocity of the rigid body at time n
+    tk::real m_angVelMeshn;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -453,6 +468,9 @@ class OversetFE : public CBase_OversetFE {
 
     //! Apply boundary conditions
     void BC();
+
+    //! Update quantities associated with the center of mass at a new time step
+    void UpdateCenterOfMass();
 };
 
 } // inciter::

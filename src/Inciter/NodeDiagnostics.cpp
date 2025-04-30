@@ -53,7 +53,8 @@ NodeDiagnostics::compute(
   const std::unordered_map< int,
           std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
   const std::unordered_set< std::size_t >& symbcnodes,
-  const std::unordered_set< std::size_t >& farfieldbcnodes ) const
+  const std::unordered_set< std::size_t >& farfieldbcnodes,
+  const std::unordered_set< std::size_t >& slipwallbcnodes ) const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization proxy to read from
@@ -64,6 +65,7 @@ NodeDiagnostics::compute(
 //! \param[in] symbcnodes Unique set of node ids at which to set symmetry BCs
 //! \param[in] farfieldbcnodes Unique set of node ids at which to set farfield
 //!   BCs
+//! \param[in] slipwallbcnodes Unique set of node ids at which to set slip BCs
 //! \return True if diagnostics have been computed
 //! \details Diagnostics are defined as some norm, e.g., L2 norm, of a quantity,
 //!   computed in mesh nodes, A, as ||A||_2 = sqrt[ sum_i(A_i)^2 V_i ],
@@ -95,6 +97,7 @@ NodeDiagnostics::compute(
 
     // Evaluate analytic solution (if exist, if not, IC)
     auto an = u;
+    auto mv = d.MeshVel();
     for (std::size_t i=0; i<an.nunk(); ++i) {
       // Query analytic solution for all components of all PDEs integrated
       std::vector< tk::real > a;
@@ -107,6 +110,8 @@ NodeDiagnostics::compute(
     g_cgpde[d.MeshId()].symbc( an, coord, bnorm, symbcnodes );
     // Apply farfield BCs on analytic solution (if exist, if not, IC)
     g_cgpde[d.MeshId()].farfieldbc( an, coord, bnorm, farfieldbcnodes );
+    // Apply slip wall BCs on analytic solution (if exist, if not, IC)
+    g_cgpde[d.MeshId()].slipwallbc( an, mv, coord, bnorm, slipwallbcnodes );
 
     // Put in norms sweeping our mesh chunk
     for (std::size_t i=0; i<u.nunk(); ++i) {
