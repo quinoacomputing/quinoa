@@ -19,7 +19,10 @@ Mixture::Mixture(
   std::size_t nspec,
   const std::vector< tk::real >& ugp,
   const std::vector< EOS >& mat_blk) :
-  m_nspec(nspec)
+  m_nspec(nspec),
+  m_mix_density(0),
+  m_mix_R(0),
+  m_Ys(nspec, 0)
 // *************************************************************************
 //  Constructor (use during timestepping)
 //! \brief Initialize a mixture class using the state vector
@@ -35,8 +38,7 @@ Mixture::Mixture(
 
   // Compute mass fractions
   for (std::size_t k=0; k<m_nspec; ++k)
-    m_Ys.push_back(ugp[multispecies::densityIdx(m_nspec, k)] /
-        m_mix_density);
+    m_Ys[k] = ugp[multispecies::densityIdx(m_nspec, k)] / m_mix_density;
 
   // Compute mixture gas constant
   m_mix_R = 0.;
@@ -46,11 +48,13 @@ Mixture::Mixture(
 
 Mixture::Mixture(
   std::size_t nspec,
-  std::vector< tk::real > Ys,
+  const std::vector< tk::real >& Ys,
   tk::real mix_pressure,
   tk::real temperature,
   const std::vector< EOS >& mat_blk) :
   m_nspec(nspec),
+  m_mix_density(0),
+  m_mix_R(0),
   m_Ys(Ys)
 // *************************************************************************
 //  Constructor (use during initialization)
