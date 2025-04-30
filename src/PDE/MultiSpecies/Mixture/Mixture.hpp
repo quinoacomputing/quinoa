@@ -45,7 +45,7 @@ class Mixture {
 
     //! Compute mixture frozen speed of sound.
     tk::real frozen_soundspeed(tk::real mix_density,
-                               tk::real mix_pressure,
+                               tk::real mix_temp,
                                const std::vector< EOS >& mat_blk) const;
 
     //! Compute mixture total energy
@@ -53,16 +53,12 @@ class Mixture {
                          tk::real u,
                          tk::real v,
                          tk::real w,
-                         tk::real mix_pressure,
+                         tk::real mix_temp,
                          const std::vector< EOS >& mat_blk) const;
 
     //! Compute mixture pressure
     tk::real pressure(tk::real mix_density,
-                      tk::real u,
-                      tk::real v,
-                      tk::real w,
-                      tk::real rhoE,
-                      const std::vector< EOS >& mat_blk) const;
+                      tk::real mix_temp) const;
 
     //! Compute mixture temperature
     tk::real temperature(tk::real mix_density,

@@ -208,7 +208,7 @@ class DGPDE {
                            const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem,
-                           std::vector< std::size_t >& ndofel ) const
+                           const std::vector< std::size_t >& ndofel ) const
     { self->updatePrimitives( unk, L, geoElem, prim, nielem, ndofel ); }
 
     //! Public interface to cleaning up trace materials for the diff eq
@@ -443,7 +443,7 @@ class DGPDE {
                                      const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t,
-                                     std::vector< std::size_t >& ) const = 0;
+                                     const std::vector< std::size_t >& ) const = 0;
       virtual void cleanTraceMaterial( tk::real,
                                        const tk::Fields&,
                                        tk::Fields&,
@@ -608,7 +608,7 @@ class DGPDE {
                              const tk::Fields& geoElem,
                              tk::Fields& prim,
                              std::size_t nielem,
-                             std::vector< std::size_t >& ndofel )
+                             const std::vector< std::size_t >& ndofel )
       const override {
         data.updatePrimitives( unk, L, geoElem, prim, nielem, ndofel );
       }
