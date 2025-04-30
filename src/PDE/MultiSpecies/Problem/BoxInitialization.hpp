@@ -77,7 +77,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   for (std::size_t k=0; k<nspec; ++k) Ys[k] /= total_al;
 
   // material states (density, pressure, velocity)
-  tk::real u = 0.0, v = 0.0, w = 0.0, spi(0.0), pr(0.0), rbulk(0.0);
+  tk::real u = 0.0, v = 0.0, w = 0.0, spi(0.0), rbulk(0.0);
   std::vector< tk::real > rhok(nspec, 0.0);
 
   // 1. User-specified mass, specific energy (J/m^3) and volume of box
@@ -96,14 +96,11 @@ void initializeBox( const std::vector< EOS >& mat_blk,
       v = boxvel[1];
       w = boxvel[2];
     }
-    if (boxpre > 0.0) {
-      pr = boxpre;
-    }
     if (boxene > 0.0) {
       Throw("IC-box with specified energy not set up for multispecies");
     }
 
-    spi = mix.totalenergy(rbulk, u, v, w, pr, mat_blk) / rbulk;
+    spi = mix.totalenergy(rbulk, u, v, w, boxtemp, mat_blk) / rbulk;
   }
 
   // [II] Finally initialize the solution vector
