@@ -171,6 +171,7 @@ VertexBasedMultiSpecies_P1(
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
+  tk::Fields& P,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker );
 
@@ -189,6 +190,7 @@ VertexBasedMultiSpecies_P2(
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
+  tk::Fields& P,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker );
 

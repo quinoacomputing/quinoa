@@ -467,7 +467,7 @@ class MultiSpecies {
     // //!   variables
     // //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
-    // //! \param[in,out] P Vector of primitives at recent time step
+    //! \param[in,out] P Vector of primitives at recent time step
     //! \param[in,out] shockmarker Vector of shock-marker values
     void limit( [[maybe_unused]] tk::real,
                 const bool /*pref*/,
@@ -484,7 +484,7 @@ class MultiSpecies {
                 const std::vector< std::vector<tk::real> >& /*pNodalExtrm*/,
                 const std::vector< std::vector<tk::real> >& /*mtInv*/,
                 tk::Fields& U,
-                tk::Fields& /*P*/,
+                tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
     {
       const auto limiter = g_inputdeck.get< tag::limiter >();
@@ -496,13 +496,13 @@ class MultiSpecies {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiSpecies_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, nspec,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, P, nspec,
           shockmarker );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
       {
         VertexBasedMultiSpecies_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, nspec,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, P, nspec,
           shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
