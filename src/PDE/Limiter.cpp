@@ -983,6 +983,7 @@ VertexBasedMultiSpecies_P1(
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
+  tk::Fields& P,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -999,6 +1000,7 @@ VertexBasedMultiSpecies_P1(
 //! \param[in] flux Riemann flux function to use
 //! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] P High-order primitive vector which gets limited
 //! \param[in] nspec Number of species in this PDE system
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for
@@ -1010,9 +1012,7 @@ VertexBasedMultiSpecies_P1(
   const auto rdof = inciter::g_inputdeck.get< tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
-
-  // Null field for MarkShockCells argument
-  tk::Fields P;
+  std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::shock_detector_coeff >()
@@ -1045,12 +1045,13 @@ VertexBasedMultiSpecies_P1(
 
     if (dof_el > 1)
     {
-      std::vector< std::size_t > vars;
+      std::vector< std::size_t > varc, varp;
       if(shockmarker[e]) {
         // When shockmarker is 1, there is discontinuity within the element.
         // Hence, the vertex-based limiter will be applied.
 
-        for (std::size_t c=0; c<ncomp; ++c) vars.push_back(c);
+        for (std::size_t c=0; c<ncomp; ++c) varc.push_back(c);
+        for (std::size_t c=0; c<nprim; ++c) varp.push_back(c);
       } else {
         // When shockmarker is 0, the density of minor species will still be
         // limited to ensure a stable solution.
@@ -1061,19 +1062,21 @@ VertexBasedMultiSpecies_P1(
         for(std::size_t k=0; k<nspec; ++k) {
           if (U(e, multispecies::densityDofIdx(nspec,k,rdof,0))/rhob < 1e-4) {
             // limit the density of minor species
-            vars.push_back(multispecies::densityIdx(nspec, k));
+            varc.push_back(multispecies::densityIdx(nspec, k));
           }
         }
       }
 
-      std::vector< tk::real > phic(ncomp, 1.0);
+      std::vector< tk::real > phic(ncomp, 1.0), phip(nprim, 1.0);
       VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
-        ncomp, phic, vars);
+        ncomp, phic, varc);
+      if (!varp.empty())
+        VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el,
+          nprim, phip, varp);
 
       //std::vector< tk::real > phic_p2, phip_p2;
-
-      //PositivityLimitingMultiMat(nmat, mat_blk, rdof, dof_el, ndofel, e, inpoel,
-      //  coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
+      //PositivityLimitingMultiSpecies(nspec, mat_blk, rdof, dof_el, ndofel, e,
+      //  inpoel, coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
 
       // TODO: Unit sum of mass fractions is maintained by using common limiter
       // for all species densities. Investigate better approaches.
@@ -1095,6 +1098,13 @@ VertexBasedMultiSpecies_P1(
         U(e, mark+2) = phic[c] * U(e, mark+2);
         U(e, mark+3) = phic[c] * U(e, mark+3);
       }
+      for (std::size_t c=0; c<nprim; ++c)
+      {
+        auto mark = c*rdof;
+        P(e, mark+1) = phip[c] * P(e, mark+1);
+        P(e, mark+2) = phip[c] * P(e, mark+2);
+        P(e, mark+3) = phip[c] * P(e, mark+3);
+      }
     }
   }
 }
@@ -1113,6 +1123,7 @@ VertexBasedMultiSpecies_P2(
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
+  tk::Fields& P,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -1129,6 +1140,7 @@ VertexBasedMultiSpecies_P2(
 //! \param[in] flux Riemann flux function to use
 //! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] P High-order primitive vector which gets limited
 //! \param[in] nspec Number of species in this PDE system
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for
@@ -1140,9 +1152,7 @@ VertexBasedMultiSpecies_P2(
   const auto rdof = inciter::g_inputdeck.get< tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
-
-  // Null field for MarkShockCells argument
-  tk::Fields P;
+  std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::shock_detector_coeff >() > 1e-6) {
@@ -1173,39 +1183,43 @@ VertexBasedMultiSpecies_P2(
 
     if (dof_el > 1)
     {
-      std::vector< std::size_t > vars;
+      std::vector< std::size_t > varc, varp;
       if(shockmarker[e]) {
         // When shockmarker is 1, there is discontinuity within the element.
         // Hence, the vertex-based limiter will be applied.
 
-        for (std::size_t c=0; c<ncomp; ++c) vars.push_back(c);
-      } else {
-        // When shockmarker is 0, the density of minor species will still be
-        // limited to ensure a stable solution.
-
-        tk::real rhob(0.0);
-        for(std::size_t k=0; k<nspec; ++k)
-          rhob += U(e, multispecies::densityDofIdx(nspec,k,rdof,0));
-        for(std::size_t k=0; k<nspec; ++k) {
-          if (U(e, multispecies::densityDofIdx(nspec,k,rdof,0))/rhob < 1e-4) {
-            // limit the density of minor species
-            vars.push_back(multispecies::densityIdx(nspec, k));
-          }
-        }
+        for (std::size_t c=0; c<ncomp; ++c) varc.push_back(c);
+        for (std::size_t c=0; c<nprim; ++c) varp.push_back(c);
       }
+        // When shockmarker is 0, the density of minor species is not limited
+        // since it will degrade the accuracy to second order.
 
       // Removing 3rd order DOFs if discontinuity is detected, and applying
       // limiting to the 2nd order/P1 solution
-      for (std::size_t c=0; c<vars.size(); c++) {
+      for (std::size_t c=0; c<varc.size(); c++) {
         for(std::size_t idof = 4; idof < rdof; idof++) {
-          auto mark = vars[c] * rdof + idof;
+          auto mark = varc[c] * rdof + idof;
           U(e, mark) = 0.0;
         }
       }
+      for (std::size_t c=0; c<varp.size(); c++) {
+        for(std::size_t idof = 4; idof < rdof; idof++) {
+          auto mark = varp[c] * rdof + idof;
+          P(e, mark) = 0.0;
+        }
+      }
 
-      std::vector< tk::real > phic_p1(ncomp, 1.0);
-      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
-        ncomp, phic_p1, vars);
+      std::vector< tk::real > phic_p1(ncomp, 1.0), phip_p1(nprim, 1.0);
+      if (!varc.empty())
+        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
+          ncomp, phic_p1, varc);
+      if (!varp.empty())
+        VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el,
+          nprim, phip_p1, varp);
+
+      std::vector< tk::real > phic_p2(ncomp, 1.0), phip_p2(nprim, 1.0);
+      //PositivityLimitingMultiSpecies(nspec, mat_blk, ndof, dof_el, ndofel, e,
+      //  inpoel, coord, fd.Esuel(), U, P, phic_p1, phic_p2, phip_p1, phic_p2);
 
       // TODO: Unit sum of mass fractions is maintained by using common limiter
       // for all species densities. Investigate better approaches.
@@ -1225,6 +1239,16 @@ VertexBasedMultiSpecies_P2(
         auto mark = c * rdof;
         for(std::size_t idof=1; idof<4; idof++)
           U(e, mark+idof) = phic_p1[c] * U(e, mark+idof);
+        for(std::size_t idof=4; idof<rdof; idof++)
+          U(e, mark+idof) = phic_p2[c] * U(e, mark+idof);
+      }
+      for (std::size_t c=0; c<nprim; ++c)
+      {
+        auto mark = c * rdof;
+        for(std::size_t idof=1; idof<4; idof++)
+          P(e, mark+idof) = phip_p1[c] * P(e, mark+idof);
+        for(std::size_t idof=4; idof<rdof; idof++)
+          P(e, mark+idof) = phip_p2[c] * P(e, mark+idof);
       }
     }
   }
