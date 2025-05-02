@@ -374,6 +374,18 @@ correctLimConservMultiMat(
   const tk::Fields& prim,
   tk::Fields& unk );
 
+//! Update the conservative quantities after limiting for multispecies systems
+void
+correctLimConservMultiSpecies(
+  std::size_t nelem,
+  const std::vector< EOS >& mat_blk,
+  std::size_t nspec,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
+  const tk::Fields& prim,
+  tk::Fields& unk );
+
 //! Constrain material partial pressure (alpha_k * p_k)
 tk::real
 constrain_pressure( const std::vector< EOS >& mat_blk,
