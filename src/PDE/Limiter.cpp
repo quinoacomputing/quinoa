@@ -27,6 +27,7 @@
 #include "Integrate/Mass.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -2887,6 +2888,114 @@ correctLimConservMultiMat(
         unk(e, momentumDofIdx(nmat, idir, rdof, idof)) =
           R[velocityDofIdx(nmat,idir,rdof,idof)] / L[idof];
     }
+  }
+}
+
+void
+correctLimConservMultiSpecies(
+  std::size_t nelem,
+  const std::vector< EOS >& mat_blk,
+  std::size_t nspec,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
+  const tk::Fields& prim,
+  tk::Fields& unk )
+// *****************************************************************************
+//  Update the conservative quantities after limiting for multispecies systems
+//! \param[in] nelem Number of internal elements
+//! \param[in] mat_blk EOS material block
+//! \param[in] nspec Number of species in this PDE system
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] prim Array of primitive variables
+//! \param[in,out] unk Array of conservative variables
+//! \details This function computes the updated dofs for conservative
+//!   quantities based on the limited primitive quantities, to re-instate
+//!   consistency between the limited primitive and evolved quantities. For
+//!   further details, see Pandare et al. (2023). On the Design of Stable,
+//!   Consistent, and Conservative High-Order Methods for Multi-Material
+//!   Hydrodynamics. J Comp Phys, 112313.
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  std::size_t ncomp = unk.nprop()/rdof;
+  std::size_t nprim = prim.nprop()/rdof;
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    // Here we pre-compute the right-hand-side vector. The reason that the
+    // lhs in DG.cpp is not used is that the size of this vector in this
+    // projection procedure should be rdof instead of ndof.
+    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
+
+    // The right-hand side vector is sized as nprim, i.e. the primitive quantity
+    // vector. However, it stores the consistently obtained values of evolved
+    // quantities, since nprim is the number of evolved quantities that need to
+    // be evaluated consistently. For this reason, accessing R will require
+    // the primitive quantity accessors. But this access is intended to give
+    // the corresponding evolved quantites, as follows:
+    // multispecies::tempratureIdx() - total energy
+    std::vector< tk::real > R(nprim*rdof, 0.0);
+
+    auto ng = tk::NGvol(rdof);
+
+    // Arrays for quadrature points
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+    // Loop over quadrature points in element e
+    for (std::size_t igp=0; igp<ng; ++igp) {
+      // Compute the basis function
+      auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+                               coordgp[2][igp] );
+
+      auto w = wgp[igp] * geoElem(e, 0);
+
+      // Evaluate the solution at quadrature point
+      auto state = evalPolynomialSol(mat_blk, 0, ncomp, nprim,
+        rdof, 1, e, rdof, inpoel, coord, geoElem,
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim);
+
+      // Solution vector that stores the material energy and bulk momentum
+      std::vector< tk::real > s(nprim, 0.0);
+
+      // Mixture state at quadrature point
+      Mixture mixgp(nspec, state, mat_blk);
+
+      // Mixture density at quadrature point
+      tk::real rhob = mixgp.get_mix_density();
+
+      // velocity vector at quadrature point
+      std::array< tk::real, 3 >
+        vel{ state[multispecies::momentumIdx(nspec,0)]/rhob,
+             state[multispecies::momentumIdx(nspec,1)]/rhob,
+             state[multispecies::momentumIdx(nspec,2)]/rhob };
+
+      // Compute and store total energy at quadrature point
+      s[multispecies::energyIdx(nspec,0)] = mixgp.totalenergy(rhob,
+        vel[0], vel[1], vel[2],
+        state[ncomp+multispecies::temperatureIdx(nspec,0)], mat_blk);
+
+      // Evaluate the right-hand-side vector
+      for(std::size_t k = 0; k < nprim; k++) {
+        auto mark = k * rdof;
+        for(std::size_t idof = 0; idof < rdof; idof++)
+          R[mark+idof] += w * s[k] * B[idof];
+      }
+    }
+
+    // Update the high order dofs of the total energy
+    for(std::size_t idof = 1; idof < rdof; idof++)
+      unk(e, multispecies::energyDofIdx(nspec,0,rdof,idof)) =
+        R[multispecies::temperatureDofIdx(nspec,0,rdof,idof)] / L[idof];
   }
 }
 
