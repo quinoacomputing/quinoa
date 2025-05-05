@@ -630,6 +630,8 @@ class MultiMat {
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
+              "vector must equal "+ std::to_string(rdof*m_nprim) );
 
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------

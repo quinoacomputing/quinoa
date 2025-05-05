@@ -400,7 +400,7 @@ class MultiSpecies {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
-    // //! \param[in,out] P Vector of primitives at recent time step
+    //! \param[in,out] P Vector of primitives at recent time step
     //! \param[in] pref Indicator for p-adaptive algorithm
     //! \param[in] ndofel Vector of local number of degrees of freedome
     void reconstruct( tk::real,
@@ -412,7 +412,7 @@ class MultiSpecies {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& /*P*/,
+                      tk::Fields& P,
                       const bool pref,
                       const std::vector< std::size_t >& ndofel ) const
     {
@@ -427,6 +427,8 @@ class MultiSpecies {
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
+              "vector must equal "+ std::to_string(rdof*m_nprim) );
 
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
@@ -445,6 +447,32 @@ class MultiSpecies {
 
           // 3. transform reconstructed derivatives to Dubiner dofs
           tk::transform_P0P1( rdof, e, inpoel, coord, U, vars );
+        }
+      }
+
+      //----- reconstruction of primitive quantities -----
+      //--------------------------------------------------
+      // For multispecies, conserved and primitive quantities are reconstructed
+      // separately.
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        // There are two conditions that requires the reconstruction of the
+        // primitive variables:
+        //   1. p-adaptive is triggered and P0P1 scheme is applied to specific
+        //      elements
+        //   2. p-adaptive is not triggered and P0P1 scheme is applied to the
+        //      whole computation domain
+        if ((pref && ndofel[e] == 1) || (!pref && is_p0p1)) {
+          std::vector< std::size_t > vars;
+          for (std::size_t c=0; c<m_nprim; ++c) vars.push_back(c);
+
+          // 1.
+          // Reconstruct second-order dofs in Taylor space using nodal-stencils
+          tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem, P, vars );
+
+          // 2.
+          tk::transform_P0P1(rdof, e, inpoel, coord, P, vars);
         }
       }
     }
