@@ -2980,7 +2980,7 @@ correctLimConservMultiSpecies(
              state[multispecies::momentumIdx(nspec,2)]/rhob };
 
       // Compute and store total energy at quadrature point
-      s[multispecies::energyIdx(nspec,0)] = mixgp.totalenergy(rhob,
+      s[multispecies::temperatureIdx(nspec,0)] = mixgp.totalenergy(rhob,
         vel[0], vel[1], vel[2],
         state[ncomp+multispecies::temperatureIdx(nspec,0)], mat_blk);
 
