@@ -469,6 +469,7 @@ DG::comsol( int fromch,
       "Receiving solution non-ghost data" );
     auto b = tk::cref_find( myGhosts()->m_bid, j );
     Assert( b < m_uc[0].size(), "Indexing out of bounds" );
+    Assert( b < m_pc[0].size(), "Indexing out of bounds" );
     m_uc[0][b] = u[i];
     m_pc[0][b] = prim[i];
     if (pref && fromstage == 0) {
