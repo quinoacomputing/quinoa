@@ -35,7 +35,7 @@ namespace inciter {
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
-    Assert( ul.size() == ncomp, "Incorrect size for appended "
+    Assert( ul.size() == ncomp+1, "Incorrect size for appended "
             "internal state vector" );
 
     tk::real rho(0.0);
@@ -59,7 +59,7 @@ namespace inciter {
     ur[multispecies::momentumIdx(nspec, 1)] = rho * v2r;
     ur[multispecies::momentumIdx(nspec, 2)] = rho * v3r;
 
-    Assert( ur.size() == ncomp, "Incorrect size for appended "
+    Assert( ur.size() == ncomp+1, "Incorrect size for appended "
             "boundary state vector" );
 
     return {{ std::move(ul), std::move(ur) }};
@@ -94,7 +94,7 @@ namespace inciter {
     auto fspec =
       g_inputdeck.get< tag::bc >()[0].get< tag::mass_fractions >();
 
-    Assert( ul.size() == ncomp, "Incorrect size for appended "
+    Assert( ul.size() == ncomp+1, "Incorrect size for appended "
             "internal state vector" );
 
     auto ur = ul;
@@ -169,7 +169,7 @@ namespace inciter {
     // conservative variables from internal cell (which is what ur is
     // initialized to).
 
-    Assert( ur.size() == ncomp, "Incorrect size for appended "
+    Assert( ur.size() == ncomp+1, "Incorrect size for appended "
             "boundary state vector" );
 
     return {{ std::move(ul), std::move(ur) }};
@@ -208,7 +208,7 @@ namespace inciter {
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
-    Assert( ul.size() == ncomp, "Incorrect size for appended "
+    Assert( ul.size() == ncomp+1, "Incorrect size for appended "
             "internal state vector" );
 
     tk::real rho(0.0);
@@ -230,7 +230,7 @@ namespace inciter {
     ur[multispecies::momentumIdx(nspec, 1)] = rho * v2r;
     ur[multispecies::momentumIdx(nspec, 2)] = rho * v3r;
 
-    Assert( ur.size() == ncomp, "Incorrect size for appended "
+    Assert( ur.size() == ncomp+1, "Incorrect size for appended "
             "boundary state vector" );
 
     return {{ std::move(ul), std::move(ur) }};
