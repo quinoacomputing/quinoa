@@ -14,6 +14,7 @@
 
 #include "Types.hpp"
 #include "Centering.hpp"
+#include "Options/PDE.hpp"
 
 namespace inciter {
 namespace ctr {
@@ -61,22 +62,29 @@ struct OutVar {
   //! \return True if outvar is a request for an analytic solution
   bool analytic() const { return name.find("analytic") != std::string::npos; }
 
-  //! Query if outvar is a request for a (multimat) primitive variable
+  //! Query if outvar is a request for a primitive variable
+  //! \param[in] iPDE PDE type
   //! \return True if outvar should be extracted from primitive variable data
-  //! \see deck::inciter::multimatvars
-  bool primitive() const {
+  //! \details This function returns whether the requested variable is a part
+  //!   of the vector of primitive variables. This changes according to which
+  //!   system of PDEs is configured.
+  bool primitive( const PDEType& iPDE ) const {
     bool is_prim(false);
 
-    if (varFnIdx.find("pressure") != std::string::npos ||
-        varFnIdx.find("velocity") != std::string::npos ||
-        varFnIdx.find("stress") != std::string::npos )
-    { is_prim = true; }
-    else if ( name.length() == 2 &&
-      (name.find('u') != std::string::npos ||
-       name.find('U') != std::string::npos ||
-       name.find('p') != std::string::npos ||
-       name.find('P') != std::string::npos) )
-    { is_prim = true; }
+    if (iPDE == PDEType::MULTISPECIES) {
+    }
+    else {
+      if (varFnIdx.find("pressure") != std::string::npos ||
+          varFnIdx.find("velocity") != std::string::npos ||
+          varFnIdx.find("stress") != std::string::npos )
+      { is_prim = true; }
+      else if ( name.length() == 2 &&
+        (name.find('u') != std::string::npos ||
+         name.find('U') != std::string::npos ||
+         name.find('p') != std::string::npos ||
+         name.find('P') != std::string::npos) )
+      { is_prim = true; }
+    }
 
     return is_prim;
   }
