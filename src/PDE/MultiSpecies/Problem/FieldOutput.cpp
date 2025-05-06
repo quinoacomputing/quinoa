@@ -31,6 +31,7 @@ std::map< std::string, tk::GetVarFn > MultiSpeciesOutVarFn()
 
   // Allowed strings for user-def field output vars
   OutFnMap["density"] = multispecies::mixDensityOutVar;
+  OutFnMap["temperature"] = multispecies::temperatureOutVar;
   //OutFnMap["pressure"] = multispecies::pressureOutVar;
   OutFnMap["specific_total_energy"] = multispecies::specificTotalEnergyOutVar;
   OutFnMap["x-velocity"] = multispecies::velocityOutVar<0>;
