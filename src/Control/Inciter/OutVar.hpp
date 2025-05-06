@@ -72,6 +72,8 @@ struct OutVar {
     bool is_prim(false);
 
     if (iPDE == PDEType::MULTISPECIES) {
+      if (varFnIdx.find("temperature") != std::string::npos)
+      { is_prim = true; }
     }
     else {
       if (varFnIdx.find("pressure") != std::string::npos ||
