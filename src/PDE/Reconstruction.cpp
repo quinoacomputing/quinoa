@@ -21,6 +21,7 @@
 #include "Around.hpp"
 #include "Base/HashMapReducer.hpp"
 #include "Reconstruction.hpp"
+#include "Inciter/Options/PDE.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
@@ -894,17 +895,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
   }
 
   // physical constraints
-  if (state.size() > ncomp) {
-    using inciter::pressureIdx;
-    using inciter::volfracIdx;
-    using inciter::densityIdx;
-
-    for (std::size_t k=0; k<nmat; ++k) {
-      state[ncomp+pressureIdx(nmat,k)] = constrain_pressure( mat_blk,
-        state[ncomp+pressureIdx(nmat,k)], state[densityIdx(nmat,k)],
-        state[volfracIdx(nmat,k)], k );
-    }
-  }
+  enforcePhysicalConstraints(mat_blk, ncomp, nmat, state);
 
   return state;
 }
@@ -998,15 +989,43 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
   }
 
   // physical constraints
-  if (state.size() > ncomp) {
+  enforcePhysicalConstraints(mat_blk, ncomp, nmat, state);
+
+  return state;
+}
+
+void
+enforcePhysicalConstraints(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t ncomp,
+  std::size_t nmat,
+  std::vector< tk::real >& state )
+// *****************************************************************************
+//  Enforce physical constraints on state at quadrature point
+//! \param[in] mat_blk EOS material block
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] nmat Total number of materials
+//! \param[in,out] state state at quadrature point
+// *****************************************************************************
+{
+  auto myPDE = inciter::g_inputdeck.get< tag::pde >();
+
+  // unfortunately have to query PDEType here. alternative will potentially
+  // require refactor that passes PDEType from DGPDE to this level.
+  if (myPDE == inciter::ctr::PDEType::MULTIMAT) {
+    using inciter::pressureIdx;
+    using inciter::volfracIdx;
+    using inciter::densityIdx;
+
     for (std::size_t k=0; k<nmat; ++k) {
       state[ncomp+pressureIdx(nmat,k)] = constrain_pressure( mat_blk,
         state[ncomp+pressureIdx(nmat,k)], state[densityIdx(nmat,k)],
         state[volfracIdx(nmat,k)], k );
     }
   }
-
-  return state;
+  else if (myPDE == inciter::ctr::PDEType::MULTISPECIES) {
+    // TODO: consider clipping temperature here
+  }
 }
 
 void
