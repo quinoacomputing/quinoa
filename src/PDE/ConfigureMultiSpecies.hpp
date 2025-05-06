@@ -117,6 +117,19 @@ velocityOutVar( const tk::Fields& U, std::size_t rdof )
   return u;
 }
 
+//! Compute mixture temperature for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] rdof Number of reconstructed solution DOFs
+//! \return Mixture temperature ready to be output to file
+static tk::GetVarFn::result_type
+temperatureOutVar( const tk::Fields& U, std::size_t rdof )
+{
+  auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+  auto r = U.extract_comp( temperatureDofIdx(nspec,0,rdof,0) );
+  return r;
+}
+
 } // multispecies::
 
 #if defined(__clang__)
