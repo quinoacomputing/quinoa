@@ -165,6 +165,14 @@ evalFVSol(
   const Fields& P,
   int srcFlag );
 
+//! Enforce physical constraints on state at quadrature point
+void
+enforcePhysicalConstraints(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t nmat,
+  std::size_t ncomp,
+  std::vector< tk::real >& state );
+
 //! Compute safe reconstructions near material interfaces
 void
 safeReco( std::size_t rdof,
