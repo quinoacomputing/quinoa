@@ -16,6 +16,7 @@
 
 #include "TaggedTuple.hpp"
 #include "Toggle.hpp"
+#include "Tags.hpp"
 #include "Inciter/Options/Physics.hpp"
 #include "Inciter/Options/Problem.hpp"
 
