@@ -175,7 +175,6 @@ Mixture::temperature(
 {
   // Compute internal energy
   tk::real e = rhoE / mix_density - 0.5 * (u*u + v*v + w*w);
-  if (e < 1e-8) e = 1e-8; // TODO: standin until positivity is implemented
 
   // Solve for temperature -- Newton's method
   tk::real temp = 1500; // Starting guess

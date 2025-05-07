@@ -1225,13 +1225,18 @@ VertexBasedMultiSpecies_P2(
       // TODO: Unit sum of mass fractions is maintained by using common limiter
       // for all species densities. Investigate better approaches.
       if (!g_inputdeck.get< tag::accuracy_test >()) {
-        tk::real phi_rhos_p1(1.0);
-        for (std::size_t k=0; k<nspec; ++k)
+        tk::real phi_rhos_p1(1.0), phi_rhos_p2(1.0);
+        for (std::size_t k=0; k<nspec; ++k) {
           phi_rhos_p1 = std::min( phi_rhos_p1,
             phic_p1[multispecies::densityIdx(nspec, k)] );
+          phi_rhos_p2 = std::min( phi_rhos_p2,
+            phic_p2[multispecies::densityIdx(nspec, k)] );
+        }
         // same limiter for all densities
-        for (std::size_t k=0; k<nspec; ++k)
+        for (std::size_t k=0; k<nspec; ++k) {
           phic_p1[multispecies::densityIdx(nspec, k)] = phi_rhos_p1;
+          phic_p2[multispecies::densityIdx(nspec, k)] = phi_rhos_p2;
+        }
       }
 
       // apply limiter function to the solution
