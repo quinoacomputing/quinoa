@@ -227,6 +227,7 @@ class Transport {
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbctri,
+      const std::vector< int >&,
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
@@ -407,6 +408,17 @@ class Transport {
     //! Set farfield boundary conditions at nodes
     void farfieldbc(
       tk::Fields&,
+      const std::array< std::vector< real >, 3 >&,
+      const std::unordered_map< int,
+              std::unordered_map< std::size_t,
+                std::array< real, 4 > > >&,
+      const std::unordered_set< std::size_t >& ) const {}
+
+    //! Set slip wall boundary conditions at nodes
+    void
+    slipwallbc(
+      tk::Fields&,
+      const tk::Fields&,
       const std::array< std::vector< real >, 3 >&,
       const std::unordered_map< int,
               std::unordered_map< std::size_t,

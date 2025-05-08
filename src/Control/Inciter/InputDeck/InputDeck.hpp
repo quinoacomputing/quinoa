@@ -50,7 +50,8 @@ using bclist = tk::TaggedTuple< brigand::list<
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >
+  tag::noslipwall,  std::vector< std::size_t >,
+  tag::slipwall,    std::vector< std::size_t >
 > >;
 
 // Transport
@@ -146,6 +147,7 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
   tag::noslipwall,  std::vector< std::size_t >,
+  tag::slipwall,    std::vector< std::size_t >,
   tag::velocity,    std::vector< tk::real >,
   tag::pressure,    tk::real,
   tag::density,     tk::real,
@@ -166,7 +168,11 @@ using bcList = tk::TaggedTuple< brigand::list<
       tag::sideset,    std::vector< uint64_t >,
       tag::fn,         std::vector< tk::real >
     > >
-  >
+  >,
+  tag::back_pressure, tk::TaggedTuple< brigand::list<
+    tag::sideset,  std::vector< std::size_t >,
+    tag::pressure, tk::real
+  > >
 > >;
 
 // IC box
@@ -1730,6 +1736,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to list (multiple) no-slip wall BC sidesets.)",
         "vector of uint(s)"});
 
+      keywords.insert({"slipwall",
+        "List sidesets with slip wall boundary conditions",
+        R"(This keyword is used to list (multiple) slip wall BC sidesets.)",
+        "vector of uint(s)"});
+
       keywords.insert({"timedep",
         "Start configuration block describing time dependent boundary conditions",
         R"(This keyword is used to introduce a bc_timedep block, used to
@@ -1739,6 +1750,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         is expected inside a fn ... end block, specified within the bc_timedep
         block. Multiple such bc_timedep blocks can be specified for different
         time dependent BCs on different groups of side sets.)", "block-title"});
+
+      keywords.insert({"back_pressure",
+        "Start configuration block describing back pressure boundary conditions",
+        R"(This keyword is used to introduce a back pressure BC block. This
+        block requires a 'sideset' vector and 'pressure' to be specified within
+        it.)", "block-title"});
 
       keywords.insert({"velocity", "Specify velocity",
         R"(This keyword is used to configure a velocity vector used in a

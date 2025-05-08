@@ -78,9 +78,11 @@ class CompFlow {
       , invalidBC         // Outlet BC not implemented
       , farfield
       , extrapolate
-      , invalidBC },      // No slip wall BC not implemented
+      , invalidBC         // No slip wall BC not implemented
+      , symmetry },       // Slip equivalent to symmetry without mesh motion
       // BC Gradient functions
       { noOpGrad
+      , noOpGrad
       , noOpGrad
       , noOpGrad
       , noOpGrad

@@ -24,6 +24,7 @@
 #include "Inciter/Options/Flux.hpp"
 #include "EoS/EOS.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -51,12 +52,13 @@ struct AUSMMultiSpecies {
     tk::real rhol(0.0), rhor(0.0), pl(0.0), pr(0.0), hl(0.0), hr(0.0),
       al(0.0), ar(0.0), a12(0.0), rho12(0.0);
 
+    // initialize mixtures
+    Mixture mixl(nspec, u[0], mat_blk);
+    Mixture mixr(nspec, u[1], mat_blk);
+
     // Mixture densities
-    for (std::size_t k=0; k<nspec; ++k)
-    {
-      rhol += u[0][multispecies::densityIdx(nspec, k)];
-      rhor += u[1][multispecies::densityIdx(nspec, k)];
-    }
+    rhol = mixl.get_mix_density();
+    rhor = mixr.get_mix_density();
 
     // Velocities
     auto ul = u[0][multispecies::momentumIdx(nspec, 0)]/rhol;
@@ -66,15 +68,15 @@ struct AUSMMultiSpecies {
     auto vr = u[1][multispecies::momentumIdx(nspec, 1)]/rhor;
     auto wr = u[1][multispecies::momentumIdx(nspec, 2)]/rhor;
 
-    pl = mat_blk[0].compute< EOS::pressure >( rhol, ul, vl, wl,
-      u[0][multispecies::energyIdx(nspec, 0)] );
+    pl = mixl.pressure( rhol, ul, vl, wl,
+      u[0][multispecies::energyIdx(nspec, 0)], mat_blk );
     hl = u[0][multispecies::energyIdx(nspec, 0)] + pl;
-    al = mat_blk[0].compute< EOS::soundspeed >( rhol, pl );
+    al = mixl.frozen_soundspeed( rhol, pl, mat_blk );
 
-    pr = mat_blk[0].compute< EOS::pressure >( rhor, ur, vr, wr,
-      u[1][multispecies::energyIdx(nspec, 0)] );
+    pr = mixr.pressure (rhor, ur, vr, wr,
+      u[1][multispecies::energyIdx(nspec, 0)], mat_blk );
     hr = u[1][multispecies::energyIdx(nspec, 0)] + pr;
-    ar = mat_blk[0].compute< EOS::soundspeed >( rhor, pr );
+    ar = mixr.frozen_soundspeed( rhor, pr, mat_blk );
 
     // Average states for mixture speed of sound
     a12 = 0.5*(al+ar);

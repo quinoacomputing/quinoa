@@ -18,6 +18,7 @@
 #include "Integrate/Basis.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "EoS/GetMatProp.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -92,10 +93,11 @@ timeStepSizeMultiSpecies(
     // get conserved quantities
     ugp = eval_state(ncomp, rdof, ndof, el, U, B_l);
 
+    // initialize mixture
+    Mixture mix(nspec, ugp, mat_blk);
+
     // mixture density
-    tk::real rhob(0.0);
-    for (std::size_t k=0; k<nspec; ++k)
-      rhob += ugp[multispecies::densityIdx(nspec, k)];
+    auto rhob = mix.get_mix_density();
 
     // advection velocity
     u = ugp[multispecies::momentumIdx(nspec, 0)]/rhob;
@@ -105,9 +107,9 @@ timeStepSizeMultiSpecies(
     vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
     // acoustic speed
-    auto p = mat_blk[0].compute< EOS::pressure >( rhob, u, v, w,
-      ugp[multispecies::energyIdx(nspec, 0)] );
-    a = mat_blk[0].compute< EOS::soundspeed >( rhob, p );
+    auto p = mix.pressure( rhob, u, v, w,
+      ugp[multispecies::energyIdx(nspec, 0)], mat_blk);
+    a = mix.frozen_soundspeed( rhob, p, mat_blk );
 
     dSV_l = geoFace(f,0) * (std::fabs(vn) + a);
 
@@ -122,10 +124,11 @@ timeStepSizeMultiSpecies(
       // get conserved quantities
       ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r);
 
+      // initialize mixture
+      Mixture mixr(nspec, ugp, mat_blk);
+
       // mixture density
-      rhob = 0.0;
-      for (std::size_t k=0; k<nspec; ++k)
-        rhob += ugp[multispecies::densityIdx(nspec, k)];
+      rhob = mixr.get_mix_density();
 
       // advection velocity
       u = ugp[multispecies::momentumIdx(nspec, 0)]/rhob;
@@ -135,9 +138,9 @@ timeStepSizeMultiSpecies(
       vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
       // acoustic speed
-      p = mat_blk[0].compute< EOS::pressure >( rhob, u, v, w,
-        ugp[multispecies::energyIdx(nspec, 0)] );
-      a = mat_blk[0].compute< EOS::soundspeed >( rhob, p );
+      p = mixr.pressure( rhob, u, v, w,
+        ugp[multispecies::energyIdx(nspec, 0)], mat_blk );
+      a = mixr.frozen_soundspeed( rhob, p, mat_blk );
 
       dSV_r = geoFace(f,0) * (std::fabs(vn) + a);
 

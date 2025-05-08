@@ -81,7 +81,6 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
   }
   else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
     // query input deck for ThermallyPerfectGas parameters
-    auto g = getspecprop< tag::gamma >(k);
     auto R = getspecprop< tag::R >(k);
     // assume only one type of species
     auto cp_coeff =
@@ -89,7 +88,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto t_range =
       g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
     auto dH_ref = getspecprop< tag::dH_ref >(k);
-    m_material = ThermallyPerfectGas(g, R, cp_coeff, t_range, dH_ref);
+    m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref);
   }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
 }

@@ -45,6 +45,7 @@
 #include "MultiSpecies/BCFunctions.hpp"
 #include "MultiSpecies/MiscMultiSpeciesFns.hpp"
 #include "EoS/GetMatProp.hpp"
+#include "Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -81,14 +82,16 @@ class MultiSpecies {
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall },
+        , noslipwall 
+        , symmetry },       // Slip equivalent to symmetry without mesh motion
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
         , noOpGrad
         , noOpGrad
         , noOpGrad
-        , noOpGrad }
+        , noOpGrad
+        , symmetryGrad }
         ) );
 
       // EoS initialization
@@ -755,17 +758,18 @@ class MultiSpecies {
           tk::dot(J[2],dc));
         auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
 
+        // Mixture calculations, initialized
+        Mixture mix(nspec, uhp, m_mat_blk);
+
         // store solution in history output vector
         Up[j].resize(6+nspec, 0.0);
-        for (std::size_t k=0; k<nspec; ++k) {
-          Up[j][0] += uhp[multispecies::densityIdx(nspec,k)];
-        }
+        Up[j][0] = mix.get_mix_density();
         Up[j][1] = uhp[multispecies::momentumIdx(nspec,0)]/Up[j][0];
         Up[j][2] = uhp[multispecies::momentumIdx(nspec,1)]/Up[j][0];
         Up[j][3] = uhp[multispecies::momentumIdx(nspec,2)]/Up[j][0];
         Up[j][4] = uhp[multispecies::energyIdx(nspec,0)];
-        Up[j][5] = m_mat_blk[0].compute< EOS::pressure >( Up[j][0], Up[j][1],
-          Up[j][2], Up[j][3], Up[j][4]);
+        Up[j][5] = mix.pressure( Up[j][0], Up[j][1], Up[j][2], Up[j][3],
+          Up[j][4], m_mat_blk);
         for (std::size_t k=0; k<nspec; ++k) {
           Up[j][6+k] = uhp[multispecies::densityIdx(nspec,k)]/Up[j][0];
         }
@@ -847,17 +851,15 @@ class MultiSpecies {
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
 
-      tk::real rhob(0.0);
-      for (std::size_t k=0; k<nspec; ++k)
-        rhob += ugp[multispecies::densityIdx(nspec, k)];
+      Mixture mix(nspec, ugp, mat_blk);
+      auto rhob = mix.get_mix_density();
 
       std::array< tk::real, 3 > u{{
         ugp[multispecies::momentumIdx(nspec,0)] / rhob,
         ugp[multispecies::momentumIdx(nspec,1)] / rhob,
         ugp[multispecies::momentumIdx(nspec,2)] / rhob }};
       auto rhoE0 = ugp[multispecies::energyIdx(nspec,0)];
-      auto p = mat_blk[0].compute< EOS::pressure >( rhob, u[0], u[1], u[2],
-        rhoE0 );
+      auto p = mix.pressure(rhob, u[0], u[1], u[2], rhoE0, mat_blk);
 
       // density flux
       for (std::size_t k=0; k<nspec; ++k) {

@@ -81,7 +81,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_bnormc(),
   m_symbcnodes(),
   m_farfieldbcnodes(),
+  m_slipwallbcnodes(),
   m_symbctri(),
+  m_slipwallbctri(),
   m_timedepbcnodes(),
   m_timedepbcFn(),
   m_stage( 0 ),
@@ -173,14 +175,35 @@ ALECG::queryBnd()
   for (const auto& [s,nodes] : far)
     m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
 
-  // If farfield BC is set on a node, will not also set symmetry BC
-  for (auto fn : m_farfieldbcnodes) m_symbcnodes.erase(fn);
+  // Prepare unique set of slip wall BC nodes
+  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
+  for (const auto& [s,nodes] : slip)
+    m_slipwallbcnodes.insert( begin(nodes), end(nodes) );
 
-  // Prepare boundary nodes contiguously accessible from a triangle-face loop
+  // If farfield BC is set on a node, will not also set symmetry and slip BC
+  for (auto fn : m_farfieldbcnodes) {
+    m_symbcnodes.erase(fn);
+    m_slipwallbcnodes.erase(fn);
+  }
+
+  // If symmetry BC is set on a node, will not also set slip BC
+  for (auto fn : m_symbcnodes) {
+    m_slipwallbcnodes.erase(fn);
+  }
+
+  // Prepare boundary nodes contiguously accessible from a triangle-face loop,
+  // which contain both symmetry and no slip walls
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
     if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
       m_symbctri[e] = 1;
+
+  // Prepare the above for slip walls, which are needed for pressure integrals
+  // to obtain force on overset walls
+  m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
+  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
+    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+      m_slipwallbctri[e] = 1;
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -874,6 +897,10 @@ ALECG::BC()
   // Apply farfield BCs
   g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
 
+  // Apply slip wall BCs
+  g_cgpde[d->MeshId()].slipwallbc( m_u, d->meshvel(), coord, m_bnorm,
+    m_slipwallbcnodes );
+
   // Apply user defined time dependent BCs
   g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
     m_timedepbcFn );
@@ -1044,7 +1071,7 @@ ALECG::rhs()
   conserved( m_u, Disc()->Vol() );
   g_cgpde[d->MeshId()].rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-          m_symbctri, d->Vol(), m_edgenode, m_edgeid,
+          m_symbctri, m_slipwallbctri, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
           m_rhs );
   volumetric( m_u, Disc()->Vol() );
@@ -1201,7 +1228,8 @@ ALECG::ale()
     conserved( m_u, Disc()->Vol() );
     conserved( m_un, Disc()->Voln() );
     auto diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
-                                         m_symbcnodes, m_farfieldbcnodes );
+                                          m_symbcnodes, m_farfieldbcnodes,
+                                          m_slipwallbcnodes );
     volumetric( m_u, Disc()->Vol() );
     volumetric( m_un, Disc()->Voln() );
     // Increase number of iterations and physical time

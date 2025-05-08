@@ -78,19 +78,25 @@ class MultiMat {
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall },
+        , noslipwall 
+        , symmetry },       // Slip equivalent to symmetry without mesh motion
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
         , noOpGrad
         , noOpGrad
         , noOpGrad
-        , noOpGrad }
+        , noOpGrad
+        , symmetryGrad }
         ) );
 
       // Inlet BC has a different structure than above BCs, so it must be 
       // handled differently than with ConfigBC
       ConfigInletBC(m_bc, inlet, zeroGrad);
+
+      // Back pressure BC has a different structure than above BCs, so it must
+      // be handled differently than with ConfigBC
+      ConfigBackPressureBC(m_bc, back_pressure, noOpGrad);
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );

@@ -20,6 +20,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       MultiMatProblem
                       FVMultiMatPhysics
                       MultiSpeciesProblem
+                      MultiSpeciesMixture
                       Integrate
                       MeshRefinement
                       LoadBalance
