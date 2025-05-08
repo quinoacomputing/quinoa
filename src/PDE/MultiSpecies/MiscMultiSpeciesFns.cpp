@@ -51,7 +51,7 @@ timeStepSizeMultiSpecies(
   const std::size_t nelem,
   std::size_t nspec,
   const tk::Fields& U,
-  const tk::Fields& /*P*/ )
+  const tk::Fields& P )
 // *****************************************************************************
 //  Time step restriction for multi species cell-centered schemes
 //! \param[in] mat_blk EOS species block
@@ -61,17 +61,18 @@ timeStepSizeMultiSpecies(
 //! \param[in] nelem Number of elements
 //! \param[in] nspec Number of speciess in this PDE system
 //! \param[in] U High-order solution vector
-// //! \param[in] P High-order vector of primitives
+//! \param[in] P High-order vector of primitives
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto rdof = g_inputdeck.get< tag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
+  std::size_t nprim = P.nprop()/rdof;
 
   tk::real u, v, w, a, vn, dSV_l, dSV_r;
   std::vector< tk::real > delt(U.nunk(), 0.0);
-  std::vector< tk::real > ugp(ncomp, 0.0);
+  std::vector< tk::real > ugp(ncomp, 0.0), pgp(nprim, 0.0);
 
   // compute maximum characteristic speed at all internal element faces
   for (std::size_t f=0; f<esuf.size()/2; ++f)
@@ -92,6 +93,8 @@ timeStepSizeMultiSpecies(
 
     // get conserved quantities
     ugp = eval_state(ncomp, rdof, ndof, el, U, B_l);
+    // get primitive quantities
+    pgp = eval_state(nprim, rdof, ndof, el, P, B_l);
 
     // initialize mixture
     Mixture mix(nspec, ugp, mat_blk);
@@ -107,9 +110,8 @@ timeStepSizeMultiSpecies(
     vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
     // acoustic speed
-    auto p = mix.pressure( rhob, u, v, w,
-      ugp[multispecies::energyIdx(nspec, 0)], mat_blk);
-    a = mix.frozen_soundspeed( rhob, p, mat_blk );
+    a = mix.frozen_soundspeed( rhob, pgp[multispecies::temperatureIdx(nspec,0)],
+      mat_blk );
 
     dSV_l = geoFace(f,0) * (std::fabs(vn) + a);
 
@@ -122,7 +124,8 @@ timeStepSizeMultiSpecies(
       B_r[0] = 1.0;
 
       // get conserved quantities
-      ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r);
+      ugp = eval_state(ncomp, rdof, ndof, eR, U, B_r);
+      pgp = eval_state(nprim, rdof, ndof, eR, P, B_r);
 
       // initialize mixture
       Mixture mixr(nspec, ugp, mat_blk);
@@ -138,9 +141,8 @@ timeStepSizeMultiSpecies(
       vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
       // acoustic speed
-      p = mixr.pressure( rhob, u, v, w,
-        ugp[multispecies::energyIdx(nspec, 0)], mat_blk );
-      a = mixr.frozen_soundspeed( rhob, p, mat_blk );
+      a = mix.frozen_soundspeed( rhob,
+        pgp[multispecies::temperatureIdx(nspec,0)], mat_blk );
 
       dSV_r = geoFace(f,0) * (std::fabs(vn) + a);
 

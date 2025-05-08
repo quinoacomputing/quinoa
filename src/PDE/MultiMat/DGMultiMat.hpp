@@ -445,7 +445,7 @@ class MultiMat {
                            const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem,
-                           std::vector< std::size_t >& ndofel ) const
+                           const std::vector< std::size_t >& ndofel ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto ndof = g_inputdeck.get< tag::ndof >();
@@ -630,6 +630,8 @@ class MultiMat {
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
+              "vector must equal "+ std::to_string(rdof*m_nprim) );
 
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------

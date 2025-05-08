@@ -100,8 +100,14 @@ class MultiSpecies {
 
     //! Find the number of primitive quantities required for this PDE system
     //! \return The number of primitive quantities required to be stored for
-    //!   this PDE system (zero for multi-species)
-    std::size_t nprim() const { return 0; }
+    //!   this PDE system
+    std::size_t nprim() const
+    {
+      // mixture temperature
+      std::size_t np(1);
+
+      return np;
+    }
 
     //! Find the number of materials set up for this PDE system
     //! \return The number of materials set up for this PDE system
@@ -271,19 +277,106 @@ class MultiSpecies {
       std::vector< std::size_t >& /*ndofel*/,
       std::vector< std::size_t >& /*interface*/ ) const {}
 
-    //! Update the primitives for this PDE system. No-op.
-    // //! \param[in] unk Array of unknowns
-    // //! \param[in] L The left hand side block-diagonal mass matrix
-    // //! \param[in] geoElem Element geometry array
-    // //! \param[in,out] prim Array of primitives
-    // //! \param[in] nielem Number of internal elements
-    // //! \param[in] ndofel Array of dofs
-    void updatePrimitives( const tk::Fields& /*unk*/,
-                           const tk::Fields& /*L*/,
-                           const tk::Fields& /*geoElem*/,
-                           tk::Fields& /*prim*/,
-                           std::size_t /*nielem*/,
-                           std::vector< std::size_t >& /*ndofel*/ ) const {}
+    //! Update the primitives for this PDE system.
+    //! \param[in] unk Array of unknowns
+    //! \param[in] L The left hand side block-diagonal mass matrix
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] prim Array of primitives
+    //! \param[in] nielem Number of internal elements
+    //! \param[in] ndofel Array of dofs
+    //! \details This function computes and stores the dofs for primitive
+    //!   quantities, which are required for obtaining reconstructed states used
+    //!   in the Riemann solver. See for eg. /PDE/Riemann/AUSMMultiSpecies.hpp,
+    //!   where temperature is independently reconstructed.
+    void updatePrimitives( const tk::Fields& unk,
+                           const tk::Fields& L,
+                           const tk::Fields& geoElem,
+                           tk::Fields& prim,
+                           std::size_t nielem,
+                           const std::vector< std::size_t >& ndofel ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( prim.nprop() == rdof*m_nprim, "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
+
+      for (std::size_t e=0; e<nielem; ++e)
+      {
+        std::vector< tk::real > R(m_nprim*ndof, 0.0);
+
+        auto ng = tk::NGvol(ndof);
+
+        // arrays for quadrature points
+        std::array< std::vector< tk::real >, 3 > coordgp;
+        std::vector< tk::real > wgp;
+
+        coordgp[0].resize( ng );
+        coordgp[1].resize( ng );
+        coordgp[2].resize( ng );
+        wgp.resize( ng );
+
+        tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+        // Local degree of freedom
+        auto dof_el = ndofel[e];
+
+        // Loop over quadrature points in element e
+        for (std::size_t igp=0; igp<ng; ++igp)
+        {
+          // Compute the basis function
+          auto B = tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
+            coordgp[2][igp] );
+
+          auto w = wgp[igp] * geoElem(e, 0);
+
+          auto state = tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B );
+
+          // Mixture state at quadrature point
+          Mixture mixgp(nspec, state, m_mat_blk);
+
+          // Mixture density at quadrature point
+          tk::real rhob = mixgp.get_mix_density();
+
+          // velocity vector at quadrature point
+          std::array< tk::real, 3 >
+            vel{ state[multispecies::momentumIdx(nspec, 0)]/rhob,
+                 state[multispecies::momentumIdx(nspec, 1)]/rhob,
+                 state[multispecies::momentumIdx(nspec, 2)]/rhob };
+
+          std::vector< tk::real > pri(m_nprim, 0.0);
+
+          // Evaluate mixture temperature at quadrature point
+          auto rhoE0 = state[multispecies::energyIdx(nspec, 0)];
+          pri[multispecies::temperatureIdx(nspec,0)] =
+            mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk);
+          // TODO: consider clipping temperature here
+
+          for(std::size_t k = 0; k < m_nprim; k++)
+          {
+            auto mark = k * ndof;
+            for(std::size_t idof = 0; idof < dof_el; idof++)
+              R[mark+idof] += w * pri[k] * B[idof];
+          }
+        }
+
+        // Update the DG solution of primitive variables
+        for(std::size_t k = 0; k < m_nprim; k++)
+        {
+          auto mark = k * ndof;
+          auto rmark = k * rdof;
+          for(std::size_t idof = 0; idof < dof_el; idof++)
+          {
+            prim(e, rmark+idof) = R[mark+idof] / L(e, mark+idof);
+          }
+        }
+      }
+    }
 
     //! Clean up the state of trace materials for this PDE system. No-op.
     // //! \param[in] t Physical time
@@ -304,7 +397,7 @@ class MultiSpecies {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] U Solution vector at recent time step
-    // //! \param[in,out] P Vector of primitives at recent time step
+    //! \param[in,out] P Vector of primitives at recent time step
     //! \param[in] pref Indicator for p-adaptive algorithm
     //! \param[in] ndofel Vector of local number of degrees of freedome
     void reconstruct( tk::real,
@@ -316,7 +409,7 @@ class MultiSpecies {
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       tk::Fields& U,
-                      tk::Fields& /*P*/,
+                      tk::Fields& P,
                       const bool pref,
                       const std::vector< std::size_t >& ndofel ) const
     {
@@ -331,6 +424,8 @@ class MultiSpecies {
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
+              "vector must equal "+ std::to_string(rdof*m_nprim) );
 
       //----- reconstruction of conserved quantities -----
       //--------------------------------------------------
@@ -349,6 +444,32 @@ class MultiSpecies {
 
           // 3. transform reconstructed derivatives to Dubiner dofs
           tk::transform_P0P1( rdof, e, inpoel, coord, U, vars );
+        }
+      }
+
+      //----- reconstruction of primitive quantities -----
+      //--------------------------------------------------
+      // For multispecies, conserved and primitive quantities are reconstructed
+      // separately.
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        // There are two conditions that requires the reconstruction of the
+        // primitive variables:
+        //   1. p-adaptive is triggered and P0P1 scheme is applied to specific
+        //      elements
+        //   2. p-adaptive is not triggered and P0P1 scheme is applied to the
+        //      whole computation domain
+        if ((pref && ndofel[e] == 1) || (!pref && is_p0p1)) {
+          std::vector< std::size_t > vars;
+          for (std::size_t c=0; c<m_nprim; ++c) vars.push_back(c);
+
+          // 1.
+          // Reconstruct second-order dofs in Taylor space using nodal-stencils
+          tk::recoLeastSqExtStencil( rdof, e, esup, inpoel, geoElem, P, vars );
+
+          // 2.
+          tk::transform_P0P1(rdof, e, inpoel, coord, P, vars);
         }
       }
     }
@@ -371,7 +492,7 @@ class MultiSpecies {
     // //!   variables
     // //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
-    // //! \param[in,out] P Vector of primitives at recent time step
+    //! \param[in,out] P Vector of primitives at recent time step
     //! \param[in,out] shockmarker Vector of shock-marker values
     void limit( [[maybe_unused]] tk::real,
                 const bool /*pref*/,
@@ -388,7 +509,7 @@ class MultiSpecies {
                 const std::vector< std::vector<tk::real> >& /*pNodalExtrm*/,
                 const std::vector< std::vector<tk::real> >& /*mtInv*/,
                 tk::Fields& U,
-                tk::Fields& /*P*/,
+                tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
     {
       const auto limiter = g_inputdeck.get< tag::limiter >();
@@ -400,13 +521,13 @@ class MultiSpecies {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiSpecies_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, nspec,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, P, nspec,
           shockmarker );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
       {
         VertexBasedMultiSpecies_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, nspec,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, P, nspec,
           shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
@@ -416,24 +537,37 @@ class MultiSpecies {
     }
 
     //! Apply CPL to the conservative variable solution for this PDE system
-    // //! \param[in] prim Array of primitive variables
-    // //! \param[in] geoElem Element geometry array
-    // //! \param[in] inpoel Element-node connectivity
-    // //! \param[in] coord Array of nodal coordinates
-    // //! \param[in,out] unk Array of conservative variables
-    // //! \param[in] nielem Number of internal elements
+    //! \param[in] prim Array of primitive variables
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in,out] unk Array of conservative variables
+    //! \param[in] nielem Number of internal elements
     //! \details This function applies CPL to obtain consistent dofs for
     //!   conservative quantities based on the limited primitive quantities.
-    //!   No-op for now, but might need in the future, see appendix of paper.
-    //!   See Pandare et al. (2023). On the Design of Stable,
+    //!   See appendix of paper: Pandare et al. (2023). On the Design of Stable,
     //!   Consistent, and Conservative High-Order Methods for Multi-Material
     //!   Hydrodynamics. J Comp Phys, 112313.
-    void CPL( const tk::Fields& /*prim*/,
-      const tk::Fields& /*geoElem*/,
-      const std::vector< std::size_t >& /*inpoel*/,
-      const tk::UnsMesh::Coords& /*coord*/,
-      tk::Fields& /*unk*/,
-      std::size_t /*nielem*/ ) const {}
+    void CPL( const tk::Fields& prim,
+      const tk::Fields& geoElem,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      tk::Fields& unk,
+      std::size_t nielem ) const
+    {
+      [[maybe_unused]] const auto rdof = g_inputdeck.get< tag::rdof >();
+      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( prim.nprop() == rdof*m_nprim, "Number of components in vector of "
+              "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
+
+      correctLimConservMultiSpecies(nielem, m_mat_blk, nspec, inpoel,
+        coord, geoElem, prim, unk);
+    }
 
     //! Return cell-average deformation gradient tensor. No-op.
     std::array< std::vector< tk::real >, 9 > cellAvgDeformGrad(
@@ -719,7 +853,7 @@ class MultiSpecies {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Array of unknowns
-    // //! \param[in] P Array of primitive quantities
+    //! \param[in] P Array of primitive quantities
     //! \return Vector of time history output of bulk flow quantities (density,
     //!   velocity, total energy, and pressure) evaluated at time history points
     std::vector< std::vector< tk::real > >
@@ -727,7 +861,7 @@ class MultiSpecies {
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
-                const tk::Fields& /*P*/ ) const
+                const tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
@@ -757,6 +891,7 @@ class MultiSpecies {
         auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
           tk::dot(J[2],dc));
         auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
+        auto php = eval_state(m_nprim, rdof, rdof, e, P, B);
 
         // Mixture calculations, initialized
         Mixture mix(nspec, uhp, m_mat_blk);
@@ -768,8 +903,8 @@ class MultiSpecies {
         Up[j][2] = uhp[multispecies::momentumIdx(nspec,1)]/Up[j][0];
         Up[j][3] = uhp[multispecies::momentumIdx(nspec,2)]/Up[j][0];
         Up[j][4] = uhp[multispecies::energyIdx(nspec,0)];
-        Up[j][5] = mix.pressure( Up[j][0], Up[j][1], Up[j][2], Up[j][3],
-          Up[j][4], m_mat_blk);
+        Up[j][5] = mix.pressure( Up[j][0],
+          php[multispecies::temperatureIdx(nspec,0)] );
         for (std::size_t k=0; k<nspec; ++k) {
           Up[j][6+k] = uhp[multispecies::densityIdx(nspec,k)]/Up[j][0];
         }
@@ -845,8 +980,6 @@ class MultiSpecies {
           const std::vector< tk::real >& ugp,
           const std::vector< std::array< tk::real, 3 > >& )
     {
-      Assert( ugp.size() == ncomp, "Size mismatch" );
-
       auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
       std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
@@ -858,8 +991,8 @@ class MultiSpecies {
         ugp[multispecies::momentumIdx(nspec,0)] / rhob,
         ugp[multispecies::momentumIdx(nspec,1)] / rhob,
         ugp[multispecies::momentumIdx(nspec,2)] / rhob }};
-      auto rhoE0 = ugp[multispecies::energyIdx(nspec,0)];
-      auto p = mix.pressure(rhob, u[0], u[1], u[2], rhoE0, mat_blk);
+      auto p = mix.pressure(rhob,
+        ugp[ncomp+multispecies::temperatureIdx(nspec,0)]);
 
       // density flux
       for (std::size_t k=0; k<nspec; ++k) {

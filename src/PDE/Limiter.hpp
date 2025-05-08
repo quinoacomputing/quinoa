@@ -171,6 +171,7 @@ VertexBasedMultiSpecies_P1(
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
+  tk::Fields& P,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker );
 
@@ -189,6 +190,7 @@ VertexBasedMultiSpecies_P2(
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
+  tk::Fields& P,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker );
 
@@ -273,22 +275,49 @@ BoundPreservingLimitingFunction( const tk::real min,
                                  const tk::real al_gp,
                                  const tk::real al_avg );
 
-//! Positivity preserving limiter for multi-material solver
-void PositivityLimitingMultiMat( std::size_t nmat,
-                                 const std::vector< EOS >& mat_blk,
-                                 std::size_t rdof,
-                                 std::size_t ndof_el,
-                                 const std::vector< std::size_t >& ndofel,
-                                 std::size_t e,
-                                 const std::vector< std::size_t >& inpoel,
-                                 const tk::UnsMesh::Coords& coord,
-                                 const std::vector< int >& esuel,
-                                 const tk::Fields& U,
-                                 const tk::Fields& P,
-                                 std::vector< tk::real >& phic_p1,
-                                 std::vector< tk::real >& phic_p2,
-                                 std::vector< tk::real >& phip_p1,
-                                 std::vector< tk::real >& phip_p2 );
+//! Positivity preserving limiter for multi-material and multispecies solver
+void PositivityLimiting( std::size_t nmat,
+                         std::size_t nspec,
+                         const std::vector< EOS >& mat_blk,
+                         std::size_t rdof,
+                         std::size_t ndof_el,
+                         const std::vector< std::size_t >& ndofel,
+                         std::size_t e,
+                         const std::vector< std::size_t >& inpoel,
+                         const tk::UnsMesh::Coords& coord,
+                         const std::vector< int >& esuel,
+                         const tk::Fields& U,
+                         const tk::Fields& P,
+                         std::vector< tk::real >& phic_p1,
+                         std::vector< tk::real >& phic_p2,
+                         std::vector< tk::real >& phip_p1,
+                         std::vector< tk::real >& phip_p2 );
+
+//! Positivity bounds for multi-material PDE system
+void PositivityBoundsMultiMat(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t rdof,
+  std::size_t e,
+  const tk::Fields& U,
+  const tk::Fields& P,
+  const std::vector< tk::real >& state,
+  const std::vector< tk::real >& sprim,
+  std::vector< tk::real >& phic_bounds,
+  std::vector< tk::real >& phip_bounds );
+
+//! Positivity bounds for multispecies PDE system
+void PositivityBoundsMultiSpecies(
+  std::size_t nspec,
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t rdof,
+  std::size_t e,
+  const tk::Fields& U,
+  const tk::Fields& P,
+  const std::vector< tk::real >& state,
+  const std::vector< tk::real >& sprim,
+  std::vector< tk::real >& phic_bound,
+  std::vector< tk::real >& phip_bound );
 
 //! Positivity preserving limiter for the FV multi-material solver
 void PositivityPreservingMultiMat_FV(
@@ -303,7 +332,7 @@ void PositivityPreservingMultiMat_FV(
 
 //! Positivity preserving limiter function
 tk::real
-PositivityLimiting( const tk::real min,
+PositivityFunction( const tk::real min,
                     const tk::real u_gp,
                     const tk::real u_avg );
 
@@ -339,6 +368,18 @@ correctLimConservMultiMat(
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   std::size_t nmat,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
+  const tk::Fields& prim,
+  tk::Fields& unk );
+
+//! Update the conservative quantities after limiting for multispecies systems
+void
+correctLimConservMultiSpecies(
+  std::size_t nelem,
+  const std::vector< EOS >& mat_blk,
+  std::size_t nspec,
   const std::vector< std::size_t >& inpoel,
   const tk::UnsMesh::Coords& coord,
   const tk::Fields& geoElem,

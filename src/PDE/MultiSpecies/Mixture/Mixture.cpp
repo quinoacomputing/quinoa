@@ -79,27 +79,25 @@ Mixture::Mixture(
 tk::real
 Mixture::frozen_soundspeed(
   tk::real mix_density,
-  tk::real mix_pressure,
+  tk::real mix_temp,
   const std::vector< EOS >& mat_blk) const
 // *************************************************************************
 //! \brief Calculate frozen speed of sound based on the mixture composition
 //!   and species parameters.
 //! \param[in] mix_density Mixture density (sum of species density)
-//! \param[in] mix_pressure Mixture pressure (sum of species pressure)
+//! \param[in] mix_temp Mixture temperature (provided at call-site, since
+//!   it is reconstructed separately)
 //! \param[in] mat_blk EOS material block
 //! \return Mixture speed of sound using the ideal gas EoS
 // *************************************************************************
 {
   // Clip pressure
-  auto mix_peff = std::max( 1.0e-15, mix_pressure );
-
-  // Compute temperature based on equation of state
-  tk::real temp = mix_peff / (m_mix_R * mix_density);
+  auto mix_peff = std::max( 1.0e-15, pressure(mix_density, mix_temp) );
 
   // Compute beta, mixture parameters for sound speed calc.
   tk::real mix_Cv = 0.;
   for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_Cv += mat_blk[k].compute< EOS::cv >(temp) * m_Ys[k];
+    mix_Cv += mat_blk[k].compute< EOS::cv >(mix_temp) * m_Ys[k];
   }
   tk::real beta = m_mix_R / mix_Cv;
 
@@ -114,7 +112,7 @@ Mixture::totalenergy(
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real mix_pressure,
+  tk::real mix_temp,
   const std::vector< EOS >& mat_blk) const
 // *************************************************************************
 //! \brief Calculate total energy based on the mixture composition
@@ -123,18 +121,16 @@ Mixture::totalenergy(
 //! \param[in] u Velocity component
 //! \param[in] v Velocity component
 //! \param[in] w Velocity component
-//! \param[in] mix_pressure Mixture pressure
+//! \param[in] mix_temp Mixture temperature (provided at call-site, since
+//!   it is reconstructed separately
 //! \param[in] mat_blk EOS material block
 //! \return Total energy
 // *************************************************************************
 {
-  // Calculate temperature from ideal gas EOS
-  tk::real temp = mix_pressure / (m_mix_R * mix_density);
-
   // Compute mixture internal energy
   tk::real mix_e = 0.;
   for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_e += m_Ys[k] * mat_blk[k].compute< EOS::internalenergy >(temp);
+    mix_e += m_Ys[k] * mat_blk[k].compute< EOS::internalenergy >(mix_temp);
   }
 
   // Compute total energy
@@ -144,28 +140,17 @@ Mixture::totalenergy(
 tk::real
 Mixture::pressure(
   tk::real mix_density,
-  tk::real u,
-  tk::real v,
-  tk::real w,
-  tk::real rhoE,
-  const std::vector< EOS >& mat_blk) const
+  tk::real mix_temp ) const
 // *************************************************************************
 //! \brief Calculate mixture pressure based on the mixture composition
 //!   and species parameters.
 //! \param[in] mix_density Mixture density (sum of species density)
-//! \param[in] u Velocity component
-//! \param[in] v Velocity component
-//! \param[in] w Velocity component
-//! \param[in] rhoE Total energy of the mixture
-//! \param[in] mat_blk EOS material block
+//! \param[in] mix_temp Mixture temperature
 //! \return Mixture pressure
 // *************************************************************************
 {
-  // Compute temperature from the state vector
-  tk::real temp = temperature(mix_density, u, v, w, rhoE, mat_blk);
-
   // Compute pressure based on the ideal gas EOS
-  return mix_density * m_mix_R * temp;
+  return mix_density * m_mix_R * mix_temp;
 }
 
 tk::real
@@ -190,7 +175,6 @@ Mixture::temperature(
 {
   // Compute internal energy
   tk::real e = rhoE / mix_density - 0.5 * (u*u + v*v + w*w);
-  if (e < 1e-8) e = 1e-8; // TODO: standin until positivity is implemented
 
   // Solve for temperature -- Newton's method
   tk::real temp = 1500; // Starting guess

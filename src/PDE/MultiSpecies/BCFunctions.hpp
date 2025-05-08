@@ -35,7 +35,7 @@ namespace inciter {
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
-    Assert( ul.size() == ncomp, "Incorrect size for appended "
+    Assert( ul.size() == ncomp+1, "Incorrect size for appended "
             "internal state vector" );
 
     tk::real rho(0.0);
@@ -59,7 +59,7 @@ namespace inciter {
     ur[multispecies::momentumIdx(nspec, 1)] = rho * v2r;
     ur[multispecies::momentumIdx(nspec, 2)] = rho * v3r;
 
-    Assert( ur.size() == ncomp, "Incorrect size for appended "
+    Assert( ur.size() == ncomp+1, "Incorrect size for appended "
             "boundary state vector" );
 
     return {{ std::move(ul), std::move(ur) }};
@@ -94,7 +94,7 @@ namespace inciter {
     auto fspec =
       g_inputdeck.get< tag::bc >()[0].get< tag::mass_fractions >();
 
-    Assert( ul.size() == ncomp, "Incorrect size for appended "
+    Assert( ul.size() == ncomp+1, "Incorrect size for appended "
             "internal state vector" );
 
     auto ur = ul;
@@ -111,9 +111,9 @@ namespace inciter {
     auto vn = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
 
     // Acoustic speed
-    auto pl = mixl.pressure(rhol, v1l, v2l, v3l,
-      ul[multispecies::energyIdx(nspec,0)], mat_blk);
-    auto a = mixl.frozen_soundspeed(rhol, pl, mat_blk);
+    auto Tl = ul[ncomp+multispecies::temperatureIdx(nspec,0)];
+    auto pl = mixl.pressure(rhol, Tl);
+    auto a = mixl.frozen_soundspeed(rhol, Tl, mat_blk);
 
     // Mach number
     auto Ma = vn / a;
@@ -129,7 +129,7 @@ namespace inciter {
         ur[multispecies::densityIdx(nspec,k)] = fspec[k] * rhor;
       }
       ur[multispecies::energyIdx(nspec,0)] = mixr.totalenergy(rhor, fu[0],
-        fu[1], fu[2], fp, mat_blk);
+        fu[1], fu[2], ft, mat_blk);
       for (std::size_t i=0; i<3; ++i) {
         ur[multispecies::momentumIdx(nspec,i)] = rhor * fu[i];
       }
@@ -146,7 +146,7 @@ namespace inciter {
         ur[multispecies::densityIdx(nspec,k)] = fspec[k] * rhor;
       }
       ur[multispecies::energyIdx(nspec,0)] = mixr.totalenergy(rhor, fu[0],
-        fu[1], fu[2], pl, mat_blk);
+        fu[1], fu[2], Tl, mat_blk);
       for (std::size_t i=0; i<3; ++i) {
         ur[multispecies::momentumIdx(nspec,i)] = rhor * fu[i];
       }
@@ -159,9 +159,7 @@ namespace inciter {
       std::vector< tk::real > massfrac_l;
       for (std::size_t k = 0; k < nspec; k++)
         massfrac_l[k] = ul[multispecies::densityIdx(nspec, k)] / rhol;
-      tk::real tl = mixl.temperature(rhol, v1l, v2l, v3l,
-        ul[multispecies::energyIdx(nspec,0)], mat_blk);
-      Mixture mixr(nspec, massfrac_l, fp, tl, mat_blk);
+      Mixture mixr(nspec, massfrac_l, fp, Tl, mat_blk);
 
       ur[multispecies::energyIdx(nspec,0)] = mixr.totalenergy(rhol, v1l,
         v2l, v3l, fp, mat_blk);
@@ -171,7 +169,7 @@ namespace inciter {
     // conservative variables from internal cell (which is what ur is
     // initialized to).
 
-    Assert( ur.size() == ncomp, "Incorrect size for appended "
+    Assert( ur.size() == ncomp+1, "Incorrect size for appended "
             "boundary state vector" );
 
     return {{ std::move(ul), std::move(ur) }};
@@ -210,7 +208,7 @@ namespace inciter {
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
-    Assert( ul.size() == ncomp, "Incorrect size for appended "
+    Assert( ul.size() == ncomp+1, "Incorrect size for appended "
             "internal state vector" );
 
     tk::real rho(0.0);
@@ -232,7 +230,7 @@ namespace inciter {
     ur[multispecies::momentumIdx(nspec, 1)] = rho * v2r;
     ur[multispecies::momentumIdx(nspec, 2)] = rho * v3r;
 
-    Assert( ur.size() == ncomp, "Incorrect size for appended "
+    Assert( ur.size() == ncomp+1, "Incorrect size for appended "
             "boundary state vector" );
 
     return {{ std::move(ul), std::move(ur) }};

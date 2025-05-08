@@ -61,7 +61,8 @@ numericFieldOutput( const tk::Fields& U,
   std::vector< std::vector< tk::real > > f;
   for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
     if (v.centering == c && !v.analytic()) {
-      const auto& F = v.primitive() ? p : U;
+      auto iPDE = g_inputdeck.get< tag::pde >();
+      const auto& F = v.primitive(iPDE) ? p : U;
       if (v.varFnIdx == "null") {        // depvar-based direct access
         f.push_back( F.extract_comp( v.field*rdof ) );
       } else {  // human-readable non-analytic via custom fn
