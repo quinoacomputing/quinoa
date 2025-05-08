@@ -277,7 +277,7 @@ class MultiSpecies {
       std::vector< std::size_t >& /*ndofel*/,
       std::vector< std::size_t >& /*interface*/ ) const {}
 
-    //! Update the primitives for this PDE system. No-op.
+    //! Update the primitives for this PDE system.
     //! \param[in] unk Array of unknowns
     //! \param[in] L The left hand side block-diagonal mass matrix
     //! \param[in] geoElem Element geometry array
@@ -352,13 +352,10 @@ class MultiSpecies {
           std::vector< tk::real > pri(m_nprim, 0.0);
 
           // Evaluate mixture temperature at quadrature point
-          for(std::size_t k = 0; k < nspec; k++)
-          {
-            auto rhoE0 = state[multispecies::energyIdx(nspec, 0)];
-            pri[multispecies::temperatureIdx(nspec,0)] =
-              mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk);
-            // TODO: consider clipping temperature here
-          }
+          auto rhoE0 = state[multispecies::energyIdx(nspec, 0)];
+          pri[multispecies::temperatureIdx(nspec,0)] =
+            mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk);
+          // TODO: consider clipping temperature here
 
           for(std::size_t k = 0; k < m_nprim; k++)
           {
