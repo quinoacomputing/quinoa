@@ -496,10 +496,17 @@ BiCG::pq( tk::real d )
   // If (p,q)=0, then p and q are orthogonal and the system either has a trivial
   // solution, x=x0, or the BCs are incomplete or wrong, in either case the
   // solve cannot continue.
+  // sod_pe4 DOES have a trivial solution, yet we are using it for a test case...
+  // we have to tolerate small eps values and rely on the numerator also being small.  
+  // We should generally allow for the mesh to stay still though, so need to think about this some.
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   if (std::abs(d) < eps) {
-    m_it = m_maxit;
-    m_alpha = 0.0;
+    if ( m_it > 0) {
+      m_alpha = m_rho / d;
+    } else {
+      m_it = m_maxit;
+      m_alpha = 0.0;
+    }
   } else {
     m_alpha = m_rho / d;
   }
@@ -583,21 +590,18 @@ BiCG::x()
   }
   tk::destroy( m_xc );
 
-  //++m_it;//Don't iterate counter yet!
+  //Don't iterate counter yet!
   auto normb = m_normb > 1.0e-14 ? m_normb : 1.0;
   auto normr = std::sqrt( m_rho );
-
   if ( m_it < m_maxit && normr > m_tol*normb ) { //If we are not solved, continue, else exit
                                                  //Here is where we significantly diverge from regular CG as we dont' go to "next()" yet
-    //next();
   // initiate computing t = A * s  ;
 
-   // std::cout << "Tol not met:  "  << normr << " in first pass, going to second stage \n";
     thisProxy[ thisIndex ].wait4t();
     tAs();
 
   } else {
-   // std::cout << "Tol Met:  "  << normr << " in first pass \n";
+
     m_converged = m_it == m_maxit && normr > m_tol*normb ? false : true;
     m_solved.send( CkDataMsg::buildNew( sizeof(tk::real), &normr ) );
 
@@ -683,26 +687,12 @@ BiCG::ts( tk::real d )
 //! \param[in] d Dot product of (t,s) (aggregated across all chares)
 // *****************************************************************************
 {
-  // If (t,s)=0, then p and q are orthogonal and the system either has a trivial
-  // solution, x=x0, or the BCs are incomplete or wrong, in either case the
-  // solve cannot continue.
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  if (std::abs(d) < eps) {
-    m_it = m_maxit;
-    m_alpha = 0.0;
-  }
-  else {
-    m_omega = d; //numerator set
-  }
+
+  m_omega = d; //numerator set 
+
   dot( m_t, m_t, //compute denominator
        CkCallback( CkReductionTarget(BiCG,tt), thisProxy ) );
 
-//  // compute s = r - alpha * q
-//  for (std::size_t i=0; i<m_r.size(); ++i) m_r[i] -= m_alpha * m_q[i];
-
-  // initiate computing norm of residual: (r,r)
-  //dot( m_r, m_r,
-  //     CkCallback( CkReductionTarget(BiCG,normres), thisProxy ) );
 }
 void
 BiCG::tt( tk::real d )
@@ -715,24 +705,20 @@ BiCG::tt( tk::real d )
   // solution, x=x0, or the BCs are incomplete or wrong, in either case the
   // solve cannot continue.
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-  if (std::abs(d) < eps) {
-    m_it = m_maxit;
-    m_alpha = 0.0;
-   // std::cout << "Uhoh..  bad alpha/omega? \n";
+  if (std::abs(d) < eps && std::abs(m_omega) > 1000*eps) { //Unsure how to check for smallness here since m_omega may also be very small
+    //m_it = m_maxit;
+    m_omega = m_omega/d; //d is denominator
+    //m_omega = 0.0;
   }
   else {
     m_omega = m_omega/d; //d is denominator
   }
-  //std::cout << "Omega is: " << m_omega << "\n";
   //compute x = h + omega * s
   for (std::size_t i=0; i<m_x.size(); ++i) m_x[i] += m_omega * m_r[i];
   // Now update r:  compute r = s - omega * t
   for (std::size_t i=0; i<m_r.size(); ++i) m_r[i] -= m_omega * m_t[i];
-/*  for (std::size_t i = 0; i < m_r.size(); ++i) {
-	  std::cout << i << "  " << m_r[i] << " " << m_r0[i] << "\n" ;
-  }
-*/	  // initiate computing norm of residual: (r0,r) for assigning to new rho
-  dot( m_r0, m_r,
+	  // initiate computing norm of residual: (r,r) for exit criteria
+  dot( m_r, m_r,
        CkCallback( CkReductionTarget(BiCG,normresomega), thisProxy ) );
 }
 void
@@ -788,19 +774,24 @@ BiCG::x2()
   auto normr = std::sqrt( m_rho );
 
   if ( m_it < m_maxit && normr > m_tol*normb ) { //If we are not solved, continue, else exit
-
-    //std::cout << "Tol not met in 2nd pass, iterating:  " << m_it << "  " << normr << " \n";
-    next();
+    //get next rho value
+    dot( m_r0, m_r,
+       CkCallback( CkReductionTarget(BiCG,comprho), thisProxy ) );
 
   } else {
 
-    //std::cout << "Tol met in 2nd pass! Iteration count:  " << m_it << "  " << normr << " \n";
     m_converged = m_it == m_maxit && normr > m_tol*normb ? false : true;
     m_solved.send( CkDataMsg::buildNew( sizeof(tk::real), &normr ) );
 
   }
 }
 
+void
+BiCG::comprho( tk::real r )
+{
+  m_rho = r;
+  next();
+}
 void
 BiCG::comx2( const std::vector< std::size_t >& gid,
                           const std::vector< std::vector< tk::real > >& x2c )
