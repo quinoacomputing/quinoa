@@ -129,6 +129,8 @@ class BiCG : public CBase_BiCG {
 
     //! Compute the norm of the residual: (r,r)
     void normres( tk::real r );
+    //! Compute the norm of the residual: (r0,r)
+    void comprho( tk::real r );
     //! Compute the norm of the residual 2nd step: (r,r)
     void normresomega( tk::real r );
 

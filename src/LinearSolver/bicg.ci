@@ -50,6 +50,7 @@ module bicg {
       entry [reductiontarget] void ts( tk::real n );
       entry [reductiontarget] void normres( tk::real r );
       entry [reductiontarget] void normresomega( tk::real r );
+      entry [reductiontarget] void comprho( tk::real r );
       entry void comres( const std::vector< std::size_t >& gid,
                          const std::vector< std::vector< tk::real > >& rc );
       entry void combc( const std::unordered_map< std::size_t,
