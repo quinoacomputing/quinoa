@@ -42,6 +42,8 @@ message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 # Determine number of CPUs available
 if (DEFINED ENV{SLURM_NPROCS})
   set(PROCESSOR_COUNT $ENV{SLURM_NPROCS})
+elseif (DEFINED PROCESSOR_COUNT)
+  # use the specified number of CPUs
 else()
   include(ProcessorCount)
   ProcessorCount(PROCESSOR_COUNT)
