@@ -291,20 +291,24 @@ WilkinsAluminum::shearspeed(
 
 tk::real
 WilkinsAluminum::totalenergy(
-  tk::real rho,
+  tk::real arho,
   tk::real u,
   tk::real v,
   tk::real w,
   tk::real,
+  tk::real alpha,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
-//! \param[in] rho Material density
+//! \param[in] arho Material partial density
 //! \param[in] u X-velocity
 //! \param[in] v Y-velocity
 //! \param[in] w Z-velocity
-// //! \param[in] pr Material pressure
+// //! \param[in] apr Material partial pressure
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
+//!   the single-material system, this argument can be left unspecified by
+//!   the calling code
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   g_k. Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
@@ -313,6 +317,7 @@ WilkinsAluminum::totalenergy(
 {
   // obtain hydro contribution to energy
   tk::real rho0 = m_rho0;
+  tk::real rho = arho/alpha;
   tk::real rhoEh = (e1+e2*std::pow(rho/rho0,2.0)+e3*(rho/rho0)
                     +e4*std::pow(rho/rho0,-1.0)-e5*std::log(rho/rho0))/rho0
                    + 0.5*rho*(u*u + v*v + w*w);
@@ -320,7 +325,7 @@ WilkinsAluminum::totalenergy(
   std::array< std::array< tk::real, 3 >, 3 > devH;
   tk::real rhoEe = elasticEnergy(defgrad, devH);
 
-  return (rhoEh + rhoEe);
+  return alpha*(rhoEh + rhoEe);
 }
 
 tk::real

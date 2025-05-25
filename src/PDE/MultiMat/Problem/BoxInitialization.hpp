@@ -106,9 +106,9 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 
       pr = bgpreic;
       auto te = mat_blk[boxmatid].compute< EOS::totalenergy >(
-        rhok[boxmatid], u, v, w, pr);
+        boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*pr, boxmat_vf );
       tmp = mat_blk[boxmatid].compute< EOS::temperature >(
-        boxmat_vf*rhok[boxmatid], u, v, w, boxmat_vf*te, boxmat_vf );
+        boxmat_vf*rhok[boxmatid], u, v, w, te, boxmat_vf );
 
       // if the above density and pressure lead to an invalid thermodynamic
       // state (negative temperature/energy), change temperature to background
@@ -182,8 +182,9 @@ void initializeBox( const std::vector< EOS >& mat_blk,
       else {
         gk = {{}};
       }
-      s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-        mat_blk[k].compute< EOS::totalenergy >( rhok[k], u, v, w, pr, gk );
+      s[energyIdx(nmat,k)] =
+        mat_blk[k].compute< EOS::totalenergy >( s[volfracIdx(nmat,k)]*rhok[k],
+        u, v, w, s[volfracIdx(nmat,k)]*pr, s[volfracIdx(nmat,k)], gk );
     }
   }
   // bulk momentum

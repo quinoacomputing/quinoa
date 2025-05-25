@@ -965,11 +965,11 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
       alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*1e-12),
         1e-12);
     }
-    state[energyIdx(nmat,k)] = alk *
+    state[energyIdx(nmat,k)] =
       mat_blk[k].compute< inciter::EOS::totalenergy >(
-      state[densityIdx(nmat,k)]/alk, sprim[velocityIdx(nmat,0)],
+      state[densityIdx(nmat,k)], sprim[velocityIdx(nmat,0)],
       sprim[velocityIdx(nmat,1)], sprim[velocityIdx(nmat,2)],
-      sprim[pressureIdx(nmat,k)]/alk);
+      sprim[pressureIdx(nmat,k)], alk);
     rhob += state[densityIdx(nmat,k)];
   }
   // get momentum from reconstructed velocity and bulk density

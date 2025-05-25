@@ -2864,12 +2864,12 @@ correctLimConservMultiMat(
       // Compute and store material energy at quadrature point
       for(std::size_t imat = 0; imat < nmat; imat++) {
         auto alphamat = state[volfracIdx(nmat, imat)];
-        auto rhomat = state[densityIdx(nmat, imat)]/alphamat;
-        auto premat = state[ncomp+pressureIdx(nmat, imat)]/alphamat;
+        auto arhomat = state[densityIdx(nmat, imat)];
+        auto apremat = state[ncomp+pressureIdx(nmat, imat)];
         auto gmat = getDeformGrad(nmat, imat, state);
-        s[pressureIdx(nmat,imat)] = alphamat *
-          mat_blk[imat].compute< EOS::totalenergy >( rhomat, vel[0], vel[1],
-          vel[2], premat, gmat );
+        s[pressureIdx(nmat,imat)] =
+          mat_blk[imat].compute< EOS::totalenergy >( arhomat, vel[0], vel[1],
+          vel[2], apremat, alphamat, gmat );
       }
 
       // Evaluate the righ-hand-side vector
