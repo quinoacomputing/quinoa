@@ -64,8 +64,9 @@ MultiMatProblemSinewavePacket::initialize( ncomp_t ncomp,
   auto rhob = std::exp(-a*(xi-0.5)*(xi-0.5)) * std::sin(c*pi*xi) + 2.0;
   s[volfracIdx(nmat, 0)] = 1.0;
   s[densityIdx(nmat, 0)] = s[volfracIdx(nmat, 0)] * rhob;
-  s[energyIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]
-    * mat_blk[0].compute< EOS::totalenergy >( rhob, u, v, w, 1.0 );
+  s[energyIdx(nmat, 0)] =
+    mat_blk[0].compute< EOS::totalenergy >( s[volfracIdx(nmat, 0)]*rhob, u, v, w,
+    s[volfracIdx(nmat, 0)]*1.0,  s[volfracIdx(nmat, 0)] );
   s[momentumIdx(nmat, 0)] = rhob * u;
   s[momentumIdx(nmat, 1)] = rhob * v;
   s[momentumIdx(nmat, 2)] = rhob * w;

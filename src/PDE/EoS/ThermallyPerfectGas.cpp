@@ -122,15 +122,17 @@ ThermallyPerfectGas::totalenergy(
   tk::real ,
   tk::real ,
   tk::real ,
+  tk::real ,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
-//! \param[in] rho density
-//! \param[in] u X-velocity
-//! \param[in] v Y-velocity
-//! \param[in] w Z-velocity
-//! \param[in] pr pressure
+// //! \param[in] rho density
+// //! \param[in] u X-velocity
+// //! \param[in] v Y-velocity
+// //! \param[in] w Z-velocity
+// //! \param[in] pr pressure
+// //! \param[in] alpha volume fraction
 //! \return specific total energy using the thermally perfect gas EoS
 // *************************************************************************
 {
