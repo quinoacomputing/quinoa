@@ -152,6 +152,7 @@ DEFTAG(ndof);
 DEFTAG(rdof);
 DEFTAG(flux);
 DEFTAG(lowspeed_kp);
+DEFTAG(lowspeed_ku);
 DEFTAG(limiter);
 DEFTAG(cweight);
 DEFTAG(shock_detector_coeff);
