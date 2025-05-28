@@ -317,6 +317,7 @@ using ConfigMembers = brigand::list<
   tag::rdof,        std::size_t,
   tag::flux,        FluxType,
   tag::lowspeed_kp, tk::real,
+  tag::lowspeed_ku, tk::real,
 
   // limiter options
   tag::limiter,              LimiterType,
@@ -812,6 +813,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         AUSM+up flux function used for the DG or FV spatial discretization for
         multi-material hydro, and not used for anything else. The default
         value is 0, and recommended value for low speed flows (Mach < 0.1) is
+        1.)"});
+
+      keywords.insert({"lowspeed_ku",
+        "Select the low-speed coefficient K_u in the AUSM+up flux function",
+        R"(This keyword is used to select the low-speed coefficient K_u in the
+        AUSM+up flux function used for the DG or FV spatial discretization for
+        multi-material hydro, and not used for anything else. The default
+        value is 1, and recommended value for low speed flows (Mach < 0.1) is
         1.)"});
 
       keywords.insert({"hll",
