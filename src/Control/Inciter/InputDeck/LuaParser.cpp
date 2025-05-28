@@ -185,6 +185,8 @@ LuaParser::storeInputDeck(
     true);
   storeIfSpecd< tk::real >(
     lua_ideck, "lowspeed_kp", gideck.get< tag::lowspeed_kp >(), 0.0);
+  storeIfSpecd< tk::real >(
+    lua_ideck, "lowspeed_ku", gideck.get< tag::lowspeed_ku >(), 1.0);
 
   // configure solutions DOFs
   auto scheme = gideck.get< tag::scheme >();

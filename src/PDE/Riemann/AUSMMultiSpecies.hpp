@@ -44,6 +44,17 @@ struct AUSMMultiSpecies {
         const std::vector< std::array< tk::real, 3 > >& = {} )
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+    // All-speed parameters
+    // These parameters control the amount of all-speed diffusion necessary for
+    // low-Mach flows. Setting k_u and k_p to zero does not add any all-speed
+    // diffusion, whereas setting k_u and k_p to 1 adds maximum recommended
+    // all-speed diffusion. See "Liou, M. S. (2006). A sequel to AUSM, Part II:
+    // AUSM+-up for all speeds. Journal of computational physics, 214(1),
+    // 137-170" for more mathematical explanation. k_u is the velocity diffusion
+    // term and k_p is the pressure diffusion term. These two terms reduce
+    // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
+    auto k_u = g_inputdeck.get< tag::lowspeed_ku >();
     auto k_p = g_inputdeck.get< tag::lowspeed_kp >();
 
     auto ncomp = u[0].size()-1;
@@ -90,16 +101,7 @@ struct AUSMMultiSpecies {
     auto ml = vnl/a12;
     auto mr = vnr/a12;
 
-    // All-speed parameters
-    // These parameters control the amount of all-speed diffusion necessary for
-    // low-Mach flows. Setting k_u and k_p to zero does not add any all-speed
-    // diffusion, whereas setting k_u and k_p to 1 adds maximum recommended
-    // all-speed diffusion. See "Liou, M. S. (2006). A sequel to AUSM, Part II:
-    // AUSM+-up for all speeds. Journal of computational physics, 214(1),
-    // 137-170" for more mathematical explanation. k_u is the velocity diffusion
-    // term and k_p is the pressure diffusion term. These two terms reduce
-    // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
-    tk::real k_u(1.0), f_a(1.0);
+    tk::real f_a(1.0);
 
     // Split Mach polynomials
     auto msl = splitmach_ausm( ml, f_a );
