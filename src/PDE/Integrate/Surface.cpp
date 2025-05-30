@@ -226,6 +226,39 @@ surfInt( const bool pref,
 
       // compute flux
       auto fl = flux( mat_blk, fn, state, v );
+      
+      if (viscous==1){
+      auto state_grad_l=tk::eval_state_gradient (ncomp, ndof, dof_el, 
+                         el, U, dBdx );
+      auto fl_vis_l = update_visc_flux(state_grad_l, state[0]) ; 
+      auto state_grad_r=tk::eval_state_gradient (ncomp, ndof, dof_er, 
+                         er, U, dBdx );
+      auto fl_vis_r = update_visc_flux(state_grad_r, state[1]) ; 
+      
+ 
+
+           // Flux functions
+    for (std::size_t i=0; i<3; ++i)
+    {
+    fluxl[1] + =fl_vis_l[1][i]*fn[0];
+    fluxl[2] + =fl_vis_l[2][i]*fn[1];
+    fluxl[3] + =fl_vis_l[3][i]*fn[2];
+    fluxl[4] + =fl_vis_l[4][i];
+    fluxr[1] + =fl_vis_r[1][i]*fn[0];
+    fluxr[2] + =fl_vis_r[2][i]*fn[1];
+    fluxr[3] + =fl_vis_r[3][i]*fn[2];
+    fluxr[4] + =fl_vis_r[4][i];
+    }
+    
+        
+       
+    // Numerical flux function
+    for(std::size_t c=1; c<5; ++c)
+      fl[c] = fl[c]+0.5 * (fluxl[c] + fluxr[c]);
+      
+      
+      
+      }
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,
@@ -357,6 +390,48 @@ update_rhs_fa( ncomp_t ncomp,
       }
   }
 }
+
+
+void  central_flux( 
+        const std::array< tk::real, 3 >& fn,
+        const std::array< std::vector< tk::real >, 2 >& u,
+        const std::vector< std::array< tk::real, 3 > >& = {} )
+  {
+    std::vector< tk::real >  flx( u[0].size(), 0.0 ),
+                            fluxl( u[0].size(), 0.0 ),
+                            fluxr( u[0].size(), 0.0 );
+
+
+    // Face-normal velocities
+    auto vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
+    auto vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
+
+    // Flux functions
+    fluxl[0] = u[0][0] * vnl;
+    fluxl[1] = u[0][1] * vnl + pl*fn[0];
+    fluxl[2] = u[0][2] * vnl + pl*fn[1];
+    fluxl[3] = u[0][3] * vnl + pl*fn[2];
+    fluxl[4] = ( u[0][4] + pl ) * vnl;
+
+    fluxr[0] = u[1][0] * vnr;
+    fluxr[1] = u[1][1] * vnr + pr*fn[0];
+    fluxr[2] = u[1][2] * vnr + pr*fn[1];
+    fluxr[3] = u[1][3] * vnr + pr*fn[2];
+    fluxr[4] = ( u[1][4] + pr ) * vnr;
+
+    auto lambda = std::max(al,ar) + std::max( std::abs(vnl), std::abs(vnr) );
+
+    // Numerical flux function
+    for(std::size_t c=0; c<5; ++c)
+      flx[c] = 0.5 * (fluxl[c] + fluxr[c] - lambda*(u[1][c] - u[0][c]));
+
+    return flx;
+  }
+
+  //! Flux type accessor
+  //! \return Flux type
+  static ctr::FluxType type() noexcept { return ctr::FluxType::LaxFriedrichs; }
+};
 
 void
 surfIntFV(

@@ -117,10 +117,18 @@ tk::volInt( std::size_t nmat,
           {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
         // evaluate prescribed velocity (if any)
-        auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
+        auto v = vel( ncomp, gp[0], gp[1], gp[2], t );              
 
         // comput flux
         auto fl = flux( ncomp, mat_blk, state, v );
+
+        if (viscous==1)
+        {
+         auto state_grad=tk::eval_state_gradient (ncomp, ndof, dof_el, 
+                         e, U, dBdx )
+         auto fl_vis = update_visc_flux(state_grad, state) ;
+         fl=fl+ fl_vis;               
+        }   
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );
       }
@@ -184,3 +192,60 @@ tk::update_rhs( ncomp_t ncomp,
     }
   }
 }
+
+std::vector< std::array< tk::real, 3 > > 
+tk::eval_state_gradient ( ncomp_t ncomp,
+                 const std::size_t ndof,
+                 const std::size_t ndof_el,
+                 const std::size_t e,
+                 const Fields& U,
+                 const std::array< std::vector<tk::real>, 3 >& dBdx )
+// *****************************************************************************
+//  Compute the state variables for the tetrahedron element
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] ndof_el Number of degrees of freedom for the local element
+//! \param[in] e Index for the tetrahedron element
+//! \param[in] U Solution vector at recent time step
+//! \param[in] B Vector of basis functions
+//! \return Vector of state variable for tetrahedron element
+// *****************************************************************************
+{
+  // This is commented for now because that when p0/p1 adaptive with limiter
+  // applied, the size of basis will be 10. However, ndof_el will be 4 which
+  // leads to a size mismatch in limiter function.
+  //Assert( B.size() == ndof_el, "Size mismatch" );
+
+  if (U.empty()) return {};
+
+  
+  std::vector< std::array< tk::real, 3 > >  state_grad(ncomp, 
+                                            std::array< real, 3 >{{0, 0, 0}});
+
+  
+ for (std::size_t i=0; i<3; ++i) {
+   for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      auto mark = c*ndof;
+      state_grad(c,i) += U( e, mark+1 ) * dBdx[i][1] 
+                       + U( e, mark+2 ) * dBdx[i][2]
+                       + U( e, mark+3 ) * dBdx[i][3];
+
+      if( ndof_el > 4 )
+    {
+      state_grad(c,i) += U( e, mark+4 ) * dBdx[i][4] 
+                       + U( e, mark+5 ) * dBdx[i][5]
+                       + U( e, mark+6 ) * dBdx[i][6]
+                       + U( e, mark+4 ) * dBdx[i][7] 
+                       + U( e, mark+5 ) * dBdx[i][8]
+                       + U( e, mark+6 ) * dBdx[i][9];
+    }
+  }
+}
+  
+ return state_grad
+  
+}
+
+
+
