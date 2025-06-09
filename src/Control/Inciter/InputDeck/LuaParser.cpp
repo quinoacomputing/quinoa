@@ -185,6 +185,8 @@ LuaParser::storeInputDeck(
     true);
   storeIfSpecd< tk::real >(
     lua_ideck, "lowspeed_kp", gideck.get< tag::lowspeed_kp >(), 0.0);
+  storeIfSpecd< tk::real >(
+    lua_ideck, "lowspeed_ku", gideck.get< tag::lowspeed_ku >(), 1.0);
 
   // configure solutions DOFs
   auto scheme = gideck.get< tag::scheme >();
@@ -614,9 +616,6 @@ LuaParser::storeInputDeck(
         Assert(nspec == spci_deck.get< tag::id >().size(),
           "Number of ids in species-block not equal to number of species");
 
-        // gamma
-        checkStoreMatProp(sol_spc[i+1], "gamma", nspec,
-          spci_deck.get< tag::gamma >());
         // R
         checkStoreMatProp(sol_spc[i+1], "R", nspec,
           spci_deck.get< tag::R >());
@@ -1253,6 +1252,9 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "noslipwall",
         bc_deck[i].get< tag::noslipwall >(), {});
 
+      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "slipwall",
+        bc_deck[i].get< tag::slipwall >(), {});
+
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
         const sol::table& sol_tdbc = sol_bc[i+1]["timedep"];
@@ -1272,6 +1274,21 @@ LuaParser::storeInputDeck(
             "be divisible by 6: one 'column' for the abscissa, and 5 for the "
             "ordinate.");
         }
+      }
+
+      // Back pressure BC
+      if (sol_bc[i+1]["back_pressure"].valid()) {
+        const sol::table& sol_bpbc = sol_bc[i+1]["back_pressure"];
+        auto& bpbc_deck = bc_deck[i].get< tag::back_pressure >();
+
+        storeVecIfSpecd< uint64_t >(sol_bpbc, "sideset",
+          bpbc_deck.get< tag::sideset >(), {});
+
+        if (!sol_bpbc["pressure"].valid())
+          Throw("Pressure is required for back pressure BC.");
+
+        storeIfSpecd< tk::real >(sol_bpbc, "pressure",
+          bpbc_deck.get< tag::pressure >(), 0.0);
       }
 
       // Velocity for inlet/farfield

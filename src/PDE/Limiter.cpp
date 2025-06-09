@@ -27,6 +27,7 @@
 #include "Integrate/Mass.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -634,8 +635,8 @@ VertexBasedMultiMat_P1(
 
       std::vector< tk::real > phic_p2, phip_p2;
 
-      PositivityLimitingMultiMat(nmat, mat_blk, rdof, dof_el, ndofel, e, inpoel,
-        coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
+      PositivityLimiting(nmat, 1, mat_blk, rdof, dof_el, ndofel, e,
+        inpoel, coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -829,8 +830,8 @@ VertexBasedMultiMat_P2(
         //}
       }
 
-      PositivityLimitingMultiMat(nmat, mat_blk, ndof, dof_el, ndofel, e, inpoel,
-          coord, fd.Esuel(), U, P, phic_p1, phic_p2, phip_p1, phic_p2);
+      PositivityLimiting(nmat, 1, mat_blk, ndof, dof_el, ndofel, e,
+        inpoel, coord, fd.Esuel(), U, P, phic_p1, phic_p2, phip_p1, phic_p2);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(nmat, 0);
@@ -983,6 +984,7 @@ VertexBasedMultiSpecies_P1(
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
+  tk::Fields& P,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -999,6 +1001,7 @@ VertexBasedMultiSpecies_P1(
 //! \param[in] flux Riemann flux function to use
 //! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] P High-order primitive vector which gets limited
 //! \param[in] nspec Number of species in this PDE system
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for
@@ -1010,9 +1013,7 @@ VertexBasedMultiSpecies_P1(
   const auto rdof = inciter::g_inputdeck.get< tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
-
-  // Null field for MarkShockCells argument
-  tk::Fields P;
+  std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::shock_detector_coeff >()
@@ -1045,12 +1046,13 @@ VertexBasedMultiSpecies_P1(
 
     if (dof_el > 1)
     {
-      std::vector< std::size_t > vars;
+      std::vector< std::size_t > varc, varp;
       if(shockmarker[e]) {
         // When shockmarker is 1, there is discontinuity within the element.
         // Hence, the vertex-based limiter will be applied.
 
-        for (std::size_t c=0; c<ncomp; ++c) vars.push_back(c);
+        for (std::size_t c=0; c<ncomp; ++c) varc.push_back(c);
+        for (std::size_t c=0; c<nprim; ++c) varp.push_back(c);
       } else {
         // When shockmarker is 0, the density of minor species will still be
         // limited to ensure a stable solution.
@@ -1061,19 +1063,21 @@ VertexBasedMultiSpecies_P1(
         for(std::size_t k=0; k<nspec; ++k) {
           if (U(e, multispecies::densityDofIdx(nspec,k,rdof,0))/rhob < 1e-4) {
             // limit the density of minor species
-            vars.push_back(multispecies::densityIdx(nspec, k));
+            varc.push_back(multispecies::densityIdx(nspec, k));
           }
         }
       }
 
-      std::vector< tk::real > phic(ncomp, 1.0);
+      std::vector< tk::real > phic(ncomp, 1.0), phip(nprim, 1.0);
       VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
-        ncomp, phic, vars);
+        ncomp, phic, varc);
+      if (!varp.empty())
+        VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el,
+          nprim, phip, varp);
 
-      //std::vector< tk::real > phic_p2, phip_p2;
-
-      //PositivityLimitingMultiMat(nmat, mat_blk, rdof, dof_el, ndofel, e, inpoel,
-      //  coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
+      std::vector< tk::real > phic_p2, phip_p2;
+      PositivityLimiting(1, nspec, mat_blk, rdof, dof_el, ndofel, e,
+        inpoel, coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
 
       // TODO: Unit sum of mass fractions is maintained by using common limiter
       // for all species densities. Investigate better approaches.
@@ -1095,6 +1099,13 @@ VertexBasedMultiSpecies_P1(
         U(e, mark+2) = phic[c] * U(e, mark+2);
         U(e, mark+3) = phic[c] * U(e, mark+3);
       }
+      for (std::size_t c=0; c<nprim; ++c)
+      {
+        auto mark = c*rdof;
+        P(e, mark+1) = phip[c] * P(e, mark+1);
+        P(e, mark+2) = phip[c] * P(e, mark+2);
+        P(e, mark+3) = phip[c] * P(e, mark+3);
+      }
     }
   }
 }
@@ -1113,6 +1124,7 @@ VertexBasedMultiSpecies_P2(
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
+  tk::Fields& P,
   std::size_t nspec,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -1129,6 +1141,7 @@ VertexBasedMultiSpecies_P2(
 //! \param[in] flux Riemann flux function to use
 //! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
+//! \param[in,out] P High-order primitive vector which gets limited
 //! \param[in] nspec Number of species in this PDE system
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for
@@ -1140,9 +1153,7 @@ VertexBasedMultiSpecies_P2(
   const auto rdof = inciter::g_inputdeck.get< tag::rdof >();
   const auto ndof = inciter::g_inputdeck.get< tag::ndof >();
   std::size_t ncomp = U.nprop()/rdof;
-
-  // Null field for MarkShockCells argument
-  tk::Fields P;
+  std::size_t nprim = P.nprop()/rdof;
 
   // Evaluate the interface condition and mark the shock cells
   if (inciter::g_inputdeck.get< tag::shock_detector_coeff >() > 1e-6) {
@@ -1173,50 +1184,59 @@ VertexBasedMultiSpecies_P2(
 
     if (dof_el > 1)
     {
-      std::vector< std::size_t > vars;
+      std::vector< std::size_t > varc, varp;
       if(shockmarker[e]) {
         // When shockmarker is 1, there is discontinuity within the element.
         // Hence, the vertex-based limiter will be applied.
 
-        for (std::size_t c=0; c<ncomp; ++c) vars.push_back(c);
-      } else {
-        // When shockmarker is 0, the density of minor species will still be
-        // limited to ensure a stable solution.
-
-        tk::real rhob(0.0);
-        for(std::size_t k=0; k<nspec; ++k)
-          rhob += U(e, multispecies::densityDofIdx(nspec,k,rdof,0));
-        for(std::size_t k=0; k<nspec; ++k) {
-          if (U(e, multispecies::densityDofIdx(nspec,k,rdof,0))/rhob < 1e-4) {
-            // limit the density of minor species
-            vars.push_back(multispecies::densityIdx(nspec, k));
-          }
-        }
+        for (std::size_t c=0; c<ncomp; ++c) varc.push_back(c);
+        for (std::size_t c=0; c<nprim; ++c) varp.push_back(c);
       }
+        // When shockmarker is 0, the density of minor species is not limited
+        // since it will degrade the accuracy to second order.
 
       // Removing 3rd order DOFs if discontinuity is detected, and applying
       // limiting to the 2nd order/P1 solution
-      for (std::size_t c=0; c<vars.size(); c++) {
+      for (std::size_t c=0; c<varc.size(); c++) {
         for(std::size_t idof = 4; idof < rdof; idof++) {
-          auto mark = vars[c] * rdof + idof;
+          auto mark = varc[c] * rdof + idof;
           U(e, mark) = 0.0;
         }
       }
+      for (std::size_t c=0; c<varp.size(); c++) {
+        for(std::size_t idof = 4; idof < rdof; idof++) {
+          auto mark = varp[c] * rdof + idof;
+          P(e, mark) = 0.0;
+        }
+      }
 
-      std::vector< tk::real > phic_p1(ncomp, 1.0);
-      VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
-        ncomp, phic_p1, vars);
+      std::vector< tk::real > phic_p1(ncomp, 1.0), phip_p1(nprim, 1.0);
+      if (!varc.empty())
+        VertexBasedLimiting(U, esup, inpoel, coord, e, rdof, dof_el,
+          ncomp, phic_p1, varc);
+      if (!varp.empty())
+        VertexBasedLimiting(P, esup, inpoel, coord, e, rdof, dof_el,
+          nprim, phip_p1, varp);
+
+      std::vector< tk::real > phic_p2(ncomp, 1.0), phip_p2(nprim, 1.0);
+      PositivityLimiting(1, nspec, mat_blk, ndof, dof_el, ndofel, e,
+        inpoel, coord, fd.Esuel(), U, P, phic_p1, phic_p2, phip_p1, phip_p2);
 
       // TODO: Unit sum of mass fractions is maintained by using common limiter
       // for all species densities. Investigate better approaches.
       if (!g_inputdeck.get< tag::accuracy_test >()) {
-        tk::real phi_rhos_p1(1.0);
-        for (std::size_t k=0; k<nspec; ++k)
+        tk::real phi_rhos_p1(1.0), phi_rhos_p2(1.0);
+        for (std::size_t k=0; k<nspec; ++k) {
           phi_rhos_p1 = std::min( phi_rhos_p1,
             phic_p1[multispecies::densityIdx(nspec, k)] );
+          phi_rhos_p2 = std::min( phi_rhos_p2,
+            phic_p2[multispecies::densityIdx(nspec, k)] );
+        }
         // same limiter for all densities
-        for (std::size_t k=0; k<nspec; ++k)
+        for (std::size_t k=0; k<nspec; ++k) {
           phic_p1[multispecies::densityIdx(nspec, k)] = phi_rhos_p1;
+          phic_p2[multispecies::densityIdx(nspec, k)] = phi_rhos_p2;
+        }
       }
 
       // apply limiter function to the solution
@@ -1225,6 +1245,16 @@ VertexBasedMultiSpecies_P2(
         auto mark = c * rdof;
         for(std::size_t idof=1; idof<4; idof++)
           U(e, mark+idof) = phic_p1[c] * U(e, mark+idof);
+        for(std::size_t idof=4; idof<rdof; idof++)
+          U(e, mark+idof) = phic_p2[c] * U(e, mark+idof);
+      }
+      for (std::size_t c=0; c<nprim; ++c)
+      {
+        auto mark = c * rdof;
+        for(std::size_t idof=1; idof<4; idof++)
+          P(e, mark+idof) = phip_p1[c] * P(e, mark+idof);
+        for(std::size_t idof=4; idof<rdof; idof++)
+          P(e, mark+idof) = phip_p2[c] * P(e, mark+idof);
       }
     }
   }
@@ -2079,24 +2109,26 @@ BoundPreservingLimitingFunction( const tk::real min,
   return phi;
 }
 
-void PositivityLimitingMultiMat( std::size_t nmat,
-                                 const std::vector< inciter::EOS >& mat_blk,
-                                 std::size_t rdof,
-                                 std::size_t ndof_el,
-                                 const std::vector< std::size_t >& ndofel,
-                                 std::size_t e,
-                                 const std::vector< std::size_t >& inpoel,
-                                 const tk::UnsMesh::Coords& coord,
-                                 const std::vector< int >& esuel,
-                                 const tk::Fields& U,
-                                 const tk::Fields& P,
-                                 std::vector< tk::real >& phic_p1,
-                                 std::vector< tk::real >& phic_p2,
-                                 std::vector< tk::real >& phip_p1,
-                                 std::vector< tk::real >& phip_p2 )
+void PositivityLimiting( std::size_t nmat,
+                         std::size_t nspec,
+                         const std::vector< inciter::EOS >& mat_blk,
+                         std::size_t rdof,
+                         std::size_t ndof_el,
+                         const std::vector< std::size_t >& ndofel,
+                         std::size_t e,
+                         const std::vector< std::size_t >& inpoel,
+                         const tk::UnsMesh::Coords& coord,
+                         const std::vector< int >& esuel,
+                         const tk::Fields& U,
+                         const tk::Fields& P,
+                         std::vector< tk::real >& phic_p1,
+                         std::vector< tk::real >& phic_p2,
+                         std::vector< tk::real >& phip_p1,
+                         std::vector< tk::real >& phip_p2 )
 // *****************************************************************************
-//  Positivity preserving limiter for multi-material solver
+//  Positivity preserving limiter for multi-material and multspecies solver
 //! \param[in] nmat Number of materials in this PDE system
+//! \param[in] nspec Number of species in this PDE system
 //! \param[in] mat_blk EOS material block
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] ndof_el Number of dofs for element e
@@ -2138,8 +2170,6 @@ void PositivityLimitingMultiMat( std::size_t nmat,
   std::vector< tk::real > phic_bound(ncomp, 1.0);
   std::vector< tk::real > phip_bound(nprim, 1.0);
 
-  const tk::real min = 1e-15;
-
   for (std::size_t lf=0; lf<4; ++lf)
   {
     std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
@@ -2177,30 +2207,15 @@ void PositivityLimitingMultiMat( std::size_t nmat,
       auto state = eval_state(ncomp, rdof, ndof_el, e, U, B);
       auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B);
 
-      for(std::size_t imat = 0; imat < nmat; imat++)
-      {
-        tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
-        // Evaluate the limiting coefficient for material density
-        auto rho = state[densityIdx(nmat, imat)];
-        auto rho_avg = U(e, densityDofIdx(nmat, imat, rdof, 0));
-        phi_rho = PositivityLimiting(min, rho, rho_avg);
-        phic_bound[densityIdx(nmat, imat)] =
-          std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
-        // Evaluate the limiting coefficient for material energy
-        auto rhoe = state[energyIdx(nmat, imat)];
-        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, rdof, 0));
-        phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
-        phic_bound[energyIdx(nmat, imat)] =
-          std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
-        // Evaluate the limiting coefficient for material pressure
-        auto min_pre = std::max(min, state[volfracIdx(nmat, imat)] *
-          mat_blk[imat].compute< EOS::min_eff_pressure >(min, rho,
-          state[volfracIdx(nmat, imat)]));
-        auto pre = sprim[pressureIdx(nmat, imat)];
-        auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
-        phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
-        phip_bound[pressureIdx(nmat, imat)] =
-          std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
+      if (nmat > 1) {
+        // multi-material PDE bounds
+        PositivityBoundsMultiMat(nmat, mat_blk, rdof, e, U, P, state, sprim,
+          phic_bound, phip_bound);
+      }
+      else {
+        // multispecies PDE bounds
+        PositivityBoundsMultiSpecies(nspec, mat_blk, rdof, e, U, P, state,
+          sprim, phic_bound, phip_bound);
       }
     }
   }
@@ -2226,59 +2241,122 @@ void PositivityLimitingMultiMat( std::size_t nmat,
       auto state = eval_state(ncomp, rdof, ndof_el, e, U, B);
       auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B);
 
-      for(std::size_t imat = 0; imat < nmat; imat++)
-      {
-        tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
-        // Evaluate the limiting coefficient for material density
-        auto rho = state[densityIdx(nmat, imat)];
-        auto rho_avg = U(e, densityDofIdx(nmat, imat, rdof, 0));
-        phi_rho = PositivityLimiting(min, rho, rho_avg);
-        phic_bound[densityIdx(nmat, imat)] =
-          std::min(phic_bound[densityIdx(nmat, imat)], phi_rho);
-        // Evaluate the limiting coefficient for material energy
-        auto rhoe = state[energyIdx(nmat, imat)];
-        auto rhoe_avg = U(e, energyDofIdx(nmat, imat, rdof, 0));
-        phi_rhoe = PositivityLimiting(min, rhoe, rhoe_avg);
-        phic_bound[energyIdx(nmat, imat)] =
-          std::min(phic_bound[energyIdx(nmat, imat)], phi_rhoe);
-        // Evaluate the limiting coefficient for material pressure
-        auto min_pre = std::max(min, state[volfracIdx(nmat, imat)] *
-          mat_blk[imat].compute< EOS::min_eff_pressure >(min, rho,
-          state[volfracIdx(nmat, imat)]));
-        auto pre = sprim[pressureIdx(nmat, imat)];
-        auto pre_avg = P(e, pressureDofIdx(nmat, imat, rdof, 0));
-        phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
-        phip_bound[pressureIdx(nmat, imat)] =
-          std::min(phip_bound[pressureIdx(nmat, imat)], phi_pre);
+      if (nmat > 1) {
+        // multi-material PDE bounds
+        PositivityBoundsMultiMat(nmat, mat_blk, rdof, e, U, P, state, sprim,
+          phic_bound, phip_bound);
+      }
+      else {
+        // multispecies PDE bounds
+        PositivityBoundsMultiSpecies(nspec, mat_blk, rdof, e, U, P, state,
+          sprim, phic_bound, phip_bound);
       }
     }
   }
 
-  // apply new bounds to material quantities
-  for (std::size_t k=0; k<nmat; ++k) {
-    // mat density
-    phic_p1[densityIdx(nmat, k)] = std::min( phic_bound[densityIdx(nmat, k)],
-      phic_p1[densityIdx(nmat, k)] );
-    // mat energy
-    phic_p1[energyIdx(nmat, k)] = std::min( phic_bound[energyIdx(nmat, k)],
-      phic_p1[energyIdx(nmat, k)] );
-    // mat pressure
-    phip_p1[pressureIdx(nmat, k)] = std::min( phip_bound[pressureIdx(nmat, k)],
-      phip_p1[pressureIdx(nmat, k)] );
-
-    // for dgp2
-    if (ndof_el > 4) {
-      // mat density
-      phic_p2[densityIdx(nmat, k)] = std::min( phic_bound[densityIdx(nmat, k)],
-        phic_p2[densityIdx(nmat, k)] );
-      // mat energy
-      phic_p2[energyIdx(nmat, k)] = std::min( phic_bound[energyIdx(nmat, k)],
-        phic_p2[energyIdx(nmat, k)] );
-      // mat pressure
-      phip_p2[pressureIdx(nmat, k)] = std::min( phip_bound[pressureIdx(nmat, k)],
-        phip_p2[pressureIdx(nmat, k)] );
-    }
+  // apply new bounds
+  for (std::size_t c=0; c<ncomp; ++c) {
+    phic_p1[c] = std::min( phic_bound[c], phic_p1[c] );
+    if (ndof_el > 4) phic_p2[c] = std::min( phic_bound[c], phic_p2[c] );
   }
+  for (std::size_t c=0; c<nprim; ++c) {
+    phip_p1[c] = std::min( phip_bound[c], phip_p1[c] );
+    if (ndof_el > 4) phip_p2[c] = std::min( phip_bound[c], phip_p2[c] );
+  }
+}
+
+void PositivityBoundsMultiMat(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t rdof,
+  std::size_t e,
+  const tk::Fields& U,
+  const tk::Fields& P,
+  const std::vector< tk::real >& state,
+  const std::vector< tk::real >& sprim,
+  std::vector< tk::real >& phic_bound,
+  std::vector< tk::real >& phip_bound )
+// *****************************************************************************
+//  Positivity bounds for multi-material PDE system
+//! \param[in] nmat Number of materials in this system
+//! \param[in] mat_blk EOS material block
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] e Element for which bounds are being calculated
+//! \param[in] U Vector of conservative variables
+//! \param[in] P Vector of primitive variables
+//! \param[in] state Vector of state of conserved quantities at quadrature point
+//! \param[in] sprim Vector of state of primitive quantities at quadrature point
+//! \param[in,out] phic_bound Vector of bounding-limiter functions for dofs of
+//!   the conserved quantities
+//! \param[in,out] phip_bound Vector of bounding-limiter functions for dofs of
+//!   the primitive quantities
+// *****************************************************************************
+{
+  const tk::real min = 1e-15;
+
+  for(std::size_t k = 0; k < nmat; k++)
+  {
+    tk::real phi_rho(1.0), phi_rhoe(1.0), phi_pre(1.0);
+    // Evaluate the limiting coefficient for material density
+    auto rho = state[densityIdx(nmat, k)];
+    auto rho_avg = U(e, densityDofIdx(nmat, k, rdof, 0));
+    phi_rho = PositivityFunction(min, rho, rho_avg);
+    phic_bound[densityIdx(nmat, k)] =
+      std::min(phic_bound[densityIdx(nmat, k)], phi_rho);
+    // Evaluate the limiting coefficient for material energy
+    auto rhoe = state[energyIdx(nmat, k)];
+    auto rhoe_avg = U(e, energyDofIdx(nmat, k, rdof, 0));
+    phi_rhoe = PositivityFunction(min, rhoe, rhoe_avg);
+    phic_bound[energyIdx(nmat, k)] =
+      std::min(phic_bound[energyIdx(nmat, k)], phi_rhoe);
+    // Evaluate the limiting coefficient for material pressure
+    auto min_pre = std::max(min, state[volfracIdx(nmat, k)] *
+      mat_blk[k].compute< EOS::min_eff_pressure >(min, rho,
+      state[volfracIdx(nmat, k)]));
+    auto pre = sprim[pressureIdx(nmat, k)];
+    auto pre_avg = P(e, pressureDofIdx(nmat, k, rdof, 0));
+    phi_pre = PositivityFunction(min_pre, pre, pre_avg);
+    phip_bound[pressureIdx(nmat, k)] =
+      std::min(phip_bound[pressureIdx(nmat, k)], phi_pre);
+  }
+}
+
+void PositivityBoundsMultiSpecies(
+  std::size_t nspec,
+  const std::vector< inciter::EOS >& /*mat_blk*/,
+  std::size_t rdof,
+  std::size_t e,
+  const tk::Fields& /*U*/,
+  const tk::Fields& P,
+  const std::vector< tk::real >& /*state*/,
+  const std::vector< tk::real >& sprim,
+  std::vector< tk::real >& /*phic_bound*/,
+  std::vector< tk::real >& phip_bound )
+// *****************************************************************************
+//  Positivity bounds for multispecies PDE system
+//! \param[in] nmat Number of materials in this system
+// //! \param[in] mat_blk EOS material block
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] e Element for which bounds are being calculated
+// //! \param[in] U Vector of conservative variables
+//! \param[in] P Vector of primitive variables
+// //! \param[in] state Vector of state of conserved quantities at quadrature point
+//! \param[in] sprim Vector of state of primitive quantities at quadrature point
+// //! \param[in,out] phic_bound Vector of bounding-limiter functions for dofs of
+// //!   the conserved quantities
+//! \param[in,out] phip_bound Vector of bounding-limiter functions for dofs of
+//!   the primitive quantities
+// *****************************************************************************
+{
+  const tk::real min = 1e-8;
+
+  tk::real phi_T(1.0);
+  // Evaluate the limiting coefficient for mixture temperature
+  auto T = sprim[multispecies::temperatureIdx(nspec, 0)];
+  auto T_avg = P(e, multispecies::temperatureDofIdx(nspec, 0, rdof, 0));
+  phi_T = PositivityFunction(min, T, T_avg);
+  phip_bound[multispecies::temperatureIdx(nspec, 0)] =
+    std::min(phip_bound[multispecies::temperatureIdx(nspec, 0)], phi_T);
 }
 
 void PositivityPreservingMultiMat_FV(
@@ -2361,7 +2439,7 @@ void PositivityPreservingMultiMat_FV(
         // Evaluate the limiting coefficient for material density
         auto rho = state[densityIdx(nmat, i)];
         auto rho_avg = U(e, densityDofIdx(nmat, i, rdof, 0));
-        auto phi_rho = PositivityLimiting(min, rho, rho_avg);
+        auto phi_rho = PositivityFunction(min, rho, rho_avg);
         phic[densityIdx(nmat, i)] =
           std::min(phic[densityIdx(nmat, i)], phi_rho);
       }
@@ -2410,7 +2488,7 @@ void PositivityPreservingMultiMat_FV(
           U(e,volfracDofIdx(nmat,i,rdof,0))));
         auto pre = sprim[pressureIdx(nmat, i)];
         auto pre_avg = P(e, pressureDofIdx(nmat, i, rdof, 0));
-        phi_pre = PositivityLimiting(min_pre, pre, pre_avg);
+        phi_pre = PositivityFunction(min_pre, pre, pre_avg);
         phip[pressureIdx(nmat, i)] =
           std::min(phip[pressureIdx(nmat, i)], phi_pre);
       }
@@ -2426,7 +2504,7 @@ void PositivityPreservingMultiMat_FV(
 }
 
 tk::real
-PositivityLimiting( const tk::real min,
+PositivityFunction( const tk::real min,
                     const tk::real u_gp,
                     const tk::real u_avg )
 // *****************************************************************************
@@ -2815,6 +2893,114 @@ correctLimConservMultiMat(
         unk(e, momentumDofIdx(nmat, idir, rdof, idof)) =
           R[velocityDofIdx(nmat,idir,rdof,idof)] / L[idof];
     }
+  }
+}
+
+void
+correctLimConservMultiSpecies(
+  std::size_t nelem,
+  const std::vector< EOS >& mat_blk,
+  std::size_t nspec,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
+  const tk::Fields& geoElem,
+  const tk::Fields& prim,
+  tk::Fields& unk )
+// *****************************************************************************
+//  Update the conservative quantities after limiting for multispecies systems
+//! \param[in] nelem Number of internal elements
+//! \param[in] mat_blk EOS material block
+//! \param[in] nspec Number of species in this PDE system
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] prim Array of primitive variables
+//! \param[in,out] unk Array of conservative variables
+//! \details This function computes the updated dofs for conservative
+//!   quantities based on the limited primitive quantities, to re-instate
+//!   consistency between the limited primitive and evolved quantities. For
+//!   further details, see Pandare et al. (2023). On the Design of Stable,
+//!   Consistent, and Conservative High-Order Methods for Multi-Material
+//!   Hydrodynamics. J Comp Phys, 112313.
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  std::size_t ncomp = unk.nprop()/rdof;
+  std::size_t nprim = prim.nprop()/rdof;
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    // Here we pre-compute the right-hand-side vector. The reason that the
+    // lhs in DG.cpp is not used is that the size of this vector in this
+    // projection procedure should be rdof instead of ndof.
+    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
+
+    // The right-hand side vector is sized as nprim, i.e. the primitive quantity
+    // vector. However, it stores the consistently obtained values of evolved
+    // quantities, since nprim is the number of evolved quantities that need to
+    // be evaluated consistently. For this reason, accessing R will require
+    // the primitive quantity accessors. But this access is intended to give
+    // the corresponding evolved quantites, as follows:
+    // multispecies::tempratureIdx() - total energy
+    std::vector< tk::real > R(nprim*rdof, 0.0);
+
+    auto ng = tk::NGvol(rdof);
+
+    // Arrays for quadrature points
+    std::array< std::vector< tk::real >, 3 > coordgp;
+    std::vector< tk::real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+    // Loop over quadrature points in element e
+    for (std::size_t igp=0; igp<ng; ++igp) {
+      // Compute the basis function
+      auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+                               coordgp[2][igp] );
+
+      auto w = wgp[igp] * geoElem(e, 0);
+
+      // Evaluate the solution at quadrature point
+      auto state = evalPolynomialSol(mat_blk, 0, ncomp, nprim,
+        rdof, 1, e, rdof, inpoel, coord, geoElem,
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim);
+
+      // Solution vector that stores the material energy and bulk momentum
+      std::vector< tk::real > s(nprim, 0.0);
+
+      // Mixture state at quadrature point
+      Mixture mixgp(nspec, state, mat_blk);
+
+      // Mixture density at quadrature point
+      tk::real rhob = mixgp.get_mix_density();
+
+      // velocity vector at quadrature point
+      std::array< tk::real, 3 >
+        vel{ state[multispecies::momentumIdx(nspec,0)]/rhob,
+             state[multispecies::momentumIdx(nspec,1)]/rhob,
+             state[multispecies::momentumIdx(nspec,2)]/rhob };
+
+      // Compute and store total energy at quadrature point
+      s[multispecies::temperatureIdx(nspec,0)] = mixgp.totalenergy(rhob,
+        vel[0], vel[1], vel[2],
+        state[ncomp+multispecies::temperatureIdx(nspec,0)], mat_blk);
+
+      // Evaluate the right-hand-side vector
+      for(std::size_t k = 0; k < nprim; k++) {
+        auto mark = k * rdof;
+        for(std::size_t idof = 0; idof < rdof; idof++)
+          R[mark+idof] += w * s[k] * B[idof];
+      }
+    }
+
+    // Update the high order dofs of the total energy
+    for(std::size_t idof = 1; idof < rdof; idof++)
+      unk(e, multispecies::energyDofIdx(nspec,0,rdof,idof)) =
+        R[multispecies::temperatureDofIdx(nspec,0,rdof,idof)] / L[idof];
   }
 }
 

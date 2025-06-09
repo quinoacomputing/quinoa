@@ -78,9 +78,11 @@ class CompFlow {
       , invalidBC         // Outlet BC not implemented
       , farfield
       , extrapolate
-      , invalidBC },      // No slip wall BC not implemented
+      , invalidBC         // No slip wall BC not implemented
+      , symmetry },       // Slip equivalent to symmetry without mesh motion
       // BC Gradient functions
       { noOpGrad
+      , noOpGrad
       , noOpGrad
       , noOpGrad
       , noOpGrad
@@ -264,7 +266,7 @@ class CompFlow {
                            const tk::Fields&,
                            tk::Fields&,
                            std::size_t,
-                           std::vector< std::size_t >& ) const {}
+                           const std::vector< std::size_t >& ) const {}
 
     //! Clean up the state of trace materials for this PDE system
     //! \details This function cleans up the state of materials present in trace

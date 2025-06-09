@@ -449,7 +449,7 @@ class DG : public CBase_DG {
     //! Start preparing fields for output to file
     void startFieldOutput( CkCallback c );
 
-    //! Compute the integration step for IMEX-RK
+    //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
 };
 

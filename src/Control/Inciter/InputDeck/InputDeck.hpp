@@ -50,7 +50,8 @@ using bclist = tk::TaggedTuple< brigand::list<
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >
+  tag::noslipwall,  std::vector< std::size_t >,
+  tag::slipwall,    std::vector< std::size_t >
 > >;
 
 // Transport
@@ -146,6 +147,7 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
   tag::noslipwall,  std::vector< std::size_t >,
+  tag::slipwall,    std::vector< std::size_t >,
   tag::velocity,    std::vector< tk::real >,
   tag::pressure,    tk::real,
   tag::density,     tk::real,
@@ -166,7 +168,11 @@ using bcList = tk::TaggedTuple< brigand::list<
       tag::sideset,    std::vector< uint64_t >,
       tag::fn,         std::vector< tk::real >
     > >
-  >
+  >,
+  tag::back_pressure, tk::TaggedTuple< brigand::list<
+    tag::sideset,  std::vector< std::size_t >,
+    tag::pressure, tk::real
+  > >
 > >;
 
 // IC box
@@ -311,6 +317,7 @@ using ConfigMembers = brigand::list<
   tag::rdof,        std::size_t,
   tag::flux,        FluxType,
   tag::lowspeed_kp, tk::real,
+  tag::lowspeed_ku, tk::real,
 
   // limiter options
   tag::limiter,              LimiterType,
@@ -806,6 +813,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         AUSM+up flux function used for the DG or FV spatial discretization for
         multi-material hydro, and not used for anything else. The default
         value is 0, and recommended value for low speed flows (Mach < 0.1) is
+        1.)"});
+
+      keywords.insert({"lowspeed_ku",
+        "Select the low-speed coefficient K_u in the AUSM+up flux function",
+        R"(This keyword is used to select the low-speed coefficient K_u in the
+        AUSM+up flux function used for the DG or FV spatial discretization for
+        multi-material hydro, and not used for anything else. The default
+        value is 1, and recommended value for low speed flows (Mach < 0.1) is
         1.)"});
 
       keywords.insert({"hll",
@@ -1730,6 +1745,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to list (multiple) no-slip wall BC sidesets.)",
         "vector of uint(s)"});
 
+      keywords.insert({"slipwall",
+        "List sidesets with slip wall boundary conditions",
+        R"(This keyword is used to list (multiple) slip wall BC sidesets.)",
+        "vector of uint(s)"});
+
       keywords.insert({"timedep",
         "Start configuration block describing time dependent boundary conditions",
         R"(This keyword is used to introduce a bc_timedep block, used to
@@ -1739,6 +1759,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         is expected inside a fn ... end block, specified within the bc_timedep
         block. Multiple such bc_timedep blocks can be specified for different
         time dependent BCs on different groups of side sets.)", "block-title"});
+
+      keywords.insert({"back_pressure",
+        "Start configuration block describing back pressure boundary conditions",
+        R"(This keyword is used to introduce a back pressure BC block. This
+        block requires a 'sideset' vector and 'pressure' to be specified within
+        it.)", "block-title"});
 
       keywords.insert({"velocity", "Specify velocity",
         R"(This keyword is used to configure a velocity vector used in a

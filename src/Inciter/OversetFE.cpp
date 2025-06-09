@@ -81,7 +81,9 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_bnormc(),
   m_symbcnodes(),
   m_farfieldbcnodes(),
+  m_slipwallbcnodes(),
   m_symbctri(),
+  m_slipwallbctri(),
   m_timedepbcnodes(),
   m_timedepbcFn(),
   m_stage( 0 ),
@@ -100,7 +102,10 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_surfTorque({{0, 0, 0}}),
   m_centMass({{0, 0, 0}}),
   m_centMassVel({{0, 0, 0}}),
-  m_angVelMesh(0)
+  m_angVelMesh(0),
+  m_centMassn({{0, 0, 0}}),
+  m_centMassVeln({{0, 0, 0}}),
+  m_angVelMeshn(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -178,14 +183,35 @@ OversetFE::getBCNodes()
   for (const auto& [s,nodes] : far)
     m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
 
-  // If farfield BC is set on a node, will not also set symmetry BC
-  for (auto fn : m_farfieldbcnodes) m_symbcnodes.erase(fn);
+  // Prepare unique set of slip wall BC nodes
+  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
+  for (const auto& [s,nodes] : slip)
+    m_slipwallbcnodes.insert( begin(nodes), end(nodes) );
 
-  // Prepare boundary nodes contiguously accessible from a triangle-face loop
+  // If farfield BC is set on a node, will not also set symmetry and slip BC
+  for (auto fn : m_farfieldbcnodes) {
+    m_symbcnodes.erase(fn);
+    m_slipwallbcnodes.erase(fn);
+  }
+
+  // If symmetry BC is set on a node, will not also set slip BC
+  for (auto fn : m_symbcnodes) {
+    m_slipwallbcnodes.erase(fn);
+  }
+
+  // Prepare boundary nodes contiguously accessible from a triangle-face loop,
+  // which contain both symmetry and no slip walls
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
     if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
       m_symbctri[e] = 1;
+
+  // Prepare the above for slip walls, which are needed for pressure integrals
+  // to obtain force on overset walls
+  m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
+  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
+    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+      m_slipwallbctri[e] = 1;
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -935,12 +961,27 @@ OversetFE::BC()
           g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
         }
 
+        // Apply slip wall BCs
+        g_cgpde[d->MeshId()].slipwallbc( m_u, d->MeshVel(), coord, m_bnorm,
+          m_slipwallbcnodes );
+
         // Apply user defined time dependent BCs
         g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
           m_timedepbcFn );
       }
     }
   }
+}
+
+void
+OversetFE::UpdateCenterOfMass()
+// *****************************************************************************
+// Update quantities associated with the center of mass at a new time step
+// *****************************************************************************
+{
+  m_centMassn = m_centMass;
+  m_centMassVeln = m_centMassVel;
+  m_angVelMeshn = m_angVelMesh;
 }
 
 void
@@ -1002,7 +1043,7 @@ OversetFE::dt()
   std::vector< tk::real > F(6, 0.0);
   if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
     && d->MeshId() > 0) {
-    g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_symbctri,
+    g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_slipwallbctri,
       m_u, m_centMass, F );
   }
 
@@ -1129,7 +1170,7 @@ OversetFE::rhs()
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
   g_cgpde[d->MeshId()].rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-          m_symbctri, d->Vol(), m_edgenode, m_edgeid,
+          m_symbctri, m_slipwallbctri, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->MeshVel(), m_tp, d->Boxvol(),
           m_rhs );
   if (steady)
@@ -1196,6 +1237,8 @@ OversetFE::solve()
   // Update state at time n
   if (m_stage == 0) {
     m_un = m_u;
+    d->UpdateCoordn();
+    UpdateCenterOfMass();
   }
 
   // Explicit time-stepping using RK3
@@ -1257,9 +1300,9 @@ OversetFE::solve()
         // rotation (this is currently only configured for planar motion)
         // ---------------------------------------------------------------------
         std::array< tk::real, 3 > rCM{{
-          d->Coord()[0][p] - m_centMass[0],
-          d->Coord()[1][p] - m_centMass[1],
-          d->Coord()[2][p] - m_centMass[2] }};
+          d->Coordn()[0][p] - m_centMassn[0],
+          d->Coordn()[1][p] - m_centMassn[1],
+          d->Coordn()[2][p] - m_centMassn[2] }};
 
         // obtain tangential velocity
         tk::real r_mag(0.0);
@@ -1281,39 +1324,39 @@ OversetFE::solve()
         // angle of rotation
         auto dtheta = m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp;
 
+        // add contribution of rotation to mesh displacement
+        std::array< tk::real, 3 > angles{{ 0, 0, 0 }};
+        angles[sym_dir] = dtheta * 180.0/pi;
+        tk::rotatePoint(angles, rCM);
+
         // rectilinear motion
         // ---------------------------------------------------------------------
-        std::array< tk::real, 3 > ds{{ 0, 0, 0 }};
+
+        tk::real dsT, dsR;
+
         for (std::size_t i=0; i<3; ++i) {
-          // mesh displacement
-          ds[i] = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
-          // mesh velocity
+          // mesh displacement from translation
+          dsT = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+          // mesh displacement from rotation
+          dsR = rCM[i] + m_centMass[i] - d->Coordn()[i][p];
+          // add both contributions
+          d->Coord()[i][p] = d->Coordn()[i][p] + dsT + dsR;
+          // mesh velocity change from translation
           u_mesh(p,i) += a_mesh[i]*dtp;
         }
 
         // add contribution of rotation to mesh velocity
         u_mesh(p,i1) += a1*dtp;
         u_mesh(p,i2) += a2*dtp;
-
-        // add contribution of rotation to mesh displacement
-        std::array< tk::real, 3 > angles{{ 0, 0, 0 }};
-        angles[sym_dir] = dtheta * 180.0/pi;
-        tk::rotatePoint(angles, rCM);
-
-        // combine both contributions
-        for (std::size_t i=0; i<3; ++i) {
-          d->Coord()[i][p] = rCM[i] + m_centMass[i];
-          d->Coord()[i][p] += ds[i];
-        }
       }
 
       // update angular velocity
-      m_angVelMesh += alpha_mesh*dtp;
+      m_angVelMesh = m_angVelMeshn + alpha_mesh*dtp;
 
       // move center of mass
       for (std::size_t i=0; i<3; ++i) {
-        m_centMass[i] += m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
-        m_centMassVel[i] += a_mesh[i]*dtp;  // no rotational component
+        m_centMass[i] = m_centMassn[i] + m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+        m_centMassVel[i] = m_centMassVeln[i] + a_mesh[i]*dtp;  // no rotational component
       }
     }
 
@@ -1334,7 +1377,8 @@ OversetFE::solve()
   if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
     diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
-                                    m_symbcnodes, m_farfieldbcnodes );
+                                    m_symbcnodes, m_farfieldbcnodes,
+                                    m_slipwallbcnodes );
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping

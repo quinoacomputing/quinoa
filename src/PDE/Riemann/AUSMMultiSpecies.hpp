@@ -24,6 +24,7 @@
 #include "Inciter/Options/Flux.hpp"
 #include "EoS/EOS.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -43,20 +44,34 @@ struct AUSMMultiSpecies {
         const std::vector< std::array< tk::real, 3 > >& = {} )
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+    // All-speed parameters
+    // These parameters control the amount of all-speed diffusion necessary for
+    // low-Mach flows. Setting k_u and k_p to zero does not add any all-speed
+    // diffusion, whereas setting k_u and k_p to 1 adds maximum recommended
+    // all-speed diffusion. See "Liou, M. S. (2006). A sequel to AUSM, Part II:
+    // AUSM+-up for all speeds. Journal of computational physics, 214(1),
+    // 137-170" for more mathematical explanation. k_u is the velocity diffusion
+    // term and k_p is the pressure diffusion term. These two terms reduce
+    // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
+    auto k_u = g_inputdeck.get< tag::lowspeed_ku >();
     auto k_p = g_inputdeck.get< tag::lowspeed_kp >();
 
-    auto ncomp = u[0].size();
+    auto ncomp = u[0].size()-1;
     std::vector< tk::real > flx( ncomp, 0 );
 
     tk::real rhol(0.0), rhor(0.0), pl(0.0), pr(0.0), hl(0.0), hr(0.0),
-      al(0.0), ar(0.0), a12(0.0), rho12(0.0);
+      Tl(0.0), Tr(0.0), al(0.0), ar(0.0), a12(0.0), rho12(0.0);
+
+    // initialize mixtures
+    Mixture mixl(nspec, u[0], mat_blk);
+    Mixture mixr(nspec, u[1], mat_blk);
 
     // Mixture densities
-    for (std::size_t k=0; k<nspec; ++k)
-    {
-      rhol += u[0][multispecies::densityIdx(nspec, k)];
-      rhor += u[1][multispecies::densityIdx(nspec, k)];
-    }
+    rhol = mixl.get_mix_density();
+    rhor = mixr.get_mix_density();
+    Tl = u[0][ncomp+multispecies::temperatureIdx(nspec, 0)];
+    Tr = u[1][ncomp+multispecies::temperatureIdx(nspec, 0)];
 
     // Velocities
     auto ul = u[0][multispecies::momentumIdx(nspec, 0)]/rhol;
@@ -66,15 +81,13 @@ struct AUSMMultiSpecies {
     auto vr = u[1][multispecies::momentumIdx(nspec, 1)]/rhor;
     auto wr = u[1][multispecies::momentumIdx(nspec, 2)]/rhor;
 
-    pl = mat_blk[0].compute< EOS::pressure >( rhol, ul, vl, wl,
-      u[0][multispecies::energyIdx(nspec, 0)] );
+    pl = mixl.pressure( rhol, Tl );
     hl = u[0][multispecies::energyIdx(nspec, 0)] + pl;
-    al = mat_blk[0].compute< EOS::soundspeed >( rhol, pl );
+    al = mixl.frozen_soundspeed( rhol, Tl, mat_blk );
 
-    pr = mat_blk[0].compute< EOS::pressure >( rhor, ur, vr, wr,
-      u[1][multispecies::energyIdx(nspec, 0)] );
+    pr = mixr.pressure( rhor, Tr );
     hr = u[1][multispecies::energyIdx(nspec, 0)] + pr;
-    ar = mat_blk[0].compute< EOS::soundspeed >( rhor, pr );
+    ar = mixr.frozen_soundspeed( rhor, Tr, mat_blk );
 
     // Average states for mixture speed of sound
     a12 = 0.5*(al+ar);
@@ -88,16 +101,7 @@ struct AUSMMultiSpecies {
     auto ml = vnl/a12;
     auto mr = vnr/a12;
 
-    // All-speed parameters
-    // These parameters control the amount of all-speed diffusion necessary for
-    // low-Mach flows. Setting k_u and k_p to zero does not add any all-speed
-    // diffusion, whereas setting k_u and k_p to 1 adds maximum recommended
-    // all-speed diffusion. See "Liou, M. S. (2006). A sequel to AUSM, Part II:
-    // AUSM+-up for all speeds. Journal of computational physics, 214(1),
-    // 137-170" for more mathematical explanation. k_u is the velocity diffusion
-    // term and k_p is the pressure diffusion term. These two terms reduce
-    // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
-    tk::real k_u(1.0), f_a(1.0);
+    tk::real f_a(1.0);
 
     // Split Mach polynomials
     auto msl = splitmach_ausm( ml, f_a );

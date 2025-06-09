@@ -72,10 +72,16 @@ struct ConfigBC {
 };
 
 //! \brief Extract information on inlet BCs, which have a different structure
-//! than other BCs
+//!   than other BCs
 void ConfigInletBC( BCStateFn&,
                     const tk::StateFn&,
                     const tk::StateFn& );
+
+//! \brief Extract information on back pressure BCs, which have a different
+//!   structure than other BCs
+void ConfigBackPressureBC( BCStateFn&,
+                           const tk::StateFn&,
+                           const tk::StateFn& );
 
 //! State function for invalid/un-configured boundary conditions
 [[noreturn]] tk::StateFn::result_type
@@ -202,7 +208,7 @@ class DGPDE {
                            const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem,
-                           std::vector< std::size_t >& ndofel ) const
+                           const std::vector< std::size_t >& ndofel ) const
     { self->updatePrimitives( unk, L, geoElem, prim, nielem, ndofel ); }
 
     //! Public interface to cleaning up trace materials for the diff eq
@@ -437,7 +443,7 @@ class DGPDE {
                                      const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t,
-                                     std::vector< std::size_t >& ) const = 0;
+                                     const std::vector< std::size_t >& ) const = 0;
       virtual void cleanTraceMaterial( tk::real,
                                        const tk::Fields&,
                                        tk::Fields&,
@@ -602,7 +608,7 @@ class DGPDE {
                              const tk::Fields& geoElem,
                              tk::Fields& prim,
                              std::size_t nielem,
-                             std::vector< std::size_t >& ndofel )
+                             const std::vector< std::size_t >& ndofel )
       const override {
         data.updatePrimitives( unk, L, geoElem, prim, nielem, ndofel );
       }
