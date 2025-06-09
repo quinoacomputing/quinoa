@@ -246,7 +246,9 @@ Transporter::info( const InciterPrint& print )
               g_inputdeck.get< tag::operator_reorder >() );
   auto steady = g_inputdeck.get< tag::steady_state >();
   print.item( "Local time stepping", steady );
-  if (steady) {
+  auto implicitts = g_inputdeck.get< tag::implicit_timestepping >();
+  print.item( "Implicit time stepping", implicitts );
+  if (steady || implicitts) {
     print.item( "L2-norm residual convergence criterion",
                 g_inputdeck.get< tag::residual >() );
     print.item( "Convergence criterion component index",

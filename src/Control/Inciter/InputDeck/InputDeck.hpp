@@ -302,9 +302,10 @@ using ConfigMembers = brigand::list<
   tag::imex_abstol,      tk::real,
 
   // steady-state solver options
-  tag::steady_state, bool,
-  tag::residual,     tk::real,
-  tag::rescomp,      uint32_t,
+  tag::implicit_timestepping, bool,
+  tag::steady_state,          bool,
+  tag::residual,              tk::real,
+  tag::rescomp,               uint32_t,
 
   // mesh partitioning and reordering/sorting choices
   tag::partitioning,     tk::ctr::PartitioningAlgorithmType,
@@ -510,6 +511,16 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"ttyi", "Set screen output interval",
         R"(This keyword is used to specify the interval in time steps for screen
         output during a simulation.)", "uint"});
+
+      keywords.insert({"implicit_timestepping",
+        "Toggle use of an implicit time-stepping scheme",
+        R"(This keywords is used to trigger implicit time integration BDF1
+        (backward Euler) for the DG/DGP1/DGP2/PDG spatial discretizations. This
+        will activate the implicit BDF1 scheme which replaces the explicit RK3
+        that is usually used. This requires PDE-specific implementation of the
+        Jacobian matrix. Jacobian implementation is complete only for
+        PDEType::MULTISPECIES, i.e. implicit_timestepping can only be used for
+        multispecies currently.)", "bool"});
 
       keywords.insert({"imex_runge_kutta",
         "Toggle use of IMplicit-EXplicit Runge-Kutta scheme",
