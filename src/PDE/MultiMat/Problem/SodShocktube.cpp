@@ -82,10 +82,12 @@ MultiMatProblemSodShocktube::initialize( ncomp_t ncomp,
   s[densityIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*r;
   s[densityIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*r;
   // total specific energy
-  s[energyIdx(nmat, 0)] = s[volfracIdx(nmat, 0)]*
-    mat_blk[0].compute< EOS::totalenergy >( r, u, v, w, p );
-  s[energyIdx(nmat, 1)] = s[volfracIdx(nmat, 1)]*
-    mat_blk[1].compute< EOS::totalenergy >( r, u, v, w, p );
+  s[energyIdx(nmat, 0)] =
+    mat_blk[0].compute< EOS::totalenergy >( s[volfracIdx(nmat, 0)]*r, u, v, w,
+    s[volfracIdx(nmat, 0)]*p, s[volfracIdx(nmat, 0)] );
+  s[energyIdx(nmat, 1)] =
+    mat_blk[1].compute< EOS::totalenergy >( s[volfracIdx(nmat, 1)]*r, u, v, w,
+    s[volfracIdx(nmat, 1)]*p, s[volfracIdx(nmat, 1)] );
 
   return s;
 }

@@ -122,8 +122,8 @@ SmallShearSolid::pressure(
   auto arhoEh = arhoE - arhoEe;
 
   // use stiffened gas eos to get pressure
-  tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) -
-    alpha*m_pstiff) * (m_gamma-1.0) - alpha*m_pstiff;
+  tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w))
+    * (m_gamma-1.0) - alpha*m_gamma*m_pstiff;
 
   // check partial pressure divergence
   if (!std::isfinite(partpressure)) {
@@ -603,20 +603,24 @@ SmallShearSolid::shearspeed(
 
 tk::real
 SmallShearSolid::totalenergy(
-  tk::real rho,
+  tk::real arho,
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real pr,
+  tk::real apr,
+  tk::real alpha,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
-//! \param[in] rho Material density
+//! \param[in] arho Material partial density
 //! \param[in] u X-velocity
 //! \param[in] v Y-velocity
 //! \param[in] w Z-velocity
-//! \param[in] pr Material pressure
+//! \param[in] apr Material partial pressure
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
+//!   the single-material system, this argument can be left unspecified by
+//!   the calling code
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   g_k. Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
@@ -624,13 +628,13 @@ SmallShearSolid::totalenergy(
 // *************************************************************************
 {
   // obtain hydro contribution to energy
-  tk::real rhoEh = (pr + m_pstiff) / (m_gamma-1.0) + 0.5 * rho *
-    (u*u + v*v + w*w) + m_pstiff;
+  tk::real arhoEh = (apr + alpha*m_gamma*m_pstiff) / (m_gamma-1.0) + 0.5 * arho *
+    (u*u + v*v + w*w);
   // obtain elastic contribution to energy
   tk::real eps2;
-  tk::real rhoEe = elasticEnergy(defgrad, eps2);
+  tk::real arhoEe = alpha*elasticEnergy(defgrad, eps2);
 
-  return (rhoEh + rhoEe);
+  return (arhoEh + arhoEe);
 }
 
 tk::real
