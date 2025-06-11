@@ -1953,81 +1953,82 @@ DG::step()
 void
 DG::imex_integrate()
 {
-  /*****************************************************************************
-  Performs the Implicit-Explicit Runge-Kutta step.
+// *****************************************************************************
+//  Perform the Implicit-Explicit Runge-Kutta stage update
+//
+//  \details
+//    Performs the Implicit-Explicit Runge-Kutta step. Scheme taken from
+//    Cavaglieri, D., & Bewley, T. (2015). Low-storage implicit/explicit
+//    Runge–Kutta schemes for the simulation of stiff high-dimensional ODE
+//    systems. Journal of Computational Physics, 286, 172-193.
+//
+//    Scheme given by equations (25a,b):
+//
+//    u[0] = u[n] + dt * (expl_rkcoef[1,0]*R_ex(u[n])+impl_rkcoef[1,1]*R_im(u[0]))
+//
+//    u[1] = u[n] + dt * (expl_rkcoef[2,1]*R_ex(u[0])+impl_rkcoef[2,1]*R_im(u[0])
+//                                                   +impl_rkcoef[2,2]*R_im(u[1]))
+//
+//    u[n+1] = u[n] + dt * (expl_rkcoef[3,1]*R_ex(u[0])+impl_rkcoef[3,1]*R_im(u[0])
+//                          expl_rkcoef[3,2]*R_ex(u[1])+impl_rkcoef[3,2]*R_im(u[1]))
+//
+//    In order to solve the first two equations we need to solve a series of
+//    systems of non-linear equations:
+//
+//    F1(u[0]) = B1 + R1(u[0]) = 0, and
+//    F2(u[1]) = B2 + R2(u[1]) = 0,
+//
+//    where
+//
+//    B1 = u[n] + dt * expl_rkcoef[1,0]*R_ex(u[n]),
+//    R1 = dt * impl_rkcoef[1,1]*R_im(u[0]) - u([0]),
+//    B2 = u[n] + dt * (expl_rkcoef[2,1]*R_ex(u[0])+impl_rkcoef[2,1]*R_im(u[0])),
+//    R2 = dt * impl_rkcoef[2,2]*R_im(u[1]) - u([1]).
+//
+//    In order to solve the non-linear system F(U) = 0, we employ Broyden's method.
+//    Taken from https://en.wikipedia.org/wiki/Broyden%27s_method.
+//    The method consists in obtaining an approximation for the inverse of the
+//    Jacobian H = J^(-1) and advancing in a quasi-newton step:
+//
+//    U[k+1] = U[k] - H[k]*F(U[k]),
+//
+//    until F(U) is close enough to zero.
+//
+//    The approximation H[k] is improved at every iteration following
+//
+//    H[k] = H[k-1] + (DU[k]-H[k-1]*DF[k])/(DU[k]^T*H[k-1]*DF[k]) * DU[k]^T*H[k-1],
+//
+//    where DU[k] = U[k] - U[k-1] and DF[k] = F(U[k]) - F(U[k-1)).
+//
+//    This function performs the following main algorithmic steps:
+//    - If stage == 0 or stage == 1:
+//      - Take Initial value:
+//        U[0] = U[n] + dt * expl_rkcoef[1,0]*R_ex(U[n]) (for stage 0)
+//        U[1] = U[n] + dt * (expl_rkcoef[2,1]*R_ex(U[0])
+//                           +impl_rkcoef[2,1]*R_im(U[0])) (for stage 1)
+//      - Loop over the Elements (e++)
+//        - Initialize Jacobian inverse approximation as the identity
+//        - Compute implicit right-hand-side (F_im) with current U
+//        - Iterate for the solution (iter++)
+//          - Compute new solution U[k+1] = U[k] - H[k]*F(U[k])
+//          - Compute implicit right-hand-side (F_im) with current U
+//          - Compute DU and DF
+//          - Update inverse Jacobian approximation by:
+//            - Compute V1 = H[k-1]*DF[k] and V2 = DU[k]^T*H[k-1]
+//            - Compute d = DU[k]^T*V1 and V3 = DU[k]-V1
+//            - Compute V4 = V3/d
+//            - Update H[k] = H[k-1] + V4*V2
+//          - Save old U and F
+//          - Compute absolute and relative errors
+//          - Break iterations if error < tol or iter == max_iter
+//       - Update explicit equations using only the explicit terms.
+//    - Else if stage == 2:
+//       - Update explicit equations using only the explicit terms.
+//       - Update implicit equations using:
+//       u[n+1] = u[n]+dt*(expl_rkcoef[3,1]*R_ex(u[0])+impl_rkcoef[3,1]*R_im(u[0])
+//                         expl_rkcoef[3,2]*R_ex(u[1])+impl_rkcoef[3,2]*R_im(u[1]))
+// *****************************************************************************
 
-  \details Performs the Implicit-Explicit Runge-Kutta step. Scheme taken from
-  Cavaglieri, D., & Bewley, T. (2015). Low-storage implicit/explicit Runge–Kutta
-  schemes for the simulation of stiff high-dimensional ODE systems. Journal of
-  Computational Physics, 286, 172-193.
-
-  Scheme given by equations (25a,b):
-
-  u[0] = u[n] + dt * (expl_rkcoef[1,0]*R_ex(u[n])+impl_rkcoef[1,1]*R_im(u[0]))
-
-  u[1] = u[n] + dt * (expl_rkcoef[2,1]*R_ex(u[0])+impl_rkcoef[2,1]*R_im(u[0])
-                                                 +impl_rkcoef[2,2]*R_im(u[1]))
-
-  u[n+1] = u[n] + dt * (expl_rkcoef[3,1]*R_ex(u[0])+impl_rkcoef[3,1]*R_im(u[0])
-                        expl_rkcoef[3,2]*R_ex(u[1])+impl_rkcoef[3,2]*R_im(u[1]))
-
-  In order to solve the first two equations we need to solve a series of systems
-  of non-linear equations:
-
-  F1(u[0]) = B1 + R1(u[0]) = 0, and
-  F2(u[1]) = B2 + R2(u[1]) = 0,
-
-  where
-
-  B1 = u[n] + dt * expl_rkcoef[1,0]*R_ex(u[n]),
-  R1 = dt * impl_rkcoef[1,1]*R_im(u[0]) - u([0]),
-  B2 = u[n] + dt * (expl_rkcoef[2,1]*R_ex(u[0])+impl_rkcoef[2,1]*R_im(u[0])),
-  R2 = dt * impl_rkcoef[2,2]*R_im(u[1]) - u([1]).
-
-  In order to solve the non-linear system F(U) = 0, we employ Broyden's method.
-  Taken from https://en.wikipedia.org/wiki/Broyden%27s_method.
-  The method consists in obtaining an approximation for the inverse of the
-  Jacobian H = J^(-1) and advancing in a quasi-newton step:
-
-  U[k+1] = U[k] - H[k]*F(U[k]),
-
-  until F(U) is close enough to zero.
-
-  The approximation H[k] is improved at every iteration following
-
-  H[k] = H[k-1] + (DU[k]-H[k-1]*DF[k])/(DU[k]^T*H[k-1]*DF[k]) * DU[k]^T*H[k-1],
-
-  where DU[k] = U[k] - U[k-1] and DF[k] = F(U[k]) - F(U[k-1)).
-
-  This function performs the following main algorithmic steps:
-  - If stage == 0 or stage == 1:
-    - Take Initial value:
-      U[0] = U[n] + dt * expl_rkcoef[1,0]*R_ex(U[n]) (for stage 0)
-      U[1] = U[n] + dt * (expl_rkcoef[2,1]*R_ex(U[0])
-                         +impl_rkcoef[2,1]*R_im(U[0])) (for stage 1)
-    - Loop over the Elements (e++)
-      - Initialize Jacobian inverse approximation as the identity
-      - Compute implicit right-hand-side (F_im) with current U
-      - Iterate for the solution (iter++)
-        - Compute new solution U[k+1] = U[k] - H[k]*F(U[k])
-        - Compute implicit right-hand-side (F_im) with current U
-        - Compute DU and DF
-        - Update inverse Jacobian approximation by:
-          - Compute V1 = H[k-1]*DF[k] and V2 = DU[k]^T*H[k-1]
-          - Compute d = DU[k]^T*V1 and V3 = DU[k]-V1
-          - Compute V4 = V3/d
-          - Update H[k] = H[k-1] + V4*V2
-        - Save old U and F
-        - Compute absolute and relative errors
-        - Break iterations if error < tol or iter == max_iter
-     - Update explicit equations using only the explicit terms.
-  - Else if stage == 2:
-     - Update explicit equations using only the explicit terms.
-     - Update implicit equations using:
-     u[n+1] = u[n]+dt*(expl_rkcoef[3,1]*R_ex(u[0])+impl_rkcoef[3,1]*R_im(u[0])
-                       expl_rkcoef[3,2]*R_ex(u[1])+impl_rkcoef[3,2]*R_im(u[1]))
-
-  ******************************************************************************/
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
