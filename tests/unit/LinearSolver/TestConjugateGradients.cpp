@@ -5,15 +5,15 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Unit tests for LinearSolver/BiCG
-  \details   Unit tests for LinearSolver/BiCG
+  \brief     Unit tests for LinearSolver/ConjugateGradients
+  \details   Unit tests for LinearSolver/ConjugateGradients
 */
 // *****************************************************************************
 
 #include "NoWarning/tut.hpp"
 
 #include "TUTConfig.hpp"
-#include "BiCG.hpp"
+#include "ConjugateGradients.hpp"
 #include "DerivedData.hpp"
 #include "Reorder.hpp"
 #include "Vector.hpp"
@@ -46,7 +46,7 @@ using ConjugateGradients_object = ConjugateGradients_group::object;
 
 //! Define test group
 static ConjugateGradients_group
-  ConjugateGradients( "LinearSolver/BiCG" );
+  ConjugateGradients( "LinearSolver/ConjugateGradients" );
 
 //! Charm++ chare to receive callbacks when CG tasks are complete
 class CGReceiver : public CBase_CGReceiver {
@@ -57,7 +57,7 @@ class CGReceiver : public CBase_CGReceiver {
                 tk::real tol,
                 tk::real normb_ex,
                 tk::real normres_ex,
-                tk::CProxy_BiCG cg )
+                tk::CProxy_ConjugateGradients cg )
       : m_label( label ), m_maxit(maxit), m_tol(tol), m_normb_ex(normb_ex),
         m_normres_ex(normres_ex), m_cg( cg ) {}
     //! Called after CG::setup() finished
@@ -86,7 +86,7 @@ class CGReceiver : public CBase_CGReceiver {
     //! Expected norm of the final residual
     tk::real m_normres_ex;
     //! CG solver proxy
-    tk::CProxy_BiCG m_cg;
+    tk::CProxy_ConjugateGradients m_cg;
     //! Function creating a TUT test on completing a CG task
     void received( const std::string& msg,
                    const std::string& in,
@@ -94,7 +94,7 @@ class CGReceiver : public CBase_CGReceiver {
                    tk::real expected )
     {
       // Create test result struct
-      tut::test_result tr( "LinearSolver/BiCG", 1,
+      tut::test_result tr( "LinearSolver/ConjugateGradients", 1,
                            m_label + " " + msg,
                            tut::test_result::result_type::ok );
       try {
@@ -205,8 +205,8 @@ void ConjugateGradients_object::test< 1 >() {
   A.dirichlet( 0 );
 
   // Create CG solver (chare array with a single element)
-  tk::CProxy_BiCG cg =
-    tk::CProxy_BiCG::ckNew( A, x, b, {}, {}, {}, 1 );
+  tk::CProxy_ConjugateGradients cg =
+    tk::CProxy_ConjugateGradients::ckNew( A, x, b, {}, {}, {}, 1 );
 
   // Create receiver chare whose callbacks are called when a CG task is done
   CProxy_CGReceiver host =
@@ -278,7 +278,7 @@ void ConjugateGradients_object::test< 2 >() {
   nodecommap.back()[0].insert( { 7,4,3,10,1,12,11,0,13 } );
 
   // Create CG solver (empty chare array, will use dynamic insertion)
-  tk::CProxy_BiCG cg = tk::CProxy_BiCG::ckNew();
+  tk::CProxy_ConjugateGradients cg = tk::CProxy_ConjugateGradients::ckNew();
 
   // Create receiver chare array (2 elements) whose callbacks are called when a
   // CG task is done on a PE
@@ -445,8 +445,8 @@ void ConjugateGradients_object::test< 3 >() {
   for (std::size_t i=0; i<3; ++i) A.dirichlet( 0, {}, {}, i );
 
   // Create CG solver (chare array with a single element)
-  tk::CProxy_BiCG cg =
-    tk::CProxy_BiCG::ckNew( A, x, b, {}, {}, {}, 1 );
+  tk::CProxy_ConjugateGradients cg =
+    tk::CProxy_ConjugateGradients::ckNew( A, x, b, {}, {}, {}, 1 );
 
   // Create receiver chare whose callbacks are called when a CG task is done
   CProxy_CGReceiver host =
@@ -518,7 +518,7 @@ void ConjugateGradients_object::test< 4 >() {
   nodecommap.back()[0].insert( { 7,4,3,10,1,12,11,0,13 } );
 
   // Create CG solver (empty chare array, will use dynamic insertion)
-  tk::CProxy_BiCG cg = tk::CProxy_BiCG::ckNew();
+  tk::CProxy_ConjugateGradients cg = tk::CProxy_ConjugateGradients::ckNew();
 
   // Create receiver chare array (2 elements) whose callbacks are called when a
   // CG task is done on a PE
