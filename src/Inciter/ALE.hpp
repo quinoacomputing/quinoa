@@ -20,7 +20,7 @@
 #ifndef ALE_h
 #define ALE_h
 
-#include "BiCG.hpp"
+#include "ConjugateGradients.hpp"
 #include "Inciter/Options/MeshVelocitySmoother.hpp"
 #include "Options/UserTable.hpp"
 #include "Fields.hpp"
@@ -59,7 +59,7 @@ class ALE : public CBase_ALE {
 
     //! Constructor
     explicit
-    ALE( const tk::CProxy_BiCG& bicgproxy,
+    ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
          const std::array< std::vector< tk::real >, 3 >& coord,
          const std::vector< std::size_t >& inpoel,
          const std::vector< std::size_t >& gid,
@@ -141,7 +141,7 @@ class ALE : public CBase_ALE {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
-      p | m_bicg;
+      p | m_conjugategradients;
       p | m_done;
       p | m_soundspeed;
       p | m_nvort;
@@ -180,7 +180,7 @@ class ALE : public CBase_ALE {
 
   private:
     //! Distributed conjugrate gradients solver proxy
-    tk::CProxy_BiCG m_bicg;
+    tk::CProxy_ConjugateGradients m_conjugategradients;
     //! Function call to continue with when mesh velocity has been computed
     CkCallback m_done;
     //! Speed of sound in mesh nodes

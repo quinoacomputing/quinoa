@@ -164,8 +164,8 @@ class BiCG : public CBase_BiCG {
       p | m_t;
       p | m_qc;
       p | m_tc;
-      p | m_nt;
       p | m_nq;
+      p | m_nt;
       p | m_initres;
       p | m_solved;
       p | m_normb;

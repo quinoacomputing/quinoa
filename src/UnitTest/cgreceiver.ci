@@ -21,7 +21,7 @@ module cgreceiver {
                         tk::real tol,
                         tk::real normb_ex,
                         tk::real normres_ex,
-                        tk::CProxy_BiCG cg );
+                        tk::CProxy_ConjugateGradients cg );
       entry void initialized( CkDataMsg* msg );
       entry void solved( CkDataMsg* msg );
     }

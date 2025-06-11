@@ -69,8 +69,8 @@ BiCG::BiCG(
   m_t( m_A.rsize(), 0.0 ),
   m_qc(),
   m_tc(), //can I reuse this?
-  m_nt( 0 ),
   m_nq( 0 ),
+  m_nt( 0 ),
   m_initres(),
   m_solved(),
   m_normb( 0.0 ),
