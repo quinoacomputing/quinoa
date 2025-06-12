@@ -589,6 +589,7 @@ Transporter::createPartitioner()
     m_scheme.emplace_back( g_inputdeck.get< tag::scheme >(),
                            g_inputdeck.get< tag::ale, tag::ale >(),
                            need_linearsolver(),
+                           g_inputdeck.get< tag::implicit_timestepping >(),
                            centering );
 
   ErrChk( !m_input.empty(), "No input mesh" );
@@ -1174,6 +1175,9 @@ Transporter::doneInsertingGhosts(std::size_t meshid)
 //! \param[in] meshid Mesh id
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::implicit_timestepping >())
+    m_scheme[meshid].implicitsolver().doneInserting();
+
   m_scheme[meshid].ghosts().doneInserting();
   m_scheme[meshid].ghosts().startCommSetup();
 }

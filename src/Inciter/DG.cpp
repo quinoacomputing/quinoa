@@ -179,6 +179,18 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
 
+  // insert array-element into the implicit solver chare array
+  if (g_inputdeck.get< tag::implicit_timestepping >()) {
+    const auto& inpoel = myGhosts()->m_inpoel;
+    // TODO: modify CSR to handle element-based structures (or create new one)
+    tk::CSR A(m_lhs.nprop(), tk::genPsup(inpoel,4,tk::genEsup(inpoel,4)));
+    std::vector< tk::real > x(m_u.nunk()*m_lhs.nprop(), 0.0),
+      b(m_u.nunk()*m_lhs.nprop(), 0.0);
+
+    Disc()->ImplicitSolver()[ thisIndex ].insert(std::move(A), std::move(x),
+      std::move(b), Disc()->Gid(), Disc()->Lid(), Disc()->NodeCommMap());
+  }
+
   // global-sync to call doneInserting on m_ghosts
   auto meshid = Disc()->MeshId();
   contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
