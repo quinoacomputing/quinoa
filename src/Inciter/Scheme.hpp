@@ -86,6 +86,7 @@
 #include "NoWarning/fv.decl.h"
 #include "NoWarning/ale.decl.h"
 #include "NoWarning/conjugategradients.decl.h"
+#include "NoWarning/conjugategradients.decl.h"
 #include "NoWarning/ghosts.decl.h"
 
 namespace inciter {
@@ -114,6 +115,7 @@ class Scheme {
     //! \param[in] scheme Discretization scheme
     //! \param[in] ale True if enable ALE
     //! \param[in] linearsolver True if enable a linear solver
+    //! \param[in] implicitsolver True if enable an implicit-in-time solver
     //! \details Based on the input enum we create at least two empty chare
     //!   arrays: (1) discproxy which contains common functionality and data for
     //!   all discretizations, and (2) proxy, which have functionality and data
@@ -124,6 +126,7 @@ class Scheme {
     explicit Scheme( ctr::SchemeType scheme,
                      bool ale = false,
                      bool linearsolver = false,
+                     bool implicitsolver = false,
                      tk::Centering centering = tk::Centering::NODE ) :
       discproxy( CProxy_Discretization::ckNew() )
     {
@@ -145,6 +148,8 @@ class Scheme {
       if (ale) aleproxy = CProxy_ALE::ckNew(bound);
       if (linearsolver)
         conjugategradientsproxy = tk::CProxy_ConjugateGradients::ckNew(bound);
+      if (implicitsolver)
+        implicitsolverproxy = tk::CProxy_BiCG::ckNew(bound);
       if (centering == tk::Centering::ELEM)
         ghostsproxy = CProxy_Ghosts::ckNew(bound);
     }
@@ -250,6 +255,11 @@ class Scheme {
     tk::CProxy_ConjugateGradients& conjugategradients() noexcept
     { return conjugategradientsproxy; }
 
+    //! Get reference to implicit solver proxy
+    //! \return Implicit solver Charm++ chare array proxy
+    tk::CProxy_BiCG& implicitsolver() noexcept
+    { return implicitsolverproxy; }
+
     //! Get reference to Ghosts proxy
     //! \return Ghosts Charm++ chare array proxy
     CProxy_Ghosts& ghosts() noexcept { return ghostsproxy; }
@@ -281,6 +291,7 @@ class Scheme {
       p | discproxy;
       p | aleproxy;
       p | conjugategradientsproxy;
+      p | implicitsolverproxy;
       p | ghostsproxy;
       p | bound;
     }
@@ -299,6 +310,8 @@ class Scheme {
     CProxy_ALE aleproxy;
     //! Charm++ proxy to conjugate gradients linear solver class
     tk::CProxy_ConjugateGradients conjugategradientsproxy;
+    //! Charm++ proxy to implicit solver class
+    tk::CProxy_BiCG implicitsolverproxy;
     //! Charm++ proxy to Ghosts class
     CProxy_Ghosts ghostsproxy;
     //! Charm++ array options for binding chares

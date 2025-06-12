@@ -67,6 +67,7 @@ class Discretization : public CBase_Discretization {
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+        const tk::CProxy_BiCG& implicitsolverproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const tk::UnsMesh::CoordMap& coordmap,
@@ -268,6 +269,9 @@ class Discretization : public CBase_Discretization {
     //! Accessor to flag indicating if the mesh was refined as non-const-ref
     int& refined() { return m_refined; }
 
+    //! Accessor to bound implicit solver non-const-ref
+    tk::CProxy_BiCG& ImplicitSolver() { return m_implicitsolver; };
+
     //! Transporter proxy accessor as const-ref
     const CProxy_Transporter& Tr() const { return m_transporter; }
     //! Transporter proxy accessor as non-const-ref
@@ -459,6 +463,7 @@ class Discretization : public CBase_Discretization {
       p | m_nvol;
       p | m_nxfer;
       p | m_ale;
+      p | m_implicitsolver;
       p | m_transporter;
       p | m_meshwriter;
       p | m_refiner;
@@ -558,6 +563,8 @@ class Discretization : public CBase_Discretization {
     std::size_t m_nxfer;
     //! Distributed ALE proxy
     CProxy_ALE m_ale;
+    //! Distributed implicit solver proxy
+    tk::CProxy_BiCG m_implicitsolver;
     //! Transporter proxy
     CProxy_Transporter m_transporter;
     //! Mesh writer proxy
