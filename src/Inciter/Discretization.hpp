@@ -270,7 +270,7 @@ class Discretization : public CBase_Discretization {
     int& refined() { return m_refined; }
 
     //! Accessor to bound implicit solver non-const-ref
-    tk::CProxy_BiCG& ImplicitSolver() { return m_implicitsolver; };
+    tk::CProxy_BiCG& ImplicitSolver() { return m_implicitsolver; }
 
     //! Transporter proxy accessor as const-ref
     const CProxy_Transporter& Tr() const { return m_transporter; }
