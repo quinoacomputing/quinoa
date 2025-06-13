@@ -31,6 +31,16 @@
       beta := (rho_{j+1}/rho_{j})*(alpha/w)  
       p_{j+1} := r_{j+1} + beta(p_j - wAp_j)
     end
+
+  Usage notes and interfaces into BiCG:
+  (1) BiCG::converged() is an accessor used to query for convergence
+  (2) BiCG::init() is a charm entry method that initializes the solver, and
+      returns execution to client code using CkCallback input arg
+  (3) BiCG::solve() actually solves the linear system, and returns execution
+      to client code using CkCallback input arg
+  (4) BiCG::solution() is an accessor to the solution of linear solver
+      CAUTION! solution() is not a ref, so it creates a copy of the entire
+      solution vector
 */
 // *****************************************************************************
 
