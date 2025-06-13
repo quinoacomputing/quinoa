@@ -115,6 +115,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodalExtrmc(),
   m_npoin( Disc()->Coord()[0].size() ),
   m_diag(),
+  m_nstage( 3 ),
   m_stage( 0 ),
   m_ndof(),
   m_interface(),
@@ -181,8 +182,12 @@ DG::DG( const CProxy_Discretization& disc,
 
   // insert array-element into the implicit solver chare array
   if (g_inputdeck.get< tag::implicit_timestepping >()) {
+    // Single-stage BDF1 for implicit solver
+    m_nstage = 1;
+
     const auto& inpoel = myGhosts()->m_inpoel;
-    // TODO: modify CSR to handle element-based structures (or create new one)
+    // TODO: linear solver:
+    //  modify CSR to handle element-based structures (or create new one)
     tk::CSR A(m_lhs.nprop(), tk::genPsup(inpoel,4,tk::genEsup(inpoel,4)));
     std::vector< tk::real > x(m_u.nunk()*m_lhs.nprop(), 0.0),
       b(m_u.nunk()*m_lhs.nprop(), 0.0);
@@ -1420,6 +1425,7 @@ DG::solve( tk::real newdt )
 
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
+  const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
 
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
@@ -1445,7 +1451,15 @@ DG::solve( tk::real newdt )
     myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
     myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
 
-  if (!imex_runge_kutta) {
+  if (imex_runge_kutta) {
+    // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
+    DG::imex_integrate();
+  }
+  else if (implicit_ts) {
+    // Implicit time-stepping using BDF1 to discretize time-derivative
+    DG::BDF1_integrate();
+  }
+  else {
     // Explicit time-stepping using RK3 to discretize time-derivative
     for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
       for(std::size_t c=0; c<neq; ++c)
@@ -1463,10 +1477,6 @@ DG::solve( tk::real newdt )
           }
         }
       }
-  }
-  else {
-    // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
-    DG::imex_integrate();
   }
 
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
@@ -1493,7 +1503,7 @@ DG::solve( tk::real newdt )
       m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
 
-  if (m_stage < 2) {
+  if (m_stage < m_nstage-1) {
 
     // continue with next time step stage
     stage();
@@ -1861,7 +1871,7 @@ DG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise prepare for nodal field output
-  if (m_stage < 3)
+  if (m_stage < m_nstage)
     next();
   else
     startFieldOutput( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
@@ -2044,7 +2054,7 @@ DG::imex_integrate()
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
-  if (m_stage < 2) {
+  if (m_stage < m_nstage-1) {
     // Save previous stiff_rhs
     m_stiffrhsprev = m_stiffrhs;
 
@@ -2340,6 +2350,20 @@ DG::imex_integrate()
         }
     }
   }
+}
+
+void
+DG::BDF1_integrate()
+// *****************************************************************************
+//  Perform the BDF1 update
+//! \details This function solves the linear system resulting from the BDF1
+//!   (backward Euler) time discretization, and updates the solution accordingly
+// *****************************************************************************
+{
+  //TODO: implicit solver:
+  // 1. jacobian computation (call to e.g. g_dgpde[d->MeshId()].computeJacobian)
+  // 2. linear system solve (call to BiCG object)
+  // 3. update solution m_u
 }
 
 #include "NoWarning/dg.def.h"
