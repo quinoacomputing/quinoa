@@ -216,6 +216,12 @@ class DG : public CBase_DG {
     //! (no-op)
     void advance( tk::real, std::array< tk::real, 6 > ) {}
 
+    //! Initialize the linear solver via the interface BiCG::init()
+    void initializeLinearSystem( tk::real newdt );
+
+    //! Solve the linear system via the interface BiCG::solve()
+    void solveLinearSystem();
+
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 

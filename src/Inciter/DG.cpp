@@ -1390,9 +1390,59 @@ DG::dt()
   // Resize the buffer vector of nodal extrema
   resizeNodalExtremac();
 
+  // Set up the reduction target for finding minimum dt across chares.
+  // 1. If implicit solver is used, first invoke the solver object via
+  // appropriate entry methods, and then proceed to solve.
+  // 2. If explicit, directly proceed to solve.
+  CkCallback minDtDone;
+  if (!g_inputdeck.get< tag::implicit_timestepping >())
+    minDtDone = CkCallback(CkReductionTarget(DG,solve), thisProxy);
+  else
+    minDtDone = CkCallback(CkReductionTarget(DG,initializeLinearSystem),
+      thisProxy);
+
   // Contribute to minimum dt across all chares then advance to next step
-  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DG,solve), thisProxy) );
+  contribute( sizeof(tk::real), &mindt, CkReduction::min_double, minDtDone );
+}
+
+void
+DG::initializeLinearSystem( tk::real newdt )
+// *****************************************************************************
+// Initialize the linear solver via the interface BiCG::init()
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set new time step size
+  if (m_stage == 0) d->setdt( newdt );
+
+  // Initialize linear solver, and route to solveLinearSystem()
+  // TODO: linear solver:
+  // 1. jacobian computation (call to e.g. g_dgpde[d->MeshId()].computeJacobian)
+  // 2. the following call is just a stand-in/example- verify correctness
+  d->ImplicitSolver()[ thisIndex ].init( m_u.flat(), {}, {}, 1,
+    CkCallback(CkIndex_DG::solveLinearSystem(), thisProxy[thisIndex]) );
+}
+
+void
+DG::solveLinearSystem()
+// *****************************************************************************
+// Solve the linear system via the interface BiCG::solve()
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Get new time step size to pass along to solve()
+  auto dt = d->Dt();
+
+  // Solve linear system, and route to solve()
+  // TODO: linear solver:
+  //  the following call is just a stand-in/example- verify correctness
+  d->ImplicitSolver()[ thisIndex ].solve(
+     g_inputdeck.get< tag::ale, tag::maxit >(),
+     g_inputdeck.get< tag::residual >(),
+     CkCallback(CkIndex_DG::solve(dt), thisProxy[thisIndex]) );
 }
 
 void
@@ -1417,8 +1467,10 @@ DG::solve( tk::real newdt )
   const auto neq = m_u.nprop()/rdof;
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
-  // Set new time step size
-  if (m_stage == 0) d->setdt( newdt );
+  // Set new time step size. If implicit solver, time step has already been
+  // set in initializeImplicitSystem()
+  if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
+    d->setdt( newdt );
 
   // Update Un
   if (m_stage == 0) m_un = m_u;
@@ -2356,14 +2408,12 @@ void
 DG::BDF1_integrate()
 // *****************************************************************************
 //  Perform the BDF1 update
-//! \details This function solves the linear system resulting from the BDF1
-//!   (backward Euler) time discretization, and updates the solution accordingly
+//! \details This function updates the solution using the BDF1 (backward Euler)
+//!   time discretization.
 // *****************************************************************************
 {
   //TODO: implicit solver:
-  // 1. jacobian computation (call to e.g. g_dgpde[d->MeshId()].computeJacobian)
-  // 2. linear system solve (call to BiCG object)
-  // 3. update solution m_u
+  // update solution m_u
 }
 
 #include "NoWarning/dg.def.h"
