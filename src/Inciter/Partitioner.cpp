@@ -95,7 +95,7 @@ Partitioner::Partitioner(
   // initializing MPI. This has to be done from a Charm++ nodegroup, since there
   // exists only one rank per node on a nodegroup, in SMP mode.
   // see https://github.com/trilinos/Trilinos/issues/11197#issuecomment-1301325163
-  Kokkos::initialize();
+  if (m_meshid == 0) Kokkos::initialize();
 
   // Create mesh reader
   tk::MeshReader mr( filename );
@@ -627,7 +627,7 @@ Partitioner::~Partitioner()
 {
   // The following call has to be made on all MPI ranks to free all resources.
   // see https://github.com/trilinos/Trilinos/issues/11197#issuecomment-1301325163
-  Kokkos::finalize();
+  if (m_meshid == 0) Kokkos::finalize();
 }
 
 #include "NoWarning/partitioner.def.h"
