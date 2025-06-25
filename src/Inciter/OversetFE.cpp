@@ -266,6 +266,11 @@ OversetFE::norm()
   // Merge BC data where boundary-point normals are required
   for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
 
+  // Query nodes at which slip wall BCs are specified
+  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
+  // Merge BC data where boundary-point normals are required
+  for (const auto& [s,n] : slip) bn[s].insert( begin(n), end(n) );
+
   // Query nodes at which mesh velocity symmetry BCs are specified
   std::unordered_map<int, std::unordered_set< std::size_t >> ms;
   for (const auto& s : g_inputdeck.get< tag::ale, tag::symmetry >()) {
