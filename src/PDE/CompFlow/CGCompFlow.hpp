@@ -886,9 +886,11 @@ class CompFlow {
             if (j != end(bnorm)) {
               auto i = j->second.find(p);      // find normal for node
               if (i != end(j->second)) {
+                auto rho = U(p,0);
                 std::array< real, 3 >
                   n{ i->second[0], i->second[1], i->second[2] },
-                  rel_v{ U(p,1) - W(p,0), U(p,2) - W(p,1), U(p,3) - W(p,2) };
+                  rel_v{ U(p,1) - rho*W(p,0), U(p,2) - rho*W(p,1),
+                    U(p,3) - rho*W(p,2) };
                 auto rel_v_dot_n = tk::dot( rel_v, n );
                 // slip wall bc: remove normal component of relative velocity
                 U(p,1) -= rel_v_dot_n * n[0];
