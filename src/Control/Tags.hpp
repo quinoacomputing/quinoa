@@ -158,7 +158,7 @@ DEFTAG(cweight);
 DEFTAG(shock_detector_coeff);
 DEFTAG(accuracy_test);
 DEFTAG(limsol_projection);
-DEFTAG(imex_runge_kutta);
+DEFTAG(plasticity);
 DEFTAG(imex_maxiter);
 DEFTAG(imex_reltol);
 DEFTAG(imex_abstol);

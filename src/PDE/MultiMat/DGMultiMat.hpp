@@ -165,18 +165,27 @@ class MultiMat {
       tk::BoxElems< eq >(geoElem, nielem, inbox);
     }
 
-    //! Find how many 'stiff equations', which are the inverse
+    //! Find how many 'stiff equations', which are the volume fraction and
+    //! energy equations due to pressure relaxation, and/or the inverse
     //! deformation equations because of plasticity
     //! \return number of stiff equations
     std::size_t nstiffeq() const
     {
-      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      return 9*numSolids(nmat, solidx);
+      auto nstiff = 0;
+      if ( g_inputdeck.get< tag::multimat, tag::prelax >() )
+      {
+	nstiff += 2*nmat;
+      }
+      if ( g_inputdeck.get< tag::plasticity >() )
+      {
+	const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+	nstiff += 9*numSolids(nmat, solidx);
+      }
+      return nstiff;
     }
 
-    //! Find how many 'non-stiff equations', which are the inverse
-    //! deformation equations because of plasticity
+    //! Find how many 'non-stiff equations', which are the remaining equations
     //! \return number of stiff equations
     std::size_t nnonstiffeq() const
     {
@@ -191,24 +200,51 @@ class MultiMat {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       std::size_t icnt = 0;
-      for (std::size_t k=0; k<nmat; ++k)
-        if (solidx[k] > 0)
-          for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-            {
-              stiffEqIdx[icnt] =
-                inciter::deformIdx(nmat, solidx[k], i, j);
-              icnt++;
-            }
+      if ( g_inputdeck.get< tag::multimat, tag::prelax >() )
+      {
+	for (std::size_t k=0; k<nmat; ++k)
+	{
+	  stiffEqIdx[icnt] = inciter::volfracIdx(nmat, k);
+	  icnt++;
+	}
+	for (std::size_t k=0; k<nmat; ++k)
+	{
+	  stiffEqIdx[icnt] = inciter::energyIdx(nmat, k);
+	  icnt++;
+	}
+      }
+      if ( g_inputdeck.get< tag::plasticity >() )
+      {
+	for (std::size_t k=0; k<nmat; ++k)
+	  if (solidx[k] > 0)
+	    for (std::size_t i=0; i<3; ++i)
+	      for (std::size_t j=0; j<3; ++j)
+	      {
+		stiffEqIdx[icnt] =
+		  inciter::deformIdx(nmat, solidx[k], i, j);
+		icnt++;
+	      }
+      }
     }
 
     //! Locate the nonstiff equations.
     //! \param[out] nonStiffEqIdx list with pointers to nonstiff equations
     void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
     {
+      std::vector< std::size_t > stiffEqIdx;
+      setStiffEqIdx(stiffEqIdx);
       nonStiffEqIdx.resize(nnonstiffeq(), 0);
-      for (std::size_t icomp=0; icomp<nnonstiffeq(); icomp++)
-        nonStiffEqIdx[icomp] = icomp;
+      std::size_t icnt = 0;
+      for (std::size_t icomp=0; icomp<m_ncomp; icomp++)
+      {
+	bool is_stiff = std::find(std::begin(stiffEqIdx),
+	  std::end(stiffEqIdx), icomp) != std::end(stiffEqIdx);
+	if (!is_stiff)
+	{
+	  nonStiffEqIdx[icnt] = icomp;
+	  icnt++;
+	}
+      }
     }
 
     //! Initialize the compressible flow equations, prepare for time integration
@@ -998,15 +1034,6 @@ class MultiMat {
                               inpoel, coord, geoElem, U, P, ndofel,
                               dt, R);
 
-      // compute finite pressure relaxation terms
-      if (g_inputdeck.get< tag::multimat, tag::prelax >())
-      {
-        const auto ct = g_inputdeck.get< tag::multimat,
-                                         tag::prelax_timescale >();
-        tk::pressureRelaxationInt( pref, nmat, m_mat_blk, ndof,
-                                   rdof, nelem, inpoel, coord, geoElem, U, P,
-                                   ndofel, ct, R, intsharp );
-      }
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -1098,6 +1125,7 @@ class MultiMat {
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t e,
+		    const std::size_t nelem,
                     const tk::Fields& geoElem,
                     const std::vector< std::size_t >& inpoel,
                     const tk::UnsMesh::Coords& coord,
@@ -1127,166 +1155,187 @@ class MultiMat {
       for (std::size_t i=0; i<ndof*nstiffeq(); ++i)
         R(e, i) = 0.0;
 
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
+      // baseline index for R contributions
+      auto base_idx = 0;
 
-      auto ncomp = U.nprop()/rdof;
-      auto nprim = P.nprop()/rdof;
-
-      auto ng = tk::NGvol(ndofel[e]);
-
-      // arrays for quadrature points
-      std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp;
-
-      coordgp[0].resize( ng );
-      coordgp[1].resize( ng );
-      coordgp[2].resize( ng );
-      wgp.resize( ng );
-
-      tk::GaussQuadratureTet( ng, coordgp, wgp );
-
-      // Extract the element coordinates
-      std::array< std::array< tk::real, 3>, 4 > coordel {{
-        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-      }};
-
-      // Gaussian quadrature
-      for (std::size_t igp=0; igp<ng; ++igp)
+      // compute finite pressure relaxation terms
+      if (g_inputdeck.get< tag::multimat, tag::prelax >())
       {
-        // Compute the coordinates of quadrature point at physical domain
-        auto gp = tk::eval_gp( igp, coordel, coordgp );
+	const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+        const auto ct = g_inputdeck.get< tag::multimat,
+                                         tag::prelax_timescale >();
+        tk::pressureRelaxIntElemWise( e, pref, nmat, m_mat_blk, ndof,
+				      rdof, nelem, inpoel, coord, geoElem, U, P,
+				      ndofel, ct, R, intsharp );
+	// Shift baseline index for R contributions
+	base_idx = 2*nmat;
+      }
+      
+      if ( g_inputdeck.get< tag::plasticity >() )
+      {
 
-        // Compute the basis function
-        auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
-                             coordgp[2][igp] );
+	const auto& cx = coord[0];
+	const auto& cy = coord[1];
+	const auto& cz = coord[2];
 
-        auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
-          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P);
+	auto ncomp = U.nprop()/rdof;
+	auto nprim = P.nprop()/rdof;
 
-        // compute source
-        // Loop through materials
-        std::size_t ksld = 0;
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          if (solidx[k] > 0)
+	auto ng = tk::NGvol(ndofel[e]);
+
+	// arrays for quadrature points
+	std::array< std::vector< tk::real >, 3 > coordgp;
+	std::vector< tk::real > wgp;
+
+	coordgp[0].resize( ng );
+	coordgp[1].resize( ng );
+	coordgp[2].resize( ng );
+	wgp.resize( ng );
+
+	tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+	// Extract the element coordinates
+	std::array< std::array< tk::real, 3>, 4 > coordel {{
+	  {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+	  {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+	  {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+	  {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+	}};
+
+	// Gaussian quadrature
+	for (std::size_t igp=0; igp<ng; ++igp)
+	{
+	  // Compute the coordinates of quadrature point at physical domain
+	  auto gp = tk::eval_gp( igp, coordel, coordgp );
+
+	  // Compute the basis function
+	  auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+				   coordgp[2][igp] );
+
+	  auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
+            rdof, nmat, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P);
+
+	  // compute source
+	  // Loop through materials
+	  std::size_t ksld = 0;
+	  for (std::size_t k=0; k<nmat; ++k)
           {
-            tk::real alpha = state[inciter::volfracIdx(nmat, k)];
-            std::array< std::array< tk::real, 3 >, 3 > g;
-            // Compute the source terms
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                g[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)];
+	    if (solidx[k] > 0)
+            {
+	      tk::real alpha = state[inciter::volfracIdx(nmat, k)];
+	      std::array< std::array< tk::real, 3 >, 3 > g;
+	      // Compute the source terms
+	      for (std::size_t i=0; i<3; ++i)
+		for (std::size_t j=0; j<3; ++j)
+		  g[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)];
 
-            // Compute Lp
-            // Reference: Ortega, A. L., Lombardini, M., Pullin, D. I., &
-            // Meiron, D. I. (2014). Numerical simulation of elastic–plastic
-            // solid mechanics using an Eulerian stretch tensor approach and
-            // HLLD Riemann solver. Journal of Computational Physics, 257,
-            // 414-441
-            std::array< std::array< tk::real, 3 >, 3 > Lp;
+	      // Compute Lp
+	      // Reference: Ortega, A. L., Lombardini, M., Pullin, D. I., &
+	      // Meiron, D. I. (2014). Numerical simulation of elastic–plastic
+	      // solid mechanics using an Eulerian stretch tensor approach and
+	      // HLLD Riemann solver. Journal of Computational Physics, 257,
+	      // 414-441
+	      std::array< std::array< tk::real, 3 >, 3 > Lp;
 
-            // 1. Compute dev(sigma)
-            auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
-              state[inciter::densityIdx(nmat, k)], 0.0, 0.0, 0.0, 0.0, alpha, k,
-              g );
-            tk::real apr = state[ncomp+inciter::pressureIdx(nmat, k)];
-            for (std::size_t i=0; i<3; ++i) sigma_dev[i][i] -= apr;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                sigma_dev[i][j] /= alpha;
-            tk::real sigma_trace =
-              sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
-            for (std::size_t i=0; i<3; ++i)
-              sigma_dev[i][i] -= sigma_trace/3.0;
+	      // 1. Compute dev(sigma)
+	      auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
+                state[inciter::densityIdx(nmat, k)], 0.0, 0.0, 0.0, 0.0, alpha,
+		k, g );
+	      tk::real apr = state[ncomp+inciter::pressureIdx(nmat, k)];
+	      for (std::size_t i=0; i<3; ++i) sigma_dev[i][i] -= apr;
+	      for (std::size_t i=0; i<3; ++i)
+		for (std::size_t j=0; j<3; ++j)
+		  sigma_dev[i][j] /= alpha;
+	      tk::real sigma_trace =
+		sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
+	      for (std::size_t i=0; i<3; ++i)
+		sigma_dev[i][i] -= sigma_trace/3.0;
 
-            // 2. Compute inv(g)
-            double ginv[9];
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                ginv[3*i+j] = g[i][j];
-            lapack_int ipiv[3];
-            #ifndef NDEBUG
-            lapack_int ierr =
-            #endif
+	      // 2. Compute inv(g)
+	      double ginv[9];
+	      for (std::size_t i=0; i<3; ++i)
+		for (std::size_t j=0; j<3; ++j)
+		  ginv[3*i+j] = g[i][j];
+	      lapack_int ipiv[3];
+              #ifndef NDEBUG
+              lapack_int ierr =
+              #endif
               LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, ginv, 3, ipiv);
-            Assert(ierr==0, "Lapack error in LU factorization of g");
-            #ifndef NDEBUG
-            lapack_int jerr =
-            #endif
+	      Assert(ierr==0, "Lapack error in LU factorization of g");
+              #ifndef NDEBUG
+              lapack_int jerr =
+              #endif
               LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, ginv, 3, ipiv);
-            Assert(jerr==0, "Lapack error in inverting g");
+              Assert(jerr==0, "Lapack error in inverting g");
 
-            // 3. Compute dev(sigma)*inv(g)
-            std::array< std::array< tk::real, 3 >, 3 > aux_mat;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-              {
-                tk::real sum = 0.0;
-                for (std::size_t l=0; l<3; ++l)
-                  sum += sigma_dev[i][l]*ginv[3*l+j];
-                aux_mat[i][j] = sum;
-              }
-
-            // 4. Compute g*(dev(sigma)*inv(g))
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-              {
-                tk::real sum = 0.0;
-                for (std::size_t l=0; l<3; ++l)
-                  sum += g[i][l]*aux_mat[l][j];
-                Lp[i][j] = sum;
-              }
-
-            // 5. Divide by 2*mu*tau
-            // 'Perfect' plasticity
-            tk::real yield_stress = getmatprop< tag::yield_stress >(k);
-            tk::real equiv_stress = 0.0;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
-            equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
-            // rel_factor = 1/tau <- Perfect plasticity for now.
-            tk::real rel_factor = 0.0;
-            if (equiv_stress >= yield_stress)
-              rel_factor = 1.0e07;
-            tk::real mu = getmatprop< tag::mu >(k);
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                Lp[i][j] *= rel_factor/(2.0*mu);
-
-            // Compute the source terms
-            std::vector< tk::real > s(9*ndof, 0.0);
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                for (std::size_t idof=0; idof<ndof; ++idof)
+	      // 3. Compute dev(sigma)*inv(g)
+	      std::array< std::array< tk::real, 3 >, 3 > aux_mat;
+	      for (std::size_t i=0; i<3; ++i)
+		for (std::size_t j=0; j<3; ++j)
                 {
-                  s[(i*3+j)*ndof+idof] = B[idof] * (Lp[i][0]*g[0][j]
-                                                   +Lp[i][1]*g[1][j]
-                                                   +Lp[i][2]*g[2][j]);
+		  tk::real sum = 0.0;
+		  for (std::size_t l=0; l<3; ++l)
+		    sum += sigma_dev[i][l]*ginv[3*l+j];
+		  aux_mat[i][j] = sum;
                 }
 
-            auto wt = wgp[igp] * geoElem(e, 0);
-
-            // Contribute to the right-hand-side
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                for (std::size_t idof=0; idof<ndof; ++idof)
+	      // 4. Compute g*(dev(sigma)*inv(g))
+	      for (std::size_t i=0; i<3; ++i)
+		for (std::size_t j=0; j<3; ++j)
                 {
-                  std::size_t srcId = (i*3+j)*ndof+idof;
-                  std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
-                  R(e, dofId) += wt * s[srcId];
-                }
+		  tk::real sum = 0.0;
+		  for (std::size_t l=0; l<3; ++l)
+		    sum += g[i][l]*aux_mat[l][j];
+		  Lp[i][j] = sum;
+		}
 
-            ksld++;
-          }
-        }
+	      // 5. Divide by 2*mu*tau
+	      // 'Perfect' plasticity
+	      tk::real yield_stress = getmatprop< tag::yield_stress >(k);
+	      tk::real equiv_stress = 0.0;
+	      for (std::size_t i=0; i<3; ++i)
+		for (std::size_t j=0; j<3; ++j)
+		  equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
+	      equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
+	      // rel_factor = 1/tau <- Perfect plasticity for now.
+	      tk::real rel_factor = 0.0;
+	      if (equiv_stress >= yield_stress)
+		rel_factor = 1.0e07;
+	      tk::real mu = getmatprop< tag::mu >(k);
+	      for (std::size_t i=0; i<3; ++i)
+		for (std::size_t j=0; j<3; ++j)
+		  Lp[i][j] *= rel_factor/(2.0*mu);
 
+	      // Compute the source terms
+	      std::vector< tk::real > s(9*ndof, 0.0);
+	      for (std::size_t i=0; i<3; ++i)
+		for (std::size_t j=0; j<3; ++j)
+		  for (std::size_t idof=0; idof<ndof; ++idof)
+		  {
+		    s[(i*3+j)*ndof+idof] = B[idof] * (Lp[i][0]*g[0][j]
+						     +Lp[i][1]*g[1][j]
+                                                     +Lp[i][2]*g[2][j]);
+		  }
+
+	      auto wt = wgp[igp] * geoElem(e, 0);
+
+	      // Contribute to the right-hand-side
+	      for (std::size_t i=0; i<3; ++i)
+		for (std::size_t j=0; j<3; ++j)
+		  for (std::size_t idof=0; idof<ndof; ++idof)
+                  {
+		    std::size_t srcId = (i*3+j)*ndof+idof;
+		    std::size_t dofId = base_idx
+		      + solidTensorIdx(ksld,i,j)*ndof+idof;
+		    R(e, dofId) += wt * s[srcId];
+		  }
+
+	      ksld++;
+	    }
+	  }
         }
+      }
+
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.

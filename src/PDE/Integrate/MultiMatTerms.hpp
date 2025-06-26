@@ -86,6 +86,25 @@ pressureRelaxationInt( const bool pref,
                        Fields& R,
                        int intsharp );
 
+//! Same as above, but for a given element e.
+void
+pressureRelaxIntElemWise( std::size_t e,
+			  const bool pref,
+			  std::size_t nmat,
+			  const std::vector< inciter::EOS >& mat_blk,
+			  const std::size_t ndof,
+			  const std::size_t rdof,
+			  const std::size_t nelem,
+			  const std::vector< std::size_t >& inpoel,
+			  const UnsMesh::Coords& coord,
+			  const Fields& geoElem,
+			  const Fields& U,
+			  const Fields& P,
+			  const std::vector< std::size_t >& ndofel,
+			  const tk::real ct,
+			  Fields& R,
+			  int intsharp );
+
 //! Update the rhs by adding the pressure relaxation integrals
 void
 updateRhsPre(

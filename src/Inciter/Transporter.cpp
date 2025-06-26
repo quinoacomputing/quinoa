@@ -221,8 +221,15 @@ Transporter::info( const InciterPrint& print )
   // Print discretization parameters
   print.section( "Discretization parameters" );
   print.Item< ctr::Scheme, tag::scheme >();
-  print.item( "Implicit-Explicit Runge-Kutta",
-              g_inputdeck.get< tag::imex_runge_kutta >() );
+  if ( g_inputdeck.get< tag::plasticity >() ||
+       g_inputdeck.get< tag::multimat, tag::prelax >() )
+  {
+    print.item( "Implicit-Explicit Runge-Kutta", 1);
+  }
+  else
+  {
+    print.item( "Implicit-Explicit Runge-Kutta", 0);
+  }
 
   if (g_inputdeck.centering() == tk::Centering::ELEM)
   {

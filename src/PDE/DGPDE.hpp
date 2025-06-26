@@ -339,6 +339,7 @@ class DGPDE {
 
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
+		    const std::size_t nelem,
                     const tk::Fields& geoElem,
                     const std::vector< std::size_t >& inpoel,
                     const tk::UnsMesh::Coords& coord,
@@ -346,7 +347,7 @@ class DGPDE {
                     const tk::Fields& P,
                     const std::vector< std::size_t >& ndofel,
                     tk::Fields& R ) const
-    { return self->stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R); }
+  { return self->stiff_rhs( e, nelem, geoElem, inpoel, coord, U, P, ndofel, R); }
 
     //! Public interface to returning maps of output var functions
     std::map< std::string, tk::GetVarFn > OutVarFn() const
@@ -527,6 +528,7 @@ class DGPDE {
                            const tk::Fields&,
                            const std::size_t ) const = 0;
       virtual void stiff_rhs( std::size_t,
+			      const std::size_t,
                               const tk::Fields&,
                               const std::vector< std::size_t >&,
                               const tk::UnsMesh::Coords&,
@@ -721,6 +723,7 @@ class DGPDE {
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
                         U, P, nielem ); }
       void stiff_rhs( std::size_t e,
+		      const std::size_t nelem,
                       const tk::Fields& geoElem,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
@@ -728,7 +731,7 @@ class DGPDE {
                       const tk::Fields& P,
                       const std::vector< std::size_t >& ndofel,
                       tk::Fields& R ) const override
-      { return data.stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R ); }
+      { return data.stiff_rhs( e, nelem, geoElem, inpoel, coord, U, P, ndofel, R ); }
       std::map< std::string, tk::GetVarFn > OutVarFn() const override
       { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override

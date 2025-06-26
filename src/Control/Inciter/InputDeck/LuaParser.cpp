@@ -139,7 +139,7 @@ LuaParser::storeInputDeck(
   storeIfSpecd< uint32_t >(
     lua_ideck, "rescomp", gideck.get< tag::rescomp >(), 1);
   storeIfSpecd< uint32_t >(
-    lua_ideck, "imex_runge_kutta", gideck.get< tag::imex_runge_kutta >(), 0);
+    lua_ideck, "plasticity", gideck.get< tag::plasticity >(), 0);
   storeIfSpecd< uint32_t >(
     lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 50);
   storeIfSpecd< tk::real >(

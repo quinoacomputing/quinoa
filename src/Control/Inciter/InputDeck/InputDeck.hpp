@@ -296,7 +296,7 @@ using ConfigMembers = brigand::list<
   tag::dt,               tk::real,
   tag::cfl,              tk::real,
   tag::ttyi,             uint32_t,
-  tag::imex_runge_kutta, uint32_t,
+  tag::plasticity,       uint32_t,
   tag::imex_maxiter,     uint32_t,
   tag::imex_reltol,      tk::real,
   tag::imex_abstol,      tk::real,
@@ -511,8 +511,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to specify the interval in time steps for screen
         output during a simulation.)", "uint"});
 
-      keywords.insert({"imex_runge_kutta",
-        "Toggle use of IMplicit-EXplicit Runge-Kutta scheme",
+      keywords.insert({"plasticity",
+        "Toggle use of IMplicit-EXplicit Runge-Kutta scheme for plasticity",
         R"(This keywords is used to turn IMEX integrator on/off for solid materials
         in a multimat run. Plastic terms are integrated implicitly in time. This
         flag will activate an Implicit-Explicit Runge-Kutta scheme to replace the

@@ -548,6 +548,179 @@ pressureRelaxationInt( const bool pref,
 }
 
 void
+pressureRelaxIntElemWise( std::size_t e,
+			  const bool pref,
+			  std::size_t nmat,
+			  const std::vector< inciter::EOS >& mat_blk,
+			  const std::size_t ndof,
+			  const std::size_t rdof,
+			  const std::size_t nelem,
+			  const std::vector< std::size_t >& inpoel,
+			  const UnsMesh::Coords& coord,
+			  const Fields& geoElem,
+			  const Fields& U,
+			  const Fields& P,
+			  const std::vector< std::size_t >& ndofel,
+			  const tk::real ct,
+			  Fields& R,
+			  int intsharp )
+// *****************************************************************************
+//  Compute volume integrals of pressure relaxation terms in multi-material DG,
+//  element wise version.
+//! \details This is called for multi-material DG to compute volume integrals of
+//!   finite pressure relaxation terms in the volume fraction and energy
+//!   equations, which do not exist in the single-material flow formulation (for
+//!   `CompFlow` DG). For further details see Dobrev, V. A., Kolev, T. V.,
+//!   Rieben, R. N., & Tomov, V. Z. (2016). Multi‐material closure model for
+//!   high‐order finite element Lagrangian hydrodynamics. International Journal
+//!   for Numerical Methods in Fluids, 82(10), 689-706.
+//! \param[in] e Element number
+//! \param[in] pref Indicator for p-adaptive algorithm
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] nelem Total number of elements
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
+//! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] ct Pressure relaxation time-scale for this system
+//! \param[in,out] R Right-hand side vector added to
+//! \param[in] intsharp Interface reconstruction indicator
+// *****************************************************************************
+{
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+  using inciter::pressureIdx;
+  using inciter::velocityIdx;
+  using inciter::deformIdx;
+
+  const auto& solidx =
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
+
+  auto dx = geoElem(e,4)/2.0;
+  auto ng = NGvol(ndofel[e]);
+
+  // arrays for quadrature points
+  std::array< std::vector< real >, 3 > coordgp;
+  std::vector< real > wgp;
+
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  coordgp[2].resize( ng );
+  wgp.resize( ng );
+
+  GaussQuadratureTet( ng, coordgp, wgp );
+
+  // Compute the derivatives of basis function for DG(P1)
+  std::array< std::vector<real>, 3 > dBdx;
+
+  // If an rDG method is set up (P0P1), then, currently we compute the P1
+  // basis functions and solutions by default. This implies that P0P1 is
+  // unsupported in the p-adaptive DG (PDG).
+  std::size_t dof_el;
+  if (rdof > ndof)
+  {
+    dof_el = rdof;
+  }
+  else
+  {
+    dof_el = ndofel[e];
+  }
+
+  // For multi-material p-adaptive simulation, when dofel = 1, p0p1 is applied
+  // and ndof for solution evaluation should be 4
+  if(dof_el == 1 && pref)
+    dof_el = 4;
+
+  // Gaussian quadrature
+  for (std::size_t igp=0; igp<ng; ++igp)
+  {
+    // Compute the basis function
+    auto B =
+      eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+
+    auto wt = wgp[igp] * geoElem(e, 0);
+
+    auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+      rdof, nmat, e, dof_el, inpoel, coord, geoElem,
+      {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
+
+    // get bulk properties
+    real rhob(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+      rhob += state[densityIdx(nmat, k)];
+
+    // get pressures and bulk modulii
+    real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
+    std::vector< real > apmat(nmat, 0.0), kmat(nmat, 0.0);
+    std::vector< int > do_relax(nmat, 1);
+    bool is_relax(false);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      real arhomat = state[densityIdx(nmat, k)];
+      real alphamat = state[volfracIdx(nmat, k)];
+      apmat[k] = state[ncomp+pressureIdx(nmat, k)];
+      real amat = 0.0;
+      if (solidx[k] == 0 && alphamat >= inciter::volfracPRelaxLim()) {
+	amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
+            apmat[k], alphamat, k );
+	kmat[k] = arhomat * amat * amat;
+	pb += apmat[k];
+
+	// relaxation parameters
+	trelax = std::max(trelax, ct*dx/amat);
+	nume += alphamat * apmat[k] / kmat[k];
+	deno += alphamat * alphamat / kmat[k];
+
+	is_relax = true;
+      }
+      else do_relax[k] = 0;
+    }
+    real p_relax(0.0);
+    if (is_relax) p_relax = nume/deno;
+
+    // compute pressure relaxation terms
+    std::vector< real > s_prelax(ncomp, 0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // only perform prelax on existing quantities
+      if (do_relax[k] == 1) {
+	auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
+	  * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
+	s_prelax[volfracIdx(nmat, k)] = s_alpha;
+	s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+      }
+    }
+
+    // Volume fraction contributions
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto c = volfracIdx(nmat, k);
+      auto mark = k*ndof;
+      for(std::size_t idof = 0; idof < ndof; idof++)
+	R(e, mark+idof) += wt * s_prelax[c] * B[idof];
+    }
+    // Energy contributions
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto c = energyIdx(nmat, k);
+      auto mark = nmat*ndof + k*ndof;
+      for(std::size_t idof = 0; idof < ndof; idof++)
+	R(e, mark+idof) += wt * s_prelax[c] * B[idof];
+    }
+  }
+}
+
+void
 updateRhsPre(
   ncomp_t ncomp,
   const std::size_t ndof,
