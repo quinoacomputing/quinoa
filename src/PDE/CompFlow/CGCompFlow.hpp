@@ -1384,8 +1384,7 @@ class CompFlow {
         f[1][0] = ruA*vn + p*nx;
         f[2][0] = rvA*vn + p*ny;
         f[3][0] = rwA*vn + p*nz;
-        f[4][0] = reA*vn + p*((sym || slip)
-                ? 0.0 : (nx*ruA + ny*rvA + nz*rwA)/rA);
+        f[4][0] = reA*vn + p*((nx*ruA + ny*rvA + nz*rwA)/rA);
         p = m_mat_blk[0].compute< EOS::pressure >( rB, ruB/rB, rvB/rB, rwB/rB,
           reB );
         vn = (sym || slip) ? 0.0 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
@@ -1393,8 +1392,7 @@ class CompFlow {
         f[1][1] = ruB*vn + p*nx;
         f[2][1] = rvB*vn + p*ny;
         f[3][1] = rwB*vn + p*nz;
-        f[4][1] = reB*vn + p*((sym || slip)
-                ? 0.0 : (nx*ruB + ny*rvB + nz*rwB)/rB);
+        f[4][1] = reB*vn + p*((nx*ruB + ny*rvB + nz*rwB)/rB);
         p = m_mat_blk[0].compute< EOS::pressure >( rC, ruC/rC, rvC/rC, rwC/rC,
           reC );
         vn = (sym || slip) ? 0.0 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
@@ -1402,8 +1400,7 @@ class CompFlow {
         f[1][2] = ruC*vn + p*nx;
         f[2][2] = rvC*vn + p*ny;
         f[3][2] = rwC*vn + p*nz;
-        f[4][2] = reC*vn + p*((sym || slip)
-                ? 0.0 : (nx*ruC + ny*rvC + nz*rwC)/rC);
+        f[4][2] = reC*vn + p*((nx*ruC + ny*rvC + nz*rwC)/rC);
         // compute face area
         auto A6 = tk::area( x[N[0]], x[N[1]], x[N[2]],
                             y[N[0]], y[N[1]], y[N[2]],
