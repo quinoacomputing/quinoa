@@ -225,6 +225,10 @@ class MultiMat {
 		icnt++;
 	      }
       }
+      // printf("nmat = %lu\n", nmat);
+      // printf("nstiffeq = %lu\n", nstiffeq());
+      // for (std::size_t i=0; i<nstiffeq(); i++)
+      // 	printf("stiffEqIdx[%lu] = %lu\n", i, stiffEqIdx[i]);
     }
 
     //! Locate the nonstiff equations.
@@ -245,6 +249,11 @@ class MultiMat {
 	  icnt++;
 	}
       }
+      // printf("ncomp = %lu\n", m_ncomp);
+      // printf("nstiffeq = %lu\n", nstiffeq());
+      // printf("nnonstiffeq = %lu\n", nnonstiffeq());
+      // for (std::size_t i=0; i<nnonstiffeq(); i++)
+      // 	printf("nonStiffEqIdx[%lu] = %lu\n", i, nonStiffEqIdx[i]);
     }
 
     //! Initialize the compressible flow equations, prepare for time integration

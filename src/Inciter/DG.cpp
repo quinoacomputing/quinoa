@@ -297,7 +297,8 @@ DG::setup()
   }
 
   // If working with IMEX-RK, Store stiff equations into m_stiffEqIdx
-  if (g_inputdeck.get< tag::plasticity >())
+  if (g_inputdeck.get< tag::plasticity >() ||
+      g_inputdeck.get< tag::multimat, tag::prelax >())
   {
     g_dgpde[Disc()->MeshId()].setStiffEqIdx(m_stiffEqIdx);
     g_dgpde[Disc()->MeshId()].setNonStiffEqIdx(m_nonStiffEqIdx);
@@ -1407,7 +1408,10 @@ DG::solve( tk::real newdt )
   if (m_stage == 0) m_un = m_u;
 
   // Explicit or IMEX
-  const auto plasticity = g_inputdeck.get< tag::plasticity >();
+  auto imex = 0;
+  if (g_inputdeck.get< tag::plasticity >() ||
+      g_inputdeck.get< tag::multimat, tag::prelax >())
+    imex = 1;
 
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
@@ -1418,7 +1422,7 @@ DG::solve( tk::real newdt )
     physT += 0.5*d->Dt();
   }
 
-  if (plasticity) {
+  if (imex) {
     if (m_stage == 0)
     {
       // Save previous rhs
@@ -1433,7 +1437,7 @@ DG::solve( tk::real newdt )
     myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
     myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
 
-  if (!plasticity) {
+  if (!imex) {
     // Explicit time-stepping using RK3 to discretize time-derivative
     for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
       for(std::size_t c=0; c<neq; ++c)
