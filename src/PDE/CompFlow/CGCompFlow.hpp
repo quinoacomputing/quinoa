@@ -886,14 +886,16 @@ class CompFlow {
             if (j != end(bnorm)) {
               auto i = j->second.find(p);      // find normal for node
               if (i != end(j->second)) {
+                auto rho = U(p,0);
                 std::array< real, 3 >
                   n{ i->second[0], i->second[1], i->second[2] },
-                  rel_v{ U(p,1) - W(p,0), U(p,2) - W(p,1), U(p,3) - W(p,2) };
-                auto rel_v_dot_n = tk::dot( rel_v, n );
-                // slip wall bc: remove normal component of relative velocity
-                U(p,1) -= rel_v_dot_n * n[0];
-                U(p,2) -= rel_v_dot_n * n[1];
-                U(p,3) -= rel_v_dot_n * n[2];
+                  rel_mtm{ U(p,1) - rho*W(p,0), U(p,2) - rho*W(p,1),
+                    U(p,3) - rho*W(p,2) };
+                auto rel_mtm_dot_n = tk::dot( rel_mtm, n );
+                // slip wall bc: remove normal component of relative momentum
+                U(p,1) -= rel_mtm_dot_n * n[0];
+                U(p,2) -= rel_mtm_dot_n * n[1];
+                U(p,3) -= rel_mtm_dot_n * n[2];
               }
             }
           }
@@ -1382,8 +1384,7 @@ class CompFlow {
         f[1][0] = ruA*vn + p*nx;
         f[2][0] = rvA*vn + p*ny;
         f[3][0] = rwA*vn + p*nz;
-        f[4][0] = reA*vn + p*((sym || slip)
-                ? 0.0 : (nx*ruA + ny*rvA + nz*rwA)/rA);
+        f[4][0] = reA*vn + p*((nx*ruA + ny*rvA + nz*rwA)/rA);
         p = m_mat_blk[0].compute< EOS::pressure >( rB, ruB/rB, rvB/rB, rwB/rB,
           reB );
         vn = (sym || slip) ? 0.0 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
@@ -1391,8 +1392,7 @@ class CompFlow {
         f[1][1] = ruB*vn + p*nx;
         f[2][1] = rvB*vn + p*ny;
         f[3][1] = rwB*vn + p*nz;
-        f[4][1] = reB*vn + p*((sym || slip)
-                ? 0.0 : (nx*ruB + ny*rvB + nz*rwB)/rB);
+        f[4][1] = reB*vn + p*((nx*ruB + ny*rvB + nz*rwB)/rB);
         p = m_mat_blk[0].compute< EOS::pressure >( rC, ruC/rC, rvC/rC, rwC/rC,
           reC );
         vn = (sym || slip) ? 0.0 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
@@ -1400,8 +1400,7 @@ class CompFlow {
         f[1][2] = ruC*vn + p*nx;
         f[2][2] = rvC*vn + p*ny;
         f[3][2] = rwC*vn + p*nz;
-        f[4][2] = reC*vn + p*((sym || slip)
-                ? 0.0 : (nx*ruC + ny*rvC + nz*rwC)/rC);
+        f[4][2] = reC*vn + p*((nx*ruC + ny*rvC + nz*rwC)/rC);
         // compute face area
         auto A6 = tk::area( x[N[0]], x[N[1]], x[N[2]],
                             y[N[0]], y[N[1]], y[N[2]],

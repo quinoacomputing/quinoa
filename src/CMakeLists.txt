@@ -135,6 +135,13 @@ if(CBLAS_FOUND)
 endif()
 message(STATUS "CBLAS found: "${CBLAS_LIBRARIES})
 
+# Find Trilinos
+set(trilinos "trilinos")
+find_package(Trilinos)
+if(Trilinos_FOUND)
+  set(trilinos "")
+endif()
+
 # Compilers
 # =========
 # There are two sets of compilers, given by the following CMake variables:
