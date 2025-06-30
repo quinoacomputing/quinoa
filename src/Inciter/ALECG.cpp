@@ -1227,7 +1227,7 @@ ALECG::ale()
     // Compute diagnostics, e.g., residuals
     conserved( m_u, Disc()->Vol() );
     conserved( m_un, Disc()->Voln() );
-    auto diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
+    auto diag_computed = m_diag.compute( *d, m_u, m_un, {0, 0, 0}, m_bnorm,
                                           m_symbcnodes, m_farfieldbcnodes,
                                           m_slipwallbcnodes );
     volumetric( m_u, Disc()->Vol() );

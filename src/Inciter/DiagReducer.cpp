@@ -103,6 +103,9 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
       if (w[LINFERR][i] > v[LINFERR][i]) v[LINFERR][i] = w[LINFERR][i];
     // Sum of the total energy over the entire domain
     v[TOTALSOL][0] += w[TOTALSOL][0];
+    // Copy resultant force vector on mesh boundaries (reduction-sum is expected
+    // to have been done in Discretization-child)
+    for (std::size_t i=0; i<3; ++i) v[RESFORCE][i] = w[RESFORCE][i];
     // Copy ITER, TIME, DT
     for (std::size_t j=v.size()-3; j<v.size(); ++j)
       for (std::size_t i=0; i<v[j].size(); ++i)

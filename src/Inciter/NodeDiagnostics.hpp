@@ -33,6 +33,7 @@ class NodeDiagnostics {
       Discretization& d,
       const tk::Fields& u,
       const tk::Fields& un,
+      const std::array< tk::real, 3 >& surfForce,
       const std::unordered_map< int,
         std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
       const std::unordered_set< std::size_t >& symbcnodes,
