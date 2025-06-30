@@ -2150,9 +2150,12 @@ DG::imex_integrate()
                     approx_jacob[ieq*ndof+idof][jeq*ndof+jdof] * f[jeq*ndof+jdof];
               // Update u
               auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-              m_u(e, stiffrmark) -= delta;
+	      m_u(e, stiffrmark) -= delta;
             }
 
+	  // WHAT ABOUT LIMITS? pressure can go negative here..
+	  g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p, myGhosts()->m_fd.Esuel().size()/4, m_ndof );
+	  
           // Compute new stiff_rhs
           g_dgpde[d->MeshId()].stiff_rhs( e, nelem, myGhosts()->m_geoElem,
             myGhosts()->m_inpoel, myGhosts()->m_coord,
@@ -2333,4 +2336,15 @@ DG::imex_integrate()
   }
 }
 
+// std::vector< tk::real >
+// DG::f_nonlinear(std::vector < tk::real > x)
+// {
+
+// }
+
+// void DG::broyden_nonlinear(?)
+// {
+
+// }
+  
 #include "NoWarning/dg.def.h"
