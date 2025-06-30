@@ -1366,6 +1366,10 @@ OversetFE::solve()
     }
 
   }
+  // Remove surface force values for background mesh
+  else if (d->MeshId() == 0) {
+    for (std::size_t i=0; i<3; ++i) m_surfForce[i] = 0.0;
+  }
 
   // Apply boundary-conditions
   BC();
@@ -1381,7 +1385,7 @@ OversetFE::solve()
   bool diag_computed(false);
   if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
-    diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
+    diag_computed = m_diag.compute( *d, m_u, m_un, m_surfForce, m_bnorm,
                                     m_symbcnodes, m_farfieldbcnodes,
                                     m_slipwallbcnodes );
     // Increase number of iterations and physical time
