@@ -507,6 +507,7 @@ class Data {
     //! \return Const reference to data of type tk::real
     //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
     //!   Patterns Applied, Addison-Wesley Professional, 2001.
+    //? First Layout
     const tk::real&
     access( ncomp_t unknown, ncomp_t component, int2type< UnkEqComp > ) const
     {

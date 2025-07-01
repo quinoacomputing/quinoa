@@ -964,7 +964,7 @@ class MultiMat {
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
+                    inpoel, coord, geoElem, flux_kokkos, velfn, U, P, ndofel, R,
                     intsharp );
 
       // compute boundary surface flux integrals
@@ -1489,6 +1489,19 @@ class MultiMat {
 
       return tk::fluxTerms(ncomp, nmat, mat_blk, ugp);
     }
+
+    //! Same as above function, but Kokkos-friendly. Used ONLY for Volume integral
+    
+    template<typename ugpType>
+    static tk::FluxFn::result_type
+    flux_kokkos( ncomp_t ncomp,
+          const std::vector< EOS >& mat_blk, //TODO change EOS
+          const ugpType& ugp, 
+          const std::size_t nmat,
+          const std::vector< std::array< tk::real, 3 > >& )
+    {
+      return tk::fluxTerms_kokkos(ncomp, nmat, solidx, mat_blk, ugp);
+    };
 
     //! \brief Boundary state function providing the left and right state of a
     //!   face at Dirichlet boundaries

@@ -23,6 +23,7 @@
 namespace tk {
 //! Initialization of number of Gauss points for volume integration
 //! \param[in] ndof Number of degrees of freedom
+KOKKOS_INLINE_FUNCTION
 constexpr std::size_t NGvol( const std::size_t ndof ) {
   return ndof == 1 ? 1 :
          ndof == 4 ? 5 :

@@ -668,6 +668,38 @@ getDeformGrad(
   return gk;
 }
 
+template <typename solidxType, typename stateType>
+auto getDeformGrad(
+  std::size_t nmat,
+  std::size_t k,
+  const solidxType& solidx,
+  const stateType& state )
+// *****************************************************************************
+//  Get the inverse deformation gradient tensor for a material at given location
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] k Material id whose deformation gradient is required
+//! \param[in] state State vector at location
+//! \return Inverse deformation gradient tensor (g_k) of material k
+// *****************************************************************************
+{
+
+  Kokkos::Array<Kokkos::Array<real, 3>, 3> gk;
+
+  if (solidx[k] > 0) {
+    // deformation gradient for solids
+    for (std::size_t i=0; i<3; ++i) {
+      for (std::size_t j=0; j<3; ++j)
+        gk[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
+    }
+  }
+  else {
+    // empty vector for fluids
+    gk = {{}};
+  }
+
+  return gk;
+}
+
 std::array< std::array< tk::real, 3 >, 3 >
 getCauchyStress(
   std::size_t nmat,
@@ -699,10 +731,42 @@ getCauchyStress(
   return asigk;
 }
 
-bool
-haveSolid(
+template <typename solidxType, typename stateType>
+auto getCauchyStress(
   std::size_t nmat,
-  const std::vector< std::size_t >& solidx )
+  std::size_t k,
+  std::size_t ncomp,
+  const solidxType& solidx,
+  const StateType& state )
+// *****************************************************************************
+//  Get the elastic Cauchy stress tensor for a material at given location
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] k Material id whose deformation gradient is required
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] state State vector at location
+//! \return Elastic Cauchy stress tensor (alpha * \sigma_ij) of material k
+// *****************************************************************************
+{
+
+    Kokkos::Array<Kokkos::Array<real, 3>, 3> asigk = {};
+
+  // elastic Cauchy stress for solids
+  if (solidx[k] > 0) {
+    for (std::size_t i=0; i<3; ++i) {
+      for (std::size_t j=0; j<3; ++j)
+        asigk[i][j] = state[ncomp +
+          stressIdx(nmat, solidx[k], stressCmp[i][j])];
+    }
+  }
+
+  return asigk;
+}
+
+
+template <typename solidxType>
+bool haveSolid(
+  std::size_t nmat,
+  const solidxType& solidx )
 // *****************************************************************************
 //  Check whether we have solid materials in our problem
 //! \param[in] nmat Number of materials in this PDE system

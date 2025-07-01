@@ -133,6 +133,15 @@ if(CBLAS_FOUND)
 endif()
 message(STATUS "CBLAS found: "${CBLAS_LIBRARIES})
 
+#set(Kokkos_SOURCE_DIR_OVERRIDE /vast/home/rjpark/kokkosDirect/kokkos/build/cmake_packages/Kokkos)
+
+## Find Kokkos 
+#set(Kokkos_DIR "/vast/home/rjpark/kokkosDirect/kokkos/build/cmake_packages/Kokkos")
+#find_package(Kokkos REQUIRED)
+#message(STATUS "Kokkos found: "${KOKKOS_LIBRARIES})
+#target_link_libraries (run PRIVATE Kokkos::kokkos)
+
+
 # Compilers
 # =========
 # There are two sets of compilers, given by the following CMake variables:

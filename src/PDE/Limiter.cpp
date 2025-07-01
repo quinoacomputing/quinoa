@@ -2525,10 +2525,11 @@ PositivityFunction( const tk::real min,
   return phi;
 }
 
-bool
-interfaceIndicator( std::size_t nmat,
-  const std::vector< tk::real >& al,
-  std::vector< std::size_t >& matInt )
+template <typename alType, typename matIntType>
+KOKKOS_INLINE_FUNCTION
+bool interfaceIndicator( std::size_t nmat,
+  const alType& al,
+  matIntType& matInt )
 // *****************************************************************************
 //  Interface indicator function, which checks element for material interface
 //! \param[in] nmat Number of materials in this PDE system
@@ -3005,7 +3006,7 @@ correctLimConservMultiSpecies(
 }
 
 tk::real
-constrain_pressure( const std::vector< EOS >& mat_blk,
+constrain_pressure(const std::vector< EOS >& mat_blk,
   tk::real apr,
   tk::real arho,
   tk::real alpha=1.0,

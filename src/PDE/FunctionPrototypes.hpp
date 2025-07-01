@@ -51,7 +51,7 @@ using RiemannFluxFn = std::function<
 //! \see e.g., inciter::dg::Transport::flux, inciter::dg::CompFlow::flux
 using FluxFn = std::function<
   std::vector< std::array< real, 3 > >
-  ( ncomp_t, const std::vector< inciter::EOS >&,
+  (ncomp_t, const std::vector< inciter::EOS >&,
     const std::vector< real >&, const std::vector< std::array< real, 3 > >& ) >;
 
 //! Function prototype for evaluating a prescribed velocity field

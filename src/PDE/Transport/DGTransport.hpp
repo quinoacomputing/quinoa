@@ -563,6 +563,7 @@ class Transport {
     }
 
   private:
+  
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy
     const ncomp_t m_ncomp;              //!< Number of components in this PDE

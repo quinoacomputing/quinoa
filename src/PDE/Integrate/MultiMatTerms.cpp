@@ -886,7 +886,8 @@ fluxTerms(
   auto u = ugp[ncomp+velocityIdx(nmat,0)];
   auto v = ugp[ncomp+velocityIdx(nmat,1)];
   auto w = ugp[ncomp+velocityIdx(nmat,2)];
-
+ 
+  //? Have solid function is easy to do, its in PDE/MultiMat/MiscMultiMatFns.hpp
   if (inciter::haveSolid(nmat, solidx))
   {
     std::vector< tk::real > al(nmat, 0.0);
@@ -897,6 +898,7 @@ fluxTerms(
     {
       al[k] = ugp[volfracIdx(nmat, k)];
       // inv deformation gradient and Cauchy stress tensors
+      //? getDeformGrad, getCauchyStress seems find, just need to pass in solidx to avoid using ginputDeck
       g.push_back(inciter::getDeformGrad(nmat, k, ugp));
       asig.push_back(inciter::getCauchyStress(nmat, k, ncomp, ugp));
       for (std::size_t i=0; i<3; ++i) asig[k][i][i] -= ugp[ncomp+pressureIdx(nmat,k)];
@@ -959,6 +961,158 @@ fluxTerms(
   {
     tk::real p(0.0);
     std::vector< tk::real > apk( nmat, 0.0 );
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      apk[k] = ugp[ncomp+pressureIdx(nmat,k)];
+      p += apk[k];
+    }
+
+    // conservative part of momentum flux
+    fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
+    fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
+    fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
+
+    fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
+    fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
+    fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
+
+    fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
+    fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
+    fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
+
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // conservative part of volume-fraction flux
+      fl[volfracIdx(nmat, k)][0] = 0.0;
+      fl[volfracIdx(nmat, k)][1] = 0.0;
+      fl[volfracIdx(nmat, k)][2] = 0.0;
+
+      // conservative part of material continuity flux
+      fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+
+      // conservative part of material total-energy flux
+      auto hmat = ugp[energyIdx(nmat, k)] + apk[k];
+      fl[energyIdx(nmat, k)][0] = u * hmat;
+      fl[energyIdx(nmat, k)][1] = v * hmat;
+      fl[energyIdx(nmat, k)][2] = w * hmat;
+    }
+  }
+
+  return fl;
+}
+
+template <typename ugpType, typename solidxType>
+auto fluxTerms_kokkos(
+  std::size_t ncomp,
+  std::size_t nmat,
+  const solidxType& solidx;
+  const std::vector< inciter::EOS >& /*mat_blk*/,
+  const ugpType& ugp )
+// *****************************************************************************
+//  Compute the flux-function for the multimaterial PDEs
+//! \param[in] ncomp Number of components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
+// //! \param[in] mat_blk EOS material block
+//! \param[in] ugp State vector at the Gauss point at which flux is required
+//! \return Flux vectors for all components in multi-material PDE system
+// *****************************************************************************
+{
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+  using inciter::velocityIdx;
+  using inciter::pressureIdx;
+  using inciter::deformIdx;
+
+  //const auto& solidx =
+   // inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >(); //TODO
+
+  Kokkos::Array<Kokkos::Array<real, 3>, ncomp> fl = {};
+
+  tk::real rho(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    rho += ugp[densityIdx(nmat, k)];
+
+  auto u = ugp[ncomp+velocityIdx(nmat,0)];
+  auto v = ugp[ncomp+velocityIdx(nmat,1)];
+  auto w = ugp[ncomp+velocityIdx(nmat,2)];
+ 
+  //? Have solid function is easy to do, its in PDE/MultiMat/MiscMultiMatFns.hpp //?DONE
+  if (inciter::haveSolid(nmat, solidx))
+  {
+    Kokkos::Array<real, nmat> al = {};
+    Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, nmat> g, asig; //TODO cannot dynamically allocate Kokkos::Array, need to specify
+    Kokkos::Array<Kokkos::Array<real, 3>, 3> sig = {}
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      al[k] = ugp[volfracIdx(nmat, k)];
+      // inv deformation gradient and Cauchy stress tensors
+      //? getDeformGrad, getCauchyStress seems fine, just need to pass in solidx to avoid using ginputDeck
+      g[k] = inciter::getDeformGrad(nmat, k, ugp);
+      asig[k] = inciter::getCauchyStress(nmat, k, ncomp, ugp);
+      for (std::size_t i=0; i<3; ++i) asig[k][i][i] -= ugp[ncomp+pressureIdx(nmat,k)];
+
+      for (size_t i=0; i<3; ++i)
+        for (size_t j=0; j<3; ++j)
+          sig[i][j] += asig[k][i][j];
+    }
+
+    // conservative part of momentum flux
+    fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u - sig[0][0];
+    fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u - sig[0][1];
+    fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u - sig[0][2];
+
+    fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v - sig[1][0];
+    fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v - sig[1][1];
+    fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v - sig[1][2];
+
+    fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w - sig[2][0];
+    fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w - sig[2][1];
+    fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w - sig[2][2];
+
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // conservative part of volume-fraction flux
+      fl[volfracIdx(nmat, k)][0] = 0.0;
+      fl[volfracIdx(nmat, k)][1] = 0.0;
+      fl[volfracIdx(nmat, k)][2] = 0.0;
+
+      // conservative part of material continuity flux
+      fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
+      fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+
+      // conservative part of material total-energy flux
+      fl[energyIdx(nmat, k)][0] = u * ugp[energyIdx(nmat, k)]
+        - u * asig[k][0][0] - v * asig[k][1][0] - w * asig[k][2][0];
+      fl[energyIdx(nmat, k)][1] = v * ugp[energyIdx(nmat, k)]
+        - u * asig[k][0][1] - v * asig[k][1][1] - w * asig[k][2][1];
+      fl[energyIdx(nmat, k)][2] = w * ugp[energyIdx(nmat, k)]
+        - u * asig[k][0][2] - v * asig[k][1][2] - w * asig[k][2][2];
+
+      // conservative part of material inverse deformation gradient
+      // g_ij: \partial (g_il u_l) / \partial (x_j)
+      if (solidx[k] > 0)
+      {
+        for (std::size_t i=0; i<3; ++i)
+        {
+          for (std::size_t j=0; j<3; ++j)
+          {
+            fl[deformIdx(nmat,solidx[k],i,j)][j] =
+              u*g[k][i][0] + v*g[k][i][1] + w*g[k][i][2];
+          }
+          // other components are zero
+        }
+      }
+    }
+  }
+  else
+  {
+    tk::real p(0.0);
+    Kokkos::Array<real, nmat> apk = {} //TODO : Again need to know nmat at compile time.
     for (std::size_t k=0; k<nmat; ++k)
     {
       apk[k] = ugp[ncomp+pressureIdx(nmat,k)];
