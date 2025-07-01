@@ -28,6 +28,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto g = getmatprop< tag::gamma >(k);
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
+    type = EOSType::StiffenedGas;
     m_material = StiffenedGas(g, ps, c_v);
   }
   else if (mattype == ctr::MaterialType::JWL) {
@@ -46,6 +47,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto rhor_jwl = getmatprop< tag::rhor_jwl >(k);
     auto Tr_jwl = getmatprop< tag::Tr_jwl >(k);
     auto Pr_jwl = getmatprop< tag::Pr_jwl >(k);
+    type = EOSType::JWL;
     m_material = JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, Tr_jwl, Pr_jwl, A_jwl,
       B_jwl, R1_jwl, R2_jwl);
   }
@@ -57,6 +59,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
+    type = EOSType::SmallShearSolid;
     m_material = SmallShearSolid(g, ps, c_v, mu);
   }
   else if (mattype == ctr::MaterialType::WILKINSALUMINUM) {
@@ -66,6 +69,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto g = getmatprop< tag::gamma >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
+    type = EOSType::WilkinsAluminum;
     m_material = WilkinsAluminum(g, c_v, mu);
   }
   else if (mattype == ctr::MaterialType::GODUNOVROMENSKI) {
@@ -77,6 +81,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto rho0_gr = getmatprop< tag::rho0_jwl >(k);
     auto alpha = getmatprop< tag::alpha >(k);
     auto K0 = getmatprop< tag::K0 >(k);
+    type = EOSType::GodunovRomenski;
     m_material = GodunovRomenski(g, mu, rho0_gr, alpha, K0);
   }
   else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
@@ -88,6 +93,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto t_range =
       g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
     auto dH_ref = getspecprop< tag::dH_ref >(k);
+    type = EOSType::ThermallyPerfectGas;
     m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref);
   }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
