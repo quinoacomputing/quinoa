@@ -44,22 +44,33 @@ class EOS {
                 , ThermallyPerfectGas};
 
     EOSType type;
-    union {
+
+    union EOSUnion {
         StiffenedGas stiffenedGas;
         JWL jwl;
         SmallShearSolid smallShearSolid;
         WilkinsAluminum wilkinsAluminum;
         GodunovRomenski godunovRomenski;
         ThermallyPerfectGas thermallyPerfectGas;
+
+        EOSUnion() {};
+        ~EOSUnion() {};
+        EOSUnion(const StiffenedGas& s) : stiffenedGas(s) {};
+        EOSUnion(const JWL& s) : jwl(s) {};
+        EOSUnion(const WilkinsAluminum& s) : wilkinsAluminum(s) {};
+        EOSUnion(const GodunovRomenski& s) : godunovRomenski(s) {};
+        EOSUnion(const ThermallyPerfectGas& s) : thermallyPerfectGas(s) {};
+
     } m_material;
 
 
   public:
     //! Empty constructor for Charm++
-    explicit EOS();
+    explicit EOS() {
+    }
 
     //! Constructor
-    explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k );
+    explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k);
 
     //! Entry method tags for specific EOS classes to use with compute()
     struct density {};
@@ -340,6 +351,7 @@ class EOS {
           else if constexpr( std::is_same_v< Fn, cv > )
             return m_material.wilkinsAluminum.cv( std::forward< Args >( args )... );
         };
+        return 0;
 
     }
 
@@ -422,49 +434,30 @@ class EOS {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup(PUP::er &p) {
-    p | type;  // Serialize the tag first
+    //p | type;  // Serialize the tag first
 
     switch(type) {
         case EOSType::StiffenedGas:
-            if (p.isUnpacking()) {
-                // Construct in-place since union member needs explicit construction
-                new (&m_material.stiffenedGas) StiffenedGas();
-            }
             p | m_material.stiffenedGas;
             break;
 
         case EOSType::JWL:
-            if (p.isUnpacking()) {
-                new (&m_material.jwl) JWL();
-            }
             p | m_material.jwl;
             break;
 
         case EOSType::SmallShearSolid:
-            if (p.isUnpacking()) {
-                new (&m_material.smallShearSolid) SmallShearSolid();
-            }
             p | m_material.smallShearSolid;
             break;
 
         case EOSType::WilkinsAluminum:
-            if (p.isUnpacking()) {
-                new (&m_material.wilkinsAluminum) WilkinsAluminum();
-            }
             p | m_material.wilkinsAluminum;
             break;
 
         case EOSType::GodunovRomenski:
-            if (p.isUnpacking()) {
-                new (&m_material.godunovRomenski) GodunovRomenski();
-            }
             p | m_material.godunovRomenski;
             break;
 
         case EOSType::ThermallyPerfectGas:
-            if (p.isUnpacking()) {
-                new (&m_material.thermallyPerfectGas) ThermallyPerfectGas();
-            }
             p | m_material.thermallyPerfectGas;
             break;
     }
