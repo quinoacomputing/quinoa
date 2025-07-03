@@ -2335,16 +2335,5 @@ DG::imex_integrate()
     }
   }
 }
-
-// std::vector< tk::real >
-// DG::f_nonlinear(std::vector < tk::real > x)
-// {
-
-// }
-
-// void DG::broyden_nonlinear(?)
-// {
-
-// }
   
 #include "NoWarning/dg.def.h"
