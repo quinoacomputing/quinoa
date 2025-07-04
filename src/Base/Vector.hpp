@@ -15,6 +15,7 @@
 #include <array>
 #include <cmath>
 #include <vector>
+#include "Kokkos_Core.hpp"
 #include <cblas.h>
 
 #include "Types.hpp"
@@ -90,6 +91,14 @@ cross( const Kokkos::Array<real, 3>& v1, const Kokkos::Array<real, 3>& v2 )
   return {{ std::move(rx), std::move(ry), std::move(rz) }};
 }
 
+inline std::array< real, 3 >
+cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
+{
+  real rx, ry, rz;
+  cross( v1[0], v1[1], v1[2], v2[0], v2[1], v2[2], rx, ry, rz );
+  return { std::move(rx), std::move(ry), std::move(rz) };
+}
+
 //! Compute the cross-product of two vectors divided by a scalar
 //! \param[in] v1x x coordinate of the 1st vector
 //! \param[in] v1y y coordinate of the 1st vector
@@ -136,6 +145,12 @@ crossdiv( const std::array< real, 3 >& v1,
 
 KOKKOS_INLINE_FUNCTION real
 dot(const Kokkos::Array<real, 3>& v1, const Kokkos::Array<real, 3>& v2 )
+{
+  return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+}
+
+inline real
+dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 {
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
@@ -213,6 +228,18 @@ tk::real triple(real v1x, real v1y, real v1z,
   return v1x*cx + v1y*cy + v1z*cz;
 }
 
+#pragma omp declare simd
+inline tk::real
+triple( real v1x, real v1y, real v1z,
+        real v2x, real v2y, real v2z,
+        real v3x, real v3y, real v3z )
+{
+  real cx, cy, cz;
+  cross( v2x, v2y, v2z, v3x, v3y, v3z, cx, cy, cz );
+  return v1x*cx + v1y*cy + v1z*cz;
+}
+
+
 //! Compute the triple-product of three vectors
 //! \param[in] v1 1st vector
 //! \param[in] v2 2nd vector
@@ -222,6 +249,14 @@ KOKKOS_INLINE_FUNCTION
 real triple(Kokkos::Array<real, 3> v1,
         Kokkos::Array<real, 3> v2,
         Kokkos::Array<real, 3> v3 )
+{
+  return dot( v1, cross(v2,v3) );
+}
+
+inline real
+triple( const std::array< real, 3 >& v1,
+        const std::array< real, 3 >& v2,
+        const std::array< real, 3 >& v3 )
 {
   return dot( v1, cross(v2,v3) );
 }
@@ -393,6 +428,16 @@ inverseJacobian(const Kokkos::Array<real, 3>& v1,
 //! Compute the determinant of 3x3 matrix
 //!  \param[in] a 3x3 matrix
 //!  \return Determinant of the 3x3 matrix
+
+inline tk::real
+determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
+{
+  return ( a[0][0] * (a[1][1]*a[2][2]-a[1][2]*a[2][1])
+         - a[0][1] * (a[1][0]*a[2][2]-a[1][2]*a[2][0])
+         + a[0][2] * (a[1][0]*a[2][1]-a[1][1]*a[2][0]) );
+}
+
+
 KOKKOS_INLINE_FUNCTION tk::real
 determinant(const Kokkos::Array<Kokkos::Array<real, 3>, 3>& a )
 {

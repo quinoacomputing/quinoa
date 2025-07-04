@@ -21,6 +21,10 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "FunctionPrototypes.hpp"
 #include "EoS/EOS.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::Serial;
+using memory_space = Kokkos::HostSpace;
 
 namespace inciter {
 
@@ -341,6 +345,11 @@ bool
 interfaceIndicator( std::size_t nmat,
   const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt );
+
+KOKKOS_INLINE_FUNCTION
+bool interfaceIndicator( std::size_t nmat,
+  Kokkos::View<real*, memory_space> al,
+  Kokkos::View<size_t*, memory_space> matInt )
 
 //! Mark the cells that contain discontinuity according to the interface
 void MarkShockCells ( const bool pref,

@@ -23,6 +23,10 @@
 #include "Basis.hpp"
 #include "Vector.hpp"
 #include "Mass.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::Serial;
+using memory_space = Kokkos::HostSpace;
 
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
@@ -248,9 +252,10 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   return dBdx;
 }
 
-KOKKOS_INLINE_FUNCTION auto
+KOKKOS_INLINE_FUNCTION void
 tk::eval_dBdx_p1( const std::size_t ndof,
-                  const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv )
+                  const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv, 
+                Kokkos::View<real**, memory_space> dBdx)
 // *****************************************************************************
 //  Compute the derivatives of basis functions for DG(P1)
 //! \param[in] ndof Number of degrees of freedom
@@ -266,7 +271,6 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   // The matrix dxi/dx is the inverse of the Jacobian of transformation
   // and the matrix vector product has to be calculated. This follows.
 
-  Kokkos::Array<Kokkos::Array<real, ndof>, 3> dBdx;
 
   auto db2dxi1 = 2.0;
   auto db2dxi2 = 1.0;
@@ -280,43 +284,41 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   auto db4dxi2 = 0.0;
   auto db4dxi3 = 4.0;
 
-  dBdx[0][1] =  db2dxi1 * jacInv[0][0]
+  dBdx(0, 1) =  db2dxi1 * jacInv[0][0]
               + db2dxi2 * jacInv[1][0]
               + db2dxi3 * jacInv[2][0];
 
-  dBdx[1][1] =  db2dxi1 * jacInv[0][1]
+  dBdx(1, 1) =  db2dxi1 * jacInv[0][1]
               + db2dxi2 * jacInv[1][1]
               + db2dxi3 * jacInv[2][1];
 
-  dBdx[2][1] =  db2dxi1 * jacInv[0][2]
+  dBdx(2, 1) =  db2dxi1 * jacInv[0][2]
               + db2dxi2 * jacInv[1][2]
               + db2dxi3 * jacInv[2][2];
 
-  dBdx[0][2] =  db3dxi1 * jacInv[0][0]
+  dBdx(0, 2) =  db3dxi1 * jacInv[0][0]
               + db3dxi2 * jacInv[1][0]
               + db3dxi3 * jacInv[2][0];
 
-  dBdx[1][2] =  db3dxi1 * jacInv[0][1]
+  dBdx(1, 2) =  db3dxi1 * jacInv[0][1]
               + db3dxi2 * jacInv[1][1]
               + db3dxi3 * jacInv[2][1];
 
-  dBdx[2][2] =  db3dxi1 * jacInv[0][2]
+  dBdx(2, 2) =  db3dxi1 * jacInv[0][2]
               + db3dxi2 * jacInv[1][2]
               + db3dxi3 * jacInv[2][2];
 
-  dBdx[0][3] =  db4dxi1 * jacInv[0][0]
+  dBdx(0, 3) =  db4dxi1 * jacInv[0][0]
               + db4dxi2 * jacInv[1][0]
               + db4dxi3 * jacInv[2][0];
 
-  dBdx[1][3] =  db4dxi1 * jacInv[0][1]
+  dBdx(1, 3) =  db4dxi1 * jacInv[0][1]
               + db4dxi2 * jacInv[1][1]
               + db4dxi3 * jacInv[2][1];
 
-  dBdx[2][3] =  db4dxi1 * jacInv[0][2]
+  dBdx(2, 3) =  db4dxi1 * jacInv[0][2]
               + db4dxi2 * jacInv[1][2]
               + db4dxi3 * jacInv[2][2];
-
-  return dBdx;
 }
 
 void
@@ -435,11 +437,11 @@ tk::eval_dBdx_p2( const std::size_t igp,
               + db10dxi3 * jacInv[2][2];
 }
 
-template <typename T1, typename T2>
-KOKKOS_INLINE_FUNCTION void tk::eval_dBdx_p2( const std::size_t igp,
-                  T1& coordgp,
+KOKKOS_INLINE_FUNCTION 
+void tk::eval_dBdx_p2( const std::size_t igp,
+                  Kokkos::View<real**, memory_space> coordgp,
                   const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv,
-                  T2& dBdx)
+                  Kokkos::View<real**, memory_space> dBdx)
 // *****************************************************************************
 //  Compute the derivatives of Dubiner basis function for DG(P2)
 //! \param[in] igp Index of quadrature points
@@ -448,105 +450,105 @@ KOKKOS_INLINE_FUNCTION void tk::eval_dBdx_p2( const std::size_t igp,
 //! \param[in,out] dBdx Array of the derivatives of basis function
 // *****************************************************************************
 {
-  auto db5dxi1 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp]
-               +  6.0 * coordgp[2][igp] - 6.0;
-  auto db5dxi2 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp]
-               +  2.0 * coordgp[2][igp] - 2.0;
-  auto db5dxi3 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp]
-               +  2.0 * coordgp[2][igp] - 2.0;
+  auto db5dxi1 = 12.0 * coordgp(0, igp) + 6.0 * coordgp(1, igp)
+               +  6.0 * coordgp(2, igp) - 6.0;
+  auto db5dxi2 =  6.0 * coordgp(0, igp) + 2.0 * coordgp(1, igp)
+               +  2.0 * coordgp(2, igp) - 2.0;
+  auto db5dxi3 =  6.0 * coordgp(0, igp) + 2.0 * coordgp(1, igp)
+               +  2.0 * coordgp(2, igp) - 2.0;
 
-  auto db6dxi1 = 10.0 * coordgp[1][igp] +  2.0 * coordgp[2][igp] - 2.0;
-  auto db6dxi2 = 10.0 * coordgp[0][igp] + 10.0 * coordgp[1][igp]
-               +  6.0 * coordgp[2][igp] - 6.0;
-  auto db6dxi3 =  2.0 * coordgp[0][igp] +  6.0 * coordgp[1][igp]
-               +  2.0 * coordgp[2][igp] - 2.0;
+  auto db6dxi1 = 10.0 * coordgp(1, igp) +  2.0 * coordgp(2, igp) - 2.0;
+  auto db6dxi2 = 10.0 * coordgp(0, igp) + 10.0 * coordgp(1, igp)
+               +  6.0 * coordgp(2, igp) - 6.0;
+  auto db6dxi3 =  2.0 * coordgp(0, igp) +  6.0 * coordgp(1, igp)
+               +  2.0 * coordgp(2, igp) - 2.0;
 
-  auto db7dxi1 = 12.0 * coordgp[2][igp] - 2.0;
-  auto db7dxi2 =  6.0 * coordgp[2][igp] - 1.0;
-  auto db7dxi3 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp]
-               + 12.0 * coordgp[2][igp] - 7.0;
+  auto db7dxi1 = 12.0 * coordgp(2, igp) - 2.0;
+  auto db7dxi2 =  6.0 * coordgp(2, igp) - 1.0;
+  auto db7dxi3 = 12.0 * coordgp(0, igp) + 6.0 * coordgp(1, igp)
+               + 12.0 * coordgp(2, igp) - 7.0;
 
   auto db8dxi1 =  0;
-  auto db8dxi2 = 20.0 * coordgp[1][igp] + 8.0 * coordgp[2][igp] - 8.0;
-  auto db8dxi3 =  8.0 * coordgp[1][igp] + 2.0 * coordgp[2][igp] - 2.0;
+  auto db8dxi2 = 20.0 * coordgp(1, igp) + 8.0 * coordgp(2, igp) - 8.0;
+  auto db8dxi3 =  8.0 * coordgp(1, igp) + 2.0 * coordgp(2, igp) - 2.0;
 
   auto db9dxi1 =  0;
-  auto db9dxi2 = 18.0 * coordgp[2][igp] -  3.0;
-  auto db9dxi3 = 18.0 * coordgp[1][igp] + 12.0 * coordgp[2][igp] - 7.0;
+  auto db9dxi2 = 18.0 * coordgp(2, igp) -  3.0;
+  auto db9dxi3 = 18.0 * coordgp(1, igp) + 12.0 * coordgp(2, igp) - 7.0;
 
   auto db10dxi1 =  0;
   auto db10dxi2 =  0;
-  auto db10dxi3 = 30.0 * coordgp[2][igp] - 10.0;
+  auto db10dxi3 = 30.0 * coordgp(2, igp) - 10.0;
 
-  dBdx[0][4] =  db5dxi1 * jacInv[0][0]
+  dBdx(0, 4) =  db5dxi1 * jacInv[0][0]
               + db5dxi2 * jacInv[1][0]
               + db5dxi3 * jacInv[2][0];
 
-  dBdx[1][4] =  db5dxi1 * jacInv[0][1]
+  dBdx(1, 4) =  db5dxi1 * jacInv[0][1]
               + db5dxi2 * jacInv[1][1]
               + db5dxi3 * jacInv[2][1];
 
-  dBdx[2][4] =  db5dxi1 * jacInv[0][2]
+  dBdx(2, 4) =  db5dxi1 * jacInv[0][2]
               + db5dxi2 * jacInv[1][2]
               + db5dxi3 * jacInv[2][2];
 
-  dBdx[0][5] =  db6dxi1 * jacInv[0][0]
+  dBdx(0, 5) =  db6dxi1 * jacInv[0][0]
               + db6dxi2 * jacInv[1][0]
               + db6dxi3 * jacInv[2][0];
 
-  dBdx1[1][5] =  db6dxi1 * jacInv[0][1]
+  dBdx1(1, 5) =  db6dxi1 * jacInv[0][1]
               + db6dxi2 * jacInv[1][1]
               + db6dxi3 * jacInv[2][1];
 
-  dBdx[2][5] =  db6dxi1 * jacInv[0][2]
+  dBdx(2, 5) =  db6dxi1 * jacInv[0][2]
               + db6dxi2 * jacInv[1][2]
               + db6dxi3 * jacInv[2][2];
 
-  dBdx[0][6] =  db7dxi1 * jacInv[0][0]
+  dBdx(0, 6) =  db7dxi1 * jacInv[0][0]
               + db7dxi2 * jacInv[1][0]
               + db7dxi3 * jacInv[2][0];
 
-  dBdx[1][6] =  db7dxi1 * jacInv[0][1]
+  dBdx(1, 6) =  db7dxi1 * jacInv[0][1]
               + db7dxi2 * jacInv[1][1]
               + db7dxi3 * jacInv[2][1];
 
-  dBdx[2][6] =  db7dxi1 * jacInv[0][2]
+  dBdx(2, 6) =  db7dxi1 * jacInv[0][2]
               + db7dxi2 * jacInv[1][2]
               + db7dxi3 * jacInv[2][2];
 
-  dBdx[0][7] =  db8dxi1 * jacInv[0][0]
+  dBdx(0, 7) =  db8dxi1 * jacInv[0][0]
               + db8dxi2 * jacInv[1][0]
               + db8dxi3 * jacInv[2][0];
 
-  dBdx[1][7] =  db8dxi1 * jacInv[0][1]
+  dBdx(1, 7) =  db8dxi1 * jacInv[0][1]
               + db8dxi2 * jacInv[1][1]
               + db8dxi3 * jacInv[2][1];
 
-  dBdx[2][7] =  db8dxi1 * jacInv[0][2]
+  dBdx(2, 7) =  db8dxi1 * jacInv[0][2]
               + db8dxi2 * jacInv[1][2]
               + db8dxi3 * jacInv[2][2];
 
-  dBdx[0][8] =  db9dxi1 * jacInv[0][0]
+  dBdx(0, 8) =  db9dxi1 * jacInv[0][0]
               + db9dxi2 * jacInv[1][0]
               + db9dxi3 * jacInv[2][0];
 
-  dBdx[1][8] =  db9dxi1 * jacInv[0][1]
+  dBdx(1, 8) =  db9dxi1 * jacInv[0][1]
               + db9dxi2 * jacInv[1][1]
               + db9dxi3 * jacInv[2][1];
 
-  dBdx[2][8] =  db9dxi1 * jacInv[0][2]
+  dBdx(2, 8) =  db9dxi1 * jacInv[0][2]
               + db9dxi2 * jacInv[1][2]
               + db9dxi3 * jacInv[2][2];
 
-  dBdx[0][9] =  db10dxi1 * jacInv[0][0]
+  dBdx(0, 9) =  db10dxi1 * jacInv[0][0]
               + db10dxi2 * jacInv[1][0]
               + db10dxi3 * jacInv[2][0];
 
-  dBdx[1][9] =  db10dxi1 * jacInv[0][1]
+  dBdx(1, 9) =  db10dxi1 * jacInv[0][1]
               + db10dxi2 * jacInv[1][1]
               + db10dxi3 * jacInv[2][1];
 
-  dBdx[2][9] =  db10dxi1 * jacInv[0][2]
+  dBdx(2, 9) =  db10dxi1 * jacInv[0][2]
               + db10dxi2 * jacInv[1][2]
               + db10dxi3 * jacInv[2][2];
 }
@@ -593,11 +595,13 @@ tk::eval_basis( const std::size_t ndof,
   return B;
 }
 
+//! difference function signature for Kokkos friendly eval_basis?
 KOKKOS_INLINE_FUNCTION 
 auto tk::eval_basis( const std::size_t ndof,
                 const tk::real xi,
                 const tk::real eta,
-                const tk::real zeta )
+                const tk::real zeta, 
+              const tk:real )
 // *****************************************************************************
 //  Compute the Dubiner basis functions
 //! \param[in] ndof Number of degrees of freedom
@@ -613,7 +617,7 @@ auto tk::eval_basis( const std::size_t ndof,
     Kokkos::Array<real, 10> B;
   }
 
-  B(0) = 1.0;
+  B[0] = 1.0;
 
   if ( ndof > 1 )           // DG(P1)
   {
@@ -697,13 +701,14 @@ tk::eval_state ( ncomp_t ncomp,
 }
 
 template <typename BasisType>
-KOKKOS_INLINE_FUNCTION auto
-tk::eval_state ( ncomp_t ncomp,
+KOKKOS_INLINE_FUNCTION 
+void tk::eval_state ( ncomp_t ncomp,
                  const std::size_t ndof,
                  const std::size_t ndof_el,
                  const std::size_t e, size_t m_nprop,
                  Kokkos::View<const real*, memory_space> U,
-                 BasisType B )
+                 BasisType B, 
+                Kokkos::View<real*, memory_space> state)
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -723,7 +728,6 @@ tk::eval_state ( ncomp_t ncomp,
   if (U.extent(0) == 0) return {};
 
   // Array of state variable for tetrahedron element
-  Kokkos::Array<real, ncomp> state;
   /*
    const tk::real&
     access( ncomp_t unknown, ncomp_t component, int2type< UnkEqComp > ) const
@@ -739,18 +743,18 @@ tk::eval_state ( ncomp_t ncomp,
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    state[c] = U[e * m_nprop + mark];
+    state(c) = U(e * m_nprop + mark);
 
     if(ndof_el > 1)        // Second order polynomial solution
     {
-      state[c] += U( e, mark+1 ) * B[1]
+      state(c) += U( e, mark+1 ) * B[1]
                 + U( e, mark+2 ) * B[2]
                 + U( e, mark+3 ) * B[3];
     }
 
     if(ndof_el > 4)        // Third order polynomial solution
     {
-      state[c] += U( e, mark+4 ) * B[4];
+      state(c) += U( e, mark+4 ) * B[4];
                 + U( e, mark+5 ) * B[5];
                 + U( e, mark+6 ) * B[6];
                 + U( e, mark+7 ) * B[7];
@@ -758,8 +762,6 @@ tk::eval_state ( ncomp_t ncomp,
                 + U( e, mark+9 ) * B[9];
     }
   }
-
-  return state;
 }
 
 std::vector< std::vector< tk::real > >

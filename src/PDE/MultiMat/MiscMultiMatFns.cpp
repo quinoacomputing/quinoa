@@ -18,6 +18,10 @@
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "EoS/GetMatProp.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::Serial;
+using memory_space = Kokkos::HostSpace;
 
 namespace inciter {
 
@@ -668,12 +672,12 @@ getDeformGrad(
   return gk;
 }
 
-template <typename solidxType, typename stateType>
-auto getDeformGrad(
+void getDeformGrad(
   std::size_t nmat,
   std::size_t k,
-  const solidxType& solidx,
-  const stateType& state )
+  Kokkos::View<const real*, memory_space> solidx,
+  Kokkos::View<const real*, memory_space> state 
+  Kokkos::View<real***, memory_space> g)
 // *****************************************************************************
 //  Get the inverse deformation gradient tensor for a material at given location
 //! \param[in] nmat Number of materials in this PDE system
@@ -683,21 +687,13 @@ auto getDeformGrad(
 // *****************************************************************************
 {
 
-  Kokkos::Array<Kokkos::Array<real, 3>, 3> gk;
-
-  if (solidx[k] > 0) {
+  if (solidx(k) > 0) {
     // deformation gradient for solids
     for (std::size_t i=0; i<3; ++i) {
       for (std::size_t j=0; j<3; ++j)
-        gk[i][j] = state[deformIdx(nmat,solidx[k],i,j)];
+        g(k, i, j) = state(deformIdx(nmat, solidx[k],i,j));
     }
   }
-  else {
-    // empty vector for fluids
-    gk = {{}};
-  }
-
-  return gk;
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
@@ -731,13 +727,13 @@ getCauchyStress(
   return asigk;
 }
 
-template <typename solidxType, typename stateType>
-auto getCauchyStress(
+void getCauchyStress(
   std::size_t nmat,
   std::size_t k,
   std::size_t ncomp,
-  const solidxType& solidx,
-  const StateType& state )
+  Kokkos::View<const real*, memory_space> solidx,
+  Kokkos::View<const real*, memory_space> state,
+Kokkos::View<real***, memory_space> asig)
 // *****************************************************************************
 //  Get the elastic Cauchy stress tensor for a material at given location
 //! \param[in] nmat Number of materials in this PDE system
@@ -748,25 +744,21 @@ auto getCauchyStress(
 // *****************************************************************************
 {
 
-    Kokkos::Array<Kokkos::Array<real, 3>, 3> asigk = {};
-
   // elastic Cauchy stress for solids
-  if (solidx[k] > 0) {
+  if (solidx(k) > 0) {
     for (std::size_t i=0; i<3; ++i) {
       for (std::size_t j=0; j<3; ++j)
-        asigk[i][j] = state[ncomp +
-          stressIdx(nmat, solidx[k], stressCmp[i][j])];
+        asigk(k, i, j) = state[ncomp +
+          stressIdx(nmat, solidx(k), stressCmpKokkos[i][j])];
     }
   }
 
-  return asigk;
 }
 
-
-template <typename solidxType>
-bool haveSolid(
+bool
+haveSolid(
   std::size_t nmat,
-  const solidxType& solidx )
+  const std::vector< std::size_t >& solidx )
 // *****************************************************************************
 //  Check whether we have solid materials in our problem
 //! \param[in] nmat Number of materials in this PDE system
@@ -777,6 +769,23 @@ bool haveSolid(
   bool haveSolid = false;
   for (std::size_t k=0; k<nmat; ++k)
     if (solidx[k] > 0) haveSolid = true;
+
+  return haveSolid;
+}
+
+bool haveSolid(
+  std::size_t nmat,
+  Kokkos::View<const size_t*, memory_space>  solidx )
+// *****************************************************************************
+//  Check whether we have solid materials in our problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return true if we have at least one solid, false otherwise.
+// *****************************************************************************
+{
+  bool haveSolid = false;
+  for (std::size_t k=0; k<nmat; ++k)
+    if (solidx(k) > 0) haveSolid = true;
 
   return haveSolid;
 }
@@ -795,6 +804,24 @@ std::size_t numSolids(
   std::size_t nsld(0);
   for (std::size_t k=0; k<nmat; ++k)
     if (solidx[k] > 0) ++nsld;
+
+  return nsld;
+}
+
+std::size_t numSolids(
+  std::size_t nmat,
+  Kokkos::View<const size_t*, memory_space> solidx )
+// *****************************************************************************
+//  Count total number of solid materials in the problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return Total number of solid materials in the problem
+// *****************************************************************************
+{
+  // count number of solid materials
+  std::size_t nsld(0);
+  for (std::size_t k=0; k<nmat; ++k)
+    if (solidx(k) > 0) ++nsld;
 
   return nsld;
 }

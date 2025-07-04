@@ -26,6 +26,10 @@
 #include "UnsMesh.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "../MultiMat/MultiMatIndexing.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::Serial;
+using memory_space = Kokkos::HostSpace;
 
 namespace tk {
 
@@ -43,6 +47,12 @@ eval_gp ( const std::size_t igp,
           const std::array< std::array< tk::real, 3>, 4 >& coord,
           const std::array< std::vector< tk::real >, 3 >& coordgp );
 
+//! Kokkos version of eval_gp volume integral
+KOKKOS_INLINE_FUNCTION Kokkos::Array<real, 3>
+tk::eval_gp ( const std::size_t igp,
+              const Kokkos::Array<Kokkos::Array<real, 3>, 4>& coord,
+              Kokkos::View<const double**, memory_space> coordgp );
+
 //! Compute the derivatives of Dubiner basis wrt. reference coordinates
 std::array< std::vector< tk::real >, 3 >
 eval_dBdxi( const std::size_t ndof,
@@ -53,6 +63,12 @@ std::array< std::vector<tk::real>, 3 >
 eval_dBdx_p1( const std::size_t ndof,
               const std::array< std::array< tk::real, 3 >, 3 >& jacInv );
 
+//! Kokkos version of eval_dBdx_p1
+KOKKOS_INLINE_FUNCTION auto
+tk::eval_dBdx_p1( const std::size_t ndof,
+                const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv, 
+                Kokkos::View<real**, memory_space> dBdx);
+
 //! Compute the derivatives of basis function for DG(P2)
 void
 eval_dBdx_p2( const std::size_t igp,
@@ -60,12 +76,27 @@ eval_dBdx_p2( const std::size_t igp,
               const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
               std::array< std::vector<tk::real>, 3 >& dBdx );
 
+//! Kokkos version of eval_dBdx_p2
+KOKKOS_INLINE_FUNCTION 
+void tk::eval_dBdx_p2( const std::size_t igp,
+              Kokkos::View<real**, memory_space> coordgp,
+              const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv,
+              Kokkos::View<real**, memory_space> dBdx);
+
 //! Compute the Dubiner basis functions
 std::vector< tk::real >
 eval_basis( const std::size_t ndof,
             const tk::real xi,
             const tk::real eta,
             const tk::real zeta );
+//! Kokks version of eval_basis
+
+KOKKOS_INLINE_FUNCTION 
+auto tk::eval_basis( const std::size_t ndof,
+                const tk::real xi,
+                const tk::real eta,
+                const tk::real zeta, 
+               const tk:real );
 
 //! Compute the state variables for the tetrahedron element
 std::vector< tk::real >
@@ -75,6 +106,17 @@ eval_state ( ncomp_t ncomp,
              const std::size_t e,
              const Fields& U,
              const std::vector< tk::real >& B );
+  
+//! Kokkos versioon of eval_state
+template <typename BasisType>
+KOKKOS_INLINE_FUNCTION 
+void tk::eval_state ( ncomp_t ncomp,
+                 const std::size_t ndof,
+                 const std::size_t ndof_el,
+                 const std::size_t e, size_t m_nprop,
+                 Kokkos::View<const real*, memory_space> U,
+                 BasisType B, 
+                 Kokkos::View<real*, memory_space> state);
 
 //! Transform the solution with Dubiner basis to the solution with Taylor basis
 std::vector< std::vector< tk::real > >

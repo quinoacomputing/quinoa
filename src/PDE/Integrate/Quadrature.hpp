@@ -67,6 +67,12 @@ GaussQuadratureTet( std::size_t NG,
                     std::array< std::vector< real >, 3 >& coordgp,
                     std::vector< real >& wgp );
 
+//! Kokkos version of GaussQuadratureTet
+KOKKOS_INLINE_FUNCTION 
+void tk::GaussQuadratureTet( const std::size_t NG,
+              Kokkos::View<real**, memory_space> coordgp,
+              Kokkos::View<real**, memory_space> wgp);
+
 //! Initialize Gaussian quadrature points locations and weights for a triangle
 void
 GaussQuadratureTri( std::size_t NG,

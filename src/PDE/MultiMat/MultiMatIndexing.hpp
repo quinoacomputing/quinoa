@@ -227,6 +227,12 @@ const std::array< std::array< std::size_t, 3 >, 3 > stressCmp{{
   {{3, 1, 5}},
   {{4, 5, 2}} }};
 
+//! Kokkos version of stressCmp since std::array cant be used
+const Kokkos::Array<Kokkos::Array<size_t, 3>, 3> stressCmpKokkos = {{
+  {{0, 3, 4}},
+  {{3, 1, 5}},
+  {{4, 5, 2}} }};
+
 //! Get the index of the required material deformation gradient equation
 //! in the context of a list where only the g's of solid materials are present.
 //! If one needs to access the deformation tensor within the state array one

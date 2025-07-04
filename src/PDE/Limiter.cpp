@@ -2525,11 +2525,10 @@ PositivityFunction( const tk::real min,
   return phi;
 }
 
-template <typename alType, typename matIntType>
-KOKKOS_INLINE_FUNCTION
-bool interfaceIndicator( std::size_t nmat,
-  const alType& al,
-  matIntType& matInt )
+bool
+interfaceIndicator( std::size_t nmat,
+  const std::vector< tk::real >& al,
+  std::vector< std::size_t >& matInt )
 // *****************************************************************************
 //  Interface indicator function, which checks element for material interface
 //! \param[in] nmat Number of materials in this PDE system
@@ -2551,6 +2550,32 @@ bool interfaceIndicator( std::size_t nmat,
     almax = std::max(almax, al[k]);
     matInt[k] = 0;
     if ((al[k] > loLim) && (al[k] < hiLim)) matInt[k] = 1;
+  }
+
+  if ((almax > loLim) && (almax < hiLim)) intInd = true;
+
+  return intInd;
+}
+
+//! Kokkos verison of interfaceIndicator
+KOKKOS_INLINE_FUNCTION
+bool interfaceIndicator( std::size_t nmat,
+  Kokkos::View<real*, memory_space> al,
+  Kokkos::View<size_t*, memory_space> matInt )
+{
+  bool intInd = false;
+
+  // limits under which compression is to be performed
+  auto al_eps = 1e-08;
+  auto loLim = 2.0 * al_eps;
+  auto hiLim = 1.0 - loLim;
+
+  auto almax = 0.0;
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    almax = std::max(almax, al(k));
+    matInt(k) = 0;
+    if ((al(k) > loLim) && (al(k) < hiLim)) matInt(k) = 1;
   }
 
   if ((almax > loLim) && (almax < hiLim)) intInd = true;

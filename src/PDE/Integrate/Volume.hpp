@@ -20,6 +20,10 @@
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "EoS/EOS.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::Serial;
+using memory_space = Kokkos::HostSpace;
 
 namespace tk {
 
@@ -54,6 +58,17 @@ update_rhs( ncomp_t ncomp,
             const std::array< std::vector<tk::real>, 3 >& dBdx,
             const std::vector< std::array< tk::real, 3 > >& fl,
             Fields& R );
+
+KOKKOS_INLINE_FUNCTION
+void tk::update_rhs( ncomp_t ncomp,
+      const std::size_t ndof,
+      const std::size_t ndof_el,
+      const tk::real wt,
+      const std::size_t m_nprop,
+      const std::size_t e,
+      Kokkos::View<const real**, memory_space> dBdx,
+      Kokkos::View<const real**, memory_space> fl,
+      Kokkos::View<real*, memory_space> R)
 
 } // tk::
 

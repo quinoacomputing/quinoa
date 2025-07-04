@@ -84,6 +84,33 @@ THINCRecoTransport(
   [[maybe_unused]] const std::vector< real >& vfmax,
   std::vector< real >& state );
 
+//! Kokkos Version of above
+KOKKOS_INLINE_FUNCTION void
+THINCReco( std::size_t rdof,
+           std::size_t nmat,
+           std::size_t e, 
+           std::size_t ncomp,
+           std::size_t m_nprop,
+            tk::real bparam
+           const std::vector< std::size_t >& inpoel,
+           Kokkos::View<const real*, memory_space> cx,
+           Kokkos::View<const real*, memory_space> cy, 
+           Kokkos::View<const real*, memory_space> cz,
+           Kokkos::View<const real*, memory_space> & geoElem,
+           const Kokkos::Array<real, 3>& ref_xp,
+           Kokkos::View<const real*, memory_space> U,
+           Kokkos::View<const real*, memory_space> P,
+           bool intInd,
+           Kokkos::View<const real*, memory_space> solidx,
+           Kokkos::View<size_t*, memory_space> matInt,
+           [[maybe_unused]] Kokkos::View<const real*, memory_space> vfmin,
+           [[maybe_unused]] Kokkos::View<const real*, memory_space> vfmax,
+           Kokkos::View<real*, memory_space> state, 
+          Kokkos::View<real*, memory_space> alSol, 
+        Kokkos::View<real*, memory_space> alReco,
+        Kokkos::View<real**, memory_space> dBdx, 
+        Kokkos::View<real**, memory_space> ref_n);
+
 //! Old THINC reconstruction function for volume fractions near interfaces
 void
 THINCFunction( std::size_t rdof,
@@ -98,6 +125,24 @@ THINCFunction( std::size_t rdof,
   bool intInd,
   const std::vector< std::size_t >& matInt,
   std::vector< real >& alReco );
+
+KOKKOS_INLINE_FUNCTION
+void THINCFunction( std::size_t rdof,
+    std::size_t nmat,
+    std::size_t e,
+    Kokkos::View<const size_t*, memory_space> inpoel,
+    Kokkos::View<const real*, memory_space> cx,
+    Kokkos::View<const real*, memory_space> cy,
+    Kokkos::View<const real*, memory_space> cz,
+    const Kokkos::Array<real, 3>& ref_xp,
+    real vol,
+    real bparam,
+    Kokkos::View<const real*, memory_space> alSol,
+    bool intInd,
+    Kokkos::View<const size_t*, memory_space> matInt,
+    Kokkos::View<real*, memory_space> alReco
+    Kokkos::View<real**, memory_space> dBdx
+    Kokkos::View<real**, memory_space> ref_n);
 
 //! New THINC reconstruction function for volume fractions near interfaces
 void
@@ -146,6 +191,33 @@ evalPolynomialSol(
   const Fields& U,
   const Fields& P);
 
+  //! Kokkos evalPolySolution
+  template <typename BasisType> void
+evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
+    int intsharp,
+    std::size_t ncomp,
+    std::size_t nprim,
+    std::size_t rdof,
+    std::size_t nmat,
+    std::size_t e,
+    std::size_t dof_e,
+    std::size_t m_nprop,
+    tk::real bparam,
+    Kokkos::View<const size_t*, memory_space> inpoel,
+    Kokkos::View<const real*, memory_space> cx,
+    Kokkos::View<const real*, memory_space> cy,
+    Kokkos::View<const real*, memory_space> cz,
+    Kokkos::View<const real*, memory_space> geoElem,
+    const Kokkos::Array<real, 3>& ref_gp,
+    const BasisType& B,
+    Kokkos::View<const real*, memory_space> U,
+    Kokkos::View<const real*, memory_space> P,
+  Kokkos::View<real*, memory_space> state, 
+  Kokkos::View<real*, memory_space> matInt,
+  Kokkos::View<real*, memory_space> alAvg, 
+  Kokkos::View<real*, memory_space> vfmax, 
+  Kokkos::View<real*, memory_space> vfmin)
+
 //! Evaluate second-order FV solution at quadrature point
 std::vector< tk::real >
 evalFVSol(
@@ -172,6 +244,13 @@ enforcePhysicalConstraints(
   std::size_t nmat,
   std::size_t ncomp,
   std::vector< tk::real >& state );
+
+void
+enforcePhysicalConstraints(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t nmat,
+  std::size_t ncomp,
+  Kokkos::View<real*, memory_space> state);
 
 //! Compute safe reconstructions near material interfaces
 void
