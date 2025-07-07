@@ -463,6 +463,16 @@ class DG : public CBase_DG {
 
     //! Perform the BDF1 update
     void BDF1_integrate();
+
+    //! Non-linear solver using Broyden's method
+    std::vector< tk::real > nonlinear_solver(std::size_t e,
+                                             std::vector< tk::real > x,
+                                             std::vector< tk::real > x_lower,
+                                             std::vector< tk::real > x_upper);
+
+    //! Non-linear function necessary to integrate with IMEX
+    std::vector< tk::real > nonlinear_func(std::size_t e,
+                                           std::vector< tk::real > x);
 };
 
 } // inciter::
