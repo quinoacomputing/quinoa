@@ -84,12 +84,13 @@ getDeformGrad(
   const std::vector< tk::real >& state );
 
 //! Kokkos version of getDeformGrad
+KOKKOS_INLINE_FUNCTION
  void getDeformGrad(
   std::size_t nmat,
   std::size_t k,
-  Kokkos::View<const real*, memory_space> solidx,
-  Kokkos::View<const real*, memory_space> state 
-  Kokkos::View<real***, memory_space> g);
+  Kokkos::View<const size_t*, memory_space> solidx,
+  Kokkos::View<const tk::real*, memory_space> state,
+  Kokkos::View<tk::real***, memory_space> g);
 
 //! Get the elastic Cauchy stress tensor for a material at given location
 std::array< std::array< tk::real, 3 >, 3 >
@@ -100,14 +101,14 @@ getCauchyStress(
   const std::vector< tk::real >& state );
 
 //! Kokkos Version of getCauchyStress
-
+KOKKOS_INLINE_FUNCTION
 void getCauchyStress(
   std::size_t nmat,
   std::size_t k,
   std::size_t ncomp,
-  Kokkos::View<const real*, memory_space> solidx,
-  Kokkos::View<const real*, memory_space> state,
- Kokkos::View<real***, memory_space> asig);
+  Kokkos::View<const size_t*, memory_space> solidx,
+  Kokkos::View<const tk::real*, memory_space> state,
+  Kokkos::View<tk::real***, memory_space> asig);
 
 //! Check whether we have solid materials in our problem
 bool
@@ -118,7 +119,7 @@ haveSolid(
 //! Kokkos version of haveSolid
 bool haveSolid(
   std::size_t nmat,
-  Kokkos::View<const size_t*, memory_space>  solidx )
+  Kokkos::View<const size_t*, memory_space>  solidx);
 
 //! Count total number of solid materials in the problem
 std::size_t numSolids(

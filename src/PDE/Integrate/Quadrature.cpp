@@ -12,6 +12,10 @@
 // *****************************************************************************
 
 #include "Quadrature.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::Serial;
+using memory_space = Kokkos::HostSpace;
 
 void
 tk::GaussQuadratureTet( const std::size_t NG,
@@ -248,7 +252,7 @@ tk::GaussQuadratureTet( const std::size_t NG,
 
 KOKKOS_INLINE_FUNCTION void tk::GaussQuadratureTet( const std::size_t NG,
                         Kokkos::View<real**, memory_space> coordgp,
-                        Kokkos::View<real**, memory_space> wgp)
+                        Kokkos::View<real*, memory_space> wgp)
 // *****************************************************************************
 //! Initialize Gaussian quadrature points locations and weights for a tetrahedron
 //! \param(in) NG number of quadrature points

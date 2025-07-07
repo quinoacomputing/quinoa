@@ -60,7 +60,7 @@ update_rhs( ncomp_t ncomp,
             Fields& R );
 
 KOKKOS_INLINE_FUNCTION
-void tk::update_rhs( ncomp_t ncomp,
+void update_rhs( ncomp_t ncomp,
       const std::size_t ndof,
       const std::size_t ndof_el,
       const tk::real wt,
@@ -68,7 +68,7 @@ void tk::update_rhs( ncomp_t ncomp,
       const std::size_t e,
       Kokkos::View<const real**, memory_space> dBdx,
       Kokkos::View<const real**, memory_space> fl,
-      Kokkos::View<real*, memory_space> R)
+      Kokkos::View<real*, memory_space> R);
 
 } // tk::
 

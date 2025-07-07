@@ -21,6 +21,9 @@
 #include "UnsMesh.hpp"
 #include "EoS/EOS.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
+#include "Kokkos_Core.hpp"
+
+using memory_space = Kokkos::HostSpace;
 
 namespace tk {
 
@@ -138,6 +141,21 @@ fluxTerms(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
   const std::vector< tk::real >& ugp );
+
+//! Kokkos version of flux(fluxTerms) function call
+KOKKOS_INLINE_FUNCTION
+void fluxTerms_multimat_kokkos(
+  std::size_t ncomp,
+  std::size_t nmat,
+  Kokkos::View<const size_t*, memory_space>  solidx,
+  const std::vector< inciter::EOS >& /*mat_blk*/,
+  Kokkos::View<real*, memory_space> ugp, // this is state essentially
+  Kokkos::View<real***, memory_space> g, 
+  Kokkos::View<real***, memory_space> asig,
+  Kokkos::View<real*, memory_space> al,
+  Kokkos::View<real**, memory_space> fl, 
+  Kokkos::View<real*, memory_space> apk);
+
 } // tk::
 
 #endif // MultiMatTerms_h

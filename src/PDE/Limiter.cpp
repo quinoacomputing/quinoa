@@ -28,6 +28,10 @@
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "MultiSpecies/Mixture/Mixture.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::Serial;
+using memory_space = Kokkos::HostSpace;
 
 namespace inciter {
 
@@ -2560,7 +2564,7 @@ interfaceIndicator( std::size_t nmat,
 //! Kokkos verison of interfaceIndicator
 KOKKOS_INLINE_FUNCTION
 bool interfaceIndicator( std::size_t nmat,
-  Kokkos::View<real*, memory_space> al,
+  Kokkos::View<tk::real*, memory_space> al,
   Kokkos::View<size_t*, memory_space> matInt )
 {
   bool intInd = false;

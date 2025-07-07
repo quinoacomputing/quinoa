@@ -15,11 +15,14 @@
 #include <array>
 #include <cmath>
 #include <vector>
-#include "Kokkos_Core.hpp"
 #include <cblas.h>
 
 #include "Types.hpp"
 #include "Exception.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::Serial;
+using memory_space = Kokkos::HostSpace;
 
 // ignore old-style-casts required for lapack/blas calls
 #if defined(__clang__)
@@ -40,10 +43,6 @@ extern lapack_int LAPACKE_dgetri( int, lapack_int, double*, lapack_int,
   const lapack_int* );
 
 }
-
-using memory_space = Kokkos::HostSpace;
-using exection_space = Kokkos::DefaultExecutionSpace;
-using range_policy = Kokkos::RangePolicy<execution_space>;
 
 
 namespace tk {
@@ -143,17 +142,19 @@ crossdiv( const std::array< real, 3 >& v1,
 //! \param[in] v2 2nd vector
 //! \return Dot-product
 
+template <typename ArrayType>
 KOKKOS_INLINE_FUNCTION real
-dot(const Kokkos::Array<real, 3>& v1, const Kokkos::Array<real, 3>& v2 )
+dot(const ArrayType& v1, const ArrayType& v2 )
 {
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
-inline real
+/*inline real
 dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 {
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
+*/
 
 //! Compute the dot-product of a matrix and a vector
 //! \param[in] m Matrix
@@ -227,18 +228,6 @@ tk::real triple(real v1x, real v1y, real v1z,
   cross( v2x, v2y, v2z, v3x, v3y, v3z, cx, cy, cz );
   return v1x*cx + v1y*cy + v1z*cz;
 }
-
-#pragma omp declare simd
-inline tk::real
-triple( real v1x, real v1y, real v1z,
-        real v2x, real v2y, real v2z,
-        real v3x, real v3y, real v3z )
-{
-  real cx, cy, cz;
-  cross( v2x, v2y, v2z, v3x, v3y, v3z, cx, cy, cz );
-  return v1x*cx + v1y*cy + v1z*cz;
-}
-
 
 //! Compute the triple-product of three vectors
 //! \param[in] v1 1st vector
@@ -397,7 +386,7 @@ inverseJacobian(const Kokkos::Array<real, 3>& v1,
           const Kokkos::Array<real, 3>& v3,
           const Kokkos::Array<real, 3>& v4 )
 {
-  Kokkoks::Array<Kokkos::Array<real, 3>, 3> jacInv;
+  Kokkos::Array<Kokkos::Array<real, 3>, 3> jacInv;
 
   auto detJ = Jacobian( v1, v2, v3, v4 );
 
@@ -437,22 +426,13 @@ determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
          + a[0][2] * (a[1][0]*a[2][1]-a[1][1]*a[2][0]) );
 }
 
-
-KOKKOS_INLINE_FUNCTION tk::real
-determinant(const Kokkos::Array<Kokkos::Array<real, 3>, 3>& a )
-{
-  return ( a[0][0] * (a[1][1]*a[2][2]-a[1][2]*a[2][1])
-         - a[0][1] * (a[1][0]*a[2][2]-a[1][2]*a[2][0])
-         + a[0][2] * (a[1][0]*a[2][1]-a[1][1]*a[2][0]) );
-}
-
 //! Compute the inverse of 3x3 matrix
 //!  \param[in] m 3x3 matrix
 //!  \return Inverse of the 3x3 matrix
 inline std::array< std::array< tk::real, 3 >, 3 >
 inverse( const std::array< std::array< tk::real, 3 >, 3 >& m )
 {
-  tk::real det = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
+  tk::real det = m[0][0] * (m[1][1] * m[2][2] - m[2][ 1] * m[1][2]) -
                  m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
                  m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
 

@@ -348,8 +348,8 @@ interfaceIndicator( std::size_t nmat,
 
 KOKKOS_INLINE_FUNCTION
 bool interfaceIndicator( std::size_t nmat,
-  Kokkos::View<real*, memory_space> al,
-  Kokkos::View<size_t*, memory_space> matInt )
+  Kokkos::View<tk::real*, memory_space> al,
+  Kokkos::View<size_t*, memory_space> matInt );
 
 //! Mark the cells that contain discontinuity according to the interface
 void MarkShockCells ( const bool pref,

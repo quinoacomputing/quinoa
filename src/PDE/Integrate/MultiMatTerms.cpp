@@ -1005,10 +1005,10 @@ fluxTerms(
 
 //! Kokkos version of fluxTerms for experimental purposes
 //! to avoid using function pointers
-void  fluxTerms_multimat_kokkos(
+void fluxTerms_multimat_kokkos(
   std::size_t ncomp,
   std::size_t nmat,
-  Kokkos::View<const size_t*, memory_space>  solidx;
+  Kokkos::View<const size_t*, memory_space>  solidx,
   const std::vector< inciter::EOS >& /*mat_blk*/,
   Kokkos::View<real*, memory_space> ugp, // this is state essentially
   Kokkos::View<real***, memory_space> g, 
@@ -1025,8 +1025,6 @@ void  fluxTerms_multimat_kokkos(
   using inciter::pressureIdx;
   using inciter::deformIdx;
 
-  Kokkos::resize(fl, ncomp, 3);
-
   tk::real rho(0.0);
   for (std::size_t k=0; k<nmat; ++k)
     rho += ugp(densityIdx(nmat, k));
@@ -1038,18 +1036,15 @@ void  fluxTerms_multimat_kokkos(
   //? Have solid function is easy to do, its in PDE/MultiMat/MiscMultiMatFns.hpp //?DONE
   if (inciter::haveSolid(nmat, solidx))
   {
-    Kokkos::resize(nmat);
-    Kokkos::resize(nmat, 3, 3);
-    
-    Kokkos::Array<Kokkos::Array<real, 3>, 3> sig = {}
+    Kokkos::Array<Kokkos::Array<real, 3>, 3> sig = {};
     for (std::size_t k=0; k<nmat; ++k)
     {
       al(k) = ugp[volfracIdx(nmat, k)];
       // inv deformation gradient and Cauchy stress tensors
       //? getDeformGrad, getCauchyStress seems fine, just need to pass in solidx to avoid using ginputDeck
       //? Try using subview, but doesnt seem to work? So, just pass g, asig as reference views :(
-      inciter::getDeformGrad(nmat, k, ugp, g);
-      inciter::getCauchyStress(nmat, k, ncomp, ugp, solidx, asig);
+      inciter::getDeformGrad(nmat, k, solidx, ugp, g);
+      inciter::getCauchyStress(nmat, k, ncomp, solidx, ugp, asig);
       for (std::size_t i=0; i<3; ++i) asig(k, i, i) -= ugp(ncomp+pressureIdx(nmat,k));
       for (size_t i=0; i<3; ++i)
         for (size_t j=0; j<3; ++j)
@@ -1111,7 +1106,7 @@ void  fluxTerms_multimat_kokkos(
     for (std::size_t k=0; k<nmat; ++k)
     {
       apk(k) = ugp(ncomp+pressureIdx(nmat,k));
-      p += apk(k)
+      p += apk(k);
     }
 
     // conservative part of momentum flux

@@ -13,6 +13,10 @@
 #ifndef MultiMatIndexing_h
 #define MultiMatIndexing_h
 
+#include "Kokkos_Core.hpp"
+using execution_space = Kokkos::Serial;
+using memory_space = Kokkos::HostSpace;
+
 namespace inciter {
 
 /** @name Functions that compute indices for physics variables for MultiMat */

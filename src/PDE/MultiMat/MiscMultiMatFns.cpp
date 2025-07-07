@@ -511,7 +511,8 @@ timeStepSizeMultiMatFV(
     auto u = pgp[velocityIdx(nmat, 0)];
     auto v = pgp[velocityIdx(nmat, 1)];
     auto w = pgp[velocityIdx(nmat, 2)];
-    auto vmag = std::sqrt(tk::dot({u, v, w}, {u, v, w}));
+
+    auto vmag = std::sqrt(u*u + v*v + w*w); 
 
     // acoustic speed
     tk::real a = 0.0;
@@ -672,12 +673,13 @@ getDeformGrad(
   return gk;
 }
 
+KOKKOS_INLINE_FUNCTION
 void getDeformGrad(
   std::size_t nmat,
   std::size_t k,
-  Kokkos::View<const real*, memory_space> solidx,
-  Kokkos::View<const real*, memory_space> state 
-  Kokkos::View<real***, memory_space> g)
+  Kokkos::View<const tk::real*, memory_space> solidx,
+  Kokkos::View<const tk::real*, memory_space> state, 
+  Kokkos::View<tk::real***, memory_space> g)
 // *****************************************************************************
 //  Get the inverse deformation gradient tensor for a material at given location
 //! \param[in] nmat Number of materials in this PDE system
@@ -691,7 +693,7 @@ void getDeformGrad(
     // deformation gradient for solids
     for (std::size_t i=0; i<3; ++i) {
       for (std::size_t j=0; j<3; ++j)
-        g(k, i, j) = state(deformIdx(nmat, solidx[k],i,j));
+        g(k, i, j) = state(deformIdx(nmat, solidx(k),i,j));
     }
   }
 }
@@ -727,13 +729,14 @@ getCauchyStress(
   return asigk;
 }
 
+KOKKOS_INLINE_FUNCTION
 void getCauchyStress(
   std::size_t nmat,
   std::size_t k,
   std::size_t ncomp,
-  Kokkos::View<const real*, memory_space> solidx,
-  Kokkos::View<const real*, memory_space> state,
-Kokkos::View<real***, memory_space> asig)
+  Kokkos::View<const tk::real*, memory_space> solidx,
+  Kokkos::View<const tk::real*, memory_space> state,
+  Kokkos::View<tk::real***, memory_space> asigk)  
 // *****************************************************************************
 //  Get the elastic Cauchy stress tensor for a material at given location
 //! \param[in] nmat Number of materials in this PDE system

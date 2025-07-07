@@ -81,10 +81,10 @@ tk::eval_gp ( const std::size_t igp,
    coord[0][2]*shp1 + coord[1][2]*shp2 + coord[2][2]*shp3 + coord[3][2]*shp4 }};
 }
 
-KOKKOS_INLINE_FUNCTION Kokkos::Array<real, 3>
+KOKKOS_INLINE_FUNCTION Kokkos::Array<tk::real, 3>
 tk::eval_gp ( const std::size_t igp,
-              const Kokkos::Array<Kokkos::Array<real, 3>, 4>& coord,
-              const Kokkos::View<double**, memory_space> coordgp )
+              const Kokkos::Array<Kokkos::Array<tk::real, 3>, 4>& coord,
+              Kokkos::View<const tk::real**, memory_space> coordgp )
 // *****************************************************************************
 //  Compute the coordinates of quadrature points for volume integral in
 //  physical space
@@ -255,7 +255,7 @@ tk::eval_dBdx_p1( const std::size_t ndof,
 KOKKOS_INLINE_FUNCTION void
 tk::eval_dBdx_p1( const std::size_t ndof,
                   const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv, 
-                Kokkos::View<real**, memory_space> dBdx)
+                  Kokkos::View<real**, memory_space> dBdx)
 // *****************************************************************************
 //  Compute the derivatives of basis functions for DG(P1)
 //! \param[in] ndof Number of degrees of freedom
@@ -319,7 +319,7 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   dBdx(2, 3) =  db4dxi1 * jacInv[0][2]
               + db4dxi2 * jacInv[1][2]
               + db4dxi3 * jacInv[2][2];
-}
+};
 
 void
 tk::eval_dBdx_p2( const std::size_t igp,
@@ -496,7 +496,7 @@ void tk::eval_dBdx_p2( const std::size_t igp,
               + db6dxi2 * jacInv[1][0]
               + db6dxi3 * jacInv[2][0];
 
-  dBdx1(1, 5) =  db6dxi1 * jacInv[0][1]
+  dBdx(1, 5) =  db6dxi1 * jacInv[0][1]
               + db6dxi2 * jacInv[1][1]
               + db6dxi3 * jacInv[2][1];
 
@@ -595,13 +595,13 @@ tk::eval_basis( const std::size_t ndof,
   return B;
 }
 
-//! difference function signature for Kokkos friendly eval_basis?
+//! overloaded function for eval_basis for Kokkos 
 KOKKOS_INLINE_FUNCTION 
-auto tk::eval_basis( const std::size_t ndof,
+void tk::eval_basis( const std::size_t ndof,
                 const tk::real xi,
                 const tk::real eta,
                 const tk::real zeta, 
-              const tk:real )
+                Kokkos::View<real*, memory_space> B)
 // *****************************************************************************
 //  Compute the Dubiner basis functions
 //! \param[in] ndof Number of degrees of freedom
@@ -610,40 +610,32 @@ auto tk::eval_basis( const std::size_t ndof,
 // *****************************************************************************
 {
   // Array of basis functions
-  if (ndof < 5) {
-    Kokkos::Array<real, 4> B;
-  }
-  else {
-    Kokkos::Array<real, 10> B;
-  }
 
-  B[0] = 1.0;
+  B(0) = 1.0;
 
   if ( ndof > 1 )           // DG(P1)
   {
-    B[1] = 2.0 * xi + eta + zeta - 1.0;
-    B[2] = 3.0 * eta + zeta - 1.0;
+    B(1) = 2.0 * xi + eta + zeta - 1.0;
+    B(2) = 3.0 * eta + zeta - 1.0;
     B(3) = 4.0 * zeta - 1.0;
 
     if( ndof > 4 )         // DG(P2)
     {
-      B[4] =  6.0 * xi * xi + eta * eta + zeta * zeta
+      B(4) =  6.0 * xi * xi + eta * eta + zeta * zeta
             + 6.0 * xi * eta + 6.0 * xi * zeta + 2.0 * eta * zeta
             - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-      B[5] =  5.0 * eta * eta + zeta * zeta
+      B(5) =  5.0 * eta * eta + zeta * zeta
             + 10.0 * xi * eta + 2.0 * xi * zeta + 6.0 * eta * zeta
             - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
-      B[6] =  6.0 * zeta * zeta + 12.0 * xi * zeta + 6.0 * eta * zeta - 2.0 * xi
+      B(6) =  6.0 * zeta * zeta + 12.0 * xi * zeta + 6.0 * eta * zeta - 2.0 * xi
             - eta - 7.0 * zeta + 1.0;
-      B[7] =  10.0 * eta * eta + zeta * zeta + 8.0 * eta * zeta
+      B(7) =  10.0 * eta * eta + zeta * zeta + 8.0 * eta * zeta
             - 8.0 * eta - 2.0 * zeta + 1.0;
-      B[8] =  6.0 * zeta * zeta + 18.0 * eta * zeta - 3.0 * eta - 7.0 * zeta
+      B(8) =  6.0 * zeta * zeta + 18.0 * eta * zeta - 3.0 * eta - 7.0 * zeta
             + 1.0;
-      B[9] =  15.0 * zeta * zeta - 10.0 * zeta + 1.0;
+      B(9) =  15.0 * zeta * zeta - 10.0 * zeta + 1.0;
     }
   }
-
-  return B;
 }
 
 std::vector< tk::real >
@@ -706,9 +698,10 @@ void tk::eval_state ( ncomp_t ncomp,
                  const std::size_t ndof,
                  const std::size_t ndof_el,
                  const std::size_t e, size_t m_nprop,
-                 Kokkos::View<const real*, memory_space> U,
+                 Kokkos::View<const tk::real*, memory_space> U,
                  BasisType B, 
-                Kokkos::View<real*, memory_space> state)
+                 Kokkos::View<tk::real*, memory_space> state,
+                const size_t& idx)
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -724,8 +717,6 @@ void tk::eval_state ( ncomp_t ncomp,
   // applied, the size of basis will be 10. However, ndof_el will be 4 which
   // leads to a size mismatch in limiter function.
   //Assert( B.size() == ndof_el, "Size mismatch" );
-
-  if (U.extent(0) == 0) return {};
 
   // Array of state variable for tetrahedron element
   /*
@@ -743,23 +734,23 @@ void tk::eval_state ( ncomp_t ncomp,
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    state(c) = U(e * m_nprop + mark);
+    state(c + idx) = U(e * m_nprop + mark);
 
     if(ndof_el > 1)        // Second order polynomial solution
     {
-      state(c) += U( e, mark+1 ) * B[1]
-                + U( e, mark+2 ) * B[2]
-                + U( e, mark+3 ) * B[3];
+      state(c + idx) += U( e * m_nprop +mark+1 ) * B(1)
+                + U( e * m_nprop +mark+2 ) * B(2)
+                + U( e * m_nprop +mark+3 ) * B(3);
     }
 
     if(ndof_el > 4)        // Third order polynomial solution
     {
-      state(c) += U( e, mark+4 ) * B[4];
-                + U( e, mark+5 ) * B[5];
-                + U( e, mark+6 ) * B[6];
-                + U( e, mark+7 ) * B[7];
-                + U( e, mark+8 ) * B[8];
-                + U( e, mark+9 ) * B[9];
+      state(c + idx) += U( e * m_nprop + mark+4 ) * B(4)
+                + U( e * m_nprop + mark+5 ) * B(5)
+                + U( e * m_nprop + mark+6 ) * B(6)
+                + U( e * m_nprop + mark+7 ) * B(7)
+                + U( e * m_nprop +mark+8 ) * B(8)
+                + U( e * m_nprop + mark+9 ) * B(9);
     }
   }
 }
