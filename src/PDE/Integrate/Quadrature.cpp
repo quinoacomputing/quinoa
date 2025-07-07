@@ -250,7 +250,7 @@ tk::GaussQuadratureTet( const std::size_t NG,
   }
 }
 
-KOKKOS_INLINE_FUNCTION void tk::GaussQuadratureTet( const std::size_t NG,
+KOKKOS_FUNCTION void tk::GaussQuadratureTet( const std::size_t NG,
                         Kokkos::View<real**, memory_space> coordgp,
                         Kokkos::View<real*, memory_space> wgp)
 // *****************************************************************************

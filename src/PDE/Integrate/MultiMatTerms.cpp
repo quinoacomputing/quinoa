@@ -1005,6 +1005,7 @@ fluxTerms(
 
 //! Kokkos version of fluxTerms for experimental purposes
 //! to avoid using function pointers
+KOKKOS_FUNCTION
 void fluxTerms_multimat_kokkos(
   std::size_t ncomp,
   std::size_t nmat,

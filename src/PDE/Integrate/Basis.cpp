@@ -81,7 +81,7 @@ tk::eval_gp ( const std::size_t igp,
    coord[0][2]*shp1 + coord[1][2]*shp2 + coord[2][2]*shp3 + coord[3][2]*shp4 }};
 }
 
-KOKKOS_INLINE_FUNCTION Kokkos::Array<tk::real, 3>
+KOKKOS_FUNCTION Kokkos::Array<tk::real, 3>
 tk::eval_gp ( const std::size_t igp,
               const Kokkos::Array<Kokkos::Array<tk::real, 3>, 4>& coord,
               Kokkos::View<const tk::real**, memory_space> coordgp )
@@ -252,7 +252,7 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   return dBdx;
 }
 
-KOKKOS_INLINE_FUNCTION void
+KOKKOS_FUNCTION void
 tk::eval_dBdx_p1( const std::size_t ndof,
                   const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv, 
                   Kokkos::View<real**, memory_space> dBdx)
@@ -437,7 +437,7 @@ tk::eval_dBdx_p2( const std::size_t igp,
               + db10dxi3 * jacInv[2][2];
 }
 
-KOKKOS_INLINE_FUNCTION 
+KOKKOS_FUNCTION 
 void tk::eval_dBdx_p2( const std::size_t igp,
                   Kokkos::View<real**, memory_space> coordgp,
                   const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv,
@@ -596,7 +596,7 @@ tk::eval_basis( const std::size_t ndof,
 }
 
 //! overloaded function for eval_basis for Kokkos 
-KOKKOS_INLINE_FUNCTION 
+KOKKOS_FUNCTION 
 void tk::eval_basis( const std::size_t ndof,
                 const tk::real xi,
                 const tk::real eta,
@@ -692,14 +692,13 @@ tk::eval_state ( ncomp_t ncomp,
   return state;
 }
 
-template <typename BasisType>
-KOKKOS_INLINE_FUNCTION 
+KOKKOS_FUNCTION 
 void tk::eval_state ( ncomp_t ncomp,
                  const std::size_t ndof,
                  const std::size_t ndof_el,
                  const std::size_t e, size_t m_nprop,
                  Kokkos::View<const tk::real*, memory_space> U,
-                 BasisType B, 
+                 Kokkos::View<const tk::real*, memory_space> B, 
                  Kokkos::View<tk::real*, memory_space> state,
                 const size_t& idx)
 // *****************************************************************************

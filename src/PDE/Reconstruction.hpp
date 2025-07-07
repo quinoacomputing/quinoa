@@ -195,8 +195,7 @@ evalPolynomialSol(
   const Fields& P);
 
   //! Kokkos evalPolySolution
-template <typename BasisType> 
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
     int intsharp,
     std::size_t ncomp,
@@ -214,7 +213,7 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
     Kokkos::View<const real*, memory_space> cz,
     Kokkos::View<const real*, memory_space> geoElem,
     const Kokkos::Array<real, 3>& ref_gp,
-    const BasisType& B,
+     Kokkos::View<const tk::real*, memory_space> B,
     Kokkos::View<const real*, memory_space> U,
     Kokkos::View<const real*, memory_space> P,
   Kokkos::View<real*, memory_space> state, 

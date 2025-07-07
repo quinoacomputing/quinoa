@@ -48,7 +48,7 @@ eval_gp ( const std::size_t igp,
           const std::array< std::vector< tk::real >, 3 >& coordgp );
 
 //! Kokkos version of eval_gp volume integral
-KOKKOS_INLINE_FUNCTION Kokkos::Array<tk::real, 3>
+KOKKOS_FUNCTION Kokkos::Array<tk::real, 3>
 eval_gp ( const std::size_t igp,
               const Kokkos::Array<Kokkos::Array<tk::real, 3>, 4>& coord,
               Kokkos::View<const tk::real**, memory_space> coordgp );
@@ -64,7 +64,7 @@ eval_dBdx_p1( const std::size_t ndof,
               const std::array< std::array< tk::real, 3 >, 3 >& jacInv );
 
 //! Kokkos version of eval_dBdx_p1
-KOKKOS_INLINE_FUNCTION void
+KOKKOS_FUNCTION void
 eval_dBdx_p1( const std::size_t ndof,
                 const Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>& jacInv, 
                 Kokkos::View<tk::real**, memory_space> dBdx);
@@ -77,7 +77,7 @@ eval_dBdx_p2( const std::size_t igp,
               std::array< std::vector<tk::real>, 3 >& dBdx );
 
 //! Kokkos version of eval_dBdx_p2
-KOKKOS_INLINE_FUNCTION 
+KOKKOS_FUNCTION 
 void eval_dBdx_p2( const std::size_t igp,
               Kokkos::View<tk::real**, memory_space> coordgp,
               const Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>& jacInv,
@@ -91,7 +91,7 @@ eval_basis( const std::size_t ndof,
             const tk::real zeta );
 //! Kokks version of eval_basis
 
-KOKKOS_INLINE_FUNCTION 
+KOKKOS_FUNCTION 
 void eval_basis( const std::size_t ndof,
                 const tk::real xi,
                 const tk::real eta,
@@ -108,14 +108,13 @@ eval_state ( ncomp_t ncomp,
              const std::vector< tk::real >& B );
   
 //! Kokkos versioon of eval_state
-template <typename BasisType>
-KOKKOS_INLINE_FUNCTION 
-void tk::eval_state ( ncomp_t ncomp,
+KOKKOS_FUNCTION 
+void eval_state ( ncomp_t ncomp,
                  const std::size_t ndof,
                  const std::size_t ndof_el,
                  const std::size_t e, size_t m_nprop,
                  Kokkos::View<const tk::real*, memory_space> U,
-                 BasisType B, 
+                 Kokkos::View<const tk::real*, memory_space> B, 
                  Kokkos::View<tk::real*, memory_space> state, 
                 const size_t& idx);
 

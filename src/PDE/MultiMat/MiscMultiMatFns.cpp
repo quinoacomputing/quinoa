@@ -673,11 +673,11 @@ getDeformGrad(
   return gk;
 }
 
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 void getDeformGrad(
   std::size_t nmat,
   std::size_t k,
-  Kokkos::View<const tk::real*, memory_space> solidx,
+  Kokkos::View<const size_t*, memory_space> solidx,
   Kokkos::View<const tk::real*, memory_space> state, 
   Kokkos::View<tk::real***, memory_space> g)
 // *****************************************************************************
@@ -729,12 +729,12 @@ getCauchyStress(
   return asigk;
 }
 
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 void getCauchyStress(
   std::size_t nmat,
   std::size_t k,
   std::size_t ncomp,
-  Kokkos::View<const tk::real*, memory_space> solidx,
+  Kokkos::View<const size_t*, memory_space> solidx,
   Kokkos::View<const tk::real*, memory_space> state,
   Kokkos::View<tk::real***, memory_space> asigk)  
 // *****************************************************************************
@@ -776,6 +776,7 @@ haveSolid(
   return haveSolid;
 }
 
+KOKKOS_FUNCTION
 bool haveSolid(
   std::size_t nmat,
   Kokkos::View<const size_t*, memory_space>  solidx )

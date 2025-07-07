@@ -1191,8 +1191,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
   return state;
 }
 
-template <typename BasisType>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    int intsharp,
                    std::size_t ncomp,
@@ -1205,23 +1204,23 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    tk::real bparam,
                    Kokkos::View<const size_t*, memory_space> solidx,
                    Kokkos::View<const size_t*, memory_space> inpoel,
-                   Kokkos::View<const real*, memory_space> cx,
-                   Kokkos::View<const real*, memory_space> cy,
-                   Kokkos::View<const real*, memory_space> cz,
-                   Kokkos::View<const real*, memory_space> geoElem,
-                   const Kokkos::Array<real, 3>& ref_gp,
-                   const BasisType& B,
-                   Kokkos::View<const real*, memory_space> U,
-                   Kokkos::View<const real*, memory_space> P,
-                  Kokkos::View<real*, memory_space> state, 
+                   Kokkos::View<const tk::real*, memory_space> cx,
+                   Kokkos::View<const tk::real*, memory_space> cy,
+                   Kokkos::View<const tk::real*, memory_space> cz,
+                   Kokkos::View<const tk::real*, memory_space> geoElem,
+                   const Kokkos::Array<tk::real, 3>& ref_gp,
+                   Kokkos::View<const tk::real*, memory_space> B,
+                   Kokkos::View<const tk::real*, memory_space> U,
+                   Kokkos::View<const tk::real*, memory_space> P,
+                  Kokkos::View<tk::real*, memory_space> state, 
                   Kokkos::View<size_t*, memory_space> matInt,
-                  Kokkos::View<real*, memory_space> alAvg, 
-                  Kokkos::View<real*, memory_space> vfmax, 
-                  Kokkos::View<real*, memory_space> vfmin,
-                  Kokkos::View<real*, memory_space> alSol, 
-                  Kokkos::View<real*, memory_space> alReco,
-                  Kokkos::View<real**, memory_space> dBdx, 
-                   Kokkos::View<Kokkos::Array<real, 3>*, memory_space> ref_n)
+                  Kokkos::View<tk::real*, memory_space> alAvg, 
+                  Kokkos::View<tk::real*, memory_space> vfmax, 
+                  Kokkos::View<tk::real*, memory_space> vfmin,
+                  Kokkos::View<tk::real*, memory_space> alSol, 
+                  Kokkos::View<tk::real*, memory_space> alReco,
+                  Kokkos::View<tk::real**, memory_space> dBdx, 
+                   Kokkos::View<Kokkos::Array<tk::real, 3>*, memory_space> ref_n)
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] mat_blk EOS material block
@@ -1282,9 +1281,12 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
     //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
   }
 
-  // physical constraints
-  //? uncomment the below equations if pressure is an issue
-  //enforcePhysicalConstraints(mat_blk, ncomp, nmat, state);
+  // // physical constraints
+  // //? uncomment the below equations if pressure is an issue
+  // //enforcePhysicalConstraints(mat_blk, ncomp, nmat, state);
+  for (std::size_t k=0; k<nmat; ++k)
+    state(ncomp+inciter::pressureIdx(nmat,k)) =
+      std::max(0.0, state(ncomp+inciter::pressureIdx(nmat,k)));
   }
 
 }
@@ -1418,7 +1420,6 @@ enforcePhysicalConstraints(
   }
 }
 
-KOKKOS_INLINE_FUNCTION
 void enforcePhysicalConstraints(
   const std::vector< inciter::EOS >& mat_blk,
   std::size_t ncomp,

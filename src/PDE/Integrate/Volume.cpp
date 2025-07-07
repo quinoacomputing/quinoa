@@ -74,7 +74,6 @@ tk::volInt( std::size_t nmat,
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
-
   int ncomp = U.nprop()/rdof;
   int nprim = P.nprop()/rdof;
 
@@ -150,11 +149,12 @@ tk::volInt( std::size_t nmat,
     Kokkos::deep_copy(R_d_view, R_h_view);
 
     //create View variables in device space that will be used inside the kernel (parallel env)
-   // The sizes are only known inside the kernel!!
-    Kokkos::View<real**, memory_space> coordgp("coordgp_d_view", 3, 3);
-    Kokkos::View<real*, memory_space> wgp("wgp_d_view", 1);
-    Kokkos::View<real**, memory_space> dBdx("dBdx_d_view", 3, 3);
-    Kokkos::View<real*, memory_space> B("B", 3);
+   // The sizes are only known inside the kernel!! 
+   //! Right now, pick the largest size
+    Kokkos::View<real**, memory_space> coordgp("coordgp_d_view", 3, 14);
+    Kokkos::View<real*, memory_space> wgp("wgp_d_view", 14);
+    Kokkos::View<real**, memory_space> dBdx("dBdx_d_view", 3, 10);
+    Kokkos::View<real*, memory_space> B("B", 10);
 
     // for flux evaluation, but size is known before kernel
     Kokkos::View<real***, memory_space> g("g_d_view", nmat, 3, 3);
@@ -187,17 +187,9 @@ tk::volInt( std::size_t nmat,
           //!Kokkos::resize(wgp, static_cast<const std::size_t>(ng));
 
           GaussQuadratureTet(ng, coordgp, wgp ); //?DONE
-
-          // Extract the element coordinates
           
-          /*std::array< std::array< real, 3>, 4 > coordel {{
-            {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-            {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-            {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-            {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-          }};
-          */
-
+          // Extract the element coordinates
+              
           Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
           for (int i = 0;i < 4;i++) {
               coordel[i][0] = cx_d_view(inpoel_d_view(4*e + i));
@@ -206,13 +198,13 @@ tk::volInt( std::size_t nmat,
             }
         
           //jacInv is Kokkos::Array based matrix
-          auto jacInv =
+           auto jacInv =
                   inverseJacobian(coordel[0], coordel[1], coordel[2], coordel[3] ); // ?DONE
 
-          auto dof_el = ndofel_d_view(e); //? DONE
+           auto dof_el = ndofel_d_view(e); //? DONE
 
           //! Pass in dBdx rather than returning it since I have already created dBdx as view type
-          eval_dBdx_p1(dof_el, jacInv, dBdx); //?DONE
+            eval_dBdx_p1(dof_el, jacInv, dBdx); //?DONE
           
             // Gaussian quadrature
             for (std::size_t igp=0; igp<ng; ++igp)
@@ -222,14 +214,14 @@ tk::volInt( std::size_t nmat,
 
               // Compute the coordinates of quadrature point at physical domain
               auto gp = eval_gp( igp, coordel, coordgp); // ?DONE
-
+              
               // Compute the basis function
-              // B is Kokkos::View //TODO: Fix B
+              // B is Kokkos::View //TODO: Fix B //! Right now uses largest possible size
               eval_basis( dof_el, coordgp(0, igp), coordgp(1, igp),
                                   coordgp(2, igp), B); //?DONE
 
               auto wt = wgp(igp) * geoElem_d_view(e * m_nprop);  //?DONE
-
+              
               evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
                 rdof, nmat, e, ndofel_d_view(e), m_nprop, bparam, solidx_d_view, inpoel_d_view, cx_d_view, cy_d_view, cz_d_view, geoElem_d_view, // * pass in cx, cy, cx rather
                 {{coordgp(0, igp), coordgp(1, igp), coordgp(2, igp)}}, B, U_d_view, P_d_view, state,
@@ -240,12 +232,14 @@ tk::volInt( std::size_t nmat,
 
               // comput flux
               
-              tk::fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 
+              fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 
                   mat_blk, state, g, asig, al, fl, apk);
-
+              
               update_rhs(ncomp, ndof, dof_el, wt, m_nprop, e, dBdx, fl, R_d_view); //?DONE
+              
           }
         }
+        
       });
     };
      Kokkos::finalize();
@@ -310,7 +304,7 @@ void tk::update_rhs( ncomp_t ncomp,
 
 
 //! overloaded version of update_rhs for Kokkos
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 void tk::update_rhs( ncomp_t ncomp,
                 const std::size_t ndof,
                 const std::size_t ndof_el,

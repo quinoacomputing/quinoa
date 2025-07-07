@@ -143,7 +143,7 @@ fluxTerms(
   const std::vector< tk::real >& ugp );
 
 //! Kokkos version of flux(fluxTerms) function call
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 void fluxTerms_multimat_kokkos(
   std::size_t ncomp,
   std::size_t nmat,

@@ -72,7 +72,7 @@ GaussQuadratureTet( std::size_t NG,
                     std::vector< real >& wgp );
 
 //! Kokkos version of GaussQuadratureTet
-KOKKOS_INLINE_FUNCTION 
+KOKKOS_FUNCTION 
 void GaussQuadratureTet( const std::size_t NG,
               Kokkos::View<real**, memory_space> coordgp,
               Kokkos::View<real*, memory_space> wgp);

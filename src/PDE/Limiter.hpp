@@ -346,7 +346,7 @@ interfaceIndicator( std::size_t nmat,
   const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt );
 
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 bool interfaceIndicator( std::size_t nmat,
   Kokkos::View<tk::real*, memory_space> al,
   Kokkos::View<size_t*, memory_space> matInt );
