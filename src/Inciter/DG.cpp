@@ -2246,10 +2246,6 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
       m_u(e, stiffrmark) = x[ieq*ndof+idof];
     }
-
-  // Update primitives
-  g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
-    myGhosts()->m_fd.Esuel().size()/4, m_ndof );
   
   // Compute explicit terms (Should be computed once)
   std::vector< tk::real > expl_terms(n, 0.0);
@@ -2330,8 +2326,8 @@ std::vector< tk::real > DG::nonlinear_solver(std::size_t e,
   for (std::size_t i=0; i<n; ++i)
     err0 += f[i]*f[i];
   err0 = std::sqrt(err0);
+  auto abs_err_old = err0;
 
-  
   // Iterate for the solution if err0 > 0
   if (err0 > abs_tol)
     for (size_t iter=0; iter<max_iter; ++iter)
@@ -2346,12 +2342,39 @@ std::vector< tk::real > DG::nonlinear_solver(std::size_t e,
           delta[i] += approx_jacob[i][j] * f[j];
       }
 
-      // Update x
-      for (std::size_t i=0; i<n; ++i)
-        x[i] -= delta[i];
+      // Update x using line search
+      std::size_t nline = 10;
+      tk::real alpha = 1.0;
+      auto xtest = x;
+      for (std::size_t iline = 0; iline<nline; ++iline)
+      {
+        // Evaluate xtest
+        for (std::size_t i=0; i<n; ++i)
+          xtest[i] = x[i] - alpha*delta[i];
 
-      // Compute new f(x)
-      f = DG::nonlinear_func(e, x);
+        // Compute new f(x)
+        f = DG::nonlinear_func(e, xtest);
+
+        tk::real err = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+          err += f[i]*f[i];
+        abs_err = std::sqrt(err);
+        
+        if (abs_err < abs_err_old)
+        {
+          break;
+        }
+        else
+        {
+          alpha *= 0.5;
+        }
+        // if (iline == nline-1)
+        //  printf("Line search failed to decrease f\n");
+      }
+      
+      // Save x
+      for (std::size_t i=0; i<n; ++i)
+        x[i] = xtest[i];
 
       // Compute delta_x and delta_f
       for (std::size_t i=0; i<n; ++i)
@@ -2414,19 +2437,20 @@ std::vector< tk::real > DG::nonlinear_solver(std::size_t e,
         for (std::size_t j=0; j<n; ++j)
           approx_jacob[i][j] += auxvec1[i] * auxvec2[j];
 
-      // Save solution and f
-      for (std::size_t i=0; i<n; ++i)
-      {
-	x_old[i] = x[i];
-	f_old[i] = f[i];
-      }
-
       // Compute a measure of error, use norm of f
       tk::real err = 0.0;
       for (std::size_t i=0; i<n; ++i)
 	err += f[i]*f[i];
       abs_err = std::sqrt(err);
       rel_err = abs_err/err0;
+
+      // Save solution and f
+      for (std::size_t i=0; i<n; ++i)
+      {
+	x_old[i] = x[i];
+	f_old[i] = f[i];
+      }
+      abs_err_old = abs_err;
 
       //check if error condition is met and loop back
       if (rel_err < rel_tol || abs_err < abs_tol)
