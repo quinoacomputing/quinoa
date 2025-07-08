@@ -74,10 +74,13 @@ tk::volInt( std::size_t nmat,
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
-  int ncomp = U.nprop()/rdof;
-  int nprim = P.nprop()/rdof;
+  size_t ncomp = U.nprop()/rdof;
+  size_t nprim = P.nprop()/rdof;
 
   size_t m_nprop = U.nprop();
+  size_t p_nprop = P.nprop();
+  size_t r_nprop = R.nprop();
+  size_t geo_nprop = geoElem.nprop();
 
   // solidx is a vector
   const auto& solidx = inciter::g_inputdeck.get<
@@ -143,9 +146,14 @@ tk::volInt( std::size_t nmat,
     auto U_h_view = changeToView(U.getPointer(), U_size);
     Kokkos::deep_copy(U_d_view, U_h_view);
 
+    //   for (int i = 0; i < 9;i++) {
+
+    //    printf("%e, %e, %e\n", U_d_view(i), U_h_view(i), U(i / 9, i));
+    //  }
+
     size_t R_size = R.getSize();
     Kokkos::View<real*, memory_space> R_d_view("R_d_view", R_size);
-    auto R_h_view = changeToView(R.getPointer(), R_size);
+    auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
     Kokkos::deep_copy(R_d_view, R_h_view);
 
     //create View variables in device space that will be used inside the kernel (parallel env)
@@ -164,7 +172,7 @@ tk::volInt( std::size_t nmat,
     Kokkos::View<real*, memory_space> apk("apk", nmat);
 
     //Need for evalPolynomialSol function
-    Kokkos::View<real*, memory_space> state("state", 2*ncomp); // state has state + sprim length
+    Kokkos::View<real*, memory_space> state("state", (ncomp + nprim)); // state has state + sprim length
     Kokkos::View<size_t*, memory_space> matInt("matInt", nmat);
     Kokkos::View<real*, memory_space> alAvg("alAvg", nmat);
     Kokkos::View<real*, memory_space> vfmax("vfmax", nmat);
@@ -200,13 +208,12 @@ tk::volInt( std::size_t nmat,
           //jacInv is Kokkos::Array based matrix
            auto jacInv =
                   inverseJacobian(coordel[0], coordel[1], coordel[2], coordel[3] ); // ?DONE
-
            auto dof_el = ndofel_d_view(e); //? DONE
-
+           
           //! Pass in dBdx rather than returning it since I have already created dBdx as view type
             eval_dBdx_p1(dof_el, jacInv, dBdx); //?DONE
-          
-            // Gaussian quadrature
+           // Gaussian quadrature
+           
             for (std::size_t igp=0; igp<ng; ++igp)
             {
               if (dof_el > 4)
@@ -220,29 +227,33 @@ tk::volInt( std::size_t nmat,
               eval_basis( dof_el, coordgp(0, igp), coordgp(1, igp),
                                   coordgp(2, igp), B); //?DONE
 
-              auto wt = wgp(igp) * geoElem_d_view(e * m_nprop);  //?DONE
-              
+              auto wt = wgp(igp) * geoElem_d_view(e * geo_nprop);  //?DONE
+            
               evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
-                rdof, nmat, e, ndofel_d_view(e), m_nprop, bparam, solidx_d_view, inpoel_d_view, cx_d_view, cy_d_view, cz_d_view, geoElem_d_view, // * pass in cx, cy, cx rather
-                {{coordgp(0, igp), coordgp(1, igp), coordgp(2, igp)}}, B, U_d_view, P_d_view, state,
-                matInt, alAvg, vfmax, vfmin, alSol, alReco, dBdx, ref_n);
-
+                rdof, nmat, e, ndofel_d_view(e), m_nprop, p_nprop, geo_nprop,
+                bparam, solidx_d_view, inpoel_d_view, 
+                cx_d_view, cy_d_view, cz_d_view, geoElem_d_view,
+                {{coordgp(0, igp), coordgp(1, igp), coordgp(2, igp)}}, B, U_d_view, 
+                P_d_view, state, matInt, alAvg, vfmax, vfmin, alSol, alReco, dBdx, ref_n);
+              
               // evaluate prescribed velocity (if any)
               //auto v = vel( ncomp, gp[0], gp[1], gp[2], t ); 
 
-              // comput flux
+              // compute flux
               
               fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 
                   mat_blk, state, g, asig, al, fl, apk);
               
-              update_rhs(ncomp, ndof, dof_el, wt, m_nprop, e, dBdx, fl, R_d_view); //?DONE
               
+              //printf("%f\n", fl(1, 1));
+              update_rhs(ncomp, ndof, dof_el, wt, m_nprop, e, dBdx, fl, R_d_view); //?DONE  
           }
         }
         
       });
+      Kokkos::deep_copy(R_h_view, R_d_view);
     };
-     Kokkos::finalize();
+    Kokkos::finalize();
 }
  
 

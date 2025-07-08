@@ -1033,6 +1033,7 @@ void fluxTerms_multimat_kokkos(
   auto u = ugp(ncomp+velocityIdx(nmat,0));
   auto v = ugp(ncomp+velocityIdx(nmat,1));
   auto w = ugp(ncomp+velocityIdx(nmat,2));
+  //printf("u,v,w = %e, %e, %e\n", u, v, w);
  
   //? Have solid function is easy to do, its in PDE/MultiMat/MiscMultiMatFns.hpp //?DONE
   if (inciter::haveSolid(nmat, solidx))

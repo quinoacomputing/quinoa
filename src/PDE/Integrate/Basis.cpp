@@ -283,6 +283,8 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   auto db4dxi1 = 0.0;
   auto db4dxi2 = 0.0;
   auto db4dxi3 = 4.0;
+  
+  dBdx(0, 0) = 0.0;
 
   dBdx(0, 1) =  db2dxi1 * jacInv[0][0]
               + db2dxi2 * jacInv[1][0]
@@ -696,11 +698,12 @@ KOKKOS_FUNCTION
 void tk::eval_state ( ncomp_t ncomp,
                  const std::size_t ndof,
                  const std::size_t ndof_el,
-                 const std::size_t e, size_t m_nprop,
+                 const std::size_t e, 
+                 size_t m_nprop,
                  Kokkos::View<const tk::real*, memory_space> U,
                  Kokkos::View<const tk::real*, memory_space> B, 
                  Kokkos::View<tk::real*, memory_space> state,
-                const size_t& idx)
+                 const size_t& idx)
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -734,6 +737,15 @@ void tk::eval_state ( ncomp_t ncomp,
   {
     auto mark = c*ndof;
     state(c + idx) = U(e * m_nprop + mark);
+    // if (idx != 0)
+    // {
+    //   if (c == inciter::velocityIdx(2,0))
+    //     printf("U = %e\n", U(e * m_nprop + mark));
+    //   if (c == inciter::velocityIdx(2,1))
+    //     printf("V = %e\n", U(e * m_nprop + mark));
+    //   if (c == inciter::velocityIdx(2,2))
+    //     printf("W = %e\n", U(e * m_nprop + mark));
+    // }
 
     if(ndof_el > 1)        // Second order polynomial solution
     {
@@ -748,7 +760,7 @@ void tk::eval_state ( ncomp_t ncomp,
                 + U( e * m_nprop + mark+5 ) * B(5)
                 + U( e * m_nprop + mark+6 ) * B(6)
                 + U( e * m_nprop + mark+7 ) * B(7)
-                + U( e * m_nprop +mark+8 ) * B(8)
+                + U( e * m_nprop + mark+8 ) * B(8)
                 + U( e * m_nprop + mark+9 ) * B(9);
     }
   }

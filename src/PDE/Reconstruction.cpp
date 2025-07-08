@@ -328,6 +328,8 @@ THINCReco( std::size_t rdof,
            std::size_t e, 
            std::size_t ncomp,
            std::size_t m_nprop,
+           std::size_t p_nprop,
+           std::size_t geo_nprop,
             tk::real bparam,
           Kokkos::View<const size_t*, memory_space> inpoel,
            Kokkos::View<const real*, memory_space> cx,
@@ -402,7 +404,7 @@ THINCReco( std::size_t rdof,
     // material interface
     alReco(k) = state(volfracIdx(nmat,k));
   }
-  THINCFunction(rdof, nmat, e, inpoel, cx, cy, cz, ref_xp, geoElem(e *m_nprop), bparam,
+  THINCFunction(rdof, nmat, e, inpoel, cx, cy, cz, ref_xp, geoElem(e *geo_nprop), bparam,
     alSol, intInd, matInt, alReco, dBdx, ref_n);
 
   // check reconstructed volfracs for positivity
@@ -440,7 +442,7 @@ THINCReco( std::size_t rdof,
         state(energyIdx(nmat,k)) = alReco(k)
           * U(e * m_nprop + energyDofIdx(nmat,k,rdof,0))/alCC;
         state(ncomp+pressureIdx(nmat,k)) = alReco(k)
-          * P(e * m_nprop + pressureDofIdx(nmat,k,rdof,0))/alCC;
+          * P(e * p_nprop + pressureDofIdx(nmat,k,rdof,0))/alCC;
         if (solidx(k) > 0) {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
@@ -449,7 +451,7 @@ THINCReco( std::size_t rdof,
 
           for (std::size_t i=0; i<6; ++i)
             state(ncomp+stressIdx(nmat,solidx(k),i)) = alReco(k)
-              * P(e * m_nprop + stressDofIdx(nmat,solidx(k),i,rdof,0))/alCC;
+              * P(e * p_nprop + stressDofIdx(nmat,solidx(k),i,rdof,0))/alCC;
         }
       }
 
@@ -463,7 +465,7 @@ THINCReco( std::size_t rdof,
       state(momentumIdx(nmat,i)) = rhobHO
         * U(e * m_nprop +  momentumDofIdx(nmat,i,rdof,0))/rhobCC;
       state(ncomp+velocityIdx(nmat,i)) =
-        P(e * m_nprop +  velocityDofIdx(nmat,i,rdof,0));
+        P(e * p_nprop +  velocityDofIdx(nmat,i,rdof,0));
     }
   }
 }
@@ -1201,6 +1203,8 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    std::size_t e,
                    std::size_t dof_e,
                    std::size_t m_nprop,
+                   std::size_t p_nprop,
+                   std::size_t geo_nprop,
                    tk::real bparam,
                    Kokkos::View<const size_t*, memory_space> solidx,
                    Kokkos::View<const size_t*, memory_space> inpoel,
@@ -1248,7 +1252,7 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
   //auto state_sub = Kokkos::subview(state, Kokkos::make_pair(0, 1));
   //auto sprim_sub = Kokkos::subview(state, Kokkos::make_pair(1, 2));
   eval_state( ncomp, rdof, dof_e, e, m_nprop, U, B, state, 0); //?DONE
-  eval_state( nprim, rdof, dof_e, e, m_nprop, P, B, state, ncomp); //?DONE
+  eval_state( nprim, rdof, dof_e, e, p_nprop, P, B, state, ncomp); //?DONE
 
   // interface detection
   bool intInd(false);
@@ -1270,7 +1274,7 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
     //  vfmin[k] = VolFracMax(el, 2*k, 0);
     //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
     //}
-    tk::THINCReco(rdof, nmat, e, ncomp, m_nprop, bparam, inpoel, cx, cy, cz, geoElem,
+    tk::THINCReco(rdof, nmat, e, ncomp, m_nprop, p_nprop, geo_nprop, bparam, inpoel, cx, cy, cz, geoElem,
       ref_gp, U, P, intInd, solidx, matInt, vfmin, vfmax, state, alSol,
       alReco, dBdx, ref_n);
 
@@ -1286,7 +1290,7 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
   // //enforcePhysicalConstraints(mat_blk, ncomp, nmat, state);
   for (std::size_t k=0; k<nmat; ++k)
     state(ncomp+inciter::pressureIdx(nmat,k)) =
-      std::max(0.0, state(ncomp+inciter::pressureIdx(nmat,k)));
+      std::max(1e-12, state(ncomp+inciter::pressureIdx(nmat,k)));
   }
 
 }

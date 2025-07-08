@@ -87,7 +87,8 @@ cross( const Kokkos::Array<real, 3>& v1, const Kokkos::Array<real, 3>& v2 )
 {
   real rx, ry, rz;
   cross( v1[0], v1[1], v1[2], v2[0], v2[1], v2[2], rx, ry, rz );
-  return {{ std::move(rx), std::move(ry), std::move(rz) }};
+  return {{rx, ry, rz}};
+  //return {{ std::move(rx), std::move(ry), std::move(rz) }};
 }
 
 inline std::array< real, 3 >
@@ -220,7 +221,7 @@ unit( std::array< real, 3 >& v ) noexcept(ndebug)
 //! \return Scalar value of the triple product
 
 KOKKOS_INLINE_FUNCTION 
-tk::real triple(real v1x, real v1y, real v1z,
+real triple(real v1x, real v1y, real v1z,
         real v2x, real v2y, real v2z,
         real v3x, real v3y, real v3z )
 {

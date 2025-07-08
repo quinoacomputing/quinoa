@@ -498,6 +498,9 @@ class Data {
     auto getSize() const {
       return m_vec.size();
     }
+    auto getPointerNonConst() {
+      return m_vec.data();
+    }
 
   private:
     //! Transform a compile-time uint8_t into a type, used for dispatch
