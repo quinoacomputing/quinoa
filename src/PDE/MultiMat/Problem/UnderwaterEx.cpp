@@ -48,10 +48,10 @@ MultiMatProblemUnderwaterEx::initialize( ncomp_t ncomp,
   Assert( ncomp == 12, "Number of scalar components must be 12" );
 
   auto nmat = g_inputdeck.get< eq, tag::nmat >();
+  auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
 
   std::vector< tk::real > s(ncomp, 0.0), r(nmat, 0.0);
   tk::real p, u, v, w, temp;
-  auto alphamin = 1.0e-12;
 
   // velocity
   u = 0.0;

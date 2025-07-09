@@ -13,7 +13,11 @@
 #ifndef MultiMatIndexing_h
 #define MultiMatIndexing_h
 
+#include "Inciter/InputDeck/InputDeck.hpp"
+
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
 
 /** @name Functions that compute indices for physics variables for MultiMat */
 ///@{
@@ -201,7 +205,11 @@ inline std::size_t stressDofIdx( std::size_t nmat, std::size_t ksld,
 { return stressIdx(nmat, ksld, i)*ndof+idof; }
 
 inline bool matExists( tk::real volfrac )
-{ return (volfrac > 1e-10) ? true : false; }
+{
+  return
+    (volfrac > 100.0*g_inputdeck.get< tag::multimat, tag::min_volumefrac >())
+    ? true : false;
+}
 
 inline tk::real volfracPRelaxLim()
 { return 1.0e-02; }

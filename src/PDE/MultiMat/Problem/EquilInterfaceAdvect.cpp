@@ -50,10 +50,10 @@ MultiMatProblemEquilInterfaceAdvect::initialize(
   Assert( ncomp == 9, "Number of scalar components must be 9" );
 
   auto nmat = g_inputdeck.get< eq, tag::nmat >();
+  auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
 
   std::vector< tk::real > s( ncomp, 0.0 );
   tk::real r, p, u, v, w;
-  auto alphamin = 1.0e-12;
 
   // pressure
   p = 0.4;
