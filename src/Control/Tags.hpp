@@ -184,6 +184,7 @@ DEFTAG(p0);
 DEFTAG(ce);
 DEFTAG(kappa);
 DEFTAG(nmat);
+DEFTAG(min_volumefrac);
 DEFTAG(nspec);
 DEFTAG(prelax);
 DEFTAG(prelax_timescale);

@@ -53,6 +53,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
 // *****************************************************************************
 {
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+  auto alphamin = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
 
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
@@ -66,8 +67,6 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   auto boxtemp = b.template get< tag::temperature >();
   auto boxmas = b.template get< tag::mass >();
   auto boxenc = b.template get< tag::energy_content >();
-
-  auto alphamin = 1.0e-12;
 
   // [I] Compute the states inside the IC box/block based on the type of user
   // input.
