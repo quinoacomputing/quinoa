@@ -415,6 +415,9 @@ THINCFunction( std::size_t rdof,
 //!   THINCFunction_new) is sufficiently tested.
 // *****************************************************************************
 {
+  auto min_al = inciter::g_inputdeck.get< tag::multimat,
+    tag::min_volumefrac >();
+
   // determine number of materials with interfaces in this cell
   auto epsl(1e-4), epsh(1e-1), bred(1.25), bmod(bparam);
   std::size_t nIntMat(0);
@@ -487,8 +490,8 @@ THINCFunction( std::size_t rdof,
     }
 
     // 2. Reconstruct volume fractions using THINC
-    auto max_lim = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
-    auto min_lim = 1e-12;
+    auto max_lim = 1.0 - (static_cast<tk::real>(nmat-1)*min_al);
+    auto min_lim = min_al;
     auto sum_inter(0.0), sum_non_inter(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
@@ -579,6 +582,9 @@ THINCFunction_new( std::size_t rdof,
 //!   currently experimental.
 // *****************************************************************************
 {
+  auto min_al = inciter::g_inputdeck.get< tag::multimat,
+    tag::min_volumefrac >();
+
   // compression parameter
   auto beta = bparam/std::cbrt(6.0*vol);
 
@@ -647,8 +653,8 @@ THINCFunction_new( std::size_t rdof,
   // Step 2. Reconstruct volume fraction of majority material using THINC
   // -------------------------------------------------------------------------
 
-  auto al_max = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
-  auto al_min = 1e-12;
+  auto al_max = 1.0 - (static_cast<tk::real>(nmat-1)*min_al);
+  auto al_min = min_al;
   auto alsum(0.0);
   // get location of material interface (volume fraction 0.5) from the
   // assumed tanh volume fraction distribution, and cell-averaged
@@ -937,6 +943,9 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
 //!   if near interfaces using THINC
 // *****************************************************************************
 {
+  auto min_al = inciter::g_inputdeck.get< tag::multimat,
+    tag::min_volumefrac >();
+
   using inciter::pressureIdx;
   using inciter::velocityIdx;
   using inciter::volfracIdx;
@@ -962,8 +971,8 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
   for (std::size_t k=0; k<nmat; ++k) {
     auto alk = state[volfracIdx(nmat,k)];
     if (matInt[k]) {
-      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*1e-12),
-        1e-12);
+      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*min_al),
+        min_al);
     }
     state[energyIdx(nmat,k)] =
       mat_blk[k].compute< inciter::EOS::totalenergy >(
