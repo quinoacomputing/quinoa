@@ -239,8 +239,8 @@ struct HLLDMultiMat {
       uStar[0][volfracIdx(nmat, k)] = w_l * u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
-        + (Sm-vnl[0]) * (u[0][densityIdx(nmat, k)]*Sm
-                        - asignnlStar[k][0][0]/(Sl-vnl[0]));
+        + w_l * (Sm-vnl[0]) * (u[0][densityIdx(nmat, k)]*Sm
+                              - asignnl[k][0][0]/(Sl-vnl[0]));
       rholStar += uStar[0][densityIdx(nmat, k)];
 
       auto amatl = mat_blk[k].compute< EOS::shearspeed >(
@@ -259,8 +259,8 @@ struct HLLDMultiMat {
       uStar[1][volfracIdx(nmat, k)] = w_r * u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
-        + (Sm-vnr[0]) * (u[1][densityIdx(nmat, k)]*Sm
-                        - asignnrStar[k][0][0]/(Sr-vnr[0]));
+        + w_r * (Sm-vnr[0]) * (u[1][densityIdx(nmat, k)]*Sm
+                              - asignnr[k][0][0]/(Sr-vnr[0]));
       rhorStar += uStar[1][densityIdx(nmat, k)];
 
       auto amatr = mat_blk[k].compute< EOS::shearspeed >(
@@ -383,12 +383,12 @@ struct HLLDMultiMat {
         if (solidx[k] > 0)
         {
           gnlStarStar = gnlStar[k];
-          gnlStar[k][0][0] += gnlStar[k][0][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
-                            + gnlStar[k][0][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
-          gnlStar[k][1][0] += gnlStar[k][1][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
-                            + gnlStar[k][1][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
-          gnlStar[k][2][0] += gnlStar[k][2][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
-                            + gnlStar[k][2][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
+          gnlStarStar[0][0] += gnlStar[k][0][1]*(vnl[1]-vnlStarStar[1])/(Sm-Ssl)
+                             + gnlStar[k][0][2]*(vnl[2]-vnlStarStar[2])/(Sm-Ssl);
+          gnlStarStar[1][0] += gnlStar[k][1][1]*(vnl[1]-vnlStarStar[1])/(Sm-Ssl)
+                             + gnlStar[k][1][2]*(vnl[2]-vnlStarStar[2])/(Sm-Ssl);
+          gnlStarStar[2][0] += gnlStar[k][2][1]*(vnl[1]-vnlStarStar[1])/(Sm-Ssl)
+                             + gnlStar[k][2][2]*(vnl[2]-vnlStarStar[2])/(Sm-Ssl);
           // rotate g back to original frame of reference
           glStarStar.push_back(tk::unrotateTensor(gnlStarStar, fn));
         }
@@ -406,12 +406,12 @@ struct HLLDMultiMat {
         if (solidx[k] > 0)
         {
           gnrStarStar = gnrStar[k];
-          gnrStar[k][0][0] += gnrStar[k][0][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
-                            + gnrStar[k][0][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
-          gnrStar[k][1][0] += gnrStar[k][1][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
-                            + gnrStar[k][1][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
-          gnrStar[k][2][0] += gnrStar[k][2][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
-                            + gnrStar[k][2][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
+          gnrStarStar[0][0] += gnrStar[k][0][1]*(vnr[1]-vnrStarStar[1])/(Sm-Ssr)
+                             + gnrStar[k][0][2]*(vnr[2]-vnrStarStar[2])/(Sm-Ssr);
+          gnrStarStar[1][0] += gnrStar[k][1][1]*(vnr[1]-vnrStarStar[1])/(Sm-Ssr)
+                             + gnrStar[k][1][2]*(vnr[2]-vnrStarStar[2])/(Sm-Ssr);
+          gnrStarStar[2][0] += gnrStar[k][2][1]*(vnr[1]-vnrStarStar[1])/(Sm-Ssr)
+                             + gnrStar[k][2][2]*(vnr[2]-vnrStarStar[2])/(Sm-Ssr);
           // rotate g back to original frame of reference
           grStarStar.push_back(tk::unrotateTensor(gnrStarStar, fn));
         }
@@ -429,7 +429,7 @@ struct HLLDMultiMat {
 
     // Numerical fluxes
     // -------------------------------------------------------------------------
-    if (Sl > 0.0) {
+    if (0.0 <= Sl) {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
@@ -458,6 +458,7 @@ struct HLLDMultiMat {
         flx.push_back(std::sqrt((aTnl[k][0]*aTnl[k][0]
                                 +aTnl[k][1]*aTnl[k][1]
                                 +aTnl[k][2]*aTnl[k][2])));
+      // flx.push_back(asignnl[k][0][0]);
       // Store Riemann velocity
       flx.push_back(vnl[0]);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -469,7 +470,7 @@ struct HLLDMultiMat {
 
     }
 
-    else if (Sl <= 0.0 && Ssl > 0.0) {
+    else if (Sl < 0.0 && 0.0 <= Ssl) {
 
       for (std::size_t idir=0; idir<3; ++idir)
        flx[momentumIdx(nmat, idir)] =
@@ -498,6 +499,7 @@ struct HLLDMultiMat {
         flx.push_back(std::sqrt(aTnlStar[k][0]*aTnlStar[k][0]
                                +aTnlStar[k][1]*aTnlStar[k][1]
                                +aTnlStar[k][2]*aTnlStar[k][2]));
+      // flx.push_back(asignnlStar[k][0][0]);
       // Store Riemann velocity
       flx.push_back(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -509,7 +511,7 @@ struct HLLDMultiMat {
 
     }
 
-    else if (Ssl <= 0.0 && Sm > 0.0) {
+    else if (Ssl < 0.0 && 0.0 <= Sm && nsld > 0) {
 
       for (std::size_t idir=0; idir<3; ++idir)
        flx[momentumIdx(nmat, idir)] =
@@ -538,6 +540,7 @@ struct HLLDMultiMat {
         flx.push_back(std::sqrt(aTnlStarStar[k][0]*aTnlStarStar[k][0]
                                +aTnlStarStar[k][1]*aTnlStarStar[k][1]
                                +aTnlStarStar[k][2]*aTnlStarStar[k][2]));
+      // flx.push_back(asignnlStar[k][0][0]);
       // Store Riemann velocity
       flx.push_back(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -549,7 +552,7 @@ struct HLLDMultiMat {
 
     }
 
-    else if (Sm <= 0.0 && Ssr > 0.0) {
+    else if (Sm < 0.0 && 0.0 <= Ssr && nsld > 0) {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
@@ -578,6 +581,7 @@ struct HLLDMultiMat {
         flx.push_back(std::sqrt(aTnrStarStar[k][0]*aTnrStarStar[k][0]
                                +aTnrStarStar[k][1]*aTnrStarStar[k][1]
                                +aTnrStarStar[k][2]*aTnrStarStar[k][2]));
+      // flx.push_back(asignnrStar[k][0][0]);
       // Store Riemann velocity
       flx.push_back(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -589,7 +593,7 @@ struct HLLDMultiMat {
 
     }
 
-    else if (Ssr <= 0.0 && Sr > 0.0) {
+    else if (Ssr < 0.0 && 0.0 <= Sr) {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
@@ -618,6 +622,7 @@ struct HLLDMultiMat {
         flx.push_back(std::sqrt(aTnrStar[k][0]*aTnrStar[k][0]
                                +aTnrStar[k][1]*aTnrStar[k][1]
                                +aTnrStar[k][2]*aTnrStar[k][2]));
+      // flx.push_back(asignnrStar[k][0][0]);
       // Store Riemann velocity
       flx.push_back(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -658,6 +663,7 @@ struct HLLDMultiMat {
         flx.push_back(std::sqrt(aTnr[k][0]*aTnr[k][0]
                                +aTnr[k][1]*aTnr[k][1]
                                +aTnr[k][2]*aTnr[k][2]));
+        // flx.push_back(asignnr[k][0][0]);
       // Store Riemann velocity
       flx.push_back(vnr[0]);
       for (std::size_t k=0; k<nmat; ++k) {
