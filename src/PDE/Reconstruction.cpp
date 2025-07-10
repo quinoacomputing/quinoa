@@ -378,7 +378,7 @@ THINCRecoTransport( std::size_t rdof,
 }
 
 void
-THINCFunction( std::size_t rdof,
+THINCFunction_old( std::size_t rdof,
                std::size_t nmat,
                std::size_t e,
                const std::vector< std::size_t >& inpoel,
@@ -548,20 +548,20 @@ THINCFunction( std::size_t rdof,
 }
 
 void
-THINCFunction_new( std::size_t rdof,
-                   std::size_t nmat,
-                   std::size_t e,
-                   const std::vector< std::size_t >& inpoel,
-                   const UnsMesh::Coords& coord,
-                   const std::array< real, 3 >& ref_xp,
-                   real vol,
-                   real bparam,
-                   const std::vector< real >& alSol,
-                   bool intInd,
-                   const std::vector< std::size_t >& matInt,
-                   std::vector< real >& alReco )
+THINCFunction( std::size_t rdof,
+               std::size_t nmat,
+               std::size_t e,
+               const std::vector< std::size_t >& inpoel,
+               const UnsMesh::Coords& coord,
+               const std::array< real, 3 >& ref_xp,
+               real vol,
+               real bparam,
+               const std::vector< real >& alSol,
+               bool intInd,
+               const std::vector< std::size_t >& matInt,
+               std::vector< real >& alReco )
 // *****************************************************************************
-//  New Multi-Medium THINC reconstruction function for volume fractions
+//  Multi-Medium THINC reconstruction function for volume fractions
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of materials
 //! \param[in] e Element for which interface reconstruction is being calculated
@@ -578,8 +578,7 @@ THINCFunction_new( std::size_t rdof,
 //! \details This function computes the interface reconstruction using the
 //!   algebraic multi-material THINC reconstruction for each material at the
 //!   given (ref_xp) quadrature point. This function succeeds the older version
-//!   of the mm-THINC (see THINCFunction), but is still under testing and is
-//!   currently experimental.
+//!   of the mm-THINC (see THINCFunction_old).
 // *****************************************************************************
 {
   auto min_al = inciter::g_inputdeck.get< tag::multimat,
