@@ -122,14 +122,37 @@ struct HLLCMultiMat {
       uStar[0][densityIdx(nmat, k)] =
         (Sl-vnl) * u[0][densityIdx(nmat, k)] / (Sl-Sm);
       uStar[0][energyIdx(nmat, k)] =
-        ((Sl-vnl) * u[0][energyIdx(nmat, k)] - apl[k]*vnl + apStar[k]*Sm) / (Sl-Sm);
+        // ((Sl-vnl) * u[0][energyIdx(nmat, k)] - apl[k]*vnl + apStar[k]*Sm) / (Sl-Sm);
+        ((Sl-vnl)/(Sl-Sm)) * ( u[0][energyIdx(nmat, k)]
+                             + (Sm-vnl) * (u[0][densityIdx(nmat, k)]*Sm
+                                          - apl[k]/(Sl-vnl)));
 
       // Right
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] =
         (Sr-vnr) * u[1][densityIdx(nmat, k)] / (Sr-Sm);
       uStar[1][energyIdx(nmat, k)] =
-        ((Sr-vnr) * u[1][energyIdx(nmat, k)] - apr[k]*vnr + apStar[k]*Sm) / (Sr-Sm);
+        //((Sr-vnr) * u[1][energyIdx(nmat, k)] - apr[k]*vnr + apStar[k]*Sm) / (Sr-Sm);
+        ((Sr-vnr)/(Sr-Sm)) * ( u[1][energyIdx(nmat, k)]
+                             + (Sm-vnr) * (u[1][densityIdx(nmat, k)]*Sm
+                                          - apr[k]/(Sr-vnr)));
+      auto ener1l = ((Sl-vnl) * u[0][energyIdx(nmat, k)] - apl[k]*vnl + apStar[k]*Sm) / (Sl-Sm);
+      auto ener1r = ((Sr-vnr) * u[1][energyIdx(nmat, k)] - apr[k]*vnr + apStar[k]*Sm) / (Sr-Sm);
+      auto ener2l = ((Sl-vnl)/(Sl-Sm)) * ( u[0][energyIdx(nmat, k)]
+                             + (Sm-vnl) * (u[0][densityIdx(nmat, k)]*Sm
+                                          - apl[k]/(Sl-vnl)));
+      auto ener2r = ((Sr-vnr)/(Sr-Sm)) * ( u[1][energyIdx(nmat, k)]
+                             + (Sm-vnr) * (u[1][densityIdx(nmat, k)]*Sm
+                                          - apr[k]/(Sr-vnr)));
+      if (std::abs(ener1l-ener2l) > 1.0E-02 || std::abs(ener1r-ener2r) > 1.0E-02) {
+        printf("DBG\n");
+        printf("vnl,vnr = %e, %e\n", vnl, vnr);
+        printf("Sl,Sm,Sr = %e, %e, %e\n", Sl, Sm, Sr);
+        printf("apl[0], apStar[0], apr[0] = %e, %e, %e\n", apl[0], apStar[0], apr[0]);
+        printf("apl[1], apStar[1], apr[1] = %e, %e, %e\n", apl[1], apStar[1], apr[1]);
+        printf("ener_l = %24.16e, %24.16e\n", ener1l, ener2l);
+        printf("ener_r = %24.16e, %24.16e\n", ener1r, ener2r);
+      }
     }
 
     // Numerical fluxes
@@ -222,7 +245,7 @@ struct HLLCMultiMat {
 
   ////! Flux type accessor
   ////! \return Flux type
-  //static ctr::FluxType type() noexcept {
+  //Static ctr::FluxType type() noexcept {
   //  return ctr::FluxType::HLLCMultiMat; }
 };
 
