@@ -143,10 +143,6 @@ struct HLLCMultiMat {
     auto vnl = tk::rotateVector({ul, vl, wl}, fn);
     auto vnr = tk::rotateVector({ur, vr, wr}, fn);
 
-    printf("DBG\n");
-    printf("%e, %e, %e\n", ul, vl, wl);
-    printf("%e, %e, %e\n", vnl[0], vnl[1], vnl[2]);
-
     // Signal velocities
     auto Sl = std::min((vnl[0]-acl), (vnr[0]-acr));
     auto Sr = std::max((vnl[0]+acl), (vnr[0]+acr));
@@ -217,12 +213,6 @@ struct HLLCMultiMat {
 
       auto asiglStar = tk::unrotateTensor(asignnlStar[k], fn);
       auto asigrStar = tk::unrotateTensor(asignnrStar[k], fn);
-      // printf("dbg1:\n");
-      // for (std::size_t i=0; i<3; ++i)
-      //   printf("%e, %e, %e\n", asignnlStar[k][i][0], asignnlStar[k][i][1], asignnlStar[k][i][2]);
-      // printf("dbg2:\n");
-      // for (std::size_t i=0; i<3; ++i)
-      //   printf("%e, %e, %e\n", asiglStar[i][0], asiglStar[i][1], asiglStar[i][2]);
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
         {
