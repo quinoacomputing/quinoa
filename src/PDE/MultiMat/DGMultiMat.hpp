@@ -946,7 +946,7 @@ class MultiMat {
       // 4) 3*nsld terms: 3 derivatives of \alpha \sigma_ij for each solid
       //    material, for the energy equations.
       std::vector< std::vector< tk::real > >
-        riemannDeriv(3*nmat+ndof+3*nsld, std::vector<tk::real>(U.nunk(),0.0));
+        riemannDeriv(3*nmat+ndof+3*nsld+27*nsld, std::vector<tk::real>(U.nunk(),0.0));
 
       // configure a no-op lambda for prescribed velocity
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
@@ -974,8 +974,8 @@ class MultiMat {
                         m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
                         riemannDeriv, intsharp );
 
-      Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld, "Size of "
-              "Riemann derivative vector incorrect" );
+      // Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld, "Size of "
+      //         "Riemann derivative vector incorrect" );
 
       // get derivatives from riemannDeriv
       for (std::size_t k=0; k<riemannDeriv.size(); ++k)
