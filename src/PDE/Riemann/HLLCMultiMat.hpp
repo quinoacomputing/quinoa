@@ -273,10 +273,10 @@ struct HLLCMultiMat {
       uStar[0][volfracIdx(nmat, k)] = w_l * u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
-        + w_l * (Sm-vnl[0]) * (u[0][densityIdx(nmat, k)]*Sm
-                               - asignnl[k][0][0]/(Sl-vnl[0]))
-        + ( - asignnl[k][1][0]*vnl[1]
+        + ( - asignnl[k][0][0]*vnl[0]
+            - asignnl[k][1][0]*vnl[1]
             - asignnl[k][2][0]*vnl[2]
+            + asignnlStar[k][0][0]*vnlStar[0]
             + asignnlStar[k][1][0]*vnlStar[1]
             + asignnlStar[k][2][0]*vnlStar[2]
           ) / (Sm-Sl);
@@ -301,10 +301,10 @@ struct HLLCMultiMat {
       uStar[1][volfracIdx(nmat, k)] = w_r * u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
-        + w_r * (Sm-vnr[0]) * (u[1][densityIdx(nmat, k)]*Sm
-                               - asignnr[k][0][0]/(Sr-vnr[0]))
-        + ( - asignnr[k][1][0]*vnr[1]
+        + ( - asignnr[k][0][0]*vnr[0]
+            - asignnr[k][1][0]*vnr[1]
             - asignnr[k][2][0]*vnr[2]
+            + asignnrStar[k][0][0]*vnrStar[0]
             + asignnrStar[k][1][0]*vnrStar[1]
             + asignnrStar[k][2][0]*vnrStar[2]
           ) / (Sm-Sr);
