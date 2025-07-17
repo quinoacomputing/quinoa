@@ -115,6 +115,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodalExtrmc(),
   m_npoin( Disc()->Coord()[0].size() ),
   m_diag(),
+  m_nstage( 3 ),
   m_stage( 0 ),
   m_ndof(),
   m_interface(),
@@ -1481,7 +1482,7 @@ DG::solve( tk::real newdt )
       m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
 
-  if (m_stage < 2) {
+  if (m_stage < m_nstage-1) {
 
     // continue with next time step stage
     stage();
@@ -1849,7 +1850,7 @@ DG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise prepare for nodal field output
-  if (m_stage < 3)
+  if (m_stage < m_nstage)
     next();
   else
     startFieldOutput( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
@@ -2031,7 +2032,7 @@ DG::imex_integrate()
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
-  if (m_stage < 2) {
+  if (m_stage < m_nstage-1) {
     // Save previous stiff_rhs
     m_stiffrhsprev = m_stiffrhs;
 

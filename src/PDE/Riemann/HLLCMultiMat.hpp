@@ -152,6 +152,10 @@ struct HLLCMultiMat {
 
     // Middle-zone (star) variables
     // -------------------------------------------------------------------------
+    // the Cauchy stress in the star zone is theoretically equivalent when derived
+    // from the left or right state. However, there might be differences
+    // numerically due to truncation etc. Hence two separate evaluations
+    // are used.
     std::vector< std::array< std::array< tk::real, 3 >, 3 > >
       asignnlStar, asignnrStar;
     std::array< std::array< tk::real, 3 >, 3 >

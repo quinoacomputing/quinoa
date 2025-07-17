@@ -136,6 +136,7 @@ namespace inciter {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
     auto& inbc = g_inputdeck.get< tag::bc >()[0].get< tag::inlet >();
+    tk::real alphamin = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
 
     // inlet velocity and material
     auto u_in = inbc[0].get< tag::velocity >();
@@ -169,7 +170,6 @@ namespace inciter {
     // Mach number
     auto Ma = vn / a;
 
-    tk::real alphamin = 1e-12;
     tk::real pk(0.0);
     tk::real rho(0.0);
     for (std::size_t k=0; k<nmat; ++k) {
@@ -231,6 +231,7 @@ namespace inciter {
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+    tk::real alphamin = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
 
     // Farfield primitive quantities
     auto fp =
@@ -267,8 +268,6 @@ namespace inciter {
 
     // Mach number
     auto Ma = vn / a;
-
-    tk::real alphamin = 1e-12;
 
     if (Ma <= -1) {  // Supersonic inflow
       // For supersonic inflow, all the characteristics are from outside.
