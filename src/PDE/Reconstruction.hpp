@@ -26,7 +26,8 @@
 #include "EoS/EOS.hpp"
 #include "Kokkos_Core.hpp"
 
-using memory_space = Kokkos::HostSpace;
+using execution_space = Kokkos::DefaultExecutionSpace;
+using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
 namespace tk {
 

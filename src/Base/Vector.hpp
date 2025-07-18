@@ -21,9 +21,6 @@
 #include "Exception.hpp"
 #include "Kokkos_Core.hpp"
 
-using execution_space = Kokkos::Serial;
-using memory_space = Kokkos::HostSpace;
-
 // ignore old-style-casts required for lapack/blas calls
 #if defined(__clang__)
   #pragma clang diagnostic ignored "-Wold-style-cast"

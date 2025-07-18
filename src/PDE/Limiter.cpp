@@ -30,9 +30,6 @@
 #include "MultiSpecies/Mixture/Mixture.hpp"
 #include "Kokkos_Core.hpp"
 
-using execution_space = Kokkos::Serial;
-using memory_space = Kokkos::HostSpace;
-
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;

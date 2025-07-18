@@ -21,8 +21,8 @@
 #include "Kokkos_Core.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
-using execution_space = Kokkos::Serial;
-using memory_space = Kokkos::HostSpace;
+using execution_space = Kokkos::DefaultExecutionSpace;
+using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 using range_policy = Kokkos::RangePolicy<execution_space>;
 using UnManagedMem =Kokkos::MemoryTraits<Kokkos::Unmanaged>;
 
@@ -36,8 +36,7 @@ namespace inciter {
   extern ctr::InputDeck g_inputdeck; //! is this allowed?
 };
 
-void
-tk::volInt( std::size_t nmat,
+void tk::volInt( std::size_t nmat,
             real t,
             const std::vector< inciter::EOS >& mat_blk,
             const std::size_t ndof,
@@ -83,7 +82,7 @@ tk::volInt( std::size_t nmat,
   size_t geo_nprop = geoElem.nprop();
 
   // solidx is a vector
-  const auto& solidx = inciter::g_inputdeck.get<
+  const auto solidx = inciter::g_inputdeck.get<
       tag::matidxmap, tag::solidx >();
 
   // bparm is a scalar

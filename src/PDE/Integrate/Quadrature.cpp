@@ -14,9 +14,6 @@
 #include "Quadrature.hpp"
 #include "Kokkos_Core.hpp"
 
-using execution_space = Kokkos::Serial;
-using memory_space = Kokkos::HostSpace;
-
 void
 tk::GaussQuadratureTet( const std::size_t NG,
                         std::array< std::vector< real >, 3>& coordgp,
@@ -250,7 +247,7 @@ tk::GaussQuadratureTet( const std::size_t NG,
   }
 }
 
-KOKKOS_FUNCTION void tk::GaussQuadratureTet( const std::size_t NG,
+KOKKOS_FORCEINLINE_FUNCTION void tk::GaussQuadratureTet( const std::size_t NG,
                         Kokkos::View<real**, memory_space> coordgp,
                         Kokkos::View<real*, memory_space> wgp)
 // *****************************************************************************

@@ -25,9 +25,6 @@
 #include "Mass.hpp"
 #include "Kokkos_Core.hpp"
 
-using execution_space = Kokkos::Serial;
-using memory_space = Kokkos::HostSpace;
-
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
               const std::array< std::array< tk::real, 3>, 3 >& coordfa,

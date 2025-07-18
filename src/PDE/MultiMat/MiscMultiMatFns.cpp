@@ -20,9 +20,6 @@
 #include "EoS/GetMatProp.hpp"
 #include "Kokkos_Core.hpp"
 
-using execution_space = Kokkos::Serial;
-using memory_space = Kokkos::HostSpace;
-
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -746,6 +743,10 @@ void getCauchyStress(
 //! \return Elastic Cauchy stress tensor (alpha * \sigma_ij) of material k
 // *****************************************************************************
 {
+  const Kokkos::Array<Kokkos::Array<size_t, 3>, 3> stressCmpKokkos = {{
+  {{0, 3, 4}},
+  {{3, 1, 5}},
+  {{4, 5, 2}} }};
 
   // elastic Cauchy stress for solids
   if (solidx(k) > 0) {

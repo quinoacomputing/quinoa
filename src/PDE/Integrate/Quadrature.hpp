@@ -21,8 +21,8 @@
 #include "Exception.hpp"
 #include "Kokkos_Core.hpp"
 
-using execution_space = Kokkos::Serial;
-using memory_space = Kokkos::HostSpace;
+using execution_space = Kokkos::DefaultExecutionSpace;
+using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
 namespace tk {
 //! Initialization of number of Gauss points for volume integration
@@ -32,7 +32,7 @@ constexpr std::size_t NGvol( const std::size_t ndof ) {
   return ndof == 1 ? 1 :
          ndof == 4 ? 5 :
          ndof == 10 ? 11 :
-         throw std::logic_error("ndof must be one of 1,4,10");
+        0;
 }
 
 
@@ -72,7 +72,7 @@ GaussQuadratureTet( std::size_t NG,
                     std::vector< real >& wgp );
 
 //! Kokkos version of GaussQuadratureTet
-KOKKOS_FUNCTION 
+KOKKOS_FORCEINLINE_FUNCTION 
 void GaussQuadratureTet( const std::size_t NG,
               Kokkos::View<real**, memory_space> coordgp,
               Kokkos::View<real*, memory_space> wgp);

@@ -14,8 +14,8 @@
 #define MultiMatIndexing_h
 
 #include "Kokkos_Core.hpp"
-using execution_space = Kokkos::Serial;
-using memory_space = Kokkos::HostSpace;
+using execution_space = Kokkos::DefaultExecutionSpace;
+using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
 namespace inciter {
 
@@ -227,12 +227,6 @@ KOKKOS_INLINE_FUNCTION std::size_t newSolidsAccFn( std::size_t kmat,
 //! \brief Index for Cauchy stress components, since only the 6 independent
 //!   components are stored.
 const std::array< std::array< std::size_t, 3 >, 3 > stressCmp{{
-  {{0, 3, 4}},
-  {{3, 1, 5}},
-  {{4, 5, 2}} }};
-
-//! Kokkos version of stressCmp since std::array cant be used
-const Kokkos::Array<Kokkos::Array<size_t, 3>, 3> stressCmpKokkos = {{
   {{0, 3, 4}},
   {{3, 1, 5}},
   {{4, 5, 2}} }};
