@@ -464,6 +464,13 @@ struct HLLDMultiMat {
             flx.push_back(aTnl[k][i]);
         }
       }
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              flx.push_back(gl[k][i][j]);
+        }
+      }
 
     }
 
@@ -502,6 +509,13 @@ struct HLLDMultiMat {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             flx.push_back(aTnlStar[k][i]);
+        }
+      }
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              flx.push_back(glStar[k][i][j]);
         }
       }
 
@@ -544,6 +558,13 @@ struct HLLDMultiMat {
             flx.push_back(aTnlStarStar[k][i]);
         }
       }
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              flx.push_back(glStarStar[k][i][j]);
+        }
+      }
 
     }
 
@@ -582,6 +603,13 @@ struct HLLDMultiMat {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             flx.push_back(aTnrStarStar[k][i]);
+        }
+      }
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              flx.push_back(grStarStar[k][i][j]);
         }
       }
 
@@ -624,6 +652,13 @@ struct HLLDMultiMat {
             flx.push_back(aTnrStar[k][i]);
         }
       }
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              flx.push_back(grStar[k][i][j]);
+        }
+      }
 
     }
 
@@ -662,6 +697,13 @@ struct HLLDMultiMat {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             flx.push_back(aTnr[k][i]);
+        }
+      }
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              flx.push_back(gr[k][i][j]);
         }
       }
 
