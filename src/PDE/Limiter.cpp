@@ -2537,10 +2537,13 @@ interfaceIndicator( std::size_t nmat,
 //! \return Boolean which indicates if the element contains a material interface
 // *****************************************************************************
 {
+  auto alphamin =
+    inciter::g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
+
   bool intInd = false;
 
   // limits under which compression is to be performed
-  auto al_eps = 1e-08;
+  auto al_eps = std::min(1e-08, 1e4*alphamin); // limit this value at 1e-8
   auto loLim = 2.0 * al_eps;
   auto hiLim = 1.0 - loLim;
 

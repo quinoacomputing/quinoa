@@ -226,7 +226,6 @@ struct HLLCMultiMat {
         TnlStar[i] += aTnlStar[k][i];
         TnrStar[i] += aTnrStar[k][i];
       }
-    }
 
     auto w_l = (vnl[0]-Sl)/(Sm-Sl);
     auto w_r = (vnr[0]-Sr)/(Sm-Sr);
