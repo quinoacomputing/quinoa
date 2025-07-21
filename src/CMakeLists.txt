@@ -125,7 +125,7 @@ find_package(LAPACKE)
 if(LAPACKE_FOUND)
   set(lapack "")
 endif()
-message(STATUS "LAPACK found: "${LAPACKE_LIBRARIES})
+message(STATUS "LAPACK found: " ${LAPACKE_LIBRARIES})
 
 # Find CBLAS
 set(cblas "cblas")
@@ -133,7 +133,7 @@ find_package(CBLAS)
 if(CBLAS_FOUND)
   set(cblas "")
 endif()
-message(STATUS "CBLAS found: "${CBLAS_LIBRARIES})
+message(STATUS "CBLAS found: " ${CBLAS_LIBRARIES})
 
 # Find Trilinos
 set(trilinos "trilinos")
