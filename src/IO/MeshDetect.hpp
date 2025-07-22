@@ -13,6 +13,7 @@
 #define MeshDetect_h
 
 #include <iosfwd>
+#include <cstdint>
 
 namespace tk {
 

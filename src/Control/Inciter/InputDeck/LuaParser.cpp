@@ -314,6 +314,9 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multimat"], "nmat",
       gideck.get< tag::multimat, tag::nmat >(), 2);
+    storeIfSpecd< tk::real >(
+      lua_ideck["multimat"], "min_volumefrac",
+      gideck.get< tag::multimat, tag::min_volumefrac >(), 1.0e-12);
     storeIfSpecd< uint64_t >(
       lua_ideck["multimat"], "prelax",
       gideck.get< tag::multimat, tag::prelax >(), 1);

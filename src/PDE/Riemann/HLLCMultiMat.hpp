@@ -101,19 +101,25 @@ struct HLLCMultiMat {
 
     // Middle-zone (star) variables
     // -------------------------------------------------------------------------
-    tk::real pStar(0.0);
-    std::vector< tk::real > apStar(nmat, 0.0);
+    tk::real pStar_l(0.0), pStar_r(0.0);
+    std::vector< tk::real > apStar_l(nmat, 0.0), apStar_r(nmat, 0.0);
+    // the pressure in the star zone is theoretically equivalent when derived
+    // from the left or right state. However, there might be differences
+    // numerically due to truncation etc. Hence two separate evaluations
+    // are used.
     for (std::size_t k=0; k<nmat; ++k) {
-      apStar[k] = apl[k] + u[0][densityIdx(nmat, k)]*(vnl-Sl)*(vnl-Sm);
-      pStar += apStar[k];
+      apStar_l[k] = apl[k] + u[0][densityIdx(nmat, k)]*(vnl-Sl)*(vnl-Sm);
+      apStar_r[k] = apr[k] + u[1][densityIdx(nmat, k)]*(vnr-Sr)*(vnr-Sm);
+      pStar_l += apStar_l[k];
+      pStar_r += apStar_r[k];
     }
     auto uStar = u;
 
     for (std::size_t idir=0; idir<3; ++idir) {
       uStar[0][momentumIdx(nmat, idir)] =
-        ((Sl-vnl)*u[0][momentumIdx(nmat, idir)] + (pStar-pl)*fn[idir])/(Sl-Sm);
+        ((Sl-vnl)*u[0][momentumIdx(nmat, idir)] + (pStar_l-pl)*fn[idir])/(Sl-Sm);
       uStar[1][momentumIdx(nmat, idir)] =
-        ((Sr-vnr)*u[1][momentumIdx(nmat, idir)] + (pStar-pr)*fn[idir])/(Sr-Sm);
+        ((Sr-vnr)*u[1][momentumIdx(nmat, idir)] + (pStar_r-pr)*fn[idir])/(Sr-Sm);
     }
 
     for (std::size_t k=0; k<nmat; ++k) {
@@ -122,14 +128,14 @@ struct HLLCMultiMat {
       uStar[0][densityIdx(nmat, k)] =
         (Sl-vnl) * u[0][densityIdx(nmat, k)] / (Sl-Sm);
       uStar[0][energyIdx(nmat, k)] =
-        ((Sl-vnl) * u[0][energyIdx(nmat, k)] - apl[k]*vnl + apStar[k]*Sm) / (Sl-Sm);
+        ((Sl-vnl) * u[0][energyIdx(nmat, k)] - apl[k]*vnl + apStar_l[k]*Sm) / (Sl-Sm);
 
       // Right
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] =
         (Sr-vnr) * u[1][densityIdx(nmat, k)] / (Sr-Sm);
       uStar[1][energyIdx(nmat, k)] =
-        ((Sr-vnr) * u[1][energyIdx(nmat, k)] - apr[k]*vnr + apStar[k]*Sm) / (Sr-Sm);
+        ((Sr-vnr) * u[1][energyIdx(nmat, k)] - apr[k]*vnr + apStar_r[k]*Sm) / (Sr-Sm);
     }
 
     // Numerical fluxes
@@ -158,18 +164,18 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          uStar[0][momentumIdx(nmat, idir)] * Sm + pStar*fn[idir];
+          uStar[0][momentumIdx(nmat, idir)] * Sm + pStar_l*fn[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[0][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[0][densityIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] = (uStar[0][energyIdx(nmat, k)] + apStar[k]) * Sm;
+        flx[energyIdx(nmat, k)] = (uStar[0][energyIdx(nmat, k)] + apStar_l[k]) * Sm;
       }
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(apStar[k]);
+        flx.push_back(apStar_l[k]);
       // Store Riemann velocity
       flx.push_back(Sm);
     }
@@ -178,18 +184,18 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          uStar[1][momentumIdx(nmat, idir)] * Sm + pStar*fn[idir];
+          uStar[1][momentumIdx(nmat, idir)] * Sm + pStar_r*fn[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[1][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[1][densityIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] = (uStar[1][energyIdx(nmat, k)] + apStar[k]) * Sm;
+        flx[energyIdx(nmat, k)] = (uStar[1][energyIdx(nmat, k)] + apStar_r[k]) * Sm;
       }
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(apStar[k]);
+        flx.push_back(apStar_r[k]);
       // Store Riemann velocity
       flx.push_back(Sm);
     }
