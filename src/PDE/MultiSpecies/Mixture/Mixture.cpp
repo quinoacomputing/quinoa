@@ -212,3 +212,112 @@ Mixture::temperature(
   return temp;
 }
 
+std::vector < tk::real >
+Mixture::pressure_prim_partials(
+  tk::real mix_density,
+  tk::real mix_temp,
+  const std::vector< EOS >& mat_blk ) const
+// *************************************************************************
+//! \brief Calculate mixture pressure partial derivatives with respect to the
+//!   primitives.
+//! \param[in] mix_density Mixture density (sum of species density)
+//! \param[in] mix_temp Mixture temperature
+//! \param[in] mat_blk EOS material block
+//! \return Mixture pressure
+// *************************************************************************
+{
+  std::vector< tk::real > dpdP(m_nspec + 3 + 1, 0.0);
+  std::vector< tk::real > dRdP = mix_R_prim_partials(mix_density, mat_blk);
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    dpdP[k] = m_mix_R * mix_temp + mix_density * dRdP[k] * mix_temp;
+  }
+  dpdP[m_nspec + 3] = mix_density*m_mix_R;
+  return dpdP;
+}
+
+std::vector < tk::real >
+Mixture::mix_R_prim_partials(
+  tk::real mix_density,
+  const std::vector< EOS >& mat_blk) const
+// *************************************************************************
+//! \brief Calculate mixture gas constant partial derivatives with respect to
+//!   the primitives.
+//! \param[in] mix_density Mixture density (sum of species density)
+//! \param[in] mat_blk EOS material block
+//! \return Mixture pressure
+// *************************************************************************
+{
+  std::vector< tk::real > dRdP(m_nspec + 3 + 1, 0.0);
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    dRdP[k] = mat_blk[k].compute< EOS::gas_constant >() / mix_density
+            - m_mix_R / mix_density;
+  }
+  return dRdP;
+}
+
+std::vector < tk::real >
+Mixture::mix_Cv_prim_partials(
+  tk::real mix_density,
+  tk::real mix_temp,
+  const std::vector< EOS >& mat_blk) const
+// *************************************************************************
+//! \brief Calculate mixture specific heat partial derivatives with respect to
+//!   the primitives.
+//! \param[in] mix_density Mixture density (sum of species density)
+//! \param[in] mix_temp Mixture temperature
+//! \param[in] mat_blk EOS material block
+//! \return Mixture pressure
+// *************************************************************************
+{
+  std::vector< tk::real > dCvdP(m_nspec + 3 + 1, 0.0);
+  tk::real mix_Cv = 0.;
+
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    mix_Cv += mat_blk[k].compute< EOS::cv >(mix_temp) * m_Ys[k];
+  }
+
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    dCvdP[k] = mat_blk[k].compute< EOS::cv >(mix_temp) / mix_density
+             - mix_Cv / mix_density;
+  }
+  return dCvdP;
+}
+
+std::vector < tk::real >
+Mixture::soundspeed_prim_partials(
+  tk::real mix_density,
+  tk::real mix_temp,
+  const std::vector< EOS >& mat_blk ) const
+// *************************************************************************
+//! \brief Calculate mixture sound speed partial derivatives with respect to
+//!   the primitives.
+//! \param[in] mix_density Mixture density (sum of species density)
+//! \param[in] mix_temp Mixture temperature
+//! \param[in] mat_blk EOS material block
+//! \return Mixture pressure
+// *************************************************************************
+{
+  std::vector< tk::real > dadP(m_nspec + 3 + 1, 0.0),
+                          drhodP(m_nspec + 3 + 1, 0.0);
+  auto dpdP = pressure_prim_partials(mix_density, mix_temp, mat_blk);
+  auto dCvdP = mix_Cv_prim_partials(mix_density, mix_temp, mat_blk);
+  auto dRdP = mix_R_prim_partials(mix_density, mat_blk);
+  auto a = frozen_soundspeed(mix_density, mix_temp, mat_blk);
+  auto p = pressure(mix_density, mix_temp);
+  tk::real mix_Cv(0.), dbetadP(0.);
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    mix_Cv += mat_blk[k].compute< EOS::cv >(mix_temp) * m_Ys[k];
+    drhodP[k] = 1;
+  }
+  tk::real beta = m_mix_R / mix_Cv;
+
+  // Add constituent partials together
+  for (std::size_t k = 0; k < m_nspec + 3 + 1; k++) {
+    dbetadP = dRdP[k] / mix_Cv - m_mix_R / ( mix_Cv * mix_Cv ) * dCvdP[k];
+    dadP[k] = 0.5 / a * ( (1 + beta) / mix_density * dpdP[k]
+                      + p / mix_density * dbetadP
+                      - (1 + beta) * p / (mix_density*mix_density) * drhodP[k]
+                      );
+  }
+  return dadP;
+}
