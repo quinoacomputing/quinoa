@@ -1156,7 +1156,13 @@ Transporter::diagHeader()
     // Augment diagnostics variables by L2-norm of the residual and total energy
     if ( scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE ||
-         scheme == ctr::SchemeType::FV )
+         scheme == ctr::SchemeType::FV ||
+	 scheme == ctr::SchemeType::DG ||
+	 scheme == ctr::SchemeType::DGP1 ||
+	 scheme == ctr::SchemeType::DGP2 ||
+	 scheme == ctr::SchemeType::P0P1 ||
+	 scheme == ctr::SchemeType::PDG
+	 )
     {
       for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
     }
@@ -1565,7 +1571,13 @@ Transporter::diagnostics( CkReductionMsg* msg )
       diag.push_back( l2res[i] );
     }
   }
-  else if (scheme == ctr::SchemeType::FV) {
+  else if (scheme == ctr::SchemeType::FV ||
+		  scheme==ctr::SchemeType::DG ||
+		  scheme==ctr::SchemeType::DGP1 ||
+		  scheme==ctr::SchemeType::DGP2 ||
+		  scheme==ctr::SchemeType::P0P1 ||
+		  scheme==ctr::SchemeType::PDG
+		  ) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] );
       diag.push_back( l2res[i] );
