@@ -1088,6 +1088,94 @@ class MultiMat {
       return mindt;
     }
 
+   
+// void:: compute_g_kh_k()
+// {
+// for (k = 0; k < numberPhases; k++ ){
+// zk[k] = std::sqrt(gamma_k[k] * (F[k+numberPhases]*p0+ pinf_k[k])*akrho[k]/F[k]);
+// hk[k] = mu0*zk[k]* F[k] * (1-F[k])*(F[k+numberPhases]-F[2*numberPhases])*p0;
+// rhoCKI[k]= (F[2*numberPhases]*(gamma_k[k]-1)+F[k+numberPhases])*p0+gamma_k[k]* pinf_k[k]
+// gk[k] =rhoCkI[k]/F[k]* hk[k]/p0;
+// dmukdalpha[k] = -0.5*zk[k] /F[k];
+// dhkdak[k,k]= mu0*(dmukdalpha[k]*F[k] * (1-F[k]) +zk[k]*(1.-2*F[k]))*(F[k+numberPhases]-F[2*numberPhases])*p0;
+// dmukdpk[k]=0.5/zk[k]*gamma_k[k]*akrho[k]/F[k];
+// dhkdpk[k,k]=dmukdpk[k] * F[k] * (1-F[k]) * (F[k+numberPhases]-F[2*numberPhases]+mu0*zk[k]* F[k] * (1-F[k])) * p0;
+// dhkdpI[k]=-mu0*zk[k]* F[k] * (1-F[k])*p0;
+// dgkdak[k,k]= -gk[k]/F[k]-rhoCKI[k]/(F[k] p0)*dhkdak[k,k];
+// dgkdpk[k,k]= -h_k/F[k]-rhoCKI[k]/(F[k] p0)*dhkdpk[k,k];
+// dgkdpI[k]=(gamma_k-1)/F[k]*hk[k]-rhoCKI[k]/(F[k] * p0)*dhkdpI[k];
+// }
+
+  
+    //! Pressure relaxation
+    //! \param[in] nelem Number of elements
+    //! \param[in] U Conserved unknowns
+    void pressure_relaxation( const std::size_t nelem,
+                              tk::Fields& U ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      const auto intsharp =
+        g_inputdeck.get< tag::multimat, tag::intsharp >();
+      const auto& solidx = inciter::g_inputdeck.get<
+        tag::matidxmap, tag::solidx >();
+
+      // Solver parameters
+      std::size_t max_iter = 500;
+      tk::real tol = 1.0E-05;
+      
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        tk::real rho = 0.0;
+        for (std::size_t k=0; k<nmat; ++k)
+          rho += U(e, densityDofIdx(nmat, k, ndof, 0));
+        auto u = U(e, momentumDofIdx(nmat, 0, ndof, 0))/rho;
+        auto v = U(e, momentumDofIdx(nmat, 1, ndof, 0))/rho;
+        auto w = U(e, momentumDofIdx(nmat, 2, ndof, 0))/rho;
+
+        std::vector< tk::real > pressure(nmat, 0.0);
+        tk::real max_pressure = 0.0;
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          auto alpha = U(e, alphaDofIdx(nmat, k, ndof, 0));
+          auto arho = U(e, densityDofIdx(nmat, k, ndof, 0));
+          auto arhoe = U(e, energyDofIdx(nmat, k, ndof, 0));
+          std::array< std::array< tk::real, 3 >, 3 > g;
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, ndof, 0));
+          pressure[k] = m_mat_blk[k].compute< EOS::pressure >(
+            rho, u, v, w, arhoe, volfrac, k, g);
+          max_pressure = std::max(pressure[k], max_pressure);
+        }
+        // First, if all pressure are equal, there is nothing to do
+        tk::real sum = 0.0;
+        for (std::size_t imat=0; imat<nmat; ++imat)
+          for (std::size_t jmat=0; jmat<nmat; ++jmat)
+            err += std::abs(pressure[imat]-pressure[jmat]);
+        err /= max_pressure;
+        if (err > tol)
+        {
+          // Define solution vector
+          std::vector< tk::real > x_old(2*nmat+1, 0.0), x(2*nmat+1, 0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            x[k] = U(e, alphaDofIdx(nmat, k, ndof, 0));
+            x[2*k] = pressure[k];
+          }
+          x[2*nmat] = max_pressure; // idk
+          // Define f vector
+          std::vector< tk::real > f_old(2*nmat+1, 0.0), f(2*nmat+1, 0.0);
+          // Iterate for the solution
+          for (std::size_t iter=0; iter<max_iter; ++iter)
+          {
+            
+          }
+        }
+      }
+    }
+
     //! Compute stiff terms for a single element
     //! \param[in] e Element number
     //! \param[in] geoElem Element geometry array
