@@ -481,7 +481,7 @@ struct HLLCMultiMat {
 
   ////! Flux type accessor
   ////! \return Flux type
-  //Static ctr::FluxType type() noexcept {
+  //static ctr::FluxType type() noexcept {
   //  return ctr::FluxType::HLLCMultiMat; }
 };
 
