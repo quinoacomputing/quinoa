@@ -444,6 +444,13 @@ class Transport {
       return mindt;
     }
 
+    //! Pressure relaxation, not implemented here
+    //! \param[in] U Conserved unknowns
+    //! \param[in] P Primitive unknowns
+    void pressure_relaxation( tk::Fields& /*U*/,
+                              tk::Fields& /*P*/ ) const
+    {}
+
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array
