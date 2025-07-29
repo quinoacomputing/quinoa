@@ -95,11 +95,7 @@ Mixture::frozen_soundspeed(
   auto mix_peff = std::max( 1.0e-15, pressure(mix_density, mix_temp) );
 
   // Compute beta, mixture parameters for sound speed calc.
-  tk::real mix_Cv = 0.;
-  for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_Cv += mat_blk[k].compute< EOS::cv >(mix_temp) * m_Ys[k];
-  }
-  tk::real beta = m_mix_R / mix_Cv;
+  tk::real beta = m_mix_R / mix_Cv(mix_temp, mat_blk);
 
   // Compute speed of sound
   tk::real a_sq = (1. + beta) * mix_peff / mix_density;
@@ -289,15 +285,10 @@ Mixture::mix_Cv_prim_partials(
 // *************************************************************************
 {
   std::vector< tk::real > dCvdP(m_nspec + 3 + 1, 0.0);
-  tk::real mix_Cv = 0.;
-
-  for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_Cv += mat_blk[k].compute< EOS::cv >(mix_temp) * m_Ys[k];
-  }
 
   for (std::size_t k = 0; k < m_nspec; k++) {
     dCvdP[k] = mat_blk[k].compute< EOS::cv >(mix_temp) / mix_density
-             - mix_Cv / mix_density;
+             - mix_Cv(mix_temp, mat_blk) / mix_density;
   }
   return dCvdP;
 }
