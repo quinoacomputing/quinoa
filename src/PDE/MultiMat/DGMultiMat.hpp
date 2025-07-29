@@ -974,8 +974,8 @@ class MultiMat {
                         m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
                         riemannDeriv, intsharp );
 
-      // Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld, "Size of "
-      //         "Riemann derivative vector incorrect" );
+      Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
+              "Riemann derivative vector incorrect" );
 
       // get derivatives from riemannDeriv
       for (std::size_t k=0; k<riemannDeriv.size(); ++k)

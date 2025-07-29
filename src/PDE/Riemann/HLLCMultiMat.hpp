@@ -501,8 +501,8 @@ struct HLLCMultiMat {
 
     }
 
-    // Assert( flx.size() == (ncomp+nmat+1+3*nsld), "Size of "
-    //         "multi-material flux vector incorrect" );
+    Assert( flx.size() == (ncomp+nmat+1+3*nsld+9*nsld), "Size of "
+            "multi-material flux vector incorrect" );
 
     return flx;
   }
