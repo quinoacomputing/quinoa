@@ -292,7 +292,7 @@ update_rhs_bc ( ncomp_t ncomp,
             wt * fl[mark+i];
       }
 
-    // Bunch of derivatives of g: d(g_ik)/dx_j-d(g_ij)/dx_k
+    // Derivatives of g: d(g_ik)/dx_j-d(g_ij)/dx_k
     // for i=1,2,3; j=1,2,3; k=1,2,3. Total = 3x3x3 (per solid)
     std::size_t nsld = inciter::numSolids(nmat, solidx);
     for (std::size_t k=0; k<nmat; ++k)

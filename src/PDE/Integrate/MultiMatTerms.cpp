@@ -301,9 +301,6 @@ updateRhsNonCons(
   using inciter::volfracDofIdx;
   using inciter::energyDofIdx;
   using inciter::deformDofIdx;
-  
-  const auto& solidx =
-    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   //Assert( dBdx[0].size() == ndof_el,
   //        "Size mismatch for basis function derivatives" );
@@ -332,12 +329,7 @@ updateRhsNonCons(
           wt * ncf[volfracIdx(nmat,k)][idof];
         R(e, energyDofIdx(nmat,k,ndof,idof)) +=
           wt * ncf[energyIdx(nmat,k)][idof] * B[idof];
-        // High order non-conservative g terms
-        if (solidx[k] > 0)
-          for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-              R(e, deformDofIdx(nmat,solidx[k],i,j,ndof,idof)) +=
-                wt * ncf[deformIdx(nmat,solidx[k],i,j)][idof] * B[idof];
+        // Note: High order non-conservative g terms not implemented yet!
       }
     }
   }
