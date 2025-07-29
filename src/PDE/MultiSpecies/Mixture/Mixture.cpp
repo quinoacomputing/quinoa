@@ -107,6 +107,25 @@ Mixture::frozen_soundspeed(
 }
 
 tk::real
+Mixture::mix_Cv(
+  tk::real mix_temp,
+  const std::vector< EOS >& mat_blk) const
+// *************************************************************************
+//! \brief Calculate the mixture Cv
+//! \param[in] mix_temp Mixture temperature (provided at call-site, since
+//!   it is reconstructed separately
+//! \param[in] mat_blk EOS material block
+//! \return Mixture Cv using the ideal gas EoS
+// *************************************************************************
+{
+  tk::real mix_Cv = 0.;
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    mix_Cv += mat_blk[k].compute< EOS::cv >(mix_temp) * m_Ys[k];
+  }
+  return mix_Cv;
+}
+
+tk::real
 Mixture::totalenergy(
   tk::real mix_density,
   tk::real u,
