@@ -48,6 +48,10 @@ class Mixture {
                                tk::real mix_temp,
                                const std::vector< EOS >& mat_blk) const;
 
+    //! Compute mixture Cv.
+    tk::real mix_Cv(tk::real mix_temp,
+                    const std::vector< EOS >& mat_blk) const;
+
     //! Compute mixture total energy
     tk::real totalenergy(tk::real mix_density,
                          tk::real u,
