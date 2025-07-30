@@ -1121,17 +1121,14 @@ class MultiMat {
       using inciter::deformDofIdx;
       
       const auto ndof = g_inputdeck.get< tag::ndof >();
-      const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      const auto intsharp =
-        g_inputdeck.get< tag::multimat, tag::intsharp >();
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
 
       // Solver parameters
       std::size_t max_iter = 1;
       tk::real tol = 1.0E-05;
-      tk::real p0 = 1.0E00; // idk
+      tk::real p0 = 1.0E00;
       
       for (std::size_t e=0; e<nelem; ++e)
       {
@@ -1187,7 +1184,7 @@ class MultiMat {
             x[nmat+k] = pressure[k]/p0;
             x[2*nmat] += zk[k]*pressure[k]/zk_sum;
           }
-          double x_old[2*nmat+1];
+          //double x_old[2*nmat+1];
           double x_initial[2*nmat+1];
           for (std::size_t i=0; i<2*nmat+1; ++i)
             x_initial[i] = x[i];
@@ -1197,7 +1194,7 @@ class MultiMat {
           for (std::size_t iter=0; iter<max_iter; ++iter)
           {
             // Compute zk, hk, rhoCkI and gk
-            std::vector< tk::real > zk(nmat, 0.0), hk(nmat, 0.0), rhoCkI(nmat, 0.0), gk(nmat, 0.0);
+            std::vector< tk::real > hk(nmat, 0.0), rhoCkI(nmat, 0.0), gk(nmat, 0.0);
             for (std::size_t k=0; k<nmat; ++k)
             {
               tk::real gamma = getmatprop< tag::gamma >(k);
@@ -1221,7 +1218,6 @@ class MultiMat {
             for (std::size_t k=0; k<nmat; ++k)
             {
               tk::real gamma = getmatprop< tag::gamma >(k);
-              tk::real pinf = getmatprop< tag::pstiff >(k);
               dhk_dak[k] = zk[k]*(1-2*x[k])*(x[nmat+k]-x[2*nmat])*p0;
               dhk_dpk[k] = zk[k]*x[k]*(1-x[k])*p0;
               dhk_dpI[k] = -zk[k]*x[k]*(1-x[k])*p0;
@@ -1250,6 +1246,7 @@ class MultiMat {
                 printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
               printf("\n");
             }
+            printf("pI = %e\n", x[2*nmat]);
             // solve J*dx = -f
             double dx[2*nmat+1];
             for (std::size_t i=0; i<2*nmat+1; ++i)
@@ -1264,12 +1261,49 @@ class MultiMat {
             }
             else
             {
-              printf("Failed with info: %d\n", info);
+              printf("Failed with info: %ld\n", info);
             }
             // Update x <- x+dx
+            for (std::size_t i=0; i<2*nmat/*+1*/; ++i)
+              x[i] += 1.0E-04*dx[i];
+            // Restore bounds
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
+              if (x[k] < alphamin)
+                x[k] = alphamin;
+              else if (x[k] > 1.0)
+                x[k] = 1.0;
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              tk::real pinf = getmatprop< tag::pstiff >(k); 
+              if (x[nmat+k] < -gamma*pinf)
+                x[nmat+k] = -gamma*pinf;
+            }
+            // Re-normalize alphas
+            tk::real alpha_sum = 0.0;
+            for (std::size_t k=0; k<nmat; ++k)
+              alpha_sum += x[k];
+            for (std::size_t k=0; k<nmat; ++k)
+              x[k] /= alpha_sum;
+            // Re-compute error. If it's below tol, exit loop
+            err = 0.0;
             for (std::size_t i=0; i<2*nmat+1; ++i)
-              x[i] += dx;
+              err += f[i]*f[i];
+            err = std::sqrt(err);
+            if (err < tol) {
+              printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter);
+              break;
+            }
           }
+          // Save solution x into vector of conserved variables U..
+          // First, alpha..
+          for (std::size_t k=0; k<nmat; ++k)
+            U(e, volfracDofIdx(nmat, k, ndof, 0)) = x[k];
+          // Then, energy computed using alpha and p.
+          std::vector< tk::real > arhoe(nmat, 0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+            U(e, energyDofIdx(nmat, k, ndof, 0)) =
+              m_mat_blk[k].compute< EOS::totalenergy >( x[k]*rhomat[k], u, v, w, x[k]*x[nmat+k], x[k] );
         }
       }
     }
