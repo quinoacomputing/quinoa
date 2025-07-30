@@ -1127,7 +1127,7 @@ Transporter::diagHeader()
     if ( scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE )
       for (const auto& eq : g_cgpde) varnames( eq, var );
-    else if ( scheme == ctr::SchemeType::DG ||
+    else if ( scheme == ctr::SchemeType::DGP0 ||
               scheme == ctr::SchemeType::P0P1 ||
               scheme == ctr::SchemeType::DGP1 ||
               scheme == ctr::SchemeType::DGP2 ||
@@ -1157,7 +1157,7 @@ Transporter::diagHeader()
     if ( scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE ||
          scheme == ctr::SchemeType::FV ||
-         scheme == ctr::SchemeType::DG ||
+         scheme == ctr::SchemeType::DGP0 ||
          scheme == ctr::SchemeType::DGP1 ||
          scheme == ctr::SchemeType::DGP2 ||
          scheme == ctr::SchemeType::P0P1 ||
@@ -1488,7 +1488,7 @@ Transporter::inthead( const InciterPrint& print )
 {
   auto refined = g_inputdeck.get< tag::field_output, tag::refined >();
   const auto scheme = g_inputdeck.get< tag::scheme >();
-  if (refined && scheme == ctr::SchemeType::DG) {
+  if (refined && scheme == ctr::SchemeType::DGP0) {
     printer() << "\n>>> WARNING: Ignoring refined field output for DG(P0)\n\n";
     refined = false;
   }
@@ -1572,7 +1572,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
     }
   }
   else if ( scheme == ctr::SchemeType::FV ||
-            scheme == ctr::SchemeType::DG ||
+            scheme == ctr::SchemeType::DGP0 ||
             scheme == ctr::SchemeType::DGP1 ||
             scheme == ctr::SchemeType::DGP2 ||
             scheme == ctr::SchemeType::P0P1 ||
