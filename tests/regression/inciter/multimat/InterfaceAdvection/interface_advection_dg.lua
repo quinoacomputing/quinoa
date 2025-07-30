@@ -5,8 +5,7 @@ inciter = {
   nstep = 50,  -- Max number of time steps
   dt = 2.5e-7,
   ttyi = 1,    -- TTY output interval
-  scheme = "dg",
-  limsol_projection = false,
+  scheme = "dgp0",
   lowspeed_kp = 1.0,
 
   multimat = {

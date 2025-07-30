@@ -8,7 +8,7 @@ inciter = {
   nstep = 125,
   cfl = 0.8,
   ttyi = 25,  -- TTY output interval
-  scheme = "dg",
+  scheme = "dgp0",
   flux = "hllc",
 
   partitioning = "mj",
