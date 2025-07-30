@@ -48,6 +48,24 @@
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
 
+// ignore old-style-casts required for lapack/blas calls
+#if defined(__clang__)
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
+// Lapacke forward declarations
+extern "C" {
+
+using lapack_int = long;
+
+#define LAPACK_ROW_MAJOR 101
+#define LAPACK_COL_MAJOR 102
+
+extern lapack_int LAPACKE_dgesv( int, lapack_int, lapack_int, double*,
+  lapack_int, lapack_int*, double*, lapack_int );
+
+}
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -1090,8 +1108,10 @@ class MultiMat {
 
     //! Pressure relaxation
     //! \param[in] nelem Number of elements
+    //! \param[in] dt Time step
     //! \param[in] U Conserved unknowns
     void pressure_relaxation( const std::size_t nelem,
+                              const tk::real dt,
                               tk::Fields& U ) const
     {
       using inciter::volfracDofIdx;
@@ -1125,22 +1145,22 @@ class MultiMat {
         // Store alpha and pressure vectors
         std::vector< tk::real > alpha(nmat, 0.0);
         std::vector< tk::real > pressure(nmat, 0.0);
-        tk::real max_pressure = 0.0;
+        tk::real max_pressure = 1.0e-08;
         for (std::size_t k=0; k<nmat; ++k)
         {
           alpha[k] = U(e, volfracDofIdx(nmat, k, ndof, 0));
           auto arho = U(e, densityDofIdx(nmat, k, ndof, 0));
           auto arhoe = U(e, energyDofIdx(nmat, k, ndof, 0));
-          std::array< std::array< tk::real, 3 >, 3 > g;
+          std::array< std::array< tk::real, 3 >, 3 > gmat;
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
-              g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, ndof, 0));
+              gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, ndof, 0));
           pressure[k] = m_mat_blk[k].compute< EOS::pressure >(
-            rho, u, v, w, arhoe, alpha[k], k, g);
+            rho, u, v, w, arhoe, alpha[k], k, gmat);
           max_pressure = std::max(pressure[k], max_pressure);
         }
         // First, if all pressure are equal, there is nothing to do
-        tk::real sum = 0.0;
+        tk::real err = 0.0;
         for (std::size_t imat=0; imat<nmat; ++imat)
           for (std::size_t jmat=0; jmat<nmat; ++jmat)
             err += std::abs(pressure[imat]-pressure[jmat]);
@@ -1148,34 +1168,89 @@ class MultiMat {
         if (err > tol)
         {
           // Define solution vector
-          std::vector< tk::real > x(2*nmat+1, 0.0);
+          double x[2*nmat+1];
           for (std::size_t k=0; k<nmat; ++k)
           {
             x[k] = alpha[k];
             x[nmat+k] = pressure[k]/p0;
           }
           x[2*nmat] = max_pressure/p0; // idk
-          auto x_old = x;
+          double x_old[2*nmat+1];
           // Declare f vector
           std::vector< tk::real > f(2*nmat+1, 0.0), f_old(2*nmat+1, 0.0);
           // Iterate for the solution
           for (std::size_t iter=0; iter<max_iter; ++iter)
           {
-            // Compute hk and rhoCkI
-            std::vector< tk::real > h(nmat, 0.0), rhoCkI(nmat, 0.0);
+            // Compute hk, rhoCkI and gk
+            std::vector< tk::real > hk(nmat, 0.0), rhoCkI(nmat, 0.0), gk(nmat, 0.0);
             for (std::size_t k=0; k<nmat; ++k)
             {
               tk::real mu = getmatprop< tag::mu >(k);
               tk::real gamma = getmatprop< tag::gamma >(k);
               tk::real pinf = getmatprop< tag::pstiff >(k);
-              h[k] = mu*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])*p0;
-              rhoCkI[k] = (x[2*nmat]*(gamma-1)+x[nmat+k]*p0+gamma*pinf;
+              hk[k] = mu*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])*p0;
+              rhoCkI[k] = (x[2*nmat]*(gamma-1)+x[nmat+k])*p0+gamma*pinf;
+              gk[k] = rhoCkI[k]*hk[k]/(x[k]*p0);
             }
             // Compute f
+            f[2*nmat] = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
             {
-              f[k] = h[k];
-              f[nmat+k] = 
+              f[k] = hk[k];
+              f[nmat+k] = rhoCkI[k]*hk[k]/(x[k]*p0);
+              f[2*nmat] += hk[k];
+            }
+            // Compute auxiliar vectors
+            std::vector< tk::real > dhk_dak(nmat, 0.0), dhk_dpk(nmat, 0.0), dhk_dpI(nmat, 0.0);
+            std::vector< tk::real > dgk_dak(nmat, 0.0), dgk_dpk(nmat, 0.0), dgk_dpI(nmat, 0.0);
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              tk::real mu = getmatprop< tag::mu >(k);
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              tk::real pinf = getmatprop< tag::pstiff >(k);
+              dhk_dak[k] = mu*(1-2*x[k])*(x[nmat+k]-x[2*nmat])*p0;
+              dhk_dpk[k] = mu*x[k]*(1-x[k])*p0;
+              dhk_dpI[k] = -mu*x[k]*(1-x[k])*p0;
+              dgk_dak[k] = -gk[k]/x[k] - rhoCkI[k]*dhk_dak[k]/(x[k]*p0);
+              dgk_dpk[k] = -hk[k]/x[k] - rhoCkI[k]*dhk_dpk[k]/(x[k]*p0);
+              dgk_dpI[k] = -(gamma-1)*hk[k]*p0/x[k] - rhoCkI[k]*dhk_dpI[k]/(x[k]*p0);
+            }
+            // Compute jacobian
+            double jacobian[(2*nmat+1)*(2*nmat+1)];
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              jacobian[(2*nmat+1)*k        + k]       = 1.0-dt*dhk_dak[k];
+              jacobian[(2*nmat+1)*k        + nmat+k]  =    -dt*dhk_dpk[k];
+              jacobian[(2*nmat+1)*k        + 2*nmat]  =    -dt*dhk_dpI[k];
+              jacobian[(2*nmat+1)*(nmat+k) + k]       =    -dt*dgk_dak[k];
+              jacobian[(2*nmat+1)*(nmat+k) + nmat+k]  = 1.0-dt*dgk_dpk[k];
+              jacobian[(2*nmat+1)*(nmat+k) + 2*nmat]  =    -dt*dgk_dpI[k];
+              jacobian[(2*nmat+1)*(2*nmat) + k]       =     dt*dhk_dak[k];
+              jacobian[(2*nmat+1)*(2*nmat) + nmat+k]  =     dt*dhk_dpk[k];
+              jacobian[(2*nmat+1)*(2*nmat) + 2*nmat] +=     dt*dhk_dpI[k];
+            }
+            printf("DBG\n");
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+            {
+              for (std::size_t j=0; j<2*nmat+1; ++j)
+                printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
+              printf("\n");
+            }
+            // solve J*dx = -f
+            double dx[2*nmat+1];
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              dx[i] = -f[i];
+            lapack_int info;
+            lapack_int ipiv[2*nmat+1];
+            info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, 2*nmat+1, 1, jacobian, 2*nmat+1, ipiv, dx, 2*nmat+1);
+
+            if (info == 0) {
+              for (std::size_t i=0; i<2*nmat+1; ++i)
+                printf("dx[%lu] = %e\n", i, dx[i]);
+            }
+            else
+            {
+              printf("Failed with info: %d\n", info);
             }
           }
         }
