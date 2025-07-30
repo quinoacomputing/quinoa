@@ -1967,6 +1967,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         equation, but can also be a 'user-defined' mesh velocity specification for
         ALE mesh motion.)"});
 
+      keywords.insert({"mixed_cell",
+        "Select a mixed cell problem to test pressure relaxation",
+        R"(This keyword is used to select mixed cell)"});
+
       keywords.insert({"shear_diff",
         "Select the shear + diffusion test problem ",
         R"(This keyword is used to select the shear diffusion test problem. The

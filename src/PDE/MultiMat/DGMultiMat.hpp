@@ -1129,9 +1129,9 @@ class MultiMat {
         tag::matidxmap, tag::solidx >();
 
       // Solver parameters
-      std::size_t max_iter = 500;
+      std::size_t max_iter = 1;
       tk::real tol = 1.0E-05;
-      tk::real p0 = 1.0E05; // idk
+      tk::real p0 = 1.0E00; // idk
       
       for (std::size_t e=0; e<nelem; ++e)
       {
@@ -1145,11 +1145,12 @@ class MultiMat {
         // Store alpha and pressure vectors
         std::vector< tk::real > alpha(nmat, 0.0);
         std::vector< tk::real > pressure(nmat, 0.0);
+        std::vector< tk::real > rhomat(nmat, 0.0);
         tk::real max_pressure = 1.0e-08;
         for (std::size_t k=0; k<nmat; ++k)
         {
           alpha[k] = U(e, volfracDofIdx(nmat, k, ndof, 0));
-          auto arho = U(e, densityDofIdx(nmat, k, ndof, 0));
+          rhomat[k] = U(e, densityDofIdx(nmat, k, ndof, 0))/alpha[k];
           auto arhoe = U(e, energyDofIdx(nmat, k, ndof, 0));
           std::array< std::array< tk::real, 3 >, 3 > gmat;
           for (std::size_t i=0; i<3; ++i)
@@ -1167,28 +1168,42 @@ class MultiMat {
         err /= max_pressure;
         if (err > tol)
         {
+          // Compute zk
+          tk::real zk_sum = 0.0;
+          std::vector< tk::real > zk(nmat, 0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            tk::real gamma = getmatprop< tag::gamma >(k);
+            tk::real pinf = getmatprop< tag::pstiff >(k);
+            zk[k] = std::sqrt(gamma*(pressure[k]+pinf)*rhomat[k]);
+            zk_sum += zk[k];
+          }
           // Define solution vector
           double x[2*nmat+1];
+          x[2*nmat] = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
           {
             x[k] = alpha[k];
             x[nmat+k] = pressure[k]/p0;
+            x[2*nmat] += zk[k]*pressure[k]/zk_sum;
           }
-          x[2*nmat] = max_pressure/p0; // idk
           double x_old[2*nmat+1];
+          double x_initial[2*nmat+1];
+          for (std::size_t i=0; i<2*nmat+1; ++i)
+            x_initial[i] = x[i];
           // Declare f vector
           std::vector< tk::real > f(2*nmat+1, 0.0), f_old(2*nmat+1, 0.0);
           // Iterate for the solution
           for (std::size_t iter=0; iter<max_iter; ++iter)
           {
-            // Compute hk, rhoCkI and gk
-            std::vector< tk::real > hk(nmat, 0.0), rhoCkI(nmat, 0.0), gk(nmat, 0.0);
+            // Compute zk, hk, rhoCkI and gk
+            std::vector< tk::real > zk(nmat, 0.0), hk(nmat, 0.0), rhoCkI(nmat, 0.0), gk(nmat, 0.0);
             for (std::size_t k=0; k<nmat; ++k)
             {
-              tk::real mu = getmatprop< tag::mu >(k);
               tk::real gamma = getmatprop< tag::gamma >(k);
               tk::real pinf = getmatprop< tag::pstiff >(k);
-              hk[k] = mu*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])*p0;
+              zk[k] = std::sqrt(gamma*(x[nmat+k]*p0+pinf)*rhomat[k]);
+              hk[k] = zk[k]*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])*p0;
               rhoCkI[k] = (x[2*nmat]*(gamma-1)+x[nmat+k])*p0+gamma*pinf;
               gk[k] = rhoCkI[k]*hk[k]/(x[k]*p0);
             }
@@ -1196,21 +1211,20 @@ class MultiMat {
             f[2*nmat] = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
             {
-              f[k] = hk[k];
-              f[nmat+k] = rhoCkI[k]*hk[k]/(x[k]*p0);
-              f[2*nmat] += hk[k];
+              f[k] = x[k]-x_initial[k]-dt*hk[k];
+              f[nmat+k] = x[nmat+k]-x_initial[nmat+k]+dt*rhoCkI[k]*hk[k]/(x[k]*p0);
+              f[2*nmat] += dt*hk[k];
             }
             // Compute auxiliar vectors
             std::vector< tk::real > dhk_dak(nmat, 0.0), dhk_dpk(nmat, 0.0), dhk_dpI(nmat, 0.0);
             std::vector< tk::real > dgk_dak(nmat, 0.0), dgk_dpk(nmat, 0.0), dgk_dpI(nmat, 0.0);
             for (std::size_t k=0; k<nmat; ++k)
             {
-              tk::real mu = getmatprop< tag::mu >(k);
               tk::real gamma = getmatprop< tag::gamma >(k);
               tk::real pinf = getmatprop< tag::pstiff >(k);
-              dhk_dak[k] = mu*(1-2*x[k])*(x[nmat+k]-x[2*nmat])*p0;
-              dhk_dpk[k] = mu*x[k]*(1-x[k])*p0;
-              dhk_dpI[k] = -mu*x[k]*(1-x[k])*p0;
+              dhk_dak[k] = zk[k]*(1-2*x[k])*(x[nmat+k]-x[2*nmat])*p0;
+              dhk_dpk[k] = zk[k]*x[k]*(1-x[k])*p0;
+              dhk_dpI[k] = -zk[k]*x[k]*(1-x[k])*p0;
               dgk_dak[k] = -gk[k]/x[k] - rhoCkI[k]*dhk_dak[k]/(x[k]*p0);
               dgk_dpk[k] = -hk[k]/x[k] - rhoCkI[k]*dhk_dpk[k]/(x[k]*p0);
               dgk_dpI[k] = -(gamma-1)*hk[k]*p0/x[k] - rhoCkI[k]*dhk_dpI[k]/(x[k]*p0);
@@ -1252,6 +1266,9 @@ class MultiMat {
             {
               printf("Failed with info: %d\n", info);
             }
+            // Update x <- x+dx
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              x[i] += dx;
           }
         }
       }
