@@ -445,10 +445,12 @@ class Transport {
     }
 
     //! Pressure relaxation, not implemented here
+    //! \param[in] nelem Number of elements
+    //! \param[in] dt Time step
     //! \param[in] U Conserved unknowns
-    //! \param[in] P Primitive unknowns
-    void pressure_relaxation( tk::Fields& /*U*/,
-                              tk::Fields& /*P*/ ) const
+    void pressure_relaxation( const std::size_t /*nelem*/,
+                              const tk::real /*dt*/,
+                              tk::Fields& /*U*/ ) const
     {}
 
     //! Compute stiff terms for a single element, not implemented here
