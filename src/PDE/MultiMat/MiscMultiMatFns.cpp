@@ -216,32 +216,6 @@ cleanTraceMultiMat(
           P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
         }
       }
-      // check for unbounded volume fractions
-      else if (alk < 0.0 || !std::isfinite(alk))
-      {
-        auto rhok = mat_blk[k].compute< EOS::density >(p_target,
-          std::max(1e-8,tmax));
-        if (std::isfinite(alk)) d_al += (alk - 1e-14);
-        // update state of trace material
-        U(e, volfracDofIdx(nmat, k, rdof, 0)) = 1e-14;
-        U(e, densityDofIdx(nmat, k, rdof, 0)) = 1e-14 * rhok;
-        auto gk = std::array< std::array< tk::real, 3 >, 3 >
-          {{ {{1, 0, 0}},
-             {{0, 1, 0}},
-             {{0, 0, 1}} }};
-        U(e, energyDofIdx(nmat, k, rdof, 0)) =
-          mat_blk[k].compute< EOS::totalenergy >(1e-14*rhok, u, v, w,
-          1e-14*p_target, 1e-14, gk);
-        P(e, pressureDofIdx(nmat, k, rdof, 0)) = 1e-14 *
-          p_target;
-        resetSolidTensors(nmat, k, e, U, P);
-        for (std::size_t i=1; i<rdof; ++i) {
-          U(e, volfracDofIdx(nmat, k, rdof, i)) = 0.0;
-          U(e, densityDofIdx(nmat, k, rdof, i)) = 0.0;
-          U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
-          P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
-        }
-      }
       else if (!matExists(alk)) {  // condition so that else-branch not exec'ed for solids
         // determine target relaxation pressure
         auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
