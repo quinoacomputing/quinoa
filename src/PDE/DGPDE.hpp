@@ -338,9 +338,10 @@ class DGPDE {
                        P, nielem ); }
 
     //! Public interface pressure relaxation
-    void pressure_relaxation( tk::Fields& U,
-                              tk::Fields& P ) const
-    { return self->pressure_relaxation( U, P); }
+    void pressure_relaxation( const std::size_t nelem,
+                              const tk::real dt,
+                              tk::Fields& U ) const
+    { return self->pressure_relaxation( nelem, dt, U); }
   
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
@@ -531,7 +532,8 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t ) const = 0;
-      virtual void pressure_relaxation( tk::Fields&,
+      virtual void pressure_relaxation( const std::size_t,
+                                        const tk::real,
                                         tk::Fields& ) const = 0;
       virtual void stiff_rhs( std::size_t,
                               const tk::Fields&,
@@ -727,9 +729,10 @@ class DGPDE {
                    const std::size_t nielem ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
                         U, P, nielem ); }
-      void pressure_relaxation( tk::Fields& U,
-                                tk::Fields& P ) const override
-      { return data.pressure_relaxation( U, P); }
+      void pressure_relaxation( const std::size_t nelem,
+                                const tk::real dt,
+                                tk::Fields& U ) const override
+      { return data.pressure_relaxation( nelem, dt, U ); }
       void stiff_rhs( std::size_t e,
                       const tk::Fields& geoElem,
                       const std::vector< std::size_t >& inpoel,
