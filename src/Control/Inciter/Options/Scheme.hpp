@@ -24,7 +24,7 @@ namespace ctr {
 //! Scheme types
 enum class SchemeType : uint8_t { ALECG
                                 , OversetFE
-                                , DG
+                                , DGP0
                                 , P0P1 
                                 , DGP1 
                                 , DGP2
@@ -48,7 +48,7 @@ class Scheme : public tk::Toggle< SchemeType > {
         //! Enums -> names (if defined, policy codes, if not, name)
         { { SchemeType::ALECG, "alecg" },
           { SchemeType::OversetFE, "oversetfe" },
-          { SchemeType::DG, "dg" },
+          { SchemeType::DGP0, "dgp0" },
           { SchemeType::P0P1, "p0p1" },
           { SchemeType::DGP1, "dgp1" },
           { SchemeType::DGP2, "dgp2" },
@@ -57,7 +57,7 @@ class Scheme : public tk::Toggle< SchemeType > {
         //! keywords -> Enums
         { { "alecg", SchemeType::ALECG },
           { "oversetfe", SchemeType::OversetFE },
-          { "dg", SchemeType::DG },
+          { "dgp0", SchemeType::DGP0 },
           { "p0p1", SchemeType::P0P1 }, 
           { "dgp1", SchemeType::DGP1 }, 
           { "dgp2", SchemeType::DGP2 },
@@ -73,7 +73,7 @@ class Scheme : public tk::Toggle< SchemeType > {
 
         return tk::Centering::NODE;
 
-      else if ( type == SchemeType::DG ||
+      else if ( type == SchemeType::DGP0 ||
                 type == SchemeType::P0P1 ||
                 type == SchemeType::DGP1 ||
                 type == SchemeType::DGP2 ||
