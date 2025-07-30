@@ -45,10 +45,10 @@ MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t ncomp,
   Assert( ncomp == 9, "Number of scalar components must be 9" );
 
   auto nmat = g_inputdeck.get< eq, tag::nmat >();
+  auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
 
   std::vector< tk::real > s( ncomp, 0.0 );
   tk::real p, T, u, v, w;
-  auto alphamin = 1.0e-12;
 
   // unshocked state
   p = 95600.0;
@@ -83,8 +83,9 @@ MultiMatProblemRichtmyerMeshkov::initialize( ncomp_t ncomp,
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)]*r;
     rb += s[densityIdx(nmat, k)];
     // total specific energy
-    s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]*
-      mat_blk[k].compute< EOS::totalenergy >( r, u, v, w, p );
+    s[energyIdx(nmat, k)] =
+      mat_blk[k].compute< EOS::totalenergy >( s[volfracIdx(nmat, k)]*r, u, v, w,
+      s[volfracIdx(nmat, k)]*p, s[volfracIdx(nmat, k)] );
   }
   // momentum
   s[momentumIdx(nmat, 0)] = rb*u;

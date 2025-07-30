@@ -44,6 +44,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
   tk::InitializeFn::result_type s( ncomp, 0.0 );
 
   auto nmat = g_inputdeck.get< eq, tag::nmat >();
+  auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   // Set background ICs
@@ -55,8 +56,6 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
 
   if (bgtempic < 1e-12) Throw( "No background temperature IC" );
   if (bgpreic < 1e-12) Throw( "No background pressure IC" );
-
-  auto alphamin = 1.0e-12;
 
   // initialize background material states
   for (std::size_t k=0; k<nmat; ++k) {
@@ -93,9 +92,9 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
       g = {{}};
     }
     // total specific energy
-    s[energyIdx(nmat,k)] = s[volfracIdx(nmat,k)] *
-      mat_blk[k].compute< EOS::totalenergy >(rhok, u, v, w, bgpreic,
-      g);
+    s[energyIdx(nmat,k)] =
+      mat_blk[k].compute< EOS::totalenergy >(s[volfracIdx(nmat,k)]*rhok, u, v,
+      w, s[volfracIdx(nmat,k)]*bgpreic, s[volfracIdx(nmat,k)], g);
     // bulk density
     rb += s[densityIdx(nmat,k)];
   }

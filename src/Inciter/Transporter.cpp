@@ -1159,6 +1159,13 @@ Transporter::diagHeader()
     }
     d.push_back( "mE" );
 
+    // Augment diagnostics variables with resultant force vector on mesh
+    // boundaries that is used for rigid body motion of overset mesh
+    if ( scheme == ctr::SchemeType::OversetFE )
+    {
+      for (std::size_t i=0; i<3; ++i) d.push_back( "F" + std::to_string(i+1) );
+    }
+
     // Write diagnostics header
     dw.header( d );
 
@@ -1561,6 +1568,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Append total energy
   diag.push_back( d[TOTALSOL][0] );
+
+  // Append resultant force vector
+  if (scheme == ctr::SchemeType::OversetFE) {
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[RESFORCE][i] );
+  }
 
   // Append diagnostics file at selected times
   auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();

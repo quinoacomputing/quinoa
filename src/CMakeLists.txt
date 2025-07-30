@@ -42,6 +42,8 @@ message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 # Determine number of CPUs available
 if (DEFINED ENV{SLURM_NPROCS})
   set(PROCESSOR_COUNT $ENV{SLURM_NPROCS})
+elseif (DEFINED PROCESSOR_COUNT)
+  # use the specified number of CPUs
 else()
   include(ProcessorCount)
   ProcessorCount(PROCESSOR_COUNT)
@@ -133,14 +135,12 @@ if(CBLAS_FOUND)
 endif()
 message(STATUS "CBLAS found: "${CBLAS_LIBRARIES})
 
-#set(Kokkos_SOURCE_DIR_OVERRIDE /vast/home/rjpark/kokkosDirect/kokkos/build/cmake_packages/Kokkos)
-
-## Find Kokkos 
-#set(Kokkos_DIR "/vast/home/rjpark/kokkosDirect/kokkos/build/cmake_packages/Kokkos")
-#find_package(Kokkos REQUIRED)
-#message(STATUS "Kokkos found: "${KOKKOS_LIBRARIES})
-#target_link_libraries (run PRIVATE Kokkos::kokkos)
-
+# Find Trilinos
+set(trilinos "trilinos")
+find_package(Trilinos)
+if(Trilinos_FOUND)
+  set(trilinos "")
+endif()
 
 # Compilers
 # =========

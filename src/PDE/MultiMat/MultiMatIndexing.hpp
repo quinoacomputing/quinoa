@@ -17,7 +17,11 @@
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
+#include "Inciter/InputDeck/InputDeck.hpp"
+
 namespace inciter {
+
+extern ctr::InputDeck g_inputdeck;
 
 /** @name Functions that compute indices for physics variables for MultiMat */
 ///@{
@@ -204,7 +208,7 @@ KOKKOS_INLINE_FUNCTION std::size_t stressDofIdx( std::size_t nmat, std::size_t k
   std::size_t i, std::size_t ndof, std::size_t idof )
 { return stressIdx(nmat, ksld, i)*ndof+idof; }
 
-KOKKOS_INLINE_FUNCTION bool matExists( tk::real volfrac )
+inline bool matExists( tk::real volfrac )
 { return (volfrac > 1e-10) ? true : false; }
 
 KOKKOS_INLINE_FUNCTION tk::real volfracPRelaxLim()

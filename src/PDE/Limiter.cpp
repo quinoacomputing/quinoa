@@ -2538,10 +2538,13 @@ interfaceIndicator( std::size_t nmat,
 //! \return Boolean which indicates if the element contains a material interface
 // *****************************************************************************
 {
+  auto alphamin =
+    inciter::g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
+
   bool intInd = false;
 
   // limits under which compression is to be performed
-  auto al_eps = 1e-08;
+  auto al_eps = std::min(1e-08, 1e4*alphamin); // limit this value at 1e-8
   auto loLim = 2.0 * al_eps;
   auto hiLim = 1.0 - loLim;
 
@@ -2891,12 +2894,12 @@ correctLimConservMultiMat(
       // Compute and store material energy at quadrature point
       for(std::size_t imat = 0; imat < nmat; imat++) {
         auto alphamat = state[volfracIdx(nmat, imat)];
-        auto rhomat = state[densityIdx(nmat, imat)]/alphamat;
-        auto premat = state[ncomp+pressureIdx(nmat, imat)]/alphamat;
+        auto arhomat = state[densityIdx(nmat, imat)];
+        auto apremat = state[ncomp+pressureIdx(nmat, imat)];
         auto gmat = getDeformGrad(nmat, imat, state);
-        s[pressureIdx(nmat,imat)] = alphamat *
-          mat_blk[imat].compute< EOS::totalenergy >( rhomat, vel[0], vel[1],
-          vel[2], premat, gmat );
+        s[pressureIdx(nmat,imat)] =
+          mat_blk[imat].compute< EOS::totalenergy >( arhomat, vel[0], vel[1],
+          vel[2], apremat, alphamat, gmat );
       }
 
       // Evaluate the righ-hand-side vector

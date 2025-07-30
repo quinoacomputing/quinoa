@@ -44,13 +44,13 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t ncomp,
 // *****************************************************************************
 {
   auto nmat = g_inputdeck.get< eq, tag::nmat >();
+  auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
 
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Number of scalar components must be 6 or 9" );
 
   std::vector< tk::real > s( ncomp, 0.0 );
   tk::real r, p, u, v, w;
-  auto alphamin = 1.0e-12;
 
   if(nmat > 1) {                  // If this is multi-material test
     if(x > -4.0) {
@@ -95,8 +95,9 @@ MultiMatProblemShockDensityWave::initialize( ncomp_t ncomp,
     s[densityIdx(nmat, imat)] = s[volfracIdx(nmat, imat)]*r;
 
     // total specific energy
-    s[energyIdx(nmat, imat)] = s[volfracIdx(nmat, imat)]*
-      mat_blk[imat].compute< EOS::totalenergy >( r, u, v, w, p );
+    s[energyIdx(nmat, imat)] =
+      mat_blk[imat].compute< EOS::totalenergy >( s[volfracIdx(nmat, imat)]*r,
+      u, v, w, s[volfracIdx(nmat, imat)]*p, s[volfracIdx(nmat, imat)] );
 
     rb += s[densityIdx(nmat, imat)];
   }

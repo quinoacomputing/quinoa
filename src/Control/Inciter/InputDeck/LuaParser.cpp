@@ -185,6 +185,8 @@ LuaParser::storeInputDeck(
     true);
   storeIfSpecd< tk::real >(
     lua_ideck, "lowspeed_kp", gideck.get< tag::lowspeed_kp >(), 0.0);
+  storeIfSpecd< tk::real >(
+    lua_ideck, "lowspeed_ku", gideck.get< tag::lowspeed_ku >(), 1.0);
 
   // configure solutions DOFs
   auto scheme = gideck.get< tag::scheme >();
@@ -310,6 +312,9 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multimat"], "nmat",
       gideck.get< tag::multimat, tag::nmat >(), 2);
+    storeIfSpecd< tk::real >(
+      lua_ideck["multimat"], "min_volumefrac",
+      gideck.get< tag::multimat, tag::min_volumefrac >(), 1.0e-12);
     storeIfSpecd< uint64_t >(
       lua_ideck["multimat"], "prelax",
       gideck.get< tag::multimat, tag::prelax >(), 1);

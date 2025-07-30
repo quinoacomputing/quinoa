@@ -95,11 +95,12 @@ class SmallShearSolid {
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
     tk::real totalenergy(
-      tk::real rho,
+      tk::real arho,
       tk::real u,
       tk::real v,
       tk::real w,
-      tk::real pr,
+      tk::real apr,
+      tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! \brief Calculate material temperature from the material density, and

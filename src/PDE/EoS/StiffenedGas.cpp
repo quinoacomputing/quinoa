@@ -83,8 +83,8 @@ StiffenedGas::pressure(
   tk::real g = m_gamma;
   tk::real p_c = m_pstiff;
 
-  tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w) -
-    alpha*p_c) * (g-1.0) - alpha*p_c;
+  tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w)) * (g-1.0) -
+    alpha*g*p_c;
 
   // check partial pressure divergence
   if (!std::isfinite(partpressure)) {
@@ -168,28 +168,32 @@ StiffenedGas::soundspeed(
 
 tk::real
 StiffenedGas::totalenergy(
-  tk::real rho,
+  tk::real arho,
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real pr,
+  tk::real apr,
+  tk::real alpha,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
-//! \param[in] rho Material density
+//! \param[in] arho Material partial density
 //! \param[in] u X-velocity
 //! \param[in] v Y-velocity
 //! \param[in] w Z-velocity
-//! \param[in] pr Material pressure
+//! \param[in] apr Material partial pressure
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
+//!   the single-material system, this argument can be left unspecified by
+//!   the calling code
 //! \return Material specific total energy using the stiffened-gas EoS
 // *************************************************************************
 {
   auto g = m_gamma;
   auto p_c = m_pstiff;
 
-  tk::real rhoE = (pr + p_c) / (g-1.0) + 0.5 * rho * (u*u + v*v + w*w) + p_c;
-  return rhoE;
+  tk::real arhoE = (apr + alpha*g*p_c) / (g-1.0) + 0.5 * arho * (u*u + v*v + w*w);
+  return arhoE;
 }
 
 tk::real
