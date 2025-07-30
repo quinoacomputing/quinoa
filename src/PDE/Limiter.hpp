@@ -346,10 +346,31 @@ interfaceIndicator( std::size_t nmat,
   const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt );
 
-KOKKOS_FUNCTION
+//! Kokkos verison of interfaceIndicator
+KOKKOS_INLINE_FUNCTION
 bool interfaceIndicator( std::size_t nmat,
   Kokkos::View<tk::real*, memory_space> al,
-  Kokkos::View<size_t*, memory_space> matInt );
+  Kokkos::View<size_t*, memory_space> matInt )
+{
+  bool intInd = false;
+
+  // limits under which compression is to be performed
+  auto al_eps = 1e-08;
+  auto loLim = 2.0 * al_eps;
+  auto hiLim = 1.0 - loLim;
+
+  auto almax = 0.0;
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    almax = std::max(almax, al(k));
+    matInt(k) = 0;
+    if ((al(k) > loLim) && (al(k) < hiLim)) matInt(k) = 1;
+  }
+
+  if ((almax > loLim) && (almax < hiLim)) intInd = true;
+
+  return intInd;
+}
 
 //! Mark the cells that contain discontinuity according to the interface
 void MarkShockCells ( const bool pref,
