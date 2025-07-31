@@ -43,6 +43,17 @@ using RiemannFluxFn = std::function<
                        const std::array< std::vector< real >, 2 >&,
                        const std::vector< std::array< real, 3 > >& ) >;
 
+//! Function prototype for Riemann flux function Jacobians
+//! \details Functions of this type are used to compute numerical Jacbobians of
+//!    fluxes across a surface using a Riemann solver
+//! \see e.g., inciter::Upwind, inciter::LaxFriedrichs, inciter::HLLC
+using RiemannFluxJacFn = std::function<
+  std::array < std::vector< std::vector < real > >, 2 > (
+    const std::vector< inciter::EOS >& ,
+    const std::array< real, 3 >&,
+    const std::array< std::vector< real >, 2 >&,
+    const std::vector< std::array< real, 3 > >& ) >;
+
 //! Function prototype for flux vector functions
 //! \details Functions of this type are used to compute physical flux functions
 //!   in the PDEs being solved. These are different than the RiemannFluxFn
