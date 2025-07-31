@@ -1126,8 +1126,8 @@ class MultiMat {
         tag::matidxmap, tag::solidx >();
 
       // Solver parameters
-      std::size_t max_iter = 1;
-      tk::real tol = 1.0E-05;
+      std::size_t max_iter = 100;
+      tk::real tol = 1.0E-14;//1.0E-05*dt;
       tk::real p0 = 1.0E00;
       
       for (std::size_t e=0; e<nelem; ++e)
@@ -1154,7 +1154,7 @@ class MultiMat {
             for (std::size_t j=0; j<3; ++j)
               gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, ndof, 0));
           pressure[k] = m_mat_blk[k].compute< EOS::pressure >(
-            rho, u, v, w, arhoe, alpha[k], k, gmat);
+            rho, u, v, w, arhoe, alpha[k], k, gmat)/alpha[k];
           max_pressure = std::max(pressure[k], max_pressure);
         }
         // First, if all pressure are equal, there is nothing to do
@@ -1167,6 +1167,7 @@ class MultiMat {
         {
           // Compute zk
           tk::real zk_sum = 0.0;
+          tk::real mu0 = 1.0e+01;
           std::vector< tk::real > zk(nmat, 0.0);
           for (std::size_t k=0; k<nmat; ++k)
           {
@@ -1178,18 +1179,21 @@ class MultiMat {
           // Define solution vector
           double x[2*nmat+1];
           x[2*nmat] = 0.0;
+          tk::real sum = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+            sum += zk[k]*alpha[k]*(1-alpha[k]);
           for (std::size_t k=0; k<nmat; ++k)
           {
             x[k] = alpha[k];
             x[nmat+k] = pressure[k]/p0;
-            x[2*nmat] += zk[k]*pressure[k]/zk_sum;
+            x[2*nmat] += zk[k]*pressure[k]/zk_sum; //zk[k]*alpha[k]*(1-alpha[k])*pressure[k]/sum;
           }
           //double x_old[2*nmat+1];
           double x_initial[2*nmat+1];
           for (std::size_t i=0; i<2*nmat+1; ++i)
             x_initial[i] = x[i];
           // Declare f vector
-          std::vector< tk::real > f(2*nmat+1, 0.0), f_old(2*nmat+1, 0.0);
+          double f[2*nmat+1];
           // Iterate for the solution
           for (std::size_t iter=0; iter<max_iter; ++iter)
           {
@@ -1199,8 +1203,8 @@ class MultiMat {
             {
               tk::real gamma = getmatprop< tag::gamma >(k);
               tk::real pinf = getmatprop< tag::pstiff >(k);
-              zk[k] = std::sqrt(gamma*(x[nmat+k]*p0+pinf)*rhomat[k]);
-              hk[k] = zk[k]*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])*p0;
+              zk[k] = std::sqrt(gamma*(x[nmat+k]*p0+pinf)*alpha[k]*rhomat[k]/x[k]);
+              hk[k] = mu0*zk[k]*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])*p0;
               rhoCkI[k] = (x[2*nmat]*(gamma-1)+x[nmat+k])*p0+gamma*pinf;
               gk[k] = rhoCkI[k]*hk[k]/(x[k]*p0);
             }
@@ -1209,8 +1213,8 @@ class MultiMat {
             for (std::size_t k=0; k<nmat; ++k)
             {
               f[k] = x[k]-x_initial[k]-dt*hk[k];
-              f[nmat+k] = x[nmat+k]-x_initial[nmat+k]+dt*rhoCkI[k]*hk[k]/(x[k]*p0);
-              f[2*nmat] += dt*hk[k];
+              f[nmat+k] = x[nmat+k]-x_initial[nmat+k]-dt*gk[k];
+              f[2*nmat] += hk[k];
             }
             // Compute auxiliar vectors
             std::vector< tk::real > dhk_dak(nmat, 0.0), dhk_dpk(nmat, 0.0), dhk_dpI(nmat, 0.0);
@@ -1218,15 +1222,20 @@ class MultiMat {
             for (std::size_t k=0; k<nmat; ++k)
             {
               tk::real gamma = getmatprop< tag::gamma >(k);
-              dhk_dak[k] = zk[k]*(1-2*x[k])*(x[nmat+k]-x[2*nmat])*p0;
-              dhk_dpk[k] = zk[k]*x[k]*(1-x[k])*p0;
-              dhk_dpI[k] = -zk[k]*x[k]*(1-x[k])*p0;
+              tk::real dmu_dak = -0.5*zk[k]/x[k]; // checked
+              tk::real dmu_dpk = 0.5*gamma*alpha[k]*rhomat[k]/(zk[k]*x[k]); // checked 
+              dhk_dak[k] = mu0*(dmu_dak*x[k]*(1-x[k])+zk[k]*(1-2*x[k]))*(x[nmat+k]-x[2*nmat])*p0;
+              dhk_dpk[k] = (dmu_dpk*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])+mu0*zk[k]*x[k]*(1-x[k]))*p0;
+              dhk_dpI[k] = -mu0*zk[k]*x[k]*(1-x[k])*p0;
               dgk_dak[k] = -gk[k]/x[k] - rhoCkI[k]*dhk_dak[k]/(x[k]*p0);
               dgk_dpk[k] = -hk[k]/x[k] - rhoCkI[k]*dhk_dpk[k]/(x[k]*p0);
-              dgk_dpI[k] = -(gamma-1)*hk[k]*p0/x[k] - rhoCkI[k]*dhk_dpI[k]/(x[k]*p0);
+              dgk_dpI[k] = -(gamma-1)*hk[k]/x[k] - rhoCkI[k]*dhk_dpI[k]/(x[k]*p0);
             }
             // Compute jacobian
             double jacobian[(2*nmat+1)*(2*nmat+1)];
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              for (std::size_t j=0; j<2*nmat+1; ++j)
+                jacobian[(2*nmat+1)*i+j] = 0.0;
             for (std::size_t k=0; k<nmat; ++k)
             {
               jacobian[(2*nmat+1)*k        + k]       = 1.0-dt*dhk_dak[k];
@@ -1235,9 +1244,9 @@ class MultiMat {
               jacobian[(2*nmat+1)*(nmat+k) + k]       =    -dt*dgk_dak[k];
               jacobian[(2*nmat+1)*(nmat+k) + nmat+k]  = 1.0-dt*dgk_dpk[k];
               jacobian[(2*nmat+1)*(nmat+k) + 2*nmat]  =    -dt*dgk_dpI[k];
-              jacobian[(2*nmat+1)*(2*nmat) + k]       =     dt*dhk_dak[k];
-              jacobian[(2*nmat+1)*(2*nmat) + nmat+k]  =     dt*dhk_dpk[k];
-              jacobian[(2*nmat+1)*(2*nmat) + 2*nmat] +=     dt*dhk_dpI[k];
+              jacobian[(2*nmat+1)*(2*nmat) + k]       =        dhk_dak[k];
+              jacobian[(2*nmat+1)*(2*nmat) + nmat+k]  =        dhk_dpk[k];
+              jacobian[(2*nmat+1)*(2*nmat) + 2*nmat] +=        dhk_dpI[k];
             }
             printf("DBG\n");
             for (std::size_t i=0; i<2*nmat+1; ++i)
@@ -1246,14 +1255,23 @@ class MultiMat {
                 printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
               printf("\n");
             }
+            for (std::size_t k=0; k<nmat; ++k)
+              printf("p[%lu] = %e\n", k, x[nmat+k]);
             printf("pI = %e\n", x[2*nmat]);
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              printf("f[%lu] = %e\n", i, f[i]);
+            for (std::size_t k=0; k<nmat; ++k)
+              printf("zk[%lu] = %e\n", k, zk[k]);
+            // // DEBUG
+            // for (std::size_t i=0; i<2*nmat; ++i)
+            //   f[i] = 0.0;
             // solve J*dx = -f
             double dx[2*nmat+1];
             for (std::size_t i=0; i<2*nmat+1; ++i)
               dx[i] = -f[i];
             lapack_int info;
             lapack_int ipiv[2*nmat+1];
-            info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, 2*nmat+1, 1, jacobian, 2*nmat+1, ipiv, dx, 2*nmat+1);
+            info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, 2*nmat+1, 1, jacobian, 2*nmat+1, ipiv, dx, 1);
 
             if (info == 0) {
               for (std::size_t i=0; i<2*nmat+1; ++i)
@@ -1263,9 +1281,18 @@ class MultiMat {
             {
               printf("Failed with info: %ld\n", info);
             }
+
             // Update x <- x+dx
-            for (std::size_t i=0; i<2*nmat/*+1*/; ++i)
-              x[i] += 1.0E-04*dx[i];
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              x[i] += dx[i];
+            // x[2*nmat] = 0.0;
+            // tk::real sum = 0.0;
+            // for (std::size_t k=0; k<nmat; ++k)
+            //   sum += zk[k]*x[k]*(1-x[k]);
+            // for (std::size_t k=0; k<nmat; ++k)
+            //   x[2*nmat] += zk[k]*x[k]*(1-x[k])*x[nmat+k]/sum;
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              printf("x[%lu] = %e\n", i, x[i]);
             // Restore bounds
             for (std::size_t k=0; k<nmat; ++k)
             {
@@ -1291,7 +1318,7 @@ class MultiMat {
               err += f[i]*f[i];
             err = std::sqrt(err);
             if (err < tol) {
-              printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter);
+              printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter+1);
               break;
             }
           }
@@ -1303,7 +1330,7 @@ class MultiMat {
           std::vector< tk::real > arhoe(nmat, 0.0);
           for (std::size_t k=0; k<nmat; ++k)
             U(e, energyDofIdx(nmat, k, ndof, 0)) =
-              m_mat_blk[k].compute< EOS::totalenergy >( x[k]*rhomat[k], u, v, w, x[k]*x[nmat+k], x[k] );
+              m_mat_blk[k].compute< EOS::totalenergy >( alpha[k]*rhomat[k], u, v, w, x[k]*x[nmat+k], x[k] );
         }
       }
     }
