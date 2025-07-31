@@ -204,7 +204,7 @@ LuaParser::storeInputDeck(
   } else if (scheme == SchemeType::PDG) {
     ndof = rdof = 10;
     gideck.get< tag::pref, tag::pref >() = true;
-  } else if (scheme != SchemeType::DG &&
+  } else if (scheme != SchemeType::DGP0 &&
       scheme != SchemeType::ALECG &&
       scheme != SchemeType::OversetFE) {
     Throw("Scheme type not configured in configure_scheme");
