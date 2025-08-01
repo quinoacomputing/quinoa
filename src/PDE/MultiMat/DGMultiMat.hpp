@@ -1167,7 +1167,7 @@ class MultiMat {
         {
           // Compute zk
           tk::real zk_sum = 0.0;
-          tk::real mu0 = 1.0e+01;
+          tk::real mu0 = 1.0e+03;
           std::vector< tk::real > zk(nmat, 0.0);
           for (std::size_t k=0; k<nmat; ++k)
           {
@@ -1188,7 +1188,6 @@ class MultiMat {
             x[nmat+k] = pressure[k]/p0;
             x[2*nmat] += zk[k]*pressure[k]/zk_sum; //zk[k]*alpha[k]*(1-alpha[k])*pressure[k]/sum;
           }
-          //double x_old[2*nmat+1];
           double x_initial[2*nmat+1];
           for (std::size_t i=0; i<2*nmat+1; ++i)
             x_initial[i] = x[i];
@@ -1206,7 +1205,7 @@ class MultiMat {
               zk[k] = std::sqrt(gamma*(x[nmat+k]*p0+pinf)*alpha[k]*rhomat[k]/x[k]);
               hk[k] = mu0*zk[k]*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])*p0;
               rhoCkI[k] = (x[2*nmat]*(gamma-1)+x[nmat+k])*p0+gamma*pinf;
-              gk[k] = rhoCkI[k]*hk[k]/(x[k]*p0);
+              gk[k] = -rhoCkI[k]*hk[k]/(x[k]*p0);
             }
             // Compute f
             f[2*nmat] = 0.0;
@@ -1215,6 +1214,10 @@ class MultiMat {
               f[k] = x[k]-x_initial[k]-dt*hk[k];
               f[nmat+k] = x[nmat+k]-x_initial[nmat+k]-dt*gk[k];
               f[2*nmat] += hk[k];
+              // printf("x[%lu] = %e\n", nmat+k, x[nmat+k]);
+              // printf("x_initial[%lu] = %e\n", nmat+k, x_initial[nmat+k]);
+              // printf("dt*g[%lu] = %e\n", k, dt*gk[k]);
+              // printf("f[%lu] = %e\n", nmat+k, f[k]);
             }
             // Compute auxiliar vectors
             std::vector< tk::real > dhk_dak(nmat, 0.0), dhk_dpk(nmat, 0.0), dhk_dpI(nmat, 0.0);
@@ -1244,8 +1247,8 @@ class MultiMat {
               jacobian[(2*nmat+1)*(nmat+k) + k]       =    -dt*dgk_dak[k];
               jacobian[(2*nmat+1)*(nmat+k) + nmat+k]  = 1.0-dt*dgk_dpk[k];
               jacobian[(2*nmat+1)*(nmat+k) + 2*nmat]  =    -dt*dgk_dpI[k];
-              jacobian[(2*nmat+1)*(2*nmat) + k]       =        dhk_dak[k];
-              jacobian[(2*nmat+1)*(2*nmat) + nmat+k]  =        dhk_dpk[k];
+              jacobian[(2*nmat+1)*(2*nmat) + k]      +=        dhk_dak[k];
+              jacobian[(2*nmat+1)*(2*nmat) + nmat+k] +=        dhk_dpk[k];
               jacobian[(2*nmat+1)*(2*nmat) + 2*nmat] +=        dhk_dpI[k];
             }
             printf("DBG\n");
