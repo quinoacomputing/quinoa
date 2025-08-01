@@ -62,7 +62,7 @@ MultiMatProblemMixedCell::initialize( ncomp_t ncomp,
   // initialize background material states
   for (std::size_t k=0; k<nmat; ++k) {
     s[volfracIdx(nmat,k)] = 1.0/nmat;
-    pressure[k] = bgpreic;//*std::pow(10.0,k);
+    pressure[k] = bgpreic*std::pow(10.0,k);
   }
 
   tk::real u = bgvelic[0];
