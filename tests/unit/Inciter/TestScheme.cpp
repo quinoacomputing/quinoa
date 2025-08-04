@@ -78,7 +78,7 @@ template<> template<>
 void Scheme_object::test< 1 >() {
   set_test_name( "ctor which" );
 
-  inciter::Scheme d( inciter::ctr::SchemeType::DG );
+  inciter::Scheme d( inciter::ctr::SchemeType::DGP0 );
   ensure_equals( "Underlying type", d.index(), 0 );
   inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
   ensure_equals( "Underlying type", a.index(), 1 );
@@ -93,7 +93,7 @@ template<> template<>
 void Scheme_object::test< 2 >() {
   set_test_name( "operator[] which" );
 
-  inciter::Scheme d( inciter::ctr::SchemeType::DG );
+  inciter::Scheme d( inciter::ctr::SchemeType::DGP0 );
   ensure_equals( "Underlying element type", d.index_element(), 0 );
   inciter::Scheme a( inciter::ctr::SchemeType::ALECG );
   ensure_equals( "Underlying element type", a.index_element(), 1 );
@@ -118,10 +118,10 @@ void Scheme_object::test< 3 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "Charm:migrate Scheme(DG) 1" );
+  set_test_name( "Charm:migrate Scheme(DGP0) 1" );
 
   CProxy_Receiver::ckNew(
-    inciter::Scheme( inciter::ctr::SchemeType::DG ), 0, "DG" );
+    inciter::Scheme( inciter::ctr::SchemeType::DGP0 ), 0, "DGP0" );
 }
 
 //! Test Pack/Unpack of Scheme holding CProxy_AELCG
