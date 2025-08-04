@@ -378,7 +378,7 @@ THINCRecoTransport( std::size_t rdof,
 }
 
 void
-THINCFunction( std::size_t rdof,
+THINCFunction_old( std::size_t rdof,
                std::size_t nmat,
                std::size_t e,
                const std::vector< std::size_t >& inpoel,
@@ -415,6 +415,9 @@ THINCFunction( std::size_t rdof,
 //!   THINCFunction_new) is sufficiently tested.
 // *****************************************************************************
 {
+  auto min_al = inciter::g_inputdeck.get< tag::multimat,
+    tag::min_volumefrac >();
+
   // determine number of materials with interfaces in this cell
   auto epsl(1e-4), epsh(1e-1), bred(1.25), bmod(bparam);
   std::size_t nIntMat(0);
@@ -487,8 +490,8 @@ THINCFunction( std::size_t rdof,
     }
 
     // 2. Reconstruct volume fractions using THINC
-    auto max_lim = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
-    auto min_lim = 1e-12;
+    auto max_lim = 1.0 - (static_cast<tk::real>(nmat-1)*min_al);
+    auto min_lim = min_al;
     auto sum_inter(0.0), sum_non_inter(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
@@ -545,20 +548,20 @@ THINCFunction( std::size_t rdof,
 }
 
 void
-THINCFunction_new( std::size_t rdof,
-                   std::size_t nmat,
-                   std::size_t e,
-                   const std::vector< std::size_t >& inpoel,
-                   const UnsMesh::Coords& coord,
-                   const std::array< real, 3 >& ref_xp,
-                   real vol,
-                   real bparam,
-                   const std::vector< real >& alSol,
-                   bool intInd,
-                   const std::vector< std::size_t >& matInt,
-                   std::vector< real >& alReco )
+THINCFunction( std::size_t rdof,
+               std::size_t nmat,
+               std::size_t e,
+               const std::vector< std::size_t >& inpoel,
+               const UnsMesh::Coords& coord,
+               const std::array< real, 3 >& ref_xp,
+               real vol,
+               real bparam,
+               const std::vector< real >& alSol,
+               bool intInd,
+               const std::vector< std::size_t >& matInt,
+               std::vector< real >& alReco )
 // *****************************************************************************
-//  New Multi-Medium THINC reconstruction function for volume fractions
+//  Multi-Medium THINC reconstruction function for volume fractions
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of materials
 //! \param[in] e Element for which interface reconstruction is being calculated
@@ -575,10 +578,12 @@ THINCFunction_new( std::size_t rdof,
 //! \details This function computes the interface reconstruction using the
 //!   algebraic multi-material THINC reconstruction for each material at the
 //!   given (ref_xp) quadrature point. This function succeeds the older version
-//!   of the mm-THINC (see THINCFunction), but is still under testing and is
-//!   currently experimental.
+//!   of the mm-THINC (see THINCFunction_old).
 // *****************************************************************************
 {
+  auto min_al = inciter::g_inputdeck.get< tag::multimat,
+    tag::min_volumefrac >();
+
   // compression parameter
   auto beta = bparam/std::cbrt(6.0*vol);
 
@@ -647,8 +652,8 @@ THINCFunction_new( std::size_t rdof,
   // Step 2. Reconstruct volume fraction of majority material using THINC
   // -------------------------------------------------------------------------
 
-  auto al_max = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
-  auto al_min = 1e-12;
+  auto al_max = 1.0 - (static_cast<tk::real>(nmat-1)*min_al);
+  auto al_min = min_al;
   auto alsum(0.0);
   // get location of material interface (volume fraction 0.5) from the
   // assumed tanh volume fraction distribution, and cell-averaged
@@ -937,6 +942,9 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
 //!   if near interfaces using THINC
 // *****************************************************************************
 {
+  auto min_al = inciter::g_inputdeck.get< tag::multimat,
+    tag::min_volumefrac >();
+
   using inciter::pressureIdx;
   using inciter::velocityIdx;
   using inciter::volfracIdx;
@@ -962,8 +970,8 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
   for (std::size_t k=0; k<nmat; ++k) {
     auto alk = state[volfracIdx(nmat,k)];
     if (matInt[k]) {
-      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*1e-12),
-        1e-12);
+      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*min_al),
+        min_al);
     }
     state[energyIdx(nmat,k)] =
       mat_blk[k].compute< inciter::EOS::totalenergy >(

@@ -44,6 +44,7 @@ MultiMatProblemInterfaceAdvection::initialize(
 {
   auto nmat =
     g_inputdeck.get< eq, tag::nmat >();
+  auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
 
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Incorrect number of components in multi-material "
@@ -53,7 +54,6 @@ MultiMatProblemInterfaceAdvection::initialize(
   auto u = std::sqrt(50.0);
   auto v = std::sqrt(50.0);
   auto w = 0.0;
-  auto alphamin = 1.0e-12;
 
   // center of the cylinder
   auto x0 = 0.45 + u*t;

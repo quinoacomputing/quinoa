@@ -236,11 +236,10 @@ struct HLLDMultiMat {
         // rotate g back to original frame of reference
         glStar.push_back(tk::unrotateTensor(gnlStar[k], fn));
       }
-      uStar[0][volfracIdx(nmat, k)] = w_l * u[0][volfracIdx(nmat, k)];
+      uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
-        + (Sm-vnl[0]) * (u[0][densityIdx(nmat, k)]*Sm
-                        - asignnlStar[k][0][0]/(Sl-vnl[0]));
+        + (asignnlStar[k][0][0]*vnlStar[0] - asignnl[k][0][0]*vnl[0]) / (Sm-Sl);
       rholStar += uStar[0][densityIdx(nmat, k)];
 
       auto amatl = mat_blk[k].compute< EOS::shearspeed >(
@@ -256,11 +255,10 @@ struct HLLDMultiMat {
         // rotate g back to original frame of reference
         grStar.push_back(tk::unrotateTensor(gnrStar[k], fn));
       }
-      uStar[1][volfracIdx(nmat, k)] = w_r * u[1][volfracIdx(nmat, k)];
+      uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
-        + (Sm-vnr[0]) * (u[1][densityIdx(nmat, k)]*Sm
-                        - asignnrStar[k][0][0]/(Sr-vnr[0]));
+        + (asignnrStar[k][0][0]*vnrStar[0] - asignnr[k][0][0]*vnr[0]) / (Sm-Sr);
       rhorStar += uStar[1][densityIdx(nmat, k)];
 
       auto amatr = mat_blk[k].compute< EOS::shearspeed >(
@@ -383,12 +381,12 @@ struct HLLDMultiMat {
         if (solidx[k] > 0)
         {
           gnlStarStar = gnlStar[k];
-          gnlStar[k][0][0] += gnlStar[k][0][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
-                            + gnlStar[k][0][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
-          gnlStar[k][1][0] += gnlStar[k][1][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
-                            + gnlStar[k][1][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
-          gnlStar[k][2][0] += gnlStar[k][2][1]*(vnlStarStar[1]-vnl[1])/(Sm-Ssl)
-                            + gnlStar[k][2][2]*(vnlStarStar[2]-vnl[2])/(Sm-Ssl);
+          gnlStarStar[0][0] += gnlStar[k][0][1]*(vnl[1]-vnlStarStar[1])/(Sm-Ssl)
+                             + gnlStar[k][0][2]*(vnl[2]-vnlStarStar[2])/(Sm-Ssl);
+          gnlStarStar[1][0] += gnlStar[k][1][1]*(vnl[1]-vnlStarStar[1])/(Sm-Ssl)
+                             + gnlStar[k][1][2]*(vnl[2]-vnlStarStar[2])/(Sm-Ssl);
+          gnlStarStar[2][0] += gnlStar[k][2][1]*(vnl[1]-vnlStarStar[1])/(Sm-Ssl)
+                             + gnlStar[k][2][2]*(vnl[2]-vnlStarStar[2])/(Sm-Ssl);
           // rotate g back to original frame of reference
           glStarStar.push_back(tk::unrotateTensor(gnlStarStar, fn));
         }
@@ -406,12 +404,12 @@ struct HLLDMultiMat {
         if (solidx[k] > 0)
         {
           gnrStarStar = gnrStar[k];
-          gnrStar[k][0][0] += gnrStar[k][0][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
-                            + gnrStar[k][0][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
-          gnrStar[k][1][0] += gnrStar[k][1][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
-                            + gnrStar[k][1][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
-          gnrStar[k][2][0] += gnrStar[k][2][1]*(vnrStarStar[1]-vnr[1])/(Sm-Ssr)
-                            + gnrStar[k][2][2]*(vnrStarStar[2]-vnr[2])/(Sm-Ssr);
+          gnrStarStar[0][0] += gnrStar[k][0][1]*(vnr[1]-vnrStarStar[1])/(Sm-Ssr)
+                             + gnrStar[k][0][2]*(vnr[2]-vnrStarStar[2])/(Sm-Ssr);
+          gnrStarStar[1][0] += gnrStar[k][1][1]*(vnr[1]-vnrStarStar[1])/(Sm-Ssr)
+                             + gnrStar[k][1][2]*(vnr[2]-vnrStarStar[2])/(Sm-Ssr);
+          gnrStarStar[2][0] += gnrStar[k][2][1]*(vnr[1]-vnrStarStar[1])/(Sm-Ssr)
+                             + gnrStar[k][2][2]*(vnr[2]-vnrStarStar[2])/(Sm-Ssr);
           // rotate g back to original frame of reference
           grStarStar.push_back(tk::unrotateTensor(gnrStarStar, fn));
         }
@@ -429,7 +427,7 @@ struct HLLDMultiMat {
 
     // Numerical fluxes
     // -------------------------------------------------------------------------
-    if (Sl > 0.0) {
+    if (0.0 <= Sl) {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
@@ -438,10 +436,8 @@ struct HLLDMultiMat {
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)] * vnl[0];
         flx[densityIdx(nmat, k)] = u[0][densityIdx(nmat, k)] * vnl[0];
-        flx[energyIdx(nmat, k)] = u[0][energyIdx(nmat, k)] * vnl[0];
-        flx[energyIdx(nmat, k)] -= ul * aTnl[k][0];
-        flx[energyIdx(nmat, k)] -= vl * aTnl[k][1];
-        flx[energyIdx(nmat, k)] -= wl * aTnl[k][2];
+        flx[energyIdx(nmat, k)] = u[0][energyIdx(nmat, k)] * vnl[0]
+          - ul * aTnl[k][0] - vl * aTnl[k][1] - wl * aTnl[k][2];
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
@@ -469,7 +465,7 @@ struct HLLDMultiMat {
 
     }
 
-    else if (Sl <= 0.0 && Ssl > 0.0) {
+    else if (Sl < 0.0 && 0.0 <= Ssl) {
 
       for (std::size_t idir=0; idir<3; ++idir)
        flx[momentumIdx(nmat, idir)] =
@@ -478,10 +474,10 @@ struct HLLDMultiMat {
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[0][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[0][densityIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] = uStar[0][energyIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] -= vlStar[0] * aTnlStar[k][0];
-        flx[energyIdx(nmat, k)] -= vlStar[1] * aTnlStar[k][1];
-        flx[energyIdx(nmat, k)] -= vlStar[2] * aTnlStar[k][2];
+        flx[energyIdx(nmat, k)] = uStar[0][energyIdx(nmat, k)] * Sm
+          - vlStar[0] * aTnlStar[k][0]
+          - vlStar[1] * aTnlStar[k][1]
+          - vlStar[2] * aTnlStar[k][2];
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -509,7 +505,7 @@ struct HLLDMultiMat {
 
     }
 
-    else if (Ssl <= 0.0 && Sm > 0.0) {
+    else if (Ssl < 0.0 && 0.0 <= Sm && nsld > 0) {
 
       for (std::size_t idir=0; idir<3; ++idir)
        flx[momentumIdx(nmat, idir)] =
@@ -518,10 +514,10 @@ struct HLLDMultiMat {
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStarStar[0][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStarStar[0][densityIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] = uStarStar[0][energyIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] -= vlStarStar[0] * aTnlStarStar[k][0];
-        flx[energyIdx(nmat, k)] -= vlStarStar[1] * aTnlStarStar[k][1];
-        flx[energyIdx(nmat, k)] -= vlStarStar[2] * aTnlStarStar[k][2];
+        flx[energyIdx(nmat, k)] = uStarStar[0][energyIdx(nmat, k)] * Sm
+          - vlStarStar[0] * aTnlStarStar[k][0]
+          - vlStarStar[1] * aTnlStarStar[k][1]
+          - vlStarStar[2] * aTnlStarStar[k][2];
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -549,7 +545,7 @@ struct HLLDMultiMat {
 
     }
 
-    else if (Sm <= 0.0 && Ssr > 0.0) {
+    else if (Sm < 0.0 && 0.0 <= Ssr && nsld > 0) {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
@@ -558,10 +554,10 @@ struct HLLDMultiMat {
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStarStar[1][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStarStar[1][densityIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] = uStarStar[1][energyIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] -= vrStarStar[0] * aTnrStarStar[k][0];
-        flx[energyIdx(nmat, k)] -= vrStarStar[1] * aTnrStarStar[k][1];
-        flx[energyIdx(nmat, k)] -= vrStarStar[2] * aTnrStarStar[k][2];
+        flx[energyIdx(nmat, k)] = uStarStar[1][energyIdx(nmat, k)] * Sm
+          - vrStarStar[0] * aTnrStarStar[k][0]
+          - vrStarStar[1] * aTnrStarStar[k][1]
+          - vrStarStar[2] * aTnrStarStar[k][2];
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -589,7 +585,7 @@ struct HLLDMultiMat {
 
     }
 
-    else if (Ssr <= 0.0 && Sr > 0.0) {
+    else if (Ssr < 0.0 && 0.0 <= Sr) {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
@@ -598,10 +594,10 @@ struct HLLDMultiMat {
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[1][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[1][densityIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] = uStar[1][energyIdx(nmat, k)] * Sm;
-        flx[energyIdx(nmat, k)] -= vrStar[0] * aTnrStar[k][0];
-        flx[energyIdx(nmat, k)] -= vrStar[1] * aTnrStar[k][1];
-        flx[energyIdx(nmat, k)] -= vrStar[2] * aTnrStar[k][2];
+        flx[energyIdx(nmat, k)] = uStar[1][energyIdx(nmat, k)] * Sm
+          - vrStar[0] * aTnrStar[k][0]
+          - vrStar[1] * aTnrStar[k][1]
+          - vrStar[2] * aTnrStar[k][2];
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -638,10 +634,8 @@ struct HLLDMultiMat {
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)] * vnr[0];
         flx[densityIdx(nmat, k)] = u[1][densityIdx(nmat, k)] * vnr[0];
-        flx[energyIdx(nmat, k)] = u[1][energyIdx(nmat, k)] * vnr[0];
-        flx[energyIdx(nmat, k)] -= ur * aTnr[k][0];
-        flx[energyIdx(nmat, k)] -= vr * aTnr[k][1];
-        flx[energyIdx(nmat, k)] -= wr * aTnr[k][2];
+        flx[energyIdx(nmat, k)] = u[1][energyIdx(nmat, k)] * vnr[0]
+          - ur * aTnr[k][0] - vr * aTnr[k][1] - wr * aTnr[k][2];
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
