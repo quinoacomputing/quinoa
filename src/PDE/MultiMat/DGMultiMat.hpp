@@ -1251,20 +1251,20 @@ class MultiMat {
               jacobian[(2*nmat+1)*(2*nmat) + nmat+k] +=        dhk_dpk[k];
               jacobian[(2*nmat+1)*(2*nmat) + 2*nmat] +=        dhk_dpI[k];
             }
-            printf("DBG\n");
-            for (std::size_t i=0; i<2*nmat+1; ++i)
-            {
-              for (std::size_t j=0; j<2*nmat+1; ++j)
-                printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
-              printf("\n");
-            }
-            for (std::size_t k=0; k<nmat; ++k)
-              printf("p[%lu] = %e\n", k, x[nmat+k]);
-            printf("pI = %e\n", x[2*nmat]);
-            for (std::size_t i=0; i<2*nmat+1; ++i)
-              printf("f[%lu] = %e\n", i, f[i]);
-            for (std::size_t k=0; k<nmat; ++k)
-              printf("zk[%lu] = %e\n", k, zk[k]);
+            // printf("DBG\n");
+            // for (std::size_t i=0; i<2*nmat+1; ++i)
+            // {
+            //   for (std::size_t j=0; j<2*nmat+1; ++j)
+            //     printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
+            //   printf("\n");
+            // }
+            // for (std::size_t k=0; k<nmat; ++k)
+            //   printf("p[%lu] = %e\n", k, x[nmat+k]);
+            // printf("pI = %e\n", x[2*nmat]);
+            // for (std::size_t i=0; i<2*nmat+1; ++i)
+            //   printf("f[%lu] = %e\n", i, f[i]);
+            // for (std::size_t k=0; k<nmat; ++k)
+            //   printf("zk[%lu] = %e\n", k, zk[k]);
             // // DEBUG
             // for (std::size_t i=0; i<2*nmat; ++i)
             //   f[i] = 0.0;
@@ -1276,14 +1276,16 @@ class MultiMat {
             lapack_int ipiv[2*nmat+1];
             info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, 2*nmat+1, 1, jacobian, 2*nmat+1, ipiv, dx, 1);
 
-            if (info == 0) {
-              for (std::size_t i=0; i<2*nmat+1; ++i)
-                printf("dx[%lu] = %e\n", i, dx[i]);
-            }
-            else
-            {
-              printf("Failed with info: %ld\n", info);
-            }
+            // if (info == 0) {
+            //   for (std::size_t i=0; i<2*nmat+1; ++i)
+            //     printf("dx[%lu] = %e\n", i, dx[i]);
+            // }
+            // else
+            // {
+            //   printf("Failed with info: %ld\n", info);
+            // }
+            if (info != 0)
+              printf("Linear solver failed with info: %ld\n", info);
 
             // Update x <- x+dx
             for (std::size_t i=0; i<2*nmat+1; ++i)
@@ -1294,8 +1296,8 @@ class MultiMat {
             //   sum += zk[k]*x[k]*(1-x[k]);
             // for (std::size_t k=0; k<nmat; ++k)
             //   x[2*nmat] += zk[k]*x[k]*(1-x[k])*x[nmat+k]/sum;
-            for (std::size_t i=0; i<2*nmat+1; ++i)
-              printf("x[%lu] = %e\n", i, x[i]);
+            // for (std::size_t i=0; i<2*nmat+1; ++i)
+            //   printf("x[%lu] = %e\n", i, x[i]);
             // Restore bounds
             for (std::size_t k=0; k<nmat; ++k)
             {
@@ -1321,7 +1323,7 @@ class MultiMat {
               err += f[i]*f[i];
             err = std::sqrt(err);
             if (err < tol) {
-              printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter+1);
+              // printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter+1);
               break;
             }
           }
