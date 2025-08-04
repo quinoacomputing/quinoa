@@ -251,6 +251,7 @@ class ALECG : public CBase_ALECG {
       p | m_nusermeshblk;
       p | m_nodeblockid;
       p | m_nodeblockidc;
+      p | m_srcFlag;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -377,6 +378,8 @@ class ALECG : public CBase_ALECG {
     //! \details Key: mesh block id, value: set of global node ids for nodes
     //!   in this mesh block.
     std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockidc;
+    //! Vector indicating if a source was added to node
+    std::vector< int > m_srcFlag;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

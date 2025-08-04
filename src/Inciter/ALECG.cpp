@@ -97,7 +97,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_refinedmesh( 0 ),
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
-  m_nodeblockidc()
+  m_nodeblockidc(),
+  m_srcFlag(m_u.nunk(), 0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -951,7 +952,7 @@ ALECG::dt()
 
       // find the smallest dt of all equations on this chare
       auto eqdt = g_cgpde[d->MeshId()].dt( d->Coord(), d->Inpoel(), d->T(),
-        d->Dtn(), m_u, d->Vol(), d->Voln() );
+        d->Dtn(), m_u, d->Vol(), d->Voln(), m_srcFlag );
       if (eqdt < mindt) mindt = eqdt;
 
     }
@@ -1073,7 +1074,7 @@ ALECG::rhs()
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
           m_symbctri, m_slipwallbctri, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
-          m_rhs );
+          m_rhs, m_srcFlag );
   volumetric( m_u, Disc()->Vol() );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
@@ -1351,6 +1352,7 @@ ALECG::resizePostAMR(
   auto nprop = m_u.nprop();
   m_u.resize( npoin );
   m_un.resize( npoin );
+  m_srcFlag.resize( npoin );
   m_rhs.resize( npoin );
   m_chBndGrad.resize( d->Bid().size() );
   tk::destroy(m_esup);

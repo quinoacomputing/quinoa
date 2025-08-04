@@ -413,6 +413,7 @@ class CompFlow {
     //! \param[in] tp Physical time for each mesh node
     //! \param[in] V Total box volume
     //! \param[in,out] R Right-hand side vector computed
+    //! \param[in,out] srcFlag Whether the energy source was added
     void rhs( real t,
               const std::array< std::vector< real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
@@ -436,7 +437,8 @@ class CompFlow {
               const tk::Fields& W,
               const std::vector< tk::real >& tp,
               real V,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              std::vector< int >& srcFlag ) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
@@ -460,7 +462,8 @@ class CompFlow {
       bndint( coord, triinpoel, symbctri, slipwallbctri, U, W, R );
 
       // compute external (energy) sources
-      boxSrc( V, t, inpoel, esup, boxnodes, coord, R );
+      for (auto& is : srcFlag) is = 0;   // reset energy source flag
+      boxSrc( V, t, inpoel, esup, boxnodes, coord, R, srcFlag );
 
       // compute optional source integral
       src( coord, inpoel, t, tp, R );
@@ -545,20 +548,22 @@ class CompFlow {
     //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] t Physical time
+//    //! \param[in] t Physical time
     //! \param[in] dtn Time step size at the previous time step
     //! \param[in] U Solution vector at recent time step
     //! \param[in] vol Nodal volume (with contributions from other chares)
     //! \param[in] voln Nodal volume (with contributions from other chares) at
     //!   the previous time step
+    //! \param[in] srcFlag Whether the energy source was added
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
-             tk::real t,
+             tk::real /*t*/,
              tk::real dtn,
              const tk::Fields& U,
              const std::vector< tk::real >& vol,
-             const std::vector< tk::real >& voln ) const
+             const std::vector< tk::real >& voln,
+             const std::vector< int >& srcFlag ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
@@ -572,6 +577,19 @@ class CompFlow {
 
       // ratio of specific heats
       auto g = getmatprop< tag::gamma >();
+
+      // energy source propagation velocity (in all IC boxes configured)
+      real vFront(0.0);
+      if (!icbox.empty()) {
+        for (const auto& b : icbox) {   // for all boxes for this eq
+          const auto& initiate = b.template get< tag::initiate >();
+          if (initiate == ctr::InitiateType::LINEAR) {
+            vFront = std::max(vFront,
+              b.template get< tag::front_speed >());
+          }
+        }
+      }
+
       // compute the minimum dt across all elements we own
       real mindt = std::numeric_limits< real >::max();
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
@@ -601,22 +619,8 @@ class CompFlow {
           auto c = m_mat_blk[0].compute< EOS::soundspeed >( r, p );
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
 
-          // energy source propagation velocity (in all IC boxes configured)
-          if (!icbox.empty()) {
-            for (const auto& b : icbox) {   // for all boxes for this eq
-              const auto& initiate = b.template get< tag::initiate >();
-              auto iv = b.template get< tag::front_speed >();
-              if (initiate == ctr::InitiateType::LINEAR) {
-                auto zmin = b.template get< tag::zmin >();
-                auto zmax = b.template get< tag::zmax >();
-                auto wFront = 0.08;
-                auto tInit = 0.0;
-                auto tFinal = tInit + (zmax - zmin - 2.0*wFront) /
-                  std::fabs(iv);
-                if (t >= tInit && t <= tFinal)
-                  v = std::max(v, std::fabs(iv));
-              }
-            }
+          if (srcFlag[N[j]] > 0 && std::abs(vFront) > 1e-8) {
+            v = std::max(v, std::fabs(vFront));
           }
 
           if (v > maxvel) maxvel = v;
@@ -1470,9 +1474,10 @@ class CompFlow {
     //! \param[in] boxnodes Mesh node ids within user-defined boxes
     //! \param[in] coord Mesh node coordinates
     //! \param[in] R Right-hand side vector
-    //! \details This function add the energy source corresponding to a planar
-    //!   wave-front propagating along the z-direction with a user-specified
-    //!   velocity, within a box initial condition, configured by the user.
+    //! \param[in,out] engSrcAdded Whether the energy source was added
+    //! \details This function adds the energy source corresponding to a
+    //!   spherical wave-front growing at a user-specified velocity, within a
+    //!   user-configured box initial condition, configured by the user.
     //!   Example (SI) units of the quantities involved:
     //!    * internal energy content (energy per unit volume): J/m^3
     //!    * specific energy (internal energy per unit mass): J/kg
@@ -1483,7 +1488,8 @@ class CompFlow {
                                   std::vector< std::size_t > >& esup,
                  const std::vector< std::unordered_set< std::size_t > >& boxnodes,
                  const std::array< std::vector< real >, 3 >& coord,
-                 tk::Fields& R ) const
+                 tk::Fields& R,
+                 std::vector< int >& engSrcAdded ) const
     {
       const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
 
@@ -1502,80 +1508,46 @@ class CompFlow {
 
           auto boxenc = b.template get< tag::energy_content >();
           Assert( boxenc > 0.0, "Box energy content must be nonzero" );
+          const auto& x0_front = b.template get< tag::point >();
+          Assert(x0_front.size()==3, "Incorrectly sized front initial location");
 
           auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
 
           // determine times at which sourcing is initialized and terminated
-          auto iv = b.template get< tag::front_speed >();
+          auto vFront = b.template get< tag::front_speed >();
           auto wFront = b.template get< tag::front_width >();
           auto tInit = b.template get< tag::init_time >();
-          auto tFinal = tInit + (box[5] - box[4] - wFront) / std::fabs(iv);
-          auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
           const auto& x = coord[0];
           const auto& y = coord[1];
           const auto& z = coord[2];
 
-          if (t >= tInit && t <= tFinal) {
-            // The energy front is assumed to have a half-sine-wave shape. The
-            // half wave-length is the width of the front. At t=0, the center of
-            // this front (i.e. the peak of the partial-sine-wave) is at X_0 +
-            // W_0.  W_0 is calculated based on the width of the front and the
-            // direction of propagation (which is assumed to be along the
-            // z-direction).  If the front propagation velocity is positive, it
-            // is assumed that the initial position of the energy source is the
-            // minimum z-coordinate of the box; whereas if this velocity is
-            // negative, the initial position is the maximum z-coordinate of the
-            // box.
+          if (t >= tInit) {
+            // current radius of front
+            tk::real rFront = vFront * (t-tInit);
 
-            // Orientation of box
-            std::array< tk::real, 3 > b_orientn{{
-              b.template get< tag::orientation >()[0],
-              b.template get< tag::orientation >()[1],
-              b.template get< tag::orientation >()[2] }};
-            std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
-              0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
-            // Transform box to reference space
-            std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
-            std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
-            tk::movePoint(b_centroid, b_min);
-            tk::movePoint(b_centroid, b_max);
-
-            // initial center of front
-            tk::real zInit(b_min[2]);
-            if (iv < 0.0) zInit = b_max[2];
-            // current location of front
-            auto z0 = zInit + iv * (t-tInit);
-            auto z1 = z0 + std::copysign(wFront, iv);
-            tk::real s0(z0), s1(z1);
-            // if velocity of propagation is negative, initial position is z1
-            if (iv < 0.0) {
-              s0 = z1;
-              s1 = z0;
-            }
-            // Sine-wave (positive part of the wave) source term amplitude
-            auto pi = 4.0 * std::atan(1.0);
-            auto amplE = boxenc * V_ex * pi
-              / (aBox * wFront * 2.0 * (tFinal-tInit));
-            //// Square wave (constant) source term amplitude
-            //auto amplE = boxenc * V_ex
-            //  / (aBox * wFront * (tFinal-tInit));
-            //// arbitrary shape form
-            //auto amplE = boxenc * std::abs(iv) / wFront;
+            //// Sine-wave (positive part of the wave) source term amplitude
+            //auto pi = 4.0 * std::atan(1.0);
+            //auto amplE = boxenc * V_ex * pi
+            //  / (areaBox * wFront * 2.0 * (tFinal-tInit));
+            // arbitrary shape form
+            auto amplE = boxenc * vFront / wFront;
             amplE *= V_ex / V;
 
-            // add source
             for (auto p : boxnodes[bcnt]) {
               std::array< tk::real, 3 > node{{ x[p], y[p], z[p] }};
-              // Transform node to reference space of box
-              tk::movePoint(b_centroid, node);
-              tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
-                node);
 
-              if (node[2] >= s0 && node[2] <= s1) {
-                auto S = amplE * std::sin(pi*(node[2]-s0)/wFront);
-                //// arbitrary shape form
-                //auto S = amplE;
+              auto r_e = std::sqrt(
+                (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
+                (node[1]-x0_front[1])*(node[1]-x0_front[1]) +
+                (node[2]-x0_front[2])*(node[2]-x0_front[2]) );
+
+              // if mesh node lies within spherical shell add sources
+              if (r_e >= rFront && r_e <= rFront+wFront) {
+                //// Sine-wave form
+                //auto S = amplE * std::sin(pi*(node[2]-s0)/wFront);
+                // arbitrary shape form
+                auto S = amplE;
                 for (auto e : tk::Around(esup,p)) {
                   // access node IDs
                   std::size_t N[4] =
@@ -1593,7 +1565,9 @@ class CompFlow {
                   auto J =
                     tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
                   auto J24 = J/24.0;
+                  // Add the source term to the rhs
                   R(p,4) += J24 * S;
+                  engSrcAdded[p] = 1;
                 }
               }
             }
