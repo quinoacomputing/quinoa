@@ -237,7 +237,8 @@ class Transport {
       [[maybe_unused]] const tk::Fields& W,
       const std::vector< tk::real >&,
       real,
-      tk::Fields& R ) const
+      tk::Fields& R,
+      std::vector< int >& ) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
@@ -283,7 +284,8 @@ class Transport {
              tk::real,
              const tk::Fields& U,
              const std::vector< tk::real >&,
-             const std::vector< tk::real >& ) const
+             const std::vector< tk::real >&,
+             const std::vector< int >& ) const
     {
       using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
