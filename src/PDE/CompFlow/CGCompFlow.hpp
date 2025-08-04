@@ -460,23 +460,7 @@ class CompFlow {
       bndint( coord, triinpoel, symbctri, slipwallbctri, U, W, R );
 
       // compute external (energy) sources
-      const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
-
-      if (!icbox.empty() && !boxnodes.empty()) {
-        std::size_t bcnt = 0;
-        for (const auto& b : icbox) {   // for all boxes for this eq
-          std::vector< tk::real > box
-           { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-             b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-             b.template get< tag::zmin >(), b.template get< tag::zmax >() };
-
-          const auto& initiate = b.template get< tag::initiate >();
-          if (initiate == ctr::InitiateType::LINEAR) {
-            boxSrc( V, t, inpoel, esup, boxnodes[bcnt], coord, R );
-          }
-          ++bcnt;
-        }
-      }
+      boxSrc( V, t, inpoel, esup, boxnodes, coord, R );
 
       // compute optional source integral
       src( coord, inpoel, t, tp, R );
@@ -1483,7 +1467,7 @@ class CompFlow {
     //! \param[in] t Physical time
     //! \param[in] inpoel Element point connectivity
     //! \param[in] esup Elements surrounding points
-    //! \param[in] boxnodes Mesh node ids within user-defined box
+    //! \param[in] boxnodes Mesh node ids within user-defined boxes
     //! \param[in] coord Mesh node coordinates
     //! \param[in] R Right-hand side vector
     //! \details This function add the energy source corresponding to a planar
@@ -1497,14 +1481,20 @@ class CompFlow {
                  const std::vector< std::size_t >& inpoel,
                  const std::pair< std::vector< std::size_t >,
                                   std::vector< std::size_t > >& esup,
-                 const std::unordered_set< std::size_t >& boxnodes,
+                 const std::vector< std::unordered_set< std::size_t > >& boxnodes,
                  const std::array< std::vector< real >, 3 >& coord,
                  tk::Fields& R ) const
     {
       const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
 
-      if (!icbox.empty()) {
-        for (const auto& b : icbox) {   // for all boxes for this eq
+      // if nodes exist in box (on this partition)
+      if (!icbox.empty() && !boxnodes.empty()) {
+        std::size_t bcnt = 0;
+        // for all boxes
+        for (const auto& b : icbox) {
+          // if linear initialize is set up (energy-pill)
+          if (b.template get< tag::initiate >() == ctr::InitiateType::LINEAR) {
+
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
@@ -1575,7 +1565,7 @@ class CompFlow {
             amplE *= V_ex / V;
 
             // add source
-            for (auto p : boxnodes) {
+            for (auto p : boxnodes[bcnt]) {
               std::array< tk::real, 3 > node{{ x[p], y[p], z[p] }};
               // Transform node to reference space of box
               tk::movePoint(b_centroid, node);
@@ -1608,6 +1598,9 @@ class CompFlow {
               }
             }
           }
+
+          }
+          ++bcnt;
         }
       }
     }
