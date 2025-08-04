@@ -1472,7 +1472,7 @@ DG::solve( tk::real newdt )
       }
     }
 
-  // NEW pressure relaxation
+  // New pressure relaxation
   g_dgpde[d->MeshId()].pressure_relaxation( myGhosts()->m_nunk, d->Dt(), m_u );
 
   // Update primitives based on the evolved solution

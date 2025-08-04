@@ -1127,8 +1127,8 @@ class MultiMat {
 
       // Solver parameters
       std::size_t max_iter = 100;
-      tk::real tol = 1.0E-14;//1.0E-05*dt;
-      tk::real p0 = 1.0E00;
+      tk::real tol = 1.0E-01*dt;
+      tk::real p0 = 1.0E+00;
       
       for (std::size_t e=0; e<nelem; ++e)
       {
@@ -1147,16 +1147,34 @@ class MultiMat {
         for (std::size_t k=0; k<nmat; ++k)
         {
           alpha[k] = U(e, volfracDofIdx(nmat, k, ndof, 0));
-          rhomat[k] = U(e, densityDofIdx(nmat, k, ndof, 0))/alpha[k];
+          auto arho = U(e, densityDofIdx(nmat, k, ndof, 0));
+          rhomat[k] = arho/alpha[k];
           auto arhoe = U(e, energyDofIdx(nmat, k, ndof, 0));
           std::array< std::array< tk::real, 3 >, 3 > gmat;
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
               gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, ndof, 0));
           pressure[k] = m_mat_blk[k].compute< EOS::pressure >(
-            rho, u, v, w, arhoe, alpha[k], k, gmat)/alpha[k];
+            arho, u, v, w, arhoe, alpha[k], k, gmat)/alpha[k];
           max_pressure = std::max(pressure[k], max_pressure);
         }
+        // Check bounds
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
+          if (alpha[k] < alphamin)
+            alpha[k] = alphamin;
+          else if (alpha[k] > 1.0)
+            alpha[k] = 1.0;
+          tk::real gamma = getmatprop< tag::gamma >(k);
+          tk::real pinf = getmatprop< tag::pstiff >(k); 
+          if (pressure[k] < -gamma*pinf+1.0E-06)
+            pressure[k] = -gamma*pinf+1.0E-06;
+        }
+        for (std::size_t k=0; k<nmat; ++k)
+          printf("alpha[%lu] = %e\n", k, alpha[k]);
+        for (std::size_t k=0; k<nmat; ++k)
+          printf("pressure[%lu] = %e\n", k, pressure[k]);
         // First, if all pressure are equal, there is nothing to do
         tk::real err = 0.0;
         for (std::size_t imat=0; imat<nmat; ++imat)
@@ -1167,7 +1185,7 @@ class MultiMat {
         {
           // Compute zk
           tk::real zk_sum = 0.0;
-          tk::real mu0 = 1.0e+03;
+          tk::real mu0 = 1.0e+00;
           std::vector< tk::real > zk(nmat, 0.0);
           for (std::size_t k=0; k<nmat; ++k)
           {
@@ -1251,23 +1269,21 @@ class MultiMat {
               jacobian[(2*nmat+1)*(2*nmat) + nmat+k] +=        dhk_dpk[k];
               jacobian[(2*nmat+1)*(2*nmat) + 2*nmat] +=        dhk_dpI[k];
             }
-            // printf("DBG\n");
-            // for (std::size_t i=0; i<2*nmat+1; ++i)
-            // {
-            //   for (std::size_t j=0; j<2*nmat+1; ++j)
-            //     printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
-            //   printf("\n");
-            // }
-            // for (std::size_t k=0; k<nmat; ++k)
-            //   printf("p[%lu] = %e\n", k, x[nmat+k]);
-            // printf("pI = %e\n", x[2*nmat]);
-            // for (std::size_t i=0; i<2*nmat+1; ++i)
-            //   printf("f[%lu] = %e\n", i, f[i]);
-            // for (std::size_t k=0; k<nmat; ++k)
-            //   printf("zk[%lu] = %e\n", k, zk[k]);
-            // // DEBUG
-            // for (std::size_t i=0; i<2*nmat; ++i)
-            //   f[i] = 0.0;
+            printf("DBG. iter = %lu\n", iter);
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+            {
+              for (std::size_t j=0; j<2*nmat+1; ++j)
+                printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
+              printf("\n");
+            }
+            for (std::size_t k=0; k<nmat; ++k)
+              printf("p[%lu] = %e\n", k, x[nmat+k]);
+            printf("pI = %e\n", x[2*nmat]);
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              printf("f[%lu] = %e\n", i, f[i]);
+            // DEBUG
+            for (std::size_t i=0; i<2*nmat; ++i)
+              f[i] = 0.0;
             // solve J*dx = -f
             double dx[2*nmat+1];
             for (std::size_t i=0; i<2*nmat+1; ++i)
@@ -1276,28 +1292,20 @@ class MultiMat {
             lapack_int ipiv[2*nmat+1];
             info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, 2*nmat+1, 1, jacobian, 2*nmat+1, ipiv, dx, 1);
 
-            // if (info == 0) {
-            //   for (std::size_t i=0; i<2*nmat+1; ++i)
-            //     printf("dx[%lu] = %e\n", i, dx[i]);
-            // }
-            // else
-            // {
-            //   printf("Failed with info: %ld\n", info);
-            // }
+            if (info == 0) {
+              for (std::size_t i=0; i<2*nmat+1; ++i)
+                printf("dx[%lu] = %e\n", i, dx[i]);
+            }
+            else
+            {
+              printf("Failed with info: %ld\n", info);
+            }
             if (info != 0)
               printf("Linear solver failed with info: %ld\n", info);
 
             // Update x <- x+dx
             for (std::size_t i=0; i<2*nmat+1; ++i)
               x[i] += dx[i];
-            // x[2*nmat] = 0.0;
-            // tk::real sum = 0.0;
-            // for (std::size_t k=0; k<nmat; ++k)
-            //   sum += zk[k]*x[k]*(1-x[k]);
-            // for (std::size_t k=0; k<nmat; ++k)
-            //   x[2*nmat] += zk[k]*x[k]*(1-x[k])*x[nmat+k]/sum;
-            // for (std::size_t i=0; i<2*nmat+1; ++i)
-            //   printf("x[%lu] = %e\n", i, x[i]);
             // Restore bounds
             for (std::size_t k=0; k<nmat; ++k)
             {
@@ -1309,7 +1317,7 @@ class MultiMat {
               tk::real gamma = getmatprop< tag::gamma >(k);
               tk::real pinf = getmatprop< tag::pstiff >(k); 
               if (x[nmat+k] < -gamma*pinf)
-                x[nmat+k] = -gamma*pinf;
+                x[nmat+k] = -gamma*pinf+1.0E-06;
             }
             // Re-normalize alphas
             tk::real alpha_sum = 0.0;
@@ -1323,7 +1331,7 @@ class MultiMat {
               err += f[i]*f[i];
             err = std::sqrt(err);
             if (err < tol) {
-              // printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter+1);
+              printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter+1);
               break;
             }
           }
