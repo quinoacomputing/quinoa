@@ -98,7 +98,7 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
   m_nodeblockidc(),
-  m_srcFlag(m_u.nunk(), 0)
+  m_srcFlag(m_u.nunk(), 1)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
