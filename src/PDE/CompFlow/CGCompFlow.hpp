@@ -1526,10 +1526,6 @@ class CompFlow {
             // current radius of front
             tk::real rFront = vFront * (t-tInit);
 
-            //// Sine-wave (positive part of the wave) source term amplitude
-            //auto pi = 4.0 * std::atan(1.0);
-            //auto amplE = boxenc * V_ex * pi
-            //  / (areaBox * wFront * 2.0 * (tFinal-tInit));
             // arbitrary shape form
             auto amplE = boxenc * vFront / wFront;
             amplE *= V_ex / V;
@@ -1544,8 +1540,6 @@ class CompFlow {
 
               // if mesh node lies within spherical shell add sources
               if (r_e >= rFront && r_e <= rFront+wFront) {
-                //// Sine-wave form
-                //auto S = amplE * std::sin(pi*(node[2]-s0)/wFront);
                 // arbitrary shape form
                 auto S = amplE;
                 for (auto e : tk::Around(esup,p)) {
