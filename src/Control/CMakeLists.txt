@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 project(Control CXX)
 
 #### Quinoa control build configuration ########################################
 
-include(/vast/home/rjpark/quinoa/cmake/charm.cmake)
+include(charm)
 
+message(STATUS "LUAAAA ${LUA_INCLUDE_DIR}")
+message(STATUS "BRIGAND ${BRIGAND_INCLUDE_DIRS}")
+message(STATUS "SOL ${SOL2_INCLUDE_DIRS}")
 #### Inciter control ###########################################################
 if (ENABLE_INCITER)
   add_library(InciterControl
@@ -21,9 +23,9 @@ if (ENABLE_INCITER)
                              ${QUINOA_SOURCE_DIR}/Inciter
                              ${PEGTL_INCLUDE_DIRS}
                              ${CHARM_INCLUDE_DIRS}
-                             ${BRIGAND_INCLUDE_DIRS}
-                             ${LUA_INCLUDE_DIR}
-                             ${SOL2_INCLUDE_DIRS}
+                             ${BRIGAND_INCLUDE_DIRS}/
+                             ${LUA_INCLUDE_DIR}/
+                             ${SOL2_INCLUDE_DIRS}/
                              ${PROJECT_BINARY_DIR}/../Main)
 
   set_target_properties(InciterControl PROPERTIES

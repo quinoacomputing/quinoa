@@ -1,6 +1,6 @@
-# # Inciter executable ##########################################################
+# Inciter executable ##########################################################
 
-# set(INCITER_DRIVER_OBJ ${PROJECT_BINARY_DIR}/CMakeFiles/inciter.dir/InciterDriver.cpp.o )
+# set(INCITER_DRIVER_OBJ ${PROJECT_BINARY_DIR}/CMakeFiles/inciter.dir/InciterDriver.cpp.o)
 # add_custom_command(
 #     OUTPUT 
 #         ${INCITER_DRIVER_OBJ} 
@@ -64,9 +64,9 @@
 #         -std=c++17 -extended-lambda 
 #         #-Wext-lambda-captures-this 
 #         #-arch=sm_61 
-#         -MD -MT Main/CMakeFiles/inciter.dir/InciterDriver.cpp.o 
-#         -MF Main/CMakeFiles/inciter.dir/InciterDriver.cpp.o.d 
-#         -o Main/CMakeFiles/inciter.dir/InciterDriver.cpp.o 
+#         -MD -MT CMakeFiles/inciter.dir/InciterDriver.cpp.o 
+#         -MF CMakeFiles/inciter.dir/InciterDriver.cpp.o.d 
+#         -o CMakeFiles/inciter.dir/InciterDriver.cpp.o 
 #         -c /vast/home/rjpark/quinoa/src/Main/InciterDriver.cpp
 #     DEPENDS
 #         charestatecollectorCharmModule
@@ -81,8 +81,9 @@ add_executable(${INCITER_EXECUTABLE}
 
 config_executable(${INCITER_EXECUTABLE})
 
+message(STATUS "LUAAA ${LUA_LIBRARIES}")
 target_link_libraries(${INCITER_EXECUTABLE}
-                      /vast/home/rjpark/quinoa/build/release/Control/libInciterControl.a
+                      InciterControl
                       PDE
                       Inciter
                       EOS
