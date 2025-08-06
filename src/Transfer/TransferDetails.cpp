@@ -53,17 +53,21 @@ void
 TransferDetails::setSourceTets(
     std::vector< std::size_t>* inpoel,
     tk::UnsMesh::Coords* coords,
-    const tk::Fields& u )
+    const tk::Fields& u,
+    CkCallback cb )
 // *****************************************************************************
 //  Set the data for the source tetrahedrons to be collided
 //! \param[in] inpoel Pointer to the connectivity data for the source mesh
 //! \param[in] coords Pointer to the coordinate data for the source mesh
 //! \param[in] u Pointer to the solution data for the source mesh
+//! \param[in] cb Callback to call when src side of transfer is done
 // *****************************************************************************
 {
   m_coord = coords;
   m_u = const_cast< tk::Fields* >( &u );
   m_inpoel = inpoel;
+  m_donecb = cb;
+  m_srcnotified = 0;
 
   // Send tetrahedron data to the collision detection library
   collideTets();
@@ -78,7 +82,7 @@ TransferDetails::setDestPoints(
 //  Set the data for the destination points to be collided
 //! \param[in] coords Pointer to the coordinate data for the destination mesh
 //! \param[in,out] u Pointer to the solution data for the destination mesh
-//! \param[in] cb Callback to call once this chare received all solution data
+//! \param[in] cb Callback to call when dst side of transfer is done
 // *****************************************************************************
 {
   m_coord = coords;
@@ -221,7 +225,7 @@ TransferDetails::determineActualCollisions(
     CProxy_TransferDetails proxy,
     int index,
     int nColls,
-    PotentialCollision* colls ) const
+    PotentialCollision* colls )
 // *****************************************************************************
 //  Identify actual collisions by calling intet on all possible collisions, and
 //  interpolate solution values to send back to the destination mesh.
@@ -266,6 +270,10 @@ TransferDetails::determineActualCollisions(
   //    thisIndex, numInTet, nColls);
   // Send the solution data for the actual collisions back to the dest mesh
   proxy[index].transferSolution( return_data );
+  if (not m_srcnotified) {
+    m_donecb.send();
+    m_srcnotified = 1;
+  }
 }
 
 void
