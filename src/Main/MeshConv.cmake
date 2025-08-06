@@ -7,15 +7,24 @@ add_executable(${MESHCONV_EXECUTABLE}
 config_executable(${MESHCONV_EXECUTABLE})
 
 target_include_directories(${MESHCONV_EXECUTABLE} PUBLIC
-                           ${PROJECT_BINARY_DIR}/../Base)
+                           ${PROJECT_BINARY_DIR}/../Base
+                           ${QUINOA_SOURCE_DIR}
+                            ${QUINOA_SOURCE_DIR}/Base
+                            ${QUINOA_SOURCE_DIR}/IO
+                            ${QUINOA_SOURCE_DIR}/Control
+                            ${PROJECT_BINARY_DIR}/../Main
+                            ${PEGTL_INCLUDE_DIRS}
+                            ${CHARM_INCLUDE_DIRS}
+                            ${BRIGAND_INCLUDE_DIRS})
 
+set(MESHCONVCONTROL_LIBS ${PROJECT_BINARY_DIR}/../Control/libMeshConvControl.a)
 target_link_libraries(${MESHCONV_EXECUTABLE}
                       NativeMeshIO
                       ExodusIIMeshIO
                       HyperMeshIO
                       MeshDetect
                       Mesh
-                      MeshConvControl
+                      ${MESHCONVCONTROL_LIBS}
                       Base
                       Config
                       Init

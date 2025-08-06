@@ -6,14 +6,14 @@ project(quinoa CXX)
 add_definitions()
 
 # Include function for adding Charm++ modules
-include(charm)
+include(/vast/home/rjpark/quinoa/cmake/charm.cmake)
 
 # Link executables with the charmc wrapper
 STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
        "${LINKER_COMPILER} -module CommonLBs -module collidecharm ${EXTRA_LINK_ARGS} -c++ <CMAKE_CXX_COMPILER>"
        CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
 
-include(ConfigExecutable)
+include(/vast/home/rjpark/quinoa/cmake/ConfigExecutable.cmake)
 
 # Configure configuration library
 if (BRIGAND_FOUND)

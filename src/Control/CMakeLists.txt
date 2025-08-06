@@ -1,8 +1,9 @@
+cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 project(Control CXX)
 
 #### Quinoa control build configuration ########################################
 
-include(charm)
+include(/vast/home/rjpark/quinoa/cmake/charm.cmake)
 
 #### Inciter control ###########################################################
 if (ENABLE_INCITER)
