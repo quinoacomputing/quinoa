@@ -289,6 +289,8 @@ Mixture::mix_Cv_prim_partials(
   for (std::size_t k = 0; k < m_nspec; k++) {
     dCvdP[k] = mat_blk[k].compute< EOS::cv >(mix_temp) / mix_density
              - mix_Cv(mix_temp, mat_blk) / mix_density;
+
+    dCvdP[m_nspec + 3] += mat_blk[k].compute< EOS::dcvdT >(mix_temp) * m_Ys[k];
   }
   return dCvdP;
 }
