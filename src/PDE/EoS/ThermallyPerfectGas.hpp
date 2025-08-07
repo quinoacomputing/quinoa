@@ -214,6 +214,10 @@ class ThermallyPerfectGas {
     //! Return species specific heat (constant volume)
     tk::real cv(tk::real temp) const;
 
+    //! Return species specific heat (constant volume) partial w.r.t.
+    //! temperature 
+    tk::real dcvdT(tk::real temp) const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

@@ -148,6 +148,9 @@ class GodunovRomenski {
     //! Return specific heat (no-op)
     tk::real cv( [[maybe_unused]] tk::real temp) const { return 0.0; }
 
+    //! Return specific heat derivative (no-op)
+    tk::real dcvdT( [[maybe_unused]] tk::real temp) const { return 0.0; }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

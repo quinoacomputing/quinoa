@@ -186,3 +186,27 @@ ThermallyPerfectGas::cv(tk::real temp) const
   tk::real cp = calc_cp(temp) * R;
   return cp - R;
 }
+
+tk::real
+ThermallyPerfectGas::dcvdT(tk::real temp) const
+// *************************************************************************
+//! \brief Calculate species specific heat (constant volume) partial w.r.t.
+//! temperature
+//! \param[in] temp Temperature
+//! \return Species specific heat using the thermally perfect gas EoS
+// *************************************************************************
+{
+  std::size_t t_rng_idx(0); // Reference the correct polynomial.
+  tk::real temp_poly = temp; // temp to use in polynomial expression
+  get_t_range(temp_poly, t_rng_idx); // Bounds check performed inside
+
+  tk::real dcvdT = 
+    -2. * m_cp_coeff[t_rng_idx][0] * std::pow(temp_poly, -3) +
+         -m_cp_coeff[t_rng_idx][1] * std::pow(temp_poly, -2) +
+          m_cp_coeff[t_rng_idx][3] +
+     2. * m_cp_coeff[t_rng_idx][4] * temp_poly +
+     3. * m_cp_coeff[t_rng_idx][5] * std::pow(temp_poly, 2) +
+     4. * m_cp_coeff[t_rng_idx][6] * std::pow(temp_poly, 3);
+
+  return dcvdT;
+}
