@@ -36,7 +36,7 @@
 
     \code{.cpp}
       // Instantiate a Scheme object
-      Scheme s( ctr::SchemeType::DG );  // see Control/Inciter/Options/Scheme.h
+      Scheme s( ctr::SchemeType::DGP0 );  // see Control/Inciter/Options/Scheme.h
 
       // Issue broadcast to child scheme entry method
       s.bcast< Scheme::setup >(...);
@@ -128,7 +128,7 @@ class Scheme {
       discproxy( CProxy_Discretization::ckNew() )
     {
       bound.bindTo( discproxy );
-      if (scheme == ctr::SchemeType::DG ||
+      if (scheme == ctr::SchemeType::DGP0 ||
                  scheme == ctr::SchemeType::P0P1 ||
                  scheme == ctr::SchemeType::DGP1 ||
                  scheme == ctr::SchemeType::DGP2 ||
