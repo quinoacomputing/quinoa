@@ -90,8 +90,8 @@ void tk::volInt( std::size_t nmat,
     tag::intsharp_param >();
 
   // compute volume integrals
-  Kokkos::initialize();
-  {
+  //Kokkos::initialize();
+  
     //! Transfer all the constants to View is not necessary!
     //Transfer solidx is a vector
     auto solidx_h_view = changeToView(solidx.data(), nmat);
@@ -125,7 +125,7 @@ void tk::volInt( std::size_t nmat,
 
     size_t ndofel_size = ndofel.size();
     auto ndofel_h_view = changeToView(ndofel.data(), ndofel_size);
-    Kokkos::View<double*, memory_space> ndofel_d_view("nodefel device view", ndofel_size);
+    Kokkos::View<size_t*, memory_space> ndofel_d_view("nodefel device view", ndofel_size);
     Kokkos::deep_copy(ndofel_d_view, ndofel_h_view);
 
     // geoElem, U, P, R transfer
@@ -251,8 +251,7 @@ void tk::volInt( std::size_t nmat,
         
       });
       Kokkos::deep_copy(R_h_view, R_d_view);
-    };
-    Kokkos::finalize();
+    //Kokkos::finalize();
 }
  
 
