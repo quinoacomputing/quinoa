@@ -1654,7 +1654,7 @@ DG::refinedOutput() const
 // *****************************************************************************
 {
   return g_inputdeck.get< tag::field_output, tag::refined >() &&
-         g_inputdeck.get< tag::scheme >() != ctr::SchemeType::DG;
+         g_inputdeck.get< tag::scheme >() != ctr::SchemeType::DGP0;
 }
 
 void
