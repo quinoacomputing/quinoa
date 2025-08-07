@@ -48,6 +48,8 @@
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
 
+#include <fstream>
+
 // ignore old-style-casts required for lapack/blas calls
 #if defined(__clang__)
   #pragma clang diagnostic ignored "-Wold-style-cast"
@@ -1127,7 +1129,7 @@ class MultiMat {
 
       // Solver parameters
       std::size_t max_iter = 100;
-      tk::real tol = 1.0E-01*dt;
+      tk::real tol = 1.0E-14; //1.0E-06*dt;
       tk::real p0 = 1.0E+00;
       
       for (std::size_t e=0; e<nelem; ++e)
@@ -1185,7 +1187,7 @@ class MultiMat {
         {
           // Compute zk
           tk::real zk_sum = 0.0;
-          tk::real mu0 = 1.0e+00;
+          tk::real mu0 = 1.0e+03;
           std::vector< tk::real > zk(nmat, 0.0);
           for (std::size_t k=0; k<nmat; ++k)
           {
@@ -1281,9 +1283,9 @@ class MultiMat {
             printf("pI = %e\n", x[2*nmat]);
             for (std::size_t i=0; i<2*nmat+1; ++i)
               printf("f[%lu] = %e\n", i, f[i]);
-            // DEBUG
-            for (std::size_t i=0; i<2*nmat; ++i)
-              f[i] = 0.0;
+            // // DEBUG
+            // for (std::size_t i=0; i<2*nmat; ++i)
+            //   f[i] = 0.0;
             // solve J*dx = -f
             double dx[2*nmat+1];
             for (std::size_t i=0; i<2*nmat+1; ++i)
@@ -1344,6 +1346,9 @@ class MultiMat {
           for (std::size_t k=0; k<nmat; ++k)
             U(e, energyDofIdx(nmat, k, ndof, 0)) =
               m_mat_blk[k].compute< EOS::totalenergy >( alpha[k]*rhomat[k], u, v, w, x[k]*x[nmat+k], x[k] );
+          std::ofstream outFile("prelax_results.dat", std::ios::app);
+          outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+                  << U(e, energyDofIdx(nmat, 0, ndof, 0))+U(e, energyDofIdx(nmat, 1, ndof, 0)) <<std::endl;
         }
       }
     }
