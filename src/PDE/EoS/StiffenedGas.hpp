@@ -126,6 +126,9 @@ class StiffenedGas {
     //! Return dynamic viscosity coefficient
     tk::real viscCoeff() const { return m_mu; }
 
+    //! Return specific heat derivative (no-op)
+    tk::real dcvdT( [[maybe_unused]] tk::real temp) const { return 0.0; }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

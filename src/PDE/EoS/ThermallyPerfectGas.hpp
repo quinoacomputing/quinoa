@@ -217,6 +217,10 @@ class ThermallyPerfectGas {
     //! Return dynamic viscosity coefficient
     tk::real viscCoeff() const { return m_mu; }
 
+    //! Return species specific heat (constant volume) partial w.r.t.
+    //! temperature 
+    tk::real dcvdT(tk::real temp) const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
