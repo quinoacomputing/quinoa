@@ -644,7 +644,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         scheme with Runge-Kutta (RK) time stepping, combined with overset grids.
         See Control/Inciter/Options/Scheme.hpp for other valid options.)"});
 
-      keywords.insert({"dg",
+      keywords.insert({"dgp0",
         "Select 1st-order discontinuous Galerkin discretization + Runge-Kutta",
         R"(This keyword is used to select the first-order accurate discontinuous
         Galerkin, DG(P0), spatial discretiztaion used in Inciter. As this is first

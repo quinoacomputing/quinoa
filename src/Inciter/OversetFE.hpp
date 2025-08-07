@@ -238,6 +238,7 @@ class OversetFE : public CBase_OversetFE {
       p | m_nusermeshblk;
       p | m_nodeblockid;
       p | m_nodeblockidc;
+      p | m_srcFlag;
       p | m_ixfer;
       p | m_surfForce;
       p | m_surfTorque;
@@ -378,6 +379,8 @@ class OversetFE : public CBase_OversetFE {
     //! \details Key: mesh block id, value: set of global node ids for nodes
     //!   in this mesh block.
     std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockidc;
+    //! Vector indicating if a source was added to node
+    std::vector< int > m_srcFlag;
     //! Counter for two-way transfer
     std::size_t m_ixfer;
     //! Surface force on mesh for rigid body motion

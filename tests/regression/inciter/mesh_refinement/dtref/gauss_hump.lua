@@ -5,7 +5,7 @@ inciter = {
   nstep = 10,  -- Max number of time steps
   dt = 1.0e-3, -- Time step size
   ttyi = 1,     -- TTY output interval
-  scheme = "dg",
+  scheme = "dgp0",
 
   partitioning = "mj",
 
