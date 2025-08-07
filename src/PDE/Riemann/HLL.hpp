@@ -225,7 +225,16 @@ struct HLL {
       }
     }
 
-    Assert( flx.size() == (ncomp+nmat+1+3*nsld), "Size of "
+    // Store Riemann g_ij (9*nsld)
+    for (std::size_t k=0; k<nmat; ++k) {
+      if (solidx[k] > 0) {
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            flx.push_back( p_plus*g_l[k][i][j] + p_minus*g_r[k][i][j] );
+      }
+    }
+
+    Assert( flx.size() == (ncomp+nmat+1+3*nsld+9*nsld), "Size of "
             "multi-material flux vector incorrect" );
 
     return flx;

@@ -214,6 +214,20 @@ nonConservativeInt( const bool pref,
                                                   - riemannDeriv[mark+idir][e] );
         }
 
+        // evaluate non-conservative terms for g equation
+        if (solidx[k] > 0) {
+          std::size_t nsld = inciter::numSolids(nmat, solidx);
+          for (std::size_t idof=0; idof<ndofel[e]; ++idof)
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                for (std::size_t l=0; l<3; ++l)
+                {
+                  mark = 3*nmat+ndof+3*nsld+27*(solidx[k]-1)+3*(3*i+j)+l;
+                  ncf[deformIdx(nmat, solidx[k], i, j)][idof] -=
+                    vel[l] * riemannDeriv[mark][e];
+                }
+        }
+
         // Evaluate non-conservative term for volume fraction equation:
         // Here we make an assumption that the derivative of Riemann velocity
         // times the basis function is constant. Therefore, when P0P1/DGP1/DGP2
@@ -283,8 +297,10 @@ updateRhsNonCons(
 {
   using inciter::volfracIdx;
   using inciter::energyIdx;
+  using inciter::deformIdx;
   using inciter::volfracDofIdx;
   using inciter::energyDofIdx;
+  using inciter::deformDofIdx;
 
   //Assert( dBdx[0].size() == ndof_el,
   //        "Size mismatch for basis function derivatives" );
@@ -313,6 +329,7 @@ updateRhsNonCons(
           wt * ncf[volfracIdx(nmat,k)][idof];
         R(e, energyDofIdx(nmat,k,ndof,idof)) +=
           wt * ncf[energyIdx(nmat,k)][idof] * B[idof];
+        // Note: High order non-conservative g terms not implemented yet!
       }
     }
   }

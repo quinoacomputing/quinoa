@@ -355,6 +355,24 @@ update_rhs_fa( ncomp_t ncomp,
             wt * fl[mark+i];
         }
       }
+
+    // Derivatives of g: d(g_ik)/dx_j-d(g_ij)/dx_k
+    // for i=1,2,3; j=1,2,3; k=1,2,3. Total = 3x3x3 (per solid)
+    std::size_t nsld = inciter::numSolids(nmat, solidx);
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t l=0; l<3; ++l)
+              if (j != l)
+              {
+                std::size_t mark1 = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+l;
+                std::size_t mark2 = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+j;
+                riemannDeriv[3*nmat+ndof+3*nsld+27*(solidx[k]-1)+3*(3*i+j)+l][el] -=
+                  wt * ( fl[mark1] * fn[j] - fl[mark2] * fn[l]);
+                riemannDeriv[3*nmat+ndof+3*nsld+27*(solidx[k]-1)+3*(3*i+j)+l][er] +=
+                  wt * ( fl[mark1] * fn[j] - fl[mark2] * fn[l]);
+              }
   }
 }
 
