@@ -81,7 +81,8 @@ add_executable(${INCITER_EXECUTABLE}
 
 config_executable(${INCITER_EXECUTABLE})
 
-message(STATUS "LUAAA ${LUA_LIBRARIES}")
+set(MY_LUA "/usr/lib64/liblua-5.3.so;/usr/lib64/libm.so")
+message(STATUS "LUAAA ${MY_LUA}")
 target_link_libraries(${INCITER_EXECUTABLE}
                       InciterControl
                       PDE
@@ -117,7 +118,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${CBLAS_LIBRARIES}
                       ${NETCDF_LIBRARIES}     # only for static link
                       ${BACKWARD_LIBRARIES}
-                      ${LUA_LIBRARIES}
+                      ${MY_LUA}
                       ${LIBCXX_LIBRARIES}     # only for static link with libc++
                       ${LIBCXXABI_LIBRARIES}) # only for static link with libc++
 
