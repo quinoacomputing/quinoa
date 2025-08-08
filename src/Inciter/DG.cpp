@@ -2289,15 +2289,13 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
 	- m_u(e, stiffrmark);
     }
 
-  test();
-  CkExit();
   return f;
 }
 
-std::vector< tk::real > DG::nonlinear_solver(std::size_t e,
-					     std::vector< tk::real > x,
-					     std::vector< tk::real > x_lower,
-					     std::vector< tk::real > x_upper)
+std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
+                                              std::vector< tk::real > x,
+                                              std::vector< tk::real > x_lower,
+                                              std::vector< tk::real > x_upper)
 {
   // Broyden's method
   // Control parameters
@@ -2479,63 +2477,114 @@ std::vector< tk::real > DG::nonlinear_solver(std::size_t e,
   return x;
 }
 
-class MyProblem : public NOX::Epetra::Interface::Required {
-public:
-  MyProblem(const Epetra_Map& map) : map_(map) {}
+std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
+                                             std::vector< tk::real > x,
+                                             std::vector< tk::real > x_lower,
+                                             std::vector< tk::real > x_upper)
+{
+  // Newton's method
+  // Control parameters
+  std::size_t max_iter = g_inputdeck.get< tag::imex_maxiter >();
+  tk::real rel_tol = g_inputdeck.get< tag::imex_reltol >();
+  tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
+  tk::real rel_err = rel_tol+1;
+  tk::real abs_err = abs_tol+1;
+  std::size_t n = x.size();
 
-  bool computeF(const Epetra_Vector& x, Epetra_Vector& F, NOX::Epetra::Interface::Required::FillType) override {
-    double x0 = x[0];
-    double x1 = x[1];
-    F[0] = x0*x0 + x1 - 37.0;
-    F[1] = x0 - x1*x1 - 5.0;
-    return true;
+  // Define jacobian
+  std::vector< std::vector< tk::real > > jacob(n, std::vector< tk::real >(n, 0.0));
+
+  // Compute f with initial guess
+  std::vector< tk::real > f = DG::nonlinear_func(e, x);
+
+  // Initialize x_old and f_old
+  std::vector< tk::real > x_old(n, 0.0), f_old(n, 0.0);
+  for (std::size_t i=0; i<n; ++i)
+  {
+    x_old[i] = x[i];
+    f_old[i] = f[i];
   }
 
-private:
-  Epetra_Map map_;
-};
+  // Initialize delta_x and delta_f
+  std::vector< tk::real > delta_x(n, 0.0), delta_f(n, 0.0);
 
-void test() {
-  Epetra_SerialComm Comm;
-  Epetra_Map map(2, 0, Comm);
+  // Store the norm of f initially, for relative error measure
+  tk::real err0 = 0.0;
+  for (std::size_t i=0; i<n; ++i)
+    err0 += f[i]*f[i];
+  err0 = std::sqrt(err0);
+  auto abs_err_old = err0;
 
-  // Initial guess
-  Teuchos::RCP<Epetra_Vector> x = Teuchos::rcp(new Epetra_Vector(map));
-  (*x)[0] = 1.0;
-  (*x)[1] = 1.0;
+  // Iterate for the solution if err0 > 0
+  if (err0 > abs_tol)
+    for (size_t iter=0; iter<max_iter; ++iter)
+    {
 
-  // Instantiate your nonlinear system
-  Teuchos::RCP<MyProblem> interface = Teuchos::rcp(new MyProblem(map));
-  NOX::Epetra::Vector noxInitGuess(x, NOX::Epetra::Vector::CreateView);
-
-  // Set NOX solver parameters
-  Teuchos::RCP<Teuchos::ParameterList> nlParams = Teuchos::rcp(new Teuchos::ParameterList);
-  nlParams->sublist("Nonlinear Solver").set("Solver Type", "Line Search Based");
-  nlParams->sublist("Direction").set("Method", "Newton");
-  nlParams->sublist("Line Search").set("Method", "Full Step");
-
-  // Request finite difference Jacobian
-  nlParams->sublist("Printing").set("Output Information",
-    NOX::Utils::OuterIteration + NOX::Utils::Warning + NOX::Utils::Error + NOX::Utils::Details);
-  nlParams->sublist("Direction").sublist("Newton").sublist("Forcing Term").set("Method", "Constant");
-  nlParams->sublist("Direction").sublist("Newton").set("Forcing Term Method", "Constant");
-  nlParams->sublist("Direction").sublist("Newton").set("Finite Difference Jacobian", true);
-
-  // Construct the group
-  Teuchos::RCP<NOX::Epetra::Interface::Required> iReq = interface;
-  Teuchos::RCP<NOX::Epetra::Group> group = Teuchos::rcp(new NOX::Epetra::Group(*nlParams, iReq, noxInitGuess));
-
-  // Create solver
-  Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(group, *nlParams);
-
-  // Solve
-  NOX::StatusTest::StatusType status = solver->solve();
-
-  // Print result
-  const NOX::Epetra::Group& finalGroup = dynamic_cast<const NOX::Epetra::Group&>(solver.getSolutionGroup());
-  const Epetra_Vector& finalSolution = dynamic_cast<const NOX::Epetra::Vector&>(finalGroup.getX()).getEpetraVector();
-  std::cout << "\nFinal solution: " << finalSolution << std::endl;
+      // Compute new solution by solving linear system J*dx = -f
+      
+      
+      
+    }
+  
 }
+
+// class MyProblem : public NOX::Epetra::Interface::Required {
+// public:
+//   MyProblem(const Epetra_Map& map) : map_(map) {}
+
+//   bool computeF(const Epetra_Vector& x, Epetra_Vector& F, NOX::Epetra::Interface::Required::FillType) override {
+//     double x0 = x[0];
+//     double x1 = x[1];
+//     F[0] = x0*x0 + x1 - 37.0;
+//     F[1] = x0 - x1*x1 - 5.0;
+//     return true;
+//   }
+
+// private:
+//   Epetra_Map map_;
+// };
+
+// void test() {
+//   Epetra_SerialComm Comm;
+//   Epetra_Map map(2, 0, Comm);
+
+//   // Initial guess
+//   Teuchos::RCP<Epetra_Vector> x = Teuchos::rcp(new Epetra_Vector(map));
+//   (*x)[0] = 1.0;
+//   (*x)[1] = 1.0;
+
+//   // Instantiate your nonlinear system
+//   Teuchos::RCP<MyProblem> interface = Teuchos::rcp(new MyProblem(map));
+//   NOX::Epetra::Vector noxInitGuess(x, NOX::Epetra::Vector::CreateView);
+
+//   // Set NOX solver parameters
+//   Teuchos::RCP<Teuchos::ParameterList> nlParams = Teuchos::rcp(new Teuchos::ParameterList);
+//   nlParams->sublist("Nonlinear Solver").set("Solver Type", "Line Search Based");
+//   nlParams->sublist("Direction").set("Method", "Newton");
+//   nlParams->sublist("Line Search").set("Method", "Full Step");
+
+//   // Request finite difference Jacobian
+//   nlParams->sublist("Printing").set("Output Information",
+//     NOX::Utils::OuterIteration + NOX::Utils::Warning + NOX::Utils::Error + NOX::Utils::Details);
+//   nlParams->sublist("Direction").sublist("Newton").sublist("Forcing Term").set("Method", "Constant");
+//   nlParams->sublist("Direction").sublist("Newton").set("Forcing Term Method", "Constant");
+//   nlParams->sublist("Direction").sublist("Newton").set("Finite Difference Jacobian", true);
+
+//   // Construct the group
+//   Teuchos::RCP<NOX::Epetra::Interface::Required> iReq = interface;
+//   Teuchos::RCP<NOX::Epetra::Group> group = Teuchos::rcp(new NOX::Epetra::Group(*nlParams, iReq, noxInitGuess));
+
+//   // Create solver
+//   Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(group, *nlParams);
+
+//   // Solve
+//   NOX::StatusTest::StatusType status = solver->solve();
+
+//   // Print result
+//   const NOX::Epetra::Group& finalGroup = dynamic_cast<const NOX::Epetra::Group&>(solver.getSolutionGroup());
+//   const Epetra_Vector& finalSolution = dynamic_cast<const NOX::Epetra::Vector&>(finalGroup.getX()).getEpetraVector();
+//   std::cout << "\nFinal solution: " << finalSolution << std::endl;
+// }
 
 
 #include "NoWarning/dg.def.h"

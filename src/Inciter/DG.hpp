@@ -465,7 +465,13 @@ class DG : public CBase_DG {
     void BDF1_integrate();
 
     //! Non-linear solver using Broyden's method
-    std::vector< tk::real > nonlinear_solver(std::size_t e,
+    std::vector< tk::real > nonlinear_broyden(std::size_t e,
+                                              std::vector< tk::real > x,
+                                              std::vector< tk::real > x_lower,
+                                              std::vector< tk::real > x_upper);
+
+    //! Non-linear solver using Newton's method
+    std::vector< tk::real > nonlinear_newton(std::size_t e,
                                              std::vector< tk::real > x,
                                              std::vector< tk::real > x_lower,
                                              std::vector< tk::real > x_upper);
