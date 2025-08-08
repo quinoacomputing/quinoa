@@ -1480,6 +1480,9 @@ DG::solve( tk::real newdt )
       }
     }
 
+  // New pressure relaxation
+  g_dgpde[d->MeshId()].pressure_relaxation( myGhosts()->m_nunk, d->Dt()/3.0, m_u );
+
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof, m_interface );

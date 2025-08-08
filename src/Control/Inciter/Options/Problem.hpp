@@ -44,7 +44,8 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    SHOCKDENSITY_WAVE,
                                    EQUILINTERFACE_ADVECT,
                                    SINEWAVE_PACKET,
-                                   RICHTMYER_MESHKOV };
+                                   RICHTMYER_MESHKOV,
+                                   MIXED_CELL };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -83,7 +84,8 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::SHOCKDENSITY_WAVE, "shockdensity_wave" },
           { ProblemType::EQUILINTERFACE_ADVECT, "equilinterface_advect" },
           { ProblemType::RICHTMYER_MESHKOV, "richtmyer_meshkov" },
-          { ProblemType::SINEWAVE_PACKET, "sinewave_packet" }
+          { ProblemType::SINEWAVE_PACKET, "sinewave_packet" },
+          { ProblemType::MIXED_CELL, "mixed_cell" }
         },
         //! keywords -> Enums
         { { "user_defined", ProblemType::USER_DEFINED },
@@ -109,7 +111,8 @@ class Problem : public tk::Toggle< ProblemType > {
           { "shockdensity_wave", ProblemType::SHOCKDENSITY_WAVE },
           { "equilinterface_advect", ProblemType::EQUILINTERFACE_ADVECT },
           { "richtmyer_meshkov", ProblemType::RICHTMYER_MESHKOV },
-          { "sinewave_packet", ProblemType::SINEWAVE_PACKET }
+          { "sinewave_packet", ProblemType::SINEWAVE_PACKET },
+          { "mixed_cell", ProblemType::MIXED_CELL }
         } )
     {}
 };
