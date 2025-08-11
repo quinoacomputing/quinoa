@@ -1342,13 +1342,42 @@ class MultiMat {
           for (std::size_t k=0; k<nmat; ++k)
             U(e, volfracDofIdx(nmat, k, ndof, 0)) = x[k];
           // Then, energy computed using alpha and p.
+          // Also, record energy exchange
           std::vector< tk::real > arhoe(nmat, 0.0);
+          tk::real arhoe_initial = 0.0;
+          tk::real delta_energy = 0.0;
           for (std::size_t k=0; k<nmat; ++k)
+          {
+            arhoe_initial = U(e, energyDofIdx(nmat, k, ndof, 0));
             U(e, energyDofIdx(nmat, k, ndof, 0)) =
               m_mat_blk[k].compute< EOS::totalenergy >( alpha[k]*rhomat[k], u, v, w, x[k]*x[nmat+k], x[k] );
-          std::ofstream outFile("prelax_results.dat", std::ios::app);
-          outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
-                  << U(e, energyDofIdx(nmat, 0, ndof, 0))+U(e, energyDofIdx(nmat, 1, ndof, 0)) <<std::endl;
+            delta_energy += U(e, energyDofIdx(nmat, k, ndof, 0)) - arhoe_initial;
+          }
+          // Need to put delta_energy back into the system
+          // For now, give it to the majority material
+          std::size_t k_max = 0;
+          tk::real alpha_max = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            tk::real al = U(e, volfracDofIdx(nmat, k, ndof, 0));
+            if (al > alpha_max)
+            {
+              k_max = k;
+              alpha_max = al;
+            }
+          }
+          U(e, energyDofIdx(nmat, k_max, ndof, 0)) -= delta_energy;
+
+          if (nmat == 2) {
+            std::ofstream outFile("prelax_results.dat", std::ios::app);
+            outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+                    << U(e, energyDofIdx(nmat, 0, ndof, 0))+U(e, energyDofIdx(nmat, 1, ndof, 0)) << std::endl;
+          } else if (nmat == 3) {
+            std::ofstream outFile("prelax_results.dat", std::ios::app);
+            outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+                    << x[5] << ", " << x[6] << ", "
+                    << U(e, energyDofIdx(nmat, 0, ndof, 0))+U(e, energyDofIdx(nmat, 1, ndof, 0))+U(e, energyDofIdx(nmat, 2, ndof, 0)) << std::endl;
+          }
         }
       }
     }
