@@ -34,13 +34,13 @@
 #include "ChareStateCollector.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
 
-#include "NOX.H"
-#include "NOX_Epetra.H"
-#include "Teuchos_GlobalMPISession.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Epetra_SerialComm.h"
-#include "Epetra_Vector.h"
-#include "Epetra_Map.h"
+// #include "NOX.H"
+// #include "NOX_Epetra.H"
+// #include "Teuchos_GlobalMPISession.hpp"
+// #include "Teuchos_ParameterList.hpp"
+// #include "Epetra_SerialComm.h"
+// #include "Epetra_Vector.h"
+// #include "Epetra_Map.h"
 
 namespace inciter {
 
@@ -1553,8 +1553,8 @@ DG::solve( tk::real newdt )
       }
     }
 
-  // New pressure relaxation
-  g_dgpde[d->MeshId()].pressure_relaxation( myGhosts()->m_nunk, d->Dt()/3.0, m_u );
+  // // New pressure relaxation
+  // g_dgpde[d->MeshId()].pressure_relaxation( myGhosts()->m_nunk, d->Dt()/3.0, m_u );
 
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
@@ -2160,7 +2160,7 @@ DG::imex_integrate()
       std::vector< tk::real > x_upper(m_nstiffeq*ndof, 0.0);
 
       // Solve nonlinear system
-      x = DG::nonlinear_solver(e, x, x_lower, x_upper);
+      x = DG::nonlinear_newton(e, x, x_lower, x_upper);
 
       // m_u <- x
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
