@@ -63,9 +63,9 @@ MultiMatProblemMixedCell::initialize( ncomp_t ncomp,
   for (std::size_t k=0; k<nmat; ++k) {
     //s[volfracIdx(nmat,k)] = 1.0/nmat;
     if (k == 0)
-      s[volfracIdx(nmat,k)] = .01;
+      s[volfracIdx(nmat,k)] = .5;
     else if (k == 1)
-      s[volfracIdx(nmat,k)] = .99;
+      s[volfracIdx(nmat,k)] = .5;
     else if (k == 2)
       s[volfracIdx(nmat,k)] = 1.0e-01;
     //pressure[k] = bgpreic*std::pow(10.0,k);

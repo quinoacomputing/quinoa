@@ -1113,6 +1113,7 @@ class MultiMat {
     //! \param[in] dt Time step
     //! \param[in] U Conserved unknowns
     void pressure_relaxation( const std::size_t nelem,
+                              const tk::real time,
                               const tk::real dt,
                               tk::Fields& U ) const
     {
@@ -1173,10 +1174,10 @@ class MultiMat {
           if (pressure[k] < -gamma*pinf+1.0E-06)
             pressure[k] = -gamma*pinf+1.0E-06;
         }
-        for (std::size_t k=0; k<nmat; ++k)
-          printf("alpha[%lu] = %e\n", k, alpha[k]);
-        for (std::size_t k=0; k<nmat; ++k)
-          printf("pressure[%lu] = %e\n", k, pressure[k]);
+        // for (std::size_t k=0; k<nmat; ++k)
+        //   printf("alpha[%lu] = %e\n", k, alpha[k]);
+        // for (std::size_t k=0; k<nmat; ++k)
+        //   printf("pressure[%lu] = %e\n", k, pressure[k]);
         // First, if all pressure are equal, there is nothing to do
         tk::real err = 0.0;
         for (std::size_t imat=0; imat<nmat; ++imat)
@@ -1271,18 +1272,18 @@ class MultiMat {
               jacobian[(2*nmat+1)*(2*nmat) + nmat+k] +=        dhk_dpk[k];
               jacobian[(2*nmat+1)*(2*nmat) + 2*nmat] +=        dhk_dpI[k];
             }
-            printf("DBG. iter = %lu\n", iter);
-            for (std::size_t i=0; i<2*nmat+1; ++i)
-            {
-              for (std::size_t j=0; j<2*nmat+1; ++j)
-                printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
-              printf("\n");
-            }
-            for (std::size_t k=0; k<nmat; ++k)
-              printf("p[%lu] = %e\n", k, x[nmat+k]);
-            printf("pI = %e\n", x[2*nmat]);
-            for (std::size_t i=0; i<2*nmat+1; ++i)
-              printf("f[%lu] = %e\n", i, f[i]);
+            // printf("DBG. iter = %lu\n", iter);
+            // for (std::size_t i=0; i<2*nmat+1; ++i)
+            // {
+            //   for (std::size_t j=0; j<2*nmat+1; ++j)
+            //     printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
+            //   printf("\n");
+            // }
+            // for (std::size_t k=0; k<nmat; ++k)
+            //   printf("p[%lu] = %e\n", k, x[nmat+k]);
+            // printf("pI = %e\n", x[2*nmat]);
+            // for (std::size_t i=0; i<2*nmat+1; ++i)
+            //   printf("f[%lu] = %e\n", i, f[i]);
             // // DEBUG
             // for (std::size_t i=0; i<2*nmat; ++i)
             //   f[i] = 0.0;
@@ -1295,15 +1296,14 @@ class MultiMat {
             info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, 2*nmat+1, 1, jacobian, 2*nmat+1, ipiv, dx, 1);
 
             if (info == 0) {
-              for (std::size_t i=0; i<2*nmat+1; ++i)
-                printf("dx[%lu] = %e\n", i, dx[i]);
+              // Print solution
+              // for (std::size_t i=0; i<2*nmat+1; ++i)
+              //   printf("dx[%lu] = %e\n", i, dx[i]);
             }
             else
             {
               printf("Failed with info: %ld\n", info);
             }
-            if (info != 0)
-              printf("Linear solver failed with info: %ld\n", info);
 
             // Update x <- x+dx
             for (std::size_t i=0; i<2*nmat+1; ++i)
@@ -1336,6 +1336,8 @@ class MultiMat {
               printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter+1);
               break;
             }
+            if (iter == max_iter-1)
+              printf("Reached total number of iterations\n");
           }
           // Save solution x into vector of conserved variables U..
           // First, alpha..
@@ -1370,11 +1372,11 @@ class MultiMat {
 
           if (nmat == 2) {
             std::ofstream outFile("prelax_results.dat", std::ios::app);
-            outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+            outFile << time << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
                     << U(e, energyDofIdx(nmat, 0, ndof, 0))+U(e, energyDofIdx(nmat, 1, ndof, 0)) << std::endl;
           } else if (nmat == 3) {
             std::ofstream outFile("prelax_results.dat", std::ios::app);
-            outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+            outFile << time << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
                     << x[5] << ", " << x[6] << ", "
                     << U(e, energyDofIdx(nmat, 0, ndof, 0))+U(e, energyDofIdx(nmat, 1, ndof, 0))+U(e, energyDofIdx(nmat, 2, ndof, 0)) << std::endl;
           }

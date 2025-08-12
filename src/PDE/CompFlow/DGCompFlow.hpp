@@ -784,6 +784,7 @@ class CompFlow {
     //! \param[in] dt Time step
     //! \param[in] U Conserved unknowns
     void pressure_relaxation( const std::size_t /*nelem*/,
+                              const tk::real /*time*/,
                               const tk::real /*dt*/,
                               tk::Fields& /*U*/ ) const
     {}
