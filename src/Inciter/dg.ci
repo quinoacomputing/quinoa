@@ -119,6 +119,7 @@ module dg {
       entry void comlim_complete();
       entry void ownnod_complete( CkCallback c, const std::unordered_map< std::size_t, std::size_t >& addedTets );
       entry void comnodeout_complete();
+      entry void handle_sigterm(int signum);
     }
 
   } // inciter::

@@ -222,6 +222,7 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step
     void step();
 
+    static void handle_sigterm( int signum ) ;
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -283,7 +284,7 @@ class DG : public CBase_DG {
     //! \param[in,out] i DG object reference
     friend void operator|( PUP::er& p, DG& i ) { i.pup(p); }
     //@}
-
+    
   private:
     //! Discretization proxy
     CProxy_Discretization m_disc;

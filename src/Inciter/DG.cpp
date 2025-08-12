@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <numeric>
 #include <sstream>
+#include <signal.h>
 
 #include "DG.hpp"
 #include "Discretization.hpp"
@@ -36,9 +37,9 @@
 
 namespace inciter {
 
+volatile sig_atomic_t termsig;
 extern ctr::InputDeck g_inputdeck;
 extern std::vector< DGPDE > g_dgpde;
-
 //! Runge-Kutta coefficients
 static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
@@ -144,7 +145,10 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
 // *****************************************************************************
-{
+{ 
+  inciter::termsig = 0;
+
+
   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
       g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
@@ -267,6 +271,7 @@ DG::setup()
 // Set initial conditions, generate lhs, output mesh
 // *****************************************************************************
 {
+  signal(SIGTERM,DG::handle_sigterm);
   if (g_inputdeck.get< tag::cmd, tag::chare >() ||
       g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "DG", thisIndex, CkMyPe(), Disc()->It(),
@@ -1936,9 +1941,9 @@ DG::step()
   const auto term = g_inputdeck.get< tag::term >();
   const auto nstep = g_inputdeck.get< tag::nstep >();
   const auto eps = std::numeric_limits< tk::real >::epsilon();
-
   // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+  if (std::fabs(d->T()-term) > eps && d->It() < nstep && !termsig ) {
+  //if (std::fabs(d->T()-term) > eps && d->It() < nstep ) {
 
     evalRestart();
  
@@ -1950,7 +1955,6 @@ DG::step()
 
   }
 }
-
 void
 DG::imex_integrate()
 // *****************************************************************************
@@ -2330,4 +2334,11 @@ DG::imex_integrate()
   }
 }
 
+void 
+DG::handle_sigterm(int signum) {
+    if (signum == SIGTERM) {
+        std::cout << "Received SIGTERM signal. Initiating graceful shutdown..." << std::endl;
+	inciter::termsig = 15;
+    }
+}
 #include "NoWarning/dg.def.h"
