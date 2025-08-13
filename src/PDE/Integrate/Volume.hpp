@@ -66,8 +66,8 @@ void update_rhs( ncomp_t ncomp,
       const tk::real wt,
       const std::size_t m_nprop,
       const std::size_t e,
-      Kokkos::View<const real**, memory_space> dBdx,
-      Kokkos::View<const real**, memory_space> fl,
+      Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
+      Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
       Kokkos::View<real*, memory_space> R);
 
 } // tk::

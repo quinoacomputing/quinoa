@@ -51,7 +51,7 @@ eval_gp ( const std::size_t igp,
 KOKKOS_INLINE_FUNCTION Kokkos::Array<tk::real, 3>
 eval_gp ( const std::size_t igp,
               const Kokkos::Array<Kokkos::Array<tk::real, 3>, 4>& coord,
-              Kokkos::View<const tk::real**, memory_space> coordgp )
+              const Kokkos::Array<Kokkos::Array<tk::real, 14>, 3>& coordgp )
 // *****************************************************************************
 //  Compute the coordinates of quadrature points for volume integral in
 //  physical space
@@ -62,17 +62,18 @@ eval_gp ( const std::size_t igp,
 // *****************************************************************************
 {
   // Barycentric coordinates for the tetradedron element
-  auto shp1 = 1.0 - coordgp(0, igp) - coordgp(1, igp) - coordgp(2, igp);
-  auto shp2 = coordgp(0, igp);
-  auto shp3 = coordgp(1, igp);
-  auto shp4 = coordgp(2, igp);
+  auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp] - coordgp[2][igp];
+  auto shp2 = coordgp[0][igp];
+  auto shp3 = coordgp[1][igp];
+  auto shp4 = coordgp[2][igp];
 
   // Transformation of the quadrature point from the reference/master
   // element to physical space, to obtain its physical (x,y,z) coordinates.
-  return {{
-   coord[0][0]*shp1 + coord[1][0]*shp2 + coord[2][0]*shp3 + coord[3][0]*shp4,
+  Kokkos::Array<tk::real, 3> m = 
+   {{coord[0][0]*shp1 + coord[1][0]*shp2 + coord[2][0]*shp3 + coord[3][0]*shp4,
    coord[0][1]*shp1 + coord[1][1]*shp2 + coord[2][1]*shp3 + coord[3][1]*shp4,
    coord[0][2]*shp1 + coord[1][2]*shp2 + coord[2][2]*shp3 + coord[3][2]*shp4 }};
+   return m;
 }
 
 //! Compute the derivatives of Dubiner basis wrt. reference coordinates
@@ -88,8 +89,8 @@ eval_dBdx_p1( const std::size_t ndof,
 //! Kokkos version of eval_dBdx_p1
 KOKKOS_INLINE_FUNCTION void
 eval_dBdx_p1( const std::size_t ndof,
-                  const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv, 
-                  Kokkos::View<real**, memory_space> dBdx)
+                  const Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>& jacInv, 
+                  Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx)
 // *****************************************************************************
 //  Compute the derivatives of basis functions for DG(P1)
 //! \param[in] ndof Number of degrees of freedom
@@ -118,41 +119,41 @@ eval_dBdx_p1( const std::size_t ndof,
   auto db4dxi2 = 0.0;
   auto db4dxi3 = 4.0;
   
-  dBdx(0, 0) = 0.0;
+  dBdx[0][0] = 0.0;
 
-  dBdx(0, 1) =  db2dxi1 * jacInv[0][0]
+  dBdx[0][1] =  db2dxi1 * jacInv[0][0]
               + db2dxi2 * jacInv[1][0]
               + db2dxi3 * jacInv[2][0];
 
-  dBdx(1, 1) =  db2dxi1 * jacInv[0][1]
+  dBdx[1][1] =  db2dxi1 * jacInv[0][1]
               + db2dxi2 * jacInv[1][1]
               + db2dxi3 * jacInv[2][1];
 
-  dBdx(2, 1) =  db2dxi1 * jacInv[0][2]
+  dBdx[2][1] =  db2dxi1 * jacInv[0][2]
               + db2dxi2 * jacInv[1][2]
               + db2dxi3 * jacInv[2][2];
 
-  dBdx(0, 2) =  db3dxi1 * jacInv[0][0]
+  dBdx[0][2] =  db3dxi1 * jacInv[0][0]
               + db3dxi2 * jacInv[1][0]
               + db3dxi3 * jacInv[2][0];
 
-  dBdx(1, 2) =  db3dxi1 * jacInv[0][1]
+  dBdx[1][2] =  db3dxi1 * jacInv[0][1]
               + db3dxi2 * jacInv[1][1]
               + db3dxi3 * jacInv[2][1];
 
-  dBdx(2, 2) =  db3dxi1 * jacInv[0][2]
+  dBdx[2][2] =  db3dxi1 * jacInv[0][2]
               + db3dxi2 * jacInv[1][2]
               + db3dxi3 * jacInv[2][2];
 
-  dBdx(0, 3) =  db4dxi1 * jacInv[0][0]
+  dBdx[0][3] =  db4dxi1 * jacInv[0][0]
               + db4dxi2 * jacInv[1][0]
               + db4dxi3 * jacInv[2][0];
 
-  dBdx(1, 3) =  db4dxi1 * jacInv[0][1]
+  dBdx[1][3] =  db4dxi1 * jacInv[0][1]
               + db4dxi2 * jacInv[1][1]
               + db4dxi3 * jacInv[2][1];
 
-  dBdx(2, 3) =  db4dxi1 * jacInv[0][2]
+  dBdx[2][3] =  db4dxi1 * jacInv[0][2]
               + db4dxi2 * jacInv[1][2]
               + db4dxi3 * jacInv[2][2];
 };
@@ -167,9 +168,9 @@ eval_dBdx_p2( const std::size_t igp,
 //! Kokkos version of eval_dBdx_p2
 KOKKOS_INLINE_FUNCTION 
 void eval_dBdx_p2( const std::size_t igp,
-                  Kokkos::View<real**, memory_space> coordgp,
-                  const Kokkos::Array<Kokkos::Array<real, 3>, 3>& jacInv,
-                  Kokkos::View<real**, memory_space> dBdx)
+                  const Kokkos::Array<Kokkos::Array<tk::real, 14>, 3>& coordgp,
+                  const Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>& jacInv,
+                  Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx)
 // *****************************************************************************
 //  Compute the derivatives of Dubiner basis function for DG(P2)
 //! \param[in] igp Index of quadrature points
@@ -178,105 +179,105 @@ void eval_dBdx_p2( const std::size_t igp,
 //! \param[in,out] dBdx Array of the derivatives of basis function
 // *****************************************************************************
 {
-  auto db5dxi1 = 12.0 * coordgp(0, igp) + 6.0 * coordgp(1, igp)
-               +  6.0 * coordgp(2, igp) - 6.0;
-  auto db5dxi2 =  6.0 * coordgp(0, igp) + 2.0 * coordgp(1, igp)
-               +  2.0 * coordgp(2, igp) - 2.0;
-  auto db5dxi3 =  6.0 * coordgp(0, igp) + 2.0 * coordgp(1, igp)
-               +  2.0 * coordgp(2, igp) - 2.0;
+  auto db5dxi1 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp]
+               +  6.0 * coordgp[2][igp] - 6.0;
+  auto db5dxi2 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp]
+               +  2.0 * coordgp[2][igp] - 2.0;
+  auto db5dxi3 =  6.0 * coordgp[0][igp] + 2.0 * coordgp[1][igp]
+               +  2.0 * coordgp[2][igp] - 2.0;
 
-  auto db6dxi1 = 10.0 * coordgp(1, igp) +  2.0 * coordgp(2, igp) - 2.0;
-  auto db6dxi2 = 10.0 * coordgp(0, igp) + 10.0 * coordgp(1, igp)
-               +  6.0 * coordgp(2, igp) - 6.0;
-  auto db6dxi3 =  2.0 * coordgp(0, igp) +  6.0 * coordgp(1, igp)
-               +  2.0 * coordgp(2, igp) - 2.0;
+  auto db6dxi1 = 10.0 * coordgp[1][igp] +  2.0 * coordgp[2][igp] - 2.0;
+  auto db6dxi2 = 10.0 * coordgp[0][igp] + 10.0 * coordgp[1][igp]
+               +  6.0 * coordgp[2][igp] - 6.0;
+  auto db6dxi3 =  2.0 * coordgp[0][igp] +  6.0 * coordgp[1][igp]
+               +  2.0 * coordgp[2][igp] - 2.0;
 
-  auto db7dxi1 = 12.0 * coordgp(2, igp) - 2.0;
-  auto db7dxi2 =  6.0 * coordgp(2, igp) - 1.0;
-  auto db7dxi3 = 12.0 * coordgp(0, igp) + 6.0 * coordgp(1, igp)
-               + 12.0 * coordgp(2, igp) - 7.0;
+  auto db7dxi1 = 12.0 * coordgp[2][igp] - 2.0;
+  auto db7dxi2 =  6.0 * coordgp[2][igp] - 1.0;
+  auto db7dxi3 = 12.0 * coordgp[0][igp] + 6.0 * coordgp[1][igp]
+               + 12.0 * coordgp[2][igp] - 7.0;
 
   auto db8dxi1 =  0;
-  auto db8dxi2 = 20.0 * coordgp(1, igp) + 8.0 * coordgp(2, igp) - 8.0;
-  auto db8dxi3 =  8.0 * coordgp(1, igp) + 2.0 * coordgp(2, igp) - 2.0;
+  auto db8dxi2 = 20.0 * coordgp[1][igp] + 8.0 * coordgp[2][igp] - 8.0;
+  auto db8dxi3 =  8.0 * coordgp[1][igp] + 2.0 * coordgp[2][igp] - 2.0;
 
   auto db9dxi1 =  0;
-  auto db9dxi2 = 18.0 * coordgp(2, igp) -  3.0;
-  auto db9dxi3 = 18.0 * coordgp(1, igp) + 12.0 * coordgp(2, igp) - 7.0;
+  auto db9dxi2 = 18.0 * coordgp[2][igp] -  3.0;
+  auto db9dxi3 = 18.0 * coordgp[1][igp] + 12.0 * coordgp[2][igp] - 7.0;
 
   auto db10dxi1 =  0;
   auto db10dxi2 =  0;
-  auto db10dxi3 = 30.0 * coordgp(2, igp) - 10.0;
+  auto db10dxi3 = 30.0 * coordgp[2][igp] - 10.0;
 
-  dBdx(0, 4) =  db5dxi1 * jacInv[0][0]
+  dBdx[0][4] =  db5dxi1 * jacInv[0][0]
               + db5dxi2 * jacInv[1][0]
               + db5dxi3 * jacInv[2][0];
 
-  dBdx(1, 4) =  db5dxi1 * jacInv[0][1]
+  dBdx[1][4] =  db5dxi1 * jacInv[0][1]
               + db5dxi2 * jacInv[1][1]
               + db5dxi3 * jacInv[2][1];
 
-  dBdx(2, 4) =  db5dxi1 * jacInv[0][2]
+  dBdx[2][4] =  db5dxi1 * jacInv[0][2]
               + db5dxi2 * jacInv[1][2]
               + db5dxi3 * jacInv[2][2];
 
-  dBdx(0, 5) =  db6dxi1 * jacInv[0][0]
+  dBdx[0][5] =  db6dxi1 * jacInv[0][0]
               + db6dxi2 * jacInv[1][0]
               + db6dxi3 * jacInv[2][0];
 
-  dBdx(1, 5) =  db6dxi1 * jacInv[0][1]
+  dBdx[1][5] =  db6dxi1 * jacInv[0][1]
               + db6dxi2 * jacInv[1][1]
               + db6dxi3 * jacInv[2][1];
 
-  dBdx(2, 5) =  db6dxi1 * jacInv[0][2]
+  dBdx[2][5] =  db6dxi1 * jacInv[0][2]
               + db6dxi2 * jacInv[1][2]
               + db6dxi3 * jacInv[2][2];
 
-  dBdx(0, 6) =  db7dxi1 * jacInv[0][0]
+  dBdx[0][6] =  db7dxi1 * jacInv[0][0]
               + db7dxi2 * jacInv[1][0]
               + db7dxi3 * jacInv[2][0];
 
-  dBdx(1, 6) =  db7dxi1 * jacInv[0][1]
+  dBdx[1][6] =  db7dxi1 * jacInv[0][1]
               + db7dxi2 * jacInv[1][1]
               + db7dxi3 * jacInv[2][1];
 
-  dBdx(2, 6) =  db7dxi1 * jacInv[0][2]
+  dBdx[2][6] =  db7dxi1 * jacInv[0][2]
               + db7dxi2 * jacInv[1][2]
               + db7dxi3 * jacInv[2][2];
 
-  dBdx(0, 7) =  db8dxi1 * jacInv[0][0]
+  dBdx[0][7] =  db8dxi1 * jacInv[0][0]
               + db8dxi2 * jacInv[1][0]
               + db8dxi3 * jacInv[2][0];
 
-  dBdx(1, 7) =  db8dxi1 * jacInv[0][1]
+  dBdx[1][7] =  db8dxi1 * jacInv[0][1]
               + db8dxi2 * jacInv[1][1]
               + db8dxi3 * jacInv[2][1];
 
-  dBdx(2, 7) =  db8dxi1 * jacInv[0][2]
+  dBdx[2][7] =  db8dxi1 * jacInv[0][2]
               + db8dxi2 * jacInv[1][2]
               + db8dxi3 * jacInv[2][2];
 
-  dBdx(0, 8) =  db9dxi1 * jacInv[0][0]
+  dBdx[0][8] =  db9dxi1 * jacInv[0][0]
               + db9dxi2 * jacInv[1][0]
               + db9dxi3 * jacInv[2][0];
 
-  dBdx(1, 8) =  db9dxi1 * jacInv[0][1]
+  dBdx[1][8] =  db9dxi1 * jacInv[0][1]
               + db9dxi2 * jacInv[1][1]
               + db9dxi3 * jacInv[2][1];
 
-  dBdx(2, 8) =  db9dxi1 * jacInv[0][2]
+  dBdx[2][8] =  db9dxi1 * jacInv[0][2]
               + db9dxi2 * jacInv[1][2]
               + db9dxi3 * jacInv[2][2];
 
-  dBdx(0, 9) =  db10dxi1 * jacInv[0][0]
+  dBdx[0][9] =  db10dxi1 * jacInv[0][0]
               + db10dxi2 * jacInv[1][0]
               + db10dxi3 * jacInv[2][0];
 
-  dBdx(1, 9) =  db10dxi1 * jacInv[0][1]
+  dBdx[1][9] =  db10dxi1 * jacInv[0][1]
               + db10dxi2 * jacInv[1][1]
               + db10dxi3 * jacInv[2][1];
 
-  dBdx(2, 9) =  db10dxi1 * jacInv[0][2]
+  dBdx[2][9] =  db10dxi1 * jacInv[0][2]
               + db10dxi2 * jacInv[1][2]
               + db10dxi3 * jacInv[2][2];
 }
@@ -294,7 +295,7 @@ void eval_basis( const std::size_t ndof,
                 const tk::real xi,
                 const tk::real eta,
                 const tk::real zeta, 
-                Kokkos::View<real*, memory_space> B)
+                Kokkos::Array<tk::real, 10>& B)
 // *****************************************************************************
 //  Compute the Dubiner basis functions
 //! \param[in] ndof Number of degrees of freedom
@@ -304,29 +305,29 @@ void eval_basis( const std::size_t ndof,
 {
   // Array of basis functions
 
-  B(0) = 1.0;
+  B[0] = 1.0;
 
   if ( ndof > 1 )           // DG(P1)
   {
-    B(1) = 2.0 * xi + eta + zeta - 1.0;
-    B(2) = 3.0 * eta + zeta - 1.0;
-    B(3) = 4.0 * zeta - 1.0;
+    B[1] = 2.0 * xi + eta + zeta - 1.0;
+    B[2] = 3.0 * eta + zeta - 1.0;
+    B[3] = 4.0 * zeta - 1.0;
 
     if( ndof > 4 )         // DG(P2)
     {
-      B(4) =  6.0 * xi * xi + eta * eta + zeta * zeta
+      B[4] =  6.0 * xi * xi + eta * eta + zeta * zeta
             + 6.0 * xi * eta + 6.0 * xi * zeta + 2.0 * eta * zeta
             - 6.0 * xi - 2.0 * eta - 2.0 * zeta + 1.0;
-      B(5) =  5.0 * eta * eta + zeta * zeta
+      B[5] =  5.0 * eta * eta + zeta * zeta
             + 10.0 * xi * eta + 2.0 * xi * zeta + 6.0 * eta * zeta
             - 2.0 * xi - 6.0 * eta - 2.0 * zeta + 1.0;
-      B(6) =  6.0 * zeta * zeta + 12.0 * xi * zeta + 6.0 * eta * zeta - 2.0 * xi
+      B[6] =  6.0 * zeta * zeta + 12.0 * xi * zeta + 6.0 * eta * zeta - 2.0 * xi
             - eta - 7.0 * zeta + 1.0;
-      B(7) =  10.0 * eta * eta + zeta * zeta + 8.0 * eta * zeta
+      B[7] =  10.0 * eta * eta + zeta * zeta + 8.0 * eta * zeta
             - 8.0 * eta - 2.0 * zeta + 1.0;
-      B(8) =  6.0 * zeta * zeta + 18.0 * eta * zeta - 3.0 * eta - 7.0 * zeta
+      B[8] =  6.0 * zeta * zeta + 18.0 * eta * zeta - 3.0 * eta - 7.0 * zeta
             + 1.0;
-      B(9) =  15.0 * zeta * zeta - 10.0 * zeta + 1.0;
+      B[9] =  15.0 * zeta * zeta - 10.0 * zeta + 1.0;
     }
   }
 }
@@ -347,8 +348,8 @@ void eval_state ( ncomp_t ncomp,
                  const std::size_t e, 
                  size_t m_nprop,
                  Kokkos::View<const tk::real*, memory_space> U,
-                 Kokkos::View<const tk::real*, memory_space> B, 
-                 Kokkos::View<tk::real*, memory_space> state,
+                 Kokkos::Array<tk::real, 10>& B, 
+                 Kokkos::Array<tk::real, 50>& state,
                  const size_t& idx)
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
@@ -382,7 +383,7 @@ void eval_state ( ncomp_t ncomp,
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    state(c + idx) = U(e * m_nprop + mark);
+    state[c + idx] = U(e * m_nprop + mark);
     // if (idx != 0)
     // {
     //   if (c == inciter::velocityIdx(2,0))
@@ -395,19 +396,19 @@ void eval_state ( ncomp_t ncomp,
 
     if(ndof_el > 1)        // Second order polynomial solution
     {
-      state(c + idx) += U( e * m_nprop +mark+1 ) * B(1)
-                + U( e * m_nprop +mark+2 ) * B(2)
-                + U( e * m_nprop +mark+3 ) * B(3);
+      state[c + idx] += U( e * m_nprop +mark+1 ) * B[1]
+                + U( e * m_nprop +mark+2 ) * B[2]
+                + U( e * m_nprop +mark+3 ) * B[3];
     }
 
     if(ndof_el > 4)        // Third order polynomial solution
     {
-      state(c + idx) += U( e * m_nprop + mark+4 ) * B(4)
-                + U( e * m_nprop + mark+5 ) * B(5)
-                + U( e * m_nprop + mark+6 ) * B(6)
-                + U( e * m_nprop + mark+7 ) * B(7)
-                + U( e * m_nprop + mark+8 ) * B(8)
-                + U( e * m_nprop + mark+9 ) * B(9);
+      state[c + idx] += U( e * m_nprop + mark+4 ) * B[4]
+                + U( e * m_nprop + mark+5 ) * B[5]
+                + U( e * m_nprop + mark+6 ) * B[6]
+                + U( e * m_nprop + mark+7 ) * B[7]
+                + U( e * m_nprop + mark+8 ) * B[8]
+                + U( e * m_nprop + mark+9 ) * B[9];
     }
   }
 }

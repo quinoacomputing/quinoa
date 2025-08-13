@@ -115,25 +115,25 @@ void THINCFunction_old( std::size_t rdof,
                const Kokkos::Array<real, 3>& ref_xp,
                real vol,
                real bparam,
-               Kokkos::View<const real*, memory_space> alSol,
+               Kokkos::Array<real, 20>& alSol,
                bool intInd,
-               Kokkos::View<const size_t*, memory_space> matInt,
-               Kokkos::View<real*, memory_space> alReco,
-               Kokkos::View<real**, memory_space> dBdx,
-               Kokkos::View<Kokkos::Array<real, 3>*, memory_space> ref_n)
+              Kokkos::Array<size_t, 2>& matInt,
+               Kokkos::Array<real, 2>& alReco,
+               Kokkos::Array<Kokkos::Array<real, 10>, 3>& dBdx,
+               Kokkos::Array<Kokkos::Array<real, 3>, 2>& ref_n)
 {
   // determine number of materials with interfaces in this cell
   auto epsl(1e-4), epsh(1e-1), bred(1.25), bmod(bparam);
   std::size_t nIntMat(0);
   for (std::size_t k=0; k<nmat; ++k)
   {
-    auto alk = alSol(k*rdof);
+    auto alk = alSol[k*rdof];
     if (alk > epsl)
     {
       ++nIntMat;
       if ((alk > epsl) && (alk < epsh))
-        bmod = std::min(bmod,
-          (alk-epsl)/(epsh-epsl) * (bred - bparam) + bparam);
+        bmod = bmod < (alk-epsl)/(epsh-epsl) * (bred - bparam) + bparam ? 
+            bmod : (alk-epsl)/(epsh-epsl) * (bred - bparam) + bparam;
       else if (alk > epsh)
         bmod = bred;
     }
@@ -164,9 +164,9 @@ void THINCFunction_old( std::size_t rdof,
     {
       // Get derivatives from moments in Dubiner space
       for (std::size_t i=0; i<3; ++i)
-        nInt[i] = dBdx(i, 1) * alSol(k*rdof+1)
-          + dBdx(i, 2) * alSol(k*rdof+2)
-          + dBdx(i, 3) * alSol(k*rdof+3);
+        nInt[i] = dBdx[i][1] * alSol[k*rdof+1]
+          + dBdx[i][2] * alSol[k*rdof+2]
+          + dBdx[i][3] * alSol[k*rdof+3];
 
       auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
 
@@ -180,7 +180,7 @@ void THINCFunction_old( std::size_t rdof,
           coordel[i+1][0]-coordel[0][0],
           coordel[i+1][1]-coordel[0][1],
           coordel[i+1][2]-coordel[0][2]};
-         ref_n(k)[i] = tk::dot(nInt, axis);
+         ref_n[k][i] = tk::dot(nInt, axis);
       }
     }
 
@@ -190,46 +190,47 @@ void THINCFunction_old( std::size_t rdof,
     auto sum_inter(0.0), sum_non_inter(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
-      if (matInt(k))
+      if (matInt[k])
       {
         // get location of material interface (volume fraction 0.5) from the
         // assumed tanh volume fraction distribution, and cell-averaged
         // volume fraction
-        auto alCC(alSol(k*rdof));
+        auto alCC(alSol[k*rdof]);
         auto Ac(0.0), Bc(0.0), Qc(0.0);
-        if ((std::abs(ref_n(k)[0]) > std::abs(ref_n(k)[1]))
-          && (std::abs(ref_n(k)[0]) > std::abs(ref_n(k)[2])))
+        if ((std::abs(ref_n[k][0]) > std::abs(ref_n[k][1]))
+          && (std::abs(ref_n[k][0]) > std::abs(ref_n[k][2])))
         {
-          Ac = std::exp(0.5*beta*ref_n(k)[0]);
-          Bc = std::exp(0.5*beta*(ref_n(k)[1])+ref_n(k)[2]);
-          Qc = std::exp(0.5*beta*ref_n(k)[0]*(2.0*alCC-1.0));
+          Ac = std::exp(0.5*beta*ref_n[k][0]);
+          Bc = std::exp(0.5*beta*(ref_n[k][1])+ref_n[k][2]);
+          Qc = std::exp(0.5*beta*ref_n[k][0]*(2.0*alCC-1.0));
         }
-        else if ((std::abs(ref_n(k)[1]) > std::abs(ref_n(k)[0]))
-          && (std::abs(ref_n(k)[1]) > std::abs(ref_n(k)[2])))
+        else if ((std::abs(ref_n[k][1]) > std::abs(ref_n[k][0]))
+          && (std::abs(ref_n[k][1]) > std::abs(ref_n[k][2])))
         {
-          Ac = std::exp(0.5*beta*ref_n(k)[1]);
-          Bc = std::exp(0.5*beta*(ref_n(k)[0]+ref_n(k)[2]));
-          Qc = std::exp(0.5*beta*ref_n(k)[1]*(2.0*alCC-1.0));
+          Ac = std::exp(0.5*beta*ref_n[k][1]);
+          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][2]));
+          Qc = std::exp(0.5*beta*ref_n[k][1]*(2.0*alCC-1.0));
         }
         else
         {
-          Ac = std::exp(0.5*beta*ref_n(k)[2]);
-          Bc = std::exp(0.5*beta*(ref_n(k)[0]+ref_n(k)[1]));
-          Qc = std::exp(0.5*beta*ref_n(k)[2]*(2.0*alCC-1.0));
+          Ac = std::exp(0.5*beta*ref_n[k][2]);
+          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][1]));
+          Qc = std::exp(0.5*beta*ref_n[k][2]*(2.0*alCC-1.0));
         }
         auto d = std::log((1.0-Ac*Qc) / (Ac*Bc*(Qc-Ac))) / (2.0*beta);
 
         // THINC reconstruction
-        auto al_c = 0.5 * (1.0 + std::tanh(beta*(ref_n(k)[0]*ref_xp[0]
-          + ref_n(k)[1]*ref_xp[1]+ref_n(k)[2]*ref_xp[2] + d)));
+        auto al_c = 0.5 * (1.0 + Kokkos::tanh(beta*(ref_n[k][0]*ref_xp[0]
+          + ref_n[k][1]*ref_xp[1]+ref_n[k][2]*ref_xp[2] + d)));
 
         //! nested std::max, min might pose a problem
-        alReco(k) = std::min(max_lim, std::max(min_lim, al_c));
+        auto m = min_lim > al_c ? min_lim : al_c;
+        alReco[k] = max_lim < m ? max_lim : m;
 
-        sum_inter += alReco(k);
+        sum_inter += alReco[k];
       } else
       {
-        sum_non_inter += alReco(k);
+        sum_non_inter += alReco[k];
       }
       // else, if this material does not have an interface close-by, the TVD
       // reconstructions must be used for state variables. This is ensured by
@@ -239,8 +240,8 @@ void THINCFunction_old( std::size_t rdof,
     // Rescale volume fractions of interface-materials to ensure unit sum
     auto sum_rest = 1.0 - sum_non_inter;
     for (std::size_t k=0; k<nmat; ++k)
-      if(matInt(k))
-        alReco(k) = alReco(k) * sum_rest / sum_inter;
+      if(matInt[k])
+        alReco[k] = alReco[k] * sum_rest / sum_inter;
   }
 };
 
@@ -263,14 +264,14 @@ THINCReco( std::size_t rdof,
            Kokkos::View<const real*, memory_space> P,
            bool intInd,
            Kokkos::View<const size_t*, memory_space> solidx,
-           Kokkos::View<size_t*, memory_space> matInt,
-           [[maybe_unused]] Kokkos::View<const real*, memory_space> vfmin,
-           [[maybe_unused]] Kokkos::View<const real*, memory_space> vfmax,
-           Kokkos::View<real*, memory_space> state, 
-          Kokkos::View<real*, memory_space> alSol, 
-        Kokkos::View<real*, memory_space> alReco,
-        Kokkos::View<real**, memory_space> dBdx, 
-         Kokkos::View<Kokkos::Array<real, 3>*, memory_space> ref_n
+           Kokkos::Array<size_t, 2> matInt,
+           [[maybe_unused]] const Kokkos::Array<real, 2>& vfmin,
+           [[maybe_unused]] const Kokkos::Array<real, 2>& vfmax,
+           Kokkos::Array<real, 50>& state, 
+          Kokkos::Array<real, 20>& alSol, 
+          Kokkos::Array<real, 2>& alReco,
+          Kokkos::Array<Kokkos::Array<real, 10>, 3>& dBdx, 
+          Kokkos::Array<Kokkos::Array<real, 3>, 2>& ref_n
       )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for multi-material flows
@@ -320,11 +321,11 @@ THINCReco( std::size_t rdof,
   for (std::size_t k=0; k<nmat; ++k) {
     auto mark = k*rdof;
     for (std::size_t i=0; i<rdof; ++i) {
-      alSol(mark+i) = U(e * m_nprop + volfracDofIdx(nmat,k,rdof,i));
+      alSol[mark+i] = U(e * m_nprop + volfracDofIdx(nmat,k,rdof,i));
     }
     // initialize with TVD reconstructions which will be modified if near
     // material interface
-    alReco(k) = state(volfracIdx(nmat,k));
+    alReco[k] = state[volfracIdx(nmat,k)];
   }
   THINCFunction_old(rdof, nmat, e, inpoel, cx, cy, cz, ref_xp, geoElem(e *geo_nprop), bparam,
     alSol, intInd, matInt, alReco, dBdx, ref_n);
@@ -332,7 +333,7 @@ THINCReco( std::size_t rdof,
   // check reconstructed volfracs for positivity
   bool neg_vf = false;
   for (std::size_t k=0; k<nmat; ++k) {
-    if (alReco(k) < 1e-16 && matInt(k) > 0) neg_vf = true;
+    if (alReco[k] < 1e-16 && matInt[k] > 0) neg_vf = true;
   }
   /*
   for (std::size_t k=0; k<nmat; ++k) {
@@ -356,39 +357,39 @@ THINCReco( std::size_t rdof,
     for (std::size_t k=0; k<nmat; ++k)
     {
       auto alCC = U(e * m_nprop + volfracDofIdx(nmat,k,rdof,0));
-      alCC = std::max(1e-14, alCC);
+      alCC = 1e-14 > alCC ? 1e-14 : alCC;
 
-      if (matInt(k))
+      if (matInt[k])
       {
-        state(volfracIdx(nmat,k)) = alReco(k);
-        state(densityIdx(nmat,k)) = alReco(k)
+        state[volfracIdx(nmat,k)] = alReco[k];
+        state[densityIdx(nmat,k)] = alReco[k]
           * U(e * m_nprop + densityDofIdx(nmat,k,rdof,0))/alCC;
-        state(energyIdx(nmat,k)) = alReco(k)
+        state[energyIdx(nmat,k)] = alReco[k]
           * U(e * m_nprop + energyDofIdx(nmat,k,rdof,0))/alCC;
-        state(ncomp+pressureIdx(nmat,k)) = alReco(k)
+        state[ncomp+pressureIdx(nmat,k)] = alReco[k]
           * P(e * p_nprop + pressureDofIdx(nmat,k,rdof,0))/alCC;
         if (solidx(k) > 0) {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
-              state(deformIdx(nmat,solidx(k),i,j)) =
+              state[deformIdx(nmat,solidx(k),i,j)] =
                 U(e * m_nprop + deformDofIdx(nmat,solidx(k),i,j,rdof,0));
 
           for (std::size_t i=0; i<6; ++i)
-            state(ncomp+stressIdx(nmat,solidx(k),i)) = alReco(k)
+            state[ncomp+stressIdx(nmat,solidx(k),i)] = alReco[k]
               * P(e * p_nprop + stressDofIdx(nmat,solidx(k),i,rdof,0))/alCC;
         }
       }
 
       rhobCC += U(e * m_nprop + densityDofIdx(nmat,k,rdof,0));
-      rhobHO += state(densityIdx(nmat,k));
+      rhobHO += state[densityIdx(nmat,k)];
     }
 
     // consistent reconstruction for bulk momentum
     for (std::size_t i=0; i<3; ++i)
     {
-      state(momentumIdx(nmat,i)) = rhobHO
+      state[momentumIdx(nmat,i)] = rhobHO
         * U(e * m_nprop +  momentumDofIdx(nmat,i,rdof,0))/rhobCC;
-      state(ncomp+velocityIdx(nmat,i)) =
+      state[ncomp+velocityIdx(nmat,i)] =
         P(e * p_nprop +  velocityDofIdx(nmat,i,rdof,0));
     }
   }
@@ -462,18 +463,18 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    Kokkos::View<const tk::real*, memory_space> cz,
                    Kokkos::View<const tk::real*, memory_space> geoElem,
                    const Kokkos::Array<tk::real, 3>& ref_gp,
-                   Kokkos::View<const tk::real*, memory_space> B,
+                   Kokkos::Array<tk::real, 10>& B,
                    Kokkos::View<const tk::real*, memory_space> U,
                    Kokkos::View<const tk::real*, memory_space> P,
-                  Kokkos::View<tk::real*, memory_space> state, 
-                  Kokkos::View<size_t*, memory_space> matInt,
-                  Kokkos::View<tk::real*, memory_space> alAvg, 
-                  Kokkos::View<tk::real*, memory_space> vfmax, 
-                  Kokkos::View<tk::real*, memory_space> vfmin,
-                  Kokkos::View<tk::real*, memory_space> alSol, 
-                  Kokkos::View<tk::real*, memory_space> alReco,
-                  Kokkos::View<tk::real**, memory_space> dBdx, 
-                   Kokkos::View<Kokkos::Array<tk::real, 3>*, memory_space> ref_n)
+                  Kokkos::Array<tk::real, 50>& state, 
+                  Kokkos::Array<size_t, 2>& matInt,
+                  Kokkos::Array<tk::real, 2>& alAvg, 
+                  Kokkos::Array<tk::real, 2>& vfmax, 
+                  Kokkos::Array<tk::real, 2>& vfmin,
+                  Kokkos::Array<tk::real, 20>& alSol, 
+                  Kokkos::Array<tk::real, 2>& alReco,
+                  Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx, 
+                   Kokkos::Array<Kokkos::Array<tk::real, 3>, 2>& ref_n)
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] mat_blk EOS material block
@@ -508,7 +509,7 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 
   if (nmat > 1) {
     for (std::size_t k=0; k<nmat; ++k) {
-      alAvg(k) = U(e * m_nprop + inciter::volfracDofIdx(nmat,k,rdof,0)); //?DONE
+      alAvg[k] = U(e * m_nprop + inciter::volfracDofIdx(nmat,k,rdof,0)); //?DONE
       intInd = inciter::interfaceIndicator(nmat, alAvg, matInt); //?DONE
     }
 
@@ -537,9 +538,16 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
   // // physical constraints
   // //? uncomment the below equations if pressure is an issue
   // //enforcePhysicalConstraints(mat_blk, ncomp, nmat, state);
-  for (std::size_t k=0; k<nmat; ++k)
-    state(ncomp+inciter::pressureIdx(nmat,k)) =
-      std::max(1e-12, state(ncomp+inciter::pressureIdx(nmat,k)));
+  for (std::size_t k=0; k<nmat; ++k) {
+      auto pres = state[ncomp+inciter::pressureIdx(nmat,k)];
+      if (k == 0) {
+        tk::real gamma = 4.4;
+        tk::real pinf = 6.0e8;
+        state[ncomp+inciter::pressureIdx(nmat,k)] = -gamma*pinf+1e-12 > pres ? -gamma*pinf+1e-12 : pres;
+      }
+      else
+        state[ncomp+inciter::pressureIdx(nmat,k)] = 1e-12 > pres ? 1e-12 : pres;
+    }
   }
 
 }

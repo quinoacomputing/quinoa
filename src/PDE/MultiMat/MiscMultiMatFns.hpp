@@ -89,8 +89,8 @@ void getDeformGrad(
   std::size_t nmat,
   std::size_t k,
   Kokkos::View<const size_t*, memory_space> solidx,
-  Kokkos::View<const tk::real*, memory_space> state, 
-  Kokkos::View<tk::real***, memory_space> g)
+  Kokkos::Array<tk::real, 50>& state, 
+  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& g)
 // *****************************************************************************
 //  Get the inverse deformation gradient tensor for a material at given location
 //! \param[in] nmat Number of materials in this PDE system
@@ -104,7 +104,7 @@ void getDeformGrad(
     // deformation gradient for solids
     for (std::size_t i=0; i<3; ++i) {
       for (std::size_t j=0; j<3; ++j)
-        g(k, i, j) = state(deformIdx(nmat, solidx(k),i,j));
+        g[k][i][j] = state[deformIdx(nmat, solidx(k),i,j)];
     }
   }
 }
@@ -123,8 +123,8 @@ void getCauchyStress(
   std::size_t k,
   std::size_t ncomp,
   Kokkos::View<const size_t*, memory_space> solidx,
-  Kokkos::View<const tk::real*, memory_space> state,
-  Kokkos::View<tk::real***, memory_space> asigk)  
+  Kokkos::Array<tk::real, 50>& state,
+  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& asigk)  
 // *****************************************************************************
 //  Get the elastic Cauchy stress tensor for a material at given location
 //! \param[in] nmat Number of materials in this PDE system
@@ -143,7 +143,7 @@ void getCauchyStress(
   if (solidx(k) > 0) {
     for (std::size_t i=0; i<3; ++i) {
       for (std::size_t j=0; j<3; ++j)
-        asigk(k, i, j) = state[ncomp +
+        asigk[k][i][j] = state[ncomp +
           stressIdx(nmat, solidx(k), stressCmpKokkos[i][j])];
     }
   }

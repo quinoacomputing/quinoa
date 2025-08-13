@@ -349,8 +349,8 @@ interfaceIndicator( std::size_t nmat,
 //! Kokkos verison of interfaceIndicator
 KOKKOS_INLINE_FUNCTION
 bool interfaceIndicator( std::size_t nmat,
-  Kokkos::View<tk::real*, memory_space> al,
-  Kokkos::View<size_t*, memory_space> matInt )
+  Kokkos::Array<tk::real, 2>& al,
+  Kokkos::Array<size_t, 2>& matInt )
 {
   bool intInd = false;
 
@@ -362,9 +362,9 @@ bool interfaceIndicator( std::size_t nmat,
   auto almax = 0.0;
   for (std::size_t k=0; k<nmat; ++k)
   {
-    almax = std::max(almax, al(k));
-    matInt(k) = 0;
-    if ((al(k) > loLim) && (al(k) < hiLim)) matInt(k) = 1;
+    almax = almax > al[k] ? almax : al[k];
+    matInt[k] = 0;
+    if ((al[k] > loLim) && (al[k] < hiLim)) matInt[k] = 1;
   }
 
   if ((almax > loLim) && (almax < hiLim)) intInd = true;

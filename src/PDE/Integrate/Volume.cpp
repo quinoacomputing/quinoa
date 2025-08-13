@@ -28,7 +28,7 @@ using UnManagedMem =Kokkos::MemoryTraits<Kokkos::Unmanaged>;
 
 template <typename T>
 auto changeToView(T* object, size_t n) {
-    Kokkos::View<T*, Kokkos::HostSpace, UnManagedMem> object_view(object, n);
+    Kokkos::View<T*, Kokkos::LayoutLeft, Kokkos::HostSpace, UnManagedMem> object_view(object, n);
     return object_view;
 }
 
@@ -145,11 +145,6 @@ void tk::volInt( std::size_t nmat,
     auto U_h_view = changeToView(U.getPointer(), U_size);
     Kokkos::deep_copy(U_d_view, U_h_view);
 
-    //   for (int i = 0; i < 9;i++) {
-
-    //    printf("%e, %e, %e\n", U_d_view(i), U_h_view(i), U(i / 9, i));
-    //  }
-
     size_t R_size = R.getSize();
     Kokkos::View<real*, memory_space> R_d_view("R_d_view", R_size);
     auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
@@ -157,31 +152,35 @@ void tk::volInt( std::size_t nmat,
 
     //create View variables in device space that will be used inside the kernel (parallel env)
    // The sizes are only known inside the kernel!! 
-   //! Right now, pick the largest size
-    Kokkos::View<real**, memory_space> coordgp("coordgp_d_view", 3, 14);
-    Kokkos::View<real*, memory_space> wgp("wgp_d_view", 14);
-    Kokkos::View<real**, memory_space> dBdx("dBdx_d_view", 3, 10);
-    Kokkos::View<real*, memory_space> B("B", 10);
+  //  //! Right now, pick the largest size
+  //   Kokkos::View<real**, memory_space> coordgp("coordgp_d_view", 3, 14);
+  //   Kokkos::View<real*, memory_space> wgp("wgp_d_view", 14);
+  //   Kokkos::View<real**, memory_space> dBdx("dBdx_d_view", 3, 10);
+  //   Kokkos::View<real*, memory_space> B("B", nelem, nmat);
 
-    // for flux evaluation, but size is known before kernel
-    Kokkos::View<real***, memory_space> g("g_d_view", nmat, 3, 3);
-    Kokkos::View<real***, memory_space> asig("asig_d_view", nmat, 3, 3);
-    Kokkos::View<real*, memory_space> al("al", nmat);
-    Kokkos::View<real**, memory_space> fl("fl", ncomp, 3);
-    Kokkos::View<real*, memory_space> apk("apk", nmat);
+  //   // for flux evaluation, but size is known before kernel
+  //   Kokkos::View<real***, memory_space> g("g_d_view", nmat, 3, 3);
+  //   Kokkos::View<real***, memory_space> asig("asig_d_view", nmat, 3, 3);
+  //   Kokkos::View<real*, memory_space> al("al", nmat);
+  //   Kokkos::View<real**, memory_space> fl("fl", ncomp, 3);
+  //   Kokkos::View<real*, memory_space> apk("apk", nmat);
 
-    //Need for evalPolynomialSol function
-    Kokkos::View<real*, memory_space> state("state", (ncomp + nprim)); // state has state + sprim length
-    Kokkos::View<size_t*, memory_space> matInt("matInt", nmat);
-    Kokkos::View<real*, memory_space> alAvg("alAvg", nmat);
-    Kokkos::View<real*, memory_space> vfmax("vfmax", nmat);
-    Kokkos::View<real*, memory_space> vfmin("vfmin", nmat);
+  //   //Need for evalPolynomialSol function
+  //   Kokkos::View<real*, memory_space> state("state", (ncomp + nprim)); // state has state + sprim length
+  //   Kokkos::View<size_t*, memory_space> matInt("matInt", nmat);
+  //   Kokkos::View<real*, memory_space> alAvg("alAvg", nmat);
+  //   Kokkos::View<real*, memory_space> vfmax("vfmax", nmat);
+  //   Kokkos::View<real*, memory_space> vfmin("vfmin", nmat);
 
-    //Need for THINC, but also evalPolynomialSol
-    Kokkos::View<real*, memory_space> alSol("alSol", rdof*nmat);
-    Kokkos::View<real*, memory_space> alReco("alReco", nmat);
-    Kokkos::View<Kokkos::Array<real, 3>*, memory_space> ref_n("ref_n", nmat);
-
+  //   //Need for THINC, but also evalPolynomialSol
+  //   Kokkos::View<real*, memory_space> alSol("alSol", rdof*nmat);
+  //   Kokkos::View<real*, memory_space> alReco("alReco", nmat);
+  //   Kokkos::View<Kokkos::Array<real, 3>*, memory_space> ref_n("ref_n", nmat);
+    // size_t tot;
+    // Kokkos::parallel_reduce(range_policy(0, nelem), KOKKOS_LAMBDA(const int i, size_t& part) {
+    //   part += ncomp;
+    // }, tot);
+    // printf("%d\n", tot);
     Kokkos::parallel_for(range_policy(0, nelem), KOKKOS_LAMBDA(const size_t e)
     {
         if(ndofel_d_view(e) > 1)
@@ -193,6 +192,9 @@ void tk::volInt( std::size_t nmat,
           //!Kokkos::resize(coordgp, 3, static_cast<const std::size_t>(ng));
           //!Kokkos::resize(wgp, static_cast<const std::size_t>(ng));
 
+          //! Right now, pick the largest size
+          Kokkos::Array<Kokkos::Array<real, 14>, 3> coordgp = {};
+          Kokkos::Array<real, 14> wgp = {};
           GaussQuadratureTet(ng, coordgp, wgp ); //?DONE
           
           // Extract the element coordinates
@@ -205,6 +207,8 @@ void tk::volInt( std::size_t nmat,
             }
         
           //jacInv is Kokkos::Array based matrix
+            Kokkos::Array<Kokkos::Array<real, 10>, 3> dBdx = {};
+            Kokkos::Array<real, 10> B = {};
            auto jacInv =
                   inverseJacobian(coordel[0], coordel[1], coordel[2], coordel[3] ); // ?DONE
            auto dof_el = ndofel_d_view(e); //? DONE
@@ -212,27 +216,59 @@ void tk::volInt( std::size_t nmat,
           //! Pass in dBdx rather than returning it since I have already created dBdx as view type
             eval_dBdx_p1(dof_el, jacInv, dBdx); //?DONE
            // Gaussian quadrature
+
+           //Kokkos::View<real***, memory_space> g("g_d_view", nmat, 3, 3);
+              Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> g = {};
+              //Kokkos::View<real***, memory_space> asig("asig_d_view", nmat, 3, 3);
+              Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> asig = {};
+              //Kokkos::View<real*, memory_space> al("al", nmat);
+              Kokkos::Array<real, 2> al = {};
+              //Kokkos::View<real**, memory_space> fl("fl", ncomp, 3);
+              Kokkos::Array<Kokkos::Array<real, 12>, 3> fl = {};
+              //Kokkos::View<real*, memory_space> apk("apk", nmat);
+              Kokkos::Array<real, 2> apk = {};
+
+              //Need for evalPolynomialSol function
+              //Kokkos::View<real*, memory_space> state("state", (ncomp + nprim)); // state has state + sprim length
+              Kokkos::Array<real, 50> state = {};
+              //Kokkos::View<size_t*, memory_space> matInt("matInt", nmat);
+              Kokkos::Array<size_t, 2> matInt = {};
+              //Kokkos::View<real*, memory_space> alAvg("alAvg", nmat);
+              Kokkos::Array<real, 2> alAvg = {};
+              //Kokkos::View<real*, memory_space> vfmax("vfmax", nmat);
+              Kokkos::Array<real, 2> vfmax = {};
+              //Kokkos::View<real*, memory_space> vfmin("vfmin", nmat);
+
+              Kokkos::Array<real, 2> vfmin = {};
+
+             //Need for THINC, but also evalPolynomialSol
+              //Kokkos::View<real*, memory_space> alSol("alSol", rdof*nmat);
+              Kokkos::Array<real, 20> alSol = {};
+              //Kokkos::View<real*, memory_space> alReco("alReco", nmat);
+              Kokkos::Array<real, 2> alReco = {};
+
+              //Kokkos::View<Kokkos::Array<real, 3>*, memory_space> ref_n("ref_n", nmat);
+              Kokkos::Array<Kokkos::Array<real, 3>, 2> ref_n = {};
            
             for (std::size_t igp=0; igp<ng; ++igp)
             {
-              if (dof_el > 4)
+                if (dof_el > 4)
                 eval_dBdx_p2( igp, coordgp, jacInv, dBdx); //?DONE
 
               // Compute the coordinates of quadrature point at physical domain
               auto gp = eval_gp( igp, coordel, coordgp); // ?DONE
               
               // Compute the basis function
-              // B is Kokkos::View //TODO: Fix B //! Right now uses largest possible size
-              eval_basis( dof_el, coordgp(0, igp), coordgp(1, igp),
-                                  coordgp(2, igp), B); //?DONE
+              eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
+                                  coordgp[2][igp], B); //?DONE
 
-              auto wt = wgp(igp) * geoElem_d_view(e * geo_nprop);  //?DONE
+              auto wt = wgp[igp] * geoElem_d_view(e * geo_nprop);  //?DONE
             
               evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
                 rdof, nmat, e, ndofel_d_view(e), m_nprop, p_nprop, geo_nprop,
                 bparam, solidx_d_view, inpoel_d_view, 
                 cx_d_view, cy_d_view, cz_d_view, geoElem_d_view,
-                {{coordgp(0, igp), coordgp(1, igp), coordgp(2, igp)}}, B, U_d_view, 
+                {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U_d_view, 
                 P_d_view, state, matInt, alAvg, vfmax, vfmin, alSol, alReco, dBdx, ref_n);
               
               // evaluate prescribed velocity (if any)
@@ -243,15 +279,14 @@ void tk::volInt( std::size_t nmat,
               fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 
                   mat_blk, state, g, asig, al, fl, apk);
               
-              
               //printf("%f\n", fl(1, 1));
-              update_rhs(ncomp, ndof, dof_el, wt, m_nprop, e, dBdx, fl, R_d_view); //?DONE  
+              update_rhs(ncomp, ndof, dof_el, wt, r_nprop, e, dBdx, fl, R_d_view); //?DONE  
           }
         }
         
       });
+      Kokkos::fence();
       Kokkos::deep_copy(R_h_view, R_d_view);
-    //Kokkos::finalize();
 }
  
 
@@ -320,34 +355,34 @@ void tk::update_rhs( ncomp_t ncomp,
                 const tk::real wt,
                 const std::size_t m_nprop,
                 const std::size_t e,
-                Kokkos::View<const real**, memory_space> dBdx,
-                Kokkos::View<const real**, memory_space> fl,
+                Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
+                Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
                 Kokkos::View<real*, memory_space> R)
  {
   for (ncomp_t c=0; c<ncomp; ++c)
-    {
-      auto mark = c*ndof;
-      R(e * m_nprop + mark+1) +=
-        wt * (fl(c, 0)*dBdx(0, 1) + fl(c, 1)*dBdx(1, 1) + fl(c, 2)*dBdx(2, 1));
-      R(e * m_nprop + mark+2) +=
-        wt * (fl(c, 0)*dBdx(0, 2) + fl(c, 1)*dBdx(1, 2) + fl(c, 2)*dBdx(2, 2));
-      R(e * m_nprop + mark+3) +=
-        wt * (fl(c, 0)*dBdx(0, 3) + fl(c, 1)*dBdx(1, 3) + fl(c, 2)*dBdx(2, 3));
+  {
+    auto mark = c*ndof;
+    R(e * m_nprop + mark+1) +=
+      wt * (fl[c][0]*dBdx[0][1] + fl[c][1]*dBdx[1][1] + fl[c][2]*dBdx[2][1]);
+    R(e * m_nprop +mark+2) +=
+      wt * (fl[c][0]*dBdx[0][2] + fl[c][1]*dBdx[1][2] + fl[c][2]*dBdx[2][2]);
+    R(e * m_nprop + mark+3) +=
+      wt * (fl[c][0]*dBdx[0][3] + fl[c][1]*dBdx[1][3] + fl[c][2]*dBdx[2][3]);
 
-      if( ndof_el > 4 )
-      {
-        R(e * m_nprop + mark+4) +=
-          wt * (fl(c, 0)*dBdx(0, 4) + fl(c, 1)*dBdx(1, 4) + fl(c, 2)*dBdx(2, 4));
-        R(e * m_nprop + mark+5) +=
-          wt * (fl(c, 0)*dBdx(0, 5) + fl(c, 1)*dBdx(1, 5) + fl(c, 2)*dBdx(2, 5));
-        R(e * m_nprop + mark+6) +=
-          wt * (fl(c, 0)*dBdx(0, 6) + fl(c, 1)*dBdx(1, 6) + fl(c, 2)*dBdx(2, 6));
-        R(e * m_nprop + mark+7) +=
-          wt * (fl(c, 0)*dBdx(0, 7) + fl(c, 1)*dBdx(1, 7) + fl(c, 2)*dBdx(2, 7));
-        R(e * m_nprop + mark+8) +=
-          wt * (fl(c, 0)*dBdx(0, 8) + fl(c, 1)*dBdx(1, 8) + fl(c, 2)*dBdx(2, 8));
-        R(e * m_nprop + mark+9) +=
-          wt * (fl(c, 0)*dBdx(0, 9) + fl(c, 1)*dBdx(1, 9) + fl(c, 2)*dBdx(2, 9));
-      }
+    if( ndof_el > 4 )
+    {
+      R(e * m_nprop + mark+4) +=
+        wt * (fl[c][0]*dBdx[0][4] + fl[c][1]*dBdx[1][4] + fl[c][2]*dBdx[2][4]);
+      R(e * m_nprop + mark+5) +=
+        wt * (fl[c][0]*dBdx[0][5] + fl[c][1]*dBdx[1][5] + fl[c][2]*dBdx[2][5]);
+      R(e * m_nprop +mark+6) +=
+        wt * (fl[c][0]*dBdx[0][6] + fl[c][1]*dBdx[1][6] + fl[c][2]*dBdx[2][6]);
+      R(e * m_nprop + mark+7) +=
+        wt * (fl[c][0]*dBdx[0][7] + fl[c][1]*dBdx[1][7] + fl[c][2]*dBdx[2][7]);
+      R(e * m_nprop + mark+8) +=
+        wt * (fl[c][0]*dBdx[0][8] + fl[c][1]*dBdx[1][8] + fl[c][2]*dBdx[2][8]);
+      R(e * m_nprop + mark+9) +=
+        wt * (fl[c][0]*dBdx[0][9] + fl[c][1]*dBdx[1][9] + fl[c][2]*dBdx[2][9]);
     }
+  }
   }
