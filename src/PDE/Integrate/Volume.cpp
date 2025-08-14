@@ -281,7 +281,6 @@ void tk::update_rhs( ncomp_t ncomp,
   }
 }
 
-
 //! overloaded version of update_rhs for Kokkos
 KOKKOS_FUNCTION
 void tk::update_rhs( ncomp_t ncomp,

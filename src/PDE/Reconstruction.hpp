@@ -396,7 +396,6 @@ THINCReco( std::size_t rdof,
 }
 
 //! New THINC reconstruction function for volume fractions near interfaces
-
 void
 THINCFunction( std::size_t rdof,
   std::size_t nmat,

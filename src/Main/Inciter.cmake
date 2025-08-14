@@ -1,4 +1,4 @@
-# Inciter executable ##########################################################
+## Inciter executable ##########################################################
 
 add_executable(${INCITER_EXECUTABLE}
                InciterDriver.cpp
