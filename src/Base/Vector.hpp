@@ -19,6 +19,7 @@
 
 #include "Types.hpp"
 #include "Exception.hpp"
+#include "Kokkos_Core.hpp"
 
 // ignore old-style-casts required for lapack/blas calls
 #if defined(__clang__)
@@ -62,8 +63,8 @@ flip( std::array< real, 3 >& v )
 //! \param[out] rx x coordinate of the product vector
 //! \param[out] ry y coordinate of the product vector
 //! \param[out] rz z coordinate of the product vector
-#pragma omp declare simd
-inline void
+
+KOKKOS_INLINE_FUNCTION void
 cross( real v1x, real v1y, real v1z,
        real v2x, real v2y, real v2z,
        real& rx, real& ry, real& rz )
@@ -77,6 +78,15 @@ cross( real v1x, real v1y, real v1z,
 //! \param[in] v1 1st vector
 //! \param[in] v2 2nd vector
 //! \return Cross-product
+KOKKOS_INLINE_FUNCTION Kokkos::Array<real, 3>
+cross( const Kokkos::Array<real, 3>& v1, const Kokkos::Array<real, 3>& v2 )
+{
+  real rx, ry, rz;
+  cross( v1[0], v1[1], v1[2], v2[0], v2[1], v2[2], rx, ry, rz );
+  return {{rx, ry, rz}};
+  //return {{ std::move(rx), std::move(ry), std::move(rz) }};
+}
+
 inline std::array< real, 3 >
 cross( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
 {
@@ -128,8 +138,10 @@ crossdiv( const std::array< real, 3 >& v1,
 //! \param[in] v1 1st vector
 //! \param[in] v2 2nd vector
 //! \return Dot-product
-inline real
-dot( const std::array< real, 3 >& v1, const std::array< real, 3 >& v2 )
+
+template <typename ArrayType>
+KOKKOS_INLINE_FUNCTION real
+dot(const ArrayType& v1, const ArrayType& v2 )
 {
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
@@ -196,9 +208,9 @@ unit( std::array< real, 3 >& v ) noexcept(ndebug)
 //! \param[in] v3y y coordinate of the 3rd vector
 //! \param[in] v3z z coordinate of the 3rd vector
 //! \return Scalar value of the triple product
-#pragma omp declare simd
-inline tk::real
-triple( real v1x, real v1y, real v1z,
+
+KOKKOS_INLINE_FUNCTION 
+real triple(real v1x, real v1y, real v1z,
         real v2x, real v2y, real v2z,
         real v3x, real v3y, real v3z )
 {
@@ -212,6 +224,14 @@ triple( real v1x, real v1y, real v1z,
 //! \param[in] v2 2nd vector
 //! \param[in] v3 3rd vector
 //! \return Triple-product
+KOKKOS_INLINE_FUNCTION 
+real triple(Kokkos::Array<real, 3> v1,
+        Kokkos::Array<real, 3> v2,
+        Kokkos::Array<real, 3> v3 )
+{
+  return dot( v1, cross(v2,v3) );
+}
+
 inline real
 triple( const std::array< real, 3 >& v1,
         const std::array< real, 3 >& v2,
@@ -291,6 +311,23 @@ Jacobian( const std::array< real, 3 >& v1,
   return triple( ba, ca, da );
 }
 
+
+KOKKOS_INLINE_FUNCTION 
+real Jacobian(const Kokkos::Array<real, 3>& v1,
+          const Kokkos::Array<real, 3>& v2,
+          const Kokkos::Array<real, 3>& v3,
+          const Kokkos::Array<real, 3>& v4 )
+{
+  Kokkos::Array<real, 3> ba, ca, da;
+
+  for (int i = 0; i < 3;i++) {
+    ba[i] = v2[i] - v1[i];
+    ca[i] = v3[i] - v1[i];
+    da[i] = v4[i] - v1[i];
+  }
+  return triple(ba, ca, da);
+}
+
 //! \brief Compute the inverse of the Jacobian of a coordinate transformation
 //!   over a tetrahedron
 //! \param[in] v1 (x,y,z) coordinates of 1st vertex of the tetrahedron
@@ -306,6 +343,40 @@ inverseJacobian( const std::array< real, 3 >& v1,
                  const std::array< real, 3 >& v4 )
 {
   std::array< std::array< real, 3 >, 3 > jacInv;
+
+  auto detJ = Jacobian( v1, v2, v3, v4 );
+
+  jacInv[0][0] =  (  (v3[1]-v1[1])*(v4[2]-v1[2])
+                   - (v4[1]-v1[1])*(v3[2]-v1[2])) / detJ;
+  jacInv[1][0] = -(  (v2[1]-v1[1])*(v4[2]-v1[2])
+                   - (v4[1]-v1[1])*(v2[2]-v1[2])) / detJ;
+  jacInv[2][0] =  (  (v2[1]-v1[1])*(v3[2]-v1[2])
+                   - (v3[1]-v1[1])*(v2[2]-v1[2])) / detJ;
+
+  jacInv[0][1] = -(  (v3[0]-v1[0])*(v4[2]-v1[2])
+                   - (v4[0]-v1[0])*(v3[2]-v1[2])) / detJ;
+  jacInv[1][1] =  (  (v2[0]-v1[0])*(v4[2]-v1[2])
+                   - (v4[0]-v1[0])*(v2[2]-v1[2])) / detJ;
+  jacInv[2][1] = -(  (v2[0]-v1[0])*(v3[2]-v1[2])
+                   - (v3[0]-v1[0])*(v2[2]-v1[2])) / detJ;
+
+  jacInv[0][2] =  (  (v3[0]-v1[0])*(v4[1]-v1[1])
+                   - (v4[0]-v1[0])*(v3[1]-v1[1])) / detJ;
+  jacInv[1][2] = -(  (v2[0]-v1[0])*(v4[1]-v1[1])
+                   - (v4[0]-v1[0])*(v2[1]-v1[1])) / detJ;
+  jacInv[2][2] =  (  (v2[0]-v1[0])*(v3[1]-v1[1])
+                   - (v3[0]-v1[0])*(v2[1]-v1[1])) / detJ;
+
+  return jacInv;
+}
+
+KOKKOS_INLINE_FUNCTION Kokkos::Array<Kokkos::Array<real, 3>, 3>
+inverseJacobian(const Kokkos::Array<real, 3>& v1,
+          const Kokkos::Array<real, 3>& v2,
+          const Kokkos::Array<real, 3>& v3,
+          const Kokkos::Array<real, 3>& v4 )
+{
+  Kokkos::Array<Kokkos::Array<real, 3>, 3> jacInv;
 
   auto detJ = Jacobian( v1, v2, v3, v4 );
 
@@ -350,7 +421,7 @@ determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
 inline std::array< std::array< tk::real, 3 >, 3 >
 inverse( const std::array< std::array< tk::real, 3 >, 3 >& m )
 {
-  tk::real det = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
+  tk::real det = m[0][0] * (m[1][1] * m[2][2] - m[2][ 1] * m[1][2]) -
                  m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
                  m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
 

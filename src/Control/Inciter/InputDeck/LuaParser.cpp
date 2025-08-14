@@ -20,7 +20,7 @@
 #include "Exception.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Inciter/InputDeck/LuaParser.hpp"
-#include "PDE/MultiMat/MultiMatIndexing.hpp"
+#include "PDE/MultiMat/MultiMatIndexingSolFriendly.hpp"
 #include "PDE/MultiSpecies/MultiSpeciesIndexing.hpp"
 
 namespace tk {

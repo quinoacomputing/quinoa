@@ -18,12 +18,17 @@
 
 #include "Types.hpp"
 #include "Fields.hpp"
+#include "Limiter.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "EoS/EOS.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::DefaultExecutionSpace;
+using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
 namespace tk {
 
@@ -99,7 +104,299 @@ THINCFunction_old( std::size_t rdof,
   const std::vector< std::size_t >& matInt,
   std::vector< real >& alReco );
 
+KOKKOS_INLINE_FUNCTION 
+void THINCFunction_old( std::size_t rdof,
+               std::size_t nmat,
+               std::size_t e,
+               Kokkos::View<const size_t*, memory_space> inpoel,
+                Kokkos::View<const real*, memory_space> cx,
+                Kokkos::View<const real*, memory_space> cy,
+                Kokkos::View<const real*, memory_space> cz,
+               const Kokkos::Array<real, 3>& ref_xp,
+               real vol,
+               real bparam,
+               Kokkos::Array<real, 20>& alSol,
+               bool intInd,
+              Kokkos::Array<size_t, 2>& matInt,
+               Kokkos::Array<real, 2>& alReco,
+               Kokkos::Array<Kokkos::Array<real, 10>, 3>& dBdx,
+               Kokkos::Array<Kokkos::Array<real, 3>, 2>& ref_n)
+{
+  // determine number of materials with interfaces in this cell
+  auto epsl(1e-4), epsh(1e-1), bred(1.25), bmod(bparam);
+  std::size_t nIntMat(0);
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    auto alk = alSol[k*rdof];
+    if (alk > epsl)
+    {
+      ++nIntMat;
+      if ((alk > epsl) && (alk < epsh))
+        bmod = bmod < (alk-epsl)/(epsh-epsl) * (bred - bparam) + bparam ? 
+            bmod : (alk-epsl)/(epsh-epsl) * (bred - bparam) + bparam;
+      else if (alk > epsh)
+        bmod = bred;
+    }
+  }
+
+  if (nIntMat > 2) bparam = bmod;
+
+  // compression parameter
+  auto beta = bparam/std::cbrt(6.0*vol);
+
+  if (intInd)
+  {
+    // 1. Get unit normals to material interface
+
+    // Compute Jacobian matrix for converting Dubiner dofs to derivatives
+
+     Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
+    for (int i = 0;i < 4;i++) {
+        coordel[i][0] = cx(inpoel(4*e + i));
+        coordel[i][1] = cy(inpoel(4*e + i));
+        coordel[i][2] = cz(inpoel(4*e + i));
+    }
+  
+    Kokkos::Array<real, 3> nInt = {};
+
+    // Get normals
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // Get derivatives from moments in Dubiner space
+      for (std::size_t i=0; i<3; ++i)
+        nInt[i] = dBdx[i][1] * alSol[k*rdof+1]
+          + dBdx[i][2] * alSol[k*rdof+2]
+          + dBdx[i][3] * alSol[k*rdof+3];
+
+      auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
+
+      for (std::size_t i=0; i<3; ++i)
+        nInt[i] /= nMag;
+
+      // project interface normal onto local/reference coordinate system
+      for (std::size_t i=0; i<3; ++i)
+      {
+        Kokkos::Array<real, 3> axis = {
+          coordel[i+1][0]-coordel[0][0],
+          coordel[i+1][1]-coordel[0][1],
+          coordel[i+1][2]-coordel[0][2]};
+         ref_n[k][i] = tk::dot(nInt, axis);
+      }
+    }
+
+    // 2. Reconstruct volume fractions using THINC
+    auto max_lim = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
+    auto min_lim = 1e-12;
+    auto sum_inter(0.0), sum_non_inter(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      if (matInt[k])
+      {
+        // get location of material interface (volume fraction 0.5) from the
+        // assumed tanh volume fraction distribution, and cell-averaged
+        // volume fraction
+        auto alCC(alSol[k*rdof]);
+        auto Ac(0.0), Bc(0.0), Qc(0.0);
+        if ((std::abs(ref_n[k][0]) > std::abs(ref_n[k][1]))
+          && (std::abs(ref_n[k][0]) > std::abs(ref_n[k][2])))
+        {
+          Ac = std::exp(0.5*beta*ref_n[k][0]);
+          Bc = std::exp(0.5*beta*(ref_n[k][1])+ref_n[k][2]);
+          Qc = std::exp(0.5*beta*ref_n[k][0]*(2.0*alCC-1.0));
+        }
+        else if ((std::abs(ref_n[k][1]) > std::abs(ref_n[k][0]))
+          && (std::abs(ref_n[k][1]) > std::abs(ref_n[k][2])))
+        {
+          Ac = std::exp(0.5*beta*ref_n[k][1]);
+          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][2]));
+          Qc = std::exp(0.5*beta*ref_n[k][1]*(2.0*alCC-1.0));
+        }
+        else
+        {
+          Ac = std::exp(0.5*beta*ref_n[k][2]);
+          Bc = std::exp(0.5*beta*(ref_n[k][0]+ref_n[k][1]));
+          Qc = std::exp(0.5*beta*ref_n[k][2]*(2.0*alCC-1.0));
+        }
+        auto d = std::log((1.0-Ac*Qc) / (Ac*Bc*(Qc-Ac))) / (2.0*beta);
+
+        // THINC reconstruction
+        auto al_c = 0.5 * (1.0 + Kokkos::tanh(beta*(ref_n[k][0]*ref_xp[0]
+          + ref_n[k][1]*ref_xp[1]+ref_n[k][2]*ref_xp[2] + d)));
+
+        //! nested std::max, min might pose a problem
+        auto m = min_lim > al_c ? min_lim : al_c;
+        alReco[k] = max_lim < m ? max_lim : m;
+
+        sum_inter += alReco[k];
+      } else
+      {
+        sum_non_inter += alReco[k];
+      }
+      // else, if this material does not have an interface close-by, the TVD
+      // reconstructions must be used for state variables. This is ensured by
+      // initializing the alReco vector as the TVD state.
+    }
+
+    // Rescale volume fractions of interface-materials to ensure unit sum
+    auto sum_rest = 1.0 - sum_non_inter;
+    for (std::size_t k=0; k<nmat; ++k)
+      if(matInt[k])
+        alReco[k] = alReco[k] * sum_rest / sum_inter;
+  }
+};
+
+KOKKOS_INLINE_FUNCTION void
+THINCReco( std::size_t rdof,
+           std::size_t nmat,
+           std::size_t e, 
+           std::size_t ncomp,
+           std::size_t m_nprop,
+           std::size_t p_nprop,
+           std::size_t geo_nprop,
+            tk::real bparam,
+          Kokkos::View<const size_t*, memory_space> inpoel,
+           Kokkos::View<const real*, memory_space> cx,
+           Kokkos::View<const real*, memory_space> cy, 
+           Kokkos::View<const real*, memory_space> cz,
+           Kokkos::View<const real*, memory_space> geoElem,
+           const Kokkos::Array<real, 3>& ref_xp,
+           Kokkos::View<const real*, memory_space> U,
+           Kokkos::View<const real*, memory_space> P,
+           bool intInd,
+           Kokkos::View<const size_t*, memory_space> solidx,
+           Kokkos::Array<size_t, 2> matInt,
+           [[maybe_unused]] const Kokkos::Array<real, 2>& vfmin,
+           [[maybe_unused]] const Kokkos::Array<real, 2>& vfmax,
+           Kokkos::Array<real, 50>& state, 
+          Kokkos::Array<real, 20>& alSol, 
+          Kokkos::Array<real, 2>& alReco,
+          Kokkos::Array<Kokkos::Array<real, 10>, 3>& dBdx, 
+          Kokkos::Array<Kokkos::Array<real, 3>, 2>& ref_n
+      )
+// *****************************************************************************
+//  Compute THINC reconstructions at quadrature point for multi-material flows
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which interface reconstruction is being calculated
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_xp Quadrature point in reference space
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \param[in] intInd Boolean which indicates if the element contains a
+//!   material interface
+//! \param[in] matInt Array indicating which material has an interface
+//! \param[in] vfmin Vector containing min volume fractions for each material
+//!   in this cell
+//! \param[in] vfmax Vector containing max volume fractions for each material
+//!   in this cell
+//! \param[in,out] state Unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+//! \details This function is an interface for the multimat PDEs that use the
+//!   algebraic multi-material THINC reconstruction. This particular function
+//!   should only be called for multimat.
+// *****************************************************************************
+{
+  using inciter::volfracDofIdx;
+  using inciter::densityDofIdx;
+  using inciter::momentumDofIdx;
+  using inciter::energyDofIdx;
+  using inciter::pressureDofIdx;
+  using inciter::velocityDofIdx;
+  using inciter::deformDofIdx;
+  using inciter::stressDofIdx;
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+  using inciter::pressureIdx;
+  using inciter::velocityIdx;
+  using inciter::deformIdx;
+  using inciter::stressIdx;
+
+  // Step-1: Perform THINC reconstruction
+  // create a vector of volume-fractions and pass it to the THINC function
+
+  for (std::size_t k=0; k<nmat; ++k) {
+    auto mark = k*rdof;
+    for (std::size_t i=0; i<rdof; ++i) {
+      alSol[mark+i] = U(e * m_nprop + volfracDofIdx(nmat,k,rdof,i));
+    }
+    // initialize with TVD reconstructions which will be modified if near
+    // material interface
+    alReco[k] = state[volfracIdx(nmat,k)];
+  }
+  THINCFunction_old(rdof, nmat, e, inpoel, cx, cy, cz, ref_xp, geoElem(e *geo_nprop), bparam,
+    alSol, intInd, matInt, alReco, dBdx, ref_n);
+
+  // check reconstructed volfracs for positivity
+  bool neg_vf = false;
+  for (std::size_t k=0; k<nmat; ++k) {
+    if (alReco[k] < 1e-16 && matInt[k] > 0) neg_vf = true;
+  }
+  /*
+  for (std::size_t k=0; k<nmat; ++k) {
+    if (neg_vf) {
+      printf("Material-id:        %d\n", k);
+      printf("Volume-fraction:    %0.17f\n",alReco(k));
+      printf("Cell-avg vol-frac:  %0.17f\n", U(e * m_nprop + volfracDofIdx(nmat,k,rdof,0)));
+      printf("Material-interface? %d\n", intInd);
+      printf("Mat-k-involved?     %d\n", matInt(k));
+    }
+  }
+  */
+  if (neg_vf) 
+    printf("Material has negative volume fraction after THINC "
+    "reconstruction.\n");
+
+  // Step-2: Perform consistent reconstruction on other conserved quantities
+  if (intInd)
+  {
+    auto rhobCC(0.0), rhobHO(0.0);
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      auto alCC = U(e * m_nprop + volfracDofIdx(nmat,k,rdof,0));
+      alCC = 1e-14 > alCC ? 1e-14 : alCC;
+
+      if (matInt[k])
+      {
+        state[volfracIdx(nmat,k)] = alReco[k];
+        state[densityIdx(nmat,k)] = alReco[k]
+          * U(e * m_nprop + densityDofIdx(nmat,k,rdof,0))/alCC;
+        state[energyIdx(nmat,k)] = alReco[k]
+          * U(e * m_nprop + energyDofIdx(nmat,k,rdof,0))/alCC;
+        state[ncomp+pressureIdx(nmat,k)] = alReco[k]
+          * P(e * p_nprop + pressureDofIdx(nmat,k,rdof,0))/alCC;
+        if (solidx(k) > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              state[deformIdx(nmat,solidx(k),i,j)] =
+                U(e * m_nprop + deformDofIdx(nmat,solidx(k),i,j,rdof,0));
+
+          for (std::size_t i=0; i<6; ++i)
+            state[ncomp+stressIdx(nmat,solidx(k),i)] = alReco[k]
+              * P(e * p_nprop + stressDofIdx(nmat,solidx(k),i,rdof,0))/alCC;
+        }
+      }
+
+      rhobCC += U(e * m_nprop + densityDofIdx(nmat,k,rdof,0));
+      rhobHO += state[densityIdx(nmat,k)];
+    }
+
+    // consistent reconstruction for bulk momentum
+    for (std::size_t i=0; i<3; ++i)
+    {
+      state[momentumIdx(nmat,i)] = rhobHO
+        * U(e * m_nprop +  momentumDofIdx(nmat,i,rdof,0))/rhobCC;
+      state[ncomp+velocityIdx(nmat,i)] =
+        P(e * p_nprop +  velocityDofIdx(nmat,i,rdof,0));
+    }
+  }
+}
+
 //! New THINC reconstruction function for volume fractions near interfaces
+
 void
 THINCFunction( std::size_t rdof,
   std::size_t nmat,
@@ -146,6 +443,115 @@ evalPolynomialSol(
   const Fields& U,
   const Fields& P);
 
+KOKKOS_INLINE_FUNCTION
+void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
+                   int intsharp,
+                   std::size_t ncomp,
+                   std::size_t nprim,
+                   std::size_t rdof,
+                   std::size_t nmat,
+                   std::size_t e,
+                   std::size_t dof_e,
+                   std::size_t m_nprop,
+                   std::size_t p_nprop,
+                   std::size_t geo_nprop,
+                   tk::real bparam,
+                   Kokkos::View<const size_t*, memory_space> solidx,
+                   Kokkos::View<const size_t*, memory_space> inpoel,
+                   Kokkos::View<const tk::real*, memory_space> cx,
+                   Kokkos::View<const tk::real*, memory_space> cy,
+                   Kokkos::View<const tk::real*, memory_space> cz,
+                   Kokkos::View<const tk::real*, memory_space> geoElem,
+                   const Kokkos::Array<tk::real, 3>& ref_gp,
+                   Kokkos::Array<tk::real, 10>& B,
+                   Kokkos::View<const tk::real*, memory_space> U,
+                   Kokkos::View<const tk::real*, memory_space> P,
+                  Kokkos::Array<tk::real, 50>& state, 
+                  Kokkos::Array<size_t, 2>& matInt,
+                  Kokkos::Array<tk::real, 2>& alAvg, 
+                  Kokkos::Array<tk::real, 2>& vfmax, 
+                  Kokkos::Array<tk::real, 2>& vfmin,
+                  Kokkos::Array<tk::real, 20>& alSol, 
+                  Kokkos::Array<tk::real, 2>& alReco,
+                  Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx, 
+                   Kokkos::Array<Kokkos::Array<tk::real, 3>, 2>& ref_n)
+// *****************************************************************************
+//  Evaluate polynomial solution at quadrature point
+//! \param[in] mat_blk EOS material block
+//! \param[in] intsharp Interface reconstruction indicator
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] nprim Number of primitive quantities
+//! \param[in] rdof Total number of reconstructed dofs
+//! \param[in] nmat Total number of materials
+//! \param[in] e Element for which polynomial solution is being evaluated
+//! \param[in] dof_e Degrees of freedom for element
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] ref_gp Quadrature point in reference space
+//! \param[in] B Basis function at given quadrature point
+//! \param[in] U Solution vector
+//! \param[in] P Vector of primitives
+//! \return High-order unknown/state vector at quadrature point, modified
+//!   if near interfaces using THINC
+// *****************************************************************************
+{
+
+  // since we are combining state, and primitives at the end,
+  // just have one single "state" view and use subviews
+  //auto state_sub = Kokkos::subview(state, Kokkos::make_pair(0, 1));
+  //auto sprim_sub = Kokkos::subview(state, Kokkos::make_pair(1, 2));
+  eval_state( ncomp, rdof, dof_e, e, m_nprop, U, B, state, 0); //?DONE
+  eval_state( nprim, rdof, dof_e, e, p_nprop, P, B, state, ncomp); //?DONE
+
+  // interface detection
+  bool intInd(false);
+
+  if (nmat > 1) {
+    for (std::size_t k=0; k<nmat; ++k) {
+      alAvg[k] = U(e * m_nprop + inciter::volfracDofIdx(nmat,k,rdof,0)); //?DONE
+      intInd = inciter::interfaceIndicator(nmat, alAvg, matInt); //?DONE
+    }
+
+
+  if (intsharp > 0)
+  {
+
+    // Until the appropriate setup for activating THINC with Transport
+    // is ready, the following two chunks of code will need to be commented
+    // for using THINC with Transport
+    //for (std::size_t k=0; k<nmat; ++k) {
+    //  vfmin[k] = VolFracMax(el, 2*k, 0);
+    //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
+    //}
+    tk::THINCReco(rdof, nmat, e, ncomp, m_nprop, p_nprop, geo_nprop, bparam, inpoel, cx, cy, cz, geoElem,
+      ref_gp, U, P, intInd, solidx, matInt, vfmin, vfmax, state, alSol,
+      alReco, dBdx, ref_n);
+
+    // Until the appropriate setup for activating THINC with Transport
+    // is ready, the following lines will need to be uncommented for
+    // using THINC with Transport
+    //tk::THINCRecoTransport(rdof, nmat, el, inpoel, coord,
+    //  geoElem, ref_gp_l, U, P, vfmin, vfmax, state[0]);
+  }
+
+  // // physical constraints
+  // //? uncomment the below equations if pressure is an issue
+  // //enforcePhysicalConstraints(mat_blk, ncomp, nmat, state);
+  for (std::size_t k=0; k<nmat; ++k) {
+      auto pres = state[ncomp+inciter::pressureIdx(nmat,k)];
+      if (k == 0) {
+        tk::real gamma = 4.4;
+        tk::real pinf = 6.0e8;
+        state[ncomp+inciter::pressureIdx(nmat,k)] = -gamma*pinf+1e-12 > pres ? -gamma*pinf+1e-12 : pres;
+      }
+      else
+        state[ncomp+inciter::pressureIdx(nmat,k)] = 1e-12 > pres ? 1e-12 : pres;
+    }
+  }
+
+}
+
 //! Evaluate second-order FV solution at quadrature point
 std::vector< tk::real >
 evalFVSol(
@@ -172,6 +578,13 @@ enforcePhysicalConstraints(
   std::size_t nmat,
   std::size_t ncomp,
   std::vector< tk::real >& state );
+
+void
+enforcePhysicalConstraints(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t nmat,
+  std::size_t ncomp,
+  Kokkos::View<real*, memory_space> state);
 
 //! Compute safe reconstructions near material interfaces
 void

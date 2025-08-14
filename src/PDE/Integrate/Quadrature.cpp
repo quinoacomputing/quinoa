@@ -12,6 +12,7 @@
 // *****************************************************************************
 
 #include "Quadrature.hpp"
+#include "Kokkos_Core.hpp"
 
 void
 tk::GaussQuadratureTet( const std::size_t NG,

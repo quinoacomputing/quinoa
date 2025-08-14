@@ -23,6 +23,7 @@
 #include "Basis.hpp"
 #include "Vector.hpp"
 #include "Mass.hpp"
+#include "Kokkos_Core.hpp"
 
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
