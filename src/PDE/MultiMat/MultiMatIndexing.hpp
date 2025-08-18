@@ -214,19 +214,21 @@ inline bool matExists( tk::real volfrac )
 inline tk::real volfracPRelaxLim()
 { return 1.0e-02; }
 
-//! \brief Get the index of the quantity vel[l]*g[i][j] computed inside the
-//!   Riemann flux solver.
-//! \param[in] kmat Index of required material
-//! \param[in] i Row of inverse deformation tensor
-//! \param[in] j Column of inverse deformation tensor
-//! \param[in] l Velocity component
-//! \return Index of the quantity vel[l]*g[i][j] computed inside the
-//!   Riemann flux solver.
-//! \details This function is used to get the index of the quantity
-//!   vel[l]*g[i][j] computed inside the Riemann flux solver.
-inline std::size_t newSolidsAccFn( std::size_t kmat,
+//! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
+//!  on the riemannDeriv array.
+//! \param[in] k Index of required material
+//! \param[in] i
+//! \param[in] j
+//! \param[in] l
+//! \return Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
+//!  on the riemannDeriv array.
+//! \details This function is used to get the index of the nonconservative
+//!  terms of the deformation equation.
+inline std::size_t newSolidsAccFn( std::size_t k,
   std::size_t i, std::size_t j, std::size_t l)
-{ return 3*9*kmat+3*(3*i+j)+l; }
+{ const auto& solidx =
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  return 27*(solidx[k]-1)+3*(3*i+j)+l; }
 
 //! \brief Index for Cauchy stress components, since only the 6 independent
 //!   components are stored.

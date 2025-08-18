@@ -222,7 +222,7 @@ nonConservativeInt( const bool pref,
               for (std::size_t j=0; j<3; ++j)
                 for (std::size_t l=0; l<3; ++l)
                 {
-                  mark = 3*nmat+ndof+3*nsld+27*(solidx[k]-1)+3*(3*i+j)+l;
+                  mark = 3*nmat+ndof+3*nsld+inciter::newSolidsAccFn(k,i,j,l);
                   ncf[deformIdx(nmat, solidx[k], i, j)][idof] -=
                     vel[l] * riemannDeriv[mark][e];
                 }
