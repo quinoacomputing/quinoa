@@ -238,9 +238,12 @@ cleanTraceMultiMat(
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             gk[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
-        U(e, energyDofIdx(nmat, k, rdof, 0)) =
-          mat_blk[k].compute< EOS::totalenergy >( arhok, u, v, w,
-          P(e, pressureDofIdx(nmat, k, rdof, 0)), alk, gk );
+          auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhok, u, v, w,
+            P(e, pressureDofIdx(nmat, k, rdof, 0)), alk, gk );
+          // total energy flux into majority material
+          d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
+            - arhoEmat);
+          U(e, energyDofIdx(nmat, k, rdof, 0)) = arhoEmat;
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
         }
