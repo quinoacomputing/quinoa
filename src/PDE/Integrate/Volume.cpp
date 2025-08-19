@@ -21,10 +21,6 @@
 #include "Kokkos_Core.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
-// Max size of quadrature array
-constexpr std::size_t NQUAD_MAX = 14;
-constexpr std::size_t NDOF_MAX = 10;
-
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 using range_policy = Kokkos::RangePolicy<execution_space>;
@@ -158,7 +154,7 @@ void tk::volInt( std::size_t nmat,
         Kokkos::Array<Kokkos::Array<real, NQUAD_MAX>, 3> coordgp = {};
         Kokkos::Array<real, NQUAD_MAX> wgp = {};
         GaussQuadratureTet(ng, coordgp, wgp );
-  
+
         // Extract the element coordinates
         Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
         for (int i=0; i<4; i++) {
@@ -168,8 +164,8 @@ void tk::volInt( std::size_t nmat,
         }
 
         // jacInv is Kokkos::Array based matrix
-        Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, 3> dBdx = {};
         Kokkos::Array<real, NDOF_MAX> B = {};
+        Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, 3> dBdx = {};
         auto jacInv =
           inverseJacobian(coordel[0], coordel[1], coordel[2], coordel[3] );
         auto dof_el = ndofel_d_view(e);
@@ -183,13 +179,6 @@ void tk::volInt( std::size_t nmat,
         Kokkos::Array<real, 2> apk = {};
         // state has state + sprim length
         Kokkos::Array<real, 50> state = {};
-        Kokkos::Array<size_t, 2> matInt = {};
-        Kokkos::Array<real, 2> alAvg = {};
-        Kokkos::Array<real, 2> vfmin = {};
-        Kokkos::Array<real, 2> vfmax = {};
-        Kokkos::Array<real, 20> alSol = {};
-        Kokkos::Array<real, 2> alReco = {};
-        Kokkos::Array<Kokkos::Array<real, 3>, 2> ref_n = {};
 
         for (std::size_t igp=0; igp<ng; ++igp)
         {
@@ -214,7 +203,7 @@ void tk::volInt( std::size_t nmat,
             bparam, solidx_d_view, inpoel_d_view, 
             cx_d_view, cy_d_view, cz_d_view, geoElem_d_view,
             {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U_d_view, 
-            P_d_view, state, matInt, alAvg, vfmax, vfmin, alSol, alReco, dBdx, ref_n);
+            P_d_view, state);
 
           // compute flux
           fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 

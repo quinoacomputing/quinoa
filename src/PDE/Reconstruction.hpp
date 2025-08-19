@@ -27,6 +27,11 @@
 #include "EoS/EOS.hpp"
 #include "Kokkos_Core.hpp"
 
+// Max size of quadrature array
+constexpr std::size_t NQUAD_MAX = 14;
+// Max number of degrees of freedom
+constexpr std::size_t NDOF_MAX = 10;
+
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
@@ -106,21 +111,20 @@ THINCFunction_old( std::size_t rdof,
 
 KOKKOS_INLINE_FUNCTION 
 void THINCFunction_old( std::size_t rdof,
-               std::size_t nmat,
-               std::size_t e,
-               Kokkos::View<const size_t*, memory_space> inpoel,
-                Kokkos::View<const real*, memory_space> cx,
-                Kokkos::View<const real*, memory_space> cy,
-                Kokkos::View<const real*, memory_space> cz,
-               const Kokkos::Array<real, 3>& ref_xp,
-               real vol,
-               real bparam,
-               Kokkos::Array<real, 20>& alSol,
-               bool intInd,
-              Kokkos::Array<size_t, 2>& matInt,
-               Kokkos::Array<real, 2>& alReco,
-               Kokkos::Array<Kokkos::Array<real, 10>, 3>& dBdx,
-               Kokkos::Array<Kokkos::Array<real, 3>, 2>& ref_n)
+                        std::size_t nmat,
+                        std::size_t e,
+                        std::size_t dof_e,
+                        Kokkos::View<const size_t*, memory_space> inpoel,
+                        Kokkos::View<const real*, memory_space> cx,
+                        Kokkos::View<const real*, memory_space> cy,
+                        Kokkos::View<const real*, memory_space> cz,
+                        const Kokkos::Array<real, 3>& ref_xp,
+                        real vol,
+                        real bparam,
+                        Kokkos::Array<real, 20>& alSol,
+                        bool intInd,
+                        Kokkos::Array<size_t, 2>& matInt,
+                        Kokkos::Array<real, 2>& alReco)
 {
   // determine number of materials with interfaces in this cell
   auto epsl(1e-4), epsh(1e-1), bred(1.25), bmod(bparam);
@@ -150,14 +154,23 @@ void THINCFunction_old( std::size_t rdof,
 
     // Compute Jacobian matrix for converting Dubiner dofs to derivatives
 
-     Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
-    for (int i = 0;i < 4;i++) {
-        coordel[i][0] = cx(inpoel(4*e + i));
-        coordel[i][1] = cy(inpoel(4*e + i));
-        coordel[i][2] = cz(inpoel(4*e + i));
+    // Extract the element coordinates
+    Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
+    for (int i=0; i<4; i++) {
+      coordel[i][0] = cx(inpoel(4*e + i));
+      coordel[i][1] = cy(inpoel(4*e + i));
+      coordel[i][2] = cz(inpoel(4*e + i));
     }
-  
+
+    Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, 3> dBdx = {};
+    Kokkos::Array<real, NDOF_MAX> B = {};
+    auto jacInv =
+      inverseJacobian(coordel[0], coordel[1], coordel[2], coordel[3] );
+
+    eval_dBdx_p1(dof_e, jacInv, dBdx);
+    
     Kokkos::Array<real, 3> nInt = {};
+    Kokkos::Array<Kokkos::Array<real, 3>, 2> ref_n = {};
 
     // Get normals
     for (std::size_t k=0; k<nmat; ++k)
@@ -253,8 +266,9 @@ THINCReco( std::size_t rdof,
            std::size_t m_nprop,
            std::size_t p_nprop,
            std::size_t geo_nprop,
-            tk::real bparam,
-          Kokkos::View<const size_t*, memory_space> inpoel,
+           std::size_t dof_e,
+           tk::real bparam,
+           Kokkos::View<const size_t*, memory_space> inpoel,
            Kokkos::View<const real*, memory_space> cx,
            Kokkos::View<const real*, memory_space> cy, 
            Kokkos::View<const real*, memory_space> cz,
@@ -267,12 +281,7 @@ THINCReco( std::size_t rdof,
            Kokkos::Array<size_t, 2> matInt,
            [[maybe_unused]] const Kokkos::Array<real, 2>& vfmin,
            [[maybe_unused]] const Kokkos::Array<real, 2>& vfmax,
-           Kokkos::Array<real, 50>& state, 
-          Kokkos::Array<real, 20>& alSol, 
-          Kokkos::Array<real, 2>& alReco,
-          Kokkos::Array<Kokkos::Array<real, 10>, 3>& dBdx, 
-          Kokkos::Array<Kokkos::Array<real, 3>, 2>& ref_n
-      )
+           Kokkos::Array<real, 50>& state )
 // *****************************************************************************
 //  Compute THINC reconstructions at quadrature point for multi-material flows
 //! \param[in] rdof Total number of reconstructed dofs
@@ -318,6 +327,8 @@ THINCReco( std::size_t rdof,
   // Step-1: Perform THINC reconstruction
   // create a vector of volume-fractions and pass it to the THINC function
 
+  Kokkos::Array<real, 20> alSol;
+  Kokkos::Array<real, 2> alReco;
   for (std::size_t k=0; k<nmat; ++k) {
     auto mark = k*rdof;
     for (std::size_t i=0; i<rdof; ++i) {
@@ -327,8 +338,8 @@ THINCReco( std::size_t rdof,
     // material interface
     alReco[k] = state[volfracIdx(nmat,k)];
   }
-  THINCFunction_old(rdof, nmat, e, inpoel, cx, cy, cz, ref_xp, geoElem(e *geo_nprop), bparam,
-    alSol, intInd, matInt, alReco, dBdx, ref_n);
+  THINCFunction_old(rdof, nmat, e, dof_e, inpoel, cx, cy, cz, ref_xp, geoElem(e *geo_nprop), bparam,
+    alSol, intInd, matInt, alReco);
 
   // check reconstructed volfracs for positivity
   bool neg_vf = false;
@@ -444,36 +455,28 @@ evalPolynomialSol(
 
 KOKKOS_INLINE_FUNCTION
 void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
-                   int intsharp,
-                   std::size_t ncomp,
-                   std::size_t nprim,
-                   std::size_t rdof,
-                   std::size_t nmat,
-                   std::size_t e,
-                   std::size_t dof_e,
-                   std::size_t m_nprop,
-                   std::size_t p_nprop,
-                   std::size_t geo_nprop,
-                   tk::real bparam,
-                   Kokkos::View<const size_t*, memory_space> solidx,
-                   Kokkos::View<const size_t*, memory_space> inpoel,
-                   Kokkos::View<const tk::real*, memory_space> cx,
-                   Kokkos::View<const tk::real*, memory_space> cy,
-                   Kokkos::View<const tk::real*, memory_space> cz,
-                   Kokkos::View<const tk::real*, memory_space> geoElem,
-                   const Kokkos::Array<tk::real, 3>& ref_gp,
-                   Kokkos::Array<tk::real, 10>& B,
-                   Kokkos::View<const tk::real*, memory_space> U,
-                   Kokkos::View<const tk::real*, memory_space> P,
-                  Kokkos::Array<tk::real, 50>& state, 
-                  Kokkos::Array<size_t, 2>& matInt,
-                  Kokkos::Array<tk::real, 2>& alAvg, 
-                  Kokkos::Array<tk::real, 2>& vfmax, 
-                  Kokkos::Array<tk::real, 2>& vfmin,
-                  Kokkos::Array<tk::real, 20>& alSol, 
-                  Kokkos::Array<tk::real, 2>& alReco,
-                  Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx, 
-                   Kokkos::Array<Kokkos::Array<tk::real, 3>, 2>& ref_n)
+                        int intsharp,
+                        std::size_t ncomp,
+                        std::size_t nprim,
+                        std::size_t rdof,
+                        std::size_t nmat,
+                        std::size_t e,
+                        std::size_t dof_e,
+                        std::size_t m_nprop,
+                        std::size_t p_nprop,
+                        std::size_t geo_nprop,
+                        tk::real bparam,
+                        Kokkos::View<const size_t*, memory_space> solidx,
+                        Kokkos::View<const size_t*, memory_space> inpoel,
+                        Kokkos::View<const tk::real*, memory_space> cx,
+                        Kokkos::View<const tk::real*, memory_space> cy,
+                        Kokkos::View<const tk::real*, memory_space> cz,
+                        Kokkos::View<const tk::real*, memory_space> geoElem,
+                        const Kokkos::Array<tk::real, 3>& ref_gp,
+                        Kokkos::Array<tk::real, 10>& B,
+                        Kokkos::View<const tk::real*, memory_space> U,
+                        Kokkos::View<const tk::real*, memory_space> P,
+                        Kokkos::Array<tk::real, 50>& state )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] mat_blk EOS material block
@@ -504,7 +507,9 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
   eval_state( nprim, rdof, dof_e, e, p_nprop, P, B, state, ncomp); //?DONE
 
   // interface detection
+  Kokkos::Array<size_t, 2> matInt = {};
   bool intInd(false);
+  Kokkos::Array<real, 2> alAvg = {};
 
   if (nmat > 1) {
     for (std::size_t k=0; k<nmat; ++k) {
@@ -515,6 +520,8 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 
   if (intsharp > 0)
   {
+    Kokkos::Array<real, 2> vfmin = {};
+    Kokkos::Array<real, 2> vfmax = {};
 
     // Until the appropriate setup for activating THINC with Transport
     // is ready, the following two chunks of code will need to be commented
@@ -523,9 +530,9 @@ void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
     //  vfmin[k] = VolFracMax(el, 2*k, 0);
     //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
     //}
-    tk::THINCReco(rdof, nmat, e, ncomp, m_nprop, p_nprop, geo_nprop, bparam, inpoel, cx, cy, cz, geoElem,
-      ref_gp, U, P, intInd, solidx, matInt, vfmin, vfmax, state, alSol,
-      alReco, dBdx, ref_n);
+    tk::THINCReco(rdof, nmat, e, ncomp, m_nprop, p_nprop, geo_nprop, dof_e,
+                  bparam, inpoel, cx, cy, cz, geoElem, ref_gp, U, P, intInd,
+                  solidx, matInt, vfmin, vfmax, state);
 
     // Until the appropriate setup for activating THINC with Transport
     // is ready, the following lines will need to be uncommented for
