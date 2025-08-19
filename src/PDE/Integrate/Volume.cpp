@@ -21,6 +21,10 @@
 #include "Kokkos_Core.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
+// Max size of quadrature array
+constexpr std::size_t NQUAD_MAX = 14;
+constexpr std::size_t NDOF_MAX = 10;
+
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 using range_policy = Kokkos::RangePolicy<execution_space>;
@@ -102,7 +106,6 @@ void tk::volInt( std::size_t nmat,
     Kokkos::deep_copy(inpoel_d_view, inpoel_h_view);
 
     //Transfer coord (nodal coordinates)
-
     size_t coordx_size = coord[0].size();
     auto cx_h_view = changeToView(coord[0].data(), coordx_size);
     Kokkos::View<real*, memory_space> cx_d_view("cx device view", coordx_size);
@@ -119,14 +122,12 @@ void tk::volInt( std::size_t nmat,
     Kokkos::deep_copy(cz_d_view, cz_h_view);
 
     // nodefel transfer
-
     size_t ndofel_size = ndofel.size();
     auto ndofel_h_view = changeToView(ndofel.data(), ndofel_size);
     Kokkos::View<size_t*, memory_space> ndofel_d_view("nodefel device view", ndofel_size);
     Kokkos::deep_copy(ndofel_d_view, ndofel_h_view);
 
     // geoElem, U, P, R transfer
-
     size_t geoElem_size = geoElem.getSize();
     Kokkos::View<real*, memory_space> geoElem_d_view("geoElem_d_view", geoElem_size);
     auto geoElem_h_view = changeToView(geoElem.getPointer(), geoElem_size);
@@ -149,79 +150,82 @@ void tk::volInt( std::size_t nmat,
 
     Kokkos::parallel_for(range_policy(0, nelem), KOKKOS_LAMBDA(const size_t e)
     {
-        if(ndofel_d_view(e) > 1)
-        {
-          auto ng = tk::NGvol(ndofel_d_view(e));
+      if(ndofel_d_view(e) > 1)
+      {
+        auto ng = tk::NGvol(ndofel_d_view(e));
 
-          //! Right now, pick the largest size
-          Kokkos::Array<Kokkos::Array<real, 14>, 3> coordgp = {};
-          Kokkos::Array<real, 14> wgp = {};
-          GaussQuadratureTet(ng, coordgp, wgp );
-          
-          // Extract the element coordinates
-          Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
-          for (int i = 0;i < 4;i++) {
-              coordel[i][0] = cx_d_view(inpoel_d_view(4*e + i));
-              coordel[i][1] = cy_d_view(inpoel_d_view(4*e + i));
-              coordel[i][2] = cz_d_view(inpoel_d_view(4*e + i));
-            }
-        
-          //jacInv is Kokkos::Array based matrix
-            Kokkos::Array<Kokkos::Array<real, 10>, 3> dBdx = {};
-            Kokkos::Array<real, 10> B = {};
-           auto jacInv =
-                  inverseJacobian(coordel[0], coordel[1], coordel[2], coordel[3] );
-           auto dof_el = ndofel_d_view(e);
-           
-            eval_dBdx_p1(dof_el, jacInv, dBdx);
-           // Gaussian quadrature
-
-            Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> g = {};
-            Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> asig = {}
-            Kokkos::Array<real, 2> al = {};
-            Kokkos::Array<Kokkos::Array<real, 12>, 3> fl = {};
-            Kokkos::Array<real, 2> apk = {};
-            // state has state + sprim length
-            Kokkos::Array<real, 50> state = {};
-            Kokkos::Array<size_t, 2> matInt = {};
-            Kokkos::Array<real, 2> alAvg = {};
-            Kokkos::Array<real, 2> vfmin = {};
-            Kokkos::Array<real, 20> alSol = {};
-            Kokkos::Array<real, 2> alReco = {};
-            Kokkos::Array<Kokkos::Array<real, 3>, 2> ref_n = {};
-           
-            for (std::size_t igp=0; igp<ng; ++igp)
-            {
-                if (dof_el > 4)
-                eval_dBdx_p2( igp, coordgp, jacInv, dBdx);
-
-              // Compute the coordinates of quadrature point at physical domain
-              auto gp = eval_gp( igp, coordel, coordgp);
-              
-              // Compute the basis function
-              eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
-                                  coordgp[2][igp], B);
-
-              auto wt = wgp[igp] * geoElem_d_view(e * geo_nprop);
-            
-              evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
-                rdof, nmat, e, ndofel_d_view(e), m_nprop, p_nprop, geo_nprop,
-                bparam, solidx_d_view, inpoel_d_view, 
-                cx_d_view, cy_d_view, cz_d_view, geoElem_d_view,
-                {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U_d_view, 
-                P_d_view, state, matInt, alAvg, vfmax, vfmin, alSol, alReco, dBdx, ref_n);
-          
-              // compute flux
-              fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 
-                  mat_blk, state, g, asig, al, fl, apk);
-              
-              update_rhs(ncomp, ndof, dof_el, wt, r_nprop, e, dBdx, fl, R_d_view);  
-          }
+        //! Right now, pick the largest size
+        Kokkos::Array<Kokkos::Array<real, NQUAD_MAX>, 3> coordgp = {};
+        Kokkos::Array<real, NQUAD_MAX> wgp = {};
+        GaussQuadratureTet(ng, coordgp, wgp );
+  
+        // Extract the element coordinates
+        Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
+        for (int i=0; i<4; i++) {
+          coordel[i][0] = cx_d_view(inpoel_d_view(4*e + i));
+          coordel[i][1] = cy_d_view(inpoel_d_view(4*e + i));
+          coordel[i][2] = cz_d_view(inpoel_d_view(4*e + i));
         }
-        
-      });
-      Kokkos::fence();
-      Kokkos::deep_copy(R_h_view, R_d_view);
+
+        // jacInv is Kokkos::Array based matrix
+        Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, 3> dBdx = {};
+        Kokkos::Array<real, NDOF_MAX> B = {};
+        auto jacInv =
+          inverseJacobian(coordel[0], coordel[1], coordel[2], coordel[3] );
+        auto dof_el = ndofel_d_view(e);
+   
+        eval_dBdx_p1(dof_el, jacInv, dBdx);
+
+        Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> g = {};
+        Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> asig = {};
+        Kokkos::Array<real, 2> al = {};
+        Kokkos::Array<Kokkos::Array<real, 12>, 3> fl = {};
+        Kokkos::Array<real, 2> apk = {};
+        // state has state + sprim length
+        Kokkos::Array<real, 50> state = {};
+        Kokkos::Array<size_t, 2> matInt = {};
+        Kokkos::Array<real, 2> alAvg = {};
+        Kokkos::Array<real, 2> vfmin = {};
+        Kokkos::Array<real, 2> vfmax = {};
+        Kokkos::Array<real, 20> alSol = {};
+        Kokkos::Array<real, 2> alReco = {};
+        Kokkos::Array<Kokkos::Array<real, 3>, 2> ref_n = {};
+
+        for (std::size_t igp=0; igp<ng; ++igp)
+        {
+          if (dof_el > 4)
+            eval_dBdx_p2( igp, coordgp, jacInv, dBdx);
+
+          // Compute the coordinates of quadrature point at physical domain
+          auto gp = eval_gp( igp, coordel, coordgp);
+    
+          // Compute the basis function
+          eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
+                      coordgp[2][igp], B);
+
+          auto wt = wgp[igp] * geoElem_d_view(e * geo_nprop);
+
+          // orig: auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+          // rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
+          // {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
+          
+          evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+            rdof, nmat, e, ndofel_d_view(e), m_nprop, p_nprop, geo_nprop,
+            bparam, solidx_d_view, inpoel_d_view, 
+            cx_d_view, cy_d_view, cz_d_view, geoElem_d_view,
+            {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U_d_view, 
+            P_d_view, state, matInt, alAvg, vfmax, vfmin, alSol, alReco, dBdx, ref_n);
+
+          // compute flux
+          fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 
+            mat_blk, state, g, asig, al, fl, apk);
+              
+          update_rhs(ncomp, ndof, dof_el, wt, r_nprop, e, dBdx, fl, R_d_view);  
+        }
+      }
+    });
+    Kokkos::fence();
+    Kokkos::deep_copy(R_h_view, R_d_view);
 }
  
 
