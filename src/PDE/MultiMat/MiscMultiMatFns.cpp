@@ -216,25 +216,33 @@ cleanTraceMultiMat(
         }
       }
       else if (!matExists(alk)) {  // condition so that else-branch not exec'ed for solids
-        // determine target relaxation pressure
-        auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-          U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
-        prelax = std::max(prelax, p_target);
         auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
-        auto gk = std::array< std::array< tk::real, 3 >, 3 >
-          {{ {{1, 0, 0}},
-             {{0, 1, 0}},
-             {{0, 0, 1}} }};
-        // update state of trace material
+        // For solids, reset deformation and stress
+        if (solidx[k] > 0)
+        {
+          resetSolidTensors(nmat, k, e, U, P);
+        }
+        // For fluids, reset pressure
+        else
+        {
+          // determine target relaxation pressure
+          auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
+          prelax = std::max(prelax, p_target);
+          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
+            prelax;
+          for (std::size_t i=1; i<rdof; ++i)
+            P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
+        }
+        std::array< std::array< tk::real, 3 >, 3 > gk;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            gk[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
         U(e, energyDofIdx(nmat, k, rdof, 0)) =
-          mat_blk[k].compute< EOS::totalenergy >( arhok, u, v, w, alk*prelax,
-          alk, gk );
-        P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
-          prelax;
-        resetSolidTensors(nmat, k, e, U, P);
+          mat_blk[k].compute< EOS::totalenergy >( arhok, u, v, w,
+          P(e, pressureDofIdx(nmat, k, rdof, 0)), alk, gk );
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
-          P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
     }
@@ -578,7 +586,7 @@ resetSolidTensors(
   std::size_t k,
   std::size_t e,
   tk::Fields& U,
-  tk::Fields& P )
+  tk::Fields& P)
 // *****************************************************************************
 //  Reset the solid tensors
 //! \param[in] nmat Number of materials in this PDE system
@@ -592,10 +600,15 @@ resetSolidTensors(
   const auto rdof = g_inputdeck.get< tag::rdof >();
 
   if (solidx[k] > 0) {
+    std::array< std::array< tk::real, 3 >, 3 > gk;
+    for (std::size_t i=0; i<3; ++i)
+      for (std::size_t j=0; j<3; ++j)
+        gk[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+    auto new_gii = std::pow(tk::determinant(gk),1.0/3.0);
     for (std::size_t i=0; i<3; ++i) {
       for (std::size_t j=0; j<3; ++j) {
         // deformation gradient reset
-        if (i==j) U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = 1.0;
+        if (i==j) U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = new_gii;
         else U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = 0.0;
 
         // elastic Cauchy-stress reset
