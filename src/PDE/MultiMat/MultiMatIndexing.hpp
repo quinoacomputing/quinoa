@@ -217,9 +217,9 @@ inline tk::real volfracPRelaxLim()
 //! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
 //!  on the riemannDeriv array.
 //! \param[in] k Index of required material
-//! \param[in] i
-//! \param[in] j
-//! \param[in] l
+//! \param[in] i Index i
+//! \param[in] j Index j
+//! \param[in] l Index l
 //! \return Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
 //!  on the riemannDeriv array.
 //! \details This function is used to get the index of the nonconservative
