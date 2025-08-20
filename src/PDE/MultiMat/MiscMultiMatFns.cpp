@@ -219,9 +219,7 @@ cleanTraceMultiMat(
         auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
         // For solids, reset deformation and stress
         if (solidx[k] > 0)
-        {
           resetSolidTensors(nmat, k, e, U, P);
-        }
         // For fluids, reset pressure
         else
         {
@@ -229,8 +227,7 @@ cleanTraceMultiMat(
           auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
             U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
           prelax = std::max(prelax, p_target);
-          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
-            prelax;
+          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk * prelax;
           for (std::size_t i=1; i<rdof; ++i)
             P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
@@ -238,12 +235,12 @@ cleanTraceMultiMat(
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             gk[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
-          auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhok, u, v, w,
-            P(e, pressureDofIdx(nmat, k, rdof, 0)), alk, gk );
-          // total energy flux into majority material
-          d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
-            - arhoEmat);
-          U(e, energyDofIdx(nmat, k, rdof, 0)) = arhoEmat;
+        auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhok, u, v, w,
+          P(e, pressureDofIdx(nmat, k, rdof, 0)), alk, gk );
+        // total energy flux into majority material
+        d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
+          - arhoEmat);
+        U(e, energyDofIdx(nmat, k, rdof, 0)) = arhoEmat;
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
         }
