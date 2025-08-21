@@ -463,6 +463,30 @@ class Transport {
                     tk::Fields& /*R*/ ) const
     {}
 
+    //! Assemble residual terms for use with implicit solver, not implemented
+    //! here.
+    // //! \param[in] fd Face connectivity and boundary conditions object
+    // //! \param[in] geoFace Face geometry array
+    // //! \param[in] geoElem Element geometry array
+    // //! \param[in] inpoel Element-node connectivity
+    // //! \param[in] coord Array of nodal coordinates
+    // //! \param[in] U Solution vector at recent time step
+    // //! \param[in] P Primitive vector at recent time step
+    // //! \param[in] ndofel Vector of local number of degrees of freedom
+    // //! \param[in,out] R Assembly matrix computed
+    // //! \param[in] intsharp Interface compression tag, an optional argument,
+    // //!    with default 0, so that it's unused for single-material and
+    // //!    transport.  
+    void implicit_assembly( const inciter::FaceData& /*fd*/,
+                            const tk::Fields& /*geoFace*/,
+                            const tk::Fields& /*geoElem*/,
+                            const std::vector< std::size_t >& /*inpoel*/,
+                            const tk::UnsMesh::Coords& /*coord*/,
+                            const tk::Fields& /*U*/,
+                            const tk::Fields& /*P*/,
+                            const std::vector< std::size_t >& /*ndofel*/,
+                            tk::Fields& /*R*/ ) const {}
+
     //! Return a map that associates user-specified strings to functions
     //! \return Map that associates user-specified strings to functions that
     //!  compute relevant quantities to be output to file

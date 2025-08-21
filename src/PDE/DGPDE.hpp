@@ -348,6 +348,21 @@ class DGPDE {
                     tk::Fields& R ) const
     { return self->stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R); }
 
+    //! Public interface for computing implicit terms for a face
+    void implicit_assembly( const inciter::FaceData& fd,
+                            const tk::Fields& geoFace,
+                            const tk::Fields& geoElem,
+                            const std::vector< std::size_t >& inpoel,
+                            const tk::UnsMesh::Coords& coord,
+                            const tk::Fields& U,
+                            const tk::Fields& P,
+                            const std::vector< std::size_t >& ndofel,
+                            tk::Fields& R ) const
+    {
+      return self->implicit_assembly( fd, geoFace, geoElem, inpoel, coord,
+                                      U, P, ndofel, R);
+    }
+
     //! Public interface to returning maps of output var functions
     std::map< std::string, tk::GetVarFn > OutVarFn() const
     { return self->OutVarFn(); }
@@ -534,6 +549,15 @@ class DGPDE {
                               const tk::Fields&,
                               const std::vector< std::size_t >&,
                               tk::Fields& ) const = 0;
+      virtual void implicit_assembly( const inciter::FaceData&,
+                                      const tk::Fields&,
+                                      const tk::Fields&,
+                                      const std::vector< std::size_t >&,
+                                      const tk::UnsMesh::Coords&,
+                                      const tk::Fields&,
+                                      const tk::Fields&,
+                                      const std::vector< std::size_t >&,
+                                      tk::Fields& ) const = 0;
       virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -729,6 +753,17 @@ class DGPDE {
                       const std::vector< std::size_t >& ndofel,
                       tk::Fields& R ) const override
       { return data.stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R ); }
+      void implicit_assembly( const inciter::FaceData& fd,
+                              const tk::Fields& geoFace,
+                              const tk::Fields& geoElem,
+                              const std::vector< std::size_t >& inpoel,
+                              const tk::UnsMesh::Coords& coord,
+                              const tk::Fields& U,
+                              const tk::Fields& P,
+                              const std::vector< std::size_t >& ndofel,
+                              tk::Fields& R ) const override
+      { return data.implicit_assembly( fd, geoFace, geoElem, inpoel, coord, U,
+                                       P, ndofel, R ); }
       std::map< std::string, tk::GetVarFn > OutVarFn() const override
       { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override
