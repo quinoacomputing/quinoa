@@ -51,6 +51,7 @@ using RiemannFluxJacFn = std::function<
   std::array < std::vector< std::vector < real > >, 2 > (
     const std::vector< inciter::EOS >& ,
     const std::array< real, 3 >&,
+    const std::array< std::vector< std::vector < real > >, 2 >&, 
     const std::array< std::vector< real >, 2 >&,
     const std::vector< std::array< real, 3 > >& ) >;
 

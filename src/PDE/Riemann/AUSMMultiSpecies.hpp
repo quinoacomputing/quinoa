@@ -143,12 +143,14 @@ struct AUSMMultiSpecies {
   //! AUSM+up approximate Riemann solver flux Jacbobian function for
   //! multi-species flow
   //! \param[in] fn Face/Surface normal
+  //! \param[in] dUdP Jacobian of conserved variables with respect to primatives
   //! \param[in] u Left and right unknown/state vector
   //! \return Riemann flux Jacobian according to AUSM+up.
   //! \note The function signature must follow tk::RiemannFluxJacFn
   static tk::RiemannFluxJacFn::result_type
   fluxJac( const std::vector< EOS >& mat_blk,
            const std::array< tk::real, 3 >& fn,
+           const std::array< std::vector< std::vector < tk::real > >, 2 >& dUdP,
            const std::array< std::vector< tk::real >, 2 >& u,
            const std::vector< std::array< tk::real, 3 > >& = {} )
   {
@@ -156,7 +158,7 @@ struct AUSMMultiSpecies {
     auto k_p = g_inputdeck.get< tag::lowspeed_kp >();
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
     auto ncomp = u[0].size()-1;
-    tk::real rhol(0.0), rhor(0.0), pl(0.0), pr(0.0), Tl(0.0), Tr(0.0), al(0.0),
+    tk::real rhol(0.0), rhor(0.0), pl(0.0), pr(0.0), al(0.0),
              ar(0.0), a12(0.0), rho12(0.0), f_a(1.0);
     std::size_t uid, vid, wid, Tid;
 
@@ -219,17 +221,15 @@ struct AUSMMultiSpecies {
       drho12dP[1][k] = 0.5;
     }
 
-    pl = mixl.pressure( rhol, Tl );
-    al = mixl.frozen_soundspeed( rhol, Tl, mat_blk );
+    pl = mixl.pressure( rhol, P[0][Tid] );
+    al = mixl.frozen_soundspeed( rhol, P[0][Tid], mat_blk );
 
-    pr = mixr.pressure( rhor, Tr );
-    ar = mixr.frozen_soundspeed( rhor, Tr, mat_blk );
+    pr = mixr.pressure( rhor, P[1][Tid] );
+    ar = mixr.frozen_soundspeed( rhor, P[1][Tid], mat_blk );
 
     // Average states for mixture speed of sound
     a12 = 0.5*(al+ar);
     rho12 = 0.5*(rhol+rhor);
-
-    auto dUdP = conservedPrimitiveJac(mat_blk, fn, u);
 
     // Face-normal velocities from advective velocities
     auto vnl = P[0][uid] * fn[0]
@@ -438,117 +438,6 @@ struct AUSMMultiSpecies {
         }
 
     return dFdU;
-  }
-
-  //! NOTE: this is a fairly general function, and likely shouldn't be here,
-  //! but I'm not sure the best place for it.
-  //! Calculates the Jacobian of the converved variables with respect to the
-  //! primitive variables
-  //! \param[in] u Left and right unknown/state vector
-  //! \return Derivatives of conserved variables with respect to primitive
-  //! variables for the left and right states
-  //! \note The function signature must follow tk::RiemannFluxJacFn
-  static tk::RiemannFluxJacFn::result_type
-  conservedPrimitiveJac(
-    const std::vector< EOS >& mat_blk,
-    const std::array< tk::real, 3 >& ,
-    const std::array< std::vector< tk::real >, 2 >& u,
-    const std::vector< std::array< tk::real, 3 > >& = {} )
-  {
-    auto ncomp = u[0].size()-1;
-    auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
-    std::array dUdP{ std::vector(ncomp, std::vector< tk::real >(ncomp)),
-                     std::vector(ncomp, std::vector< tk::real >(ncomp)) };
-    tk::real rhol(0.0), rhor(0.0), Tl(0.0), Tr(0.0);
-
-    // Initialize mixtures
-    Mixture mixl(nspec, u[0], mat_blk);
-    Mixture mixr(nspec, u[1], mat_blk);
-
-    Tl = u[0][ncomp+multispecies::temperatureIdx(nspec, 0)];
-    Tr = u[1][ncomp+multispecies::temperatureIdx(nspec, 0)];
-    rhol = mixl.get_mix_density();
-    rhor = mixr.get_mix_density();
-
-    // Velocities
-    auto ul = u[0][multispecies::momentumIdx(nspec, 0)]/rhol;
-    auto vl = u[0][multispecies::momentumIdx(nspec, 1)]/rhol;
-    auto wl = u[0][multispecies::momentumIdx(nspec, 2)]/rhol;
-    auto ur = u[1][multispecies::momentumIdx(nspec, 0)]/rhor;
-    auto vr = u[1][multispecies::momentumIdx(nspec, 1)]/rhor;
-    auto wr = u[1][multispecies::momentumIdx(nspec, 2)]/rhor;
-
-    // Partials of species density w.r.t. species density
-    for (std::size_t k=0; k<nspec; ++k)
-    {
-      dUdP[0][multispecies::densityIdx(nspec, k)]
-          [multispecies::densityIdx(nspec, k)] = 1.0;
-      dUdP[1][multispecies::densityIdx(nspec, k)]
-          [multispecies::densityIdx(nspec, k)] = 1.0;
-    }
-
-    // Partials of momentum...
-    // ... w.r.t. species density
-    for (std::size_t k=0; k<nspec; ++k)
-    {
-      dUdP[0][multispecies::momentumIdx(nspec, 0)]
-          [multispecies::densityIdx(nspec, k)] = ul;
-      dUdP[0][multispecies::momentumIdx(nspec, 1)]
-          [multispecies::densityIdx(nspec, k)] = vl;
-      dUdP[0][multispecies::momentumIdx(nspec, 2)]
-          [multispecies::densityIdx(nspec, k)] = wl;
-      dUdP[1][multispecies::momentumIdx(nspec, 0)]
-          [multispecies::densityIdx(nspec, k)] = ur;
-      dUdP[1][multispecies::momentumIdx(nspec, 1)]
-          [multispecies::densityIdx(nspec, k)] = vr;
-      dUdP[1][multispecies::momentumIdx(nspec, 2)]
-          [multispecies::densityIdx(nspec, k)] = wr;
-    }
-
-    // ... w.r.t. velocity
-    for (std::size_t idir=0; idir<3; ++idir)
-    {
-      dUdP[0][multispecies::momentumIdx(nspec, idir)]
-          [multispecies::momentumIdx(nspec, idir)] = rhol;
-      dUdP[1][multispecies::momentumIdx(nspec, idir)]
-          [multispecies::momentumIdx(nspec, idir)] = rhor;
-    }
-
-    // Partials of energy...
-    // ... w.r.t. species density
-    for (std::size_t k=0; k<nspec; ++k)
-    {
-      // This assumes de_s/drho_s = 0
-      dUdP[0][multispecies::energyIdx(nspec, 0)]
-          [multispecies::densityIdx(nspec, k)] =
-          mat_blk[k].compute< EOS::internalenergy >(Tl) +
-          0.5 * (ul*ul + vl*vl + wl*wl);
-      dUdP[1][multispecies::energyIdx(nspec, 0)]
-          [multispecies::densityIdx(nspec, k)] =
-          mat_blk[k].compute< EOS::internalenergy >(Tr) +
-          0.5 * (ur*ur + vr*vr + wr*wr);
-    }
-    // ... w.r.t. velocity
-    dUdP[0][multispecies::energyIdx(nspec, 0)]
-        [multispecies::momentumIdx(nspec, 0)] = rhol * ul;
-    dUdP[0][multispecies::energyIdx(nspec, 0)]
-        [multispecies::momentumIdx(nspec, 1)] = rhol * vl;
-    dUdP[0][multispecies::energyIdx(nspec, 0)]
-        [multispecies::momentumIdx(nspec, 2)] = rhol * wl;
-    dUdP[1][multispecies::energyIdx(nspec, 0)]
-        [multispecies::momentumIdx(nspec, 0)] = rhor * ur;
-    dUdP[1][multispecies::energyIdx(nspec, 0)]
-        [multispecies::momentumIdx(nspec, 1)] = rhor * vr;
-    dUdP[1][multispecies::energyIdx(nspec, 0)]
-        [multispecies::momentumIdx(nspec, 2)] = rhor * wr;
-
-    // ... w.r.t. temperature
-    dUdP[0][multispecies::energyIdx(nspec, 0)]
-        [multispecies::energyIdx(nspec, 0)] = rhol * mixl.mix_Cv(Tl, mat_blk);
-    dUdP[1][multispecies::energyIdx(nspec, 0)]
-        [multispecies::energyIdx(nspec, 0)] = rhor * mixl.mix_Cv(Tr, mat_blk);
-
-    return dUdP;
   }
 
   //! Flux type accessor
