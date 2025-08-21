@@ -72,7 +72,8 @@ class MultiSpecies {
       m_physics(),
       m_ncomp( g_inputdeck.get< tag::ncomp >() ),
       m_nprim(nprim()),
-      m_riemann( multispeciesRiemannSolver( g_inputdeck.get< tag::flux >() ) )
+      m_riemann( multispeciesRiemannSolver( g_inputdeck.get< tag::flux >() ) ),
+      m_riemannjac( multispeciesRiemannJac( g_inputdeck.get< tag::flux >() ) )
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
@@ -806,6 +807,170 @@ class MultiSpecies {
                     const std::vector< std::size_t >& /*ndofel*/,
                     tk::Fields& /*R*/ ) const {}
 
+    //! TODO: the actual form of R should be a CSR
+    //! Assemble residual terms for use with implicit solver
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] inpoel Element-node connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive vector at recent time step
+    //! \param[in] ndofel Vector of local number of degrees of freedom
+    //! \param[in,out] R Assembly matrix computed
+    //! \param[in] intsharp Interface compression tag, an optional argument,
+    //!   with default 0, so that it's unused for single-material and transport.
+    void implicit_assembly( const inciter::FaceData& fd,
+                            const tk::Fields& geoFace,
+                            const tk::Fields& geoElem,
+                            const std::vector< std::size_t >& inpoel,
+                            const tk::UnsMesh::Coords& coord,
+                            const tk::Fields& U,
+                            const tk::Fields& P,
+                            const std::vector< std::size_t >& ndofel,
+                            tk::Fields& R,
+                            int intsharp=0 ) const
+    {
+      const auto& esuf = fd.Esuf();
+      const auto& inpofa = fd.Inpofa();
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto ncomp = g_inputdeck.get< tag::ncomp >();
+      const auto nprim = P.nprop() / rdof;
+      const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+      // Loop over faces
+      for (auto f=fd.Nbfac(); esuf.size()/2; ++f) {
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+        auto ng_l = tk::NGfa(ndofel[el]);
+        auto ng_r = tk::NGfa(ndofel[er]);
+
+        // When the number of gauss points for the left and right element are
+        // different, choose the larger ng
+        auto ng = std::max( ng_l, ng_r );
+
+        // arrays for quadrature points
+        std::array< std::vector< tk::real >, 2 > coordgp;
+        std::vector< tk::real > wgp;
+
+        coordgp[0].resize( ng );
+        coordgp[1].resize( ng );
+        wgp.resize( ng );
+
+        // get quadrature point weights and coordinates for triangle
+        tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+        // Extract the element coordinates
+        std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+          {{cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+          {{cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+          {{cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+          {{cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }}
+        }};
+
+        std::array< std::array< tk::real, 3>, 4 > coordel_r {{
+          {{cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
+          {{cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
+          {{cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
+          {{cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }}
+        }};
+
+        // Compute the determinant of Jacobian matrix
+        auto detT_l =
+          tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+        auto detT_r =
+          tk::Jacobian(coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
+
+        // Extract the face coordinates
+        std::array< std::array< tk::real, 3>, 3 > coordfa {{
+          {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
+          {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
+          {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }}
+        }};
+
+        std::array< tk::real, 3 >
+          fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
+
+        // Calculate flux derivatives at each Gauss point on face.
+        for (std::size_t igp=0; igp<ng; ++igp) {
+          auto gp = tk::eval_gp( igp, coordfa, coordgp );
+
+          std::size_t dof_el, dof_er;
+          if (rdof > ndof)
+          {
+            dof_el = rdof;
+            dof_er = rdof;
+          }
+          else
+          {
+            dof_el = ndofel[el];
+            dof_er = ndofel[er];
+          }
+
+          // For multi-material p-adaptive simulation, when dofel = 1, p0p1 is
+          // applied and ndof for solution evaluation should be 4
+          if(ncomp > 5 && pref) {
+            if(dof_el == 1)
+              dof_el = 4;
+            if(dof_er == 1)
+              dof_er = 4;
+          }
+
+          std::array< tk::real, 3> ref_gp_l{
+            tk::Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+            tk::Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+            tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+          std::array< tk::real, 3> ref_gp_r{
+            tk::Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
+            tk::Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
+            tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
+          auto B_l = tk::eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
+          auto B_r = tk::eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
+          auto wt = wgp[igp] * geoFace(f,0);
+
+          //! WARNING: This is likely not the right way to do this, since this
+          //! seems to be for a Multimat?
+          std::array< std::vector< tk::real >, 2 > state;
+          state[0] = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim, rdof,
+            nmat(), el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
+          state[1] = evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim, rdof,
+            nmat(), er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
+          auto dUdP = conservedPrimitiveJac(m_mat_blk, fn, state);
+
+          // Dummy velocity for now.
+          auto v_dummy = tk::VelFn::result_type();
+
+          auto dfldU = m_riemannjac( m_mat_blk, fn, dUdP, state, v_dummy );
+
+          //! TODO: This is just pseudocode right now, will translate after the
+          //! form of R is hammered out.
+          // The residual at points on the interior of the element will receive
+          // some contribution from the interior points based on the value of
+          // the shape functions at the Gauss points and the Gauss weights.
+          // element_left = face_connectivity(left state)
+          // nodes_left = element_left.nodes()
+          //    for i = 1:nodes_left{
+          //      for j = 1:nodes_left{
+          //        for U_var over conserved variables {
+          //          dRdU[i][j][U_var] += dfldU[0][U_var]*B_l[i]*B_l[j]*wt
+          //        }
+          //      }
+          //      for j = 1:nodes_right{
+          //        for U_var over conserved variables {
+          //          dRdU[i][j][U_var] += dfldU[1][U_var]*B_l[i]*B_l[j]*wt
+          //        }
+          //      } // Loop over nodes derivatives taken with
+          //    } // Loop over nodes derivative taken on
+
+        } // Loop over GP
+      }
+    }
+
     //! Extract the velocity field at cell nodes. Currently unused.
     // //! \param[in] U Solution vector at recent time step
     // //! \param[in] N Element node indices
@@ -963,6 +1128,8 @@ class MultiSpecies {
     const ncomp_t m_nprim;
     //! Riemann solver
     tk::RiemannFluxFn m_riemann;
+    //! Riemann solver Jacboian
+    tk::RiemannFluxJacFn m_riemannjac;
     //! BC configuration
     BCStateFn m_bc;
     //! EOS material block
@@ -1019,6 +1186,96 @@ class MultiSpecies {
 
       return fl;
     }
+
+  //! Calculates the Jacobian of the converved variables with respect to the
+  //! primitive variables
+  //! \param[in] u Left and right unknown/state vector
+  //! \return Derivatives of conserved variables with respect to primitive
+  //! variables for the left and right states
+  //! \note The function signature must follow tk::RiemannFluxJacFn
+  static tk::RiemannFluxJacFn::result_type
+  conservedPrimitiveJac(
+    const std::vector< EOS >& mat_blk,
+    const std::array< tk::real, 3 >&,
+    const std::array< std::vector< tk::real >, 2 >& u,
+    const std::vector< std::array< tk::real, 3 > >& = {} )
+  {
+    auto ncomp = u[0].size()-1;
+    auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+    std::array dUdP{ std::vector(ncomp, std::vector< tk::real >(ncomp)),
+                     std::vector(ncomp, std::vector< tk::real >(ncomp)) };
+    tk::real rhol(0.0), rhor(0.0), Tl(0.0), Tr(0.0);
+    std::size_t uid, vid, wid, Tid;
+    uid = nspec; vid = nspec + 1; wid = nspec + 2; Tid = ncomp - 1;
+
+    // Initialize mixtures
+    Mixture mixl(nspec, u[0], mat_blk);
+    Mixture mixr(nspec, u[1], mat_blk);
+
+    Tl = u[0][ncomp+multispecies::temperatureIdx(nspec, 0)];
+    Tr = u[1][ncomp+multispecies::temperatureIdx(nspec, 0)];
+    rhol = mixl.get_mix_density();
+    rhor = mixr.get_mix_density();
+
+    // Velocities
+    auto ul = u[0][multispecies::momentumIdx(nspec, 0)]/rhol;
+    auto vl = u[0][multispecies::momentumIdx(nspec, 1)]/rhol;
+    auto wl = u[0][multispecies::momentumIdx(nspec, 2)]/rhol;
+    auto ur = u[1][multispecies::momentumIdx(nspec, 0)]/rhor;
+    auto vr = u[1][multispecies::momentumIdx(nspec, 1)]/rhor;
+    auto wr = u[1][multispecies::momentumIdx(nspec, 2)]/rhor;
+
+    // Partials of species density w.r.t. species density
+    for (std::size_t k=0; k<nspec; ++k)
+    {
+      dUdP[0][k][k] = 1.0;
+      dUdP[1][k][k] = 1.0;
+    }
+
+    // Partials of momentum...
+    // ... w.r.t. species density
+    for (std::size_t k=0; k<nspec; ++k)
+    {
+      dUdP[0][uid][k] = ul;
+      dUdP[0][vid][k] = vl;
+      dUdP[0][wid][k] = wl;
+      dUdP[1][uid][k] = ur;
+      dUdP[1][vid][k] = vr;
+      dUdP[1][wid][k] = wr;
+    }
+
+    // ... w.r.t. velocity
+    dUdP[0][uid][uid] = rhol;
+    dUdP[1][uid][uid] = rhor;
+    dUdP[0][vid][vid] = rhol;
+    dUdP[1][vid][vid] = rhor;
+    dUdP[0][wid][wid] = rhol;
+    dUdP[1][wid][wid] = rhor;
+
+    // Partials of energy...
+    // ... w.r.t. species density
+    for (std::size_t k=0; k<nspec; ++k)
+    {
+      // This assumes de_s/drho_s = 0
+      dUdP[0][Tid][k] = mat_blk[k].compute< EOS::internalenergy >(Tl)
+                      + 0.5 * (ul*ul + vl*vl + wl*wl);
+      dUdP[1][Tid][k] = mat_blk[k].compute< EOS::internalenergy >(Tr)
+                      + 0.5 * (ur*ur + vr*vr + wr*wr);
+    }
+    // ... w.r.t. velocity
+    dUdP[0][Tid][uid] = rhol * ul;
+    dUdP[0][Tid][vid] = rhol * vl;
+    dUdP[0][Tid][wid] = rhol * wl;
+    dUdP[1][Tid][uid] = rhor * ur;
+    dUdP[1][Tid][vid] = rhor * vr;
+    dUdP[1][Tid][wid] = rhor * wr;
+
+    // ... w.r.t. temperature
+    dUdP[0][Tid][Tid] = rhol * mixl.mix_Cv(Tl, mat_blk);
+    dUdP[1][Tid][Tid] = rhor * mixl.mix_Cv(Tr, mat_blk);
+
+    return dUdP;
+  }
 
     //! \brief Boundary state function providing the left and right state of a
     //!   face at Dirichlet boundaries
