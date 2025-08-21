@@ -1473,8 +1473,8 @@ DG::solve( tk::real newdt )
     }
 
   // New pressure relaxation
-  //if (m_stage < m_nstage-1)
-  g_dgpde[d->MeshId()].pressure_relaxation( myGhosts()->m_nunk, d->T(), d->Dt(), m_u );
+  if (m_stage == m_nstage-1)
+    g_dgpde[d->MeshId()].pressure_relaxation( myGhosts()->m_nunk, d->T(), d->Dt(), m_u );
 
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
