@@ -215,7 +215,7 @@ cleanTraceMultiMat(
           P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
         }
       }
-      else if (!matExists(alk)) {  // condition so that else-branch not exec'ed for solids
+      else if ( alk < 1.0e-04 /*!matExists(alk)*/) {  // condition so that else-branch not exec'ed for solids
         auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
         // For solids, reset deformation and stress
         if (solidx[k] > 0)
@@ -239,7 +239,7 @@ cleanTraceMultiMat(
           P(e, pressureDofIdx(nmat, k, rdof, 0)), alk, gk );
         // total energy flux into majority material
         d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
-          - arhoEmat);
+                  - arhoEmat);
         U(e, energyDofIdx(nmat, k, rdof, 0)) = arhoEmat;
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
