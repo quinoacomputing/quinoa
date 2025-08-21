@@ -2411,8 +2411,26 @@ DG::BDF1_integrate()
 //!   time discretization.
 // *****************************************************************************
 {
+  auto d = Disc();
   //TODO: implicit solver:
+
   // update solution m_u
+
+  // while iterations < maxit || max(abs(dU)) > tol {
+
+    //! TODO: Right now, I'm just putting this in m_stiffrhs, but it sohuld be
+    //! its own container, something similar to CSR
+    g_dgpde[d->MeshId()].implicit_assembly( myGhosts()->m_fd,
+      myGhosts()->m_geoFace, myGhosts()->m_geoElem, myGhosts()->m_inpoel,
+      myGhosts()->m_coord, m_u, m_p, m_ndof, m_stiffrhs );
+
+
+    // } // Newton loop
+
+  //! TODO:
+  // We will still need to take care of the volume contribution, which are only
+  // intra-element supported
+
 }
 
 #include "NoWarning/dg.def.h"
