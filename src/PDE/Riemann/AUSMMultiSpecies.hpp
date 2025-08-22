@@ -409,15 +409,15 @@ struct AUSMMultiSpecies {
     LAPACKE_dgetri(LAPACK_ROW_MAJOR, ncomp, dPldU, ncomp, ipiv);
     Assert(jerr==0, "Lapack error in inverting dUdPl");
     #ifndef NDEBUG
-    lapack_int ierr =
+    lapack_int kerr =
     #endif
     LAPACKE_dgetrf(LAPACK_ROW_MAJOR, ncomp, ncomp, dPrdU, ncomp, ipiv);
-    Assert(ierr==0, "Lapack error in LU factorization of dUdPr");
+    Assert(kerr==0, "Lapack error in LU factorization of dUdPr");
     #ifndef NDEBUG
-    lapack_int jerr =
+    lapack_int lerr =
     #endif
     LAPACKE_dgetri(LAPACK_ROW_MAJOR, ncomp, dPrdU, ncomp, ipiv);
-    Assert(jerr==0, "Lapack error in inverting dUdPr");
+    Assert(lerr==0, "Lapack error in inverting dUdPr");
 
     // Final matrix multiplication
     // We have dF_i/dP_j, (flux in first index, primitive derivative in the
