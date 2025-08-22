@@ -164,8 +164,8 @@ struct AUSMMultiSpecies {
 
     // Variables with partials of the left and right states that can be
     // overwritten each loop iteration
-    std::array< tk::real, 2 > dmldP, dmrdP, dmbardP, dmpdP, da12dP,
-                              dm12dP, dpudP, dvriemdP;
+    std::array< tk::real, 2 > dmldP, dmrdP, dmbardP, dmpdP, dm12dP, dpudP,
+                              dvriemdP;
 
     // Factory for variables that have partials with respect to both the left
     // and right states and need to be saved
@@ -250,8 +250,9 @@ struct AUSMMultiSpecies {
     auto dmsrdm = splitmach_derivs(mr, f_a);
 
     // Pressure, sound speed, and normal velocity derivatives
-    auto daldP = mixl.soundspeed_prim_partials(rhol, P[0][Tid], mat_blk);
-    auto dardP = mixr.soundspeed_prim_partials(rhor, P[1][Tid], mat_blk);
+    // Sound speeds frozen, derivatives = 0
+    // auto daldP = mixl.soundspeed_prim_partials(rhol, P[0][Tid], mat_blk);
+    // auto dardP = mixr.soundspeed_prim_partials(rhor, P[1][Tid], mat_blk);
     auto dpldP = mixl.pressure_prim_partials(rhol, P[0][Tid], mat_blk);
     auto dprdP = mixr.pressure_prim_partials(rhor, P[1][Tid], mat_blk);
     std::vector< tk::real > dvnldP(ncomp, 0.0), dvnrdP(ncomp, 0.0);
@@ -277,16 +278,12 @@ struct AUSMMultiSpecies {
     // Loop over primitives that fluxes are taken derivatives with
     for (std::size_t k=0; k<ncomp; ++k)
     {
-      // Mach number derivatives and face SoS and density derivatives
-      dmldP[0] = -ml / (2. * a12) * daldP[k];
-      dmldP[1] = -ml / (2. * a12) * dardP[k];
-      dmrdP[0] = -mr / (2. * a12) * daldP[k];
-      dmrdP[1] = -mr / (2. * a12) * dardP[k];
-      da12dP[0] = 0.5 * daldP[k];
-      da12dP[1] = 0.5 * dardP[k];
-
       // Mach derivatives pick up an extra term when taken with velocity on the
       // same side
+      dmldP[0] = 0;
+      dmrdP[1] = 0;
+      dmrdP[0] = 0;
+      dmldP[1] = 0;
       if (k >= uid && k <= wid)
       {
         dmldP[0] += fn[k - uid]/a12;
@@ -304,12 +301,10 @@ struct AUSMMultiSpecies {
 
       dmpdP[0] = C * dmbardP[0]
                + k_p * max_mbar * idenom * dpldP[k]
-               - mp / rho12 *drho12dP[0][k]
-               - 2. * mp / a12 * da12dP[0];
+               - mp / rho12 *drho12dP[0][k];
       dmpdP[1] = C * dmbardP[1]
                - k_p * max_mbar * idenom * dprdP[k]
-               - mp / rho12 *drho12dP[1][k]
-               - 2. * mp / a12 * da12dP[1];
+               - mp / rho12 *drho12dP[1][k];
 
       dm12dP[0] = dmsldm[0] * dmldP[0]
                 + dmsrdm[1] * dmrdP[0]
@@ -324,14 +319,12 @@ struct AUSMMultiSpecies {
                + -k_u * msl[2] * f_a * rho12 * a12 * (vnr-vnl) * dmsrdm[3]
                  * dmrdP[0]
                + pu / rho12 * drho12dP[0][k]
-               + pu / a12 * da12dP[0]
                + k_u* msl[2] * msr[3] * f_a * rho12 * a12 * dvnldP[k];
       dpudP[1] = -k_u * msr[3] * f_a * rho12 * a12 * (vnr-vnl) * dmsldm[2]
                  * dmldP[1]
                + -k_u * msl[2] * f_a * rho12 * a12 * (vnr-vnl) * dmsrdm[3]
                  * dmrdP[1]
                + pu / rho12 * drho12dP[1][k]
-               + pu / a12 * da12dP[1]
                - k_u* msl[2] * msr[3] * f_a * rho12 * a12 * dvnrdP[k];
 
       dp12dP[0][k] = dmsldm[2] * dmldP[0] * pl
@@ -343,8 +336,8 @@ struct AUSMMultiSpecies {
                    + msr[3] * dprdP[k]
                    + dpudP[1];
 
-      dvriemdP[0] = da12dP[0] * m12 + a12 * dm12dP[0];
-      dvriemdP[1] = da12dP[1] * m12 + a12 * dm12dP[1];
+      dvriemdP[0] = a12 * dm12dP[0];
+      dvriemdP[1] = a12 * dm12dP[1];
 
       if (vriem > 0) {
         dl_plusdP[0][k]  = dvriemdP[0];
