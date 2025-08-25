@@ -376,20 +376,20 @@ class Transport {
       std::vector< std::size_t > solidx(1, 0);
       tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
                    inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, ndofel, dt, R,
+                   visc_flux, Problem::prescribedVelocity, U, P, ndofel, dt, R,
                    riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
-                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, visc_flux,
                     Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, m_ncomp, m_mat_blk, ndof, rdof,
           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
-          Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
+          visc_flux, Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
           riemannDeriv, intsharp );
     }
 
@@ -660,6 +660,14 @@ class Transport {
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
       return {{ ul, Problem::initialize( ncomp, mat_blk, x, y, z, t ) }};
+    }
+    
+static tk::FluxFn::result_type    
+   visc_flux(const std::vector< std::array< tk::real, 3 > >& ugp_grad,
+            const std::vector< std::array< tk::real, 3 > >& pgp_grad,
+            const std::vector< tk::real >& ugp) 
+    {
+     return;
     }
 
   //----------------------------------------------------------------------------

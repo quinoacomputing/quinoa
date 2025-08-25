@@ -478,8 +478,8 @@ class CompFlow {
 
       // compute internal surface flux integrals
       tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, riemannDeriv );
+                   coord, fd, geoFace, geoElem, m_riemann, visc_flux,
+                   velfn, U, P, ndofel, dt, R, riemannDeriv );
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4,
@@ -488,13 +488,13 @@ class CompFlow {
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( 1, t, m_mat_blk, ndof, rdof,
-                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
-                    U, P, ndofel, R );
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, 
+                    visc_flux, velfn, U, P, ndofel, R );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b),
-                        fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
+                        fd, geoFace, geoElem, inpoel, coord, t, m_riemann, visc_flux,
                         velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv );
 
      // compute external (energy) sources
@@ -1014,6 +1014,14 @@ class CompFlow {
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
       return {{ ul, Problem::initialize( ncomp, mat_blk, x, y, z, t ) }};
+    }
+    
+static tk::FluxFn::result_type    
+   visc_flux(const std::vector< std::array< tk::real, 3 > >& ugp_grad,
+            const std::vector< std::array< tk::real, 3 > >& pgp_grad,
+            const std::vector< tk::real >& ugp) 
+    {
+      return;
     }
 
     //! \brief Boundary state function providing the left and right state of a

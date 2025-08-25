@@ -44,6 +44,7 @@ surfInt( const bool pref,
          const Fields& geoFace,
          const Fields& geoElem,
          const RiemannFluxFn& flux,
+         const FluxFn& visc_flux,
          const VelFn& vel,
          const Fields& U,
          const Fields& P,
@@ -90,6 +91,7 @@ surfInt( const bool pref,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+  int viscous=0;
 
   //// Determine if we have solids in our problem
   //bool haveSolid = inciter::haveSolid(nmat, solidx);
@@ -228,12 +230,16 @@ surfInt( const bool pref,
       auto fl = flux( mat_blk, fn, state, v );
       
       if (viscous==1){
-      auto state_grad_l=tk::eval_state_gradient (ncomp, ndof, dof_el, 
+      auto state_U_grad_l = eval_state_gradient (ncomp, ndof, dof_el, 
                          el, U, dBdx );
-      auto fl_vis_l = update_visc_flux(state_grad_l, state[0]) ; 
-      auto state_grad_r=tk::eval_state_gradient (ncomp, ndof, dof_er, 
+      auto state_P_grad_l = eval_state_gradient (nprim, ndof, dof_el, 
+                         el, P, dBdx );
+      auto fl_vis_l = visc_flux(state_U_grad_l, state_P_grad_l, state[0]) ; 
+      auto state_U_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
                          er, U, dBdx );
-      auto fl_vis_r = update_visc_flux(state_grad_r, state[1]) ; 
+      auto state_P_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
+                         er, P, dBdx );
+      auto fl_vis_r = visc_flux(state_U_grad_r, state_P_grad_r, state[1]) ; 
       
  
 

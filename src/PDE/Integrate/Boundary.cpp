@@ -44,6 +44,7 @@ bndSurfInt( const bool pref,
             const UnsMesh::Coords& coord,
             real t,
             const RiemannFluxFn& flux,
+            const FluxFn& visc_flux,
             const VelFn& vel,
             const StateFn& state,
             const Fields& U,
@@ -95,6 +96,7 @@ bndSurfInt( const bool pref,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+  int viscous=0;
 
   //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
   //        "derivative vector for single material compflow" );
@@ -189,6 +191,42 @@ bndSurfInt( const bool pref,
 
           // Compute the numerical flux
           auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t));
+                    if (viscous==1){
+            auto state_U_grad_l = eval_state_gradient (ncomp, ndof, dof_el, 
+                         el, U, dBdx );
+            auto state_P_grad_l = eval_state_gradient (nprim, ndof, dof_el, 
+                         el, P, dBdx );
+            auto fl_vis_l = visc_flux(state_U_grad_l, state_P_grad_l, var[0]) ; 
+            auto state_U_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
+                         er, U, dBdx );
+            auto state_P_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
+                         er, P, dBdx );
+            auto fl_vis_r = visc_flux(state_U_grad_r, state_P_grad_r, var[1]) ; 
+      
+ 
+
+           // Flux functions
+           for (std::size_t i=0; i<3; ++i)
+            {
+             fluxl[1] + =fl_vis_l[1][i]*fn[0];
+             fluxl[2] + =fl_vis_l[2][i]*fn[1];
+             fluxl[3] + =fl_vis_l[3][i]*fn[2];
+             fluxl[4] + =fl_vis_l[4][i];
+             fluxr[1] + =fl_vis_r[1][i]*fn[0];
+             fluxr[2] + =fl_vis_r[2][i]*fn[1];
+             fluxr[3] + =fl_vis_r[3][i]*fn[2];
+             fluxr[4] + =fl_vis_r[4][i];
+            }
+    
+        
+       
+           // Numerical flux function
+           for(std::size_t c=1; c<5; ++c)
+            fl[c] = fl[c]+0.5 * (fluxl[c] + fluxr[c]);
+      
+      
+      
+           }
 
           // Code below commented until details about the form of these terms in
           // the \alpha_k g_k equations are sorted out.
