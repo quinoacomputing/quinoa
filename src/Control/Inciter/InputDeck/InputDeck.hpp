@@ -85,6 +85,7 @@ using compflowList = tk::TaggedTuple< brigand::list<
 using multimatList = tk::TaggedTuple< brigand::list<
   tag::physics,          PhysicsType,
   tag::nmat,             std::size_t,
+  tag::min_volumefrac,   tk::real,
   tag::prelax,           uint64_t,
   tag::prelax_timescale, tk::real,
   tag::intsharp,         int,
@@ -643,7 +644,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         scheme with Runge-Kutta (RK) time stepping, combined with overset grids.
         See Control/Inciter/Options/Scheme.hpp for other valid options.)"});
 
-      keywords.insert({"dg",
+      keywords.insert({"dgp0",
         "Select 1st-order discontinuous Galerkin discretization + Runge-Kutta",
         R"(This keyword is used to select the first-order accurate discontinuous
         Galerkin, DG(P0), spatial discretiztaion used in Inciter. As this is first
@@ -882,6 +883,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "Set number of materials for the multi-material system",
         R"(This keyword is used to specify the number of materials for
         multi-material flow, see also the keyword 'multimat'.)", "uint"});
+
+      keywords.insert({"min_volumefrac",
+        "Minimum volume fraction of a material in a cell",
+        R"(This keyword is used to specify the minimum volume fraction that a
+        material can occupy in a computational element. The default value is
+        1.0e-12. It is used only for multimat, and has no effect for the other
+        PDE types.)", "real"});
 
       keywords.insert({"nspec",
         "Set number of species for the multi-species system",

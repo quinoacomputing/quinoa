@@ -136,6 +136,7 @@ namespace inciter {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
     auto& inbc = g_inputdeck.get< tag::bc >()[0].get< tag::inlet >();
+    tk::real alphamin = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
 
     // inlet velocity and material
     auto u_in = inbc[0].get< tag::velocity >();
@@ -169,7 +170,6 @@ namespace inciter {
     // Mach number
     auto Ma = vn / a;
 
-    tk::real alphamin = 1e-12;
     tk::real pk(0.0);
     tk::real rho(0.0);
     for (std::size_t k=0; k<nmat; ++k) {
@@ -189,8 +189,9 @@ namespace inciter {
 
       ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat,k)] * pk;
       ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
-      ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
-        mat_blk[k].compute< EOS::totalenergy >(rhok, v1r, v2r, v3r, pk);
+      ur[energyIdx(nmat,k)] =
+        mat_blk[k].compute< EOS::totalenergy >(ur[volfracIdx(nmat,k)]*rhok,
+        v1r, v2r, v3r, ur[volfracIdx(nmat,k)]*pk, ur[volfracIdx(nmat,k)]);
 
       // bulk density
       rho += ur[densityIdx(nmat,k)];
@@ -230,6 +231,7 @@ namespace inciter {
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+    tk::real alphamin = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
 
     // Farfield primitive quantities
     auto fp =
@@ -267,8 +269,6 @@ namespace inciter {
     // Mach number
     auto Ma = vn / a;
 
-    tk::real alphamin = 1e-12;
-
     if (Ma <= -1) {  // Supersonic inflow
       // For supersonic inflow, all the characteristics are from outside.
       // Therefore, we calculate the ghost cell state using the primitive
@@ -282,8 +282,9 @@ namespace inciter {
           ur[volfracIdx(nmat,k)] = alphamin;
         auto rhok = mat_blk[k].compute< EOS::density >(fp, ft);
         ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
-        ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
-          mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], fp);
+        ur[energyIdx(nmat,k)] =
+          mat_blk[k].compute< EOS::totalenergy >(ur[volfracIdx(nmat,k)]*rhok,
+          fu[0], fu[1], fu[2], ur[volfracIdx(nmat,k)]*fp, ur[volfracIdx(nmat,k)]);
 
         // material pressures
         ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * fp;
@@ -310,8 +311,9 @@ namespace inciter {
         auto p = ul[ncomp+pressureIdx(nmat,k)] / ul[volfracIdx(nmat,k)];
         auto rhok = mat_blk[k].compute< EOS::density >(p, ft);
         ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
-        ur[energyIdx(nmat,k)] = ur[volfracIdx(nmat,k)] *
-          mat_blk[k].compute< EOS::totalenergy >(rhok, fu[0], fu[1], fu[2], p);
+        ur[energyIdx(nmat,k)] =
+          mat_blk[k].compute< EOS::totalenergy >(ur[volfracIdx(nmat,k)]*rhok,
+          fu[0], fu[1], fu[2], ur[volfracIdx(nmat,k)]*p, ur[volfracIdx(nmat,k)]);
 
         // material pressures
         ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * p;
@@ -329,9 +331,10 @@ namespace inciter {
       // by taking pressure from the outside and other quantities from the
       // internal cell.
       for (std::size_t k=0; k<nmat; ++k) {
-        ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
+        ur[energyIdx(nmat, k)] =
         mat_blk[k].compute< EOS::totalenergy >(
-          ur[densityIdx(nmat, k)]/ul[volfracIdx(nmat, k)], v1l, v2l, v3l, fp );
+          ur[densityIdx(nmat, k)], v1l, v2l, v3l, ul[volfracIdx(nmat, k)]*fp,
+          ul[volfracIdx(nmat, k)] );
 
         // material pressures
         ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;
@@ -504,9 +507,10 @@ namespace inciter {
         ul[volfracIdx(nmat, k)] );
       auto rhor_k = mat_blk[k].compute< inciter::EOS::density >( fbp, T_k );
       ur[densityIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * rhor_k;
-      ur[energyIdx(nmat, k)] = ul[volfracIdx(nmat, k)] *
+      ur[energyIdx(nmat, k)] =
       mat_blk[k].compute< EOS::totalenergy >(
-        rhor_k, vl[0], vl[1], vl[2], fbp );
+        ul[volfracIdx(nmat, k)]*rhor_k, vl[0], vl[1], vl[2],
+        ul[volfracIdx(nmat, k)]*fbp, ul[volfracIdx(nmat, k)] );
       rhor_b += ur[densityIdx(nmat, k)];
 
       // material pressures

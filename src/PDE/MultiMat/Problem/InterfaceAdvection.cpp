@@ -44,6 +44,7 @@ MultiMatProblemInterfaceAdvection::initialize(
 {
   auto nmat =
     g_inputdeck.get< eq, tag::nmat >();
+  auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
 
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 3*nmat+3, "Incorrect number of components in multi-material "
@@ -53,7 +54,6 @@ MultiMatProblemInterfaceAdvection::initialize(
   auto u = std::sqrt(50.0);
   auto v = std::sqrt(50.0);
   auto w = 0.0;
-  auto alphamin = 1.0e-12;
 
   // center of the cylinder
   auto x0 = 0.45 + u*t;
@@ -92,8 +92,9 @@ MultiMatProblemInterfaceAdvection::initialize(
   {
     auto rhok = mat_blk[k].compute< EOS::density >( 1.0e5, 300.0 );
     s[densityIdx(nmat, k)] = s[volfracIdx(nmat, k)] * rhok;
-    s[energyIdx(nmat, k)] = s[volfracIdx(nmat, k)]
-      * mat_blk[k].compute< EOS::totalenergy >( rhok, u, v, w, 1.0e5 );
+    s[energyIdx(nmat, k)] =
+      mat_blk[k].compute< EOS::totalenergy >( s[volfracIdx(nmat, k)]*rhok,
+      u, v, w, s[volfracIdx(nmat, k)]*1.0e5, s[volfracIdx(nmat, k)] );
     rhob += s[densityIdx(nmat, k)];
   }
   s[momentumIdx(nmat, 0)] = rhob * u;

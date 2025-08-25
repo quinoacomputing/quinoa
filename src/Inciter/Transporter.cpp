@@ -1124,7 +1124,7 @@ Transporter::diagHeader()
     if ( scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE )
       for (const auto& eq : g_cgpde) varnames( eq, var );
-    else if ( scheme == ctr::SchemeType::DG ||
+    else if ( scheme == ctr::SchemeType::DGP0 ||
               scheme == ctr::SchemeType::P0P1 ||
               scheme == ctr::SchemeType::DGP1 ||
               scheme == ctr::SchemeType::DGP2 ||
@@ -1153,11 +1153,24 @@ Transporter::diagHeader()
     // Augment diagnostics variables by L2-norm of the residual and total energy
     if ( scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE ||
-         scheme == ctr::SchemeType::FV )
+         scheme == ctr::SchemeType::FV ||
+         scheme == ctr::SchemeType::DGP0 ||
+         scheme == ctr::SchemeType::DGP1 ||
+         scheme == ctr::SchemeType::DGP2 ||
+         scheme == ctr::SchemeType::P0P1 ||
+         scheme == ctr::SchemeType::PDG
+       )
     {
       for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
     }
     d.push_back( "mE" );
+
+    // Augment diagnostics variables with resultant force vector on mesh
+    // boundaries that is used for rigid body motion of overset mesh
+    if ( scheme == ctr::SchemeType::OversetFE )
+    {
+      for (std::size_t i=0; i<3; ++i) d.push_back( "F" + std::to_string(i+1) );
+    }
 
     // Write diagnostics header
     dw.header( d );
@@ -1469,7 +1482,7 @@ Transporter::inthead( const InciterPrint& print )
 {
   auto refined = g_inputdeck.get< tag::field_output, tag::refined >();
   const auto scheme = g_inputdeck.get< tag::scheme >();
-  if (refined && scheme == ctr::SchemeType::DG) {
+  if (refined && scheme == ctr::SchemeType::DGP0) {
     printer() << "\n>>> WARNING: Ignoring refined field output for DG(P0)\n\n";
     refined = false;
   }
@@ -1552,7 +1565,13 @@ Transporter::diagnostics( CkReductionMsg* msg )
       diag.push_back( l2res[i] );
     }
   }
-  else if (scheme == ctr::SchemeType::FV) {
+  else if ( scheme == ctr::SchemeType::FV ||
+            scheme == ctr::SchemeType::DGP0 ||
+            scheme == ctr::SchemeType::DGP1 ||
+            scheme == ctr::SchemeType::DGP2 ||
+            scheme == ctr::SchemeType::P0P1 ||
+            scheme == ctr::SchemeType::PDG
+          ) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] );
       diag.push_back( l2res[i] );
@@ -1561,6 +1580,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Append total energy
   diag.push_back( d[TOTALSOL][0] );
+
+  // Append resultant force vector
+  if (scheme == ctr::SchemeType::OversetFE) {
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[RESFORCE][i] );
+  }
 
   // Append diagnostics file at selected times
   auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();

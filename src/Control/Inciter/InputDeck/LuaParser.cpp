@@ -202,7 +202,7 @@ LuaParser::storeInputDeck(
   } else if (scheme == SchemeType::PDG) {
     ndof = rdof = 10;
     gideck.get< tag::pref, tag::pref >() = true;
-  } else if (scheme != SchemeType::DG &&
+  } else if (scheme != SchemeType::DGP0 &&
       scheme != SchemeType::ALECG &&
       scheme != SchemeType::OversetFE) {
     Throw("Scheme type not configured in configure_scheme");
@@ -312,6 +312,9 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multimat"], "nmat",
       gideck.get< tag::multimat, tag::nmat >(), 2);
+    storeIfSpecd< tk::real >(
+      lua_ideck["multimat"], "min_volumefrac",
+      gideck.get< tag::multimat, tag::min_volumefrac >(), 1.0e-12);
     storeIfSpecd< uint64_t >(
       lua_ideck["multimat"], "prelax",
       gideck.get< tag::multimat, tag::prelax >(), 1);

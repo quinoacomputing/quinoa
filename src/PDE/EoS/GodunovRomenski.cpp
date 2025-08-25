@@ -284,20 +284,24 @@ GodunovRomenski::shearspeed(
 
 tk::real
 GodunovRomenski::totalenergy(
-  tk::real rho,
+  tk::real arho,
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real pr,
+  tk::real apr,
+  tk::real alpha,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
-//! \param[in] rho Material density
+//! \param[in] arho Material partial density
 //! \param[in] u X-velocity
 //! \param[in] v Y-velocity
 //! \param[in] w Z-velocity
-//! \param[in] pr Material pressure
+//! \param[in] apr Material partial pressure
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
+//!   the single-material system, this argument can be left unspecified by
+//!   the calling code
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   g_k. Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
@@ -305,16 +309,16 @@ GodunovRomenski::totalenergy(
 // *************************************************************************
 {
   // obtain thermal and kinetic energy
-  auto pt = pr - pressure_coldcompr(rho);
+  auto apt = apr - pressure_coldcompr(arho, alpha);
   // in the above expression, shear pressure is not included in pr in the first
   // place, so should not subtract it
-  auto rhoEh = pt/m_gamma + 0.5*rho*(u*u + v*v + w*w);
+  auto arhoEh = apt/m_gamma + 0.5*arho*(u*u + v*v + w*w);
   // obtain elastic contribution to energy
   std::array< std::array< tk::real, 3 >, 3 > devH;
-  auto rhoEe = elasticEnergy(defgrad, devH);
-  auto rhoEc = coldcomprEnergy(rho);
+  auto arhoEe = alpha*elasticEnergy(defgrad, devH);
+  auto arhoEc = alpha*coldcomprEnergy(arho/alpha);
 
-  return (rhoEh + rhoEe + rhoEc);
+  return (arhoEh + arhoEe + arhoEc);
 }
 
 tk::real

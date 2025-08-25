@@ -29,8 +29,9 @@ inciter = {
 
         -- linear propagation of energy source
         initiate = "linear",
-        front_speed = -8.2e+3, -- detonation velocity: 0.82 cm/us = 82e+3 m/s
-        front_width = 0.08
+        point = { 1.0e-14, 0.0, 6.0 },
+        front_speed = 8.2e+3, -- detonation velocity: 0.82 cm/us = 82e+3 m/s
+        front_width = 0.5
       }
     }
   },

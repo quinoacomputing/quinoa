@@ -258,6 +258,7 @@ class DG : public CBase_DG {
       p | m_nnonstiffeq;
       p | m_npoin;
       p | m_diag;
+      p | m_nstage;
       p | m_stage;
       p | m_ndof;
       p | m_interface;
@@ -349,6 +350,8 @@ class DG : public CBase_DG {
     std::size_t m_npoin;
     //! Diagnostics object
     ElemDiagnostics m_diag;
+    //! Total number of Runge-Kutta stages
+    std::size_t m_nstage;
     //! Runge-Kutta stage counter
     std::size_t m_stage;
     //! Vector of local number of degrees of freedom for each element
@@ -449,7 +452,7 @@ class DG : public CBase_DG {
     //! Start preparing fields for output to file
     void startFieldOutput( CkCallback c );
 
-    //! Compute the integration step for IMEX-RK
+    //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
 };
 

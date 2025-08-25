@@ -50,6 +50,7 @@ NodeDiagnostics::compute(
   Discretization& d,
   const tk::Fields& u,
   const tk::Fields& un,
+  const std::array< tk::real, 3 >& surfForce,
   const std::unordered_map< int,
           std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
   const std::unordered_set< std::size_t >& symbcnodes,
@@ -60,6 +61,7 @@ NodeDiagnostics::compute(
 //! \param[in] d Discretization proxy to read from
 //! \param[in] u Current solution vector
 //! \param[in] un Previous solution vector
+//! \param[in] surfForce Surface force on mesh for rigid body motion
 //! \param[in] bnorm Face normals in boundary points, key local node id,
 //!   first 3 reals of value: unit normal, outer key: side set id
 //! \param[in] symbcnodes Unique set of node ids at which to set symmetry BCs
@@ -133,6 +135,9 @@ NodeDiagnostics::compute(
       // entry is used)
       diag[TOTALSOL][0] += u(i,u.nprop()-1) * v[i];
     }
+
+    // Append diagnostics vector with resultant force vector on mesh boundaries
+    for (std::size_t i=0; i<3; ++i) diag[RESFORCE][i] = surfForce[i];
 
     // Append diagnostics vector with metadata on the current time step
     // ITER:: Current iteration count (only the first entry is used)

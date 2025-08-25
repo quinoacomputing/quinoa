@@ -97,6 +97,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
   m_nodeblockidc(),
+  m_srcFlag(m_u.nunk(), 1),
   m_ixfer(0),
   m_surfForce({{0, 0, 0}}),
   m_surfTorque({{0, 0, 0}}),
@@ -265,6 +266,11 @@ OversetFE::norm()
   auto far = d->bcnodes< tag::farfield >( m_bface, m_triinpoel );
   // Merge BC data where boundary-point normals are required
   for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
+
+  // Query nodes at which slip wall BCs are specified
+  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
+  // Merge BC data where boundary-point normals are required
+  for (const auto& [s,n] : slip) bn[s].insert( begin(n), end(n) );
 
   // Query nodes at which mesh velocity symmetry BCs are specified
   std::unordered_map<int, std::unordered_set< std::size_t >> ms;
@@ -1026,7 +1032,7 @@ OversetFE::dt()
 
       // find the smallest dt of all equations on this chare
       auto eqdt = g_cgpde[d->MeshId()].dt( d->Coord(), d->Inpoel(), d->T(),
-        d->Dtn(), m_u, d->Vol(), d->Voln() );
+        d->Dtn(), m_u, d->Vol(), d->Voln(), m_srcFlag );
       if (eqdt < mindt) mindt = eqdt;
 
     }
@@ -1172,7 +1178,7 @@ OversetFE::rhs()
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
           m_symbctri, m_slipwallbctri, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->MeshVel(), m_tp, d->Boxvol(),
-          m_rhs );
+          m_rhs, m_srcFlag );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
@@ -1361,6 +1367,10 @@ OversetFE::solve()
     }
 
   }
+  // Remove surface force values for background mesh
+  else if (d->MeshId() == 0) {
+    for (std::size_t i=0; i<3; ++i) m_surfForce[i] = 0.0;
+  }
 
   // Apply boundary-conditions
   BC();
@@ -1376,7 +1386,7 @@ OversetFE::solve()
   bool diag_computed(false);
   if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
-    diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
+    diag_computed = m_diag.compute( *d, m_u, m_un, m_surfForce, m_bnorm,
                                     m_symbcnodes, m_farfieldbcnodes,
                                     m_slipwallbcnodes );
     // Increase number of iterations and physical time
