@@ -61,18 +61,18 @@ MultiMatProblemMixedCell::initialize( ncomp_t ncomp,
 
   // initialize background material states
   for (std::size_t k=0; k<nmat; ++k) {
-    //s[volfracIdx(nmat,k)] = 1.0/nmat;
-    if (k == 0)
-      s[volfracIdx(nmat,k)] = .5;
-    else if (k == 1)
-      s[volfracIdx(nmat,k)] = .5;
-    else if (k == 2)
-      s[volfracIdx(nmat,k)] = 1.0e-01;
-    //pressure[k] = bgpreic*std::pow(10.0,k);
+    s[volfracIdx(nmat,k)] = 1.0/nmat;
+    // if (k == 0)
+    //   s[volfracIdx(nmat,k)] = .5;
+    // else if (k == 1)
+    //   s[volfracIdx(nmat,k)] = .5;
+    // else if (k == 2)
+    //   s[volfracIdx(nmat,k)] = 1.0e-10;
+    // pressure[k] = bgpreic*std::pow(10.0,k);
     if (k == 0)
       pressure[k] = 1.0;
     else if (k == 1)
-      pressure[k] = 1000.0;
+      pressure[k] = 10.0;
     else if (k == 2)
       pressure[k] = 1000.0;
   }
