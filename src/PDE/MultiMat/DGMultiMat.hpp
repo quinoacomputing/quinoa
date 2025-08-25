@@ -1507,14 +1507,6 @@ class MultiMat {
       for (std::size_t i=0; i<ndof*nstiffeq(); ++i)
         R(e, i) = 0.0;
 
-      // If the cell is not majority solid, do nothing (?)
-      tk::real solid_volfrac = 0.0;
-      for (std::size_t k=0; k<nmat; ++k)
-        if (solidx[k] > 0)
-          solid_volfrac += U(e, inciter::volfracDofIdx(nmat, k, rdof, 0));
-      if (solid_volfrac < 0.5)
-        return;
-
       const auto& cx = coord[0];
       const auto& cy = coord[1];
       const auto& cz = coord[2];
@@ -1561,7 +1553,7 @@ class MultiMat {
         std::size_t ksld = 0;
         for (std::size_t k=0; k<nmat; ++k)
         {
-          if (solidx[k] > 0 && state[inciter::volfracIdx(nmat, k)] > 1.0e-03)
+          if (solidx[k] > 0)
           {
             tk::real alpha = state[inciter::volfracIdx(nmat, k)];
             std::array< std::array< tk::real, 3 >, 3 > g;
@@ -1633,6 +1625,8 @@ class MultiMat {
             // 5. Divide by 2*mu*tau
             // 'Perfect' plasticity
             tk::real yield_stress = getmatprop< tag::yield_stress >(k);
+            // scale yield based on value of alpha
+            tk::real scaled_yield = yield_stress * std::exp(-1.0e00*(1.0-alpha)/alpha);
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -1640,7 +1634,7 @@ class MultiMat {
             equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
             // rel_factor = 1/tau <- Perfect plasticity for now.
             tk::real rel_factor = 0.0;
-            if (equiv_stress >= yield_stress)
+            if (equiv_stress >= scaled_yield)
               rel_factor = 1.0e05;
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
