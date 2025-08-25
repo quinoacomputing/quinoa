@@ -133,6 +133,10 @@ SmallShearSolid::pressure(
     std::cout << "Total energy:     " << arhoE << std::endl;
     std::cout << "Hydro energy:     " << arhoEh << std::endl;
     std::cout << "det(defgrad):     " << tk::determinant(defgrad) << std::endl;
+    std::cout << "g-tensor:" << std::endl;
+    std::cout << defgrad[0][0] << " " << defgrad[0][1] << " " << defgrad[0][2] << std::endl;
+    std::cout << defgrad[1][0] << " " << defgrad[1][1] << " " << defgrad[1][2] << std::endl;
+    std::cout << defgrad[2][0] << " " << defgrad[2][1] << " " << defgrad[2][2] << std::endl;
     std::cout << "Velocity:         " << u << ", " << v << ", " << w
       << std::endl;
     Throw("Material-" + std::to_string(imat) +
