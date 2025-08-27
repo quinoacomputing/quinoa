@@ -20,5 +20,5 @@ add_regression_test(compflow_engsrc_propagating_alecg
                     BIN_DIFF_PROG_ARGS -m
                     TEXT_BASELINE diag_alecg.std
                     TEXT_RESULT diag
-                    TEXT_DIFF_PROG_CONF sod_shocktube_diag.ndiff.cfg
+                    TEXT_DIFF_PROG_CONF engsrc_propagating.ndiff.cfg
                     LABELS alecg)

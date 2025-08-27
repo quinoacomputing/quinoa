@@ -5,7 +5,7 @@ inciter = {
   nstep = 100,   -- Max number of time steps
   dt = 1.0e-4,   -- Time step size
   ttyi = 5,      -- TTY output interval
-  scheme = "dg",
+  scheme = "dgp0",
 
   compflow = {
     physics = "euler",
