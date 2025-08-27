@@ -1478,6 +1478,7 @@ class MultiMat {
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t e,
+                    const tk::real dt,
                     const tk::Fields& geoElem,
                     const std::vector< std::size_t >& inpoel,
                     const tk::UnsMesh::Coords& coord,
@@ -1623,34 +1624,51 @@ class MultiMat {
               }
 
             // 5. Divide by 2*mu*tau
+            std::vector< tk::real > s(9*ndof, 0.0);
             // 'Perfect' plasticity
+            // FAVRIE: This should be under a loop over ndof
             tk::real yield_stress = getmatprop< tag::yield_stress >(k);
             // scale yield based on value of alpha
-            tk::real scaled_yield = yield_stress * std::exp(-1.0e00*(1.0-alpha)/alpha);
-            tk::real equiv_stress = 0.0;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
-            equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
-            // rel_factor = 1/tau <- Perfect plasticity for now.
-            tk::real rel_factor = 0.0;
-            if (equiv_stress >= scaled_yield)
-              rel_factor = 1.0e05;
-            tk::real mu = getmatprop< tag::mu >(k);
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                Lp[i][j] *= rel_factor/(2.0*mu);
+            //tk::real scaled_yield = yield_stress * std::exp(-1.0e00*(1.0-alpha)/alpha);
+            tk::real alpha_ref = 0.01;
+            tk::real scaled_yield = yield_stress * (alpha-alpha_ref)/(1.0-alpha_ref);
+            // tk::real detg = tk::determinant(g);
+            // if (scaled_yield < 1.0e-06) {
+            //   for (std::size_t i=0; i<3; ++i)
+            //     for (std::size_t j=0; j<3; ++j)
+            //       for (std::size_t idof=0; idof<ndof; ++idof)
+            //       {
+            //         //s[(i*3+j)*ndof+idof] = B[idof]*g[i][j];///dt;
+            //         if (i==j) s[(i*3+j)*ndof+idof] -= B[idof]*1.0*detg;///dt;
+            //       }
+            // }
+            // else
+            if (alpha > alpha_ref)
+            {
+              tk::real equiv_stress = 0.0;
+              for (std::size_t i=0; i<3; ++i)
+                for (std::size_t j=0; j<3; ++j)
+                  equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
+              equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
+              // rel_factor = 1/tau <- Perfect plasticity for now.
+              tk::real rel_factor = 0.0;
+              if (equiv_stress >= yield_stress/*scaled_yield*/)
+                rel_factor = 1.0e05 /** (equiv_stress-scaled_yield)*/;
+              tk::real mu = getmatprop< tag::mu >(k);
+              for (std::size_t i=0; i<3; ++i)
+                for (std::size_t j=0; j<3; ++j)
+                  Lp[i][j] *= rel_factor/(2.0*mu);
 
-            // Compute the source terms
-            std::vector< tk::real > s(9*ndof, 0.0);
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                for (std::size_t idof=0; idof<ndof; ++idof)
-                {
-                  s[(i*3+j)*ndof+idof] = B[idof] * (Lp[i][0]*g[0][j]
-                                                   +Lp[i][1]*g[1][j]
-                                                   +Lp[i][2]*g[2][j]);
-                }
+              // Compute the source terms
+              for (std::size_t i=0; i<3; ++i)
+                for (std::size_t j=0; j<3; ++j)
+                  for (std::size_t idof=0; idof<ndof; ++idof)
+                  {
+                    s[(i*3+j)*ndof+idof] = B[idof] * (Lp[i][0]*g[0][j]
+                                                     +Lp[i][1]*g[1][j]
+                                                     +Lp[i][2]*g[2][j]);
+                  }
+            }
 
             auto wt = wgp[igp] * geoElem(e, 0);
 
