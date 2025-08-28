@@ -2094,7 +2094,7 @@ DG::imex_integrate()
         }
 
       // Compute stiff_rhs with initial u
-      g_dgpde[d->MeshId()].stiff_rhs( e, d->Dt(), myGhosts()->m_geoElem,
+      g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
         myGhosts()->m_inpoel, myGhosts()->m_coord,
         m_u, m_p, m_ndof, m_stiffrhs );
 
@@ -2151,7 +2151,7 @@ DG::imex_integrate()
             }
 
           // Compute new stiff_rhs
-          g_dgpde[d->MeshId()].stiff_rhs( e, d-> Dt(), myGhosts()->m_geoElem,
+          g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
             myGhosts()->m_inpoel, myGhosts()->m_coord,
             m_u, m_p, m_ndof, m_stiffrhs );
 
