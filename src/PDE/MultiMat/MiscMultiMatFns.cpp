@@ -215,7 +215,7 @@ cleanTraceMultiMat(
           P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
         }
       }
-      else if ( alk < 0.99 /*!matExists(alk)*/) {  // condition so that else-branch not exec'ed for solids
+      else if ( alk-volfracPRelaxLim() < 1.0e-06 ) {  // condition so that else-branch not exec'ed for solids
         auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
         // For solids, reset deformation and stress
         if (solidx[k] > 0)
@@ -586,7 +586,7 @@ resetSolidTensors(
   std::size_t k,
   std::size_t e,
   tk::Fields& U,
-  tk::Fields& P)
+  tk::Fields& P )
 // *****************************************************************************
 //  Reset the solid tensors
 //! \param[in] nmat Number of materials in this PDE system

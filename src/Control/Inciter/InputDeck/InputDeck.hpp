@@ -106,27 +106,28 @@ using multispeciesList = tk::TaggedTuple< brigand::list<
 
 // Material/EOS object
 using materialList = tk::TaggedTuple< brigand::list<
-  tag::eos,          MaterialType,
-  tag::id,           std::vector< uint64_t >,
-  tag::gamma,        std::vector< tk::real >,
-  tag::pstiff,       std::vector< tk::real >,
-  tag::w_gru,        std::vector< tk::real >,
-  tag::A_jwl,        std::vector< tk::real >,
-  tag::B_jwl,        std::vector< tk::real >,
-  tag::C_jwl,        std::vector< tk::real >,
-  tag::R1_jwl,       std::vector< tk::real >,
-  tag::R2_jwl,       std::vector< tk::real >,
-  tag::rho0_jwl,     std::vector< tk::real >,
-  tag::de_jwl,       std::vector< tk::real >,
-  tag::rhor_jwl,     std::vector< tk::real >,
-  tag::Tr_jwl,       std::vector< tk::real >,
-  tag::Pr_jwl,       std::vector< tk::real >,
-  tag::mu,           std::vector< tk::real >,
-  tag::yield_stress, std::vector< tk::real >,
-  tag::alpha,        std::vector< tk::real >,
-  tag::K0,           std::vector< tk::real >,
-  tag::cv,           std::vector< tk::real >,
-  tag::k,            std::vector< tk::real >
+  tag::eos,                MaterialType,
+  tag::id,                 std::vector< uint64_t >,
+  tag::gamma,              std::vector< tk::real >,
+  tag::pstiff,             std::vector< tk::real >,
+  tag::w_gru,              std::vector< tk::real >,
+  tag::A_jwl,              std::vector< tk::real >,
+  tag::B_jwl,              std::vector< tk::real >,
+  tag::C_jwl,              std::vector< tk::real >,
+  tag::R1_jwl,             std::vector< tk::real >,
+  tag::R2_jwl,             std::vector< tk::real >,
+  tag::rho0_jwl,           std::vector< tk::real >,
+  tag::de_jwl,             std::vector< tk::real >,
+  tag::rhor_jwl,           std::vector< tk::real >,
+  tag::Tr_jwl,             std::vector< tk::real >,
+  tag::Pr_jwl,             std::vector< tk::real >,
+  tag::mu,                 std::vector< tk::real >,
+  tag::yield_stress,       std::vector< tk::real >,
+  tag::alpha,              std::vector< tk::real >,
+  tag::K0,                 std::vector< tk::real >,
+  tag::cv,                 std::vector< tk::real >,
+  tag::k,                  std::vector< tk::real >,
+  tag::plasticity_reltime, std::vector< tk::real >
 > >;
 
 // Species/EOS object
@@ -1099,6 +1100,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"k", "heat conductivity",
         R"(This keyword is used to specify the material property, heat
         conductivity.)", "vector of reals"});
+
+      keywords.insert({"plasticity_reltime", "Relaxation time for plasticity",
+        R"(This keyword is used to specify the base relaxation time for a solid
+        subject to perfect plasticity. See Ortega, A. López, et al. "Numerical
+        simulation of elastic–plastic solid mechanics using an Eulerian stretch
+        tensor approach and HLLD Riemann solver." Journal of Computational
+        Physics 257 (2014): 414-441.)", "vector of reals"});
 
       keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
         R"(This keyword is used to specify species' coefficients in the
