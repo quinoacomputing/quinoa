@@ -463,7 +463,6 @@ class Transport {
     // //! \param[in] ndofel Vector of local number of degrees of freedom
     // //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t /*e*/,
-                    const tk::real /*dt*/,
                     const tk::Fields& /*geoElem*/,
                     const std::vector< std::size_t >& /*inpoel*/,
                     const tk::UnsMesh::Coords& /*coord*/,

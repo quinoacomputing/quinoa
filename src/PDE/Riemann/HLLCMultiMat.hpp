@@ -407,31 +407,6 @@ struct HLLCMultiMat {
         }
       }
 
-      for (std::size_t k=0; k<nmat; ++k)
-        if (solidx[k] > 0)
-          if (std::isnan(glStar[k][0][0])) {
-            printf("\nglStar[%lu]\n", k);
-            printf("normal = %e, %e, %e\n", fn[0], fn[1], fn[2]);
-            // auto test_mat = tk::rotateTensor({{ {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0} }}, fn);
-            // printf("Test matrix:\n");
-            // printf("%e, %e, %e\n", test_mat[0][0], test_mat[0][1], test_mat[0][2]);
-            // printf("%e, %e, %e\n", test_mat[1][0], test_mat[1][1], test_mat[1][2]);
-            // printf("%e, %e, %e\n", test_mat[2][0], test_mat[2][1], test_mat[2][2]);
-            printf("gl:\n");
-            printf("%e, %e, %e\n", gl[k][0][0], gl[k][0][1], gl[k][0][2]);
-            printf("%e, %e, %e\n", gl[k][1][0], gl[k][1][1], gl[k][1][2]);
-            printf("%e, %e, %e\n", gl[k][2][0], gl[k][2][1], gl[k][2][2]);
-            printf("gnl:\n");
-            printf("%e, %e, %e\n", gnl[k][0][0], gnl[k][0][1], gnl[k][0][2]);
-            printf("%e, %e, %e\n", gnl[k][1][0], gnl[k][1][1], gnl[k][1][2]);
-            printf("%e, %e, %e\n", gnl[k][2][0], gnl[k][2][1], gnl[k][2][2]);
-            printf("glStar:\n");
-            printf("%e, %e, %e\n", glStar[k][0][0], glStar[k][0][1], glStar[k][0][2]);
-            printf("%e, %e, %e\n", glStar[k][1][0], glStar[k][1][1], glStar[k][1][2]);
-            printf("%e, %e, %e\n", glStar[k][2][0], glStar[k][2][1], glStar[k][2][2]);
-            printf("vnl = %e, %e, %e\n", vnl[0], vnl[1], vnl[2]);
-            printf("vnlStar = %e, %e, %e\n", vnlStar[0], vnlStar[1], vnlStar[2]);
-        }
     }
 
     else if (Sm < 0.0 && 0.0 <= Sr) {
@@ -479,11 +454,6 @@ struct HLLCMultiMat {
         }
       }
 
-      for (std::size_t k=0; k<nmat; ++k)
-        if (solidx[k] > 0)
-          if (std::isnan(grStar[k][0][0])) {
-            printf("grStar[%lu]\n", k);
-          }
     }
 
     else {
