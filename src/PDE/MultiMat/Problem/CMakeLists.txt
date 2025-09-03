@@ -9,8 +9,7 @@ add_library(MultiMatProblem
             ShockDensityWave.cpp
             EquilInterfaceAdvect.cpp
             RichtmyerMeshkov.cpp
-            SinewavePacket.cpp
-            MixedCell.cpp)
+            SinewavePacket.cpp)
 
 target_include_directories(MultiMatProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}
