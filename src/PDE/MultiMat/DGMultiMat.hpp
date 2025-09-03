@@ -965,8 +965,10 @@ class MultiMat {
       //    the deformation gradient equations.
       // 4) 3*nsld terms: 3 derivatives of \alpha \sigma_ij for each solid
       //    material, for the energy equations.
+      // 5) 27*nsld terms: all combinations of d(g_il)/d(x_j) - d(g_ij)/d(x_l)
+      //    for each solid material, for the deformation equations.
       std::vector< std::vector< tk::real > >
-        riemannDeriv(3*nmat+ndof+3*nsld, std::vector<tk::real>(U.nunk(),0.0));
+        riemannDeriv(3*nmat+ndof+3*nsld+27*nsld, std::vector<tk::real>(U.nunk(),0.0));
 
       // configure a no-op lambda for prescribed velocity
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
@@ -994,7 +996,7 @@ class MultiMat {
                         m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
                         riemannDeriv, intsharp );
 
-      Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld, "Size of "
+      Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
               "Riemann derivative vector incorrect" );
 
       // get derivatives from riemannDeriv
@@ -1551,9 +1553,9 @@ class MultiMat {
         std::size_t ksld = 0;
         for (std::size_t k=0; k<nmat; ++k)
         {
-          if (solidx[k] > 0)
+          tk::real alpha = state[inciter::volfracIdx(nmat, k)];
+          if (solidx[k] > 0 && alpha-volfracPRelaxLim() > 1.0e-06)
           {
-            tk::real alpha = state[inciter::volfracIdx(nmat, k)];
             std::array< std::array< tk::real, 3 >, 3 > g;
             // Compute the source terms
             for (std::size_t i=0; i<3; ++i)
@@ -1622,6 +1624,7 @@ class MultiMat {
 
             // 5. Divide by 2*mu*tau
             // 'Perfect' plasticity
+            std::vector< tk::real > s(9*ndof, 0.0);
             tk::real yield_stress = getmatprop< tag::yield_stress >(k);
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)
@@ -1629,16 +1632,17 @@ class MultiMat {
                 equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
             equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
             // rel_factor = 1/tau <- Perfect plasticity for now.
+            // Future implementation:
+            // rel_factor = 1.0e05*(equiv_stress-scaled_yield)
             tk::real rel_factor = 0.0;
             if (equiv_stress >= yield_stress)
-              rel_factor = 1.0e07;
+              rel_factor = 1.0/getmatprop< tag::plasticity_reltime >(k);
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 Lp[i][j] *= rel_factor/(2.0*mu);
 
             // Compute the source terms
-            std::vector< tk::real > s(9*ndof, 0.0);
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 for (std::size_t idof=0; idof<ndof; ++idof)
