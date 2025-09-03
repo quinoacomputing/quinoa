@@ -48,26 +48,6 @@
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
 
-#include <fstream>
-
-// ignore old-style-casts required for lapack/blas calls
-#if defined(__clang__)
-  #pragma clang diagnostic ignored "-Wold-style-cast"
-#endif
-
-// Lapacke forward declarations
-extern "C" {
-
-using lapack_int = long;
-
-#define LAPACK_ROW_MAJOR 101
-#define LAPACK_COL_MAJOR 102
-
-extern lapack_int LAPACKE_dgesv( int, lapack_int, lapack_int, double*,
-  lapack_int, lapack_int*, double*, lapack_int );
-
-}
-
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
