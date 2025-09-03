@@ -779,34 +779,6 @@ class CompFlow {
       return mindt;
     }
 
-    //! Pressure relaxation, not implemented here
-    //! \param[in] nelem Number of elements
-    //! \param[in] dt Time step
-    //! \param[in] U Conserved unknowns
-    void pressure_relaxation( const std::size_t /*nelem*/,
-                              const tk::real /*dt*/,
-                              tk::Fields& /*U*/ ) const
-    {}
-
-    //! Compute stiff terms for a single element, not implemented here
-    // //! \param[in] e Element number
-    // //! \param[in] geoElem Element geometry array
-    // //! \param[in] inpoel Element-node connectivity
-    // //! \param[in] coord Array of nodal coordinates
-    // //! \param[in] U Solution vector at recent time step
-    // //! \param[in] P Primitive vector at recent time step
-    // //! \param[in] ndofel Vector of local number of degrees of freedom
-    // //! \param[in,out] R Right-hand side vector computed
-    void stiff_rhs( std::size_t /*e*/,
-                    const tk::Fields& /*geoElem*/,
-                    const std::vector< std::size_t >& /*inpoel*/,
-                    const tk::UnsMesh::Coords& /*coord*/,
-                    const tk::Fields& /*U*/,
-                    const tk::Fields& /*P*/,
-                    const std::vector< std::size_t >& /*ndofel*/,
-                    tk::Fields& /*R*/ ) const
-    {}
-
     //! Extract the velocity field at cell nodes. Currently unused.
     //! \param[in] U Solution vector at recent time step
     //! \param[in] N Element node indices
