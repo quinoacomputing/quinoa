@@ -1206,41 +1206,13 @@ class MultiMat {
             for (std::size_t i=0; i<3; ++i)
               sigma_dev[i][i] -= sigma_trace/3.0;
 
-            // 2. Compute inv(g)
-            double ginv[9];
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                ginv[3*i+j] = g[i][j];
-            lapack_int ipiv[3];
-            #ifndef NDEBUG
-            lapack_int ierr =
-            #endif
-              LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, ginv, 3, ipiv);
-            Assert(ierr==0, "Lapack error in LU factorization of g");
-            #ifndef NDEBUG
-            lapack_int jerr =
-            #endif
-              LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, ginv, 3, ipiv);
-            Assert(jerr==0, "Lapack error in inverting g");
-
-            // 3. Compute dev(sigma)*inv(g)
-            std::array< std::array< tk::real, 3 >, 3 > aux_mat;
+            // 2. Compute g*dev(sigma)
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
               {
                 tk::real sum = 0.0;
                 for (std::size_t l=0; l<3; ++l)
-                  sum += sigma_dev[i][l]*ginv[3*l+j];
-                aux_mat[i][j] = sum;
-              }
-
-            // 4. Compute g*(dev(sigma)*inv(g))
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-              {
-                tk::real sum = 0.0;
-                for (std::size_t l=0; l<3; ++l)
-                  sum += g[i][l]*aux_mat[l][j];
+                  sum += g[i][l]*sigma_dev[l][j];
                 Lp[i][j] = sum;
               }
 
@@ -1269,9 +1241,7 @@ class MultiMat {
               for (std::size_t j=0; j<3; ++j)
                 for (std::size_t idof=0; idof<ndof; ++idof)
                 {
-                  s[(i*3+j)*ndof+idof] = B[idof] * (Lp[i][0]*g[0][j]
-                                                   +Lp[i][1]*g[1][j]
-                                                   +Lp[i][2]*g[2][j]);
+                  s[(i*3+j)*ndof+idof] = B[idof] * Lp[i][j];
                 }
 
             auto wt = wgp[igp] * geoElem(e, 0);
@@ -1285,12 +1255,19 @@ class MultiMat {
                   std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
                   R(e, dofId) += wt * s[srcId];
                 }
+            // for (std::size_t i=0; i<3; ++i)
+            //   for (std::size_t j=0; j<3; ++j)
+            //     for (std::size_t idof=0; idof<ndof; ++idof)
+            //       if (s[(i*3+j)*ndof+idof] > 1.0e-06) {
+            //         printf("ksld, alpha = %lu, %e\n", ksld, alpha);
+            //         printf("s[%lu] = %e\n", (i*3+j)*ndof+idof, s[(i*3+j)*ndof+idof]);
+            //       }
 
             ksld++;
           }
         }
 
-        }
+      }
     }
 
     //! Extract the velocity field at cell nodes. Currently unused.

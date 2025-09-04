@@ -215,6 +215,38 @@ cleanTraceMultiMat(
           P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
         }
       }
+      // else if ( !matExists(alk) && solidx[k] > 0 ) {
+      //   // If alpha is less than the minimum allowed, we restart the material properties
+      //   printf("[1] ALPHA, DENSITY, PRESSURE = %e, %e, %e\n", alk, U(e, densityDofIdx(nmat, k, rdof, 0)), P(e, pressureDofIdx(nmat, k, rdof, 0)));
+      //   alk = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
+      //   U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk;
+      //   auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+      //       alk*2700.0, alk);
+      //   prelax = std::max(prelax, p_target);
+      //   U(e, densityDofIdx(nmat, k, rdof, 0))
+      //     = mat_blk[k].compute< EOS::density > (prelax, 300.0);
+      //   P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk * prelax;
+      //   for (std::size_t i=1; i<rdof; ++i) {
+      //     P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
+      //     U(e, densityDofIdx(nmat, k, rdof, i)) = 0.0;
+      //   }
+      //   resetSolidTensors(nmat, k, e, U, P);
+      //   std::array< std::array< tk::real, 3 >, 3 > gk;
+      //   for (std::size_t i=0; i<3; ++i)
+      //     for (std::size_t j=0; j<3; ++j)
+      //       gk[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+      //   auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(
+      //     U(e, densityDofIdx(nmat, k, rdof, 0)), u, v, w,
+      //     P(e, pressureDofIdx(nmat, k, rdof, 0)), alk, gk );
+      //   // total energy flux into majority material
+      //   d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
+      //             - arhoEmat);
+      //   U(e, energyDofIdx(nmat, k, rdof, 0)) = arhoEmat;
+      //   for (std::size_t i=1; i<rdof; ++i) {
+      //     U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
+      //   }
+      //   printf("[2] ALPHA, DENSITY, PRESSURE = %e, %e, %e\n", alk, U(e, densityDofIdx(nmat, k, rdof, 0)), P(e, pressureDofIdx(nmat, k, rdof, 0)));
+      // }
       else if ( alk-volfracPRelaxLim() < 1.0e-06 ) {  // condition so that else-branch not exec'ed for solids
         auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
         // For solids, reset deformation and stress
