@@ -73,7 +73,10 @@ GodunovRomenski::density(
   tk::real err = tol + 1;
   for (std::size_t iter=0; iter<maxiter; ++iter)
   {
-    tk::real p = pressure_coldcompr(rho) - pr;
+    
+    auto rrho0a = std::pow(rho/m_rho0, m_alpha);
+    auto p_coldcompr = m_K0/m_alpha * (rrho0a*rho/m_rho0) * (rrho0a-1.0);
+    tk::real p = p_coldcompr - pr;
     auto dpdrho = DpccDrho(rho);
     auto delta = p/dpdrho;
     rho -= delta;
@@ -369,6 +372,10 @@ GodunovRomenski::min_eff_pressure(
 {
   // minimum pressure is constrained by zero soundspeed.
   auto rho = arho/alpha;
+  // if (rho < 0.0) {
+  //   printf("DEBUG:\n");
+  //   printf("rho, arho, alpha = %e, %e, %e\n", rho, arho, alpha);
+  // }
   return min
     - rho/(m_gamma+1.0) * DpccDrho(rho)
     + pressure_coldcompr(arho, alpha)/alpha;

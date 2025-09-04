@@ -42,6 +42,26 @@
 // #include "Epetra_Vector.h"
 // #include "Epetra_Map.h"
 
+#include <fstream>
+
+// ignore old-style-casts required for lapack/blas calls
+#if defined(__clang__)
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
+// Lapacke forward declarations
+extern "C" {
+
+using lapack_int = long;
+
+#define LAPACK_ROW_MAJOR 101
+#define LAPACK_COL_MAJOR 102
+
+extern lapack_int LAPACKE_dgesv( int, lapack_int, lapack_int, double*,
+  lapack_int, lapack_int*, double*, lapack_int );
+
+}
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -2474,16 +2494,24 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
     approx_jacob(n, std::vector< tk::real >(n, 0.0));
   for (std::size_t i=0; i<n; ++i)
     approx_jacob[i][i] = 1.0e+00;
-  
+
   // Compute f with initial guess
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
-  
+
   // Initialize x_old and f_old
   std::vector< tk::real > x_old(n, 0.0), f_old(n, 0.0);
   for (std::size_t i=0; i<n; ++i)
   {
     x_old[i] = x[i];
     f_old[i] = f[i];
+  }
+
+  // DEBUG: Get x0 and f0
+  std::vector< tk::real > x0(n, 0.0), f0(n, 0.0);
+  for (std::size_t i=0; i<n; ++i)
+  {
+    x0[i] = x[i];
+    f0[i] = f[i];
   }
 
   // Initialize delta_x and delta_f
@@ -2620,7 +2648,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
       }
       abs_err_old = abs_err;
 
-      //check if error condition is met and loop back
+      // check if error condition is met and loop back
       if (rel_err < rel_tol || abs_err < abs_tol)
 	break;
 
@@ -2631,6 +2659,12 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
 	printf("Element #%lu\n", e);
 	printf("Relative error: %e\n", rel_err);
 	printf("Absolute error: %e\n\n", abs_err);
+        printf("x0 vs x:\n");
+        for (std::size_t i=0; i<n; ++i)
+          printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
+        printf("f0 vs f:\n");
+        for (std::size_t i=0; i<n; ++i)
+          printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
       }
     }
 
@@ -2652,21 +2686,18 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
   std::size_t n = x.size();
 
   // Define jacobian
-  std::vector< std::vector< tk::real > > jacob(n, std::vector< tk::real >(n, 0.0));
+  double jacob[n*n];
 
   // Compute f with initial guess
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
 
-  // Initialize x_old and f_old
-  std::vector< tk::real > x_old(n, 0.0), f_old(n, 0.0);
+  // DEBUG: Get x0 and f0
+  std::vector< tk::real > x0(n, 0.0), f0(n, 0.0);
   for (std::size_t i=0; i<n; ++i)
   {
-    x_old[i] = x[i];
-    f_old[i] = f[i];
+    x0[i] = x[i];
+    f0[i] = f[i];
   }
-
-  // Initialize delta_x and delta_f
-  std::vector< tk::real > delta_x(n, 0.0), delta_f(n, 0.0);
 
   // Store the norm of f initially, for relative error measure
   tk::real err0 = 0.0;
@@ -2677,15 +2708,106 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
   // Iterate for the solution if err0 > 0
   if (err0 > abs_tol)
-    for (size_t iter=0; iter<max_iter; ++iter)
+    for (std::size_t iter=0; iter<max_iter; ++iter)
     {
 
+      // Evaluate jacobian
+      tk::real dx = 1.0e-02;
+      for (std::size_t i=0; i<n; ++i)
+        for (std::size_t j=0; j<n; ++j)
+        {
+          // Derivative of f[i] with respect to x[j]
+          auto x_perturb = x;
+          x_perturb[j] += dx;
+          auto f_perturb = DG::nonlinear_func(e, x_perturb);
+          jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
+        }
+      // printf("JACOBIAN\n");
+      // for (std::size_t i=0; i<n; ++i)
+      //   for (std::size_t j=0; j<n; ++j)
+      //     printf("j[%lu][%lu] = %e\n", i, j, jacob[i*n+j]);
+
       // Compute new solution by solving linear system J*dx = -f
-      
-      
-      
+      double delta[n];
+      for (std::size_t i=0; i<n; ++i)
+        delta[i] = -f[i];
+      lapack_int info;
+      lapack_int ipiv[n];
+      info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, 1, jacob, n, ipiv, delta, 1);
+
+      if (info == 0) {
+        // Print solution
+        // for (std::size_t i=0; i<2*nmat+1; ++i)
+        //   printf("dx[%lu] = %e\n", i, dx[i]);
+      }
+      else
+      {
+        printf("Failed with info: %ld\n", info);
+      }
+
+      // Update x using line search
+      std::size_t nline = 10;
+      tk::real alpha = 1.0;
+      auto xtest = x;
+      for (std::size_t iline = 0; iline<nline; ++iline)
+      {
+        // Evaluate xtest
+        for (std::size_t i=0; i<n; ++i)
+          xtest[i] = x[i] + alpha*delta[i];
+
+        // Compute new f(x)
+        f = DG::nonlinear_func(e, xtest);
+
+        tk::real err = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+          err += f[i]*f[i];
+        abs_err = std::sqrt(err);
+
+        if (abs_err < abs_err_old)
+        {
+          break;
+        }
+        else
+        {
+          alpha *= 0.5;
+        }
+        if (iline == nline-1)
+          printf("Line search failed to decrease f\n");
+      }
+
+      // Save x
+      for (std::size_t i=0; i<n; ++i)
+        x[i] = xtest[i];
+
+      // Compute a measure of error, use norm of f
+      tk::real err = 0.0;
+      for (std::size_t i=0; i<n; ++i)
+	err += f[i]*f[i];
+      abs_err = std::sqrt(err);
+      rel_err = abs_err/err0;
+
+      // check if error condition is met and loop back
+      if (rel_err < rel_tol || abs_err < abs_tol)
+	break;
+
+      // If we did not converge, print a message and keep going
+      if (iter == max_iter-1)
+      {
+	printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
+	printf("Element #%lu\n", e);
+	printf("Relative error: %e\n", rel_err);
+	printf("Absolute error: %e\n\n", abs_err);
+        printf("x0 vs x:\n");
+        for (std::size_t i=0; i<n; ++i)
+          printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
+        printf("f0 vs f:\n");
+        for (std::size_t i=0; i<n; ++i)
+          printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
+      }
     }
-  
+
+  return x;
+
 }
 
 // class MyProblem : public NOX::Epetra::Interface::Required {
