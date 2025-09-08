@@ -24,6 +24,7 @@
 #include "DGPDE.hpp"
 #include "Inciter/Options/Scheme.hpp"
 #include "UnsMesh.hpp"
+#include "Vector.hpp"
 #include "ContainerUtil.hpp"
 #include "Callback.hpp"
 
@@ -104,6 +105,33 @@ Partitioner::Partitioner(
   std::vector< std::size_t > triinpoel;
   mr.readMeshPart( m_ginpoel, m_inpoel, triinpoel, m_lid, m_coord,
                    m_elemBlockId, CkNumNodes(), CkMyNode() );
+
+  // Check if mesh rotation specified
+  auto mesh_orientation =
+    g_inputdeck.get< tag::mesh >()[meshid].get< tag::orientation >();
+  bool rotate_mesh(false);
+  for (std::size_t i=0; i<3; ++i) {
+    if (std::abs(mesh_orientation[i]) > 1e-8) {
+      rotate_mesh = true;
+      break;
+    }
+  }
+
+  // Rotate mesh if specified
+  if (rotate_mesh) {
+    auto& x = m_coord[0];
+    auto& y = m_coord[1];
+    auto& z = m_coord[2];
+    for (std::size_t i=0; i<x.size(); ++i) {
+      std::array< tk::real, 3 > point{{ x[i], y[i], z[i] }};
+      tk::rotatePoint(
+        {{ mesh_orientation[0], mesh_orientation[1], mesh_orientation[2] }},
+        point );
+      x[i] = point[0];
+      y[i] = point[1];
+      z[i] = point[2];
+    }
+  }
 
   // Compute triangle connectivity for side sets, reduce boundary face for side
   // sets to this compute node only and to compute-node-local face ids
