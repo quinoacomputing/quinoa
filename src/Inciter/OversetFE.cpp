@@ -101,6 +101,8 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_ixfer(0),
   m_surfForce({{0, 0, 0}}),
   m_surfTorque({{0, 0, 0}}),
+  m_displacement({{0, 0, 0}}),
+  m_rotation({{0, 0, 0}}),
   m_centMass({{0, 0, 0}}),
   m_centMassVel({{0, 0, 0}}),
   m_angVelMesh(0),
@@ -1356,6 +1358,13 @@ OversetFE::solve()
         u_mesh(p,i2) += a2*dtp;
       }
 
+      // obtain total displacement of center-of-mass and rotation for diagnostics
+      for (std::size_t i=0; i<3; ++i) {
+        m_displacement[i] += m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+      }
+      m_rotation[sym_dir] += (m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp)
+        *180.0/pi;
+
       // update angular velocity
       m_angVelMesh = m_angVelMeshn + alpha_mesh*dtp;
 
@@ -1386,7 +1395,8 @@ OversetFE::solve()
   bool diag_computed(false);
   if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
-    diag_computed = m_diag.compute( *d, m_u, m_un, m_surfForce, m_bnorm,
+    diag_computed = m_diag.compute( *d, m_u, m_un, m_surfForce, m_surfTorque,
+                                    m_displacement, m_rotation, m_bnorm,
                                     m_symbcnodes, m_farfieldbcnodes,
                                     m_slipwallbcnodes );
     // Increase number of iterations and physical time
