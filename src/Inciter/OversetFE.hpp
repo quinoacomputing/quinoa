@@ -242,6 +242,8 @@ class OversetFE : public CBase_OversetFE {
       p | m_ixfer;
       p | m_surfForce;
       p | m_surfTorque;
+      p | m_displacement;
+      p | m_rotation;
       p | m_centMass;
       p | m_centMassVel;
       p | m_angVelMesh;
@@ -387,6 +389,10 @@ class OversetFE : public CBase_OversetFE {
     std::array< tk::real, 3 > m_surfForce;
     //! Surface torque on mesh for rigid body motion
     std::array< tk::real, 3 > m_surfTorque;
+    //! Total displacement of rigid body center of mass
+    std::array< tk::real, 3 > m_displacement;
+    //! Total rotation of rigid body
+    std::array< tk::real, 3 > m_rotation;
     //! Center of mass of rigid body
     std::array< tk::real, 3 > m_centMass;
     //! Velocity of the center of mass of rigid body
