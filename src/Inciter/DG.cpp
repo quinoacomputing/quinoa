@@ -2172,16 +2172,20 @@ DG::imex_integrate()
 	  x[ieq*ndof+idof] = m_u(e, stiffrmark);
 	}
 
-      // x_lower and x_upper unused for now
-      std::vector< tk::real > x_lower(m_nstiffeq*ndof, 0.0);
-      std::vector< tk::real > x_upper(m_nstiffeq*ndof, 0.0);
-      // Compute stiff_rhs with initial u
-      g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
-        myGhosts()->m_inpoel, myGhosts()->m_coord,
-        m_u, m_p, m_ndof, m_stiffrhs );
+      // Solve nonlinear system, first try broyden
+      bool solver_failed = false;
+      x = DG::nonlinear_broyden(e, x, solver_failed);
 
-      // Solve nonlinear system
-      x = DG::nonlinear_newton(e, x, x_lower, x_upper);
+      // If solver_failed, do newton
+      if (solver_failed) {
+        solver_failed = false;
+        x = DG::nonlinear_newton(e, x, solver_failed);
+      }
+
+      // If newton failed, crash
+      if (solver_failed)
+        Throw("At element " + std::to_string(e) +
+              " nonlinear solvers was not able to converge");
 
       // m_u <- x
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
@@ -2474,8 +2478,7 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
 
 std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
                                               std::vector< tk::real > x,
-                                              std::vector< tk::real > x_lower,
-                                              std::vector< tk::real > x_upper)
+                                              bool solver_failed )
 {
   // Broyden's method
   // Control parameters
@@ -2488,12 +2491,6 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   // if (n /= x.size())
   //   Throw("In non-linear solver: Size of initial guess is not equal to number of stiff equations "
   //         + std::to_string(n) + " /= " + std::to_string(x.size()));
-
-  // Initialize Jacobian to be the identity
-  std::vector< std::vector< tk::real > >
-    approx_jacob(n, std::vector< tk::real >(n, 0.0));
-  for (std::size_t i=0; i<n; ++i)
-    approx_jacob[i][i] = 1.0e+00;
 
   // Compute f with initial guess
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
@@ -2525,9 +2522,53 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   auto abs_err_old = err0;
 
   // Iterate for the solution if err0 > 0
-  if (err0 > abs_tol)
+  solver_failed = false;
+  tk::real alpha_jacob = 1.0;
+  if (err0 > abs_tol) {
+
+    // Evaluate finite difference based jacobian
+    double jacob[n*n];
+    tk::real dx = 0.0;
+    for (std::size_t i=0; i<n; ++i)
+      for (std::size_t j=0; j<n; ++j)
+      {
+        // Set dx in the order 1% of the unknown
+        dx = std::max(std::abs(0.1*x[j]),1.0e-06);
+        // Derivative of f[i] with respect to x[j]
+        auto x_perturb = x;
+        x_perturb[j] += dx;
+        auto f_perturb = DG::nonlinear_func(e, x_perturb);
+        jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
+      }
+    
+    // Initialize Jacobian to be the inverse of this jacobian
+    lapack_int ipiv[n];
+
+    #ifndef NDEBUG
+    lapack_int ierr =
+    #endif
+      LAPACKE_dgetrf(LAPACK_ROW_MAJOR, n, n, jacob, n, ipiv);
+    Assert(ierr==0, "Lapack error in LU factorization of FD Jacobian");
+
+    #ifndef NDEBUG
+    lapack_int jerr =
+    #endif
+      LAPACKE_dgetri(LAPACK_ROW_MAJOR, n, jacob, n, ipiv);
+    Assert(jerr==0, "Lapack error in inverting FD Jacobian");
+
+    std::vector< std::vector< tk::real > >
+      approx_jacob(n, std::vector< tk::real >(n, 0.0));
+    for (std::size_t i=0; i<n; ++i)
+      for (std::size_t j=0; j<n; ++j)
+        approx_jacob[i][j] = jacob[i*n+j];
+
     for (size_t iter=0; iter<max_iter; ++iter)
     {
+
+      // Scale inverse of jacobian if things are not going well
+      for (std::size_t i=0; i<n; ++i)
+        for (std::size_t j=0; j<n; ++j)
+          approx_jacob[i][j] *= alpha_jacob;
 
       // Compute new solution
       std::vector < tk::real > delta(n, 0.0);
@@ -2535,18 +2576,19 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
       {
         delta[i] = 0.0;
         for (std::size_t j=0; j<n; ++j)
-          delta[i] += approx_jacob[i][j] * f[j];
+          delta[i] -= approx_jacob[i][j] * f[j];
       }
 
       // Update x using line search
-      std::size_t nline = 10;
-      tk::real alpha = 1.0;
+      bool ls_failed = false;
+      tk::real alpha_ls = 1.0E+00;
+      std::size_t nline = 25;
       auto xtest = x;
       for (std::size_t iline = 0; iline<nline; ++iline)
       {
         // Evaluate xtest
         for (std::size_t i=0; i<n; ++i)
-          xtest[i] = x[i] - alpha*delta[i];
+          xtest[i] = x[i] + alpha_ls*delta[i];
 
         // Compute new f(x)
         f = DG::nonlinear_func(e, xtest);
@@ -2555,126 +2597,165 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
         for (std::size_t i=0; i<n; ++i)
           err += f[i]*f[i];
         abs_err = std::sqrt(err);
-        
-        if (abs_err < abs_err_old)
+
+        // If 1. The error went up
+        // or 2. The function f flipped in sign
+        // Reduce the factor alpha_ls
+        bool flipped_sign = false;
+        for (std::size_t i=0; i<n; ++i)
+          if (f_old[i]*f[i] < 0.0) {
+            flipped_sign = true;
+            break;
+          }
+
+        if (!flipped_sign)
         {
           break;
         }
         else
         {
-          alpha *= 0.5;
+          alpha_ls *= 0.5;
         }
-        // if (iline == nline-1)
-        //  printf("Line search failed to decrease f\n");
+        if (iline == nline-1) {
+          // Try again by reducing the jacobian,
+          // but only a few times, otherwise give up
+          alpha_jacob *= 0.5;
+          if (alpha_jacob < 1.0E-03)
+            solver_failed = true;
+          else
+            ls_failed = true;
+        }
+      }
+
+      if (solver_failed) {
+        // f = DG::nonlinear_func(e, x);
+        // printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", iter+1);
+        // printf("Element #%lu\n", e);
+        // printf("Relative error: %e\n", rel_err);
+        // printf("Absolute error: %e\n\n", abs_err);
+        // printf("alpha_ls = %e\n", alpha_ls);
+        // printf("x0 vs x:\n");
+        // for (std::size_t i=0; i<n; ++i)
+        //   printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
+        // printf("f0 vs f:\n");
+        // for (std::size_t i=0; i<n; ++i)
+        //   printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
+        // printf("delta:\n");
+        // for (std::size_t i=0; i<n; ++i)
+        //   printf("delta[%lu] = %e\n", i, delta[i]);
+        break;
       }
       
-      // Save x
-      for (std::size_t i=0; i<n; ++i)
-        x[i] = xtest[i];
+      if (!ls_failed) {
+        // Save x
+        for (std::size_t i=0; i<n; ++i)
+          x[i] = xtest[i];
 
-      // Compute delta_x and delta_f
-      for (std::size_t i=0; i<n; ++i)
-      {
-        delta_x[i] = x[i] - x_old[i];
-        delta_f[i] = f[i] - f_old[i];
-      }
-
-      // Update inverse Jacobian approximation
-
-      // 1. Compute approx_jacob*delta_f and delta_x*jacob_approx
-      tk::real sum1, sum2;
-      std::vector< tk::real > auxvec1(n, 0.0), auxvec2(n, 0.0);
-      for (std::size_t i=0; i<n; ++i)
-      {
-        sum1 = 0.0;
-        sum2 = 0.0;
-        for (std::size_t j=0; j<n; ++j)
+        // Compute delta_x and delta_f
+        for (std::size_t i=0; i<n; ++i)
         {
-          sum1 += approx_jacob[i][j]*delta_f[j];
-          sum2 += delta_x[j]*approx_jacob[j][i];
+          delta_x[i] = x[i] - x_old[i];
+          delta_f[i] = f[i] - f_old[i];
         }
-        auxvec1[i] = sum1;
-        auxvec2[i] = sum2;
-      }
 
-      // 2. Compute delta_x*approx_jacob*delta_f
-      // and delta_x-approx_jacob*delta_f
-      tk::real denom = 0.0;
-      for (std::size_t i=0; i<n; ++i)
-      {
-        denom += delta_x[i]*auxvec1[i];
-        auxvec1[i] = delta_x[i]-auxvec1[i];
-      }
+        // Update inverse Jacobian approximation
 
-      // 3. Divide delta_u+approx_jacob*delta_f
-      // by delta_x*(approx_jacob*delta_f)
-      if (std::abs(denom) < 1.0e-18)
-      {
-        if (denom < 0.0)
+        // 1. Compute approx_jacob*delta_f and delta_x*jacob_approx
+        tk::real sum1, sum2;
+        std::vector< tk::real > auxvec1(n, 0.0), auxvec2(n, 0.0);
+        for (std::size_t i=0; i<n; ++i)
         {
-          for (std::size_t i=0; i<n; ++i)
-            auxvec1[i] /= -1.0e-18;
+          sum1 = 0.0;
+          sum2 = 0.0;
+          for (std::size_t j=0; j<n; ++j)
+          {
+            sum1 += approx_jacob[i][j]*delta_f[j];
+            sum2 += delta_x[j]*approx_jacob[j][i];
+          }
+          auxvec1[i] = sum1;
+          auxvec2[i] = sum2;
+        }
+
+        // 2. Compute delta_x*approx_jacob*delta_f
+        // and delta_x-approx_jacob*delta_f
+        tk::real denom = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+        {
+          denom += delta_x[i]*auxvec1[i];
+          auxvec1[i] = delta_x[i]-auxvec1[i];
+        }
+
+        // 3. Divide delta_u+approx_jacob*delta_f
+        // by delta_x*(approx_jacob*delta_f)
+        if (std::abs(denom) < 1.0e-18)
+        {
+          if (denom < 0.0)
+          {
+            for (std::size_t i=0; i<n; ++i)
+              auxvec1[i] /= -1.0e-18;
+          }
+          else
+          {
+            for (std::size_t i=0; i<n; ++i)
+              auxvec1[i] /= 1.0e-18;
+          }
         }
         else
         {
           for (std::size_t i=0; i<n; ++i)
-            auxvec1[i] /= 1.0e-18;
+            auxvec1[i] /= denom;
+        }
+
+        // 4. Perform outter product between the two arrays and
+        // add that quantity to the new jacobian approximation
+        for (std::size_t i=0; i<n; ++i)
+          for (std::size_t j=0; j<n; ++j)
+            approx_jacob[i][j] += auxvec1[i] * auxvec2[j];
+
+        // Compute a measure of error, use norm of f
+        tk::real err = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+          err += f[i]*f[i];
+        abs_err = std::sqrt(err);
+        rel_err = abs_err/err0;
+
+        // Save solution and f
+        for (std::size_t i=0; i<n; ++i)
+        {
+          x_old[i] = x[i];
+          f_old[i] = f[i];
+        }
+        abs_err_old = abs_err;
+
+        // check if error condition is met and loop back
+        if (rel_err < rel_tol || abs_err < abs_tol)
+          break;
+
+        // If we did not converge, print a message and keep going
+        if (iter == max_iter-1)
+        {
+          solver_failed = true;
+          // printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
+          // printf("Element #%lu\n", e);
+          // printf("Relative error: %e\n", rel_err);
+          // printf("Absolute error: %e\n\n", abs_err);
+          // printf("x0 vs x:\n");
+          // for (std::size_t i=0; i<n; ++i)
+          //   printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
+          // printf("f0 vs f:\n");
+          // for (std::size_t i=0; i<n; ++i)
+          //   printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
         }
       }
-      else
-      {
-        for (std::size_t i=0; i<n; ++i)
-          auxvec1[i] /= denom;
-      }
-
-      // 4. Perform outter product between the two arrays and
-      // add that quantity to the new jacobian approximation
-      for (std::size_t i=0; i<n; ++i)
-        for (std::size_t j=0; j<n; ++j)
-          approx_jacob[i][j] += auxvec1[i] * auxvec2[j];
-
-      // Compute a measure of error, use norm of f
-      tk::real err = 0.0;
-      for (std::size_t i=0; i<n; ++i)
-	err += f[i]*f[i];
-      abs_err = std::sqrt(err);
-      rel_err = abs_err/err0;
-
-      // Save solution and f
-      for (std::size_t i=0; i<n; ++i)
-      {
-	x_old[i] = x[i];
-	f_old[i] = f[i];
-      }
-      abs_err_old = abs_err;
-
-      // check if error condition is met and loop back
-      if (rel_err < rel_tol || abs_err < abs_tol)
-	break;
-
-      // If we did not converge, print a message and keep going
-      if (iter == max_iter-1)
-      {
-	printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
-	printf("Element #%lu\n", e);
-	printf("Relative error: %e\n", rel_err);
-	printf("Absolute error: %e\n\n", abs_err);
-        printf("x0 vs x:\n");
-        for (std::size_t i=0; i<n; ++i)
-          printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
-        printf("f0 vs f:\n");
-        for (std::size_t i=0; i<n; ++i)
-          printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
-      }
     }
+  }
 
   return x;
 }
 
 std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
                                              std::vector< tk::real > x,
-                                             std::vector< tk::real > x_lower,
-                                             std::vector< tk::real > x_upper)
+                                             bool solver_failed )
 {
   // Newton's method
   // Control parameters
@@ -2707,25 +2788,25 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
   auto abs_err_old = err0;
 
   // Iterate for the solution if err0 > 0
+  solver_failed = false;
+  tk::real alpha_jacob = 1.0;
   if (err0 > abs_tol)
     for (std::size_t iter=0; iter<max_iter; ++iter)
     {
 
       // Evaluate jacobian
-      tk::real dx = 1.0e-02;
+      tk::real dx = 0.0;
       for (std::size_t i=0; i<n; ++i)
         for (std::size_t j=0; j<n; ++j)
         {
+          // Set dx in the order 1% of the unknown
+          dx = alpha_jacob*std::max(std::abs(0.1*x[j]),1.0e-06);
           // Derivative of f[i] with respect to x[j]
           auto x_perturb = x;
           x_perturb[j] += dx;
           auto f_perturb = DG::nonlinear_func(e, x_perturb);
           jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
         }
-      // printf("JACOBIAN\n");
-      // for (std::size_t i=0; i<n; ++i)
-      //   for (std::size_t j=0; j<n; ++j)
-      //     printf("j[%lu][%lu] = %e\n", i, j, jacob[i*n+j]);
 
       // Compute new solution by solving linear system J*dx = -f
       double delta[n];
@@ -2735,25 +2816,25 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
       lapack_int ipiv[n];
       info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, 1, jacob, n, ipiv, delta, 1);
 
-      if (info == 0) {
-        // Print solution
-        // for (std::size_t i=0; i<2*nmat+1; ++i)
-        //   printf("dx[%lu] = %e\n", i, dx[i]);
-      }
-      else
-      {
+      if (info != 0) {
         printf("Failed with info: %ld\n", info);
       }
 
+      // Save f as fold
+      std::vector< tk::real > fold(n);
+      for (std::size_t i=0; i<n; ++i)
+        fold[i] = f[i];
+
       // Update x using line search
-      std::size_t nline = 10;
-      tk::real alpha = 1.0;
+      bool ls_failed = false;
+      tk::real alpha_ls = 1.0E+00;
+      std::size_t nline = 25;
       auto xtest = x;
       for (std::size_t iline = 0; iline<nline; ++iline)
       {
         // Evaluate xtest
         for (std::size_t i=0; i<n; ++i)
-          xtest[i] = x[i] + alpha*delta[i];
+          xtest[i] = x[i] + alpha_ls*delta[i];
 
         // Compute new f(x)
         f = DG::nonlinear_func(e, xtest);
@@ -2763,46 +2844,103 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
           err += f[i]*f[i];
         abs_err = std::sqrt(err);
 
-        if (abs_err < abs_err_old)
+        // If 1. The error went up
+        // or 2. The function f flipped in sign
+        // Reduce the factor alpha_ls
+        bool flipped_sign = false;
+        for (std::size_t i=0; i<n; ++i)
+          if (fold[i]*f[i] < 0.0) {
+            flipped_sign = true;
+            break;
+          }
+
+        if (abs_err < abs_err_old && !flipped_sign)
         {
           break;
         }
         else
         {
-          alpha *= 0.5;
+          alpha_ls *= 0.5;
         }
-        if (iline == nline-1)
-          printf("Line search failed to decrease f\n");
+        if (iline == nline-1) {
+          //printf("Line search failed to decrease f\n");
+          // Try again by reducing the jacobian,
+          // but only a few times, otherwise give up
+          alpha_jacob *= 0.5;
+          if (alpha_jacob < 1.0E-03)
+            solver_failed = true;
+          else
+            ls_failed = true;
+        }
       }
 
-      // Save x
-      for (std::size_t i=0; i<n; ++i)
-        x[i] = xtest[i];
-
-      // Compute a measure of error, use norm of f
-      tk::real err = 0.0;
-      for (std::size_t i=0; i<n; ++i)
-	err += f[i]*f[i];
-      abs_err = std::sqrt(err);
-      rel_err = abs_err/err0;
-
-      // check if error condition is met and loop back
-      if (rel_err < rel_tol || abs_err < abs_tol)
-	break;
-
-      // If we did not converge, print a message and keep going
-      if (iter == max_iter-1)
-      {
-	printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
-	printf("Element #%lu\n", e);
-	printf("Relative error: %e\n", rel_err);
-	printf("Absolute error: %e\n\n", abs_err);
+      if (solver_failed) {
+        f = DG::nonlinear_func(e, x);
+        printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", iter+1);
+        printf("Element #%lu\n", e);
+        printf("Relative error: %e\n", rel_err);
+        printf("Absolute error: %e\n\n", abs_err);
+        printf("alpha_ls = %e\n", alpha_ls);
         printf("x0 vs x:\n");
         for (std::size_t i=0; i<n; ++i)
           printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
         printf("f0 vs f:\n");
         for (std::size_t i=0; i<n; ++i)
           printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
+        printf("delta:\n");
+        for (std::size_t i=0; i<n; ++i)
+          printf("delta[%lu] = %e\n", i, delta[i]);
+        break;
+      }
+
+      if (!ls_failed) {
+        // Save x
+        for (std::size_t i=0; i<n; ++i)
+          x[i] = xtest[i];
+
+        // Compute a measure of error, use norm of f
+        tk::real err = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+          err += f[i]*f[i];
+        abs_err = std::sqrt(err);
+        rel_err = abs_err/err0;
+
+        // check if error condition is met and loop back
+        if (rel_err < rel_tol || abs_err < abs_tol) {
+          // if (std::abs(alpha_ls-1.0) > 1.0E-06) {
+          //   printf("SUCCESS. iter = %lu\n", iter);
+          //   printf("Element #%lu\n", e);
+          //   printf("Relative error: %e\n", rel_err);
+          //   printf("Absolute error: %e\n\n", abs_err);
+          //   printf("Absolute error(old): %e\n\n", abs_err_old);
+          //   printf("x0 vs x:\n");
+          //   for (std::size_t i=0; i<n; ++i)
+          //     printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
+          //   printf("f0 vs f:\n");
+          //   for (std::size_t i=0; i<n; ++i)
+          //     printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
+          // }
+          break;
+        }
+
+        // If we did not converge, print a message and keep going
+        if (iter == max_iter-1)
+        {
+          printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
+          printf("Element #%lu\n", e);
+          printf("Relative error: %e\n", rel_err);
+          printf("Absolute error: %e\n\n", abs_err);
+          printf("alpha_ls = %e\n", alpha_ls);
+          printf("x0 vs x:\n");
+          for (std::size_t i=0; i<n; ++i)
+            printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
+          printf("f0 vs f:\n");
+          for (std::size_t i=0; i<n; ++i)
+            printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
+          printf("delta:\n");
+          for (std::size_t i=0; i<n; ++i)
+            printf("delta[%lu] = %e\n", i, delta[i]);
+        }
       }
     }
 

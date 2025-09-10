@@ -1176,7 +1176,7 @@ class MultiMat {
         for (std::size_t k=0; k<nmat; ++k)
         {
           tk::real alpha = state[inciter::volfracIdx(nmat, k)];
-          if (solidx[k] > 0 && alpha-volfracPRelaxLim() > 1.0e-06)
+          if (solidx[k] > 0 /*&& alpha-volfracPRelaxLim() > 1.0e-06*/)
           {
             std::array< std::array< tk::real, 3 >, 3 > g;
             // Compute the source terms
@@ -1196,8 +1196,8 @@ class MultiMat {
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
               state[inciter::densityIdx(nmat, k)], 0.0, 0.0, 0.0, 0.0, alpha, k,
               g );
-            tk::real apr = state[ncomp+inciter::pressureIdx(nmat, k)];
-            for (std::size_t i=0; i<3; ++i) sigma_dev[i][i] -= apr;
+            // tk::real apr = state[ncomp+inciter::pressureIdx(nmat, k)];
+            // for (std::size_t i=0; i<3; ++i) sigma_dev[i][i] -= apr;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
@@ -1206,17 +1206,20 @@ class MultiMat {
             for (std::size_t i=0; i<3; ++i)
               sigma_dev[i][i] -= sigma_trace/3.0;
 
-            // 2. Compute g*dev(sigma)
+            // 2. Compute g*dev(sigma), symmetrized
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
               {
-                tk::real sum = 0.0;
-                for (std::size_t l=0; l<3; ++l)
-                  sum += g[i][l]*sigma_dev[l][j];
-                Lp[i][j] = sum;
+                tk::real sum1 = 0.0;
+                tk::real sum2 = 0.0;
+                for (std::size_t l=0; l<3; ++l) {
+                  sum1 += g[i][l]*sigma_dev[l][j];
+                  sum2 += sigma_dev[i][l]*g[l][j];
+                }
+                Lp[i][j] = 0.5*(sum1+sum2);
               }
 
-            // 5. Divide by 2*mu*tau
+            // 3. Divide by 2*mu*tau
             // 'Perfect' plasticity
             std::vector< tk::real > s(9*ndof, 0.0);
             tk::real yield_stress = getmatprop< tag::yield_stress >(k);
@@ -1229,8 +1232,20 @@ class MultiMat {
             // Future implementation:
             // rel_factor = 1.0e05*(equiv_stress-scaled_yield)
             tk::real rel_factor = 0.0;
-            if (equiv_stress >= yield_stress)
-              rel_factor = 1.0/getmatprop< tag::plasticity_reltime >(k);
+            tk::real phi = std::max(0.0, equiv_stress-yield_stress);
+            tk::real rel_time = getmatprop< tag::plasticity_reltime >(k);
+            if (phi > 0.0) {
+              //rel_factor = 1.0/rel_time;
+              rel_factor = std::pow((phi/yield_stress),2.0)/rel_time;
+              // Scale rel_factor by alpha
+              tk::real a_min = 1.0e-03, a_max = 2.0e-01;
+              auto smoothstep = [&](tk::real a){
+                tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
+                return t*t*(3.0-2.0*t);
+              };
+              tk::real a_tilde = smoothstep(alpha);
+              rel_factor *= a_tilde;
+            }
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
