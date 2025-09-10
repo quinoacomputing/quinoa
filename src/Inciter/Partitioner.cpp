@@ -119,14 +119,44 @@ Partitioner::Partitioner(
 
   // Rotate mesh if specified
   if (rotate_mesh) {
+    auto mesh_cm =
+      g_inputdeck.get< tag::mesh >()[meshid].get< tag::center_of_mass >();
+    auto& x = m_coord[0];
+    auto& y = m_coord[1];
+    auto& z = m_coord[2];
+    for (std::size_t i=0; i<x.size(); ++i) {
+      std::array< tk::real, 3 >
+        point{{ x[i]-mesh_cm[0], y[i]-mesh_cm[1], z[i]-mesh_cm[2] }};
+      tk::rotatePoint(
+        {{ mesh_orientation[0], mesh_orientation[1], mesh_orientation[2] }},
+        point );
+      x[i] = point[0]+mesh_cm[0];
+      y[i] = point[1]+mesh_cm[1];
+      z[i] = point[2]+mesh_cm[2];
+    }
+  }
+
+  // Check if mesh location specified
+  auto mesh_location =
+    g_inputdeck.get< tag::mesh >()[meshid].get< tag::location >();
+  bool relocate_mesh(false);
+  for (std::size_t i=0; i<3; ++i) {
+    if (std::abs(mesh_location[i]) > 1e-8) {
+      relocate_mesh = true;
+      break;
+    }
+  }
+
+  // Relocate mesh if specified
+  if (relocate_mesh) {
     auto& x = m_coord[0];
     auto& y = m_coord[1];
     auto& z = m_coord[2];
     for (std::size_t i=0; i<x.size(); ++i) {
       std::array< tk::real, 3 > point{{ x[i], y[i], z[i] }};
-      tk::rotatePoint(
-        {{ mesh_orientation[0], mesh_orientation[1], mesh_orientation[2] }},
-        point );
+      // negative values due to how tk::movePoint() is interpreted
+      tk::movePoint(
+        {{ -mesh_location[0], -mesh_location[1], -mesh_location[2] }}, point );
       x[i] = point[0];
       y[i] = point[1];
       z[i] = point[2];

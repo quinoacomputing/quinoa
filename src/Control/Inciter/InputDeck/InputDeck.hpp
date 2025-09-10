@@ -1976,9 +1976,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"filename", "Set filename",
         R"(Set filename, e.g., mesh filename for solver coupling.)", "string"});
 
-      keywords.insert({"location", "Configure location",
-        R"(Configure location of a mesh relative to another.)",
-        "vector of 3 reals"});
+      keywords.insert({"location", "Configure location of mesh",
+        R"(Configure location of a mesh relative to its local coordinate
+        system. Requires specification of three distances which are used to
+        relocate the mesh.)", "vector of 3 reals"});
 
       keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
         R"(Moment of inertia of rigid body for rotational motion)", "real"});
