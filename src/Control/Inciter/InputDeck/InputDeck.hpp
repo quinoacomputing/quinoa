@@ -1885,7 +1885,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"orientation", "Configure orientation",
         R"(Configure orientation of an IC box for rotation about centroid of
-        box; or configure orientation of a mesh relative to another.)",
+        box (when specified within an IC 'box' block); or configure orientation
+        of a mesh (when specified within a 'mesh' block). Requires specification
+        of three angles about which the entity (box or mesh) is to be rotated.
+        The entity is rotated about the cartesian coordinate axes.)",
         "vector of 3 reals"});
 
       keywords.insert({"initiate", "Initiation type",
