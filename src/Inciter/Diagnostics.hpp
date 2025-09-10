@@ -17,7 +17,7 @@
 namespace inciter {
 
 //! Number of entries in diagnostics vector (of vectors)
-const std::size_t NUMDIAG = 9;
+const std::size_t NUMDIAG = 12;
 
 //! Diagnostics labels
 enum Diag { L2SOL=0,    //!< L2 norm of numerical solution
@@ -26,6 +26,9 @@ enum Diag { L2SOL=0,    //!< L2 norm of numerical solution
             LINFERR,    //!< L_inf norm of numerical-analytic solution
             TOTALSOL,   //!< Sum of conserved solution over entire domain
             RESFORCE,   //!< Resultant force vector on mesh boundaries
+            RESTORQUE,  //!< Resultant torque vector on mesh boundaries
+            DISPLACEMNT,//!< Total displacement of rigid body center-of-mass
+            ROTATION,   //!< Total rotation of rigid body
             ITER,       //!< Iteration count
             TIME,       //!< Physical time
             DT };       //!< Time step size
