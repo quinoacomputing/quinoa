@@ -129,6 +129,8 @@ GodunovRomenski::pressure(
   auto arhoEc = alpha*coldcomprEnergy(rho);
   // obtain thermal contribution to energy
   auto arhoEt = arhoE - arhoEe - arhoEc - 0.5*arho*(u*u + v*v + w*w);
+  //if (arhoEt < 1.0E-06)
+  //  printf("In partpressure, arhoEt = %e\n", arhoEt);
 
   // use Mie-Gruneisen form of Godunov-Romenski for pressure
   auto partpressure = pressure_coldcompr(arho,alpha) + m_gamma*arhoEt;
@@ -178,7 +180,7 @@ GodunovRomenski::CauchyStress(
 
   // p_mean
   auto p_se = -elasticEnergy(defgrad, devH);
-  auto pmean = alpha * p_se;
+  // auto pmean = alpha * p_se;
 
   // Pressure due to shear
   asig[0][0] = -pmean;
@@ -226,7 +228,7 @@ GodunovRomenski::soundspeed(
   // Hydro contribution
   tk::real rho = arho/alpha;
   auto p_cc = pressure_coldcompr(arho, alpha);
-  a += std::max( 1.0e-15, DpccDrho(rho) + (m_gamma+1.0) * (apr - p_cc)/arho );
+  a += std::max( 1.0e-15, DpccDrho(rho) + m_gamma * (apr - p_cc)/arho );
   // in the above expression, shear pressure is not included in apr in the first
   // place, so should not subtract it
 
@@ -372,13 +374,15 @@ GodunovRomenski::min_eff_pressure(
 {
   // minimum pressure is constrained by zero soundspeed.
   auto rho = arho/alpha;
-  // if (rho < 0.0) {
-  //   printf("DEBUG:\n");
-  //   printf("rho, arho, alpha = %e, %e, %e\n", rho, arho, alpha);
-  // }
+  auto aeff = std::max(alpha, g_inputdeck.get< tag::multimat, tag::min_volumefrac >());
+  auto arhoeff = std::max(arho, aeff*rho);
+  if (rho < 0.0) {
+    printf("DEBUG:\n");
+    printf("rho, arho, alpha = %e, %e, %e\n", rho, arho, alpha);
+  }
   return min
-    - rho/(m_gamma+1.0) * DpccDrho(rho)
-    + pressure_coldcompr(arho, alpha)/alpha;
+    - rho/m_gamma * DpccDrho(rho)
+    + pressure_coldcompr(arhoeff, aeff)/aeff;
 }
 
 tk::real

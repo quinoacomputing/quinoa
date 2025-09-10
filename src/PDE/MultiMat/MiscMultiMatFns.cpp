@@ -247,7 +247,7 @@ cleanTraceMultiMat(
       //   }
       //   printf("[2] ALPHA, DENSITY, PRESSURE = %e, %e, %e\n", alk, U(e, densityDofIdx(nmat, k, rdof, 0)), P(e, pressureDofIdx(nmat, k, rdof, 0)));
       // }
-      else if ( alk-volfracPRelaxLim() < 1.0e-06 ) {  // condition so that else-branch not exec'ed for solids
+      else if ( alk-1.0e-03/*volfracPRelaxLim()*/ < 1.0e-06 ) {  // condition so that else-branch not exec'ed for solids
         auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
         // For solids, reset deformation and stress
         if (solidx[k] > 0)
