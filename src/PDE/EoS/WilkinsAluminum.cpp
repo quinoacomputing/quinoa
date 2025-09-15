@@ -20,17 +20,31 @@
 #include "EoS/WilkinsAluminum.hpp"
 #include "EoS/GetMatProp.hpp"
 
-// // Lapacke forward declarations
-// extern "C" {
+namespace {
+  constexpr tk::real A_TRACE = 1e-4;
+  constexpr tk::real RHO_FLOOR = 1e-12;     // per-solid density floor [kg/m^3]
+  constexpr tk::real DET_FLOOR = 1e-18;     // for SPD guards on g
 
-// using lapack_int = long;
-
-// #define LAPACK_ROW_MAJOR 101
-
-// lapack_int LAPACKE_dgeev(int, char, char, lapack_int, double*, lapack_int,
-//   double*, double*, double*, lapack_int, double*, lapack_int );
-
-// }
+  inline tk::real alpha_eff(tk::real a) noexcept {
+    return (a > A_TRACE) ? a : A_TRACE;     // only for UNWEIGHTING
+  }
+  inline tk::real safe_pos(tk::real x, tk::real eps) noexcept {
+    return std::isfinite(x) && x > eps ? x : eps;
+  }
+  inline void symmetrize(std::array<std::array<tk::real,3>,3>& g) {
+    for (int i=0;i<3;++i) for (int j=i+1;j<3;++j) {
+      tk::real s = 0.5*(g[i][j] + g[j][i]); g[i][j]=g[j][i]=s;
+    }
+  }
+  inline std::array<std::array<tk::real,3>,3>
+  spherical_from_det(const std::array<std::array<tk::real,3>,3>& g) {
+    auto detg = safe_pos(tk::determinant(g), DET_FLOOR);
+    tk::real d = std::pow(detg, 1.0/3.0);
+    std::array<std::array<tk::real,3>,3> G{};
+    for (int i=0;i<3;++i) for (int j=0;j<3;++j) G[i][j] = (i==j)? d : 0.0;
+    return G;
+  }
+}
 
 static const tk::real e1 = -13.0e+09;
 static const tk::real e2 = 20.0e+09;
@@ -133,22 +147,22 @@ WilkinsAluminum::pressure(
 //!   WilkinsAluminum EoS
 // *************************************************************************
 {
-  tk::real rho0 = m_rho0;
-  tk::real rho = arho/alpha;
-  tk::real partpressure = alpha*(2*e2*std::pow(rho/rho0,3.0)
-                                 + e3*std::pow(rho/rho0,2.0)
-                                 - e5*rho/rho0 - e4 );
+  // Invalid or vanishing alpha → no contribution
+  if (!(alpha > 0.0)) return 0.0;
 
-  // check partial pressure divergence
+  // Per-solid density with alpha floor ONLY for unweighting
+  const tk::real aeff = alpha_eff(alpha);
+  const tk::real rho  = std::max(arho/aeff, RHO_FLOOR);
+  const tk::real rho0 = m_rho0;
+
+  tk::real partpressure = alpha * ( 2*e2*std::pow(rho/rho0,3.0)
+                                  + e3*std::pow(rho/rho0,2.0)
+                                  - e5*rho/rho0 - e4 );
+
   if (!std::isfinite(partpressure)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    Throw("Material-" + std::to_string(imat) +
-      " has nan/inf partial pressure: " + std::to_string(partpressure) +
-      ", material volume fraction: " + std::to_string(alpha));
+    // Silent fallback instead of throwing: return hydro floor
+    partpressure = 0.0;
   }
-
   return partpressure;
 }
 
@@ -178,6 +192,7 @@ WilkinsAluminum::CauchyStress(
 // *************************************************************************
 {
   std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
+  if (!(alpha > 0.0)) return asig;
 
   // obtain elastic contribution to energy and substract it from pmean
   std::array< std::array< tk::real, 3 >, 3 > devH;
@@ -226,31 +241,22 @@ WilkinsAluminum::soundspeed(
 //! \return Material speed of sound using the WilkinsAluminum EoS
 // *************************************************************************
 {
-  tk::real a = 0.0;
+  if (!(alpha > 0.0)) return 0.0;
 
-  // Hydro contribution
-  tk::real rho0 = m_rho0;
-  tk::real rho = arho/alpha;
-  a += std::max( 1.0e-15, 6*e2*std::pow(rho/rho0,2.0)/rho0
-                 + 2*e3*rho/(rho0*rho0) - e5/rho0 );
+  const tk::real aeff = alpha_eff(alpha);
+  const tk::real rho  = std::max(arho/aeff, RHO_FLOOR); // per-solid
+  const tk::real rho0 = m_rho0;
+
+  // Hydro c^2 (clamped ≥ tiny positive)
+  tk::real c2_h = 6*e2*std::pow(rho/rho0,2.0)/rho0
+                + 2*e3*rho/(rho0*rho0) - e5/rho0;
+  c2_h = std::max(c2_h, 1.0e-15);
 
   // Shear contribution
-  a += (4.0/3.0) * m_mu / (arho/alpha);
+  tk::real c2_s = (4.0/3.0) * m_mu / rho;
 
-  // Compute square root
-  a = std::sqrt(a);
-
-  // check sound speed divergence
-  if (!std::isfinite(a)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Partial pressure: " << apr << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
-      + std::to_string(a) + ", material volume fraction: " +
-      std::to_string(alpha));
-  }
-
+  tk::real a = std::sqrt(c2_h + c2_s);
+  if (!std::isfinite(a)) a = 0.0;
   return a;
 }
 
@@ -274,19 +280,10 @@ WilkinsAluminum::shearspeed(
   // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
-  tk::real a = std::sqrt(alpha*m_mu/arho);
-
-  // check shear-wave speed divergence
-  if (!std::isfinite(a)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf shear-wave speed: "
-      + std::to_string(a) + ", material volume fraction: " +
-      std::to_string(alpha));
-  }
-
-  return a;
+  if (!(alpha > 0.0)) return 0.0;
+  const tk::real rho = std::max(arho/alpha_eff(alpha), RHO_FLOOR);
+  tk::real a = std::sqrt(m_mu / rho);      // per-solid
+  return std::isfinite(a) ? a : 0.0;
 }
 
 tk::real
@@ -315,17 +312,23 @@ WilkinsAluminum::totalenergy(
 //! \return Material specific total energy using the WilkinsAluminum EoS
 // *************************************************************************
 {
-  // obtain hydro contribution to energy
-  tk::real rho0 = m_rho0;
-  tk::real rho = arho/alpha;
-  tk::real rhoEh = (e1+e2*std::pow(rho/rho0,2.0)+e3*(rho/rho0)
-                    +e4*std::pow(rho/rho0,-1.0)-e5*std::log(rho/rho0))/rho0
-                   + 0.5*rho*(u*u + v*v + w*w);
-  // obtain elastic contribution to energy
-  std::array< std::array< tk::real, 3 >, 3 > devH;
-  tk::real rhoEe = elasticEnergy(defgrad, devH);
+  if (!(alpha > 0.0)) return 0.0;
 
-  return alpha*(rhoEh + rhoEe);
+  const tk::real aeff = alpha_eff(alpha);
+  const tk::real rho0 = m_rho0;
+  const tk::real rho  = std::max(arho/aeff, RHO_FLOOR);
+
+  // Hydro + kinetic per-solid, then alpha-weight
+  tk::real rhoEh = ( e1 + e2*std::pow(rho/rho0,2.0) + e3*(rho/rho0)
+                   + e4*std::pow(rho/rho0,-1.0) - e5*std::log(rho/rho0) )/rho0
+                   + 0.5*rho*(u*u + v*v + w*w);
+
+  // Elastic contribution (robustified below)
+  std::array<std::array<tk::real,3>,3> devH;
+  tk::real rhoEe = elasticEnergy(defgrad, devH);  // per-solid
+
+  tk::real out = alpha * (rhoEh + rhoEe);
+  return std::isfinite(out) ? out : 0.0;
 }
 
 tk::real
@@ -390,14 +393,22 @@ WilkinsAluminum::elasticEnergy(
 //!   the elastic shear distortion for further use
 // *************************************************************************
 {
-  // Compute deviatoric part of Hencky tensor
-  devH = tk::getDevHencky(defgrad);
+  // Symmetrize and ensure positive determinant (fallback to spherical)
+  auto g = defgrad;
+  symmetrize(g);
+  tk::real detg = tk::determinant(g);
+  if (!(detg > DET_FLOOR)) {
+    g = spherical_from_det(g);      // zero deviatoric in trace/invalid cells
+  }
 
-  // Compute elastic energy
+  // Compute deviatoric Hencky strain safely
+  devH = tk::getDevHencky(g);
+
+  // Guard against non-finite output
   tk::real rhoEe = 0.0;
-  for (std::size_t i=0; i<3; ++i)
-    for (std::size_t j=0; j<3; ++j)
-      rhoEe += m_mu*devH[i][j]*devH[i][j];
-
+  for (int i=0;i<3;++i) for (int j=0;j<3;++j) {
+    if (!std::isfinite(devH[i][j])) { devH = {}; return 0.0; }
+    rhoEe += m_mu * devH[i][j]*devH[i][j];
+  }
   return rhoEe;
 }

@@ -53,6 +53,7 @@ transform_P0P1( std::size_t rdof,
 //! Compute THINC reconstructions near material interfaces
 void
 THINCReco(
+  const std::vector< inciter::EOS >& mat_blk,
   std::size_t rdof,
   std::size_t nmat,
   std::size_t e,
