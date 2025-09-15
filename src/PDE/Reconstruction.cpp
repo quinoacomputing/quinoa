@@ -175,8 +175,7 @@ transform_P0P1( std::size_t rdof,
 }
 
 void
-THINCReco( const std::vector< inciter::EOS >& mat_blk,
-           std::size_t rdof,
+THINCReco( std::size_t rdof,
            std::size_t nmat,
            std::size_t e,
            const std::vector< std::size_t >& inpoel,
@@ -295,40 +294,8 @@ THINCReco( const std::vector< inciter::EOS >& mat_blk,
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
               state[deformIdx(nmat,solidx[k],i,j)] =
-                alReco[k]*U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0))/alCC;
-          
-          // // Get the state of Cauchy Stress from the equation of state
-          // std::array< std::array< tk::real, 3 >, 3 > g;
-          // for (std::size_t i=0; i<3; ++i)
-          //   for (std::size_t j=0; j<3; ++j)
-          //     g[i][j] = U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0));
-          // // If alpha < 1.0e-04 -> Symmetrize, kill trace and keep determinant
-          // if (alReco[k] < 1.0e-04) {
-          //   for (size_t i=0;i<3;++i)
-          //     for (size_t j=i+1;j<3;++j) {
-          //       tk::real sij = 0.5*(g[i][j] + g[j][i]);
-          //       g[i][j] = g[j][i] = sij;
-          //     }
-          //   // Robust determinant and spherical replacement
-          //   tk::real detg = tk::determinant(g);
-          //   // Clamp to avoid NaNs; eps should be small but > 0
-          //   const tk::real det_floor = 1e-18;
-          //   if (!(detg > det_floor)) detg = det_floor;
-          //   const tk::real new_gii = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
-          //   for (size_t i=0;i<3;++i)
-          //     for (size_t j=0;j<3;++j)
-          //       g[i][j] = (i==j) ? new_gii : 0.0;
-          // }
-          // auto asig = mat_blk[k].computeTensor< inciter::EOS::CauchyStress >(
-          //   0.0, 0.0, 0.0, 0.0, 0.0, alReco[k], k, g);
-          // for (std::size_t i=0; i<3; ++i)
-          //   for (std::size_t j=0; j<3; ++j)
-          //     state[inciter::stressIdx(nmat, solidx[k], inciter::stressCmp[i][j])] =
-          //       asig[i][j];
+                U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0));
 
-          // for (std::size_t i=0; i<6; ++i)
-          //   state[ncomp+stressIdx(nmat,solidx[k],i)] = EOS call with 
-          //     U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0)) and alReco[k];
           for (std::size_t i=0; i<6; ++i)
             state[ncomp+stressIdx(nmat,solidx[k],i)] = alReco[k]
               * P(e, stressDofIdx(nmat,solidx[k],i,rdof,0))/alCC;
@@ -897,54 +864,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 
   state = eval_state( ncomp, rdof, dof_e, e, U, B );
   sprim = eval_state( nprim, rdof, dof_e, e, P, B );
-  
-  // // Get the state of Cauchy Stress from the equation of state
-  // const auto& solidx = inciter::g_inputdeck.get<
-  //   tag::matidxmap, tag::solidx >();
-  // for (std::size_t k=0; k<nmat; ++k) {
-  //   if (solidx[k] > 0) {
-  //     std::array< std::array< tk::real, 3 >, 3 > g;
-  //     for (std::size_t i=0; i<3; ++i)
-  //       for (std::size_t j=0; j<3; ++j)
-  //         g[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)];
-  //     // If alpha < 1.0e-04 -> Symmetrize, kill trace and keep determinant
-  //     if (state[inciter::volfracIdx(nmat, k)] < 1.0e-04) {
-  //       for (size_t i=0;i<3;++i)
-  //         for (size_t j=i+1;j<3;++j) {
-  //           tk::real sij = 0.5*(g[i][j] + g[j][i]);
-  //           g[i][j] = g[j][i] = sij;
-  //         }
-  //       // Robust determinant and spherical replacement
-  //       tk::real detg = tk::determinant(g);
-  //       // Clamp to avoid NaNs; eps should be small but > 0
-  //       const tk::real det_floor = 1e-18;
-  //       if (!(detg > det_floor)) detg = det_floor;
-  //       const tk::real new_gii = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
-  //       for (size_t i=0;i<3;++i)
-  //         for (size_t j=0;j<3;++j)
-  //           g[i][j] = (i==j) ? new_gii : 0.0;
-  //     }
-  //     auto asig = mat_blk[k].computeTensor< inciter::EOS::CauchyStress >(
-  //       0.0, 0.0, 0.0, 0.0, 0.0, state[inciter::volfracIdx(nmat,k)], k, g);
-  //     // printf("k = %lu\n", k);
-  //     // printf("alpha = %e\n", state[inciter::volfracIdx(nmat,k)]);
-  //     // printf("g:\n");
-  //     // for (std::size_t i=0; i<3; ++i)
-  //     //   printf("%e, %e, %e\n", g[i][0], g[i][1], g[i][2]);
-  //     // printf("asig\n");
-  //     // for (std::size_t i=0; i<3; ++i)
-  //     //   printf("%e, %e, %e\n", asig[i][0], asig[i][1], asig[i][2]);
-  //     // printf("state\n");
-  //     // for (std::size_t i=0; i<ncomp; ++i)
-  //     //   printf("%e\n", state[i]);
-  //     // printf("\n");
-  //     for (std::size_t i=0; i<3; ++i)
-  //       for (std::size_t j=0; j<3; ++j)
-  //         sprim[inciter::stressIdx(nmat, solidx[k], inciter::stressCmp[i][j])] =
-  //           asig[i][j];
-  //   }
-  // }
-  
+
   // interface detection
   std::vector< std::size_t > matInt(nmat, 0);
   bool intInd(false);
@@ -969,7 +889,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
     //  vfmin[k] = VolFracMax(el, 2*k, 0);
     //  vfmax[k] = VolFracMax(el, 2*k+1, 0);
     //}
-    tk::THINCReco(mat_blk, rdof, nmat, e, inpoel, coord, geoElem,
+    tk::THINCReco(rdof, nmat, e, inpoel, coord, geoElem,
       ref_gp, U, P, intInd, matInt, vfmin, vfmax, state);
 
     // Until the appropriate setup for activating THINC with Transport
@@ -1072,7 +992,7 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
   {
     std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 
-    tk::THINCReco(mat_blk, rdof, nmat, e, inpoel, coord, geoElem,
+    tk::THINCReco(rdof, nmat, e, inpoel, coord, geoElem,
       ref_gp, U, P, intInd, matInt, vfmin, vfmax, state);
   }
 
