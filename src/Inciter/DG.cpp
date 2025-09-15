@@ -2162,7 +2162,7 @@ DG::imex_integrate()
     const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
     for (std::size_t e=0; e<nelem; ++e)
     {
-      
+ 
       // x <- m_u
       std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
@@ -2171,6 +2171,11 @@ DG::imex_integrate()
 	  auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
 	  x[ieq*ndof+idof] = m_u(e, stiffrmark);
 	}
+
+      // Save all the values of m_u at stiffEqIdx as x_star,
+      // They will serve to balance the energy exchange
+      // from the implicit step
+      auto x_star = x;
 
       // Solve nonlinear system, first try broyden
       bool solver_failed = false;
@@ -2186,6 +2191,9 @@ DG::imex_integrate()
       if (solver_failed)
         Throw("At element " + std::to_string(e) +
               " nonlinear solvers was not able to converge");
+
+      // Balance energy
+      g_dgpde[d->MeshId()].balance_elastic_energy(e, x_star, x, m_un);
 
       // m_u <- x
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)

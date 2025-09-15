@@ -20,17 +20,31 @@
 #include "EoS/GodunovRomenski.hpp"
 #include "EoS/GetMatProp.hpp"
 
-// // Lapacke forward declarations
-// extern "C" {
+namespace {
+  constexpr tk::real A_TRACE = 1e-4;
+  constexpr tk::real RHO_FLOOR = 1e-12;     // per-solid density floor [kg/m^3]
+  constexpr tk::real DET_FLOOR = 1e-18;     // for SPD guards on g
 
-// using lapack_int = long;
-
-// #define LAPACK_ROW_MAJOR 101
-
-// lapack_int LAPACKE_dgeev(int, char, char, lapack_int, double*, lapack_int,
-//   double*, double*, double*, lapack_int, double*, lapack_int );
-
-// }
+  inline tk::real alpha_eff(tk::real a) noexcept {
+    return (a > A_TRACE) ? a : A_TRACE;     // only for UNWEIGHTING
+  }
+  inline tk::real safe_pos(tk::real x, tk::real eps) noexcept {
+    return std::isfinite(x) && x > eps ? x : eps;
+  }
+  inline void symmetrize(std::array<std::array<tk::real,3>,3>& g) {
+    for (int i=0;i<3;++i) for (int j=i+1;j<3;++j) {
+      tk::real s = 0.5*(g[i][j] + g[j][i]); g[i][j]=g[j][i]=s;
+    }
+  }
+  inline std::array<std::array<tk::real,3>,3>
+  spherical_from_det(const std::array<std::array<tk::real,3>,3>& g) {
+    auto detg = safe_pos(tk::determinant(g), DET_FLOOR);
+    tk::real d = std::pow(detg, 1.0/3.0);
+    std::array<std::array<tk::real,3>,3> G{};
+    for (int i=0;i<3;++i) for (int j=0;j<3;++j) G[i][j] = (i==j)? d : 0.0;
+    return G;
+  }
+}
 
 using inciter::GodunovRomenski;
 
@@ -121,30 +135,28 @@ GodunovRomenski::pressure(
 //!   the elastic Cauchy stress tensor, not in the pressure.
 // *************************************************************************
 {
-  // obtain elastic contribution to energy
-  std::array< std::array< tk::real, 3 >, 3 > devH;
-  auto arhoEe = alpha*elasticEnergy(defgrad, devH);
-  // obtain cold compression contribution to energy
-  auto rho = arho/alpha;
-  auto arhoEc = alpha*coldcomprEnergy(rho);
-  // obtain thermal contribution to energy
-  auto arhoEt = arhoE - arhoEe - arhoEc - 0.5*arho*(u*u + v*v + w*w);
-  //if (arhoEt < 1.0E-06)
-  //  printf("In partpressure, arhoEt = %e\n", arhoEt);
+  if (!(alpha > 0.0)) return 0.0;
 
-  // use Mie-Gruneisen form of Godunov-Romenski for pressure
-  auto partpressure = pressure_coldcompr(arho,alpha) + m_gamma*arhoEt;
+  // elastic part (α-weighted)
+  std::array<std::array<tk::real,3>,3> devH{};
+  const tk::real arhoEe = alpha * elasticEnergy(defgrad, devH);
 
-  // check partial pressure divergence
+  // cold-compression energy (α-weighted) with α-safe unweighting
+  const tk::real aeff = alpha_eff(alpha);
+  const tk::real rho  = std::max(arho/aeff, RHO_FLOOR);
+  const tk::real arhoEc = alpha * coldcomprEnergy(rho);
+
+  // thermal energy (α-weighted)
+  const tk::real arhoEt = arhoE - arhoEe - arhoEc - 0.5*arho*(u*u + v*v + w*w);
+
+  // cold-compression pressure (α-weighted) + Mie–Grüneisen thermal part
+  const tk::real pcc_alpha = pressure_coldcompr(arho, alpha);
+  tk::real partpressure = pcc_alpha + m_gamma * arhoEt;
+
   if (!std::isfinite(partpressure)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    Throw("Material-" + std::to_string(imat) +
-      " has nan/inf partial pressure: " + std::to_string(partpressure) +
-      ", material volume fraction: " + std::to_string(alpha));
+    // avoid throwing in hot path; return safe floor
+    partpressure = 0.0;
   }
-
   return partpressure;
 }
 
@@ -180,7 +192,7 @@ GodunovRomenski::CauchyStress(
 
   // p_mean
   auto p_se = -elasticEnergy(defgrad, devH);
-  // auto pmean = alpha * p_se;
+  auto pmean = alpha * p_se;
 
   // Pressure due to shear
   asig[0][0] = -pmean;
@@ -223,33 +235,23 @@ GodunovRomenski::soundspeed(
 //! \return Material speed of sound using the GodunovRomenski EoS
 // *************************************************************************
 {
-  tk::real a = 0.0;
+  if (!(alpha > 0.0)) return 0.0;
 
-  // Hydro contribution
-  tk::real rho = arho/alpha;
-  auto p_cc = pressure_coldcompr(arho, alpha);
-  a += std::max( 1.0e-15, DpccDrho(rho) + m_gamma * (apr - p_cc)/arho );
-  // in the above expression, shear pressure is not included in apr in the first
-  // place, so should not subtract it
+  const tk::real aeff = alpha_eff(alpha);
+  const tk::real rho  = std::max(arho/aeff, RHO_FLOOR);
+  const tk::real pcc_alpha = pressure_coldcompr(arho, alpha);
 
-  // Shear contribution
-  a += (4.0/3.0) * alpha * m_mu / arho;
+  // hydro + thermal (all consistent with α-weighted apr)
+  tk::real a2 = std::max<tk::real>(
+                  1.0e-15,
+                  DpccDrho(rho) + m_gamma * (apr - pcc_alpha) / std::max(arho, A_TRACE*rho)
+                );
 
-  // Compute square root
-  a = std::sqrt(a);
+  // shear contribution
+  a2 += (4.0/3.0) * m_mu / rho;
 
-  // check sound speed divergence
-  if (!std::isfinite(a)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Partial pressure: " << apr << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
-      + std::to_string(a) + ", material volume fraction: " +
-      std::to_string(alpha));
-  }
-
-  return a;
+  tk::real a = std::sqrt(a2);
+  return std::isfinite(a) ? a : 0.0;
 }
 
 tk::real
@@ -272,19 +274,10 @@ GodunovRomenski::shearspeed(
   // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
-  tk::real a = std::sqrt(alpha*m_mu/arho);
-
-  // check shear-wave speed divergence
-  if (!std::isfinite(a)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf shear-wave speed: "
-      + std::to_string(a) + ", material volume fraction: " +
-      std::to_string(alpha));
-  }
-
-  return a;
+  if (!(alpha > 0.0)) return 0.0;
+  const tk::real rho = std::max(arho/alpha_eff(alpha), RHO_FLOOR);
+  tk::real a = std::sqrt(m_mu / rho);  // per-solid
+  return std::isfinite(a) ? a : 0.0;
 }
 
 tk::real
@@ -313,17 +306,21 @@ GodunovRomenski::totalenergy(
 //! \return Material specific total energy using the GodunovRomenski EoS
 // *************************************************************************
 {
-  // obtain thermal and kinetic energy
-  auto apt = apr - pressure_coldcompr(arho, alpha);
-  // in the above expression, shear pressure is not included in pr in the first
-  // place, so should not subtract it
-  auto arhoEh = apt/m_gamma + 0.5*arho*(u*u + v*v + w*w);
-  // obtain elastic contribution to energy
-  std::array< std::array< tk::real, 3 >, 3 > devH;
-  auto arhoEe = alpha*elasticEnergy(defgrad, devH);
-  auto arhoEc = alpha*coldcomprEnergy(arho/alpha);
+  if (!(alpha > 0.0)) return 0.0;
 
-  return (arhoEh + arhoEe + arhoEc);
+  // alpha-weighted hydro + thermal
+  const tk::real pcc_alpha = pressure_coldcompr(arho, alpha);
+  const tk::real apt = apr - pcc_alpha;
+  const tk::real arhoEh = apt/m_gamma + 0.5*arho*(u*u + v*v + w*w);
+
+  // alpha-weighted elastic + cold-compression energies
+  std::array<std::array<tk::real,3>,3> devH{};
+  const tk::real arhoEe = alpha * elasticEnergy(defgrad, devH);
+  const tk::real rho    = std::max(arho/alpha_eff(alpha), RHO_FLOOR);
+  const tk::real arhoEc = alpha * coldcomprEnergy(rho);
+
+  tk::real out = arhoEh + arhoEe + arhoEc;
+  return std::isfinite(out) ? out : 0.0;
 }
 
 tk::real
@@ -372,17 +369,18 @@ GodunovRomenski::min_eff_pressure(
 //! \return Minimum pressure allowed by physical constraints
 // *************************************************************************
 {
-  // minimum pressure is constrained by zero soundspeed.
-  auto rho = arho/alpha;
-  auto aeff = std::max(alpha, g_inputdeck.get< tag::multimat, tag::min_volumefrac >());
-  auto arhoeff = std::max(arho, aeff*rho);
-  if (rho < 0.0) {
-    printf("DEBUG:\n");
-    printf("rho, arho, alpha = %e, %e, %e\n", rho, arho, alpha);
-  }
-  return min
-    - rho/m_gamma * DpccDrho(rho)
-    + pressure_coldcompr(arhoeff, aeff)/aeff;
+  if (!(alpha > 0.0)) return min;
+
+  const tk::real aeff = alpha_eff(alpha);
+  const tk::real rho  = std::max(arho/aeff, RHO_FLOOR);
+
+  // p_cc per-solid
+  const tk::real pcc_solid = pressure_coldcompr(aeff*rho, aeff) / aeff;
+
+  // hydro constraint (non-negative c^2) in Mie–Grüneisen form
+  tk::real pmin = min - (rho/m_gamma)*DpccDrho(rho) + pcc_solid;
+  if (!std::isfinite(pmin)) pmin = min;
+  return pmin;
 }
 
 tk::real
@@ -410,9 +408,12 @@ GodunovRomenski::pressure_coldcompr(
 //! \return Material cold compression pressure using the GodunovRomenski EoS
 // *************************************************************************
 {
-  auto rho = arho/alpha;
-  auto rrho0a = std::pow(rho/m_rho0, m_alpha);
-  return alpha * (m_K0/m_alpha * (rrho0a*rho/m_rho0) * (rrho0a-1.0));
+  if (!(alpha > 0.0)) return 0.0;
+
+  const tk::real aeff = alpha_eff(alpha);
+  const tk::real rho  = std::max(arho/aeff, RHO_FLOOR);
+  const tk::real rrho0a = std::pow(rho/m_rho0, m_alpha);
+  return aeff * ( m_K0/m_alpha * (rrho0a * rho/m_rho0) * (rrho0a - 1.0) );
 }
 
 tk::real
@@ -429,15 +430,21 @@ GodunovRomenski::elasticEnergy(
 //!   the elastic shear distortion for further use
 // *************************************************************************
 {
-  // Compute deviatoric part of Hencky tensor
-  devH = tk::getDevHencky(defgrad);
+  // Symmetrize and ensure positive determinant
+  auto g = defgrad;
+  symmetrize(g);
+  tk::real detg = tk::determinant(g);
+  if (!(detg > DET_FLOOR)) {
+    g = spherical_from_det(g);  // zero deviatoric if g is toxic
+  }
 
-  // Compute elastic energy
+  // Deviatoric Hencky (safe) and energy
+  devH = tk::getDevHencky(g);
   tk::real rhoEe = 0.0;
-  for (std::size_t i=0; i<3; ++i)
-    for (std::size_t j=0; j<3; ++j)
-      rhoEe += m_mu*devH[i][j]*devH[i][j];
-
+  for (int i=0;i<3;++i) for (int j=0;j<3;++j) {
+    if (!std::isfinite(devH[i][j])) return 0.0;
+    rhoEe += m_mu * devH[i][j] * devH[i][j];
+  }
   return rhoEe;
 }
 

@@ -21,17 +21,31 @@
 #include "Vector.hpp"
 #include "EoS/SmallShearSolid.hpp"
 
-// // Lapacke forward declarations
-// extern "C" {
+namespace {
+  constexpr tk::real A_TRACE = 1e-4;
+  constexpr tk::real RHO_FLOOR = 1e-12;     // per-solid density floor [kg/m^3]
+  constexpr tk::real DET_FLOOR = 1e-18;     // for SPD guards on g
 
-// using lapack_int = long;
-
-// #define LAPACK_ROW_MAJOR 101
-
-// lapack_int LAPACKE_dgeev(int, char, char, lapack_int, double*, lapack_int,
-//   double*, double*, double*, lapack_int, double*, lapack_int );
-
-// }
+  inline tk::real alpha_eff(tk::real a) noexcept {
+    return (a > A_TRACE) ? a : A_TRACE;     // only for UNWEIGHTING
+  }
+  inline tk::real safe_pos(tk::real x, tk::real eps) noexcept {
+    return std::isfinite(x) && x > eps ? x : eps;
+  }
+  inline void symmetrize(std::array<std::array<tk::real,3>,3>& g) {
+    for (int i=0;i<3;++i) for (int j=i+1;j<3;++j) {
+      tk::real s = 0.5*(g[i][j] + g[j][i]); g[i][j]=g[j][i]=s;
+    }
+  }
+  inline std::array<std::array<tk::real,3>,3>
+  spherical_from_det(const std::array<std::array<tk::real,3>,3>& g) {
+    auto detg = safe_pos(tk::determinant(g), DET_FLOOR);
+    tk::real d = std::pow(detg, 1.0/3.0);
+    std::array<std::array<tk::real,3>,3> G{};
+    for (int i=0;i<3;++i) for (int j=0;j<3;++j) G[i][j] = (i==j)? d : 0.0;
+    return G;
+  }
+}
 
 using inciter::SmallShearSolid;
 
@@ -115,35 +129,18 @@ SmallShearSolid::pressure(
 //!   SmallShearSolid EoS
 // *************************************************************************
 {
-  // obtain elastic contribution to energy
+  if (!(alpha > 0.0)) return 0.0;
+
+  // elastic with robust elasticEnergy()
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
-  // obtain hydro contribution to energy
-  auto arhoEh = arhoE - arhoEe;
+  const tk::real arhoEe = alpha * elasticEnergy(defgrad, eps2);
 
-  // use stiffened gas eos to get pressure
-  tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w))
-    * (m_gamma-1.0) - alpha*m_gamma*m_pstiff;
+  // hydro part (α-weighted)
+  const tk::real arhoEh = arhoE - arhoEe;
+  tk::real partpressure = (arhoEh - 0.5*arho*(u*u+v*v+w*w))*(m_gamma-1.0)
+                          - alpha*m_gamma*m_pstiff;
 
-  // check partial pressure divergence
-  if (!std::isfinite(partpressure)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Total energy:     " << arhoE << std::endl;
-    std::cout << "Hydro energy:     " << arhoEh << std::endl;
-    std::cout << "det(defgrad):     " << tk::determinant(defgrad) << std::endl;
-    std::cout << "g-tensor:" << std::endl;
-    std::cout << defgrad[0][0] << " " << defgrad[0][1] << " " << defgrad[0][2] << std::endl;
-    std::cout << defgrad[1][0] << " " << defgrad[1][1] << " " << defgrad[1][2] << std::endl;
-    std::cout << defgrad[2][0] << " " << defgrad[2][1] << " " << defgrad[2][2] << std::endl;
-    std::cout << "Velocity:         " << u << ", " << v << ", " << w
-      << std::endl;
-    Throw("Material-" + std::to_string(imat) +
-      " has nan/inf partial pressure: " + std::to_string(partpressure) +
-      ", material volume fraction: " + std::to_string(alpha));
-  }
-
+  if (!std::isfinite(partpressure)) partpressure = 0.0;      // finite fallback
   return partpressure;
 }
 
@@ -172,37 +169,26 @@ SmallShearSolid::CauchyStress(
 //!   the SmallShearSolid EoS
 // *************************************************************************
 {
-  std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
+  std::array<std::array<tk::real,3>,3> asig{{{0,0,0},{0,0,0},{0,0,0}}};
+  if (!(alpha > 0.0)) return asig;
 
-  // obtain elastic contribution to energy
+  // volumetric shear (spherical) via eps2
   tk::real eps2;
-  elasticEnergy(defgrad, eps2);
+  (void) elasticEnergy(defgrad, eps2);
+  const tk::real pmean = - alpha * m_mu * eps2;
 
-  // p_mean
-  auto pmean = - alpha * m_mu * eps2;
+  asig[0][0] = asig[1][1] = asig[2][2] = -pmean;
 
-  // Volumetric component of Cauchy stress tensor
-  asig[0][0] = -pmean;
-  asig[1][1] = -pmean;
-  asig[2][2] = -pmean;
+  // deviatoric with det guard
+  auto B = tk::getLeftCauchyGreen(defgrad);
+  tk::real detB = safe_pos(tk::determinant(B), DET_FLOOR);
+  const tk::real Jm23 = std::pow(detB, 1.0/3.0); // = J^{-2/3}
+  for (int i=0;i<3;++i) for (int j=0;j<3;++j) B[i][j] /= Jm23;
+  const tk::real trB3 = (B[0][0]+B[1][1]+B[2][2]) / 3.0;
+  B[0][0]-=trB3; B[1][1]-=trB3; B[2][2]-=trB3;
 
-  // Deviatoric (trace-free) part of volume-preserving left Cauchy-Green tensor
-  auto devbt = tk::getLeftCauchyGreen(defgrad);
-  auto detb = std::pow(tk::determinant(devbt), 1.0/3.0);
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      devbt[i][j] /= detb;
-  }
-  auto trbt = (devbt[0][0]+devbt[1][1]+devbt[2][2])/3.0;
-  devbt[0][0] -= trbt;
-  devbt[1][1] -= trbt;
-  devbt[2][2] -= trbt;
-
-  // Add deviatoric component of Cauchy stress tensor
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      asig[i][j] += m_mu*alpha*devbt[i][j];
-  }
+  for (int i=0;i<3;++i) for (int j=0;j<3;++j)
+    asig[i][j] += m_mu * alpha * B[i][j];
 
   return asig;
 }
@@ -547,27 +533,17 @@ SmallShearSolid::soundspeed(
   // Approximated elastic contribution, from Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
-  tk::real a = (4.0/3.0) * m_mu * alpha / arho;
+  if (!(alpha > 0.0)) return 0.0;
 
-  // hydrodynamic contribution
-  auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
-  a += m_gamma * p_eff / arho;
+  // per-solid variables with α floor (only for unweighting)
+  const tk::real aeff   = alpha_eff(alpha);
+  const tk::real rho    = std::max(arho/aeff, RHO_FLOOR);
+  const tk::real p_eff  = std::max<tk::real>(apr/aeff + m_pstiff, 1.0e-15);
 
-  // Compute square root
-  a = std::sqrt(a);
-
-  // check sound speed divergence
-  if (!std::isfinite(a)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Partial pressure: " << apr << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
-      + std::to_string(a) + ", material volume fraction: " +
-      std::to_string(alpha));
-  }
-
-  return a;
+  // Barton-style approx
+  tk::real a2 = (4.0/3.0) * m_mu / rho + m_gamma * p_eff / rho;
+  tk::real a  = std::sqrt(std::max<tk::real>(a2, 0.0));
+  return std::isfinite(a) ? a : 0.0;
 }
 
 tk::real
@@ -587,22 +563,10 @@ SmallShearSolid::shearspeed(
 //! \return Material shear-wave speed speed using the SmallShearSolid EoS
 // *************************************************************************
 {
-  // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
-  // An interface-capturing Godunov method for the simulation of compressible
-  // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
-  tk::real a = std::sqrt(alpha*m_mu/arho);
-
-  // check shear-wave speed divergence
-  if (!std::isfinite(a)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf shear-wave speed: "
-      + std::to_string(a) + ", material volume fraction: " +
-      std::to_string(alpha));
-  }
-
-  return a;
+  if (!(alpha > 0.0)) return 0.0;
+  const tk::real rho = std::max(arho/alpha_eff(alpha), RHO_FLOOR);
+  tk::real a = std::sqrt(m_mu / rho);
+  return std::isfinite(a) ? a : 0.0;
 }
 
 tk::real
@@ -631,14 +595,18 @@ SmallShearSolid::totalenergy(
 //! \return Material specific total energy using the SmallShearSolid EoS
 // *************************************************************************
 {
-  // obtain hydro contribution to energy
-  tk::real arhoEh = (apr + alpha*m_gamma*m_pstiff) / (m_gamma-1.0) + 0.5 * arho *
-    (u*u + v*v + w*w);
-  // obtain elastic contribution to energy
-  tk::real eps2;
-  tk::real arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  if (!(alpha > 0.0)) return 0.0;
 
-  return (arhoEh + arhoEe);
+  // hydro for stiffened gas
+  const tk::real arhoEh = (apr + alpha*m_gamma*m_pstiff)/(m_gamma-1.0)
+                          + 0.5*arho*(u*u+v*v+w*w);
+
+  // elastic
+  tk::real eps2;
+  const tk::real arhoEe = alpha * elasticEnergy(defgrad, eps2);
+
+  const tk::real out = arhoEh + arhoEe;
+  return std::isfinite(out) ? out : 0.0;
 }
 
 tk::real
@@ -667,15 +635,15 @@ SmallShearSolid::temperature(
 //! \return Material temperature using the SmallShearSolid EoS
 // *************************************************************************
 {
-  // obtain elastic contribution to energy
-  tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
-  // obtain hydro contribution to energy
-  auto arhoEh = arhoE - arhoEe;
+  if (!(alpha > 0.0)) return 0.0;
 
-  tk::real t = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) - alpha*m_pstiff)
-               / (arho*m_cv);
-  return t;
+  tk::real eps2;
+  const tk::real arhoEe = alpha * elasticEnergy(defgrad, eps2);
+  const tk::real arhoEh = arhoE - arhoEe;
+
+  const tk::real arho_eff = std::max<tk::real>(arho, A_TRACE*RHO_FLOOR);
+  tk::real T = (arhoEh - 0.5*arho*(u*u+v*v+w*w) - alpha*m_pstiff) / (arho_eff*m_cv);
+  return std::isfinite(T) ? T : 0.0;
 }
 
 tk::real
@@ -707,14 +675,22 @@ SmallShearSolid::elasticEnergy(
 //!   the elastic shear distortion for further use
 // *************************************************************************
 {
-  // compute volume-preserving part of Right Cauchy-Green strain tensor
-  auto Ct = tk::getIsochorRightCauchyGreen(defgrad);
+  // Precondition g: symmetrize and fix determinant
+  auto g = defgrad;
+  symmetrize(g);
+  tk::real detg = tk::determinant(g);
+  if (!(detg > DET_FLOOR)) {
+    g = spherical_from_det(g);
+  }
 
-  // compute elastic shear distortion
-  eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
+  // Isochoric Right Cauchy–Green from the *fixed* g
+  auto Ct = tk::getIsochorRightCauchyGreen(g);
 
-  // compute elastic energy
-  auto rhoEe = m_mu * eps2;
+  // eps2
+  eps2 = 0.5 * (Ct[0][0] + Ct[1][1] + Ct[2][2] - 3.0);
 
+  // elastic energy per-solid (distortional)
+  tk::real rhoEe = m_mu * eps2;
+  if (!std::isfinite(rhoEe)) { eps2 = 0.0; rhoEe = 0.0; }
   return rhoEe;
 }

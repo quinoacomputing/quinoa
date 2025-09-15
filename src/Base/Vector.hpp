@@ -42,6 +42,10 @@ extern lapack_int LAPACKE_dgetri( int, lapack_int, double*, lapack_int,
 
 namespace tk {
 
+  constexpr tk::real A_TRACE = 1e-4;
+  constexpr tk::real RHO_FLOOR = 1e-12;     // per-solid density floor [kg/m^3]
+  constexpr tk::real DET_FLOOR = 1e-18;     // for SPD guards on g
+
 //! Flip sign of vector components
 //! \param[in] v Vector whose components to multiply by -1.0
 inline void
@@ -344,6 +348,19 @@ determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
          + a[0][2] * (a[1][0]*a[2][1]-a[1][1]*a[2][0]) );
 }
 
+//! Compute the determinant of 3x3 matrix,
+//! if it's negative or zero, return eps
+//!  \param[in] a 3x3 matrix
+//!  \return Determinant of the 3x3 matrix
+inline tk::real
+positive_determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
+{
+  tk::real det = ( a[0][0] * (a[1][1]*a[2][2]-a[1][2]*a[2][1])
+                 - a[0][1] * (a[1][0]*a[2][2]-a[1][2]*a[2][0])
+                 + a[0][2] * (a[1][0]*a[2][1]-a[1][1]*a[2][0]) );
+  return std::max(det, 1.0e-08);
+}
+
 //! Compute the inverse of 3x3 matrix
 //!  \param[in] m 3x3 matrix
 //!  \return Inverse of the 3x3 matrix
@@ -534,6 +551,26 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
             {b[6], b[7], b[8]} }};
 }
 
+  inline tk::real alpha_eff(tk::real a) noexcept {
+    return (a > A_TRACE) ? a : A_TRACE;     // only for UNWEIGHTING
+  }
+  inline tk::real safe_pos(tk::real x, tk::real eps) noexcept {
+    return std::isfinite(x) && x > eps ? x : eps;
+  }
+  inline void symmetrize(std::array<std::array<tk::real,3>,3>& g) {
+    for (int i=0;i<3;++i) for (int j=i+1;j<3;++j) {
+      tk::real s = 0.5*(g[i][j] + g[j][i]); g[i][j]=g[j][i]=s;
+    }
+  }
+  inline std::array<std::array<tk::real,3>,3>
+  spherical_from_det(const std::array<std::array<tk::real,3>,3>& g) {
+    auto detg = safe_pos(tk::determinant(g), DET_FLOOR);
+    tk::real d = std::pow(detg, 1.0/3.0);
+    std::array<std::array<tk::real,3>,3> G{};
+    for (int i=0;i<3;++i) for (int j=0;j<3;++j) G[i][j] = (i==j)? d : 0.0;
+    return G;
+  }
+
 //! \brief Get the volume-preserving part of the right Cauchy-Green strain
 //!   tensor from the inverse deformation gradient tensor.
 //! \param[in] g Inverse deformation gradient tensor
@@ -542,6 +579,10 @@ inline std::array< std::array< tk::real, 3 >, 3 >
 getIsochorRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
   auto Ct = tk::getRightCauchyGreen(g);
+  tk::real detCt = tk::determinant(Ct);
+  if (!(detCt > DET_FLOOR)) {
+    Ct = spherical_from_det(Ct);
+  }
   auto detC = std::pow(tk::determinant(Ct), 1.0/3.0);
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
@@ -556,8 +597,14 @@ getIsochorRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 //! \param[in] g Inverse deformation gradient tensor
 //! \return Deviatoric Hencky strain tensor
 inline std::array< std::array< real, 3 >, 3 >
-getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
+getDevHencky(const std::array< std::array< real, 3 >, 3 >& g_in)
 {
+  auto g = g_in;
+  symmetrize(g);
+  tk::real detg = tk::determinant(g);
+  if (!(detg > DET_FLOOR)) {
+    g = spherical_from_det(g);
+  }
   // Get right volm-preserving part of Cauchy-Green strain tensor
   auto C = getIsochorRightCauchyGreen(g);
 

@@ -788,6 +788,11 @@ class MultiSpecies {
       return mindt;
     }
 
+    void balance_elastic_energy( std::size_t /*e*/,
+                                 std::vector< tk::real > /*x_star*/,
+                                 std::vector< tk::real > /*x*/,
+                                 tk::Fields& /*U*/ ) const {}
+
     //! Compute stiff terms for a single element. No-op until chem sources added
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array

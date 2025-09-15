@@ -247,7 +247,7 @@ cleanTraceMultiMat(
       //   }
       //   printf("[2] ALPHA, DENSITY, PRESSURE = %e, %e, %e\n", alk, U(e, densityDofIdx(nmat, k, rdof, 0)), P(e, pressureDofIdx(nmat, k, rdof, 0)));
       // }
-      else if ( alk-1.0e-03/*volfracPRelaxLim()*/ < 1.0e-06 ) {  // condition so that else-branch not exec'ed for solids
+      else if ( alk < 1.0e-04/*volfracPRelaxLim()*/ ) {  // condition so that else-branch not exec'ed for solids
         auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
         // For solids, reset deformation and stress
         if (solidx[k] > 0)
@@ -370,6 +370,7 @@ timeStepSizeMultiMat(
   const auto rdof = g_inputdeck.get< tag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   tk::real u, v, w, a, vn, dSV_l, dSV_r;
   std::vector< tk::real > delt(U.nunk(), 0.0);
@@ -408,7 +409,9 @@ timeStepSizeMultiMat(
     a = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
     {
-      if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+      tk::real alpha_min = 1.0e-04;
+      if (solidx[k] > 0) alpha_min = 1.0e-04;
+      if (ugp[volfracIdx(nmat, k)] > alpha_min) {
         auto gk = getDeformGrad(nmat, k, ugp);
         gk = tk::rotateTensor(gk, fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
@@ -443,7 +446,9 @@ timeStepSizeMultiMat(
       a = 0.0;
       for (std::size_t k=0; k<nmat; ++k)
       {
-        if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+        tk::real alpha_min = 1.0e-04;
+        if (solidx[k] > 0) alpha_min = 1.0e-04;
+        if (ugp[volfracIdx(nmat, k)] > alpha_min) {
           auto gk = getDeformGrad(nmat, k, ugp);
           gk = tk::rotateTensor(gk, fn);
           a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
@@ -631,29 +636,41 @@ resetSolidTensors(
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
   const auto rdof = g_inputdeck.get< tag::rdof >();
 
-  if (solidx[k] > 0) {
-    std::array< std::array< tk::real, 3 >, 3 > gk;
-    for (std::size_t i=0; i<3; ++i)
-      for (std::size_t j=0; j<3; ++j)
-        gk[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
-    auto new_gii = std::pow(tk::determinant(gk),1.0/3.0);
-    for (std::size_t i=0; i<3; ++i) {
-      for (std::size_t j=0; j<3; ++j) {
-        // deformation gradient reset
-        if (i==j) U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = new_gii;
-        else U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = 0.0;
+  if (solidx[k] == 0) return; // fluid: nothing to reset here
 
-        // elastic Cauchy-stress reset
-        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
+  // Load g and symmetrize once to reduce roundoff
+  std::array<std::array<tk::real,3>,3> g{};
+  for (size_t i=0;i<3;++i)
+    for (size_t j=0;j<3;++j)
+      g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+  // symmetric part
+  for (size_t i=0;i<3;++i)
+    for (size_t j=i+1;j<3;++j) {
+      tk::real sij = 0.5*(g[i][j] + g[j][i]);
+      g[i][j] = g[j][i] = sij;
+    }
 
-        // high-order reset
-        for (std::size_t l=1; l<rdof; ++l) {
-          U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l)) = 0.0;
-          P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) = 0.0;
-        }
+  // Robust determinant and spherical replacement
+  tk::real detg = tk::determinant(g);
+  // Clamp to avoid NaNs; eps should be small but > 0
+  const tk::real det_floor = 1e-18;
+  if (!(detg > det_floor)) detg = det_floor;
+  const tk::real new_gii = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
+
+  for (size_t i=0;i<3;++i)
+    for (size_t j=0;j<3;++j)
+      U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = (i==j) ? new_gii : 0.0;
+
+  // Zero elastic (deviatoric) Cauchy stress DOFs ONLY (not pressure)
+  for (size_t i=0;i<3;++i)
+    for (size_t j=0;j<3;++j) {
+      P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
+      // Clear higher DOFs for g and elastic stress
+      for (size_t l=1; l<rdof; ++l) {
+        U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l)) = 0.0;
+        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) = 0.0;
       }
     }
-  }
 }
 
 std::array< std::array< tk::real, 3 >, 3 >

@@ -444,6 +444,11 @@ class Transport {
       return mindt;
     }
 
+    void balance_elastic_energy( std::size_t /*e*/,
+                                 std::vector< tk::real > /*x_star*/,
+                                 std::vector< tk::real > /*x*/,
+                                 tk::Fields& /*U*/ ) const {}
+
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array
