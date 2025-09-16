@@ -34,14 +34,6 @@
 #include "ChareStateCollector.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
 
-// #include "NOX.H"
-// #include "NOX_Epetra.H"
-// #include "Teuchos_GlobalMPISession.hpp"
-// #include "Teuchos_ParameterList.hpp"
-// #include "Epetra_SerialComm.h"
-// #include "Epetra_Vector.h"
-// #include "Epetra_Map.h"
-
 #include <fstream>
 
 // ignore old-style-casts required for lapack/blas calls
@@ -2089,15 +2081,15 @@ DG::imex_integrate()
     const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
     for (std::size_t e=0; e<nelem; ++e)
     {
- 
+
       // x <- m_u
       std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-	for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-	{
-	  auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-	  x[ieq*ndof+idof] = m_u(e, stiffrmark);
-	}
+        for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        {
+          auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+          x[ieq*ndof+idof] = m_u(e, stiffrmark);
+        }
 
       // Save all the values of m_u at stiffEqIdx as x_star,
       // They will serve to balance the energy exchange
@@ -2124,12 +2116,12 @@ DG::imex_integrate()
 
       // m_u <- x
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-	for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-	{
-	  auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-	  m_u(e, stiffrmark) = x[ieq*ndof+idof];
-	}
-      
+        for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        {
+          auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+          m_u(e, stiffrmark) = x[ieq*ndof+idof];
+        }
+
     }
 
     // Then, integrate explicitly on the remaining equations
@@ -2190,7 +2182,7 @@ DG::imex_integrate()
 }
 
 std::vector< tk::real > DG::nonlinear_func(std::size_t e,
-					   std::vector< tk::real > x)
+                                           std::vector< tk::real > x)
 {
   // Evaluates the stiff RHS and stiff equations f = b - A(x)
   auto d = Disc();
@@ -2205,7 +2197,7 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
       m_u(e, stiffrmark) = x[ieq*ndof+idof];
     }
-  
+
   // Compute explicit terms (Should be computed once)
   std::vector< tk::real > expl_terms(n, 0.0);
   for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
@@ -2214,8 +2206,8 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
       auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
       expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
-	+ d->Dt() * ( expl_rkcoef[0][m_stage]
-	* m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+        + d->Dt() * ( expl_rkcoef[0][m_stage]
+        * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
         + expl_rkcoef[1][m_stage]
         * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
         + impl_rkcoef[0][m_stage]
@@ -2235,9 +2227,9 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
       auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
       f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
-	+ d->Dt() * impl_rkcoef[1][m_stage]
-	* m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
-	- m_u(e, stiffrmark);
+        + d->Dt() * impl_rkcoef[1][m_stage]
+        * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
+        - m_u(e, stiffrmark);
     }
 
   return f;
@@ -2255,9 +2247,6 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   tk::real rel_err = rel_tol+1;
   tk::real abs_err = abs_tol+1;
   std::size_t n = x.size();
-  // if (n /= x.size())
-  //   Throw("In non-linear solver: Size of initial guess is not equal to number of stiff equations "
-  //         + std::to_string(n) + " /= " + std::to_string(x.size()));
 
   // Compute f with initial guess
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
@@ -2268,14 +2257,6 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   {
     x_old[i] = x[i];
     f_old[i] = f[i];
-  }
-
-  // DEBUG: Get x0 and f0
-  std::vector< tk::real > x0(n, 0.0), f0(n, 0.0);
-  for (std::size_t i=0; i<n; ++i)
-  {
-    x0[i] = x[i];
-    f0[i] = f[i];
   }
 
   // Initialize delta_x and delta_f
@@ -2307,7 +2288,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
         auto f_perturb = DG::nonlinear_func(e, x_perturb);
         jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
       }
-    
+
     // Initialize Jacobian to be the inverse of this jacobian
     lapack_int ipiv[n];
 
@@ -2395,24 +2376,9 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
       }
 
       if (solver_failed) {
-        // f = DG::nonlinear_func(e, x);
-        // printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", iter+1);
-        // printf("Element #%lu\n", e);
-        // printf("Relative error: %e\n", rel_err);
-        // printf("Absolute error: %e\n\n", abs_err);
-        // printf("alpha_ls = %e\n", alpha_ls);
-        // printf("x0 vs x:\n");
-        // for (std::size_t i=0; i<n; ++i)
-        //   printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
-        // printf("f0 vs f:\n");
-        // for (std::size_t i=0; i<n; ++i)
-        //   printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
-        // printf("delta:\n");
-        // for (std::size_t i=0; i<n; ++i)
-        //   printf("delta[%lu] = %e\n", i, delta[i]);
         break;
       }
-      
+
       if (!ls_failed) {
         // Save x
         for (std::size_t i=0; i<n; ++i)
@@ -2502,16 +2468,6 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
         if (iter == max_iter-1)
         {
           solver_failed = true;
-          // printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
-          // printf("Element #%lu\n", e);
-          // printf("Relative error: %e\n", rel_err);
-          // printf("Absolute error: %e\n\n", abs_err);
-          // printf("x0 vs x:\n");
-          // for (std::size_t i=0; i<n; ++i)
-          //   printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
-          // printf("f0 vs f:\n");
-          // for (std::size_t i=0; i<n; ++i)
-          //   printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
         }
       }
     }
@@ -2538,14 +2494,6 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
   // Compute f with initial guess
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
-
-  // DEBUG: Get x0 and f0
-  std::vector< tk::real > x0(n, 0.0), f0(n, 0.0);
-  for (std::size_t i=0; i<n; ++i)
-  {
-    x0[i] = x[i];
-    f0[i] = f[i];
-  }
 
   // Store the norm of f initially, for relative error measure
   tk::real err0 = 0.0;
@@ -2647,16 +2595,6 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
         printf("Element #%lu\n", e);
         printf("Relative error: %e\n", rel_err);
         printf("Absolute error: %e\n\n", abs_err);
-        printf("alpha_ls = %e\n", alpha_ls);
-        printf("x0 vs x:\n");
-        for (std::size_t i=0; i<n; ++i)
-          printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
-        printf("f0 vs f:\n");
-        for (std::size_t i=0; i<n; ++i)
-          printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
-        printf("delta:\n");
-        for (std::size_t i=0; i<n; ++i)
-          printf("delta[%lu] = %e\n", i, delta[i]);
         break;
       }
 
@@ -2674,19 +2612,6 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
         // check if error condition is met and loop back
         if (rel_err < rel_tol || abs_err < abs_tol) {
-          // if (std::abs(alpha_ls-1.0) > 1.0E-06) {
-          //   printf("SUCCESS. iter = %lu\n", iter);
-          //   printf("Element #%lu\n", e);
-          //   printf("Relative error: %e\n", rel_err);
-          //   printf("Absolute error: %e\n\n", abs_err);
-          //   printf("Absolute error(old): %e\n\n", abs_err_old);
-          //   printf("x0 vs x:\n");
-          //   for (std::size_t i=0; i<n; ++i)
-          //     printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
-          //   printf("f0 vs f:\n");
-          //   for (std::size_t i=0; i<n; ++i)
-          //     printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
-          // }
           break;
         }
 
@@ -2714,64 +2639,5 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
   return x;
 
 }
-
-// class MyProblem : public NOX::Epetra::Interface::Required {
-// public:
-//   MyProblem(const Epetra_Map& map) : map_(map) {}
-
-//   bool computeF(const Epetra_Vector& x, Epetra_Vector& F, NOX::Epetra::Interface::Required::FillType) override {
-//     double x0 = x[0];
-//     double x1 = x[1];
-//     F[0] = x0*x0 + x1 - 37.0;
-//     F[1] = x0 - x1*x1 - 5.0;
-//     return true;
-//   }
-
-// private:
-//   Epetra_Map map_;
-// };
-
-// void test() {
-//   Epetra_SerialComm Comm;
-//   Epetra_Map map(2, 0, Comm);
-
-//   // Initial guess
-//   Teuchos::RCP<Epetra_Vector> x = Teuchos::rcp(new Epetra_Vector(map));
-//   (*x)[0] = 1.0;
-//   (*x)[1] = 1.0;
-
-//   // Instantiate your nonlinear system
-//   Teuchos::RCP<MyProblem> interface = Teuchos::rcp(new MyProblem(map));
-//   NOX::Epetra::Vector noxInitGuess(x, NOX::Epetra::Vector::CreateView);
-
-//   // Set NOX solver parameters
-//   Teuchos::RCP<Teuchos::ParameterList> nlParams = Teuchos::rcp(new Teuchos::ParameterList);
-//   nlParams->sublist("Nonlinear Solver").set("Solver Type", "Line Search Based");
-//   nlParams->sublist("Direction").set("Method", "Newton");
-//   nlParams->sublist("Line Search").set("Method", "Full Step");
-
-//   // Request finite difference Jacobian
-//   nlParams->sublist("Printing").set("Output Information",
-//     NOX::Utils::OuterIteration + NOX::Utils::Warning + NOX::Utils::Error + NOX::Utils::Details);
-//   nlParams->sublist("Direction").sublist("Newton").sublist("Forcing Term").set("Method", "Constant");
-//   nlParams->sublist("Direction").sublist("Newton").set("Forcing Term Method", "Constant");
-//   nlParams->sublist("Direction").sublist("Newton").set("Finite Difference Jacobian", true);
-
-//   // Construct the group
-//   Teuchos::RCP<NOX::Epetra::Interface::Required> iReq = interface;
-//   Teuchos::RCP<NOX::Epetra::Group> group = Teuchos::rcp(new NOX::Epetra::Group(*nlParams, iReq, noxInitGuess));
-
-//   // Create solver
-//   Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(group, *nlParams);
-
-//   // Solve
-//   NOX::StatusTest::StatusType status = solver->solve();
-
-//   // Print result
-//   const NOX::Epetra::Group& finalGroup = dynamic_cast<const NOX::Epetra::Group&>(solver.getSolutionGroup());
-//   const Epetra_Vector& finalSolution = dynamic_cast<const NOX::Epetra::Vector&>(finalGroup.getX()).getEpetraVector();
-//   std::cout << "\nFinal solution: " << finalSolution << std::endl;
-// }
-
 
 #include "NoWarning/dg.def.h"

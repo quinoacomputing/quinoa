@@ -180,7 +180,7 @@ GodunovRomenski::CauchyStress(
 
   // p_mean
   auto p_se = -elasticEnergy(defgrad, devH);
-  // auto pmean = alpha * p_se;
+  auto pmean = alpha * p_se;
 
   // Pressure due to shear
   asig[0][0] = -pmean;
