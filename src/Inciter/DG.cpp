@@ -2707,16 +2707,6 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
           printf("Element #%lu\n", e);
           printf("Relative error: %e\n", rel_err);
           printf("Absolute error: %e\n\n", abs_err);
-          printf("alpha_ls = %e\n", alpha_ls);
-          printf("x0 vs x:\n");
-          for (std::size_t i=0; i<n; ++i)
-            printf("x0,x[%lu] = %e, %e\n", i, x0[i], x[i]);
-          printf("f0 vs f:\n");
-          for (std::size_t i=0; i<n; ++i)
-            printf("f0,f[%lu] = %e, %e\n", i, f0[i], f[i]);
-          printf("delta:\n");
-          for (std::size_t i=0; i<n; ++i)
-            printf("delta[%lu] = %e\n", i, delta[i]);
         }
       }
     }
