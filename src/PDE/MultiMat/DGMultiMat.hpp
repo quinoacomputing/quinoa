@@ -1251,7 +1251,7 @@ class MultiMat {
         for (std::size_t k=0; k<nmat; ++k)
         {
           tk::real alpha = state[inciter::volfracIdx(nmat, k)];
-          if (solidx[k] > 0 /*&& alpha-volfracPRelaxLim() > 1.0e-06*/)
+          if (solidx[k] > 0)
           {
             std::array< std::array< tk::real, 3 >, 3 > g;
             // Compute the source terms
