@@ -1385,7 +1385,7 @@ DG::dt()
 
       // time-step suppression for unsteady problems
       tk::real coeff(1.0);
-      if (g_inputdeck.get< tag::cfl_ramping > && d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It()+1);
+      if (g_inputdeck.get< tag::cfl_ramping >() && d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It()+1);
 
       mindt *= coeff * g_inputdeck.get< tag::cfl >();
     }
@@ -2461,7 +2461,6 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
           x_old[i] = x[i];
           f_old[i] = f[i];
         }
-        abs_err_old = abs_err;
 
         // check if error condition is met and loop back
         if (rel_err < rel_tol || abs_err < abs_tol)
