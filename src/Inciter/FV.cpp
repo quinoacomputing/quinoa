@@ -177,7 +177,7 @@ FV::resizeSolVectors()
     "GeoElem unknowns size mismatch" );
 
   // Signal the runtime system that all workers have received their adjacency
-  std::vector< std::size_t > meshdata{ myGhosts()->m_initial, Disc()->MeshId() };
+  std::vector< std::size_t > meshdata{ m_initial, Disc()->MeshId() };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
@@ -777,7 +777,6 @@ FV::resizePostAMR(
 
   // Set flag that indicates that we are during time stepping
   m_initial = 0;
-  myGhosts()->m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;

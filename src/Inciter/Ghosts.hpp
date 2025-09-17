@@ -150,8 +150,6 @@ class Ghosts : public CBase_Ghosts {
     std::unordered_map< std::size_t, std::size_t > m_bid;
     //! Elements (value) surrounding point (key) data-structure
     std::map< std::size_t, std::vector< std::size_t > > m_esup;
-    //! 1 if starting time stepping, 0 if during time stepping
-    std::size_t m_initial;
 
     //1 Start setup of communication maps for cell-centered schemes
     void startCommSetup();
@@ -200,7 +198,6 @@ class Ghosts : public CBase_Ghosts {
       p | m_exptGhost;
       p | m_bid;
       p | m_esup;
-      p | m_initial;
       p | m_ncomfac;
       p | m_nadj;
       p | m_ncomEsup;
