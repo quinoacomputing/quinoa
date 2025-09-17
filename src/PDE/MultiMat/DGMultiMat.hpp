@@ -1097,16 +1097,9 @@ class MultiMat {
                                  tk::Fields& U ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
-      const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      const auto intsharp =
-        g_inputdeck.get< tag::multimat, tag::intsharp >();
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
-      auto nsld = numSolids(nmat, solidx);
-
-      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
-              "vector must equal "+ std::to_string(rdof*m_ncomp) );
 
       // compute correction
       // Loop through materials
