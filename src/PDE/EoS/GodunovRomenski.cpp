@@ -372,17 +372,17 @@ GodunovRomenski::min_eff_pressure(
 //! \return Minimum pressure allowed by physical constraints
 // *************************************************************************
 {
-  // minimum pressure is constrained by zero soundspeed.
-  auto rho = arho/alpha;
-  auto aeff = std::max(alpha, g_inputdeck.get< tag::multimat, tag::min_volumefrac >());
-  auto arhoeff = std::max(arho, aeff*rho);
-  if (rho < 0.0) {
-    printf("DEBUG:\n");
-    printf("rho, arho, alpha = %e, %e, %e\n", rho, arho, alpha);
-  }
-  return min
-    - rho/m_gamma * DpccDrho(rho)
-    + pressure_coldcompr(arhoeff, aeff)/aeff;
+  // // minimum pressure is constrained by zero soundspeed.
+  // auto rho = arho/alpha;
+  // auto aeff = std::max(alpha, g_inputdeck.get< tag::multimat, tag::min_volumefrac >());
+  // auto arhoeff = std::max(arho, aeff*rho);
+  // if (rho < 0.0) {
+  //   printf("DEBUG:\n");
+  //   printf("rho, arho, alpha = %e, %e, %e\n", rho, arho, alpha);
+  // }
+  return min;
+    // - rho/m_gamma * DpccDrho(rho)
+    // + pressure_coldcompr(arhoeff, aeff)/aeff;
 }
 
 tk::real
