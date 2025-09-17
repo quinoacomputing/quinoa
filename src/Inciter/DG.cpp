@@ -1383,7 +1383,11 @@ DG::dt()
           myGhosts()->m_fd.Esuel().size()/4 );
       if (eqdt < mindt) mindt = eqdt;
 
-      mindt *= g_inputdeck.get< tag::cfl >();
+      // time-step suppression for unsteady problems
+      tk::real coeff(1.0);
+      if (g_inputdeck.get< tag::cfl_ramping > && d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It()+1);
+
+      mindt *= coeff * g_inputdeck.get< tag::cfl >();
     }
   }
   else
@@ -2267,7 +2271,6 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   for (std::size_t i=0; i<n; ++i)
     err0 += f[i]*f[i];
   err0 = std::sqrt(err0);
-  auto abs_err_old = err0;
 
   // Iterate for the solution if err0 > 0
   solver_failed = false;
