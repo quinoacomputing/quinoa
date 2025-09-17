@@ -216,44 +216,48 @@ surfInt( const bool pref,
       state[1] = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
         nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
 
-      auto clamp_face_state = [&](std::vector<tk::real>& sL,
-                                  std::vector<tk::real>& sR) {
-        // 0) ensure 0<=alpha<=1 and sum=1 on each side
-        auto fix_alpha = [&](std::vector<tk::real>& st) {
-          double sum = 0.0;
+      // Perform clamping of state, only for MultiMat runs!
+      auto myPDE = inciter::g_inputdeck.get< tag::pde >();
+      if (myPDE == inciter::ctr::PDEType::MULTIMAT) {
+        auto clamp_face_state = [&](std::vector<tk::real>& sL,
+                                    std::vector<tk::real>& sR) {
+          // 0) ensure 0<=alpha<=1 and sum=1 on each side
+          auto fix_alpha = [&](std::vector<tk::real>& st) {
+            double sum = 0.0;
+            for (std::size_t k=0; k<nmat; ++k) {
+              auto &a = st[inciter::volfracIdx(nmat,k)];
+              if (a < 0.0) a = 0.0;
+              if (a > 1.0) a = 1.0;
+              sum += a;
+            }
+            if (sum > 0.0) for (std::size_t k=0; k<nmat; ++k)
+                             st[inciter::volfracIdx(nmat,k)] /= sum;
+          };
+          fix_alpha(sL); fix_alpha(sR);
+
+          // 1) bound densities/energies between neighbor cell averages (p0 bounds)
           for (std::size_t k=0; k<nmat; ++k) {
-            auto &a = st[inciter::volfracIdx(nmat,k)];
-            if (a < 0.0) a = 0.0;
-            if (a > 1.0) a = 1.0;
-            sum += a;
+            const auto rhoL = U(el, inciter::densityDofIdx(nmat,k,rdof,0));
+            const auto rhoR = U(er, inciter::densityDofIdx(nmat,k,rdof,0));
+            const auto eL   = U(el, inciter::energyDofIdx (nmat,k,rdof,0));
+            const auto eR   = U(er, inciter::energyDofIdx (nmat,k,rdof,0));
+
+            auto &rhoLf = sL[inciter::densityIdx(nmat,k)];
+            auto &rhoRf = sR[inciter::densityIdx(nmat,k)];
+            auto &eLf   = sL[inciter::energyIdx(nmat,k)];
+            auto &eRf   = sR[inciter::energyIdx(nmat,k)];
+
+            const auto rmin = std::min(rhoL, rhoR), rmax = std::max(rhoL, rhoR);
+            const auto emin = std::min(eL,   eR  ), emax = std::max(eL,   eR  );
+
+            rhoLf = std::min(rmax, std::max(rmin, rhoLf));
+            rhoRf = std::min(rmax, std::max(rmin, rhoRf));
+            eLf   = std::min(emax, std::max(emin, eLf  ));
+            eRf   = std::min(emax, std::max(emin, eRf  ));
           }
-          if (sum > 0.0) for (std::size_t k=0; k<nmat; ++k)
-                           st[inciter::volfracIdx(nmat,k)] /= sum;
         };
-        fix_alpha(sL); fix_alpha(sR);
-
-        // 1) bound densities/energies between neighbor cell averages (p0 bounds)
-        for (std::size_t k=0; k<nmat; ++k) {
-          const auto rhoL = U(el, inciter::densityDofIdx(nmat,k,rdof,0));
-          const auto rhoR = U(er, inciter::densityDofIdx(nmat,k,rdof,0));
-          const auto eL   = U(el, inciter::energyDofIdx (nmat,k,rdof,0));
-          const auto eR   = U(er, inciter::energyDofIdx (nmat,k,rdof,0));
-
-          auto &rhoLf = sL[inciter::densityIdx(nmat,k)];
-          auto &rhoRf = sR[inciter::densityIdx(nmat,k)];
-          auto &eLf   = sL[inciter::energyIdx(nmat,k)];
-          auto &eRf   = sR[inciter::energyIdx(nmat,k)];
-
-          const auto rmin = std::min(rhoL, rhoR), rmax = std::max(rhoL, rhoR);
-          const auto emin = std::min(eL,   eR  ), emax = std::max(eL,   eR  );
-
-          rhoLf = std::min(rmax, std::max(rmin, rhoLf));
-          rhoRf = std::min(rmax, std::max(rmin, rhoRf));
-          eLf   = std::min(emax, std::max(emin, eLf  ));
-          eRf   = std::min(emax, std::max(emin, eRf  ));
-        }
-      };
-      clamp_face_state(state[0], state[1]);
+        clamp_face_state(state[0], state[1]);
+      }
 
       Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
               "appended boundary state vector" );

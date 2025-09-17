@@ -182,19 +182,23 @@ bndSurfInt( const bool pref,
           auto ugp = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
             rdof, nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
 
-          // 0) ensure 0<=alpha<=1 and sum=1 on each side
-          auto fix_alpha = [&](std::vector<tk::real>& st) {
-            double sum = 0.0;
-            for (std::size_t k=0; k<nmat; ++k) {
-              auto &a = st[inciter::volfracIdx(nmat,k)];
-              if (a < 0.0) a = 0.0;
-              if (a > 1.0) a = 1.0;
-              sum += a;
-            }
-            if (sum > 0.0) for (std::size_t k=0; k<nmat; ++k)
-                             st[inciter::volfracIdx(nmat,k)] /= sum;
-          };
-          fix_alpha(ugp);
+          // Perform clamping of alpha, only for MultiMat runs!
+          auto myPDE = inciter::g_inputdeck.get< tag::pde >();
+          if (myPDE == inciter::ctr::PDEType::MULTIMAT) {
+            // 0) ensure 0<=alpha<=1 and sum=1 on each side
+            auto fix_alpha = [&](std::vector<tk::real>& st) {
+              double sum = 0.0;
+              for (std::size_t k=0; k<nmat; ++k) {
+                auto &a = st[inciter::volfracIdx(nmat,k)];
+                if (a < 0.0) a = 0.0;
+                if (a > 1.0) a = 1.0;
+                sum += a;
+              }
+              if (sum > 0.0) for (std::size_t k=0; k<nmat; ++k)
+                               st[inciter::volfracIdx(nmat,k)] /= sum;
+            };
+            fix_alpha(ugp);
+          }
 
           Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
                   "appended boundary state vector" );
