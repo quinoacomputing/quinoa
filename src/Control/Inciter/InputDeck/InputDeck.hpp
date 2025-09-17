@@ -297,6 +297,7 @@ using ConfigMembers = brigand::list<
   tag::t0,               tk::real,
   tag::dt,               tk::real,
   tag::cfl,              tk::real,
+  tag::cfl_ramping,      bool,
   tag::ttyi,             uint32_t,
   tag::imex_runge_kutta, uint32_t,
   tag::imex_maxiter,     uint32_t,
@@ -445,6 +446,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       // Default time stepping params
       get< tag::dt >() = 0.0;
       get< tag::cfl >() = 0.0;
+      get< tag::cfl_ramping >() = false;
       // Default AMR settings
       auto rmax =
         std::numeric_limits< tk::real >::max() / 100;
@@ -509,6 +511,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       R"(This keyword is used to specify the CFL coefficient for
       variable-time-step-size simulations. Setting 'cfl' and 'dt' are mutually
       exclusive. If both 'cfl' and 'dt' are set, 'dt' wins.)", "real"});
+
+      keywords.insert({"cfl_ramping",
+      "Determines whether a ramping coefficient is applied to the CFL coefficient.",
+      R"(This keyword is used to specify a boolean that determines
+      whether a ramping coefficient is applied to the CFL coefficient.
+      If true, the CFL would be scaled down by 0.01 at the first step,
+      and increased by 0.01 for the next 100 steps.)", "bool"});
 
       keywords.insert({"ttyi", "Set screen output interval",
         R"(This keyword is used to specify the interval in time steps for screen
