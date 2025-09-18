@@ -20,18 +20,6 @@
 #include "EoS/GodunovRomenski.hpp"
 #include "EoS/GetMatProp.hpp"
 
-// // Lapacke forward declarations
-// extern "C" {
-
-// using lapack_int = long;
-
-// #define LAPACK_ROW_MAJOR 101
-
-// lapack_int LAPACKE_dgeev(int, char, char, lapack_int, double*, lapack_int,
-//   double*, double*, double*, lapack_int, double*, lapack_int );
-
-// }
-
 using inciter::GodunovRomenski;
 
 GodunovRomenski::GodunovRomenski(
@@ -72,8 +60,7 @@ GodunovRomenski::density(
   tk::real tol = 1.0e-04;
   tk::real err = tol + 1;
   for (std::size_t iter=0; iter<maxiter; ++iter)
-  {
-    
+  {    
     auto rrho0a = std::pow(rho/m_rho0, m_alpha);
     auto p_coldcompr = m_K0/m_alpha * (rrho0a*rho/m_rho0) * (rrho0a-1.0);
     tk::real p = p_coldcompr - pr;
@@ -129,8 +116,6 @@ GodunovRomenski::pressure(
   auto arhoEc = alpha*coldcomprEnergy(rho);
   // obtain thermal contribution to energy
   auto arhoEt = arhoE - arhoEe - arhoEc - 0.5*arho*(u*u + v*v + w*w);
-  //if (arhoEt < 1.0E-06)
-  //  printf("In partpressure, arhoEt = %e\n", arhoEt);
 
   // use Mie-Gruneisen form of Godunov-Romenski for pressure
   auto partpressure = pressure_coldcompr(arho,alpha) + m_gamma*arhoEt;
