@@ -338,7 +338,6 @@ timeStepSizeMultiMat(
   const auto rdof = g_inputdeck.get< tag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
-  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   tk::real u, v, w, a, vn, dSV_l, dSV_r;
   std::vector< tk::real > delt(U.nunk(), 0.0);
