@@ -127,8 +127,8 @@ class GodunovRomenski {
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(
       tk::real min,
-      tk::real arho,
-      tk::real alpha=1.0 ) const;
+      tk::real /*arho*/,
+      tk::real /*alpha=1.0*/ ) const;
 
     //! Compute the reference density
     tk::real refDensity() const { return density(refPressure(), 300.0); }

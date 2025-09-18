@@ -347,8 +347,8 @@ GodunovRomenski::temperature(
 tk::real
 GodunovRomenski::min_eff_pressure(
   tk::real min,
-  tk::real arho,
-  tk::real alpha ) const
+  tk::real /*arho*/,
+  tk::real /*alpha*/ ) const
 // *************************************************************************
 //! Compute the minimum allowed pressure
 //! \param[in] min Numerical threshold above which pressure needs to be limited
