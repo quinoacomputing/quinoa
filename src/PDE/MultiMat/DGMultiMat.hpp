@@ -1091,6 +1091,10 @@ class MultiMat {
     }
 
     //! Balances elastic energy after plastic update
+    //! \param[in] e Element number
+    //! \param[in] x_star Stiff variables before implicit update
+    //! \param[in] x Stiff variables after implicit update
+    //! \param[in] U Field of conserved variables
     void balance_elastic_energy( std::size_t e,
                                  std::vector< tk::real > x_star,
                                  std::vector< tk::real > x,
@@ -1264,8 +1268,6 @@ class MultiMat {
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
               state[inciter::densityIdx(nmat, k)], 0.0, 0.0, 0.0, 0.0, alpha, k,
               g );
-            // tk::real apr = state[ncomp+inciter::pressureIdx(nmat, k)];
-            // for (std::size_t i=0; i<3; ++i) sigma_dev[i][i] -= apr;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
@@ -1296,14 +1298,10 @@ class MultiMat {
               for (std::size_t j=0; j<3; ++j)
                 equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
             equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
-            // rel_factor = 1/tau <- Perfect plasticity for now.
-            // Future implementation:
-            // rel_factor = 1.0e05*(equiv_stress-scaled_yield)
             tk::real rel_factor = 0.0;
             tk::real phi = std::max(0.0, equiv_stress-yield_stress);
             tk::real rel_time = getmatprop< tag::plasticity_reltime >(k);
             if (phi > 0.0) {
-              //rel_factor = 1.0/rel_time;
               rel_factor = std::pow((phi/yield_stress),2.0)/rel_time;
               // Scale rel_factor by alpha
               tk::real a_min = 1.0e-04, a_max = 2.0e-01;
@@ -1338,13 +1336,6 @@ class MultiMat {
                   std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
                   R(e, dofId) += wt * s[srcId];
                 }
-            // for (std::size_t i=0; i<3; ++i)
-            //   for (std::size_t j=0; j<3; ++j)
-            //     for (std::size_t idof=0; idof<ndof; ++idof)
-            //       if (s[(i*3+j)*ndof+idof] > 1.0e-06) {
-            //         printf("ksld, alpha = %lu, %e\n", ksld, alpha);
-            //         printf("s[%lu] = %e\n", (i*3+j)*ndof+idof, s[(i*3+j)*ndof+idof]);
-            //       }
 
             ksld++;
           }
