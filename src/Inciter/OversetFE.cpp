@@ -1276,9 +1276,11 @@ OversetFE::solve()
       }
     }
 
-    // Mark if mesh moved
+    // Mark if mesh moved or is moving
     if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12 ||
-      std::sqrt(tk::dot(m_surfTorque, m_surfTorque)) > 1e-12)
+      std::sqrt(tk::dot(m_surfTorque, m_surfTorque)) > 1e-12 ||
+      std::sqrt(tk::dot(m_centMassVeln, m_centMassVeln)) > 1e-12 ||
+      std::sqrt(m_angVelMeshn * m_angVelMeshn) > 1e-12 )
       m_movedmesh = 1;
     else
       m_movedmesh = 0;
@@ -1317,6 +1319,7 @@ OversetFE::solve()
         }
         r_mag = std::sqrt(r_mag);
         auto a_tgt = alpha_mesh*r_mag;
+        auto v_tgt = m_angVelMeshn*r_mag;
 
         // get the other two directions
         auto i1 = (sym_dir+1)%3;
@@ -1326,6 +1329,8 @@ OversetFE::solve()
         auto theta = std::atan2(rCM[i2],rCM[i1]);
         auto a1 = a_tgt*std::cos((pi/2.0)+theta);
         auto a2 = a_tgt*std::sin((pi/2.0)+theta);
+        auto v1 = v_tgt*std::cos((pi/2.0)+theta);
+        auto v2 = v_tgt*std::sin((pi/2.0)+theta);
 
         // angle of rotation
         auto dtheta = m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp;
@@ -1344,16 +1349,16 @@ OversetFE::solve()
           // mesh displacement from translation
           dsT = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
           // mesh displacement from rotation
-          dsR = rCM[i] + m_centMass[i] - d->Coordn()[i][p];
+          dsR = rCM[i] + m_centMassn[i] - d->Coordn()[i][p];
           // add both contributions
           d->Coord()[i][p] = d->Coordn()[i][p] + dsT + dsR;
           // mesh velocity change from translation
-          u_mesh(p,i) += a_mesh[i]*dtp;
+          u_mesh(p,i) = m_centMassVeln[i] + a_mesh[i]*dtp;
         }
 
         // add contribution of rotation to mesh velocity
-        u_mesh(p,i1) += a1*dtp;
-        u_mesh(p,i2) += a2*dtp;
+        u_mesh(p,i1) += v1 + a1*dtp;
+        u_mesh(p,i2) += v2 + a2*dtp;
       }
 
       // update angular velocity
