@@ -909,12 +909,12 @@ class MultiSpecies {
     // Other boundary condition types that do not depend on "Problem" should be
     // added in BCFunctions.hpp
 
-static tk::FluxFn::result_type    
+  static tk::FluxFn::result_type   
    visc_flux(const std::vector< std::array< tk::real, 3 > >& ugp_grad,
             const std::vector< std::array< tk::real, 3 > >& pgp_grad,
             const std::vector< tk::real >& ugp) 
     {
-     std::vector< std::array< tk::real, 3 > > fl( ugp.size() ); 
+     std::vector< std::array< tk::real, 3 > > fl( ugp.size()+1 ); 
   auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
 

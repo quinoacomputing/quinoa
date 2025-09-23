@@ -127,12 +127,26 @@ tk::volInt( std::size_t nmat,
 
         if (viscous==1)
         {
+        std::vector< std::array< tk::real, 3 > > grad_all(2*ncomp, 
+                                            std::array< real, 3 >{{0, 0, 0}});
          auto state_U_grad = eval_state_gradient(ncomp, ndof, dof_el, 
-                         e, U, dBdx )
+                         e, U, dBdx );
          auto state_P_grad = eval_state_gradient(nprim, ndof, dof_el, 
-                         e, P, dBdx )
-         auto fl_vis =  visc_flux(state_U_grad, state_P_grad, state) ;
-         fl=fl+ fl_vis;               
+                         e, P, dBdx );
+
+         for (ncomp_t c=0; c<ncomp; ++c){
+           grad_all.push_back(state_U_grad[c]);
+         }
+
+         for (ncomp_t c=0; c<ncomp; ++c){
+           grad_all.push_back(state_P_grad[c]);
+         }         
+   
+         auto fl_vis =  visc_flux(ncomp, mat_blk, state, grad_all) ;
+         for (ncomp_t c=0; c<ncomp; ++c){
+          for (std::size_t i=0; i<3; ++i)
+           fl[c][i] = fl[c][i] + fl_vis[c][i];  
+          }              
          } 
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );

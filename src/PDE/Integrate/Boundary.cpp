@@ -191,31 +191,40 @@ bndSurfInt( const bool pref,
 
           // Compute the numerical flux
           auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t));
-                    if (viscous==1){
+          if (viscous==1){
+            std::array< std::vector<real>, 3 > dBdx;
+            std::vector< std::array< tk::real, 3 > > grad_all(2*ncomp, 
+                                            std::array< real, 3 >{{0, 0, 0}});
+            std::vector<real> fluxl(5, 0);
+            std::vector<real> fluxr(5, 0);
             auto state_U_grad_l = eval_state_gradient (ncomp, ndof, dof_el, 
                          el, U, dBdx );
             auto state_P_grad_l = eval_state_gradient (nprim, ndof, dof_el, 
                          el, P, dBdx );
-            auto fl_vis_l = visc_flux(state_U_grad_l, state_P_grad_l, var[0]) ; 
-            auto state_U_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
-                         er, U, dBdx );
-            auto state_P_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
-                         er, P, dBdx );
-            auto fl_vis_r = visc_flux(state_U_grad_r, state_P_grad_r, var[1]) ; 
+            for (ncomp_t c=0; c<ncomp; ++c){
+              grad_all.push_back(state_U_grad_l[c]);
+             }
+
+            for (ncomp_t c=0; c<ncomp; ++c){
+              grad_all.push_back(state_P_grad_l[c]);
+            } 
+            auto fl_vis_l = visc_flux(ncomp, mat_blk, var[0], grad_all); 
+
+            auto fl_vis_r = visc_flux(ncomp, mat_blk, var[1], grad_all) ; 
       
  
 
            // Flux functions
            for (std::size_t i=0; i<3; ++i)
             {
-             fluxl[1] + =fl_vis_l[1][i]*fn[0];
-             fluxl[2] + =fl_vis_l[2][i]*fn[1];
-             fluxl[3] + =fl_vis_l[3][i]*fn[2];
-             fluxl[4] + =fl_vis_l[4][i];
-             fluxr[1] + =fl_vis_r[1][i]*fn[0];
-             fluxr[2] + =fl_vis_r[2][i]*fn[1];
-             fluxr[3] + =fl_vis_r[3][i]*fn[2];
-             fluxr[4] + =fl_vis_r[4][i];
+             fluxl[1] = fluxl[1] + fl_vis_l[1][i]*fn[i];
+             fluxl[2] = fluxl[2] + fl_vis_l[2][i]*fn[i];
+             fluxl[3] = fluxl[3] + fl_vis_l[3][i]*fn[i];
+             fluxl[4] = fluxl[4] + fl_vis_l[4][i]*fn[i];
+             fluxr[1] = fluxr[1] + fl_vis_r[1][i]*fn[i];
+             fluxr[2] = fluxr[2] + fl_vis_r[2][i]*fn[i];
+             fluxr[3] = fluxr[3] + fl_vis_r[3][i]*fn[i];
+             fluxr[4] = fluxr[4] + fl_vis_r[4][i]*fn[i];
             }
     
         

@@ -1086,13 +1086,13 @@ tk::eval_state_gradient ( ncomp_t ncomp,
    for (ncomp_t c=0; c<ncomp; ++c)
     {
       auto mark = c*ndof;
-      state_grad(c,i) += U( e, mark+1 ) * dBdx[i][1] 
+      state_grad[c][i] += U( e, mark+1 ) * dBdx[i][1] 
                        + U( e, mark+2 ) * dBdx[i][2]
                        + U( e, mark+3 ) * dBdx[i][3];
 
       if( ndof_el > 4 )
     {
-      state_grad(c,i) += U( e, mark+4 ) * dBdx[i][4] 
+      state_grad[c][i] += U( e, mark+4 ) * dBdx[i][4] 
                        + U( e, mark+5 ) * dBdx[i][5]
                        + U( e, mark+6 ) * dBdx[i][6]
                        + U( e, mark+4 ) * dBdx[i][7] 
@@ -1102,6 +1102,6 @@ tk::eval_state_gradient ( ncomp_t ncomp,
   }
 }
   
- return state_grad
+ return state_grad;
   
 }
