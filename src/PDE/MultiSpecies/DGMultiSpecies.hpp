@@ -910,11 +910,13 @@ class MultiSpecies {
     // added in BCFunctions.hpp
 
   static tk::FluxFn::result_type   
-   visc_flux(const std::vector< std::array< tk::real, 3 > >& ugp_grad,
-            const std::vector< std::array< tk::real, 3 > >& pgp_grad,
-            const std::vector< tk::real >& ugp) 
+   visc_flux 
+            ( ncomp_t ncomp,
+          const std::vector< EOS >& mat_blk,
+          const std::vector< tk::real >& ugp,
+          const std::vector< std::array< tk::real, 3 > > & grad_all )
     {
-     std::vector< std::array< tk::real, 3 > > fl( ugp.size()+1 ); 
+     std::vector< std::array< tk::real, 3 > > fl( ugp.size() ); 
   auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
 
@@ -930,10 +932,10 @@ class MultiSpecies {
         ugp[multispecies::momentumIdx(nspec,1)] / rhob,
         ugp[multispecies::momentumIdx(nspec,2)] / rhob }};
         
-  std::array< std::array< real, 3 >, 3 > dudx, tau;
-  std::array< real, 3 > dTdx;
-  real mu(0.0), conduct(0.0);
-  std::vector< real > alLR(nspec, 0), conduct_mat(nspec, 0);
+  std::array< std::array< tk::real, 3 >, 3 > dudx, tau;
+  std::array< tk::real, 3 > dTdx;
+  tk::real mu(0.0), conduct(0.0);
+  std::vector< tk::real > alLR(nspec, 0), conduct_mat(nspec, 0);
   
   for (std::size_t k=0; k<nspec; ++k)
   {
@@ -947,14 +949,14 @@ class MultiSpecies {
       for (std::size_t i=0; i<3; ++i) {
         auto idx = multispecies::momentumIdx(nspec,i);
         for (std::size_t j=0; j<3; ++j) {
-        dudx[i][j]=ugp_grad[idx][j];
+        dudx[i][j]=grad_all[idx][j];
         }
       } 
       
-     auto idx = multispecies::temperatureIdx(nspec,0);
+     auto idx_1 = multispecies::temperatureIdx(nspec,0);
        
       for (std::size_t j=0; j<3; ++j) {
-        dTdx[j] = pgp_grad[idx][j];
+        dTdx[j] = grad_all[ncomp+idx_1][j];
       } 
   
   
@@ -979,10 +981,10 @@ class MultiSpecies {
       }     
  
        // energy  viscous flux
-      auto idx = multispecies::temperatureIdx(nspec,0);
+      auto idx_2 = multispecies::temperatureIdx(nspec,0);
       for (std::size_t i=0; i<3; ++i) {
         for (std::size_t j=0; j<3; ++j) {
-        fl[idx][i] += u[j] * tau[i][j]+conduct*dTdx[i];
+        fl[idx_2][i] += u[j] * tau[i][j]+conduct*dTdx[i];
         }
       }   
 

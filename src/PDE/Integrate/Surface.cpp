@@ -242,10 +242,10 @@ surfInt( const bool pref,
           tk::inverseJacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
           auto dBdx_r = tk::eval_dBdx_p1(dof_er, jacInv_r );
           
-        if (dof_el > 4)
-          eval_dBdx_p2( igp, coordgp, jacInv_l, dBdx_l );
-        if (dof_er > 4)
-          eval_dBdx_p2( igp, coordgp, jacInv_r, dBdx_r );
+//         if (dof_el > 4)
+//           eval_dBdx_p2( igp, coordgp, jacInv_l, dBdx_l );
+//         if (dof_er > 4)
+//           eval_dBdx_p2( igp, coordgp, jacInv_r, dBdx_r );
     
       auto state_U_grad_l = eval_state_gradient (ncomp, ndof, dof_el, 
                          el, U, dBdx_l );
