@@ -420,7 +420,7 @@ class DG : public CBase_DG {
       const std::unordered_map< std::size_t, std::size_t >& addedTets );
 
     //! Add the protective layer for ndof refinement
-    void refine();
+    void p_refine();
 
     //! Smooth the refined ndof distribution
     void smooth();
