@@ -233,7 +233,6 @@ cleanTraceMultiMat(
 
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
-          P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
     }
