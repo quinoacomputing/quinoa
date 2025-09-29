@@ -181,68 +181,59 @@ cleanTraceMultiMat(
     // 1. Correct minority materials and store volume/energy changes
     for (std::size_t k=0; k<nmat; ++k)
     {
+      bool ctm_element(false);
       auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
       auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
-      // for positive volume fractions
-      if (solidx[k] == 0 && solidx[kmax] == 0 && matExists(alk))
-      {
-        // check if volume fraction is lesser than threshold (volfracPRelaxLim)
-        // and if the material (effective) pressure is negative. If either of
-        // these conditions is true, perform pressure relaxation.
-        if ((alk < volfracPRelaxLim()) ||
-          (pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
-          U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
-          /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
-        {
-          // determine target relaxation pressure
-          auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
-          prelax = std::max(prelax, p_target);
 
-          // energy change
-          auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
-          auto gmat = getDeformGrad(nmat, k, ugp);
-          auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
-            alk*prelax, alk, gmat);
+      // Determine if element-e needs trace-material cleanup. This decision is
+      // based on specific scenarios.
+      // WARNING: Changing this decision-making logic can adversely affect
+      // code stability.
+      if (
+        // 1. if volume fraction is lesser than threshold
+        (alk < volfracPRelaxLim()) ||
+        // 2. if current and majority material is fluid, AND the material
+        //    (effective) pressure is negative
+        (solidx[k] == 0 && solidx[kmax] == 0 && matExists(alk) &&
+        pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
+        U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
+      )
+        ctm_element = true;
 
-          // total energy flux into majority material
-          d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
-            - arhoEmat);
-
-          // update state of trace material
-          U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk;
-          U(e, energyDofIdx(nmat, k, rdof, 0)) = arhoEmat;
-          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
-        }
-      }
-      else if ( alk < volfracPRelaxLim() ) {  // condition so that else-branch not exec'ed for solids
-        auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
-        // For solids, reset deformation and stress
-        if (solidx[k] > 0)
+      if (ctm_element) {
+        tk::real prelax(0.0);
+        if (solidx[k] > 0) {
+          // for solids:
+          // 1. reset deformation gradient and stress
+          // 2. do not attempt to relax pressure
           resetSolidTensors(nmat, k, e, U, P);
-        // For fluids, reset pressure
-        else
-        {
-          // determine target relaxation pressure
-          auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+          prelax = P(e, pressureDofIdx(nmat, k, rdof, 0))/alk;
+        }
+        else {
+          // for fluids, determine target relaxation pressure
+          prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
             U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
           prelax = std::max(prelax, p_target);
-          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk * prelax;
-          for (std::size_t i=1; i<rdof; ++i)
-            P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
-        std::array< std::array< tk::real, 3 >, 3 > gk;
-        for (std::size_t i=0; i<3; ++i)
-          for (std::size_t j=0; j<3; ++j)
-            gk[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
-        auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhok, u, v, w,
-          P(e, pressureDofIdx(nmat, k, rdof, 0)), alk, gk );
+
+        // energy change
+        auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
+        auto gmat = getDeformGrad(nmat, k, ugp);
+        auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
+          alk*prelax, alk, gmat);
+
         // total energy flux into majority material
         d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
-                  - arhoEmat);
+          - arhoEmat);
+
+        // update state of trace material
+        U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk;
         U(e, energyDofIdx(nmat, k, rdof, 0)) = arhoEmat;
+        P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
+
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
+          P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
     }
