@@ -79,11 +79,11 @@ module dg {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4sol() {
-        when ownsol_complete(), comsol_complete() serial "sol" { refine(); }
+        when ownsol_complete(), comsol_complete() serial "sol" { p_refine(); }
       }
 
       entry void wait4refine() {
-        when ownrefine_complete(), comrefine_complete() serial "refine" { smooth(); }
+        when ownrefine_complete(), comrefine_complete() serial "p_refine" { smooth(); }
       }
 
       entry void wait4smooth() {
