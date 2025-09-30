@@ -338,12 +338,12 @@ class DGPDE {
                        P, nielem ); }
 
     //! Public interface for elastic energy balance
-    void balance_elastic_energy( std::size_t e,
+    void balance_plastic_energy( std::size_t e,
                                  std::vector< tk::real > x_star,
                                  std::vector< tk::real > x,
                                  tk::Fields& U ) const
-    { return self->balance_elastic_energy(e, x_star, x, U); }
-  
+    { return self->balance_plastic_energy(e, x_star, x, U); }
+
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
                     const tk::Fields& geoElem,
@@ -533,7 +533,7 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t ) const = 0;
-      virtual void balance_elastic_energy( std::size_t,
+      virtual void balance_plastic_energy( std::size_t,
                                            std::vector< tk::real >,
                                            std::vector< tk::real >,
                                            tk::Fields& ) const = 0;
@@ -731,11 +731,11 @@ class DGPDE {
                    const std::size_t nielem ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
                         U, P, nielem ); }
-      void balance_elastic_energy( std::size_t e,
+      void balance_plastic_energy( std::size_t e,
                                    std::vector< tk::real > x_star,
                                    std::vector< tk::real > x,
                                    tk::Fields& U ) const override
-      { return data.balance_elastic_energy( e, x_star, x, U); }
+      { return data.balance_plastic_energy( e, x_star, x, U); }
       void stiff_rhs( std::size_t e,
                       const tk::Fields& geoElem,
                       const std::vector< std::size_t >& inpoel,

@@ -2009,7 +2009,13 @@ DG::imex_integrate()
 //!    B2 = u[n] + dt * (expl_rkcoef[2,1]*R_ex(u[0])+impl_rkcoef[2,1]*R_im(u[0])),
 //!    R2 = dt * impl_rkcoef[2,2]*R_im(u[1]) - u([1]).
 //!
-//!    In order to solve the non-linear system F(U) = 0, we employ Broyden's method.
+//!    In order to solve the non-linear system F(U) = 0, we employ:
+//!    First, Broyden's method.
+//!    If that fails, Newton's method (with FD approximation for jacobian).
+//!
+//!    Broyden's method:
+//!    ----------------
+//!
 //!    Taken from https://en.wikipedia.org/wiki/Broyden%27s_method.
 //!    The method consists in obtaining an approximation for the inverse of the
 //!    Jacobian H = J^(-1) and advancing in a quasi-newton step:
@@ -2024,6 +2030,18 @@ DG::imex_integrate()
 //!
 //!    where DU[k] = U[k] - U[k-1] and DF[k] = F(U[k]) - F(U[k-1)).
 //!
+//!    Newton's method:
+//!    ----------------
+//!
+//!    Taken from https://en.wikipedia.org/wiki/Newton%27s_method
+//!    The method consists in inverting the jacobian
+//!    Jacobian J and advancing in a Newton step:
+//!
+//!    U[k+1] = U[k] - J^(-1)[k]*F(U[k]),
+//!
+//!    until F(U) is close enough to zero.
+//!
+//!
 //!    This function performs the following main algorithmic steps:
 //!    - If stage == 0 or stage == 1:
 //!      - Take Initial value:
@@ -2031,9 +2049,11 @@ DG::imex_integrate()
 //!        U[1] = U[n] + dt * (expl_rkcoef[2,1]*R_ex(U[0])
 //!                           +impl_rkcoef[2,1]*R_im(U[0])) (for stage 1)
 //!      - Loop over the Elements (e++)
-//!        - Initialize Jacobian inverse approximation as the identity
+//!        - Broyden steps:
+//!        - Initialize Jacobian inverse approximation using FD
 //!        - Compute implicit right-hand-side (F_im) with current U
 //!        - Iterate for the solution (iter++)
+//!          - Perform line search prior to solution update
 //!          - Compute new solution U[k+1] = U[k] - H[k]*F(U[k])
 //!          - Compute implicit right-hand-side (F_im) with current U
 //!          - Compute DU and DF
@@ -2042,6 +2062,17 @@ DG::imex_integrate()
 //!            - Compute d = DU[k]^T*V1 and V3 = DU[k]-V1
 //!            - Compute V4 = V3/d
 //!            - Update H[k] = H[k-1] + V4*V2
+//!          - Save old U and F
+//!          - Compute absolute and relative errors
+//!          - Break iterations if error < tol or iter == max_iter
+//!        - Newton steps:
+//!          - Initialize Jacobian using FD approximation.
+//!          - Compute implicit right-hand-side (F_im) with current U
+//!          - Iterate for the solution (iter++)
+//!          - Perform line search prior to solution update
+//!          - Compute new solution U[k+1] = U[k] - J^(-1)[k]*F(U[k])
+//!          - Compute implicit right-hand-side (F_im) with current U
+//!          - Compute DU and DF
 //!          - Save old U and F
 //!          - Compute absolute and relative errors
 //!          - Break iterations if error < tol or iter == max_iter
@@ -2086,7 +2117,8 @@ DG::imex_integrate()
     for (std::size_t e=0; e<nelem; ++e)
     {
 
-      // x <- m_u
+      // Non-linear solver solves for x.
+      // Copy the relevant variables from the state array into x.
       std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
@@ -2116,9 +2148,9 @@ DG::imex_integrate()
               " nonlinear solvers was not able to converge");
 
       // Balance energy
-      g_dgpde[d->MeshId()].balance_elastic_energy(e, x_star, x, m_un);
+      g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
 
-      // m_u <- x
+      // Update the state u with the converged vector x.
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
@@ -2185,10 +2217,17 @@ DG::imex_integrate()
   }
 }
 
+// *****************************************************************************
+// Evaluate the stiff RHS and stiff equations f = b - A(x)
+//
+//! \details
+//!   Defines the F(x) function that the non-linear solvers
+//!   look to minimize. Deals with properly calling the stiff
+//!   RHS functions.
+// *****************************************************************************
 std::vector< tk::real > DG::nonlinear_func(std::size_t e,
                                            std::vector< tk::real > x)
 {
-  // Evaluates the stiff RHS and stiff equations f = b - A(x)
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
@@ -2239,6 +2278,19 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
   return f;
 }
 
+// *****************************************************************************
+// Performs Broyden's method to solve a non-linear system on
+// element e.
+//
+//! \details
+//!    Taken from https://en.wikipedia.org/wiki/Broyden%27s_method.
+//!    The method consists in obtaining an approximation for the inverse of the
+//!    Jacobian H = J^(-1) and advancing in a quasi-newton step:
+//!
+//!    U[k+1] = U[k] - H[k]*F(U[k]),
+//!
+//!    until F(U) is close enough to zero.
+// *****************************************************************************
 std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
                                               std::vector< tk::real > x,
                                               bool solver_failed )
@@ -2478,6 +2530,20 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   return x;
 }
 
+
+// *****************************************************************************
+// Performs Newton's method to solve a non-linear system on
+// element e.
+//
+//! \details
+//!    Taken from https://en.wikipedia.org/wiki/Newton%27s_method
+//!    The method consists in inverting the jacobian
+//!    Jacobian J and advancing in a Newton step:
+//!
+//!    U[k+1] = U[k] - J^(-1)[k]*F(U[k]),
+//!
+//!    until F(U) is close enough to zero.
+// *****************************************************************************
 std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
                                              std::vector< tk::real > x,
                                              bool solver_failed )

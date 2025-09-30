@@ -1091,11 +1091,18 @@ class MultiMat {
     }
 
     //! Balances elastic energy after plastic update
+    //! \details Since we perform an implicit update for the
+    //! deformation based on plastic work, we perform an update
+    //! on the total energy based on that change in elastic energy.
+    //! We use a Taylor-Quinney expression, see:
+    //! Bever, Michael Berliner, David Lewis Holt, and Alan Lee
+    //! Titchener. "The stored energy of cold work." Progress in
+    //! materials science 17 (1973): 5-177.
     //! \param[in] e Element number
     //! \param[in] x_star Stiff variables before implicit update
     //! \param[in] x Stiff variables after implicit update
     //! \param[in] U Field of conserved variables
-    void balance_elastic_energy( std::size_t e,
+    void balance_plastic_energy( std::size_t e,
                                  std::vector< tk::real > x_star,
                                  std::vector< tk::real > x,
                                  tk::Fields& U ) const
@@ -1154,14 +1161,15 @@ class MultiMat {
           tk::real beta = 1.0;
           const tk::real dE_vol = alpha * a_tilde * beta * (-dpsi);
           for (std::size_t idof=0; idof<ndof; ++idof)
-            // Should have B[idof] here I think..
+            // Should have B[idof] here for it to work for high order
+            // Currently, only useful for ndof=1
             U(e, energyDofIdx(nmat,k,ndof,idof)) += dE_vol;
           ksld++;
         }
       }
     }
-                               
-  
+
+
     //! Compute stiff terms for a single element
     //! \param[in] e Element number
     //! \param[in] geoElem Element geometry array
