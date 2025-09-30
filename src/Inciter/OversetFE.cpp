@@ -102,7 +102,9 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_surfForce({{0, 0, 0}}),
   m_surfTorque({{0, 0, 0}}),
   m_displacement({{0, 0, 0}}),
+  m_displacementn({{0, 0, 0}}),
   m_rotation({{0, 0, 0}}),
+  m_rotationn({{0, 0, 0}}),
   m_centMass({{0, 0, 0}}),
   m_centMassVel({{0, 0, 0}}),
   m_angVelMesh(0),
@@ -990,6 +992,8 @@ OversetFE::UpdateCenterOfMass()
   m_centMassn = m_centMass;
   m_centMassVeln = m_centMassVel;
   m_angVelMeshn = m_angVelMesh;
+  m_displacementn = m_displacement;
+  m_rotationn = m_rotation;
 }
 
 void
@@ -1365,10 +1369,11 @@ OversetFE::solve()
 
       // obtain total displacement of center-of-mass and rotation for diagnostics
       for (std::size_t i=0; i<3; ++i) {
-        m_displacement[i] += m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+        m_displacement[i] = m_displacementn[i]
+          + m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
       }
-      m_rotation[sym_dir] += (m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp)
-        *180.0/pi;
+      m_rotation[sym_dir] = m_rotationn[sym_dir]
+        + (m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp)*180.0/pi;
 
       // update angular velocity
       m_angVelMesh = m_angVelMeshn + alpha_mesh*dtp;
