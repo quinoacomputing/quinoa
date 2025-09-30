@@ -449,7 +449,7 @@ class Transport {
     // //! \param[in] x_star Stiff variables before implicit update
     // //! \param[in] x Stiff variables after implicit update
     // //! \param[in] U Field of conserved variables
-    void balance_elastic_energy( std::size_t /*e*/,
+    void balance_plastic_energy( std::size_t /*e*/,
                                  std::vector< tk::real > /*x_star*/,
                                  std::vector< tk::real > /*x*/,
                                  tk::Fields& /*U*/ ) const {}

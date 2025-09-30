@@ -60,10 +60,8 @@ GodunovRomenski::density(
   tk::real tol = 1.0e-04;
   tk::real err = tol + 1;
   for (std::size_t iter=0; iter<maxiter; ++iter)
-  {    
-    auto rrho0a = std::pow(rho/m_rho0, m_alpha);
-    auto p_coldcompr = m_K0/m_alpha * (rrho0a*rho/m_rho0) * (rrho0a-1.0);
-    tk::real p = p_coldcompr - pr;
+  {
+    tk::real p = pressure_coldcompr(rho) - pr;
     auto dpdrho = DpccDrho(rho);
     auto delta = p/dpdrho;
     rho -= delta;
@@ -213,7 +211,7 @@ GodunovRomenski::soundspeed(
   // Hydro contribution
   tk::real rho = arho/alpha;
   auto p_cc = pressure_coldcompr(arho, alpha);
-  a += std::max( 1.0e-15, DpccDrho(rho) + m_gamma * (apr - p_cc)/arho );
+  a += std::max( 1.0e-15, DpccDrho(rho) + (m_gamma+1.0) * (apr - p_cc)/arho );
   // in the above expression, shear pressure is not included in apr in the first
   // place, so should not subtract it
 
