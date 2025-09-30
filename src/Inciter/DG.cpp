@@ -186,10 +186,12 @@ DG::DG( const CProxy_Discretization& disc,
 
   usesAtSync = true;    // enable migration at AtSync
 
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
-    thisProxy[ thisIndex ].wait4refine();
+    if (pref) thisProxy[ thisIndex ].wait4refine();
     thisProxy[ thisIndex ].wait4smooth();
     thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4nod();
@@ -594,7 +596,7 @@ DG::lhs()
   if (!m_initial) stage();
 }
 
-void DG::refine()
+void DG::p_refine()
 // *****************************************************************************
 // Add the protective layer for ndof refinement
 // *****************************************************************************
@@ -620,26 +622,33 @@ void DG::refine()
 
   if (pref && m_stage==0) refine_ndof();
 
-  if (myGhosts()->m_sendGhost.empty())
-    comrefine_complete();
-  else
-    for(const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
-      std::vector< std::size_t > tetid( ghostdata.size() );
-      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
-                                             prim( ghostdata.size() );
-      std::vector< std::size_t > ndof( ghostdata.size() );
-      std::size_t j = 0;
-      for(const auto& i : ghostdata) {
-        Assert( i < myGhosts()->m_fd.Esuel().size()/4, "Sending refined ndof  "
-          "data" );
-        tetid[j] = i;
-        if (pref && m_stage == 0) ndof[j] = m_ndof[i];
-        ++j;
+  if (!pref) {
+    // if p-refinement is not configured, proceed directly to reconstructions
+    reco();
+  }
+  else {
+    // if p-refinement is configured, do refine-smoothing before reconstruction
+    if (myGhosts()->m_sendGhost.empty())
+      comrefine_complete();
+    else
+      for(const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
+        std::vector< std::size_t > tetid( ghostdata.size() );
+        std::vector< std::vector< tk::real > > u( ghostdata.size() ),
+                                               prim( ghostdata.size() );
+        std::vector< std::size_t > ndof( ghostdata.size() );
+        std::size_t j = 0;
+        for(const auto& i : ghostdata) {
+          Assert( i < myGhosts()->m_fd.Esuel().size()/4, "Sending refined ndof  "
+            "data" );
+          tetid[j] = i;
+          if (pref && m_stage == 0) ndof[j] = m_ndof[i];
+          ++j;
+        }
+        thisProxy[ cid ].comrefine( thisIndex, tetid, ndof );
       }
-      thisProxy[ cid ].comrefine( thisIndex, tetid, ndof );
-    }
 
-  ownrefine_complete();
+    ownrefine_complete();
+  }
 }
 
 void
@@ -764,9 +773,11 @@ DG::reco()
 
   // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
-  for (const auto& b : myGhosts()->m_bid) {
-    if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[2][ b.second ];
+  if (pref) {
+    for (const auto& b : myGhosts()->m_bid) {
+      if (m_stage == 0) {
+        m_ndof[ b.first ] = m_ndofc[2][ b.second ];
+      }
     }
   }
 
@@ -1410,9 +1421,11 @@ DG::solve( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
-  thisProxy[ thisIndex ].wait4refine();
+  if (pref) thisProxy[ thisIndex ].wait4refine();
   thisProxy[ thisIndex ].wait4smooth();
   thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4nodalExtrema();
@@ -1423,7 +1436,6 @@ DG::solve( tk::real newdt )
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
