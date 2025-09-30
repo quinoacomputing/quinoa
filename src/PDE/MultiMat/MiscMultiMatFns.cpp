@@ -604,19 +604,14 @@ resetSolidTensors(
     }
 
   // Robust determinant and spherical replacement
-  tk::real detg = tk::determinant(g);
   // Clamp to avoid NaNs; eps should be small but > 0
-  const tk::real det_floor = 1e-18;
-  if (!(detg > det_floor)) detg = det_floor;
+  auto detg = std::max(1e-18, tk::determinant(g));
   const tk::real new_gii = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
 
-  for (size_t i=0;i<3;++i)
-    for (size_t j=0;j<3;++j)
-      U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = (i==j) ? new_gii : 0.0;
-
-  // Zero elastic (deviatoric) Cauchy stress DOFs ONLY (not pressure)
+  // Set g and zero elastic (deviatoric) Cauchy stress DOFs ONLY (not pressure)
   for (size_t i=0;i<3;++i)
     for (size_t j=0;j<3;++j) {
+      U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = (i==j) ? new_gii : 0.0;
       P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
       // Clear higher DOFs for g and elastic stress
       for (size_t l=1; l<rdof; ++l) {
