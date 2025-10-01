@@ -125,24 +125,26 @@ SmallShearSolid::pressure(
   tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w))
     * (m_gamma-1.0) - alpha*m_gamma*m_pstiff;
 
-  // check partial pressure divergence
-  if (!std::isfinite(partpressure)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Total energy:     " << arhoE << std::endl;
-    std::cout << "Hydro energy:     " << arhoEh << std::endl;
-    std::cout << "det(defgrad):     " << tk::determinant(defgrad) << std::endl;
-    std::cout << "g-tensor:" << std::endl;
-    std::cout << defgrad[0][0] << " " << defgrad[0][1] << " " << defgrad[0][2] << std::endl;
-    std::cout << defgrad[1][0] << " " << defgrad[1][1] << " " << defgrad[1][2] << std::endl;
-    std::cout << defgrad[2][0] << " " << defgrad[2][1] << " " << defgrad[2][2] << std::endl;
-    std::cout << "Velocity:         " << u << ", " << v << ", " << w
-      << std::endl;
-    Throw("Material-" + std::to_string(imat) +
-      " has nan/inf partial pressure: " + std::to_string(partpressure) +
-      ", material volume fraction: " + std::to_string(alpha));
-  }
+  partpressure = std::max(min_eff_pressure(1e-10, arho, alpha), partpressure);
+
+  //// check partial pressure divergence
+  //if (!std::isfinite(partpressure)) {
+  //  std::cout << "Material-id:      " << imat << std::endl;
+  //  std::cout << "Volume-fraction:  " << alpha << std::endl;
+  //  std::cout << "Partial density:  " << arho << std::endl;
+  //  std::cout << "Total energy:     " << arhoE << std::endl;
+  //  std::cout << "Hydro energy:     " << arhoEh << std::endl;
+  //  std::cout << "det(defgrad):     " << tk::determinant(defgrad) << std::endl;
+  //  std::cout << "g-tensor:" << std::endl;
+  //  std::cout << defgrad[0][0] << " " << defgrad[0][1] << " " << defgrad[0][2] << std::endl;
+  //  std::cout << defgrad[1][0] << " " << defgrad[1][1] << " " << defgrad[1][2] << std::endl;
+  //  std::cout << defgrad[2][0] << " " << defgrad[2][1] << " " << defgrad[2][2] << std::endl;
+  //  std::cout << "Velocity:         " << u << ", " << v << ", " << w
+  //    << std::endl;
+  //  Throw("Material-" + std::to_string(imat) +
+  //    " has nan/inf partial pressure: " + std::to_string(partpressure) +
+  //    ", material volume fraction: " + std::to_string(alpha));
+  //}
 
   return partpressure;
 }
