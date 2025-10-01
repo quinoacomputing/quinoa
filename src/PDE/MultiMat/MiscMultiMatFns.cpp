@@ -207,7 +207,10 @@ cleanTraceMultiMat(
           // 1. reset deformation gradient and stress
           // 2. do not attempt to relax pressure
           resetSolidTensors(nmat, k, e, U, P);
-          prelax = P(e, pressureDofIdx(nmat, k, rdof, 0))/alk;
+          // prelax = P(e, pressureDofIdx(nmat, k, rdof, 0))/alk;
+          prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
+          prelax = std::max(prelax, p_target);
         }
         else {
           // for fluids, determine target relaxation pressure
