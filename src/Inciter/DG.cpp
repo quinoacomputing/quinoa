@@ -2402,7 +2402,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
   tk::real rel_err = rel_tol+1;
   tk::real abs_err = abs_tol+1;
-  lapack_int n = x.size();
+  lapack_int n = int(x.size());
 
   // Compute f with initial guess
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
@@ -2657,7 +2657,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
   tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
   tk::real rel_err = rel_tol+1;
   tk::real abs_err = abs_tol+1;
-  lapack_int n = x.size();
+  lapack_int n = int(x.size());
 
   // Define jacobian
   double jacob[n*n];
