@@ -2314,16 +2314,17 @@ DG::BDF1_integrate()
   // update solution m_u
 }
 
+std::vector< tk::real > DG::nonlinear_func(std::size_t e,
+                                           std::vector< tk::real > x)
 // *****************************************************************************
 // Evaluate the stiff RHS and stiff equations f = b - A(x)
-//
+//! \param[in] e Element number
+//! \param[in,out] x Array of unknowns to solve for
 //! \details
 //!   Defines the F(x) function that the non-linear solvers
 //!   look to minimize. Deals with properly calling the stiff
 //!   RHS functions.
 // *****************************************************************************
-std::vector< tk::real > DG::nonlinear_func(std::size_t e,
-                                           std::vector< tk::real > x)
 {
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -2375,10 +2376,15 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
   return f;
 }
 
+std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
+                                              std::vector< tk::real > x,
+                                              bool solver_failed )
 // *****************************************************************************
 // Performs Broyden's method to solve a non-linear system on
 // element e.
-//
+//! \param[in] e Element number
+//! \param[in,out] x Array of unknowns to solve for
+//! \param[out] solver_failed Returns true if solver did not converge
 //! \details
 //!    Taken from https://en.wikipedia.org/wiki/Broyden%27s_method.
 //!    The method consists in obtaining an approximation for the inverse of the
@@ -2388,9 +2394,6 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
 //!
 //!    until F(U) is close enough to zero.
 // *****************************************************************************
-std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
-                                              std::vector< tk::real > x,
-                                              bool solver_failed )
 {
   // Broyden's method
   // Control parameters
@@ -2399,7 +2402,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
   tk::real rel_err = rel_tol+1;
   tk::real abs_err = abs_tol+1;
-  std::size_t n = x.size();
+  lapack_int n = x.size();
 
   // Compute f with initial guess
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
@@ -2627,11 +2630,15 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   return x;
 }
 
-
+std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
+                                             std::vector< tk::real > x,
+                                             bool solver_failed )
 // *****************************************************************************
 // Performs Newton's method to solve a non-linear system on
 // element e.
-//
+//! \param[in] e Element number
+//! \param[in,out] x Array of unknowns to solve for
+//! \param[out] solver_failed Returns true if solver did not converge
 //! \details
 //!    Taken from https://en.wikipedia.org/wiki/Newton%27s_method
 //!    The method consists in inverting the jacobian
@@ -2641,9 +2648,6 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
 //!
 //!    until F(U) is close enough to zero.
 // *****************************************************************************
-std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
-                                             std::vector< tk::real > x,
-                                             bool solver_failed )
 {
   // Newton's method
   // Control parameters
@@ -2652,7 +2656,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
   tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
   tk::real rel_err = rel_tol+1;
   tk::real abs_err = abs_tol+1;
-  std::size_t n = x.size();
+  lapack_int n = x.size();
 
   // Define jacobian
   double jacob[n*n];

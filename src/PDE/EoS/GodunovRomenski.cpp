@@ -359,12 +359,8 @@ GodunovRomenski::min_eff_pressure(
   // auto rho = arho/alpha;
   // auto aeff = std::max(alpha, g_inputdeck.get< tag::multimat, tag::min_volumefrac >());
   // auto arhoeff = std::max(arho, aeff*rho);
-  // if (rho < 0.0) {
-  //   printf("DEBUG:\n");
-  //   printf("rho, arho, alpha = %e, %e, %e\n", rho, arho, alpha);
-  // }
   return min;
-    // - rho/m_gamma * DpccDrho(rho)
+    // - rho/(m_gamma+1) * DpccDrho(rho)
     // + pressure_coldcompr(arhoeff, aeff)/aeff;
 }
 
