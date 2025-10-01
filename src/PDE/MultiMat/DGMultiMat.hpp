@@ -514,9 +514,6 @@ class MultiMat {
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
               alphamat, imat, gmat );
 
-            pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
-              pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
-
             if (solidx[imat] > 0) {
               auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(
               alphamat, imat, gmat );

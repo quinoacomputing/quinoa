@@ -282,9 +282,6 @@ class MultiMat {
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             m_mat_blk[k].compute< EOS::pressure >( arhomat, vel[0], vel[1],
             vel[2], arhoemat, alphamat, k, gmat );
-          prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
-            constrain_pressure( m_mat_blk,
-            prim(e, pressureDofIdx(nmat, k, rdof, 0)), arhomat, alphamat, k);
           for (std::size_t idof=1; idof<rdof; ++idof)
             prim(e, pressureDofIdx(nmat, k, rdof, idof)) = 0.0;
         }

@@ -139,15 +139,17 @@ WilkinsAluminum::pressure(
                                  + e3*std::pow(rho/rho0,2.0)
                                  - e5*rho/rho0 - e4 );
 
-  // check partial pressure divergence
-  if (!std::isfinite(partpressure)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    Throw("Material-" + std::to_string(imat) +
-      " has nan/inf partial pressure: " + std::to_string(partpressure) +
-      ", material volume fraction: " + std::to_string(alpha));
-  }
+  partpressure = std::max(min_eff_pressure(1e-10, arho, alpha), partpressure);
+
+  //// check partial pressure divergence
+  //if (!std::isfinite(partpressure)) {
+  //  std::cout << "Material-id:      " << imat << std::endl;
+  //  std::cout << "Volume-fraction:  " << alpha << std::endl;
+  //  std::cout << "Partial density:  " << arho << std::endl;
+  //  Throw("Material-" + std::to_string(imat) +
+  //    " has nan/inf partial pressure: " + std::to_string(partpressure) +
+  //    ", material volume fraction: " + std::to_string(alpha));
+  //}
 
   return partpressure;
 }
