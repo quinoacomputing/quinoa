@@ -2317,7 +2317,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
   tk::real rel_err = rel_tol+1;
   tk::real abs_err = abs_tol+1;
-  lapack_int n = int(x.size());
+  std::size_t n = x.size();
 
   // Compute f with initial guess
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
@@ -2345,7 +2345,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   if (err0 > abs_tol) {
 
     // Evaluate finite difference based jacobian
-    double jacob[n*n];
+    std::vector< double > jacob(n*n);
     tk::real dx = 0.0;
     for (std::size_t i=0; i<n; ++i)
       for (std::size_t j=0; j<n; ++j)
@@ -2360,18 +2360,19 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
       }
 
     // Initialize Jacobian to be the inverse of this jacobian
-    lapack_int ipiv[n];
+    lapack_int ln = static_cast< lapack_int >(n);
+    std::vector< lapack_int > ipiv(n);
 
     #ifndef NDEBUG
     lapack_int ierr =
     #endif
-      LAPACKE_dgetrf(LAPACK_ROW_MAJOR, n, n, jacob, n, ipiv);
+      LAPACKE_dgetrf(LAPACK_ROW_MAJOR, ln, ln, jacob.data(), ln, ipiv.data());
     Assert(ierr==0, "Lapack error in LU factorization of FD Jacobian");
 
     #ifndef NDEBUG
     lapack_int jerr =
     #endif
-      LAPACKE_dgetri(LAPACK_ROW_MAJOR, n, jacob, n, ipiv);
+      LAPACKE_dgetri(LAPACK_ROW_MAJOR, ln, jacob.data(), ln, ipiv.data());
     Assert(jerr==0, "Lapack error in inverting FD Jacobian");
 
     std::vector< std::vector< tk::real > >
@@ -2571,10 +2572,10 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
   tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
   tk::real rel_err = rel_tol+1;
   tk::real abs_err = abs_tol+1;
-  lapack_int n = int(x.size());
+  std::size_t n = x.size();
 
   // Define jacobian
-  double jacob[n*n];
+  std::vector< double > jacob(n*n);
 
   // Compute f with initial guess
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
@@ -2608,12 +2609,13 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
         }
 
       // Compute new solution by solving linear system J*dx = -f
-      double delta[n];
+      lapack_int ln = static_cast< lapack_int >(n);
+      std::vector< double > delta(n);
       for (std::size_t i=0; i<n; ++i)
         delta[i] = -f[i];
       lapack_int info;
-      lapack_int ipiv[n];
-      info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, 1, jacob, n, ipiv, delta, 1);
+      std::vector< lapack_int > ipiv(n);
+      info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, ln, 1, jacob.data(), ln, ipiv.data(), delta.data(), 1);
 
       if (info != 0) {
         printf("Failed with info: %ld\n", info);
