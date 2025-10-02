@@ -203,21 +203,13 @@ cleanTraceMultiMat(
       if (ctm_element) {
         tk::real prelax(0.0);
         if (solidx[k] > 0) {
-          // for solids:
-          // 1. reset deformation gradient and stress
-          // 2. do not attempt to relax pressure
+          // for solids, reset deformation gradient and stress
           resetSolidTensors(nmat, k, e, U, P);
-          // prelax = P(e, pressureDofIdx(nmat, k, rdof, 0))/alk;
-          prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
-          prelax = std::max(prelax, p_target);
         }
-        else {
-          // for fluids, determine target relaxation pressure
-          prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
-          prelax = std::max(prelax, p_target);
-        }
+        // determine target relaxation pressure
+        prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+          U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
+        prelax = std::max(prelax, p_target);
 
         // energy change
         auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
