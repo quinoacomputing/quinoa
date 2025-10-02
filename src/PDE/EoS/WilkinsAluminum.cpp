@@ -109,7 +109,7 @@ WilkinsAluminum::pressure(
   tk::real,
   tk::real,
   tk::real alpha,
-  std::size_t imat,
+  std::size_t /*imat*/,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
@@ -123,9 +123,9 @@ WilkinsAluminum::pressure(
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
-//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
-//!   for the single-material system, this argument can be left unspecified
-//!   by the calling code
+// //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+// //!   for the single-material system, this argument can be left unspecified
+// //!   by the calling code
 // //! \param[in] defgrad Material inverse deformation gradient tensor
 // //!   (g_k). Default is 0, so that for the single-material system,
 // //!   this argument can be left unspecified by the calling code
