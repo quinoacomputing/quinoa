@@ -519,7 +519,6 @@ class MultiMat {
 
             if (solidx[imat] > 0) {
               auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(
-              arhomat, vel[0], vel[1], vel[2], arhoemat,
               alphamat, imat, gmat );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
@@ -1274,8 +1273,7 @@ class MultiMat {
 
             // 1. Compute dev(sigma)
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
-              state[inciter::densityIdx(nmat, k)], 0.0, 0.0, 0.0, 0.0, alpha, k,
-              g );
+              alpha, k, g );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;

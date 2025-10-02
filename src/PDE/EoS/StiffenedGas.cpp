@@ -105,16 +105,11 @@ StiffenedGas::pressure(
 std::array< std::array< tk::real, 3 >, 3 >
 StiffenedGas::CauchyStress(
   tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
   std::size_t,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
-//! \brief Calculate the Cauchy stress tensor from the material density,
-//!   momentum, and total energy
+//! \brief Calculate the Cauchy stress tensor from the material
+//!   inverse deformation gradient tensor
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k)
 // *************************************************************************
 {
