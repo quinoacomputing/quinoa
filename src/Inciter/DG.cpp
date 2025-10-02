@@ -47,7 +47,6 @@ extern "C" {
 using lapack_int = long;
 
 #define LAPACK_ROW_MAJOR 101
-#define LAPACK_COL_MAJOR 102
 
 extern lapack_int LAPACKE_dgesv( int, lapack_int, lapack_int, double*,
   lapack_int, lapack_int*, double*, lapack_int );
