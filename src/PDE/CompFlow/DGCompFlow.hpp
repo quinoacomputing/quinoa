@@ -779,6 +779,16 @@ class CompFlow {
       return mindt;
     }
 
+    //! Pressure relaxation, not implemented here
+    //! \param[in] nelem Number of elements
+    //! \param[in] dt Time step
+    //! \param[in] U Conserved unknowns
+    void pressure_relaxation( const std::size_t /*nelem*/,
+                              const tk::real /*time*/,
+                              const tk::real /*dt*/,
+                              tk::Fields& /*U*/ ) const
+    {}  
+
     //! Balances elastic energy after plastic update. Not implemented here.
     // //! \param[in] e Element number
     // //! \param[in] x_star Stiff variables before implicit update

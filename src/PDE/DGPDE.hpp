@@ -337,6 +337,13 @@ class DGPDE {
     { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U,
                        P, nielem ); }
 
+    //! Public interface pressure relaxation
+    void pressure_relaxation( const std::size_t nelem,
+                              const tk::real time,
+                              const tk::real dt,
+                              tk::Fields& U ) const
+    { return self->pressure_relaxation( nelem, time, dt, U); }
+
     //! Public interface for elastic energy balance
     void balance_plastic_energy( std::size_t e,
                                  std::vector< tk::real > x_star,
@@ -533,6 +540,10 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t ) const = 0;
+      virtual void pressure_relaxation( const std::size_t,
+                                        const tk::real,
+                                        const tk::real,
+                                        tk::Fields& ) const = 0;
       virtual void balance_plastic_energy( std::size_t,
                                            std::vector< tk::real >,
                                            std::vector< tk::real >,
@@ -731,6 +742,11 @@ class DGPDE {
                    const std::size_t nielem ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
                         U, P, nielem ); }
+      void pressure_relaxation( const std::size_t nelem,
+                                const tk::real time,
+                                const tk::real dt,
+                                tk::Fields& U ) const override
+      { return data.pressure_relaxation( nelem, time, dt, U ); }
       void balance_plastic_energy( std::size_t e,
                                    std::vector< tk::real > x_star,
                                    std::vector< tk::real > x,

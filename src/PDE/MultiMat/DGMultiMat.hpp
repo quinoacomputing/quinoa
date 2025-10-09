@@ -48,6 +48,26 @@
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
 
+#include <fstream>
+
+// ignore old-style-casts required for lapack/blas calls
+#if defined(__clang__)
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
+// Lapacke forward declarations
+extern "C" {
+
+using lapack_int = long;
+
+#define LAPACK_ROW_MAJOR 101
+#define LAPACK_COL_MAJOR 102
+
+extern lapack_int LAPACKE_dgesv( int, lapack_int, lapack_int, double*,
+  lapack_int, lapack_int*, double*, lapack_int );
+
+}
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -1087,6 +1107,937 @@ class MultiMat {
       // where p is the order of the DG polynomial by linear stability theory.
       mindt /= (2.0*dgp + 1.0);
       return mindt;
+    }
+
+    //! Pressure relaxation
+    //! \param[in] nelem Number of elements
+    //! \param[in] dt Time step
+    //! \param[in] U Conserved unknowns
+    void pressure_relaxation( const std::size_t nelem,
+                              const tk::real time,
+                              const tk::real dt,
+                              tk::Fields& U ) const
+    {
+      // Copying and pasting here to ensure not breaking what works.
+      // This will have to be cleaned up anyway.
+      // Original
+      // pressure_relaxation_1(nelem, time, dt, U);
+      // Tipton's closure
+      // pressure_relaxation_2(nelem, time, dt, U);
+      // New Favrie's model
+      pressure_relaxation_3(nelem, time, dt, U);
+    }
+
+    void pressure_relaxation_1( const std::size_t nelem,
+                                const tk::real time,
+                                const tk::real dt,
+                                tk::Fields& U ) const
+    {
+      using inciter::volfracDofIdx;
+      using inciter::densityDofIdx;
+      using inciter::momentumDofIdx;
+      using inciter::energyDofIdx;
+      using inciter::deformDofIdx;
+      
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      const auto& solidx = inciter::g_inputdeck.get<
+        tag::matidxmap, tag::solidx >();
+
+      // Solver parameters
+      std::size_t max_iter = 100;
+      tk::real tol = 1.0E-20; //1.0E-06*dt;
+      tk::real p0 = 1.0E+00;
+      
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        tk::real rho = 0.0;
+        for (std::size_t k=0; k<nmat; ++k)
+          rho += U(e, densityDofIdx(nmat, k, rdof, 0));
+        auto u = U(e, momentumDofIdx(nmat, 0, rdof, 0))/rho;
+        auto v = U(e, momentumDofIdx(nmat, 1, rdof, 0))/rho;
+        auto w = U(e, momentumDofIdx(nmat, 2, rdof, 0))/rho;
+
+        // Store alpha and pressure vectors
+        std::vector< tk::real > alpha(nmat, 0.0);
+        std::vector< tk::real > pressure(nmat, 0.0);
+        std::vector< tk::real > rhomat(nmat, 0.0);
+        tk::real max_pressure = 1.0e-08;
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          alpha[k] = U(e, volfracDofIdx(nmat, k, rdof, 0));
+          auto arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+          rhomat[k] = arho/alpha[k];
+          auto arhoe = U(e, energyDofIdx(nmat, k, rdof, 0));
+          std::array< std::array< tk::real, 3 >, 3 > gmat;
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+          pressure[k] = m_mat_blk[k].compute< EOS::pressure >(
+            arho, u, v, w, arhoe, alpha[k], k, gmat)/alpha[k];
+          max_pressure = std::max(pressure[k], max_pressure);
+        }
+        // Check bounds
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
+          if (alpha[k] < alphamin)
+            alpha[k] = alphamin;
+          else if (alpha[k] > 1.0)
+            alpha[k] = 1.0;
+          tk::real gamma = getmatprop< tag::gamma >(k);
+          tk::real pinf = getmatprop< tag::pstiff >(k); 
+          if (pressure[k] < -gamma*pinf+1.0E-06)
+            pressure[k] = -gamma*pinf+1.0E-06;
+        }
+        // for (std::size_t k=0; k<nmat; ++k)
+        //   printf("alpha[%lu] = %e\n", k, alpha[k]);
+        // for (std::size_t k=0; k<nmat; ++k)
+        //   printf("pressure[%lu] = %e\n", k, pressure[k]);
+        // First, if all pressure are equal, there is nothing to do
+        tk::real err = 0.0;
+        for (std::size_t imat=0; imat<nmat; ++imat)
+          for (std::size_t jmat=0; jmat<nmat; ++jmat)
+            err += std::abs(pressure[imat]-pressure[jmat]);
+        err /= max_pressure;
+        if (err > tol)
+        {
+          // Compute zk
+          tk::real zk_sum = 0.0;
+          tk::real mu0 = 1.0e+03;
+          std::vector< tk::real > zk(nmat, 0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            tk::real gamma = getmatprop< tag::gamma >(k);
+            tk::real pinf = getmatprop< tag::pstiff >(k);
+            // Favrie's
+            zk[k] = std::sqrt(gamma*(pressure[k]+pinf)*rhomat[k]);
+            zk_sum += zk[k];
+          }
+          // Define solution vector
+          double x[2*nmat+1];
+          x[2*nmat] = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            x[k] = alpha[k];
+            x[nmat+k] = pressure[k]/p0;
+            // Favrie's
+            x[2*nmat] += zk[k]*pressure[k]/zk_sum;
+          }
+          double x_initial[2*nmat+1];
+          for (std::size_t i=0; i<2*nmat+1; ++i)
+            x_initial[i] = x[i];
+          // Declare f vector
+          double f[2*nmat+1];
+          // Iterate for the solution
+          for (std::size_t iter=0; iter<max_iter; ++iter)
+          {
+            // Compute zk, hk, rhoCkI and gk
+            std::vector< tk::real > hk(nmat, 0.0), rhoCkI(nmat, 0.0), gk(nmat, 0.0);
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              tk::real pinf = getmatprop< tag::pstiff >(k);
+              //
+              // Favrie's
+              //
+              zk[k] = std::sqrt(gamma*(x[nmat+k]*p0+pinf)*alpha[k]*rhomat[k]/x[k]);
+              hk[k] = mu0*zk[k]*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])*p0;
+              rhoCkI[k] = (x[2*nmat]*(gamma-1)+x[nmat+k])*p0+gamma*pinf;
+              gk[k] = -rhoCkI[k]*hk[k]/(x[k]*p0);
+            }
+            // Compute f
+            f[2*nmat] = 0.0;
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              f[k] = x[k]-x_initial[k]-dt*hk[k];
+              f[nmat+k] = x[nmat+k]-x_initial[nmat+k]-dt*gk[k];
+              f[2*nmat] += hk[k];
+              // printf("x[%lu] = %e\n", nmat+k, x[nmat+k]);
+              // printf("x_initial[%lu] = %e\n", nmat+k, x_initial[nmat+k]);
+              // printf("dt*g[%lu] = %e\n", k, dt*gk[k]);
+              // printf("f[%lu] = %e\n", nmat+k, f[k]);
+            }
+            // Compute auxiliar vectors
+            std::vector< tk::real > dhk_dak(nmat, 0.0), dhk_dpk(nmat, 0.0), dhk_dpI(nmat, 0.0);
+            std::vector< tk::real > dgk_dak(nmat, 0.0), dgk_dpk(nmat, 0.0), dgk_dpI(nmat, 0.0);
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              //
+              // Favrie's
+              //
+              tk::real dmu_dak = -0.5*zk[k]/x[k]; // checked
+              tk::real dmu_dpk = 0.5*gamma*alpha[k]*rhomat[k]/(zk[k]*x[k]); // checked
+              dhk_dak[k] = mu0*(dmu_dak*x[k]*(1-x[k])+zk[k]*(1-2*x[k]))*(x[nmat+k]-x[2*nmat])*p0;
+              dhk_dpk[k] = (dmu_dpk*x[k]*(1-x[k])*(x[nmat+k]-x[2*nmat])+mu0*zk[k]*x[k]*(1-x[k]))*p0;
+              dhk_dpI[k] = -mu0*zk[k]*x[k]*(1-x[k])*p0;
+              dgk_dak[k] = -gk[k]/x[k] - rhoCkI[k]*dhk_dak[k]/(x[k]*p0);
+              dgk_dpk[k] = -hk[k]/x[k] - rhoCkI[k]*dhk_dpk[k]/(x[k]*p0);
+              dgk_dpI[k] = -(gamma-1)*hk[k]/x[k] - rhoCkI[k]*dhk_dpI[k]/(x[k]*p0);
+            }
+            // Compute jacobian
+            double jacobian[(2*nmat+1)*(2*nmat+1)];
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              for (std::size_t j=0; j<2*nmat+1; ++j)
+                jacobian[(2*nmat+1)*i+j] = 0.0;
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              jacobian[(2*nmat+1)*k        + k]       = 1.0-dt*dhk_dak[k];
+              jacobian[(2*nmat+1)*k        + nmat+k]  =    -dt*dhk_dpk[k];
+              jacobian[(2*nmat+1)*k        + 2*nmat]  =    -dt*dhk_dpI[k];
+              jacobian[(2*nmat+1)*(nmat+k) + k]       =    -dt*dgk_dak[k];
+              jacobian[(2*nmat+1)*(nmat+k) + nmat+k]  = 1.0-dt*dgk_dpk[k];
+              jacobian[(2*nmat+1)*(nmat+k) + 2*nmat]  =    -dt*dgk_dpI[k];
+              jacobian[(2*nmat+1)*(2*nmat) + k]      +=        dhk_dak[k];
+              jacobian[(2*nmat+1)*(2*nmat) + nmat+k] +=        dhk_dpk[k];
+              jacobian[(2*nmat+1)*(2*nmat) + 2*nmat] +=        dhk_dpI[k];
+            }
+            // printf("DBG. iter = %lu\n", iter);
+            // for (std::size_t i=0; i<2*nmat+1; ++i)
+            // {
+            //   for (std::size_t j=0; j<2*nmat+1; ++j)
+            //     printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
+            //   printf("\n");
+            // }
+            // for (std::size_t k=0; k<nmat; ++k)
+            //   printf("p[%lu] = %e\n", k, x[nmat+k]);
+            // printf("pI = %e\n", x[2*nmat]);
+            // for (std::size_t i=0; i<2*nmat+1; ++i)
+            //   printf("f[%lu] = %e\n", i, f[i]);
+            // solve J*dx = -f
+            double dx[2*nmat+1];
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              dx[i] = -f[i];
+            lapack_int info;
+            lapack_int ipiv[2*nmat+1];
+            info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, 2*nmat+1, 1, jacobian, 2*nmat+1, ipiv, dx, 1);
+
+            if (info == 0) {
+              // Print solution
+              // for (std::size_t i=0; i<2*nmat+1; ++i)
+              //   printf("dx[%lu] = %e\n", i, dx[i]);
+            }
+            else
+            {
+              printf("Failed with info: %ld\n", info);
+            }
+
+            // Update x <- x+dx
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              x[i] += dx[i];
+            // Restore bounds
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
+              if (x[k] < alphamin)
+                x[k] = alphamin;
+              else if (x[k] > 1.0)
+                x[k] = 1.0;
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              tk::real pinf = getmatprop< tag::pstiff >(k); 
+              if (x[nmat+k] < -gamma*pinf)
+                x[nmat+k] = -gamma*pinf+1.0E-06;
+            }
+            // Re-normalize alphas
+            tk::real alpha_sum = 0.0;
+            for (std::size_t k=0; k<nmat; ++k)
+              alpha_sum += x[k];
+            for (std::size_t k=0; k<nmat; ++k)
+              x[k] /= alpha_sum;
+            // Re-compute error. If it's below tol, exit loop
+            err = 0.0;
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              err += f[i]*f[i];
+            err = std::sqrt(err);
+            if (err < tol) {
+              printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter+1);
+              break;
+            }
+            if (iter == max_iter-1)
+              printf("Reached total number of iterations\n");
+          }
+          // Save solution x into vector of conserved variables U..
+          // First, alpha..
+          for (std::size_t k=0; k<nmat; ++k)
+            U(e, volfracDofIdx(nmat, k, rdof, 0)) = x[k];
+          // Then, energy computed using alpha and p.
+          // Also, record energy exchange
+          std::vector< tk::real > arhoe(nmat, 0.0);
+          tk::real arhoe_initial = 0.0;
+          tk::real delta_energy = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            arhoe_initial = U(e, energyDofIdx(nmat, k, rdof, 0));
+            U(e, energyDofIdx(nmat, k, rdof, 0)) =
+              m_mat_blk[k].compute< EOS::totalenergy >( alpha[k]*rhomat[k], u, v, w, x[k]*x[nmat+k], x[k] );
+            delta_energy += U(e, energyDofIdx(nmat, k, rdof, 0)) - arhoe_initial;
+          }
+          // Need to put delta_energy back into the system
+          // For now, give it to the majority material
+          std::size_t k_max = 0;
+          tk::real alpha_max = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            tk::real al = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            if (al > alpha_max)
+            {
+              k_max = k;
+              alpha_max = al;
+            }
+          }
+          U(e, energyDofIdx(nmat, k_max, rdof, 0)) -= delta_energy;
+
+          if (nmat == 2) {
+            std::ofstream outFile("prelax_results.dat", std::ios::app);
+            outFile << time << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+                    << U(e, energyDofIdx(nmat, 0, rdof, 0))+U(e, energyDofIdx(nmat, 1, rdof, 0)) << std::endl;
+          } else if (nmat == 3) {
+            std::ofstream outFile("prelax_results.dat", std::ios::app);
+            outFile << time << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+                    << x[5] << ", " << x[6] << ", "
+                    << U(e, energyDofIdx(nmat, 0, rdof, 0))+U(e, energyDofIdx(nmat, 1, rdof, 0))+U(e, energyDofIdx(nmat, 2, rdof, 0)) << std::endl;
+          }
+        }
+      }
+    }
+
+    void pressure_relaxation_2( const std::size_t nelem,
+                                const tk::real time,
+                                const tk::real dt,
+                                tk::Fields& U ) const
+    {
+      using inciter::volfracDofIdx;
+      using inciter::densityDofIdx;
+      using inciter::momentumDofIdx;
+      using inciter::energyDofIdx;
+      using inciter::deformDofIdx;
+      
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      const auto& solidx = inciter::g_inputdeck.get<
+        tag::matidxmap, tag::solidx >();
+
+      // Solver parameters
+      std::size_t max_iter = 100;
+      tk::real tol = 1.0E-20; //1.0E-06*dt;
+      tk::real p0 = 1.0E+00;
+      
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        tk::real rho = 0.0;
+        for (std::size_t k=0; k<nmat; ++k)
+          rho += U(e, densityDofIdx(nmat, k, rdof, 0));
+        auto u = U(e, momentumDofIdx(nmat, 0, rdof, 0))/rho;
+        auto v = U(e, momentumDofIdx(nmat, 1, rdof, 0))/rho;
+        auto w = U(e, momentumDofIdx(nmat, 2, rdof, 0))/rho;
+
+        // Store alpha and pressure vectors
+        std::vector< tk::real > alpha(nmat, 0.0);
+        std::vector< tk::real > pressure(nmat, 0.0);
+        std::vector< tk::real > rhomat(nmat, 0.0);
+        tk::real max_pressure = 1.0e-08;
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          alpha[k] = U(e, volfracDofIdx(nmat, k, rdof, 0));
+          auto arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+          rhomat[k] = arho/alpha[k];
+          auto arhoe = U(e, energyDofIdx(nmat, k, rdof, 0));
+          std::array< std::array< tk::real, 3 >, 3 > gmat;
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+          pressure[k] = m_mat_blk[k].compute< EOS::pressure >(
+            arho, u, v, w, arhoe, alpha[k], k, gmat)/alpha[k];
+          max_pressure = std::max(pressure[k], max_pressure);
+        }
+        // Check bounds
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
+          if (alpha[k] < alphamin)
+            alpha[k] = alphamin;
+          else if (alpha[k] > 1.0)
+            alpha[k] = 1.0;
+          tk::real gamma = getmatprop< tag::gamma >(k);
+          tk::real pinf = getmatprop< tag::pstiff >(k); 
+          if (pressure[k] < -gamma*pinf+1.0E-06)
+            pressure[k] = -gamma*pinf+1.0E-06;
+        }
+        // for (std::size_t k=0; k<nmat; ++k)
+        //   printf("alpha[%lu] = %e\n", k, alpha[k]);
+        // for (std::size_t k=0; k<nmat; ++k)
+        //   printf("pressure[%lu] = %e\n", k, pressure[k]);
+        // First, if all pressure are equal, there is nothing to do
+        tk::real err = 0.0;
+        for (std::size_t imat=0; imat<nmat; ++imat)
+          for (std::size_t jmat=0; jmat<nmat; ++jmat)
+            err += std::abs(pressure[imat]-pressure[jmat]);
+        err /= max_pressure;
+        if (err > tol)
+        {
+          // Compute zk
+          tk::real zk_sum = 0.0;
+          tk::real mu0 = 2.0e+03;
+          std::vector< tk::real > zk(nmat, 0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            tk::real gamma = getmatprop< tag::gamma >(k);
+            tk::real pinf = getmatprop< tag::pstiff >(k);
+            // Tipton
+            zk[k] = gamma*(pressure[k]+pinf);
+            zk_sum += alpha[k]/zk[k];
+          }
+          // Define solution vector
+          double x[2*nmat+1];
+          x[2*nmat] = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            x[k] = alpha[k];
+            x[nmat+k] = pressure[k]/p0;
+            x[2*nmat] += alpha[k]/zk[k]*pressure[k]/zk_sum; //zk[k]*alpha[k]*(1-alpha[k])*pressure[k]/sum;
+          }
+          double x_initial[2*nmat+1];
+          for (std::size_t i=0; i<2*nmat+1; ++i)
+            x_initial[i] = x[i];
+          // Declare f vector
+          double f[2*nmat+1];
+          // Iterate for the solution
+          for (std::size_t iter=0; iter<max_iter; ++iter)
+          {
+            // Compute zk, hk, rhoCkI and gk
+            std::vector< tk::real > hk(nmat, 0.0), rhoCkI(nmat, 0.0), gk(nmat, 0.0);
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              tk::real pinf = getmatprop< tag::pstiff >(k);
+              //
+              // Tipton
+              //
+              zk[k] = gamma*(x[nmat+k]*p0+pinf); // here zk will be the compressibility modulus (K)
+              hk[k] = mu0/zk[k]*x[k]*(x[nmat+k]-x[2*nmat])*p0; // mu0 = 1/tau of tipton closure
+              rhoCkI[k] = (x[2*nmat]*(gamma-1)+x[nmat+k])*p0+gamma*pinf;
+              gk[k] = -rhoCkI[k]*hk[k]/(x[k]*p0);
+            }
+            // Compute f
+            f[2*nmat] = 0.0;
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              f[k] = x[k]-x_initial[k]-dt*hk[k];
+              f[nmat+k] = x[nmat+k]-x_initial[nmat+k]-dt*gk[k];
+              f[2*nmat] += hk[k];
+              // printf("x[%lu] = %e\n", nmat+k, x[nmat+k]);
+              // printf("x_initial[%lu] = %e\n", nmat+k, x_initial[nmat+k]);
+              // printf("dt*g[%lu] = %e\n", k, dt*gk[k]);
+              // printf("f[%lu] = %e\n", nmat+k, f[k]);
+            }
+            // Compute auxiliar vectors
+            std::vector< tk::real > dhk_dak(nmat, 0.0), dhk_dpk(nmat, 0.0), dhk_dpI(nmat, 0.0);
+            std::vector< tk::real > dgk_dak(nmat, 0.0), dgk_dpk(nmat, 0.0), dgk_dpI(nmat, 0.0);
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              //
+              // Tipton's
+              //
+              dhk_dak[k] = mu0/zk[k]*(x[nmat+k]-x[2*nmat])*p0;
+              dhk_dpk[k] = mu0/zk[k]*x[k]*p0-mu0/(zk[k]*zk[k])*gamma*(x[nmat+k]-x[2*nmat])*p0;
+              dhk_dpI[k] = -mu0/zk[k]*x[k]*p0;
+              dgk_dak[k] = -gk[k]/x[k] - rhoCkI[k]*dhk_dak[k]/(x[k]*p0);
+              dgk_dpk[k] = -hk[k]/x[k] - rhoCkI[k]*dhk_dpk[k]/(x[k]*p0);
+              dgk_dpI[k] = -(gamma-1)*hk[k]/x[k] - rhoCkI[k]*dhk_dpI[k]/(x[k]*p0);
+            }
+            // Compute jacobian
+            double jacobian[(2*nmat+1)*(2*nmat+1)];
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              for (std::size_t j=0; j<2*nmat+1; ++j)
+                jacobian[(2*nmat+1)*i+j] = 0.0;
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              jacobian[(2*nmat+1)*k        + k]       = 1.0-dt*dhk_dak[k];
+              jacobian[(2*nmat+1)*k        + nmat+k]  =    -dt*dhk_dpk[k];
+              jacobian[(2*nmat+1)*k        + 2*nmat]  =    -dt*dhk_dpI[k];
+              jacobian[(2*nmat+1)*(nmat+k) + k]       =    -dt*dgk_dak[k];
+              jacobian[(2*nmat+1)*(nmat+k) + nmat+k]  = 1.0-dt*dgk_dpk[k];
+              jacobian[(2*nmat+1)*(nmat+k) + 2*nmat]  =    -dt*dgk_dpI[k];
+              jacobian[(2*nmat+1)*(2*nmat) + k]      +=        dhk_dak[k];
+              jacobian[(2*nmat+1)*(2*nmat) + nmat+k] +=        dhk_dpk[k];
+              jacobian[(2*nmat+1)*(2*nmat) + 2*nmat] +=        dhk_dpI[k];
+            }
+            printf("DBG. iter = %lu\n", iter);
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+            {
+              for (std::size_t j=0; j<2*nmat+1; ++j)
+                printf("%16.8e ", jacobian[(2*nmat+1)*i+j]);
+              printf("\n");
+            }
+            for (std::size_t k=0; k<nmat; ++k)
+              printf("p[%lu] = %e\n", k, x[nmat+k]);
+            printf("pI = %e\n", x[2*nmat]);
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              printf("f[%lu] = %e\n", i, f[i]);
+            // solve J*dx = -f
+            double dx[2*nmat+1];
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              dx[i] = -f[i];
+            lapack_int info;
+            lapack_int ipiv[2*nmat+1];
+            info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, 2*nmat+1, 1, jacobian, 2*nmat+1, ipiv, dx, 1);
+
+            if (info == 0) {
+              // Print solution
+              // for (std::size_t i=0; i<2*nmat+1; ++i)
+              //   printf("dx[%lu] = %e\n", i, dx[i]);
+            }
+            else
+            {
+              printf("Failed with info: %ld\n", info);
+            }
+
+            // Update x <- x+dx
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              x[i] += dx[i];
+            // Restore bounds
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
+              if (x[k] < alphamin)
+                x[k] = alphamin;
+              else if (x[k] > 1.0)
+                x[k] = 1.0;
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              tk::real pinf = getmatprop< tag::pstiff >(k); 
+              if (x[nmat+k] < -gamma*pinf)
+                x[nmat+k] = -gamma*pinf+1.0E-06;
+            }
+            // Re-normalize alphas
+            tk::real alpha_sum = 0.0;
+            for (std::size_t k=0; k<nmat; ++k)
+              alpha_sum += x[k];
+            for (std::size_t k=0; k<nmat; ++k)
+              x[k] /= alpha_sum;
+            // Re-compute error. If it's below tol, exit loop
+            err = 0.0;
+            for (std::size_t i=0; i<2*nmat+1; ++i)
+              err += f[i]*f[i];
+            err = std::sqrt(err);
+            if (err < tol) {
+              printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter+1);
+              break;
+            }
+            if (iter == max_iter-1)
+              printf("Reached total number of iterations\n");
+          }
+          // Save solution x into vector of conserved variables U..
+          // First, alpha..
+          for (std::size_t k=0; k<nmat; ++k)
+            U(e, volfracDofIdx(nmat, k, rdof, 0)) = x[k];
+          // Then, energy computed using alpha and p.
+          // Also, record energy exchange
+          std::vector< tk::real > arhoe(nmat, 0.0);
+          tk::real arhoe_initial = 0.0;
+          tk::real delta_energy = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            arhoe_initial = U(e, energyDofIdx(nmat, k, rdof, 0));
+            U(e, energyDofIdx(nmat, k, rdof, 0)) =
+              m_mat_blk[k].compute< EOS::totalenergy >( alpha[k]*rhomat[k], u, v, w, x[k]*x[nmat+k], x[k] );
+            delta_energy += U(e, energyDofIdx(nmat, k, rdof, 0)) - arhoe_initial;
+          }
+          // Need to put delta_energy back into the system
+          // For now, give it to the majority material
+          std::size_t k_max = 0;
+          tk::real alpha_max = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            tk::real al = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            if (al > alpha_max)
+            {
+              k_max = k;
+              alpha_max = al;
+            }
+          }
+          U(e, energyDofIdx(nmat, k_max, rdof, 0)) -= delta_energy;
+
+          if (nmat == 2) {
+            std::ofstream outFile("prelax_results.dat", std::ios::app);
+            outFile << time << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+                    << U(e, energyDofIdx(nmat, 0, rdof, 0))+U(e, energyDofIdx(nmat, 1, rdof, 0)) << std::endl;
+          } else if (nmat == 3) {
+            std::ofstream outFile("prelax_results.dat", std::ios::app);
+            outFile << time << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+                    << x[5] << ", " << x[6] << ", "
+                    << U(e, energyDofIdx(nmat, 0, rdof, 0))+U(e, energyDofIdx(nmat, 1, rdof, 0))+U(e, energyDofIdx(nmat, 2, rdof, 0)) << std::endl;
+          }
+        }
+      }
+    }
+
+    // Auxiliary to new model:
+    void compute_zk_dzk( const std::size_t nmat,
+                         const std::vector<tk::real>& p,
+                         const std::vector<tk::real>& rho,
+                         const std::vector<tk::real>& gamma,
+                         const std::vector<tk::real>& pinf,
+                         const std::vector<tk::real>& alpha,
+                         std::vector<tk::real>& z,
+                         std::vector<tk::real>& dzdp,
+                         std::vector<tk::real>& dzdalpha,
+                         std::vector<tk::real>& dzdrho ) const
+    {
+      for(std::size_t k=0; k<nmat; ++k){
+        z[k] = std::sqrt(gamma[k]*(p[k]+pinf[k])*rho[k]);
+        dzdp[k] = 0.5*gamma[k]*rho[k]/z[k];
+        dzdrho[k] = 0.5*gamma[k]*(p[k]+pinf[k])/z[k];
+        dzdalpha[k] = -rho[k]/alpha[k]*dzdrho[k];
+      }
+    }
+
+    void compute_uIik_duIik( const std::size_t nmat,
+                             const std::vector<tk::real>& p,
+                             const std::vector<tk::real>& z,
+                             const std::vector<tk::real>& dzdalpha,
+                             const std::vector<tk::real>& dzdp,
+                             std::vector<tk::real>& uIik,
+                             std::vector<tk::real>& duIikdalpha,
+                             std::vector<tk::real>& duIikdp ) const
+    {
+      tk::real unsumz;
+      for(std::size_t k=0; k<nmat; ++k){
+        for(std::size_t i=0; i<nmat; ++i){
+          unsumz = 1/(z[i]+z[k]);
+          uIik[i*nmat+k] = (p[k]-p[i])*unsumz;
+          duIikdalpha[(i*nmat+k)*nmat+i] = -uIik[i*nmat+k]*unsumz*dzdalpha[i];
+          duIikdalpha[(i*nmat+k)*nmat+k] = -uIik[i*nmat+k]*unsumz*dzdalpha[k];
+          duIikdp[(i*nmat+k)*nmat+i] = -unsumz-uIik[i*nmat+k]*unsumz*dzdp[i];
+          duIikdp[(i*nmat+k)*nmat+k] = unsumz-uIik[i*nmat+k]*unsumz*dzdp[k]; 
+        }
+      }
+    }
+
+    // the index 1 is the derivative with respect to i and the 2 is the derivative with respect to k
+    void compute_gik_dgik( const std::size_t nmat,
+                           const std::vector<tk::real>& alpha,
+                           const std::vector<tk::real>& rhok,
+                           const std::vector<tk::real>& akrhok,
+                           const std::vector<tk::real>& gamma,
+                           const std::vector<tk::real>& Sik,
+                           const std::vector<tk::real>& uIik,
+                           const std::vector<tk::real>& duIikdalpha,
+                           const std::vector<tk::real>& duIikdp,
+                           const std::vector<tk::real>& z,
+                           const std::vector<tk::real>& dzdp,
+                           const std::vector<tk::real>& dzdalpha,
+                           std::vector<tk::real>& gik,
+                           std::vector<tk::real>& dgikdalpha,
+                           std::vector<tk::real>& dgikdp ) const
+    {
+      tk::real temp,Sikakrk;
+      tk::real undekdpk,dekdpkdpk,dekdpkdalphak;
+      for(std::size_t k=0; k<nmat; ++k){
+        for(std::size_t i=0; i<nmat; ++i){
+          Sikakrk = Sik[i*nmat+k]/akrhok[k];
+          undekdpk = (gamma[k]-1)*rhok[k];
+          dekdpkdpk = 0.;
+          dekdpkdalphak = 1/(akrhok[k]*(gamma[k]-1));
+   
+          gik[i*nmat+k] = uIik[i*nmat+k]*(uIik[i*nmat+k]*undekdpk-z[k])*z[k]*Sikakrk;
+          temp = (2.*uIik[i*nmat+k]*undekdpk-z[k])*z[k]*Sikakrk;
+          dgikdp[(i*nmat+k)*nmat+k] = temp*duIikdp[(i*nmat+k)*nmat+k];
+          dgikdalpha[(i*nmat+k)*nmat+k] = temp*duIikdalpha[(i*nmat+k)*nmat+k];
+          dgikdp[(i*nmat+k)*nmat+i] = temp*duIikdp[(i*nmat+k)*nmat+i];
+          dgikdalpha[(i*nmat+k)*nmat+i] = temp*duIikdalpha[(i*nmat+k)*nmat+i];
+
+          temp = (uIik[i*nmat+k]*undekdpk-2*z[k])*uIik[i*nmat+k]*Sikakrk;
+          dgikdp[(i*nmat+k)*nmat+k] += temp*dzdp[k];
+          dgikdalpha[(i*nmat+k)*nmat+i] += temp*dzdalpha[k];
+
+          temp = uIik[i*nmat+k]*uIik[i*nmat+k]*undekdpk*undekdpk*z[k]*Sikakrk;
+          dgikdp[(i*nmat+k)*nmat+k] += temp*dekdpkdpk;
+          dgikdalpha[(i*nmat+k)*nmat+k] += temp*dekdpkdalphak;
+        }
+      }
+    }
+
+    // here we compute the interface surface between fluids I used the volume fraction of each phase but itsnot very good
+    // the best would be to have some probabilistic model to tell the surface of contact between each phase
+    void compute_Sik( const std::size_t nmat,
+                      const std::vector<tk::real>& X,
+                      std::vector<tk::real>& Sik ) const
+    {
+      for (std::size_t k=0; k<nmat; ++k){
+        for (std::size_t i=0; i<nmat; ++i){
+          Sik[i*nmat+k] = X[i]*X[k];
+        }
+        Sik[k*nmat+k] = 0.;
+      }
+    }
+
+  
+    // this function computes the jacobian of the system of equations for the pressure relaxation model depending on the interface surface between fluids, from X(alpha...,p...) this routine computes the F and the jacobian you only have to solve Jacobian(X-X0)=-F
+
+    void compute_F_jacobian( const std::size_t nmat,
+                             double* X,
+                             const std::vector<tk::real>& akrhok,
+                             const std::vector<tk::real>& gamma,
+                             const std::vector<tk::real>& pinf,
+                             const tk::real& dt,
+                             double* F,
+                             double* jacobian ) const
+    {
+      std::vector< tk::real > z(nmat, 0.0), rhok(nmat, 0.0),alpha(nmat, 0.0);
+      std::vector< tk::real > p(nmat, 0.0), dzdrho(nmat, 0.0), dzdalpha(nmat, 0.0), dzdp(nmat, 0.0);
+      std::vector< tk::real > Sik(nmat*nmat, 0.0), uIik(nmat*nmat, 0.0);
+      std::vector< tk::real > gik(nmat*nmat, 0.0);
+      std::vector< tk::real > duIikdalpha(nmat*nmat*nmat, 0.0);
+      std::vector< tk::real > duIikdp(nmat*nmat*nmat, 0.0);
+      std::vector< tk::real > dgikdalpha(nmat*nmat*nmat, 0.0);
+      std::vector< tk::real > dgikdp(nmat*nmat*nmat, 0.0);
+      for (int i=0; i<nmat; ++i){
+        rhok[i] = akrhok[i]/X[i];
+        p[i] = X[nmat+i];
+        alpha[i] = X[i];
+        F[i] = 0.0;
+        F[nmat+i] = 0.0;
+      }
+
+      for (int i=0; i<2*nmat; ++i)
+        for (int j=0; j<2*nmat; ++j)
+          jacobian[(2*nmat)*i+j] = 0.0;
+      compute_Sik(nmat,alpha,Sik);
+      compute_zk_dzk(nmat, p, rhok, gamma, pinf, alpha, z, dzdp, dzdalpha, dzdrho);
+      compute_uIik_duIik(nmat, p, z, dzdalpha, dzdp, uIik, duIikdalpha, duIikdp);
+      compute_gik_dgik( nmat, alpha, rhok, akrhok, gamma, Sik, uIik, duIikdalpha, duIikdp, z, dzdp, dzdalpha, gik, dgikdalpha, dgikdp);
+      // Filling of the jacobian
+      for (int k=0; k<nmat; ++k){
+        for(int i=0; i<nmat; ++i){
+          F[k] += -dt*uIik[i*nmat+k]*Sik[i*nmat+k];
+          F[k+nmat] += -dt*gik[i*nmat+k];
+          jacobian[(2*nmat)*k + k] += -dt * duIikdalpha[(i*nmat + k)*nmat+k]*Sik[i*nmat+k];
+          jacobian[(2*nmat)*k + i] += -dt * duIikdalpha[(i*nmat + k)*nmat+i]*Sik[i*nmat+k];
+          jacobian[(2*nmat)*k + nmat + k] += -dt * duIikdp[(i*nmat + k)*nmat+k]*Sik[i*nmat+k];
+          jacobian[(2*nmat)*k + nmat + i] += -dt * duIikdp[(i*nmat + k)*nmat+i]*Sik[i*nmat+k];
+          jacobian[(2*nmat)*(nmat+k) + k] += -dt * dgikdalpha[(i*nmat + k)*nmat+k];
+          jacobian[(2*nmat)*(nmat+k) + i] += -dt * dgikdalpha[(i*nmat + k)*nmat+i];
+          jacobian[(2*nmat)*(nmat+k) + nmat + k] += -dt * dgikdp[(i*nmat + k)*nmat+k];
+          jacobian[(2*nmat)*(nmat+k) + nmat + i] += -dt * dgikdp[(i*nmat + k)*nmat+i]; 
+        }
+        // filling of the diagonal
+        jacobian[(2*nmat)*k + k] += 1. ;
+        jacobian[(2*nmat)*(nmat+k) + nmat+k] += 1. ;
+      }
+    }
+
+    void pressure_relaxation_3( const std::size_t nelem,
+                                const tk::real time,
+                                const tk::real dt,
+                                tk::Fields& U ) const
+    {
+      using inciter::volfracDofIdx;
+      using inciter::densityDofIdx;
+      using inciter::momentumDofIdx;
+      using inciter::energyDofIdx;
+      using inciter::deformDofIdx;
+      
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      const auto& solidx = inciter::g_inputdeck.get<
+        tag::matidxmap, tag::solidx >();
+
+      // Solver parameters
+      std::size_t max_iter = 100;
+      tk::real tol = 1.0E-10; //1.0E-06*dt;
+      tk::real p0 = 1.0E+00;
+      
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        tk::real rho = 0.0;
+        for (std::size_t k=0; k<nmat; ++k)
+          rho += U(e, densityDofIdx(nmat, k, rdof, 0));
+        auto u = U(e, momentumDofIdx(nmat, 0, rdof, 0))/rho;
+        auto v = U(e, momentumDofIdx(nmat, 1, rdof, 0))/rho;
+        auto w = U(e, momentumDofIdx(nmat, 2, rdof, 0))/rho;
+
+        // Store alpha and pressure vectors
+        std::vector< tk::real > alpha(nmat, 0.0);
+        std::vector< tk::real > pressure(nmat, 0.0);
+        std::vector< tk::real > rhomat(nmat, 0.0);
+        std::vector< tk::real > arho(nmat, 0.0);
+        tk::real max_pressure = 1.0e-08;
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          alpha[k] = U(e, volfracDofIdx(nmat, k, rdof, 0));
+          arho[k] = U(e, densityDofIdx(nmat, k, rdof, 0));
+          rhomat[k] = arho[k]/alpha[k];
+          auto arhoe = U(e, energyDofIdx(nmat, k, rdof, 0));
+          std::array< std::array< tk::real, 3 >, 3 > gmat;
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+          pressure[k] = m_mat_blk[k].compute< EOS::pressure >(
+            arho[k], u, v, w, arhoe, alpha[k], k, gmat)/alpha[k];
+          max_pressure = std::max(pressure[k], max_pressure);
+        }
+        // Check bounds
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
+          if (alpha[k] < alphamin)
+            alpha[k] = alphamin;
+          else if (alpha[k] > 1.0)
+            alpha[k] = 1.0;
+          tk::real gamma = getmatprop< tag::gamma >(k);
+          tk::real pinf = getmatprop< tag::pstiff >(k);
+          if (pressure[k] < -gamma*pinf+1.0E-06)
+            pressure[k] = -gamma*pinf+1.0E-06;
+        }
+        // First, if all pressure are equal, there is nothing to do
+        tk::real err = 0.0;
+        for (std::size_t imat=0; imat<nmat; ++imat)
+          for (std::size_t jmat=0; jmat<nmat; ++jmat)
+            err += std::abs(pressure[imat]-pressure[jmat]);
+        err /= max_pressure;
+        if (err > tol)
+        {
+          // Define solution vector
+          double x[2*nmat];
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            x[k] = alpha[k];
+            x[nmat+k] = pressure[k]/p0;
+          }
+          double x_initial[2*nmat];
+          for (std::size_t i=0; i<2*nmat; ++i)
+            x_initial[i] = x[i];
+          // Declare f vector
+          double f[2*nmat];
+          // Iterate for the solution
+          for (std::size_t iter=0; iter<max_iter; ++iter)
+          {
+            // Need vector of gamma and pinf
+            std::vector< tk::real > gamma_vec(nmat);
+            std::vector< tk::real > pinf_vec(nmat);
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              tk::real pinf = getmatprop< tag::pstiff >(k);
+              gamma_vec[k] = gamma;
+              pinf_vec[k] = pinf;
+            }
+            // Compute F and jacobian
+            double jacobian[(2*nmat)*(2*nmat)];
+            compute_F_jacobian(nmat, x, arho, gamma_vec, pinf_vec, dt, f, jacobian);
+            // printf("DBG. iter = %lu\n", iter);
+            // for (std::size_t i=0; i<2*nmat; ++i)
+            // {
+            //   for (std::size_t j=0; j<2*nmat; ++j)
+            //     printf("%16.8e ", jacobian[(2*nmat)*i+j]);
+            //   printf("\n");
+            // }
+            // for (std::size_t k=0; k<nmat; ++k)
+            //   printf("p[%lu] = %e\n", k, x[nmat+k]);
+            // // printf("pI = %e\n", x[2*nmat]);
+            // for (std::size_t i=0; i<2*nmat; ++i)
+            //   printf("f[%lu] = %e\n", i, f[i]);
+            // solve J*dx = -f
+            double dx[2*nmat];
+            for (std::size_t i=0; i<2*nmat; ++i)
+              dx[i] = -f[i];
+            lapack_int info;
+            lapack_int ipiv[2*nmat];
+            info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, 2*nmat, 1, jacobian, 2*nmat, ipiv, dx, 1);
+
+            if (info == 0) {
+              // Print solution
+              // for (std::size_t i=0; i<2*nmat; ++i)
+              //   printf("dx[%lu] = %e\n", i, dx[i]);
+            }
+            else
+            {
+              printf("Failed with info: %ld\n", info);
+            }
+
+            // Update x <- x+dx
+            for (std::size_t i=0; i<2*nmat; ++i)
+              x[i] += dx[i];
+            // Restore bounds
+            for (std::size_t k=0; k<nmat; ++k)
+            {
+              auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
+              if (x[k] < alphamin)
+                x[k] = alphamin;
+              else if (x[k] > 1.0)
+                x[k] = 1.0;
+              tk::real gamma = getmatprop< tag::gamma >(k);
+              tk::real pinf = getmatprop< tag::pstiff >(k); 
+              if (x[nmat+k] < -gamma*pinf)
+                x[nmat+k] = -gamma*pinf+1.0E-06;
+            }
+            // Re-normalize alphas
+            tk::real alpha_sum = 0.0;
+            for (std::size_t k=0; k<nmat; ++k)
+              alpha_sum += x[k];
+            for (std::size_t k=0; k<nmat; ++k)
+              x[k] /= alpha_sum;
+            // Re-compute error. If it's below tol, exit loop
+            err = 0.0;
+            for (std::size_t i=0; i<2*nmat; ++i)
+              err += f[i]*f[i];
+            err = std::sqrt(err);
+            if (err < tol) {
+              // printf("Non-linear solver for pressure relaxation converged after %lu iterations\n", iter+1);
+              break;
+            }
+            // if (iter == max_iter-1)
+            //   printf("Reached total number of iterations\n");
+          }
+          // Save solution x into vector of conserved variables U..
+          // First, alpha..
+          for (std::size_t k=0; k<nmat; ++k)
+            U(e, volfracDofIdx(nmat, k, rdof, 0)) = x[k];
+          // Then, energy computed using alpha and p.
+          // Also, record energy exchange
+          std::vector< tk::real > arhoe(nmat, 0.0);
+          tk::real arhoe_initial = 0.0;
+          tk::real delta_energy = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            arhoe_initial = U(e, energyDofIdx(nmat, k, rdof, 0));
+            std::array< std::array< tk::real, 3 >, 3 > gmat;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+            U(e, energyDofIdx(nmat, k, rdof, 0)) =
+              m_mat_blk[k].compute< EOS::totalenergy >( alpha[k]*rhomat[k], u, v, w, x[k]*x[nmat+k], x[k], gmat );
+            delta_energy += U(e, energyDofIdx(nmat, k, rdof, 0)) - arhoe_initial;
+          }
+          // Need to put delta_energy back into the system
+          // For now, give it to the majority material
+          std::size_t k_max = 0;
+          tk::real alpha_max = 0.0;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            tk::real al = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            if (al > alpha_max)
+            {
+              k_max = k;
+              alpha_max = al;
+            }
+          }
+          U(e, energyDofIdx(nmat, k_max, rdof, 0)) -= delta_energy;
+
+          // if (nmat == 2) {
+          //   std::ofstream outFile("prelax_results.dat", std::ios::app);
+          //   outFile << time << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", "
+          //           << U(e, energyDofIdx(nmat, 0, rdof, 0))+U(e, energyDofIdx(nmat, 1, rdof, 0)) << std::endl;
+          // } else if (nmat == 3) {
+          //   std::ofstream outFile("prelax_results.dat", std::ios::app);
+          //   outFile << time << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+          //           << x[5] << ", "
+          //           << U(e, energyDofIdx(nmat, 0, rdof, 0))+U(e, energyDofIdx(nmat, 1, rdof, 0))+U(e, energyDofIdx(nmat, 2, rdof, 0)) << std::endl;
+          // }
+        }
+      }
     }
 
     //! Balances elastic energy after plastic update
