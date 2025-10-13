@@ -143,7 +143,8 @@ StiffenedGas::soundspeed(
   auto g = m_gamma;
   auto p_c = m_pstiff;
 
-  auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
+  auto al_eff = std::max( 1.0e-14, alpha );
+  auto p_eff = std::max( 1.0e-15, apr+(al_eff*p_c) );
 
   tk::real a = std::sqrt( g * p_eff / arho );
 
