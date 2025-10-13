@@ -203,16 +203,17 @@ GodunovRomenski::soundspeed(
 // *************************************************************************
 {
   tk::real a = 0.0;
+  auto al_eff = std::max( 1e-14, alpha );
 
   // Hydro contribution
-  tk::real rho = arho/alpha;
-  auto p_cc = pressure_coldcompr(arho, alpha);
+  tk::real rho = arho/al_eff;
+  auto p_cc = pressure_coldcompr(arho, al_eff);
   a += std::max( 1.0e-15, DpccDrho(rho) + (m_gamma+1.0) * (apr - p_cc)/arho );
   // in the above expression, shear pressure is not included in apr in the first
   // place, so should not subtract it
 
   // Shear contribution
-  a += (4.0/3.0) * alpha * m_mu / arho;
+  a += (4.0/3.0) * al_eff * m_mu / arho;
 
   // Compute square root
   a = std::sqrt(a);
@@ -251,7 +252,8 @@ GodunovRomenski::shearspeed(
   // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
-  tk::real a = std::sqrt(alpha*m_mu/arho);
+  auto al_eff = std::max( 1e-14, alpha );
+  tk::real a = std::sqrt(al_eff*m_mu/arho);
 
   // check shear-wave speed divergence
   if (!std::isfinite(a)) {
