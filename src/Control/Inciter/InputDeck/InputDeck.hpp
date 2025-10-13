@@ -242,7 +242,7 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::location,          std::vector< tk::real >,
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
-  tag::moment_of_inertia, tk::real,
+  tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
   tag::center_of_mass,    std::vector< tk::real >
 > >;
 
@@ -1971,7 +1971,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         relocate the mesh.)", "vector of 3 reals"});
 
       keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
-        R"(Moment of inertia of rigid body for rotational motion)", "real"});
+        R"(Moment of inertia of rigid body for rotational motion)",
+        "vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
         R"(Center of mass of rigid body used to compute torque for rotational

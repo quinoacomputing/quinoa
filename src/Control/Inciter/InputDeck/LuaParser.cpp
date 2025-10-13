@@ -742,9 +742,19 @@ LuaParser::storeInputDeck(
       storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
         mesh_deck[i].get< tag::mass >(), 0.0);
 
-      // moment of inertia. this is currently only configured for planar motion
-      storeIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
-        mesh_deck[i].get< tag::moment_of_inertia >(), 0.0);
+      // moment of inertia tensor
+      storeVecVecIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
+        mesh_deck[i].get< tag::moment_of_inertia >(),
+        {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}});
+      auto& storage = mesh_deck[i].get< tag::moment_of_inertia >();
+      if (storage.size() != 3)
+        Throw("Incorrect number of moment_of_inertia vectors"
+          "specified. Expected 3 vectors");
+      for (std::size_t k=0; k<storage.size(); ++k){
+        if (storage[k].size() != 3)
+          Throw("Incorrect size of 'moment_of_inertia' vector " + 
+            std::to_string(k+1) +" specified. Expected size 3");
+      };
 
       // center of mass
       storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
@@ -774,7 +784,9 @@ LuaParser::storeInputDeck(
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::mass >() = 0.0;
-    mesh_deck[0].get< tag::moment_of_inertia >() = 0.0;
+    mesh_deck[0].get< tag::moment_of_inertia >() = {{0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0}};
     mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
   }
 
