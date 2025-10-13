@@ -493,10 +493,19 @@ class Transport {
       return n;
     }
 
+    //! Return surface field names to be output to file
+    //! \return Vector of strings labelling surface fields output in file
+    std::vector< std::string > surfNames() const
+    {
+      std::vector< std::string > s; // punt for now
+      return s;
+    }
+
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
-    surfOutput( const std::map< int, std::vector< std::size_t > >&,
-                tk::Fields& ) const
+    surfOutput( const inciter::FaceData&,
+      const tk::Fields&,
+      const tk::Fields& ) const
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;
