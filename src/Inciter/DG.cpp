@@ -1898,11 +1898,18 @@ DG::writeFields(
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
+  // Collect surface output names
+  auto surfnames = g_dgpde[d->MeshId()].surfNames();
+
+  // Collect surface field solution
+  const auto& fd = myGhosts()->m_fd;
+  auto elemsurfs = g_dgpde[d->MeshId()].surfOutput(fd, m_u, m_p);
+
   // Output chare mesh and fields metadata to file
   const auto& triinpoel = m_outmesh.triinpoel;
   d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            {}, {}, elemfields, nodefields, {}, {}, c );
+            surfnames, {}, elemfields, nodefields, elemsurfs, {}, c );
 }
 
 void

@@ -849,13 +849,23 @@ class MultiSpecies {
       return MultiSpeciesHistNames();
     }
 
+    //! Return surface field names to be output to file
+    //! \return Vector of strings labelling surface fields output in file
+    std::vector< std::string > surfNames() const
+    {
+      return MultiSpeciesSurfNames();
+    }
+
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
-    surfOutput( const std::map< int, std::vector< std::size_t > >&,
-                tk::Fields& ) const
+    surfOutput( const inciter::FaceData& fd,
+      const tk::Fields& U,
+      const tk::Fields& P ) const
     {
-      std::vector< std::vector< tk::real > > s; // punt for now
-      return s;
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto nspec = g_inputdeck.get< eq, tag::nspec >();
+
+      return MultiSpeciesSurfOutput( nspec, rdof, fd, U, P );
     }
 
     //! Return time history field output evaluated at time history points
