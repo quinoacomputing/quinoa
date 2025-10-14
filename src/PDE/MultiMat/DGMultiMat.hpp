@@ -1350,41 +1350,45 @@ class MultiMat {
       }
     }
 
-    //! Extract the velocity field at cell nodes. Currently unused.
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] N Element node indices
-    //! \return Array of the four values of the velocity field
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >&,
-              const std::array< std::size_t, 4 >& N ) const
+    //! Extract the velocity field at cell nodes.
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] esup Elements-surrounding-nodes connectivity
+    //! \param[in] coord Array of nodal coordinates
+    //! \param[in] P Vector of primitives at recent time step
+    //! \param[in,out] W Velocity components
+    //! \details This function computes and stores a fluid velocity at nodes
+    //!   from the DG solution in elements based on an
+    //!   inverse-distance-squared weighted average.
+    void nodeVelocity(
+      const tk::Fields& geoElem,
+      const std::map< std::size_t, std::vector< std::size_t > >& esup,
+      const tk::UnsMesh::Coords& coord,
+      const tk::Fields& P,
+      tk::Fields& W ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
-      std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( momentumDofIdx(nmat, 0, rdof, 0), N );
-      v[1] = U.extract( momentumDofIdx(nmat, 1, rdof, 0), N );
-      v[2] = U.extract( momentumDofIdx(nmat, 2, rdof, 0), N );
+      for (std::size_t p=0; p<W.nunk(); ++p) {
+        std::array< tk::real, 3 > usum{{0, 0, 0}};
+        tk::real denom(0.0);
 
-      std::vector< std::array< tk::real, 4 > > ar;
-      ar.resize(nmat);
-      for (std::size_t k=0; k<nmat; ++k)
-        ar[k] = U.extract( densityDofIdx(nmat, k, rdof, 0), N );
-
-      std::array< tk::real, 4 > r{{ 0.0, 0.0, 0.0, 0.0 }};
-      for (std::size_t i=0; i<r.size(); ++i) {
-        for (std::size_t k=0; k<nmat; ++k)
-          r[i] += ar[k][i];
+        // loop over all the elements surrounding this node p
+        const auto& pesup = tk::cref_find(esup, p);
+        for (auto e : pesup)
+        {
+          // centroid distance
+          std::array< tk::real, 3 > wdeltax{{ geoElem(e,1)-coord[0][p],
+                                              geoElem(e,2)-coord[1][p],
+                                              geoElem(e,3)-coord[2][p] }};
+          auto weight = 1.0/tk::dot(wdeltax, wdeltax);
+          for (std::size_t i=0; i<3; ++i) {
+            usum[i] += weight * P(e, velocityDofIdx(nmat,i,rdof,0));
+          }
+          denom += weight;
+        }
+        for (std::size_t i=0; i<3; ++i) W(p,i) = usum[i]/denom;
       }
-
-      std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[2].begin(), v[2].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      return v;
     }
 
     //! Return a map that associates user-specified strings to functions

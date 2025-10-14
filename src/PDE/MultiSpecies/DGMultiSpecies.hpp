@@ -816,18 +816,14 @@ class MultiSpecies {
                     const std::vector< std::size_t >& /*ndofel*/,
                     tk::Fields& /*R*/ ) const {}
 
-    //! Extract the velocity field at cell nodes. Currently unused.
-    // //! \param[in] U Solution vector at recent time step
-    // //! \param[in] N Element node indices
-    //! \return Array of the four values of the velocity field
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& /*U*/,
-              const std::array< std::vector< tk::real >, 3 >&,
-              const std::array< std::size_t, 4 >& /*N*/ ) const
-    {
-      std::array< std::array< tk::real, 4 >, 3 > v;
-      return v;
-    }
+    //! Extract the velocity field at cell nodes. Not implemented for MultiSpecies
+    void nodeVelocity(
+      const tk::Fields&,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
+      const tk::UnsMesh::Coords&,
+      const tk::Fields&,
+      tk::Fields& ) const
+    {}
 
     //! Return a map that associates user-specified strings to functions
     //! \return Map that associates user-specified strings to functions that

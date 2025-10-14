@@ -808,28 +808,14 @@ class CompFlow {
                     tk::Fields& /*R*/ ) const
     {}
 
-    //! Extract the velocity field at cell nodes. Currently unused.
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] N Element node indices
-    //! \return Array of the four values of the velocity field
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >&,
-              const std::array< std::size_t, 4 >& N ) const
-    {
-      std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( 1, N );
-      v[1] = U.extract( 2, N );
-      v[2] = U.extract( 3, N );
-      auto r = U.extract( 0, N );
-      std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[2].begin(), v[2].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      return v;
-    }
+    //! Extract the velocity field at cell nodes. Not implemented for CompFlow
+    void nodeVelocity(
+      const tk::Fields&,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
+      const tk::UnsMesh::Coords&,
+      const tk::Fields&,
+      tk::Fields& ) const
+    {}
 
     //! Return a map that associates user-specified strings to functions
     //! \return Map that associates user-specified strings to functions that

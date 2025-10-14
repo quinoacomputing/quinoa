@@ -355,6 +355,15 @@ class DGPDE {
                     tk::Fields& R ) const
     { return self->stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R); }
 
+    //! Public interface for computing velocity at nodes of elements
+    void nodeVelocity(
+      const tk::Fields& geoElem,
+      const std::map< std::size_t, std::vector< std::size_t > >& esup,
+      const tk::UnsMesh::Coords& coord,
+      const tk::Fields& P,
+      tk::Fields& W ) const
+    { return self->nodeVelocity( geoElem, esup, coord, P, W ); }
+
     //! Public interface to returning maps of output var functions
     std::map< std::string, tk::GetVarFn > OutVarFn() const
     { return self->OutVarFn(); }
@@ -549,6 +558,12 @@ class DGPDE {
                               const tk::Fields&,
                               const std::vector< std::size_t >&,
                               tk::Fields& ) const = 0;
+      virtual void nodeVelocity(
+        const tk::Fields&,
+        const std::map< std::size_t, std::vector< std::size_t > >&,
+        const tk::UnsMesh::Coords&,
+        const tk::Fields&,
+        tk::Fields& ) const = 0;
       virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -751,6 +766,13 @@ class DGPDE {
                       const std::vector< std::size_t >& ndofel,
                       tk::Fields& R ) const override
       { return data.stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R ); }
+      void nodeVelocity(
+        const tk::Fields& geoElem,
+        const std::map< std::size_t, std::vector< std::size_t > >& esup,
+        const tk::UnsMesh::Coords& coord,
+        const tk::Fields& P,
+        tk::Fields& W ) const override
+      { return data.nodeVelocity( geoElem, esup, coord, P, W ); }
       std::map< std::string, tk::GetVarFn > OutVarFn() const override
       { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override

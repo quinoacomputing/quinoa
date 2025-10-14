@@ -473,6 +473,15 @@ class Transport {
                     tk::Fields& /*R*/ ) const
     {}
 
+    //! Extract the velocity field at cell nodes. Not implemented for Transport
+    void nodeVelocity(
+      const tk::Fields&,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
+      const tk::UnsMesh::Coords&,
+      const tk::Fields&,
+      tk::Fields& ) const
+    {}
+
     //! Return a map that associates user-specified strings to functions
     //! \return Map that associates user-specified strings to functions that
     //!  compute relevant quantities to be output to file
