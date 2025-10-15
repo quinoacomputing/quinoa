@@ -225,13 +225,14 @@ WilkinsAluminum::soundspeed(
   tk::real a = 0.0;
 
   // Hydro contribution
+  auto al_eff = std::max( 1.0e-14, alpha );
   tk::real rho0 = m_rho0;
-  tk::real rho = arho/alpha;
+  tk::real rho = arho/al_eff;
   a += std::max( 1.0e-15, 6*e2*std::pow(rho/rho0,2.0)/rho0
                  + 2*e3*rho/(rho0*rho0) - e5/rho0 );
 
   // Shear contribution
-  a += (4.0/3.0) * m_mu / (arho/alpha);
+  a += (4.0/3.0) * m_mu / (arho/al_eff);
 
   // Compute square root
   a = std::sqrt(a);
@@ -270,7 +271,8 @@ WilkinsAluminum::shearspeed(
   // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
-  tk::real a = std::sqrt(alpha*m_mu/arho);
+  auto al_eff = std::max( 1.0e-14, alpha );
+  tk::real a = std::sqrt(al_eff*m_mu/arho);
 
   // check shear-wave speed divergence
   if (!std::isfinite(a)) {
