@@ -1044,22 +1044,23 @@ evaluateMeshVelTri(
   const std::array< std::vector< real >, 2 >& coordgp,
   const Fields& W )
 // *****************************************************************************
-//  Evaluate mesh velocity at a quadrature point on triangular faces
+//  Evaluate mesh velocity at a quadrature point on a triangular face
 //! \param[in] f Id of face on which evaluation is being done
 //! \param[in] igp Local quadrature point id where mesh velocity is required
 //! \param[in] inpofa Face-node connectivity
-//! \param[in] coordgp 2 spatial coordinates of quadrature points
+//! \param[in] coordgp 2 spatial coordinates of quadrature points on reference
+//!   triangular element
 //! \param[in] W Mesh velocity vector at recent time step
 //! \return Mesh velocity at quadrature point
 //! \details This function evaluates the mesh velocity at the specified
-//!   quadrature point on a triangular face assuming linear finite element
-//!   basis functions (i.e. Lagrange basis).
+//!   quadrature point on a reference triangular element (face) assuming linear
+//!   finite element basis functions (i.e. Lagrange basis).
 // *****************************************************************************
 {
-  std::array< tk::real, 3 > w_igp {{ 0.0, 0.0, 0.0 }};
+  std::array< real, 3 > w_igp {{ 0.0, 0.0, 0.0 }};
 
   // Barycentric coordinates/Lagrange basis at igp
-  std::array< tk::real, 3 > lambda_igp {{
+  std::array< real, 3 > lambda_igp {{
     1.0-coordgp[0][igp]-coordgp[1][igp],
     coordgp[0][igp], coordgp[1][igp] }};
 
@@ -1073,6 +1074,44 @@ evaluateMeshVelTri(
   }
 
   return w_igp;
+}
+
+std::array< real, 3 >
+evaluateMeshVelTet(
+  const std::size_t e,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpoel,
+  const std::array< std::vector< real >, 3 >& coordgp,
+  const Fields& W )
+// *****************************************************************************
+//  Evaluate mesh velocity at a quadrature point on a tetrahedral element
+//! \param[in] e Id of element in which evaluation is being done
+//! \param[in] igp Local quadrature point id where mesh velocity is required
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] coordgp 3 spatial coordinates of quadrature points in reference
+//!   tetrahedron
+//! \param[in] W Mesh velocity vector at recent time step
+//! \return Mesh velocity at quadrature point
+//! \details This function evaluates the mesh velocity at the specified
+//!   quadrature point on a reference tetrahedral element assuming linear finite
+//!   element basis functions (i.e. Lagrange basis).
+// *****************************************************************************
+{
+  std::array< real, 3 > w_igp {{ 0.0, 0.0, 0.0 }};
+
+  // Barycentric coordinates/Lagrange basis at igp
+  std::array< real, 4 > lambda_igp {{
+    1.0-coordgp[0][igp]-coordgp[1][igp]-coordgp[2][igp],
+    coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] }};
+
+  // Mesh velocity evaluation using Lagrange basis
+  for (std::size_t j=0; j<4; ++j) {
+    auto wt_igp = lambda_igp[j];
+    auto nid = inpoel[4*e+j];
+    w_igp[0] += wt_igp*W(nid,0);
+    w_igp[1] += wt_igp*W(nid,1);
+    w_igp[2] += wt_igp*W(nid,2);
+  }
 }
 
 void
