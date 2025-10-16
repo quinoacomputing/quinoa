@@ -219,8 +219,14 @@ class DG : public CBase_DG {
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 
+    //! Update mesh data based on direct ALE
+    void ALEUpdate();
+
     //! Evaluate whether to continue with next time step
     void step();
+
+    //! Start computing the mesh mesh velocity for ALE
+    void meshvelstart();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -241,7 +247,6 @@ class DG : public CBase_DG {
       p | m_u;
       p | m_un;
       p | m_p;
-      p | m_geoElem;
       p | m_lhs;
       p | m_mtInv;
       p | m_uNodalExtrm;
@@ -277,6 +282,7 @@ class DG : public CBase_DG {
       p | m_outmesh;
       p | m_boxelems;
       p | m_shockmarker;
+      p | m_meshvel;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -322,8 +328,6 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
-    //! Element geometry
-    tk::Fields m_geoElem;
     //! Left-hand side mass-matrix which is a diagonal matrix
     tk::Fields m_lhs;
     //! Vector of right-hand side
@@ -395,6 +399,8 @@ class DG : public CBase_DG {
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
     //! Shock detection marker for field output
     std::vector< std::size_t > m_shockmarker;
+    //! Mesh velocity for ALE
+    tk::Fields m_meshvel;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

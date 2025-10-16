@@ -47,6 +47,7 @@ surfInt( const bool pref,
          const VelFn& vel,
          const Fields& U,
          const Fields& P,
+         const Fields& W,
          const std::vector< std::size_t >& ndofel,
          const tk::real /*dt*/,
          Fields& R,
@@ -70,6 +71,7 @@ surfInt( const bool pref,
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 // //! \param[in] dt Delta time
 //! \param[in,out] R Right-hand side vector computed
@@ -81,6 +83,7 @@ surfInt( const bool pref,
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
 
@@ -224,8 +227,16 @@ surfInt( const bool pref,
       // evaluate prescribed velocity (if any)
       auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
+      // mesh velocity at quadrature point
+      tk::real wn_igp(0.0);
+      if (ale) {
+        auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+        // mesh velocity normal to element face
+        wn_igp = tk::dot(w_igp, fn);
+      }
+
       // compute flux
-      auto fl = flux( mat_blk, fn, state, v );
+      auto fl = flux( mat_blk, fn, state, v, wn_igp );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,
@@ -498,7 +509,7 @@ surfIntFV(
     auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
     // compute flux
-    auto fl = flux( mat_blk, fn, state, v );
+    auto fl = flux( mat_blk, fn, state, v, 0.0 );
 
     // compute non-conservative terms
     std::vector< tk::real > var_riemann(nmat+1, 0.0);

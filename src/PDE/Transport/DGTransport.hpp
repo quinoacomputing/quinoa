@@ -329,6 +329,7 @@ class Transport {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
+    //! \param[in] W Mesh velocity vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
@@ -342,6 +343,7 @@ class Transport {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
+              const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
               tk::Fields& R ) const
@@ -359,6 +361,8 @@ class Transport {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( P.nprop() == 0, "Number of components in primitive "
               "vector must equal "+ std::to_string(0) );
+      Assert( W.nunk() == coord[0].size(), "Number of unknowns in mesh "
+              "velocity vector incorrect." );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
@@ -376,20 +380,20 @@ class Transport {
       std::vector< std::size_t > solidx(1, 0);
       tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
                    inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, ndofel, dt, R,
+                   Problem::prescribedVelocity, U, P, W, ndofel, dt, R,
                    riemannDeriv, intsharp );
 
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
-                    Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
+                    Problem::prescribedVelocity, U, P, W, ndofel, R, intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, m_ncomp, m_mat_blk, ndof, rdof,
           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
-          Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
+          Problem::prescribedVelocity, std::get<1>(b), U, P, W, ndofel, R,
           riemannDeriv, intsharp );
     }
 

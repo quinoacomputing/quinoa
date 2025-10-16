@@ -39,7 +39,8 @@ struct LDFSS {
   flux( const std::vector< EOS >& mat_blk,
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& = {} )
+        const std::vector< std::array< tk::real, 3 > >& = {},
+        const tk::real = 0 )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 

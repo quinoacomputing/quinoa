@@ -40,6 +40,7 @@ volInt( std::size_t nmat,
         const VelFn& vel,
         const Fields& U,
         const Fields& P,
+        const Fields& W,
         const std::vector< std::size_t >& ndofel,
         Fields& R,
         int intsharp=0 );

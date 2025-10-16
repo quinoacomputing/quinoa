@@ -33,13 +33,15 @@ struct HLLCMultiMat {
 //! HLLC approximate Riemann solver flux function
   //! \param[in] fn Face/Surface normal
   //! \param[in] u Left and right unknown/state vector
+  //! \param[in] wn Mesh velocity normal to face
   //! \return Riemann solution according to Harten-Lax-van Leer-Contact
   //! \note The function signature must follow tk::RiemannFluxFn
   static tk::RiemannFluxFn::result_type
   flux( const std::vector< EOS >& mat_blk,
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& = {} )
+        const std::vector< std::array< tk::real, 3 > >& = {},
+        const tk::real wn = 0 )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();

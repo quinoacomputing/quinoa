@@ -890,6 +890,7 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
+    //! \param[in] W Mesh velocity vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
@@ -903,6 +904,7 @@ class MultiMat {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
+              const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
               tk::Fields& R ) const
@@ -926,6 +928,8 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
               "vector must equal "+ std::to_string(rdof*m_nprim) );
+      Assert( W.nunk() == coord[0].size(), "Number of unknowns in mesh "
+              "velocity vector incorrect." );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
@@ -955,8 +959,8 @@ class MultiMat {
 
       // compute internal surface flux integrals
       tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, riemannDeriv, intsharp );
+                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
+                   ndofel, dt, R, riemannDeriv, intsharp );
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
@@ -965,14 +969,14 @@ class MultiMat {
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
+                    inpoel, coord, geoElem, flux, velfn, U, P, W, ndofel, R,
                     intsharp );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
                         std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-                        m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
+                        m_riemann, velfn, std::get<1>(b), U, P, W, ndofel, R,
                         riemannDeriv, intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "

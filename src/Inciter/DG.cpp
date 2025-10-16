@@ -156,7 +156,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
-  m_shockmarker(m_u.nunk(), 1)
+  m_shockmarker(m_u.nunk(), 1),
+  m_meshvel( Disc()->Lid().size(), 3 )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -592,7 +593,7 @@ DG::lhs()
 {
   g_dgpde[Disc()->MeshId()].lhs( myGhosts()->m_geoElem, m_lhs );
 
-  if (!m_initial) stage();
+  //if (!m_initial) stage();
 }
 
 void DG::p_refine()
@@ -784,6 +785,8 @@ DG::reco()
   if (pref && m_stage==0) {
     g_dgpde[d->MeshId()].resetAdapSol( myGhosts()->m_fd, m_u, m_p, m_ndof );
   }
+
+  if (g_inputdeck.get< tag::ale, tag::ale >()) meshvelstart();
 
   if (rdof > 1)
     // Reconstruct second-order solution and primitive quantities
@@ -1440,7 +1443,10 @@ DG::solve( tk::real newdt )
   if (m_stage == 0) d->setdt( newdt );
 
   // Update Un
-  if (m_stage == 0) m_un = m_u;
+  if (m_stage == 0) {
+    m_un = m_u;
+    if (g_inputdeck.get< tag::ale, tag::ale >()) d->UpdateCoordn();
+  }
 
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
@@ -1467,7 +1473,7 @@ DG::solve( tk::real newdt )
 
   g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
     myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-    myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
+    myGhosts()->m_coord, m_u, m_p, m_meshvel, m_ndof, d->Dt(), m_rhs );
 
   if (!imex_runge_kutta) {
     // Explicit time-stepping using RK3 to discretize time-derivative
@@ -1507,6 +1513,9 @@ DG::solve( tk::real newdt )
       }
     }
 
+  // Perform ALE mesh data updates
+  if (g_inputdeck.get< tag::ale, tag::ale >()) ALEUpdate();
+
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof, m_interface );
@@ -1536,6 +1545,32 @@ DG::solve( tk::real newdt )
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
 
   }
+}
+
+void
+DG::ALEUpdate()
+// *****************************************************************************
+// Update mesh data based on direct ALE
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Advance mesh if ALE is enabled
+  auto& coord = d->Coord();
+  for (std::size_t j=0; j<3; ++j)
+    for (std::size_t i=0; i<coord[j].size(); ++i)
+      coord[j][i] = rkcoef[0][m_stage] * d->Coordn()[j][i]
+        + rkcoef[1][m_stage] * ( coord[j][i]
+          + d->Dt() * m_meshvel(i,j) );
+
+  // Update mesh geometry data
+  myGhosts()->m_geoFace = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
+    myGhosts()->m_fd.Inpofa(), myGhosts()->m_coord);
+  myGhosts()->m_geoElem = tk::genGeoElemTet( myGhosts()->m_inpoel,
+    myGhosts()->m_coord );
+
+  // Update mass matrix
+  lhs();
 }
 
 void
@@ -1990,6 +2025,24 @@ DG::step()
                    CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
+}
+
+void
+DG::meshvelstart()
+// *****************************************************************************
+// Start computing the mesh mesh velocity for ALE
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Compute fluid velocity at nodes, and set this as the mesh velocity
+  g_dgpde[d->MeshId()].nodeVelocity( myGhosts()->m_geoElem, myGhosts()->m_esup,
+    myGhosts()->m_coord, m_p, m_meshvel );
+
+  // TODO: the following API into ALE will be needed for mesh smoothing
+  //// Start computing the mesh velocity for ALE
+  //d->meshvelStart( vel, soundspeed, m_bnorm, rkcoef[m_stage] * d->Dt(),
+  //  CkCallback(CkIndex_ALECG::meshveldone(), thisProxy[thisIndex]) );
 }
 
 void

@@ -32,6 +32,7 @@ tk::volInt( std::size_t nmat,
             const VelFn& vel,
             const Fields& U,
             const Fields& P,
+            const Fields& /*W*/,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
             int intsharp )
@@ -50,6 +51,7 @@ tk::volInt( std::size_t nmat,
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+// //! \param[in] W Mesh velocity vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface compression tag, an optional argument, with

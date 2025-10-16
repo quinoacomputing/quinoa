@@ -173,6 +173,15 @@ enforcePhysicalConstraints(
   std::size_t ncomp,
   std::vector< tk::real >& state );
 
+//! Evaluate mesh velocity at a quadrature point on triangular faces
+std::array< real, 3 >
+evaluateMeshVelTri(
+  const std::size_t f,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpofa,
+  const std::array< std::vector< real >, 2 >& coordgp,
+  const Fields& W );
+
 //! Compute safe reconstructions near material interfaces
 void
 safeReco( std::size_t rdof,
