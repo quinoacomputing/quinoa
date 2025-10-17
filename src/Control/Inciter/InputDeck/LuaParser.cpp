@@ -707,6 +707,11 @@ LuaParser::storeInputDeck(
         if (solidx[i] > 0)
           ntot += 9;
       }
+      // Add an extra variable per solid to model damage
+      for (std::size_t i=0; i<solidx.size(); ++i) {
+        if (solidx[i] > 0)
+          ntot += 1;
+      }
       gideck.get< tag::ncomp >() = ntot;
     }
   }
