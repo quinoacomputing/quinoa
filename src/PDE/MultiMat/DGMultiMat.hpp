@@ -298,43 +298,30 @@ class MultiMat {
       }
     }
 
-    //! Compute density constraint for a given material
+    //! Compute damage for solids
     //! \param[in] nelem Number of elements
     //! \param[in] unk Array of unknowns
-    //! \param[out] densityConstr Density Constraint: rho/(rho0*det(g))
-    void computeDensityConstr( std::size_t nelem,
-                               tk::Fields& unk,
-                               std::vector< tk::real >& densityConstr) const
+    //! \param[out] damage Sum of alpha*damage for solids
+    void computeDamage( std::size_t nelem,
+                        tk::Fields& unk,
+                        std::vector< tk::real >& damage) const
     {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t rdof = g_inputdeck.get< tag::rdof >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      std::size_t nsld = numSolids(nmat, solidx);
       for (std::size_t e=0; e<nelem; ++e)
-        densityConstr[e] = 0.0;
+        damage[e] = 0.0;
       for (std::size_t imat=0; imat<nmat; ++imat)
         if (solidx[imat] > 0)
         {
           for (std::size_t e=0; e<nelem; ++e)
           {
             // Retrieve unknowns
-            tk::real arho = unk(e, densityDofIdx(nmat, imat, rdof, 0));
-            std::array< std::array< tk::real, 3 >, 3 > g;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                g[i][j] = unk(e, deformDofIdx(nmat, solidx[imat], i, j, rdof, 0));
-            // Compute determinant of g
-            tk::real detg = tk::determinant(g);
-            // Compute constraint measure
-            densityConstr[e] += arho/(m_mat_blk[imat].compute< EOS::rho0 >()*detg);
-          }
-        }
-        else
-        {
-          for (std::size_t e=0; e<nelem; ++e)
-          {
-            // Retrieve alpha and add it to the constraint measure
             tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
-            densityConstr[e] += alpha;
+            tk::real rho = unk(e, densityDofIdx(nmat, imat, rdof, 0))/alpha;
+            tk::real dmg = unk(e, damageDofIdx(nmat, nsld, imat, rdof, 0));
+            damage[e] += dmg/rho;
           }
         }
     }
@@ -592,6 +579,123 @@ class MultiMat {
         unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
+    }
+
+    //! Evolve damage variable for solids
+    //! \param[in] dt Current time step used
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] U Array of unknowns
+    //! \param[in,out] P Array of primitives
+    //! \param[in] nelem Number of internal elements
+    //! \details Evolve damage variable for solids
+    void evolveDamage( tk::real dt,
+                       const tk::Fields& geoElem,
+                       tk::Fields& U,
+                       tk::Fields& P,
+                       std::size_t nelem ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      std::size_t ncomp = U.nprop()/rdof;
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      auto nsld = numSolids(nmat, solidx);
+
+      std::vector< tk::real > ugp(ncomp, 0.0);
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        //printf("elem = %lu\n",e);
+        // get conserved quantities
+        std::vector< tk::real > B(rdof, 0.0);
+        B[0] = 1.0;
+        ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+
+        // Loop through materials
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (solidx[k] > 0)
+          {
+            tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            std::array< std::array< tk::real, 3 >, 3 > g;
+            // Compute the source terms
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                g[i][j] = U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+
+            // Compute Lp
+            // Reference: Ortega, A. L., Lombardini, M., Pullin, D. I., &
+            // Meiron, D. I. (2014). Numerical simulation of elastic–plastic
+            // solid mechanics using an Eulerian stretch tensor approach and
+            // HLLD Riemann solver. Journal of Computational Physics, 257,
+            // 414-441
+            std::array< std::array< tk::real, 3 >, 3 > Lp;
+
+            // 1. Compute dev(sigma)
+            auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
+              alpha, k, g );
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                sigma_dev[i][j] /= alpha;
+            tk::real sigma_trace =
+              sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
+            for (std::size_t i=0; i<3; ++i)
+              sigma_dev[i][i] -= sigma_trace/3.0;
+
+            // 2. Compute g*dev(sigma), symmetrized
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+              {
+                tk::real sum1 = 0.0;
+                tk::real sum2 = 0.0;
+                for (std::size_t l=0; l<3; ++l) {
+                  sum1 += g[i][l]*sigma_dev[l][j];
+                  sum2 += sigma_dev[i][l]*g[l][j];
+                }
+                Lp[i][j] = 0.5*(sum1+sum2);
+              }
+            // 4. Compute equivalent plastic strain rate
+            tk::real plastic_rate = 0.0;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                plastic_rate += Lp[i][j]*Lp[i][j];
+            plastic_rate = std::sqrt(3.0*plastic_rate/2.0);
+            // Scale plastic_rate by alpha
+            tk::real a_min = 1.0e-04, a_max = 2.0e-01;
+            auto smoothstep = [&](tk::real a){
+              tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
+              return t*t*(3.0-2.0*t);
+            };
+            tk::real a_tilde = smoothstep(alpha);
+            plastic_rate *= a_tilde;
+            // 5. Compute dD
+            tk::real equiv_stress = 0.0;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
+            equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
+            auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
+            tk::real d1 = 0.1166; // temp
+            tk::real d2 = 0.0934; // temp
+            tk::real d3 = -0.5442; // temp
+            tk::real d4 = 0.0; // temp
+            tk :: real ef = d1;
+            if (std::abs(equiv_stress) > 1.0e-08) {
+              tk::real eta = -pk/(equiv_stress);
+              ef += d2*std::exp(d3*eta); // <- for d4=0 (temp)
+            }
+            tk::real dD = std::min(0.2, std::max(-0.2, plastic_rate*dt/ef));
+            // 6. Evolve D
+            U(e, damageDofIdx(nmat, nsld, k, rdof, 0)) =
+              std::min(1.0, U(e, damageDofIdx(nmat, nsld, k, rdof, 0))+dD);
+            //printf("k, elem, damage, dD = %lu, %lu, %e, %e\n", k, e, U(e, damageDofIdx(nmat, nsld, k, rdof, 0)), dD);
+            // Zero out high-order terms
+            for (std::size_t idof=1; idof<rdof; ++idof)
+              U(e, damageDofIdx(nmat, nsld, k, rdof, 0)) = 0.0;
+          }
+        }
+      }
     }
 
     //! Reconstruct second-order solution from first-order

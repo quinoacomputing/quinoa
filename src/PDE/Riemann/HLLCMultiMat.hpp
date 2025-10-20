@@ -273,6 +273,8 @@ struct HLLCMultiMat {
           + gnl[k][2][2]*(vnl[2]-vnlStar[2])/(Sm-Sl);
         // rotate g back to original frame of reference
         glStar.push_back(tk::unrotateTensor(gnlStar[k], fn));
+        // damage
+        uStar[0][damageIdx(nmat, nsld, k)] = w_l * u[0][damageIdx(nmat, nsld, k)];
       }
       uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
@@ -301,6 +303,8 @@ struct HLLCMultiMat {
           + gnr[k][2][2]*(vnr[2]-vnrStar[2])/(Sm-Sr);
         // rotate g back to original frame of reference
         grStar.push_back(tk::unrotateTensor(gnrStar[k], fn));
+        // damage
+        uStar[1][damageIdx(nmat, nsld, k)] = w_r * u[1][damageIdx(nmat, nsld, k)];
       }
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
@@ -335,6 +339,7 @@ struct HLLCMultiMat {
                 gl[k][i][0] * ul +
                 gl[k][i][1] * vl +
                 gl[k][i][2] * wl ) * fn[j];
+          flx[damageIdx(nmat, nsld, k)] = u[0][damageIdx(nmat, nsld, k)] * vnl[0];
         }
       }
 
@@ -382,6 +387,7 @@ struct HLLCMultiMat {
                   glStar[k][i][0] * vlStar[0] +
                   glStar[k][i][1] * vlStar[1] +
                   glStar[k][i][2] * vlStar[2] ) * fn[j];
+          flx[damageIdx(nmat, nsld, k)] = uStar[0][damageIdx(nmat, nsld, k)] * Sm;
           }
       }
 
@@ -429,6 +435,7 @@ struct HLLCMultiMat {
                   grStar[k][i][0] * vrStar[0] +
                   grStar[k][i][1] * vrStar[1] +
                   grStar[k][i][2] * vrStar[2] ) * fn[j];
+          flx[damageIdx(nmat, nsld, k)] = uStar[1][damageIdx(nmat, nsld, k)] * Sm;
           }
       }
 
@@ -474,6 +481,7 @@ struct HLLCMultiMat {
                   gr[k][i][0] * ur +
                   gr[k][i][1] * vr +
                   gr[k][i][2] * wr ) * fn[j];
+          flx[damageIdx(nmat, nsld, k)] = u[1][damageIdx(nmat, nsld, k)] * vnr[0];
           }
       }
 

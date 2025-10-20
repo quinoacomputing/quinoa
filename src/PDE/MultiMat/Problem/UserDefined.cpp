@@ -101,7 +101,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
     rb += s[densityIdx(nmat,k)];
     // damage variable for solids
     if (solidx[k] > 0)
-      s[damageIdx(nmat,nsld,solidx[k])] = 1.0;
+      s[damageIdx(nmat,nsld,solidx[k])] = 0.0;
   }
 
   // bulk momentum

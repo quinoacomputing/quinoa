@@ -229,15 +229,15 @@ class CompFlow {
       }
     }
 
-    //! Compute density constraint for a given material
-    // //! \param[in] nelem Number of elements
-    // //! \param[in] unk Array of unknowns
-    //! \param[out] densityConstr Density Constraint: rho/(rho0*det(g))
-    void computeDensityConstr( std::size_t /*nelem*/,
-                               tk::Fields& /*unk*/,
-                               std::vector< tk::real >& densityConstr) const
+    //! Compute damage for solids
+    //! \param[in] nelem Number of elements
+    //! \param[in] unk Array of unknowns
+    //! \param[out] damage Sum of alpha*damage for solids
+    void computeDamage( std::size_t /*nelem*/,
+                        tk::Fields& /*unk*/,
+                        std::vector< tk::real >& damage) const
     {
-      densityConstr.resize(0);
+      damage.resize(0);
     }
 
     //! Compute the left hand side block-diagonal mass matrix
@@ -276,6 +276,14 @@ class CompFlow {
                              tk::Fields&,
                              tk::Fields&,
                              std::size_t ) const {}
+
+    //! Evolve damage variable for solids
+    //! \details Evolve damage variable for solids. Unused here.
+    void evolveDamage( tk::real,
+                       const tk::Fields&,
+                       tk::Fields&,
+                       tk::Fields&,
+                       std::size_t ) const {}
 
     //! Reconstruct second-order solution from first-order using least-squares
 //    //! \param[in] t Physical time

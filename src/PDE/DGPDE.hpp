@@ -185,11 +185,11 @@ class DGPDE {
       const std::size_t nielem ) const
     { self->initialize( L, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
-    //! Public interface for computing density constraint
-    void computeDensityConstr( std::size_t nelem,
-                               tk::Fields& unk,
-                               std::vector< tk::real >& densityConstr) const
-    { self->computeDensityConstr( nelem, unk, densityConstr); }
+    //! Public interface for computing damage
+    void computeDamage( std::size_t nelem,
+                        tk::Fields& unk,
+                        std::vector< tk::real >& damage) const
+    { self->computeDamage( nelem, unk, damage); }
 
     //! Public interface to computing the left-hand side matrix for the diff eq
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
@@ -218,6 +218,14 @@ class DGPDE {
                              tk::Fields& prim,
                              std::size_t nielem ) const
     { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
+  
+    //! Public interface for function to evolve damage in solids
+    void evolveDamage( tk::real dt,
+                       const tk::Fields& geoElem,
+                       tk::Fields& U,
+                       tk::Fields& P,
+                       std::size_t nelem ) const
+    { self->evolveDamage(dt, geoElem, U, P, nelem); }
 
     //! Public interface to reconstructing the second-order solution
     void reconstruct( tk::real t,
@@ -440,10 +448,9 @@ class DGPDE {
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
-      virtual void computeDensityConstr( std::size_t nelem,
-                                         tk::Fields& unk,
-                                         std::vector< tk::real >& densityConstr)
-                                         const = 0;
+      virtual void computeDamage( std::size_t nelem,
+                                  tk::Fields& unk,
+                                  std::vector< tk::real >& damage) const = 0;
       virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
@@ -460,6 +467,11 @@ class DGPDE {
                                        tk::Fields&,
                                        tk::Fields&,
                                        std::size_t ) const = 0;
+      virtual void evolveDamage( tk::real,
+                                 const tk::Fields&,
+                                 tk::Fields&,
+                                 tk::Fields&,
+                                 std::size_t ) const = 0;
       virtual void reconstruct( tk::real,
                                 const tk::Fields&,
                                 const tk::Fields&,
@@ -608,11 +620,10 @@ class DGPDE {
         const std::size_t nielem )
       const override { data.initialize( L, inpoel, coord, inbox, elemblkid, unk,
         t, nielem ); }
-      void computeDensityConstr( std::size_t nelem,
-                                 tk::Fields& unk,
-                                 std::vector< tk::real >& densityConstr)
-                                 const override
-      { data.computeDensityConstr( nelem, unk, densityConstr ); }
+      void computeDamage( std::size_t nelem,
+                          tk::Fields& unk,
+                          std::vector< tk::real >& damage) const override
+      { data.computeDamage( nelem, unk, damage ); }
       void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
       { data.lhs( geoElem, l ); }
       void updateInterfaceCells( tk::Fields& unk,
@@ -635,6 +646,12 @@ class DGPDE {
                                tk::Fields& prim,
                                std::size_t nielem )
       const override { data.cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
+      void evolveDamage( tk::real dt,
+                         const tk::Fields& geoElem,
+                         tk::Fields& U,
+                         tk::Fields& P,
+                         std::size_t nelem)
+      const override { data.evolveDamage( dt, geoElem, U, P, nelem); }
       void reconstruct( tk::real t,
                         const tk::Fields& geoFace,
                         const tk::Fields& geoElem,

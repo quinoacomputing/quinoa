@@ -1507,6 +1507,10 @@ DG::solve( tk::real newdt )
       }
     }
 
+  // Evolve damage
+  g_dgpde[d->MeshId()].evolveDamage( d->Dt(), myGhosts()->m_geoElem, m_u,
+      m_p, myGhosts()->m_fd.Esuel().size()/4 );
+
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof, m_interface );
@@ -1797,13 +1801,20 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
-  // Add rho0*det(g)/rho to make sure it is staying close to 1,
-  // averaged for all materials
-  std::vector< tk::real > densityConstr(nelem);
-  g_dgpde[d->MeshId()].computeDensityConstr(nelem, m_u, densityConstr);
+  // Add damage to solids
+  std::vector< tk::real > damage(nelem);
+  g_dgpde[d->MeshId()].computeDamage(nelem, m_u, damage);
   for (const auto& [child,parent] : addedTets)
-    densityConstr[child] = 0.0;
-  if (densityConstr.size() > 0) elemfields.push_back( densityConstr );
+    damage[child] = 0.0;
+  if (damage.size() > 0) elemfields.push_back( damage );
+
+  // // Add rho0*det(g)/rho to make sure it is staying close to 1,
+  // // averaged for all materials
+  // std::vector< tk::real > densityConstr(nelem);
+  // g_dgpde[d->MeshId()].computeDensityConstr(nelem, m_u, densityConstr);
+  // for (const auto& [child,parent] : addedTets)
+  //   densityConstr[child] = 0.0;
+  // if (densityConstr.size() > 0) elemfields.push_back( densityConstr );
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
@@ -1819,8 +1830,8 @@ DG::writeFields(
 
   elemfieldnames.push_back( "shock_marker" );
 
-  if (densityConstr.size() > 0)
-    elemfieldnames.push_back( "density_constraint" );
+  if (damage.size() > 0)
+    elemfieldnames.push_back( "damage" );
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
