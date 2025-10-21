@@ -145,6 +145,10 @@ struct HLLCMultiMat {
     auto vnl = tk::rotateVector({ul, vl, wl}, fn);
     auto vnr = tk::rotateVector({ur, vr, wr}, fn);
 
+    // ALE mesh motion relative normal velocity
+    vnl[0] -= wn;
+    vnr[0] -= wn;
+
     // Signal velocities
     auto Sl = std::min((vnl[0]-acl), (vnr[0]-acr));
     auto Sr = std::max((vnl[0]+acl), (vnr[0]+acr));
@@ -316,6 +320,12 @@ struct HLLCMultiMat {
           ) / (Sm-Sr);
       rhorStar += uStar[1][densityIdx(nmat, k)];
     }
+    for (std::size_t idir=0; idir<3; ++idir) {
+      uStar[0][momentumIdx(nmat, idir)] = w_l*u[0][momentumIdx(nmat, idir)]
+        - (TnlStar[idir] - Tnl[idir])/(Sl-Sm);
+      uStar[1][momentumIdx(nmat, idir)] = w_r*u[1][momentumIdx(nmat, idir)]
+        - (TnrStar[idir] - Tnr[idir])/(Sr-Sm);
+    }
 
     // Numerical fluxes
     // -------------------------------------------------------------------------
@@ -368,13 +378,14 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
        flx[momentumIdx(nmat, idir)] =
-         vlStar[idir] * rholStar * Sm - TnlStar[idir];
+         uStar[0][momentumIdx(nmat, idir)] * Sm - TnlStar[idir];
+         //vlStar[idir] * rholStar * Sm - TnlStar[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[0][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[0][densityIdx(nmat, k)] * Sm;
         flx[energyIdx(nmat, k)] = uStar[0][energyIdx(nmat, k)] * Sm
-          - vlStar[0] * aTnlStar[k][0]
+          - (vlStar[0]+wn) * aTnlStar[k][0]  // TODO:check if w.aTnlStar should be added like this to other two terms
           - vlStar[1] * aTnlStar[k][1]
           - vlStar[2] * aTnlStar[k][2];
         if (solidx[k] > 0) {
@@ -415,13 +426,14 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          vrStar[idir] * rhorStar * Sm - TnrStar[idir];
+          uStar[1][momentumIdx(nmat, idir)] * Sm - TnrStar[idir];
+          //vrStar[idir] * rhorStar * Sm - TnrStar[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[1][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[1][densityIdx(nmat, k)] * Sm;
         flx[energyIdx(nmat, k)] = uStar[1][energyIdx(nmat, k)] * Sm
-          - vrStar[0] * aTnrStar[k][0]
+          - (vrStar[0]+wn) * aTnrStar[k][0]  // TODO:check if w.aTnrStar should be added like this to other two terms
           - vrStar[1] * aTnrStar[k][1]
           - vrStar[2] * aTnrStar[k][2];
         if (solidx[k] > 0) {

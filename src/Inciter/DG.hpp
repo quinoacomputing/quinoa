@@ -247,6 +247,8 @@ class DG : public CBase_DG {
       p | m_u;
       p | m_un;
       p | m_p;
+      p | m_geoElemk;
+      p | m_geoElemn;
       p | m_mtInv;
       p | m_uNodalExtrm;
       p | m_pNodalExtrm;
@@ -327,6 +329,10 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
+    //! Element geometry array at the previous RK-stage
+    tk::Fields m_geoElemk;
+    //! Element geometry array at the previous time step
+    tk::Fields m_geoElemn;
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Vector of previous right-hand side values used in the IMEX-RK scheme

@@ -117,6 +117,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(), g_inputdeck.get< tag::rdof >()*
     g_dgpde[Disc()->MeshId()].nprim() ),
+  m_geoElemk( m_u.nunk(), 5 ),
+  m_geoElemn( m_u.nunk(), 5 ),
   m_rhs( m_u.nunk(),
          g_inputdeck.get< tag::ndof >()*
          g_inputdeck.get< tag::ncomp >() ),
@@ -251,6 +253,7 @@ DG::resizeSolVectors()
   m_rhsprev.resize( myGhosts()->m_nunk );
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_stiffrhsprev.resize( myGhosts()->m_nunk );
+  m_meshvel.resize( myGhosts()->m_coord[0].size() );
 
   // Size communication buffer for solution and number of degrees of freedom
   for (auto& n : m_ndofc) n.resize( myGhosts()->m_bid.size() );
@@ -296,9 +299,6 @@ DG::setup()
 
   auto d = Disc();
 
-  // Compute left-hand side of discrete PDEs
-  lhs();
-
   // Determine elements inside user-defined IC box
   g_dgpde[d->MeshId()].IcBoxElems( myGhosts()->m_geoElem,
     myGhosts()->m_fd.Esuel().size()/4, m_boxelems );
@@ -334,6 +334,10 @@ DG::box( tk::real v, const std::vector< tk::real >& )
 
   // Store user-defined box IC volume
   d->Boxvol() = v;
+
+  // Store previous time step and stage element volumes for GCL
+  m_geoElemk = myGhosts()->m_geoElem;
+  m_geoElemn = myGhosts()->m_geoElem;
 
   // Set initial conditions for all PDEs
   g_dgpde[d->MeshId()].initialize( myGhosts()->m_geoElem, myGhosts()->m_inpoel,
@@ -772,6 +776,7 @@ DG::reco()
   }
 
   if (g_inputdeck.get< tag::ale, tag::ale >()) meshvelstart();
+  m_initial = 0;
 
   if (rdof > 1)
     // Reconstruct second-order solution and primitive quantities
@@ -1409,6 +1414,7 @@ DG::solve( tk::real newdt )
 // *****************************************************************************
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto is_ale = g_inputdeck.get< tag::ale, tag::ale >();
 
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
@@ -1430,7 +1436,10 @@ DG::solve( tk::real newdt )
   // Update Un
   if (m_stage == 0) {
     m_un = m_u;
-    if (g_inputdeck.get< tag::ale, tag::ale >()) d->UpdateCoordn();
+    if (is_ale) {
+      d->UpdateCoordn();
+      m_geoElemn = myGhosts()->m_geoElem;
+    }
   }
 
   // Explicit or IMEX
@@ -1460,10 +1469,18 @@ DG::solve( tk::real newdt )
     myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
     myGhosts()->m_coord, m_u, m_p, m_meshvel, m_ndof, d->Dt(), m_rhs );
 
+  // Perform ALE mesh data updates
+  if (is_ale) ALEUpdate();
+
   if (!imex_runge_kutta) {
     // Explicit time-stepping using RK3 to discretize time-derivative
     for(std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+
+      // Stage-wise volumes for GCL consistent RK
       auto vole = myGhosts()->m_geoElem(e,0);
+      auto vole_n = m_geoElemn(e,0);
+      auto vole_k = m_geoElemk(e,0);
+
       for(std::size_t c=0; c<neq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
@@ -1471,9 +1488,15 @@ DG::solve( tk::real newdt )
           if(k < m_ndof[e]) {
             auto rmark = c*rdof+k;
             auto mark = c*ndof+k;
-            m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
-              + rkcoef[1][m_stage] * ( m_u(e, rmark)
-                + d->Dt() * m_rhs(e, mark)/ (vole*mass_dubiner[k]));
+
+            auto mm_i = vole * mass_dubiner[k];
+            auto mm_n = vole_n * mass_dubiner[k];
+            auto mm_k = vole_k * mass_dubiner[k];
+            m_u(e, rmark) = (
+              rkcoef[0][m_stage] * mm_n * m_un(e, rmark)
+              + rkcoef[1][m_stage] * ( mm_k * m_u(e, rmark)
+              + d->Dt() * m_rhs(e, mark) )
+              ) / mm_i;
             if(fabs(m_u(e, rmark)) < 1e-16)
               m_u(e, rmark) = 0;
           }
@@ -1499,9 +1522,6 @@ DG::solve( tk::real newdt )
         }
       }
     }
-
-  // Perform ALE mesh data updates
-  if (g_inputdeck.get< tag::ale, tag::ale >()) ALEUpdate();
 
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
@@ -1543,21 +1563,23 @@ DG::ALEUpdate()
   auto d = Disc();
 
   // Advance mesh if ALE is enabled
-  auto& coord = d->Coord();
-  for (std::size_t j=0; j<3; ++j)
+  auto& coord = myGhosts()->m_coord;
+  for (std::size_t j=0; j<3; ++j) {
     for (std::size_t i=0; i<coord[j].size(); ++i)
       coord[j][i] = rkcoef[0][m_stage] * d->Coordn()[j][i]
         + rkcoef[1][m_stage] * ( coord[j][i]
           + d->Dt() * m_meshvel(i,j) );
+  }
+  d->Coord() = coord;
+
+  // Store element volumes at previous stage for GCL consistent RK
+  m_geoElemk = myGhosts()->m_geoElem;
 
   // Update mesh geometry data
   myGhosts()->m_geoFace = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
     myGhosts()->m_fd.Inpofa(), myGhosts()->m_coord);
   myGhosts()->m_geoElem = tk::genGeoElemTet( myGhosts()->m_inpoel,
     myGhosts()->m_coord );
-
-  // Update mass matrix
-  lhs();
 }
 
 void
@@ -1649,6 +1671,7 @@ DG::resizePostAMR(
     m_ndof_NodalExtrm*g_inputdeck.get< tag::ncomp >() ) );
   m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
     m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::rdof >()));
+  m_meshvel.resize( coord[0].size() );
 
   // Resize the buffer vector of nodal extrema
   resizeNodalExtremac();
@@ -1914,8 +1937,14 @@ DG::stage()
   // otherwise prepare for nodal field output
   if (m_stage < m_nstage)
     next();
-  else
+  else {
+    // Ensure new field output file if ALE is enabled
+    if (g_inputdeck.get< tag::ale, tag::ale >()) {
+      Disc()->Itf() = 0;  // Zero field output iteration count if mesh moved
+      ++Disc()->Itr();    // Increase number of iterations with a change in the mesh
+    }
     startFieldOutput( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+  }
 }
 
 void
@@ -2021,9 +2050,20 @@ DG::meshvelstart()
 {
   auto d = Disc();
 
-  // Compute fluid velocity at nodes, and set this as the mesh velocity
-  g_dgpde[d->MeshId()].nodeVelocity( myGhosts()->m_geoElem, myGhosts()->m_esup,
-    myGhosts()->m_coord, m_p, m_meshvel );
+  auto meshveltype = g_inputdeck.get< tag::ale, tag::mesh_velocity >();
+
+  if (meshveltype == ctr::MeshVelocityType::SINE) {
+    // prescribe mesh velocity with a sine function during setup
+    if (m_initial) {
+      for (std::size_t i=0; i<m_meshvel.nunk(); ++i)
+        m_meshvel(i,0) = std::pow( std::sin(myGhosts()->m_coord[0][i]*M_PI), 2.0 );
+    }
+  }
+  else if (meshveltype == ctr::MeshVelocityType::FLUID) {
+    // Compute fluid velocity at nodes, and set this as the mesh velocity
+    g_dgpde[d->MeshId()].nodeVelocity( myGhosts()->m_geoElem,
+      myGhosts()->m_esup, myGhosts()->m_coord, m_p, m_meshvel );
+  }
 
   // TODO: the following API into ALE will be needed for mesh smoothing
   //// Start computing the mesh velocity for ALE
