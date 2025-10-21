@@ -205,7 +205,7 @@ class DG : public CBase_DG {
     const tk::Fields& solution() const { return m_u; }
 
     //! Compute left hand side - no-op for DG
-    void lhs() {};
+    void lhs() {}
 
     //! Unused in DG
     void resized() {}
