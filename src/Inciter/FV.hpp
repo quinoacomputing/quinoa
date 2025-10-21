@@ -162,7 +162,7 @@ class FV : public CBase_FV {
     const tk::Fields& solution() const { return m_u; }
 
     //! Compute left hand side - no-op for FV
-    void lhs() {};
+    void lhs() {}
 
     //! Unused in FV
     void resized() {}
