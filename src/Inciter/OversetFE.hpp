@@ -245,13 +245,14 @@ class OversetFE : public CBase_OversetFE {
       p | m_displacement;
       p | m_displacementn;
       p | m_rotation;
-      p | m_rotationn;
       p | m_centMass;
       p | m_centMassVel;
-      p | m_angVelMesh;
+      p | m_angMomentum;
       p | m_centMassn;
       p | m_centMassVeln;
-      p | m_angVelMeshn;
+      p | m_angMomentumn;
+      p | m_rotationq;
+      p | m_rotationqn;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -397,20 +398,22 @@ class OversetFE : public CBase_OversetFE {
     std::array< tk::real, 3 > m_displacementn;
     //! Total rotation of rigid body
     std::array< tk::real, 3 > m_rotation;
-    //! Total rotation of rigid body at time n
-    std::array< tk::real, 3 > m_rotationn;
     //! Center of mass of rigid body
     std::array< tk::real, 3 > m_centMass;
     //! Velocity of the center of mass of rigid body
     std::array< tk::real, 3 > m_centMassVel;
-    //! Angular velocity of the rigid body
-    tk::real m_angVelMesh;
+    //! Angular momentum of the rigid body
+    std::array< tk::real, 3 > m_angMomentum;
     //! Center of mass of rigid body at time n
     std::array< tk::real, 3 > m_centMassn;
     //! Velocity of the center of mass of rigid body at time n
     std::array< tk::real, 3 > m_centMassVeln;
-    //! Angular velocity of the rigid body at time n
-    tk::real m_angVelMeshn;
+    //! Angular momentum of the rigid body at time n
+    std::array< tk::real, 3 > m_angMomentumn;
+    //! Quaternion representing rotation of the rigid body
+    std::array< tk::real, 4 > m_rotationq;
+    //! Quaternion representing rotation of the rigid body at time n
+    std::array< tk::real, 4 > m_rotationqn;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
