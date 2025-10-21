@@ -60,6 +60,22 @@ constexpr std::size_t NGinit( const std::size_t ndof ) {
          throw std::logic_error("ndof must be one of 1,4,10");
 }
 
+//! Diagonal mass matrix for Dubiner basis functions on a reference tetrahedron
+//! \return Diagonal mass matrix
+constexpr std::array< real, 10 > massMatrixDubiner() {
+  return {{
+    1.0,
+    1.0/10.0,
+    3.0/10.0,
+    3.0/5.0,
+    1.0/35.0,
+    1.0/21.0,
+    1.0/14.0,
+    1.0/7.0,
+    3.0/14.0,
+    3.0/7.0 }};
+}
+
 //! Initialize Gaussian quadrature points locations and weights for a tetrahedron
 void
 GaussQuadratureTet( std::size_t NG,
