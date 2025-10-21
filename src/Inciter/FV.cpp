@@ -61,19 +61,18 @@ FV::FV( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(), g_inputdeck.get< tag::rdof >()*
     g_fvpde[Disc()->MeshId()].nprim() ),
-  m_lhs( m_u.nunk(),
+  m_rhs( m_u.nunk(),
          g_inputdeck.get< tag::ncomp >() ),
-  m_rhs( m_u.nunk(), m_lhs.nprop() ),
   m_npoin( Disc()->Coord()[0].size() ),
   m_diag(),
   m_stage( 0 ),
   m_uc(),
   m_pc(),
   m_initial( 1 ),
-  m_uElemfields( m_u.nunk(), m_lhs.nprop() ),
+  m_uElemfields( m_u.nunk(), m_rhs.nprop() ),
   m_pElemfields(m_u.nunk(),
     m_p.nprop()/g_inputdeck.get< tag::rdof >()),
-  m_uNodefields( m_npoin, m_lhs.nprop() ),
+  m_uNodefields( m_npoin, m_rhs.nprop() ),
   m_pNodefields(m_npoin,
     m_p.nprop()/g_inputdeck.get< tag::rdof >()),
   m_uNodefieldsc(),
@@ -163,7 +162,6 @@ FV::resizeSolVectors()
   m_un.resize( myGhosts()->m_nunk );
   m_srcFlag.resize( myGhosts()->m_nunk );
   m_p.resize( myGhosts()->m_nunk );
-  m_lhs.resize( myGhosts()->m_nunk );
   m_rhs.resize( myGhosts()->m_nunk );
   m_dte.resize( myGhosts()->m_nunk );
 
@@ -195,13 +193,6 @@ FV::setup()
 
   auto d = Disc();
 
-  // Basic error checking on sizes of element geometry data and connectivity
-  Assert( myGhosts()->m_geoElem.nunk() == m_lhs.nunk(),
-    "Size mismatch in FV::setup()" );
-
-  // Compute left-hand side of discrete PDEs
-  lhs();
-
   // Determine elements inside user-defined IC box
   g_fvpde[d->MeshId()].IcBoxElems( myGhosts()->m_geoElem,
     myGhosts()->m_fd.Esuel().size()/4, m_boxelems );
@@ -232,7 +223,7 @@ FV::box( tk::real v, const std::vector< tk::real >& )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  g_fvpde[d->MeshId()].initialize( m_lhs, myGhosts()->m_inpoel,
+  g_fvpde[d->MeshId()].initialize( myGhosts()->m_geoElem, myGhosts()->m_inpoel,
     myGhosts()->m_coord, m_boxelems, d->ElemBlockId(), m_u, d->T(),
     myGhosts()->m_fd.Esuel().size()/4 );
   g_fvpde[d->MeshId()].updatePrimitives( m_u, m_p,
@@ -423,17 +414,6 @@ FV::extractFieldOutput(
   }
 
   ownnod_complete( c );
-}
-
-void
-FV::lhs()
-// *****************************************************************************
-// Compute left-hand side of discrete transport equations
-// *****************************************************************************
-{
-  g_fvpde[Disc()->MeshId()].lhs( myGhosts()->m_geoElem, m_lhs );
-
-  if (!m_initial) stage();
 }
 
 void
@@ -657,7 +637,8 @@ FV::solve( tk::real newdt )
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   const auto steady = g_inputdeck.get< tag::steady_state >();
-  for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+  for (std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+    auto vole = myGhosts()->m_geoElem(e,0);
     for (std::size_t c=0; c<neq; ++c)
     {
       auto dte = d->Dt();
@@ -665,7 +646,7 @@ FV::solve( tk::real newdt )
       auto rmark = c*rdof;
       m_u(e, rmark) =  m_rkcoef[0][m_stage] * m_un(e, rmark)
         + m_rkcoef[1][m_stage] * ( m_u(e, rmark)
-          + dte * m_rhs(e, c)/m_lhs(e, c) );
+          + dte * m_rhs(e, c)/vole );
       // zero out reconstructed dofs of equations using reduced dofs
       if (rdof > 1) {
         for (std::size_t k=1; k<rdof; ++k)
@@ -675,6 +656,7 @@ FV::solve( tk::real newdt )
         }
       }
     }
+  }
 
   // Update primitives based on the evolved solution
   g_fvpde[d->MeshId()].updatePrimitives( m_u, m_p,
@@ -800,7 +782,6 @@ FV::resizePostAMR(
   m_u.resize( nelem );
   m_srcFlag.resize( nelem );
   m_un.resize( nelem );
-  m_lhs.resize( nelem );
   m_rhs.resize( nelem );
 
   myGhosts()->m_fd = FaceData( myGhosts()->m_inpoel, bface,

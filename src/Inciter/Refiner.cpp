@@ -1021,13 +1021,11 @@ Refiner::writeMesh( const std::string& basefilename,
     auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
     auto u = lhs;
     if (scheme == ctr::SchemeType::FV) {
-      g_fvpde[m_meshid].lhs( geoElem, lhs );
-      g_fvpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+      g_fvpde[m_meshid].initialize( geoElem, m_inpoel, m_coord, inbox, elemblockid,
         u, t0, m_inpoel.size()/4 );
     }
     else {
-      g_dgpde[m_meshid].lhs( geoElem, lhs );
-      g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+      g_dgpde[m_meshid].initialize( geoElem, m_inpoel, m_coord, inbox, elemblockid,
         u, t0, m_inpoel.size()/4 );
     }
 
@@ -1548,13 +1546,11 @@ Refiner::nodeinit( std::size_t npoin,
     auto lhs = ue;
     auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
     if (scheme == ctr::SchemeType::FV) {
-    g_fvpde[m_meshid].lhs( geoElem, lhs );
-    g_fvpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+    g_fvpde[m_meshid].initialize( geoElem, m_inpoel, m_coord, inbox, elemblockid,
       ue, t0, esuel.size()/4 );
     }
     else {
-    g_dgpde[m_meshid].lhs( geoElem, lhs );
-    g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+    g_dgpde[m_meshid].initialize( geoElem, m_inpoel, m_coord, inbox, elemblockid,
       ue, t0, esuel.size()/4 );
     }
 
