@@ -19,6 +19,7 @@
 
 #include "Types.hpp"
 #include "Exception.hpp"
+#include <iostream>
 
 // ignore old-style-casts required for lapack/blas calls
 #if defined(__clang__)
@@ -826,6 +827,87 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
             {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
             {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+}
+
+//! \brief Wrapper to multiply two 3x3 matrices
+//! \param[in] A matrix 1
+//! \param[in] B matrix 2
+//! \return A*B
+inline std::array< std::array< tk::real, 3 >, 3 >
+matmult33(const std::array< std::array< tk::real, 3 >, 3 >& A,
+          const std::array< std::array< tk::real, 3 >, 3 >& B)
+{
+  // Unrolled as cblas was giving issues
+  auto AB = A;
+  AB[0][0] = A[0][0]*B[0][0] + A[0][1]*B[1][0] + A[0][2]*B[2][0];
+  AB[0][1] = A[0][0]*B[0][1] + A[0][1]*B[1][1] + A[0][2]*B[2][1];
+  AB[0][2] = A[0][0]*B[0][2] + A[0][1]*B[1][2] + A[0][2]*B[2][2]; 
+  AB[1][0] = A[1][0]*B[0][0] + A[1][1]*B[1][0] + A[1][2]*B[2][0]; 
+  AB[1][1] = A[1][0]*B[0][1] + A[1][1]*B[1][1] + A[1][2]*B[2][1]; 
+  AB[1][2] = A[1][0]*B[0][2] + A[1][1]*B[1][2] + A[1][2]*B[2][2]; 
+  AB[2][0] = A[2][0]*B[0][0] + A[2][1]*B[1][0] + A[2][2]*B[2][0]; 
+  AB[2][1] = A[2][0]*B[0][1] + A[2][1]*B[1][1] + A[2][2]*B[2][1]; 
+  AB[2][2] = A[2][0]*B[0][2] + A[2][1]*B[1][2] + A[2][2]*B[2][2]; 
+  return AB;
+}
+
+//! \brief Multiply 2 quaternions
+//! \param[in] a first quaternion
+//! \param[in] b second quaternion
+//! \return multiplied quaternion
+inline std::array< tk::real, 4 >
+quaternion_mult(const std::array< tk::real, 4 >& a,
+                const std::array< tk::real, 4 >& b)
+{
+  std::array< tk::real, 3 > av{ a[1], a[2], a[3] };
+  std::array< tk::real, 3 > bv{ b[1], b[2], b[3] };
+  auto as = a[0];
+  auto bs = b[0];
+  auto abs = as*bs - dot(av, bv);
+  auto abv = cross(av, bv);
+  for (int i = 0; i < 3; ++i)
+      abv[i] += as*bv[i] + bs*av[i];
+  std::array< tk::real, 4 > ab{abs, abv[0], abv[1], abv[2] };
+  return ab;
+}
+
+//! \brief Obtain the magnitude of a quaternion
+//! \param[in] q quaternion
+//! \return quaternion magnitude
+inline tk::real
+quaternion_mag(const std::array< tk::real, 4 >& q)
+{
+  std::array< tk::real, 3 > v{ q[1], q[2], q[3] };
+  return std::sqrt(q[0]*q[0] + dot(v, v));
+}
+
+//! \brief Convert a rotation quaternion to a rotation matrix
+//! \param[in] q quaternion
+//! \return quaternion magnitude
+inline std::array< std::array< tk::real, 3 >, 3 >
+qtoR(const std::array< tk::real, 4 >& q)
+{
+  std::array< std::array< tk::real, 3 >, 3 > R;
+  std::array< tk::real, 3 > v{ q[1], q[2], q[3] };
+  auto s = q[0];
+  // The conversion for quaternion [s, v_i] is:
+  // vx_{ij} = -e_{ijk} v_k
+  // R_{ij} = delta_{ij} + 2*s*vx_{ij} + 2*vx_{ik}vx_{kj}
+  // e_{ijk} is the Levi-Civita tensor
+  std::array< std::array< tk::real, 3 >, 3 >  vx{
+    {
+      {0.0, -v[2], v[1]},
+      {v[2], 0.0, -v[0]},
+      {-v[1], v[0], 0.0},
+    }};
+
+  auto vxvx = matmult33(vx, vx);
+  for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j){
+      R[i][j] = 2.0*s*vx[i][j] + 2.0*vxvx[i][j];
+      if (i == j) R[i][j] += 1.0;
+    }
+  return R;
 }
 
 } // tk::
