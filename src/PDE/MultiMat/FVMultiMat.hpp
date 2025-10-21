@@ -29,7 +29,6 @@
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Initialize.hpp"
-#include "Integrate/Mass.hpp"
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
@@ -215,16 +214,6 @@ class MultiMat {
           }
         }
       }
-    }
-
-    //! Compute the left hand side block-diagonal mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto nelem = geoElem.nunk();
-      for (std::size_t e=0; e<nelem; ++e)
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          l(e, c) = geoElem(e,0);
     }
 
     //! Update the primitives for this PDE system

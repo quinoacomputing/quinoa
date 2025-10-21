@@ -29,7 +29,6 @@
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Initialize.hpp"
-#include "Integrate/Mass.hpp"
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
@@ -167,7 +166,7 @@ class MultiSpecies {
     }
 
     //! Initialize the compressible flow equations, prepare for time integration
-    //! \param[in] L Block diagonal mass matrix
+    //! \param[in] geoElem Element geometry array
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] inbox List of elements at which box user ICs are set for
@@ -177,7 +176,7 @@ class MultiSpecies {
     //! \param[in,out] unk Array of unknowns
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
-    void initialize( const tk::Fields& L,
+    void initialize( const tk::Fields& geoElem,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
@@ -187,7 +186,7 @@ class MultiSpecies {
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_ncomp, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_ncomp, m_mat_blk, geoElem, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -259,14 +258,6 @@ class MultiSpecies {
       densityConstr.resize(0);
     }
 
-    //! Compute the left hand side block-diagonal mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto ndof = g_inputdeck.get< tag::ndof >();
-      tk::mass( m_ncomp, ndof, geoElem, l );
-    }
-
     //! Update the interface cells to first order dofs. No-op.
     // //! \param[in] unk Array of unknowns
     // //! \param[in] nielem Number of internal elements
@@ -279,7 +270,6 @@ class MultiSpecies {
 
     //! Update the primitives for this PDE system.
     //! \param[in] unk Array of unknowns
-    //! \param[in] L The left hand side block-diagonal mass matrix
     //! \param[in] geoElem Element geometry array
     //! \param[in,out] prim Array of primitives
     //! \param[in] nielem Number of internal elements
@@ -289,7 +279,6 @@ class MultiSpecies {
     //!   in the Riemann solver. See for eg. /PDE/Riemann/AUSMMultiSpecies.hpp,
     //!   where temperature is independently reconstructed.
     void updatePrimitives( const tk::Fields& unk,
-                           const tk::Fields& L,
                            const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem,
@@ -305,6 +294,8 @@ class MultiSpecies {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( prim.nprop() == rdof*m_nprim, "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
+
+      auto mass_m = tk::massMatrixDubiner();
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -326,6 +317,8 @@ class MultiSpecies {
         // Local degree of freedom
         auto dof_el = ndofel[e];
 
+        auto vole = geoElem(e, 0);
+
         // Loop over quadrature points in element e
         for (std::size_t igp=0; igp<ng; ++igp)
         {
@@ -333,7 +326,7 @@ class MultiSpecies {
           auto B = tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
             coordgp[2][igp] );
 
-          auto w = wgp[igp] * geoElem(e, 0);
+          auto w = wgp[igp] * vole;
 
           auto state = tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B );
 
@@ -372,7 +365,7 @@ class MultiSpecies {
           auto rmark = k * rdof;
           for(std::size_t idof = 0; idof < dof_el; idof++)
           {
-            prim(e, rmark+idof) = R[mark+idof] / L(e, mark+idof);
+            prim(e, rmark+idof) = R[mark+idof] / (mass_m[idof]*vole);
           }
         }
       }

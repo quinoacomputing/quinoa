@@ -22,7 +22,7 @@
 
 #include "Basis.hpp"
 #include "Vector.hpp"
-#include "Mass.hpp"
+#include "Quadrature.hpp"
 
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
@@ -872,7 +872,8 @@ tk::TaylorToDubinerRefEl( ncomp_t ncomp,
 {
   auto vol = 1.0/6.0;
 
-  auto M = massMatrixDubiner(ndof, vol);
+  auto M = tk::massMatrixDubiner();
+  for (auto& mi : M) mi *= vol;
 
   // 1. Get rhs for L2-projection
   // Quadrature setup
