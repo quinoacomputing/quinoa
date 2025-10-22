@@ -92,7 +92,8 @@ SmallShearSolid::pressure(
   tk::real arhoE,
   tk::real alpha,
   std::size_t /*imat*/,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
 //!   and the inverse deformation gradient tensor using the SmallShearSolid
@@ -117,7 +118,7 @@ SmallShearSolid::pressure(
 {
   // obtain elastic contribution to energy
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2, damage);
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -153,7 +154,8 @@ std::array< std::array< tk::real, 3 >, 3 >
 SmallShearSolid::CauchyStress(
   tk::real alpha,
   std::size_t /*imat*/,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate the elastic Cauchy stress tensor from the material
 //!   inverse deformation gradient tensor using the SmallShearSolid EOS
@@ -172,10 +174,10 @@ SmallShearSolid::CauchyStress(
 
   // obtain elastic contribution to energy
   tk::real eps2;
-  elasticEnergy(defgrad, eps2);
+  elasticEnergy(defgrad, eps2, damage);
 
   // p_mean
-  auto pmean = - alpha * m_mu * eps2;
+  auto pmean = - alpha * (1.0-damage) * m_mu * eps2;
 
   // Volumetric component of Cauchy stress tensor
   asig[0][0] = -pmean;
@@ -197,7 +199,7 @@ SmallShearSolid::CauchyStress(
   // Add deviatoric component of Cauchy stress tensor
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
-      asig[i][j] += m_mu*alpha*devbt[i][j];
+      asig[i][j] += (1.0-damage) * m_mu*alpha*devbt[i][j];
   }
 
   return asig;
@@ -209,7 +211,8 @@ SmallShearSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/ ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/,
+  tk::real damage ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -544,7 +547,7 @@ SmallShearSolid::soundspeed(
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
   auto al_eff = std::max( 1.0e-14, alpha );
-  tk::real a = (4.0/3.0) * m_mu * al_eff / arho;
+  tk::real a = (4.0/3.0) * (1.0-damage) * m_mu * al_eff / arho;
 
   // hydrodynamic contribution
   auto p_eff = std::max( 1.0e-15, apr+(al_eff*m_pstiff) );
@@ -571,7 +574,8 @@ tk::real
 SmallShearSolid::shearspeed(
   tk::real arho,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  tk::real damage ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -588,7 +592,7 @@ SmallShearSolid::shearspeed(
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
   auto al_eff = std::max( 1e-14, alpha );
-  tk::real a = std::sqrt(al_eff*m_mu/arho);
+  tk::real a = std::sqrt(al_eff*(1.0-damage)*m_mu/arho);
 
   // check shear-wave speed divergence
   if (!std::isfinite(a)) {
@@ -611,7 +615,8 @@ SmallShearSolid::totalenergy(
   tk::real w,
   tk::real apr,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -634,7 +639,7 @@ SmallShearSolid::totalenergy(
     (u*u + v*v + w*w);
   // obtain elastic contribution to energy
   tk::real eps2;
-  tk::real arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  tk::real arhoEe = alpha*elasticEnergy(defgrad, eps2, damage);
 
   return (arhoEh + arhoEe);
 }
@@ -647,7 +652,8 @@ SmallShearSolid::temperature(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy
@@ -667,7 +673,7 @@ SmallShearSolid::temperature(
 {
   // obtain elastic contribution to energy
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2, damage);
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -694,7 +700,8 @@ SmallShearSolid::min_eff_pressure(
 tk::real
 SmallShearSolid::elasticEnergy(
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
-  tk::real& eps2 ) const
+  tk::real& eps2,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate elastic contribution to material energy from the material
 //!   density, and deformation gradient tensor
@@ -712,7 +719,7 @@ SmallShearSolid::elasticEnergy(
   eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
 
   // compute elastic energy
-  auto rhoEe = m_mu * eps2;
+  auto rhoEe = (1.0-damage) * m_mu * eps2;
 
   return rhoEe;
 }

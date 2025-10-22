@@ -2870,6 +2870,9 @@ correctLimConservMultiMat(
         auto arhomat = state[densityIdx(nmat, imat)];
         auto apremat = state[ncomp+pressureIdx(nmat, imat)];
         auto gmat = getDeformGrad(nmat, imat, state);
+        const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+        auto nsld = numSolids(nmat, solidx);
+        auto damage = state[damageIdx(nmat, nsld, imat)]/arhomat;
         s[pressureIdx(nmat,imat)] =
           mat_blk[imat].compute< EOS::totalenergy >( arhomat, vel[0], vel[1],
           vel[2], apremat, alphamat, gmat );

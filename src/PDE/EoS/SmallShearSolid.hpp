@@ -31,7 +31,8 @@ class SmallShearSolid {
     //!   material density, and deformation gradient tensor
     tk::real elasticEnergy(
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
-      tk::real& eps2 ) const;
+      tk::real& eps2,
+      tk::real damage/*=0.0*/ ) const;
 
   public:
     //! Default constructor
@@ -56,7 +57,8 @@ class SmallShearSolid {
       tk::real arhoE,
       tk::real alpha=1.0,
       std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+      tk::real damage=0.0 ) const;
 
     //! Calculate cold-compression component of pressure (no-op)
     tk::real pressure_coldcompr(
@@ -70,7 +72,8 @@ class SmallShearSolid {
     CauchyStress(
       tk::real alpha,
       std::size_t /*imat*/,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad,
+      tk::real damage=0.0 ) const;
 
     //! Calculate speed of sound from the material density and material pressure
     tk::real soundspeed(
@@ -78,13 +81,15 @@ class SmallShearSolid {
       tk::real apr,
       tk::real alpha=1.0,
       std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
+      tk::real damage=0.0 ) const;
 
     //! Calculate speed of shear waves
     tk::real shearspeed(
       tk::real arho,
       tk::real alpha=1.0,
-      std::size_t imat=0 ) const;
+      std::size_t imat=0,
+      tk::real damage=0.0 ) const;
 
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
@@ -95,7 +100,8 @@ class SmallShearSolid {
       tk::real w,
       tk::real apr,
       tk::real alpha=1.0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+      tk::real damage=0.0 ) const;
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
@@ -106,7 +112,8 @@ class SmallShearSolid {
       tk::real w,
       tk::real arhoE,
       tk::real alpha=1.0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+      tk::real damage=0.0 ) const;
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(
