@@ -40,7 +40,7 @@ struct AUSM {
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {},
-        const tk::real = 0 )
+        const tk::real wn = 0 )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
@@ -116,6 +116,9 @@ struct AUSM {
     auto vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
     auto vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 
+    vnl -= wn;
+    vnr -= wn;
+
     // Mach numbers
     auto ml = vnl/ac12;
     auto mr = vnr/ac12;
@@ -153,7 +156,11 @@ struct AUSM {
       flx[volfracIdx(nmat, k)] = l_plus*al_l[k] + l_minus*al_r[k];
       flx[densityIdx(nmat, k)] = l_plus*u[0][densityIdx(nmat, k)]
                               + l_minus*u[1][densityIdx(nmat, k)];
-      flx[energyIdx(nmat, k)] = l_plus*hml[k] + l_minus*hmr[k];
+      // Energy flux for direct ALE using AUSM-ALE flux. For details, see
+      // Luo, H., Baum, J. D., & Löhner, R. (2004). On the computation of
+      // multi-material flows using ALE formulation. Journal of Computational
+      // Physics, 194(1), 304-328.
+      flx[energyIdx(nmat, k)] = l_plus*hml[k] + l_minus*hmr[k] + p12*wn;
     }
 
     for (std::size_t idir=0; idir<3; ++idir)
@@ -171,7 +178,10 @@ struct AUSM {
       flx.push_back( l_plus*pml[k] + l_minus*pmr[k] );
 
     // Store Riemann velocity
-    flx.push_back( vriem );
+    // Note that mesh velocity must be added back into the Riemann velocity,
+    // since the non-conservative term is not based on relative velocity, but
+    // on fluid velocity.
+    flx.push_back( vriem+wn );
 
     Assert( flx.size() == (3*nmat+3+nmat+1), "Size of multi-material flux "
             "vector incorrect" );

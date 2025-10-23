@@ -1564,13 +1564,22 @@ DG::ALEUpdate()
 
   // Advance mesh if ALE is enabled
   auto& coord = myGhosts()->m_coord;
+  auto& disc_coord = d->Coord();
+  auto dc_size = disc_coord[0].size();
   for (std::size_t j=0; j<3; ++j) {
-    for (std::size_t i=0; i<coord[j].size(); ++i)
+    for (std::size_t i=0; i<coord[j].size(); ++i) {
       coord[j][i] = rkcoef[0][m_stage] * d->Coordn()[j][i]
         + rkcoef[1][m_stage] * ( coord[j][i]
           + d->Dt() * m_meshvel(i,j) );
+
+      // separately update d->Coord() because it has different size
+      if (i<dc_size) {
+        disc_coord[j][i] = rkcoef[0][m_stage] * d->Coordn()[j][i]
+          + rkcoef[1][m_stage] * ( disc_coord[j][i]
+            + d->Dt() * m_meshvel(i,j) );
+      }
+    }
   }
-  d->Coord() = coord;
 
   // Store element volumes at previous stage for GCL consistent RK
   m_geoElemk = myGhosts()->m_geoElem;
@@ -2063,6 +2072,22 @@ DG::meshvelstart()
     // Compute fluid velocity at nodes, and set this as the mesh velocity
     g_dgpde[d->MeshId()].nodeVelocity( myGhosts()->m_geoElem,
       myGhosts()->m_esup, myGhosts()->m_coord, m_p, m_meshvel );
+
+    // Remove mesh velocity in directions not specified
+    const auto& ale_dirn = g_inputdeck.get< tag::ale, tag::mesh_motion >();
+    std::vector< std::size_t > no_movt;
+    for (std::size_t j=0; j<3; j++) {
+      bool is_present(false);
+      for (auto i : ale_dirn) {
+        if (i==j) is_present = true;
+      }
+      if (!is_present) no_movt.push_back(j);
+    }
+    for (std::size_t i=0; i<m_meshvel.nunk(); ++i) {
+      for (auto j : no_movt) {
+        m_meshvel(i,j) = 0.0;
+      }
+    }
   }
 
   // TODO: the following API into ALE will be needed for mesh smoothing
