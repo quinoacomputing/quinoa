@@ -1585,10 +1585,33 @@ DG::ALEUpdate()
   m_geoElemk = myGhosts()->m_geoElem;
 
   // Update mesh geometry data
-  myGhosts()->m_geoFace = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
-    myGhosts()->m_fd.Inpofa(), myGhosts()->m_coord);
-  myGhosts()->m_geoElem = tk::genGeoElemTet( myGhosts()->m_inpoel,
-    myGhosts()->m_coord );
+
+  // 1. recompute internal + physical boundary faces
+  auto gf = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
+    myGhosts()->m_fd.Inpofa(), myGhosts()->m_coord );
+  for (std::size_t f=0; f<myGhosts()->m_fd.Nipfac(); ++f)
+    for (std::size_t i=0; i<gf.nprop(); ++i)
+      myGhosts()->m_geoFace(f,i) = gf(f,i);
+
+  // 2. recompute chare-boundary faces [Nipfac .. nfac)
+  const auto& esuf = myGhosts()->m_fd.Esuf();
+  for (std::size_t f = myGhosts()->m_fd.Nipfac(); f < esuf.size()/2; ++f) {
+    // left (inner) element id for this face:
+    std::size_t el = static_cast<std::size_t>(esuf[2*f]);
+    // rebuild t in *unreversed* order so addGeoFace() can reverse it:
+    tk::UnsMesh::Face t{{
+      d->Gid()[myGhosts()->m_fd.Inpofa()[3*f+2]],  // A
+      d->Gid()[myGhosts()->m_fd.Inpofa()[3*f+1]],  // B
+      d->Gid()[myGhosts()->m_fd.Inpofa()[3*f+0]]   // C
+    }};
+    std::array<std::size_t,2> id{{f, el}};
+    myGhosts()->addGeoFace(t, id);  // writes m_geoFace(f, :)
+  }
+
+  // TODO: begin updating myGhosts()->m_geoElem
+  //myGhosts()->m_geoElem = tk::genGeoElemTet( myGhosts()->m_inpoel,
+  //  myGhosts()->m_coord );
+
 }
 
 void

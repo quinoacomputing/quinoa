@@ -179,6 +179,11 @@ class Ghosts : public CBase_Ghosts {
       const std::unordered_map< std::size_t, std::vector< tk::real > >&
         nodeBndCells );
 
+    //! Fill face-geometry data along chare boundary
+    void addGeoFace(
+      const tk::UnsMesh::Face& t,
+      const std::array< std::size_t, 2 >& id );
+
     /** @name Pack/unpack (Charm++ serialization) routines */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -287,11 +292,6 @@ class Ghosts : public CBase_Ghosts {
       const std::array< std::size_t, 2 >& id,
       std::size_t ghostid,
       const tk::UnsMesh::Face& t );
-
-    //! Fill face-geometry data along chare boundary
-    void addGeoFace(
-      const tk::UnsMesh::Face& t,
-      const std::array< std::size_t, 2 >& id );
 };
 
 } // inciter::
