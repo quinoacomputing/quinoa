@@ -1587,11 +1587,11 @@ DG::ALEUpdate()
   // Update mesh geometry data
 
   // 1. recompute internal + physical boundary faces
-  auto gf = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
+  auto gf_temp = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
     myGhosts()->m_fd.Inpofa(), myGhosts()->m_coord );
   for (std::size_t f=0; f<myGhosts()->m_fd.Nipfac(); ++f)
-    for (std::size_t i=0; i<gf.nprop(); ++i)
-      myGhosts()->m_geoFace(f,i) = gf(f,i);
+    for (std::size_t i=0; i<gf_temp.nprop(); ++i)
+      myGhosts()->m_geoFace(f,i) = gf_temp(f,i);
 
   // 2. recompute chare-boundary faces [Nipfac .. nfac)
   const auto& esuf = myGhosts()->m_fd.Esuf();
@@ -1608,9 +1608,14 @@ DG::ALEUpdate()
     myGhosts()->addGeoFace(t, id);  // writes m_geoFace(f, :)
   }
 
-  // TODO: begin updating myGhosts()->m_geoElem
-  //myGhosts()->m_geoElem = tk::genGeoElemTet( myGhosts()->m_inpoel,
-  //  myGhosts()->m_coord );
+  // 3. recompute element geometries for owned elements
+  auto ge_temp = tk::genGeoElemTet( myGhosts()->m_inpoel,
+    d->Coord()/*myGhosts()->m_coord*/ );
+  for (std::size_t e=0; e<ge_temp.nunk(); ++e)
+    for (std::size_t i=0; i<ge_temp.nprop(); ++i)
+      myGhosts()->m_geoElem(e,i) = ge_temp(e,i);
+  // TODO: update myGhosts()->m_geoElem for ghost elements and node-neighbors
+  // across chare boundaries
 
 }
 
