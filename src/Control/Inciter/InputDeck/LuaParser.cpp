@@ -820,24 +820,18 @@ LuaParser::storeInputDeck(
       Throw("Only 3 or 6 rigid body DOFs supported.");
 
     // symmetry plane
-    storeIfSpecd< std::size_t >(
+    storeVecIfSpecd< tk::real >(
       lua_ideck["rigid_body_motion"], "symmetry_plane",
-      rbm_deck.get< tag::symmetry_plane >(), 0);
-    if (rbm_deck.get< tag::symmetry_plane >() > 3)
-      Throw("Rigid body motion symmetry plane must be 1(x), 2(y), or 3(z).");
-    if (rbm_deck.get< tag::symmetry_plane >() == 0 &&
-      rbm_deck.get< tag::rigid_body_dof >() == 3)
-      Throw(
-        "Rigid body motion symmetry plane must be specified for 3 DOF motion.");
-    // reset to 0-based indexing
-    rbm_deck.get< tag::symmetry_plane >() -= 1;
+      rbm_deck.get< tag::symmetry_plane >(), { 0 } );
+    if (rbm_deck.get< tag::symmetry_plane >().size() != 3 )
+      Throw("A vector of size 3 must be supplied for 3 DOF rigid body motion.");
   }
   else {
     // TODO: remove double-specification of defaults
     auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
     rbm_deck.get< tag::rigid_body_movt >() = false;
     rbm_deck.get< tag::rigid_body_dof >() = 0;
-    rbm_deck.get< tag::symmetry_plane >() = 0;
+    rbm_deck.get< tag::symmetry_plane >() = {};
   }
 
   // Field output block

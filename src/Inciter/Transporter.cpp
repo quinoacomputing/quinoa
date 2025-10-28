@@ -274,9 +274,11 @@ Transporter::info( const InciterPrint& print )
   if (rbmotion.get< tag::rigid_body_movt >()) {
     const auto& rbdof = rbmotion.get< tag::rigid_body_dof >();
     print.item( "Rigid body motion DOF", rbdof );
-    if (rbdof == 3)
-      print.item( "Rigid body 3-DOF symmetry plane",
-        rbmotion.get< tag::symmetry_plane >() );
+    if (rbdof == 3) {
+      const auto& sym_dir = rbmotion.get< tag::symmetry_plane >();
+      print.item( "Rigid body 3-DOF symmetry plane vector",
+        tk::parameters(sym_dir) );
+    }
   }
 
   // Print out info on settings of selected partial differential equations
