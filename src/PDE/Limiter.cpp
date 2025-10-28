@@ -2542,7 +2542,7 @@ interfaceIndicator( std::size_t nmat,
   bool intInd = false;
 
   // limits under which compression is to be performed
-  auto al_eps = std::min(1e-08, 1e4*alphamin); // limit this value at 1e-8
+  auto al_eps = 1e2*alphamin;
   auto loLim = 2.0 * al_eps;
   auto hiLim = 1.0 - loLim;
 
