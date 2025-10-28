@@ -147,9 +147,8 @@ class MultiMat {
 
       // volume fractions are P0Pm (ndof = 1) for multi-material simulations
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      if(nmat > 1)
-        for (std::size_t k=0; k<nmat; ++k)
-          numEqDof[volfracIdx(nmat, k)] = 1;
+      for (std::size_t k=0; k<nmat; ++k)
+        numEqDof[volfracIdx(nmat, k)] = 1;
     }
 
     //! Determine elements that lie inside the user-defined IC box

@@ -148,6 +148,7 @@ struct HLLCMultiMat {
     // ALE mesh motion relative normal velocity
     vnl[0] -= wn;
     vnr[0] -= wn;
+    // TODO: add ALE compatibility to solids
 
     // Signal velocities
     auto Sl = std::min((vnl[0]-acl), (vnr[0]-acr));
