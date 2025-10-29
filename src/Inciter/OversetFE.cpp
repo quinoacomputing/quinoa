@@ -1273,13 +1273,24 @@ OversetFE::solve()
     // Remove symmetry directions if 3 DOF motion
     if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_dof >()
       == 3) {
-
-      auto sym_dir =
+      
+      // normal vector to symmetry plane (no restrictions on if it's a unit
+      // vector, convert it here)
+      auto sym_dir_vec =
         g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
+      std::array< tk::real, 3 > sym_dir;
+      sym_dir[0] = sym_dir_vec[0];
+      sym_dir[1] = sym_dir_vec[1];
+      sym_dir[2] = sym_dir_vec[2];
+      auto sym_dir_mag = std::sqrt(tk::dot(sym_dir, sym_dir));
+      for (std::size_t i=0; i<3; ++i) sym_dir[i] /= sym_dir_mag;
 
-      m_surfForce[sym_dir] = 0.0;
+      // symmetry is enforced on forces and torques
       for (std::size_t i=0; i<3; ++i) {
-        if (i != sym_dir) m_surfTorque[i] = 0.0;
+        // Subtract out components of force along sym_dir
+        m_surfForce[i] -= tk::dot(m_surfForce, sym_dir) * sym_dir[i];
+        // Only keep components of torque along sym_dir
+        m_surfTorque[i] = tk::dot(m_surfTorque, sym_dir) * sym_dir[i];
       }
     }
 
@@ -1306,6 +1317,8 @@ OversetFE::solve()
       // Rotation operations: see the following thread for a detailed
       // explanation
       // https://physics.stackexchange.com/questions/790061/calculate-rotation-from-net-torque-and-inertia-matrix
+      // Since the kinematic equations no longer apply, an in-stage leap frog
+      // step is used to advance rotation of the mesh
 
       // copy MoI vector to array for use with vector operations
       std::array < std::array < tk::real, 3 >, 3 >

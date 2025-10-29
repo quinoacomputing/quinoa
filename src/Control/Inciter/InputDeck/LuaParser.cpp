@@ -825,6 +825,12 @@ LuaParser::storeInputDeck(
       rbm_deck.get< tag::symmetry_plane >(), { 0 } );
     if (rbm_deck.get< tag::symmetry_plane >().size() != 3 )
       Throw("A vector of size 3 must be supplied for 3 DOF rigid body motion.");
+
+    //! TODO:
+    // If sym_dir is not an eigenvector of the moment_of_inertia tensor, it
+    // is possible there may be rotation of the body about axes other than
+    // the axis of symmetry. The user may be expecting this, but provide an
+    // initial warning in case they are not.
   }
   else {
     // TODO: remove double-specification of defaults

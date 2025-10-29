@@ -19,7 +19,6 @@
 
 #include "Types.hpp"
 #include "Exception.hpp"
-#include <iostream>
 
 // ignore old-style-casts required for lapack/blas calls
 #if defined(__clang__)
