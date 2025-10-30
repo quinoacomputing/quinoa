@@ -116,6 +116,7 @@ struct AUSM {
     auto vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
     auto vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 
+    // relative velocity (v_fluid-v_mesh) based mach etc
     vnl -= wn;
     vnr -= wn;
 
@@ -149,6 +150,7 @@ struct AUSM {
     // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
     auto l_minus = 0.5 * (vriem - std::fabs(vriem) - 2.0*md);
+    // -------------------------------------------------------------------------
 
     // Conservative fluxes
     for (std::size_t k=0; k<nmat; ++k)
@@ -160,7 +162,8 @@ struct AUSM {
       // Luo, H., Baum, J. D., & Löhner, R. (2004). On the computation of
       // multi-material flows using ALE formulation. Journal of Computational
       // Physics, 194(1), 304-328.
-      flx[energyIdx(nmat, k)] = l_plus*hml[k] + l_minus*hmr[k] + p12*wn;
+      flx[energyIdx(nmat, k)] = l_plus*hml[k] + l_minus*hmr[k]
+                             + (msl[2]*pml[k] + msr[3]*pmr[k] + pu) * wn;
     }
 
     for (std::size_t idir=0; idir<3; ++idir)
