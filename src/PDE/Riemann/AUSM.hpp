@@ -176,9 +176,13 @@ struct AUSM {
     l_plus = l_plus/( vriem + std::copysign(1.0e-12,vriem) );
     l_minus = l_minus/( vriem + std::copysign(1.0e-12,vriem) );
 
+    // Partition the pressure according to vriem and wn
+    auto wn_ratio = std::abs(wn)/( std::abs(vriem)+std::abs(wn)+1.0e-12 );
+
     // Store Riemann-advected partial pressures
     for (std::size_t k=0; k<nmat; ++k)
-      flx.push_back( l_plus*pml[k] + l_minus*pmr[k] );
+      flx.push_back( (1.0-wn_ratio)*(l_plus*pml[k] + l_minus*pmr[k])
+        + (wn_ratio)*(msl[2]*pml[k] + msr[3]*pmr[k]) );
 
     // Store Riemann velocity
     // Note that mesh velocity must be added back into the Riemann velocity,
