@@ -114,10 +114,6 @@ class FVPDE {
       const std::size_t nielem ) const
     { self->initialize( L, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
-    //! Public interface to computing the left-hand side matrix for the diff eq
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
-    { self->lhs( geoElem, l ); }
-
     //! Public interface to updating the primitives for the diff eq
     void updatePrimitives( const tk::Fields& unk,
                            tk::Fields& prim,
@@ -277,7 +273,6 @@ class FVPDE {
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
-      virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void updatePrimitives( const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t ) const = 0;
@@ -376,8 +371,6 @@ class FVPDE {
         const std::size_t nielem )
       const override { data.initialize( L, inpoel, coord, inbox, elemblkid, unk,
         t, nielem ); }
-      void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
-      { data.lhs( geoElem, l ); }
       void updatePrimitives( const tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem )

@@ -7,7 +7,14 @@ implemented in Quinoa. The papers are grouped by executables.
 @section papers_inciter Inciter
 
 - @m_div{m-text m-strong}
-  W. Li, A. Pandare, H. Luo, J. Bakosi, J. Waltz, **[Robust 3D multi-material hydrodynamics using discontinuous Galerkin methods](https://doi.org/10.1002/fld.5340)**, International Journal for Numerical Methods in Fluids, 2024.
+  A. Pandare, J. Edwards, **[Stable low diffusion flux splitting schemes on unstructured meshes](https://doi.org/10.1016/j.jcp.2025.114415)**, Journal of Computational Physics, 543: 114415, 2025.
+  @m_enddiv
+
+  This paper includes the derivation of the carbuncle-fixes implemented in
+  @ref inciter_mm "Quinoa's" flux vector splitting schemes.
+
+- @m_div{m-text m-strong}
+  W. Li, A. Pandare, H. Luo, J. Bakosi, J. Waltz, **[Robust 3D multi-material hydrodynamics using discontinuous Galerkin methods](https://doi.org/10.1002/fld.5340)**, International Journal for Numerical Methods in Fluids, 97(2), 2024.
   @m_enddiv
 
   This paper includes the complete description of the discontinuous Galerkin

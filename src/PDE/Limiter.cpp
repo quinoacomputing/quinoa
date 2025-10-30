@@ -24,7 +24,6 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "PrefIndicator.hpp"
 #include "Reconstruction.hpp"
-#include "Integrate/Mass.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "MultiSpecies/Mixture/Mixture.hpp"
@@ -2543,7 +2542,7 @@ interfaceIndicator( std::size_t nmat,
   bool intInd = false;
 
   // limits under which compression is to be performed
-  auto al_eps = std::min(1e-08, 1e4*alphamin); // limit this value at 1e-8
+  auto al_eps = 1e2*alphamin;
   auto loLim = 2.0 * al_eps;
   auto hiLim = 1.0 - loLim;
 
@@ -2803,11 +2802,10 @@ correctLimConservMultiMat(
   const auto intsharp = inciter::g_inputdeck.get< tag::multimat,
     tag::intsharp >();
 
+  auto L = tk::massMatrixDubiner();
+
   for (std::size_t e=0; e<nelem; ++e) {
-    // Here we pre-compute the right-hand-side vector. The reason that the
-    // lhs in DG.cpp is not used is that the size of this vector in this
-    // projection procedure should be rdof instead of ndof.
-    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
+    auto vole = geoElem(e,0);
 
     // The right-hand side vector is sized as nprim, i.e. the primitive quantity
     // vector. However, it stores the consistently obtained values of evolved
@@ -2839,7 +2837,7 @@ correctLimConservMultiMat(
       auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
                                coordgp[2][igp] );
 
-      auto w = wgp[igp] * geoElem(e, 0);
+      auto w = wgp[igp] * vole;
 
       // Evaluate the solution at quadrature point
       auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
@@ -2887,14 +2885,14 @@ correctLimConservMultiMat(
     for(std::size_t imat = 0; imat < nmat; imat++) {
       for(std::size_t idof = 1; idof < rdof; idof++)
         unk(e, energyDofIdx(nmat, imat, rdof, idof)) =
-          R[pressureDofIdx(nmat,imat,rdof,idof)] / L[idof];
+          R[pressureDofIdx(nmat,imat,rdof,idof)] / (vole*L[idof]);
     }
 
     // Update the high order dofs of the bulk momentum
     for(std::size_t idir = 0; idir < 3; idir++) {
       for(std::size_t idof = 1; idof < rdof; idof++)
         unk(e, momentumDofIdx(nmat, idir, rdof, idof)) =
-          R[velocityDofIdx(nmat,idir,rdof,idof)] / L[idof];
+          R[velocityDofIdx(nmat,idir,rdof,idof)] / (vole*L[idof]);
     }
   }
 }
@@ -2931,11 +2929,10 @@ correctLimConservMultiSpecies(
   std::size_t ncomp = unk.nprop()/rdof;
   std::size_t nprim = prim.nprop()/rdof;
 
+  auto L = tk::massMatrixDubiner();
+
   for (std::size_t e=0; e<nelem; ++e) {
-    // Here we pre-compute the right-hand-side vector. The reason that the
-    // lhs in DG.cpp is not used is that the size of this vector in this
-    // projection procedure should be rdof instead of ndof.
-    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
+    auto vole = geoElem(e,0);
 
     // The right-hand side vector is sized as nprim, i.e. the primitive quantity
     // vector. However, it stores the consistently obtained values of evolved
@@ -2965,7 +2962,7 @@ correctLimConservMultiSpecies(
       auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
                                coordgp[2][igp] );
 
-      auto w = wgp[igp] * geoElem(e, 0);
+      auto w = wgp[igp] * vole;
 
       // Evaluate the solution at quadrature point
       auto state = evalPolynomialSol(mat_blk, 0, ncomp, nprim,
@@ -3003,7 +3000,7 @@ correctLimConservMultiSpecies(
     // Update the high order dofs of the total energy
     for(std::size_t idof = 1; idof < rdof; idof++)
       unk(e, multispecies::energyDofIdx(nspec,0,rdof,idof)) =
-        R[multispecies::temperatureDofIdx(nspec,0,rdof,idof)] / L[idof];
+        R[multispecies::temperatureDofIdx(nspec,0,rdof,idof)] / (vole*L[idof]);
   }
 }
 

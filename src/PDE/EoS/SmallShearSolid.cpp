@@ -543,10 +543,11 @@ SmallShearSolid::soundspeed(
   // Approximated elastic contribution, from Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
-  tk::real a = (4.0/3.0) * m_mu * alpha / arho;
+  auto al_eff = std::max( 1.0e-14, alpha );
+  tk::real a = (4.0/3.0) * m_mu * al_eff / arho;
 
   // hydrodynamic contribution
-  auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
+  auto p_eff = std::max( 1.0e-15, apr+(al_eff*m_pstiff) );
   a += m_gamma * p_eff / arho;
 
   // Compute square root
@@ -586,7 +587,8 @@ SmallShearSolid::shearspeed(
   // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
-  tk::real a = std::sqrt(alpha*m_mu/arho);
+  auto al_eff = std::max( 1e-14, alpha );
+  tk::real a = std::sqrt(al_eff*m_mu/arho);
 
   // check shear-wave speed divergence
   if (!std::isfinite(a)) {

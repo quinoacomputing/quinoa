@@ -33,6 +33,7 @@
 #include "FieldOutput.hpp"
 #include "ChareStateCollector.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
+#include "Integrate/Quadrature.hpp"
 
 #include <fstream>
 
@@ -84,6 +85,7 @@ static const std::array< std::array< tk::real, 3 >, 2 >
 static const std::array< std::array< tk::real, 3 >, 2>
   impl_rkcoef{{ {{ 0.0, a32_impl, b2 }},
                 {{ a22_impl, a33_impl, b3}} }};
+static const std::array< tk::real, 10 > mass_dubiner( tk::massMatrixDubiner() );
 
 } // inciter::
 
@@ -115,11 +117,10 @@ DG::DG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(), g_inputdeck.get< tag::rdof >()*
     g_dgpde[Disc()->MeshId()].nprim() ),
-  m_lhs( m_u.nunk(),
+  m_rhs( m_u.nunk(),
          g_inputdeck.get< tag::ndof >()*
          g_inputdeck.get< tag::ncomp >() ),
-  m_rhs( m_u.nunk(), m_lhs.nprop() ),
-  m_rhsprev( m_u.nunk(), m_lhs.nprop() ),
+  m_rhsprev( m_u.nunk(), m_rhs.nprop() ),
   m_stiffrhs( m_u.nunk(), g_inputdeck.get< tag::ndof >()*
               g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_stiffrhsprev( m_u.nunk(), g_inputdeck.get< tag::ndof >()*
@@ -245,7 +246,6 @@ DG::resizeSolVectors()
   m_u.resize( myGhosts()->m_nunk );
   m_un.resize( myGhosts()->m_nunk );
   m_p.resize( myGhosts()->m_nunk );
-  m_lhs.resize( myGhosts()->m_nunk );
   m_rhs.resize( myGhosts()->m_nunk );
   m_rhsprev.resize( myGhosts()->m_nunk );
   m_stiffrhs.resize( myGhosts()->m_nunk );
@@ -295,10 +295,6 @@ DG::setup()
 
   auto d = Disc();
 
-  // Basic error checking on sizes of element geometry data and connectivity
-  Assert( myGhosts()->m_geoElem.nunk() == m_lhs.nunk(),
-    "Size mismatch in DG::setup()" );
-
   // Compute left-hand side of discrete PDEs
   lhs();
 
@@ -339,10 +335,10 @@ DG::box( tk::real v, const std::vector< tk::real >& )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  g_dgpde[d->MeshId()].initialize( m_lhs, myGhosts()->m_inpoel,
+  g_dgpde[d->MeshId()].initialize( myGhosts()->m_geoElem, myGhosts()->m_inpoel,
     myGhosts()->m_coord, m_boxelems, d->ElemBlockId(), m_u, d->T(),
     myGhosts()->m_fd.Esuel().size()/4 );
-  g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
+  g_dgpde[d->MeshId()].updatePrimitives( m_u, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof );
 
   m_un = m_u;
@@ -582,17 +578,6 @@ DG::extractFieldOutput(
   }
 
   ownnod_complete( c, addedTets );
-}
-
-void
-DG::lhs()
-// *****************************************************************************
-// Compute left-hand side of discrete transport equations
-// *****************************************************************************
-{
-  g_dgpde[Disc()->MeshId()].lhs( myGhosts()->m_geoElem, m_lhs );
-
-  if (!m_initial) stage();
 }
 
 void DG::p_refine()
@@ -1471,7 +1456,8 @@ DG::solve( tk::real newdt )
 
   if (!imex_runge_kutta) {
     // Explicit time-stepping using RK3 to discretize time-derivative
-    for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+    for(std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+      auto vole = myGhosts()->m_geoElem(e,0);
       for(std::size_t c=0; c<neq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
@@ -1481,12 +1467,13 @@ DG::solve( tk::real newdt )
             auto mark = c*ndof+k;
             m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
               + rkcoef[1][m_stage] * ( m_u(e, rmark)
-                + d->Dt() * m_rhs(e, mark)/m_lhs(e, mark) );
+                + d->Dt() * m_rhs(e, mark)/ (vole*mass_dubiner[k]));
             if(fabs(m_u(e, rmark)) < 1e-16)
               m_u(e, rmark) = 0;
           }
         }
       }
+    }
   }
   else {
     // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
@@ -1510,7 +1497,7 @@ DG::solve( tk::real newdt )
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof, m_interface );
-  g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
+  g_dgpde[d->MeshId()].updatePrimitives( m_u, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof );
   if (!g_inputdeck.get< tag::accuracy_test >()) {
     g_dgpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem, m_u,
@@ -1620,7 +1607,6 @@ DG::resizePostAMR(
   m_p.resize( nelem );
   m_u.resize( nelem );
   m_un.resize( nelem );
-  m_lhs.resize( nelem );
   m_rhs.resize( nelem );
   m_rhsprev.resize( nelem );
   m_stiffrhs.resize( nelem );
@@ -1825,11 +1811,18 @@ DG::writeFields(
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
+  // Collect surface output names
+  auto surfnames = g_dgpde[d->MeshId()].surfNames();
+
+  // Collect surface field solution
+  const auto& fd = myGhosts()->m_fd;
+  auto elemsurfs = g_dgpde[d->MeshId()].surfOutput(fd, m_u, m_p);
+
   // Output chare mesh and fields metadata to file
   const auto& triinpoel = m_outmesh.triinpoel;
   d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            {}, {}, elemfields, nodefields, {}, {}, c );
+            surfnames, {}, elemfields, nodefields, elemsurfs, {}, c );
 }
 
 void
@@ -2106,7 +2099,8 @@ DG::imex_integrate()
 
     // Integrate explicitly on the imex equations
     // (To use as initial values)
-    for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+    for (std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+      auto vole = myGhosts()->m_geoElem(e,0);
       for (std::size_t c=0; c<m_nstiffeq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
@@ -2114,14 +2108,15 @@ DG::imex_integrate()
           auto rmark = m_stiffEqIdx[c]*rdof+k;
           auto mark = m_stiffEqIdx[c]*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark)
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k])
             + impl_rkcoef[0][m_stage]
-            * m_stiffrhsprev(e,c*ndof+k)/m_lhs(e, mark) );
+            * m_stiffrhsprev(e,c*ndof+k)/(vole*mass_dubiner[k]) );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
       }
+    }
 
     // Solve for implicit-explicit equations
     const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
@@ -2172,7 +2167,8 @@ DG::imex_integrate()
     }
 
     // Then, integrate explicitly on the remaining equations
-    for (std::size_t e=0; e<nelem; ++e)
+    for (std::size_t e=0; e<nelem; ++e) {
+      auto vole = myGhosts()->m_geoElem(e,0);
       for (std::size_t c=0; c<m_nnonstiffeq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
@@ -2180,18 +2176,20 @@ DG::imex_integrate()
           auto rmark = m_nonStiffEqIdx[c]*rdof+k;
           auto mark = m_nonStiffEqIdx[c]*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
       }
+    }
   }
   else {
     // For last stage just use all previously computed stages
     const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
     for (std::size_t e=0; e<nelem; ++e)
     {
+      auto vole = myGhosts()->m_geoElem(e,0);
       // First integrate explicitly on nonstiff equations
       for (std::size_t c=0; c<m_nnonstiffeq; ++c)
       {
@@ -2200,8 +2198,8 @@ DG::imex_integrate()
           auto rmark = m_nonStiffEqIdx[c]*rdof+k;
           auto mark = m_nonStiffEqIdx[c]*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -2214,13 +2212,13 @@ DG::imex_integrate()
           auto mark = m_stiffEqIdx[ieq]*ndof+idof;
           m_u(e, rmark) = m_un(e, rmark)
             + d->Dt() * (expl_rkcoef[0][m_stage]
-                         * m_rhsprev(e,mark)/m_lhs(e,mark)
+                         * m_rhsprev(e,mark)/(vole*mass_dubiner[idof])
                          + expl_rkcoef[1][m_stage]
-                         * m_rhs(e,mark)/m_lhs(e,mark)
+                         * m_rhs(e,mark)/(vole*mass_dubiner[idof])
                          + impl_rkcoef[0][m_stage]
-                         * m_stiffrhsprev(e,ieq*ndof+idof)/m_lhs(e,mark)
+                         * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
                          + impl_rkcoef[1][m_stage]
-                         * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,mark) );
+                         * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -2253,6 +2251,8 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
       m_u(e, stiffrmark) = x[ieq*ndof+idof];
     }
 
+  auto vole = myGhosts()->m_geoElem(e,0);
+
   // Compute explicit terms (Should be computed once)
   std::vector< tk::real > expl_terms(n, 0.0);
   for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
@@ -2262,11 +2262,11 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
       expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
         + d->Dt() * ( expl_rkcoef[0][m_stage]
-        * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
+        * m_rhsprev(e,stiffmark)/(vole*mass_dubiner[idof])
         + expl_rkcoef[1][m_stage]
-        * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
+        * m_rhs(e,stiffmark)/(vole*mass_dubiner[idof])
         + impl_rkcoef[0][m_stage]
-        * m_stiffrhsprev(e,ieq*ndof+idof)/m_lhs(e,stiffmark) );
+        * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
     }
 
   // Compute stiff_rhs
@@ -2280,10 +2280,9 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
     for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
     {
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-      auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
       f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
         + d->Dt() * impl_rkcoef[1][m_stage]
-        * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
+        * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
         - m_u(e, stiffrmark);
     }
 

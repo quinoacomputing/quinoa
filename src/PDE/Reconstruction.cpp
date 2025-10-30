@@ -25,7 +25,7 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
-#include "Integrate/Mass.hpp"
+#include "Integrate/Quadrature.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
@@ -760,11 +760,10 @@ computeTemperaturesFV(
     tag::intsharp >();
   auto nelem = unk.nunk();
 
+  auto L = tk::massMatrixDubiner();
+
   for (std::size_t e=0; e<nelem; ++e) {
-    // Here we pre-compute the left-hand-side (mass) matrix. The lhs in
-    // DG.cpp is not used here because the size of the mass matrix in this
-    // projection procedure should be rdof instead of ndof.
-    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
+    auto vole = geoElem(e,0);
 
     std::vector< tk::real > R(nmat*rdof, 0.0);
 
@@ -787,7 +786,7 @@ computeTemperaturesFV(
       auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
                                coordgp[2][igp] );
 
-      auto w = wgp[igp] * geoElem(e, 0);
+      auto w = wgp[igp] * vole;
 
       // Evaluate the solution at quadrature point
       auto state = evalFVSol(mat_blk, intsharp, ncomp, nprim, rdof,
@@ -817,7 +816,7 @@ computeTemperaturesFV(
     for(std::size_t k=0; k<nmat; k++) {
       auto mark = k * rdof;
       for(std::size_t idof=1; idof<rdof; idof++)
-        T(e, mark+idof) = R[mark+idof] / L[idof];
+        T(e, mark+idof) = R[mark+idof] / (vole*L[idof]);
     }
   }
 }

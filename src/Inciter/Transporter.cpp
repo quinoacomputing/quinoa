@@ -686,7 +686,8 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
     auto print = printer();
 
     // Start timer measuring preparation of the mesh for partitioning
-    const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
+    const auto itTimer = TimerTag::MESH_READ;
+    const auto& timer = tk::cref_find( m_timer, itTimer );
     print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
     // Print out mesh partitioning configuration
