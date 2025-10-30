@@ -599,6 +599,26 @@ OversetFE::continueSetup()
     histnames.insert( end(histnames), begin(n), end(n) );
     d->histheader( std::move(histnames) );
   }
+
+  // Record rotation in mesh's rotation quaternion
+  // Check if mesh rotation specified
+  auto mesh_orientation =
+    g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::orientation >();
+  bool rotate_mesh(false);
+  for (std::size_t i=0; i<3; ++i) {
+    if (std::abs(mesh_orientation[i]) > 1e-8) {
+      rotate_mesh = true;
+      break;
+    }
+  }
+
+  if (rotate_mesh) {
+    auto R = tk::anglesToRotMat(
+      {{ mesh_orientation[0], mesh_orientation[1], mesh_orientation[2] }});
+    auto p = tk::Rtoq(R);
+    m_rotationqn = tk::quaternion_mult(p, m_rotationqn);
+    m_rotationq = m_rotationqn;
+  }
 }
 //! [setup]
 
@@ -1420,9 +1440,9 @@ OversetFE::solve()
       }
 
       // Rotation for diagnostics (ZYX Euler angles)
-      m_rotation[0] = std::asin(-Rn[2][0]);
-      m_rotation[1] = std::atan2(Rn[2][1], Rn[2][2]);
-      m_rotation[2] = std::atan2(Rn[1][0], Rn[0][0]);
+      m_rotation[0] = std::atan2(Rn1[1][0], Rn1[0][0]);
+      m_rotation[1] = std::asin(-Rn1[2][0]);
+      m_rotation[2] = std::atan2(Rn1[2][1], Rn1[2][2]);
 
       // move center of mass
       for (std::size_t i=0; i<3; ++i) {

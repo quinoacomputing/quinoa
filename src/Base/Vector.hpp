@@ -412,12 +412,11 @@ movePoint( const std::array< tk::real, 3 >& origin,
     point[i] -= origin[i];
 }
 
-//! Rotate a point in 3D space by specifying rotation angles in degrees
+//! Calculate rotation matrix given three rotations in degrees
 //!  \param[in] angles Angles in 3D space by which point is to be rotated
-//!  \param[in,out] point Point that needs to be rotated
-inline void
-rotatePoint( const std::array< tk::real, 3 >& angles,
-  std::array< tk::real, 3 >& point )
+//!  \param[out] rotMat Rotation matrix associated with rotations
+inline std::array< std::array< tk::real, 3 >, 3 > 
+anglesToRotMat( const std::array< tk::real, 3 >& angles)
 {
   // Convert angles to radian
   tk::real pi = 4.0*std::atan(1.0);
@@ -427,20 +426,30 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
 
   // Rotation matrix
   std::array< std::array< tk::real, 3 >, 3 > rotMat;
-  {
-    using namespace std;
-    rotMat[0][0] = cos(b)*cos(c);
-    rotMat[0][1] = - cos(b)*sin(c);
-    rotMat[0][2] = sin(b);
+  rotMat[0][0] = cos(b)*cos(c);
+  rotMat[0][1] = - cos(b)*sin(c);
+  rotMat[0][2] = sin(b);
 
-    rotMat[1][0] = sin(a)*sin(b)*cos(c) + cos(a)*sin(c);
-    rotMat[1][1] = - sin(a)*sin(b)*sin(c) + cos(a)*cos(c);
-    rotMat[1][2] = - sin(a)*cos(b);
+  rotMat[1][0] = sin(a)*sin(b)*cos(c) + cos(a)*sin(c);
+  rotMat[1][1] = - sin(a)*sin(b)*sin(c) + cos(a)*cos(c);
+  rotMat[1][2] = - sin(a)*cos(b);
 
-    rotMat[2][0] = - cos(a)*sin(b)*cos(c) + sin(a)*sin(c);
-    rotMat[2][1] = cos(a)*sin(b)*sin(c) + sin(a)*cos(c);
-    rotMat[2][2] = cos(a)*cos(b);
-  }
+  rotMat[2][0] = - cos(a)*sin(b)*cos(c) + sin(a)*sin(c);
+  rotMat[2][1] = cos(a)*sin(b)*sin(c) + sin(a)*cos(c);
+  rotMat[2][2] = cos(a)*cos(b);
+
+  return rotMat;
+}
+
+//! Rotate a point in 3D space by specifying rotation angles in degrees
+//!  \param[in] angles Angles in 3D space by which point is to be rotated
+//!  \param[in,out] point Point that needs to be rotated
+inline void
+rotatePoint( const std::array< tk::real, 3 >& angles,
+  std::array< tk::real, 3 >& point )
+{
+  // Rotation matrix
+  auto rotMat = anglesToRotMat(angles);
 
   // Apply rotation
   std::array< tk::real, 3 > x{{0.0, 0.0, 0.0}};
@@ -882,7 +891,7 @@ quaternion_mag(const std::array< tk::real, 4 >& q)
 
 //! \brief Convert a rotation quaternion to a rotation matrix
 //! \param[in] q quaternion
-//! \return quaternion magnitude
+//! \return Rotation matrix
 inline std::array< std::array< tk::real, 3 >, 3 >
 qtoR(const std::array< tk::real, 4 >& q)
 {
@@ -907,6 +916,47 @@ qtoR(const std::array< tk::real, 4 >& q)
       if (i == j) R[i][j] += 1.0;
     }
   return R;
+}
+
+//! \brief Convert a rotation matrix to a rotation quaternion
+//! \param[in] R rotation amtrix
+//! \return rotation quaternion
+inline std::array< tk::real, 4 >
+Rtoq(const std::array< std::array< tk::real, 3 >, 3 >& R)
+{
+  std::array< tk::real, 4 > q;
+
+  auto tr = R[0][0] + R[1][1] + R[2][2];
+  tk::real S, qw, qx, qy, qz;
+
+  if (tr > 0) { 
+    S = sqrt(tr + 1.0) * 2; // S=4*qw 
+    qw = 0.25 * S;
+    qx = (R[2][1] - R[1][2]) / S;
+    qy = (R[0][2] - R[2][0]) / S; 
+    qz = (R[1][0] - R[0][1]) / S; 
+  } else if ((R[0][0] > R[1][1]) & (R[0][0] > R[2][2])) { 
+    S = sqrt(1.0 + R[0][0] - R[1][1] - R[2][2]) * 2;
+    qw = (R[2][1] - R[1][2]) / S;
+    qx = 0.25 * S;
+    qy = (R[0][1] + R[1][0]) / S; 
+    qz = (R[0][2] + R[2][0]) / S; 
+  } else if (R[1][1] > R[2][2]) { 
+    S = sqrt(1.0 + R[1][1] - R[0][0] - R[2][2]) * 2;
+    qw = (R[0][2] - R[2][0]) / S;
+    qx = (R[0][1] + R[1][0]) / S; 
+    qy = 0.25 * S;
+    qz = (R[1][2] + R[2][1]) / S; 
+  } else { 
+    S = sqrt(1.0 + R[2][2] - R[0][0] - R[1][1]) * 2;
+    qw = (R[1][0] - R[0][1]) / S;
+    qx = (R[0][2] + R[2][0]) / S;
+    qy = (R[1][2] + R[2][1]) / S;
+    qz = 0.25 * S;
+  }
+
+  q[0] = qw; q[1] = qx; q[2] = qy; q[3] = qz;
+  return q;
 }
 
 } // tk::
