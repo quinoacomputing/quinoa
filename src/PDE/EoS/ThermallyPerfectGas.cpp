@@ -59,8 +59,8 @@ ThermallyPerfectGas::pressure(
   tk::real ,
   tk::real,
   std::size_t,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  tk::real ) const
+  tk::real ,
+  const std::array< std::array< tk::real, 3 >, 3 >&) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the thermally perfect gas equation of state
@@ -79,8 +79,8 @@ std::array< std::array< tk::real, 3 >, 3 >
 ThermallyPerfectGas::CauchyStress(
   tk::real,
   std::size_t,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  tk::real ) const
+  tk::real,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate the Cauchy stress tensor from the material
 //!   inverse deformation gradient tensor
@@ -100,9 +100,9 @@ ThermallyPerfectGas::soundspeed(
   tk::real ,
   tk::real,
   std::size_t,
+  tk::real,
   const std::array< std::array< tk::real, 3 >, 3 >&,
-  const std::array< tk::real, 3 >&,
-  tk::real ) const
+  const std::array< tk::real, 3 >& ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] rho density
@@ -121,8 +121,8 @@ ThermallyPerfectGas::totalenergy(
   tk::real ,
   tk::real ,
   tk::real ,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  tk::real ) const
+  tk::real ,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -145,9 +145,9 @@ ThermallyPerfectGas::temperature(
   tk::real ,
   tk::real ,
   tk::real ,
-  tk::real,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  tk::real ) const
+  tk::real ,
+  tk::real ,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density
 //! \param[in] rho density

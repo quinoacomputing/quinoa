@@ -94,8 +94,8 @@ JWL::pressure(
   tk::real arhoE,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  tk::real damage ) const
+  tk::real damage,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the stiffened-gas equation of state
@@ -147,8 +147,8 @@ std::array< std::array< tk::real, 3 >, 3 >
 JWL::CauchyStress(
   tk::real,
   std::size_t,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  tk::real ) const
+  tk::real,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate the Cauchy stress tensor from the material
 //!   inverse deformation gradient tensor
@@ -168,8 +168,8 @@ JWL::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  tk::real damage ) const
+  tk::real damage,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -222,8 +222,8 @@ JWL::totalenergy(
   tk::real w,
   tk::real apr,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  tk::real damage ) const
+  tk::real damage,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -255,8 +255,8 @@ JWL::temperature(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  tk::real damage ) const
+  tk::real damage,
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy
