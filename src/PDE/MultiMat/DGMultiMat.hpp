@@ -438,6 +438,7 @@ class MultiMat {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      auto nsld = numSolids(nmat, solidx);
 
       Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -497,16 +498,18 @@ class MultiMat {
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
             auto gmat = getDeformGrad(nmat, imat, state);
+            tk::real damage = 0.0;
+            if (solidx[imat] > 0)
+              damage = state[damageIdx(nmat, nsld, imat)]/arhomat;
             pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
-              alphamat, imat, gmat );
+                               alphamat, imat, damage, gmat );
 
             pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
 
             if (solidx[imat] > 0) {
-              auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(
-              alphamat, imat, gmat );
+              auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(alphamat, imat, damage, gmat );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
               pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
@@ -632,8 +635,9 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
+            auto damage = U(e, damageDofIdx(nmat, nsld, k, rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
-              alpha, k, g );
+              alpha, k, damage, g );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
@@ -1298,6 +1302,7 @@ class MultiMat {
         g_inputdeck.get< tag::multimat, tag::intsharp >();
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
+      auto nsld = numSolids(nmat, solidx);
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -1376,8 +1381,9 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
+            auto damage = U(e, damageDofIdx(nmat, nsld, k, rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
-              alpha, k, g );
+              alpha, k, damage, g );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;

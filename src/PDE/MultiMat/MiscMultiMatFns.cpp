@@ -126,6 +126,7 @@ cleanTraceMultiMat(
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
   std::size_t ncomp = U.nprop()/rdof;
+  auto nsld = numSolids(nmat, solidx);
   auto neg_density = false;
 
   std::vector< tk::real > ugp(ncomp, 0.0);
@@ -155,9 +156,11 @@ cleanTraceMultiMat(
     auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
     auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0))/almax;
     auto gmax = getDeformGrad(nmat, kmax, ugp);
-    auto tmax = mat_blk[kmax].compute< EOS::temperature >(
-      U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
-      U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax, gmax );
+    auto dmg_max = U(e, damageDofIdx(nmat, nsld, kmax, rdof, 0))/U(e, densityDofIdx(nmat, kmax, rdof, 0));
+    // Temperature does not depend on damage so input 0
+    tk::real tmax = mat_blk[kmax].compute< EOS::temperature >(
+        U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
+        U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax, 0.0, gmax );
 
     tk::real p_target(0.0), d_al(0.0), d_arE(0.0);
     //// get equilibrium pressure
@@ -217,8 +220,9 @@ cleanTraceMultiMat(
 
         // energy change
         auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
+        auto damage = U(e, damageDofIdx(nmat, nsld, k, rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
         auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
-          alk*prelax, alk, gmat);
+          alk*prelax, alk, damage, gmat);
 
         // total energy flux into majority material
         d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
@@ -243,7 +247,7 @@ cleanTraceMultiMat(
       mat_blk[kmax].compute< EOS::pressure >(
       U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0)),
-      U(e, volfracDofIdx(nmat, kmax, rdof, 0)), kmax, gmax );
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0)), kmax, dmg_max, gmax );
 
     // 3. enforce unit sum of volume fractions
     auto alsum = 0.0;
@@ -326,6 +330,8 @@ timeStepSizeMultiMat(
   const auto rdof = g_inputdeck.get< tag::rdof >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  auto nsld = numSolids(nmat, solidx);
 
   tk::real u, v, w, a, vn, dSV_l, dSV_r;
   std::vector< tk::real > delt(U.nunk(), 0.0);
@@ -366,10 +372,11 @@ timeStepSizeMultiMat(
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
         auto gk = getDeformGrad(nmat, k, ugp);
+        auto damage = ugp[damageIdx(nmat, nsld, k)]/ugp[densityIdx(nmat, k)];
         gk = tk::rotateTensor(gk, fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
-          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk ) );
+          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, damage, gk ) );
       }
     }
 
@@ -401,10 +408,11 @@ timeStepSizeMultiMat(
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
           auto gk = getDeformGrad(nmat, k, ugp);
+          auto damage = ugp[damageIdx(nmat, nsld, k)]/ugp[densityIdx(nmat, k)];
           gk = tk::rotateTensor(gk, fn);
           a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
             ugp[densityIdx(nmat, k)],
-            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk ) );
+            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, damage, gk ) );
         }
       }
 

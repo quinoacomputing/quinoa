@@ -61,7 +61,7 @@ StiffenedGas::pressure(
   tk::real arhoE,
   tk::real alpha,
   std::size_t imat,
-  tk::real damage,
+  tk::real ,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum and total
@@ -128,7 +128,7 @@ StiffenedGas::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  tk::real damage,
+  tk::real ,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
@@ -173,7 +173,7 @@ StiffenedGas::totalenergy(
   tk::real w,
   tk::real apr,
   tk::real alpha,
-  tk::real damage,
+  tk::real ,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
@@ -204,7 +204,7 @@ StiffenedGas::temperature(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  tk::real damage,
+  tk::real ,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and

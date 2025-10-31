@@ -2875,7 +2875,7 @@ correctLimConservMultiMat(
         auto damage = state[damageIdx(nmat, nsld, imat)]/arhomat;
         s[pressureIdx(nmat,imat)] =
           mat_blk[imat].compute< EOS::totalenergy >( arhomat, vel[0], vel[1],
-          vel[2], apremat, alphamat, gmat );
+          vel[2], apremat, alphamat, damage, gmat );
       }
 
       // Evaluate the righ-hand-side vector

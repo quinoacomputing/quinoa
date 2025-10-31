@@ -104,8 +104,8 @@ struct HLLCMultiMat {
       gnl.push_back(tk::rotateTensor(gl[k], fn));
       auto amatl = mat_blk[k].compute< EOS::soundspeed >(
         u[0][densityIdx(nmat, k)], apl[k],
-        u[0][volfracIdx(nmat, k)], k, gnl[k],
-        u[0][damageIdx(nmat, nsld, k)]/u[0][densityIdx(nmat, k)] );
+        u[0][volfracIdx(nmat, k)], k, 
+        u[0][damageIdx(nmat, nsld, k)]/u[0][densityIdx(nmat, k)], gnl[k] );
 
       // Right state
       apr[k] = u[1][ncomp+pressureIdx(nmat, k)];
@@ -131,8 +131,8 @@ struct HLLCMultiMat {
       gnr.push_back(tk::rotateTensor(gr[k], fn));
       auto amatr = mat_blk[k].compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], apr[k],
-        u[1][volfracIdx(nmat, k)], k, gnr[k],
-        u[1][damageIdx(nmat, nsld, k)]/u[1][densityIdx(nmat, k)]);
+        u[1][volfracIdx(nmat, k)], k,
+        u[1][damageIdx(nmat, nsld, k)]/u[1][densityIdx(nmat, k)], gnr[k]);
 
       // Mixture speed of sound
       acl += u[0][densityIdx(nmat, k)] * amatl * amatl;

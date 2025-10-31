@@ -75,7 +75,7 @@ struct HLL {
       // rotate deformation gradient tensor for speed of sound in normal dir
       gn_l.push_back(tk::rotateTensor(g_l[k], fn));
       amatl = mat_blk[k].compute< EOS::soundspeed >(
-        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, gn_l[k] );
+        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, 0.0, gn_l[k] );
 
       // Right state
       // -----------------------------------------------------------------------
@@ -96,7 +96,7 @@ struct HLL {
       // rotate deformation gradient tensor for speed of sound in normal dir
       gn_r.push_back(tk::rotateTensor(g_r[k], fn));
       amatr = mat_blk[k].compute< EOS::soundspeed >(
-        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, gn_r[k] );
+        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, 0.0, gn_r[k] );
 
       // Mixture speed of sound
       // -----------------------------------------------------------------------
