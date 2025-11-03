@@ -1357,7 +1357,7 @@ OversetFE::solve()
 
       // q drifted half-time step over this stage
       auto dq = tk::quaternion_mult(omega_qn, m_rotationqn);
-      for (int i = 0; i < 4; ++i) {
+      for (std::size_t i = 0; i < 4; ++i) {
         dq[i] *= 0.5*(dtp*0.5);
         qn12[i] = m_rotationqn[i] + dq[i];
       };
@@ -1378,14 +1378,14 @@ OversetFE::solve()
       std::array< tk::real, 4>
         omega_qn1{0, omega_n1[0], omega_n1[1], omega_n1[2]};
       dq = tk::quaternion_mult(omega_qn1, qn12);
-      for (int i = 0; i < 4; ++i) {
+      for (std::size_t i = 0; i < 4; ++i) {
         dq[i] *= 0.5*(dtp*0.5);
         m_rotationq[i] = qn12[i] + dq[i];
       };
       
       // normalize
       auto qmag = tk::quaternion_mag(m_rotationq);
-      for (int i = 0; i < 4; ++i) {
+      for (std::size_t i = 0; i < 4; ++i) {
         m_rotationq[i] /= qmag;
       };
 
