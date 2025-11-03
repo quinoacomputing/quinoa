@@ -1360,7 +1360,7 @@ OversetFE::solve()
       for (std::size_t i = 0; i < 4; ++i) {
         dq[i] *= 0.5*(dtp*0.5);
         qn12[i] = m_rotationqn[i] + dq[i];
-      };
+      }
 
       // Derived quantities from q
       auto Rn12 = tk::qtoR(qn12);
@@ -1381,13 +1381,13 @@ OversetFE::solve()
       for (std::size_t i = 0; i < 4; ++i) {
         dq[i] *= 0.5*(dtp*0.5);
         m_rotationq[i] = qn12[i] + dq[i];
-      };
+      }
       
       // normalize
       auto qmag = tk::quaternion_mag(m_rotationq);
       for (std::size_t i = 0; i < 4; ++i) {
         m_rotationq[i] /= qmag;
-      };
+      }
 
       // Derived quantities from q
       auto Rn1 = tk::qtoR(m_rotationq);
