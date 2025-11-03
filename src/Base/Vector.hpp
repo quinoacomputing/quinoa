@@ -414,7 +414,7 @@ movePoint( const std::array< tk::real, 3 >& origin,
 
 //! Calculate rotation matrix given three rotations in degrees
 //!  \param[in] angles Angles in 3D space by which point is to be rotated
-//!  \param[out] rotMat Rotation matrix associated with rotations
+//!  \return Rotation matrix associated with rotations
 inline std::array< std::array< tk::real, 3 >, 3 > 
 anglesToRotMat( const std::array< tk::real, 3 >& angles)
 {
@@ -873,7 +873,7 @@ quaternion_mult(const std::array< tk::real, 4 >& a,
   auto bs = b[0];
   auto abs = as*bs - dot(av, bv);
   auto abv = cross(av, bv);
-  for (int i = 0; i < 3; ++i)
+  for (std::size_t i = 0; i < 3; ++i)
       abv[i] += as*bv[i] + bs*av[i];
   std::array< tk::real, 4 > ab{abs, abv[0], abv[1], abv[2] };
   return ab;
@@ -910,8 +910,8 @@ qtoR(const std::array< tk::real, 4 >& q)
     }};
 
   auto vxvx = matmult33(vx, vx);
-  for (int i = 0; i < 3; ++i)
-    for (int j = 0; j < 3; ++j){
+  for (std::size_t i = 0; i < 3; ++i)
+    for (std::size_t j = 0; j < 3; ++j){
       R[i][j] = 2.0*s*vx[i][j] + 2.0*vxvx[i][j];
       if (i == j) R[i][j] += 1.0;
     }

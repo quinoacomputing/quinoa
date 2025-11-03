@@ -754,7 +754,7 @@ LuaParser::storeInputDeck(
         if (storage[k].size() != 3)
           Throw("Incorrect size of 'moment_of_inertia' vector " + 
             std::to_string(k+1) +" specified. Expected size 3");
-      };
+      }
 
       // center of mass
       storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
