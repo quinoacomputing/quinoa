@@ -815,7 +815,9 @@ class MultiSpecies {
     void nodeVelocity(
       const tk::Fields&,
       const std::map< std::size_t, std::vector< std::size_t > >&,
+      const std::vector< std::size_t >&,
       const tk::UnsMesh::Coords&,
+      const tk::Fields&,
       const tk::Fields&,
       tk::Fields& ) const
     {}

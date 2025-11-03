@@ -2099,7 +2099,8 @@ DG::meshvelstart()
   else if (meshveltype == ctr::MeshVelocityType::FLUID) {
     // Compute fluid velocity at nodes, and set this as the mesh velocity
     g_dgpde[d->MeshId()].nodeVelocity( myGhosts()->m_geoElem,
-      myGhosts()->m_esup, myGhosts()->m_coord, m_p, m_meshvel );
+      myGhosts()->m_esup, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p,
+      m_meshvel );
 
     // Remove mesh velocity in directions not specified
     const auto& ale_dirn = g_inputdeck.get< tag::ale, tag::mesh_motion >();

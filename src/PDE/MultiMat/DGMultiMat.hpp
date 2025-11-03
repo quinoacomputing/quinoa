@@ -1346,7 +1346,9 @@ class MultiMat {
     //! Extract the velocity field at cell nodes.
     //! \param[in] geoElem Element geometry array
     //! \param[in] esup Elements-surrounding-nodes connectivity
+    //! \param[in] inpoel Element connectivity
     //! \param[in] coord Array of nodal coordinates
+    //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitives at recent time step
     //! \param[in,out] W Velocity components
     //! \details This function computes and stores a fluid velocity at nodes
@@ -1355,12 +1357,19 @@ class MultiMat {
     void nodeVelocity(
       const tk::Fields& geoElem,
       const std::map< std::size_t, std::vector< std::size_t > >& esup,
+      const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
+      const tk::Fields& U,
       const tk::Fields& P,
       tk::Fields& W ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      auto nprim = P.nprop()/rdof;
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
 
       for (std::size_t p=0; p<W.nunk(); ++p) {
         std::array< tk::real, 3 > usum{{0, 0, 0}};
@@ -1370,13 +1379,49 @@ class MultiMat {
         const auto& pesup = tk::cref_find(esup, p);
         for (auto e : pesup)
         {
+          // Node coordinates
+          std::array< tk::real, 3 > c_n{{ cx[p], cy[p], cz[p] }};
+
+          // Extract the element coordinates
+          std::array< std::array< tk::real, 3>, 4 > coordel {{
+            {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+            {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+            {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+            {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+          // Compute the determinant of Jacobian matrix
+          auto detT =
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+          // Transform node coordinates to reference space
+          std::array< tk::real, 3> ref_gp{
+            tk::Jacobian( coordel[0], c_n, coordel[2], coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], c_n, coordel[3] ) / detT,
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], c_n ) / detT };
+
+          // Compute the basis functions at node
+          auto B_p = tk::eval_basis( rdof, ref_gp[0], ref_gp[1], ref_gp[2] );
+
+          // Interface detection
+          std::vector< std::size_t > matInt(nmat, 0);
+          bool intInd(false);
+          std::vector< tk::real > alAvg(nmat, 0.0);
+          for (std::size_t k=0; k<nmat; ++k)
+            alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
+          intInd = interfaceIndicator(nmat, alAvg, matInt);
+
+          // Compute velocity at node (drop to first order at interfaces)
+          std::size_t dof_e(rdof);
+          if (intInd) dof_e = 1;
+          auto u_p = tk::eval_state( nprim, rdof, dof_e, e, P, B_p );
+
           // centroid distance
-          std::array< tk::real, 3 > wdeltax{{ geoElem(e,1)-coord[0][p],
-                                              geoElem(e,2)-coord[1][p],
-                                              geoElem(e,3)-coord[2][p] }};
+          std::array< tk::real, 3 > wdeltax{{ geoElem(e,1)-cx[p],
+                                              geoElem(e,2)-cy[p],
+                                              geoElem(e,3)-cz[p] }};
           auto weight = 1.0/tk::dot(wdeltax, wdeltax);
           for (std::size_t i=0; i<3; ++i) {
-            usum[i] += weight * P(e, velocityDofIdx(nmat,i,rdof,0));
+            usum[i] += weight * u_p[velocityIdx(nmat,i)];
           }
           denom += weight;
         }
