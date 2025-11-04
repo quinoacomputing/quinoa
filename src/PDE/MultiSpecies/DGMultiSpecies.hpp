@@ -644,6 +644,7 @@ class MultiSpecies {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      auto viscous = g_inputdeck.get< tag::multispecies, tag::viscous >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -678,7 +679,7 @@ class MultiSpecies {
       // compute internal surface flux integrals
       tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                    coord, fd, geoFace, geoElem, m_riemann, visc_flux, 
-                   velfn, U, P, ndofel, dt, R, riemannDeriv );
+                   velfn, U, P, ndofel, dt, R, riemannDeriv, viscous);
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
@@ -686,14 +687,15 @@ class MultiSpecies {
 
       if(ndof > 1)
         // compute volume integrals
+        
         tk::volInt( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem,
-          flux, visc_flux, velfn, U, P, ndofel, R );
+          flux, visc_flux, velfn, U, P, ndofel, R, viscous);
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
                         geoFace, geoElem, inpoel, coord, t, m_riemann, visc_flux,
-                        velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv );
+                        velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv, viscous);
 
       // compute external (energy) sources
       //m_physics.physSrc(nspec, t, geoElem, {}, R, {});

@@ -35,7 +35,8 @@ tk::volInt( std::size_t nmat,
             const Fields& P,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
-            int intsharp )
+            bool  viscous,
+            int intsharp)
 // *****************************************************************************
 //  Compute volume integrals for DG
 //! \param[in] nmat Number of materials in this PDE system
@@ -63,8 +64,6 @@ tk::volInt( std::size_t nmat,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
-  
-  int viscous=0;
 
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
@@ -125,7 +124,7 @@ tk::volInt( std::size_t nmat,
         // comput flux
         auto fl = flux( ncomp, mat_blk, state, v );
 
-        if (viscous==1)
+        if (viscous)
         {
         std::vector< std::array< tk::real, 3 > > grad_all(2*ncomp, 
                                             std::array< real, 3 >{{0, 0, 0}});

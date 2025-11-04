@@ -52,7 +52,9 @@ surfInt( const bool pref,
          const tk::real /*dt*/,
          Fields& R,
          std::vector< std::vector< tk::real > >& riemannDeriv,
-         int intsharp )
+         bool viscous,
+         int intsharp
+         )
 // *****************************************************************************
 //  Compute internal surface flux integrals
 //! \param[in] pref Indicator for p-adaptive algorithm
@@ -91,7 +93,6 @@ surfInt( const bool pref,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
-  int viscous=0;
 
   //// Determine if we have solids in our problem
   //bool haveSolid = inciter::haveSolid(nmat, solidx);
@@ -229,7 +230,7 @@ surfInt( const bool pref,
       // compute flux
       auto fl = flux( mat_blk, fn, state, v );
       
-      if (viscous==1){
+      if (viscous){
           std::vector< tk::real> fluxl(5, 0);
           std::vector< tk::real> fluxr(5, 0);
           //std::array< std::vector<real>, 3 > dBdx_l, dBdx_r;
@@ -242,10 +243,24 @@ surfInt( const bool pref,
           tk::inverseJacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
           auto dBdx_r = tk::eval_dBdx_p1(dof_er, jacInv_r );
           
-//         if (dof_el > 4)
-//           eval_dBdx_p2( igp, coordgp, jacInv_l, dBdx_l );
-//         if (dof_er > 4)
-//           eval_dBdx_p2( igp, coordgp, jacInv_r, dBdx_r );
+        if (dof_el > 4){          
+          std::array< std::vector< real >, 3 > coordgp_3;
+          coordgp_3[0].resize( ng );
+          coordgp_3[1].resize( ng );
+          coordgp_3[2].resize( ng );
+          for(int i=0; i<3; i++)
+             coordgp_3[i][igp]=ref_gp_l[i];
+          eval_dBdx_p2( igp, coordgp_3, jacInv_l, dBdx_l );
+        }  
+        if (dof_er > 4){          
+          std::array< std::vector< real >, 3 > coordgp_3;
+          coordgp_3[0].resize( ng );
+          coordgp_3[1].resize( ng );
+          coordgp_3[2].resize( ng );
+          for(int i=0; i<3; i++)
+             coordgp_3[i][igp]=ref_gp_r[i];
+          eval_dBdx_p2( igp, coordgp_3, jacInv_r, dBdx_r );
+        }  
     
       auto state_U_grad_l = eval_state_gradient (ncomp, ndof, dof_el, 
                          el, U, dBdx_l );

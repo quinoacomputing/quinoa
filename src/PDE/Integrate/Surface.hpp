@@ -50,7 +50,8 @@ surfInt( const bool pref,
          const tk::real dt,
          Fields& R,
          std::vector< std::vector< tk::real > >& riemannDeriv,
-         int intcompr=0 );
+         bool viscous,
+         int intcompr=0);
 
 // Update the rhs by adding surface integration term
 void
