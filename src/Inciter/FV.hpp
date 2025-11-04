@@ -161,8 +161,8 @@ class FV : public CBase_FV {
     //! \return Const-ref to current solution
     const tk::Fields& solution() const { return m_u; }
 
-    //! Compute left hand side
-    void lhs();
+    //! Compute left hand side - no-op for FV
+    void lhs() {}
 
     //! Unused in FV
     void resized() {}
@@ -193,7 +193,6 @@ class FV : public CBase_FV {
       p | m_u;
       p | m_un;
       p | m_p;
-      p | m_lhs;
       p | m_rhs;
       p | m_npoin;
       p | m_diag;
@@ -242,8 +241,6 @@ class FV : public CBase_FV {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
-    //! Left-hand side mass-matrix which is a diagonal matrix
-    tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Counter for number of nodes on this chare excluding ghosts

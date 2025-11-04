@@ -684,7 +684,8 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
     auto print = printer();
 
     // Start timer measuring preparation of the mesh for partitioning
-    const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
+    const auto itTimer = TimerTag::MESH_READ;
+    const auto& timer = tk::cref_find( m_timer, itTimer );
     print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
     // Print out mesh partitioning configuration
@@ -1165,11 +1166,19 @@ Transporter::diagHeader()
     }
     d.push_back( "mE" );
 
-    // Augment diagnostics variables with resultant force vector on mesh
-    // boundaries that is used for rigid body motion of overset mesh
+    // Augment diagnostics variables with the following:
+    // 1. resultant force vector on mesh boundaries that is used for rigid body
+    //    motion of overset mesh ('Fi')
+    // 2. resultant torque vector on mesh boundaries that is used for rigid body
+    //    motion of overset mesh ('Ti')
+    // 3. total displacement of rigid body center-of-mass ('Di')
+    // 4. total rotation of rigid body ('Ri')
     if ( scheme == ctr::SchemeType::OversetFE )
     {
       for (std::size_t i=0; i<3; ++i) d.push_back( "F" + std::to_string(i+1) );
+      for (std::size_t i=0; i<3; ++i) d.push_back( "T" + std::to_string(i+1) );
+      for (std::size_t i=0; i<3; ++i) d.push_back( "D" + std::to_string(i+1) );
+      for (std::size_t i=0; i<3; ++i) d.push_back( "R" + std::to_string(i+1) );
     }
 
     // Write diagnostics header
@@ -1581,10 +1590,16 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Append total energy
   diag.push_back( d[TOTALSOL][0] );
 
-  // Append resultant force vector
+  // Append resultant force, torque, displacement, and rotation vector
   if (scheme == ctr::SchemeType::OversetFE) {
     for (std::size_t i=0; i<3; ++i)
       diag.push_back( d[RESFORCE][i] );
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[RESTORQUE][i] );
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[DISPLACEMNT][i] );
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[ROTATION][i] );
   }
 
   // Append diagnostics file at selected times

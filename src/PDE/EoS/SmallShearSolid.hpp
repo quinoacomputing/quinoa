@@ -65,15 +65,9 @@ class SmallShearSolid {
     { return 0.0; }
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
-    //!   density, momentum, total energy, and inverse deformation gradient
-    //!   tensor using the SmallShearSolid equation of state
+    //!   inverse deformation gradient tensor using the SmallShearSolid EOS
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
       tk::real alpha,
       std::size_t /*imat*/,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const;

@@ -130,6 +130,8 @@ LuaParser::storeInputDeck(
     lua_ideck, "dt", gideck.get< tag::dt >(), 0.0);
   storeIfSpecd< tk::real >(
     lua_ideck, "cfl", gideck.get< tag::cfl >(), 0.0);
+  storeIfSpecd< bool >(
+    lua_ideck, "cfl_ramping", gideck.get< tag::cfl_ramping >(), false);
   storeIfSpecd< uint32_t >(
     lua_ideck, "ttyi", gideck.get< tag::ttyi >(), 1);
   storeIfSpecd< bool >(
@@ -486,6 +488,13 @@ LuaParser::storeInputDeck(
         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
           mati_deck.get< tag::mu >());
 
+        // plasticity_reltime
+        if (!sol_mat[i+1]["plasticity_reltime"].valid())
+          sol_mat[i+1]["plasticity_reltime"] =
+            std::vector< tk::real >(ntype, 1.0e-05);
+        checkStoreMatProp(sol_mat[i+1], "plasticity_reltime", ntype,
+          mati_deck.get< tag::plasticity_reltime >());
+
         // yield_stress
         if (!sol_mat[i+1]["yield_stress"].valid())
           sol_mat[i+1]["yield_stress"] =
@@ -506,6 +515,13 @@ LuaParser::storeInputDeck(
         // mu
         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
           mati_deck.get< tag::mu >());
+
+        // plasticity_reltime
+        if (!sol_mat[i+1]["plasticity_reltime"].valid())
+          sol_mat[i+1]["plasticity_reltime"] =
+            std::vector< tk::real >(ntype, 1.0e-07);
+        checkStoreMatProp(sol_mat[i+1], "plasticity_reltime", ntype,
+          mati_deck.get< tag::plasticity_reltime >());
 
         // yield_stress
         if (!sol_mat[i+1]["yield_stress"].valid())
@@ -539,6 +555,13 @@ LuaParser::storeInputDeck(
         // K0
         checkStoreMatProp(sol_mat[i+1], "K0", ntype,
           mati_deck.get< tag::K0 >());
+
+        // plasticity_reltime
+        if (!sol_mat[i+1]["plasticity_reltime"].valid())
+          sol_mat[i+1]["plasticity_reltime"] =
+            std::vector< tk::real >(ntype, 1.0e-07);
+        checkStoreMatProp(sol_mat[i+1], "plasticity_reltime", ntype,
+          mati_deck.get< tag::plasticity_reltime >());
 
         // yield_stress
         if (!sol_mat[i+1]["yield_stress"].valid())

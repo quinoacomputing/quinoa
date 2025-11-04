@@ -204,8 +204,8 @@ class DG : public CBase_DG {
     //! \return Const-ref to current solution
     const tk::Fields& solution() const { return m_u; }
 
-    //! Compute left hand side
-    void lhs();
+    //! Compute left hand side - no-op for DG
+    void lhs() {}
 
     //! Unused in DG
     void resized() {}
@@ -242,7 +242,6 @@ class DG : public CBase_DG {
       p | m_un;
       p | m_p;
       p | m_geoElem;
-      p | m_lhs;
       p | m_mtInv;
       p | m_uNodalExtrm;
       p | m_pNodalExtrm;
@@ -324,8 +323,6 @@ class DG : public CBase_DG {
     tk::Fields m_p;
     //! Element geometry
     tk::Fields m_geoElem;
-    //! Left-hand side mass-matrix which is a diagonal matrix
-    tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Vector of previous right-hand side values used in the IMEX-RK scheme
@@ -414,7 +411,7 @@ class DG : public CBase_DG {
       const std::unordered_map< std::size_t, std::size_t >& addedTets );
 
     //! Add the protective layer for ndof refinement
-    void refine();
+    void p_refine();
 
     //! Smooth the refined ndof distribution
     void smooth();
@@ -454,6 +451,20 @@ class DG : public CBase_DG {
 
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
+
+    //! Non-linear solver using Broyden's method
+    std::vector< tk::real > nonlinear_broyden(std::size_t e,
+                                              std::vector< tk::real > x,
+                                              bool solver_failed );
+
+    //! Non-linear solver using Newton's method
+    std::vector< tk::real > nonlinear_newton(std::size_t e,
+                                             std::vector< tk::real > x,
+                                             bool solver_failed );
+
+    //! Non-linear function necessary to integrate with IMEX
+    std::vector< tk::real > nonlinear_func(std::size_t e,
+                                           std::vector< tk::real > x);
 };
 
 } // inciter::
