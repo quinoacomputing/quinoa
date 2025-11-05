@@ -201,7 +201,7 @@ cleanTraceMultiMat(
         ctm_element = true;
 
       if (ctm_element) {
-        tk::real prelax(0.0);
+        tk::real prelax(pk);
         std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
         if (solidx[k] > 0) {
           // for solids, reset deformation gradient and stress
@@ -210,10 +210,16 @@ cleanTraceMultiMat(
             for (std::size_t j=0; j<3; ++j)
               gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
         }
-        // determine target relaxation pressure
-        prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-          U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
-        prelax = std::max(prelax, p_target);
+        if (pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
+            U(e, densityDofIdx(nmat, k, rdof, 0)), alk)) {
+          // determine target relaxation pressure
+          prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
+          prelax = std::max(prelax, p_target);
+          for (std::size_t i=1; i<rdof; ++i) {
+            P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
+          }
+        }
 
         // energy change
         auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
