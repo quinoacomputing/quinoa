@@ -216,9 +216,9 @@ cleanTraceMultiMat(
           prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
             U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
           prelax = std::max(prelax, p_target);
-          for (std::size_t i=1; i<rdof; ++i) {
-            P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
-          }
+          // for (std::size_t i=1; i<rdof; ++i) {
+          //   P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
+          // }
         }
 
         // energy change
