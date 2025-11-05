@@ -181,60 +181,56 @@ cleanTraceMultiMat(
     // 1. Correct minority materials and store volume/energy changes
     for (std::size_t k=0; k<nmat; ++k)
     {
+      bool ctm_element(false);
       auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
       auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
-      // for positive volume fractions
-      if (solidx[k] == 0 && solidx[kmax] == 0 && matExists(alk))
-      {
-        // check if volume fraction is lesser than threshold (volfracPRelaxLim)
-        // and if the material (effective) pressure is negative. If either of
-        // these conditions is true, perform pressure relaxation.
-        if ((alk < volfracPRelaxLim()) ||
-          (pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
-          U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
-          /*&& (std::fabs((pk-pmax)/pmax) > 1e-08)*/)
-        {
-          // determine target relaxation pressure
-          auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
-          prelax = std::max(prelax, p_target);
 
-          // energy change
-          auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
-          auto gmat = getDeformGrad(nmat, k, ugp);
-          auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
-            alk*prelax, alk, gmat);
+      // Determine if element-e needs trace-material cleanup. This decision is
+      // based on specific scenarios.
+      // WARNING: Changing this decision-making logic can adversely affect
+      // code stability.
+      if (
+        // 1. if volume fraction is lesser than threshold
+        (alk < volfracPRelaxLim()) ||
+        // 2. if current and majority material is fluid, AND the material
+        //    (effective) pressure is negative
+        (solidx[k] == 0 && solidx[kmax] == 0 && matExists(alk) &&
+        pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
+        U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
+      )
+        ctm_element = true;
 
-          // total energy flux into majority material
-          d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
-            - arhoEmat);
-
-          // update state of trace material
-          U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk;
-          U(e, energyDofIdx(nmat, k, rdof, 0)) = arhoEmat;
-          P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
+      if (ctm_element) {
+        tk::real prelax(0.0);
+        std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
+        if (solidx[k] > 0) {
+          // for solids, reset deformation gradient and stress
+          resetSolidTensors(nmat, k, e, U, P);
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
         }
-      }
-      else if (!matExists(alk)) {  // condition so that else-branch not exec'ed for solids
         // determine target relaxation pressure
-        auto prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+        prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
         prelax = std::max(prelax, p_target);
-        auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
-        auto gk = std::array< std::array< tk::real, 3 >, 3 >
-          {{ {{1, 0, 0}},
-             {{0, 1, 0}},
-             {{0, 0, 1}} }};
+
+        // energy change
+        auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
+        auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
+          alk*prelax, alk, gmat);
+
+        // total energy flux into majority material
+        d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
+          - arhoEmat);
+
         // update state of trace material
-        U(e, energyDofIdx(nmat, k, rdof, 0)) =
-          mat_blk[k].compute< EOS::totalenergy >( arhok, u, v, w, alk*prelax,
-          alk, gk );
-        P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk *
-          prelax;
-        resetSolidTensors(nmat, k, e, U, P);
+        U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk;
+        U(e, energyDofIdx(nmat, k, rdof, 0)) = arhoEmat;
+        P(e, pressureDofIdx(nmat, k, rdof, 0)) = alk*prelax;
+
         for (std::size_t i=1; i<rdof; ++i) {
           U(e, energyDofIdx(nmat, k, rdof, i)) = 0.0;
-          P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
         }
       }
     }
@@ -591,24 +587,36 @@ resetSolidTensors(
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
   const auto rdof = g_inputdeck.get< tag::rdof >();
 
-  if (solidx[k] > 0) {
-    for (std::size_t i=0; i<3; ++i) {
-      for (std::size_t j=0; j<3; ++j) {
-        // deformation gradient reset
-        if (i==j) U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = 1.0;
-        else U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = 0.0;
+  if (solidx[k] == 0) return; // fluid: nothing to reset here
 
-        // elastic Cauchy-stress reset
-        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
+  // Load g and symmetrize once to reduce roundoff
+  std::array<std::array<tk::real,3>,3> g{};
+  for (size_t i=0;i<3;++i)
+    for (size_t j=0;j<3;++j)
+      g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+  // symmetric part
+  for (size_t i=0;i<3;++i)
+    for (size_t j=i+1;j<3;++j) {
+      tk::real sij = 0.5*(g[i][j] + g[j][i]);
+      g[i][j] = g[j][i] = sij;
+    }
 
-        // high-order reset
-        for (std::size_t l=1; l<rdof; ++l) {
-          U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l)) = 0.0;
-          P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) = 0.0;
-        }
+  // Robust determinant and spherical replacement
+  // Clamp to avoid NaNs; eps should be small but > 0
+  auto detg = std::max(1e-18, tk::determinant(g));
+  const tk::real new_gii = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
+
+  // Set g and zero elastic (deviatoric) Cauchy stress DOFs ONLY (not pressure)
+  for (size_t i=0;i<3;++i)
+    for (size_t j=0;j<3;++j) {
+      U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = (i==j) ? new_gii : 0.0;
+      P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
+      // Clear higher DOFs for g and elastic stress
+      for (size_t l=1; l<rdof; ++l) {
+        U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l)) = 0.0;
+        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) = 0.0;
       }
     }
-  }
 }
 
 std::array< std::array< tk::real, 3 >, 3 >

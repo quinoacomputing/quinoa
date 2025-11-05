@@ -106,27 +106,28 @@ using multispeciesList = tk::TaggedTuple< brigand::list<
 
 // Material/EOS object
 using materialList = tk::TaggedTuple< brigand::list<
-  tag::eos,          MaterialType,
-  tag::id,           std::vector< uint64_t >,
-  tag::gamma,        std::vector< tk::real >,
-  tag::pstiff,       std::vector< tk::real >,
-  tag::w_gru,        std::vector< tk::real >,
-  tag::A_jwl,        std::vector< tk::real >,
-  tag::B_jwl,        std::vector< tk::real >,
-  tag::C_jwl,        std::vector< tk::real >,
-  tag::R1_jwl,       std::vector< tk::real >,
-  tag::R2_jwl,       std::vector< tk::real >,
-  tag::rho0_jwl,     std::vector< tk::real >,
-  tag::de_jwl,       std::vector< tk::real >,
-  tag::rhor_jwl,     std::vector< tk::real >,
-  tag::Tr_jwl,       std::vector< tk::real >,
-  tag::Pr_jwl,       std::vector< tk::real >,
-  tag::mu,           std::vector< tk::real >,
-  tag::yield_stress, std::vector< tk::real >,
-  tag::alpha,        std::vector< tk::real >,
-  tag::K0,           std::vector< tk::real >,
-  tag::cv,           std::vector< tk::real >,
-  tag::k,            std::vector< tk::real >
+  tag::eos,                MaterialType,
+  tag::id,                 std::vector< uint64_t >,
+  tag::gamma,              std::vector< tk::real >,
+  tag::pstiff,             std::vector< tk::real >,
+  tag::w_gru,              std::vector< tk::real >,
+  tag::A_jwl,              std::vector< tk::real >,
+  tag::B_jwl,              std::vector< tk::real >,
+  tag::C_jwl,              std::vector< tk::real >,
+  tag::R1_jwl,             std::vector< tk::real >,
+  tag::R2_jwl,             std::vector< tk::real >,
+  tag::rho0_jwl,           std::vector< tk::real >,
+  tag::de_jwl,             std::vector< tk::real >,
+  tag::rhor_jwl,           std::vector< tk::real >,
+  tag::Tr_jwl,             std::vector< tk::real >,
+  tag::Pr_jwl,             std::vector< tk::real >,
+  tag::mu,                 std::vector< tk::real >,
+  tag::yield_stress,       std::vector< tk::real >,
+  tag::alpha,              std::vector< tk::real >,
+  tag::K0,                 std::vector< tk::real >,
+  tag::cv,                 std::vector< tk::real >,
+  tag::k,                  std::vector< tk::real >,
+  tag::plasticity_reltime, std::vector< tk::real >
 > >;
 
 // Species/EOS object
@@ -296,6 +297,7 @@ using ConfigMembers = brigand::list<
   tag::t0,               tk::real,
   tag::dt,               tk::real,
   tag::cfl,              tk::real,
+  tag::cfl_ramping,      bool,
   tag::ttyi,             uint32_t,
   tag::imex_runge_kutta, uint32_t,
   tag::imex_maxiter,     uint32_t,
@@ -444,6 +446,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       // Default time stepping params
       get< tag::dt >() = 0.0;
       get< tag::cfl >() = 0.0;
+      get< tag::cfl_ramping >() = false;
       // Default AMR settings
       auto rmax =
         std::numeric_limits< tk::real >::max() / 100;
@@ -508,6 +511,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       R"(This keyword is used to specify the CFL coefficient for
       variable-time-step-size simulations. Setting 'cfl' and 'dt' are mutually
       exclusive. If both 'cfl' and 'dt' are set, 'dt' wins.)", "real"});
+
+      keywords.insert({"cfl_ramping",
+      "Determines whether a ramping coefficient is applied to the CFL coefficient.",
+      R"(This keyword is used to specify a boolean that determines
+      whether a ramping coefficient is applied to the CFL coefficient.
+      If true, the CFL would be scaled down by 0.01 at the first step,
+      and increased by 0.01 for the next 100 steps.)", "bool"});
 
       keywords.insert({"ttyi", "Set screen output interval",
         R"(This keyword is used to specify the interval in time steps for screen
@@ -1099,6 +1109,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"k", "heat conductivity",
         R"(This keyword is used to specify the material property, heat
         conductivity.)", "vector of reals"});
+
+      keywords.insert({"plasticity_reltime", "Relaxation time for plasticity",
+        R"(This keyword is used to specify the base relaxation time for a solid
+        subject to perfect plasticity. See Ortega, A. López, et al. "Numerical
+        simulation of elastic–plastic solid mechanics using an Eulerian stretch
+        tensor approach and HLLD Riemann solver." Journal of Computational
+        Physics 257 (2014): 414-441.)", "vector of reals"});
 
       keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
         R"(This keyword is used to specify species' coefficients in the
@@ -1896,7 +1913,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"orientation", "Configure orientation",
         R"(Configure orientation of an IC box for rotation about centroid of
-        box; or configure orientation of a mesh relative to another.)",
+        box (when specified within an IC 'box' block); or configure orientation
+        of a mesh (when specified within a 'mesh' block). Requires specification
+        of three angles about which the entity (box or mesh) is to be rotated.
+        The entity is rotated about the cartesian coordinate axes.)",
         "vector of 3 reals"});
 
       keywords.insert({"initiate", "Initiation type",
@@ -1956,9 +1976,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"filename", "Set filename",
         R"(Set filename, e.g., mesh filename for solver coupling.)", "string"});
 
-      keywords.insert({"location", "Configure location",
-        R"(Configure location of a mesh relative to another.)",
-        "vector of 3 reals"});
+      keywords.insert({"location", "Configure location of mesh",
+        R"(Configure location of a mesh relative to its local coordinate
+        system. Requires specification of three distances which are used to
+        relocate the mesh.)", "vector of 3 reals"});
 
       keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
         R"(Moment of inertia of rigid body for rotational motion)", "real"});

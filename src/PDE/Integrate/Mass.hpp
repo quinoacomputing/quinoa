@@ -20,20 +20,11 @@ namespace tk {
 
 using ncomp_t = tk::ncomp_t;
 
-//! Compute the block-diagnoal mass matrix for DG
-void
-mass( ncomp_t ncomp, ncomp_t ndof, const Fields& geoElem, Fields& l );
-
 //! Compute lumped mass matrix for CG
 tk::Fields
 lump( ncomp_t ncomp,
       const std::array< std::vector< tk::real >, 3 >& coord,
       const std::vector< std::size_t >& inpoel );
-
-//! Compute the diagonal mass matrix for DG with Dubiner basis functions
-std::vector< tk::real >
-massMatrixDubiner( std::size_t dof,
-  tk::real vol );
 
 } // tk::
 

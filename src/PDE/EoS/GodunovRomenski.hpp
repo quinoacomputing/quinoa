@@ -75,15 +75,9 @@ class GodunovRomenski {
       tk::real alpha=1.0 ) const;
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
-    //!   density, momentum, total energy, and inverse deformation gradient
-    //!   tensor using the GodunovRomenski equation of state
+    //!   inverse deformation gradient tensor using the GodunovRomenski EOS
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
-      tk::real arho,
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
       tk::real alpha,
       std::size_t /*imat*/,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const;
@@ -127,8 +121,8 @@ class GodunovRomenski {
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(
       tk::real min,
-      tk::real arho,
-      tk::real alpha=1.0 ) const;
+      tk::real /*arho*/,
+      tk::real /*alpha=1.0*/ ) const;
 
     //! Compute the reference density
     tk::real refDensity() const { return density(refPressure(), 300.0); }

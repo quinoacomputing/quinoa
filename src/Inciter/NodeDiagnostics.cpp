@@ -51,6 +51,9 @@ NodeDiagnostics::compute(
   const tk::Fields& u,
   const tk::Fields& un,
   const std::array< tk::real, 3 >& surfForce,
+  const std::array< tk::real, 3 >& surfTorque,
+  const std::array< tk::real, 3 >& displacement,
+  const std::array< tk::real, 3 >& rotation,
   const std::unordered_map< int,
           std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& bnorm,
   const std::unordered_set< std::size_t >& symbcnodes,
@@ -62,6 +65,9 @@ NodeDiagnostics::compute(
 //! \param[in] u Current solution vector
 //! \param[in] un Previous solution vector
 //! \param[in] surfForce Surface force on mesh for rigid body motion
+//! \param[in] surfTorque Surface torque on mesh for rigid body motion
+//! \param[in] displacement Total displacement of rigid body center-of-mass
+//! \param[in] rotation Total rotation of rigid body
 //! \param[in] bnorm Face normals in boundary points, key local node id,
 //!   first 3 reals of value: unit normal, outer key: side set id
 //! \param[in] symbcnodes Unique set of node ids at which to set symmetry BCs
@@ -136,8 +142,11 @@ NodeDiagnostics::compute(
       diag[TOTALSOL][0] += u(i,u.nprop()-1) * v[i];
     }
 
-    // Append diagnostics vector with resultant force vector on mesh boundaries
+    // Append diagnostics vector with rigid body motion qtys.
     for (std::size_t i=0; i<3; ++i) diag[RESFORCE][i] = surfForce[i];
+    for (std::size_t i=0; i<3; ++i) diag[RESTORQUE][i] = surfTorque[i];
+    for (std::size_t i=0; i<3; ++i) diag[DISPLACEMNT][i] = displacement[i];
+    for (std::size_t i=0; i<3; ++i) diag[ROTATION][i] = rotation[i];
 
     // Append diagnostics vector with metadata on the current time step
     // ITER:: Current iteration count (only the first entry is used)

@@ -66,15 +66,10 @@ class JWL {
       tk::real ) const
     { return 0.0; }
 
-    //! \brief Calculate the Cauchy stress tensor from the material density,
-    //!   momentum, and total energy
+    //! \brief Calculate the Cauchy stress tensor from the material
+    //!   inverse deformation gradient tensor
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
       tk::real,
       std::size_t,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;

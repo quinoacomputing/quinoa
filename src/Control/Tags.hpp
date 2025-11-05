@@ -140,6 +140,7 @@ DEFTAG(term);
 DEFTAG(t0);
 DEFTAG(dt);
 DEFTAG(cfl);
+DEFTAG(cfl_ramping);
 DEFTAG(ttyi);
 DEFTAG(steady_state);
 DEFTAG(residual);
@@ -227,6 +228,7 @@ DEFTAG(R);
 DEFTAG(cp_coeff);
 DEFTAG(t_range);
 DEFTAG(dH_ref);
+DEFTAG(plasticity_reltime);
 
 DEFTAG(field_output);
 DEFTAG(interval);

@@ -101,6 +101,10 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_ixfer(0),
   m_surfForce({{0, 0, 0}}),
   m_surfTorque({{0, 0, 0}}),
+  m_displacement({{0, 0, 0}}),
+  m_displacementn({{0, 0, 0}}),
+  m_rotation({{0, 0, 0}}),
+  m_rotationn({{0, 0, 0}}),
   m_centMass({{0, 0, 0}}),
   m_centMassVel({{0, 0, 0}}),
   m_angVelMesh(0),
@@ -988,6 +992,8 @@ OversetFE::UpdateCenterOfMass()
   m_centMassn = m_centMass;
   m_centMassVeln = m_centMassVel;
   m_angVelMeshn = m_angVelMesh;
+  m_displacementn = m_displacement;
+  m_rotationn = m_rotation;
 }
 
 void
@@ -1276,9 +1282,11 @@ OversetFE::solve()
       }
     }
 
-    // Mark if mesh moved
+    // Mark if mesh moved or is moving
     if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12 ||
-      std::sqrt(tk::dot(m_surfTorque, m_surfTorque)) > 1e-12)
+      std::sqrt(tk::dot(m_surfTorque, m_surfTorque)) > 1e-12 ||
+      std::sqrt(tk::dot(m_centMassVeln, m_centMassVeln)) > 1e-12 ||
+      std::sqrt(m_angVelMeshn * m_angVelMeshn) > 1e-12 )
       m_movedmesh = 1;
     else
       m_movedmesh = 0;
@@ -1317,6 +1325,7 @@ OversetFE::solve()
         }
         r_mag = std::sqrt(r_mag);
         auto a_tgt = alpha_mesh*r_mag;
+        auto v_tgt = m_angVelMeshn*r_mag;
 
         // get the other two directions
         auto i1 = (sym_dir+1)%3;
@@ -1326,6 +1335,8 @@ OversetFE::solve()
         auto theta = std::atan2(rCM[i2],rCM[i1]);
         auto a1 = a_tgt*std::cos((pi/2.0)+theta);
         auto a2 = a_tgt*std::sin((pi/2.0)+theta);
+        auto v1 = v_tgt*std::cos((pi/2.0)+theta);
+        auto v2 = v_tgt*std::sin((pi/2.0)+theta);
 
         // angle of rotation
         auto dtheta = m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp;
@@ -1344,17 +1355,25 @@ OversetFE::solve()
           // mesh displacement from translation
           dsT = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
           // mesh displacement from rotation
-          dsR = rCM[i] + m_centMass[i] - d->Coordn()[i][p];
+          dsR = rCM[i] + m_centMassn[i] - d->Coordn()[i][p];
           // add both contributions
           d->Coord()[i][p] = d->Coordn()[i][p] + dsT + dsR;
           // mesh velocity change from translation
-          u_mesh(p,i) += a_mesh[i]*dtp;
+          u_mesh(p,i) = m_centMassVeln[i] + a_mesh[i]*dtp;
         }
 
         // add contribution of rotation to mesh velocity
-        u_mesh(p,i1) += a1*dtp;
-        u_mesh(p,i2) += a2*dtp;
+        u_mesh(p,i1) += v1 + a1*dtp;
+        u_mesh(p,i2) += v2 + a2*dtp;
       }
+
+      // obtain total displacement of center-of-mass and rotation for diagnostics
+      for (std::size_t i=0; i<3; ++i) {
+        m_displacement[i] = m_displacementn[i]
+          + m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+      }
+      m_rotation[sym_dir] = m_rotationn[sym_dir]
+        + (m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp)*180.0/pi;
 
       // update angular velocity
       m_angVelMesh = m_angVelMeshn + alpha_mesh*dtp;
@@ -1386,7 +1405,8 @@ OversetFE::solve()
   bool diag_computed(false);
   if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
-    diag_computed = m_diag.compute( *d, m_u, m_un, m_surfForce, m_bnorm,
+    diag_computed = m_diag.compute( *d, m_u, m_un, m_surfForce, m_surfTorque,
+                                    m_displacement, m_rotation, m_bnorm,
                                     m_symbcnodes, m_farfieldbcnodes,
                                     m_slipwallbcnodes );
     // Increase number of iterations and physical time
