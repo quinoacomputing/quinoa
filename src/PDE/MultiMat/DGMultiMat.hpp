@@ -500,16 +500,16 @@ class MultiMat {
             auto gmat = getDeformGrad(nmat, imat, state);
             tk::real damage = 0.0;
             if (solidx[imat] > 0)
-              damage = state[damageIdx(nmat, nsld, imat)]/arhomat;
+              damage = state[damageIdx(nmat, nsld, solidx[imat])]/arhomat;
             pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
-                               alphamat, imat, damage, gmat );
+                               alphamat, imat, gmat, damage );
 
             pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
 
             if (solidx[imat] > 0) {
-              auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(alphamat, imat, damage, gmat );
+              auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(alphamat, imat, gmat, damage );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
               pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
@@ -637,7 +637,7 @@ class MultiMat {
             // 1. Compute dev(sigma)
             auto damage = U(e, damageDofIdx(nmat, nsld, k, rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
-              alpha, k, damage, g );
+               alpha, k, g, damage );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
@@ -1383,7 +1383,7 @@ class MultiMat {
             // 1. Compute dev(sigma)
             auto damage = U(e, damageDofIdx(nmat, nsld, k, rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
-              alpha, k, damage, g );
+               alpha, k, g, damage );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
@@ -1715,11 +1715,12 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
+        tk::real damage = ur[damageIdx(nmat, nsld, solidx[k])];
         auto gk = getDeformGrad(nmat, k, ur);
         ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k, gk );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k, gk, damage );
       }
 
       Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "

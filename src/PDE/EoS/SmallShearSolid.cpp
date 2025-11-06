@@ -211,8 +211,8 @@ SmallShearSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/,
-  tk::real /*damage*/ ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)

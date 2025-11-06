@@ -160,7 +160,7 @@ cleanTraceMultiMat(
     // Temperature does not depend on damage so input 0
     tk::real tmax = mat_blk[kmax].compute< EOS::temperature >(
         U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
-        U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax, 0.0, gmax );
+        U(e, energyDofIdx(nmat, kmax, rdof, 0)), almax, gmax, dmg_max );
 
     tk::real p_target(0.0), d_al(0.0), d_arE(0.0);
     //// get equilibrium pressure
@@ -222,7 +222,7 @@ cleanTraceMultiMat(
         auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
         auto damage = U(e, damageDofIdx(nmat, nsld, k, rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
         auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
-          alk*prelax, alk, damage, gmat);
+          alk*prelax, alk, gmat, damage);
 
         // total energy flux into majority material
         d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
@@ -247,7 +247,7 @@ cleanTraceMultiMat(
       mat_blk[kmax].compute< EOS::pressure >(
       U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
       U(e, energyDofIdx(nmat, kmax, rdof, 0)),
-      U(e, volfracDofIdx(nmat, kmax, rdof, 0)), kmax, dmg_max, gmax );
+      U(e, volfracDofIdx(nmat, kmax, rdof, 0)), kmax, gmax, dmg_max );
 
     // 3. enforce unit sum of volume fractions
     auto alsum = 0.0;
@@ -372,11 +372,11 @@ timeStepSizeMultiMat(
     {
       if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
         auto gk = getDeformGrad(nmat, k, ugp);
-        auto damage = ugp[damageIdx(nmat, nsld, k)]/ugp[densityIdx(nmat, k)];
+        auto damage = ugp[damageIdx(nmat, nsld, solidx[k])]/ugp[densityIdx(nmat, k)];
         gk = tk::rotateTensor(gk, fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
           ugp[densityIdx(nmat, k)],
-          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, damage, gk ) );
+          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk, damage ) );
       }
     }
 
@@ -408,11 +408,11 @@ timeStepSizeMultiMat(
       {
         if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
           auto gk = getDeformGrad(nmat, k, ugp);
-          auto damage = ugp[damageIdx(nmat, nsld, k)]/ugp[densityIdx(nmat, k)];
+          auto damage = ugp[damageIdx(nmat, nsld, solidx[k])]/ugp[densityIdx(nmat, k)];
           gk = tk::rotateTensor(gk, fn);
           a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
             ugp[densityIdx(nmat, k)],
-            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, damage, gk ) );
+            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk, damage) );
         }
       }
 

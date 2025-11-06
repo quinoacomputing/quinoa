@@ -71,7 +71,7 @@ inline std::size_t deformIdx( std::size_t nmat, std::size_t ksld,
 //! \return Index of the required material damage equation
 inline std::size_t damageIdx( std::size_t nmat, std::size_t nsld,
   std::size_t ksld)
-{ return 2*nmat+3+nmat+9*nsld+ksld; }
+{ return 2*nmat+3+nmat+9*nsld+(ksld-1); }
 
 //! Get the index of the required velocity component from vector of primitives
 //! \param[in] nmat Number of materials

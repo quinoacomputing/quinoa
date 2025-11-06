@@ -100,7 +100,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
     // total specific energy
     s[energyIdx(nmat,k)] =
       mat_blk[k].compute< EOS::totalenergy >(s[volfracIdx(nmat,k)]*rhok, u, v,
-      w, s[volfracIdx(nmat,k)]*bgpreic, s[volfracIdx(nmat,k)], damage, g);
+      w, s[volfracIdx(nmat,k)]*bgpreic, s[volfracIdx(nmat,k)], g, damage);
     // bulk density
     rb += s[densityIdx(nmat,k)];
   }

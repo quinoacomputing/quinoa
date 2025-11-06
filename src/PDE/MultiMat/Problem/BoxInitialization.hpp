@@ -188,7 +188,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
         s[damageIdx(nmat,nsld,solidx[k])] = damage;
       s[energyIdx(nmat,k)] =
         mat_blk[k].compute< EOS::totalenergy >( s[volfracIdx(nmat,k)]*rhok[k],
-        u, v, w, s[volfracIdx(nmat,k)]*pr, s[volfracIdx(nmat,k)], damage, gk );
+        u, v, w, s[volfracIdx(nmat,k)]*pr, s[volfracIdx(nmat,k)], gk, damage );
     }
   }
   // bulk momentum
