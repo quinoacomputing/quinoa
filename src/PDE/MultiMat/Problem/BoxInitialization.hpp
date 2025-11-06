@@ -56,6 +56,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   auto alphamin = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
 
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  auto nsld = numSolids(nmat,solidx);
 
   const auto& initiate = b.template get< tag::initiate >();
 
@@ -181,9 +182,13 @@ void initializeBox( const std::vector< EOS >& mat_blk,
       else {
         gk = {{}};
       }
+      tk::real damage = 0.0;
+      // damage variable for solids
+      if (solidx[k] > 0)
+        s[damageIdx(nmat,nsld,solidx[k])] = damage;
       s[energyIdx(nmat,k)] =
         mat_blk[k].compute< EOS::totalenergy >( s[volfracIdx(nmat,k)]*rhok[k],
-        u, v, w, s[volfracIdx(nmat,k)]*pr, s[volfracIdx(nmat,k)], gk );
+        u, v, w, s[volfracIdx(nmat,k)]*pr, s[volfracIdx(nmat,k)], damage, gk );
     }
   }
   // bulk momentum

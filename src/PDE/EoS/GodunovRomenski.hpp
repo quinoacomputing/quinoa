@@ -67,8 +67,7 @@ class GodunovRomenski {
       tk::real arhoE,
       tk::real alpha=1.0,
       std::size_t imat=0,
-      tk::real damage=0.0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+      tk::real damage=0.0 ) const;
 
     //! \brief Calculate cold-compression contribution to material pressure from
     //!   the material density

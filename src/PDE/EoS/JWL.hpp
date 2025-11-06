@@ -58,8 +58,8 @@ class JWL {
                        tk::real arhoE,
                        tk::real alpha=1.0,
                        std::size_t imat=0,
-                       tk::real damage=0.0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+                       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+                       tk::real damage=0.0 ) const;
 
     //! Calculate cold-compression component of pressure (no-op)
     tk::real pressure_coldcompr(
@@ -73,16 +73,16 @@ class JWL {
     CauchyStress(
       tk::real,
       std::size_t,
-      tk::real damage=0.0,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
+      tk::real damage=0.0 ) const;
 
     //! Calculate speed of sound from the material density and material pressure
     tk::real soundspeed( tk::real arho,
                          tk::real apr,
                          tk::real alpha=1.0,
                          std::size_t imat=0,
-                         tk::real damage=0.0,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
+                         const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
+                         tk::real damage=0.0 ) const;
 
     //! Calculate speed of shear waves
     tk::real shearspeed(
@@ -99,8 +99,8 @@ class JWL {
                           tk::real w,
                           tk::real apr,
                           tk::real alpha=1.0,
-                          tk::real damage=0.0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+                          const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+                          tk::real damage=0.0 ) const;
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
@@ -110,8 +110,8 @@ class JWL {
                           tk::real w,
                           tk::real arhoE,
                           tk::real alpha=1.0,
-                          tk::real damage=0.0,
-      const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+                          const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}},
+                          tk::real damage=0.0 ) const;
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(
