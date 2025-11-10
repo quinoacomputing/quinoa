@@ -177,7 +177,7 @@ SmallShearSolid::CauchyStress(
   elasticEnergy(defgrad, eps2, damage);
 
   // p_mean
-  auto pmean = - alpha * (1.0-damage) * m_mu * eps2;
+  auto pmean = - alpha * /*(1.0-damage) * */ m_mu * eps2;
 
   // Volumetric component of Cauchy stress tensor
   asig[0][0] = -pmean;
@@ -199,7 +199,7 @@ SmallShearSolid::CauchyStress(
   // Add deviatoric component of Cauchy stress tensor
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
-      asig[i][j] += (1.0-damage) * m_mu*alpha*devbt[i][j];
+      asig[i][j] += /*(1.0-damage) * */ m_mu*alpha*devbt[i][j];
   }
 
   return asig;
@@ -547,7 +547,7 @@ SmallShearSolid::soundspeed(
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
   auto al_eff = std::max( 1.0e-14, alpha );
-  tk::real a = (4.0/3.0) * (1.0-damage) * m_mu * al_eff / arho;
+  tk::real a = (4.0/3.0) * /*(1.0-damage) * */ m_mu * al_eff / arho;
 
   // hydrodynamic contribution
   auto p_eff = std::max( 1.0e-15, apr+(al_eff*m_pstiff) );
@@ -592,7 +592,7 @@ SmallShearSolid::shearspeed(
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
   auto al_eff = std::max( 1e-14, alpha );
-  tk::real a = std::sqrt(al_eff*(1.0-damage)*m_mu/arho);
+  tk::real a = std::sqrt(al_eff/* *(1.0-damage) */*m_mu/arho);
 
   // check shear-wave speed divergence
   if (!std::isfinite(a)) {
@@ -719,7 +719,7 @@ SmallShearSolid::elasticEnergy(
   eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
 
   // compute elastic energy
-  auto rhoEe = (1.0-damage) * m_mu * eps2;
+  auto rhoEe = /*(1.0-damage) * */ m_mu * eps2;
 
   return rhoEe;
 }

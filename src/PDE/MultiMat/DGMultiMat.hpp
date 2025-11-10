@@ -663,7 +663,6 @@ class MultiMat {
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 plastic_rate += Lp[i][j]*Lp[i][j];
-            plastic_rate = std::sqrt(3.0*plastic_rate/2.0);
             // Scale plastic_rate by alpha
             tk::real a_min = 1.0e-04, a_max = 2.0e-01;
             auto smoothstep = [&](tk::real a){
@@ -672,11 +671,14 @@ class MultiMat {
             };
             tk::real a_tilde = smoothstep(alpha);
             plastic_rate *= a_tilde;
+            plastic_rate = std::sqrt(3.0*plastic_rate/2.0);
             // 5. Compute dD
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
+            // Scale equiv_stress by alpha
+            equiv_stress *= a_tilde;
             equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
             auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
             auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
