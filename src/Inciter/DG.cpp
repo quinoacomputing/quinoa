@@ -1391,6 +1391,20 @@ DG::dt()
       if (g_inputdeck.get< tag::cfl_ramping >() && d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It()+1);
 
       mindt *= coeff * g_inputdeck.get< tag::cfl >();
+
+      // time-step restriction based on max volume change
+      auto mindtv = std::numeric_limits< tk::real >::max();
+      auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
+      if (d->Dtn() > 1e-12 && dvcfl > 0.0) {
+        for (std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+          auto dt_v = dvcfl *
+            d->Dtn() * std::min(m_geoElemn(e,0), myGhosts()->m_geoElem(e,0))
+            / (std::abs(m_geoElemn(e,0)-myGhosts()->m_geoElem(e,0)) + 1.0e-12);
+          mindtv = std::min(mindtv, dt_v);
+        }
+      }
+
+      mindt = std::min(mindt, mindtv);
     }
   }
   else
@@ -1901,6 +1915,21 @@ DG::writeFields(
 
   if (densityConstr.size() > 0)
     elemfieldnames.push_back( "density_constraint" );
+
+  //! Lambda to put in a field for output if not empty
+  auto add_node_field = [&]( const auto& name, const auto& field ){
+    if (not field.empty()) {
+      nodefieldnames.push_back( name );
+      nodefields.push_back( field );
+    }
+  };
+
+  // Output mesh velocity if ALE is enabled
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    add_node_field( "x-mesh-velocity", m_meshvel.extract_comp(0) );
+    add_node_field( "y-mesh-velocity", m_meshvel.extract_comp(1) );
+    add_node_field( "z-mesh-velocity", m_meshvel.extract_comp(2) );
+  }
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );

@@ -37,7 +37,7 @@ struct LaxFriedrichsSolids {
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {},
-        const tk::real = 0 )
+        const tk::real wn = 0 )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -126,6 +126,10 @@ struct LaxFriedrichsSolids {
     auto vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
     auto vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 
+    // relative velocity (v_fluid-v_mesh) based mach etc
+    vnl -= wn;
+    vnr -= wn;
+
     // Maximum eignevalue and Riemann velocity
     auto lambda = std::max(std::abs(vnl), std::abs(vnr)) + std::max(ac_l, ac_r);
     auto vriem = 0.5 * (vnl + vnr);
@@ -189,7 +193,7 @@ struct LaxFriedrichsSolids {
       flx.push_back( 0.5*(pml[k]+pmr[k]) );
 
     // Store Riemann velocity (1)
-    flx.push_back( vriem );
+    flx.push_back( vriem+wn );
 
     // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem));
