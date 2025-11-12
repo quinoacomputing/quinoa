@@ -823,7 +823,8 @@ LuaParser::storeInputDeck(
     storeVecIfSpecd< tk::real >(
       lua_ideck["rigid_body_motion"], "symmetry_plane",
       rbm_deck.get< tag::symmetry_plane >(), { 0 } );
-    if (rbm_deck.get< tag::symmetry_plane >().size() != 3 )
+    if (rbm_deck.get< tag::rigid_body_dof >() == 3 && 
+       rbm_deck.get< tag::symmetry_plane >().size() != 3 )
       Throw("A vector of size 3 must be supplied for 3 DOF rigid body motion.");
 
     //! TODO:
