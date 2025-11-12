@@ -320,7 +320,7 @@ class MultiMat {
             // Retrieve unknowns
             tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
             tk::real rho = unk(e, densityDofIdx(nmat, imat, rdof, 0))/alpha;
-            tk::real dmg = unk(e, damageDofIdx(nmat, nsld, imat, rdof, 0));
+            tk::real dmg = unk(e, damageDofIdx(nmat, nsld, solidx[imat], rdof, 0));
             damage[e] += dmg/rho;
           }
         }
@@ -635,7 +635,7 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
-            auto damage = U(e, damageDofIdx(nmat, nsld, k, rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
+            auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
                alpha, k, g, damage );
             for (std::size_t i=0; i<3; ++i)
@@ -687,18 +687,30 @@ class MultiMat {
             tk::real d3 = -0.5442; // temp
             tk::real d4 = 0.0; // temp
             tk :: real ef = d1;
-            if (std::abs(equiv_stress) > 1.0e-08) {
+            tk::real dD = 0.0;
+            if (std::abs(equiv_stress) > 1.0e+06) {
               tk::real eta = -pk/(equiv_stress);
               ef += d2*std::exp(d3*eta); // <- for d4=0 (temp)
+              dD = std::min(0.02, std::max(-0.02, plastic_rate*dt/ef));
+              // printf("debug = %e, %e\n", dD, equiv_stress);
+              // printf("alpha = %e\n", alpha);
+              // printf("%e, %e, %e\n", g[0][0], g[0][1], g[0][2]);
+              // printf("%e, %e, %e\n", g[1][0], g[1][1], g[1][2]);
+              // printf("%e, %e, %e\n", g[2][0], g[2][1], g[2][2]);
+              // printf("g33 --->>> %e, %e\n", g[2][2], U(e, deformDofIdx(nmat,solidx[k],2,2,rdof,0)));
+              // printf("%e, %e, %e\n", sigma_dev[0][0], sigma_dev[0][1], sigma_dev[0][2]);
+              // printf("%e, %e, %e\n", sigma_dev[1][0], sigma_dev[1][1], sigma_dev[1][2]);
+              // printf("%e, %e, %e\n", sigma_dev[2][0], sigma_dev[2][1], sigma_dev[2][2]);
             }
-            tk::real dD = std::min(0.2, std::max(-0.2, plastic_rate*dt/ef));
             // 6. Evolve D
-            U(e, damageDofIdx(nmat, nsld, k, rdof, 0)) =
-              std::min(1.0, U(e, damageDofIdx(nmat, nsld, k, rdof, 0))+dD);
+            U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) += dD;
+            // 7. Maintain bounds: max_damage = 0.99
+            U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) =
+              std::min(0.99, U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)));
             //printf("k, elem, damage, dD = %lu, %lu, %e, %e\n", k, e, U(e, damageDofIdx(nmat, nsld, k, rdof, 0)), dD);
             // Zero out high-order terms
             for (std::size_t idof=1; idof<rdof; ++idof)
-              U(e, damageDofIdx(nmat, nsld, k, rdof, 0)) = 0.0;
+              U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) = 0.0;
           }
         }
       }
@@ -1383,7 +1395,7 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
-            auto damage = U(e, damageDofIdx(nmat, nsld, k, rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
+            auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
             auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
                alpha, k, g, damage );
             for (std::size_t i=0; i<3; ++i)

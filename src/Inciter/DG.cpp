@@ -1465,6 +1465,10 @@ DG::solve( tk::real newdt )
     }
   }
 
+  // Evolve damage
+  g_dgpde[d->MeshId()].evolveDamage( d->Dt(), myGhosts()->m_geoElem, m_u,
+      m_p, myGhosts()->m_fd.Esuel().size()/4 );
+  
   g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
     myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
     myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
@@ -1506,10 +1510,6 @@ DG::solve( tk::real newdt )
         }
       }
     }
-
-  // Evolve damage
-  g_dgpde[d->MeshId()].evolveDamage( d->Dt(), myGhosts()->m_geoElem, m_u,
-      m_p, myGhosts()->m_fd.Esuel().size()/4 );
 
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,

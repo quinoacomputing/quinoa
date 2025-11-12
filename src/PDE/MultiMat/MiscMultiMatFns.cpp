@@ -156,7 +156,7 @@ cleanTraceMultiMat(
     auto w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
     auto pmax = P(e, pressureDofIdx(nmat, kmax, rdof, 0))/almax;
     auto gmax = getDeformGrad(nmat, kmax, ugp);
-    auto dmg_max = U(e, damageDofIdx(nmat, nsld, kmax, rdof, 0))/U(e, densityDofIdx(nmat, kmax, rdof, 0));
+    auto dmg_max = U(e, damageDofIdx(nmat, nsld, solidx[kmax], rdof, 0))/U(e, densityDofIdx(nmat, kmax, rdof, 0));
     // Temperature does not depend on damage so input 0
     tk::real tmax = mat_blk[kmax].compute< EOS::temperature >(
         U(e, densityDofIdx(nmat, kmax, rdof, 0)), u, v, w,
@@ -204,7 +204,7 @@ cleanTraceMultiMat(
         ctm_element = true;
 
       if (ctm_element) {
-        tk::real prelax(0.0);
+        tk::real prelax(pk);
         std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
         if (solidx[k] > 0) {
           // for solids, reset deformation gradient and stress
@@ -213,14 +213,18 @@ cleanTraceMultiMat(
             for (std::size_t j=0; j<3; ++j)
               gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
         }
-        // determine target relaxation pressure
-        prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-          U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
-        prelax = std::max(prelax, p_target);
+        if (pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
+          U(e, densityDofIdx(nmat, k, rdof, 0)), alk) ||
+          solidx[k] == 0) {
+          // determine target relaxation pressure
+          prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
+          prelax = std::max(prelax, p_target);
+        }
 
         // energy change
         auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
-        auto damage = U(e, damageDofIdx(nmat, nsld, k, rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
+        auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
         auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
           alk*prelax, alk, gmat, damage);
 
