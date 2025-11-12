@@ -210,9 +210,9 @@ DG::DG( const CProxy_Discretization& disc,
     const auto& inpoel = myGhosts()->m_inpoel;
     // TODO: linear solver:
     //  modify CSR to handle element-based structures (or create new one)
-    tk::CSR A(m_lhs.nprop(), tk::genPsup(inpoel,4,tk::genEsup(inpoel,4)));
-    std::vector< tk::real > x(m_u.nunk()*m_lhs.nprop(), 0.0),
-      b(m_u.nunk()*m_lhs.nprop(), 0.0);
+    tk::CSR A(m_rhs.nprop(), tk::genPsup(inpoel,4,tk::genEsup(inpoel,4)));
+    std::vector< tk::real > x(m_u.nunk()*m_rhs.nprop(), 0.0),
+      b(m_u.nunk()*m_rhs.nprop(), 0.0);
 
     Disc()->ImplicitSolver()[ thisIndex ].insert(std::move(A), std::move(x),
       std::move(b), Disc()->Gid(), Disc()->Lid(), Disc()->NodeCommMap());

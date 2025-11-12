@@ -24,11 +24,11 @@
       t = As
       w = (t,s)/(t,t)   //replaces beta
 
-      x_{j+1} := h + ws 
-      r_{j+1} := s - wt 
+      x_{j+1} := h + ws
+      r_{j+1} := s - wt
       Exit if r_{j+1} is sufficient
-      rho_{j+1} := (rhat0, r_{j+1})  
-      beta := (rho_{j+1}/rho_{j})*(alpha/w)  
+      rho_{j+1} := (rhat0, r_{j+1})
+      beta := (rho_{j+1}/rho_{j})*(alpha/w)
       p_{j+1} := r_{j+1} + beta(p_j - wAp_j)
     end
 
@@ -409,7 +409,7 @@ BiCG::next()
   if (m_it == 0) {
      m_alpha = 0.0;
      m_omega=0.0;
-     
+
   }else{
      m_alpha =( m_rho/m_rho0 ) * ( m_alpha/m_omega ) ; //alpha functions as Beta??
   }
@@ -422,7 +422,6 @@ BiCG::next()
   thisProxy[ thisIndex ].wait4q();
   qAp();
 }
-
 
 void
 BiCG::qAp()
@@ -507,7 +506,7 @@ BiCG::pq( tk::real d )
   // solution, x=x0, or the BCs are incomplete or wrong, in either case the
   // solve cannot continue.
   // sod_pe4 DOES have a trivial solution, yet we are using it for a test case...
-  // we have to tolerate small eps values and rely on the numerator also being small.  
+  // we have to tolerate small eps values and rely on the numerator also being small.
   // We should generally allow for the mesh to stay still though, so need to think about this some.
   const auto eps = std::numeric_limits< tk::real >::epsilon();
   if (std::abs(d) < eps) {
@@ -698,7 +697,7 @@ BiCG::ts( tk::real d )
 // *****************************************************************************
 {
 
-  m_omega = d; //numerator set 
+  m_omega = d; //numerator set
 
   dot( m_t, m_t, //compute denominator
        CkCallback( CkReductionTarget(BiCG,tt), thisProxy ) );
@@ -727,7 +726,7 @@ BiCG::tt( tk::real d )
   for (std::size_t i=0; i<m_x.size(); ++i) m_x[i] += m_omega * m_r[i];
   // Now update r:  compute r = s - omega * t
   for (std::size_t i=0; i<m_r.size(); ++i) m_r[i] -= m_omega * m_t[i];
-	  // initiate computing norm of residual: (r,r) for exit criteria
+  // initiate computing norm of residual: (r,r) for exit criteria
   dot( m_r, m_r,
        CkCallback( CkReductionTarget(BiCG,normresomega), thisProxy ) );
 }
@@ -739,7 +738,7 @@ BiCG::normresomega( tk::real r )
 // *****************************************************************************
 {
   m_rho = r;
-  
+
   // Communicate solution
   thisProxy[ thisIndex ].wait4x2();
 
@@ -802,6 +801,7 @@ BiCG::comprho( tk::real r )
   m_rho = r;
   next();
 }
+
 void
 BiCG::comx2( const std::vector< std::size_t >& gid,
                           const std::vector< std::vector< tk::real > >& x2c )
@@ -820,4 +820,5 @@ BiCG::comx2( const std::vector< std::size_t >& gid,
     comx2_complete();
   }
 }
+
 #include "NoWarning/bicg.def.h"
