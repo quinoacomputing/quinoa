@@ -134,13 +134,6 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
 
   const auto& bc = g_inputdeck.get< tag::bc >();
   for (const auto& ib : bc) {
-    const auto& stag = ib.get< tag::stag_point >();
-    const auto& radius = ib.get< tag::radius >();
-    if (!stag.empty()) {
-      nfo.emplace_back( "Stagnation point(s)", parameters( stag ) );
-      nfo.emplace_back( "Stagnation point(s) radii", parameter( radius ) );
-    }
-
     const auto& fs = ib.get< tag::farfield >();
     if (!fs.empty())
       nfo.emplace_back( "Farfield BC sideset(s)", parameters( fs ) );
@@ -148,6 +141,10 @@ infoCompFlow( std::map< ctr::PDEType, tk::ncomp_t >& cnt )
     const auto& sym = ib.get< tag::symmetry >();
     if (!sym.empty())
       nfo.emplace_back( "Symmetry BC sideset(s)", parameters( sym ) );
+
+    const auto& slip = ib.get< tag::slipwall >();
+    if (!slip.empty())
+      nfo.emplace_back( "Slip wall BC sideset(s)", parameters( slip ) );
 
     const auto& dir = ib.get< tag::dirichlet >();
     if (!dir.empty())

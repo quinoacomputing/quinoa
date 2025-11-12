@@ -29,7 +29,6 @@
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Initialize.hpp"
-#include "Integrate/Mass.hpp"
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
@@ -78,19 +77,25 @@ class MultiMat {
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall },
+        , noslipwall 
+        , symmetry },       // Slip equivalent to symmetry without mesh motion
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
         , noOpGrad
         , noOpGrad
         , noOpGrad
-        , noOpGrad }
+        , noOpGrad
+        , symmetryGrad }
         ) );
 
       // Inlet BC has a different structure than above BCs, so it must be 
       // handled differently than with ConfigBC
       ConfigInletBC(m_bc, inlet, zeroGrad);
+
+      // Back pressure BC has a different structure than above BCs, so it must
+      // be handled differently than with ConfigBC
+      ConfigBackPressureBC(m_bc, back_pressure, noOpGrad);
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
@@ -209,16 +214,6 @@ class MultiMat {
           }
         }
       }
-    }
-
-    //! Compute the left hand side block-diagonal mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto nelem = geoElem.nunk();
-      for (std::size_t e=0; e<nelem; ++e)
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          l(e, c) = geoElem(e,0);
     }
 
     //! Update the primitives for this PDE system

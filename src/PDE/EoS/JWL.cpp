@@ -145,16 +145,11 @@ JWL::pressure(
 std::array< std::array< tk::real, 3 >, 3 >
 JWL::CauchyStress(
   tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
   std::size_t,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
-//! \brief Calculate the Cauchy stress tensor from the material density,
-//!   momentum, and total energy
+//! \brief Calculate the Cauchy stress tensor from the material
+//!   inverse deformation gradient tensor
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k)
 // *************************************************************************
 {
@@ -171,8 +166,7 @@ JWL::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >&,
-  const std::array< tk::real, 3 >& ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -219,30 +213,34 @@ JWL::soundspeed(
 
 tk::real
 JWL::totalenergy(
-  tk::real rho,
+  tk::real arho,
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real pr,
+  tk::real apr,
+  tk::real alpha,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
-//! \param[in] rho Material density
+//! \param[in] arho Material partial density
 //! \param[in] u X-velocity
 //! \param[in] v Y-velocity
 //! \param[in] w Z-velocity
-//! \param[in] pr Material pressure
+//! \param[in] apr Material partial pressure
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
+//!   the single-material system, this argument can be left unspecified by
+//!   the calling code
 //! \return Material specific total energy using the stiffened-gas EoS
 // *************************************************************************
 {
   //// reference energy (input quantity, might need for calculation)
   //tk::real e0 = a/r1*exp(-r1*rho0/rho) + b/r2*exp(-r2*rho0/rho);
 
-  tk::real rhoE = rho*intEnergy( rho, pr )
-                + 0.5*rho*(u*u + v*v + w*w);
+  tk::real arhoE = arho*intEnergy( arho/alpha, apr/alpha )
+                + 0.5*arho*(u*u + v*v + w*w);
 
-  return rhoE;
+  return arhoE;
 }
 
 tk::real

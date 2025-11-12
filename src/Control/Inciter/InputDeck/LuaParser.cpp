@@ -130,6 +130,8 @@ LuaParser::storeInputDeck(
     lua_ideck, "dt", gideck.get< tag::dt >(), 0.0);
   storeIfSpecd< tk::real >(
     lua_ideck, "cfl", gideck.get< tag::cfl >(), 0.0);
+  storeIfSpecd< bool >(
+    lua_ideck, "cfl_ramping", gideck.get< tag::cfl_ramping >(), false);
   storeIfSpecd< uint32_t >(
     lua_ideck, "ttyi", gideck.get< tag::ttyi >(), 1);
   storeIfSpecd< bool >(
@@ -185,6 +187,8 @@ LuaParser::storeInputDeck(
     true);
   storeIfSpecd< tk::real >(
     lua_ideck, "lowspeed_kp", gideck.get< tag::lowspeed_kp >(), 0.0);
+  storeIfSpecd< tk::real >(
+    lua_ideck, "lowspeed_ku", gideck.get< tag::lowspeed_ku >(), 1.0);
 
   // configure solutions DOFs
   auto scheme = gideck.get< tag::scheme >();
@@ -200,7 +204,7 @@ LuaParser::storeInputDeck(
   } else if (scheme == SchemeType::PDG) {
     ndof = rdof = 10;
     gideck.get< tag::pref, tag::pref >() = true;
-  } else if (scheme != SchemeType::DG &&
+  } else if (scheme != SchemeType::DGP0 &&
       scheme != SchemeType::ALECG &&
       scheme != SchemeType::OversetFE) {
     Throw("Scheme type not configured in configure_scheme");
@@ -310,6 +314,9 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multimat"], "nmat",
       gideck.get< tag::multimat, tag::nmat >(), 2);
+    storeIfSpecd< tk::real >(
+      lua_ideck["multimat"], "min_volumefrac",
+      gideck.get< tag::multimat, tag::min_volumefrac >(), 1.0e-12);
     storeIfSpecd< uint64_t >(
       lua_ideck["multimat"], "prelax",
       gideck.get< tag::multimat, tag::prelax >(), 1);
@@ -324,7 +331,7 @@ LuaParser::storeInputDeck(
       gideck.get< tag::multimat, tag::intsharp_param >(), 1.8);
     storeIfSpecd< uint64_t >(
       lua_ideck["multimat"], "rho0constraint",
-      gideck.get< tag::multimat, tag::rho0constraint >(), 1);
+      gideck.get< tag::multimat, tag::rho0constraint >(), 0);
     storeIfSpecd< int >(
       lua_ideck["multimat"], "dt_sos_massavg",
       gideck.get< tag::multimat, tag::dt_sos_massavg >(), 0);
@@ -481,6 +488,13 @@ LuaParser::storeInputDeck(
         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
           mati_deck.get< tag::mu >());
 
+        // plasticity_reltime
+        if (!sol_mat[i+1]["plasticity_reltime"].valid())
+          sol_mat[i+1]["plasticity_reltime"] =
+            std::vector< tk::real >(ntype, 1.0e-05);
+        checkStoreMatProp(sol_mat[i+1], "plasticity_reltime", ntype,
+          mati_deck.get< tag::plasticity_reltime >());
+
         // yield_stress
         if (!sol_mat[i+1]["yield_stress"].valid())
           sol_mat[i+1]["yield_stress"] =
@@ -491,9 +505,9 @@ LuaParser::storeInputDeck(
         // assign solid
         is_solid = true;
       }
-      // Godunov-Romenski aluminum materials
+      // Wilkins aluminum materials
       else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::GODUNOVROMENSKIALUMINUM) {
+        inciter::ctr::MaterialType::WILKINSALUMINUM) {
         // gamma
         checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
           mati_deck.get< tag::gamma >());
@@ -501,6 +515,53 @@ LuaParser::storeInputDeck(
         // mu
         checkStoreMatProp(sol_mat[i+1], "mu", ntype,
           mati_deck.get< tag::mu >());
+
+        // plasticity_reltime
+        if (!sol_mat[i+1]["plasticity_reltime"].valid())
+          sol_mat[i+1]["plasticity_reltime"] =
+            std::vector< tk::real >(ntype, 1.0e-07);
+        checkStoreMatProp(sol_mat[i+1], "plasticity_reltime", ntype,
+          mati_deck.get< tag::plasticity_reltime >());
+
+        // yield_stress
+        if (!sol_mat[i+1]["yield_stress"].valid())
+          sol_mat[i+1]["yield_stress"] =
+            std::vector< tk::real >(ntype, 300.0e+06);
+        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
+          mati_deck.get< tag::yield_stress >());
+
+        // assign solid
+        is_solid = true;
+      }
+      // Godunov-Romenski materials
+      else if (mati_deck.get< tag::eos >() ==
+        inciter::ctr::MaterialType::GODUNOVROMENSKI) {
+        // gamma
+        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
+          mati_deck.get< tag::gamma >());
+
+        // mu
+        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
+          mati_deck.get< tag::mu >());
+
+        // rho0_jwl
+        checkStoreMatProp(sol_mat[i+1], "rho0_jwl", ntype,
+          mati_deck.get< tag::rho0_jwl >());
+
+        // alpha
+        checkStoreMatProp(sol_mat[i+1], "alpha", ntype,
+          mati_deck.get< tag::alpha >());
+
+        // K0
+        checkStoreMatProp(sol_mat[i+1], "K0", ntype,
+          mati_deck.get< tag::K0 >());
+
+        // plasticity_reltime
+        if (!sol_mat[i+1]["plasticity_reltime"].valid())
+          sol_mat[i+1]["plasticity_reltime"] =
+            std::vector< tk::real >(ntype, 1.0e-07);
+        checkStoreMatProp(sol_mat[i+1], "plasticity_reltime", ntype,
+          mati_deck.get< tag::plasticity_reltime >());
 
         // yield_stress
         if (!sol_mat[i+1]["yield_stress"].valid())
@@ -581,9 +642,6 @@ LuaParser::storeInputDeck(
         Assert(nspec == spci_deck.get< tag::id >().size(),
           "Number of ids in species-block not equal to number of species");
 
-        // gamma
-        checkStoreMatProp(sol_spc[i+1], "gamma", nspec,
-          spci_deck.get< tag::gamma >());
         // R
         checkStoreMatProp(sol_spc[i+1], "R", nspec,
           spci_deck.get< tag::R >());
@@ -680,11 +738,19 @@ LuaParser::storeInputDeck(
       if (mesh_deck[i].get< tag::orientation >().size() != 3)
         Throw("Mesh orientation requires 3 rotation angles.");
 
-      // velocity
-      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "velocity",
-        mesh_deck[i].get< tag::velocity >(), {0.0, 0.0, 0.0});
-      if (mesh_deck[i].get< tag::velocity >().size() != 3)
-        Throw("Mesh velocity requires 3 components.");
+      // mass
+      storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
+        mesh_deck[i].get< tag::mass >(), 0.0);
+
+      // moment of inertia. this is currently only configured for planar motion
+      storeIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
+        mesh_deck[i].get< tag::moment_of_inertia >(), 0.0);
+
+      // center of mass
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
+        mesh_deck[i].get< tag::center_of_mass >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::center_of_mass >().size() != 3)
+        Throw("Mesh center of mass requires 3 coordinates.");
 
       // Transfer object
       if (i > 0) {
@@ -707,11 +773,60 @@ LuaParser::storeInputDeck(
       gideck.get< tag::cmd, tag::io, tag::input >();
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
-    mesh_deck[0].get< tag::velocity >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< tag::mass >() = 0.0;
+    mesh_deck[0].get< tag::moment_of_inertia >() = 0.0;
+    mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
   }
 
   Assert(gideck.get< tag::mesh >().size() == gideck.get< tag::depvar >().size(),
     "Number of depvar not equal to the number of meshes.");
+
+  // Rigid body motion block for overset meshes
+  // ---------------------------------------------------------------------------
+  if (lua_ideck["rigid_body_motion"].valid()) {
+
+    Assert(gideck.get< tag::mesh >().size() > 1,
+      "Multiple meshes (overset) needed for rigid body motion.");
+
+    // check that rigid body mass is provided
+    const auto mesh_deck = gideck.get< tag::mesh >();
+    for (std::size_t i=1; i<mesh_deck.size(); ++i) {
+      Assert(mesh_deck[i].get< tag::mass >() > 1e-10,
+        "Mass of body required for overset meshes with rigid body motion.");
+    }
+
+    auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
+
+    rbm_deck.get< tag::rigid_body_movt >() = true;
+
+    // degrees of freedom
+    storeIfSpecd< std::size_t >(
+      lua_ideck["rigid_body_motion"], "rigid_body_dof",
+      rbm_deck.get< tag::rigid_body_dof >(), 3);
+    if (rbm_deck.get< tag::rigid_body_dof >() != 3 &&
+      rbm_deck.get< tag::rigid_body_dof >() != 6)
+      Throw("Only 3 or 6 rigid body DOFs supported.");
+
+    // symmetry plane
+    storeIfSpecd< std::size_t >(
+      lua_ideck["rigid_body_motion"], "symmetry_plane",
+      rbm_deck.get< tag::symmetry_plane >(), 0);
+    if (rbm_deck.get< tag::symmetry_plane >() > 3)
+      Throw("Rigid body motion symmetry plane must be 1(x), 2(y), or 3(z).");
+    if (rbm_deck.get< tag::symmetry_plane >() == 0 &&
+      rbm_deck.get< tag::rigid_body_dof >() == 3)
+      Throw(
+        "Rigid body motion symmetry plane must be specified for 3 DOF motion.");
+    // reset to 0-based indexing
+    rbm_deck.get< tag::symmetry_plane >() -= 1;
+  }
+  else {
+    // TODO: remove double-specification of defaults
+    auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
+    rbm_deck.get< tag::rigid_body_movt >() = false;
+    rbm_deck.get< tag::rigid_body_dof >() = 0;
+    rbm_deck.get< tag::symmetry_plane >() = 0;
+  }
 
   // Field output block
   // ---------------------------------------------------------------------------
@@ -1163,6 +1278,9 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< uint64_t >(sol_bc[i+1], "noslipwall",
         bc_deck[i].get< tag::noslipwall >(), {});
 
+      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "slipwall",
+        bc_deck[i].get< tag::slipwall >(), {});
+
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
         const sol::table& sol_tdbc = sol_bc[i+1]["timedep"];
@@ -1184,17 +1302,20 @@ LuaParser::storeInputDeck(
         }
       }
 
-      // Stagnation point
-      storeVecIfSpecd< tk::real >(sol_bc[i+1], "stag_point",
-        bc_deck[i].get< tag::stag_point >(), {});
-      if (!bc_deck[i].get< tag::stag_point >().empty() &&
-        bc_deck[i].get< tag::stag_point >().size() % 3 != 0)
-        Throw("BC stagnation point requires 3 coordinate values for each "
-          "point. Thus, this vector must be divisible by 3.");
+      // Back pressure BC
+      if (sol_bc[i+1]["back_pressure"].valid()) {
+        const sol::table& sol_bpbc = sol_bc[i+1]["back_pressure"];
+        auto& bpbc_deck = bc_deck[i].get< tag::back_pressure >();
 
-      // Stagnation radius
-      storeIfSpecd< tk::real >(sol_bc[i+1], "radius",
-        bc_deck[i].get< tag::radius >(), 0.0);
+        storeVecIfSpecd< uint64_t >(sol_bpbc, "sideset",
+          bpbc_deck.get< tag::sideset >(), {});
+
+        if (!sol_bpbc["pressure"].valid())
+          Throw("Pressure is required for back pressure BC.");
+
+        storeIfSpecd< tk::real >(sol_bpbc, "pressure",
+          bpbc_deck.get< tag::pressure >(), 0.0);
+      }
 
       // Velocity for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "velocity",

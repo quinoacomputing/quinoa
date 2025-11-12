@@ -17,6 +17,7 @@
 #include "EoS/EOS.hpp"
 #include "ContainerUtil.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -67,16 +68,16 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   // input.
 
   // species volume fractions
-  auto alphas = boxmassfrac;
+  auto Ys = boxmassfrac;
   tk::real total_al(0.0);
   for (std::size_t k=0; k<nspec; ++k) {
-    alphas[k] = std::max(alphas[k], alphamin);
-    total_al += alphas[k];
+    Ys[k] = std::max(Ys[k], alphamin);
+    total_al += Ys[k];
   }
-  for (std::size_t k=0; k<nspec; ++k) alphas[k] /= total_al;
+  for (std::size_t k=0; k<nspec; ++k) Ys[k] /= total_al;
 
   // material states (density, pressure, velocity)
-  tk::real u = 0.0, v = 0.0, w = 0.0, spi(0.0), pr(0.0), rbulk(0.0);
+  tk::real u = 0.0, v = 0.0, w = 0.0, spi(0.0), rbulk(0.0);
   std::vector< tk::real > rhok(nspec, 0.0);
 
   // 1. User-specified mass, specific energy (J/m^3) and volume of box
@@ -85,29 +86,27 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   }
   // 2. User-specified temperature, pressure and velocity in box
   else {
+    Mixture mix(nspec, Ys, boxpre, boxtemp, mat_blk);
+    rbulk = mix.get_mix_density();
     for (std::size_t k=0; k<nspec; ++k) {
-      rhok[k] = mat_blk[0].compute< EOS::density >(boxpre, boxtemp);
-      rbulk += alphas[k]*rhok[k];
+      rhok[k] = Ys[k]*rbulk;
     }
     if (boxvel.size() == 3) {
       u = boxvel[0];
       v = boxvel[1];
       w = boxvel[2];
     }
-    if (boxpre > 0.0) {
-      pr = boxpre;
-    }
     if (boxene > 0.0) {
       Throw("IC-box with specified energy not set up for multispecies");
     }
 
-    spi = mat_blk[0].compute< EOS::totalenergy >(rbulk, u, v, w, pr) / rbulk;
+    spi = mix.totalenergy(rbulk, u, v, w, boxtemp, mat_blk) / rbulk;
   }
 
   // [II] Finally initialize the solution vector
   // partial density
   for (std::size_t k=0; k<nspec; ++k) {
-    s[multispecies::densityIdx(nspec,k)] = alphas[k] * rhok[k];
+    s[multispecies::densityIdx(nspec,k)] = Ys[k] * rhok[k];
   }
   // total specific energy
   s[multispecies::energyIdx(nspec,0)] = rbulk * spi;

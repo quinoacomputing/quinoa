@@ -23,7 +23,6 @@ inciter = {
   species = {
     {
       id       = { 1, 2 },
-      gamma    = { 1.4, 1.4 },  -- ratio of specific heats
       R        = { 2.870025066673538e+02, 2.870025066673538e+02 },  -- specific gas constant
       cp_coeff = { { {0, 0, 3.5, 0, 0, 0, 0, 0}, {0, 0, 3.5, 0, 0, 0, 0, 0}, {0, 0, 3.5, 0, 0, 0, 0, 0} },
                  { {0, 0, 3.5, 0, 0, 0, 0, 0}, {0, 0, 3.5, 0, 0, 0, 0, 0}, {0, 0, 3.5, 0, 0, 0, 0, 0} } }, -- Coefficients for cP / R (NASA GLENN polynomial)

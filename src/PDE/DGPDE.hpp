@@ -72,10 +72,16 @@ struct ConfigBC {
 };
 
 //! \brief Extract information on inlet BCs, which have a different structure
-//! than other BCs
+//!   than other BCs
 void ConfigInletBC( BCStateFn&,
                     const tk::StateFn&,
                     const tk::StateFn& );
+
+//! \brief Extract information on back pressure BCs, which have a different
+//!   structure than other BCs
+void ConfigBackPressureBC( BCStateFn&,
+                           const tk::StateFn&,
+                           const tk::StateFn& );
 
 //! State function for invalid/un-configured boundary conditions
 [[noreturn]] tk::StateFn::result_type
@@ -168,7 +174,7 @@ class DGPDE {
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize(
-      const tk::Fields& L,
+      const tk::Fields& geoElem,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
@@ -177,17 +183,13 @@ class DGPDE {
       tk::Fields& unk,
       tk::real t,
       const std::size_t nielem ) const
-    { self->initialize( L, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
+    { self->initialize( geoElem, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
     //! Public interface for computing density constraint
     void computeDensityConstr( std::size_t nelem,
                                tk::Fields& unk,
                                std::vector< tk::real >& densityConstr) const
     { self->computeDensityConstr( nelem, unk, densityConstr); }
-
-    //! Public interface to computing the left-hand side matrix for the diff eq
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
-    { self->lhs( geoElem, l ); }
 
     //! Public interface to updating the interface cells for the diff eq
     void updateInterfaceCells( tk::Fields& unk,
@@ -198,12 +200,11 @@ class DGPDE {
 
     //! Public interface to updating the primitives for the diff eq
     void updatePrimitives( const tk::Fields& unk,
-                           const tk::Fields& L,
                            const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem,
-                           std::vector< std::size_t >& ndofel ) const
-    { self->updatePrimitives( unk, L, geoElem, prim, nielem, ndofel ); }
+                           const std::vector< std::size_t >& ndofel ) const
+    { self->updatePrimitives( unk, geoElem, prim, nielem, ndofel ); }
 
     //! Public interface to cleaning up trace materials for the diff eq
     void cleanTraceMaterial( tk::real t,
@@ -331,6 +332,13 @@ class DGPDE {
     { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U,
                        P, nielem ); }
 
+    //! Public interface for elastic energy balance
+    void balance_plastic_energy( std::size_t e,
+                                 std::vector< tk::real > x_star,
+                                 std::vector< tk::real > x,
+                                 tk::Fields& U ) const
+    { return self->balance_plastic_energy(e, x_star, x, U); }
+
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
                     const tk::Fields& geoElem,
@@ -356,11 +364,15 @@ class DGPDE {
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
 
+    //! Public interface to returning surface output labels
+    std::vector< std::string > surfNames() const { return self->surfNames(); }
+
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
-    surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
-                tk::Fields& U ) const
-    { return self->surfOutput( bnd, U ); }
+    surfOutput( const inciter::FaceData& fd,
+      const tk::Fields& U,
+      const tk::Fields& P ) const
+    { return self->surfOutput( fd, U, P ); }
 
     //! Public interface to return point history output
     std::vector< std::vector< tk::real > >
@@ -427,17 +439,15 @@ class DGPDE {
                                          tk::Fields& unk,
                                          std::vector< tk::real >& densityConstr)
                                          const = 0;
-      virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
                                          std::vector< std::size_t >&,
                                          std::vector< std::size_t >& ) const = 0;
       virtual void updatePrimitives( const tk::Fields&,
                                      const tk::Fields&,
-                                     const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t,
-                                     std::vector< std::size_t >& ) const = 0;
+                                     const std::vector< std::size_t >& ) const = 0;
       virtual void cleanTraceMaterial( tk::real,
                                        const tk::Fields&,
                                        tk::Fields&,
@@ -520,6 +530,10 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t ) const = 0;
+      virtual void balance_plastic_energy( std::size_t,
+                                           std::vector< tk::real >,
+                                           std::vector< tk::real >,
+                                           tk::Fields& ) const = 0;
       virtual void stiff_rhs( std::size_t,
                               const tk::Fields&,
                               const std::vector< std::size_t >&,
@@ -532,9 +546,11 @@ class DGPDE {
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
+      virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::vector< tk::real > > surfOutput(
-        const std::map< int, std::vector< std::size_t > >&,
-        tk::Fields& ) const = 0;
+        const inciter::FaceData&,
+        const tk::Fields&,
+        const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > histOutput(
         const std::vector< HistData >&,
         const std::vector< std::size_t >&,
@@ -574,7 +590,7 @@ class DGPDE {
         std::vector< std::unordered_set< std::size_t > >& inbox )
       const override { data.IcBoxElems( geoElem, nielem, inbox ); }
       void initialize(
-        const tk::Fields& L,
+        const tk::Fields& geoElem,
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
         const std::vector< std::unordered_set< std::size_t > >& inbox,
@@ -583,28 +599,25 @@ class DGPDE {
         tk::Fields& unk,
         tk::real t,
         const std::size_t nielem )
-      const override { data.initialize( L, inpoel, coord, inbox, elemblkid, unk,
-        t, nielem ); }
+      const override { data.initialize( geoElem, inpoel, coord, inbox,
+        elemblkid, unk, t, nielem ); }
       void computeDensityConstr( std::size_t nelem,
                                  tk::Fields& unk,
                                  std::vector< tk::real >& densityConstr)
                                  const override
       { data.computeDensityConstr( nelem, unk, densityConstr ); }
-      void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
-      { data.lhs( geoElem, l ); }
       void updateInterfaceCells( tk::Fields& unk,
                                  std::size_t nielem,
                                  std::vector< std::size_t >& ndofel,
                                  std::vector< std::size_t >& interface )
       const override { data.updateInterfaceCells( unk, nielem, ndofel, interface ); }
       void updatePrimitives( const tk::Fields& unk,
-                             const tk::Fields& L,
                              const tk::Fields& geoElem,
                              tk::Fields& prim,
                              std::size_t nielem,
-                             std::vector< std::size_t >& ndofel )
+                             const std::vector< std::size_t >& ndofel )
       const override {
-        data.updatePrimitives( unk, L, geoElem, prim, nielem, ndofel );
+        data.updatePrimitives( unk, geoElem, prim, nielem, ndofel );
       }
       void cleanTraceMaterial( tk::real t,
                                const tk::Fields& geoElem,
@@ -714,6 +727,11 @@ class DGPDE {
                    const std::size_t nielem ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
                         U, P, nielem ); }
+      void balance_plastic_energy( std::size_t e,
+                                   std::vector< tk::real > x_star,
+                                   std::vector< tk::real > x,
+                                   tk::Fields& U ) const override
+      { return data.balance_plastic_energy( e, x_star, x, U); }
       void stiff_rhs( std::size_t e,
                       const tk::Fields& geoElem,
                       const std::vector< std::size_t >& inpoel,
@@ -731,10 +749,13 @@ class DGPDE {
       { return data.histNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
+      std::vector< std::string > surfNames() const override
+      { return data.surfNames(); }
       std::vector< std::vector< tk::real > > surfOutput(
-        const std::map< int, std::vector< std::size_t > >& bnd,
-        tk::Fields& U ) const override
-      { return data.surfOutput( bnd, U ); }
+        const inciter::FaceData& fd,
+        const tk::Fields& U,
+        const tk::Fields& P ) const override
+      { return data.surfOutput( fd, U, P ); }
       std::vector< std::vector< tk::real > > histOutput(
         const std::vector< HistData >& h,
         const std::vector< std::size_t >& inpoel,

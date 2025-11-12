@@ -62,7 +62,6 @@ class CompFlow {
     explicit CompFlow() :
       m_physics(),
       m_problem(),
-      m_stagCnf(),
       m_fr(),
       m_fp(),
       m_fu()
@@ -80,12 +79,6 @@ class CompFlow {
 
       // Boundary condition configurations
       for (const auto& bci : g_inputdeck.get< tag::bc >()) {
-        // store stag-point coordinates
-        auto& spt = std::get< 0 >(m_stagCnf);
-        spt.insert( spt.end(), bci.get< tag::stag_point >().begin(),
-          bci.get< tag::stag_point >().end() );
-        // store stag-radius
-        std::get< 1 >(m_stagCnf).push_back( bci.get< tag::radius >() );
         // freestream quantities
         m_fr = bci.get< tag::density >();
         m_fp = bci.get< tag::pressure >();
@@ -260,13 +253,9 @@ class CompFlow {
         }
 
         unk(i,0) = s[0]; // rho
-        if (stagPoint(x[i],y[i],z[i])) {
-          unk(i,1) = unk(i,2) = unk(i,3) = 0.0;
-        } else {
-          unk(i,1) = s[1]; // rho * u
-          unk(i,2) = s[2]; // rho * v
-          unk(i,3) = s[3]; // rho * w
-        }
+        unk(i,1) = s[1]; // rho * u
+        unk(i,2) = s[2]; // rho * v
+        unk(i,3) = s[3]; // rho * w
         unk(i,4) = s[4]; // rho * e, e: total = kinetic + internal
       }
     }
@@ -391,10 +380,6 @@ class CompFlow {
               u[3] = U(N[b],3)/u[0];
               u[4] = U(N[b],4)/u[0]
                      - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
-              if ( stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
-              {
-                u[1] = u[2] = u[3] = 0.0;
-              }
               for (std::size_t c=0; c<5; ++c)
                 for (std::size_t j=0; j<3; ++j)
                   G(i->second,c*3+j) += J24 * g[b][j] * u[c];
@@ -417,6 +402,7 @@ class CompFlow {
     //! \param[in] psup Points surrounding points
     //! \param[in] esup Elements surrounding points
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
+    //! \param[in] slipwallbctri Vector with 1 at slip BC boundary triangles
     //! \param[in] vol Nodal volumes
     //! \param[in] edgenode Local node IDs of edges
     //! \param[in] edgeid Edge ids in the order of access
@@ -427,6 +413,7 @@ class CompFlow {
     //! \param[in] tp Physical time for each mesh node
     //! \param[in] V Total box volume
     //! \param[in,out] R Right-hand side vector computed
+    //! \param[in,out] srcFlag Whether the energy source was added
     void rhs( real t,
               const std::array< std::vector< real >, 3 >& coord,
               const std::vector< std::size_t >& inpoel,
@@ -440,6 +427,7 @@ class CompFlow {
               const std::pair< std::vector< std::size_t >,
                                std::vector< std::size_t > >& esup,
               const std::vector< int >& symbctri,
+              const std::vector< int >& slipwallbctri,
               const std::vector< real >& vol,
               const std::vector< std::size_t >& edgenode,
               const std::vector< std::size_t >& edgeid,
@@ -449,7 +437,8 @@ class CompFlow {
               const tk::Fields& W,
               const std::vector< tk::real >& tp,
               real V,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              std::vector< int >& srcFlag ) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
@@ -470,82 +459,88 @@ class CompFlow {
       domainint( coord, gid, edgenode, edgeid, psup, dfn, U, W, Grad, R );
 
       // compute boundary integrals
-      bndint( coord, triinpoel, symbctri, U, W, R );
+      bndint( coord, triinpoel, symbctri, slipwallbctri, U, W, R );
 
       // compute external (energy) sources
-      const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
-
-      if (!icbox.empty() && !boxnodes.empty()) {
-        std::size_t bcnt = 0;
-        for (const auto& b : icbox) {   // for all boxes for this eq
-          std::vector< tk::real > box
-           { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-             b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-             b.template get< tag::zmin >(), b.template get< tag::zmax >() };
-
-          const auto& initiate = b.template get< tag::initiate >();
-          if (initiate == ctr::InitiateType::LINEAR) {
-            boxSrc( V, t, inpoel, esup, boxnodes[bcnt], coord, R );
-          }
-          ++bcnt;
-        }
-      }
+      for (auto& is : srcFlag) is = 0;   // reset energy source flag
+      boxSrc( V, t, inpoel, esup, boxnodes, coord, R, srcFlag );
 
       // compute optional source integral
       src( coord, inpoel, t, tp, R );
     }
 
-    //! Compute overset mesh motion for OversetFE
-//    //! \param[in] t Physical time
-//    //! \param[in] coord Mesh node coordinates
-    //! \param[in] psup Points surrounding points
-    //! \param[in] symbcnodes Symmetry BC node list
-    //! \param[in] uservel User specified constant mesh velocity
+    //! Compute boundary pressure integrals (force) for rigid body motion
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
+    //! \param[in] slipwallbctri Vector with 1 at symmetry BC boundary triangles
     //! \param[in] U Solution vector at recent time step
-//    //! \param[in,out] meshvel Velocity of each mesh node based on user input
-    //! \param[in,out] movedmesh True/false if mesh moved
-    void getMeshVel(
-      real /*t*/,
-      const std::array< std::vector< real >, 3 >& /*coord*/,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >& psup,
-      const std::unordered_set< std::size_t >& symbcnodes,
-      const std::array< tk::real, 3 >& uservel,
+    //! \param[in] CM Center of mass
+    //! \param[in,out] F Force vector (appended with torque vector) computed
+    void bndPressureInt(
+      const std::array< std::vector< real >, 3 >& coord,
+      const std::vector< std::size_t >& triinpoel,
+      const std::vector< int >& slipwallbctri,
       const tk::Fields& U,
-      tk::Fields& /*meshvel*/,
-      int& movedmesh ) const
+      const std::array< tk::real, 3 >& CM,
+      std::vector< real >& F ) const
     {
-      //Assert( meshvel.nunk() == U.nunk(),
-      //  "Mesh-velocity vector has incorrect size" );
 
-      auto uvelmag = std::sqrt(tk::dot(uservel, uservel));
+      // access node coordinates
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
 
-      // Check for pressure differential only if mesh has not moved before
-      if (movedmesh == 0 && uvelmag > 1e-8) {
-        for (auto p : symbcnodes) {
-          for (auto q : tk::Around(psup,p)) {
-            // compute pressure difference
-            real rL  = U(p,0);
-            real ruL = U(p,1) / rL;
-            real rvL = U(p,2) / rL;
-            real rwL = U(p,3) / rL;
-            real reL = U(p,4) / rL - 0.5*(ruL*ruL + rvL*rvL + rwL*rwL);
-            real rR  = U(q,0);
-            real ruR = U(q,1) / rR;
-            real rvR = U(q,2) / rR;
-            real rwR = U(q,3) / rR;
-            real reR = U(q,4) / rR - 0.5*(ruR*ruR + rvR*rvR + rwR*rwR);
-            real pL = m_mat_blk[0].compute< EOS::pressure >( rL, ruL/rL, rvL/rL,
-              rwL/rL, reL );
-            real pR = m_mat_blk[0].compute< EOS::pressure >( rR, ruR/rR, rvR/rR,
-              rwR/rR, reR );
+      // boundary integrals: compute surface integral of pressure (=force)
+      for (std::size_t e=0; e<triinpoel.size()/3; ++e) {
+        if (slipwallbctri[e]) {
+        // access node IDs
+        std::size_t N[3] =
+          { triinpoel[e*3+0], triinpoel[e*3+1], triinpoel[e*3+2] };
+        // access solution at element nodes
+        real rA  = U(N[0],0);
+        real rB  = U(N[1],0);
+        real rC  = U(N[2],0);
+        real ruA = U(N[0],1);
+        real ruB = U(N[1],1);
+        real ruC = U(N[2],1);
+        real rvA = U(N[0],2);
+        real rvB = U(N[1],2);
+        real rvC = U(N[2],2);
+        real rwA = U(N[0],3);
+        real rwB = U(N[1],3);
+        real rwC = U(N[2],3);
+        real reA = U(N[0],4);
+        real reB = U(N[1],4);
+        real reC = U(N[2],4);
+        // compute face normal
+        real nx, ny, nz;
+        tk::normal( x[N[0]], x[N[1]], x[N[2]],
+                    y[N[0]], y[N[1]], y[N[2]],
+                    z[N[0]], z[N[1]], z[N[2]],
+                    nx, ny, nz );
+        // compute boundary pressures
+        auto p = (
+          m_mat_blk[0].compute< EOS::pressure >(rA, ruA/rA, rvA/rA, rwA/rA, reA) +
+          m_mat_blk[0].compute< EOS::pressure >(rB, ruB/rB, rvB/rB, rwB/rB, reB) +
+          m_mat_blk[0].compute< EOS::pressure >(rC, ruC/rC, rvC/rC, rwC/rC, reC)
+          ) / 3.0;
+        // compute face area
+        auto Ae = tk::area( x[N[0]], x[N[1]], x[N[2]],
+                            y[N[0]], y[N[1]], y[N[2]],
+                            z[N[0]], z[N[1]], z[N[2]] );
+        // contribute to force vector
+        F[0] += p * Ae * nx;
+        F[1] += p * Ae * ny;
+        F[2] += p * Ae * nz;
 
-            if (std::abs(pR/pL) > 2.0) {
-              movedmesh = 1;
-              break;
-            }
-          }
-          if (movedmesh) break;
+        // contribute to torque vector
+        std::array< tk::real, 3 > rCM{{
+          (x[N[0]]+x[N[1]]+x[N[2]])/3.0 - CM[0],
+          (y[N[0]]+y[N[1]]+y[N[2]])/3.0 - CM[1],
+          (z[N[0]]+z[N[1]]+z[N[2]])/3.0 - CM[2] }};
+
+        auto torque = tk::cross(rCM, {{p*Ae*nx, p*Ae*ny, p*Ae*nz}});
+        for (std::size_t i=0; i<3; ++i) F[i+3] += torque[i];
         }
       }
     }
@@ -553,20 +548,22 @@ class CompFlow {
     //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] coord Mesh node coordinates
     //! \param[in] inpoel Mesh element connectivity
-    //! \param[in] t Physical time
+//    //! \param[in] t Physical time
     //! \param[in] dtn Time step size at the previous time step
     //! \param[in] U Solution vector at recent time step
     //! \param[in] vol Nodal volume (with contributions from other chares)
     //! \param[in] voln Nodal volume (with contributions from other chares) at
     //!   the previous time step
+    //! \param[in] srcFlag Whether the energy source was added
     //! \return Minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
              const std::vector< std::size_t >& inpoel,
-             tk::real t,
+             tk::real /*t*/,
              tk::real dtn,
              const tk::Fields& U,
              const std::vector< tk::real >& vol,
-             const std::vector< tk::real >& voln ) const
+             const std::vector< tk::real >& voln,
+             const std::vector< int >& srcFlag ) const
     {
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
               "vector at recent time step incorrect" );
@@ -580,6 +577,19 @@ class CompFlow {
 
       // ratio of specific heats
       auto g = getmatprop< tag::gamma >();
+
+      // energy source propagation velocity (in all IC boxes configured)
+      real vFront(0.0);
+      if (!icbox.empty()) {
+        for (const auto& b : icbox) {   // for all boxes for this eq
+          const auto& initiate = b.template get< tag::initiate >();
+          if (initiate == ctr::InitiateType::LINEAR) {
+            vFront = std::max(vFront,
+              b.template get< tag::front_speed >());
+          }
+        }
+      }
+
       // compute the minimum dt across all elements we own
       real mindt = std::numeric_limits< real >::max();
       for (std::size_t e=0; e<inpoel.size()/4; ++e) {
@@ -609,22 +619,8 @@ class CompFlow {
           auto c = m_mat_blk[0].compute< EOS::soundspeed >( r, p );
           auto v = std::sqrt((ru*ru + rv*rv + rw*rw)/r/r) + c; // char. velocity
 
-          // energy source propagation velocity (in all IC boxes configured)
-          if (!icbox.empty()) {
-            for (const auto& b : icbox) {   // for all boxes for this eq
-              const auto& initiate = b.template get< tag::initiate >();
-              auto iv = b.template get< tag::front_speed >();
-              if (initiate == ctr::InitiateType::LINEAR) {
-                auto zmin = b.template get< tag::zmin >();
-                auto zmax = b.template get< tag::zmax >();
-                auto wFront = 0.08;
-                auto tInit = 0.0;
-                auto tFinal = tInit + (zmax - zmin - 2.0*wFront) /
-                  std::fabs(iv);
-                if (t >= tInit && t <= tFinal)
-                  v = std::max(v, std::fabs(iv));
-              }
-            }
+          if (srcFlag[N[j]] > 0 && std::abs(vFront) > 1e-8) {
+            v = std::max(v, std::fabs(vFront));
           }
 
           if (v > maxvel) maxvel = v;
@@ -735,9 +731,6 @@ class CompFlow {
                         t, deltat, Problem::initialize ) :
                 Problem::initialize( m_ncomp, m_mat_blk, x[n], y[n],
                                      z[n], t+deltat );
-              if ( stagPoint(x[n],y[n],z[n]) ) {
-                s[1] = s[2] = s[3] = 0.0;
-              }
               bc[n] = {{ {true,s[0]}, {true,s[1]}, {true,s[2]}, {true,s[3]},
                          {true,s[4]} }};
             }
@@ -851,6 +844,53 @@ class CompFlow {
           }
     }
 
+    //! Set slip wall boundary conditions at nodes
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] W Mesh velocity
+    //! \param[in] bnorm Face normals in boundary points, key local node id,
+    //!   first 3 reals of value: unit normal, outer key: side set id
+    //! \param[in] nodes Unique set of node ids at which to set slip BCs
+    void
+    slipwallbc( tk::Fields& U,
+           const tk::Fields& W,
+           const std::array< std::vector< real >, 3 >&,
+           const std::unordered_map< int,
+             std::unordered_map< std::size_t, std::array< real, 4 > > >& bnorm,
+           const std::unordered_set< std::size_t >& nodes ) const
+    {
+      // collect sidesets across all meshes
+      std::vector< std::size_t > swbc;
+      for (const auto& ibc : g_inputdeck.get< tag::bc >()) {
+        swbc.insert(swbc.end(), ibc.get< tag::slipwall >().begin(),
+          ibc.get< tag::slipwall >().end());
+      }
+
+      if (swbc.size() > 0) {             // use slip bcs for this system
+        for (auto p : nodes) {                 // for all slipbc nodes
+          // for all user-def slipbc sets
+          for (std::size_t s=0; s<swbc.size(); ++s) {
+            // find nodes & normals for side
+            auto j = bnorm.find(static_cast<int>(swbc[s]));
+            if (j != end(bnorm)) {
+              auto i = j->second.find(p);      // find normal for node
+              if (i != end(j->second)) {
+                auto rho = U(p,0);
+                std::array< real, 3 >
+                  n{ i->second[0], i->second[1], i->second[2] },
+                  rel_mtm{ U(p,1) - rho*W(p,0), U(p,2) - rho*W(p,1),
+                    U(p,3) - rho*W(p,2) };
+                auto rel_mtm_dot_n = tk::dot( rel_mtm, n );
+                // slip wall bc: remove normal component of relative momentum
+                U(p,1) -= rel_mtm_dot_n * n[0];
+                U(p,2) -= rel_mtm_dot_n * n[1];
+                U(p,3) -= rel_mtm_dot_n * n[2];
+              }
+            }
+          }
+        }
+      }
+    }
+
     //! Apply user defined time dependent BCs
     //! \param[in] t Physical time
     //! \param[in,out] U Solution vector at recent time step
@@ -934,30 +974,11 @@ class CompFlow {
   private:
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy
-    //! Stagnation BC user configuration: point coordinates and radii
-    std::tuple< std::vector< real >, std::vector< real > > m_stagCnf;
     real m_fr;                    //!< Farfield density
     real m_fp;                    //!< Farfield pressure
     std::vector< real > m_fu;     //!< Farfield velocity
     //! EOS material block
     std::vector< EOS > m_mat_blk;
-
-    //! Decide if point is a stagnation point
-    //! \param[in] x X mesh point coordinates to query
-    //! \param[in] y Y mesh point coordinates to query
-    //! \param[in] z Z mesh point coordinates to query
-    //! \return True if point is configured as a stagnation point by the user
-    #pragma omp declare simd
-    bool
-    stagPoint( real x, real y, real z ) const {
-      const auto& pnt = std::get< 0 >( m_stagCnf );
-      const auto& rad = std::get< 1 >( m_stagCnf );
-      for (std::size_t i=0; i<pnt.size()/3; ++i) {
-        if (tk::length( x-pnt[i*3+0], y-pnt[i*3+1], z-pnt[i*3+2] ) < rad[i])
-          return true;
-      }
-      return false;
-    }
 
     //! \brief Compute/assemble nodal gradients of primitive variables for
     //!   ALECG in all points
@@ -1031,10 +1052,6 @@ class CompFlow {
             u[3] = U(N[b],3)/u[0];
             u[4] = U(N[b],4)/u[0]
                    - 0.5*(u[1]*u[1] + u[2]*u[2] + u[3]*u[3]);
-            if ( stagPoint(x[N[b]],y[N[b]],z[N[b]]) )
-            {
-              u[1] = u[2] = u[3] = 0.0;
-            }
             for (std::size_t c=0; c<m_ncomp; ++c)
               for (std::size_t i=0; i<3; ++i)
                 Grad(p,c*3+i) += J24 * g[b][i] * u[c];
@@ -1082,11 +1099,6 @@ class CompFlow {
       // domain-edge integral: compute fluxes in edges
       std::vector< real > dflux( edgenode.size()/2 * m_ncomp );
 
-      // access node coordinates
-      const auto& x = coord[0];
-      const auto& y = coord[1];
-      const auto& z = coord[2];
-
       #pragma omp simd
       for (std::size_t e=0; e<edgenode.size()/2; ++e) {
         auto p = edgenode[e*2+0];
@@ -1109,12 +1121,6 @@ class CompFlow {
         real w1R = W(q,0);
         real w2R = W(q,1);
         real w3R = W(q,2);
-
-        // apply stagnation BCs to primitive variables
-        if ( stagPoint(x[p],y[p],z[p]) )
-          ruL = rvL = rwL = 0.0;
-        if ( stagPoint(x[q],y[q],z[q]) )
-          ruR = rvR = rwR = 0.0;
 
         // compute MUSCL reconstruction in edge-end points
         muscl( p, q, coord, G,
@@ -1297,12 +1303,14 @@ class CompFlow {
     //! \param[in] coord Mesh node coordinates
     //! \param[in] triinpoel Boundary triangle face connecitivity with local ids
     //! \param[in] symbctri Vector with 1 at symmetry BC boundary triangles
+    //! \param[in] slipwallbctri Vector with 1 at slip wall BC boundary triangles
     //! \param[in] U Solution vector at recent time step
     //! \param[in] W Mesh velocity
     //! \param[in,out] R Right-hand side vector computed
     void bndint( const std::array< std::vector< real >, 3 >& coord,
                  const std::vector< std::size_t >& triinpoel,
                  const std::vector< int >& symbctri,
+                 const std::vector< int >& slipwallbctri,
                  const tk::Fields& U,
                  const tk::Fields& W,
                  tk::Fields& R ) const
@@ -1346,19 +1354,6 @@ class CompFlow {
         real w1C = W(N[2],0);
         real w2C = W(N[2],1);
         real w3C = W(N[2],2);
-        // apply stagnation BCs
-        if ( stagPoint(x[N[0]],y[N[0]],z[N[0]]) )
-        {
-          ruA = rvA = rwA = 0.0;
-        }
-        if ( stagPoint(x[N[1]],y[N[1]],z[N[1]]) )
-        {
-          ruB = rvB = rwB = 0.0;
-        }
-        if ( stagPoint(x[N[2]],y[N[2]],z[N[2]]) )
-        {
-          ruC = rvC = rwC = 0.0;
-        }
         // compute face normal
         real nx, ny, nz;
         tk::normal( x[N[0]], x[N[1]], x[N[2]],
@@ -1369,30 +1364,31 @@ class CompFlow {
         real f[m_ncomp][3];
         real p, vn;
         int sym = symbctri[e];
+        int slip = slipwallbctri[e];
         p = m_mat_blk[0].compute< EOS::pressure >( rA, ruA/rA, rvA/rA, rwA/rA,
           reA );
-        vn = sym ? 0.0 : (nx*(ruA/rA-w1A) + ny*(rvA/rA-w2A) + nz*(rwA/rA-w3A));
+        vn = (sym || slip) ? 0.0 : (nx*(ruA/rA-w1A) + ny*(rvA/rA-w2A) + nz*(rwA/rA-w3A));
         f[0][0] = rA*vn;
         f[1][0] = ruA*vn + p*nx;
         f[2][0] = rvA*vn + p*ny;
         f[3][0] = rwA*vn + p*nz;
-        f[4][0] = reA*vn + p*(sym ? 0.0 : (nx*ruA + ny*rvA + nz*rwA)/rA);
+        f[4][0] = reA*vn + p*((nx*ruA + ny*rvA + nz*rwA)/rA);
         p = m_mat_blk[0].compute< EOS::pressure >( rB, ruB/rB, rvB/rB, rwB/rB,
           reB );
-        vn = sym ? 0.0 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
+        vn = (sym || slip) ? 0.0 : (nx*(ruB/rB-w1B) + ny*(rvB/rB-w2B) + nz*(rwB/rB-w3B));
         f[0][1] = rB*vn;
         f[1][1] = ruB*vn + p*nx;
         f[2][1] = rvB*vn + p*ny;
         f[3][1] = rwB*vn + p*nz;
-        f[4][1] = reB*vn + p*(sym ? 0.0 : (nx*ruB + ny*rvB + nz*rwB)/rB);
+        f[4][1] = reB*vn + p*((nx*ruB + ny*rvB + nz*rwB)/rB);
         p = m_mat_blk[0].compute< EOS::pressure >( rC, ruC/rC, rvC/rC, rwC/rC,
           reC );
-        vn = sym ? 0.0 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
+        vn = (sym || slip) ? 0.0 : (nx*(ruC/rC-w1C) + ny*(rvC/rC-w2C) + nz*(rwC/rC-w3C));
         f[0][2] = rC*vn;
         f[1][2] = ruC*vn + p*nx;
         f[2][2] = rvC*vn + p*ny;
         f[3][2] = rwC*vn + p*nz;
-        f[4][2] = reC*vn + p*(sym ? 0.0 : (nx*ruC + ny*rvC + nz*rwC)/rC);
+        f[4][2] = reC*vn + p*((nx*ruC + ny*rvC + nz*rwC)/rC);
         // compute face area
         auto A6 = tk::area( x[N[0]], x[N[1]], x[N[2]],
                             y[N[0]], y[N[1]], y[N[2]],
@@ -1475,12 +1471,13 @@ class CompFlow {
     //! \param[in] t Physical time
     //! \param[in] inpoel Element point connectivity
     //! \param[in] esup Elements surrounding points
-    //! \param[in] boxnodes Mesh node ids within user-defined box
+    //! \param[in] boxnodes Mesh node ids within user-defined boxes
     //! \param[in] coord Mesh node coordinates
     //! \param[in] R Right-hand side vector
-    //! \details This function add the energy source corresponding to a planar
-    //!   wave-front propagating along the z-direction with a user-specified
-    //!   velocity, within a box initial condition, configured by the user.
+    //! \param[in,out] engSrcAdded Whether the energy source was added
+    //! \details This function adds the energy source corresponding to a
+    //!   spherical wave-front growing at a user-specified velocity, within a
+    //!   user-configured box initial condition, configured by the user.
     //!   Example (SI) units of the quantities involved:
     //!    * internal energy content (energy per unit volume): J/m^3
     //!    * specific energy (internal energy per unit mass): J/kg
@@ -1489,14 +1486,21 @@ class CompFlow {
                  const std::vector< std::size_t >& inpoel,
                  const std::pair< std::vector< std::size_t >,
                                   std::vector< std::size_t > >& esup,
-                 const std::unordered_set< std::size_t >& boxnodes,
+                 const std::vector< std::unordered_set< std::size_t > >& boxnodes,
                  const std::array< std::vector< real >, 3 >& coord,
-                 tk::Fields& R ) const
+                 tk::Fields& R,
+                 std::vector< int >& engSrcAdded ) const
     {
       const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
 
-      if (!icbox.empty()) {
-        for (const auto& b : icbox) {   // for all boxes for this eq
+      // if nodes exist in box (on this partition)
+      if (!icbox.empty() && !boxnodes.empty()) {
+        std::size_t bcnt = 0;
+        // for all boxes
+        for (const auto& b : icbox) {
+          // if linear initialize is set up (energy-pill)
+          if (b.template get< tag::initiate >() == ctr::InitiateType::LINEAR) {
+
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
              b.template get< tag::ymin >(), b.template get< tag::ymax >(),
@@ -1504,80 +1508,40 @@ class CompFlow {
 
           auto boxenc = b.template get< tag::energy_content >();
           Assert( boxenc > 0.0, "Box energy content must be nonzero" );
+          const auto& x0_front = b.template get< tag::point >();
+          Assert(x0_front.size()==3, "Incorrectly sized front initial location");
 
           auto V_ex = (box[1]-box[0]) * (box[3]-box[2]) * (box[5]-box[4]);
 
           // determine times at which sourcing is initialized and terminated
-          auto iv = b.template get< tag::front_speed >();
+          auto vFront = b.template get< tag::front_speed >();
           auto wFront = b.template get< tag::front_width >();
           auto tInit = b.template get< tag::init_time >();
-          auto tFinal = tInit + (box[5] - box[4] - wFront) / std::fabs(iv);
-          auto aBox = (box[1]-box[0]) * (box[3]-box[2]);
 
           const auto& x = coord[0];
           const auto& y = coord[1];
           const auto& z = coord[2];
 
-          if (t >= tInit && t <= tFinal) {
-            // The energy front is assumed to have a half-sine-wave shape. The
-            // half wave-length is the width of the front. At t=0, the center of
-            // this front (i.e. the peak of the partial-sine-wave) is at X_0 +
-            // W_0.  W_0 is calculated based on the width of the front and the
-            // direction of propagation (which is assumed to be along the
-            // z-direction).  If the front propagation velocity is positive, it
-            // is assumed that the initial position of the energy source is the
-            // minimum z-coordinate of the box; whereas if this velocity is
-            // negative, the initial position is the maximum z-coordinate of the
-            // box.
+          if (t >= tInit) {
+            // current radius of front
+            tk::real rFront = vFront * (t-tInit);
 
-            // Orientation of box
-            std::array< tk::real, 3 > b_orientn{{
-              b.template get< tag::orientation >()[0],
-              b.template get< tag::orientation >()[1],
-              b.template get< tag::orientation >()[2] }};
-            std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
-              0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
-            // Transform box to reference space
-            std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
-            std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
-            tk::movePoint(b_centroid, b_min);
-            tk::movePoint(b_centroid, b_max);
-
-            // initial center of front
-            tk::real zInit(b_min[2]);
-            if (iv < 0.0) zInit = b_max[2];
-            // current location of front
-            auto z0 = zInit + iv * (t-tInit);
-            auto z1 = z0 + std::copysign(wFront, iv);
-            tk::real s0(z0), s1(z1);
-            // if velocity of propagation is negative, initial position is z1
-            if (iv < 0.0) {
-              s0 = z1;
-              s1 = z0;
-            }
-            // Sine-wave (positive part of the wave) source term amplitude
-            auto pi = 4.0 * std::atan(1.0);
-            auto amplE = boxenc * V_ex * pi
-              / (aBox * wFront * 2.0 * (tFinal-tInit));
-            //// Square wave (constant) source term amplitude
-            //auto amplE = boxenc * V_ex
-            //  / (aBox * wFront * (tFinal-tInit));
-            //// arbitrary shape form
-            //auto amplE = boxenc * std::abs(iv) / wFront;
+            // arbitrary shape form
+            auto amplE = boxenc * vFront / wFront;
             amplE *= V_ex / V;
 
-            // add source
-            for (auto p : boxnodes) {
+            for (auto p : boxnodes[bcnt]) {
               std::array< tk::real, 3 > node{{ x[p], y[p], z[p] }};
-              // Transform node to reference space of box
-              tk::movePoint(b_centroid, node);
-              tk::rotatePoint({{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
-                node);
 
-              if (node[2] >= s0 && node[2] <= s1) {
-                auto S = amplE * std::sin(pi*(node[2]-s0)/wFront);
-                //// arbitrary shape form
-                //auto S = amplE;
+              auto r_e = std::sqrt(
+                (node[0]-x0_front[0])*(node[0]-x0_front[0]) +
+                (node[1]-x0_front[1])*(node[1]-x0_front[1]) +
+                (node[2]-x0_front[2])*(node[2]-x0_front[2]) );
+
+              // if mesh node lies within spherical shell add sources
+              if (r_e >= rFront && r_e <= rFront+wFront) {
+                // arbitrary shape form
+                auto S = amplE;
                 for (auto e : tk::Around(esup,p)) {
                   // access node IDs
                   std::size_t N[4] =
@@ -1595,11 +1559,16 @@ class CompFlow {
                   auto J =
                     tk::triple( bax, bay, baz, cax, cay, caz, dax, day, daz );
                   auto J24 = J/24.0;
+                  // Add the source term to the rhs
                   R(p,4) += J24 * S;
+                  engSrcAdded[p] = 1;
                 }
               }
             }
           }
+
+          }
+          ++bcnt;
         }
       }
     }

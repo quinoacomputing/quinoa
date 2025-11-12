@@ -114,7 +114,7 @@ class ALECG : public CBase_ALECG {
     void start();
 
     //! Advance equations to next time step
-    void advance( tk::real newdt, tk::real );
+    void advance( tk::real newdt, std::array< tk::real, 6 > );
 
     //! Compute left-hand side of transport equations
     void lhs();
@@ -234,7 +234,9 @@ class ALECG : public CBase_ALECG {
       p | m_bnormc;
       p | m_symbcnodes;
       p | m_farfieldbcnodes;
+      p | m_slipwallbcnodes;
       p | m_symbctri;
+      p | m_slipwallbctri;
       p | m_timedepbcnodes;
       p | m_timedepbcFn;
       p | m_stage;
@@ -249,6 +251,7 @@ class ALECG : public CBase_ALECG {
       p | m_nusermeshblk;
       p | m_nodeblockid;
       p | m_nodeblockidc;
+      p | m_srcFlag;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -334,8 +337,12 @@ class ALECG : public CBase_ALECG {
     std::unordered_set< std::size_t > m_symbcnodes;
     //! Unique set of nodes at which farfield BCs are set
     std::unordered_set< std::size_t > m_farfieldbcnodes;
+    //! Unique set of nodes at which slip wall BCs are set
+    std::unordered_set< std::size_t > m_slipwallbcnodes;
     //! Vector with 1 at symmetry BC boundary triangles
     std::vector< int > m_symbctri;
+    //! Vector with 1 at slip wall BC boundary triangles
+    std::vector< int > m_slipwallbctri;
     //! \brief Unique set of nodes at which time dependent BCs are set
     //    for each time dependent BC
     std::vector< std::unordered_set< std::size_t > > m_timedepbcnodes;
@@ -371,6 +378,8 @@ class ALECG : public CBase_ALECG {
     //! \details Key: mesh block id, value: set of global node ids for nodes
     //!   in this mesh block.
     std::unordered_map< std::size_t, std::set< std::size_t > > m_nodeblockidc;
+    //! Vector indicating if a source was added to node
+    std::vector< int > m_srcFlag;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

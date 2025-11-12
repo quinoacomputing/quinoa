@@ -31,7 +31,6 @@
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Initialize.hpp"
-#include "Integrate/Mass.hpp"
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
@@ -78,9 +77,11 @@ class CompFlow {
       , invalidBC         // Outlet BC not implemented
       , farfield
       , extrapolate
-      , invalidBC },      // No slip wall BC not implemented
+      , invalidBC         // No slip wall BC not implemented
+      , symmetry },       // Slip equivalent to symmetry without mesh motion
       // BC Gradient functions
       { noOpGrad
+      , noOpGrad
       , noOpGrad
       , noOpGrad
       , noOpGrad
@@ -165,7 +166,7 @@ class CompFlow {
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
-    //! \param[in] L Block diagonal mass matrix
+    //! \param[in] geoElem Element geometry array
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] inbox List of elements at which box user ICs are set for
@@ -174,7 +175,7 @@ class CompFlow {
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void
-    initialize( const tk::Fields& L,
+    initialize( const tk::Fields& geoElem,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::unordered_set< std::size_t > >& inbox,
@@ -184,7 +185,7 @@ class CompFlow {
                 tk::real t,
                 const std::size_t nielem ) const
     {
-      tk::initialize( m_ncomp, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_ncomp, m_mat_blk, geoElem, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -238,14 +239,6 @@ class CompFlow {
       densityConstr.resize(0);
     }
 
-    //! Compute the left hand side block-diagonal mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto ndof = g_inputdeck.get< tag::ndof >();
-      tk::mass( m_ncomp, ndof, geoElem, l );
-    }
-
     //! Update the interface cells to first order dofs
     //! \details This function resets the high-order terms in interface cells,
     //!   and is currently not used in compflow.
@@ -261,10 +254,9 @@ class CompFlow {
     //!   add the computation of the primitive variables.
     void updatePrimitives( const tk::Fields&,
                            const tk::Fields&,
-                           const tk::Fields&,
                            tk::Fields&,
                            std::size_t,
-                           std::vector< std::size_t >& ) const {}
+                           const std::vector< std::size_t >& ) const {}
 
     //! Clean up the state of trace materials for this PDE system
     //! \details This function cleans up the state of materials present in trace
@@ -777,6 +769,16 @@ class CompFlow {
       return mindt;
     }
 
+    //! Balances elastic energy after plastic update. Not implemented here.
+    // //! \param[in] e Element number
+    // //! \param[in] x_star Stiff variables before implicit update
+    // //! \param[in] x Stiff variables after implicit update
+    // //! \param[in] U Field of conserved variables
+    void balance_plastic_energy( std::size_t /*e*/,
+                                 std::vector< tk::real > /*x_star*/,
+                                 std::vector< tk::real > /*x*/,
+                                 tk::Fields& /*U*/ ) const {}
+
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array
@@ -835,10 +837,19 @@ class CompFlow {
     std::vector< std::string > histNames() const
     { return CompFlowHistNames(); }
 
+    //! Return surface field names to be output to file
+    //! \return Vector of strings labelling surface fields output in file
+    std::vector< std::string > surfNames() const
+    {
+      std::vector< std::string > s; // punt for now
+      return s;
+    }
+
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
-    surfOutput( const std::map< int, std::vector< std::size_t > >&,
-                tk::Fields& ) const
+    surfOutput( const inciter::FaceData&,
+      const tk::Fields&,
+      const tk::Fields& ) const
     {
       std::vector< std::vector< tk::real > > s; // punt for now
       return s;

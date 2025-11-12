@@ -5,7 +5,7 @@ inciter = {
   nstep = 25,
   dt = 1.0e-7,
   --cfl = 0.5,
-  ttyi = 50,  -- TTY output interval
+  ttyi = 25,  -- TTY output interval
   scheme = "p0p1",
   limiter = "vertexbasedp1",
 
@@ -25,7 +25,6 @@ inciter = {
     {
       -- Values for Nitrogen (N2)
       id       = { 1 },
-      gamma    = { 1.4 },  -- ratio of specific heats
       R        = { 2.968030520448514e+02 },  -- specific gas constant
       cp_coeff = { { {2.210371497E+04, -3.818461820E+02, 6.082738360E+00, -8.530914410E-03, 1.384646189E-05, -9.625793620E-09, 2.519705809E-12, 7.108460860E+02},
                      {5.877124060E+05, -2.239249073E+03, 6.066949220E+00, -6.139685500E-04, 1.491806679E-07, -1.923105485E-11, 1.061954386E-15, 1.283210415E+04},

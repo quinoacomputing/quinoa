@@ -18,6 +18,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -58,31 +59,30 @@ MultiSpeciesProblemUserDefined::initialize( ncomp_t ncomp,
   auto alphamin = 1.0e-12;
 
   // initialize background species states
-  auto alphas = bgmassfrac;
+  auto Ys = bgmassfrac;
   tk::real total_al(0.0);
   for (std::size_t k=0; k<nspec; ++k) {
-    alphas[k] = std::max(alphas[k], alphamin);
-    total_al += alphas[k];
+    Ys[k] = std::max(Ys[k], alphamin);
+    total_al += Ys[k];
   }
-  for (std::size_t k=0; k<nspec; ++k) alphas[k] /= total_al;
+  for (std::size_t k=0; k<nspec; ++k) Ys[k] /= total_al;
 
   tk::real u = bgvelic[0];
   tk::real v = bgvelic[1];
   tk::real w = bgvelic[2];
 
-  auto rb = 0.0;
+  // Initialize mixture
+  Mixture mix(nspec, Ys, bgpreic, bgtempic, mat_blk);
+
+  auto rb = mix.get_mix_density();
   for (std::size_t k=0; k<nspec; ++k) {
-    // density
-    auto rhok = mat_blk[0].compute< EOS::density >(bgpreic, bgtempic);
     // partial density
-    s[multispecies::densityIdx(nspec,k)] = alphas[k] * rhok;
-    // bulk density
-    rb += s[multispecies::densityIdx(nspec,k)];
+    s[multispecies::densityIdx(nspec,k)] = Ys[k] * rb;
   }
 
   // total specific energy
-  s[multispecies::energyIdx(nspec,0)] =
-    mat_blk[0].compute< EOS::totalenergy >(rb, u, v, w, bgpreic);
+  s[multispecies::energyIdx(nspec,0)] = mix.totalenergy(rb,
+    u, v, w, bgtempic, mat_blk);
 
   // bulk momentum
   s[multispecies::momentumIdx(nspec,0)] = rb * u;

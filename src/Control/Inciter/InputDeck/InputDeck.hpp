@@ -50,7 +50,8 @@ using bclist = tk::TaggedTuple< brigand::list<
   tag::outlet,      std::vector< std::size_t >,
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >
+  tag::noslipwall,  std::vector< std::size_t >,
+  tag::slipwall,    std::vector< std::size_t >
 > >;
 
 // Transport
@@ -84,6 +85,7 @@ using compflowList = tk::TaggedTuple< brigand::list<
 using multimatList = tk::TaggedTuple< brigand::list<
   tag::physics,          PhysicsType,
   tag::nmat,             std::size_t,
+  tag::min_volumefrac,   tk::real,
   tag::prelax,           uint64_t,
   tag::prelax_timescale, tk::real,
   tag::intsharp,         int,
@@ -104,25 +106,28 @@ using multispeciesList = tk::TaggedTuple< brigand::list<
 
 // Material/EOS object
 using materialList = tk::TaggedTuple< brigand::list<
-  tag::eos,          MaterialType,
-  tag::id,           std::vector< uint64_t >,
-  tag::gamma,        std::vector< tk::real >,
-  tag::pstiff,       std::vector< tk::real >,
-  tag::w_gru,        std::vector< tk::real >,
-  tag::A_jwl,        std::vector< tk::real >,
-  tag::B_jwl,        std::vector< tk::real >,
-  tag::C_jwl,        std::vector< tk::real >,
-  tag::R1_jwl,       std::vector< tk::real >,
-  tag::R2_jwl,       std::vector< tk::real >,
-  tag::rho0_jwl,     std::vector< tk::real >,
-  tag::de_jwl,       std::vector< tk::real >,
-  tag::rhor_jwl,     std::vector< tk::real >,
-  tag::Tr_jwl,       std::vector< tk::real >,
-  tag::Pr_jwl,       std::vector< tk::real >,
-  tag::mu,           std::vector< tk::real >,
-  tag::yield_stress, std::vector< tk::real >,
-  tag::cv,           std::vector< tk::real >,
-  tag::k,            std::vector< tk::real >
+  tag::eos,                MaterialType,
+  tag::id,                 std::vector< uint64_t >,
+  tag::gamma,              std::vector< tk::real >,
+  tag::pstiff,             std::vector< tk::real >,
+  tag::w_gru,              std::vector< tk::real >,
+  tag::A_jwl,              std::vector< tk::real >,
+  tag::B_jwl,              std::vector< tk::real >,
+  tag::C_jwl,              std::vector< tk::real >,
+  tag::R1_jwl,             std::vector< tk::real >,
+  tag::R2_jwl,             std::vector< tk::real >,
+  tag::rho0_jwl,           std::vector< tk::real >,
+  tag::de_jwl,             std::vector< tk::real >,
+  tag::rhor_jwl,           std::vector< tk::real >,
+  tag::Tr_jwl,             std::vector< tk::real >,
+  tag::Pr_jwl,             std::vector< tk::real >,
+  tag::mu,                 std::vector< tk::real >,
+  tag::yield_stress,       std::vector< tk::real >,
+  tag::alpha,              std::vector< tk::real >,
+  tag::K0,                 std::vector< tk::real >,
+  tag::cv,                 std::vector< tk::real >,
+  tag::k,                  std::vector< tk::real >,
+  tag::plasticity_reltime, std::vector< tk::real >
 > >;
 
 // Species/EOS object
@@ -144,8 +149,7 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::farfield,    std::vector< std::size_t >,
   tag::extrapolate, std::vector< std::size_t >,
   tag::noslipwall,  std::vector< std::size_t >,
-  tag::stag_point,  std::vector< tk::real >,
-  tag::radius,      tk::real,
+  tag::slipwall,    std::vector< std::size_t >,
   tag::velocity,    std::vector< tk::real >,
   tag::pressure,    tk::real,
   tag::density,     tk::real,
@@ -166,7 +170,11 @@ using bcList = tk::TaggedTuple< brigand::list<
       tag::sideset,    std::vector< uint64_t >,
       tag::fn,         std::vector< tk::real >
     > >
-  >
+  >,
+  tag::back_pressure, tk::TaggedTuple< brigand::list<
+    tag::sideset,  std::vector< std::size_t >,
+    tag::pressure, tk::real
+  > >
 > >;
 
 // IC box
@@ -230,10 +238,12 @@ using icList = tk::TaggedTuple< brigand::list<
 
 // Overset mesh block
 using meshList = tk::TaggedTuple< brigand::list<
-  tag::filename,    std::string,
-  tag::location,    std::vector< tk::real >,
-  tag::orientation, std::vector< tk::real >,
-  tag::velocity,    std::vector< tk::real >
+  tag::filename,          std::string,
+  tag::location,          std::vector< tk::real >,
+  tag::orientation,       std::vector< tk::real >,
+  tag::mass,              tk::real,
+  tag::moment_of_inertia, tk::real,
+  tag::center_of_mass,    std::vector< tk::real >
 > >;
 
 // Field output block
@@ -287,6 +297,7 @@ using ConfigMembers = brigand::list<
   tag::t0,               tk::real,
   tag::dt,               tk::real,
   tag::cfl,              tk::real,
+  tag::cfl_ramping,      bool,
   tag::ttyi,             uint32_t,
   tag::imex_runge_kutta, uint32_t,
   tag::imex_maxiter,     uint32_t,
@@ -309,6 +320,7 @@ using ConfigMembers = brigand::list<
   tag::rdof,        std::size_t,
   tag::flux,        FluxType,
   tag::lowspeed_kp, tk::real,
+  tag::lowspeed_ku, tk::real,
 
   // limiter options
   tag::limiter,              LimiterType,
@@ -345,6 +357,13 @@ using ConfigMembers = brigand::list<
   tag::ic, icList,
   tag::mesh, std::vector< meshList >,
   tag::transfer, std::vector< Transfer >,
+
+  // Rigid-body motion solver
+  tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
+    tag::rigid_body_movt, bool,
+    tag::rigid_body_dof,  std::size_t,
+    tag::symmetry_plane,  std::size_t
+  > >,
 
   // ALE block
   // ---------------------------------------------------------------------------
@@ -426,6 +445,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       // Default time stepping params
       get< tag::dt >() = 0.0;
       get< tag::cfl >() = 0.0;
+      get< tag::cfl_ramping >() = false;
       // Default AMR settings
       auto rmax =
         std::numeric_limits< tk::real >::max() / 100;
@@ -490,6 +510,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       R"(This keyword is used to specify the CFL coefficient for
       variable-time-step-size simulations. Setting 'cfl' and 'dt' are mutually
       exclusive. If both 'cfl' and 'dt' are set, 'dt' wins.)", "real"});
+
+      keywords.insert({"cfl_ramping",
+      "Determines whether a ramping coefficient is applied to the CFL coefficient.",
+      R"(This keyword is used to specify a boolean that determines
+      whether a ramping coefficient is applied to the CFL coefficient.
+      If true, the CFL would be scaled down by 0.01 at the first step,
+      and increased by 0.01 for the next 100 steps.)", "bool"});
 
       keywords.insert({"ttyi", "Set screen output interval",
         R"(This keyword is used to specify the interval in time steps for screen
@@ -627,7 +654,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         scheme with Runge-Kutta (RK) time stepping, combined with overset grids.
         See Control/Inciter/Options/Scheme.hpp for other valid options.)"});
 
-      keywords.insert({"dg",
+      keywords.insert({"dgp0",
         "Select 1st-order discontinuous Galerkin discretization + Runge-Kutta",
         R"(This keyword is used to select the first-order accurate discontinuous
         Galerkin, DG(P0), spatial discretiztaion used in Inciter. As this is first
@@ -799,12 +826,28 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         value is 0, and recommended value for low speed flows (Mach < 0.1) is
         1.)"});
 
+      keywords.insert({"lowspeed_ku",
+        "Select the low-speed coefficient K_u in the AUSM+up flux function",
+        R"(This keyword is used to select the low-speed coefficient K_u in the
+        AUSM+up flux function used for the DG or FV spatial discretization for
+        multi-material hydro, and not used for anything else. The default
+        value is 1, and recommended value for low speed flows (Mach < 0.1) is
+        1.)"});
+
       keywords.insert({"hll",
         "Select the Harten-Lax-vanLeer (HLL) flux function",
         R"(This keyword is used to select the HLL flux
         function used for discontinuous Galerkin (DG) spatial discretization
         used in inciter. It is only set up for for multi-material hydro, and
         not selectable for anything else.)"});
+
+      keywords.insert({"hlld",
+        "Select the Harten-Lax-vanLeer-Discontinuities (HLLD) flux function",
+        R"(This keyword is used to select the HLLD flux
+        function used for discontinuous Galerkin (DG) spatial discretization
+        used in inciter. It is only set up for for multi-material runs. This
+        flux is designed to handle normal and shear waves within solid
+        materials)"});
 
       // -----------------------------------------------------------------------
       // PDE keywords
@@ -850,6 +893,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "Set number of materials for the multi-material system",
         R"(This keyword is used to specify the number of materials for
         multi-material flow, see also the keyword 'multimat'.)", "uint"});
+
+      keywords.insert({"min_volumefrac",
+        "Minimum volume fraction of a material in a cell",
+        R"(This keyword is used to specify the minimum volume fraction that a
+        material can occupy in a computational element. The default value is
+        1.0e-12. It is used only for multimat, and has no effect for the other
+        PDE types.)", "real"});
 
       keywords.insert({"nspec",
         "Set number of species for the multi-species system",
@@ -1033,6 +1083,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         which indicates the stress (units: Pa) after which the material begins
         plastic flow.)", "vector of reals"});
 
+      keywords.insert({"alpha", "alpha parameter for Godunov-Romenski EOS",
+        R"(This keyword is used to specify the alpha parameter for
+        Godunov-Romenski EOS for solids.)", "vector of reals"});
+
+      keywords.insert({"K0", "K0 parameter for Godunov-Romenski EOS",
+        R"(This keyword is used to specify the K0 parameter for
+        Godunov-Romenski EOS for solids.)", "vector of reals"});
+
       keywords.insert({"cv", "specific heat at constant volume",
         R"(This keyword is used to specify the material property, specific heat at
         constant volume.)", "vector of reals"});
@@ -1040,6 +1098,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"k", "heat conductivity",
         R"(This keyword is used to specify the material property, heat
         conductivity.)", "vector of reals"});
+
+      keywords.insert({"plasticity_reltime", "Relaxation time for plasticity",
+        R"(This keyword is used to specify the base relaxation time for a solid
+        subject to perfect plasticity. See Ortega, A. López, et al. "Numerical
+        simulation of elastic–plastic solid mechanics using an Eulerian stretch
+        tensor approach and HLLD Riemann solver." Journal of Computational
+        Physics 257 (2014): 414-441.)", "vector of reals"});
 
       keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
         R"(This keyword is used to specify species' coefficients in the
@@ -1083,11 +1148,19 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         analysis of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
         Mechanics, 537, 55-89 for further details.)"});
 
-      keywords.insert({"godunovromenski_aluminum",
-        "Select the GODUNOVROMENSKIALUMINUM equation of state",
-        R"(This keyword is used to select the Godunov-Romenski equation of
-        state for solids and a hydro EoS for aluminum. These function were
-        taken from Barton, Philip T. "An interface-capturing Godunov method
+      keywords.insert({"wilkins_aluminum",
+        "Select Wilkins' equation of state for aluminum",
+        R"(This keyword is used to select Wilkin's equation of state for solids
+        and a hydro EoS for aluminum. These functions were taken from Example 4
+        of Barton, Philip T. "An interface-capturing Godunov method
+        for the simulation of compressible solid-fluid problems." Journal
+        of Computational Physics 390 (2019): 25-50.)"});
+
+      keywords.insert({"godunovromenski",
+        "Select godunovromenski equation of state for solids",
+        R"(This keyword is used to select Godunov-Romenski equation of state
+        for solids. These functions were taken from Example 1
+        of Barton, Philip T. "An interface-capturing Godunov method
         for the simulation of compressible solid-fluid problems." Journal
         of Computational Physics 390 (2019): 25-50.)"});
 
@@ -1697,9 +1770,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to list (multiple) no-slip wall BC sidesets.)",
         "vector of uint(s)"});
 
-      keywords.insert({"stag",
-        "List sidesets with stagnation boundary conditions",
-        R"(This keyword is used to list (multiple) stagnation BC sidesets.)",
+      keywords.insert({"slipwall",
+        "List sidesets with slip wall boundary conditions",
+        R"(This keyword is used to list (multiple) slip wall BC sidesets.)",
         "vector of uint(s)"});
 
       keywords.insert({"timedep",
@@ -1712,15 +1785,39 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         block. Multiple such bc_timedep blocks can be specified for different
         time dependent BCs on different groups of side sets.)", "block-title"});
 
-      keywords.insert({"radius", "Specify a radius",
-        R"(This keyword is used to specify a radius, used, e.g., in specifying a
-        point in 3D space for setting a stagnation (velocity vector = 0).)",
-        "real"});
+      keywords.insert({"back_pressure",
+        "Start configuration block describing back pressure boundary conditions",
+        R"(This keyword is used to introduce a back pressure BC block. This
+        block requires a 'sideset' vector and 'pressure' to be specified within
+        it.)", "block-title"});
 
       keywords.insert({"velocity", "Specify velocity",
         R"(This keyword is used to configure a velocity vector used in a
-        context-specific way, e.g., for boundary or initial conditions, or
-        specifying overset mesh velocity.)", "vector of 3 reals"});
+        context-specific way, e.g., for boundary or initial conditions.)",
+        "vector of 3 reals"});
+
+      // -----------------------------------------------------------------------
+      // Rigid-body motion solver
+      // -----------------------------------------------------------------------
+
+      keywords.insert({"rigid_body_motion", "Specify a rigid body motion block",
+        R"(This keyword is used to specify a rigid body motion block, to move an
+        overset mesh as a rigid body. Number of degrees of freedom and the
+        symmetry plane (if any) are specified within this block.)",
+        "block-title"});
+
+      keywords.insert({"rigid_body_dof",
+        "Number of rigid body degrees of freedom", R"(This keyword is used to
+        specify the number of degrees of freedom the rigid body has. Valid
+        options are 3 and 6. 3 DOFs indicate translation in two dimensions and
+        rotation about symmetry plane axis; 6 DOFs indication translation in
+        three dimensions and rotation about three axes. If 3 DOFs is specified,
+        symmetry plane is required; if 6 DOFs is specified symmetry plane is not
+        used.)", "uint"});
+
+      keywords.insert({"symmetry_plane", "Symmetry plane for rigid body motion",
+        R"(This keyword is used to specify the symmetry plane for a 3 DOF rigid
+        body motion solver. 1: x-plane, 2: y-plane, 3: z-plane.)", "uint"});
 
       // -----------------------------------------------------------------------
       // IC object
@@ -1767,8 +1864,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "real"});
 
       keywords.insert({"mass", "Specify mass",
-        R"(This keyword is used to configure the mass within a box/meshblock.)",
-        "real"});
+        R"(This keyword is used to configure the mass within a box/meshblock,
+        or mass of the rigid body which is conformally meshed using the overset
+        mesh.)", "real"});
 
       keywords.insert({"energy", "Specify energy per unit mass",
         R"(This keyword is used to configure energy per unit mass, used for, e.g.,
@@ -1803,7 +1901,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         a box.)", "real"});
 
       keywords.insert({"orientation", "Configure orientation",
-        R"(Configure orientation of an IC box for rotation about centroid of box.)",
+        R"(Configure orientation of an IC box for rotation about centroid of
+        box (when specified within an IC 'box' block); or configure orientation
+        of a mesh (when specified within a 'mesh' block). Requires specification
+        of three angles about which the entity (box or mesh) is to be rotated.
+        The entity is rotated about the cartesian coordinate axes.)",
         "vector of 3 reals"});
 
       keywords.insert({"initiate", "Initiation type",
@@ -1863,13 +1965,17 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"filename", "Set filename",
         R"(Set filename, e.g., mesh filename for solver coupling.)", "string"});
 
-      keywords.insert({"location", "Configure location",
-        R"(Configure location of a mesh relative to another.)",
-        "vector of 3 reals"});
+      keywords.insert({"location", "Configure location of mesh",
+        R"(Configure location of a mesh relative to its local coordinate
+        system. Requires specification of three distances which are used to
+        relocate the mesh.)", "vector of 3 reals"});
 
-      keywords.insert({"orientation", "Configure orientation",
-        R"(Configure orientation of a mesh relative to another.)",
-        "vector of 3 reals"});
+      keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
+        R"(Moment of inertia of rigid body for rotational motion)", "real"});
+
+      keywords.insert({"center_of_mass", "Center of mass of rigid body",
+        R"(Center of mass of rigid body used to compute torque for rotational
+        motion)", "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // pre-configured problems

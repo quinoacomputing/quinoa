@@ -60,15 +60,16 @@ class JWL {
                        std::size_t imat=0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
-    //! \brief Calculate the Cauchy stress tensor from the material density,
-    //!   momentum, and total energy
+    //! Calculate cold-compression component of pressure (no-op)
+    tk::real pressure_coldcompr(
+      tk::real,
+      tk::real ) const
+    { return 0.0; }
+
+    //! \brief Calculate the Cauchy stress tensor from the material
+    //!   inverse deformation gradient tensor
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
       tk::real,
       std::size_t,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
@@ -78,8 +79,7 @@ class JWL {
                          tk::real apr,
                          tk::real alpha=1.0,
                          std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
-      const std::array< tk::real, 3 >& asigman={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
 
     //! Calculate speed of shear waves
     tk::real shearspeed(
@@ -89,11 +89,12 @@ class JWL {
 
     //! \brief Calculate material specific total energy from the material
     //!   density, momentum and material pressure
-    tk::real totalenergy( tk::real rho,
+    tk::real totalenergy( tk::real arho,
                           tk::real u,
                           tk::real v,
                           tk::real w,
-                          tk::real pr,
+                          tk::real apr,
+                          tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! \brief Calculate material temperature from the material density, and
@@ -122,6 +123,15 @@ class JWL {
 
     //! Return initial density
     tk::real rho0() const { return m_rho0; }
+
+    //! Return gas constant (no-op)
+    tk::real gas_constant() const { return 0.0; }
+
+    //! Return internal energy (no-op)
+    tk::real internalenergy(tk::real temp) const { return m_cv * temp; }
+
+    //! Return specific heat (no-op)
+    tk::real cv( [[maybe_unused]] tk::real temp) const { return m_cv; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

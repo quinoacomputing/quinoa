@@ -59,18 +59,28 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto mu = getmatprop< tag::mu >(k);
     m_material = SmallShearSolid(g, ps, c_v, mu);
   }
-  else if (mattype == ctr::MaterialType::GODUNOVROMENSKIALUMINUM) {
+  else if (mattype == ctr::MaterialType::WILKINSALUMINUM) {
     if (eq == EqType::compflow)
-      Throw("GodunovRomenskiAluminum not set up for PDE type");
-    // query input deck for GodunovRomenski parameters
+      Throw("WilkinsAluminum not set up for PDE type");
+    // query input deck for Wilkins parameters
     auto g = getmatprop< tag::gamma >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
-    m_material = GodunovRomenskiAluminum(g, c_v, mu);
+    m_material = WilkinsAluminum(g, c_v, mu);
+  }
+  else if (mattype == ctr::MaterialType::GODUNOVROMENSKI) {
+    if (eq == EqType::compflow)
+      Throw("GodunovRomenski not set up for PDE type");
+    // query input deck for Wilkins parameters
+    auto g = getmatprop< tag::gamma >(k);
+    auto mu = getmatprop< tag::mu >(k);
+    auto rho0_gr = getmatprop< tag::rho0_jwl >(k);
+    auto alpha = getmatprop< tag::alpha >(k);
+    auto K0 = getmatprop< tag::K0 >(k);
+    m_material = GodunovRomenski(g, mu, rho0_gr, alpha, K0);
   }
   else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
     // query input deck for ThermallyPerfectGas parameters
-    auto g = getspecprop< tag::gamma >(k);
     auto R = getspecprop< tag::R >(k);
     // assume only one type of species
     auto cp_coeff =
@@ -78,7 +88,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto t_range =
       g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
     auto dH_ref = getspecprop< tag::dH_ref >(k);
-    m_material = ThermallyPerfectGas(g, R, cp_coeff, t_range, dH_ref);
+    m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref);
   }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
 }

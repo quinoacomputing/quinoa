@@ -42,6 +42,8 @@ message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 # Determine number of CPUs available
 if (DEFINED ENV{SLURM_NPROCS})
   set(PROCESSOR_COUNT $ENV{SLURM_NPROCS})
+elseif (DEFINED PROCESSOR_COUNT)
+  # use the specified number of CPUs
 else()
   include(ProcessorCount)
   ProcessorCount(PROCESSOR_COUNT)
@@ -123,7 +125,7 @@ find_package(LAPACKE)
 if(LAPACKE_FOUND)
   set(lapack "")
 endif()
-message(STATUS "LAPACK found: "${LAPACKE_LIBRARIES})
+message(STATUS "LAPACK found: " ${LAPACKE_LIBRARIES})
 
 # Find CBLAS
 set(cblas "cblas")
@@ -131,7 +133,14 @@ find_package(CBLAS)
 if(CBLAS_FOUND)
   set(cblas "")
 endif()
-message(STATUS "CBLAS found: "${CBLAS_LIBRARIES})
+message(STATUS "CBLAS found: " ${CBLAS_LIBRARIES})
+
+# Find Trilinos
+set(trilinos "trilinos")
+find_package(Trilinos)
+if(Trilinos_FOUND)
+  set(trilinos "")
+endif()
 
 # Compilers
 # =========

@@ -91,7 +91,7 @@ SmallShearSolid::pressure(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  std::size_t imat,
+  std::size_t /*imat*/,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
@@ -105,9 +105,9 @@ SmallShearSolid::pressure(
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
-//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
-//!   for the single-material system, this argument can be left unspecified
-//!   by the calling code
+// //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+// //!   for the single-material system, this argument can be left unspecified
+// //!   by the calling code
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   (g_k). Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
@@ -122,41 +122,41 @@ SmallShearSolid::pressure(
   auto arhoEh = arhoE - arhoEe;
 
   // use stiffened gas eos to get pressure
-  tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) -
-    alpha*m_pstiff) * (m_gamma-1.0) - alpha*m_pstiff;
+  tk::real partpressure = (arhoEh - 0.5 * arho * (u*u + v*v + w*w))
+    * (m_gamma-1.0) - alpha*m_gamma*m_pstiff;
 
-  // check partial pressure divergence
-  if (!std::isfinite(partpressure)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Total energy:     " << arhoE << std::endl;
-    std::cout << "Hydro energy:     " << arhoEh << std::endl;
-    std::cout << "det(defgrad):     " << tk::determinant(defgrad) << std::endl;
-    std::cout << "Velocity:         " << u << ", " << v << ", " << w
-      << std::endl;
-    Throw("Material-" + std::to_string(imat) +
-      " has nan/inf partial pressure: " + std::to_string(partpressure) +
-      ", material volume fraction: " + std::to_string(alpha));
-  }
+  partpressure = std::max(min_eff_pressure(1e-10, arho, alpha), partpressure);
+
+  //// check partial pressure divergence
+  //if (!std::isfinite(partpressure)) {
+  //  std::cout << "Material-id:      " << imat << std::endl;
+  //  std::cout << "Volume-fraction:  " << alpha << std::endl;
+  //  std::cout << "Partial density:  " << arho << std::endl;
+  //  std::cout << "Total energy:     " << arhoE << std::endl;
+  //  std::cout << "Hydro energy:     " << arhoEh << std::endl;
+  //  std::cout << "det(defgrad):     " << tk::determinant(defgrad) << std::endl;
+  //  std::cout << "g-tensor:" << std::endl;
+  //  std::cout << defgrad[0][0] << " " << defgrad[0][1] << " " << defgrad[0][2] << std::endl;
+  //  std::cout << defgrad[1][0] << " " << defgrad[1][1] << " " << defgrad[1][2] << std::endl;
+  //  std::cout << defgrad[2][0] << " " << defgrad[2][1] << " " << defgrad[2][2] << std::endl;
+  //  std::cout << "Velocity:         " << u << ", " << v << ", " << w
+  //    << std::endl;
+  //  Throw("Material-" + std::to_string(imat) +
+  //    " has nan/inf partial pressure: " + std::to_string(partpressure) +
+  //    ", material volume fraction: " + std::to_string(alpha));
+  //}
 
   return partpressure;
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
 SmallShearSolid::CauchyStress(
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
   tk::real alpha,
   std::size_t /*imat*/,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
-//! \brief Calculate the elastic Cauchy stress tensor from the material density,
-//!   momentum, total energy, and inverse deformation gradient tensor using the
-//!   SmallShearSolid equation of state
+//! \brief Calculate the elastic Cauchy stress tensor from the material
+//!   inverse deformation gradient tensor using the SmallShearSolid EOS
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
@@ -209,8 +209,7 @@ SmallShearSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/,
-  const std::array< tk::real, 3 >& /*asigman*/ ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/ ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -227,9 +226,6 @@ SmallShearSolid::soundspeed(
 //  //! \param[in] defgrad Material inverse deformation gradient tensor
 //  //!   (g_k) with the first dimension aligned to direction in which
 //  //!   wave speeds are required. Default is 0, so that for the single-material
-//  //!   system, this argument can be left unspecified by the calling code
-//  //! \param[in] asigman Material traction vector in normal direction
-//  //!   (alpha * sigma_ij * n_j ). Default is 0, so that for the single-material
 //  //!   system, this argument can be left unspecified by the calling code
 //! \return Material speed of sound using the SmallShearSolid EoS
 // *************************************************************************
@@ -547,10 +543,11 @@ SmallShearSolid::soundspeed(
   // Approximated elastic contribution, from Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
-  tk::real a = (4.0/3.0) * m_mu * alpha / arho;
+  auto al_eff = std::max( 1.0e-14, alpha );
+  tk::real a = (4.0/3.0) * m_mu * al_eff / arho;
 
   // hydrodynamic contribution
-  auto p_eff = std::max( 1.0e-15, apr+(alpha*m_pstiff) );
+  auto p_eff = std::max( 1.0e-15, apr+(al_eff*m_pstiff) );
   a += m_gamma * p_eff / arho;
 
   // Compute square root
@@ -590,7 +587,8 @@ SmallShearSolid::shearspeed(
   // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
-  tk::real a = std::sqrt(alpha*m_mu/arho);
+  auto al_eff = std::max( 1e-14, alpha );
+  tk::real a = std::sqrt(al_eff*m_mu/arho);
 
   // check shear-wave speed divergence
   if (!std::isfinite(a)) {
@@ -607,20 +605,24 @@ SmallShearSolid::shearspeed(
 
 tk::real
 SmallShearSolid::totalenergy(
-  tk::real rho,
+  tk::real arho,
   tk::real u,
   tk::real v,
   tk::real w,
-  tk::real pr,
+  tk::real apr,
+  tk::real alpha,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
-//! \param[in] rho Material density
+//! \param[in] arho Material partial density
 //! \param[in] u X-velocity
 //! \param[in] v Y-velocity
 //! \param[in] w Z-velocity
-//! \param[in] pr Material pressure
+//! \param[in] apr Material partial pressure
+//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
+//!   the single-material system, this argument can be left unspecified by
+//!   the calling code
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   g_k. Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
@@ -628,13 +630,13 @@ SmallShearSolid::totalenergy(
 // *************************************************************************
 {
   // obtain hydro contribution to energy
-  tk::real rhoEh = (pr + m_pstiff) / (m_gamma-1.0) + 0.5 * rho *
-    (u*u + v*v + w*w) + m_pstiff;
+  tk::real arhoEh = (apr + alpha*m_gamma*m_pstiff) / (m_gamma-1.0) + 0.5 * arho *
+    (u*u + v*v + w*w);
   // obtain elastic contribution to energy
   tk::real eps2;
-  tk::real rhoEe = elasticEnergy(defgrad, eps2);
+  tk::real arhoEe = alpha*elasticEnergy(defgrad, eps2);
 
-  return (rhoEh + rhoEe);
+  return (arhoEh + arhoEe);
 }
 
 tk::real
@@ -703,13 +705,8 @@ SmallShearSolid::elasticEnergy(
 //!   the elastic shear distortion for further use
 // *************************************************************************
 {
-  // compute Right Cauchy-Green strain tensor
-  auto Ct = tk::getRightCauchyGreen(defgrad);
-  auto detC = std::pow(tk::determinant(Ct), 1.0/3.0);
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j)
-      Ct[i][j] /= detC;
-  }
+  // compute volume-preserving part of Right Cauchy-Green strain tensor
+  auto Ct = tk::getIsochorRightCauchyGreen(defgrad);
 
   // compute elastic shear distortion
   eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);

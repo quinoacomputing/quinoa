@@ -270,6 +270,15 @@ Transporter::info( const InciterPrint& print )
       + " - " + meshes[i].get< tag::filename >() );
   }
 
+  const auto& rbmotion = g_inputdeck.get< tag::rigid_body_motion >();
+  if (rbmotion.get< tag::rigid_body_movt >()) {
+    const auto& rbdof = rbmotion.get< tag::rigid_body_dof >();
+    print.item( "Rigid body motion DOF", rbdof );
+    if (rbdof == 3)
+      print.item( "Rigid body 3-DOF symmetry plane",
+        rbmotion.get< tag::symmetry_plane >() );
+  }
+
   // Print out info on settings of selected partial differential equations
   print.pdes( "Partial differential equations integrated", stack.info() );
 
@@ -492,6 +501,9 @@ Transporter::matchBCs( std::map< int, std::vector< std::size_t > >& bnd )
       for (auto i : b.get< tag::sideset >())
         usedsets.insert(static_cast<int>(i));
     }
+    const auto& bp = bci.get< tag::back_pressure >();
+    for (auto i : bp.get< tag::sideset >())
+      usedsets.insert(static_cast<int>(i));
   }
 
   // Query side sets of boundaries prescribed as moving with ALE
@@ -672,7 +684,8 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
     auto print = printer();
 
     // Start timer measuring preparation of the mesh for partitioning
-    const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
+    const auto itTimer = TimerTag::MESH_READ;
+    const auto& timer = tk::cref_find( m_timer, itTimer );
     print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
     // Print out mesh partitioning configuration
@@ -1112,7 +1125,7 @@ Transporter::diagHeader()
     if ( scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE )
       for (const auto& eq : g_cgpde) varnames( eq, var );
-    else if ( scheme == ctr::SchemeType::DG ||
+    else if ( scheme == ctr::SchemeType::DGP0 ||
               scheme == ctr::SchemeType::P0P1 ||
               scheme == ctr::SchemeType::DGP1 ||
               scheme == ctr::SchemeType::DGP2 ||
@@ -1141,11 +1154,32 @@ Transporter::diagHeader()
     // Augment diagnostics variables by L2-norm of the residual and total energy
     if ( scheme == ctr::SchemeType::ALECG ||
          scheme == ctr::SchemeType::OversetFE ||
-         scheme == ctr::SchemeType::FV )
+         scheme == ctr::SchemeType::FV ||
+         scheme == ctr::SchemeType::DGP0 ||
+         scheme == ctr::SchemeType::DGP1 ||
+         scheme == ctr::SchemeType::DGP2 ||
+         scheme == ctr::SchemeType::P0P1 ||
+         scheme == ctr::SchemeType::PDG
+       )
     {
       for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
     }
     d.push_back( "mE" );
+
+    // Augment diagnostics variables with the following:
+    // 1. resultant force vector on mesh boundaries that is used for rigid body
+    //    motion of overset mesh ('Fi')
+    // 2. resultant torque vector on mesh boundaries that is used for rigid body
+    //    motion of overset mesh ('Ti')
+    // 3. total displacement of rigid body center-of-mass ('Di')
+    // 4. total rotation of rigid body ('Ri')
+    if ( scheme == ctr::SchemeType::OversetFE )
+    {
+      for (std::size_t i=0; i<3; ++i) d.push_back( "F" + std::to_string(i+1) );
+      for (std::size_t i=0; i<3; ++i) d.push_back( "T" + std::to_string(i+1) );
+      for (std::size_t i=0; i<3; ++i) d.push_back( "D" + std::to_string(i+1) );
+      for (std::size_t i=0; i<3; ++i) d.push_back( "R" + std::to_string(i+1) );
+    }
 
     // Write diagnostics header
     dw.header( d );
@@ -1395,17 +1429,40 @@ Transporter::solutionTransferred()
 }
 
 void
-Transporter::minDtAcrossMeshes( tk::real* reducndata, [[maybe_unused]] int n )
+Transporter::collectDtAndForces( CkReductionMsg* advMsg )
 // *****************************************************************************
-// Reduction target that computes minimum timestep across all meshes
-//! \param[in] reducndata Vector containing minimum values of dt and mesh-moved
-//!   flags, collected across all meshes
-//! \param[in] n Size of vector, automatically computed by Charm
+// \brief Reduction target that computes minimum timestep across all meshes and
+//    sums up the forces on each mesh
+//! \param[in] advMsg Reduction msg containing minimum timestep and total
+//!   surface force information
 // *****************************************************************************
 {
-  Assert(static_cast<std::size_t>(n-1) == m_nelem.size(),
-    "Incorrectly sized reduction vector");
-  m_dtmsh.push_back(reducndata[0]);
+  // obtain results of reduction from reduction-msg
+  CkReduction::tupleElement* results = nullptr;
+  int num_reductions = 0;
+  advMsg->toTuple(&results, &num_reductions);
+
+// ignore the old-style-cast warning from clang for this code
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wcast-align"
+#endif
+
+  tk::real mindt = *(tk::real*)results[0].data;
+  std::array< tk::real, 6 > F;
+  F[0] = *(tk::real*)results[1].data;
+  F[1] = *(tk::real*)results[2].data;
+  F[2] = *(tk::real*)results[3].data;
+  F[3] = *(tk::real*)results[4].data;
+  F[4] = *(tk::real*)results[5].data;
+  F[5] = *(tk::real*)results[6].data;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
+
+  m_dtmsh.push_back(mindt);
 
   if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
     Assert(m_dtmsh.size() == m_nelem.size(), "Incorrect size of dtmsh");
@@ -1419,10 +1476,8 @@ Transporter::minDtAcrossMeshes( tk::real* reducndata, [[maybe_unused]] int n )
     m_ndtmsh = 0;
 
     // broadcast to advance time step
-    std::size_t ic(0);
     for (auto& m : m_scheme) {
-      m.bcast< Scheme::advance >( dt, reducndata[ic+1] );
-      ++ic;
+      m.bcast< Scheme::advance >( dt, F );
     }
   }
 }
@@ -1436,7 +1491,7 @@ Transporter::inthead( const InciterPrint& print )
 {
   auto refined = g_inputdeck.get< tag::field_output, tag::refined >();
   const auto scheme = g_inputdeck.get< tag::scheme >();
-  if (refined && scheme == ctr::SchemeType::DG) {
+  if (refined && scheme == ctr::SchemeType::DGP0) {
     printer() << "\n>>> WARNING: Ignoring refined field output for DG(P0)\n\n";
     refined = false;
   }
@@ -1519,7 +1574,13 @@ Transporter::diagnostics( CkReductionMsg* msg )
       diag.push_back( l2res[i] );
     }
   }
-  else if (scheme == ctr::SchemeType::FV) {
+  else if ( scheme == ctr::SchemeType::FV ||
+            scheme == ctr::SchemeType::DGP0 ||
+            scheme == ctr::SchemeType::DGP1 ||
+            scheme == ctr::SchemeType::DGP2 ||
+            scheme == ctr::SchemeType::P0P1 ||
+            scheme == ctr::SchemeType::PDG
+          ) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] );
       diag.push_back( l2res[i] );
@@ -1528,6 +1589,18 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Append total energy
   diag.push_back( d[TOTALSOL][0] );
+
+  // Append resultant force, torque, displacement, and rotation vector
+  if (scheme == ctr::SchemeType::OversetFE) {
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[RESFORCE][i] );
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[RESTORQUE][i] );
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[DISPLACEMNT][i] );
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[ROTATION][i] );
+  }
 
   // Append diagnostics file at selected times
   auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();

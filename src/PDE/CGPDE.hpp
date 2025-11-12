@@ -162,6 +162,7 @@ class CGPDE {
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbctri,
+      const std::vector< int >& slipwallbctri,
       const std::vector< real >& vol,
       const std::vector< std::size_t >& edgenode,
       const std::vector< std::size_t >& edgeid,
@@ -171,24 +172,21 @@ class CGPDE {
       const tk::Fields& W,
       const std::vector< real >& tp,
       real V,
-      tk::Fields& R ) const
+      tk::Fields& R,
+      std::vector< int >& srcFlag ) const
     { self->rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
-        esup, symbctri, vol, edgenode, edgeid,
-        boxnodes, G, U, W, tp, V, R ); }
+        esup, symbctri, slipwallbctri, vol, edgenode, edgeid,
+        boxnodes, G, U, W, tp, V, R, srcFlag ); }
 
-    //! Public interface to compute the mesh velocity for OversetFE
-    void getMeshVel(
-      real t,
+    //! Public interface to compute boundary surface integrals of pressure
+    void bndPressureInt(
       const std::array< std::vector< real >, 3 >& coord,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >& psup,
-      const std::unordered_set< std::size_t >& symbcnodes,
-      const std::array< tk::real, 3 >& uservel,
+      const std::vector< std::size_t >& triinpoel,
+      const std::vector< int >& slipwallbctri,
       const tk::Fields& U,
-      tk::Fields& meshvel,
-      int& movedmesh ) const
-    { self->getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
-        movedmesh ); }
+      const std::array< tk::real, 3 >& CM,
+      std::vector< real >& F ) const
+    { self->bndPressureInt( coord, triinpoel, slipwallbctri, U, CM, F ); }
 
     //! Public interface for computing the minimum time step size
     real dt( const std::array< std::vector< real >, 3 >& coord,
@@ -197,8 +195,9 @@ class CGPDE {
              tk::real dtn,
              const tk::Fields& U,
              const std::vector< tk::real >& vol,
-             const std::vector< tk::real >& voln ) const
-    { return self->dt( coord, inpoel, t, dtn, U, vol, voln ); }
+             const std::vector< tk::real >& voln,
+             const std::vector< int >& srcFlag ) const
+    { return self->dt( coord, inpoel, t, dtn, U, vol, voln, srcFlag ); }
 
     //! Public interface for computing a time step size for each mesh node
     void dt( uint64_t it,
@@ -238,6 +237,17 @@ class CGPDE {
                           std::array< real, 4 > > >& bnorm,
                 const std::unordered_set< std::size_t >& nodes ) const
     { self->farfieldbc( U, coord, bnorm, nodes ); }
+
+    //! Public interface to set slip wall boundary conditions at nodes
+    void
+    slipwallbc( tk::Fields& U,
+           const tk::Fields& W,
+           const std::array< std::vector< real >, 3 >& coord,
+           const std::unordered_map< int,
+                   std::unordered_map< std::size_t,
+                     std::array< real, 4 > > >& bnorm,
+           const std::unordered_set< std::size_t >& nodes ) const
+    { self->slipwallbc( U, W, coord, bnorm, nodes ); }
 
     //! Public interface to applying time dependent boundary conditions at nodes
     void
@@ -351,6 +361,7 @@ class CGPDE {
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >&,
         const std::vector< int >&,
+        const std::vector< int >&,
         const std::vector< real >&,
         const std::vector< std::size_t >&,
         const std::vector< std::size_t >&,
@@ -360,24 +371,23 @@ class CGPDE {
         const tk::Fields&,
         const std::vector< real >&,
         real,
-        tk::Fields& ) const = 0;
-      virtual void getMeshVel(
-        real,
-        const std::array< std::vector< real >, 3 >&,
-        const std::pair< std::vector< std::size_t >,
-                         std::vector< std::size_t > >&,
-        const std::unordered_set< std::size_t >&,
-        const std::array< tk::real, 3 >&,
-        const tk::Fields&,
         tk::Fields&,
-        int& ) const = 0;
+        std::vector< int >& ) const = 0;
+      virtual void bndPressureInt(
+        const std::array< std::vector< real >, 3 >&,
+        const std::vector< std::size_t >&,
+        const std::vector< int >&,
+        const tk::Fields&,
+        const std::array< tk::real, 3 >&,
+        std::vector< real >& ) const = 0;
       virtual real dt( const std::array< std::vector< real >, 3 >&,
                        const std::vector< std::size_t >&,
                        tk::real,
                        tk::real,
                        const tk::Fields&,
                        const std::vector< tk::real >& ,
-                       const std::vector< tk::real >& ) const = 0;
+                       const std::vector< tk::real >& ,
+                       const std::vector< int >& ) const = 0;
       virtual void dt( uint64_t,
                        const std::vector< real > &,
                        const tk::Fields&,
@@ -399,6 +409,14 @@ class CGPDE {
         const std::unordered_set< std::size_t >& ) const = 0;
       virtual void farfieldbc(
         tk::Fields&,
+        const std::array< std::vector< real >, 3 >&,
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< real, 4 > > >&,
+        const std::unordered_set< std::size_t >& ) const = 0;
+      virtual void slipwallbc(
+        tk::Fields& U,
+        const tk::Fields& W,
         const std::array< std::vector< real >, 3 >&,
         const std::unordered_map< int,
                 std::unordered_map< std::size_t,
@@ -481,6 +499,7 @@ class CGPDE {
         const std::pair< std::vector< std::size_t >,
                          std::vector< std::size_t > >& esup,
         const std::vector< int >& symbctri,
+        const std::vector< int >& slipwallbctri,
         const std::vector< real >& vol,
         const std::vector< std::size_t >& edgenode,
         const std::vector< std::size_t >& edgeid,
@@ -490,30 +509,28 @@ class CGPDE {
         const tk::Fields& W,
         const std::vector< real >& tp,
         real V,
-        tk::Fields& R ) const override
+        tk::Fields& R,
+        std::vector< int >& srcFlag ) const override
       { data.rhs( t, coord, inpoel, triinpoel, gid, bid, lid, dfn, psup,
-                  esup, symbctri, vol, edgenode,
-                  edgeid, boxnodes, G, U, W, tp, V, R ); }
-      void getMeshVel(
-        real t,
+                  esup, symbctri, slipwallbctri, vol, edgenode,
+                  edgeid, boxnodes, G, U, W, tp, V, R, srcFlag ); }
+      void bndPressureInt(
         const std::array< std::vector< real >, 3 >& coord,
-        const std::pair< std::vector< std::size_t >,
-                         std::vector< std::size_t > >& psup,
-        const std::unordered_set< std::size_t >& symbcnodes,
-        const std::array< tk::real, 3 >& uservel,
+        const std::vector< std::size_t >& triinpoel,
+        const std::vector< int >& slipwallbctri,
         const tk::Fields& U,
-        tk::Fields& meshvel,
-        int& movedmesh ) const override
-      { data.getMeshVel( t, coord, psup, symbcnodes, uservel, U, meshvel,
-          movedmesh ); }
+        const std::array< tk::real, 3 >& CM,
+        std::vector< real >& F ) const override
+      { data.bndPressureInt( coord, triinpoel, slipwallbctri, U, CM, F ); }
       real dt( const std::array< std::vector< real >, 3 >& coord,
                const std::vector< std::size_t >& inpoel,
                tk::real t,
                tk::real dtn,
                const tk::Fields& U,
                const std::vector< tk::real >& vol,
-               const std::vector< tk::real >& voln ) const override
-      { return data.dt( coord, inpoel, t, dtn, U, vol, voln ); }
+               const std::vector< tk::real >& voln,
+               const std::vector< int >& srcFlag ) const override
+      { return data.dt( coord, inpoel, t, dtn, U, vol, voln, srcFlag ); }
       void dt( uint64_t it,
                const std::vector< real > & vol,
                const tk::Fields& U,
@@ -545,6 +562,15 @@ class CGPDE {
                   std::array< real, 4 > > >& bnorm,
         const std::unordered_set< std::size_t >& nodes ) const override
       { data.farfieldbc( U, coord, bnorm, nodes ); }
+      void slipwallbc(
+        tk::Fields& U,
+        const tk::Fields& W,
+        const std::array< std::vector< real >, 3 >& coord,
+        const std::unordered_map< int,
+                std::unordered_map< std::size_t,
+                  std::array< real, 4 > > >& bnorm,
+        const std::unordered_set< std::size_t >& nodes ) const override
+      { data.slipwallbc( U, W, coord, bnorm, nodes ); }
       void
       timedepbc(
         tk::real t,

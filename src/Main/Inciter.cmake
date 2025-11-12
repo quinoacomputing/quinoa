@@ -20,6 +20,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       MultiMatProblem
                       FVMultiMatPhysics
                       MultiSpeciesProblem
+                      MultiSpeciesMixture
                       Integrate
                       MeshRefinement
                       LoadBalance
@@ -37,7 +38,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       LinearSolver
                       ${EXAM2M_LIBRARIES}
                       ${SEACASExodus_LIBRARIES}
-                      ${Zoltan2_LIBRARIES}
+                      ${Trilinos_LIBRARIES}
                       ${LAPACKE_LIBRARIES}
                       ${CBLAS_LIBRARIES}
                       ${NETCDF_LIBRARIES}     # only for static link

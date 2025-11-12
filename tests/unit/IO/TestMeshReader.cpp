@@ -155,7 +155,7 @@ void MeshReader_object::test< 1 >() {
   tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
   //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
   tk::MeshReader erf( tk::regression_dir() +
-         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
+         "/inciter/compflow/Euler/SedovBlastwave/unitsquare_01_3.6k.exo" );
 
   // Verify the output of mesh reader dispatching to ExodusII reader using two
   // different meshes, one with only tets, one with faces/sidesets.
@@ -172,7 +172,7 @@ void MeshReader_object::test< 2 >() {
   tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
   //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
   tk::MeshReader erf( tk::regression_dir() +
-         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
+         "/inciter/compflow/Euler/SedovBlastwave/unitsquare_01_3.6k.exo" );
 
   std::vector< tk::MeshReader > v;
 
@@ -200,7 +200,7 @@ void MeshReader_object::test< 3 >() {
   tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
   //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
   tk::MeshReader erf( tk::regression_dir() +
-         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
+         "/inciter/compflow/Euler/SedovBlastwave/unitsquare_01_3.6k.exo" );
 
   std::vector< tk::MeshReader > v;
 
@@ -226,7 +226,7 @@ void MeshReader_object::test< 4 >() {
   tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
   //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
   tk::MeshReader erf( tk::regression_dir() +
-         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
+         "/inciter/compflow/Euler/SedovBlastwave/unitsquare_01_3.6k.exo" );
 
   // Invoke constructor
   tk::MeshReader q( er );
@@ -256,7 +256,7 @@ void MeshReader_object::test< 5 >() {
   tk::MeshReader er( tk::regression_dir() + "/meshconv/gmsh_output/box_24.exo" );
   //! Mesh reader configured for ExodusIIMesReader for mesh w/ faces
   tk::MeshReader erf( tk::regression_dir() +
-         "/inciter/transport/GaussHump/unitsquare_01_3.6k.exo" );
+         "/inciter/compflow/Euler/SedovBlastwave/unitsquare_01_3.6k.exo" );
 
   // Invoke move assignment
   auto c = er;

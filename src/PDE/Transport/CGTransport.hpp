@@ -227,6 +227,7 @@ class Transport {
       const std::pair< std::vector< std::size_t >,
                        std::vector< std::size_t > >& esup,
       const std::vector< int >& symbctri,
+      const std::vector< int >&,
       const std::vector< real >& vol,
       const std::vector< std::size_t >&,
       const std::vector< std::size_t >& edgeid,
@@ -236,7 +237,8 @@ class Transport {
       [[maybe_unused]] const tk::Fields& W,
       const std::vector< tk::real >&,
       real,
-      tk::Fields& R ) const
+      tk::Fields& R,
+      std::vector< int >& ) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
@@ -259,18 +261,16 @@ class Transport {
       bndint( coord, triinpoel, symbctri, U, R );
     }
 
-    //! Compute overset mesh motion for OversetFE (no-op for transport)
-    void getMeshVel(
-      real,
+    //! Compute boundary pressure integrals (force) (no-op for transport)
+    void bndPressureInt(
       const std::array< std::vector< real >, 3 >&,
-      const std::pair< std::vector< std::size_t >,
-                       std::vector< std::size_t > >&,
-      const std::unordered_set< std::size_t >&,
-      const std::array< tk::real, 3 >&,
+      const std::vector< std::size_t >&,
+      const std::vector< int >&,
       const tk::Fields&,
-      tk::Fields&,
-      int& ) const
+      const std::array< tk::real, 3 >&,
+      std::vector< real >& ) const
     { }
+
 
     //! Compute the minimum time step size (for unsteady time stepping)
     //! \param[in] U Solution vector at recent time step
@@ -284,7 +284,8 @@ class Transport {
              tk::real,
              const tk::Fields& U,
              const std::vector< tk::real >&,
-             const std::vector< tk::real >& ) const
+             const std::vector< tk::real >&,
+             const std::vector< int >& ) const
     {
       using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
@@ -409,6 +410,17 @@ class Transport {
     //! Set farfield boundary conditions at nodes
     void farfieldbc(
       tk::Fields&,
+      const std::array< std::vector< real >, 3 >&,
+      const std::unordered_map< int,
+              std::unordered_map< std::size_t,
+                std::array< real, 4 > > >&,
+      const std::unordered_set< std::size_t >& ) const {}
+
+    //! Set slip wall boundary conditions at nodes
+    void
+    slipwallbc(
+      tk::Fields&,
+      const tk::Fields&,
       const std::array< std::vector< real >, 3 >&,
       const std::unordered_map< int,
               std::unordered_map< std::size_t,
@@ -680,7 +692,9 @@ class Transport {
           auto v =
             Problem::prescribedVelocity( m_ncomp, x[p], y[p], z[p], 0.0 );
           // sum donain-edge contributions
-          for (auto e : tk::cref_find(esued,{p,q})) {
+          const std::array< std::size_t,2 > pq{{p,q}};
+          const auto& edges = tk::cref_find(esued, pq);
+          for (std::size_t e : edges) {
             const std::array< std::size_t, 4 >
               N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
             // compute element Jacobi determinant

@@ -81,7 +81,9 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_bnormc(),
   m_symbcnodes(),
   m_farfieldbcnodes(),
+  m_slipwallbcnodes(),
   m_symbctri(),
+  m_slipwallbctri(),
   m_timedepbcnodes(),
   m_timedepbcFn(),
   m_stage( 0 ),
@@ -95,7 +97,20 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
   m_nodeblockidc(),
-  m_ixfer(0)
+  m_srcFlag(m_u.nunk(), 1),
+  m_ixfer(0),
+  m_surfForce({{0, 0, 0}}),
+  m_surfTorque({{0, 0, 0}}),
+  m_displacement({{0, 0, 0}}),
+  m_displacementn({{0, 0, 0}}),
+  m_rotation({{0, 0, 0}}),
+  m_rotationn({{0, 0, 0}}),
+  m_centMass({{0, 0, 0}}),
+  m_centMassVel({{0, 0, 0}}),
+  m_angVelMesh(0),
+  m_centMassn({{0, 0, 0}}),
+  m_centMassVeln({{0, 0, 0}}),
+  m_angVelMeshn(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -135,6 +150,10 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
     tk::remap( m_triinpoel, map );
   }
 
+  for (std::size_t i=0; i<3; ++i)
+    m_centMass[i] = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
+      tag::center_of_mass >()[i];
+
   // Query/update boundary-conditions-related data structures from user input
   getBCNodes();
 
@@ -142,14 +161,9 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4norm();
   thisProxy[ thisIndex ].wait4meshblk();
 
-  // Determine user-specified mesh velocity
-  const auto& uservelvec =
-    g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::velocity >();
-  m_uservel = {uservelvec[0], uservelvec[1], uservelvec[2]};
-
   if (g_inputdeck.get< tag::steady_state >() &&
-    std::sqrt(tk::dot(m_uservel, m_uservel)) > 1e-8)
-    Throw("Mesh motion cannot be activated for steady state problem");
+    g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >())
+    Throw("Rigid body motion cannot be activated for steady state problem");
 
   d->comfinal();
 
@@ -174,14 +188,35 @@ OversetFE::getBCNodes()
   for (const auto& [s,nodes] : far)
     m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
 
-  // If farfield BC is set on a node, will not also set symmetry BC
-  for (auto fn : m_farfieldbcnodes) m_symbcnodes.erase(fn);
+  // Prepare unique set of slip wall BC nodes
+  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
+  for (const auto& [s,nodes] : slip)
+    m_slipwallbcnodes.insert( begin(nodes), end(nodes) );
 
-  // Prepare boundary nodes contiguously accessible from a triangle-face loop
+  // If farfield BC is set on a node, will not also set symmetry and slip BC
+  for (auto fn : m_farfieldbcnodes) {
+    m_symbcnodes.erase(fn);
+    m_slipwallbcnodes.erase(fn);
+  }
+
+  // If symmetry BC is set on a node, will not also set slip BC
+  for (auto fn : m_symbcnodes) {
+    m_slipwallbcnodes.erase(fn);
+  }
+
+  // Prepare boundary nodes contiguously accessible from a triangle-face loop,
+  // which contain both symmetry and no slip walls
   m_symbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
     if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
       m_symbctri[e] = 1;
+
+  // Prepare the above for slip walls, which are needed for pressure integrals
+  // to obtain force on overset walls
+  m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
+  for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
+    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+      m_slipwallbctri[e] = 1;
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -235,6 +270,11 @@ OversetFE::norm()
   auto far = d->bcnodes< tag::farfield >( m_bface, m_triinpoel );
   // Merge BC data where boundary-point normals are required
   for (const auto& [s,n] : far) bn[s].insert( begin(n), end(n) );
+
+  // Query nodes at which slip wall BCs are specified
+  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
+  // Merge BC data where boundary-point normals are required
+  for (const auto& [s,n] : slip) bn[s].insert( begin(n), end(n) );
 
   // Query nodes at which mesh velocity symmetry BCs are specified
   std::unordered_map<int, std::unordered_set< std::size_t >> ms;
@@ -580,6 +620,11 @@ OversetFE::box( tk::real v, const std::vector< tk::real >& blkvols )
   // Set initial conditions for all PDEs
   g_cgpde[d->MeshId()].initialize( d->Coord(), m_u, d->T(), d->Boxvol(),
     m_boxnodes, d->MeshBlkVol(), m_nodeblockid );
+  // Initialize overset mesh velocity to zero
+  auto& u_mesh = d->MeshVel();
+  for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
+    for (std::size_t i=0; i<3; ++i) u_mesh(p,i) = 0.0;
+  }
 
   // Initialize nodal mesh volumes at previous time step stage
   d->Voln() = d->Vol();
@@ -932,12 +977,29 @@ OversetFE::BC()
           g_cgpde[d->MeshId()].farfieldbc( m_u, coord, m_bnorm, m_farfieldbcnodes );
         }
 
+        // Apply slip wall BCs
+        g_cgpde[d->MeshId()].slipwallbc( m_u, d->MeshVel(), coord, m_bnorm,
+          m_slipwallbcnodes );
+
         // Apply user defined time dependent BCs
         g_cgpde[d->MeshId()].timedepbc( d->T(), m_u, m_timedepbcnodes,
           m_timedepbcFn );
       }
     }
   }
+}
+
+void
+OversetFE::UpdateCenterOfMass()
+// *****************************************************************************
+// Update quantities associated with the center of mass at a new time step
+// *****************************************************************************
+{
+  m_centMassn = m_centMass;
+  m_centMassVeln = m_centMassVel;
+  m_angVelMeshn = m_angVelMesh;
+  m_displacementn = m_displacement;
+  m_rotationn = m_rotation;
 }
 
 void
@@ -982,7 +1044,7 @@ OversetFE::dt()
 
       // find the smallest dt of all equations on this chare
       auto eqdt = g_cgpde[d->MeshId()].dt( d->Coord(), d->Inpoel(), d->T(),
-        d->Dtn(), m_u, d->Vol(), d->Voln() );
+        d->Dtn(), m_u, d->Vol(), d->Voln(), m_srcFlag );
       if (eqdt < mindt) mindt = eqdt;
 
     }
@@ -990,41 +1052,47 @@ OversetFE::dt()
 
   }
 
-  // Determine if this chunk of mesh needs to be moved
-  g_cgpde[d->MeshId()].getMeshVel(d->T(), d->Coord(), m_psup, m_symbcnodes,
-    m_uservel, m_u, d->MeshVel(), m_movedmesh);
-
   //! [Advance]
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
 
-  // TODO: this is a hacky way to know if any chunk moved. redesign it
-  std::vector < tk::real > reducndata(d->Transfers().size()+2, 0.0);
-
-  reducndata[0] = mindt;
-  reducndata[d->MeshId()+1] = static_cast< tk::real >(-m_movedmesh);
-
-  // Contribute to minimum dt across all chares and advance to next step
-  if (g_inputdeck.get< tag::steady_state >()) {
-    contribute( reducndata, CkReduction::min_double,
-                CkCallback(CkReductionTarget(OversetFE,advance), thisProxy) );
+  // Compute own portion of force on boundary for overset mesh rigid body motion
+  std::vector< tk::real > F(6, 0.0);
+  if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
+    && d->MeshId() > 0) {
+    g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_slipwallbctri,
+      m_u, m_centMass, F );
   }
-  else {
-    // if solving a time-accurate problem, find minimum dt across all meshes
-    // and eventually broadcast to OversetFE::advance()
-    contribute( reducndata, CkReduction::min_double,
-      CkCallback(CkReductionTarget(Transporter,minDtAcrossMeshes), d->Tr()) );
-  }
+
+  // Tuple-reduction for min-dt and sum-F
+  int tupleSize = 7;
+  CkReduction::tupleElement advancingData[] = {
+    CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[1], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[3], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[4], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double)
+  };
+  CkReductionMsg* advMsg =
+    CkReductionMsg::buildFromTuple(advancingData, tupleSize);
+
+  // Contribute to minimum dt across all chares, find minimum dt across all
+  // meshes, and eventually broadcast to OversetFE::advance()
+  CkCallback cb(CkReductionTarget(Transporter,collectDtAndForces), d->Tr());
+  advMsg->setCallback(cb);
+  contribute(advMsg);
   //! [Advance]
 }
 
 void
-OversetFE::advance( tk::real newdt, tk::real nmovedmesh )
+OversetFE::advance( tk::real newdt, std::array< tk::real, 6 > F )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt The smallest dt across the whole problem
-//! \param[in] nmovedmesh (negative of) if any chunk of this mesh moved
+//! \param[in] F Total surface force on this mesh
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1032,8 +1100,10 @@ OversetFE::advance( tk::real newdt, tk::real nmovedmesh )
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  // TODO: this is a hacky way to know if any chunk moved. redesign it
-  if (nmovedmesh < -0.1) m_movedmesh = 1;
+  for (std::size_t i=0; i<3; ++i) {
+    m_surfForce[i] = F[i];
+    m_surfTorque[i] = F[i+3];
+  }
 
   // Compute gradients for next time step
   chBndGrad();
@@ -1112,25 +1182,15 @@ OversetFE::rhs()
 
   const auto steady = g_inputdeck.get< tag::steady_state >();
 
-  // Assign mesh velocity
-  if (m_movedmesh) {
-    const auto& coord = d->Coord();
-    auto& mvel = d->MeshVel();
-    for (std::size_t p=0; p<coord[0].size(); ++p) {
-      for (std::size_t i=0; i<3; ++i)
-        mvel(p, i) = m_uservel[i];
-    }
-  }
-
   // Compute own portion of right-hand side for all equations
   auto prev_rkcoef = m_stage == 0 ? 0.0 : rkcoef[m_stage-1];
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] += prev_rkcoef * m_dtp[p];
   g_cgpde[d->MeshId()].rhs( d->T() + prev_rkcoef * d->Dt(), d->Coord(), d->Inpoel(),
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
-          m_symbctri, d->Vol(), m_edgenode, m_edgeid,
+          m_symbctri, m_slipwallbctri, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->MeshVel(), m_tp, d->Boxvol(),
-          m_rhs );
+          m_rhs, m_srcFlag );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
@@ -1195,6 +1255,8 @@ OversetFE::solve()
   // Update state at time n
   if (m_stage == 0) {
     m_un = m_u;
+    d->UpdateCoordn();
+    UpdateCenterOfMass();
   }
 
   // Explicit time-stepping using RK3
@@ -1209,25 +1271,131 @@ OversetFE::solve()
         / d->Vol()[i];
   }
 
-  // Move overset mesh
-  if (m_movedmesh) {
-    auto& x = d->Coord()[0];
-    auto& y = d->Coord()[1];
-    auto& z = d->Coord()[2];
-    const auto& w = d->MeshVel();
-    for (std::size_t i=0; i<w.nunk(); ++i) {
-      // time-step
-      auto dtp = d->Dt();
-      if (steady) dtp = m_dtp[i];
+  // Kinematics for rigid body motion of overset meshes
+  if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
+    && d->MeshId() > 0) {
 
-      x[i] += rkcoef[m_stage] * dtp * w(i,0);
-      y[i] += rkcoef[m_stage] * dtp * w(i,1);
-      z[i] += rkcoef[m_stage] * dtp * w(i,2);
+    // Remove symmetry directions if 3 DOF motion
+    if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_dof >()
+      == 3) {
+
+      auto sym_dir =
+        g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
+
+      m_surfForce[sym_dir] = 0.0;
+      for (std::size_t i=0; i<3; ++i) {
+        if (i != sym_dir) m_surfTorque[i] = 0.0;
+      }
     }
+
+    // Mark if mesh moved or is moving
+    if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12 ||
+      std::sqrt(tk::dot(m_surfTorque, m_surfTorque)) > 1e-12 ||
+      std::sqrt(tk::dot(m_centMassVeln, m_centMassVeln)) > 1e-12 ||
+      std::sqrt(m_angVelMeshn * m_angVelMeshn) > 1e-12 )
+      m_movedmesh = 1;
+    else
+      m_movedmesh = 0;
+
+    if (m_movedmesh == 1) {
+      auto mass_mesh =
+        g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
+      auto mI_mesh = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
+        tag::moment_of_inertia >();
+      auto dtp = rkcoef[m_stage] * d->Dt();
+      auto sym_dir =
+        g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
+
+      auto pi = 4.0*std::atan(1.0);
+
+      // mesh acceleration
+      std::array< tk::real, 3 > a_mesh;
+      for (std::size_t i=0; i<3; ++i) a_mesh[i] = m_surfForce[i] / mass_mesh;
+      auto alpha_mesh = m_surfTorque[sym_dir]/mI_mesh; // angular acceleration
+
+      auto& u_mesh = d->MeshVel();
+
+      for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
+
+        // rotation (this is currently only configured for planar motion)
+        // ---------------------------------------------------------------------
+        std::array< tk::real, 3 > rCM{{
+          d->Coordn()[0][p] - m_centMassn[0],
+          d->Coordn()[1][p] - m_centMassn[1],
+          d->Coordn()[2][p] - m_centMassn[2] }};
+
+        // obtain tangential velocity
+        tk::real r_mag(0.0);
+        for (std::size_t i=0; i<3; ++i) {
+          if (i != sym_dir) r_mag += rCM[i]*rCM[i];
+        }
+        r_mag = std::sqrt(r_mag);
+        auto a_tgt = alpha_mesh*r_mag;
+        auto v_tgt = m_angVelMeshn*r_mag;
+
+        // get the other two directions
+        auto i1 = (sym_dir+1)%3;
+        auto i2 = (sym_dir+2)%3;
+
+        // project tangential velocity to these two directions
+        auto theta = std::atan2(rCM[i2],rCM[i1]);
+        auto a1 = a_tgt*std::cos((pi/2.0)+theta);
+        auto a2 = a_tgt*std::sin((pi/2.0)+theta);
+        auto v1 = v_tgt*std::cos((pi/2.0)+theta);
+        auto v2 = v_tgt*std::sin((pi/2.0)+theta);
+
+        // angle of rotation
+        auto dtheta = m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp;
+
+        // add contribution of rotation to mesh displacement
+        std::array< tk::real, 3 > angles{{ 0, 0, 0 }};
+        angles[sym_dir] = dtheta * 180.0/pi;
+        tk::rotatePoint(angles, rCM);
+
+        // rectilinear motion
+        // ---------------------------------------------------------------------
+
+        tk::real dsT, dsR;
+
+        for (std::size_t i=0; i<3; ++i) {
+          // mesh displacement from translation
+          dsT = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+          // mesh displacement from rotation
+          dsR = rCM[i] + m_centMassn[i] - d->Coordn()[i][p];
+          // add both contributions
+          d->Coord()[i][p] = d->Coordn()[i][p] + dsT + dsR;
+          // mesh velocity change from translation
+          u_mesh(p,i) = m_centMassVeln[i] + a_mesh[i]*dtp;
+        }
+
+        // add contribution of rotation to mesh velocity
+        u_mesh(p,i1) += v1 + a1*dtp;
+        u_mesh(p,i2) += v2 + a2*dtp;
+      }
+
+      // obtain total displacement of center-of-mass and rotation for diagnostics
+      for (std::size_t i=0; i<3; ++i) {
+        m_displacement[i] = m_displacementn[i]
+          + m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+      }
+      m_rotation[sym_dir] = m_rotationn[sym_dir]
+        + (m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp)*180.0/pi;
+
+      // update angular velocity
+      m_angVelMesh = m_angVelMeshn + alpha_mesh*dtp;
+
+      // move center of mass
+      for (std::size_t i=0; i<3; ++i) {
+        m_centMass[i] = m_centMassn[i] + m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+        m_centMassVel[i] = m_centMassVeln[i] + a_mesh[i]*dtp;  // no rotational component
+      }
+    }
+
   }
-  // the following line will be needed for situations where the mesh stops
-  // moving after its initial motion
-  // else m_movedmesh = 0;
+  // Remove surface force values for background mesh
+  else if (d->MeshId() == 0) {
+    for (std::size_t i=0; i<3; ++i) m_surfForce[i] = 0.0;
+  }
 
   // Apply boundary-conditions
   BC();
@@ -1243,8 +1411,10 @@ OversetFE::solve()
   bool diag_computed(false);
   if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
-    diag_computed = m_diag.compute( *d, m_u, m_un, m_bnorm,
-                                    m_symbcnodes, m_farfieldbcnodes );
+    diag_computed = m_diag.compute( *d, m_u, m_un, m_surfForce, m_surfTorque,
+                                    m_displacement, m_rotation, m_bnorm,
+                                    m_symbcnodes, m_farfieldbcnodes,
+                                    m_slipwallbcnodes );
     // Increase number of iterations and physical time
     d->next();
     // Advance physical time for local time stepping

@@ -142,7 +142,7 @@ PDEStack::selectedDG() const
   std::vector< DGPDE > pdes;                // will store instantiated PDEs
 
   auto sch = g_inputdeck.get< tag::scheme >();
-  if (sch == ctr::SchemeType::DG ||
+  if (sch == ctr::SchemeType::DGP0 ||
       sch == ctr::SchemeType::P0P1 || sch == ctr::SchemeType::DGP1 ||
       sch == ctr::SchemeType::DGP2 || sch == ctr::SchemeType::PDG ||
       sch == ctr::SchemeType::FV) {

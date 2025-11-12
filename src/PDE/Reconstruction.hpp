@@ -86,7 +86,7 @@ THINCRecoTransport(
 
 //! Old THINC reconstruction function for volume fractions near interfaces
 void
-THINCFunction( std::size_t rdof,
+THINCFunction_old( std::size_t rdof,
   std::size_t nmat,
   std::size_t e,
   const std::vector< std::size_t >& inpoel,
@@ -101,7 +101,7 @@ THINCFunction( std::size_t rdof,
 
 //! New THINC reconstruction function for volume fractions near interfaces
 void
-THINCFunction_new( std::size_t rdof,
+THINCFunction( std::size_t rdof,
   std::size_t nmat,
   std::size_t e,
   const std::vector< std::size_t >& inpoel,
@@ -164,6 +164,14 @@ evalFVSol(
   const Fields& U,
   const Fields& P,
   int srcFlag );
+
+//! Enforce physical constraints on state at quadrature point
+void
+enforcePhysicalConstraints(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t nmat,
+  std::size_t ncomp,
+  std::vector< tk::real >& state );
 
 //! Compute safe reconstructions near material interfaces
 void
