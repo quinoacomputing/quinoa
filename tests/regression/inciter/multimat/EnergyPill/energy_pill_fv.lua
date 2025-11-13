@@ -5,6 +5,7 @@ inciter = {
   nstep = 50,
   ttyi = 5,      -- TTY output interval
   cfl = 0.9,
+  cfl_ramping = 1,
 
   scheme = "fv",
   lowspeed_kp = 1.0,
