@@ -44,6 +44,7 @@ surfInt( const bool pref,
          const Fields& geoFace,
          const Fields& geoElem,
          const RiemannFluxFn& flux,
+         const FluxFn& visc_flux,
          const VelFn& vel,
          const Fields& U,
          const Fields& P,
@@ -51,7 +52,9 @@ surfInt( const bool pref,
          const tk::real /*dt*/,
          Fields& R,
          std::vector< std::vector< tk::real > >& riemannDeriv,
-         int intsharp )
+         bool viscous,
+         int intsharp
+         )
 // *****************************************************************************
 //  Compute internal surface flux integrals
 //! \param[in] pref Indicator for p-adaptive algorithm
@@ -226,6 +229,89 @@ surfInt( const bool pref,
 
       // compute flux
       auto fl = flux( mat_blk, fn, state, v );
+      
+      if (viscous){
+          std::vector< tk::real> fluxl(5, 0);
+          std::vector< tk::real> fluxr(5, 0);
+          //std::array< std::vector<real>, 3 > dBdx_l, dBdx_r;
+          std::vector< std::array< tk::real, 3 > > grad_all(2*ncomp, 
+                                     std::array< real, 3 >{{0, 0, 0}});
+          auto jacInv_l =
+          tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+          auto dBdx_l = tk::eval_dBdx_p1(dof_el, jacInv_l );
+          auto jacInv_r =
+          tk::inverseJacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
+          auto dBdx_r = tk::eval_dBdx_p1(dof_er, jacInv_r );
+          
+        if (dof_el > 4){          
+          std::array< std::vector< real >, 3 > coordgp_3;
+          coordgp_3[0].resize( ng );
+          coordgp_3[1].resize( ng );
+          coordgp_3[2].resize( ng );
+          for(int i=0; i<3; i++)
+             coordgp_3[i][igp]=ref_gp_l[i];
+          eval_dBdx_p2( igp, coordgp_3, jacInv_l, dBdx_l );
+        }  
+        if (dof_er > 4){          
+          std::array< std::vector< real >, 3 > coordgp_3;
+          coordgp_3[0].resize( ng );
+          coordgp_3[1].resize( ng );
+          coordgp_3[2].resize( ng );
+          for(int i=0; i<3; i++)
+             coordgp_3[i][igp]=ref_gp_r[i];
+          eval_dBdx_p2( igp, coordgp_3, jacInv_r, dBdx_r );
+        }  
+    
+      auto state_U_grad_l = eval_state_gradient (ncomp, ndof, dof_el, 
+                         el, U, dBdx_l );
+      auto state_P_grad_l = eval_state_gradient (nprim, ndof, dof_el, 
+                         el, P, dBdx_l );
+      for (ncomp_t c=0; c<ncomp; ++c){
+          grad_all.push_back(state_U_grad_l[c]);
+      }
+
+      for (ncomp_t c=0; c<ncomp; ++c){
+          grad_all.push_back(state_P_grad_l[c]);
+      } 
+      auto fl_vis_l = visc_flux(ncomp, mat_blk, state[0], grad_all); 
+      auto state_U_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
+                         er, U, dBdx_r );
+      auto state_P_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
+                         er, P, dBdx_r );
+      grad_all.clear();
+      for (ncomp_t c=0; c<ncomp; ++c){
+          grad_all.push_back(state_U_grad_r[c]);
+      }
+
+      for (ncomp_t c=0; c<ncomp; ++c){
+          grad_all.push_back(state_P_grad_r[c]);
+      } 
+      auto fl_vis_r = visc_flux(ncomp, mat_blk, state[1], grad_all); 
+      
+ 
+
+           // Flux functions
+    for (std::size_t i=0; i<3; ++i)
+    {
+    fluxl[1] = fluxl[1] + fl_vis_l[1][i]*fn[i];
+    fluxl[2] = fluxl[2] + fl_vis_l[2][i]*fn[i];
+    fluxl[3] = fluxl[3] + fl_vis_l[3][i]*fn[i];
+    fluxl[4] = fluxl[4] + fl_vis_l[4][i]*fn[i];
+    fluxr[1] = fluxr[1] + fl_vis_r[1][i]*fn[i];
+    fluxr[2] = fluxr[2] + fl_vis_r[2][i]*fn[i];
+    fluxr[3] = fluxr[3] + fl_vis_r[3][i]*fn[i];
+    fluxr[4] = fluxr[4] + fl_vis_r[4][i]*fn[i];
+    }
+    
+        
+       
+    // Numerical flux function
+    for(std::size_t c=1; c<5; ++c)
+      fl[c] = fl[c]+0.5 * (fluxl[c] + fluxr[c]);
+      
+      
+      
+      }
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,

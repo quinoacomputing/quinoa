@@ -42,6 +42,7 @@ bndSurfInt( const bool pref,
             const UnsMesh::Coords& coord,
             real t,
             const RiemannFluxFn& flux,
+            const FluxFn& visc_flux,
             const VelFn& vel,
             const StateFn& state,
             const Fields& U,
@@ -49,7 +50,8 @@ bndSurfInt( const bool pref,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
             std::vector< std::vector< tk::real > >& riemannDeriv,
-            int intcompr=0 );
+            bool viscous,
+            int intcompr=0);
 
 //! Update the rhs by adding the boundary surface integration term
 void
