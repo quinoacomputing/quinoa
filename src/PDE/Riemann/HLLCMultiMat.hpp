@@ -65,11 +65,17 @@ struct HLLCMultiMat {
 
     // Outer states
     // -------------------------------------------------------------------------
-    tk::real pl(0.0), pr(0.0);
     tk::real acl(0.0), acr(0.0);
+    tk::real bulkl_deno(0.0), bulkr_deno(0.0);
+    std::vector< tk::real > bulkl(nmat, 0.0), bulkr(nmat, 0.0);
     std::vector< tk::real > apl(nmat, 0.0), apr(nmat, 0.0);
     std::array< tk::real, 3 > Tnl{{0, 0, 0}}, Tnr{{0, 0, 0}};
+    std::array< tk::real, 3 > Tnl_nume{{0, 0, 0}}, Tnr_nume{{0, 0, 0}};
     std::vector< std::array< tk::real, 3 > > aTnl, aTnr;
+    std::array< std::array< tk::real, 3 >, 3 >
+      signnl_nume{{{0,0,0},{0,0,0},{0,0,0}}};
+    std::array< std::array< tk::real, 3 >, 3 >
+      signnr_nume{{{0,0,0},{0,0,0},{0,0,0}}};
     std::array< std::array< tk::real, 3 >, 3 > asigl, asigr;
     std::array< std::array< tk::real, 3 >, 3 >
       signnl{{{0,0,0},{0,0,0},{0,0,0}}};
@@ -82,7 +88,6 @@ struct HLLCMultiMat {
     for (std::size_t k=0; k<nmat; ++k) {
       // Left state
       apl[k] = u[0][ncomp+pressureIdx(nmat, k)];
-      pl += apl[k];
 
       // inv deformation gradient and Cauchy stress tensors
       gl.push_back(getDeformGrad(nmat, k, u[0]));
@@ -96,9 +101,6 @@ struct HLLCMultiMat {
 
       // rotate stress vector
       asignnl.push_back(tk::rotateTensor(asigl, fn));
-      for (std::size_t i=0; i<3; ++i)
-        for (std::size_t j=0; j<3; ++j)
-          signnl[i][j] += asignnl[k][i][j];
 
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnl.push_back(tk::rotateTensor(gl[k], fn));
@@ -106,9 +108,17 @@ struct HLLCMultiMat {
         u[0][densityIdx(nmat, k)], apl[k],
         u[0][volfracIdx(nmat, k)], k, gnl[k] );
 
+      // numerator and denominator for bulk quantities
+      bulkl[k] = u[0][densityIdx(nmat, k)] * amatl * amatl;
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+          signnl_nume[i][j] += u[0][volfracIdx(nmat, k)] * asignnl[k][i][j] / bulkl[k];
+      for (std::size_t i=0; i<3; ++i)
+        Tnl_nume[i] += aTnl[k][i] / bulkl[k];
+      bulkl_deno += std::pow(u[0][volfracIdx(nmat, k)],2.0) / bulkl[k];
+
       // Right state
       apr[k] = u[1][ncomp+pressureIdx(nmat, k)];
-      pr += apr[k];
 
       // inv deformation gradient and Cauchy stress tensors
       gr.push_back(getDeformGrad(nmat, k, u[1]));
@@ -132,12 +142,34 @@ struct HLLCMultiMat {
         u[1][densityIdx(nmat, k)], apr[k],
         u[1][volfracIdx(nmat, k)], k, gnr[k] );
 
+      // numerator and denominator for bulk quantities
+      bulkr[k] = u[1][densityIdx(nmat, k)] * amatr * amatr;
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+          signnr_nume[i][j] += u[1][volfracIdx(nmat, k)] * asignnr[k][i][j] / bulkr[k];
+      for (std::size_t i=0; i<3; ++i)
+        Tnr_nume[i] += aTnr[k][i] / bulkr[k];
+      bulkr_deno += std::pow(u[1][volfracIdx(nmat, k)],2.0) / bulkr[k];
+
       // Mixture speed of sound
       acl += u[0][densityIdx(nmat, k)] * amatl * amatl;
       acr += u[1][densityIdx(nmat, k)] * amatr * amatr;
     }
     acl = std::sqrt(acl/rhol);
     acr = std::sqrt(acr/rhor);
+
+    // Compute bulk quantities using previously computed numerator and denominators
+    for (std::size_t k=0; k<nmat; ++k) {
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j) {
+          signnl[i][j] = signnl_nume[i][j] / bulkl_deno;
+          signnr[i][j] = signnr_nume[i][j] / bulkr_deno;
+        }
+      for (std::size_t i=0; i<3; ++i) {
+        Tnl[i] = Tnl_nume[i] / bulkl_deno;
+        Tnr[i] = Tnr_nume[i] / bulkr_deno;
+      }
+    }
 
     // Rotated velocities from advective velocities
     auto vnl = tk::rotateVector({ul, vl, wl}, fn);
@@ -162,10 +194,16 @@ struct HLLCMultiMat {
       signnlStar{{{0,0,0},{0,0,0},{0,0,0}}},
       signnrStar{{{0,0,0},{0,0,0},{0,0,0}}};
     std::array< std::array< tk::real, 3 >, 3 >
+      signnlStar_nume{{{0,0,0},{0,0,0},{0,0,0}}},
+      signnrStar_nume{{{0,0,0},{0,0,0},{0,0,0}}};
+    std::array< std::array< tk::real, 3 >, 3 >
       siglStar{{{0,0,0},{0,0,0},{0,0,0}}}, sigrStar{{{0,0,0},{0,0,0},{0,0,0}}};
     asignnlStar.resize(nmat);
     asignnrStar.resize(nmat);
     std::array< tk::real, 3 > TnlStar{{0, 0, 0}}, TnrStar{{0, 0, 0}};
+    std::array< tk::real, 3 >
+      TnlStar_nume{{0, 0, 0}},
+      TnrStar_nume{{0, 0, 0}};
     std::vector< std::array< tk::real, 3 > > aTnlStar, aTnrStar;
     for (std::size_t k=0; k<nmat; ++k) {
       for (std::size_t i=0; i<3; ++i)
@@ -208,15 +246,18 @@ struct HLLCMultiMat {
       asignnrStar[k][0][1] = asignnrStar[k][1][0];
       asignnrStar[k][0][2] = asignnrStar[k][2][0];
 
+      // Here bulkl and bulkr should probably be built using star states,
+      // but I cannot compute those yet (I think)
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
         {
-          signnlStar[i][j] += asignnlStar[k][i][j];
-          signnrStar[i][j] += asignnrStar[k][i][j];
+          signnlStar_nume[i][j] += u[0][volfracIdx(nmat, k)] * asignnlStar[k][i][j] / bulkl[k];
+          signnrStar_nume[i][j] += u[1][volfracIdx(nmat, k)] * asignnrStar[k][i][j] / bulkr[k];
         }
 
       auto asiglStar = tk::unrotateTensor(asignnlStar[k], fn);
       auto asigrStar = tk::unrotateTensor(asignnrStar[k], fn);
+      // SiglStar and sigrStar are unused! Should delete.
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
         {
@@ -227,8 +268,21 @@ struct HLLCMultiMat {
       aTnrStar.push_back(tk::matvec(asigrStar, fn));
       for (std::size_t i=0; i<3; ++i)
       {
-        TnlStar[i] += aTnlStar[k][i];
-        TnrStar[i] += aTnrStar[k][i];
+        TnlStar_nume[i] += u[0][volfracIdx(nmat, k)] * aTnlStar[k][i] / bulkl[k];
+        TnrStar_nume[i] += u[1][volfracIdx(nmat, k)] * aTnrStar[k][i] / bulkr[k];
+       }
+    }
+
+    // Compute bulk quantities using previously computed numerators
+    for (std::size_t k=0; k<nmat; ++k) {
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j) {
+          signnlStar[i][j] = signnlStar_nume[i][j] / bulkl_deno;
+          signnrStar[i][j] = signnrStar_nume[i][j] / bulkr_deno;
+        }
+      for (std::size_t i=0; i<3; ++i) {
+        TnlStar[i] = TnlStar_nume[i] / bulkl_deno;
+        TnrStar[i] = TnrStar_nume[i] / bulkr_deno;
       }
     }
 
@@ -341,9 +395,10 @@ struct HLLCMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt((aTnl[k][0]*aTnl[k][0]
-                                +aTnl[k][1]*aTnl[k][1]
-                                +aTnl[k][2]*aTnl[k][2])));
+        flx.push_back(u[0][volfracIdx(nmat, k)] *
+                      std::sqrt((Tnl[0]*Tnl[0]
+                                +Tnl[1]*Tnl[1]
+                                +Tnl[2]*Tnl[2])));
       // Store Riemann velocity
       flx.push_back(vnl[0]);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -388,9 +443,10 @@ struct HLLCMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt(aTnlStar[k][0]*aTnlStar[k][0]
-                               +aTnlStar[k][1]*aTnlStar[k][1]
-                               +aTnlStar[k][2]*aTnlStar[k][2]));
+        flx.push_back(uStar[0][volfracIdx(nmat, k)] *
+                      std::sqrt(TnlStar[0]*TnlStar[0]
+                               +TnlStar[1]*TnlStar[1]
+                               +TnlStar[2]*TnlStar[2]));
       // Store Riemann velocity
       flx.push_back(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -435,9 +491,10 @@ struct HLLCMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt(aTnrStar[k][0]*aTnrStar[k][0]
-                               +aTnrStar[k][1]*aTnrStar[k][1]
-                               +aTnrStar[k][2]*aTnrStar[k][2]));
+        flx.push_back(uStar[1][volfracIdx(nmat, k)] *
+                      std::sqrt(TnrStar[0]*TnrStar[0]
+                               +TnrStar[1]*TnrStar[1]
+                               +TnrStar[2]*TnrStar[2]));
       // Store Riemann velocity
       flx.push_back(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -480,9 +537,10 @@ struct HLLCMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt(aTnr[k][0]*aTnr[k][0]
-                               +aTnr[k][1]*aTnr[k][1]
-                               +aTnr[k][2]*aTnr[k][2]));
+        flx.push_back(u[1][volfracIdx(nmat, k)] *
+                      std::sqrt(Tnr[0]*Tnr[0]
+                               +Tnr[1]*Tnr[1]
+                               +Tnr[2]*Tnr[2]));
       // Store Riemann velocity
       flx.push_back(vnr[0]);
       for (std::size_t k=0; k<nmat; ++k) {
