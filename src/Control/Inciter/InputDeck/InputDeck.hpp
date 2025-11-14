@@ -298,6 +298,7 @@ using ConfigMembers = brigand::list<
   tag::dt,               tk::real,
   tag::cfl,              tk::real,
   tag::cfl_ramping,      bool,
+  tag::cfl_ramping_steps,uint32_t,
   tag::ttyi,             uint32_t,
   tag::imex_runge_kutta, uint32_t,
   tag::imex_maxiter,     uint32_t,
@@ -516,8 +517,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       "Determines whether a ramping coefficient is applied to the CFL coefficient.",
       R"(This keyword is used to specify a boolean that determines
       whether a ramping coefficient is applied to the CFL coefficient.
-      If true, the CFL would be scaled down by 0.01 at the first step,
-      and increased by 0.01 for the next 100 steps.)", "bool"});
+      If true, the CFL would be scaled down by 1/'cfl_ramping_steps' at the
+      first step, and linearly increased to the full CFL value.)", "bool"});
+
+      keywords.insert({"cfl_ramping_steps",
+      "Specify the number of steps the CFL coefficient is ramped over.",
+      R"(This keyword is used to specify the number of steps over which the
+      the CFL coefficient ramping is active. Only used if 'cfl_ramping' is set
+      to true. Default value is 100.)", "uint"});
 
       keywords.insert({"ttyi", "Set screen output interval",
         R"(This keyword is used to specify the interval in time steps for screen

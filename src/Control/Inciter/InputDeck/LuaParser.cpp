@@ -132,6 +132,8 @@ LuaParser::storeInputDeck(
     lua_ideck, "cfl", gideck.get< tag::cfl >(), 0.0);
   storeIfSpecd< bool >(
     lua_ideck, "cfl_ramping", gideck.get< tag::cfl_ramping >(), false);
+  storeIfSpecd< uint32_t >( lua_ideck,
+    "cfl_ramping_steps", gideck.get< tag::cfl_ramping_steps >(), 100);
   storeIfSpecd< uint32_t >(
     lua_ideck, "ttyi", gideck.get< tag::ttyi >(), 1);
   storeIfSpecd< bool >(lua_ideck, "implicit_timestepping",

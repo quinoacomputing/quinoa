@@ -1396,7 +1396,10 @@ DG::dt()
 
       // time-step suppression for unsteady problems
       tk::real coeff(1.0);
-      if (g_inputdeck.get< tag::cfl_ramping >() && d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It()+1);
+      auto ramp_steps = g_inputdeck.get< tag::cfl_ramping_steps >();
+      if (g_inputdeck.get< tag::cfl_ramping >() && d->It() < ramp_steps)
+        coeff = 1.0/static_cast< tk::real >(ramp_steps)
+          * static_cast< tk::real >(d->It()+1);
 
       mindt *= coeff * g_inputdeck.get< tag::cfl >();
     }
