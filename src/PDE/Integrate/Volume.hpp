@@ -37,11 +37,13 @@ volInt( std::size_t nmat,
         const UnsMesh::Coords& coord,
         const Fields& geoElem,
         const FluxFn& flux,
+        const FluxFn& visc_flux,
         const VelFn& vel,
         const Fields& U,
         const Fields& P,
         const std::vector< std::size_t >& ndofel,
         Fields& R,
+        bool  viscous,
         int intsharp=0 );
 
 //! Update the rhs by adding the source term integrals

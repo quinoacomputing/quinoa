@@ -29,12 +29,14 @@ tk::volInt( std::size_t nmat,
             const UnsMesh::Coords& coord,
             const Fields& geoElem,
             const FluxFn& flux,
+            const FluxFn& visc_flux,
             const VelFn& vel,
             const Fields& U,
             const Fields& P,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
-            int intsharp )
+            bool  viscous,
+            int intsharp)
 // *****************************************************************************
 //  Compute volume integrals for DG
 //! \param[in] nmat Number of materials in this PDE system
@@ -121,6 +123,30 @@ tk::volInt( std::size_t nmat,
 
         // comput flux
         auto fl = flux( ncomp, mat_blk, state, v );
+
+        if (viscous)
+        {
+        std::vector< std::array< tk::real, 3 > > grad_all(2*ncomp, 
+                                            std::array< real, 3 >{{0, 0, 0}});
+         auto state_U_grad = eval_state_gradient(ncomp, ndof, dof_el, 
+                         e, U, dBdx );
+         auto state_P_grad = eval_state_gradient(nprim, ndof, dof_el, 
+                         e, P, dBdx );
+
+         for (ncomp_t c=0; c<ncomp; ++c){
+           grad_all.push_back(state_U_grad[c]);
+         }
+
+         for (ncomp_t c=0; c<ncomp; ++c){
+           grad_all.push_back(state_P_grad[c]);
+         }         
+   
+         auto fl_vis =  visc_flux(ncomp, mat_blk, state, grad_all) ;
+         for (ncomp_t c=0; c<ncomp; ++c){
+          for (std::size_t i=0; i<3; ++i)
+           fl[c][i] = fl[c][i] + fl_vis[c][i];  
+          }              
+         } 
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );
       }

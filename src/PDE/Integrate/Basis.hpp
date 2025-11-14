@@ -133,6 +133,14 @@ invMassMatTaylorRefEl( std::size_t dof );
 std::vector< std::vector< tk::real > >
 massMatrixTaylorRefEl(std::size_t dof);
 
+std::vector< std::array< tk::real, 3 > > 
+eval_state_gradient( ncomp_t ncomp,
+                 const std::size_t ndof,
+                 const std::size_t ndof_el,
+                 const std::size_t e,
+                 const Fields& U,
+                 const std::array< std::vector<tk::real>, 3 >& dBdx );
+
 } // tk::
 
 #endif // Basis_h

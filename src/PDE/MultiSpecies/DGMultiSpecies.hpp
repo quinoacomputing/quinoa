@@ -644,6 +644,7 @@ class MultiSpecies {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      auto viscous = g_inputdeck.get< tag::multispecies, tag::viscous >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -677,8 +678,8 @@ class MultiSpecies {
 
       // compute internal surface flux integrals
       tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, riemannDeriv );
+                   coord, fd, geoFace, geoElem, m_riemann, visc_flux, 
+                   velfn, U, P, ndofel, dt, R, riemannDeriv, viscous);
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
@@ -686,14 +687,15 @@ class MultiSpecies {
 
       if(ndof > 1)
         // compute volume integrals
+        
         tk::volInt( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem,
-          flux, velfn, U, P, ndofel, R );
+          flux, visc_flux, velfn, U, P, ndofel, R, viscous);
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
-                        geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
-                        std::get<1>(b), U, P, ndofel, R, riemannDeriv );
+                        geoFace, geoElem, inpoel, coord, t, m_riemann, visc_flux,
+                        velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv, viscous);
 
       // compute external (energy) sources
       //m_physics.physSrc(nspec, t, geoElem, {}, R, {});
@@ -1031,6 +1033,89 @@ class MultiSpecies {
       }
 
       return fl;
+    }
+    
+  static tk::FluxFn::result_type   
+   visc_flux 
+            ( ncomp_t ncomp,
+          const std::vector< EOS >& mat_blk,
+          const std::vector< tk::real >& ugp,
+          const std::vector< std::array< tk::real, 3 > > & grad_all )
+    {
+     std::vector< std::array< tk::real, 3 > > fl( ugp.size() ); 
+  auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+
+    
+// 2. Compute viscous stress tensor
+  
+  tk::real rhob(0.0);
+  for (std::size_t k=0; k<nspec; ++k)
+  rhob += ugp[multispecies::densityIdx(nspec, k)];        
+
+  std::array< tk::real, 3 > u{{
+        ugp[multispecies::momentumIdx(nspec,0)] / rhob,
+        ugp[multispecies::momentumIdx(nspec,1)] / rhob,
+        ugp[multispecies::momentumIdx(nspec,2)] / rhob }};
+        
+  std::array< std::array< tk::real, 3 >, 3 > dudx, tau;
+  std::array< tk::real, 3 > dTdx;
+  tk::real mu(0.0), conduct(0.0);
+  std::vector< tk::real > alLR(nspec, 0), conduct_mat(nspec, 0);
+  
+  for (std::size_t k=0; k<nspec; ++k)
+  {
+    alLR[k] = ugp[multispecies::densityIdx(nspec, k)]/rhob; 
+    mu += alLR[k] * getmatprop< tag::mu >(k);
+    conduct += alLR[k] *getmatprop< tag::mu >(k) *
+      getmatprop< tag::cv >(k) * getmatprop< tag::gamma >(k)
+      / 0.71;
+  }
+
+      for (std::size_t i=0; i<3; ++i) {
+        auto idx = multispecies::momentumIdx(nspec,i);
+        for (std::size_t j=0; j<3; ++j) {
+        dudx[i][j]=grad_all[idx][j];
+        }
+      } 
+      
+     auto idx_1 = multispecies::temperatureIdx(nspec,0);
+       
+      for (std::size_t j=0; j<3; ++j) {
+        dTdx[j] = grad_all[ncomp+idx_1][j];
+      } 
+  
+  
+
+  tau[0][0] = mu * ( 4.0 * dudx[0][0] - 2.0*(dudx[1][1] + dudx[2][2]) ) / 3.0;
+  tau[1][1] = mu * ( 4.0 * dudx[1][1] - 2.0*(dudx[0][0] + dudx[2][2]) ) / 3.0;
+  tau[2][2] = mu * ( 4.0 * dudx[2][2] - 2.0*(dudx[0][0] + dudx[1][1]) ) / 3.0;
+  tau[0][1] = mu * ( dudx[0][1] + dudx[1][0] );
+  tau[0][2] = mu * ( dudx[0][2] + dudx[2][0] );
+  tau[1][2] = mu * ( dudx[1][2] + dudx[2][1] );
+  tau[1][0] = tau[0][1];
+  tau[2][0] = tau[0][2];
+  tau[2][1] = tau[1][2];
+  
+      
+       // momentum viscous flux
+      for (std::size_t i=0; i<3; ++i) {
+        auto idx = multispecies::momentumIdx(nspec,i);
+        for (std::size_t j=0; j<3; ++j) {
+          fl[idx][j] += tau[i][j];
+        }
+      }     
+ 
+       // energy  viscous flux
+      auto idx_2 = multispecies::temperatureIdx(nspec,0);
+      for (std::size_t i=0; i<3; ++i) {
+        for (std::size_t j=0; j<3; ++j) {
+        fl[idx_2][i] += u[j] * tau[i][j]+conduct*dTdx[i];
+        }
+      }   
+
+    return fl;
+    
     }
 
     //! \brief Boundary state function providing the left and right state of a

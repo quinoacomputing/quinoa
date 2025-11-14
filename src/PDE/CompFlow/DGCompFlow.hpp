@@ -438,6 +438,7 @@ class CompFlow {
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
+      bool viscous=false;
 
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
@@ -468,8 +469,8 @@ class CompFlow {
 
       // compute internal surface flux integrals
       tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, riemannDeriv );
+                   coord, fd, geoFace, geoElem, m_riemann, visc_flux,
+                   velfn, U, P, ndofel, dt, R, riemannDeriv, viscous);
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4,
@@ -478,14 +479,14 @@ class CompFlow {
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( 1, t, m_mat_blk, ndof, rdof,
-                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
-                    U, P, ndofel, R );
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, 
+                    visc_flux, velfn, U, P, ndofel, R, viscous );
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b),
-                        fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                        velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv );
+                        fd, geoFace, geoElem, inpoel, coord, t, m_riemann, visc_flux,
+                        velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv, viscous );
 
      // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::ic >();
@@ -1023,6 +1024,17 @@ class CompFlow {
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
       return {{ ul, Problem::initialize( ncomp, mat_blk, x, y, z, t ) }};
+    }
+    
+static tk::FluxFn::result_type    
+   visc_flux( ncomp_t ncomp,
+          const std::vector< EOS >& mat_blk,
+          const std::vector< tk::real >& ugp,
+          const std::vector< std::array< tk::real, 3 > > & grad_all ) 
+    {
+    std::vector< std::array< tk::real, 3 > > fl( ugp.size(),
+                                             std::array<tk::real, 3 >{{0, 0, 0}}); 
+      return fl;
     }
 
     //! \brief Boundary state function providing the left and right state of a

@@ -44,6 +44,7 @@ bndSurfInt( const bool pref,
             const UnsMesh::Coords& coord,
             real t,
             const RiemannFluxFn& flux,
+            const FluxFn& visc_flux,
             const VelFn& vel,
             const StateFn& state,
             const Fields& U,
@@ -51,7 +52,8 @@ bndSurfInt( const bool pref,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
             std::vector< std::vector< tk::real > >& riemannDeriv,
-            int intsharp )
+            bool viscous,
+            int intsharp)
 // *****************************************************************************
 //! Compute boundary surface flux integrals for a given boundary type for DG
 //! \details This function computes contributions from surface integrals along
@@ -141,6 +143,8 @@ bndSurfInt( const bool pref,
 
         std::array< real, 3 >
           fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
+          
+
 
         // Gaussian quadrature
         for (std::size_t igp=0; igp<ng; ++igp)
@@ -189,6 +193,65 @@ bndSurfInt( const bool pref,
 
           // Compute the numerical flux
           auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t));
+          if (viscous){
+            std::vector< std::array< tk::real, 3 > > grad_all(2*ncomp, 
+                                            std::array< real, 3 >{{0, 0, 0}});
+            std::vector<real> fluxl(5, 0);
+            std::vector<real> fluxr(5, 0);
+ 
+            auto jacInv_l =
+          tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+           auto dBdx_l = tk::eval_dBdx_p1(dof_el, jacInv_l );
+           
+          if (dof_el > 4){
+              std::array< std::vector< real >, 3 > coordgp_3;
+              coordgp_3[0].resize( ng );
+              coordgp_3[1].resize( ng );
+              coordgp_3[2].resize( ng );
+              for(int i=0; i<3; i++)
+                coordgp_3[i][igp]=ref_gp_l[i];
+              eval_dBdx_p2( igp, coordgp_3, jacInv_l, dBdx_l );
+          }
+            
+            auto state_U_grad_l = eval_state_gradient (ncomp, ndof, dof_el, 
+                         el, U, dBdx_l );
+            auto state_P_grad_l = eval_state_gradient (nprim, ndof, dof_el, 
+                         el, P, dBdx_l );
+            for (ncomp_t c=0; c<ncomp; ++c){
+              grad_all.push_back(state_U_grad_l[c]);
+             }
+
+            for (ncomp_t c=0; c<ncomp; ++c){
+              grad_all.push_back(state_P_grad_l[c]);
+            } 
+            auto fl_vis_l = visc_flux(ncomp, mat_blk, var[0], grad_all); 
+
+            auto fl_vis_r = visc_flux(ncomp, mat_blk, var[1], grad_all) ; 
+      
+ 
+
+           // Flux functions
+           for (std::size_t i=0; i<3; ++i)
+            {
+             fluxl[1] = fluxl[1] + fl_vis_l[1][i]*fn[i];
+             fluxl[2] = fluxl[2] + fl_vis_l[2][i]*fn[i];
+             fluxl[3] = fluxl[3] + fl_vis_l[3][i]*fn[i];
+             fluxl[4] = fluxl[4] + fl_vis_l[4][i]*fn[i];
+             fluxr[1] = fluxr[1] + fl_vis_r[1][i]*fn[i];
+             fluxr[2] = fluxr[2] + fl_vis_r[2][i]*fn[i];
+             fluxr[3] = fluxr[3] + fl_vis_r[3][i]*fn[i];
+             fluxr[4] = fluxr[4] + fl_vis_r[4][i]*fn[i];
+            }
+    
+        
+       
+           // Numerical flux function
+           for(std::size_t c=1; c<5; ++c)
+            fl[c] = fl[c]+0.5 * (fluxl[c] + fluxr[c]);
+      
+      
+      
+           }
 
           // Code below commented until details about the form of these terms in
           // the \alpha_k g_k equations are sorted out.

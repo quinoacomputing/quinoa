@@ -42,6 +42,7 @@ surfInt( const bool pref,
          const Fields& geoFace,
          const Fields& geoElem,
          const RiemannFluxFn& flux,
+         const FluxFn& visc_flux,
          const VelFn& vel,
          const Fields& U,
          const Fields& P,
@@ -49,7 +50,8 @@ surfInt( const bool pref,
          const tk::real dt,
          Fields& R,
          std::vector< std::vector< tk::real > >& riemannDeriv,
-         int intcompr=0 );
+         bool viscous,
+         int intcompr=0);
 
 // Update the rhs by adding surface integration term
 void

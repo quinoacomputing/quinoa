@@ -340,6 +340,7 @@ class Transport {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto intsharp = g_inputdeck.get< tag::transport,
         tag::intsharp >();
+      bool viscous=false;
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -366,21 +367,21 @@ class Transport {
       std::vector< std::size_t > solidx(1, 0);
       tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
                    inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, ndofel, dt, R,
-                   riemannDeriv, intsharp );
+                   visc_flux, Problem::prescribedVelocity, U, P, ndofel, dt, R,
+                   riemannDeriv, viscous, intsharp);
 
       if(ndof > 1)
         // compute volume integrals
         tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
-                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
-                    Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, visc_flux,
+                    Problem::prescribedVelocity, U, P, ndofel, R, viscous, intsharp);
 
       // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, m_ncomp, m_mat_blk, ndof, rdof,
           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
-          Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
-          riemannDeriv, intsharp );
+          visc_flux, Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
+          riemannDeriv, viscous, intsharp );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -669,6 +670,17 @@ class Transport {
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
       return {{ ul, Problem::initialize( ncomp, mat_blk, x, y, z, t ) }};
+    }
+    
+static tk::FluxFn::result_type    
+   visc_flux( ncomp_t ncomp,
+          const std::vector< EOS >& mat_blk,
+          const std::vector< tk::real >& ugp,
+          const std::vector< std::array< tk::real, 3 > > & grad_all )
+    {
+    std::vector< std::array< tk::real, 3 > > fl( ugp.size(),
+                                             std::array<tk::real, 3 >{{0, 0, 0}}); 
+      return fl;
     }
 
   //----------------------------------------------------------------------------
