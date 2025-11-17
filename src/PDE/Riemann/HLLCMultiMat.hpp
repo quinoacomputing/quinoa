@@ -114,7 +114,7 @@ struct HLLCMultiMat {
         for (std::size_t j=0; j<3; ++j)
           signnl_nume[i][j] += u[0][volfracIdx(nmat, k)] * asignnl[k][i][j] / bulkl[k];
       for (std::size_t i=0; i<3; ++i)
-        Tnl_nume[i] += aTnl[k][i] / bulkl[k];
+        Tnl_nume[i] += u[0][volfracIdx(nmat, k)] * aTnl[k][i] / bulkl[k];
       bulkl_deno += std::pow(u[0][volfracIdx(nmat, k)],2.0) / bulkl[k];
 
       // Right state
@@ -148,7 +148,7 @@ struct HLLCMultiMat {
         for (std::size_t j=0; j<3; ++j)
           signnr_nume[i][j] += u[1][volfracIdx(nmat, k)] * asignnr[k][i][j] / bulkr[k];
       for (std::size_t i=0; i<3; ++i)
-        Tnr_nume[i] += aTnr[k][i] / bulkr[k];
+        Tnr_nume[i] += u[1][volfracIdx(nmat, k)] * aTnr[k][i] / bulkr[k];
       bulkr_deno += std::pow(u[1][volfracIdx(nmat, k)],2.0) / bulkr[k];
 
       // Mixture speed of sound

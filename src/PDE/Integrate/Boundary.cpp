@@ -309,12 +309,11 @@ update_rhs_bc ( ncomp_t ncomp,
               }
     
     // Derivatives of Tn
-    for (std::size_t k=0; k<nmat; ++k)
-      for (std::size_t idir=0; idir<3; ++idir) {
-        std::size_t mark = ncomp+nmat+1+3*nsld+9*nsld+idir;
-        std::size_t deriv_mark = 3*nmat+ndof+3*nsld+27*nsld+idir;
-        riemannDeriv[deriv_mark][el] -= wt * fl[mark] * fn[idir];
-      }
+    for (std::size_t idir=0; idir<3; ++idir) {
+      std::size_t mark = ncomp+nmat+1+3*nsld+9*nsld+idir;
+      std::size_t deriv_mark = 3*nmat+ndof+3*nsld+27*nsld+idir;
+      riemannDeriv[deriv_mark][el] += wt * fl[mark] * fn[idir];
+    }
   }
 }
 
