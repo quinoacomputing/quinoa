@@ -136,6 +136,8 @@ LuaParser::storeInputDeck(
     "cfl_ramping_steps", gideck.get< tag::cfl_ramping_steps >(), 100);
   storeIfSpecd< uint32_t >(
     lua_ideck, "ttyi", gideck.get< tag::ttyi >(), 1);
+  storeIfSpecd< bool >(lua_ideck, "implicit_timestepping",
+    gideck.get< tag::implicit_timestepping >(), false);
   storeIfSpecd< bool >(
     lua_ideck, "steady_state", gideck.get< tag::steady_state >(), false);
   storeIfSpecd< tk::real >(

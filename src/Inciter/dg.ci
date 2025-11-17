@@ -60,6 +60,8 @@ module dg {
                          const std::vector< std::size_t >& interface,
                          const std::vector< std::size_t >& ndof );
       entry void refine( const std::vector< tk::real >& l2ref );
+      entry [reductiontarget] void initializeLinearSystem( tk::real newdt );
+      entry void solveLinearSystem();
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void transferSol();
