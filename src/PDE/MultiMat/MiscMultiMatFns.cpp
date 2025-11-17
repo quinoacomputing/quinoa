@@ -211,14 +211,14 @@ cleanTraceMultiMat(
               gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
         }
         if (pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
-            U(e, densityDofIdx(nmat, k, rdof, 0)), alk)) {
+            U(e, densityDofIdx(nmat, k, rdof, 0)), alk) || solidx[k] == 0) {
           // determine target relaxation pressure
           prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
             U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
           prelax = std::max(prelax, p_target);
-          // for (std::size_t i=1; i<rdof; ++i) {
-          //   P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
-          // }
+          for (std::size_t i=1; i<rdof; ++i) {
+            P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
+          }
         }
 
         // energy change

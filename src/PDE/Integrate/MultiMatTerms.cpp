@@ -101,6 +101,7 @@ nonConservativeInt( const bool pref,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+  std::size_t nsld = inciter::numSolids(nmat, solidx);
 
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
@@ -191,6 +192,10 @@ nonConservativeInt( const bool pref,
           dap[idir] += riemannDeriv[mark+idir][e];
       }
 
+      std::array< tk::real, 3 > dT{{0.0, 0.0, 0.0}};
+      for (std::size_t idir=0; idir<3; ++idir)
+        dT[idir] = riemannDeriv[3*nmat+ndof+30*nsld+idir][e];
+
       // compute non-conservative terms
       std::vector< std::vector< tk::real > > ncf
         (ncomp, std::vector<tk::real>(ndofel[e],0.0));
@@ -210,13 +215,12 @@ nonConservativeInt( const bool pref,
           ncf[densityIdx(nmat, k)][idof] = 0.0;
 
           for (std::size_t idir=0; idir<3; ++idir)
-            ncf[energyIdx(nmat, k)][idof] -= vel[idir] * ( ymat[k]*dap[idir]
+            ncf[energyIdx(nmat, k)][idof] -= vel[idir] * ( ymat[k]*dT[idir]
                                                   - riemannDeriv[mark+idir][e] );
         }
 
         // evaluate non-conservative terms for g equation
         if (solidx[k] > 0) {
-          std::size_t nsld = inciter::numSolids(nmat, solidx);
           for (std::size_t idof=0; idof<ndofel[e]; ++idof)
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)

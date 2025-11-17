@@ -395,10 +395,9 @@ struct HLLCMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(u[0][volfracIdx(nmat, k)] *
-                      std::sqrt((Tnl[0]*Tnl[0]
-                                +Tnl[1]*Tnl[1]
-                                +Tnl[2]*Tnl[2])));
+        flx.push_back(std::sqrt(aTnl[k][0]*aTnl[k][0]
+                               +aTnl[k][1]*aTnl[k][1]
+                               +aTnl[k][2]*aTnl[k][2]));
       // Store Riemann velocity
       flx.push_back(vnl[0]);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -414,6 +413,8 @@ struct HLLCMultiMat {
               flx.push_back(gl[k][i][j]);
         }
       }
+      for (std::size_t idir=0; idir<3; ++idir)
+        flx.push_back(Tnl[idir]);
 
     }
 
@@ -443,10 +444,9 @@ struct HLLCMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(uStar[0][volfracIdx(nmat, k)] *
-                      std::sqrt(TnlStar[0]*TnlStar[0]
-                               +TnlStar[1]*TnlStar[1]
-                               +TnlStar[2]*TnlStar[2]));
+        flx.push_back(std::sqrt(aTnlStar[k][0]*aTnlStar[k][0]
+                               +aTnlStar[k][1]*aTnlStar[k][1]
+                               +aTnlStar[k][2]*aTnlStar[k][2]));
       // Store Riemann velocity
       flx.push_back(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -462,6 +462,8 @@ struct HLLCMultiMat {
               flx.push_back(glStar[k][i][j]);
         }
       }
+      for (std::size_t idir=0; idir<3; ++idir)
+        flx.push_back(TnlStar[idir]);
 
     }
 
@@ -491,10 +493,9 @@ struct HLLCMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(uStar[1][volfracIdx(nmat, k)] *
-                      std::sqrt(TnrStar[0]*TnrStar[0]
-                               +TnrStar[1]*TnrStar[1]
-                               +TnrStar[2]*TnrStar[2]));
+        flx.push_back(std::sqrt(aTnrStar[k][0]*aTnrStar[k][0]
+                               +aTnrStar[k][1]*aTnrStar[k][1]
+                               +aTnrStar[k][2]*aTnrStar[k][2]));
       // Store Riemann velocity
       flx.push_back(Sm);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -510,6 +511,8 @@ struct HLLCMultiMat {
               flx.push_back(grStar[k][i][j]);
         }
       }
+      for (std::size_t idir=0; idir<3; ++idir)
+        flx.push_back(TnrStar[idir]);
 
     }
 
@@ -537,10 +540,9 @@ struct HLLCMultiMat {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(u[1][volfracIdx(nmat, k)] *
-                      std::sqrt(Tnr[0]*Tnr[0]
-                               +Tnr[1]*Tnr[1]
-                               +Tnr[2]*Tnr[2]));
+        flx.push_back(std::sqrt(aTnr[k][0]*aTnr[k][0]
+                               +aTnr[k][1]*aTnr[k][1]
+                               +aTnr[k][2]*aTnr[k][2]));
       // Store Riemann velocity
       flx.push_back(vnr[0]);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -556,10 +558,12 @@ struct HLLCMultiMat {
               flx.push_back(gr[k][i][j]);
         }
       }
+      for (std::size_t idir=0; idir<3; ++idir)
+        flx.push_back(Tnr[idir]);
 
     }
 
-    Assert( flx.size() == (ncomp+nmat+1+3*nsld+9*nsld), "Size of "
+    Assert( flx.size() == (ncomp+nmat+1+3*nsld+9*nsld+3), "Size of "
             "multi-material flux vector incorrect" );
 
     return flx;
