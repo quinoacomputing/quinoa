@@ -216,6 +216,12 @@ class DG : public CBase_DG {
     //! (no-op)
     void advance( tk::real, std::array< tk::real, 6 > ) {}
 
+    //! Initialize the linear solver via the interface BiCG::init()
+    void initializeLinearSystem( tk::real newdt );
+
+    //! Solve the linear system via the interface BiCG::solve()
+    void solveLinearSystem();
+
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 
@@ -451,6 +457,9 @@ class DG : public CBase_DG {
 
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
+
+    //! Perform the BDF1 update
+    void BDF1_integrate();
 
     //! Non-linear solver using Broyden's method
     std::vector< tk::real > nonlinear_broyden(std::size_t e,
