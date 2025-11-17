@@ -86,7 +86,6 @@
 #include "NoWarning/fv.decl.h"
 #include "NoWarning/ale.decl.h"
 #include "NoWarning/conjugategradients.decl.h"
-#include "NoWarning/conjugategradients.decl.h"
 #include "NoWarning/ghosts.decl.h"
 
 namespace inciter {
