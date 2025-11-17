@@ -634,9 +634,8 @@ class MultiMat {
     //! Return analytic field names to be output to file
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
-      auto nmat = g_inputdeck.get< eq, tag::nmat >();
-
-      return MultiMatFieldNames(nmat);
+      std::vector< std::string > s; // punt for now
+      return s;
     }
 
     //! Return surface field names to be output to file
