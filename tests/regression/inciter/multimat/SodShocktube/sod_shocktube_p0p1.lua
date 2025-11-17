@@ -51,16 +51,6 @@ inciter = {
       "x-velocity",
       "y-velocity",
       "z-velocity"
-    },
-    elemalias = {
-      "volfrac1_numerical",
-      "volfrac2_numerical",
-      "density_numerical",
-      "pressure_numerical",
-      "total_energy_density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical"
     }
   }
 

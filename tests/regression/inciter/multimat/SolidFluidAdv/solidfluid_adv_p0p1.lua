@@ -82,16 +82,6 @@ inciter = {
       "y-velocity",
       "z-velocity",
       "g_tensor"
-    },
-    elemalias = {
-      "volfrac1",
-      "density",
-      "pressure",
-      "total_energy_density",
-      "x-velocity",
-      "y-velocity",
-      "z-velocity",
-      ""
     }
   }
 

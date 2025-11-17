@@ -255,9 +255,7 @@ using fieldOutputList = tk::TaggedTuple< brigand::list<
   tag::filetype,      tk::ctr::FieldFileType,
   tag::sideset,       std::vector< uint64_t >,
   tag::outvar,        std::vector< OutVar >,
-  tag::elemalias,     std::vector< std::string >,  // only for error checking
   tag::elemvar,       std::vector< std::string >,  // only for error checking
-  tag::nodealias,     std::vector< std::string >,  // only for error checking
   tag::nodevar,       std::vector< std::string >   // only for error checking
 > >;
 

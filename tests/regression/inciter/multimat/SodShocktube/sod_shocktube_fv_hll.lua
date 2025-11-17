@@ -47,12 +47,6 @@ inciter = {
       "density",
       "pressure",
       "x-velocity"
-    },
-    elemalias = {
-      "material_indicator_numerical",
-      "density_numerical",
-      "pressure_numerical",
-      "x-velocity_numerical"
     }
   }
 
