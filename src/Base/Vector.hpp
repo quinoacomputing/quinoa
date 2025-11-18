@@ -828,6 +828,62 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
             {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
 }
 
+//! Branchless Cholesky factorization of a 3x3 (SPD) matrix
+//! \param[in] A Matrix to be factorized
+//! \param[in,out] L Cholesky factorization
+inline void chol3x3( const std::array< std::array< tk::real, 3 >, 3 >& A,
+                     std::array< std::array< tk::real, 3 >, 3 >& L )
+{
+  // A is symmetric: [a b c; b d e; c e f]
+  const tk::real a = A[0][0], b = A[0][1], c = A[0][2];
+  const tk::real d = A[1][1], e = A[1][2], f = A[2][2];
+
+  // Regularize (helps near-degenerate stencils)
+  const tk::real tr = a + d + f;
+  const tk::real eps = std::max<tk::real>(1e-30, tr * 1e-14);
+
+  const tk::real aR = a + eps;
+  const tk::real dR = d + eps;
+  const tk::real fR = f + eps;
+
+  const tk::real L00 = std::sqrt(aR);
+  const tk::real L10 = b / L00;
+  const tk::real L20 = c / L00;
+
+  const tk::real t11 = dR - L10*L10;
+  const tk::real L11 = std::sqrt( t11 > 0 ? t11 : eps );
+
+  const tk::real L21 = (e - L10*L20) / L11;
+
+  const tk::real t22 = fR - L20*L20 - L21*L21;
+  const tk::real L22 = std::sqrt( t22 > 0 ? t22 : eps );
+
+  L = {{ { L00, 0.0, 0.0 },
+         { L10, L11, 0.0 },
+         { L20, L21, L22 } }};
+}
+
+//! Solve 3x3 system using the Cholesky factorization the 3x3 (SPD) matrix
+//! \param[in] L Cholesky factorization of 3x3 LHS matrix
+//! \param[in] b RHS matrix
+//! \return Solution of the 3x3 system Ax=b
+inline std::array< tk::real,3 >
+solve_chol3x3( const std::array< std::array< tk::real, 3 >, 3 >& L,
+               const std::array< tk::real, 3 >& b )
+{
+  // Forward: L y = b
+  const tk::real y0 = b[0] / L[0][0];
+  const tk::real y1 = (b[1] - L[1][0]*y0) / L[1][1];
+  const tk::real y2 = (b[2] - L[2][0]*y0 - L[2][1]*y1) / L[2][2];
+
+  // Backward: L^T x = y
+  tk::real x2 = y2 / L[2][2];
+  tk::real x1 = (y1 - L[2][1]*x2) / L[1][1];
+  tk::real x0 = (y0 - L[1][0]*x1 - L[2][0]*x2) / L[0][0];
+
+  return {{ x0, x1, x2 }};
+}
+
 } // tk::
 
 #endif // Vector_h
