@@ -120,7 +120,9 @@ recoLeastSqExtStencil(
   std::array<std::array<tk::real,3>,3> L;
   chol3x3(A, L);
 
-  // Solve and write P1 derivatives for each variable
+  // Solve for and update the P1 dofs with the reconstructioned gradients.
+  // Since this reconstruction does not affect the cell-averaged solution,
+  // W(e,mark+0) is unchanged.
   for (std::size_t iv=0; iv<nvar; ++iv) {
     auto c = varList[iv];
     auto mark = c*rdof;
