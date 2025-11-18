@@ -410,7 +410,7 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          coord, srcFlag, solidx, U, P, nmat );
+          srcFlag, solidx, U, P, nmat );
         PositivityPreservingMultiMat_FV( inpoel, fd.Esuel().size()/4, nmat,
           m_mat_blk, coord, geoFace, U, P );
       }

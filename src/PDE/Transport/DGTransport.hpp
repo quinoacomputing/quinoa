@@ -277,8 +277,7 @@ class Transport {
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
         Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
-        VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          coord, U );
+        VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4, U );
     }
 
     //! Update the conservative variable solution for this PDE system
