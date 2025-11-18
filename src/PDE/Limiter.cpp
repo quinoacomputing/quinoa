@@ -2334,21 +2334,17 @@ void PositivityBoundsMultiSpecies(
 }
 
 void PositivityPreservingMultiMat_FV(
-  const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
-  const tk::UnsMesh::Coords& coord,
   const tk::Fields& /*geoFace*/,
   tk::Fields& U,
   tk::Fields& P )
 // *****************************************************************************
 //  Positivity preserving limiter for the FV multi-material solver
-//! \param[in] inpoel Element connectivity
 //! \param[in] nelem Number of elements
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] mat_blk Material EOS block
-//! \param[in] coord Array of nodal coordinates
 ////! \param[in] geoFace Face geometry array
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
@@ -2360,23 +2356,17 @@ void PositivityPreservingMultiMat_FV(
   const auto ncomp = U.nprop() / rdof;
   const auto nprim = P.nprop() / rdof;
 
-  const auto& cx = coord[0];
-  const auto& cy = coord[1];
-  const auto& cz = coord[2];
+  // Basis functions for all face-centroids of element e
+  auto one_third = 1.0/3.0;
+  std::array< std::vector< tk::real >, 4 > Bf_array = {
+    tk::eval_basis(rdof, one_third, one_third, one_third),
+    tk::eval_basis(rdof, 0.0, one_third, one_third),
+    tk::eval_basis(rdof, one_third, 0.0, one_third),
+    tk::eval_basis(rdof, one_third, one_third, 0.0)
+  };
 
   for (std::size_t e=0; e<nelem; ++e)
   {
-    // Extract the element coordinates
-    std::array< std::array< tk::real, 3>, 4 > coordel {{
-      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
-
-    // Compute the determinant of Jacobian matrix
-    auto detT =
-      tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
-
     std::vector< tk::real > phic(ncomp, 1.0);
     std::vector< tk::real > phip(nprim, 1.0);
 
@@ -2386,32 +2376,15 @@ void PositivityPreservingMultiMat_FV(
     //    and density are positive)
     for (std::size_t lf=0; lf<4; ++lf)
     {
-      std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
-                                               inpoel[4*e+tk::lpofa[lf][1]],
-                                               inpoel[4*e+tk::lpofa[lf][2]] }};
-
-      // face coordinates
-      std::array< std::array< tk::real, 3>, 3 > coordfa {{
-        {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
-        {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
-        {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
-
-      // face centroid
-      std::array< tk::real, 3 > fc{{
-        (coordfa[0][0]+coordfa[1][0]+coordfa[2][0])/3.0 ,
-        (coordfa[0][1]+coordfa[1][1]+coordfa[2][1])/3.0 ,
-        (coordfa[0][2]+coordfa[1][2]+coordfa[2][2])/3.0 }};
-
-      auto B = tk::eval_basis( rdof,
-            tk::Jacobian( coordel[0], fc, coordel[2], coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], fc, coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], coordel[2], fc ) / detT );
-      auto state = eval_state(ncomp, rdof, rdof, e, U, B);
+      auto B = Bf_array[lf];
 
       for(std::size_t i=0; i<nmat; i++)
       {
         // Evaluate the limiting coefficient for material density
-        auto rho = state[densityIdx(nmat, i)];
+        auto rho = B[0]*U(e,densityDofIdx(nmat,i,rdof,0))
+          + B[1]*U(e,densityDofIdx(nmat,i,rdof,1))
+          + B[2]*U(e,densityDofIdx(nmat,i,rdof,2))
+          + B[3]*U(e,densityDofIdx(nmat,i,rdof,3));
         auto rho_avg = U(e, densityDofIdx(nmat, i, rdof, 0));
         auto phi_rho = PositivityFunction(min, rho, rho_avg);
         phic[densityIdx(nmat, i)] =
@@ -2429,38 +2402,23 @@ void PositivityPreservingMultiMat_FV(
     // 2. Enforce positive pressure (assuming density is positive)
     for (std::size_t lf=0; lf<4; ++lf)
     {
-      std::array< std::size_t, 3 > inpofa_l {{ inpoel[4*e+tk::lpofa[lf][0]],
-                                               inpoel[4*e+tk::lpofa[lf][1]],
-                                               inpoel[4*e+tk::lpofa[lf][2]] }};
-
-      // face coordinates
-      std::array< std::array< tk::real, 3>, 3 > coordfa {{
-        {{ cx[ inpofa_l[0] ], cy[ inpofa_l[0] ], cz[ inpofa_l[0] ] }},
-        {{ cx[ inpofa_l[1] ], cy[ inpofa_l[1] ], cz[ inpofa_l[1] ] }},
-        {{ cx[ inpofa_l[2] ], cy[ inpofa_l[2] ], cz[ inpofa_l[2] ] }} }};
-
-      // face centroid
-      std::array< tk::real, 3 > fc{{
-        (coordfa[0][0]+coordfa[1][0]+coordfa[2][0])/3.0 ,
-        (coordfa[0][1]+coordfa[1][1]+coordfa[2][1])/3.0 ,
-        (coordfa[0][2]+coordfa[1][2]+coordfa[2][2])/3.0 }};
-
-      auto B = tk::eval_basis( rdof,
-            tk::Jacobian( coordel[0], fc, coordel[2], coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], fc, coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], coordel[2], fc ) / detT );
-      auto state = eval_state(ncomp, rdof, rdof, e, U, B);
-      auto sprim = eval_state(nprim, rdof, rdof, e, P, B);
+      auto B = Bf_array[lf];
 
       for(std::size_t i=0; i<nmat; i++)
       {
         tk::real phi_pre(1.0);
         // Evaluate the limiting coefficient for material pressure
-        auto rho = state[densityIdx(nmat, i)];
+        auto rho = B[0]*U(e,densityDofIdx(nmat,i,rdof,0))
+          + B[1]*U(e,densityDofIdx(nmat,i,rdof,1))
+          + B[2]*U(e,densityDofIdx(nmat,i,rdof,2))
+          + B[3]*U(e,densityDofIdx(nmat,i,rdof,3));
         auto min_pre = std::max(min, U(e,volfracDofIdx(nmat,i,rdof,0)) *
           mat_blk[i].compute< EOS::min_eff_pressure >(min, rho,
           U(e,volfracDofIdx(nmat,i,rdof,0))));
-        auto pre = sprim[pressureIdx(nmat, i)];
+        auto pre = B[0]*P(e,pressureDofIdx(nmat,i,rdof,0))
+          + B[1]*P(e,pressureDofIdx(nmat,i,rdof,1))
+          + B[2]*P(e,pressureDofIdx(nmat,i,rdof,2))
+          + B[3]*P(e,pressureDofIdx(nmat,i,rdof,3));
         auto pre_avg = P(e, pressureDofIdx(nmat, i, rdof, 0));
         phi_pre = PositivityFunction(min_pre, pre, pre_avg);
         phip[pressureIdx(nmat, i)] =

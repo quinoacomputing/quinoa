@@ -385,7 +385,6 @@ class MultiMat {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
     //! \param[in] srcFlag Whether the energy source was added
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
@@ -393,7 +392,6 @@ class MultiMat {
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord,
                 const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P ) const
@@ -411,8 +409,8 @@ class MultiMat {
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
           srcFlag, solidx, U, P, nmat );
-        PositivityPreservingMultiMat_FV( inpoel, fd.Esuel().size()/4, nmat,
-          m_mat_blk, coord, geoFace, U, P );
+        PositivityPreservingMultiMat_FV( fd.Esuel().size()/4, nmat,
+          m_mat_blk, geoFace, U, P );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {

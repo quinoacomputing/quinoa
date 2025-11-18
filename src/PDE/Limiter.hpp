@@ -317,11 +317,9 @@ void PositivityBoundsMultiSpecies(
 
 //! Positivity preserving limiter for the FV multi-material solver
 void PositivityPreservingMultiMat_FV(
-  const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
-  const tk::UnsMesh::Coords& coord,
   const tk::Fields& geoFace,
   tk::Fields& U,
   tk::Fields& P );
