@@ -20,6 +20,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
 else()
   set(multimat_waterair_shocktube_dgp1_BIN_DIFF_PROG_CONF exodiff_dg.cfg)
 endif()
+
 add_regression_test(multimat_waterair_shocktube_dgp1_thinc ${INCITER_EXECUTABLE}
                     NUMPES 1
                     INPUTFILES waterair_shocktube_dgp1_thinc.lua rectangle_01_1.5k.exo
