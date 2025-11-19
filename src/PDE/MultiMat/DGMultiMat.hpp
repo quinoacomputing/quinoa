@@ -318,10 +318,11 @@ class MultiMat {
           for (std::size_t e=0; e<nelem; ++e)
           {
             // Retrieve unknowns
-            tk::real arho = unk(e, densityDofIdx(nmat, imat, rdof, 0));
+            tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
+            tk::real rho = unk(e, densityDofIdx(nmat, imat, rdof, 0))/alpha;
             tk::real dmg = unk(e, damageDofIdx(nmat, nsld, solidx[imat], rdof, 0));
             //printf("k, e, dmg = %lu, %lu, %e\n", imat, e, damage[e]);
-            damage[e] += dmg/arho;
+            damage[e] += dmg/rho;
           }
         }
     }
@@ -644,19 +645,74 @@ class MultiMat {
               sigma_dev[i][i] -= sigma_trace/3.0;
             tk::real pk = -sigma_trace/3.0;
 
-            // 2. Compute g*dev(sigma), symmetrized
+            // 2. Compute inv(g)
+            double ginv[9];
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                ginv[3*i+j] = g[i][j];
+            lapack_int ipiv[3];
+            #ifndef NDEBUG
+            lapack_int ierr =
+            #endif
+              LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, ginv, 3, ipiv);
+            Assert(ierr==0, "Lapack error in LU factorization of g");
+            #ifndef NDEBUG
+            lapack_int jerr =
+            #endif
+              LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, ginv, 3, ipiv);
+            Assert(jerr==0, "Lapack error in inverting g");
+
+            // 3. Compute dev(sigma)*inv(g)
+            std::array< std::array< tk::real, 3 >, 3 > aux_mat;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
               {
-                tk::real sum1 = 0.0;
-                tk::real sum2 = 0.0;
-                for (std::size_t l=0; l<3; ++l) {
-                  sum1 += g[i][l]*sigma_dev[l][j];
-                  sum2 += sigma_dev[i][l]*g[l][j];
-                }
-                Lp[i][j] = 0.5*(sum1+sum2);
+                tk::real sum = 0.0;
+                for (std::size_t l=0; l<3; ++l)
+                  sum += sigma_dev[i][l]*ginv[3*l+j];
+                aux_mat[i][j] = sum;
               }
-            // 4. Compute equivalent plastic strain rate
+
+            // 4. Compute g*(dev(sigma)*inv(g))
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+              {
+                tk::real sum = 0.0;
+                for (std::size_t l=0; l<3; ++l)
+                  sum += g[i][l]*aux_mat[l][j];
+                Lp[i][j] = sum;
+              }
+
+            // 5. Divide by 2*mu*tau
+            // 'Perfect' plasticity
+            std::vector< tk::real > s(9*ndof, 0.0);
+            tk::real yield_stress =
+              std::max(1.0e-06, (1.0-damage)) * getmatprop< tag::yield_stress >(k);
+            tk::real equiv_stress = 0.0;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
+            equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
+            tk::real rel_factor = 0.0;
+            tk::real phi = std::max(0.0, equiv_stress-yield_stress);
+            tk::real rel_time = getmatprop< tag::plasticity_reltime >(k);
+            if (phi > 0.0) {
+              rel_factor = std::pow((phi/yield_stress),2.0)/rel_time;
+              // Scale rel_factor by alpha
+              tk::real a_min = 1.0e-04, a_max = 2.0e-01;
+              auto smoothstep = [&](tk::real a){
+                tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
+                return t*t*(3.0-2.0*t);
+              };
+              tk::real a_tilde = smoothstep(alpha);
+              rel_factor *= a_tilde;
+            }
+            tk::real mu = getmatprop< tag::mu >(k);
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                Lp[i][j] *= rel_factor/(2.0*mu);
+
+            // 6. Compute equivalent plastic strain rate
             tk::real plastic_rate = 0.0;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -668,37 +724,38 @@ class MultiMat {
               return t*t*(3.0-2.0*t);
             };
             tk::real a_tilde = smoothstep(alpha);
-            plastic_rate *= a_tilde;
+            // plastic_rate *= a_tilde;
             plastic_rate = std::sqrt(3.0*plastic_rate/2.0);
-            // 5. Compute dD
-            tk::real equiv_stress = 0.0;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
-            // Scale equiv_stress by alpha
-            equiv_stress *= a_tilde;
-            equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
+
+            // 7. Compute dD
             auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
             // auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
-            tk::real d1 = 0.1166; // temp
-            tk::real d2 = 0.0934; // temp
-            tk::real d3 = -0.5442; // temp
-            tk::real d4 = 0.0; // temp
-            tk::real ef = d1;
+            tk::real d1(0.0), d2(0.0), d3(0.0), d4(0.0);
+            if (k == 1) {
+              d1 = 0.1166; // temp
+              d2 = 0.0934; // temp
+              d3 = -0.5442; // temp
+              d4 = 0.0; // temp
+            } else if (k == 2) {
+              d1 = 0.05;
+              d2 = 3.44;
+              d3 = -2.21;
+              d4 = 0.0;
+            }
+            tk::real ef = 0.0;
             tk::real dD = 0.0;
-            if (std::abs(equiv_stress) > 1.0e+5) {
-              tk::real eta = std::min(10.0, -pk/(equiv_stress));
+            if (phi > 0.0) {
+              tk::real eta = std::clamp(-pk/(equiv_stress), -1.5, 1.5);
               //printf("dbg = %e, %e, %e, %e\n", alpha, pk, equiv_stress, d3*eta);
-              ef += d2*std::exp(d3*eta); // <- for d4=0 (temp)
-              dD = std::min(0.02, std::max(-0.02, plastic_rate*dt/ef));
-              if (k == 0)
-                dD = 0.0;
+              ef = std::max<tk::real>(d1 + d2*std::exp(d3*eta), 5.0e-02);
+              dD = std::min(2.0e-02, std::max(0.0, plastic_rate*dt/ef));
+              // if (k == 0)
+              //   dD = 0.0;
               // printf("debug = %e, %e\n", dD, equiv_stress);
               // printf("alpha = %e\n", alpha);
               // printf("%e, %e, %e\n", g[0][0], g[0][1], g[0][2]);
               // printf("%e, %e, %e\n", g[1][0], g[1][1], g[1][2]);
               // printf("%e, %e, %e\n", g[2][0], g[2][1], g[2][2]);
-              // printf("g33 --->>> %e, %e\n", g[2][2], U(e, deformDofIdx(nmat,solidx[k],2,2,rdof,0)));
               // printf("%e, %e, %e\n", sigma_dev[0][0], sigma_dev[0][1], sigma_dev[0][2]);
               // printf("%e, %e, %e\n", sigma_dev[1][0], sigma_dev[1][1], sigma_dev[1][2]);
               // printf("%e, %e, %e\n", sigma_dev[2][0], sigma_dev[2][1], sigma_dev[2][2]);
@@ -709,7 +766,7 @@ class MultiMat {
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) += arho*dD;
             // 7. Maintain bounds
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) =
-              std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))), 1.0e-06*arho);
+              std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 1.0e-06*arho);
             //printf("k, elem, damage, dD = %lu, %lu, %e, %e\n", k, e, U(e, damageDofIdx(nmat, nsld, k, rdof, 0)), dD);
             // // Zero out high-order terms
             // for (std::size_t idof=1; idof<rdof; ++idof)
