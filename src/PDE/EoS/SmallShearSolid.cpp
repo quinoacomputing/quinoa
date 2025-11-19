@@ -177,7 +177,7 @@ SmallShearSolid::CauchyStress(
   elasticEnergy(defgrad, eps2, damage);
 
   // p_mean
-  auto pmean = - alpha * /*std::max(0.0, (1.0-damage))* */ m_mu * eps2;
+  auto pmean = - alpha * std::max(1.0e-06, (1.0-damage)) * m_mu * eps2;
 
   // Volumetric component of Cauchy stress tensor
   asig[0][0] = -pmean;
