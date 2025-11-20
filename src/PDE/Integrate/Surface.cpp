@@ -443,8 +443,8 @@ surfIntFV(
     // face centroid
     std::array< real, 3 > gp{{geoFace(f,4), geoFace(f,5), geoFace(f,6)}};
 
-    auto f_Lid = localFaceId[2*f];
-    auto f_Rid = localFaceId[2*f+1];
+    auto f_Lid = static_cast< std::size_t >(localFaceId[2*f]);
+    auto f_Rid = static_cast< std::size_t >(localFaceId[2*f+1]);
 
     auto ref_gp_l = tk::fc_coord[f_Lid];
     auto ref_gp_r = tk::fc_coord[f_Rid];
