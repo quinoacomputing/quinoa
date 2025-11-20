@@ -2357,12 +2357,11 @@ void PositivityPreservingMultiMat_FV(
   const auto nprim = P.nprop() / rdof;
 
   // Basis functions for all face-centroids of element e
-  auto one_third = 1.0/3.0;
   std::array< std::vector< tk::real >, 4 > Bf_array = {
-    tk::eval_basis(rdof, one_third, one_third, one_third),
-    tk::eval_basis(rdof, 0.0, one_third, one_third),
-    tk::eval_basis(rdof, one_third, 0.0, one_third),
-    tk::eval_basis(rdof, one_third, one_third, 0.0)
+    tk::eval_basis(rdof, tk::fc_coord[0][0], tk::fc_coord[0][1], tk::fc_coord[0][2]),
+    tk::eval_basis(rdof, tk::fc_coord[1][0], tk::fc_coord[1][1], tk::fc_coord[1][2]),
+    tk::eval_basis(rdof, tk::fc_coord[2][0], tk::fc_coord[2][1], tk::fc_coord[2][2]),
+    tk::eval_basis(rdof, tk::fc_coord[3][0], tk::fc_coord[3][1], tk::fc_coord[3][2])
   };
 
   std::vector< tk::real > phic(ncomp, 1.0), phip(nprim, 1.0);
