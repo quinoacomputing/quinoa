@@ -130,7 +130,8 @@ inline int opposite_vertex_of_tet(
   // mark the three face nodes
   uint8_t mask = 0;
   for (auto fn : face) {
-    for (int i=0; i<4; ++i) if (el[i]==fn) { mask |= (1u<<i); break; }
+    for (int i=0; i<4; ++i) if (el[static_cast<std::size_t>(i)]==fn)
+      { mask |= (1u<<i); break; }
   }
   // the missing bit is the opposite vertex
   for (int i=0; i<4; ++i) if ((mask & (1u<<i)) == 0) return i;
