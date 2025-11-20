@@ -418,39 +418,6 @@ class MultiMat {
       }
     }
 
-    //! Apply CPL to the conservative variable solution for this PDE system
-    //! \param[in] prim Array of primitive variables
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in,out] unk Array of conservative variables
-    //! \param[in] nielem Number of internal elements
-    //! \details This function applies CPL to obtain consistent dofs for
-    //!   conservative quantities based on the limited primitive quantities.
-    //!   See Pandare et al. (2023). On the Design of Stable,
-    //!   Consistent, and Conservative High-Order Methods for Multi-Material
-    //!   Hydrodynamics. J Comp Phys, 112313.
-    void CPL( const tk::Fields& prim,
-      const tk::Fields& geoElem,
-      const std::vector< std::size_t >& inpoel,
-      const tk::UnsMesh::Coords& coord,
-      tk::Fields& unk,
-      std::size_t nielem ) const
-    {
-      [[maybe_unused]] const auto rdof = g_inputdeck.get< tag::rdof >();
-      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-
-      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
-              "vector and primitive vector at recent time step incorrect" );
-      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
-              "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
-              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-
-      correctLimConservMultiMat(nielem, m_mat_blk, nmat, inpoel,
-        coord, geoElem, prim, unk);
-    }
-
     //! Compute right hand side
     //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array

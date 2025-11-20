@@ -982,6 +982,11 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
     alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
   auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
 
+  std::array< tk::real, 3 > vel{{
+    sprim[velocityIdx(nmat,0)],
+    sprim[velocityIdx(nmat,1)],
+    sprim[velocityIdx(nmat,2)] }};
+
   // get mat-energy from reconstructed mat-pressure
   auto rhob(0.0);
   for (std::size_t k=0; k<nmat; ++k) {
@@ -992,14 +997,14 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
     }
     state[energyIdx(nmat,k)] =
       mat_blk[k].compute< inciter::EOS::totalenergy >(
-      state[densityIdx(nmat,k)], sprim[velocityIdx(nmat,0)],
-      sprim[velocityIdx(nmat,1)], sprim[velocityIdx(nmat,2)],
+      state[densityIdx(nmat,k)], vel[0],
+      vel[1], vel[2],
       sprim[pressureIdx(nmat,k)], alk);
     rhob += state[densityIdx(nmat,k)];
   }
   // get momentum from reconstructed velocity and bulk density
   for (std::size_t i=0; i<3; ++i) {
-    state[momentumIdx(nmat,i)] = rhob * sprim[velocityIdx(nmat,i)];
+    state[momentumIdx(nmat,i)] = rhob * vel[i];
   }
 
   // consolidate primitives into state vector

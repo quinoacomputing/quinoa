@@ -2365,10 +2365,13 @@ void PositivityPreservingMultiMat_FV(
     tk::eval_basis(rdof, one_third, one_third, 0.0)
   };
 
+  std::vector< tk::real > phic(ncomp, 1.0), phip(nprim, 1.0);
+
   for (std::size_t e=0; e<nelem; ++e)
   {
-    std::vector< tk::real > phic(ncomp, 1.0);
-    std::vector< tk::real > phip(nprim, 1.0);
+    // reset limiter coefficients
+    std::fill(phic.begin(), phic.end(), 1.0);
+    std::fill(phip.begin(), phip.end(), 1.0);
 
     const tk::real min = 1e-15;
 
