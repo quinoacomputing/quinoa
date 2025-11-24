@@ -547,11 +547,12 @@ SmallShearSolid::soundspeed(
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
   auto al_eff = std::max( 1.0e-14, alpha );
-  tk::real a = (4.0/3.0) /** std::max(0.0, (1.0-damage))*/ * m_mu * al_eff / arho;
+  auto arho_eff = std::abs(arho);
+  tk::real a = (4.0/3.0) /** std::max(0.0, (1.0-damage))*/ * m_mu * al_eff / arho_eff;
 
   // hydrodynamic contribution
   auto p_eff = std::max( 1.0e-15, apr+(al_eff*m_pstiff) );
-  a += m_gamma * p_eff / arho;
+  a += m_gamma * p_eff / arho_eff;
 
   // Compute square root
   a = std::sqrt(a);

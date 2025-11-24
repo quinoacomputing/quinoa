@@ -87,6 +87,8 @@ StiffenedGas::pressure(
   tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w)) * (g-1.0) -
     alpha*g*p_c;
 
+  partpressure = std::max(min_eff_pressure(1e-10, arho, alpha), partpressure);
+
   // check partial pressure divergence
   if (!std::isfinite(partpressure)) {
     std::cout << "Material-id:      " << imat << std::endl;

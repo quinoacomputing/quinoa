@@ -138,6 +138,9 @@ cleanTraceMultiMat(
     std::size_t kmax = 0;
     for (std::size_t k=0; k<nmat; ++k)
     {
+      U(e, volfracDofIdx(nmat, k, rdof, 0)) =
+        std::max(g_inputdeck.get< tag::multimat, tag::min_volumefrac >(),
+                 U(e, volfracDofIdx(nmat, k, rdof, 0)));
       auto al = U(e, volfracDofIdx(nmat, k, rdof, 0));
       if (al > almax)
       {
@@ -220,9 +223,14 @@ cleanTraceMultiMat(
           prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
             U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
           prelax = std::max(prelax, p_target);
+          for (std::size_t i=1; i<rdof; ++i) {
+            P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
+          }
         }
 
         // energy change
+        U(e, densityDofIdx(nmat, k, rdof, 0)) = std::max(U(e, densityDofIdx(nmat, k, rdof, 0)),
+          g_inputdeck.get< tag::multimat, tag::min_volumefrac >() * 1.0e-02);
         auto arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
         auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
         auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
@@ -266,6 +274,119 @@ cleanTraceMultiMat(
       if (solidx[k] > 0) {
         for (std::size_t i=0; i<6; ++i)
           P(e, stressDofIdx(nmat, solidx[k], i, rdof, 0)) /= alsum;
+      }
+    }
+
+    // // 0) Mixture velocity from momentum
+    // double rho_mix = 0.0;
+    // for (std::size_t k=0; k<nmat; ++k)
+    //   rho_mix += U(e, densityDofIdx(nmat, k, rdof, 0));
+    // rho_mix = std::max(rho_mix, 1e-12);
+
+    // // If you store momentum in U:
+    // double mx = U(e, momentumDofIdx(nmat, 0, rdof, 0));
+    // double my = U(e, momentumDofIdx(nmat, 1, rdof, 0));
+    // double mz = U(e, momentumDofIdx(nmat, 2, rdof, 0));
+    // double ub = mx / rho_mix, vb = my / rho_mix, wb = mz / rho_mix;
+
+    // // 1) Rebuild pressure (and stress for solids) from *conserved* (αρ, αρE, α)
+    // for (std::size_t k=0; k<nmat; ++k) {
+    //   const double a    = std::max(U(e, volfracDofIdx(nmat, k, rdof, 0)), 1e-12);
+    //   const double arho = std::max(U(e, densityDofIdx(nmat, k, rdof, 0)), 0.0);
+    //   const double aE   = U(e, energyDofIdx (nmat, k, rdof, 0));
+
+    //   // deformation gradient for solids, identity for fluids
+    //   std::array<std::array<tk::real,3>,3> gk{{ {1,0,0},{0,1,0},{0,0,1} }};
+    //   if (solidx[k] > 0) {
+    //     for (std::size_t i=0; i<3; ++i)
+    //       for (std::size_t j=0; j<3; ++j)
+    //         gk[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+    //   }
+
+    //   // Recompute EOS pressure from conserved (arho, aE, a)
+    //   double pk = mat_blk[k].compute< EOS::pressure >( arho, ub, vb, wb, aE, a, k, gk );
+    //   P(e, pressureDofIdx(nmat, k, rdof, 0)) = a * pk;
+    //   for (std::size_t i=1; i<rdof; ++i)
+    //     P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
+
+    //   // // For solids: rebuild α*σ from EOS too (keeps primitives consistent)
+    //   // if (solidx[k] > 0) {
+    //   //   auto asig = mat_blk[k].computeTensor< EOS::CauchyStress >(
+    //   //                                                             /*ρ,u,v,w,E not used*/ 0.0,0.0,0.0,0.0, /*alpha*/ a, /*imat*/ k, gk );
+    //   //   for (int i=0;i<3;++i) for (int j=0;j<3;++j) {
+    //   //       P(e, stressDofIdx(nmat, solidx[k], inciter::stressCmp[i][j], rdof, 0)) =
+    //   //         asig[i][j];
+    //   //       for (std::size_t d=1; d<rdof; ++d)
+    //   //         P(e, stressDofIdx(nmat, solidx[k], inciter::stressCmp[i][j], rdof, d)) = 0.0;
+    //   //     }
+    //   // }
+    // }
+
+
+    // ---------- Mixture KE limiter (cell-average) ----------
+    {
+      // 1) Mixture mass and total energy
+      double rho_mix = 0.0;
+      double Esum    = 0.0;
+      for (std::size_t k=0; k<nmat; ++k) {
+        rho_mix += U(e, densityDofIdx(nmat, k, rdof, 0));
+        Esum    += U(e, energyDofIdx (nmat, k, rdof, 0));
+      }
+      rho_mix = std::max(rho_mix, 1e-12);
+
+      // 2) Mixture momentum (rdof=0).
+      double mx = U(e, momentumDofIdx(nmat, 0, rdof, 0));
+      double my = U(e, momentumDofIdx(nmat, 1, rdof, 0));
+      double mz = U(e, momentumDofIdx(nmat, 2, rdof, 0));
+
+      const double KE = 0.5 * (mx*mx + my*my + mz*mz) / rho_mix;
+
+      // 3) Build an energy floor consistent with per-phase EOS pressure floors
+      double E_floor_sum = 0.0;
+      for (std::size_t k=0; k<nmat; ++k) {
+        const double alk  = U(e, volfracDofIdx(nmat, k, rdof, 0));
+        const double arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+        if (alk <= 0.0 || arho <= 0.0) continue;
+
+        // Per-phase pressure floor
+        const double pmin_k = mat_blk[k].compute< EOS::min_eff_pressure >(1e-12, arho, alk);
+
+        // Deformation gradient
+        std::array<std::array<tk::real,3>,3> gk{{ {1,0,0},{0,1,0},{0,0,1} }};
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              gk[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+        }
+
+        // Total energy at p = pmin_k
+        const double u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
+        const double v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
+        const double w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
+        const double aE_floor_k =
+          mat_blk[k].compute< EOS::totalenergy >(arho, u, v, w, alk * pmin_k, alk, gk);
+
+        E_floor_sum += aE_floor_k;
+      }
+
+      // Thermal+elastic floor (subtract current KE to get the minimum allowable Eth)
+      double Eth_min = std::max(0.0, E_floor_sum - KE);
+
+      // 4) If current Eth < Eth_min, scale momentum to reduce KE
+      const double Eth = Esum - KE;
+      if (Eth < Eth_min) {
+        const double eps = 1e-20;
+        double beta2 = (Esum - Eth_min) / std::max(KE, eps);
+        beta2 = std::min(std::max(beta2, 0.0), 1.0);
+        const double beta = std::sqrt(beta2);
+
+        // Scale all momentum dofs (rdof>=1 too keeps HO consistent)
+        for (std::size_t idof=0; idof<rdof; ++idof) {
+          const std::size_t ix = momentumDofIdx(nmat, 0, rdof, idof);
+          const std::size_t iy = momentumDofIdx(nmat, 1, rdof, idof);
+          const std::size_t iz = momentumDofIdx(nmat, 2, rdof, idof);
+          U(e, ix) *= beta;  U(e, iy) *= beta;  U(e, iz) *= beta;
+        }
       }
     }
 

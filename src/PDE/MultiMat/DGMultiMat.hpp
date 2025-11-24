@@ -580,7 +580,7 @@ class MultiMat {
               "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       auto neg_density = cleanTraceMultiMat(t, nielem, m_mat_blk, geoElem, nmat,
-        unk, prim);
+                                            unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
     }
