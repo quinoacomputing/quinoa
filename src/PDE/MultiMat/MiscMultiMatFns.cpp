@@ -200,7 +200,7 @@ cleanTraceMultiMat(
       )
         ctm_element = true;
 
-      else if (ctm_element) {
+      if (ctm_element) {
         tk::real prelax(0.0);
         std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
         if (solidx[k] > 0) {
@@ -213,8 +213,11 @@ cleanTraceMultiMat(
 
         // check for unbounded volume fractions
         if (alk < 0.0 || !std::isfinite(alk)) {
+          auto rhok = mat_blk[k].compute< EOS::density >(p_target,
+            std::max(1e-8,tmax));
           if (std::isfinite(alk)) d_al += (alk - 1e-14);
           alk = 1e-14;
+          U(e, densityDofIdx(nmat, k, rdof, 0)) = alk * rhok;
         }
 
         // determine target relaxation pressure
