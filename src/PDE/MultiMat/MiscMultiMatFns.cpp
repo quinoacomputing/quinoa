@@ -210,6 +210,16 @@ cleanTraceMultiMat(
             for (std::size_t j=0; j<3; ++j)
               gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
         }
+
+        // check for unbounded volume fractions
+        if (alk < 0.0 || !std::isfinite(alk)) {
+          auto rhok = mat_blk[k].compute< EOS::density >(p_target,
+            std::max(1e-8,tmax));
+          if (std::isfinite(alk)) d_al += (alk - 1e-14);
+          alk = 1e-14;
+          U(e, densityDofIdx(nmat, k, rdof, 0)) = alk * rhok;
+        }
+
         // determine target relaxation pressure
         prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
