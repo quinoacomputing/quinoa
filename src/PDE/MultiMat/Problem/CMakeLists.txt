@@ -1,11 +1,8 @@
 add_library(MultiMatProblem
             UserDefined.cpp
             FieldOutput.cpp
-            SodShocktube.cpp
             InterfaceAdvection.cpp
-            WaterAirShocktube.cpp
             ShockHeBubble.cpp
-            UnderwaterEx.cpp
             ShockDensityWave.cpp
             EquilInterfaceAdvect.cpp
             RichtmyerMeshkov.cpp

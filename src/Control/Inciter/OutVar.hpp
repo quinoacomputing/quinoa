@@ -22,10 +22,9 @@ namespace ctr {
 //! Output variable
 struct OutVar {
   using Centering = tk::Centering;
-  
+
   Centering centering;  //!< Centering
   std::string name;     //!< Human readable name
-  std::string alias;    //!< user specified alias to the name
   tk::ncomp_t field;    //!< Field ID
   std::string varFnIdx; //!< Material-based physics label + material id
 
@@ -36,10 +35,9 @@ struct OutVar {
   //! \param[in] vn Var function name
   explicit OutVar( Centering c = Centering::NODE,
                    const std::string& n = {},
-                   const std::string& a = "",
                    tk::ncomp_t f = 0,
                    const std::string& vn = "null" ) :
-    centering(c), name(n), alias(a), field(f), varFnIdx(vn) {}
+    centering(c), name(n), field(f), varFnIdx(vn) {}
 
   /** @name Pack/Unpack: Serialize OutVar object for Charm++ */
   ///@{
@@ -48,7 +46,6 @@ struct OutVar {
   void pup( PUP::er& p ) {
     p | centering;
     p | name;
-    p | alias;
     p | field;
     p | varFnIdx;
   }

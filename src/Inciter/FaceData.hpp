@@ -51,6 +51,9 @@ class FaceData {
               const std::map< int, std::vector< std::size_t > >& bface,
               const std::vector< std::size_t >& triinpoel );
 
+    //! Generate local face IDs for all faces (2 per face since face has 2 esuf)
+    void genLocalFaceId( const std::vector< std::size_t >& inpoel );
+
     /** @name Accessors
       * */
     ///@{
@@ -66,6 +69,7 @@ class FaceData {
     const std::vector< std::size_t >& Belem() const { return m_belem; }
     const std::vector< int >& Esuf() const { return m_esuf; }
     std::vector< int >& Esuf() { return m_esuf; }
+    const std::vector< int >& FaceLocalId() const { return m_faceLocalId; }
     //@}
 
     /** @name Charm++ pack/unpack (serialization) routines
@@ -81,6 +85,7 @@ class FaceData {
       p | m_inpofa;
       p | m_belem;
       p | m_esuf;
+      p | m_faceLocalId;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -103,6 +108,8 @@ class FaceData {
     std::vector< std::size_t > m_belem;
     //! Element surrounding faces
     std::vector< int > m_esuf;
+    //! Local ID of faces wrt. surrounding elements (useful for flux calcs)
+    std::vector< int > m_faceLocalId;
 };
 
 } // inciter::

@@ -15,7 +15,6 @@ inciter = {
 
   multimat = {
     physics = "euler",
-    problem = "sod_shocktube",
     prelax = 0,
     nmat = 2
   },
@@ -24,6 +23,27 @@ inciter = {
     {
       id = { 1, 2 },
       gamma = { 1.4, 1.4 }  -- ratio of specific heats
+    }
+  },
+
+  ic = {
+    -- background state is left state
+    materialid = 1,
+    temperature = 3.484321e-3,
+    pressure = 1.0,
+    velocity = { 0, 0, 0 },
+
+    -- right state
+    box = {
+      {
+        materialid = 2,
+        xmin = 0.5, xmax = 1.1,
+        ymin = -0.5, ymax = 0.5,
+        zmin = -0.5, zmax = 0.5,
+        temperature = 2.7874568e-3,
+        pressure = 0.1,
+        velocity = { 0, 0, 0 }
+      }
     }
   },
 
@@ -51,16 +71,6 @@ inciter = {
       "x-velocity",
       "y-velocity",
       "z-velocity"
-    },
-    elemalias = {
-      "volfrac1_numerical",
-      "volfrac2_numerical",
-      "density_numerical",
-      "pressure_numerical",
-      "total_energy_density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical"
     }
   }
 

@@ -58,7 +58,6 @@ VertexBasedTransport_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  const tk::UnsMesh::Coords& coord,
   tk::Fields& U );
 
 //! Kuzmin's vertex-based limiter for single-material DGP1
@@ -149,7 +148,6 @@ VertexBasedMultiMat_FV(
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
-  const tk::UnsMesh::Coords& coord,
   const std::vector< int >& srcFlag,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
@@ -223,11 +221,9 @@ VertexBasedLimiting(
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
-  const tk::UnsMesh::Coords& coord,
   std::size_t e,
   std::size_t rdof,
   std::size_t ,
-  std::size_t ncomp,
   std::vector< tk::real >& phi,
   const std::vector< std::size_t >& VarList );
 
@@ -321,11 +317,9 @@ void PositivityBoundsMultiSpecies(
 
 //! Positivity preserving limiter for the FV multi-material solver
 void PositivityPreservingMultiMat_FV(
-  const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
-  const tk::UnsMesh::Coords& coord,
   const tk::Fields& geoFace,
   tk::Fields& U,
   tk::Fields& P );

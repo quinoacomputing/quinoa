@@ -372,13 +372,18 @@ bndSurfIntFV(
 {
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
-
-  const auto& cx = coord[0];
-  const auto& cy = coord[1];
-  const auto& cz = coord[2];
+  const auto& localFaceId = fd.FaceLocalId();
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+
+  // Basis functions for all face-centroids of element e
+  std::array< std::vector< tk::real >, 4 > Bf_array = {
+    tk::eval_basis(rdof, tk::fc_coord[0][0], tk::fc_coord[0][1], tk::fc_coord[0][2]),
+    tk::eval_basis(rdof, tk::fc_coord[1][0], tk::fc_coord[1][1], tk::fc_coord[1][2]),
+    tk::eval_basis(rdof, tk::fc_coord[2][0], tk::fc_coord[2][1], tk::fc_coord[2][2]),
+    tk::eval_basis(rdof, tk::fc_coord[3][0], tk::fc_coord[3][1], tk::fc_coord[3][2])
+  };
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find(static_cast<int>(s));// faces for side set
@@ -390,17 +395,6 @@ bndSurfIntFV(
 
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
 
-        // Extract the left element coordinates
-        std::array< std::array< tk::real, 3>, 4 > coordel_l {{
-        {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
-        {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
-        {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
-        {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
-
-        // Compute the determinant of Jacobian matrix
-        auto detT_l =
-          Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
-
         // face normal
         std::array< real, 3 >
           fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
@@ -409,13 +403,11 @@ bndSurfIntFV(
         std::array< real, 3 >
           gp{{ geoFace(f,4), geoFace(f,5), geoFace(f,6) }};
 
-        std::array< tk::real, 3> ref_gp_l{
-          Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
-          Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
-          Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+        auto f_Lid = static_cast< std::size_t >(localFaceId[2*f]);
+        auto ref_gp_l = tk::fc_coord[f_Lid];
 
-        //Compute the basis functions for the left element
-        auto B_l = eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
+        // Compute the basis functions for the left element
+        const auto& B_l = Bf_array[f_Lid];
 
         // Compute the state variables at the left element
         auto ugp = evalFVSol(mat_blk, intsharp, ncomp, nprim,

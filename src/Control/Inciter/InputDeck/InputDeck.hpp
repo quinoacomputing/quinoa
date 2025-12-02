@@ -255,9 +255,7 @@ using fieldOutputList = tk::TaggedTuple< brigand::list<
   tag::filetype,      tk::ctr::FieldFileType,
   tag::sideset,       std::vector< uint64_t >,
   tag::outvar,        std::vector< OutVar >,
-  tag::elemalias,     std::vector< std::string >,  // only for error checking
   tag::elemvar,       std::vector< std::string >,  // only for error checking
-  tag::nodealias,     std::vector< std::string >,  // only for error checking
   tag::nodevar,       std::vector< std::string >   // only for error checking
 > >;
 
@@ -298,6 +296,7 @@ using ConfigMembers = brigand::list<
   tag::dt,               tk::real,
   tag::cfl,              tk::real,
   tag::cfl_ramping,      bool,
+  tag::cfl_ramping_steps,uint32_t,
   tag::ttyi,             uint32_t,
   tag::imex_runge_kutta, uint32_t,
   tag::imex_maxiter,     uint32_t,
@@ -305,9 +304,10 @@ using ConfigMembers = brigand::list<
   tag::imex_abstol,      tk::real,
 
   // steady-state solver options
-  tag::steady_state, bool,
-  tag::residual,     tk::real,
-  tag::rescomp,      uint32_t,
+  tag::implicit_timestepping, bool,
+  tag::steady_state,          bool,
+  tag::residual,              tk::real,
+  tag::rescomp,               uint32_t,
 
   // mesh partitioning and reordering/sorting choices
   tag::partitioning,     tk::ctr::PartitioningAlgorithmType,
@@ -515,12 +515,28 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       "Determines whether a ramping coefficient is applied to the CFL coefficient.",
       R"(This keyword is used to specify a boolean that determines
       whether a ramping coefficient is applied to the CFL coefficient.
-      If true, the CFL would be scaled down by 0.01 at the first step,
-      and increased by 0.01 for the next 100 steps.)", "bool"});
+      If true, the CFL would be scaled down by 1/'cfl_ramping_steps' at the
+      first step, and linearly increased to the full CFL value.)", "bool"});
+
+      keywords.insert({"cfl_ramping_steps",
+      "Specify the number of steps the CFL coefficient is ramped over.",
+      R"(This keyword is used to specify the number of steps over which the
+      the CFL coefficient ramping is active. Only used if 'cfl_ramping' is set
+      to true. Default value is 100.)", "uint"});
 
       keywords.insert({"ttyi", "Set screen output interval",
         R"(This keyword is used to specify the interval in time steps for screen
         output during a simulation.)", "uint"});
+
+      keywords.insert({"implicit_timestepping",
+        "Toggle use of an implicit time-stepping scheme",
+        R"(This keywords is used to trigger implicit time integration BDF1
+        (backward Euler) for the DG/DGP1/DGP2/PDG spatial discretizations. This
+        will activate the implicit BDF1 scheme which replaces the explicit RK3
+        that is usually used. This requires PDE-specific implementation of the
+        Jacobian matrix. Jacobian implementation is complete only for
+        PDEType::MULTISPECIES, i.e. implicit_timestepping can only be used for
+        multispecies currently.)", "bool"});
 
       keywords.insert({"imex_runge_kutta",
         "Toggle use of IMplicit-EXplicit Runge-Kutta scheme",

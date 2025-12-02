@@ -205,6 +205,22 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
 
+  // insert array-element into the implicit solver chare array
+  if (g_inputdeck.get< tag::implicit_timestepping >()) {
+    // Single-stage BDF1 for implicit solver
+    m_nstage = 1;
+
+    const auto& inpoel = myGhosts()->m_inpoel;
+    // TODO: linear solver:
+    //  modify CSR to handle element-based structures (or create new one)
+    tk::CSR A(m_rhs.nprop(), tk::genPsup(inpoel,4,tk::genEsup(inpoel,4)));
+    std::vector< tk::real > x(m_u.nunk()*m_rhs.nprop(), 0.0),
+      b(m_u.nunk()*m_rhs.nprop(), 0.0);
+
+    Disc()->ImplicitSolver()[ thisIndex ].insert(std::move(A), std::move(x),
+      std::move(b), Disc()->Gid(), Disc()->Lid(), Disc()->NodeCommMap());
+  }
+
   // global-sync to call doneInserting on m_ghosts
   auto meshid = Disc()->MeshId();
   contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
@@ -1388,7 +1404,10 @@ DG::dt()
 
       // time-step suppression for unsteady problems
       tk::real coeff(1.0);
-      if (g_inputdeck.get< tag::cfl_ramping >() && d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It()+1);
+      auto ramp_steps = g_inputdeck.get< tag::cfl_ramping_steps >();
+      if (g_inputdeck.get< tag::cfl_ramping >() && d->It() < ramp_steps)
+        coeff = 1.0/static_cast< tk::real >(ramp_steps)
+          * static_cast< tk::real >(d->It()+1);
 
       mindt *= coeff * g_inputdeck.get< tag::cfl >();
 
@@ -1415,9 +1434,59 @@ DG::dt()
   // Resize the buffer vector of nodal extrema
   resizeNodalExtremac();
 
+  // Set up the reduction target for finding minimum dt across chares.
+  // 1. If implicit solver is used, first invoke the solver object via
+  // appropriate entry methods, and then proceed to solve.
+  // 2. If explicit, directly proceed to solve.
+  CkCallback minDtDone;
+  if (!g_inputdeck.get< tag::implicit_timestepping >())
+    minDtDone = CkCallback(CkReductionTarget(DG,solve), thisProxy);
+  else
+    minDtDone = CkCallback(CkReductionTarget(DG,initializeLinearSystem),
+      thisProxy);
+
   // Contribute to minimum dt across all chares then advance to next step
-  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DG,solve), thisProxy) );
+  contribute( sizeof(tk::real), &mindt, CkReduction::min_double, minDtDone );
+}
+
+void
+DG::initializeLinearSystem( tk::real newdt )
+// *****************************************************************************
+// Initialize the linear solver via the interface BiCG::init()
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set new time step size
+  if (m_stage == 0) d->setdt( newdt );
+
+  // Initialize linear solver, and route to solveLinearSystem()
+  // TODO: linear solver:
+  // 1. jacobian computation (call to e.g. g_dgpde[d->MeshId()].computeJacobian)
+  // 2. the following call is just a stand-in/example- verify correctness
+  d->ImplicitSolver()[ thisIndex ].init( m_u.flat(), {}, {}, 1,
+    CkCallback(CkIndex_DG::solveLinearSystem(), thisProxy[thisIndex]) );
+}
+
+void
+DG::solveLinearSystem()
+// *****************************************************************************
+// Solve the linear system via the interface BiCG::solve()
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Get new time step size to pass along to solve()
+  auto dt = d->Dt();
+
+  // Solve linear system, and route to solve()
+  // TODO: linear solver:
+  //  the following call is just a stand-in/example- verify correctness
+  d->ImplicitSolver()[ thisIndex ].solve(
+     g_inputdeck.get< tag::ale, tag::maxit >(),
+     g_inputdeck.get< tag::residual >(),
+     CkCallback(CkIndex_DG::solve(dt), thisProxy[thisIndex]) );
 }
 
 void
@@ -1444,8 +1513,10 @@ DG::solve( tk::real newdt )
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
 
-  // Set new time step size
-  if (m_stage == 0) d->setdt( newdt );
+  // Set new time step size. If implicit solver, time step has already been
+  // set in initializeImplicitSystem()
+  if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
+    d->setdt( newdt );
 
   // Update Un
   if (m_stage == 0) {
@@ -1458,6 +1529,7 @@ DG::solve( tk::real newdt )
 
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
+  const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
 
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
@@ -1486,7 +1558,15 @@ DG::solve( tk::real newdt )
   // Perform ALE mesh data updates
   if (is_ale) ALEUpdate();
 
-  if (!imex_runge_kutta) {
+  if (imex_runge_kutta) {
+    // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
+    DG::imex_integrate();
+  }
+  else if (implicit_ts) {
+    // Implicit time-stepping using BDF1 to discretize time-derivative
+    DG::BDF1_integrate();
+  }
+  else {
     // Explicit time-stepping using RK3 to discretize time-derivative
     for(std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
 
@@ -1517,10 +1597,6 @@ DG::solve( tk::real newdt )
         }
       }
     }
-  }
-  else {
-    // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
-    DG::imex_integrate();
   }
 
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
@@ -2399,6 +2475,18 @@ DG::imex_integrate()
         }
     }
   }
+}
+
+void
+DG::BDF1_integrate()
+// *****************************************************************************
+//  Perform the BDF1 update
+//! \details This function updates the solution using the BDF1 (backward Euler)
+//!   time discretization.
+// *****************************************************************************
+{
+  //TODO: implicit solver:
+  // update solution m_u
 }
 
 std::vector< tk::real > DG::nonlinear_func(std::size_t e,

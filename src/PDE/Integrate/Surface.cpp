@@ -426,13 +426,18 @@ surfIntFV(
 // *****************************************************************************
 {
   const auto& esuf = fd.Esuf();
-
-  const auto& cx = coord[0];
-  const auto& cy = coord[1];
-  const auto& cz = coord[2];
+  const auto& localFaceId = fd.FaceLocalId();
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+
+  // Basis functions for all face-centroids of element e
+  std::array< std::vector< tk::real >, 4 > Bf_array = {
+    tk::eval_basis(rdof, tk::fc_coord[0][0], tk::fc_coord[0][1], tk::fc_coord[0][2]),
+    tk::eval_basis(rdof, tk::fc_coord[1][0], tk::fc_coord[1][1], tk::fc_coord[1][2]),
+    tk::eval_basis(rdof, tk::fc_coord[2][0], tk::fc_coord[2][1], tk::fc_coord[2][2]),
+    tk::eval_basis(rdof, tk::fc_coord[3][0], tk::fc_coord[3][1], tk::fc_coord[3][2])
+  };
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -443,53 +448,21 @@ surfIntFV(
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    // Extract the element coordinates
-    std::array< std::array< tk::real, 3>, 4 > coordel_l {{
-      {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
-      {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
-      {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
-      {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
-
-    std::array< std::array< tk::real, 3>, 4 > coordel_r {{
-      {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
-      {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
-      {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
-      {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
-
-    // Compute the determinant of Jacobian matrix
-    auto detT_l =
-      Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
-    auto detT_r =
-      Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
-
     // face normal
     std::array< real, 3 > fn{{geoFace(f,1), geoFace(f,2), geoFace(f,3)}};
 
     // face centroid
     std::array< real, 3 > gp{{geoFace(f,4), geoFace(f,5), geoFace(f,6)}};
 
-    // In order to determine the high-order solution from the left and right
-    // elements at the surface quadrature points, the basis functions from
-    // the left and right elements are needed. For this, a transformation to
-    // the reference coordinates is necessary, since the basis functions are
-    // defined on the reference tetrahedron only.
-    // The transformation relations are shown below:
-    //  xi   = Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT
-    //  eta  = Jacobian( coordel[0], coordel[2], gp, coordel[3] ) / detT
-    //  zeta = Jacobian( coordel[0], coordel[2], coordel[3], gp ) / detT
+    auto f_Lid = static_cast< std::size_t >(localFaceId[2*f]);
+    auto f_Rid = static_cast< std::size_t >(localFaceId[2*f+1]);
 
-    std::array< tk::real, 3> ref_gp_l{
-      Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
-      Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
-      Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
-    std::array< tk::real, 3> ref_gp_r{
-      Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
-      Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
-      Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
+    auto ref_gp_l = tk::fc_coord[f_Lid];
+    auto ref_gp_r = tk::fc_coord[f_Rid];
 
-    //Compute the basis functions
-    auto B_l = eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
-    auto B_r = eval_basis( rdof, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
+    // Compute the basis functions
+    const auto& B_l = Bf_array[f_Lid];
+    const auto& B_r = Bf_array[f_Rid];
 
     std::array< std::vector< real >, 2 > state;
 
