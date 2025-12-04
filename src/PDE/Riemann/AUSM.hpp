@@ -136,11 +136,17 @@ struct AUSM {
     auto p12 = msl[2]*pl + msr[3]*pr + pu;
 
     auto md = 0.0;
-    //// uncomment code below AND set k_u to zero above for AUSM-2025u/p mods.
+    auto delta = 0.0;
+    // Velocity magnitudes
+    auto vmag_l = tk::dot( {{ul, vl, wl}}, {{ul, vl, wl}} );
+    auto vmag_r = tk::dot( {{ur, vr, wr}}, {{ur, vr, wr}} );
+    auto m0_mod = 4.0
+      * (0.25 - (0.5*(vmag_l*vmag_l + vmag_r*vmag_r)/(ac12*ac12)));
+    //// uncomment code below AND set k_u and k_p to zero for AUSM-2025u/p mods.
     //// Additional diffusion
-    //auto delta = 4.0;
-    ////auto md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * ac12);
-    //md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
+    //delta = 4.0;
+    //md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * ac12);
+    ////md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
 
     // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
@@ -162,8 +168,13 @@ struct AUSM {
                                  + p12*fn[idir];
     }
 
-    l_plus = l_plus/( vriem + std::copysign(1.0e-12,vriem) );
-    l_minus = l_minus/( vriem + std::copysign(1.0e-12,vriem) );
+    // Evaluate pressure work biasing in energy equation
+    l_plus = 0.5 * (vriem + std::fabs(vriem))
+      / ( vriem + std::copysign(1.0e-12,vriem) )
+      + delta*std::max(m0_mod, 0.0);
+    l_minus = 0.5 * (vriem - std::fabs(vriem))
+      / ( vriem + std::copysign(1.0e-12,vriem) )
+      - delta*std::max(m0_mod, 0.0);
 
     // Store Riemann-advected partial pressures
     for (std::size_t k=0; k<nmat; ++k)
