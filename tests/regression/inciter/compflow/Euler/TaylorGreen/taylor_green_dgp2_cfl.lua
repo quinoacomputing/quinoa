@@ -4,6 +4,7 @@ inciter = {
 
   nstep = 40,   -- Max number of time steps
   cfl = 0.8,     -- CFL number
+  cfl_ramping = false,
   ttyi = 5,      -- TTY output interval
   scheme = "dgp2",
 
