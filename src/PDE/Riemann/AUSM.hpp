@@ -67,7 +67,7 @@ struct AUSM {
       rhor += u[1][densityIdx(nmat, k)];
     }
 
-    tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0);
+    tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0), dalmax(0.0);
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             hml(nmat, 0.0), hmr(nmat, 0.0),
                             pml(nmat, 0.0), pmr(nmat, 0.0),
@@ -88,6 +88,8 @@ struct AUSM {
       hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
       amatr = mat_blk[k].compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k );
+
+      dalmax = std::max(std::fabs(al_l[k]-al_r[k]), dalmax);
 
       // Average states for mixture speed of sound
       arhom12[k] = 0.5*(u[0][densityIdx(nmat, k)] + u[1][densityIdx(nmat, k)]);
@@ -145,13 +147,15 @@ struct AUSM {
     // Velocity magnitudes
     auto vmag_l = tk::dot( {{ul, vl, wl}}, {{ul, vl, wl}} );
     auto vmag_r = tk::dot( {{ur, vr, wr}}, {{ur, vr, wr}} );
-    auto m0_mod = 4.0
-      * (0.25 - (0.5*(vmag_l*vmag_l + vmag_r*vmag_r)/(ac12*ac12)));
+    auto m0_mod = 2.0
+      * (0.5 - (0.5*(vmag_l*vmag_l + vmag_r*vmag_r)/(ac12*ac12)));
     //// uncomment code below AND set k_u and k_p to zero for AUSM-2025u/p mods.
     //// Additional diffusion
+    //if (dalmax < 1e-6) {
     //delta = 4.0;
     //md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * ac12);
     ////md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
+    //}
 
     // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
