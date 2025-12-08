@@ -749,7 +749,7 @@ class MultiMat {
               tk::real eta = std::clamp(-pk/(equiv_stress), -1.5, 1.5);
               //printf("dbg = %e, %e, %e, %e\n", alpha, pk, equiv_stress, d3*eta);
               ef = std::max<tk::real>(d1 + d2*std::exp(d3*eta), 5.0e-02);
-              dD = std::min(1.0e-04, std::max(-1.0e-04, plastic_rate*dt/ef));
+              dD = 1.0e-02*std::min(1.0e-04, std::max(-1.0e-04, plastic_rate*dt/ef));
             }
             // 6. Evolve D
             //printf("k, dmg = %lu, %e\n", k, U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)));
