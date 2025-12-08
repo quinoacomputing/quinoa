@@ -1520,14 +1520,8 @@ DG::solve( tk::real newdt )
     }
   }
 
-  if (!imex_runge_kutta) {
-    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
-  }
-  else if (m_stage < m_nstage-1) {
-    // Save previous rhs
-    m_rhsprev = m_rhs;
+  if (!imex_runge_kutta || m_stage < m_nstage-1) {
+    if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
       myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
       myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
