@@ -730,6 +730,7 @@ class MultiMat {
             // 7. Compute dD
             auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
             // auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
+
             tk::real d1(0.0), d2(0.0), d3(0.0), d4(0.0);
             if (k == 1) {
               d1 = 0.1166; // temp
@@ -748,22 +749,13 @@ class MultiMat {
               tk::real eta = std::clamp(-pk/(equiv_stress), -1.5, 1.5);
               //printf("dbg = %e, %e, %e, %e\n", alpha, pk, equiv_stress, d3*eta);
               ef = std::max<tk::real>(d1 + d2*std::exp(d3*eta), 5.0e-02);
-              dD = std::min(2.0e-02, std::max(0.0, plastic_rate*dt/ef));
-              // if (k == 0)
-              //   dD = 0.0;
-              // printf("debug = %e, %e\n", dD, equiv_stress);
-              // printf("alpha = %e\n", alpha);
-              // printf("%e, %e, %e\n", g[0][0], g[0][1], g[0][2]);
-              // printf("%e, %e, %e\n", g[1][0], g[1][1], g[1][2]);
-              // printf("%e, %e, %e\n", g[2][0], g[2][1], g[2][2]);
-              // printf("%e, %e, %e\n", sigma_dev[0][0], sigma_dev[0][1], sigma_dev[0][2]);
-              // printf("%e, %e, %e\n", sigma_dev[1][0], sigma_dev[1][1], sigma_dev[1][2]);
-              // printf("%e, %e, %e\n", sigma_dev[2][0], sigma_dev[2][1], sigma_dev[2][2]);
+              dD = std::min(1.0e-04, std::max(-1.0e-04, plastic_rate*dt/ef));
             }
             // 6. Evolve D
             //printf("k, dmg = %lu, %e\n", k, U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)));
             tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) += arho*dD;
+
             // 7. Maintain bounds
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) =
               std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 1.0e-06*arho);

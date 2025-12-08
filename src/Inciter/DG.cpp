@@ -1457,17 +1457,24 @@ DG::solve( tk::real newdt )
   if (imex_runge_kutta) {
     if (m_stage == 0)
     {
-      // Save previous rhs
-      m_rhsprev = m_rhs;
-      // Initialize m_stiffrhs to zero
+      // Initialize m_stiffrhs to zero                                                                                                                      
       m_stiffrhs.fill(0.0);
       m_stiffrhsprev.fill(0.0);
     }
   }
 
-  g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-    myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-    myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
+  if (!imex_runge_kutta) {
+    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+      myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
+  }
+  else if (m_stage < m_nstage-1) {
+    // Save previous rhs                                                                                                                                    
+    m_rhsprev = m_rhs;
+    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+      myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
+  }
 
   if (!imex_runge_kutta) {
     // Explicit time-stepping using RK3 to discretize time-derivative
