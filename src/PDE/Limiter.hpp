@@ -223,7 +223,6 @@ VertexBasedLimiting(
   const std::vector< std::size_t >& inpoel,
   std::size_t e,
   std::size_t rdof,
-  std::size_t ,
   std::vector< tk::real >& phi,
   const std::vector< std::size_t >& VarList );
 

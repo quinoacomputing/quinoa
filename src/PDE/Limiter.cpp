@@ -280,7 +280,7 @@ VertexBasedTransport_P1(
       std::vector< std::size_t > var;
       for (std::size_t c=0; c<ncomp; ++c) var.push_back(c);
       // limit conserved quantities
-      VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phi, var);
+      VertexBasedLimiting(U, esup, inpoel, e, rdof, phi, var);
 
       // limits under which compression is to be performed
       std::vector< std::size_t > matInt(ncomp, 0);
@@ -383,7 +383,7 @@ VertexBasedCompflow_P1(
       std::vector< std::size_t > var;
       for (std::size_t c=0; c<ncomp; ++c) var.push_back(c);
       // limit conserved quantities
-      VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phi, var);
+      VertexBasedLimiting(U, esup, inpoel, e, rdof, phi, var);
 
       // apply limiter function
       for (std::size_t c=0; c<ncomp; ++c)
@@ -493,7 +493,7 @@ VertexBasedCompflow_P2(
       // Obtain limiting coefficient for P1 coefficients
       std::vector< std::size_t > var;
       for (std::size_t c=0; c<ncomp; ++c) var.push_back(c);
-      VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phic_p1, var);
+      VertexBasedLimiting(U, esup, inpoel, e, rdof, phic_p1, var);
 
       // apply limiter function to the solution with Taylor basis
       for (std::size_t c=0; c<ncomp; ++c) {
@@ -595,17 +595,17 @@ VertexBasedMultiMat_P1(
         // limit conserved quantities
         std::vector< std::size_t > varc;
         for (std::size_t c=0; c<ncomp; ++c) varc.push_back(c);
-        VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phic, varc);
+        VertexBasedLimiting(U, esup, inpoel, e, rdof, phic, varc);
         // limit primitive quantities
         std::vector< std::size_t > varp;
         for (std::size_t c=0; c<nprim; ++c) varp.push_back(c);
-        VertexBasedLimiting(P, esup, inpoel, e, rdof, dof_el, phip, varp);
+        VertexBasedLimiting(P, esup, inpoel, e, rdof, phip, varp);
       } else {
         // When shockmarker is 0, the volume fraction, density and energy
         // of minor material will still be limited to ensure a stable solution.
         std::vector< std::size_t > vars;
         for (std::size_t k=0; k<nmat; ++k) vars.push_back(volfracIdx(nmat,k));
-        VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phic, vars);
+        VertexBasedLimiting(U, esup, inpoel, e, rdof, phic, vars);
 
         for(std::size_t k=0; k<nmat; ++k) {
           if(U(e, volfracDofIdx(nmat,k,rdof,0)) < 1e-4) {
@@ -618,10 +618,10 @@ VertexBasedMultiMat_P1(
                 for (std::size_t j=0; j<3; ++j)
                   vars.push_back(deformIdx(nmat, solidx[k], i, j));
             }
-            VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phic, vars);
+            VertexBasedLimiting(U, esup, inpoel, e, rdof, phic, vars);
 
             // limit the pressure of minor materials
-            VertexBasedLimiting(P, esup, inpoel, e, rdof, dof_el,
+            VertexBasedLimiting(P, esup, inpoel, e, rdof,
               phip, std::vector< std::size_t >{pressureIdx(nmat, k)});
           }
         }
@@ -794,11 +794,11 @@ VertexBasedMultiMat_P2(
         // Obtain limiter coefficient for P1 conserved quantities
         std::vector< std::size_t > varc;
         for (std::size_t c=0; c<ncomp; ++c) varc.push_back(c);
-        VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phic_p1, varc);
+        VertexBasedLimiting(U, esup, inpoel, e, rdof, phic_p1, varc);
         // Obtain limiter coefficient for P1 primitive quantities
         std::vector< std::size_t > varp;
         for (std::size_t c=0; c<nprim; ++c) varp.push_back(c);
-        VertexBasedLimiting(P, esup, inpoel, e, rdof, dof_el, phip_p1, varp);
+        VertexBasedLimiting(P, esup, inpoel, e, rdof, phip_p1, varp);
       } else {
         // When shockmarker is 0, the volume fraction will still be limited to
         // ensure a stable solution. Since the limiting strategy for third order
@@ -806,16 +806,16 @@ VertexBasedMultiMat_P2(
         // energy and pressure of minor material will not be limited.
         std::vector< std::size_t > vars;
         for (std::size_t k=0; k<nmat; ++k) vars.push_back(volfracIdx(nmat,k));
-        VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phic_p1, vars);
+        VertexBasedLimiting(U, esup, inpoel, e, rdof, phic_p1, vars);
 
         //for(std::size_t k=0; k<nmat; ++k) {
         //  if(U(e, volfracDofIdx(nmat,k,rdof,0)) < 1e-4) {
         //    // limit the density of minor materials
-        //    VertexBasedLimiting(unk, U, esup, inpoel, e, rdof, dof_el,
+        //    VertexBasedLimiting(unk, U, esup, inpoel, e, rdof,
         //      phic_p1, std::vector< std::size_t >{densityIdx(nmat,k)});
 
         //    // limit the pressure of minor materials
-        //    VertexBasedLimiting(prim, P, esup, inpoel, e, rdof, dof_el,
+        //    VertexBasedLimiting(prim, P, esup, inpoel, e, rdof,
         //      phip_p1, std::vector< std::size_t >{pressureIdx(nmat,k)});
         //  }
         //}
@@ -918,9 +918,9 @@ VertexBasedMultiMat_FV(
     std::fill(phip.begin(), phip.end(), 1.0);
 
     // limit conserved quantities
-    VertexBasedLimiting(U, esup, inpoel, e, rdof, rdof, phic, varc);
+    VertexBasedLimiting(U, esup, inpoel, e, rdof, phic, varc);
     // limit primitive quantities
-    VertexBasedLimiting(P, esup, inpoel, e, rdof, rdof, phip, varp);
+    VertexBasedLimiting(P, esup, inpoel, e, rdof, phip, varp);
 
     // limits under which compression is to be performed
     for (std::size_t k=0; k<nmat; ++k)
@@ -1060,9 +1060,9 @@ VertexBasedMultiSpecies_P1(
       }
 
       std::vector< tk::real > phic(ncomp, 1.0), phip(nprim, 1.0);
-      VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phic, varc);
+      VertexBasedLimiting(U, esup, inpoel, e, rdof, phic, varc);
       if (!varp.empty())
-        VertexBasedLimiting(P, esup, inpoel, e, rdof, dof_el, phip, varp);
+        VertexBasedLimiting(P, esup, inpoel, e, rdof, phip, varp);
 
       std::vector< tk::real > phic_p2, phip_p2;
       PositivityLimiting(1, nspec, mat_blk, rdof, dof_el, ndofel, e,
@@ -1201,9 +1201,9 @@ VertexBasedMultiSpecies_P2(
 
       std::vector< tk::real > phic_p1(ncomp, 1.0), phip_p1(nprim, 1.0);
       if (!varc.empty())
-        VertexBasedLimiting(U, esup, inpoel, e, rdof, dof_el, phic_p1, varc);
+        VertexBasedLimiting(U, esup, inpoel, e, rdof, phic_p1, varc);
       if (!varp.empty())
-        VertexBasedLimiting(P, esup, inpoel, e, rdof, dof_el, phip_p1, varp);
+        VertexBasedLimiting(P, esup, inpoel, e, rdof, phip_p1, varp);
 
       std::vector< tk::real > phic_p2(ncomp, 1.0), phip_p2(nprim, 1.0);
       PositivityLimiting(1, nspec, mat_blk, ndof, dof_el, ndofel, e,
@@ -1521,7 +1521,6 @@ VertexBasedLimiting(
   const std::vector< std::size_t >& inpoel,
   std::size_t e,
   std::size_t rdof,
-  std::size_t dof_el,
   std::vector< tk::real >& phi,
   const std::vector< std::size_t >& VarList )
 // *****************************************************************************
@@ -1531,11 +1530,12 @@ VertexBasedLimiting(
 //! \param[in] inpoel Element connectivity
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] dof_el Local number of degrees of freedom
 //! \param[in,out] phi Limiter function for solution in element e
 //! \param[in] VarList List of variable indices to be limited
 // *****************************************************************************
 {
+  std::size_t ncomp = U.nprop()/rdof;
+
   // Kuzmin's vertex-based TVD limiter uses min-max bounds that the
   // high-order solution should satisfy, to ensure TVD properties. For a
   // high-order method like DG, this involves the following steps:
@@ -1581,6 +1581,7 @@ VertexBasedLimiting(
 
     // ----- Step-2: compute the limiter function at this node
     const auto& B_p = Bp_array[lp];
+    auto state = tk::eval_state(ncomp, rdof, rdof, e, U, B_p);
 
     // compute the limiter function
     for (std::size_t i=0; i<VarList.size(); ++i)
@@ -1589,13 +1590,7 @@ VertexBasedLimiting(
       auto phi_gp = 1.0;
       auto mark = c*rdof;
       auto u0 = U(e, mark);
-
-      // uNeg = u(gp) - u0
-      auto uNeg = 0.0;
-      auto m = std::min(dof_el, B_p.size());
-      for (std::size_t j=1; j<m; ++j) {
-        uNeg += B_p[j] * U(e, mark+j);
-      }
+      auto uNeg = state[c] - u0;
 
       auto tol = 1.0e-06*std::max(std::fabs(u0), 1e-14);
       if (uNeg > tol)
