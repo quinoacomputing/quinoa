@@ -798,25 +798,98 @@ class MultiSpecies {
                                  std::vector< tk::real > /*x*/,
                                  tk::Fields& /*U*/ ) const {}
 
-    //! Compute stiff terms for a single element. No-op until chem sources added
-    // //! \param[in] e Element number
-    // //! \param[in] geoElem Element geometry array
-    // //! \param[in] inpoel Element-node connectivity
-    // //! \param[in] coord Array of nodal coordinates
-    // //! \param[in] U Solution vector at recent time step
-    // //! \param[in] P Primitive vector at recent time step
-    // //! \param[in] ndofel Vector of local number of degrees of freedom
-    // //! \param[in,out] R Right-hand side vector computed
-    void stiff_rhs( std::size_t /*e*/,
-                    const tk::Fields& /*geoElem*/,
-                    const std::vector< std::size_t >& /*inpoel*/,
-                    const tk::UnsMesh::Coords& /*coord*/,
-                    const tk::Fields& /*U*/,
-                    const tk::Fields& /*P*/,
-                    const std::vector< std::size_t >& /*ndofel*/,
-                    tk::Fields& /*R*/ ) const {}
+		    
+    void stiff_rhs( std::size_t e, 
+		    const tk::Fields& geoElem,
+		    const std::vector< std::size_t >& inpoel,
+		    const tk::UnsMesh::Coords& coord,
+		    const tk::Fields& U,
+		    const tk::Fields& P,
+		    const std::vector< std::size_t >& ndofel,
+		    tk::Fields& R ) const
+    {
+   
 
-    //! Extract the velocity field at cell nodes. Currently unused.
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+      Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
+              "vector and primitive vector at recent time step incorrect" );
+      Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
+              "vector must equal "+ std::to_string(rdof*m_ncomp) );
+      Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
+              "vector must equal "+ std::to_string(rdof*m_nprim) );
+      Assert( R.nprop() == ndof*nstiffeq(), "Number of components in "
+              "right-hand side must equal "+ std::to_string(ndof*nstiffeq()) );
+
+      // set rhs to zero for element e
+      for (std::size_t i=0; i<ndof*nstiffeq(); ++i)
+        R(e, i) = 0.0;
+	    
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      auto ncomp = U.nprop()/rdof;
+      auto nprim = P.nprop()/rdof;
+
+      auto ng = tk::NGvol(ndofel[e]);
+
+      // arrays for quadrature points
+      std::array< std::vector< tk::real >, 3 > coordgp;
+      std::vector< tk::real > wgp;
+
+      coordgp[0].resize( ng );
+      coordgp[1].resize( ng );
+      coordgp[2].resize( ng );
+      wgp.resize( ng );
+
+      tk::GaussQuadratureTet( ng, coordgp, wgp );
+
+      // Extract the element coordinates
+      std::array< std::array< tk::real, 3>, 4 > coordel {{
+        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+      }};
+
+
+      // Gaussian quadrature
+      for (std::size_t igp=0; igp<ng; ++igp)
+      {
+        // Compute the coordinates of quadrature point at physical domain
+        auto gp = tk::eval_gp( igp, coordel, coordgp );
+
+        // Compute the basis function
+        auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+                             coordgp[2][igp] );
+
+        auto state = tk::evalPolynomialSol(m_mat_blk, 0, ncomp, nprim,
+          rdof, 1, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P); // nmat = 1
+
+        // compute source
+        // Loop through species
+        for (std::size_t k=0; k<nspec; ++k)
+        {
+            // Contribute to the right-hand-side
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                for (std::size_t idof=0; idof<ndof; ++idof)
+                {
+                  std::size_t dofId = densityDofIdx(nspec,k,ndof,idof);
+                  R(e, dofId) += 0; // currently no-op
+                }
+          }
+        }
+
+      
+    }
+
+
+
+    // //! Extract the velocity field at cell nodes. Currently unused.
     // //! \param[in] U Solution vector at recent time step
     // //! \param[in] N Element node indices
     //! \return Array of the four values of the velocity field
