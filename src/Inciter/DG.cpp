@@ -2350,8 +2350,7 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
 
   // Compute stiff_rhs
   g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
-    myGhosts()->m_inpoel, myGhosts()->m_coord,
-    m_u, m_p, m_ndof, m_stiffrhs );
+    m_u, m_ndof, m_stiffrhs );
 
   // Store f
   std::vector< tk::real > f(n, 0.0);
