@@ -1170,40 +1170,31 @@ class MultiMat {
     //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t e,
                     const tk::Fields& geoElem,
-                    const std::vector< std::size_t >& inpoel,
-                    const tk::UnsMesh::Coords& coord,
+                    const std::vector< std::size_t >& /*inpoel*/,
+                    const tk::UnsMesh::Coords& /*coord*/,
                     const tk::Fields& U,
-                    const tk::Fields& P,
+                    const tk::Fields& /*P*/,
                     const std::vector< std::size_t >& ndofel,
                     tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      const auto intsharp =
-        g_inputdeck.get< tag::multimat, tag::intsharp >();
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
 
-      Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
-              "vector and primitive vector at recent time step incorrect" );
+      // Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
+      //         "vector and primitive vector at recent time step incorrect" );
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
-              "vector must equal "+ std::to_string(rdof*m_nprim) );
+      // Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
+      //         "vector must equal "+ std::to_string(rdof*m_nprim) );
       Assert( R.nprop() == ndof*nstiffeq(), "Number of components in "
               "right-hand side must equal "+ std::to_string(ndof*nstiffeq()) );
 
       // set rhs to zero for element e
       for (std::size_t i=0; i<ndof*nstiffeq(); ++i)
         R(e, i) = 0.0;
-
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      auto ncomp = U.nprop()/rdof;
-      auto nprim = P.nprop()/rdof;
 
       auto ng = tk::NGvol(ndofel[e]);
 
@@ -1218,26 +1209,14 @@ class MultiMat {
 
       tk::GaussQuadratureTet( ng, coordgp, wgp );
 
-      // Extract the element coordinates
-      std::array< std::array< tk::real, 3>, 4 > coordel {{
-        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-      }};
-
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)
       {
-        // Compute the coordinates of quadrature point at physical domain
-        auto gp = tk::eval_gp( igp, coordel, coordgp );
-
         // Compute the basis function
         auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
-        auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
-          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P);
+        auto state = tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B );
 
         // compute source
         // Loop through materials

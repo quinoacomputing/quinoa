@@ -2173,21 +2173,33 @@ DG::imex_integrate()
     m_stiffrhsprev = m_stiffrhs;
 
     // Compute the imex update
+    const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+    const auto neq = m_u.nprop()/rdof;
 
-    // Integrate explicitly on the imex equations
-    // (To use as initial values)
-    for (std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+    for (std::size_t e=0; e<nelem; ++e) {
       auto vole = myGhosts()->m_geoElem(e,0);
+      // Integrate explicitly on all equations
+      for (std::size_t c=0; c<neq; ++c)
+      {
+        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+        {
+          auto rmark = c*rdof+k;
+          auto mark = c*ndof+k;
+          m_u(e, rmark) = m_un(e, rmark) + d->Dt() * (
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
+          if(fabs(m_u(e, rmark)) < 1e-16)
+            m_u(e, rmark) = 0;
+        }
+      }
+      // Integrate previous implicit step, which is now explicit
       for (std::size_t c=0; c<m_nstiffeq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
           auto rmark = m_stiffEqIdx[c]*rdof+k;
-          auto mark = m_stiffEqIdx[c]*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k])
-            + impl_rkcoef[0][m_stage]
+          m_u(e, rmark) += d->Dt() *
+            ( impl_rkcoef[0][m_stage]
             * m_stiffrhsprev(e,c*ndof+k)/(vole*mass_dubiner[k]) );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
@@ -2196,7 +2208,6 @@ DG::imex_integrate()
     }
 
     // Solve for implicit-explicit equations
-    const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
     for (std::size_t e=0; e<nelem; ++e)
     {
 
@@ -2243,37 +2254,21 @@ DG::imex_integrate()
 
     }
 
-    // Then, integrate explicitly on the remaining equations
-    for (std::size_t e=0; e<nelem; ++e) {
-      auto vole = myGhosts()->m_geoElem(e,0);
-      for (std::size_t c=0; c<m_nnonstiffeq; ++c)
-      {
-        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
-        {
-          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
-          auto mark = m_nonStiffEqIdx[c]*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
-          if(fabs(m_u(e, rmark)) < 1e-16)
-            m_u(e, rmark) = 0;
-        }
-      }
-    }
   }
   else {
     // For last stage just use all previously computed stages
     const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+    const auto neq = m_u.nprop()/rdof;
     for (std::size_t e=0; e<nelem; ++e)
     {
       auto vole = myGhosts()->m_geoElem(e,0);
-      // First integrate explicitly on nonstiff equations
-      for (std::size_t c=0; c<m_nnonstiffeq; ++c)
+      // First integrate explicitly on all equations
+      for (std::size_t c=0; c<neq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
-          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
-          auto mark = m_nonStiffEqIdx[c]*ndof+k;
+          auto rmark = c*rdof+k;
+          auto mark = c*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
             expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
             + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
@@ -2281,21 +2276,16 @@ DG::imex_integrate()
             m_u(e, rmark) = 0;
         }
       }
-      // Then, integrate the imex-equations
+      // Then, integrate the implicit part
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
           auto rmark = m_stiffEqIdx[ieq]*rdof+idof;
-          auto mark = m_stiffEqIdx[ieq]*ndof+idof;
-          m_u(e, rmark) = m_un(e, rmark)
-            + d->Dt() * (expl_rkcoef[0][m_stage]
-                         * m_rhsprev(e,mark)/(vole*mass_dubiner[idof])
-                         + expl_rkcoef[1][m_stage]
-                         * m_rhs(e,mark)/(vole*mass_dubiner[idof])
-                         + impl_rkcoef[0][m_stage]
-                         * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
-                         + impl_rkcoef[1][m_stage]
-                         * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
+          m_u(e, rmark) +=
+            d->Dt() * ( impl_rkcoef[0][m_stage]
+                      * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
+                      + impl_rkcoef[1][m_stage]
+                      * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
