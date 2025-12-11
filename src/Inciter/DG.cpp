@@ -2129,6 +2129,22 @@ DG::imex_integrate()
 
     // Compute the imex update
 
+    // First, integrate explicitly on the remaining equations
+    const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+    for (std::size_t e=0; e<nelem; ++e)
+      for (std::size_t c=0; c<m_nnonstiffeq; ++c)
+      {
+        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+        {
+          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
+          auto mark = m_nonStiffEqIdx[c]*ndof+k;
+          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
+          if(fabs(m_u(e, rmark)) < 1e-16)
+            m_u(e, rmark) = 0;
+        }
+      }
     // Integrate explicitly on the imex equations
     // (To use as initial values)
     for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
@@ -2149,7 +2165,6 @@ DG::imex_integrate()
       }
 
     // Solve for implicit-explicit equations
-    const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
     for (std::size_t e=0; e<nelem; ++e)
     {
 
@@ -2196,21 +2211,6 @@ DG::imex_integrate()
 
     }
 
-    // Then, integrate explicitly on the remaining equations
-    for (std::size_t e=0; e<nelem; ++e)
-      for (std::size_t c=0; c<m_nnonstiffeq; ++c)
-      {
-        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
-        {
-          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
-          auto mark = m_nonStiffEqIdx[c]*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
-          if(fabs(m_u(e, rmark)) < 1e-16)
-            m_u(e, rmark) = 0;
-        }
-      }
   }
   else {
     // For last stage just use all previously computed stages
