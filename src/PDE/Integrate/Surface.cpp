@@ -19,7 +19,6 @@
 #include "Vector.hpp"
 #include "Quadrature.hpp"
 #include "Reconstruction.hpp"
-#include "Integrate/SolidTerms.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"

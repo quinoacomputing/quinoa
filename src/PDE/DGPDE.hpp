@@ -185,11 +185,11 @@ class DGPDE {
       const std::size_t nielem ) const
     { self->initialize( geoElem, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
-    //! Public interface for computing density constraint
-    void computeDensityConstr( std::size_t nelem,
+    //! Public interface for computing plastic deformation
+    void computePlasticDeformation( std::size_t nelem,
                                tk::Fields& unk,
-                               std::vector< tk::real >& densityConstr) const
-    { self->computeDensityConstr( nelem, unk, densityConstr); }
+                               std::vector< tk::real >& plasticDeformation) const
+    { self->computePlasticDeformation( nelem, unk, plasticDeformation); }
 
     //! Public interface to updating the interface cells for the diff eq
     void updateInterfaceCells( tk::Fields& unk,
@@ -432,9 +432,9 @@ class DGPDE {
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
-      virtual void computeDensityConstr( std::size_t nelem,
+      virtual void computePlasticDeformation( std::size_t nelem,
                                          tk::Fields& unk,
-                                         std::vector< tk::real >& densityConstr)
+                                         std::vector< tk::real >& plasticDeformation)
                                          const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
@@ -595,11 +595,11 @@ class DGPDE {
         const std::size_t nielem )
       const override { data.initialize( geoElem, inpoel, coord, inbox,
         elemblkid, unk, t, nielem ); }
-      void computeDensityConstr( std::size_t nelem,
+      void computePlasticDeformation( std::size_t nelem,
                                  tk::Fields& unk,
-                                 std::vector< tk::real >& densityConstr)
+                                 std::vector< tk::real >& plasticDeformation)
                                  const override
-      { data.computeDensityConstr( nelem, unk, densityConstr ); }
+      { data.computePlasticDeformation( nelem, unk, plasticDeformation ); }
       void updateInterfaceCells( tk::Fields& unk,
                                  std::size_t nielem,
                                  std::vector< std::size_t >& ndofel,

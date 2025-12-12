@@ -33,7 +33,6 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/Source.hpp"
-#include "Integrate/SolidTerms.hpp"
 #include "RiemannChoice.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -247,15 +246,15 @@ class MultiSpecies {
       }
     }
 
-    //! Compute density constraint for a given material. No-op
-    // //! \param[in] nelem Number of elements
-    // //! \param[in] unk Array of unknowns
-    //! \param[out] densityConstr Density Constraint: rho/(rho0*det(g))
-    void computeDensityConstr( std::size_t /*nelem*/,
-                               tk::Fields& /*unk*/,
-                               std::vector< tk::real >& densityConstr) const
+    //! Compute average plastic deformation on each element
+    //! \param[in] nelem Number of elements
+    //! \param[in] unk Array of unknowns
+    //! \param[out] plasticDeformation Frobenius norm of Lp matrix
+    void computePlasticDeformation( std::size_t nelem,
+                                    tk::Fields& unk,
+                                    std::vector< tk::real >& plasticDeformation) const
     {
-      densityConstr.resize(0);
+      plasticDeformation.resize(0);
     }
 
     //! Update the interface cells to first order dofs. No-op.

@@ -7,8 +7,7 @@ add_library(Integrate
             Volume.cpp
             MultiMatTerms.cpp
             Source.cpp
-            Basis.cpp
-            SolidTerms.cpp)
+            Basis.cpp)
 
 target_include_directories(Integrate PUBLIC
                            ${QUINOA_SOURCE_DIR}

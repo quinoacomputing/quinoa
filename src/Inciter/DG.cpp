@@ -1860,13 +1860,13 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
-  // Add rho0*det(g)/rho to make sure it is staying close to 1,
+  // Add  to make sure it is staying close to 1,
   // averaged for all materials
-  std::vector< tk::real > densityConstr(nelem);
-  g_dgpde[d->MeshId()].computeDensityConstr(nelem, m_u, densityConstr);
+  std::vector< tk::real > plasticDeformation(nelem);
+  g_dgpde[d->MeshId()].computePlasticDeformation(nelem, m_u, plasticDeformation);
   for (const auto& [child,parent] : addedTets)
-    densityConstr[child] = 0.0;
-  if (densityConstr.size() > 0) elemfields.push_back( densityConstr );
+    plasticDeformation[child] = 0.0;
+  if (plasticDeformation.size() > 0) elemfields.push_back( plasticDeformation );
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
@@ -1882,8 +1882,8 @@ DG::writeFields(
 
   elemfieldnames.push_back( "shock_marker" );
 
-  if (densityConstr.size() > 0)
-    elemfieldnames.push_back( "density_constraint" );
+  if (plasticDeformation.size() > 0)
+    elemfieldnames.push_back( "plastic_deformation" );
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
