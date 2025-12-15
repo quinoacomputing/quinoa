@@ -311,41 +311,42 @@ class MultiMat {
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       for (std::size_t e=0; e<nelem; ++e)
         plasticDeformation[e] = 0.0;
+      if (!inciter::haveSolid(nmat, solidx)) return;
       for (std::size_t e=0; e<nelem; ++e)
-          for (std::size_t imat=0; imat<nmat; ++imat)
-            if (solidx[imat] > 0) {
-              tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
-              std::array< std::array< tk::real, 3 >, 3 > g;
-              // Compute the source terms
-              for (std::size_t i=0; i<3; ++i)
-                for (std::size_t j=0; j<3; ++j)
-                  g[i][j] = unk(e, deformDofIdx(nmat, solidx[imat], i, j, rdof, 0));
+        for (std::size_t imat=0; imat<nmat; ++imat)
+          if (solidx[imat] > 0) {
+            tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
+            std::array< std::array< tk::real, 3 >, 3 > g;
+            // Compute the source terms
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                g[i][j] = unk(e, deformDofIdx(nmat, solidx[imat], i, j, rdof, 0));
 
-              // Compute dev(sigma)
-              std::array< std::array< tk::real, 3 >, 3 > sigma_dev;
-              for (std::size_t i=0; i<3; ++i)
-                for (std::size_t j=0; j<3; ++j)
-                  sigma_dev[i][j] = pri(e, stressDofIdx(nmat, solidx[imat],
-                    stressCmp[i][j], rdof, 0))/alpha;
-              tk::real sigma_trace =
-                sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
-              for (std::size_t i=0; i<3; ++i)
-                sigma_dev[i][i] -= sigma_trace/3.0;
+            // Compute dev(sigma)
+            std::array< std::array< tk::real, 3 >, 3 > sigma_dev;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                sigma_dev[i][j] = pri(e, stressDofIdx(nmat, solidx[imat],
+                  stressCmp[i][j], rdof, 0))/alpha;
+            tk::real sigma_trace =
+              sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
+            for (std::size_t i=0; i<3; ++i)
+              sigma_dev[i][i] -= sigma_trace/3.0;
 
-              // Compute g*dev(sigma), symmetrized and
-              // add it to plasticDeformation
-              for (std::size_t i=0; i<3; ++i)
-                for (std::size_t j=0; j<3; ++j) {
-                  tk::real sum1 = 0.0;
-                  tk::real sum2 = 0.0;
-                  for (std::size_t l=0; l<3; ++l) {
-                    sum1 += g[i][l]*sigma_dev[l][j];
-                    sum2 += sigma_dev[i][l]*g[l][j];
-                  }
-                  plasticDeformation[e] += std::pow(0.5*(sum1+sum2),2.0);
+            // Compute g*dev(sigma), symmetrized and
+            // add it to plasticDeformation
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j) {
+                tk::real sum1 = 0.0;
+                tk::real sum2 = 0.0;
+                for (std::size_t l=0; l<3; ++l) {
+                  sum1 += g[i][l]*sigma_dev[l][j];
+                  sum2 += sigma_dev[i][l]*g[l][j];
                 }
-              plasticDeformation[e] = alpha*std::sqrt(plasticDeformation[e]);
-            }
+                plasticDeformation[e] += std::pow(0.5*(sum1+sum2),2.0);
+              }
+            plasticDeformation[e] = alpha*std::sqrt(plasticDeformation[e]);
+          }
     }
 
     //! Update the interface cells to first order dofs
