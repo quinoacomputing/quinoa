@@ -1368,7 +1368,7 @@ OversetFE::solve()
       auto I_n12 = tk::matmult33(dRn12,
                    tk::matmult33(I_n, tk::transpose3by3(dRn12)));
 
-      // omega kicked full time step 
+      // omega kicked full time step
       for (std::size_t i=0; i<3; ++i) {
         m_angMomentum[i] = m_angMomentumn[i] + m_surfTorque[i]*dtp;
       }
