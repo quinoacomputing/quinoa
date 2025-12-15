@@ -415,7 +415,7 @@ movePoint( const std::array< tk::real, 3 >& origin,
 //! Calculate rotation matrix given three rotations in degrees
 //!  \param[in] angles Angles in 3D space by which point is to be rotated
 //!  \return Rotation matrix associated with rotations
-inline std::array< std::array< tk::real, 3 >, 3 > 
+inline std::array< std::array< tk::real, 3 >, 3 >
 anglesToRotMat( const std::array< tk::real, 3 >& angles)
 {
   // Convert angles to radian
@@ -849,13 +849,13 @@ matmult33(const std::array< std::array< tk::real, 3 >, 3 >& A,
   auto AB = A;
   AB[0][0] = A[0][0]*B[0][0] + A[0][1]*B[1][0] + A[0][2]*B[2][0];
   AB[0][1] = A[0][0]*B[0][1] + A[0][1]*B[1][1] + A[0][2]*B[2][1];
-  AB[0][2] = A[0][0]*B[0][2] + A[0][1]*B[1][2] + A[0][2]*B[2][2]; 
-  AB[1][0] = A[1][0]*B[0][0] + A[1][1]*B[1][0] + A[1][2]*B[2][0]; 
-  AB[1][1] = A[1][0]*B[0][1] + A[1][1]*B[1][1] + A[1][2]*B[2][1]; 
-  AB[1][2] = A[1][0]*B[0][2] + A[1][1]*B[1][2] + A[1][2]*B[2][2]; 
-  AB[2][0] = A[2][0]*B[0][0] + A[2][1]*B[1][0] + A[2][2]*B[2][0]; 
-  AB[2][1] = A[2][0]*B[0][1] + A[2][1]*B[1][1] + A[2][2]*B[2][1]; 
-  AB[2][2] = A[2][0]*B[0][2] + A[2][1]*B[1][2] + A[2][2]*B[2][2]; 
+  AB[0][2] = A[0][0]*B[0][2] + A[0][1]*B[1][2] + A[0][2]*B[2][2];
+  AB[1][0] = A[1][0]*B[0][0] + A[1][1]*B[1][0] + A[1][2]*B[2][0];
+  AB[1][1] = A[1][0]*B[0][1] + A[1][1]*B[1][1] + A[1][2]*B[2][1];
+  AB[1][2] = A[1][0]*B[0][2] + A[1][1]*B[1][2] + A[1][2]*B[2][2];
+  AB[2][0] = A[2][0]*B[0][0] + A[2][1]*B[1][0] + A[2][2]*B[2][0];
+  AB[2][1] = A[2][0]*B[0][1] + A[2][1]*B[1][1] + A[2][2]*B[2][1];
+  AB[2][2] = A[2][0]*B[0][2] + A[2][1]*B[1][2] + A[2][2]*B[2][2];
   return AB;
 }
 
@@ -929,25 +929,25 @@ Rtoq(const std::array< std::array< tk::real, 3 >, 3 >& R)
   auto tr = R[0][0] + R[1][1] + R[2][2];
   tk::real S, qw, qx, qy, qz;
 
-  if (tr > 0) { 
-    S = sqrt(tr + 1.0) * 2; // S=4*qw 
+  if (tr > 0) {
+    S = sqrt(tr + 1.0) * 2; // S=4*qw
     qw = 0.25 * S;
     qx = (R[2][1] - R[1][2]) / S;
-    qy = (R[0][2] - R[2][0]) / S; 
-    qz = (R[1][0] - R[0][1]) / S; 
-  } else if ((R[0][0] > R[1][1]) & (R[0][0] > R[2][2])) { 
+    qy = (R[0][2] - R[2][0]) / S;
+    qz = (R[1][0] - R[0][1]) / S;
+  } else if ((R[0][0] > R[1][1]) & (R[0][0] > R[2][2])) {
     S = sqrt(1.0 + R[0][0] - R[1][1] - R[2][2]) * 2;
     qw = (R[2][1] - R[1][2]) / S;
     qx = 0.25 * S;
-    qy = (R[0][1] + R[1][0]) / S; 
-    qz = (R[0][2] + R[2][0]) / S; 
-  } else if (R[1][1] > R[2][2]) { 
+    qy = (R[0][1] + R[1][0]) / S;
+    qz = (R[0][2] + R[2][0]) / S;
+  } else if (R[1][1] > R[2][2]) {
     S = sqrt(1.0 + R[1][1] - R[0][0] - R[2][2]) * 2;
     qw = (R[0][2] - R[2][0]) / S;
-    qx = (R[0][1] + R[1][0]) / S; 
+    qx = (R[0][1] + R[1][0]) / S;
     qy = 0.25 * S;
-    qz = (R[1][2] + R[2][1]) / S; 
-  } else { 
+    qz = (R[1][2] + R[2][1]) / S;
+  } else {
     S = sqrt(1.0 + R[2][2] - R[0][0] - R[1][1]) * 2;
     qw = (R[1][0] - R[0][1]) / S;
     qx = (R[0][2] + R[2][0]) / S;

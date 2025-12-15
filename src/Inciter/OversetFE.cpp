@@ -1293,7 +1293,7 @@ OversetFE::solve()
     // Remove symmetry directions if 3 DOF motion
     if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_dof >()
       == 3) {
-      
+
       // normal vector to symmetry plane (no restrictions on if it's a unit
       // vector, convert it here)
       auto sym_dir_vec =
@@ -1382,7 +1382,7 @@ OversetFE::solve()
         dq[i] *= 0.5*(dtp*0.5);
         m_rotationq[i] = qn12[i] + dq[i];
       }
-      
+
       // normalize
       auto qmag = tk::quaternion_mag(m_rotationq);
       for (std::size_t i = 0; i < 4; ++i) {
