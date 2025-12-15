@@ -1860,10 +1860,9 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
-  // Add  to make sure it is staying close to 1,
-  // averaged for all materials
+  // Compute plastic deformation averaged for all materials
   std::vector< tk::real > plasticDeformation(nelem);
-  g_dgpde[d->MeshId()].computePlasticDeformation(nelem, m_u, plasticDeformation);
+  g_dgpde[d->MeshId()].computePlasticDeformation(nelem, m_u, m_p, plasticDeformation);
   for (const auto& [child,parent] : addedTets)
     plasticDeformation[child] = 0.0;
   if (plasticDeformation.size() > 0) elemfields.push_back( plasticDeformation );

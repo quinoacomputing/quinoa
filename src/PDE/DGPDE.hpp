@@ -188,8 +188,9 @@ class DGPDE {
     //! Public interface for computing plastic deformation
     void computePlasticDeformation( std::size_t nelem,
                                tk::Fields& unk,
+                               tk::Fields& pri,
                                std::vector< tk::real >& plasticDeformation) const
-    { self->computePlasticDeformation( nelem, unk, plasticDeformation); }
+    { self->computePlasticDeformation( nelem, unk, pri, plasticDeformation); }
 
     //! Public interface to updating the interface cells for the diff eq
     void updateInterfaceCells( tk::Fields& unk,
@@ -433,8 +434,9 @@ class DGPDE {
         tk::real,
         const std::size_t nielem ) const = 0;
       virtual void computePlasticDeformation( std::size_t nelem,
-                                         tk::Fields& unk,
-                                         std::vector< tk::real >& plasticDeformation)
+                                              tk::Fields& unk,
+                                              tk::Fields& pri,
+                                              std::vector< tk::real >& plasticDeformation)
                                          const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
@@ -596,10 +598,11 @@ class DGPDE {
       const override { data.initialize( geoElem, inpoel, coord, inbox,
         elemblkid, unk, t, nielem ); }
       void computePlasticDeformation( std::size_t nelem,
-                                 tk::Fields& unk,
-                                 std::vector< tk::real >& plasticDeformation)
+                                      tk::Fields& unk,
+                                      tk::Fields& pri,
+                                      std::vector< tk::real >& plasticDeformation)
                                  const override
-      { data.computePlasticDeformation( nelem, unk, plasticDeformation ); }
+      { data.computePlasticDeformation( nelem, unk, pri, plasticDeformation ); }
       void updateInterfaceCells( tk::Fields& unk,
                                  std::size_t nielem,
                                  std::vector< std::size_t >& ndofel,

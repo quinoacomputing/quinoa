@@ -174,11 +174,13 @@ class Transport {
     }
 
     //! Compute average plastic deformation on each element
-    //! \param[in] nelem Number of elements
-    //! \param[in] unk Array of unknowns
+    // //! \param[in] nelem Number of elements
+    // //! \param[in] unk Array of unknowns
+    // //! \param[in] pri Array of primitives
     //! \param[out] plasticDeformation Frobenius norm of Lp matrix
-    void computePlasticDeformation( std::size_t nelem,
-                                    tk::Fields& unk,
+    void computePlasticDeformation( std::size_t /*nelem*/,
+                                    tk::Fields& /*unk*/,
+                                    tk::Fields& /*pri*/,
                                     std::vector< tk::real >& plasticDeformation) const
     {
       plasticDeformation.resize(0);
