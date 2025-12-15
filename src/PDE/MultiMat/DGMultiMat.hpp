@@ -309,10 +309,12 @@ class MultiMat {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t rdof = g_inputdeck.get< tag::rdof >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      for (std::size_t e=0; e<nelem; ++e)
+      if (!inciter::haveSolid(nmat, solidx)) {
+        plasticDeformation.resize(0);
+        return;
+      }
+      for (std::size_t e=0; e<nelem; ++e) {
         plasticDeformation[e] = 0.0;
-      if (!inciter::haveSolid(nmat, solidx)) return;
-      for (std::size_t e=0; e<nelem; ++e)
         for (std::size_t imat=0; imat<nmat; ++imat)
           if (solidx[imat] > 0) {
             tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
@@ -347,6 +349,7 @@ class MultiMat {
               }
             plasticDeformation[e] = alpha*std::sqrt(plasticDeformation[e]);
           }
+      }
     }
 
     //! Update the interface cells to first order dofs
