@@ -37,6 +37,7 @@ std::map< std::string, tk::GetVarFn > MultiMatOutVarFn()
   OutFnMap["y-velocity"] = multimat::velocityOutVar<1>;
   OutFnMap["z-velocity"] = multimat::velocityOutVar<2>;
   OutFnMap["material_indicator"] = multimat::matIndicatorOutVar;
+  OutFnMap["damage"] = multimat::damageOutVar;
   // Cauchy stress tensor
   OutFnMap["stress11"] = multimat::stressOutVar<0,0>;
   OutFnMap["stress12"] = multimat::stressOutVar<0,1>;

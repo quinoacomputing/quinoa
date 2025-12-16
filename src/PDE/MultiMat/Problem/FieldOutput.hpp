@@ -19,6 +19,7 @@
 #include "FaceData.hpp"
 #include "FunctionPrototypes.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
 
@@ -214,6 +215,33 @@ defGradOutVar( const tk::Fields& U, std::size_t rdof )
   }
 
   return g;
+}
+  
+//! Compute damage for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] rdof Number of reconstructed solution DOFs
+//! \return Damage ready to be output to file
+static tk::GetVarFn::result_type
+damageOutVar( const tk::Fields& U, std::size_t rdof )
+{
+  using tk::operator+=;
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  auto nsld = numSolids(nmat, solidx);
+  std::vector< tk::real > damage(U.nunk(), 0.0);
+  for (std::size_t e=0; e<U.nunk(); ++e)
+    for (std::size_t k=0; k<nmat; ++k) {
+      tk::real dmg(0.0);
+
+      if (solidx[k] > 0) {
+        auto arho = U(e, densityDofIdx(nmat,k,rdof,0));
+        dmg = U(e, damageDofIdx(nmat,nsld,solidx[k],rdof,0))/arho;
+      }
+
+      damage[e] += dmg;
+    }
+  return damage;
 }
 
 } // multimat::

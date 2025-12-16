@@ -173,25 +173,6 @@ class Transport {
                       Problem::initialize, unk, t, nielem );
     }
 
-<<<<<<< HEAD
-    //! Compute damage for solids
-    //! \param[in] nelem Number of elements
-    //! \param[in] unk Array of unknowns
-    //! \param[out] damage Sum of alpha*damage for solids
-    void computeDamage( std::size_t /*nelem*/,
-                        tk::Fields& /*unk*/,
-                        std::vector< tk::real >& damage) const
-    {
-      damage.resize(0);
-    }
-
-    //! Compute the left hand side mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto ndof = g_inputdeck.get< tag::ndof >();
-      tk::mass( m_ncomp, ndof, geoElem, l );
-=======
     //! Compute average plastic deformation on each element
     // //! \param[in] nelem Number of elements
     // //! \param[in] unk Array of unknowns
@@ -203,7 +184,6 @@ class Transport {
                                     std::vector< tk::real >& plasticDeformation) const
     {
       plasticDeformation.resize(0);
->>>>>>> develop
     }
 
     //! Update the interface cells to first order dofs
