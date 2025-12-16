@@ -246,7 +246,9 @@ Transporter::info( const InciterPrint& print )
               g_inputdeck.get< tag::operator_reorder >() );
   auto steady = g_inputdeck.get< tag::steady_state >();
   print.item( "Local time stepping", steady );
-  if (steady) {
+  auto implicitts = g_inputdeck.get< tag::implicit_timestepping >();
+  print.item( "Implicit time stepping", implicitts );
+  if (steady || implicitts) {
     print.item( "L2-norm residual convergence criterion",
                 g_inputdeck.get< tag::residual >() );
     print.item( "Convergence criterion component index",
@@ -587,6 +589,7 @@ Transporter::createPartitioner()
     m_scheme.emplace_back( g_inputdeck.get< tag::scheme >(),
                            g_inputdeck.get< tag::ale, tag::ale >(),
                            need_linearsolver(),
+                           g_inputdeck.get< tag::implicit_timestepping >(),
                            centering );
 
   ErrChk( !m_input.empty(), "No input mesh" );
@@ -684,7 +687,8 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
     auto print = printer();
 
     // Start timer measuring preparation of the mesh for partitioning
-    const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
+    const auto itTimer = TimerTag::MESH_READ;
+    const auto& timer = tk::cref_find( m_timer, itTimer );
     print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
     // Print out mesh partitioning configuration
@@ -1193,6 +1197,9 @@ Transporter::doneInsertingGhosts(std::size_t meshid)
 //! \param[in] meshid Mesh id
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::implicit_timestepping >())
+    m_scheme[meshid].implicitsolver().doneInserting();
+
   m_scheme[meshid].ghosts().doneInserting();
   m_scheme[meshid].ghosts().startCommSetup();
 }

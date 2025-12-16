@@ -34,7 +34,7 @@ namespace tk {
 void
 initialize( ncomp_t ncomp,
             const std::vector< inciter::EOS >& mat_blk,
-            const Fields& L,
+            const Fields& geoElem,
             const std::vector< std::size_t >& inpoel,
             const UnsMesh::Coords& coord,
             const InitializeFn& solution,
@@ -59,7 +59,7 @@ eval_init( ncomp_t ncomp,
            const std::size_t rdof,
            const std::size_t e,
            const std::vector< tk::real >& R,
-           const Fields& L,
+           real vole,
            Fields& unk );
 
 template< class eq >

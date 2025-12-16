@@ -15,7 +15,6 @@ inciter = {
 
   multimat = {
     physics = "euler",
-    problem = "waterair_shocktube",
     intsharp = 1,
     intsharp_param = 2.5,
     prelax = 1,
@@ -29,6 +28,27 @@ inciter = {
       gamma = { 4.4, 1.4 },  -- ratio of specific heats
       cv = { 951.36, 717.5 },  -- specific heat at const volume
       pstiff = { 6.0e8, 0.0 },  -- sg-eos stiffness parameter
+    }
+  },
+
+  ic = {
+    -- background (right-side conditions)
+    materialid = 2,
+    pressure = 1.0e5,
+    temperature = 34.844,
+    velocity = { 0.0, 0.0, 0.0 },
+
+    -- left-side conditions
+    box = {
+      {
+        materialid = 1,
+        xmin = -1e-10, xmax = 0.75,
+        ymin = -1.0, ymax = 1.0,
+        zmin = -1.0, zmax = 1.0,
+        pressure = 1.0e9,
+        temperature = 494.646,
+        velocity = { 0.0, 0.0, 0.0 }
+      }
     }
   },
 
@@ -56,16 +76,6 @@ inciter = {
       "x-velocity",
       "y-velocity",
       "z-velocity"
-    },
-    elemalias = {
-      "volfrac1_numerical",
-      "volfrac2_numerical",
-      "density_numerical",
-      "pressure_numerical",
-      "total_energy_density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical"
     }
   }
 

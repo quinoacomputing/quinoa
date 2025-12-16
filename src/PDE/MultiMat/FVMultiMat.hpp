@@ -29,7 +29,6 @@
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Initialize.hpp"
-#include "Integrate/Mass.hpp"
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
@@ -217,16 +216,6 @@ class MultiMat {
       }
     }
 
-    //! Compute the left hand side block-diagonal mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto nelem = geoElem.nunk();
-      for (std::size_t e=0; e<nelem; ++e)
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          l(e, c) = geoElem(e,0);
-    }
-
     //! Update the primitives for this PDE system
     //! \param[in] unk Array of unknowns
     //! \param[in,out] prim Array of primitives
@@ -396,7 +385,6 @@ class MultiMat {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
     //! \param[in] srcFlag Whether the energy source was added
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
@@ -404,7 +392,6 @@ class MultiMat {
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord,
                 const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P ) const
@@ -421,47 +408,14 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          coord, srcFlag, solidx, U, P, nmat );
-        PositivityPreservingMultiMat_FV( inpoel, fd.Esuel().size()/4, nmat,
-          m_mat_blk, coord, geoFace, U, P );
+          srcFlag, solidx, U, P, nmat );
+        PositivityPreservingMultiMat_FV( fd.Esuel().size()/4, nmat,
+          m_mat_blk, geoFace, U, P );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
         Throw("Limiter type not configured for multimat.");
       }
-    }
-
-    //! Apply CPL to the conservative variable solution for this PDE system
-    //! \param[in] prim Array of primitive variables
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in,out] unk Array of conservative variables
-    //! \param[in] nielem Number of internal elements
-    //! \details This function applies CPL to obtain consistent dofs for
-    //!   conservative quantities based on the limited primitive quantities.
-    //!   See Pandare et al. (2023). On the Design of Stable,
-    //!   Consistent, and Conservative High-Order Methods for Multi-Material
-    //!   Hydrodynamics. J Comp Phys, 112313.
-    void CPL( const tk::Fields& prim,
-      const tk::Fields& geoElem,
-      const std::vector< std::size_t >& inpoel,
-      const tk::UnsMesh::Coords& coord,
-      tk::Fields& unk,
-      std::size_t nielem ) const
-    {
-      [[maybe_unused]] const auto rdof = g_inputdeck.get< tag::rdof >();
-      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-
-      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
-              "vector and primitive vector at recent time step incorrect" );
-      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
-              "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
-              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-
-      correctLimConservMultiMat(nielem, m_mat_blk, nmat, inpoel,
-        coord, geoElem, prim, unk);
     }
 
     //! Compute right hand side
@@ -645,9 +599,8 @@ class MultiMat {
     //! Return analytic field names to be output to file
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
-      auto nmat = g_inputdeck.get< eq, tag::nmat >();
-
-      return MultiMatFieldNames(nmat);
+      std::vector< std::string > s; // punt for now
+      return s;
     }
 
     //! Return surface field names to be output to file

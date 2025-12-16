@@ -27,7 +27,6 @@
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Initialize.hpp"
-#include "Integrate/Mass.hpp"
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
@@ -153,7 +152,7 @@ class Transport {
     {}
 
     //! Initalize the transport equations for DG
-    //! \param[in] L Element mass matrix
+    //! \param[in] geoElem Element geometry array
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in,out] unk Array of unknowns
@@ -161,7 +160,7 @@ class Transport {
     //! \param[in] nielem Number of internal elements
     void
     initialize(
-      const tk::Fields& L,
+      const tk::Fields& geoElem,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& /*inbox*/,
@@ -170,10 +169,11 @@ class Transport {
       tk::real t,
       const std::size_t nielem ) const
     {
-      tk::initialize( m_ncomp, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_ncomp, m_mat_blk, geoElem, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
     }
 
+<<<<<<< HEAD
     //! Compute damage for solids
     //! \param[in] nelem Number of elements
     //! \param[in] unk Array of unknowns
@@ -191,6 +191,19 @@ class Transport {
     void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       tk::mass( m_ncomp, ndof, geoElem, l );
+=======
+    //! Compute average plastic deformation on each element
+    // //! \param[in] nelem Number of elements
+    // //! \param[in] unk Array of unknowns
+    // //! \param[in] pri Array of primitives
+    //! \param[out] plasticDeformation Frobenius norm of Lp matrix
+    void computePlasticDeformation( std::size_t /*nelem*/,
+                                    tk::Fields& /*unk*/,
+                                    tk::Fields& /*pri*/,
+                                    std::vector< tk::real >& plasticDeformation) const
+    {
+      plasticDeformation.resize(0);
+>>>>>>> develop
     }
 
     //! Update the interface cells to first order dofs
@@ -205,7 +218,6 @@ class Transport {
     //! \details This function computes and stores the dofs for primitive
     //!   quantities, which are currently unused for transport.
     void updatePrimitives( const tk::Fields&,
-                           const tk::Fields&,
                            const tk::Fields&,
                            tk::Fields&,
                            std::size_t,
@@ -295,8 +307,7 @@ class Transport {
       else if (limiter == ctr::LimiterType::SUPERBEEP1)
         Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1)
-        VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          coord, U );
+        VertexBasedTransport_P1( esup, inpoel, ndofel, fd.Esuel().size()/4, U );
     }
 
     //! Update the conservative variable solution for this PDE system
@@ -465,18 +476,12 @@ class Transport {
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array
-    // //! \param[in] inpoel Element-node connectivity
-    // //! \param[in] coord Array of nodal coordinates
     // //! \param[in] U Solution vector at recent time step
-    // //! \param[in] P Primitive vector at recent time step
     // //! \param[in] ndofel Vector of local number of degrees of freedom
     // //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t /*e*/,
                     const tk::Fields& /*geoElem*/,
-                    const std::vector< std::size_t >& /*inpoel*/,
-                    const tk::UnsMesh::Coords& /*coord*/,
                     const tk::Fields& /*U*/,
-                    const tk::Fields& /*P*/,
                     const std::vector< std::size_t >& /*ndofel*/,
                     tk::Fields& /*R*/ ) const
     {}

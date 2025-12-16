@@ -31,7 +31,6 @@
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Initialize.hpp"
-#include "Integrate/Mass.hpp"
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
@@ -167,7 +166,7 @@ class CompFlow {
     }
 
     //! Initalize the compressible flow equations, prepare for time integration
-    //! \param[in] L Block diagonal mass matrix
+    //! \param[in] geoElem Element geometry array
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] inbox List of elements at which box user ICs are set for
@@ -176,7 +175,7 @@ class CompFlow {
     //! \param[in] t Physical time
     //! \param[in] nielem Number of internal elements
     void
-    initialize( const tk::Fields& L,
+    initialize( const tk::Fields& geoElem,
                 const std::vector< std::size_t >& inpoel,
                 const tk::UnsMesh::Coords& coord,
                 const std::vector< std::unordered_set< std::size_t > >& inbox,
@@ -186,7 +185,7 @@ class CompFlow {
                 tk::real t,
                 const std::size_t nielem ) const
     {
-      tk::initialize( m_ncomp, m_mat_blk, L, inpoel, coord,
+      tk::initialize( m_ncomp, m_mat_blk, geoElem, inpoel, coord,
                       Problem::initialize, unk, t, nielem );
 
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -229,23 +228,17 @@ class CompFlow {
       }
     }
 
-    //! Compute damage for solids
-    //! \param[in] nelem Number of elements
-    //! \param[in] unk Array of unknowns
-    //! \param[out] damage Sum of alpha*damage for solids
-    void computeDamage( std::size_t /*nelem*/,
-                        tk::Fields& /*unk*/,
-                        std::vector< tk::real >& damage) const
+    //! Compute average plastic deformation on each element
+    // //! \param[in] nelem Number of elements
+    // //! \param[in] unk Array of unknowns
+    // //! \param[in] pri Array of primitives
+    //! \param[out] plasticDeformation Frobenius norm of Lp matrix
+    void computePlasticDeformation( std::size_t /*nelem*/,
+                                    tk::Fields& /*unk*/,
+                                    tk::Fields& /*pri*/,
+                                    std::vector< tk::real >& plasticDeformation) const
     {
-      damage.resize(0);
-    }
-
-    //! Compute the left hand side block-diagonal mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto ndof = g_inputdeck.get< tag::ndof >();
-      tk::mass( m_ncomp, ndof, geoElem, l );
+      plasticDeformation.resize(0);
     }
 
     //! Update the interface cells to first order dofs
@@ -262,7 +255,6 @@ class CompFlow {
     //!   requires primitive variables for example, this would be the place to
     //!   add the computation of the primitive variables.
     void updatePrimitives( const tk::Fields&,
-                           const tk::Fields&,
                            const tk::Fields&,
                            tk::Fields&,
                            std::size_t,
@@ -800,18 +792,12 @@ class CompFlow {
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array
-    // //! \param[in] inpoel Element-node connectivity
-    // //! \param[in] coord Array of nodal coordinates
     // //! \param[in] U Solution vector at recent time step
-    // //! \param[in] P Primitive vector at recent time step
     // //! \param[in] ndofel Vector of local number of degrees of freedom
     // //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t /*e*/,
                     const tk::Fields& /*geoElem*/,
-                    const std::vector< std::size_t >& /*inpoel*/,
-                    const tk::UnsMesh::Coords& /*coord*/,
                     const tk::Fields& /*U*/,
-                    const tk::Fields& /*P*/,
                     const std::vector< std::size_t >& /*ndofel*/,
                     tk::Fields& /*R*/ ) const
     {}

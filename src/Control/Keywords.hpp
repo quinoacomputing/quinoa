@@ -170,7 +170,7 @@ struct end_info {
     Example: "rngs ... end".)";
   }
 };
-using end = keyword< end_info, TAOCPP_PEGTL_STRING("end") >;
+using end = keyword< end_info, TAO_PEGTL_STRING("end") >;
 
 struct help_info {
   static std::string name() { return "help"; }
@@ -185,7 +185,7 @@ struct help_info {
   }
   using alias = Alias< h >;
 };
-using help = keyword< help_info, TAOCPP_PEGTL_STRING("help") >;
+using help = keyword< help_info, TAO_PEGTL_STRING("help") >;
 
 struct helpctr_info {
   static std::string name() { return "helpctr"; }
@@ -197,7 +197,7 @@ struct helpctr_info {
   }
   using alias = Alias< C >;
 };
-using helpctr = keyword< helpctr_info, TAOCPP_PEGTL_STRING("helpctr") >;
+using helpctr = keyword< helpctr_info, TAO_PEGTL_STRING("helpctr") >;
 
 struct helpkw_info {
   static std::string name() { return "helpkw"; }
@@ -214,7 +214,7 @@ struct helpkw_info {
     static std::string description() { return "string"; }
   };
 };
-using helpkw = keyword< helpkw_info, TAOCPP_PEGTL_STRING("helpkw") >;
+using helpkw = keyword< helpkw_info, TAO_PEGTL_STRING("helpkw") >;
 
 struct pdfs_info {
   static std::string name() { return "PDFs block"; }
@@ -231,7 +231,7 @@ struct pdfs_info {
     doc/pages/statistics_output.dox.)";
   }
 };
-using pdfs = keyword< pdfs_info, TAOCPP_PEGTL_STRING("pdfs") >;
+using pdfs = keyword< pdfs_info, TAO_PEGTL_STRING("pdfs") >;
 
 struct raw_info {
   static std::string name() { return "raw"; }
@@ -246,7 +246,7 @@ struct raw_info {
     differently depending on the particular equation or physical model. See the
     the init policies in DiffEq/InitPolicy.hpp for valid options.)"; }
 };
-using raw = keyword< raw_info, TAOCPP_PEGTL_STRING("raw") >;
+using raw = keyword< raw_info, TAO_PEGTL_STRING("raw") >;
 
 struct zero_info {
   static std::string name() { return "zero"; }
@@ -261,7 +261,7 @@ struct zero_info {
     depending on the particular equation or physical model. See the init
     policies in DiffEq/InitPolicy.hpp for valid options.)"; }
 };
-using zero = keyword< zero_info, TAOCPP_PEGTL_STRING("zero") >;
+using zero = keyword< zero_info, TAO_PEGTL_STRING("zero") >;
 
 struct ncomp_info {
   static std::string name() { return "ncomp"; }
@@ -279,7 +279,7 @@ struct ncomp_info {
     static std::string description() { return "uint"; }
   };
 };
-using ncomp = keyword< ncomp_info,  TAOCPP_PEGTL_STRING("ncomp") >;
+using ncomp = keyword< ncomp_info,  TAO_PEGTL_STRING("ncomp") >;
 
 struct ttyi_info {
   static std::string name() { return "ttyi"; }
@@ -295,7 +295,7 @@ struct ttyi_info {
     static std::string description() { return "uint"; }
   };
 };
-using ttyi = keyword< ttyi_info, TAOCPP_PEGTL_STRING("ttyi") >;
+using ttyi = keyword< ttyi_info, TAO_PEGTL_STRING("ttyi") >;
 
 struct control_info {
   static std::string name() { return "control"; }
@@ -311,7 +311,7 @@ struct control_info {
     static std::string description() { return "string"; }
   };
 };
-using control = keyword< control_info, TAOCPP_PEGTL_STRING("control") >;
+using control = keyword< control_info, TAO_PEGTL_STRING("control") >;
 
 struct verbose_info {
   static std::string name() { return "verbose"; }
@@ -324,7 +324,7 @@ struct verbose_info {
   }
   using alias = Alias< v >;
 };
-using verbose = keyword< verbose_info, TAOCPP_PEGTL_STRING("verbose") >;
+using verbose = keyword< verbose_info, TAO_PEGTL_STRING("verbose") >;
 
 struct charestate_info {
   static std::string name() { return "charestate"; }
@@ -343,7 +343,7 @@ struct charestate_info {
   }
   using alias = Alias< S >;
 };
-using charestate = keyword< charestate_info, TAOCPP_PEGTL_STRING("state") >;
+using charestate = keyword< charestate_info, TAO_PEGTL_STRING("state") >;
 
 struct benchmark_info {
   static std::string name() { return "benchmark"; }
@@ -356,7 +356,7 @@ struct benchmark_info {
   using alias = Alias< b >;
 };
 
-using benchmark = keyword< benchmark_info, TAOCPP_PEGTL_STRING("benchmark") >;
+using benchmark = keyword< benchmark_info, TAO_PEGTL_STRING("benchmark") >;
 
 struct nonblocking_info {
   static std::string name() { return "nonblocking"; }
@@ -371,7 +371,7 @@ struct nonblocking_info {
 };
 
 using nonblocking =
-  keyword< nonblocking_info, TAOCPP_PEGTL_STRING("nonblocking") >;
+  keyword< nonblocking_info, TAO_PEGTL_STRING("nonblocking") >;
 
 struct lbfreq_info {
   static std::string name() { return "Load balancing frequency"; }
@@ -397,7 +397,7 @@ struct lbfreq_info {
     }
   };
 };
-using lbfreq = keyword< lbfreq_info, TAOCPP_PEGTL_STRING("lbfreq") >;
+using lbfreq = keyword< lbfreq_info, TAO_PEGTL_STRING("lbfreq") >;
 
 struct rsfreq_info {
   static std::string name() { return "Checkpoint/restart frequency"; }
@@ -420,7 +420,7 @@ struct rsfreq_info {
     }
   };
 };
-using rsfreq = keyword< rsfreq_info, TAOCPP_PEGTL_STRING("rsfreq") >;
+using rsfreq = keyword< rsfreq_info, TAO_PEGTL_STRING("rsfreq") >;
 
 struct feedback_info {
   static std::string name() { return "feedback"; }
@@ -432,7 +432,7 @@ struct feedback_info {
   }
   using alias = Alias< f >;
 };
-using feedback = keyword< feedback_info, TAOCPP_PEGTL_STRING("feedback") >;
+using feedback = keyword< feedback_info, TAO_PEGTL_STRING("feedback") >;
 
 struct version_info {
   static std::string name() { return "Show version"; }
@@ -443,7 +443,7 @@ struct version_info {
   }
   using alias = Alias< V >;
 };
-using version = keyword< version_info, TAOCPP_PEGTL_STRING("version") >;
+using version = keyword< version_info, TAO_PEGTL_STRING("version") >;
 
 struct license_info {
   static std::string name() { return "Show license"; }
@@ -454,7 +454,7 @@ struct license_info {
   }
   using alias = Alias< L >;
 };
-using license = keyword< license_info, TAOCPP_PEGTL_STRING("license") >;
+using license = keyword< license_info, TAO_PEGTL_STRING("license") >;
 
 struct trace_info {
   static std::string name() { return "trace"; }
@@ -467,7 +467,7 @@ struct trace_info {
     option.)"; }
   using alias = Alias< t >;
 };
-using trace = keyword< trace_info, TAOCPP_PEGTL_STRING("trace") >;
+using trace = keyword< trace_info, TAO_PEGTL_STRING("trace") >;
 
 struct quiescence_info {
   static std::string name() { return "quiescence"; }
@@ -482,7 +482,7 @@ struct quiescence_info {
   using alias = Alias< q >;
 };
 using quiescence =
-  keyword< quiescence_info, TAOCPP_PEGTL_STRING("quiescence") >;
+  keyword< quiescence_info, TAO_PEGTL_STRING("quiescence") >;
 
 struct virtualization_info {
   static std::string name() { return "virtualization"; }
@@ -516,7 +516,7 @@ struct virtualization_info {
   };
 };
 using virtualization =
-  keyword< virtualization_info, TAOCPP_PEGTL_STRING("virtualization") >;
+  keyword< virtualization_info, TAO_PEGTL_STRING("virtualization") >;
 
 struct pdf_info {
   static std::string name() { return "pdf"; }
@@ -532,7 +532,7 @@ struct pdf_info {
     static std::string description() { return "string"; }
   };
 };
-using pdf = keyword< pdf_info, TAOCPP_PEGTL_STRING("pdf") >;
+using pdf = keyword< pdf_info, TAO_PEGTL_STRING("pdf") >;
 
 struct stat_info {
   static std::string name() { return "stat"; }
@@ -548,7 +548,7 @@ struct stat_info {
     static std::string description() { return "string"; }
   };
 };
-using stat = keyword< stat_info, TAOCPP_PEGTL_STRING("stat") >;
+using stat = keyword< stat_info, TAO_PEGTL_STRING("stat") >;
 
 struct input_info {
   static std::string name() { return "input"; }
@@ -562,7 +562,7 @@ struct input_info {
     static std::string description() { return "string"; }
   };
 };
-using input = keyword< input_info, TAOCPP_PEGTL_STRING("input") >;
+using input = keyword< input_info, TAO_PEGTL_STRING("input") >;
 
 struct output_info {
   static std::string name() { return "output"; }
@@ -584,7 +584,7 @@ struct output_info {
     static std::string description() { return "string"; }
   };
 };
-using output = keyword< output_info, TAOCPP_PEGTL_STRING("output") >;
+using output = keyword< output_info, TAO_PEGTL_STRING("output") >;
 
 struct refined_info {
   static std::string name() { return "Refined field output"; }
@@ -600,7 +600,7 @@ struct refined_info {
     static std::string choices() { return "true | false"; }
   };
 };
-using refined =keyword< refined_info, TAOCPP_PEGTL_STRING("refined") >;
+using refined =keyword< refined_info, TAO_PEGTL_STRING("refined") >;
 
 struct screen_info {
   static std::string name() { return "screen"; }
@@ -616,7 +616,7 @@ struct screen_info {
     static std::string description() { return "string"; }
   };
 };
-using screen = keyword< screen_info, TAOCPP_PEGTL_STRING("screen") >;
+using screen = keyword< screen_info, TAO_PEGTL_STRING("screen") >;
 
 struct restart_info {
   static std::string name()
@@ -634,7 +634,7 @@ struct restart_info {
     static std::string description() { return "string"; }
   };
 };
-using restart = keyword< restart_info, TAOCPP_PEGTL_STRING("restart") >;
+using restart = keyword< restart_info, TAO_PEGTL_STRING("restart") >;
 
 struct diagnostics_cmd_info {
   static std::string name() { return "diagnostics"; }
@@ -650,7 +650,7 @@ struct diagnostics_cmd_info {
   };
 };
 using diagnostics_cmd =
-  keyword< diagnostics_cmd_info, TAOCPP_PEGTL_STRING("diagnostics") >;
+  keyword< diagnostics_cmd_info, TAO_PEGTL_STRING("diagnostics") >;
 
 struct reorder_cmd_info {
   static std::string name() { return "reorder"; }
@@ -667,7 +667,7 @@ struct reorder_cmd_info {
     static std::string description() { return "string"; }
   };
 };
-using reorder_cmd = keyword< reorder_cmd_info, TAOCPP_PEGTL_STRING("reorder") >;
+using reorder_cmd = keyword< reorder_cmd_info, TAO_PEGTL_STRING("reorder") >;
 
 struct group_info {
   static std::string name() { return "group"; }
@@ -688,7 +688,7 @@ struct group_info {
     static std::string description() { return "string"; }
   };
 };
-using group = keyword< group_info, TAOCPP_PEGTL_STRING("group") >;
+using group = keyword< group_info, TAO_PEGTL_STRING("group") >;
 
 struct inciter_info {
   static std::string name() { return "inciter"; }
@@ -699,7 +699,7 @@ struct inciter_info {
     shock hydrodynamics tool, solving a PDE.)";
   }
 };
-using inciter = keyword< inciter_info, TAOCPP_PEGTL_STRING("inciter") >;
+using inciter = keyword< inciter_info, TAO_PEGTL_STRING("inciter") >;
 
 struct sideset_info {
   static std::string name() { return "sideset"; }
@@ -715,7 +715,7 @@ struct sideset_info {
     static std::string description() { return "strings"; }
   };
 };
-using sideset = keyword< sideset_info, TAOCPP_PEGTL_STRING("sideset") >;
+using sideset = keyword< sideset_info, TAO_PEGTL_STRING("sideset") >;
 
 // This will go away once all the keywords below are documented
 struct undefined_info {

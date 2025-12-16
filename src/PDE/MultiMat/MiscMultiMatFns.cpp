@@ -207,7 +207,7 @@ cleanTraceMultiMat(
         ctm_element = true;
 
       if (ctm_element) {
-        tk::real prelax(pk);
+        tk::real prelax(0.0);
         std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
         if (solidx[k] > 0) {
           // for solids, reset deformation gradient and stress
@@ -216,17 +216,20 @@ cleanTraceMultiMat(
             for (std::size_t j=0; j<3; ++j)
               gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
         }
-        if (pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
-          U(e, densityDofIdx(nmat, k, rdof, 0)), alk) ||
-          solidx[k] == 0) {
-          // determine target relaxation pressure
-          prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
-            U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
-          prelax = std::max(prelax, p_target);
-          for (std::size_t i=1; i<rdof; ++i) {
-            P(e, pressureDofIdx(nmat, k, rdof, i)) = 0.0;
-          }
+
+        // check for unbounded volume fractions
+        if (alk < 0.0 || !std::isfinite(alk)) {
+          auto rhok = mat_blk[k].compute< EOS::density >(p_target,
+            std::max(1e-8,tmax));
+          if (std::isfinite(alk)) d_al += (alk - 1e-14);
+          alk = 1e-14;
+          U(e, densityDofIdx(nmat, k, rdof, 0)) = alk * rhok;
         }
+
+        // determine target relaxation pressure
+        prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
+          U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
+        prelax = std::max(prelax, p_target);
 
         // energy change
         U(e, densityDofIdx(nmat, k, rdof, 0)) = std::max(U(e, densityDofIdx(nmat, k, rdof, 0)),

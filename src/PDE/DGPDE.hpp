@@ -174,7 +174,7 @@ class DGPDE {
 
     //! Public interface to setting the initial conditions for the diff eq
     void initialize(
-      const tk::Fields& L,
+      const tk::Fields& geoElem,
       const std::vector< std::size_t >& inpoel,
       const tk::UnsMesh::Coords& coord,
       const std::vector< std::unordered_set< std::size_t > >& inbox,
@@ -183,17 +183,14 @@ class DGPDE {
       tk::Fields& unk,
       tk::real t,
       const std::size_t nielem ) const
-    { self->initialize( L, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
+    { self->initialize( geoElem, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
-    //! Public interface for computing damage
-    void computeDamage( std::size_t nelem,
-                        tk::Fields& unk,
-                        std::vector< tk::real >& damage) const
-    { self->computeDamage( nelem, unk, damage); }
-
-    //! Public interface to computing the left-hand side matrix for the diff eq
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
-    { self->lhs( geoElem, l ); }
+    //! Public interface for computing plastic deformation
+    void computePlasticDeformation( std::size_t nelem,
+                               tk::Fields& unk,
+                               tk::Fields& pri,
+                               std::vector< tk::real >& plasticDeformation) const
+    { self->computePlasticDeformation( nelem, unk, pri, plasticDeformation); }
 
     //! Public interface to updating the interface cells for the diff eq
     void updateInterfaceCells( tk::Fields& unk,
@@ -204,12 +201,11 @@ class DGPDE {
 
     //! Public interface to updating the primitives for the diff eq
     void updatePrimitives( const tk::Fields& unk,
-                           const tk::Fields& L,
                            const tk::Fields& geoElem,
                            tk::Fields& prim,
                            std::size_t nielem,
                            const std::vector< std::size_t >& ndofel ) const
-    { self->updatePrimitives( unk, L, geoElem, prim, nielem, ndofel ); }
+    { self->updatePrimitives( unk, geoElem, prim, nielem, ndofel ); }
 
     //! Public interface to cleaning up trace materials for the diff eq
     void cleanTraceMaterial( tk::real t,
@@ -218,7 +214,7 @@ class DGPDE {
                              tk::Fields& prim,
                              std::size_t nielem ) const
     { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
-  
+
     //! Public interface for function to evolve damage in solids
     void evolveDamage( tk::real dt,
                        const tk::Fields& geoElem,
@@ -355,13 +351,10 @@ class DGPDE {
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
                     const tk::Fields& geoElem,
-                    const std::vector< std::size_t >& inpoel,
-                    const tk::UnsMesh::Coords& coord,
                     const tk::Fields& U,
-                    const tk::Fields& P,
                     const std::vector< std::size_t >& ndofel,
                     tk::Fields& R ) const
-    { return self->stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R); }
+    { return self->stiff_rhs( e, geoElem, U, ndofel, R); }
 
     //! Public interface to returning maps of output var functions
     std::map< std::string, tk::GetVarFn > OutVarFn() const
@@ -448,16 +441,16 @@ class DGPDE {
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
-      virtual void computeDamage( std::size_t nelem,
-                                  tk::Fields& unk,
-                                  std::vector< tk::real >& damage) const = 0;
-      virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
+      virtual void computePlasticDeformation( std::size_t nelem,
+                                              tk::Fields& unk,
+                                              tk::Fields& pri,
+                                              std::vector< tk::real >& plasticDeformation)
+                                         const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
                                          std::vector< std::size_t >&,
                                          std::vector< std::size_t >& ) const = 0;
       virtual void updatePrimitives( const tk::Fields&,
-                                     const tk::Fields&,
                                      const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t,
@@ -555,9 +548,6 @@ class DGPDE {
                                            tk::Fields& ) const = 0;
       virtual void stiff_rhs( std::size_t,
                               const tk::Fields&,
-                              const std::vector< std::size_t >&,
-                              const tk::UnsMesh::Coords&,
-                              const tk::Fields&,
                               const tk::Fields&,
                               const std::vector< std::size_t >&,
                               tk::Fields& ) const = 0;
@@ -609,7 +599,7 @@ class DGPDE {
         std::vector< std::unordered_set< std::size_t > >& inbox )
       const override { data.IcBoxElems( geoElem, nielem, inbox ); }
       void initialize(
-        const tk::Fields& L,
+        const tk::Fields& geoElem,
         const std::vector< std::size_t >& inpoel,
         const tk::UnsMesh::Coords& coord,
         const std::vector< std::unordered_set< std::size_t > >& inbox,
@@ -618,27 +608,26 @@ class DGPDE {
         tk::Fields& unk,
         tk::real t,
         const std::size_t nielem )
-      const override { data.initialize( L, inpoel, coord, inbox, elemblkid, unk,
-        t, nielem ); }
-      void computeDamage( std::size_t nelem,
-                          tk::Fields& unk,
-                          std::vector< tk::real >& damage) const override
-      { data.computeDamage( nelem, unk, damage ); }
-      void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
-      { data.lhs( geoElem, l ); }
+      const override { data.initialize( geoElem, inpoel, coord, inbox,
+        elemblkid, unk, t, nielem ); }
+      void computePlasticDeformation( std::size_t nelem,
+                                      tk::Fields& unk,
+                                      tk::Fields& pri,
+                                      std::vector< tk::real >& plasticDeformation)
+                                 const override
+      { data.computePlasticDeformation( nelem, unk, pri, plasticDeformation ); }
       void updateInterfaceCells( tk::Fields& unk,
                                  std::size_t nielem,
                                  std::vector< std::size_t >& ndofel,
                                  std::vector< std::size_t >& interface )
       const override { data.updateInterfaceCells( unk, nielem, ndofel, interface ); }
       void updatePrimitives( const tk::Fields& unk,
-                             const tk::Fields& L,
                              const tk::Fields& geoElem,
                              tk::Fields& prim,
                              std::size_t nielem,
                              const std::vector< std::size_t >& ndofel )
       const override {
-        data.updatePrimitives( unk, L, geoElem, prim, nielem, ndofel );
+        data.updatePrimitives( unk, geoElem, prim, nielem, ndofel );
       }
       void cleanTraceMaterial( tk::real t,
                                const tk::Fields& geoElem,
@@ -761,13 +750,10 @@ class DGPDE {
       { return data.balance_plastic_energy( e, x_star, x, U); }
       void stiff_rhs( std::size_t e,
                       const tk::Fields& geoElem,
-                      const std::vector< std::size_t >& inpoel,
-                      const tk::UnsMesh::Coords& coord,
                       const tk::Fields& U,
-                      const tk::Fields& P,
                       const std::vector< std::size_t >& ndofel,
                       tk::Fields& R ) const override
-      { return data.stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R ); }
+      { return data.stiff_rhs( e, geoElem, U, ndofel, R ); }
       std::map< std::string, tk::GetVarFn > OutVarFn() const override
       { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override

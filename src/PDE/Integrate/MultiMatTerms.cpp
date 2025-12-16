@@ -384,22 +384,21 @@ nonConservativeIntFV(
   std::array< tk::real, 3 > vel{{ P(e, velocityDofIdx(nmat,0,rdof,0)),
                                   P(e, velocityDofIdx(nmat,1,rdof,0)),
                                   P(e, velocityDofIdx(nmat,2,rdof,0)) }};
+  auto v_dot_n = tk::dot(vel, fn);
 
   // compute non-conservative terms
+  auto v_riem = var_riemann[nmat];
   std::vector< tk::real > ncf(ncomp, 0.0);
-  std::vector< tk::real > ymat(nmat, 0.0);
   for (std::size_t k=0; k<nmat; ++k)
   {
-    ymat[k] = U(e, densityDofIdx(nmat,k,rdof,0))/rhob;
+    auto ymat = U(e, densityDofIdx(nmat,k,rdof,0))/rhob;
 
     // evaluate non-conservative term for energy equation
-    for (std::size_t idir=0; idir<3; ++idir)
-      ncf[energyIdx(nmat, k)] -= vel[idir] * ( ymat[k]*p_face*fn[idir]
-                                            - var_riemann[k]*fn[idir] );
+    ncf[energyIdx(nmat, k)] -= v_dot_n * ( ymat*p_face - var_riemann[k] );
 
     // evaluate non-conservative term for volume fraction equation
     ncf[volfracIdx(nmat, k)] = U(e, volfracDofIdx(nmat,k,rdof,0))
-      * var_riemann[nmat];
+      * v_riem;
   }
 
   return ncf;
@@ -638,22 +637,25 @@ pressureRelaxationIntFV(
 // *****************************************************************************
 {
   using inciter::volfracIdx;
-  using inciter::energyIdx;
+  using inciter::volfracDofIdx;
+  using inciter::energyDofIdx;
   using inciter::pressureIdx;
-  using inciter::velocityIdx;
   using inciter::densityIdx;
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  std::vector< real > apmat(nmat, 0.0), kmat(nmat, 0.0);
+  std::vector< int > do_relax(nmat, 1);
+
+  // Compute the basis function
+  std::vector< tk::real > B(rdof, 0.0);
+  B[0] = 1.0;
+
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
   {
     auto dx = geoElem(e,4)/2.0;
-
-    // Compute the basis function
-    std::vector< tk::real > B(rdof, 0.0);
-    B[0] = 1.0;
 
     auto state = evalPolynomialSol(mat_blk, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
@@ -666,11 +668,10 @@ pressureRelaxationIntFV(
 
     // get pressures and bulk modulii
     real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
-    std::vector< real > apmat(nmat, 0.0), kmat(nmat, 0.0);
-    std::vector< int > do_relax(nmat, 1);
     bool is_relax(false);
     for (std::size_t k=0; k<nmat; ++k)
     {
+      do_relax[k] = 1;
       real arhomat = state[densityIdx(nmat, k)];
       real alphamat = state[volfracIdx(nmat, k)];
       if (alphamat >= inciter::volfracPRelaxLim()) {
@@ -693,22 +694,16 @@ pressureRelaxationIntFV(
     if (is_relax) p_relax = nume/deno;
 
     // compute pressure relaxation terms
-    std::vector< real > s_prelax(ncomp, 0.0);
-
     for (std::size_t k=0; k<nmat; ++k)
     {
       // only perform prelax on existing quantities
       if (do_relax[k] == 1) {
         auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
           * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
-        s_prelax[volfracIdx(nmat, k)] = s_alpha;
-        s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
-      }
-    }
 
-    for (ncomp_t c=0; c<ncomp; ++c)
-    {
-      R(e, c) += geoElem(e,0) * s_prelax[c];
+        R(e, volfracDofIdx(nmat,k,1,0)) += geoElem(e,0) * s_alpha;
+        R(e, energyDofIdx(nmat,k,1,0)) += geoElem(e,0) * (-pb*s_alpha);
+      }
     }
   }
 }

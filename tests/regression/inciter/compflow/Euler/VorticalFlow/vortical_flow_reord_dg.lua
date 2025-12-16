@@ -44,15 +44,6 @@ inciter = {
       "specific_total_energy",
       "pressure",
     },
-    elemalias = {
-      "",
-      "density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical",
-      "specific_total_energy_numerical",
-      "pressure_numerical"
-    },
     interval = 10
   }
 
