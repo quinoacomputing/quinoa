@@ -4,6 +4,7 @@ inciter = {
 
   nstep = 100,   -- Max number of time steps
   dt = 2.0e-3,   -- Time step size
+  cfl_ramping = false,
   ttyi = 10,     -- TTY output interval
   scheme = "dgp0",
 
@@ -40,14 +41,6 @@ inciter = {
       "z-velocity",
       "specific_total_energy",
       "pressure"
-    },
-    elemalias = {
-      "density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical",
-      "specific_total_energy_numerical",
-      "pressure_numerical"
     }
   }
 

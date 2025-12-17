@@ -29,7 +29,7 @@ numericFieldNames( tk::Centering c )
   for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
     if (v.centering == c && !v.analytic()) {
       std::stringstream s;
-      if (v.alias.empty()) s << v.name; else s << v.alias;
+      s << v.name;
       f.push_back( s.str() );
     }
   }

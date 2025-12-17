@@ -121,6 +121,23 @@ area( real x1, real x2, real x3,
   return sqrt( semip * (semip-sidea) * (semip-sideb) * (semip-sidec) );
 }
 
+// Compute local face id wrt to tet based on tet and face connectivities
+inline int opposite_vertex_of_tet(
+  const std::array< std::size_t,4 >& el,
+  const std::array< std::size_t,3 >& face) noexcept
+{
+  // Bitmask trick
+  // mark the three face nodes
+  uint8_t mask = 0;
+  for (auto fn : face) {
+    for (int i=0; i<4; ++i) if (el[static_cast<std::size_t>(i)]==fn)
+      { mask |= (1u<<i); break; }
+  }
+  // the missing bit is the opposite vertex
+  for (int i=0; i<4; ++i) if ((mask & (1u<<i)) == 0) return i;
+  return 0; // unreachable if topology is valid
+}
+
 //! Compute the area of a triangle
 real
 area( const std::array< real, 3 >& x,

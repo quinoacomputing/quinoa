@@ -228,15 +228,17 @@ class CompFlow {
       }
     }
 
-    //! Compute density constraint for a given material
+    //! Compute average plastic deformation on each element
     // //! \param[in] nelem Number of elements
     // //! \param[in] unk Array of unknowns
-    //! \param[out] densityConstr Density Constraint: rho/(rho0*det(g))
-    void computeDensityConstr( std::size_t /*nelem*/,
-                               tk::Fields& /*unk*/,
-                               std::vector< tk::real >& densityConstr) const
+    // //! \param[in] pri Array of primitives
+    //! \param[out] plasticDeformation Frobenius norm of Lp matrix
+    void computePlasticDeformation( std::size_t /*nelem*/,
+                                    tk::Fields& /*unk*/,
+                                    tk::Fields& /*pri*/,
+                                    std::vector< tk::real >& plasticDeformation) const
     {
-      densityConstr.resize(0);
+      plasticDeformation.resize(0);
     }
 
     //! Update the interface cells to first order dofs
@@ -782,18 +784,12 @@ class CompFlow {
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array
-    // //! \param[in] inpoel Element-node connectivity
-    // //! \param[in] coord Array of nodal coordinates
     // //! \param[in] U Solution vector at recent time step
-    // //! \param[in] P Primitive vector at recent time step
     // //! \param[in] ndofel Vector of local number of degrees of freedom
     // //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t /*e*/,
                     const tk::Fields& /*geoElem*/,
-                    const std::vector< std::size_t >& /*inpoel*/,
-                    const tk::UnsMesh::Coords& /*coord*/,
                     const tk::Fields& /*U*/,
-                    const tk::Fields& /*P*/,
                     const std::vector< std::size_t >& /*ndofel*/,
                     tk::Fields& /*R*/ ) const
     {}
