@@ -170,7 +170,7 @@ class MultiMat {
     {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      return 9*numSolids(nmat, solidx);
+      return 2*nmat+9*numSolids(nmat, solidx);
     }
 
     //! Find how many 'non-stiff equations', which are the inverse
@@ -189,6 +189,14 @@ class MultiMat {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       std::size_t icnt = 0;
+      for (std::size_t k=0; k<nmat; ++k) {
+        stiffEqIdx[icnt] = inciter::volfracIdx(nmat, k);
+        icnt++;
+      }
+      for (std::size_t k=0; k<nmat; ++k) {
+        stiffEqIdx[icnt] = inciter::energyIdx(nmat, k);
+        icnt++;
+      }
       for (std::size_t k=0; k<nmat; ++k)
         if (solidx[k] > 0)
           for (std::size_t i=0; i<3; ++i)
@@ -205,8 +213,16 @@ class MultiMat {
     void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
     {
       nonStiffEqIdx.resize(nnonstiffeq(), 0);
-      for (std::size_t icomp=0; icomp<nnonstiffeq(); icomp++)
-        nonStiffEqIdx[icomp] = icomp;
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      std::size_t icnt = 0;
+      for (std::size_t k=0; k<nmat; ++k) {
+        nonStiffEqIdx[icnt] = inciter::densityIdx(nmat, k);
+        icnt++;
+      }
+      for (std::size_t idir=0; idir<3; ++idir) {
+        nonStiffEqIdx[icnt] = inciter::momentumIdx(nmat, idir);
+        icnt++;
+      }
     }
 
     //! Initialize the compressible flow equations, prepare for time integration
@@ -1183,6 +1199,8 @@ class MultiMat {
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
+      const auto ct = g_inputdeck.get< tag::multimat,
+                                       tag::prelax_timescale >();
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -1209,14 +1227,99 @@ class MultiMat {
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)
       {
+        auto dx = geoElem(e,4)/2.0;
         // Compute the basis function
         auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
         auto state = tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B );
 
-        // compute source
-        // Loop through materials
+        // Compute pressure relaxation source
+        // get bulk properties
+        tk::real rhob(0.0);
+        for (std::size_t k=0; k<nmat; ++k)
+          rhob += state[densityIdx(nmat, k)];
+        
+        // velocity vector at quadrature point
+        std::array< tk::real, 3 >
+          vel{ state[momentumIdx(nmat, 0)]/rhob,
+               state[momentumIdx(nmat, 1)]/rhob,
+               state[momentumIdx(nmat, 2)]/rhob };
+
+        // get pressures and bulk modulii
+        tk::real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
+        std::vector< tk::real > apmat(nmat, 0.0), kmat(nmat, 0.0);
+        std::vector< int > do_relax(nmat, 1);
+        bool is_relax(false);
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          tk::real arhomat = state[densityIdx(nmat, k)];
+          tk::real alphamat = state[volfracIdx(nmat, k)];
+          tk::real arhoe = state[energyIdx(nmat, k)];
+          std::array< std::array< tk::real, 3 >, 3 > gmat;
+          // Compute the source terms
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              if (solidx[k] > 0) {
+                gmat[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)];
+              } else {
+                gmat[i][j] = 0.0;
+              }
+          // Compute new pressure
+          apmat[k] = m_mat_blk[k].compute< inciter::EOS::pressure >( arhomat,
+            vel[0], vel[1], vel[2], arhoe, alphamat, k, gmat );
+          tk::real amat = 0.0;
+          if (/*solidx[k] == 0 && alphamat >= inciter::volfracPRelaxLim()*/ true) {
+            amat = m_mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
+              apmat[k], alphamat, k );
+            kmat[k] = arhomat * amat * amat;
+            pb += apmat[k];
+
+            // relaxation parameters
+            trelax = std::max(trelax, ct*dx/amat);
+            nume += alphamat * apmat[k] / kmat[k];
+            deno += alphamat * alphamat / kmat[k];
+
+            is_relax = true;
+          }
+          else do_relax[k] = 0;
+        }
+        tk::real p_relax(0.0);
+        if (is_relax) p_relax = nume/deno;
+
+        // compute pressure relaxation terms
+        std::vector< tk::real > s_prelax(m_ncomp, 0.0);
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          // only perform prelax on existing quantities
+          if (do_relax[k] == 1) {
+            auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
+              * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
+            s_prelax[volfracIdx(nmat, k)] = s_alpha;
+            s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
+          }
+        }
+
+        auto wt = wgp[igp] * geoElem(e, 0);
+
+        // Volume fraction contributions
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          auto c = volfracIdx(nmat, k);
+          auto mark = k*ndof;
+          for(std::size_t idof = 0; idof < ndof; idof++)
+            R(e, mark+idof) += wt * s_prelax[c] * B[idof];
+        }
+        // Energy contributions
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          auto c = energyIdx(nmat, k);
+          auto mark = nmat*ndof + k*ndof;
+          for(std::size_t idof = 0; idof < ndof; idof++)
+            R(e, mark+idof) += wt * s_prelax[c] * B[idof];
+        }
+
+        // Compute plastic source
         std::size_t ksld = 0;
         for (std::size_t k=0; k<nmat; ++k)
         {
@@ -1305,7 +1408,7 @@ class MultiMat {
                 for (std::size_t idof=0; idof<ndof; ++idof)
                 {
                   std::size_t srcId = (i*3+j)*ndof+idof;
-                  std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
+                  std::size_t dofId = 2*nmat*ndof+solidTensorIdx(ksld,i,j)*ndof+idof;
                   R(e, dofId) += wt * s[srcId];
                 }
 
