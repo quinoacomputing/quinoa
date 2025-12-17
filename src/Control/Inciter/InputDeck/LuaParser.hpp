@@ -141,8 +141,8 @@ class LuaParser {
         storage = dflt;
     }
 
-    //! Assign vector of vectors parameter to inputdeck entry if specified,
-    //! else default
+    //! \brief Assign vector of vectors parameter to inputdeck entry if
+    //!   specified, else default
     //! \tparam N Type of parameter vector being read/assigned
     //! \param[in] table Sol-table which contains said parameter
     //! \param[in] key Key for said parameter in Sol-table
@@ -162,7 +162,7 @@ class LuaParser {
           auto sol_vec = sol_vecvec[i+1];
           std::vector< N > temp_storage;
           for (std::size_t j=0; j<sol::table(sol_vec).size(); ++j){
-            temp_storage.push_back(sol_vecvec[i+1][j+1]);
+            temp_storage.push_back(sol_vec[j+1]);
           }
           storage.push_back(temp_storage);
         }

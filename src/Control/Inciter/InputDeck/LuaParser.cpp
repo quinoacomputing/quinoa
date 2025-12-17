@@ -827,6 +827,9 @@ LuaParser::storeInputDeck(
     if (rbm_deck.get< tag::rigid_body_dof >() == 3 &&
        rbm_deck.get< tag::symmetry_plane >().size() != 3 )
       Throw("A vector of size 3 must be supplied for 3 DOF rigid body motion.");
+    if (rbm_deck.get< tag::rigid_body_dof >() == 6 &&
+       rbm_deck.get< tag::symmetry_plane >().size() == 3 )
+      Throw("Symmetry plane has been specified for 6DOF motion.");
 
     //! TODO:
     // If sym_dir is not an eigenvector of the moment_of_inertia tensor, it

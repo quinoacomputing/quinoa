@@ -110,8 +110,8 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_centMassn({{0, 0, 0}}),
   m_centMassVeln({{0, 0, 0}}),
   m_angMomentumn({{0, 0, 0}}),
-  m_rotationq({{1.0, 0, 0, 0}}),
-  m_rotationqn({{1.0, 0, 0, 0}})
+  m_rotationQ({{1.0, 0, 0, 0}}),
+  m_rotationQn({{1.0, 0, 0, 0}})
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -616,8 +616,8 @@ OversetFE::continueSetup()
     auto R = tk::anglesToRotMat(
       {{ mesh_orientation[0], mesh_orientation[1], mesh_orientation[2] }});
     auto p = tk::Rtoq(R);
-    m_rotationqn = tk::quaternion_mult(p, m_rotationqn);
-    m_rotationq = m_rotationqn;
+    m_rotationQn = tk::quaternion_mult(p, m_rotationQn);
+    m_rotationQ = m_rotationQn;
   }
 }
 //! [setup]
@@ -1014,7 +1014,7 @@ OversetFE::UpdateCenterOfMass()
   m_centMassVeln = m_centMassVel;
   m_angMomentumn = m_angMomentum;
   m_displacementn = m_displacement;
-  m_rotationqn = m_rotationq;
+  m_rotationQn = m_rotationQ;
 }
 
 void
@@ -1347,7 +1347,7 @@ OversetFE::solve()
                {mI_mesh[2][0], mI_mesh[2][1], mI_mesh[2][2]} } };
 
       // MoI Tensor derived from body-centered tensor rotated to inertial frame
-      auto Rn = tk::qtoR(m_rotationqn);
+      auto Rn = tk::qtoR(m_rotationQn);
       I_n = tk::matmult33(Rn, tk::matmult33(I_n, tk::transpose3by3(Rn)));
 
       // from angular velocity, obtain change in rotation quaternion
@@ -1356,10 +1356,10 @@ OversetFE::solve()
                                qn12;
 
       // q drifted half-time step over this stage
-      auto dq = tk::quaternion_mult(omega_qn, m_rotationqn);
+      auto dq = tk::quaternion_mult(omega_qn, m_rotationQn);
       for (std::size_t i = 0; i < 4; ++i) {
         dq[i] *= 0.5*(dtp*0.5);
-        qn12[i] = m_rotationqn[i] + dq[i];
+        qn12[i] = m_rotationQn[i] + dq[i];
       }
 
       // Derived quantities from q
@@ -1380,17 +1380,17 @@ OversetFE::solve()
       dq = tk::quaternion_mult(omega_qn1, qn12);
       for (std::size_t i = 0; i < 4; ++i) {
         dq[i] *= 0.5*(dtp*0.5);
-        m_rotationq[i] = qn12[i] + dq[i];
+        m_rotationQ[i] = qn12[i] + dq[i];
       }
 
       // normalize
-      auto qmag = tk::quaternion_mag(m_rotationq);
+      auto qmag = tk::quaternion_mag(m_rotationQ);
       for (std::size_t i = 0; i < 4; ++i) {
-        m_rotationq[i] /= qmag;
+        m_rotationQ[i] /= qmag;
       }
 
       // Derived quantities from q
-      auto Rn1 = tk::qtoR(m_rotationq);
+      auto Rn1 = tk::qtoR(m_rotationQ);
       // total rotation just over RK stage, applied to points below
       auto dR = tk::matmult33(Rn1, tk::transpose3by3(Rn));
       std::array< tk::real, 3>
@@ -1439,10 +1439,16 @@ OversetFE::solve()
           + m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
       }
 
-      // Rotation for diagnostics (ZYX Euler angles)
-      m_rotation[0] = std::atan2(Rn1[1][0], Rn1[0][0]);
-      m_rotation[1] = std::asin(-Rn1[2][0]);
-      m_rotation[2] = std::atan2(Rn1[2][1], Rn1[2][2]);
+      auto radToDeg = 180.0 / (4.0 * std::atan(1.0));
+      auto mesh_orientation =
+        g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::orientation >();
+      // Rotation for diagnostics, accounting for initial rotation (ZYX Euler
+      // angles)
+      m_rotation[0] = std::atan2(Rn1[1][0], Rn1[0][0]) * radToDeg - 
+        mesh_orientation[2];
+      m_rotation[1] = std::asin(-Rn1[2][0]) * radToDeg - mesh_orientation[1];
+      m_rotation[2] = std::atan2(Rn1[2][1], Rn1[2][2]) * radToDeg - 
+        mesh_orientation[0];
 
       // move center of mass
       for (std::size_t i=0; i<3; ++i) {

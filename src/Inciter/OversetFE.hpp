@@ -251,8 +251,8 @@ class OversetFE : public CBase_OversetFE {
       p | m_centMassn;
       p | m_centMassVeln;
       p | m_angMomentumn;
-      p | m_rotationq;
-      p | m_rotationqn;
+      p | m_rotationQ;
+      p | m_rotationQn;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -411,9 +411,9 @@ class OversetFE : public CBase_OversetFE {
     //! Angular momentum of the rigid body at time n
     std::array< tk::real, 3 > m_angMomentumn;
     //! Quaternion representing rotation of the rigid body
-    std::array< tk::real, 4 > m_rotationq;
+    std::array< tk::real, 4 > m_rotationQ;
     //! Quaternion representing rotation of the rigid body at time n
-    std::array< tk::real, 4 > m_rotationqn;
+    std::array< tk::real, 4 > m_rotationQn;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

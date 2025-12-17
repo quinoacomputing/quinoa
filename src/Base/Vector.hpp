@@ -418,6 +418,8 @@ movePoint( const std::array< tk::real, 3 >& origin,
 inline std::array< std::array< tk::real, 3 >, 3 >
 anglesToRotMat( const std::array< tk::real, 3 >& angles)
 {
+  using std::cos;  using std::sin;
+
   // Convert angles to radian
   tk::real pi = 4.0*std::atan(1.0);
   auto a = angles[0] * pi/180.0;
