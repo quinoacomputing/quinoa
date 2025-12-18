@@ -464,12 +464,12 @@ class DG : public CBase_DG {
     //! Non-linear solver using Broyden's method
     std::vector< tk::real > nonlinear_broyden(std::size_t e,
                                               std::vector< tk::real > x,
-                                              bool solver_failed );
+                                              bool& solver_failed );
 
     //! Non-linear solver using Newton's method
     std::vector< tk::real > nonlinear_newton(std::size_t e,
                                              std::vector< tk::real > x,
-                                             bool solver_failed );
+                                             bool& solver_failed );
 
     //! Non-linear function necessary to integrate with IMEX
     std::vector< tk::real > nonlinear_func(std::size_t e,

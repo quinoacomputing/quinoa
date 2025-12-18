@@ -145,6 +145,20 @@ class Transport {
       nonStiffEqIdx.resize(0);
     }
 
+    //! Enforces the bounds of the defined stiff variables
+    // //! \param[in,out] x Stiff unknown array
+    void enforceStiffBounds( std::vector< tk::real >& /*x*/ ) const
+    {
+      // Do not enforce any bounds.
+    }
+  
+    //! Compute the error measure for the non-linear solver of the
+    //! stiff system of equations
+    void computeStiffError( std::size_t /*n*/,
+                            std::vector< tk::real >& /*f*/,
+                            tk::real& /*err*/) const
+    {}
+
     //! Determine elements that lie inside the user-defined IC box
     void IcBoxElems( const tk::Fields&,
       std::size_t,

@@ -166,6 +166,16 @@ class DGPDE {
     void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
     { return self->setNonStiffEqIdx( nonStiffEqIdx ); }
 
+    //! Public function to enforce bounds of stiff variables
+    void enforceStiffBounds( std::vector< tk::real >& x ) const
+    { return self->enforceStiffBounds( x ); }
+
+    //! Public function to compute error of non-linear solver from stiff eqs
+    void computeStiffError( std::size_t n,
+                            std::vector< tk::real >& f,
+                            tk::real& err ) const
+    { return self->computeStiffError( n, f, err ); }
+
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
@@ -421,6 +431,10 @@ class DGPDE {
       virtual std::size_t nnonstiffeq() const = 0;
       virtual void setStiffEqIdx( std::vector< std::size_t >& ) const = 0;
       virtual void setNonStiffEqIdx( std::vector< std::size_t >& ) const = 0;
+      virtual void enforceStiffBounds( std::vector< tk::real >& x ) const = 0;
+      virtual void computeStiffError( std::size_t n,
+                                      std::vector< tk::real >& f,
+                                      tk::real& err ) const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
         std::vector< std::unordered_set< std::size_t > >& ) const = 0;
@@ -581,6 +595,12 @@ class DGPDE {
       { data.setStiffEqIdx(stiffEqIdx); }
       void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const override
       { data.setNonStiffEqIdx(nonStiffEqIdx); }
+      void enforceStiffBounds( std::vector< tk::real >& x ) const override
+      { data.enforceStiffBounds(x); }
+      void computeStiffError( std::size_t n,
+                              std::vector< tk::real >& f,
+                              tk::real& err ) const override
+      { data.computeStiffError( n, f, err); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
         std::vector< std::unordered_set< std::size_t > >& inbox )

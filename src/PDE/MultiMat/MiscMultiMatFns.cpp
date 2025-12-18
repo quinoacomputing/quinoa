@@ -374,7 +374,7 @@ timeStepSizeMultiMat(
     a = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
     {
-      if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+      if (ugp[volfracIdx(nmat, k)] > 1.0e-08) {
         auto gk = getDeformGrad(nmat, k, ugp);
         gk = tk::rotateTensor(gk, fn);
         a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
@@ -409,7 +409,7 @@ timeStepSizeMultiMat(
       a = 0.0;
       for (std::size_t k=0; k<nmat; ++k)
       {
-        if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+        if (ugp[volfracIdx(nmat, k)] > 1.0e-08) {
           auto gk = getDeformGrad(nmat, k, ugp);
           gk = tk::rotateTensor(gk, fn);
           a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(

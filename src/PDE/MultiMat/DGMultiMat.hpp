@@ -225,6 +225,40 @@ class MultiMat {
       }
     }
 
+    //! Enforces the bounds of the defined stiff variables
+    //! \param[in,out] x Stiff unknown array
+    void enforceStiffBounds( std::vector< tk::real >& x ) const
+    {
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      std::size_t icnt = 0;
+      for (std::size_t k=0; k<nmat; ++k) {
+        tk::real alpha_min = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
+        // if (x[icnt] < alpha_min) {
+        //   printf("DEBUG01: %e < %e\n", x[icnt], alpha_min);
+        //   x[icnt] = alpha_min;
+        // }
+          
+        x[icnt] = std::max(alpha_min, x[icnt]);
+        icnt++;
+      }
+      // Do not enforce bounds for energy or deformation.
+    }
+
+    //! Compute the error measure for the non-linear solver of the
+    //! stiff system of equations
+    void computeStiffError( std::size_t n,
+                            std::vector< tk::real >& f,
+                            tk::real& err) const
+    {
+      const std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      const std::size_t ndof = g_inputdeck.get< tag::ndof >();
+      err = 0.0;
+      // Not including volume fraction equations in error measure
+      for (std::size_t i=nmat*ndof; i<n; ++i)
+        err += f[i]*f[i];
+      err = std::sqrt(err);
+    }
+
     //! Initialize the compressible flow equations, prepare for time integration
     //! \param[in] geoElem Element geometry array
     //! \param[in] inpoel Element-node connectivity
@@ -1138,29 +1172,43 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > g_star;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j) {
-                std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
+                std::size_t dofId = 2*nmat*ndof+solidTensorIdx(ksld,i,j)*ndof+idof;
                 g[i][j] = x[dofId];
                 g_star[i][j] = x_star[dofId];
               }
-            std::array< std::array< tk::real, 3 >, 3 > devH;
             // Coded in for now
             tk::real mu = getmatprop< tag::mu >(k);
+            // std::array< std::array< tk::real, 3 >, 3 > devH;
+            // // 1. Compute Psi
+            // // Compute deviatoric part of Hencky tensor
+            // devH = tk::getDevHencky(g);
+            // // Compute elastic energy
+            // tk::real psi = 0.0;
+            // for (std::size_t i=0; i<3; ++i)
+            //   for (std::size_t j=0; j<3; ++j)
+            //     psi += mu*devH[i][j]*devH[i][j];
+            // // 2. Compute Psi_star
+            // // Compute deviatoric part of Hencky tensor
+            // devH = tk::getDevHencky(g_star);
+            // // Compute elastic energy
+            // tk::real psi_star = 0.0;
+            // for (std::size_t i=0; i<3; ++i)
+            //   for (std::size_t j=0; j<3; ++j)
+            //     psi_star += mu*devH[i][j]*devH[i][j];
             // 1. Compute Psi
-            // Compute deviatoric part of Hencky tensor
-            devH = tk::getDevHencky(g);
+            // Compute vol-preserving part of Right Cauchy-Green strain tensor
+            auto Ct = tk::getIsochorRightCauchyGreen(g);
+            // Compute elastic shear distortion
+            tk::real eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
             // Compute elastic energy
-            tk::real psi = 0.0;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                psi += mu*devH[i][j]*devH[i][j];
+            tk::real psi = mu * eps2;
             // 2. Compute Psi_star
-            // Compute deviatoric part of Hencky tensor
-            devH = tk::getDevHencky(g_star);
+            // Compute vol-preserving part of Right Cauchy-Green strain tensor
+            Ct = tk::getIsochorRightCauchyGreen(g_star);
+            // Compute elastic shear distortion
+            eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
             // Compute elastic energy
-            tk::real psi_star = 0.0;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                psi_star += mu*devH[i][j]*devH[i][j];
+            tk::real psi_star = mu * eps2;
             // Compute difference
             dpsi += psi - psi_star;
           }
@@ -1300,7 +1348,7 @@ class MultiMat {
           }
         }
 
-        auto wt = wgp[igp] * geoElem(e, 0);
+        tk::real wt = wgp[igp] * geoElem(e, 0);
 
         // Volume fraction contributions
         for (std::size_t k=0; k<nmat; ++k)
@@ -1400,7 +1448,7 @@ class MultiMat {
                   s[(i*3+j)*ndof+idof] = B[idof] * Lp[i][j];
                 }
 
-            auto wt = wgp[igp] * geoElem(e, 0);
+            wt = wgp[igp] * geoElem(e, 0);
 
             // Contribute to the right-hand-side
             for (std::size_t i=0; i<3; ++i)
@@ -1409,7 +1457,7 @@ class MultiMat {
                 {
                   std::size_t srcId = (i*3+j)*ndof+idof;
                   std::size_t dofId = 2*nmat*ndof+solidTensorIdx(ksld,i,j)*ndof+idof;
-                  R(e, dofId) += wt * s[srcId];
+                  R(e, dofId) += wt * s[srcId] * B[idof];
                 }
 
             ksld++;

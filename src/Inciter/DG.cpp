@@ -2218,6 +2218,11 @@ DG::imex_integrate()
         {
           auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
           x[ieq*ndof+idof] = m_u(e, stiffrmark);
+          if (x[ieq*ndof+idof] < 1.0e-08 && ieq<3) {
+            printf("\n");
+            printf("idx1, idx2, x = %lu, %lu, %e\n", ieq*ndof+idof, stiffrmark, x[ieq*ndof+idof]);
+            x[ieq*ndof+idof] = 1.0e-08;
+          }
         }
 
       // Save all the values of m_u at stiffEqIdx as x_star,
@@ -2368,7 +2373,7 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
 
 std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
                                               std::vector< tk::real > x,
-                                              bool solver_failed )
+                                              bool& solver_failed )
 // *****************************************************************************
 // Performs Broyden's method to solve a non-linear system on
 // element e.
@@ -2386,6 +2391,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
 // *****************************************************************************
 {
   // Broyden's method
+  auto d = Disc();
   // Control parameters
   std::size_t max_iter = g_inputdeck.get< tag::imex_maxiter >();
   tk::real rel_tol = g_inputdeck.get< tag::imex_reltol >();
@@ -2410,9 +2416,10 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
 
   // Store the norm of f initially, for relative error measure
   tk::real err0 = 0.0;
-  for (std::size_t i=0; i<n; ++i)
-    err0 += f[i]*f[i];
-  err0 = std::sqrt(err0);
+  // for (std::size_t i=0; i<n; ++i)
+  //   err0 += f[i]*f[i];
+  // err0 = std::sqrt(err0);
+  g_dgpde[d->MeshId()].computeStiffError( n, f, err0 );
 
   // Iterate for the solution if err0 > 0
   solver_failed = false;
@@ -2430,8 +2437,11 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
         // Derivative of f[i] with respect to x[j]
         auto x_perturb = x;
         x_perturb[j] += dx;
+        if (x[j] < 1.0e-08 && j<3)
+          printf("DEBUG00: %e < 1.0e-08\n", x[j]);
+        g_dgpde[d->MeshId()].enforceStiffBounds( x_perturb );
         auto f_perturb = DG::nonlinear_func(e, x_perturb);
-        jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
+        jacob[i*n+j] = (f_perturb[i]-f[i])/(x_perturb[j]-x[j]);
       }
 
     // Initialize Jacobian to be the inverse of this jacobian
@@ -2484,13 +2494,17 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
         for (std::size_t i=0; i<n; ++i)
           xtest[i] = x[i] + alpha_ls*delta[i];
 
+        // Enforce bounds
+        g_dgpde[d->MeshId()].enforceStiffBounds( x );
+
         // Compute new f(x)
         f = DG::nonlinear_func(e, xtest);
 
-        tk::real err = 0.0;
-        for (std::size_t i=0; i<n; ++i)
-          err += f[i]*f[i];
-        abs_err = std::sqrt(err);
+        // tk::real err = 0.0;
+        // for (std::size_t i=0; i<n; ++i)
+        //   err += f[i]*f[i];
+        // abs_err = std::sqrt(err);
+        g_dgpde[d->MeshId()].computeStiffError( n, f, abs_err );
 
         // If 1. The error went up
         // or 2. The function f flipped in sign
@@ -2592,10 +2606,11 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
             approx_jacob[i][j] += auxvec1[i] * auxvec2[j];
 
         // Compute a measure of error, use norm of f
-        tk::real err = 0.0;
-        for (std::size_t i=0; i<n; ++i)
-          err += f[i]*f[i];
-        abs_err = std::sqrt(err);
+        // tk::real err = 0.0;
+        // for (std::size_t i=0; i<n; ++i)
+        //   err += f[i]*f[i];
+        // abs_err = std::sqrt(err);
+        g_dgpde[d->MeshId()].computeStiffError( n, f, abs_err );
         rel_err = abs_err/err0;
 
         // Save solution and f
@@ -2623,7 +2638,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
 
 std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
                                              std::vector< tk::real > x,
-                                             bool solver_failed )
+                                             bool& solver_failed )
 // *****************************************************************************
 // Performs Newton's method to solve a non-linear system on
 // element e.
@@ -2640,6 +2655,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 //!    until F(U) is close enough to zero.
 // *****************************************************************************
 {
+  auto d = Disc();
   // Newton's method
   // Control parameters
   std::size_t max_iter = g_inputdeck.get< tag::imex_maxiter >();
@@ -2657,9 +2673,10 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
   // Store the norm of f initially, for relative error measure
   tk::real err0 = 0.0;
-  for (std::size_t i=0; i<n; ++i)
-    err0 += f[i]*f[i];
-  err0 = std::sqrt(err0);
+  // for (std::size_t i=0; i<n; ++i)
+  //   err0 += f[i]*f[i];
+  // err0 = std::sqrt(err0);
+  g_dgpde[d->MeshId()].computeStiffError( n, f, err0 );
   auto abs_err_old = err0;
 
   // Iterate for the solution if err0 > 0
@@ -2679,8 +2696,9 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
           // Derivative of f[i] with respect to x[j]
           auto x_perturb = x;
           x_perturb[j] += dx;
+          g_dgpde[d->MeshId()].enforceStiffBounds( x_perturb );
           auto f_perturb = DG::nonlinear_func(e, x_perturb);
-          jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
+          jacob[i*n+j] = (f_perturb[i]-f[i])/(x_perturb[j]-x[j]);
         }
 
       // Compute new solution by solving linear system J*dx = -f
@@ -2712,13 +2730,17 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
         for (std::size_t i=0; i<n; ++i)
           xtest[i] = x[i] + alpha_ls*delta[i];
 
+        // Enforce bounds
+        g_dgpde[d->MeshId()].enforceStiffBounds( x );
+
         // Compute new f(x)
         f = DG::nonlinear_func(e, xtest);
 
-        tk::real err = 0.0;
-        for (std::size_t i=0; i<n; ++i)
-          err += f[i]*f[i];
-        abs_err = std::sqrt(err);
+        // tk::real err = 0.0;
+        // for (std::size_t i=0; i<n; ++i)
+        //   err += f[i]*f[i];
+        // abs_err = std::sqrt(err);
+        g_dgpde[d->MeshId()].computeStiffError( n, f, abs_err );
 
         // If 1. The error went up
         // or 2. The function f flipped in sign
@@ -2752,7 +2774,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
       if (solver_failed) {
         f = DG::nonlinear_func(e, x);
-        printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", iter+1);
+        printf("\nIMEX-RK: Newton solver did not converge in %lu iterations\n", iter+1);
         printf("Element #%lu\n", e);
         printf("Relative error: %e\n", rel_err);
         printf("Absolute error: %e\n\n", abs_err);
@@ -2765,10 +2787,11 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
           x[i] = xtest[i];
 
         // Compute a measure of error, use norm of f
-        tk::real err = 0.0;
-        for (std::size_t i=0; i<n; ++i)
-          err += f[i]*f[i];
-        abs_err = std::sqrt(err);
+        // tk::real err = 0.0;
+        // for (std::size_t i=0; i<n; ++i)
+        //   err += f[i]*f[i];
+        // abs_err = std::sqrt(err);
+        g_dgpde[d->MeshId()].computeStiffError( n, f, abs_err );
         rel_err = abs_err/err0;
 
         // check if error condition is met and loop back
@@ -2779,7 +2802,8 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
         // If we did not converge, print a message and keep going
         if (iter == max_iter-1)
         {
-          printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
+          solver_failed = true;
+          printf("\nIMEX-RK: Newton solver did not converge in %lu iterations\n", max_iter);
           printf("Element #%lu\n", e);
           printf("Relative error: %e\n", rel_err);
           printf("Absolute error: %e\n\n", abs_err);

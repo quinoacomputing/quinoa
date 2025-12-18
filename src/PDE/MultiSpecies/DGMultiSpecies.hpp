@@ -164,6 +164,32 @@ class MultiSpecies {
       nonStiffEqIdx.resize(0);
     }
 
+    //! Enforces the bounds of the defined stiff variables
+    //! \param[in,out] x Stiff unknown array
+    void enforceStiffBounds( std::vector< tk::real >& x ) const
+    {
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      std::size_t icnt = 0;
+      for (std::size_t k=0; k<nmat; ++k) {
+        tk::real rho_min = 1.0e-08;
+        x[icnt] = std::max(rho_min, x[icnt]);
+        icnt++;
+      }
+      // Do not enforce bounds for energy.
+    }
+
+    //! Compute the error measure for the non-linear solver of the
+    //! stiff system of equations
+    void computeStiffError( std::size_t n,
+                            std::vector< tk::real >& f,
+                            tk::real& err) const
+    {
+      err = 0.0;
+      for (std::size_t i=0; i<n; ++i)
+        err += f[i]*f[i];
+      err = std::sqrt(err);
+    }
+
     //! Initialize the compressible flow equations, prepare for time integration
     //! \param[in] geoElem Element geometry array
     //! \param[in] inpoel Element-node connectivity
