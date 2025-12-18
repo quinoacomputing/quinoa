@@ -241,7 +241,7 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::location,          std::vector< tk::real >,
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
-  tag::moment_of_inertia, tk::real,
+  tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
   tag::center_of_mass,    std::vector< tk::real >
 > >;
 
@@ -361,7 +361,7 @@ using ConfigMembers = brigand::list<
   tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
     tag::rigid_body_movt, bool,
     tag::rigid_body_dof,  std::size_t,
-    tag::symmetry_plane,  std::size_t
+    tag::symmetry_plane,  std::vector< tk::real >
   > >,
 
   // ALE block
@@ -1826,7 +1826,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"symmetry_plane", "Symmetry plane for rigid body motion",
         R"(This keyword is used to specify the symmetry plane for a 3 DOF rigid
-        body motion solver. 1: x-plane, 2: y-plane, 3: z-plane.)", "uint"});
+        body motion solver, given as a vector normal to the plane)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // IC object
@@ -1980,7 +1981,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         relocate the mesh.)", "vector of 3 reals"});
 
       keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
-        R"(Moment of inertia of rigid body for rotational motion)", "real"});
+        R"(Moment of inertia of rigid body for rotational motion)",
+        "3-by-3 vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
         R"(Center of mass of rigid body used to compute torque for rotational
