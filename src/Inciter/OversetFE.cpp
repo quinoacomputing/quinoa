@@ -1444,11 +1444,12 @@ OversetFE::solve()
         g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::orientation >();
       // Rotation for diagnostics, accounting for initial rotation (ZYX Euler
       // angles)
-      m_rotation[0] = std::atan2(Rn1[1][0], Rn1[0][0]) * radToDeg -
-        mesh_orientation[2];
-      m_rotation[1] = std::asin(-Rn1[2][0]) * radToDeg - mesh_orientation[1];
-      m_rotation[2] = std::atan2(Rn1[2][1], Rn1[2][2]) * radToDeg -
-        mesh_orientation[0];
+      m_rotation[0] = std::atan2(-Rn1[1][2], Rn1[2][2]) * radToDeg
+        - mesh_orientation[0];
+      m_rotation[1] = std::atan2(Rn1[0][2], std::sqrt(Rn1[0][0]*Rn1[0][0]
+        + Rn1[0][1]*Rn1[0][1])) * radToDeg - mesh_orientation[1];
+      m_rotation[2] = std::atan2(-Rn1[0][1], Rn1[0][0]) * radToDeg
+        - mesh_orientation[2];
 
       // move center of mass
       for (std::size_t i=0; i<3; ++i) {
