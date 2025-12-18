@@ -1561,7 +1561,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diagnostics, tag::error >();
 
-  decltype(ncomp) n = 0;
+  [[maybe_unused]] decltype(ncomp) n = 0;
   n += ncomp;
   if (error == tk::ctr::ErrorType::L2) {
    // Finish computing the L2 norm of the numerical - analytical solution

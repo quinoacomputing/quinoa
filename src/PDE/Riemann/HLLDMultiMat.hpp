@@ -65,7 +65,7 @@ struct HLLDMultiMat {
 
     // Outer states
     // -------------------------------------------------------------------------
-    tk::real pl(0.0), pr(0.0);
+    [[maybe_unused]] tk::real pl(0.0), pr(0.0);
     tk::real acl(0.0), acr(0.0);
     std::vector< tk::real > apl(nmat, 0.0), apr(nmat, 0.0);
     std::array< tk::real, 3 > Tnl{{0, 0, 0}}, Tnr{{0, 0, 0}};
