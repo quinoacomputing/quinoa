@@ -468,9 +468,9 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
 //! \return Boolean which will be true if matrix contains all zeros.
 inline bool is_matrix_empty(const std::array< std::array< tk::real, 3>, 3> mat)
 {
-  for (const auto& row : mat)
-    for (double v : row)
-      if (std::abs(v) < 1.0e-16)
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      if (std::abs(mat[i][j]) > 1.0e-16)
         return false;
   return true;
 }
@@ -482,6 +482,10 @@ inline bool is_matrix_empty(const std::array< std::array< tk::real, 3>, 3> mat)
 inline std::array< std::array< real, 3 >, 3 >
 getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(g))
+    return {{}};
+
   // allocate matrices
   double G[9], C[9];
 
@@ -523,6 +527,10 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 inline std::array< std::array< real, 3 >, 3 >
 getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(g))
+    return {{}};
+
   // allocate matrices
   double G[9], b[9];
 
@@ -581,6 +589,10 @@ getIsochorRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 inline std::array< std::array< real, 3 >, 3 >
 getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(g))
+    return {{}};
+
   // Get right volm-preserving part of Cauchy-Green strain tensor
   auto C = getIsochorRightCauchyGreen(g);
 
