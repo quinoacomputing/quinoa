@@ -463,6 +463,18 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
   point = x;
 }
 
+//! Check if 3x3 matrix is empty to avoid unnecesary calculations
+//! \param[in] mat 3x3 matrix.
+//! \return Boolean which will be true if matrix contains all zeros.
+inline bool is_matrix_empty(const std::array< std::array< tk::real, 3>, 3> mat)
+{
+  for (const auto& row : mat)
+    for (double v : row)
+      if (std::abs(v) < 1.0e-16)
+        return false;
+  return true;
+}
+
 //! \brief Get the Right Cauchy-Green strain tensor from the inverse deformation
 //! gradient tensor.
 //! \param[in] g Inverse deformation gradient tensor
@@ -681,6 +693,10 @@ inline std::array< std::array< tk::real, 3 >, 3 >
 rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
              const std::array< tk::real, 3 >& r )
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(mat))
+    return {{}};
+
   // define rotation matrix
   std::array< std::array< tk::real, 3 >, 3 > rotMatrix = getRotationMatrix(r);
   double rotMat[9];
@@ -728,6 +744,10 @@ inline std::array< std::array< tk::real, 3 >, 3 >
 unrotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
                const std::array< tk::real, 3 >& r )
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(mat))
+    return {{}};
+
   // define rotation matrix
   std::array< std::array< tk::real, 3 >, 3 > rotMatrix = getRotationMatrix(r);
   double rotMat[9];
@@ -806,6 +826,10 @@ inline std::array< std::array< tk::real, 3 >, 3 >
 reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
               const std::array< std::array< tk::real, 3 >, 3 >& reflectMat)
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(mat))
+    return {{}};
+
   // define reflection matrix
   double refMat[9];
   for (std::size_t i=0; i<3; ++i)
