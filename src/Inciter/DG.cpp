@@ -2218,11 +2218,11 @@ DG::imex_integrate()
         {
           auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
           x[ieq*ndof+idof] = m_u(e, stiffrmark);
-          if (x[ieq*ndof+idof] < 1.0e-08 && ieq<3) {
-            printf("\n");
-            printf("idx1, idx2, x = %lu, %lu, %e\n", ieq*ndof+idof, stiffrmark, x[ieq*ndof+idof]);
-            x[ieq*ndof+idof] = 1.0e-08;
-          }
+          // if (x[ieq*ndof+idof] < 1.0e-08 && ieq<3) {
+          //   printf("\n");
+          //   printf("idx1, idx2, x = %lu, %lu, %e\n", ieq*ndof+idof, stiffrmark, x[ieq*ndof+idof]);
+          //   x[ieq*ndof+idof] = 1.0e-08;
+          // }
         }
 
       // Save all the values of m_u at stiffEqIdx as x_star,
@@ -2238,6 +2238,16 @@ DG::imex_integrate()
       if (solver_failed) {
         solver_failed = false;
         x = DG::nonlinear_newton(e, x, solver_failed);
+      }
+
+      auto nmat = 3;
+      if (nmat == 2) {
+        std::ofstream outFile("prelax_results.dat", std::ios::app);
+        outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << std::endl;
+      } else if (nmat == 3) {
+        std::ofstream outFile("prelax_results.dat", std::ios::app);
+        outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+                << x[5] << ", " << x[6] << std::endl;
       }
 
       // If newton failed, crash
