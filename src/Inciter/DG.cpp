@@ -1581,6 +1581,16 @@ DG::solve( tk::real newdt )
       m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
 
+  auto nmat = 2;
+  if (nmat == 2) {
+    std::ofstream outFile("prelax_results.dat", std::ios::app);
+    outFile << m_u(0, 0) << ", " << m_u(0, 1) << ", " << m_p(0, 0)/m_u(0, 0) << ", " << m_p(0, 1)/m_u(0, 1) << std::endl;
+  } /*else if (nmat == 3) {
+    std::ofstream outFile("prelax_results.dat", std::ios::app);
+    outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+            << x[5] << ", " << x[6] << std::endl;
+            }*/
+
   if (m_stage < m_nstage-1) {
 
     // continue with next time step stage
@@ -2230,30 +2240,21 @@ DG::imex_integrate()
       // from the implicit step
       auto x_star = x;
 
-      // Solve nonlinear system, first try broyden
-      bool solver_failed = false;
-      x = DG::nonlinear_broyden(e, x, solver_failed);
+      // // Solve nonlinear system, first try broyden
+      // bool solver_failed = false;
+      // x = DG::nonlinear_broyden(e, x, solver_failed);
 
       // If solver_failed, do newton
+      bool solver_failed = true;
       if (solver_failed) {
         solver_failed = false;
         x = DG::nonlinear_newton(e, x, solver_failed);
       }
 
-      auto nmat = 3;
-      if (nmat == 2) {
-        std::ofstream outFile("prelax_results.dat", std::ios::app);
-        outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << std::endl;
-      } else if (nmat == 3) {
-        std::ofstream outFile("prelax_results.dat", std::ios::app);
-        outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
-                << x[5] << ", " << x[6] << std::endl;
-      }
-
-      // If newton failed, crash
-      if (solver_failed)
-        Throw("At element " + std::to_string(e) +
-              " nonlinear solvers was not able to converge");
+      // // If newton failed, crash
+      // if (solver_failed)
+      //   Throw("At element " + std::to_string(e) +
+      //         " nonlinear solvers was not able to converge");
 
       // Balance energy
       g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
@@ -2430,6 +2431,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
   //   err0 += f[i]*f[i];
   // err0 = std::sqrt(err0);
   g_dgpde[d->MeshId()].computeStiffError( n, f, err0 );
+  auto abs_err_old = err0;
 
   // Iterate for the solution if err0 > 0
   solver_failed = false;
@@ -2495,7 +2497,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
 
       // Update x using line search
       bool ls_failed = false;
-      tk::real alpha_ls = 1.0E+00;
+      tk::real alpha_ls = 1.0E+01;
       std::size_t nline = 25;
       auto xtest = x;
       for (std::size_t iline = 0; iline<nline; ++iline)
@@ -2526,7 +2528,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
             break;
           }
 
-        if (!flipped_sign)
+        if (abs_err < abs_err_old /*&& !flipped_sign*/)
         {
           break;
         }
@@ -2637,6 +2639,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
         // If we did not converge, print a message and keep going
         if (iter == max_iter-1)
         {
+          printf("BROYDEN FAILED\n");
           solver_failed = true;
         }
       }
@@ -2731,11 +2734,13 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
       // Update x using line search
       bool ls_failed = false;
-      tk::real alpha_ls = 1.0E+00;
-      std::size_t nline = 25;
+      tk::real alpha_ls = 1.0E-00;
+      std::size_t nline = 1;
       auto xtest = x;
+      std::size_t ilineout = 0;
       for (std::size_t iline = 0; iline<nline; ++iline)
       {
+        ilineout = iline;
         // Evaluate xtest
         for (std::size_t i=0; i<n; ++i)
           xtest[i] = x[i] + alpha_ls*delta[i];
@@ -2762,7 +2767,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
             break;
           }
 
-        if (abs_err < abs_err_old && !flipped_sign)
+        if (abs_err < abs_err_old /*&& !flipped_sign*/)
         {
           break;
         }
@@ -2780,6 +2785,14 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
           else
             ls_failed = true;
         }
+      }
+      auto nmat = 2;
+      if (nmat == 2) {
+        tk::real error0, error1;
+        g_dgpde[d->MeshId()].computeStiffError( n, fold, error0 );
+        g_dgpde[d->MeshId()].computeStiffError( n, f, error1 );
+        std::ofstream outFile("newton_iterations.dat", std::ios::app);
+        outFile << iter << ", " << ilineout << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << error0 << ", " << error1 << std::endl;
       }
 
       if (solver_failed) {

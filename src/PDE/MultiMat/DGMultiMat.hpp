@@ -233,7 +233,7 @@ class MultiMat {
       std::size_t icnt = 0;
       for (std::size_t k=0; k<nmat; ++k) {
         tk::real alpha_min = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
-        x[icnt] = std::max(alpha_min, x[icnt]);
+        x[icnt] = std::min(std::max(alpha_min, x[icnt]), 1.0);
         icnt++;
       }
       // Do not enforce bounds for energy or deformation.
@@ -1340,14 +1340,14 @@ class MultiMat {
               * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
             s_prelax[volfracIdx(nmat, k)] = s_alpha;
             s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
-            if (std::abs(s_prelax[energyIdx(nmat, k)]) > 1.0e-08) {
-              if (k == 0) printf("\n");
-              printf("kmat = %e\n", kmat[k]);
-              printf("alpha_k = %e\n", state[volfracIdx(nmat, k)]);
-              printf("pb, s_alpha = %e, %e\n", pb, s_alpha);
-              printf("p_k, p_relax = %e, %e\n", apmat[k]/state[volfracIdx(nmat, k)], p_relax);
-              printf("R_e[%lu] = %e\n", k, s_prelax[energyIdx(nmat, k)]);
-            }
+            // if (std::abs(s_prelax[energyIdx(nmat, k)]) > 1.0e-08 && e==0) {
+            //   if (k == 0) printf("\n");
+            //   printf("kmat = %e\n", kmat[k]);
+            //   printf("alpha_k = %e\n", state[volfracIdx(nmat, k)]);
+            //   printf("pb, s_alpha = %e, %e\n", pb, s_alpha);
+            //   printf("p_k, p_relax = %e, %e\n", apmat[k]/state[volfracIdx(nmat, k)], p_relax);
+            //   printf("R_e[%lu] = %e\n", k, s_prelax[energyIdx(nmat, k)]);
+            // }
           }
         }
 
@@ -1359,7 +1359,7 @@ class MultiMat {
           auto c = volfracIdx(nmat, k);
           auto mark = k*ndof;
           for(std::size_t idof = 0; idof < ndof; idof++)
-            R(e, mark+idof) += wt * s_prelax[c] * B[idof];
+            R(e, mark+idof) -= wt * s_prelax[c] * B[idof];
         }
         // Energy contributions
         for (std::size_t k=0; k<nmat; ++k)
@@ -1367,7 +1367,7 @@ class MultiMat {
           auto c = energyIdx(nmat, k);
           auto mark = nmat*ndof + k*ndof;
           for(std::size_t idof = 0; idof < ndof; idof++)
-            R(e, mark+idof) += wt * s_prelax[c] * B[idof];
+            R(e, mark+idof) -= wt * s_prelax[c] * B[idof];
         }
 
         // Compute plastic source
