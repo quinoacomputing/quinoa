@@ -4,6 +4,7 @@ inciter = {
 
   nstep = 20,   -- Max number of time steps
   cfl = 0.8,
+  cfl_ramping = false,
   ttyi = 5,      -- TTY output interval
   scheme = "dgp1",
   limiter = "vertexbasedp1",

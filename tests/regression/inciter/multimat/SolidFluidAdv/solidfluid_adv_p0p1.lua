@@ -4,6 +4,7 @@ inciter = {
 
   nstep = 10,
   cfl = 0.8,
+  cfl_ramping = false,
   ttyi = 1,  -- TTY output interval
   scheme = "p0p1",
   limiter = "vertexbasedp1",

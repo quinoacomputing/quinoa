@@ -118,9 +118,22 @@ struct AUSMMultiSpecies {
     auto pu = -k_u* msl[2] * msr[3] * f_a * rho12 * a12 * (vnr-vnl);
     auto p12 = msl[2]*pl + msr[3]*pr + pu;
 
+    // Shock-instability fix from Pandare, Edwards (2025), JCP 543.
+    // Uncomment code below AND set k_u and k_p to zero for AUSM-2025u/p mods.
+    auto md = 0.0;
+    //// Velocity magnitudes
+    //auto vmag_l = tk::dot( {{ul, vl, wl}}, {{ul, vl, wl}} );
+    //auto vmag_r = tk::dot( {{ur, vr, wr}}, {{ur, vr, wr}} );
+    //auto m0_mod = 4.0
+    //  * (0.25 - (0.5*(vmag_l*vmag_l + vmag_r*vmag_r)/(a12*a12)));
+    //// Additional diffusion
+    //auto delta = 4.0;
+    //md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * a12);
+    ////md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
+
     // Flux vector splitting
-    auto l_plus = 0.5 * (vriem + std::fabs(vriem));
-    auto l_minus = 0.5 * (vriem - std::fabs(vriem));
+    auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
+    auto l_minus = 0.5 * (vriem - std::fabs(vriem) - 2.0*md);
 
     // Conservative fluxes
     for (std::size_t k=0; k<nspec; ++k)

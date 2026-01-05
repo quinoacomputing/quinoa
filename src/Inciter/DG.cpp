@@ -1543,20 +1543,20 @@ DG::solve( tk::real newdt )
   if (imex_runge_kutta) {
     if (m_stage == 0)
     {
-      // Save previous rhs
-      m_rhsprev = m_rhs;
       // Initialize m_stiffrhs to zero
       m_stiffrhs.fill(0.0);
       m_stiffrhsprev.fill(0.0);
     }
   }
 
-  g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-    myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-    myGhosts()->m_coord, m_u, m_p, m_meshvel, m_ndof, d->Dt(), m_rhs );
-
   // Perform ALE mesh data updates
   if (is_ale) ALEUpdate();
+  if (!imex_runge_kutta || m_stage < m_nstage-1) {
+    if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
+    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+      myGhosts()->m_coord, m_u, m_p, m_meshvel, m_ndof, d->Dt(), m_rhs );
+  }
 
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
@@ -1967,13 +1967,12 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
-  // Add rho0*det(g)/rho to make sure it is staying close to 1,
-  // averaged for all materials
-  std::vector< tk::real > densityConstr(nelem);
-  g_dgpde[d->MeshId()].computeDensityConstr(nelem, m_u, densityConstr);
+  // Compute plastic deformation averaged for all materials
+  std::vector< tk::real > plasticDeformation(nelem);
+  g_dgpde[d->MeshId()].computePlasticDeformation(nelem, m_u, m_p, plasticDeformation);
   for (const auto& [child,parent] : addedTets)
-    densityConstr[child] = 0.0;
-  if (densityConstr.size() > 0) elemfields.push_back( densityConstr );
+    plasticDeformation[child] = 0.0;
+  if (plasticDeformation.size() > 0) elemfields.push_back( plasticDeformation );
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
@@ -1989,8 +1988,8 @@ DG::writeFields(
 
   elemfieldnames.push_back( "shock_marker" );
 
-  if (densityConstr.size() > 0)
-    elemfieldnames.push_back( "density_constraint" );
+  if (plasticDeformation.size() > 0)
+    elemfieldnames.push_back( "plastic_deformation" );
 
   //! Lambda to put in a field for output if not empty
   auto add_node_field = [&]( const auto& name, const auto& field ){
@@ -2347,21 +2346,33 @@ DG::imex_integrate()
     m_stiffrhsprev = m_stiffrhs;
 
     // Compute the imex update
+    const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+    const auto neq = m_u.nprop()/rdof;
 
-    // Integrate explicitly on the imex equations
-    // (To use as initial values)
-    for (std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+    for (std::size_t e=0; e<nelem; ++e) {
       auto vole = myGhosts()->m_geoElem(e,0);
+      // Integrate explicitly on all equations
+      for (std::size_t c=0; c<neq; ++c)
+      {
+        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+        {
+          auto rmark = c*rdof+k;
+          auto mark = c*ndof+k;
+          m_u(e, rmark) = m_un(e, rmark) + d->Dt() * (
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
+          if(fabs(m_u(e, rmark)) < 1e-16)
+            m_u(e, rmark) = 0;
+        }
+      }
+      // Integrate previous implicit step, which is now explicit
       for (std::size_t c=0; c<m_nstiffeq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
           auto rmark = m_stiffEqIdx[c]*rdof+k;
-          auto mark = m_stiffEqIdx[c]*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k])
-            + impl_rkcoef[0][m_stage]
+          m_u(e, rmark) += d->Dt() *
+            ( impl_rkcoef[0][m_stage]
             * m_stiffrhsprev(e,c*ndof+k)/(vole*mass_dubiner[k]) );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
@@ -2370,7 +2381,6 @@ DG::imex_integrate()
     }
 
     // Solve for implicit-explicit equations
-    const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
     for (std::size_t e=0; e<nelem; ++e)
     {
 
@@ -2417,37 +2427,21 @@ DG::imex_integrate()
 
     }
 
-    // Then, integrate explicitly on the remaining equations
-    for (std::size_t e=0; e<nelem; ++e) {
-      auto vole = myGhosts()->m_geoElem(e,0);
-      for (std::size_t c=0; c<m_nnonstiffeq; ++c)
-      {
-        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
-        {
-          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
-          auto mark = m_nonStiffEqIdx[c]*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
-          if(fabs(m_u(e, rmark)) < 1e-16)
-            m_u(e, rmark) = 0;
-        }
-      }
-    }
   }
   else {
     // For last stage just use all previously computed stages
     const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+    const auto neq = m_u.nprop()/rdof;
     for (std::size_t e=0; e<nelem; ++e)
     {
       auto vole = myGhosts()->m_geoElem(e,0);
-      // First integrate explicitly on nonstiff equations
-      for (std::size_t c=0; c<m_nnonstiffeq; ++c)
+      // First integrate explicitly on all equations
+      for (std::size_t c=0; c<neq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
-          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
-          auto mark = m_nonStiffEqIdx[c]*ndof+k;
+          auto rmark = c*rdof+k;
+          auto mark = c*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
             expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
             + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
@@ -2455,21 +2449,16 @@ DG::imex_integrate()
             m_u(e, rmark) = 0;
         }
       }
-      // Then, integrate the imex-equations
+      // Then, integrate the implicit part
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
           auto rmark = m_stiffEqIdx[ieq]*rdof+idof;
-          auto mark = m_stiffEqIdx[ieq]*ndof+idof;
-          m_u(e, rmark) = m_un(e, rmark)
-            + d->Dt() * (expl_rkcoef[0][m_stage]
-                         * m_rhsprev(e,mark)/(vole*mass_dubiner[idof])
-                         + expl_rkcoef[1][m_stage]
-                         * m_rhs(e,mark)/(vole*mass_dubiner[idof])
-                         + impl_rkcoef[0][m_stage]
-                         * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
-                         + impl_rkcoef[1][m_stage]
-                         * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
+          m_u(e, rmark) +=
+            d->Dt() * ( impl_rkcoef[0][m_stage]
+                      * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
+                      + impl_rkcoef[1][m_stage]
+                      * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -2534,8 +2523,7 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
 
   // Compute stiff_rhs
   g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
-    myGhosts()->m_inpoel, myGhosts()->m_coord,
-    m_u, m_p, m_ndof, m_stiffrhs );
+    m_u, m_ndof, m_stiffrhs );
 
   // Store f
   std::vector< tk::real > f(n, 0.0);

@@ -412,13 +412,14 @@ movePoint( const std::array< tk::real, 3 >& origin,
     point[i] -= origin[i];
 }
 
-//! Rotate a point in 3D space by specifying rotation angles in degrees
+//! Calculate rotation matrix given three rotations in degrees
 //!  \param[in] angles Angles in 3D space by which point is to be rotated
-//!  \param[in,out] point Point that needs to be rotated
-inline void
-rotatePoint( const std::array< tk::real, 3 >& angles,
-  std::array< tk::real, 3 >& point )
+//!  \return Rotation matrix associated with rotations
+inline std::array< std::array< tk::real, 3 >, 3 >
+anglesToRotMat( const std::array< tk::real, 3 >& angles)
 {
+  using std::cos;  using std::sin;
+
   // Convert angles to radian
   tk::real pi = 4.0*std::atan(1.0);
   auto a = angles[0] * pi/180.0;
@@ -427,20 +428,30 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
 
   // Rotation matrix
   std::array< std::array< tk::real, 3 >, 3 > rotMat;
-  {
-    using namespace std;
-    rotMat[0][0] = cos(b)*cos(c);
-    rotMat[0][1] = - cos(b)*sin(c);
-    rotMat[0][2] = sin(b);
+  rotMat[0][0] = cos(b)*cos(c);
+  rotMat[0][1] = - cos(b)*sin(c);
+  rotMat[0][2] = sin(b);
 
-    rotMat[1][0] = sin(a)*sin(b)*cos(c) + cos(a)*sin(c);
-    rotMat[1][1] = - sin(a)*sin(b)*sin(c) + cos(a)*cos(c);
-    rotMat[1][2] = - sin(a)*cos(b);
+  rotMat[1][0] = sin(a)*sin(b)*cos(c) + cos(a)*sin(c);
+  rotMat[1][1] = - sin(a)*sin(b)*sin(c) + cos(a)*cos(c);
+  rotMat[1][2] = - sin(a)*cos(b);
 
-    rotMat[2][0] = - cos(a)*sin(b)*cos(c) + sin(a)*sin(c);
-    rotMat[2][1] = cos(a)*sin(b)*sin(c) + sin(a)*cos(c);
-    rotMat[2][2] = cos(a)*cos(b);
-  }
+  rotMat[2][0] = - cos(a)*sin(b)*cos(c) + sin(a)*sin(c);
+  rotMat[2][1] = cos(a)*sin(b)*sin(c) + sin(a)*cos(c);
+  rotMat[2][2] = cos(a)*cos(b);
+
+  return rotMat;
+}
+
+//! Rotate a point in 3D space by specifying rotation angles in degrees
+//!  \param[in] angles Angles in 3D space by which point is to be rotated
+//!  \param[in,out] point Point that needs to be rotated
+inline void
+rotatePoint( const std::array< tk::real, 3 >& angles,
+  std::array< tk::real, 3 >& point )
+{
+  // Rotation matrix
+  auto rotMat = anglesToRotMat(angles);
 
   // Apply rotation
   std::array< tk::real, 3 > x{{0.0, 0.0, 0.0}};
@@ -826,6 +837,128 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
             {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
             {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+}
+
+//! \brief Wrapper to multiply two 3x3 matrices
+//! \param[in] A matrix 1
+//! \param[in] B matrix 2
+//! \return A*B
+inline std::array< std::array< tk::real, 3 >, 3 >
+matmult33(const std::array< std::array< tk::real, 3 >, 3 >& A,
+          const std::array< std::array< tk::real, 3 >, 3 >& B)
+{
+  // Unrolled as cblas was giving issues
+  auto AB = A;
+  AB[0][0] = A[0][0]*B[0][0] + A[0][1]*B[1][0] + A[0][2]*B[2][0];
+  AB[0][1] = A[0][0]*B[0][1] + A[0][1]*B[1][1] + A[0][2]*B[2][1];
+  AB[0][2] = A[0][0]*B[0][2] + A[0][1]*B[1][2] + A[0][2]*B[2][2];
+  AB[1][0] = A[1][0]*B[0][0] + A[1][1]*B[1][0] + A[1][2]*B[2][0];
+  AB[1][1] = A[1][0]*B[0][1] + A[1][1]*B[1][1] + A[1][2]*B[2][1];
+  AB[1][2] = A[1][0]*B[0][2] + A[1][1]*B[1][2] + A[1][2]*B[2][2];
+  AB[2][0] = A[2][0]*B[0][0] + A[2][1]*B[1][0] + A[2][2]*B[2][0];
+  AB[2][1] = A[2][0]*B[0][1] + A[2][1]*B[1][1] + A[2][2]*B[2][1];
+  AB[2][2] = A[2][0]*B[0][2] + A[2][1]*B[1][2] + A[2][2]*B[2][2];
+  return AB;
+}
+
+//! \brief Multiply 2 quaternions
+//! \param[in] a first quaternion
+//! \param[in] b second quaternion
+//! \return multiplied quaternion
+inline std::array< tk::real, 4 >
+quaternion_mult(const std::array< tk::real, 4 >& a,
+                const std::array< tk::real, 4 >& b)
+{
+  std::array< tk::real, 3 > av{ a[1], a[2], a[3] };
+  std::array< tk::real, 3 > bv{ b[1], b[2], b[3] };
+  auto as = a[0];
+  auto bs = b[0];
+  auto abs = as*bs - dot(av, bv);
+  auto abv = cross(av, bv);
+  for (std::size_t i = 0; i < 3; ++i)
+      abv[i] += as*bv[i] + bs*av[i];
+  std::array< tk::real, 4 > ab{abs, abv[0], abv[1], abv[2] };
+  return ab;
+}
+
+//! \brief Obtain the magnitude of a quaternion
+//! \param[in] q quaternion
+//! \return quaternion magnitude
+inline tk::real
+quaternion_mag(const std::array< tk::real, 4 >& q)
+{
+  std::array< tk::real, 3 > v{ q[1], q[2], q[3] };
+  return std::sqrt(q[0]*q[0] + dot(v, v));
+}
+
+//! \brief Convert a rotation quaternion to a rotation matrix
+//! \param[in] q quaternion
+//! \return Rotation matrix
+inline std::array< std::array< tk::real, 3 >, 3 >
+qtoR(const std::array< tk::real, 4 >& q)
+{
+  std::array< std::array< tk::real, 3 >, 3 > R;
+  std::array< tk::real, 3 > v{ q[1], q[2], q[3] };
+  auto s = q[0];
+  // The conversion for quaternion [s, v_i] is:
+  // vx_{ij} = -e_{ijk} v_k
+  // R_{ij} = delta_{ij} + 2*s*vx_{ij} + 2*vx_{ik}vx_{kj}
+  // e_{ijk} is the Levi-Civita tensor
+  std::array< std::array< tk::real, 3 >, 3 >  vx{
+    {
+      {0.0, -v[2], v[1]},
+      {v[2], 0.0, -v[0]},
+      {-v[1], v[0], 0.0},
+    }};
+
+  auto vxvx = matmult33(vx, vx);
+  for (std::size_t i = 0; i < 3; ++i)
+    for (std::size_t j = 0; j < 3; ++j){
+      R[i][j] = 2.0*s*vx[i][j] + 2.0*vxvx[i][j];
+      if (i == j) R[i][j] += 1.0;
+    }
+  return R;
+}
+
+//! \brief Convert a rotation matrix to a rotation quaternion
+//! \param[in] R rotation amtrix
+//! \return rotation quaternion
+inline std::array< tk::real, 4 >
+Rtoq(const std::array< std::array< tk::real, 3 >, 3 >& R)
+{
+  std::array< tk::real, 4 > q;
+
+  auto tr = R[0][0] + R[1][1] + R[2][2];
+  tk::real S, qw, qx, qy, qz;
+
+  if (tr > 0) {
+    S = sqrt(tr + 1.0) * 2; // S=4*qw
+    qw = 0.25 * S;
+    qx = (R[2][1] - R[1][2]) / S;
+    qy = (R[0][2] - R[2][0]) / S;
+    qz = (R[1][0] - R[0][1]) / S;
+  } else if ((R[0][0] > R[1][1]) && (R[0][0] > R[2][2])) {
+    S = sqrt(1.0 + R[0][0] - R[1][1] - R[2][2]) * 2;
+    qw = (R[2][1] - R[1][2]) / S;
+    qx = 0.25 * S;
+    qy = (R[0][1] + R[1][0]) / S;
+    qz = (R[0][2] + R[2][0]) / S;
+  } else if (R[1][1] > R[2][2]) {
+    S = sqrt(1.0 + R[1][1] - R[0][0] - R[2][2]) * 2;
+    qw = (R[0][2] - R[2][0]) / S;
+    qx = (R[0][1] + R[1][0]) / S;
+    qy = 0.25 * S;
+    qz = (R[1][2] + R[2][1]) / S;
+  } else {
+    S = sqrt(1.0 + R[2][2] - R[0][0] - R[1][1]) * 2;
+    qw = (R[1][0] - R[0][1]) / S;
+    qx = (R[0][2] + R[2][0]) / S;
+    qy = (R[1][2] + R[2][1]) / S;
+    qz = 0.25 * S;
+  }
+
+  q[0] = qw; q[1] = qx; q[2] = qy; q[3] = qz;
+  return q;
 }
 
 //! Branchless Cholesky factorization of a 3x3 (SPD) matrix

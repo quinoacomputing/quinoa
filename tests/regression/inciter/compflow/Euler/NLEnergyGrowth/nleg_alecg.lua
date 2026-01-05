@@ -5,6 +5,7 @@ title = "Euler equations computing nonlinear energy growth",
   term = 1.0,
   ttyi = 1,       -- TTY output interval
   cfl = 0.8,
+  cfl_ramping = false,
   scheme = "alecg",
 
   partitioning = "mj",

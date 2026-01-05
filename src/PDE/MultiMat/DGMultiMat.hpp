@@ -35,7 +35,6 @@
 #include "Integrate/Volume.hpp"
 #include "Integrate/MultiMatTerms.hpp"
 #include "Integrate/Source.hpp"
-#include "Integrate/SolidTerms.hpp"
 #include "RiemannChoice.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -296,45 +295,60 @@ class MultiMat {
       }
     }
 
-    //! Compute density constraint for a given material
+    //! Compute average plastic deformation on each element
     //! \param[in] nelem Number of elements
     //! \param[in] unk Array of unknowns
-    //! \param[out] densityConstr Density Constraint: rho/(rho0*det(g))
-    void computeDensityConstr( std::size_t nelem,
-                               tk::Fields& unk,
-                               std::vector< tk::real >& densityConstr) const
+    //! \param[in] pri Array of primitives
+    //! \param[out] plasticDeformation Frobenius norm of Lp matrix
+    void computePlasticDeformation( std::size_t nelem,
+                                    tk::Fields& unk,
+                                    tk::Fields& pri,
+                                    std::vector< tk::real >& plasticDeformation) const
     {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t rdof = g_inputdeck.get< tag::rdof >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      for (std::size_t e=0; e<nelem; ++e)
-        densityConstr[e] = 0.0;
-      for (std::size_t imat=0; imat<nmat; ++imat)
-        if (solidx[imat] > 0)
-        {
-          for (std::size_t e=0; e<nelem; ++e)
-          {
-            // Retrieve unknowns
-            tk::real arho = unk(e, densityDofIdx(nmat, imat, rdof, 0));
+      if (!inciter::haveSolid(nmat, solidx)) {
+        plasticDeformation.resize(0);
+        return;
+      }
+      for (std::size_t e=0; e<nelem; ++e) {
+        plasticDeformation[e] = 0.0;
+        for (std::size_t imat=0; imat<nmat; ++imat)
+          if (solidx[imat] > 0) {
+            tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
             std::array< std::array< tk::real, 3 >, 3 > g;
+            // Compute the source terms
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 g[i][j] = unk(e, deformDofIdx(nmat, solidx[imat], i, j, rdof, 0));
-            // Compute determinant of g
-            tk::real detg = tk::determinant(g);
-            // Compute constraint measure
-            densityConstr[e] += arho/(m_mat_blk[imat].compute< EOS::rho0 >()*detg);
+
+            // Compute dev(sigma)
+            std::array< std::array< tk::real, 3 >, 3 > sigma_dev;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                sigma_dev[i][j] = pri(e, stressDofIdx(nmat, solidx[imat],
+                  stressCmp[i][j], rdof, 0))/alpha;
+            tk::real sigma_trace =
+              sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
+            for (std::size_t i=0; i<3; ++i)
+              sigma_dev[i][i] -= sigma_trace/3.0;
+
+            // Compute g*dev(sigma), symmetrized and
+            // add it to plasticDeformation
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j) {
+                tk::real sum1 = 0.0;
+                tk::real sum2 = 0.0;
+                for (std::size_t l=0; l<3; ++l) {
+                  sum1 += g[i][l]*sigma_dev[l][j];
+                  sum2 += sigma_dev[i][l]*g[l][j];
+                }
+                plasticDeformation[e] += std::pow(0.5*(sum1+sum2),2.0);
+              }
+            plasticDeformation[e] = alpha*std::sqrt(plasticDeformation[e]);
           }
-        }
-        else
-        {
-          for (std::size_t e=0; e<nelem; ++e)
-          {
-            // Retrieve alpha and add it to the constraint measure
-            tk::real alpha = unk(e, volfracDofIdx(nmat, imat, rdof, 0));
-            densityConstr[e] += alpha;
-          }
-        }
+      }
     }
 
     //! Update the interface cells to first order dofs
@@ -985,13 +999,6 @@ class MultiMat {
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, R, intsharp );
 
-      // Compute integrals for inverse deformation correction in solid materials
-      if (inciter::haveSolid(nmat, solidx) &&
-        g_inputdeck.get< tag::multimat, tag::rho0constraint >())
-        tk::solidTermsVolInt( nmat, m_mat_blk, ndof, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, ndofel,
-                              dt, R);
-
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::multimat, tag::prelax >())
       {
@@ -1165,48 +1172,29 @@ class MultiMat {
     //! Compute stiff terms for a single element
     //! \param[in] e Element number
     //! \param[in] geoElem Element geometry array
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
-    //! \param[in] P Primitive vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t e,
                     const tk::Fields& geoElem,
-                    const std::vector< std::size_t >& inpoel,
-                    const tk::UnsMesh::Coords& coord,
                     const tk::Fields& U,
-                    const tk::Fields& P,
                     const std::vector< std::size_t >& ndofel,
                     tk::Fields& R ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      const auto intsharp =
-        g_inputdeck.get< tag::multimat, tag::intsharp >();
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
 
-      Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
-              "vector and primitive vector at recent time step incorrect" );
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
-              "vector must equal "+ std::to_string(rdof*m_nprim) );
       Assert( R.nprop() == ndof*nstiffeq(), "Number of components in "
               "right-hand side must equal "+ std::to_string(ndof*nstiffeq()) );
 
       // set rhs to zero for element e
       for (std::size_t i=0; i<ndof*nstiffeq(); ++i)
         R(e, i) = 0.0;
-
-      const auto& cx = coord[0];
-      const auto& cy = coord[1];
-      const auto& cz = coord[2];
-
-      auto ncomp = U.nprop()/rdof;
-      auto nprim = P.nprop()/rdof;
 
       auto ng = tk::NGvol(ndofel[e]);
 
@@ -1221,26 +1209,14 @@ class MultiMat {
 
       tk::GaussQuadratureTet( ng, coordgp, wgp );
 
-      // Extract the element coordinates
-      std::array< std::array< tk::real, 3>, 4 > coordel {{
-        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-      }};
-
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)
       {
-        // Compute the coordinates of quadrature point at physical domain
-        auto gp = tk::eval_gp( igp, coordel, coordgp );
-
         // Compute the basis function
         auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
                              coordgp[2][igp] );
 
-        auto state = tk::evalPolynomialSol(m_mat_blk, intsharp, ncomp, nprim,
-          rdof, nmat, e, ndofel[e], inpoel, coord, geoElem, gp, B, U, P);
+        auto state = tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B );
 
         // compute source
         // Loop through materials

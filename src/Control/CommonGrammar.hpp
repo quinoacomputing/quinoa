@@ -148,10 +148,10 @@ namespace grm {
       auto pos = in.position();
       if (!in.empty()) {
         ss << typestr << " while parsing '" << in.string() << "' at "
-           << pos.line << ',' << pos.byte_in_line << ". " << msg->second;
+           << pos.line << ',' << pos.column-1 << ". " << msg->second;
       } else {
         ss << typestr << " while parsing at " << pos.line << ','
-           << pos.byte_in_line << ". " << msg->second;
+           << pos.column-1 << ". " << msg->second;
       }
       stack.template get< tag::error >().push_back( ss.str() );
     } else {

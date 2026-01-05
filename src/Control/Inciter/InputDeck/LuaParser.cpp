@@ -131,7 +131,7 @@ LuaParser::storeInputDeck(
   storeIfSpecd< tk::real >(
     lua_ideck, "cfl", gideck.get< tag::cfl >(), 0.0);
   storeIfSpecd< bool >(
-    lua_ideck, "cfl_ramping", gideck.get< tag::cfl_ramping >(), false);
+    lua_ideck, "cfl_ramping", gideck.get< tag::cfl_ramping >(), true);
   storeIfSpecd< uint32_t >( lua_ideck,
     "cfl_ramping_steps", gideck.get< tag::cfl_ramping_steps >(), 100);
   storeIfSpecd< uint32_t >(
@@ -333,9 +333,6 @@ LuaParser::storeInputDeck(
     storeIfSpecd< tk::real >(
       lua_ideck["multimat"], "intsharp_param",
       gideck.get< tag::multimat, tag::intsharp_param >(), 1.8);
-    storeIfSpecd< uint64_t >(
-      lua_ideck["multimat"], "rho0constraint",
-      gideck.get< tag::multimat, tag::rho0constraint >(), 0);
     storeIfSpecd< int >(
       lua_ideck["multimat"], "dt_sos_massavg",
       gideck.get< tag::multimat, tag::dt_sos_massavg >(), 0);
@@ -746,9 +743,19 @@ LuaParser::storeInputDeck(
       storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
         mesh_deck[i].get< tag::mass >(), 0.0);
 
-      // moment of inertia. this is currently only configured for planar motion
-      storeIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
-        mesh_deck[i].get< tag::moment_of_inertia >(), 0.0);
+      // moment of inertia tensor
+      storeVecVecIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
+        mesh_deck[i].get< tag::moment_of_inertia >(),
+        {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}});
+      auto& storage = mesh_deck[i].get< tag::moment_of_inertia >();
+      if (storage.size() != 3)
+        Throw("Incorrect number of moment_of_inertia vectors"
+          "specified. Expected 3 vectors");
+      for (std::size_t k=0; k<storage.size(); ++k){
+        if (storage[k].size() != 3)
+          Throw("Incorrect size of 'moment_of_inertia' vector " + 
+            std::to_string(k+1) +" specified. Expected size 3");
+      }
 
       // center of mass
       storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
@@ -778,7 +785,9 @@ LuaParser::storeInputDeck(
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::mass >() = 0.0;
-    mesh_deck[0].get< tag::moment_of_inertia >() = 0.0;
+    mesh_deck[0].get< tag::moment_of_inertia >() = {{0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0}};
     mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
   }
 
@@ -812,24 +821,28 @@ LuaParser::storeInputDeck(
       Throw("Only 3 or 6 rigid body DOFs supported.");
 
     // symmetry plane
-    storeIfSpecd< std::size_t >(
+    storeVecIfSpecd< tk::real >(
       lua_ideck["rigid_body_motion"], "symmetry_plane",
-      rbm_deck.get< tag::symmetry_plane >(), 0);
-    if (rbm_deck.get< tag::symmetry_plane >() > 3)
-      Throw("Rigid body motion symmetry plane must be 1(x), 2(y), or 3(z).");
-    if (rbm_deck.get< tag::symmetry_plane >() == 0 &&
-      rbm_deck.get< tag::rigid_body_dof >() == 3)
-      Throw(
-        "Rigid body motion symmetry plane must be specified for 3 DOF motion.");
-    // reset to 0-based indexing
-    rbm_deck.get< tag::symmetry_plane >() -= 1;
+      rbm_deck.get< tag::symmetry_plane >(), { 0 } );
+    if (rbm_deck.get< tag::rigid_body_dof >() == 3 &&
+       rbm_deck.get< tag::symmetry_plane >().size() != 3 )
+      Throw("A vector of size 3 must be supplied for 3 DOF rigid body motion.");
+    if (rbm_deck.get< tag::rigid_body_dof >() == 6 &&
+       rbm_deck.get< tag::symmetry_plane >().size() == 3 )
+      Throw("Symmetry plane has been specified for 6DOF motion.");
+
+    //! TODO:
+    // If sym_dir is not an eigenvector of the moment_of_inertia tensor, it
+    // is possible there may be rotation of the body about axes other than
+    // the axis of symmetry. The user may be expecting this, but provide an
+    // initial warning in case they are not.
   }
   else {
     // TODO: remove double-specification of defaults
     auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
     rbm_deck.get< tag::rigid_body_movt >() = false;
     rbm_deck.get< tag::rigid_body_dof >() = 0;
-    rbm_deck.get< tag::symmetry_plane >() = 0;
+    rbm_deck.get< tag::symmetry_plane >() = {};
   }
 
   // Field output block
