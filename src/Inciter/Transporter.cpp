@@ -613,20 +613,12 @@ Transporter::createPartitioner()
     mr.readSidesetFaces( bface, faces );
 
     bool bcs_set = false;
-    if (centering == tk::Centering::ELEM) {
-
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bcs_set = matchBCs( bface );
-
-    } else if (centering == tk::Centering::NODE) {
-
-      // Read node lists on side sets
-      bnode = mr.readSidesetNodes();
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bool bcnode_set = matchBCs( bnode );
-      bool bcface_set = matchBCs( bface );
-      bcs_set = bcface_set or bcnode_set;
-    }
+    // Read node lists on side sets
+    bnode = mr.readSidesetNodes();
+    // Verify boundarty condition (BC) side sets used exist in mesh file
+    bool bcnode_set = matchBCs( bnode );
+    bool bcface_set = matchBCs( bface );
+    bcs_set = bcface_set or bcnode_set;
 
     // Warn on no BCs
     if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";

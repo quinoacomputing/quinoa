@@ -280,6 +280,9 @@ class ALE : public CBase_ALE {
 
     //! Apply mesh force
     void meshforce();
+
+    //! Enforce boundary conditions on the mesh velocity and execute callback
+    void enforceMeshVelBCs();
 };
 
 } // inciter::

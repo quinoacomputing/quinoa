@@ -69,7 +69,7 @@ class DG : public CBase_DG {
     explicit DG( const CProxy_Discretization& disc,
                  const CProxy_Ghosts& ghostsproxy,
                  const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::map< int, std::vector< std::size_t > >& /* bnode */,
+                 const std::map< int, std::vector< std::size_t > >& bnode,
                  const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
@@ -234,6 +234,9 @@ class DG : public CBase_DG {
     //! Start computing the mesh mesh velocity for ALE
     void meshvelstart();
 
+    //! Done with computing the mesh mesh velocity for ALE
+    void meshveldone();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -289,7 +292,8 @@ class DG : public CBase_DG {
       p | m_outmesh;
       p | m_boxelems;
       p | m_shockmarker;
-      p | m_meshvel;
+      p | m_nodevel;
+      p | m_bnode;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -408,8 +412,10 @@ class DG : public CBase_DG {
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
     //! Shock detection marker for field output
     std::vector< std::size_t > m_shockmarker;
-    //! Mesh velocity for ALE
-    tk::Fields m_meshvel;
+    //! Velocity at nodes for ALE
+    tk::UnsMesh::Coords m_nodevel;
+    //! Boundary node lists mapped to side set ids used in the input file
+    std::map< int, std::vector< std::size_t > > m_bnode;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {

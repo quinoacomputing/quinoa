@@ -357,7 +357,7 @@ class DGPDE {
       const tk::UnsMesh::Coords& coord,
       const tk::Fields& U,
       const tk::Fields& P,
-      tk::Fields& W ) const
+      tk::UnsMesh::Coords& W ) const
     { return self->nodeVelocity( geoElem, esup, inpoel, coord, U, P, W ); }
 
     //! Public interface to returning maps of output var functions
@@ -558,7 +558,7 @@ class DGPDE {
         const tk::UnsMesh::Coords&,
         const tk::Fields&,
         const tk::Fields&,
-        tk::Fields& ) const = 0;
+        tk::UnsMesh::Coords& ) const = 0;
       virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -764,7 +764,7 @@ class DGPDE {
         const tk::UnsMesh::Coords& coord,
         const tk::Fields& U,
         const tk::Fields& P,
-        tk::Fields& W ) const override
+        tk::UnsMesh::Coords& W ) const override
       { return data.nodeVelocity( geoElem, esup, inpoel, coord, U, P, W ); }
       std::map< std::string, tk::GetVarFn > OutVarFn() const override
       { return data.OutVarFn(); }

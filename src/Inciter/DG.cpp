@@ -96,7 +96,7 @@ using inciter::DG;
 DG::DG( const CProxy_Discretization& disc,
         const CProxy_Ghosts& ghostsproxy,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& /* bnode */,
+        const std::map< int, std::vector< std::size_t > >& bnode,
         const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_ghosts( ghostsproxy ),
@@ -160,7 +160,10 @@ DG::DG( const CProxy_Discretization& disc,
   m_outmesh(),
   m_boxelems(),
   m_shockmarker(m_u.nunk(), 1),
-  m_meshvel( Disc()->Lid().size(), 3 )
+  m_nodevel( {{ std::vector<tk::real>(Disc()->Lid().size(), 0.0),
+                std::vector<tk::real>(Disc()->Lid().size(), 0.0),
+                std::vector<tk::real>(Disc()->Lid().size(), 0.0) }} ),
+  m_bnode( bnode )
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -204,6 +207,9 @@ DG::DG( const CProxy_Discretization& disc,
 
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
+
+  // Query ALE mesh velocity boundary condition node lists
+  Disc()->meshvelBnd( bface, m_bnode, triinpoel );
 
   // insert array-element into the implicit solver chare array
   if (g_inputdeck.get< tag::implicit_timestepping >()) {
@@ -269,7 +275,8 @@ DG::resizeSolVectors()
   m_rhsprev.resize( myGhosts()->m_nunk );
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_stiffrhsprev.resize( myGhosts()->m_nunk );
-  m_meshvel.resize( myGhosts()->m_coord[0].size() );
+  for (std::size_t i=0; i<3; ++i)
+    m_nodevel[i].resize( myGhosts()->m_coord[0].size() );
 
   // Size communication buffer for solution and number of degrees of freedom
   for (auto& n : m_ndofc) n.resize( myGhosts()->m_bid.size() );
@@ -790,9 +797,6 @@ DG::reco()
   if (pref && m_stage==0) {
     g_dgpde[d->MeshId()].resetAdapSol( myGhosts()->m_fd, m_u, m_p, m_ndof );
   }
-
-  if (g_inputdeck.get< tag::ale, tag::ale >()) meshvelstart();
-  m_initial = 0;
 
   if (rdof > 1)
     // Reconstruct second-order solution and primitive quantities
@@ -1555,7 +1559,7 @@ DG::solve( tk::real newdt )
     if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
       myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, m_u, m_p, m_meshvel, m_ndof, d->Dt(), m_rhs );
+      myGhosts()->m_coord, m_u, m_p, d->meshvel(), m_ndof, d->Dt(), m_rhs );
   }
 
   if (imex_runge_kutta) {
@@ -1653,6 +1657,7 @@ DG::ALEUpdate()
   auto d = Disc();
 
   // Advance mesh if ALE is enabled
+  const auto& meshvel = d->meshvel();
   auto& coord = myGhosts()->m_coord;
   auto& disc_coord = d->Coord();
   auto dc_size = disc_coord[0].size();
@@ -1660,13 +1665,13 @@ DG::ALEUpdate()
     for (std::size_t i=0; i<coord[j].size(); ++i) {
       coord[j][i] = rkcoef[0][m_stage] * d->Coordn()[j][i]
         + rkcoef[1][m_stage] * ( coord[j][i]
-          + d->Dt() * m_meshvel(i,j) );
+          + d->Dt() * meshvel(i,j) );
 
       // separately update d->Coord() because it has different size
       if (i<dc_size) {
         disc_coord[j][i] = rkcoef[0][m_stage] * d->Coordn()[j][i]
           + rkcoef[1][m_stage] * ( disc_coord[j][i]
-            + d->Dt() * m_meshvel(i,j) );
+            + d->Dt() * meshvel(i,j) );
       }
     }
   }
@@ -1798,7 +1803,7 @@ DG::resizePostAMR(
     m_ndof_NodalExtrm*g_inputdeck.get< tag::ncomp >() ) );
   m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
     m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::rdof >()));
-  m_meshvel.resize( coord[0].size() );
+  for (std::size_t i=0; i<3; ++i) m_nodevel[i].resize( coord[0].size() );
 
   // Resize the buffer vector of nodal extrema
   resizeNodalExtremac();
@@ -2001,9 +2006,9 @@ DG::writeFields(
 
   // Output mesh velocity if ALE is enabled
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
-    add_node_field( "x-mesh-velocity", m_meshvel.extract_comp(0) );
-    add_node_field( "y-mesh-velocity", m_meshvel.extract_comp(1) );
-    add_node_field( "z-mesh-velocity", m_meshvel.extract_comp(2) );
+    add_node_field( "x-mesh-velocity", d->meshvel().extract_comp(0) );
+    add_node_field( "y-mesh-velocity", d->meshvel().extract_comp(1) );
+    add_node_field( "z-mesh-velocity", d->meshvel().extract_comp(2) );
   }
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
@@ -2191,42 +2196,28 @@ DG::meshvelstart()
 {
   auto d = Disc();
 
-  auto meshveltype = g_inputdeck.get< tag::ale, tag::mesh_velocity >();
-
-  if (meshveltype == ctr::MeshVelocityType::SINE) {
-    // prescribe mesh velocity with a sine function during setup
-    if (m_initial) {
-      for (std::size_t i=0; i<m_meshvel.nunk(); ++i)
-        m_meshvel(i,0) = std::pow( std::sin(myGhosts()->m_coord[0][i]*M_PI), 2.0 );
-    }
-  }
-  else if (meshveltype == ctr::MeshVelocityType::FLUID) {
-    // Compute fluid velocity at nodes, and set this as the mesh velocity
+  // Compute fluid velocity at nodes
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
     g_dgpde[d->MeshId()].nodeVelocity( myGhosts()->m_geoElem,
       myGhosts()->m_esup, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p,
-      m_meshvel );
-
-    // Remove mesh velocity in directions not specified
-    const auto& ale_dirn = g_inputdeck.get< tag::ale, tag::mesh_motion >();
-    std::vector< std::size_t > no_movt;
-    for (std::size_t j=0; j<3; j++) {
-      bool is_present(false);
-      for (auto i : ale_dirn) {
-        if (i==j) is_present = true;
-      }
-      if (!is_present) no_movt.push_back(j);
-    }
-    for (std::size_t i=0; i<m_meshvel.nunk(); ++i) {
-      for (auto j : no_movt) {
-        m_meshvel(i,j) = 0.0;
-      }
-    }
+      m_nodevel );
   }
 
-  // TODO: the following API into ALE will be needed for mesh smoothing
-  //// Start computing the mesh velocity for ALE
-  //d->meshvelStart( vel, soundspeed, m_bnorm, rkcoef[m_stage] * d->Dt(),
-  //  CkCallback(CkIndex_ALECG::meshveldone(), thisProxy[thisIndex]) );
+  // Start computing the mesh velocity for ALE
+  d->meshvelStart( m_nodevel, {}, std::unordered_map< int,
+    std::unordered_map< std::size_t, std::array< tk::real, 4 > > >{}, 1.0,
+    CkCallback(CkIndex_DG::meshveldone(), thisProxy[thisIndex]) );
+}
+
+void
+DG::meshveldone()
+// *****************************************************************************
+// Done with computing the mesh velocity for ALE
+// *****************************************************************************
+{
+  m_initial = 0;
+
+  p_refine();
 }
 
 void

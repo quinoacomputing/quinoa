@@ -807,7 +807,7 @@ class CompFlow {
       const tk::UnsMesh::Coords&,
       const tk::Fields&,
       const tk::Fields&,
-      tk::Fields& ) const
+      tk::UnsMesh::Coords& ) const
     {}
 
     //! Return a map that associates user-specified strings to functions

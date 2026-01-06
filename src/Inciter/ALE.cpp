@@ -80,9 +80,11 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   m_w.fill( 0.0 );
 
   // Activate SDAG wait for initially computing prerequisites for ALE
-  thisProxy[ thisIndex ].wait4vel();
-  thisProxy[ thisIndex ].wait4pot();
-  thisProxy[ thisIndex ].wait4for();
+  if (smoother != ctr::MeshVelocitySmootherType::NONE) {
+    thisProxy[ thisIndex ].wait4vel();
+    thisProxy[ thisIndex ].wait4pot();
+    thisProxy[ thisIndex ].wait4for();
+  }
 }
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
@@ -350,41 +352,48 @@ ALE::start(
 
   }
 
-  // start computing the fluid vorticity
-  m_vorticity = tk::curl( coord, m_inpoel, vel );
-  // communicate vorticity sums to other chares on chare-boundary
-  if (m_nodeCommMap.empty()) {
-    comvort_complete();
-  } else {
-    for (const auto& [c,n] : m_nodeCommMap) {
-      std::vector< std::array< tk::real, 3 > > v( n.size() );
-      std::size_t j = 0;
-      for (auto i : n) {
-        auto lid = tk::cref_find( m_lid, i );
-        v[j][0] = m_vorticity[0][lid];
-        v[j][1] = m_vorticity[1][lid];
-        v[j][2] = m_vorticity[2][lid];
-        ++j;
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+  if (smoother == ctr::MeshVelocitySmootherType::NONE) {
+    // if no smoother is selected, short-circuit to BC enforcement
+    enforceMeshVelBCs();
+  }
+  else {
+    // start computing the fluid vorticity
+    m_vorticity = tk::curl( coord, m_inpoel, vel );
+    // communicate vorticity sums to other chares on chare-boundary
+    if (m_nodeCommMap.empty()) {
+      comvort_complete();
+    } else {
+      for (const auto& [c,n] : m_nodeCommMap) {
+        std::vector< std::array< tk::real, 3 > > v( n.size() );
+        std::size_t j = 0;
+        for (auto i : n) {
+          auto lid = tk::cref_find( m_lid, i );
+          v[j][0] = m_vorticity[0][lid];
+          v[j][1] = m_vorticity[1][lid];
+          v[j][2] = m_vorticity[2][lid];
+          ++j;
+        }
+        thisProxy[c].comvort( std::vector<std::size_t>(begin(n),end(n)), v );
       }
-      thisProxy[c].comvort( std::vector<std::size_t>(begin(n),end(n)), v );
     }
-  }
-  ownvort_complete();
+    ownvort_complete();
 
-  // start computing the fluid velocity divergence
-  m_veldiv = tk::div( coord, m_inpoel, vel );
-  // communicate vorticity sums to other chares on chare-boundary
-  if (m_nodeCommMap.empty()) {
-    comdiv_complete();
-  } else {
-    for (const auto& [c,n] : m_nodeCommMap) {
-      std::vector< tk::real > v( n.size() );
-      std::size_t j = 0;
-      for (auto i : n) v[j++] = m_veldiv[ tk::cref_find( m_lid, i ) ];
-      thisProxy[c].comdiv( std::vector<std::size_t>(begin(n),end(n)), v );
+    // start computing the fluid velocity divergence
+    m_veldiv = tk::div( coord, m_inpoel, vel );
+    // communicate vorticity sums to other chares on chare-boundary
+    if (m_nodeCommMap.empty()) {
+      comdiv_complete();
+    } else {
+      for (const auto& [c,n] : m_nodeCommMap) {
+        std::vector< tk::real > v( n.size() );
+        std::size_t j = 0;
+        for (auto i : n) v[j++] = m_veldiv[ tk::cref_find( m_lid, i ) ];
+        thisProxy[c].comdiv( std::vector<std::size_t>(begin(n),end(n)), v );
+      }
     }
+    owndiv_complete();
   }
-  owndiv_complete();
 }
 
 void
@@ -829,6 +838,15 @@ ALE::meshforce()
        // This is likely incorrect. It should be m_w = m_w0 + ...
        m_w(i,j) += m_adt * m_wf(i,j);
 
+  enforceMeshVelBCs();
+}
+
+void
+ALE::enforceMeshVelBCs()
+// *****************************************************************************
+//  Enforce boundary conditions on the mesh velocity and execute callback
+// *****************************************************************************
+{
   // Enforce mesh velocity Dirichlet BCs where user specfied but did not
   // prescribe a move
   for (auto i : m_meshveldirbcnodes)
@@ -856,10 +874,14 @@ ALE::meshforce()
   }
 
   // Activate SDAG wait for re-computing prerequisites for ALE
-  thisProxy[ thisIndex ].wait4vel();
-  thisProxy[ thisIndex ].wait4pot();
-  thisProxy[ thisIndex ].wait4for();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+  if (smoother != ctr::MeshVelocitySmootherType::NONE) {
+    thisProxy[ thisIndex ].wait4vel();
+    thisProxy[ thisIndex ].wait4pot();
+    thisProxy[ thisIndex ].wait4for();
+  }
 
+  // ALE's work is done, callback to client
   m_done.send();
 }
 

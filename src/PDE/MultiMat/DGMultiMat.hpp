@@ -1337,7 +1337,7 @@ class MultiMat {
       const tk::UnsMesh::Coords& coord,
       const tk::Fields& U,
       const tk::Fields& P,
-      tk::Fields& W ) const
+      tk::UnsMesh::Coords& W ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
@@ -1347,7 +1347,7 @@ class MultiMat {
       const auto& cy = coord[1];
       const auto& cz = coord[2];
 
-      for (std::size_t p=0; p<W.nunk(); ++p) {
+      for (std::size_t p=0; p<W[0].size(); ++p) {
         std::array< tk::real, 3 > usum{{0, 0, 0}};
         tk::real denom(0.0);
 
@@ -1401,7 +1401,7 @@ class MultiMat {
           }
           denom += weight;
         }
-        for (std::size_t i=0; i<3; ++i) W(p,i) = usum[i]/denom;
+        for (std::size_t i=0; i<3; ++i) W[i][p] = usum[i]/denom;
       }
     }
 

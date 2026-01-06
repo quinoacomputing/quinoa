@@ -70,6 +70,7 @@ module dg {
       entry void comnodalExtrema( const std::vector< std::size_t >& gid,
                                   const std::vector< std::vector< tk::real > >& G1,
                                   const std::vector< std::vector< tk::real > >& G2 );
+      entry void meshveldone();
       entry void step();
       entry void start();
       entry void next();
@@ -79,7 +80,7 @@ module dg {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4sol() {
-        when ownsol_complete(), comsol_complete() serial "sol" { p_refine(); }
+        when ownsol_complete(), comsol_complete() serial "sol" { meshvelstart(); }
       }
 
       entry void wait4refine() {
