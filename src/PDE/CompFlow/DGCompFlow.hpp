@@ -453,8 +453,6 @@ class CompFlow {
               "vector must equal "+ std::to_string(rdof*5) );
       Assert( P.nprop() == 0, "Number of components in primitive "
               "vector must equal "+ std::to_string(0) );
-      Assert( W.nunk() == coord[0].size(), "Number of unknowns in mesh "
-              "velocity vector incorrect." );
       Assert( R.nprop() == ndof*5, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*5) );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,

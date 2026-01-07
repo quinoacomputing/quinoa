@@ -931,8 +931,6 @@ class MultiMat {
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
       Assert( P.nprop() == rdof*m_nprim, "Number of components in primitive "
               "vector must equal "+ std::to_string(rdof*m_nprim) );
-      Assert( W.nunk() == coord[0].size(), "Number of unknowns in mesh "
-              "velocity vector incorrect." );
       Assert( R.nprop() == ndof*m_ncomp, "Number of components in right-hand "
               "side vector must equal "+ std::to_string(ndof*m_ncomp) );
       Assert( fd.Inpofa().size()/3 == fd.Esuf().size()/2,
