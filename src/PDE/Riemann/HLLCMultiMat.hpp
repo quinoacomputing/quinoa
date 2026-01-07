@@ -262,13 +262,15 @@ struct HLLCMultiMat {
     auto uStar = u;
 
     tk::real rholStar(0.0), rhorStar(0.0);
-    std::vector< std::array< std::array< tk::real, 3 >, 3 > > gnlStar, gnrStar;
-    std::vector< std::array< std::array< tk::real, 3 >, 3 > > glStar, grStar;
+    std::array< std::array< tk::real, 3 >, 3 > tempArray {{ {0,0,0}, {0,0,0}, {0,0,0} }};
+    std::vector< std::array< std::array< tk::real, 3 >, 3 > >
+      gnlStar(nmat, tempArray), gnrStar(nmat, tempArray),
+      glStar(nmat, tempArray), grStar(nmat, tempArray);
     for (std::size_t k=0; k<nmat; ++k) {
       // Left
+      gnlStar[k] = gnl[k];
       if (solidx[k] > 0)
       {
-        gnlStar.push_back(gnl[k]);
         gnlStar[k][0][0] = w_l * gnl[k][0][0]
           + gnl[k][0][1]*(vnl[1]-vnlStar[1])/(Sm-Sl)
           + gnl[k][0][2]*(vnl[2]-vnlStar[2])/(Sm-Sl);
@@ -278,9 +280,9 @@ struct HLLCMultiMat {
         gnlStar[k][2][0] = w_l * gnl[k][2][0]
           + gnl[k][2][1]*(vnl[1]-vnlStar[1])/(Sm-Sl)
           + gnl[k][2][2]*(vnl[2]-vnlStar[2])/(Sm-Sl);
-        // rotate g back to original frame of reference
-        glStar.push_back(tk::unrotateTensor(gnlStar[k], fn));
       }
+      // rotate g back to original frame of reference
+      glStar[k] = tk::unrotateTensor(gnlStar[k], fn);
       uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
@@ -294,9 +296,9 @@ struct HLLCMultiMat {
       rholStar += uStar[0][densityIdx(nmat, k)];
 
       // Right
+      gnrStar[k] = gnr[k];
       if (solidx[k] > 0)
       {
-        gnrStar.push_back(gnr[k]);
         gnrStar[k][0][0] = w_r * gnr[k][0][0]
           + gnr[k][0][1]*(vnr[1]-vnrStar[1])/(Sm-Sr)
           + gnr[k][0][2]*(vnr[2]-vnrStar[2])/(Sm-Sr);
@@ -306,9 +308,9 @@ struct HLLCMultiMat {
         gnrStar[k][2][0] = w_r * gnr[k][2][0]
           + gnr[k][2][1]*(vnr[1]-vnrStar[1])/(Sm-Sr)
           + gnr[k][2][2]*(vnr[2]-vnrStar[2])/(Sm-Sr);
-        // rotate g back to original frame of reference
-        grStar.push_back(tk::unrotateTensor(gnrStar[k], fn));
       }
+      // rotate g back to original frame of reference
+      grStar[k] = tk::unrotateTensor(gnrStar[k], fn);
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
