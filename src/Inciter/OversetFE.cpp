@@ -1313,6 +1313,13 @@ OversetFE::solve()
         m_surfTorque[i] = tk::dot(m_surfTorque, sym_dir) * sym_dir[i];
       }
     }
+    // add body force
+    auto mass_mesh =
+      g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
+    auto body_force = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
+      tag::body_force >();
+    if (m_stage == 0)
+      for (std::size_t i=0; i<3; ++i) m_surfForce[i] += body_force[i]*mass_mesh;
 
     // Mark if mesh moved or is moving
     if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12 ||
@@ -1324,8 +1331,6 @@ OversetFE::solve()
       m_movedmesh = 0;
 
     if (m_movedmesh == 1) {
-      auto mass_mesh =
-        g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
       auto mI_mesh = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
         tag::moment_of_inertia >();
       auto dtp = rkcoef[m_stage] * d->Dt();
