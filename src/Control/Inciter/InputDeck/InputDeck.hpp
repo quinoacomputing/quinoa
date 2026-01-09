@@ -247,7 +247,8 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
   tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
-  tag::center_of_mass,    std::vector< tk::real >
+  tag::center_of_mass,    std::vector< tk::real >,
+  tag::body_force,        std::vector< tk::real >
 > >;
 
 // Field output block
@@ -2013,8 +2014,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "3-by-3 vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
-        R"(Center of mass of rigid body used to compute torque for rotational
+        R"(Center of mass of rigid body used to compute force for translational
         motion)", "vector of 3 reals"});
+
+      keywords.insert({"body_force", "Body force applied to rigid body",
+        R"(Vector representing the force per unit mass applied to a body)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // pre-configured problems

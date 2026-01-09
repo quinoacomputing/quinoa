@@ -832,6 +832,12 @@ LuaParser::storeInputDeck(
       if (mesh_deck[i].get< tag::center_of_mass >().size() != 3)
         Throw("Mesh center of mass requires 3 coordinates.");
 
+      // body force
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "body_force",
+        mesh_deck[i].get< tag::body_force >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::body_force >().size() != 3)
+        Throw("Mesh body force requires 3 coordinates.");
+
       // Transfer object
       if (i > 0) {
         gideck.get< tag::transfer >().emplace_back( 0, i );
@@ -858,6 +864,7 @@ LuaParser::storeInputDeck(
                                                     {0.0, 0.0, 0.0},
                                                     {0.0, 0.0, 0.0}};
     mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< tag::body_force >() = {0.0, 0.0, 0.0};
   }
 
   Assert(gideck.get< tag::mesh >().size() == gideck.get< tag::depvar >().size(),
