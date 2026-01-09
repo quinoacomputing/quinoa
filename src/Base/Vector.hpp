@@ -463,6 +463,18 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
   point = x;
 }
 
+//! Check if 3x3 matrix is empty to avoid unnecesary calculations
+//! \param[in] mat 3x3 matrix.
+//! \return Boolean which will be true if matrix contains all zeros.
+inline bool is_matrix_empty(const std::array< std::array< tk::real, 3>, 3> mat)
+{
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      if (std::abs(mat[i][j]) > 1.0e-16)
+        return false;
+  return true;
+}
+
 //! \brief Get the Right Cauchy-Green strain tensor from the inverse deformation
 //! gradient tensor.
 //! \param[in] g Inverse deformation gradient tensor
@@ -470,6 +482,10 @@ rotatePoint( const std::array< tk::real, 3 >& angles,
 inline std::array< std::array< real, 3 >, 3 >
 getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(g))
+    return {{}};
+
   // allocate matrices
   double G[9], C[9];
 
@@ -511,6 +527,10 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 inline std::array< std::array< real, 3 >, 3 >
 getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(g))
+    return {{}};
+
   // allocate matrices
   double G[9], b[9];
 
@@ -569,6 +589,10 @@ getIsochorRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 inline std::array< std::array< real, 3 >, 3 >
 getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(g))
+    return {{}};
+
   // Get right volm-preserving part of Cauchy-Green strain tensor
   auto C = getIsochorRightCauchyGreen(g);
 
@@ -681,6 +705,10 @@ inline std::array< std::array< tk::real, 3 >, 3 >
 rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
              const std::array< tk::real, 3 >& r )
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(mat))
+    return {{}};
+
   // define rotation matrix
   std::array< std::array< tk::real, 3 >, 3 > rotMatrix = getRotationMatrix(r);
   double rotMat[9];
@@ -728,6 +756,10 @@ inline std::array< std::array< tk::real, 3 >, 3 >
 unrotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
                const std::array< tk::real, 3 >& r )
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(mat))
+    return {{}};
+
   // define rotation matrix
   std::array< std::array< tk::real, 3 >, 3 > rotMatrix = getRotationMatrix(r);
   double rotMat[9];
@@ -806,6 +838,10 @@ inline std::array< std::array< tk::real, 3 >, 3 >
 reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
               const std::array< std::array< tk::real, 3 >, 3 >& reflectMat)
 {
+  // Return empty if input matrix is empty
+  if (is_matrix_empty(mat))
+    return {{}};
+
   // define reflection matrix
   double refMat[9];
   for (std::size_t i=0; i<3; ++i)
@@ -937,7 +973,7 @@ Rtoq(const std::array< std::array< tk::real, 3 >, 3 >& R)
     qx = (R[2][1] - R[1][2]) / S;
     qy = (R[0][2] - R[2][0]) / S;
     qz = (R[1][0] - R[0][1]) / S;
-  } else if ((R[0][0] > R[1][1]) & (R[0][0] > R[2][2])) {
+  } else if ((R[0][0] > R[1][1]) && (R[0][0] > R[2][2])) {
     S = sqrt(1.0 + R[0][0] - R[1][1] - R[2][2]) * 2;
     qw = (R[2][1] - R[1][2]) / S;
     qx = 0.25 * S;
