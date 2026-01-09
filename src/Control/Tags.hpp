@@ -333,6 +333,7 @@ DEFTAG(location);
 DEFTAG(transfer);
 DEFTAG(moment_of_inertia);
 DEFTAG(center_of_mass);
+DEFTAG(body_force);
 
 struct BirthdaySpacings {};
 
