@@ -1061,16 +1061,23 @@ class MultiSpecies {
   std::array< std::array< tk::real, 3 >, 3 > dudx, tau;
   std::array< tk::real, 3 > dTdx;
   tk::real mu(0.0), conduct(0.0);
-  std::vector< tk::real > alLR(nspec, 0), conduct_mat(nspec, 0);
   
-  for (std::size_t k=0; k<nspec; ++k)
-  {
-    alLR[k] = ugp[multispecies::densityIdx(nspec, k)]/rhob; 
-    mu += alLR[k] * getmatprop< tag::mu >(k);
-    conduct += alLR[k] *getmatprop< tag::mu >(k) *
-      getmatprop< tag::cv >(k) * getmatprop< tag::gamma >(k)
-      / 0.71;
-  }
+  Mixture mix(nspec, ugp, mat_blk);
+  
+//   for (std::size_t k=0; k<nspec; ++k)
+//   {
+//     alLR[k] = ugp[multispecies::densityIdx(nspec, k)]/rhob; 
+//     mu += alLR[k] * getmatprop< tag::mu >(k);
+//     conduct += alLR[k] *getmatprop< tag::mu >(k) *
+//       getmatprop< tag::cv >(k) * getmatprop< tag::gamma >(k)
+//       / 0.71;
+//   }
+
+      mu= mix.viscosity(ugp[ncomp+multispecies::temperatureIdx(nspec,0)],
+      mat_blk);
+      
+      conduct= mix.conduct(ugp[ncomp+multispecies::temperatureIdx(nspec,0)],
+      mat_blk);
 
       for (std::size_t i=0; i<3; ++i) {
         auto idx = multispecies::momentumIdx(nspec,i);

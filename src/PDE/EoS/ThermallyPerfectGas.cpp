@@ -21,11 +21,19 @@ ThermallyPerfectGas::ThermallyPerfectGas(
   tk::real R,
   std::vector< std::vector< tk::real > > cp_coeff,
   std::vector< tk::real > t_range,
-  tk::real dH_ref) :
+  tk::real dH_ref,
+  tk::real temp_ref,
+  tk::real mu_ref,
+  tk::real C,
+  bool Sutherland) :
   m_R(R),
   m_cp_coeff(cp_coeff),
   m_t_range(t_range),
-  m_dH_ref(dH_ref)
+  m_dH_ref(dH_ref);
+  m_temp_ref(temp_ref),
+  m_mu_ref(mu_ref), 
+  m_C(C),
+  m_Sutherland(Sutherland)
 // *************************************************************************
 //  Constructor
 //! \param[in] R gas constant
@@ -180,4 +188,22 @@ ThermallyPerfectGas::cv(tk::real temp) const
   auto R = m_R;
   tk::real cp = calc_cp(temp) * R;
   return cp - R;
+}
+
+tk::real
+ThermallyPerfectGas::mu(tk::real temp) const
+// *************************************************************************
+//! \brief Calculate species specific heat (constant volume)
+//! \param[in] temp Temperature
+//! \return Species specific heat using the thermally perfect gas EoS
+// *************************************************************************
+{
+ if (m_Sutherland)
+  auto mu_ref = m_mu_ref;
+  auto temp_ref = m_temp_ref;
+  auto C = m_C;
+  tk::real mu =mu_ref*pow((temp/temp_ref),1.5)*(temp_ref+C)/(temp+C);
+  return mu;
+ else
+  return m_mu_ref;
 }

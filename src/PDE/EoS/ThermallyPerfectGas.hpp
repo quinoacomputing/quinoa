@@ -24,6 +24,10 @@ class ThermallyPerfectGas {
     std::vector< std::vector< tk::real > > m_cp_coeff{3, std::vector< tk::real >(8)};
     std::vector< tk::real > m_t_range{std::vector< tk::real >(4)};
     tk::real m_dH_ref;
+    tk::real m_temp_ref;
+    tk::real m_mu_ref; 
+    tk::real m_C;
+    bool m_Sutherland=false;
 
     void get_t_range( tk::real &temp_poly,
                              std::size_t &t_rng_idx ) const
@@ -208,6 +212,8 @@ class ThermallyPerfectGas {
 
     //! Return species specific heat (constant volume)
     tk::real cv(tk::real temp) const;
+    
+    tk::real mu(tk::real temp) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -218,6 +224,10 @@ class ThermallyPerfectGas {
       p | m_cp_coeff;
       p | m_t_range;
       p | m_dH_ref;
+      p | m_temp_ref;
+      p | m_mu_ref; 
+      p | m_C;
+      p | m_Sutherland;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

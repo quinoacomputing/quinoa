@@ -212,3 +212,58 @@ Mixture::temperature(
   return temp;
 }
 
+tk::real
+Mixture::viscosity(
+  tk::real mix_temp,
+  const std::vector< EOS >& mat_blk) const
+// *************************************************************************
+//! \brief Calculate total energy based on the mixture composition
+//!   and species parameters.
+//! \param[in] mix_density Mixture density (sum of species density)
+//! \param[in] u Velocity component
+//! \param[in] v Velocity component
+//! \param[in] w Velocity component
+//! \param[in] mix_temp Mixture temperature (provided at call-site, since
+//!   it is reconstructed separately
+//! \param[in] mat_blk EOS material block
+//! \return Total energy
+// *************************************************************************
+{
+  // Compute mixture internal energy
+  tk::real mix_mu = 0.;
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    mix_mu += m_Ys[k] * mat_blk[k].compute< EOS::mu >(mix_temp);
+  }
+
+  // Compute total energy
+  return mix_mu;
+}
+
+tk::real
+Mixture::conduct(
+  tk::real mix_temp,
+  const std::vector< EOS >& mat_blk) const
+// *************************************************************************
+//! \brief Calculate total energy based on the mixture composition
+//!   and species parameters.
+//! \param[in] mix_density Mixture density (sum of species density)
+//! \param[in] u Velocity component
+//! \param[in] v Velocity component
+//! \param[in] w Velocity component
+//! \param[in] mix_temp Mixture temperature (provided at call-site, since
+//!   it is reconstructed separately
+//! \param[in] mat_blk EOS material block
+//! \return Total energy
+// *************************************************************************
+{
+  // Compute mixture internal energy
+  tk::real mix_conduct = 0.;
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    mix_conduct += m_Ys[k] * mat_blk[k].compute< EOS::mu >(mix_temp)*
+    mat_blk[k].compute< EOS::cv >(mix_temp)*getspecprop< tag::gamma >(k)/0.71;
+  }
+
+  // Compute total energy
+  return mix_conduct;
+}
+
