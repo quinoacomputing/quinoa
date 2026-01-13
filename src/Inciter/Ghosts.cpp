@@ -800,6 +800,9 @@ Ghosts::adj()
       Assert( m_exptGhost.insert( g.second ).second,
               "Failed to store local tetid as exptected ghost id" );
 
+  // Generate local face IDs wrt surrounding elements
+  m_fd.genLocalFaceId(m_inpoel);
+
   // Callback function from DG/FV after ghost-setup is done
   m_cbAfterDone.send();
 }

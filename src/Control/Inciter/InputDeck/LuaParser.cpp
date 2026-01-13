@@ -131,7 +131,7 @@ LuaParser::storeInputDeck(
   storeIfSpecd< tk::real >(
     lua_ideck, "cfl", gideck.get< tag::cfl >(), 0.0);
   storeIfSpecd< bool >(
-    lua_ideck, "cfl_ramping", gideck.get< tag::cfl_ramping >(), false);
+    lua_ideck, "cfl_ramping", gideck.get< tag::cfl_ramping >(), true);
   storeIfSpecd< uint32_t >( lua_ideck,
     "cfl_ramping_steps", gideck.get< tag::cfl_ramping_steps >(), 100);
   storeIfSpecd< uint32_t >(
@@ -333,9 +333,6 @@ LuaParser::storeInputDeck(
     storeIfSpecd< tk::real >(
       lua_ideck["multimat"], "intsharp_param",
       gideck.get< tag::multimat, tag::intsharp_param >(), 1.8);
-    storeIfSpecd< uint64_t >(
-      lua_ideck["multimat"], "rho0constraint",
-      gideck.get< tag::multimat, tag::rho0constraint >(), 0);
     storeIfSpecd< int >(
       lua_ideck["multimat"], "dt_sos_massavg",
       gideck.get< tag::multimat, tag::dt_sos_massavg >(), 0);
@@ -746,9 +743,19 @@ LuaParser::storeInputDeck(
       storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
         mesh_deck[i].get< tag::mass >(), 0.0);
 
-      // moment of inertia. this is currently only configured for planar motion
-      storeIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
-        mesh_deck[i].get< tag::moment_of_inertia >(), 0.0);
+      // moment of inertia tensor
+      storeVecVecIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
+        mesh_deck[i].get< tag::moment_of_inertia >(),
+        {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}});
+      auto& storage = mesh_deck[i].get< tag::moment_of_inertia >();
+      if (storage.size() != 3)
+        Throw("Incorrect number of moment_of_inertia vectors"
+          "specified. Expected 3 vectors");
+      for (std::size_t k=0; k<storage.size(); ++k){
+        if (storage[k].size() != 3)
+          Throw("Incorrect size of 'moment_of_inertia' vector " + 
+            std::to_string(k+1) +" specified. Expected size 3");
+      }
 
       // center of mass
       storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
@@ -778,7 +785,9 @@ LuaParser::storeInputDeck(
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::mass >() = 0.0;
-    mesh_deck[0].get< tag::moment_of_inertia >() = 0.0;
+    mesh_deck[0].get< tag::moment_of_inertia >() = {{0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0}};
     mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
   }
 
@@ -812,24 +821,28 @@ LuaParser::storeInputDeck(
       Throw("Only 3 or 6 rigid body DOFs supported.");
 
     // symmetry plane
-    storeIfSpecd< std::size_t >(
+    storeVecIfSpecd< tk::real >(
       lua_ideck["rigid_body_motion"], "symmetry_plane",
-      rbm_deck.get< tag::symmetry_plane >(), 0);
-    if (rbm_deck.get< tag::symmetry_plane >() > 3)
-      Throw("Rigid body motion symmetry plane must be 1(x), 2(y), or 3(z).");
-    if (rbm_deck.get< tag::symmetry_plane >() == 0 &&
-      rbm_deck.get< tag::rigid_body_dof >() == 3)
-      Throw(
-        "Rigid body motion symmetry plane must be specified for 3 DOF motion.");
-    // reset to 0-based indexing
-    rbm_deck.get< tag::symmetry_plane >() -= 1;
+      rbm_deck.get< tag::symmetry_plane >(), { 0 } );
+    if (rbm_deck.get< tag::rigid_body_dof >() == 3 &&
+       rbm_deck.get< tag::symmetry_plane >().size() != 3 )
+      Throw("A vector of size 3 must be supplied for 3 DOF rigid body motion.");
+    if (rbm_deck.get< tag::rigid_body_dof >() == 6 &&
+       rbm_deck.get< tag::symmetry_plane >().size() == 3 )
+      Throw("Symmetry plane has been specified for 6DOF motion.");
+
+    //! TODO:
+    // If sym_dir is not an eigenvector of the moment_of_inertia tensor, it
+    // is possible there may be rotation of the body about axes other than
+    // the axis of symmetry. The user may be expecting this, but provide an
+    // initial warning in case they are not.
   }
   else {
     // TODO: remove double-specification of defaults
     auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
     rbm_deck.get< tag::rigid_body_movt >() = false;
     rbm_deck.get< tag::rigid_body_dof >() = 0;
-    rbm_deck.get< tag::symmetry_plane >() = 0;
+    rbm_deck.get< tag::symmetry_plane >() = {};
   }
 
   // Field output block
@@ -880,36 +893,19 @@ LuaParser::storeInputDeck(
     if (gideck.get< tag::pde >() == inciter::ctr::PDEType::MULTIMAT)
       nmat = gideck.get< tag::multimat, tag::nmat >();
 
-    // elem aliases
-    std::vector< std::string > elemalias;
     if (lua_ideck["field_output"]["elemvar"].valid())
       nevar = sol::table(lua_ideck["field_output"]["elemvar"]).size();
-    storeVecIfSpecd< std::string >(
-      lua_ideck["field_output"], "elemalias", elemalias,
-      std::vector< std::string >(nevar, ""));
 
-    // node aliases
-    std::vector< std::string > nodealias;
     if (lua_ideck["field_output"]["nodevar"].valid())
       nnvar = sol::table(lua_ideck["field_output"]["nodevar"]).size();
-    storeVecIfSpecd< std::string >(
-      lua_ideck["field_output"], "nodealias", nodealias,
-      std::vector< std::string >(nnvar, ""));
-
-    // error check on aliases
-    if (elemalias.size() != nevar)
-      Throw("elemalias should have the same size as elemvar.");
-    if (nodealias.size() != nnvar)
-      Throw("nodealias should have the same size as nodevar.");
 
     // element variables
     if (lua_ideck["field_output"]["elemvar"].valid()) {
       for (std::size_t i=0; i<nevar; ++i) {
         std::string varname(lua_ideck["field_output"]["elemvar"][i+1]);
-        std::string alias(elemalias[i]);
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
-        addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
+        addOutVar(varname, gideck.get< tag::depvar >(), nmat,
           nspec, gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
       }
     }
@@ -918,10 +914,9 @@ LuaParser::storeInputDeck(
     if (lua_ideck["field_output"]["nodevar"].valid()) {
       for (std::size_t i=0; i<nnvar; ++i) {
         std::string varname(lua_ideck["field_output"]["nodevar"][i+1]);
-        std::string alias(nodealias[i]);
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
-        addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
+        addOutVar(varname, gideck.get< tag::depvar >(), nmat,
           nspec, gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
       }
     }
@@ -1708,7 +1703,6 @@ LuaParser::checkStoreMatPropVecVec(
 void
 LuaParser::addOutVar(
   const std::string& varname,
-  const std::string& alias,
   std::vector< char >& depv,
   std::size_t nmat,
   std::size_t nspec,
@@ -1718,7 +1712,6 @@ LuaParser::addOutVar(
 // *****************************************************************************
 //  Check and store field output variables
 //! \param[in] varname Name of variable requested
-//! \param[in] alias User specified alias for output
 //! \param[in] depv List of depvars
 //! \param[in] nmat Number of materials configured
 //! \param[in] nspec Number of species configured
@@ -1737,27 +1730,27 @@ LuaParser::addOutVar(
     // multimat/matvar quantities
       if (qty == 'D') {  // density
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::densityIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::densityIdx(nmat,j)) );
       }
       else if (qty == 'F') {  // volume fraction
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::volfracIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::volfracIdx(nmat,j)) );
       }
       else if (qty == 'M') {  // momentum
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::momentumIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::momentumIdx(nmat,j)) );
       }
       else if (qty == 'E') {  // specific total energy
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::energyIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::energyIdx(nmat,j)) );
       }
       else if (qty == 'U') {  // velocity (primitive)
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::velocityIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::velocityIdx(nmat,j)) );
       }
       else if (qty == 'P') {  // material pressure (primitive)
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::pressureIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::pressureIdx(nmat,j)) );
       }
       else {
         // error out if incorrect matvar used
@@ -1768,17 +1761,17 @@ LuaParser::addOutVar(
     // multispecies/matvar quantities
       if (qty == 'D') {  // density
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias,
+          inciter::ctr::OutVar(c, varname,
             inciter::multispecies::densityIdx(nspec,j)) );
       }
       else if (qty == 'M') {  // momentum
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias,
+          inciter::ctr::OutVar(c, varname,
             inciter::multispecies::momentumIdx(nspec,j)) );
       }
       else if (qty == 'E') {  // specific total energy
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias,
+          inciter::ctr::OutVar(c, varname,
             inciter::multispecies::energyIdx(nspec,j)) );
       }
       else {
@@ -1790,14 +1783,14 @@ LuaParser::addOutVar(
     // quantities specified by depvar
       for (const auto& id : depv)
         if (std::tolower(qty) == id) {
-          foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, j) );
+          foutvar.emplace_back( inciter::ctr::OutVar(c, varname, j) );
         }
     }
   }
   // analytic quantity specification
   // -------------------------------
   else if (varname.find("analytic") != std::string::npos) {
-    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, 0) );
+    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, 0) );
   }
   // name-based tensor quantity specification
   // ----------------------------------------
@@ -1809,13 +1802,13 @@ LuaParser::addOutVar(
     for (std::size_t i=1; i<=3; ++i) {
       for (std::size_t j=1; j<=3; ++j) {
         std::string tij(namet + std::to_string(i) + std::to_string(j));
-        foutvar.emplace_back( inciter::ctr::OutVar(c, tij, alias, 0, tij) );
+        foutvar.emplace_back( inciter::ctr::OutVar(c, tij, 0, tij) );
       }
     }
   }
   // name-based quantity specification
   // ---------------------------------
   else {
-    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, 0, varname) );
+    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, 0, varname) );
   }
 }
