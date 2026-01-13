@@ -121,7 +121,11 @@ class ThermallyPerfectGas {
       tk::real R,
       std::vector< std::vector< tk::real > > cp_coeff,
       std::vector< tk::real > t_range,
-      tk::real dH_ref);
+      tk::real dH_ref,
+      tk::real temp_ref,
+      tk::real mu_ref,
+      tk::real C,
+      bool Sutherland);
 
     //! Set rho0 EOS parameter. No-op.
     void setRho0(tk::real) {}

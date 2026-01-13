@@ -29,7 +29,7 @@ ThermallyPerfectGas::ThermallyPerfectGas(
   m_R(R),
   m_cp_coeff(cp_coeff),
   m_t_range(t_range),
-  m_dH_ref(dH_ref);
+  m_dH_ref(dH_ref),
   m_temp_ref(temp_ref),
   m_mu_ref(mu_ref), 
   m_C(C),
@@ -198,12 +198,11 @@ ThermallyPerfectGas::mu(tk::real temp) const
 //! \return Species specific heat using the thermally perfect gas EoS
 // *************************************************************************
 {
- if (m_Sutherland)
-  auto mu_ref = m_mu_ref;
-  auto temp_ref = m_temp_ref;
+ if (m_Sutherland){
   auto C = m_C;
-  tk::real mu =mu_ref*pow((temp/temp_ref),1.5)*(temp_ref+C)/(temp+C);
+  tk::real mu =m_mu_ref*pow((temp/m_temp_ref),1.5)*(m_temp_ref+C)/(temp+C);
   return mu;
+  }
  else
   return m_mu_ref;
 }

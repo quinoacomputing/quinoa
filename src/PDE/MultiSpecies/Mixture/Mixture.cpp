@@ -259,8 +259,7 @@ Mixture::conduct(
   // Compute mixture internal energy
   tk::real mix_conduct = 0.;
   for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_conduct += m_Ys[k] * mat_blk[k].compute< EOS::mu >(mix_temp)*
-    mat_blk[k].compute< EOS::cv >(mix_temp)*getspecprop< tag::gamma >(k)/0.71;
+    mix_conduct += m_Ys[k] * mat_blk[k].compute< EOS::cv >(mix_temp);
   }
 
   // Compute total energy
