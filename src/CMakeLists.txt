@@ -287,6 +287,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-unknown-warning-option")
   add_compiler_flag("-Wno-unknown-pragmas")
   add_compiler_flag("-Wno-source-uses-openmp")
+  add_compiler_flag("-Wno-reserved-identifier")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags

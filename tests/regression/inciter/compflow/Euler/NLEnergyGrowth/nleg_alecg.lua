@@ -5,6 +5,7 @@ title = "Euler equations computing nonlinear energy growth",
   term = 1.0,
   ttyi = 1,       -- TTY output interval
   cfl = 0.8,
+  cfl_ramping = false,
   scheme = "alecg",
 
   partitioning = "mj",
@@ -43,15 +44,6 @@ title = "Euler equations computing nonlinear energy growth",
       "z-velocity",
       "specific_total_energy",
       "pressure"
-    },
-    nodealias = {
-      "",
-      "density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical",
-      "specific_total_energy_numerical",
-      "pressure_numerical"
     }
   },
 

@@ -90,7 +90,6 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::prelax_timescale, tk::real,
   tag::intsharp,         int,
   tag::intsharp_param,   tk::real,
-  tag::rho0constraint,   uint64_t,
   tag::dt_sos_massavg,   int,
   tag::problem,          ProblemType,
   tag::viscous,          bool
@@ -242,7 +241,7 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::location,          std::vector< tk::real >,
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
-  tag::moment_of_inertia, tk::real,
+  tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
   tag::center_of_mass,    std::vector< tk::real >
 > >;
 
@@ -255,9 +254,7 @@ using fieldOutputList = tk::TaggedTuple< brigand::list<
   tag::filetype,      tk::ctr::FieldFileType,
   tag::sideset,       std::vector< uint64_t >,
   tag::outvar,        std::vector< OutVar >,
-  tag::elemalias,     std::vector< std::string >,  // only for error checking
   tag::elemvar,       std::vector< std::string >,  // only for error checking
-  tag::nodealias,     std::vector< std::string >,  // only for error checking
   tag::nodevar,       std::vector< std::string >   // only for error checking
 > >;
 
@@ -364,7 +361,7 @@ using ConfigMembers = brigand::list<
   tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
     tag::rigid_body_movt, bool,
     tag::rigid_body_dof,  std::size_t,
-    tag::symmetry_plane,  std::size_t
+    tag::symmetry_plane,  std::vector< tk::real >
   > >,
 
   // ALE block
@@ -954,12 +951,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         sharpening. This parameter affects how many cells the material interfaces
         span, after the use of sharpening. It is used for multimat and transport,
         and has no effect for the other PDE types.)", "real" });
-
-      keywords.insert({"rho0constraint",
-        "Toggle the density constraint correction",
-        R"(This keyword is used to toggle the density constraint in solid
-        dynamics on/off. It is used only for the multi-material solver in the
-        presence of solids. The default is 1 (on).)", "uint 0/1"});
 
       keywords.insert({"dt_sos_massavg",
         "Toggle method for calculating speed of sound used for time step in a cell",
@@ -1835,7 +1826,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"symmetry_plane", "Symmetry plane for rigid body motion",
         R"(This keyword is used to specify the symmetry plane for a 3 DOF rigid
-        body motion solver. 1: x-plane, 2: y-plane, 3: z-plane.)", "uint"});
+        body motion solver, given as a vector normal to the plane)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // IC object
@@ -1989,7 +1981,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         relocate the mesh.)", "vector of 3 reals"});
 
       keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
-        R"(Moment of inertia of rigid body for rotational motion)", "real"});
+        R"(Moment of inertia of rigid body for rotational motion)",
+        "3-by-3 vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
         R"(Center of mass of rigid body used to compute torque for rotational

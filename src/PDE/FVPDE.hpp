@@ -146,12 +146,11 @@ class FVPDE {
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord,
                 const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
-      self->limit( geoFace, fd, esup, inpoel, coord, srcFlag, U, P );
+      self->limit( geoFace, fd, esup, inpoel, srcFlag, U, P );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -294,7 +293,6 @@ class FVPDE {
                           const std::map< std::size_t,
                             std::vector< std::size_t > >&,
                           const std::vector< std::size_t >&,
-                          const tk::UnsMesh::Coords&,
                           const std::vector< int >&,
                           tk::Fields&,
                           tk::Fields& ) const = 0;
@@ -397,12 +395,11 @@ class FVPDE {
                   const std::map< std::size_t, std::vector< std::size_t > >&
                     esup,
                   const std::vector< std::size_t >& inpoel,
-                  const tk::UnsMesh::Coords& coord,
                   const std::vector< int >& srcFlag,
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {
-        data.limit( geoFace, fd, esup, inpoel, coord, srcFlag, U, P );
+        data.limit( geoFace, fd, esup, inpoel, srcFlag, U, P );
       }
       void rhs(
         tk::real t,

@@ -55,12 +55,12 @@ std::vector< std::string > CompFlowSurfNames()
 {
   std::vector< std::string > n;
 
-  n.push_back( "density_numerical" );
-  n.push_back( "x-velocity_numerical" );
-  n.push_back( "y-velocity_numerical" );
-  n.push_back( "z-velocity_numerical" );
-  n.push_back( "specific_total_energy_numerical" );
-  n.push_back( "pressure_numerical" );
+  n.push_back( "density" );
+  n.push_back( "x-velocity" );
+  n.push_back( "y-velocity" );
+  n.push_back( "z-velocity" );
+  n.push_back( "specific_total_energy" );
+  n.push_back( "pressure" );
 
   return n;
 }

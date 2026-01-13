@@ -156,7 +156,8 @@ namespace inciter {
       // outgoing characteristics. Therefore, we calculate the ghost cell state
       // by taking pressure from the outside and other quantities from the
       // internal cell.
-      std::vector< tk::real > massfrac_l;
+      std::vector< tk::real > massfrac_l(nspec,
+        1.0/static_cast< tk::real >(nspec));
       for (std::size_t k = 0; k < nspec; k++)
         massfrac_l[k] = ul[multispecies::densityIdx(nspec, k)] / rhol;
       Mixture mixr(nspec, massfrac_l, fp, Tl, mat_blk);

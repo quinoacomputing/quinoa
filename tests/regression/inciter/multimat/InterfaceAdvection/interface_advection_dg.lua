@@ -4,7 +4,7 @@ inciter = {
 
   nstep = 50,  -- Max number of time steps
   dt = 2.5e-7,
-  ttyi = 1,    -- TTY output interval
+  ttyi = 5,    -- TTY output interval
   scheme = "dgp0",
   lowspeed_kp = 1.0,
 
@@ -40,26 +40,15 @@ inciter = {
   field_output = {
     interval = 25,
     elemvar = {
-	    "F1",
-	    "F2",
-	    "F3",
-	    "density",
-	    "x-velocity",
-	    "y-velocity",
-	    "z-velocity",
-	    "pressure",
-	    "specific_total_energy"
-    },
-    elemalias = {
-	    "volfrac1_numerical",
-	    "volfrac2_numerical",
-	    "volfrac3_numerical",
-	    "density_numerical",
-	    "x-velocity_numerical",
-	    "y-velocity_numerical",
-	    "z-velocity_numerical",
-	    "pressure_numerical",
-	    "total_energy_density_numerical"
+      "F1",
+      "F2",
+      "F3",
+      "density",
+      "x-velocity",
+      "y-velocity",
+      "z-velocity",
+      "pressure",
+      "specific_total_energy"
     }
   }
 

@@ -457,8 +457,7 @@ FV::lim()
 
   if (rdof > 1) {
     g_fvpde[Disc()->MeshId()].limit( myGhosts()->m_geoFace, myGhosts()->m_fd,
-      myGhosts()->m_esup,
-      myGhosts()->m_inpoel, myGhosts()->m_coord, m_srcFlag, m_u, m_p );
+      myGhosts()->m_esup, myGhosts()->m_inpoel, m_srcFlag, m_u, m_p );
   }
 
   // Send limited solution to neighboring chares
