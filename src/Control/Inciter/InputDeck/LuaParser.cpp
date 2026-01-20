@@ -362,6 +362,12 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multispecies"], "nspec",
       gideck.get< tag::multispecies, tag::nspec >(), 1);
+    
+    
+    storeIfSpecd< bool >(lua_ideck["multispecies"], "viscous", 
+      gideck.get< tag::multispecies, tag::viscous >(),
+      false);
+    
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["multispecies"], "problem",
       gideck.get< tag::multispecies, tag::problem >(),
@@ -655,6 +661,18 @@ LuaParser::storeInputDeck(
         // dH_ref
         checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
           spci_deck.get< tag::dH_ref >());
+	// temp_ref (Sutherland)
+        checkStoreMatProp(sol_spc[i+1], "temp_ref", nspec,
+          spci_deck.get< tag::temp_ref >());
+	// mu_ref (Sutherland)
+        checkStoreMatProp(sol_spc[i+1], "mu_ref", nspec,
+          spci_deck.get< tag::mu_ref >());
+	// C (Sutherland)
+        checkStoreMatProp(sol_spc[i+1], "C", nspec,
+          spci_deck.get< tag::C >());
+	// Sutherland (bool)
+        checkStoreMatPropBool(sol_spc[i+1], "Sutherland", nspec,
+          spci_deck.get< tag::Sutherland >());
       }
 
       // Generate mapping between material index and eos parameter index
@@ -1607,6 +1625,35 @@ LuaParser::checkStoreMatProp(
   // store values from table to inputdeck
   storeVecIfSpecd< tk::real >(table, key, storage,
     std::vector< tk::real >(vecsize, 0.0));
+}
+
+
+void
+LuaParser::checkStoreMatPropBool(
+  const sol::table table,
+  const std::string key,
+  std::size_t vecsize,
+  std::vector< bool >& storage )
+// *****************************************************************************
+//  Check and store material property into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] vecsize Number of said property in Sol-table (based on number of
+//!   materials that are of the same eos type
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != vecsize)
+    Throw("Incorrect number of '" + key + "'s specified. Expected " +
+      std::to_string(vecsize));
+
+  // store values from table to inputdeck
+  storeVecIfSpecd< bool >(table, key, storage,
+    std::vector< bool >(vecsize, true));
 }
 
 void
