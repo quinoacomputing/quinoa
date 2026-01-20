@@ -88,10 +88,10 @@ struct N9Species {
 
 // Fixed-width 5×16 field reader (NASA style)
 inline void n9_collect_fw(const std::string& line, std::vector<double>& out) {
-  for (int f = 0; f < 5; ++f) {
-    int start = f * 16;
-    if (start >= (int)line.size()) break;
-    int end = std::min(start + 16, (int)line.size());
+  for (std::size_t f = 0; f < 5; ++f) {
+    std::size_t start = f * 16;
+    if (start >= line.size()) break;
+    std::size_t end = std::min(start + 16, line.size());
     std::string chunk = line.substr(start, end - start);
     if (chunk.find_first_not_of(" \t\r\n") == std::string::npos) continue;
     for (char& c : chunk) if (c=='D' || c=='d') c = 'E';
@@ -158,7 +158,7 @@ inline N9Species read_nasa9_species(const std::string& file,
     sp.Hf298_mass  = Hf298 / Mw;
 
     // 3 intervals: header + 2 coeff lines each
-    for (int iv = 0; iv < 3; ++iv) {
+    for (std::size_t iv = 0; iv < 3; ++iv) {
       std::string hdr;
       // skip comments/blank lines between blocks
       while (true) {
@@ -194,7 +194,7 @@ inline N9Species read_nasa9_species(const std::string& file,
       N9Interval I;
       I.Tlow  = Tmin;
       I.Thigh = Tmax;
-      for (int k = 0; k < 9; ++k)
+      for (std::size_t k = 0; k < 9; ++k)
         I.a[k] = coeffs[k];
 
       sp.intervals.push_back(I);
