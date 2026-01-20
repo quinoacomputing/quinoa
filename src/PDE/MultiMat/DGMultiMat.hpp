@@ -226,17 +226,45 @@ class MultiMat {
     }
 
     //! Enforces the bounds of the defined stiff variables
+    //! \param[in] e Element number
+    //! \param[in] U Solution vector at recent time step
     //! \param[in,out] x Stiff unknown array
-    void enforceStiffBounds( std::vector< tk::real >& x ) const
+    void enforceStiffBounds( std::size_t e,
+                             const tk::Fields& U,
+                             std::vector< tk::real >& x ) const
     {
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t icnt = 0;
       for (std::size_t k=0; k<nmat; ++k) {
         tk::real alpha_min = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
         x[icnt] = std::min(std::max(alpha_min, x[icnt]), 1.0);
         icnt++;
       }
-      // Do not enforce bounds for energy or deformation.
+      for (std::size_t k=0; k<nmat; ++k) {
+        // For the current state, compute energy corresponding
+        // to minimum allowed pressure
+        tk::real alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
+        tk::real arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
+        tk::real u = U(e, momentumDofIdx(nmat, 0, rdof, 0));
+        tk::real v = U(e, momentumDofIdx(nmat, 1, rdof, 0));
+        tk::real w = U(e, momentumDofIdx(nmat, 2, rdof, 0));
+        std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+        }
+        tk::real pmin = m_mat_blk[k].compute< EOS::min_eff_pressure >(
+          1e-12, arhomat, alk);
+        tk::real arhoEmin = m_mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
+          alk*pmin, alk, gmat);
+        // Enforce energy to be above minimum
+        x[icnt] = std::max(arhoEmin, x[icnt]);
+        icnt++;
+      }
+      // Do not enforce bounds for deformation.
     }
 
     //! Compute the error measure for the non-linear solver of the
@@ -1332,12 +1360,15 @@ class MultiMat {
 
         // compute pressure relaxation terms
         std::vector< tk::real > s_prelax(m_ncomp, 0.0);
+        tk::real alpha_min = g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
         for (std::size_t k=0; k<nmat; ++k)
         {
+          auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
+            * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
+          if (state[volfracIdx(nmat,k)] < alpha_min+1.0e-04 && s_alpha < 0) s_alpha = 0.0;
+          if (state[volfracIdx(nmat,k)] > (1-1.0e-04) && s_alpha > 0) s_alpha = 0.0;
           // only perform prelax on existing quantities
           if (do_relax[k] == 1) {
-            auto s_alpha = (apmat[k]-p_relax*state[volfracIdx(nmat, k)])
-              * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
             s_prelax[volfracIdx(nmat, k)] = s_alpha;
             s_prelax[energyIdx(nmat, k)] = - pb*s_alpha;
             // if (std::abs(s_prelax[energyIdx(nmat, k)]) > 1.0e-08 && e==0) {
@@ -1359,7 +1390,7 @@ class MultiMat {
           auto c = volfracIdx(nmat, k);
           auto mark = k*ndof;
           for(std::size_t idof = 0; idof < ndof; idof++)
-            R(e, mark+idof) -= wt * s_prelax[c] * B[idof];
+            R(e, mark+idof) += wt * s_prelax[c] * B[idof];
         }
         // Energy contributions
         for (std::size_t k=0; k<nmat; ++k)
@@ -1367,7 +1398,7 @@ class MultiMat {
           auto c = energyIdx(nmat, k);
           auto mark = nmat*ndof + k*ndof;
           for(std::size_t idof = 0; idof < ndof; idof++)
-            R(e, mark+idof) -= wt * s_prelax[c] * B[idof];
+            R(e, mark+idof) += wt * s_prelax[c] * B[idof];
         }
 
         // Compute plastic source

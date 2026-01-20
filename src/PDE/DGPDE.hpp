@@ -167,8 +167,10 @@ class DGPDE {
     { return self->setNonStiffEqIdx( nonStiffEqIdx ); }
 
     //! Public function to enforce bounds of stiff variables
-    void enforceStiffBounds( std::vector< tk::real >& x ) const
-    { return self->enforceStiffBounds( x ); }
+    void enforceStiffBounds( std::size_t e,
+                             const tk::Fields& U,
+                             std::vector< tk::real >& x ) const
+    { return self->enforceStiffBounds( e, U, x ); }
 
     //! Public function to compute error of non-linear solver from stiff eqs
     void computeStiffError( std::size_t n,
@@ -431,7 +433,9 @@ class DGPDE {
       virtual std::size_t nnonstiffeq() const = 0;
       virtual void setStiffEqIdx( std::vector< std::size_t >& ) const = 0;
       virtual void setNonStiffEqIdx( std::vector< std::size_t >& ) const = 0;
-      virtual void enforceStiffBounds( std::vector< tk::real >& x ) const = 0;
+      virtual void enforceStiffBounds( std::size_t e,
+                                       const tk::Fields& U,
+                                       std::vector< tk::real >& x ) const = 0;
       virtual void computeStiffError( std::size_t n,
                                       std::vector< tk::real >& f,
                                       tk::real& err ) const = 0;
@@ -595,8 +599,10 @@ class DGPDE {
       { data.setStiffEqIdx(stiffEqIdx); }
       void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const override
       { data.setNonStiffEqIdx(nonStiffEqIdx); }
-      void enforceStiffBounds( std::vector< tk::real >& x ) const override
-      { data.enforceStiffBounds(x); }
+      void enforceStiffBounds( std::size_t e,
+                               const tk::Fields& U,
+                               std::vector< tk::real >& x ) const override
+      { data.enforceStiffBounds(e, U, x); }
       void computeStiffError( std::size_t n,
                               std::vector< tk::real >& f,
                               tk::real& err ) const override

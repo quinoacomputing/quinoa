@@ -1527,6 +1527,19 @@ DG::solve( tk::real newdt )
       myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
   }
 
+  // auto nmat = 2;
+  // if (nmat == 2) {
+  //   std::ofstream outFile("prelax_results.dat", std::ios::app);
+  //   outFile << m_stage << ", " << m_u(0, 0) << ", " << m_u(0, 1) << ", " << m_p(0, 0)/m_u(0, 0) << ", " << m_p(0, 1)/m_u(0, 1) << ", " << m_u(0, 7) << ", " << m_u(0, 8) << std::endl;
+  //   // printf("\n");
+  //   // printf("%lu, %e, %e, %e, %e, %e, %e\n", m_stage, m_u(0, 0), m_u(0, 1), m_p(0, 0)/m_u(0, 0), m_p(0, 1)/m_u(0, 1), m_u(0, 7), m_u(0, 8));
+  //   // printf("\n");
+  // } /*else if (nmat == 3) {
+  //   std::ofstream outFile("prelax_results.dat", std::ios::app);
+  //   outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
+  //           << x[5] << ", " << x[6] << std::endl;
+  //           }*/
+
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
     DG::imex_integrate();
@@ -1576,20 +1589,10 @@ DG::solve( tk::real newdt )
     myGhosts()->m_fd.Esuel().size()/4, m_ndof, m_interface );
   g_dgpde[d->MeshId()].updatePrimitives( m_u, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof );
-  if (!g_inputdeck.get< tag::accuracy_test >()) {
-    g_dgpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem, m_u,
-      m_p, myGhosts()->m_fd.Esuel().size()/4 );
-  }
-
-  auto nmat = 2;
-  if (nmat == 2) {
-    std::ofstream outFile("prelax_results.dat", std::ios::app);
-    outFile << m_u(0, 0) << ", " << m_u(0, 1) << ", " << m_p(0, 0)/m_u(0, 0) << ", " << m_p(0, 1)/m_u(0, 1) << std::endl;
-  } /*else if (nmat == 3) {
-    std::ofstream outFile("prelax_results.dat", std::ios::app);
-    outFile << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << x[4] << ", "
-            << x[5] << ", " << x[6] << std::endl;
-            }*/
+  // if (!g_inputdeck.get< tag::accuracy_test >()) {
+  //   g_dgpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem, m_u,
+  //     m_p, myGhosts()->m_fd.Esuel().size()/4 );
+  // }
 
   if (m_stage < m_nstage-1) {
 
@@ -2178,12 +2181,14 @@ DG::imex_integrate()
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
   if (m_stage < m_nstage-1) {
-    // Save previous stiff_rhs
-    m_stiffrhsprev = m_stiffrhs;
-
-    // Compute the imex update
     const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
     const auto neq = m_u.nprop()/rdof;
+    // Compute stiff_rhs with current unknown as 'previous'
+    for (std::size_t e=0; e<nelem; ++e)
+      g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
+        m_u, m_ndof, m_stiffrhsprev );
+
+    // Compute the imex update
 
     for (std::size_t e=0; e<nelem; ++e) {
       auto vole = myGhosts()->m_geoElem(e,0);
@@ -2201,19 +2206,19 @@ DG::imex_integrate()
             m_u(e, rmark) = 0;
         }
       }
-      // Integrate previous implicit step, which is now explicit
-      for (std::size_t c=0; c<m_nstiffeq; ++c)
-      {
-        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
-        {
-          auto rmark = m_stiffEqIdx[c]*rdof+k;
-          m_u(e, rmark) += d->Dt() *
-            ( impl_rkcoef[0][m_stage]
-            * m_stiffrhsprev(e,c*ndof+k)/(vole*mass_dubiner[k]) );
-          if(fabs(m_u(e, rmark)) < 1e-16)
-            m_u(e, rmark) = 0;
-        }
-      }
+      // // Integrate previous implicit step, which is now explicit
+      // for (std::size_t c=0; c<m_nstiffeq; ++c)
+      // {
+      //   for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+      //   {
+      //     auto rmark = m_stiffEqIdx[c]*rdof+k;
+      //     m_u(e, rmark) += d->Dt() *
+      //       ( impl_rkcoef[0][m_stage]
+      //       * m_stiffrhsprev(e,c*ndof+k)/(vole*mass_dubiner[k]) );
+      //     if(fabs(m_u(e, rmark)) < 1e-16)
+      //       m_u(e, rmark) = 0;
+      //   }
+      // }
     }
 
     // Solve for implicit-explicit equations
@@ -2228,6 +2233,7 @@ DG::imex_integrate()
         {
           auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
           x[ieq*ndof+idof] = m_u(e, stiffrmark);
+          g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, x );
           // if (x[ieq*ndof+idof] < 1.0e-08 && ieq<3) {
           //   printf("\n");
           //   printf("idx1, idx2, x = %lu, %lu, %e\n", ieq*ndof+idof, stiffrmark, x[ieq*ndof+idof]);
@@ -2241,11 +2247,10 @@ DG::imex_integrate()
       auto x_star = x;
 
       // // Solve nonlinear system, first try broyden
-      // bool solver_failed = false;
-      // x = DG::nonlinear_broyden(e, x, solver_failed);
+      bool solver_failed = false;
+      x = DG::nonlinear_broyden(e, x, solver_failed);
 
       // If solver_failed, do newton
-      bool solver_failed = true;
       if (solver_failed) {
         solver_failed = false;
         x = DG::nonlinear_newton(e, x, solver_failed);
@@ -2445,15 +2450,22 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
       for (std::size_t j=0; j<n; ++j)
       {
         // Set dx in the order 1% of the unknown
-        dx = std::max(std::abs(0.1*x[j]),1.0e-06);
+        dx = std::max(std::abs(0.01*x[j]),1.0e-06);
         // Derivative of f[i] with respect to x[j]
         auto x_perturb = x;
         x_perturb[j] += dx;
-        if (x[j] < 1.0e-08 && j<3)
-          printf("DEBUG00: %e < 1.0e-08\n", x[j]);
-        g_dgpde[d->MeshId()].enforceStiffBounds( x_perturb );
+        // if (x[j] < 1.0e-08 && j<3)
+        //   printf("DEBUG00: %e < 1.0e-08\n", x[j]);
+        g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, x_perturb );
         auto f_perturb = DG::nonlinear_func(e, x_perturb);
-        jacob[i*n+j] = (f_perturb[i]-f[i])/(x_perturb[j]-x[j]);
+        if (std::abs(f[i]) > 1.0e-08 && std::abs(x_perturb[j]-x[j]) > 1.0e-08)
+          jacob[i*n+j] = (f_perturb[i]-f[i])/(x_perturb[j]-x[j]);
+        else {
+          if (i == j)
+            jacob[i*n+j] = 1.0;
+          else
+            jacob[i*n+j] = 0.0;
+        }
       }
 
     // Initialize Jacobian to be the inverse of this jacobian
@@ -2507,7 +2519,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
           xtest[i] = x[i] + alpha_ls*delta[i];
 
         // Enforce bounds
-        g_dgpde[d->MeshId()].enforceStiffBounds( x );
+        g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, xtest );
 
         // Compute new f(x)
         f = DG::nonlinear_func(e, xtest);
@@ -2639,7 +2651,7 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
         // If we did not converge, print a message and keep going
         if (iter == max_iter-1)
         {
-          printf("BROYDEN FAILED\n");
+          // printf("BROYDEN FAILED\n");
           solver_failed = true;
         }
       }
@@ -2705,13 +2717,21 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
         for (std::size_t j=0; j<n; ++j)
         {
           // Set dx in the order 1% of the unknown
-          dx = alpha_jacob*std::max(std::abs(0.1*x[j]),1.0e-06);
+          dx = alpha_jacob*std::max(std::abs(0.01*x[j]),1.0e-06);
           // Derivative of f[i] with respect to x[j]
           auto x_perturb = x;
           x_perturb[j] += dx;
-          g_dgpde[d->MeshId()].enforceStiffBounds( x_perturb );
+          g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, x_perturb );
           auto f_perturb = DG::nonlinear_func(e, x_perturb);
-          jacob[i*n+j] = (f_perturb[i]-f[i])/(x_perturb[j]-x[j]);
+          // In the case where f[i] == 0, I've already converge for i, make that row zero
+          if (std::abs(f[i]) > 1.0e-08 && std::abs(x_perturb[j]-x[j]) > 1.0e-08)
+            jacob[i*n+j] = (f_perturb[i]-f[i])/(x_perturb[j]-x[j]);
+          else {
+            if (i == j)
+              jacob[i*n+j] = 1.0;
+            else
+              jacob[i*n+j] = 0.0;
+          }
         }
 
       // Compute new solution by solving linear system J*dx = -f
@@ -2722,6 +2742,9 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
       lapack_int info;
       std::vector< lapack_int > ipiv(n);
       info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, ln, 1, jacob.data(), ln, ipiv.data(), delta.data(), 1);
+
+      // for (std::size_t i=0; i<4; ++i)
+      //   printf("(iter), i, x, delta, f = (%lu), %lu, %e, %e, %e\n", iter, i, x[i], delta[i], f[i]);
 
       if (info != 0) {
         printf("Failed with info: %ld\n", info);
@@ -2735,7 +2758,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
       // Update x using line search
       bool ls_failed = false;
       tk::real alpha_ls = 1.0E-00;
-      std::size_t nline = 1;
+      std::size_t nline = 15;
       auto xtest = x;
       std::size_t ilineout = 0;
       for (std::size_t iline = 0; iline<nline; ++iline)
@@ -2746,7 +2769,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
           xtest[i] = x[i] + alpha_ls*delta[i];
 
         // Enforce bounds
-        g_dgpde[d->MeshId()].enforceStiffBounds( x );
+        g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, xtest );
 
         // Compute new f(x)
         f = DG::nonlinear_func(e, xtest);
@@ -2786,21 +2809,21 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
             ls_failed = true;
         }
       }
-      auto nmat = 2;
-      if (nmat == 2) {
-        tk::real error0, error1;
-        g_dgpde[d->MeshId()].computeStiffError( n, fold, error0 );
-        g_dgpde[d->MeshId()].computeStiffError( n, f, error1 );
-        std::ofstream outFile("newton_iterations.dat", std::ios::app);
-        outFile << iter << ", " << ilineout << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << error0 << ", " << error1 << std::endl;
-      }
+      // auto nmat = 2;
+      // if (nmat == 2) {
+      //   tk::real error0, error1;
+      //   g_dgpde[d->MeshId()].computeStiffError( n, fold, error0 );
+      //   g_dgpde[d->MeshId()].computeStiffError( n, f, error1 );
+      //   std::ofstream outFile("newton_iterations.dat", std::ios::app);
+      //   outFile << iter << ", " << ilineout << ", " << x[0] << ", " << x[1] << ", " << x[2] << ", " << x[3] << ", " << error0 << ", " << error1 << std::endl;
+      // }
 
       if (solver_failed) {
         f = DG::nonlinear_func(e, x);
-        printf("\nIMEX-RK: Newton solver did not converge in %lu iterations\n", iter+1);
-        printf("Element #%lu\n", e);
-        printf("Relative error: %e\n", rel_err);
-        printf("Absolute error: %e\n\n", abs_err);
+        // printf("\nIMEX-RK: Newton solver did not converge in %lu iterations\n", iter+1);
+        // printf("Element #%lu\n", e);
+        // printf("Relative error: %e\n", rel_err);
+        // printf("Absolute error: %e\n\n", abs_err);
         break;
       }
 
@@ -2826,10 +2849,10 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
         if (iter == max_iter-1)
         {
           solver_failed = true;
-          printf("\nIMEX-RK: Newton solver did not converge in %lu iterations\n", max_iter);
-          printf("Element #%lu\n", e);
-          printf("Relative error: %e\n", rel_err);
-          printf("Absolute error: %e\n\n", abs_err);
+          // printf("\nIMEX-RK: Newton solver did not converge in %lu iterations\n", max_iter);
+          // printf("Element #%lu\n", e);
+          // printf("Relative error: %e\n", rel_err);
+          // printf("Absolute error: %e\n\n", abs_err);
         }
       }
     }

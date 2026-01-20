@@ -166,8 +166,12 @@ class CompFlow {
     }
 
     //! Enforces the bounds of the defined stiff variables
-    // //! \param[in,out] x Stiff unknown array
-    void enforceStiffBounds( std::vector< tk::real >& /*x*/ ) const
+    //! \param[in] e Element number
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] x Stiff unknown array
+    void enforceStiffBounds( std::size_t /*e*/,
+                             const tk::Fields& /*U*/,
+                             std::vector< tk::real >& /*x*/ ) const
     {
       // Do not enforce any bounds.
     }
