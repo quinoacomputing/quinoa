@@ -578,7 +578,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to specify the filepath of the NASA9 database
         file. By providing this file, the user is able to initialize species by
         providing their names (variable spec_name) and the rest of the parameters
-        will be read from the file)", "real"});
+        will be read from the file. Default assumes file is called nasa9.dat and
+        is located the working directory where inciter is being executed from)",
+        "string"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options
@@ -1154,7 +1156,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"spec_name", "List of species names, e.g. CO2, Ar.",
         R"(This keyword is used to specify a list of chemical species which will serve
         as reference for the program to retrieve its TPG coefficients from the NASA9
-        database)", "vector of strings"});
+        database. if species names are specified, the nasa9_filepath must be specified
+        or the nasa9 database must be present at the default location.)", "strings"});
 
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas

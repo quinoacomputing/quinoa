@@ -668,7 +668,7 @@ LuaParser::storeInputDeck(
           for (std::size_t ispec=0; ispec<nspec; ++ispec){
             std::string spec_name =
               spci_deck.get< tag::spec_name >()[ispec];
-            nasa9_cache[spci_deck.get< tag::spec_name >()[ispec]] =
+            nasa9_cache[spec_name] =
               read_nasa9_species(nasa9_path, spec_name);
 
             const N9Species& spec = nasa9_cache.at(spec_name);
@@ -685,13 +685,13 @@ LuaParser::storeInputDeck(
                 t_range[ispec][interv+1] = I.Thigh;
             }
           }
-            // Store unknowns (manually for the high-dimension ones)
-            storeVecIfSpecd< tk::real >(
-              sol_spc[i+1], "R", spci_deck.get< tag::R >(), R);
-            storeVecIfSpecd< tk::real >(
-              sol_spc[i+1], "dH_ref", spci_deck.get< tag::dH_ref >(), dH_ref);
-            spci_deck.get< tag::cp_coeff >() = cp_coeff;
-            spci_deck.get< tag::t_range >() = t_range;
+          // Store unknowns (manually for the high-dimension ones)
+          storeVecIfSpecd< tk::real >(
+            sol_spc[i+1], "R", spci_deck.get< tag::R >(), R);
+          storeVecIfSpecd< tk::real >(
+            sol_spc[i+1], "dH_ref", spci_deck.get< tag::dH_ref >(), dH_ref);
+          spci_deck.get< tag::cp_coeff >() = cp_coeff;
+          spci_deck.get< tag::t_range >() = t_range;
         }
         else {
           // R
