@@ -214,7 +214,7 @@ class DG : public CBase_DG {
     void transferSol() {}
 
     //! (no-op)
-    void advance( tk::real, std::array< tk::real, 6 > ) {}
+    void advance( tk::real ) {}
 
     //! (no-op)
     void storeForces( std::array< tk::real, 6 > ) {}
