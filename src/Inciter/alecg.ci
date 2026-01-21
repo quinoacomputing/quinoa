@@ -46,6 +46,7 @@ module alecg {
       entry [reductiontarget] void advance(
         tk::real newdt,
         std::array< tk::real, 6 > F );
+      entry void storeForces( std::array< tk::real, 6 > F );
       entry void comdfnorm(
               const std::unordered_map< tk::UnsMesh::Edge,
               std::array< tk::real, 3 >,

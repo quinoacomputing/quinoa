@@ -193,6 +193,9 @@ class DG : public CBase_DG {
     //! (no-op)
     void advance( tk::real, std::array< tk::real, 6 > ) {}
 
+    //! (no-op)
+    void storeForces( std::array< tk::real, 6 > ) {}
+
     //! Initialize the linear solver via the interface BiCG::init()
     void initializeLinearSystem( tk::real newdt );
 

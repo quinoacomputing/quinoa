@@ -173,6 +173,9 @@ class FV : public CBase_FV {
     //! (no-op)
     void advance( tk::real, std::array< tk::real, 6 > ) {}
 
+    //! (no-op)
+    void storeForces( std::array< tk::real, 6 > ) {}
+
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 

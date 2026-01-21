@@ -201,6 +201,9 @@ class Transporter : public CBase_Transporter {
     //    and sums up the forces on each mesh
     void collectDtAndForces( CkReductionMsg* advMsg );
 
+    // \brief Reduction target that sums up the forces on each mesh
+    void collectForces( CkReductionMsg* advMsg );
+
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
     //!   residuals, from all  worker chares
     void diagnostics( CkReductionMsg* msg );

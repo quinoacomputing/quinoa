@@ -103,6 +103,9 @@ class OversetFE : public CBase_OversetFE {
     //! Advance equations to next time step
     void advance( tk::real newdt, std::array< tk::real, 6 > F );
 
+    //! Advance equations to next time step
+    void storeForces( std::array< tk::real, 6 > F );
+
     //! Compute left-hand side of transport equations
     void lhs();
 
