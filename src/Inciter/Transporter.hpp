@@ -198,8 +198,7 @@ class Transporter : public CBase_Transporter {
     void solutionTransferred();
 
     // \brief Reduction target that computes minimum timestep across all meshes
-    //    and sums up the forces on each mesh
-    void collectDtAndForces( CkReductionMsg* advMsg );
+    void collectDt( CkReductionMsg* advMsg );
 
     // \brief Reduction target that sums up the forces on each mesh
     void collectForces( CkReductionMsg* advMsg );
