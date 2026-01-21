@@ -1437,10 +1437,9 @@ Transporter::solutionTransferred()
 }
 
 void
-Transporter::collectDtAndForces( CkReductionMsg* advMsg )
+Transporter::collectDt( CkReductionMsg* advMsg )
 // *****************************************************************************
-// \brief Reduction target that computes minimum timestep across all meshes and
-//    sums up the forces on each mesh
+// \brief Reduction target that computes minimum timestep across all meshes
 //! \param[in] advMsg Reduction msg containing minimum timestep and total
 //!   surface force information
 // *****************************************************************************
