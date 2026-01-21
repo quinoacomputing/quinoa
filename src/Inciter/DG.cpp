@@ -1394,7 +1394,7 @@ DG::dt()
         g_dgpde[d->MeshId()].dt( myGhosts()->m_coord, myGhosts()->m_inpoel,
           myGhosts()->m_fd,
           myGhosts()->m_geoFace, myGhosts()->m_geoElem, m_ndof, m_u, m_p,
-          myGhosts()->m_fd.Esuel().size()/4 );
+          myGhosts()->m_fd.Esuel().size()/4, m_dte );
       if (eqdt < mindt) mindt = eqdt;
 
       // time-step suppression for unsteady problems

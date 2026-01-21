@@ -553,6 +553,8 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] local_dte Time step size for each element (for local
+    //!   time stepping)
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
@@ -562,7 +564,8 @@ class CompFlow {
                  const std::vector< std::size_t >& ndofel,
                  const tk::Fields& U,
                  const tk::Fields&,
-                 const std::size_t /*nielem*/ ) const
+                 const std::size_t /*nielem*/,
+                 std::vector< tk::real >& local_dte ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
 
@@ -765,7 +768,8 @@ class CompFlow {
 
         // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
         // where p is the order of the DG polynomial by linear stability theory.
-        mindt = std::min( mindt, geoElem(e,0)/ (delt[e] * (2.0*dgp + 1.0)) );
+        local_dte[e] = geoElem(e,0)/ (delt[e] * (2.0*dgp + 1.0));
+        mindt = std::min( mindt, local_dte[e] );
       }
 
       return mindt;
