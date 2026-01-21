@@ -1072,24 +1072,12 @@ OversetFE::dt()
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
 
-  // Compute own portion of force on boundary for overset mesh rigid body motion
-  std::vector< tk::real > F(6, 0.0);
-  if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
-    && d->MeshId() > 0) {
-    g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_slipwallbctri,
-      m_u, m_centMass, F );
-  }
-
   // Tuple-reduction for min-dt and sum-F
-  int tupleSize = 7;
+  //! TODO: we don't need this to be a tuple
+  //! TODO: remove F arg, rename dtANDFORCES, get rid of F in advance
+  int tupleSize = 1;
   CkReduction::tupleElement advancingData[] = {
     CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[1], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[3], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[4], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double)
   };
   CkReductionMsg* advMsg =
     CkReductionMsg::buildFromTuple(advancingData, tupleSize);
@@ -1114,11 +1102,6 @@ OversetFE::advance( tk::real newdt, std::array< tk::real, 6 > F )
 
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
-
-  for (std::size_t i=0; i<3; ++i) {
-    m_surfForce[i] = F[i];
-    m_surfTorque[i] = F[i+3];
-  }
 
   // Compute gradients for next time step
   chBndGrad();
@@ -1147,6 +1130,46 @@ OversetFE::chBndGrad()
       for (auto i : n) g[ j++ ] = m_chBndGrad[ tk::cref_find(d->Bid(),i) ];
       thisProxy[c].comChBndGrad( std::vector<std::size_t>(begin(n),end(n)), g );
     }
+
+  // Compute own portion of force on boundary for overset mesh rigid body motion
+  std::vector< tk::real > F(6, 0.0);
+  if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_movt >()
+    && d->MeshId() > 0) {
+    g_cgpde[d->MeshId()].bndPressureInt( d->Coord(), m_triinpoel, m_slipwallbctri,
+      m_u, m_centMass, F );
+  }
+
+  int tupleSize = 6;
+  CkReduction::tupleElement advancingData[] = {
+    CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[1], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[3], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[4], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double)
+  };
+  CkReductionMsg* advMsg =
+    CkReductionMsg::buildFromTuple(advancingData, tupleSize);
+
+  // Contribute to surface forces, 
+  CkCallback cb(CkReductionTarget(Transporter, collectForces), d->Tr());
+
+  advMsg->setCallback(cb);
+  contribute(advMsg);
+
+  owngrad_complete();
+}
+
+void OversetFE::storeForces( std::array< tk::real, 6 > F )
+// *****************************************************************************
+// Advance equations to next time step
+//! \param[in] F Total surface force on this mesh
+// *****************************************************************************
+{
+  for (std::size_t i=0; i<3; ++i) {
+    m_surfForce[i] = F[i];
+    m_surfTorque[i] = F[i+3];
+  }
 
   owngrad_complete();
 }
@@ -1318,8 +1341,7 @@ OversetFE::solve()
       g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
     auto body_force = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
       tag::body_force >();
-    if (m_stage == 0)
-      for (std::size_t i=0; i<3; ++i) m_surfForce[i] += body_force[i]*mass_mesh;
+    for (std::size_t i=0; i<3; ++i) m_surfForce[i] += body_force[i]*mass_mesh;
 
     // Mark if mesh moved or is moving
     if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12 ||

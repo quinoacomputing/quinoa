@@ -1458,13 +1458,6 @@ Transporter::collectDtAndForces( CkReductionMsg* advMsg )
 #endif
 
   tk::real mindt = *(tk::real*)results[0].data;
-  std::array< tk::real, 6 > F;
-  F[0] = *(tk::real*)results[1].data;
-  F[1] = *(tk::real*)results[2].data;
-  F[2] = *(tk::real*)results[3].data;
-  F[3] = *(tk::real*)results[4].data;
-  F[4] = *(tk::real*)results[5].data;
-  F[5] = *(tk::real*)results[6].data;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -1487,6 +1480,49 @@ Transporter::collectDtAndForces( CkReductionMsg* advMsg )
     for (auto& m : m_scheme) {
       m.bcast< Scheme::advance >( dt, F );
     }
+  }
+}
+
+void
+Transporter::collectForces( CkReductionMsg* advMsg )
+// *****************************************************************************
+// \brief Reduction target that sums up the forces on each mesh
+//! \param[in] advMsg Reduction msg containing total surface force information
+// *****************************************************************************
+{
+  // obtain results of reduction from reduction-msg
+  CkReduction::tupleElement* results = nullptr;
+  int num_reductions = 0;
+  advMsg->toTuple(&results, &num_reductions);
+
+// ignore the old-style-cast warning from clang for this code
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+  #pragma clang diagnostic ignored "-Wcast-align"
+#endif
+
+  std::array< tk::real, 6 > F;
+  F[0] = *(tk::real*)results[0].data;
+  F[1] = *(tk::real*)results[1].data;
+  F[2] = *(tk::real*)results[2].data;
+  F[3] = *(tk::real*)results[3].data;
+  F[4] = *(tk::real*)results[4].data;
+  F[5] = *(tk::real*)results[5].data;
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#endif
+
+  if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
+
+    // broadcast to storeForces
+    for (auto& m : m_scheme) {
+      m.bcast< Scheme::storeForces >( F );
+    }
+
+    // clear counter
+    m_ndtmsh = 0;
   }
 }
 
