@@ -1073,8 +1073,6 @@ OversetFE::dt()
   thisProxy[ thisIndex ].wait4rhs();
 
   // Tuple-reduction for min-dt and sum-F
-  //! TODO: we don't need this to be a tuple
-  //! TODO: remove F arg, rename dtANDFORCES, get rid of F in advance
   int tupleSize = 1;
   CkReduction::tupleElement advancingData[] = {
     CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double),
