@@ -1608,7 +1608,7 @@ DG::solve( tk::real newdt )
       m_ndof, m_u, m_un );
 
     // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
+    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
 
   }
 }
