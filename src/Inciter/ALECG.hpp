@@ -114,7 +114,7 @@ class ALECG : public CBase_ALECG {
     void start();
 
     //! Advance equations to next time step
-    void advance( tk::real newdt, std::array< tk::real, 6 > );
+    void advance( tk::real newdt );
 
     //! no-op
     void storeForces( std::array< tk::real, 6 > ) {}

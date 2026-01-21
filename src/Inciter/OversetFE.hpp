@@ -101,7 +101,7 @@ class OversetFE : public CBase_OversetFE {
     void start();
 
     //! Advance equations to next time step
-    void advance( tk::real newdt, std::array< tk::real, 6 > F );
+    void advance( tk::real newdt );
 
     //! Advance equations to next time step
     void storeForces( std::array< tk::real, 6 > F );

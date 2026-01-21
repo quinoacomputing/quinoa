@@ -1094,7 +1094,7 @@ OversetFE::dt()
 }
 
 void
-OversetFE::advance( tk::real newdt, std::array< tk::real, 6 > F )
+OversetFE::advance( tk::real newdt )
 // *****************************************************************************
 // Advance equations to next time step
 //! \param[in] newdt The smallest dt across the whole problem
