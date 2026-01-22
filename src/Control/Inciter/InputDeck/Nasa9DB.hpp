@@ -203,5 +203,5 @@ inline N9Species read_nasa9_species(const std::string& file,
     return sp;
   }
 
-  throw std::runtime_error("Species " + targetName + " not found in " + file);
+  Throw("Species " + targetName + " not found in " + file);
 }
