@@ -2060,10 +2060,6 @@ DG::step()
   // Reset Runge-Kutta stage counter
   m_stage = 0;
 
-  const auto term = g_inputdeck.get< tag::term >();
-  const auto nstep = g_inputdeck.get< tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-
   // If neither max iterations nor max time reached, continue, otherwise finish
   if (not m_finished) {
 
