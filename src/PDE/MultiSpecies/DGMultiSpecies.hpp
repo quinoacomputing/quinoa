@@ -782,6 +782,8 @@ class MultiSpecies {
       // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
       // where p is the order of the DG polynomial by linear stability theory.
       mindt /= (2.0*dgp + 1.0);
+      for (std::size_t e=0; e<nielem; ++e)
+        local_dte[e] /= (2.0*dgp + 1.0);
       return mindt;
     }
 
