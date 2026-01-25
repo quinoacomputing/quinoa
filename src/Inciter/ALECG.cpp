@@ -147,6 +147,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
 
   d->comfinal();
 
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
+
 }
 //! [Constructor]
 

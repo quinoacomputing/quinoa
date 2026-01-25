@@ -90,7 +90,7 @@ class Refiner : public CBase_Refiner {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit Refiner( CkMigrateMessage* ) {}
+    explicit Refiner( CkMigrateMessage* msg ) : CBase_Refiner( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -160,6 +160,7 @@ class Refiner : public CBase_Refiner {
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) override {
+        ArrayElement::pup(p);
       p | m_meshid;
       p | m_ncit;
       p | m_host;
@@ -208,6 +209,9 @@ class Refiner : public CBase_Refiner {
       p | m_rid;
       //p | m_oldrid;
       p | m_lref;
+            if (p.isUnpacking()) {
+              chareIdx = -1;
+            }
       //p | m_oldlref;
       //p | m_oldparent;
       p | m_writeCallback;

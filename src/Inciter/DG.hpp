@@ -78,7 +78,7 @@ class DG : public CBase_DG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit DG( CkMigrateMessage* msg ) : CBase_DG( msg ) {}
+    explicit DG( CkMigrateMessage* msg ) : CBase_DG( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

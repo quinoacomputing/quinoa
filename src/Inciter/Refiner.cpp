@@ -157,6 +157,9 @@ Refiner::Refiner( std::size_t meshid,
 
   // Generate boundary data structures for coarse mesh
   coarseMesh();
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
+
 
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
