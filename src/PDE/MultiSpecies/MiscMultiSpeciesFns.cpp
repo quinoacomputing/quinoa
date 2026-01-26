@@ -51,7 +51,8 @@ timeStepSizeMultiSpecies(
   const std::size_t nelem,
   std::size_t nspec,
   const tk::Fields& U,
-  const tk::Fields& P )
+  const tk::Fields& P,
+  std::vector< tk::real >& local_dte )
 // *****************************************************************************
 //  Time step restriction for multi species cell-centered schemes
 //! \param[in] mat_blk EOS species block
@@ -62,6 +63,8 @@ timeStepSizeMultiSpecies(
 //! \param[in] nspec Number of speciess in this PDE system
 //! \param[in] U High-order solution vector
 //! \param[in] P High-order vector of primitives
+//! \param[in,out] local_dte Time step size for each element (for local
+//!   time stepping)
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
@@ -159,7 +162,8 @@ timeStepSizeMultiSpecies(
   // compute allowable dt
   for (std::size_t e=0; e<nelem; ++e)
   {
-    mindt = std::min( mindt, geoElem(e,0)/delt[e] );
+    local_dte[e] = geoElem(e,0)/delt[e];
+    mindt = std::min( mindt, local_dte[e] );
   }
 
   return mindt;
