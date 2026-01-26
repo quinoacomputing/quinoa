@@ -1,18 +1,9 @@
 diff --git a/src/libs/ck-libs/collide/collidecharm.C b/src/libs/ck-libs/collide/collidecharm.C
-index 529f39e0c..c1d287015 100644
+index 68b444057..efc3d9c3a 100644
 --- a/src/libs/ck-libs/collide/collidecharm.C
 +++ b/src/libs/ck-libs/collide/collidecharm.C
-@@ -377,6 +377,8 @@ void syncReductionMgr::childDone(int stepCount)
-   tryFinish();
- }
- 
-+syncReductionMgr::syncReductionMgr(CkMigrateMessage* m) :
-+  CBase_syncReductionMgr(m) {}
- 
- /*********************** collideMgr ***********************/
- //Extract the (signed) low 23 bits of src--
-@@ -411,6 +413,9 @@ collideMgr::collideMgr(const CollideGrid3d &gridMap_,
-   msgsSent=msgsRecvd=0;
+@@ -340,6 +340,9 @@ collideMgr::collideMgr(const CollideGrid3d &gridMap_,
+   collisionStarted = false;
  }
  
 +collideMgr::collideMgr(CkMigrateMessage* m) : CBase_collideMgr(m),
@@ -21,7 +12,7 @@ index 529f39e0c..c1d287015 100644
  //Maintain contributor registration count
  void collideMgr::registerContributor(int chunkNo)
  {
-@@ -619,6 +624,10 @@ void collideVoxel::startCollision(int step,
+@@ -586,6 +589,10 @@ void collideVoxel::startCollision(int step,
    CC_STATUS("} startCollision");
  }
  
@@ -32,7 +23,7 @@ index 529f39e0c..c1d287015 100644
  collideClient::~collideClient() {}
  
  /********************** serialCollideClient *****************/
-@@ -629,6 +638,8 @@ serialCollideClient::serialCollideClient(void) {
+@@ -596,6 +603,8 @@ serialCollideClient::serialCollideClient(void) {
    useCb = false;
  }
  
@@ -42,10 +33,10 @@ index 529f39e0c..c1d287015 100644
    clientFn=NULL;
    clientParam=NULL;
 diff --git a/src/libs/ck-libs/collide/collidecharm.ci b/src/libs/ck-libs/collide/collidecharm.ci
-index 8f1d507af..b5f833dc1 100644
+index 7676bbd32..0761c6127 100644
 --- a/src/libs/ck-libs/collide/collidecharm.ci
 +++ b/src/libs/ck-libs/collide/collidecharm.ci
-@@ -3,18 +3,18 @@ module collidecharm {
+@@ -3,7 +3,7 @@ module collidecharm {
  
    group collideClient {
    };
@@ -54,21 +45,17 @@ index 8f1d507af..b5f833dc1 100644
      entry serialCollideClient();
      entry serialCollideClient(CkCallback clientCb_);
      entry void reductionDone(CkReductionMsg *m);
+@@ -13,7 +13,7 @@ module collidecharm {
+     entry distributedCollideClient(CkCallback clientCb_);
    };
  
--  group syncReductionMgr {
-+  group [migratable] syncReductionMgr {
-     entry syncReductionMgr();
-     entry void childProd(int stepCount);
-     entry void childDone(int stepCount);
-   };
--  group collideMgr : syncReductionMgr {
-+  group [migratable] collideMgr : syncReductionMgr {
+-  group collideMgr {
++  group [migratable] collideMgr {
      entry collideMgr(CollideGrid3d gridMap,
          CProxy_collideClient client,
          CkArrayID cells);
 diff --git a/src/libs/ck-libs/collide/collidecharm.h b/src/libs/ck-libs/collide/collidecharm.h
-index aabf7d268..e93f19f7e 100644
+index cb595a95b..e72f09ccf 100644
 --- a/src/libs/ck-libs/collide/collidecharm.h
 +++ b/src/libs/ck-libs/collide/collidecharm.h
 @@ -22,6 +22,8 @@
@@ -78,21 +65,13 @@ index aabf7d268..e93f19f7e 100644
 +    collideClient();
 +    collideClient(CkMigrateMessage* m);
      virtual ~collideClient();
-     virtual void collisions(ArrayElement *src,
-         int step,CollisionList &colls) =0;
+     virtual void collisions(int step,CollisionList &colls) =0;
+ };
 diff --git a/src/libs/ck-libs/collide/collidecharm_impl.h b/src/libs/ck-libs/collide/collidecharm_impl.h
-index 7232caf68..b7626bb77 100644
+index 8ea606fd3..15b7ce3d5 100644
 --- a/src/libs/ck-libs/collide/collidecharm_impl.h
 +++ b/src/libs/ck-libs/collide/collidecharm_impl.h
-@@ -125,6 +125,7 @@ class syncReductionMgr : public CBase_syncReductionMgr
-   public:
-   int getStepCount(void) const {return stepCount;}
-   syncReductionMgr();
-+  syncReductionMgr(CkMigrateMessage* m);
- 
-   //Called by parent-- will you contribute?
-   void childProd(int stepCount);
-@@ -172,6 +173,7 @@ class collideMgr : public CBase_collideMgr
+@@ -131,6 +131,7 @@ class collideMgr : public CBase_collideMgr
    collideMgr(const CollideGrid3d &gridMap,
        const CProxy_collideClient &client,
        const CProxy_collideVoxel &voxels);
@@ -100,7 +79,7 @@ index 7232caf68..b7626bb77 100644
  
    //Maintain contributor registration count
    void registerContributor(int chunkNo);
-@@ -225,6 +227,7 @@ class serialCollideClient : public collideClient {
+@@ -194,6 +195,7 @@ class serialCollideClient : public collideClient {
    public:
    serialCollideClient(void);
    serialCollideClient(CkCallback clientCb_);
