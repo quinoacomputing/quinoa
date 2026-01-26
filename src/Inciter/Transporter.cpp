@@ -1437,56 +1437,12 @@ Transporter::solutionTransferred()
 }
 
 void
-Transporter::collectDt( CkReductionMsg* advMsg )
+Transporter::collectDtAndForces( CkReductionMsg* advMsg )
 // *****************************************************************************
-// \brief Reduction target that computes minimum timestep across all meshes
+// \brief Reduction target that sums up the forces on each mesh and computes
+// minimum timestep across all meshes
 //! \param[in] advMsg Reduction msg containing minimum timestep and total
 //!   surface force information
-// *****************************************************************************
-{
-  // obtain results of reduction from reduction-msg
-  CkReduction::tupleElement* results = nullptr;
-  int num_reductions = 0;
-  advMsg->toTuple(&results, &num_reductions);
-
-// ignore the old-style-cast warning from clang for this code
-#if defined(__clang__)
-  #pragma clang diagnostic push
-  #pragma clang diagnostic ignored "-Wold-style-cast"
-  #pragma clang diagnostic ignored "-Wcast-align"
-#endif
-
-  tk::real mindt = *(tk::real*)results[0].data;
-
-#if defined(__clang__)
-  #pragma clang diagnostic pop
-#endif
-
-  m_dtmsh.push_back(mindt);
-
-  if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
-    Assert(m_dtmsh.size() == m_nelem.size(), "Incorrect size of dtmsh");
-
-    // compute minimum dt across meshes
-    tk::real dt = std::numeric_limits< tk::real >::max();
-    for (auto idt : m_dtmsh) dt = std::min(dt, idt);
-
-    // clear dt-vector and counter
-    m_dtmsh.clear();
-    m_ndtmsh = 0;
-
-    // broadcast to advance time step
-    for (auto& m : m_scheme) {
-      m.bcast< Scheme::advance >( dt );
-    }
-  }
-}
-
-void
-Transporter::collectForces( CkReductionMsg* advMsg )
-// *****************************************************************************
-// \brief Reduction target that sums up the forces on each mesh
-//! \param[in] advMsg Reduction msg containing total surface force information
 // *****************************************************************************
 {
   // obtain results of reduction from reduction-msg
@@ -1508,20 +1464,29 @@ Transporter::collectForces( CkReductionMsg* advMsg )
   F[3] = *(tk::real*)results[3].data;
   F[4] = *(tk::real*)results[4].data;
   F[5] = *(tk::real*)results[5].data;
+  tk::real mindt = *(tk::real*)results[6].data;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
 #endif
 
+  m_dtmsh.push_back(mindt);
+
   if (++m_ndtmsh == m_nelem.size()) {    // all meshes have been loaded
+    Assert(m_dtmsh.size() == m_nelem.size(), "Incorrect size of dtmsh");
 
-    // broadcast to storeForces
-    for (auto& m : m_scheme) {
-      m.bcast< Scheme::storeForces >( F );
-    }
+    // compute minimum dt across meshes
+    tk::real dt = std::numeric_limits< tk::real >::max();
+    for (auto idt : m_dtmsh) dt = std::min(dt, idt);
 
-    // clear counter
+    // clear dt-vector and counter
+    m_dtmsh.clear();
     m_ndtmsh = 0;
+
+    // broadcast to storeDtAndForces
+    for (auto& m : m_scheme) {
+      m.bcast< Scheme::storeDtAndForces >( F, mindt );
+    }
   }
 }
 

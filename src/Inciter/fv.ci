@@ -51,7 +51,7 @@ module fv {
       entry void resized();
       entry void transferSol();
       entry void advance( tk::real newdt );
-      entry void storeForces( std::array< tk::real, 6 > F );
+      entry void storeDtAndForces( std::array< tk::real, 6 > F, tk::real mindt );
       entry void lhs();
       entry void step();
       entry void start();

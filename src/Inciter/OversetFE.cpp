@@ -1070,49 +1070,21 @@ OversetFE::dt()
 
   }
 
-  //! [Advance]
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
   thisProxy[ thisIndex ].wait4rhs();
 
-  // Tuple-reduction for min-dt and sum-F
-  int tupleSize = 1;
-  CkReduction::tupleElement advancingData[] = {
-    CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double),
-  };
-  CkReductionMsg* advMsg =
-    CkReductionMsg::buildFromTuple(advancingData, tupleSize);
-
-  // Contribute to minimum dt across all chares, find minimum dt across all
-  // meshes, and eventually broadcast to OversetFE::advance()
-  CkCallback cb(CkReductionTarget(Transporter,collectDt), d->Tr());
-  advMsg->setCallback(cb);
-  contribute(advMsg);
-  //! [Advance]
+  // Compute gradients for next time step and perform reductions
+  chBndGrad( mindt );
 }
 
 void
-OversetFE::advance( tk::real newdt )
-// *****************************************************************************
-// Advance equations to next time step
-//! \param[in] newdt The smallest dt across the whole problem
-//! \param[in] F Total surface force on this mesh
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Set new time step size
-  if (m_stage == 0) d->setdt( newdt );
-
-  // Compute gradients for next time step
-  chBndGrad();
-}
-
-void
-OversetFE::chBndGrad()
+OversetFE::chBndGrad( tk::real mindt )
 // *****************************************************************************
 // Compute nodal gradients at chare-boundary nodes. Gradients at internal nodes
-// are calculated locally as needed and are not stored.
+// are calculated locally as needed and are not stored. Additionally, performs
+// reductions and broadcasts on time step and force
+//! \param[in] mindt The smallest dt across the whole problem
 // *****************************************************************************
 {
   auto d = Disc();
@@ -1140,37 +1112,43 @@ OversetFE::chBndGrad()
       m_u, m_centMass, F );
   }
 
-  int tupleSize = 6;
+  int tupleSize = 7;
   CkReduction::tupleElement advancingData[] = {
     CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[1], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[3], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[4], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double)
+    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double)
   };
   CkReductionMsg* advMsg =
     CkReductionMsg::buildFromTuple(advancingData, tupleSize);
 
-  // Contribute to surface forces, 
-  CkCallback cb(CkReductionTarget(Transporter, collectForces), d->Tr());
+  // Contribute to surface forces and mindt
+  CkCallback cb(CkReductionTarget(Transporter, collectDtAndForces), d->Tr());
 
   advMsg->setCallback(cb);
   contribute(advMsg);
-
-  owngrad_complete();
 }
 
-void OversetFE::storeForces( std::array< tk::real, 6 > F )
+void OversetFE::storeDtAndForces( std::array< tk::real, 6 > F, tk::real mindt )
 // *****************************************************************************
-// Advance equations to next time step
+// Receive forces from broadcast, then continue to rhs()
 //! \param[in] F Total surface force on this mesh
+//! \param[in] mindt The smallest dt across the whole problem
 // *****************************************************************************
 {
+  auto d = Disc();
+
+  // Store surface forces and torques
   for (std::size_t i=0; i<3; ++i) {
     m_surfForce[i] = F[i];
     m_surfTorque[i] = F[i+3];
   }
+
+  // Set new time step size
+  if (m_stage == 0) d->setdt( mindt );
 
   owngrad_complete();
 }
@@ -1581,7 +1559,8 @@ OversetFE::stage()
   }
   else {
     // start with next time-step stage
-    chBndGrad();
+    auto d = Disc();
+    chBndGrad(d->Dt());
   }
 }
 //! [stage]
