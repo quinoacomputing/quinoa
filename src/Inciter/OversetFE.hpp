@@ -100,11 +100,11 @@ class OversetFE : public CBase_OversetFE {
     // Start time stepping
     void start();
 
-    //! Advance equations to next time step
-    void advance( tk::real newdt );
+    //! (no-op)
+    void advance( tk::real ) {}
 
-    //! Advance equations to next time step
-    void storeForces( std::array< tk::real, 6 > F );
+    //! Store surface forces and time step following reduction
+    void storeDtAndForces( std::array< tk::real, 6 > F, tk::real mindt );
 
     //! Compute left-hand side of transport equations
     void lhs();
@@ -466,7 +466,7 @@ class OversetFE : public CBase_OversetFE {
     void mergelhs();
 
     //! Compute gradients
-    void chBndGrad();
+    void chBndGrad( tk::real mindt );
 
     //! Compute righ-hand side vector of transport equations
     void rhs();

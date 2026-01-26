@@ -117,7 +117,7 @@ class ALECG : public CBase_ALECG {
     void advance( tk::real newdt );
 
     //! no-op
-    void storeForces( std::array< tk::real, 6 > ) {}
+    void storeDtAndForces( std::array< tk::real, 6 >, tk::real ) {}
 
     //! Compute left-hand side of transport equations
     void lhs();
