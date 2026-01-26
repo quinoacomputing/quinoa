@@ -1,4 +1,2 @@
 *~
-*sw?
-/build
-/install
+*.sw?

@@ -1,9 +1,0 @@
-Info    : Running '/usr/bin/gmsh -check cube_coarse.msh' [Gmsh 2.15.0, 1 node, max. 1 thread]
-Info    : Started on Tue May 30 08:31:27 2017
-Info    : 17576 vertices
-Info    : 101250 elements
-Info    : Checking mesh coherence (93750 elements)...
-Info    : Checking for duplicate vertices...
-Info    : Checking for duplicate elements...
-Info    : Done checking mesh coherence
-Info    : Stopped on Tue May 30 08:31:28 2017

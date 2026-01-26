@@ -1,7 +1,0 @@
-/*!
-  \page      inciter_newscheme_nowarning_page NoWarning/alecg.decl.h and NoWarning/alecg.def.h
-
-@include NoWarning/alecg.decl.h
-@include NoWarning/alecg.def.h
-
-*/
