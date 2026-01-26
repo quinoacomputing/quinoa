@@ -93,7 +93,7 @@ Sorter::Sorter( std::size_t meshid,
             { return std::all_of( begin(s.second), end(s.second),
                        [&](auto f){ return f*3+2 < m_triinpoel.size(); } ); } ),
           "Boundary face data structures inconsistent" );
-  
+
   // Array elements must not use the chare_objs table
   chareIdx = -1;
 }
