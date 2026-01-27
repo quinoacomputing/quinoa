@@ -178,6 +178,8 @@ Discretization::Discretization(
       //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
     }
   }
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 std::unordered_map< std::size_t, std::size_t >

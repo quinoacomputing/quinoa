@@ -1121,6 +1121,8 @@ class MultiMat {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
+    //! \param[in,out] local_dte Time step size for each element (for local
+    //!   time stepping)
     //! \return Minimum time step size
     //! \details The allowable dt is calculated by looking at the maximum
     //!   wave-speed in elements surrounding each face, times the area of that
@@ -1135,13 +1137,14 @@ class MultiMat {
                  const std::vector< std::size_t >& /*ndofel*/,
                  const tk::Fields& U,
                  const tk::Fields& P,
-                 const std::size_t nielem ) const
+                 const std::size_t nielem,
+                 std::vector< tk::real >& local_dte ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
       auto mindt = timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem,
-        nielem, nmat, U, P);
+        nielem, nmat, U, P, local_dte);
 
       tk::real dgp = 0.0;
       if (ndof == 4)
@@ -1156,6 +1159,8 @@ class MultiMat {
       // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
       // where p is the order of the DG polynomial by linear stability theory.
       mindt /= (2.0*dgp + 1.0);
+      for (std::size_t e=0; e<nielem; ++e)
+        local_dte[e] /= (2.0*dgp + 1.0);
       return mindt;
     }
 

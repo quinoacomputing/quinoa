@@ -131,12 +131,13 @@ using materialList = tk::TaggedTuple< brigand::list<
 
 // Species/EOS object
 using speciesList = tk::TaggedTuple< brigand::list<
-  tag::id,       std::vector< uint64_t >,
-  tag::gamma,    std::vector< tk::real >,
-  tag::R,        std::vector< tk::real >,
-  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
-  tag::t_range,  std::vector< std::vector< tk::real > >,
-  tag::dH_ref,   std::vector< tk::real >
+  tag::id,        std::vector< uint64_t >,
+  tag::gamma,     std::vector< tk::real >,
+  tag::R,         std::vector< tk::real >,
+  tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,   std::vector< std::vector< tk::real > >,
+  tag::dH_ref,    std::vector< tk::real >,
+  tag::spec_name, std::vector< std::string >
 > >;
 
 // Boundary conditions block
@@ -241,7 +242,7 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::location,          std::vector< tk::real >,
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
-  tag::moment_of_inertia, tk::real,
+  tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
   tag::center_of_mass,    std::vector< tk::real >
 > >;
 
@@ -302,6 +303,9 @@ using ConfigMembers = brigand::list<
   tag::imex_reltol,      tk::real,
   tag::imex_abstol,      tk::real,
 
+  // NASA9 database location for MultiSpecies
+  tag::nasa9_filepath, std::string,
+
   // steady-state solver options
   tag::implicit_timestepping, bool,
   tag::steady_state,          bool,
@@ -361,7 +365,7 @@ using ConfigMembers = brigand::list<
   tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
     tag::rigid_body_movt, bool,
     tag::rigid_body_dof,  std::size_t,
-    tag::symmetry_plane,  std::size_t
+    tag::symmetry_plane,  std::vector< tk::real >
   > >,
 
   // ALE block
@@ -564,6 +568,19 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to specify the absolute tolerance that
         the non-linear solver uses to obtain the implicit unknowns within the
         Implicit-Explicit Runge-Kutta scheme.)", "real"});
+
+      // -----------------------------------------------------------------------
+      // MultiSpecies option to provide NASA9 DB filepath
+      // -----------------------------------------------------------------------
+
+      keywords.insert({"nasa9_filepath",
+        "Provide the path to the NASA9 data file",
+        R"(This keywords is used to specify the filepath of the NASA9 database
+        file. By providing this file, the user is able to initialize species by
+        providing their names (variable spec_name) and the rest of the parameters
+        will be read from the file. Default assumes file is called nasa9.dat and
+        is located the working directory where inciter is being executed from)",
+        "string"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options
@@ -1135,6 +1152,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         the reference temperature in the enthalpy calculations is 0 K. This number
         is taken from the NASA Glenn 2002 report, and is the heat of formation
         divided by the species molar mass.)", "vector of reals"});
+
+      keywords.insert({"spec_name", "List of species names, e.g. CO2, Ar.",
+        R"(This keyword is used to specify a list of chemical species which will serve
+        as reference for the program to retrieve its TPG coefficients from the NASA9
+        database. if species names are specified, the nasa9_filepath must be specified
+        or the nasa9 database must be present at the default location.)", "strings"});
 
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas
@@ -1826,7 +1849,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"symmetry_plane", "Symmetry plane for rigid body motion",
         R"(This keyword is used to specify the symmetry plane for a 3 DOF rigid
-        body motion solver. 1: x-plane, 2: y-plane, 3: z-plane.)", "uint"});
+        body motion solver, given as a vector normal to the plane)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // IC object
@@ -1980,7 +2004,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         relocate the mesh.)", "vector of 3 reals"});
 
       keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
-        R"(Moment of inertia of rigid body for rotational motion)", "real"});
+        R"(Moment of inertia of rigid body for rotational motion)",
+        "3-by-3 vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
         R"(Center of mass of rigid body used to compute torque for rotational

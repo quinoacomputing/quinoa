@@ -23,6 +23,8 @@
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
 #include "PDE/MultiSpecies/MultiSpeciesIndexing.hpp"
 
+#include "Nasa9DB.hpp"
+
 namespace tk {
 namespace grm {
 
@@ -157,6 +159,11 @@ LuaParser::storeInputDeck(
     Throw("No time step calculation policy has been selected in the "
       "preceeding block. Use keyword 'dt' to set a constant or 'cfl' to set an "
       "adaptive time step size calculation policy.");
+
+  // Option to provide NASA9 file directory to read species for MultiSpecies
+  // ---------------------------------------------------------------------------
+  storeIfSpecd< std::string >(
+    lua_ideck, "nasa9_filepath", gideck.get< tag::nasa9_filepath >(), "nasa9.dat");
 
   // partitioning/reordering options
   // ---------------------------------------------------------------------------
@@ -643,18 +650,63 @@ LuaParser::storeInputDeck(
         Assert(nspec == spci_deck.get< tag::id >().size(),
           "Number of ids in species-block not equal to number of species");
 
-        // R
-        checkStoreMatProp(sol_spc[i+1], "R", nspec,
-          spci_deck.get< tag::R >());
-        // cp_coeff
-        checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
-          spci_deck.get< tag::cp_coeff >());
-        // t_range
-        checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
-          spci_deck.get< tag::t_range >());
-        // dH_ref
-        checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
-          spci_deck.get< tag::dH_ref >());
+        // If names are given, ready data from Nasa9 file, otherwise read all
+        // from control file
+        storeVecIfSpecd< std::string >(
+          sol_spc[i+1], "spec_name", spci_deck.get< tag::spec_name >(),
+          std::vector< std::string >(nspec, ""));
+        if (sol_spc[i+1]["spec_name"].valid()) {
+          std::string nasa9_path = gideck.get< tag::nasa9_filepath >();
+          std::unordered_map<std::string,N9Species> nasa9_cache;
+
+          std::vector<tk::real> R(nspec);
+          std::vector<std::vector<std::vector<tk::real>>> cp_coeff(nspec,
+            std::vector<std::vector<tk::real>>( 3, std::vector<tk::real>(8)));
+          std::vector<std::vector<tk::real>> t_range(nspec,
+            std::vector<tk::real>(4));
+          std::vector<tk::real> dH_ref(nspec);
+          for (std::size_t ispec=0; ispec<nspec; ++ispec){
+            std::string spec_name =
+              spci_deck.get< tag::spec_name >()[ispec];
+            nasa9_cache[spec_name] =
+              read_nasa9_species(nasa9_path, spec_name);
+
+            const N9Species& spec = nasa9_cache.at(spec_name);
+            dH_ref[ispec] = spec.Hf298_mass;
+            R[ispec] = spec.R();
+
+            // Loop over intervals and retrieve coefficients
+            for (std::size_t interv = 0; interv < spec.nIntervals(); ++interv) {
+              const N9Interval& I = spec.intervalByIndex(interv);
+              for (std::size_t k = 0; k < 9; ++k)
+                cp_coeff[ispec][interv][k] = I.a[k];
+              t_range[ispec][interv] = I.Tlow;
+              if (interv == spec.nIntervals()-1)
+                t_range[ispec][interv+1] = I.Thigh;
+            }
+          }
+          // Store unknowns (manually for the high-dimension ones)
+          storeVecIfSpecd< tk::real >(
+            sol_spc[i+1], "R", spci_deck.get< tag::R >(), R);
+          storeVecIfSpecd< tk::real >(
+            sol_spc[i+1], "dH_ref", spci_deck.get< tag::dH_ref >(), dH_ref);
+          spci_deck.get< tag::cp_coeff >() = cp_coeff;
+          spci_deck.get< tag::t_range >() = t_range;
+        }
+        else {
+          // R
+          checkStoreMatProp(sol_spc[i+1], "R", nspec,
+            spci_deck.get< tag::R >());
+          // cp_coeff
+          checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
+            spci_deck.get< tag::cp_coeff >());
+          // t_range
+          checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
+            spci_deck.get< tag::t_range >());
+          // dH_ref
+          checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
+            spci_deck.get< tag::dH_ref >());
+        }
       }
 
       // Generate mapping between material index and eos parameter index
@@ -743,9 +795,19 @@ LuaParser::storeInputDeck(
       storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
         mesh_deck[i].get< tag::mass >(), 0.0);
 
-      // moment of inertia. this is currently only configured for planar motion
-      storeIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
-        mesh_deck[i].get< tag::moment_of_inertia >(), 0.0);
+      // moment of inertia tensor
+      storeVecVecIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
+        mesh_deck[i].get< tag::moment_of_inertia >(),
+        {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}});
+      auto& storage = mesh_deck[i].get< tag::moment_of_inertia >();
+      if (storage.size() != 3)
+        Throw("Incorrect number of moment_of_inertia vectors"
+          "specified. Expected 3 vectors");
+      for (std::size_t k=0; k<storage.size(); ++k){
+        if (storage[k].size() != 3)
+          Throw("Incorrect size of 'moment_of_inertia' vector " + 
+            std::to_string(k+1) +" specified. Expected size 3");
+      }
 
       // center of mass
       storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
@@ -775,7 +837,9 @@ LuaParser::storeInputDeck(
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::mass >() = 0.0;
-    mesh_deck[0].get< tag::moment_of_inertia >() = 0.0;
+    mesh_deck[0].get< tag::moment_of_inertia >() = {{0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0}};
     mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
   }
 
@@ -809,24 +873,28 @@ LuaParser::storeInputDeck(
       Throw("Only 3 or 6 rigid body DOFs supported.");
 
     // symmetry plane
-    storeIfSpecd< std::size_t >(
+    storeVecIfSpecd< tk::real >(
       lua_ideck["rigid_body_motion"], "symmetry_plane",
-      rbm_deck.get< tag::symmetry_plane >(), 0);
-    if (rbm_deck.get< tag::symmetry_plane >() > 3)
-      Throw("Rigid body motion symmetry plane must be 1(x), 2(y), or 3(z).");
-    if (rbm_deck.get< tag::symmetry_plane >() == 0 &&
-      rbm_deck.get< tag::rigid_body_dof >() == 3)
-      Throw(
-        "Rigid body motion symmetry plane must be specified for 3 DOF motion.");
-    // reset to 0-based indexing
-    rbm_deck.get< tag::symmetry_plane >() -= 1;
+      rbm_deck.get< tag::symmetry_plane >(), { 0 } );
+    if (rbm_deck.get< tag::rigid_body_dof >() == 3 &&
+       rbm_deck.get< tag::symmetry_plane >().size() != 3 )
+      Throw("A vector of size 3 must be supplied for 3 DOF rigid body motion.");
+    if (rbm_deck.get< tag::rigid_body_dof >() == 6 &&
+       rbm_deck.get< tag::symmetry_plane >().size() == 3 )
+      Throw("Symmetry plane has been specified for 6DOF motion.");
+
+    //! TODO:
+    // If sym_dir is not an eigenvector of the moment_of_inertia tensor, it
+    // is possible there may be rotation of the body about axes other than
+    // the axis of symmetry. The user may be expecting this, but provide an
+    // initial warning in case they are not.
   }
   else {
     // TODO: remove double-specification of defaults
     auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
     rbm_deck.get< tag::rigid_body_movt >() = false;
     rbm_deck.get< tag::rigid_body_dof >() = 0;
-    rbm_deck.get< tag::symmetry_plane >() = 0;
+    rbm_deck.get< tag::symmetry_plane >() = {};
   }
 
   // Field output block

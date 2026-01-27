@@ -70,9 +70,9 @@ MultiMatProblemMixedCell::initialize( ncomp_t ncomp,
     //   s[volfracIdx(nmat,k)] = 0.2;
     // pressure[k] = bgpreic*std::pow(10.0,k);
     if (k == 0)
-      pressure[k] = 1e9;
-    else if (k == 1)
       pressure[k] = 1e6;
+    else if (k == 1)
+      pressure[k] = 1e9;
     else if (k == 2)
       pressure[k] = 1e10;
   }

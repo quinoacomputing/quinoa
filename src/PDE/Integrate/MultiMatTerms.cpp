@@ -511,12 +511,7 @@ pressureRelaxationInt( const bool pref,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
         {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
 
-      // get bulk properties
-      real rhob(0.0);
-      for (std::size_t k=0; k<nmat; ++k)
-        rhob += state[densityIdx(nmat, k)];
-
-      // get pressures and bulk modulii
+      // get bulk pressures and bulk modulii
       real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
       std::vector< real > apmat(nmat, 0.0), kmat(nmat, 0.0);
       std::vector< int > do_relax(nmat, 1);
@@ -661,12 +656,7 @@ pressureRelaxationIntFV(
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
       {{0.25, 0.25, 0.25}}, B, U, P);
 
-    // get bulk properties
-    real rhob(0.0);
-    for (std::size_t k=0; k<nmat; ++k)
-      rhob += state[densityIdx(nmat, k)];
-
-    // get pressures and bulk modulii
+    // get bulk pressures and bulk modulii
     real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
     bool is_relax(false);
     for (std::size_t k=0; k<nmat; ++k)
@@ -890,10 +880,6 @@ fluxTerms(
     inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   std::vector< std::array< tk::real, 3 > > fl( ncomp, {{0, 0, 0}} );
-
-  tk::real rho(0.0);
-  for (std::size_t k=0; k<nmat; ++k)
-    rho += ugp[densityIdx(nmat, k)];
 
   auto u = ugp[ncomp+velocityIdx(nmat,0)];
   auto v = ugp[ncomp+velocityIdx(nmat,1)];
