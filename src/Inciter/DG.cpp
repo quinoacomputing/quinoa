@@ -1538,17 +1538,17 @@ DG::solve( tk::real newdt )
       myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
   }
 
-  auto nmat = 2;
-  if (nmat == 2) {
-    std::ofstream outFile("prelax_results.dat", std::ios::app);
-    outFile << m_stage << ", " << m_u(0, 0) << ", " << m_u(0, 1) << ", " << m_p(0, 0)/std::max(1.0e-08,m_u(0, 0)) << ", " << m_p(0, 1)/std::max(1.0e-08,m_u(0, 1)) << ", " << m_u(0, 7) << ", " << m_u(0, 8) << std::endl;
-    // printf("\n");
-    // printf("%lu, %e, %e, %e, %e, %e, %e\n", m_stage, m_u(0, 0), m_u(0, 1), m_p(0, 0)/m_u(0, 0), m_p(0, 1)/m_u(0, 1), m_u(0, 7), m_u(0, 8));
-    // printf("\n");
-  } else if (nmat == 3) {
-    std::ofstream outFile("prelax_results.dat", std::ios::app);
-    outFile << m_stage << ", " << m_u(0, 0) << ", " << m_u(0, 1) << ", " << m_u(0, 2) << ", " << m_p(0, 0)/m_u(0, 0) << ", " << m_p(0, 1)/m_u(0, 1) << ", " << m_p(0, 2)/m_u(0, 2) << std::endl;
-  }
+  // auto nmat = 3;
+  // if (nmat == 2) {
+  //   std::ofstream outFile("prelax_results.dat", std::ios::app);
+  //   outFile << m_stage << ", " << m_u(0, 0) << ", " << m_u(0, 1) << ", " << m_p(0, 0)/std::max(1.0e-08,m_u(0, 0)) << ", " << m_p(0, 1)/std::max(1.0e-08,m_u(0, 1)) << ", " << m_u(0, 7) << ", " << m_u(0, 8) << std::endl;
+  //   // printf("\n");
+  //   // printf("%lu, %e, %e, %e, %e, %e, %e\n", m_stage, m_u(0, 0), m_u(0, 1), m_p(0, 0)/m_u(0, 0), m_p(0, 1)/m_u(0, 1), m_u(0, 7), m_u(0, 8));
+  //   // printf("\n");
+  // } else if (nmat == 3) {
+  //   std::ofstream outFile("prelax_results.dat", std::ios::app);
+  //   outFile << m_stage << ", " << m_u(0, 0) << ", " << m_u(0, 1) << ", " << m_u(0, 2) << ", " << m_p(0, 0)/m_u(0, 0) << ", " << m_p(0, 1)/m_u(0, 1) << ", " << m_p(0, 2)/m_u(0, 2) << std::endl;
+  // }
 
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
@@ -2269,13 +2269,13 @@ DG::imex_integrate()
 
       // // Solve nonlinear system, first try broyden
       bool solver_failed = false;
-      x = DG::nonlinear_broyden(e, x, solver_failed);
+      // x = DG::nonlinear_broyden(e, x, solver_failed);
 
-      // If solver_failed, do newton
-      if (solver_failed) {
-        solver_failed = false;
+      // // If solver_failed, do newton
+      // if (solver_failed) {
+      //   solver_failed = false;
         x = DG::nonlinear_newton(e, x, solver_failed);
-      }
+      // }
 
       // // If newton failed, crash
       // if (solver_failed)

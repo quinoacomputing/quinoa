@@ -242,29 +242,29 @@ class MultiMat {
         x[icnt] = std::min(std::max(alpha_min, x[icnt]), 1.0);
         icnt++;
       }
-      for (std::size_t k=0; k<nmat; ++k) {
-        // For the current state, compute energy corresponding
-        // to minimum allowed pressure
-        tk::real alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
-        tk::real arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
-        tk::real u = U(e, momentumDofIdx(nmat, 0, rdof, 0));
-        tk::real v = U(e, momentumDofIdx(nmat, 1, rdof, 0));
-        tk::real w = U(e, momentumDofIdx(nmat, 2, rdof, 0));
-        std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
-        if (solidx[k] > 0) {
-          for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-              gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
-        }
-        tk::real pmin = m_mat_blk[k].compute< EOS::min_eff_pressure >(
-          1e-12, arhomat, alk);
-        tk::real arhoEmin = m_mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
-          alk*pmin, alk, gmat);
-        // Enforce energy to be above minimum
-        x[icnt] = std::max(arhoEmin, x[icnt]);
-        icnt++;
-      }
-      // Do not enforce bounds for deformation.
+      // for (std::size_t k=0; k<nmat; ++k) {
+      //   // For the current state, compute energy corresponding
+      //   // to minimum allowed pressure
+      //   tk::real alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
+      //   tk::real arhomat = U(e, densityDofIdx(nmat, k, rdof, 0));
+      //   tk::real u = U(e, momentumDofIdx(nmat, 0, rdof, 0));
+      //   tk::real v = U(e, momentumDofIdx(nmat, 1, rdof, 0));
+      //   tk::real w = U(e, momentumDofIdx(nmat, 2, rdof, 0));
+      //   std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
+      //   if (solidx[k] > 0) {
+      //     for (std::size_t i=0; i<3; ++i)
+      //       for (std::size_t j=0; j<3; ++j)
+      //         gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+      //   }
+      //   tk::real pmin = m_mat_blk[k].compute< EOS::min_eff_pressure >(
+      //     1e-12, arhomat, alk);
+      //   tk::real arhoEmin = m_mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
+      //     alk*pmin, alk, gmat);
+      //   // Enforce energy to be above minimum
+      //   x[icnt] = std::max(arhoEmin, x[icnt]);
+      //   icnt++;
+      // }
+      // // Do not enforce bounds for deformation.
     }
 
     //! Compute the error measure for the non-linear solver of the
