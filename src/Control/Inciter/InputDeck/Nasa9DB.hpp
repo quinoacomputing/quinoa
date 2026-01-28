@@ -21,7 +21,7 @@ struct N9Species {
   double Mw         = 0.0;  // kg/mol
   double Hf298_mol  = 0.0;  // J/mol (formation)
   double Hf298_mass = 0.0;  // J/kg (formation)
-  std::vector<N9Interval> intervals; // should be 3
+  std::vector<N9Interval> intervals; // should be 1-3
 
   double R() const { return NASA9_RU / Mw; }   // J/(kg·K)
 
@@ -157,8 +157,13 @@ inline N9Species read_nasa9_species(const std::string& file,
     sp.Hf298_mol   = Hf298;
     sp.Hf298_mass  = Hf298 / Mw;
 
+    // Retrieve number of temperature intervals
+    const std::size_t nIntervals = std::lround(nums[0]);
+    if (nIntervals < 1 || 3 < nIntervals)
+      Throw("Invalid number of intervals for " + targetName);
+
     // 3 intervals: header + 2 coeff lines each
-    for (std::size_t iv = 0; iv < 3; ++iv) {
+    for (std::size_t iv = 0; iv < nIntervals; ++iv) {
       std::string hdr;
       // skip comments/blank lines between blocks
       while (true) {
