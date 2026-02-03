@@ -101,16 +101,6 @@ namespace AMR {
             }
 
             /**
-             * @brief set a tet as normal
-             *
-             * @param id id to set
-             */
-            void mark_normal(size_t id)
-            {
-                set_normal(id, true);
-            }
-
-            /**
              * @brief get data for a tet from master element
              *
              * @param id id of tet to get

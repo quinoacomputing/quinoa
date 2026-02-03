@@ -738,7 +738,7 @@ FV::resizePostAMR(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
-  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
+  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& addedTets,
   const std::set< std::size_t >& removedNodes,
   const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
@@ -751,6 +751,7 @@ FV::resizePostAMR(
 //  Receive new mesh from Refiner
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
+//! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] removedNodes Newly removed mesh node local ids
 //! \param[in] amrNodeMap Node id map after amr (local ids)
@@ -777,7 +778,7 @@ FV::resizePostAMR(
 
   // Resize mesh data structures
   d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
-    elemblockid );
+    addedNodes, elemblockid );
 
   // Update state
   myGhosts()->m_inpoel = d->Inpoel();

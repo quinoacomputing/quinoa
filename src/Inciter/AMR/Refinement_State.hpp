@@ -38,38 +38,38 @@ namespace AMR {
 
             Refinement_State() {}
 
-            /**
-             * @brief Constructor which allows for all data fields to be explicitly
-             * specified
-             *
-             * @param active_element_number_in The active element id
-             * @param refinement_case_in The refinement case
-             * @param children_in The children ids
-             * @param refinement_level_in The level of refinement
-             * @param child_number_in ??  // TODO: What is this?
-             * @param parent_id_in Id of parent element
-             * @param has_parent_in True if element has a parent, default is true
-            */
-            Refinement_State(
-                    size_t active_element_number_in,
-                    Refinement_Case refinement_case_in,
-                    const child_id_list_t& children_in,
-                    size_t refinement_level_in,
-                    size_t child_number_in,
-                    size_t parent_id_in,
-                    bool has_parent_in=true
-            ) :
-                    active_element_number(active_element_number_in),
-                    refinement_case(refinement_case_in),
-                    children(children_in),
-                    refinement_level(refinement_level_in),
-                    child_number(child_number_in),
-                    parent_id(parent_id_in),
-                    normal(0),
-                    has_parent(has_parent_in)
-            {
-                // Empty
-            }
+            ///**
+            // * @brief Constructor which allows for all data fields to be explicitly
+            // * specified
+            // *
+            // * @param active_element_number_in The active element id
+            // * @param refinement_case_in The refinement case
+            // * @param children_in The children ids
+            // * @param refinement_level_in The level of refinement
+            // * @param child_number_in ??  // TODO: What is this?
+            // * @param parent_id_in Id of parent element
+            // * @param has_parent_in True if element has a parent, default is true
+            //*/
+            //Refinement_State(
+            //        size_t active_element_number_in,
+            //        Refinement_Case refinement_case_in,
+            //        const child_id_list_t& children_in,
+            //        size_t refinement_level_in,
+            //        size_t child_number_in,
+            //        size_t parent_id_in,
+            //        bool has_parent_in=true
+            //) :
+            //        active_element_number(active_element_number_in),
+            //        refinement_case(refinement_case_in),
+            //        children(children_in),
+            //        refinement_level(refinement_level_in),
+            //        child_number(child_number_in),
+            //        parent_id(parent_id_in),
+            //        normal(0),
+            //        has_parent(has_parent_in)
+            //{
+            //    // Empty
+            //}
 
             /**
              * @brief Constructor which assumes sensible Defaults for new nodes
@@ -95,6 +95,8 @@ namespace AMR {
                     normal(0),
                     has_parent(has_parent_in)
             {
+                if (refinement_case_in == Refinement_Case::initial_grid)
+                  normal = true;
                 // Set default size of children to be sensible
                 children.reserve(MAX_CHILDREN);
             }

@@ -1344,7 +1344,7 @@ ALECG::resizePostAMR(
 
   // Resize mesh data structures after mesh refinement
   d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
-    elemblockid );
+    addedNodes, elemblockid );
 
   // Remove newly removed nodes from solution vectors
   m_u.rm(removedNodes);

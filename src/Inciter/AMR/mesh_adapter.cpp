@@ -275,32 +275,29 @@ namespace AMR {
     )
     {
         int compatibility = 0;
-        num_locked_edges += num_intermediate_edges;
+        //// Commented-out by Aditya on 02/02/2026
+        //num_locked_edges += num_intermediate_edges;
 
-        /*
+        // Uncommented by Aditya on 02/02/2026
         // Split this into three categories
-        // 1. Normal elements without locked edges. => 1
-        //if (normal) {
+        if (normal) {
 
-            // 3. Intermediate elements with at least one edge marked for refinement => 3
-            if (num_intermediate_edges > 0)
-            {
-                compatibility = 3;
-            }
-            else if (num_locked_edges == 0) {
+            // 1. Normal elements without locked edges. => 1
+            if (num_locked_edges == 0) {
                 compatibility = 1;
             }
-        // 2. Normal elements with locked edges. => 2
+            // 2. Normal elements with locked edges. => 2
             else {
                 compatibility = 2;
             }
-        //}
-        */
+        }
 
-        //else {
-            //if (num_intermediate_edges > 0) { compatibility = 3; }
-        //}
-
+        else {
+            // 3. Intermediate elements with at least one edge marked for refinement => 3
+            Assert(num_intermediate_edges > 0, "Intermediate (non-normal) "
+              "element has no intermediate edges");
+            compatibility = 3;
+        }
 
 
         // Only 1:2 and 1:4 are intermediates and eligible for class3 // NOT TRUE!
@@ -330,6 +327,7 @@ namespace AMR {
         */
 
 
+        /* // Commented-out by Aditya on 02/02/2026
         // Old implementation
         // Only 1:2 and 1:4 are intermediates and eligible for class3 // NOT TRUE!
         if (
@@ -357,6 +355,7 @@ namespace AMR {
                 compatibility = 2;
             }
         }
+        */
 
         assert(compatibility > 0);
         assert(compatibility < 4);
@@ -1069,7 +1068,7 @@ namespace AMR {
                 edge_t key = edge_list[k];
                 trace_out << "Compat 3 " << key << std::endl;
                 if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
-		{
+                {
                     trace_out << "Compat 3 marking edge " << key << std::endl;
                     tet_store.edge_store.mark_for_refinement(key);
                 }
@@ -1113,7 +1112,7 @@ namespace AMR {
                 lock_tet_edges(child);
                 trace_out << "Compat 3 locking edges of " << child << std::endl;
                 // Here we interpret normal to mean "don't treat it like it has intermediates"
-                tet_store.mark_normal(child);
+                tet_store.set_normal(child, true);
                 trace_out << "Compat 3 " << child << std::endl;
             }
         }
@@ -1141,11 +1140,16 @@ namespace AMR {
         for (const auto& kv : tet_store.tets)
         {
             size_t tet_id = kv.first;
-            tet_store.set_normal(tet_id, 0);
+            AMR::Refinement_Case refinement_case =
+              tet_store.get_refinement_case(tet_id);
+            // only remove 'normal' status if element is not on initial grid
+            if (refinement_case != AMR::Refinement_Case::initial_grid &&
+                refinement_case != AMR::Refinement_Case::one_to_eight)
+              tet_store.set_normal(tet_id, 0);
         }
     }
 
-    void mesh_adapter_t::remove_edge_locks(int intermediate)
+    void mesh_adapter_t::remove_edge_locks(int inter_edge)
     {
         for (const auto& kv : tet_store.tets)
         {
@@ -1157,7 +1161,7 @@ namespace AMR {
             if (tet_store.is_active(tet_id)) {
                 // change it from intermediate to locked
                 update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::locked, AMR::Edge_Lock_Case::unlocked);
-                if (intermediate) {
+                if (inter_edge) {
                     update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::intermediate, AMR::Edge_Lock_Case::unlocked);
                 }
             }

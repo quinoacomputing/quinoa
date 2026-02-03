@@ -1093,7 +1093,6 @@ Refiner::perform()
   }
 
   // Remove temporary edge-locks resulting from the parallel compatibility
-  m_refiner.remove_edge_locks(1);
   m_refiner.remove_edge_temp_locks();
 
   //auto& tet_store = m_refiner.tet_store;
