@@ -363,19 +363,35 @@ class Transport {
       // system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
-      // compute internal surface flux integrals
+      // p-adaptive DG
       std::vector< std::size_t > solidx(1, 0);
       if (!pref) {
+        // compute internal surface flux integrals
         tk::surfInt_constP( m_ncomp, m_mat_blk, t, ndof, rdof,
                      inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
                      Problem::prescribedVelocity, U, P, dt, R,
                      riemannDeriv, intsharp );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt_constP( m_ncomp, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
+            Problem::prescribedVelocity, std::get<1>(b), U, P, R,
+            riemannDeriv, intsharp );
       }
       else {
+        // compute internal surface flux integrals
         tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
                      inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
                      Problem::prescribedVelocity, U, P, ndofel, dt, R,
                      riemannDeriv, intsharp );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt( pref, m_ncomp, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
+            Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
+            riemannDeriv, intsharp );
       }
 
       if(ndof > 1)
@@ -383,13 +399,6 @@ class Transport {
         tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
                     Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
-
-      // compute boundary surface flux integrals
-      for (const auto& b : m_bc)
-        tk::bndSurfInt( pref, m_ncomp, m_mat_blk, ndof, rdof,
-          std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
-          Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
-          riemannDeriv, intsharp );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element

@@ -679,16 +679,30 @@ class MultiSpecies {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
-      // compute internal surface flux integrals
+      // p-adaptive DG
       if (!pref) {
+        // compute internal surface flux integrals
         tk::surfInt_constP( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
           coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
           dt, R, riemannDeriv );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt_constP( 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
+                          geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
+                          std::get<1>(b), U, P, R, riemannDeriv );
       }
       else {
+        // compute internal surface flux integrals
         tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
                      dt, R, riemannDeriv );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
+                          geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
+                          std::get<1>(b), U, P, ndofel, R, riemannDeriv );
       }
 
       // compute optional source term
@@ -699,12 +713,6 @@ class MultiSpecies {
         // compute volume integrals
         tk::volInt( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem,
           flux, velfn, U, P, ndofel, R );
-
-      // compute boundary surface flux integrals
-      for (const auto& b : m_bc)
-        tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
-                        geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
-                        std::get<1>(b), U, P, ndofel, R, riemannDeriv );
 
       // compute external (energy) sources
       //m_physics.physSrc(nspec, t, geoElem, {}, R, {});
