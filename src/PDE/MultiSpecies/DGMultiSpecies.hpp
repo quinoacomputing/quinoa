@@ -799,8 +799,9 @@ class MultiSpecies {
 
     void output_internal_energy( std::size_t /*nelem*/,
                                  const tk::real /*time*/,
+                                 const tk::Fields& /*geoElem*/,
                                  const tk::Fields& /*U*/,
-                                 tk::real /*internal_energy*/ ) const
+                                 tk::real& /*internal_energy*/ ) const
     {}
 
     //! Compute stiff terms for a single element. No-op until chem sources added

@@ -1174,8 +1174,9 @@ class MultiMat {
 
     void output_internal_energy( std::size_t nelem,
                                  const tk::real time,
+                                 const tk::Fields& geoElem,
                                  const tk::Fields& U,
-                                 tk::real internal_energy ) const
+                                 tk::real& internal_energy ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -1187,7 +1188,7 @@ class MultiMat {
       // retrieve its internal energy and add it to the sum
       internal_energy = 0.0;
       for (std::size_t e=0; e<nelem; ++e) {
-        if (U(e, volfracDofIdx(nmat, 2, rdof, 0)) >= 0.8) {
+        if (U(e, volfracDofIdx(nmat, 3, rdof, 0)) >= 0.9) {
           // Compute bulk properties
           tk::real rho = 0.0;
           for (std::size_t k=0; k<nmat; ++k) {
@@ -1216,9 +1217,8 @@ class MultiMat {
               auto rhoEe = mu * eps2;
               intE -= alpha * rhoEe;
             }
-            // Finally, divide intE by alpha*rho and then add it to internal_energy
-            intE /= arho;
-            internal_energy += intE;
+            // Finally, multiply by volume and then add it to internal_energy
+            internal_energy += intE * geoElem(e, 0);
           }
         }
       }

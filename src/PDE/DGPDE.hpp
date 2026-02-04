@@ -344,9 +344,10 @@ class DGPDE {
     //! Public interface for output internal energy
     void output_internal_energy( std::size_t nelem,
                                  const tk::real time,
+                                 const tk::Fields& geoElem,
                                  const tk::Fields& U,
-                                 tk::real internal_energy ) const
-  { return self->output_internal_energy( nelem, time, U, internal_energy ); }
+                                 tk::real& internal_energy ) const
+  { return self->output_internal_energy( nelem, time, geoElem, U, internal_energy ); }
 
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
@@ -545,7 +546,8 @@ class DGPDE {
       virtual void output_internal_energy( std::size_t,
                                            const tk::real,
                                            const tk::Fields&,
-                                           tk::real ) const = 0;
+                                           const tk::Fields&,
+                                           tk::real& ) const = 0;
       virtual void stiff_rhs( std::size_t,
                               const tk::Fields&,
                               const tk::Fields&,
@@ -745,9 +747,10 @@ class DGPDE {
       { return data.balance_plastic_energy( e, x_star, x, U); }
       void output_internal_energy( std::size_t nelem,
                                    const tk::real time,
+                                   const tk::Fields& geoElem,
                                    const tk::Fields& U,
-                                   tk::real internal_energy ) const override
-      { return data.output_internal_energy( nelem, time, U, internal_energy ); }
+                                   tk::real& internal_energy ) const override
+      { return data.output_internal_energy( nelem, time, geoElem, U, internal_energy ); }
       void stiff_rhs( std::size_t e,
                       const tk::Fields& geoElem,
                       const tk::Fields& U,

@@ -1602,6 +1602,9 @@ DG::solve( tk::real newdt )
 
   } else {
 
+    // Output internal energy inside the cylinder into a file
+    DG::output_internal_energy();
+
     // Increase number of iterations and physical time
     d->next();
 
@@ -1614,19 +1617,15 @@ DG::solve( tk::real newdt )
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
 
   }
-
-  // Output internal energy inside the cylinder into a file
-  DG::output_internal_energy();
 }
 
 void
 DG::output_internal_energy()
 {
-  if (m_stage /= m_nstage-1) return;
   auto d = Disc();
   std::size_t nelem = myGhosts()->m_fd.Esuel().size()/4;
   tk::real intE = 0.0;
-  g_dgpde[d->MeshId()].output_internal_energy(nelem, d->T(), m_u, intE);
+  g_dgpde[d->MeshId()].output_internal_energy(nelem, d->T(), myGhosts()->m_geoElem, m_u, intE);
 
   CkCallback sumDone;
   sumDone = CkCallback(CkReductionTarget(DG,print_internal_energy), thisProxy);
