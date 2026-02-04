@@ -21,7 +21,7 @@ struct N9Species {
   double Mw         = 0.0;  // kg/mol
   double Hf298_mol  = 0.0;  // J/mol (formation)
   double Hf298_mass = 0.0;  // J/kg (formation)
-  std::vector<N9Interval> intervals; // should be 1-3
+  std::vector<N9Interval> intervals; // 3
 
   double R() const { return NASA9_RU / Mw; }   // J/(kg·K)
 
@@ -35,7 +35,7 @@ struct N9Species {
 
   const N9Interval& interval(double T) const {
     if (intervals.empty())
-      throw std::runtime_error("No intervals for " + name);
+      Throw("No intervals for " + name);
     if (T <= intervals.front().Thigh) return intervals.front();
     if (T >= intervals.back().Tlow)   return intervals.back();
     for (const auto& I : intervals)
@@ -121,7 +121,7 @@ inline N9Species read_nasa9_species(const std::string& file,
 {
   std::ifstream in(file);
   if (!in)
-    throw std::runtime_error("Cannot open nasa9 file: " + file);
+    Throw("Cannot open nasa9 file: " + file);
 
   std::string line;
   while (std::getline(in, line)) {
@@ -140,12 +140,12 @@ inline N9Species read_nasa9_species(const std::string& file,
     // comp/meta line
     std::string comp;
     if (!std::getline(in, comp))
-      throw std::runtime_error("EOF after header for " + targetName);
+      Throw("EOF after header for " + targetName);
 
     std::vector<double> nums;
     n9_collect_ws(comp, nums);
     if (nums.size() < 2)
-      throw std::runtime_error("Cannot parse Mw/Hf line for " + targetName);
+      Throw("Cannot parse Mw/Hf line for " + targetName);
 
     double Hf298   = nums.back();            // J/mol
     double Mw_gmol = nums[nums.size()-2];    // g/mol
@@ -159,8 +159,8 @@ inline N9Species read_nasa9_species(const std::string& file,
 
     // Retrieve number of temperature intervals
     const std::size_t nIntervals = std::lround(nums[0]);
-    if (nIntervals < 1 || 3 < nIntervals)
-      Throw("Invalid number of intervals for " + targetName);
+    if (nIntervals != 3)
+      Throw("Only species with 3 temperature intervals are supported. " + targetName + " has " + std::to_string(nIntervals));
 
     // 3 intervals: header + 2 coeff lines each
     for (std::size_t iv = 0; iv < nIntervals; ++iv) {
@@ -168,7 +168,7 @@ inline N9Species read_nasa9_species(const std::string& file,
       // skip comments/blank lines between blocks
       while (true) {
         if (!std::getline(in, hdr))
-          throw std::runtime_error("EOF in header for " + targetName);
+          Throw("EOF in header for " + targetName);
         std::string tmp = hdr;
         auto q1 = tmp.find_first_not_of(" \t\r\n");
         if (q1 == std::string::npos || tmp[q1]=='!') continue;
@@ -180,21 +180,21 @@ inline N9Species read_nasa9_species(const std::string& file,
       std::vector<double> hnums;
       n9_collect_ws(thdr, hnums);
       if (hnums.size() < 2)
-        throw std::runtime_error("Bad interval header for " + targetName);
+        Throw("Bad interval header for " + targetName);
       double Tmin = hnums[0];
       double Tmax = hnums[1];
 
       // coeff lines
       std::string c1, c2;
       if (!std::getline(in, c1) || !std::getline(in, c2))
-        throw std::runtime_error("EOF reading coeffs for " + targetName);
+        Throw("EOF reading coeffs for " + targetName);
 
       std::vector<double> coeffs;
       coeffs.reserve(10);
       n9_collect_fw(c1, coeffs);
       n9_collect_fw(c2, coeffs);
       if (coeffs.size() < 9)
-        throw std::runtime_error("Fewer than 9 coeffs for " + targetName);
+        Throw("Fewer than 9 coeffs for " + targetName);
 
       N9Interval I;
       I.Tlow  = Tmin;
