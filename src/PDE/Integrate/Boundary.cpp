@@ -96,6 +96,8 @@ bndSurfInt( const bool pref,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  std::vector< tk::real > ugp(ncomp+nprim);
+
   //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
   //        "derivative vector for single material compflow" );
 
@@ -174,16 +176,14 @@ bndSurfInt( const bool pref,
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
 
           //Compute the basis functions for the left element
-          auto B_l = eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
+          std::vector< tk::real > B_l(dof_el);
+          eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
 
           auto wt = wgp[igp] * geoFace(f,0);
 
           // Compute the state variables at the left element
-          auto ugp = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
-            rdof, nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-
-          Assert( ugp.size() == ncomp+nprim, "Incorrect size for "
-                  "appended boundary state vector" );
+          evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof, nmat, el,
+            dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, ugp);
 
           auto var = state( ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t, fn );
 
@@ -365,12 +365,11 @@ bndSurfIntFV(
   auto nprim = P.nprop()/rdof;
 
   // Basis functions for all face-centroids of element e
-  std::array< std::vector< tk::real >, 4 > Bf_array = {
-    tk::eval_basis(rdof, tk::fc_coord[0][0], tk::fc_coord[0][1], tk::fc_coord[0][2]),
-    tk::eval_basis(rdof, tk::fc_coord[1][0], tk::fc_coord[1][1], tk::fc_coord[1][2]),
-    tk::eval_basis(rdof, tk::fc_coord[2][0], tk::fc_coord[2][1], tk::fc_coord[2][2]),
-    tk::eval_basis(rdof, tk::fc_coord[3][0], tk::fc_coord[3][1], tk::fc_coord[3][2])
-  };
+  std::array< std::vector< tk::real >, 4 > Bf_array;
+  for (std::size_t i=0; i<4; ++i) {
+    Bf_array[i].resize(rdof);
+    eval_basis(rdof, tk::fc_coord[i][0], tk::fc_coord[i][1], tk::fc_coord[i][2], Bf_array[i]);
+  }
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find(static_cast<int>(s));// faces for side set
@@ -485,6 +484,8 @@ bndSurfIntViscousFV(
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  std::vector< tk::real > B_l(rdof);
+
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find(static_cast<int>(s));// faces for side set
     if (bc != end(bface))
@@ -520,7 +521,7 @@ bndSurfIntViscousFV(
           Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
 
         //Compute the basis functions for the left element
-        auto B_l = eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
+        eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
 
         // Compute the state variables at the left element
         auto ugp = evalFVSol(mat_blk, intsharp, ncomp, nprim,

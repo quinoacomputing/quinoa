@@ -75,14 +75,16 @@ tk::srcInt( const std::vector< inciter::EOS >& mat_blk,
       {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
       {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
 
+    std::vector< tk::real > B(ndofel[e]);
+
     for (std::size_t igp=0; igp<ng; ++igp)
     {
       // Compute the coordinates of quadrature point at physical domain
       auto gp = eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B =
-        eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+      eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp], coordgp[2][igp],
+        B );
 
       // Compute the source term variable
       std::vector< real > s(ncomp, 0.0);

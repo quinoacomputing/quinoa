@@ -297,6 +297,7 @@ class MultiSpecies {
               "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       auto mass_m = tk::massMatrixDubiner();
+      std::vector< tk::real > state(m_ncomp, 0.0);
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -320,16 +321,18 @@ class MultiSpecies {
 
         auto vole = geoElem(e, 0);
 
+        std::vector< tk::real > B(dof_el);
+
         // Loop over quadrature points in element e
         for (std::size_t igp=0; igp<ng; ++igp)
         {
           // Compute the basis function
-          auto B = tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
-            coordgp[2][igp] );
+          tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
+            coordgp[2][igp], B );
 
           auto w = wgp[igp] * vole;
 
-          auto state = tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B );
+          tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B, state.data() );
 
           // Mixture state at quadrature point
           Mixture mixgp(nspec, state, m_mat_blk);
@@ -677,9 +680,16 @@ class MultiSpecies {
         return tk::VelFn::result_type(); };
 
       // compute internal surface flux integrals
-      tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, riemannDeriv );
+      if (!pref) {
+        tk::surfInt_constP( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
+          dt, R, riemannDeriv );
+      }
+      else {
+        tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
+                     dt, R, riemannDeriv );
+      }
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
@@ -884,6 +894,7 @@ class MultiSpecies {
       const auto& z = coord[2];
 
       std::vector< std::vector< tk::real > > Up(h.size());
+      std::vector< tk::real > B(rdof), uhp(m_ncomp, 0.0), php(m_nprim, 0.0);
 
       std::size_t j = 0;
       for (const auto& p : h) {
@@ -901,10 +912,10 @@ class MultiSpecies {
         // evaluate solution at history-point
         std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
           chp[2]-cp[0][2]}};
-        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
-          tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
-        auto php = eval_state(m_nprim, rdof, rdof, e, P, B);
+        tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc), B);
+        eval_state(m_ncomp, rdof, rdof, e, U, B, uhp.data());
+        eval_state(m_nprim, rdof, rdof, e, P, B, php.data());
 
         // Mixture calculations, initialized
         Mixture mix(nspec, uhp, m_mat_blk);

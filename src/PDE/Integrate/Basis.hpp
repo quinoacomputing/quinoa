@@ -61,20 +61,22 @@ eval_dBdx_p2( const std::size_t igp,
               std::array< std::vector<tk::real>, 3 >& dBdx );
 
 //! Compute the Dubiner basis functions
-std::vector< tk::real >
+void
 eval_basis( const std::size_t ndof,
             const tk::real xi,
             const tk::real eta,
-            const tk::real zeta );
+            const tk::real zeta,
+            std::vector< tk::real >& B );
 
 //! Compute the state variables for the tetrahedron element
-std::vector< tk::real >
+void
 eval_state ( ncomp_t ncomp,
              const std::size_t ndof,
              const std::size_t ndof_el,
              const std::size_t e,
              const Fields& U,
-             const std::vector< tk::real >& B );
+             const std::vector< tk::real >& B,
+             tk::real* statePointer );
 
 //! Transform the solution with Dubiner basis to the solution with Taylor basis
 std::vector< std::vector< tk::real > >

@@ -460,6 +460,7 @@ class MultiMat {
               "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       auto mass_m = tk::massMatrixDubiner();
+      std::vector< tk::real > state(m_ncomp, 0.0);
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -480,6 +481,7 @@ class MultiMat {
 
         // Local degree of freedom
         auto dof_el = ndofel[e];
+        std::vector< tk::real > B(dof_el);
 
         auto vole = geoElem(e, 0);
 
@@ -487,12 +489,11 @@ class MultiMat {
         for (std::size_t igp=0; igp<ng; ++igp)
         {
           // Compute the basis function
-          auto B =
-            tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+          tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
 
           auto w = wgp[igp] * vole;
 
-          auto state = tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B );
+          tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B, state.data() );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -958,9 +959,16 @@ class MultiMat {
         return tk::VelFn::result_type(); };
 
       // compute internal surface flux integrals
-      tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, riemannDeriv, intsharp );
+      if (!pref) {
+        tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
+          dt, R, riemannDeriv, intsharp );
+      }
+      else {
+        tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
+                     dt, R, riemannDeriv, intsharp );
+      }
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
@@ -1202,7 +1210,7 @@ class MultiMat {
 
       // arrays for quadrature points
       std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp;
+      std::vector< tk::real > wgp, B(ndofel[e]), state(m_ncomp);
 
       coordgp[0].resize( ng );
       coordgp[1].resize( ng );
@@ -1215,10 +1223,10 @@ class MultiMat {
       for (std::size_t igp=0; igp<ng; ++igp)
       {
         // Compute the basis function
-        auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
-                             coordgp[2][igp] );
+        tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+                        coordgp[2][igp], B );
 
-        auto state = tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B );
+        tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B, state.data() );
 
         // compute source
         // Loop through materials
@@ -1418,6 +1426,7 @@ class MultiMat {
       const auto& z = coord[2];
 
       std::vector< std::vector< tk::real > > Up(h.size());
+      std::vector< tk::real > B(rdof), uhp(m_ncomp), php(m_nprim);
 
       std::size_t j = 0;
       for (const auto& p : h) {
@@ -1435,10 +1444,10 @@ class MultiMat {
         // evaluate solution at history-point
         std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
           chp[2]-cp[0][2]}};
-        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
-          tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
-        auto php = eval_state(m_nprim, rdof, rdof, e, P, B);
+        tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc), B);
+        eval_state(m_ncomp, rdof, rdof, e, U, B, uhp.data());
+        eval_state(m_nprim, rdof, rdof, e, P, B, php.data());
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);

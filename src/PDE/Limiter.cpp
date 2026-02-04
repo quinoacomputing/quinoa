@@ -1454,6 +1454,7 @@ SuperbeeLimiting( const tk::Fields& U,
 
   // initialize limiter function
   std::vector< tk::real > phi(ncomp, 1.0);
+  std::vector< tk::real > B_l(rdof), state(ncomp, 0.0);
   for (std::size_t lf=0; lf<4; ++lf)
   {
     // Extract the face coordinates
@@ -1473,15 +1474,12 @@ SuperbeeLimiting( const tk::Fields& U,
       auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
       //Compute the basis functions
-      auto B_l = tk::eval_basis( rdof,
+      tk::eval_basis( rdof,
             tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT, B_l );
 
-      auto state =
-        tk::eval_state(ncomp, rdof, dof_el, e, U, B_l);
-
-      Assert( state.size() == ncomp, "Size mismatch" );
+      tk::eval_state(ncomp, rdof, dof_el, e, U, B_l, state.data());
 
       // compute the limiter function
       for (inciter::ncomp_t c=0; c<ncomp; ++c)
@@ -1544,15 +1542,16 @@ VertexBasedLimiting(
   //    From these, use the minimum value of the limiter function.
 
   std::vector< tk::real > uMin(VarList.size(), 0.0),
-                          uMax(VarList.size(), 0.0);
+                          uMax(VarList.size(), 0.0),
+                          state(ncomp, 0.0);
 
   // Basis functions for all vertices of element e
-  std::array< std::vector< tk::real >, 4 > Bp_array = {
-    tk::eval_basis(rdof, 0.0, 0.0, 0.0),
-    tk::eval_basis(rdof, 1.0, 0.0, 0.0),
-    tk::eval_basis(rdof, 0.0, 1.0, 0.0),
-    tk::eval_basis(rdof, 0.0, 0.0, 1.0)
-  };
+  std::array< std::vector< tk::real >, 4 > Bp_array;
+  for (std::size_t i=0; i<4; ++i) Bp_array[i].resize(rdof);
+  tk::eval_basis(rdof, 0.0, 0.0, 0.0, Bp_array[0]);
+  tk::eval_basis(rdof, 1.0, 0.0, 0.0, Bp_array[1]);
+  tk::eval_basis(rdof, 0.0, 1.0, 0.0, Bp_array[2]);
+  tk::eval_basis(rdof, 0.0, 0.0, 1.0, Bp_array[3]);
 
   // loop over all nodes of the element e
   for (std::size_t lp=0; lp<4; ++lp)
@@ -1581,7 +1580,7 @@ VertexBasedLimiting(
 
     // ----- Step-2: compute the limiter function at this node
     const auto& B_p = Bp_array[lp];
-    auto state = tk::eval_state(ncomp, rdof, rdof, e, U, B_p);
+    tk::eval_state(ncomp, rdof, rdof, e, U, B_p, state.data());
 
     // compute the limiter function
     for (std::size_t i=0; i<VarList.size(); ++i)
@@ -1939,6 +1938,7 @@ void BoundPreservingLimiting( std::size_t nmat,
 //!   obtain a non-oscillatory and bounded solution.
 // *****************************************************************************
 {
+  auto ncomp = U.nprop()/ndof;
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -1959,6 +1959,8 @@ void BoundPreservingLimiting( std::size_t nmat,
   // Compute the upper and lower bound for volume fraction
   const tk::real min = 1e-14;
   const tk::real max = 1.0 - min * static_cast<tk::real>(nmat - 1);
+
+  std::vector< tk::real > B(ndof), state(ncomp, 0.0);
 
   // loop over all faces of the element e
   for (std::size_t lf=0; lf<4; ++lf)
@@ -1993,12 +1995,12 @@ void BoundPreservingLimiting( std::size_t nmat,
       auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
       //Compute the basis functions
-      auto B = tk::eval_basis( ndof,
+      tk::eval_basis( ndof,
             tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT, B );
 
-      auto state = eval_state( U.nprop()/ndof, ndof, ndof, e, U, B );
+      eval_state( ncomp, ndof, ndof, e, U, B, state.data() );
 
       for(std::size_t imat = 0; imat < nmat; imat++)
       {
@@ -2030,10 +2032,10 @@ void BoundPreservingLimiting( std::size_t nmat,
     for (std::size_t igp=0; igp<ng; ++igp)
     {
       // Compute the basis function
-      auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
-        coordgp[2][igp] );
+      tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
+        coordgp[2][igp], B );
 
-      auto state = tk::eval_state(U.nprop()/ndof, ndof, ndof, e, U, B);
+      tk::eval_state(ncomp, ndof, ndof, e, U, B, state.data());
 
       for(std::size_t imat = 0; imat < nmat; imat++)
       {
@@ -2138,6 +2140,7 @@ void PositivityLimiting( std::size_t nmat,
 
   std::vector< tk::real > phic_bound(ncomp, 1.0);
   std::vector< tk::real > phip_bound(nprim, 1.0);
+  std::vector< tk::real > B(ndof_el), state(ncomp, 0.0), sprim(nprim, 0.0);
 
   for (std::size_t lf=0; lf<4; ++lf)
   {
@@ -2168,13 +2171,13 @@ void PositivityLimiting( std::size_t nmat,
     for (std::size_t igp=0; igp<ng; ++igp)
     {
       auto gp = tk::eval_gp( igp, coordfa, coordgp );
-      auto B = tk::eval_basis( ndof_el,
+      tk::eval_basis( ndof_el,
             tk::Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT,
             tk::Jacobian( coordel[0], coordel[1], gp, coordel[3] ) / detT,
-            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT );
+            tk::Jacobian( coordel[0], coordel[1], coordel[2], gp ) / detT, B );
 
-      auto state = eval_state(ncomp, rdof, ndof_el, e, U, B);
-      auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B);
+      eval_state(ncomp, rdof, ndof_el, e, U, B, state.data());
+      eval_state(nprim, rdof, ndof_el, e, P, B, sprim.data());
 
       if (nmat > 1) {
         // multi-material PDE bounds
@@ -2204,11 +2207,11 @@ void PositivityLimiting( std::size_t nmat,
 
     for (std::size_t igp=0; igp<ng; ++igp)
     {
-      auto B = tk::eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp],
-        coordgp[2][igp] );
+      tk::eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp],
+        coordgp[2][igp], B );
 
-      auto state = eval_state(ncomp, rdof, ndof_el, e, U, B);
-      auto sprim = eval_state(nprim, rdof, ndof_el, e, P, B);
+      eval_state(ncomp, rdof, ndof_el, e, U, B, state.data());
+      eval_state(nprim, rdof, ndof_el, e, P, B, sprim.data());
 
       if (nmat > 1) {
         // multi-material PDE bounds
@@ -2352,12 +2355,12 @@ void PositivityPreservingMultiMat_FV(
   const auto nprim = P.nprop() / rdof;
 
   // Basis functions for all face-centroids of element e
-  std::array< std::vector< tk::real >, 4 > Bf_array = {
-    tk::eval_basis(rdof, tk::fc_coord[0][0], tk::fc_coord[0][1], tk::fc_coord[0][2]),
-    tk::eval_basis(rdof, tk::fc_coord[1][0], tk::fc_coord[1][1], tk::fc_coord[1][2]),
-    tk::eval_basis(rdof, tk::fc_coord[2][0], tk::fc_coord[2][1], tk::fc_coord[2][2]),
-    tk::eval_basis(rdof, tk::fc_coord[3][0], tk::fc_coord[3][1], tk::fc_coord[3][2])
-  };
+  std::array< std::vector< tk::real >, 4 > Bf_array;
+  for (std::size_t i=0; i<4; ++i) {
+    Bf_array[i].resize(rdof);
+    tk::eval_basis(rdof, tk::fc_coord[i][0], tk::fc_coord[i][1],
+      tk::fc_coord[i][2], Bf_array[i]);
+  }
 
   std::vector< tk::real > phic(ncomp, 1.0), phip(nprim, 1.0);
 
@@ -2549,6 +2552,10 @@ void MarkShockCells ( const bool pref,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  std::array< std::vector< tk::real >, 2 > state;
+  state[0].resize(ncomp+nprim);
+  state[1].resize(ncomp+nprim);
+
   // Loop over faces
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f) {
     Assert( esuf[2*f] > -1 && esuf[2*f+1] > -1, "Interior element detected "
@@ -2624,20 +2631,15 @@ void MarkShockCells ( const bool pref,
         tk::Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
         tk::Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
         tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
-      auto B_l = tk::eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
-      auto B_r = tk::eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
+      std::vector< tk::real > B_l(dof_el), B_r(dof_er);
+      tk::eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
+      tk::eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2], B_r );
 
       // Evaluate the high order solution at the qudrature point
-      std::array< std::vector< tk::real >, 2 > state;
-      state[0] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
-        nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
-        nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
-
-      Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
-              "appended boundary state vector" );
-      Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
-              "appended boundary state vector" );
+      tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
+        nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, state[0]);
+      tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
+        nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P, state[1]);
 
       // Force deformation unknown to first order
       for (std::size_t k=0; k<nmat; ++k)
@@ -2733,6 +2735,8 @@ correctLimConservMultiMat(
     tag::intsharp >();
 
   auto L = tk::massMatrixDubiner();
+  std::vector< tk::real > B(rdof);
+  std::vector< tk::real > state(ncomp+nprim);
 
   for (std::size_t e=0; e<nelem; ++e) {
     auto vole = geoElem(e,0);
@@ -2764,15 +2768,16 @@ correctLimConservMultiMat(
     // Loop over quadrature points in element e
     for (std::size_t igp=0; igp<ng; ++igp) {
       // Compute the basis function
-      auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
-                               coordgp[2][igp] );
+      tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+                      coordgp[2][igp], B );
 
       auto w = wgp[igp] * vole;
 
       // Evaluate the solution at quadrature point
-      auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, rdof, inpoel, coord, geoElem,
-        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim);
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim,
+        state);
 
       // Solution vector that stores the material energy and bulk momentum
       std::vector< tk::real > s(nprim, 0.0);
@@ -2860,6 +2865,8 @@ correctLimConservMultiSpecies(
   std::size_t nprim = prim.nprop()/rdof;
 
   auto L = tk::massMatrixDubiner();
+  std::vector< tk::real > B(rdof);
+  std::vector< tk::real > state(ncomp+nprim);
 
   for (std::size_t e=0; e<nelem; ++e) {
     auto vole = geoElem(e,0);
@@ -2889,15 +2896,16 @@ correctLimConservMultiSpecies(
     // Loop over quadrature points in element e
     for (std::size_t igp=0; igp<ng; ++igp) {
       // Compute the basis function
-      auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
-                               coordgp[2][igp] );
+      tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+                      coordgp[2][igp], B );
 
       auto w = wgp[igp] * vole;
 
       // Evaluate the solution at quadrature point
-      auto state = evalPolynomialSol(mat_blk, 0, ncomp, nprim,
+      evalPolynomialSol(mat_blk, 0, ncomp, nprim,
         rdof, 1, e, rdof, inpoel, coord, geoElem,
-        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim);
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, unk, prim,
+        state);
 
       // Solution vector that stores the material energy and bulk momentum
       std::vector< tk::real > s(nprim, 0.0);

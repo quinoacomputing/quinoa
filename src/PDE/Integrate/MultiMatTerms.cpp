@@ -102,6 +102,8 @@ nonConservativeInt( const bool pref,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  std::vector< tk::real > state(ncomp+nprim);
+
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -152,6 +154,8 @@ nonConservativeInt( const bool pref,
     if (ndofel[e] > 1)
       dBdx = eval_dBdx_p1( ndofel[e], jacInv );
 
+    std::vector< tk::real > B(dof_el);
+
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
     {
@@ -159,14 +163,13 @@ nonConservativeInt( const bool pref,
         eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
 
       // Compute the basis function
-      auto B =
-        eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+      eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
-        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
 
       // get bulk properties
       tk::real rhob(0.0);
@@ -460,6 +463,8 @@ pressureRelaxationInt( const bool pref,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  std::vector< tk::real > state(ncomp+nprim);
+
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -498,18 +503,19 @@ pressureRelaxationInt( const bool pref,
     if(dof_el == 1 && pref)
       dof_el = 4;
 
+    std::vector< tk::real > B(dof_el);
+
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
     {
       // Compute the basis function
-      auto B =
-        eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+      eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
 
       auto wt = wgp[igp] * geoElem(e, 0);
 
-      auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
-        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
 
       // get bulk pressures and bulk modulii
       real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
@@ -645,6 +651,7 @@ pressureRelaxationIntFV(
 
   // Compute the basis function
   std::vector< tk::real > B(rdof, 0.0);
+  std::vector< tk::real > state(ncomp+nprim);
   B[0] = 1.0;
 
   // compute volume integrals
@@ -652,9 +659,9 @@ pressureRelaxationIntFV(
   {
     auto dx = geoElem(e,4)/2.0;
 
-    auto state = evalPolynomialSol(mat_blk, 0, ncomp, nprim,
+    evalPolynomialSol(mat_blk, 0, ncomp, nprim,
       rdof, nmat, e, rdof, inpoel, coord, geoElem,
-      {{0.25, 0.25, 0.25}}, B, U, P);
+      {{0.25, 0.25, 0.25}}, B, U, P, state);
 
     // get bulk pressures and bulk modulii
     real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);

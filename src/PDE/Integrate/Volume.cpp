@@ -63,6 +63,8 @@ tk::volInt( std::size_t nmat,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  std::vector< tk::real > state(ncomp+nprim);
+
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -97,6 +99,8 @@ tk::volInt( std::size_t nmat,
       // Compute the derivatives of basis function for second order terms
       auto dBdx = eval_dBdx_p1( dof_el, jacInv );
 
+      std::vector< tk::real > B(dof_el);
+
       // Gaussian quadrature
       for (std::size_t igp=0; igp<ng; ++igp)
       {
@@ -107,14 +111,14 @@ tk::volInt( std::size_t nmat,
         auto gp = eval_gp( igp, coordel, coordgp );
 
         // Compute the basis function
-        auto B = eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
-                             coordgp[2][igp] );
+        eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp],
+          B );
 
         auto wt = wgp[igp] * geoElem(e, 0);
 
-        auto state = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+        evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
           rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
-          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P);
+          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
 
         // evaluate prescribed velocity (if any)
         auto v = vel( ncomp, gp[0], gp[1], gp[2], t );

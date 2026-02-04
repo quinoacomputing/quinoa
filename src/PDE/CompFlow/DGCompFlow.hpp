@@ -469,9 +469,16 @@ class CompFlow {
         return tk::VelFn::result_type(); };
 
       // compute internal surface flux integrals
-      tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
+      if (!pref) {
+      tk::surfInt_constP( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
                    dt, R, riemannDeriv );
+      }
+      else {
+        tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
+                     dt, R, riemannDeriv );
+      }
 
       // compute optional source term
       tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4,
@@ -637,6 +644,8 @@ class CompFlow {
         dSV_l = 0.0;
         dSV_r = 0.0;
 
+        std::vector< tk::real > B_l(ndofel[el]);
+
         // Gaussian quadrature
         for (std::size_t igp=0; igp<ng; ++igp)
         {
@@ -644,10 +653,11 @@ class CompFlow {
           auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
           // Compute the basis function for the left element
-          auto B_l = tk::eval_basis( ndofel[el],
+          tk::eval_basis( ndofel[el],
             tk::Jacobian(coordel_l[0], gp, coordel_l[2], coordel_l[3])/detT_l,
             tk::Jacobian(coordel_l[0], coordel_l[1], gp, coordel_l[3])/detT_l,
-            tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], gp)/detT_l );
+            tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], gp)/detT_l,
+            B_l );
 
           auto wt = wgp[igp] * geoFace(f,0);
 
@@ -708,10 +718,12 @@ class CompFlow {
             gp = tk::eval_gp( igp, coordfa, coordgp );
 
             // Compute the basis function for the right element
-            auto B_r = tk::eval_basis( ndofel[eR],
+            std::vector< tk::real > B_r(ndofel[eR]);
+            tk::eval_basis( ndofel[eR],
               tk::Jacobian(coordel_r[0],gp,coordel_r[2],coordel_r[3])/detT_r,
               tk::Jacobian(coordel_r[0],coordel_r[1],gp,coordel_r[3])/detT_r,
-              tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],gp)/detT_r );
+              tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],gp)/detT_r,
+              B_r );
  
             for (ncomp_t c=0; c<5; ++c)
             {
@@ -874,6 +886,7 @@ class CompFlow {
       const auto& z = coord[2];
 
       std::vector< std::vector< tk::real > > Up(h.size());
+      std::vector< tk::real > B(rdof), uhp(m_ncomp);
 
       std::size_t j = 0;
       for (const auto& p : h) {
@@ -891,9 +904,9 @@ class CompFlow {
         // evaluate solution at history-point
         std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
           chp[2]-cp[0][2]}};
-        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
-          tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
+        tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc), B);
+        eval_state(m_ncomp, rdof, rdof, e, U, B, uhp.data());
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
@@ -1286,6 +1299,8 @@ class CompFlow {
               {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
               {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}}};
 
+              std::vector< tk::real > B(ndofel[e]);
+
               for (std::size_t igp=0; igp<ng; ++igp) {
                 // Compute the coordinates of quadrature point at physical
                 // domain
@@ -1297,8 +1312,8 @@ class CompFlow {
                   gp);
 
                 // Compute the basis function
-                auto B = tk::eval_basis( ndofel[e], coordgp[0][igp],
-                                         coordgp[1][igp], coordgp[2][igp] );
+                tk::eval_basis( ndofel[e], coordgp[0][igp],
+                                coordgp[1][igp], coordgp[2][igp], B );
 
                 // Compute the source term variable
                 std::vector< tk::real > s(5, 0.0);

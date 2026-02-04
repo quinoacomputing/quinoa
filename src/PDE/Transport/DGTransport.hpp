@@ -365,10 +365,18 @@ class Transport {
 
       // compute internal surface flux integrals
       std::vector< std::size_t > solidx(1, 0);
-      tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
-                   inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, ndofel, dt, R,
-                   riemannDeriv, intsharp );
+      if (!pref) {
+        tk::surfInt_constP( m_ncomp, m_mat_blk, t, ndof, rdof,
+                     inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
+                     Problem::prescribedVelocity, U, P, dt, R,
+                     riemannDeriv, intsharp );
+      }
+      else {
+        tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
+                     inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
+                     Problem::prescribedVelocity, U, P, ndofel, dt, R,
+                     riemannDeriv, intsharp );
+      }
 
       if(ndof > 1)
         // compute volume integrals
