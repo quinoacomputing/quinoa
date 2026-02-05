@@ -410,7 +410,6 @@ VertexBasedCompflow_P2(
   const tk::UnsMesh::Coords& coord,
   [[maybe_unused]] const std::vector< std::size_t >& gid,
   [[maybe_unused]] const std::unordered_map< std::size_t, std::size_t >& bid,
-  [[maybe_unused]] const std::vector< std::vector<tk::real> >& uNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
@@ -430,8 +429,6 @@ VertexBasedCompflow_P2(
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!   global node ids (key)
-//! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-//!   variables
 //! \param[in] mtInv Inverse of Taylor mass matrix
 //! \param[in] flux Riemann flux function to use
 //! \param[in] solidx Solid material index indicator
@@ -688,8 +685,6 @@ VertexBasedMultiMat_P2(
   const tk::UnsMesh::Coords& coord,
   [[maybe_unused]] const std::vector< std::size_t >& gid,
   [[maybe_unused]] const std::unordered_map< std::size_t, std::size_t >& bid,
-  [[maybe_unused]] const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  [[maybe_unused]] const std::vector< std::vector<tk::real> >& pNodalExtrm,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
@@ -712,10 +707,6 @@ VertexBasedMultiMat_P2(
 //! \param[in] gid Local->global node id map
 //! \param[in] bid Local chare-boundary node ids (value) associated to
 //!   global node ids (key)
-//! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-//!   variables
-//! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-//!   variables
 //! \param[in] mtInv Inverse of Taylor mass matrix
 //! \param[in] flux Riemann flux function to use
 //! \param[in] solidx Solid material index indicator

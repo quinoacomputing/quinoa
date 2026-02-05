@@ -712,10 +712,6 @@ class MultiMat {
     //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!   global node ids (key)
-    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-    //!   variables
-    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-    //!   variables
     //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
@@ -731,8 +727,6 @@ class MultiMat {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields& P,
@@ -763,8 +757,7 @@ class MultiMat {
       {
         VertexBasedMultiMat_P2( pref, esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, pNodalExtrm, mtInv, flux, solidx, U, P, nmat,
-          shockmarker );
+          mtInv, flux, solidx, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
