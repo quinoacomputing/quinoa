@@ -688,8 +688,12 @@ class MultiSpecies {
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt_constP( 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
-                          geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
-                          std::get<1>(b), U, P, R, riemannDeriv );
+            geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
+            std::get<1>(b), U, P, R, riemannDeriv );
+
+        // compute volume integrals
+        tk::volInt_constP( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
+          geoElem, flux, velfn, Problem::src, U, P, R );
       }
       else {
         // compute internal surface flux integrals
@@ -702,11 +706,11 @@ class MultiSpecies {
           tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
                           geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
                           std::get<1>(b), U, P, ndofel, R, riemannDeriv );
-      }
 
-      // compute volume integrals
-      tk::volInt( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem,
-        flux, velfn, Problem::src, U, P, ndofel, R );
+        // compute volume integrals
+        tk::volInt( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem,
+          flux, velfn, Problem::src, U, P, ndofel, R );
+      }
 
       // compute external (energy) sources
       //m_physics.physSrc(nspec, t, geoElem, {}, R, {});

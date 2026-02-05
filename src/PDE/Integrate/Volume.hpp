@@ -66,6 +66,26 @@ update_rhs_src( const std::size_t ndof,
                 const std::vector< tk::real >& s,
                 Fields& R );
 
+//! Compute volume integrals for const-order DG (not p-adaptive)
+void
+volInt_constP(
+  std::size_t nmat,
+  real t,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const FluxFn& flux,
+  const VelFn& vel,
+  const SrcFn& src,
+  const Fields& U,
+  const Fields& P,
+  Fields& R,
+  int intsharp=0 );
+
 //! Compute source term integrals for FV
 void
 srcIntFV( const std::vector< inciter::EOS >& mat_blk,

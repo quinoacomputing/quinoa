@@ -479,6 +479,10 @@ class CompFlow {
           tk::bndSurfInt_constP( 1, m_mat_blk, ndof, rdof, std::get<0>(b),
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                           velfn, std::get<1>(b), U, P, R, riemannDeriv );
+
+        // compute volume integrals
+        tk::volInt_constP( 1, t, m_mat_blk, ndof, rdof, fd.Esuel().size()/4,
+          inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, R );
       }
       else {
         // compute internal surface flux integrals
@@ -491,12 +495,12 @@ class CompFlow {
           tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b),
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
                         velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv );
-      }
 
-      // compute volume integrals
-      tk::volInt( 1, t, m_mat_blk, ndof, rdof,
-                  fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
-                  Problem::src, U, P, ndofel, R );
+        // compute volume integrals
+        tk::volInt( 1, t, m_mat_blk, ndof, rdof,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
+                    Problem::src, U, P, ndofel, R );
+      }
 
      // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::ic >();

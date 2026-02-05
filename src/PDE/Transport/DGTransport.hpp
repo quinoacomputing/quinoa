@@ -363,6 +363,11 @@ class Transport {
       // system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
+      // configure a no-op lambda for source term function
+      auto srcfn = []( ncomp_t, const std::vector< inciter::EOS >&, tk::real,
+        tk::real, tk::real, tk::real, std::vector< tk::real >& ){
+        return tk::SrcFn::result_type(); };
+
       // p-adaptive DG
       std::vector< std::size_t > solidx(1, 0);
       if (!pref) {
@@ -378,6 +383,11 @@ class Transport {
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
             Problem::prescribedVelocity, std::get<1>(b), U, P, R,
             riemannDeriv, intsharp );
+
+        // compute volume integrals
+        tk::volInt_constP( m_ncomp, t, m_mat_blk, ndof, rdof,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
+                    Problem::prescribedVelocity, srcfn, U, P, R, intsharp );
       }
       else {
         // compute internal surface flux integrals
@@ -392,16 +402,12 @@ class Transport {
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
             Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
             riemannDeriv, intsharp );
-      }
 
-      // configure a no-op lambda for source term function
-      auto srcfn = []( ncomp_t, const std::vector< inciter::EOS >&, tk::real,
-        tk::real, tk::real, tk::real, std::vector< tk::real >& ){
-        return tk::SrcFn::result_type(); };
-      // compute volume integrals
-      tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
-                  fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
-                  Problem::prescribedVelocity, srcfn, U, P, ndofel, R, intsharp );
+        // compute volume integrals
+        tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
+                    Problem::prescribedVelocity, srcfn, U, P, ndofel, R, intsharp );
+      }
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element

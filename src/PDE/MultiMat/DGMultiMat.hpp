@@ -967,9 +967,13 @@ class MultiMat {
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
-                          std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-                          m_riemann, velfn, std::get<1>(b), U, P, R,
-                          riemannDeriv, intsharp );
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+            m_riemann, velfn, std::get<1>(b), U, P, R,
+            riemannDeriv, intsharp );
+
+        // compute volume integrals
+        tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
+          geoElem, flux, velfn, Problem::src, U, P, R, intsharp );
       }
       else {
         // compute internal surface flux integrals
@@ -983,12 +987,12 @@ class MultiMat {
                           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
                           m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
                           riemannDeriv, intsharp );
-      }
 
-      // compute volume integrals
-      tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-                  inpoel, coord, geoElem, flux, velfn, Problem::src, U, P,
-                  ndofel, R, intsharp );
+        // compute volume integrals
+        tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
+                    inpoel, coord, geoElem, flux, velfn, Problem::src, U, P,
+                    ndofel, R, intsharp );
+      }
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
               "Riemann derivative vector incorrect" );
