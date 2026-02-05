@@ -147,14 +147,15 @@ tk::eval_dBdxi( const std::size_t ndof,
   return dBdxi;
 }
 
-std::array< std::vector<tk::real>, 3 >
+void
 tk::eval_dBdx_p1( const std::size_t ndof,
-                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv )
+                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+                  std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis functions for DG(P1)
 //! \param[in] ndof Number of degrees of freedom
 //! \param[in] jacInv Array of the inverse of Jacobian
-//! \return Array of the derivatives of basis functions
+//! \param[in,out] Array of the derivatives of basis functions
 // *****************************************************************************
 {
   // The derivatives of the basis functions dB/dx are easily calculated
@@ -164,11 +165,6 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   //        xi = (xi, eta, zeta) are the reference coordinates.
   // The matrix dxi/dx is the inverse of the Jacobian of transformation
   // and the matrix vector product has to be calculated. This follows.
-
-  std::array< std::vector<tk::real>, 3 > dBdx;
-  dBdx[0].resize( ndof, 0 );
-  dBdx[1].resize( ndof, 0 );
-  dBdx[2].resize( ndof, 0 );
 
   auto db2dxi1 = 2.0;
   auto db2dxi2 = 1.0;
@@ -181,6 +177,10 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   auto db4dxi1 = 0.0;
   auto db4dxi2 = 0.0;
   auto db4dxi3 = 4.0;
+
+  for (std::size_t i=0; i<3; i++) dBdx[i][0] = 0.0;
+
+  if (ndof > 1) {
 
   dBdx[0][1] =  db2dxi1 * jacInv[0][0]
               + db2dxi2 * jacInv[1][0]
@@ -217,8 +217,7 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   dBdx[2][3] =  db4dxi1 * jacInv[0][2]
               + db4dxi2 * jacInv[1][2]
               + db4dxi3 * jacInv[2][2];
-
-  return dBdx;
+  }
 }
 
 void
@@ -475,7 +474,9 @@ tk::DubinerToTaylor( ncomp_t ncomp,
               tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
   // Compute the derivatives of basis function for DG(P1)
-  auto dBdx = tk::eval_dBdx_p1( ndof, jacInv );
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( ndof, 0 );
+  tk::eval_dBdx_p1( ndof, jacInv, dBdx );
 
   if(ndof > 4) {
     tk::eval_dBdx_p2(0, center, jacInv, dBdx);

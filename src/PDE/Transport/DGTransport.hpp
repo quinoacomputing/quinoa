@@ -394,11 +394,14 @@ class Transport {
             riemannDeriv, intsharp );
       }
 
-      if(ndof > 1)
-        // compute volume integrals
-        tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
-                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
-                    Problem::prescribedVelocity, U, P, ndofel, R, intsharp );
+      // configure a no-op lambda for source term function
+      auto srcfn = []( ncomp_t, const std::vector< inciter::EOS >&, tk::real,
+        tk::real, tk::real, tk::real, std::vector< tk::real >& ){
+        return tk::SrcFn::result_type(); };
+      // compute volume integrals
+      tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
+                  fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
+                  Problem::prescribedVelocity, srcfn, U, P, ndofel, R, intsharp );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element

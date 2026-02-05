@@ -34,7 +34,6 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/MultiMatTerms.hpp"
-#include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -986,15 +985,10 @@ class MultiMat {
                           riemannDeriv, intsharp );
       }
 
-      // compute optional source term
-      tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
-                  coord, geoElem, Problem::src, ndofel, R, nmat );
-
-      if(ndof > 1)
-        // compute volume integrals
-        tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
-                    intsharp );
+      // compute volume integrals
+      tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
+                  inpoel, coord, geoElem, flux, velfn, Problem::src, U, P,
+                  ndofel, R, intsharp );
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
               "Riemann derivative vector incorrect" );

@@ -30,6 +30,7 @@ tk::volInt( std::size_t nmat,
             const Fields& geoElem,
             const FluxFn& flux,
             const VelFn& vel,
+            const SrcFn& src,
             const Fields& U,
             const Fields& P,
             const std::vector< std::size_t >& ndofel,
@@ -48,6 +49,7 @@ tk::volInt( std::size_t nmat,
 //! \param[in] geoElem Element geometry array
 //! \param[in] flux Flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
+//! \param[in] src Source function to use
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
@@ -68,54 +70,57 @@ tk::volInt( std::size_t nmat,
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
   {
-    if(ndofel[e] > 1)
+    auto ng = tk::NGvol(ndofel[e]);
+
+    // arrays for quadrature points
+    std::array< std::vector< real >, 3 > coordgp;
+    std::vector< real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    GaussQuadratureTet( ng, coordgp, wgp );
+
+    // Extract the element coordinates
+    std::array< std::array< real, 3>, 4 > coordel {{
+      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+    }};
+
+    auto jacInv =
+            inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+    auto dof_el = ndofel[e];
+
+    // Compute the derivatives of basis function for second order terms
+    std::array< std::vector<tk::real>, 3 > dBdx;
+    for (std::size_t i=0; i<3; ++i) dBdx[i].resize( dof_el, 0 );
+    eval_dBdx_p1( dof_el, jacInv, dBdx );
+
+    std::vector< tk::real > B(dof_el);
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
     {
-      auto ng = tk::NGvol(ndofel[e]);
+      if (dof_el > 4)
+        eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
 
-      // arrays for quadrature points
-      std::array< std::vector< real >, 3 > coordgp;
-      std::vector< real > wgp;
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = eval_gp( igp, coordel, coordgp );
 
-      coordgp[0].resize( ng );
-      coordgp[1].resize( ng );
-      coordgp[2].resize( ng );
-      wgp.resize( ng );
+      // Compute the basis function
+      eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp],
+        B );
 
-      GaussQuadratureTet( ng, coordgp, wgp );
+      auto wt = wgp[igp] * geoElem(e, 0);
 
-      // Extract the element coordinates
-      std::array< std::array< real, 3>, 4 > coordel {{
-        {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-        {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-        {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-        {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-      }};
-
-      auto jacInv =
-              inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
-
-      auto dof_el = ndofel[e];
-
-      // Compute the derivatives of basis function for second order terms
-      auto dBdx = eval_dBdx_p1( dof_el, jacInv );
-
-      std::vector< tk::real > B(dof_el);
-
-      // Gaussian quadrature
-      for (std::size_t igp=0; igp<ng; ++igp)
+      // volume fluxes
+      if(dof_el > 1)
       {
-        if (dof_el > 4)
-          eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
-
-        // Compute the coordinates of quadrature point at physical domain
-        auto gp = eval_gp( igp, coordel, coordgp );
-
-        // Compute the basis function
-        eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp],
-          B );
-
-        auto wt = wgp[igp] * geoElem(e, 0);
-
         evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
           rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
           {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
@@ -128,6 +133,12 @@ tk::volInt( std::size_t nmat,
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );
       }
+
+      // source terms
+      std::vector< real > s(ncomp, 0.0);
+      src( nmat, mat_blk, gp[0], gp[1], gp[2], t, s );
+
+      update_rhs_src( ndof, ndofel[e], wt, e, B, s, R );
     }
   }
 }
@@ -185,6 +196,89 @@ tk::update_rhs( ncomp_t ncomp,
         wt * (fl[c][0]*dBdx[0][8] + fl[c][1]*dBdx[1][8] + fl[c][2]*dBdx[2][8]);
       R(e, mark+9) +=
         wt * (fl[c][0]*dBdx[0][9] + fl[c][1]*dBdx[1][9] + fl[c][2]*dBdx[2][9]);
+    }
+  }
+}
+
+void
+tk::update_rhs_src(
+  const std::size_t ndof,
+  const std::size_t ndof_el,
+  const tk::real wt,
+  const std::size_t e,
+  const std::vector< tk::real >& B,
+  const std::vector< tk::real >& s,
+  Fields& R )
+// *****************************************************************************
+//  Update the rhs by adding the source term integrals
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] ndof_el Number of degrees of freedom for local element
+//! \param[in] wt Weight of gauss quadrature point
+//! \param[in] e Element index
+//! \param[in] B Vector of basis functions
+//! \param[in] s Source term vector
+//! \param[in,out] R Right-hand side vector computed
+// *****************************************************************************
+{
+  Assert( B.size() == ndof_el, "Size mismatch for basis function" );
+
+  for (ncomp_t c=0; c<s.size(); ++c)
+  {
+    auto mark = c*ndof;
+    R(e, mark)   += wt * s[c];
+
+    if ( ndof_el > 1 )
+    {
+      R(e, mark+1) += wt * s[c] * B[1];
+      R(e, mark+2) += wt * s[c] * B[2];
+      R(e, mark+3) += wt * s[c] * B[3];
+
+      if( ndof_el > 4 )
+      {
+        R(e, mark+4) += wt * s[c] * B[4];
+        R(e, mark+5) += wt * s[c] * B[5];
+        R(e, mark+6) += wt * s[c] * B[6];
+        R(e, mark+7) += wt * s[c] * B[7];
+        R(e, mark+8) += wt * s[c] * B[8];
+        R(e, mark+9) += wt * s[c] * B[9];
+      }
+    }
+  }
+}
+
+void
+tk::srcIntFV( const std::vector< inciter::EOS >& mat_blk,
+              real t,
+              const std::size_t nelem,
+              const Fields& geoElem,
+              const SrcFn& src,
+              Fields& R,
+              std::size_t nmat )
+// *****************************************************************************
+//  Compute source term integrals for DG
+//! \param[in] mat_blk Material block EOS
+//! \param[in] t Physical time
+//! \param[in] nelem Maximum number of elements
+//! \param[in] geoElem Element geometry array
+//! \param[in] src Source function to use
+//! \param[in,out] R Right-hand side vector computed
+//! \param[in] nmat Number of materials. A default is set to 1, so that calling
+//!   code for single material systems primitive quantities does not need to
+//!   specify this argument.
+// *****************************************************************************
+{
+  auto ncomp = R.nprop();
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // Compute the source term variable
+    std::vector< real > s(ncomp, 0.0);
+    src( nmat, mat_blk, geoElem(e,1), geoElem(e,2), geoElem(e,3), t, s );
+
+    // Add the source term to the rhs
+    for (ncomp_t c=0; c<ncomp; ++c)
+    {
+      R(e, c) += geoElem(e,0) * s[c];
     }
   }
 }

@@ -640,6 +640,8 @@ bndSurfIntViscousFV(
   auto nprim = P.nprop()/rdof;
 
   std::vector< tk::real > B_l(rdof);
+  std::array< std::vector<tk::real>, 3 > dBdx_l;
+  for (std::size_t i=0; i<3; ++i) dBdx_l[i].resize( rdof, 0 );
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find(static_cast<int>(s));// faces for side set
@@ -732,7 +734,7 @@ bndSurfIntViscousFV(
         // 1. Get spatial gradient from Dubiner dofs
         auto jacInv_l = tk::inverseJacobian( coordel_l[0], coordel_l[1],
           coordel_l[2], coordel_l[3] );
-        auto dBdx_l = tk::eval_dBdx_p1( rdof, jacInv_l );
+        tk::eval_dBdx_p1( rdof, jacInv_l, dBdx_l );
 
         std::vector< real > dudx_l(9,0.0);
         for (std::size_t i=0; i<3; ++i)

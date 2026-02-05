@@ -702,6 +702,11 @@ surfIntViscousFV(
   auto nprim = P.nprop()/rdof;
 
   std::vector< tk::real > B_l(rdof), B_r(rdof);
+  std::array< std::vector<tk::real>, 3 > dBdx_l, dBdx_r;
+  for (std::size_t i=0; i<3; ++i) {
+    dBdx_l[i].resize( rdof, 0 );
+    dBdx_r[i].resize( rdof, 0 );
+  }
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -806,10 +811,10 @@ surfIntViscousFV(
     // 1. Get spatial gradient from Dubiner dofs
     auto jacInv_l =
       tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
-    auto dBdx_l = tk::eval_dBdx_p1( rdof, jacInv_l );
+    tk::eval_dBdx_p1( rdof, jacInv_l, dBdx_l );
     auto jacInv_r =
       tk::inverseJacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
-    auto dBdx_r = tk::eval_dBdx_p1( rdof, jacInv_r );
+    tk::eval_dBdx_p1( rdof, jacInv_r, dBdx_r );
 
     // 2. Average du_i/dx_j
     std::array< std::array< real, 3 >, 3 > dudx;

@@ -151,8 +151,9 @@ nonConservativeInt( const bool pref,
 
     // Compute the derivatives of basis function for second order terms
     std::array< std::vector<tk::real>, 3 > dBdx;
+    for (std::size_t i=0; i<3; ++i) dBdx[i].resize( ndofel[e], 0 );
     if (ndofel[e] > 1)
-      dBdx = eval_dBdx_p1( ndofel[e], jacInv );
+      eval_dBdx_p1( ndofel[e], jacInv, dBdx );
 
     std::vector< tk::real > B(dof_el);
 

@@ -49,9 +49,10 @@ eval_dBdxi( const std::size_t ndof,
             const std::array< tk::real, 3 >& coordgp );
 
 //! Compute the derivatives of basis function for DG(P1)
-std::array< std::vector<tk::real>, 3 >
+void
 eval_dBdx_p1( const std::size_t ndof,
-              const std::array< std::array< tk::real, 3 >, 3 >& jacInv );
+              const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+              std::array< std::vector<tk::real>, 3 >& dBdx );
 
 //! Compute the derivatives of basis function for DG(P2)
 void

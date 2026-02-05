@@ -171,7 +171,9 @@ transform_P0P1( std::size_t rdof,
     tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
   // Compute the derivatives of basis function for DG(P1)
-  auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( rdof, 0 );
+  tk::eval_dBdx_p1( rdof, jacInv, dBdx );
 
   for (std::size_t i=0; i<varList.size(); ++i)
   {
@@ -477,7 +479,9 @@ THINCFunction_old( std::size_t rdof,
     auto jacInv =
       tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-    auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+    std::array< std::vector<tk::real>, 3 > dBdx;
+    for (std::size_t i=0; i<3; ++i) dBdx[i].resize( rdof, 0 );
+    tk::eval_dBdx_p1( rdof, jacInv, dBdx );
 
     std::array< real, 3 > nInt;
     std::vector< std::array< real, 3 > > ref_n(nmat, {{0.0, 0.0, 0.0}});
@@ -627,7 +631,9 @@ THINCFunction( std::size_t rdof,
   auto jacInv =
     tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-  auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( rdof, 0 );
+  tk::eval_dBdx_p1( rdof, jacInv, dBdx );
 
   std::array< real, 3 > nInt;
   std::array< real, 3 > ref_n{0.0, 0.0, 0.0};
