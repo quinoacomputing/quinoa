@@ -1188,7 +1188,7 @@ class MultiMat {
       // retrieve its internal energy and add it to the sum
       internal_energy = 0.0;
       for (std::size_t e=0; e<nelem; ++e) {
-        if (U(e, volfracDofIdx(nmat, 3, rdof, 0)) >= 0.9) {
+        if (U(e, volfracDofIdx(nmat, 3, rdof, 0)) >= 0.5) {
           // Compute bulk properties
           tk::real rho = 0.0;
           for (std::size_t k=0; k<nmat; ++k) {
@@ -1197,29 +1197,27 @@ class MultiMat {
           tk::real u = U(e, momentumDofIdx(nmat, 0, rdof, 0))/rho;
           tk::real v = U(e, momentumDofIdx(nmat, 1, rdof, 0))/rho;
           tk::real w = U(e, momentumDofIdx(nmat, 2, rdof, 0))/rho;
-          // Loop over materials
-          for (std::size_t k=0; k<nmat; ++k) {
-            // Retrieve alpha*rho*E
-            tk::real intE = U(e, energyDofIdx(nmat, k, rdof, 0));
-            // Substract kinetic energy
-            tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
-            tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
-            intE -= 0.5 * arho * (u*u+v*v+w*w);
-            // Substract elastic energy
-            if (solidx[k] > 0) {
-              std::array< std::array< tk::real, 3 >, 3 > g;
-              for (std::size_t i=0; i<3; ++i)
-                for (std::size_t j=0; j<3; ++j)
-                  g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
-              auto Ct = tk::getIsochorRightCauchyGreen(g);
-              tk::real eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
-              tk::real mu = getmatprop< tag::mu >(k);
-              auto rhoEe = mu * eps2;
-              intE -= alpha * rhoEe;
-            }
-            // Finally, multiply by volume and then add it to internal_energy
-            internal_energy += intE * geoElem(e, 0);
+          std::size_t k = 0;
+          // Retrieve alpha*rho*E
+          tk::real intE = U(e, energyDofIdx(nmat, k, rdof, 0));
+          // Substract kinetic energy
+          tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
+          tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+          intE -= 0.5 * arho * (u*u+v*v+w*w);
+          // Substract elastic energy
+          if (solidx[k] > 0) {
+            std::array< std::array< tk::real, 3 >, 3 > g;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+            auto Ct = tk::getIsochorRightCauchyGreen(g);
+            tk::real eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
+            tk::real mu = getmatprop< tag::mu >(k);
+            auto rhoEe = mu * eps2;
+            intE -= alpha * rhoEe;
           }
+          // Finally, multiply by volume and then add it to internal_energy
+          internal_energy += intE * geoElem(e, 0);
         }
       }
     }
