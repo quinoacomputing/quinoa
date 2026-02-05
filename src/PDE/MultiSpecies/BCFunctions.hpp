@@ -248,12 +248,15 @@ namespace inciter {
   //! \note The function signature must follow tk::StateFn.
   static tk::StateFn::result_type
   isothermal( [[maybe_unused]] ncomp_t ncomp,
-              const std::vector< EOS >&,
+              const std::vector< EOS >& mat_blk,
               const std::vector< tk::real >& ul,
               tk::real, tk::real, tk::real, tk::real,
-              const std::array< tk::real, 3 >& /*fn*/ )
+              const std::array< tk::real, 3 >& fn )
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+    auto tw =
+      g_inputdeck.get< tag::bc >()[0].get< tag::temperature >();
 
     Assert( ul.size() == ncomp+1, "Incorrect size for appended "
             "internal state vector" );
@@ -264,6 +267,10 @@ namespace inciter {
 
     auto ur = ul;
 
+    spec = ??;
+    Mixture mix(nspec, );
+    energy = ?
+    
     // Internal cell velocity components
     auto v1l = ul[multispecies::momentumIdx(nspec, 0)]/rho;
     auto v2l = ul[multispecies::momentumIdx(nspec, 1)]/rho;
