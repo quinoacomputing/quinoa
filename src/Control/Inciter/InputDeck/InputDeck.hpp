@@ -1156,8 +1156,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"spec_name", "List of species names, e.g. CO2, Ar.",
         R"(This keyword is used to specify a list of chemical species which will serve
         as reference for the program to retrieve its TPG coefficients from the NASA9
-        database. if species names are specified, the nasa9_filepath must be specified
-        or the nasa9 database must be present at the default location.)", "strings"});
+        database. Only species with 3 temperature intervals are supported. If species
+        names are specified, the nasa9_filepath must be specified or the nasa9 database
+        must be present at the default location.)", "strings"});
 
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas

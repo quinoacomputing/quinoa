@@ -138,29 +138,6 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& interface,
                  const std::vector< std::size_t >& ndof );
 
-    //! Receive contributions to nodal gradients on chare-boundaries
-    void
-    comnodalExtrema( const std::vector< std::size_t >& gid,
-                     const std::vector< std::vector< tk::real > >& G1,
-                     const std::vector< std::vector< tk::real > >& G2 );
-
-    //! Initialize the vector of nodal extrema
-    void resizeNodalExtremac();
-
-    //! Compute the nodal extrema of ref el derivatives for chare-boundary nodes
-    void evalNodalExtrmRefEl(
-      const std::size_t ncomp,
-      const std::size_t nprim,
-      const std::size_t ndof_NodalExtrm,
-      const std::vector< std::size_t >& bndel,
-      const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& gid,
-      const std::unordered_map< std::size_t, std::size_t >& bid,
-      const tk::Fields& U,
-      const tk::Fields& P,
-      std::vector< std::vector<tk::real> >& uNodalExtrm,
-      std::vector< std::vector<tk::real> >& pNodalExtrm );
-
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
     void comnodeout( const std::vector< std::size_t >& gid,
@@ -237,7 +214,6 @@ class DG : public CBase_DG {
     void pup( PUP::er &p ) override {
       p | m_disc;
       p | m_ghosts;
-      p | m_ndof_NodalExtrm;
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
@@ -245,16 +221,11 @@ class DG : public CBase_DG {
       p | m_nrefine;
       p | m_nsmooth;
       p | m_nreco;
-      p | m_nnodalExtrema;
       p | m_u;
       p | m_un;
       p | m_p;
       p | m_geoElem;
       p | m_mtInv;
-      p | m_uNodalExtrm;
-      p | m_pNodalExtrm;
-      p | m_uNodalExtrmc;
-      p | m_pNodalExtrmc;
       p | m_rhs;
       p | m_rhsprev;
       p | m_stiffrhs;
@@ -298,11 +269,6 @@ class DG : public CBase_DG {
     CProxy_Discretization m_disc;
     //! Distributed Ghosts proxy
     CProxy_Ghosts m_ghosts;
-    //! \brief Degree of freedom for nodal extrema vector. When DGP1 is applied,
-    //!   there is one degree of freedom for cell average variable. When DGP2 is
-    //!   applied, the degree of freedom is 4 which refers to cell average and
-    //!   gradients in three directions
-    std::size_t m_ndof_NodalExtrm;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
     //! \brief Counter signaling that we have received all our solution ghost
@@ -320,9 +286,6 @@ class DG : public CBase_DG {
     std::size_t m_nsmooth;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
-    //! \brief Counter signaling that we have received all our nodal extrema from
-    //!   ghost chare partitions
-    std::size_t m_nnodalExtrema;
     //! Counters signaling how many stiff and non-stiff equations in the system
     std::size_t m_nstiffeq, m_nnonstiffeq;
     //! Vector of unknown/solution average over each mesh element
@@ -345,14 +308,6 @@ class DG : public CBase_DG {
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
     //! Inverse of Taylor mass-matrix
     std::vector< std::vector< tk::real > > m_mtInv;
-    //! Vector of nodal extrema for conservative variables
-    std::vector< std::vector<tk::real> > m_uNodalExtrm;
-    //! Vector of nodal extrema for primitive variables
-    std::vector< std::vector<tk::real> > m_pNodalExtrm;
-    //! Buffer for vector of nodal extrema for conservative variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
-    //! Buffer for vector of nodal extrema for primitive variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_npoin;
     //! Diagnostics object
@@ -432,9 +387,6 @@ class DG : public CBase_DG {
 
     //! Compute solution reconstructions
     void reco();
-
-    //! Compute nodal extrema at chare-boundary nodes
-    void nodalExtrema();
 
     //! Compute limiter function
     void lim();

@@ -148,7 +148,7 @@ cleanTraceMultiMat(
     // get conserved quantities
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
-    ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+    eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
 
     auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
@@ -362,9 +362,9 @@ timeStepSizeMultiMat(
     B_l[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, rdof, ndof, el, U, B_l);
+    eval_state(ncomp, rdof, ndof, el, U, B_l, ugp.data());
     // get primitive quantities
-    pgp = eval_state(nprim, rdof, ndof, el, P, B_l);
+    eval_state(nprim, rdof, ndof, el, P, B_l, pgp.data());
 
     // advection velocity
     u = pgp[velocityIdx(nmat, 0)];
@@ -397,9 +397,9 @@ timeStepSizeMultiMat(
       B_r[0] = 1.0;
 
       // get conserved quantities
-      ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r);
+      eval_state( ncomp, rdof, ndof, eR, U, B_r, ugp.data());
       // get primitive quantities
-      pgp = eval_state( nprim, rdof, ndof, eR, P, B_r);
+      eval_state( nprim, rdof, ndof, eR, P, B_r, pgp.data());
 
       // advection velocity
       u = pgp[velocityIdx(nmat, 0)];
@@ -483,9 +483,9 @@ timeStepSizeMultiMatFV(
     B[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+    eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
     // get primitive quantities
-    pgp = eval_state(nprim, rdof, ndof, e, P, B);
+    eval_state(nprim, rdof, ndof, e, P, B, pgp.data());
 
     // magnitude of advection velocity
     auto u = pgp[velocityIdx(nmat, 0)];
@@ -554,13 +554,14 @@ timeStepSizeViscousFV(
   std::size_t ncomp = U.nprop()/rdof;
 
   auto mindt = std::numeric_limits< tk::real >::max();
+  std::vector< tk::real > ugp(ncomp, 0.0);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
     // get conserved quantities at centroid
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
-    auto ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+    eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
 
     // Kinematic viscosity
     tk::real nu(0.0);

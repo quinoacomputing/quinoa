@@ -33,7 +33,6 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/MultiMatTerms.hpp"
-#include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -650,6 +649,7 @@ class MultiMat {
       const auto& z = coord[2];
 
       std::vector< std::vector< tk::real > > Up(h.size());
+      std::vector< tk::real > B(rdof), uhp(m_ncomp), php(nprim());
 
       std::size_t j = 0;
       for (const auto& p : h) {
@@ -667,10 +667,10 @@ class MultiMat {
         // evaluate solution at history-point
         std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
           chp[2]-cp[0][2]}};
-        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
-          tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
-        auto php = eval_state(nprim(), rdof, rdof, e, P, B);
+        tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc), B);
+        eval_state(m_ncomp, rdof, rdof, e, U, B, uhp.data());
+        eval_state(nprim(), rdof, rdof, e, P, B, php.data());
 
         // store solution in history output vector
         Up[j].resize(6+nmat, 0.0);
@@ -763,9 +763,9 @@ class MultiMat {
         B[0] = 1.0;
 
         // get conserved quantities
-        ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+        eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
         // get primitive quantities
-        pgp = eval_state(nprim, rdof, ndof, e, P, B);
+        eval_state(nprim, rdof, ndof, e, P, B, pgp.data());
 
         // acoustic speed (this should be consistent with time-step calculation)
         ss[e] = 0.0;
