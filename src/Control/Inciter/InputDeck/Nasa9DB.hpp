@@ -158,7 +158,7 @@ inline N9Species read_nasa9_species(const std::string& file,
     sp.Hf298_mass  = Hf298 / Mw;
 
     // Retrieve number of temperature intervals
-    const std::size_t nIntervals = std::lround(nums[0]);
+    const std::size_t nIntervals = static_cast<std::size_t>(std::lround(nums[0]));
     if (nIntervals != 3)
       Throw("Only species with 3 temperature intervals are supported. " + targetName + " has " + std::to_string(nIntervals));
 
