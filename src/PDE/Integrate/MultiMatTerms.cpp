@@ -529,7 +529,9 @@ pressureRelaxationInt( const bool pref,
         real alphamat = state[volfracIdx(nmat, k)];
         apmat[k] = state[ncomp+pressureIdx(nmat, k)];
         real amat = 0.0;
-        if (solidx[k] == 0 && alphamat >= inciter::volfracPRelaxLim()) {
+        bool include_solid(true);
+        if (solidx[k] > 0 && apmat[k] < 1e3*alphamat) include_solid = false;
+        if (include_solid && alphamat >= inciter::volfracPRelaxLim()) {
             amat = mat_blk[k].compute< inciter::EOS::soundspeed >( arhomat,
               apmat[k], alphamat, k );
           kmat[k] = arhomat * amat * amat;
