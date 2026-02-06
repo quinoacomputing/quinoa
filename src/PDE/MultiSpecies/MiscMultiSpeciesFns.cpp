@@ -95,9 +95,9 @@ timeStepSizeMultiSpecies(
     B_l[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, rdof, ndof, el, U, B_l);
+    eval_state(ncomp, rdof, ndof, el, U, B_l, ugp.data());
     // get primitive quantities
-    pgp = eval_state(nprim, rdof, ndof, el, P, B_l);
+    eval_state(nprim, rdof, ndof, el, P, B_l, pgp.data());
 
     // initialize mixture
     Mixture mix(nspec, ugp, mat_blk);
@@ -127,8 +127,8 @@ timeStepSizeMultiSpecies(
       B_r[0] = 1.0;
 
       // get conserved quantities
-      ugp = eval_state(ncomp, rdof, ndof, eR, U, B_r);
-      pgp = eval_state(nprim, rdof, ndof, eR, P, B_r);
+      eval_state(ncomp, rdof, ndof, eR, U, B_r, ugp.data());
+      eval_state(nprim, rdof, ndof, eR, P, B_r, pgp.data());
 
       // initialize mixture
       Mixture mixr(nspec, ugp, mat_blk);
