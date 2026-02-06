@@ -1196,7 +1196,7 @@ class MultiMat {
       // retrieve its internal energy and add it to the sum
       internal_energy = 0.0;
       for (std::size_t e=0; e<nelem; ++e) {
-        if (U(e, volfracDofIdx(nmat, 3, rdof, 0)) >= 0.5) {
+        if (U(e, volfracDofIdx(nmat, 3, rdof, 0)) >= 1.0e-08) {
           // Compute bulk properties
           tk::real rho = 0.0;
           for (std::size_t k=0; k<nmat; ++k) {
@@ -1205,7 +1205,7 @@ class MultiMat {
           tk::real u = U(e, momentumDofIdx(nmat, 0, rdof, 0))/rho;
           tk::real v = U(e, momentumDofIdx(nmat, 1, rdof, 0))/rho;
           tk::real w = U(e, momentumDofIdx(nmat, 2, rdof, 0))/rho;
-          std::size_t k = 0;
+          std::size_t k = 3;
           // Retrieve alpha*rho*E
           tk::real intE = U(e, energyDofIdx(nmat, k, rdof, 0));
           // Substract kinetic energy
@@ -1225,7 +1225,8 @@ class MultiMat {
             intE -= alpha * rhoEe;
           }
           // Finally, multiply by volume and then add it to internal_energy
-          internal_energy += intE * geoElem(e, 0);
+          // Also multiply by 10 because I am running with a 10th of the thickness
+          internal_energy += intE * geoElem(e, 0) * 10;
         }
       }
     }
