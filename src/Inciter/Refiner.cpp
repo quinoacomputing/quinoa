@@ -945,11 +945,12 @@ Refiner::refinementFields() const
 
   // Prepare element fields with mesh refinement data
   std::vector< std::string >
-    elemfieldnames{ "refinement level", "cell type", "error" };
+    elemfieldnames{ "refinement level", "cell type", "normal cell", "error" };
   auto& tet_store = m_refiner.tet_store;
   std::vector< std::vector< tk::real > > elemfields{
     tet_store.get_refinement_level_list(),
     tet_store.get_cell_type_list(),
+    tet_store.get_normal_cell_list(),
     error };
 
   using tuple_t = std::tuple< std::vector< std::string >,
