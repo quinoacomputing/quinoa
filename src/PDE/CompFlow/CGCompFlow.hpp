@@ -1499,7 +1499,8 @@ class CompFlow {
         // for all boxes
         for (const auto& b : icbox) {
           // if linear initialize is set up (energy-pill)
-          if (b.template get< tag::initiate >() == ctr::InitiateType::LINEAR) {
+          if (b.template get< tag::initiate >() == ctr::InitiateType::LINEAR && 
+                      !boxnodes[bcnt].empty()) {
 
           std::vector< tk::real > box
            { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
