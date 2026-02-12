@@ -11,11 +11,6 @@
 #include "AMR_types.hpp"
 
 namespace AMR {
-    // Types
-    using real_t = tk::real;
-
-    const size_t DEFUALT_CHILD_NUMBER = 0; // Used to mark "doesn't have children"
-
     // TODO: Populate this enum with the available refinement cases
     enum Refinement_Case { initial_grid = 0, one_to_two, one_to_four, one_to_eight,
         two_to_eight, four_to_eight, none };
@@ -31,7 +26,6 @@ namespace AMR {
             Refinement_Case refinement_case;
             child_id_list_t children;
             size_t refinement_level;
-            size_t child_number;
             size_t parent_id;
             bool normal;
             bool has_parent;
@@ -46,7 +40,6 @@ namespace AMR {
             // * @param refinement_case_in The refinement case
             // * @param children_in The children ids
             // * @param refinement_level_in The level of refinement
-            // * @param child_number_in ??  // TODO: What is this?
             // * @param parent_id_in Id of parent element
             // * @param has_parent_in True if element has a parent, default is true
             //*/
@@ -63,7 +56,6 @@ namespace AMR {
             //        refinement_case(refinement_case_in),
             //        children(children_in),
             //        refinement_level(refinement_level_in),
-            //        child_number(child_number_in),
             //        parent_id(parent_id_in),
             //        normal(0),
             //        has_parent(has_parent_in)
@@ -90,7 +82,6 @@ namespace AMR {
                     active_element_number(active_element_number_in),
                     refinement_case(refinement_case_in),
                     refinement_level(refinement_level_in),
-                    child_number(DEFUALT_CHILD_NUMBER), // Give it default child id
                     parent_id(parent_id_in),
                     normal(0),
                     has_parent(has_parent_in)

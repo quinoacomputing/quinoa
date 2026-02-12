@@ -605,7 +605,6 @@ namespace AMR {
             //refiner.overwrite_children(tet_store, former_children, current_children);
 
             tet_store.unset_marked_children(i); // FIXME: This will not work well in parallel
-            element.refinement_case = AMR::Refinement_Case::one_to_eight;
         }
 
         // Clean up dead edges
@@ -1435,6 +1434,15 @@ namespace AMR {
                             trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 3" << std::endl;
                         }
 
+                    }
+                    // This is not in paper
+                    else {
+                        // Deactivate all points
+                        for (auto child_id : children) {
+                          deactivate_deref_tet_edges(child_id);
+                        }
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
+                        trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 3" << std::endl;
                     }
                 }
 

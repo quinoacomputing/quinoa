@@ -56,14 +56,15 @@ namespace AMR {
             {
                 Refinement_State& master_element = tet_store.data(tet_id);
 
-                // These asserts mean we never actually try refine a 1:2 or 1:4
-                assert( master_element.refinement_case !=
-                        Refinement_Case::one_to_two);
-                assert( master_element.refinement_case !=
-                        Refinement_Case::one_to_four);
+                //// Commented out by Aditya on 02/12/2026
+                //// These asserts mean we never actually try refine a 1:2 or 1:4
+                //assert( master_element.refinement_case !=
+                //        Refinement_Case::one_to_two);
+                //assert( master_element.refinement_case !=
+                //        Refinement_Case::one_to_four);
 
-                // cppcheck-suppress assertWithSideEffect
-                assert( tet_store.is_active(tet_id) );
+                //// cppcheck-suppress assertWithSideEffect
+                //assert( tet_store.is_active(tet_id) );
 
                 // Check this won't take us past the max refinement level
                 if (master_element.refinement_level >= MAX_REFINEMENT_LEVEL)

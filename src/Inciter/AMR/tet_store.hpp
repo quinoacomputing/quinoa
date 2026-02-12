@@ -188,10 +188,11 @@ namespace AMR {
 
                 //std::cout << "id " << id << " parent " << parent_id << std::endl;
 
-                add_to_master(id, nodes, refinement_case, parent_id, true);
-
-                master_elements.get(id).refinement_level =
+                size_t ref_level =
                     master_elements.get(parent_id).refinement_level+1;
+
+                add_to_master(id, nodes, refinement_case, parent_id, ref_level,
+                  true);
 
                 // Deal with updating parent
                 master_elements.add_child(parent_id, id);
@@ -208,15 +209,14 @@ namespace AMR {
              * @param refinement_case The refinement case which caused this tet
              * to be generated
              * @param parent_id The ID of the parent tetrahedron
+             * @param refinement_level The level of refinement
              * @param has_parent True if element has a parent
             */
             void add_to_master(size_t id, const tet_t& nodes,
               Refinement_Case refinement_case, size_t parent_id=0,
-              bool has_parent=false)
+              size_t refinement_level=0, bool has_parent=false)
             {
                 store_tet(id, nodes);
-
-                size_t refinement_level = 0;
 
                 // Add to master list
                 master_elements.add(id, refinement_case, refinement_level, parent_id, has_parent);
