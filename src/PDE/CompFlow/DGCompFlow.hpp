@@ -34,7 +34,6 @@
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
-#include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "EoS/EOS.hpp"
 #include "Reconstruction.hpp"
@@ -228,15 +227,17 @@ class CompFlow {
       }
     }
 
-    //! Compute density constraint for a given material
+    //! Compute average plastic deformation on each element
     // //! \param[in] nelem Number of elements
     // //! \param[in] unk Array of unknowns
-    //! \param[out] densityConstr Density Constraint: rho/(rho0*det(g))
-    void computeDensityConstr( std::size_t /*nelem*/,
-                               tk::Fields& /*unk*/,
-                               std::vector< tk::real >& densityConstr) const
+    // //! \param[in] pri Array of primitives
+    //! \param[out] plasticDeformation Frobenius norm of Lp matrix
+    void computePlasticDeformation( std::size_t /*nelem*/,
+                                    tk::Fields& /*unk*/,
+                                    tk::Fields& /*pri*/,
+                                    std::vector< tk::real >& plasticDeformation) const
     {
-      densityConstr.resize(0);
+      plasticDeformation.resize(0);
     }
 
     //! Update the interface cells to first order dofs
@@ -306,8 +307,6 @@ class CompFlow {
     //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!   global node ids (key)
-    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-    //!   variables
     //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] shockmarker Vector of shock-marker values
@@ -322,8 +321,6 @@ class CompFlow {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                const std::vector< std::vector<tk::real> >&,
                 const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields&,
@@ -344,7 +341,7 @@ class CompFlow {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, mtInv, flux, solidx, U, shockmarker);
+          mtInv, flux, solidx, U, shockmarker);
     }
 
     //! Update the conservative variable solution for this PDE system
@@ -466,26 +463,40 @@ class CompFlow {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
-      // compute internal surface flux integrals
-      tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, riemannDeriv );
+      // p-adaptive DG
+      if (!pref) {
+        // compute internal surface flux integrals
+        tk::surfInt_constP( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
+                     dt, R, riemannDeriv );
 
-      // compute optional source term
-      tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4,
-                  inpoel, coord, geoElem, Problem::src, ndofel, R );
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt_constP( 1, m_mat_blk, ndof, rdof, std::get<0>(b),
+                          fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
+                          velfn, std::get<1>(b), U, P, R, riemannDeriv );
 
-      if(ndof > 1)
+        // compute volume integrals
+        tk::volInt_constP( 1, t, m_mat_blk, ndof, rdof, fd.Esuel().size()/4,
+          inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, R );
+      }
+      else {
+        // compute internal surface flux integrals
+        tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
+                     dt, R, riemannDeriv );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b),
+                          fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
+                        velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv );
+
         // compute volume integrals
         tk::volInt( 1, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
-                    U, P, ndofel, R );
-
-      // compute boundary surface flux integrals
-      for (const auto& b : m_bc)
-        tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b),
-                        fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                        velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv );
+                    Problem::src, U, P, ndofel, R );
+      }
 
      // compute external (energy) sources
       const auto& ic = g_inputdeck.get< tag::ic >();
@@ -551,6 +562,8 @@ class CompFlow {
     //! \param[in] geoElem Element geometry array
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] local_dte Time step size for each element (for local
+    //!   time stepping)
     //! \return Minimum time step size
     tk::real dt( const std::array< std::vector< tk::real >, 3 >& coord,
                  const std::vector< std::size_t >& inpoel,
@@ -560,7 +573,8 @@ class CompFlow {
                  const std::vector< std::size_t >& ndofel,
                  const tk::Fields& U,
                  const tk::Fields&,
-                 const std::size_t /*nielem*/ ) const
+                 const std::size_t /*nielem*/,
+                 std::vector< tk::real >& local_dte ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
 
@@ -632,6 +646,8 @@ class CompFlow {
         dSV_l = 0.0;
         dSV_r = 0.0;
 
+        std::vector< tk::real > B_l(ndofel[el]);
+
         // Gaussian quadrature
         for (std::size_t igp=0; igp<ng; ++igp)
         {
@@ -639,10 +655,11 @@ class CompFlow {
           auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
           // Compute the basis function for the left element
-          auto B_l = tk::eval_basis( ndofel[el],
+          tk::eval_basis( ndofel[el],
             tk::Jacobian(coordel_l[0], gp, coordel_l[2], coordel_l[3])/detT_l,
             tk::Jacobian(coordel_l[0], coordel_l[1], gp, coordel_l[3])/detT_l,
-            tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], gp)/detT_l );
+            tk::Jacobian(coordel_l[0], coordel_l[1], coordel_l[2], gp)/detT_l,
+            B_l );
 
           auto wt = wgp[igp] * geoFace(f,0);
 
@@ -703,10 +720,12 @@ class CompFlow {
             gp = tk::eval_gp( igp, coordfa, coordgp );
 
             // Compute the basis function for the right element
-            auto B_r = tk::eval_basis( ndofel[eR],
+            std::vector< tk::real > B_r(ndofel[eR]);
+            tk::eval_basis( ndofel[eR],
               tk::Jacobian(coordel_r[0],gp,coordel_r[2],coordel_r[3])/detT_r,
               tk::Jacobian(coordel_r[0],coordel_r[1],gp,coordel_r[3])/detT_r,
-              tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],gp)/detT_r );
+              tk::Jacobian(coordel_r[0],coordel_r[1],coordel_r[2],gp)/detT_r,
+              B_r );
  
             for (ncomp_t c=0; c<5; ++c)
             {
@@ -763,7 +782,8 @@ class CompFlow {
 
         // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
         // where p is the order of the DG polynomial by linear stability theory.
-        mindt = std::min( mindt, geoElem(e,0)/ (delt[e] * (2.0*dgp + 1.0)) );
+        local_dte[e] = geoElem(e,0)/ (delt[e] * (2.0*dgp + 1.0));
+        mindt = std::min( mindt, local_dte[e] );
       }
 
       return mindt;
@@ -782,18 +802,12 @@ class CompFlow {
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array
-    // //! \param[in] inpoel Element-node connectivity
-    // //! \param[in] coord Array of nodal coordinates
     // //! \param[in] U Solution vector at recent time step
-    // //! \param[in] P Primitive vector at recent time step
     // //! \param[in] ndofel Vector of local number of degrees of freedom
     // //! \param[in,out] R Right-hand side vector computed
     void stiff_rhs( std::size_t /*e*/,
                     const tk::Fields& /*geoElem*/,
-                    const std::vector< std::size_t >& /*inpoel*/,
-                    const tk::UnsMesh::Coords& /*coord*/,
                     const tk::Fields& /*U*/,
-                    const tk::Fields& /*P*/,
                     const std::vector< std::size_t >& /*ndofel*/,
                     tk::Fields& /*R*/ ) const
     {}
@@ -874,6 +888,7 @@ class CompFlow {
       const auto& z = coord[2];
 
       std::vector< std::vector< tk::real > > Up(h.size());
+      std::vector< tk::real > B(rdof), uhp(m_ncomp);
 
       std::size_t j = 0;
       for (const auto& p : h) {
@@ -891,9 +906,9 @@ class CompFlow {
         // evaluate solution at history-point
         std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
           chp[2]-cp[0][2]}};
-        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
-          tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
+        tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc), B);
+        eval_state(m_ncomp, rdof, rdof, e, U, B, uhp.data());
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);
@@ -1286,6 +1301,8 @@ class CompFlow {
               {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
               {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}}};
 
+              std::vector< tk::real > B(ndofel[e]);
+
               for (std::size_t igp=0; igp<ng; ++igp) {
                 // Compute the coordinates of quadrature point at physical
                 // domain
@@ -1297,8 +1314,8 @@ class CompFlow {
                   gp);
 
                 // Compute the basis function
-                auto B = tk::eval_basis( ndofel[e], coordgp[0][igp],
-                                         coordgp[1][igp], coordgp[2][igp] );
+                tk::eval_basis( ndofel[e], coordgp[0][igp],
+                                coordgp[1][igp], coordgp[2][igp], B );
 
                 // Compute the source term variable
                 std::vector< tk::real > s(5, 0.0);
@@ -1306,7 +1323,7 @@ class CompFlow {
 
                 auto wt = wgp[igp] * geoElem(e, 0);
 
-                tk::update_rhs( ndof, ndofel[e], wt, e, B, s, R );
+                tk::update_rhs_src( ndof, ndofel[e], wt, e, B, s, R );
               }
             }
           }

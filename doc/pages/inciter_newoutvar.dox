@@ -1,0 +1,60 @@
+namespace inciter {
+/*!
+  \page      inciter_newoutvar How to add a new field output variable
+
+@tableofcontents{xml}
+
+This page describes the basic steps required to add a new variable to the field
+output.
+
+This example adds a variable `pressure` to the field output for the
+multi-material PDE system:
+
+1. Determine if the new variable is available from the primitive variable
+   vector, or the conserved solution vector. If conserved, skip this step. If
+   primitive, add corresponding entry to the `primitive()` function in
+   `src/Control/Inciter/OutVar.hpp`.
+
+2. Add the "outvar-function" corresponding to the variable to be extracted for
+   output, in `src/PDE/MultiMat/Problem/FieldOutput.hpp` inside the section
+   titled "Functions that compute physics variables from the numerical solution".
+   Replace the MultiMat in the above path by the appropriate PDE system name.
+@code{.cpp}
+//! Compute bulk pressure for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] rdof Number of reconstructed solution DOFs
+//! \return Bulk pressure ready to be output to file
+static tk::GetVarFn::result_type
+bulkPressureOutVar( const tk::Fields& U, std::size_t rdof )
+{
+  using tk::operator+=;
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+  auto p = U.extract_comp( pressureDofIdx(nmat,0,rdof,0) );
+  for (std::size_t k=1; k<nmat; ++k)
+    p += U.extract_comp( pressureDofIdx(nmat,k,rdof,0) );
+  return p;
+}
+@endcode
+
+   When adding this function, a few things to remember:
+   - Ensure that the newly added function follows the function signature of
+     `tk::GetVarFn` declared in `src/PDE/FunctionPrototypes.hpp`.
+   - When the primitive flag has been set in step 1, the first argument of this
+     function will be the primitive vector. Otherwise, it will be the conserved
+     solution vector. In this example, the multimat PDE system stores material
+     pressures in the primitive vector. Therefore, the input arg `U` is the
+     primitive vector.
+   - Access the primitive/solution vector appropriately and store the values
+     into a `std::vector< tk::real >`. `Data::extract_comp()` can be used for
+     this purpose. This newly allocated vector should be returned by the
+     function.
+
+3. Link the newly defined outvar-function to the keyword in `MultiMatOutVarFn()`
+   in `src/PDE/MultiMat/Problem/FieldOutput.cpp` as:
+@code{.cpp}
+  OutFnMap["pressure"] = multimat::bulkPressureOutVar;
+@endcode
+
+*/
+} // inciter::

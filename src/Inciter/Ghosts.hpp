@@ -69,7 +69,7 @@ class Ghosts : public CBase_Ghosts {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit Ghosts( CkMigrateMessage* ) {}
+    explicit Ghosts( CkMigrateMessage* msg ) : CBase_Ghosts( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

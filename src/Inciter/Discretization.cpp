@@ -48,6 +48,7 @@ Discretization::Discretization(
   const std::vector< CProxy_Discretization >& disc,
   const CProxy_ALE& aleproxy,
   const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+  const tk::CProxy_BiCG& implicitsolverproxy,
   const CProxy_Transporter& transporter,
   const tk::CProxy_MeshWriter& meshwriter,
   const tk::UnsMesh::CoordMap& coordmap,
@@ -76,6 +77,7 @@ Discretization::Discretization(
   m_nvol( 0 ),
   m_nxfer( 0 ),
   m_ale( aleproxy ),
+  m_implicitsolver( implicitsolverproxy ),
   m_transporter( transporter ),
   m_meshwriter( meshwriter ),
   m_el( el ),     // fills m_inpoel, m_gid, m_lid
@@ -202,6 +204,8 @@ Discretization::addRestartedMesh( CkCallback cb )
       std::cout << "Disc: on restart " << m_meshid << " called addMesh(). \n";
     }
   }
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 std::unordered_map< std::size_t, std::size_t >

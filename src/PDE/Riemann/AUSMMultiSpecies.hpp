@@ -45,23 +45,12 @@ struct AUSMMultiSpecies {
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
-    // All-speed parameters
-    // These parameters control the amount of all-speed diffusion necessary for
-    // low-Mach flows. Setting k_u and k_p to zero does not add any all-speed
-    // diffusion, whereas setting k_u and k_p to 1 adds maximum recommended
-    // all-speed diffusion. See "Liou, M. S. (2006). A sequel to AUSM, Part II:
-    // AUSM+-up for all speeds. Journal of computational physics, 214(1),
-    // 137-170" for more mathematical explanation. k_u is the velocity diffusion
-    // term and k_p is the pressure diffusion term. These two terms reduce
-    // pressure-velocity decoupling (chequerboarding/odd-even oscillations).
-    auto k_u = g_inputdeck.get< tag::lowspeed_ku >();
-    auto k_p = g_inputdeck.get< tag::lowspeed_kp >();
-
     auto ncomp = u[0].size()-1;
     std::vector< tk::real > flx( ncomp, 0 );
 
     tk::real rhol(0.0), rhor(0.0), pl(0.0), pr(0.0), hl(0.0), hr(0.0),
-      Tl(0.0), Tr(0.0), al(0.0), ar(0.0), a12(0.0), rho12(0.0);
+      Tl(0.0), Tr(0.0), al(0.0), ar(0.0), a12(0.0);
+    [[maybe_unused]] tk::real rho12(0.0);
 
     // initialize mixtures
     Mixture mixl(nspec, u[0], mat_blk);
@@ -109,17 +98,27 @@ struct AUSMMultiSpecies {
 
     // Riemann Mach number
     auto m0 = 1.0 - (0.5*(vnl*vnl + vnr*vnr)/(a12*a12));
-    auto mp = -k_p* std::max(m0, 0.0) * (pr-pl) / (f_a*rho12*a12*a12);
-    auto m12 = msl[0] + msr[1] + mp;
+    auto m12 = msl[0] + msr[1];
     auto vriem = a12 * m12;
 
     // Riemann pressure
-    auto pu = -k_u* msl[2] * msr[3] * f_a * rho12 * a12 * (vnr-vnl);
-    auto p12 = msl[2]*pl + msr[3]*pr + pu;
+    auto p12 = msl[2]*pl + msr[3]*pr;
+
+    // Shock-instability fix from Pandare, Edwards (2025), JCP 543.
+    auto md = 0.0;
+    //// Velocity magnitudes
+    //auto vmag_l = tk::dot( {{ul, vl, wl}}, {{ul, vl, wl}} );
+    //auto vmag_r = tk::dot( {{ur, vr, wr}}, {{ur, vr, wr}} );
+    //auto m0_mod = 4.0
+    //  * (0.25 - (0.5*(vmag_l*vmag_l + vmag_r*vmag_r)/(a12*a12)));
+    // Additional diffusion
+    auto delta = 4.0;
+    md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * a12);
+    //md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
 
     // Flux vector splitting
-    auto l_plus = 0.5 * (vriem + std::fabs(vriem));
-    auto l_minus = 0.5 * (vriem - std::fabs(vriem));
+    auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
+    auto l_minus = 0.5 * (vriem - std::fabs(vriem) - 2.0*md);
 
     // Conservative fluxes
     for (std::size_t k=0; k<nspec; ++k)

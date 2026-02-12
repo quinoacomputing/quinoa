@@ -77,7 +77,7 @@ class FV : public CBase_FV {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit FV( CkMigrateMessage* msg ) : CBase_FV( msg ) {}
+    explicit FV( CkMigrateMessage* msg ) : CBase_FV( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

@@ -185,11 +185,12 @@ class DGPDE {
       const std::size_t nielem ) const
     { self->initialize( geoElem, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
-    //! Public interface for computing density constraint
-    void computeDensityConstr( std::size_t nelem,
+    //! Public interface for computing plastic deformation
+    void computePlasticDeformation( std::size_t nelem,
                                tk::Fields& unk,
-                               std::vector< tk::real >& densityConstr) const
-    { self->computeDensityConstr( nelem, unk, densityConstr); }
+                               tk::Fields& pri,
+                               std::vector< tk::real >& plasticDeformation) const
+    { self->computePlasticDeformation( nelem, unk, pri, plasticDeformation); }
 
     //! Public interface to updating the interface cells for the diff eq
     void updateInterfaceCells( tk::Fields& unk,
@@ -244,15 +245,13 @@ class DGPDE {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
     {
       self->limit( t, pref, geoFace, geoElem, fd, esup, inpoel, coord, ndofel,
-                   gid, bid, uNodalExtrm, pNodalExtrm, mtInv, U, P, shockmarker );
+                   gid, bid, mtInv, U, P, shockmarker );
     }
 
     //! Public interface to update the conservative variable solution
@@ -328,9 +327,10 @@ class DGPDE {
                  const std::vector< std::size_t >& ndofel,
                  const tk::Fields& U,
                  const tk::Fields& P,
-                 const std::size_t nielem ) const
+                 const std::size_t nielem,
+                 std::vector< tk::real >& local_dte ) const
     { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U,
-                       P, nielem ); }
+                       P, nielem, local_dte ); }
 
     //! Public interface for elastic energy balance
     void balance_plastic_energy( std::size_t e,
@@ -342,13 +342,10 @@ class DGPDE {
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
                     const tk::Fields& geoElem,
-                    const std::vector< std::size_t >& inpoel,
-                    const tk::UnsMesh::Coords& coord,
                     const tk::Fields& U,
-                    const tk::Fields& P,
                     const std::vector< std::size_t >& ndofel,
                     tk::Fields& R ) const
-    { return self->stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R); }
+    { return self->stiff_rhs( e, geoElem, U, ndofel, R); }
 
     //! Public interface to returning maps of output var functions
     std::map< std::string, tk::GetVarFn > OutVarFn() const
@@ -435,9 +432,10 @@ class DGPDE {
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
-      virtual void computeDensityConstr( std::size_t nelem,
-                                         tk::Fields& unk,
-                                         std::vector< tk::real >& densityConstr)
+      virtual void computePlasticDeformation( std::size_t nelem,
+                                              tk::Fields& unk,
+                                              tk::Fields& pri,
+                                              std::vector< tk::real >& plasticDeformation)
                                          const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
@@ -477,8 +475,6 @@ class DGPDE {
                           const std::vector< std::size_t >&,
                           const std::vector< std::size_t >&,
                           const std::unordered_map< std::size_t, std::size_t >&,
-                          const std::vector< std::vector<tk::real> >&,
-                          const std::vector< std::vector<tk::real> >&,
                           const std::vector< std::vector<tk::real> >&,
                           tk::Fields&,
                           tk::Fields&,
@@ -529,15 +525,13 @@ class DGPDE {
                            const std::vector< std::size_t >&,
                            const tk::Fields&,
                            const tk::Fields&,
-                           const std::size_t ) const = 0;
+                           const std::size_t,
+                           std::vector< tk::real >& ) const = 0;
       virtual void balance_plastic_energy( std::size_t,
                                            std::vector< tk::real >,
                                            std::vector< tk::real >,
                                            tk::Fields& ) const = 0;
       virtual void stiff_rhs( std::size_t,
-                              const tk::Fields&,
-                              const std::vector< std::size_t >&,
-                              const tk::UnsMesh::Coords&,
                               const tk::Fields&,
                               const tk::Fields&,
                               const std::vector< std::size_t >&,
@@ -601,11 +595,12 @@ class DGPDE {
         const std::size_t nielem )
       const override { data.initialize( geoElem, inpoel, coord, inbox,
         elemblkid, unk, t, nielem ); }
-      void computeDensityConstr( std::size_t nelem,
-                                 tk::Fields& unk,
-                                 std::vector< tk::real >& densityConstr)
+      void computePlasticDeformation( std::size_t nelem,
+                                      tk::Fields& unk,
+                                      tk::Fields& pri,
+                                      std::vector< tk::real >& plasticDeformation)
                                  const override
-      { data.computeDensityConstr( nelem, unk, densityConstr ); }
+      { data.computePlasticDeformation( nelem, unk, pri, plasticDeformation ); }
       void updateInterfaceCells( tk::Fields& unk,
                                  std::size_t nielem,
                                  std::vector< std::size_t >& ndofel,
@@ -653,15 +648,13 @@ class DGPDE {
                   const std::vector< std::size_t >& ndofel,
                   const std::vector< std::size_t >& gid,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
-                  const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                  const std::vector< std::vector<tk::real> >& pNodalExtrm,
                   const std::vector< std::vector<tk::real> >& mtInv,
                   tk::Fields& U,
                   tk::Fields& P,
                   std::vector< std::size_t >& shockmarker ) const override
       {
         data.limit( t, pref, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                    bid, uNodalExtrm, pNodalExtrm, mtInv, U, P, shockmarker );
+                    bid, mtInv, U, P, shockmarker );
       }
       void CPL( const tk::Fields& prim,
                 const tk::Fields& geoElem,
@@ -724,9 +717,10 @@ class DGPDE {
                    const std::vector< std::size_t >& ndofel,
                    const tk::Fields& U,
                    const tk::Fields& P,
-                   const std::size_t nielem ) const override
+                   const std::size_t nielem,
+                   std::vector< tk::real >& local_dte ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
-                        U, P, nielem ); }
+                        U, P, nielem, local_dte ); }
       void balance_plastic_energy( std::size_t e,
                                    std::vector< tk::real > x_star,
                                    std::vector< tk::real > x,
@@ -734,13 +728,10 @@ class DGPDE {
       { return data.balance_plastic_energy( e, x_star, x, U); }
       void stiff_rhs( std::size_t e,
                       const tk::Fields& geoElem,
-                      const std::vector< std::size_t >& inpoel,
-                      const tk::UnsMesh::Coords& coord,
                       const tk::Fields& U,
-                      const tk::Fields& P,
                       const std::vector< std::size_t >& ndofel,
                       tk::Fields& R ) const override
-      { return data.stiff_rhs( e, geoElem, inpoel, coord, U, P, ndofel, R ); }
+      { return data.stiff_rhs( e, geoElem, U, ndofel, R ); }
       std::map< std::string, tk::GetVarFn > OutVarFn() const override
       { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override

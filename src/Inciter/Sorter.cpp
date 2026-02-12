@@ -93,6 +93,9 @@ Sorter::Sorter( std::size_t meshid,
             { return std::all_of( begin(s.second), end(s.second),
                        [&](auto f){ return f*3+2 < m_triinpoel.size(); } ); } ),
           "Boundary face data structures inconsistent" );
+
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 void
@@ -574,8 +577,8 @@ Sorter::createDiscWorkers()
   // "Dynamic Insertion".
 
   m_scheme[m_meshid].disc()[ thisIndex ].insert( m_meshid, disc,
-    m_scheme[m_meshid].ale(),
-    m_scheme[m_meshid].conjugategradients(), m_host, m_meshwriter, m_coordmap,
+    m_scheme[m_meshid].ale(), m_scheme[m_meshid].conjugategradients(),
+    m_scheme[m_meshid].implicitsolver(), m_host, m_meshwriter, m_coordmap,
     m_el, m_msum, m_bface, m_triinpoel, m_elemblockid, m_nchare );
 
   contribute( sizeof(std::size_t), &m_meshid, CkReduction::nop,

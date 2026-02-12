@@ -246,7 +246,9 @@ Transporter::info( const InciterPrint& print )
               g_inputdeck.get< tag::operator_reorder >() );
   auto steady = g_inputdeck.get< tag::steady_state >();
   print.item( "Local time stepping", steady );
-  if (steady) {
+  auto implicitts = g_inputdeck.get< tag::implicit_timestepping >();
+  print.item( "Implicit time stepping", implicitts );
+  if (steady || implicitts) {
     print.item( "L2-norm residual convergence criterion",
                 g_inputdeck.get< tag::residual >() );
     print.item( "Convergence criterion component index",
@@ -274,9 +276,11 @@ Transporter::info( const InciterPrint& print )
   if (rbmotion.get< tag::rigid_body_movt >()) {
     const auto& rbdof = rbmotion.get< tag::rigid_body_dof >();
     print.item( "Rigid body motion DOF", rbdof );
-    if (rbdof == 3)
-      print.item( "Rigid body 3-DOF symmetry plane",
-        rbmotion.get< tag::symmetry_plane >() );
+    if (rbdof == 3) {
+      const auto& sym_dir = rbmotion.get< tag::symmetry_plane >();
+      print.item( "Rigid body 3-DOF symmetry plane vector",
+        tk::parameters(sym_dir) );
+    }
   }
 
   // Print out info on settings of selected partial differential equations
@@ -587,6 +591,7 @@ Transporter::createPartitioner()
     m_scheme.emplace_back( g_inputdeck.get< tag::scheme >(),
                            g_inputdeck.get< tag::ale, tag::ale >(),
                            need_linearsolver(),
+                           g_inputdeck.get< tag::implicit_timestepping >(),
                            centering );
 
   ErrChk( !m_input.empty(), "No input mesh" );
@@ -1194,6 +1199,9 @@ Transporter::doneInsertingGhosts(std::size_t meshid)
 //! \param[in] meshid Mesh id
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::implicit_timestepping >())
+    m_scheme[meshid].implicitsolver().doneInserting();
+
   m_scheme[meshid].ghosts().doneInserting();
   m_scheme[meshid].ghosts().startCommSetup();
 }
@@ -1553,7 +1561,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diagnostics, tag::error >();
 
-  decltype(ncomp) n = 0;
+  [[maybe_unused]] decltype(ncomp) n = 0;
   n += ncomp;
   if (error == tk::ctr::ErrorType::L2) {
    // Finish computing the L2 norm of the numerical - analytical solution

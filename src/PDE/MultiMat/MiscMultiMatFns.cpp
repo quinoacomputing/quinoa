@@ -148,7 +148,7 @@ cleanTraceMultiMat(
     // get conserved quantities
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
-    ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+    eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
 
     auto u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
     auto v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
@@ -210,6 +210,16 @@ cleanTraceMultiMat(
             for (std::size_t j=0; j<3; ++j)
               gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
         }
+
+        // check for unbounded volume fractions
+        if (alk < 0.0 || !std::isfinite(alk)) {
+          auto rhok = mat_blk[k].compute< EOS::density >(p_target,
+            std::max(1e-8,tmax));
+          if (std::isfinite(alk)) d_al += (alk - 1e-14);
+          alk = 1e-14;
+          U(e, densityDofIdx(nmat, k, rdof, 0)) = alk * rhok;
+        }
+
         // determine target relaxation pressure
         prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
@@ -308,7 +318,8 @@ timeStepSizeMultiMat(
   const std::size_t nelem,
   std::size_t nmat,
   const tk::Fields& U,
-  const tk::Fields& P )
+  const tk::Fields& P,
+  std::vector< tk::real >& local_dte )
 // *****************************************************************************
 //  Time step restriction for multi material cell-centered schemes
 //! \param[in] mat_blk EOS material block
@@ -319,6 +330,8 @@ timeStepSizeMultiMat(
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] U High-order solution vector
 //! \param[in] P High-order vector of primitives
+//! \param[in,out] local_dte Time step size for each element (for local
+//!   time stepping)
 //! \return Maximum allowable time step based on cfl criterion
 // *****************************************************************************
 {
@@ -349,9 +362,9 @@ timeStepSizeMultiMat(
     B_l[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, rdof, ndof, el, U, B_l);
+    eval_state(ncomp, rdof, ndof, el, U, B_l, ugp.data());
     // get primitive quantities
-    pgp = eval_state(nprim, rdof, ndof, el, P, B_l);
+    eval_state(nprim, rdof, ndof, el, P, B_l, pgp.data());
 
     // advection velocity
     u = pgp[velocityIdx(nmat, 0)];
@@ -384,9 +397,9 @@ timeStepSizeMultiMat(
       B_r[0] = 1.0;
 
       // get conserved quantities
-      ugp = eval_state( ncomp, rdof, ndof, eR, U, B_r);
+      eval_state( ncomp, rdof, ndof, eR, U, B_r, ugp.data());
       // get primitive quantities
-      pgp = eval_state( nprim, rdof, ndof, eR, P, B_r);
+      eval_state( nprim, rdof, ndof, eR, P, B_r, pgp.data());
 
       // advection velocity
       u = pgp[velocityIdx(nmat, 0)];
@@ -423,7 +436,8 @@ timeStepSizeMultiMat(
   // compute allowable dt
   for (std::size_t e=0; e<nelem; ++e)
   {
-    mindt = std::min( mindt, geoElem(e,0)/delt[e] );
+    local_dte[e] = geoElem(e,0)/delt[e];
+    mindt = std::min( mindt, local_dte[e] );
   }
 
   return mindt;
@@ -469,9 +483,9 @@ timeStepSizeMultiMatFV(
     B[0] = 1.0;
 
     // get conserved quantities
-    ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+    eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
     // get primitive quantities
-    pgp = eval_state(nprim, rdof, ndof, e, P, B);
+    eval_state(nprim, rdof, ndof, e, P, B, pgp.data());
 
     // magnitude of advection velocity
     auto u = pgp[velocityIdx(nmat, 0)];
@@ -540,13 +554,14 @@ timeStepSizeViscousFV(
   std::size_t ncomp = U.nprop()/rdof;
 
   auto mindt = std::numeric_limits< tk::real >::max();
+  std::vector< tk::real > ugp(ncomp, 0.0);
 
   for (std::size_t e=0; e<nelem; ++e)
   {
     // get conserved quantities at centroid
     std::vector< tk::real > B(rdof, 0.0);
     B[0] = 1.0;
-    auto ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+    eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
 
     // Kinematic viscosity
     tk::real nu(0.0);

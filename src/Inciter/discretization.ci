@@ -17,6 +17,7 @@ module discretization {
   extern module meshwriter;
   extern module ale;
   extern module conjugategradients;
+  extern module bicg;
 
   include "UnsMesh.hpp";
   include "CommMap.hpp";
@@ -29,6 +30,7 @@ module discretization {
         const std::vector< CProxy_Discretization >& disc,
         const CProxy_ALE& aleproxy,
         const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
+        const tk::CProxy_BiCG& implicitsolverproxy,
         const CProxy_Transporter& transporter,
         const tk::CProxy_MeshWriter& meshwriter,
         const tk::UnsMesh::CoordMap& coordmap,

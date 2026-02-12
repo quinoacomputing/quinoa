@@ -76,6 +76,13 @@ constexpr std::array< real, 10 > massMatrixDubiner() {
     3.0/7.0 }};
 }
 
+//! Face centroid coords in standard-tet-reference frame
+const std::array< std::array< tk::real, 3 > , 4 > fc_coord {{
+    { 1.0/3.0, 1.0/3.0, 1.0/3.0 },
+    { 0.0, 1.0/3.0, 1.0/3.0 },
+    { 1.0/3.0, 0.0, 1.0/3.0 },
+    { 1.0/3.0, 1.0/3.0, 0.0 } }};
+
 //! Initialize Gaussian quadrature points locations and weights for a tetrahedron
 void
 GaussQuadratureTet( std::size_t NG,

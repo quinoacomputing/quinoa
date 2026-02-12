@@ -47,10 +47,6 @@ inciter = {
     elemvar = {
       "analytic",
       "C1"
-    },
-    elemalias = {
-      "",
-      "c0_numerical"
     }
   }
 

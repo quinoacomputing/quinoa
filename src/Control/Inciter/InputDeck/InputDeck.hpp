@@ -90,7 +90,6 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::prelax_timescale, tk::real,
   tag::intsharp,         int,
   tag::intsharp_param,   tk::real,
-  tag::rho0constraint,   uint64_t,
   tag::dt_sos_massavg,   int,
   tag::problem,          ProblemType,
   tag::viscous,          bool
@@ -132,12 +131,13 @@ using materialList = tk::TaggedTuple< brigand::list<
 
 // Species/EOS object
 using speciesList = tk::TaggedTuple< brigand::list<
-  tag::id,       std::vector< uint64_t >,
-  tag::gamma,    std::vector< tk::real >,
-  tag::R,        std::vector< tk::real >,
-  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
-  tag::t_range,  std::vector< std::vector< tk::real > >,
-  tag::dH_ref,   std::vector< tk::real >
+  tag::id,        std::vector< uint64_t >,
+  tag::gamma,     std::vector< tk::real >,
+  tag::R,         std::vector< tk::real >,
+  tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,   std::vector< std::vector< tk::real > >,
+  tag::dH_ref,    std::vector< tk::real >,
+  tag::spec_name, std::vector< std::string >
 > >;
 
 // Boundary conditions block
@@ -242,7 +242,7 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::location,          std::vector< tk::real >,
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
-  tag::moment_of_inertia, tk::real,
+  tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
   tag::center_of_mass,    std::vector< tk::real >
 > >;
 
@@ -255,9 +255,7 @@ using fieldOutputList = tk::TaggedTuple< brigand::list<
   tag::filetype,      tk::ctr::FieldFileType,
   tag::sideset,       std::vector< uint64_t >,
   tag::outvar,        std::vector< OutVar >,
-  tag::elemalias,     std::vector< std::string >,  // only for error checking
   tag::elemvar,       std::vector< std::string >,  // only for error checking
-  tag::nodealias,     std::vector< std::string >,  // only for error checking
   tag::nodevar,       std::vector< std::string >   // only for error checking
 > >;
 
@@ -298,16 +296,21 @@ using ConfigMembers = brigand::list<
   tag::dt,               tk::real,
   tag::cfl,              tk::real,
   tag::cfl_ramping,      bool,
+  tag::cfl_ramping_steps,uint32_t,
   tag::ttyi,             uint32_t,
   tag::imex_runge_kutta, uint32_t,
   tag::imex_maxiter,     uint32_t,
   tag::imex_reltol,      tk::real,
   tag::imex_abstol,      tk::real,
 
+  // NASA9 database location for MultiSpecies
+  tag::nasa9_filepath, std::string,
+
   // steady-state solver options
-  tag::steady_state, bool,
-  tag::residual,     tk::real,
-  tag::rescomp,      uint32_t,
+  tag::implicit_timestepping, bool,
+  tag::steady_state,          bool,
+  tag::residual,              tk::real,
+  tag::rescomp,               uint32_t,
 
   // mesh partitioning and reordering/sorting choices
   tag::partitioning,     tk::ctr::PartitioningAlgorithmType,
@@ -362,7 +365,7 @@ using ConfigMembers = brigand::list<
   tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
     tag::rigid_body_movt, bool,
     tag::rigid_body_dof,  std::size_t,
-    tag::symmetry_plane,  std::size_t
+    tag::symmetry_plane,  std::vector< tk::real >
   > >,
 
   // ALE block
@@ -515,12 +518,28 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       "Determines whether a ramping coefficient is applied to the CFL coefficient.",
       R"(This keyword is used to specify a boolean that determines
       whether a ramping coefficient is applied to the CFL coefficient.
-      If true, the CFL would be scaled down by 0.01 at the first step,
-      and increased by 0.01 for the next 100 steps.)", "bool"});
+      If true, the CFL would be scaled down by 1/'cfl_ramping_steps' at the
+      first step, and linearly increased to the full CFL value.)", "bool"});
+
+      keywords.insert({"cfl_ramping_steps",
+      "Specify the number of steps the CFL coefficient is ramped over.",
+      R"(This keyword is used to specify the number of steps over which the
+      the CFL coefficient ramping is active. Only used if 'cfl_ramping' is set
+      to true. Default value is 100.)", "uint"});
 
       keywords.insert({"ttyi", "Set screen output interval",
         R"(This keyword is used to specify the interval in time steps for screen
         output during a simulation.)", "uint"});
+
+      keywords.insert({"implicit_timestepping",
+        "Toggle use of an implicit time-stepping scheme",
+        R"(This keywords is used to trigger implicit time integration BDF1
+        (backward Euler) for the DG/DGP1/DGP2/PDG spatial discretizations. This
+        will activate the implicit BDF1 scheme which replaces the explicit RK3
+        that is usually used. This requires PDE-specific implementation of the
+        Jacobian matrix. Jacobian implementation is complete only for
+        PDEType::MULTISPECIES, i.e. implicit_timestepping can only be used for
+        multispecies currently.)", "bool"});
 
       keywords.insert({"imex_runge_kutta",
         "Toggle use of IMplicit-EXplicit Runge-Kutta scheme",
@@ -549,6 +568,19 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to specify the absolute tolerance that
         the non-linear solver uses to obtain the implicit unknowns within the
         Implicit-Explicit Runge-Kutta scheme.)", "real"});
+
+      // -----------------------------------------------------------------------
+      // MultiSpecies option to provide NASA9 DB filepath
+      // -----------------------------------------------------------------------
+
+      keywords.insert({"nasa9_filepath",
+        "Provide the path to the NASA9 data file",
+        R"(This keywords is used to specify the filepath of the NASA9 database
+        file. By providing this file, the user is able to initialize species by
+        providing their names (variable spec_name) and the rest of the parameters
+        will be read from the file. Default assumes file is called nasa9.dat and
+        is located the working directory where inciter is being executed from)",
+        "string"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options
@@ -937,12 +969,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         span, after the use of sharpening. It is used for multimat and transport,
         and has no effect for the other PDE types.)", "real" });
 
-      keywords.insert({"rho0constraint",
-        "Toggle the density constraint correction",
-        R"(This keyword is used to toggle the density constraint in solid
-        dynamics on/off. It is used only for the multi-material solver in the
-        presence of solids. The default is 1 (on).)", "uint 0/1"});
-
       keywords.insert({"dt_sos_massavg",
         "Toggle method for calculating speed of sound used for time step in a cell",
         R"(This keyword is used to specify the method to calculate the speed of
@@ -1126,6 +1152,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         the reference temperature in the enthalpy calculations is 0 K. This number
         is taken from the NASA Glenn 2002 report, and is the heat of formation
         divided by the species molar mass.)", "vector of reals"});
+
+      keywords.insert({"spec_name", "List of species names, e.g. CO2, Ar.",
+        R"(This keyword is used to specify a list of chemical species which will serve
+        as reference for the program to retrieve its TPG coefficients from the NASA9
+        database. Only species with 3 temperature intervals are supported. If species
+        names are specified, the nasa9_filepath must be specified or the nasa9 database
+        must be present at the default location.)", "strings"});
 
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas
@@ -1817,7 +1850,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"symmetry_plane", "Symmetry plane for rigid body motion",
         R"(This keyword is used to specify the symmetry plane for a 3 DOF rigid
-        body motion solver. 1: x-plane, 2: y-plane, 3: z-plane.)", "uint"});
+        body motion solver, given as a vector normal to the plane)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // IC object
@@ -1971,7 +2005,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         relocate the mesh.)", "vector of 3 reals"});
 
       keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
-        R"(Moment of inertia of rigid body for rotational motion)", "real"});
+        R"(Moment of inertia of rigid body for rotational motion)",
+        "3-by-3 vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
         R"(Center of mass of rigid body used to compute torque for rotational

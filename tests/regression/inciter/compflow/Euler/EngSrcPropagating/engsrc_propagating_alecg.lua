@@ -55,11 +55,6 @@ inciter = {
       "density",
       "specific_total_energy",
       "pressure"
-    },
-    nodealias = {
-      "density_numerical",
-      "specific_total_energy_numerical",
-      "pressure_numerical"
     }
   },
 

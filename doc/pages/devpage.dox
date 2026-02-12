@@ -16,6 +16,7 @@ This page provides links to resources for Quinoa developers.
 - @ref inciter_newscheme "How to add a new scheme"
 - @ref inciter_newpde "How to add a new PDE type"
 - @ref inciter_newparse "How to parse a new block in the control file"
+- @ref inciter_newoutvar "How to add a new field output variable"
 
 We roughly follow the development model described
 [here](http://nvie.com/posts/a-successful-git-branching-model). As a

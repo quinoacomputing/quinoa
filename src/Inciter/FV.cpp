@@ -122,6 +122,9 @@ FV::FV( const CProxy_Discretization& disc,
   contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
     CkCallback(CkReductionTarget(Transporter,doneInsertingGhosts),
     Disc()->Tr()) );
+
+    // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 void
@@ -457,8 +460,7 @@ FV::lim()
 
   if (rdof > 1) {
     g_fvpde[Disc()->MeshId()].limit( myGhosts()->m_geoFace, myGhosts()->m_fd,
-      myGhosts()->m_esup,
-      myGhosts()->m_inpoel, myGhosts()->m_coord, m_srcFlag, m_u, m_p );
+      myGhosts()->m_esup, myGhosts()->m_inpoel, m_srcFlag, m_u, m_p );
   }
 
   // Send limited solution to neighboring chares
@@ -570,7 +572,10 @@ FV::dt()
       // time-step suppression for unsteady problems
       tk::real coeff(1.0);
       if (!g_inputdeck.get< tag::steady_state >()) {
-        if (d->It() < 100) coeff = 0.01 * static_cast< tk::real >(d->It());
+        auto ramp_steps = g_inputdeck.get< tag::cfl_ramping_steps >();
+        if (g_inputdeck.get< tag::cfl_ramping >() && d->It() < ramp_steps)
+          coeff = 1.0/static_cast< tk::real >(ramp_steps)
+            * static_cast< tk::real >(d->It());
       }
       else {
         for (auto& edt : m_dte) edt *= g_inputdeck.get< tag::cfl >();
