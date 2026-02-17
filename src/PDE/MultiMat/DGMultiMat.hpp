@@ -1212,7 +1212,7 @@ class MultiMat {
           tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
           tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
           intE -= 0.5 * arho * (u*u+v*v+w*w);
-          // Substract elastic energy
+          // Substract elastic energy: NOTE: This is the WRONG elastic energy is using GR EOS.
           if (solidx[k] > 0) {
             std::array< std::array< tk::real, 3 >, 3 > g;
             for (std::size_t i=0; i<3; ++i)
@@ -1225,7 +1225,7 @@ class MultiMat {
             intE -= alpha * rhoEe;
           }
           // Finally, multiply by volume and then add it to internal_energy
-          // Also multiply by 10 because I am running with a 10th of the thickness
+          // Also multiply by 50 because I am running with a 50th of the thickness
           // Also multiply by 4 to account for the whole cylinder, not just a fourth.
           internal_energy += intE * geoElem(e, 0) * 50 * 4;
         }
