@@ -1039,7 +1039,7 @@ enforcePhysicalConstraints(
 // *****************************************************************************
 {
   auto myPDE = inciter::g_inputdeck.get< tag::pde >();
-  auto nspec = inciter::g_inputdeck.get< tag::multispeces, tag::nspec >();
+  auto nspec = inciter::g_inputdeck.get< tag::multispecies, tag::nspec >();
 
   // unfortunately have to query PDEType here. alternative will potentially
   // require refactor that passes PDEType from DGPDE to this level.
