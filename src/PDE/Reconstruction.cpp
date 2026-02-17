@@ -23,6 +23,7 @@
 #include "Reconstruction.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
 #include "Integrate/Quadrature.hpp"
@@ -1038,6 +1039,7 @@ enforcePhysicalConstraints(
 // *****************************************************************************
 {
   auto myPDE = inciter::g_inputdeck.get< tag::pde >();
+  auto nspec = inciter::g_inputdeck.get< tag::multispeces, tag::nspec >();
 
   // unfortunately have to query PDEType here. alternative will potentially
   // require refactor that passes PDEType from DGPDE to this level.
@@ -1053,7 +1055,9 @@ enforcePhysicalConstraints(
     }
   }
   else if (myPDE == inciter::ctr::PDEType::MULTISPECIES) {
-    // TODO: consider clipping temperature here
+    using inciter::multispecies::temperatureIdx;
+    state[ncomp+temperatureIdx(nspec,0)] = inciter::constrain_temperature(
+      state[ncomp+temperatureIdx(nspec,0)] );
   }
 }
 
