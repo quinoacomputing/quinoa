@@ -266,8 +266,6 @@ class Transport {
                 const std::vector< std::size_t >&,
                 const std::unordered_map< std::size_t, std::size_t >&,
                 const std::vector< std::vector<tk::real> >&,
-                const std::vector< std::vector<tk::real> >&,
-                const std::vector< std::vector<tk::real> >&,
                 tk::Fields& U,
                 tk::Fields&,
                 std::vector< std::size_t >& ) const
@@ -364,25 +362,52 @@ class Transport {
       // system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
-      // compute internal surface flux integrals
+
+      // configure a no-op lambda for source term function
+      auto srcfn = []( ncomp_t, const std::vector< inciter::EOS >&, tk::real,
+        tk::real, tk::real, tk::real, std::vector< tk::real >& ){
+        return tk::SrcFn::result_type(); };
+
+      // p-adaptive DG
       std::vector< std::size_t > solidx(1, 0);
-      tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
-                   inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
-                   visc_flux, Problem::prescribedVelocity, U, P, ndofel, dt, R,
-                   riemannDeriv, viscous, intsharp);
+      if (!pref) {
+        // compute internal surface flux integrals
+        tk::surfInt_constP( m_ncomp, m_mat_blk, t, ndof, rdof,
+                     inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
+                     visc_flux, Problem::prescribedVelocity, U, P, dt, R,
+                     riemannDeriv, viscous, intsharp );
 
-      if(ndof > 1)
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt_constP( m_ncomp, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
+            visc_flux, Problem::prescribedVelocity, std::get<1>(b), U, P, R,
+            riemannDeriv, viscous, intsharp );
+
         // compute volume integrals
-        tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
-                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, visc_flux,
-                    Problem::prescribedVelocity, U, P, ndofel, R, viscous, intsharp);
+        tk::volInt_constP( m_ncomp, t, m_mat_blk, ndof, rdof,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, visc_flux, 
+                    Problem::prescribedVelocity, srcfn, U, P, R, viscous, intsharp );
+      }
+      else {
+        // compute internal surface flux integrals
+        tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
+                     inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
+                     visc_flux, Problem::prescribedVelocity, U, P, ndofel, dt, R,
+                     riemannDeriv, viscous, intsharp );
 
-      // compute boundary surface flux integrals
+        // compute boundary surface flux integrals
       for (const auto& b : m_bc)
         tk::bndSurfInt( pref, m_ncomp, m_mat_blk, ndof, rdof,
           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
           visc_flux, Problem::prescribedVelocity, std::get<1>(b), U, P, ndofel, R,
           riemannDeriv, viscous, intsharp );
+
+        // compute volume integrals
+        tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
+<<                  fd.Esuel().size()/4, inpoel, coord, geoElem, flux, visc_flux,
+                    Problem::prescribedVelocity, U, P, ndofel, R, viscous, intsharp);
+      }
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -430,7 +455,8 @@ class Transport {
                  const std::vector< std::size_t >& /*ndofel*/,
                  const tk::Fields& /*U*/,
                  const tk::Fields&,
-                 const std::size_t /*nielem*/ ) const
+                 const std::size_t /*nielem*/,
+                 std::vector< tk::real >& /*local_dte*/ ) const
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
       return mindt;

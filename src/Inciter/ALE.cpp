@@ -83,6 +83,9 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   thisProxy[ thisIndex ].wait4vel();
   thisProxy[ thisIndex ].wait4pot();
   thisProxy[ thisIndex ].wait4for();
+
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
