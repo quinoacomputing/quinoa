@@ -14,6 +14,7 @@
 #ifndef DGMultiSpecies_h
 #define DGMultiSpecies_h
 
+#include <iostream>
 #include <cmath>
 #include <algorithm>
 #include <unordered_set>
@@ -1092,6 +1093,8 @@ class MultiSpecies {
 
       mu= mix.viscosity(ugp[ncomp+multispecies::temperatureIdx(nspec,0)],
       mat_blk);
+
+      //std::cout<<"mu="<<mu<<std::endl;
       
       conduct= mix.conduct(ugp[ncomp+multispecies::temperatureIdx(nspec,0)],
       mat_blk);
