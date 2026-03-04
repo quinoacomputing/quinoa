@@ -140,7 +140,7 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::temp_ref, std::vector< tk::real >,
   tag::mu_ref,   std::vector< tk::real >,
   tag::C,        std::vector< tk::real >,
-  tag::Sutherland, std::vector< bool >
+  tag::Sutherland, std::vector< bool >,
   tag::spec_name, std::vector< std::string >
 > >;
 

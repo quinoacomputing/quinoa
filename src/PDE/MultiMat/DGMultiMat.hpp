@@ -985,7 +985,7 @@ class MultiMat {
 
         // compute volume integrals
         tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-        inpoel, coord, geoElem, flux, visc_flux, velfn, U, P, ndofel, R, viscous,
+        inpoel, coord, geoElem, flux, visc_flux, velfn, Problem::src, U, P, ndofel, R, viscous,
                     intsharp);
 
       }

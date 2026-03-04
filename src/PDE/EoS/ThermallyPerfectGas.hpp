@@ -47,7 +47,7 @@ class ThermallyPerfectGas {
         temp_poly = m_t_range.back();
       } else {
       // Valid bounds
-        for (std::size_t k = 0; k < m_t_range.size() - 2; k++) {
+        for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
           if (temp_poly >= m_t_range[k] && temp_poly <= m_t_range[k+1]) {
             t_rng_idx = k;
             break;

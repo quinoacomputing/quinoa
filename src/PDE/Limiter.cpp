@@ -2956,5 +2956,16 @@ constrain_pressure( const std::vector< EOS >& mat_blk,
     EOS::min_eff_pressure >(1e-12, arho, alpha));
 }
 
+tk::real
+constrain_temperature( tk::real tmix )
+// *****************************************************************************
+//  Constrain mixture temperature
+//! \param[in] tmix Mixture temperature
+//! \return Constrained mixture temperature
+// *****************************************************************************
+{
+  return std::max( tmix, 1e-8 );
+}
+
 
 } // inciter::

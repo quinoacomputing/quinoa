@@ -160,7 +160,8 @@ Mixture::temperature(
   tk::real v,
   tk::real w,
   tk::real rhoE,
-  const std::vector< EOS >& mat_blk) const
+  const std::vector< EOS >& mat_blk,
+  tk::real T_init ) const
 // *************************************************************************
 //! \brief Calculate temperature based on the mixture composition
 //!   and species parameters.
@@ -177,7 +178,7 @@ Mixture::temperature(
   tk::real e = rhoE / mix_density - 0.5 * (u*u + v*v + w*w);
 
   // Solve for temperature -- Newton's method
-  tk::real temp = 1500; // Starting guess
+  tk::real temp = std::max( 10.0, T_init); // Starting guess
   tk::real tol = std::max(1e-8, 1e-8 * e); // Stopping condition
   tk::real err;
   std::size_t maxiter = 10;
@@ -205,7 +206,8 @@ Mixture::temperature(
     i++;
     if ( i == maxiter ) {
       Throw("Mixture Newton's Method for temperature failed to converge after iterations "
-      + std::to_string(i));
+      + std::to_string(i)  + " with temperature " + std::to_string(temp) +
+      " at final iteration" );
     }
   }
 

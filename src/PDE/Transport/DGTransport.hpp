@@ -405,8 +405,8 @@ class Transport {
 
         // compute volume integrals
         tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
-<<                  fd.Esuel().size()/4, inpoel, coord, geoElem, flux, visc_flux,
-                    Problem::prescribedVelocity, U, P, ndofel, R, viscous, intsharp);
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux, visc_flux,
+                    Problem::prescribedVelocity, srcfn, U, P, ndofel, R, viscous, intsharp);
       }
     }
 

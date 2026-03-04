@@ -230,15 +230,15 @@ surfInt( const bool pref,
       if (viscous){
           std::vector< tk::real> fluxl(5, 0);
           std::vector< tk::real> fluxr(5, 0);
-          //std::array< std::vector<real>, 3 > dBdx_l, dBdx_r;
+          std::array< std::vector<real>, 3 > dBdx_l, dBdx_r;
           std::vector< std::array< tk::real, 3 > > grad_all(2*ncomp, 
                                      std::array< real, 3 >{{0, 0, 0}});
           auto jacInv_l =
           tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
-          auto dBdx_l = tk::eval_dBdx_p1(dof_el, jacInv_l );
+          tk::eval_dBdx_p1(dof_el, jacInv_l, dBdx_l);
           auto jacInv_r =
           tk::inverseJacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
-          auto dBdx_r = tk::eval_dBdx_p1(dof_er, jacInv_r );
+          tk::eval_dBdx_p1(dof_er, jacInv_r, dBdx_r );
           
         if (dof_el > 4){          
           std::array< std::vector< real >, 3 > coordgp_3;
@@ -627,15 +627,15 @@ surfInt_constP(
       if (viscous){
           std::vector< tk::real> fluxl(5, 0);
           std::vector< tk::real> fluxr(5, 0);
-          //std::array< std::vector<real>, 3 > dBdx_l, dBdx_r;
+          std::array< std::vector<real>, 3 > dBdx_l, dBdx_r;
           std::vector< std::array< tk::real, 3 > > grad_all(ncomp+nprim, 
                                      std::array< real, 3 >{{0, 0, 0}});
           auto jacInv_l =
           tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
-          auto dBdx_l = tk::eval_dBdx_p1(rdof, jacInv_l );
+          tk::eval_dBdx_p1(rdof, jacInv_l,dBdx_l );
           auto jacInv_r =
           tk::inverseJacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
-          auto dBdx_r = tk::eval_dBdx_p1(rdof, jacInv_r );
+          tk::eval_dBdx_p1(rdof, jacInv_r, dBdx_r);
           
         if (rdof > 4){          
           std::array< std::vector< real >, 3 > coordgp_3;

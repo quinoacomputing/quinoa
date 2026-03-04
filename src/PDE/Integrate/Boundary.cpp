@@ -198,10 +198,11 @@ bndSurfInt( const bool pref,
                                             std::array< real, 3 >{{0, 0, 0}});
             std::vector<real> fluxl(5, 0);
             std::vector<real> fluxr(5, 0);
+            std::array< std::vector<tk::real>, 3 > dBdx_l;
  
             auto jacInv_l =
           tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
-           auto dBdx_l = tk::eval_dBdx_p1(dof_el, jacInv_l );
+          tk::eval_dBdx_p1(dof_el, jacInv_l, dBdx_l);
            
           if (dof_el > 4){
               std::array< std::vector< real >, 3 > coordgp_3;
@@ -519,10 +520,11 @@ bndSurfInt_constP(
                                             std::array< real, 3 >{{0, 0, 0}});
             std::vector<real> fluxl(5, 0);
             std::vector<real> fluxr(5, 0);
+            std::array< std::vector<tk::real>, 3 > dBdx_l;
  
             auto jacInv_l =
           tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
-           auto dBdx_l = tk::eval_dBdx_p1(rdof, jacInv_l );
+            tk::eval_dBdx_p1(rdof, jacInv_l, dBdx_l);
            
           if (rdof > 4){
               std::array< std::vector< real >, 3 > coordgp_3;
