@@ -1310,10 +1310,10 @@ LuaParser::storeInputDeck(
       totalmesh.insert(bc_deck[i].get< tag::mesh >().begin(),
         bc_deck[i].get< tag::mesh >().end());
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "dirichlet",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "dirichlet",
         bc_deck[i].get< tag::dirichlet >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "symmetry",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "symmetry",
         bc_deck[i].get< tag::symmetry >(), {});
 
       if (sol_bc[i+1]["inlet"].valid()) {
@@ -1341,19 +1341,19 @@ LuaParser::storeInputDeck(
         }
       }
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "outlet",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "outlet",
         bc_deck[i].get< tag::outlet >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "farfield",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "farfield",
         bc_deck[i].get< tag::farfield >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "extrapolate",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "extrapolate",
         bc_deck[i].get< tag::extrapolate >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "noslipwall",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "noslipwall",
         bc_deck[i].get< tag::noslipwall >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "slipwall",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "slipwall",
         bc_deck[i].get< tag::slipwall >(), {});
 
       // Time-dependent BC
@@ -1382,7 +1382,7 @@ LuaParser::storeInputDeck(
         const sol::table& sol_bpbc = sol_bc[i+1]["back_pressure"];
         auto& bpbc_deck = bc_deck[i].get< tag::back_pressure >();
 
-        storeVecIfSpecd< uint64_t >(sol_bpbc, "sideset",
+        storeVecIfSpecd< std::size_t >(sol_bpbc, "sideset",
           bpbc_deck.get< tag::sideset >(), {});
 
         if (!sol_bpbc["pressure"].valid())
@@ -1578,7 +1578,7 @@ LuaParser::storeInputDeck(
         checkBlock< inciter::ctr::meshblockList::Keys >(lua_meshblock[i+1],
           "meshblock");
 
-        storeIfSpecd< std::size_t >(lua_meshblock[i+1], "blockid",
+        storeIfSpecd< std::uint64_t >(lua_meshblock[i+1], "blockid",
           mblk_deck[i].get< tag::blockid >(), 0);
         if (mblk_deck[i].get< tag::blockid >() == 0)
           Throw("Each IC mesh block must specify the mesh block id.");

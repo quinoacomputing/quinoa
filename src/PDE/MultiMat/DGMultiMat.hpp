@@ -514,7 +514,7 @@ class MultiMat {
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
             auto gmat = getDeformGrad(nmat, imat, state);
-            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].compute<
+            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].template compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
               alphamat, imat, gmat );
 
@@ -522,7 +522,7 @@ class MultiMat {
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
 
             if (solidx[imat] > 0) {
-              auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(
+              auto asigmat = m_mat_blk[imat].template computeTensor< EOS::CauchyStress >(
               alphamat, imat, gmat );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
@@ -1254,7 +1254,7 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
-            auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
+            auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
               alpha, k, g );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
