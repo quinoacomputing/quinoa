@@ -1070,39 +1070,22 @@ OversetFE::dt()
 
   }
 
-  // Actiavate SDAG waits for next time step stage
-  thisProxy[ thisIndex ].wait4grad();
-  thisProxy[ thisIndex ].wait4rhs();
-
-  // Compute gradients for next time step and perform reductions
-  chBndGrad( mindt );
+  getForces(mindt);
 }
 
 void
-OversetFE::chBndGrad( tk::real mindt )
+OversetFE::getForces( tk::real mindt )
 // *****************************************************************************
-// Compute nodal gradients at chare-boundary nodes. Gradients at internal nodes
-// are calculated locally as needed and are not stored. Additionally, performs
-// reductions and broadcasts on time step and force
+// Compute forces and moments on the overset mesh and perform reduction
 //! \param[in] mindt The smallest dt across the whole problem
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Compute own portion of gradients for all equations
-  g_cgpde[d->MeshId()].chBndGrad( d->Coord(), d->Inpoel(), m_bndel, d->Gid(),
-    d->Bid(), m_u, m_chBndGrad );
-
-  // Communicate gradients to other chares on chare-boundary
-  if (d->NodeCommMap().empty())        // in serial we are done
-    comgrad_complete();
-  else // send gradients contributions to chare-boundary nodes to fellow chares
-    for (const auto& [c,n] : d->NodeCommMap()) {
-      std::vector< std::vector< tk::real > > g( n.size() );
-      std::size_t j = 0;
-      for (auto i : n) g[ j++ ] = m_chBndGrad[ tk::cref_find(d->Bid(),i) ];
-      thisProxy[c].comChBndGrad( std::vector<std::size_t>(begin(n),end(n)), g );
-    }
+  //! [Advance]
+  // Actiavate SDAG waits for next time step stage
+  thisProxy[ thisIndex ].wait4grad();
+  thisProxy[ thisIndex ].wait4rhs();
 
   // Compute own portion of force on boundary for overset mesh rigid body motion
   std::vector< tk::real > F(6, 0.0);
@@ -1112,6 +1095,7 @@ OversetFE::chBndGrad( tk::real mindt )
       m_u, m_centMass, F );
   }
 
+  // Tuple-reduction for min-dt and sum-F
   int tupleSize = 7;
   CkReduction::tupleElement advancingData[] = {
     CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
@@ -1130,25 +1114,54 @@ OversetFE::chBndGrad( tk::real mindt )
 
   advMsg->setCallback(cb);
   contribute(advMsg);
+  //! [Advance]
 }
 
-void OversetFE::storeDtAndForces( std::array< tk::real, 6 > F, tk::real mindt )
+void
+OversetFE::advance( tk::real newdt, std::array< tk::real, 6 > F )
 // *****************************************************************************
-// Receive forces from broadcast, then continue to rhs()
+// Advance equations to next time step
+//! \param[in] newdt The smallest dt across the whole problem
 //! \param[in] F Total surface force on this mesh
-//! \param[in] mindt The smallest dt across the whole problem
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Store surface forces and torques
+  // Set new time step size
+  if (m_stage == 0) d->setdt( newdt );
+
   for (std::size_t i=0; i<3; ++i) {
     m_surfForce[i] = F[i];
     m_surfTorque[i] = F[i+3];
   }
 
-  // Set new time step size
-  if (m_stage == 0) d->setdt( mindt );
+  // Compute gradients for next time step
+  chBndGrad();
+}
+
+void
+OversetFE::chBndGrad()
+// *****************************************************************************
+// Compute nodal gradients at chare-boundary nodes. Gradients at internal nodes
+// are calculated locally as needed and are not stored.
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Compute own portion of gradients for all equations
+  g_cgpde[d->MeshId()].chBndGrad( d->Coord(), d->Inpoel(), m_bndel, d->Gid(),
+    d->Bid(), m_u, m_chBndGrad );
+
+  // Communicate gradients to other chares on chare-boundary
+  if (d->NodeCommMap().empty())        // in serial we are done
+    comgrad_complete();
+  else // send gradients contributions to chare-boundary nodes to fellow chares
+    for (const auto& [c,n] : d->NodeCommMap()) {
+      std::vector< std::vector< tk::real > > g( n.size() );
+      std::size_t j = 0;
+      for (auto i : n) g[ j++ ] = m_chBndGrad[ tk::cref_find(d->Bid(),i) ];
+      thisProxy[c].comChBndGrad( std::vector<std::size_t>(begin(n),end(n)), g );
+    }
 
   owngrad_complete();
 }
@@ -1559,8 +1572,7 @@ OversetFE::stage()
   }
   else {
     // start with next time-step stage
-    auto d = Disc();
-    chBndGrad(d->Dt());
+    getForces(Disc()->Dt());
   }
 }
 //! [stage]

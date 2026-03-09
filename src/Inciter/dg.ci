@@ -65,8 +65,7 @@ module dg {
       entry [reductiontarget] void solve( tk::real newdt );
       entry void resized();
       entry void transferSol();
-      entry void advance( tk::real newdt );
-      entry void storeDtAndForces( std::array< tk::real, 6 > F, tk::real mindt );
+      entry void advance( tk::real newdt, std::array< tk::real, 6 > F );
       entry void lhs();
       entry void step();
       entry void start();
