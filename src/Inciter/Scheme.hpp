@@ -158,7 +158,6 @@ class Scheme {
     struct box {};
     struct transferSol {};
     struct advance {};
-    struct storeDtAndForces {};
     struct resized {};
     struct resizeComm {};
     struct refine {};
@@ -185,8 +184,6 @@ class Scheme {
             p.transferSol( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, advance > )
             p.advance( std::forward< Args >( args )... );
-          else if constexpr( std::is_same_v< Fn, storeDtAndForces > )
-            p.storeDtAndForces( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, resized > )
             p.resized( std::forward< Args >( args )... );
           else if constexpr( std::is_same_v< Fn, resizeComm > )

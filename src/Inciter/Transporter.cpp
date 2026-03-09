@@ -1483,9 +1483,9 @@ Transporter::collectDtAndForces( CkReductionMsg* advMsg )
     m_dtmsh.clear();
     m_ndtmsh = 0;
 
-    // broadcast to storeDtAndForces
+    // broadcast to advance time step
     for (auto& m : m_scheme) {
-      m.bcast< Scheme::storeDtAndForces >( F, mindt );
+      m.bcast< Scheme::advance >( mindt, F );
     }
   }
 }
