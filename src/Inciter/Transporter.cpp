@@ -1485,7 +1485,7 @@ Transporter::collectDtAndForces( CkReductionMsg* advMsg )
 
     // broadcast to advance time step
     for (auto& m : m_scheme) {
-      m.bcast< Scheme::advance >( mindt, F );
+      m.bcast< Scheme::advance >( dt, F );
     }
   }
 }
