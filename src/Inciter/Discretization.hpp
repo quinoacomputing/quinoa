@@ -85,7 +85,7 @@ class Discretization : public CBase_Discretization {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit Discretization( CkMigrateMessage* ) {}
+    explicit Discretization( CkMigrateMessage* msg ) : CBase_Discretization( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

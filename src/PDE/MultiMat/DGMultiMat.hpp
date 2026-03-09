@@ -34,7 +34,6 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/MultiMatTerms.hpp"
-#include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -460,6 +459,7 @@ class MultiMat {
               "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       auto mass_m = tk::massMatrixDubiner();
+      std::vector< tk::real > state(m_ncomp, 0.0);
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -480,6 +480,7 @@ class MultiMat {
 
         // Local degree of freedom
         auto dof_el = ndofel[e];
+        std::vector< tk::real > B(dof_el);
 
         auto vole = geoElem(e, 0);
 
@@ -487,12 +488,11 @@ class MultiMat {
         for (std::size_t igp=0; igp<ng; ++igp)
         {
           // Compute the basis function
-          auto B =
-            tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+          tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
 
           auto w = wgp[igp] * vole;
 
-          auto state = tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B );
+          tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B, state.data() );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -514,7 +514,7 @@ class MultiMat {
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
             auto gmat = getDeformGrad(nmat, imat, state);
-            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].compute<
+            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].template compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
               alphamat, imat, gmat );
 
@@ -522,7 +522,7 @@ class MultiMat {
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
 
             if (solidx[imat] > 0) {
-              auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(
+              auto asigmat = m_mat_blk[imat].template computeTensor< EOS::CauchyStress >(
               alphamat, imat, gmat );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
@@ -712,10 +712,6 @@ class MultiMat {
     //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!   global node ids (key)
-    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-    //!   variables
-    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-    //!   variables
     //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
@@ -731,8 +727,6 @@ class MultiMat {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields& P,
@@ -763,8 +757,7 @@ class MultiMat {
       {
         VertexBasedMultiMat_P2( pref, esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, pNodalExtrm, mtInv, flux, solidx, U, P, nmat,
-          shockmarker );
+          mtInv, flux, solidx, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
@@ -957,27 +950,42 @@ class MultiMat {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
-      // compute internal surface flux integrals
-      tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, riemannDeriv, intsharp );
+      // p-adaptive DG
+      if (!pref) {
+        // compute internal surface flux integrals
+        tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
+          dt, R, riemannDeriv, intsharp );
 
-      // compute optional source term
-      tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
-                  coord, geoElem, Problem::src, ndofel, R, nmat );
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+            m_riemann, velfn, std::get<1>(b), U, P, R,
+            riemannDeriv, intsharp );
 
-      if(ndof > 1)
+        // compute volume integrals
+        tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
+          geoElem, flux, velfn, Problem::src, U, P, R, intsharp );
+      }
+      else {
+        // compute internal surface flux integrals
+        tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
+                     dt, R, riemannDeriv, intsharp );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
+                          std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+                          m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
+                          riemannDeriv, intsharp );
+
         // compute volume integrals
         tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
-                    intsharp );
-
-      // compute boundary surface flux integrals
-      for (const auto& b : m_bc)
-        tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
-                        std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-                        m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
-                        riemannDeriv, intsharp );
+                    inpoel, coord, geoElem, flux, velfn, Problem::src, U, P,
+                    ndofel, R, intsharp );
+      }
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
               "Riemann derivative vector incorrect" );
@@ -1048,6 +1056,8 @@ class MultiMat {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
+    //! \param[in,out] local_dte Time step size for each element (for local
+    //!   time stepping)
     //! \return Minimum time step size
     //! \details The allowable dt is calculated by looking at the maximum
     //!   wave-speed in elements surrounding each face, times the area of that
@@ -1062,13 +1072,14 @@ class MultiMat {
                  const std::vector< std::size_t >& /*ndofel*/,
                  const tk::Fields& U,
                  const tk::Fields& P,
-                 const std::size_t nielem ) const
+                 const std::size_t nielem,
+                 std::vector< tk::real >& local_dte ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
       auto mindt = timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem,
-        nielem, nmat, U, P);
+        nielem, nmat, U, P, local_dte);
 
       tk::real dgp = 0.0;
       if (ndof == 4)
@@ -1083,6 +1094,8 @@ class MultiMat {
       // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
       // where p is the order of the DG polynomial by linear stability theory.
       mindt /= (2.0*dgp + 1.0);
+      for (std::size_t e=0; e<nielem; ++e)
+        local_dte[e] /= (2.0*dgp + 1.0);
       return mindt;
     }
 
@@ -1197,7 +1210,7 @@ class MultiMat {
 
       // arrays for quadrature points
       std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp;
+      std::vector< tk::real > wgp, B(ndofel[e]), state(m_ncomp);
 
       coordgp[0].resize( ng );
       coordgp[1].resize( ng );
@@ -1210,10 +1223,10 @@ class MultiMat {
       for (std::size_t igp=0; igp<ng; ++igp)
       {
         // Compute the basis function
-        auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
-                             coordgp[2][igp] );
+        tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+                        coordgp[2][igp], B );
 
-        auto state = tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B );
+        tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B, state.data() );
 
         // compute source
         // Loop through materials
@@ -1238,7 +1251,7 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
-            auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
+            auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
               alpha, k, g );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -1413,6 +1426,7 @@ class MultiMat {
       const auto& z = coord[2];
 
       std::vector< std::vector< tk::real > > Up(h.size());
+      std::vector< tk::real > B(rdof), uhp(m_ncomp), php(m_nprim);
 
       std::size_t j = 0;
       for (const auto& p : h) {
@@ -1430,10 +1444,10 @@ class MultiMat {
         // evaluate solution at history-point
         std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
           chp[2]-cp[0][2]}};
-        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
-          tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
-        auto php = eval_state(m_nprim, rdof, rdof, e, P, B);
+        tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc), B);
+        eval_state(m_ncomp, rdof, rdof, e, U, B, uhp.data());
+        eval_state(m_nprim, rdof, rdof, e, P, B, php.data());
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);

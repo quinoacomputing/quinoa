@@ -39,7 +39,7 @@ class ThermallyPerfectGas {
         t_rng_idx = 0;
         temp_poly = m_t_range[0];
       } else if (temp_poly > m_t_range.back()) {
-        t_rng_idx = m_t_range.size() - 1;
+        t_rng_idx = m_t_range.size() - 2;
         temp_poly = m_t_range.back();
       } else {
       // Valid bounds

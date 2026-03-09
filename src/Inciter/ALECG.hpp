@@ -84,7 +84,7 @@ class ALECG : public CBase_ALECG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit ALECG( CkMigrateMessage* msg ) : CBase_ALECG( msg ) {}
+    explicit ALECG( CkMigrateMessage* msg ) : CBase_ALECG( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif

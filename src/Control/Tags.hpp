@@ -166,6 +166,8 @@ DEFTAG(imex_maxiter);
 DEFTAG(imex_reltol);
 DEFTAG(imex_abstol);
 
+DEFTAG(nasa9_filepath);
+
 DEFTAG(ncomp);
 DEFTAG(pde);
 DEFTAG(problem);
@@ -224,6 +226,7 @@ DEFTAG(matidx);
 DEFTAG(solidx);
 DEFTAG(yield_stress);
 DEFTAG(K0);
+DEFTAG(spec_name);
 DEFTAG(R);
 DEFTAG(cp_coeff);
 DEFTAG(t_range);

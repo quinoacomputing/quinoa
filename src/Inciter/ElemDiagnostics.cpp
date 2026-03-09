@@ -149,6 +149,7 @@ const
     if (!ndofel.empty()) {
       dofe = ndofel[e];
     }
+    std::vector< tk::real > B(dofe);
     // Number of quadrature points for volume integration
     auto ng = tk::NGdiag(dofe);
 
@@ -176,8 +177,8 @@ const
       auto gp = tk::eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B = tk::eval_basis( dofe, coordgp[0][igp], coordgp[1][igp],
-                               coordgp[2][igp]);
+      tk::eval_basis( dofe, coordgp[0][igp], coordgp[1][igp],
+                      coordgp[2][igp], B );
 
       auto wt = wgp[igp] * geoElem(e, 0);
 

@@ -23,6 +23,8 @@
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
 #include "PDE/MultiSpecies/MultiSpeciesIndexing.hpp"
 
+#include "Nasa9DB.hpp"
+
 namespace tk {
 namespace grm {
 
@@ -157,6 +159,11 @@ LuaParser::storeInputDeck(
     Throw("No time step calculation policy has been selected in the "
       "preceeding block. Use keyword 'dt' to set a constant or 'cfl' to set an "
       "adaptive time step size calculation policy.");
+
+  // Option to provide NASA9 file directory to read species for MultiSpecies
+  // ---------------------------------------------------------------------------
+  storeIfSpecd< std::string >(
+    lua_ideck, "nasa9_filepath", gideck.get< tag::nasa9_filepath >(), "nasa9.dat");
 
   // partitioning/reordering options
   // ---------------------------------------------------------------------------
@@ -643,18 +650,63 @@ LuaParser::storeInputDeck(
         Assert(nspec == spci_deck.get< tag::id >().size(),
           "Number of ids in species-block not equal to number of species");
 
-        // R
-        checkStoreMatProp(sol_spc[i+1], "R", nspec,
-          spci_deck.get< tag::R >());
-        // cp_coeff
-        checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
-          spci_deck.get< tag::cp_coeff >());
-        // t_range
-        checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
-          spci_deck.get< tag::t_range >());
-        // dH_ref
-        checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
-          spci_deck.get< tag::dH_ref >());
+        // If names are given, ready data from Nasa9 file, otherwise read all
+        // from control file
+        storeVecIfSpecd< std::string >(
+          sol_spc[i+1], "spec_name", spci_deck.get< tag::spec_name >(),
+          std::vector< std::string >(nspec, ""));
+        if (sol_spc[i+1]["spec_name"].valid()) {
+          std::string nasa9_path = gideck.get< tag::nasa9_filepath >();
+          std::unordered_map<std::string,N9Species> nasa9_cache;
+
+          std::vector<tk::real> R(nspec);
+          std::vector<std::vector<std::vector<tk::real>>> cp_coeff(nspec,
+            std::vector<std::vector<tk::real>>( 3, std::vector<tk::real>(8)));
+          std::vector<std::vector<tk::real>> t_range(nspec,
+            std::vector<tk::real>(4));
+          std::vector<tk::real> dH_ref(nspec);
+          for (std::size_t ispec=0; ispec<nspec; ++ispec){
+            std::string spec_name =
+              spci_deck.get< tag::spec_name >()[ispec];
+            nasa9_cache[spec_name] =
+              read_nasa9_species(nasa9_path, spec_name);
+
+            const N9Species& spec = nasa9_cache.at(spec_name);
+            dH_ref[ispec] = spec.Hf298_mass;
+            R[ispec] = spec.R();
+
+            // Loop over intervals and retrieve coefficients
+            for (std::size_t interv = 0; interv < spec.nIntervals(); ++interv) {
+              const N9Interval& I = spec.intervalByIndex(interv);
+              for (std::size_t k = 0; k < 9; ++k)
+                cp_coeff[ispec][interv][k] = I.a[k];
+              t_range[ispec][interv] = I.Tlow;
+              if (interv == spec.nIntervals()-1)
+                t_range[ispec][interv+1] = I.Thigh;
+            }
+          }
+          // Store unknowns (manually for the high-dimension ones)
+          storeVecIfSpecd< tk::real >(
+            sol_spc[i+1], "R", spci_deck.get< tag::R >(), R);
+          storeVecIfSpecd< tk::real >(
+            sol_spc[i+1], "dH_ref", spci_deck.get< tag::dH_ref >(), dH_ref);
+          spci_deck.get< tag::cp_coeff >() = cp_coeff;
+          spci_deck.get< tag::t_range >() = t_range;
+        }
+        else {
+          // R
+          checkStoreMatProp(sol_spc[i+1], "R", nspec,
+            spci_deck.get< tag::R >());
+          // cp_coeff
+          checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
+            spci_deck.get< tag::cp_coeff >());
+          // t_range
+          checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
+            spci_deck.get< tag::t_range >());
+          // dH_ref
+          checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
+            spci_deck.get< tag::dH_ref >());
+        }
       }
 
       // Generate mapping between material index and eos parameter index
@@ -1241,10 +1293,10 @@ LuaParser::storeInputDeck(
       totalmesh.insert(bc_deck[i].get< tag::mesh >().begin(),
         bc_deck[i].get< tag::mesh >().end());
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "dirichlet",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "dirichlet",
         bc_deck[i].get< tag::dirichlet >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "symmetry",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "symmetry",
         bc_deck[i].get< tag::symmetry >(), {});
 
       if (sol_bc[i+1]["inlet"].valid()) {
@@ -1272,19 +1324,19 @@ LuaParser::storeInputDeck(
         }
       }
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "outlet",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "outlet",
         bc_deck[i].get< tag::outlet >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "farfield",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "farfield",
         bc_deck[i].get< tag::farfield >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "extrapolate",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "extrapolate",
         bc_deck[i].get< tag::extrapolate >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "noslipwall",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "noslipwall",
         bc_deck[i].get< tag::noslipwall >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "slipwall",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "slipwall",
         bc_deck[i].get< tag::slipwall >(), {});
 
       // Time-dependent BC
@@ -1313,7 +1365,7 @@ LuaParser::storeInputDeck(
         const sol::table& sol_bpbc = sol_bc[i+1]["back_pressure"];
         auto& bpbc_deck = bc_deck[i].get< tag::back_pressure >();
 
-        storeVecIfSpecd< uint64_t >(sol_bpbc, "sideset",
+        storeVecIfSpecd< std::size_t >(sol_bpbc, "sideset",
           bpbc_deck.get< tag::sideset >(), {});
 
         if (!sol_bpbc["pressure"].valid())
@@ -1509,7 +1561,7 @@ LuaParser::storeInputDeck(
         checkBlock< inciter::ctr::meshblockList::Keys >(lua_meshblock[i+1],
           "meshblock");
 
-        storeIfSpecd< std::size_t >(lua_meshblock[i+1], "blockid",
+        storeIfSpecd< std::uint64_t >(lua_meshblock[i+1], "blockid",
           mblk_deck[i].get< tag::blockid >(), 0);
         if (mblk_deck[i].get< tag::blockid >() == 0)
           Throw("Each IC mesh block must specify the mesh block id.");

@@ -131,12 +131,13 @@ using materialList = tk::TaggedTuple< brigand::list<
 
 // Species/EOS object
 using speciesList = tk::TaggedTuple< brigand::list<
-  tag::id,       std::vector< uint64_t >,
-  tag::gamma,    std::vector< tk::real >,
-  tag::R,        std::vector< tk::real >,
-  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
-  tag::t_range,  std::vector< std::vector< tk::real > >,
-  tag::dH_ref,   std::vector< tk::real >
+  tag::id,        std::vector< uint64_t >,
+  tag::gamma,     std::vector< tk::real >,
+  tag::R,         std::vector< tk::real >,
+  tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,   std::vector< std::vector< tk::real > >,
+  tag::dH_ref,    std::vector< tk::real >,
+  tag::spec_name, std::vector< std::string >
 > >;
 
 // Boundary conditions block
@@ -302,6 +303,9 @@ using ConfigMembers = brigand::list<
   tag::imex_maxiter,     uint32_t,
   tag::imex_reltol,      tk::real,
   tag::imex_abstol,      tk::real,
+
+  // NASA9 database location for MultiSpecies
+  tag::nasa9_filepath, std::string,
 
   // steady-state solver options
   tag::implicit_timestepping, bool,
@@ -565,6 +569,19 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to specify the absolute tolerance that
         the non-linear solver uses to obtain the implicit unknowns within the
         Implicit-Explicit Runge-Kutta scheme.)", "real"});
+
+      // -----------------------------------------------------------------------
+      // MultiSpecies option to provide NASA9 DB filepath
+      // -----------------------------------------------------------------------
+
+      keywords.insert({"nasa9_filepath",
+        "Provide the path to the NASA9 data file",
+        R"(This keywords is used to specify the filepath of the NASA9 database
+        file. By providing this file, the user is able to initialize species by
+        providing their names (variable spec_name) and the rest of the parameters
+        will be read from the file. Default assumes file is called nasa9.dat and
+        is located the working directory where inciter is being executed from)",
+        "string"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options
@@ -1136,6 +1153,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         the reference temperature in the enthalpy calculations is 0 K. This number
         is taken from the NASA Glenn 2002 report, and is the heat of formation
         divided by the species molar mass.)", "vector of reals"});
+
+      keywords.insert({"spec_name", "List of species names, e.g. CO2, Ar.",
+        R"(This keyword is used to specify a list of chemical species which will serve
+        as reference for the program to retrieve its TPG coefficients from the NASA9
+        database. Only species with 3 temperature intervals are supported. If species
+        names are specified, the nasa9_filepath must be specified or the nasa9 database
+        must be present at the default location.)", "strings"});
 
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas
