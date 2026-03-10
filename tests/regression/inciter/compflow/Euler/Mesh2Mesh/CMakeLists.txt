@@ -52,10 +52,10 @@
                                  out.1.e-s.0.4.1
                                  out.1.e-s.0.4.2
                                  out.1.e-s.0.4.3
-                                 out.1.e-s.1.4.0
-                                 out.1.e-s.1.4.1
-                                 out.1.e-s.1.4.2
-                                 out.1.e-s.1.4.3
+                                 out.1.e-s.2.4.0
+                                 out.1.e-s.2.4.1
+                                 out.1.e-s.2.4.2
+                                 out.1.e-s.2.4.3
                       BIN_DIFF_PROG_ARGS -m
                       BIN_DIFF_PROG_CONF m2m_moving.cfg
                       LABELS "oversetfe;m2m")

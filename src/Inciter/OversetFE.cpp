@@ -94,6 +94,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_tp( m_u.nunk(), g_inputdeck.get< tag::t0 >() ),
   m_finished( 0 ),
   m_movedmesh( 0 ),
+  m_movedmeshTimeStep( 0 ),
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
   m_nodeblockidc(),
@@ -1344,6 +1345,9 @@ OversetFE::solve()
     else
       m_movedmesh = 0;
 
+    // Mark if mesh moved during any RK-stage of this time step
+    m_movedmeshTimeStep = std::max( m_movedmeshTimeStep, m_movedmesh );
+
     if (m_movedmesh == 1) {
       auto mI_mesh = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
         tag::moment_of_inertia >();
@@ -1528,7 +1532,7 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
     const auto residual = g_inputdeck.get< tag::residual >();
     const auto rc = g_inputdeck.get< tag::rescomp >() - 1;
 
-    if (m_movedmesh) {
+    if (m_movedmeshTimeStep) {
       d->Itf() = 0;  // Zero field output iteration count if mesh moved
       ++d->Itr();    // Increase number of iterations with a change in the mesh
     }
