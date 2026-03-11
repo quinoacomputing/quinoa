@@ -1288,6 +1288,7 @@ OversetFE::solve()
     m_un = m_u;
     d->UpdateCoordn();
     UpdateCenterOfMass();
+    m_movedmeshTimeStep = 0;  // Reset movement indicator for new time step
   }
 
   // Explicit time-stepping using RK3
