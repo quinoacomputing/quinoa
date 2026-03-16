@@ -235,6 +235,7 @@ class OversetFE : public CBase_OversetFE {
       p | m_tp;
       p | m_finished;
       p | m_movedmesh;
+      p | m_movedmeshTimeStep;
       p | m_nusermeshblk;
       p | m_nodeblockid;
       p | m_nodeblockidc;
@@ -374,8 +375,10 @@ class OversetFE : public CBase_OversetFE {
     std::vector< tk::real > m_tp;
     //! True in the last time step
     int m_finished;
-    //! True if overset mesh moved
+    //! True if overset mesh moved during this RK-stage
     int m_movedmesh;
+    //! True if overset mesh moved anytime during timestep
+    int m_movedmeshTimeStep;
     //! Number of mesh-blocks with user-defined ICs
     std::size_t m_nusermeshblk;
     //! Local node ids associated with mesh block ids
@@ -473,6 +476,9 @@ class OversetFE : public CBase_OversetFE {
 
     //! Compute time step size
     void dt();
+
+    //! Compute forces and moments on the overset mesh and perform reduction
+    void getForces( tk::real mindt );
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();

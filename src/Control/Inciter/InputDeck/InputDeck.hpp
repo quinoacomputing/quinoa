@@ -243,7 +243,8 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
   tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
-  tag::center_of_mass,    std::vector< tk::real >
+  tag::center_of_mass,    std::vector< tk::real >,
+  tag::body_force,        std::vector< tk::real >
 > >;
 
 // Field output block
@@ -1156,8 +1157,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"spec_name", "List of species names, e.g. CO2, Ar.",
         R"(This keyword is used to specify a list of chemical species which will serve
         as reference for the program to retrieve its TPG coefficients from the NASA9
-        database. if species names are specified, the nasa9_filepath must be specified
-        or the nasa9 database must be present at the default location.)", "strings"});
+        database. Only species with 3 temperature intervals are supported. If species
+        names are specified, the nasa9_filepath must be specified or the nasa9 database
+        must be present at the default location.)", "strings"});
 
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas
@@ -2008,8 +2010,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "3-by-3 vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
-        R"(Center of mass of rigid body used to compute torque for rotational
+        R"(Center of mass of rigid body used to compute force for translational
         motion)", "vector of 3 reals"});
+
+      keywords.insert({"body_force", "Body force applied to rigid body",
+        R"(Vector representing the force per unit mass applied to a body)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // pre-configured problems

@@ -73,6 +73,8 @@ tk::initialize( ncomp_t ncomp,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
+  std::vector< tk::real > B(ndof);
+
   for (std::size_t e=0; e<nielem; ++e) {    // for all tets
     // The volume of tetrahedron
     auto vole = geoElem(e, 0);
@@ -94,8 +96,7 @@ tk::initialize( ncomp_t ncomp,
       auto gp = eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B =
-        eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+      eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
 
       const auto s = solution( ncomp, mat_blk, gp[0], gp[1], gp[2], t );
 

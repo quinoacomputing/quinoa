@@ -93,6 +93,18 @@ else()
   set(LUA_INCLUDE_DIR "")
 endif()
 
+# For Mutation++
+include_directories(SYSTEM ${TPL_DIR}/include/eigen3)
+
+find_package(MutationPP QUIET)
+if (MutationPP_FOUND)
+  message(STATUS "Found Mutation++: ${MUTATIONPP_LIBRARY}")
+  # Treat Mutation++ headers as system headers so compiler warnings from them are supressed
+  include_directories(SYSTEM ${MUTATIONPP_INCLUDE_DIRS})
+else()
+  message(STATUS "Mutation++ not found; chemistry features will be disabled")
+endif()
+
 message(STATUS "------------------------------------------")
 
 # Function to print a list of missing library names
