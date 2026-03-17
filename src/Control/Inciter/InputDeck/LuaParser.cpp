@@ -947,7 +947,7 @@ LuaParser::storeInputDeck(
 
     // Assign outvar
     auto& foutvar = fo_deck.get< tag::outvar >();
-    std::size_t nevar(0), nnvar(0), tensorcompvar(0);
+    std::size_t nevar(0), nnvar(0), tensorcompvar(0), massfracextra(0);
     std::size_t nmat(1);
     if (gideck.get< tag::pde >() == inciter::ctr::PDEType::MULTIMAT)
       nmat = gideck.get< tag::multimat, tag::nmat >();
@@ -964,6 +964,8 @@ LuaParser::storeInputDeck(
         std::string varname(lua_ideck["field_output"]["elemvar"][i+1]);
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
+        if (varname == "mass_fractions")
+          massfracextra += nspec - 1;
         addOutVar(varname, gideck.get< tag::depvar >(), nmat,
           nspec, gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
       }
@@ -975,12 +977,14 @@ LuaParser::storeInputDeck(
         std::string varname(lua_ideck["field_output"]["nodevar"][i+1]);
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
+        if (varname == "mass_fractions")
+          massfracextra += nspec - 1;
         addOutVar(varname, gideck.get< tag::depvar >(), nmat,
           nspec, gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
       }
     }
 
-    Assert(foutvar.size() == (nevar + nnvar + tensorcompvar),
+    Assert(foutvar.size() == (nevar + nnvar + tensorcompvar + massfracextra),
       "Incorrectly sized outvar vector.");
   }
   else {
@@ -1863,6 +1867,14 @@ LuaParser::addOutVar(
         std::string tij(namet + std::to_string(i) + std::to_string(j));
         foutvar.emplace_back( inciter::ctr::OutVar(c, tij, 0, tij) );
       }
+    }
+  }
+  // name-based multi-species quantity specification
+  // -----------------------------------------------
+  else if (varname == "mass_fractions") {
+    for (std::size_t k=0; k<nspec; ++k) {
+      const auto mfrac = "mass_fraction_" + std::to_string(k+1);
+      foutvar.emplace_back( inciter::ctr::OutVar(c, mfrac, 0, mfrac) );
     }
   }
   // name-based quantity specification
