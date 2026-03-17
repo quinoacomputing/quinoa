@@ -1339,6 +1339,9 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< std::size_t >(sol_bc[i+1], "slipwall",
         bc_deck[i].get< tag::slipwall >(), {});
 
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "isothermal_wall",
+        bc_deck[i].get< tag::isothermal_wall >(), {});
+
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
         const sol::table& sol_tdbc = sol_bc[i+1]["timedep"];
@@ -1392,6 +1395,10 @@ LuaParser::storeInputDeck(
       // Temperature for inlet/outlet/farfield
       storeIfSpecd< tk::real >(sol_bc[i+1], "temperature",
         bc_deck[i].get< tag::temperature >(), 0.0);
+
+      // Wall temperature for isothermal wall bc
+      storeIfSpecd< tk::real >(sol_bc[i+1], "wall_temperature",
+        bc_deck[i].get< tag::wall_temperature >(), 0.0);
 
       // Mass fractions for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "mass_fractions",
