@@ -1421,7 +1421,7 @@ LuaParser::storeInputDeck(
 
       // Wall temperature for isothermal wall bc
       storeIfSpecd< tk::real >(sol_bc[i+1], "wall_temperature",
-        bc_deck[i].get< tag::wall_temperature >(), 0.0);
+        bc_deck[i].get< tag::wall_temperature >(), 300.0);
 
       // Mass fractions for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "mass_fractions",
