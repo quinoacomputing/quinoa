@@ -239,8 +239,9 @@ namespace inciter {
 
   //! \brief Boundary state function providing the left and right state of a
   //!   face at isothermal boundaries, with remaining variables treated as
-  //!   slip wall boundaries. Once viscosity is implemented for MultiSpecies,
-  //!   the remaining variables should be treated as no-slip boundaries.
+  //!   slip wall boundaries. TODO: Once viscosity is implemented for
+  //!   MultiSpecies, the remaining variables should be treated as no-slip
+  //!   boundaries.
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
   //! \param[in] fn Unit face normal
@@ -299,7 +300,7 @@ namespace inciter {
 
     return {{ std::move(ul), std::move(ur) }};
   }
-  
+
   //----------------------------------------------------------------------------
   // Boundary Gradient functions
   //----------------------------------------------------------------------------
