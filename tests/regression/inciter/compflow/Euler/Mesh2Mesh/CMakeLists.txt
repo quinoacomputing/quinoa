@@ -40,10 +40,10 @@
                                    mvngoverset0_pe4.std.exo.1
                                    mvngoverset0_pe4.std.exo.2
                                    mvngoverset0_pe4.std.exo.3
-                                   mvngoverset2_pe4.std.exo.0
-                                   mvngoverset2_pe4.std.exo.1
-                                   mvngoverset2_pe4.std.exo.2
-                                   mvngoverset2_pe4.std.exo.3
+                                   mvngoverset8_pe4.std.exo.0
+                                   mvngoverset8_pe4.std.exo.1
+                                   mvngoverset8_pe4.std.exo.2
+                                   mvngoverset8_pe4.std.exo.3
                       BIN_RESULT out.0.e-s.0.4.0
                                  out.0.e-s.0.4.1
                                  out.0.e-s.0.4.2
@@ -52,10 +52,10 @@
                                  out.1.e-s.0.4.1
                                  out.1.e-s.0.4.2
                                  out.1.e-s.0.4.3
-                                 out.1.e-s.2.4.0
-                                 out.1.e-s.2.4.1
-                                 out.1.e-s.2.4.2
-                                 out.1.e-s.2.4.3
+                                 out.1.e-s.8.4.0
+                                 out.1.e-s.8.4.1
+                                 out.1.e-s.8.4.2
+                                 out.1.e-s.8.4.3
                       BIN_DIFF_PROG_ARGS -m
                       BIN_DIFF_PROG_CONF m2m_moving.cfg
                       LABELS "oversetfe;m2m")
