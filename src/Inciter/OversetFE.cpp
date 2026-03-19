@@ -220,8 +220,11 @@ OversetFE::getBCNodes()
   // to obtain force on overset walls
   m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes) ||
+        m_slipwallbcnodes.find(m_triinpoel[e*3+1]) != end(m_slipwallbcnodes) ||
+        m_slipwallbcnodes.find(m_triinpoel[e*3+2]) != end(m_slipwallbcnodes)){
       m_slipwallbctri[e] = 1;
+    }
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
