@@ -299,6 +299,7 @@ DEFTAG(noslipwall);
 DEFTAG(timedep);
 DEFTAG(slipwall);
 DEFTAG(back_pressure);
+DEFTAG(isothermal_wall);
 
 DEFTAG(rigid_body_motion);
 DEFTAG(rigid_body_movt);
@@ -309,6 +310,7 @@ DEFTAG(ic);
 DEFTAG(materialid);
 DEFTAG(pressure);
 DEFTAG(temperature);
+DEFTAG(wall_temperature);
 DEFTAG(velocity);
 DEFTAG(mass_fractions);
 DEFTAG(box);
