@@ -31,7 +31,8 @@ timeStepSizeMultiSpecies(
   const std::size_t nelem,
   std::size_t nspec,
   const tk::Fields& U,
-  const tk::Fields& P );
+  const tk::Fields& P,
+  std::vector< tk::real >& local_dte );
 
 } //inciter::
 

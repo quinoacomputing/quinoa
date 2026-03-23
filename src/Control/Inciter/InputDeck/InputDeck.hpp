@@ -45,13 +45,14 @@ namespace ctr {
 using ncomp_t = std::size_t;
 
 using bclist = tk::TaggedTuple< brigand::list<
-  tag::dirichlet,   std::vector< std::size_t >,
-  tag::symmetry,    std::vector< std::size_t >,
-  tag::outlet,      std::vector< std::size_t >,
-  tag::farfield,    std::vector< std::size_t >,
-  tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >,
-  tag::slipwall,    std::vector< std::size_t >
+  tag::dirichlet,        std::vector< std::size_t >,
+  tag::symmetry,         std::vector< std::size_t >,
+  tag::outlet,           std::vector< std::size_t >,
+  tag::farfield,         std::vector< std::size_t >,
+  tag::extrapolate,      std::vector< std::size_t >,
+  tag::noslipwall,       std::vector< std::size_t >,
+  tag::slipwall,         std::vector< std::size_t >,
+  tag::isothermal_wall,  std::vector< std::size_t >
 > >;
 
 // Transport
@@ -131,36 +132,39 @@ using materialList = tk::TaggedTuple< brigand::list<
 
 // Species/EOS object
 using speciesList = tk::TaggedTuple< brigand::list<
-  tag::id,       std::vector< uint64_t >,
-  tag::gamma,    std::vector< tk::real >,
-  tag::R,        std::vector< tk::real >,
-  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
-  tag::t_range,  std::vector< std::vector< tk::real > >,
-  tag::dH_ref,   std::vector< tk::real >
+  tag::id,        std::vector< uint64_t >,
+  tag::gamma,     std::vector< tk::real >,
+  tag::R,         std::vector< tk::real >,
+  tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,   std::vector< std::vector< tk::real > >,
+  tag::dH_ref,    std::vector< tk::real >,
+  tag::spec_name, std::vector< std::string >
 > >;
 
 // Boundary conditions block
 using bcList = tk::TaggedTuple< brigand::list<
-  tag::mesh,        std::vector< std::size_t >,
-  tag::dirichlet,   std::vector< std::size_t >,
-  tag::symmetry,    std::vector< std::size_t >,
-  tag::outlet,      std::vector< std::size_t >,
-  tag::farfield,    std::vector< std::size_t >,
-  tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >,
-  tag::slipwall,    std::vector< std::size_t >,
-  tag::velocity,    std::vector< tk::real >,
-  tag::pressure,    tk::real,
-  tag::density,     tk::real,
-  tag::temperature, tk::real,
-  tag::mass_fractions, std::vector< tk::real >,
-  tag::materialid,  std::size_t,
-  tag::inlet,       std::vector<
+  tag::mesh,             std::vector< std::size_t >,
+  tag::dirichlet,        std::vector< std::size_t >,
+  tag::symmetry,         std::vector< std::size_t >,
+  tag::outlet,           std::vector< std::size_t >,
+  tag::farfield,         std::vector< std::size_t >,
+  tag::extrapolate,      std::vector< std::size_t >,
+  tag::noslipwall,       std::vector< std::size_t >,
+  tag::slipwall,         std::vector< std::size_t >,
+  tag::isothermal_wall,  std::vector< std::size_t >,
+  tag::velocity,         std::vector< tk::real >,
+  tag::pressure,         tk::real,
+  tag::density,          tk::real,
+  tag::temperature,      tk::real,
+  tag::wall_temperature, tk::real,
+  tag::mass_fractions,   std::vector< tk::real >,
+  tag::materialid,       std::size_t,
+  tag::inlet,            std::vector<
     tk::TaggedTuple< brigand::list<
       tag::sideset,      std::vector< uint64_t >,
       tag::velocity,     std::vector< tk::real >,
       tag::pressure,     tk::real,
-      tag::temperature,     tk::real,
+      tag::temperature,  tk::real,
       tag::materialid,   std::size_t
     > >
   >,
@@ -242,7 +246,8 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
   tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
-  tag::center_of_mass,    std::vector< tk::real >
+  tag::center_of_mass,    std::vector< tk::real >,
+  tag::body_force,        std::vector< tk::real >
 > >;
 
 // Field output block
@@ -301,6 +306,9 @@ using ConfigMembers = brigand::list<
   tag::imex_maxiter,     uint32_t,
   tag::imex_reltol,      tk::real,
   tag::imex_abstol,      tk::real,
+
+  // NASA9 database location for MultiSpecies
+  tag::nasa9_filepath, std::string,
 
   // steady-state solver options
   tag::implicit_timestepping, bool,
@@ -564,6 +572,19 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to specify the absolute tolerance that
         the non-linear solver uses to obtain the implicit unknowns within the
         Implicit-Explicit Runge-Kutta scheme.)", "real"});
+
+      // -----------------------------------------------------------------------
+      // MultiSpecies option to provide NASA9 DB filepath
+      // -----------------------------------------------------------------------
+
+      keywords.insert({"nasa9_filepath",
+        "Provide the path to the NASA9 data file",
+        R"(This keywords is used to specify the filepath of the NASA9 database
+        file. By providing this file, the user is able to initialize species by
+        providing their names (variable spec_name) and the rest of the parameters
+        will be read from the file. Default assumes file is called nasa9.dat and
+        is located the working directory where inciter is being executed from)",
+        "string"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options
@@ -1135,6 +1156,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         the reference temperature in the enthalpy calculations is 0 K. This number
         is taken from the NASA Glenn 2002 report, and is the heat of formation
         divided by the species molar mass.)", "vector of reals"});
+
+      keywords.insert({"spec_name", "List of species names, e.g. CO2, Ar.",
+        R"(This keyword is used to specify a list of chemical species which will serve
+        as reference for the program to retrieve its TPG coefficients from the NASA9
+        database. Only species with 3 temperature intervals are supported. If species
+        names are specified, the nasa9_filepath must be specified or the nasa9 database
+        must be present at the default location.)", "strings"});
 
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas
@@ -1784,6 +1812,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to list (multiple) slip wall BC sidesets.)",
         "vector of uint(s)"});
 
+      keywords.insert({"isothermal_wall",
+        "List sidesets with isothermal wall boundary conditions",
+        R"(This keyword is used to list (multiple) isothermal wall BC sidesets.)",
+        "vector of uint(s)"});
+
       keywords.insert({"timedep",
         "Start configuration block describing time dependent boundary conditions",
         R"(This keyword is used to introduce a bc_timedep block, used to
@@ -1846,6 +1879,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"temperature", "Specify temperature",
         R"(This keyword is used to configure temperature, used for, e.g.,
         boundary or initial conditions.)" , "real"});
+
+      keywords.insert({"wall_temperature", "Specify wall temperature",
+        R"(This keyword is used to configure wall temperature, used for
+        isothermal boundary conditions.)" , "real"});
 
       keywords.insert({"mass_fractions", "Specify species mass fractions",
         R"(This keyword is used to configure species mass fractions, used for,
@@ -1985,8 +2022,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "3-by-3 vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
-        R"(Center of mass of rigid body used to compute torque for rotational
+        R"(Center of mass of rigid body used to compute force for translational
         motion)", "vector of 3 reals"});
+
+      keywords.insert({"body_force", "Body force applied to rigid body",
+        R"(Vector representing the force per unit mass applied to a body)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // pre-configured problems

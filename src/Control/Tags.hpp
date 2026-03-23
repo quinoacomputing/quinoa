@@ -166,6 +166,8 @@ DEFTAG(imex_maxiter);
 DEFTAG(imex_reltol);
 DEFTAG(imex_abstol);
 
+DEFTAG(nasa9_filepath);
+
 DEFTAG(ncomp);
 DEFTAG(pde);
 DEFTAG(problem);
@@ -224,6 +226,7 @@ DEFTAG(matidx);
 DEFTAG(solidx);
 DEFTAG(yield_stress);
 DEFTAG(K0);
+DEFTAG(spec_name);
 DEFTAG(R);
 DEFTAG(cp_coeff);
 DEFTAG(t_range);
@@ -296,6 +299,7 @@ DEFTAG(noslipwall);
 DEFTAG(timedep);
 DEFTAG(slipwall);
 DEFTAG(back_pressure);
+DEFTAG(isothermal_wall);
 
 DEFTAG(rigid_body_motion);
 DEFTAG(rigid_body_movt);
@@ -306,6 +310,7 @@ DEFTAG(ic);
 DEFTAG(materialid);
 DEFTAG(pressure);
 DEFTAG(temperature);
+DEFTAG(wall_temperature);
 DEFTAG(velocity);
 DEFTAG(mass_fractions);
 DEFTAG(box);
@@ -333,6 +338,7 @@ DEFTAG(location);
 DEFTAG(transfer);
 DEFTAG(moment_of_inertia);
 DEFTAG(center_of_mass);
+DEFTAG(body_force);
 
 struct BirthdaySpacings {};
 

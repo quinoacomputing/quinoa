@@ -1431,8 +1431,8 @@ Transporter::solutionTransferred()
 void
 Transporter::collectDtAndForces( CkReductionMsg* advMsg )
 // *****************************************************************************
-// \brief Reduction target that computes minimum timestep across all meshes and
-//    sums up the forces on each mesh
+// \brief Reduction target that sums up the forces on each mesh and computes
+// minimum timestep across all meshes
 //! \param[in] advMsg Reduction msg containing minimum timestep and total
 //!   surface force information
 // *****************************************************************************
@@ -1449,14 +1449,14 @@ Transporter::collectDtAndForces( CkReductionMsg* advMsg )
   #pragma clang diagnostic ignored "-Wcast-align"
 #endif
 
-  tk::real mindt = *(tk::real*)results[0].data;
   std::array< tk::real, 6 > F;
-  F[0] = *(tk::real*)results[1].data;
-  F[1] = *(tk::real*)results[2].data;
-  F[2] = *(tk::real*)results[3].data;
-  F[3] = *(tk::real*)results[4].data;
-  F[4] = *(tk::real*)results[5].data;
-  F[5] = *(tk::real*)results[6].data;
+  F[0] = *(tk::real*)results[0].data;
+  F[1] = *(tk::real*)results[1].data;
+  F[2] = *(tk::real*)results[2].data;
+  F[3] = *(tk::real*)results[3].data;
+  F[4] = *(tk::real*)results[4].data;
+  F[5] = *(tk::real*)results[5].data;
+  tk::real mindt = *(tk::real*)results[6].data;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

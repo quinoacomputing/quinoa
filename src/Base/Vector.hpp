@@ -15,7 +15,7 @@
 #include <array>
 #include <cmath>
 #include <vector>
-#include <cblas.h>
+#include "NoWarning/cblas.hpp"
 
 #include "Types.hpp"
 #include "Exception.hpp"
@@ -41,6 +41,44 @@ extern lapack_int LAPACKE_dgetri( int, lapack_int, double*, lapack_int,
 }
 
 namespace tk {
+
+namespace nowarn_cblas {
+
+//! Wrapper around cblas_dgemm to locally silence Apple CBLAS deprecation.
+inline void cblas_dgemm( enum CBLAS_ORDER layout,
+                         enum CBLAS_TRANSPOSE transa,
+                         enum CBLAS_TRANSPOSE transb,
+                         int m,
+                         int n,
+                         int k,
+                         double alpha,
+                         const double* A,
+                         int lda,
+                         const double* B,
+                         int ldb,
+                         double beta,
+                         double* C,
+                         int ldc )
+{
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+  ::cblas_dgemm( layout, transa, transb, m, n, k, alpha,
+                 A, lda, B, ldb, beta, C, ldc );
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
+}
+
+} // namespace nowarn_cblas
 
 //! Flip sign of vector components
 //! \param[in] v Vector whose components to multiply by -1.0
@@ -496,7 +534,7 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
   }
 
   // get g.g^T
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
     3, 3, 3, 1.0, G, 3, G, 3, 0.0, C, 3);
 
   // get inv(g.g^T)
@@ -541,7 +579,7 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
   }
 
   // get g^T.g
-  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
     3, 3, 3, 1.0, G, 3, G, 3, 0.0, b, 3);
 
   // get inv(g^T.g)
@@ -609,7 +647,7 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
     for (std::size_t j=0; j<3; ++j)
       G[i*3+j] = g[i][j];
   }
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
     3, 3, 3, 1.0, G, 3, G, 3, 0.0, CInv, 3);
 
   // volume-preserving part
@@ -723,7 +761,7 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
     }
 
   // compute matAuxIn*rotMat and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
     3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
 
   // matAuxOut -> matAuxIn
@@ -734,7 +772,7 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   }
 
   // compute rotMat^T*matAuxIn and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
     3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
   // return matAuxOut as a 2D array
@@ -773,7 +811,7 @@ unrotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
       rotMat[i*3+j] = rotMatrix[i][j];
     }
   // compute matAuxIn*rotMat and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
     3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
   // matAuxOut -> matAuxIn
   for (std::size_t i=0; i<9; i++)
@@ -782,7 +820,7 @@ unrotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
     matAuxOut[i] = 0.0;
   }
   // compute rotMat^T*matAuxIn and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
     3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
   // return matAuxOut as a 2D array
   return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
@@ -855,7 +893,7 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
       matAuxIn[i*3+j] = mat[i][j];
 
   // compute matAuxIn*refMat and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
     3, 3, 3, 1.0, matAuxIn, 3, refMat, 3, 0.0, matAuxOut, 3);
 
   // matAuxOut -> matAuxIn
@@ -866,7 +904,7 @@ reflectTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   }
 
   // compute refMat^T*matAuxIn and store it into matAuxOut
-  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
     3, 3, 3, 1.0, refMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
 
   // return matAuxOut as a 2D array

@@ -88,6 +88,9 @@ ConjugateGradients::ConjugateGradients(
   Assert( m_A.rsize() == m_gid.size()*A.Ncomp(), "Size mismatch" );
   Assert( m_x.size() == m_gid.size()*A.Ncomp(), "Size mismatch" );
   Assert( m_b.size() == m_gid.size()*A.Ncomp(), "Size mismatch" );
+
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 void

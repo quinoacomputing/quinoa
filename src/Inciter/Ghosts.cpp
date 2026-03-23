@@ -65,6 +65,9 @@ Ghosts::Ghosts( const CProxy_Discretization& disc,
       g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "Ghosts", thisIndex, CkMyPe(), Disc()->It(),
                                         "Ghosts" );
+
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 void

@@ -59,7 +59,8 @@ inline void escape_impl( std::string & result, const int i )
          break;
       default: {
          char tmp[ 12 ];
-         ::snprintf( tmp, sizeof( tmp ), "\\u%04x", i );
+         ::snprintf( tmp, sizeof( tmp ), "\\u%04x",
+                     static_cast<unsigned int>( static_cast<unsigned char>( i ) ) );
          result += tmp;
       }  break;
    }

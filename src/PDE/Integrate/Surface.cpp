@@ -93,6 +93,10 @@ surfInt( const bool pref,
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  std::array< std::vector< tk::real >, 2 > state;
+  state[0].resize(ncomp+nprim);
+  state[1].resize(ncomp+nprim);
+
   //// Determine if we have solids in our problem
   //bool haveSolid = inciter::haveSolid(nmat, solidx);
 
@@ -206,22 +210,16 @@ surfInt( const bool pref,
         Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
 
       //Compute the basis functions
-      auto B_l = eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
-      auto B_r = eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
+      std::vector< tk::real > B_l(dof_el), B_r(dof_er);
+      eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
+      eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2], B_r );
 
       auto wt = wgp[igp] * geoFace(f,0);
 
-      std::array< std::vector< real >, 2 > state;
-
-      state[0] = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
-        nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P);
-      state[1] = evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
-        nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P);
-
-      Assert( state[0].size() == ncomp+nprim, "Incorrect size for "
-              "appended boundary state vector" );
-      Assert( state[1].size() == ncomp+nprim, "Incorrect size for "
-              "appended boundary state vector" );
+      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof, nmat, el, dof_el,
+        inpoel, coord, geoElem, ref_gp_l, B_l, U, P, state[0]);
+      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof, nmat, er, dof_er,
+        inpoel, coord, geoElem, ref_gp_r, B_r, U, P, state[1]);
 
       // evaluate prescribed velocity (if any)
       auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
@@ -387,6 +385,187 @@ update_rhs_fa( ncomp_t ncomp,
 }
 
 void
+surfInt_constP(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  real t,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& /*solidx*/,
+  const UnsMesh::Coords& coord,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const RiemannFluxFn& flux,
+  const VelFn& vel,
+  const Fields& U,
+  const Fields& P,
+  const Fields& W,
+  const tk::real /*dt*/,
+  Fields& R,
+  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp )
+// *****************************************************************************
+//  Compute internal surface flux integrals for const-order DG (not p-adaptive)
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
+//! \param[in] t Physical time
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] inpoel Element-node connectivity
+// //! \param[in] solidx Material index indicator
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] flux Riemann flux function to use
+//! \param[in] vel Function to use to query prescribed velocity (if any)
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
+// //! \param[in] dt Delta time
+//! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
+//! \param[in] intsharp Interface compression tag, an optional argument, with
+//!   default 0, so that it is unused for single-material and transport.
+// *****************************************************************************
+{
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
+  const auto& esuf = fd.Esuf();
+  const auto& inpofa = fd.Inpofa();
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
+
+  //// Determine if we have solids in our problem
+  //bool haveSolid = inciter::haveSolid(nmat, solidx);
+
+  //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+  //        "derivative vector for single material compflow" );
+
+  // Quadrature points
+  auto ng = tk::NGfa(ndof);
+
+  // arrays for quadrature points
+  std::array< std::vector< real >, 2 > coordgp;
+  std::vector< real > wgp;
+
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  wgp.resize( ng );
+
+  // get quadrature point weights and coordinates for triangle
+  GaussQuadratureTri( ng, coordgp, wgp );
+
+  // Allocate memory
+  std::vector< tk::real > B_l(rdof, 1.0), B_r(rdof, 1.0);
+  std::array< std::vector< real >, 2 > state;
+  state[0].resize(ncomp+nprim);
+  state[1].resize(ncomp+nprim);
+
+  // compute internal surface flux integrals
+  for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
+  {
+    Assert( esuf[2*f] > -1 && esuf[2*f+1] > -1, "Interior element detected "
+            "as -1" );
+
+    std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+    std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
+
+    // Extract the element coordinates
+    std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+      {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+      {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+      {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+      {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
+
+    std::array< std::array< tk::real, 3>, 4 > coordel_r {{
+      {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
+      {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
+      {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
+      {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
+
+    // Compute the determinant of Jacobian matrix
+    auto detT_l =
+      Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+    auto detT_r =
+      Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
+
+    // Extract the face coordinates
+    std::array< std::array< tk::real, 3>, 3 > coordfa {{
+      {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
+      {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
+      {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
+
+    std::array< real, 3 >
+      fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = eval_gp( igp, coordfa, coordgp );
+
+      //// In order to determine the high-order solution from the left and right
+      //// elements at the surface quadrature points, the basis functions from
+      //// the left and right elements are needed. For this, a transformation to
+      //// the reference coordinates is necessary, since the basis functions are
+      //// defined on the reference tetrahedron only.
+      //// The transformation relations are shown below:
+      ////  xi   = Jacobian( coordel[0], gp, coordel[2], coordel[3] ) / detT
+      ////  eta  = Jacobian( coordel[0], coordel[2], gp, coordel[3] ) / detT
+      ////  zeta = Jacobian( coordel[0], coordel[2], coordel[3], gp ) / detT
+
+      std::array< tk::real, 3> ref_gp_l{
+        Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+        Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+        Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+      std::array< tk::real, 3> ref_gp_r{
+        Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
+        Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
+        Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
+
+      //Compute the basis functions
+      eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
+      eval_basis( rdof, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2], B_r );
+
+      auto wt = wgp[igp] * geoFace(f,0);
+
+      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
+        nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, state[0]);
+      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
+        nmat, er, rdof, inpoel, coord, geoElem, ref_gp_r, B_r, U, P, state[1]);
+
+      // evaluate prescribed velocity (if any)
+      auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
+
+      // mesh velocity at quadrature point
+      tk::real wn_igp(0.0);
+      if (ale) {
+        auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+        // mesh velocity normal to element face
+        wn_igp = tk::dot(w_igp, fn);
+      }
+
+      // compute flux
+      auto fl = flux( mat_blk, fn, state, v, wn_igp );
+
+      // Add the surface integration term to the rhs
+      update_rhs_fa( ncomp, nmat, ndof, ndof, ndof, wt, fn,
+                     el, er, fl, B_l, B_r, R, riemannDeriv );
+    }
+  }
+}
+
+void
 surfIntFV(
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
@@ -431,12 +610,11 @@ surfIntFV(
   auto nprim = P.nprop()/rdof;
 
   // Basis functions for all face-centroids of element e
-  std::array< std::vector< tk::real >, 4 > Bf_array = {
-    tk::eval_basis(rdof, tk::fc_coord[0][0], tk::fc_coord[0][1], tk::fc_coord[0][2]),
-    tk::eval_basis(rdof, tk::fc_coord[1][0], tk::fc_coord[1][1], tk::fc_coord[1][2]),
-    tk::eval_basis(rdof, tk::fc_coord[2][0], tk::fc_coord[2][1], tk::fc_coord[2][2]),
-    tk::eval_basis(rdof, tk::fc_coord[3][0], tk::fc_coord[3][1], tk::fc_coord[3][2])
-  };
+  std::array< std::vector< tk::real >, 4 > Bf_array;
+  for (std::size_t i=0; i<4; ++i) {
+    Bf_array[i].resize(rdof);
+    eval_basis(rdof, tk::fc_coord[i][0], tk::fc_coord[i][1], tk::fc_coord[i][2], Bf_array[i]);
+  }
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -545,6 +723,13 @@ surfIntViscousFV(
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
 
+  std::vector< tk::real > B_l(rdof), B_r(rdof);
+  std::array< std::vector<tk::real>, 3 > dBdx_l, dBdx_r;
+  for (std::size_t i=0; i<3; ++i) {
+    dBdx_l[i].resize( rdof, 0 );
+    dBdx_r[i].resize( rdof, 0 );
+  }
+
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
   {
@@ -599,8 +784,8 @@ surfIntViscousFV(
       Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
 
     //Compute the basis functions
-    auto B_l = eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2] );
-    auto B_r = eval_basis( rdof, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2] );
+    eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
+    eval_basis( rdof, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2], B_r );
 
     std::array< std::vector< real >, 2 > state;
 
@@ -648,10 +833,10 @@ surfIntViscousFV(
     // 1. Get spatial gradient from Dubiner dofs
     auto jacInv_l =
       tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
-    auto dBdx_l = tk::eval_dBdx_p1( rdof, jacInv_l );
+    tk::eval_dBdx_p1( rdof, jacInv_l, dBdx_l );
     auto jacInv_r =
       tk::inverseJacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
-    auto dBdx_r = tk::eval_dBdx_p1( rdof, jacInv_r );
+    tk::eval_dBdx_p1( rdof, jacInv_r, dBdx_r );
 
     // 2. Average du_i/dx_j
     std::array< std::array< real, 3 >, 3 > dudx;

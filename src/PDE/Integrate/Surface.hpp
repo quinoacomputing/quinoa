@@ -69,6 +69,30 @@ update_rhs_fa ( ncomp_t ncomp,
                 Fields& R,
                 std::vector< std::vector< tk::real > >& riemannDeriv );
 
+//! Compute internal surface flux integrals for const-order DG (not p-adaptive)
+void
+surfInt_constP(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  real t,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::vector< std::size_t >& inpoel,
+  const std::vector< std::size_t >& /*solidx*/,
+  const UnsMesh::Coords& coord,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const RiemannFluxFn& flux,
+  const VelFn& vel,
+  const Fields& U,
+  const Fields& P,
+  const Fields& W,
+  const tk::real /*dt*/,
+  Fields& R,
+  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp=0 );
+
 // Compute internal surface flux integrals for second order FV
 void
 surfIntFV(

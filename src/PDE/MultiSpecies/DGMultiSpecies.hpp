@@ -32,7 +32,6 @@
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
-#include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -81,7 +80,8 @@ class MultiSpecies {
         , farfield
         , extrapolate
         , noslipwall 
-        , symmetry },       // Slip equivalent to symmetry without mesh motion
+        , symmetry
+        , isothermal_wall },       // Slip equivalent to symmetry without mesh motion
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
@@ -89,6 +89,7 @@ class MultiSpecies {
         , noOpGrad
         , noOpGrad
         , noOpGrad
+        , symmetryGrad
         , symmetryGrad }
         ) );
 
@@ -297,6 +298,7 @@ class MultiSpecies {
               "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       auto mass_m = tk::massMatrixDubiner();
+      std::vector< tk::real > state(m_ncomp, 0.0);
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -320,16 +322,18 @@ class MultiSpecies {
 
         auto vole = geoElem(e, 0);
 
+        std::vector< tk::real > B(dof_el);
+
         // Loop over quadrature points in element e
         for (std::size_t igp=0; igp<ng; ++igp)
         {
           // Compute the basis function
-          auto B = tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
-            coordgp[2][igp] );
+          tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp],
+            coordgp[2][igp], B );
 
           auto w = wgp[igp] * vole;
 
-          auto state = tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B );
+          tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B, state.data() );
 
           // Mixture state at quadrature point
           Mixture mixgp(nspec, state, m_mat_blk);
@@ -348,8 +352,11 @@ class MultiSpecies {
           // Evaluate mixture temperature at quadrature point
           auto rhoE0 = state[multispecies::energyIdx(nspec, 0)];
           pri[multispecies::temperatureIdx(nspec,0)] =
-            mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk);
+            mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk,
+              prim(e,multispecies::temperatureDofIdx(nspec, 0, rdof, 0)));
           // TODO: consider clipping temperature here
+          pri[multispecies::temperatureIdx(nspec,0)] = constrain_temperature(
+            pri[multispecies::temperatureIdx(nspec,0)]);
 
           for(std::size_t k = 0; k < m_nprim; k++)
           {
@@ -480,10 +487,6 @@ class MultiSpecies {
     // //! \param[in] gid Local->global node id map
     // //! \param[in] bid Local chare-boundary node ids (value) associated to
     // //!   global node ids (key)
-    // //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-    // //!   variables
-    // //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-    // //!   variables
     // //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
@@ -499,8 +502,6 @@ class MultiSpecies {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& /*gid*/,
                 const std::unordered_map< std::size_t, std::size_t >& /*bid*/,
-                const std::vector< std::vector<tk::real> >& /*uNodalExtrm*/,
-                const std::vector< std::vector<tk::real> >& /*pNodalExtrm*/,
                 const std::vector< std::vector<tk::real> >& /*mtInv*/,
                 tk::Fields& U,
                 tk::Fields& P,
@@ -678,25 +679,39 @@ class MultiSpecies {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
-      // compute internal surface flux integrals
-      tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
-                   ndofel, dt, R, riemannDeriv );
+      // p-adaptive DG
+      if (!pref) {
+        // compute internal surface flux integrals
+        tk::surfInt_constP( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
+          dt, R, riemannDeriv );
 
-      // compute optional source term
-      tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
-                  coord, geoElem, Problem::src, ndofel, R );
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt_constP( 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
+            geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
+            std::get<1>(b), U, P, W, R, riemannDeriv );
 
-      if(ndof > 1)
+        // compute volume integrals
+        tk::volInt_constP( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
+          geoElem, flux, velfn, Problem::src, U, P, W, R );
+      }
+      else {
+        // compute internal surface flux integrals
+        tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
+                     ndofel, dt, R, riemannDeriv );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
+                          geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
+                          std::get<1>(b), U, P, W, ndofel, R, riemannDeriv );
+
         // compute volume integrals
         tk::volInt( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem,
-          flux, velfn, U, P, W, ndofel, R );
-
-      // compute boundary surface flux integrals
-      for (const auto& b : m_bc)
-        tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
-                        geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
-                        std::get<1>(b), U, P, W, ndofel, R, riemannDeriv );
+          flux, velfn, Problem::src, U, P, W, ndofel, R );
+      }
 
       // compute external (energy) sources
       //m_physics.physSrc(nspec, t, geoElem, {}, R, {});
@@ -742,6 +757,8 @@ class MultiSpecies {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
+    //! \param[in,out] local_dte Time step size for each element (for local
+    //!   time stepping)
     //! \return Minimum time step size
     //! \details The allowable dt is calculated by looking at the maximum
     //!   wave-speed in elements surrounding each face, times the area of that
@@ -756,13 +773,14 @@ class MultiSpecies {
                  const std::vector< std::size_t >& /*ndofel*/,
                  const tk::Fields& U,
                  const tk::Fields& P,
-                 const std::size_t nielem ) const
+                 const std::size_t nielem,
+                 std::vector< tk::real >& local_dte ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
       auto mindt = timeStepSizeMultiSpecies( m_mat_blk, fd.Esuf(), geoFace,
-        geoElem, nielem, nspec, U, P);
+        geoElem, nielem, nspec, U, P, local_dte);
 
       //if (viscous)
       //  mindt = std::min(mindt, timeStepSizeViscousFV(geoElem, nielem, nspec, U));
@@ -781,6 +799,8 @@ class MultiSpecies {
       // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
       // where p is the order of the DG polynomial by linear stability theory.
       mindt /= (2.0*dgp + 1.0);
+      for (std::size_t e=0; e<nielem; ++e)
+        local_dte[e] /= (2.0*dgp + 1.0);
       return mindt;
     }
 
@@ -879,6 +899,7 @@ class MultiSpecies {
       const auto& z = coord[2];
 
       std::vector< std::vector< tk::real > > Up(h.size());
+      std::vector< tk::real > B(rdof), uhp(m_ncomp, 0.0), php(m_nprim, 0.0);
 
       std::size_t j = 0;
       for (const auto& p : h) {
@@ -896,10 +917,10 @@ class MultiSpecies {
         // evaluate solution at history-point
         std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
           chp[2]-cp[0][2]}};
-        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
-          tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
-        auto php = eval_state(m_nprim, rdof, rdof, e, P, B);
+        tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc), B);
+        eval_state(m_ncomp, rdof, rdof, e, U, B, uhp.data());
+        eval_state(m_nprim, rdof, rdof, e, P, B, php.data());
 
         // Mixture calculations, initialized
         Mixture mix(nspec, uhp, m_mat_blk);

@@ -23,6 +23,8 @@
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
 #include "PDE/MultiSpecies/MultiSpeciesIndexing.hpp"
 
+#include "Nasa9DB.hpp"
+
 namespace tk {
 namespace grm {
 
@@ -157,6 +159,11 @@ LuaParser::storeInputDeck(
     Throw("No time step calculation policy has been selected in the "
       "preceeding block. Use keyword 'dt' to set a constant or 'cfl' to set an "
       "adaptive time step size calculation policy.");
+
+  // Option to provide NASA9 file directory to read species for MultiSpecies
+  // ---------------------------------------------------------------------------
+  storeIfSpecd< std::string >(
+    lua_ideck, "nasa9_filepath", gideck.get< tag::nasa9_filepath >(), "nasa9.dat");
 
   // partitioning/reordering options
   // ---------------------------------------------------------------------------
@@ -643,18 +650,63 @@ LuaParser::storeInputDeck(
         Assert(nspec == spci_deck.get< tag::id >().size(),
           "Number of ids in species-block not equal to number of species");
 
-        // R
-        checkStoreMatProp(sol_spc[i+1], "R", nspec,
-          spci_deck.get< tag::R >());
-        // cp_coeff
-        checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
-          spci_deck.get< tag::cp_coeff >());
-        // t_range
-        checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
-          spci_deck.get< tag::t_range >());
-        // dH_ref
-        checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
-          spci_deck.get< tag::dH_ref >());
+        // If names are given, ready data from Nasa9 file, otherwise read all
+        // from control file
+        storeVecIfSpecd< std::string >(
+          sol_spc[i+1], "spec_name", spci_deck.get< tag::spec_name >(),
+          std::vector< std::string >(nspec, ""));
+        if (sol_spc[i+1]["spec_name"].valid()) {
+          std::string nasa9_path = gideck.get< tag::nasa9_filepath >();
+          std::unordered_map<std::string,N9Species> nasa9_cache;
+
+          std::vector<tk::real> R(nspec);
+          std::vector<std::vector<std::vector<tk::real>>> cp_coeff(nspec,
+            std::vector<std::vector<tk::real>>( 3, std::vector<tk::real>(8)));
+          std::vector<std::vector<tk::real>> t_range(nspec,
+            std::vector<tk::real>(4));
+          std::vector<tk::real> dH_ref(nspec);
+          for (std::size_t ispec=0; ispec<nspec; ++ispec){
+            std::string spec_name =
+              spci_deck.get< tag::spec_name >()[ispec];
+            nasa9_cache[spec_name] =
+              read_nasa9_species(nasa9_path, spec_name);
+
+            const N9Species& spec = nasa9_cache.at(spec_name);
+            dH_ref[ispec] = spec.Hf298_mass;
+            R[ispec] = spec.R();
+
+            // Loop over intervals and retrieve coefficients
+            for (std::size_t interv = 0; interv < spec.nIntervals(); ++interv) {
+              const N9Interval& I = spec.intervalByIndex(interv);
+              for (std::size_t k = 0; k < 9; ++k)
+                cp_coeff[ispec][interv][k] = I.a[k];
+              t_range[ispec][interv] = I.Tlow;
+              if (interv == spec.nIntervals()-1)
+                t_range[ispec][interv+1] = I.Thigh;
+            }
+          }
+          // Store unknowns (manually for the high-dimension ones)
+          storeVecIfSpecd< tk::real >(
+            sol_spc[i+1], "R", spci_deck.get< tag::R >(), R);
+          storeVecIfSpecd< tk::real >(
+            sol_spc[i+1], "dH_ref", spci_deck.get< tag::dH_ref >(), dH_ref);
+          spci_deck.get< tag::cp_coeff >() = cp_coeff;
+          spci_deck.get< tag::t_range >() = t_range;
+        }
+        else {
+          // R
+          checkStoreMatProp(sol_spc[i+1], "R", nspec,
+            spci_deck.get< tag::R >());
+          // cp_coeff
+          checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
+            spci_deck.get< tag::cp_coeff >());
+          // t_range
+          checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
+            spci_deck.get< tag::t_range >());
+          // dH_ref
+          checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
+            spci_deck.get< tag::dH_ref >());
+        }
       }
 
       // Generate mapping between material index and eos parameter index
@@ -763,6 +815,12 @@ LuaParser::storeInputDeck(
       if (mesh_deck[i].get< tag::center_of_mass >().size() != 3)
         Throw("Mesh center of mass requires 3 coordinates.");
 
+      // body force
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "body_force",
+        mesh_deck[i].get< tag::body_force >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::body_force >().size() != 3)
+        Throw("Mesh body force requires 3 coordinates.");
+
       // Transfer object
       if (i > 0) {
         gideck.get< tag::transfer >().emplace_back( 0, i );
@@ -789,6 +847,7 @@ LuaParser::storeInputDeck(
                                                     {0.0, 0.0, 0.0},
                                                     {0.0, 0.0, 0.0}};
     mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< tag::body_force >() = {0.0, 0.0, 0.0};
   }
 
   Assert(gideck.get< tag::mesh >().size() == gideck.get< tag::depvar >().size(),
@@ -888,7 +947,7 @@ LuaParser::storeInputDeck(
 
     // Assign outvar
     auto& foutvar = fo_deck.get< tag::outvar >();
-    std::size_t nevar(0), nnvar(0), tensorcompvar(0);
+    std::size_t nevar(0), nnvar(0), tensorcompvar(0), massfracextra(0);
     std::size_t nmat(1);
     if (gideck.get< tag::pde >() == inciter::ctr::PDEType::MULTIMAT)
       nmat = gideck.get< tag::multimat, tag::nmat >();
@@ -905,6 +964,8 @@ LuaParser::storeInputDeck(
         std::string varname(lua_ideck["field_output"]["elemvar"][i+1]);
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
+        if (varname == "mass_fractions")
+          massfracextra += nspec - 1;
         addOutVar(varname, gideck.get< tag::depvar >(), nmat,
           nspec, gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
       }
@@ -916,12 +977,14 @@ LuaParser::storeInputDeck(
         std::string varname(lua_ideck["field_output"]["nodevar"][i+1]);
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
+        if (varname == "mass_fractions")
+          massfracextra += nspec - 1;
         addOutVar(varname, gideck.get< tag::depvar >(), nmat,
           nspec, gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
       }
     }
 
-    Assert(foutvar.size() == (nevar + nnvar + tensorcompvar),
+    Assert(foutvar.size() == (nevar + nnvar + tensorcompvar + massfracextra),
       "Incorrectly sized outvar vector.");
   }
   else {
@@ -1234,10 +1297,10 @@ LuaParser::storeInputDeck(
       totalmesh.insert(bc_deck[i].get< tag::mesh >().begin(),
         bc_deck[i].get< tag::mesh >().end());
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "dirichlet",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "dirichlet",
         bc_deck[i].get< tag::dirichlet >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "symmetry",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "symmetry",
         bc_deck[i].get< tag::symmetry >(), {});
 
       if (sol_bc[i+1]["inlet"].valid()) {
@@ -1265,20 +1328,23 @@ LuaParser::storeInputDeck(
         }
       }
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "outlet",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "outlet",
         bc_deck[i].get< tag::outlet >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "farfield",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "farfield",
         bc_deck[i].get< tag::farfield >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "extrapolate",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "extrapolate",
         bc_deck[i].get< tag::extrapolate >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "noslipwall",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "noslipwall",
         bc_deck[i].get< tag::noslipwall >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "slipwall",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "slipwall",
         bc_deck[i].get< tag::slipwall >(), {});
+
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "isothermal_wall",
+        bc_deck[i].get< tag::isothermal_wall >(), {});
 
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
@@ -1306,7 +1372,7 @@ LuaParser::storeInputDeck(
         const sol::table& sol_bpbc = sol_bc[i+1]["back_pressure"];
         auto& bpbc_deck = bc_deck[i].get< tag::back_pressure >();
 
-        storeVecIfSpecd< uint64_t >(sol_bpbc, "sideset",
+        storeVecIfSpecd< std::size_t >(sol_bpbc, "sideset",
           bpbc_deck.get< tag::sideset >(), {});
 
         if (!sol_bpbc["pressure"].valid())
@@ -1333,6 +1399,10 @@ LuaParser::storeInputDeck(
       // Temperature for inlet/outlet/farfield
       storeIfSpecd< tk::real >(sol_bc[i+1], "temperature",
         bc_deck[i].get< tag::temperature >(), 0.0);
+
+      // Wall temperature for isothermal wall bc
+      storeIfSpecd< tk::real >(sol_bc[i+1], "wall_temperature",
+        bc_deck[i].get< tag::wall_temperature >(), 300.0);
 
       // Mass fractions for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "mass_fractions",
@@ -1502,7 +1572,7 @@ LuaParser::storeInputDeck(
         checkBlock< inciter::ctr::meshblockList::Keys >(lua_meshblock[i+1],
           "meshblock");
 
-        storeIfSpecd< std::size_t >(lua_meshblock[i+1], "blockid",
+        storeIfSpecd< std::uint64_t >(lua_meshblock[i+1], "blockid",
           mblk_deck[i].get< tag::blockid >(), 0);
         if (mblk_deck[i].get< tag::blockid >() == 0)
           Throw("Each IC mesh block must specify the mesh block id.");
@@ -1804,6 +1874,14 @@ LuaParser::addOutVar(
         std::string tij(namet + std::to_string(i) + std::to_string(j));
         foutvar.emplace_back( inciter::ctr::OutVar(c, tij, 0, tij) );
       }
+    }
+  }
+  // name-based multi-species quantity specification
+  // -----------------------------------------------
+  else if (varname == "mass_fractions") {
+    for (std::size_t k=0; k<nspec; ++k) {
+      const auto mfrac = "mass_fraction_" + std::to_string(k+1);
+      foutvar.emplace_back( inciter::ctr::OutVar(c, mfrac, 0, mfrac) );
     }
   }
   // name-based quantity specification

@@ -74,9 +74,11 @@ class Transport {
         , invalidBC  // Characteristic BC not implemented
         , extrapolate
         , invalidBC        // Slip wall BC not implemented
+        , invalidBC
         , invalidBC },      // No slip wall BC not implemented
         // BC Gradient functions
         { noOpGrad
+        , noOpGrad
         , noOpGrad
         , noOpGrad
         , noOpGrad
@@ -266,8 +268,6 @@ class Transport {
                 const std::vector< std::size_t >&,
                 const std::unordered_map< std::size_t, std::size_t >&,
                 const std::vector< std::vector<tk::real> >&,
-                const std::vector< std::vector<tk::real> >&,
-                const std::vector< std::vector<tk::real> >&,
                 tk::Fields& U,
                 tk::Fields&,
                 std::vector< std::size_t >& ) const
@@ -365,25 +365,52 @@ class Transport {
       // system of PDEs.
       std::vector< std::vector < tk::real > > riemannDeriv;
 
-      // compute internal surface flux integrals
-      std::vector< std::size_t > solidx(1, 0);
-      tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
-                   inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
-                   Problem::prescribedVelocity, U, P, W, ndofel, dt, R,
-                   riemannDeriv, intsharp );
+      // configure a no-op lambda for source term function
+      auto srcfn = []( ncomp_t, const std::vector< inciter::EOS >&, tk::real,
+        tk::real, tk::real, tk::real, std::vector< tk::real >& ){
+        return tk::SrcFn::result_type(); };
 
-      if(ndof > 1)
+      // p-adaptive DG
+      std::vector< std::size_t > solidx(1, 0);
+      if (!pref) {
+        // compute internal surface flux integrals
+        tk::surfInt_constP( m_ncomp, m_mat_blk, t, ndof, rdof,
+                     inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
+                     Problem::prescribedVelocity, U, P, W, dt, R,
+                     riemannDeriv, intsharp );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt_constP( m_ncomp, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
+            Problem::prescribedVelocity, std::get<1>(b), U, P, W, R,
+            riemannDeriv, intsharp );
+
+        // compute volume integrals
+        tk::volInt_constP( m_ncomp, t, m_mat_blk, ndof, rdof,
+                    fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
+                    Problem::prescribedVelocity, srcfn, U, P, W, R, intsharp );
+      }
+      else {
+        // compute internal surface flux integrals
+        tk::surfInt( pref, m_ncomp, m_mat_blk, t, ndof, rdof,
+                     inpoel, solidx, coord, fd, geoFace, geoElem, Upwind::flux,
+                     Problem::prescribedVelocity, U, P, W, ndofel, dt, R,
+                     riemannDeriv, intsharp );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt( pref, m_ncomp, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
+            Problem::prescribedVelocity, std::get<1>(b), U, P, W, ndofel, R,
+            riemannDeriv, intsharp );
+
         // compute volume integrals
         tk::volInt( m_ncomp, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux,
-                    Problem::prescribedVelocity, U, P, W, ndofel, R, intsharp );
-
-      // compute boundary surface flux integrals
-      for (const auto& b : m_bc)
-        tk::bndSurfInt( pref, m_ncomp, m_mat_blk, ndof, rdof,
-          std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t, Upwind::flux,
-          Problem::prescribedVelocity, std::get<1>(b), U, P, W, ndofel, R,
-          riemannDeriv, intsharp );
+                    Problem::prescribedVelocity, srcfn, U, P, W, ndofel, R,
+                    intsharp );
+      }
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -431,7 +458,8 @@ class Transport {
                  const std::vector< std::size_t >& /*ndofel*/,
                  const tk::Fields& /*U*/,
                  const tk::Fields&,
-                 const std::size_t /*nielem*/ ) const
+                 const std::size_t /*nielem*/,
+                 std::vector< tk::real >& /*local_dte*/ ) const
     {
       tk::real mindt = std::numeric_limits< tk::real >::max();
       return mindt;
