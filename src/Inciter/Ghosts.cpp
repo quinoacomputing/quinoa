@@ -36,7 +36,9 @@ Ghosts::Ghosts( const CProxy_Discretization& disc,
   m_nfac( m_fd.Inpofa().size()/3 ),
   m_bndFace(),
   m_sendGhost(),
+  m_sendChBndNode(),
   m_ghost(),
+  m_recvChBndNode(),
   m_exptGhost(),
   m_bid(),
   m_esup(),
@@ -119,6 +121,9 @@ Ghosts::resizeComm()
 {
   // Enable SDAG wait for setting up chare boundary faces
   thisProxy[ thisIndex ].wait4fac();
+
+  m_sendChBndNode.clear();
+  m_recvChBndNode.clear();
 
   auto d = Disc();
 
@@ -369,6 +374,7 @@ Ghosts::setupGhost()
             ncoord[2] = m_coord[2][ m_inpoel[ mark+f ] ];
 
             std::get< 3 >( tuple ) = f;
+            m_sendChBndNode[c][e] = m_inpoel[ mark+f ];
 
             std::get< 4 >( tuple ) = {{ gid[ m_inpoel[ mark ] ],
                                         gid[ m_inpoel[ mark+1 ] ],
@@ -547,6 +553,11 @@ Ghosts::comGhost( int fromch, const GhostData& ghost )
           m_coord[2].push_back( coordg[2] );
           Assert( m_inpoel[ 4*(m_nunk-1)+std::get< 3 >( g.second ) ] == ncoord,
                   "Mismatch in extended inpoel for ghost element" );
+          auto ghostnode =
+            m_inpoel[ 4*(m_nunk-1) + std::get< 3 >( g.second ) ];
+          Assert( ghostnode == ncoord,
+                  "Mismatch in extended point index for ghost element" );
+          m_recvChBndNode[fromch][e] = ghostnode;
           ++ncoord;                // increase number of nodes on this chare
         }
       }

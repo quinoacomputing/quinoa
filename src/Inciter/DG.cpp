@@ -109,6 +109,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsmooth( 0 ),
   m_nreco( 0 ),
   m_nnodalExtrema( 0 ),
+  m_nale( 0 ),
   m_nstiffeq( g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_nnonstiffeq( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
   m_u( Disc()->Inpoel().size()/4,
@@ -200,6 +201,7 @@ DG::DG( const CProxy_Discretization& disc,
     if (pref) thisProxy[ thisIndex ].wait4refine();
     thisProxy[ thisIndex ].wait4smooth();
     thisProxy[ thisIndex ].wait4lim();
+    thisProxy[ thisIndex ].wait4ale();
     thisProxy[ thisIndex ].wait4nod();
     thisProxy[ thisIndex ].wait4reco();
     thisProxy[ thisIndex ].wait4nodalExtrema();
@@ -1364,6 +1366,163 @@ DG::comlim( int fromch,
 }
 
 void
+DG::updateChareBoundaryGeoFace()
+// *****************************************************************************
+// Recompute chare-boundary face geometry after ALE ghost updates arrive
+// *****************************************************************************
+{
+  auto d = Disc();
+  auto g = myGhosts();
+  const auto& esuf = g->m_fd.Esuf();
+
+  for (std::size_t f = g->m_fd.Nipfac(); f < esuf.size()/2; ++f) {
+    std::size_t el = static_cast< std::size_t >( esuf[2*f] );
+    tk::UnsMesh::Face t{{
+      d->Gid()[ g->m_fd.Inpofa()[3*f+2] ],
+      d->Gid()[ g->m_fd.Inpofa()[3*f+1] ],
+      d->Gid()[ g->m_fd.Inpofa()[3*f+0] ]
+    }};
+    std::array< std::size_t, 2 > id{{ f, el }};
+    g->addGeoFace( t, id );
+  }
+}
+
+void
+DG::ALEComm()
+// *****************************************************************************
+// Perform ALE mesh update and communicate updated ghost mesh data
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto is_ale = g_inputdeck.get< tag::ale, tag::ale >();
+
+  if (!is_ale) {
+    ownale_complete();
+    comale_complete();
+    return;
+  }
+
+  if (m_stage == 0) {
+    d->UpdateCoordn();
+    m_geoElemn = myGhosts()->m_geoElem;
+  }
+
+  // Advance owned mesh coordinates and mirror them into the extended array.
+  const auto& meshvel = d->meshvel();
+  auto& coord = myGhosts()->m_coord;
+  auto& disc_coord = d->Coord();
+  const auto dc_size = disc_coord[0].size();
+  for (std::size_t j=0; j<3; ++j) {
+    for (std::size_t i=0; i<dc_size; ++i) {
+      auto x = rkcoef[0][m_stage] * d->Coordn()[j][i]
+        + rkcoef[1][m_stage] * ( disc_coord[j][i] + d->Dt() * meshvel(i,j) );
+      disc_coord[j][i] = x;
+      coord[j][i] = x;
+    }
+  }
+
+  // Store element volumes at previous stage for GCL consistent RK
+  m_geoElemk = myGhosts()->m_geoElem;
+
+  // Recompute internal + physical boundary face geometry from the updated mesh.
+  auto gf_temp = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
+    myGhosts()->m_fd.Inpofa(), myGhosts()->m_coord );
+  for (std::size_t f=0; f<myGhosts()->m_fd.Nipfac(); ++f)
+    for (std::size_t i=0; i<gf_temp.nprop(); ++i)
+      myGhosts()->m_geoFace(f,i) = gf_temp(f,i);
+
+  // Recompute element geometries for owned elements only.
+  auto ge_temp = tk::genGeoElemTet( d->Inpoel(), disc_coord );
+  for (std::size_t e=0; e<ge_temp.nunk(); ++e)
+    for (std::size_t i=0; i<ge_temp.nprop(); ++i)
+      myGhosts()->m_geoElem(e,i) = ge_temp(e,i);
+
+  if (myGhosts()->m_sendGhost.empty()) {
+    updateChareBoundaryGeoFace();
+    comale_complete();
+  } else {
+    for (const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > geoElem( ghostdata.size() );
+      std::vector< std::array< tk::real, 3 > > coordg(
+        ghostdata.size(), std::array< tk::real, 3 >{{ 0.0, 0.0, 0.0 }} );
+      const auto sendnode = myGhosts()->m_sendChBndNode.find( cid );
+
+      std::size_t j = 0;
+      for (const auto& e : ghostdata) {
+        Assert( e < myGhosts()->m_fd.Esuel().size()/4,
+          "Sending ALE ghost data" );
+        tetid[j] = e;
+        geoElem[j] = myGhosts()->m_geoElem[e];
+
+        if (sendnode != end(myGhosts()->m_sendChBndNode)) {
+          const auto n = sendnode->second.find( e );
+          if (n != end(sendnode->second)) {
+            coordg[j] = {{ coord[0][n->second],
+                           coord[1][n->second],
+                           coord[2][n->second] }};
+          }
+        }
+        ++j;
+      }
+
+      thisProxy[ cid ].comale( thisIndex, tetid, geoElem, coordg );
+    }
+  }
+
+  ownale_complete();
+}
+
+void
+DG::comale( int fromch,
+            const std::vector< std::size_t >& tetid,
+            const std::vector< std::vector< tk::real > >& geoElem,
+            const std::vector< std::array< tk::real, 3 > >& coord )
+// *****************************************************************************
+//  Receive updated ALE ghost mesh data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive ALE mesh data for
+//! \param[in] geoElem Updated ghost-element geometry
+//! \param[in] coord Updated off-face coordinates for face ghosts
+// *****************************************************************************
+{
+  Assert( geoElem.size() == tetid.size(), "Size mismatch in DG::comale()" );
+  Assert( coord.size() == tetid.size(), "Size mismatch in DG::comale()" );
+
+  const auto& ghost = tk::cref_find( myGhosts()->m_ghost, fromch );
+  const auto recvnode = myGhosts()->m_recvChBndNode.find( fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( ghost, tetid[i] );
+    Assert( j >= myGhosts()->m_fd.Esuel().size()/4,
+      "Receiving ALE non-ghost data" );
+    Assert( geoElem[i].size() == myGhosts()->m_geoElem.nprop(),
+      "Geometry size mismatch in DG::comale()" );
+
+    for (std::size_t c=0; c<geoElem[i].size(); ++c)
+      myGhosts()->m_geoElem(j,c) = geoElem[i][c];
+
+    if (recvnode != end(myGhosts()->m_recvChBndNode)) {
+      const auto n = recvnode->second.find( tetid[i] );
+      if (n != end(recvnode->second)) {
+        auto p = n->second;
+        Assert( p < myGhosts()->m_coord[0].size(),
+          "Indexing out of extended ALE ghost coordinates" );
+        myGhosts()->m_coord[0][p] = coord[i][0];
+        myGhosts()->m_coord[1][p] = coord[i][1];
+        myGhosts()->m_coord[2][p] = coord[i][2];
+      }
+    }
+  }
+
+  if (++m_nale == myGhosts()->m_sendGhost.size()) {
+    m_nale = 0;
+    updateChareBoundaryGeoFace();
+    comale_complete();
+  }
+}
+
+void
 DG::dt()
 // *****************************************************************************
 // Compute time step size
@@ -1501,7 +1660,6 @@ DG::solve( tk::real newdt )
 // *****************************************************************************
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-  const auto is_ale = g_inputdeck.get< tag::ale, tag::ale >();
 
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
@@ -1510,6 +1668,7 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4nodalExtrema();
   thisProxy[ thisIndex ].wait4lim();
+  thisProxy[ thisIndex ].wait4ale();
   thisProxy[ thisIndex ].wait4nod();
 
   auto d = Disc();
@@ -1523,13 +1682,7 @@ DG::solve( tk::real newdt )
     d->setdt( newdt );
 
   // Update Un
-  if (m_stage == 0) {
-    m_un = m_u;
-    if (is_ale) {
-      d->UpdateCoordn();
-      m_geoElemn = myGhosts()->m_geoElem;
-    }
-  }
+  if (m_stage == 0) m_un = m_u;
 
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
@@ -1553,8 +1706,6 @@ DG::solve( tk::real newdt )
     }
   }
 
-  // Perform ALE mesh data updates
-  if (is_ale) ALEUpdate();
   if (!imex_runge_kutta || m_stage < m_nstage-1) {
     if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
@@ -1646,72 +1797,6 @@ DG::solve( tk::real newdt )
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
 
   }
-}
-
-void
-DG::ALEUpdate()
-// *****************************************************************************
-// Update mesh data based on direct ALE
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Advance mesh if ALE is enabled
-  const auto& meshvel = d->meshvel();
-  auto& coord = myGhosts()->m_coord;
-  auto& disc_coord = d->Coord();
-  auto dc_size = disc_coord[0].size();
-  for (std::size_t j=0; j<3; ++j) {
-    for (std::size_t i=0; i<coord[j].size(); ++i) {
-      coord[j][i] = rkcoef[0][m_stage] * d->Coordn()[j][i]
-        + rkcoef[1][m_stage] * ( coord[j][i]
-          + d->Dt() * meshvel(i,j) );
-
-      // separately update d->Coord() because it has different size
-      if (i<dc_size) {
-        disc_coord[j][i] = rkcoef[0][m_stage] * d->Coordn()[j][i]
-          + rkcoef[1][m_stage] * ( disc_coord[j][i]
-            + d->Dt() * meshvel(i,j) );
-      }
-    }
-  }
-
-  // Store element volumes at previous stage for GCL consistent RK
-  m_geoElemk = myGhosts()->m_geoElem;
-
-  // Update mesh geometry data
-
-  // 1. recompute internal + physical boundary faces
-  auto gf_temp = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
-    myGhosts()->m_fd.Inpofa(), myGhosts()->m_coord );
-  for (std::size_t f=0; f<myGhosts()->m_fd.Nipfac(); ++f)
-    for (std::size_t i=0; i<gf_temp.nprop(); ++i)
-      myGhosts()->m_geoFace(f,i) = gf_temp(f,i);
-
-  // 2. recompute chare-boundary faces [Nipfac .. nfac)
-  const auto& esuf = myGhosts()->m_fd.Esuf();
-  for (std::size_t f = myGhosts()->m_fd.Nipfac(); f < esuf.size()/2; ++f) {
-    // left (inner) element id for this face:
-    std::size_t el = static_cast<std::size_t>(esuf[2*f]);
-    // rebuild t in *unreversed* order so addGeoFace() can reverse it:
-    tk::UnsMesh::Face t{{
-      d->Gid()[myGhosts()->m_fd.Inpofa()[3*f+2]],  // A
-      d->Gid()[myGhosts()->m_fd.Inpofa()[3*f+1]],  // B
-      d->Gid()[myGhosts()->m_fd.Inpofa()[3*f+0]]   // C
-    }};
-    std::array<std::size_t,2> id{{f, el}};
-    myGhosts()->addGeoFace(t, id);  // writes m_geoFace(f, :)
-  }
-
-  // 3. recompute element geometries for owned elements
-  auto ge_temp = tk::genGeoElemTet( myGhosts()->m_inpoel,
-    d->Coord()/*myGhosts()->m_coord*/ );
-  for (std::size_t e=0; e<ge_temp.nunk(); ++e)
-    for (std::size_t i=0; i<ge_temp.nprop(); ++i)
-      myGhosts()->m_geoElem(e,i) = ge_temp(e,i);
-  // TODO: update myGhosts()->m_geoElem for ghost elements and node-neighbors
-  // across chare boundaries
-
 }
 
 void

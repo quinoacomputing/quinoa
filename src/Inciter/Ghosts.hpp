@@ -138,12 +138,30 @@ class Ghosts : public CBase_Ghosts {
     std::unordered_map< int, FaceMap > m_bndFace;
     //! Elements which are ghosts for other chares associated to those chare IDs
     std::unordered_map< int, std::unordered_set< std::size_t > > m_sendGhost;
+    //! Owned face-ghost elements mapped to the local node opposite the shared face
+    //! \details The outer map key is the neighboring chare id to which the
+    //!   face-ghost element is sent. The inner map key is the local id of the
+    //!   owned element exported as a ghost to that neighboring chare. The
+    //!   inner map value is the local node id of the element vertex opposite
+    //!   the shared chare-boundary face, i.e., the single vertex whose
+    //!   coordinates may need to be sent explicitly after ALE mesh motion.
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::size_t > > m_sendChBndNode;
     //! Local element id associated to ghost remote id charewise
     //! \details This map associates the local element id (inner map value) to
     //!    the (remote) element id of the ghost (inner map key) based on the
     //!    chare id (outer map key) this remote element lies in.
     std::unordered_map< int,
       std::unordered_map< std::size_t, std::size_t > > m_ghost;
+    //! Received face-ghost elements mapped to the local extended ghost node
+    //! \details The outer map key is the neighboring chare id from which the
+    //!   face-ghost element is received. The inner map key is the remote
+    //!   element id on that neighboring chare, i.e., the same remote id used
+    //!   to index m_ghost. The inner map value is the local extended node id
+    //!   created on this chare for the off-face ghost vertex, allowing its
+    //!   coordinates to be refreshed after ALE mesh motion.
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::size_t > > m_recvChBndNode;
     //! Expected ghost tet ids (used only in DEBUG)
     std::set< std::size_t > m_exptGhost;
     //! Map local ghost tet ids (value) and zero-based boundary ids (key)
@@ -199,7 +217,9 @@ class Ghosts : public CBase_Ghosts {
       p | m_nfac;
       p | m_bndFace;
       p | m_sendGhost;
+      p | m_sendChBndNode;
       p | m_ghost;
+      p | m_recvChBndNode;
       p | m_exptGhost;
       p | m_bid;
       p | m_esup;

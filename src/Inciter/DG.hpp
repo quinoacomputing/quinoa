@@ -138,6 +138,12 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& interface,
                  const std::vector< std::size_t >& ndof );
 
+    //! Receive updated ALE ghost mesh data from neighboring chares
+    void comale( int fromch,
+                 const std::vector< std::size_t >& tetid,
+                 const std::vector< std::vector< tk::real > >& geoElem,
+                 const std::vector< std::array< tk::real, 3 > >& coord );
+
     //! Receive contributions to nodal gradients on chare-boundaries
     void
     comnodalExtrema( const std::vector< std::size_t >& gid,
@@ -225,9 +231,6 @@ class DG : public CBase_DG {
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
 
-    //! Update mesh data based on direct ALE
-    void ALEUpdate();
-
     //! Evaluate whether to continue with next time step
     void step();
 
@@ -253,6 +256,7 @@ class DG : public CBase_DG {
       p | m_nsmooth;
       p | m_nreco;
       p | m_nnodalExtrema;
+      p | m_nale;
       p | m_u;
       p | m_un;
       p | m_p;
@@ -331,6 +335,8 @@ class DG : public CBase_DG {
     //! \brief Counter signaling that we have received all our nodal extrema from
     //!   ghost chare partitions
     std::size_t m_nnodalExtrema;
+    //! Counter signaling that we have received all ALE ghost mesh updates
+    std::size_t m_nale;
     //! Counters signaling how many stiff and non-stiff equations in the system
     std::size_t m_nstiffeq, m_nnonstiffeq;
     //! Vector of unknown/solution average over each mesh element
@@ -448,6 +454,12 @@ class DG : public CBase_DG {
 
     //! Compute limiter function
     void lim();
+
+    //! Recompute chare-boundary face geometry after ALE ghost updates arrive
+    void updateChareBoundaryGeoFace();
+
+    //! Perform ALE mesh update and communicate updated ghost mesh data
+    void ALEComm();
 
     //! Compute time step size
     void dt();
