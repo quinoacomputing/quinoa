@@ -2138,11 +2138,12 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
       lapack_int ln = static_cast< lapack_int >(n);
       std::vector< double > delta(n);
       std::vector< lapack_int > ipiv(n);
+      auto jacob_copy = jacob;
 
       for (std::size_t i=0; i<n; ++i) delta[i] = -f[i];
 
       lapack_int info = LAPACKE_dgesv(
-        LAPACK_ROW_MAJOR, ln, 1, jacob.data(), ln, ipiv.data(), delta.data(), 1 );
+        LAPACK_ROW_MAJOR, ln, 1, jacob_copy.data(), ln, ipiv.data(), delta.data(), 1 );
 
       if (info != 0) {
         solver_failed = true;
@@ -2199,14 +2200,14 @@ std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
         break;
       }
 
-      // check if error condition is met
-      if (rel_err < rel_tol || abs_err < abs_tol)
-        break;
-
       if (!ls_failed) {
         // Save x
         for (std::size_t i=0; i<n; ++i)
           x[i] = xtest[i];
+
+        // check if error condition is met
+        if (rel_err < rel_tol || abs_err < abs_tol)
+          break;
 
         // Compute delta_x and delta_f
         for (std::size_t i=0; i<n; ++i)
@@ -2297,7 +2298,6 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
   // Iterate for the solution if err0 > 0
   solver_failed = false;
-  tk::real alpha_jacob = 1.0;
   if (err0 > abs_tol)
     for (std::size_t iter=0; iter<max_iter; ++iter)
     {
@@ -2377,20 +2377,8 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
           alpha_ls *= 0.5;
         }
         if (iline == nline-1) {
-          //printf("Line search failed to decrease f\n");
-          // Try again by reducing the jacobian,
-          // but only a few times, otherwise give up
-          alpha_jacob *= 0.5;
-          if (alpha_jacob < 1.0E-03)
-            solver_failed = true;
-          else
-            ls_failed = true;
+          ls_failed = true;
         }
-      }
-
-      // check if error condition is met and loop back
-      if (rel_err < rel_tol || abs_err < abs_tol) {
-        break;
       }
 
       if (solver_failed) {
@@ -2407,6 +2395,11 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
         for (std::size_t i=0; i<n; ++i)
           x[i] = xtest[i];
 
+        // check if error condition is met and loop back
+        if (rel_err < rel_tol && abs_err < abs_tol) {
+          break;
+        }
+ 
         // If we did not converge, print a message and keep going
         if (iter == max_iter-1)
         {
