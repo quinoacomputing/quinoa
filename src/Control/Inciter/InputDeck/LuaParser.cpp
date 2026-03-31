@@ -23,6 +23,7 @@
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
 #include "PDE/MultiSpecies/MultiSpeciesIndexing.hpp"
 
+#include "config.h"
 #include "Nasa9DB.hpp"
 
 namespace tk {
@@ -162,8 +163,9 @@ LuaParser::storeInputDeck(
 
   // Option to provide NASA9 file directory to read species for MultiSpecies
   // ---------------------------------------------------------------------------
+  const std::string nasa9_dir = std::string(TPL_DIR) + "/include/mutation++/data/thermo/nasa9.dat";
   storeIfSpecd< std::string >(
-    lua_ideck, "nasa9_filepath", gideck.get< tag::nasa9_filepath >(), "nasa9.dat");
+    lua_ideck, "nasa9_filepath", gideck.get< tag::nasa9_filepath >(), nasa9_dir);
 
   // partitioning/reordering options
   // ---------------------------------------------------------------------------
