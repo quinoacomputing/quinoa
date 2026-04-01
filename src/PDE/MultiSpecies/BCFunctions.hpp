@@ -15,7 +15,7 @@
 
 #include "FunctionPrototypes.hpp"
 #include "MiscMultiSpeciesFns.hpp"
-
+#include <iostream>
 namespace inciter {
 
   //! \brief Boundary state function providing the left and right state of a
@@ -207,6 +207,7 @@ namespace inciter {
               tk::real, tk::real, tk::real, tk::real,
               const std::array< tk::real, 3 >& /*fn*/ )
   {
+    //std::cout << "Inside noslipwall function" << std::endl;
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
     Assert( ul.size() == ncomp+1, "Incorrect size for appended "
@@ -230,6 +231,10 @@ namespace inciter {
     ur[multispecies::momentumIdx(nspec, 0)] = rho * v1r;
     ur[multispecies::momentumIdx(nspec, 1)] = rho * v2r;
     ur[multispecies::momentumIdx(nspec, 2)] = rho * v3r;
+
+    //std::cout << "ul[0]: " << ul[multispecies::momentumIdx(nspec, 0)] << "; ur[0]: " << ur[multispecies::momentumIdx(nspec, 0)] << std::endl;
+    //std::cout << "ul[1]: " << ul[multispecies::momentumIdx(nspec, 1)] << "; ur[1]: " << ur[multispecies::momentumIdx(nspec, 1)] << std::endl;
+    //std::cout << "ul[2]: " << ul[multispecies::momentumIdx(nspec, 2)] << "; ur[2]: " << ur[multispecies::momentumIdx(nspec, 2)] << std::endl;
 
     Assert( ur.size() == ncomp+1, "Incorrect size for appended "
             "boundary state vector" );

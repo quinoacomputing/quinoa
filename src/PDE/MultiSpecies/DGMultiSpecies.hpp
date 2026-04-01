@@ -646,7 +646,7 @@ class MultiSpecies {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       auto viscous = g_inputdeck.get< tag::multispecies, tag::viscous >();
-
+      std::cout << "Viscous boolean: " << viscous << std::endl;
       const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
@@ -1066,6 +1066,7 @@ class MultiSpecies {
       getmatprop< tag::cv >(k) * getmatprop< tag::gamma >(k)
       / 0.71;
   }
+  std::cout << "Mu: " << mu << std::endl; 
 
       for (std::size_t i=0; i<3; ++i) {
         auto idx = multispecies::momentumIdx(nspec,i);
@@ -1102,11 +1103,12 @@ class MultiSpecies {
       }     
  
        // energy  viscous flux
-      auto idx_2 = multispecies::temperatureIdx(nspec,0);
+      auto idx_2 = multispecies::energyIdx(nspec, 0); //multispecies::temperatureIdx(nspec,0);
       for (std::size_t i=0; i<3; ++i) {
         for (std::size_t j=0; j<3; ++j) {
-        fl[idx_2][i] += u[j] * tau[i][j]+conduct*dTdx[i];
+        fl[idx_2][i] += u[j] * tau[i][j]; //+conduct*dTdx[i];
         }
+        fl[idx_2][i] += conduct*dTdx[i];
       }   
 
     return fl;

@@ -362,6 +362,9 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multispecies"], "nspec",
       gideck.get< tag::multispecies, tag::nspec >(), 1);
+    storeIfSpecd< bool >(
+      lua_ideck["multispecies"], "viscous",
+      gideck.get< tag::multispecies, tag::viscous >(), false);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["multispecies"], "problem",
       gideck.get< tag::multispecies, tag::problem >(),
