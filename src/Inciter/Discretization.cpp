@@ -197,15 +197,32 @@ Discretization::addRestartedMesh( CkCallback cb )
     // skip transfer if single mesh or if not involved in coupling
     cb.send();
   } else {
+    // Store the callback so collideRestartDone() (element 0) can forward it
+    // to addMesh once all PEs have finished reinitClient.
+    m_restartcb = cb;
+    // Reinitialize the collision client on this PE's collideMgr branch.
+    // Contribute to a barrier so ALL PEs finish reinitClient before element 0
+    // calls addMesh.  Without this, collideMgr on some PEs may not yet be
+    // restored from checkpoint when the first collision messages arrive,
+    // causing "group proxy not initialized" (CmiAbort / SIGSEGV on restart).
     CollideSerialClientRestart(exam2m::collideHandle, exam2m::collisionHandler,
       0);
-    if (thisIndex == 0) {
-      exam2m::addMesh( thisProxy, m_nchare, cb );
-      std::cout << "Disc: on restart " << m_meshid << " called addMesh(). \n";
-    }
+    contribute( CkCallback(CkIndex_Discretization::collideRestartDone(), thisProxy) );
   }
   // Array elements must not use the chare_objs table
   chareIdx = -1;
+}
+
+void
+Discretization::collideRestartDone()
+// *****************************************************************************
+// Called on element 0 once every chare has finished CollideSerialClientRestart
+// *****************************************************************************
+{
+  if (thisIndex == 0) {
+    std::cout << "Disc: on restart " << m_meshid << " called addMesh(). \n";
+    exam2m::addMesh( thisProxy, m_nchare, m_restartcb );
+  }
 }
 
 std::unordered_map< std::size_t, std::size_t >
