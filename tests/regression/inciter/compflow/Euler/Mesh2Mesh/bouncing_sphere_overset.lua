@@ -5,7 +5,7 @@ inciter = {
 
   title = "Sphere in a cube",
 
-  nstep = 2,
+  nstep = 10,
   cfl = 0.8,
   ttyi = 1,  -- TTY output interval
   scheme = "oversetfe",
@@ -87,7 +87,7 @@ inciter = {
   },
 
   field_output = {
-    time_interval = 2,
+    time_interval = 5,
     nodevar = {
       "density",
       "specific_total_energy",
