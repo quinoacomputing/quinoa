@@ -646,7 +646,6 @@ class MultiSpecies {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       auto viscous = g_inputdeck.get< tag::multispecies, tag::viscous >();
-      std::cout << "Viscous boolean: " << viscous << std::endl;
       const auto nelem = fd.Esuel().size()/4;
 
       Assert( U.nunk() == P.nunk(), "Number of unknowns in solution "
@@ -1056,17 +1055,20 @@ class MultiSpecies {
   std::array< std::array< tk::real, 3 >, 3 > dudx, tau;
   std::array< tk::real, 3 > dTdx;
   tk::real mu(0.0), conduct(0.0);
+  //tk::real conduct(0.0);
   std::vector< tk::real > alLR(nspec, 0), conduct_mat(nspec, 0);
-  
+
   for (std::size_t k=0; k<nspec; ++k)
   {
     alLR[k] = ugp[multispecies::densityIdx(nspec, k)]/rhob; 
     mu += alLR[k] * getmatprop< tag::mu >(k);
+
+    auto test = getmatprop< tag::mu >(k);
     conduct += alLR[k] *getmatprop< tag::mu >(k) *
       getmatprop< tag::cv >(k) * getmatprop< tag::gamma >(k)
       / 0.71;
+
   }
-  std::cout << "Mu: " << mu << std::endl; 
 
       for (std::size_t i=0; i<3; ++i) {
         auto idx = multispecies::momentumIdx(nspec,i);

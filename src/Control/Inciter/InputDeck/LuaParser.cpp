@@ -629,6 +629,10 @@ LuaParser::storeInputDeck(
       else if (mati_deck.get< tag::eos >() ==
         inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
 
+        // mu
+        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
+          mati_deck.get< tag::mu >());
+
         if (!lua_ideck["species"].valid())
           Throw("Species block must be specified for thermally perfect gas");
         sol::table sol_spc = lua_ideck["species"];

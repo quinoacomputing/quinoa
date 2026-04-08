@@ -230,7 +230,7 @@ surfInt( const bool pref,
       auto fl = flux( mat_blk, fn, state, v );
       
       if (viscous){
-          std::vector< tk::real> fluxl(5, 0);
+	  std::vector< tk::real> fluxl(5, 0);
           std::vector< tk::real> fluxr(5, 0);
           //std::array< std::vector<real>, 3 > dBdx_l, dBdx_r;
           std::vector< std::array< tk::real, 3 > > grad_all(2*ncomp, 
@@ -260,7 +260,6 @@ surfInt( const bool pref,
              coordgp_3[i][igp]=ref_gp_r[i];
           eval_dBdx_p2( igp, coordgp_3, jacInv_r, dBdx_r );
         }  
-    
       auto state_U_grad_l = eval_state_gradient (ncomp, ndof, dof_el, 
                          el, U, dBdx_l );
       auto state_P_grad_l = eval_state_gradient (nprim, ndof, dof_el, 
@@ -275,7 +274,7 @@ surfInt( const bool pref,
       auto fl_vis_l = visc_flux(ncomp, mat_blk, state[0], grad_all); 
       auto state_U_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
                          er, U, dBdx_r );
-      auto state_P_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
+      auto state_P_grad_r = eval_state_gradient (nprim, ndof, dof_er, 
                          er, P, dBdx_r );
       grad_all.clear();
       for (ncomp_t c=0; c<ncomp; ++c){
@@ -286,7 +285,6 @@ surfInt( const bool pref,
           grad_all.push_back(state_P_grad_r[c]);
       } 
       auto fl_vis_r = visc_flux(ncomp, mat_blk, state[1], grad_all); 
-      
  
 
            // Flux functions

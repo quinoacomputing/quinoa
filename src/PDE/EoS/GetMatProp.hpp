@@ -40,12 +40,13 @@ getmatprop( std::size_t imat=0 ) {
   auto meos = map.template get< tag::eosidx >()[ imat ];
   auto midx = map.template get< tag::matidx >()[ imat ];
   auto pvec = matprop[ meos ].template get< Prop >();
-
   tk::real mp;
-  if (!pvec.empty())
+  if (!pvec.empty()){
     mp = pvec[ midx ];
-  else
+  }
+  else {
     mp = 0.0;
+  }
   return mp;
 }
 

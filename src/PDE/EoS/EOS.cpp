@@ -9,7 +9,7 @@
     where children implement specific EOS functions.
 */
 // *****************************************************************************
-
+#include <iostream>
 #include "EoS/EOS.hpp"
 #include "Exception.hpp"
 #include "EoS/GetMatProp.hpp"
@@ -89,6 +89,8 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
     auto dH_ref = getspecprop< tag::dH_ref >(k);
     m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref);
+    auto mu = getmatprop< tag::mu >(k);
+    //std::cout << "EOS mu: " << mu << "; index k: " << k << std::endl;
   }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
 }
