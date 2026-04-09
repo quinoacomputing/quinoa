@@ -419,19 +419,18 @@ class DG : public CBase_DG {
     //! Perform the BDF1 update
     void BDF1_integrate();
 
-    //! Non-linear solver using Broyden's method
-    std::vector< tk::real > nonlinear_broyden(std::size_t e,
-                                              std::vector< tk::real > x,
-                                              bool& solver_failed );
-
     //! Non-linear solver using Newton's method
     std::vector< tk::real > nonlinear_newton(std::size_t e,
-                                             std::vector< tk::real > x,
-                                             bool& solver_failed );
+                                             std::vector< tk::real > x );
 
     //! Non-linear function necessary to integrate with IMEX
     std::vector< tk::real > nonlinear_func(std::size_t e,
                                            std::vector< tk::real > x);
+
+    //! Computes jacobian for non-linear solver
+    std::vector< tk::real > compute_jacobian(std::size_t e,
+                                             std::vector< tk::real > x,
+                                             std::vector< tk::real > f);
 };
 
 } // inciter::

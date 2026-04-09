@@ -1788,23 +1788,6 @@ DG::imex_integrate()
 //!    First, Broyden's method.
 //!    If that fails, Newton's method (with FD approximation for jacobian).
 //!
-//!    Broyden's method:
-//!    ----------------
-//!
-//!    Taken from https://en.wikipedia.org/wiki/Broyden%27s_method.
-//!    The method consists in obtaining an approximation for the inverse of the
-//!    Jacobian H = J^(-1) and advancing in a quasi-newton step:
-//!
-//!    U[k+1] = U[k] - H[k]*F(U[k]),
-//!
-//!    until F(U) is close enough to zero.
-//!
-//!    The approximation H[k] is improved at every iteration following
-//!
-//!    H[k] = H[k-1] + (DU[k]-H[k-1]*DF[k])/(DU[k]^T*H[k-1]*DF[k]) * DU[k]^T*H[k-1],
-//!
-//!    where DU[k] = U[k] - U[k-1] and DF[k] = F(U[k]) - F(U[k-1)).
-//!
 //!    Newton's method:
 //!    ----------------
 //!
@@ -1824,22 +1807,6 @@ DG::imex_integrate()
 //!        U[1] = U[n] + dt * (expl_rkcoef[2,1]*R_ex(U[0])
 //!                           +impl_rkcoef[2,1]*R_im(U[0])) (for stage 1)
 //!      - Loop over the Elements (e++)
-//!        - Broyden steps:
-//!        - Initialize Jacobian inverse approximation using FD
-//!        - Compute implicit right-hand-side (F_im) with current U
-//!        - Iterate for the solution (iter++)
-//!          - Perform line search prior to solution update
-//!          - Compute new solution U[k+1] = U[k] - H[k]*F(U[k])
-//!          - Compute implicit right-hand-side (F_im) with current U
-//!          - Compute DU and DF
-//!          - Update inverse Jacobian approximation by:
-//!            - Compute V1 = H[k-1]*DF[k] and V2 = DU[k]^T*H[k-1]
-//!            - Compute d = DU[k]^T*V1 and V3 = DU[k]-V1
-//!            - Compute V4 = V3/d
-//!            - Update H[k] = H[k-1] + V4*V2
-//!          - Save old U and F
-//!          - Compute absolute and relative errors
-//!          - Break iterations if error < tol or iter == max_iter
 //!        - Newton steps:
 //!          - Initialize Jacobian using FD approximation.
 //!          - Compute implicit right-hand-side (F_im) with current U
@@ -1920,23 +1887,11 @@ DG::imex_integrate()
       // from the implicit step
       auto x_star = x;
 
-      // Solve nonlinear system, first try broyden
-      bool solver_failed = false;
-      x = DG::nonlinear_broyden(e, x, solver_failed);
+      // Solve nonlinear system
+      x = DG::nonlinear_newton(e, x);
 
-      // If solver_failed, do newton
-      if (solver_failed) {
-        solver_failed = false;
-        x = DG::nonlinear_newton(e, x, solver_failed);
-      }
-
-      // If newton failed, crash
-      if (solver_failed)
-        Throw("At element " + std::to_string(e) +
-              " nonlinear solvers was not able to converge");
-
-      // Balance energy
-      g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
+      // // Balance energy
+      // g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
 
       // Update the state u with the converged vector x.
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
@@ -2061,209 +2016,70 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
   return f;
 }
 
-std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
-                                              std::vector< tk::real > x,
-                                              bool& solver_failed )
+std::vector< double > DG::compute_jacobian(std::size_t e,
+                                           std::vector< tk::real > x,
+                                           std::vector< tk::real > f)
 // *****************************************************************************
-// Performs Broyden's method to solve a non-linear system on
-// element e.
+// Evaluate the stiff jacobian of the implicit system
 //! \param[in] e Element number
 //! \param[in,out] x Array of unknowns to solve for
-//! \param[out] solver_failed Returns true if solver did not converge
 //! \details
-//!    Taken from https://en.wikipedia.org/wiki/Broyden%27s_method.
-//!    The method consists in obtaining an approximation for the inverse of the
-//!    Jacobian H = J^(-1) and advancing in a quasi-newton step:
-//!
-//!    U[k+1] = U[k] - H[k]*F(U[k]),
-//!
-//!    until F(U) is close enough to zero.
+//!   Computes the Jacobian of F(x). Attempts to querry the solver for an
+//!   analytical jacobian, if that's not provided, use finite differences.
 // *****************************************************************************
 {
-  // Broyden's method
-  // Control parameters
-  std::size_t max_iter = g_inputdeck.get< tag::imex_maxiter >();
-  tk::real rel_tol = g_inputdeck.get< tag::imex_reltol >();
-  tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
-  tk::real rel_err = rel_tol+1;
-  tk::real abs_err = abs_tol+1;
+  auto d = Disc();
   std::size_t n = x.size();
+  std::size_t jacob_provided = 0;
+  std::vector< double > jacob(n*n);
+  // Call compute_jacobian function in dgpde
+  // Returns stiff_jacob and a jacob_provided integer which
+  // indicates: jacob_provided = 0 <- No jacobian
+  //                           = 1 <- Full jacobian
+  g_dgpde[d->MeshId()].compute_jacobian( e, myGhosts()->m_geoElem,
+    m_u, m_ndof, jacob, jacob_provided );
 
-  // Compute f with initial guess
-  std::vector< tk::real > f = DG::nonlinear_func(e, x);
-
-  // Initialize x_old and f_old
-  std::vector< tk::real > x_old(n, 0.0), f_old(n, 0.0);
-  for (std::size_t i=0; i<n; ++i)
-  {
-    x_old[i] = x[i];
-    f_old[i] = f[i];
-  }
-
-  // Initialize delta_x and delta_f
-  std::vector< tk::real > delta_x(n, 0.0), delta_f(n, 0.0);
-
-  // Store the norm of f initially, for relative error measure
-  tk::real err0 = 0.0;
-  for (std::size_t i=0; i<n; ++i)
-    err0 += f[i]*f[i];
-  err0 = std::sqrt(err0);
-  auto abs_err_old = err0;
-
-  // Iterate for the solution if err0 > 0
-  solver_failed = false;
-  if (err0 > abs_tol) {
-
-    // Evaluate finite difference based jacobian
-    std::vector< double > jacob(n*n);
-    tk::real dx = 0.0;
-    for (std::size_t i=0; i<n; ++i)
-      for (std::size_t j=0; j<n; ++j)
-      {
-        // Set dx
-        const tk::real eta = 1.0e-07;
-        const tk::real scale = 1.0;
-        dx = eta * std::max(std::abs(x[j]), scale);
-        // Derivative of f[i] with respect to x[j]
+  if (jacob_provided != 1) {
+    const tk::real eta = 1.0e-07;
+    const tk::real scale = 1.0;
+    const tk::real min_heff = 1.0e-12;
+    const std::size_t max_tries = 4;
+    // Compute approximated jacobian using finite differences
+    for (std::size_t j=0; j<n; ++j) {
+      // Set dx
+      tk::real dx = eta * std::max(std::abs(x[j]), scale);
+      bool success = false;
+      // Derivative of f[i] with respect to x[j]
+      for (std::size_t itry=0; itry<max_tries; ++itry) {
         auto x_perturb = x;
         x_perturb[j] += dx;
-        auto f_perturb = DG::nonlinear_func(e, x_perturb);
-        jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
-      }
-
-    for (size_t iter=0; iter<max_iter; ++iter)
-    {
-
-      // Compute new solution
-      lapack_int ln = static_cast< lapack_int >(n);
-      std::vector< double > delta(n);
-      std::vector< lapack_int > ipiv(n);
-      auto jacob_copy = jacob;
-
-      for (std::size_t i=0; i<n; ++i) delta[i] = -f[i];
-
-      lapack_int info = LAPACKE_dgesv(
-        LAPACK_ROW_MAJOR, ln, 1, jacob_copy.data(), ln, ipiv.data(), delta.data(), 1 );
-
-      if (info != 0) {
-        solver_failed = true;
-        printf("\nIMEX-RK: Broyden linear solve failed with info = %ld\n", info);
-        printf("Element #%lu\n", e);
-        break;
-      }
-
-      // Update x using line search
-      bool ls_failed = false;
-      tk::real alpha_ls = 1.0E+00;
-      std::size_t nline = 25;
-      auto xtest = x;
-      abs_err_old = abs_err;
-      for (std::size_t iline = 0; iline<nline; ++iline)
-      {
-        // Evaluate xtest
-        for (std::size_t i=0; i<n; ++i)
-          xtest[i] = x[i] + alpha_ls*delta[i];
-
-        // Compute new f(x)
-        f = DG::nonlinear_func(e, xtest);
-
-        tk::real err = 0.0;
-        for (std::size_t i=0; i<n; ++i)
-          err += f[i]*f[i];
-        abs_err = std::sqrt(err);
-        rel_err = abs_err/err0;
-
-        // If 1. The error went up
-        // or 2. The function f flipped in sign
-        // Reduce the factor alpha_ls
-        bool flipped_sign = false;
-        for (std::size_t i=0; i<n; ++i)
-          if (f_old[i]*f[i] < 0.0) {
-            flipped_sign = true;
-            break;
-          }
-
-        if (abs_err < abs_err_old && !flipped_sign)
-        {
-          break;
-        }
-        else
-        {
-          alpha_ls *= 0.5;
-        }
-        if (iline == nline-1) {
-          ls_failed = true;
-        }
-      }
-
-      if (solver_failed) {
-        break;
-      }
-
-      if (!ls_failed) {
-        // Save x
-        for (std::size_t i=0; i<n; ++i)
-          x[i] = xtest[i];
-
-        // check if error condition is met
-        if (rel_err < rel_tol || abs_err < abs_tol)
-          break;
-
-        // Compute delta_x and delta_f
-        for (std::size_t i=0; i<n; ++i)
-        {
-          delta_x[i] = x[i] - x_old[i];
-          delta_f[i] = f[i] - f_old[i];
-        }
-
-        // Update inverse Jacobian approximation
-        std::vector< tk::real > aux_vec(n, 0.0);
-        for (std::size_t i=0; i<n; ++i) {
-          tk::real sum = 0.0;
-          for (std::size_t j=0; j<n; ++j)
-            sum += jacob[i*n+j] * delta_x[j];
-          tk::real jdx_i = sum;
-          aux_vec[i] = delta_f[i] - jdx_i;
-        }
-
-        tk::real denom = 0.0;
-        for (std::size_t i=0; i<n; ++i)
-          denom += delta_x[i] * delta_x[i];
-
-        if (std::abs(denom) > 1.0e-18) {
+        g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, x_perturb );
+        tk::real heff = x_perturb[j] - x[j];
+        if (std::abs(heff) > min_heff) {
+          auto f_perturb = DG::nonlinear_func(e, x_perturb);
           for (std::size_t i=0; i<n; ++i)
-            for (std::size_t j=0; j<n; ++j)
-              jacob[i*n+j] += aux_vec[i] * delta_x[j] / denom;
+            jacob[i*n+j] = (f_perturb[i]-f[i])/(x_perturb[j]-x[j]);
+          success = true;
+          break;
         }
-
-        // Save solution and f
+        dx *= 10.0;
+      }
+      if (!success) {
         for (std::size_t i=0; i<n; ++i)
-        {
-          x_old[i] = x[i];
-          f_old[i] = f[i];
-        }
-
-        // If we did not converge, keep going and try newton
-        if (iter == max_iter-1)
-        {
-          solver_failed = true;
-        }
+          jacob[i*n+j] = 0.0;
       }
     }
   }
-
-  return x;
+  return jacob;
 }
-
+  
 std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
-                                             std::vector< tk::real > x,
-                                             bool& solver_failed )
+                                             std::vector< tk::real > x )
 // *****************************************************************************
 // Performs Newton's method to solve a non-linear system on
 // element e.
 //! \param[in] e Element number
 //! \param[in,out] x Array of unknowns to solve for
-//! \param[out] solver_failed Returns true if solver did not converge
 //! \details
 //!    Taken from https://en.wikipedia.org/wiki/Newton%27s_method
 //!    The method consists in inverting the jacobian
@@ -2274,7 +2090,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 //!    until F(U) is close enough to zero.
 // *****************************************************************************
 {
-  // Newton's method
+  auto d = Disc();
   // Control parameters
   std::size_t max_iter = g_inputdeck.get< tag::imex_maxiter >();
   tk::real rel_tol = g_inputdeck.get< tag::imex_reltol >();
@@ -2282,6 +2098,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
   tk::real rel_err = rel_tol+1;
   tk::real abs_err = abs_tol+1;
   std::size_t n = x.size();
+  bool solver_success = true;
 
   // Define jacobian
   std::vector< double > jacob(n*n);
@@ -2290,126 +2107,160 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
   std::vector< tk::real > f = DG::nonlinear_func(e, x);
 
   // Store the norm of f initially, for relative error measure
-  tk::real err0 = 0.0;
+  abs_err = 0.0;
   for (std::size_t i=0; i<n; ++i)
-    err0 += f[i]*f[i];
-  err0 = std::sqrt(err0);
-  auto abs_err_old = err0;
+    abs_err += f[i]*f[i];
+  abs_err = std::sqrt(abs_err);
+  auto err0 = abs_err;
+  auto abs_err_old = abs_err;
 
-  // Iterate for the solution if err0 > 0
-  solver_failed = false;
-  if (err0 > abs_tol)
-    for (std::size_t iter=0; iter<max_iter; ++iter)
-    {
+  // If initial error is low enough, exit
+  if (abs_err < abs_tol) return x;
 
-      // Evaluate jacobian
-      tk::real dx = 0.0;
-      for (std::size_t i=0; i<n; ++i)
-        for (std::size_t j=0; j<n; ++j)
-        {
-          // Set dx
-          const tk::real eta = 1.0e-07;
-          const tk::real scale = 1.0;
-          dx = eta * std::max(std::abs(x[j]), scale);
-          // Derivative of f[i] with respect to x[j]
-          auto x_perturb = x;
-          x_perturb[j] += dx;
-          auto f_perturb = DG::nonlinear_func(e, x_perturb);
-          jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
-        }
+  // Evaluate jacobian
+  jacob = DG::compute_jacobian(e, x, f);
 
-      // Compute new solution by solving linear system J*dx = -f
+  // Use computed_jacobian variable to avoid re-computing it if possible
+  bool computed_jacobian = true;
+
+  // Count number of regularization performed on current Jacobian
+  std::size_t jacobian_regularization = 0;
+
+  // If this bool is true, everything else has failed
+  // and a new descent direction was proposed
+  bool new_descent_dir = false;
+
+  // Iterate for the solution
+  for (std::size_t iter=0; iter<max_iter; ++iter) {
+    // Compute new solution by solving linear system J*dx = -f
+    // if not attempting new descent direction
+    std::vector< double > delta(n);
+    if (!new_descent_dir) {
+      auto mat = jacob;
       lapack_int ln = static_cast< lapack_int >(n);
-      std::vector< double > delta(n);
       for (std::size_t i=0; i<n; ++i)
         delta[i] = -f[i];
       lapack_int info;
       std::vector< lapack_int > ipiv(n);
-      info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, ln, 1, jacob.data(), ln, ipiv.data(), delta.data(), 1);
-
-      if (info != 0) {
-        printf("Failed with info: %ld\n", info);
+      info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, ln, 1, mat.data(), ln, ipiv.data(), delta.data(), 1);
+      if (info != 0)
+        Throw("Linear solver failed with info: " + std::to_string(info));
+    }
+    else {
+      for (std::size_t i=0; i<n; ++i) {
+        delta[i] = 0.0;
+        for (std::size_t j=0; j<n; ++j)
+          delta[i] -= jacob[j*n+i] * f[j];
       }
+    }
 
-      // Save f as fold
-      std::vector< tk::real > fold(n);
+    // Update x using line search
+    bool step_success = false;
+    tk::real alpha_ls = 1.0E+00;
+    std::size_t nline = 25;
+    auto xtest = x;
+    auto ftest = f;
+    abs_err_old = abs_err;
+    for (std::size_t iline = 0; iline<nline; ++iline)
+    {
+      // Evaluate xtest
       for (std::size_t i=0; i<n; ++i)
-        fold[i] = f[i];
+        xtest[i] = x[i] + alpha_ls*delta[i];
 
-      // Update x using line search
-      bool ls_failed = false;
-      tk::real alpha_ls = 1.0E+00;
-      std::size_t nline = 25;
-      auto xtest = x;
-      abs_err_old = abs_err;
-      for (std::size_t iline = 0; iline<nline; ++iline)
-      {
-        // Evaluate xtest
-        for (std::size_t i=0; i<n; ++i)
-          xtest[i] = x[i] + alpha_ls*delta[i];
+      // Enforce boundaries on xtest
+      g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, xtest );
 
-        // Compute new f(x)
-        f = DG::nonlinear_func(e, xtest);
+      // Compute new f(x)
+      ftest = DG::nonlinear_func(e, xtest);
 
-        // Compute error
-        tk::real err = 0.0;
-        for (std::size_t i=0; i<n; ++i)
-          err += f[i]*f[i];
-        abs_err = std::sqrt(err);
-        rel_err = abs_err/err0;
+      // Compute error
+      tk::real err = 0.0;
+      for (std::size_t i=0; i<n; ++i)
+        err += ftest[i]*ftest[i];
+      abs_err = std::sqrt(err);
+      rel_err = abs_err/err0;
 
-        // If 1. The error went up
-        // or 2. The function f flipped in sign
-        // Reduce the factor alpha_ls
-        bool flipped_sign = false;
-        for (std::size_t i=0; i<n; ++i)
-          if (fold[i]*f[i] < 0.0) {
-            flipped_sign = true;
-            break;
-          }
-
-        if (abs_err < abs_err_old && !flipped_sign)
-        {
-          break;
-        }
-        else
-        {
-          alpha_ls *= 0.5;
-        }
-        if (iline == nline-1) {
-          ls_failed = true;
-        }
+      if (abs_err < abs_err_old) {
+        step_success = true;
+        break;
+      }
+      else {
+        alpha_ls *= 0.5;
       }
 
-      if (solver_failed) {
-        f = DG::nonlinear_func(e, x);
-        printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", iter+1);
-        printf("Element #%lu\n", e);
-        printf("Relative error: %e\n", rel_err);
-        printf("Absolute error: %e\n\n", abs_err);
+    }
+
+    if (step_success) {
+      // Save x
+      for (std::size_t i=0; i<n; ++i)
+        x[i] = xtest[i];
+
+      // Save f
+      for (std::size_t i=0; i<n; ++i)
+        f[i] = ftest[i];
+
+        jacob = DG::compute_jacobian(e, x, f);
+        computed_jacobian = true;
+
+      // check if error condition is met and loop back
+      if (rel_err < rel_tol || abs_err < abs_tol) {
+        solver_success = true;
         break;
       }
 
-      if (!ls_failed) {
-        // Save x
-        for (std::size_t i=0; i<n; ++i)
-          x[i] = xtest[i];
+      // Set computed_jacobian to false,
+      // since we are not re-computing it next step
+      computed_jacobian = false;
 
-        // check if error condition is met and loop back
-        if (rel_err < rel_tol && abs_err < abs_tol) {
-          break;
-        }
+      // Reset the counter of regularizations
+      jacobian_regularization = 0;
+
+      // Set new_descent_dir to false for next iteration
+      new_descent_dir = false;
  
-        // If we did not converge, print a message and keep going
-        if (iter == max_iter-1)
-        {
-          printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
-          printf("Element #%lu\n", e);
-          printf("Relative error: %e\n", rel_err);
-          printf("Absolute error: %e\n\n", abs_err);
+      // If we reached max iterations, solver failed.
+      if (iter == max_iter-1)
+        solver_success = false;
+    }
+    else {
+      // Step did not succeed in improving the solution.
+      // If Jacobian was not computed this iteration, do so
+      if (!computed_jacobian) {
+        jacob = DG::compute_jacobian(e, x, f);
+        computed_jacobian = true;
+      }
+      // If the jacobian was computed and the step still failed,
+      // Attempt to salvage it
+      else {
+        if (jacobian_regularization < 4) {
+          // Add diagonal regulatization to jacobian
+          // Lambda is 1e-8, 1e-6, 1e-4 or 1e-2 depends on trial number.
+          tk::real lambda = 1.0e-08 * std::pow(10.0,2*jacobian_regularization);
+          tk::real diag_max = jacob[0];
+          for (std::size_t i=1; i<n; ++i)
+            if (std::abs(jacob[i*n+i]) > std::abs(diag_max))
+              diag_max = jacob[i*n+i];
+          for (std::size_t i=0; i<n; ++i)
+            jacob[i*n+i] += diag_max * lambda;
+          jacobian_regularization++;
+        }
+        else {
+          // Regularization did not do it.
+          // Try descent direction d_k = -J_k^T * F_k
+          // Unless it has already been tried, in that case just fail
+          if (!new_descent_dir)
+            new_descent_dir = true;
+          else
+            solver_success = false;
         }
       }
     }
+  }
+
+  if (!solver_success) {
+    Throw("At element " + std::to_string(e) +
+          " nonlinear solver was not able to converge");
+  }
 
   return x;
 

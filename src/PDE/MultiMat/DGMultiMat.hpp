@@ -210,6 +210,17 @@ class MultiMat {
         nonStiffEqIdx[icomp] = icomp;
     }
 
+    //! Enforces the bounds of the defined stiff variables
+    //! \param[in] e Element number
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] x Stiff unknown array
+    void enforceStiffBounds( std::size_t /*e*/,
+                             const tk::Fields& /*U*/,
+                             std::vector< tk::real >& /*x*/ ) const
+    {
+      // Do not enforce any bounds.
+    }
+
     //! Initialize the compressible flow equations, prepare for time integration
     //! \param[in] geoElem Element geometry array
     //! \param[in] inpoel Element-node connectivity
@@ -1180,7 +1191,6 @@ class MultiMat {
       }
     }
 
-
     //! Compute stiff terms for a single element
     //! \param[in] e Element number
     //! \param[in] geoElem Element geometry array
@@ -1330,6 +1340,21 @@ class MultiMat {
 
       }
     }
+
+    //! Compute analytical jacobian for stiff rhs if available.
+    //! otherwise no-op.
+    // //! \param[in] e Element number
+    // //! \param[in] geoElem Element geometry array
+    // //! \param[in] U Solution vector at recent time step
+    // //! \param[in] ndofel Vector of local number of degrees of freedom
+    // //! \param[out] jacob Jacobian matrix in row major
+    // //! \param[out] jacobian_provided >0 if jacobian is present
+    void compute_jacobian( std::size_t /*e*/,
+                           const tk::Fields& /*geoElem*/,
+                           const tk::Fields& /*U*/,
+                           const std::vector< std::size_t >& /*ndofel*/,
+                           std::vector< double > /*jacob*/,
+                           std::size_t /*jacobian_provided*/ ) const {}
 
     //! Extract the velocity field at cell nodes. Currently unused.
     //! \param[in] U Solution vector at recent time step

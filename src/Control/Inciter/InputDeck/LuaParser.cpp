@@ -150,11 +150,11 @@ LuaParser::storeInputDeck(
   storeIfSpecd< uint32_t >(
     lua_ideck, "imex_runge_kutta", gideck.get< tag::imex_runge_kutta >(), 0);
   storeIfSpecd< uint32_t >(
-    lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 50);
+    lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 250);
   storeIfSpecd< tk::real >(
     lua_ideck, "imex_reltol", gideck.get< tag::imex_reltol >(), 1.0e-02);
   storeIfSpecd< tk::real >(
-    lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-04);
+    lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-08);
 
   if (gideck.get< tag::dt >() < 1e-12 && gideck.get< tag::cfl >() < 1e-12)
     Throw("No time step calculation policy has been selected in the "
