@@ -2140,11 +2140,8 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
       lapack_int ln = static_cast< lapack_int >(n);
       for (std::size_t i=0; i<n; ++i)
         delta[i] = -f[i];
-      lapack_int info;
       std::vector< lapack_int > ipiv(n);
-      info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, ln, 1, mat.data(), ln, ipiv.data(), delta.data(), 1);
-      if (info != 0)
-        Throw("Linear solver failed with info: " + std::to_string(info));
+      LAPACKE_dgesv(LAPACK_ROW_MAJOR, ln, 1, mat.data(), ln, ipiv.data(), delta.data(), 1);
     }
     else {
       for (std::size_t i=0; i<n; ++i) {
@@ -2199,8 +2196,8 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
       for (std::size_t i=0; i<n; ++i)
         f[i] = ftest[i];
 
-        jacob = DG::compute_jacobian(e, x, f);
-        computed_jacobian = true;
+      jacob = DG::compute_jacobian(e, x, f);
+      computed_jacobian = true;
 
       // check if error condition is met and loop back
       if (rel_err < rel_tol || abs_err < abs_tol) {
