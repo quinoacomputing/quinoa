@@ -2154,7 +2154,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
     // Update x using line search
     bool step_success = false;
     tk::real alpha_ls = 1.0E+00;
-    std::size_t nline = 25;
+    std::size_t nline = 10;
     auto xtest = x;
     auto ftest = f;
     abs_err_old = abs_err;
@@ -2195,9 +2195,6 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
       // Save f
       for (std::size_t i=0; i<n; ++i)
         f[i] = ftest[i];
-
-      jacob = DG::compute_jacobian(e, x, f);
-      computed_jacobian = true;
 
       // check if error condition is met and loop back
       if (rel_err < rel_tol || abs_err < abs_tol) {
