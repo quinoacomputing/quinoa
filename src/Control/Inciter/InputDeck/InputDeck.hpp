@@ -317,6 +317,7 @@ using ConfigMembers = brigand::list<
 
   // steady-state solver options
   tag::implicit_timestepping, bool,
+  tag::point_implicit,        bool,
   tag::steady_state,          bool,
   tag::residual,              tk::real,
   tag::rescomp,               uint32_t,
@@ -548,6 +549,16 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         that is usually used. This requires PDE-specific implementation of the
         Jacobian matrix. Jacobian implementation is complete only for
         PDEType::MULTISPECIES, i.e. implicit_timestepping can only be used for
+        multispecies currently.)", "bool"});
+
+      keywords.insert({"point_implicit",
+        "Toggle use of a point-implicit time-stepping scheme",
+        R"(This keywords is used to trigger point-implicit time integration for
+        the DG/DGP1/DGP2/PDG spatial discretizations. This will activate the
+        point-implicit, element-local scheme which replaces the explicit RK3
+        that is usually used. This requires PDE-specific implementation of the
+        Jacobian matrix. Jacobian implementation is complete only for
+        PDEType::MULTISPECIES, i.e. point_implicit can only be used for 
         multispecies currently.)", "bool"});
 
       keywords.insert({"imex_runge_kutta",

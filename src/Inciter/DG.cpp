@@ -1191,6 +1191,7 @@ DG::solve( tk::real newdt )
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
+  const auto point_implicit = g_inputdeck.get< tag::point_implicit >();
 
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
@@ -1224,6 +1225,10 @@ DG::solve( tk::real newdt )
   else if (implicit_ts) {
     // Implicit time-stepping using BDF1 to discretize time-derivative
     DG::BDF1_integrate();
+  }
+  else if (point_implicit) {
+    // Point-implicit time-stepping using BDF1 to discretize time-derivative
+    DG::point_implicit_integrate();
   }
   else {
     // Explicit time-stepping using RK3 to discretize time-derivative
@@ -1998,6 +2003,28 @@ DG::BDF1_integrate()
 {
   //TODO: implicit solver:
   // update solution m_u
+}
+
+void
+DG::point_implicit_integrate()
+// *****************************************************************************
+//  Perform the point-implicit update
+//! \details This function updates the solution using the point-implicit
+//!   time discretization.
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  const auto steady = g_inputdeck.get< tag::steady_state >();
+  
+  Assert(steady, "Point-implicit integrator currently only for steady-state");
+
+  // Element-local implicit solve
+  for (std::size_t e=0; e<nelem; ++e) {
+  }
 }
 
 std::vector< tk::real > DG::nonlinear_func(std::size_t e,

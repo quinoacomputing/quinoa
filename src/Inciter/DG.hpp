@@ -419,6 +419,9 @@ class DG : public CBase_DG {
     //! Perform the BDF1 update
     void BDF1_integrate();
 
+    //! Perform the point-implicit update
+    void point_implicit_integrate();
+
     //! Non-linear solver using Broyden's method
     std::vector< tk::real > nonlinear_broyden(std::size_t e,
                                               std::vector< tk::real > x,
