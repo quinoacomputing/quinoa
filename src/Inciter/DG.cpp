@@ -1954,8 +1954,46 @@ DG::BDF1_integrate()
   // update solution m_u
 }
 
-std::vector< tk::real > DG::nonlinear_func(std::size_t e,
-                                           std::vector< tk::real > x)
+std::vector< tk::real >
+DG::compute_stiff_rhs_local( std::size_t e,
+                             std::vector< tk::real > x )
+// *****************************************************************************
+// Evaluate the stiff RHS and store it in a local array
+//! \param[in] e Element number
+//! \param[in,out] x Array of unknowns to solve for
+//! \details
+//!   Evaluate the stiff RHS and store it in a local array
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const std::size_t n = x.size();
+
+  // m_u <- x on stiff subset
+  for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+    for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+    {
+      auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
+      m_u(e, stiffrmark) = x[ieq*ndof + idof];
+    }
+
+  // Compute stiff rhs into m_stiffrhs
+  g_dgpde[d->MeshId()].stiff_rhs(
+    e, myGhosts()->m_geoElem, m_u, m_ndof, m_stiffrhs );
+
+  // Extract local stiff block
+  std::vector< tk::real > rim(n, 0.0);
+  for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+    for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      rim[ieq*ndof + idof] = m_stiffrhs(e, ieq*ndof + idof);
+
+  return rim;
+}
+
+std::vector< tk::real >
+DG::nonlinear_func( std::size_t e,
+                    std::vector< tk::real > x )
 // *****************************************************************************
 // Evaluate the stiff RHS and stiff equations f = b - A(x)
 //! \param[in] e Element number
@@ -1969,56 +2007,45 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
-  std::size_t n = x.size();
-
-  // m_u <- x
-  for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-    for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-    {
-      auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-      m_u(e, stiffrmark) = x[ieq*ndof+idof];
-    }
-
+  const std::size_t n = x.size();
   auto vole = myGhosts()->m_geoElem(e,0);
 
-  // Compute explicit terms (Should be computed once)
+  // Compute explicit terms
   std::vector< tk::real > expl_terms(n, 0.0);
-  for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-    for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-    {
-      auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
-      auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-      expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
-        + d->Dt() * ( expl_rkcoef[0][m_stage]
-        * m_rhsprev(e,stiffmark)/(vole*mass_dubiner[idof])
-        + expl_rkcoef[1][m_stage]
-        * m_rhs(e,stiffmark)/(vole*mass_dubiner[idof])
-        + impl_rkcoef[0][m_stage]
-        * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
-    }
-
-  // Compute stiff_rhs
-  g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
-    m_u, m_ndof, m_stiffrhs );
-
-  // Store f
-  std::vector< tk::real > f(n, 0.0);
   for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
     for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
     {
-      auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-      f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
-        + d->Dt() * impl_rkcoef[1][m_stage]
-        * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
-        - m_u(e, stiffrmark);
+      auto stiffmark  = m_stiffEqIdx[ieq]*ndof + idof;
+      auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
+
+      expl_terms[ieq*ndof + idof] =
+        m_un(e, stiffrmark)
+        + d->Dt() * (
+            expl_rkcoef[0][m_stage]
+              * m_rhsprev(e, stiffmark)/(vole*mass_dubiner[idof])
+          + expl_rkcoef[1][m_stage]
+              * m_rhs(e, stiffmark)/(vole*mass_dubiner[idof])
+          + impl_rkcoef[0][m_stage]
+              * m_stiffrhsprev(e, ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
     }
+
+  auto rim = DG::compute_stiff_rhs_local(e, x);
+
+  std::vector< tk::real > f(n, 0.0);
+  for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+    for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      f[ieq*ndof+idof] =
+        expl_terms[ieq*ndof+idof]
+        + d->Dt() * impl_rkcoef[1][m_stage]
+          * rim[ieq*ndof+idof] / (vole*mass_dubiner[idof])
+        - x[ieq*ndof+idof];
 
   return f;
 }
 
-std::vector< double > DG::compute_jacobian(std::size_t e,
-                                           std::vector< tk::real > x,
-                                           std::vector< tk::real > f)
+std::vector< double >
+DG::compute_jacobian( std::size_t e,
+                      std::vector< tk::real > x )
 // *****************************************************************************
 // Evaluate the stiff jacobian of the implicit system
 //! \param[in] e Element number
@@ -2029,47 +2056,72 @@ std::vector< double > DG::compute_jacobian(std::size_t e,
 // *****************************************************************************
 {
   auto d = Disc();
-  std::size_t n = x.size();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const std::size_t n = x.size();
+  auto vole = myGhosts()->m_geoElem(e,0);
+
   std::size_t jacob_provided = 0;
-  std::vector< double > jacob(n*n);
-  // Call compute_jacobian function in dgpde
-  // Returns stiff_jacob and a jacob_provided integer which
-  // indicates: jacob_provided = 0 <- No jacobian
-  //                           = 1 <- Full jacobian
-  g_dgpde[d->MeshId()].compute_jacobian( e, myGhosts()->m_geoElem,
-    m_u, m_ndof, jacob, jacob_provided );
+
+  // Store J_Rim, not the full Jacobian of F
+  std::vector< double > jrim(n*n, 0.0);
+
+  // Ask PDE for analytic stiff Jacobian if available
+  g_dgpde[d->MeshId()].compute_jacobian(
+    e, myGhosts()->m_geoElem, m_u, m_ndof, jrim, jacob_provided );
 
   if (jacob_provided != 1) {
     const tk::real eta = 1.0e-07;
     const tk::real scale = 1.0;
     const tk::real min_heff = 1.0e-12;
     const std::size_t max_tries = 4;
-    // Compute approximated jacobian using finite differences
+
+    auto rim = DG::compute_stiff_rhs_local(e, x);
+
     for (std::size_t j=0; j<n; ++j) {
-      // Set dx
       tk::real dx = eta * std::max(std::abs(x[j]), scale);
       bool success = false;
-      // Derivative of f[i] with respect to x[j]
+
       for (std::size_t itry=0; itry<max_tries; ++itry) {
         auto x_perturb = x;
         x_perturb[j] += dx;
         g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, x_perturb );
+
         tk::real heff = x_perturb[j] - x[j];
         if (std::abs(heff) > min_heff) {
-          auto f_perturb = DG::nonlinear_func(e, x_perturb);
+          auto rim_perturb = DG::compute_stiff_rhs_local(e, x_perturb);
+
           for (std::size_t i=0; i<n; ++i)
-            jacob[i*n+j] = (f_perturb[i]-f[i])/(x_perturb[j]-x[j]);
+            jrim[i*n + j] = (rim_perturb[i] - rim[i]) / heff;
+
           success = true;
           break;
         }
+
         dx *= 10.0;
       }
+
       if (!success) {
         for (std::size_t i=0; i<n; ++i)
-          jacob[i*n+j] = 0.0;
+          jrim[i*n + j] = 0.0;
       }
     }
   }
+
+  // Assemble full Jacobian of F:
+  // J = dt * a_ii * D * J_Rim - I
+  std::vector< double > jacob(n*n, 0.0);
+  const tk::real coeff = d->Dt() * impl_rkcoef[1][m_stage];
+
+  for (std::size_t i=0; i<n; ++i) {
+    std::size_t idof_i = i % ndof;
+    tk::real row_scale = coeff / (vole * mass_dubiner[idof_i]);
+
+    for (std::size_t j=0; j<n; ++j)
+      jacob[i*n + j] = row_scale * jrim[i*n + j];
+
+    jacob[i*n + i] -= 1.0;
+  }
+
   return jacob;
 }
   
@@ -2118,7 +2170,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
   if (abs_err < abs_tol) return x;
 
   // Evaluate jacobian
-  jacob = DG::compute_jacobian(e, x, f);
+  jacob = DG::compute_jacobian(e, x);
 
   // Use computed_jacobian variable to avoid re-computing it if possible
   bool computed_jacobian = true;
@@ -2220,7 +2272,7 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
       // Step did not succeed in improving the solution.
       // If Jacobian was not computed this iteration, do so
       if (!computed_jacobian) {
-        jacob = DG::compute_jacobian(e, x, f);
+        jacob = DG::compute_jacobian(e, x);
         computed_jacobian = true;
       }
       // If the jacobian was computed and the step still failed,

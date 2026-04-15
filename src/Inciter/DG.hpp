@@ -420,17 +420,21 @@ class DG : public CBase_DG {
     void BDF1_integrate();
 
     //! Non-linear solver using Newton's method
-    std::vector< tk::real > nonlinear_newton(std::size_t e,
-                                             std::vector< tk::real > x );
+    std::vector< tk::real > nonlinear_newton( std::size_t e,
+                                              std::vector< tk::real > x );
+
+    //! Local stiff RHS
+    std::vector< tk::real >
+    compute_stiff_rhs_local( std::size_t e,
+                             std::vector< tk::real > x );
 
     //! Non-linear function necessary to integrate with IMEX
-    std::vector< tk::real > nonlinear_func(std::size_t e,
-                                           std::vector< tk::real > x);
+    std::vector< tk::real > nonlinear_func( std::size_t e,
+                                            std::vector< tk::real > x );
 
     //! Computes jacobian for non-linear solver
-    std::vector< tk::real > compute_jacobian(std::size_t e,
-                                             std::vector< tk::real > x,
-                                             std::vector< tk::real > f);
+    std::vector< tk::real > compute_jacobian( std::size_t e,
+                                              std::vector< tk::real > x );
 };
 
 } // inciter::
