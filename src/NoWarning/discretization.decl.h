@@ -38,6 +38,7 @@
   #pragma clang diagnostic ignored "-Wswitch-enum"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wcovered-switch-default"
+  #pragma clang diagnostic ignored "-Wswitch-default"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wunused-private-field"
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"

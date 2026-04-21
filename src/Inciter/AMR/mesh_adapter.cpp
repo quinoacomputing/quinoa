@@ -19,6 +19,7 @@
   #pragma clang diagnostic push
   #pragma clang diagnostic ignored "-Wunreachable-code"
   #pragma clang diagnostic ignored "-Wdocumentation"
+  #pragma clang diagnostic ignored "-Wswitch-default"
 #endif
 
 namespace AMR {

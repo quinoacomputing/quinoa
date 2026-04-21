@@ -12,6 +12,14 @@
 #include "util.hpp"
 #include "id_generator.hpp"
 
+#if defined(__clang__)
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wswitch-default"
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wswitch-default"
+#endif
+
 namespace AMR {
 
     class tet_store_t {
@@ -762,5 +770,11 @@ namespace AMR {
 
     };
 }
+
+#if defined(__clang__)
+  #pragma clang diagnostic pop
+#elif defined(STRICT_GNUC)
+  #pragma GCC diagnostic pop
+#endif
 
 #endif // guard

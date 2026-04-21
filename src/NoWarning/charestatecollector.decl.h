@@ -34,6 +34,7 @@
   #pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wcovered-switch-default"
+  #pragma clang diagnostic ignored "-Wswitch-default"
   #pragma clang diagnostic ignored "-Wshadow-field-in-constructor"
   #pragma clang diagnostic ignored "-Wconversion"
   #pragma clang diagnostic ignored "-Wcast-qual"

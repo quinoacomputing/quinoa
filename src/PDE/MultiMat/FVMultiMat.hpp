@@ -77,7 +77,8 @@ class MultiMat {
         , farfield
         , extrapolate
         , noslipwall 
-        , symmetry },       // Slip equivalent to symmetry without mesh motion
+        , symmetry          // Slip equivalent to symmetry without mesh motion
+        , invalidBC },
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
@@ -85,7 +86,8 @@ class MultiMat {
         , noOpGrad
         , noOpGrad
         , noOpGrad
-        , symmetryGrad }
+        , symmetryGrad
+        , noOpGrad }
         ) );
 
       // Inlet BC has a different structure than above BCs, so it must be 
@@ -268,7 +270,7 @@ class MultiMat {
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0));
           auto gmat = getDeformGrad(nmat, k, unk.extract(e));
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
-            m_mat_blk[k].compute< EOS::pressure >( arhomat, vel[0], vel[1],
+            m_mat_blk[k].template compute< EOS::pressure >( arhomat, vel[0], vel[1],
             vel[2], arhoemat, alphamat, k, gmat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             constrain_pressure( m_mat_blk,
@@ -776,7 +778,7 @@ class MultiMat {
           {
             // mass averaging SoS
             ss[e] += ugp[densityIdx(nmat,k)]*
-              m_mat_blk[k].compute< EOS::soundspeed >(
+              m_mat_blk[k].template compute< EOS::soundspeed >(
               ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
               ugp[volfracIdx(nmat, k)], k );
 
@@ -786,7 +788,7 @@ class MultiMat {
           {
             if (ugp[volfracIdx(nmat, k)] > 1.0e-04)
             {
-              ss[e] = std::max( ss[e], m_mat_blk[k].compute< EOS::soundspeed >(
+              ss[e] = std::max( ss[e], m_mat_blk[k].template compute< EOS::soundspeed >(
                 ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
                 ugp[volfracIdx(nmat, k)], k ) );
             }
