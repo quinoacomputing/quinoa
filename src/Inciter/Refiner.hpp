@@ -196,6 +196,7 @@ class Refiner : public CBase_Refiner {
       p | m_remoteEdges;
       p | m_intermediates;
       p | m_nodeCommMap;
+      p | m_edgeCommMap;
       p | m_oldTets;
       p | m_addedNodes;
       p | m_addedTets;
@@ -305,6 +306,9 @@ class Refiner : public CBase_Refiner {
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow
     //!    worker chares associated to their chare IDs for the coarse mesh
     tk::NodeCommMap m_nodeCommMap;
+    //! \brief Edges with global node IDs bordering the mesh chunk held by
+    //!   fellow Discretization chares associated to their chare IDs
+    tk::EdgeCommMap m_edgeCommMap;
     //! Tetrahedra before refinement/derefinement step
     TetSet m_oldTets;
     //! Newly added mesh nodes (local id) and their parents (local ids)

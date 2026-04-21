@@ -158,6 +158,7 @@ class DG : public CBase_DG {
       const std::set< std::size_t >& removedNodes,
       const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
       const tk::NodeCommMap& nodeCommMap,
+      const tk::EdgeCommMap& edgeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
       const std::map< int, std::vector< std::size_t > >& /* bnode */,
       const std::vector< std::size_t >& triinpoel,

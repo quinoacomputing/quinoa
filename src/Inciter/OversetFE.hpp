@@ -179,6 +179,7 @@ class OversetFE : public CBase_OversetFE {
       const std::set< std::size_t >&,
       const std::unordered_map< std::size_t, std::size_t >&,
       const tk::NodeCommMap&,
+      const tk::EdgeCommMap&,
       const std::map< int, std::vector< std::size_t > >&,
       const std::map< int, std::vector< std::size_t > >&,
       const std::vector< std::size_t >&,

@@ -1317,6 +1317,7 @@ ALECG::resizePostAMR(
   const std::set< std::size_t >& removedNodes,
   const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
   const tk::NodeCommMap& nodeCommMap,
+  const tk::EdgeCommMap& edgeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel,
@@ -1331,6 +1332,7 @@ ALECG::resizePostAMR(
 //! \param[in] removedNodes Newly removed mesh node local ids
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
+//! \param[in] edgeCommMap New edge communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
@@ -1343,8 +1345,8 @@ ALECG::resizePostAMR(
   ++d->Itr();    // Increase number of iterations with a change in the mesh
 
   // Resize mesh data structures after mesh refinement
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
-    addedNodes, elemblockid );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, edgeCommMap,
+    removedNodes, addedNodes, elemblockid );
 
   // Remove newly removed nodes from solution vectors
   m_u.rm(removedNodes);

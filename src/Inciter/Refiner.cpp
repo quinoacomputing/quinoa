@@ -84,6 +84,7 @@ Refiner::Refiner( std::size_t meshid,
   m_localEdgeData(),
   m_remoteEdgeData(),
   m_nodeCommMap(),
+  m_edgeCommMap(),
   m_oldTets(),
   m_addedNodes(),
   m_addedTets(),
@@ -1143,7 +1144,7 @@ Refiner::next()
     // Send new mesh, solution, and communication data back to PDE worker
     m_scheme[m_meshid].ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel,
       m_el, m_coord, m_addedNodes, m_addedTets, m_removedNodes, m_amrNodeMap,
-      m_nodeCommMap, m_bface, m_bnode, m_triinpoel, m_elemblockid );
+      m_nodeCommMap, m_edgeCommMap, m_bface, m_bnode, m_triinpoel, m_elemblockid );
 
   } else if (m_mode == RefMode::OUTREF) {
 
@@ -1211,6 +1212,7 @@ Refiner::endt0ref()
   //   tk::destroy( m_remoteEdges );
   //   tk::destroy( m_intermediates );
   //   tk::destroy( m_nodeCommMap );
+  //   tk::destroy( m_edgeCommMap );
   //   tk::destroy( m_oldTets );
   //   tk::destroy( m_addedNodes );
   //   tk::destroy( m_addedTets );
@@ -1605,12 +1607,14 @@ Refiner::updateMesh()
   std::size_t l = m_lref.size();
   for (auto r : ref) if (old.find(r) == end(old)) m_lref[r] = l++;
 
-  // Get nodal communication map from Discretization worker
+  // Get nodal and edge communication map from Discretization worker
   if ( m_mode == RefMode::DTREF ||
        m_mode == RefMode::OUTREF ||
        m_mode == RefMode::OUTDEREF ) {
     m_nodeCommMap =
       m_scheme[m_meshid].disc()[thisIndex].ckLocal()->NodeCommMap();
+    m_edgeCommMap =
+      m_scheme[m_meshid].disc()[thisIndex].ckLocal()->EdgeCommMap();
   }
 
   // Update mesh and solution after refinement
@@ -1629,16 +1633,30 @@ Refiner::updateMesh()
   // Update boundary face and node information
   newBndMesh( ref );
 
-  // Augment node communication map with newly added nodes on chare-boundary
+  // Augment node and edge communication maps with newly added nodes and edges
+  // on chare-boundary
   if (m_mode == RefMode::DTREF || m_mode == RefMode::OUTREF) {
     for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
       auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
+      auto& commedges = tk::ref_find( m_edgeCommMap, neighborchare );
       for (const auto& e : edges) {
         // If parent nodes were part of the node communication map for chare
         if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
           // Add new node if local id was generated for it
           auto n = Hash<2>()( e );
-          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
+          if (m_lid.find(n) != end(m_lid)) {
+            nodes.insert( n );
+            if (m_mode == RefMode::DTREF) {  // edgecommmap is needed only for dtref
+              // insert child edges
+              commedges.insert( {std::min(e[0],n), std::max(e[0],n)} );
+              commedges.insert( {std::min(e[1],n), std::max(e[1],n)} );
+              // remove parent edge
+              // TODO: what if that edge wasn't found in the edgecommmap?
+              //if (commedges.find(e) == commedges.end())
+              //  std::cout << "edge not found to erase !!!" << std::endl;
+              commedges.erase(e);
+            }
+          }
         }
       }
     }
@@ -1731,6 +1749,14 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       for (auto& [neighborchare, sharednodes] : m_nodeCommMap) {
         if (sharednodes.find(g) != sharednodes.end()) {
           sharednodes.erase(g);
+        }
+      }
+      // remove derefined edges from edge comm map
+      for (auto& [neighborchare, sharededges] : m_edgeCommMap) {
+        for (const auto& edge : sharededges) {
+          if (edge[0] == g || edge[1] == g) {
+            sharededges.erase(edge);
+          }
         }
       }
       gid_rem[l] = g;

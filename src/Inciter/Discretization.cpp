@@ -452,6 +452,7 @@ Discretization::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, std::size_t >& /*amrNodeMap*/,
   const tk::NodeCommMap& nodeCommMap,
+  const tk::EdgeCommMap& edgeCommMap,
   const std::set< std::size_t >& /*removedNodes*/,
   const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
@@ -461,6 +462,7 @@ Discretization::resizePostAMR(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
+//! \param[in] edgeCommMap New edge communication map
 //! \param[in] removedNodes Newly removed mesh node local ids
 //! \param[in] removedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] elemblockid New local tet ids associated with mesh block ids
@@ -469,6 +471,8 @@ Discretization::resizePostAMR(
   m_el = chunk;         // updates m_inpoel, m_gid, m_lid
   m_nodeCommMap.clear();
   m_nodeCommMap = nodeCommMap;        // update node communication map
+  m_edgeCommMap.clear();
+  m_edgeCommMap = edgeCommMap;        // update edge communication map
   m_elemblockid.clear();
   m_elemblockid = elemblockid;
 
