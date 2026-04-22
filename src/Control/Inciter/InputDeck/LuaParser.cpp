@@ -426,6 +426,24 @@ LuaParser::storeInputDeck(
     // species vector size is one, since all species are only of one type for now
     gideck.get< tag::species >().resize(1);
 
+    // Species vector
+    if (lua_ideck["species"].valid()) {
+      sol::table sol_spc = lua_ideck["species"];
+
+      // We have assumed that nmat == 1 always for multi species, and that
+      // all species are of a single type, so that the outer species vector
+      // is of size one
+      auto& spci_deck = gideck.get< tag::species >()[0];
+
+      // species ids (default is for single species)
+      storeVecIfSpecd< uint64_t >(
+        sol_spc[1], "id", spci_deck.get< tag::id >(),
+        std::vector< uint64_t >(1,1));
+
+      Assert(nspec == spci_deck.get< tag::id >().size(),
+        "Number of ids in species-block not equal to number of species");
+    }
+
     // store material properties
     for (std::size_t i=0; i<gideck.get< tag::material >().size(); ++i) {
 
@@ -454,6 +472,16 @@ LuaParser::storeInputDeck(
       }
 
       std::size_t ntype = mati_deck.get< tag::id >().size();
+
+      // EOS parameters are specified inside species block for multispecies
+      if (gideck.get< tag::pde >() == inciter::ctr::PDEType::MULTISPECIES) {
+        if (lua_ideck["species"].valid()) {
+          sol_mat = lua_ideck["species"];
+          ntype = nspec;
+        }
+        else
+          Throw("'species' block not found");
+      }
       // cv
       if (!sol_mat[i+1]["cv"].valid())
         sol_mat[i+1]["cv"] = std::vector< tk::real >(ntype, 717.5);
@@ -643,14 +671,6 @@ LuaParser::storeInputDeck(
         // all species are of a single type, so that the outer species vector
         // is of size one
         auto& spci_deck = gideck.get< tag::species >()[0];
-
-        // species ids (default is for single species)
-        storeVecIfSpecd< uint64_t >(
-          sol_spc[i+1], "id", spci_deck.get< tag::id >(),
-          std::vector< uint64_t >(1,1));
-
-        Assert(nspec == spci_deck.get< tag::id >().size(),
-          "Number of ids in species-block not equal to number of species");
 
         // If names are given, ready data from Nasa9 file, otherwise read all
         // from control file
