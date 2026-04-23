@@ -225,9 +225,11 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_mtInv;
       p | m_rhs;
-      p | m_rhsprev;
-      p | m_stiffrhs;
-      p | m_stiffrhsprev;
+      p | m_imex_uacc;
+      p | m_imex_stage;
+      p | m_imex_stageprev;
+      p | m_imex_rhs_ex;
+      p | m_imex_rhs_im;
       p | m_stiffEqIdx;
       p | m_nonStiffEqIdx;
       p | m_nstiffeq;
@@ -296,12 +298,16 @@ class DG : public CBase_DG {
     tk::Fields m_geoElem;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of previous right-hand side values used in the IMEX-RK scheme
-    tk::Fields m_rhsprev;
-    //! Vector of right-hand side for stiff equations
-    tk::Fields m_stiffrhs;
-    //! Vector of previous right-hand side values for stiff equations
-    tk::Fields m_stiffrhsprev;
+    //! running accumulated solution register x
+    tk::Fields m_imex_uacc;
+    //! current stage state register z
+    tk::Fields m_imex_stage;
+    //! previous stage state register y
+    tk::Fields m_imex_stageprev;
+    //! explicit RHS at current stage
+    tk::Fields m_imex_rhs_ex;
+    //! implicit RHS at current stage
+    tk::Fields m_imex_rhs_im;
     //! Vectors that indicates which equations are stiff and non-stiff
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
     //! Inverse of Taylor mass-matrix

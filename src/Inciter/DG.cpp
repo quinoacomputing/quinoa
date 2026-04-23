@@ -63,28 +63,52 @@ extern std::vector< DGPDE > g_dgpde;
 static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
-//! Implicit-Explicit Runge-Kutta Coefficients
-[[maybe_unused]] static const tk::real rk_gamma = (2.0-std::sqrt(2.0))/2.0;
-[[maybe_unused]] static const tk::real rk_delta = -2.0*std::sqrt(2.0)/3.0;
-static const tk::real c2 =
-  (27.0 + std::pow(2187.0-1458.0*std::sqrt(2.0),1.0/3.0)
-   + 9.0*std::pow(3.0+2.0*std::sqrt(2.0),1.0/3.0))/54.0;
-static const tk::real c3 = c2/(6.0*std::pow(c2,2.0)-3.0*c2+1.0);
-static const tk::real b2 = (3.0*c2-1.0)/(6.0*std::pow(c2,2.0));
-static const tk::real b3 =
-  (6.0*std::pow(c2,2.0)-3.0*c2+1.0)/(6.0*std::pow(c2,2.0));
-static const tk::real a22_impl = c2;
-static const tk::real a21_expl = c2;
-static const tk::real a32_expl = c3;
-static const tk::real a33_impl =
-  (1.0/6.0-b2*std::pow(c2,2.0)-b3*c2*c3)/(b3*(c3-c2));
-static const tk::real a32_impl = a33_impl-c3;
-static const std::array< std::array< tk::real, 3 >, 2 >
-  expl_rkcoef{{ {{ 0.0, 0.0, b2 }},
-                {{ a21_expl, a32_expl, b3 }} }};
-static const std::array< std::array< tk::real, 3 >, 2>
-  impl_rkcoef{{ {{ 0.0, a32_impl, b2 }},
-                {{ a22_impl, a33_impl, b3}} }};
+//! IMEXRKCB3f coefficients (Cavaglieri & Bewley 2015, eq. 32c)
+static const tk::real c2_imex3f = 49.0/50.0;
+static const tk::real c3_imex3f = 1.0/25.0;
+static const tk::real c4_imex3f = 1.0;
+
+// Implicit coefficients
+static const tk::real a21_impl_imex3f = c2_imex3f/2.0;
+static const tk::real a22_impl_imex3f = c2_imex3f/2.0;
+
+static const tk::real a31_impl_imex3f =
+  -785157464198.0 / 1093480182337.0;
+static const tk::real a32_impl_imex3f =
+  -30736234873.0 / 978681420651.0;
+static const tk::real a33_impl_imex3f =
+   983779726483.0 / 1246172347126.0;
+
+static const tk::real a42_impl_imex3f =
+  -381180097479.0 / 1276440792700.0;
+static const tk::real a43_impl_imex3f =
+   -54660926949.0 / 461115766612.0;
+static const tk::real a44_impl_imex3f =
+   344309628413.0 / 552073727558.0;
+
+// Explicit coefficients
+static const tk::real a21_expl_imex3f = c2_imex3f;
+
+static const tk::real a31_expl_imex3f =
+   13244205847.0 / 647648310246.0;
+static const tk::real a32_expl_imex3f =
+   13419997131.0 / 686433909488.0;
+
+static const tk::real a42_expl_imex3f =
+   231677526244.0 / 1085522130027.0;
+static const tk::real a43_expl_imex3f =
+   3007879347537.0 / 683461566472.0;
+
+// Weights
+static const tk::real b1_imex3f =
+  -2179897048956.0 / 603118880443.0;
+static const tk::real b2_imex3f =
+     99189146040.0 / 891495457793.0;
+static const tk::real b3_imex3f =
+   6064140186914.0 / 1415701440113.0;
+static const tk::real b4_imex3f =
+    146791865627.0 / 668377518349.0;
+
 static const std::array< tk::real, 10 > mass_dubiner( tk::massMatrixDubiner() );
 
 } // inciter::
@@ -118,11 +142,14 @@ DG::DG( const CProxy_Discretization& disc,
   m_rhs( m_u.nunk(),
          g_inputdeck.get< tag::ndof >()*
          g_inputdeck.get< tag::ncomp >() ),
+
+  NEED THESE SIZES FOR NEW VARS ..
   m_rhsprev( m_u.nunk(), m_rhs.nprop() ),
   m_stiffrhs( m_u.nunk(), g_inputdeck.get< tag::ndof >()*
               g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_stiffrhsprev( m_u.nunk(), g_inputdeck.get< tag::ndof >()*
                   g_dgpde[Disc()->MeshId()].nstiffeq() ),
+  
   m_stiffEqIdx( g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_nonStiffEqIdx( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
   m_mtInv(
@@ -1753,6 +1780,269 @@ DG::step()
 void
 DG::imex_integrate()
 // *****************************************************************************
+//  Perform one IMEXRKCB3f stage update in low-storage [3R] form
+//! \details
+//!   Low-storage [3R] implementation specialized to IMEXRKCB3f.
+//!
+//!   Registers:
+//!     m_imex_x   : accumulated solution register x
+//!     m_imex_y   : state register y
+//!     m_imex_zex : explicit RHS register G_k
+//!     m_imex_zim : implicit RHS register F_k
+//!
+//!   We perform one stage per call, driven by m_stage = 0,1,2,3.
+//!
+//!   Stage logic:
+//!     k=1:
+//!       y = x = u^n
+//!       stage = y
+//!       evaluate F1, G1
+//!       x += b1 dt (F1 + G1)
+//!
+//!     k=2:
+//!       stage = y + a21_expl dt G1 + a21_impl dt F1
+//!       y     = x + (a31_impl - b1) dt F1 + (a31_expl - b1) dt G1
+//!       solve for stage with diagonal a22_impl
+//!       evaluate F2, G2
+//!       x += b2 dt (F2 + G2)
+//!
+//!     k=3:
+//!       stage = y + a32_expl dt G2 + a32_impl dt F2
+//!       y     = x + (a42_impl - b2) dt F2 + (a42_expl - b2) dt G2
+//!       solve for stage with diagonal a33_impl
+//!       evaluate F3, G3
+//!       x += b3 dt (F3 + G3)
+//!
+//!     k=4:
+//!       stage = y + a43_expl dt G3 + a43_impl dt F3
+//!       solve for stage with diagonal a44_impl
+//!       evaluate F4, G4
+//!       x += b4 dt (F4 + G4)
+//!
+//!   At the end of stage 4, m_u is set to the final accumulated solution.
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  const auto dt = d->Dt();
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  //--------------------------------------------------------------------------
+  // Helpers
+  //--------------------------------------------------------------------------
+
+  // Add explicit RHS contribution to a state register
+  auto add_explicit =
+    [&]( tk::Fields& U, const tk::Fields& G, tk::real coeff )
+  {
+    if (std::abs(coeff) < 1.0e-16) return;
+
+    for (std::size_t e=0; e<nelem; ++e) {
+      auto vole = myGhosts()->m_geoElem(e,0);
+      for (std::size_t c=0; c<neq; ++c)
+        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+        {
+          auto rmark = c*rdof + k;
+          auto mark  = c*ndof + k;
+          U(e, rmark) += dt * coeff * G(e, mark) / (vole*mass_dubiner[k]);
+        }
+    }
+  };
+
+  // Add implicit RHS contribution to stiff subset of a state register
+  auto add_implicit =
+    [&]( tk::Fields& U, const tk::Fields& F, tk::real coeff )
+  {
+    if (std::abs(coeff) < 1.0e-16) return;
+
+    for (std::size_t e=0; e<nelem; ++e) {
+      auto vole = myGhosts()->m_geoElem(e,0);
+      for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        {
+          auto rmark = m_stiffEqIdx[ieq]*rdof + idof;
+          U(e, rmark) += dt * coeff * F(e, ieq*ndof+idof)
+                       / (vole*mass_dubiner[idof]);
+        }
+    }
+  };
+
+  // Evaluate explicit RHS at state U into Gstage
+  auto eval_explicit_rhs =
+    [&]( tk::Fields& U, tk::Fields& Gstage, tk::real physT )
+  {
+    // update primitives at stage state
+    g_dgpde[d->MeshId()].updateInterfaceCells( U, nelem, m_ndof, m_interface );
+    g_dgpde[d->MeshId()].updatePrimitives(
+      U, myGhosts()->m_geoElem, m_p, nelem, m_ndof );
+
+    g_dgpde[d->MeshId()].rhs(
+      physT, pref, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
+      myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+      myGhosts()->m_coord, U, m_p, m_ndof, dt, Gstage );
+  };
+
+  // Evaluate implicit RHS at state U into Fstage
+  auto eval_implicit_rhs =
+    [&]( tk::Fields& U, tk::Fields& Fstage )
+  {
+    // update primitives at stage state
+    g_dgpde[d->MeshId()].updateInterfaceCells( U, nelem, m_ndof, m_interface );
+    g_dgpde[d->MeshId()].updatePrimitives(
+      U, myGhosts()->m_geoElem, m_p, nelem, m_ndof );
+
+    for (std::size_t e=0; e<nelem; ++e)
+      g_dgpde[d->MeshId()].stiff_rhs(
+        e, myGhosts()->m_geoElem, U, m_ndof, Fstage );
+  };
+
+  // Solve implicit stage:
+  //   U = stage_base + dt * aii * F(U)
+  // on the stiff unknown subset only.
+  auto solve_stage =
+    [&]( tk::Fields& U, tk::real aii )
+  {
+    for (std::size_t e=0; e<nelem; ++e)
+    {
+      // packed local stiff unknowns
+      std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
+      std::vector< tk::real > stage_base(m_nstiffeq*ndof, 0.0);
+
+      for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        {
+          auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
+          x[ieq*ndof + idof] = U(e, stiffrmark);
+          stage_base[ieq*ndof + idof] = U(e, stiffrmark);
+        }
+
+      // This is the one dependency to handle next:
+      // nonlinear_newton_stage must solve
+      //   x - dt*aii*F(x) - stage_base = 0
+      x = DG::nonlinear_newton_stage( e, x, stage_base, aii );
+
+      for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        {
+          auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
+          U(e, stiffrmark) = x[ieq*ndof + idof];
+        }
+    }
+  };
+
+  // Accumulate x <- x + b_k dt (F_k + G_k)
+  auto accumulate_x =
+    [&]( tk::real bcoeff )
+  {
+    add_explicit( m_imex_x, m_imex_zex, bcoeff );
+    add_implicit( m_imex_x, m_imex_zim, bcoeff );
+  };
+
+  //--------------------------------------------------------------------------
+  // Stage 1 (m_stage == 0)
+  //--------------------------------------------------------------------------
+
+  if (m_stage == 0)
+  {
+    // x = u^n, y = u^n
+    m_imex_x = m_un;
+    m_imex_y = m_un;
+    m_u      = m_un;   // current stage state for communication/output
+
+    // Evaluate G1 and F1 at Y1 = u^n
+    eval_explicit_rhs( m_u, m_imex_zex, d->T() );
+    eval_implicit_rhs( m_u, m_imex_zim );
+
+    // Accumulate x <- x + b1 dt (F1 + G1)
+    accumulate_x( b1_imex );
+  }
+
+  //--------------------------------------------------------------------------
+  // Stage 2 (m_stage == 1)
+  //--------------------------------------------------------------------------
+
+  else if (m_stage == 1)
+  {
+    // stage = y + a21_expl dt G1 + a21_impl dt F1
+    m_u = m_imex_y;
+    add_explicit( m_u, m_imex_zex, a21_expl );
+    add_implicit( m_u, m_imex_zim, a21_impl );
+
+    // y <- x + (a31_impl - b1) dt F1 + (a31_expl - b1) dt G1
+    m_imex_y = m_imex_x;
+    add_implicit( m_imex_y, m_imex_zim, a31_impl - b1_imex );
+    add_explicit( m_imex_y, m_imex_zex, a31_expl - b1_imex );
+
+    // Solve stage 2: U = base + dt*a22*F(U)
+    solve_stage( m_u, a22_impl );
+
+    // Evaluate G2 and F2 at accepted stage
+    eval_explicit_rhs( m_u, m_imex_zex, d->T() + c2_imex*dt );
+    eval_implicit_rhs( m_u, m_imex_zim );
+
+    // Accumulate x <- x + b2 dt (F2 + G2)
+    accumulate_x( b2_imex );
+  }
+
+  //--------------------------------------------------------------------------
+  // Stage 3 (m_stage == 2)
+  //--------------------------------------------------------------------------
+
+  else if (m_stage == 2)
+  {
+    // stage = y + a32_expl dt G2 + a32_impl dt F2
+    m_u = m_imex_y;
+    add_explicit( m_u, m_imex_zex, a32_expl );
+    add_implicit( m_u, m_imex_zim, a32_impl );
+
+    // y <- x + (a42_impl - b2) dt F2 + (a42_expl - b2) dt G2
+    m_imex_y = m_imex_x;
+    add_implicit( m_imex_y, m_imex_zim, a42_impl - b2_imex );
+    add_explicit( m_imex_y, m_imex_zex, a42_expl - b2_imex );
+
+    // Solve stage 3
+    solve_stage( m_u, a33_impl );
+
+    // Evaluate G3 and F3
+    eval_explicit_rhs( m_u, m_imex_zex, d->T() + c3_imex*dt );
+    eval_implicit_rhs( m_u, m_imex_zim );
+
+    // Accumulate x <- x + b3 dt (F3 + G3)
+    accumulate_x( b3_imex );
+  }
+
+  //--------------------------------------------------------------------------
+  // Stage 4 (m_stage == 3)
+  //--------------------------------------------------------------------------
+
+  else if (m_stage == 3)
+  {
+    // stage = y + a43_expl dt G3 + a43_impl dt F3
+    m_u = m_imex_y;
+    add_explicit( m_u, m_imex_zex, a43_expl );
+    add_implicit( m_u, m_imex_zim, a43_impl );
+
+    // Solve stage 4
+    solve_stage( m_u, a44_impl );
+
+    // Evaluate G4 and F4
+    eval_explicit_rhs( m_u, m_imex_zex, d->T() + c4_imex*dt );
+    eval_implicit_rhs( m_u, m_imex_zim );
+
+    // Accumulate x <- x + b4 dt (F4 + G4)
+    accumulate_x( b4_imex );
+
+    // Final solution
+    m_u = m_imex_x;
+  }
+}
+
+void
+DG::imex_integrate()
+// *****************************************************************************
 //  Perform the Implicit-Explicit Runge-Kutta stage update
 //
 //!  \details
@@ -2184,6 +2474,11 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
   // Iterate for the solution
   for (std::size_t iter=0; iter<max_iter; ++iter) {
+    // Save some parameters to recover if we need to rescue the step
+    const auto x_old = x;
+    const auto f_old = f;
+    const auto abs_err_accept = abs_err;
+    const auto rel_err_accept = rel_err;
     // Compute new solution by solving linear system J*dx = -f
     // if not attempting new descent direction
     std::vector< double > delta(n);
@@ -2270,6 +2565,10 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
     }
     else {
       // Step did not succeed in improving the solution.
+      x = x_old;
+      f = f_old;
+      abs_err = abs_err_accept;
+      rel_err = rel_err_accept;
       // If Jacobian was not computed this iteration, do so
       if (!computed_jacobian) {
         jacob = DG::compute_jacobian(e, x);
