@@ -667,8 +667,8 @@ OversetFE::transferSol()
 // Transfer solution to other solver and mesh if coupled
 // *****************************************************************************
 {
-  std::cout << "Overset " << Disc()->MeshId()
-    << " in transferSol(), m_ixfer: " << m_ixfer << "\n";
+  //std::cout << "Overset " << Disc()->MeshId()
+  //  << " in transferSol(), m_ixfer: " << m_ixfer << "\n";
 
   // Set up transfer-flags for receiving mesh
   if (m_ixfer == 1) {
@@ -677,8 +677,8 @@ OversetFE::transferSol()
   setTransferFlags(m_ixfer);
   ++m_ixfer;
 
-  std::cout << "Overset " << Disc()->MeshId()
-    << " transferflags set, m_ixfer: " << m_ixfer << "\n";
+  //std::cout << "Overset " << Disc()->MeshId()
+  //  << " transferflags set, m_ixfer: " << m_ixfer << "\n";
 
   // Initiate IC transfer (if coupled)
   Disc()->transfer( m_uc, m_ixfer-1,
@@ -1707,7 +1707,7 @@ OversetFE::continueEvalLB()
 // *****************************************************************************
 {
   auto d = Disc();
-  std::cout << "Overset " << d->MeshId() << " in continueEvalLB. \n";
+  //std::cout << "Overset " << d->MeshId() << " in continueEvalLB. \n";
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
