@@ -148,6 +148,31 @@ temperatureOutVar( const tk::Fields& U, std::size_t rdof )
   return r;
 }
 
+//! Return a field-output function for a species mass fraction
+//! \param[in] kspec Species index
+//! \return Field-output function that computes a species mass fraction
+//! \details The returned function follows the tk::GetVarFn signature and
+//!   computes the requested species density divided by the mixture density.
+inline tk::GetVarFn
+massFractionOutVar( std::size_t kspec )
+{
+  return [kspec]( const tk::Fields& U, std::size_t rdof ) {
+    using tk::operator+=;
+    using tk::operator/=;
+
+    const auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+    auto y = U.extract_comp(
+      multispecies::densityDofIdx(nspec,kspec,rdof,0) );
+
+    auto r = U.extract_comp( multispecies::densityDofIdx(nspec,0,rdof,0) );
+    for (std::size_t k=1; k<nspec; ++k)
+      r += U.extract_comp( multispecies::densityDofIdx(nspec,k,rdof,0) );
+
+    y /= r;
+    return y;
+  };
+}
+
 } // multispecies::
 
 #if defined(__clang__)

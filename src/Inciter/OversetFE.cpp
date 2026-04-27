@@ -94,6 +94,7 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_tp( m_u.nunk(), g_inputdeck.get< tag::t0 >() ),
   m_finished( 0 ),
   m_movedmesh( 0 ),
+  m_movedmeshTimeStep( 0 ),
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
   m_nodeblockidc(),
@@ -219,8 +220,11 @@ OversetFE::getBCNodes()
   // to obtain force on overset walls
   m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes) ||
+        m_slipwallbcnodes.find(m_triinpoel[e*3+1]) != end(m_slipwallbcnodes) ||
+        m_slipwallbcnodes.find(m_triinpoel[e*3+2]) != end(m_slipwallbcnodes)){
       m_slipwallbctri[e] = 1;
+    }
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -1076,6 +1080,18 @@ OversetFE::dt()
 
   }
 
+  getForces(mindt);
+}
+
+void
+OversetFE::getForces( tk::real mindt )
+// *****************************************************************************
+// Compute forces and moments on the overset mesh and perform reduction
+//! \param[in] mindt The smallest dt across the whole problem
+// *****************************************************************************
+{
+  auto d = Disc();
+
   //! [Advance]
   // Actiavate SDAG waits for next time step stage
   thisProxy[ thisIndex ].wait4grad();
@@ -1092,20 +1108,20 @@ OversetFE::dt()
   // Tuple-reduction for min-dt and sum-F
   int tupleSize = 7;
   CkReduction::tupleElement advancingData[] = {
-    CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[1], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[3], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[4], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double)
+    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double)
   };
   CkReductionMsg* advMsg =
     CkReductionMsg::buildFromTuple(advancingData, tupleSize);
 
-  // Contribute to minimum dt across all chares, find minimum dt across all
-  // meshes, and eventually broadcast to OversetFE::advance()
-  CkCallback cb(CkReductionTarget(Transporter,collectDtAndForces), d->Tr());
+  // Contribute to surface forces and mindt
+  CkCallback cb(CkReductionTarget(Transporter, collectDtAndForces), d->Tr());
+
   advMsg->setCallback(cb);
   contribute(advMsg);
   //! [Advance]
@@ -1281,6 +1297,7 @@ OversetFE::solve()
     m_un = m_u;
     d->UpdateCoordn();
     UpdateCenterOfMass();
+    m_movedmeshTimeStep = 0;  // Reset movement indicator for new time step
   }
 
   // Explicit time-stepping using RK3
@@ -1322,6 +1339,12 @@ OversetFE::solve()
         m_surfTorque[i] = tk::dot(m_surfTorque, sym_dir) * sym_dir[i];
       }
     }
+    // add body force
+    auto mass_mesh =
+      g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
+    auto body_force = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
+      tag::body_force >();
+    for (std::size_t i=0; i<3; ++i) m_surfForce[i] += body_force[i]*mass_mesh;
 
     // Mark if mesh moved or is moving
     if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12 ||
@@ -1332,9 +1355,10 @@ OversetFE::solve()
     else
       m_movedmesh = 0;
 
+    // Mark if mesh moved during any RK-stage of this time step
+    m_movedmeshTimeStep = std::max( m_movedmeshTimeStep, m_movedmesh );
+
     if (m_movedmesh == 1) {
-      auto mass_mesh =
-        g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
       auto mI_mesh = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
         tag::moment_of_inertia >();
       auto dtp = rkcoef[m_stage] * d->Dt();
@@ -1518,7 +1542,7 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
     const auto residual = g_inputdeck.get< tag::residual >();
     const auto rc = g_inputdeck.get< tag::rescomp >() - 1;
 
-    if (m_movedmesh) {
+    if (m_movedmeshTimeStep) {
       d->Itf() = 0;  // Zero field output iteration count if mesh moved
       ++d->Itr();    // Increase number of iterations with a change in the mesh
     }
@@ -1562,7 +1586,7 @@ OversetFE::stage()
   }
   else {
     // start with next time-step stage
-    chBndGrad();
+    getForces(Disc()->Dt());
   }
 }
 //! [stage]

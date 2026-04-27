@@ -37,6 +37,11 @@ std::map< std::string, tk::GetVarFn > MultiSpeciesOutVarFn()
   OutFnMap["x-velocity"] = multispecies::velocityOutVar<0>;
   OutFnMap["y-velocity"] = multispecies::velocityOutVar<1>;
   OutFnMap["z-velocity"] = multispecies::velocityOutVar<2>;
+  for (std::size_t k=0; k<g_inputdeck.get< tag::multispecies, tag::nspec >();
+       ++k) {
+    const auto mfrac = "mass_fraction_" + std::to_string(k+1);
+    OutFnMap[mfrac] = multispecies::massFractionOutVar( k );
+  }
 
   return OutFnMap;
 }
