@@ -181,7 +181,7 @@ Discretization::Discretization(
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
-      std::cout << "Disc: " << m_meshid << " called addMesh(). \n";
+      //std::cout << "Disc: " << m_meshid << " called addMesh(). \n";
     }
   }
 }
@@ -201,7 +201,7 @@ Discretization::addRestartedMesh( CkCallback cb )
       0);
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare, cb );
-      std::cout << "Disc: on restart " << m_meshid << " called addMesh(). \n";
+      //std::cout << "Disc: on restart " << m_meshid << " called addMesh(). \n";
     }
   }
   // Array elements must not use the chare_objs table
@@ -230,7 +230,7 @@ Discretization::transferInit()
 // coupled to other solver)
 // *****************************************************************************
 {
-  std::cout << "Disc: " << m_meshid << " completed addMesh(). \n";
+  //std::cout << "Disc: " << m_meshid << " completed addMesh(). \n";
   // Compute number of mesh points owned
   std::size_t npoin = m_gid.size();
   for (auto g : m_gid) if (tk::slave(m_nodeCommMap,g,thisIndex)) --npoin;
@@ -372,7 +372,7 @@ Discretization::transfer(
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (fromMesh == m_meshid) {
-      std::cout << "Disc: " << m_meshid << " setting source tets. \n";
+      //std::cout << "Disc: " << m_meshid << " setting source tets. \n";
       exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
       ++m_nsrc;
     } else {
@@ -380,7 +380,7 @@ Discretization::transfer(
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
     if (toMesh == m_meshid) {
-      std::cout << "Disc: " << m_meshid << " setting destination pts. \n";
+      //std::cout << "Disc: " << m_meshid << " setting destination pts. \n";
       exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
         cb_xfer );
       ++m_ndst;

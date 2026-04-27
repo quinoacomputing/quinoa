@@ -7,8 +7,6 @@
 #include "collidecharm.h"
 #include "Fields.hpp"
 
-#include <iostream>
-
 namespace exam2m {
 
 //! External user interface functions to M2MTransfer
@@ -24,7 +22,7 @@ class LibMain : public CBase_LibMain {
 public:
   LibMain(CkArgMsg* msg);
   explicit LibMain(CkMigrateMessage* msg) : CBase_LibMain(msg) {
-    std::cout << "LibMain() migrate ctor cmplt." << std::endl;
+    //std::cout << "LibMain() migrate ctor cmplt." << std::endl;
   }
   void pup(PUP::er&) {}
   friend void operator|( PUP::er& p, LibMain& m ) { m.pup(p); }
