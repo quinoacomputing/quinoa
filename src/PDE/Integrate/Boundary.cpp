@@ -522,6 +522,8 @@ bndSurfInt_constP(
             std::vector<real> fluxr(5, 0);
             std::array< std::vector<tk::real>, 3 > dBdx_l;
  
+            for (std::size_t i=0; i<3; ++i) dBdx_l[i].resize( rdof, 0);
+    
             auto jacInv_l =
           tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
             tk::eval_dBdx_p1(rdof, jacInv_l, dBdx_l);

@@ -94,6 +94,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto Sutherland = getspecprop< tag::Sutherland >(k);
     m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, temp_ref,
      mu_ref, C, Sutherland);
+    auto mu = getmatprop< tag::mu >(k);
   }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
 }

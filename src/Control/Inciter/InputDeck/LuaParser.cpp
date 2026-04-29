@@ -371,12 +371,9 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multispecies"], "nspec",
       gideck.get< tag::multispecies, tag::nspec >(), 1);
-    
-    
-    storeIfSpecd< bool >(lua_ideck["multispecies"], "viscous", 
-      gideck.get< tag::multispecies, tag::viscous >(),
-      false);
-    
+    storeIfSpecd< bool >(
+      lua_ideck["multispecies"], "viscous", 
+      gideck.get< tag::multispecies, tag::viscous >(), false);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["multispecies"], "problem",
       gideck.get< tag::multispecies, tag::problem >(),
@@ -640,6 +637,10 @@ LuaParser::storeInputDeck(
       // Thermally-perfect gas materials
       else if (mati_deck.get< tag::eos >() ==
         inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
+        
+        // mu
+        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
+          mati_deck.get< tag::mu >()); 
 
         if (!lua_ideck["species"].valid())
           Throw("Species block must be specified for thermally perfect gas");
@@ -1669,7 +1670,7 @@ LuaParser::storeInputDeck(
       std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec));
   }
 }
-
+}
 void
 LuaParser::checkStoreMatProp(
   const sol::table table,

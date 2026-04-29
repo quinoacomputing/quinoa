@@ -12,7 +12,7 @@
      various orders of numerical representation.
 */
 // *****************************************************************************
-
+#include <iostream>
 #include <array>
 
 #include "Surface.hpp"
@@ -267,20 +267,20 @@ surfInt( const bool pref,
           grad_all.push_back(state_U_grad_l[c]);
       }
 
-      for (ncomp_t c=0; c<ncomp; ++c){
+      for (ncomp_t c=0; c<nprim; ++c){
           grad_all.push_back(state_P_grad_l[c]);
       } 
       auto fl_vis_l = visc_flux(ncomp, mat_blk, state[0], grad_all); 
       auto state_U_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
                          er, U, dBdx_r );
-      auto state_P_grad_r = eval_state_gradient (ncomp, ndof, dof_er, 
+      auto state_P_grad_r = eval_state_gradient (nprim, ndof, dof_er, 
                          er, P, dBdx_r );
       grad_all.clear();
       for (ncomp_t c=0; c<ncomp; ++c){
           grad_all.push_back(state_U_grad_r[c]);
       }
 
-      for (ncomp_t c=0; c<ncomp; ++c){
+      for (ncomp_t c=0; c<nprim; ++c){
           grad_all.push_back(state_P_grad_r[c]);
       } 
       auto fl_vis_r = visc_flux(ncomp, mat_blk, state[1], grad_all); 
@@ -630,6 +630,11 @@ surfInt_constP(
           std::array< std::vector<real>, 3 > dBdx_l, dBdx_r;
           std::vector< std::array< tk::real, 3 > > grad_all(ncomp+nprim, 
                                      std::array< real, 3 >{{0, 0, 0}});
+          for (std::size_t i=0; i<3; ++i) {
+            dBdx_l[i].resize( rdof, 0);
+            dBdx_r[i].resize( rdof, 0);
+          }
+
           auto jacInv_l =
           tk::inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
           tk::eval_dBdx_p1(rdof, jacInv_l,dBdx_l );
@@ -670,7 +675,7 @@ surfInt_constP(
       auto fl_vis_l = visc_flux(ncomp, mat_blk, state[0], grad_all); 
       auto state_U_grad_r = eval_state_gradient (ncomp, ndof, rdof, 
                          er, U, dBdx_r );
-      auto state_P_grad_r = eval_state_gradient (ncomp, ndof, rdof, 
+      auto state_P_grad_r = eval_state_gradient (nprim, ndof, rdof, 
                          er, P, dBdx_r );
       grad_all.clear();
       for (ncomp_t c=0; c<ncomp; ++c){

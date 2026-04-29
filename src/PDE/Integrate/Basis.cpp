@@ -16,7 +16,7 @@
   \see [2] https://doi.org/10.1093/imamat/hxh111
 */
 // *****************************************************************************
-
+#include <iostream>
 #include <array>
 #include "QuinoaConfig.hpp"
 
@@ -165,7 +165,6 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   //        xi = (xi, eta, zeta) are the reference coordinates.
   // The matrix dxi/dx is the inverse of the Jacobian of transformation
   // and the matrix vector product has to be calculated. This follows.
-
   auto db2dxi1 = 2.0;
   auto db2dxi2 = 1.0;
   auto db2dxi3 = 1.0;
@@ -177,15 +176,14 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   auto db4dxi1 = 0.0;
   auto db4dxi2 = 0.0;
   auto db4dxi3 = 4.0;
-
+ 
   for (std::size_t i=0; i<3; i++) dBdx[i][0] = 0.0;
+  
 
   if (ndof > 1) {
-
   dBdx[0][1] =  db2dxi1 * jacInv[0][0]
               + db2dxi2 * jacInv[1][0]
               + db2dxi3 * jacInv[2][0];
-
   dBdx[1][1] =  db2dxi1 * jacInv[0][1]
               + db2dxi2 * jacInv[1][1]
               + db2dxi3 * jacInv[2][1];
@@ -1092,9 +1090,9 @@ tk::eval_state_gradient ( ncomp_t ncomp,
       state_grad[c][i] += U( e, mark+4 ) * dBdx[i][4] 
                        + U( e, mark+5 ) * dBdx[i][5]
                        + U( e, mark+6 ) * dBdx[i][6]
-                       + U( e, mark+4 ) * dBdx[i][7] 
-                       + U( e, mark+5 ) * dBdx[i][8]
-                       + U( e, mark+6 ) * dBdx[i][9];
+                       + U( e, mark+7 ) * dBdx[i][7] 
+                       + U( e, mark+8 ) * dBdx[i][8]
+                       + U( e, mark+9 ) * dBdx[i][9];
     }
   }
 }

@@ -1136,7 +1136,7 @@ class MultiSpecies {
       }     
  
        // energy  viscous flux
-      auto idx_2 = multispecies::temperatureIdx(nspec,0);
+      auto idx_2 = multispecies::energyIdx(nspec,0);
       for (std::size_t i=0; i<3; ++i) {
         for (std::size_t j=0; j<3; ++j) {
         fl[idx_2][i] += u[j] * tau[i][j]+conduct*dTdx[i];
