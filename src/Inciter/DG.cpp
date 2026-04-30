@@ -265,7 +265,7 @@ DG::resizeSolVectors()
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_stiffrhsprev.resize( myGhosts()->m_nunk );
   for (std::size_t i=0; i<3; ++i)
-    m_nodevel[i].resize( myGhosts()->m_coord[0].size() );
+    m_nodevel[i].resize( Disc()->Coord()[0].size() );
   m_dte.resize( myGhosts()->m_nunk );
 
   // Size communication buffer for solution and number of degrees of freedom
