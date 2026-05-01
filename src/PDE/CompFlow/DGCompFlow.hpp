@@ -77,9 +77,11 @@ class CompFlow {
       , farfield
       , extrapolate
       , invalidBC         // No slip wall BC not implemented
-      , symmetry },       // Slip equivalent to symmetry without mesh motion
+      , symmetry
+      , invalidBC },       // Slip equivalent to symmetry without mesh motion
       // BC Gradient functions
       { noOpGrad
+      , noOpGrad
       , noOpGrad
       , noOpGrad
       , noOpGrad
@@ -694,9 +696,9 @@ class CompFlow {
           v = ugp[0][2]/rho;
           w = ugp[0][3]/rho;
           rhoE = ugp[0][4];
-          p = m_mat_blk[0].compute< EOS::pressure >( rho, u, v, w, rhoE );
+          p = m_mat_blk[0].template compute< EOS::pressure >( rho, u, v, w, rhoE );
 
-          a = m_mat_blk[0].compute< EOS::soundspeed >( rho, p );
+          a = m_mat_blk[0].template compute< EOS::soundspeed >( rho, p );
 
           vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
@@ -755,8 +757,8 @@ class CompFlow {
             v = ugp[1][2]/rho;
             w = ugp[1][3]/rho;
             rhoE = ugp[1][4];
-            p = m_mat_blk[0].compute< EOS::pressure >( rho, u, v, w, rhoE );
-            a = m_mat_blk[0].compute< EOS::soundspeed >( rho, p );
+            p = m_mat_blk[0].template compute< EOS::pressure >( rho, u, v, w, rhoE );
+            a = m_mat_blk[0].template compute< EOS::soundspeed >( rho, p );
 
             vn = u*geoFace(f,1) + v*geoFace(f,2) + w*geoFace(f,3);
 
@@ -921,7 +923,7 @@ class CompFlow {
         Up[j][2] = uhp[2]/uhp[0];
         Up[j][3] = uhp[3]/uhp[0];
         Up[j][4] = uhp[4]/uhp[0];
-        Up[j][5] = m_mat_blk[0].compute< EOS::pressure >( uhp[0], uhp[1]/uhp[0],
+        Up[j][5] = m_mat_blk[0].template compute< EOS::pressure >( uhp[0], uhp[1]/uhp[0],
           uhp[2]/uhp[0], uhp[3]/uhp[0], uhp[4] );
         ++j;
       }

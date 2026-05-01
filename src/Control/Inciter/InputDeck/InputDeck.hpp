@@ -45,13 +45,14 @@ namespace ctr {
 using ncomp_t = std::size_t;
 
 using bclist = tk::TaggedTuple< brigand::list<
-  tag::dirichlet,   std::vector< std::size_t >,
-  tag::symmetry,    std::vector< std::size_t >,
-  tag::outlet,      std::vector< std::size_t >,
-  tag::farfield,    std::vector< std::size_t >,
-  tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >,
-  tag::slipwall,    std::vector< std::size_t >
+  tag::dirichlet,        std::vector< std::size_t >,
+  tag::symmetry,         std::vector< std::size_t >,
+  tag::outlet,           std::vector< std::size_t >,
+  tag::farfield,         std::vector< std::size_t >,
+  tag::extrapolate,      std::vector< std::size_t >,
+  tag::noslipwall,       std::vector< std::size_t >,
+  tag::slipwall,         std::vector< std::size_t >,
+  tag::isothermal_wall,  std::vector< std::size_t >
 > >;
 
 // Transport
@@ -141,31 +142,41 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::mu_ref,   std::vector< tk::real >,
   tag::C,        std::vector< tk::real >,
   tag::Sutherland, std::vector< bool >,
+  tag::id,        std::vector< uint64_t >,
+  tag::gamma,     std::vector< tk::real >,
+  tag::cv,        std::vector< tk::real >,
+  tag::pstiff,    std::vector< tk::real >,
+  tag::R,         std::vector< tk::real >,
+  tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,   std::vector< std::vector< tk::real > >,
+  tag::dH_ref,    std::vector< tk::real >,
   tag::spec_name, std::vector< std::string >
 > >;
 
 // Boundary conditions block
 using bcList = tk::TaggedTuple< brigand::list<
-  tag::mesh,        std::vector< std::size_t >,
-  tag::dirichlet,   std::vector< std::size_t >,
-  tag::symmetry,    std::vector< std::size_t >,
-  tag::outlet,      std::vector< std::size_t >,
-  tag::farfield,    std::vector< std::size_t >,
-  tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >,
-  tag::slipwall,    std::vector< std::size_t >,
-  tag::velocity,    std::vector< tk::real >,
-  tag::pressure,    tk::real,
-  tag::density,     tk::real,
-  tag::temperature, tk::real,
-  tag::mass_fractions, std::vector< tk::real >,
-  tag::materialid,  std::size_t,
-  tag::inlet,       std::vector<
+  tag::mesh,             std::vector< std::size_t >,
+  tag::dirichlet,        std::vector< std::size_t >,
+  tag::symmetry,         std::vector< std::size_t >,
+  tag::outlet,           std::vector< std::size_t >,
+  tag::farfield,         std::vector< std::size_t >,
+  tag::extrapolate,      std::vector< std::size_t >,
+  tag::noslipwall,       std::vector< std::size_t >,
+  tag::slipwall,         std::vector< std::size_t >,
+  tag::isothermal_wall,  std::vector< std::size_t >,
+  tag::velocity,         std::vector< tk::real >,
+  tag::pressure,         tk::real,
+  tag::density,          tk::real,
+  tag::temperature,      tk::real,
+  tag::wall_temperature, tk::real,
+  tag::mass_fractions,   std::vector< tk::real >,
+  tag::materialid,       std::size_t,
+  tag::inlet,            std::vector<
     tk::TaggedTuple< brigand::list<
       tag::sideset,      std::vector< uint64_t >,
       tag::velocity,     std::vector< tk::real >,
       tag::pressure,     tk::real,
-      tag::temperature,     tk::real,
+      tag::temperature,  tk::real,
       tag::materialid,   std::size_t
     > >
   >,
@@ -247,7 +258,8 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
   tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
-  tag::center_of_mass,    std::vector< tk::real >
+  tag::center_of_mass,    std::vector< tk::real >,
+  tag::body_force,        std::vector< tk::real >
 > >;
 
 // Field output block
@@ -1812,6 +1824,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to list (multiple) slip wall BC sidesets.)",
         "vector of uint(s)"});
 
+      keywords.insert({"isothermal_wall",
+        "List sidesets with isothermal wall boundary conditions",
+        R"(This keyword is used to list (multiple) isothermal wall BC sidesets.)",
+        "vector of uint(s)"});
+
       keywords.insert({"timedep",
         "Start configuration block describing time dependent boundary conditions",
         R"(This keyword is used to introduce a bc_timedep block, used to
@@ -1874,6 +1891,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"temperature", "Specify temperature",
         R"(This keyword is used to configure temperature, used for, e.g.,
         boundary or initial conditions.)" , "real"});
+
+      keywords.insert({"wall_temperature", "Specify wall temperature",
+        R"(This keyword is used to configure wall temperature, used for
+        isothermal boundary conditions.)" , "real"});
 
       keywords.insert({"mass_fractions", "Specify species mass fractions",
         R"(This keyword is used to configure species mass fractions, used for,
@@ -2013,8 +2034,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "3-by-3 vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
-        R"(Center of mass of rigid body used to compute torque for rotational
+        R"(Center of mass of rigid body used to compute force for translational
         motion)", "vector of 3 reals"});
+
+      keywords.insert({"body_force", "Body force applied to rigid body",
+        R"(Vector representing the force per unit mass applied to a body)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // pre-configured problems

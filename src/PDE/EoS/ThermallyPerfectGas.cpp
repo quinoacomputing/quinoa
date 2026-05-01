@@ -173,7 +173,7 @@ ThermallyPerfectGas::internalenergy(tk::real temp) const
 // *************************************************************************
 {
   auto R = m_R;
-  tk::real h = calc_h(temp) * R * temp + m_dH_ref;
+  tk::real h = calc_h(temp) * R * temp;
   return h - R * temp;
 }
 

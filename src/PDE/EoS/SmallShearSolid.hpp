@@ -124,7 +124,7 @@ class SmallShearSolid {
     tk::real rho0() const { return m_rho0; }
 
     //! Return gas constant (no-op)
-    tk::real gas_constant() const { return 0.0; }
+    tk::real gas_constant() const { return (m_gamma-1.0)*m_cv; }
 
     //! Return internal energy (no-op)
     tk::real internalenergy(tk::real temp) const { return m_cv * temp; }

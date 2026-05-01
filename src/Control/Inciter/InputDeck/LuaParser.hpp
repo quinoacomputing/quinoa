@@ -81,6 +81,18 @@ class LuaParser {
   private:
     const std::string m_filename;             //!< Name of file to parse
 
+    //! Store materials from the material block into the input deck
+    void registerMaterials(
+      std::size_t imat,
+      const sol::table& lua_ideck,
+      ctr::InputDeck& gideck,
+      bool& is_solid );
+
+    //! Store species from the species block into the input deck
+    void registerSpecies( std::size_t imat,
+      const sol::table& lua_ideck,
+      ctr::InputDeck& gideck );
+
     //! Assign parameter to inputdeck entry if specified, else default
     //! \tparam N Type of parameter being read/assigned
     //! \param[in] table Sol-table which contains said parameter

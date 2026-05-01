@@ -2289,11 +2289,11 @@ void PositivityBoundsMultiSpecies(
   const std::vector< inciter::EOS >& /*mat_blk*/,
   std::size_t rdof,
   std::size_t e,
-  const tk::Fields& /*U*/,
+  const tk::Fields& U,
   const tk::Fields& P,
-  const std::vector< tk::real >& /*state*/,
+  const std::vector< tk::real >& state,
   const std::vector< tk::real >& sprim,
-  std::vector< tk::real >& /*phic_bound*/,
+  std::vector< tk::real >& phic_bound,
   std::vector< tk::real >& phip_bound )
 // *****************************************************************************
 //  Positivity bounds for multispecies PDE system
@@ -2313,13 +2313,27 @@ void PositivityBoundsMultiSpecies(
 {
   const tk::real min = 1e-8;
 
-  tk::real phi_T(1.0);
+  tk::real phi_T(1.0), phi_rho(1.0), phi_rhoe(1.0);
   // Evaluate the limiting coefficient for mixture temperature
   auto T = sprim[multispecies::temperatureIdx(nspec, 0)];
   auto T_avg = P(e, multispecies::temperatureDofIdx(nspec, 0, rdof, 0));
   phi_T = PositivityFunction(min, T, T_avg);
   phip_bound[multispecies::temperatureIdx(nspec, 0)] =
     std::min(phip_bound[multispecies::temperatureIdx(nspec, 0)], phi_T);
+  // Evaluate the limiting coefficient for species density
+  for (std::size_t k=0; k<nspec; ++k) {
+    auto rho = state[multispecies::densityIdx(nspec, k)];
+    auto rho_avg = U(e, multispecies::densityDofIdx(nspec, k, rdof, 0));
+    phi_rho = PositivityFunction(min, rho, rho_avg);
+    phic_bound[multispecies::densityIdx(nspec, k)] =
+      std::min(phic_bound[multispecies::densityIdx(nspec, k)], phi_rho);
+  }
+  // Evaluate the limiting coefficient for material energy
+  auto rhoe = state[multispecies::energyIdx(nspec, 0)];
+  auto rhoe_avg = U(e, multispecies::energyDofIdx(nspec, 0, rdof, 0));
+  phi_rhoe = PositivityFunction(min, rhoe, rhoe_avg);
+  phic_bound[multispecies::energyIdx(nspec, 0)] =
+    std::min(phic_bound[multispecies::energyIdx(nspec, 0)], phi_rhoe);
 }
 
 void PositivityPreservingMultiMat_FV(
