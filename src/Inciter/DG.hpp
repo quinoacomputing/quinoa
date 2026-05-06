@@ -225,11 +225,11 @@ class DG : public CBase_DG {
       p | m_geoElem;
       p | m_mtInv;
       p | m_rhs;
-      p | m_imex_uacc;
-      p | m_imex_stage;
-      p | m_imex_stageprev;
-      p | m_imex_rhs_ex;
-      p | m_imex_rhs_im;
+      p | m_stiffrhs;
+      p | m_imex_x;
+      p | m_imex_y;
+      p | m_imex_zex;
+      p | m_imex_zim;
       p | m_stiffEqIdx;
       p | m_nonStiffEqIdx;
       p | m_nstiffeq;
@@ -296,18 +296,18 @@ class DG : public CBase_DG {
     tk::Fields m_p;
     //! Element geometry
     tk::Fields m_geoElem;
-    //! Vector of right-hand side
+    //! Vector of explicit right-hand side
     tk::Fields m_rhs;
-    //! running accumulated solution register x
-    tk::Fields m_imex_uacc;
-    //! current stage state register z
-    tk::Fields m_imex_stage;
-    //! previous stage state register y
-    tk::Fields m_imex_stageprev;
-    //! explicit RHS at current stage
-    tk::Fields m_imex_rhs_ex;
-    //! implicit RHS at current stage
-    tk::Fields m_imex_rhs_im;
+    //! Vector of stiff right-hand side
+    tk::Fields m_stiffrhs;
+    //! IMEX accumulated solution register
+    tk::Fields m_imex_x;
+    //! IMEX stage-state register
+    tk::Fields m_imex_y;
+    //! IMEX explicit RHS register
+    tk::Fields m_imex_zex;
+    //! IMEX implicit RHS register
+    tk::Fields m_imex_zim;
     //! Vectors that indicates which equations are stiff and non-stiff
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
     //! Inverse of Taylor mass-matrix
@@ -425,22 +425,30 @@ class DG : public CBase_DG {
     //! Perform the BDF1 update
     void BDF1_integrate();
 
-    //! Non-linear solver using Newton's method
-    std::vector< tk::real > nonlinear_newton( std::size_t e,
-                                              std::vector< tk::real > x );
-
-    //! Local stiff RHS
+    //! Local stiff RHS evaluated at a packed element-local stiff state
     std::vector< tk::real >
     compute_stiff_rhs_local( std::size_t e,
-                             std::vector< tk::real > x );
+                             const std::vector< tk::real >& x );
 
-    //! Non-linear function necessary to integrate with IMEX
-    std::vector< tk::real > nonlinear_func( std::size_t e,
-                                            std::vector< tk::real > x );
+    //! Nonlinear residual for one diagonal implicit RK stage
+    std::vector< tk::real >
+    nonlinear_func_stage( std::size_t e,
+                          const std::vector< tk::real >& x,
+                          const std::vector< tk::real >& stage_base,
+                          tk::real aii );
 
-    //! Computes jacobian for non-linear solver
-    std::vector< tk::real > compute_jacobian( std::size_t e,
-                                              std::vector< tk::real > x );
+    //! Jacobian for one diagonal implicit RK stage residual
+    std::vector< double >
+    compute_jacobian_stage( std::size_t e,
+                            const std::vector< tk::real >& x,
+                            tk::real aii );
+
+    //! Newton solve for one diagonal implicit RK stage
+    std::vector< tk::real >
+    nonlinear_newton_stage( std::size_t e,
+                            std::vector< tk::real > x,
+                            const std::vector< tk::real >& stage_base,
+                            tk::real aii );
 };
 
 } // inciter::

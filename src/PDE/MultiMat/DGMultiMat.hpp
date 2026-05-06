@@ -1129,66 +1129,66 @@ class MultiMat {
                                  std::vector< tk::real > x,
                                  tk::Fields& U ) const
     {
-      const auto ndof = g_inputdeck.get< tag::ndof >();
-      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      const auto& solidx = inciter::g_inputdeck.get<
-        tag::matidxmap, tag::solidx >();
+      // const auto ndof = g_inputdeck.get< tag::ndof >();
+      // auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      // const auto& solidx = inciter::g_inputdeck.get<
+      //   tag::matidxmap, tag::solidx >();
 
-      // compute correction
-      // Loop through materials
-      std::size_t ksld = 0;
-      for (std::size_t k=0; k<nmat; ++k)
-      {
-        tk::real alpha = U(e, inciter::volfracDofIdx(nmat, k, ndof, 0));
-        if (solidx[k] > 0)
-        {
-          tk::real dpsi = 0.0;
-          for (std::size_t idof=0; idof<ndof; ++idof) {
-            std::array< std::array< tk::real, 3 >, 3 > g;
-            std::array< std::array< tk::real, 3 >, 3 > g_star;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j) {
-                std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
-                g[i][j] = x[dofId];
-                g_star[i][j] = x_star[dofId];
-              }
-            std::array< std::array< tk::real, 3 >, 3 > devH;
-            // Coded in for now
-            tk::real mu = getmatprop< tag::mu >(k);
-            // 1. Compute Psi
-            // Compute deviatoric part of Hencky tensor
-            devH = tk::getDevHencky(g);
-            // Compute elastic energy
-            tk::real psi = 0.0;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                psi += mu*devH[i][j]*devH[i][j];
-            // 2. Compute Psi_star
-            // Compute deviatoric part of Hencky tensor
-            devH = tk::getDevHencky(g_star);
-            // Compute elastic energy
-            tk::real psi_star = 0.0;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                psi_star += mu*devH[i][j]*devH[i][j];
-            // Compute difference
-            dpsi += psi - psi_star;
-          }
-          tk::real a_min = 1.0e-04, a_max = 2.0e-01;
-          auto smoothstep = [&](tk::real a){
-            tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
-            return t*t*(3.0-2.0*t);
-          };
-          tk::real a_tilde = smoothstep(alpha);
-          tk::real beta = 1.0;
-          const tk::real dE_vol = alpha * a_tilde * beta * (-dpsi);
-          for (std::size_t idof=0; idof<ndof; ++idof)
-            // Should have B[idof] here for it to work for high order
-            // Currently, only useful for ndof=1
-            U(e, energyDofIdx(nmat,k,ndof,idof)) += dE_vol;
-          ksld++;
-        }
-      }
+      // // compute correction
+      // // Loop through materials
+      // std::size_t ksld = 0;
+      // for (std::size_t k=0; k<nmat; ++k)
+      // {
+      //   tk::real alpha = U(e, inciter::volfracDofIdx(nmat, k, ndof, 0));
+      //   if (solidx[k] > 0)
+      //   {
+      //     tk::real dpsi = 0.0;
+      //     for (std::size_t idof=0; idof<ndof; ++idof) {
+      //       std::array< std::array< tk::real, 3 >, 3 > g;
+      //       std::array< std::array< tk::real, 3 >, 3 > g_star;
+      //       for (std::size_t i=0; i<3; ++i)
+      //         for (std::size_t j=0; j<3; ++j) {
+      //           std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
+      //           g[i][j] = x[dofId];
+      //           g_star[i][j] = x_star[dofId];
+      //         }
+      //       std::array< std::array< tk::real, 3 >, 3 > devH;
+      //       // Coded in for now
+      //       tk::real mu = getmatprop< tag::mu >(k);
+      //       // 1. Compute Psi
+      //       // Compute deviatoric part of Hencky tensor
+      //       devH = tk::getDevHencky(g);
+      //       // Compute elastic energy
+      //       tk::real psi = 0.0;
+      //       for (std::size_t i=0; i<3; ++i)
+      //         for (std::size_t j=0; j<3; ++j)
+      //           psi += mu*devH[i][j]*devH[i][j];
+      //       // 2. Compute Psi_star
+      //       // Compute deviatoric part of Hencky tensor
+      //       devH = tk::getDevHencky(g_star);
+      //       // Compute elastic energy
+      //       tk::real psi_star = 0.0;
+      //       for (std::size_t i=0; i<3; ++i)
+      //         for (std::size_t j=0; j<3; ++j)
+      //           psi_star += mu*devH[i][j]*devH[i][j];
+      //       // Compute difference
+      //       dpsi += psi - psi_star;
+      //     }
+      //     tk::real a_min = 1.0e-04, a_max = 2.0e-01;
+      //     auto smoothstep = [&](tk::real a){
+      //       tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
+      //       return t*t*(3.0-2.0*t);
+      //     };
+      //     tk::real a_tilde = smoothstep(alpha);
+      //     tk::real beta = 1.0;
+      //     const tk::real dE_vol = alpha * a_tilde * beta * (-dpsi);
+      //     for (std::size_t idof=0; idof<ndof; ++idof)
+      //       // Should have B[idof] here for it to work for high order
+      //       // Currently, only useful for ndof=1
+      //       U(e, energyDofIdx(nmat,k,ndof,idof)) += dE_vol;
+      //     ksld++;
+      //   }
+      // }
     }
 
     //! Compute stiff terms for a single element
