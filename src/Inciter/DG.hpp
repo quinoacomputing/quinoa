@@ -432,6 +432,10 @@ class DG : public CBase_DG {
     //! Non-linear function necessary to integrate with IMEX
     std::vector< tk::real > nonlinear_func(std::size_t e,
                                            std::vector< tk::real > x);
+  
+    void output_internal_energy();
+
+    void print_internal_energy( tk::real internal_energy );
 };
 
 } // inciter::

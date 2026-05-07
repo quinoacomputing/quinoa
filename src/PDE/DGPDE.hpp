@@ -339,6 +339,14 @@ class DGPDE {
                                  tk::Fields& U ) const
     { return self->balance_plastic_energy(e, x_star, x, U); }
 
+    //! Public interface for output internal energy
+    void output_internal_energy( std::size_t nelem,
+                                 const tk::real time,
+                                 const tk::Fields& geoElem,
+                                 const tk::Fields& U,
+                                 tk::real& internal_energy ) const
+  { return self->output_internal_energy( nelem, time, geoElem, U, internal_energy ); }
+
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
                     const tk::Fields& geoElem,
@@ -531,6 +539,11 @@ class DGPDE {
                                            std::vector< tk::real >,
                                            std::vector< tk::real >,
                                            tk::Fields& ) const = 0;
+      virtual void output_internal_energy( std::size_t,
+                                           const tk::real,
+                                           const tk::Fields&,
+                                           const tk::Fields&,
+                                           tk::real& ) const = 0;
       virtual void stiff_rhs( std::size_t,
                               const tk::Fields&,
                               const tk::Fields&,
@@ -726,6 +739,12 @@ class DGPDE {
                                    std::vector< tk::real > x,
                                    tk::Fields& U ) const override
       { return data.balance_plastic_energy( e, x_star, x, U); }
+      void output_internal_energy( std::size_t nelem,
+                                   const tk::real time,
+                                   const tk::Fields& geoElem,
+                                   const tk::Fields& U,
+                                   tk::real& internal_energy ) const override
+      { return data.output_internal_energy( nelem, time, geoElem, U, internal_energy ); }
       void stiff_rhs( std::size_t e,
                       const tk::Fields& geoElem,
                       const tk::Fields& U,
