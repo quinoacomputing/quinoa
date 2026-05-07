@@ -205,6 +205,8 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step
     void step();
 
+    void print_internal_energy( tk::real internal_energy );
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -434,8 +436,6 @@ class DG : public CBase_DG {
                                            std::vector< tk::real > x);
   
     void output_internal_energy();
-
-    void print_internal_energy( tk::real internal_energy );
 };
 
 } // inciter::

@@ -1212,18 +1212,18 @@ class MultiMat {
           tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
           tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
           intE -= 0.5 * arho * (u*u+v*v+w*w);
-          // Substract elastic energy: NOTE: This is the WRONG elastic energy is using GR EOS.
-          if (solidx[k] > 0) {
-            std::array< std::array< tk::real, 3 >, 3 > g;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
-            auto Ct = tk::getIsochorRightCauchyGreen(g);
-            tk::real eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
-            tk::real mu = getmatprop< tag::mu >(k);
-            auto rhoEe = mu * eps2;
-            intE -= alpha * rhoEe;
-          }
+          // // Substract elastic energy: NOTE: This is the WRONG elastic energy is using GR EOS.
+          // if (solidx[k] > 0) {
+          //   std::array< std::array< tk::real, 3 >, 3 > g;
+          //   for (std::size_t i=0; i<3; ++i)
+          //     for (std::size_t j=0; j<3; ++j)
+          //       g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+          //   auto Ct = tk::getIsochorRightCauchyGreen(g);
+          //   tk::real eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
+          //   tk::real mu = getmatprop< tag::mu >(k);
+          //   auto rhoEe = mu * eps2;
+          //   intE -= alpha * rhoEe;
+          // }
           // Finally, multiply by volume and then add it to internal_energy
           // Also multiply by 8 because I am running an octant of the sphere
           internal_energy += intE * geoElem(e, 0) * 8;
