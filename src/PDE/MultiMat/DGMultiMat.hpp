@@ -1180,6 +1180,56 @@ class MultiMat {
       }
     }
 
+    void output_internal_energy( std::size_t nelem,
+                                 const tk::real time,
+                                 const tk::Fields& geoElem,
+                                 const tk::Fields& U,
+                                 tk::real& internal_energy ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      const auto& solidx = inciter::g_inputdeck.get<
+        tag::matidxmap, tag::solidx >();
+
+      // Loop over elements, if element belongs to material 3 (alpha_2 >= 0.8),
+      // retrieve its internal energy and add it to the sum
+      internal_energy = 0.0;
+      for (std::size_t e=0; e<nelem; ++e) {
+        if (U(e, volfracDofIdx(nmat, 1, rdof, 0)) >= 1.0e-08) {
+          // Compute bulk properties
+          tk::real rho = 0.0;
+          for (std::size_t k=0; k<nmat; ++k) {
+            rho += U(e, densityDofIdx(nmat, k, rdof, 0));
+          }
+          tk::real u = U(e, momentumDofIdx(nmat, 0, rdof, 0))/rho;
+          tk::real v = U(e, momentumDofIdx(nmat, 1, rdof, 0))/rho;
+          tk::real w = U(e, momentumDofIdx(nmat, 2, rdof, 0))/rho;
+          std::size_t k = 1;
+          // Retrieve alpha*rho*E
+          tk::real intE = U(e, energyDofIdx(nmat, k, rdof, 0));
+          // Substract kinetic energy
+          tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
+          tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+          intE -= 0.5 * arho * (u*u+v*v+w*w);
+          // Substract elastic energy: NOTE: This is the WRONG elastic energy is using GR EOS.
+          if (solidx[k] > 0) {
+            std::array< std::array< tk::real, 3 >, 3 > g;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+            auto Ct = tk::getIsochorRightCauchyGreen(g);
+            tk::real eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
+            tk::real mu = getmatprop< tag::mu >(k);
+            auto rhoEe = mu * eps2;
+            intE -= alpha * rhoEe;
+          }
+          // Finally, multiply by volume and then add it to internal_energy
+          // Also multiply by 8 because I am running an octant of the sphere
+          internal_energy += intE * geoElem(e, 0) * 8;
+        }
+      }
+    }
 
     //! Compute stiff terms for a single element
     //! \param[in] e Element number
