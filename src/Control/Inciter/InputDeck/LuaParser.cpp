@@ -371,12 +371,9 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multispecies"], "nspec",
       gideck.get< tag::multispecies, tag::nspec >(), 1);
-    
-    
     storeIfSpecd< bool >(lua_ideck["multispecies"], "viscous", 
       gideck.get< tag::multispecies, tag::viscous >(),
-      false);
-    
+      false); 
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["multispecies"], "problem",
       gideck.get< tag::multispecies, tag::problem >(),
@@ -459,7 +456,8 @@ LuaParser::storeInputDeck(
 
       // reset solid-marker
       is_solid = false;
-
+      
+      std::size_t ntype = nspec;
       // Stiffened-gas materials
       if (mati_deck.get< tag::eos >() ==
         inciter::ctr::MaterialType::STIFFENEDGAS) {
@@ -629,96 +627,16 @@ LuaParser::storeInputDeck(
           Throw("Either reference density or reference temperature must be "
             "specified for JWL equation of state (EOS).");
       }
-      // Thermally-perfect gas materials
+      // Thermallly-perfect gas materials
       else if (mati_deck.get< tag::eos >() ==
         inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
-
-        if (!lua_ideck["species"].valid())
-          Throw("Species block must be specified for thermally perfect gas");
-        sol::table sol_spc = lua_ideck["species"];
-
-        // We have assumed that nmat == 1 always for multi species, and that
-        // all species are of a single type, so that the outer species vector
-        // is of size one
-        auto& spci_deck = gideck.get< tag::species >()[0];
-
-        // species ids (default is for single species)
-        storeVecIfSpecd< uint64_t >(
-          sol_spc[i+1], "id", spci_deck.get< tag::id >(),
-          std::vector< uint64_t >(1,1));
-
-        Assert(nspec == spci_deck.get< tag::id >().size(),
-          "Number of ids in species-block not equal to number of species");
-
-        // If names are given, ready data from Nasa9 file, otherwise read all
-        // from control file
-        storeVecIfSpecd< std::string >(
-          sol_spc[i+1], "spec_name", spci_deck.get< tag::spec_name >(),
-          std::vector< std::string >(nspec, ""));
-        if (sol_spc[i+1]["spec_name"].valid()) {
-          std::string nasa9_path = gideck.get< tag::nasa9_filepath >();
-          std::unordered_map<std::string,N9Species> nasa9_cache;
-
-          std::vector<tk::real> R(nspec);
-          std::vector<std::vector<std::vector<tk::real>>> cp_coeff(nspec,
-            std::vector<std::vector<tk::real>>( 3, std::vector<tk::real>(8)));
-          std::vector<std::vector<tk::real>> t_range(nspec,
-            std::vector<tk::real>(4));
-          std::vector<tk::real> dH_ref(nspec);
-          for (std::size_t ispec=0; ispec<nspec; ++ispec){
-            std::string spec_name =
-              spci_deck.get< tag::spec_name >()[ispec];
-            nasa9_cache[spec_name] =
-              read_nasa9_species(nasa9_path, spec_name);
-
-            const N9Species& spec = nasa9_cache.at(spec_name);
-            dH_ref[ispec] = spec.Hf298_mass;
-            R[ispec] = spec.R();
-
-            // Loop over intervals and retrieve coefficients
-            for (std::size_t interv = 0; interv < spec.nIntervals(); ++interv) {
-              const N9Interval& I = spec.intervalByIndex(interv);
-              for (std::size_t k = 0; k < 9; ++k)
-                cp_coeff[ispec][interv][k] = I.a[k];
-              t_range[ispec][interv] = I.Tlow;
-              if (interv == spec.nIntervals()-1)
-                t_range[ispec][interv+1] = I.Thigh;
-            }
-          }
-          // Store unknowns (manually for the high-dimension ones)
-          storeVecIfSpecd< tk::real >(
-            sol_spc[i+1], "R", spci_deck.get< tag::R >(), R);
-          storeVecIfSpecd< tk::real >(
-            sol_spc[i+1], "dH_ref", spci_deck.get< tag::dH_ref >(), dH_ref);
-          spci_deck.get< tag::cp_coeff >() = cp_coeff;
-          spci_deck.get< tag::t_range >() = t_range;
+        if (gideck.get< tag::multispecies, tag::viscous >()){ 
+          // mu
+          checkStoreMatProp(sol_mat[i+1], "mu", ntype,
+            mati_deck.get< tag::mu >());   
         }
-        else {
-          // R
-          checkStoreMatProp(sol_spc[i+1], "R", nspec,
-            spci_deck.get< tag::R >());
-          // cp_coeff
-          checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
-            spci_deck.get< tag::cp_coeff >());
-          // t_range
-          checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
-            spci_deck.get< tag::t_range >());
-          // dH_ref
-          checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
-            spci_deck.get< tag::dH_ref >());
-	// temp_ref (Sutherland)
-        checkStoreMatProp(sol_spc[i+1], "temp_ref", nspec,
-          spci_deck.get< tag::temp_ref >());
-	// mu_ref (Sutherland)
-        checkStoreMatProp(sol_spc[i+1], "mu_ref", nspec,
-          spci_deck.get< tag::mu_ref >());
-	// C (Sutherland)
-        checkStoreMatProp(sol_spc[i+1], "C", nspec,
-          spci_deck.get< tag::C >());
-	// Sutherland (bool)
-        checkStoreMatPropBool(sol_spc[i+1], "Sutherland", nspec,
-          spci_deck.get< tag::Sutherland >());
       }
+
       // Store material information
       registerMaterials(i, lua_ideck, gideck, is_solid);
 
@@ -751,7 +669,7 @@ LuaParser::storeInputDeck(
       Throw("The total number of materials in all the material blocks (" +
         std::to_string(tmat) +
         ") is not equal to the number of materials specified 'nmat'.");
-
+    
     // Contiguous and 1-based material ids
     if (*matidset.begin() != 1)
       Throw("Material ids specified in material blocks not one-based. "
@@ -1681,9 +1599,9 @@ LuaParser::registerMaterials(
 //! \param[in,out] is_solid Solid material marker
 // *****************************************************************************
 {
+  
   if (gideck.get< tag::pde >() != inciter::ctr::PDEType::MULTIMAT &&
       gideck.get< tag::pde >() != inciter::ctr::PDEType::COMPFLOW) return;
-
   // set source data from sol
   sol::table sol_mat = lua_ideck["material"];
 
@@ -1865,6 +1783,17 @@ LuaParser::registerMaterials(
       Throw("Either reference density or reference temperature must be "
         "specified for JWL equation of state (EOS).");
   }
+
+  // Thermallly-perfect gas materials
+  else if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
+        
+    // mu (dynamic viscosity) and 'viscous' keyword
+    if (!sol_mat[imat+1]["mu"].valid())
+      sol_mat[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+    else gideck.get< tag::multispecies, tag::viscous >() = true;
+      checkStoreMatProp(sol_mat[imat+1], "mu", ntype, mati_deck.get< tag::mu >());
+    }
 }
 
 void
@@ -1897,13 +1826,14 @@ LuaParser::registerSpecies(
   // all species are of a single type, so that the outer species vector
   // is of size one
   // set target data in inputdeck
+  // species vector size is one, since all species are only of one type for now
+  gideck.get< tag::species >().resize(1);
   auto& spci_deck = gideck.get< tag::species >()[0];
 
   // species ids (default is for single species)
   storeVecIfSpecd< uint64_t >(
     sol_spc[imat+1], "id", spci_deck.get< tag::id >(),
     std::vector< uint64_t >(1,1));
-
   Assert(nspec == spci_deck.get< tag::id >().size(),
     "Number of ids in species-block not equal to number of species");
 
@@ -1988,6 +1918,17 @@ LuaParser::registerSpecies(
       // dH_ref
       checkStoreMatProp(sol_spc[imat+1], "dH_ref", nspec,
         spci_deck.get< tag::dH_ref >());
+      if (gideck.get< tag::multispecies, tag::viscous >()){ 
+        // mu_ref (Sutherland)
+        checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
+          spci_deck.get< tag::mu_ref >());
+        // C (Sutherland)
+        checkStoreMatProp(sol_spc[imat+1], "C", nspec,
+          spci_deck.get< tag::C >());
+        // Sutherland (bool)
+        checkStoreMatPropBool(sol_spc[imat+1], "Sutherland", nspec,
+          spci_deck.get< tag::Sutherland >());
+      }
     }
   }
 }

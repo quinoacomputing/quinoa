@@ -146,7 +146,7 @@ tk::volInt( std::size_t nmat,
            grad_all.push_back(state_U_grad[c]);
          }
 
-         for (ncomp_t c=0; c<ncomp; ++c){
+         for (ncomp_t c=0; c<nprim; ++c){
            grad_all.push_back(state_P_grad[c]);
          }         
    

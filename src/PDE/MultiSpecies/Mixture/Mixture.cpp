@@ -231,40 +231,56 @@ Mixture::viscosity(
 //! \return Total energy
 // *************************************************************************
 {
-  // Compute mixture internal energy
+  // Compute mixture viscosity
   tk::real mix_mu = 0.;
   for (std::size_t k = 0; k < m_nspec; k++) {
     mix_mu += m_Ys[k] * mat_blk[k].compute< EOS::mu >(mix_temp);
   }
 
-  // Compute total energy
   return mix_mu;
 }
 
-tk::real
+tk::real 
 Mixture::conduct(
   tk::real mix_temp,
   const std::vector< EOS >& mat_blk) const
-// *************************************************************************
-//! \brief Calculate total energy based on the mixture composition
-//!   and species parameters.
-//! \param[in] mix_density Mixture density (sum of species density)
-//! \param[in] u Velocity component
-//! \param[in] v Velocity component
-//! \param[in] w Velocity component
-//! \param[in] mix_temp Mixture temperature (provided at call-site, since
-//!   it is reconstructed separately
-//! \param[in] mat_blk EOS material block
-//! \return Total energy
-// *************************************************************************
-{
-  // Compute mixture internal energy
-  tk::real mix_conduct = 0.;
-  for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_conduct += m_Ys[k] * mat_blk[k].compute< EOS::cv >(mix_temp);
+  // *************************************************************************
+  //! \brief Calculate total energy based on the mixture composition
+  //!   and species parameters.
+  //! \param[in] mix_density Mixture density (sum of species density)
+  //! \param[in] u Velocity component
+  //! \param[in] v Velocity component
+  //! \param[in] w Velocity component
+  //! \param[in] mix_temp Mixture temperature (provided at call-site, since
+  //!   it is reconstructed separately
+  //! \param[in] mat_blk EOS material block
+  //! \return Total energy
+  // *************************************************************************
+  {
+    // Compute mixture internal energy
+    tk::real mix_cv = 0.;
+    tk::real Pr = 0.71; //assume constant from Ching 2019 paper
+  //make user input
+    for (std::size_t k = 0; k < m_nspec; k++) {
+      mix_cv += m_Ys[k] * mat_blk[k].compute< EOS::cv >(mix_temp);
+    }
+    
+    // Compute mixture gas constant
+    tk::real m_mix_R = 0.;
+    for (std::size_t k = 0; k < m_nspec; k++)
+      m_mix_R += m_Ys[k] * mat_blk[k].compute< EOS::gas_constant >();
+      
+    // Compute mixture cp 
+    tk::real m_mix_cp = m_mix_R + mix_cv;
+   
+    // Compute mixture viscosity
+    tk::real mix_mu = 0.;
+    for (std::size_t k = 0; k < m_nspec; k++) {
+      mix_mu += m_Ys[k] * mat_blk[k].compute< EOS::mu >(mix_temp);
+    }
+   
+    tk::real k = mix_mu * m_mix_cp / Pr; 
+    
+    return k;
   }
-
-  // Compute total energy
-  return mix_conduct;
-}
 

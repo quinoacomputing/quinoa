@@ -1092,9 +1092,9 @@ tk::eval_state_gradient ( ncomp_t ncomp,
       state_grad[c][i] += U( e, mark+4 ) * dBdx[i][4] 
                        + U( e, mark+5 ) * dBdx[i][5]
                        + U( e, mark+6 ) * dBdx[i][6]
-                       + U( e, mark+4 ) * dBdx[i][7] 
-                       + U( e, mark+5 ) * dBdx[i][8]
-                       + U( e, mark+6 ) * dBdx[i][9];
+                       + U( e, mark+7 ) * dBdx[i][7] 
+                       + U( e, mark+8 ) * dBdx[i][8]
+                       + U( e, mark+9 ) * dBdx[i][9];
     }
   }
 }

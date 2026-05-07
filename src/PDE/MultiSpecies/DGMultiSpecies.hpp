@@ -1064,11 +1064,7 @@ class MultiSpecies {
     {
      std::vector< std::array< tk::real, 3 > > fl( ugp.size() ); 
   auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
-
-
-    
-// 2. Compute viscous stress tensor
-  
+ 
   tk::real rhob(0.0);
   for (std::size_t k=0; k<nspec; ++k)
   rhob += ugp[multispecies::densityIdx(nspec, k)];        
@@ -1084,20 +1080,9 @@ class MultiSpecies {
   
   Mixture mix(nspec, ugp, mat_blk);
   
-//   for (std::size_t k=0; k<nspec; ++k)
-//   {
-//     alLR[k] = ugp[multispecies::densityIdx(nspec, k)]/rhob; 
-//     mu += alLR[k] * getmatprop< tag::mu >(k);
-//     conduct += alLR[k] *getmatprop< tag::mu >(k) *
-//       getmatprop< tag::cv >(k) * getmatprop< tag::gamma >(k)
-//       / 0.71;
-//   }
-
       mu= mix.viscosity(ugp[ncomp+multispecies::temperatureIdx(nspec,0)],
       mat_blk);
-
-      //std::cout<<"mu="<<mu<<std::endl;
-      
+ 
       conduct= mix.conduct(ugp[ncomp+multispecies::temperatureIdx(nspec,0)],
       mat_blk);
 
@@ -1136,11 +1121,12 @@ class MultiSpecies {
       }     
  
        // energy  viscous flux
-      auto idx_2 = multispecies::temperatureIdx(nspec,0);
+      auto idx_2 = multispecies::energyIdx(nspec,0);
       for (std::size_t i=0; i<3; ++i) {
         for (std::size_t j=0; j<3; ++j) {
-        fl[idx_2][i] += u[j] * tau[i][j]+conduct*dTdx[i];
+        fl[idx_2][i] += u[j] * tau[i][j];
         }
+      fl[idx_2][i] += conduct*dTdx[i];
       }   
 
     return fl;
