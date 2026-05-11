@@ -422,6 +422,13 @@ class DG : public CBase_DG {
     //! Perform the point-implicit update
     void point_implicit_integrate();
 
+    //!  Solve element-local implicit system using Newton's method
+    bool solve_element_implicit(std::size_t e,
+                                const std::vector<tk::real>& u_old,
+                                std::vector<tk::real>& u_new,
+                                tk::real dte,
+                                tk::real vole );
+
     //! Non-linear solver using Broyden's method
     std::vector< tk::real > nonlinear_broyden(std::size_t e,
                                               std::vector< tk::real > x,

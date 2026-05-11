@@ -186,6 +186,9 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
 
+  //! TODO: formalism here for handling point-implicit, should perhaps just be
+  // m_nstage = 1
+
   // insert array-element into the implicit solver chare array
   if (g_inputdeck.get< tag::implicit_timestepping >()) {
     // Single-stage BDF1 for implicit solver
@@ -2005,28 +2008,6 @@ DG::BDF1_integrate()
   // update solution m_u
 }
 
-void
-DG::point_implicit_integrate()
-// *****************************************************************************
-//  Perform the point-implicit update
-//! \details This function updates the solution using the point-implicit
-//!   time discretization.
-// *****************************************************************************
-{
-  auto d = Disc();
-  const auto rdof = g_inputdeck.get< tag::rdof >();
-  const auto ndof = g_inputdeck.get< tag::ndof >();
-  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
-  const auto neq = m_u.nprop()/rdof;
-  const auto steady = g_inputdeck.get< tag::steady_state >();
-  
-  Assert(steady, "Point-implicit integrator currently only for steady-state");
-
-  // Element-local implicit solve
-  for (std::size_t e=0; e<nelem; ++e) {
-  }
-}
-
 std::vector< tk::real > DG::nonlinear_func(std::size_t e,
                                            std::vector< tk::real > x)
 // *****************************************************************************
@@ -2512,6 +2493,197 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
   return x;
 
+}
+
+void
+DG::point_implicit_integrate()
+// *****************************************************************************
+//  Perform the point-implicit update
+//! \details This function updates the solution using the point-implicit
+//!   time discretization.
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  
+  Assert(g_inputdeck.get< tag::steady_state >(),
+    "Point-implicit integrator currently only for steady-state");
+
+  // Point-implicit currently only for P0 (ndof=1)
+  if (ndof != 1) {
+    Throw( "Point-implicit time integration currently only implemented for P0 "
+           "(ndof=1). Set ndof=1 in input file." );
+  }
+
+  // Element-local implicit solve
+  for (std::size_t e=0; e<nelem; ++e) {
+
+    auto vole = myGhosts()->m_geoElem(e,0);
+    auto dte = m_dte[e];
+
+    // Extract element DOFs
+    std::vector<tk::real> u_old(neq*ndof), u_new(neq*ndof);
+    for (size_t c=0; c<neq; ++c)
+      for (size_t k=0; k<m_numEqDof[c]; ++k) {
+        u_old[c*ndof+k] = m_un(e, c*rdof+k);
+        u_new[c*ndof+k] = m_u(e, c*rdof+k);  // Initial guess from previous iter
+      }
+
+    // Newton iteration for element e
+    bool converged = solve_element_implicit(e, u_old, u_new, dte, vole);
+
+    if (!converged)
+      Throw("Point-implicit solver failed at element " + std::to_string(e));
+
+    // Update global solution
+    for (size_t c=0; c<neq; ++c)
+      for (size_t k=0; k<m_numEqDof[c]; ++k)
+        m_u(e, c*rdof+k) = u_new[c*ndof+k];
+  }
+}
+
+bool
+DG::solve_element_implicit(
+  std::size_t e,
+  const std::vector<tk::real>& u_old,
+  std::vector<tk::real>& u_new,
+  tk::real dte,
+  tk::real vole )
+// *****************************************************************************
+//  Solve element-local implicit system using Newton's method
+//! \param[in] e Element index
+//! \param[in] u_old Solution at previous time step (element DOFs)
+//! \param[in,out] u_new Solution at current time step (input: initial guess, 
+//!   output: converged solution)
+//! \param[in] dte Element-local time step size
+//! \param[in] vole Element volume
+//! \return True if Newton iterations converged, false otherwise
+//! \details Solves the nonlinear system F(u) = u - u_old - dt*R(u) = 0 using
+//!   Newton's method with line search. The Jacobian and RHS are obtained from
+//!   the physics-specific PDE system via g_dgpde.
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto neq = u_new.size()/rdof;
+
+  // Newton solver parameters from input deck
+  //! TODO: make these specific to this problem (?)
+  const auto max_iter = g_inputdeck.get< tag::imex_maxiter >();
+  const auto abs_tol = g_inputdeck.get< tag::imex_abstol >();
+  const auto rel_tol = g_inputdeck.get< tag::imex_reltol >();
+
+  tk::real norm_F0 = 0.0;  // Initial residual norm for relative tolerance
+
+  // Newton iteration
+  for (size_t iter=0; iter<max_iter; ++iter) {
+
+    // Compute residual: F = u_new - u_old - dte*R(u_new)/vole
+    auto R = g_dgpde[d->MeshId()].element_rhs( e, u_new, m_ndof );
+
+    std::vector<tk::real> F(neq*ndof);
+    for (size_t c=0; c<neq; ++c)
+      for (size_t k=0; k<m_numEqDof[c]; ++k) {
+        auto mark = c*ndof+k;
+        F[mark] = u_new[mark] - u_old[mark] - dte * R[mark] / vole;
+      }
+
+    // Compute residual norm
+    tk::real norm_F = 0.0;
+    for (auto f : F) norm_F += f*f;
+    norm_F = std::sqrt(norm_F);
+
+    // Store initial residual for relative tolerance check
+    if (iter == 0) norm_F0 = norm_F;
+
+    // Check convergence
+    if (norm_F < abs_tol) return true;
+    if (norm_F0 > abs_tol && norm_F / norm_F0 < rel_tol) return true;
+
+    // Compute Jacobian: J = I - dte/vole * dR/du
+    auto J = g_dgpde[d->MeshId()].element_jacobian( e, u_new, m_ndof, 
+      //dte, vole );
+
+    // Solve linear system: J * delta_u = -F using LAPACK
+    // Copy J into column-major format for LAPACK
+    std::vector<double> J_lapack(neq*ndof * neq*ndof);
+    for (size_t i=0; i<neq*ndof; ++i)
+      for (size_t j=0; j<neq*ndof; ++j) {
+        J_lapack[j*neq*ndof + i] = J[i][j];  // Transpose for column-major
+      }
+
+    // Copy -F as the RHS
+    std::vector<double> delta_u(neq*ndof);
+    for (size_t i=0; i<neq*ndof; ++i) {
+      delta_u[i] = -F[i];
+    }
+
+    // Solve with LAPACK
+    lapack_int n = static_cast<lapack_int>(neq*ndof);
+    std::vector<lapack_int> ipiv(neq*ndof);
+    lapack_int info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, 1, 
+                                     J_lapack.data(), n, ipiv.data(), 
+                                     delta_u.data(), 1);
+    
+    if (info != 0) {
+      // Singular matrix or LAPACK error
+      return false;
+    }
+    
+    // Line search: find alpha such that ||F(u + alpha*delta_u)|| < ||F(u)||
+    tk::real alpha = 1.0;
+    const size_t max_line_search = 10;
+    bool line_search_success = false;
+    
+    for (size_t iline=0; iline<max_line_search; ++iline) {
+      // Trial step
+      auto u_trial = u_new;
+      for (size_t c=0; c<neq; ++c)
+        for (size_t k=0; k<m_numEqDof[c]; ++k) {
+          auto mark = c*ndof+k;
+          u_trial[mark] += alpha * delta_u[mark];
+        }
+      
+      // Compute residual at trial point
+      auto R_trial = g_dgpde[d->MeshId()].element_rhs( e, u_trial, m_ndof );
+      
+      tk::real norm_F_trial = 0.0;
+      for (size_t c=0; c<neq; ++c) 
+        for (size_t k=0; k<m_numEqDof[c]; ++k) {
+          auto mark = c*ndof+k;
+          tk::real F_trial =
+            u_trial[mark] - u_old[mark] - dte * R_trial[mark] / vole;
+          norm_F_trial += F_trial * F_trial;
+        }
+      norm_F_trial = std::sqrt(norm_F_trial);
+      
+      // Accept step if residual decreased
+      if (norm_F_trial < norm_F) {
+        u_new = u_trial;
+        line_search_success = true;
+        break;
+      }
+      
+      // Reduce step size and try again
+      alpha *= 0.5;
+    }
+    
+    // If line search failed, Newton may not be converging
+    if (!line_search_success) {
+      // Take the step anyway (damped Newton)
+      for (size_t c=0; c<neq; ++c) 
+        for (size_t k=0; k<m_numEqDof[c]; ++k) {
+          auto mark = c*ndof+k;
+          u_new[mark] += alpha * delta_u[mark];
+        }
+    }
+  }
+  
+  // Failed to converge within max_iter
+  return false;
 }
 
 //------------------------------------------------------------------------------
