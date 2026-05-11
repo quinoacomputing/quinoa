@@ -63,6 +63,8 @@ module dg {
                          const std::vector< std::size_t >& tetid,
                          const std::vector< std::vector< tk::real > >& geoElem,
                          const std::vector< std::array< tk::real, 3 > >& coord );
+      entry void comnorm( const std::unordered_map< int,
+        std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
       entry void refine( const std::vector< tk::real >& l2ref );
       entry [reductiontarget] void initializeLinearSystem( tk::real newdt );
       entry void solveLinearSystem();
@@ -81,8 +83,12 @@ module dg {
       // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       entry void wait4sol() {
-        when ownsol_complete(), comsol_complete() serial "sol" { meshvelstart(); }
+        when ownsol_complete(), comsol_complete() serial "sol" { computeBNorm(); }
       }
+
+      entry void wait4norm() {
+        when ownnorm_complete(), comnorm_complete() serial "norm"
+        { normfinal(); meshvelstart(); } }
 
       entry void wait4refine() {
         when ownrefine_complete(), comrefine_complete() serial "p_refine" { smooth(); }
@@ -110,6 +116,8 @@ module dg {
 
       entry void ownsol_complete();
       entry void comsol_complete();
+      entry void ownnorm_complete();
+      entry void comnorm_complete();
       entry void ownrefine_complete();
       entry void comrefine_complete();
       entry void ownsmooth_complete();

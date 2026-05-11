@@ -269,6 +269,12 @@ class ALE : public CBase_ALE {
     //! Find Dirichlet BCs on mesh velocity with prescribed movement
     bool move( std::size_t i ) const;
 
+    //! Query if ALE mesh force coefficients are all zero
+    bool zeroMeshForce() const;
+
+    //! Query if ALE mesh velocity smoothing requires velocity derivatives
+    bool needVelocityDerivatives() const;
+
     //! Finalize computing fluid vorticity and velocity divergence for ALE
     void mergevel();
 

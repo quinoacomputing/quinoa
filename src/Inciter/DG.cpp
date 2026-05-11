@@ -19,6 +19,7 @@
 
 #include "DG.hpp"
 #include "Discretization.hpp"
+#include "CGPDE.hpp"
 #include "DGPDE.hpp"
 #include "DiagReducer.hpp"
 #include "DerivedData.hpp"
@@ -108,6 +109,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_nsmooth( 0 ),
   m_nreco( 0 ),
   m_nale( 0 ),
+  m_nbnorm( 0 ),
   m_nstiffeq( g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_nnonstiffeq( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
   m_u( Disc()->Inpoel().size()/4,
@@ -159,6 +161,10 @@ DG::DG( const CProxy_Discretization& disc,
                 std::vector<tk::real>(Disc()->Lid().size(), 0.0),
                 std::vector<tk::real>(Disc()->Lid().size(), 0.0) }} ),
   m_bnode( bnode ),
+  m_bface( bface ),
+  m_triinpoel( tk::remap( triinpoel, Disc()->Lid() ) ),
+  m_bnorm(),
+  m_bnormc(),
   m_dte(m_u.nunk(), 0.0),
   m_finished(0)
 // *****************************************************************************
@@ -195,7 +201,7 @@ DG::DG( const CProxy_Discretization& disc,
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
 
   // Query ALE mesh velocity boundary condition node lists
-  Disc()->meshvelBnd( bface, m_bnode, triinpoel );
+  Disc()->meshvelBnd( m_bface, m_bnode, m_triinpoel );
 
   // insert array-element into the implicit solver chare array
   if (g_inputdeck.get< tag::implicit_timestepping >()) {
@@ -1078,6 +1084,117 @@ DG::updateChareBoundaryGeoFace()
 }
 
 void
+DG::bnorm()
+// *****************************************************************************
+//  Compute boundary point normals for mesh velocity symmetry BCs
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  std::unordered_map< int, std::unordered_set< std::size_t > > bcnodes;
+  for (const auto& s : g_inputdeck.get< tag::ale, tag::symmetry >()) {
+    auto k = m_bface.find(static_cast<int>(s));
+    if (k != end(m_bface)) {
+      auto& n = bcnodes[ k->first ];
+      for (auto f : k->second) {
+        n.insert( m_triinpoel[f*3+0] );
+        n.insert( m_triinpoel[f*3+1] );
+        n.insert( m_triinpoel[f*3+2] );
+      }
+    }
+  }
+
+  m_bnorm = cg::bnorm( m_bface, m_triinpoel, d->Coord(), d->Gid(), bcnodes );
+
+  // Send our nodal normal contributions to neighbor chares
+  if (d->NodeCommMap().empty())
+    comnorm_complete();
+  else
+    for (const auto& [neighborchare, sharednodes] : d->NodeCommMap()) {
+      decltype(m_bnorm) exp;
+      for (auto i : sharednodes) {
+        for (const auto& [s,norms] : m_bnorm) {
+          auto j = norms.find(i);
+          if (j != end(norms)) exp[s][i] = j->second;
+        }
+      }
+      thisProxy[ neighborchare ].comnorm( exp );
+    }
+
+  ownnorm_complete();
+}
+
+void
+DG::comnorm( const std::unordered_map< int,
+  std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm )
+// *****************************************************************************
+// Receive boundary point normals on chare-boundaries
+//! \param[in] innorm Incoming partial sums of boundary point normal
+//!   contributions to normals (first 3 components), inverse distance squared
+//!   (4th component), associated to side set ids
+// *****************************************************************************
+{
+  // Buffer up incoming boundary-point normal vector contributions
+  for (const auto& [s,norms] : innorm) {
+    auto& bnorms = m_bnormc[s];
+    for (const auto& [p,n] : norms) {
+      auto& bnorm = bnorms[p];
+      bnorm[0] += n[0];
+      bnorm[1] += n[1];
+      bnorm[2] += n[2];
+      bnorm[3] += n[3];
+    }
+  }
+
+  if (++m_nbnorm == Disc()->NodeCommMap().size()) {
+    m_nbnorm = 0;
+    comnorm_complete();
+  }
+}
+
+void
+DG::normfinal()
+// *****************************************************************************
+//  Finish computing boundary point normals
+// *****************************************************************************
+{
+  const auto& lid = Disc()->Lid();
+
+  // Combine own and communicated contributions to boundary point normals
+  for (const auto& [s,norms] : m_bnormc) {
+    auto& bnorms = m_bnorm[s];
+    for (const auto& [p,n] : norms) {
+      auto& norm = bnorms[p];
+      norm[0] += n[0];
+      norm[1] += n[1];
+      norm[2] += n[2];
+      norm[3] += n[3];
+    }
+  }
+  tk::destroy( m_bnormc );
+
+  // Divide summed point normals by the sum of inverse distance squared
+  for (auto& [s,norms] : m_bnorm)
+    for (auto& [p,n] : norms) {
+      n[0] /= n[3];
+      n[1] /= n[3];
+      n[2] /= n[3];
+      Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
+              1.0e+3*std::numeric_limits< tk::real >::epsilon(),
+              "Non-unit normal" );
+    }
+
+  // Replace global->local ids associated to boundary point normals
+  decltype(m_bnorm) bnorm;
+  for (auto& [s,norms] : m_bnorm) {
+    auto& bnorms = bnorm[s];
+    for (auto&& [g,n] : norms)
+      bnorms[ tk::cref_find(lid,g) ] = std::move(n);
+  }
+  m_bnorm = std::move(bnorm);
+}
+
+void
 DG::ALEComm()
 // *****************************************************************************
 // Perform ALE mesh update and communicate updated ghost mesh data
@@ -1102,7 +1219,7 @@ DG::ALEComm()
   auto& coord = myGhosts()->m_coord;
   auto& disc_coord = d->Coord();
   const auto dc_size = disc_coord[0].size();
-  for (std::size_t j=0; j<3; ++j) {
+  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >()) {
     for (std::size_t i=0; i<dc_size; ++i) {
       auto x = rkcoef[0][m_stage] * d->Coordn()[j][i]
         + rkcoef[1][m_stage] * ( disc_coord[j][i] + d->Dt() * meshvel(i,j) );
@@ -1545,7 +1662,7 @@ DG::resizePostAMR(
   const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& /* bnode */,
+  const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
@@ -1594,6 +1711,11 @@ DG::resizePostAMR(
 
   myGhosts()->m_fd = FaceData( myGhosts()->m_inpoel, bface,
     tk::remap(triinpoel,d->Lid()) );
+
+  m_bnode = bnode;
+  m_bface = bface;
+  m_triinpoel = tk::remap( triinpoel, d->Lid() );
+  d->meshvelBnd( m_bface, m_bnode, m_triinpoel );
 
   myGhosts()->m_geoFace =
     tk::Fields( tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
@@ -1969,23 +2091,59 @@ DG::step()
 }
 
 void
+DG::computeBNorm()
+// *****************************************************************************
+// Start computing the boundary normals for ALE
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::ale, tag::ale >() &&
+      !g_inputdeck.get< tag::ale, tag::symmetry >().empty())
+  {
+    thisProxy[ thisIndex ].wait4norm();
+    bnorm();
+  } else {
+    meshvelstart();
+  }
+}
+
+void
 DG::meshvelstart()
 // *****************************************************************************
-// Start computing the mesh mesh velocity for ALE
+// Start computing the mesh mesh velocity after boundary normals are ready
 // *****************************************************************************
 {
   auto d = Disc();
 
   // Compute fluid velocity at nodes
   if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    const auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+    const auto meshveltype =
+      g_inputdeck.get< tag::ale, tag::mesh_velocity >();
+
+    if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+      Throw( "DG-ALE does not yet support the Helmholtz mesh velocity "
+             "smoother" );
+
+    if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
+      if (meshveltype != ctr::MeshVelocityType::FLUID)
+        Throw( "DG-ALE Laplace mesh velocity smoothing is currently "
+               "supported only with mesh_velocity = \"fluid\"" );
+
+      const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
+      if (!std::all_of( begin(meshforce), end(meshforce),
+            [](tk::real c){ return c == 0.0; } ))
+        Throw( "DG-ALE Laplace mesh velocity smoothing does not yet support "
+               "nonzero meshforce coefficients" );
+    }
+
     g_dgpde[d->MeshId()].nodeVelocity( myGhosts()->m_geoElem,
       myGhosts()->m_esup, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p,
       m_nodevel );
   }
 
   // Start computing the mesh velocity for ALE
-  d->meshvelStart( m_nodevel, {}, std::unordered_map< int,
-    std::unordered_map< std::size_t, std::array< tk::real, 4 > > >{}, 1.0,
+  const auto adt = rkcoef[1][m_stage] * d->Dt();
+  d->meshvelStart( m_nodevel, {}, m_bnorm, adt,
     CkCallback(CkIndex_DG::meshveldone(), thisProxy[thisIndex]) );
 }
 
@@ -1995,6 +2153,9 @@ DG::meshveldone()
 // Done with computing the mesh velocity for ALE
 // *****************************************************************************
 {
+  // Assess and record mesh velocity linear solver convergence
+  Disc()->meshvelConv();
+
   m_initial = 0;
 
   p_refine();

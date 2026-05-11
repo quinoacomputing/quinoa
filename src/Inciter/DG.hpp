@@ -144,6 +144,10 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& geoElem,
                  const std::vector< std::array< tk::real, 3 > >& coord );
 
+    //! Receive boundary point normals on chare-boundaries
+    void comnorm( const std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
+
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
     void comnodeout( const std::vector< std::size_t >& gid,
@@ -165,7 +169,7 @@ class DG : public CBase_DG {
       const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
       const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
-      const std::map< int, std::vector< std::size_t > >& /* bnode */,
+      const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel,
       const std::unordered_map< std::size_t, std::set< std::size_t > >&
         elemblockid );
@@ -211,8 +215,8 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step
     void step();
 
-    //! Start computing the mesh mesh velocity for ALE
-    void meshvelstart();
+    //! Start computing the boundary normals for ALE
+    void computeBNorm();
 
     //! Done with computing the mesh mesh velocity for ALE
     void meshveldone();
@@ -232,6 +236,7 @@ class DG : public CBase_DG {
       p | m_nsmooth;
       p | m_nreco;
       p | m_nale;
+      p | m_nbnorm;
       p | m_u;
       p | m_un;
       p | m_p;
@@ -269,6 +274,10 @@ class DG : public CBase_DG {
       p | m_shockmarker;
       p | m_nodevel;
       p | m_bnode;
+      p | m_bface;
+      p | m_triinpoel;
+      p | m_bnorm;
+      p | m_bnormc;
       p | m_dte;
       p | m_finished;
     }
@@ -302,6 +311,8 @@ class DG : public CBase_DG {
     std::size_t m_nreco;
     //! Counter signaling that we have received all ALE ghost mesh updates
     std::size_t m_nale;
+    //! Counter for receiving boundary point normals
+    std::size_t m_nbnorm;
     //! Counters signaling how many stiff and non-stiff equations in the system
     std::size_t m_nstiffeq, m_nnonstiffeq;
     //! Vector of unknown/solution average over each mesh element
@@ -379,6 +390,21 @@ class DG : public CBase_DG {
     tk::UnsMesh::Coords m_nodevel;
     //! Boundary node lists mapped to side set ids used in the input file
     std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Boundary face lists mapped to side set ids used in the input file
+    std::map< int, std::vector< std::size_t > > m_bface;
+    //! Boundary triangle face connecitivity where BCs are set by user
+    std::vector< std::size_t > m_triinpoel;
+    //! Face normals in boundary points associated to side sets
+    //! \details Key: local node id, value: unit normal and inverse distance
+    //!   square between face centroids and points, outer key: side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
+    //! \brief Receive buffer for communication of the boundary point normals
+    //!   associated to side sets
+    //! \details Key: global node id, value: normals (first 3 components),
+    //!   inverse distance squared (4th component), outer key, side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnormc;
     //! Time step size for each element (for local time stepping)
     std::vector< tk::real > m_dte;
     //! Flag for completed calculation
@@ -418,6 +444,15 @@ class DG : public CBase_DG {
 
     //! Perform ALE mesh update and communicate updated ghost mesh data
     void ALEComm();
+
+    //! Compute boundary point normals for mesh velocity symmetry BCs
+    void bnorm();
+
+    //! Finish computing boundary point normals
+    void normfinal();
+
+    //! Start computing the mesh velocity after boundary normals are ready
+    void meshvelstart();
 
     //! Compute time step size
     void dt();

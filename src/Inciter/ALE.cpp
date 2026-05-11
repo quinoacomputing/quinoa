@@ -80,11 +80,14 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   m_w.fill( 0.0 );
 
   // Activate SDAG wait for initially computing prerequisites for ALE
-  if (smoother != ctr::MeshVelocitySmootherType::NONE) {
+  if (needVelocityDerivatives())
     thisProxy[ thisIndex ].wait4vel();
+
+  if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
     thisProxy[ thisIndex ].wait4pot();
+
+  if (!zeroMeshForce())
     thisProxy[ thisIndex ].wait4for();
-  }
 
   // Array elements must not use the chare_objs table
   chareIdx = -1;
@@ -359,8 +362,9 @@ ALE::start(
   if (smoother == ctr::MeshVelocitySmootherType::NONE) {
     // if no smoother is selected, short-circuit to BC enforcement
     enforceMeshVelBCs();
-  }
-  else {
+  } else if (!needVelocityDerivatives()) {
+    meshvelbc();
+  } else {
     // start computing the fluid vorticity
     m_vorticity = tk::curl( coord, m_inpoel, vel );
     // communicate vorticity sums to other chares on chare-boundary
@@ -711,8 +715,11 @@ ALE::solved( [[maybe_unused]] CkDataMsg* msg )
 
   }
 
-  // continue to applying a mesh force to the mesh velocity
-  startforce();
+  if (zeroMeshForce())
+    enforceMeshVelBCs();
+  else
+    // continue to applying a mesh force to the mesh velocity
+    startforce();
 }
 
 void
@@ -878,14 +885,46 @@ ALE::enforceMeshVelBCs()
 
   // Activate SDAG wait for re-computing prerequisites for ALE
   auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-  if (smoother != ctr::MeshVelocitySmootherType::NONE) {
+  if (needVelocityDerivatives())
     thisProxy[ thisIndex ].wait4vel();
+
+  if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
     thisProxy[ thisIndex ].wait4pot();
+
+  if (!zeroMeshForce())
     thisProxy[ thisIndex ].wait4for();
-  }
 
   // ALE's work is done, callback to client
   m_done.send();
+}
+
+bool
+ALE::zeroMeshForce() const
+// *****************************************************************************
+//  Query if ALE mesh force coefficients are all zero
+//! \return True if all ALE mesh force coefficients are zero
+// *****************************************************************************
+{
+  const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
+  return std::all_of( begin(meshforce), end(meshforce),
+    [](tk::real c){ return c == 0.0; } );
+}
+
+bool
+ALE::needVelocityDerivatives() const
+// *****************************************************************************
+//  Query if ALE mesh velocity smoothing requires velocity derivatives
+//! \return True if the selected smoother requires velocity-divergence or
+//!   vorticity data
+// *****************************************************************************
+{
+  const auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+  if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+    return true;
+
+  return smoother == ctr::MeshVelocitySmootherType::LAPLACE &&
+    (g_inputdeck.get< tag::ale, tag::vortmult >() != 0.0 ||
+     !zeroMeshForce());
 }
 
 #include "NoWarning/ale.def.h"
