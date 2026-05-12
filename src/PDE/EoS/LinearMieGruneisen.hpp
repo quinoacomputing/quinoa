@@ -23,7 +23,7 @@ namespace inciter {
 class LinearMieGruneisen {
 
   private:
-    tk::real m_gamma0, m_b, m_rho0, m_c0, m_s1, m_cv, m_mu;
+    tk::real m_gamma0, m_rho0, m_b, m_c0, m_s1, m_cv, m_mu;
 
     //! \brief Calculate elastic contribution to material energy from the
     //!   material density, and deformation gradient tensor
@@ -62,14 +62,15 @@ class LinearMieGruneisen {
     //! Constructor
     LinearMieGruneisen(
       tk::real gamma0,
+      tk::real rho0,
       tk::real b,
       tk::real c0,
       tk::real s1,
       tk::real cv,
       tk::real mu );
 
-    //! Set rho0 EOS parameter; i.e. the initial density
-    void setRho0(tk::real rho0);
+    //! Set rho0 EOS parameter; no-op since provided by user
+    void setRho0(tk::real) {}
 
     //! Calculate density from the material pressure and temperature
     tk::real density( tk::real pr,
@@ -165,8 +166,8 @@ class LinearMieGruneisen {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) /*override*/ {
       p | m_gamma0;
-      p | m_b;
       p | m_rho0;
+      p | m_b;
       p | m_c0;
       p | m_s1;
       p | m_cv;

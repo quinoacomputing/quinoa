@@ -19,6 +19,7 @@
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/JWL.hpp"
 #include "EoS/SmallShearSolid.hpp"
+#include "EoS/LinearMieGruneisen.hpp"
 #include "EoS/WilkinsAluminum.hpp"
 #include "EoS/GodunovRomenski.hpp"
 #include "EoS/ThermallyPerfectGas.hpp"
@@ -39,6 +40,7 @@ class EOS {
     std::variant< StiffenedGas
                 , JWL
                 , SmallShearSolid
+                , LinearMieGruneisen
                 , WilkinsAluminum
                 , GodunovRomenski
                 , ThermallyPerfectGas

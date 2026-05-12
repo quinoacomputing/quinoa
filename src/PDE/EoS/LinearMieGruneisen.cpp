@@ -25,12 +25,14 @@ using inciter::LinearMieGruneisen;
 
 LinearMieGruneisen::LinearMieGruneisen(
   tk::real gamma0,
+  tk::real rho0,
   tk::real b,
   tk::real c0,
   tk::real s1,
   tk::real cv,
   tk::real mu ) :
   m_gamma0(gamma0),
+  m_rho0(rho0),
   m_b(b),
   m_c0(c0),
   m_s1(s1),
@@ -39,6 +41,7 @@ LinearMieGruneisen::LinearMieGruneisen(
 // *************************************************************************
 //  Constructor
 //! \param[in] gamma0 Reference Gruneisen coefficient
+//! \param[in] rho0 Initial density
 //! \param[in] b Density-dependence coefficient for Gruneisen coefficient
 //! \param[in] c0 Bulk sound speed coefficient in linear Us-Up relation
 //! \param[in] s1 Slope coefficient in linear Us-Up relation
@@ -46,16 +49,6 @@ LinearMieGruneisen::LinearMieGruneisen(
 //! \param[in] mu Constant shear modulus
 // *************************************************************************
 { }
-
-void
-LinearMieGruneisen::setRho0( tk::real rho0 )
-// *************************************************************************
-//  Set rho0 EOS parameter; i.e. the initial density
-//! \param[in] rho0 Initial material density that needs to be stored
-// *************************************************************************
-{
-  m_rho0 = rho0;
-}
 
 tk::real
 LinearMieGruneisen::density(

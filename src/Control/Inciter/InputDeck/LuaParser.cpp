@@ -1484,6 +1484,50 @@ LuaParser::registerMaterials(
     // assign solid
     is_solid = true;
   }
+  // Linear Mie-Gruneisen materials
+  else if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::LINEARMIEGRUNEISEN) {
+    // w_gru
+    checkStoreMatProp(sol_mat[imat+1], "w_gru", ntype,
+      mati_deck.get< tag::w_gru >());
+
+    // rho0_jwl
+    checkStoreMatProp(sol_mat[imat+1], "rho0_jwl", ntype,
+      mati_deck.get< tag::rho0_jwl >());
+
+    // b
+    checkStoreMatProp(sol_mat[imat+1], "b", ntype,
+      mati_deck.get< tag::b >());
+
+    // c0
+    checkStoreMatProp(sol_mat[imat+1], "c0", ntype,
+      mati_deck.get< tag::c0 >());
+
+    // s1
+    checkStoreMatProp(sol_mat[imat+1], "s1", ntype,
+      mati_deck.get< tag::s1 >());
+
+    // mu
+    checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
+      mati_deck.get< tag::mu >());
+
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-05);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
+
+    // yield_stress
+    if (!sol_mat[imat+1]["yield_stress"].valid())
+      sol_mat[imat+1]["yield_stress"] =
+        std::vector< tk::real >(ntype, 300.0e+06);
+    checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
+      mati_deck.get< tag::yield_stress >());
+
+    // assign solid
+    is_solid = true;
+  }
   // Wilkins aluminum materials
   else if (mati_deck.get< tag::eos >() ==
     inciter::ctr::MaterialType::WILKINSALUMINUM) {
