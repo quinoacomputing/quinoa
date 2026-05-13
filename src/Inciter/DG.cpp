@@ -2507,7 +2507,6 @@ DG::point_implicit_integrate()
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
   const auto neq = m_u.nprop()/rdof;
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   
   Assert(g_inputdeck.get< tag::steady_state >(),
     "Point-implicit integrator currently only for steady-state");
@@ -2517,7 +2516,8 @@ DG::point_implicit_integrate()
     "Point-implicit integrator currently only implemented for P0 (ndof=1)");
 
   // Currently no p-refinement
-  if (pref) Throw("Point-implicit integrator currently requires pref=false");
+  Assert(g_inputdeck.get< tag::pref, tag::pref >(),
+    "Point-implicit integrator currently requires pref=false");
 
   // Frozen neighbors
   const tk::Fields Ubase( m_un );
