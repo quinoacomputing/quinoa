@@ -2765,6 +2765,52 @@ DG::point_implicit_rhs(
   return re;
 }
 
+std::vector< std::vector< tk::real > >
+DG::point_implicit_jacobian(
+  tk::real t,
+  std::size_t e,
+  const std::vector< tk::real >& ue,
+  const tk::Fields& Ubase,
+  const tk::Fields& Pbase ) const
+// *****************************************************************************
+// Calculates element-local residual Jacobian
+//! \param[in] t Physical time
+//! \param[in] e Element index
+//! \param[in] ue Element-local unknowns
+//! \param[in] Ubase Base conservative field with lagged neighbor states
+//! \param[in] Pbase Base primitive field with lagged neighbor states
+//! \return Dense matrix dR_e/du_e
+//! \details WIP that performs finite differencing to calculate Jacobian, with
+//! the exact Jacobian to be wired in later.
+// *****************************************************************************
+{
+  const auto n = ue.size();
+
+  auto r0 = point_implicit_rhs( t, e, ue, Ubase, Pbase );
+
+  std::vector< std::vector< tk::real > >
+    dRdu(n, std::vector< tk::real >(n, 0.0));
+
+  for (std::size_t j=0; j<n; ++j) {
+    auto up = ue;
+
+    // small step forward for finite difference
+    const auto eps =
+      std::sqrt(std::numeric_limits< tk::real >::epsilon()) *
+      std::max(std::abs(ue[j]), tk::real(1.0));
+
+    up[j] += eps;
+
+    auto rp = point_implicit_rhs( t, e, up, Ubase, Pbase );
+
+    for (std::size_t i=0; i<n; ++i) {
+      dRdu[i][j] = (rp[i] - r0[i]) / eps;
+    }
+  }
+
+  return dRdu;
+}
+
 //------------------------------------------------------------------------------
 // Unused Nodal Extrema code
 //------------------------------------------------------------------------------
