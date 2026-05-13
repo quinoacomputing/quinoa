@@ -186,8 +186,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
 
-  //! TODO: formalism here for handling point-implicit, should perhaps just be
-  // m_nstage = 1
+  // Only one stage for point implicit
+  if (g_inputdeck.get< tag::point_implicit >()) m_nstage = 1;
 
   // insert array-element into the implicit solver chare array
   if (g_inputdeck.get< tag::implicit_timestepping >()) {
@@ -1214,7 +1214,7 @@ DG::solve( tk::real newdt )
     }
   }
 
-  if (!imex_runge_kutta || m_stage < m_nstage-1) {
+  if ( (!imex_runge_kutta || m_stage < m_nstage-1) && !point_implicit) {
     if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
       myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
@@ -2507,41 +2507,55 @@ DG::point_implicit_integrate()
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
   const auto neq = m_u.nprop()/rdof;
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   
   Assert(g_inputdeck.get< tag::steady_state >(),
     "Point-implicit integrator currently only for steady-state");
 
   // Point-implicit currently only for P0 (ndof=1)
-  if (ndof != 1) {
-    Throw( "Point-implicit time integration currently only implemented for P0 "
-           "(ndof=1). Set ndof=1 in input file." );
-  }
+  Assert(ndof == 1,
+    "Point-implicit integrator currently only implemented for P0 (ndof=1)");
+
+  // Currently no p-refinement
+  Assert(!pref, "Point-implicit integrator currently requires pref=false");
+
+  // Frozen neighbors
+  const tk::Fields Ubase( m_un );
+  const tk::Fields Pbase( m_p );
+
+  tk::Fields Unew( m_u );
 
   // Element-local implicit solve
   for (std::size_t e=0; e<nelem; ++e) {
-
     auto vole = myGhosts()->m_geoElem(e,0);
     auto dte = m_dte[e];
 
     // Extract element DOFs
-    std::vector<tk::real> u_old(neq*ndof), u_new(neq*ndof);
+    std::vector<tk::real> u_old(neq*ndof), u_cur(neq*ndof);
     for (size_t c=0; c<neq; ++c)
       for (size_t k=0; k<m_numEqDof[c]; ++k) {
-        u_old[c*ndof+k] = m_un(e, c*rdof+k);
-        u_new[c*ndof+k] = m_u(e, c*rdof+k);  // Initial guess from previous iter
+        const auto rmark = c*rdof + k;
+        const auto mark = c*ndof + k;
+        u_old[mark] = Ubase(e, rmark);
+        u_cur[mark] = Ubase(e, rmark);
       }
 
     // Newton iteration for element e
-    bool converged = solve_element_implicit(e, u_old, u_new, dte, vole);
+    auto converged = solve_element_implicit(e, u_old, u_cur, dte, vole);
 
     if (!converged)
-      Throw("Point-implicit solver failed at element " + std::to_string(e));
+      Throw( "Point-implicit solver failed at element " + std::to_string(e) );
 
     // Update global solution
     for (size_t c=0; c<neq; ++c)
-      for (size_t k=0; k<m_numEqDof[c]; ++k)
-        m_u(e, c*rdof+k) = u_new[c*ndof+k];
+      for (size_t k=0; k<m_numEqDof[c]; ++k) {
+        const auto rmark = c*rdof + k;
+        const auto mark = c*ndof + k;
+        Unew(e, rmark) = u_new[mark];
+      }
   }
+
+  m_u = std::move(Unew);
 }
 
 bool
@@ -2562,7 +2576,7 @@ DG::solve_element_implicit(
 //! \return True if Newton iterations converged, false otherwise
 //! \details Solves the nonlinear system F(u) = u - u_old - dt*R(u) = 0 using
 //!   Newton's method with line search. The Jacobian and RHS are obtained from
-//!   the physics-specific PDE system via g_dgpde.
+//!   the physics-specific implementations
 // *****************************************************************************
 {
   auto d = Disc();
@@ -2605,7 +2619,7 @@ DG::solve_element_implicit(
 
     // Compute Jacobian: J = I - dte/vole * dR/du
     auto J = g_dgpde[d->MeshId()].element_jacobian( e, u_new, m_ndof, 
-      //dte, vole );
+      dte, vole );
 
     // Solve linear system: J * delta_u = -F using LAPACK
     // Copy J into column-major format for LAPACK
@@ -2627,17 +2641,17 @@ DG::solve_element_implicit(
     lapack_int info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, 1, 
                                      J_lapack.data(), n, ipiv.data(), 
                                      delta_u.data(), 1);
-    
+
     if (info != 0) {
       // Singular matrix or LAPACK error
       return false;
     }
-    
-    // Line search: find alpha such that ||F(u + alpha*delta_u)|| < ||F(u)||
+
+    // Line search
     tk::real alpha = 1.0;
     const size_t max_line_search = 10;
     bool line_search_success = false;
-    
+
     for (size_t iline=0; iline<max_line_search; ++iline) {
       // Trial step
       auto u_trial = u_new;
@@ -2646,10 +2660,10 @@ DG::solve_element_implicit(
           auto mark = c*ndof+k;
           u_trial[mark] += alpha * delta_u[mark];
         }
-      
+
       // Compute residual at trial point
       auto R_trial = g_dgpde[d->MeshId()].element_rhs( e, u_trial, m_ndof );
-      
+
       tk::real norm_F_trial = 0.0;
       for (size_t c=0; c<neq; ++c) 
         for (size_t k=0; k<m_numEqDof[c]; ++k) {
@@ -2659,21 +2673,21 @@ DG::solve_element_implicit(
           norm_F_trial += F_trial * F_trial;
         }
       norm_F_trial = std::sqrt(norm_F_trial);
-      
+
       // Accept step if residual decreased
       if (norm_F_trial < norm_F) {
         u_new = u_trial;
         line_search_success = true;
         break;
       }
-      
+
       // Reduce step size and try again
       alpha *= 0.5;
     }
-    
+
     // If line search failed, Newton may not be converging
     if (!line_search_success) {
-      // Take the step anyway (damped Newton)
+      // Take the step anyway
       for (size_t c=0; c<neq; ++c) 
         for (size_t k=0; k<m_numEqDof[c]; ++k) {
           auto mark = c*ndof+k;
@@ -2681,7 +2695,7 @@ DG::solve_element_implicit(
         }
     }
   }
-  
+
   // Failed to converge within max_iter
   return false;
 }
