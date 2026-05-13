@@ -2517,7 +2517,7 @@ DG::point_implicit_integrate()
     "Point-implicit integrator currently only implemented for P0 (ndof=1)");
 
   // Currently no p-refinement
-  Assert(!pref, "Point-implicit integrator currently requires pref=false");
+  if (pref) Throw("Point-implicit integrator currently requires pref=false");
 
   // Frozen neighbors
   const tk::Fields Ubase( m_un );
@@ -2537,11 +2537,13 @@ DG::point_implicit_integrate()
         const auto rmark = c*rdof + k;
         const auto mark = c*ndof + k;
         u_old[mark] = Ubase(e, rmark);
+        // guess previous value
         u_cur[mark] = Ubase(e, rmark);
       }
 
     // Newton iteration for element e
-    auto converged = solve_element_implicit(e, u_old, u_cur, dte, vole);
+    auto converged = solve_element_implicit(
+      e, Ubase, Pbase, u_old, u_cur, dte, vole );
 
     if (!converged)
       Throw( "Point-implicit solver failed at element " + std::to_string(e) );
@@ -2551,7 +2553,7 @@ DG::point_implicit_integrate()
       for (size_t k=0; k<m_numEqDof[c]; ++k) {
         const auto rmark = c*rdof + k;
         const auto mark = c*ndof + k;
-        Unew(e, rmark) = u_new[mark];
+        Unew(e, rmark) = u_cur[mark];
       }
   }
 
@@ -2561,16 +2563,19 @@ DG::point_implicit_integrate()
 bool
 DG::solve_element_implicit(
   std::size_t e,
-  const std::vector<tk::real>& u_old,
-  std::vector<tk::real>& u_new,
+  const tk::Fields& Ubase,
+  const tk::Fields& Pbase,
+  const std::vector< tk::real >& u_old,
+  std::vector< tk::real >& u_new,
   tk::real dte,
   tk::real vole )
 // *****************************************************************************
 //  Solve element-local implicit system using Newton's method
 //! \param[in] e Element index
+//! \param[in] Ubase Base conservative field with lagged neighbor states
+//! \param[in] Pbase Base primitive field with lagged neighbor states
 //! \param[in] u_old Solution at previous time step (element DOFs)
-//! \param[in,out] u_new Solution at current time step (input: initial guess, 
-//!   output: converged solution)
+//! \param[in] u_new Updated solution
 //! \param[in] dte Element-local time step size
 //! \param[in] vole Element volume
 //! \return True if Newton iterations converged, false otherwise
@@ -2579,121 +2584,106 @@ DG::solve_element_implicit(
 //!   the physics-specific implementations
 // *****************************************************************************
 {
-  auto d = Disc();
-  const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
-  const auto neq = u_new.size()/rdof;
+
+  // Intermediate variable that ends up equal to ndof * neq
+  const auto n = u_new.size();
 
   // Newton solver parameters from input deck
-  //! TODO: make these specific to this problem (?)
+  //! TODO: make these specific to this problem
   const auto max_iter = g_inputdeck.get< tag::imex_maxiter >();
   const auto abs_tol = g_inputdeck.get< tag::imex_abstol >();
   const auto rel_tol = g_inputdeck.get< tag::imex_reltol >();
 
-  tk::real norm_F0 = 0.0;  // Initial residual norm for relative tolerance
+  // Lamda for norm calculation
+  auto norm = []( const std::vector< tk::real >& x ) {
+    tk::real s = 0.0;
+    for (auto v : x) s += v*v;
+    return std::sqrt(s);
+  };
+
+  // lambda to calculate residual
+  auto residual = [&]( const std::vector< tk::real >& u ) {
+    auto r = point_implicit_rhs( e, u, Ubase, Pbase );
+
+    std::vector< tk::real > f(n, 0.0);
+
+    for (std::size_t i=0; i<n; ++i) {
+      const auto k = i % ndof;
+      const auto scale = dte / (vole * mass_dubiner[k]);
+
+      f[i] = u[i] - u_old[i] - scale*r[i];
+    }
+
+    return f;
+  };
+
+  // initial residuals and norm
+  auto F = residual( u_new );
+  const tk::real norm_F0 = std::max( norm(F), tk::real(1.0) );
 
   // Newton iteration
   for (size_t iter=0; iter<max_iter; ++iter) {
+    const auto norm_F = norm(F);
 
-    // Compute residual: F = u_new - u_old - dte*R(u_new)/vole
-    auto R = g_dgpde[d->MeshId()].element_rhs( e, u_new, m_ndof );
+    // Convergence check
+    if (norm_F < abs_tol || norm_F/norm_F0 < rel_tol) return true;
 
-    std::vector<tk::real> F(neq*ndof);
-    for (size_t c=0; c<neq; ++c)
-      for (size_t k=0; k<m_numEqDof[c]; ++k) {
-        auto mark = c*ndof+k;
-        F[mark] = u_new[mark] - u_old[mark] - dte * R[mark] / vole;
+    auto dRdu = point_implicit_jacobian( e, u_new, Ubase, Pbase );
+
+    // LAPACK variables
+    std::vector< double > A(n*n, 0.0);
+    std::vector< double > delta(n, 0.0);
+
+    // Fill RHS vector with negative residual and LHS matrix with:
+    // dij - dte/vole/m dRi/duj
+    for (std::size_t i=0; i<n; ++i) {
+      const auto k = i % ndof;
+      const auto scale = dte / (vole * mass_dubiner[k]);
+
+      for (std::size_t j=0; j<n; ++j) {
+        A[i*n + j] = (i == j ? 1.0 : 0.0) - scale*dRdu[i][j];
       }
 
-    // Compute residual norm
-    tk::real norm_F = 0.0;
-    for (auto f : F) norm_F += f*f;
-    norm_F = std::sqrt(norm_F);
-
-    // Store initial residual for relative tolerance check
-    if (iter == 0) norm_F0 = norm_F;
-
-    // Check convergence
-    if (norm_F < abs_tol) return true;
-    if (norm_F0 > abs_tol && norm_F / norm_F0 < rel_tol) return true;
-
-    // Compute Jacobian: J = I - dte/vole * dR/du
-    auto J = g_dgpde[d->MeshId()].element_jacobian( e, u_new, m_ndof, 
-      dte, vole );
-
-    // Solve linear system: J * delta_u = -F using LAPACK
-    // Copy J into column-major format for LAPACK
-    std::vector<double> J_lapack(neq*ndof * neq*ndof);
-    for (size_t i=0; i<neq*ndof; ++i)
-      for (size_t j=0; j<neq*ndof; ++j) {
-        J_lapack[j*neq*ndof + i] = J[i][j];  // Transpose for column-major
-      }
-
-    // Copy -F as the RHS
-    std::vector<double> delta_u(neq*ndof);
-    for (size_t i=0; i<neq*ndof; ++i) {
-      delta_u[i] = -F[i];
+      delta[i] = -F[i];
     }
 
-    // Solve with LAPACK
-    lapack_int n = static_cast<lapack_int>(neq*ndof);
-    std::vector<lapack_int> ipiv(neq*ndof);
-    lapack_int info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, n, 1, 
-                                     J_lapack.data(), n, ipiv.data(), 
-                                     delta_u.data(), 1);
+    // Solve this small system of equations with LAPACK
+    const lapack_int ln = static_cast< lapack_int >(n);
+    std::vector< lapack_int > ipiv(n);
 
-    if (info != 0) {
-      // Singular matrix or LAPACK error
-      return false;
-    }
+    const auto info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, ln, 1, A.data(), ln,
+      ipiv.data(), delta.data(), 1 );
+
+    // Singular matrix or LAPACK error
+    if (info != 0) return false;
 
     // Line search
     tk::real alpha = 1.0;
     const size_t max_line_search = 10;
     bool line_search_success = false;
 
-    for (size_t iline=0; iline<max_line_search; ++iline) {
-      // Trial step
+    for (std::size_t ls=0; ls<max_line_search; ++ls) {
       auto u_trial = u_new;
-      for (size_t c=0; c<neq; ++c)
-        for (size_t k=0; k<m_numEqDof[c]; ++k) {
-          auto mark = c*ndof+k;
-          u_trial[mark] += alpha * delta_u[mark];
-        }
 
-      // Compute residual at trial point
-      auto R_trial = g_dgpde[d->MeshId()].element_rhs( e, u_trial, m_ndof );
+      for (std::size_t i=0; i<n; ++i) {
+        u_trial[i] += alpha * static_cast< tk::real >(delta[i]);
+      }
 
-      tk::real norm_F_trial = 0.0;
-      for (size_t c=0; c<neq; ++c) 
-        for (size_t k=0; k<m_numEqDof[c]; ++k) {
-          auto mark = c*ndof+k;
-          tk::real F_trial =
-            u_trial[mark] - u_old[mark] - dte * R_trial[mark] / vole;
-          norm_F_trial += F_trial * F_trial;
-        }
-      norm_F_trial = std::sqrt(norm_F_trial);
+      auto F_trial = residual( u_trial );
 
-      // Accept step if residual decreased
-      if (norm_F_trial < norm_F) {
-        u_new = u_trial;
+      if (norm(F_trial) < norm_F) {
+        u_new = std::move(u_trial);
+        F = std::move(F_trial);
         line_search_success = true;
         break;
       }
 
-      // Reduce step size and try again
       alpha *= 0.5;
     }
 
-    // If line search failed, Newton may not be converging
-    if (!line_search_success) {
-      // Take the step anyway
-      for (size_t c=0; c<neq; ++c) 
-        for (size_t k=0; k<m_numEqDof[c]; ++k) {
-          auto mark = c*ndof+k;
-          u_new[mark] += alpha * delta_u[mark];
-        }
-    }
+    // Line search failed!
+    if (!line_search_success) return false;
   }
 
   // Failed to converge within max_iter
@@ -2702,14 +2692,12 @@ DG::solve_element_implicit(
 
 std::vector< tk::real >
 DG::point_implicit_rhs(
-  tk::real t,
   std::size_t e,
   const std::vector< tk::real >& ue,
   const tk::Fields& Ubase,
   const tk::Fields& Pbase ) const
 // *****************************************************************************
 // Evaluate the spatial residual for a single element
-//! \param[in] t Physical time
 //! \param[in] e Element index
 //! \param[in] ue Element-local unknowns
 //! \param[in] Ubase Base conservative field with lagged neighbor states
@@ -2720,6 +2708,10 @@ DG::point_implicit_rhs(
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Time taken to be at next time step
+  tk::real physT(d->T());
+  physT += d->Dt();
 
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
@@ -2767,14 +2759,12 @@ DG::point_implicit_rhs(
 
 std::vector< std::vector< tk::real > >
 DG::point_implicit_jacobian(
-  tk::real t,
   std::size_t e,
   const std::vector< tk::real >& ue,
   const tk::Fields& Ubase,
   const tk::Fields& Pbase ) const
 // *****************************************************************************
 // Calculates element-local residual Jacobian
-//! \param[in] t Physical time
 //! \param[in] e Element index
 //! \param[in] ue Element-local unknowns
 //! \param[in] Ubase Base conservative field with lagged neighbor states
@@ -2786,7 +2776,7 @@ DG::point_implicit_jacobian(
 {
   const auto n = ue.size();
 
-  auto r0 = point_implicit_rhs( t, e, ue, Ubase, Pbase );
+  auto r0 = point_implicit_rhs( e, ue, Ubase, Pbase );
 
   std::vector< std::vector< tk::real > >
     dRdu(n, std::vector< tk::real >(n, 0.0));
@@ -2801,7 +2791,7 @@ DG::point_implicit_jacobian(
 
     up[j] += eps;
 
-    auto rp = point_implicit_rhs( t, e, up, Ubase, Pbase );
+    auto rp = point_implicit_rhs( e, up, Ubase, Pbase );
 
     for (std::size_t i=0; i<n; ++i) {
       dRdu[i][j] = (rp[i] - r0[i]) / eps;
