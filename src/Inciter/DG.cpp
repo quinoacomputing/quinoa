@@ -2700,6 +2700,71 @@ DG::solve_element_implicit(
   return false;
 }
 
+std::vector< tk::real >
+DG::point_implicit_rhs(
+  tk::real t,
+  std::size_t e,
+  const std::vector< tk::real >& ue,
+  const tk::Fields& Ubase,
+  const tk::Fields& Pbase ) const
+// *****************************************************************************
+// Evaluate the spatial residual for a single element
+//! \param[in] t Physical time
+//! \param[in] e Element index
+//! \param[in] ue Element-local unknowns
+//! \param[in] Ubase Base conservative field with lagged neighbor states
+//! \param[in] Pbase Base primitive field with lagged neighbor states
+//! \return Element residual R_e evaluated at ue and lagged neighbors
+//! \details WIP that simply takes existing DG rhs and calculates it for all
+//! elements, then just takes the element we're after
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto ncomp = m_u.nprop()/rdof;
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
+  Assert( ue.size() == ncomp*ndof, "Size mismatch in point_implicit_rhs()" );
+
+  tk::Fields U( Ubase );
+  tk::Fields P( Pbase );
+  tk::Fields R( Ubase.nunk(), ndof*ncomp );
+
+  for (std::size_t c=0; c<ncomp; ++c) {
+    for (std::size_t k=0; k<ndof; ++k) {
+      auto rmark = c*rdof+k;
+      auto mark = c*ndof+k;
+      U(e, rmark) = ue[mark];
+    }
+  }
+
+  g_dgpde[d->MeshId()].updatePrimitives(
+    U, myGhosts()->m_geoElem, P, nelem, m_ndof );
+
+  //! WIP: Right now we just calculate the RHS using the generic RHS function.
+  //! We should construct a type of "element_local_rhs" in each physics file
+  //! that does this per element (as this current method is incredibly slow and
+  //! scales horribly.)
+    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+      myGhosts()->m_coord, U, P, m_ndof, d->Dt(), R );
+
+  std::vector< tk::real > re(ncomp*ndof, 0.0);
+
+  for (std::size_t c=0; c<ncomp; ++c) {
+    for (std::size_t k=0; k<ndof; ++k) {
+      auto rmark = c*rdof+k;
+      auto mark = c*ndof+k;
+      re[mark] = R(e, rmark);
+    }
+  }
+
+  return re;
+}
+
 //------------------------------------------------------------------------------
 // Unused Nodal Extrema code
 //------------------------------------------------------------------------------
