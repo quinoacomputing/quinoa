@@ -442,7 +442,7 @@ LinearMieGruneisen::dGruneisenDrho( tk::real rho ) const
 //! \return Derivative of Gruneisen coefficient wrt density
 // *************************************************************************
 {
-  return m_b*dEtaDrho(rho);
+  return (- m_b * gruneisen(rho) / rho);
 }
 
 tk::real
