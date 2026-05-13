@@ -1282,8 +1282,10 @@ DG::solve( tk::real newdt )
 
   } else {
 
-    // Output internal energy inside the cylinder into a file
-    DG::output_internal_energy();
+    if (d->It()%50 == 0) {
+      // Output internal energy inside the cylinder into a file
+      DG::output_internal_energy();
+    }
 
     // Increase number of iterations and physical time
     d->next();
