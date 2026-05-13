@@ -5,12 +5,13 @@
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Linear Mie-Gruneisen equation of state for solids
+  \brief     Linear Mie-Gruneisen equation of state (a.k.a. shock-wave EOS)
   \details   This file defines functions for the LinearMieGruneisen equation of
              state for solids. The elastic contribution follows SmallShearSolid.
              The hydrodynamic contribution uses a linear Us-Up Hugoniot and a
-             density-dependent Gruneisen coefficient,
-             Gamma = gamma0 + b*(1-rho0/rho).
+             density-dependent Gruneisen coefficient. Ref. Shyue, K. M. (2001).
+             A fluid-mixture type algorithm for compressible multicomponent flow
+             with Mie–Grüneisen equation of state. J Comp Phys, 171(2), 678-707.
 */
 // *****************************************************************************
 
@@ -430,7 +431,7 @@ LinearMieGruneisen::gruneisen( tk::real rho ) const
 //! \return Gruneisen coefficient
 // *************************************************************************
 {
-  return m_gamma0 + m_b*eta(rho);
+  return m_gamma0 * std::pow(m_rho0/rho, m_b);
 }
 
 tk::real

@@ -1208,12 +1208,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         Mechanics, 537, 55-89 for further details.)"});
 
       keywords.insert({"linear_miegruneisen",
-        "Select the Linear Mie-Gruneisen equation of state",
+        "Select the Linear Mie-Gruneisen equation of state (a.k.a. shock-wave EOS)",
         R"(This keyword is used to select the linear Mie-Gruneisen equation of
         state for solids. This EOS uses a linear Us-Up Hugoniot with a
         density-dependent Gruneisen coefficient for the hydrodynamic
         contribution, and a small-shear approximation for the
-        elastic contribution.)"});
+        elastic contribution. This EOS is described in Shyue, J Comp Phys (2001)
+        171(2), 678-707.)"});
 
       keywords.insert({"wilkins_aluminum",
         "Select Wilkins' equation of state for aluminum",
