@@ -27,14 +27,14 @@ using inciter::LinearMieGruneisen;
 LinearMieGruneisen::LinearMieGruneisen(
   tk::real gamma0,
   tk::real rho0,
-  tk::real b,
+  tk::real alpha,
   tk::real c0,
   tk::real s1,
   tk::real cv,
   tk::real mu ) :
   m_gamma0(gamma0),
   m_rho0(rho0),
-  m_b(b),
+  m_alpha(alpha),
   m_c0(c0),
   m_s1(s1),
   m_cv(cv),
@@ -43,7 +43,7 @@ LinearMieGruneisen::LinearMieGruneisen(
 //  Constructor
 //! \param[in] gamma0 Reference Gruneisen coefficient
 //! \param[in] rho0 Initial density
-//! \param[in] b Density-dependence coefficient for Gruneisen coefficient
+//! \param[in] alpha Density-dependence exponent for Gruneisen coefficient
 //! \param[in] c0 Bulk sound speed coefficient in linear Us-Up relation
 //! \param[in] s1 Slope coefficient in linear Us-Up relation
 //! \param[in] cv Specific heat at constant volume
@@ -431,7 +431,7 @@ LinearMieGruneisen::gruneisen( tk::real rho ) const
 //! \return Gruneisen coefficient
 // *************************************************************************
 {
-  return m_gamma0 * std::pow(m_rho0/rho, m_b);
+  return m_gamma0 * std::pow(m_rho0/rho, m_alpha);
 }
 
 tk::real
@@ -442,7 +442,7 @@ LinearMieGruneisen::dGruneisenDrho( tk::real rho ) const
 //! \return Derivative of Gruneisen coefficient wrt density
 // *************************************************************************
 {
-  return (- m_b * gruneisen(rho) / rho);
+  return (- m_alpha * gruneisen(rho) / rho);
 }
 
 tk::real

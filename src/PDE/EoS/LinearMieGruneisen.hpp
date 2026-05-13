@@ -24,7 +24,7 @@ namespace inciter {
 class LinearMieGruneisen {
 
   private:
-    tk::real m_gamma0, m_rho0, m_b, m_c0, m_s1, m_cv, m_mu;
+    tk::real m_gamma0, m_rho0, m_alpha, m_c0, m_s1, m_cv, m_mu;
 
     //! \brief Calculate elastic contribution to material energy from the
     //!   material density, and deformation gradient tensor
@@ -64,7 +64,7 @@ class LinearMieGruneisen {
     LinearMieGruneisen(
       tk::real gamma0,
       tk::real rho0,
-      tk::real b,
+      tk::real alpha,
       tk::real c0,
       tk::real s1,
       tk::real cv,
@@ -168,7 +168,7 @@ class LinearMieGruneisen {
     void pup( PUP::er &p ) /*override*/ {
       p | m_gamma0;
       p | m_rho0;
-      p | m_b;
+      p | m_alpha;
       p | m_c0;
       p | m_s1;
       p | m_cv;

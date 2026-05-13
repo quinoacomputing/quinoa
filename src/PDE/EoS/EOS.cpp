@@ -61,13 +61,14 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
   else if (mattype == ctr::MaterialType::LINEARMIEGRUNEISEN) {
     // query input deck for LinearMieGruneisen parameters
     auto gamma0 = getmatprop< tag::w_gru >(k);
-    auto b = getmatprop< tag::b >(k);
+    auto alpha = getmatprop< tag::alpha >(k);
     auto c0 = getmatprop< tag::c0 >(k);
     auto s1 = getmatprop< tag::s1 >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
     auto rho0_gr = getmatprop< tag::rho0_jwl >(k);
-    m_material = LinearMieGruneisen(gamma0, rho0_gr, b, c0, s1, c_v, mu);
+    m_material =
+      LinearMieGruneisen(gamma0, rho0_gr, alpha, c0, s1, c_v, mu);
   }
   else if (mattype == ctr::MaterialType::WILKINSALUMINUM) {
     // query input deck for Wilkins parameters

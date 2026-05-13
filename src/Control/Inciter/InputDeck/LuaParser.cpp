@@ -1495,9 +1495,9 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "rho0_jwl", ntype,
       mati_deck.get< tag::rho0_jwl >());
 
-    // b
-    checkStoreMatProp(sol_mat[imat+1], "b", ntype,
-      mati_deck.get< tag::b >());
+    // alpha
+    checkStoreMatProp(sol_mat[imat+1], "alpha", ntype,
+      mati_deck.get< tag::alpha >());
 
     // c0
     checkStoreMatProp(sol_mat[imat+1], "c0", ntype,

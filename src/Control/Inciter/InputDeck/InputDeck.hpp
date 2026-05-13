@@ -125,7 +125,6 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::yield_stress,       std::vector< tk::real >,
   tag::alpha,              std::vector< tk::real >,
   tag::K0,                 std::vector< tk::real >,
-  tag::b,                  std::vector< tk::real >,
   tag::c0,                 std::vector< tk::real >,
   tag::s1,                 std::vector< tk::real >,
   tag::cv,                 std::vector< tk::real >,
@@ -1120,18 +1119,15 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         which indicates the stress (units: Pa) after which the material begins
         plastic flow.)", "vector of reals"});
 
-      keywords.insert({"alpha", "alpha parameter for Godunov-Romenski EOS",
+      keywords.insert({"alpha", "alpha EOS parameter",
         R"(This keyword is used to specify the alpha parameter for
-        Godunov-Romenski EOS for solids.)", "vector of reals"});
+        Godunov-Romenski EOS for solids, and the density-dependence
+        exponent for the Gruneisen coefficient in the linear Mie-Gruneisen
+        equation of state.)", "vector of reals"});
 
       keywords.insert({"K0", "K0 parameter for Godunov-Romenski EOS",
         R"(This keyword is used to specify the K0 parameter for
         Godunov-Romenski EOS for solids.)", "vector of reals"});
-
-      keywords.insert({"b", "b parameter for Linear Mie-Gruneisen EOS",
-        R"(This keyword is used to specify the b parameter in the
-        density-dependent Gruneisen coefficient for the linear Mie-Gruneisen
-        equation of state.)", "vector of reals"});
 
       keywords.insert({"c0", "c0 parameter for Linear Mie-Gruneisen EOS",
         R"(This keyword is used to specify the c0 parameter in the linear
