@@ -18,6 +18,14 @@ set(CMAKE_VERBOSE_MAKEFILE 1)
 # Quinoa cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
+# Set config file
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/config.h
+  @ONLY
+)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 # Disallow in-source builds
 include(DisallowInSourceBuilds)
 disallow_in_source_builds()
@@ -125,7 +133,7 @@ find_package(LAPACKE)
 if(LAPACKE_FOUND)
   set(lapack "")
 endif()
-message(STATUS "LAPACK found: "${LAPACKE_LIBRARIES})
+message(STATUS "LAPACK found: " ${LAPACKE_LIBRARIES})
 
 # Find CBLAS
 set(cblas "cblas")
@@ -133,7 +141,7 @@ find_package(CBLAS)
 if(CBLAS_FOUND)
   set(cblas "")
 endif()
-message(STATUS "CBLAS found: "${CBLAS_LIBRARIES})
+message(STATUS "CBLAS found: " ${CBLAS_LIBRARIES})
 
 # Find Trilinos
 set(trilinos "trilinos")
@@ -287,6 +295,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-unknown-warning-option")
   add_compiler_flag("-Wno-unknown-pragmas")
   add_compiler_flag("-Wno-source-uses-openmp")
+  add_compiler_flag("-Wno-reserved-identifier")
 
   # Linker flags for clang
   set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)      # clear link flags

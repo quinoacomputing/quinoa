@@ -58,7 +58,6 @@ VertexBasedTransport_P1(
   const std::vector< std::size_t >& inpoel,
   const std::vector< std::size_t >& ndofel,
   std::size_t nelem,
-  const tk::UnsMesh::Coords& coord,
   tk::Fields& U );
 
 //! Kuzmin's vertex-based limiter for single-material DGP1
@@ -92,7 +91,6 @@ VertexBasedCompflow_P2(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
@@ -133,8 +131,6 @@ VertexBasedMultiMat_P2(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  const std::vector< std::vector<tk::real> >& pNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
@@ -149,7 +145,6 @@ VertexBasedMultiMat_FV(
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
-  const tk::UnsMesh::Coords& coord,
   const std::vector< int >& srcFlag,
   const std::vector< std::size_t >& solidx,
   tk::Fields& U,
@@ -223,11 +218,8 @@ VertexBasedLimiting(
   const tk::Fields& U,
   const std::map< std::size_t, std::vector< std::size_t > >& esup,
   const std::vector< std::size_t >& inpoel,
-  const tk::UnsMesh::Coords& coord,
   std::size_t e,
   std::size_t rdof,
-  std::size_t ,
-  std::size_t ncomp,
   std::vector< tk::real >& phi,
   const std::vector< std::size_t >& VarList );
 
@@ -321,11 +313,9 @@ void PositivityBoundsMultiSpecies(
 
 //! Positivity preserving limiter for the FV multi-material solver
 void PositivityPreservingMultiMat_FV(
-  const std::vector< std::size_t >& inpoel,
   std::size_t nelem,
   std::size_t nmat,
   const std::vector< inciter::EOS >& mat_blk,
-  const tk::UnsMesh::Coords& coord,
   const tk::Fields& geoFace,
   tk::Fields& U,
   tk::Fields& P );
@@ -393,6 +383,10 @@ constrain_pressure( const std::vector< EOS >& mat_blk,
   tk::real arho,
   tk::real alpha,
   std::size_t imat );
+
+//! Constrain mixture temperature
+tk::real
+constrain_temperature( tk::real tmix );
 
 } // inciter::
 

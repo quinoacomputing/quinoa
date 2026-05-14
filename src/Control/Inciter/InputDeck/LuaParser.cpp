@@ -23,6 +23,9 @@
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
 #include "PDE/MultiSpecies/MultiSpeciesIndexing.hpp"
 
+#include "config.h"
+#include "Nasa9DB.hpp"
+
 namespace tk {
 namespace grm {
 
@@ -130,8 +133,14 @@ LuaParser::storeInputDeck(
     lua_ideck, "dt", gideck.get< tag::dt >(), 0.0);
   storeIfSpecd< tk::real >(
     lua_ideck, "cfl", gideck.get< tag::cfl >(), 0.0);
+  storeIfSpecd< bool >(
+    lua_ideck, "cfl_ramping", gideck.get< tag::cfl_ramping >(), true);
+  storeIfSpecd< uint32_t >( lua_ideck,
+    "cfl_ramping_steps", gideck.get< tag::cfl_ramping_steps >(), 100);
   storeIfSpecd< uint32_t >(
     lua_ideck, "ttyi", gideck.get< tag::ttyi >(), 1);
+  storeIfSpecd< bool >(lua_ideck, "implicit_timestepping",
+    gideck.get< tag::implicit_timestepping >(), false);
   storeIfSpecd< bool >(
     lua_ideck, "steady_state", gideck.get< tag::steady_state >(), false);
   storeIfSpecd< tk::real >(
@@ -151,6 +160,12 @@ LuaParser::storeInputDeck(
     Throw("No time step calculation policy has been selected in the "
       "preceeding block. Use keyword 'dt' to set a constant or 'cfl' to set an "
       "adaptive time step size calculation policy.");
+
+  // Option to provide NASA9 file directory to read species for MultiSpecies
+  // ---------------------------------------------------------------------------
+  const std::string nasa9_dir = std::string(TPL_DIR) + "/include/mutation++/data/thermo/nasa9.dat";
+  storeIfSpecd< std::string >(
+    lua_ideck, "nasa9_filepath", gideck.get< tag::nasa9_filepath >(), nasa9_dir);
 
   // partitioning/reordering options
   // ---------------------------------------------------------------------------
@@ -202,7 +217,7 @@ LuaParser::storeInputDeck(
   } else if (scheme == SchemeType::PDG) {
     ndof = rdof = 10;
     gideck.get< tag::pref, tag::pref >() = true;
-  } else if (scheme != SchemeType::DG &&
+  } else if (scheme != SchemeType::DGP0 &&
       scheme != SchemeType::ALECG &&
       scheme != SchemeType::OversetFE) {
     Throw("Scheme type not configured in configure_scheme");
@@ -312,6 +327,9 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multimat"], "nmat",
       gideck.get< tag::multimat, tag::nmat >(), 2);
+    storeIfSpecd< tk::real >(
+      lua_ideck["multimat"], "min_volumefrac",
+      gideck.get< tag::multimat, tag::min_volumefrac >(), 1.0e-12);
     storeIfSpecd< uint64_t >(
       lua_ideck["multimat"], "prelax",
       gideck.get< tag::multimat, tag::prelax >(), 1);
@@ -324,9 +342,6 @@ LuaParser::storeInputDeck(
     storeIfSpecd< tk::real >(
       lua_ideck["multimat"], "intsharp_param",
       gideck.get< tag::multimat, tag::intsharp_param >(), 1.8);
-    storeIfSpecd< uint64_t >(
-      lua_ideck["multimat"], "rho0constraint",
-      gideck.get< tag::multimat, tag::rho0constraint >(), 1);
     storeIfSpecd< int >(
       lua_ideck["multimat"], "dt_sos_massavg",
       gideck.get< tag::multimat, tag::dt_sos_massavg >(), 0);
@@ -408,8 +423,6 @@ LuaParser::storeInputDeck(
     // size of the material vector is the number of distinct types of materials
     sol::table sol_mat = lua_ideck["material"];
     gideck.get< tag::material >().resize(sol_mat.size());
-    // species vector size is one, since all species are only of one type for now
-    gideck.get< tag::species >().resize(1);
 
     // store material properties
     for (std::size_t i=0; i<gideck.get< tag::material >().size(); ++i) {
@@ -438,197 +451,11 @@ LuaParser::storeInputDeck(
           Throw("Repeating material id specified");
       }
 
-      std::size_t ntype = mati_deck.get< tag::id >().size();
-      // cv
-      if (!sol_mat[i+1]["cv"].valid())
-        sol_mat[i+1]["cv"] = std::vector< tk::real >(ntype, 717.5);
-      checkStoreMatProp(sol_mat[i+1], "cv", ntype, mati_deck.get< tag::cv >());
-
       // reset solid-marker
       is_solid = false;
 
-      // Stiffened-gas materials
-      if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::STIFFENEDGAS) {
-        // gamma
-        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          mati_deck.get< tag::gamma >());
-
-        // pstiff
-        if (!sol_mat[i+1]["pstiff"].valid())
-          sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
-        checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
-          mati_deck.get< tag::pstiff >());
-
-        // mu (dynamic viscosity) and 'viscous' keyword
-        if (!sol_mat[i+1]["mu"].valid())
-          sol_mat[i+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
-        else gideck.get< tag::multimat, tag::viscous >() = true;
-        checkStoreMatProp(sol_mat[i+1], "mu", ntype, mati_deck.get< tag::mu >());
-      }
-      // Small-shear solid materials
-      else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::SMALLSHEARSOLID) {
-        // gamma
-        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          mati_deck.get< tag::gamma >());
-
-        // pstiff
-        if (!sol_mat[i+1]["pstiff"].valid())
-          sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
-        checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
-          mati_deck.get< tag::pstiff >());
-
-        // mu
-        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
-          mati_deck.get< tag::mu >());
-
-        // yield_stress
-        if (!sol_mat[i+1]["yield_stress"].valid())
-          sol_mat[i+1]["yield_stress"] =
-            std::vector< tk::real >(ntype, 300.0e+06);
-        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
-          mati_deck.get< tag::yield_stress >());
-
-        // assign solid
-        is_solid = true;
-      }
-      // Wilkins aluminum materials
-      else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::WILKINSALUMINUM) {
-        // gamma
-        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          mati_deck.get< tag::gamma >());
-
-        // mu
-        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
-          mati_deck.get< tag::mu >());
-
-        // yield_stress
-        if (!sol_mat[i+1]["yield_stress"].valid())
-          sol_mat[i+1]["yield_stress"] =
-            std::vector< tk::real >(ntype, 300.0e+06);
-        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
-          mati_deck.get< tag::yield_stress >());
-
-        // assign solid
-        is_solid = true;
-      }
-      // Godunov-Romenski materials
-      else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::GODUNOVROMENSKI) {
-        // gamma
-        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          mati_deck.get< tag::gamma >());
-
-        // mu
-        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
-          mati_deck.get< tag::mu >());
-
-        // rho0_jwl
-        checkStoreMatProp(sol_mat[i+1], "rho0_jwl", ntype,
-          mati_deck.get< tag::rho0_jwl >());
-
-        // alpha
-        checkStoreMatProp(sol_mat[i+1], "alpha", ntype,
-          mati_deck.get< tag::alpha >());
-
-        // K0
-        checkStoreMatProp(sol_mat[i+1], "K0", ntype,
-          mati_deck.get< tag::K0 >());
-
-        // yield_stress
-        if (!sol_mat[i+1]["yield_stress"].valid())
-          sol_mat[i+1]["yield_stress"] =
-            std::vector< tk::real >(ntype, 300.0e+06);
-        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
-          mati_deck.get< tag::yield_stress >());
-
-        // assign solid
-        is_solid = true;
-      }
-      // JWL materials
-      else if (mati_deck.get< tag::eos >() == inciter::ctr::MaterialType::JWL) {
-        // w_gru
-        checkStoreMatProp(sol_mat[i+1], "w_gru", ntype,
-          mati_deck.get< tag::w_gru >());
-
-        // a_jwl
-        checkStoreMatProp(sol_mat[i+1], "A_jwl", ntype,
-          mati_deck.get< tag::A_jwl >());
-
-        // b_jwl
-        checkStoreMatProp(sol_mat[i+1], "B_jwl", ntype,
-          mati_deck.get< tag::B_jwl >());
-
-        // R1_jwl
-        checkStoreMatProp(sol_mat[i+1], "R1_jwl", ntype,
-          mati_deck.get< tag::R1_jwl >());
-
-        // R2_jwl
-        checkStoreMatProp(sol_mat[i+1], "R2_jwl", ntype,
-          mati_deck.get< tag::R2_jwl >());
-
-        // rho0_jwl
-        checkStoreMatProp(sol_mat[i+1], "rho0_jwl", ntype,
-          mati_deck.get< tag::rho0_jwl >());
-
-        // de_jwl
-        checkStoreMatProp(sol_mat[i+1], "de_jwl", ntype,
-          mati_deck.get< tag::de_jwl >());
-
-        // Pr_jwl
-        checkStoreMatProp(sol_mat[i+1], "Pr_jwl", ntype,
-          mati_deck.get< tag::Pr_jwl >());
-
-        // rhor_jwl
-        if (sol_mat[i+1]["rhor_jwl"].valid()) {
-          checkStoreMatProp(sol_mat[i+1], "rhor_jwl", ntype,
-            mati_deck.get< tag::rhor_jwl >());
-        }
-        // Tr_jwl
-        else if (sol_mat[i+1]["Tr_jwl"].valid()) {
-          checkStoreMatProp(sol_mat[i+1], "Tr_jwl", ntype,
-            mati_deck.get< tag::Tr_jwl >());
-        }
-        else
-          Throw("Either reference density or reference temperature must be "
-            "specified for JWL equation of state (EOS).");
-      }
-      // Thermally-perfect gas materials
-      else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
-
-        if (!lua_ideck["species"].valid())
-          Throw("Species block must be specified for thermally perfect gas");
-        sol::table sol_spc = lua_ideck["species"];
-
-        // We have assumed that nmat == 1 always for multi species, and that
-        // all species are of a single type, so that the outer species vector
-        // is of size one
-        auto& spci_deck = gideck.get< tag::species >()[0];
-
-        // species ids (default is for single species)
-        storeVecIfSpecd< uint64_t >(
-          sol_spc[i+1], "id", spci_deck.get< tag::id >(),
-          std::vector< uint64_t >(1,1));
-
-        Assert(nspec == spci_deck.get< tag::id >().size(),
-          "Number of ids in species-block not equal to number of species");
-
-        // R
-        checkStoreMatProp(sol_spc[i+1], "R", nspec,
-          spci_deck.get< tag::R >());
-        // cp_coeff
-        checkStoreMatPropVecVec(sol_spc[i+1], "cp_coeff", nspec, 3, 8,
-          spci_deck.get< tag::cp_coeff >());
-        // t_range
-        checkStoreMatPropVec(sol_spc[i+1], "t_range", nspec, 4,
-          spci_deck.get< tag::t_range >());
-        // dH_ref
-        checkStoreMatProp(sol_spc[i+1], "dH_ref", nspec,
-          spci_deck.get< tag::dH_ref >());
-      }
+      // Store material information
+      registerMaterials(i, lua_ideck, gideck, is_solid);
 
       // Generate mapping between material index and eos parameter index
       auto& eosmap = gideck.get< tag::matidxmap, tag::eosidx >();
@@ -683,6 +510,9 @@ LuaParser::storeInputDeck(
       }
       gideck.get< tag::ncomp >() = ntot;
     }
+
+    // Store species information
+    registerSpecies(0, lua_ideck, gideck);
   }
 
   // Mesh specification block (for overset)
@@ -716,15 +546,31 @@ LuaParser::storeInputDeck(
       storeIfSpecd< tk::real >(lua_mesh[i+1], "mass",
         mesh_deck[i].get< tag::mass >(), 0.0);
 
-      // moment of inertia. this is currently only configured for planar motion
-      storeIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
-        mesh_deck[i].get< tag::moment_of_inertia >(), 0.0);
+      // moment of inertia tensor
+      storeVecVecIfSpecd< tk::real >(lua_mesh[i+1], "moment_of_inertia",
+        mesh_deck[i].get< tag::moment_of_inertia >(),
+        {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}});
+      auto& storage = mesh_deck[i].get< tag::moment_of_inertia >();
+      if (storage.size() != 3)
+        Throw("Incorrect number of moment_of_inertia vectors"
+          "specified. Expected 3 vectors");
+      for (std::size_t k=0; k<storage.size(); ++k){
+        if (storage[k].size() != 3)
+          Throw("Incorrect size of 'moment_of_inertia' vector " + 
+            std::to_string(k+1) +" specified. Expected size 3");
+      }
 
       // center of mass
       storeVecIfSpecd< tk::real >(lua_mesh[i+1], "center_of_mass",
         mesh_deck[i].get< tag::center_of_mass >(), {0.0, 0.0, 0.0});
       if (mesh_deck[i].get< tag::center_of_mass >().size() != 3)
         Throw("Mesh center of mass requires 3 coordinates.");
+
+      // body force
+      storeVecIfSpecd< tk::real >(lua_mesh[i+1], "body_force",
+        mesh_deck[i].get< tag::body_force >(), {0.0, 0.0, 0.0});
+      if (mesh_deck[i].get< tag::body_force >().size() != 3)
+        Throw("Mesh body force requires 3 coordinates.");
 
       // Transfer object
       if (i > 0) {
@@ -748,8 +594,11 @@ LuaParser::storeInputDeck(
     mesh_deck[0].get< tag::location >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::orientation >() = {0.0, 0.0, 0.0};
     mesh_deck[0].get< tag::mass >() = 0.0;
-    mesh_deck[0].get< tag::moment_of_inertia >() = 0.0;
+    mesh_deck[0].get< tag::moment_of_inertia >() = {{0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0},
+                                                    {0.0, 0.0, 0.0}};
     mesh_deck[0].get< tag::center_of_mass >() = {0.0, 0.0, 0.0};
+    mesh_deck[0].get< tag::body_force >() = {0.0, 0.0, 0.0};
   }
 
   Assert(gideck.get< tag::mesh >().size() == gideck.get< tag::depvar >().size(),
@@ -782,24 +631,28 @@ LuaParser::storeInputDeck(
       Throw("Only 3 or 6 rigid body DOFs supported.");
 
     // symmetry plane
-    storeIfSpecd< std::size_t >(
+    storeVecIfSpecd< tk::real >(
       lua_ideck["rigid_body_motion"], "symmetry_plane",
-      rbm_deck.get< tag::symmetry_plane >(), 0);
-    if (rbm_deck.get< tag::symmetry_plane >() > 3)
-      Throw("Rigid body motion symmetry plane must be 1(x), 2(y), or 3(z).");
-    if (rbm_deck.get< tag::symmetry_plane >() == 0 &&
-      rbm_deck.get< tag::rigid_body_dof >() == 3)
-      Throw(
-        "Rigid body motion symmetry plane must be specified for 3 DOF motion.");
-    // reset to 0-based indexing
-    rbm_deck.get< tag::symmetry_plane >() -= 1;
+      rbm_deck.get< tag::symmetry_plane >(), { 0 } );
+    if (rbm_deck.get< tag::rigid_body_dof >() == 3 &&
+       rbm_deck.get< tag::symmetry_plane >().size() != 3 )
+      Throw("A vector of size 3 must be supplied for 3 DOF rigid body motion.");
+    if (rbm_deck.get< tag::rigid_body_dof >() == 6 &&
+       rbm_deck.get< tag::symmetry_plane >().size() == 3 )
+      Throw("Symmetry plane has been specified for 6DOF motion.");
+
+    //! TODO:
+    // If sym_dir is not an eigenvector of the moment_of_inertia tensor, it
+    // is possible there may be rotation of the body about axes other than
+    // the axis of symmetry. The user may be expecting this, but provide an
+    // initial warning in case they are not.
   }
   else {
     // TODO: remove double-specification of defaults
     auto& rbm_deck = gideck.get< tag::rigid_body_motion >();
     rbm_deck.get< tag::rigid_body_movt >() = false;
     rbm_deck.get< tag::rigid_body_dof >() = 0;
-    rbm_deck.get< tag::symmetry_plane >() = 0;
+    rbm_deck.get< tag::symmetry_plane >() = {};
   }
 
   // Field output block
@@ -845,41 +698,26 @@ LuaParser::storeInputDeck(
 
     // Assign outvar
     auto& foutvar = fo_deck.get< tag::outvar >();
-    std::size_t nevar(0), nnvar(0), tensorcompvar(0);
+    std::size_t nevar(0), nnvar(0), tensorcompvar(0), massfracextra(0);
     std::size_t nmat(1);
     if (gideck.get< tag::pde >() == inciter::ctr::PDEType::MULTIMAT)
       nmat = gideck.get< tag::multimat, tag::nmat >();
 
-    // elem aliases
-    std::vector< std::string > elemalias;
     if (lua_ideck["field_output"]["elemvar"].valid())
       nevar = sol::table(lua_ideck["field_output"]["elemvar"]).size();
-    storeVecIfSpecd< std::string >(
-      lua_ideck["field_output"], "elemalias", elemalias,
-      std::vector< std::string >(nevar, ""));
 
-    // node aliases
-    std::vector< std::string > nodealias;
     if (lua_ideck["field_output"]["nodevar"].valid())
       nnvar = sol::table(lua_ideck["field_output"]["nodevar"]).size();
-    storeVecIfSpecd< std::string >(
-      lua_ideck["field_output"], "nodealias", nodealias,
-      std::vector< std::string >(nnvar, ""));
-
-    // error check on aliases
-    if (elemalias.size() != nevar)
-      Throw("elemalias should have the same size as elemvar.");
-    if (nodealias.size() != nnvar)
-      Throw("nodealias should have the same size as nodevar.");
 
     // element variables
     if (lua_ideck["field_output"]["elemvar"].valid()) {
       for (std::size_t i=0; i<nevar; ++i) {
         std::string varname(lua_ideck["field_output"]["elemvar"][i+1]);
-        std::string alias(elemalias[i]);
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
-        addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
+        if (varname == "mass_fractions")
+          massfracextra += nspec - 1;
+        addOutVar(varname, gideck.get< tag::depvar >(), nmat,
           nspec, gideck.get< tag::pde >(), tk::Centering::ELEM, foutvar);
       }
     }
@@ -888,15 +726,16 @@ LuaParser::storeInputDeck(
     if (lua_ideck["field_output"]["nodevar"].valid()) {
       for (std::size_t i=0; i<nnvar; ++i) {
         std::string varname(lua_ideck["field_output"]["nodevar"][i+1]);
-        std::string alias(nodealias[i]);
         // add extra outvars for tensor components
         if (varname.find("_tensor") != std::string::npos) tensorcompvar += 8;
-        addOutVar(varname, alias, gideck.get< tag::depvar >(), nmat,
+        if (varname == "mass_fractions")
+          massfracextra += nspec - 1;
+        addOutVar(varname, gideck.get< tag::depvar >(), nmat,
           nspec, gideck.get< tag::pde >(), tk::Centering::NODE, foutvar);
       }
     }
 
-    Assert(foutvar.size() == (nevar + nnvar + tensorcompvar),
+    Assert(foutvar.size() == (nevar + nnvar + tensorcompvar + massfracextra),
       "Incorrectly sized outvar vector.");
   }
   else {
@@ -1209,10 +1048,10 @@ LuaParser::storeInputDeck(
       totalmesh.insert(bc_deck[i].get< tag::mesh >().begin(),
         bc_deck[i].get< tag::mesh >().end());
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "dirichlet",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "dirichlet",
         bc_deck[i].get< tag::dirichlet >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "symmetry",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "symmetry",
         bc_deck[i].get< tag::symmetry >(), {});
 
       if (sol_bc[i+1]["inlet"].valid()) {
@@ -1240,20 +1079,23 @@ LuaParser::storeInputDeck(
         }
       }
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "outlet",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "outlet",
         bc_deck[i].get< tag::outlet >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "farfield",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "farfield",
         bc_deck[i].get< tag::farfield >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "extrapolate",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "extrapolate",
         bc_deck[i].get< tag::extrapolate >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "noslipwall",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "noslipwall",
         bc_deck[i].get< tag::noslipwall >(), {});
 
-      storeVecIfSpecd< uint64_t >(sol_bc[i+1], "slipwall",
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "slipwall",
         bc_deck[i].get< tag::slipwall >(), {});
+
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "isothermal_wall",
+        bc_deck[i].get< tag::isothermal_wall >(), {});
 
       // Time-dependent BC
       if (sol_bc[i+1]["timedep"].valid()) {
@@ -1281,7 +1123,7 @@ LuaParser::storeInputDeck(
         const sol::table& sol_bpbc = sol_bc[i+1]["back_pressure"];
         auto& bpbc_deck = bc_deck[i].get< tag::back_pressure >();
 
-        storeVecIfSpecd< uint64_t >(sol_bpbc, "sideset",
+        storeVecIfSpecd< std::size_t >(sol_bpbc, "sideset",
           bpbc_deck.get< tag::sideset >(), {});
 
         if (!sol_bpbc["pressure"].valid())
@@ -1308,6 +1150,10 @@ LuaParser::storeInputDeck(
       // Temperature for inlet/outlet/farfield
       storeIfSpecd< tk::real >(sol_bc[i+1], "temperature",
         bc_deck[i].get< tag::temperature >(), 0.0);
+
+      // Wall temperature for isothermal wall bc
+      storeIfSpecd< tk::real >(sol_bc[i+1], "wall_temperature",
+        bc_deck[i].get< tag::wall_temperature >(), 300.0);
 
       // Mass fractions for inlet/farfield
       storeVecIfSpecd< tk::real >(sol_bc[i+1], "mass_fractions",
@@ -1477,7 +1323,7 @@ LuaParser::storeInputDeck(
         checkBlock< inciter::ctr::meshblockList::Keys >(lua_meshblock[i+1],
           "meshblock");
 
-        storeIfSpecd< std::size_t >(lua_meshblock[i+1], "blockid",
+        storeIfSpecd< std::uint64_t >(lua_meshblock[i+1], "blockid",
           mblk_deck[i].get< tag::blockid >(), 0);
         if (mblk_deck[i].get< tag::blockid >() == 0)
           Throw("Each IC mesh block must specify the mesh block id.");
@@ -1553,6 +1399,375 @@ LuaParser::storeInputDeck(
     ic_deck.get< tag::velocity >() = {0.0, 0.0, 0.0};
     ic_deck.get< tag::mass_fractions >() =
       std::vector< tk::real >(nspec, 1.0/static_cast<tk::real>(nspec));
+  }
+}
+
+void
+LuaParser::registerMaterials(
+  std::size_t imat,
+  const sol::table& lua_ideck,
+  ctr::InputDeck& gideck,
+  bool& is_solid )
+// *****************************************************************************
+//  Store materials from the material block into the input deck
+//! \param[in] imat Material id being processed
+//! \param[in] lua_ideck Lua inputdeck parsed by sol2
+//! \param[in,out] gideck Inciter's inputdeck storage
+//! \param[in,out] is_solid Solid material marker
+// *****************************************************************************
+{
+  if (gideck.get< tag::pde >() != inciter::ctr::PDEType::MULTIMAT &&
+      gideck.get< tag::pde >() != inciter::ctr::PDEType::COMPFLOW) return;
+
+  // set source data from sol
+  sol::table sol_mat = lua_ideck["material"];
+
+  // set target data in inputdeck
+  auto& mati_deck = gideck.get< tag::material >()[imat];
+
+  std::size_t ntype = mati_deck.get< tag::id >().size();
+  // cv
+  if (!sol_mat[imat+1]["cv"].valid())
+    sol_mat[imat+1]["cv"] = std::vector< tk::real >(ntype, 717.5);
+  checkStoreMatProp(sol_mat[imat+1], "cv", ntype, mati_deck.get< tag::cv >());
+
+  // Stiffened-gas materials
+  if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::STIFFENEDGAS) {
+    // gamma
+    checkStoreMatProp(sol_mat[imat+1], "gamma", ntype,
+      mati_deck.get< tag::gamma >());
+
+    // pstiff
+    if (!sol_mat[imat+1]["pstiff"].valid())
+      sol_mat[imat+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
+    checkStoreMatProp(sol_mat[imat+1], "pstiff", ntype,
+      mati_deck.get< tag::pstiff >());
+
+    // mu (dynamic viscosity) and 'viscous' keyword
+    if (!sol_mat[imat+1]["mu"].valid())
+      sol_mat[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+    else gideck.get< tag::multimat, tag::viscous >() = true;
+    checkStoreMatProp(sol_mat[imat+1], "mu", ntype, mati_deck.get< tag::mu >());
+  }
+  // Small-shear solid materials
+  else if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+    // gamma
+    checkStoreMatProp(sol_mat[imat+1], "gamma", ntype,
+      mati_deck.get< tag::gamma >());
+
+    // pstiff
+    if (!sol_mat[imat+1]["pstiff"].valid())
+      sol_mat[imat+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
+    checkStoreMatProp(sol_mat[imat+1], "pstiff", ntype,
+      mati_deck.get< tag::pstiff >());
+
+    // mu
+    checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
+      mati_deck.get< tag::mu >());
+
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-05);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
+
+    // yield_stress
+    if (!sol_mat[imat+1]["yield_stress"].valid())
+      sol_mat[imat+1]["yield_stress"] =
+        std::vector< tk::real >(ntype, 300.0e+06);
+    checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
+      mati_deck.get< tag::yield_stress >());
+
+    // assign solid
+    is_solid = true;
+  }
+  // Linear Mie-Gruneisen materials
+  else if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::LINEARMIEGRUNEISEN) {
+    // w_gru
+    checkStoreMatProp(sol_mat[imat+1], "w_gru", ntype,
+      mati_deck.get< tag::w_gru >());
+
+    // rho0_jwl
+    checkStoreMatProp(sol_mat[imat+1], "rho0_jwl", ntype,
+      mati_deck.get< tag::rho0_jwl >());
+
+    // alpha
+    checkStoreMatProp(sol_mat[imat+1], "alpha", ntype,
+      mati_deck.get< tag::alpha >());
+
+    // c0
+    checkStoreMatProp(sol_mat[imat+1], "c0", ntype,
+      mati_deck.get< tag::c0 >());
+
+    // s1
+    checkStoreMatProp(sol_mat[imat+1], "s1", ntype,
+      mati_deck.get< tag::s1 >());
+
+    // mu
+    checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
+      mati_deck.get< tag::mu >());
+
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-05);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
+
+    // yield_stress
+    if (!sol_mat[imat+1]["yield_stress"].valid())
+      sol_mat[imat+1]["yield_stress"] =
+        std::vector< tk::real >(ntype, 300.0e+06);
+    checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
+      mati_deck.get< tag::yield_stress >());
+
+    // assign solid
+    is_solid = true;
+  }
+  // Wilkins aluminum materials
+  else if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::WILKINSALUMINUM) {
+    // gamma
+    checkStoreMatProp(sol_mat[imat+1], "gamma", ntype,
+      mati_deck.get< tag::gamma >());
+
+    // mu
+    checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
+      mati_deck.get< tag::mu >());
+
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-07);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
+
+    // yield_stress
+    if (!sol_mat[imat+1]["yield_stress"].valid())
+      sol_mat[imat+1]["yield_stress"] =
+        std::vector< tk::real >(ntype, 300.0e+06);
+    checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
+      mati_deck.get< tag::yield_stress >());
+
+    // assign solid
+    is_solid = true;
+  }
+  // Godunov-Romenski materials
+  else if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::GODUNOVROMENSKI) {
+    // gamma
+    checkStoreMatProp(sol_mat[imat+1], "gamma", ntype,
+      mati_deck.get< tag::gamma >());
+
+    // mu
+    checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
+      mati_deck.get< tag::mu >());
+
+    // rho0_jwl
+    checkStoreMatProp(sol_mat[imat+1], "rho0_jwl", ntype,
+      mati_deck.get< tag::rho0_jwl >());
+
+    // alpha
+    checkStoreMatProp(sol_mat[imat+1], "alpha", ntype,
+      mati_deck.get< tag::alpha >());
+
+    // K0
+    checkStoreMatProp(sol_mat[imat+1], "K0", ntype,
+      mati_deck.get< tag::K0 >());
+
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-07);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
+
+    // yield_stress
+    if (!sol_mat[imat+1]["yield_stress"].valid())
+      sol_mat[imat+1]["yield_stress"] =
+        std::vector< tk::real >(ntype, 300.0e+06);
+    checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
+      mati_deck.get< tag::yield_stress >());
+
+    // assign solid
+    is_solid = true;
+  }
+  // JWL materials
+  else if (mati_deck.get< tag::eos >() == inciter::ctr::MaterialType::JWL) {
+    // w_gru
+    checkStoreMatProp(sol_mat[imat+1], "w_gru", ntype,
+      mati_deck.get< tag::w_gru >());
+
+    // a_jwl
+    checkStoreMatProp(sol_mat[imat+1], "A_jwl", ntype,
+      mati_deck.get< tag::A_jwl >());
+
+    // b_jwl
+    checkStoreMatProp(sol_mat[imat+1], "B_jwl", ntype,
+      mati_deck.get< tag::B_jwl >());
+
+    // R1_jwl
+    checkStoreMatProp(sol_mat[imat+1], "R1_jwl", ntype,
+      mati_deck.get< tag::R1_jwl >());
+
+    // R2_jwl
+    checkStoreMatProp(sol_mat[imat+1], "R2_jwl", ntype,
+      mati_deck.get< tag::R2_jwl >());
+
+    // rho0_jwl
+    checkStoreMatProp(sol_mat[imat+1], "rho0_jwl", ntype,
+      mati_deck.get< tag::rho0_jwl >());
+
+    // de_jwl
+    checkStoreMatProp(sol_mat[imat+1], "de_jwl", ntype,
+      mati_deck.get< tag::de_jwl >());
+
+    // Pr_jwl
+    checkStoreMatProp(sol_mat[imat+1], "Pr_jwl", ntype,
+      mati_deck.get< tag::Pr_jwl >());
+
+    // rhor_jwl
+    if (sol_mat[imat+1]["rhor_jwl"].valid()) {
+      checkStoreMatProp(sol_mat[imat+1], "rhor_jwl", ntype,
+        mati_deck.get< tag::rhor_jwl >());
+    }
+    // Tr_jwl
+    else if (sol_mat[imat+1]["Tr_jwl"].valid()) {
+      checkStoreMatProp(sol_mat[imat+1], "Tr_jwl", ntype,
+        mati_deck.get< tag::Tr_jwl >());
+    }
+    else
+      Throw("Either reference density or reference temperature must be "
+        "specified for JWL equation of state (EOS).");
+  }
+}
+
+void
+LuaParser::registerSpecies(
+  std::size_t imat,
+  const sol::table& lua_ideck,
+  ctr::InputDeck& gideck )
+// *****************************************************************************
+//  Store species from the species block into the input deck
+//! \param[in] imat Material id to which the species belongs (assumed as 0 for
+//!   now, see details below)
+//! \param[in] lua_ideck Lua inputdeck parsed by sol2
+//! \param[in,out] gideck Inciter's inputdeck storage
+//! \details All species are assumed to be of the same type, i.e. nmat == 1
+//!   always for multi species, so that the outer species vector is of size one
+// *****************************************************************************
+{
+  // species vector size is one, since all species are only of one type for now
+  gideck.get< tag::species >().resize(1);
+
+  if (gideck.get< tag::pde >() != inciter::ctr::PDEType::MULTISPECIES) return;
+  if (!lua_ideck["species"].valid())
+    Throw("Species block missing for multispecies setup");
+  auto nspec = gideck.get< tag::multispecies, tag::nspec >();
+
+  // set source data from sol
+  sol::table sol_spc = lua_ideck["species"];
+
+  // We have assumed that nmat == 1 always for multi species, and that
+  // all species are of a single type, so that the outer species vector
+  // is of size one
+  // set target data in inputdeck
+  auto& spci_deck = gideck.get< tag::species >()[0];
+
+  // species ids (default is for single species)
+  storeVecIfSpecd< uint64_t >(
+    sol_spc[imat+1], "id", spci_deck.get< tag::id >(),
+    std::vector< uint64_t >(1,1));
+
+  Assert(nspec == spci_deck.get< tag::id >().size(),
+    "Number of ids in species-block not equal to number of species");
+
+  std::size_t ntype = nspec;
+  const auto& mati_deck = gideck.get< tag::material >()[imat];
+
+  // Stiffened-gas species
+  if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::STIFFENEDGAS) {
+    // gamma
+    checkStoreMatProp(sol_spc[imat+1], "gamma", ntype,
+      spci_deck.get< tag::gamma >());
+
+    // cv
+    if (!sol_spc[imat+1]["cv"].valid())
+      sol_spc[imat+1]["cv"] = std::vector< tk::real >(ntype, 717.5);
+    checkStoreMatProp(sol_spc[imat+1], "cv", ntype,
+      spci_deck.get< tag::cv >());
+
+    // pstiff
+    if (!sol_spc[imat+1]["pstiff"].valid())
+      sol_spc[imat+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
+    checkStoreMatProp(sol_spc[imat+1], "pstiff", ntype,
+      spci_deck.get< tag::pstiff >());
+  }
+  // Thermally-perfect gas species
+  else if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
+    // If names are given, ready data from Nasa9 file, otherwise read all
+    // from control file
+    storeVecIfSpecd< std::string >(
+      sol_spc[imat+1], "spec_name", spci_deck.get< tag::spec_name >(),
+      std::vector< std::string >(nspec, ""));
+    if (sol_spc[imat+1]["spec_name"].valid()) {
+      std::string nasa9_path = gideck.get< tag::nasa9_filepath >();
+      std::unordered_map<std::string,N9Species> nasa9_cache;
+
+      std::vector<tk::real> R(nspec);
+      std::vector<std::vector<std::vector<tk::real>>> cp_coeff(nspec,
+        std::vector<std::vector<tk::real>>( 3, std::vector<tk::real>(8)));
+      std::vector<std::vector<tk::real>> t_range(nspec,
+        std::vector<tk::real>(4));
+      std::vector<tk::real> dH_ref(nspec);
+      for (std::size_t ispec=0; ispec<nspec; ++ispec){
+        std::string spec_name =
+          spci_deck.get< tag::spec_name >()[ispec];
+        nasa9_cache[spec_name] =
+          read_nasa9_species(nasa9_path, spec_name);
+
+        const N9Species& spec = nasa9_cache.at(spec_name);
+        dH_ref[ispec] = spec.Hf298_mass;
+        R[ispec] = spec.R();
+
+        // Loop over intervals and retrieve coefficients
+        for (std::size_t interv = 0; interv < spec.nIntervals(); ++interv) {
+          const N9Interval& I = spec.intervalByIndex(interv);
+          for (std::size_t k = 0; k < 9; ++k)
+            cp_coeff[ispec][interv][k] = I.a[k];
+          t_range[ispec][interv] = I.Tlow;
+          if (interv == spec.nIntervals()-1)
+            t_range[ispec][interv+1] = I.Thigh;
+        }
+      }
+      // Store unknowns (manually for the high-dimension ones)
+      storeVecIfSpecd< tk::real >(
+        sol_spc[imat+1], "R", spci_deck.get< tag::R >(), R);
+      storeVecIfSpecd< tk::real >(
+        sol_spc[imat+1], "dH_ref", spci_deck.get< tag::dH_ref >(), dH_ref);
+      spci_deck.get< tag::cp_coeff >() = cp_coeff;
+      spci_deck.get< tag::t_range >() = t_range;
+    }
+    else {
+      // R
+      checkStoreMatProp(sol_spc[imat+1], "R", nspec,
+        spci_deck.get< tag::R >());
+      // cp_coeff
+      checkStoreMatPropVecVec(sol_spc[imat+1], "cp_coeff", nspec, 3, 8,
+        spci_deck.get< tag::cp_coeff >());
+      // t_range
+      checkStoreMatPropVec(sol_spc[imat+1], "t_range", nspec, 4,
+        spci_deck.get< tag::t_range >());
+      // dH_ref
+      checkStoreMatProp(sol_spc[imat+1], "dH_ref", nspec,
+        spci_deck.get< tag::dH_ref >());
+    }
   }
 }
 
@@ -1678,7 +1893,6 @@ LuaParser::checkStoreMatPropVecVec(
 void
 LuaParser::addOutVar(
   const std::string& varname,
-  const std::string& alias,
   std::vector< char >& depv,
   std::size_t nmat,
   std::size_t nspec,
@@ -1688,7 +1902,6 @@ LuaParser::addOutVar(
 // *****************************************************************************
 //  Check and store field output variables
 //! \param[in] varname Name of variable requested
-//! \param[in] alias User specified alias for output
 //! \param[in] depv List of depvars
 //! \param[in] nmat Number of materials configured
 //! \param[in] nspec Number of species configured
@@ -1707,27 +1920,27 @@ LuaParser::addOutVar(
     // multimat/matvar quantities
       if (qty == 'D') {  // density
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::densityIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::densityIdx(nmat,j)) );
       }
       else if (qty == 'F') {  // volume fraction
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::volfracIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::volfracIdx(nmat,j)) );
       }
       else if (qty == 'M') {  // momentum
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::momentumIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::momentumIdx(nmat,j)) );
       }
       else if (qty == 'E') {  // specific total energy
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::energyIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::energyIdx(nmat,j)) );
       }
       else if (qty == 'U') {  // velocity (primitive)
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::velocityIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::velocityIdx(nmat,j)) );
       }
       else if (qty == 'P') {  // material pressure (primitive)
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias, inciter::pressureIdx(nmat,j)) );
+          inciter::ctr::OutVar(c, varname, inciter::pressureIdx(nmat,j)) );
       }
       else {
         // error out if incorrect matvar used
@@ -1738,17 +1951,17 @@ LuaParser::addOutVar(
     // multispecies/matvar quantities
       if (qty == 'D') {  // density
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias,
+          inciter::ctr::OutVar(c, varname,
             inciter::multispecies::densityIdx(nspec,j)) );
       }
       else if (qty == 'M') {  // momentum
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias,
+          inciter::ctr::OutVar(c, varname,
             inciter::multispecies::momentumIdx(nspec,j)) );
       }
       else if (qty == 'E') {  // specific total energy
         foutvar.emplace_back(
-          inciter::ctr::OutVar(c, varname, alias,
+          inciter::ctr::OutVar(c, varname,
             inciter::multispecies::energyIdx(nspec,j)) );
       }
       else {
@@ -1760,14 +1973,14 @@ LuaParser::addOutVar(
     // quantities specified by depvar
       for (const auto& id : depv)
         if (std::tolower(qty) == id) {
-          foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, j) );
+          foutvar.emplace_back( inciter::ctr::OutVar(c, varname, j) );
         }
     }
   }
   // analytic quantity specification
   // -------------------------------
   else if (varname.find("analytic") != std::string::npos) {
-    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, 0) );
+    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, 0) );
   }
   // name-based tensor quantity specification
   // ----------------------------------------
@@ -1779,13 +1992,21 @@ LuaParser::addOutVar(
     for (std::size_t i=1; i<=3; ++i) {
       for (std::size_t j=1; j<=3; ++j) {
         std::string tij(namet + std::to_string(i) + std::to_string(j));
-        foutvar.emplace_back( inciter::ctr::OutVar(c, tij, alias, 0, tij) );
+        foutvar.emplace_back( inciter::ctr::OutVar(c, tij, 0, tij) );
       }
+    }
+  }
+  // name-based multi-species quantity specification
+  // -----------------------------------------------
+  else if (varname == "mass_fractions") {
+    for (std::size_t k=0; k<nspec; ++k) {
+      const auto mfrac = "mass_fraction_" + std::to_string(k+1);
+      foutvar.emplace_back( inciter::ctr::OutVar(c, mfrac, 0, mfrac) );
     }
   }
   // name-based quantity specification
   // ---------------------------------
   else {
-    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, alias, 0, varname) );
+    foutvar.emplace_back( inciter::ctr::OutVar(c, varname, 0, varname) );
   }
 }

@@ -94,18 +94,25 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
   m_tp( m_u.nunk(), g_inputdeck.get< tag::t0 >() ),
   m_finished( 0 ),
   m_movedmesh( 0 ),
+  m_movedmeshTimeStep( 0 ),
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
   m_nodeblockidc(),
+  m_srcFlag(m_u.nunk(), 1),
   m_ixfer(0),
   m_surfForce({{0, 0, 0}}),
   m_surfTorque({{0, 0, 0}}),
+  m_displacement({{0, 0, 0}}),
+  m_displacementn({{0, 0, 0}}),
+  m_rotation({{0, 0, 0}}),
   m_centMass({{0, 0, 0}}),
   m_centMassVel({{0, 0, 0}}),
-  m_angVelMesh(0),
+  m_angMomentum({{0, 0, 0}}),
   m_centMassn({{0, 0, 0}}),
   m_centMassVeln({{0, 0, 0}}),
-  m_angVelMeshn(0)
+  m_angMomentumn({{0, 0, 0}}),
+  m_rotationQ({{1.0, 0, 0, 0}}),
+  m_rotationQn({{1.0, 0, 0, 0}})
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -162,6 +169,9 @@ OversetFE::OversetFE( const CProxy_Discretization& disc,
 
   d->comfinal();
 
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
+
 }
 //! [Constructor]
 
@@ -210,8 +220,11 @@ OversetFE::getBCNodes()
   // to obtain force on overset walls
   m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes) ||
+        m_slipwallbcnodes.find(m_triinpoel[e*3+1]) != end(m_slipwallbcnodes) ||
+        m_slipwallbcnodes.find(m_triinpoel[e*3+2]) != end(m_slipwallbcnodes)){
       m_slipwallbctri[e] = 1;
+    }
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -592,6 +605,26 @@ OversetFE::continueSetup()
     auto n = g_cgpde[d->MeshId()].histNames();
     histnames.insert( end(histnames), begin(n), end(n) );
     d->histheader( std::move(histnames) );
+  }
+
+  // Record rotation in mesh's rotation quaternion
+  // Check if mesh rotation specified
+  auto mesh_orientation =
+    g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::orientation >();
+  bool rotate_mesh(false);
+  for (std::size_t i=0; i<3; ++i) {
+    if (std::abs(mesh_orientation[i]) > 1e-8) {
+      rotate_mesh = true;
+      break;
+    }
+  }
+
+  if (rotate_mesh) {
+    auto R = tk::anglesToRotMat(
+      {{ mesh_orientation[0], mesh_orientation[1], mesh_orientation[2] }});
+    auto p = tk::Rtoq(R);
+    m_rotationQn = tk::quaternion_mult(p, m_rotationQn);
+    m_rotationQ = m_rotationQn;
   }
 }
 //! [setup]
@@ -986,7 +1019,9 @@ OversetFE::UpdateCenterOfMass()
 {
   m_centMassn = m_centMass;
   m_centMassVeln = m_centMassVel;
-  m_angVelMeshn = m_angVelMesh;
+  m_angMomentumn = m_angMomentum;
+  m_displacementn = m_displacement;
+  m_rotationQn = m_rotationQ;
 }
 
 void
@@ -1031,13 +1066,25 @@ OversetFE::dt()
 
       // find the smallest dt of all equations on this chare
       auto eqdt = g_cgpde[d->MeshId()].dt( d->Coord(), d->Inpoel(), d->T(),
-        d->Dtn(), m_u, d->Vol(), d->Voln() );
+        d->Dtn(), m_u, d->Vol(), d->Voln(), m_srcFlag );
       if (eqdt < mindt) mindt = eqdt;
 
     }
     //! [Find the minimum dt across all PDEs integrated]
 
   }
+
+  getForces(mindt);
+}
+
+void
+OversetFE::getForces( tk::real mindt )
+// *****************************************************************************
+// Compute forces and moments on the overset mesh and perform reduction
+//! \param[in] mindt The smallest dt across the whole problem
+// *****************************************************************************
+{
+  auto d = Disc();
 
   //! [Advance]
   // Actiavate SDAG waits for next time step stage
@@ -1055,20 +1102,20 @@ OversetFE::dt()
   // Tuple-reduction for min-dt and sum-F
   int tupleSize = 7;
   CkReduction::tupleElement advancingData[] = {
-    CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[0], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[1], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[2], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[3], CkReduction::sum_double),
     CkReduction::tupleElement (sizeof(tk::real), &F[4], CkReduction::sum_double),
-    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double)
+    CkReduction::tupleElement (sizeof(tk::real), &F[5], CkReduction::sum_double),
+    CkReduction::tupleElement (sizeof(tk::real), &mindt, CkReduction::min_double)
   };
   CkReductionMsg* advMsg =
     CkReductionMsg::buildFromTuple(advancingData, tupleSize);
 
-  // Contribute to minimum dt across all chares, find minimum dt across all
-  // meshes, and eventually broadcast to OversetFE::advance()
-  CkCallback cb(CkReductionTarget(Transporter,collectDtAndForces), d->Tr());
+  // Contribute to surface forces and mindt
+  CkCallback cb(CkReductionTarget(Transporter, collectDtAndForces), d->Tr());
+
   advMsg->setCallback(cb);
   contribute(advMsg);
   //! [Advance]
@@ -1177,7 +1224,7 @@ OversetFE::rhs()
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
           m_symbctri, m_slipwallbctri, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->MeshVel(), m_tp, d->Boxvol(),
-          m_rhs );
+          m_rhs, m_srcFlag );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
 
@@ -1244,6 +1291,7 @@ OversetFE::solve()
     m_un = m_u;
     d->UpdateCoordn();
     UpdateCenterOfMass();
+    m_movedmeshTimeStep = 0;  // Reset movement indicator for new time step
   }
 
   // Explicit time-stepping using RK3
@@ -1266,73 +1314,132 @@ OversetFE::solve()
     if (g_inputdeck.get< tag::rigid_body_motion >().get< tag::rigid_body_dof >()
       == 3) {
 
-      auto sym_dir =
+      // normal vector to symmetry plane (no restrictions on if it's a unit
+      // vector, convert it here)
+      auto sym_dir_vec =
         g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
+      std::array< tk::real, 3 > sym_dir;
+      sym_dir[0] = sym_dir_vec[0];
+      sym_dir[1] = sym_dir_vec[1];
+      sym_dir[2] = sym_dir_vec[2];
+      auto sym_dir_mag = std::sqrt(tk::dot(sym_dir, sym_dir));
+      for (std::size_t i=0; i<3; ++i) sym_dir[i] /= sym_dir_mag;
 
-      m_surfForce[sym_dir] = 0.0;
+      // symmetry is enforced on forces and torques
       for (std::size_t i=0; i<3; ++i) {
-        if (i != sym_dir) m_surfTorque[i] = 0.0;
+        // Subtract out components of force along sym_dir
+        m_surfForce[i] -= tk::dot(m_surfForce, sym_dir) * sym_dir[i];
+        // Only keep components of torque along sym_dir
+        m_surfTorque[i] = tk::dot(m_surfTorque, sym_dir) * sym_dir[i];
       }
     }
+    // add body force
+    auto mass_mesh =
+      g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
+    auto body_force = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
+      tag::body_force >();
+    for (std::size_t i=0; i<3; ++i) m_surfForce[i] += body_force[i]*mass_mesh;
 
-    // Mark if mesh moved
+    // Mark if mesh moved or is moving
     if (std::sqrt(tk::dot(m_surfForce, m_surfForce)) > 1e-12 ||
-      std::sqrt(tk::dot(m_surfTorque, m_surfTorque)) > 1e-12)
+      std::sqrt(tk::dot(m_surfTorque, m_surfTorque)) > 1e-12 ||
+      std::sqrt(tk::dot(m_centMassVeln, m_centMassVeln)) > 1e-12 ||
+      std::sqrt(tk::dot(m_angMomentumn, m_angMomentumn)) > 1e-12 )
       m_movedmesh = 1;
     else
       m_movedmesh = 0;
 
+    // Mark if mesh moved during any RK-stage of this time step
+    m_movedmeshTimeStep = std::max( m_movedmeshTimeStep, m_movedmesh );
+
     if (m_movedmesh == 1) {
-      auto mass_mesh =
-        g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::mass >();
       auto mI_mesh = g_inputdeck.get< tag::mesh >()[d->MeshId()].get<
         tag::moment_of_inertia >();
       auto dtp = rkcoef[m_stage] * d->Dt();
-      auto sym_dir =
-        g_inputdeck.get< tag::rigid_body_motion >().get< tag::symmetry_plane >();
-
-      auto pi = 4.0*std::atan(1.0);
 
       // mesh acceleration
       std::array< tk::real, 3 > a_mesh;
       for (std::size_t i=0; i<3; ++i) a_mesh[i] = m_surfForce[i] / mass_mesh;
-      auto alpha_mesh = m_surfTorque[sym_dir]/mI_mesh; // angular acceleration
+
+      // Rotation operations: see the following thread for a detailed
+      // explanation
+      // https://physics.stackexchange.com/questions/790061/calculate-rotation-from-net-torque-and-inertia-matrix
+      // Since the kinematic equations no longer apply, an in-stage leap frog
+      // step is used to advance rotation of the mesh
+
+      // copy MoI vector to array for use with vector operations
+      std::array < std::array < tk::real, 3 >, 3 >
+        I_n{ { {mI_mesh[0][0], mI_mesh[0][1], mI_mesh[0][2]},
+               {mI_mesh[1][0], mI_mesh[1][1], mI_mesh[1][2]},
+               {mI_mesh[2][0], mI_mesh[2][1], mI_mesh[2][2]} } };
+
+      // MoI Tensor derived from body-centered tensor rotated to inertial frame
+      auto Rn = tk::qtoR(m_rotationQn);
+      I_n = tk::matmult33(Rn, tk::matmult33(I_n, tk::transpose3by3(Rn)));
+
+      // from angular velocity, obtain change in rotation quaternion
+      auto omega_n = tk::matvec(tk::inverse(I_n), m_angMomentumn);
+      std::array< tk::real, 4> omega_qn{0, omega_n[0], omega_n[1], omega_n[2]},
+                               qn12;
+
+      // q drifted half-time step over this stage
+      auto dq = tk::quaternion_mult(omega_qn, m_rotationQn);
+      for (std::size_t i = 0; i < 4; ++i) {
+        dq[i] *= 0.5*(dtp*0.5);
+        qn12[i] = m_rotationQn[i] + dq[i];
+      }
+
+      // Derived quantities from q
+      auto Rn12 = tk::qtoR(qn12);
+      auto dRn12 = tk::matmult33(Rn12, tk::transpose3by3(Rn));
+      auto I_n12 = tk::matmult33(dRn12,
+                   tk::matmult33(I_n, tk::transpose3by3(dRn12)));
+
+      // omega kicked full time step
+      for (std::size_t i=0; i<3; ++i) {
+        m_angMomentum[i] = m_angMomentumn[i] + m_surfTorque[i]*dtp;
+      }
+      auto omega_n1 = tk::matvec(tk::inverse(I_n12), m_angMomentum);
+
+      // q drifted next half-time step over this stage
+      std::array< tk::real, 4>
+        omega_qn1{0, omega_n1[0], omega_n1[1], omega_n1[2]};
+      dq = tk::quaternion_mult(omega_qn1, qn12);
+      for (std::size_t i = 0; i < 4; ++i) {
+        dq[i] *= 0.5*(dtp*0.5);
+        m_rotationQ[i] = qn12[i] + dq[i];
+      }
+
+      // normalize
+      auto qmag = tk::quaternion_mag(m_rotationQ);
+      for (std::size_t i = 0; i < 4; ++i) {
+        m_rotationQ[i] /= qmag;
+      }
+
+      // Derived quantities from q
+      auto Rn1 = tk::qtoR(m_rotationQ);
+      // total rotation just over RK stage, applied to points below
+      auto dR = tk::matmult33(Rn1, tk::transpose3by3(Rn));
+      std::array< tk::real, 3>
+        omega_n12{0.5*(omega_n1[0] + omega_n[0]),
+                  0.5*(omega_n1[1] + omega_n[1]),
+                  0.5*(omega_n1[2] + omega_n[2])};
 
       auto& u_mesh = d->MeshVel();
 
       for (std::size_t p=0; p<u_mesh.nunk(); ++p) {
 
-        // rotation (this is currently only configured for planar motion)
+        // rotation
         // ---------------------------------------------------------------------
         std::array< tk::real, 3 > rCM{{
           d->Coordn()[0][p] - m_centMassn[0],
           d->Coordn()[1][p] - m_centMassn[1],
           d->Coordn()[2][p] - m_centMassn[2] }};
 
-        // obtain tangential velocity
-        tk::real r_mag(0.0);
-        for (std::size_t i=0; i<3; ++i) {
-          if (i != sym_dir) r_mag += rCM[i]*rCM[i];
-        }
-        r_mag = std::sqrt(r_mag);
-        auto a_tgt = alpha_mesh*r_mag;
+        rCM = tk::matvec(dR, rCM);
 
-        // get the other two directions
-        auto i1 = (sym_dir+1)%3;
-        auto i2 = (sym_dir+2)%3;
-
-        // project tangential velocity to these two directions
-        auto theta = std::atan2(rCM[i2],rCM[i1]);
-        auto a1 = a_tgt*std::cos((pi/2.0)+theta);
-        auto a2 = a_tgt*std::sin((pi/2.0)+theta);
-
-        // angle of rotation
-        auto dtheta = m_angVelMesh*dtp + 0.5*alpha_mesh*dtp*dtp;
-
-        // add contribution of rotation to mesh displacement
-        std::array< tk::real, 3 > angles{{ 0, 0, 0 }};
-        angles[sym_dir] = dtheta * 180.0/pi;
-        tk::rotatePoint(angles, rCM);
+        // Linear velocity at this point, using average angular velocity
+        auto vr = tk::cross(rCM, omega_n12);
 
         // rectilinear motion
         // ---------------------------------------------------------------------
@@ -1343,20 +1450,33 @@ OversetFE::solve()
           // mesh displacement from translation
           dsT = m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
           // mesh displacement from rotation
-          dsR = rCM[i] + m_centMass[i] - d->Coordn()[i][p];
+          dsR = rCM[i] + m_centMassn[i] - d->Coordn()[i][p];
           // add both contributions
           d->Coord()[i][p] = d->Coordn()[i][p] + dsT + dsR;
           // mesh velocity change from translation
-          u_mesh(p,i) += a_mesh[i]*dtp;
+          u_mesh(p,i) = m_centMassVeln[i] + a_mesh[i]*dtp;
+          // add contribution of rotation to mesh velocity
+          u_mesh(p,i) += vr[i];
         }
-
-        // add contribution of rotation to mesh velocity
-        u_mesh(p,i1) += a1*dtp;
-        u_mesh(p,i2) += a2*dtp;
       }
 
-      // update angular velocity
-      m_angVelMesh = m_angVelMeshn + alpha_mesh*dtp;
+      // obtain total displacement of center-of-mass for diagnostics
+      for (std::size_t i=0; i<3; ++i) {
+        m_displacement[i] = m_displacementn[i]
+          + m_centMassVel[i]*dtp + 0.5*a_mesh[i]*dtp*dtp;
+      }
+
+      auto radToDeg = 180.0 / (4.0 * std::atan(1.0));
+      auto mesh_orientation =
+        g_inputdeck.get< tag::mesh >()[d->MeshId()].get< tag::orientation >();
+      // Rotation for diagnostics, accounting for initial rotation (ZYX Euler
+      // angles)
+      m_rotation[0] = std::atan2(-Rn1[1][2], Rn1[2][2]) * radToDeg
+        - mesh_orientation[0];
+      m_rotation[1] = std::atan2(Rn1[0][2], std::sqrt(Rn1[0][0]*Rn1[0][0]
+        + Rn1[0][1]*Rn1[0][1])) * radToDeg - mesh_orientation[1];
+      m_rotation[2] = std::atan2(-Rn1[0][1], Rn1[0][0]) * radToDeg
+        - mesh_orientation[2];
 
       // move center of mass
       for (std::size_t i=0; i<3; ++i) {
@@ -1385,7 +1505,8 @@ OversetFE::solve()
   bool diag_computed(false);
   if (m_stage == 3) {
     // Compute diagnostics, e.g., residuals
-    diag_computed = m_diag.compute( *d, m_u, m_un, m_surfForce, m_bnorm,
+    diag_computed = m_diag.compute( *d, m_u, m_un, m_surfForce, m_surfTorque,
+                                    m_displacement, m_rotation, m_bnorm,
                                     m_symbcnodes, m_farfieldbcnodes,
                                     m_slipwallbcnodes );
     // Increase number of iterations and physical time
@@ -1415,7 +1536,7 @@ OversetFE::refine( const std::vector< tk::real >& l2res )
     const auto residual = g_inputdeck.get< tag::residual >();
     const auto rc = g_inputdeck.get< tag::rescomp >() - 1;
 
-    if (m_movedmesh) {
+    if (m_movedmeshTimeStep) {
       d->Itf() = 0;  // Zero field output iteration count if mesh moved
       ++d->Itr();    // Increase number of iterations with a change in the mesh
     }
@@ -1459,7 +1580,7 @@ OversetFE::stage()
   }
   else {
     // start with next time-step stage
-    chBndGrad();
+    getForces(Disc()->Dt());
   }
 }
 //! [stage]

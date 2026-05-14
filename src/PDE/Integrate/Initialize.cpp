@@ -29,7 +29,7 @@ extern ctr::InputDeck g_inputdeck;
 void
 tk::initialize( ncomp_t ncomp,
                 const std::vector< inciter::EOS >& mat_blk,
-                const Fields& L,
+                const Fields& geoElem,
                 const std::vector< std::size_t >& inpoel,
                 const UnsMesh::Coords& coord,
                 const InitializeFn& solution,
@@ -41,7 +41,7 @@ tk::initialize( ncomp_t ncomp,
 //! solution space
 //! \details This is the public interface exposed to client code.
 //! \param[in] ncomp Number of scalar components in this PDE system
-//! \param[in] L Block diagonal mass matrix
+//! \param[in] geoElem Element geometry array
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of node coordinates
 //! \param[in] solution Function to call to evaluate known solution or initial
@@ -73,9 +73,11 @@ tk::initialize( ncomp_t ncomp,
   const auto& cy = coord[1];
   const auto& cz = coord[2];
 
+  std::vector< tk::real > B(ndof);
+
   for (std::size_t e=0; e<nielem; ++e) {    // for all tets
     // The volume of tetrahedron
-    auto vole = L(e, 0);
+    auto vole = geoElem(e, 0);
 
     // Extract the element coordinates
     std::array< std::array< real, 3>, 4 > coordel {{
@@ -94,8 +96,7 @@ tk::initialize( ncomp_t ncomp,
       auto gp = eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B =
-        eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+      eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
 
       const auto s = solution( ncomp, mat_blk, gp[0], gp[1], gp[2], t );
 
@@ -105,7 +106,7 @@ tk::initialize( ncomp_t ncomp,
     }
 
     // Compute the initial conditions
-    eval_init(ncomp, ndof, rdof, e, R, L, unk);
+    eval_init(ncomp, ndof, rdof, e, R, vole, unk);
   }
 }
 
@@ -160,7 +161,7 @@ tk::eval_init( ncomp_t ncomp,
                const std::size_t rdof,
                const std::size_t e,
                const std::vector< tk::real >& R,
-               const Fields& L,
+               real vole,
                Fields& unk )
 // *****************************************************************************
 //  Compute the initial conditions
@@ -169,16 +170,18 @@ tk::eval_init( ncomp_t ncomp,
 //! \param[in] rdof Total number of reconstructed degrees of freedom
 //! \param[in] e Element index
 //! \param[in] R Right-hand side vector
-//! \param[in] L Block diagonal mass matrix
+//! \param[in] vole Volume of element e
 //! \param[in,out] unk Array of unknowns
 // *****************************************************************************
 {
+  auto mass_dubiner = massMatrixDubiner();
+  for (auto& mi : mass_dubiner) mi *= vole;
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     // DG(P0)
     auto mark = c*ndof;
     auto rmark = c*rdof;
-    unk(e, rmark) = R[mark] / L(e, mark);
+    unk(e, rmark) = R[mark] / mass_dubiner[0];
 
     // if P0P1, initialize higher dofs to 0
     if (rdof > ndof)
@@ -190,18 +193,18 @@ tk::eval_init( ncomp_t ncomp,
 
     if(ndof > 1)          // DG(P1)
     {
-      unk(e, rmark+1) = R[mark+1] / L(e, mark+1);
-      unk(e, rmark+2) = R[mark+2] / L(e, mark+2);
-      unk(e, rmark+3) = R[mark+3] / L(e, mark+3);
+      unk(e, rmark+1) = R[mark+1] / mass_dubiner[1];
+      unk(e, rmark+2) = R[mark+2] / mass_dubiner[2];
+      unk(e, rmark+3) = R[mark+3] / mass_dubiner[3];
  
       if(ndof > 4)        // DG(P2)
       {
-        unk(e, rmark+4) = R[mark+4] / L(e, mark+4);
-        unk(e, rmark+5) = R[mark+5] / L(e, mark+5);
-        unk(e, rmark+6) = R[mark+6] / L(e, mark+6);
-        unk(e, rmark+7) = R[mark+7] / L(e, mark+7);
-        unk(e, rmark+8) = R[mark+8] / L(e, mark+8);
-        unk(e, rmark+9) = R[mark+9] / L(e, mark+9);
+        unk(e, rmark+4) = R[mark+4] / mass_dubiner[4];
+        unk(e, rmark+5) = R[mark+5] / mass_dubiner[5];
+        unk(e, rmark+6) = R[mark+6] / mass_dubiner[6];
+        unk(e, rmark+7) = R[mark+7] / mass_dubiner[7];
+        unk(e, rmark+8) = R[mark+8] / mass_dubiner[8];
+        unk(e, rmark+9) = R[mark+9] / mass_dubiner[9];
       }
     }
   }

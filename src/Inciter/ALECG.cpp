@@ -97,7 +97,8 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   m_refinedmesh( 0 ),
   m_nusermeshblk( 0 ),
   m_nodeblockid(),
-  m_nodeblockidc()
+  m_nodeblockidc(),
+  m_srcFlag(m_u.nunk(), 1)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -145,6 +146,9 @@ ALECG::ALECG( const CProxy_Discretization& disc,
   thisProxy[ thisIndex ].wait4meshblk();
 
   d->comfinal();
+
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 
 }
 //! [Constructor]
@@ -202,8 +206,11 @@ ALECG::queryBnd()
   // to obtain force on overset walls
   m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes))
+    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes) ||
+        m_slipwallbcnodes.find(m_triinpoel[e*3+1]) != end(m_slipwallbcnodes) ||
+        m_slipwallbcnodes.find(m_triinpoel[e*3+2]) != end(m_slipwallbcnodes)){
       m_slipwallbctri[e] = 1;
+    }
 
   // Prepare unique set of time dependent BC nodes
   m_timedepbcnodes.clear();
@@ -951,7 +958,7 @@ ALECG::dt()
 
       // find the smallest dt of all equations on this chare
       auto eqdt = g_cgpde[d->MeshId()].dt( d->Coord(), d->Inpoel(), d->T(),
-        d->Dtn(), m_u, d->Vol(), d->Voln() );
+        d->Dtn(), m_u, d->Vol(), d->Voln(), m_srcFlag );
       if (eqdt < mindt) mindt = eqdt;
 
     }
@@ -1073,7 +1080,7 @@ ALECG::rhs()
           m_triinpoel, d->Gid(), d->Bid(), d->Lid(), m_dfn, m_psup, m_esup,
           m_symbctri, m_slipwallbctri, d->Vol(), m_edgenode, m_edgeid,
           m_boxnodes, m_chBndGrad, m_u, d->meshvel(), m_tp, d->Boxvol(),
-          m_rhs );
+          m_rhs, m_srcFlag );
   volumetric( m_u, Disc()->Vol() );
   if (steady)
     for (std::size_t p=0; p<m_tp.size(); ++p) m_tp[p] -= prev_rkcoef * m_dtp[p];
@@ -1227,7 +1234,8 @@ ALECG::ale()
     // Compute diagnostics, e.g., residuals
     conserved( m_u, Disc()->Vol() );
     conserved( m_un, Disc()->Voln() );
-    auto diag_computed = m_diag.compute( *d, m_u, m_un, {0, 0, 0}, m_bnorm,
+    auto diag_computed = m_diag.compute( *d, m_u, m_un, {0, 0, 0}, {0, 0, 0},
+                                          {0, 0, 0}, {0, 0, 0}, m_bnorm,
                                           m_symbcnodes, m_farfieldbcnodes,
                                           m_slipwallbcnodes );
     volumetric( m_u, Disc()->Vol() );
@@ -1351,6 +1359,7 @@ ALECG::resizePostAMR(
   auto nprop = m_u.nprop();
   m_u.resize( npoin );
   m_un.resize( npoin );
+  m_srcFlag.resize( npoin );
   m_rhs.resize( npoin );
   m_chBndGrad.resize( d->Bid().size() );
   tk::destroy(m_esup);

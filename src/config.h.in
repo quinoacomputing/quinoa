@@ -1,0 +1,3 @@
+#pragma once
+
+#define TPL_DIR "@TPL_DIR@"

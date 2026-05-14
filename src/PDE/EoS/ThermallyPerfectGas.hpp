@@ -39,7 +39,7 @@ class ThermallyPerfectGas {
         t_rng_idx = 0;
         temp_poly = m_t_range[0];
       } else if (temp_poly > m_t_range.back()) {
-        t_rng_idx = m_t_range.size() - 1;
+        t_rng_idx = m_t_range.size() - 2;
         temp_poly = m_t_range.back();
       } else {
       // Valid bounds
@@ -142,15 +142,10 @@ class ThermallyPerfectGas {
       tk::real ) const
     { return 0.0; }
 
-    //! \brief Calculate the Cauchy stress tensor from the material density,
-    //!   momentum, and total energy
+    //! \brief Calculate the Cauchy stress tensor from the material
+    //!   inverse deformation gradient tensor
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
       tk::real,
       std::size_t,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;

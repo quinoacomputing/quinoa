@@ -5,7 +5,7 @@ inciter = {
   nstep = 100,   -- Max number of time steps
   dt = 1.0e-4,   -- Time step size
   ttyi = 5,      -- TTY output interval
-  scheme = "dg",
+  scheme = "dgp0",
 
   compflow = {
     physics = "euler",
@@ -42,15 +42,6 @@ inciter = {
       "z-velocity",
       "specific_total_energy",
       "pressure",
-    },
-    elemalias = {
-      "",
-      "density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical",
-      "specific_total_energy_numerical",
-      "pressure_numerical"
     },
     interval = 10
   }

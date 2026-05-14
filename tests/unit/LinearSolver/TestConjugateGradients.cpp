@@ -211,8 +211,8 @@ void ConjugateGradients_object::test< 1 >() {
   // Create receiver chare whose callbacks are called when a CG task is done
   CProxy_CGReceiver host =
     CProxy_CGReceiver::ckNew( "Laplacian 1DOF 1PE",
-                              /* maxit = */ 10,
-                              /* tol = * */ 1.0e-3,
+                              /* maxit = */ 200,
+                              /* tol = * */ 1.0e-16,
                               /* normb_ex = */ 3.7416573867739413,
                               /* normres_ex = */ 3.8368230753371624e-15,
                               cg, 1 );
@@ -284,8 +284,8 @@ void ConjugateGradients_object::test< 2 >() {
   // CG task is done on a PE
   CProxy_CGReceiver host =
     CProxy_CGReceiver::ckNew( "Laplacian 1DOF 2PE",
-                              /* maxit = */ 10,
-                              /* tol = * */ 1.0e-3,
+                              /* maxit = */ 100,
+                              /* tol = * */ 1.0e-16,
                               /* normb_ex = */ 3.7416573867739413,
                               /* normres_ex = */ 3.8368230753371624e-15,
                               cg, 2 );
@@ -452,7 +452,7 @@ void ConjugateGradients_object::test< 3 >() {
   CProxy_CGReceiver host =
     CProxy_CGReceiver::ckNew( "Laplacian 3DOF 1PE",
                               /* maxit = */ 1000,
-                              /* tol = * */ 1.0e-3,
+                              /* tol = * */ 1.0e-15,
                               /* normb_ex = */ 6.4807406984078604,
                               /* normres_ex = */ 5.7532468516593534e-14,
                               cg, 1 );
@@ -525,7 +525,7 @@ void ConjugateGradients_object::test< 4 >() {
   CProxy_CGReceiver host =
     CProxy_CGReceiver::ckNew( "Laplacian 3DOF 2PE",
                               /* maxit = */ 1000,
-                              /* tol = * */ 1.0e-3,
+                              /* tol = * */ 1.0e-15,
                               /* normb_ex = */ 6.4807406984078604,
                               /* normres_ex = */ 5.7532468516593534e-14,
                               cg, 2 );

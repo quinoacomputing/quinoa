@@ -33,6 +33,26 @@
 #include "FieldOutput.hpp"
 #include "ChareStateCollector.hpp"
 #include "PDE/MultiMat/MultiMatIndexing.hpp"
+#include "Integrate/Quadrature.hpp"
+
+#include <fstream>
+
+// ignore old-style-casts required for lapack/blas calls
+#if defined(__clang__)
+  #pragma clang diagnostic ignored "-Wold-style-cast"
+#endif
+
+// Lapacke forward declarations
+extern "C" {
+
+using lapack_int = long;
+
+#define LAPACK_ROW_MAJOR 101
+
+extern lapack_int LAPACKE_dgesv( int, lapack_int, lapack_int, double*,
+  lapack_int, lapack_int*, double*, lapack_int );
+
+}
 
 namespace inciter {
 
@@ -44,8 +64,8 @@ static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
 //! Implicit-Explicit Runge-Kutta Coefficients
-static const tk::real rk_gamma = (2.0-std::sqrt(2.0))/2.0;
-static const tk::real rk_delta = -2.0*std::sqrt(2.0)/3.0;
+[[maybe_unused]] static const tk::real rk_gamma = (2.0-std::sqrt(2.0))/2.0;
+[[maybe_unused]] static const tk::real rk_delta = -2.0*std::sqrt(2.0)/3.0;
 static const tk::real c2 =
   (27.0 + std::pow(2187.0-1458.0*std::sqrt(2.0),1.0/3.0)
    + 9.0*std::pow(3.0+2.0*std::sqrt(2.0),1.0/3.0))/54.0;
@@ -65,6 +85,7 @@ static const std::array< std::array< tk::real, 3 >, 2 >
 static const std::array< std::array< tk::real, 3 >, 2>
   impl_rkcoef{{ {{ 0.0, a32_impl, b2 }},
                 {{ a22_impl, a33_impl, b3}} }};
+static const std::array< tk::real, 10 > mass_dubiner( tk::massMatrixDubiner() );
 
 } // inciter::
 
@@ -79,7 +100,6 @@ DG::DG( const CProxy_Discretization& disc,
         const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_ghosts( ghostsproxy ),
-  m_ndof_NodalExtrm( 3 ), // for the first order derivatives in 3 directions
   m_nsol( 0 ),
   m_ninitsol( 0 ),
   m_nlim( 0 ),
@@ -87,7 +107,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_nrefine( 0 ),
   m_nsmooth( 0 ),
   m_nreco( 0 ),
-  m_nnodalExtrema( 0 ),
   m_nstiffeq( g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_nnonstiffeq( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
   m_u( Disc()->Inpoel().size()/4,
@@ -96,11 +115,10 @@ DG::DG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(), g_inputdeck.get< tag::rdof >()*
     g_dgpde[Disc()->MeshId()].nprim() ),
-  m_lhs( m_u.nunk(),
+  m_rhs( m_u.nunk(),
          g_inputdeck.get< tag::ndof >()*
          g_inputdeck.get< tag::ncomp >() ),
-  m_rhs( m_u.nunk(), m_lhs.nprop() ),
-  m_rhsprev( m_u.nunk(), m_lhs.nprop() ),
+  m_rhsprev( m_u.nunk(), m_rhs.nprop() ),
   m_stiffrhs( m_u.nunk(), g_inputdeck.get< tag::ndof >()*
               g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_stiffrhsprev( m_u.nunk(), g_inputdeck.get< tag::ndof >()*
@@ -109,12 +127,9 @@ DG::DG( const CProxy_Discretization& disc,
   m_nonStiffEqIdx( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
   m_mtInv(
     tk::invMassMatTaylorRefEl(g_inputdeck.get< tag::rdof >()) ),
-  m_uNodalExtrm(),
-  m_pNodalExtrm(),
-  m_uNodalExtrmc(),
-  m_pNodalExtrmc(),
   m_npoin( Disc()->Coord()[0].size() ),
   m_diag(),
+  m_nstage( 3 ),
   m_stage( 0 ),
   m_ndof(),
   m_interface(),
@@ -136,7 +151,9 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
-  m_shockmarker(m_u.nunk(), 1)
+  m_shockmarker(m_u.nunk(), 1),
+  m_dte(m_u.nunk(), 0.0),
+  m_finished(0)
 // *****************************************************************************
 //  Constructor
 //! \param[in] disc Discretization proxy
@@ -152,38 +169,47 @@ DG::DG( const CProxy_Discretization& disc,
   // assign number of dofs for each equation in all pde systems
   g_dgpde[Disc()->MeshId()].numEquationDofs(m_numEqDof);
 
-  // Allocate storage for the vector of nodal extrema
-  m_uNodalExtrm.resize( Disc()->Bid().size(),
-    std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
-    g_inputdeck.get< tag::ncomp >() ) );
-  m_pNodalExtrm.resize( Disc()->Bid().size(),
-    std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
-    m_p.nprop() / g_inputdeck.get< tag::rdof >() ) );
-
-  // Initialization for the buffer vector of nodal extrema
-  resizeNodalExtremac();
-
   usesAtSync = true;    // enable migration at AtSync
+
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   // Enable SDAG wait for initially building the solution vector and limiting
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
-    thisProxy[ thisIndex ].wait4refine();
+    if (pref) thisProxy[ thisIndex ].wait4refine();
     thisProxy[ thisIndex ].wait4smooth();
     thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4nod();
     thisProxy[ thisIndex ].wait4reco();
-    thisProxy[ thisIndex ].wait4nodalExtrema();
   }
 
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
+
+  // insert array-element into the implicit solver chare array
+  if (g_inputdeck.get< tag::implicit_timestepping >()) {
+    // Single-stage BDF1 for implicit solver
+    m_nstage = 1;
+
+    const auto& inpoel = myGhosts()->m_inpoel;
+    // TODO: linear solver:
+    //  modify CSR to handle element-based structures (or create new one)
+    tk::CSR A(m_rhs.nprop(), tk::genPsup(inpoel,4,tk::genEsup(inpoel,4)));
+    std::vector< tk::real > x(m_u.nunk()*m_rhs.nprop(), 0.0),
+      b(m_u.nunk()*m_rhs.nprop(), 0.0);
+
+    Disc()->ImplicitSolver()[ thisIndex ].insert(std::move(A), std::move(x),
+      std::move(b), Disc()->Gid(), Disc()->Lid(), Disc()->NodeCommMap());
+  }
 
   // global-sync to call doneInserting on m_ghosts
   auto meshid = Disc()->MeshId();
   contribute( sizeof(std::size_t), &meshid, CkReduction::nop,
     CkCallback(CkReductionTarget(Transporter,doneInsertingGhosts),
     Disc()->Tr()) );
+
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 void
@@ -223,11 +249,11 @@ DG::resizeSolVectors()
   m_u.resize( myGhosts()->m_nunk );
   m_un.resize( myGhosts()->m_nunk );
   m_p.resize( myGhosts()->m_nunk );
-  m_lhs.resize( myGhosts()->m_nunk );
   m_rhs.resize( myGhosts()->m_nunk );
   m_rhsprev.resize( myGhosts()->m_nunk );
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_stiffrhsprev.resize( myGhosts()->m_nunk );
+  m_dte.resize( myGhosts()->m_nunk );
 
   // Size communication buffer for solution and number of degrees of freedom
   for (auto& n : m_ndofc) n.resize( myGhosts()->m_bid.size() );
@@ -273,10 +299,6 @@ DG::setup()
 
   auto d = Disc();
 
-  // Basic error checking on sizes of element geometry data and connectivity
-  Assert( myGhosts()->m_geoElem.nunk() == m_lhs.nunk(),
-    "Size mismatch in DG::setup()" );
-
   // Compute left-hand side of discrete PDEs
   lhs();
 
@@ -317,10 +339,10 @@ DG::box( tk::real v, const std::vector< tk::real >& )
   d->Boxvol() = v;
 
   // Set initial conditions for all PDEs
-  g_dgpde[d->MeshId()].initialize( m_lhs, myGhosts()->m_inpoel,
+  g_dgpde[d->MeshId()].initialize( myGhosts()->m_geoElem, myGhosts()->m_inpoel,
     myGhosts()->m_coord, m_boxelems, d->ElemBlockId(), m_u, d->T(),
     myGhosts()->m_fd.Esuel().size()/4 );
-  g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
+  g_dgpde[d->MeshId()].updatePrimitives( m_u, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof );
 
   m_un = m_u;
@@ -562,18 +584,7 @@ DG::extractFieldOutput(
   ownnod_complete( c, addedTets );
 }
 
-void
-DG::lhs()
-// *****************************************************************************
-// Compute left-hand side of discrete transport equations
-// *****************************************************************************
-{
-  g_dgpde[Disc()->MeshId()].lhs( myGhosts()->m_geoElem, m_lhs );
-
-  if (!m_initial) stage();
-}
-
-void DG::refine()
+void DG::p_refine()
 // *****************************************************************************
 // Add the protective layer for ndof refinement
 // *****************************************************************************
@@ -599,26 +610,33 @@ void DG::refine()
 
   if (pref && m_stage==0) refine_ndof();
 
-  if (myGhosts()->m_sendGhost.empty())
-    comrefine_complete();
-  else
-    for(const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
-      std::vector< std::size_t > tetid( ghostdata.size() );
-      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
-                                             prim( ghostdata.size() );
-      std::vector< std::size_t > ndof( ghostdata.size() );
-      std::size_t j = 0;
-      for(const auto& i : ghostdata) {
-        Assert( i < myGhosts()->m_fd.Esuel().size()/4, "Sending refined ndof  "
-          "data" );
-        tetid[j] = i;
-        if (pref && m_stage == 0) ndof[j] = m_ndof[i];
-        ++j;
+  if (!pref) {
+    // if p-refinement is not configured, proceed directly to reconstructions
+    reco();
+  }
+  else {
+    // if p-refinement is configured, do refine-smoothing before reconstruction
+    if (myGhosts()->m_sendGhost.empty())
+      comrefine_complete();
+    else
+      for(const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
+        std::vector< std::size_t > tetid( ghostdata.size() );
+        std::vector< std::vector< tk::real > > u( ghostdata.size() ),
+                                               prim( ghostdata.size() );
+        std::vector< std::size_t > ndof( ghostdata.size() );
+        std::size_t j = 0;
+        for(const auto& i : ghostdata) {
+          Assert( i < myGhosts()->m_fd.Esuel().size()/4, "Sending refined ndof  "
+            "data" );
+          tetid[j] = i;
+          if (pref && m_stage == 0) ndof[j] = m_ndof[i];
+          ++j;
+        }
+        thisProxy[ cid ].comrefine( thisIndex, tetid, ndof );
       }
-      thisProxy[ cid ].comrefine( thisIndex, tetid, ndof );
-    }
 
-  ownrefine_complete();
+    ownrefine_complete();
+  }
 }
 
 void
@@ -743,9 +761,11 @@ DG::reco()
 
   // Combine own and communicated contributions of unreconstructed solution and
   // degrees of freedom in cells (if p-adaptive)
-  for (const auto& b : myGhosts()->m_bid) {
-    if (pref && m_stage == 0) {
-      m_ndof[ b.first ] = m_ndofc[2][ b.second ];
+  if (pref) {
+    for (const auto& b : myGhosts()->m_bid) {
+      if (m_stage == 0) {
+        m_ndof[ b.first ] = m_ndofc[2][ b.second ];
+      }
     }
   }
 
@@ -826,18 +846,16 @@ DG::comreco( int fromch,
 }
 
 void
-DG::nodalExtrema()
+DG::lim()
 // *****************************************************************************
-// Compute nodal extrema at chare-boundary nodes. Extrema at internal nodes
-// are calculated in limiter function.
+// Compute limiter function
 // *****************************************************************************
 {
   auto d = Disc();
   auto gid = d->Gid();
   auto bid = d->Bid();
   const auto rdof = g_inputdeck.get< tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   // Combine own and communicated contributions of unlimited solution, and
   // if a p-adaptive algorithm is used, degrees of freedom in cells
@@ -852,307 +870,11 @@ DG::nodalExtrema()
     }
   }
 
-  // Initialize nodal extrema vector
-  auto large = std::numeric_limits< tk::real >::max();
-  for(std::size_t i = 0; i<bid.size(); i++)
-  {
-    for (std::size_t c=0; c<ncomp; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        m_uNodalExtrm[i][max_mark] = -large;
-        m_uNodalExtrm[i][min_mark] =  large;
-      }
-    }
-    for (std::size_t c=0; c<nprim; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        m_pNodalExtrm[i][max_mark] = -large;
-        m_pNodalExtrm[i][min_mark] =  large;
-      }
-    }
-  }
-
-  // Evaluate the max/min value for the chare-boundary nodes
-  if(rdof > 4) {
-      evalNodalExtrmRefEl(ncomp, nprim, m_ndof_NodalExtrm, d->bndel(),
-        myGhosts()->m_inpoel, gid, bid, m_u, m_p, m_uNodalExtrm, m_pNodalExtrm);
-  }
-
-  // Communicate extrema at nodes to other chares on chare-boundary
-  if (d->NodeCommMap().empty())        // in serial we are done
-    comnodalExtrema_complete();
-  else  // send nodal extrema to chare-boundary nodes to fellow chares
-  {
-    for (const auto& [c,n] : d->NodeCommMap()) {
-      std::vector< std::vector< tk::real > > g1( n.size() ), g2( n.size() );
-      std::size_t j = 0;
-      for (auto i : n)
-      {
-        auto p = tk::cref_find(d->Bid(),i);
-        g1[ j   ] = m_uNodalExtrm[ p ];
-        g2[ j++ ] = m_pNodalExtrm[ p ];
-      }
-      thisProxy[c].comnodalExtrema( std::vector<std::size_t>(begin(n),end(n)),
-        g1, g2 );
-    }
-  }
-  ownnodalExtrema_complete();
-}
-
-void
-DG::comnodalExtrema( const std::vector< std::size_t >& gid,
-                     const std::vector< std::vector< tk::real > >& G1,
-                     const std::vector< std::vector< tk::real > >& G2 )
-// *****************************************************************************
-//  Receive contributions to nodal extrema on chare-boundaries
-//! \param[in] gid Global mesh node IDs at which we receive grad contributions
-//! \param[in] G1 Partial contributions of extrema for conservative variables to
-//!   chare-boundary nodes
-//! \param[in] G2 Partial contributions of extrema for primitive variables to
-//!   chare-boundary nodes
-//! \details This function receives contributions to m_uNodalExtrm/m_pNodalExtrm
-//!   , which stores nodal extrems at mesh chare-boundary nodes. While
-//!   m_uNodalExtrm/m_pNodalExtrm stores own contributions, m_uNodalExtrmc
-//!   /m_pNodalExtrmc collects the neighbor chare contributions during
-//!   communication.
-// *****************************************************************************
-{
-  Assert( G1.size() == gid.size(), "Size mismatch" );
-  Assert( G2.size() == gid.size(), "Size mismatch" );
-
-  const auto rdof = g_inputdeck.get< tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
-
-  for (std::size_t i=0; i<gid.size(); ++i)
-  {
-    auto& u = m_uNodalExtrmc[gid[i]];
-    auto& p = m_pNodalExtrmc[gid[i]];
-    for (std::size_t c=0; c<ncomp; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        u[max_mark] = std::max( G1[i][max_mark], u[max_mark] );
-        u[min_mark] = std::min( G1[i][min_mark], u[min_mark] );
-      }
-    }
-    for (std::size_t c=0; c<nprim; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        p[max_mark] = std::max( G2[i][max_mark], p[max_mark] );
-        p[min_mark] = std::min( G2[i][min_mark], p[min_mark] );
-      }
-    }
-  }
-
-  if (++m_nnodalExtrema == Disc()->NodeCommMap().size())
-  {
-    m_nnodalExtrema = 0;
-    comnodalExtrema_complete();
-  }
-}
-
-void DG::resizeNodalExtremac()
-// *****************************************************************************
-//  Resize the buffer vector of nodal extrema
-// *****************************************************************************
-{
-  const auto rdof = g_inputdeck.get< tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
-
-  auto large = std::numeric_limits< tk::real >::max();
-  for (const auto& [c,n] : Disc()->NodeCommMap())
-  {
-    for (auto i : n) {
-      auto& u = m_uNodalExtrmc[i];
-      auto& p = m_pNodalExtrmc[i];
-      u.resize( 2*m_ndof_NodalExtrm*ncomp, large );
-      p.resize( 2*m_ndof_NodalExtrm*nprim, large );
-
-      // Initialize the minimum nodal extrema
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        for(std::size_t k = 0; k < ncomp; k++)
-          u[2*k*m_ndof_NodalExtrm+2*idof] = -large;
-        for(std::size_t k = 0; k < nprim; k++)
-          p[2*k*m_ndof_NodalExtrm+2*idof] = -large;
-      }
-    }
-  }
-}
-
-void DG::evalNodalExtrmRefEl(
-  const std::size_t ncomp,
-  const std::size_t nprim,
-  const std::size_t ndof_NodalExtrm,
-  const std::vector< std::size_t >& bndel,
-  const std::vector< std::size_t >& inpoel,
-  const std::vector< std::size_t >& gid,
-  const std::unordered_map< std::size_t, std::size_t >& bid,
-  const tk::Fields& U,
-  const tk::Fields& P,
-  std::vector< std::vector<tk::real> >& uNodalExtrm,
-  std::vector< std::vector<tk::real> >& pNodalExtrm )
-// *****************************************************************************
-//  Compute the nodal extrema of ref el derivatives for chare-boundary nodes
-//! \param[in] ncomp Number of conservative variables
-//! \param[in] nprim Number of primitive variables
-//! \param[in] ndof_NodalExtrm Degree of freedom for nodal extrema
-//! \param[in] bndel List of elements contributing to chare-boundary nodes
-//! \param[in] inpoel Element-node connectivity for element e
-//! \param[in] gid Local->global node id map
-//! \param[in] bid Local chare-boundary node ids (value) associated to
-//!   global node ids (key)
-//! \param[in] U Vector of conservative variables
-//! \param[in] P Vector of primitive variables
-//! \param[in,out] uNodalExtrm Chare-boundary nodal extrema for conservative
-//!   variables
-//! \param[in,out] pNodalExtrm Chare-boundary nodal extrema for primitive
-//!   variables
-// *****************************************************************************
-{
-  const auto rdof = g_inputdeck.get< tag::rdof >();
-
-  for (auto e : bndel)
-  {
-    // access node IDs
-    const std::vector<std::size_t> N
-      { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
-
-    // Loop over nodes of element e
-    for(std::size_t ip=0; ip<4; ++ip)
-    {
-      auto i = bid.find( gid[N[ip]] );
-      if (i != end(bid))      // If ip is the chare boundary point
-      {
-        // If DG(P2) is applied, find the nodal extrema of the gradients of
-        // conservative/primitive variables in the reference element
-
-        // Vector used to store the first order derivatives for both
-        // conservative and primitive variables
-        std::vector< std::array< tk::real, 3 > > gradc(ncomp, {0.0, 0.0, 0.0});
-        std::vector< std::array< tk::real, 3 > > gradp(ncomp, {0.0, 0.0, 0.0});
-
-        // Derivatives of the Dubiner basis
-        std::array< tk::real, 3 > center {{0.25, 0.25, 0.25}};
-        auto dBdxi = tk::eval_dBdxi(rdof, center);
-
-        // Evaluate the first order derivative
-        for(std::size_t icomp = 0; icomp < ncomp; icomp++)
-        {
-          auto mark = icomp * rdof;
-          for(std::size_t idir = 0; idir < 3; idir++)
-          {
-            gradc[icomp][idir] = 0;
-            for(std::size_t idof = 1; idof < rdof; idof++)
-              gradc[icomp][idir] += U(e, mark+idof) * dBdxi[idir][idof];
-          }
-        }
-        for(std::size_t icomp = 0; icomp < nprim; icomp++)
-        {
-          auto mark = icomp * rdof;
-          for(std::size_t idir = 0; idir < 3; idir++)
-          {
-            gradp[icomp][idir] = 0;
-            for(std::size_t idof = 1; idof < rdof; idof++)
-              gradp[icomp][idir] += P(e, mark+idof) * dBdxi[idir][idof];
-          }
-        }
-
-        // Store the extrema for the gradients
-        for (std::size_t c=0; c<ncomp; ++c)
-        {
-          for (std::size_t idof = 0; idof < ndof_NodalExtrm; idof++)
-          {
-            auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-            auto min_mark = max_mark + 1;
-            auto& ex = uNodalExtrm[i->second];
-            ex[max_mark] = std::max(ex[max_mark], gradc[c][idof]);
-            ex[min_mark] = std::min(ex[min_mark], gradc[c][idof]);
-          }
-        }
-        for (std::size_t c=0; c<nprim; ++c)
-        {
-          for (std::size_t idof = 0; idof < ndof_NodalExtrm; idof++)
-          {
-            auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-            auto min_mark = max_mark + 1;
-            auto& ex = pNodalExtrm[i->second];
-            ex[max_mark] = std::max(ex[max_mark], gradp[c][idof]);
-            ex[min_mark] = std::min(ex[min_mark], gradp[c][idof]);
-          }
-        }
-      }
-    }
-  }
-}
-
-void
-DG::lim()
-// *****************************************************************************
-// Compute limiter function
-// *****************************************************************************
-{
-  auto d = Disc();
-  const auto rdof = g_inputdeck.get< tag::rdof >();
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-  const auto ncomp = m_u.nprop() / rdof;
-  const auto nprim = m_p.nprop() / rdof;
-
-  // Combine own and communicated contributions to nodal extrema
-  for (const auto& [gid,g] : m_uNodalExtrmc) {
-    auto bid = tk::cref_find( d->Bid(), gid );
-    for (ncomp_t c=0; c<ncomp; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        m_uNodalExtrm[bid][max_mark] =
-          std::max(g[max_mark], m_uNodalExtrm[bid][max_mark]);
-        m_uNodalExtrm[bid][min_mark] =
-          std::min(g[min_mark], m_uNodalExtrm[bid][min_mark]);
-      }
-    }
-  }
-  for (const auto& [gid,g] : m_pNodalExtrmc) {
-    auto bid = tk::cref_find( d->Bid(), gid );
-    for (ncomp_t c=0; c<nprim; ++c)
-    {
-      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
-      {
-        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
-        auto min_mark = max_mark + 1;
-        m_pNodalExtrm[bid][max_mark] =
-          std::max(g[max_mark], m_pNodalExtrm[bid][max_mark]);
-        m_pNodalExtrm[bid][min_mark] =
-          std::min(g[min_mark], m_pNodalExtrm[bid][min_mark]);
-      }
-    }
-  }
-
-  // clear gradients receive buffer
-  tk::destroy(m_uNodalExtrmc);
-  tk::destroy(m_pNodalExtrmc);
-
   if (rdof > 1) {
     g_dgpde[d->MeshId()].limit( d->T(), pref, myGhosts()->m_geoFace,
               myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_esup,
               myGhosts()->m_inpoel, myGhosts()->m_coord, m_ndof, d->Gid(),
-              d->Bid(), m_uNodalExtrm, m_pNodalExtrm, m_mtInv, m_u, m_p,
-              m_shockmarker );
+              d->Bid(), m_mtInv, m_u, m_p, m_shockmarker );
 
     if (g_inputdeck.get< tag::limsol_projection >())
       g_dgpde[d->MeshId()].CPL(m_p, myGhosts()->m_geoElem,
@@ -1359,10 +1081,22 @@ DG::dt()
         g_dgpde[d->MeshId()].dt( myGhosts()->m_coord, myGhosts()->m_inpoel,
           myGhosts()->m_fd,
           myGhosts()->m_geoFace, myGhosts()->m_geoElem, m_ndof, m_u, m_p,
-          myGhosts()->m_fd.Esuel().size()/4 );
+          myGhosts()->m_fd.Esuel().size()/4, m_dte );
       if (eqdt < mindt) mindt = eqdt;
 
-      mindt *= g_inputdeck.get< tag::cfl >();
+      // time-step suppression for unsteady problems
+      tk::real coeff(1.0);
+      if (!g_inputdeck.get< tag::steady_state >()) {
+        auto ramp_steps = g_inputdeck.get< tag::cfl_ramping_steps >();
+        if (g_inputdeck.get< tag::cfl_ramping >() && d->It() < ramp_steps)
+          coeff = 1.0/static_cast< tk::real >(ramp_steps)
+            * static_cast< tk::real >(d->It()+1);
+      }
+      else {
+        for (auto& edt : m_dte) edt *= g_inputdeck.get< tag::cfl >();
+      }
+ 
+      mindt *= coeff * g_inputdeck.get< tag::cfl >();
     }
   }
   else
@@ -1370,12 +1104,59 @@ DG::dt()
     mindt = d->Dt();
   }
 
-  // Resize the buffer vector of nodal extrema
-  resizeNodalExtremac();
+  // Set up the reduction target for finding minimum dt across chares.
+  // 1. If implicit solver is used, first invoke the solver object via
+  // appropriate entry methods, and then proceed to solve.
+  // 2. If explicit, directly proceed to solve.
+  CkCallback minDtDone;
+  if (!g_inputdeck.get< tag::implicit_timestepping >())
+    minDtDone = CkCallback(CkReductionTarget(DG,solve), thisProxy);
+  else
+    minDtDone = CkCallback(CkReductionTarget(DG,initializeLinearSystem),
+      thisProxy);
 
   // Contribute to minimum dt across all chares then advance to next step
-  contribute( sizeof(tk::real), &mindt, CkReduction::min_double,
-              CkCallback(CkReductionTarget(DG,solve), thisProxy) );
+  contribute( sizeof(tk::real), &mindt, CkReduction::min_double, minDtDone );
+}
+
+void
+DG::initializeLinearSystem( tk::real newdt )
+// *****************************************************************************
+// Initialize the linear solver via the interface BiCG::init()
+//! \param[in] newdt Size of this new time step
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Set new time step size
+  if (m_stage == 0) d->setdt( newdt );
+
+  // Initialize linear solver, and route to solveLinearSystem()
+  // TODO: linear solver:
+  // 1. jacobian computation (call to e.g. g_dgpde[d->MeshId()].computeJacobian)
+  // 2. the following call is just a stand-in/example- verify correctness
+  d->ImplicitSolver()[ thisIndex ].init( m_u.flat(), {}, {}, 1,
+    CkCallback(CkIndex_DG::solveLinearSystem(), thisProxy[thisIndex]) );
+}
+
+void
+DG::solveLinearSystem()
+// *****************************************************************************
+// Solve the linear system via the interface BiCG::solve()
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Get new time step size to pass along to solve()
+  auto dt = d->Dt();
+
+  // Solve linear system, and route to solve()
+  // TODO: linear solver:
+  //  the following call is just a stand-in/example- verify correctness
+  d->ImplicitSolver()[ thisIndex ].solve(
+     g_inputdeck.get< tag::ale, tag::maxit >(),
+     g_inputdeck.get< tag::residual >(),
+     CkCallback(CkIndex_DG::solve(dt), thisProxy[thisIndex]) );
 }
 
 void
@@ -1385,12 +1166,13 @@ DG::solve( tk::real newdt )
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
-  thisProxy[ thisIndex ].wait4refine();
+  if (pref) thisProxy[ thisIndex ].wait4refine();
   thisProxy[ thisIndex ].wait4smooth();
   thisProxy[ thisIndex ].wait4reco();
-  thisProxy[ thisIndex ].wait4nodalExtrema();
   thisProxy[ thisIndex ].wait4lim();
   thisProxy[ thisIndex ].wait4nod();
 
@@ -1398,16 +1180,18 @@ DG::solve( tk::real newdt )
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
-  // Set new time step size
-  if (m_stage == 0) d->setdt( newdt );
+  // Set new time step size. If implicit solver, time step has already been
+  // set in initializeImplicitSystem()
+  if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
+    d->setdt( newdt );
 
   // Update Un
   if (m_stage == 0) m_un = m_u;
 
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
+  const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
 
   // physical time at time-stage for computing exact source terms
   tk::real physT(d->T());
@@ -1421,21 +1205,34 @@ DG::solve( tk::real newdt )
   if (imex_runge_kutta) {
     if (m_stage == 0)
     {
-      // Save previous rhs
-      m_rhsprev = m_rhs;
       // Initialize m_stiffrhs to zero
       m_stiffrhs.fill(0.0);
       m_stiffrhsprev.fill(0.0);
     }
   }
 
-  g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-    myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-    myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
+  if (!imex_runge_kutta || m_stage < m_nstage-1) {
+    if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
+    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+      myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
+  }
 
-  if (!imex_runge_kutta) {
+  if (imex_runge_kutta) {
+    // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
+    DG::imex_integrate();
+  }
+  else if (implicit_ts) {
+    // Implicit time-stepping using BDF1 to discretize time-derivative
+    DG::BDF1_integrate();
+  }
+  else {
     // Explicit time-stepping using RK3 to discretize time-derivative
-    for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+    const auto steady = g_inputdeck.get< tag::steady_state >();
+    for(std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+      auto vole = myGhosts()->m_geoElem(e,0);
+      auto dte = d -> Dt();
+      if (steady) dte = m_dte[e];
       for(std::size_t c=0; c<neq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
@@ -1445,16 +1242,13 @@ DG::solve( tk::real newdt )
             auto mark = c*ndof+k;
             m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
               + rkcoef[1][m_stage] * ( m_u(e, rmark)
-                + d->Dt() * m_rhs(e, mark)/m_lhs(e, mark) );
+                + dte * m_rhs(e, mark)/ (vole*mass_dubiner[k]));
             if(fabs(m_u(e, rmark)) < 1e-16)
               m_u(e, rmark) = 0;
           }
         }
       }
-  }
-  else {
-    // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
-    DG::imex_integrate();
+    }
   }
 
   for(std::size_t e=0; e<myGhosts()->m_nunk; ++e)
@@ -1474,14 +1268,14 @@ DG::solve( tk::real newdt )
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof, m_interface );
-  g_dgpde[d->MeshId()].updatePrimitives( m_u, m_lhs, myGhosts()->m_geoElem, m_p,
+  g_dgpde[d->MeshId()].updatePrimitives( m_u, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof );
   if (!g_inputdeck.get< tag::accuracy_test >()) {
     g_dgpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem, m_u,
       m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
 
-  if (m_stage < 2) {
+  if (m_stage < m_nstage-1) {
 
     // continue with next time step stage
     stage();
@@ -1497,13 +1291,13 @@ DG::solve( tk::real newdt )
       m_ndof, m_u, m_un );
 
     // Continue to mesh refinement (if configured)
-    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 0.0 ) );
+    if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
 
   }
 }
 
 void
-DG::refine( [[maybe_unused]] const std::vector< tk::real >& l2res )
+DG::refine( const std::vector< tk::real >& l2res )
 // *****************************************************************************
 // Optionally refine/derefine mesh
 //! \param[in] l2res L2-norms of the residual for each scalar component
@@ -1511,6 +1305,18 @@ DG::refine( [[maybe_unused]] const std::vector< tk::real >& l2res )
 // *****************************************************************************
 {
   auto d = Disc();
+
+  // Assess convergence for steady state
+  const auto steady = g_inputdeck.get< tag::steady_state >();
+  const auto residual = g_inputdeck.get< tag::residual >();
+  const auto rc = g_inputdeck.get< tag::rescomp >() - 1;
+
+  bool converged(false);
+  if (steady) converged = l2res[rc] < residual;
+
+  // this is the last time step if max time of max number of time steps
+  // reached or the residual has reached its convergence criterion
+  if (d->finished() or converged) m_finished = 1;
 
   auto dtref = g_inputdeck.get< tag::amr, tag::dtref >();
   auto dtfreq = g_inputdeck.get< tag::amr, tag::dtfreq >();
@@ -1584,18 +1390,10 @@ DG::resizePostAMR(
   m_p.resize( nelem );
   m_u.resize( nelem );
   m_un.resize( nelem );
-  m_lhs.resize( nelem );
   m_rhs.resize( nelem );
   m_rhsprev.resize( nelem );
   m_stiffrhs.resize( nelem );
   m_stiffrhsprev.resize( nelem );
-  m_uNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*g_inputdeck.get< tag::ncomp >() ) );
-  m_pNodalExtrm.resize( Disc()->Bid().size(), std::vector<tk::real>( 2*
-    m_ndof_NodalExtrm*m_p.nprop()/g_inputdeck.get< tag::rdof >()));
-
-  // Resize the buffer vector of nodal extrema
-  resizeNodalExtremac();
 
   myGhosts()->m_fd = FaceData( myGhosts()->m_inpoel, bface,
     tk::remap(triinpoel,d->Lid()) );
@@ -1642,7 +1440,7 @@ DG::fieldOutput() const
   auto d = Disc();
 
   // Output field data
-  return d->fielditer() or d->fieldtime() or d->fieldrange() or d->finished();
+  return d->fielditer() or d->fieldtime() or d->fieldrange() or m_finished;
 }
 
 bool
@@ -1653,7 +1451,7 @@ DG::refinedOutput() const
 // *****************************************************************************
 {
   return g_inputdeck.get< tag::field_output, tag::refined >() &&
-         g_inputdeck.get< tag::scheme >() != ctr::SchemeType::DG;
+         g_inputdeck.get< tag::scheme >() != ctr::SchemeType::DGP0;
 }
 
 void
@@ -1761,13 +1559,12 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
-  // Add rho0*det(g)/rho to make sure it is staying close to 1,
-  // averaged for all materials
-  std::vector< tk::real > densityConstr(nelem);
-  g_dgpde[d->MeshId()].computeDensityConstr(nelem, m_u, densityConstr);
+  // Compute plastic deformation averaged for all materials
+  std::vector< tk::real > plasticDeformation(nelem);
+  g_dgpde[d->MeshId()].computePlasticDeformation(nelem, m_u, m_p, plasticDeformation);
   for (const auto& [child,parent] : addedTets)
-    densityConstr[child] = 0.0;
-  if (densityConstr.size() > 0) elemfields.push_back( densityConstr );
+    plasticDeformation[child] = 0.0;
+  if (plasticDeformation.size() > 0) elemfields.push_back( plasticDeformation );
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
@@ -1783,17 +1580,24 @@ DG::writeFields(
 
   elemfieldnames.push_back( "shock_marker" );
 
-  if (densityConstr.size() > 0)
-    elemfieldnames.push_back( "density_constraint" );
+  if (plasticDeformation.size() > 0)
+    elemfieldnames.push_back( "plastic_deformation" );
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
+
+  // Collect surface output names
+  auto surfnames = g_dgpde[d->MeshId()].surfNames();
+
+  // Collect surface field solution
+  const auto& fd = myGhosts()->m_fd;
+  auto elemsurfs = g_dgpde[d->MeshId()].surfOutput(fd, m_u, m_p);
 
   // Output chare mesh and fields metadata to file
   const auto& triinpoel = m_outmesh.triinpoel;
   d->write( inpoel, m_outmesh.coord, m_outmesh.bface, {},
             tk::remap( triinpoel, lid ), elemfieldnames, nodefieldnames,
-            {}, {}, elemfields, nodefields, {}, {}, c );
+            surfnames, {}, elemfields, nodefields, elemsurfs, {}, c );
 }
 
 void
@@ -1849,7 +1653,7 @@ DG::stage()
 
   // if not all Runge-Kutta stages complete, continue to next time stage,
   // otherwise prepare for nodal field output
-  if (m_stage < 3)
+  if (m_stage < m_nstage)
     next();
   else
     startFieldOutput( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
@@ -1865,7 +1669,7 @@ DG::evalLB( int nrestart )
   auto d = Disc();
 
   // Detect if just returned from a checkpoint and if so, zero timers
-  d->restarted( nrestart );
+  if (d->restarted( nrestart )) m_finished = 0;
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();
@@ -1932,12 +1736,8 @@ DG::step()
   // Reset Runge-Kutta stage counter
   m_stage = 0;
 
-  const auto term = g_inputdeck.get< tag::term >();
-  const auto nstep = g_inputdeck.get< tag::nstep >();
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-
   // If neither max iterations nor max time reached, continue, otherwise finish
-  if (std::fabs(d->T()-term) > eps && d->It() < nstep) {
+  if (not m_finished) {
 
     evalRestart();
  
@@ -1984,7 +1784,13 @@ DG::imex_integrate()
 //!    B2 = u[n] + dt * (expl_rkcoef[2,1]*R_ex(u[0])+impl_rkcoef[2,1]*R_im(u[0])),
 //!    R2 = dt * impl_rkcoef[2,2]*R_im(u[1]) - u([1]).
 //!
-//!    In order to solve the non-linear system F(U) = 0, we employ Broyden's method.
+//!    In order to solve the non-linear system F(U) = 0, we employ:
+//!    First, Broyden's method.
+//!    If that fails, Newton's method (with FD approximation for jacobian).
+//!
+//!    Broyden's method:
+//!    ----------------
+//!
 //!    Taken from https://en.wikipedia.org/wiki/Broyden%27s_method.
 //!    The method consists in obtaining an approximation for the inverse of the
 //!    Jacobian H = J^(-1) and advancing in a quasi-newton step:
@@ -1999,6 +1805,18 @@ DG::imex_integrate()
 //!
 //!    where DU[k] = U[k] - U[k-1] and DF[k] = F(U[k]) - F(U[k-1)).
 //!
+//!    Newton's method:
+//!    ----------------
+//!
+//!    Taken from https://en.wikipedia.org/wiki/Newton%27s_method
+//!    The method consists in inverting the jacobian
+//!    Jacobian J and advancing in a Newton step:
+//!
+//!    U[k+1] = U[k] - J^(-1)[k]*F(U[k]),
+//!
+//!    until F(U) is close enough to zero.
+//!
+//!
 //!    This function performs the following main algorithmic steps:
 //!    - If stage == 0 or stage == 1:
 //!      - Take Initial value:
@@ -2006,9 +1824,11 @@ DG::imex_integrate()
 //!        U[1] = U[n] + dt * (expl_rkcoef[2,1]*R_ex(U[0])
 //!                           +impl_rkcoef[2,1]*R_im(U[0])) (for stage 1)
 //!      - Loop over the Elements (e++)
-//!        - Initialize Jacobian inverse approximation as the identity
+//!        - Broyden steps:
+//!        - Initialize Jacobian inverse approximation using FD
 //!        - Compute implicit right-hand-side (F_im) with current U
 //!        - Iterate for the solution (iter++)
+//!          - Perform line search prior to solution update
 //!          - Compute new solution U[k+1] = U[k] - H[k]*F(U[k])
 //!          - Compute implicit right-hand-side (F_im) with current U
 //!          - Compute DU and DF
@@ -2017,6 +1837,17 @@ DG::imex_integrate()
 //!            - Compute d = DU[k]^T*V1 and V3 = DU[k]-V1
 //!            - Compute V4 = V3/d
 //!            - Update H[k] = H[k-1] + V4*V2
+//!          - Save old U and F
+//!          - Compute absolute and relative errors
+//!          - Break iterations if error < tol or iter == max_iter
+//!        - Newton steps:
+//!          - Initialize Jacobian using FD approximation.
+//!          - Compute implicit right-hand-side (F_im) with current U
+//!          - Iterate for the solution (iter++)
+//!          - Perform line search prior to solution update
+//!          - Compute new solution U[k+1] = U[k] - J^(-1)[k]*F(U[k])
+//!          - Compute implicit right-hand-side (F_im) with current U
+//!          - Compute DU and DF
 //!          - Save old U and F
 //!          - Compute absolute and relative errors
 //!          - Break iterations if error < tol or iter == max_iter
@@ -2031,302 +1862,991 @@ DG::imex_integrate()
   auto d = Disc();
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
-  if (m_stage < 2) {
+  if (m_stage < m_nstage-1) {
     // Save previous stiff_rhs
     m_stiffrhsprev = m_stiffrhs;
 
     // Compute the imex update
+    const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+    const auto neq = m_u.nprop()/rdof;
 
-    // Integrate explicitly on the imex equations
-    // (To use as initial values)
-    for (std::size_t e=0; e<myGhosts()->m_nunk; ++e)
+    for (std::size_t e=0; e<nelem; ++e) {
+      auto vole = myGhosts()->m_geoElem(e,0);
+      // Integrate explicitly on all equations
+      for (std::size_t c=0; c<neq; ++c)
+      {
+        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+        {
+          auto rmark = c*rdof+k;
+          auto mark = c*ndof+k;
+          m_u(e, rmark) = m_un(e, rmark) + d->Dt() * (
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
+          if(fabs(m_u(e, rmark)) < 1e-16)
+            m_u(e, rmark) = 0;
+        }
+      }
+      // Integrate previous implicit step, which is now explicit
       for (std::size_t c=0; c<m_nstiffeq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
           auto rmark = m_stiffEqIdx[c]*rdof+k;
-          auto mark = m_stiffEqIdx[c]*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark)
-            + impl_rkcoef[0][m_stage]
-            * m_stiffrhsprev(e,c*ndof+k)/m_lhs(e, mark) );
+          m_u(e, rmark) += d->Dt() *
+            ( impl_rkcoef[0][m_stage]
+            * m_stiffrhsprev(e,c*ndof+k)/(vole*mass_dubiner[k]) );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
       }
+    }
 
     // Solve for implicit-explicit equations
-    const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
     for (std::size_t e=0; e<nelem; ++e)
     {
-      // Non-linear system f(u) = 0 to be solved
-      // Broyden's method
-      // Control parameters
-      std::size_t max_iter = g_inputdeck.get< tag::imex_maxiter >();
-      tk::real rel_tol = g_inputdeck.get< tag::imex_reltol >();
-      tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
-      tk::real rel_err = rel_tol+1;
-      tk::real abs_err = abs_tol+1;
-      std::size_t nstiff = m_nstiffeq*ndof;
 
-      // Initialize Jacobian to be the identity
-      std::vector< std::vector< tk::real > >
-        approx_jacob(nstiff, std::vector< tk::real >(nstiff, 0.0));
-      for (std::size_t i=0; i<nstiff; ++i)
-        approx_jacob[i][i] = 1.0e+00;
-
-      // Save explicit terms to be re-used
-      std::vector< tk::real > expl_terms(nstiff, 0.0);
+      // Non-linear solver solves for x.
+      // Copy the relevant variables from the state array into x.
+      std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
       for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
-          auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
           auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-          expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
-            + d->Dt() * ( expl_rkcoef[0][m_stage]
-            * m_rhsprev(e,stiffmark)/m_lhs(e,stiffmark)
-            + expl_rkcoef[1][m_stage]
-            * m_rhs(e,stiffmark)/m_lhs(e,stiffmark)
-            + impl_rkcoef[0][m_stage]
-            * m_stiffrhsprev(e,ieq*ndof+idof)/m_lhs(e,stiffmark) );
+          x[ieq*ndof+idof] = m_u(e, stiffrmark);
         }
 
-      // Compute stiff_rhs with initial u
-      g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
-        myGhosts()->m_inpoel, myGhosts()->m_coord,
-        m_u, m_p, m_ndof, m_stiffrhs );
+      // Save all the values of m_u at stiffEqIdx as x_star,
+      // They will serve to balance the energy exchange
+      // from the implicit step
+      auto x_star = x;
 
-      // Make auxiliary u_old and f_old to store previous values
-      std::vector< tk::real > u_old(nstiff, 0.0), f_old(nstiff, 0.0);
-      // Make delta_u and delta_f
-      std::vector< tk::real > delta_u(nstiff, 0.0), delta_f(nstiff, 0.0);
-      // Store f
-      std::vector< tk::real > f(nstiff, 0.0);
-      for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      // Solve nonlinear system, first try broyden
+      bool solver_failed = false;
+      x = DG::nonlinear_broyden(e, x, solver_failed);
+
+      // If solver_failed, do newton
+      if (solver_failed) {
+        solver_failed = false;
+        x = DG::nonlinear_newton(e, x, solver_failed);
+      }
+
+      // If newton failed, crash
+      if (solver_failed)
+        Throw("At element " + std::to_string(e) +
+              " nonlinear solvers was not able to converge");
+
+      // Balance energy
+      g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
+
+      // Update the state u with the converged vector x.
+      for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+        for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
           auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-          auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
-          f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
-            + d->Dt() * impl_rkcoef[1][m_stage]
-            * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
-            - m_u(e, stiffrmark);
+          m_u(e, stiffrmark) = x[ieq*ndof+idof];
         }
 
-      // Initialize u_old and f_old
-      for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-        {
-          u_old[ieq*ndof+idof] = m_u(e, m_stiffEqIdx[ieq]*rdof+idof);
-          f_old[ieq*ndof+idof] = f[ieq*ndof+idof];
-        }
-
-      // Store the norm of f initially, for relative error measure
-      tk::real err0 = 0.0;
-      for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-          err0 += f[ieq*ndof+idof]*f[ieq*ndof+idof];
-      err0 = std::sqrt(err0);
-
-      // Iterate for the solution if err0 > 0
-      if (err0 > abs_tol)
-        for (size_t iter=0; iter<max_iter; ++iter)
-        {
-
-          // Compute new solution
-          tk::real delta;
-          for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-            for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-            {
-              delta = 0.0;
-              for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
-                for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-                  delta +=
-                    approx_jacob[ieq*ndof+idof][jeq*ndof+jdof] * f[jeq*ndof+jdof];
-              // Update u
-              auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-              m_u(e, stiffrmark) -= delta;
-            }
-
-          // Compute new stiff_rhs
-          g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
-            myGhosts()->m_inpoel, myGhosts()->m_coord,
-            m_u, m_p, m_ndof, m_stiffrhs );
-
-          // Compute new f(u)
-          for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-            for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-            {
-              auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-              auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
-              f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
-                + d->Dt() * impl_rkcoef[1][m_stage]
-                * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,stiffmark)
-                - m_u(e, stiffrmark);
-            }
-
-          // Compute delta_u and delta_f
-          for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-            for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-            {
-              auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-              delta_u[ieq*ndof+idof] = m_u(e, stiffrmark) - u_old[ieq*ndof+idof];
-              delta_f[ieq*ndof+idof] = f[ieq*ndof+idof] - f_old[ieq*ndof+idof];
-            }
-
-          // Update inverse Jacobian approximation
-
-          // 1. Compute approx_jacob*delta_f and delta_u*jacob_approx
-          tk::real sum1, sum2;
-          std::vector< tk::real > auxvec1(nstiff, 0.0), auxvec2(nstiff, 0.0);
-          for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-            for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-            {
-              sum1 = 0.0;
-              sum2 = 0.0;
-              for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
-                for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-                {
-                  sum1 += approx_jacob[ieq*ndof+idof][jeq*ndof+jdof] *
-                    delta_f[jeq*ndof+jdof];
-                  sum2 += delta_u[jeq*ndof+jdof] *
-                    approx_jacob[jeq*ndof+jdof][ieq*ndof+idof];
-                }
-              auxvec1[ieq*ndof+idof] = sum1;
-              auxvec2[ieq*ndof+idof] = sum2;
-            }
-
-          // 2. Compute delta_u*approx_jacob*delta_f
-          // and delta_u-approx_jacob*delta_f
-          tk::real denom = 0.0;
-          for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
-            for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-            {
-              denom += delta_u[jeq*ndof+jdof]*auxvec1[jeq*ndof+jdof];
-              auxvec1[jeq*ndof+jdof] =
-                delta_u[jeq*ndof+jdof]-auxvec1[jeq*ndof+jdof];
-            }
-
-          // 3. Divide delta_u+approx_jacob*delta_f
-          // by delta_u*(approx_jacob*delta_f)
-          if (std::abs(denom) < 1.0e-18)
-          {
-            if (denom < 0.0)
-            {
-              for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
-                for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-                  auxvec1[jeq*ndof+jdof] /= -1.0e-18;
-            }
-            else
-            {
-              for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
-                for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-                  auxvec1[jeq*ndof+jdof] /= 1.0e-18;
-            }
-          }
-          else
-          {
-            for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
-              for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-                auxvec1[jeq*ndof+jdof] /= denom;
-          }
-
-          // 4. Perform outter product between the two arrays and
-          // add that quantity to the new jacobian approximation
-          for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-            for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-              for (std::size_t jeq=0; jeq<m_nstiffeq; ++jeq)
-                for (std::size_t jdof=0; jdof<m_numEqDof[jeq]; ++jdof)
-                  approx_jacob[ieq*ndof+idof][jeq*ndof+jdof] +=
-                    auxvec1[ieq*ndof+idof] * auxvec2[jeq*ndof+jdof];
-
-          // Save solution and f
-          for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-            for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-            {
-              u_old[ieq*ndof+idof] = m_u(e, m_stiffEqIdx[ieq]*rdof+idof);
-              f_old[ieq*ndof+idof] = f[ieq*ndof+idof];
-            }
-
-          // Compute a measure of error, use norm of f
-          tk::real err = 0.0;
-          for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-            for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
-              err += f[ieq*ndof+idof]*f[ieq*ndof+idof];
-          abs_err = std::sqrt(err);
-          rel_err = abs_err/err0;
-
-          // Check if error condition is met and loop back
-          if (rel_err < rel_tol || abs_err < abs_tol)
-            break;
-
-          // If we did not converge, print a message
-          if (iter == max_iter-1)
-          {
-            printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
-            printf("Element #%lu\n", e);
-            printf("Relative error: %e\n", rel_err);
-            printf("Absolute error: %e\n\n", abs_err);
-          }
-        }
     }
 
-    // Then, integrate explicitly on the remaining equations
-    for (std::size_t e=0; e<nelem; ++e)
-      for (std::size_t c=0; c<m_nnonstiffeq; ++c)
-      {
-        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
-        {
-          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
-          auto mark = m_nonStiffEqIdx[c]*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
-          if(fabs(m_u(e, rmark)) < 1e-16)
-            m_u(e, rmark) = 0;
-        }
-      }
   }
   else {
     // For last stage just use all previously computed stages
     const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+    const auto neq = m_u.nprop()/rdof;
     for (std::size_t e=0; e<nelem; ++e)
     {
-      // First integrate explicitly on nonstiff equations
-      for (std::size_t c=0; c<m_nnonstiffeq; ++c)
+      auto vole = myGhosts()->m_geoElem(e,0);
+      // First integrate explicitly on all equations
+      for (std::size_t c=0; c<neq; ++c)
       {
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
-          auto rmark = m_nonStiffEqIdx[c]*rdof+k;
-          auto mark = m_nonStiffEqIdx[c]*ndof+k;
+          auto rmark = c*rdof+k;
+          auto mark = c*ndof+k;
           m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/m_lhs(e, mark)
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/m_lhs(e, mark));
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
       }
-      // Then, integrate the imex-equations
+      // Then, integrate the implicit part
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
           auto rmark = m_stiffEqIdx[ieq]*rdof+idof;
-          auto mark = m_stiffEqIdx[ieq]*ndof+idof;
-          m_u(e, rmark) = m_un(e, rmark)
-            + d->Dt() * (expl_rkcoef[0][m_stage]
-                         * m_rhsprev(e,mark)/m_lhs(e,mark)
-                         + expl_rkcoef[1][m_stage]
-                         * m_rhs(e,mark)/m_lhs(e,mark)
-                         + impl_rkcoef[0][m_stage]
-                         * m_stiffrhsprev(e,ieq*ndof+idof)/m_lhs(e,mark)
-                         + impl_rkcoef[1][m_stage]
-                         * m_stiffrhs(e,ieq*ndof+idof)/m_lhs(e,mark) );
+          m_u(e, rmark) +=
+            d->Dt() * ( impl_rkcoef[0][m_stage]
+                      * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
+                      + impl_rkcoef[1][m_stage]
+                      * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
     }
   }
 }
+
+void
+DG::BDF1_integrate()
+// *****************************************************************************
+//  Perform the BDF1 update
+//! \details This function updates the solution using the BDF1 (backward Euler)
+//!   time discretization.
+// *****************************************************************************
+{
+  //TODO: implicit solver:
+  // update solution m_u
+}
+
+std::vector< tk::real > DG::nonlinear_func(std::size_t e,
+                                           std::vector< tk::real > x)
+// *****************************************************************************
+// Evaluate the stiff RHS and stiff equations f = b - A(x)
+//! \param[in] e Element number
+//! \param[in,out] x Array of unknowns to solve for
+//! \details
+//!   Defines the F(x) function that the non-linear solvers
+//!   look to minimize. Deals with properly calling the stiff
+//!   RHS functions.
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  std::size_t n = x.size();
+
+  // m_u <- x
+  for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+    for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+    {
+      auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+      m_u(e, stiffrmark) = x[ieq*ndof+idof];
+    }
+
+  auto vole = myGhosts()->m_geoElem(e,0);
+
+  // Compute explicit terms (Should be computed once)
+  std::vector< tk::real > expl_terms(n, 0.0);
+  for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+    for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+    {
+      auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
+      auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+      expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
+        + d->Dt() * ( expl_rkcoef[0][m_stage]
+        * m_rhsprev(e,stiffmark)/(vole*mass_dubiner[idof])
+        + expl_rkcoef[1][m_stage]
+        * m_rhs(e,stiffmark)/(vole*mass_dubiner[idof])
+        + impl_rkcoef[0][m_stage]
+        * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
+    }
+
+  // Compute stiff_rhs
+  g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
+    m_u, m_ndof, m_stiffrhs );
+
+  // Store f
+  std::vector< tk::real > f(n, 0.0);
+  for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+    for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+    {
+      auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+      f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
+        + d->Dt() * impl_rkcoef[1][m_stage]
+        * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
+        - m_u(e, stiffrmark);
+    }
+
+  return f;
+}
+
+std::vector< tk::real > DG::nonlinear_broyden(std::size_t e,
+                                              std::vector< tk::real > x,
+                                              bool solver_failed )
+// *****************************************************************************
+// Performs Broyden's method to solve a non-linear system on
+// element e.
+//! \param[in] e Element number
+//! \param[in,out] x Array of unknowns to solve for
+//! \param[out] solver_failed Returns true if solver did not converge
+//! \details
+//!    Taken from https://en.wikipedia.org/wiki/Broyden%27s_method.
+//!    The method consists in obtaining an approximation for the inverse of the
+//!    Jacobian H = J^(-1) and advancing in a quasi-newton step:
+//!
+//!    U[k+1] = U[k] - H[k]*F(U[k]),
+//!
+//!    until F(U) is close enough to zero.
+// *****************************************************************************
+{
+  // Broyden's method
+  // Control parameters
+  std::size_t max_iter = g_inputdeck.get< tag::imex_maxiter >();
+  tk::real rel_tol = g_inputdeck.get< tag::imex_reltol >();
+  tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
+  tk::real rel_err = rel_tol+1;
+  tk::real abs_err = abs_tol+1;
+  std::size_t n = x.size();
+
+  // Compute f with initial guess
+  std::vector< tk::real > f = DG::nonlinear_func(e, x);
+
+  // Initialize x_old and f_old
+  std::vector< tk::real > x_old(n, 0.0), f_old(n, 0.0);
+  for (std::size_t i=0; i<n; ++i)
+  {
+    x_old[i] = x[i];
+    f_old[i] = f[i];
+  }
+
+  // Initialize delta_x and delta_f
+  std::vector< tk::real > delta_x(n, 0.0), delta_f(n, 0.0);
+
+  // Store the norm of f initially, for relative error measure
+  tk::real err0 = 0.0;
+  for (std::size_t i=0; i<n; ++i)
+    err0 += f[i]*f[i];
+  err0 = std::sqrt(err0);
+
+  // Iterate for the solution if err0 > 0
+  solver_failed = false;
+  tk::real alpha_jacob = 1.0;
+  if (err0 > abs_tol) {
+
+    // Evaluate finite difference based jacobian
+    std::vector< double > jacob(n*n);
+    tk::real dx = 0.0;
+    for (std::size_t i=0; i<n; ++i)
+      for (std::size_t j=0; j<n; ++j)
+      {
+        // Set dx in the order 1% of the unknown
+        dx = std::max(std::abs(0.1*x[j]),1.0e-06);
+        // Derivative of f[i] with respect to x[j]
+        auto x_perturb = x;
+        x_perturb[j] += dx;
+        auto f_perturb = DG::nonlinear_func(e, x_perturb);
+        jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
+      }
+
+    // Initialize Jacobian to be the inverse of this jacobian
+    lapack_int ln = static_cast< lapack_int >(n);
+    std::vector< lapack_int > ipiv(n);
+
+    #ifndef NDEBUG
+    lapack_int ierr =
+    #endif
+      LAPACKE_dgetrf(LAPACK_ROW_MAJOR, ln, ln, jacob.data(), ln, ipiv.data());
+    Assert(ierr==0, "Lapack error in LU factorization of FD Jacobian");
+
+    #ifndef NDEBUG
+    lapack_int jerr =
+    #endif
+      LAPACKE_dgetri(LAPACK_ROW_MAJOR, ln, jacob.data(), ln, ipiv.data());
+    Assert(jerr==0, "Lapack error in inverting FD Jacobian");
+
+    std::vector< std::vector< tk::real > >
+      approx_jacob(n, std::vector< tk::real >(n, 0.0));
+    for (std::size_t i=0; i<n; ++i)
+      for (std::size_t j=0; j<n; ++j)
+        approx_jacob[i][j] = jacob[i*n+j];
+
+    for (size_t iter=0; iter<max_iter; ++iter)
+    {
+
+      // Scale inverse of jacobian if things are not going well
+      for (std::size_t i=0; i<n; ++i)
+        for (std::size_t j=0; j<n; ++j)
+          approx_jacob[i][j] *= alpha_jacob;
+
+      // Compute new solution
+      std::vector < tk::real > delta(n, 0.0);
+      for (std::size_t i=0; i<n; ++i)
+      {
+        delta[i] = 0.0;
+        for (std::size_t j=0; j<n; ++j)
+          delta[i] -= approx_jacob[i][j] * f[j];
+      }
+
+      // Update x using line search
+      bool ls_failed = false;
+      tk::real alpha_ls = 1.0E+00;
+      std::size_t nline = 25;
+      auto xtest = x;
+      for (std::size_t iline = 0; iline<nline; ++iline)
+      {
+        // Evaluate xtest
+        for (std::size_t i=0; i<n; ++i)
+          xtest[i] = x[i] + alpha_ls*delta[i];
+
+        // Compute new f(x)
+        f = DG::nonlinear_func(e, xtest);
+
+        tk::real err = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+          err += f[i]*f[i];
+        abs_err = std::sqrt(err);
+
+        // If 1. The error went up
+        // or 2. The function f flipped in sign
+        // Reduce the factor alpha_ls
+        bool flipped_sign = false;
+        for (std::size_t i=0; i<n; ++i)
+          if (f_old[i]*f[i] < 0.0) {
+            flipped_sign = true;
+            break;
+          }
+
+        if (!flipped_sign)
+        {
+          break;
+        }
+        else
+        {
+          alpha_ls *= 0.5;
+        }
+        if (iline == nline-1) {
+          // Try again by reducing the jacobian,
+          // but only a few times, otherwise give up
+          alpha_jacob *= 0.5;
+          if (alpha_jacob < 1.0E-03)
+            solver_failed = true;
+          else
+            ls_failed = true;
+        }
+      }
+
+      if (solver_failed) {
+        break;
+      }
+
+      if (!ls_failed) {
+        // Save x
+        for (std::size_t i=0; i<n; ++i)
+          x[i] = xtest[i];
+
+        // Compute delta_x and delta_f
+        for (std::size_t i=0; i<n; ++i)
+        {
+          delta_x[i] = x[i] - x_old[i];
+          delta_f[i] = f[i] - f_old[i];
+        }
+
+        // Update inverse Jacobian approximation
+
+        // 1. Compute approx_jacob*delta_f and delta_x*jacob_approx
+        tk::real sum1, sum2;
+        std::vector< tk::real > auxvec1(n, 0.0), auxvec2(n, 0.0);
+        for (std::size_t i=0; i<n; ++i)
+        {
+          sum1 = 0.0;
+          sum2 = 0.0;
+          for (std::size_t j=0; j<n; ++j)
+          {
+            sum1 += approx_jacob[i][j]*delta_f[j];
+            sum2 += delta_x[j]*approx_jacob[j][i];
+          }
+          auxvec1[i] = sum1;
+          auxvec2[i] = sum2;
+        }
+
+        // 2. Compute delta_x*approx_jacob*delta_f
+        // and delta_x-approx_jacob*delta_f
+        tk::real denom = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+        {
+          denom += delta_x[i]*auxvec1[i];
+          auxvec1[i] = delta_x[i]-auxvec1[i];
+        }
+
+        // 3. Divide delta_u+approx_jacob*delta_f
+        // by delta_x*(approx_jacob*delta_f)
+        if (std::abs(denom) < 1.0e-18)
+        {
+          if (denom < 0.0)
+          {
+            for (std::size_t i=0; i<n; ++i)
+              auxvec1[i] /= -1.0e-18;
+          }
+          else
+          {
+            for (std::size_t i=0; i<n; ++i)
+              auxvec1[i] /= 1.0e-18;
+          }
+        }
+        else
+        {
+          for (std::size_t i=0; i<n; ++i)
+            auxvec1[i] /= denom;
+        }
+
+        // 4. Perform outter product between the two arrays and
+        // add that quantity to the new jacobian approximation
+        for (std::size_t i=0; i<n; ++i)
+          for (std::size_t j=0; j<n; ++j)
+            approx_jacob[i][j] += auxvec1[i] * auxvec2[j];
+
+        // Compute a measure of error, use norm of f
+        tk::real err = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+          err += f[i]*f[i];
+        abs_err = std::sqrt(err);
+        rel_err = abs_err/err0;
+
+        // Save solution and f
+        for (std::size_t i=0; i<n; ++i)
+        {
+          x_old[i] = x[i];
+          f_old[i] = f[i];
+        }
+
+        // check if error condition is met and loop back
+        if (rel_err < rel_tol || abs_err < abs_tol)
+          break;
+
+        // If we did not converge, print a message and keep going
+        if (iter == max_iter-1)
+        {
+          solver_failed = true;
+        }
+      }
+    }
+  }
+
+  return x;
+}
+
+std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
+                                             std::vector< tk::real > x,
+                                             bool solver_failed )
+// *****************************************************************************
+// Performs Newton's method to solve a non-linear system on
+// element e.
+//! \param[in] e Element number
+//! \param[in,out] x Array of unknowns to solve for
+//! \param[out] solver_failed Returns true if solver did not converge
+//! \details
+//!    Taken from https://en.wikipedia.org/wiki/Newton%27s_method
+//!    The method consists in inverting the jacobian
+//!    Jacobian J and advancing in a Newton step:
+//!
+//!    U[k+1] = U[k] - J^(-1)[k]*F(U[k]),
+//!
+//!    until F(U) is close enough to zero.
+// *****************************************************************************
+{
+  // Newton's method
+  // Control parameters
+  std::size_t max_iter = g_inputdeck.get< tag::imex_maxiter >();
+  tk::real rel_tol = g_inputdeck.get< tag::imex_reltol >();
+  tk::real abs_tol = g_inputdeck.get< tag::imex_abstol >();
+  tk::real rel_err = rel_tol+1;
+  tk::real abs_err = abs_tol+1;
+  std::size_t n = x.size();
+
+  // Define jacobian
+  std::vector< double > jacob(n*n);
+
+  // Compute f with initial guess
+  std::vector< tk::real > f = DG::nonlinear_func(e, x);
+
+  // Store the norm of f initially, for relative error measure
+  tk::real err0 = 0.0;
+  for (std::size_t i=0; i<n; ++i)
+    err0 += f[i]*f[i];
+  err0 = std::sqrt(err0);
+  auto abs_err_old = err0;
+
+  // Iterate for the solution if err0 > 0
+  solver_failed = false;
+  tk::real alpha_jacob = 1.0;
+  if (err0 > abs_tol)
+    for (std::size_t iter=0; iter<max_iter; ++iter)
+    {
+
+      // Evaluate jacobian
+      tk::real dx = 0.0;
+      for (std::size_t i=0; i<n; ++i)
+        for (std::size_t j=0; j<n; ++j)
+        {
+          // Set dx in the order 1% of the unknown
+          dx = alpha_jacob*std::max(std::abs(0.1*x[j]),1.0e-06);
+          // Derivative of f[i] with respect to x[j]
+          auto x_perturb = x;
+          x_perturb[j] += dx;
+          auto f_perturb = DG::nonlinear_func(e, x_perturb);
+          jacob[i*n+j] = (f_perturb[i]-f[i])/dx;
+        }
+
+      // Compute new solution by solving linear system J*dx = -f
+      lapack_int ln = static_cast< lapack_int >(n);
+      std::vector< double > delta(n);
+      for (std::size_t i=0; i<n; ++i)
+        delta[i] = -f[i];
+      lapack_int info;
+      std::vector< lapack_int > ipiv(n);
+      info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, ln, 1, jacob.data(), ln, ipiv.data(), delta.data(), 1);
+
+      if (info != 0) {
+        printf("Failed with info: %ld\n", info);
+      }
+
+      // Save f as fold
+      std::vector< tk::real > fold(n);
+      for (std::size_t i=0; i<n; ++i)
+        fold[i] = f[i];
+
+      // Update x using line search
+      bool ls_failed = false;
+      tk::real alpha_ls = 1.0E+00;
+      std::size_t nline = 25;
+      auto xtest = x;
+      for (std::size_t iline = 0; iline<nline; ++iline)
+      {
+        // Evaluate xtest
+        for (std::size_t i=0; i<n; ++i)
+          xtest[i] = x[i] + alpha_ls*delta[i];
+
+        // Compute new f(x)
+        f = DG::nonlinear_func(e, xtest);
+
+        tk::real err = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+          err += f[i]*f[i];
+        abs_err = std::sqrt(err);
+
+        // If 1. The error went up
+        // or 2. The function f flipped in sign
+        // Reduce the factor alpha_ls
+        bool flipped_sign = false;
+        for (std::size_t i=0; i<n; ++i)
+          if (fold[i]*f[i] < 0.0) {
+            flipped_sign = true;
+            break;
+          }
+
+        if (abs_err < abs_err_old && !flipped_sign)
+        {
+          break;
+        }
+        else
+        {
+          alpha_ls *= 0.5;
+        }
+        if (iline == nline-1) {
+          //printf("Line search failed to decrease f\n");
+          // Try again by reducing the jacobian,
+          // but only a few times, otherwise give up
+          alpha_jacob *= 0.5;
+          if (alpha_jacob < 1.0E-03)
+            solver_failed = true;
+          else
+            ls_failed = true;
+        }
+      }
+
+      if (solver_failed) {
+        f = DG::nonlinear_func(e, x);
+        printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", iter+1);
+        printf("Element #%lu\n", e);
+        printf("Relative error: %e\n", rel_err);
+        printf("Absolute error: %e\n\n", abs_err);
+        break;
+      }
+
+      if (!ls_failed) {
+        // Save x
+        for (std::size_t i=0; i<n; ++i)
+          x[i] = xtest[i];
+
+        // Compute a measure of error, use norm of f
+        tk::real err = 0.0;
+        for (std::size_t i=0; i<n; ++i)
+          err += f[i]*f[i];
+        abs_err = std::sqrt(err);
+        rel_err = abs_err/err0;
+
+        // check if error condition is met and loop back
+        if (rel_err < rel_tol || abs_err < abs_tol) {
+          break;
+        }
+
+        // If we did not converge, print a message and keep going
+        if (iter == max_iter-1)
+        {
+          printf("\nIMEX-RK: Non-linear solver did not converge in %lu iterations\n", max_iter);
+          printf("Element #%lu\n", e);
+          printf("Relative error: %e\n", rel_err);
+          printf("Absolute error: %e\n\n", abs_err);
+        }
+      }
+    }
+
+  return x;
+
+}
+
+//------------------------------------------------------------------------------
+// Unused Nodal Extrema code
+//------------------------------------------------------------------------------
+// The following code computes the 'nodal extrema' of solutions that can be used
+// for high-order limiting purposes. However, these are currently unused, due to
+// more effective limiting methods in use. Hence the code is commented. The code
+// itself is quite complex and it is worthwhile to keep it.
+//------------------------------------------------------------------------------
+// 1) in DG.hpp:
+//    void pup( PUP::er &p ) override {
+//      p | m_ndof_NodalExtrm;
+//      p | m_nnodalExtrema;
+//      p | m_uNodalExtrm;
+//      p | m_pNodalExtrm;
+//      p | m_uNodalExtrmc;
+//      p | m_pNodalExtrmc;
+//    }
+//    //! \brief Degree of freedom for nodal extrema vector. When DGP1 is applied,
+//    //!   there is one degree of freedom for cell average variable. When DGP2 is
+//    //!   applied, the degree of freedom is 4 which refers to cell average and
+//    //!   gradients in three directions
+//    std::size_t m_ndof_NodalExtrm;
+//    //! \brief Counter signaling that we have received all our nodal extrema from
+//    //!   ghost chare partitions
+//    std::size_t m_nnodalExtrema;
+//    //! Vector of nodal extrema for conservative variables
+//    std::vector< std::vector<tk::real> > m_uNodalExtrm;
+//    //! Vector of nodal extrema for primitive variables
+//    std::vector< std::vector<tk::real> > m_pNodalExtrm;
+//    //! Buffer for vector of nodal extrema for conservative variables
+//    std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
+//    //! Buffer for vector of nodal extrema for primitive variables
+//    std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
+//
+// 2) in dg.ci:
+//      entry void comnodalExtrema( const std::vector< std::size_t >& gid,
+//                                  const std::vector< std::vector< tk::real > >& G1,
+//                                  const std::vector< std::vector< tk::real > >& G2 );
+//
+//      >> Call nodalExtrema() when wait4reco() is done.
+//
+//      entry void wait4nodalExtrema() {
+//        when ownnodalExtrema_complete(), comnodalExtrema_complete()
+//        serial "nodalExtrema" { lim(); } }
+//
+//      entry void ownnodalExtrema_complete();
+//      entry void comnodalExtrema_complete();
+//
+// 3) in DG.cpp:
+//  m_ndof_NodalExtrm( 3 ), // for the first order derivatives in 3 directions
+//
+//  // Allocate storage for the vector of nodal extrema in DG::ctor
+//  m_uNodalExtrm.resize( Disc()->Bid().size(),
+//    std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
+//    g_inputdeck.get< tag::ncomp >() ) );
+//  m_pNodalExtrm.resize( Disc()->Bid().size(),
+//    std::vector<tk::real>( 2 * m_ndof_NodalExtrm *
+//    m_p.nprop() / g_inputdeck.get< tag::rdof >() ) );
+//
+//  // Initialization for the buffer vector of nodal extrema in DG::ctor
+//  resizeNodalExtremac();
+//
+//  // In appropriate locations
+//  thisProxy[ thisIndex ].wait4nodalExtrema();
+//
+//void
+//DG::nodalExtrema()
+//// *****************************************************************************
+//// Compute nodal extrema at chare-boundary nodes. Extrema at internal nodes
+//// are calculated in limiter function.
+//// *****************************************************************************
+//{
+//  // Initialize nodal extrema vector
+//  auto large = std::numeric_limits< tk::real >::max();
+//  for(std::size_t i = 0; i<bid.size(); i++)
+//  {
+//    for (std::size_t c=0; c<ncomp; ++c)
+//    {
+//      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+//      {
+//        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+//        auto min_mark = max_mark + 1;
+//        m_uNodalExtrm[i][max_mark] = -large;
+//        m_uNodalExtrm[i][min_mark] =  large;
+//      }
+//    }
+//    for (std::size_t c=0; c<nprim; ++c)
+//    {
+//      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+//      {
+//        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+//        auto min_mark = max_mark + 1;
+//        m_pNodalExtrm[i][max_mark] = -large;
+//        m_pNodalExtrm[i][min_mark] =  large;
+//      }
+//    }
+//  }
+//
+//  // Evaluate the max/min value for the chare-boundary nodes
+//  if(rdof > 4) {
+//      evalNodalExtrmRefEl(ncomp, nprim, m_ndof_NodalExtrm, d->bndel(),
+//        myGhosts()->m_inpoel, gid, bid, m_u, m_p, m_uNodalExtrm, m_pNodalExtrm);
+//  }
+//
+//  // Communicate extrema at nodes to other chares on chare-boundary
+//  if (d->NodeCommMap().empty())        // in serial we are done
+//    comnodalExtrema_complete();
+//  else  // send nodal extrema to chare-boundary nodes to fellow chares
+//  {
+//    for (const auto& [c,n] : d->NodeCommMap()) {
+//      std::vector< std::vector< tk::real > > g1( n.size() ), g2( n.size() );
+//      std::size_t j = 0;
+//      for (auto i : n)
+//      {
+//        auto p = tk::cref_find(d->Bid(),i);
+//        g1[ j   ] = m_uNodalExtrm[ p ];
+//        g2[ j++ ] = m_pNodalExtrm[ p ];
+//      }
+//      thisProxy[c].comnodalExtrema( std::vector<std::size_t>(begin(n),end(n)),
+//        g1, g2 );
+//    }
+//  }
+//  ownnodalExtrema_complete();
+//}
+//
+//void
+//DG::comnodalExtrema( const std::vector< std::size_t >& gid,
+//                     const std::vector< std::vector< tk::real > >& G1,
+//                     const std::vector< std::vector< tk::real > >& G2 )
+//// *****************************************************************************
+////  Receive contributions to nodal extrema on chare-boundaries
+////! \param[in] gid Global mesh node IDs at which we receive grad contributions
+////! \param[in] G1 Partial contributions of extrema for conservative variables to
+////!   chare-boundary nodes
+////! \param[in] G2 Partial contributions of extrema for primitive variables to
+////!   chare-boundary nodes
+////! \details This function receives contributions to m_uNodalExtrm/m_pNodalExtrm
+////!   , which stores nodal extrems at mesh chare-boundary nodes. While
+////!   m_uNodalExtrm/m_pNodalExtrm stores own contributions, m_uNodalExtrmc
+////!   /m_pNodalExtrmc collects the neighbor chare contributions during
+////!   communication.
+//// *****************************************************************************
+//{
+//  Assert( G1.size() == gid.size(), "Size mismatch" );
+//  Assert( G2.size() == gid.size(), "Size mismatch" );
+//
+//  const auto rdof = g_inputdeck.get< tag::rdof >();
+//  const auto ncomp = m_u.nprop() / rdof;
+//  const auto nprim = m_p.nprop() / rdof;
+//
+//  for (std::size_t i=0; i<gid.size(); ++i)
+//  {
+//    auto& u = m_uNodalExtrmc[gid[i]];
+//    auto& p = m_pNodalExtrmc[gid[i]];
+//    for (std::size_t c=0; c<ncomp; ++c)
+//    {
+//      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+//      {
+//        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+//        auto min_mark = max_mark + 1;
+//        u[max_mark] = std::max( G1[i][max_mark], u[max_mark] );
+//        u[min_mark] = std::min( G1[i][min_mark], u[min_mark] );
+//      }
+//    }
+//    for (std::size_t c=0; c<nprim; ++c)
+//    {
+//      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+//      {
+//        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+//        auto min_mark = max_mark + 1;
+//        p[max_mark] = std::max( G2[i][max_mark], p[max_mark] );
+//        p[min_mark] = std::min( G2[i][min_mark], p[min_mark] );
+//      }
+//    }
+//  }
+//
+//  if (++m_nnodalExtrema == Disc()->NodeCommMap().size())
+//  {
+//    m_nnodalExtrema = 0;
+//    comnodalExtrema_complete();
+//  }
+//}
+//
+//void DG::resizeNodalExtremac()
+//// *****************************************************************************
+////  Resize the buffer vector of nodal extrema
+//// *****************************************************************************
+//{
+//  const auto rdof = g_inputdeck.get< tag::rdof >();
+//  const auto ncomp = m_u.nprop() / rdof;
+//  const auto nprim = m_p.nprop() / rdof;
+//
+//  auto large = std::numeric_limits< tk::real >::max();
+//  for (const auto& [c,n] : Disc()->NodeCommMap())
+//  {
+//    for (auto i : n) {
+//      auto& u = m_uNodalExtrmc[i];
+//      auto& p = m_pNodalExtrmc[i];
+//      u.resize( 2*m_ndof_NodalExtrm*ncomp, large );
+//      p.resize( 2*m_ndof_NodalExtrm*nprim, large );
+//
+//      // Initialize the minimum nodal extrema
+//      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+//      {
+//        for(std::size_t k = 0; k < ncomp; k++)
+//          u[2*k*m_ndof_NodalExtrm+2*idof] = -large;
+//        for(std::size_t k = 0; k < nprim; k++)
+//          p[2*k*m_ndof_NodalExtrm+2*idof] = -large;
+//      }
+//    }
+//  }
+//}
+//
+//void DG::evalNodalExtrmRefEl(
+//  const std::size_t ncomp,
+//  const std::size_t nprim,
+//  const std::size_t ndof_NodalExtrm,
+//  const std::vector< std::size_t >& bndel,
+//  const std::vector< std::size_t >& inpoel,
+//  const std::vector< std::size_t >& gid,
+//  const std::unordered_map< std::size_t, std::size_t >& bid,
+//  const tk::Fields& U,
+//  const tk::Fields& P,
+//  std::vector< std::vector<tk::real> >& uNodalExtrm,
+//  std::vector< std::vector<tk::real> >& pNodalExtrm )
+//// *****************************************************************************
+////  Compute the nodal extrema of ref el derivatives for chare-boundary nodes
+////! \param[in] ncomp Number of conservative variables
+////! \param[in] nprim Number of primitive variables
+////! \param[in] ndof_NodalExtrm Degree of freedom for nodal extrema
+////! \param[in] bndel List of elements contributing to chare-boundary nodes
+////! \param[in] inpoel Element-node connectivity for element e
+////! \param[in] gid Local->global node id map
+////! \param[in] bid Local chare-boundary node ids (value) associated to
+////!   global node ids (key)
+////! \param[in] U Vector of conservative variables
+////! \param[in] P Vector of primitive variables
+////! \param[in,out] uNodalExtrm Chare-boundary nodal extrema for conservative
+////!   variables
+////! \param[in,out] pNodalExtrm Chare-boundary nodal extrema for primitive
+////!   variables
+//// *****************************************************************************
+//{
+//  const auto rdof = g_inputdeck.get< tag::rdof >();
+//
+//  for (auto e : bndel)
+//  {
+//    // access node IDs
+//    const std::vector<std::size_t> N
+//      { inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] };
+//
+//    // Loop over nodes of element e
+//    for(std::size_t ip=0; ip<4; ++ip)
+//    {
+//      auto i = bid.find( gid[N[ip]] );
+//      if (i != end(bid))      // If ip is the chare boundary point
+//      {
+//        // If DG(P2) is applied, find the nodal extrema of the gradients of
+//        // conservative/primitive variables in the reference element
+//
+//        // Vector used to store the first order derivatives for both
+//        // conservative and primitive variables
+//        std::vector< std::array< tk::real, 3 > > gradc(ncomp, {0.0, 0.0, 0.0});
+//        std::vector< std::array< tk::real, 3 > > gradp(ncomp, {0.0, 0.0, 0.0});
+//
+//        // Derivatives of the Dubiner basis
+//        std::array< tk::real, 3 > center {{0.25, 0.25, 0.25}};
+//        auto dBdxi = tk::eval_dBdxi(rdof, center);
+//
+//        // Evaluate the first order derivative
+//        for(std::size_t icomp = 0; icomp < ncomp; icomp++)
+//        {
+//          auto mark = icomp * rdof;
+//          for(std::size_t idir = 0; idir < 3; idir++)
+//          {
+//            gradc[icomp][idir] = 0;
+//            for(std::size_t idof = 1; idof < rdof; idof++)
+//              gradc[icomp][idir] += U(e, mark+idof) * dBdxi[idir][idof];
+//          }
+//        }
+//        for(std::size_t icomp = 0; icomp < nprim; icomp++)
+//        {
+//          auto mark = icomp * rdof;
+//          for(std::size_t idir = 0; idir < 3; idir++)
+//          {
+//            gradp[icomp][idir] = 0;
+//            for(std::size_t idof = 1; idof < rdof; idof++)
+//              gradp[icomp][idir] += P(e, mark+idof) * dBdxi[idir][idof];
+//          }
+//        }
+//
+//        // Store the extrema for the gradients
+//        for (std::size_t c=0; c<ncomp; ++c)
+//        {
+//          for (std::size_t idof = 0; idof < ndof_NodalExtrm; idof++)
+//          {
+//            auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+//            auto min_mark = max_mark + 1;
+//            auto& ex = uNodalExtrm[i->second];
+//            ex[max_mark] = std::max(ex[max_mark], gradc[c][idof]);
+//            ex[min_mark] = std::min(ex[min_mark], gradc[c][idof]);
+//          }
+//        }
+//        for (std::size_t c=0; c<nprim; ++c)
+//        {
+//          for (std::size_t idof = 0; idof < ndof_NodalExtrm; idof++)
+//          {
+//            auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+//            auto min_mark = max_mark + 1;
+//            auto& ex = pNodalExtrm[i->second];
+//            ex[max_mark] = std::max(ex[max_mark], gradp[c][idof]);
+//            ex[min_mark] = std::min(ex[min_mark], gradp[c][idof]);
+//          }
+//        }
+//      }
+//    }
+//  }
+//}
+//
+// >> Once communication into buffers is complete, and the next function is
+// called store communicated extrema values there as follows:
+//
+//  // Combine own and communicated contributions to nodal extrema
+//  for (const auto& [gid,g] : m_uNodalExtrmc) {
+//    auto bid = tk::cref_find( d->Bid(), gid );
+//    for (ncomp_t c=0; c<ncomp; ++c)
+//    {
+//      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+//      {
+//        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+//        auto min_mark = max_mark + 1;
+//        m_uNodalExtrm[bid][max_mark] =
+//          std::max(g[max_mark], m_uNodalExtrm[bid][max_mark]);
+//        m_uNodalExtrm[bid][min_mark] =
+//          std::min(g[min_mark], m_uNodalExtrm[bid][min_mark]);
+//      }
+//    }
+//  }
+//  for (const auto& [gid,g] : m_pNodalExtrmc) {
+//    auto bid = tk::cref_find( d->Bid(), gid );
+//    for (ncomp_t c=0; c<nprim; ++c)
+//    {
+//      for(std::size_t idof=0; idof<m_ndof_NodalExtrm; idof++)
+//      {
+//        auto max_mark = 2*c*m_ndof_NodalExtrm + 2*idof;
+//        auto min_mark = max_mark + 1;
+//        m_pNodalExtrm[bid][max_mark] =
+//          std::max(g[max_mark], m_pNodalExtrm[bid][max_mark]);
+//        m_pNodalExtrm[bid][min_mark] =
+//          std::min(g[min_mark], m_pNodalExtrm[bid][min_mark]);
+//      }
+//    }
+//  }
+//
+//  // clear gradients receive buffer
+//  tk::destroy(m_uNodalExtrmc);
+//  tk::destroy(m_pNodalExtrmc);
+//
+//  >> Resize these buffers in dt() prior to the contribute-call by
+//  calling resizeNodalExtremac();
+//
+//------------------------------------------------------------------------------
 
 #include "NoWarning/dg.def.h"

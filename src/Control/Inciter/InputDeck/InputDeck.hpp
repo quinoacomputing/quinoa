@@ -45,13 +45,14 @@ namespace ctr {
 using ncomp_t = std::size_t;
 
 using bclist = tk::TaggedTuple< brigand::list<
-  tag::dirichlet,   std::vector< std::size_t >,
-  tag::symmetry,    std::vector< std::size_t >,
-  tag::outlet,      std::vector< std::size_t >,
-  tag::farfield,    std::vector< std::size_t >,
-  tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >,
-  tag::slipwall,    std::vector< std::size_t >
+  tag::dirichlet,        std::vector< std::size_t >,
+  tag::symmetry,         std::vector< std::size_t >,
+  tag::outlet,           std::vector< std::size_t >,
+  tag::farfield,         std::vector< std::size_t >,
+  tag::extrapolate,      std::vector< std::size_t >,
+  tag::noslipwall,       std::vector< std::size_t >,
+  tag::slipwall,         std::vector< std::size_t >,
+  tag::isothermal_wall,  std::vector< std::size_t >
 > >;
 
 // Transport
@@ -85,11 +86,11 @@ using compflowList = tk::TaggedTuple< brigand::list<
 using multimatList = tk::TaggedTuple< brigand::list<
   tag::physics,          PhysicsType,
   tag::nmat,             std::size_t,
+  tag::min_volumefrac,   tk::real,
   tag::prelax,           uint64_t,
   tag::prelax_timescale, tk::real,
   tag::intsharp,         int,
   tag::intsharp_param,   tk::real,
-  tag::rho0constraint,   uint64_t,
   tag::dt_sos_massavg,   int,
   tag::problem,          ProblemType,
   tag::viscous,          bool
@@ -105,61 +106,69 @@ using multispeciesList = tk::TaggedTuple< brigand::list<
 
 // Material/EOS object
 using materialList = tk::TaggedTuple< brigand::list<
-  tag::eos,          MaterialType,
-  tag::id,           std::vector< uint64_t >,
-  tag::gamma,        std::vector< tk::real >,
-  tag::pstiff,       std::vector< tk::real >,
-  tag::w_gru,        std::vector< tk::real >,
-  tag::A_jwl,        std::vector< tk::real >,
-  tag::B_jwl,        std::vector< tk::real >,
-  tag::C_jwl,        std::vector< tk::real >,
-  tag::R1_jwl,       std::vector< tk::real >,
-  tag::R2_jwl,       std::vector< tk::real >,
-  tag::rho0_jwl,     std::vector< tk::real >,
-  tag::de_jwl,       std::vector< tk::real >,
-  tag::rhor_jwl,     std::vector< tk::real >,
-  tag::Tr_jwl,       std::vector< tk::real >,
-  tag::Pr_jwl,       std::vector< tk::real >,
-  tag::mu,           std::vector< tk::real >,
-  tag::yield_stress, std::vector< tk::real >,
-  tag::alpha,        std::vector< tk::real >,
-  tag::K0,           std::vector< tk::real >,
-  tag::cv,           std::vector< tk::real >,
-  tag::k,            std::vector< tk::real >
+  tag::eos,                MaterialType,
+  tag::id,                 std::vector< uint64_t >,
+  tag::gamma,              std::vector< tk::real >,
+  tag::pstiff,             std::vector< tk::real >,
+  tag::w_gru,              std::vector< tk::real >,
+  tag::A_jwl,              std::vector< tk::real >,
+  tag::B_jwl,              std::vector< tk::real >,
+  tag::C_jwl,              std::vector< tk::real >,
+  tag::R1_jwl,             std::vector< tk::real >,
+  tag::R2_jwl,             std::vector< tk::real >,
+  tag::rho0_jwl,           std::vector< tk::real >,
+  tag::de_jwl,             std::vector< tk::real >,
+  tag::rhor_jwl,           std::vector< tk::real >,
+  tag::Tr_jwl,             std::vector< tk::real >,
+  tag::Pr_jwl,             std::vector< tk::real >,
+  tag::mu,                 std::vector< tk::real >,
+  tag::yield_stress,       std::vector< tk::real >,
+  tag::alpha,              std::vector< tk::real >,
+  tag::K0,                 std::vector< tk::real >,
+  tag::c0,                 std::vector< tk::real >,
+  tag::s1,                 std::vector< tk::real >,
+  tag::cv,                 std::vector< tk::real >,
+  tag::k,                  std::vector< tk::real >,
+  tag::plasticity_reltime, std::vector< tk::real >
 > >;
 
 // Species/EOS object
 using speciesList = tk::TaggedTuple< brigand::list<
-  tag::id,       std::vector< uint64_t >,
-  tag::gamma,    std::vector< tk::real >,
-  tag::R,        std::vector< tk::real >,
-  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
-  tag::t_range,  std::vector< std::vector< tk::real > >,
-  tag::dH_ref,   std::vector< tk::real >
+  tag::id,        std::vector< uint64_t >,
+  tag::gamma,     std::vector< tk::real >,
+  tag::cv,        std::vector< tk::real >,
+  tag::pstiff,    std::vector< tk::real >,
+  tag::R,         std::vector< tk::real >,
+  tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
+  tag::t_range,   std::vector< std::vector< tk::real > >,
+  tag::dH_ref,    std::vector< tk::real >,
+  tag::spec_name, std::vector< std::string >
 > >;
 
 // Boundary conditions block
 using bcList = tk::TaggedTuple< brigand::list<
-  tag::mesh,        std::vector< std::size_t >,
-  tag::dirichlet,   std::vector< std::size_t >,
-  tag::symmetry,    std::vector< std::size_t >,
-  tag::outlet,      std::vector< std::size_t >,
-  tag::farfield,    std::vector< std::size_t >,
-  tag::extrapolate, std::vector< std::size_t >,
-  tag::noslipwall,  std::vector< std::size_t >,
-  tag::slipwall,    std::vector< std::size_t >,
-  tag::velocity,    std::vector< tk::real >,
-  tag::pressure,    tk::real,
-  tag::density,     tk::real,
-  tag::temperature, tk::real,
-  tag::mass_fractions, std::vector< tk::real >,
-  tag::materialid,  std::size_t,
-  tag::inlet,       std::vector<
+  tag::mesh,             std::vector< std::size_t >,
+  tag::dirichlet,        std::vector< std::size_t >,
+  tag::symmetry,         std::vector< std::size_t >,
+  tag::outlet,           std::vector< std::size_t >,
+  tag::farfield,         std::vector< std::size_t >,
+  tag::extrapolate,      std::vector< std::size_t >,
+  tag::noslipwall,       std::vector< std::size_t >,
+  tag::slipwall,         std::vector< std::size_t >,
+  tag::isothermal_wall,  std::vector< std::size_t >,
+  tag::velocity,         std::vector< tk::real >,
+  tag::pressure,         tk::real,
+  tag::density,          tk::real,
+  tag::temperature,      tk::real,
+  tag::wall_temperature, tk::real,
+  tag::mass_fractions,   std::vector< tk::real >,
+  tag::materialid,       std::size_t,
+  tag::inlet,            std::vector<
     tk::TaggedTuple< brigand::list<
       tag::sideset,      std::vector< uint64_t >,
       tag::velocity,     std::vector< tk::real >,
       tag::pressure,     tk::real,
-      tag::temperature,     tk::real,
+      tag::temperature,  tk::real,
       tag::materialid,   std::size_t
     > >
   >,
@@ -240,8 +249,9 @@ using meshList = tk::TaggedTuple< brigand::list<
   tag::location,          std::vector< tk::real >,
   tag::orientation,       std::vector< tk::real >,
   tag::mass,              tk::real,
-  tag::moment_of_inertia, tk::real,
-  tag::center_of_mass,    std::vector< tk::real >
+  tag::moment_of_inertia, std::vector< std::vector< tk::real > >,
+  tag::center_of_mass,    std::vector< tk::real >,
+  tag::body_force,        std::vector< tk::real >
 > >;
 
 // Field output block
@@ -253,9 +263,7 @@ using fieldOutputList = tk::TaggedTuple< brigand::list<
   tag::filetype,      tk::ctr::FieldFileType,
   tag::sideset,       std::vector< uint64_t >,
   tag::outvar,        std::vector< OutVar >,
-  tag::elemalias,     std::vector< std::string >,  // only for error checking
   tag::elemvar,       std::vector< std::string >,  // only for error checking
-  tag::nodealias,     std::vector< std::string >,  // only for error checking
   tag::nodevar,       std::vector< std::string >   // only for error checking
 > >;
 
@@ -295,16 +303,22 @@ using ConfigMembers = brigand::list<
   tag::t0,               tk::real,
   tag::dt,               tk::real,
   tag::cfl,              tk::real,
+  tag::cfl_ramping,      bool,
+  tag::cfl_ramping_steps,uint32_t,
   tag::ttyi,             uint32_t,
   tag::imex_runge_kutta, uint32_t,
   tag::imex_maxiter,     uint32_t,
   tag::imex_reltol,      tk::real,
   tag::imex_abstol,      tk::real,
 
+  // NASA9 database location for MultiSpecies
+  tag::nasa9_filepath, std::string,
+
   // steady-state solver options
-  tag::steady_state, bool,
-  tag::residual,     tk::real,
-  tag::rescomp,      uint32_t,
+  tag::implicit_timestepping, bool,
+  tag::steady_state,          bool,
+  tag::residual,              tk::real,
+  tag::rescomp,               uint32_t,
 
   // mesh partitioning and reordering/sorting choices
   tag::partitioning,     tk::ctr::PartitioningAlgorithmType,
@@ -359,7 +373,7 @@ using ConfigMembers = brigand::list<
   tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
     tag::rigid_body_movt, bool,
     tag::rigid_body_dof,  std::size_t,
-    tag::symmetry_plane,  std::size_t
+    tag::symmetry_plane,  std::vector< tk::real >
   > >,
 
   // ALE block
@@ -442,6 +456,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       // Default time stepping params
       get< tag::dt >() = 0.0;
       get< tag::cfl >() = 0.0;
+      get< tag::cfl_ramping >() = false;
       // Default AMR settings
       auto rmax =
         std::numeric_limits< tk::real >::max() / 100;
@@ -507,9 +522,32 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       variable-time-step-size simulations. Setting 'cfl' and 'dt' are mutually
       exclusive. If both 'cfl' and 'dt' are set, 'dt' wins.)", "real"});
 
+      keywords.insert({"cfl_ramping",
+      "Determines whether a ramping coefficient is applied to the CFL coefficient.",
+      R"(This keyword is used to specify a boolean that determines
+      whether a ramping coefficient is applied to the CFL coefficient.
+      If true, the CFL would be scaled down by 1/'cfl_ramping_steps' at the
+      first step, and linearly increased to the full CFL value.)", "bool"});
+
+      keywords.insert({"cfl_ramping_steps",
+      "Specify the number of steps the CFL coefficient is ramped over.",
+      R"(This keyword is used to specify the number of steps over which the
+      the CFL coefficient ramping is active. Only used if 'cfl_ramping' is set
+      to true. Default value is 100.)", "uint"});
+
       keywords.insert({"ttyi", "Set screen output interval",
         R"(This keyword is used to specify the interval in time steps for screen
         output during a simulation.)", "uint"});
+
+      keywords.insert({"implicit_timestepping",
+        "Toggle use of an implicit time-stepping scheme",
+        R"(This keywords is used to trigger implicit time integration BDF1
+        (backward Euler) for the DG/DGP1/DGP2/PDG spatial discretizations. This
+        will activate the implicit BDF1 scheme which replaces the explicit RK3
+        that is usually used. This requires PDE-specific implementation of the
+        Jacobian matrix. Jacobian implementation is complete only for
+        PDEType::MULTISPECIES, i.e. implicit_timestepping can only be used for
+        multispecies currently.)", "bool"});
 
       keywords.insert({"imex_runge_kutta",
         "Toggle use of IMplicit-EXplicit Runge-Kutta scheme",
@@ -538,6 +576,19 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to specify the absolute tolerance that
         the non-linear solver uses to obtain the implicit unknowns within the
         Implicit-Explicit Runge-Kutta scheme.)", "real"});
+
+      // -----------------------------------------------------------------------
+      // MultiSpecies option to provide NASA9 DB filepath
+      // -----------------------------------------------------------------------
+
+      keywords.insert({"nasa9_filepath",
+        "Provide the path to the NASA9 data file",
+        R"(This keywords is used to specify the filepath of the NASA9 database
+        file. By providing this file, the user is able to initialize species by
+        providing their names (variable spec_name) and the rest of the parameters
+        will be read from the file. Default assumes file is called nasa9.dat and
+        is located the working directory where inciter is being executed from)",
+        "string"});
 
       // -----------------------------------------------------------------------
       // steady-state solver options
@@ -643,7 +694,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         scheme with Runge-Kutta (RK) time stepping, combined with overset grids.
         See Control/Inciter/Options/Scheme.hpp for other valid options.)"});
 
-      keywords.insert({"dg",
+      keywords.insert({"dgp0",
         "Select 1st-order discontinuous Galerkin discretization + Runge-Kutta",
         R"(This keyword is used to select the first-order accurate discontinuous
         Galerkin, DG(P0), spatial discretiztaion used in Inciter. As this is first
@@ -883,6 +934,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to specify the number of materials for
         multi-material flow, see also the keyword 'multimat'.)", "uint"});
 
+      keywords.insert({"min_volumefrac",
+        "Minimum volume fraction of a material in a cell",
+        R"(This keyword is used to specify the minimum volume fraction that a
+        material can occupy in a computational element. The default value is
+        1.0e-12. It is used only for multimat, and has no effect for the other
+        PDE types.)", "real"});
+
       keywords.insert({"nspec",
         "Set number of species for the multi-species system",
         R"(This keyword is used to specify the number of species for
@@ -918,12 +976,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         sharpening. This parameter affects how many cells the material interfaces
         span, after the use of sharpening. It is used for multimat and transport,
         and has no effect for the other PDE types.)", "real" });
-
-      keywords.insert({"rho0constraint",
-        "Toggle the density constraint correction",
-        R"(This keyword is used to toggle the density constraint in solid
-        dynamics on/off. It is used only for the multi-material solver in the
-        presence of solids. The default is 1 (on).)", "uint 0/1"});
 
       keywords.insert({"dt_sos_massavg",
         "Toggle method for calculating speed of sound used for time step in a cell",
@@ -1006,7 +1058,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"w_gru", "Grueneisen coefficient",
         R"(This keyword is used to specify the material property, Gruneisen
-        coefficient for the Jones-Wilkins-Lee equation of state.)",
+        coefficient for the Jones-Wilkins-Lee equation of state, and the
+        reference Gruneisen coefficient for the linear Mie-Gruneisen equation
+        of state.)",
         "vector of reals"});
 
       keywords.insert({"A_jwl", "JWL EoS A parameter",
@@ -1065,13 +1119,25 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         which indicates the stress (units: Pa) after which the material begins
         plastic flow.)", "vector of reals"});
 
-      keywords.insert({"alpha", "alpha parameter for Godunov-Romenski EOS",
+      keywords.insert({"alpha", "alpha EOS parameter",
         R"(This keyword is used to specify the alpha parameter for
-        Godunov-Romenski EOS for solids.)", "vector of reals"});
+        Godunov-Romenski EOS for solids, and the density-dependence
+        exponent for the Gruneisen coefficient in the linear Mie-Gruneisen
+        equation of state.)", "vector of reals"});
 
       keywords.insert({"K0", "K0 parameter for Godunov-Romenski EOS",
         R"(This keyword is used to specify the K0 parameter for
         Godunov-Romenski EOS for solids.)", "vector of reals"});
+
+      keywords.insert({"c0", "c0 parameter for Linear Mie-Gruneisen EOS",
+        R"(This keyword is used to specify the c0 parameter in the linear
+        Us-Up Hugoniot relation for the linear Mie-Gruneisen equation of
+        state. Units: m/s)", "vector of reals"});
+
+      keywords.insert({"s1", "s1 parameter for Linear Mie-Gruneisen EOS",
+        R"(This keyword is used to specify the s1 slope parameter in the linear
+        Us-Up Hugoniot relation for the linear Mie-Gruneisen equation of
+        state.)", "vector of reals"});
 
       keywords.insert({"cv", "specific heat at constant volume",
         R"(This keyword is used to specify the material property, specific heat at
@@ -1080,6 +1146,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"k", "heat conductivity",
         R"(This keyword is used to specify the material property, heat
         conductivity.)", "vector of reals"});
+
+      keywords.insert({"plasticity_reltime", "Relaxation time for plasticity",
+        R"(This keyword is used to specify the base relaxation time for a solid
+        subject to perfect plasticity. See Ortega, A. López, et al. "Numerical
+        simulation of elastic–plastic solid mechanics using an Eulerian stretch
+        tensor approach and HLLD Riemann solver." Journal of Computational
+        Physics 257 (2014): 414-441.)", "vector of reals"});
 
       keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
         R"(This keyword is used to specify species' coefficients in the
@@ -1102,6 +1175,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         is taken from the NASA Glenn 2002 report, and is the heat of formation
         divided by the species molar mass.)", "vector of reals"});
 
+      keywords.insert({"spec_name", "List of species names, e.g. CO2, Ar.",
+        R"(This keyword is used to specify a list of chemical species which will serve
+        as reference for the program to retrieve its TPG coefficients from the NASA9
+        database. Only species with 3 temperature intervals are supported. If species
+        names are specified, the nasa9_filepath must be specified or the nasa9 database
+        must be present at the default location.)", "strings"});
+
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas
         constant, in units J/kg.K.)", "vector of reals"});
@@ -1122,6 +1202,15 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         the internal energy See Plohr, J. N., & Plohr, B. J. (2005). Linearized
         analysis of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
         Mechanics, 537, 55-89 for further details.)"});
+
+      keywords.insert({"linear_miegruneisen",
+        "Select the Linear Mie-Gruneisen equation of state (a.k.a. shock-wave EOS)",
+        R"(This keyword is used to select the linear Mie-Gruneisen equation of
+        state for solids. This EOS uses a linear Us-Up Hugoniot with a
+        density-dependent Gruneisen coefficient for the hydrodynamic
+        contribution, and a small-shear approximation for the
+        elastic contribution. This EOS is described in Shyue, J Comp Phys (2001)
+        171(2), 678-707.)"});
 
       keywords.insert({"wilkins_aluminum",
         "Select Wilkins' equation of state for aluminum",
@@ -1750,6 +1839,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to list (multiple) slip wall BC sidesets.)",
         "vector of uint(s)"});
 
+      keywords.insert({"isothermal_wall",
+        "List sidesets with isothermal wall boundary conditions",
+        R"(This keyword is used to list (multiple) isothermal wall BC sidesets.)",
+        "vector of uint(s)"});
+
       keywords.insert({"timedep",
         "Start configuration block describing time dependent boundary conditions",
         R"(This keyword is used to introduce a bc_timedep block, used to
@@ -1792,7 +1886,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"symmetry_plane", "Symmetry plane for rigid body motion",
         R"(This keyword is used to specify the symmetry plane for a 3 DOF rigid
-        body motion solver. 1: x-plane, 2: y-plane, 3: z-plane.)", "uint"});
+        body motion solver, given as a vector normal to the plane)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // IC object
@@ -1811,6 +1906,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"temperature", "Specify temperature",
         R"(This keyword is used to configure temperature, used for, e.g.,
         boundary or initial conditions.)" , "real"});
+
+      keywords.insert({"wall_temperature", "Specify wall temperature",
+        R"(This keyword is used to configure wall temperature, used for
+        isothermal boundary conditions.)" , "real"});
 
       keywords.insert({"mass_fractions", "Specify species mass fractions",
         R"(This keyword is used to configure species mass fractions, used for,
@@ -1877,7 +1976,10 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"orientation", "Configure orientation",
         R"(Configure orientation of an IC box for rotation about centroid of
-        box; or configure orientation of a mesh relative to another.)",
+        box (when specified within an IC 'box' block); or configure orientation
+        of a mesh (when specified within a 'mesh' block). Requires specification
+        of three angles about which the entity (box or mesh) is to be rotated.
+        The entity is rotated about the cartesian coordinate axes.)",
         "vector of 3 reals"});
 
       keywords.insert({"initiate", "Initiation type",
@@ -1937,16 +2039,22 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"filename", "Set filename",
         R"(Set filename, e.g., mesh filename for solver coupling.)", "string"});
 
-      keywords.insert({"location", "Configure location",
-        R"(Configure location of a mesh relative to another.)",
-        "vector of 3 reals"});
+      keywords.insert({"location", "Configure location of mesh",
+        R"(Configure location of a mesh relative to its local coordinate
+        system. Requires specification of three distances which are used to
+        relocate the mesh.)", "vector of 3 reals"});
 
       keywords.insert({"moment_of_inertia", "Moment of inertia of rigid body",
-        R"(Moment of inertia of rigid body for rotational motion)", "real"});
+        R"(Moment of inertia of rigid body for rotational motion)",
+        "3-by-3 vector of vector of reals"});
 
       keywords.insert({"center_of_mass", "Center of mass of rigid body",
-        R"(Center of mass of rigid body used to compute torque for rotational
+        R"(Center of mass of rigid body used to compute force for translational
         motion)", "vector of 3 reals"});
+
+      keywords.insert({"body_force", "Body force applied to rigid body",
+        R"(Vector representing the force per unit mass applied to a body)",
+        "vector of 3 reals"});
 
       // -----------------------------------------------------------------------
       // pre-configured problems

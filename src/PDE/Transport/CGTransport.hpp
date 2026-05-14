@@ -237,7 +237,8 @@ class Transport {
       [[maybe_unused]] const tk::Fields& W,
       const std::vector< tk::real >&,
       real,
-      tk::Fields& R ) const
+      tk::Fields& R,
+      std::vector< int >& ) const
     {
       Assert( G.nprop() == m_ncomp*3,
               "Number of components in gradient vector incorrect" );
@@ -283,7 +284,8 @@ class Transport {
              tk::real,
              const tk::Fields& U,
              const std::vector< tk::real >&,
-             const std::vector< tk::real >& ) const
+             const std::vector< tk::real >&,
+             const std::vector< int >& ) const
     {
       using tag::transport;
       Assert( U.nunk() == coord[0].size(), "Number of unknowns in solution "
@@ -690,7 +692,9 @@ class Transport {
           auto v =
             Problem::prescribedVelocity( m_ncomp, x[p], y[p], z[p], 0.0 );
           // sum donain-edge contributions
-          for (auto e : tk::cref_find(esued,{p,q})) {
+          const std::array< std::size_t,2 > pq{{p,q}};
+          const auto& edges = tk::cref_find(esued, pq);
+          for (std::size_t e : edges) {
             const std::array< std::size_t, 4 >
               N{{ inpoel[e*4+0], inpoel[e*4+1], inpoel[e*4+2], inpoel[e*4+3] }};
             // compute element Jacobi determinant

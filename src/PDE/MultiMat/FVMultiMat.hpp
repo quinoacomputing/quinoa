@@ -29,12 +29,10 @@
 #include "Integrate/Basis.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Integrate/Initialize.hpp"
-#include "Integrate/Mass.hpp"
 #include "Integrate/Surface.hpp"
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/MultiMatTerms.hpp"
-#include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -79,7 +77,8 @@ class MultiMat {
         , farfield
         , extrapolate
         , noslipwall 
-        , symmetry },       // Slip equivalent to symmetry without mesh motion
+        , symmetry          // Slip equivalent to symmetry without mesh motion
+        , invalidBC },
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
@@ -87,7 +86,8 @@ class MultiMat {
         , noOpGrad
         , noOpGrad
         , noOpGrad
-        , symmetryGrad }
+        , symmetryGrad
+        , noOpGrad }
         ) );
 
       // Inlet BC has a different structure than above BCs, so it must be 
@@ -217,16 +217,6 @@ class MultiMat {
       }
     }
 
-    //! Compute the left hand side block-diagonal mass matrix
-    //! \param[in] geoElem Element geometry array
-    //! \param[in,out] l Block diagonal mass matrix
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const {
-      const auto nelem = geoElem.nunk();
-      for (std::size_t e=0; e<nelem; ++e)
-        for (ncomp_t c=0; c<m_ncomp; ++c)
-          l(e, c) = geoElem(e,0);
-    }
-
     //! Update the primitives for this PDE system
     //! \param[in] unk Array of unknowns
     //! \param[in,out] prim Array of primitives
@@ -280,7 +270,7 @@ class MultiMat {
           tk::real alphamat = unk(e, volfracDofIdx(nmat, k, rdof, 0));
           auto gmat = getDeformGrad(nmat, k, unk.extract(e));
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
-            m_mat_blk[k].compute< EOS::pressure >( arhomat, vel[0], vel[1],
+            m_mat_blk[k].template compute< EOS::pressure >( arhomat, vel[0], vel[1],
             vel[2], arhoemat, alphamat, k, gmat );
           prim(e, pressureDofIdx(nmat, k, rdof, 0)) =
             constrain_pressure( m_mat_blk,
@@ -396,7 +386,6 @@ class MultiMat {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] esup Elements-surrounding-nodes connectivity
     //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
     //! \param[in] srcFlag Whether the energy source was added
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
@@ -404,7 +393,6 @@ class MultiMat {
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord,
                 const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P ) const
@@ -421,47 +409,14 @@ class MultiMat {
       if (limiter == ctr::LimiterType::VERTEXBASEDP1)
       {
         VertexBasedMultiMat_FV( esup, inpoel, fd.Esuel().size()/4,
-          coord, srcFlag, solidx, U, P, nmat );
-        PositivityPreservingMultiMat_FV( inpoel, fd.Esuel().size()/4, nmat,
-          m_mat_blk, coord, geoFace, U, P );
+          srcFlag, solidx, U, P, nmat );
+        PositivityPreservingMultiMat_FV( fd.Esuel().size()/4, nmat,
+          m_mat_blk, geoFace, U, P );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
         Throw("Limiter type not configured for multimat.");
       }
-    }
-
-    //! Apply CPL to the conservative variable solution for this PDE system
-    //! \param[in] prim Array of primitive variables
-    //! \param[in] geoElem Element geometry array
-    //! \param[in] inpoel Element-node connectivity
-    //! \param[in] coord Array of nodal coordinates
-    //! \param[in,out] unk Array of conservative variables
-    //! \param[in] nielem Number of internal elements
-    //! \details This function applies CPL to obtain consistent dofs for
-    //!   conservative quantities based on the limited primitive quantities.
-    //!   See Pandare et al. (2023). On the Design of Stable,
-    //!   Consistent, and Conservative High-Order Methods for Multi-Material
-    //!   Hydrodynamics. J Comp Phys, 112313.
-    void CPL( const tk::Fields& prim,
-      const tk::Fields& geoElem,
-      const std::vector< std::size_t >& inpoel,
-      const tk::UnsMesh::Coords& coord,
-      tk::Fields& unk,
-      std::size_t nielem ) const
-    {
-      [[maybe_unused]] const auto rdof = g_inputdeck.get< tag::rdof >();
-      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-
-      Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
-              "vector and primitive vector at recent time step incorrect" );
-      Assert( unk.nprop() == rdof*m_ncomp, "Number of components in solution "
-              "vector must equal "+ std::to_string(rdof*m_ncomp) );
-      Assert( prim.nprop() == rdof*nprim(), "Number of components in vector of "
-              "primitive quantities must equal "+ std::to_string(rdof*nprim()) );
-
-      correctLimConservMultiMat(nielem, m_mat_blk, nmat, inpoel,
-        coord, geoElem, prim, unk);
     }
 
     //! Compute right hand side
@@ -645,9 +600,8 @@ class MultiMat {
     //! Return analytic field names to be output to file
     //! \return Vector of strings labelling analytic fields output in file
     std::vector< std::string > analyticFieldNames() const {
-      auto nmat = g_inputdeck.get< eq, tag::nmat >();
-
-      return MultiMatFieldNames(nmat);
+      std::vector< std::string > s; // punt for now
+      return s;
     }
 
     //! Return surface field names to be output to file
@@ -697,6 +651,7 @@ class MultiMat {
       const auto& z = coord[2];
 
       std::vector< std::vector< tk::real > > Up(h.size());
+      std::vector< tk::real > B(rdof), uhp(m_ncomp), php(nprim());
 
       std::size_t j = 0;
       for (const auto& p : h) {
@@ -714,10 +669,10 @@ class MultiMat {
         // evaluate solution at history-point
         std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
           chp[2]-cp[0][2]}};
-        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
-          tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
-        auto php = eval_state(nprim(), rdof, rdof, e, P, B);
+        tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc), B);
+        eval_state(m_ncomp, rdof, rdof, e, U, B, uhp.data());
+        eval_state(nprim(), rdof, rdof, e, P, B, php.data());
 
         // store solution in history output vector
         Up[j].resize(6+nmat, 0.0);
@@ -810,9 +765,9 @@ class MultiMat {
         B[0] = 1.0;
 
         // get conserved quantities
-        ugp = eval_state(ncomp, rdof, ndof, e, U, B);
+        eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
         // get primitive quantities
-        pgp = eval_state(nprim, rdof, ndof, e, P, B);
+        eval_state(nprim, rdof, ndof, e, P, B, pgp.data());
 
         // acoustic speed (this should be consistent with time-step calculation)
         ss[e] = 0.0;
@@ -823,7 +778,7 @@ class MultiMat {
           {
             // mass averaging SoS
             ss[e] += ugp[densityIdx(nmat,k)]*
-              m_mat_blk[k].compute< EOS::soundspeed >(
+              m_mat_blk[k].template compute< EOS::soundspeed >(
               ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
               ugp[volfracIdx(nmat, k)], k );
 
@@ -833,7 +788,7 @@ class MultiMat {
           {
             if (ugp[volfracIdx(nmat, k)] > 1.0e-04)
             {
-              ss[e] = std::max( ss[e], m_mat_blk[k].compute< EOS::soundspeed >(
+              ss[e] = std::max( ss[e], m_mat_blk[k].template compute< EOS::soundspeed >(
                 ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
                 ugp[volfracIdx(nmat, k)], k ) );
             }

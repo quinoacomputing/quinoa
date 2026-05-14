@@ -39,3 +39,46 @@ FaceData::FaceData(
   Assert( m_belem.size() == nbfac,
          "Number of boundary-elements and number of boundary-faces unequal" );
 }
+
+void
+FaceData::genLocalFaceId( const std::vector< std::size_t >& inpoel )
+// *****************************************************************************
+//  Generate local face IDs for all faces (2 per face since face has 2 esuf)
+// *****************************************************************************
+{
+  m_faceLocalId.resize(m_esuf.size());
+
+  for (std::size_t f=0; f<m_esuf.size()/2; ++f) {
+    std::array< std::size_t, 3 > inpofa_f{{
+      m_inpofa[3*f],
+      m_inpofa[3*f+1],
+      m_inpofa[3*f+2] }};
+
+    // left element is always interior
+    Assert( m_esuf[2*f] > -1, "Interior element detected as -1" );
+    std::size_t el = static_cast< std::size_t >(m_esuf[2*f]);
+    std::array< std::size_t, 4 > inpoel_l{{
+      inpoel[4*el],
+      inpoel[4*el+1],
+      inpoel[4*el+2],
+      inpoel[4*el+3] }};
+    m_faceLocalId[2*f] = tk::opposite_vertex_of_tet(inpoel_l, inpofa_f);
+
+    if (f >= Nbfac()) {
+      // internal face
+      Assert( m_esuf[2*f+1] > -1, "Interior element detected as -1" );
+      std::size_t er = static_cast< std::size_t >(m_esuf[2*f+1]);
+      std::array< std::size_t, 4 > inpoel_r{{
+        inpoel[4*er],
+        inpoel[4*er+1],
+        inpoel[4*er+2],
+        inpoel[4*er+3] }};
+      m_faceLocalId[2*f+1] = tk::opposite_vertex_of_tet(inpoel_r, inpofa_f);
+    }
+    else {
+      // boundary face
+      Assert( m_esuf[2*f+1] == -1, "Outside boundary element not -1" );
+      m_faceLocalId[2*f+1] = -1;  // no element to the right-side of boundary
+    }
+  }
+}

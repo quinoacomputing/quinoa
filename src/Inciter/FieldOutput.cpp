@@ -29,7 +29,7 @@ numericFieldNames( tk::Centering c )
   for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
     if (v.centering == c && !v.analytic()) {
       std::stringstream s;
-      if (v.alias.empty()) s << v.name; else s << v.alias;
+      s << v.name;
       f.push_back( s.str() );
     }
   }
@@ -150,6 +150,8 @@ evalSolution(
     }
   }
 
+  std::vector< tk::real > u(uncomp), p(pncomp);
+
   // If mesh is not refined for output, evaluate solution in nodes
   if (addedTets.empty()) {
 
@@ -158,6 +160,7 @@ evalSolution(
       if (!ndofel.empty()) {
         dofe = ndofel[e];
       }
+      std::vector< tk::real > Bn(dofe);
       auto e4 = e*4;
       // Extract element node coordinates
       std::array< std::array< real, 3>, 4 > ce{{
@@ -171,10 +174,10 @@ evalSolution(
       for (std::size_t j=0; j<4; ++j) {
         std::array< real, 3 >
            h{{ce[j][0]-ce[0][0], ce[j][1]-ce[0][1], ce[j][2]-ce[0][2] }};
-        auto Bn = tk::eval_basis( dofe,
-                                  dot(J[0],h), dot(J[1],h), dot(J[2],h) );
-        auto u = eval_state( uncomp, rdof, dofe, e, U, Bn );
-        auto p = eval_state( pncomp, rdof, dofe, e, P, Bn );
+        tk::eval_basis( dofe,
+                        dot(J[0],h), dot(J[1],h), dot(J[2],h), Bn );
+        eval_state( uncomp, rdof, dofe, e, U, Bn, u.data() );
+        eval_state( pncomp, rdof, dofe, e, P, Bn, p.data() );
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[e4+j],i) += u[i];
         for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[e4+j],i) += p[i];
@@ -193,11 +196,14 @@ evalSolution(
               "Indexing out of old solution vector" );
     }
 
+    std::vector< tk::real > cnu(uncomp), cnp(pncomp);
+
     for (const auto& [child,parent] : addedTets) {
       std::size_t dofe(1);
       if (!ndofel.empty()) {
         dofe = ndofel[parent];
       }
+      std::vector< tk::real > B(dofe), Bn(dofe);
       // Extract parent element's node coordinates
       auto p4 = 4*parent;
       std::array< std::array< real, 3>, 4 > cp{{
@@ -217,9 +223,9 @@ evalSolution(
                  z[inpoel[c4+2]] + z[inpoel[c4+3]]) / 4.0;
       // Compute solution in child centroid
       std::array< real, 3 > h{{cx-cp[0][0], cy-cp[0][1], cz-cp[0][2] }};
-      auto B = tk::eval_basis( dofe, dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h) );
-      auto u = eval_state( uncomp, rdof, dofe, parent, U, B );
-      auto p = eval_state( pncomp, rdof, dofe, parent, P, B );
+      tk::eval_basis( dofe, dot(Jp[0],h), dot(Jp[1],h), dot(Jp[2],h), B );
+      eval_state( uncomp, rdof, dofe, parent, U, B, u.data() );
+      eval_state( pncomp, rdof, dofe, parent, P, B, p.data() );
       // Assign cell center solution from parent to child
       for (std::size_t i=0; i<uncomp; ++i) uElemfields(child,i) = u[i];
       for (std::size_t i=0; i<pncomp; ++i) pElemfields(child,i) = p[i];
@@ -233,10 +239,10 @@ evalSolution(
       for (std::size_t j=0; j<4; ++j) {
         std::array< real, 3 >
            hn{{cc[j][0]-cp[0][0], cc[j][1]-cp[0][1], cc[j][2]-cp[0][2] }};
-        auto Bn = tk::eval_basis( dofe,
-                                  dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn) );
-        auto cnu = eval_state(uncomp, rdof, dofe, parent, U, Bn);
-        auto cnp = eval_state(pncomp, rdof, dofe, parent, P, Bn);
+        tk::eval_basis( dofe,
+                        dot(Jp[0],hn), dot(Jp[1],hn), dot(Jp[2],hn), Bn );
+        eval_state(uncomp, rdof, dofe, parent, U, Bn, cnu.data());
+        eval_state(pncomp, rdof, dofe, parent, P, Bn, cnp.data());
         // Assign child node solution
         for (std::size_t i=0; i<uncomp; ++i) uNodefields(inpoel[c4+j],i) += cnu[i];
         for (std::size_t i=0; i<pncomp; ++i) pNodefields(inpoel[c4+j],i) += cnp[i];

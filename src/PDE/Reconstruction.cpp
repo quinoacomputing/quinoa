@@ -23,9 +23,10 @@
 #include "Reconstruction.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
-#include "Integrate/Mass.hpp"
+#include "Integrate/Quadrature.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
@@ -60,59 +61,77 @@ recoLeastSqExtStencil(
 //!   is solved in the least-squares sense using the normal equations approach.
 // *****************************************************************************
 {
-  // lhs matrix
-  std::array< std::array< tk::real, 3 >, 3 >
-    lhs_ls( {{ {{0.0, 0.0, 0.0}},
-               {{0.0, 0.0, 0.0}},
-               {{0.0, 0.0, 0.0}} }} );
-  // rhs matrix
-  std::vector< std::array< tk::real, 3 > >
-  rhs_ls( varList.size(), {{ 0.0, 0.0, 0.0 }} );
+  // Element centroid
+  auto ex = geoElem(e,1);
+  auto ey = geoElem(e,2);
+  auto ez = geoElem(e,3);
 
-  // loop over all nodes of the element e
-  for (std::size_t lp=0; lp<4; ++lp)
-  {
-    auto p = inpoel[4*e+lp];
-    const auto& pesup = cref_find(esup, p);
+  tk::real m_xx = 0.0, m_xy = 0.0, m_xz = 0.0,
+           m_yy = 0.0, m_yz = 0.0, m_zz = 0.0;
 
-    // loop over all the elements surrounding this node p
-    for (auto er : pesup)
-    {
-      // centroid distance
-      std::array< real, 3 > wdeltax{{ geoElem(er,1)-geoElem(e,1),
-                                      geoElem(er,2)-geoElem(e,2),
-                                      geoElem(er,3)-geoElem(e,3) }};
+  // RHS for each variable in varList
+  auto nvar = varList.size();
+  std::vector< std::array< tk::real,3 > > rhs(nvar);
+  for (auto& r : rhs) r = {{0.0, 0.0, 0.0}};
 
-      // contribute to lhs matrix
-      for (std::size_t idir=0; idir<3; ++idir)
-        for (std::size_t jdir=0; jdir<3; ++jdir)
-          lhs_ls[idir][jdir] += wdeltax[idir] * wdeltax[jdir];
+  // Cache P0 of the target cell for all variables (used for all neighbors)
+  std::vector< tk::real > w0(nvar);
+  for (std::size_t iv=0; iv<nvar; ++iv) {
+    auto c = varList[iv];
+    auto mark = c*rdof;
+    w0[iv] = W(e, mark + 0);
+  }
 
-      // compute rhs matrix
-      for (std::size_t i=0; i<varList.size(); i++)
-      {
-        auto mark = varList[i]*rdof;
-        for (std::size_t idir=0; idir<3; ++idir)
-          rhs_ls[i][idir] +=
-            wdeltax[idir] * (W(er,mark)-W(e,mark));
+  // Build LHS and accumulate RHS (neighbor outer loop)
+  for (std::size_t lp=0; lp<4; ++lp) {
+    auto p = inpoel[4*e + lp];
+    auto& pesup = cref_find(esup, p);
 
+    for (auto er : pesup) {
+      auto dx = geoElem(er,1) - ex;
+      auto dy = geoElem(er,2) - ey;
+      auto dz = geoElem(er,3) - ez;
+
+      // LHS (use symmetry)
+      m_xx += dx*dx;
+      m_xy += dx*dy;
+      m_xz += dx*dz;
+      m_yy += dy*dy;
+      m_yz += dy*dz;
+      m_zz += dz*dz;
+
+      // RHS for all variables
+      for (std::size_t iv=0; iv<nvar; ++iv) {
+        auto c = varList[iv];
+        auto mark = c*rdof;
+        auto dW = W(er, mark + 0) - w0[iv];
+        rhs[iv][0] += dx * dW;
+        rhs[iv][1] += dy * dW;
+        rhs[iv][2] += dz * dW;
       }
     }
   }
 
-  // solve least-square normal equation system using Cramer's rule
-  for (std::size_t i=0; i<varList.size(); i++)
-  {
-    auto mark = varList[i]*rdof;
+  // Form full symmetric 3×3 and factor once (reused for all RHS)
+  std::array<std::array<tk::real,3>,3> A {{
+    {{ m_xx, m_xy, m_xz }},
+    {{ m_xy, m_yy, m_yz }},
+    {{ m_xz, m_yz, m_zz }}
+  }};
+  std::array<std::array<tk::real,3>,3> L;
+  chol3x3(A, L);
 
-    auto ux = tk::cramer( lhs_ls, rhs_ls[i] );
+  // Solve for and update the P1 dofs with the reconstructioned gradients.
+  // Since this reconstruction does not affect the cell-averaged solution,
+  // W(e,mark+0) is unchanged.
+  for (std::size_t iv=0; iv<nvar; ++iv) {
+    auto c = varList[iv];
+    auto mark = c*rdof;
+    auto ux = solve_chol3x3(L, rhs[iv]);
 
-    // Update the P1 dofs with the reconstructioned gradients.
-    // Since this reconstruction does not affect the cell-averaged solution,
-    // W(e,mark+0) is unchanged.
-    W(e,mark+1) = ux[0];
-    W(e,mark+2) = ux[1];
-    W(e,mark+3) = ux[2];
+    W(e, mark + 1) = ux[0];
+    W(e, mark + 2) = ux[1];
+    W(e, mark + 3) = ux[2];
   }
 }
 
@@ -153,7 +172,9 @@ transform_P0P1( std::size_t rdof,
     tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
   // Compute the derivatives of basis function for DG(P1)
-  auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( rdof, 0 );
+  tk::eval_dBdx_p1( rdof, jacInv, dBdx );
 
   for (std::size_t i=0; i<varList.size(); ++i)
   {
@@ -378,7 +399,7 @@ THINCRecoTransport( std::size_t rdof,
 }
 
 void
-THINCFunction( std::size_t rdof,
+THINCFunction_old( std::size_t rdof,
                std::size_t nmat,
                std::size_t e,
                const std::vector< std::size_t >& inpoel,
@@ -415,6 +436,9 @@ THINCFunction( std::size_t rdof,
 //!   THINCFunction_new) is sufficiently tested.
 // *****************************************************************************
 {
+  auto min_al = inciter::g_inputdeck.get< tag::multimat,
+    tag::min_volumefrac >();
+
   // determine number of materials with interfaces in this cell
   auto epsl(1e-4), epsh(1e-1), bred(1.25), bmod(bparam);
   std::size_t nIntMat(0);
@@ -456,7 +480,9 @@ THINCFunction( std::size_t rdof,
     auto jacInv =
       tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-    auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+    std::array< std::vector<tk::real>, 3 > dBdx;
+    for (std::size_t i=0; i<3; ++i) dBdx[i].resize( rdof, 0 );
+    tk::eval_dBdx_p1( rdof, jacInv, dBdx );
 
     std::array< real, 3 > nInt;
     std::vector< std::array< real, 3 > > ref_n(nmat, {{0.0, 0.0, 0.0}});
@@ -487,8 +513,8 @@ THINCFunction( std::size_t rdof,
     }
 
     // 2. Reconstruct volume fractions using THINC
-    auto max_lim = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
-    auto min_lim = 1e-12;
+    auto max_lim = 1.0 - (static_cast<tk::real>(nmat-1)*min_al);
+    auto min_lim = min_al;
     auto sum_inter(0.0), sum_non_inter(0.0);
     for (std::size_t k=0; k<nmat; ++k)
     {
@@ -545,20 +571,20 @@ THINCFunction( std::size_t rdof,
 }
 
 void
-THINCFunction_new( std::size_t rdof,
-                   std::size_t nmat,
-                   std::size_t e,
-                   const std::vector< std::size_t >& inpoel,
-                   const UnsMesh::Coords& coord,
-                   const std::array< real, 3 >& ref_xp,
-                   real vol,
-                   real bparam,
-                   const std::vector< real >& alSol,
-                   bool intInd,
-                   const std::vector< std::size_t >& matInt,
-                   std::vector< real >& alReco )
+THINCFunction( std::size_t rdof,
+               std::size_t nmat,
+               std::size_t e,
+               const std::vector< std::size_t >& inpoel,
+               const UnsMesh::Coords& coord,
+               const std::array< real, 3 >& ref_xp,
+               real vol,
+               real bparam,
+               const std::vector< real >& alSol,
+               bool intInd,
+               const std::vector< std::size_t >& matInt,
+               std::vector< real >& alReco )
 // *****************************************************************************
-//  New Multi-Medium THINC reconstruction function for volume fractions
+//  Multi-Medium THINC reconstruction function for volume fractions
 //! \param[in] rdof Total number of reconstructed dofs
 //! \param[in] nmat Total number of materials
 //! \param[in] e Element for which interface reconstruction is being calculated
@@ -575,10 +601,12 @@ THINCFunction_new( std::size_t rdof,
 //! \details This function computes the interface reconstruction using the
 //!   algebraic multi-material THINC reconstruction for each material at the
 //!   given (ref_xp) quadrature point. This function succeeds the older version
-//!   of the mm-THINC (see THINCFunction), but is still under testing and is
-//!   currently experimental.
+//!   of the mm-THINC (see THINCFunction_old).
 // *****************************************************************************
 {
+  auto min_al = inciter::g_inputdeck.get< tag::multimat,
+    tag::min_volumefrac >();
+
   // compression parameter
   auto beta = bparam/std::cbrt(6.0*vol);
 
@@ -604,7 +632,9 @@ THINCFunction_new( std::size_t rdof,
   auto jacInv =
     tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-  auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( rdof, 0 );
+  tk::eval_dBdx_p1( rdof, jacInv, dBdx );
 
   std::array< real, 3 > nInt;
   std::array< real, 3 > ref_n{0.0, 0.0, 0.0};
@@ -647,8 +677,8 @@ THINCFunction_new( std::size_t rdof,
   // Step 2. Reconstruct volume fraction of majority material using THINC
   // -------------------------------------------------------------------------
 
-  auto al_max = 1.0 - (static_cast<tk::real>(nmat-1)*1.0e-12);
-  auto al_min = 1e-12;
+  auto al_max = 1.0 - (static_cast<tk::real>(nmat-1)*min_al);
+  auto al_min = min_al;
   auto alsum(0.0);
   // get location of material interface (volume fraction 0.5) from the
   // assumed tanh volume fraction distribution, and cell-averaged
@@ -755,11 +785,11 @@ computeTemperaturesFV(
     tag::intsharp >();
   auto nelem = unk.nunk();
 
+  auto L = tk::massMatrixDubiner();
+  std::vector< tk::real > B(rdof);
+
   for (std::size_t e=0; e<nelem; ++e) {
-    // Here we pre-compute the left-hand-side (mass) matrix. The lhs in
-    // DG.cpp is not used here because the size of the mass matrix in this
-    // projection procedure should be rdof instead of ndof.
-    auto L = tk::massMatrixDubiner(rdof, geoElem(e,0));
+    auto vole = geoElem(e,0);
 
     std::vector< tk::real > R(nmat*rdof, 0.0);
 
@@ -779,10 +809,10 @@ computeTemperaturesFV(
     // Loop over quadrature points in element e
     for (std::size_t igp=0; igp<ng; ++igp) {
       // Compute the basis function
-      auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
-                               coordgp[2][igp] );
+      tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+                      coordgp[2][igp], B );
 
-      auto w = wgp[igp] * geoElem(e, 0);
+      auto w = wgp[igp] * vole;
 
       // Evaluate the solution at quadrature point
       auto state = evalFVSol(mat_blk, intsharp, ncomp, nprim, rdof,
@@ -812,12 +842,12 @@ computeTemperaturesFV(
     for(std::size_t k=0; k<nmat; k++) {
       auto mark = k * rdof;
       for(std::size_t idof=1; idof<rdof; idof++)
-        T(e, mark+idof) = R[mark+idof] / L[idof];
+        T(e, mark+idof) = R[mark+idof] / (vole*L[idof]);
     }
   }
 }
 
-std::vector< tk::real >
+void
 evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    int intsharp,
                    std::size_t ncomp,
@@ -832,7 +862,8 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    const std::array< real, 3 >& ref_gp,
                    const std::vector< real >& B,
                    const Fields& U,
-                   const Fields& P )
+                   const Fields& P,
+                   std::vector< tk::real >& state )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] mat_blk EOS material block
@@ -850,15 +881,11 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 //! \param[in] B Basis function at given quadrature point
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
-//! \return High-order unknown/state vector at quadrature point, modified
-//!   if near interfaces using THINC
+//! \param[in,out] state Vector of solution states at quadrature point
 // *****************************************************************************
 {
-  std::vector< real > state;
-  std::vector< real > sprim;
-
-  state = eval_state( ncomp, rdof, dof_e, e, U, B );
-  sprim = eval_state( nprim, rdof, dof_e, e, P, B );
+  eval_state( ncomp, rdof, dof_e, e, U, B, state.data() );
+  eval_state( nprim, rdof, dof_e, e, P, B, state.data()+ncomp );
 
   // interface detection
   std::vector< std::size_t > matInt(nmat, 0);
@@ -869,9 +896,6 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
       alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
     intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
   }
-
-  // consolidate primitives into state vector
-  state.insert(state.end(), sprim.begin(), sprim.end());
 
   if (intsharp > 0)
   {
@@ -896,8 +920,6 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 
   // physical constraints
   enforcePhysicalConstraints(mat_blk, ncomp, nmat, state);
-
-  return state;
 }
 
 std::vector< tk::real >
@@ -937,6 +959,9 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
 //!   if near interfaces using THINC
 // *****************************************************************************
 {
+  auto min_al = inciter::g_inputdeck.get< tag::multimat,
+    tag::min_volumefrac >();
+
   using inciter::pressureIdx;
   using inciter::velocityIdx;
   using inciter::volfracIdx;
@@ -944,11 +969,11 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
   using inciter::energyIdx;
   using inciter::momentumIdx;
 
-  std::vector< real > state;
-  std::vector< real > sprim;
+  std::vector< real > state(ncomp);
+  std::vector< real > sprim(nprim);
 
-  state = eval_state( ncomp, rdof, rdof, e, U, B );
-  sprim = eval_state( nprim, rdof, rdof, e, P, B );
+  eval_state( ncomp, rdof, rdof, e, U, B, state.data() );
+  eval_state( nprim, rdof, rdof, e, P, B, sprim.data() );
 
   // interface detection so that eos is called on the appropriate quantities
   std::vector< std::size_t > matInt(nmat, 0);
@@ -957,24 +982,29 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
     alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
   auto intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
 
+  std::array< tk::real, 3 > vel{{
+    sprim[velocityIdx(nmat,0)],
+    sprim[velocityIdx(nmat,1)],
+    sprim[velocityIdx(nmat,2)] }};
+
   // get mat-energy from reconstructed mat-pressure
   auto rhob(0.0);
   for (std::size_t k=0; k<nmat; ++k) {
     auto alk = state[volfracIdx(nmat,k)];
     if (matInt[k]) {
-      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*1e-12),
-        1e-12);
+      alk = std::max(std::min(alk, 1.0-static_cast<tk::real>(nmat-1)*min_al),
+        min_al);
     }
     state[energyIdx(nmat,k)] =
       mat_blk[k].compute< inciter::EOS::totalenergy >(
-      state[densityIdx(nmat,k)], sprim[velocityIdx(nmat,0)],
-      sprim[velocityIdx(nmat,1)], sprim[velocityIdx(nmat,2)],
+      state[densityIdx(nmat,k)], vel[0],
+      vel[1], vel[2],
       sprim[pressureIdx(nmat,k)], alk);
     rhob += state[densityIdx(nmat,k)];
   }
   // get momentum from reconstructed velocity and bulk density
   for (std::size_t i=0; i<3; ++i) {
-    state[momentumIdx(nmat,i)] = rhob * sprim[velocityIdx(nmat,i)];
+    state[momentumIdx(nmat,i)] = rhob * vel[i];
   }
 
   // consolidate primitives into state vector
@@ -1009,6 +1039,7 @@ enforcePhysicalConstraints(
 // *****************************************************************************
 {
   auto myPDE = inciter::g_inputdeck.get< tag::pde >();
+  auto nspec = inciter::g_inputdeck.get< tag::multispecies, tag::nspec >();
 
   // unfortunately have to query PDEType here. alternative will potentially
   // require refactor that passes PDEType from DGPDE to this level.
@@ -1024,7 +1055,9 @@ enforcePhysicalConstraints(
     }
   }
   else if (myPDE == inciter::ctr::PDEType::MULTISPECIES) {
-    // TODO: consider clipping temperature here
+    using inciter::multispecies::temperatureIdx;
+    state[ncomp+temperatureIdx(nspec,0)] = inciter::constrain_temperature(
+      state[ncomp+temperatureIdx(nspec,0)] );
   }
 }
 

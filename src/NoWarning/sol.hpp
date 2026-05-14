@@ -34,6 +34,8 @@
   #pragma clang diagnostic ignored "-Wextra-semi-stmt"
   #pragma clang diagnostic ignored "-Wc++2a-compat"
   #pragma clang diagnostic ignored "-Wsuggest-override"
+  #pragma clang diagnostic ignored "-Wswitch-default"
+  #pragma clang diagnostic ignored "-Wcast-function-type-strict"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wfloat-equal"
@@ -41,6 +43,10 @@
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 1 )
+#endif
+
+#ifndef SOL_USE_BOOST
+  #define SOL_USE_BOOST 1
 #endif
 
 #include <sol/sol.hpp>

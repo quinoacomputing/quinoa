@@ -77,16 +77,11 @@ ThermallyPerfectGas::pressure(
 std::array< std::array< tk::real, 3 >, 3 >
 ThermallyPerfectGas::CauchyStress(
   tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
   std::size_t,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
-//! \brief Calculate the Cauchy stress tensor from the material density,
-//!   momentum, and total energy
+//! \brief Calculate the Cauchy stress tensor from the material
+//!   inverse deformation gradient tensor
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k)
 // *************************************************************************
 {
@@ -170,7 +165,7 @@ ThermallyPerfectGas::internalenergy(tk::real temp) const
 // *************************************************************************
 {
   auto R = m_R;
-  tk::real h = calc_h(temp) * R * temp + m_dH_ref;
+  tk::real h = calc_h(temp) * R * temp;
   return h - R * temp;
 }
 

@@ -52,15 +52,10 @@ class StiffenedGas {
       tk::real ) const
     { return 0.0; }
 
-    //! \brief Calculate the Cauchy stress tensor from the material density,
-    //!   momentum, and total energy
+    //! \brief Calculate the Cauchy stress tensor from the material
+    //!   inverse deformation gradient tensor
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
       tk::real,
       std::size_t,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
@@ -114,7 +109,7 @@ class StiffenedGas {
     tk::real rho0() const { return density(1.0e5, 300.0); }
 
     //! Return gas constant (no-op)
-    tk::real gas_constant() const { return 0.0; }
+    tk::real gas_constant() const { return (m_gamma-1.0)*m_cv; }
 
     //! Return internal energy (no-op)
     tk::real internalenergy(tk::real temp) const { return m_cv * temp; }

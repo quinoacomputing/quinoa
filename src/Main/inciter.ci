@@ -27,6 +27,7 @@ mainmodule inciter {
   extern module charestatecollector;
   extern module lbswitch;
   extern module m2mtransfer;
+  extern module bicg;
 
   readonly CProxy_Main mainProxy;
   readonly tk::CProxy_ChareStateCollector stateProxy;
