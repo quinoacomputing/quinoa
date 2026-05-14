@@ -66,7 +66,8 @@ class Mixture {
                          tk::real v,
                          tk::real w,
                          tk::real rhoE,
-                         const std::vector< EOS >& mat_blk) const;
+                         const std::vector< EOS >& mat_blk,
+                         tk::real T_init=1500) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

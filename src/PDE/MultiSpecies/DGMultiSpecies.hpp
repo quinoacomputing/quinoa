@@ -80,7 +80,8 @@ class MultiSpecies {
         , farfield
         , extrapolate
         , noslipwall 
-        , symmetry },       // Slip equivalent to symmetry without mesh motion
+        , symmetry
+        , isothermal_wall },       // Slip equivalent to symmetry without mesh motion
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
@@ -88,6 +89,7 @@ class MultiSpecies {
         , noOpGrad
         , noOpGrad
         , noOpGrad
+        , symmetryGrad
         , symmetryGrad }
         ) );
 
@@ -350,8 +352,11 @@ class MultiSpecies {
           // Evaluate mixture temperature at quadrature point
           auto rhoE0 = state[multispecies::energyIdx(nspec, 0)];
           pri[multispecies::temperatureIdx(nspec,0)] =
-            mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk);
+            mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk,
+              prim(e,multispecies::temperatureDofIdx(nspec, 0, rdof, 0)));
           // TODO: consider clipping temperature here
+          pri[multispecies::temperatureIdx(nspec,0)] = constrain_temperature(
+            pri[multispecies::temperatureIdx(nspec,0)]);
 
           for(std::size_t k = 0; k < m_nprim; k++)
           {

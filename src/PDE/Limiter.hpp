@@ -384,6 +384,10 @@ constrain_pressure( const std::vector< EOS >& mat_blk,
   tk::real alpha,
   std::size_t imat );
 
+//! Constrain mixture temperature
+tk::real
+constrain_temperature( tk::real tmix );
+
 } // inciter::
 
 #endif // Limiter_h

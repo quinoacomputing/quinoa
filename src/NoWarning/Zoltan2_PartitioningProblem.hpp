@@ -43,6 +43,7 @@
   #pragma clang diagnostic ignored "-Wunused-template"
   #pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
   #pragma clang diagnostic ignored "-Wcovered-switch-default"
+  #pragma clang diagnostic ignored "-Wswitch-default"
   #pragma clang diagnostic ignored "-Wused-but-marked-unused"
   #pragma clang diagnostic ignored "-Wshadow"
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
@@ -55,6 +56,7 @@
   #pragma clang diagnostic ignored "-Wuninitialized-const-reference"
   #pragma clang diagnostic ignored "-Wctad-maybe-unsupported"
   #pragma clang diagnostic ignored "-Wcompound-token-split-by-space"
+  #pragma clang diagnostic ignored "-Wundefined-reinterpret-cast"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"

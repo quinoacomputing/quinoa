@@ -106,7 +106,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
   // [II] Finally initialize the solution vector
   // partial density
   for (std::size_t k=0; k<nspec; ++k) {
-    s[multispecies::densityIdx(nspec,k)] = Ys[k] * rhok[k];
+    s[multispecies::densityIdx(nspec,k)] = rhok[k];
   }
   // total specific energy
   s[multispecies::energyIdx(nspec,0)] = rbulk * spi;

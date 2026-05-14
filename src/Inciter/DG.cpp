@@ -64,8 +64,8 @@ static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
 //! Implicit-Explicit Runge-Kutta Coefficients
-static const tk::real rk_gamma = (2.0-std::sqrt(2.0))/2.0;
-static const tk::real rk_delta = -2.0*std::sqrt(2.0)/3.0;
+[[maybe_unused]] static const tk::real rk_gamma = (2.0-std::sqrt(2.0))/2.0;
+[[maybe_unused]] static const tk::real rk_delta = -2.0*std::sqrt(2.0)/3.0;
 static const tk::real c2 =
   (27.0 + std::pow(2187.0-1458.0*std::sqrt(2.0),1.0/3.0)
    + 9.0*std::pow(3.0+2.0*std::sqrt(2.0),1.0/3.0))/54.0;
