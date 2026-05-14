@@ -36,14 +36,16 @@ enum class EqType : uint8_t { compflow
 class EOS {
 
   private:
-   //! Using union style instead of variant
-    enum class EOSType {StiffenedGas
+    //! Using union style instead of variant
+    enum class EOSType {
+                  StiffenedGas
                 , JWL
                 , SmallShearSolid
                 , LinearMieGruneisen
                 , WilkinsAluminum
                 , GodunovRomenski
-                , ThermallyPerfectGas};
+                , ThermallyPerfectGas
+                };
 
     EOSType type;
 
@@ -51,28 +53,28 @@ class EOS {
         StiffenedGas stiffenedGas;
         JWL jwl;
         SmallShearSolid smallShearSolid;
+        LinearMieGruneisen linearMieGruneisen;
         WilkinsAluminum wilkinsAluminum;
         GodunovRomenski godunovRomenski;
         ThermallyPerfectGas thermallyPerfectGas;
 
-        EOSUnion() {};
-        ~EOSUnion() {};
-        EOSUnion(const StiffenedGas& s) : stiffenedGas(s) {};
-        EOSUnion(const JWL& s) : jwl(s) {};
-        EOSUnion(const WilkinsAluminum& s) : wilkinsAluminum(s) {};
-        EOSUnion(const GodunovRomenski& s) : godunovRomenski(s) {};
-        EOSUnion(const ThermallyPerfectGas& s) : thermallyPerfectGas(s) {};
+        EOSUnion() {}
+        ~EOSUnion() {}
+        EOSUnion(const StiffenedGas& s) : stiffenedGas(s) {}
+        EOSUnion(const JWL& s) : jwl(s) {}
+        EOSUnion(const WilkinsAluminum& s) : wilkinsAluminum(s) {}
+        EOSUnion(const GodunovRomenski& s) : godunovRomenski(s) {}
+        EOSUnion(const ThermallyPerfectGas& s) : thermallyPerfectGas(s) {}
 
     } m_material;
 
 
   public:
     //! Empty constructor for Charm++
-    explicit EOS() {
-    }
+    explicit EOS() {}
 
     //! Constructor
-    explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k);
+    explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k );
 
     //! Entry method tags for specific EOS classes to use with compute()
     struct density {};
@@ -224,7 +226,7 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, cv > )
             return m_material.smallShearSolid.cv( std::forward< Args >( args )... );
-        } 
+        }
         else if (type == EOSType::GodunovRomenski) {
           if constexpr( std::is_same_v< Fn, density > )
             return m_material.godunovRomenski.density( std::forward< Args >( args )... );
@@ -369,30 +371,30 @@ class EOS {
     std::array< std::array< tk::real, 3 >, 3 > computeTensor( Args&&... args )
     const {
         if (type == EOSType::StiffenedGas) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.stiffenedGas.CauchyStress( std::forward< Args >( args )... );
         }
         else if (type == EOSType::GodunovRomenski) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.godunovRomenski.CauchyStress( std::forward< Args >( args )... );
         }
         else if (type == EOSType::JWL) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.jwl.CauchyStress( std::forward< Args >( args )... );
         }
         else if (type == EOSType::SmallShearSolid) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.smallShearSolid.CauchyStress( std::forward< Args >( args )... );
         }
         else if (type == EOSType::ThermallyPerfectGas) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.thermallyPerfectGas.CauchyStress( std::forward< Args >( args )... );
         }
         else if (type == EOSType::WilkinsAluminum) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.wilkinsAluminum.CauchyStress( std::forward< Args >( args )... );
         }
-      
+
     }
 
     //! Entry method tags for specific EOS classes to use with set()
@@ -406,27 +408,27 @@ class EOS {
     template< typename Fn, typename... Args >
     void set( Args&&... args ) {
        if (type == EOSType::StiffenedGas) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.stiffenedGas.setRho0( std::forward< Args >( args )... );
         }
         else if (type == EOSType::GodunovRomenski) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.godunovRomenski.setRho0( std::forward< Args >( args )... );
         }
         else if (type == EOSType::JWL) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.jwl.setRho0( std::forward< Args >( args )... );
         }
         else if (type == EOSType::SmallShearSolid) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.smallShearSolid.setRho0( std::forward< Args >( args )... );
         }
         else if (type == EOSType::ThermallyPerfectGas) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.thermallyPerfectGas.setRho0( std::forward< Args >( args )... );
         }
         else if (type == EOSType::WilkinsAluminum) {
-          if constexpr(std::is_same_v<Fn, CauchyStress>) 
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
             return m_material.wilkinsAluminum.setRho0( std::forward< Args >( args )... );
         }
     }
@@ -451,6 +453,10 @@ class EOS {
             p | m_material.smallShearSolid;
             break;
 
+        case EOSType::LinearMieGruneisen:
+            p | m_material.linearMieGruneisen;
+            break;
+
         case EOSType::WilkinsAluminum:
             p | m_material.wilkinsAluminum;
             break;
@@ -463,7 +469,7 @@ class EOS {
             p | m_material.thermallyPerfectGas;
             break;
     }
-}
+    }
 
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

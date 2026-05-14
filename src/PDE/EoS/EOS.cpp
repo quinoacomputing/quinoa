@@ -70,7 +70,8 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
     auto rho0_gr = getmatprop< tag::rho0_jwl >(k);
-    m_material =
+    type = EOSType::LinearMieGruneisen;
+    new (&m_material.linearMieGruneisen)
       LinearMieGruneisen(gamma0, rho0_gr, alpha, c0, s1, c_v, mu);
   }
   else if (mattype == ctr::MaterialType::WILKINSALUMINUM) {
@@ -101,7 +102,8 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto g = getspecprop< tag::gamma >(k);
       auto ps = getspecprop< tag::pstiff >(k);
       auto c_v = getspecprop< tag::cv >(k);
-      m_material = StiffenedGas(g, ps, c_v);
+      type = EOSType::StiffenedGas;
+      new (&m_material.stiffenedGas) StiffenedGas(g, ps, c_v);
     }
     else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
       // query input deck for ThermallyPerfectGas parameters
@@ -112,7 +114,9 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto t_range =
         g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
       auto dH_ref = getspecprop< tag::dH_ref >(k);
-      m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref);
+      type = EOSType::ThermallyPerfectGas;
+      new (&m_material.thermallyPerfectGas)
+        ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref);
     }
     else Throw( "Unknown EOS for species " + std::to_string(k+1) );
   }
@@ -124,11 +128,11 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto g = getmatprop< tag::gamma >(k);
       auto ps = getmatprop< tag::pstiff >(k);
       auto c_v = getmatprop< tag::cv >(k);
-      m_material = StiffenedGas(g, ps, c_v);
+      type = EOSType::StiffenedGas;
+      new (&m_material.stiffenedGas) StiffenedGas(g, ps, c_v);
     }
     else Throw( "Unknown EOS for material " + std::to_string(k+1) );
   }
   else
     Throw( "Unknown PDE type encountered in EOS ctor" );
 }
-
