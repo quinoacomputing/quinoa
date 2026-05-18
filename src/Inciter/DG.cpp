@@ -2748,9 +2748,8 @@ DG::point_implicit_rhs(
 
   for (std::size_t c=0; c<ncomp; ++c) {
     for (std::size_t k=0; k<ndof; ++k) {
-      auto rmark = c*rdof+k;
       auto mark = c*ndof+k;
-      re[mark] = R(e, rmark);
+      re[mark] = R(e, mark);
     }
   }
 
