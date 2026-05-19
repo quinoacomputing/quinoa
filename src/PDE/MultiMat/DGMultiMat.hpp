@@ -953,7 +953,6 @@ class MultiMat {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
-
       // p-adaptive DG
       if (!pref) {
         // compute internal surface flux integrals
@@ -975,21 +974,20 @@ class MultiMat {
       else {
         // compute internal surface flux integrals
         tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                     coord, fd, geoFace, geoElem, m_riemann, visc_flux, velfn, 
+                     coord, fd, geoFace, geoElem, m_riemann, visc_flux, velfn,
                      U, P, ndofel, dt, R, riemannDeriv, viscous, intsharp );
 
         // compute boundary surface flux integrals
-      for (const auto& b : m_bc)
-        tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
-                        std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-                        m_riemann, visc_flux, velfn, std::get<1>(b), U, P, ndofel, R,
-                        riemannDeriv, viscous, intsharp);
+        for (const auto& b : m_bc)
+          tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
+                          std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+                          m_riemann, visc_flux, velfn, std::get<1>(b), U, P, ndofel, R,
+                          riemannDeriv, viscous, intsharp);
 
         // compute volume integrals
         tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-        inpoel, coord, geoElem, flux, visc_flux, velfn, Problem::src, U, P, ndofel, R, viscous,
-                    intsharp);
-
+                    inpoel, coord, geoElem, flux, visc_flux, velfn, Problem::src, U, P,
+                    ndofel, R, viscous, intsharp);
       }
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "

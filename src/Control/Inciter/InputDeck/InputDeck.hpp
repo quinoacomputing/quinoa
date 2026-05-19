@@ -132,16 +132,6 @@ using materialList = tk::TaggedTuple< brigand::list<
 
 // Species/EOS object
 using speciesList = tk::TaggedTuple< brigand::list<
-  tag::id,       std::vector< uint64_t >,
-  tag::gamma,    std::vector< tk::real >,
-  tag::R,        std::vector< tk::real >,
-  tag::cp_coeff, std::vector< std::vector< std::vector< tk::real > > >,
-  tag::t_range,  std::vector< std::vector< tk::real > >,
-  tag::dH_ref,   std::vector< tk::real >,
-  tag::temp_ref, std::vector< tk::real >,
-  tag::mu_ref,   std::vector< tk::real >,
-  tag::C,        std::vector< tk::real >,
-  tag::Sutherland, std::vector< bool >,
   tag::id,        std::vector< uint64_t >,
   tag::gamma,     std::vector< tk::real >,
   tag::cv,        std::vector< tk::real >,
@@ -150,7 +140,11 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
   tag::t_range,   std::vector< std::vector< tk::real > >,
   tag::dH_ref,    std::vector< tk::real >,
-  tag::spec_name, std::vector< std::string >
+  tag::spec_name, std::vector< std::string >,
+  tag::temp_ref,  std::vector< tk::real >,
+  tag::mu_ref,    std::vector< tk::real >,
+  tag::C,         std::vector< tk::real >,
+  tag::Sutherland, std::vector< bool >
 > >;
 
 // Boundary conditions block

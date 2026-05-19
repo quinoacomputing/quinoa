@@ -37,7 +37,7 @@ class LuaParser {
       const sol::table& lua_ideck,
       ctr::InputDeck& gideck );
 
-    //! Check and store material property into inpudeck storage
+    //! Check and store material property boolean into inpudeck storage
     void checkStoreMatPropBool(
       const sol::table table,
       const std::string key,

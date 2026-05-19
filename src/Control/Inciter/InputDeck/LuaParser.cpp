@@ -1599,7 +1599,7 @@ LuaParser::registerMaterials(
 //! \param[in,out] is_solid Solid material marker
 // *****************************************************************************
 {
-  
+
   if (gideck.get< tag::pde >() != inciter::ctr::PDEType::MULTIMAT &&
       gideck.get< tag::pde >() != inciter::ctr::PDEType::COMPFLOW) return;
   // set source data from sol
@@ -1827,7 +1827,6 @@ LuaParser::registerSpecies(
   // is of size one
   // set target data in inputdeck
   // species vector size is one, since all species are only of one type for now
-  gideck.get< tag::species >().resize(1);
   auto& spci_deck = gideck.get< tag::species >()[0];
 
   // species ids (default is for single species)
@@ -1969,7 +1968,7 @@ LuaParser::checkStoreMatPropBool(
   std::size_t vecsize,
   std::vector< bool >& storage )
 // *****************************************************************************
-//  Check and store material property into inpudeck storage
+//  Check and store material property boolean into inpudeck storage
 //! \param[in] table Sol-table which contains said property
 //! \param[in] key Key for said property in Sol-table
 //! \param[in] vecsize Number of said property in Sol-table (based on number of
