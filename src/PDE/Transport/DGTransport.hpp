@@ -517,6 +517,9 @@ class Transport {
     std::vector< std::vector< tk::real > >
     surfOutput( const inciter::FaceData&,
       const tk::Fields&,
+      const std::vector< std::size_t >&,
+      const tk::UnsMesh::Coords&,
+      const tk::Fields&,
       const tk::Fields& ) const
     {
       std::vector< std::vector< tk::real > > s; // punt for now

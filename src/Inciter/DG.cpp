@@ -1591,7 +1591,9 @@ DG::writeFields(
 
   // Collect surface field solution
   const auto& fd = myGhosts()->m_fd;
-  auto elemsurfs = g_dgpde[d->MeshId()].surfOutput(fd, m_u, m_p);
+  auto elemsurfs = g_dgpde[d->MeshId()].surfOutput(
+    fd, myGhosts()->m_geoFace, myGhosts()->m_inpoel, myGhosts()->m_coord,
+    m_u, m_p );
 
   // Output chare mesh and fields metadata to file
   const auto& triinpoel = m_outmesh.triinpoel;

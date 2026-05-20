@@ -15,6 +15,7 @@
 #include "Vector.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "ConfigureMultiSpecies.hpp"
+#include "Integrate/Basis.hpp"
 
 namespace inciter {
 
@@ -84,6 +85,7 @@ std::vector< std::string > MultiSpeciesSurfNames()
   n.push_back( "z-velocity" );
   n.push_back( "specific_total_energy" );
   n.push_back( "pressure" );
+  n.push_back( "wall_normal-temperature_gradient" );
 
   return n;
 }
@@ -93,6 +95,9 @@ MultiSpeciesSurfOutput(
   const std::size_t nspec,
   const std::size_t rdof,
   const FaceData& fd,
+  const tk::Fields& geoFace,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
   const tk::Fields& U,
   const tk::Fields& P )
 // *****************************************************************************
@@ -100,6 +105,9 @@ MultiSpeciesSurfOutput(
 //! \param[in] nspec Number of species in this PDE system
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \return Vector of vectors of solution on side set faces to be output to file
@@ -112,6 +120,11 @@ MultiSpeciesSurfOutput(
   std::vector< EOS > mat_blk;
   initializeSpeciesEoS( mat_blk );
   std::vector< tk::real > ugp( nspec+4, 0.0 );
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+  std::array< std::vector< tk::real >, 3 > dBdx;
+  for (auto& d : dBdx) d.resize( rdof, 0.0 );
 
   // extract field output along side sets requested
   for (auto s : g_inputdeck.get< tag::field_output, tag::sideset >()) {
@@ -121,7 +134,7 @@ MultiSpeciesSurfOutput(
     const auto& faces = b->second;
     std::vector< tk::real > surfaceSol( faces.size() );
     auto i = out.size();
-    out.insert( end(out), 6, surfaceSol );
+    out.insert( end(out), 7, surfaceSol );
     std::size_t j = 0;
     for (auto f : faces) {
       Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
@@ -144,6 +157,29 @@ MultiSpeciesSurfOutput(
       out[i+4][j] = rhoE;
       out[i+5][j] = mix.pressure( rhob,
         P(el, multispecies::temperatureDofIdx(nspec,0,rdof,0)) );
+      // Temperature gradients are only computed for second- and higher-order
+      // schemes.
+      if (rdof >= 4) {
+        std::array< std::array< tk::real, 3 >, 4 > coordel {{
+          {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+          {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+          {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+          {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }}
+        }};
+        auto jacInv =
+          tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+        tk::eval_dBdx_p1( rdof, jacInv, dBdx );
+        for (std::size_t idir=0; idir<3; ++idir) {
+          auto dTdx =
+              dBdx[idir][1] *
+                P(el, multispecies::temperatureDofIdx(nspec,0,rdof,1))
+            + dBdx[idir][2] *
+                P(el, multispecies::temperatureDofIdx(nspec,0,rdof,2))
+            + dBdx[idir][3] *
+                P(el, multispecies::temperatureDofIdx(nspec,0,rdof,3));
+          out[i+6][j] += dTdx * geoFace(f,idir+1);
+        }
+      }
       ++j;
     }
   }

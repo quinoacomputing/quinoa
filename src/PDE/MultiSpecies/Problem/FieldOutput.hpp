@@ -17,6 +17,7 @@
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 #include "FaceData.hpp"
+#include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "PDE/MultiSpecies/MiscMultiSpeciesFns.hpp"
@@ -46,6 +47,9 @@ MultiSpeciesSurfOutput(
   const std::size_t nspec,
   const std::size_t rdof,
   const FaceData& fd,
+  const tk::Fields& geoFace,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
   const tk::Fields& U,
   const tk::Fields& P );
 
