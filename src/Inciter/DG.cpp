@@ -1214,7 +1214,7 @@ DG::solve( tk::real newdt )
     }
   }
 
-  if ( (!imex_runge_kutta || m_stage < m_nstage-1) && !point_implicit) {
+  if ( !imex_runge_kutta || m_stage < m_nstage-1 || point_implicit) {
     if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
       myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
@@ -2541,7 +2541,7 @@ DG::point_implicit_integrate()
         u_cur[mark] = Ubase(e, rmark);
       }
 
-    // Newton iteration for element e
+    // Get value at next time step
     auto converged = solve_element_implicit(
       e, Ubase, Pbase, u_old, u_cur, dte, vole );
 
@@ -2570,7 +2570,7 @@ DG::solve_element_implicit(
   tk::real dte,
   tk::real vole )
 // *****************************************************************************
-//  Solve element-local implicit system using Newton's method
+//  Solve element-local, linearized implicit system 
 //! \param[in] e Element index
 //! \param[in] Ubase Base conservative field with lagged neighbor states
 //! \param[in] Pbase Base primitive field with lagged neighbor states
@@ -2578,116 +2578,77 @@ DG::solve_element_implicit(
 //! \param[in] u_new Updated solution
 //! \param[in] dte Element-local time step size
 //! \param[in] vole Element volume
-//! \return True if Newton iterations converged, false otherwise
-//! \details Solves the nonlinear system F(u) = u - u_old - dt*R(u) = 0 using
-//!   Newton's method with line search. The Jacobian and RHS are obtained from
-//!   the physics-specific implementations
+//! \return True if invert is successful, false otherwise
+//! \details Solves the linearized system u - u_old = dt( R(u)^n + dR(u)/du^n).
+//!   The Jacobian and RHS are obtained from the physics-specific
+//!   implementations
 // *****************************************************************************
 {
   const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ncomp = m_u.nprop() / rdof;
 
   // Intermediate variable that ends up equal to ndof * neq
   const auto n = u_new.size();
 
-  // Newton solver parameters from input deck
-  //! TODO: make these specific to this problem
-  const auto max_iter = g_inputdeck.get< tag::imex_maxiter >();
-  const auto abs_tol = g_inputdeck.get< tag::imex_abstol >();
-  const auto rel_tol = g_inputdeck.get< tag::imex_reltol >();
+  Assert( n == ncomp*ndof, "Size mismatch in solve_element_implicit()" );
+  Assert( u_new.size() == n, "Size mismatch in solve_element_implicit()" );
 
-  // Lamda for norm calculation
-  auto norm = []( const std::vector< tk::real >& x ) {
-    tk::real s = 0.0;
-    for (auto v : x) s += v*v;
-    return std::sqrt(s);
-  };
 
-  // lambda to calculate residual
-  auto residual = [&]( const std::vector< tk::real >& u ) {
-    auto r = point_implicit_rhs( e, u, Ubase, Pbase );
+  // Jacobian of the RHS evaluated at the old state.
+  auto dRdu = point_implicit_jacobian( e, u_old, Ubase, Pbase );
 
-    std::vector< tk::real > f(n, 0.0);
+  // Container for previous RHS
+  std::vector< tk::real > rhs_old(n, 0.0);
 
-    for (std::size_t i=0; i<n; ++i) {
-      const auto k = i % ndof;
-      const auto scale = dte / (vole * mass_dubiner[k]);
-
-      f[i] = u[i] - u_old[i] - scale*r[i];
+  for (std::size_t c=0; c<ncomp; ++c) {
+    for (std::size_t k=0; k<ndof; ++k) {
+      const auto mark = c*ndof + k;
+      rhs_old[mark] = m_rhs(e, mark);
     }
-
-    return f;
-  };
-
-  // initial residuals and norm
-  auto F = residual( u_new );
-  const tk::real norm_F0 = std::max( norm(F), tk::real(1.0) );
-
-  // Newton iteration
-  for (size_t iter=0; iter<max_iter; ++iter) {
-    const auto norm_F = norm(F);
-
-    // Convergence check
-    if (norm_F < abs_tol || norm_F/norm_F0 < rel_tol) return true;
-
-    auto dRdu = point_implicit_jacobian( e, u_new, Ubase, Pbase );
-
-    // LAPACK variables
-    std::vector< double > A(n*n, 0.0);
-    std::vector< double > delta(n, 0.0);
-
-    // Fill RHS vector with negative residual and LHS matrix with:
-    // dij - dte/vole/m dRi/duj
-    for (std::size_t i=0; i<n; ++i) {
-      const auto k = i % ndof;
-      const auto scale = dte / (vole * mass_dubiner[k]);
-
-      for (std::size_t j=0; j<n; ++j) {
-        A[i*n + j] = (i == j ? 1.0 : 0.0) - scale*dRdu[i][j];
-      }
-
-      delta[i] = -F[i];
-    }
-
-    // Solve this small system of equations with LAPACK
-    const lapack_int ln = static_cast< lapack_int >(n);
-    std::vector< lapack_int > ipiv(n);
-
-    const auto info = LAPACKE_dgesv(LAPACK_ROW_MAJOR, ln, 1, A.data(), ln,
-      ipiv.data(), delta.data(), 1 );
-
-    // Singular matrix or LAPACK error
-    if (info != 0) return false;
-
-    // Line search
-    tk::real alpha = 1.0;
-    const size_t max_line_search = 10;
-    bool line_search_success = false;
-
-    for (std::size_t ls=0; ls<max_line_search; ++ls) {
-      auto u_trial = u_new;
-
-      for (std::size_t i=0; i<n; ++i) {
-        u_trial[i] += alpha * static_cast< tk::real >(delta[i]);
-      }
-
-      auto F_trial = residual( u_trial );
-
-      if (norm(F_trial) < norm_F) {
-        u_new = std::move(u_trial);
-        F = std::move(F_trial);
-        line_search_success = true;
-        break;
-      }
-
-      alpha *= 0.5;
-    }
-
-    // Line search failed!
-    if (!line_search_success) return false;
   }
 
-  // Failed to converge within max_iter
-  return false;
+  std::vector< double > A(n*n, 0.0);
+  std::vector< double > b(n, 0.0);
+
+  // For this element, take solve for one step of u
+  for (std::size_t i=0; i<n; ++i) {
+    const auto k = i % ndof;
+    const auto scale = dte / (vole * mass_dubiner[k]);
+
+    // RHS: dt M^-1 R^n
+    b[i] = static_cast< double >(scale * rhs_old[i]);
+
+    // LHS: I - dt M^-1 dR/du
+    for (std::size_t j=0; j<n; ++j) {
+      A[i*n + j] =
+        static_cast< double >(
+          (i == j ? tk::real(1.0) : tk::real(0.0))
+          - scale * dRdu[i][j] );
+    }
+  }
+
+  const auto ln = static_cast< lapack_int >(n);
+
+  std::vector< lapack_int > ipiv(n);
+
+  const auto info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, ln, 1, A.data(), ln,
+    ipiv.data(), b.data(), 1 );
+
+  // LAPACK didn't converge
+  if (info != 0) return false;
+
+  // b has been overwritten with du, add to previous solution
+  u_new = u_old;
+  for (std::size_t i=0; i<n; ++i) {
+    const auto du = static_cast< tk::real >(b[i]);
+
+    if (!std::isfinite(du)) return false;
+
+    u_new[i] += du;
+  }
+
+  return true;
 }
 
 std::vector< tk::real >
@@ -2775,6 +2736,7 @@ DG::point_implicit_jacobian(
 {
   const auto n = ue.size();
 
+  //! WIP: This still must call the global RHS function.
   auto r0 = point_implicit_rhs( e, ue, Ubase, Pbase );
 
   std::vector< std::vector< tk::real > >
