@@ -32,7 +32,7 @@ std::map< std::string, tk::GetVarFn > MultiSpeciesOutVarFn()
   // Allowed strings for user-def field output vars
   OutFnMap["density"] = multispecies::mixDensityOutVar;
   OutFnMap["temperature"] = multispecies::temperatureOutVar;
-  //OutFnMap["pressure"] = multispecies::pressureOutVar;
+  OutFnMap["pressure"] = multispecies::pressureOutVar;
   OutFnMap["specific_total_energy"] = multispecies::specificTotalEnergyOutVar;
   OutFnMap["x-velocity"] = multispecies::velocityOutVar<0>;
   OutFnMap["y-velocity"] = multispecies::velocityOutVar<1>;
@@ -83,6 +83,7 @@ std::vector< std::string > MultiSpeciesSurfNames()
   n.push_back( "y-velocity" );
   n.push_back( "z-velocity" );
   n.push_back( "specific_total_energy" );
+  n.push_back( "pressure" );
 
   return n;
 }
@@ -93,14 +94,14 @@ MultiSpeciesSurfOutput(
   const std::size_t rdof,
   const FaceData& fd,
   const tk::Fields& U,
-  const tk::Fields& /*P*/ )
+  const tk::Fields& P )
 // *****************************************************************************
 //  Return element surface field output (on triangle faces) going to file
 //! \param[in] nspec Number of species in this PDE system
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] U Solution vector at recent time step
-// //! \param[in] P Vector of primitives at recent time step
+//! \param[in] P Vector of primitives at recent time step
 //! \return Vector of vectors of solution on side set faces to be output to file
 // *****************************************************************************
 {
@@ -108,6 +109,9 @@ MultiSpeciesSurfOutput(
 
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
+  std::vector< EOS > mat_blk;
+  initializeSpeciesEoS( mat_blk );
+  std::vector< tk::real > ugp( nspec+4, 0.0 );
 
   // extract field output along side sets requested
   for (auto s : g_inputdeck.get< tag::field_output, tag::sideset >()) {
@@ -126,15 +130,20 @@ MultiSpeciesSurfOutput(
       // access solutions at boundary element
       tk::real rhob(0.0), rhoE(0.0);
       for (std::size_t k=0; k<nspec; ++k) {
-        rhob += U(el, multispecies::densityDofIdx(nspec,k,rdof,0));
+        auto rhok = U(el, multispecies::densityDofIdx(nspec,k,rdof,0));
+        rhob += rhok;
+        ugp[multispecies::densityIdx(nspec,k)] = rhok;
       }
       rhoE = U(el, multispecies::energyDofIdx(nspec,0,rdof,0));
+      Mixture mix( nspec, ugp, mat_blk );
 
       out[i+0][j] = rhob;
       out[i+1][j] = U(el, multispecies::momentumDofIdx(nspec,0,rdof,0))/rhob;
       out[i+2][j] = U(el, multispecies::momentumDofIdx(nspec,1,rdof,0))/rhob;
       out[i+3][j] = U(el, multispecies::momentumDofIdx(nspec,2,rdof,0))/rhob;
       out[i+4][j] = rhoE;
+      out[i+5][j] = mix.pressure( rhob,
+        P(el, multispecies::temperatureDofIdx(nspec,0,rdof,0)) );
       ++j;
     }
   }
