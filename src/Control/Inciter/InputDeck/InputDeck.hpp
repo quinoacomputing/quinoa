@@ -101,7 +101,8 @@ using multispeciesList = tk::TaggedTuple< brigand::list<
   tag::physics,          PhysicsType,
   tag::nspec,            std::size_t,
   tag::problem,          ProblemType,
-  tag::viscous,          bool
+  tag::viscous,          bool,
+  tag::Sutherland,       bool
 > >;
 
 // Material/EOS object
@@ -143,8 +144,7 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::spec_name, std::vector< std::string >,
   tag::temp_ref,  std::vector< tk::real >,
   tag::mu_ref,    std::vector< tk::real >,
-  tag::C,         std::vector< tk::real >,
-  tag::Sutherland, std::vector< bool >
+  tag::C,         std::vector< tk::real >
 > >;
 
 // Boundary conditions block

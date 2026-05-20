@@ -86,7 +86,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto temp_ref = getspecprop< tag::temp_ref >(k);
     auto mu_ref = getspecprop< tag::mu_ref >(k);
     auto C = getspecprop< tag::C >(k);
-    auto Sutherland = getspecprop< tag::Sutherland >(k);
+    auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
     m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, temp_ref,
      mu_ref, C, Sutherland);
   }
@@ -114,7 +114,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto temp_ref = getspecprop< tag::temp_ref >(k);
       auto mu_ref = getspecprop< tag::mu_ref >(k);
       auto C = getspecprop< tag::C >(k);
-      auto Sutherland = getspecprop< tag::Sutherland >(k);
+      auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
       m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, temp_ref,
        mu_ref, C, Sutherland);
     }

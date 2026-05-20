@@ -371,9 +371,12 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multispecies"], "nspec",
       gideck.get< tag::multispecies, tag::nspec >(), 1);
-    storeIfSpecd< bool >(lua_ideck["multispecies"], "viscous", 
+    storeIfSpecd< bool >(lua_ideck["multispecies"], "viscous",
       gideck.get< tag::multispecies, tag::viscous >(),
-      false); 
+      false);
+    storeIfSpecd< bool >(lua_ideck["multispecies"], "Sutherland",
+      gideck.get< tag::multispecies, tag::Sutherland >(),
+      false);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["multispecies"], "problem",
       gideck.get< tag::multispecies, tag::problem >(),
@@ -456,186 +459,6 @@ LuaParser::storeInputDeck(
 
       // reset solid-marker
       is_solid = false;
-      
-      std::size_t ntype = nspec;
-      // Stiffened-gas materials
-      if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::STIFFENEDGAS) {
-        // gamma
-        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          mati_deck.get< tag::gamma >());
-
-        // pstiff
-        if (!sol_mat[i+1]["pstiff"].valid())
-          sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
-        checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
-          mati_deck.get< tag::pstiff >());
-
-        // mu (dynamic viscosity) and 'viscous' keyword
-        if (!sol_mat[i+1]["mu"].valid())
-          sol_mat[i+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
-        else gideck.get< tag::multimat, tag::viscous >() = true;
-        checkStoreMatProp(sol_mat[i+1], "mu", ntype, mati_deck.get< tag::mu >());
-      }
-      // Small-shear solid materials
-      else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::SMALLSHEARSOLID) {
-        // gamma
-        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          mati_deck.get< tag::gamma >());
-
-        // pstiff
-        if (!sol_mat[i+1]["pstiff"].valid())
-          sol_mat[i+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
-        checkStoreMatProp(sol_mat[i+1], "pstiff", ntype,
-          mati_deck.get< tag::pstiff >());
-
-        // mu
-        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
-          mati_deck.get< tag::mu >());
-
-        // plasticity_reltime
-        if (!sol_mat[i+1]["plasticity_reltime"].valid())
-          sol_mat[i+1]["plasticity_reltime"] =
-            std::vector< tk::real >(ntype, 1.0e-05);
-        checkStoreMatProp(sol_mat[i+1], "plasticity_reltime", ntype,
-          mati_deck.get< tag::plasticity_reltime >());
-
-        // yield_stress
-        if (!sol_mat[i+1]["yield_stress"].valid())
-          sol_mat[i+1]["yield_stress"] =
-            std::vector< tk::real >(ntype, 300.0e+06);
-        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
-          mati_deck.get< tag::yield_stress >());
-
-        // assign solid
-        is_solid = true;
-      }
-      // Wilkins aluminum materials
-      else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::WILKINSALUMINUM) {
-        // gamma
-        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          mati_deck.get< tag::gamma >());
-
-        // mu
-        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
-          mati_deck.get< tag::mu >());
-
-        // plasticity_reltime
-        if (!sol_mat[i+1]["plasticity_reltime"].valid())
-          sol_mat[i+1]["plasticity_reltime"] =
-            std::vector< tk::real >(ntype, 1.0e-07);
-        checkStoreMatProp(sol_mat[i+1], "plasticity_reltime", ntype,
-          mati_deck.get< tag::plasticity_reltime >());
-
-        // yield_stress
-        if (!sol_mat[i+1]["yield_stress"].valid())
-          sol_mat[i+1]["yield_stress"] =
-            std::vector< tk::real >(ntype, 300.0e+06);
-        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
-          mati_deck.get< tag::yield_stress >());
-
-        // assign solid
-        is_solid = true;
-      }
-      // Godunov-Romenski materials
-      else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::GODUNOVROMENSKI) {
-        // gamma
-        checkStoreMatProp(sol_mat[i+1], "gamma", ntype,
-          mati_deck.get< tag::gamma >());
-
-        // mu
-        checkStoreMatProp(sol_mat[i+1], "mu", ntype,
-          mati_deck.get< tag::mu >());
-
-        // rho0_jwl
-        checkStoreMatProp(sol_mat[i+1], "rho0_jwl", ntype,
-          mati_deck.get< tag::rho0_jwl >());
-
-        // alpha
-        checkStoreMatProp(sol_mat[i+1], "alpha", ntype,
-          mati_deck.get< tag::alpha >());
-
-        // K0
-        checkStoreMatProp(sol_mat[i+1], "K0", ntype,
-          mati_deck.get< tag::K0 >());
-
-        // plasticity_reltime
-        if (!sol_mat[i+1]["plasticity_reltime"].valid())
-          sol_mat[i+1]["plasticity_reltime"] =
-            std::vector< tk::real >(ntype, 1.0e-07);
-        checkStoreMatProp(sol_mat[i+1], "plasticity_reltime", ntype,
-          mati_deck.get< tag::plasticity_reltime >());
-
-        // yield_stress
-        if (!sol_mat[i+1]["yield_stress"].valid())
-          sol_mat[i+1]["yield_stress"] =
-            std::vector< tk::real >(ntype, 300.0e+06);
-        checkStoreMatProp(sol_mat[i+1], "yield_stress", ntype,
-          mati_deck.get< tag::yield_stress >());
-
-        // assign solid
-        is_solid = true;
-      }
-      // JWL materials
-      else if (mati_deck.get< tag::eos >() == inciter::ctr::MaterialType::JWL) {
-        // w_gru
-        checkStoreMatProp(sol_mat[i+1], "w_gru", ntype,
-          mati_deck.get< tag::w_gru >());
-
-        // a_jwl
-        checkStoreMatProp(sol_mat[i+1], "A_jwl", ntype,
-          mati_deck.get< tag::A_jwl >());
-
-        // b_jwl
-        checkStoreMatProp(sol_mat[i+1], "B_jwl", ntype,
-          mati_deck.get< tag::B_jwl >());
-
-        // R1_jwl
-        checkStoreMatProp(sol_mat[i+1], "R1_jwl", ntype,
-          mati_deck.get< tag::R1_jwl >());
-
-        // R2_jwl
-        checkStoreMatProp(sol_mat[i+1], "R2_jwl", ntype,
-          mati_deck.get< tag::R2_jwl >());
-
-        // rho0_jwl
-        checkStoreMatProp(sol_mat[i+1], "rho0_jwl", ntype,
-          mati_deck.get< tag::rho0_jwl >());
-
-        // de_jwl
-        checkStoreMatProp(sol_mat[i+1], "de_jwl", ntype,
-          mati_deck.get< tag::de_jwl >());
-
-        // Pr_jwl
-        checkStoreMatProp(sol_mat[i+1], "Pr_jwl", ntype,
-          mati_deck.get< tag::Pr_jwl >());
-
-        // rhor_jwl
-        if (sol_mat[i+1]["rhor_jwl"].valid()) {
-          checkStoreMatProp(sol_mat[i+1], "rhor_jwl", ntype,
-            mati_deck.get< tag::rhor_jwl >());
-        }
-        // Tr_jwl
-        else if (sol_mat[i+1]["Tr_jwl"].valid()) {
-          checkStoreMatProp(sol_mat[i+1], "Tr_jwl", ntype,
-            mati_deck.get< tag::Tr_jwl >());
-        }
-        else
-          Throw("Either reference density or reference temperature must be "
-            "specified for JWL equation of state (EOS).");
-      }
-      // Thermallly-perfect gas materials
-      else if (mati_deck.get< tag::eos >() ==
-        inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
-        if (gideck.get< tag::multispecies, tag::viscous >()){ 
-          // mu
-          checkStoreMatProp(sol_mat[i+1], "mu", ntype,
-            mati_deck.get< tag::mu >());   
-        }
-      }
 
       // Store material information
       registerMaterials(i, lua_ideck, gideck, is_solid);
@@ -1784,16 +1607,6 @@ LuaParser::registerMaterials(
         "specified for JWL equation of state (EOS).");
   }
 
-  // Thermallly-perfect gas materials
-  else if (mati_deck.get< tag::eos >() ==
-    inciter::ctr::MaterialType::THERMALLYPERFECTGAS) {
-        
-    // mu (dynamic viscosity) and 'viscous' keyword
-    if (!sol_mat[imat+1]["mu"].valid())
-      sol_mat[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
-    else gideck.get< tag::multispecies, tag::viscous >() = true;
-      checkStoreMatProp(sol_mat[imat+1], "mu", ntype, mati_deck.get< tag::mu >());
-    }
 }
 
 void
@@ -1866,6 +1679,17 @@ LuaParser::registerSpecies(
     storeVecIfSpecd< std::string >(
       sol_spc[imat+1], "spec_name", spci_deck.get< tag::spec_name >(),
       std::vector< std::string >(nspec, ""));
+    // If viscous problem, read all parameters from control file
+    if (gideck.get< tag::multispecies, tag::viscous >()){
+      // mu_ref (Sutherland)
+      checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
+        spci_deck.get< tag::mu_ref >());
+      if (gideck.get< tag::multispecies, tag::Sutherland >()){
+        // C (Sutherland)
+        checkStoreMatProp(sol_spc[imat+1], "C", nspec,
+          spci_deck.get< tag::C >());
+      }
+    }
     if (sol_spc[imat+1]["spec_name"].valid()) {
       std::string nasa9_path = gideck.get< tag::nasa9_filepath >();
       std::unordered_map<std::string,N9Species> nasa9_cache;
@@ -1917,17 +1741,6 @@ LuaParser::registerSpecies(
       // dH_ref
       checkStoreMatProp(sol_spc[imat+1], "dH_ref", nspec,
         spci_deck.get< tag::dH_ref >());
-      if (gideck.get< tag::multispecies, tag::viscous >()){ 
-        // mu_ref (Sutherland)
-        checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
-          spci_deck.get< tag::mu_ref >());
-        // C (Sutherland)
-        checkStoreMatProp(sol_spc[imat+1], "C", nspec,
-          spci_deck.get< tag::C >());
-        // Sutherland (bool)
-        checkStoreMatPropBool(sol_spc[imat+1], "Sutherland", nspec,
-          spci_deck.get< tag::Sutherland >());
-      }
     }
   }
 }

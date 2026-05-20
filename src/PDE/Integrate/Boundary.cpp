@@ -209,7 +209,7 @@ bndSurfInt( const bool pref,
               coordgp_3[0].resize( ng );
               coordgp_3[1].resize( ng );
               coordgp_3[2].resize( ng );
-              for(int i=0; i<3; i++)
+              for(std::size_t i=0; i<3; i++)
                 coordgp_3[i][igp]=ref_gp_l[i];
               eval_dBdx_p2( igp, coordgp_3, jacInv_l, dBdx_l );
           }
@@ -533,7 +533,7 @@ bndSurfInt_constP(
               coordgp_3[0].resize( ng );
               coordgp_3[1].resize( ng );
               coordgp_3[2].resize( ng );
-              for(int i=0; i<3; i++)
+              for(std::size_t i=0; i<3; i++)
                 coordgp_3[i][igp]=ref_gp_l[i];
               eval_dBdx_p2( igp, coordgp_3, jacInv_l, dBdx_l );
           }
