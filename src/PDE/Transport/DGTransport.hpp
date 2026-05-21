@@ -479,6 +479,13 @@ class Transport {
                                  tk::real& /*internal_energy*/ ) const
     {}
 
+    void output_internal_volume( std::size_t /*nelem*/,
+                                 const tk::real /*time*/,
+                                 const tk::Fields& /*geoElem*/,
+                                 const tk::Fields& /*U*/,
+                                 tk::real& /*internal_volume*/ ) const
+    {}
+
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array

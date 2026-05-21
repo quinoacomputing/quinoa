@@ -64,6 +64,7 @@ module dg {
       entry void solveLinearSystem();
       entry [reductiontarget] void solve( tk::real newdt );
       entry [reductiontarget] void print_internal_energy( tk::real internal_energy );
+      entry [reductiontarget] void print_internal_volume( tk::real internal_volume );
       entry void resized();
       entry void transferSol();
       entry void advance( tk::real newdt, std::array< tk::real, 6 > F );

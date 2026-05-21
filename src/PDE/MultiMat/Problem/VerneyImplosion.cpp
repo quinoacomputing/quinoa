@@ -66,7 +66,7 @@ MultiMatProblemVerneyImplosion::initialize( ncomp_t ncomp,
     rho = {{ 0.01, 7900.0, 1.0 }};
     tk::real r0 = 0.08;
     tk::real u0 = 1400.0;
-    tk::real vel_mag = u0 * std::pow((r0*r0)/(r*r),2.0);
+    tk::real vel_mag = u0 * std::pow(r0/r,2.0);
     vel = {{ -vel_mag*x/r, -vel_mag*y/r, -vel_mag*z/r }};
     p = 101325.0;
   }
@@ -77,7 +77,7 @@ MultiMatProblemVerneyImplosion::initialize( ncomp_t ncomp,
     p = 101325.0;
   }
   tk::real rhob = 0.0;
-  for (std::size_t k=0; k<nmat; ++k) rhob += rho[k];
+  for (std::size_t k=0; k<nmat; ++k) rhob += alpha[k]*rho[k];
   s[momentumIdx(nmat, 0)] = rhob * vel[0];
   s[momentumIdx(nmat, 1)] = rhob * vel[1];
   s[momentumIdx(nmat, 2)] = rhob * vel[2];
