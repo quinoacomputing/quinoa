@@ -2523,6 +2523,10 @@ DG::point_implicit_integrate()
   const tk::Fields Ubase( m_un );
   const tk::Fields Pbase( m_p );
 
+
+  // Jacobian of RHS of all elements
+  const auto dRdu_elem = point_implicit_jacobian(Ubase, Pbase);
+
   tk::Fields Unew( m_u );
 
   // Element-local implicit solve
@@ -2543,7 +2547,7 @@ DG::point_implicit_integrate()
 
     // Get value at next time step
     auto converged = solve_element_implicit(
-      e, Ubase, Pbase, u_old, u_cur, dte, vole );
+      e, u_old, u_cur, dte, vole, dRdu_elem[e] );
 
     if (!converged)
       Throw( "Point-implicit solver failed at element " + std::to_string(e) );
@@ -2563,21 +2567,20 @@ DG::point_implicit_integrate()
 bool
 DG::solve_element_implicit(
   std::size_t e,
-  const tk::Fields& Ubase,
-  const tk::Fields& Pbase,
   const std::vector< tk::real >& u_old,
   std::vector< tk::real >& u_new,
   tk::real dte,
-  tk::real vole )
+  tk::real vole,
+  const std::vector< std::vector< tk::real > >& dRdu
+ )
 // *****************************************************************************
 //  Solve element-local, linearized implicit system 
 //! \param[in] e Element index
-//! \param[in] Ubase Base conservative field with lagged neighbor states
-//! \param[in] Pbase Base primitive field with lagged neighbor states
 //! \param[in] u_old Solution at previous time step (element DOFs)
 //! \param[in] u_new Updated solution
 //! \param[in] dte Element-local time step size
 //! \param[in] vole Element volume
+//! \param[in] dRdU Jacobian of RHS for element
 //! \return True if invert is successful, false otherwise
 //! \details Solves the linearized system u - u_old = dt( R(u)^n + dR(u)/du^n).
 //!   The Jacobian and RHS are obtained from the physics-specific
@@ -2585,39 +2588,26 @@ DG::solve_element_implicit(
 // *****************************************************************************
 {
   const auto ndof = g_inputdeck.get< tag::ndof >();
-  const auto rdof = g_inputdeck.get< tag::rdof >();
-  const auto ncomp = m_u.nprop() / rdof;
 
   // Intermediate variable that ends up equal to ndof * neq
   const auto n = u_new.size();
 
-  Assert( n == ncomp*ndof, "Size mismatch in solve_element_implicit()" );
+  Assert( n == m_u.nprop()/g_inputdeck.get< tag::rdof >()*ndof,
+    "Size mismatch in solve_element_implicit()" );
   Assert( u_new.size() == n, "Size mismatch in solve_element_implicit()" );
-
-
-  // Jacobian of the RHS evaluated at the old state.
-  auto dRdu = point_implicit_jacobian( e, u_old, Ubase, Pbase );
-
-  // Container for previous RHS
-  std::vector< tk::real > rhs_old(n, 0.0);
-
-  for (std::size_t c=0; c<ncomp; ++c) {
-    for (std::size_t k=0; k<ndof; ++k) {
-      const auto mark = c*ndof + k;
-      rhs_old[mark] = m_rhs(e, mark);
-    }
-  }
+  Assert( dRdu.size() == n, "Jacobian row size mismatch" );
 
   std::vector< double > A(n*n, 0.0);
   std::vector< double > b(n, 0.0);
 
   // For this element, take solve for one step of u
   for (std::size_t i=0; i<n; ++i) {
+    Assert( dRdu[i].size() == n, "Jacobian column size mismatch" );
     const auto k = i % ndof;
     const auto scale = dte / (vole * mass_dubiner[k]);
 
     // RHS: dt M^-1 R^n
-    b[i] = static_cast< double >(scale * rhs_old[i]);
+    b[i] = static_cast< double >(scale * m_rhs(e, i));
 
     // LHS: I - dt M^-1 dR/du
     for (std::size_t j=0; j<n; ++j) {
@@ -2717,45 +2707,66 @@ DG::point_implicit_rhs(
   return re;
 }
 
-std::vector< std::vector< tk::real > >
+std::vector< std::vector< std::vector< tk::real > > >
 DG::point_implicit_jacobian(
-  std::size_t e,
-  const std::vector< tk::real >& ue,
   const tk::Fields& Ubase,
   const tk::Fields& Pbase ) const
 // *****************************************************************************
 // Calculates element-local residual Jacobian
-//! \param[in] e Element index
-//! \param[in] ue Element-local unknowns
 //! \param[in] Ubase Base conservative field with lagged neighbor states
 //! \param[in] Pbase Base primitive field with lagged neighbor states
-//! \return Dense matrix dR_e/du_e
+//! \return Dense matrix dR_e/du_e for all elements
 //! \details WIP that performs finite differencing to calculate Jacobian, with
 //! the exact Jacobian to be wired in later.
 // *****************************************************************************
 {
-  const auto n = ue.size();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  const auto nunk = neq*ndof;
 
-  //! WIP: This still must call the global RHS function.
-  auto r0 = point_implicit_rhs( e, ue, Ubase, Pbase );
+  // Allocate each element's Jacobian
+  std::vector< std::vector< std::vector< tk::real > > >
+    dRdu( nelem,
+      std::vector< std::vector< tk::real > >(
+        nunk, std::vector< tk::real >( nunk, 0.0 ) ) );
 
-  std::vector< std::vector< tk::real > >
-    dRdu(n, std::vector< tk::real >(n, 0.0));
+  for (std::size_t e=0; e<nelem; ++e) {
+    std::vector< tk::real > u( nunk, 0.0 );
 
-  for (std::size_t j=0; j<n; ++j) {
-    auto up = ue;
+    for (std::size_t c=0; c<neq; ++c) {
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
+        const auto rmark = c*rdof + k;
+        const auto mark = c*ndof + k;
 
-    // small step forward for finite difference
-    const auto eps =
-      std::sqrt(std::numeric_limits< tk::real >::epsilon()) *
-      std::max(std::abs(ue[j]), tk::real(1.0));
+        u[mark] = Ubase(e,rmark);
+      }
+    }
 
-    up[j] += eps;
+    const auto r0 = point_implicit_rhs( e, u, Ubase, Pbase );
+    for (std::size_t c=0; c<neq; ++c) {
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
+        const auto col = c*ndof + k;
 
-    auto rp = point_implicit_rhs( e, up, Ubase, Pbase );
+        auto up = u;
 
-    for (std::size_t i=0; i<n; ++i) {
-      dRdu[i][j] = (rp[i] - r0[i]) / eps;
+        const auto eps =
+          std::sqrt( std::numeric_limits< tk::real >::epsilon() ) *
+          std::max( std::abs( u[col] ), tk::real(1.0) );
+
+        up[col] += eps;
+
+        const auto rp = point_implicit_rhs( e, up, Ubase, Pbase );
+
+        for (std::size_t ceq=0; ceq<neq; ++ceq) {
+          for (std::size_t keq=0; keq<m_numEqDof[ceq]; ++keq) {
+            const auto row = ceq*ndof + keq;
+
+            dRdu[e][row][col] = ( rp[row] - r0[row] ) / eps;
+          }
+        }
+      }
     }
   }
 

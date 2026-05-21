@@ -438,12 +438,12 @@ class DG : public CBase_DG {
 
     //! Solve element-local implicit system using Newton's method
     bool solve_element_implicit(std::size_t e,
-                                const tk::Fields& Ubase,
-                                const tk::Fields& Pbase,
                                 const std::vector< tk::real >& u_old,
                                 std::vector< tk::real >& u_new,
                                 tk::real dte,
-                                tk::real vole );
+                                tk::real vole,
+                                const std::vector< std::vector< tk::real > >&
+                                  dRdu );
 
     //! Calculate element-local RHS for point-implicit solve
     std::vector< tk::real > point_implicit_rhs(std::size_t e,
@@ -452,9 +452,8 @@ class DG : public CBase_DG {
                                               const tk::Fields& Pbase ) const;
 
     //! Calculate element-local Jacobian for point-implicit solve
-    std::vector< std::vector< tk::real > > point_implicit_jacobian(
-      std::size_t e,
-      const std::vector< tk::real >& ue,
+    std::vector< std::vector< std::vector< tk::real > > >
+    point_implicit_jacobian(
       const tk::Fields& Ubase,
       const tk::Fields& Pbase ) const;
 };
