@@ -57,24 +57,24 @@ MultiMatProblemVerneyImplosion::initialize( ncomp_t ncomp,
   // Inner region (air)
   if (r < 0.08) {
     alpha = {{ 1.0-2*alphamin, alphamin, alphamin }};
-    rho = {{ 0.01, 7900.0, 1.0 }};
+    rho = {{ 0.01, 7900.0, 0.01 }};
     vel = {{ 0.0, 0.0, 0.0 }};
     p = 100.0;
   }
   else if (0.08 <= r && r <= 0.085) {
     alpha = {{ alphamin, 1.0-2*alphamin, alphamin }};
-    rho = {{ 0.01, 7900.0, 1.0 }};
+    rho = {{ 0.01, 7900.0, 0.01 }};
     tk::real r0 = 0.08;
     tk::real u0 = 1400.0;
     tk::real vel_mag = u0 * std::pow(r0/r,2.0);
     vel = {{ -vel_mag*x/r, -vel_mag*y/r, -vel_mag*z/r }};
-    p = 101325.0;
+    p = 100.0;
   }
   else {
     alpha = {{ alphamin, alphamin, 1.0-2*alphamin }};
-    rho = {{ 0.01, 7900.0, 1.0 }};
+    rho = {{ 0.01, 7900.0, 0.01 }};
     vel = {{ 0.0, 0.0, 0.0 }};
-    p = 101325.0;
+    p = 100.0;
   }
   tk::real rhob = 0.0;
   for (std::size_t k=0; k<nmat; ++k) rhob += alpha[k]*rho[k];
