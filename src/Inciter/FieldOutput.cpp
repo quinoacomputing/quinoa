@@ -51,9 +51,6 @@ numericFieldOutput( const tk::Fields& U,
 //! \return Output fields requested by user
 // *****************************************************************************
 {
-  // will not use P if empty
-  const auto& p = P.empty() ? U : P;
-
   //auto rdof =
   //  c == tk::Centering::NODE ? 1 : g_inputdeck.get< tag::rdof >();
   std::size_t rdof = 1;
@@ -62,13 +59,18 @@ numericFieldOutput( const tk::Fields& U,
   for (const auto& v : g_inputdeck.get< tag::field_output, tag::outvar >()) {
     if (v.centering == c && !v.analytic()) {
       auto iPDE = g_inputdeck.get< tag::pde >();
-      const auto& F = v.primitive(iPDE) ? p : U;
       if (v.varFnIdx == "null") {        // depvar-based direct access
-        f.push_back( F.extract_comp( v.field*rdof ) );
+        if (v.primitive(iPDE)) {
+          if (P.empty())
+            Throw("Primitive var output requested from empty primitive vector");
+          f.push_back( P.extract_comp( v.field*rdof ) );
+        }
+        else
+          f.push_back( U.extract_comp( v.field*rdof ) );
       } else {  // human-readable non-analytic via custom fn
         Assert(outvarfn.find(v.varFnIdx) != outvarfn.end(),
           "getvar() not configured for " + v.name );
-        f.push_back( outvarfn.at(v.varFnIdx)( F, rdof ) );
+        f.push_back( outvarfn.at(v.varFnIdx)( U, P, rdof ) );
       }
     }
   }
