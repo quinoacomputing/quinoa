@@ -1219,7 +1219,7 @@ DG::ALEComm()
   auto& coord = myGhosts()->m_coord;
   auto& disc_coord = d->Coord();
   const auto dc_size = disc_coord[0].size();
-  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >()) {
+  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >()) {
     for (std::size_t i=0; i<dc_size; ++i) {
       auto x = rkcoef[0][m_stage] * d->Coordn()[j][i]
         + rkcoef[1][m_stage] * ( disc_coord[j][i] + d->Dt() * meshvel(i,j) );
@@ -2130,8 +2130,9 @@ DG::meshvelstart()
                "supported only with mesh_velocity = \"fluid\"" );
 
       const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
+      const auto eps = std::numeric_limits< tk::real >::epsilon();
       if (!std::all_of( begin(meshforce), end(meshforce),
-            [](tk::real c){ return c == 0.0; } ))
+            [eps](tk::real c){ return std::abs(c) <= eps; } ))
         Throw( "DG-ALE Laplace mesh velocity smoothing does not yet support "
                "nonzero meshforce coefficients" );
     }

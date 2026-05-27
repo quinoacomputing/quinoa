@@ -377,18 +377,18 @@ using ConfigMembers = brigand::list<
   // ALE block
   // ---------------------------------------------------------------------------
   tag::ale, tk::TaggedTuple< brigand::list<
-    tag::ale,           bool,
-    tag::smoother,      MeshVelocitySmootherType,
-    tag::mesh_velocity, MeshVelocityType,
-    tag::mesh_motion,   std::vector< std::size_t >,
-    tag::meshforce,     std::vector< tk::real >,
-    tag::dvcfl,         tk::real,
-    tag::vortmult,      tk::real,
-    tag::maxit,         std::size_t,
-    tag::tolerance,     tk::real,
-    tag::dirichlet,     std::vector< std::size_t >,
-    tag::symmetry,      std::vector< std::size_t >,
-    tag::move,          std::vector<
+    tag::ale,                      bool,
+    tag::smoother,                 MeshVelocitySmootherType,
+    tag::mesh_velocity,            MeshVelocityType,
+    tag::mesh_motion_directions,   std::vector< std::size_t >,
+    tag::meshforce,                std::vector< tk::real >,
+    tag::dvcfl,                    tk::real,
+    tag::vortmult,                 tk::real,
+    tag::maxit,                    std::size_t,
+    tag::tolerance,                tk::real,
+    tag::dirichlet,                std::vector< std::size_t >,
+    tag::symmetry,                 std::vector< std::size_t >,
+    tag::move,                     std::vector<
       tk::TaggedTuple< brigand::list<
         tag::sideset, std::vector< uint64_t >,
         tag::fntype,  tk::ctr::UserTableType,
@@ -1437,7 +1437,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         Arbitrary-Lagrangian-Eulerian (ALE) mesh motion. Valid options are
         'sine', 'fluid', and 'user_defined".)", "string"});
 
-      keywords.insert({"mesh_motion",
+      keywords.insert({"mesh_motion_directions",
         "List of dimension indices that are allowed to move in ALE calculations",
         R"(This keyword is used to specify a list of integers (0, 1, or 2) whose
         coordinate directions corresponding to x, y, or z are allowed to move with

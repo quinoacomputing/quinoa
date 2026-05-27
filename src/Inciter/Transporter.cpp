@@ -365,8 +365,8 @@ Transporter::info( const InciterPrint& print )
     print.item( "Volume-change CFL coefficient", dvcfl );
     print.Item< ctr::MeshVelocity, tag::ale, tag::mesh_velocity >();
     print.Item< ctr::MeshVelocitySmoother, tag::ale, tag::smoother >();
-    print.item( "Mesh motion dimensions", tk::parameters(
-                g_inputdeck.get< tag::ale, tag::mesh_motion >() ) );
+    print.item( "Mesh motion directions", tk::parameters(
+                g_inputdeck.get< tag::ale, tag::mesh_motion_directions >() ) );
     const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
     print.item( "Mesh velocity force coefficients", tk::parameters(meshforce) );
     print.item( "Vorticity multiplier",

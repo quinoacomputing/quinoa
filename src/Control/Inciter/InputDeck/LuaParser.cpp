@@ -874,9 +874,9 @@ LuaParser::storeInputDeck(
       inciter::ctr::MeshVelocity >(lua_ideck["ale"], "mesh_velocity",
       ale_deck.get< tag::mesh_velocity >(), inciter::ctr::MeshVelocityType::SINE);
 
-    // Mesh motion direction
-    storeVecIfSpecd< std::size_t >(lua_ideck["ale"], "mesh_motion",
-      ale_deck.get< tag::mesh_motion >(), { 0, 1, 2 });
+    // Mesh motion directions
+    storeVecIfSpecd< std::size_t >(lua_ideck["ale"], "mesh_motion_directions",
+      ale_deck.get< tag::mesh_motion_directions >(), { 0, 1, 2 });
 
     // Mesh force
     storeVecIfSpecd< tk::real >(lua_ideck["ale"], "meshforce",

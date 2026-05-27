@@ -254,7 +254,7 @@ DEFTAG(coord);
 DEFTAG(ale);
 DEFTAG(smoother);
 DEFTAG(mesh_velocity);
-DEFTAG(mesh_motion);
+DEFTAG(mesh_motion_directions);
 DEFTAG(meshforce);
 DEFTAG(dvcfl);
 DEFTAG(vortmult);
