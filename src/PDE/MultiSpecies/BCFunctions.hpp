@@ -273,12 +273,10 @@ namespace inciter {
     auto v1l = ul[multispecies::momentumIdx(nspec, 0)]/rho;
     auto v2l = ul[multispecies::momentumIdx(nspec, 1)]/rho;
     auto v3l = ul[multispecies::momentumIdx(nspec, 2)]/rho;
-    // Normal component of velocity
-    auto vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
     // Ghost state velocity components
-    auto v1r = v1l - 2.0*vnl*fn[0];
-    auto v2r = v2l - 2.0*vnl*fn[1];
-    auto v3r = v3l - 2.0*vnl*fn[2];
+    auto v1r = -v1l;
+    auto v2r = -v2l;
+    auto v3r = -v3l;
     // Boundary condition
     ur[multispecies::momentumIdx(nspec, 0)] = rho * v1r;
     ur[multispecies::momentumIdx(nspec, 1)] = rho * v2r;
