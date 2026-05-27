@@ -263,6 +263,12 @@ class ALE : public CBase_ALE {
     Laplacian( std::size_t ncomp,
                const std::array< std::vector< tk::real >, 3 >& coord ) const;
 
+    //! Assemble Laplacian mesh velocity smoother matrix in place
+    void assembleLaplacian(
+      tk::CSR& A,
+      std::size_t ncomp,
+      const std::array< std::vector< tk::real >, 3 >& coord ) const;
+
     //! Initialize user-defined functions for ALE moving sides
     decltype(m_move) moveCfg();
 

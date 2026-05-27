@@ -110,6 +110,30 @@ ALE::Laplacian( std::size_t ncomp,
 {
   tk::CSR A( ncomp, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
 
+  assembleLaplacian( A, ncomp, coord );
+
+  auto npoin = coord[0].size();
+  std::vector< tk::real > b(npoin*ncomp,0.0), x(npoin*ncomp,0.0);
+
+  return { std::move(A), std::move(x), std::move(b) };
+}
+
+void
+ALE::assembleLaplacian(
+  tk::CSR& A,
+  std::size_t ncomp,
+  const std::array< std::vector< tk::real >, 3 >& coord ) const
+// *****************************************************************************
+// Assemble Laplacian mesh velocity smoother matrix in place
+//! \param[in,out] A Matrix to fill with the Laplacian operator
+//! \param[in] ncomp Number of scalar components
+//! \param[in] coord Mesh node coordinates
+// *****************************************************************************
+{
+  Assert( A.Ncomp() == ncomp, "Size mismatch" );
+
+  A.fill( 0.0 );
+
   const auto& X = coord[0];
   const auto& Y = coord[1];
   const auto& Z = coord[2];
@@ -141,11 +165,6 @@ ALE::Laplacian( std::size_t ncomp,
            for (std::size_t i=0; i<ncomp; ++i)
              A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
   }
-
-  auto npoin = coord[0].size();
-  std::vector< tk::real > b(npoin*ncomp,0.0), x(npoin*ncomp,0.0);
-
-  return { std::move(A), std::move(x), std::move(b) };
 }
 
 decltype(ALE::m_move)
@@ -321,6 +340,17 @@ ALE::start(
   m_t = t;
   m_adt = adt;
 
+  // update smoother operator with current mesh geometry
+  std::size_t nwcomp = 0;
+  const auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+  if (smoother == ctr::MeshVelocitySmootherType::LAPLACE)
+    nwcomp = 3;
+  else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+    nwcomp = 1;
+  if (nwcomp > 0)
+    assembleLaplacian( m_conjugategradients[ thisIndex ].ckLocal()->MatrixA(),
+                       nwcomp, m_coord );
+
   // assign mesh velocity
   auto meshveltype = g_inputdeck.get< tag::ale, tag::mesh_velocity >();
   if (meshveltype == ctr::MeshVelocityType::SINE) {
@@ -358,7 +388,6 @@ ALE::start(
 
   }
 
-  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
   if (smoother == ctr::MeshVelocitySmootherType::NONE) {
     // if no smoother is selected, short-circuit to BC enforcement
     enforceMeshVelBCs();
