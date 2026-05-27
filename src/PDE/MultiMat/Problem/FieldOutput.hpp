@@ -17,6 +17,7 @@
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 #include "FaceData.hpp"
+#include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
@@ -56,6 +57,9 @@ MultiMatSurfOutput(
   const std::size_t nmat,
   const std::size_t rdof,
   const FaceData& fd,
+  const tk::Fields& geoFace,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
   const tk::Fields& U,
   const tk::Fields& P );
 
@@ -78,10 +82,13 @@ namespace multimat {
 //! Compute bulk density for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk density ready to be output to file
 static tk::GetVarFn::result_type
-bulkDensityOutVar( const tk::Fields& U, std::size_t rdof )
+bulkDensityOutVar( const tk::Fields& U,
+                   [[maybe_unused]] const tk::Fields& P,
+                   std::size_t rdof )
 {
   using tk::operator+=;
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
@@ -94,26 +101,32 @@ bulkDensityOutVar( const tk::Fields& U, std::size_t rdof )
 //! Compute bulk pressure for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk pressure ready to be output to file
 static tk::GetVarFn::result_type
-bulkPressureOutVar( const tk::Fields& U, std::size_t rdof )
+bulkPressureOutVar( [[maybe_unused]] const tk::Fields& U,
+                    const tk::Fields& P,
+                    std::size_t rdof )
 {
   using tk::operator+=;
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-  auto p = U.extract_comp( pressureDofIdx(nmat,0,rdof,0) );
+  auto p = P.extract_comp( pressureDofIdx(nmat,0,rdof,0) );
   for (std::size_t k=1; k<nmat; ++k)
-    p += U.extract_comp( pressureDofIdx(nmat,k,rdof,0) );
+    p += P.extract_comp( pressureDofIdx(nmat,k,rdof,0) );
   return p;
 }
 
 //! Compute bulk specific total energy (energy per unit mass) for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk specific total energy ready to be output to file
 static tk::GetVarFn::result_type
-bulkSpecificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
+bulkSpecificTotalEnergyOutVar( const tk::Fields& U,
+                               [[maybe_unused]] const tk::Fields& P,
+                               std::size_t rdof )
 {
   using tk::operator+=;
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
@@ -127,23 +140,29 @@ bulkSpecificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 //! \note Must follow the signature in tk::GetVarFn
 //! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Velocity component ready to be output to file
 template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
-velocityOutVar( const tk::Fields& U, std::size_t rdof )
+velocityOutVar( [[maybe_unused]] const tk::Fields& U,
+                const tk::Fields& P,
+                std::size_t rdof )
 {
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-  return U.extract_comp( velocityDofIdx(nmat,dir,rdof,0) );
+  return P.extract_comp( velocityDofIdx(nmat,dir,rdof,0) );
 }
 
 //! Compute material indicator function for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Material indicator function ready to be output to file
 static tk::GetVarFn::result_type
-matIndicatorOutVar( const tk::Fields& U, std::size_t rdof )
+matIndicatorOutVar( const tk::Fields& U,
+                    [[maybe_unused]] const tk::Fields& P,
+                    std::size_t rdof )
 {
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
   std::vector< tk::real > m(U.nunk(), 0.0);
@@ -160,25 +179,28 @@ matIndicatorOutVar( const tk::Fields& U, std::size_t rdof )
 //! \tparam idir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \tparam jdir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Cauchy stress component ready to be output to file
 template< tk::ncomp_t idir, tk::ncomp_t jdir >
 tk::GetVarFn::result_type
-stressOutVar( const tk::Fields& U, std::size_t rdof )
+stressOutVar( [[maybe_unused]] const tk::Fields& U,
+              const tk::Fields& P,
+              std::size_t rdof )
 {
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
-  std::vector< tk::real > cs(U.nunk(), 0.0);
+  std::vector< tk::real > cs(P.nunk(), 0.0);
   for (std::size_t e=0; e<cs.size(); ++e) {
     for (std::size_t k=0; k<nmat; ++k) {
       tk::real asigij(0.0);
 
       if (solidx[k] > 0) asigij =
-        U(e, stressDofIdx(nmat,solidx[k],stressCmp[idir][jdir],rdof,0));
+        P(e, stressDofIdx(nmat,solidx[k],stressCmp[idir][jdir],rdof,0));
 
       if (idir == jdir)
-        asigij -= U(e, pressureDofIdx(nmat,k,rdof,0));
+        asigij -= P(e, pressureDofIdx(nmat,k,rdof,0));
 
       cs[e] += asigij;
     }
@@ -192,11 +214,14 @@ stressOutVar( const tk::Fields& U, std::size_t rdof )
 //! \tparam idir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \tparam jdir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Inverse deformation gradient tensor component to be output to file
 template< tk::ncomp_t idir, tk::ncomp_t jdir >
 tk::GetVarFn::result_type
-defGradOutVar( const tk::Fields& U, std::size_t rdof )
+defGradOutVar( const tk::Fields& U,
+               [[maybe_unused]] const tk::Fields& P,
+               std::size_t rdof )
 {
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
