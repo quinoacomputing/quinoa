@@ -56,7 +56,9 @@ ElemDiagnostics::compute( Discretization& d,
                           const tk::Fields& geoElem,
                           const std::vector< std::size_t >& ndofel,
                           const tk::Fields& u,
-                          const tk::Fields& un ) const
+                          const tk::Fields& un,
+                          const std::size_t imex_maxiter,
+                          const std::size_t imex_activeElem ) const
 // *****************************************************************************
 //  Compute diagnostics, e.g., residuals, norms of errors, etc.
 //! \param[in] d Discretization base class to read from
@@ -101,6 +103,12 @@ ElemDiagnostics::compute( Discretization& d,
     diag[ITER][0] = static_cast< tk::real >( d.It() );
     diag[TIME][0] = d.T();
     diag[DT][0] = d.Dt();
+
+    // Append IMEX diagnostics
+    // IMEXACTIVE: Percentage of total elements with nonzero implicit iterations
+    // IMEXMAXITER: Maximum number of implicit iterations on a single element
+    diag[IMEXACTIVE][0] += imex_activeElem;
+    diag[IMEXMAXITER][0] = imex_maxiter;
 
     // Contribute to diagnostics
     auto stream = serialize( d.MeshId(), u.nprop()/rdof, diag );

@@ -17,8 +17,11 @@
 #include "DiagReducer.hpp"
 #include "Diagnostics.hpp"
 #include "Exception.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
+  
+extern ctr::InputDeck g_inputdeck;
 
 std::pair< int, std::unique_ptr<char[]> >
 serialize( std::size_t meshid,
@@ -113,6 +116,14 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
     for (std::size_t j=v.size()-3; j<v.size(); ++j)
       for (std::size_t i=0; i<v[j].size(); ++i)
         v[j][i] = w[j][i];
+    // IMEX Diagnostics
+    if (g_inputdeck.get< tag::imex_runge_kutta >()) {
+      // Add up active elements
+      v[IMEXACTIVE][0] += w[IMEXACTIVE][0];
+      // Retrieve max from IMEXMAXITER
+      if (w[IMEXMAXITER][0] > w[IMEXMAXITER][0])
+        v[IMEXMAXITER][0] = w[IMEXMAXITER][0];
+    }
   }
 
   // Serialize concatenated diagnostics vector to raw stream

@@ -230,6 +230,8 @@ class DG : public CBase_DG {
       p | m_imex_y;
       p | m_imex_zex;
       p | m_imex_zim;
+      p | m_imex_maxiter;
+      p | m_imex_activeElem;
       p | m_stiffEqIdx;
       p | m_nonStiffEqIdx;
       p | m_nstiffeq;
@@ -308,6 +310,10 @@ class DG : public CBase_DG {
     tk::Fields m_imex_zex;
     //! IMEX implicit RHS register
     tk::Fields m_imex_zim;
+    //! IMEX diagnostic for maximum number of iterations
+    std::size_t m_imex_maxiter;
+    //! IMEX diagnostic to flag active elements in IMEX
+    std::vector< std::size_t > m_imex_activeElem;
     //! Vectors that indicates which equations are stiff and non-stiff
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
     //! Inverse of Taylor mass-matrix

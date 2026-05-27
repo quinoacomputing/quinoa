@@ -139,6 +139,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_imex_y( m_u.nunk(), m_u.nprop() ),
   m_imex_zex( m_u.nunk(), m_rhs.nprop() ),
   m_imex_zim( m_u.nunk(), m_stiffrhs.nprop() ),
+  m_imex_maxiter( 0 ),
+  m_imex_activeElem( 4 ),
   m_stiffEqIdx( g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_nonStiffEqIdx( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
   m_mtInv(
@@ -1211,6 +1213,11 @@ DG::solve( tk::real newdt )
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
 
+  // Initialize IMEX diagnostics
+  if (imex_runge_kutta && m_stage == 0)
+    m_imex_maxiter = 0;
+  m_imex_activeElem[m_stage] = 0;
+
   // physical time at time-stage for computing explicit source terms
   tk::real physT(d->T());
   if (imex_runge_kutta) {
@@ -1305,9 +1312,14 @@ DG::solve( tk::real newdt )
     d->next();
 
     // Compute diagnostics, e.g., residuals
+    // printf("DEBUG(2) = %lu, %lu, %lu\n", m_stage, m_imex_activeElem, m_imex_maxiter);
+    std::size_t activeElem = m_imex_activeElem[0];
+    for (std::size_t istage=1; istage<m_nstage; ++istage)
+      if (m_imex_activeElem[istage] > activeElem)
+        activeElem = m_imex_activeElem[istage];
     auto diag_computed = m_diag.compute( *d,
       m_u.nunk()-myGhosts()->m_fd.Esuel().size()/4, myGhosts()->m_geoElem,
-      m_ndof, m_u, m_un );
+      m_ndof, m_u, m_un, m_imex_maxiter, activeElem);
 
     // Continue to mesh refinement (if configured)
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
@@ -2093,6 +2105,7 @@ DG::nonlinear_newton_stage( std::size_t e,
   for (std::size_t i=0; i<n; ++i) abs_err += f[i]*f[i];
   abs_err = std::sqrt(abs_err);
 
+  std::size_t niter = 0;
   const tk::real err0 = abs_err;
   if (abs_err < abs_tol) return x;
 
@@ -2100,9 +2113,9 @@ DG::nonlinear_newton_stage( std::size_t e,
   bool computed_jacobian = true;
   std::size_t jacobian_regularization = 0;
   bool new_descent_dir = false;
-  std::size_t save_iter = 0;
 
   for (std::size_t iter=0; iter<max_iter; ++iter) {
+    niter = iter+1;
     const auto x_old = x;
     const auto f_old = f;
     const auto abs_err_accept = abs_err;
@@ -2201,12 +2214,14 @@ DG::nonlinear_newton_stage( std::size_t e,
       }
     }
 
-    save_iter = iter;
   }
+
+  if (niter > 0) m_imex_activeElem[m_stage] += 1;
+  m_imex_maxiter = std::max(m_imex_maxiter, niter);
 
   if (!solver_success) {
     printf("Stage Newton failed at element %lu\n", e);
-    printf("Total iterations: %lu\n", save_iter);
+    printf("Total iterations: %lu\n", niter);
     printf("Relative error: %e\n", rel_err);
     printf("Absolute error: %e\n", abs_err);
     Throw("At element " + std::to_string(e) +
