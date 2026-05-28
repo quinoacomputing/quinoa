@@ -1602,14 +1602,14 @@ class MultiMat {
 
     // Other boundary condition types that do not depend on "Problem" should be
     // added in BCFunctions.hpp
-   static tk::FluxFn::result_type    
-   visc_flux( [[maybe_unused]] ncomp_t ncomp,
-              [[maybe_unused]] const std::vector< EOS >& mat_blk,
-              [[maybe_unused]] const std::vector< tk::real >& ugp,
-              [[maybe_unused]] const std::vector< std::array< tk::real, 3 > > & grad_all )
+   static tk::FluxFn::result_type
+   visc_flux( ncomp_t,
+              const std::vector< EOS >&,
+              const std::vector< tk::real >& ugp,
+              const std::vector< std::array< tk::real, 3 > >& )
     {
     std::vector< std::array< tk::real, 3 > > fl( ugp.size(),
-                                             std::array<tk::real, 3 >{{0, 0, 0}}); 
+                                             std::array<tk::real, 3 >{{0, 0, 0}});
       return fl;
     }
 };

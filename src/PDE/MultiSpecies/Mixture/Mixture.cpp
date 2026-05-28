@@ -264,23 +264,18 @@ Mixture::conduct(
     for (std::size_t k = 0; k < m_nspec; k++) {
       mix_cv += m_Ys[k] * mat_blk[k].compute< EOS::cv >(mix_temp);
     }
-    
-    // Compute mixture gas constant
-    tk::real m_mix_R = 0.;
-    for (std::size_t k = 0; k < m_nspec; k++)
-      m_mix_R += m_Ys[k] * mat_blk[k].compute< EOS::gas_constant >();
-      
+
     // Compute mixture cp 
     tk::real m_mix_cp = m_mix_R + mix_cv;
-   
+
     // Compute mixture viscosity
     tk::real mix_mu = 0.;
     for (std::size_t k = 0; k < m_nspec; k++) {
       mix_mu += m_Ys[k] * mat_blk[k].compute< EOS::mu >(mix_temp);
     }
-   
-    tk::real k = mix_mu * m_mix_cp / Pr; 
-    
+
+    tk::real k = mix_mu * m_mix_cp / Pr;
+
     return k;
   }
 

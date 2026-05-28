@@ -1174,6 +1174,25 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to specify the species property, specific gas
         constant, in units J/kg.K.)", "vector of reals"});
 
+      keywords.insert({"mu_ref", "Reference dynamic viscosity",
+        R"(This keyword is used to specify the species reference viscosity at
+        the reference temperature (temp_ref) for Sutherland's Law in units of 
+        N.s/m^2)", "vector of reals"});
+
+      keywords.insert({"temp_ref", "Reference temperature", 
+        R"(This keyword is used to specify the species reference temperature 
+        for Sutherland's Law in units of K)", "vector of reals"});
+
+      keywords.insert({"C", "Sutherland constant",
+        R"(This keyword is used to specify the species Sutherland constant, 
+        which is an effective temperature in units of K)", "vector of reals"});
+
+      keywords.insert({"Sutherland", "Sutherland's Law boolean",
+        R"(This keyword is used to toggle between using Sutherland's Law and
+        holding viscosity constant. A value of 'true' enables Sutherland's 
+        Law and a value of 'false' enables constant viscosity.)",
+        "vector of reals"});
+
       keywords.insert({"stiffenedgas",
         "Select the stiffened gas equation of state",
         R"(This keyword is used to select the stiffened gas equation of state.)"});

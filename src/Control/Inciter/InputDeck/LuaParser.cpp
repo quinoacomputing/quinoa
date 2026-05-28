@@ -1670,6 +1670,18 @@ LuaParser::registerSpecies(
       sol_spc[imat+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
     checkStoreMatProp(sol_spc[imat+1], "pstiff", ntype,
       spci_deck.get< tag::pstiff >());
+
+    // If viscous problem, read all parameters from control file
+    if (gideck.get< tag::multispecies, tag::viscous >()){
+      // mu_ref (Sutherland)
+      checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
+        spci_deck.get< tag::mu_ref >());
+      if (gideck.get< tag::multispecies, tag::Sutherland >()){
+        // C (Sutherland)
+        checkStoreMatProp(sol_spc[imat+1], "C", nspec,
+          spci_deck.get< tag::C >());
+      }
+    }
   }
   // Thermally-perfect gas species
   else if (mati_deck.get< tag::eos >() ==
