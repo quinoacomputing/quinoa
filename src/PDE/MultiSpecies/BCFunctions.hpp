@@ -242,7 +242,6 @@ namespace inciter {
   //!   no slip wall boundaries. 
   //! \param[in] ncomp Number of scalar components in this PDE system
   //! \param[in] ul Left (domain-internal) state
-  //! \param[in] fn Unit face normal
   //! \return Left and right states for all scalar components in this PDE
   //!   system
   //! \note The function signature must follow tk::StateFn.
@@ -251,7 +250,7 @@ namespace inciter {
                    const std::vector< EOS >& mat_blk,
                    const std::vector< tk::real >& ul,
                    tk::real, tk::real, tk::real, tk::real,
-                   const std::array< tk::real, 3 >& fn )
+                   const std::array< tk::real, 3 >& )
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
