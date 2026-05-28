@@ -45,8 +45,8 @@ MultiSpeciesViscousTermsP0P1::MultiSpeciesViscousTermsP0P1(
 
 std::vector< tk::real >
 MultiSpeciesViscousTermsP0P1::stateAt( std::size_t e,
-                                   std::size_t ndof,
-                                   const std::vector< tk::real >& B ) const
+  std::size_t ndof,
+  const std::vector< tk::real >& B ) const
 // *****************************************************************************
 //! \brief Reconstruct conserved variables and primitives at a face point
 //! \param[in] e Element id
@@ -71,8 +71,8 @@ std::vector< tk::real >
 MultiSpeciesViscousTermsP0P1::interiorFlux(
   const std::array< std::size_t, 2 >& elem,
   const std::array< tk::real, 3 >& fn,
-  const std::array< tk::real, 3 >& gp,
-  const std::array< std::array< tk::real, 3 >, 2 >& ref_gp,
+  const std::array< tk::real, 3 >&,
+  const std::array< std::array< tk::real, 3 >, 2 >&,
   const std::array< std::array< tk::real, 3 >, 2 >& centroid,
   const std::array< std::vector< tk::real >, 2 >& B,
   const std::array< std::array< std::vector< tk::real >, 3 >, 2 >& dBdx ) const
@@ -80,8 +80,6 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
 //! \brief Compute the multispecies viscous flux at an interior face
 //! \param[in] elem Left and right element ids
 //! \param[in] fn Face normal
-//! \param[in] gp Face centroid
-//! \param[in] ref_gp Reference face point in left and right elements
 //! \param[in] centroid Left and right element centroids
 //! \param[in] B Basis values at the face point
 //! \param[in] dBdx Basis gradients in left and right elements
@@ -106,14 +104,6 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
 
   auto ul = stateAt( elem[0], m_rdof, B[0] );
   auto ur = stateAt( elem[1], m_rdof, B[1] );
-
-  // TODO: Replace the zero flux below with the multispecies viscous model:
-  // - compute mixture mu/conductivity from species properties
-  // - fill momentumIdx(nspec, idir) and energyIdx(nspec, 0)
-  // - optionally add species diffusion fluxes if those equations need them
-  (void)fn;
-  (void)gp;
-  (void)ref_gp;
 
   // 1. Compute average gradients
   // ---------------------------------------------------------------------------

@@ -40,8 +40,8 @@ class MultiSpeciesViscousTermsP0P1 {
     //! Reconstruct conserved variables and primitives at a face point
     std::vector< tk::real >
     stateAt( std::size_t e,
-             std::size_t ndof,
-             const std::vector< tk::real >& B ) const;
+      std::size_t ndof,
+      const std::vector< tk::real >& B ) const;
 
     //! Compute the multispecies viscous flux at an interior face
     std::vector< tk::real >
