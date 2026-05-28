@@ -646,6 +646,8 @@ class MultiSpecies {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      auto viscous = g_inputdeck.get< tag::multispecies, tag::viscous >();
+      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -710,6 +712,10 @@ class MultiSpecies {
         tk::volInt( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem,
           flux, velfn, Problem::src, U, P, ndofel, R );
       }
+
+      if (viscous)
+        tk::surfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof, inpoel,
+          coord, fd, geoFace, geoElem, U, P, R );
 
       // compute external (energy) sources
       //m_physics.physSrc(nspec, t, geoElem, {}, R, {});
