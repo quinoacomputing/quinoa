@@ -154,6 +154,42 @@ Mixture::pressure(
 }
 
 tk::real
+Mixture::Cp(
+  tk::real mix_temp,
+  const std::vector< EOS >& mat_blk) const
+// *************************************************************************
+//! \brief Calculate mixture specific heat at constant pressure based on the
+//!   mixture composition and species parameters.
+//! \param[in] mix_temp Mixture temperature
+//! \param[in] mat_blk EOS material block
+//! \return Mass-fraction averaged mixture specific heat at constant pressure
+// *************************************************************************
+{
+  tk::real mix_Cp = 0.;
+  for (std::size_t k = 0; k < m_nspec; k++)
+    mix_Cp += m_Ys[k] * mat_blk[k].compute< EOS::cp >(mix_temp);
+
+  return mix_Cp;
+}
+
+tk::real
+Mixture::viscCoeff(
+  const std::vector< EOS >& mat_blk) const
+// *************************************************************************
+//! \brief Calculate mixture dynamic viscosity coefficient based on the mixture
+//!   composition and species parameters.
+//! \param[in] mat_blk EOS material block
+//! \return Mass-fraction averaged mixture dynamic viscosity coefficient
+// *************************************************************************
+{
+  tk::real mix_visc = 0.;
+  for (std::size_t k = 0; k < m_nspec; k++)
+    mix_visc += m_Ys[k] * mat_blk[k].compute< EOS::viscCoeff >();
+
+  return mix_visc;
+}
+
+tk::real
 Mixture::temperature(
   tk::real mix_density,
   tk::real u,
@@ -213,4 +249,3 @@ Mixture::temperature(
 
   return temp;
 }
-

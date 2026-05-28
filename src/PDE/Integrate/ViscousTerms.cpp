@@ -97,6 +97,9 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
   using inciter::multispecies::momentumDofIdx;
   using inciter::multispecies::densityDofIdx;
   using inciter::multispecies::temperatureDofIdx;
+  using inciter::multispecies::temperatureIdx;
+  using inciter::multispecies::momentumIdx;
+  using inciter::multispecies::energyIdx;
 
   const auto ncomp = m_U.nprop()/m_rdof;
   std::vector< tk::real > fl( ncomp, 0.0 );
@@ -219,56 +222,44 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
   inciter::Mixture mix_l(m_nspec, ul, m_mat_blk);
   inciter::Mixture mix_r(m_nspec, ur, m_mat_blk);
 
-  //std::array< real, 6 > tau;
-  //real mu(0.0), kTh(0.0);
-  //for (std::size_t k=0; k<m_nspec; ++k) {
-  //  mu += 0.5 * (mix_l.MassFrac()[k] + mix_r.MassFrac()[k])
-  //    * inciter::getspecprop< tag::mu >(k);
-  //  kTh = inciter::getmatprop< tag::mu >(k) *
-  //    inciter::getmatprop< tag::cv >(k) * inciter::getmatprop< tag::gamma >(k)
-  //    / 0.71;
-  //}
-  //std::vector< real > alLR(nmat, 0), conduct_mat(nmat, 0);
-  //for (std::size_t k=0; k<nmat; ++k)
-  //  alLR[k] = 0.5*( state[0][volfracIdx(nmat,k)] + state[1][volfracIdx(nmat,k)] );
-  //for (std::size_t k=0; k<nmat; ++k) {
-  //  mu += alLR[k] * inciter::getmatprop< tag::mu >(k);
-  //  conduct_mat[k] = inciter::getmatprop< tag::mu >(k) *
-  //    inciter::getmatprop< tag::cv >(k) * inciter::getmatprop< tag::gamma >(k)
-  //    / 0.71;
-  //}
+  // compute fluid properties (viscosity and conductivity)
+  auto mu =
+    0.5 * (mix_l.viscCoeff(m_mat_blk) + mix_r.viscCoeff(m_mat_blk));
+  auto Cp = 0.5 * (mix_l.Cp(ul[ncomp+temperatureIdx(m_nspec,0)], m_mat_blk)
+    + mix_r.Cp(ur[ncomp+temperatureIdx(m_nspec,0)], m_mat_blk));
+  auto kTh = mu * Cp / 0.71; // TODO: make Prandtl number user-configurable
 
-  //tau[0] = mu * ( 4.0 * dudx_m[0][0] - 2.0*(dudx_m[1][1] + dudx_m[2][2]) ) / 3.0;
-  //tau[1] = mu * ( 4.0 * dudx_m[1][1] - 2.0*(dudx_m[0][0] + dudx_m[2][2]) ) / 3.0;
-  //tau[2] = mu * ( 4.0 * dudx_m[2][2] - 2.0*(dudx_m[0][0] + dudx_m[1][1]) ) / 3.0;
-  //tau[3] = mu * ( dudx_m[0][1] + dudx_m[1][0] );
-  //tau[4] = mu * ( dudx_m[0][2] + dudx_m[2][0] );
-  //tau[5] = mu * ( dudx_m[1][2] + dudx_m[2][1] );
+  // stress tensor
+  std::array< real, 6 > tau;
+  tau[0] = mu * ( 4.0 * dudx_m[0][0] - 2.0*(dudx_m[1][1] + dudx_m[2][2]) ) / 3.0;
+  tau[1] = mu * ( 4.0 * dudx_m[1][1] - 2.0*(dudx_m[0][0] + dudx_m[2][2]) ) / 3.0;
+  tau[2] = mu * ( 4.0 * dudx_m[2][2] - 2.0*(dudx_m[0][0] + dudx_m[1][1]) ) / 3.0;
+  tau[3] = mu * ( dudx_m[0][1] + dudx_m[1][0] );
+  tau[4] = mu * ( dudx_m[0][2] + dudx_m[2][0] );
+  tau[5] = mu * ( dudx_m[1][2] + dudx_m[2][1] );
 
-  //// 3. Compute viscous flux terms
-  //// ---------------------------------------------------------------------------
-  //for (std::size_t i=0; i<3; ++i)
-  //  for (std::size_t j=0; j<3; ++j)
-  //    fl[momentumIdx(nmat, i)] += tau[inciter::stressCmp[i][j]] * fn[j];
+  // 3. Compute viscous flux terms
+  // ---------------------------------------------------------------------------
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      fl[momentumIdx(m_nspec, i)] += tau[inciter::stressCmp[i][j]] * fn[j];
 
-  //std::vector< std::array< real, 3 > > energyFlux(nmat, {{0.0, 0.0, 0.0}});
-  //std::array< real, 3 > uAvg{{
-  //  0.5*(state[0][ncomp+velocityIdx(nmat,0)] + state[1][ncomp+velocityIdx(nmat,0)]),
-  //  0.5*(state[0][ncomp+velocityIdx(nmat,1)] + state[1][ncomp+velocityIdx(nmat,1)]),
-  //  0.5*(state[0][ncomp+velocityIdx(nmat,2)] + state[1][ncomp+velocityIdx(nmat,2)])
-  //  }};
+  auto rho_l = mix_l.get_mix_density();
+  auto rho_r = mix_r.get_mix_density();
+  std::array< real, 3 > energyFlux{{0.0, 0.0, 0.0}};
+  std::array< real, 3 > uAvg{{
+    0.5 * (ul[momentumIdx(m_nspec,0)]/rho_l + ur[momentumIdx(m_nspec,0)]/rho_r),
+    0.5 * (ul[momentumIdx(m_nspec,1)]/rho_l + ur[momentumIdx(m_nspec,1)]/rho_r),
+    0.5 * (ul[momentumIdx(m_nspec,2)]/rho_l + ur[momentumIdx(m_nspec,2)]/rho_r)
+    }};
 
-  //for (std::size_t k=0; k<nmat; ++k) {
-  //  for (std::size_t j=0; j<3; ++j)
-  //    for (std::size_t i=0; i<3; ++i)
-  //      energyFlux[k][j] += uAvg[i] * tau[inciter::stressCmp[i][j]] +
-  //        conduct_mat[k] * dTdx_m[k][j];
-  //}
+  for (std::size_t j=0; j<3; ++j) {
+    energyFlux[j] = kTh * dTdx_m[j];
+    for (std::size_t i=0; i<3; ++i)
+      energyFlux[j] += uAvg[i] * tau[inciter::stressCmp[i][j]];
+  }
 
-  //for (std::size_t k=0; k<nmat; ++k) {
-  //  fl[energyIdx(nmat, k)] = alLR[k]
-  //    * tk::dot(energyFlux[k], fn);
-  //}
+  fl[energyIdx(m_nspec, 0)] = tk::dot(energyFlux, fn);
 
   return fl;
 }
