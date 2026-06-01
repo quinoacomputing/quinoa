@@ -812,6 +812,17 @@ class CompFlow {
                                  std::vector< tk::real > /*x*/,
                                  tk::Fields& /*U*/ ) const {}
 
+    void output_solution( std::size_t /*chare_id*/,
+                          std::size_t /*nelem*/,
+                          const tk::real /*time*/,
+                          const std::vector< std::size_t >& /*inpoel*/,
+                          const tk::UnsMesh::Coords& /*coord*/,
+                          const tk::Fields& /*geoElem*/,
+                          const tk::Fields& /*U*/,
+                          const tk::Fields& /*P*/ ) const {}
+
+    std::array< tk::real, 2 > compute_solution_error( std::size_t /*chare_id*/ ) const {}
+
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number
     // //! \param[in] geoElem Element geometry array

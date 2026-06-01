@@ -205,6 +205,9 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step
     void step();
 
+    void recv_solution_err2( tk::real err2 );
+    void recv_solution_ref2( tk::real ref2 );
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -259,6 +262,10 @@ class DG : public CBase_DG {
       p | m_shockmarker;
       p | m_dte;
       p | m_finished;
+      p | m_solution_err2;
+      p | m_solution_ref2;
+      p | m_have_solution_err2;
+      p | m_have_solution_ref2;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -371,6 +378,11 @@ class DG : public CBase_DG {
     std::vector< tk::real > m_dte;
     //! Flag for completed calculation
     int m_finished;
+    //! errors:
+    tk::real m_solution_err2 = 0.0;
+    tk::real m_solution_ref2 = 0.0;
+    bool m_have_solution_err2 = false;
+    bool m_have_solution_ref2 = false;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -455,6 +467,11 @@ class DG : public CBase_DG {
                             std::vector< tk::real > x,
                             const std::vector< tk::real >& stage_base,
                             tk::real aii );
+
+    void output_solution();
+
+    void compute_solution_error();
+    void maybe_print_solution_error();
 };
 
 } // inciter::

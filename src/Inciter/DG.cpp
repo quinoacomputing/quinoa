@@ -339,7 +339,7 @@ DG::setup()
   }
 
   // If working with IMEX-RK, Store stiff equations into m_stiffEqIdx
-  if (g_inputdeck.get< tag::imex_runge_kutta >())
+  // if (g_inputdeck.get< tag::imex_runge_kutta >())
   {
     g_dgpde[Disc()->MeshId()].setStiffEqIdx(m_stiffEqIdx);
     g_dgpde[Disc()->MeshId()].setNonStiffEqIdx(m_nonStiffEqIdx);
@@ -1244,6 +1244,12 @@ DG::solve( tk::real newdt )
       myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
   }
 
+  // Compute stiff_rhs
+  for(std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+    g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
+                                    m_u, m_ndof, m_stiffrhs );
+  }
+
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping using IMEXRKCB3f.
     DG::imex_integrate();
@@ -1256,6 +1262,13 @@ DG::solve( tk::real newdt )
     // Explicit time-stepping using RK3 to discretize time-derivative
     const auto steady = g_inputdeck.get< tag::steady_state >();
     for(std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+      // add stiff_rhs to rhs array
+      for(std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof) {
+          auto mark = ieq*ndof+idof;
+          auto smark = m_stiffEqIdx[ieq]*ndof+idof;
+          m_rhs(e, smark) += m_stiffrhs(e, mark);
+        }
       auto vole = myGhosts()->m_geoElem(e,0);
       auto dte = d -> Dt();
       if (steady) dte = m_dte[e];
@@ -1311,6 +1324,11 @@ DG::solve( tk::real newdt )
     // Increase number of iterations and physical time
     d->next();
 
+    if (std::abs(d->T()-5e-07) < 1.0e-16) {
+      DG::output_solution();
+      DG::compute_solution_error();
+    }
+
     // Compute diagnostics, e.g., residuals
     // printf("DEBUG(2) = %lu, %lu, %lu\n", m_stage, m_imex_activeElem, m_imex_maxiter);
     std::size_t activeElem = m_imex_activeElem[0];
@@ -1325,6 +1343,85 @@ DG::solve( tk::real newdt )
     if (!diag_computed) refine( std::vector< tk::real >( m_u.nprop(), 1.0 ) );
 
   }
+}
+
+void
+DG::output_solution()
+{
+  auto d = Disc();
+  std::size_t nelem = myGhosts()->m_fd.Esuel().size()/4;
+  g_dgpde[d->MeshId()].output_solution(thisIndex, nelem, d->T(),
+    myGhosts()->m_inpoel, myGhosts()->m_coord, myGhosts()->m_geoElem,
+    m_u, m_p );
+}
+
+void
+DG::compute_solution_error()
+{
+  auto d = Disc();
+
+  auto err = g_dgpde[d->MeshId()].compute_solution_error( thisIndex );
+
+  tk::real err2 = err[0];
+  tk::real ref2 = err[1];
+
+  CkCallback errDone =
+    CkCallback(CkReductionTarget(DG, recv_solution_err2), thisProxy);
+
+  CkCallback refDone =
+    CkCallback(CkReductionTarget(DG, recv_solution_ref2), thisProxy);
+
+  contribute( sizeof(tk::real), &err2, CkReduction::sum_double, errDone );
+  contribute( sizeof(tk::real), &ref2, CkReduction::sum_double, refDone );
+}
+
+void
+DG::recv_solution_err2( tk::real err2 )
+{
+  if (thisIndex == 0) {
+    m_solution_err2 = err2;
+    m_have_solution_err2 = true;
+    maybe_print_solution_error();
+  }
+}
+
+void
+DG::recv_solution_ref2( tk::real ref2 )
+{
+  if (thisIndex == 0) {
+    m_solution_ref2 = ref2;
+    m_have_solution_ref2 = true;
+    maybe_print_solution_error();
+  }
+}
+
+void
+DG::maybe_print_solution_error()
+{
+  if (thisIndex != 0) return;
+
+  if (!m_have_solution_err2 || !m_have_solution_ref2) return;
+
+  auto d = Disc();
+
+  const tk::real abs_err = std::sqrt( m_solution_err2 );
+
+  tk::real rel_err = 0.0;
+  if (m_solution_ref2 > 0.0) {
+    rel_err = std::sqrt( m_solution_err2 / m_solution_ref2 );
+  }
+
+  std::ofstream outFile("solution_error.dat", std::ios::app);
+
+  outFile << d->T() << ", "
+          << abs_err << ", "
+          << rel_err << "\n";
+
+  // Reset in case this is called again later.
+  m_solution_err2 = 0.0;
+  m_solution_ref2 = 0.0;
+  m_have_solution_err2 = false;
+  m_have_solution_ref2 = false;
 }
 
 void

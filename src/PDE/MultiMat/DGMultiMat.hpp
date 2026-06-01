@@ -44,6 +44,12 @@
 #include "MultiMat/BCFunctions.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <cmath>
+#include <iostream>
 
 namespace inciter {
 
@@ -1191,6 +1197,218 @@ class MultiMat {
       // }
     }
 
+    void output_solution( std::size_t chare_id,
+                          std::size_t nelem,
+                          const tk::real time,
+                          const std::vector< std::size_t >& inpoel,
+                          const tk::UnsMesh::Coords& coord,
+                          const tk::Fields& geoElem,
+                          const tk::Fields& U,
+                          const tk::Fields& P ) const
+    {
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+
+      const auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+
+      const auto& solidx = inciter::g_inputdeck.get<
+        tag::matidxmap, tag::solidx >();
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
+      // One file per chare.
+      std::ostringstream fname;
+      fname << "solution_chare_" << chare_id << ".dat";
+
+      std::ofstream fout( fname.str() );
+
+      fout << std::setprecision(16);
+
+      // Header.
+      fout << "# time = " << time << '\n';
+      fout << "# elem xc yc zc";
+
+      for (std::size_t s=0; s<solidx.size(); ++s) {
+        fout << " sigma_xx_solid_" << s;
+      }
+
+      fout << '\n';
+
+      for (std::size_t e=0; e<nelem; ++e) {
+
+        // Element centroid
+        tk::real xc = 0.0;
+        tk::real yc = 0.0;
+        tk::real zc = 0.0;
+
+        for (std::size_t i=0; i<4; ++i) {
+          const auto p = inpoel[4*e+i];
+
+          xc += x[p];
+          yc += y[p];
+          zc += z[p];
+        }
+
+        xc /= 4.0;
+        yc /= 4.0;
+        zc /= 4.0;
+
+        fout << e << ' '
+             << xc << ' '
+             << yc << ' '
+             << zc;
+
+        // Output sigma_xx for each solid material.
+        for (std::size_t s=0; s<solidx.size(); ++s) {
+          const auto mat = solidx[s];
+
+          const auto sx_dof =
+            stressDofIdx(nmat, mat, stressCmp[0][0], rdof, 0);
+
+          const auto sigma_xx = P(e, sx_dof);
+
+          fout << ' ' << sigma_xx;
+        }
+
+        fout << '\n';
+      }
+    }
+
+    std::array< tk::real, 2 > compute_solution_error( std::size_t chare_id ) const
+    {
+      struct Row {
+        std::size_t elem;
+        tk::real xc, yc, zc;
+        std::vector< tk::real > values;
+      };
+
+      auto read_file = []( const std::string& filename ) {
+        std::ifstream fin( filename );
+
+        if (!fin) {
+          Throw( "Cannot open file: " + filename );
+        }
+
+        std::vector<Row> rows;
+        std::string line;
+
+        while (std::getline(fin, line)) {
+          if (line.empty()) continue;
+
+          auto first = line.find_first_not_of(" \t\r\n");
+          if (first == std::string::npos) continue;
+          if (line[first] == '#') continue;
+
+          std::istringstream ss(line);
+
+          Row r;
+          ss >> r.elem >> r.xc >> r.yc >> r.zc;
+
+          if (!ss) {
+            Throw( "Failed to parse elem/centroid in file: " + filename +
+                   "\nLine was: " + line );
+          }
+
+          tk::real v;
+          while (ss >> v) {
+            r.values.push_back(v);
+          }
+
+          if (r.values.empty()) {
+            Throw( "No solution values found in file: " + filename +
+                   "\nLine was: " + line );
+          }
+
+          rows.push_back( std::move(r) );
+        }
+
+        return rows;
+      };
+
+      std::ostringstream solname;
+      solname << "solution_chare_" << chare_id << ".dat";
+
+      std::ostringstream refname;
+      refname << "ref_solution_chare_" << chare_id << ".dat";
+
+      auto sol = read_file( solname.str() );
+      auto ref = read_file( refname.str() );
+
+      if (sol.size() != ref.size()) {
+        Throw( "Different number of data rows for chare " +
+               std::to_string(chare_id) +
+               ". solution rows = " + std::to_string(sol.size()) +
+               ", reference rows = " + std::to_string(ref.size()) );
+      }
+
+      // Sort both files by physical location, not by local element index.
+      auto less_by_centroid =
+        []( const Row& a, const Row& b )
+        {
+          if (a.xc != b.xc) return a.xc < b.xc;
+          if (a.yc != b.yc) return a.yc < b.yc;
+          if (a.zc != b.zc) return a.zc < b.zc;
+          return a.elem < b.elem;
+        };
+
+      std::sort( sol.begin(), sol.end(), less_by_centroid );
+      std::sort( ref.begin(), ref.end(), less_by_centroid );
+
+      const tk::real abs_tol = 1.0e-9;
+      const tk::real rel_tol = 1.0e-12;
+
+      auto close = [&]( tk::real a, tk::real b ) {
+        return std::abs(a-b) <=
+          abs_tol + rel_tol * std::max(std::abs(a), std::abs(b));
+      };
+
+      tk::real err2 = 0.0;
+      tk::real ref2 = 0.0;
+
+      for (std::size_t i=0; i<sol.size(); ++i) {
+
+        if (!close(sol[i].xc, ref[i].xc) ||
+            !close(sol[i].yc, ref[i].yc) ||
+            !close(sol[i].zc, ref[i].zc)) {
+
+          std::ostringstream msg;
+          msg << "Centroid mismatch for chare " << chare_id
+              << " after sorting, row " << i << '\n'
+              << "  solution elem = " << sol[i].elem << '\n'
+              << "  reference elem = " << ref[i].elem << '\n'
+              << "  solution centroid = "
+              << sol[i].xc << " "
+              << sol[i].yc << " "
+              << sol[i].zc << '\n'
+              << "  reference centroid = "
+              << ref[i].xc << " "
+              << ref[i].yc << " "
+              << ref[i].zc << '\n'
+              << "  centroid diff = "
+              << sol[i].xc - ref[i].xc << " "
+              << sol[i].yc - ref[i].yc << " "
+              << sol[i].zc - ref[i].zc;
+
+          Throw( msg.str() );
+        }
+
+        if (sol[i].values.size() != ref[i].values.size()) {
+          Throw( "Different number of solution values for chare " +
+                 std::to_string(chare_id) +
+                 " at sorted row " + std::to_string(i) );
+        }
+
+        for (std::size_t j=0; j<sol[i].values.size(); ++j) {
+          const auto diff = sol[i].values[j] - ref[i].values[j];
+          err2 += diff * diff;
+          ref2 += ref[i].values[j] * ref[i].values[j];
+        }
+      }
+
+      return {{ err2, ref2 }};
+    }
+  
     //! Compute stiff terms for a single element
     //! \param[in] e Element number
     //! \param[in] geoElem Element geometry array

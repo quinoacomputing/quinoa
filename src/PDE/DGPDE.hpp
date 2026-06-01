@@ -345,6 +345,20 @@ class DGPDE {
                                  tk::Fields& U ) const
     { return self->balance_plastic_energy(e, x_star, x, U); }
 
+    void output_solution( std::size_t chare_id,
+                          std::size_t nelem,
+                          const tk::real time,
+                          const std::vector< std::size_t >& inpoel,
+                          const tk::UnsMesh::Coords& coord,
+                          const tk::Fields& geoElem,
+                          const tk::Fields& U,
+                          const tk::Fields& P ) const
+    { return self->output_solution(chare_id, nelem, time, inpoel, coord,
+                                   geoElem, U, P ); }
+
+    std::array< tk::real, 2 > compute_solution_error( std::size_t chare_id ) const
+    { return self->compute_solution_error( chare_id ); }
+
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
                     const tk::Fields& geoElem,
@@ -552,6 +566,15 @@ class DGPDE {
                                            std::vector< tk::real >,
                                            std::vector< tk::real >,
                                            tk::Fields& ) const = 0;
+      virtual void output_solution( std::size_t,
+                                    std::size_t,
+                                    const tk::real,
+                                    const std::vector< std::size_t >&,
+                                    const tk::UnsMesh::Coords&,
+                                    const tk::Fields&,
+                                    const tk::Fields&,
+                                    const tk::Fields& ) const = 0;
+      virtual std::array< tk::real, 2 > compute_solution_error( std::size_t ) const = 0;
       virtual void stiff_rhs( std::size_t,
                               const tk::Fields&,
                               const tk::Fields&,
@@ -760,6 +783,17 @@ class DGPDE {
                                    std::vector< tk::real > x,
                                    tk::Fields& U ) const override
       { return data.balance_plastic_energy( e, x_star, x, U); }
+      void output_solution( std::size_t chare_id,
+                            std::size_t nelem,
+                            const tk::real time,
+                            const std::vector< std::size_t >& inpoel,
+                            const tk::UnsMesh::Coords& coord,
+                            const tk::Fields& geoElem,
+                            const tk::Fields& U,
+                            const tk::Fields& P ) const override
+      { return data.output_solution( chare_id, nelem, time, inpoel, coord, geoElem, U, P ); }
+      std::array< tk::real, 2 > compute_solution_error( std::size_t chare_id ) const override
+      { return data.compute_solution_error( chare_id ); }
       void stiff_rhs( std::size_t e,
                       const tk::Fields& geoElem,
                       const tk::Fields& U,

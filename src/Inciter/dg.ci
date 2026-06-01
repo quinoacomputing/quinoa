@@ -63,6 +63,8 @@ module dg {
       entry [reductiontarget] void initializeLinearSystem( tk::real newdt );
       entry void solveLinearSystem();
       entry [reductiontarget] void solve( tk::real newdt );
+      entry [reductiontarget] void recv_solution_err2(double err2);
+      entry [reductiontarget] void recv_solution_ref2(double ref2);
       entry void resized();
       entry void transferSol();
       entry void advance( tk::real newdt, std::array< tk::real, 6 > F );
