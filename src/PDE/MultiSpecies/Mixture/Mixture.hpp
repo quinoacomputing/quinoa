@@ -67,12 +67,12 @@ class Mixture {
                          tk::real w,
                          tk::real rhoE,
                          const std::vector< EOS >& mat_blk,
-			 tk::real T_init=1500) const;
+                         tk::real T_init=1500) const;
 
     tk::real viscosity(tk::real mix_temp,
                        const std::vector< EOS >& mat_blk) const;
 
-    tk::real conduct(tk::real mix_temp,
+    tk::real conductivity(tk::real mix_temp,
                        const std::vector< EOS >& mat_blk) const;
 
     /** @name Charm++ pack/unpack serializer member functions */

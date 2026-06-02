@@ -1078,7 +1078,7 @@ class MultiSpecies {
       mu = mix.viscosity( ugp[ncomp+multispecies::temperatureIdx(nspec,0)],
                           mat_blk );
 
-      conduct = mix.conduct( ugp[ncomp+multispecies::temperatureIdx(nspec,0)],
+      conduct = mix.conductivity( ugp[ncomp+multispecies::temperatureIdx(nspec,0)],
                              mat_blk );
 
       for (std::size_t i=0; i<3; ++i) {

@@ -143,7 +143,7 @@ class GodunovRomenski {
     tk::real cv( tk::real ) const { return 0.0; }
 
     //! Return species viscosity coefficient
-    tk::real viscCoeff( tk::real ) const { return 0.0; }
+    tk::real viscCoeff( tk::real ) const { return m_mu; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

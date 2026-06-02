@@ -128,7 +128,10 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::K0,                 std::vector< tk::real >,
   tag::cv,                 std::vector< tk::real >,
   tag::k,                  std::vector< tk::real >,
-  tag::plasticity_reltime, std::vector< tk::real >
+  tag::plasticity_reltime, std::vector< tk::real >,
+  tag::temp_ref,  std::vector< tk::real >,
+  tag::mu_ref,    std::vector< tk::real >,
+  tag::C,         std::vector< tk::real >
 > >;
 
 // Species/EOS object

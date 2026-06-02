@@ -30,11 +30,10 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto g = getmatprop< tag::gamma >(k);
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
-    auto temp_ref = getspecprop< tag::temp_ref >(k);
-    auto mu_ref = getspecprop< tag::mu_ref >(k);
-    auto C = getspecprop< tag::C >(k);
-    auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
-    m_material = StiffenedGas(g, ps, c_v, temp_ref, mu_ref, C, Sutherland);
+    auto temp_ref = getmatprop< tag::temp_ref >(k);
+    auto mu_ref = getmatprop< tag::mu_ref >(k);
+    auto C = getmatprop< tag::C >(k);
+    m_material = StiffenedGas(g, ps, c_v, temp_ref, mu_ref, C, false);
   }
   else if (mattype == ctr::MaterialType::JWL) {
     // query input deck to get jwl parameters
@@ -120,11 +119,10 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto g = getmatprop< tag::gamma >(k);
       auto ps = getmatprop< tag::pstiff >(k);
       auto c_v = getmatprop< tag::cv >(k);
-      auto temp_ref = getspecprop< tag::temp_ref >(k);
-      auto mu_ref = getspecprop< tag::mu_ref >(k);
-      auto C = getspecprop< tag::C >(k);
-      auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
-      m_material = StiffenedGas(g, ps, c_v, temp_ref, mu_ref, C, Sutherland);
+      auto temp_ref = getmatprop< tag::temp_ref >(k);
+      auto mu_ref = getmatprop< tag::mu_ref >(k);
+      auto C = getmatprop< tag::C >(k);
+      m_material = StiffenedGas(g, ps, c_v, temp_ref, mu_ref, C, false);
     }
     else Throw( "Unknown EOS for material " + std::to_string(k+1) );
   }
