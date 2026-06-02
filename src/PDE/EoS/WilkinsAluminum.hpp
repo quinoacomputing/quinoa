@@ -128,9 +128,10 @@ class WilkinsAluminum {
     tk::real internalenergy(tk::real temp) const { return m_cv * temp; }
 
     //! Return specific heat (no-op)
-    tk::real cv( [[maybe_unused]] tk::real temp) const { return m_cv; }
-    
-    tk::real mu( [[maybe_unused]] tk::real temp) const { return m_mu; }
+    tk::real cv( tk::real ) const { return 0.0; }
+
+    //! Return species viscosity (no-op)
+    tk::real viscCoeff( tk::real ) const { return 0.0; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

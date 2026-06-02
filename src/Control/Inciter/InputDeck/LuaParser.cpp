@@ -1676,6 +1676,9 @@ LuaParser::registerSpecies(
       // mu_ref (Sutherland)
       checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
         spci_deck.get< tag::mu_ref >());
+      //temp_ref (Sutherland)
+      checkStoreMatProp(sol_spc[imat+1], "temp_ref", nspec,
+        spci_deck.get< tag::temp_ref >());
       if (gideck.get< tag::multispecies, tag::Sutherland >()){
         // C (Sutherland)
         checkStoreMatProp(sol_spc[imat+1], "C", nspec,
@@ -1696,6 +1699,9 @@ LuaParser::registerSpecies(
       // mu_ref (Sutherland)
       checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
         spci_deck.get< tag::mu_ref >());
+      //temp_ref (Sutherland)
+      checkStoreMatProp(sol_spc[imat+1], "temp_ref", nspec,
+        spci_deck.get< tag::temp_ref >());
       if (gideck.get< tag::multispecies, tag::Sutherland >()){
         // C (Sutherland)
         checkStoreMatProp(sol_spc[imat+1], "C", nspec,

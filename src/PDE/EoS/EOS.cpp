@@ -30,7 +30,11 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto g = getmatprop< tag::gamma >(k);
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
-    m_material = StiffenedGas(g, ps, c_v);
+    auto temp_ref = getspecprop< tag::temp_ref >(k);
+    auto mu_ref = getspecprop< tag::mu_ref >(k);
+    auto C = getspecprop< tag::C >(k);
+    auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
+    m_material = StiffenedGas(g, ps, c_v, temp_ref, mu_ref, C, Sutherland);
   }
   else if (mattype == ctr::MaterialType::JWL) {
     // query input deck to get jwl parameters
@@ -74,22 +78,6 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto K0 = getmatprop< tag::K0 >(k);
     m_material = GodunovRomenski(g, mu, rho0_gr, alpha, K0);
   }
-  else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
-    // query input deck for ThermallyPerfectGas parameters
-    auto R = getspecprop< tag::R >(k);
-    // assume only one type of species
-    auto cp_coeff =
-      g_inputdeck.get< tag::species >()[0].get< tag::cp_coeff >()[k];
-    auto t_range =
-      g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
-    auto dH_ref = getspecprop< tag::dH_ref >(k);
-    auto temp_ref = getspecprop< tag::temp_ref >(k);
-    auto mu_ref = getspecprop< tag::mu_ref >(k);
-    auto C = getspecprop< tag::C >(k);
-    auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
-    m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, temp_ref,
-     mu_ref, C, Sutherland);
-  }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
   }
 
@@ -100,7 +88,11 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto g = getspecprop< tag::gamma >(k);
       auto ps = getspecprop< tag::pstiff >(k);
       auto c_v = getspecprop< tag::cv >(k);
-      m_material = StiffenedGas(g, ps, c_v);
+      auto temp_ref = getspecprop< tag::temp_ref >(k);
+      auto mu_ref = getspecprop< tag::mu_ref >(k);
+      auto C = getspecprop< tag::C >(k);
+      auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
+      m_material = StiffenedGas(g, ps, c_v, temp_ref, mu_ref, C, Sutherland);
     }
     else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
       // query input deck for ThermallyPerfectGas parameters
@@ -128,7 +120,11 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto g = getmatprop< tag::gamma >(k);
       auto ps = getmatprop< tag::pstiff >(k);
       auto c_v = getmatprop< tag::cv >(k);
-      m_material = StiffenedGas(g, ps, c_v);
+      auto temp_ref = getspecprop< tag::temp_ref >(k);
+      auto mu_ref = getspecprop< tag::mu_ref >(k);
+      auto C = getspecprop< tag::C >(k);
+      auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
+      m_material = StiffenedGas(g, ps, c_v, temp_ref, mu_ref, C, Sutherland);
     }
     else Throw( "Unknown EOS for material " + std::to_string(k+1) );
   }

@@ -21,13 +21,17 @@ class StiffenedGas {
 
   private:
     tk::real m_gamma, m_pstiff, m_cv;
+    tk::real m_temp_ref;
+    tk::real m_mu_ref;
+    tk::real m_C;
+    bool m_Sutherland;
 
   public:
     //! Default constructor
     StiffenedGas() = default;
 
     //! Constructor
-    StiffenedGas(tk::real gamma, tk::real pstiff, tk::real cv );
+    StiffenedGas(tk::real gamma, tk::real pstiff, tk::real cv, tk::real temp_ref, tk::real mu_ref, tk::real C, bool Sutherland);
 
     //! Set rho0 EOS parameter. No-op.
     void setRho0(tk::real) {}
@@ -115,9 +119,9 @@ class StiffenedGas {
     tk::real internalenergy(tk::real temp) const { return m_cv * temp; }
 
     //! Return specific heat (no-op)
-    tk::real cv( [[maybe_unused]] tk::real temp) const { return m_cv; }
-    
-     tk::real mu([[maybe_unused]] tk::real temp) const { return 0.0; }
+    tk::real cv( tk::real ) const { return 0.0; }
+
+    tk::real viscCoeff( tk::real ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

@@ -1190,8 +1190,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"Sutherland", "Sutherland's Law boolean",
         R"(This keyword is used to toggle between using Sutherland's Law and
         holding viscosity constant. A value of 'true' enables Sutherland's 
-        Law and a value of 'false' enables constant viscosity.)",
-        "vector of reals"});
+        Law and a value of 'false' enables constant viscosity. Default is 'false'.)",
+        "bool"});
 
       keywords.insert({"stiffenedgas",
         "Select the stiffened gas equation of state",

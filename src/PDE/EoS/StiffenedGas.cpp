@@ -20,10 +20,18 @@ using inciter::StiffenedGas;
 StiffenedGas::StiffenedGas(
   tk::real gamma,
   tk::real pstiff,
-  tk::real cv ) :
+  tk::real cv,
+  tk::real temp_ref,
+  tk::real mu_ref,
+  tk::real C,
+  bool Sutherland) :
   m_gamma(gamma),
   m_pstiff(pstiff),
-  m_cv(cv)
+  m_cv(cv),
+  m_temp_ref(temp_ref),
+  m_mu_ref(mu_ref),
+  m_C(C),
+  m_Sutherland(Sutherland)
 // *************************************************************************
 //  Constructor
 //! \param[in] gamma Ratio of specific heats
@@ -215,6 +223,7 @@ StiffenedGas::temperature(
 //! \return Material temperature using the stiffened-gas EoS
 // *************************************************************************
 {
+  //std::cout << "Inside StiffenedGas::temperature()" << std::endl;
   auto c_v = m_cv;
   auto p_c = m_pstiff;
 
@@ -236,4 +245,22 @@ StiffenedGas::min_eff_pressure(
 {
   // minimum pressure is constrained by zero soundspeed.
   return (min - m_pstiff);
+}
+
+tk::real
+StiffenedGas::viscCoeff(tk::real temp) const
+// *************************************************************************
+//! \brief Calculate species viscosity coefficient using Sutherland's Law
+//    and mixture temperature 
+//! \param[in] temp Temperature
+//! \return Species viscosity coefficient
+// *************************************************************************
+{
+ if (m_Sutherland){
+  auto C = m_C;
+  tk::real mu =m_mu_ref*pow((temp/m_temp_ref),1.5)*(m_temp_ref+C)/(temp+C);
+  return mu;
+  }
+ else
+  return m_mu_ref;
 }

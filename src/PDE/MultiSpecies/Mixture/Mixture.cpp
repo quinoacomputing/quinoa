@@ -9,7 +9,7 @@
   \details   This file declares functions for computing mixture flow quantities
 */
 // *****************************************************************************
-
+#include <iostream>
 #include "MultiSpecies/Mixture/Mixture.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
 
@@ -71,7 +71,7 @@ Mixture::Mixture(
   m_mix_R = 0.;
   for (std::size_t k = 0; k < m_nspec; k++)
     m_mix_R += m_Ys[k] * mat_blk[k].compute< EOS::gas_constant >();
-
+  
   // Compute total density (via ideal gas EOS)
   m_mix_density = mix_pressure / (m_mix_R * temperature);
 }
@@ -174,6 +174,7 @@ Mixture::temperature(
 //! \return Mixture pressure
 // *************************************************************************
 {
+  
   // Compute internal energy
   tk::real e = rhoE / mix_density - 0.5 * (u*u + v*v + w*w);
 
@@ -210,7 +211,7 @@ Mixture::temperature(
       " at final iteration" );
     }
   }
-
+  
   return temp;
 }
 
@@ -234,13 +235,13 @@ Mixture::viscosity(
   // Compute mixture viscosity
   tk::real mix_mu = 0.;
   for (std::size_t k = 0; k < m_nspec; k++) {
-    mix_mu += m_Ys[k] * mat_blk[k].compute< EOS::mu >(mix_temp);
+    mix_mu += m_Ys[k] * mat_blk[k].compute< EOS::viscCoeff >(mix_temp);
   }
 
   return mix_mu;
 }
 
-tk::real 
+tk::real
 Mixture::conduct(
   tk::real mix_temp,
   const std::vector< EOS >& mat_blk) const
@@ -271,7 +272,7 @@ Mixture::conduct(
     // Compute mixture viscosity
     tk::real mix_mu = 0.;
     for (std::size_t k = 0; k < m_nspec; k++) {
-      mix_mu += m_Ys[k] * mat_blk[k].compute< EOS::mu >(mix_temp);
+      mix_mu += m_Ys[k] * mat_blk[k].compute< EOS::viscCoeff >(mix_temp);
     }
 
     tk::real k = mix_mu * m_mix_cp / Pr;

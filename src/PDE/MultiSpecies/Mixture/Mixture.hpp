@@ -68,10 +68,10 @@ class Mixture {
                          tk::real rhoE,
                          const std::vector< EOS >& mat_blk,
 			 tk::real T_init=1500) const;
-                         
+
     tk::real viscosity(tk::real mix_temp,
                        const std::vector< EOS >& mat_blk) const;
-                       
+
     tk::real conduct(tk::real mix_temp,
                        const std::vector< EOS >& mat_blk) const;
 

@@ -137,12 +137,13 @@ class GodunovRomenski {
     tk::real gas_constant() const { return 0.0; }
 
     //! Return internal energy (no-op)
-    tk::real internalenergy( [[maybe_unused]] tk::real temp) const { return 0.0; }
+    tk::real internalenergy( tk::real ) const { return 0.0; }
 
     //! Return specific heat (no-op)
-    tk::real cv( [[maybe_unused]] tk::real temp) const { return 0.0; }
-    
-    tk::real mu([[maybe_unused]] tk::real temp) const { return m_mu; }
+    tk::real cv( tk::real ) const { return 0.0; }
+
+    //! Return species viscosity coefficient
+    tk::real viscCoeff( tk::real ) const { return 0.0; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

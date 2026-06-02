@@ -191,11 +191,12 @@ ThermallyPerfectGas::cv(tk::real temp) const
 }
 
 tk::real
-ThermallyPerfectGas::mu(tk::real temp) const
+ThermallyPerfectGas::viscCoeff(tk::real temp) const
 // *************************************************************************
-//! \brief Calculate species specific heat (constant volume)
+//! \brief Calculate species viscosity coefficient using Sutherland's Law
+//    and mixture temperature 
 //! \param[in] temp Temperature
-//! \return Species specific heat using the thermally perfect gas EoS
+//! \return Species viscosity coefficient
 // *************************************************************************
 {
  if (m_Sutherland){
