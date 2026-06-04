@@ -453,9 +453,13 @@ class DG : public CBase_DG {
 
     //! Calculate element-local Jacobian for point-implicit solve
     std::vector< std::vector< std::vector< tk::real > > >
-    point_implicit_jacobian(
-      const tk::Fields& Ubase,
-      const tk::Fields& Pbase ) const;
+      point_implicit_jacobian(
+        const tk::Fields& Ubase,
+        const tk::Fields& Pbase,
+        const tk::Fields& Rbase ) const;
+
+    //! Coloring algorithm to separate elements that share a face
+    std::vector< std::size_t > point_implicit_elem_coloring() const;
 };
 
 } // inciter::

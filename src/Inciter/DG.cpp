@@ -2522,10 +2522,11 @@ DG::point_implicit_integrate()
   // Frozen neighbors
   const tk::Fields Ubase( m_un );
   const tk::Fields Pbase( m_p );
+  const tk::Fields Rbase( m_rhs );
 
 
   // Jacobian of RHS of all elements
-  const auto dRdu_elem = point_implicit_jacobian(Ubase, Pbase);
+  const auto dRdu = point_implicit_jacobian(Ubase, Pbase, Rbase);
 
   tk::Fields Unew( m_u );
 
@@ -2547,7 +2548,7 @@ DG::point_implicit_integrate()
 
     // Get value at next time step
     auto converged = solve_element_implicit(
-      e, u_old, u_cur, dte, vole, dRdu_elem[e] );
+      e, u_old, u_cur, dte, vole, dRdu[e] );
 
     if (!converged)
       Throw( "Point-implicit solver failed at element " + std::to_string(e) );
@@ -2710,7 +2711,8 @@ DG::point_implicit_rhs(
 std::vector< std::vector< std::vector< tk::real > > >
 DG::point_implicit_jacobian(
   const tk::Fields& Ubase,
-  const tk::Fields& Pbase ) const
+  const tk::Fields& Pbase,
+  const tk::Fields& Rbase ) const
 // *****************************************************************************
 // Calculates element-local residual Jacobian
 //! \param[in] Ubase Base conservative field with lagged neighbor states
@@ -2720,11 +2722,20 @@ DG::point_implicit_jacobian(
 //! the exact Jacobian to be wired in later.
 // *****************************************************************************
 {
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
   const auto neq = m_u.nprop()/rdof;
   const auto nunk = neq*ndof;
+  auto d = Disc();
+  tk::real physT(d->T());
+  physT += d->Dt();
+
+  const auto elemColor = point_implicit_elem_coloring();
+
+  const auto ncolor =
+    *std::max_element( begin(elemColor), end(elemColor) ) + 1;
 
   // Allocate each element's Jacobian
   std::vector< std::vector< std::vector< tk::real > > >
@@ -2732,38 +2743,48 @@ DG::point_implicit_jacobian(
       std::vector< std::vector< tk::real > >(
         nunk, std::vector< tk::real >( nunk, 0.0 ) ) );
 
-  for (std::size_t e=0; e<nelem; ++e) {
-    std::vector< tk::real > u( nunk, 0.0 );
+  for (std::size_t c=0; c<neq; ++c) {
+    for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
+      const auto col = c*ndof + k;
+      const auto rcol = c*rdof + k;
 
-    for (std::size_t c=0; c<neq; ++c) {
-      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
-        const auto rmark = c*rdof + k;
-        const auto mark = c*ndof + k;
+      // Loop over different colors
+      for (std::size_t color=0; color<ncolor; ++color) {
+        // Re-allocate to base state
+        tk::Fields Up( Ubase );
+        tk::Fields Pp( Pbase );
+        tk::Fields Rp( Rbase.nunk(), Rbase.nprop() );
 
-        u[mark] = Ubase(e,rmark);
-      }
-    }
+        std::vector< tk::real > eps( nelem, 0.0 );
 
-    const auto r0 = point_implicit_rhs( e, u, Ubase, Pbase );
-    for (std::size_t c=0; c<neq; ++c) {
-      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
-        const auto col = c*ndof + k;
+        // Skip element if it's not the right color
+        for (std::size_t e=0; e<nelem; ++e) {
+          if (elemColor[e] != color) continue;
 
-        auto up = u;
+          eps[e] =
+            std::sqrt( std::numeric_limits< tk::real >::epsilon() ) *
+            std::max( std::abs( Ubase(e,rcol) ), tk::real(1.0) );
 
-        const auto eps =
-          std::sqrt( std::numeric_limits< tk::real >::epsilon() ) *
-          std::max( std::abs( u[col] ), tk::real(1.0) );
+          // Perturb solutions of this color
+          Up(e,rcol) += eps[e];
+        }
 
-        up[col] += eps;
+        // Calculate perturbed RHS
+        g_dgpde[d->MeshId()].updatePrimitives( Up, myGhosts()->m_geoElem, Pp,
+          nelem, m_ndof );
 
-        const auto rp = point_implicit_rhs( e, up, Ubase, Pbase );
+        g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+          myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel,
+          m_boxelems, myGhosts()->m_coord, Up, Pp, m_ndof, d->Dt(), Rp );
 
-        for (std::size_t ceq=0; ceq<neq; ++ceq) {
-          for (std::size_t keq=0; keq<m_numEqDof[ceq]; ++keq) {
-            const auto row = ceq*ndof + keq;
+        for (std::size_t e=0; e<nelem; ++e) {
+          if (elemColor[e] != color) continue;
 
-            dRdu[e][row][col] = ( rp[row] - r0[row] ) / eps;
+          for (std::size_t ceq=0; ceq<neq; ++ceq) {
+            for (std::size_t keq=0; keq<m_numEqDof[ceq]; ++keq) {
+              const auto row = ceq*ndof + keq;
+              dRdu[e][row][col] = ( Rp(e,row) - Rbase(e,row) ) / eps[e];
+            }
           }
         }
       }
@@ -2771,6 +2792,52 @@ DG::point_implicit_jacobian(
   }
 
   return dRdu;
+}
+
+std::vector< std::size_t >
+DG::point_implicit_elem_coloring() const
+// *****************************************************************************
+//  Color owned elements for simultaneous finite-difference perturbations
+//! \return Element color for each owned element
+//! \details Elements with the same color do not share a face, so their
+//! point-implicit residual stencils do not overlap for the P0 face-flux
+//! residual.
+// *****************************************************************************
+{
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto& esuel = myGhosts()->m_fd.Esuel();
+
+  const auto invalid = std::numeric_limits< std::size_t >::max();
+
+  std::vector< std::size_t > elemColor( nelem, invalid );
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    std::vector< std::size_t > used;
+
+    for (std::size_t f=0; f<4; ++f) {
+      const auto n = esuel[4*e+f];
+
+      if (n < 0) continue;
+
+      const auto en = static_cast< std::size_t >( n );
+
+      if (en >= nelem) continue;
+
+      if (elemColor[en] != invalid) {
+        used.push_back( elemColor[en] );
+      }
+    }
+
+    std::size_t color = 0;
+
+    while (std::find( begin(used), end(used), color ) != end(used)) {
+      ++color;
+    }
+
+    elemColor[e] = color;
+  }
+
+  return elemColor;
 }
 
 //------------------------------------------------------------------------------
