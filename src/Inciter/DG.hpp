@@ -42,6 +42,12 @@ namespace inciter {
 class DG : public CBase_DG {
 
   public:
+
+    //! Available IMEX Runge-Kutta schemes
+    enum class IMEXRKScheme {
+      CB3a,
+      CB3f
+    };
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -238,6 +244,10 @@ class DG : public CBase_DG {
       p | m_nnonstiffeq;
       p | m_npoin;
       p | m_diag;
+      int imexrk_scheme_int = static_cast< int >( m_imexrk_scheme );
+      p | imexrk_scheme_int;
+      if (p.isUnpacking())
+        m_imexrk_scheme = static_cast< IMEXRKScheme >( imexrk_scheme_int );
       p | m_nstage;
       p | m_stage;
       p | m_ndof;
@@ -267,6 +277,7 @@ class DG : public CBase_DG {
     //@}
 
   private:
+
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! Distributed Ghosts proxy
@@ -322,6 +333,8 @@ class DG : public CBase_DG {
     std::size_t m_npoin;
     //! Diagnostics object
     ElemDiagnostics m_diag;
+    //! Selected IMEX Runge-Kutta scheme
+    IMEXRKScheme m_imexrk_scheme;
     //! Total number of Runge-Kutta stages
     std::size_t m_nstage;
     //! Runge-Kutta stage counter
@@ -425,8 +438,20 @@ class DG : public CBase_DG {
     //! Start preparing fields for output to file
     void startFieldOutput( CkCallback c );
 
+    //! Parse selected IMEX Runge-Kutta scheme from input
+    IMEXRKScheme imex_scheme_from_input() const;
+
+    //! Return true if selected IMEX scheme is IMEXRKCB3f
+    bool use_imexrkcb3f() const;
+
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
+
+    //! Perform one IMEXRKCB3a stage update
+    void imex_integrate_cb3a();
+
+    //! Perform one IMEXRKCB3f stage update
+    void imex_integrate_cb3f();
 
     //! Perform the BDF1 update
     void BDF1_integrate();

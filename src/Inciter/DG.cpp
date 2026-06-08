@@ -63,6 +63,26 @@ extern std::vector< DGPDE > g_dgpde;
 static const std::array< std::array< tk::real, 3 >, 2 >
   rkcoef{{ {{ 0.0, 3.0/4.0, 1.0/3.0 }}, {{ 1.0, 1.0/4.0, 2.0/3.0 }} }};
 
+//! IMEXRKCB3a coefficients (Cavaglieri & Bewley 2015, eq. 25b)
+static const tk::real c2_imex3a =
+  (27.0 + std::pow(2187.0-1458.0*std::sqrt(2.0),1.0/3.0)
+   + 9.0*std::pow(3.0+2.0*std::sqrt(2.0),1.0/3.0))/54.0;
+static const tk::real c3_imex3a =
+  c2_imex3a/(6.0*std::pow(c2_imex3a,2.0)-3.0*c2_imex3a+1.0);
+static const tk::real b2_imex3a =
+  (3.0*c2_imex3a-1.0)/(6.0*std::pow(c2_imex3a,2.0));
+static const tk::real b3_imex3a =
+  (6.0*std::pow(c2_imex3a,2.0)-3.0*c2_imex3a+1.0)/
+  (6.0*std::pow(c2_imex3a,2.0));
+static const tk::real a21_expl_imex3a = c2_imex3a;
+static const tk::real a32_expl_imex3a = c3_imex3a;
+static const tk::real a22_impl_imex3a = c2_imex3a;
+static const tk::real a33_impl_imex3a =
+  (1.0/6.0-b2_imex3a*std::pow(c2_imex3a,2.0)
+   -b3_imex3a*c2_imex3a*c3_imex3a)/
+  (b3_imex3a*(c3_imex3a-c2_imex3a));
+static const tk::real a32_impl_imex3a = a33_impl_imex3a-c3_imex3a;
+
 //! IMEXRKCB3f coefficients (Cavaglieri & Bewley 2015, eq. 32c)
 static const tk::real c2_imex3f = 49.0/50.0;
 static const tk::real c3_imex3f = 1.0/25.0;
@@ -108,6 +128,29 @@ extern tk::CProxy_ChareStateCollector stateProxy;
 
 using inciter::DG;
 
+DG::IMEXRKScheme
+DG::imex_scheme_from_input() const
+// *****************************************************************************
+//  Parse selected IMEX Runge-Kutta scheme from input
+// *****************************************************************************
+{
+  const auto scheme = g_inputdeck.get< tag::imex_scheme >();
+
+  if (scheme == "IMEXRKCB3a") return IMEXRKScheme::CB3a;
+  if (scheme == "IMEXRKCB3f") return IMEXRKScheme::CB3f;
+
+  Throw( "Unknown IMEX Runge-Kutta scheme: " + scheme );
+}
+
+bool
+DG::use_imexrkcb3f() const
+// *****************************************************************************
+//  Query whether selected IMEX scheme is IMEXRKCB3f
+// *****************************************************************************
+{
+  return m_imexrk_scheme == IMEXRKScheme::CB3f;
+}
+
 DG::DG( const CProxy_Discretization& disc,
         const CProxy_Ghosts& ghostsproxy,
         const std::map< int, std::vector< std::size_t > >& bface,
@@ -147,7 +190,9 @@ DG::DG( const CProxy_Discretization& disc,
     tk::invMassMatTaylorRefEl(g_inputdeck.get< tag::rdof >()) ),
   m_npoin( Disc()->Coord()[0].size() ),
   m_diag(),
-  m_nstage( g_inputdeck.get< tag::imex_runge_kutta >() ? 4 : 3 ),
+  m_imexrk_scheme( imex_scheme_from_input() ),
+  m_nstage( g_inputdeck.get< tag::imex_runge_kutta >() ?
+            (use_imexrkcb3f() ? 4 : 3) : 3 ),
   m_stage( 0 ),
   m_ndof(),
   m_interface(),
@@ -1221,9 +1266,15 @@ DG::solve( tk::real newdt )
   // physical time at time-stage for computing explicit source terms
   tk::real physT(d->T());
   if (imex_runge_kutta) {
-    if (m_stage == 1) physT += c2_imex3f*d->Dt();
-    else if (m_stage == 2) physT += c3_imex3f*d->Dt();
-    else if (m_stage == 3) physT += c4_imex3f*d->Dt();
+    if (use_imexrkcb3f()) {
+      if (m_stage == 1) physT += c2_imex3f*d->Dt();
+      else if (m_stage == 2) physT += c3_imex3f*d->Dt();
+      else if (m_stage == 3) physT += c4_imex3f*d->Dt();
+    }
+    else {
+      if (m_stage == 1) physT += c2_imex3a*d->Dt();
+      else if (m_stage == 2) physT += c3_imex3a*d->Dt();
+    }
   }
   else {
     if (m_stage == 1) physT += d->Dt();
@@ -1245,7 +1296,7 @@ DG::solve( tk::real newdt )
   }
 
   if (imex_runge_kutta) {
-    // Implicit-Explicit time-stepping using IMEXRKCB3f.
+    // Implicit-Explicit time-stepping.
     DG::imex_integrate();
   }
   else if (implicit_ts) {
@@ -1785,8 +1836,142 @@ DG::step()
   }
 }
 
+
 void
 DG::imex_integrate()
+// *****************************************************************************
+//  Dispatch IMEX Runge-Kutta stage update
+// *****************************************************************************
+{
+  if (use_imexrkcb3f()) imex_integrate_cb3f();
+  else imex_integrate_cb3a();
+}
+
+void
+DG::imex_integrate_cb3a()
+// *****************************************************************************
+//  Perform one IMEXRKCB3a stage update using shared IMEX stage registers
+//! \details
+//!   This uses the same stage-register infrastructure as IMEXRKCB3f. The
+//!   explicit RHS for the current accepted stage is evaluated before this
+//!   routine, after communication of the stage state.
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  const auto dt = d->Dt();
+
+  auto add_explicit = [&]( tk::Fields& U, const tk::Fields& G,
+                           tk::real coeff )
+  {
+    if (std::abs(coeff) < 1.0e-16) return;
+
+    for (std::size_t e=0; e<nelem; ++e) {
+      auto vole = myGhosts()->m_geoElem(e,0);
+      for (std::size_t c=0; c<neq; ++c)
+        for (std::size_t k=0; k<m_numEqDof[c]; ++k)
+        {
+          auto rmark = c*rdof + k;
+          auto mark = c*ndof + k;
+          U(e, rmark) += dt * coeff * G(e, mark) /
+                         (vole*mass_dubiner[k]);
+        }
+    }
+  };
+
+  auto add_implicit = [&]( tk::Fields& U, const tk::Fields& F,
+                           tk::real coeff )
+  {
+    if (std::abs(coeff) < 1.0e-16) return;
+
+    for (std::size_t e=0; e<nelem; ++e) {
+      auto vole = myGhosts()->m_geoElem(e,0);
+      for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        {
+          auto rmark = m_stiffEqIdx[ieq]*rdof + idof;
+          U(e, rmark) += dt * coeff * F(e, ieq*ndof+idof) /
+                         (vole*mass_dubiner[idof]);
+        }
+    }
+  };
+
+  auto eval_implicit_rhs = [&]( const tk::Fields& U, tk::Fields& Fstage )
+  {
+    Fstage.fill(0.0);
+    for (std::size_t e=0; e<nelem; ++e)
+      g_dgpde[d->MeshId()].stiff_rhs(
+        e, myGhosts()->m_geoElem, U, m_ndof, Fstage );
+  };
+
+  auto solve_stage = [&]( tk::Fields& U, tk::real aii )
+  {
+    for (std::size_t e=0; e<nelem; ++e)
+    {
+      std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
+      std::vector< tk::real > stage_base(m_nstiffeq*ndof, 0.0);
+
+      for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        {
+          auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
+          auto idx = ieq*ndof + idof;
+          x[idx] = U(e, stiffrmark);
+          stage_base[idx] = U(e, stiffrmark);
+        }
+
+      auto x_star = x;
+      x = DG::nonlinear_newton_stage( e, x, stage_base, aii );
+      g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
+
+      for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        {
+          auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
+          U(e, stiffrmark) = x[ieq*ndof + idof];
+        }
+    }
+  };
+
+  auto accumulate_x = [&]( tk::real bcoeff )
+  {
+    add_explicit( m_imex_x, m_imex_zex, bcoeff );
+    add_implicit( m_imex_x, m_imex_zim, bcoeff );
+  };
+
+  if (m_stage == 0) {
+    m_imex_x = m_un;
+    m_imex_y = m_un;
+
+    m_u = m_imex_y;
+    add_explicit( m_u, m_imex_zex, a21_expl_imex3a );
+    solve_stage( m_u, a22_impl_imex3a );
+  }
+  else if (m_stage == 1) {
+    eval_implicit_rhs( m_u, m_imex_zim );
+    accumulate_x( b2_imex3a );
+
+    m_imex_y = m_imex_x;
+    add_explicit( m_imex_y, m_imex_zex, a32_expl_imex3a - b2_imex3a );
+    add_implicit( m_imex_y, m_imex_zim, a32_impl_imex3a - b2_imex3a );
+
+    m_u = m_imex_y;
+    solve_stage( m_u, a33_impl_imex3a );
+  }
+  else if (m_stage == 2) {
+    eval_implicit_rhs( m_u, m_imex_zim );
+    accumulate_x( b3_imex3a );
+
+    m_u = m_imex_x;
+    m_stiffrhs = m_imex_zim;
+  }
+}
+
+void
+DG::imex_integrate_cb3f()
 // *****************************************************************************
 //  Perform one IMEXRKCB3f stage update in low-storage [3R] form
 //! \details

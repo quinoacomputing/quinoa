@@ -162,6 +162,7 @@ DEFTAG(accuracy_test);
 DEFTAG(limsol_projection);
 DEFTAG(implicit_timestepping);
 DEFTAG(imex_runge_kutta);
+DEFTAG(imex_scheme);
 DEFTAG(imex_maxiter);
 DEFTAG(imex_reltol);
 DEFTAG(imex_abstol);
