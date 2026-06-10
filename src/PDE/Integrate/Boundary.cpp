@@ -163,23 +163,22 @@ viscousBoundaryFaceInt(
         viscousRhs.gradientIntElem( U, P, el, dBdx_l, grad[0] );
 
         // Apply BCs on gradients
-        std::vector< tk::real > dudx_l(9,0.0);
+        std::vector< tk::real > dqdx_l(4*3,0.0);
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            dudx_l[3*i+j] = grad[0][i][j];
+            dqdx_l[3*i+j] = grad[0][i][j];  // velocity gradients
 
-        auto gradBC = gradFn( 3, mat_blk, dudx_l, gp[0], gp[1], gp[2], t, fn );
+        for (std::size_t j=0; j<3; ++j)
+          dqdx_l[3*3+j] = grad[0][3][j];  // temperature gradients
+
+        auto gradBC = gradFn( 4, mat_blk, dqdx_l, gp[0], gp[1], gp[2], t, fn );
         // store BC gradients into gradient vector
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j) {
             grad[1][i][j] = gradBC[1][3*i+j];
           }
-        // TODO: remove equal temperature gradients hardcoding
-        grad[1][3] = grad[0][3];
 
         // Compute viscous fluxes
-        // ADITYA: pass in the state and cellAvgState to the fn below, so
-        // that it only knows about the MG-operation, not boundary-cell etc.
         viscousRhs.interiorFlux( mat_blk, ncomp, ghostState, ghostCellAvgState,
           fn, centroids, grad, fl );
 

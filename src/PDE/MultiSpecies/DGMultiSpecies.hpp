@@ -90,7 +90,7 @@ class MultiSpecies {
         , noOpGrad
         , noOpGrad
         , symmetryGrad
-        , symmetryGrad }
+        , noOpGrad }
         ) );
 
       // EoS initialization
