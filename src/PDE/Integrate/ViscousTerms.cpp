@@ -88,7 +88,7 @@ MultiSpeciesViscousTermsP0P1::gradientIntElem(
   // d(\rho u)/dx
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j) {
-      grad[i][j] = //dudx[i][j]
+      grad[i][j] = //drudx[i][j]
         dBdx[j][1] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,1))
       + dBdx[j][2] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,2))
       + dBdx[j][3] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,3));

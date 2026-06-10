@@ -150,10 +150,9 @@ viscousInternalFaceInt(
       inverseJacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
     eval_dBdx_p1( ndof_r, jacInv_r, dBdx[1] );
 
-    std::array< std::size_t, 2 > elem{{ el, er }};
     // Compute high-order face states
-    state[0] = viscousRhs.stateAt( mat_blk, U, P, elem[0], ndof_l, B[0] );
-    state[1] = viscousRhs.stateAt( mat_blk, U, P, elem[1], ndof_r, B[1] );
+    state[0] = viscousRhs.stateAt( mat_blk, U, P, el, ndof_l, B[0] );
+    state[1] = viscousRhs.stateAt( mat_blk, U, P, er, ndof_r, B[1] );
 
     // Compute cell-average states
     Bcc[0].assign( ndof_l, 0.0 );
@@ -161,13 +160,13 @@ viscousInternalFaceInt(
     Bcc[0][0] = 1.0;
     Bcc[1][0] = 1.0;
     cellAvgState[0] =
-      viscousRhs.stateAt( mat_blk, U, P, elem[0], ndof_l, Bcc[0] );
+      viscousRhs.stateAt( mat_blk, U, P, el, ndof_l, Bcc[0] );
     cellAvgState[1] =
-      viscousRhs.stateAt( mat_blk, U, P, elem[1], ndof_r, Bcc[1] );
+      viscousRhs.stateAt( mat_blk, U, P, er, ndof_r, Bcc[1] );
 
     // Compute gradients
-    viscousRhs.gradientIntElem( U, P, elem[0], dBdx[0], grad[0] );
-    viscousRhs.gradientIntElem( U, P, elem[1], dBdx[1], grad[1] );
+    viscousRhs.gradientIntElem( U, P, el, dBdx[0], grad[0] );
+    viscousRhs.gradientIntElem( U, P, er, dBdx[1], grad[1] );
 
     // Compute viscous fluxes
     viscousRhs.interiorFlux( mat_blk, ncomp, state, cellAvgState, fn,
