@@ -24,31 +24,29 @@ namespace tk {
 
 MultiSpeciesViscousTermsP0P1::MultiSpeciesViscousTermsP0P1(
   std::size_t nspec,
-  const std::vector< inciter::EOS >& mat_blk,
-  std::size_t rdof,
-  const Fields& U,
-  const Fields& P ) :
+  std::size_t rdof ) :
   m_nspec( nspec ),
-  m_mat_blk( mat_blk ),
-  m_rdof( rdof ),
-  m_U( U ),
-  m_P( P )
+  m_rdof( rdof )
 // *****************************************************************************
 //! Constructor
 //! \param[in] nspec Number of species in this PDE system
-//! \param[in] mat_blk Material EOS block
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
-//! \param[in] U Solution vector at recent time step
-//! \param[in] P Vector of primitives at recent time step
 // *****************************************************************************
 {}
 
 std::vector< tk::real >
-MultiSpeciesViscousTermsP0P1::stateAt( std::size_t e,
+MultiSpeciesViscousTermsP0P1::stateAt(
+  const std::vector< inciter::EOS >& mat_blk,
+  const Fields& U,
+  const Fields& P,
+  std::size_t e,
   std::size_t ndof,
   const std::vector< tk::real >& B ) const
 // *****************************************************************************
 //! \brief Reconstruct conserved variables and primitives at a face point
+//! \param[in] mat_blk Material EOS block
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
 //! \param[in] e Element id
 //! \param[in] ndof Number of local degrees of freedom
 //! \param[in] B Basis functions evaluated at the face point
@@ -56,34 +54,104 @@ MultiSpeciesViscousTermsP0P1::stateAt( std::size_t e,
 //!   multispecies primitives
 // *****************************************************************************
 {
-  const auto ncomp = m_U.nprop()/m_rdof;
-  const auto nprim = m_P.nprop()/m_rdof;
+  const auto ncomp = U.nprop()/m_rdof;
+  const auto nprim = P.nprop()/m_rdof;
   std::vector< tk::real > state( ncomp+nprim, 0.0 );
 
-  eval_state( ncomp, m_rdof, ndof, e, m_U, B, state.data() );
-  eval_state( nprim, m_rdof, ndof, e, m_P, B, state.data()+ncomp );
-  enforcePhysicalConstraints( m_mat_blk, ncomp, 1, state );
+  eval_state( ncomp, m_rdof, ndof, e, U, B, state.data() );
+  eval_state( nprim, m_rdof, ndof, e, P, B, state.data()+ncomp );
+  enforcePhysicalConstraints( mat_blk, ncomp, 1, state );
 
   return state;
 }
 
-std::vector< tk::real >
+void
+MultiSpeciesViscousTermsP0P1::gradientIntElem(
+  const Fields& U,
+  const Fields& P,
+  std::size_t elem,
+  const std::array< std::vector< tk::real >, 3 >& dBdx,
+  std::array< std::array< tk::real, 3 >, 4>& grad ) const
+// *****************************************************************************
+//! Compute gradients of quantities for an interior element
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] elem element id
+//! \param[in] dBdx Basis gradients in element
+//! \param[in,out] grad Velocity and temperature gradients in element
+// *****************************************************************************
+{
+  using inciter::multispecies::momentumDofIdx;
+  using inciter::multispecies::densityDofIdx;
+  using inciter::multispecies::temperatureDofIdx;
+
+  // d(\rho u)/dx
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      grad[i][j] = //dudx[i][j]
+        dBdx[j][1] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,1))
+      + dBdx[j][2] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,2))
+      + dBdx[j][3] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,3));
+    }
+  }
+
+  // d(\rho)/dx
+  std::array< real, 3 > drdx{{ 0.0, 0.0, 0.0 }};
+  real cellAvgRho(0.0);
+  for (std::size_t k=0; k<m_nspec; ++k) {
+    for (std::size_t j=0; j<3; ++j) {
+      drdx[j] +=
+        dBdx[j][1] * U(elem, densityDofIdx(m_nspec,k,m_rdof,1))
+      + dBdx[j][2] * U(elem, densityDofIdx(m_nspec,k,m_rdof,2))
+      + dBdx[j][3] * U(elem, densityDofIdx(m_nspec,k,m_rdof,3));
+    }
+    cellAvgRho += U(elem, densityDofIdx(m_nspec,k,m_rdof,0));
+  }
+
+  std::array< real, 3 > cellAvgVel;
+  for (std::size_t i=0; i<3; ++i) {
+    cellAvgVel[i] = U(elem, momentumDofIdx(m_nspec,i,m_rdof,0))
+      / cellAvgRho;
+  }
+
+  // du/dx
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      // dudx[i][j]
+      grad[i][j] -= cellAvgVel[i] * drdx[j];
+      grad[i][j] /= cellAvgRho;
+    }
+  }
+
+  // dT/dx_j
+  for (std::size_t j=0; j<3; ++j) {
+    // dTdx[j]
+    grad[3][j] = dBdx[j][1] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,1))
+               + dBdx[j][2] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,2))
+               + dBdx[j][3] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,3));
+  }
+}
+
+void
 MultiSpeciesViscousTermsP0P1::interiorFlux(
-  const std::array< std::size_t, 2 >& elem,
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t ncomp,
+  const std::array< std::vector< tk::real >, 2 >& state,
+  const std::array< std::vector< tk::real >, 2 >& cellAvgState,
   const std::array< tk::real, 3 >& fn,
-  const std::array< tk::real, 3 >&,
-  const std::array< std::array< tk::real, 3 >, 2 >&,
   const std::array< std::array< tk::real, 3 >, 2 >& centroid,
-  const std::array< std::vector< tk::real >, 2 >& B,
-  const std::array< std::array< std::vector< tk::real >, 3 >, 2 >& dBdx ) const
+  const std::array< std::array< std::array< tk::real, 3 >, 4>, 2 >& grad,
+  std::vector< tk::real >& fl ) const
 // *****************************************************************************
 //! \brief Compute the multispecies viscous flux at an interior face
-//! \param[in] elem Left and right element ids
+//! \param[in] mat_blk Material EOS block
+//! \param[in] ncomp Number of components in this system
+//! \param[in] state Left and right high-order face states
+//! \param[in] cellAvgState Left and right cell-average states
 //! \param[in] fn Face normal
 //! \param[in] centroid Left and right element centroids
-//! \param[in] B Basis values at the face point
-//! \param[in] dBdx Basis gradients in left and right elements
-//! \return Numerical viscous flux using the Modified Gradient approach.
+//! \param[in] grad Velocity and temperature gradients in left and right elements
+//! \param[in,out] fl Numerical viscous flux using the Modified Gradient approach
 //! \details The average gradient is modified according to Weiss et al. to
 //!   obtain a stable discretization (average results in unstable central
 //!   central difference).
@@ -92,76 +160,31 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
 //!   multigrid. AIAA journal, 37(1), 29-36.
 // *****************************************************************************
 {
-  using inciter::multispecies::momentumDofIdx;
-  using inciter::multispecies::densityDofIdx;
-  using inciter::multispecies::temperatureDofIdx;
+  using inciter::multispecies::densityIdx;
   using inciter::multispecies::temperatureIdx;
   using inciter::multispecies::momentumIdx;
   using inciter::multispecies::energyIdx;
 
-  const auto ncomp = m_U.nprop()/m_rdof;
-  std::vector< tk::real > fl( ncomp, 0.0 );
+  Assert( fl.size() == ncomp, "Incorrect viscous flux vector size" );
+  for (auto& f : fl) f = 0.0;
 
-  auto ul = stateAt( elem[0], m_rdof, B[0] );
-  auto ur = stateAt( elem[1], m_rdof, B[1] );
+  const auto& ul = state[0];
+  const auto& ur = state[1];
+  const auto& ucl = cellAvgState[0];
+  const auto& ucr = cellAvgState[1];
 
   // 1. Compute average gradients
   // ---------------------------------------------------------------------------
-  const auto& dBdx_l = dBdx[0];
-  const auto& dBdx_r = dBdx[1];
+  // du_i/dx_j
+  std::array< std::array< real, 3 >, 3 > dudx;
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      dudx[i][j] = 0.5 * ( grad[0][i][j] + grad[1][i][j] );
 
-  // d(\rho u)/dx
-  std::array< std::array< real, 3 >, 3 > dudx_l, dudx_r;
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j) {
-      dudx_l[i][j] =
-        dBdx_l[j][1] * m_U(elem[0], momentumDofIdx(m_nspec,i,m_rdof,1))
-      + dBdx_l[j][2] * m_U(elem[0], momentumDofIdx(m_nspec,i,m_rdof,2))
-      + dBdx_l[j][3] * m_U(elem[0], momentumDofIdx(m_nspec,i,m_rdof,3));
-      dudx_r[i][j] =
-        dBdx_r[j][1] * m_U(elem[1], momentumDofIdx(m_nspec,i,m_rdof,1))
-      + dBdx_r[j][2] * m_U(elem[1], momentumDofIdx(m_nspec,i,m_rdof,2))
-      + dBdx_r[j][3] * m_U(elem[1], momentumDofIdx(m_nspec,i,m_rdof,3));
-    }
-  }
-
-  // d(\rho)/dx
-  std::array< real, 3 > drdx_l{{ 0.0, 0.0, 0.0 }}, drdx_r{{ 0.0, 0.0, 0.0 }};
-  std::array< real, 2 > cellAvgRho{{ 0.0, 0.0 }};
-  for (std::size_t k=0; k<m_nspec; ++k) {
-    for (std::size_t j=0; j<3; ++j) {
-      drdx_l[j] +=
-        dBdx_l[j][1] * m_U(elem[0], densityDofIdx(m_nspec,k,m_rdof,1))
-      + dBdx_l[j][2] * m_U(elem[0], densityDofIdx(m_nspec,k,m_rdof,2))
-      + dBdx_l[j][3] * m_U(elem[0], densityDofIdx(m_nspec,k,m_rdof,3));
-
-      drdx_r[j] +=
-        dBdx_r[j][1] * m_U(elem[1], densityDofIdx(m_nspec,k,m_rdof,1))
-      + dBdx_r[j][2] * m_U(elem[1], densityDofIdx(m_nspec,k,m_rdof,2))
-      + dBdx_r[j][3] * m_U(elem[1], densityDofIdx(m_nspec,k,m_rdof,3));
-    }
-    cellAvgRho[0] += m_U(elem[0], densityDofIdx(m_nspec,k,m_rdof,0));
-    cellAvgRho[1] += m_U(elem[1], densityDofIdx(m_nspec,k,m_rdof,0));
-  }
-
-  std::array< std::array< real, 3 >, 2 > cellAvgVel;
-  for (std::size_t i=0; i<3; ++i) {
-    cellAvgVel[0][i] = m_U(elem[0], momentumDofIdx(m_nspec,i,m_rdof,0))
-      / cellAvgRho[0];
-    cellAvgVel[1][i] = m_U(elem[1], momentumDofIdx(m_nspec,i,m_rdof,0))
-      / cellAvgRho[1];
-  }
-
-  // du/dx
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j) {
-      dudx_l[i][j] -= cellAvgVel[0][i] * drdx_l[j];
-      dudx_l[i][j] /= cellAvgRho[0];
-
-      dudx_r[i][j] -= cellAvgVel[1][i] * drdx_r[j];
-      dudx_r[i][j] /= cellAvgRho[1];
-    }
-  }
+  // dT/dx_j
+  std::array< real, 3 > dTdx{{0, 0, 0}};
+  for (std::size_t j=0; j<3; ++j)
+    dTdx[j] = 0.5 * ( grad[0][3][j] + grad[1][3][j] );
 
   // 2. Modify the average gradients
   // ---------------------------------------------------------------------------
@@ -173,50 +196,43 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
   for (std::size_t i=0; i<3; ++i)
     r_f[i] /= r_mag;
 
-  // average du_i/dx_j
-  std::array< std::array< real, 3 >, 3 > dudx;
-  for (std::size_t i=0; i<3; ++i)
-    for (std::size_t j=0; j<3; ++j)
-      dudx[i][j] = 0.5 * ( dudx_l[i][j] + dudx_r[i][j] );
+  // cell averages needed for modifications
+  std::array< real, 2 > cellAvgRho{0, 0};
+  for (std::size_t k=0; k<m_nspec; ++k) {
+    cellAvgRho[0] += ucl[densityIdx(m_nspec,k)];
+    cellAvgRho[1] += ucr[densityIdx(m_nspec,k)];
+  }
+  std::array< std::array< real, 3 >, 2 > cellAvgVel;
+  for (std::size_t i=0; i<3; ++i) {
+    cellAvgVel[0][i] = ucl[momentumIdx(m_nspec,i)] / cellAvgRho[0];
+    cellAvgVel[1][i] = ucr[momentumIdx(m_nspec,i)] / cellAvgRho[1];
+  }
 
   // modify du_i/dx_j
   auto dudx_m = dudx;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
-      dudx_m[i][j] = 0.5 * ( dudx_l[i][j] + dudx_r[i][j] )
-        - ( tk::dot(dudx[i], r_f) -
+      dudx_m[i][j] -= ( tk::dot(dudx[i], r_f) -
         (cellAvgVel[1][i] - cellAvgVel[0][i])/r_mag ) * r_f[j];
-
-  // average dT/dx_j
-  std::array< real, 3 > dTdx{{0, 0, 0}};
-  for (std::size_t j=0; j<3; ++j) {
-    dTdx[j] = 0.5 * (
-        dBdx_l[j][1] * m_P(elem[0], temperatureDofIdx(m_nspec,0,m_rdof,1))
-      + dBdx_l[j][2] * m_P(elem[0], temperatureDofIdx(m_nspec,0,m_rdof,2))
-      + dBdx_l[j][3] * m_P(elem[0], temperatureDofIdx(m_nspec,0,m_rdof,3))
-      + dBdx_r[j][1] * m_P(elem[1], temperatureDofIdx(m_nspec,0,m_rdof,1))
-      + dBdx_r[j][2] * m_P(elem[1], temperatureDofIdx(m_nspec,0,m_rdof,2))
-      + dBdx_r[j][3] * m_P(elem[1], temperatureDofIdx(m_nspec,0,m_rdof,3)) );
-  }
 
   // modified dT/dx_j
   auto dTdx_m = dTdx;
   for (std::size_t j=0; j<3; ++j)
     dTdx_m[j] -= ( tk::dot(dTdx, r_f) -
-      (m_P(elem[1], temperatureDofIdx(m_nspec,0,m_rdof,0))
-     - m_P(elem[0], temperatureDofIdx(m_nspec,0,m_rdof,0)))/r_mag ) * r_f[j];
+      (ucr[ncomp+temperatureIdx(m_nspec,0)]
+     - ucl[ncomp+temperatureIdx(m_nspec,0)])/r_mag ) * r_f[j];
 
   // 3. Compute viscous stress tensor
   // ---------------------------------------------------------------------------
   // establish mixture state
-  inciter::Mixture mix_l(m_nspec, ul, m_mat_blk);
-  inciter::Mixture mix_r(m_nspec, ur, m_mat_blk);
+  inciter::Mixture mix_l(m_nspec, ul, mat_blk);
+  inciter::Mixture mix_r(m_nspec, ur, mat_blk);
 
   // compute fluid properties (viscosity and conductivity)
   auto mu =
-    0.5 * (mix_l.viscCoeff(m_mat_blk) + mix_r.viscCoeff(m_mat_blk));
-  auto Cp = 0.5 * (mix_l.Cp(ul[ncomp+temperatureIdx(m_nspec,0)], m_mat_blk)
-    + mix_r.Cp(ur[ncomp+temperatureIdx(m_nspec,0)], m_mat_blk));
+    0.5 * (mix_l.viscCoeff(mat_blk) + mix_r.viscCoeff(mat_blk));
+  auto Cp = 0.5 * (mix_l.Cp(ul[ncomp+temperatureIdx(m_nspec,0)], mat_blk)
+    + mix_r.Cp(ur[ncomp+temperatureIdx(m_nspec,0)], mat_blk));
   auto kTh = mu * Cp / 0.71; // TODO: make Prandtl number user-configurable
 
   // stress tensor
@@ -250,8 +266,6 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
   }
 
   fl[energyIdx(m_nspec, 0)] = tk::dot(energyFlux, fn);
-
-  return fl;
 }
 
 } // tk::

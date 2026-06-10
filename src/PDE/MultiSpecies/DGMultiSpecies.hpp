@@ -79,9 +79,9 @@ class MultiSpecies {
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall 
-        , symmetry
-        , isothermal_wall },       // Slip equivalent to symmetry without mesh motion
+        , noslipwall
+        , symmetry    // Slip-wall equivalent to symmetry without mesh motion
+        , isothermal_wall },
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
@@ -713,9 +713,14 @@ class MultiSpecies {
           flux, velfn, Problem::src, U, P, ndofel, R );
       }
 
-      if (viscous)
+      if (viscous) {
         tk::surfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof, inpoel,
           coord, fd, geoFace, geoElem, U, P, R );
+        for (const auto& b : m_bc)
+          tk::bndSurfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+            std::get<1>(b), std::get<2>(b), U, P, R );
+      }
 
       // compute external (energy) sources
       //m_physics.physSrc(nspec, t, geoElem, {}, R, {});

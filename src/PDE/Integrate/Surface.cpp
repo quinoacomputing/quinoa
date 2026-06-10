@@ -34,25 +34,31 @@ namespace {
 
 template< class ViscousTerms >
 void
-surfIntViscousFaceLoop(
+viscousInternalFaceInt(
   const ViscousTerms& viscousRhs,
+  const std::vector< inciter::EOS >& mat_blk,
   const std::size_t ndof,
   const std::vector< std::size_t >& inpoel,
   const UnsMesh::Coords& coord,
   const inciter::FaceData& fd,
   const Fields& geoFace,
   const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
   Fields& R )
 // *****************************************************************************
 //! \brief Shared PDE-nonspecific face traversal for viscous surface operators
 //! \tparam ViscousTerms Policy type that computes PDE-specific viscous RHS
 //! \param[in] viscousRhs PDE-specific viscous residual policy
+//! \param[in] mat_blk Material EOS block
 //! \param[in] ndof Number of active solution degrees of freedom
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] fd Face connectivity and boundary conditions object
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
 //! \param[in,out] R Right-hand side vector computed
 //! \details This routine owns only the face traversal and local geometric
 //!   quantities common to viscous surface terms. The supplied policy receives
@@ -69,7 +75,12 @@ surfIntViscousFaceLoop(
           "Mismatch in viscous RHS polynomial and component sizes" );
 
   std::array< std::vector< tk::real >, 2 > B;
+  std::array< std::vector< tk::real >, 2 > Bcc;
+  std::array< std::vector< tk::real >, 2 > state;
+  std::array< std::vector< tk::real >, 2 > cellAvgState;
   std::array< std::array< std::vector< tk::real >, 3 >, 2 > dBdx;
+  std::array< std::array< std::array< tk::real, 3 >, 4>, 2 > grad;
+  std::vector< tk::real > fl( ncomp, 0.0 );
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -140,13 +151,29 @@ surfIntViscousFaceLoop(
     eval_dBdx_p1( ndof_r, jacInv_r, dBdx[1] );
 
     std::array< std::size_t, 2 > elem{{ el, er }};
-    std::array< std::array< tk::real, 3 >, 2 > ref_gp{{ ref_gp_l, ref_gp_r }};
+    // Compute high-order face states
+    state[0] = viscousRhs.stateAt( mat_blk, U, P, elem[0], ndof_l, B[0] );
+    state[1] = viscousRhs.stateAt( mat_blk, U, P, elem[1], ndof_r, B[1] );
+
+    // Compute cell-average states
+    Bcc[0].assign( ndof_l, 0.0 );
+    Bcc[1].assign( ndof_r, 0.0 );
+    Bcc[0][0] = 1.0;
+    Bcc[1][0] = 1.0;
+    cellAvgState[0] =
+      viscousRhs.stateAt( mat_blk, U, P, elem[0], ndof_l, Bcc[0] );
+    cellAvgState[1] =
+      viscousRhs.stateAt( mat_blk, U, P, elem[1], ndof_r, Bcc[1] );
+
+    // Compute gradients
+    viscousRhs.gradientIntElem( U, P, elem[0], dBdx[0], grad[0] );
+    viscousRhs.gradientIntElem( U, P, elem[1], dBdx[1], grad[1] );
 
     // Compute viscous fluxes
-    auto fl = viscousRhs.interiorFlux( elem, fn, gp, ref_gp, centroids, B, dBdx );
+    viscousRhs.interiorFlux( mat_blk, ncomp, state, cellAvgState, fn,
+      centroids, grad, fl );
 
     // Contribute fluxes to RHS
-    Assert( fl.size() == ncomp, "Incorrect viscous flux vector size" );
     for (ncomp_t c=0; c<ncomp; ++c) {
       R(el, c) += geoFace(f,0) * fl[c];
       R(er, c) -= geoFace(f,0) * fl[c];
@@ -1017,10 +1044,9 @@ surfIntViscousMultiSpecies(
 // *****************************************************************************
 {
   if (ndof == 1) {
-    MultiSpeciesViscousTermsP0P1
-      viscousRhs( nspec, mat_blk, rdof, U, P );
-    surfIntViscousFaceLoop( viscousRhs, ndof, inpoel, coord, fd, geoFace,
-      geoElem, R );
+    MultiSpeciesViscousTermsP0P1 viscousRhs( nspec, rdof );
+    viscousInternalFaceInt( viscousRhs, mat_blk, ndof, inpoel, coord, fd,
+      geoFace, geoElem, U, P, R );
   }
   else
     Throw( "Viscous operators only implemented for scheme = 'p0p1'." );

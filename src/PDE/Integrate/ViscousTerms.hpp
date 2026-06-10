@@ -20,6 +20,7 @@
 
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
+#include "PUPUtil.hpp"
 
 namespace tk {
 
@@ -27,40 +28,61 @@ namespace tk {
 class MultiSpeciesViscousTermsP0P1 {
   public:
     //! Constructor
-    MultiSpeciesViscousTermsP0P1(
-      std::size_t nspec,
-      const std::vector< inciter::EOS >& mat_blk,
-      std::size_t rdof,
-      const Fields& U,
-      const Fields& P );
+    MultiSpeciesViscousTermsP0P1( std::size_t nspec, std::size_t rdof );
 
     //! Return local polynomial order
     std::size_t localDof( std::size_t ) const { return m_rdof; }
 
     //! Reconstruct conserved variables and primitives at a face point
     std::vector< tk::real >
-    stateAt( std::size_t e,
+    stateAt(
+      const std::vector< inciter::EOS >& mat_blk,
+      const Fields& U,
+      const Fields& P,
+      std::size_t e,
       std::size_t ndof,
       const std::vector< tk::real >& B ) const;
 
+    //! Compute gradients of quantities for an interior element
+    void
+    gradientIntElem(
+      const Fields& U,
+      const Fields& P,
+      std::size_t elem,
+      const std::array< std::vector< tk::real >, 3 >& dBdx,
+      std::array< std::array< tk::real, 3 >, 4>& grad ) const;
+
     //! Compute the multispecies viscous flux at an interior face
-    std::vector< tk::real >
+    void
     interiorFlux(
-      const std::array< std::size_t, 2 >& elem,
+      const std::vector< inciter::EOS >& mat_blk,
+      std::size_t ncomp,
+      const std::array< std::vector< tk::real >, 2 >& state,
+      const std::array< std::vector< tk::real >, 2 >& cellAvgState,
       const std::array< tk::real, 3 >& fn,
-      const std::array< tk::real, 3 >& gp,
-      const std::array< std::array< tk::real, 3 >, 2 >& ref_gp,
       const std::array< std::array< tk::real, 3 >, 2 >& centroid,
-      const std::array< std::vector< tk::real >, 2 >& B,
-      const std::array< std::array< std::vector< tk::real >, 3 >, 2 >& dBdx )
-      const;
+      const std::array< std::array< std::array< tk::real, 3 >, 4>, 2 >& grad,
+      std::vector< tk::real >& fl ) const;
+
+    /** @name Charm++ pack/unpack serializer member functions */
+    ///@{
+    //! \brief Pack/Unpack serialize member function
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    void pup( PUP::er& p ) {
+      p | m_nspec;
+      p | m_rdof;
+    }
+
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[in,out] p Charm++'s PUP::er serializer object reference
+    //! \param[in,out] v Viscous terms object reference
+    friend void operator|( PUP::er& p, MultiSpeciesViscousTermsP0P1& v )
+    { v.pup(p); }
+    //@}
 
   private:
     std::size_t m_nspec;
-    const std::vector< inciter::EOS >& m_mat_blk;
     std::size_t m_rdof;
-    const Fields& m_U;
-    const Fields& m_P;
 };
 
 } // tk::
