@@ -173,7 +173,7 @@ viscousBoundaryFaceInt(
 
         auto gradBC = gradFn( 4, mat_blk, dqdx_l, gp[0], gp[1], gp[2], t, fn );
         // store BC gradients into gradient vector
-        for (std::size_t i=0; i<3; ++i)
+        for (std::size_t i=0; i<4; ++i)
           for (std::size_t j=0; j<3; ++j) {
             grad[1][i][j] = gradBC[1][3*i+j];
           }
