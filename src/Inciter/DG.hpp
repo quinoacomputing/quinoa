@@ -459,7 +459,7 @@ class DG : public CBase_DG {
         const tk::Fields& Rbase ) const;
 
     //! Coloring algorithm to separate elements that share a face
-    std::vector< std::size_t > point_implicit_elem_coloring() const;
+    std::vector< int > point_implicit_elem_coloring() const;
 };
 
 } // inciter::

@@ -2507,23 +2507,25 @@ DG::point_implicit_integrate()
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
   const auto neq = m_u.nprop()/rdof;
-  
-  Assert(g_inputdeck.get< tag::steady_state >(),
-    "Point-implicit integrator currently only for steady-state");
 
-  // Point-implicit currently only for P0 (ndof=1)
-  Assert(ndof == 1,
-    "Point-implicit integrator currently only implemented for P0 (ndof=1)");
+  if (ndof != 1) {
+    Throw(
+      "Point-implicit integrator currently only implemented for P0 (ndof=1)");
+  }
+
+  if (!g_inputdeck.get< tag::steady_state >()) {
+    Throw("Point-implicit integrator currently only for steady-state");
+  }
 
   // Currently no p-refinement
-  Assert(g_inputdeck.get< tag::pref, tag::pref >(),
-    "Point-implicit integrator currently requires pref=false");
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    Throw("Point-implicit integrator currently requires pref=false");
+  }
 
   // Frozen neighbors
   const tk::Fields Ubase( m_un );
   const tk::Fields Pbase( m_p );
   const tk::Fields Rbase( m_rhs );
-
 
   // Jacobian of RHS of all elements
   const auto dRdu = point_implicit_jacobian(Ubase, Pbase, Rbase);
@@ -2533,22 +2535,22 @@ DG::point_implicit_integrate()
   // Element-local implicit solve
   for (std::size_t e=0; e<nelem; ++e) {
     auto vole = myGhosts()->m_geoElem(e,0);
-    auto dte = m_dte[e];
+    auto dte = Disc()->Dt();
 
     // Extract element DOFs
-    std::vector<tk::real> u_old(neq*ndof), u_cur(neq*ndof);
+    std::vector<tk::real> u_old(neq*ndof), u_new(neq*ndof);
     for (size_t c=0; c<neq; ++c)
       for (size_t k=0; k<m_numEqDof[c]; ++k) {
         const auto rmark = c*rdof + k;
         const auto mark = c*ndof + k;
         u_old[mark] = Ubase(e, rmark);
         // guess previous value
-        u_cur[mark] = Ubase(e, rmark);
+        u_new[mark] = Ubase(e, rmark);
       }
 
     // Get value at next time step
     auto converged = solve_element_implicit(
-      e, u_old, u_cur, dte, vole, dRdu[e] );
+      e, u_old, u_new, dte, vole, dRdu[e] );
 
     if (!converged)
       Throw( "Point-implicit solver failed at element " + std::to_string(e) );
@@ -2558,7 +2560,7 @@ DG::point_implicit_integrate()
       for (size_t k=0; k<m_numEqDof[c]; ++k) {
         const auto rmark = c*rdof + k;
         const auto mark = c*ndof + k;
-        Unew(e, rmark) = u_cur[mark];
+        Unew(e, rmark) = u_new[mark];
       }
   }
 
@@ -2578,7 +2580,7 @@ DG::solve_element_implicit(
 //  Solve element-local, linearized implicit system 
 //! \param[in] e Element index
 //! \param[in] u_old Solution at previous time step (element DOFs)
-//! \param[in] u_new Updated solution
+//! \param[in,out] u_new Updated solution
 //! \param[in] dte Element-local time step size
 //! \param[in] vole Element volume
 //! \param[in] dRdU Jacobian of RHS for element
@@ -2593,17 +2595,24 @@ DG::solve_element_implicit(
   // Intermediate variable that ends up equal to ndof * neq
   const auto n = u_new.size();
 
-  Assert( n == m_u.nprop()/g_inputdeck.get< tag::rdof >()*ndof,
-    "Size mismatch in solve_element_implicit()" );
-  Assert( u_new.size() == n, "Size mismatch in solve_element_implicit()" );
-  Assert( dRdu.size() == n, "Jacobian row size mismatch" );
+  if ( n != m_u.nprop()/g_inputdeck.get< tag::rdof >()*ndof ) {
+    Throw("Size mismatch in solve_element_implicit()");
+  }
+  if( u_new.size() != n ) {
+    Throw("Size mismatch in solve_element_implicit()" );
+  };
+  if( dRdu.size() != n ) {
+    Throw("Jacobian row size mismatch" );
+  };
 
   std::vector< double > A(n*n, 0.0);
   std::vector< double > b(n, 0.0);
 
   // For this element, take solve for one step of u
   for (std::size_t i=0; i<n; ++i) {
-    Assert( dRdu[i].size() == n, "Jacobian column size mismatch" );
+    if( dRdu[i].size() != n ) {
+      Throw("Jacobian column size mismatch" );
+    }
     const auto k = i % ndof;
     const auto scale = dte / (vole * mass_dubiner[k]);
 
@@ -2642,72 +2651,6 @@ DG::solve_element_implicit(
   return true;
 }
 
-std::vector< tk::real >
-DG::point_implicit_rhs(
-  std::size_t e,
-  const std::vector< tk::real >& ue,
-  const tk::Fields& Ubase,
-  const tk::Fields& Pbase ) const
-// *****************************************************************************
-// Evaluate the spatial residual for a single element
-//! \param[in] e Element index
-//! \param[in] ue Element-local unknowns
-//! \param[in] Ubase Base conservative field with lagged neighbor states
-//! \param[in] Pbase Base primitive field with lagged neighbor states
-//! \return Element residual R_e evaluated at ue and lagged neighbors
-//! \details WIP that simply takes existing DG rhs and calculates it for all
-//! elements, then just takes the element we're after
-// *****************************************************************************
-{
-  auto d = Disc();
-
-  // Time taken to be at next time step
-  tk::real physT(d->T());
-  physT += d->Dt();
-
-  const auto rdof = g_inputdeck.get< tag::rdof >();
-  const auto ndof = g_inputdeck.get< tag::ndof >();
-  const auto ncomp = m_u.nprop()/rdof;
-  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  Assert( ue.size() == ncomp*ndof, "Size mismatch in point_implicit_rhs()" );
-
-  tk::Fields U( Ubase );
-  tk::Fields P( Pbase );
-  tk::Fields R( Ubase.nunk(), ndof*ncomp );
-
-  for (std::size_t c=0; c<ncomp; ++c) {
-    for (std::size_t k=0; k<ndof; ++k) {
-      auto rmark = c*rdof+k;
-      auto mark = c*ndof+k;
-      U(e, rmark) = ue[mark];
-    }
-  }
-
-  g_dgpde[d->MeshId()].updatePrimitives(
-    U, myGhosts()->m_geoElem, P, nelem, m_ndof );
-
-  //! WIP: Right now we just calculate the RHS using the generic RHS function.
-  //! We should construct a type of "element_local_rhs" in each physics file
-  //! that does this per element (as this current method is incredibly slow and
-  //! scales horribly.)
-    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, U, P, m_ndof, d->Dt(), R );
-
-  std::vector< tk::real > re(ncomp*ndof, 0.0);
-
-  for (std::size_t c=0; c<ncomp; ++c) {
-    for (std::size_t k=0; k<ndof; ++k) {
-      auto mark = c*ndof+k;
-      re[mark] = R(e, mark);
-    }
-  }
-
-  return re;
-}
-
 std::vector< std::vector< std::vector< tk::real > > >
 DG::point_implicit_jacobian(
   const tk::Fields& Ubase,
@@ -2734,8 +2677,8 @@ DG::point_implicit_jacobian(
 
   const auto elemColor = point_implicit_elem_coloring();
 
-  const auto ncolor =
-    *std::max_element( begin(elemColor), end(elemColor) ) + 1;
+  const auto ncolor = static_cast< std::size_t >(
+    *std::max_element( begin(elemColor), end(elemColor) ) + 1);
 
   // Allocate each element's Jacobian
   std::vector< std::vector< std::vector< tk::real > > >
@@ -2759,11 +2702,9 @@ DG::point_implicit_jacobian(
 
         // Skip element if it's not the right color
         for (std::size_t e=0; e<nelem; ++e) {
-          if (elemColor[e] != color) continue;
+          if (elemColor[e] != static_cast< int >( color )) continue;
 
-          eps[e] =
-            std::sqrt( std::numeric_limits< tk::real >::epsilon() ) *
-            std::max( std::abs( Ubase(e,rcol) ), tk::real(1.0) );
+          eps[e] = 1e-4 * (1.0 + std::sqrt(Ubase(e, rcol) * Ubase(e, rcol)));
 
           // Perturb solutions of this color
           Up(e,rcol) += eps[e];
@@ -2794,7 +2735,7 @@ DG::point_implicit_jacobian(
   return dRdu;
 }
 
-std::vector< std::size_t >
+std::vector< int >
 DG::point_implicit_elem_coloring() const
 // *****************************************************************************
 //  Color owned elements for simultaneous finite-difference perturbations
@@ -2807,12 +2748,12 @@ DG::point_implicit_elem_coloring() const
   const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
   const auto& esuel = myGhosts()->m_fd.Esuel();
 
-  const auto invalid = std::numeric_limits< std::size_t >::max();
+  const auto invalid = -1;
 
-  std::vector< std::size_t > elemColor( nelem, invalid );
+  std::vector< int > elemColor( nelem, invalid );
 
   for (std::size_t e=0; e<nelem; ++e) {
-    std::vector< std::size_t > used;
+    std::vector< int > used;
 
     for (std::size_t f=0; f<4; ++f) {
       const auto n = esuel[4*e+f];
@@ -2828,13 +2769,18 @@ DG::point_implicit_elem_coloring() const
       }
     }
 
-    std::size_t color = 0;
+    int color = 0;
 
     while (std::find( begin(used), end(used), color ) != end(used)) {
       ++color;
     }
 
     elemColor[e] = color;
+  }
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    if(elemColor[e] == invalid)
+      Throw("Invalid element color in point_implicit_elem_coloring()" );
   }
 
   return elemColor;
