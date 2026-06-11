@@ -19,6 +19,7 @@
 #include <unordered_set>
 #include <map>
 #include <array>
+#include <iostream>
 
 #include "Macro.hpp"
 #include "Exception.hpp"
@@ -351,10 +352,31 @@ class MultiSpecies {
 
           // Evaluate mixture temperature at quadrature point
           auto rhoE0 = state[multispecies::energyIdx(nspec, 0)];
+          int iconv(0);
           pri[multispecies::temperatureIdx(nspec,0)] =
             mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk,
-              prim(e,multispecies::temperatureDofIdx(nspec, 0, rdof, 0)));
-          // TODO: consider clipping temperature here
+              iconv, prim(e,multispecies::temperatureDofIdx(nspec, 0, rdof, 0)));
+
+          // Check for unphysical state and error out with information
+          if (!iconv) {
+            std::cout << "Element centroid:  " << geoElem(e,1) << ", "
+              << geoElem(e,2) << ", " << geoElem(e,3) << std::endl;
+            std::cout << "Mass fractions:    ";
+            for (std::size_t k=0; k<nspec; ++k) {
+              std::cout << state[multispecies::densityIdx(nspec,k)]/rhob << ", ";
+            }
+            std::cout << std::endl;
+            std::cout << "Mixture density:   " << rhob << std::endl;
+            std::cout << "Total energy:      " << rhoE0 << std::endl;
+            std::cout << "Velocity:          " <<
+              vel[0] << ", " << vel[1] << ", " << vel[2] << std::endl;
+
+            Throw( "Newton iteration for temperature failed to converge "
+              " with temperature at final iteration = " +
+              std::to_string(pri[multispecies::temperatureIdx(nspec,0)]) );
+          }
+
+          // Clip temperature
           pri[multispecies::temperatureIdx(nspec,0)] = constrain_temperature(
             pri[multispecies::temperatureIdx(nspec,0)]);
 
