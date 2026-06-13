@@ -813,8 +813,6 @@ class MultiSpecies {
       auto mindt = timeStepSizeMultiSpecies( m_mat_blk, fd.Esuf(), geoFace,
         geoElem, nielem, nspec, U, P, local_dte);
 
-      //if (viscous)
-      //  mindt = std::min(mindt, timeStepSizeViscousFV(geoElem, nielem, nspec, U));
       //mindt = std::min(mindt, m_physics.dtRestriction(geoElem, nielem, {}));
 
       tk::real dgp = 0.0;
