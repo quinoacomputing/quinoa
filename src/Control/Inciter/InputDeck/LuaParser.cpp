@@ -1745,7 +1745,7 @@ LuaParser::registerSpecies(
         // Loop over intervals and retrieve coefficients
         for (std::size_t interv = 0; interv < spec.nIntervals(); ++interv) {
           const N9Interval& I = spec.intervalByIndex(interv);
-          for (std::size_t k = 0; k < 9; ++k)
+          for (std::size_t k = 0; k < 8; ++k)
             cp_coeff[ispec][interv][k] = I.a[k];
           t_range[ispec][interv] = I.Tlow;
           if (interv == spec.nIntervals()-1)
