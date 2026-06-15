@@ -150,7 +150,7 @@ LuaParser::storeInputDeck(
   storeIfSpecd< uint32_t >(
     lua_ideck, "imex_runge_kutta", gideck.get< tag::imex_runge_kutta >(), 0);
   storeIfSpecd< std::string >(
-    lua_ideck, "imex_scheme", gideck.get< tag::imex_scheme >(), "IMEXRKCB3f");
+    lua_ideck, "imex_scheme", gideck.get< tag::imex_scheme >(), "IMEXRKCB3d");
   storeIfSpecd< uint32_t >(
     lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 250);
   storeIfSpecd< tk::real >(

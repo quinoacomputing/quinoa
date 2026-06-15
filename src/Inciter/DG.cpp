@@ -83,42 +83,34 @@ static const tk::real a33_impl_imex3a =
   (b3_imex3a*(c3_imex3a-c2_imex3a));
 static const tk::real a32_impl_imex3a = a33_impl_imex3a-c3_imex3a;
 
-//! IMEXRKCB3f coefficients (Cavaglieri & Bewley 2015, eq. 32c)
-static const tk::real c2_imex3f = 49.0/50.0;
-static const tk::real c3_imex3f = 1.0/25.0;
-static const tk::real c4_imex3f = 1.0;
+//! IMEXRKCB3d coefficients (Cavaglieri & Bewley 2015, eq. 29a)
+static const tk::real c2_imex3d =
+  418884414754.0 / 469594081263.0;
+static const tk::real c3_imex3d =
+  214744852859.0 / 746833870870.0;
+static const tk::real c4_imex3d = 1.0;
 
-// Implicit coefficients
-static const tk::real a21_impl_imex3f = c2_imex3f/2.0;
-static const tk::real a22_impl_imex3f = c2_imex3f/2.0;
-static const tk::real a31_impl_imex3f =
-  -785157464198.0 / 1093480182337.0;
-static const tk::real a32_impl_imex3f =
-  -30736234873.0 / 978681420651.0;
-static const tk::real a33_impl_imex3f =
-   983779726483.0 / 1246172347126.0;
+// Implicit coefficients. The first implicit column is zero for CB3d, and the
+// final implicit row is stiffly accurate: a41=b1=0, a42=b2, a43=b3, a44=b4.
+static const tk::real a22_impl_imex3d = c2_imex3d;
+static const tk::real a32_impl_imex3d =
+  -304881946513433262434901.0 / 718520734375438559540570.0;
+static const tk::real a33_impl_imex3d =
+   684872032315.0 / 962089110311.0;
 
 // Explicit coefficients
-static const tk::real a21_expl_imex3f = c2_imex3f;
-static const tk::real a31_expl_imex3f =
-   13244205847.0 / 647648310246.0;
-static const tk::real a32_expl_imex3f =
-   13419997131.0 / 686433909488.0;
-static const tk::real a42_expl_imex3f =
-   231677526244.0 / 1085522130027.0;
-static const tk::real a43_expl_imex3f =
-   3007879347537.0 / 683461566472.0;
+static const tk::real a21_expl_imex3d = c2_imex3d;
+static const tk::real a32_expl_imex3d = c3_imex3d;
+static const tk::real a43_expl_imex3d =
+   658780719778.0 / 1014712533305.0;
 
-// Weights. The implicit fourth row is stiffly accurate, so
-// a41=b1, a42=b2, a43=b3, and a44=b4.
-static const tk::real b1_imex3f =
-  -2179897048956.0 / 603118880443.0;
-static const tk::real b2_imex3f =
-     99189146040.0 / 891495457793.0;
-static const tk::real b3_imex3f =
-   6064140186914.0 / 1415701440113.0;
-static const tk::real b4_imex3f =
-    146791865627.0 / 668377518349.0;
+// Weights. b1 is exactly zero for CB3d.
+static const tk::real b2_imex3d =
+  355931813527.0 / 1014712533305.0;
+static const tk::real b3_imex3d =
+  709215176366.0 / 1093407543385.0;
+static const tk::real b4_imex3d =
+  755675305.0 / 1258355728177.0;
 
 static const std::array< tk::real, 10 > mass_dubiner( tk::massMatrixDubiner() );
 
@@ -137,18 +129,18 @@ DG::imex_scheme_from_input() const
   const auto scheme = g_inputdeck.get< tag::imex_scheme >();
 
   if (scheme == "IMEXRKCB3a") return IMEXRKScheme::CB3a;
-  if (scheme == "IMEXRKCB3f") return IMEXRKScheme::CB3f;
+  if (scheme == "IMEXRKCB3d") return IMEXRKScheme::CB3d;
 
   Throw( "Unknown IMEX Runge-Kutta scheme: " + scheme );
 }
 
 bool
-DG::use_imexrkcb3f() const
+DG::use_imexrkcb3d() const
 // *****************************************************************************
-//  Query whether selected IMEX scheme is IMEXRKCB3f
+//  Query whether selected IMEX scheme is IMEXRKCB3d
 // *****************************************************************************
 {
-  return m_imexrk_scheme == IMEXRKScheme::CB3f;
+  return m_imexrk_scheme == IMEXRKScheme::CB3d;
 }
 
 DG::DG( const CProxy_Discretization& disc,
@@ -192,7 +184,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_diag(),
   m_imexrk_scheme( imex_scheme_from_input() ),
   m_nstage( g_inputdeck.get< tag::imex_runge_kutta >() ?
-            (use_imexrkcb3f() ? 4 : 3) : 3 ),
+            (use_imexrkcb3d() ? 4 : 3) : 3 ),
   m_stage( 0 ),
   m_ndof(),
   m_interface(),
@@ -1266,10 +1258,10 @@ DG::solve( tk::real newdt )
   // physical time at time-stage for computing explicit source terms
   tk::real physT(d->T());
   if (imex_runge_kutta) {
-    if (use_imexrkcb3f()) {
-      if (m_stage == 1) physT += c2_imex3f*d->Dt();
-      else if (m_stage == 2) physT += c3_imex3f*d->Dt();
-      else if (m_stage == 3) physT += c4_imex3f*d->Dt();
+    if (use_imexrkcb3d()) {
+      if (m_stage == 1) physT += c2_imex3d*d->Dt();
+      else if (m_stage == 2) physT += c3_imex3d*d->Dt();
+      else if (m_stage == 3) physT += c4_imex3d*d->Dt();
     }
     else {
       if (m_stage == 1) physT += c2_imex3a*d->Dt();
@@ -1282,7 +1274,7 @@ DG::solve( tk::real newdt )
   }
 
   if (imex_runge_kutta) {
-    // For IMEXRKCB3f the explicit RHS is evaluated on the already-accepted
+    // For IMEXRKCB3d the explicit RHS is evaluated on the already-accepted
     // stage state after ghost communication. The IMEX stage routine consumes
     // m_imex_zex and produces the next stage state in m_u.
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
@@ -1843,7 +1835,7 @@ DG::imex_integrate()
 //  Dispatch IMEX Runge-Kutta stage update
 // *****************************************************************************
 {
-  if (use_imexrkcb3f()) imex_integrate_cb3f();
+  if (use_imexrkcb3d()) imex_integrate_cb3d();
   else imex_integrate_cb3a();
 }
 
@@ -1852,7 +1844,7 @@ DG::imex_integrate_cb3a()
 // *****************************************************************************
 //  Perform one IMEXRKCB3a stage update using shared IMEX stage registers
 //! \details
-//!   This uses the same stage-register infrastructure as IMEXRKCB3f. The
+//!   This uses the same stage-register infrastructure as IMEXRKCB3d. The
 //!   explicit RHS for the current accepted stage is evaluated before this
 //!   routine, after communication of the stage state.
 // *****************************************************************************
@@ -1971,15 +1963,14 @@ DG::imex_integrate_cb3a()
 }
 
 void
-DG::imex_integrate_cb3f()
+DG::imex_integrate_cb3d()
 // *****************************************************************************
-//  Perform one IMEXRKCB3f stage update in low-storage [3R] form
+//  Perform one IMEXRKCB3d stage update in low-storage [2R] form
 //! \details
-//!   Low-storage [3R] implementation specialized to IMEXRKCB3f. The explicit
+//!   Low-storage [2R] implementation specialized to IMEXRKCB3d. The explicit
 //!   RHS for the current accepted stage is evaluated before this routine, after
-//!   communication of the stage state. This routine evaluates the stiff RHS,
-//!   updates the accumulated solution register, and constructs the next implicit
-//!   stage state.
+//!   communication of the stage state. Since b1=a21^IM=0, the first stage does
+//!   not evaluate or accumulate an F1 stiff RHS contribution.
 // *****************************************************************************
 {
   auto d = Disc();
@@ -2068,46 +2059,43 @@ DG::imex_integrate_cb3f()
   };
 
   if (m_stage == 0) {
+    // G1 has already been evaluated into m_imex_zex before this call.
+    // CB3d has b1=a21^IM=0, so no F1 evaluation or accumulation is needed.
     m_imex_x = m_un;
     m_imex_y = m_un;
-    m_u = m_un;
-
-    eval_implicit_rhs( m_u, m_imex_zim );
-    accumulate_x( b1_imex3f );
 
     m_u = m_imex_y;
-    add_explicit( m_u, m_imex_zex, a21_expl_imex3f );
-    add_implicit( m_u, m_imex_zim, a21_impl_imex3f );
-    solve_stage( m_u, a22_impl_imex3f );
-
-    m_imex_y = m_imex_x;
-    add_implicit( m_imex_y, m_imex_zim, a31_impl_imex3f - b1_imex3f );
-    add_explicit( m_imex_y, m_imex_zex, a31_expl_imex3f - b1_imex3f );
+    add_explicit( m_u, m_imex_zex, a21_expl_imex3d );
+    solve_stage( m_u, a22_impl_imex3d );
   }
   else if (m_stage == 1) {
+    // Current state is Y2, and m_imex_zex holds G2.
     eval_implicit_rhs( m_u, m_imex_zim );
-    accumulate_x( b2_imex3f );
-
-    m_u = m_imex_y;
-    add_explicit( m_u, m_imex_zex, a32_expl_imex3f );
-    add_implicit( m_u, m_imex_zim, a32_impl_imex3f );
-    solve_stage( m_u, a33_impl_imex3f );
+    accumulate_x( b2_imex3d );
 
     m_imex_y = m_imex_x;
-    add_explicit( m_imex_y, m_imex_zex, a42_expl_imex3f - b2_imex3f );
-  }
-  else if (m_stage == 2) {
-    eval_implicit_rhs( m_u, m_imex_zim );
-    accumulate_x( b3_imex3f );
+    add_explicit( m_imex_y, m_imex_zex, a32_expl_imex3d - b2_imex3d );
+    add_implicit( m_imex_y, m_imex_zim, a32_impl_imex3d - b2_imex3d );
 
     m_u = m_imex_y;
-    add_explicit( m_u, m_imex_zex, a43_expl_imex3f );
-    add_implicit( m_u, m_imex_zim, b3_imex3f );
-    solve_stage( m_u, b4_imex3f );
+    solve_stage( m_u, a33_impl_imex3d );
+  }
+  else if (m_stage == 2) {
+    // Current state is Y3, and m_imex_zex holds G3.
+    eval_implicit_rhs( m_u, m_imex_zim );
+    accumulate_x( b3_imex3d );
+
+    m_imex_y = m_imex_x;
+    add_explicit( m_imex_y, m_imex_zex, a43_expl_imex3d - b3_imex3d );
+    // The implicit fourth row is stiffly accurate, so a43^IM-b3 = 0.
+
+    m_u = m_imex_y;
+    solve_stage( m_u, b4_imex3d );
   }
   else if (m_stage == 3) {
+    // Current state is Y4, and m_imex_zex holds G4.
     eval_implicit_rhs( m_u, m_imex_zim );
-    accumulate_x( b4_imex3f );
+    accumulate_x( b4_imex3d );
 
     m_u = m_imex_x;
     m_stiffrhs = m_imex_zim;

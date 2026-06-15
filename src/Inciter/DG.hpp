@@ -46,7 +46,7 @@ class DG : public CBase_DG {
     //! Available IMEX Runge-Kutta schemes
     enum class IMEXRKScheme {
       CB3a,
-      CB3f
+      CB3d
     };
     #if defined(__clang__)
       #pragma clang diagnostic push
@@ -277,7 +277,6 @@ class DG : public CBase_DG {
     //@}
 
   private:
-
     //! Discretization proxy
     CProxy_Discretization m_disc;
     //! Distributed Ghosts proxy
@@ -441,8 +440,8 @@ class DG : public CBase_DG {
     //! Parse selected IMEX Runge-Kutta scheme from input
     IMEXRKScheme imex_scheme_from_input() const;
 
-    //! Return true if selected IMEX scheme is IMEXRKCB3f
-    bool use_imexrkcb3f() const;
+    //! Return true if selected IMEX scheme is IMEXRKCB3d
+    bool use_imexrkcb3d() const;
 
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
@@ -450,8 +449,8 @@ class DG : public CBase_DG {
     //! Perform one IMEXRKCB3a stage update
     void imex_integrate_cb3a();
 
-    //! Perform one IMEXRKCB3f stage update
-    void imex_integrate_cb3f();
+    //! Perform one IMEXRKCB3d stage update
+    void imex_integrate_cb3d();
 
     //! Perform the BDF1 update
     void BDF1_integrate();

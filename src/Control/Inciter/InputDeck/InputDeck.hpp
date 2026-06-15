@@ -563,8 +563,8 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"imex_scheme",
         "Determine the IMplicit-EXplicit Runge-Kutta scheme used",
         R"(This keywords is used to select the IMEX integration scheme used. Options
-        currently supported are 'IMEXRKCB3a' and 'IMEXRKCB3f'. Default is
-        'IMEXRKCB3f'. Schemes taken from Cavaglieri, D., &
+        currently supported are 'IMEXRKCB3a' and 'IMEXRKCB3d'. Default is
+        'IMEXRKCB3d'. Schemes taken from Cavaglieri, D., &
         Bewley, T. (2015). Low-storage implicit/explicit Runge–Kutta schemes for
         the simulation of stiff high-dimensional ODE systems. Journal of
         Computational Physics, 286, 172-193.)", "string"});
