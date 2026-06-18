@@ -50,12 +50,14 @@ tk::volInt( std::size_t nmat,
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] geoElem Element geometry array
 //! \param[in] flux Flux function to use
+//! \param[in] visc_flux Viscous flux function to use
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] src Source function to use
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector added to
+//! \param[in] viscous Boolean toggling viscosity on/off
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
@@ -68,6 +70,8 @@ tk::volInt( std::size_t nmat,
   auto nprim = P.nprop()/rdof;
 
   std::vector< tk::real > state(ncomp+nprim);
+  std::vector< std::array< tk::real, 3 > > grad_all(ncomp + nprim,
+                                      std::array< real, 3 >{{0, 0, 0}});
 
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
@@ -105,6 +109,7 @@ tk::volInt( std::size_t nmat,
 
     std::vector< tk::real > B(dof_el);
 
+
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
     {
@@ -130,32 +135,30 @@ tk::volInt( std::size_t nmat,
         // evaluate prescribed velocity (if any)
         auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
-        // comput flux
+        // compute flux
         auto fl = flux( ncomp, mat_blk, state, v );
 
-        if (viscous)
-        {
-        std::vector< std::array< tk::real, 3 > > grad_all(2*ncomp, 
-                                            std::array< real, 3 >{{0, 0, 0}});
-         auto state_U_grad = eval_state_gradient(ncomp, ndof, dof_el, 
+        if (viscous) {
+          auto state_U_grad = eval_state_gradient(ncomp, ndof, dof_el,
                          e, U, dBdx );
-         auto state_P_grad = eval_state_gradient(nprim, ndof, dof_el, 
+          auto state_P_grad = eval_state_gradient(nprim, ndof, dof_el,
                          e, P, dBdx );
 
-         for (ncomp_t c=0; c<ncomp; ++c){
-           grad_all.push_back(state_U_grad[c]);
-         }
+          for (ncomp_t c=0; c<ncomp; ++c){
+            grad_all[multispecies::densityIdx(c)] = state_U_grad[multispeciesIdx::densityIdx()];
+          }
 
-         for (ncomp_t c=0; c<nprim; ++c){
-           grad_all.push_back(state_P_grad[c]);
-         }         
-   
-         auto fl_vis =  visc_flux(ncomp, mat_blk, state, grad_all) ;
-         for (ncomp_t c=0; c<ncomp; ++c){
-          for (std::size_t i=0; i<3; ++i)
-           fl[c][i] = fl[c][i] + fl_vis[c][i];  
-          }              
-         } 
+          for (ncomp_t c=ncomp; c<nprim; ++c){
+            grad_all[multispecies::densityIdx(c)] = state_U_grad[multispeciesIdx::densityIdx()];
+          }
+
+          auto fl_vis =  visc_flux(ncomp, mat_blk, state, grad_all);
+
+          for (ncomp_t c=0; c<ncomp; ++c){
+            for (std::size_t i=0; i<3; ++i)
+              fl[c][i] = fl[c][i] - fl_vis[c][i];
+          }
+        }
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );
       }
@@ -338,6 +341,9 @@ tk::volInt_constP(
   // Allocate memory
   std::vector< tk::real > B(rdof), state(ncomp+nprim), s(ncomp, 0.0);
   std::array< std::vector<tk::real>, 3 > dBdx;
+  std::vector< std::array< tk::real, 3 > > grad_all(ncomp+nprim,
+                                      std::array< real, 3 >{{0, 0, 0}});
+
   for (std::size_t i=0; i<3; ++i) dBdx[i].resize( ndof, 0 );
 
   // compute volume integrals
@@ -380,32 +386,30 @@ tk::volInt_constP(
         // evaluate prescribed velocity (if any)
         auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
-        // comput flux
+        // compute flux
         auto fl = flux( ncomp, mat_blk, state, v );
-        
-        if (viscous)
-        {
-        std::vector< std::array< tk::real, 3 > > grad_all(ncomp+nprim, 
-                                            std::array< real, 3 >{{0, 0, 0}});
-         auto state_U_grad = eval_state_gradient(ncomp, ndof, rdof, 
-                         e, U, dBdx );
-         auto state_P_grad = eval_state_gradient(nprim, ndof, rdof, 
-                         e, P, dBdx );
 
-         for (ncomp_t c=0; c<ncomp; ++c){
-           grad_all.push_back(state_U_grad[c]);
-         }
+        if (viscous) {
 
-         for (ncomp_t c=0; c<nprim; ++c){
-           grad_all.push_back(state_P_grad[c]);
-         }         
-   
-         auto fl_vis =  visc_flux(ncomp, mat_blk, state, grad_all) ;
-         for (ncomp_t c=0; c<ncomp; ++c){
-          for (std::size_t i=0; i<3; ++i)
-           fl[c][i] = fl[c][i] + fl_vis[c][i];  
-          }              
-         }
+          auto state_U_grad = eval_state_gradient(ncomp, ndof, rdof,
+                          e, U, dBdx );
+          auto state_P_grad = eval_state_gradient(nprim, ndof, rdof,
+                          e, P, dBdx );
+
+          for (ncomp_t c=0; c<ncomp; ++c){
+            grad_all[multispecies::densityIdx(c)] = state_U_grad[multispeciesIdx::densityIdx()];
+          }
+
+          for (ncomp_t c=ncomp; c<nprim; ++c){
+            grad_all[multispecies::densityIdx(c)] = state_U_grad[multispeciesIdx::densityIdx()];
+          }
+
+          auto fl_vis =  visc_flux(ncomp, mat_blk, state, grad_all) ;
+          for (ncomp_t c=0; c<ncomp; ++c){
+            for (std::size_t i=0; i<3; ++i)
+              fl[c][i] = fl[c][i] - fl_vis[c][i];
+          }
+        }
 
         update_rhs( ncomp, ndof, ndof, wt, e, dBdx, fl, R );
       }

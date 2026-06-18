@@ -260,7 +260,7 @@ Mixture::conductivity(
     tk::real m_mix_cp = m_mix_R + mix_cv;
 
     // Compute mixture viscosity
-    tk::real mix_mu = Mixture::viscosity(mix_temp, mat_blk);
+    tk::real mix_mu = viscosity(mix_temp, mat_blk);
 
     // Compute mixture conductivity
     tk::real k = mix_mu * m_mix_cp / Pr;

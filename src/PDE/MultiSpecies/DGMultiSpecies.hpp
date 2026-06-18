@@ -14,7 +14,6 @@
 #ifndef DGMultiSpecies_h
 #define DGMultiSpecies_h
 
-#include <iostream>
 #include <cmath>
 #include <algorithm>
 #include <unordered_set>
@@ -1051,6 +1050,14 @@ class MultiSpecies {
       return fl;
     }
 
+    //! Evaluate viscous part of physical flux function for this PDE system
+    //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] ugp Numerical solution at the Gauss point at which to
+    //!   evaluate the viscous flux
+    //! \param[in] grad_all Gradients for all conservative and primitive 
+    //!   quantities
+    //! \return Viscous flux vectors for all components in this PDE system
+    //! \note The function signature must follow tk::FluxFn
     static tk::FluxFn::result_type
     visc_flux( ncomp_t ncomp,
                const std::vector< EOS >& mat_blk,
@@ -1123,7 +1130,7 @@ class MultiSpecies {
         fl[idx_2][i] += conduct*dTdx[i];
       }
 
-    return fl;
+      return fl;
     }
 
     //! \brief Boundary state function providing the left and right state of a
