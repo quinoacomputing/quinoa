@@ -142,6 +142,7 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
   tag::t_range,   std::vector< std::vector< tk::real > >,
   tag::dH_ref,    std::vector< tk::real >,
+  tag::mu,        std::vector< tk::real >,
   tag::spec_name, std::vector< std::string >
 > >;
 

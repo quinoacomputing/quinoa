@@ -20,15 +20,18 @@ using inciter::StiffenedGas;
 StiffenedGas::StiffenedGas(
   tk::real gamma,
   tk::real pstiff,
-  tk::real cv ) :
+  tk::real cv,
+  tk::real mu ) :
   m_gamma(gamma),
   m_pstiff(pstiff),
-  m_cv(cv)
+  m_cv(cv),
+  m_mu(mu)
 // *************************************************************************
 //  Constructor
 //! \param[in] gamma Ratio of specific heats
 //! \param[in] pstiff Stiffened pressure term
 //! \param[in] cv Specific heat at constant volume
+//! \param[in] mu Dynamic viscosity
 // *************************************************************************
 { }
 

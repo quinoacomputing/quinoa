@@ -21,7 +21,7 @@ namespace inciter {
 
 void initializeSpeciesEoS( std::vector< EOS >& mat_blk );
 
-//! Time step restriction for multi material cell-centered schemes
+//! Time step restriction for multi-species DG schemes
 tk::real
 timeStepSizeMultiSpecies(
   const std::vector< EOS >& mat_blk,

@@ -142,6 +142,12 @@ class GodunovRomenski {
     //! Return specific heat (no-op)
     tk::real cv( [[maybe_unused]] tk::real temp) const { return 0.0; }
 
+    //! Return specific heat at constant pressure
+    tk::real cp( tk::real ) const { return 0.0; }
+
+    //! Return dynamic viscosity coefficient
+    tk::real viscCoeff() const { return 0.0; }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
