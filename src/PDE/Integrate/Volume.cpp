@@ -17,6 +17,7 @@
 #include "Vector.hpp"
 #include "Quadrature.hpp"
 #include "Reconstruction.hpp"
+#include "MultiSpecies/MultiSpeciesIndexing.hpp"
 
 void
 tk::volInt( std::size_t nmat,
@@ -68,6 +69,7 @@ tk::volInt( std::size_t nmat,
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+  auto nspec = inciter::g_inputdeck.get< tag::multispecies, tag::nspec >();
 
   std::vector< tk::real > state(ncomp+nprim);
   std::vector< std::array< tk::real, 3 > > grad_all(ncomp + nprim,
@@ -144,12 +146,18 @@ tk::volInt( std::size_t nmat,
           auto state_P_grad = eval_state_gradient(nprim, ndof, dof_el,
                          e, P, dBdx );
 
-          for (ncomp_t c=0; c<ncomp; ++c){
-            grad_all[multispecies::densityIdx(c)] = state_U_grad[multispeciesIdx::densityIdx()];
+          for (std::size_t k=0; k<nspec; ++k){
+            grad_all[inciter::multispecies::densityIdx(nspec,k)] = state_U_grad[inciter::multispecies::densityIdx(nspec,k)];
           }
 
-          for (ncomp_t c=ncomp; c<nprim; ++c){
-            grad_all[multispecies::densityIdx(c)] = state_U_grad[multispeciesIdx::densityIdx()];
+          for (std::size_t idir=0; idir<3; ++idir){
+            grad_all[inciter::multispecies::momentumIdx(nspec,idir)] = state_U_grad[inciter::multispecies::momentumIdx(nspec,idir)];
+          }
+
+          grad_all[inciter::multispecies::energyIdx(nspec, 0)] = state_U_grad[inciter::multispecies::energyIdx(nspec, 0)];
+
+          for (std::size_t i=0; i<nprim; ++i){
+            grad_all[ncomp+i] = state_P_grad[i];
           }
 
           auto fl_vis =  visc_flux(ncomp, mat_blk, state, grad_all);
@@ -323,6 +331,7 @@ tk::volInt_constP(
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+  auto nspec = inciter::g_inputdeck.get< tag::multispecies, tag::nspec >();
 
   // Quadrature pointd
   auto ng = tk::NGvol(ndof);
@@ -396,12 +405,18 @@ tk::volInt_constP(
           auto state_P_grad = eval_state_gradient(nprim, ndof, rdof,
                           e, P, dBdx );
 
-          for (ncomp_t c=0; c<ncomp; ++c){
-            grad_all[multispecies::densityIdx(c)] = state_U_grad[multispeciesIdx::densityIdx()];
+          for (std::size_t k=0; k<nspec; ++k){
+            grad_all[inciter::multispecies::densityIdx(nspec,k)] = state_U_grad[inciter::multispecies::densityIdx(nspec,k)];
           }
 
-          for (ncomp_t c=ncomp; c<nprim; ++c){
-            grad_all[multispecies::densityIdx(c)] = state_U_grad[multispeciesIdx::densityIdx()];
+          for (std::size_t idir=0; idir<3; ++idir){
+            grad_all[inciter::multispecies::momentumIdx(nspec,idir)] = state_U_grad[inciter::multispecies::momentumIdx(nspec,idir)];
+          }
+
+          grad_all[inciter::multispecies::energyIdx(nspec, 0)] = state_U_grad[inciter::multispecies::energyIdx(nspec, 0)];
+
+          for (std::size_t i=0; i<nprim; ++i){
+            grad_all[ncomp+i] = state_P_grad[i];
           }
 
           auto fl_vis =  visc_flux(ncomp, mat_blk, state, grad_all) ;
@@ -458,3 +473,4 @@ tk::srcIntFV( const std::vector< inciter::EOS >& mat_blk,
     }
   }
 }
+

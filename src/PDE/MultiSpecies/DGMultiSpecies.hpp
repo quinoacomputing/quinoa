@@ -1052,6 +1052,7 @@ class MultiSpecies {
 
     //! Evaluate viscous part of physical flux function for this PDE system
     //! \param[in] ncomp Number of scalar components in this PDE system
+    //! \param[in] mat_blk EOS material block 
     //! \param[in] ugp Numerical solution at the Gauss point at which to
     //!   evaluate the viscous flux
     //! \param[in] grad_all Gradients for all conservative and primitive 
