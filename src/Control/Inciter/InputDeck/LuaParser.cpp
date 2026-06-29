@@ -1707,6 +1707,12 @@ LuaParser::registerSpecies(
       sol_spc[imat+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
     checkStoreMatProp(sol_spc[imat+1], "pstiff", ntype,
       spci_deck.get< tag::pstiff >());
+
+    // mu (dynamic viscosity) and 'viscous' keyword
+    if (!sol_spc[imat+1]["mu"].valid())
+      sol_spc[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+    else gideck.get< tag::multispecies, tag::viscous >() = true;
+    checkStoreMatProp(sol_spc[imat+1], "mu", ntype, spci_deck.get< tag::mu >());
   }
   // Thermally-perfect gas species
   else if (mati_deck.get< tag::eos >() ==
@@ -1739,7 +1745,7 @@ LuaParser::registerSpecies(
         // Loop over intervals and retrieve coefficients
         for (std::size_t interv = 0; interv < spec.nIntervals(); ++interv) {
           const N9Interval& I = spec.intervalByIndex(interv);
-          for (std::size_t k = 0; k < 9; ++k)
+          for (std::size_t k = 0; k < 8; ++k)
             cp_coeff[ispec][interv][k] = I.a[k];
           t_range[ispec][interv] = I.Tlow;
           if (interv == spec.nIntervals()-1)
@@ -1768,6 +1774,12 @@ LuaParser::registerSpecies(
       checkStoreMatProp(sol_spc[imat+1], "dH_ref", nspec,
         spci_deck.get< tag::dH_ref >());
     }
+
+    // mu (dynamic viscosity) and 'viscous' keyword
+    if (!sol_spc[imat+1]["mu"].valid())
+      sol_spc[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+    else gideck.get< tag::multispecies, tag::viscous >() = true;
+    checkStoreMatProp(sol_spc[imat+1], "mu", ntype, spci_deck.get< tag::mu >());
   }
 }
 

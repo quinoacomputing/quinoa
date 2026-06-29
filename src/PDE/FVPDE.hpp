@@ -203,9 +203,12 @@ class FVPDE {
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
     surfOutput( const inciter::FaceData& fd,
+                const tk::Fields& geoFace,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
                 const tk::Fields& P ) const
-    { return self->surfOutput( fd, U, P ); }
+    { return self->surfOutput( fd, geoFace, inpoel, coord, U, P ); }
 
     //! Public interface to return point history output
     std::vector< std::vector< tk::real > >
@@ -322,6 +325,9 @@ class FVPDE {
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > surfOutput(
         const inciter::FaceData&,
+        const tk::Fields&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
         const tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > histOutput(
@@ -440,9 +446,12 @@ class FVPDE {
       { return data.names(); }
       std::vector< std::vector< tk::real > > surfOutput(
         const inciter::FaceData& fd,
+        const tk::Fields& geoFace,
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
         const tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.surfOutput( fd, U, P ); }
+      { return data.surfOutput( fd, geoFace, inpoel, coord, U, P ); }
       std::vector< std::vector< tk::real > > histOutput(
         const std::vector< HistData >& h,
         const std::vector< std::size_t >& inpoel,

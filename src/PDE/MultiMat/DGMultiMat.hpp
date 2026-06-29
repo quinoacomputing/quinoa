@@ -1342,7 +1342,8 @@ class MultiMat {
             tk::real phi = std::max(0.0, equiv_stress-yield_stress);
             tk::real rel_time = getmatprop< tag::plasticity_reltime >(k);
             if (phi > 0.0) {
-              rel_factor = std::pow((phi/yield_stress),2.0)/rel_time;
+              // Note: if plasticity becomes unstable, raise the power (below) to two
+              rel_factor = std::pow((phi/yield_stress),1.0)/rel_time;
               // Scale rel_factor by alpha
               tk::real a_min = 1.0e-04, a_max = 2.0e-01;
               auto smoothstep = [&](tk::real a){
@@ -1449,13 +1450,16 @@ class MultiMat {
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
     surfOutput( const inciter::FaceData& fd,
+      const tk::Fields& geoFace,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
       const tk::Fields& U,
       const tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto nmat = g_inputdeck.get< eq, tag::nmat >();
 
-      return MultiMatSurfOutput( nmat, rdof, fd, U, P );
+      return MultiMatSurfOutput( nmat, rdof, fd, geoFace, inpoel, coord, U, P );
     }
 
     //! Return time history field output evaluated at time history points
