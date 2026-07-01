@@ -2257,6 +2257,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to select the Richtmyer-Meshkov instability
         problem. In this problem, a shock hits a perturbed material interface.)"});
 
+      keywords.insert({"mixing_layer",
+        "Select the viscous Mixing Layer problem ",
+        R"(This keyword is used to select the viscous Mixing Layer problem.
+        In this problem, one fluid is initialized with two velocity profiles 
+        on either side of an interface.)"});
+
       // -----------------------------------------------------------------------
 
       // Initialize help: fill own keywords
