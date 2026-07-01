@@ -45,9 +45,9 @@ namespace tk {
 namespace nowarn_cblas {
 
 //! Wrapper around cblas_dgemm to locally silence Apple CBLAS deprecation.
-inline void cblas_dgemm( enum CBLAS_ORDER layout,
-                         enum CBLAS_TRANSPOSE transa,
-                         enum CBLAS_TRANSPOSE transb,
+inline void cblas_dgemm( CBLAS_ORDER layout,
+                         CBLAS_TRANSPOSE transa,
+                         CBLAS_TRANSPOSE transb,
                          int m,
                          int n,
                          int k,

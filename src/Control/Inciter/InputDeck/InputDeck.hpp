@@ -125,6 +125,8 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::yield_stress,       std::vector< tk::real >,
   tag::alpha,              std::vector< tk::real >,
   tag::K0,                 std::vector< tk::real >,
+  tag::c0,                 std::vector< tk::real >,
+  tag::s1,                 std::vector< tk::real >,
   tag::cv,                 std::vector< tk::real >,
   tag::k,                  std::vector< tk::real >,
   tag::plasticity_reltime, std::vector< tk::real >
@@ -140,6 +142,7 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
   tag::t_range,   std::vector< std::vector< tk::real > >,
   tag::dH_ref,    std::vector< tk::real >,
+  tag::mu,        std::vector< tk::real >,
   tag::spec_name, std::vector< std::string >
 > >;
 
@@ -1056,7 +1059,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"w_gru", "Grueneisen coefficient",
         R"(This keyword is used to specify the material property, Gruneisen
-        coefficient for the Jones-Wilkins-Lee equation of state.)",
+        coefficient for the Jones-Wilkins-Lee equation of state, and the
+        reference Gruneisen coefficient for the linear Mie-Gruneisen equation
+        of state.)",
         "vector of reals"});
 
       keywords.insert({"A_jwl", "JWL EoS A parameter",
@@ -1115,13 +1120,25 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         which indicates the stress (units: Pa) after which the material begins
         plastic flow.)", "vector of reals"});
 
-      keywords.insert({"alpha", "alpha parameter for Godunov-Romenski EOS",
+      keywords.insert({"alpha", "alpha EOS parameter",
         R"(This keyword is used to specify the alpha parameter for
-        Godunov-Romenski EOS for solids.)", "vector of reals"});
+        Godunov-Romenski EOS for solids, and the density-dependence
+        exponent for the Gruneisen coefficient in the linear Mie-Gruneisen
+        equation of state.)", "vector of reals"});
 
       keywords.insert({"K0", "K0 parameter for Godunov-Romenski EOS",
         R"(This keyword is used to specify the K0 parameter for
         Godunov-Romenski EOS for solids.)", "vector of reals"});
+
+      keywords.insert({"c0", "c0 parameter for Linear Mie-Gruneisen EOS",
+        R"(This keyword is used to specify the c0 parameter in the linear
+        Us-Up Hugoniot relation for the linear Mie-Gruneisen equation of
+        state. Units: m/s)", "vector of reals"});
+
+      keywords.insert({"s1", "s1 parameter for Linear Mie-Gruneisen EOS",
+        R"(This keyword is used to specify the s1 slope parameter in the linear
+        Us-Up Hugoniot relation for the linear Mie-Gruneisen equation of
+        state.)", "vector of reals"});
 
       keywords.insert({"cv", "specific heat at constant volume",
         R"(This keyword is used to specify the material property, specific heat at
@@ -1186,6 +1203,15 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         the internal energy See Plohr, J. N., & Plohr, B. J. (2005). Linearized
         analysis of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
         Mechanics, 537, 55-89 for further details.)"});
+
+      keywords.insert({"linear_miegruneisen",
+        "Select the Linear Mie-Gruneisen equation of state (a.k.a. shock-wave EOS)",
+        R"(This keyword is used to select the linear Mie-Gruneisen equation of
+        state for solids. This EOS uses a linear Us-Up Hugoniot with a
+        density-dependent Gruneisen coefficient for the hydrodynamic
+        contribution, and a small-shear approximation for the
+        elastic contribution. This EOS is described in Shyue, J Comp Phys (2001)
+        171(2), 678-707.)"});
 
       keywords.insert({"wilkins_aluminum",
         "Select Wilkins' equation of state for aluminum",

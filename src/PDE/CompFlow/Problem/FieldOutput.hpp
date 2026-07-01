@@ -68,9 +68,12 @@ namespace compflow {
 //! Compute density for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \return Fluid density ready to be output to file
 static tk::GetVarFn::result_type
-densityOutVar( const tk::Fields& U, std::size_t )
+densityOutVar( const tk::Fields& U,
+               [[maybe_unused]] const tk::Fields& P,
+               std::size_t )
 {
   return U.extract_comp( 0 );
 }
@@ -79,11 +82,14 @@ densityOutVar( const tk::Fields& U, std::size_t )
 //! \note Must follow the signature in tk::GetVarFn
 //! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Velocity component ready to be output to file
 template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
-velocityOutVar( const tk::Fields& U, std::size_t rdof )
+velocityOutVar( const tk::Fields& U,
+                [[maybe_unused]] const tk::Fields& P,
+                std::size_t rdof )
 {
   using tk::operator/=;
   auto r = U.extract_comp( 0 ), u = U.extract_comp( (dir+1)*rdof );
@@ -94,10 +100,13 @@ velocityOutVar( const tk::Fields& U, std::size_t rdof )
 //! Compute volumetric total energy (energy per unit volume) for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Volumetric total energy ready to be output to file
 static tk::GetVarFn::result_type
-volumetricTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
+volumetricTotalEnergyOutVar( const tk::Fields& U,
+                             [[maybe_unused]] const tk::Fields& P,
+                             std::size_t rdof )
 {
   return U.extract_comp( 4*rdof );
 }
@@ -105,10 +114,13 @@ volumetricTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 //! Compute specific total energy (energy per unit mass) for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Specific total energy ready to be output to file
 static tk::GetVarFn::result_type
-specificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
+specificTotalEnergyOutVar( const tk::Fields& U,
+                           [[maybe_unused]] const tk::Fields& P,
+                           std::size_t rdof )
 {
   using tk::operator/=;
   auto r = U.extract_comp( 0 ), e = U.extract_comp( 4*rdof );
@@ -120,11 +132,14 @@ specificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 //! \note Must follow the signature in tk::GetVarFn
 //! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Momentum component ready to be output to file
 template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
-momentumOutVar( const tk::Fields& U, std::size_t rdof )
+momentumOutVar( const tk::Fields& U,
+                [[maybe_unused]] const tk::Fields& P,
+                std::size_t rdof )
 {
   return U.extract_comp( (dir+1)*rdof );
 }
@@ -132,10 +147,13 @@ momentumOutVar( const tk::Fields& U, std::size_t rdof )
 //! Compute pressure for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Pressure ready to be output to file
 static tk::GetVarFn::result_type
-pressureOutVar( const tk::Fields& U, std::size_t rdof )
+pressureOutVar( const tk::Fields& U,
+                [[maybe_unused]] const tk::Fields& P,
+                std::size_t rdof )
 {
   using tk::operator/=;
   auto r = U.extract_comp( 0 ),

@@ -251,6 +251,7 @@ class Transporter : public CBase_Transporter {
       p | m_minstat;
       p | m_maxstat;
       p | m_avgstat;
+      p | m_initL2res;
       p | m_timer;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -318,6 +319,8 @@ class Transporter : public CBase_Transporter {
     std::vector< std::array< tk::real, 3 > > m_maxstat;
     //! Average mesh statistics (one per mesh)
     std::vector< std::array< tk::real, 3 > > m_avgstat;
+    //! Initial L2-norm of residual for relative residual calculation
+    std::vector< tk::real > m_initL2res;
     //! Timer tags
     enum class TimerTag { MESH_READ=0 };
     //! Timers

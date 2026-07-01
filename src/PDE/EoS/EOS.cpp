@@ -30,7 +30,8 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto g = getmatprop< tag::gamma >(k);
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
-    m_material = StiffenedGas(g, ps, c_v);
+    auto mu = getmatprop< tag::mu >(k);
+    m_material = StiffenedGas(g, ps, c_v, mu);
   }
   else if (mattype == ctr::MaterialType::JWL) {
     // query input deck to get jwl parameters
@@ -58,6 +59,18 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto mu = getmatprop< tag::mu >(k);
     m_material = SmallShearSolid(g, ps, c_v, mu);
   }
+  else if (mattype == ctr::MaterialType::LINEARMIEGRUNEISEN) {
+    // query input deck for LinearMieGruneisen parameters
+    auto gamma0 = getmatprop< tag::w_gru >(k);
+    auto alpha = getmatprop< tag::alpha >(k);
+    auto c0 = getmatprop< tag::c0 >(k);
+    auto s1 = getmatprop< tag::s1 >(k);
+    auto c_v = getmatprop< tag::cv >(k);
+    auto mu = getmatprop< tag::mu >(k);
+    auto rho0_gr = getmatprop< tag::rho0_jwl >(k);
+    m_material =
+      LinearMieGruneisen(gamma0, rho0_gr, alpha, c0, s1, c_v, mu);
+  }
   else if (mattype == ctr::MaterialType::WILKINSALUMINUM) {
     // query input deck for Wilkins parameters
     auto g = getmatprop< tag::gamma >(k);
@@ -84,7 +97,8 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto g = getspecprop< tag::gamma >(k);
       auto ps = getspecprop< tag::pstiff >(k);
       auto c_v = getspecprop< tag::cv >(k);
-      m_material = StiffenedGas(g, ps, c_v);
+      auto mu = getspecprop< tag::mu >(k);
+      m_material = StiffenedGas(g, ps, c_v, mu);
     }
     else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
       // query input deck for ThermallyPerfectGas parameters
@@ -95,7 +109,8 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto t_range =
         g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
       auto dH_ref = getspecprop< tag::dH_ref >(k);
-      m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref);
+      auto mu = getspecprop< tag::mu >(k);
+      m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, mu);
     }
     else Throw( "Unknown EOS for species " + std::to_string(k+1) );
   }

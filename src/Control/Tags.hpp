@@ -226,6 +226,7 @@ DEFTAG(matidx);
 DEFTAG(solidx);
 DEFTAG(yield_stress);
 DEFTAG(K0);
+DEFTAG(s1);
 DEFTAG(spec_name);
 DEFTAG(R);
 DEFTAG(cp_coeff);

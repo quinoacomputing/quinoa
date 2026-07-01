@@ -19,6 +19,7 @@
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/JWL.hpp"
 #include "EoS/SmallShearSolid.hpp"
+#include "EoS/LinearMieGruneisen.hpp"
 #include "EoS/WilkinsAluminum.hpp"
 #include "EoS/GodunovRomenski.hpp"
 #include "EoS/ThermallyPerfectGas.hpp"
@@ -39,6 +40,7 @@ class EOS {
     std::variant< StiffenedGas
                 , JWL
                 , SmallShearSolid
+                , LinearMieGruneisen
                 , WilkinsAluminum
                 , GodunovRomenski
                 , ThermallyPerfectGas
@@ -66,6 +68,8 @@ class EOS {
     struct gas_constant {};
     struct internalenergy {};
     struct cv {};
+    struct cp {};
+    struct viscCoeff {};
     //! Call EOS function
     //! \tparam Fn Function tag identifying the function to call
     //! \tparam Args Types of arguments to pass to function
@@ -116,6 +120,12 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, cv > )
             return m.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m.viscCoeff( std::forward< Args >( args )... );
         }, m_material );
     }
 

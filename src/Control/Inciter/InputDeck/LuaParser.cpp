@@ -1484,6 +1484,50 @@ LuaParser::registerMaterials(
     // assign solid
     is_solid = true;
   }
+  // Linear Mie-Gruneisen materials
+  else if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::LINEARMIEGRUNEISEN) {
+    // w_gru
+    checkStoreMatProp(sol_mat[imat+1], "w_gru", ntype,
+      mati_deck.get< tag::w_gru >());
+
+    // rho0_jwl
+    checkStoreMatProp(sol_mat[imat+1], "rho0_jwl", ntype,
+      mati_deck.get< tag::rho0_jwl >());
+
+    // alpha
+    checkStoreMatProp(sol_mat[imat+1], "alpha", ntype,
+      mati_deck.get< tag::alpha >());
+
+    // c0
+    checkStoreMatProp(sol_mat[imat+1], "c0", ntype,
+      mati_deck.get< tag::c0 >());
+
+    // s1
+    checkStoreMatProp(sol_mat[imat+1], "s1", ntype,
+      mati_deck.get< tag::s1 >());
+
+    // mu
+    checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
+      mati_deck.get< tag::mu >());
+
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-05);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
+
+    // yield_stress
+    if (!sol_mat[imat+1]["yield_stress"].valid())
+      sol_mat[imat+1]["yield_stress"] =
+        std::vector< tk::real >(ntype, 300.0e+06);
+    checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
+      mati_deck.get< tag::yield_stress >());
+
+    // assign solid
+    is_solid = true;
+  }
   // Wilkins aluminum materials
   else if (mati_deck.get< tag::eos >() ==
     inciter::ctr::MaterialType::WILKINSALUMINUM) {
@@ -1663,6 +1707,12 @@ LuaParser::registerSpecies(
       sol_spc[imat+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
     checkStoreMatProp(sol_spc[imat+1], "pstiff", ntype,
       spci_deck.get< tag::pstiff >());
+
+    // mu (dynamic viscosity) and 'viscous' keyword
+    if (!sol_spc[imat+1]["mu"].valid())
+      sol_spc[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+    else gideck.get< tag::multispecies, tag::viscous >() = true;
+    checkStoreMatProp(sol_spc[imat+1], "mu", ntype, spci_deck.get< tag::mu >());
   }
   // Thermally-perfect gas species
   else if (mati_deck.get< tag::eos >() ==
@@ -1695,7 +1745,7 @@ LuaParser::registerSpecies(
         // Loop over intervals and retrieve coefficients
         for (std::size_t interv = 0; interv < spec.nIntervals(); ++interv) {
           const N9Interval& I = spec.intervalByIndex(interv);
-          for (std::size_t k = 0; k < 9; ++k)
+          for (std::size_t k = 0; k < 8; ++k)
             cp_coeff[ispec][interv][k] = I.a[k];
           t_range[ispec][interv] = I.Tlow;
           if (interv == spec.nIntervals()-1)
@@ -1724,6 +1774,12 @@ LuaParser::registerSpecies(
       checkStoreMatProp(sol_spc[imat+1], "dH_ref", nspec,
         spci_deck.get< tag::dH_ref >());
     }
+
+    // mu (dynamic viscosity) and 'viscous' keyword
+    if (!sol_spc[imat+1]["mu"].valid())
+      sol_spc[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+    else gideck.get< tag::multispecies, tag::viscous >() = true;
+    checkStoreMatProp(sol_spc[imat+1], "mu", ntype, spci_deck.get< tag::mu >());
   }
 }
 

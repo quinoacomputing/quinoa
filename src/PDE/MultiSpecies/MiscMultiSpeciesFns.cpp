@@ -70,12 +70,15 @@ timeStepSizeMultiSpecies(
 {
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto rdof = g_inputdeck.get< tag::rdof >();
+  auto viscous = g_inputdeck.get< tag::multispecies, tag::viscous >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
   tk::real u, v, w, a, vn, dSV_l, dSV_r;
   std::vector< tk::real > delt(U.nunk(), 0.0);
   std::vector< tk::real > ugp(ncomp, 0.0), pgp(nprim, 0.0);
+  std::vector< tk::real > B(rdof, 0.0);
+  B[0] = 1.0;
 
   // compute maximum characteristic speed at all internal element faces
   for (std::size_t f=0; f<esuf.size()/2; ++f)
@@ -90,14 +93,10 @@ timeStepSizeMultiSpecies(
 
     // left element
 
-    // Compute the basis function for the left element
-    std::vector< tk::real > B_l(rdof, 0.0);
-    B_l[0] = 1.0;
-
     // get conserved quantities
-    eval_state(ncomp, rdof, ndof, el, U, B_l, ugp.data());
+    eval_state(ncomp, rdof, ndof, el, U, B, ugp.data());
     // get primitive quantities
-    eval_state(nprim, rdof, ndof, el, P, B_l, pgp.data());
+    eval_state(nprim, rdof, ndof, el, P, B, pgp.data());
 
     // initialize mixture
     Mixture mix(nspec, ugp, mat_blk);
@@ -118,17 +117,20 @@ timeStepSizeMultiSpecies(
 
     dSV_l = geoFace(f,0) * (std::fabs(vn) + a);
 
+    // Viscous contribution
+    if (viscous) {
+      auto dSV_visc = mix.viscCoeff( mat_blk ) / rhob
+        * geoFace(f,0) * geoFace(f,0) / geoElem(el,0);
+      dSV_l += dSV_visc;
+    }
+
     // right element
     if (er > -1) {
       std::size_t eR = static_cast< std::size_t >( er );
 
-      // Compute the basis function for the right element
-      std::vector< tk::real > B_r(rdof, 0.0);
-      B_r[0] = 1.0;
-
       // get conserved quantities
-      eval_state(ncomp, rdof, ndof, eR, U, B_r, ugp.data());
-      eval_state(nprim, rdof, ndof, eR, P, B_r, pgp.data());
+      eval_state(ncomp, rdof, ndof, eR, U, B, ugp.data());
+      eval_state(nprim, rdof, ndof, eR, P, B, pgp.data());
 
       // initialize mixture
       Mixture mixr(nspec, ugp, mat_blk);
@@ -148,6 +150,13 @@ timeStepSizeMultiSpecies(
         pgp[multispecies::temperatureIdx(nspec,0)], mat_blk );
 
       dSV_r = geoFace(f,0) * (std::fabs(vn) + a);
+
+      // Viscous contribution
+      if (viscous) {
+        auto dSV_visc = mixr.viscCoeff( mat_blk ) / rhob
+          * geoFace(f,0) * geoFace(f,0) / geoElem(eR,0);
+        dSV_r += dSV_visc;
+      }
 
       delt[eR] += std::max( dSV_l, dSV_r );
     } else {
