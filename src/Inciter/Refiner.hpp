@@ -432,6 +432,9 @@ class Refiner : public CBase_Refiner {
     void newVolMesh( const std::unordered_set< std::size_t >& old,
                      const std::unordered_set< std::size_t >& ref );
 
+    //! Update mesh block ids after mesh refinement
+    void updateElemBlockId();
+
     //! Update boundary data structures after mesh refinement
     void newBndMesh( const std::unordered_set< std::size_t >& ref );
 

@@ -215,8 +215,9 @@ Refiner::coarseMesh()
   m_coarseBlkElems.clear();
   for (const auto& [blid, elids] : m_elemblockid) {
     for (auto ie : elids) {
-      m_coarseBlkElems[blid].insert( {{{m_inpoel[ie*4+0], m_inpoel[ie*4+1],
-        m_inpoel[ie*4+2], m_inpoel[ie*4+3]}}} );
+      m_coarseBlkElems[blid].insert(
+        {{{ m_gid[m_inpoel[ie*4+0]], m_gid[m_inpoel[ie*4+1]],
+            m_gid[m_inpoel[ie*4+2]], m_gid[m_inpoel[ie*4+3]] }}} );
     }
   }
 }
@@ -1630,6 +1631,9 @@ Refiner::updateMesh()
           "Size mismatch" );
   tk::remap( m_ginpoel, m_gid );
 
+  // Update element block ids for the refined mesh
+  updateElemBlockId();
+
   // Update boundary face and node information
   newBndMesh( ref );
 
@@ -2000,6 +2004,45 @@ Refiner::boundary()
   //}
 
   return pcFaceTets;
+}
+
+void
+Refiner::updateElemBlockId()
+// *****************************************************************************
+// Update mesh block ids after mesh refinement
+// *****************************************************************************
+{
+  // Clear block memberships from the previous mesh.
+  tk::destroy( m_elemblockid );
+
+  // Match each active refined tet to its coarse ancestor tet.
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+    std::unordered_set< std::size_t > ans;
+    for (std::size_t i=0; i<4; ++i) {
+      auto ai = ancestors( m_inpoel[e*4+i] );
+      ans.insert( begin(ai), end(ai) );
+    }
+
+    Assert( ans.size() == 4,
+      "Incorrect number of ancestors in refined element" );
+
+    // Convert ancestor local node ids to a global-id coarse tet.
+    Tet ct;
+    std::size_t i = 0;
+    for (auto a : ans) ct[i++] = m_gid[a];
+
+    // Assign the refined tet to the block containing its coarse ancestor.
+    auto found = false;
+    for (const auto& [blid,tets] : m_coarseBlkElems) {
+      if (tets.find(ct) != end(tets)) {
+        m_elemblockid[blid].insert( e );
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) Throw( "Cannot determine mesh block id for refined element" );
+  }
 }
 
 void
