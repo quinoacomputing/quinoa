@@ -36,6 +36,20 @@ namespace inciter {
   extern ctr::InputDeck g_inputdeck;
 };
 
+// Forward declaration of device function
+namespace tk {
+  KOKKOS_INLINE_FUNCTION
+  void update_rhs_device( ncomp_t ncomp,
+                  const std::size_t ndof,
+                  const std::size_t ndof_el,
+                  const tk::real wt,
+                  const std::size_t m_nprop,
+                  const std::size_t e,
+                  const Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
+                  const Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
+                  Kokkos::View<real*, memory_space> R);
+}
+
 void tk::volInt( std::size_t nmat,
             real t,
             const std::vector< inciter::EOS >& mat_blk,
@@ -201,7 +215,8 @@ void tk::volInt( std::size_t nmat,
           fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 
             mat_blk, state, g, asig, al, fl, apk);
               
-          update_rhs(ncomp, ndof, dof_el, wt, r_nprop, e, dBdx, fl, R_d_view);  
+          // Call device version explicitly
+          tk::update_rhs_device(ncomp, ndof, dof_el, wt, r_nprop, e, dBdx, fl, R_d_view);  
         }
       }
     });
@@ -265,19 +280,19 @@ void tk::update_rhs( ncomp_t ncomp,
   }
 }
 
-//! Kokkos-enabled version of update_rhs
-KOKKOS_FUNCTION
-void tk::update_rhs( ncomp_t ncomp,
+//! Kokkos device version of update_rhs
+KOKKOS_INLINE_FUNCTION
+void tk::update_rhs_device( ncomp_t ncomp,
                 const std::size_t ndof,
                 const std::size_t ndof_el,
                 const tk::real wt,
                 const std::size_t m_nprop,
                 const std::size_t e,
-                Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
-                Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
+                const Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
+                const Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
                 Kokkos::View<real*, memory_space> R)
 // *****************************************************************************
-//  Update the rhs by adding the flux term integrals (Kokkos version)
+//  Update the rhs by adding the flux term integrals (Kokkos device version)
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for local element
@@ -340,7 +355,7 @@ tk::update_rhs_src(
   for (ncomp_t c=0; c<s.size(); ++c)
   {
     auto mark = c*ndof;
-    R(e, mark) += wt * s[c];
+    R(e, mark)   += wt * s[c];
 
     if ( ndof_el > 1 )
     {
@@ -356,8 +371,7 @@ tk::update_rhs_src(
         R(e, mark+7) += wt * s[c] * B[7];
         R(e, mark+8) += wt * s[c] * B[8];
         R(e, mark+9) += wt * s[c] * B[9];
-      }
-    }
+      }    }
   }
 }
 

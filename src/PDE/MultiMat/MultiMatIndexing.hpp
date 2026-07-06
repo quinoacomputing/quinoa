@@ -247,11 +247,13 @@ KOKKOS_INLINE_FUNCTION std::size_t newSolidsAccFn( std::size_t kmat,
 //!  on the riemannDeriv array.
 //! \details This function is used to get the index of the nonconservative
 //!  terms of the deformation equation.
+/*
 inline std::size_t newSolidsAccFn( std::size_t k,
   std::size_t i, std::size_t j, std::size_t l)
 { const auto& solidx =
     inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
   return 27*(solidx[k]-1)+3*(3*i+j)+l; }
+*/
 
 //! \brief Index for Cauchy stress components, since only the 6 independent
 //!   components are stored.
