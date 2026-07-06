@@ -20,15 +20,18 @@ using inciter::StiffenedGas;
 StiffenedGas::StiffenedGas(
   tk::real gamma,
   tk::real pstiff,
-  tk::real cv ) :
+  tk::real cv,
+  tk::real mu ) :
   m_gamma(gamma),
   m_pstiff(pstiff),
-  m_cv(cv)
+  m_cv(cv),
+  m_mu(mu)
 // *************************************************************************
 //  Constructor
 //! \param[in] gamma Ratio of specific heats
 //! \param[in] pstiff Stiffened pressure term
 //! \param[in] cv Specific heat at constant volume
+//! \param[in] mu Dynamic viscosity
 // *************************************************************************
 { }
 
@@ -105,16 +108,11 @@ StiffenedGas::pressure(
 std::array< std::array< tk::real, 3 >, 3 >
 StiffenedGas::CauchyStress(
   tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
   std::size_t,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
-//! \brief Calculate the Cauchy stress tensor from the material density,
-//!   momentum, and total energy
+//! \brief Calculate the Cauchy stress tensor from the material
+//!   inverse deformation gradient tensor
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k)
 // *************************************************************************
 {
@@ -148,7 +146,8 @@ StiffenedGas::soundspeed(
   auto g = m_gamma;
   auto p_c = m_pstiff;
 
-  auto p_eff = std::max( 1.0e-15, apr+(alpha*p_c) );
+  auto al_eff = std::max( 1.0e-14, alpha );
+  auto p_eff = std::max( 1.0e-15, apr+(al_eff*p_c) );
 
   tk::real a = std::sqrt( g * p_eff / arho );
 

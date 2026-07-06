@@ -21,17 +21,20 @@ ThermallyPerfectGas::ThermallyPerfectGas(
   tk::real R,
   std::vector< std::vector< tk::real > > cp_coeff,
   std::vector< tk::real > t_range,
-  tk::real dH_ref) :
+  tk::real dH_ref,
+  tk::real mu) :
   m_R(R),
   m_cp_coeff(cp_coeff),
   m_t_range(t_range),
-  m_dH_ref(dH_ref)
+  m_dH_ref(dH_ref),
+  m_mu(mu)
 // *************************************************************************
 //  Constructor
 //! \param[in] R gas constant
 //! \param[in] cp_coeff NASA Glenn polynomials coefficients for cp fit
 //! \param[in] t_range temperature range where polynomial coeffs are valid
 //! \param[in] dH_ref reference enthalpy, h(t = 298.15 K) - h(t = 0 K)
+//! \param[in] mu Dynamic viscosity
 // *************************************************************************
 { }
 
@@ -77,16 +80,11 @@ ThermallyPerfectGas::pressure(
 std::array< std::array< tk::real, 3 >, 3 >
 ThermallyPerfectGas::CauchyStress(
   tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
   std::size_t,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
-//! \brief Calculate the Cauchy stress tensor from the material density,
-//!   momentum, and total energy
+//! \brief Calculate the Cauchy stress tensor from the material
+//!   inverse deformation gradient tensor
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k)
 // *************************************************************************
 {
@@ -170,7 +168,7 @@ ThermallyPerfectGas::internalenergy(tk::real temp) const
 // *************************************************************************
 {
   auto R = m_R;
-  tk::real h = calc_h(temp) * R * temp + m_dH_ref;
+  tk::real h = calc_h(temp) * R * temp;
   return h - R * temp;
 }
 
@@ -182,7 +180,16 @@ ThermallyPerfectGas::cv(tk::real temp) const
 //! \return Species specific heat using the thermally perfect gas EoS
 // *************************************************************************
 {
-  auto R = m_R;
-  tk::real cp = calc_cp(temp) * R;
-  return cp - R;
+  return cp(temp) - m_R;
+}
+
+tk::real
+ThermallyPerfectGas::cp(tk::real temp) const
+// *************************************************************************
+//! \brief Calculate species specific heat (constant pressure)
+//! \param[in] temp Temperature
+//! \return Species specific heat using the thermally perfect gas EoS
+// *************************************************************************
+{
+  return calc_cp(temp) * m_R;
 }

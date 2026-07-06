@@ -66,15 +66,10 @@ class JWL {
       tk::real ) const
     { return 0.0; }
 
-    //! \brief Calculate the Cauchy stress tensor from the material density,
-    //!   momentum, and total energy
+    //! \brief Calculate the Cauchy stress tensor from the material
+    //!   inverse deformation gradient tensor
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
       tk::real,
       std::size_t,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
@@ -137,6 +132,12 @@ class JWL {
 
     //! Return specific heat (no-op)
     tk::real cv( [[maybe_unused]] tk::real temp) const { return m_cv; }
+
+    //! Return specific heat at constant pressure
+    tk::real cp( tk::real ) const { return m_cv; }
+
+    //! Return dynamic viscosity coefficient
+    tk::real viscCoeff() const { return 0.0; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

@@ -109,7 +109,7 @@ WilkinsAluminum::pressure(
   tk::real,
   tk::real,
   tk::real alpha,
-  std::size_t imat,
+  std::size_t /*imat*/,
   const std::array< std::array< tk::real, 3 >, 3 >& ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
@@ -123,9 +123,9 @@ WilkinsAluminum::pressure(
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
-//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
-//!   for the single-material system, this argument can be left unspecified
-//!   by the calling code
+// //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
+// //!   for the single-material system, this argument can be left unspecified
+// //!   by the calling code
 // //! \param[in] defgrad Material inverse deformation gradient tensor
 // //!   (g_k). Default is 0, so that for the single-material system,
 // //!   this argument can be left unspecified by the calling code
@@ -139,33 +139,29 @@ WilkinsAluminum::pressure(
                                  + e3*std::pow(rho/rho0,2.0)
                                  - e5*rho/rho0 - e4 );
 
-  // check partial pressure divergence
-  if (!std::isfinite(partpressure)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    Throw("Material-" + std::to_string(imat) +
-      " has nan/inf partial pressure: " + std::to_string(partpressure) +
-      ", material volume fraction: " + std::to_string(alpha));
-  }
+  partpressure = std::max(min_eff_pressure(1e-10, arho, alpha), partpressure);
+
+  //// check partial pressure divergence
+  //if (!std::isfinite(partpressure)) {
+  //  std::cout << "Material-id:      " << imat << std::endl;
+  //  std::cout << "Volume-fraction:  " << alpha << std::endl;
+  //  std::cout << "Partial density:  " << arho << std::endl;
+  //  Throw("Material-" + std::to_string(imat) +
+  //    " has nan/inf partial pressure: " + std::to_string(partpressure) +
+  //    ", material volume fraction: " + std::to_string(alpha));
+  //}
 
   return partpressure;
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
 WilkinsAluminum::CauchyStress(
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
-  tk::real,
   tk::real alpha,
   std::size_t /*imat*/,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
-//! \brief Calculate the elastic Cauchy stress tensor from the material density,
-//!   momentum, total energy, and inverse deformation gradient tensor using the
-//!   WilkinsAluminum equation of state
+//! \brief Calculate the elastic Cauchy stress tensor from the material
+//!   inverse deformation gradient tensor using the WilkinsAluminum EOS
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
@@ -229,13 +225,14 @@ WilkinsAluminum::soundspeed(
   tk::real a = 0.0;
 
   // Hydro contribution
+  auto al_eff = std::max( 1.0e-14, alpha );
   tk::real rho0 = m_rho0;
-  tk::real rho = arho/alpha;
+  tk::real rho = arho/al_eff;
   a += std::max( 1.0e-15, 6*e2*std::pow(rho/rho0,2.0)/rho0
                  + 2*e3*rho/(rho0*rho0) - e5/rho0 );
 
   // Shear contribution
-  a += (4.0/3.0) * m_mu / (arho/alpha);
+  a += (4.0/3.0) * m_mu / (arho/al_eff);
 
   // Compute square root
   a = std::sqrt(a);
@@ -274,7 +271,8 @@ WilkinsAluminum::shearspeed(
   // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
-  tk::real a = std::sqrt(alpha*m_mu/arho);
+  auto al_eff = std::max( 1.0e-14, alpha );
+  tk::real a = std::sqrt(al_eff*m_mu/arho);
 
   // check shear-wave speed divergence
   if (!std::isfinite(a)) {

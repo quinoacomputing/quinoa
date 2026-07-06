@@ -226,7 +226,27 @@ KOKKOS_INLINE_FUNCTION tk::real volfracPRelaxLim()
 //!   vel[l]*g[i][j] computed inside the Riemann flux solver.
 KOKKOS_INLINE_FUNCTION std::size_t newSolidsAccFn( std::size_t kmat,
   std::size_t i, std::size_t j, std::size_t l)
-{ return 3*9*kmat+3*(3*i+j)+l; }
+{
+  return 27*kmat+3*(3*i+j)+l;
+}
+
+//! From develop branch
+//! Todo: Verify this is the same as the inline function above
+//! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
+//!  on the riemannDeriv array.
+//! \param[in] k Index of required material
+//! \param[in] i Index i
+//! \param[in] j Index j
+//! \param[in] l Index l
+//! \return Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
+//!  on the riemannDeriv array.
+//! \details This function is used to get the index of the nonconservative
+//!  terms of the deformation equation.
+inline std::size_t newSolidsAccFn( std::size_t k,
+  std::size_t i, std::size_t j, std::size_t l)
+{ const auto& solidx =
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  return 27*(solidx[k]-1)+3*(3*i+j)+l; }
 
 //! \brief Index for Cauchy stress components, since only the 6 independent
 //!   components are stored.

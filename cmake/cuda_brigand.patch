@@ -1,0 +1,47 @@
+diff --git a/include/brigand/config.hpp b/include/brigand/config.hpp
+index da61b13..3862780 100644
+--- a/include/brigand/config.hpp
++++ b/include/brigand/config.hpp
+@@ -9,24 +9,25 @@
+ 
+ // configuration macros for brigand
+ 
+-#if defined(_MSC_VER) && !defined(__GNUC__) && !defined(__clang__)
+-#define BRIGAND_COMP_MSVC
+-#if _MSC_VER == 1900
+-#define BRIGAND_COMP_MSVC_2015
+-#elif _MSC_VER == 1800
+-#define BRIGAND_COMP_MSVC_2013
+-#endif
+-#elif __INTEL_COMPILER
+-#define BRIGAND_COMP_INTEL
+-#elif __GNUC__
+-#ifndef __clang__
+-#define BRIGAND_COMP_GCC
++#if defined(__CUDACC__)
++  #define BRIGAND_COMP_CUDA
+ #else
+-#define BRIGAND_COMP_CLANG
+-#endif
++  #if defined(_MSC_VER) && !defined(__GNUC__) && !defined(__clang__)
++  #define BRIGAND_COMP_MSVC
++  #if _MSC_VER == 1900
++  #define BRIGAND_COMP_MSVC_2015
++  #elif _MSC_VER == 1800
++  #define BRIGAND_COMP_MSVC_2013
++  #endif
++  #elif __INTEL_COMPILER
++  #define BRIGAND_COMP_INTEL
++  #elif __GNUC__
++  #ifndef __clang__
++  #define BRIGAND_COMP_GCC
++  #else
++  #define BRIGAND_COMP_CLANG
++  #endif
++  #endif
+ #endif
+ 
+-#if defined(__CUDACC__)
+-#define BRIGAND_COMP_CUDA
+-#endif
+ #endif

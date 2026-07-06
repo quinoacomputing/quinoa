@@ -114,10 +114,6 @@ class FVPDE {
       const std::size_t nielem ) const
     { self->initialize( L, inpoel, coord, inbox, elemblkid, unk, t, nielem ); }
 
-    //! Public interface to computing the left-hand side matrix for the diff eq
-    void lhs( const tk::Fields& geoElem, tk::Fields& l ) const
-    { self->lhs( geoElem, l ); }
-
     //! Public interface to updating the primitives for the diff eq
     void updatePrimitives( const tk::Fields& unk,
                            tk::Fields& prim,
@@ -150,12 +146,11 @@ class FVPDE {
                 const inciter::FaceData& fd,
                 const std::map< std::size_t, std::vector< std::size_t > >& esup,
                 const std::vector< std::size_t >& inpoel,
-                const tk::UnsMesh::Coords& coord,
                 const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P ) const
     {
-      self->limit( geoFace, fd, esup, inpoel, coord, srcFlag, U, P );
+      self->limit( geoFace, fd, esup, inpoel, srcFlag, U, P );
     }
 
     //! Public interface to computing the P1 right-hand side vector
@@ -208,9 +203,12 @@ class FVPDE {
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
     surfOutput( const inciter::FaceData& fd,
+                const tk::Fields& geoFace,
+                const std::vector< std::size_t >& inpoel,
+                const tk::UnsMesh::Coords& coord,
                 const tk::Fields& U,
                 const tk::Fields& P ) const
-    { return self->surfOutput( fd, U, P ); }
+    { return self->surfOutput( fd, geoFace, inpoel, coord, U, P ); }
 
     //! Public interface to return point history output
     std::vector< std::vector< tk::real > >
@@ -277,7 +275,6 @@ class FVPDE {
         tk::Fields&,
         tk::real,
         const std::size_t nielem ) const = 0;
-      virtual void lhs( const tk::Fields&, tk::Fields& ) const = 0;
       virtual void updatePrimitives( const tk::Fields&,
                                      tk::Fields&,
                                      std::size_t ) const = 0;
@@ -299,7 +296,6 @@ class FVPDE {
                           const std::map< std::size_t,
                             std::vector< std::size_t > >&,
                           const std::vector< std::size_t >&,
-                          const tk::UnsMesh::Coords&,
                           const std::vector< int >&,
                           tk::Fields&,
                           tk::Fields& ) const = 0;
@@ -329,6 +325,9 @@ class FVPDE {
       virtual std::vector< std::string > names() const = 0;
       virtual std::vector< std::vector< tk::real > > surfOutput(
         const inciter::FaceData&,
+        const tk::Fields&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
         const tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > histOutput(
@@ -376,8 +375,6 @@ class FVPDE {
         const std::size_t nielem )
       const override { data.initialize( L, inpoel, coord, inbox, elemblkid, unk,
         t, nielem ); }
-      void lhs( const tk::Fields& geoElem, tk::Fields& l ) const override
-      { data.lhs( geoElem, l ); }
       void updatePrimitives( const tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem )
@@ -404,12 +401,11 @@ class FVPDE {
                   const std::map< std::size_t, std::vector< std::size_t > >&
                     esup,
                   const std::vector< std::size_t >& inpoel,
-                  const tk::UnsMesh::Coords& coord,
                   const std::vector< int >& srcFlag,
                   tk::Fields& U,
                   tk::Fields& P ) const override
       {
-        data.limit( geoFace, fd, esup, inpoel, coord, srcFlag, U, P );
+        data.limit( geoFace, fd, esup, inpoel, srcFlag, U, P );
       }
       void rhs(
         tk::real t,
@@ -450,9 +446,12 @@ class FVPDE {
       { return data.names(); }
       std::vector< std::vector< tk::real > > surfOutput(
         const inciter::FaceData& fd,
+        const tk::Fields& geoFace,
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
         const tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.surfOutput( fd, U, P ); }
+      { return data.surfOutput( fd, geoFace, inpoel, coord, U, P ); }
       std::vector< std::vector< tk::real > > histOutput(
         const std::vector< HistData >& h,
         const std::vector< std::size_t >& inpoel,

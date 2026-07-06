@@ -42,6 +42,7 @@ volInt( std::size_t nmat,
         const Fields& geoElem,
         const FluxFn& flux,
         const VelFn& vel,
+        const SrcFn& src,
         const Fields& U,
         const Fields& P,
         const std::vector< std::size_t >& ndofel,
@@ -59,6 +60,8 @@ update_rhs( ncomp_t ncomp,
             const std::vector< std::array< tk::real, 3 > >& fl,
             Fields& R );
 
+#ifdef USE_KOKKOS_KERNELS
+//! Kokkos version of update_rhs for volume integrals
 KOKKOS_INLINE_FUNCTION
 void update_rhs( ncomp_t ncomp,
       const std::size_t ndof,
@@ -69,6 +72,58 @@ void update_rhs( ncomp_t ncomp,
       Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
       Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
       Kokkos::View<real*, memory_space> R);
+
+//! Kokkos version of update_rhs_src for source term integrals
+KOKKOS_INLINE_FUNCTION
+void update_rhs_src( 
+      const std::size_t ndof,
+      const std::size_t ndof_el,
+      const tk::real wt,
+      const std::size_t e,
+      const Kokkos::Array<tk::real, NDOF_MAX>& B,
+      const Kokkos::Array<tk::real, NCOMP_MAX>& s,
+      Kokkos::View<real*, memory_space> R );
+#endif
+
+//! Update the rhs by adding the source term integrals
+void
+update_rhs_src( const std::size_t ndof,
+                const std::size_t ndof_el,
+                const tk::real wt,
+                const std::size_t e,
+                const std::vector< tk::real >& B,
+                const std::vector< tk::real >& s,
+                Fields& R );
+
+//! Compute volume integrals for const-order DG (not p-adaptive)
+void
+volInt_constP(
+  std::size_t nmat,
+  real t,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const FluxFn& flux,
+  const VelFn& vel,
+  const SrcFn& src,
+  const Fields& U,
+  const Fields& P,
+  Fields& R,
+  int intsharp=0 );
+
+//! Compute source term integrals for FV
+void
+srcIntFV( const std::vector< inciter::EOS >& mat_blk,
+          real t,
+          const std::size_t nelem,
+          const Fields& geoElem,
+          const SrcFn& src,
+          Fields& R,
+          std::size_t nmat );
 
 } // tk::
 

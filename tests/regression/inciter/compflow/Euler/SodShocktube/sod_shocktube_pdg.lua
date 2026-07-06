@@ -4,6 +4,7 @@ inciter = {
 
   nstep = 20,
   cfl = 0.3,
+  cfl_ramping = false,
   ttyi = 10,       -- TTY output interval
   scheme = "pdg",
   limiter = "vertexbasedp1",
@@ -48,15 +49,7 @@ inciter = {
       "z-velocity",
       "specific_total_energy",
       "pressure"
-    },
-    elemalias = {
-      "density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical",
-      "specific_total_energy_numerical",
-      "pressure_numerical"
-   }
+    }
   }
 
 }

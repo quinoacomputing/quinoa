@@ -41,6 +41,7 @@
   #pragma clang diagnostic ignored "-Wmissing-noreturn"
   #pragma clang diagnostic ignored "-Wdeprecated"
   #pragma clang diagnostic ignored "-Wcovered-switch-default"
+  #pragma clang diagnostic ignored "-Wswitch-default"
   #pragma clang diagnostic ignored "-Woverloaded-virtual"
   #pragma clang diagnostic ignored "-Wswitch-enum"
 #elif defined(STRICT_GNUC)

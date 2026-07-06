@@ -4,6 +4,7 @@ inciter = {
 
   nstep = 10,
   cfl = 0.8,
+  cfl_ramping = false,
   ttyi = 1,  -- TTY output interval
   scheme = "p0p1",
   limiter = "vertexbasedp1",
@@ -82,16 +83,6 @@ inciter = {
       "y-velocity",
       "z-velocity",
       "g_tensor"
-    },
-    elemalias = {
-      "volfrac1",
-      "density",
-      "pressure",
-      "total_energy_density",
-      "x-velocity",
-      "y-velocity",
-      "z-velocity",
-      ""
     }
   }
 

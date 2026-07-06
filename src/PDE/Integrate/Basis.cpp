@@ -24,6 +24,7 @@
 #include "Vector.hpp"
 #include "Mass.hpp"
 #include "Kokkos_Core.hpp"
+#include "Quadrature.hpp"
 
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
@@ -148,14 +149,15 @@ tk::eval_dBdxi( const std::size_t ndof,
   return dBdxi;
 }
 
-std::array< std::vector<tk::real>, 3 >
+void
 tk::eval_dBdx_p1( const std::size_t ndof,
-                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv )
+                  const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+                  std::array< std::vector<tk::real>, 3 >& dBdx )
 // *****************************************************************************
 //  Compute the derivatives of basis functions for DG(P1)
 //! \param[in] ndof Number of degrees of freedom
 //! \param[in] jacInv Array of the inverse of Jacobian
-//! \return Array of the derivatives of basis functions
+//! \param[in,out] Array of the derivatives of basis functions
 // *****************************************************************************
 {
   // The derivatives of the basis functions dB/dx are easily calculated
@@ -165,11 +167,6 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   //        xi = (xi, eta, zeta) are the reference coordinates.
   // The matrix dxi/dx is the inverse of the Jacobian of transformation
   // and the matrix vector product has to be calculated. This follows.
-
-  std::array< std::vector<tk::real>, 3 > dBdx;
-  dBdx[0].resize( ndof, 0 );
-  dBdx[1].resize( ndof, 0 );
-  dBdx[2].resize( ndof, 0 );
 
   auto db2dxi1 = 2.0;
   auto db2dxi2 = 1.0;
@@ -182,6 +179,10 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   auto db4dxi1 = 0.0;
   auto db4dxi2 = 0.0;
   auto db4dxi3 = 4.0;
+
+  for (std::size_t i=0; i<3; i++) dBdx[i][0] = 0.0;
+
+  if (ndof > 1) {
 
   dBdx[0][1] =  db2dxi1 * jacInv[0][0]
               + db2dxi2 * jacInv[1][0]
@@ -218,8 +219,7 @@ tk::eval_dBdx_p1( const std::size_t ndof,
   dBdx[2][3] =  db4dxi1 * jacInv[0][2]
               + db4dxi2 * jacInv[1][2]
               + db4dxi3 * jacInv[2][2];
-
-  return dBdx;
+  }
 }
 
 void
@@ -338,21 +338,20 @@ tk::eval_dBdx_p2( const std::size_t igp,
               + db10dxi3 * jacInv[2][2];
 }
 
-std::vector< tk::real >
+void
 tk::eval_basis( const std::size_t ndof,
                 const tk::real xi,
                 const tk::real eta,
-                const tk::real zeta )
+                const tk::real zeta,
+                std::vector< tk::real >& B )
 // *****************************************************************************
 //  Compute the Dubiner basis functions
 //! \param[in] ndof Number of degrees of freedom
 //! \param[in] xi,eta,zeta Coordinates for quadrature points in reference space
-//! \return Vector of basis functions
+//! \param[in] B Vector of basis functions
 // *****************************************************************************
 {
-  // Array of basis functions
-  std::vector< tk::real > B( ndof, 1.0 );
-
+  B[0] = 1.0;
   if ( ndof > 1 )           // DG(P1)
   {
     B[1] = 2.0 * xi + eta + zeta - 1.0;
@@ -376,17 +375,16 @@ tk::eval_basis( const std::size_t ndof,
       B[9] =  15.0 * zeta * zeta - 10.0 * zeta + 1.0;
     }
   }
-
-  return B;
 }
 
-std::vector< tk::real >
+void
 tk::eval_state ( ncomp_t ncomp,
                  const std::size_t ndof,
                  const std::size_t ndof_el,
                  const std::size_t e,
                  const Fields& U,
-                 const std::vector< tk::real >& B )
+                 const std::vector< tk::real >& B,
+                 tk::real* statePointer )
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -395,7 +393,7 @@ tk::eval_state ( ncomp_t ncomp,
 //! \param[in] e Index for the tetrahedron element
 //! \param[in] U Solution vector at recent time step
 //! \param[in] B Vector of basis functions
-//! \return Vector of state variable for tetrahedron element
+//! \param[in,out] Pointer to first element of state vector to be computed
 // *****************************************************************************
 {
   // This is commented for now because that when p0/p1 adaptive with limiter
@@ -403,26 +401,23 @@ tk::eval_state ( ncomp_t ncomp,
   // leads to a size mismatch in limiter function.
   //Assert( B.size() == ndof_el, "Size mismatch" );
 
-  if (U.empty()) return {};
-
-  // Array of state variable for tetrahedron element
-  std::vector< tk::real > state( ncomp, 0.0 );
+  if (U.empty()) return;
 
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    state[c] = U( e, mark );
+    statePointer[c] = U( e, mark );
 
     if(ndof_el > 1)        // Second order polynomial solution
     {
-      state[c] += U( e, mark+1 ) * B[1]
+      statePointer[c] += U( e, mark+1 ) * B[1]
                 + U( e, mark+2 ) * B[2]
                 + U( e, mark+3 ) * B[3];
     }
 
     if(ndof_el > 4)        // Third order polynomial solution
     {
-      state[c] += U( e, mark+4 ) * B[4]
+      statePointer[c] += U( e, mark+4 ) * B[4]
                 + U( e, mark+5 ) * B[5]
                 + U( e, mark+6 ) * B[6]
                 + U( e, mark+7 ) * B[7]
@@ -430,8 +425,6 @@ tk::eval_state ( ncomp_t ncomp,
                 + U( e, mark+9 ) * B[9];
     }
   }
-
-  return state;
 }
 
 std::vector< std::vector< tk::real > >
@@ -483,7 +476,9 @@ tk::DubinerToTaylor( ncomp_t ncomp,
               tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
   // Compute the derivatives of basis function for DG(P1)
-  auto dBdx = tk::eval_dBdx_p1( ndof, jacInv );
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( ndof, 0 );
+  tk::eval_dBdx_p1( ndof, jacInv, dBdx );
 
   if(ndof > 4) {
     tk::eval_dBdx_p2(0, center, jacInv, dBdx);
@@ -689,7 +684,8 @@ tk::TaylorToDubiner( ncomp_t ncomp,
                   + unk[c][8] * B_taylor[8] + unk[c][9] * B_taylor[9];
     }
 
-    auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+    std::vector< tk::real > B(ndof);
+    tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
 
     for (ncomp_t c=0; c<ncomp; ++c)
     {
@@ -826,16 +822,17 @@ tk::DubinerToTaylorRefEl( ncomp_t ncomp,
   // Gaussian quadrature
   std::vector< std::vector< tk::real > >
     R(ncomp, std::vector<tk::real>(ndof_el, 0.0));
+  std::vector< tk::real > state(ncomp, 0.0);
   for (std::size_t igp=0; igp<ng; ++igp)
   {
     // Dubiner basis functions
-    auto B = eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp],
-                         coordgp[2][igp] );
+    std::vector< tk::real > B(ndof_el);
+    eval_basis( ndof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
     // Taylor basis functions
     auto Bt = eval_TaylorBasisRefEl(ndof_el, coordgp[0][igp], coordgp[1][igp],
       coordgp[2][igp]);
 
-    auto state = tk::eval_state(ncomp, ndof, ndof_el, e, U, B);
+    tk::eval_state(ncomp, ndof, ndof_el, e, U, B, state.data());
 
     for (std::size_t c=0; c<ncomp; ++c) {
       for (std::size_t id=0; id<ndof_el; ++id) {
@@ -873,7 +870,8 @@ tk::TaylorToDubinerRefEl( ncomp_t ncomp,
 {
   auto vol = 1.0/6.0;
 
-  auto M = massMatrixDubiner(ndof, vol);
+  auto M = tk::massMatrixDubiner();
+  for (auto& mi : M) mi *= vol;
 
   // 1. Get rhs for L2-projection
   // Quadrature setup
@@ -892,8 +890,8 @@ tk::TaylorToDubinerRefEl( ncomp_t ncomp,
   for (std::size_t igp=0; igp<ng; ++igp)
   {
     // Dubiner basis functions
-    auto B = eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
-                         coordgp[2][igp] );
+    std::vector< tk::real > B(ndof);
+    eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
     // Taylor basis functions
     auto Bt = eval_TaylorBasisRefEl(ndof, coordgp[0][igp], coordgp[1][igp],
       coordgp[2][igp]);

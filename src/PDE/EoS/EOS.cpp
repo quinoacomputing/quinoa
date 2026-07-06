@@ -19,19 +19,21 @@ using inciter::EOS;
 //! Constructor
 //! \param[in] mattype Material type
 //! \param[in] eq Type of PDE being solved
-//! \param[in] k Material index
+//! \param[in] k Material/species index
 //! \details Based on the input enum we assign the correct material eos
 EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
 {
+  // Multi-material hydrodynamics PDEs
+  if (eq == EqType::multimat) {
   if (mattype == ctr::MaterialType::STIFFENEDGAS) {
     // query input deck to get gamma, p_c, cv
     auto g = getmatprop< tag::gamma >(k);
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
-    m_material = StiffenedGas(g, ps, c_v);
+    auto mu = getmatprop< tag::mu >(k);
+    m_material = StiffenedGas(g, ps, c_v, mu);
   }
   else if (mattype == ctr::MaterialType::JWL) {
-    if (eq == EqType::compflow) Throw("JWL not set up for PDE type");
     // query input deck to get jwl parameters
     auto w = getmatprop< tag::w_gru >(k);
     auto c_v = getmatprop< tag::cv >(k);
@@ -50,8 +52,6 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       B_jwl, R1_jwl, R2_jwl);
   }
   else if (mattype == ctr::MaterialType::SMALLSHEARSOLID) {
-    if (eq == EqType::compflow)
-      Throw("SmallShearSolid not set up for PDE type");
     // query input deck for SmallShearSolid parameters
     auto g = getmatprop< tag::gamma >(k);
     auto ps = getmatprop< tag::pstiff >(k);
@@ -59,9 +59,19 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto mu = getmatprop< tag::mu >(k);
     m_material = SmallShearSolid(g, ps, c_v, mu);
   }
+  else if (mattype == ctr::MaterialType::LINEARMIEGRUNEISEN) {
+    // query input deck for LinearMieGruneisen parameters
+    auto gamma0 = getmatprop< tag::w_gru >(k);
+    auto alpha = getmatprop< tag::alpha >(k);
+    auto c0 = getmatprop< tag::c0 >(k);
+    auto s1 = getmatprop< tag::s1 >(k);
+    auto c_v = getmatprop< tag::cv >(k);
+    auto mu = getmatprop< tag::mu >(k);
+    auto rho0_gr = getmatprop< tag::rho0_jwl >(k);
+    m_material =
+      LinearMieGruneisen(gamma0, rho0_gr, alpha, c0, s1, c_v, mu);
+  }
   else if (mattype == ctr::MaterialType::WILKINSALUMINUM) {
-    if (eq == EqType::compflow)
-      Throw("WilkinsAluminum not set up for PDE type");
     // query input deck for Wilkins parameters
     auto g = getmatprop< tag::gamma >(k);
     auto c_v = getmatprop< tag::cv >(k);
@@ -69,8 +79,6 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     m_material = WilkinsAluminum(g, c_v, mu);
   }
   else if (mattype == ctr::MaterialType::GODUNOVROMENSKI) {
-    if (eq == EqType::compflow)
-      Throw("GodunovRomenski not set up for PDE type");
     // query input deck for Wilkins parameters
     auto g = getmatprop< tag::gamma >(k);
     auto mu = getmatprop< tag::mu >(k);
@@ -79,16 +87,45 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto K0 = getmatprop< tag::K0 >(k);
     m_material = GodunovRomenski(g, mu, rho0_gr, alpha, K0);
   }
-  else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
-    // query input deck for ThermallyPerfectGas parameters
-    auto R = getspecprop< tag::R >(k);
-    // assume only one type of species
-    auto cp_coeff =
-      g_inputdeck.get< tag::species >()[0].get< tag::cp_coeff >()[k];
-    auto t_range =
-      g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
-    auto dH_ref = getspecprop< tag::dH_ref >(k);
-    m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref);
-  }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
+  }
+
+  // Multi-species PDEs
+  else if (eq == EqType::multispecies) {
+    if (mattype == ctr::MaterialType::STIFFENEDGAS) {
+      // query input deck to get gamma, p_c, cv
+      auto g = getspecprop< tag::gamma >(k);
+      auto ps = getspecprop< tag::pstiff >(k);
+      auto c_v = getspecprop< tag::cv >(k);
+      auto mu = getspecprop< tag::mu >(k);
+      m_material = StiffenedGas(g, ps, c_v, mu);
+    }
+    else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
+      // query input deck for ThermallyPerfectGas parameters
+      auto R = getspecprop< tag::R >(k);
+      // assume only one type of species
+      auto cp_coeff =
+        g_inputdeck.get< tag::species >()[0].get< tag::cp_coeff >()[k];
+      auto t_range =
+        g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
+      auto dH_ref = getspecprop< tag::dH_ref >(k);
+      auto mu = getspecprop< tag::mu >(k);
+      m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, mu);
+    }
+    else Throw( "Unknown EOS for species " + std::to_string(k+1) );
+  }
+
+  // Compressible Euler (single material) PDEs
+  else if (eq == EqType::compflow) {
+    if (mattype == ctr::MaterialType::STIFFENEDGAS) {
+      // query input deck to get gamma, p_c, cv
+      auto g = getmatprop< tag::gamma >(k);
+      auto ps = getmatprop< tag::pstiff >(k);
+      auto c_v = getmatprop< tag::cv >(k);
+      m_material = StiffenedGas(g, ps, c_v);
+    }
+    else Throw( "Unknown EOS for material " + std::to_string(k+1) );
+  }
+  else
+    Throw( "Unknown PDE type encountered in EOS ctor" );
 }

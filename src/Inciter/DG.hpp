@@ -78,7 +78,7 @@ class DG : public CBase_DG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit DG( CkMigrateMessage* msg ) : CBase_DG( msg ) {}
+    explicit DG( CkMigrateMessage* msg ) : CBase_DG( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -138,29 +138,6 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& interface,
                  const std::vector< std::size_t >& ndof );
 
-    //! Receive contributions to nodal gradients on chare-boundaries
-    void
-    comnodalExtrema( const std::vector< std::size_t >& gid,
-                     const std::vector< std::vector< tk::real > >& G1,
-                     const std::vector< std::vector< tk::real > >& G2 );
-
-    //! Initialize the vector of nodal extrema
-    void resizeNodalExtremac();
-
-    //! Compute the nodal extrema of ref el derivatives for chare-boundary nodes
-    void evalNodalExtrmRefEl(
-      const std::size_t ncomp,
-      const std::size_t nprim,
-      const std::size_t ndof_NodalExtrm,
-      const std::vector< std::size_t >& bndel,
-      const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& gid,
-      const std::unordered_map< std::size_t, std::size_t >& bid,
-      const tk::Fields& U,
-      const tk::Fields& P,
-      std::vector< std::vector<tk::real> >& uNodalExtrm,
-      std::vector< std::vector<tk::real> >& pNodalExtrm );
-
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
     void comnodeout( const std::vector< std::size_t >& gid,
@@ -204,8 +181,8 @@ class DG : public CBase_DG {
     //! \return Const-ref to current solution
     const tk::Fields& solution() const { return m_u; }
 
-    //! Compute left hand side
-    void lhs();
+    //! Compute left hand side - no-op for DG
+    void lhs() {}
 
     //! Unused in DG
     void resized() {}
@@ -215,6 +192,12 @@ class DG : public CBase_DG {
 
     //! (no-op)
     void advance( tk::real, std::array< tk::real, 6 > ) {}
+
+    //! Initialize the linear solver via the interface BiCG::init()
+    void initializeLinearSystem( tk::real newdt );
+
+    //! Solve the linear system via the interface BiCG::solve()
+    void solveLinearSystem();
 
     //! Compute right hand side and solve system
     void solve( tk::real newdt );
@@ -229,7 +212,6 @@ class DG : public CBase_DG {
     void pup( PUP::er &p ) override {
       p | m_disc;
       p | m_ghosts;
-      p | m_ndof_NodalExtrm;
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
@@ -237,17 +219,11 @@ class DG : public CBase_DG {
       p | m_nrefine;
       p | m_nsmooth;
       p | m_nreco;
-      p | m_nnodalExtrema;
       p | m_u;
       p | m_un;
       p | m_p;
       p | m_geoElem;
-      p | m_lhs;
       p | m_mtInv;
-      p | m_uNodalExtrm;
-      p | m_pNodalExtrm;
-      p | m_uNodalExtrmc;
-      p | m_pNodalExtrmc;
       p | m_rhs;
       p | m_rhsprev;
       p | m_stiffrhs;
@@ -277,6 +253,8 @@ class DG : public CBase_DG {
       p | m_outmesh;
       p | m_boxelems;
       p | m_shockmarker;
+      p | m_dte;
+      p | m_finished;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -289,11 +267,6 @@ class DG : public CBase_DG {
     CProxy_Discretization m_disc;
     //! Distributed Ghosts proxy
     CProxy_Ghosts m_ghosts;
-    //! \brief Degree of freedom for nodal extrema vector. When DGP1 is applied,
-    //!   there is one degree of freedom for cell average variable. When DGP2 is
-    //!   applied, the degree of freedom is 4 which refers to cell average and
-    //!   gradients in three directions
-    std::size_t m_ndof_NodalExtrm;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
     //! \brief Counter signaling that we have received all our solution ghost
@@ -311,9 +284,6 @@ class DG : public CBase_DG {
     std::size_t m_nsmooth;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
-    //! \brief Counter signaling that we have received all our nodal extrema from
-    //!   ghost chare partitions
-    std::size_t m_nnodalExtrema;
     //! Counters signaling how many stiff and non-stiff equations in the system
     std::size_t m_nstiffeq, m_nnonstiffeq;
     //! Vector of unknown/solution average over each mesh element
@@ -324,8 +294,6 @@ class DG : public CBase_DG {
     tk::Fields m_p;
     //! Element geometry
     tk::Fields m_geoElem;
-    //! Left-hand side mass-matrix which is a diagonal matrix
-    tk::Fields m_lhs;
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Vector of previous right-hand side values used in the IMEX-RK scheme
@@ -338,14 +306,6 @@ class DG : public CBase_DG {
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
     //! Inverse of Taylor mass-matrix
     std::vector< std::vector< tk::real > > m_mtInv;
-    //! Vector of nodal extrema for conservative variables
-    std::vector< std::vector<tk::real> > m_uNodalExtrm;
-    //! Vector of nodal extrema for primitive variables
-    std::vector< std::vector<tk::real> > m_pNodalExtrm;
-    //! Buffer for vector of nodal extrema for conservative variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
-    //! Buffer for vector of nodal extrema for primitive variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_npoin;
     //! Diagnostics object
@@ -395,6 +355,10 @@ class DG : public CBase_DG {
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
     //! Shock detection marker for field output
     std::vector< std::size_t > m_shockmarker;
+    //! Time step size for each element (for local time stepping)
+    std::vector< tk::real > m_dte;
+    //! Flag for completed calculation
+    int m_finished;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -414,16 +378,13 @@ class DG : public CBase_DG {
       const std::unordered_map< std::size_t, std::size_t >& addedTets );
 
     //! Add the protective layer for ndof refinement
-    void refine();
+    void p_refine();
 
     //! Smooth the refined ndof distribution
     void smooth();
 
     //! Compute solution reconstructions
     void reco();
-
-    //! Compute nodal extrema at chare-boundary nodes
-    void nodalExtrema();
 
     //! Compute limiter function
     void lim();
@@ -454,6 +415,23 @@ class DG : public CBase_DG {
 
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
+
+    //! Perform the BDF1 update
+    void BDF1_integrate();
+
+    //! Non-linear solver using Broyden's method
+    std::vector< tk::real > nonlinear_broyden(std::size_t e,
+                                              std::vector< tk::real > x,
+                                              bool solver_failed );
+
+    //! Non-linear solver using Newton's method
+    std::vector< tk::real > nonlinear_newton(std::size_t e,
+                                             std::vector< tk::real > x,
+                                             bool solver_failed );
+
+    //! Non-linear function necessary to integrate with IMEX
+    std::vector< tk::real > nonlinear_func(std::size_t e,
+                                           std::vector< tk::real > x);
 };
 
 } // inciter::

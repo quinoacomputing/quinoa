@@ -45,10 +45,7 @@
 
 #include "Problem/UserDefined.hpp"
 #include "Problem/InterfaceAdvection.hpp"
-#include "Problem/SodShocktube.hpp"
-#include "Problem/WaterAirShocktube.hpp"
 #include "Problem/ShockHeBubble.hpp"
-#include "Problem/UnderwaterEx.hpp"
 #include "Problem/ShockDensityWave.hpp"
 #include "Problem/EquilInterfaceAdvect.hpp"
 #include "Problem/RichtmyerMeshkov.hpp"
@@ -59,11 +56,8 @@ namespace inciter {
 //! List of all MultiMat Problem policies (defined in the includes above)
 using MultiMatProblems =
   brigand::list< MultiMatProblemUserDefined
-               , MultiMatProblemSodShocktube
                , MultiMatProblemInterfaceAdvection
-               , MultiMatProblemWaterAirShocktube
                , MultiMatProblemShockHeBubble
-               , MultiMatProblemUnderwaterEx
                , MultiMatProblemShockDensityWave
                , MultiMatProblemEquilInterfaceAdvect
                , MultiMatProblemRichtmyerMeshkov

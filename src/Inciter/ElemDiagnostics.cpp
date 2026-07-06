@@ -81,7 +81,7 @@ ElemDiagnostics::compute( Discretization& d,
   // Query after how many time steps user wants to dump diagnostics
   auto diagfreq = g_inputdeck.get< tag::diagnostics, tag::interval >();
 
-  if ( !((d.It()+1) % diagfreq) || d.finished() ) {  // if remainder, don't compute diagnostics
+  if ( !((d.It()+1) % diagfreq) || d.finished() || d.It() == 1 ) {  // if remainder, don't compute diagnostics
 
     // Query number of degrees of freedom from user's setting
     const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -103,7 +103,10 @@ ElemDiagnostics::compute( Discretization& d,
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
-    auto stream = serialize( d.MeshId(), u.nprop()/rdof, diag );
+    // Indicator if this diag computation is only for initial l2res computation
+    int is_initres(0);
+    if (((d.It()+1) % diagfreq) && !d.finished()) is_initres = 1;
+    auto stream = serialize( d.MeshId(), u.nprop()/rdof, is_initres, diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 
@@ -149,6 +152,7 @@ const
     if (!ndofel.empty()) {
       dofe = ndofel[e];
     }
+    std::vector< tk::real > B(dofe);
     // Number of quadrature points for volume integration
     auto ng = tk::NGdiag(dofe);
 
@@ -176,8 +180,8 @@ const
       auto gp = tk::eval_gp( igp, coordel, coordgp );
 
       // Compute the basis function
-      auto B = tk::eval_basis( dofe, coordgp[0][igp], coordgp[1][igp],
-                               coordgp[2][igp]);
+      tk::eval_basis( dofe, coordgp[0][igp], coordgp[1][igp],
+                      coordgp[2][igp], B );
 
       auto wt = wgp[igp] * geoElem(e, 0);
 

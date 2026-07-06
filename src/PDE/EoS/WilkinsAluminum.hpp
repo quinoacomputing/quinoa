@@ -63,15 +63,9 @@ class WilkinsAluminum {
     { return 0.0; }
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
-    //!   density, momentum, total energy, and inverse deformation gradient
-    //!   tensor using the WilkinsAluminum equation of state
+    //!   inverse deformation gradient tensor using the WilkinsAluminum EOS
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
-      tk::real,
       tk::real alpha,
       std::size_t /*imat*/,
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const;
@@ -135,6 +129,12 @@ class WilkinsAluminum {
 
     //! Return specific heat (no-op)
     tk::real cv( [[maybe_unused]] tk::real temp) const { return m_cv; }
+
+    //! Return specific heat at constant pressure
+    tk::real cp( tk::real ) const { return m_gamma*m_cv; }
+
+    //! Return dynamic viscosity coefficient
+    tk::real viscCoeff() const { return 0.0; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

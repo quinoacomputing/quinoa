@@ -47,7 +47,8 @@ timeStepSizeMultiMat(
   const std::size_t nelem,
   std::size_t nmat,
   const tk::Fields& U,
-  const tk::Fields& P );
+  const tk::Fields& P,
+  std::vector< tk::real >& local_dte );
 
 //! Time step restriction for multi material cell-centered FV scheme
 tk::real

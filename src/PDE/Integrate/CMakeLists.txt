@@ -6,9 +6,8 @@ add_library(Integrate
             Boundary.cpp
             Volume.cpp
             MultiMatTerms.cpp
-            Source.cpp
-            Basis.cpp
-            SolidTerms.cpp)
+            ViscousTerms.cpp
+            Basis.cpp)
 
 target_include_directories(Integrate PUBLIC
                            ${QUINOA_SOURCE_DIR}

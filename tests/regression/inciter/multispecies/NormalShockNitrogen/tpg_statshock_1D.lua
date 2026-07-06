@@ -72,7 +72,6 @@ inciter = {
   field_output = {
     interval = 25,
     elemvar = {
-      "D1", "D2",
       "density",
       "specific_total_energy",
       "x-velocity",

@@ -82,9 +82,10 @@ eval_dBdxi( const std::size_t ndof,
             const std::array< tk::real, 3 >& coordgp );
 
 //! Compute the derivatives of basis function for DG(P1)
-std::array< std::vector<tk::real>, 3 >
+void
 eval_dBdx_p1( const std::size_t ndof,
-              const std::array< std::array< tk::real, 3 >, 3 >& jacInv );
+              const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+              std::array< std::vector<tk::real>, 3 >& dBdx );
 
 //! Kokkos version of eval_dBdx_p1
 KOKKOS_INLINE_FUNCTION void
@@ -283,11 +284,12 @@ void eval_dBdx_p2( const std::size_t igp,
 }
 
 //! Compute the Dubiner basis functions
-std::vector< tk::real >
+void
 eval_basis( const std::size_t ndof,
             const tk::real xi,
             const tk::real eta,
-            const tk::real zeta );
+            const tk::real zeta,
+            std::vector< tk::real >& B );
 
 //! overloaded function for eval_basis for Kokkos 
 KOKKOS_INLINE_FUNCTION 
@@ -333,22 +335,23 @@ void eval_basis( const std::size_t ndof,
 }
 
 //! Compute the state variables for the tetrahedron element
-std::vector< tk::real >
+void
 eval_state ( ncomp_t ncomp,
              const std::size_t ndof,
              const std::size_t ndof_el,
              const std::size_t e,
              const Fields& U,
-             const std::vector< tk::real >& B );
-  
-KOKKOS_INLINE_FUNCTION 
+             const std::vector< tk::real >& B,
+             tk::real* statePointer );
+
+KOKKOS_INLINE_FUNCTION
 void eval_state ( ncomp_t ncomp,
                  const std::size_t ndof,
                  const std::size_t ndof_el,
-                 const std::size_t e, 
+                 const std::size_t e,
                  size_t m_nprop,
                  Kokkos::View<const tk::real*, memory_space> U,
-                 Kokkos::Array<tk::real, 10>& B, 
+                 Kokkos::Array<tk::real, 10>& B,
                  Kokkos::Array<tk::real, 50>& state,
                  const size_t& idx)
 // *****************************************************************************
@@ -361,12 +364,12 @@ void eval_state ( ncomp_t ncomp,
 //! \param[in] B Vector of basis functions
 //! \return Vector of state variable for tetrahedron element
 // *****************************************************************************
-{
+{ 
   // This is commented for now because that when p0/p1 adaptive with limiter
   // applied, the size of basis will be 10. However, ndof_el will be 4 which
   // leads to a size mismatch in limiter function.
   //Assert( B.size() == ndof_el, "Size mismatch" );
-
+  
   // Array of state variable for tetrahedron element
   /*
    const tk::real&
@@ -377,7 +380,7 @@ void eval_state ( ncomp_t ncomp,
       Assert( unknown < m_nunk, "Out-of-bounds access: unknown < number of "
               "unknowns" );
       return m_vec[ unknown*m_nprop + component ];
-      }
+      }     
     */
     
   for (ncomp_t c=0; c<ncomp; ++c)

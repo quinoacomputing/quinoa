@@ -77,7 +77,7 @@ class OversetFE : public CBase_OversetFE {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit OversetFE( CkMigrateMessage* msg ) : CBase_OversetFE( msg ) {}
+    explicit OversetFE( CkMigrateMessage* msg ) : CBase_OversetFE( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -235,6 +235,7 @@ class OversetFE : public CBase_OversetFE {
       p | m_tp;
       p | m_finished;
       p | m_movedmesh;
+      p | m_movedmeshTimeStep;
       p | m_nusermeshblk;
       p | m_nodeblockid;
       p | m_nodeblockidc;
@@ -242,12 +243,17 @@ class OversetFE : public CBase_OversetFE {
       p | m_ixfer;
       p | m_surfForce;
       p | m_surfTorque;
+      p | m_displacement;
+      p | m_displacementn;
+      p | m_rotation;
       p | m_centMass;
       p | m_centMassVel;
-      p | m_angVelMesh;
+      p | m_angMomentum;
       p | m_centMassn;
       p | m_centMassVeln;
-      p | m_angVelMeshn;
+      p | m_angMomentumn;
+      p | m_rotationQ;
+      p | m_rotationQn;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -369,8 +375,10 @@ class OversetFE : public CBase_OversetFE {
     std::vector< tk::real > m_tp;
     //! True in the last time step
     int m_finished;
-    //! True if overset mesh moved
+    //! True if overset mesh moved during this RK-stage
     int m_movedmesh;
+    //! True if overset mesh moved anytime during timestep
+    int m_movedmeshTimeStep;
     //! Number of mesh-blocks with user-defined ICs
     std::size_t m_nusermeshblk;
     //! Local node ids associated with mesh block ids
@@ -387,18 +395,28 @@ class OversetFE : public CBase_OversetFE {
     std::array< tk::real, 3 > m_surfForce;
     //! Surface torque on mesh for rigid body motion
     std::array< tk::real, 3 > m_surfTorque;
+    //! Total displacement of rigid body center of mass
+    std::array< tk::real, 3 > m_displacement;
+    //! Total displacement of rigid body center of mass at time n
+    std::array< tk::real, 3 > m_displacementn;
+    //! Total rotation of rigid body
+    std::array< tk::real, 3 > m_rotation;
     //! Center of mass of rigid body
     std::array< tk::real, 3 > m_centMass;
     //! Velocity of the center of mass of rigid body
     std::array< tk::real, 3 > m_centMassVel;
-    //! Angular velocity of the rigid body
-    tk::real m_angVelMesh;
+    //! Angular momentum of the rigid body
+    std::array< tk::real, 3 > m_angMomentum;
     //! Center of mass of rigid body at time n
     std::array< tk::real, 3 > m_centMassn;
     //! Velocity of the center of mass of rigid body at time n
     std::array< tk::real, 3 > m_centMassVeln;
-    //! Angular velocity of the rigid body at time n
-    tk::real m_angVelMeshn;
+    //! Angular momentum of the rigid body at time n
+    std::array< tk::real, 3 > m_angMomentumn;
+    //! Quaternion representing rotation of the rigid body
+    std::array< tk::real, 4 > m_rotationQ;
+    //! Quaternion representing rotation of the rigid body at time n
+    std::array< tk::real, 4 > m_rotationQn;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -458,6 +476,9 @@ class OversetFE : public CBase_OversetFE {
 
     //! Compute time step size
     void dt();
+
+    //! Compute forces and moments on the overset mesh and perform reduction
+    void getForces( tk::real mindt );
 
     //! Evaluate whether to save checkpoint/restart
     void evalRestart();

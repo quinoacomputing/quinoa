@@ -23,11 +23,13 @@ namespace inciter {
 std::pair< int, std::unique_ptr<char[]> >
 serialize( std::size_t meshid,
            std::size_t ncomp,
+           int is_initres,
            const std::vector< std::vector< tk::real > >& d )
 // *****************************************************************************
 // Serialize std::vectors to raw memory stream
 //! \param[in] meshid Mesh ID
 //! \param[in] ncomp Number of scalar components being solved
+//! \param[in] is_initres Indicator for initial residual calculation
 //! \param[in] d Diagnostics vector of vectors (of eq components)
 //! \return Pair of the length and the raw stream containing the serialized
 //!   vectors
@@ -37,6 +39,7 @@ serialize( std::size_t meshid,
   PUP::sizer sizer;
   sizer | meshid;
   sizer | ncomp;
+  sizer | is_initres;
   sizer | const_cast< std::vector< std::vector< tk::real > >& >( d );
 
   // Create raw character stream to store the serialized vectors
@@ -46,6 +49,7 @@ serialize( std::size_t meshid,
   PUP::toMem packer( flatData.get() );
   packer | meshid;
   packer | ncomp;
+  packer | is_initres;
   packer | const_cast< std::vector< std::vector< tk::real > >& >( d );
 
   // Return size of and raw stream
@@ -63,6 +67,7 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
 // *****************************************************************************
 {
   std::size_t meshid, ncomp;
+  int is_initres;
   std::vector< std::vector< tk::real > > v;
 
   // Create PUP deserializer based on message passed in
@@ -71,19 +76,23 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
   // Deserialize vector from raw stream
   creator | meshid;
   creator | ncomp;
+  creator | is_initres;
   creator | v;
 
   for (int m=1; m<nmsg; ++m) {
     // Unpack vector
     std::size_t mid, nc;
+    int ires;
     std::vector< std::vector< tk::real > > w;
     PUP::fromMem curCreator( msgs[m]->getData() );
     curCreator | mid;
     curCreator | nc;
+    curCreator | ires;
     curCreator | w;
     // Aggregate diagnostics vector
     meshid = mid;
     ncomp = nc;
+    is_initres = ires;
     Assert( v.size() == w.size(),
             "Size mismatch during diagnostics aggregation" );
     Assert( v.size() == inciter::NUMDIAG,
@@ -103,9 +112,12 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
       if (w[LINFERR][i] > v[LINFERR][i]) v[LINFERR][i] = w[LINFERR][i];
     // Sum of the total energy over the entire domain
     v[TOTALSOL][0] += w[TOTALSOL][0];
-    // Copy resultant force vector on mesh boundaries (reduction-sum is expected
-    // to have been done in Discretization-child)
+    // Copy resultant force and torque vector on mesh boundaries (reduction-sum
+    // is expected to have been done in Discretization-child)
     for (std::size_t i=0; i<3; ++i) v[RESFORCE][i] = w[RESFORCE][i];
+    for (std::size_t i=0; i<3; ++i) v[RESTORQUE][i] = w[RESTORQUE][i];
+    for (std::size_t i=0; i<3; ++i) v[DISPLACEMNT][i] = w[DISPLACEMNT][i];
+    for (std::size_t i=0; i<3; ++i) v[ROTATION][i] = w[ROTATION][i];
     // Copy ITER, TIME, DT
     for (std::size_t j=v.size()-3; j<v.size(); ++j)
       for (std::size_t i=0; i<v[j].size(); ++i)
@@ -113,7 +125,7 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
   }
 
   // Serialize concatenated diagnostics vector to raw stream
-  auto stream = serialize( meshid, ncomp, v );
+  auto stream = serialize( meshid, ncomp, is_initres, v );
 
   // Forward serialized diagnostics
   return CkReductionMsg::buildNew( stream.first, stream.second.get() );

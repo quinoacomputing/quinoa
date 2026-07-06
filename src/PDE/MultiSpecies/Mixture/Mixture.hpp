@@ -60,13 +60,22 @@ class Mixture {
     tk::real pressure(tk::real mix_density,
                       tk::real mix_temp) const;
 
+    //! Compute mixture specific heat at constant pressure
+    tk::real Cp(tk::real mix_temp,
+                const std::vector< EOS >& mat_blk) const;
+
+    //! Compute mixture dynamic viscosity coefficient
+    tk::real viscCoeff(const std::vector< EOS >& mat_blk) const;
+
     //! Compute mixture temperature
     tk::real temperature(tk::real mix_density,
                          tk::real u,
                          tk::real v,
                          tk::real w,
                          tk::real rhoE,
-                         const std::vector< EOS >& mat_blk) const;
+                         const std::vector< EOS >& mat_blk,
+                         int& converged,
+                         tk::real T_init=1500) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

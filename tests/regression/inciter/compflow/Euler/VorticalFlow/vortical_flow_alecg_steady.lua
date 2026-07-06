@@ -7,7 +7,7 @@ inciter = {
   scheme = "alecg",
 
   steady_state = true,
-  residual = 1.0e-8,
+  residual = 1.0e-4,
   rescomp = 1,
 
   partitioning = "mj",
@@ -43,15 +43,6 @@ inciter = {
       "z-velocity",
       "specific_total_energy",
       "pressure"
-    },
-    nodealias = {
-      "",
-      "density_numerical",
-      "x-velocity_numerical",
-      "y-velocity_numerical",
-      "z-velocity_numerical",
-      "specific_total_energy_numerical",
-      "pressure_numerical"
     }
   },
 

@@ -157,6 +157,14 @@ Refiner::Refiner( std::size_t meshid,
 
   // Generate boundary data structures for coarse mesh
   coarseMesh();
+  // Array elements must not use the chare_objs table from charm v8.0.1.
+  // Done by setting the chareIdx to -1. When a chare’s destructor is called,
+  // there is special logic intended for destroying singleton chares that needs
+  // to be avoided for chares in chare arrays. This is done with an if statement
+  // that checks the chareIdx, which is -1 for non-singleton chares. If chareIdx
+  // is wrong, it will throw an error.
+  chareIdx = -1;
+
 
   // If initial mesh refinement is configured, start initial mesh refinement.
   // See also tk::grm::check_amr_errors in Control/Inciter/InputDeck/Ggrammar.h.
@@ -1021,13 +1029,11 @@ Refiner::writeMesh( const std::string& basefilename,
     auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
     auto u = lhs;
     if (scheme == ctr::SchemeType::FV) {
-      g_fvpde[m_meshid].lhs( geoElem, lhs );
-      g_fvpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+      g_fvpde[m_meshid].initialize( geoElem, m_inpoel, m_coord, inbox, elemblockid,
         u, t0, m_inpoel.size()/4 );
     }
     else {
-      g_dgpde[m_meshid].lhs( geoElem, lhs );
-      g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+      g_dgpde[m_meshid].initialize( geoElem, m_inpoel, m_coord, inbox, elemblockid,
         u, t0, m_inpoel.size()/4 );
     }
 
@@ -1548,13 +1554,11 @@ Refiner::nodeinit( std::size_t npoin,
     auto lhs = ue;
     auto geoElem = tk::genGeoElemTet( m_inpoel, m_coord );
     if (scheme == ctr::SchemeType::FV) {
-    g_fvpde[m_meshid].lhs( geoElem, lhs );
-    g_fvpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+    g_fvpde[m_meshid].initialize( geoElem, m_inpoel, m_coord, inbox, elemblockid,
       ue, t0, esuel.size()/4 );
     }
     else {
-    g_dgpde[m_meshid].lhs( geoElem, lhs );
-    g_dgpde[m_meshid].initialize( lhs, m_inpoel, m_coord, inbox, elemblockid,
+    g_dgpde[m_meshid].initialize( geoElem, m_inpoel, m_coord, inbox, elemblockid,
       ue, t0, esuel.size()/4 );
     }
 

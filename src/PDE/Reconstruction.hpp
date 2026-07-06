@@ -435,7 +435,7 @@ computeTemperaturesFV(
   tk::Fields& T );
 
 //! Evaluate polynomial solution at quadrature point
-std::vector< tk::real >
+void
 evalPolynomialSol(
   const std::vector< inciter::EOS >& mat_blk,
   int intsharp,
@@ -451,7 +451,8 @@ evalPolynomialSol(
   const std::array< real, 3 >& ref_gp,
   const std::vector< real >& B,
   const Fields& U,
-  const Fields& P);
+  const Fields& P,
+  std::vector< tk::real >& state );
 
 KOKKOS_INLINE_FUNCTION
 void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,

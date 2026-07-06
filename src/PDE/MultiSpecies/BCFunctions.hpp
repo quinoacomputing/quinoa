@@ -133,6 +133,7 @@ namespace inciter {
       for (std::size_t i=0; i<3; ++i) {
         ur[multispecies::momentumIdx(nspec,i)] = rhor * fu[i];
       }
+      ur[multispecies::temperatureIdx(nspec,0)] = ft;
 
     } else if (Ma > -1 && Ma < 0) {  // Subsonic inflow
       // For subsonic inflow, there is 1 outgoing characteristic and 4
@@ -156,7 +157,8 @@ namespace inciter {
       // outgoing characteristics. Therefore, we calculate the ghost cell state
       // by taking pressure from the outside and other quantities from the
       // internal cell.
-      std::vector< tk::real > massfrac_l;
+      std::vector< tk::real > massfrac_l(nspec,
+        1.0/static_cast< tk::real >(nspec));
       for (std::size_t k = 0; k < nspec; k++)
         massfrac_l[k] = ul[multispecies::densityIdx(nspec, k)] / rhol;
       Mixture mixr(nspec, massfrac_l, fp, Tl, mat_blk);
@@ -229,6 +231,67 @@ namespace inciter {
     ur[multispecies::momentumIdx(nspec, 0)] = rho * v1r;
     ur[multispecies::momentumIdx(nspec, 1)] = rho * v2r;
     ur[multispecies::momentumIdx(nspec, 2)] = rho * v3r;
+
+    Assert( ur.size() == ncomp+1, "Incorrect size for appended "
+            "boundary state vector" );
+
+    return {{ std::move(ul), std::move(ur) }};
+  }
+
+  //! \brief Boundary state function providing the left and right state of a
+  //!   face at isothermal boundaries, with remaining variables treated as
+  //!   no slip wall boundaries. 
+  //! \param[in] ncomp Number of scalar components in this PDE system
+  //! \param[in] ul Left (domain-internal) state
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \note The function signature must follow tk::StateFn.
+  static tk::StateFn::result_type
+  isothermal_wall( [[maybe_unused]] ncomp_t ncomp,
+                   const std::vector< EOS >& mat_blk,
+                   const std::vector< tk::real >& ul,
+                   tk::real, tk::real, tk::real, tk::real,
+                   const std::array< tk::real, 3 >& )
+  {
+    auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+    auto tw =
+      g_inputdeck.get< tag::bc >()[0].get< tag::wall_temperature >();
+
+    Assert( ul.size() == ncomp+1, "Incorrect size for appended "
+            "internal state vector" );
+
+    tk::real rho(0.0);
+    for (std::size_t k=0; k<nspec; ++k)
+      rho += ul[multispecies::densityIdx(nspec, k)];
+
+    auto ur = ul;
+
+    // Internal cell velocity components
+    auto v1l = ul[multispecies::momentumIdx(nspec, 0)]/rho;
+    auto v2l = ul[multispecies::momentumIdx(nspec, 1)]/rho;
+    auto v3l = ul[multispecies::momentumIdx(nspec, 2)]/rho;
+    // Ghost state velocity components
+    auto v1r = -v1l;
+    auto v2r = -v2l;
+    auto v3r = -v3l;
+    // Boundary condition
+    ur[multispecies::momentumIdx(nspec, 0)] = rho * v1r;
+    ur[multispecies::momentumIdx(nspec, 1)] = rho * v2r;
+    ur[multispecies::momentumIdx(nspec, 2)] = rho * v3r;
+
+    // Define right side temperature.
+    // We want Tw = (Tl+Tr)/2 => Tr = 2Tw-Tl
+    Mixture mixl(nspec, ul, mat_blk);
+    int iconv(0);
+    tk::real tl = mixl.temperature(rho, v1l, v2l, v3l,
+      ul[multispecies::energyIdx(nspec, 0)], mat_blk, iconv, tw);
+    tk::real tr = 2*tw-tl;
+    // Find energy associated with that temperature
+    Mixture mixr(nspec, ur, mat_blk);
+    ur[multispecies::energyIdx(nspec, 0)] =
+      mixr.totalenergy(rho, v1r, v2r, v3r, tr, mat_blk);
+    ur[multispecies::temperatureIdx(nspec, 0)] = tr;
 
     Assert( ur.size() == ncomp+1, "Incorrect size for appended "
             "boundary state vector" );

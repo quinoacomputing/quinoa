@@ -64,6 +64,9 @@ Ghosts::Ghosts( const CProxy_Discretization& disc,
       g_inputdeck.get< tag::cmd, tag::quiescence >())
     stateProxy.ckLocalBranch()->insert( "Ghosts", thisIndex, CkMyPe(), Disc()->It(),
                                         "Ghosts" );
+
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 void
@@ -799,6 +802,9 @@ Ghosts::adj()
     for ([[maybe_unused]] const auto& g : n.second)
       Assert( m_exptGhost.insert( g.second ).second,
               "Failed to store local tetid as exptected ghost id" );
+
+  // Generate local face IDs wrt surrounding elements
+  m_fd.genLocalFaceId(m_inpoel);
 
   // Callback function from DG/FV after ghost-setup is done
   m_cbAfterDone.send();

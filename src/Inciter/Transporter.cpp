@@ -87,6 +87,7 @@ Transporter::Transporter() :
   m_minstat( m_nchare.size() ),
   m_maxstat( m_nchare.size() ),
   m_avgstat( m_nchare.size() ),
+  m_initL2res(),
   m_timer(),
   m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
@@ -246,7 +247,9 @@ Transporter::info( const InciterPrint& print )
               g_inputdeck.get< tag::operator_reorder >() );
   auto steady = g_inputdeck.get< tag::steady_state >();
   print.item( "Local time stepping", steady );
-  if (steady) {
+  auto implicitts = g_inputdeck.get< tag::implicit_timestepping >();
+  print.item( "Implicit time stepping", implicitts );
+  if (steady || implicitts) {
     print.item( "L2-norm residual convergence criterion",
                 g_inputdeck.get< tag::residual >() );
     print.item( "Convergence criterion component index",
@@ -274,9 +277,11 @@ Transporter::info( const InciterPrint& print )
   if (rbmotion.get< tag::rigid_body_movt >()) {
     const auto& rbdof = rbmotion.get< tag::rigid_body_dof >();
     print.item( "Rigid body motion DOF", rbdof );
-    if (rbdof == 3)
-      print.item( "Rigid body 3-DOF symmetry plane",
-        rbmotion.get< tag::symmetry_plane >() );
+    if (rbdof == 3) {
+      const auto& sym_dir = rbmotion.get< tag::symmetry_plane >();
+      print.item( "Rigid body 3-DOF symmetry plane vector",
+        tk::parameters(sym_dir) );
+    }
   }
 
   // Print out info on settings of selected partial differential equations
@@ -587,6 +592,7 @@ Transporter::createPartitioner()
     m_scheme.emplace_back( g_inputdeck.get< tag::scheme >(),
                            g_inputdeck.get< tag::ale, tag::ale >(),
                            need_linearsolver(),
+                           g_inputdeck.get< tag::implicit_timestepping >(),
                            centering );
 
   ErrChk( !m_input.empty(), "No input mesh" );
@@ -684,7 +690,8 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
     auto print = printer();
 
     // Start timer measuring preparation of the mesh for partitioning
-    const auto& timer = tk::cref_find( m_timer, TimerTag::MESH_READ );
+    const auto itTimer = TimerTag::MESH_READ;
+    const auto& timer = tk::cref_find( m_timer, itTimer );
     print.diag( "Mesh read time: " + std::to_string( timer.dsec() ) + " sec" );
 
     // Print out mesh partitioning configuration
@@ -1165,11 +1172,19 @@ Transporter::diagHeader()
     }
     d.push_back( "mE" );
 
-    // Augment diagnostics variables with resultant force vector on mesh
-    // boundaries that is used for rigid body motion of overset mesh
+    // Augment diagnostics variables with the following:
+    // 1. resultant force vector on mesh boundaries that is used for rigid body
+    //    motion of overset mesh ('Fi')
+    // 2. resultant torque vector on mesh boundaries that is used for rigid body
+    //    motion of overset mesh ('Ti')
+    // 3. total displacement of rigid body center-of-mass ('Di')
+    // 4. total rotation of rigid body ('Ri')
     if ( scheme == ctr::SchemeType::OversetFE )
     {
       for (std::size_t i=0; i<3; ++i) d.push_back( "F" + std::to_string(i+1) );
+      for (std::size_t i=0; i<3; ++i) d.push_back( "T" + std::to_string(i+1) );
+      for (std::size_t i=0; i<3; ++i) d.push_back( "D" + std::to_string(i+1) );
+      for (std::size_t i=0; i<3; ++i) d.push_back( "R" + std::to_string(i+1) );
     }
 
     // Write diagnostics header
@@ -1185,6 +1200,9 @@ Transporter::doneInsertingGhosts(std::size_t meshid)
 //! \param[in] meshid Mesh id
 // *****************************************************************************
 {
+  if (g_inputdeck.get< tag::implicit_timestepping >())
+    m_scheme[meshid].implicitsolver().doneInserting();
+
   m_scheme[meshid].ghosts().doneInserting();
   m_scheme[meshid].ghosts().startCommSetup();
 }
@@ -1422,8 +1440,8 @@ Transporter::solutionTransferred()
 void
 Transporter::collectDtAndForces( CkReductionMsg* advMsg )
 // *****************************************************************************
-// \brief Reduction target that computes minimum timestep across all meshes and
-//    sums up the forces on each mesh
+// \brief Reduction target that sums up the forces on each mesh and computes
+// minimum timestep across all meshes
 //! \param[in] advMsg Reduction msg containing minimum timestep and total
 //!   surface force information
 // *****************************************************************************
@@ -1440,14 +1458,14 @@ Transporter::collectDtAndForces( CkReductionMsg* advMsg )
   #pragma clang diagnostic ignored "-Wcast-align"
 #endif
 
-  tk::real mindt = *(tk::real*)results[0].data;
   std::array< tk::real, 6 > F;
-  F[0] = *(tk::real*)results[1].data;
-  F[1] = *(tk::real*)results[2].data;
-  F[2] = *(tk::real*)results[3].data;
-  F[3] = *(tk::real*)results[4].data;
-  F[4] = *(tk::real*)results[5].data;
-  F[5] = *(tk::real*)results[6].data;
+  F[0] = *(tk::real*)results[0].data;
+  F[1] = *(tk::real*)results[1].data;
+  F[2] = *(tk::real*)results[2].data;
+  F[3] = *(tk::real*)results[3].data;
+  F[4] = *(tk::real*)results[4].data;
+  F[5] = *(tk::real*)results[5].data;
+  tk::real mindt = *(tk::real*)results[6].data;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -1516,12 +1534,14 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 {
   std::size_t meshid, ncomp;
+  int is_initres;
   std::vector< std::vector< tk::real > > d;
 
   // Deserialize diagnostics vector
   PUP::fromMem creator( msg->getData() );
   creator | meshid;
   creator | ncomp;
+  creator | is_initres;
   creator | d;
   delete msg;
 
@@ -1544,7 +1564,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diagnostics, tag::error >();
 
-  decltype(ncomp) n = 0;
+  [[maybe_unused]] decltype(ncomp) n = 0;
   n += ncomp;
   if (error == tk::ctr::ErrorType::L2) {
    // Finish computing the L2 norm of the numerical - analytical solution
@@ -1562,7 +1582,6 @@ Transporter::diagnostics( CkReductionMsg* msg )
   if (scheme == ctr::SchemeType::ALECG || scheme == ctr::SchemeType::OversetFE) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol[meshid] );
-      diag.push_back( l2res[i] );
     }
   }
   else if ( scheme == ctr::SchemeType::FV ||
@@ -1574,27 +1593,47 @@ Transporter::diagnostics( CkReductionMsg* msg )
           ) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] );
-      diag.push_back( l2res[i] );
     }
+  }
+
+  // Store initial residual
+  if (m_initL2res.size() == 0) {
+    m_initL2res.resize(l2res.size());
+    for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+      m_initL2res[i] = l2res[i];
+    }
+  }
+
+  for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+    l2res[i] = l2res[i]/(m_initL2res[i]+1e-12);  // get relative residuals
+    diag.push_back( l2res[i] );
   }
 
   // Append total energy
   diag.push_back( d[TOTALSOL][0] );
 
-  // Append resultant force vector
+  // Append resultant force, torque, displacement, and rotation vector
   if (scheme == ctr::SchemeType::OversetFE) {
     for (std::size_t i=0; i<3; ++i)
       diag.push_back( d[RESFORCE][i] );
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[RESTORQUE][i] );
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[DISPLACEMNT][i] );
+    for (std::size_t i=0; i<3; ++i)
+      diag.push_back( d[ROTATION][i] );
   }
 
   // Append diagnostics file at selected times
-  auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();
-  if (m_nelem.size() > 1) filename += '.' + id;
-  tk::DiagWriter dw( filename,
-    g_inputdeck.get< tag::diagnostics, tag::format >(),
-    g_inputdeck.get< tag::diagnostics, tag::precision >(),
-    std::ios_base::app );
-  dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
+  if (!is_initres) {
+    auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();
+    if (m_nelem.size() > 1) filename += '.' + id;
+    tk::DiagWriter dw( filename,
+      g_inputdeck.get< tag::diagnostics, tag::format >(),
+      g_inputdeck.get< tag::diagnostics, tag::precision >(),
+      std::ios_base::app );
+    dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
+  }
 
   // Continue time step
   m_scheme[meshid].bcast< Scheme::refine >( l2res );

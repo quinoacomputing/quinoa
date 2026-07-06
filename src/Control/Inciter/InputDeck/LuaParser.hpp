@@ -64,7 +64,6 @@ class LuaParser {
     //! Check and store field output variables
     void addOutVar(
       const std::string& varname,
-      const std::string& alias,
       std::vector< char >& depv,
       std::size_t nmat,
       std::size_t nspec,
@@ -74,6 +73,18 @@ class LuaParser {
 
   private:
     const std::string m_filename;             //!< Name of file to parse
+
+    //! Store materials from the material block into the input deck
+    void registerMaterials(
+      std::size_t imat,
+      const sol::table& lua_ideck,
+      ctr::InputDeck& gideck,
+      bool& is_solid );
+
+    //! Store species from the species block into the input deck
+    void registerSpecies( std::size_t imat,
+      const sol::table& lua_ideck,
+      ctr::InputDeck& gideck );
 
     //! Assign parameter to inputdeck entry if specified, else default
     //! \tparam N Type of parameter being read/assigned
@@ -137,6 +148,36 @@ class LuaParser {
       if (sol_vec.valid()) {
         for (std::size_t i=0; i<sol::table(sol_vec).size(); ++i)
           storage.push_back(sol_vec[i+1]);
+      }
+      else
+        storage = dflt;
+    }
+
+    //! \brief Assign vector of vectors parameter to inputdeck entry if
+    //!   specified, else default
+    //! \tparam N Type of parameter vector being read/assigned
+    //! \param[in] table Sol-table which contains said parameter
+    //! \param[in] key Key for said parameter in Sol-table
+    //! \param[in,out] storage Storage space in inputdeck where said parameter
+    //!   is to be stored
+    //! \param[in] dflt Default value of said parameter, if unspecified
+    template< typename N > void
+    storeVecVecIfSpecd(
+      const sol::table table,
+      const std::string key,
+      std::vector< std::vector< N > >& storage,
+      const std::vector< std::vector< N > >& dflt )
+    {
+      auto sol_vecvec = table[key];
+      if (sol_vecvec.valid()) {
+        for (std::size_t i=0; i<sol::table(sol_vecvec).size(); ++i){
+          auto sol_vec = sol_vecvec[i+1];
+          std::vector< N > temp_storage;
+          for (std::size_t j=0; j<sol::table(sol_vec).size(); ++j){
+            temp_storage.push_back(sol_vec[j+1]);
+          }
+          storage.push_back(temp_storage);
+        }
       }
       else
         storage = dflt;

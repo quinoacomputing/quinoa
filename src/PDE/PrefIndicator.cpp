@@ -157,6 +157,9 @@ void non_conformity( std::size_t nunk,
 
   // The array storing the adaptive indicator for each elements
   std::vector< tk::real > Ind(nunk, 0);
+  std::array< std::vector< tk::real >, 2 > state;
+  state[0].resize(ncomp);
+  state[1].resize(ncomp);
 
   // compute error indicator for each face
   for (auto f=Nbfac; f<esuf.size()/2; ++f)
@@ -217,19 +220,20 @@ void non_conformity( std::size_t nunk,
       auto gp = tk::eval_gp( igp, coordfa, coordgp );
 
       //Compute the basis functions
-      auto B_l = tk::eval_basis( ndofel[el],
+      std::vector< tk::real > B_l(ndofel[el]), B_r(ndofel[er]);
+      tk::eval_basis( ndofel[el],
         tk::Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
         tk::Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
-        tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l );
-      auto B_r = tk::eval_basis( ndofel[er],
+        tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l,
+        B_l );
+      tk::eval_basis( ndofel[er],
         tk::Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
         tk::Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
-        tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r );
+        tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r,
+        B_r );
 
-      std::array< std::vector< tk::real >, 2 > state;
-
-      state[0] = tk::eval_state( ncomp, ndof, ndofel[el], el, unk, B_l );
-      state[1] = tk::eval_state( ncomp, ndof, ndofel[er], er, unk, B_r );
+      tk::eval_state( ncomp, ndof, ndofel[el], el, unk, B_l, state[0].data() );
+      tk::eval_state( ncomp, ndof, ndofel[er], er, unk, B_r, state[1].data() );
 
       Assert( unk[0].size() == ncomp, "Size mismatch" );
       Assert( unk[1].size() == ncomp, "Size mismatch" );
@@ -301,14 +305,16 @@ tk::real evalDiscIndicator_CompFlow( std::size_t e,
 
   tk::real dU(0.0), U(0.0), Ind(0.0);
 
+  std::vector< tk::real > B(ndofel), state(ncomp, 0.0);
+
   // Gaussian quadrature
   for (std::size_t igp=0; igp<ng; ++igp)
   {
     // Compute the basis function
-    auto B = tk::eval_basis( ndofel, coordgp[0][igp], coordgp[1][igp],
-                             coordgp[2][igp] );
+    tk::eval_basis( ndofel, coordgp[0][igp], coordgp[1][igp],
+                    coordgp[2][igp], B );
 
-    auto state = tk::eval_state( ncomp, ndof, ndofel, e, unk, B );
+    tk::eval_state( ncomp, ndof, ndofel, e, unk, B, state.data() );
 
     U += wgp[igp] * state[0] * state[0];
 
@@ -370,15 +376,15 @@ tk::real evalDiscIndicator_MultiMat( std::size_t e,
   tk::GaussQuadratureTet( ng, coordgp, wgp );
 
   tk::real dU(0.0), U(0.0), Ind(0.0);
+  std::vector< tk::real > B(ndof), state(ncomp);
 
   // Gaussian quadrature
   for (std::size_t igp=0; igp<ng; ++igp)
   {
     // Compute the basis function
-    auto B = tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp],
-                             coordgp[2][igp] );
+    tk::eval_basis( ndof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
 
-    auto state = tk::eval_state( ncomp, ndof, ndofel, e, unk, B );
+    tk::eval_state( ncomp, ndof, ndofel, e, unk, B, state.data() );
 
     tk::real denom(0.0), numer(0.0);
     for(std::size_t k = 0; k < nmat; k++) {

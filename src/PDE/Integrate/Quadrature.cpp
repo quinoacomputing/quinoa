@@ -14,6 +14,8 @@
 #include "Quadrature.hpp"
 #include "Kokkos_Core.hpp"
 
+#include <string>
+
 void
 tk::GaussQuadratureTet( const std::size_t NG,
                         std::array< std::vector< real >, 3>& coordgp,
@@ -244,6 +246,8 @@ tk::GaussQuadratureTet( const std::size_t NG,
       wgp[13]        = r;
     }
     break;
+
+    default: Throw("Quadrature not supported for number of points = " + std::to_string(NG));
   }
 }
 
@@ -303,6 +307,7 @@ tk::GaussQuadratureTri( const std::size_t NG,
       break;
 
     case 6:
+    {
       const tk::real c1 = 0.816847572980459;
       const tk::real c2 = 0.091576213509771;
       const tk::real c3 = 0.091576213509771;
@@ -336,5 +341,8 @@ tk::GaussQuadratureTri( const std::size_t NG,
       coordgp[1][5] = c4;
       wgp[5]        = w2;
       break;
+    }
+
+    default: Throw("Quadrature not supported for number of points = " + std::to_string(NG));
   }
 }

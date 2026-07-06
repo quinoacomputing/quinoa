@@ -154,13 +154,51 @@ Mixture::pressure(
 }
 
 tk::real
+Mixture::Cp(
+  tk::real mix_temp,
+  const std::vector< EOS >& mat_blk) const
+// *************************************************************************
+//! \brief Calculate mixture specific heat at constant pressure based on the
+//!   mixture composition and species parameters.
+//! \param[in] mix_temp Mixture temperature
+//! \param[in] mat_blk EOS material block
+//! \return Mass-fraction averaged mixture specific heat at constant pressure
+// *************************************************************************
+{
+  tk::real mix_Cp = 0.;
+  for (std::size_t k = 0; k < m_nspec; k++)
+    mix_Cp += m_Ys[k] * mat_blk[k].compute< EOS::cp >(mix_temp);
+
+  return mix_Cp;
+}
+
+tk::real
+Mixture::viscCoeff(
+  const std::vector< EOS >& mat_blk) const
+// *************************************************************************
+//! \brief Calculate mixture dynamic viscosity coefficient based on the mixture
+//!   composition and species parameters.
+//! \param[in] mat_blk EOS material block
+//! \return Mass-fraction averaged mixture dynamic viscosity coefficient
+// *************************************************************************
+{
+  tk::real mix_visc = 0.;
+  for (std::size_t k = 0; k < m_nspec; k++)
+    mix_visc += m_Ys[k] * mat_blk[k].compute< EOS::viscCoeff >();
+
+  return mix_visc;
+}
+
+tk::real
 Mixture::temperature(
   tk::real mix_density,
   tk::real u,
   tk::real v,
   tk::real w,
   tk::real rhoE,
-  const std::vector< EOS >& mat_blk) const
+  const std::vector< EOS >& mat_blk,
+  int& converged,
+  tk::real T_init ) const
 // *************************************************************************
 //! \brief Calculate temperature based on the mixture composition
 //!   and species parameters.
@@ -170,6 +208,8 @@ Mixture::temperature(
 //! \param[in] w Velocity component
 //! \param[in] rhoE Total energy of the mixture
 //! \param[in] mat_blk EOS material block
+//! \param[in,out] converged Indicator of Newton method convergence
+//! \param[in] T_init Initial temperature guess; default is 1500.
 //! \return Mixture pressure
 // *************************************************************************
 {
@@ -177,7 +217,7 @@ Mixture::temperature(
   tk::real e = rhoE / mix_density - 0.5 * (u*u + v*v + w*w);
 
   // Solve for temperature -- Newton's method
-  tk::real temp = 1500; // Starting guess
+  tk::real temp = std::max( 10.0, T_init); // Starting guess
   tk::real tol = std::max(1e-8, 1e-8 * e); // Stopping condition
   tk::real err;
   std::size_t maxiter = 10;
@@ -201,14 +241,15 @@ Mixture::temperature(
 
     // Check stopping conditions
     err = abs(f_T);
-    if (err <= tol) break;
+    if (err <= tol) {
+      converged = 1;
+      break;
+    }
     i++;
     if ( i == maxiter ) {
-      Throw("Mixture Newton's Method for temperature failed to converge after iterations "
-      + std::to_string(i));
+      converged = 0;
     }
   }
 
   return temp;
 }
-
