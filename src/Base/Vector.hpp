@@ -102,6 +102,7 @@ flip( std::array< real, 3 >& v )
 //! \param[out] ry y coordinate of the product vector
 //! \param[out] rz z coordinate of the product vector
 
+#pragma omp declare simd
 KOKKOS_INLINE_FUNCTION void
 cross( real v1x, real v1y, real v1z,
        real v2x, real v2y, real v2z,
@@ -176,10 +177,15 @@ crossdiv( const std::array< real, 3 >& v1,
 //! \param[in] v1 1st vector
 //! \param[in] v2 2nd vector
 //! \return Dot-product
-
 template <typename ArrayType>
 KOKKOS_INLINE_FUNCTION real
 dot(const ArrayType& v1, const ArrayType& v2 )
+{
+  return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+}
+
+inline real
+dot(const std::array<real,3>& v1, const std::array<real,3>& v2)
 {
   return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
@@ -246,9 +252,9 @@ unit( std::array< real, 3 >& v ) noexcept(ndebug)
 //! \param[in] v3y y coordinate of the 3rd vector
 //! \param[in] v3z z coordinate of the 3rd vector
 //! \return Scalar value of the triple product
-
+#pragma omp declare simd
 KOKKOS_INLINE_FUNCTION 
-real triple(real v1x, real v1y, real v1z,
+tk::real triple(real v1x, real v1y, real v1z,
         real v2x, real v2y, real v2z,
         real v3x, real v3y, real v3z )
 {
@@ -459,7 +465,7 @@ determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
 inline std::array< std::array< tk::real, 3 >, 3 >
 inverse( const std::array< std::array< tk::real, 3 >, 3 >& m )
 {
-  tk::real det = m[0][0] * (m[1][1] * m[2][2] - m[2][ 1] * m[1][2]) -
+  tk::real det = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
                  m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
                  m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
 

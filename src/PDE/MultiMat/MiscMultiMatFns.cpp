@@ -492,7 +492,8 @@ timeStepSizeMultiMatFV(
     auto u = pgp[velocityIdx(nmat, 0)];
     auto v = pgp[velocityIdx(nmat, 1)];
     auto w = pgp[velocityIdx(nmat, 2)];
-    auto vmag = std::sqrt(u*u + v*v + w*w); 
+    auto vmag = std::sqrt(tk::dot({u,v,w},{u,v,w}));
+    //auto vmag = std::sqrt(u*u + v*v + w*w); 
 
     // acoustic speed
     tk::real a = 0.0;

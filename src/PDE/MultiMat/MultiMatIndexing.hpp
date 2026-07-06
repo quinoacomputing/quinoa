@@ -209,7 +209,12 @@ KOKKOS_INLINE_FUNCTION std::size_t stressDofIdx( std::size_t nmat, std::size_t k
 { return stressIdx(nmat, ksld, i)*ndof+idof; }
 
 inline bool matExists( tk::real volfrac )
-{ return (volfrac > 1e-10) ? true : false; }
+{
+  return
+    (volfrac > 100.0*g_inputdeck.get< tag::multimat, tag::min_volumefrac >())
+    ? true : false;
+}
+//{ return (volfrac > 1e-10) ? true : false; }
 
 KOKKOS_INLINE_FUNCTION tk::real volfracPRelaxLim()
 { return 1.0e-02; }
