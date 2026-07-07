@@ -189,6 +189,37 @@ Mixture::viscCoeff(
   return mix_visc;
 }
 
+
+tk::real
+Mixture::compute_f(
+  tk::real e,
+  const std::vector< EOS >& mat_blk,
+  tk::real x ) const
+{
+  // get temp from x
+  tk::real temp = std::exp(x);
+  tk::real f = 0.0;
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    f += m_Ys[k] * mat_blk[k].compute< EOS::internalenergy >(temp);
+  }
+  f -= e;
+  return f;
+}
+
+tk::real
+Mixture::compute_fp(
+  const std::vector< EOS >& mat_blk,
+  tk::real x ) const
+{
+  // get temp from x
+  tk::real temp = std::exp(x);
+  tk::real fp = 0.0;
+  for (std::size_t k = 0; k < m_nspec; k++) {
+    fp += m_Ys[k] * mat_blk[k].compute< EOS::cv >(temp);
+  }
+  return fp*temp;
+}
+
 tk::real
 Mixture::temperature(
   tk::real mix_density,
@@ -216,31 +247,68 @@ Mixture::temperature(
   // Compute internal energy
   tk::real e = rhoE / mix_density - 0.5 * (u*u + v*v + w*w);
 
-  // Solve for temperature -- Newton's method
+  // Parameters
   tk::real temp = std::max( 10.0, T_init); // Starting guess
-  tk::real tol = std::max(1e-8, 1e-8 * e); // Stopping condition
+  tk::real tol = std::max(1e-6, 1e-10 * std::abs(e)); // Stopping condition
   tk::real err;
-  std::size_t maxiter = 10;
+  std::size_t maxiter = 100;
   std::size_t i(0);
-  while (i < maxiter) {
-    // Construct f(T) = e(temp) - e
-    tk::real f_T = 0.;
-    for (std::size_t k = 0; k < m_nspec; k++) {
-      f_T += m_Ys[k] * mat_blk[k].compute< EOS::internalenergy >(temp);
-    }
-    f_T -= e;
+  std::array< tk::real, 100 > debug_temp, debug_f;
 
-    // Construct f'(T) = cv(temp)
-    tk::real fp_T = 0.;
-    for (std::size_t k = 0; k < m_nspec; k++) {
-      fp_T += m_Ys[k] * mat_blk[k].compute< EOS::cv >(temp);
+  // Solve for x, with temp = exp(x) using Newton's method.
+  tk::real x = std::log(temp);
+
+  // Compute f
+  tk::real f = compute_f(e, mat_blk, x);
+
+  // Convergence flag
+  converged = 0;
+  if (std::abs(f) <= tol) {
+    converged = 1;
+    return temp;
+  } 
+
+  while (i < maxiter && std::abs(f) > tol) {
+
+    // Compute fp
+    tk::real fp = compute_fp(mat_blk, x);
+
+    bool accepted = false;
+    std::size_t nline = 10;
+    tk::real alpha = 1.0e-00;
+    tk::real x_test = x;
+    tk::real f_test = f;
+    for (std::size_t iline=0; iline<nline; ++iline) {
+      // Compute the step, bound it
+      tk::real step = std::clamp(f/fp, -5.0, 5.0);
+      // Compute new solution
+      x_test = x - alpha * step;
+
+      f_test = compute_f(e, mat_blk, x_test);
+
+      // Check if error decreases with current alpha
+      if (std::abs(f_test) >= std::abs(f))
+        alpha *= 0.5;
+      else {
+        accepted = true;
+        break;
+      }
     }
 
-    // Calculate next guess
-    temp = temp - f_T / fp_T;
+    if (!accepted) {
+      converged = 0;
+      debug_temp[i] = std::exp(x);
+      debug_f[i] = f;
+      break;
+    }
+
+    f = f_test;
+    x = x_test;
+    debug_temp[i] = std::exp(x);
+    debug_f[i] = f;
 
     // Check stopping conditions
-    err = abs(f_T);
+    err = std::abs(f);
     if (err <= tol) {
       converged = 1;
       break;
@@ -248,8 +316,84 @@ Mixture::temperature(
     i++;
     if ( i == maxiter ) {
       converged = 0;
+      break;
     }
   }
-
+  temp = std::exp(x);
+  if (!converged) {
+    temp = std::exp(x);
+    printf("e, rhoE, mix_density = %e, %e, %e\n", e, rhoE, mix_density);
+    printf("u, v, w = %e, %e, %e\n", u, v, w);
+    for (std::size_t j=0; j<i; ++j)
+      printf("T[%lu], f[%lu] = %e, %e\n", j, j, debug_temp[j], debug_f[j]);
+    Throw("Mixture Newton's Method for temperature failed to converge after iterations "
+          + std::to_string(i)  + " with temperature " + std::to_string(temp) +
+          " at final iteration" );
+  }
   return temp;
 }
+
+// tk::real
+// Mixture::temperature(
+//   tk::real mix_density,
+//   tk::real u,
+//   tk::real v,
+//   tk::real w,
+//   tk::real rhoE,
+//   const std::vector< EOS >& mat_blk,
+//   int& converged,
+//   tk::real T_init ) const
+// // *************************************************************************
+// //! \brief Calculate temperature based on the mixture composition
+// //!   and species parameters.
+// //! \param[in] mix_density Mixture density (sum of species density)
+// //! \param[in] u Velocity component
+// //! \param[in] v Velocity component
+// //! \param[in] w Velocity component
+// //! \param[in] rhoE Total energy of the mixture
+// //! \param[in] mat_blk EOS material block
+// //! \param[in,out] converged Indicator of Newton method convergence
+// //! \param[in] T_init Initial temperature guess; default is 1500.
+// //! \return Mixture pressure
+// // *************************************************************************
+// {
+//   // Compute internal energy
+//   tk::real e = rhoE / mix_density - 0.5 * (u*u + v*v + w*w);
+
+//   // Solve for temperature -- Newton's method
+//   tk::real temp = std::max( 10.0, T_init); // Starting guess
+//   tk::real tol = std::max(1e-8, 1e-8 * e); // Stopping condition
+//   tk::real err;
+//   std::size_t maxiter = 10;
+//   std::size_t i(0);
+//   while (i < maxiter) {
+//     // Construct f(T) = e(temp) - e
+//     tk::real f_T = 0.;
+//     for (std::size_t k = 0; k < m_nspec; k++) {
+//       f_T += m_Ys[k] * mat_blk[k].compute< EOS::internalenergy >(temp);
+//     }
+//     f_T -= e;
+
+//     // Construct f'(T) = cv(temp)
+//     tk::real fp_T = 0.;
+//     for (std::size_t k = 0; k < m_nspec; k++) {
+//       fp_T += m_Ys[k] * mat_blk[k].compute< EOS::cv >(temp);
+//     }
+
+//     // Calculate next guess
+//     temp = temp - f_T / fp_T;
+
+//     // Check stopping conditions
+//     err = abs(f_T);
+//     if (err <= tol) {
+//       converged = 1;
+//       break;
+//     }
+//     i++;
+//     if ( i == maxiter ) {
+//       converged = 0;
+//     }
+//   }
+
+//   return temp;
+// }

@@ -27,6 +27,15 @@ class Mixture {
     tk::real m_mix_R;
     std::vector< tk::real > m_Ys;
 
+    tk::real compute_f(
+      tk::real e,
+      const std::vector< EOS >& mat_blk,
+      tk::real x ) const;
+
+    tk::real compute_fp(
+      const std::vector< EOS >& mat_blk,
+      tk::real x ) const;
+
   public:
     //! Constructor based on state vector
     Mixture(const std::size_t nspec,
