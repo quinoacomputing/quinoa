@@ -7,7 +7,6 @@
 #include <cctype>
 #include <cmath>
 #include <stdexcept>
-#include <unordered_map>
 
 constexpr double NASA9_RU = 8.31446261815324; // J/(mol·K)
 
@@ -26,7 +25,6 @@ struct N9Species {
 
   double R() const { return NASA9_RU / Mw; }   // J/(kg·K)
 
-  // Backward-compatible accessors used elsewhere in Quinoa
   const std::vector<N9Interval>& getIntervals() const { return intervals; }
 
   std::size_t nIntervals() const { return intervals.size(); }
@@ -44,9 +42,51 @@ struct N9Species {
       if (T >= I.Tlow && T <= I.Thigh) return I;
     return intervals.back();
   }
+
+  // Dimensionless NASA-9 forms
+  static double Cp_over_R(double T, const N9Interval& I) {
+    const double invT  = 1.0/T;
+    const double invT2 = invT*invT;
+    const double T2 = T*T, T3 = T2*T, T4 = T3*T;
+    const auto& a = I.a;
+    return a[0]*invT2 + a[1]*invT + a[2] + a[3]*T + a[4]*T2 + a[5]*T3 + a[6]*T4;
+  }
+  static double h_over_RT(double T, const N9Interval& I) {
+    const double invT  = 1.0/T;
+    const double invT2 = invT*invT;
+    const double T2 = T*T, T3 = T2*T, T4 = T3*T;
+    const auto& a = I.a;
+    return -a[0]*invT2 + a[1]*std::log(T) + a[2]
+         + 0.5*a[3]*T + (a[4]*T2)/3.0 + (a[5]*T3)/4.0 + (a[6]*T4)/5.0
+         + a[7]*invT;
+  }
+  static double s_over_R(double T, const N9Interval& I) {
+    const double invT  = 1.0/T;
+    const double invT2 = invT*invT;
+    const double T2 = T*T, T3 = T2*T, T4 = T3*T;
+    const auto& a = I.a;
+    return -0.5*a[0]*invT2 - a[1]*invT + a[2]*std::log(T)
+         + a[3]*T + 0.5*a[4]*T2 + (a[5]*T3)/3.0 + (a[6]*T4)/4.0
+         + a[8];
+  }
+
+  // Mass-based properties
+  double Cp(double T) const { // J/(kg·K)
+    const auto& I = interval(T);
+    return Cp_over_R(T,I) * NASA9_RU / Mw;
+  }
+  double h(double T) const {  // J/kg (sensible)
+    const auto& I = interval(T);
+    return h_over_RT(T,I) * NASA9_RU * T / Mw;
+  }
+  double s(double T) const {  // J/(kg·K)
+    const auto& I = interval(T);
+    return s_over_R(T,I) * NASA9_RU / Mw;
+  }
+  double h_ref_298() const { return h(298.15); } // J/kg
 };
 
-// Fixed-width 5×16 field reader (NASA9 style)
+// Fixed-width 5×16 field reader (NASA style)
 inline void n9_collect_fw(const std::string& line, std::vector<double>& out) {
   for (std::size_t f = 0; f < 5; ++f) {
     std::size_t start = f * 16;
@@ -62,7 +102,7 @@ inline void n9_collect_fw(const std::string& line, std::vector<double>& out) {
   }
 }
 
-// Whitespace float reader
+// Whitespace float reader (for comp/header lines)
 inline void n9_collect_ws(const std::string& s, std::vector<double>& out) {
   std::istringstream ss(s);
   std::string tok;
@@ -75,70 +115,29 @@ inline void n9_collect_ws(const std::string& s, std::vector<double>& out) {
   }
 }
 
-// Normalize to exactly 3 intervals
-inline void n9_normalize_to_three_intervals(N9Species& sp) {
-  if (sp.intervals.size() == 3) return;
-  if (sp.intervals.empty()) Throw("No intervals to normalize for " + sp.name);
-
-  if (sp.intervals.size() == 2) {
-    const N9Interval last = sp.intervals.back();
-    const double b = last.Tlow;
-    const double c = last.Thigh;
-    if (!(c > b)) Throw("Invalid bounds for " + sp.name + ": Tlow >= Thigh");
-    const double mid = 0.5*(b + c);
-
-    N9Interval I1 = last; I1.Tlow = b;   I1.Thigh = mid;
-    N9Interval I2 = last; I2.Tlow = mid; I2.Thigh = c;
-
-    sp.intervals.pop_back();
-    sp.intervals.push_back(I1);
-    sp.intervals.push_back(I2);
-    return;
-  }
-
-  if (sp.intervals.size() == 1) {
-    const N9Interval only = sp.intervals.front();
-    const double a = only.Tlow;
-    const double b = only.Thigh;
-    if (!(b > a)) Throw("Invalid bounds for " + sp.name + ": Tlow >= Thigh");
-
-    const double d  = (b - a) / 3.0;
-    const double t1 = a + d;
-    const double t2 = a + 2.0*d;
-
-    N9Interval I0 = only; I0.Tlow = a;  I0.Thigh = t1;
-    N9Interval I1 = only; I1.Tlow = t1; I1.Thigh = t2;
-    N9Interval I2 = only; I2.Tlow = t2; I2.Thigh = b;
-
-    sp.intervals.clear();
-    sp.intervals.push_back(I0);
-    sp.intervals.push_back(I1);
-    sp.intervals.push_back(I2);
-    return;
-  }
-
-  Throw("Unsupported number of intervals for " + sp.name + ": " +
-        std::to_string(sp.intervals.size()));
-}
-
-// NASA9 reader (now supports 1–3 intervals, normalized to 3)
+// Read ONLY ONE SPECIES block from nasa9.dat
 inline N9Species read_nasa9_species(const std::string& file,
-                                   const std::string& targetName)
+                                    const std::string& targetName)
 {
   std::ifstream in(file);
-  if (!in) Throw("Cannot open nasa9 file: " + file);
+  if (!in)
+    Throw("Cannot open nasa9 file: " + file);
 
   std::string line;
   while (std::getline(in, line)) {
+    // strip leading spaces
     std::string nameLine = line;
     auto p1 = nameLine.find_first_not_of(" \t\r\n");
     if (p1 == std::string::npos) continue;
-
+    // species name is first token
     std::istringstream ns(nameLine.substr(p1));
     std::string spName;
     ns >> spName;
-    if (spName != targetName) continue;
+    if (spName != targetName) continue; // not the one we want
 
+    // ---- Found the species header ----
+
+    // comp/meta line
     std::string comp;
     if (!std::getline(in, comp))
       Throw("EOF after header for " + targetName);
@@ -158,13 +157,15 @@ inline N9Species read_nasa9_species(const std::string& file,
     sp.Hf298_mol   = Hf298;
     sp.Hf298_mass  = Hf298 / Mw;
 
+    // Retrieve number of temperature intervals
     const std::size_t nIntervals = static_cast<std::size_t>(std::lround(nums[0]));
-    if (nIntervals < 1 || nIntervals > 3)
-      Throw("Only species with 1, 2, or 3 temperature intervals are supported. " +
-            targetName + " has " + std::to_string(nIntervals));
+    if (nIntervals != 3)
+      Throw("Only species with 3 temperature intervals are supported. " + targetName + " has " + std::to_string(nIntervals));
 
+    // 3 intervals: header + 2 coeff lines each
     for (std::size_t iv = 0; iv < nIntervals; ++iv) {
       std::string hdr;
+      // skip comments/blank lines between blocks
       while (true) {
         if (!std::getline(in, hdr))
           Throw("EOF in header for " + targetName);
@@ -174,13 +175,16 @@ inline N9Species read_nasa9_species(const std::string& file,
         break;
       }
 
+      std::string thdr = hdr;
+      // parse Tmin Tmax from header
       std::vector<double> hnums;
-      n9_collect_ws(hdr, hnums);
+      n9_collect_ws(thdr, hnums);
       if (hnums.size() < 2)
         Throw("Bad interval header for " + targetName);
       double Tmin = hnums[0];
       double Tmax = hnums[1];
 
+      // coeff lines
       std::string c1, c2;
       if (!std::getline(in, c1) || !std::getline(in, c2))
         Throw("EOF reading coeffs for " + targetName);
@@ -189,31 +193,18 @@ inline N9Species read_nasa9_species(const std::string& file,
       coeffs.reserve(10);
       n9_collect_fw(c1, coeffs);
       n9_collect_fw(c2, coeffs);
-      if (coeffs.size() != 9 && coeffs.size() != 10)
-        Throw("Expected 9 or 10 coeffs for " + targetName +
-              ", got " + std::to_string(coeffs.size()));
+      if (coeffs.size() < 9)
+        Throw("Fewer than 9 coeffs for " + targetName);
 
       N9Interval I;
       I.Tlow  = Tmin;
       I.Thigh = Tmax;
-
-      // Mutation++/NASA9 files may appear in two layouts:
-      //   9 coeffs:  a0 ... a6, a7(H), a8(S)
-      //  10 coeffs: a0 ... a6, dummy, a7(H), a8(S)
-      // The dummy field is not a NASA9 thermodynamic coefficient.
-      for (std::size_t k = 0; k < 7; ++k) I.a[k] = coeffs[k];
-      if (coeffs.size() == 10) {
-        I.a[7] = coeffs[8];
-        I.a[8] = coeffs[9];
-      } else {
-        I.a[7] = coeffs[7];
-        I.a[8] = coeffs[8];
-      }
+      for (std::size_t k = 0; k < 9; ++k)
+        I.a[k] = coeffs[k];
 
       sp.intervals.push_back(I);
     }
 
-    n9_normalize_to_three_intervals(sp);
     return sp;
   }
 

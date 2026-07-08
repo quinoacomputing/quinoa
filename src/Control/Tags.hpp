@@ -226,13 +226,16 @@ DEFTAG(matidx);
 DEFTAG(solidx);
 DEFTAG(yield_stress);
 DEFTAG(K0);
-DEFTAG(s1);
 DEFTAG(spec_name);
 DEFTAG(R);
 DEFTAG(cp_coeff);
 DEFTAG(t_range);
 DEFTAG(dH_ref);
 DEFTAG(plasticity_reltime);
+DEFTAG(temp_ref);
+DEFTAG(mu_ref);
+DEFTAG(C);
+DEFTAG(Sutherland);
 
 DEFTAG(field_output);
 DEFTAG(interval);
