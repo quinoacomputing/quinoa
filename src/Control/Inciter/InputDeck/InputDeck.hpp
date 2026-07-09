@@ -856,7 +856,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "Select the Low Diffusion Flux Splitting Scheme (LDFSS)",
         R"(This keyword is used to select the LDFSS flux
         function used for discontinuous Galerkin (DG) spatial discretization
-        used in inciter. It is only set up for for multi-material hydro, and
+        used in inciter. It is only set up for for multi-species PDEs, and
         not selectable for anything else.)"});
 
       keywords.insert({"lowspeed_kp",
