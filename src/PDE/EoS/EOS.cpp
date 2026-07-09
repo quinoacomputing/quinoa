@@ -97,7 +97,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto g = getspecprop< tag::gamma >(k);
       auto ps = getspecprop< tag::pstiff >(k);
       auto c_v = getspecprop< tag::cv >(k);
-      auto mu = getspecprop< tag::mu >(k);
+      auto mu = getmatprop< tag::mu >(k);
       m_material = StiffenedGas(g, ps, c_v, mu);
     }
     else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {

@@ -24,6 +24,7 @@ namespace ctr {
 enum class MaterialType : uint8_t { STIFFENEDGAS
                                   , JWL
                                   , SMALLSHEARSOLID
+                                  , LINEARMIEGRUNEISEN
                                   , WILKINSALUMINUM
                                   , GODUNOVROMENSKI
                                   , THERMALLYPERFECTGAS
@@ -47,6 +48,7 @@ class Material : public tk::Toggle< MaterialType > {
         { { MaterialType::STIFFENEDGAS, "stiffenedgas" }
         , { MaterialType::JWL, "jwl" }
         , { MaterialType::SMALLSHEARSOLID, "smallshearsolid" }
+        , { MaterialType::LINEARMIEGRUNEISEN, "linear_miegruneisen" }
         , { MaterialType::WILKINSALUMINUM, "wilkins_aluminum" }
         , { MaterialType::GODUNOVROMENSKI, "godunovromenski" }
         , { MaterialType::THERMALLYPERFECTGAS, "thermallyperfectgas" }
@@ -55,6 +57,7 @@ class Material : public tk::Toggle< MaterialType > {
         { { "stiffenedgas", MaterialType::STIFFENEDGAS }
         , { "jwl", MaterialType::JWL }
         , { "smallshearsolid", MaterialType::SMALLSHEARSOLID }
+        , { "linear_miegruneisen", MaterialType::LINEARMIEGRUNEISEN }
         , { "wilkins_aluminum", MaterialType::WILKINSALUMINUM }
         , { "godunovromenski", MaterialType::GODUNOVROMENSKI }
         , { "thermallyperfectgas", MaterialType::THERMALLYPERFECTGAS }

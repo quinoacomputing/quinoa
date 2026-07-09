@@ -371,12 +371,6 @@ LuaParser::storeInputDeck(
     storeIfSpecd< std::size_t >(
       lua_ideck["multispecies"], "nspec",
       gideck.get< tag::multispecies, tag::nspec >(), 1);
-    storeIfSpecd< bool >(lua_ideck["multispecies"], "viscous",
-      gideck.get< tag::multispecies, tag::viscous >(),
-      false);
-    storeIfSpecd< bool >(lua_ideck["multispecies"], "Sutherland",
-      gideck.get< tag::multispecies, tag::Sutherland >(),
-      false);
     storeOptIfSpecd< inciter::ctr::ProblemType, inciter::ctr::Problem >(
       lua_ideck["multispecies"], "problem",
       gideck.get< tag::multispecies, tag::problem >(),
@@ -492,7 +486,7 @@ LuaParser::storeInputDeck(
       Throw("The total number of materials in all the material blocks (" +
         std::to_string(tmat) +
         ") is not equal to the number of materials specified 'nmat'.");
-    
+
     // Contiguous and 1-based material ids
     if (*matidset.begin() != 1)
       Throw("Material ids specified in material blocks not one-based. "
@@ -1422,9 +1416,9 @@ LuaParser::registerMaterials(
 //! \param[in,out] is_solid Solid material marker
 // *****************************************************************************
 {
-
   if (gideck.get< tag::pde >() != inciter::ctr::PDEType::MULTIMAT &&
       gideck.get< tag::pde >() != inciter::ctr::PDEType::COMPFLOW) return;
+
   // set source data from sol
   sol::table sol_mat = lua_ideck["material"];
 
@@ -1468,6 +1462,50 @@ LuaParser::registerMaterials(
       sol_mat[imat+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
     checkStoreMatProp(sol_mat[imat+1], "pstiff", ntype,
       mati_deck.get< tag::pstiff >());
+
+    // mu
+    checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
+      mati_deck.get< tag::mu >());
+
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-05);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
+
+    // yield_stress
+    if (!sol_mat[imat+1]["yield_stress"].valid())
+      sol_mat[imat+1]["yield_stress"] =
+        std::vector< tk::real >(ntype, 300.0e+06);
+    checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
+      mati_deck.get< tag::yield_stress >());
+
+    // assign solid
+    is_solid = true;
+  }
+  // Linear Mie-Gruneisen materials
+  else if (mati_deck.get< tag::eos >() ==
+    inciter::ctr::MaterialType::LINEARMIEGRUNEISEN) {
+    // w_gru
+    checkStoreMatProp(sol_mat[imat+1], "w_gru", ntype,
+      mati_deck.get< tag::w_gru >());
+
+    // rho0_jwl
+    checkStoreMatProp(sol_mat[imat+1], "rho0_jwl", ntype,
+      mati_deck.get< tag::rho0_jwl >());
+
+    // alpha
+    checkStoreMatProp(sol_mat[imat+1], "alpha", ntype,
+      mati_deck.get< tag::alpha >());
+
+    // c0
+    checkStoreMatProp(sol_mat[imat+1], "c0", ntype,
+      mati_deck.get< tag::c0 >());
+
+    // s1
+    checkStoreMatProp(sol_mat[imat+1], "s1", ntype,
+      mati_deck.get< tag::s1 >());
 
     // mu
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
@@ -1606,7 +1644,6 @@ LuaParser::registerMaterials(
       Throw("Either reference density or reference temperature must be "
         "specified for JWL equation of state (EOS).");
   }
-
 }
 
 void
@@ -1639,19 +1676,37 @@ LuaParser::registerSpecies(
   // all species are of a single type, so that the outer species vector
   // is of size one
   // set target data in inputdeck
-  // species vector size is one, since all species are only of one type for now
   auto& spci_deck = gideck.get< tag::species >()[0];
 
   // species ids (default is for single species)
   storeVecIfSpecd< uint64_t >(
     sol_spc[imat+1], "id", spci_deck.get< tag::id >(),
     std::vector< uint64_t >(1,1));
+
   Assert(nspec == spci_deck.get< tag::id >().size(),
     "Number of ids in species-block not equal to number of species");
 
   std::size_t ntype = nspec;
   const auto& mati_deck = gideck.get< tag::material >()[imat];
 
+  // mu (dynamic viscosity) and 'viscous' keyword
+  if (!sol_spc[imat+1]["mu"].valid())
+    sol_spc[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+  else gideck.get< tag::multispecies, tag::viscous >() = true;
+  checkStoreMatProp(sol_spc[imat+1], "mu", ntype, spci_deck.get< tag::mu >());
+
+  // Sutherland's Law check
+  if (gideck.get< tag::multispecies, tag::Sutherland >()){
+    // C (Sutherland)
+    checkStoreMatProp(sol_spc[imat+1], "C", nspec,
+      spci_deck.get< tag::C >());
+    // mu_ref (Sutherland)
+    checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
+      spci_deck.get< tag::mu_ref >());
+    //temp_ref (Sutherland)
+    checkStoreMatProp(sol_spc[imat+1], "temp_ref", nspec,
+      spci_deck.get< tag::temp_ref >());
+  }
   // Stiffened-gas species
   if (mati_deck.get< tag::eos >() ==
     inciter::ctr::MaterialType::STIFFENEDGAS) {
@@ -1670,21 +1725,6 @@ LuaParser::registerSpecies(
       sol_spc[imat+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
     checkStoreMatProp(sol_spc[imat+1], "pstiff", ntype,
       spci_deck.get< tag::pstiff >());
-
-    // If viscous problem, read all parameters from control file
-    if (gideck.get< tag::multispecies, tag::viscous >()){
-      // mu_ref (Sutherland)
-      checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
-        spci_deck.get< tag::mu_ref >());
-      //temp_ref (Sutherland)
-      checkStoreMatProp(sol_spc[imat+1], "temp_ref", nspec,
-        spci_deck.get< tag::temp_ref >());
-      if (gideck.get< tag::multispecies, tag::Sutherland >()){
-        // C (Sutherland)
-        checkStoreMatProp(sol_spc[imat+1], "C", nspec,
-          spci_deck.get< tag::C >());
-      }
-    }
   }
   // Thermally-perfect gas species
   else if (mati_deck.get< tag::eos >() ==
@@ -1694,20 +1734,6 @@ LuaParser::registerSpecies(
     storeVecIfSpecd< std::string >(
       sol_spc[imat+1], "spec_name", spci_deck.get< tag::spec_name >(),
       std::vector< std::string >(nspec, ""));
-    // If viscous problem, read all parameters from control file
-    if (gideck.get< tag::multispecies, tag::viscous >()){
-      // mu_ref (Sutherland)
-      checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
-        spci_deck.get< tag::mu_ref >());
-      //temp_ref (Sutherland)
-      checkStoreMatProp(sol_spc[imat+1], "temp_ref", nspec,
-        spci_deck.get< tag::temp_ref >());
-      if (gideck.get< tag::multispecies, tag::Sutherland >()){
-        // C (Sutherland)
-        checkStoreMatProp(sol_spc[imat+1], "C", nspec,
-          spci_deck.get< tag::C >());
-      }
-    }
     if (sol_spc[imat+1]["spec_name"].valid()) {
       std::string nasa9_path = gideck.get< tag::nasa9_filepath >();
       std::unordered_map<std::string,N9Species> nasa9_cache;
@@ -1731,7 +1757,7 @@ LuaParser::registerSpecies(
         // Loop over intervals and retrieve coefficients
         for (std::size_t interv = 0; interv < spec.nIntervals(); ++interv) {
           const N9Interval& I = spec.intervalByIndex(interv);
-          for (std::size_t k = 0; k < 9; ++k)
+          for (std::size_t k = 0; k < 8; ++k)
             cp_coeff[ispec][interv][k] = I.a[k];
           t_range[ispec][interv] = I.Tlow;
           if (interv == spec.nIntervals()-1)
@@ -1789,35 +1815,6 @@ LuaParser::checkStoreMatProp(
   // store values from table to inputdeck
   storeVecIfSpecd< tk::real >(table, key, storage,
     std::vector< tk::real >(vecsize, 0.0));
-}
-
-
-void
-LuaParser::checkStoreMatPropBool(
-  const sol::table table,
-  const std::string key,
-  std::size_t vecsize,
-  std::vector< bool >& storage )
-// *****************************************************************************
-//  Check and store material property boolean into inpudeck storage
-//! \param[in] table Sol-table which contains said property
-//! \param[in] key Key for said property in Sol-table
-//! \param[in] vecsize Number of said property in Sol-table (based on number of
-//!   materials that are of the same eos type
-//! \param[in,out] storage Storage space in inputdeck where said property is
-//!   to be stored
-// *****************************************************************************
-{
-  // check validity of table
-  if (!table[key].valid())
-    Throw("Material property '" + key + "' not specified");
-  if (sol::table(table[key]).size() != vecsize)
-    Throw("Incorrect number of '" + key + "'s specified. Expected " +
-      std::to_string(vecsize));
-
-  // store values from table to inputdeck
-  storeVecIfSpecd< bool >(table, key, storage,
-    std::vector< bool >(vecsize, true));
 }
 
 void
@@ -2030,4 +2027,32 @@ LuaParser::addOutVar(
   else {
     foutvar.emplace_back( inciter::ctr::OutVar(c, varname, 0, varname) );
   }
+}
+
+void
+LuaParser::checkStoreMatPropBool(
+  const sol::table table,
+  const std::string key,
+  std::size_t vecsize,
+  std::vector< bool >& storage )
+// *****************************************************************************
+//  Check and store material property boolean into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] vecsize Number of said property in Sol-table (based on number of
+//!   materials that are of the same eos type
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != vecsize)
+    Throw("Incorrect number of '" + key + "'s specified. Expected " +
+      std::to_string(vecsize));
+
+  // store values from table to inputdeck
+  storeVecIfSpecd< bool >(table, key, storage,
+    std::vector< bool >(vecsize, true));
 }
