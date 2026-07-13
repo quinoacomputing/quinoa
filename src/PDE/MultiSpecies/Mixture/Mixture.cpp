@@ -179,6 +179,7 @@ Mixture::viscCoeff(
 // *************************************************************************
 //! \brief Calculate mixture dynamic viscosity coefficient based on the mixture
 //!   composition and species parameters.
+//! \param[in] mix_temp Mixture temperature
 //! \param[in] mat_blk EOS material block
 //! \return Mass-fraction averaged mixture dynamic viscosity coefficient
 // *************************************************************************

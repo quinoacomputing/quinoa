@@ -43,6 +43,10 @@ ThermallyPerfectGas::ThermallyPerfectGas(
 //! \param[in] t_range temperature range where polynomial coeffs are valid
 //! \param[in] dH_ref reference enthalpy, h(t = 298.15 K) - h(t = 0 K)
 //! \param[in] mu Dynamic viscosity
+//! \param[in] temp_ref Reference temperature for Sutherland's Law
+//! \param[in] mu_ref Reference dynamic viscosity for Sutherland's Law
+//! \param[in] C Effective temperature (Sutherland constant)
+//! \param[in] Sutherland boolean keyword for toggling viscosity model
 // *************************************************************************
 { }
 
@@ -218,5 +222,5 @@ ThermallyPerfectGas::viscCoeff(tk::real temp) const
   return mu;
   }
  else
-  return m_mu_ref;
+  return m_mu;
 }
