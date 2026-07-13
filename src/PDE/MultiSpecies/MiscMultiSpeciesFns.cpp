@@ -119,7 +119,7 @@ timeStepSizeMultiSpecies(
 
     // Viscous contribution
     if (viscous) {
-      auto dSV_visc = mix.viscCoeff( mat_blk ) / rhob
+      auto dSV_visc = mix.viscCoeff( pgp[multispecies::temperatureIdx(nspec,0)], mat_blk ) / rhob
         * geoFace(f,0) * geoFace(f,0) / geoElem(el,0);
       dSV_l += dSV_visc;
     }
@@ -151,9 +151,11 @@ timeStepSizeMultiSpecies(
 
       dSV_r = geoFace(f,0) * (std::fabs(vn) + a);
 
+      // mixture temperature
+      auto mix_temp = pgp[multispecies::temperatureIdx(nspec,0)];
       // Viscous contribution
       if (viscous) {
-        auto dSV_visc = mixr.viscCoeff( mat_blk ) / rhob
+        auto dSV_visc = mixr.viscCoeff( mix_temp, mat_blk ) / rhob
           * geoFace(f,0) * geoFace(f,0) / geoElem(eR,0);
         dSV_r += dSV_visc;
       }
