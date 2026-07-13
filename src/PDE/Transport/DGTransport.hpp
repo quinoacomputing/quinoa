@@ -409,6 +409,21 @@ class Transport {
                     Problem::prescribedVelocity, srcfn, U, P, ndofel, R, intsharp );
       }
     }
+    
+    std::vector< std::vector< std::vector< tk::real > > >
+    point_implicit_jacobian_analytic(
+      const tk::Fields&,
+      const tk::Fields&,
+      const inciter::FaceData&,
+      const std::vector< std::size_t >&,
+      const tk::UnsMesh::Coords&,
+      const tk::Fields&,
+      const tk::Fields&,
+      const std::vector< std::size_t >& ) const
+    {
+      Throw("Analytic point-implicit Jacobian not implemented for this PDE");
+      return {};
+    }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
     //! \param[in] nunk Number of unknowns

@@ -2660,6 +2660,7 @@ DG::point_implicit_jacobian(
 // Calculates element-local residual Jacobian
 //! \param[in] Ubase Base conservative field with lagged neighbor states
 //! \param[in] Pbase Base primitive field with lagged neighbor states
+//! \param[in] Rbase Base RHS field
 //! \return Dense matrix dR_e/du_e for all elements
 //! \details WIP that performs finite differencing to calculate Jacobian, with
 //! the exact Jacobian to be wired in later.
@@ -2673,7 +2674,6 @@ DG::point_implicit_jacobian(
   const auto nunk = neq*ndof;
   auto d = Disc();
   tk::real physT(d->T());
-  physT += d->Dt();
 
   const auto elemColor = point_implicit_elem_coloring();
 
@@ -2728,6 +2728,62 @@ DG::point_implicit_jacobian(
             }
           }
         }
+      }
+    }
+  }
+
+  return dRdu;
+}
+std::vector< std::vector< std::vector< tk::real > > >
+DG::point_implicit_jacobian_analytic(
+  const tk::Fields& Ubase,
+  const tk::Fields& Pbase,
+  const tk::Fields& Rbase ) const
+// *****************************************************************************
+// Calculates element-local residual Jacobian using analytic PDE flux Jacobians
+//! \param[in] Ubase Base conservative field with lagged neighbor states
+//! \param[in] Pbase Base primitive field with lagged neighbor states
+//! \param[in] Rbase Base RHS field, used here only for consistency checks
+//! \return Dense matrix dR_e/du_e for all owned elements
+//! \details WIP using information specific to Riemann solver and PDE to
+//! calculate jacobian
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  const auto nunk = neq*ndof;
+
+  if (ndof != 1) {
+    Throw(
+      "Analytic point-implicit Jacobian currently only implemented for P0 "
+      "(ndof=1)");
+  }
+
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    Throw("Analytic point-implicit Jacobian currently requires pref=false");
+  }
+
+  auto d = Disc();
+
+  auto dRdu =
+    g_dgpde[d->MeshId()].point_implicit_jacobian_analytic(
+      myGhosts()->m_geoFace, myGhosts()->m_geoElem, myGhosts()->m_fd,
+      myGhosts()->m_inpoel, myGhosts()->m_coord, Ubase, Pbase, m_ndof );
+
+  if (dRdu.size() != nelem) {
+    Throw("Analytic point-implicit Jacobian element count mismatch");
+  }
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    if (dRdu[e].size() != nunk) {
+      Throw("Analytic point-implicit Jacobian row count mismatch");
+    }
+
+    for (std::size_t i=0; i<nunk; ++i) {
+      if (dRdu[e][i].size() != nunk) {
+        Throw("Analytic point-implicit Jacobian column count mismatch");
       }
     }
   }
