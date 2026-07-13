@@ -174,6 +174,7 @@ Mixture::Cp(
 
 tk::real
 Mixture::viscCoeff(
+  tk::real mix_temp,
   const std::vector< EOS >& mat_blk) const
 // *************************************************************************
 //! \brief Calculate mixture dynamic viscosity coefficient based on the mixture
@@ -184,7 +185,7 @@ Mixture::viscCoeff(
 {
   tk::real mix_visc = 0.;
   for (std::size_t k = 0; k < m_nspec; k++)
-    mix_visc += m_Ys[k] * mat_blk[k].compute< EOS::viscCoeff >();
+    mix_visc += m_Ys[k] * mat_blk[k].compute< EOS::viscCoeff >(mix_temp);
 
   return mix_visc;
 }
