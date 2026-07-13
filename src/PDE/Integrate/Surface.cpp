@@ -1047,6 +1047,13 @@ surfIntViscousMultiSpecies(
     viscousInternalFaceInt( viscousRhs, mat_blk, ndof, inpoel, coord, fd,
       geoFace, geoElem, U, P, R );
   }
+
+  if (ndof == 4) {
+    MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
+    viscousInternalFaceInt( viscousRhs, mat_blk, ndof, inpoel, coord, fd,
+      geoFace, geoElem, U, P, R ); // No-op
+  }
+  
   else
     Throw( "Viscous operators only implemented for scheme = 'p0p1'." );
 }
