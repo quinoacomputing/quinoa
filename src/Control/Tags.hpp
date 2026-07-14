@@ -233,6 +233,10 @@ DEFTAG(cp_coeff);
 DEFTAG(t_range);
 DEFTAG(dH_ref);
 DEFTAG(plasticity_reltime);
+DEFTAG(temp_ref);
+DEFTAG(mu_ref);
+DEFTAG(C);
+DEFTAG(Sutherland);
 
 DEFTAG(field_output);
 DEFTAG(interval);

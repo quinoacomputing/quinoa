@@ -124,7 +124,7 @@ class StiffenedGas {
     tk::real cp( tk::real ) const { return m_gamma*m_cv; }
 
     //! Return dynamic viscosity coefficient
-    tk::real viscCoeff() const { return m_mu; }
+    tk::real viscCoeff( tk::real ) const { return m_mu; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
