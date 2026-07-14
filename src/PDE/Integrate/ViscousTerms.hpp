@@ -58,7 +58,7 @@ class MultiSpeciesViscousTermsP0P1 {
       const std::vector< inciter::EOS >& mat_blk,
       std::size_t ncomp,
       const std::array< std::vector< tk::real >, 2 >& state,
-      const std::array< std::vector< tk::real >, 2 >& cellAvgstate,
+      const std::array< std::vector< tk::real >, 2 >& cellAvgState,
       const std::array< tk::real, 3 >& fn,
       const std::array< std::array< tk::real, 3 >, 2 >& centroid,
       const std::array< std::array< std::array< tk::real, 3 >, 4>, 2 >& grad,
