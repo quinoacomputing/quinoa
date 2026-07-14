@@ -306,10 +306,14 @@ MultiSpeciesViscousTermsDGP1::stateAt(
 //!   multispecies primitives
 // *****************************************************************************
 {
-  // no-op
   const auto ncomp = U.nprop()/m_rdof;
   const auto nprim = P.nprop()/m_rdof;
   std::vector< tk::real > state( ncomp+nprim, 0.0 );
+
+  eval_state( ncomp, m_rdof, ndof, e, U, B, state.data() );
+  eval_state( nprim, m_rdof, ndof, e, P, B, state.data()+ncomp );
+  enforcePhysicalConstraints( mat_blk, ncomp, 1, state );
+
   return state;
 }
 
@@ -352,7 +356,7 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
 //! \param[in] fn Face normal
 //! \param[in] centroid Left and right element centroids
 //! \param[in] grad Velocity and temperature gradients in left and right elements
-//! \param[in,out] fl Numerical viscous flux using the Modified Gradient approach
+//! \param[in,out] fl Numerical viscous flux
 //! \details Will be implemented using DDG
 // *****************************************************************************
 {

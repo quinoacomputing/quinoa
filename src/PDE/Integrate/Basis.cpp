@@ -1081,7 +1081,7 @@ tk::eval_state_gradient ( ncomp_t ncomp,
    for (std::size_t i=0; i<3; ++i) {
     {
       auto mark = c*ndof;
-      state_grad[c][i] += U( e, mark+1 ) * dBdx[i][1]
+      state_grad[c][i] = U( e, mark+1 ) * dBdx[i][1]
                        + U( e, mark+2 ) * dBdx[i][2]
                        + U( e, mark+3 ) * dBdx[i][3];
 

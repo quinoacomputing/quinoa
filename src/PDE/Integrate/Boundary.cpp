@@ -974,6 +974,13 @@ bndSurfIntViscousMultiSpecies(
     viscousBoundaryFaceInt( viscousRhs, mat_blk, ndof, bcconfig, inpoel,
       coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
   }
+
+  if (ndof == 4) {
+    MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
+    viscousInternalFaceInt( viscousRhs, mat_blk, ndof, inpoel, coord, fd,
+      geoFace, geoElem, U, P, R ); // No-op
+  }
+  
   else
     Throw( "Viscous operators only implemented for scheme = 'p0p1'." );
 }

@@ -43,22 +43,22 @@ class MultiSpeciesViscousTermsP0P1 {
       std::size_t ndof,
       const std::vector< tk::real >& B ) const;
 
-    //! compute gradients of quantities for an interior element
+    //! Compute gradients of quantities for an interior element
     void
     gradientIntElem(
       const Fields& U,
       const Fields& P,
       std::size_t elem,
-      const std::array< std::vector< tk::real >, 3 >& dbdx,
+      const std::array< std::vector< tk::real >, 3 >& dBdx,
       std::array< std::array< tk::real, 3 >, 4>& grad ) const;
 
-    //! compute the multispecies viscous flux at an interior face
+    //! Compute the multispecies viscous flux at an interior face
     void
     interiorFlux(
       const std::vector< inciter::EOS >& mat_blk,
       std::size_t ncomp,
       const std::array< std::vector< tk::real >, 2 >& state,
-      const std::array< std::vector< tk::real >, 2 >& cellavgstate,
+      const std::array< std::vector< tk::real >, 2 >& cellAvgstate,
       const std::array< tk::real, 3 >& fn,
       const std::array< std::array< tk::real, 3 >, 2 >& centroid,
       const std::array< std::array< std::array< tk::real, 3 >, 4>, 2 >& grad,
@@ -107,22 +107,22 @@ class MultiSpeciesViscousTermsDGP1 {
       std::size_t ndof,
       const std::vector< tk::real >& B ) const;
  
-    //! compute gradients of quantities for an interior element
+    //! Compute gradients of quantities for an interior element
     void
     gradientIntElem(
       const Fields& U,
       const Fields& P,
       std::size_t elem,
-      const std::array< std::vector< tk::real >, 3 >& dbdx,
+      const std::array< std::vector< tk::real >, 3 >& dBdx,
       std::array< std::array< tk::real, 3 >, 4>& grad ) const;
 
-    //! compute the multispecies viscous flux at an interior face
+    //! Compute the multispecies viscous flux at an interior face
     void
     interiorFlux(
       const std::vector< inciter::EOS >& mat_blk,
       std::size_t ncomp,
       const std::array< std::vector< tk::real >, 2 >& state,
-      const std::array< std::vector< tk::real >, 2 >& cellavgstate,
+      const std::array< std::vector< tk::real >, 2 >& cellAvgstate,
       const std::array< tk::real, 3 >& fn,
       const std::array< std::array< tk::real, 3 >, 2 >& centroid,
       const std::array< std::array< std::array< tk::real, 3 >, 4>, 2 >& grad,
