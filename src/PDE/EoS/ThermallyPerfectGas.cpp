@@ -22,12 +22,20 @@ ThermallyPerfectGas::ThermallyPerfectGas(
   std::vector< std::vector< tk::real > > cp_coeff,
   std::vector< tk::real > t_range,
   tk::real dH_ref,
-  tk::real mu) :
+  tk::real mu,
+  tk::real temp_ref,
+  tk::real mu_ref,
+  tk::real C,
+  bool Sutherland) :
   m_R(R),
   m_cp_coeff(cp_coeff),
   m_t_range(t_range),
   m_dH_ref(dH_ref),
-  m_mu(mu)
+  m_mu(mu),
+  m_temp_ref(temp_ref),
+  m_mu_ref(mu_ref), 
+  m_C(C),
+  m_Sutherland(Sutherland)
 // *************************************************************************
 //  Constructor
 //! \param[in] R gas constant
@@ -35,6 +43,10 @@ ThermallyPerfectGas::ThermallyPerfectGas(
 //! \param[in] t_range temperature range where polynomial coeffs are valid
 //! \param[in] dH_ref reference enthalpy, h(t = 298.15 K) - h(t = 0 K)
 //! \param[in] mu Dynamic viscosity
+//! \param[in] temp_ref Reference temperature for Sutherland's Law
+//! \param[in] mu_ref Reference dynamic viscosity for Sutherland's Law
+//! \param[in] C Effective temperature (Sutherland constant)
+//! \param[in] Sutherland boolean keyword for toggling viscosity model
 // *************************************************************************
 { }
 
@@ -192,4 +204,23 @@ ThermallyPerfectGas::cp(tk::real temp) const
 // *************************************************************************
 {
   return calc_cp(temp) * m_R;
+}
+
+
+tk::real
+ThermallyPerfectGas::viscCoeff(tk::real temp) const
+// *************************************************************************
+//! \brief Calculate species viscosity coefficient using Sutherland's Law
+//    and mixture temperature
+//! \param[in] temp Temperature
+//! \return Species viscosity coefficient
+// *************************************************************************
+{
+ if (m_Sutherland){
+  auto C = m_C;
+  tk::real mu =m_mu_ref*pow((temp/m_temp_ref),1.5)*(m_temp_ref+C)/(temp+C);
+  return mu;
+  }
+ else
+  return m_mu;
 }
