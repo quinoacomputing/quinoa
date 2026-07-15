@@ -28,7 +28,7 @@ tk::InitializeFn::result_type
 MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
   const std::vector< EOS >& mat_blk,
   tk::real x, tk::real y, tk::real,
-  tk::real )
+  tk::real t)
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -36,18 +36,17 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
 //! \param[in] y Y coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x,y,z,t)
 //! \note The function signature must follow tk::InitializeFn
-//! \details This function only initializes the mixing layer
-//!   problem, but does not actually give the analytical solution at time
-//!   greater than 0.
+//! \details This function initializes the mixing layer problem with a step-
+//!  change in the velocity profile at y=0. For t>0, this function calculates
+//!  the problem according to the analytical solution.
 // *****************************************************************************
 {
   // see also Control/Inciter/InputDeck/Grammar.hpp
   Assert( ncomp == 5, "Number of scalar components must be 5" );
 
   auto nspec = g_inputdeck.get< eq, tag::nspec >();
-  //auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
 
-  std::vector< tk::real > s( ncomp, 0.0 );
+  std::vector< tk::real > s( ncomp+1, 0.0 );
   tk::real p, T, u, v, w;
 
   // impose analytical solution instead of initial condition
@@ -59,11 +58,24 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
   auto nu = mu/rho0;
   auto f0 = 0.5;
   auto f1 = 1.0;
-  auto c = 1.4498905297373783;
-  auto eta0 = -0.10009499242392805;
-  auto x0 = 200;
+  auto c = 1.4498905297373783; // from curve fit
+  auto eta0 = -0.10009499242392805; // from curve fit
+  auto x0 = 200; // choose far downstream for thick mixing layer
   auto eta = y * std::sqrt(U1 / (2*x0*nu));
   auto f = 0.0;
+
+// initalize with step change across velocity interface
+
+if (t == 0.0) {
+  if (y < 0.0) {
+    f = 0.5;
+  }
+  else {
+    f = 1.0;
+  }
+}
+
+else if (t > 0) {
   if (eta < -5) {
     f = f0;
   }
@@ -73,7 +85,7 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
   else {
     f = f0 + (f1 - f0) / (1 + std::exp(-c * (eta - eta0)));
   }
-
+}
   auto denom = (1 + std::exp(-c * std::abs(eta - eta0)));
   p = 101325;
   T = 273.15;
@@ -85,15 +97,17 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
   for (std::size_t k = 0; k<nspec; ++k) {
     auto rho = mat_blk[k].compute< EOS::density >(p, T);
     rhob += rho;
-    s[multispecies::densityIdx(nspec,k)] = rho; 
+    s[multispecies::densityIdx(nspec,k)] = rho;
     s[multispecies::energyIdx(nspec,k)] =
       mat_blk[k].compute< EOS::totalenergy >( rho, u, v, w, p, 1.0);
+    s[ncomp + multispecies::temperatureIdx(nspec,k)] = T;
  }
 
   // momentum
   s[multispecies::momentumIdx(nspec, 0)] = rhob*u;
   s[multispecies::momentumIdx(nspec, 1)] = rhob*v;
   s[multispecies::momentumIdx(nspec, 2)] = rhob*w;
+
  
   return s;
 }
