@@ -354,19 +354,19 @@ viscousBoundaryFaceIntDG(
 
             if (ndof_l > 1) // DG(P1)
             {
-              R(el, mark+1) -= wt * fl[c] * B_l[1];
-              R(el, mark+1) -= wt * fl[c] * B_l[2];
-              R(el, mark+1) -= wt * fl[c] * B_l[3];
+              R(el, mark+1) += wt * fl[c] * B_l[1];
+              R(el, mark+1) += wt * fl[c] * B_l[2];
+              R(el, mark+1) += wt * fl[c] * B_l[3];
             }
 
             if(ndof_l > 4)  //DG(P2)
             {
-              R(el, mark+4) -= wt * fl[c] * B_l[4];
-              R(el, mark+5) -= wt * fl[c] * B_l[5];
-              R(el, mark+6) -= wt * fl[c] * B_l[6];
-              R(el, mark+7) -= wt * fl[c] * B_l[7];
-              R(el, mark+8) -= wt * fl[c] * B_l[8];
-              R(el, mark+9) -= wt * fl[c] * B_l[9];
+              R(el, mark+4) += wt * fl[c] * B_l[4];
+              R(el, mark+5) += wt * fl[c] * B_l[5];
+              R(el, mark+6) += wt * fl[c] * B_l[6];
+              R(el, mark+7) += wt * fl[c] * B_l[7];
+              R(el, mark+8) += wt * fl[c] * B_l[8];
+              R(el, mark+9) += wt * fl[c] * B_l[9];
             }
 
           }
