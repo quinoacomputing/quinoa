@@ -228,9 +228,12 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
   inciter::Mixture mix_l(m_nspec, ul, mat_blk);
   inciter::Mixture mix_r(m_nspec, ur, mat_blk);
 
+  auto mix_temp_l = ul[ncomp + temperatureIdx(m_nspec,0)];
+  auto mix_temp_r = ur[ncomp + temperatureIdx(m_nspec,0)];
+
   // compute fluid properties (viscosity and conductivity)
   auto mu =
-    0.5 * (mix_l.viscCoeff(mat_blk) + mix_r.viscCoeff(mat_blk));
+    0.5 * (mix_l.viscCoeff(mix_temp_l, mat_blk) + mix_r.viscCoeff(mix_temp_r, mat_blk));
   auto Cp = 0.5 * (mix_l.Cp(ul[ncomp+temperatureIdx(m_nspec,0)], mat_blk)
     + mix_r.Cp(ur[ncomp+temperatureIdx(m_nspec,0)], mat_blk));
   auto kTh = mu * Cp / 0.71; // TODO: make Prandtl number user-configurable
@@ -252,6 +255,7 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
 
   auto rho_l = mix_l.get_mix_density();
   auto rho_r = mix_r.get_mix_density();
+
   std::array< real, 3 > energyFlux{{0.0, 0.0, 0.0}};
   std::array< real, 3 > uAvg{{
     0.5 * (ul[momentumIdx(m_nspec,0)]/rho_l + ur[momentumIdx(m_nspec,0)]/rho_r),
