@@ -350,7 +350,7 @@ viscousBoundaryFaceIntDG(
           for (ncomp_t c=0; c<ncomp; ++c)
           {
             auto mark = c*ndof;
-            R(el, mark) -= wt * fl[c];
+            R(el, mark) += wt * fl[c];
 
             if (ndof_l > 1) // DG(P1)
             {
