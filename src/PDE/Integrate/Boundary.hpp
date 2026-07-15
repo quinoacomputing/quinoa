@@ -148,7 +148,7 @@ viscousBoundaryFaceIntDG(
             const Fields& P,
             real t,
             const StateFn& state,
-	    const StateFn& gradFn,
+            const StateFn& gradFn,
             Fields& R );
 
 // Compute boundary surface viscous flux integrals for multispecies flow
