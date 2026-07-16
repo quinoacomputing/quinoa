@@ -1086,21 +1086,6 @@ class MultiSpecies {
       return fl;
     }
 
-    //! Evaluate conservative part of physical flux function for this PDE system
-    //! \param[in] ncomp Number of scalar components in this PDE system
-    //! \param[in] ugp Numerical solution at the Gauss point at which to
-    //!   evaluate the flux
-    //! \return Flux vectors for all components in this PDE system
-    //! \note The function signature must follow tk::FluxFn
-    static tk::FluxFn::result_type
-    viscflux( [[maybe_unused]] ncomp_t ncomp,
-          const std::vector< EOS >& mat_blk,
-          const std::vector< tk::real >& ugp,
-          const std::vector< std::array< tk::real, 3 > >& )
-    {
-      //no-op
-    }
-
     //! \brief Boundary state function providing the left and right state of a
     //!   face at Dirichlet boundaries
     //! \param[in] ncomp Number of scalar components in this PDE system
