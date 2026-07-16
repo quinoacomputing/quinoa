@@ -26,6 +26,14 @@
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
+#include "Integrate/Mass.hpp"
+#include "Kokkos_Core.hpp"
+
+#ifdef USE_KOKKOS_KERNELS
+using execution_space = Kokkos::DefaultExecutionSpace;
+using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
+#endif
+
 #include "Integrate/Quadrature.hpp"
 
 namespace inciter {
@@ -271,7 +279,7 @@ THINCReco( std::size_t rdof,
     // material interface
     alReco[k] = state[volfracIdx(nmat,k)];
   }
-  THINCFunction(rdof, nmat, e, inpoel, coord, ref_xp, geoElem(e,0), bparam,
+  THINCFunction(rdof, nmat, e, inpoel, coord, ref_xp, geoElem(e, 0), bparam,
     alSol, intInd, matInt, alReco);
 
   // check reconstructed volfracs for positivity
@@ -1049,7 +1057,7 @@ enforcePhysicalConstraints(
     using inciter::densityIdx;
 
     for (std::size_t k=0; k<nmat; ++k) {
-      state[ncomp+pressureIdx(nmat,k)] = constrain_pressure( mat_blk,
+      state[ncomp+pressureIdx(nmat,k)] = constrain_pressure(mat_blk,
         state[ncomp+pressureIdx(nmat,k)], state[densityIdx(nmat,k)],
         state[volfracIdx(nmat,k)], k );
     }
@@ -1058,6 +1066,39 @@ enforcePhysicalConstraints(
     using inciter::multispecies::temperatureIdx;
     state[ncomp+temperatureIdx(nspec,0)] = inciter::constrain_temperature(
       state[ncomp+temperatureIdx(nspec,0)] );
+  }
+}
+
+void enforcePhysicalConstraints(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t ncomp,
+  std::size_t nmat,
+  Kokkos::View<real*, memory_space> state )
+// *****************************************************************************
+//  Enforce physical constraints on state at quadrature point
+//! \param[in] mat_blk EOS material block
+//! \param[in] ncomp Number of components in the PDE system
+//! \param[in] nmat Total number of materials
+//! \param[in,out] state state at quadrature point
+// *****************************************************************************
+{
+  auto myPDE = inciter::g_inputdeck.get< tag::pde >();
+
+  // unfortunately have to query PDEType here. alternative will potentially
+  // require refactor that passes PDEType from DGPDE to this level.
+  if (myPDE == inciter::ctr::PDEType::MULTIMAT) {
+    using inciter::pressureIdx;
+    using inciter::volfracIdx;
+    using inciter::densityIdx;
+
+    for (std::size_t k=0; k<nmat; ++k) {
+      state(ncomp+pressureIdx(nmat,k)) = constrain_pressure(mat_blk,
+        state(ncomp+pressureIdx(nmat,k)), state(densityIdx(nmat,k)),
+        state(volfracIdx(nmat,k)), k );
+    }
+  }
+  else if (myPDE == inciter::ctr::PDEType::MULTISPECIES) {
+    // TODO: consider clipping temperature here
   }
 }
 

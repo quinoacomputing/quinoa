@@ -17,6 +17,38 @@
 #include "Vector.hpp"
 #include "Quadrature.hpp"
 #include "Reconstruction.hpp"
+#include "MultiMatTerms.hpp"
+#include "Kokkos_Core.hpp"
+#include "Inciter/InputDeck/InputDeck.hpp"
+
+using execution_space = Kokkos::DefaultExecutionSpace;
+using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
+using range_policy = Kokkos::RangePolicy<execution_space>;
+using UnManagedMem = Kokkos::MemoryTraits<Kokkos::Unmanaged>;
+
+template <typename T>
+auto changeToView(T* object, size_t n) {
+    Kokkos::View<T*, Kokkos::LayoutLeft, Kokkos::HostSpace, UnManagedMem> object_view(object, n);
+    return object_view;
+}
+
+namespace inciter {
+  extern ctr::InputDeck g_inputdeck;
+};
+
+// Forward declaration of device function
+namespace tk {
+  KOKKOS_INLINE_FUNCTION
+  void update_rhs_device( ncomp_t ncomp,
+                  const std::size_t ndof,
+                  const std::size_t ndof_el,
+                  const tk::real wt,
+                  const std::size_t m_nprop,
+                  const std::size_t e,
+                  const Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
+                  const Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
+                  Kokkos::View<real*, memory_space> R);
+}
 
 void
 tk::volInt( std::size_t nmat,
@@ -128,7 +160,7 @@ tk::volInt( std::size_t nmat,
         // evaluate prescribed velocity (if any)
         auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
-        // comput flux
+        // compute flux
         auto fl = flux( ncomp, mat_blk, state, v );
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );
@@ -143,8 +175,7 @@ tk::volInt( std::size_t nmat,
   }
 }
 
-void
-tk::update_rhs( ncomp_t ncomp,
+void tk::update_rhs( ncomp_t ncomp,
                 const std::size_t ndof,
                 const std::size_t ndof_el,
                 const tk::real wt,
@@ -153,7 +184,7 @@ tk::update_rhs( ncomp_t ncomp,
                 const std::vector< std::array< tk::real, 3 > >& fl,
                 Fields& R )
 // *****************************************************************************
-//  Update the rhs by adding the source term integrals
+//  Update the rhs by adding the flux term integrals (CPU version)
 //! \param[in] ncomp Number of scalar components in this PDE system
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] ndof_el Number of degrees of freedom for local element
@@ -200,6 +231,58 @@ tk::update_rhs( ncomp_t ncomp,
   }
 }
 
+//! Kokkos device version of update_rhs
+KOKKOS_INLINE_FUNCTION
+void tk::update_rhs_device( ncomp_t ncomp,
+                const std::size_t ndof,
+                const std::size_t ndof_el,
+                const tk::real wt,
+                const std::size_t m_nprop,
+                const std::size_t e,
+                const Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
+                const Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
+                Kokkos::View<real*, memory_space> R)
+// *****************************************************************************
+//  Update the rhs by adding the flux term integrals (Kokkos device version)
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] ndof_el Number of degrees of freedom for local element
+//! \param[in] wt Weight of gauss quadrature point
+//! \param[in] m_nprop Number of properties in R
+//! \param[in] e Element index
+//! \param[in] dBdx Array of basis function derivatives
+//! \param[in] fl Array of numerical flux
+//! \param[in,out] R Right-hand side vector computed
+// *****************************************************************************
+{
+  for (ncomp_t c=0; c<ncomp; ++c)
+  {
+    auto mark = c*ndof;
+    R(e * m_nprop + mark+1) +=
+      wt * (fl[c][0]*dBdx[0][1] + fl[c][1]*dBdx[1][1] + fl[c][2]*dBdx[2][1]);
+    R(e * m_nprop + mark+2) +=
+      wt * (fl[c][0]*dBdx[0][2] + fl[c][1]*dBdx[1][2] + fl[c][2]*dBdx[2][2]);
+    R(e * m_nprop + mark+3) +=
+      wt * (fl[c][0]*dBdx[0][3] + fl[c][1]*dBdx[1][3] + fl[c][2]*dBdx[2][3]);
+
+    if( ndof_el > 4 )
+    {
+      R(e * m_nprop + mark+4) +=
+        wt * (fl[c][0]*dBdx[0][4] + fl[c][1]*dBdx[1][4] + fl[c][2]*dBdx[2][4]);
+      R(e * m_nprop + mark+5) +=
+        wt * (fl[c][0]*dBdx[0][5] + fl[c][1]*dBdx[1][5] + fl[c][2]*dBdx[2][5]);
+      R(e * m_nprop + mark+6) +=
+        wt * (fl[c][0]*dBdx[0][6] + fl[c][1]*dBdx[1][6] + fl[c][2]*dBdx[2][6]);
+      R(e * m_nprop + mark+7) +=
+        wt * (fl[c][0]*dBdx[0][7] + fl[c][1]*dBdx[1][7] + fl[c][2]*dBdx[2][7]);
+      R(e * m_nprop + mark+8) +=
+        wt * (fl[c][0]*dBdx[0][8] + fl[c][1]*dBdx[1][8] + fl[c][2]*dBdx[2][8]);
+      R(e * m_nprop + mark+9) +=
+        wt * (fl[c][0]*dBdx[0][9] + fl[c][1]*dBdx[1][9] + fl[c][2]*dBdx[2][9]);
+    }
+  }
+}
+
 void
 tk::update_rhs_src(
   const std::size_t ndof,
@@ -220,9 +303,6 @@ tk::update_rhs_src(
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  //// Removed since this can be called for p0p1 where B.size() > ndof_el
-  //Assert( B.size() == ndof_el, "Size mismatch for basis function" );
-
   for (ncomp_t c=0; c<s.size(); ++c)
   {
     auto mark = c*ndof;
@@ -242,8 +322,7 @@ tk::update_rhs_src(
         R(e, mark+7) += wt * s[c] * B[7];
         R(e, mark+8) += wt * s[c] * B[8];
         R(e, mark+9) += wt * s[c] * B[9];
-      }
-    }
+      }    }
   }
 }
 
@@ -266,7 +345,7 @@ tk::volInt_constP(
   Fields& R,
   int intsharp )
 // *****************************************************************************
-//  Compute volume integrals for const-order DG (not p-adaptive)
+//  Compute volume integrals for const-order DG with Kokkos acceleration
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] t Physical time
 //! \param[in] mat_blk EOS material block
@@ -286,88 +365,136 @@ tk::volInt_constP(
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
-  const auto& cx = coord[0];
-  const auto& cy = coord[1];
-  const auto& cz = coord[2];
+  size_t ncomp = U.nprop()/rdof;
+  size_t nprim = P.nprop()/rdof;
 
-  auto ncomp = U.nprop()/rdof;
-  auto nprim = P.nprop()/rdof;
+  size_t m_nprop = U.nprop();
+  size_t p_nprop = P.nprop();
+  size_t r_nprop = R.nprop();
+  size_t geo_nprop = geoElem.nprop();
 
-  // Quadrature pointd
+  const auto solidx = inciter::g_inputdeck.get<
+      tag::matidxmap, tag::solidx >();
+
+  auto bparam = inciter::g_inputdeck.get< tag::multimat,
+    tag::intsharp_param >();
+
+  // Quadrature points computed once (constant P)
   auto ng = tk::NGvol(ndof);
 
-  // arrays for quadrature points
-  std::array< std::vector< real >, 3 > coordgp;
-  std::vector< real > wgp;
+  // Transfer solidx vector
+  auto solidx_h_view = changeToView(solidx.data(), nmat);
+  Kokkos::View<size_t*, memory_space> solidx_d_view("solidx", nmat);
+  Kokkos::deep_copy(solidx_d_view, solidx_h_view);
 
-  coordgp[0].resize( ng );
-  coordgp[1].resize( ng );
-  coordgp[2].resize( ng );
-  wgp.resize( ng );
+  // Transfer inpoel variable
+  size_t inpoel_size = inpoel.size();
+  auto inpoel_h_view = changeToView(inpoel.data(), inpoel_size);
+  Kokkos::View<size_t*, memory_space> inpoel_d_view("inpoel device view", inpoel_size);
+  Kokkos::deep_copy(inpoel_d_view, inpoel_h_view);
 
-  GaussQuadratureTet( ng, coordgp, wgp );
+  // Transfer coord (nodal coordinates)
+  size_t coordx_size = coord[0].size();
+  auto cx_h_view = changeToView(coord[0].data(), coordx_size);
+  Kokkos::View<real*, memory_space> cx_d_view("cx device view", coordx_size);
+  Kokkos::deep_copy(cx_d_view, cx_h_view);
 
-  // Allocate memory
-  std::vector< tk::real > B(rdof), state(ncomp+nprim), s(ncomp, 0.0);
-  std::array< std::vector<tk::real>, 3 > dBdx;
-  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( ndof, 0 );
+  size_t coordy_size = coord[1].size();
+  auto cy_h_view = changeToView(coord[1].data(), coordy_size);
+  Kokkos::View<real*, memory_space> cy_d_view("cy device view", coordy_size);
+  Kokkos::deep_copy(cy_d_view, cy_h_view);
 
-  // compute volume integrals
-  for (std::size_t e=0; e<nelem; ++e)
+  size_t coordz_size = coord[2].size();
+  auto cz_h_view = changeToView(coord[2].data(), coordz_size);
+  Kokkos::View<real*, memory_space> cz_d_view("cz device view", coordz_size);
+  Kokkos::deep_copy(cz_d_view, cz_h_view);
+
+  // geoElem, U, P, R transfer
+  size_t geoElem_size = geoElem.getSize();
+  Kokkos::View<real*, memory_space> geoElem_d_view("geoElem_d_view", geoElem_size);
+  auto geoElem_h_view = changeToView(geoElem.getPointer(), geoElem_size);
+  Kokkos::deep_copy(geoElem_d_view, geoElem_h_view);
+
+  size_t P_size = P.getSize();
+  Kokkos::View<real*, memory_space> P_d_view("P_d_view", P_size);
+  auto P_h_view = changeToView(P.getPointer(), P_size);
+  Kokkos::deep_copy(P_d_view, P_h_view);
+
+  size_t U_size = U.getSize();
+  Kokkos::View<real*, memory_space> U_d_view("U_d_view", U_size);
+  auto U_h_view = changeToView(U.getPointer(), U_size);
+  Kokkos::deep_copy(U_d_view, U_h_view);
+
+  size_t R_size = R.getSize();
+  Kokkos::View<real*, memory_space> R_d_view("R_d_view", R_size);
+  auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
+  Kokkos::deep_copy(R_d_view, R_h_view);
+
+  Kokkos::parallel_for(range_policy(0, nelem), KOKKOS_LAMBDA(const size_t e)
   {
-    // Extract the element coordinates
-    std::array< std::array< real, 3>, 4 > coordel {{
-      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
-      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
-      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
-      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
-    }};
-
-    auto jacInv =
-            inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
-
-    // Compute the derivatives of basis function for second order terms
-    eval_dBdx_p1( ndof, jacInv, dBdx );
-
-    // Gaussian quadrature
-    for (std::size_t igp=0; igp<ng; ++igp)
+    if(ndof > 1)
     {
-      if (ndof > 4) eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
+      Kokkos::Array<Kokkos::Array<real, NQUAD_MAX>, 3> coordgp = {};
+      Kokkos::Array<real, NQUAD_MAX> wgp = {};
+      GaussQuadratureTet(ng, coordgp, wgp );
 
-      // Compute the coordinates of quadrature point at physical domain
-      auto gp = eval_gp( igp, coordel, coordgp );
-
-      // Compute the basis function
-      eval_basis( rdof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
-
-      auto wt = wgp[igp] * geoElem(e, 0);
-
-      // volume fluxes
-      if (ndof > 1)
-      {
-        evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
-          rdof, nmat, e, rdof, inpoel, coord, geoElem,
-          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
-
-        // evaluate prescribed velocity (if any)
-        auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
-
-        // comput flux
-        auto fl = flux( ncomp, mat_blk, state, v );
-
-        update_rhs( ncomp, ndof, ndof, wt, e, dBdx, fl, R );
+      // Extract the element coordinates
+      Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
+      for (int i=0; i<4; i++) {
+        coordel[i][0] = cx_d_view(inpoel_d_view(4*e + i));
+        coordel[i][1] = cy_d_view(inpoel_d_view(4*e + i));
+        coordel[i][2] = cz_d_view(inpoel_d_view(4*e + i));
       }
 
-      // source terms
-      src( nmat, mat_blk, gp[0], gp[1], gp[2], t, s );
+      Kokkos::Array<real, NDOF_MAX> B = {};
+      Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, 3> dBdx = {};
+      auto jacInv =
+        inverseJacobian(coordel[0], coordel[1], coordel[2], coordel[3] );
+ 
+      eval_dBdx_p1(ndof, jacInv, dBdx);
 
-      update_rhs_src( ndof, ndof, wt, e, B, s, R );
+      Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> g = {};
+      Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> asig = {};
+      Kokkos::Array<real, 2> al = {};
+      Kokkos::Array<Kokkos::Array<real, 12>, 3> fl = {};
+      Kokkos::Array<real, 2> apk = {};
+      Kokkos::Array<real, 50> state = {};
+
+      for (std::size_t igp=0; igp<ng; ++igp)
+      {
+        if (ndof > 4)
+          eval_dBdx_p2( igp, coordgp, jacInv, dBdx);
+
+        // Compute the coordinates of quadrature point at physical domain
+        auto gp = eval_gp( igp, coordel, coordgp);
+  
+        // Compute the basis function
+        eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+                    coordgp[2][igp], B);
+
+        auto wt = wgp[igp] * geoElem_d_view(e * geo_nprop);
+        
+        evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+          rdof, nmat, e, rdof, m_nprop, p_nprop, geo_nprop,
+          bparam, solidx_d_view, inpoel_d_view, 
+          cx_d_view, cy_d_view, cz_d_view, geoElem_d_view,
+          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U_d_view, 
+          P_d_view, state);
+
+        // compute flux
+        fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 
+          mat_blk, state, g, asig, al, fl, apk);
+            
+        // Call device version explicitly
+        tk::update_rhs_device(ncomp, ndof, ndof, wt, r_nprop, e, dBdx, fl, R_d_view);  
+      }
     }
-  }
+  });
+  Kokkos::fence();
+  Kokkos::deep_copy(R_h_view, R_d_view);
 }
 
-void
-tk::srcIntFV( const std::vector< inciter::EOS >& mat_blk,
+void tk::srcIntFV( const std::vector< inciter::EOS >& mat_blk,
               real t,
               const std::size_t nelem,
               const Fields& geoElem,

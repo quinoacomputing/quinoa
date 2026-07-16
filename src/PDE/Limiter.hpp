@@ -21,6 +21,10 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "FunctionPrototypes.hpp"
 #include "EoS/EOS.hpp"
+#include "Kokkos_Core.hpp"
+
+using execution_space = Kokkos::DefaultExecutionSpace;
+using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
 namespace inciter {
 
@@ -331,6 +335,32 @@ bool
 interfaceIndicator( std::size_t nmat,
   const std::vector< tk::real >& al,
   std::vector< std::size_t >& matInt );
+
+//! Kokkos verison of interfaceIndicator
+KOKKOS_INLINE_FUNCTION
+bool interfaceIndicator( std::size_t nmat,
+  Kokkos::Array<tk::real, 2>& al,
+  Kokkos::Array<size_t, 2>& matInt )
+{
+  bool intInd = false;
+
+  // limits under which compression is to be performed
+  auto al_eps = 1e-08;
+  auto loLim = 2.0 * al_eps;
+  auto hiLim = 1.0 - loLim;
+
+  auto almax = 0.0;
+  for (std::size_t k=0; k<nmat; ++k)
+  {
+    almax = almax > al[k] ? almax : al[k];
+    matInt[k] = 0;
+    if ((al[k] > loLim) && (al[k] < hiLim)) matInt[k] = 1;
+  }
+
+  if ((almax > loLim) && (almax < hiLim)) intInd = true;
+
+  return intInd;
+}
 
 //! Mark the cells that contain discontinuity according to the interface
 void MarkShockCells ( const bool pref,

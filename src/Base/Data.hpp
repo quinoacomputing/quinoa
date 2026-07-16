@@ -491,6 +491,16 @@ class Data {
     //! \param[in,out] d DataLyaout object reference
     friend void operator|( PUP::er& p, Data& d ) { d.pup(p); }
     //@}
+    
+    auto getPointer() const {
+      return m_vec.data();
+    }
+    auto getSize() const {
+      return m_vec.size();
+    }
+    auto getPointerNonConst() {
+      return m_vec.data();
+    }
 
   private:
     //! Transform a compile-time uint8_t into a type, used for dispatch

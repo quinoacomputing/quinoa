@@ -18,6 +18,7 @@
 #include "Integrate/Basis.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "EoS/GetMatProp.hpp"
+#include "Kokkos_Core.hpp"
 
 namespace inciter {
 
@@ -491,7 +492,8 @@ timeStepSizeMultiMatFV(
     auto u = pgp[velocityIdx(nmat, 0)];
     auto v = pgp[velocityIdx(nmat, 1)];
     auto w = pgp[velocityIdx(nmat, 2)];
-    auto vmag = std::sqrt(tk::dot({u, v, w}, {u, v, w}));
+    auto vmag = std::sqrt(tk::dot({u,v,w},{u,v,w}));
+    //auto vmag = std::sqrt(u*u + v*v + w*w); 
 
     // acoustic speed
     tk::real a = 0.0;
@@ -728,6 +730,24 @@ std::size_t numSolids(
   std::size_t nsld(0);
   for (std::size_t k=0; k<nmat; ++k)
     if (solidx[k] > 0) ++nsld;
+
+  return nsld;
+}
+
+std::size_t numSolids(
+  std::size_t nmat,
+  Kokkos::View<const size_t*, memory_space> solidx )
+// *****************************************************************************
+//  Count total number of solid materials in the problem
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] solidx Material index indicator
+//! \return Total number of solid materials in the problem
+// *****************************************************************************
+{
+  // count number of solid materials
+  std::size_t nsld(0);
+  for (std::size_t k=0; k<nmat; ++k)
+    if (solidx(k) > 0) ++nsld;
 
   return nsld;
 }

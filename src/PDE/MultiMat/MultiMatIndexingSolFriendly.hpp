@@ -13,10 +13,6 @@
 #ifndef MultiMatIndexing_h
 #define MultiMatIndexing_h
 
-#include "Kokkos_Core.hpp"
-using execution_space = Kokkos::DefaultExecutionSpace;
-using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
-
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 namespace inciter {
@@ -31,14 +27,14 @@ extern ctr::InputDeck g_inputdeck;
 //! Get the index of the required material volume fraction
 //! \param[in] kmat Index of required material
 //! \return Index of the required material volume fraction
-KOKKOS_INLINE_FUNCTION std::size_t volfracIdx( std::size_t /*nmat*/, std::size_t kmat )
+std::size_t volfracIdx( std::size_t /*nmat*/, std::size_t kmat )
 { return kmat; }
 
 //! Get the index of the required material continuity equation
 //! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \return Index of the required material continuity equation
-KOKKOS_INLINE_FUNCTION std::size_t densityIdx( std::size_t nmat, std::size_t kmat )
+std::size_t densityIdx( std::size_t nmat, std::size_t kmat )
 { return (nmat+kmat); }
 
 //! Get the index of the required momentum equation component
@@ -48,14 +44,14 @@ KOKKOS_INLINE_FUNCTION std::size_t densityIdx( std::size_t nmat, std::size_t kma
 //!   1: Y-component,
 //!   2: Z-component.
 //! \return Index of the required momentum equation component
-KOKKOS_INLINE_FUNCTION std::size_t momentumIdx( std::size_t nmat, std::size_t idir )
+std::size_t momentumIdx( std::size_t nmat, std::size_t idir )
 { return (2*nmat+idir); }
 
 //! Get the index of the required material total energy equation
 //! \param[in] nmat Number of materials
 //! \param[in] kmat Index of required material
 //! \return Index of the required material total energy equation
-KOKKOS_INLINE_FUNCTION std::size_t energyIdx( std::size_t nmat, std::size_t kmat )
+std::size_t energyIdx( std::size_t nmat, std::size_t kmat )
 { return (2*nmat+3+kmat); }
 
 //! Get the index of the required material deformation gradient equation
@@ -64,7 +60,7 @@ KOKKOS_INLINE_FUNCTION std::size_t energyIdx( std::size_t nmat, std::size_t kmat
 //! \param[in] i Row-index of required tensor component
 //! \param[in] j Column-index of required tensor component
 //! \return Index of the required material deformation gradient equation
-KOKKOS_INLINE_FUNCTION std::size_t deformIdx( std::size_t nmat, std::size_t ksld,
+std::size_t deformIdx( std::size_t nmat, std::size_t ksld,
   std::size_t i, std::size_t j )
 { return (2*nmat+3+nmat + 9*(ksld-1)+3*i+j); }
 
@@ -75,13 +71,13 @@ KOKKOS_INLINE_FUNCTION std::size_t deformIdx( std::size_t nmat, std::size_t ksld
 //!   1: Y-component,
 //!   2: Z-component.
 //! \return Index of the required velocity component from vector of primitives
-KOKKOS_INLINE_FUNCTION std::size_t velocityIdx( std::size_t nmat, std::size_t idir )
+std::size_t velocityIdx( std::size_t nmat, std::size_t idir )
 { return nmat+idir; }
 
 //! Get the index of the required material pressure from vector of primitives
 //! \param[in] kmat Index of required material
 //! \return Index of the required material pressure from vector of primitives
-KOKKOS_INLINE_FUNCTION std::size_t pressureIdx( std::size_t /*nmat*/, std::size_t kmat )
+std::size_t pressureIdx( std::size_t /*nmat*/, std::size_t kmat )
 { return kmat; }
 
 //! Get the index of the required material stress component from primitives
@@ -90,7 +86,7 @@ KOKKOS_INLINE_FUNCTION std::size_t pressureIdx( std::size_t /*nmat*/, std::size_
 //! \param[in] i Index of required stress component
 //! \return Index of the required material Cauchy stress component from vector
 //!   of primitives
-KOKKOS_INLINE_FUNCTION std::size_t stressIdx( std::size_t nmat, std::size_t ksld,
+std::size_t stressIdx( std::size_t nmat, std::size_t ksld,
   std::size_t i )
 { return (nmat+3 + 6*(ksld-1)+i); }
 
@@ -103,7 +99,7 @@ KOKKOS_INLINE_FUNCTION std::size_t stressIdx( std::size_t nmat, std::size_t ksld
 //! \return Index of the required material volume fraction
 //! \details This function is used to get the index of the required DOF in the
 //!   solution vector, which is of type tk::Fields.
-KOKKOS_INLINE_FUNCTION std::size_t volfracDofIdx( std::size_t nmat, std::size_t kmat,
+std::size_t volfracDofIdx( std::size_t nmat, std::size_t kmat,
   std::size_t ndof, std::size_t idof )
 { return volfracIdx(nmat, kmat)*ndof+idof; }
 
@@ -116,7 +112,7 @@ KOKKOS_INLINE_FUNCTION std::size_t volfracDofIdx( std::size_t nmat, std::size_t 
 //! \return Index of the required material continuity equation
 //! \details This function is used to get the index of the required DOF in the
 //!   solution vector, which is of type tk::Fields.
-KOKKOS_INLINE_FUNCTION std::size_t densityDofIdx( std::size_t nmat, std::size_t kmat,
+std::size_t densityDofIdx( std::size_t nmat, std::size_t kmat,
   std::size_t ndof, std::size_t idof )
 { return densityIdx(nmat, kmat)*ndof+idof; }
 
@@ -132,7 +128,7 @@ KOKKOS_INLINE_FUNCTION std::size_t densityDofIdx( std::size_t nmat, std::size_t 
 //! \return Index of the required momentum equation component
 //! \details This function is used to get the index of the required DOF in the
 //!   solution vector, which is of type tk::Fields.
-KOKKOS_INLINE_FUNCTION std::size_t momentumDofIdx( std::size_t nmat, std::size_t idir,
+std::size_t momentumDofIdx( std::size_t nmat, std::size_t idir,
   std::size_t ndof, std::size_t idof )
 { return momentumIdx(nmat, idir)*ndof+idof; }
 
@@ -145,7 +141,7 @@ KOKKOS_INLINE_FUNCTION std::size_t momentumDofIdx( std::size_t nmat, std::size_t
 //! \return Index of the required material total energy equation
 //! \details This function is used to get the index of the required DOF in the
 //!   solution vector, which is of type tk::Fields.
-KOKKOS_INLINE_FUNCTION std::size_t energyDofIdx( std::size_t nmat, std::size_t kmat,
+std::size_t energyDofIdx( std::size_t nmat, std::size_t kmat,
   std::size_t ndof, std::size_t idof )
 { return energyIdx(nmat, kmat)*ndof+idof; }
 
@@ -160,7 +156,7 @@ KOKKOS_INLINE_FUNCTION std::size_t energyDofIdx( std::size_t nmat, std::size_t k
 //! \return Index of the required material total energy equation
 //! \details This function is used to get the index of the required DOF in the
 //!   solution vector, which is of type tk::Fields.
-KOKKOS_INLINE_FUNCTION std::size_t deformDofIdx( std::size_t nmat, std::size_t ksld,
+std::size_t deformDofIdx( std::size_t nmat, std::size_t ksld,
   std::size_t i, std::size_t j, std::size_t ndof, std::size_t idof )
 { return deformIdx(nmat, ksld, i, j)*ndof+idof; }
 
@@ -176,7 +172,7 @@ KOKKOS_INLINE_FUNCTION std::size_t deformDofIdx( std::size_t nmat, std::size_t k
 //! \return Index of the required velocity component from vector of primitives
 //! \details This function is used to get the index of the required DOF in the
 //!   solution vector, which is of type tk::Fields.
-KOKKOS_INLINE_FUNCTION std::size_t velocityDofIdx( std::size_t nmat, std::size_t idir,
+std::size_t velocityDofIdx( std::size_t nmat, std::size_t idir,
   std::size_t ndof, std::size_t idof )
 { return velocityIdx(nmat, idir)*ndof+idof; }
 
@@ -189,7 +185,7 @@ KOKKOS_INLINE_FUNCTION std::size_t velocityDofIdx( std::size_t nmat, std::size_t
 //! \return Index of the required material pressure from vector of primitives
 //! \details This function is used to get the index of the required DOF in the
 //!   solution vector, which is of type tk::Fields.
-KOKKOS_INLINE_FUNCTION std::size_t pressureDofIdx( std::size_t nmat, std::size_t kmat,
+std::size_t pressureDofIdx( std::size_t nmat, std::size_t kmat,
   std::size_t ndof, std::size_t idof )
 { return pressureIdx(nmat, kmat)*ndof+idof; }
 
@@ -204,19 +200,14 @@ KOKKOS_INLINE_FUNCTION std::size_t pressureDofIdx( std::size_t nmat, std::size_t
 //!   of primitives
 //! \details This function is used to get the index of the required DOF in the
 //!   primitives vector, which is of type tk::Fields.
-KOKKOS_INLINE_FUNCTION std::size_t stressDofIdx( std::size_t nmat, std::size_t ksld,
+std::size_t stressDofIdx( std::size_t nmat, std::size_t ksld,
   std::size_t i, std::size_t ndof, std::size_t idof )
 { return stressIdx(nmat, ksld, i)*ndof+idof; }
 
 inline bool matExists( tk::real volfrac )
-{
-  return
-    (volfrac > 100.0*g_inputdeck.get< tag::multimat, tag::min_volumefrac >())
-    ? true : false;
-}
-//{ return (volfrac > 1e-10) ? true : false; }
+{ return (volfrac > 1e-10) ? true : false; }
 
-KOKKOS_INLINE_FUNCTION tk::real volfracPRelaxLim()
+tk::real volfracPRelaxLim()
 { return 1.0e-02; }
 
 //! \brief Get the index of the quantity vel[l]*g[i][j] computed inside the
@@ -229,31 +220,9 @@ KOKKOS_INLINE_FUNCTION tk::real volfracPRelaxLim()
 //!   Riemann flux solver.
 //! \details This function is used to get the index of the quantity
 //!   vel[l]*g[i][j] computed inside the Riemann flux solver.
-KOKKOS_INLINE_FUNCTION std::size_t newSolidsAccFn( std::size_t kmat,
+std::size_t newSolidsAccFn( std::size_t kmat,
   std::size_t i, std::size_t j, std::size_t l)
-{
-  return 27*kmat+3*(3*i+j)+l;
-}
-
-//! From develop branch
-//! Todo: Verify this is the same as the inline function above
-//! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
-//!  on the riemannDeriv array.
-//! \param[in] k Index of required material
-//! \param[in] i Index i
-//! \param[in] j Index j
-//! \param[in] l Index l
-//! \return Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
-//!  on the riemannDeriv array.
-//! \details This function is used to get the index of the nonconservative
-//!  terms of the deformation equation.
-/*
-inline std::size_t newSolidsAccFn( std::size_t k,
-  std::size_t i, std::size_t j, std::size_t l)
-{ const auto& solidx =
-    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
-  return 27*(solidx[k]-1)+3*(3*i+j)+l; }
-*/
+{ return 3*9*kmat+3*(3*i+j)+l; }
 
 //! \brief Index for Cauchy stress components, since only the 6 independent
 //!   components are stored.
@@ -271,7 +240,7 @@ const std::array< std::array< std::size_t, 3 >, 3 > stressCmp{{
 //! \param[in] j Column-index of required tensor component
 //! \return Index of the required material deformation gradient equation
 //! in the context of a list where only the g's of solid materials are present.
-KOKKOS_INLINE_FUNCTION std::size_t solidTensorIdx( std::size_t ksld, std::size_t i, std::size_t j )
+std::size_t solidTensorIdx( std::size_t ksld, std::size_t i, std::size_t j )
 { return 9*ksld+(3*i+j); }
 
 

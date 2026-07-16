@@ -22,6 +22,8 @@
 
 #include "Basis.hpp"
 #include "Vector.hpp"
+#include "Mass.hpp"
+#include "Kokkos_Core.hpp"
 #include "Quadrature.hpp"
 
 std::array< tk::real, 3 >

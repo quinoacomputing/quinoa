@@ -1289,8 +1289,7 @@ class MultiMat {
             tk::real phi = std::max(0.0, equiv_stress-yield_stress);
             tk::real rel_time = getmatprop< tag::plasticity_reltime >(k);
             if (phi > 0.0) {
-              // Note: if plasticity becomes unstable, raise the power (below) to two
-              rel_factor = std::pow((phi/yield_stress),1.0)/rel_time;
+              rel_factor = std::pow((phi/yield_stress),2.0)/rel_time;
               // Scale rel_factor by alpha
               tk::real a_min = 1.0e-04, a_max = 2.0e-01;
               auto smoothstep = [&](tk::real a){

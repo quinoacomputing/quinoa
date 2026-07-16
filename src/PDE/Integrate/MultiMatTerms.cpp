@@ -894,7 +894,6 @@ fluxTerms(
   auto u = ugp[ncomp+velocityIdx(nmat,0)];
   auto v = ugp[ncomp+velocityIdx(nmat,1)];
   auto w = ugp[ncomp+velocityIdx(nmat,2)];
-
   if (inciter::haveSolid(nmat, solidx))
   {
     std::vector< tk::real > al(nmat, 0.0);
@@ -1008,5 +1007,4 @@ fluxTerms(
 
   return fl;
 }
-
 }// tk::

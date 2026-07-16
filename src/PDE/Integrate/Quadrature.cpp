@@ -12,6 +12,7 @@
 // *****************************************************************************
 
 #include "Quadrature.hpp"
+#include "Kokkos_Core.hpp"
 
 #include <string>
 
