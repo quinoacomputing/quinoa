@@ -101,7 +101,8 @@ using multispeciesList = tk::TaggedTuple< brigand::list<
   tag::physics,          PhysicsType,
   tag::nspec,            std::size_t,
   tag::problem,          ProblemType,
-  tag::viscous,          bool
+  tag::viscous,          bool,
+  tag::Sutherland,       bool
 > >;
 
 // Material/EOS object
@@ -129,7 +130,10 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::s1,                 std::vector< tk::real >,
   tag::cv,                 std::vector< tk::real >,
   tag::k,                  std::vector< tk::real >,
-  tag::plasticity_reltime, std::vector< tk::real >
+  tag::plasticity_reltime, std::vector< tk::real >,
+  tag::temp_ref,  std::vector< tk::real >,
+  tag::mu_ref,    std::vector< tk::real >,
+  tag::C,         std::vector< tk::real >
 > >;
 
 // Species/EOS object
@@ -142,7 +146,11 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
   tag::t_range,   std::vector< std::vector< tk::real > >,
   tag::dH_ref,    std::vector< tk::real >,
-  tag::spec_name, std::vector< std::string >
+  tag::mu,        std::vector< tk::real >,
+  tag::spec_name, std::vector< std::string >,
+  tag::temp_ref,  std::vector< tk::real >,
+  tag::mu_ref,    std::vector< tk::real >,
+  tag::C,         std::vector< tk::real >
 > >;
 
 // Boundary conditions block
@@ -855,7 +863,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "Select the Low Diffusion Flux Splitting Scheme (LDFSS)",
         R"(This keyword is used to select the LDFSS flux
         function used for discontinuous Galerkin (DG) spatial discretization
-        used in inciter. It is only set up for for multi-material hydro, and
+        used in inciter. It is only set up for for multi-species PDEs, and
         not selectable for anything else.)"});
 
       keywords.insert({"lowspeed_kp",
@@ -1056,7 +1064,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to specify the material property, stiffness
         parameter in the stiffened gas equation of state.)", "vector of reals"});
 
-      keywords.insert({"w_gru", "Grueneisen coefficient",
+        keywords.insert({"w_gru", "Grueneisen coefficient",
         R"(This keyword is used to specify the material property, Gruneisen
         coefficient for the Jones-Wilkins-Lee equation of state, and the
         reference Gruneisen coefficient for the linear Mie-Gruneisen equation
@@ -1185,6 +1193,25 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"R", "Specific gas constant",
         R"(This keyword is used to specify the species property, specific gas
         constant, in units J/kg.K.)", "vector of reals"});
+
+      keywords.insert({"mu_ref", "Reference dynamic viscosity",
+        R"(This keyword is used to specify the species reference viscosity at
+        the reference temperature (temp_ref) for Sutherland's Law in units of 
+        N.s/m^2)", "vector of reals"});
+
+      keywords.insert({"temp_ref", "Reference temperature", 
+        R"(This keyword is used to specify the species reference temperature 
+        for Sutherland's Law in units of K)", "vector of reals"});
+
+      keywords.insert({"C", "Sutherland constant",
+        R"(This keyword is used to specify the species Sutherland constant, 
+        which is an effective temperature in units of K)", "vector of reals"});
+
+      keywords.insert({"Sutherland", "Sutherland's Law boolean",
+        R"(This keyword is used to toggle between using Sutherland's Law and
+        holding viscosity constant. A value of 'true' enables Sutherland's 
+        Law and a value of 'false' enables constant viscosity. Default is 'false'.)",
+        "bool"});
 
       keywords.insert({"stiffenedgas",
         "Select the stiffened gas equation of state",

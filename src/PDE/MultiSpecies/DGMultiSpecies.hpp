@@ -19,6 +19,7 @@
 #include <unordered_set>
 #include <map>
 #include <array>
+#include <iostream>
 
 #include "Macro.hpp"
 #include "Exception.hpp"
@@ -79,9 +80,9 @@ class MultiSpecies {
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall 
-        , symmetry
-        , isothermal_wall },       // Slip equivalent to symmetry without mesh motion
+        , noslipwall
+        , symmetry    // Slip-wall equivalent to symmetry without mesh motion
+        , isothermal_wall },
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
@@ -90,7 +91,7 @@ class MultiSpecies {
         , noOpGrad
         , noOpGrad
         , symmetryGrad
-        , symmetryGrad }
+        , noOpGrad }
         ) );
 
       // EoS initialization
@@ -351,10 +352,31 @@ class MultiSpecies {
 
           // Evaluate mixture temperature at quadrature point
           auto rhoE0 = state[multispecies::energyIdx(nspec, 0)];
+          int iconv(0);
           pri[multispecies::temperatureIdx(nspec,0)] =
             mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk,
-              prim(e,multispecies::temperatureDofIdx(nspec, 0, rdof, 0)));
-          // TODO: consider clipping temperature here
+              iconv, prim(e,multispecies::temperatureDofIdx(nspec, 0, rdof, 0)));
+
+          // Check for unphysical state and error out with information
+          if (!iconv) {
+            std::cout << "Element centroid:  " << geoElem(e,1) << ", "
+              << geoElem(e,2) << ", " << geoElem(e,3) << std::endl;
+            std::cout << "Mass fractions:    ";
+            for (std::size_t k=0; k<nspec; ++k) {
+              std::cout << state[multispecies::densityIdx(nspec,k)]/rhob << ", ";
+            }
+            std::cout << std::endl;
+            std::cout << "Mixture density:   " << rhob << std::endl;
+            std::cout << "Total energy:      " << rhoE0 << std::endl;
+            std::cout << "Velocity:          " <<
+              vel[0] << ", " << vel[1] << ", " << vel[2] << std::endl;
+
+            Throw( "Newton iteration for temperature failed to converge "
+              " with temperature at final iteration = " +
+              std::to_string(pri[multispecies::temperatureIdx(nspec,0)]) );
+          }
+
+          // Clip temperature
           pri[multispecies::temperatureIdx(nspec,0)] = constrain_temperature(
             pri[multispecies::temperatureIdx(nspec,0)]);
 
@@ -648,6 +670,8 @@ class MultiSpecies {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      auto viscous = g_inputdeck.get< tag::multispecies, tag::viscous >();
+      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -711,6 +735,15 @@ class MultiSpecies {
         // compute volume integrals
         tk::volInt( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem,
           flux, velfn, Problem::src, U, P, W, ndofel, R );
+      }
+
+      if (viscous) {
+        tk::surfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof, inpoel,
+          coord, fd, geoFace, geoElem, U, P, R );
+        for (const auto& b : m_bc)
+          tk::bndSurfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+            std::get<1>(b), std::get<2>(b), U, P, R );
       }
 
       // compute external (energy) sources
@@ -782,8 +815,6 @@ class MultiSpecies {
       auto mindt = timeStepSizeMultiSpecies( m_mat_blk, fd.Esuf(), geoFace,
         geoElem, nielem, nspec, U, P, local_dte);
 
-      //if (viscous)
-      //  mindt = std::min(mindt, timeStepSizeViscousFV(geoElem, nielem, nspec, U));
       //mindt = std::min(mindt, m_physics.dtRestriction(geoElem, nielem, {}));
 
       tk::real dgp = 0.0;

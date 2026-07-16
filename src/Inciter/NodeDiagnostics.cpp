@@ -90,7 +90,7 @@ NodeDiagnostics::compute(
   // Query after how many time steps user wants to dump diagnostics
   auto diagfreq = g_inputdeck.get< tag::diagnostics, tag::interval >();
 
-  if ( !((d.It()+1) % diagfreq) ) {     // if remainder, don't dump
+  if ( !((d.It()+1) % diagfreq) || d.It() == 1 ) {   // if remainder, don't dump
 
     // Diagnostics vector (of vectors) during aggregation. See
     // Inciter/Diagnostics.h.
@@ -157,7 +157,10 @@ NodeDiagnostics::compute(
     diag[DT][0] = d.Dt();
 
     // Contribute to diagnostics
-    auto stream = serialize( d.MeshId(), u.nprop(), diag );
+    // Indicator if this diag computation is only for initial l2res computation
+    int is_initres(0);
+    if ((d.It()+1) % diagfreq) is_initres = 1;
+    auto stream = serialize( d.MeshId(), u.nprop(), is_initres, diag );
     d.contribute( stream.first, stream.second.get(), DiagMerger,
       CkCallback(CkIndex_Transporter::diagnostics(nullptr), d.Tr()) );
 

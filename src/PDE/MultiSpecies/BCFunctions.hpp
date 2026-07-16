@@ -133,6 +133,7 @@ namespace inciter {
       for (std::size_t i=0; i<3; ++i) {
         ur[multispecies::momentumIdx(nspec,i)] = rhor * fu[i];
       }
+      ur[ncomp+multispecies::temperatureIdx(nspec,0)] = ft;
 
     } else if (Ma > -1 && Ma < 0) {  // Subsonic inflow
       // For subsonic inflow, there is 1 outgoing characteristic and 4
@@ -282,13 +283,15 @@ namespace inciter {
     // Define right side temperature.
     // We want Tw = (Tl+Tr)/2 => Tr = 2Tw-Tl
     Mixture mixl(nspec, ul, mat_blk);
+    int iconv(0);
     tk::real tl = mixl.temperature(rho, v1l, v2l, v3l,
-      ul[multispecies::energyIdx(nspec, 0)], mat_blk, tw);
+      ul[multispecies::energyIdx(nspec, 0)], mat_blk, iconv, tw);
     tk::real tr = 2*tw-tl;
     // Find energy associated with that temperature
     Mixture mixr(nspec, ur, mat_blk);
     ur[multispecies::energyIdx(nspec, 0)] =
       mixr.totalenergy(rho, v1r, v2r, v3r, tr, mat_blk);
+    ur[ncomp+multispecies::temperatureIdx(nspec, 0)] = tr;
 
     Assert( ur.size() == ncomp+1, "Incorrect size for appended "
             "boundary state vector" );

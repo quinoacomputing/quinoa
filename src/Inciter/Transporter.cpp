@@ -87,6 +87,7 @@ Transporter::Transporter() :
   m_minstat( m_nchare.size() ),
   m_maxstat( m_nchare.size() ),
   m_avgstat( m_nchare.size() ),
+  m_initL2res(),
   m_timer(),
   m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
@@ -1525,12 +1526,14 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 {
   std::size_t meshid, ncomp;
+  int is_initres;
   std::vector< std::vector< tk::real > > d;
 
   // Deserialize diagnostics vector
   PUP::fromMem creator( msg->getData() );
   creator | meshid;
   creator | ncomp;
+  creator | is_initres;
   creator | d;
   delete msg;
 
@@ -1571,7 +1574,6 @@ Transporter::diagnostics( CkReductionMsg* msg )
   if (scheme == ctr::SchemeType::ALECG || scheme == ctr::SchemeType::OversetFE) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol[meshid] );
-      diag.push_back( l2res[i] );
     }
   }
   else if ( scheme == ctr::SchemeType::FV ||
@@ -1583,8 +1585,20 @@ Transporter::diagnostics( CkReductionMsg* msg )
           ) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] );
-      diag.push_back( l2res[i] );
     }
+  }
+
+  // Store initial residual
+  if (m_initL2res.size() == 0) {
+    m_initL2res.resize(l2res.size());
+    for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+      m_initL2res[i] = l2res[i];
+    }
+  }
+
+  for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+    l2res[i] = l2res[i]/(m_initL2res[i]+1e-12);  // get relative residuals
+    diag.push_back( l2res[i] );
   }
 
   // Append total energy
@@ -1603,13 +1617,15 @@ Transporter::diagnostics( CkReductionMsg* msg )
   }
 
   // Append diagnostics file at selected times
-  auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();
-  if (m_nelem.size() > 1) filename += '.' + id;
-  tk::DiagWriter dw( filename,
-    g_inputdeck.get< tag::diagnostics, tag::format >(),
-    g_inputdeck.get< tag::diagnostics, tag::precision >(),
-    std::ios_base::app );
-  dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
+  if (!is_initres) {
+    auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();
+    if (m_nelem.size() > 1) filename += '.' + id;
+    tk::DiagWriter dw( filename,
+      g_inputdeck.get< tag::diagnostics, tag::format >(),
+      g_inputdeck.get< tag::diagnostics, tag::precision >(),
+      std::ios_base::app );
+    dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
+  }
 
   // Continue time step
   m_scheme[meshid].bcast< Scheme::refine >( l2res );
