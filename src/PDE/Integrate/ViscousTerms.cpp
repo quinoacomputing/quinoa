@@ -361,4 +361,20 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   // no-op
 }
 
+void
+MultiSpeciesViscousTermsDGP1::volumeFlux(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t ncomp,
+  const std::array< std::vector< tk::real >, 2 >& state,
+  const std::vector< std::array< tk::real, 3 > >& visc_fl) const
+// *****************************************************************************
+//! \brief Compute the multispecies viscous flux on a tet volume
+//! \param[in] mat_blk Material EOS block
+//! \param[in] ncomp Number of components in this system
+//! \param[in] state vector of conserved quantities
+//! \param[in,out] visc_fl viscous volume flux
+// *****************************************************************************
+{
+ // no-op
+}
 } // tk::
