@@ -365,8 +365,8 @@ void
 MultiSpeciesViscousTermsDGP1::volumeFlux(
   const std::vector< inciter::EOS >& mat_blk,
   std::size_t ncomp,
-  const std::array< std::vector< tk::real >, 2 >& state,
-  const std::vector< std::array< tk::real, 3 > >& visc_fl) const
+  const std::vector<tk::real>& state,
+  std::vector<std::array<tk::real, 3>> visc_fl ) const
 // *****************************************************************************
 //! \brief Compute the multispecies viscous flux on a tet volume
 //! \param[in] mat_blk Material EOS block

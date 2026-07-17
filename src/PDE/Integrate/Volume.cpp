@@ -18,11 +18,6 @@
 #include "Quadrature.hpp"
 #include "Reconstruction.hpp"
 #include "ViscousTerms.hpp"
-#include "Vector.hpp"
-#include "Quadrature.hpp"
-#include "Reconstruction.hpp"
-#include "Inciter/InputDeck/InputDeck.hpp"
-#include "UnsMesh.hpp"
 
 template< class ViscousTerms >
 void
@@ -68,8 +63,7 @@ tk::volIntViscous(
   Assert( ndof*ncomp == R.nprop(),
           "Mismatch in viscous RHS polynomial and component sizes" );
 
-  std::vector< std::array< tk::real, 3 > >& visc_fl(0.0);
-
+  std::vector<std::array<tk::real, 3>> visc_fl(ncomp);
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
   {
@@ -124,12 +118,9 @@ tk::volIntViscous(
       // volume fluxes
       if(dof_el > 1)
       {
-        //evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
-          //rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
-          //{{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
         state = viscousRhs.stateAt(mat_blk, U, P, e, dof_el, B );
         // compute viscous flux
-        viscousRhs.volumeFlux( ncomp, mat_blk, state, visc_fl ); //currently no-op
+        viscousRhs.volumeFlux( mat_blk, ncomp, state, visc_fl ); //currently no-op
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, visc_fl, R );
       }
@@ -523,7 +514,7 @@ tk::srcIntFV( const std::vector< inciter::EOS >& mat_blk,
 }
 
 void
-volIntViscousMultiSpecies(
+tk::volIntViscousMultiSpecies(
   std::size_t nspec,
   const std::vector< inciter::EOS >& mat_blk,
   const std::size_t ndof,
