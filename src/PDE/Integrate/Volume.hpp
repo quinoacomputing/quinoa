@@ -96,6 +96,22 @@ update_rhs_src( const std::size_t ndof,
                 Fields& R );
 
 //! Compute volume integrals for const-order DG (not p-adaptive)
+//  Persistent device-resistant scratch buffer for volInt_constP
+//  Bundles per-call device views that volInt_constP would otherwise (re)allocate on invocation
+//  An instance of this struct must be owned by a Charm++ chare and never a static thread/local
+//  in order for the views to be destroyed before Kokkos::finalize()
+struct VolIntDeviceViews {
+  Kokkos::View<std::size_t*,memory_space> solidx;
+  Kokkos::View<std::size_t*,memory_space> inpoel;
+  Kokkos::View<real*,memory_space> cx;
+  Kokkos::View<real*,memory_space> cy;
+  Kokkos::View<real*,memory_space> cz;
+  Kokkos::View<real*,memory_space> geoElem;
+  Kokkos::View<real*,memory_space> U;
+  Kokkos::View<real*,memory_space> P;
+  Kokkos::View<real*,memory_space> R;
+};
+
 void
 volInt_constP(
   std::size_t nmat,
@@ -113,7 +129,9 @@ volInt_constP(
   const Fields& U,
   const Fields& P,
   Fields& R,
-  int intsharp=0 );
+  int intsharp=0,
+  VolIntDeviceViews* dev=nullptr //added 
+);
 
 //! Compute source term integrals for FV
 void

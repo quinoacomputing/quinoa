@@ -36,6 +36,28 @@ namespace inciter {
   extern ctr::InputDeck g_inputdeck;
 };
 
+// Ensure persistent device view has (at least/exactly) requested capacity.
+// Only reallocate when the size changes (e.g. during an AMR remesh); if the
+// size does not change the existing view is kept as-is and reused.
+//
+// Returns:
+//   true  -> the view was (re)allocated. Its device contents are uninitialized
+//            and the caller MUST upload fresh data.
+//   false -> the view was reused unchanged. For time-invariant (mesh/geometry)
+//            data this means the resident copy is still valid and the H2D
+//            deep_copy can be skipped.
+template <typename T>
+bool ensureDeviceCapacity(Kokkos::View<T*, memory_space>& view,
+                          const std::string& label, std::size_t n){
+  if (view.extent(0) != n){
+    view = Kokkos::View<T*, memory_space>(
+      Kokkos::view_alloc(label, Kokkos::WithoutInitializing),
+      n);
+    return true;   // (re)allocated -> caller must upload
+  }
+  return false;    // reused -> data already resident on device
+}
+
 // Forward declaration of device function
 namespace tk {
   KOKKOS_INLINE_FUNCTION
@@ -343,7 +365,9 @@ tk::volInt_constP(
   const Fields& U,
   const Fields& P,
   Fields& R,
-  int intsharp )
+  int intsharp,
+  VolIntDeviceViews* dev //added
+)
 // *****************************************************************************
 //  Compute volume integrals for const-order DG with Kokkos acceleration
 //! \param[in] nmat Number of materials in this PDE system
@@ -365,6 +389,8 @@ tk::volInt_constP(
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  Kokkos::Profiling::pushRegion("volInt");
+
   size_t ncomp = U.nprop()/rdof;
   size_t nprim = P.nprop()/rdof;
 
@@ -382,6 +408,7 @@ tk::volInt_constP(
   // Quadrature points computed once (constant P)
   auto ng = tk::NGvol(ndof);
 
+  /*
   // Transfer solidx vector
   auto solidx_h_view = changeToView(solidx.data(), nmat);
   Kokkos::View<size_t*, memory_space> solidx_d_view("solidx", nmat);
@@ -429,8 +456,81 @@ tk::volInt_constP(
   Kokkos::View<real*, memory_space> R_d_view("R_d_view", R_size);
   auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
   Kokkos::deep_copy(R_d_view, R_h_view);
+  */
 
-  Kokkos::parallel_for(range_policy(0, nelem), KOKKOS_LAMBDA(const size_t e)
+  // Persistent device buffers
+  // Does not get rid of host->device deep_copy since the data changes per step
+  // But removes need for constant cudaMalloc and cudaFree
+  VolIntDeviceViews local_dev;
+  VolIntDeviceViews& dv = dev ? *dev : local_dev;
+  
+  // Transfer solidx vector
+  auto solidx_h_view = changeToView(solidx.data(), nmat);
+  if (ensureDeviceCapacity(dv.solidx, "solidx_d_view", nmat))
+    Kokkos::deep_copy(dv.solidx, solidx_h_view);
+
+  // Transfer inpoel variable
+  size_t inpoel_size = inpoel.size();
+  auto inpoel_h_view = changeToView(inpoel.data(), inpoel_size);
+  if (ensureDeviceCapacity(dv.inpoel, "inpoel_d_view", inpoel_size))
+    Kokkos::deep_copy(dv.inpoel, inpoel_h_view);
+
+  // Transfer coord (nodal coordinates)
+  size_t coordx_size = coord[0].size();
+  auto cx_h_view = changeToView(coord[0].data(), coordx_size);
+  if (ensureDeviceCapacity(dv.cx, "cx_d_view", coordx_size))
+    Kokkos::deep_copy(dv.cx, cx_h_view);
+
+  size_t coordy_size = coord[1].size();
+  auto cy_h_view = changeToView(coord[1].data(), coordy_size);
+  if (ensureDeviceCapacity(dv.cy, "cy_d_view", coordy_size))
+    Kokkos::deep_copy(dv.cy, cy_h_view);
+  
+  size_t coordz_size = coord[2].size();
+  auto cz_h_view = changeToView(coord[2].data(), coordz_size);
+  if (ensureDeviceCapacity(dv.cz, "cz_d_view", coordz_size))
+    Kokkos::deep_copy(dv.cz, cz_h_view);
+
+  // geoElem, U, P, R transfer
+  size_t geoElem_size = geoElem.getSize();
+  auto geoElem_h_view = changeToView(geoElem.getPointer(), geoElem_size);
+  if (ensureDeviceCapacity(dv.geoElem, "geoElem_d_view", geoElem_size))
+    Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
+
+  size_t P_size = P.getSize();
+  ensureDeviceCapacity(dv.P, "P_d_view", P_size);
+  auto P_h_view = changeToView(P.getPointer(), P_size);
+  Kokkos::deep_copy(dv.P, P_h_view);
+
+  size_t U_size = U.getSize();
+  ensureDeviceCapacity(dv.U, "U_d_view", U_size);
+  auto U_h_view = changeToView(U.getPointer(), U_size);
+  Kokkos::deep_copy(dv.U, U_h_view);
+
+  size_t R_size = R.getSize();
+  ensureDeviceCapacity(dv.R, "R_d_view", R_size);
+  auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
+  //Kokkos::deep_copy(dv.R, R_h_view);
+#ifdef VOLINT_R_PRESEEDED
+  Kokkos::deep_copy(dv.R, R_h_view);
+#else
+  Kokkos::deep_copy(dv.R, 0.0);        
+#endif
+
+  // Shallow copies of view handle
+  // Does not touch device memory, just gives kernel below local names and captures plain views by value into KOKKOS_LAMBDA
+  // If volIntDeviceViews struct (or a ref to it) is captured it will be invalid on device
+  auto solidx_d_view = dv.solidx;
+  auto inpoel_d_view = dv.inpoel;
+  auto cx_d_view = dv.cx;
+  auto cy_d_view = dv.cy;
+  auto cz_d_view = dv.cz;
+  auto geoElem_d_view = dv.geoElem;
+  auto P_d_view = dv.P;
+  auto U_d_view = dv.U;
+  auto R_d_view = dv.R;
+
+  Kokkos::parallel_for("volInt_kernel",range_policy(0, nelem), KOKKOS_LAMBDA(const size_t e)
   {
     if(ndof > 1)
     {
@@ -492,6 +592,7 @@ tk::volInt_constP(
   });
   Kokkos::fence();
   Kokkos::deep_copy(R_h_view, R_d_view);
+  Kokkos::Profiling::popRegion();
 }
 
 void tk::srcIntFV( const std::vector< inciter::EOS >& mat_blk,

@@ -274,6 +274,199 @@ nonConservativeInt( const bool pref,
 }
 
 void
+nonConservativeInt_constP(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const std::vector< std::vector< tk::real > >& riemannDeriv,
+  Fields& R,
+  int intsharp )
+// *****************************************************************************
+//  Compute volume integrals for multi-material DG (const-order, not p-adaptive)
+//! \details This is called for multi-material DG, computing volume integrals of
+//!   terms in the volume fraction and energy equations, which do not exist in
+//!   the single-material flow formulation (for `CompFlow` DG). For further
+//!   details see Pelanti, M., & Shyue, K. M. (2019).
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] nelem Total number of elements
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
+//! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms
+//! \param[in,out] R Right-hand side vector added to
+//! \param[in] intsharp Interface reconstruction indicator
+// *****************************************************************************
+{
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::momentumIdx;
+  using inciter::energyIdx;
+  using inciter::velocityIdx;
+  using inciter::deformIdx;
+  using inciter::newSolidsAccFn;
+
+  const auto& solidx =
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
+
+  // Quadrature points
+  auto ng = tk::NGvol(ndof);
+
+  // arrays for quadrature points
+  std::array< std::vector< real >, 3 > coordgp;
+  std::vector< real > wgp;
+
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  coordgp[2].resize( ng );
+  wgp.resize( ng );
+
+  GaussQuadratureTet( ng, coordgp, wgp );
+
+  // Allocate memory
+  std::vector< tk::real > B(rdof), state(ncomp+nprim);
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( ndof, 0 );
+
+  // compute volume integrals
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // Extract the element coordinates
+    std::array< std::array< real, 3>, 4 > coordel {{
+      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+    }};
+
+    auto jacInv =
+            inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+    // Compute the derivatives of basis function for second order terms
+    eval_dBdx_p1( ndof, jacInv, dBdx );
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      if (ndof > 4) eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
+
+      // Compute the basis function
+      eval_basis( rdof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
+
+      auto wt = wgp[igp] * geoElem(e, 0);
+
+      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+        rdof, nmat, e, rdof, inpoel, coord, geoElem,
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
+
+      // get bulk properties
+      tk::real rhob(0.0);
+      for (std::size_t k=0; k<nmat; ++k)
+          rhob += state[densityIdx(nmat, k)];
+
+      // get the velocity vector
+      std::array< tk::real, 3 > vel{{ state[ncomp+velocityIdx(nmat, 0)],
+                                      state[ncomp+velocityIdx(nmat, 1)],
+                                      state[ncomp+velocityIdx(nmat, 2)] }};
+
+      std::vector< tk::real > ymat(nmat, 0.0);
+      std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        ymat[k] = state[densityIdx(nmat, k)]/rhob;
+
+        std::size_t mark(3*k);
+        if (solidx[k] > 0) mark = 3*nmat+ndof+3*(solidx[k]-1);
+
+        for (std::size_t idir=0; idir<3; ++idir)
+          dap[idir] += riemannDeriv[mark+idir][e];
+      }
+
+      // compute non-conservative terms
+      std::vector< std::vector< tk::real > > ncf
+        (ncomp, std::vector<tk::real>(ndof,0.0));
+
+      for (std::size_t idir=0; idir<3; ++idir)
+        for(std::size_t idof=0; idof<ndof; ++idof)
+          ncf[momentumIdx(nmat, idir)][idof] = 0.0;
+
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        // evaluate non-conservative term for energy equation
+        std::size_t mark(3*k);
+        if (solidx[k] > 0) mark = 3*nmat+ndof+3*(solidx[k]-1);
+
+        for(std::size_t idof=0; idof<ndof; ++idof)
+        {
+          ncf[densityIdx(nmat, k)][idof] = 0.0;
+
+          for (std::size_t idir=0; idir<3; ++idir)
+            ncf[energyIdx(nmat, k)][idof] -= vel[idir] * ( ymat[k]*dap[idir]
+                                                  - riemannDeriv[mark+idir][e] );
+        }
+
+        // evaluate non-conservative terms for g equation
+        if (solidx[k] > 0) {
+          std::size_t nsld = inciter::numSolids(nmat, solidx);
+          for (std::size_t idof=0; idof<ndof; ++idof)
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                for (std::size_t l=0; l<3; ++l)
+                {
+                  mark = 3*nmat+ndof+3*nsld+inciter::newSolidsAccFn(k,i,j,l);
+                  ncf[deformIdx(nmat, solidx[k], i, j)][idof] -=
+                    vel[l] * riemannDeriv[mark][e];
+                }
+        }
+
+        // Evaluate non-conservative term for volume fraction equation.
+        // (See original notes on the constant-Riemann-velocity assumption and
+        // the special DGP2 discretization.)
+        if (ndof <= 4 || intsharp == 1) {
+          for(std::size_t idof=0; idof<ndof; ++idof)
+            ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
+                                           * riemannDeriv[3*nmat+idof][e];
+        } else if (intsharp == 0) {     // If DGP2 without THINC
+          // DGP2 is discretized differently than DGP1/FV to guarantee 3rd order
+          // convergence for testcases with uniform and constant velocity.
+
+          // P0 contributions for all equations
+          for(std::size_t idof=0; idof<ndof; ++idof)
+            ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
+                                           * riemannDeriv[3*nmat][e] * B[idof];
+          // High order contributions
+          for(std::size_t idof=1; idof<ndof; ++idof)
+            for(std::size_t idir=0; idir<3; ++idir)
+              ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)]
+                                              * vel[idir] * dBdx[idir][idof];
+        }
+      }
+
+      updateRhsNonCons( ncomp, nmat, ndof, ndof, wt, e, B, dBdx, ncf, R );
+    }
+  }
+}
+
+void
 updateRhsNonCons(
   ncomp_t ncomp,
   const std::size_t nmat,
