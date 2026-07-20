@@ -40,9 +40,11 @@ struct AUSM {
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {},
-        const tk::real wn = 0 )
+        const std::array< tk::real, 3>& w = {} )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+
+    tk::real wn = w[0]*fn[0]+w[1]*fn[1]+w[2]*fn[2];
 
     // All-speed parameters
     // These parameters control the amount of all-speed diffusion necessary for

@@ -39,7 +39,7 @@ struct AUSMCompFlow {
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {},
-        const tk::real = 0 )
+        const std::array< tk::real, 3>& = {} )
   {
     // All-speed parameters
     // These parameters control the amount of all-speed diffusion necessary for

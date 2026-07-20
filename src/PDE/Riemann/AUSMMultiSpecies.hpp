@@ -42,7 +42,7 @@ struct AUSMMultiSpecies {
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {},
-        const tk::real = 0 )
+        const std::array< tk::real, 3>& = {} )
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 

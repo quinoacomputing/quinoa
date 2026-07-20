@@ -579,14 +579,15 @@ surfInt( const bool pref,
 
       // mesh velocity at quadrature point
       tk::real wn_igp(0.0);
+      std::array< tk::real, 3 > w_igp;
       if (ale) {
-        auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
-        // mesh velocity normal to element face
-        wn_igp = tk::dot(w_igp, fn);
+        w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+        // // mesh velocity normal to element face
+        // wn_igp = tk::dot(w_igp, fn);
       }
 
       // compute flux
-      auto fl = flux( mat_blk, fn, state, v, wn_igp );
+      auto fl = flux( mat_blk, fn, state, v, w_igp );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,
@@ -902,14 +903,15 @@ surfInt_constP(
 
       // mesh velocity at quadrature point
       tk::real wn_igp(0.0);
+      std::array< tk::real, 3 > w_igp;
       if (ale) {
-        auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
-        // mesh velocity normal to element face
-        wn_igp = tk::dot(w_igp, fn);
+        w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+        // // mesh velocity normal to element face
+        // wn_igp = tk::dot(w_igp, fn);
       }
 
       // compute flux
-      auto fl = flux( mat_blk, fn, state, v, wn_igp );
+      auto fl = flux( mat_blk, fn, state, v, w_igp );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndof, ndof, wt, fn,
@@ -1012,7 +1014,7 @@ surfIntFV(
     auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
     // compute flux
-    auto fl = flux( mat_blk, fn, state, v, 0.0 );
+    auto fl = flux( mat_blk, fn, state, v, {{0.0, 0.0, 0.0}} );
 
     // compute non-conservative terms
     std::vector< tk::real > var_riemann(nmat+1, 0.0);

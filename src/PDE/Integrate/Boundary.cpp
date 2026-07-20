@@ -541,8 +541,9 @@ bndSurfInt( const bool pref,
 
           // mesh velocity at quadrature point
           tk::real wn_igp(0.0);
+          std::array< tk::real, 3 > w_igp;
           if (ale) {
-            auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+            w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
 
             // mesh velocity normal to element face
             wn_igp = tk::dot(w_igp, fn);
@@ -550,7 +551,7 @@ bndSurfInt( const bool pref,
 
           // Compute the numerical flux
           auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t),
-            wn_igp);
+            w_igp);
 
           // Code below commented until details about the form of these terms in
           // the \alpha_k g_k equations are sorted out.
@@ -813,8 +814,9 @@ bndSurfInt_constP(
 
           // mesh velocity at quadrature point
           tk::real wn_igp(0.0);
+          std::array< tk::real, 3 > w_igp;
           if (ale) {
-            auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+            w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
 
             // mesh velocity normal to element face
             wn_igp = tk::dot(w_igp, fn);
@@ -822,7 +824,7 @@ bndSurfInt_constP(
 
           // Compute the numerical flux
           auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t),
-            wn_igp);
+            w_igp);
 
           // Code below commented until details about the form of these terms in
           // the \alpha_k g_k equations are sorted out.
@@ -937,7 +939,7 @@ bndSurfIntFV(
 
         // Compute the numerical flux
         auto fl = flux( mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t),
-          0.0 );
+                        {{0.0, 0.0, 0.0}} );
 
         // compute non-conservative terms
         std::vector< tk::real > var_riemann(nmat+1, 0.0);
