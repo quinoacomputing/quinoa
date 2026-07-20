@@ -48,6 +48,22 @@ nonConservativeInt( const bool pref,
                     Fields& R,
                     int intsharp );
 
+void
+nonConservativeInt_constP(
+                   std::size_t nmat,
+                   const std::vector< inciter::EOS >& mat_blk,
+                   const std::size_t ndof,
+                   const std::size_t rdof,
+                   const std::size_t nelem,
+                   const std::vector< std::size_t >& inpoel,
+                   const UnsMesh::Coords& coord,
+                   const Fields& geoElem,
+                   const Fields& U,
+                   const Fields& P,
+                   const std::vector< std::vector< tk::real > >& riemannDeriv,
+                   Fields& R,
+                   int intsharp );
+
 //! Update the rhs by adding the non-conservative term integrals
 void
 updateRhsNonCons( ncomp_t ncomp,

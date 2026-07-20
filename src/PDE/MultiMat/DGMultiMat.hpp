@@ -20,6 +20,7 @@
 #include <unordered_set>
 #include <map>
 #include <array>
+#include <utility> //added
 
 #include "Macro.hpp"
 #include "Exception.hpp"
@@ -104,6 +105,36 @@ class MultiMat {
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
     }
+
+    // Copy constructor
+    // \param[in] x MultiMat object to copy from
+    // \details Explicitly provided instead of relying on compiler to generate
+    //   so that the persistent device-resident buffers in m_volDev are NOT shared
+    //   between copies. Leave copy's m_volDev default constructed with all views empty
+    //   and (re)allocate each buffer to the correct size on next call of initialize()
+    //   or rhs() via the extent check (see Volume.hpp). Only copies at setup in practice
+    MultiMat(const MultiMat& x):
+      m_ncomp(x.m_ncomp),
+      m_nprim(x.m_nprim),
+      m_riemann(x.m_riemann),
+      m_bc(x.m_bc),
+      m_mat_blk(x.m_mat_blk),
+      m_volDev()
+    {}
+
+    // Move constructor
+    // \param[in,out] x MultiMat object to move from
+    // \details Explicitly transfer ownership of persistent device buffer in m_volDev
+    //   Above copy constructor will suppress implicitly-generated move constructor
+    //   so we have to provide this one.
+    MultiMat(MultiMat&& x) noexcept :
+      m_ncomp(x.m_ncomp),
+      m_nprim(x.m_nprim),
+      m_riemann(std::move(x.m_riemann)),
+      m_bc(std::move(x.m_bc)),
+      m_mat_blk(std::move(x.m_mat_blk)),
+      m_volDev(std::move(x.m_volDev))
+    {}
 
     //! Find the number of primitive quantities required for this PDE system
     //! \return The number of primitive quantities required to be stored for
@@ -968,7 +999,7 @@ class MultiMat {
 
         // compute volume integrals
         tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
-          geoElem, flux, velfn, Problem::src, U, P, R, intsharp );
+          geoElem, flux, velfn, Problem::src, U, P, R, intsharp, &m_volDev ); //added &m_volDev
       }
       else {
         // compute internal surface flux integrals
@@ -1526,6 +1557,14 @@ class MultiMat {
     BCStateFn m_bc;
     //! EOS material block
     std::vector< EOS > m_mat_blk;
+
+    // Persistent device resident scratch buffer for volInt_constP
+    // This is the stuff we hoist out from the volInt_constP
+    // Make device allocation happen only once when (re)establishing mesh/sol size
+    // Ownership is here as a member of the chare so that the Kokkos views are destroyed
+    // during teardown before Kokkos::finalize(). This is mutable because rhs() is const
+    // but rhs() still needs to update this cache. Passed by pointer into volInt_constP
+    mutable tk::VolIntDeviceViews m_volDev;
 
     //! Evaluate conservative part of physical flux function for this PDE system
     //! \param[in] ncomp Number of scalar components in this PDE system
