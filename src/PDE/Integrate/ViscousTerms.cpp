@@ -444,25 +444,21 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   using inciter::multispecies::momentumIdx;
   using inciter::multispecies::energyIdx;
 
-  // 1. Compute diffusion matrices for average of left and right states
   Assert ( fl.size() == ncomp, "incorrect viscous flux vector size" );
 
-  // There are ncomp x ncomp diffusion matrices A^(lxm) for l,m = 1,...,ncomp
+  // 1. Compute diffusion matrices for average of left and right states
+  // There are ncomp by ncomp diffusion matrices A^(lm) for l,m = 1,...,ncomp
   // For 3D compressible Navier-Stokes, ncomp = 5, so there are 25 diffusion matrices
   // Each diffusion matrix is 3x3
   // Initialize container for these matrices
   // Initialize direction vectors for each diffusion matrix, which will be used to compute the numerical flux
-  // constexpr std::size_t ncomp = 5;
 
   auto neq = ncomp;
-  using Vector3 = std::array<tk::real, 3>;
-  using Matrix3 = std::array<std::array<tk::real, 3>, 3>;
-  std::vector<std::vector<Matrix3>> A(
-  ncomp, std::vector<Matrix3>(ncomp)
-  );
-
-  std::vector<Vector3> dir(ncomp * ncomp, Vector3{});
-  // All matrices A^(1m) are zero matrices
+  // Initialize vector of length 5. Each element contains 5 arrays of size 3 by 3
+  auto A = std::vector( ncomp, std::vector( ncomp, std::array< std::array< tk::real, 3>, 3> {} ));
+  // Initialize vector of length 5*5=25, each element of which contains a 3 by 1 vector
+  auto dir = std::vector( ncomp * ncomp, std::array< tk::real, 3>{});
+  
   
   // Compute averages of left and right conserved quantities
   // [0] index is left, [1] index is right
@@ -499,7 +495,9 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   auto gamma_m = 0.5 * (gamma_l + gamma_r);
   auto Pr = 0.71; // TODO: make Prandtl number user-configurable
 
-  // Build diffusion matrices A^(lm) for l,m = 1,...,ncomp
+  // Build diffusion matrices A^(lm) for l = 1,...,ncomp, m = 0, 1, ..., ncomp
+  // All matrices A^(1m) are zero matrices because continuity contains no viscous terms
+  // Since all A are initialized to zero, we don't compute anything for A^(0m).
 
   // x-momentum (mathematically, l=2 but l = 1 in zero-based indexing)
   A[1][0] = { { 
@@ -601,21 +599,24 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
 
   // 2. Compute new direction vectors using diffusion matrices and face normal
   // Take the transpose of the diffusion matrices to get A^T, then dot with face normal to get new direction vectors; /xi = A^T * n
-  //auto lmIndex = [ncomp](std::size_t l, std::size_t m) { return l*ncomp + m; };
   for (std::size_t l = 0; l < ncomp; ++l) {
     for (std::size_t m = 0; m < ncomp; ++m) {
       for (std::size_t i = 0; i < 3; ++i) {
         for (std::size_t j = 0; j < 3; ++j) {
           const auto k = l*ncomp + m;
-          dir[k][i] += A[l][m][j][i] * fn[j];
+          dir[k][i] += A[l][m][j][i] * fn[j]; // swapped i,j indices to complete the transpose. 
         }
       }
     }
   }
   
   // 3. Compute numerical flux from left and right states
-  // double check: am I calculating averages of state gradients or of velocity gradients?
-  std::vector<Vector3> numgradQ(ncomp, Vector3{});
+
+  // initialize numerical gradient of conserved quantities. Vector of size 5 with elements of size 3x1
+  // element values are dQdx, dQdy, dQdz
+  auto numgradQ = std::vector(ncomp, std::array< tk::real, 3>{});
+  
+  // we stored values of hessian in a 6-element vector. Map vector indices to mathematically true matrix indices 
   constexpr std::array<std::array<std::size_t, 3>, 3> hidx{{
   {{ 0, 3, 4 }},  // x row: xx, xy, xz
   {{ 3, 1, 5 }},  // y row: xy, yy, yz
@@ -636,11 +637,23 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
 
   // 4. Dot product of numerical flux with new direction vectors to compute flux
 
-  for (std::size_t l=1; l<ncomp; ++l) {
+  // Examples of how fl should be filled by the below nested loops:
+  // Continuity: fl[0] = 0 (all dir^(0m) = 0)
+  // X-momentum: fl[1] = numgrad(Q^(1)) * dir^(11) + numgrad(Q^(2)) * dir^(12)
+  //                     + numgrad(Q^(3)) * dir^(13) + numgrad(Q^(4)) * dir^(14)
+  //                     + numgrad(Q^(5)) * dir^(15)
+  // Y-momentum: fl[2] = numgrad(Q^(1)) * dir^(21) + numgrad(Q^(2)) * dir^(22)
+  //                     + numgrad(Q^(3)) * dir^(23) + numgrad(Q^(4)) * dir^(24)
+  //                     + numgrad(Q^(5)) * dir^(25)
+  // Z-momentum: etc...
+
+
+
+  for (std::size_t l=1; l<ncomp; ++l) { // first row is zero because continuity contains no viscous terms. start at 2nd row 
     fl[l] = 0.0;
-    for (std::size_t m=0; m<ncomp; ++m) {
-      const auto k = l*ncomp + m;
-      for (std::size_t i=0; i<3; ++i)
+    for (std::size_t m=0; m<ncomp; ++m) { // equation index
+      const auto k = l*ncomp + m;         // direction vector index 
+      for (std::size_t i=0; i<3; ++i)     // xyz index
         fl[l] += numgradQ[m][i] * dir[k][i];
     }
   }
@@ -669,14 +682,8 @@ MultiSpeciesViscousTermsDGP1::interfaceCorrection(
 //! \param[in] hess Hessians of the conserved quantities in left and right elements
 //! \param[in,out] ic Interface correction term for the numerical viscous flux
 // *****************************************************************************
-{
-  // 1. Calculate state jumps
-  for (std::size_t l=1; l<ncomp; ++l) {
-    for (std::size_t m=0; m<ncomp; ++m){
-      ic[l] = 0.5 * (state[1][m] - state[0][m]) * dir[l][m];
-    }
-  }
-
+{  
+  //no-op for now
 }
 void
 MultiSpeciesViscousTermsDGP1::volumeFlux(
