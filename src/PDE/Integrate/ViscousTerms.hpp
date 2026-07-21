@@ -114,17 +114,32 @@ class MultiSpeciesViscousTermsDGP1 {
       const Fields& P,
       std::size_t elem,
       const std::array< std::vector< tk::real >, 3 >& dBdx,
-      std::array< std::array< tk::real, 3 >, 4>& grad ) const;
+      const std::array< std::vector< tk::real >, 6 >& d2Bdx2,
+      std::array< std::array< tk::real, 3 >, 5>& grad,
+      std::array< std::array< tk::real, 6 >, 5>& hess ) const;
 
     //! Compute the multispecies viscous flux at an interior face
-    void
+    std::vector<std::array<tk::real, 3>>
     interiorFlux(
       const std::vector< inciter::EOS >& mat_blk,
       std::size_t ncomp,
       const std::array< std::vector< tk::real >, 2 >& state,
       const std::array< tk::real, 3 >& fn,
-      const std::array< std::array< std::array< tk::real, 3 >, 4>, 2 >& grad,
+      const tk::real he,
+      const std::array<std::array< std::array< tk::real, 3 >, 5 >, 2>& grad,
+      const std::array<std::array< std::array< tk::real, 6 >, 5 >, 2>& hess,
       std::vector< tk::real >& fl ) const;
+
+    //! Compute the interface correction term for the multispecies viscous flux at an interior face
+    void
+    interfaceCorrection(
+    const std::vector< inciter::EOS >& mat_blk,
+    std::size_t ncomp,
+    const std::array< std::vector< tk::real >, 2 >& state,
+    const std::vector<std::array<tk::real, 3>>& dir,
+    const std::array< std::array< std::array< tk::real, 3 >, 5>, 2 >& grad,
+    const std::array< std::array< std::array< tk::real, 6 >, 5>, 2 >& hess,
+    std::vector< tk::real >& ic ) const;
 
     //! Compute the viscous volume flux on a tet element
     void

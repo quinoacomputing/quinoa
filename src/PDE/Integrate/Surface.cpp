@@ -225,8 +225,11 @@ viscousInternalFaceIntDG(
   std::array< std::vector< tk::real >, 2 > B;
   std::array< std::vector< tk::real >, 2 > state;
   std::array< std::array< std::vector< tk::real >, 3 >, 2 > dBdx;
-  std::array< std::array< std::array< tk::real, 3 >, 4>, 2 > grad;
+  std::array< std::array< std::vector< tk::real >, 6 >, 2 > d2Bdx2;
+  std::array< std::array< std::array< tk::real, 3 >, 5>, 2 > grad;
+  std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess;
   std::vector< tk::real > fl( ncomp, 0.0 );
+  std::vector< tk::real > ic( ncomp, 0.0 );
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -285,6 +288,25 @@ viscousInternalFaceIntDG(
     std::array< real, 3 >
       fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
 
+    // Compute right and left cell diameters for numerical flux
+    // Compute distances between vertices and take maximum
+    tk::real diameter_l = 0.0;
+    tk::real diameter_r = 0.0;
+    for (std::size_t i = 0; i<3; ++i) {
+      for (std::size_t j=i+1; j<4; ++j) {
+        diameter_l = std::max(diameter_l, tk::length(
+                                   coordel_l[i][0] - coordel_l[j][0],
+                                   coordel_l[i][1] - coordel_l[j][1],
+                                   coordel_l[i][2] - coordel_l[j][2] ) );
+        diameter_r = std::max(diameter_r, tk::length(
+                                   coordel_r[i][0] - coordel_r[j][0],
+                                   coordel_r[i][1] - coordel_r[j][1],
+                                   coordel_r[i][2] - coordel_r[j][2] ) );
+      }
+    }
+
+    const tk::real he = 0.5 * (diameter_l + diameter_r);
+
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
     {
@@ -312,7 +334,7 @@ viscousInternalFaceIntDG(
       auto wt = wgp[igp] * geoFace(f,0);
 
       // Gradients of basis functions
-      for (std::size_t i=0; i<3; +i) {
+      for (std::size_t i=0; i<3; ++i) {
         dBdx[0][i].assign( ndof_l, 0.0 );
         dBdx[1][i].assign( ndof_r, 0.0 );
       }
@@ -328,13 +350,32 @@ viscousInternalFaceIntDG(
       state[0] = viscousRhs.stateAt( mat_blk, U, P, el, ndof_l, B_l );
       state[1] = viscousRhs.stateAt( mat_blk, U, P, er, ndof_r, B_r );
 
-      // Compute gradients
-      viscousRhs.gradientIntElem( U, P, el, dBdx[0], grad[0] ); // currently no-op
-      viscousRhs.gradientIntElem( U, P, er, dBdx[1], grad[1] ); // currently no-op
+      // Compute second derivates of basis functions
+      if (ndof_l <= 4) {
+        for (std::size_t i=0; i<6; ++i)
+          d2Bdx2[0][i].assign( ndof_l, 0.0); // second derivative of p0 and p1 basis function is zero
+      }
+      if (ndof_l == 10) {
+        eval_d2Bdx2_p2( ndof_l, jacInv_l, d2Bdx2[0] ); // no-op for now
+      }
+
+      if (ndof_r <= 4) {
+        for (std::size_t i=0; i<6; ++i)
+          d2Bdx2[1][i].assign( ndof_r, 0.0 ); // second derivative of p0 and p1 basis function is zero
+      }
+      if (ndof_r == 10) {
+        eval_d2Bdx2_p2( ndof_r, jacInv_r, d2Bdx2[1] ); // no-op for now
+      }
+
+      // Compute gradients and Hessians of conserved quantities
+      viscousRhs.gradientIntElem( U, P, el, dBdx[0], d2Bdx2[0], grad[0], hess[0] );
+      viscousRhs.gradientIntElem( U, P, er, dBdx[1], d2Bdx2[1], grad[1], hess[1] );
 
       // Compute viscous fluxes
-      viscousRhs.interiorFlux( mat_blk, ncomp, state, fn,
-        grad, fl ); // currently no-op
+      auto dir = viscousRhs.interiorFlux( mat_blk, ncomp, state, fn, he, grad, hess, fl );
+
+      // Compute interface correction
+      viscousRhs.interfaceCorrection( mat_blk, ncomp, state, dir, grad, hess, ic );
 
       // Contribute fluxes to RHS
       for (ncomp_t c=0; c<ncomp; ++c)

@@ -246,7 +246,9 @@ viscousBoundaryFaceIntDG(
 
   std::array < std::vector< tk::real >, 2 > B;
   std::array < std::vector< tk::real >, 3 > dBdx_l;
-  std::array < std::array< std::array< tk::real, 3 >, 4>, 2 > grad;
+  std::array< std::array< std::vector< tk::real >, 6 >, 2 > d2Bdx2;
+  std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess;
+  std::array < std::array< std::array< tk::real, 3 >, 5>, 2 > grad;
   std::vector< tk::real > fl( ncomp, 0.0);
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
@@ -292,6 +294,21 @@ viscousBoundaryFaceIntDG(
         // face normal
         std::array< real, 3 > fn{{geoFace(f,1), geoFace(f,2), geoFace(f,3)}};
 
+        // Compute right and left cell diameters for numerical flux
+        // Compute distances between vertices and take maximum
+        tk::real diameter_l = 0.0;
+        tk::real diameter_r = 0.0;
+        for (std::size_t i = 0; i<3; ++i) {
+          for (std::size_t j=i+1; j<4; ++j) {
+            diameter_l = std::max(diameter_l, tk::length(
+                                   coordel_l[i][0] - coordel_l[j][0],
+                                   coordel_l[i][1] - coordel_l[j][1],
+                                   coordel_l[i][2] - coordel_l[j][2] ) );
+          }
+        }
+
+        const tk::real he = diameter_l;
+
         // Gaussian quadrature
         for (std::size_t igp=0; igp<ng; ++igp)
         {
@@ -323,8 +340,19 @@ viscousBoundaryFaceIntDG(
             inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
           eval_dBdx_p1( ndof_l, jacInv_l, dBdx_l );
 
+          // Compute second derivates of basis functions
+          if (ndof_l <= 4) {
+            for (std::size_t i=0; i<6; ++i)
+              d2Bdx2[0][i].assign( ndof_l, 0.0); // second derivative of p0 and p1 basis function is zero
+          }
+          if (ndof_l == 10) {
+            eval_d2Bdx2_p2( ndof_l, jacInv_l, d2Bdx2[0] ); // no-op for now
+          }
+
+          auto d2Bdx2_l = d2Bdx2[0];
+
           // Compute gradients
-          viscousRhs.gradientIntElem( U, P, el, dBdx_l, grad[0] ); // no-op for now
+          viscousRhs.gradientIntElem( U, P, el, dBdx_l, d2Bdx2_l, grad[0], hess[0]); // no-op for now
 
           // Apply BCs on gradients
           std::vector< tk::real > dqdx_l(4*3,0.0);
@@ -343,8 +371,7 @@ viscousBoundaryFaceIntDG(
             }
 
           // Compute viscous fluxes
-          viscousRhs.interiorFlux( mat_blk, ncomp, State,
-            fn, grad, fl ); // no-op for now
+          viscousRhs.interiorFlux( mat_blk, ncomp, State, fn, he, grad, hess, fl ); // no-op for now
 
           // Contribute fluxes to RHS
           for (ncomp_t c=0; c<ncomp; ++c)

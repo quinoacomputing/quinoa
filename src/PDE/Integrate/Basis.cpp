@@ -337,6 +337,19 @@ tk::eval_dBdx_p2( const std::size_t igp,
 }
 
 void
+tk::eval_d2Bdx2_p2( const std::size_t ndof,
+                    const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+                    std::array< std::vector<tk::real>, 6 >& d2Bdx2 )
+// *****************************************************************************
+//  Compute the second derivatives of Dubiner basis function for DG(P2)
+//! \param[in] ndof Number of degrees of freedom
+//! \param[in] jacInv Array of the inverse of Jacobian
+//! \param[in,out] d2Bdx2 Array of the second derivatives of basis function
+// *****************************************************************************
+{
+  // no-op
+}
+void
 tk::eval_basis( const std::size_t ndof,
                 const tk::real xi,
                 const tk::real eta,
