@@ -528,7 +528,7 @@ tk::volIntViscousMultiSpecies(
   const std::vector< std::size_t >& ndofel,
   Fields& R )
 // *****************************************************************************
-//  Compute internal surface viscous flux integrals for multispecies flow
+//  Compute volume integrals of viscous fluxes for multispecies flow
 //! \param[in] nspec Number of species in this PDE system
 //! \param[in] mat_blk Material EOS block
 //! \param[in] ndof Maximum number of degrees of freedom

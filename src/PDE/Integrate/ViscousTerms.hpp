@@ -147,7 +147,7 @@ class MultiSpeciesViscousTermsDGP1 {
     const std::vector< inciter::EOS >& mat_blk,
     std::size_t ncomp,
     const std::vector<tk::real>& state,
-    const std::vector<std::array<tk::real, 3>> visc_fl ) const;
+    std::vector<std::array<tk::real, 3>>& visc_fl ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
