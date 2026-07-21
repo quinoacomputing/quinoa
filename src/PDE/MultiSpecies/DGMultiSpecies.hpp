@@ -751,17 +751,221 @@ class MultiSpecies {
     
     std::vector< std::vector< std::vector< tk::real > > >
     point_implicit_jacobian_analytic(
-      const tk::Fields&,
-      const tk::Fields&,
-      const inciter::FaceData&,
-      const std::vector< std::size_t >&,
-      const tk::UnsMesh::Coords&,
-      const tk::Fields&,
-      const tk::Fields&,
-      const std::vector< std::size_t >& ) const
+      const tk::Fields& geoFace,
+      [[maybe_unused]] const tk::Fields& geoElem,
+      const inciter::FaceData& fd,
+      [[maybe_unused]] const std::vector< std::size_t >& inpoel,
+      [[maybe_unused]] const tk::UnsMesh::Coords& coord,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      [[maybe_unused]] const std::vector< std::size_t >& ndofel ) const
+    // *****************************************************************************
+    //  Assemble element-local analytic residual Jacobian for point implicit
+    //! \param[in] geoFace Face geometry array
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] fd Face connectivity and boundary conditions object
+    //! \param[in] inpoel Element connectivity
+    //! \param[in] coord Mesh coordinates
+    //! \param[in] U Conservative solution
+    //! \param[in] P Primitive solution
+    //! \param[in] ndofel Number of DOFs per element
+    //! \return Dense matrix dR_e/du_e for all owned elements
+    //! \details First P0/source-free MultiSpecies implementation. Interior surface
+    //!   contributions are assembled analytically using the existing Riemann flux
+    //!   Jacobian. Boundary-state and source-term derivatives are intentionally not
+    //!   included in this first version.
+    // *****************************************************************************
     {
-      Throw("Analytic point-implicit Jacobian not implemented for this PDE");
-      return {};
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+      const auto nelem = fd.Esuel().size()/4;
+      const auto ncomp = static_cast< std::size_t >( m_ncomp );
+      const auto nprim = static_cast< std::size_t >( m_nprim );
+      const auto nunk = ncomp*ndof;
+
+      if (ndof != 1) {
+        Throw(
+          "MultiSpecies analytic point-implicit Jacobian currently only "
+          "implemented for P0 (ndof=1)");
+      }
+
+      if (rdof != 1) {
+        Throw(
+          "MultiSpecies analytic point-implicit Jacobian currently requires "
+          "rdof=1");
+      }
+
+      if (nprim != 1) {
+        Throw(
+          "MultiSpecies analytic point-implicit Jacobian assumes one primitive "
+          "variable: mixture temperature");
+      }
+
+      std::vector< std::vector< std::vector< tk::real > > >
+        dRdu( nelem,
+          std::vector< std::vector< tk::real > >(
+            nunk, std::vector< tk::real >( nunk, 0.0 ) ) );
+
+      // Calculation of analytic jacobian requirs a vector of both conserved
+      // variables and primitives.
+      // This is required a couple times (L and R state), so put in a lambda
+      auto load_state =
+        [&]( std::size_t e, std::vector< tk::real >& state )
+        {
+          state.assign( ncomp+nprim, 0.0 );
+
+          for (std::size_t c=0; c<ncomp; ++c) {
+            state[c] = U(e,c*rdof);
+          }
+
+          for (std::size_t p=0; p<nprim; ++p) {
+            state[ncomp+p] = P(e,p*rdof);
+          }
+        };
+
+      // Calculation of analytic jacobian requirs dU/dP
+      // This is required a couple times (L and R state), so put in a lambda
+      auto conserved_primitive_jacobian =
+        [&]( const std::vector< tk::real >& state )
+        {
+          std::vector< std::vector< tk::real > >
+            dUdP( ncomp, std::vector< tk::real >( ncomp, 0.0 ) );
+
+          const auto uid = multispecies::momentumIdx( nspec, 0 );
+          const auto vid = multispecies::momentumIdx( nspec, 1 );
+          const auto wid = multispecies::momentumIdx( nspec, 2 );
+          const auto Tid = ncomp - 1;
+          const auto eidx = multispecies::energyIdx( nspec, 0 );
+
+          tk::real rho = 0.0;
+          for (std::size_t k=0; k<nspec; ++k) {
+            rho += state[ multispecies::densityIdx( nspec, k ) ];
+          }
+
+          if (!(rho > 0.0)) {
+            Throw(
+              "Non-positive mixture density in MultiSpecies analytic "
+              "point-implicit Jacobian");
+          }
+
+          const auto u = state[uid] / rho;
+          const auto v = state[vid] / rho;
+          const auto w = state[wid] / rho;
+          const auto v2 = u*u + v*v + w*w;
+          const auto ke = 0.5*v2;
+
+          const auto T =
+            state[ncomp + multispecies::temperatureIdx( nspec, 0 )];
+
+          tk::real dEdT = 0.0;
+
+          for (std::size_t k=0; k<nspec; ++k) {
+            const auto didx = multispecies::densityIdx( nspec, k );
+            const auto rhok = state[didx];
+
+            // Species-density equations:
+            //   U_k = rho_k
+            dUdP[didx][k] = 1.0;
+
+            // Momentum:
+            //   rho*u_i = rho_mix * u_i
+            dUdP[uid][k] = u;
+            dUdP[vid][k] = v;
+            dUdP[wid][k] = w;
+
+            // Total energy:
+            //   rhoE = sum_k rho_k e_k(T) + 0.5*rho_mix*|u|^2
+            dUdP[eidx][k] =
+              m_mat_blk[k].compute< EOS::internalenergy >( T ) + ke;
+
+            dEdT += rhok * m_mat_blk[k].compute< EOS::cv >( T );
+          }
+
+          dUdP[uid][uid] = rho;
+          dUdP[vid][vid] = rho;
+          dUdP[wid][wid] = rho;
+
+          dUdP[eidx][uid] = rho*u;
+          dUdP[eidx][vid] = rho*v;
+          dUdP[eidx][wid] = rho*w;
+          dUdP[eidx][Tid] = dEdT;
+
+          return dUdP;
+        };
+
+      const auto& esuf = fd.Esuf();
+
+      // Keep the quadrature structure consistent with surfInt_constP().
+      const auto ng = tk::NGfa( ndof );
+
+      std::array< std::vector< tk::real >, 2 > coordgp;
+      std::vector< tk::real > wgp;
+
+      coordgp[0].resize( ng );
+      coordgp[1].resize( ng );
+      wgp.resize( ng );
+
+      // Gauss weights required for full analytic Jacobian
+      tk::GaussQuadratureTri( ng, coordgp, wgp );
+
+      std::array< std::vector< tk::real >, 2 > state;
+      state[0].resize( ncomp+nprim );
+      state[1].resize( ncomp+nprim );
+
+      // Interior faces. Boundary faces are handled separately by the RHS code
+      // and are not included in this WIP calculation.
+      for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f) {
+        if( esuf[2*f] < 0 || esuf[2*f+1] < 0) {
+          Throw("Interior element detected as -1 in "
+            "analytic point-implicit Jacobian");
+        }
+
+        const auto el = static_cast< std::size_t >( esuf[2*f] );
+        const auto er = static_cast< std::size_t >( esuf[2*f+1] );
+
+        if( el > U.nunk()) {Throw("Left element index out of bounds" );}
+        if( er > U.nunk()) {Throw("Right element index out of bounds" );}
+
+        std::array< tk::real, 3 >
+          fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
+
+        // Need state, containing conserved and primitive variables
+        load_state( el, state[0] );
+        load_state( er, state[1] );
+
+        std::array< std::vector< std::vector< tk::real > >, 2 > dUdP{{
+          conserved_primitive_jacobian( state[0] ),
+          conserved_primitive_jacobian( state[1] )
+        }};
+
+        const auto dFdU = m_riemannjac( m_mat_blk, fn, dUdP, state, {} );
+
+        for (std::size_t igp=0; igp<ng; ++igp) {
+          const auto wt = wgp[igp] * geoFace(f,0);
+
+          for (std::size_t row=0; row<ncomp; ++row) {
+            const auto rmark = row*ndof;
+
+            for (std::size_t col=0; col<ncomp; ++col) {
+              const auto cmark = col*ndof;
+
+              // Left residual receives -F.
+              if (el < nelem) {
+                dRdu[el][rmark][cmark] -= wt * dFdU[0][row][col];
+              }
+
+              // Right residual receives +F.
+              if (er < nelem) {
+                dRdu[er][rmark][cmark] += wt * dFdU[1][row][col];
+              }
+            }
+          }
+        }
+      }
+
+      return dRdu;
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element

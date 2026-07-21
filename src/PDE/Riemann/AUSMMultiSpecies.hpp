@@ -165,7 +165,7 @@ struct AUSMMultiSpecies {
     // Variables with partials of the left and right states that can be
     // overwritten each loop iteration
     std::array< tk::real, 2 > dmldP, dmrdP, dmbardP, dmpdP, dm12dP, dpudP,
-                              dvriemdP;
+                              dvriemdP, dmddP;
 
     // Factory for variables that have partials with respect to both the left
     // and right states and need to be saved
@@ -269,8 +269,11 @@ struct AUSMMultiSpecies {
     auto C = mbar*mbar > 1 ? 0.0 : 2. * k_p * mbar * (pr - pl) * idenom;
     auto m12 = msl[0] + msr[1] + mp;
     auto vriem = a12 * m12;
-    auto l_plus = 0.5 * (vriem + std::fabs(vriem));
-    auto l_minus = 0.5 * (vriem - std::fabs(vriem));
+    auto md_root = std::sqrt( std::abs( vnl - vnr ) * a12 );
+    auto delta = 4.0;
+    auto md = max_mbar * delta * std::sqrt(std::abs(vnl - vnr) * a12);
+    auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
+    auto l_minus = 0.5 * (vriem - std::fabs(vriem) - 2.0*md);
 
     // P_1/2 derivative pre-caluclations
     auto pu = -k_u* msl[2] * msr[3] * f_a * rho12 * a12 * (vnr-vnl);
@@ -313,6 +316,30 @@ struct AUSMMultiSpecies {
                 + dmsrdm[1] * dmrdP[1]
                 + dmpdP[1];
 
+      dmddP[0] = 0.0;
+      dmddP[1] = 0.0;
+
+      // derivatives of md
+      if (max_mbar > 0.0 && md_root > 0.0) {
+        auto sign_delta_vn = (vnl - vnr) > 0.0 ? tk::real(1.0) : tk::real(-1.0);
+
+        // m0 = 1 - mbar^2
+        auto dm0dP_l = -2.0 * mbar * dmbardP[0];
+        auto dm0dP_r = -2.0 * mbar * dmbardP[1];
+
+        // d(vnl-vnr)/dP_L and d(vnl-vnr)/dP_R
+        auto ddelta_vndP_l =  dvnldP[k];
+        auto ddelta_vndP_r = -dvnrdP[k];
+
+        // d sqrt(abs(vnl-vnr)*a12), with a12 frozen
+        auto drootdP_l = 0.5 * a12 * sign_delta_vn / md_root * ddelta_vndP_l;
+
+        auto drootdP_r = 0.5 * a12 * sign_delta_vn / md_root * ddelta_vndP_r;
+
+        dmddP[0] = delta * (md_root * dm0dP_l + max_mbar * drootdP_l);
+        dmddP[1] = delta * (md_root * dm0dP_r + max_mbar * drootdP_r);
+      }
+
       // P_1/2 derivatives
       dpudP[0] = -k_u * msr[3] * f_a * rho12 * a12 * (vnr-vnl) * dmsldm[2]
                  * dmldP[0]
@@ -340,15 +367,15 @@ struct AUSMMultiSpecies {
       dvriemdP[1] = a12 * dm12dP[1];
 
       if (vriem > 0) {
-        dl_plusdP[0][k]  = dvriemdP[0];
-        dl_plusdP[1][k]  = dvriemdP[1];
-        dl_minusdP[0][k] = 0.;
-        dl_minusdP[1][k] = 0.;
+        dl_plusdP[0][k]  = dvriemdP[0] + dmddP[0];
+        dl_plusdP[1][k]  = dvriemdP[1] + dmddP[1];
+        dl_minusdP[0][k] = -dmddP[0];
+        dl_minusdP[1][k] = -dmddP[1];;
       } else {
-        dl_plusdP[0][k]  = 0.;
-        dl_plusdP[1][k]  = 0.;
-        dl_minusdP[0][k] = dvriemdP[0];
-        dl_minusdP[1][k] = dvriemdP[1];
+        dl_plusdP[0][k]  = dmddP[0];
+        dl_plusdP[1][k]  = dmddP[1];
+        dl_minusdP[0][k] = dvriemdP[0] - dmddP[0];
+        dl_minusdP[1][k] = dvriemdP[1] - dmddP[1];
       }
     }
 
@@ -426,8 +453,8 @@ struct AUSMMultiSpecies {
       for (std::size_t j=0; j<ncomp; ++j)
         for (std::size_t k=0; k<ncomp; ++k)
         {
-          dFdU[0][i][j] += dFdP[0][i][k] * dPldU[ncomp*j+k];
-          dFdU[1][i][j] += dFdP[1][i][k] * dPrdU[ncomp*j+k];
+          dFdU[0][i][j] += dFdP[0][i][k] * dPldU[ncomp*k+j];
+          dFdU[1][i][j] += dFdP[1][i][k] * dPrdU[ncomp*k+j];
         }
 
     return dFdU;

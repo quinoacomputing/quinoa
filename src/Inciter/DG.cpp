@@ -2528,7 +2528,7 @@ DG::point_implicit_integrate()
   const tk::Fields Rbase( m_rhs );
 
   // Jacobian of RHS of all elements
-  const auto dRdu = point_implicit_jacobian(Ubase, Pbase, Rbase);
+  const auto dRdu = point_implicit_jacobian_analytic( Ubase, Pbase, Rbase );
 
   tk::Fields Unew( m_u );
 
