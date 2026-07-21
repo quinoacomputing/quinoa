@@ -38,7 +38,7 @@ struct Upwind {
           const std::array< tk::real, 3 >& fn,
           const std::array< std::vector< tk::real >, 2 >& u,
           const std::vector< std::array< tk::real, 3 > >& v,
-          const std::array< tk::real, 3>& )
+          const tk::real = 0 )
     {
       if (u[0].size() != v.size()) Throw( "Unequal components in transport" );
       std::vector< tk::real > flx( u[0].size(), 0 );

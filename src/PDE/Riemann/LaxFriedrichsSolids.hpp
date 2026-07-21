@@ -37,7 +37,7 @@ struct LaxFriedrichsSolids {
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {},
-        const std::array< tk::real, 3>& w = {} )
+        const tk::real wn = 0 )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -45,8 +45,6 @@ struct LaxFriedrichsSolids {
     auto nsld = numSolids(nmat, solidx);
     auto ncomp = u[0].size()-(3+nmat+nsld*6);
     std::vector< tk::real > flx( ncomp, 0 ), fluxl(ncomp, 0), fluxr(ncomp,0);
-
-    tk::real wn = w[0]*fn[0]+w[1]*fn[1]+w[2]*fn[2];
 
     // Primitive variables
     tk::real rhol(0.0), rhor(0.0);

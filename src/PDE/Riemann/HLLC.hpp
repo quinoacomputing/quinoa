@@ -34,7 +34,7 @@ struct HLLC {
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
         const std::vector< std::array< tk::real, 3 > >& = {},
-        const std::array< tk::real, 3>& = {} )
+        const tk::real = 0 )
   {
     std::vector< tk::real > flx( u[0].size(), 0 );
 
