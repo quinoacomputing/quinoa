@@ -402,13 +402,13 @@ Refiner::bndEdges()
         Assert( m_lid.find( C ) != end(m_lid), "Local node ID not found" );
         // assign edges to bins a single chare will respond to when computing
         // shared edges
-        auto bin = A / chunksize;
+        auto bin = std::min(A,B) / chunksize;
         Assert( bin < N, "Will index out of number of chares" );
         chbedges[ static_cast<int>(bin) ].insert( {A,B} );
-        bin = B / chunksize;
+        bin = std::min(B,C) / chunksize;
         Assert( bin < N, "Will index out of number of chares" );
         chbedges[ static_cast<int>(bin) ].insert( {B,C} );
-        bin = C / chunksize;
+        bin = std::min(C,A) / chunksize;
         Assert( bin < N, "Will index out of number of chares" );
         chbedges[ static_cast<int>(bin) ].insert( {C,A} );
       }
@@ -1185,6 +1185,8 @@ Refiner::endt0ref()
 //!   total number of elements across the whole problem.
 // *****************************************************************************
 {
+  m_mode = RefMode::DTREF;
+
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_meshid, m_host, m_meshwriter, m_cbs, m_scheme,
     CkCallback(CkIndex_Refiner::reorder(), thisProxy[thisIndex]), m_ginpoel,
