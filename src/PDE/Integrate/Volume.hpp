@@ -29,6 +29,22 @@ namespace tk {
 
 using ncomp_t = tk::ncomp_t;
 
+template< class ViscousTerms >
+void
+volIntViscous(
+            const ViscousTerms& viscousRhs,
+            const std::vector< inciter::EOS >& mat_blk,
+            const std::size_t ndof,
+            const std::size_t rdof,
+            const std::size_t nelem,
+            const std::vector< std::size_t >& inpoel,
+            const UnsMesh::Coords& coord,
+            const Fields& geoElem,
+            const Fields& U,
+            const Fields& P,
+            const std::vector< std::size_t >& ndofel,
+            Fields& R);
+
 //! Compute volume integrals for DG
 void
 volInt( std::size_t nmat,
@@ -142,6 +158,22 @@ srcIntFV( const std::vector< inciter::EOS >& mat_blk,
           const SrcFn& src,
           Fields& R,
           std::size_t nmat );
+
+//  Compute internal surface viscous flux integrals for multispecies flow
+void
+volIntViscousMultiSpecies(
+  std::size_t nspec,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const std::vector< std::size_t >& ndofel,
+  Fields& R );
 
 } // tk::
 

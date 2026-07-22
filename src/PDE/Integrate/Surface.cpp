@@ -196,7 +196,7 @@ viscousInternalFaceIntDG(
   Fields& R  )
 // *****************************************************************************
 //  Compute internal surface flux integrals
-//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] viscousRhs PDE-specific viscous residual policy
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] inpoel Element-node connectivity

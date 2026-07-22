@@ -983,43 +983,6 @@ class MultiMat {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
-      // p-adaptive DG
-      if (!pref) {
-        // compute internal surface flux integrals
-        tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
-          dt, R, riemannDeriv, intsharp );
-
-        // compute boundary surface flux integrals
-        for (const auto& b : m_bc)
-          tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
-            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-            m_riemann, velfn, std::get<1>(b), U, P, R,
-            riemannDeriv, intsharp );
-
-        // compute volume integrals
-        tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
-          geoElem, flux, velfn, Problem::src, U, P, R, intsharp, &m_volDev ); //added &m_volDev
-      }
-      else {
-        // compute internal surface flux integrals
-        tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                     dt, R, riemannDeriv, intsharp );
-
-        // compute boundary surface flux integrals
-        for (const auto& b : m_bc)
-          tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
-                          std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-                          m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
-                          riemannDeriv, intsharp );
-
-        // compute volume integrals
-        tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-                    inpoel, coord, geoElem, flux, velfn, Problem::src, U, P,
-                    ndofel, R, intsharp );
-      }
-
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
               "Riemann derivative vector incorrect" );
 
@@ -1032,11 +995,53 @@ class MultiMat {
           riemannDeriv[k][e] /= geoElem(e, 0);
       }
 
-      // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, riemannDeriv,
-                              ndofel, R, intsharp );
+      // p-adaptive DG
+      if (!pref) {
+	// compute volume integrals (first, since R is zeroed in volInt_constP()
+        tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
+          geoElem, flux, velfn, Problem::src, U, P, R, intsharp, &m_volDev ); //added &m_volDev
 
+        // compute internal surface flux integrals
+        tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
+          dt, R, riemannDeriv, intsharp );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+            m_riemann, velfn, std::get<1>(b), U, P, R,
+            riemannDeriv, intsharp );
+	
+	// compute volume integrals of non-conservative terms
+        tk::nonConservativeInt_constP( nmat, m_mat_blk, ndof, rdof, nelem,
+                                       inpoel, coord, geoElem, U, P, riemannDeriv,
+                                       R, intsharp );
+      }
+      else {
+        // compute volume integrals
+        tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
+                    inpoel, coord, geoElem, flux, velfn, Problem::src, U, P,
+                    ndofel, R, intsharp );
+
+        // compute internal surface flux integrals
+        tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
+                     dt, R, riemannDeriv, intsharp );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
+                          std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+                          m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
+                          riemannDeriv, intsharp );
+        
+        // compute volume integrals of non-conservative terms
+	tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
+                                inpoel, coord, geoElem, U, P, riemannDeriv,
+                                ndofel, R, intsharp );
+      }
+      
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::multimat, tag::prelax >())
       {
