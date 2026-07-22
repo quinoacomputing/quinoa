@@ -438,7 +438,6 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
 //!   of Computational Physics, 452.
 // *****************************************************************************
 {
-  // Pseudocode for DDG with interface correction
   using inciter::multispecies::densityIdx;
   using inciter::multispecies::temperatureIdx;
   using inciter::multispecies::momentumIdx;
@@ -669,22 +668,28 @@ MultiSpeciesViscousTermsDGP1::interfaceCorrection(
   std::size_t ncomp,
   const std::array< std::vector< tk::real >, 2 >& state,
   const std::vector<std::array<tk::real, 3>>& dir,
-  const std::array< std::array< std::array< tk::real, 3 >, 5>, 2 >& grad,
-  const std::array< std::array< std::array< tk::real, 6 >, 5>, 2 >& hess,
-  std::vector< tk::real >& ic ) const
+  std::vector<std::array< tk::real, 3>>& ic ) const
 // *****************************************************************************
 //! \brief Compute the interface correction term for the multispecies viscous flux at an interior face
 //! \param[in] mat_blk Material EOS block
 //! \param[in] ncomp Number of components in this system
 //! \param[in] state Left and right high-order face states
 //! \param[in] dir direction vectors computed from interiorFlux
-//! \param[in] grad Gradients of conserved quantities in left and right elements
-//! \param[in] hess Hessians of the conserved quantities in left and right elements
 //! \param[in,out] ic Interface correction term for the numerical viscous flux
 // *****************************************************************************
 {  
-  //no-op for now
+  
+for (std::size_t l = 1; l<ncomp; ++l) {
+  for (std::size_t m=0; m<ncomp; ++m) {
+    auto k = l*ncomp + m;
+    for (std::size_t i=0; i<3; ++i) {
+      ic[l][i] = 0.5*( (state[1][m] - state[0][m]) * dir[k][i]);
+    }
+  }
 }
+  
+}
+
 void
 MultiSpeciesViscousTermsDGP1::volumeFlux(
   const std::vector< inciter::EOS >& mat_blk,

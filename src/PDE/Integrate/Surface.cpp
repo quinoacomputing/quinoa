@@ -229,7 +229,7 @@ viscousInternalFaceIntDG(
   std::array< std::array< std::array< tk::real, 3 >, 5>, 2 > grad;
   std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess;
   std::vector< tk::real > fl( ncomp, 0.0 );
-  std::vector< tk::real > ic( ncomp, 0.0 );
+  std::vector<std::array< tk::real, 3>> ic(ncomp); 
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -371,12 +371,16 @@ viscousInternalFaceIntDG(
       viscousRhs.gradientIntElem( U, P, el, dBdx[0], d2Bdx2[0], grad[0], hess[0] );
       viscousRhs.gradientIntElem( U, P, er, dBdx[1], d2Bdx2[1], grad[1], hess[1] );
 
+      auto dBdx_l = dBdx[0];
+      auto dBdx_r = dBdx[1];
+      
       // Compute viscous fluxes
       auto dir = viscousRhs.interiorFlux( mat_blk, ncomp, state, fn, he, grad, hess, fl );
 
       // Compute interface correction
-      viscousRhs.interfaceCorrection( mat_blk, ncomp, state, dir, grad, hess, ic );
+      viscousRhs.interfaceCorrection( mat_blk, ncomp, state, dir, ic );
 
+      
       // Contribute fluxes to RHS
       for (ncomp_t c=0; c<ncomp; ++c)
       {
@@ -389,6 +393,13 @@ viscousInternalFaceIntDG(
           R(el, mark+1) += wt * fl[c] * B_l[1];
           R(el, mark+2) += wt * fl[c] * B_l[2];
           R(el, mark+3) += wt * fl[c] * B_l[3];
+          // interface correction quadrature 
+          R(el, mark+1) +=
+            wt * (ic[c][0]*dBdx_l[0][1] + ic[c][1]*dBdx_l[1][1] + ic[c][2]*dBdx_l[2][1]);
+          R(el, mark+2) +=
+            wt * (ic[c][0]*dBdx_l[0][2] + ic[c][1]*dBdx_l[1][2] + ic[c][2]*dBdx_l[2][2]);
+          R(el, mark+3) +=
+            wt * (ic[c][0]*dBdx_l[0][3] + ic[c][1]*dBdx_l[1][3] + ic[c][2]*dBdx_l[2][3]);
         }
 
         if(ndof_r > 1) //DG(P1)
@@ -396,6 +407,13 @@ viscousInternalFaceIntDG(
           R(er, mark+1) -= wt * fl[c] * B_r[1];
           R(er, mark+2) -= wt * fl[c] * B_r[2];
           R(er, mark+3) -= wt * fl[c] * B_r[3];
+          // interface correction quadrature 
+          R(er, mark+1) -=
+            wt * (ic[c][0]*dBdx_r[0][1] + ic[c][1]*dBdx_r[1][1] + ic[c][2]*dBdx_r[2][1]);
+          R(er, mark+2) -=
+            wt * (ic[c][0]*dBdx_r[0][2] + ic[c][1]*dBdx_r[1][2] + ic[c][2]*dBdx_r[2][2]);
+          R(er, mark+3) -=
+            wt * (ic[c][0]*dBdx_r[0][3] + ic[c][1]*dBdx_r[1][3] + ic[c][2]*dBdx_r[2][3]);
         }
 
         if(ndof_l > 4) //DG(P2)
@@ -406,6 +424,19 @@ viscousInternalFaceIntDG(
           R(el, mark+7) += wt * fl[c] * B_l[7];
           R(el, mark+8) += wt * fl[c] * B_l[8];
           R(el, mark+9) += wt * fl[c] * B_l[9];
+          //interface correction quadrature
+          R(el, mark+4) +=
+            wt * (ic[c][0]*dBdx_l[0][4] + ic[c][1]*dBdx_l[1][4] + ic[c][2]*dBdx_l[2][4]);
+          R(el, mark+5) +=
+            wt * (ic[c][0]*dBdx_l[0][5] + ic[c][1]*dBdx_l[1][5] + ic[c][2]*dBdx_l[2][5]);
+          R(el, mark+6) +=
+            wt * (ic[c][0]*dBdx_l[0][6] + ic[c][1]*dBdx_l[1][6] + ic[c][2]*dBdx_l[2][6]);
+          R(el, mark+7) +=
+            wt * (ic[c][0]*dBdx_l[0][7] + ic[c][1]*dBdx_l[1][7] + ic[c][2]*dBdx_l[2][7]);
+          R(el, mark+8) +=
+            wt * (ic[c][0]*dBdx_l[0][8] + ic[c][1]*dBdx_l[1][8] + ic[c][2]*dBdx_l[2][8]);
+          R(el, mark+9) +=
+            wt * (ic[c][0]*dBdx_l[0][9] + ic[c][1]*dBdx_l[1][9] + ic[c][2]*dBdx_l[2][9]);
         }
 
         if(ndof_r > 4) //DG(P2)
@@ -416,6 +447,19 @@ viscousInternalFaceIntDG(
           R(er, mark+7) -= wt * fl[c] * B_r[7];
           R(er, mark+8) -= wt * fl[c] * B_r[8];
           R(er, mark+9) -= wt * fl[c] * B_r[9];
+          //interface correction quadrature
+          R(er, mark+4) +=
+            wt * (ic[c][0]*dBdx_r[0][4] + ic[c][1]*dBdx_r[1][4] + ic[c][2]*dBdx_r[2][4]);
+          R(er, mark+5) +=
+            wt * (ic[c][0]*dBdx_r[0][5] + ic[c][1]*dBdx_r[1][5] + ic[c][2]*dBdx_r[2][5]);
+          R(er, mark+6) +=
+            wt * (ic[c][0]*dBdx_r[0][6] + ic[c][1]*dBdx_r[1][6] + ic[c][2]*dBdx_r[2][6]);
+          R(er, mark+7) +=
+            wt * (ic[c][0]*dBdx_r[0][7] + ic[c][1]*dBdx_r[1][7] + ic[c][2]*dBdx_r[2][7]);
+          R(er, mark+8) +=
+            wt * (ic[c][0]*dBdx_r[0][8] + ic[c][1]*dBdx_r[1][8] + ic[c][2]*dBdx_r[2][8]);
+          R(er, mark+9) +=
+            wt * (ic[c][0]*dBdx_r[0][9] + ic[c][1]*dBdx_r[1][9] + ic[c][2]*dBdx_r[2][9]);
         }
       }
     }

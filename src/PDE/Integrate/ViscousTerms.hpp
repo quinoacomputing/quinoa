@@ -137,9 +137,7 @@ class MultiSpeciesViscousTermsDGP1 {
     std::size_t ncomp,
     const std::array< std::vector< tk::real >, 2 >& state,
     const std::vector<std::array<tk::real, 3>>& dir,
-    const std::array< std::array< std::array< tk::real, 3 >, 5>, 2 >& grad,
-    const std::array< std::array< std::array< tk::real, 6 >, 5>, 2 >& hess,
-    std::vector< tk::real >& ic ) const;
+    std::vector<std::array< tk::real, 3>>& ic ) const;
 
     //! Compute the viscous volume flux on a tet element
     void
