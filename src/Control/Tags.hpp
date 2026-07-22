@@ -284,7 +284,6 @@ DEFTAG(yminus);
 DEFTAG(yplus);
 DEFTAG(zminus);
 DEFTAG(zplus);
-DEFTAG(refvar);
 DEFTAG(tol_refine);
 DEFTAG(tol_derefine);
 DEFTAG(pref);

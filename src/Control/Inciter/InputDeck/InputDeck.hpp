@@ -436,7 +436,6 @@ using ConfigMembers = brigand::list<
       tag::zplus,  tk::real
     > >,
     tag::error,         AMRErrorType,
-    tag::refvar,        std::vector< char >,
     tag::tol_refine,    tk::real,
     tag::tol_derefine,  tk::real
   > >,
@@ -1712,22 +1711,6 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to select the algorithm used to estimate the error
         for solution-adaptive mesh refinement. Available options are 'jump' and
         'hessian')", "string"});
-
-      keywords.insert({"refvar",
-        "Configure dependent variables used for adaptive mesh refinement",
-        R"(This keyword is used to configured a list of dependent variables that
-        trigger adaptive mesh refinement based on estimating their numerical error.
-        These refinement variables are used for both initial (i.e., before time
-        stepping) mesh refinement as well as during time stepping. Only previously
-        (i.e., earlier in the input file) selected dependent variables can be
-        configured as refinement variables. Dependent variables are required to be
-        defined in all equation system configuration blocks, e.g., transport ...
-        end, by using the 'depvar' keyword. Example: transport depvar c end amr
-        refvar c end end. Selecting a particular scalar component in a system is
-        done by appending the equation number to the refvar: Example: transport
-        depvar q ncomp 3 end amr refvar q1 q2 end end, which configures two
-        refinement variables: the first and third scalar component of the previously
-        configured transport equation system.)", "vector of char"});
 
       keywords.insert({"tol_refine", "Configure refine tolerance",
         R"(This keyword is used to set the tolerance used to tag an edge for

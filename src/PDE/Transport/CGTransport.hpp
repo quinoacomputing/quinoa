@@ -493,6 +493,9 @@ class Transport {
       return n;
     }
 
+    //! Return state components used to compute AMR errors
+    std::vector< ncomp_t > amrErrorComponents() const { return { 0 }; }
+
   private:
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy

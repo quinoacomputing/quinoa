@@ -1276,9 +1276,9 @@ Refiner::errorsInEdges(
 //!   to edges (2 local node IDs)
 // *****************************************************************************
 {
-  // Get the indices (in the system of systems) of refinement variables and the
-  // error indicator configured
-  auto ncomp = g_inputdeck.get< tag::ncomp >();
+  // Get the PDE-selected refinement variables and error indicator configured
+  const auto refvars = g_cgpde[m_meshid].amrErrorComponents();
+  Assert( !refvars.empty(), "PDE must select an AMR error component" );
   auto errtype = g_inputdeck.get< tag::amr, tag::error >();
 
   // Compute points surrounding points
@@ -1292,7 +1292,8 @@ Refiner::errorsInEdges(
     for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
       tk::real cmax = 0.0;
       AMR::edge_t e(p,q);
-      for (std::size_t i=0; i<ncomp; ++i) { // for all refinement variables
+      for (auto i : refvars) { // for all PDE-selected refinement variables
+        Assert( i < u.nprop(), "AMR error component index out of bounds" );
         auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
         if (c > cmax) cmax = c;        // find max error at edge
       }
