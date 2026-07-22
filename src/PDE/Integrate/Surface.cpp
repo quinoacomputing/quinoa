@@ -227,6 +227,7 @@ viscousInternalFaceIntDG(
   std::array< std::array< std::vector< tk::real >, 3 >, 2 > dBdx;
   std::array< std::array< std::vector< tk::real >, 6 >, 2 > d2Bdx2;
   std::array< std::array< std::array< tk::real, 3 >, 5>, 2 > grad;
+  std::array< std::array< std::array< tk::real, 3 >, 4>, 2 > vgrad;
   std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess;
   std::vector< tk::real > fl( ncomp, 0.0 );
   std::vector<std::array< tk::real, 3>> ic(ncomp); 
@@ -368,8 +369,8 @@ viscousInternalFaceIntDG(
       }
 
       // Compute gradients and Hessians of conserved quantities
-      viscousRhs.gradientIntElem( U, P, el, dBdx[0], d2Bdx2[0], grad[0], hess[0] );
-      viscousRhs.gradientIntElem( U, P, er, dBdx[1], d2Bdx2[1], grad[1], hess[1] );
+      viscousRhs.gradientIntElem( U, P, el, dBdx[0], d2Bdx2[0], grad[0], vgrad[0], hess[0] );
+      viscousRhs.gradientIntElem( U, P, er, dBdx[1], d2Bdx2[1], grad[1], vgrad[1], hess[1] );
 
       auto dBdx_l = dBdx[0];
       auto dBdx_r = dBdx[1];

@@ -116,6 +116,7 @@ class MultiSpeciesViscousTermsDGP1 {
       const std::array< std::vector< tk::real >, 3 >& dBdx,
       const std::array< std::vector< tk::real >, 6 >& d2Bdx2,
       std::array< std::array< tk::real, 3 >, 5>& grad,
+      std::array< std::array< tk::real, 3 >, 4>& vgrad,
       std::array< std::array< tk::real, 6 >, 5>& hess ) const;
 
     //! Compute the multispecies viscous flux at an interior face

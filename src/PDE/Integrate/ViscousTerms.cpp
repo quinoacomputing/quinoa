@@ -325,6 +325,7 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   const std::array< std::vector< tk::real >, 3 >& dBdx,
   const std::array< std::vector< tk::real >, 6 >& d2Bdx2,
   std::array< std::array< tk::real, 3 >, 5>& grad,
+  std::array< std::array< tk::real, 3 >, 4>& vgrad,
   std::array< std::array< tk::real, 6 >, 5>& hess ) const
 // *****************************************************************************
 //! Compute gradients of conserved quantities for an interior element
@@ -334,6 +335,7 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
 //! \param[in] dBdx Basis gradients in element
 //! \param[in] d2Bdx2 Second derivatives of basis functions in element
 //! \param[in,out] grad Density, momentum, energy gradients in element
+//! \param[in,out] vgrad Velocity, temperature gradients in element
 //! \param[in,out] hess Hessian of conserved quantities in element 
 //! \details Hessian matrix contains (d2u_i/dx_i^2, du_i/dx_jdx_i, etc. terms)
 // *****************************************************************************
@@ -341,9 +343,10 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   using inciter::multispecies::momentumDofIdx;
   using inciter::multispecies::densityDofIdx;
   using inciter::multispecies::energyDofIdx;
+  using inciter::multispecies::temperatureDofIdx;
   
-  // Gradient 
-
+  // Gradient of conserved quantities
+  real cellAvgRho(0.0);
   // d(\rho)/dx
   for (std::size_t k=0; k<m_nspec; ++k) {
     for (std::size_t j=0; j<3; ++j) {
@@ -352,6 +355,7 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
       + dBdx[j][2] * U(elem, densityDofIdx(m_nspec,k,m_rdof,2))
       + dBdx[j][3] * U(elem, densityDofIdx(m_nspec,k,m_rdof,3));
     }
+    cellAvgRho += U(elem, densityDofIdx(m_nspec,k,m_rdof,0));
   }
 
   // d(\rho u)/dx
@@ -372,6 +376,31 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
     grad[4][j] = dBdx[j][1] * U(elem, energyDofIdx(m_nspec,0,m_rdof,1))
                + dBdx[j][2] * U(elem, energyDofIdx(m_nspec,0,m_rdof,2))
                + dBdx[j][3] * U(elem, energyDofIdx(m_nspec,0,m_rdof,3));
+  }
+
+  // Velocity and temperature gradients
+
+  //std::array< std::array< tk::real, 3 >, 4> vgrad;
+  std::array< real, 3 > cellAvgVel;
+  for (std::size_t i=0; i<3; ++i) {
+    cellAvgVel[i] = U(elem, momentumDofIdx(m_nspec,i,m_rdof,0))
+      / cellAvgRho;
+  }
+
+  // du/dx
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      // dudx[i][j]
+      vgrad[i][j] = (grad[i+1][j] - cellAvgVel[i] * grad[0][j]) / cellAvgRho;
+    }
+  }
+
+  // dT/dx_j
+  for (std::size_t j=0; j<3; ++j) {
+    // dTdx[j]
+    vgrad[3][j] = dBdx[j][1] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,1))
+               + dBdx[j][2] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,2))
+               + dBdx[j][3] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,3));
   }
 
   // Hessian 
