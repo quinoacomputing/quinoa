@@ -722,17 +722,86 @@ for (std::size_t l = 1; l<ncomp; ++l) {
 void
 MultiSpeciesViscousTermsDGP1::volumeFlux(
   const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t nspec,
   std::size_t ncomp,
   const std::vector<tk::real>& state,
+  const std::array< std::array< tk::real, 3 >, 4>& vgrad,
   std::vector<std::array<tk::real, 3>>& visc_fl ) const
 // *****************************************************************************
 //! \brief Compute the multispecies viscous flux on a tet volume
 //! \param[in] mat_blk Material EOS block
+//! \param[in] nspec Number of species in this system
 //! \param[in] ncomp Number of components in this system
 //! \param[in] state vector of conserved quantities
+//! \param[in,out] vgrad Velocity, temperature gradients in element
 //! \param[in,out] visc_fl viscous volume flux
 // *****************************************************************************
 {
- // no-op
+
+  using inciter::multispecies::densityIdx;
+  using inciter::multispecies::momentumIdx;
+  using inciter::multispecies::temperatureIdx;
+  using inciter::multispecies::energyIdx;
+  using inciter::Mixture;
+  
+  tk::real rhob(0.0);
+  for (std::size_t k=0; k<nspec; ++k)
+    rhob += state[densityIdx(nspec, k)];
+
+  std::array< tk::real, 3 > u{{
+        state[momentumIdx(nspec,0)] / rhob,
+        state[momentumIdx(nspec,1)] / rhob,
+        state[momentumIdx(nspec,2)] / rhob }};
+
+  std::array< std::array< tk::real, 3 >, 3 > dudx, tau;
+  std::array< tk::real, 3 > dTdx;
+  tk::real mu(0.0), conduct(0.0);
+
+  Mixture mix( nspec, state, mat_blk );
+
+  mu = mix.viscCoeff( state[ncomp+temperatureIdx(nspec,0)],
+                      mat_blk );
+
+  conduct = mu * mix.Cp(state[ncomp+temperatureIdx(nspec,0)], mat_blk) / 0.71; 
+  //TO-DO: make Pr user-configurable
+
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      dudx[i][j]=vgrad[i][j];
+    }
+  }
+
+  for (std::size_t j=0; j<3; ++j)
+    dTdx[j] = vgrad[3][j];
+
+
+  tau[0][0] = mu * ( 4.0 * dudx[0][0] - 2.0*(dudx[1][1] + dudx[2][2]) ) / 3.0;
+  tau[1][1] = mu * ( 4.0 * dudx[1][1] - 2.0*(dudx[0][0] + dudx[2][2]) ) / 3.0;
+  tau[2][2] = mu * ( 4.0 * dudx[2][2] - 2.0*(dudx[0][0] + dudx[1][1]) ) / 3.0;
+  tau[0][1] = mu * ( dudx[0][1] + dudx[1][0] );
+  tau[0][2] = mu * ( dudx[0][2] + dudx[2][0] );
+  tau[1][2] = mu * ( dudx[1][2] + dudx[2][1] );
+  tau[1][0] = tau[0][1];
+  tau[2][0] = tau[0][2];
+  tau[2][1] = tau[1][2];
+
+  // momentum viscous flux
+  for (std::size_t i=0; i<3; ++i) {
+    auto idx = momentumIdx(nspec,i);
+    for (std::size_t j=0; j<3; ++j) {
+      visc_fl[idx][j] += tau[i][j];
+    }
+  }
+
+  // energy  viscous flux
+  auto idx_2 = energyIdx(nspec,0);
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      visc_fl[idx_2][i] += u[j] * tau[i][j];
+    }
+    visc_fl[idx_2][i] += conduct*dTdx[i];
+  }
+  
 }
+  
 } // tk::
