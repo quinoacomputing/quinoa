@@ -1192,6 +1192,8 @@ DG::normfinal()
       bnorms[ tk::cref_find(lid,g) ] = std::move(n);
   }
   m_bnorm = std::move(bnorm);
+
+  meshvelstart();
 }
 
 void
