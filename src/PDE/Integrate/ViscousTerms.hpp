@@ -91,7 +91,7 @@ class MultiSpeciesViscousTermsDGP1 {
   public:
     //! Constructor
     MultiSpeciesViscousTermsDGP1( std::size_t nspec, std::size_t rdof );
-    
+
     //! Return local polynomial order
     std::size_t localDof( std::size_t ) const { return m_rdof; }
 
@@ -106,7 +106,7 @@ class MultiSpeciesViscousTermsDGP1 {
       std::size_t e,
       std::size_t ndof,
       const std::vector< tk::real >& B ) const;
- 
+
     //! Compute gradients of quantities for an interior element
     void
     gradientIntElem(
@@ -126,6 +126,13 @@ class MultiSpeciesViscousTermsDGP1 {
       const std::array< std::array< std::array< tk::real, 3 >, 4>, 2 >& grad,
       std::vector< tk::real >& fl ) const;
 
+    //! Compute the viscous volume flux on a tet element
+    void
+    volumeFlux(
+    const std::vector< inciter::EOS >& mat_blk,
+    std::size_t ncomp,
+    const std::vector<tk::real>& state,
+    std::vector<std::array<tk::real, 3>>& visc_fl ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
