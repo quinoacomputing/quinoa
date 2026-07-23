@@ -70,8 +70,7 @@ class MultiSpecies {
       m_physics(),
       m_ncomp( g_inputdeck.get< tag::ncomp >() ),
       m_nprim(nprim()),
-      m_riemann( multispeciesRiemannSolver( g_inputdeck.get< tag::flux >() ) ),
-      m_riemannjac( multispeciesRiemannJac( g_inputdeck.get< tag::flux >() ) )
+      m_riemann( multispeciesRiemannSolver( g_inputdeck.get< tag::flux >() ) )
     {
       // associate boundary condition configurations with state functions
       brigand::for_each< ctr::bclist::Keys >( ConfigBC( m_bc,
@@ -789,6 +788,9 @@ class MultiSpecies {
       const auto& cx = coord[0];
       const auto& cy = coord[1];
       const auto& cz = coord[2];
+      
+      const auto riemannjac = multispeciesRiemannJac(
+        g_inputdeck.get< tag::flux >() );
 
       // Current exceptions for this method
       if (ndof != 1) {
@@ -924,7 +926,7 @@ class MultiSpecies {
               auto dUdP = conservedPrimitiveJac(m_mat_blk, {}, state, {});
 
               // Compute flux Jacobian
-              const auto dFdU = m_riemannjac( m_mat_blk, fn, dUdP, state, {} );
+              const auto dFdU = riemannjac( m_mat_blk, fn, dUdP, state, {} );
 
               // Compute ghost state Jacobian: dU_ghost/dU_internal
               const auto dUgdUi = symmetryJacobian( ncomp, fn );
@@ -969,7 +971,7 @@ class MultiSpecies {
 
         auto dUdP = conservedPrimitiveJac(m_mat_blk, {}, state, {});
 
-        const auto dFdU = m_riemannjac( m_mat_blk, fn, dUdP, state, {} );
+        const auto dFdU = riemannjac( m_mat_blk, fn, dUdP, state, {} );
 
         for (std::size_t igp=0; igp<ng; ++igp) {
           const auto wt = wgp[igp] * geoFace(f,0);
@@ -1276,8 +1278,6 @@ class MultiSpecies {
     const ncomp_t m_nprim;
     //! Riemann solver
     tk::RiemannFluxFn m_riemann;
-    //! Riemann solver Jacboian
-    tk::RiemannFluxJacFn m_riemannjac;
     //! BC configuration
     BCStateFn m_bc;
     //! EOS material block
