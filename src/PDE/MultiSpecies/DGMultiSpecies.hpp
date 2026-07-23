@@ -748,18 +748,7 @@ class MultiSpecies {
       // compute external (energy) sources
       //m_physics.physSrc(nspec, t, geoElem, {}, R, {});
     }
-    
-    std::vector< std::vector< std::vector< tk::real > > >
-    point_implicit_jacobian_analytic(
-      const tk::Fields& geoFace,
-      [[maybe_unused]] const tk::Fields& geoElem,
-      const inciter::FaceData& fd,
-      [[maybe_unused]] const std::vector< std::size_t >& inpoel,
-      [[maybe_unused]] const tk::UnsMesh::Coords& coord,
-      const tk::Fields& U,
-      const tk::Fields& P,
-      [[maybe_unused]] const std::vector< std::size_t >& ndofel ) const
-    // *****************************************************************************
+
     //  Assemble element-local analytic residual Jacobian for point implicit
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
@@ -770,21 +759,36 @@ class MultiSpecies {
     //! \param[in] P Primitive solution
     //! \param[in] ndofel Number of DOFs per element
     //! \return Dense matrix dR_e/du_e for all owned elements
-    //! \details First P0/source-free MultiSpecies implementation. Interior surface
-    //!   contributions are assembled analytically using the existing Riemann flux
-    //!   Jacobian. Boundary-state and source-term derivatives are intentionally not
-    //!   included in this first version.
-    // *****************************************************************************
+    //! \details First P0/source-free MultiSpecies implementation. Surface
+    //!   contributions are assembled analytically using the existing Riemann
+    //!   Jacobian. Only symmetry boundary terms are included in this first 
+    //!   version.
+    std::vector< std::vector< std::vector< tk::real > > >
+    point_implicit_jacobian_analytic(
+      const tk::Fields& geoFace,
+      [[maybe_unused]] const tk::Fields& geoElem,
+      const inciter::FaceData& fd,
+      [[maybe_unused]] const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      [[maybe_unused]] const std::vector< std::size_t >& ndofel ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto ndof = g_inputdeck.get< tag::ndof >();
-      const auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
       const auto nelem = fd.Esuel().size()/4;
       const auto ncomp = static_cast< std::size_t >( m_ncomp );
       const auto nprim = static_cast< std::size_t >( m_nprim );
       const auto nunk = ncomp*ndof;
 
+      const auto& inpofa = fd.Inpofa();
+
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
+
+      // Current exceptions for this method
       if (ndof != 1) {
         Throw(
           "MultiSpecies analytic point-implicit Jacobian currently only "
@@ -797,20 +801,15 @@ class MultiSpecies {
           "rdof=1");
       }
 
-      if (nprim != 1) {
-        Throw(
-          "MultiSpecies analytic point-implicit Jacobian assumes one primitive "
-          "variable: mixture temperature");
-      }
-
+      // Full RHS - conserved Jacobian
       std::vector< std::vector< std::vector< tk::real > > >
         dRdu( nelem,
           std::vector< std::vector< tk::real > >(
             nunk, std::vector< tk::real >( nunk, 0.0 ) ) );
 
-      // Calculation of analytic jacobian requirs a vector of both conserved
+      // Calculation of analytic jacobian requires a vector of both conserved
       // variables and primitives.
-      // This is required a couple times (L and R state), so put in a lambda
+      // This is required a few times (L and R state, BCs), so put in a lambda
       auto load_state =
         [&]( std::size_t e, std::vector< tk::real >& state )
         {
@@ -823,76 +822,6 @@ class MultiSpecies {
           for (std::size_t p=0; p<nprim; ++p) {
             state[ncomp+p] = P(e,p*rdof);
           }
-        };
-
-      // Calculation of analytic jacobian requirs dU/dP
-      // This is required a couple times (L and R state), so put in a lambda
-      auto conserved_primitive_jacobian =
-        [&]( const std::vector< tk::real >& state )
-        {
-          std::vector< std::vector< tk::real > >
-            dUdP( ncomp, std::vector< tk::real >( ncomp, 0.0 ) );
-
-          const auto uid = multispecies::momentumIdx( nspec, 0 );
-          const auto vid = multispecies::momentumIdx( nspec, 1 );
-          const auto wid = multispecies::momentumIdx( nspec, 2 );
-          const auto Tid = ncomp - 1;
-          const auto eidx = multispecies::energyIdx( nspec, 0 );
-
-          tk::real rho = 0.0;
-          for (std::size_t k=0; k<nspec; ++k) {
-            rho += state[ multispecies::densityIdx( nspec, k ) ];
-          }
-
-          if (!(rho > 0.0)) {
-            Throw(
-              "Non-positive mixture density in MultiSpecies analytic "
-              "point-implicit Jacobian");
-          }
-
-          const auto u = state[uid] / rho;
-          const auto v = state[vid] / rho;
-          const auto w = state[wid] / rho;
-          const auto v2 = u*u + v*v + w*w;
-          const auto ke = 0.5*v2;
-
-          const auto T =
-            state[ncomp + multispecies::temperatureIdx( nspec, 0 )];
-
-          tk::real dEdT = 0.0;
-
-          for (std::size_t k=0; k<nspec; ++k) {
-            const auto didx = multispecies::densityIdx( nspec, k );
-            const auto rhok = state[didx];
-
-            // Species-density equations:
-            //   U_k = rho_k
-            dUdP[didx][k] = 1.0;
-
-            // Momentum:
-            //   rho*u_i = rho_mix * u_i
-            dUdP[uid][k] = u;
-            dUdP[vid][k] = v;
-            dUdP[wid][k] = w;
-
-            // Total energy:
-            //   rhoE = sum_k rho_k e_k(T) + 0.5*rho_mix*|u|^2
-            dUdP[eidx][k] =
-              m_mat_blk[k].compute< EOS::internalenergy >( T ) + ke;
-
-            dEdT += rhok * m_mat_blk[k].compute< EOS::cv >( T );
-          }
-
-          dUdP[uid][uid] = rho;
-          dUdP[vid][vid] = rho;
-          dUdP[wid][wid] = rho;
-
-          dUdP[eidx][uid] = rho*u;
-          dUdP[eidx][vid] = rho*v;
-          dUdP[eidx][wid] = rho*w;
-          dUdP[eidx][Tid] = dEdT;
-
-          return dUdP;
         };
 
       const auto& esuf = fd.Esuf();
@@ -914,8 +843,109 @@ class MultiSpecies {
       state[0].resize( ncomp+nprim );
       state[1].resize( ncomp+nprim );
 
-      // Interior faces. Boundary faces are handled separately by the RHS code
-      // and are not included in this WIP calculation.
+      // Boundary faces: Only symmetry BC is implemented for now.
+      // Other BCs are skipped in this first version.
+      const auto& bface = fd.Bface();
+
+      for (const auto& b : m_bc) {
+        const auto& bcconfig = std::get< 0 >(b);
+        const auto& bstatefn = std::get< 1 >(b);
+
+        // Check if this BC is symmetry by comparing function pointers.
+        // Both symmetry and slip-wall are configured with the symmetry function.
+        const auto* target = bstatefn.target< decltype(&symmetry) >();
+        if (target == nullptr || *target != &symmetry) {
+          continue;
+        }
+
+        // Loop over side-sets for this BC
+        for (const auto sideset : bcconfig) {
+          const auto it = bface.find( static_cast< int >( sideset ) );
+          if (it == bface.end()) continue;
+
+          // Loop over actual boundary faces in this side-set
+          for (const auto f : it->second) {
+            // Face coordinates
+            std::array< std::array< tk::real, 3 >, 3 > coordfa{{
+              {{
+                cx[ inpofa[3*f] ], cy[ inpofa[3*f] ], cz[ inpofa[3*f] ]
+              }},
+              {{
+                cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ]
+              }},
+              {{
+                cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ]
+              }}
+            }};
+
+            if( esuf[2*f] < 0 ) Throw("Inside boundary element is invalid");
+            if( esuf[2*f+1] != -1 ) 
+              Throw("Outside boundary element is not -1");
+
+            const auto el = static_cast< std::size_t >( esuf[2*f] );
+
+            if( el >= nelem ) Throw("Boundary element index out of bounds");
+
+            std::array< tk::real, 3 >
+              fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
+
+            // Accumulate Jacobian contributions
+            // Apply chain rule:
+            //   dF/dU_internal = dF/dU_left + dF/dU_right * dU_right/dU_left
+            for (std::size_t igp=0; igp<ng; ++igp) {
+              const auto r = coordgp[0][igp];
+              const auto s = coordgp[1][igp];
+
+              // Map reference-triangle point (r,s) to the physical face.
+              std::array< tk::real, 3 > gp;
+
+              // This is overkill if we are restricted to P0 since we only have
+              // one Gauss point at the centroid, but hopefully it's forward-
+              // looking for higher-order solvers when we need the GP's
+              // at not just the centroid.
+              for (std::size_t i=0; i<3; ++i) {
+                gp[i] =
+                  (1.0 - r - s) * coordfa[0][i]
+                  + r * coordfa[1][i]
+                  + s * coordfa[2][i];
+              }
+
+              const auto wt = wgp[igp] * geoFace(f,0);
+
+              // Load internal (left) state
+              load_state( el, state[0] );
+
+              // Compute both left and right states using BC
+              state = bstatefn( ncomp, m_mat_blk, state[0],
+                                gp[0], gp[1], gp[2], 0.0, fn );
+
+              auto dUdP = conservedPrimitiveJac(m_mat_blk, {}, state, {});
+
+              // Compute flux Jacobian
+              const auto dFdU = m_riemannjac( m_mat_blk, fn, dUdP, state, {} );
+
+              // Compute ghost state Jacobian: dU_ghost/dU_internal
+              const auto dUgdUi = symmetryJacobian( ncomp, fn );
+
+              for (std::size_t row=0; row<ncomp; ++row) {
+                const auto rmark = row*ndof;
+                for (std::size_t col=0; col<ncomp; ++col) {
+                  const auto cmark = col*ndof;
+                  // Compute total flux derivative: J_left + J_right * dUgdUi
+                  auto dflux = dFdU[0][row][col];
+                  for (std::size_t k=0; k<ncomp; ++k) {
+                    dflux += dFdU[1][row][k] * dUgdUi[k][col];
+                  }
+
+                  dRdu[el][rmark][cmark] -= wt * dflux;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Interior faces
       for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f) {
         if( esuf[2*f] < 0 || esuf[2*f+1] < 0) {
           Throw("Interior element detected as -1 in "
@@ -925,8 +955,8 @@ class MultiSpecies {
         const auto el = static_cast< std::size_t >( esuf[2*f] );
         const auto er = static_cast< std::size_t >( esuf[2*f+1] );
 
-        if( el > U.nunk()) {Throw("Left element index out of bounds" );}
-        if( er > U.nunk()) {Throw("Right element index out of bounds" );}
+        if( el >= U.nunk()) Throw("Left element index out of bounds" );
+        if( er >= U.nunk()) Throw("Right element index out of bounds" );
 
         std::array< tk::real, 3 >
           fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
@@ -935,10 +965,7 @@ class MultiSpecies {
         load_state( el, state[0] );
         load_state( er, state[1] );
 
-        std::array< std::vector< std::vector< tk::real > >, 2 > dUdP{{
-          conserved_primitive_jacobian( state[0] ),
-          conserved_primitive_jacobian( state[1] )
-        }};
+        auto dUdP = conservedPrimitiveJac(m_mat_blk, {}, state, {});
 
         const auto dFdU = m_riemannjac( m_mat_blk, fn, dUdP, state, {} );
 
@@ -1324,8 +1351,11 @@ class MultiSpecies {
     std::array dUdP{ std::vector(ncomp, std::vector< tk::real >(ncomp)),
                      std::vector(ncomp, std::vector< tk::real >(ncomp)) };
     tk::real rhol(0.0), rhor(0.0), Tl(0.0), Tr(0.0);
-    std::size_t uid, vid, wid, Tid;
-    uid = nspec; vid = nspec + 1; wid = nspec + 2; Tid = ncomp - 1;
+    std::size_t Tid = ncomp - 1;
+    const auto uid = multispecies::momentumIdx( nspec, 0 );
+    const auto vid = multispecies::momentumIdx( nspec, 1 );
+    const auto wid = multispecies::momentumIdx( nspec, 2 );
+    const auto eidx = multispecies::energyIdx( nspec, 0 );
 
     // Initialize mixtures
     Mixture mixl(nspec, u[0], mat_blk);
@@ -1335,6 +1365,11 @@ class MultiSpecies {
     Tr = u[1][ncomp+multispecies::temperatureIdx(nspec, 0)];
     rhol = mixl.get_mix_density();
     rhor = mixr.get_mix_density();
+    if (!(rhol > 0.0) || !(rhor > 0.0)) {
+      Throw(
+        "Non-positive mixture density in MultiSpecies "
+        "conserved-to-primitive Jacobian");
+    }
 
     // Velocities
     auto ul = u[0][multispecies::momentumIdx(nspec, 0)]/rhol;
@@ -1376,22 +1411,22 @@ class MultiSpecies {
     for (std::size_t k=0; k<nspec; ++k)
     {
       // This assumes de_s/drho_s = 0
-      dUdP[0][Tid][k] = mat_blk[k].compute< EOS::internalenergy >(Tl)
+      dUdP[0][eidx][k] = mat_blk[k].compute< EOS::internalenergy >(Tl)
                       + 0.5 * (ul*ul + vl*vl + wl*wl);
-      dUdP[1][Tid][k] = mat_blk[k].compute< EOS::internalenergy >(Tr)
+      dUdP[1][eidx][k] = mat_blk[k].compute< EOS::internalenergy >(Tr)
                       + 0.5 * (ur*ur + vr*vr + wr*wr);
     }
     // ... w.r.t. velocity
-    dUdP[0][Tid][uid] = rhol * ul;
-    dUdP[0][Tid][vid] = rhol * vl;
-    dUdP[0][Tid][wid] = rhol * wl;
-    dUdP[1][Tid][uid] = rhor * ur;
-    dUdP[1][Tid][vid] = rhor * vr;
-    dUdP[1][Tid][wid] = rhor * wr;
+    dUdP[0][eidx][uid] = rhol * ul;
+    dUdP[0][eidx][vid] = rhol * vl;
+    dUdP[0][eidx][wid] = rhol * wl;
+    dUdP[1][eidx][uid] = rhor * ur;
+    dUdP[1][eidx][vid] = rhor * vr;
+    dUdP[1][eidx][wid] = rhor * wr;
 
     // ... w.r.t. temperature
-    dUdP[0][Tid][Tid] = rhol * mixl.mix_Cv(Tl, mat_blk);
-    dUdP[1][Tid][Tid] = rhor * mixr.mix_Cv(Tr, mat_blk);
+    dUdP[0][eidx][Tid] = rhol * mixl.mix_Cv(Tl, mat_blk);
+    dUdP[1][eidx][Tid] = rhor * mixr.mix_Cv(Tr, mat_blk);
 
     return dUdP;
   }

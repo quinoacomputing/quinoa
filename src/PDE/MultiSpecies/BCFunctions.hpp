@@ -342,6 +342,61 @@ namespace inciter {
     return {{ std::move(dul), std::move(dur) }};
   }
 
+  //! \brief Compute Jacobian of ghost state wrt internal state for symmetry BC
+  //! \param[in] ncomp Number of scalar components in this PDE system
+  //! \param[in] fn Unit face normal
+  //! \return Jacobian matrix dU_ghost/dU_internal (ncomp x ncomp)
+  //! \details For symmetry BC, the ghost velocity is:
+  //!   v_ghost = v_int - 2*(v_int·n)*n,
+  //!   which reflects the normal component while preserving tangential.
+  //!   The Jacobian captures how momentum components in the ghost state depend
+  //!   on the internal state momentum components. Since momentum is rho*v, and
+  //!   rho is the same for both states, we have:
+  //!   (rho*v_ghost)_i = (rho*v_int)_i - 2*n_i * sum_j( n_j * (rho*v_int)_j )
+  //!   Therefore: d(rho*v_ghost)_i / d(rho*v_int)_k = delta_ik - 2*n_i*n_k
+  //!   Other derivatives are just equal to the identity matrix.
+  //! \note This function is used in the point-implicit Jacobian calculation to
+  //!   apply the chain rule when computing dF/dU for boundary faces.
+  static std::vector< std::vector< tk::real > >
+  symmetryJacobian( ncomp_t ncomp,
+                    const std::array< tk::real, 3 >& fn )
+  {
+    auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+    // Initialize as identity matrix
+    std::vector< std::vector< tk::real > >
+      dUgdUi( ncomp, std::vector< tk::real >( ncomp, 0.0 ) );
+
+    // Species densities: ghost = internal (identity mapping)
+    for (std::size_t k=0; k<nspec; ++k) {
+      const auto didx = multispecies::densityIdx( nspec, k );
+      dUgdUi[didx][didx] = 1.0;
+    }
+
+    // Energy: ghost = internal (identity mapping)
+    const auto eidx = multispecies::energyIdx( nspec, 0 );
+    dUgdUi[eidx][eidx] = 1.0;
+
+    // Momentum transformation: Apply reflection formula derivatives
+    const auto uid = multispecies::momentumIdx(nspec, 0);
+    const auto vid = multispecies::momentumIdx(nspec, 1);
+    const auto wid = multispecies::momentumIdx(nspec, 2);
+
+    dUgdUi[uid][uid] = 1.0 - 2.0*fn[0]*fn[0];
+    dUgdUi[uid][vid] =     - 2.0*fn[0]*fn[1];
+    dUgdUi[uid][wid] =     - 2.0*fn[0]*fn[2];
+
+    dUgdUi[vid][uid] =     - 2.0*fn[1]*fn[0];
+    dUgdUi[vid][vid] = 1.0 - 2.0*fn[1]*fn[1];
+    dUgdUi[vid][wid] =     - 2.0*fn[1]*fn[2];
+
+    dUgdUi[wid][uid] =     - 2.0*fn[2]*fn[0];
+    dUgdUi[wid][vid] =     - 2.0*fn[2]*fn[1];
+    dUgdUi[wid][wid] = 1.0 - 2.0*fn[2]*fn[2];
+
+    return dUgdUi;
+  }
+
 } // inciter::
 
 #endif // BCFunctions_h
