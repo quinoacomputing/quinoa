@@ -304,6 +304,7 @@ class DGPDE {
     //! Public interface for computing analytic point-implicit residual Jacobian
     std::vector< std::vector< std::vector< tk::real > > >
     point_implicit_jacobian_analytic(
+      tk::real t,
       const tk::Fields& geoFace,
       const tk::Fields& geoElem,
       const inciter::FaceData& fd,
@@ -314,7 +315,7 @@ class DGPDE {
       const std::vector< std::size_t >& ndofel ) const
     {
       return self->point_implicit_jacobian_analytic(
-        geoFace, geoElem, fd, inpoel, coord, U, P, ndofel );
+        t, geoFace, geoElem, fd, inpoel, coord, U, P, ndofel );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -522,6 +523,7 @@ class DGPDE {
                         tk::Fields& ) const = 0;
       virtual std::vector< std::vector< std::vector< tk::real > > >
       point_implicit_jacobian_analytic(
+        tk::real,
         const tk::Fields&,
         const tk::Fields&,
         const inciter::FaceData&,
@@ -730,6 +732,7 @@ class DGPDE {
       }
       std::vector< std::vector< std::vector< tk::real > > >
       point_implicit_jacobian_analytic(
+        tk::real t,
         const tk::Fields& geoFace,
         const tk::Fields& geoElem,
         const inciter::FaceData& fd,
@@ -740,7 +743,7 @@ class DGPDE {
         const std::vector< std::size_t >& ndofel ) const override
       {
         return data.point_implicit_jacobian_analytic(
-          geoFace, geoElem, fd, inpoel, coord, U, P, ndofel );
+          t, geoFace, geoElem, fd, inpoel, coord, U, P, ndofel );
       }
       void eval_ndof( std::size_t nunk,
                       const tk::UnsMesh::Coords& coord,

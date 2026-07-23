@@ -143,7 +143,7 @@ struct AUSMMultiSpecies {
   //! AUSM+up approximate Riemann solver flux Jacbobian function for
   //! multi-species flow
   //! \param[in] fn Face/Surface normal
-  //! \param[in] dUdP Jacobian of conserved variables with respect to primatives
+  //! \param[in] dUdP Jacobian of conserved variables with respect to primitives
   //! \param[in] u Left and right unknown/state vector
   //! \return Riemann flux Jacobian according to AUSM+up.
   //! \note The function signature must follow tk::RiemannFluxJacFn
@@ -370,7 +370,7 @@ struct AUSMMultiSpecies {
         dl_plusdP[0][k]  = dvriemdP[0] + dmddP[0];
         dl_plusdP[1][k]  = dvriemdP[1] + dmddP[1];
         dl_minusdP[0][k] = -dmddP[0];
-        dl_minusdP[1][k] = -dmddP[1];;
+        dl_minusdP[1][k] = -dmddP[1];
       } else {
         dl_plusdP[0][k]  = dmddP[0];
         dl_plusdP[1][k]  = dmddP[1];

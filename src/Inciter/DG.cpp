@@ -2525,10 +2525,9 @@ DG::point_implicit_integrate()
   // Frozen neighbors
   const tk::Fields Ubase( m_un );
   const tk::Fields Pbase( m_p );
-  const tk::Fields Rbase( m_rhs );
 
   // Jacobian of RHS of all elements
-  const auto dRdu = point_implicit_jacobian_analytic( Ubase, Pbase, Rbase );
+  const auto dRdu = point_implicit_jacobian_analytic( Ubase, Pbase );
 
   tk::Fields Unew( m_u );
 
@@ -2538,9 +2537,9 @@ DG::point_implicit_integrate()
     auto dte = Disc()->Dt();
 
     // Extract element DOFs
-    std::vector<tk::real> u_old(neq*ndof), u_new(neq*ndof);
-    for (size_t c=0; c<neq; ++c)
-      for (size_t k=0; k<m_numEqDof[c]; ++k) {
+    std::vector< tk::real > u_old(neq*ndof), u_new(neq*ndof);
+    for (std::size_t c=0; c<neq; ++c)
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
         const auto rmark = c*rdof + k;
         const auto mark = c*ndof + k;
         u_old[mark] = Ubase(e, rmark);
@@ -2556,8 +2555,8 @@ DG::point_implicit_integrate()
       Throw( "Point-implicit solver failed at element " + std::to_string(e) );
 
     // Update global solution
-    for (size_t c=0; c<neq; ++c)
-      for (size_t k=0; k<m_numEqDof[c]; ++k) {
+    for (std::size_t c=0; c<neq; ++c)
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
         const auto rmark = c*rdof + k;
         const auto mark = c*ndof + k;
         Unew(e, rmark) = u_new[mark];
@@ -2585,7 +2584,8 @@ DG::solve_element_implicit(
 //! \param[in] vole Element volume
 //! \param[in] dRdU Jacobian of RHS for element
 //! \return True if invert is successful, false otherwise
-//! \details Solves the linearized system u - u_old = dt( R(u)^n + dR(u)/du^n).
+//! \details Solves the linearized system
+//!   M(u - u_old) = dt( R(u)^n + dR(u)/du^n)
 //!   The Jacobian and RHS are obtained from the physics-specific
 //!   implementations
 // *****************************************************************************
@@ -2737,13 +2737,11 @@ DG::point_implicit_jacobian(
 std::vector< std::vector< std::vector< tk::real > > >
 DG::point_implicit_jacobian_analytic(
   const tk::Fields& Ubase,
-  const tk::Fields& Pbase,
-  const tk::Fields& Rbase ) const
+  const tk::Fields& Pbase) const
 // *****************************************************************************
 // Calculates element-local residual Jacobian using analytic PDE flux Jacobians
 //! \param[in] Ubase Base conservative field with lagged neighbor states
 //! \param[in] Pbase Base primitive field with lagged neighbor states
-//! \param[in] Rbase Base RHS field, used here only for consistency checks
 //! \return Dense matrix dR_e/du_e for all owned elements
 //! \details WIP using information specific to Riemann solver and PDE to
 //! calculate jacobian
@@ -2769,7 +2767,7 @@ DG::point_implicit_jacobian_analytic(
 
   auto dRdu =
     g_dgpde[d->MeshId()].point_implicit_jacobian_analytic(
-      myGhosts()->m_geoFace, myGhosts()->m_geoElem, myGhosts()->m_fd,
+      d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem, myGhosts()->m_fd,
       myGhosts()->m_inpoel, myGhosts()->m_coord, Ubase, Pbase, m_ndof );
 
   if (dRdu.size() != nelem) {

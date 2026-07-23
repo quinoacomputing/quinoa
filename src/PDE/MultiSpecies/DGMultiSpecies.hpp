@@ -750,6 +750,7 @@ class MultiSpecies {
     }
 
     //  Assemble element-local analytic residual Jacobian for point implicit
+    //! \param[in] t Physical time
     //! \param[in] geoFace Face geometry array
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object
@@ -765,6 +766,7 @@ class MultiSpecies {
     //!   version.
     std::vector< std::vector< std::vector< tk::real > > >
     point_implicit_jacobian_analytic(
+      tk::real t,
       const tk::Fields& geoFace,
       [[maybe_unused]] const tk::Fields& geoElem,
       const inciter::FaceData& fd,
@@ -917,7 +919,7 @@ class MultiSpecies {
 
               // Compute both left and right states using BC
               state = bstatefn( ncomp, m_mat_blk, state[0],
-                                gp[0], gp[1], gp[2], 0.0, fn );
+                                gp[0], gp[1], gp[2], t, fn );
 
               auto dUdP = conservedPrimitiveJac(m_mat_blk, {}, state, {});
 

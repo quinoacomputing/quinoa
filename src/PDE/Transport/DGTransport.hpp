@@ -412,6 +412,7 @@ class Transport {
     
     std::vector< std::vector< std::vector< tk::real > > >
     point_implicit_jacobian_analytic(
+      tk::real,
       const tk::Fields&,
       const tk::Fields&,
       const inciter::FaceData&,

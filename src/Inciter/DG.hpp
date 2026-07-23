@@ -463,8 +463,7 @@ class DG : public CBase_DG {
     std::vector< std::vector< std::vector< tk::real > > >
       point_implicit_jacobian_analytic(
         const tk::Fields& Ubase,
-        const tk::Fields& Pbase,
-        const tk::Fields& Rbase ) const;
+        const tk::Fields& Pbase ) const;
 
     //! Coloring algorithm to separate elements that share a face
     std::vector< int > point_implicit_elem_coloring() const;
