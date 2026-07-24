@@ -985,6 +985,10 @@ class MultiMat {
 
       // p-adaptive DG
       if (!pref) {
+        // compute volume integrals
+        tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
+          geoElem, flux, velfn, Problem::src, U, P, R, intsharp, &m_volDev ); //added &m_volDev
+
         // compute internal surface flux integrals
         tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
           coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
@@ -996,12 +1000,13 @@ class MultiMat {
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
             m_riemann, velfn, std::get<1>(b), U, P, R,
             riemannDeriv, intsharp );
-
-        // compute volume integrals
-        tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
-          geoElem, flux, velfn, Problem::src, U, P, R, intsharp, &m_volDev ); //added &m_volDev
       }
       else {
+        // compute volume integrals
+        tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
+                    inpoel, coord, geoElem, flux, velfn, Problem::src, U, P,
+                    ndofel, R, intsharp );
+
         // compute internal surface flux integrals
         tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
@@ -1013,11 +1018,6 @@ class MultiMat {
                           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
                           m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
                           riemannDeriv, intsharp );
-
-        // compute volume integrals
-        tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-                    inpoel, coord, geoElem, flux, velfn, Problem::src, U, P,
-                    ndofel, R, intsharp );
       }
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
@@ -1033,9 +1033,16 @@ class MultiMat {
       }
 
       // compute volume integrals of non-conservative terms
-      tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
-                              inpoel, coord, geoElem, U, P, riemannDeriv,
-                              ndofel, R, intsharp );
+      if (!pref) {
+        tk::nonConservativeInt_constP( nmat, m_mat_blk, ndof, rdof, nelem,
+                                       inpoel, coord, geoElem, U, P, riemannDeriv,
+                                       R, intsharp );
+      }
+      else {
+        tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
+                                inpoel, coord, geoElem, U, P, riemannDeriv,
+                                ndofel, R, intsharp );
+      }
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::multimat, tag::prelax >())
