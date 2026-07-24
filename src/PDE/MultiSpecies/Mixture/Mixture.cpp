@@ -283,12 +283,14 @@ Mixture::pressure_prim_partials(
 //! \return Mixture pressure
 // *************************************************************************
 {
-  std::vector< tk::real > dpdP(m_nspec + 3 + 1, 0.0);
+  std::vector< tk::real > dpdP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0);
   std::vector< tk::real > dRdP = mix_R_prim_partials(mix_density, mat_blk);
   for (std::size_t k = 0; k < m_nspec; k++) {
-    dpdP[k] = m_mix_R * mix_temp + mix_density * dRdP[k] * mix_temp;
+    dpdP[multispecies::densityIdx(m_nspec, k)] =
+      m_mix_R * mix_temp + mix_density
+      * dRdP[multispecies::densityIdx(m_nspec, k)] * mix_temp;
   }
-  dpdP[m_nspec + 3] = mix_density*m_mix_R;
+  dpdP[multispecies::energyIdx(m_nspec, 0)] = mix_density * m_mix_R;
   return dpdP;
 }
 
@@ -304,10 +306,11 @@ Mixture::mix_R_prim_partials(
 //! \return Mixture pressure
 // *************************************************************************
 {
-  std::vector< tk::real > dRdP(m_nspec + 3 + 1, 0.0);
+  std::vector< tk::real > dRdP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0);
   for (std::size_t k = 0; k < m_nspec; k++) {
-    dRdP[k] = mat_blk[k].compute< EOS::gas_constant >() / mix_density
-            - m_mix_R / mix_density;
+    dRdP[multispecies::densityIdx(m_nspec, k)]
+      = mat_blk[k].compute< EOS::gas_constant >() / mix_density
+      - m_mix_R / mix_density;
   }
   return dRdP;
 }
@@ -326,13 +329,15 @@ Mixture::mix_Cv_prim_partials(
 //! \return Mixture pressure
 // *************************************************************************
 {
-  std::vector< tk::real > dCvdP(m_nspec + 3 + 1, 0.0);
+  std::vector< tk::real > dCvdP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0);
 
   for (std::size_t k = 0; k < m_nspec; k++) {
-    dCvdP[k] = mat_blk[k].compute< EOS::cv >(mix_temp) / mix_density
-             - mix_Cv(mix_temp, mat_blk) / mix_density;
+    dCvdP[multispecies::densityIdx(m_nspec, k)]
+      = mat_blk[k].compute< EOS::cv >(mix_temp) / mix_density
+      - mix_Cv(mix_temp, mat_blk) / mix_density;
 
-    dCvdP[m_nspec + 3] += mat_blk[k].compute< EOS::dcvdT >(mix_temp) * m_Ys[k];
+    dCvdP[multispecies::energyIdx(m_nspec, 0)]
+      += mat_blk[k].compute< EOS::dcvdT >(mix_temp) * m_Ys[k];
   }
   return dCvdP;
 }
@@ -351,8 +356,8 @@ Mixture::soundspeed_prim_partials(
 //! \return Mixture pressure
 // *************************************************************************
 {
-  std::vector< tk::real > dadP(m_nspec + 3 + 1, 0.0),
-                          drhodP(m_nspec + 3 + 1, 0.0);
+  std::vector< tk::real > dadP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0),
+                          drhodP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0);
   auto dpdP = pressure_prim_partials(mix_density, mix_temp, mat_blk);
   auto dCvdP = mix_Cv_prim_partials(mix_density, mix_temp, mat_blk);
   auto dRdP = mix_R_prim_partials(mix_density, mat_blk);
@@ -361,17 +366,22 @@ Mixture::soundspeed_prim_partials(
   tk::real mix_Cv(0.), dbetadP(0.);
   for (std::size_t k = 0; k < m_nspec; k++) {
     mix_Cv += mat_blk[k].compute< EOS::cv >(mix_temp) * m_Ys[k];
-    drhodP[k] = 1;
+    drhodP[multispecies::densityIdx(m_nspec, k)] = 1;
   }
   tk::real beta = m_mix_R / mix_Cv;
 
   // Add constituent partials together
   for (std::size_t k = 0; k < m_nspec + 3 + 1; k++) {
-    dbetadP = dRdP[k] / mix_Cv - m_mix_R / ( mix_Cv * mix_Cv ) * dCvdP[k];
-    dadP[k] = 0.5 / a * ( (1 + beta) / mix_density * dpdP[k]
-                      + p / mix_density * dbetadP
-                      - (1 + beta) * p / (mix_density*mix_density) * drhodP[k]
-                      );
+    dbetadP = dRdP[multispecies::densityIdx(m_nspec, k)]
+            / mix_Cv - m_mix_R / ( mix_Cv * mix_Cv )
+            * dCvdP[multispecies::densityIdx(m_nspec, k)];
+    dadP[multispecies::densityIdx(m_nspec, k)]
+      = 0.5 / a
+      * ( (1 + beta) / mix_density * dpdP[multispecies::densityIdx(m_nspec, k)]
+          + p / mix_density * dbetadP
+          - (1 + beta) * p / (mix_density*mix_density)
+          * drhodP[multispecies::densityIdx(m_nspec, k)]
+        );
   }
   return dadP;
 }
