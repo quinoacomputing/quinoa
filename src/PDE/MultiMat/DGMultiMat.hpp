@@ -983,21 +983,9 @@ class MultiMat {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
-      Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
-              "Riemann derivative vector incorrect" );
-
-      // get derivatives from riemannDeriv
-      for (std::size_t k=0; k<riemannDeriv.size(); ++k)
-      {
-        Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
-                "for non-conservative terms has incorrect size" );
-        for (std::size_t e=0; e<U.nunk(); ++e)
-          riemannDeriv[k][e] /= geoElem(e, 0);
-      }
-
       // p-adaptive DG
       if (!pref) {
-	// compute volume integrals (first, since R is zeroed in volInt_constP()
+        // compute volume integrals
         tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
           geoElem, flux, velfn, Problem::src, U, P, R, intsharp, &m_volDev ); //added &m_volDev
 
@@ -1012,11 +1000,6 @@ class MultiMat {
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
             m_riemann, velfn, std::get<1>(b), U, P, R,
             riemannDeriv, intsharp );
-	
-	// compute volume integrals of non-conservative terms
-        tk::nonConservativeInt_constP( nmat, m_mat_blk, ndof, rdof, nelem,
-                                       inpoel, coord, geoElem, U, P, riemannDeriv,
-                                       R, intsharp );
       }
       else {
         // compute volume integrals
@@ -1035,13 +1018,32 @@ class MultiMat {
                           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
                           m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
                           riemannDeriv, intsharp );
-        
-        // compute volume integrals of non-conservative terms
-	tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
+      }
+
+      Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
+              "Riemann derivative vector incorrect" );
+
+      // get derivatives from riemannDeriv
+      for (std::size_t k=0; k<riemannDeriv.size(); ++k)
+      {
+        Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
+                "for non-conservative terms has incorrect size" );
+        for (std::size_t e=0; e<U.nunk(); ++e)
+          riemannDeriv[k][e] /= geoElem(e, 0);
+      }
+
+      // compute volume integrals of non-conservative terms
+      if (!pref) {
+        tk::nonConservativeInt_constP( nmat, m_mat_blk, ndof, rdof, nelem,
+                                       inpoel, coord, geoElem, U, P, riemannDeriv,
+                                       R, intsharp );
+      }
+      else {
+        tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
                                 inpoel, coord, geoElem, U, P, riemannDeriv,
                                 ndofel, R, intsharp );
       }
-      
+
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::multimat, tag::prelax >())
       {
