@@ -2285,6 +2285,7 @@ DG::imex_integrate()
 
     for (std::size_t e=0; e<nelem; ++e) {
       auto vole = myGhosts()->m_geoElem(e,0);
+      auto vole_n = m_geoElemn(e,0);
       // Integrate explicitly on all equations
       for (std::size_t c=0; c<neq; ++c)
       {
@@ -2292,9 +2293,13 @@ DG::imex_integrate()
         {
           auto rmark = c*rdof+k;
           auto mark = c*ndof+k;
-          m_u(e, rmark) = m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
+
+          auto mm_i = vole * mass_dubiner[k];
+          auto mm_n = vole_n * mass_dubiner[k];
+
+          m_u(e, rmark) = ( mm_n * m_un(e, rmark) + d->Dt() * (
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark) ) ) / mm_i;
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -2305,9 +2310,12 @@ DG::imex_integrate()
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
           auto rmark = m_stiffEqIdx[c]*rdof+k;
+
+          auto mm_i = vole * mass_dubiner[k];
+
           m_u(e, rmark) += d->Dt() *
             ( impl_rkcoef[0][m_stage]
-            * m_stiffrhsprev(e,c*ndof+k)/(vole*mass_dubiner[k]) );
+            * m_stiffrhsprev(e,c*ndof+k) / mm_i );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -2369,6 +2377,7 @@ DG::imex_integrate()
     for (std::size_t e=0; e<nelem; ++e)
     {
       auto vole = myGhosts()->m_geoElem(e,0);
+      auto vole_n = m_geoElemn(e,0);
       // First integrate explicitly on all equations
       for (std::size_t c=0; c<neq; ++c)
       {
@@ -2376,9 +2385,13 @@ DG::imex_integrate()
         {
           auto rmark = c*rdof+k;
           auto mark = c*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
+
+          auto mm_i = vole * mass_dubiner[k];
+          auto mm_n = vole_n * mass_dubiner[k];
+
+          m_u(e, rmark) =  ( mm_n * m_un(e, rmark) + d->Dt() * (
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)) ) / mm_i;
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -2388,11 +2401,14 @@ DG::imex_integrate()
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
           auto rmark = m_stiffEqIdx[ieq]*rdof+idof;
+
+          auto mm_i = vole * mass_dubiner[idof];
+
           m_u(e, rmark) +=
             d->Dt() * ( impl_rkcoef[0][m_stage]
-                      * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
+                      * m_stiffrhsprev(e,ieq*ndof+idof) / mm_i
                       + impl_rkcoef[1][m_stage]
-                      * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
+                      * m_stiffrhs(e,ieq*ndof+idof) / mm_i );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -2438,6 +2454,7 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
     }
 
   auto vole = myGhosts()->m_geoElem(e,0);
+  auto vole_n = m_geoElemn(e,0);
 
   // Compute explicit terms (Should be computed once)
   std::vector< tk::real > expl_terms(n, 0.0);
@@ -2446,13 +2463,15 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
     {
       auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-      expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
+      auto mm_i = vole * mass_dubiner[idof];
+      auto mm_n = vole_n * mass_dubiner[idof];
+      expl_terms[ieq*ndof+idof] = ( mm_n * m_un(e, stiffrmark)
         + d->Dt() * ( expl_rkcoef[0][m_stage]
-        * m_rhsprev(e,stiffmark)/(vole*mass_dubiner[idof])
+        * m_rhsprev(e,stiffmark)
         + expl_rkcoef[1][m_stage]
-        * m_rhs(e,stiffmark)/(vole*mass_dubiner[idof])
+        * m_rhs(e,stiffmark)
         + impl_rkcoef[0][m_stage]
-        * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
+        * m_stiffrhsprev(e,ieq*ndof+idof)) ) / mm_i;
     }
 
   // Compute stiff_rhs
@@ -2465,9 +2484,10 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
     for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
     {
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+      auto mm_i = vole * mass_dubiner[idof];
       f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
         + d->Dt() * impl_rkcoef[1][m_stage]
-        * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
+        * m_stiffrhs(e,ieq*ndof+idof) / mm_i
         - m_u(e, stiffrmark);
     }
 
