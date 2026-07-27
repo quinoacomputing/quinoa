@@ -71,6 +71,7 @@ namespace tk {
                   const Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
                   const Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
                   Kokkos::View<real*, memory_space> R);
+}
 
 template< class ViscousTerms >
 void
@@ -516,56 +517,6 @@ tk::volInt_constP(
 
   // Quadrature points computed once (constant P)
   auto ng = tk::NGvol(ndof);
-
-  /*
-  // Transfer solidx vector
-  auto solidx_h_view = changeToView(solidx.data(), nmat);
-  Kokkos::View<size_t*, memory_space> solidx_d_view("solidx", nmat);
-  Kokkos::deep_copy(solidx_d_view, solidx_h_view);
-
-  // Transfer inpoel variable
-  size_t inpoel_size = inpoel.size();
-  auto inpoel_h_view = changeToView(inpoel.data(), inpoel_size);
-  Kokkos::View<size_t*, memory_space> inpoel_d_view("inpoel device view", inpoel_size);
-  Kokkos::deep_copy(inpoel_d_view, inpoel_h_view);
-
-  // Transfer coord (nodal coordinates)
-  size_t coordx_size = coord[0].size();
-  auto cx_h_view = changeToView(coord[0].data(), coordx_size);
-  Kokkos::View<real*, memory_space> cx_d_view("cx device view", coordx_size);
-  Kokkos::deep_copy(cx_d_view, cx_h_view);
-
-  size_t coordy_size = coord[1].size();
-  auto cy_h_view = changeToView(coord[1].data(), coordy_size);
-  Kokkos::View<real*, memory_space> cy_d_view("cy device view", coordy_size);
-  Kokkos::deep_copy(cy_d_view, cy_h_view);
-
-  size_t coordz_size = coord[2].size();
-  auto cz_h_view = changeToView(coord[2].data(), coordz_size);
-  Kokkos::View<real*, memory_space> cz_d_view("cz device view", coordz_size);
-  Kokkos::deep_copy(cz_d_view, cz_h_view);
-
-  // geoElem, U, P, R transfer
-  size_t geoElem_size = geoElem.getSize();
-  Kokkos::View<real*, memory_space> geoElem_d_view("geoElem_d_view", geoElem_size);
-  auto geoElem_h_view = changeToView(geoElem.getPointer(), geoElem_size);
-  Kokkos::deep_copy(geoElem_d_view, geoElem_h_view);
-
-  size_t P_size = P.getSize();
-  Kokkos::View<real*, memory_space> P_d_view("P_d_view", P_size);
-  auto P_h_view = changeToView(P.getPointer(), P_size);
-  Kokkos::deep_copy(P_d_view, P_h_view);
-
-  size_t U_size = U.getSize();
-  Kokkos::View<real*, memory_space> U_d_view("U_d_view", U_size);
-  auto U_h_view = changeToView(U.getPointer(), U_size);
-  Kokkos::deep_copy(U_d_view, U_h_view);
-
-  size_t R_size = R.getSize();
-  Kokkos::View<real*, memory_space> R_d_view("R_d_view", R_size);
-  auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
-  Kokkos::deep_copy(R_d_view, R_h_view);
-  */
 
   // Persistent device buffers
   // Does not get rid of host->device deep_copy since the data changes per step

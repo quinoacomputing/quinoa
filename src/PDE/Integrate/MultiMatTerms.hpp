@@ -48,6 +48,25 @@ nonConservativeInt( const bool pref,
                     Fields& R,
                     int intsharp );
 
+// Persistent device-resident scratch buffers for nonConservativeInt_constP
+// Pack the per-call device views into a structure to avoid excessive (re)allocation
+// Must be owned by a charm chare and never be static thread-local
+// In order for the views to be destroyed before calling Kokkos::finalize()
+struct nonConsvIntDeviceViews {
+                   Kokkos::View<std::size_t*,memory_space> solidx;
+                   Kokkos::View<std::size_t*,memory_space> inpoel;
+                   Kokkos::View<real*,memory_space> cx;
+                   Kokkos::View<real*,memory_space> cy;
+                   Kokkos::View<real*,memory_space> cz;
+                   Kokkos::View<real*,memory_space> geoElem;
+                   Kokkos::View<real*,memory_space> U;
+                   Kokkos::View<real*,memory_space> P;
+                   Kokkos::View<real*,memory_space> riemannDeriv; //this is flattened [nr*nc]
+                   Kokkos::View<real*,memory_space> R;
+};
+
+// Old implementation of nonConsvInt_constP
+/*
 void
 nonConservativeInt_constP(
                    std::size_t nmat,
@@ -63,6 +82,37 @@ nonConservativeInt_constP(
                    const std::vector< std::vector< tk::real > >& riemannDeriv,
                    Fields& R,
                    int intsharp );
+*/
+// Kokkos implementation of nonConsvInt_constP
+void
+nonConservativeInt_constP( std::size_t nmat,
+                           const std::vector< inciter::EOS >& mat_blk,
+                           const std::size_t ndof,
+                           const std::size_t rdof,
+                           const std::size_t nelem,
+                           const std::vector< std::size_t >& inpoel,
+                           const UnsMesh::Coords& coord,
+                           const Fields& geoElem,
+                           const Fields& U,
+                           const Fields& P,
+                           const std::vector< std::vector< tk::real > >& riemannDeriv,
+                           Fields& R,
+                           int intsharp, 
+                           nonConsvIntDeviceViews* dev = nullptr );
+
+// Kokkos device version of updateRhsNonCons
+KOKKOS_INLINE_FUNCTION
+void
+updateRhsNonCons_device( ncomp_t ncomp,
+                         const std::size_t nmat,
+                         const std::size_t ndof,
+                         const std::size_t ndof_el,
+                         const tk::real wt,
+                         const std::size_t r_nprop,
+                         const std::size_t e,
+                         const Kokkos::Array<tk::real, 10>& B,
+                         const Kokkos::Array<Kokkos::Array<tk::real,10>,50>& ncf,
+                         Kokkos::View<real*, memory_space> R );
 
 //! Update the rhs by adding the non-conservative term integrals
 void
