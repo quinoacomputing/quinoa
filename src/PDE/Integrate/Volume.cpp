@@ -590,14 +590,17 @@ tk::volInt_constP(
   auto U_d_view = dv.U;
   auto R_d_view = dv.R;
 
+  // Quadrature points
+  // Can be hoisted out because P is constant
+  Kokkos::Array<Kokkos::Array<real, NQUAD_MAX>, 3> coordgp = {};
+  Kokkos::Array<real, NQUAD_MAX> wgp = {};
+  GaussQuadratureTet(ng, coordgp, wgp );
+
+
   Kokkos::parallel_for("volInt_kernel",range_policy(0, nelem), KOKKOS_LAMBDA(const size_t e)
   {
     if(ndof > 1)
     {
-      Kokkos::Array<Kokkos::Array<real, NQUAD_MAX>, 3> coordgp = {};
-      Kokkos::Array<real, NQUAD_MAX> wgp = {};
-      GaussQuadratureTet(ng, coordgp, wgp );
-
       // Extract the element coordinates
       Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
       for (int i=0; i<4; i++) {

@@ -467,14 +467,15 @@ nonConservativeInt_constP(
   auto rd_d_view = dv.riemannDeriv;
   auto R_d_view = dv.R;
 
+  // Quadrature points can be hoisted out
+  // Because P is constant
+  Kokkos::Array<Kokkos::Array<real,NQUAD_MAX>, 3> coordgp = {};
+  Kokkos::Array<real,NQUAD_MAX> wgp = {};
+  GaussQuadratureTet(ng,coordgp,wgp);
+
   // compute volume integrals
   Kokkos::parallel_for("nonConservativeInt_kernel",range_policy(0,nelem),KOKKOS_LAMBDA(const std::size_t e)
   {
-    // Quadrature points
-    Kokkos::Array<Kokkos::Array<real, NQUAD_MAX>,3> coordgp = {};
-    Kokkos::Array<real, NQUAD_MAX> wgp = {};
-    GaussQuadratureTet(ng,coordgp,wgp);
-
     // Extract elem coords
     Kokkos::Array<Kokkos::Array<real,3>,4> coordel;
     for (int i=0; i<4; ++i){
