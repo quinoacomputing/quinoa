@@ -44,6 +44,29 @@ namespace inciter {
 //! Mesh refiner for interfacing the mesh refinement library
 class Refiner : public CBase_Refiner {
 
+  public:
+    #if defined(__clang__)
+      #pragma clang diagnostic push
+      #pragma clang diagnostic ignored "-Wunused-parameter"
+      #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wunused-parameter"
+      #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( push )
+      #pragma warning( disable: 1478 )
+    #endif
+    // Include Charm++ SDAG code. See Charm++ Structured Dagger documentation.
+    Refiner_SDAG_CODE
+    #if defined(__clang__)
+      #pragma clang diagnostic pop
+    #elif defined(STRICT_GNUC)
+      #pragma GCC diagnostic pop
+    #elif defined(__INTEL_COMPILER)
+      #pragma warning( pop )
+    #endif
+
   private:
     using Edge = tk::UnsMesh::Edge;
     using Face = tk::UnsMesh::Face;
@@ -145,6 +168,11 @@ class Refiner : public CBase_Refiner {
     //! Perform mesh refinement and decide how to continue
     void perform();
 
+    //! Receive newly added chare-boundary edges from a fellow Refiner chare
+    void comEdgeCommMap( int fromch,
+                         const EdgeSet& addededges,
+                         const EdgeSet& removededges );
+
     //! Send Refiner proxy to Discretization objects
     void sendProxy();
 
@@ -187,6 +215,7 @@ class Refiner : public CBase_Refiner {
       p | m_refiner;
       p | m_nref;
       p | m_nbnd;
+      p | m_nchedge;
       p | m_extra;
       p | m_ch;
       p | m_edgech;
@@ -197,6 +226,8 @@ class Refiner : public CBase_Refiner {
       p | m_intermediates;
       p | m_nodeCommMap;
       p | m_edgeCommMap;
+      p | m_addedChBndEdges;
+      p | m_removedChBndEdges;
       p | m_oldTets;
       p | m_addedNodes;
       p | m_addedTets;
@@ -285,6 +316,8 @@ class Refiner : public CBase_Refiner {
     std::size_t m_nref;
     //! Counter for number of chares contributing to chare boundary edges
     std::size_t m_nbnd;
+    //! Number of edge-neighbor chares whose map update is still expected
+    std::size_t m_nchedge;
     //! Number of chare-boundary newly added nodes that need correction
     std::size_t m_extra;
     //! Chares we share at least a single edge with
@@ -309,6 +342,10 @@ class Refiner : public CBase_Refiner {
     //! \brief Edges with global node IDs bordering the mesh chunk held by
     //!   fellow Discretization chares associated to their chare IDs
     tk::EdgeCommMap m_edgeCommMap;
+    //! Newly appearing edges on the post-AMR chare boundary
+    EdgeSet m_addedChBndEdges;
+    //! Removed edges on the post-AMR chare boundary, associated with neighbors
+    tk::EdgeCommMap m_removedChBndEdges;
     //! Tetrahedra before refinement/derefinement step
     TetSet m_oldTets;
     //! Newly added mesh nodes (local id) and their parents (local ids)
@@ -427,6 +464,9 @@ class Refiner : public CBase_Refiner {
 
     //! Update old mesh after refinement
     void updateMesh();
+
+    //! Update edge communication map from post-AMR boundary topology
+    void updateEdgeCommMap();
 
     //! Update volume mesh after mesh refinement
     void newVolMesh( const std::unordered_set< std::size_t >& old,

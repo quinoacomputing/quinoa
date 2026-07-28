@@ -52,7 +52,20 @@ module refiner {
       entry void refine();
       entry void comExtra();
       entry void perform();
+      entry void comEdgeCommMap(
+        int fromch,
+        const tk::UnsMesh::EdgeSet& addededges,
+        const tk::UnsMesh::EdgeSet& removededges );
       entry void sendProxy();
+
+      // Charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
+      entry void wait4edgemap() {
+        when ownedgemap_complete(), comedgemap_complete()
+        serial "edgemap" { next(); }
+      }
+
+      entry void ownedgemap_complete();
+      entry void comedgemap_complete();
     };
 
   } // inciter::

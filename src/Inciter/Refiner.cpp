@@ -77,6 +77,7 @@ Refiner::Refiner( std::size_t meshid,
   m_refiner( g_inputdeck.get< tag::amr, tag::maxlevels >(), m_inpoel ),
   m_nref( 0 ),
   m_nbnd( 0 ),
+  m_nchedge( 0 ),
   m_extra( 0 ),
   m_ch(),
   m_edgech(),
@@ -85,6 +86,8 @@ Refiner::Refiner( std::size_t meshid,
   m_remoteEdgeData(),
   m_nodeCommMap(),
   m_edgeCommMap(),
+  m_addedChBndEdges(),
+  m_removedChBndEdges(),
   m_oldTets(),
   m_addedNodes(),
   m_addedTets(),
@@ -1106,9 +1109,24 @@ Refiner::perform()
   // Update volume and boundary mesh
   updateMesh();
 
-  // Save mesh at every initial refinement step (mainly for debugging). Will
-  // replace with just a 'next()' in production.
-  if (m_mode == RefMode::T0REF) {
+  if (m_mode == RefMode::DTREF) {
+    // Wait for local preparation and all edge-neighbor map updates.
+    thisProxy[ thisIndex ].wait4edgemap();
+    if (m_edgeCommMap.empty()) {
+      comedgemap_complete();
+    } else {
+      m_nchedge = m_edgeCommMap.size();
+      for (const auto& [ neighborchare, edges ] : m_edgeCommMap) {
+        const auto& removed =
+          tk::cref_find( m_removedChBndEdges, neighborchare );
+        thisProxy[ neighborchare ].comEdgeCommMap(
+          thisIndex, m_addedChBndEdges, removed );
+      }
+    }
+    ownedgemap_complete();
+  } else if (m_mode == RefMode::T0REF) {
+    // Save mesh at every initial refinement step (mainly for debugging). Will
+    // replace with just a 'next()' in production.
 
     auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
     auto t0 = g_inputdeck.get< tag::t0 >();
@@ -1125,6 +1143,31 @@ Refiner::perform()
     next();
 
   }
+}
+
+void
+Refiner::comEdgeCommMap( int fromch,
+                         const EdgeSet& addededges,
+                         const EdgeSet& removededges )
+// *****************************************************************************
+// Validate removed and add new chare-boundary edges from a fellow chare
+// *****************************************************************************
+{
+  // A shared pre-AMR edge must disappear from both sides of the interface.
+  const auto& localremoved = tk::cref_find( m_removedChBndEdges, fromch );
+  Assert( localremoved.size() == removededges.size() &&
+          std::all_of( begin(removededges), end(removededges),
+            [&localremoved]( const auto& edge ) {
+              return localremoved.find(edge) != end(localremoved);
+            } ),
+          "Asymmetric removal of chare-boundary edges after AMR" );
+
+  auto& edges = tk::ref_find( m_edgeCommMap, fromch );
+  for (const auto& edge : addededges)
+    if (m_addedChBndEdges.find(edge) != end(m_addedChBndEdges))
+      edges.insert(edge);
+
+  if (--m_nchedge == 0) comedgemap_complete();
 }
 
 void
@@ -1640,30 +1683,19 @@ Refiner::updateMesh()
   // Update boundary face and node information
   newBndMesh( ref );
 
-  // Augment node and edge communication maps with newly added nodes and edges
-  // on chare-boundary
+  // Update local edge communication-map delta from final AMR topology.
+  if (m_mode == RefMode::DTREF) updateEdgeCommMap();
+
+  // Augment node communication map with newly added nodes on chare boundary
   if (m_mode == RefMode::DTREF || m_mode == RefMode::OUTREF) {
     for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
       auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
-      auto& commedges = tk::ref_find( m_edgeCommMap, neighborchare );
       for (const auto& e : edges) {
         // If parent nodes were part of the node communication map for chare
         if (nodes.find(e[0]) != end(nodes) && nodes.find(e[1]) != end(nodes)) {
           // Add new node if local id was generated for it
           auto n = Hash<2>()( e );
-          if (m_lid.find(n) != end(m_lid)) {
-            nodes.insert( n );
-            if (m_mode == RefMode::DTREF) {  // edgecommmap is needed only for dtref
-              // insert child edges
-              commedges.insert( {std::min(e[0],n), std::max(e[0],n)} );
-              commedges.insert( {std::min(e[1],n), std::max(e[1],n)} );
-              // remove parent edge
-              // TODO: what if that edge wasn't found in the edgecommmap?
-              //if (commedges.find(e) == commedges.end())
-              //  std::cout << "edge not found to erase !!!" << std::endl;
-              commedges.erase(e);
-            }
-          }
+          if (m_lid.find(n) != end(m_lid)) nodes.insert( n );
         }
       }
     }
@@ -1682,6 +1714,55 @@ Refiner::updateMesh()
             tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
             m_inpoel, m_coord ),
           "Refined mesh partition leaky" );
+}
+
+void
+Refiner::updateEdgeCommMap()
+// *****************************************************************************
+// Update local edge communication map from post-AMR boundary topology
+// *****************************************************************************
+{
+  // Flatten the pre-AMR edge map to identify edges newly created by AMR.
+  EdgeSet oldedges;
+  for (const auto& [ neighborchare, edges ] : m_edgeCommMap)
+    oldedges.insert( begin(edges), end(edges) );
+
+  // Enumerate every edge on the post-AMR boundary of this chare.
+  EdgeSet postedges;
+  auto esup = tk::genEsup( m_inpoel, 4 );
+  auto esuel = tk::genEsuelTet( m_inpoel, esup );
+  for (std::size_t e=0; e<esuel.size()/4; ++e) {
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {
+      if (esuel[mark+f] == -1) {
+        auto A = m_ginpoel[ mark+tk::lpofa[f][0] ];
+        auto B = m_ginpoel[ mark+tk::lpofa[f][1] ];
+        auto C = m_ginpoel[ mark+tk::lpofa[f][2] ];
+        postedges.insert( {std::min(A,B), std::max(A,B)} );
+        postedges.insert( {std::min(B,C), std::max(B,C)} );
+        postedges.insert( {std::min(C,A), std::max(C,A)} );
+      }
+    }
+  }
+
+  // Retain new chare-boundary edges for the later neighbor-delta exchange.
+  m_addedChBndEdges.clear();
+  for (const auto& e : postedges)
+    if (oldedges.find(e) == end(oldedges))
+      m_addedChBndEdges.insert(e);
+
+  // Remove edges that disappeared through refinement or derefinement.
+  m_removedChBndEdges.clear();
+  for (auto& [ neighborchare, edges ] : m_edgeCommMap) {
+    auto& removed = m_removedChBndEdges[ neighborchare ];
+    for (auto e=begin(edges); e!=end(edges); ) {
+      if (postedges.find(*e) == end(postedges)) {
+        removed.insert(*e);
+        e = edges.erase(e);
+      } else
+        ++e;
+    }
+  }
 }
 
 void
@@ -1756,14 +1837,6 @@ Refiner::newVolMesh( const std::unordered_set< std::size_t >& old,
       for (auto& [neighborchare, sharednodes] : m_nodeCommMap) {
         if (sharednodes.find(g) != sharednodes.end()) {
           sharednodes.erase(g);
-        }
-      }
-      // remove derefined edges from edge comm map
-      for (auto& [neighborchare, sharededges] : m_edgeCommMap) {
-        for (const auto& edge : sharededges) {
-          if (edge[0] == g || edge[1] == g) {
-            sharededges.erase(edge);
-          }
         }
       }
       gid_rem[l] = g;
