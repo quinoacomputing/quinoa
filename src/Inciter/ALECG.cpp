@@ -169,23 +169,39 @@ ALECG::queryBnd()
                    /* increment = */ false );
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
-  // Prepare unique set of symmetry BC nodes
-  m_symbcnodes.clear();
+  // Query boundary faces for face-based operators. These sets must remain
+  // face-based: a chare may contain a shared physical-boundary node without
+  // owning a complete boundary face at that node.
   auto sym = d->bcnodes< tag::symmetry >( m_bface, m_triinpoel );
-  for (const auto& [s,nodes] : sym)
-    m_symbcnodes.insert( begin(nodes), end(nodes) );
-
-  // Prepare unique set of farfield BC nodes
-  m_farfieldbcnodes.clear();
   auto far = d->bcnodes< tag::farfield >( m_bface, m_triinpoel );
-  for (const auto& [s,nodes] : far)
-    m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
-
-  // Prepare unique set of slip wall BC nodes
-  m_slipwallbcnodes.clear();
   auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
-  for (const auto& [s,nodes] : slip)
-    m_slipwallbcnodes.insert( begin(nodes), end(nodes) );
+
+  // Prepare node-based strong BC sets from the distributed side-set node
+  // lists. In parallel, m_bnode contains all side-set nodes present in this
+  // chare's volume mesh, including nodes for which this chare owns no complete
+  // physical-boundary face. Querying m_bface alone therefore misses strong BCs
+  // on partitioned boundary nodes.
+  m_symbcnodes.clear();
+  m_farfieldbcnodes.clear();
+  m_slipwallbcnodes.clear();
+  for (const auto& bci : g_inputdeck.get< tag::bc >()) {
+    const auto& meshes = bci.get< tag::mesh >();
+    if (std::none_of( begin(meshes), end(meshes),
+                      [d]( auto m ) { return m > 0 && m-1 == d->MeshId(); } ))
+      continue;
+
+    auto add = [this, d]( const auto& sidesets, auto& nodes ) {
+      for (auto s : sidesets) {
+        auto k = m_bnode.find( static_cast<int>(s) );
+        if (k != end(m_bnode))
+          for (auto g : k->second)
+            nodes.insert( tk::cref_find( d->Lid(), g ) );
+      }
+    };
+    add( bci.template get< tag::symmetry >(), m_symbcnodes );
+    add( bci.template get< tag::farfield >(), m_farfieldbcnodes );
+    add( bci.template get< tag::slipwall >(), m_slipwallbcnodes );
+  }
 
   // If farfield BC is set on a node, will not also set symmetry and slip BC
   for (auto fn : m_farfieldbcnodes) {
@@ -199,19 +215,27 @@ ALECG::queryBnd()
   }
 
   // Prepare boundary nodes contiguously accessible from a triangle-face loop,
-  // which contain both symmetry and no slip walls
+  // which contain both symmetry and no slip walls. Use the face-derived sets
+  // here, since these flags describe boundary-face flux treatment rather than
+  // strong nodal BC enforcement.
+  std::unordered_set< std::size_t > symfacenodes, slipfacenodes;
+  for (const auto& [s,nodes] : sym)
+    symfacenodes.insert( begin(nodes), end(nodes) );
+  for (const auto& [s,nodes] : slip)
+    slipfacenodes.insert( begin(nodes), end(nodes) );
+
   m_symbctri.assign( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
+    if (symfacenodes.find(m_triinpoel[e*3+0]) != end(symfacenodes))
       m_symbctri[e] = 1;
 
   // Prepare the above for slip walls, which are needed for pressure integrals
   // to obtain force on overset walls
   m_slipwallbctri.assign( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes) ||
-        m_slipwallbcnodes.find(m_triinpoel[e*3+1]) != end(m_slipwallbcnodes) ||
-        m_slipwallbcnodes.find(m_triinpoel[e*3+2]) != end(m_slipwallbcnodes)){
+    if (slipfacenodes.find(m_triinpoel[e*3+0]) != end(slipfacenodes) ||
+        slipfacenodes.find(m_triinpoel[e*3+1]) != end(slipfacenodes) ||
+        slipfacenodes.find(m_triinpoel[e*3+2]) != end(slipfacenodes)){
       m_slipwallbctri[e] = 1;
     }
 
