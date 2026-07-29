@@ -44,12 +44,14 @@
 #include <brigand/sequences/list.hpp>
 
 #include "Problem/UserDefined.hpp"
+#include "Problem/MixingLayer.hpp"
 
 namespace inciter {
 
 //! List of all MultiSpecies Problem policies (defined in the includes above)
 using MultiSpeciesProblems =
   brigand::list< MultiSpeciesProblemUserDefined
+               , MultiSpeciesProblemMixingLayer
                >;
 
 } // inciter::
