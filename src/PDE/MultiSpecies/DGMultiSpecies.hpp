@@ -740,6 +740,8 @@ class MultiSpecies {
       if (viscous) {
         tk::surfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof, inpoel,
           coord, fd, geoFace, geoElem, U, P, R );
+        tk::volIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof, nelem, inpoel,
+          coord, geoElem, U, P, ndofel, R );
         for (const auto& b : m_bc)
           tk::bndSurfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof,
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,

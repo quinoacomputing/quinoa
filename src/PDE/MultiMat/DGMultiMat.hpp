@@ -1355,13 +1355,13 @@ class MultiMat {
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      auto nprim = P.nprop()/rdof;
+      //auto nprim = P.nprop()/rdof;
 
       const auto& cx = coord[0];
       const auto& cy = coord[1];
       const auto& cz = coord[2];
 
-      std::vector< tk::real > B_p(rdof), u_p(nprim);
+      //std::vector< tk::real > B_p(rdof), u_p(nprim);
 
       for (std::size_t p=0; p<W[0].size(); ++p) {
         std::array< tk::real, 3 > usum{{0, 0, 0}};
