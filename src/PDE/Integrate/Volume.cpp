@@ -22,8 +22,6 @@
 #include "Kokkos_Core.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
-using execution_space = Kokkos::DefaultExecutionSpace;
-using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 using range_policy = Kokkos::RangePolicy<execution_space>;
 using UnManagedMem = Kokkos::MemoryTraits<Kokkos::Unmanaged>;
 
@@ -37,28 +35,6 @@ namespace inciter {
   extern ctr::InputDeck g_inputdeck;
 };
 
-// Ensure persistent device view has (at least/exactly) requested capacity.
-// Only reallocate when the size changes (e.g. during an AMR remesh); if the
-// size does not change the existing view is kept as-is and reused.
-//
-// Returns:
-//   true  -> the view was (re)allocated. Its device contents are uninitialized
-//            and the caller MUST upload fresh data.
-//   false -> the view was reused unchanged. For time-invariant (mesh/geometry)
-//            data this means the resident copy is still valid and the H2D
-//            deep_copy can be skipped.
-template <typename T>
-bool ensureDeviceCapacity(Kokkos::View<T*, memory_space>& view,
-                          const std::string& label, std::size_t n){
-  if (view.extent(0) != n){
-    view = Kokkos::View<T*, memory_space>(
-      Kokkos::view_alloc(label, Kokkos::WithoutInitializing),
-      n);
-    return true;   // (re)allocated -> caller must upload
-  }
-  return false;    // reused -> data already resident on device
-}
-
 // Forward declaration of device function
 namespace tk {
   KOKKOS_INLINE_FUNCTION
@@ -68,8 +44,8 @@ namespace tk {
                   const tk::real wt,
                   const std::size_t m_nprop,
                   const std::size_t e,
-                  const Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
-                  const Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
+                  const Kokkos::Array<Kokkos::Array<tk::real, NDOF_MAX>, 3>& dBdx,
+                  const Kokkos::Array<Kokkos::Array<tk::real, 3>, NCOMP_MAX>& fl,
                   Kokkos::View<real*, memory_space> R);
 }
 
@@ -371,8 +347,8 @@ void tk::update_rhs_device( ncomp_t ncomp,
                 const tk::real wt,
                 const std::size_t m_nprop,
                 const std::size_t e,
-                const Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
-                const Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
+                const Kokkos::Array<Kokkos::Array<tk::real, NDOF_MAX>, 3>& dBdx,
+                const Kokkos::Array<Kokkos::Array<tk::real, 3>, NCOMP_MAX>& fl,
                 Kokkos::View<real*, memory_space> R)
 // *****************************************************************************
 //  Update the rhs by adding the flux term integrals (Kokkos device version)
@@ -509,11 +485,15 @@ tk::volInt_constP(
   size_t r_nprop = R.nprop();
   size_t geo_nprop = geoElem.nprop();
 
-  const auto solidx = inciter::g_inputdeck.get<
+  const auto& solidx = inciter::g_inputdeck.get< //added the &
       tag::matidxmap, tag::solidx >();
 
   auto bparam = inciter::g_inputdeck.get< tag::multimat,
     tag::intsharp_param >();
+
+  // Fail loudly on host side if this config overruns the fixed-size device scratch buffers
+  // Avoid corruption of private thread memory
+  checkKokkosCaps( nmat,ndof,rdof,ncomp,nprim );
 
   // Quadrature points computed once (constant P)
   auto ng = tk::NGvol(ndof);
@@ -523,40 +503,46 @@ tk::volInt_constP(
   // But removes need for constant cudaMalloc and cudaFree
   VolIntDeviceViews local_dev;
   VolIntDeviceViews& dv = dev ? *dev : local_dev;
+
+  // Check if mesh data currently on the device belongs to this partition at this mesh gen state
+  // PDE object lives in global g_dgpde vector and shared by every DG char on the PE
+  // Returns false if time-invariant views need to be re-uploaded
+  const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
   
   // Transfer solidx vector
   auto solidx_h_view = changeToView(solidx.data(), nmat);
-  if (ensureDeviceCapacity(dv.solidx, "solidx_d_view", nmat))
+  if (ensureDeviceCapacity(dv.solidx, "solidx_d_view", nmat) || !mesh_ok)
     Kokkos::deep_copy(dv.solidx, solidx_h_view);
 
   // Transfer inpoel variable
   size_t inpoel_size = inpoel.size();
   auto inpoel_h_view = changeToView(inpoel.data(), inpoel_size);
-  if (ensureDeviceCapacity(dv.inpoel, "inpoel_d_view", inpoel_size))
+  if (ensureDeviceCapacity(dv.inpoel, "inpoel_d_view", inpoel_size) || !mesh_ok)
     Kokkos::deep_copy(dv.inpoel, inpoel_h_view);
 
   // Transfer coord (nodal coordinates)
   size_t coordx_size = coord[0].size();
   auto cx_h_view = changeToView(coord[0].data(), coordx_size);
-  if (ensureDeviceCapacity(dv.cx, "cx_d_view", coordx_size))
+  if (ensureDeviceCapacity(dv.cx, "cx_d_view", coordx_size) || !mesh_ok)
     Kokkos::deep_copy(dv.cx, cx_h_view);
 
   size_t coordy_size = coord[1].size();
   auto cy_h_view = changeToView(coord[1].data(), coordy_size);
-  if (ensureDeviceCapacity(dv.cy, "cy_d_view", coordy_size))
+  if (ensureDeviceCapacity(dv.cy, "cy_d_view", coordy_size) || !mesh_ok)
     Kokkos::deep_copy(dv.cy, cy_h_view);
   
   size_t coordz_size = coord[2].size();
   auto cz_h_view = changeToView(coord[2].data(), coordz_size);
-  if (ensureDeviceCapacity(dv.cz, "cz_d_view", coordz_size))
+  if (ensureDeviceCapacity(dv.cz, "cz_d_view", coordz_size) || !mesh_ok)
     Kokkos::deep_copy(dv.cz, cz_h_view);
 
   // geoElem, U, P, R transfer
   size_t geoElem_size = geoElem.getSize();
   auto geoElem_h_view = changeToView(geoElem.getPointer(), geoElem_size);
-  if (ensureDeviceCapacity(dv.geoElem, "geoElem_d_view", geoElem_size))
+  if (ensureDeviceCapacity(dv.geoElem, "geoElem_d_view", geoElem_size) || !mesh_ok)
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
+  // U, P, R change every call, always reupload
   size_t P_size = P.getSize();
   ensureDeviceCapacity(dv.P, "P_d_view", P_size);
   auto P_h_view = changeToView(P.getPointer(), P_size);
@@ -616,12 +602,12 @@ tk::volInt_constP(
  
       eval_dBdx_p1(ndof, jacInv, dBdx);
 
-      Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> g = {};
-      Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, 2> asig = {};
-      Kokkos::Array<real, 2> al = {};
-      Kokkos::Array<Kokkos::Array<real, 12>, 3> fl = {};
-      Kokkos::Array<real, 2> apk = {};
-      Kokkos::Array<real, 50> state = {};
+      Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, NMAT_MAX> g = {};
+      Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, NMAT_MAX> asig = {};
+      Kokkos::Array<real, NMAT_MAX> al = {};
+      Kokkos::Array<Kokkos::Array<real, 3>, NCOMP_MAX> fl = {};
+      Kokkos::Array<real, NMAT_MAX> apk = {};
+      Kokkos::Array<real, NSTATE_MAX> state = {};
 
       for (std::size_t igp=0; igp<ng; ++igp)
       {
@@ -629,7 +615,7 @@ tk::volInt_constP(
           eval_dBdx_p2( igp, coordgp, jacInv, dBdx);
 
         // Compute the coordinates of quadrature point at physical domain
-        auto gp = eval_gp( igp, coordel, coordgp);
+        // auto gp = eval_gp( igp, coordel, coordgp);
   
         // Compute the basis function
         eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
@@ -653,8 +639,50 @@ tk::volInt_constP(
       }
     }
   });
-  Kokkos::fence();
+  
   Kokkos::deep_copy(R_h_view, R_d_view);
+
+  // Source-term contributions (idk why this was not written before or where it disappeared)
+  // Bug was never spotted because only manufactured sol test case uses it
+  // Added after the R D2H copy because src() is a host function, not device-callable
+  {
+    std::array< std::vector<real>,3 > coordgp_h;
+    std::vector<real> wgp_h;
+    for (std::size_t i=0; i<3; ++i) coordgp_h[i].resize(ng);
+    wgp_h.resize(ng);
+    GaussQuadratureTet(ng,coordgp_h,wgp_h);
+
+    // Dubiner basis is a function of ref coords only, so constP implies identical for all elems
+    std::vector<std::vector<real>> Bg(ng,std::vector<real>(ndof));
+    for (std::size_t igp=0; igp<ng; ++igp)
+      eval_basis(ndof, coordgp_h[0][igp], coordgp_h[1][igp], coordgp_h[2][igp], Bg[igp]);
+
+    const auto& cx = coord[0];
+    const auto& cy = coord[1];
+    const auto& cz = coord[2];
+
+    std::vector<real> sv(ncomp,0.0);
+    
+    for (std::size_t e=0; e<nelem; ++e){
+      std::array< std::array<real,3>, 4 > coordel {{
+        {{ cx[inpoel[4*e]], cy[inpoel[4*e]], cz[inpoel[4*e]] }},
+        {{ cx[inpoel[4*e+1]], cy[inpoel[4*e+1]], cz[inpoel[4*e+1]] }},
+        {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
+        {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}
+      }};
+
+      for (std::size_t igp=0; igp<ng; ++igp)
+      {
+        auto gp = eval_gp( igp, coordel, coordgp_h );
+        auto wt = wgp_h[igp]*geoElem(e,0);
+        
+        std::fill( begin(sv), end(sv), 0.0 );
+        src( nmat, mat_blk, gp[0], gp[1], gp[2], t, sv );
+        update_rhs_src( ndof, ndof, wt, e, Bg[igp], sv, R );
+      }
+    }
+  }
+
   Kokkos::Profiling::popRegion();
 }
 

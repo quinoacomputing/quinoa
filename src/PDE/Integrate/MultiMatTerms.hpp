@@ -22,6 +22,7 @@
 #include "EoS/EOS.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "Kokkos_Core.hpp"
+#include "KokkosDevice.hpp"
 
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
@@ -49,21 +50,8 @@ nonConservativeInt( const bool pref,
                     int intsharp );
 
 // Persistent device-resident scratch buffers for nonConservativeInt_constP
-// Pack the per-call device views into a structure to avoid excessive (re)allocation
-// Must be owned by a charm chare and never be static thread-local
-// In order for the views to be destroyed before calling Kokkos::finalize()
-struct nonConsvIntDeviceViews {
-                   Kokkos::View<std::size_t*,memory_space> solidx;
-                   Kokkos::View<std::size_t*,memory_space> inpoel;
-                   Kokkos::View<real*,memory_space> cx;
-                   Kokkos::View<real*,memory_space> cy;
-                   Kokkos::View<real*,memory_space> cz;
-                   Kokkos::View<real*,memory_space> geoElem;
-                   Kokkos::View<real*,memory_space> U;
-                   Kokkos::View<real*,memory_space> P;
-                   Kokkos::View<real*,memory_space> riemannDeriv; //this is flattened [nr*nc]
-                   Kokkos::View<real*,memory_space> R;
-};
+// See KokkosDevice.hpp -> tk::KokkosDeviceViews for more detail
+using nonConsvIntDeviceViews = KokkosDeviceViews;
 
 // Old implementation of nonConsvInt_constP
 /*
@@ -110,8 +98,8 @@ updateRhsNonCons_device( ncomp_t ncomp,
                          const tk::real wt,
                          const std::size_t r_nprop,
                          const std::size_t e,
-                         const Kokkos::Array<tk::real, 10>& B,
-                         const Kokkos::Array<Kokkos::Array<tk::real,10>,50>& ncf,
+                         const Kokkos::Array<tk::real, NDOF_MAX>& B,
+                         const Kokkos::Array<Kokkos::Array<tk::real,NDOF_MAX>,NCOMP_MAX>& ncf,
                          Kokkos::View<real*, memory_space> R );
 
 //! Update the rhs by adding the non-conservative term integrals
@@ -217,12 +205,18 @@ void fluxTerms_multimat_kokkos(
   std::size_t nmat,
   Kokkos::View<const size_t*, memory_space>  solidx,
   const std::vector< inciter::EOS >& /*mat_blk*/,
-  Kokkos::Array<tk::real, 50>& ugp, // this is state essentially
-  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& g, 
-  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& asig,
-  Kokkos::Array<tk::real, 2>& al,
-  Kokkos::Array<Kokkos::Array<tk::real, 12>, 3> & fl, 
-  Kokkos::Array<tk::real, 2> & apk)
+  Kokkos::Array<tk::real, NSTATE_MAX>& ugp, // this is state essentially
+  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, NMAT_MAX>& g, 
+  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, NMAT_MAX>& asig,
+  Kokkos::Array<tk::real, NMAT_MAX>& al,
+  Kokkos::Array<Kokkos::Array<tk::real, 3>, NCOMP_MAX> & fl, 
+  Kokkos::Array<tk::real, NMAT_MAX> & apk)
+  //Kokkos::Array<tk::real, 50>& ugp, // this is state essentially
+  //Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& g, 
+  //Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& asig,
+  //Kokkos::Array<tk::real, 2>& al,
+  //Kokkos::Array<Kokkos::Array<tk::real, 12>, 3> & fl, 
+  //Kokkos::Array<tk::real, 2> & apk)
 {
   using inciter::volfracIdx;
   using inciter::densityIdx;

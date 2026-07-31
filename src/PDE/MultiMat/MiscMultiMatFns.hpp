@@ -18,6 +18,7 @@
 #include "MultiMatIndexing.hpp"
 #include "EoS/EOS.hpp"
 #include "Kokkos_Core.hpp"
+#include "KokkosDevice.hpp"
 
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
@@ -90,8 +91,8 @@ void getDeformGrad(
   std::size_t nmat,
   std::size_t k,
   Kokkos::View<const size_t*, memory_space> solidx,
-  Kokkos::Array<tk::real, 50>& state, 
-  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& g)
+  Kokkos::Array<tk::real, NSTATE_MAX>& state, 
+  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, NMAT_MAX>& g)
 // *****************************************************************************
 //  Get the inverse deformation gradient tensor for a material at given location
 //! \param[in] nmat Number of materials in this PDE system
@@ -124,8 +125,8 @@ void getCauchyStress(
   std::size_t k,
   std::size_t ncomp,
   Kokkos::View<const size_t*, memory_space> solidx,
-  Kokkos::Array<tk::real, 50>& state,
-  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& asigk)  
+  Kokkos::Array<tk::real, NSTATE_MAX>& state,
+  Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, NMAT_MAX>& asigk)  
 // *****************************************************************************
 //  Get the elastic Cauchy stress tensor for a material at given location
 //! \param[in] nmat Number of materials in this PDE system

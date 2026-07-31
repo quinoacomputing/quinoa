@@ -27,6 +27,7 @@
 #include "Integrate/Quadrature.hpp"
 #include "../MultiMat/MultiMatIndexing.hpp"
 #include "Kokkos_Core.hpp"
+#include "KokkosDevice.hpp"
 
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
@@ -91,7 +92,8 @@ eval_dBdx_p1( const std::size_t ndof,
 KOKKOS_INLINE_FUNCTION void
 eval_dBdx_p1( const std::size_t ndof,
                   const Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>& jacInv, 
-                  Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx)
+                  Kokkos::Array<Kokkos::Array<tk::real, NDOF_MAX>, 3>& dBdx)
+                  //Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx)
 // *****************************************************************************
 //  Compute the derivatives of basis functions for DG(P1)
 //! \param[in] ndof Number of degrees of freedom
@@ -171,7 +173,8 @@ KOKKOS_INLINE_FUNCTION
 void eval_dBdx_p2( const std::size_t igp,
                   const Kokkos::Array<Kokkos::Array<tk::real, 14>, 3>& coordgp,
                   const Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>& jacInv,
-                  Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx)
+                  Kokkos::Array<Kokkos::Array<tk::real, NDOF_MAX>, 3>& dBdx)
+                  //Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx)
 // *****************************************************************************
 //  Compute the derivatives of Dubiner basis function for DG(P2)
 //! \param[in] igp Index of quadrature points
@@ -351,8 +354,10 @@ void eval_state ( ncomp_t ncomp,
                  const std::size_t e,
                  size_t m_nprop,
                  Kokkos::View<const tk::real*, memory_space> U,
-                 Kokkos::Array<tk::real, 10>& B,
-                 Kokkos::Array<tk::real, 50>& state,
+                 Kokkos::Array<tk::real, NDOF_MAX>& B,
+                 Kokkos::Array<tk::real, NSTATE_MAX>& state,
+                 //Kokkos::Array<tk::real, 10>& B,
+                 //Kokkos::Array<tk::real, 50>& state,
                  const size_t& idx)
 // *****************************************************************************
 //  Compute the state variables for the tetrahedron element

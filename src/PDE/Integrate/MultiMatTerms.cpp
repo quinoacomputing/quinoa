@@ -45,29 +45,13 @@ namespace {
     using range_policy = Kokkos::RangePolicy<execution_space>;
     using UnManagedMem = Kokkos::MemoryTraits<Kokkos::Unmanaged>;
 
-    // Max number of scalar components inside device kernel
-    // Same as size of the state array on the stack that's used by evalPolynomialSol
-    // This was fixed to ncomp+nprim<=50 for all supported multimat setups
-    constexpr std::size_t NCOMP_KMAX = 50;
-
+    // Wrap host raw pointer in an unmanaged host view
+    // Ensure all kernel entry points share one definition
     template<typename T>
     auto changeToView(T* object, std::size_t n) {
         Kokkos::View<T*, Kokkos::LayoutLeft, Kokkos::HostSpace, UnManagedMem>
           object_view(object, n);
         return object_view;
-    }
-
-    // Ensure persistent device view has exactly the requested capacity
-    // Only (re)allocate when the extent changes like AMR or remesh
-    template<typename T>
-    bool ensureDeviceCapacity( Kokkos::View<T*, memory_space>& view,
-                               const std::string& label, std::size_t n ){
-        if (view.extent(0) != n){
-            view = Kokkos::View<T*, memory_space>(
-                Kokkos::view_alloc(label, Kokkos::WithoutInitializing), n);
-            return true; //reallocate and let caller upload
-        }
-        return false; //data resident on device, can reuse
     }
 }
 
@@ -342,6 +326,8 @@ nonConservativeInt_constP(
 //! \param[in] intsharp Interface reconstruction indicator
 // *****************************************************************************
 {
+  Kokkos::Profiling::pushRegion("nonConsvInt");
+
   using inciter::volfracIdx;
   using inciter::densityIdx;
   //using inciter::momentumIdx;
@@ -353,7 +339,8 @@ nonConservativeInt_constP(
   const auto& solidx =
     inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
-  // not really sure what this does but claude told me to add it
+  // Interface-compression parameter read on host
+  // g_inputdeck is not addressable from the device
   auto bparam = inciter::g_inputdeck.get<tag::multimat,tag::intsharp_param>();
 
   const std::size_t ncomp = U.nprop()/rdof;
@@ -363,6 +350,10 @@ nonConservativeInt_constP(
   const std::size_t p_nprop = P.nprop();
   const std::size_t r_nprop = R.nprop();
   const std::size_t geo_nprop = geoElem.nprop();
+
+  // Fail loudly on the hoest if the config overruns fixed-size device scratch arrays
+  // Otherwise we are corrupting thread-private memory
+  checkKokkosCaps( nmat, ndof, rdof, ncomp, nprim );
 
   // Need to evaluate numSolids() here on host before capturing it into the kernel
   const std::size_t nsld = inciter::numSolids(nmat, solidx);
@@ -376,40 +367,45 @@ nonConservativeInt_constP(
   nonConsvIntDeviceViews local_dev;
   nonConsvIntDeviceViews& dv = dev ? *dev : local_dev;
 
-  // Variables
+  // Variables go here
+  // First check whether device already holds this partition's mesh data at current meshgen state
+  // Refer to tk::meshResident() for more details
+  const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
+
   // Solidx
   auto solidx_h_view = changeToView(solidx.data(), nmat);
-  if (ensureDeviceCapacity(dv.solidx, "nconsv_solidx_d_view", nmat))
+  if (ensureDeviceCapacity(dv.solidx, "nconsv_solidx_d_view", nmat) || !mesh_ok)
     Kokkos::deep_copy(dv.solidx, solidx_h_view);
 
   // Inpoel
   const std::size_t inpoel_size = inpoel.size();
   auto inpoel_h_view = changeToView(inpoel.data(), inpoel_size);
-  if (ensureDeviceCapacity(dv.inpoel, "nconsv_inpoel_d_view", inpoel_size))
+  if (ensureDeviceCapacity(dv.inpoel, "nconsv_inpoel_d_view", inpoel_size) || !mesh_ok)
     Kokkos::deep_copy(dv.inpoel, inpoel_h_view);
 
   // Transfer coord (nodal coordinates)
   size_t coordx_size = coord[0].size();
   auto cx_h_view = changeToView(coord[0].data(), coordx_size);
-  if (ensureDeviceCapacity(dv.cx, "nconsv_cx_d_view", coordx_size))
+  if (ensureDeviceCapacity(dv.cx, "nconsv_cx_d_view", coordx_size) || !mesh_ok)
     Kokkos::deep_copy(dv.cx, cx_h_view);
 
   size_t coordy_size = coord[1].size();
   auto cy_h_view = changeToView(coord[1].data(), coordy_size);
-  if (ensureDeviceCapacity(dv.cy, "nconsv_cy_d_view", coordy_size))
+  if (ensureDeviceCapacity(dv.cy, "nconsv_cy_d_view", coordy_size) || !mesh_ok)
     Kokkos::deep_copy(dv.cy, cy_h_view);
   
   size_t coordz_size = coord[2].size();
   auto cz_h_view = changeToView(coord[2].data(), coordz_size);
-  if (ensureDeviceCapacity(dv.cz, "nconsv_cz_d_view", coordz_size))
+  if (ensureDeviceCapacity(dv.cz, "nconsv_cz_d_view", coordz_size) || !mesh_ok)
     Kokkos::deep_copy(dv.cz, cz_h_view);
 
   // geoElem, U, P transfer
   size_t geoElem_size = geoElem.getSize();
   auto geoElem_h_view = changeToView(geoElem.getPointer(), geoElem_size);
-  if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size))
+  if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size) || !mesh_ok)
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
+  // U,P change per call so always upload
   size_t P_size = P.getSize();
   ensureDeviceCapacity(dv.P, "nconsv_P_d_view", P_size);
   auto P_h_view = changeToView(P.getPointer(), P_size);
@@ -493,7 +489,7 @@ nonConservativeInt_constP(
     Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, 3> dBdx = {};
     eval_dBdx_p1(ndof, jacInv, dBdx);
 
-    Kokkos::Array<real, NCOMP_KMAX> state = {};
+    Kokkos::Array<real, NSTATE_MAX> state = {};
 
     // Gaussian quadrature
     for (std::size_t igp=0; igp<ng; ++igp)
@@ -528,7 +524,7 @@ nonConservativeInt_constP(
 
       //std::vector< tk::real > ymat(nmat, 0.0);
       //std::array< tk::real, 3 > dap{{0.0, 0.0, 0.0}};
-      Kokkos::Array<real, NCOMP_KMAX> ymat = {};
+      Kokkos::Array<real, NMAT_MAX> ymat = {};
       Kokkos::Array<real,3> dap{{0.0,0.0,0.0}};
       for (std::size_t k=0; k<nmat; ++k)
       {
@@ -553,7 +549,7 @@ nonConservativeInt_constP(
           ncf[momentumIdx(nmat, idir)][idof] = 0.0;
       */
       // zero-initialize and compute nonconsv term
-      Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, NCOMP_KMAX> ncf = {};
+      Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, NCOMP_MAX> ncf = {};
 
       for (std::size_t k=0; k<nmat; ++k)
       {
@@ -620,7 +616,6 @@ nonConservativeInt_constP(
     }
   }); //end Kokkos::parallel_for
 
-  Kokkos::fence();
   Kokkos::deep_copy(R_h_view, R_d_view);
   Kokkos::Profiling::popRegion();
 }
@@ -635,8 +630,10 @@ void updateRhsNonCons_device(
   const tk::real wt,
   const std::size_t r_nprop,
   const std::size_t e,
-  const Kokkos::Array<tk::real, 10>& B,
-  const Kokkos::Array<Kokkos::Array<tk::real, 10>, 50>& ncf,
+  //const Kokkos::Array<tk::real, 10>& B,
+  //const Kokkos::Array<Kokkos::Array<tk::real, 10>, 50>& ncf,
+  const Kokkos::Array<tk::real, NDOF_MAX>& B,
+  const Kokkos::Array<Kokkos::Array<tk::real, NDOF_MAX>, NCOMP_MAX>& ncf,
   Kokkos::View<real*, memory_space> R)
 // *****************************************************************************
 //  Update the rhs by adding the non-conservative term integrals (Kokkos ver)

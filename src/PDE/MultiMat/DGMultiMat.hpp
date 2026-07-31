@@ -1036,7 +1036,7 @@ class MultiMat {
       if (!pref) {
         tk::nonConservativeInt_constP( nmat, m_mat_blk, ndof, rdof, nelem,
                                        inpoel, coord, geoElem, U, P, riemannDeriv,
-                                       R, intsharp );
+                                       R, intsharp, &m_nconsvDev );
       }
       else {
         tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
@@ -1565,13 +1565,15 @@ class MultiMat {
     //! EOS material block
     std::vector< EOS > m_mat_blk;
 
-    // Persistent device resident scratch buffer for volInt_constP
-    // This is the stuff we hoist out from the volInt_constP
-    // Make device allocation happen only once when (re)establishing mesh/sol size
-    // Ownership is here as a member of the chare so that the Kokkos views are destroyed
-    // during teardown before Kokkos::finalize(). This is mutable because rhs() is const
-    // but rhs() still needs to update this cache. Passed by pointer into volInt_constP
+    // Persistent device resident scratch buffer for constP kernels
+    // This is the stuff we hoisted out from the _constP functions
+    // One cache per kernel entry point
+    // Kept alive across calls to reduce cudaMalloc/cudaFree and (re)upload costs
+    // Both are mutable because rhs() is const and has not yet updated the cache
+    // IMPORTANT: NOT OWNED BY A CHARE -> DEVICE MEMORY IS NOT PUPED
+    // See note in tk::KokkosDeviceViews::release()
     mutable tk::VolIntDeviceViews m_volDev;
+    mutable tk::nonConsvIntDeviceViews m_nconsvDev;
 
     //! Evaluate conservative part of physical flux function for this PDE system
     //! \param[in] ncomp Number of scalar components in this PDE system
