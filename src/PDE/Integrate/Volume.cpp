@@ -491,6 +491,7 @@ tk::volInt_constP(
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  // TODO: Wire up the W variable to the current datastructure
   Kokkos::Profiling::pushRegion("volInt");
 
   const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
@@ -608,50 +609,12 @@ tk::volInt_constP(
   {
     if(ndof > 1)
     {
-<<<<<<< HEAD
       // Extract the element coordinates
       Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
       for (int i=0; i<4; i++) {
         coordel[i][0] = cx_d_view(inpoel_d_view(4*e + i));
         coordel[i][1] = cy_d_view(inpoel_d_view(4*e + i));
         coordel[i][2] = cz_d_view(inpoel_d_view(4*e + i));
-=======
-      if (ndof > 4) eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
-
-      // Compute the coordinates of quadrature point at physical domain
-      auto gp = eval_gp( igp, coordel, coordgp );
-
-      // Compute the basis function
-      eval_basis( rdof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
-
-      auto wt = wgp[igp] * geoElem(e, 0);
-
-      // volume fluxes
-      if (ndof > 1)
-      {
-        evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
-          rdof, nmat, e, rdof, inpoel, coord, geoElem,
-          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
-
-        // evaluate prescribed velocity (if any)
-        auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
-
-        // comput flux
-        auto fl = flux( ncomp, mat_blk, state, v );
-
-        // update flux according to mesh velocity at quadrature point
-        if (ale) {
-          auto w_igp = evaluateMeshVelTet( e, igp, inpoel, coordgp, W );
-
-          for (std::size_t c=0; c<ncomp; ++c) {
-            for (std::size_t i=0; i<3; ++i) {
-              fl[c][i] -= state[c]*w_igp[i];
-            }
-          }
-        }
-
-        update_rhs( ncomp, ndof, ndof, wt, e, dBdx, fl, R );
->>>>>>> af37bc0e482aceb5879d7d6c668a799fb72112ff
       }
 
       Kokkos::Array<real, NDOF_MAX> B = {};
