@@ -366,8 +366,8 @@ Transporter::info( const InciterPrint& print )
     print.item( "Volume-change CFL coefficient", dvcfl );
     print.Item< ctr::MeshVelocity, tag::ale, tag::mesh_velocity >();
     print.Item< ctr::MeshVelocitySmoother, tag::ale, tag::smoother >();
-    print.item( "Mesh motion dimensions", tk::parameters(
-                g_inputdeck.get< tag::ale, tag::mesh_motion >() ) );
+    print.item( "Mesh motion directions", tk::parameters(
+                g_inputdeck.get< tag::ale, tag::mesh_motion_directions >() ) );
     const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
     print.item( "Mesh velocity force coefficients", tk::parameters(meshforce) );
     print.item( "Vorticity multiplier",
@@ -614,20 +614,12 @@ Transporter::createPartitioner()
     mr.readSidesetFaces( bface, faces );
 
     bool bcs_set = false;
-    if (centering == tk::Centering::ELEM) {
-
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bcs_set = matchBCs( bface );
-
-    } else if (centering == tk::Centering::NODE) {
-
-      // Read node lists on side sets
-      bnode = mr.readSidesetNodes();
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bool bcnode_set = matchBCs( bnode );
-      bool bcface_set = matchBCs( bface );
-      bcs_set = bcface_set or bcnode_set;
-    }
+    // Read node lists on side sets
+    bnode = mr.readSidesetNodes();
+    // Verify boundarty condition (BC) side sets used exist in mesh file
+    bool bcnode_set = matchBCs( bnode );
+    bool bcface_set = matchBCs( bface );
+    bcs_set = bcface_set or bcnode_set;
 
     // Warn on no BCs
     if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";

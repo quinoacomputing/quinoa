@@ -21,13 +21,30 @@
 #include "FunctionPrototypes.hpp"
 #include "EoS/EOS.hpp"
 #include "Kokkos_Core.hpp"
+#include "KokkosDevice.hpp"
 
-using execution_space = Kokkos::DefaultExecutionSpace;
-using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
+//using execution_space = Kokkos::DefaultExecutionSpace;
+//using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
 namespace tk {
 
 using ncomp_t = tk::ncomp_t;
+
+template< class ViscousTerms >
+void
+volIntViscous(
+            const ViscousTerms& viscousRhs,
+            const std::vector< inciter::EOS >& mat_blk,
+            const std::size_t ndof,
+            const std::size_t rdof,
+            const std::size_t nelem,
+            const std::vector< std::size_t >& inpoel,
+            const UnsMesh::Coords& coord,
+            const Fields& geoElem,
+            const Fields& U,
+            const Fields& P,
+            const std::vector< std::size_t >& ndofel,
+            Fields& R);
 
 //! Compute volume integrals for DG
 void
@@ -45,6 +62,7 @@ volInt( std::size_t nmat,
         const SrcFn& src,
         const Fields& U,
         const Fields& P,
+        const Fields& W,
         const std::vector< std::size_t >& ndofel,
         Fields& R,
         int intsharp=0 );
@@ -69,8 +87,8 @@ void update_rhs( ncomp_t ncomp,
       const tk::real wt,
       const std::size_t m_nprop,
       const std::size_t e,
-      Kokkos::Array<Kokkos::Array<tk::real, 10>, 3>& dBdx,
-      Kokkos::Array<Kokkos::Array<tk::real, 12>, 3>& fl,
+      Kokkos::Array<Kokkos::Array<tk::real, NDOF_MAX>, 3>& dBdx,
+      Kokkos::Array<Kokkos::Array<tk::real, 3>, NCOMP_MAX>& fl,
       Kokkos::View<real*, memory_space> R);
 
 //! Kokkos version of update_rhs_src for source term integrals
@@ -95,22 +113,9 @@ update_rhs_src( const std::size_t ndof,
                 const std::vector< tk::real >& s,
                 Fields& R );
 
-//! Compute volume integrals for const-order DG (not p-adaptive)
-//  Persistent device-resistant scratch buffer for volInt_constP
-//  Bundles per-call device views that volInt_constP would otherwise (re)allocate on invocation
-//  An instance of this struct must be owned by a Charm++ chare and never a static thread/local
-//  in order for the views to be destroyed before Kokkos::finalize()
-struct VolIntDeviceViews {
-  Kokkos::View<std::size_t*,memory_space> solidx;
-  Kokkos::View<std::size_t*,memory_space> inpoel;
-  Kokkos::View<real*,memory_space> cx;
-  Kokkos::View<real*,memory_space> cy;
-  Kokkos::View<real*,memory_space> cz;
-  Kokkos::View<real*,memory_space> geoElem;
-  Kokkos::View<real*,memory_space> U;
-  Kokkos::View<real*,memory_space> P;
-  Kokkos::View<real*,memory_space> R;
-};
+// Persistent device-resident scratch buffer for volInt_constP
+// See tk::KokkosDeviceViews (src/PDE/KokkosDevice.hpp) for more info
+using VolIntDeviceViews = KokkosDeviceViews;
 
 void
 volInt_constP(
@@ -128,6 +133,7 @@ volInt_constP(
   const SrcFn& src,
   const Fields& U,
   const Fields& P,
+  const Fields& W,
   Fields& R,
   int intsharp=0,
   VolIntDeviceViews* dev=nullptr //added 
@@ -142,6 +148,22 @@ srcIntFV( const std::vector< inciter::EOS >& mat_blk,
           const SrcFn& src,
           Fields& R,
           std::size_t nmat );
+
+//  Compute internal surface viscous flux integrals for multispecies flow
+void
+volIntViscousMultiSpecies(
+  std::size_t nspec,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const std::vector< std::size_t >& ndofel,
+  Fields& R );
 
 } // tk::
 

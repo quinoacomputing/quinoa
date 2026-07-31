@@ -22,6 +22,7 @@
 #include "FunctionPrototypes.hpp"
 #include "EoS/EOS.hpp"
 #include "Kokkos_Core.hpp"
+#include "KokkosDevice.hpp"
 
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
@@ -339,8 +340,8 @@ interfaceIndicator( std::size_t nmat,
 //! Kokkos verison of interfaceIndicator
 KOKKOS_INLINE_FUNCTION
 bool interfaceIndicator( std::size_t nmat,
-  Kokkos::Array<tk::real, 2>& al,
-  Kokkos::Array<size_t, 2>& matInt )
+  Kokkos::Array<tk::real, NMAT_MAX>& al,
+  Kokkos::Array<size_t, NMAT_MAX>& matInt )
 {
   bool intInd = false;
 

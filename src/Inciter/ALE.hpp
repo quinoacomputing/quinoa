@@ -263,11 +263,23 @@ class ALE : public CBase_ALE {
     Laplacian( std::size_t ncomp,
                const std::array< std::vector< tk::real >, 3 >& coord ) const;
 
+    //! Assemble Laplacian mesh velocity smoother matrix in place
+    void assembleLaplacian(
+      tk::CSR& A,
+      std::size_t ncomp,
+      const std::array< std::vector< tk::real >, 3 >& coord ) const;
+
     //! Initialize user-defined functions for ALE moving sides
     decltype(m_move) moveCfg();
 
     //! Find Dirichlet BCs on mesh velocity with prescribed movement
     bool move( std::size_t i ) const;
+
+    //! Query if ALE mesh force coefficients are all zero
+    bool zeroMeshForce() const;
+
+    //! Query if ALE mesh velocity smoothing requires velocity derivatives
+    bool needVelocityDerivatives() const;
 
     //! Finalize computing fluid vorticity and velocity divergence for ALE
     void mergevel();
@@ -280,6 +292,9 @@ class ALE : public CBase_ALE {
 
     //! Apply mesh force
     void meshforce();
+
+    //! Enforce boundary conditions on the mesh velocity and execute callback
+    void enforceMeshVelBCs();
 };
 
 } // inciter::
