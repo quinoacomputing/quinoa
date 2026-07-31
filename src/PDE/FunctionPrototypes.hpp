@@ -41,7 +41,8 @@ using RiemannFluxFn = std::function<
   std::vector< real >( const std::vector< inciter::EOS >& ,
                        const std::array< real, 3 >&,
                        const std::array< std::vector< real >, 2 >&,
-                       const std::vector< std::array< real, 3 > >& ) >;
+                       const std::vector< std::array< real, 3 > >&,
+                       const tk::real ) >;
 
 //! Function prototype for flux vector functions
 //! \details Functions of this type are used to compute physical flux functions

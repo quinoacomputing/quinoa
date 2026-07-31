@@ -594,6 +594,24 @@ enforcePhysicalConstraints(
   std::size_t ncomp,
   Kokkos::View<real*, memory_space> state);
 
+//! Evaluate mesh velocity at a quadrature point on a triangular face
+std::array< real, 3 >
+evaluateMeshVelTri(
+  const std::size_t f,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpofa,
+  const std::array< std::vector< real >, 2 >& coordgp,
+  const Fields& W );
+
+//! Evaluate mesh velocity at a quadrature point on a tetrahedral element
+std::array< real, 3 >
+evaluateMeshVelTet(
+  const std::size_t e,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpoel,
+  const std::array< std::vector< real >, 3 >& coordgp,
+  const Fields& W );
+
 //! Compute safe reconstructions near material interfaces
 void
 safeReco( std::size_t rdof,

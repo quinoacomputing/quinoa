@@ -173,6 +173,7 @@ tk::volInt( std::size_t nmat,
             const SrcFn& src,
             const Fields& U,
             const Fields& P,
+            const Fields& W,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
             int intsharp )
@@ -192,12 +193,14 @@ tk::volInt( std::size_t nmat,
 //! \param[in] src Source function to use
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -270,6 +273,17 @@ tk::volInt( std::size_t nmat,
 
         // compute flux
         auto fl = flux( ncomp, mat_blk, state, v );
+
+        // update flux according to mesh velocity at quadrature point
+        if (ale) {
+          auto w_igp = evaluateMeshVelTet( e, igp, inpoel, coordgp, W );
+
+          for (std::size_t c=0; c<ncomp; ++c) {
+            for (std::size_t i=0; i<3; ++i) {
+              fl[c][i] -= state[c]*w_igp[i];
+            }
+          }
+        }
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );
       }
@@ -450,6 +464,7 @@ tk::volInt_constP(
   const SrcFn& src,
   const Fields& U,
   const Fields& P,
+  const Fields& W,
   Fields& R,
   int intsharp,
   VolIntDeviceViews* dev //added
@@ -470,12 +485,18 @@ tk::volInt_constP(
 //! \param[in] src Source function to use
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
   Kokkos::Profiling::pushRegion("volInt");
+
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
 
   size_t ncomp = U.nprop()/rdof;
   size_t nprim = P.nprop()/rdof;
@@ -587,12 +608,50 @@ tk::volInt_constP(
   {
     if(ndof > 1)
     {
+<<<<<<< HEAD
       // Extract the element coordinates
       Kokkos::Array<Kokkos::Array<real, 3>, 4> coordel;
       for (int i=0; i<4; i++) {
         coordel[i][0] = cx_d_view(inpoel_d_view(4*e + i));
         coordel[i][1] = cy_d_view(inpoel_d_view(4*e + i));
         coordel[i][2] = cz_d_view(inpoel_d_view(4*e + i));
+=======
+      if (ndof > 4) eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
+
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = eval_gp( igp, coordel, coordgp );
+
+      // Compute the basis function
+      eval_basis( rdof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
+
+      auto wt = wgp[igp] * geoElem(e, 0);
+
+      // volume fluxes
+      if (ndof > 1)
+      {
+        evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+          rdof, nmat, e, rdof, inpoel, coord, geoElem,
+          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
+
+        // evaluate prescribed velocity (if any)
+        auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
+
+        // comput flux
+        auto fl = flux( ncomp, mat_blk, state, v );
+
+        // update flux according to mesh velocity at quadrature point
+        if (ale) {
+          auto w_igp = evaluateMeshVelTet( e, igp, inpoel, coordgp, W );
+
+          for (std::size_t c=0; c<ncomp; ++c) {
+            for (std::size_t i=0; i<3; ++i) {
+              fl[c][i] -= state[c]*w_igp[i];
+            }
+          }
+        }
+
+        update_rhs( ncomp, ndof, ndof, wt, e, dBdx, fl, R );
+>>>>>>> af37bc0e482aceb5879d7d6c668a799fb72112ff
       }
 
       Kokkos::Array<real, NDOF_MAX> B = {};

@@ -19,6 +19,7 @@
 
 #include "DG.hpp"
 #include "Discretization.hpp"
+#include "CGPDE.hpp"
 #include "DGPDE.hpp"
 #include "DiagReducer.hpp"
 #include "DerivedData.hpp"
@@ -96,7 +97,7 @@ using inciter::DG;
 DG::DG( const CProxy_Discretization& disc,
         const CProxy_Ghosts& ghostsproxy,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& /* bnode */,
+        const std::map< int, std::vector< std::size_t > >& bnode,
         const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_ghosts( ghostsproxy ),
@@ -107,6 +108,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_nrefine( 0 ),
   m_nsmooth( 0 ),
   m_nreco( 0 ),
+  m_nale( 0 ),
+  m_nbnorm( 0 ),
   m_nstiffeq( g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_nnonstiffeq( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
   m_u( Disc()->Inpoel().size()/4,
@@ -115,6 +118,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(), g_inputdeck.get< tag::rdof >()*
     g_dgpde[Disc()->MeshId()].nprim() ),
+  m_geoElemk( m_u.nunk(), 5 ),
+  m_geoElemn( m_u.nunk(), 5 ),
   m_rhs( m_u.nunk(),
          g_inputdeck.get< tag::ndof >()*
          g_inputdeck.get< tag::ncomp >() ),
@@ -152,6 +157,14 @@ DG::DG( const CProxy_Discretization& disc,
   m_outmesh(),
   m_boxelems(),
   m_shockmarker(m_u.nunk(), 1),
+  m_nodevel( {{ std::vector<tk::real>(Disc()->Lid().size(), 0.0),
+                std::vector<tk::real>(Disc()->Lid().size(), 0.0),
+                std::vector<tk::real>(Disc()->Lid().size(), 0.0) }} ),
+  m_bnode( bnode ),
+  m_bface( bface ),
+  m_triinpoel( tk::remap( triinpoel, Disc()->Lid() ) ),
+  m_bnorm(),
+  m_bnormc(),
   m_dte(m_u.nunk(), 0.0),
   m_finished(0)
 // *****************************************************************************
@@ -179,12 +192,16 @@ DG::DG( const CProxy_Discretization& disc,
     if (pref) thisProxy[ thisIndex ].wait4refine();
     thisProxy[ thisIndex ].wait4smooth();
     thisProxy[ thisIndex ].wait4lim();
+    thisProxy[ thisIndex ].wait4ale();
     thisProxy[ thisIndex ].wait4nod();
     thisProxy[ thisIndex ].wait4reco();
   }
 
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
+
+  // Query ALE mesh velocity boundary condition node lists
+  Disc()->meshvelBnd( m_bface, m_bnode, m_triinpoel );
 
   // insert array-element into the implicit solver chare array
   if (g_inputdeck.get< tag::implicit_timestepping >()) {
@@ -253,6 +270,8 @@ DG::resizeSolVectors()
   m_rhsprev.resize( myGhosts()->m_nunk );
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_stiffrhsprev.resize( myGhosts()->m_nunk );
+  for (std::size_t i=0; i<3; ++i)
+    m_nodevel[i].resize( Disc()->Coord()[0].size() );
   m_dte.resize( myGhosts()->m_nunk );
 
   // Size communication buffer for solution and number of degrees of freedom
@@ -281,7 +300,7 @@ DG::resizeSolVectors()
     "GeoElem unknowns size mismatch" );
 
   // Signal the runtime system that all workers have received their adjacency
-  std::vector< std::size_t > meshdata{ myGhosts()->m_initial, Disc()->MeshId() };
+  std::vector< std::size_t > meshdata{ m_initial, Disc()->MeshId() };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
@@ -298,9 +317,6 @@ DG::setup()
                                         "setup" );
 
   auto d = Disc();
-
-  // Compute left-hand side of discrete PDEs
-  lhs();
 
   // Determine elements inside user-defined IC box
   g_dgpde[d->MeshId()].IcBoxElems( myGhosts()->m_geoElem,
@@ -337,6 +353,10 @@ DG::box( tk::real v, const std::vector< tk::real >& )
 
   // Store user-defined box IC volume
   d->Boxvol() = v;
+
+  // Store previous time step and stage element volumes for GCL
+  m_geoElemk = myGhosts()->m_geoElem;
+  m_geoElemn = myGhosts()->m_geoElem;
 
   // Set initial conditions for all PDEs
   g_dgpde[d->MeshId()].initialize( myGhosts()->m_geoElem, myGhosts()->m_inpoel,
@@ -1042,6 +1062,276 @@ DG::comlim( int fromch,
 }
 
 void
+DG::updateChareBoundaryGeoFace()
+// *****************************************************************************
+// Recompute chare-boundary face geometry after ALE ghost updates arrive
+// *****************************************************************************
+{
+  auto d = Disc();
+  auto g = myGhosts();
+  const auto& esuf = g->m_fd.Esuf();
+
+  for (std::size_t f = g->m_fd.Nipfac(); f < esuf.size()/2; ++f) {
+    std::size_t el = static_cast< std::size_t >( esuf[2*f] );
+    tk::UnsMesh::Face t{{
+      d->Gid()[ g->m_fd.Inpofa()[3*f+2] ],
+      d->Gid()[ g->m_fd.Inpofa()[3*f+1] ],
+      d->Gid()[ g->m_fd.Inpofa()[3*f+0] ]
+    }};
+    std::array< std::size_t, 2 > id{{ f, el }};
+    g->addGeoFace( t, id );
+  }
+}
+
+void
+DG::bnorm()
+// *****************************************************************************
+//  Compute boundary point normals for mesh velocity symmetry BCs
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  std::unordered_map< int, std::unordered_set< std::size_t > > bcnodes;
+  for (const auto& s : g_inputdeck.get< tag::ale, tag::symmetry >()) {
+    auto k = m_bface.find(static_cast<int>(s));
+    if (k != end(m_bface)) {
+      auto& n = bcnodes[ k->first ];
+      for (auto f : k->second) {
+        n.insert( m_triinpoel[f*3+0] );
+        n.insert( m_triinpoel[f*3+1] );
+        n.insert( m_triinpoel[f*3+2] );
+      }
+    }
+  }
+
+  m_bnorm = cg::bnorm( m_bface, m_triinpoel, d->Coord(), d->Gid(), bcnodes );
+
+  // Send our nodal normal contributions to neighbor chares
+  if (d->NodeCommMap().empty())
+    comnorm_complete();
+  else
+    for (const auto& [neighborchare, sharednodes] : d->NodeCommMap()) {
+      decltype(m_bnorm) exp;
+      for (auto i : sharednodes) {
+        for (const auto& [s,norms] : m_bnorm) {
+          auto j = norms.find(i);
+          if (j != end(norms)) exp[s][i] = j->second;
+        }
+      }
+      thisProxy[ neighborchare ].comnorm( exp );
+    }
+
+  ownnorm_complete();
+}
+
+void
+DG::comnorm( const std::unordered_map< int,
+  std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm )
+// *****************************************************************************
+// Receive boundary point normals on chare-boundaries
+//! \param[in] innorm Incoming partial sums of boundary point normal
+//!   contributions to normals (first 3 components), inverse distance squared
+//!   (4th component), associated to side set ids
+// *****************************************************************************
+{
+  // Buffer up incoming boundary-point normal vector contributions
+  for (const auto& [s,norms] : innorm) {
+    auto& bnorms = m_bnormc[s];
+    for (const auto& [p,n] : norms) {
+      auto& bnorm = bnorms[p];
+      bnorm[0] += n[0];
+      bnorm[1] += n[1];
+      bnorm[2] += n[2];
+      bnorm[3] += n[3];
+    }
+  }
+
+  if (++m_nbnorm == Disc()->NodeCommMap().size()) {
+    m_nbnorm = 0;
+    comnorm_complete();
+  }
+}
+
+void
+DG::normfinal()
+// *****************************************************************************
+//  Finish computing boundary point normals
+// *****************************************************************************
+{
+  const auto& lid = Disc()->Lid();
+
+  // Combine own and communicated contributions to boundary point normals
+  for (const auto& [s,norms] : m_bnormc) {
+    auto& bnorms = m_bnorm[s];
+    for (const auto& [p,n] : norms) {
+      auto& norm = bnorms[p];
+      norm[0] += n[0];
+      norm[1] += n[1];
+      norm[2] += n[2];
+      norm[3] += n[3];
+    }
+  }
+  tk::destroy( m_bnormc );
+
+  // Divide summed point normals by the sum of inverse distance squared
+  for (auto& [s,norms] : m_bnorm)
+    for (auto& [p,n] : norms) {
+      n[0] /= n[3];
+      n[1] /= n[3];
+      n[2] /= n[3];
+      Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
+              1.0e+3*std::numeric_limits< tk::real >::epsilon(),
+              "Non-unit normal" );
+    }
+
+  // Replace global->local ids associated to boundary point normals
+  decltype(m_bnorm) bnorm;
+  for (auto& [s,norms] : m_bnorm) {
+    auto& bnorms = bnorm[s];
+    for (auto&& [g,n] : norms)
+      bnorms[ tk::cref_find(lid,g) ] = std::move(n);
+  }
+  m_bnorm = std::move(bnorm);
+
+  meshvelstart();
+}
+
+void
+DG::ALEComm()
+// *****************************************************************************
+// Perform ALE mesh update and communicate updated ghost mesh data
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto is_ale = g_inputdeck.get< tag::ale, tag::ale >();
+
+  if (!is_ale) {
+    ownale_complete();
+    comale_complete();
+    return;
+  }
+
+  if (m_stage == 0) {
+    d->UpdateCoordn();
+    m_geoElemn = myGhosts()->m_geoElem;
+  }
+
+  // Advance owned mesh coordinates and mirror them into the extended array.
+  const auto& meshvel = d->meshvel();
+  auto& coord = myGhosts()->m_coord;
+  auto& disc_coord = d->Coord();
+  const auto dc_size = disc_coord[0].size();
+  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >()) {
+    for (std::size_t i=0; i<dc_size; ++i) {
+      auto x = rkcoef[0][m_stage] * d->Coordn()[j][i]
+        + rkcoef[1][m_stage] * ( disc_coord[j][i] + d->Dt() * meshvel(i,j) );
+      disc_coord[j][i] = x;
+      coord[j][i] = x;
+    }
+  }
+
+  // Store element volumes at previous stage for GCL consistent RK
+  m_geoElemk = myGhosts()->m_geoElem;
+
+  // Recompute internal + physical boundary face geometry from the updated mesh.
+  auto gf_temp = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
+    myGhosts()->m_fd.Inpofa(), myGhosts()->m_coord );
+  for (std::size_t f=0; f<myGhosts()->m_fd.Nipfac(); ++f)
+    for (std::size_t i=0; i<gf_temp.nprop(); ++i)
+      myGhosts()->m_geoFace(f,i) = gf_temp(f,i);
+
+  // Recompute element geometries for owned elements only.
+  auto ge_temp = tk::genGeoElemTet( d->Inpoel(), disc_coord );
+  for (std::size_t e=0; e<ge_temp.nunk(); ++e)
+    for (std::size_t i=0; i<ge_temp.nprop(); ++i)
+      myGhosts()->m_geoElem(e,i) = ge_temp(e,i);
+
+  if (myGhosts()->m_sendGhost.empty()) {
+    updateChareBoundaryGeoFace();
+    comale_complete();
+  } else {
+    for (const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > geoElem( ghostdata.size() );
+      std::vector< std::array< tk::real, 3 > > coordg(
+        ghostdata.size(), std::array< tk::real, 3 >{{ 0.0, 0.0, 0.0 }} );
+      const auto sendnode = myGhosts()->m_sendChBndNode.find( cid );
+
+      std::size_t j = 0;
+      for (const auto& e : ghostdata) {
+        Assert( e < myGhosts()->m_fd.Esuel().size()/4,
+          "Sending ALE ghost data" );
+        tetid[j] = e;
+        geoElem[j] = myGhosts()->m_geoElem[e];
+
+        if (sendnode != end(myGhosts()->m_sendChBndNode)) {
+          const auto n = sendnode->second.find( e );
+          if (n != end(sendnode->second)) {
+            coordg[j] = {{ coord[0][n->second],
+                           coord[1][n->second],
+                           coord[2][n->second] }};
+          }
+        }
+        ++j;
+      }
+
+      thisProxy[ cid ].comale( thisIndex, tetid, geoElem, coordg );
+    }
+  }
+
+  ownale_complete();
+}
+
+void
+DG::comale( int fromch,
+            const std::vector< std::size_t >& tetid,
+            const std::vector< std::vector< tk::real > >& geoElem,
+            const std::vector< std::array< tk::real, 3 > >& coord )
+// *****************************************************************************
+//  Receive updated ALE ghost mesh data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive ALE mesh data for
+//! \param[in] geoElem Updated ghost-element geometry
+//! \param[in] coord Updated off-face coordinates for face ghosts
+// *****************************************************************************
+{
+  Assert( geoElem.size() == tetid.size(), "Size mismatch in DG::comale()" );
+  Assert( coord.size() == tetid.size(), "Size mismatch in DG::comale()" );
+
+  const auto& ghost = tk::cref_find( myGhosts()->m_ghost, fromch );
+  const auto recvnode = myGhosts()->m_recvChBndNode.find( fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( ghost, tetid[i] );
+    Assert( j >= myGhosts()->m_fd.Esuel().size()/4,
+      "Receiving ALE non-ghost data" );
+    Assert( geoElem[i].size() == myGhosts()->m_geoElem.nprop(),
+      "Geometry size mismatch in DG::comale()" );
+
+    for (std::size_t c=0; c<geoElem[i].size(); ++c)
+      myGhosts()->m_geoElem(j,c) = geoElem[i][c];
+
+    if (recvnode != end(myGhosts()->m_recvChBndNode)) {
+      const auto n = recvnode->second.find( tetid[i] );
+      if (n != end(recvnode->second)) {
+        auto p = n->second;
+        Assert( p < myGhosts()->m_coord[0].size(),
+          "Indexing out of extended ALE ghost coordinates" );
+        myGhosts()->m_coord[0][p] = coord[i][0];
+        myGhosts()->m_coord[1][p] = coord[i][1];
+        myGhosts()->m_coord[2][p] = coord[i][2];
+      }
+    }
+  }
+
+  if (++m_nale == myGhosts()->m_sendGhost.size()) {
+    m_nale = 0;
+    updateChareBoundaryGeoFace();
+    comale_complete();
+  }
+}
+
+void
 DG::dt()
 // *****************************************************************************
 // Compute time step size
@@ -1096,6 +1386,20 @@ DG::dt()
       }
 
       mindt *= coeff * g_inputdeck.get< tag::cfl >();
+
+      // time-step restriction based on max volume change
+      auto mindtv = std::numeric_limits< tk::real >::max();
+      auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
+      if (d->Dtn() > 1e-12 && dvcfl > 0.0) {
+        for (std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+          auto dt_v = dvcfl *
+            d->Dtn() * std::min(m_geoElemn(e,0), myGhosts()->m_geoElem(e,0))
+            / (std::abs(m_geoElemn(e,0)-myGhosts()->m_geoElem(e,0)) + 1.0e-12);
+          mindtv = std::min(mindtv, dt_v);
+        }
+      }
+
+      mindt = std::min(mindt, mindtv);
     }
   }
   else
@@ -1173,6 +1477,7 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4smooth();
   thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4lim();
+  thisProxy[ thisIndex ].wait4ale();
   thisProxy[ thisIndex ].wait4nod();
 
   auto d = Disc();
@@ -1214,7 +1519,7 @@ DG::solve( tk::real newdt )
     if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
       myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
+      myGhosts()->m_coord, m_u, m_p, d->meshvel(), m_ndof, d->Dt(), m_rhs );
   }
 
   if (imex_runge_kutta) {
@@ -1229,7 +1534,12 @@ DG::solve( tk::real newdt )
     // Explicit time-stepping using RK3 to discretize time-derivative
     const auto steady = g_inputdeck.get< tag::steady_state >();
     for(std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+
+      // Stage-wise volumes for GCL consistent RK
       auto vole = myGhosts()->m_geoElem(e,0);
+      auto vole_n = m_geoElemn(e,0);
+      auto vole_k = m_geoElemk(e,0);
+
       auto dte = d -> Dt();
       if (steady) dte = m_dte[e];
       for(std::size_t c=0; c<neq; ++c)
@@ -1239,9 +1549,15 @@ DG::solve( tk::real newdt )
           if(k < m_ndof[e]) {
             auto rmark = c*rdof+k;
             auto mark = c*ndof+k;
-            m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
-              + rkcoef[1][m_stage] * ( m_u(e, rmark)
-                + dte * m_rhs(e, mark)/ (vole*mass_dubiner[k]));
+
+            auto mm_i = vole * mass_dubiner[k];
+            auto mm_n = vole_n * mass_dubiner[k];
+            auto mm_k = vole_k * mass_dubiner[k];
+            m_u(e, rmark) = (
+              rkcoef[0][m_stage] * mm_n * m_un(e, rmark)
+              + rkcoef[1][m_stage] * ( mm_k * m_u(e, rmark)
+              + dte * m_rhs(e, mark) )
+              ) / mm_i;
             if(fabs(m_u(e, rmark)) < 1e-16)
               m_u(e, rmark) = 0;
           }
@@ -1347,7 +1663,7 @@ DG::resizePostAMR(
   const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& /* bnode */,
+  const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
@@ -1367,7 +1683,6 @@ DG::resizePostAMR(
 
   // Set flag that indicates that we are during time stepping
   m_initial = 0;
-  myGhosts()->m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
@@ -1393,9 +1708,15 @@ DG::resizePostAMR(
   m_rhsprev.resize( nelem );
   m_stiffrhs.resize( nelem );
   m_stiffrhsprev.resize( nelem );
+  for (std::size_t i=0; i<3; ++i) m_nodevel[i].resize( coord[0].size() );
 
   myGhosts()->m_fd = FaceData( myGhosts()->m_inpoel, bface,
     tk::remap(triinpoel,d->Lid()) );
+
+  m_bnode = bnode;
+  m_bface = bface;
+  m_triinpoel = tk::remap( triinpoel, d->Lid() );
+  d->meshvelBnd( m_bface, m_bnode, m_triinpoel );
 
   myGhosts()->m_geoFace =
     tk::Fields( tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
@@ -1582,6 +1903,21 @@ DG::writeFields(
   if (plasticDeformation.size() > 0)
     elemfieldnames.push_back( "plastic_deformation" );
 
+  //! Lambda to put in a field for output if not empty
+  auto add_node_field = [&]( const auto& name, const auto& field ){
+    if (not field.empty()) {
+      nodefieldnames.push_back( name );
+      nodefields.push_back( field );
+    }
+  };
+
+  // Output mesh velocity if ALE is enabled
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    add_node_field( "x-mesh-velocity", d->meshvel().extract_comp(0) );
+    add_node_field( "y-mesh-velocity", d->meshvel().extract_comp(1) );
+    add_node_field( "z-mesh-velocity", d->meshvel().extract_comp(2) );
+  }
+
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
 
@@ -1656,8 +1992,14 @@ DG::stage()
   // otherwise prepare for nodal field output
   if (m_stage < m_nstage)
     next();
-  else
+  else {
+    // Ensure new field output file if ALE is enabled
+    if (g_inputdeck.get< tag::ale, tag::ale >()) {
+      Disc()->Itf() = 0;  // Zero field output iteration count if mesh moved
+      ++Disc()->Itr();    // Increase number of iterations with a change in the mesh
+    }
     startFieldOutput( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+  }
 }
 
 void
@@ -1749,6 +2091,78 @@ DG::step()
                    CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
+}
+
+void
+DG::computeBNorm()
+// *****************************************************************************
+// Start computing the boundary normals for ALE
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::ale, tag::ale >() &&
+      !g_inputdeck.get< tag::ale, tag::symmetry >().empty())
+  {
+    thisProxy[ thisIndex ].wait4norm();
+    bnorm();
+  } else {
+    meshvelstart();
+  }
+}
+
+void
+DG::meshvelstart()
+// *****************************************************************************
+// Start computing the mesh mesh velocity after boundary normals are ready
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Compute fluid velocity at nodes
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    const auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+    const auto meshveltype =
+      g_inputdeck.get< tag::ale, tag::mesh_velocity >();
+
+    if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+      Throw( "DG-ALE does not yet support the Helmholtz mesh velocity "
+             "smoother" );
+
+    if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
+      if (meshveltype != ctr::MeshVelocityType::FLUID)
+        Throw( "DG-ALE Laplace mesh velocity smoothing is currently "
+               "supported only with mesh_velocity = \"fluid\"" );
+
+      const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
+      const auto eps = std::numeric_limits< tk::real >::epsilon();
+      if (!std::all_of( begin(meshforce), end(meshforce),
+            [eps](tk::real c){ return std::abs(c) <= eps; } ))
+        Throw( "DG-ALE Laplace mesh velocity smoothing does not yet support "
+               "nonzero meshforce coefficients" );
+    }
+
+    g_dgpde[d->MeshId()].nodeVelocity( myGhosts()->m_geoElem,
+      myGhosts()->m_esup, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p,
+      m_nodevel );
+  }
+
+  // Start computing the mesh velocity for ALE
+  const auto adt = rkcoef[1][m_stage] * d->Dt();
+  d->meshvelStart( m_nodevel, {}, m_bnorm, adt,
+    CkCallback(CkIndex_DG::meshveldone(), thisProxy[thisIndex]) );
+}
+
+void
+DG::meshveldone()
+// *****************************************************************************
+// Done with computing the mesh velocity for ALE
+// *****************************************************************************
+{
+  // Assess and record mesh velocity linear solver convergence
+  Disc()->meshvelConv();
+
+  m_initial = 0;
+
+  p_refine();
 }
 
 void
