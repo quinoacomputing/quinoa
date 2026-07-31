@@ -1100,6 +1100,7 @@ void enforcePhysicalConstraints(
   else if (myPDE == inciter::ctr::PDEType::MULTISPECIES) {
     // TODO: consider clipping temperature here
   }
+}
 
 std::array< real, 3 >
 evaluateMeshVelTri(

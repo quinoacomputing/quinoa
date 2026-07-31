@@ -988,7 +988,7 @@ class MultiMat {
       if (!pref) {
         // compute volume integrals
         tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
-          geoElem, flux, velfn, Problem::src, U, P, R, intsharp, &m_volDev ); //added &m_volDev
+          geoElem, flux, velfn, Problem::src, U, P, W, R, intsharp, &m_volDev ); //added &m_volDev
 
         // compute internal surface flux integrals
         tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
@@ -1005,7 +1005,7 @@ class MultiMat {
       else {
         // compute volume integrals
         tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-                    inpoel, coord, geoElem, flux, velfn, Problem::src, U, P,
+                    inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, W,
                     ndofel, R, intsharp );
 
         // compute internal surface flux integrals
