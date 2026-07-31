@@ -344,6 +344,17 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   using inciter::multispecies::densityDofIdx;
   using inciter::multispecies::energyDofIdx;
   using inciter::multispecies::temperatureDofIdx;
+
+  // Set grad evals to zero for every gp to avoid runaway rhs
+  for (auto& component : grad)
+    component.fill(0.0);
+
+  for (auto& component : vgrad)
+    component.fill(0.0);
+
+  for (auto& component : hess)
+    component.fill(0.0);
+
   
   // Gradient of conserved quantities
   real cellAvgRho(0.0);

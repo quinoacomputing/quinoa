@@ -1048,7 +1048,7 @@ class MultiSpecies {
     {
       auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
-      std::vector< std::array< tk::real, 3 > > fl( ugp.size() );
+      std::vector< std::array< tk::real, 3 > > fl( ncomp );
 
       Mixture mix(nspec, ugp, mat_blk);
       auto rhob = mix.get_mix_density();

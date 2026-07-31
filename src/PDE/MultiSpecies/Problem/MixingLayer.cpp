@@ -53,8 +53,8 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
 
   //logistic curve fit of analytical solution
   auto U1 = 10;
-  auto mu = 1.716e-5;
-  auto rho0 = 1.225;
+  auto mu = 1.47e-5;
+  auto rho0 = 1.98;
   auto nu = mu/rho0;
   auto f0 = 0.5;
   auto f1 = 1.0;
@@ -87,8 +87,8 @@ else if (t > 0) {
   }
 }
   auto denom = (1 + std::exp(-c * std::abs(eta - eta0)));
-  p = 101325;
-  T = 273.15;
+  p = 100000;
+  T = 400;
   u = f*U1;
   v = 0;
   w = 0;

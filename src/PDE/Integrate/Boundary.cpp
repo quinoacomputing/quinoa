@@ -416,8 +416,8 @@ viscousBoundaryFaceIntDG(
             if (ndof_l > 1) // DG(P1)
             {
               R(el, mark+1) += wt * fl[c] * B_l[1];
-              R(el, mark+1) += wt * fl[c] * B_l[2];
-              R(el, mark+1) += wt * fl[c] * B_l[3];
+              R(el, mark+2) += wt * fl[c] * B_l[2];
+              R(el, mark+3) += wt * fl[c] * B_l[3];
               // interface correction quadrature 
               R(el, mark+1) +=
                 wt * (ic[c][0]*dBdx_l[0][1] + ic[c][1]*dBdx_l[1][1] + ic[c][2]*dBdx_l[2][1]);
@@ -1174,7 +1174,7 @@ bndSurfIntViscousFV(
               + dBdx_l[j][3] * P(el, velocityDofIdx(nmat,i,rdof,3));
 
         // 2. Average du_i/dx_j
-        auto grad = gradFn( 3, mat_blk, dudx_l, gp[0], gp[2], gp[2], t, fn );
+        auto grad = gradFn( 3, mat_blk, dudx_l, gp[0], gp[1], gp[2], t, fn );
         std::array< std::array< tk::real, 3 >, 3 > dudx;
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
@@ -1242,7 +1242,7 @@ bndSurfIntViscousMultiSpecies(
       coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
   }
 
-  if (ndof == 4) {
+  else if (ndof == 4) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     viscousBoundaryFaceIntDG( viscousRhs, mat_blk, nspec, ndof, rdof, bcconfig, 
       inpoel, coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
