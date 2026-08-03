@@ -2598,9 +2598,6 @@ DG::solve_element_implicit(
   if ( n != m_u.nprop()/g_inputdeck.get< tag::rdof >()*ndof ) {
     Throw("Size mismatch in solve_element_implicit()");
   }
-  if( u_new.size() != n ) {
-    Throw("Size mismatch in solve_element_implicit()" );
-  };
   if( dRdu.size() != n ) {
     Throw("Jacobian row size mismatch" );
   };

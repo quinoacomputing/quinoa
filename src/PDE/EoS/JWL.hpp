@@ -140,6 +140,8 @@ class JWL {
     tk::real viscCoeff() const { return 0.0; }
 
     //! Return specific heat derivative (no-op)
+    //! \note: cv and T may be related in JWL, but this relationship has not
+    //! been quantified in the current version of the code.
     tk::real dcvdT( [[maybe_unused]] tk::real temp) const { return 0.0; }
 
     /** @name Charm++ pack/unpack serializer member functions */

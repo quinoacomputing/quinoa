@@ -337,11 +337,12 @@ Mixture::mix_Cv_prim_partials(
 // *************************************************************************
 {
   std::vector< tk::real > dCvdP(ncomp, 0.0);
+  auto mix_cv = mix_Cv(mix_temp, mat_blk);
 
   for (std::size_t k = 0; k < m_nspec; k++) {
     dCvdP[multispecies::densityIdx(m_nspec, k)]
       = mat_blk[k].compute< EOS::cv >(mix_temp) / mix_density
-      - mix_Cv(mix_temp, mat_blk) / mix_density;
+      - mix_cv / mix_density;
 
     dCvdP[multispecies::energyIdx(m_nspec, 0)]
       += mat_blk[k].compute< EOS::dcvdT >(mix_temp) * m_Ys[k];
@@ -378,17 +379,34 @@ Mixture::soundspeed_prim_partials(
   }
   tk::real beta = m_mix_R / mix_Cv;
 
+  // associate proper indices using accessors
+  std::vector< std::size_t > indices;
+
+  for (std::size_t k=0; k<m_nspec; ++k) {
+    indices.push_back(
+      multispecies::densityIdx( m_nspec, k ) );
+  }
+
+  for (std::size_t idir=0; idir<3; ++idir) {
+    indices.push_back(
+      multispecies::momentumIdx( m_nspec, idir ) );
+  }
+
+  // Temperature occupies the energy-equation slot in this combined vector.
+  indices.push_back(
+    multispecies::energyIdx( m_nspec, 0 ) );
+
+
   // Add constituent partials together
-  for (std::size_t k = 0; k < m_nspec + 3 + 1; k++) {
-    dbetadP = dRdP[multispecies::densityIdx(m_nspec, k)]
-            / mix_Cv - m_mix_R / ( mix_Cv * mix_Cv )
-            * dCvdP[multispecies::densityIdx(m_nspec, k)];
+  for (std::size_t k = 0; k < ncomp; k++) {
+    const auto idx = indices[k];
+    dbetadP = dRdP[idx] / mix_Cv - m_mix_R / ( mix_Cv * mix_Cv ) * dCvdP[idx];
     dadP[multispecies::densityIdx(m_nspec, k)]
       = 0.5 / a
-      * ( (1 + beta) / mix_density * dpdP[multispecies::densityIdx(m_nspec, k)]
+      * ( (1 + beta) / mix_density * dpdP[idx]
           + p / mix_density * dbetadP
           - (1 + beta) * p / (mix_density*mix_density)
-          * drhodP[multispecies::densityIdx(m_nspec, k)]
+          * drhodP[idx]
         );
   }
   return dadP;

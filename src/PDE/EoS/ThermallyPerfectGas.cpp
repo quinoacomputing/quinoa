@@ -215,5 +215,5 @@ ThermallyPerfectGas::dcvdT(tk::real temp) const
      3. * m_cp_coeff[t_rng_idx][5] * std::pow(temp_poly, 2) +
      4. * m_cp_coeff[t_rng_idx][6] * std::pow(temp_poly, 3);
 
-  return dcvdT;
+  return dcvdT * m_R;
 }
