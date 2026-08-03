@@ -84,21 +84,25 @@ class Mixture {
     std::vector < tk::real > pressure_prim_partials(
       tk::real mix_density,
       tk::real mix_temp,
-      const std::vector< EOS >& mat_blk ) const;
+      const std::vector< EOS >& mat_blk,
+      std::size_t ncomp ) const;
 
     std::vector < tk::real > mix_R_prim_partials(
       tk::real mix_density,
-      const std::vector< EOS >& mat_blk) const;
+      const std::vector< EOS >& mat_blk,
+      std::size_t ncomp ) const;
 
     std::vector < tk::real > mix_Cv_prim_partials(
       tk::real mix_density,
       tk::real mix_temp,
-      const std::vector< EOS >& mat_blk) const;
+      const std::vector< EOS >& mat_blk,
+      std::size_t ncomp ) const;
 
     std::vector < tk::real > soundspeed_prim_partials(
       tk::real mix_density,
       tk::real mix_temp,
-      const std::vector< EOS >& mat_blk ) const;
+      const std::vector< EOS >& mat_blk,
+      std::size_t ncomp ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

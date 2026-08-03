@@ -251,10 +251,12 @@ struct AUSMMultiSpecies {
 
     // Pressure, sound speed, and normal velocity derivatives
     // Sound speeds frozen, derivatives = 0
-    // auto daldP = mixl.soundspeed_prim_partials(rhol, P[0][Tid], mat_blk);
-    // auto dardP = mixr.soundspeed_prim_partials(rhor, P[1][Tid], mat_blk);
-    auto dpldP = mixl.pressure_prim_partials(rhol, P[0][Tid], mat_blk);
-    auto dprdP = mixr.pressure_prim_partials(rhor, P[1][Tid], mat_blk);
+    // auto daldP = mixl.soundspeed_prim_partials(
+    //  rhol, P[0][Tid], mat_blk, ncomp);
+    // auto dardP = mixr.soundspeed_prim_partials(
+    //  rhor, P[1][Tid], mat_blk, ncomp);
+    auto dpldP = mixl.pressure_prim_partials(rhol, P[0][Tid], mat_blk, ncomp);
+    auto dprdP = mixr.pressure_prim_partials(rhor, P[1][Tid], mat_blk, ncomp);
     std::vector< tk::real > dvnldP(ncomp, 0.0), dvnrdP(ncomp, 0.0);
     std::transform(fn.begin(), fn.end(), dvnldP.begin() + uid,
                    [](tk::real ni){ return ni; });

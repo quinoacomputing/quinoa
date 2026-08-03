@@ -273,18 +273,21 @@ std::vector < tk::real >
 Mixture::pressure_prim_partials(
   tk::real mix_density,
   tk::real mix_temp,
-  const std::vector< EOS >& mat_blk ) const
+  const std::vector< EOS >& mat_blk,
+  std::size_t ncomp ) const
 // *************************************************************************
 //! \brief Calculate mixture pressure partial derivatives with respect to the
 //!   primitives.
 //! \param[in] mix_density Mixture density (sum of species density)
 //! \param[in] mix_temp Mixture temperature
 //! \param[in] mat_blk EOS material block
+//! \param[in] ncomp Number of conservative variables
 //! \return Mixture pressure
 // *************************************************************************
 {
-  std::vector< tk::real > dpdP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0);
-  std::vector< tk::real > dRdP = mix_R_prim_partials(mix_density, mat_blk);
+  std::vector< tk::real > dpdP(ncomp, 0.0);
+  std::vector< tk::real > dRdP = mix_R_prim_partials(
+    mix_density, mat_blk, ncomp);
   for (std::size_t k = 0; k < m_nspec; k++) {
     dpdP[multispecies::densityIdx(m_nspec, k)] =
       m_mix_R * mix_temp + mix_density
@@ -297,16 +300,18 @@ Mixture::pressure_prim_partials(
 std::vector < tk::real >
 Mixture::mix_R_prim_partials(
   tk::real mix_density,
-  const std::vector< EOS >& mat_blk) const
+  const std::vector< EOS >& mat_blk,
+  std::size_t ncomp ) const
 // *************************************************************************
 //! \brief Calculate mixture gas constant partial derivatives with respect to
 //!   the primitives.
 //! \param[in] mix_density Mixture density (sum of species density)
 //! \param[in] mat_blk EOS material block
+//! \param[in] ncomp Number of conservative variables
 //! \return Mixture pressure
 // *************************************************************************
 {
-  std::vector< tk::real > dRdP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0);
+  std::vector< tk::real > dRdP(ncomp, 0.0);
   for (std::size_t k = 0; k < m_nspec; k++) {
     dRdP[multispecies::densityIdx(m_nspec, k)]
       = mat_blk[k].compute< EOS::gas_constant >() / mix_density
@@ -319,17 +324,19 @@ std::vector < tk::real >
 Mixture::mix_Cv_prim_partials(
   tk::real mix_density,
   tk::real mix_temp,
-  const std::vector< EOS >& mat_blk) const
+  const std::vector< EOS >& mat_blk,
+  std::size_t ncomp ) const
 // *************************************************************************
 //! \brief Calculate mixture specific heat partial derivatives with respect to
 //!   the primitives.
 //! \param[in] mix_density Mixture density (sum of species density)
 //! \param[in] mix_temp Mixture temperature
 //! \param[in] mat_blk EOS material block
+//! \param[in] ncomp Number of conservative variables
 //! \return Mixture pressure
 // *************************************************************************
 {
-  std::vector< tk::real > dCvdP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0);
+  std::vector< tk::real > dCvdP(ncomp, 0.0);
 
   for (std::size_t k = 0; k < m_nspec; k++) {
     dCvdP[multispecies::densityIdx(m_nspec, k)]
@@ -346,21 +353,22 @@ std::vector < tk::real >
 Mixture::soundspeed_prim_partials(
   tk::real mix_density,
   tk::real mix_temp,
-  const std::vector< EOS >& mat_blk ) const
+  const std::vector< EOS >& mat_blk,
+  std::size_t ncomp ) const
 // *************************************************************************
 //! \brief Calculate mixture sound speed partial derivatives with respect to
 //!   the primitives.
 //! \param[in] mix_density Mixture density (sum of species density)
 //! \param[in] mix_temp Mixture temperature
 //! \param[in] mat_blk EOS material block
+//! \param[in] ncomp Number of conservative variables
 //! \return Mixture pressure
 // *************************************************************************
 {
-  std::vector< tk::real > dadP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0),
-                          drhodP(multispecies::energyIdx(m_nspec, 0) + 1, 0.0);
-  auto dpdP = pressure_prim_partials(mix_density, mix_temp, mat_blk);
-  auto dCvdP = mix_Cv_prim_partials(mix_density, mix_temp, mat_blk);
-  auto dRdP = mix_R_prim_partials(mix_density, mat_blk);
+  std::vector< tk::real > dadP(ncomp, 0.0), drhodP(ncomp, 0.0);
+  auto dpdP = pressure_prim_partials(mix_density, mix_temp, mat_blk, ncomp);
+  auto dCvdP = mix_Cv_prim_partials(mix_density, mix_temp, mat_blk, ncomp);
+  auto dRdP = mix_R_prim_partials(mix_density, mat_blk, ncomp);
   auto a = frozen_soundspeed(mix_density, mix_temp, mat_blk);
   auto p = pressure(mix_density, mix_temp);
   tk::real mix_Cv(0.), dbetadP(0.);
