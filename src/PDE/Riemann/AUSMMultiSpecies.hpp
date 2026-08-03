@@ -154,17 +154,15 @@ struct AUSMMultiSpecies {
            const std::array< std::vector< tk::real >, 2 >& u,
            const std::vector< std::array< tk::real, 3 > >& = {} )
   {
-    auto k_u = g_inputdeck.get< tag::lowspeed_ku >();
-    auto k_p = g_inputdeck.get< tag::lowspeed_kp >();
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
     auto ncomp = u[0].size()-1;
     tk::real rhol(0.0), rhor(0.0), pl(0.0), pr(0.0), al(0.0),
-             ar(0.0), a12(0.0), rho12(0.0), f_a(1.0);
+             ar(0.0), a12(0.0), f_a(1.0);
     std::size_t uid, vid, wid, Tid;
 
     // Variables with partials of the left and right states that can be
     // overwritten each loop iteration
-    std::array< tk::real, 2 > dmldP, dmrdP, dmbardP, dmpdP, dm12dP, dpudP,
+    std::array< tk::real, 2 > dmldP, dmrdP, dmbardP, dm12dP,
                               dvriemdP, dmddP;
 
     // Factory for variables that have partials with respect to both the left
@@ -229,7 +227,7 @@ struct AUSMMultiSpecies {
 
     // Average states for mixture speed of sound
     a12 = 0.5*(al+ar);
-    rho12 = 0.5*(rhol+rhor);
+    // rho12 = 0.5*(rhol+rhor);
 
     // Face-normal velocities from advective velocities
     auto vnl = P[0][uid] * fn[0]
@@ -265,11 +263,11 @@ struct AUSMMultiSpecies {
 
     // M_1/2 derivative pre-calculations
     auto mbar = std::sqrt(0.5*(vnl*vnl + vnr*vnr)/(a12*a12));
-    auto idenom = 1. / (f_a * rho12 * a12 * a12);
     auto max_mbar = std::max(1. - mbar*mbar, 0.0);
-    auto mp = -k_p* max_mbar * (pr - pl) * idenom;
-    auto C = mbar*mbar > 1 ? 0.0 : 2. * k_p * mbar * (pr - pl) * idenom;
-    auto m12 = msl[0] + msr[1] + mp;
+    // auto idenom = 1. / (f_a * rho12 * a12 * a12);
+    // auto mp = -k_p* max_mbar * (pr - pl) * idenom;
+    // auto C = mbar*mbar > 1 ? 0.0 : 2. * k_p * mbar * (pr - pl) * idenom;
+    auto m12 = msl[0] + msr[1]; // + mp;
     auto vriem = a12 * m12;
     auto md_root = std::sqrt( std::abs( vnl - vnr ) * a12 );
     auto delta = 4.0;
@@ -277,8 +275,8 @@ struct AUSMMultiSpecies {
     auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
     auto l_minus = 0.5 * (vriem - std::fabs(vriem) - 2.0*md);
 
-    // P_1/2 derivative pre-caluclations
-    auto pu = -k_u* msl[2] * msr[3] * f_a * rho12 * a12 * (vnr-vnl);
+    // P_1/2 derivative pre-caluclations (not implemented in multi-species)
+    // auto pu = -k_u* msl[2] * msr[3] * f_a * rho12 * a12 * (vnr-vnl);
 
     // Loop over primitives that fluxes are taken derivatives with
     for (std::size_t k=0; k<ncomp; ++k)
@@ -304,19 +302,19 @@ struct AUSMMultiSpecies {
         dmbardP[1] = 0.5 /  mbar * (ml * dmldP[1] + mr * dmrdP[1]);
       }
 
-      dmpdP[0] = C * dmbardP[0]
-               + k_p * max_mbar * idenom * dpldP[k]
-               - mp / rho12 *drho12dP[0][k];
-      dmpdP[1] = C * dmbardP[1]
-               - k_p * max_mbar * idenom * dprdP[k]
-               - mp / rho12 *drho12dP[1][k];
+      // dmpdP[0] = C * dmbardP[0]
+      //          + k_p * max_mbar * idenom * dpldP[k];
+      //          - mp / rho12 *drho12dP[0][k];
+      // dmpdP[1] = C * dmbardP[1]
+      //          - k_p * max_mbar * idenom * dprdP[k]
+      //          - mp / rho12 *drho12dP[1][k];
 
       dm12dP[0] = dmsldm[0] * dmldP[0]
-                + dmsrdm[1] * dmrdP[0]
-                + dmpdP[0];
+                + dmsrdm[1] * dmrdP[0];
+                // + dmpdP[0];
       dm12dP[1] = dmsldm[0] * dmldP[1]
-                + dmsrdm[1] * dmrdP[1]
-                + dmpdP[1];
+                + dmsrdm[1] * dmrdP[1];
+                // + dmpdP[1];
 
       dmddP[0] = 0.0;
       dmddP[1] = 0.0;
@@ -342,28 +340,28 @@ struct AUSMMultiSpecies {
         dmddP[1] = delta * (md_root * dm0dP_r + max_mbar * drootdP_r);
       }
 
-      // P_1/2 derivatives
-      dpudP[0] = -k_u * msr[3] * f_a * rho12 * a12 * (vnr-vnl) * dmsldm[2]
-                 * dmldP[0]
-               + -k_u * msl[2] * f_a * rho12 * a12 * (vnr-vnl) * dmsrdm[3]
-                 * dmrdP[0]
-               + pu / rho12 * drho12dP[0][k]
-               + k_u* msl[2] * msr[3] * f_a * rho12 * a12 * dvnldP[k];
-      dpudP[1] = -k_u * msr[3] * f_a * rho12 * a12 * (vnr-vnl) * dmsldm[2]
-                 * dmldP[1]
-               + -k_u * msl[2] * f_a * rho12 * a12 * (vnr-vnl) * dmsrdm[3]
-                 * dmrdP[1]
-               + pu / rho12 * drho12dP[1][k]
-               - k_u* msl[2] * msr[3] * f_a * rho12 * a12 * dvnrdP[k];
+      // P_1/2 derivatives (not implemented in multi-species)
+      // dpudP[0] = -k_u * msr[3] * f_a * rho12 * a12 * (vnr-vnl) * dmsldm[2]
+      //            * dmldP[0]
+      //          + -k_u * msl[2] * f_a * rho12 * a12 * (vnr-vnl) * dmsrdm[3]
+      //            * dmrdP[0]
+      //          + pu / rho12 * drho12dP[0][k]
+      //          + k_u* msl[2] * msr[3] * f_a * rho12 * a12 * dvnldP[k];
+      // dpudP[1] = -k_u * msr[3] * f_a * rho12 * a12 * (vnr-vnl) * dmsldm[2]
+      //            * dmldP[1]
+      //          + -k_u * msl[2] * f_a * rho12 * a12 * (vnr-vnl) * dmsrdm[3]
+      //            * dmrdP[1]
+      //          + pu / rho12 * drho12dP[1][k]
+      //          - k_u* msl[2] * msr[3] * f_a * rho12 * a12 * dvnrdP[k];
 
       dp12dP[0][k] = dmsldm[2] * dmldP[0] * pl
                    + msl[2] * dpldP[k]
-                   + dmsrdm[3] * dmrdP[0] * pr
-                   + dpudP[0];
+                   + dmsrdm[3] * dmrdP[0] * pr;
+                  //  + dpudP[0];
       dp12dP[1][k] = dmsldm[2] * dmldP[1] * pl
                    + dmsrdm[3] * dmrdP[1] * pr
-                   + msr[3] * dprdP[k]
-                   + dpudP[1];
+                   + msr[3] * dprdP[k];
+                  //  + dpudP[1];
 
       dvriemdP[0] = a12 * dm12dP[0];
       dvriemdP[1] = a12 * dm12dP[1];
