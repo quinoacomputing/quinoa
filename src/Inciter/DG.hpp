@@ -437,7 +437,7 @@ class DG : public CBase_DG {
                                            std::vector< tk::real > x);
 
     //! Solve element-local implicit system using Newton's method
-    bool solve_element_implicit(std::size_t e,
+    bool element_implicit_step(std::size_t e,
                                 const std::vector< tk::real >& u_old,
                                 std::vector< tk::real >& u_new,
                                 tk::real dte,

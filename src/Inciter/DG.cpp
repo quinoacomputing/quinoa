@@ -2548,7 +2548,7 @@ DG::point_implicit_integrate()
       }
 
     // Get value at next time step
-    auto converged = solve_element_implicit(
+    auto converged = element_implicit_step(
       e, u_old, u_new, dte, vole, dRdu[e] );
 
     if (!converged)
@@ -2567,7 +2567,7 @@ DG::point_implicit_integrate()
 }
 
 bool
-DG::solve_element_implicit(
+DG::element_implicit_step(
   std::size_t e,
   const std::vector< tk::real >& u_old,
   std::vector< tk::real >& u_new,
@@ -2576,7 +2576,7 @@ DG::solve_element_implicit(
   const std::vector< std::vector< tk::real > >& dRdu
  )
 // *****************************************************************************
-//  Solve element-local, linearized implicit system 
+//  Solve one iteration of an element-local, linearized implicit system
 //! \param[in] e Element index
 //! \param[in] u_old Solution at previous time step (element DOFs)
 //! \param[in,out] u_new Updated solution
@@ -2596,7 +2596,7 @@ DG::solve_element_implicit(
   const auto n = u_new.size();
 
   if ( n != m_u.nprop()/g_inputdeck.get< tag::rdof >()*ndof ) {
-    Throw("Size mismatch in solve_element_implicit()");
+    Throw("Size mismatch in element_implicit_step()");
   }
   if( dRdu.size() != n ) {
     Throw("Jacobian row size mismatch" );
