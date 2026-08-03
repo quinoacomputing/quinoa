@@ -17,8 +17,11 @@
 #include "Fields.hpp"
 #include "EoS/EOS.hpp"
 #include "FaceData.hpp"
+#include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "PDE/MultiSpecies/MiscMultiSpeciesFns.hpp"
+#include "PDE/MultiSpecies/Mixture/Mixture.hpp"
 #include "PDE/MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "ContainerUtil.hpp"
 
@@ -44,6 +47,9 @@ MultiSpeciesSurfOutput(
   const std::size_t nspec,
   const std::size_t rdof,
   const FaceData& fd,
+  const tk::Fields& geoFace,
+  const std::vector< std::size_t >& inpoel,
+  const tk::UnsMesh::Coords& coord,
   const tk::Fields& U,
   const tk::Fields& P );
 
@@ -66,10 +72,13 @@ namespace multispecies {
 //! Compute mixture density for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Bulk density ready to be output to file
 static tk::GetVarFn::result_type
-mixDensityOutVar( const tk::Fields& U, std::size_t rdof )
+mixDensityOutVar( const tk::Fields& U,
+                  [[maybe_unused]] const tk::Fields& P,
+                  std::size_t rdof )
 {
   using tk::operator+=;
   auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
@@ -79,29 +88,46 @@ mixDensityOutVar( const tk::Fields& U, std::size_t rdof )
   return r;
 }
 
-////! Compute pressure for output to file
-////! \note Must follow the signature in tk::GetVarFn
-////! \param[in] U Numerical solution
-////! \param[in] rdof Number of reconstructed solution DOFs
-////! \return Pressure ready to be output to file
-//static tk::GetVarFn::result_type
-//pressureOutVar( const tk::Fields& U, std::size_t rdof )
-//{
-//  using tk::operator+=;
-//  auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
-//  auto p = U.extract_comp( pressureDofIdx(nspec,0,rdof,0) );
-//  for (std::size_t k=1; k<nspec; ++k)
-//    p += U.extract_comp( pressureDofIdx(nspec,k,rdof,0) );
-//  return p;
-//}
+//! Compute pressure for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
+//! \param[in] rdof Number of reconstructed solution DOFs
+//! \return Pressure ready to be output to file
+static tk::GetVarFn::result_type
+pressureOutVar( const tk::Fields& U,
+                const tk::Fields& P,
+                std::size_t rdof )
+{
+  auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+  std::vector< EOS > mat_blk;
+  initializeSpeciesEoS( mat_blk );
+
+  std::vector< tk::real > p( U.nunk(), 0.0 );
+  std::vector< tk::real > ugp( nspec+4, 0.0 );
+  for (std::size_t e=0; e<U.nunk(); ++e) {
+    for (std::size_t k=0; k<nspec; ++k)
+      ugp[densityIdx(nspec,k)] = U(e, densityDofIdx(nspec,k,rdof,0));
+
+    Mixture mix( nspec, ugp, mat_blk );
+    p[e] = mix.pressure( mix.get_mix_density(),
+      P(e, temperatureDofIdx(nspec,0,rdof,0)) );
+  }
+
+  return p;
+}
 
 //! Compute specific total energy (energy per unit volume) for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Specific total energy ready to be output to file
 static tk::GetVarFn::result_type
-specificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
+specificTotalEnergyOutVar( const tk::Fields& U,
+                           [[maybe_unused]] const tk::Fields& P,
+                           std::size_t rdof )
 {
   auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
   return U.extract_comp( energyDofIdx(nspec,0,rdof,0) );
@@ -111,11 +137,14 @@ specificTotalEnergyOutVar( const tk::Fields& U, std::size_t rdof )
 //! \note Must follow the signature in tk::GetVarFn
 //! \tparam dir Physical direction, encoded as 0:x, 1:y, 2:z
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Velocity component ready to be output to file
 template< tk::ncomp_t dir >
 tk::GetVarFn::result_type
-velocityOutVar( const tk::Fields& U, std::size_t rdof )
+velocityOutVar( const tk::Fields& U,
+                [[maybe_unused]] const tk::Fields& P,
+                std::size_t rdof )
 {
   using tk::operator/=;
   using tk::operator+=;
@@ -138,14 +167,44 @@ velocityOutVar( const tk::Fields& U, std::size_t rdof )
 //! Compute mixture temperature for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Mixture temperature ready to be output to file
 static tk::GetVarFn::result_type
-temperatureOutVar( const tk::Fields& U, std::size_t rdof )
+temperatureOutVar( [[maybe_unused]] const tk::Fields& U,
+                   const tk::Fields& P,
+                   std::size_t rdof )
 {
   auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
-  auto r = U.extract_comp( temperatureDofIdx(nspec,0,rdof,0) );
+  auto r = P.extract_comp( temperatureDofIdx(nspec,0,rdof,0) );
   return r;
+}
+
+//! Return a field-output function for a species mass fraction
+//! \param[in] kspec Species index
+//! \return Field-output function that computes a species mass fraction
+//! \details The returned function follows the tk::GetVarFn signature and
+//!   computes the requested species density divided by the mixture density.
+inline tk::GetVarFn
+massFractionOutVar( std::size_t kspec )
+{
+  return [kspec]( const tk::Fields& U,
+                  [[maybe_unused]] const tk::Fields& P,
+                  std::size_t rdof ) {
+    using tk::operator+=;
+    using tk::operator/=;
+
+    const auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
+    auto y = U.extract_comp(
+      multispecies::densityDofIdx(nspec,kspec,rdof,0) );
+
+    auto r = U.extract_comp( multispecies::densityDofIdx(nspec,0,rdof,0) );
+    for (std::size_t k=1; k<nspec; ++k)
+      r += U.extract_comp( multispecies::densityDofIdx(nspec,k,rdof,0) );
+
+    y /= r;
+    return y;
+  };
 }
 
 } // multispecies::

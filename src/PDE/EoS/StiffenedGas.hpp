@@ -20,14 +20,17 @@ namespace inciter {
 class StiffenedGas {
 
   private:
-    tk::real m_gamma, m_pstiff, m_cv;
+    tk::real m_gamma, m_pstiff, m_cv, m_mu;
 
   public:
     //! Default constructor
     StiffenedGas() = default;
 
     //! Constructor
-    StiffenedGas(tk::real gamma, tk::real pstiff, tk::real cv );
+    StiffenedGas(tk::real gamma,
+                 tk::real pstiff,
+                 tk::real cv,
+                 tk::real mu=0.0 );
 
     //! Set rho0 EOS parameter. No-op.
     void setRho0(tk::real) {}
@@ -115,13 +118,19 @@ class StiffenedGas {
     tk::real rho0() const { return density(1.0e5, 300.0); }
 
     //! Return gas constant (no-op)
-    tk::real gas_constant() const { return 0.0; }
+    tk::real gas_constant() const { return (m_gamma-1.0)*m_cv; }
 
     //! Return internal energy (no-op)
     tk::real internalenergy(tk::real temp) const { return m_cv * temp; }
 
     //! Return specific heat (no-op)
     tk::real cv( [[maybe_unused]] tk::real temp) const { return m_cv; }
+
+    //! Return specific heat at constant pressure
+    tk::real cp( tk::real ) const { return m_gamma*m_cv; }
+
+    //! Return dynamic viscosity coefficient
+    tk::real viscCoeff( tk::real ) const { return m_mu; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -131,6 +140,7 @@ class StiffenedGas {
       p | m_gamma;
       p | m_pstiff;
       p | m_cv;
+      p | m_mu;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

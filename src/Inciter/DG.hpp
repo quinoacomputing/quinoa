@@ -69,7 +69,7 @@ class DG : public CBase_DG {
     explicit DG( const CProxy_Discretization& disc,
                  const CProxy_Ghosts& ghostsproxy,
                  const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::map< int, std::vector< std::size_t > >& /* bnode */,
+                 const std::map< int, std::vector< std::size_t > >& bnode,
                  const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
@@ -78,7 +78,7 @@ class DG : public CBase_DG {
     #endif
     //! Migrate constructor
     // cppcheck-suppress uninitMemberVar
-    explicit DG( CkMigrateMessage* msg ) : CBase_DG( msg ) {}
+    explicit DG( CkMigrateMessage* msg ) : CBase_DG( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -138,28 +138,15 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& interface,
                  const std::vector< std::size_t >& ndof );
 
-    //! Receive contributions to nodal gradients on chare-boundaries
-    void
-    comnodalExtrema( const std::vector< std::size_t >& gid,
-                     const std::vector< std::vector< tk::real > >& G1,
-                     const std::vector< std::vector< tk::real > >& G2 );
+    //! Receive updated ALE ghost mesh data from neighboring chares
+    void comale( int fromch,
+                 const std::vector< std::size_t >& tetid,
+                 const std::vector< std::vector< tk::real > >& geoElem,
+                 const std::vector< std::array< tk::real, 3 > >& coord );
 
-    //! Initialize the vector of nodal extrema
-    void resizeNodalExtremac();
-
-    //! Compute the nodal extrema of ref el derivatives for chare-boundary nodes
-    void evalNodalExtrmRefEl(
-      const std::size_t ncomp,
-      const std::size_t nprim,
-      const std::size_t ndof_NodalExtrm,
-      const std::vector< std::size_t >& bndel,
-      const std::vector< std::size_t >& inpoel,
-      const std::vector< std::size_t >& gid,
-      const std::unordered_map< std::size_t, std::size_t >& bid,
-      const tk::Fields& U,
-      const tk::Fields& P,
-      std::vector< std::vector<tk::real> >& uNodalExtrm,
-      std::vector< std::vector<tk::real> >& pNodalExtrm );
+    //! Receive boundary point normals on chare-boundaries
+    void comnorm( const std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
 
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
@@ -182,7 +169,7 @@ class DG : public CBase_DG {
       const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
       const tk::NodeCommMap& nodeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
-      const std::map< int, std::vector< std::size_t > >& /* bnode */,
+      const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel,
       const std::unordered_map< std::size_t, std::set< std::size_t > >&
         elemblockid );
@@ -228,6 +215,12 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step
     void step();
 
+    //! Start computing the boundary normals for ALE
+    void computeBNorm();
+
+    //! Done with computing the mesh mesh velocity for ALE
+    void meshveldone();
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -235,7 +228,6 @@ class DG : public CBase_DG {
     void pup( PUP::er &p ) override {
       p | m_disc;
       p | m_ghosts;
-      p | m_ndof_NodalExtrm;
       p | m_nsol;
       p | m_ninitsol;
       p | m_nlim;
@@ -243,16 +235,14 @@ class DG : public CBase_DG {
       p | m_nrefine;
       p | m_nsmooth;
       p | m_nreco;
-      p | m_nnodalExtrema;
+      p | m_nale;
+      p | m_nbnorm;
       p | m_u;
       p | m_un;
       p | m_p;
-      p | m_geoElem;
+      p | m_geoElemk;
+      p | m_geoElemn;
       p | m_mtInv;
-      p | m_uNodalExtrm;
-      p | m_pNodalExtrm;
-      p | m_uNodalExtrmc;
-      p | m_pNodalExtrmc;
       p | m_rhs;
       p | m_rhsprev;
       p | m_stiffrhs;
@@ -282,6 +272,14 @@ class DG : public CBase_DG {
       p | m_outmesh;
       p | m_boxelems;
       p | m_shockmarker;
+      p | m_nodevel;
+      p | m_bnode;
+      p | m_bface;
+      p | m_triinpoel;
+      p | m_bnorm;
+      p | m_bnormc;
+      p | m_dte;
+      p | m_finished;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
@@ -294,11 +292,6 @@ class DG : public CBase_DG {
     CProxy_Discretization m_disc;
     //! Distributed Ghosts proxy
     CProxy_Ghosts m_ghosts;
-    //! \brief Degree of freedom for nodal extrema vector. When DGP1 is applied,
-    //!   there is one degree of freedom for cell average variable. When DGP2 is
-    //!   applied, the degree of freedom is 4 which refers to cell average and
-    //!   gradients in three directions
-    std::size_t m_ndof_NodalExtrm;
     //! Counter signaling that we have received all our solution ghost data
     std::size_t m_nsol;
     //! \brief Counter signaling that we have received all our solution ghost
@@ -316,9 +309,10 @@ class DG : public CBase_DG {
     std::size_t m_nsmooth;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
-    //! \brief Counter signaling that we have received all our nodal extrema from
-    //!   ghost chare partitions
-    std::size_t m_nnodalExtrema;
+    //! Counter signaling that we have received all ALE ghost mesh updates
+    std::size_t m_nale;
+    //! Counter for receiving boundary point normals
+    std::size_t m_nbnorm;
     //! Counters signaling how many stiff and non-stiff equations in the system
     std::size_t m_nstiffeq, m_nnonstiffeq;
     //! Vector of unknown/solution average over each mesh element
@@ -327,8 +321,10 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
-    //! Element geometry
-    tk::Fields m_geoElem;
+    //! Element geometry array at the previous RK-stage
+    tk::Fields m_geoElemk;
+    //! Element geometry array at the previous time step
+    tk::Fields m_geoElemn;
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Vector of previous right-hand side values used in the IMEX-RK scheme
@@ -341,14 +337,6 @@ class DG : public CBase_DG {
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
     //! Inverse of Taylor mass-matrix
     std::vector< std::vector< tk::real > > m_mtInv;
-    //! Vector of nodal extrema for conservative variables
-    std::vector< std::vector<tk::real> > m_uNodalExtrm;
-    //! Vector of nodal extrema for primitive variables
-    std::vector< std::vector<tk::real> > m_pNodalExtrm;
-    //! Buffer for vector of nodal extrema for conservative variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_uNodalExtrmc;
-    //! Buffer for vector of nodal extrema for primitive variables
-    std::unordered_map< std::size_t, std::vector< tk::real > > m_pNodalExtrmc;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_npoin;
     //! Diagnostics object
@@ -398,6 +386,29 @@ class DG : public CBase_DG {
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
     //! Shock detection marker for field output
     std::vector< std::size_t > m_shockmarker;
+    //! Velocity at nodes for ALE
+    tk::UnsMesh::Coords m_nodevel;
+    //! Boundary node lists mapped to side set ids used in the input file
+    std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Boundary face lists mapped to side set ids used in the input file
+    std::map< int, std::vector< std::size_t > > m_bface;
+    //! Boundary triangle face connecitivity where BCs are set by user
+    std::vector< std::size_t > m_triinpoel;
+    //! Face normals in boundary points associated to side sets
+    //! \details Key: local node id, value: unit normal and inverse distance
+    //!   square between face centroids and points, outer key: side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
+    //! \brief Receive buffer for communication of the boundary point normals
+    //!   associated to side sets
+    //! \details Key: global node id, value: normals (first 3 components),
+    //!   inverse distance squared (4th component), outer key, side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnormc;
+    //! Time step size for each element (for local time stepping)
+    std::vector< tk::real > m_dte;
+    //! Flag for completed calculation
+    int m_finished;
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
@@ -425,11 +436,23 @@ class DG : public CBase_DG {
     //! Compute solution reconstructions
     void reco();
 
-    //! Compute nodal extrema at chare-boundary nodes
-    void nodalExtrema();
-
     //! Compute limiter function
     void lim();
+
+    //! Recompute chare-boundary face geometry after ALE ghost updates arrive
+    void updateChareBoundaryGeoFace();
+
+    //! Perform ALE mesh update and communicate updated ghost mesh data
+    void ALEComm();
+
+    //! Compute boundary point normals for mesh velocity symmetry BCs
+    void bnorm();
+
+    //! Finish computing boundary point normals
+    void normfinal();
+
+    //! Start computing the mesh velocity after boundary normals are ready
+    void meshvelstart();
 
     //! Compute time step size
     void dt();

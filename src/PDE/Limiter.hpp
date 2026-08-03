@@ -91,7 +91,6 @@ VertexBasedCompflow_P2(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
@@ -132,8 +131,6 @@ VertexBasedMultiMat_P2(
   const tk::UnsMesh::Coords& coord,
   const std::vector< std::size_t >& gid,
   const std::unordered_map< std::size_t, std::size_t >& bid,
-  const std::vector< std::vector<tk::real> >& uNodalExtrm,
-  const std::vector< std::vector<tk::real> >& pNodalExtrm,
   const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
@@ -386,6 +383,10 @@ constrain_pressure( const std::vector< EOS >& mat_blk,
   tk::real arho,
   tk::real alpha,
   std::size_t imat );
+
+//! Constrain mixture temperature
+tk::real
+constrain_temperature( tk::real tmix );
 
 } // inciter::
 

@@ -53,6 +53,14 @@ signalHandler( int signum )
 {
   // associate each signal with a signal name string.
   const char* name = nullptr;
+  #if defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wswitch-default"
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wswitch-default"
+  #endif
+
   switch( signum ) {
     case SIGABRT: name = "SIGABRT";  break;
     case SIGFPE:  name = "SIGFPE";   break;
@@ -61,6 +69,12 @@ signalHandler( int signum )
     case SIGSEGV: name = "SIGSEGV";  break;
     case SIGTERM: name = "SIGTERM";  break;
   }
+
+  #if defined(__clang__)
+    #pragma clang diagnostic pop
+  #elif defined(STRICT_GNUC)
+    #pragma GCC diagnostic pop
+  #endif
 
   // Echo what signal is caught
   if ( name )

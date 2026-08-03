@@ -34,7 +34,6 @@
 #include "Integrate/Boundary.hpp"
 #include "Integrate/Volume.hpp"
 #include "Integrate/MultiMatTerms.hpp"
-#include "Integrate/Source.hpp"
 #include "RiemannChoice.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
@@ -81,7 +80,8 @@ class MultiMat {
       , farfield
       , extrapolate
       , noslipwall 
-      , symmetry },       // Slip equivalent to symmetry without mesh motion
+      , symmetry
+      , invalidBC },       // Slip equivalent to symmetry without mesh motion
       // BC Gradient functions
       { noOpGrad
       , symmetryGrad
@@ -89,7 +89,8 @@ class MultiMat {
       , noOpGrad
       , noOpGrad
       , noOpGrad
-      , symmetryGrad }
+      , symmetryGrad
+      , noOpGrad }
       ) );
 
       // Inlet BC has a different structure than above BCs, so it must be 
@@ -146,9 +147,8 @@ class MultiMat {
 
       // volume fractions are P0Pm (ndof = 1) for multi-material simulations
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      if(nmat > 1)
-        for (std::size_t k=0; k<nmat; ++k)
-          numEqDof[volfracIdx(nmat, k)] = 1;
+      for (std::size_t k=0; k<nmat; ++k)
+        numEqDof[volfracIdx(nmat, k)] = 1;
     }
 
     //! Determine elements that lie inside the user-defined IC box
@@ -461,6 +461,7 @@ class MultiMat {
               "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       auto mass_m = tk::massMatrixDubiner();
+      std::vector< tk::real > state(m_ncomp, 0.0);
 
       for (std::size_t e=0; e<nielem; ++e)
       {
@@ -481,6 +482,7 @@ class MultiMat {
 
         // Local degree of freedom
         auto dof_el = ndofel[e];
+        std::vector< tk::real > B(dof_el);
 
         auto vole = geoElem(e, 0);
 
@@ -488,12 +490,11 @@ class MultiMat {
         for (std::size_t igp=0; igp<ng; ++igp)
         {
           // Compute the basis function
-          auto B =
-            tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] );
+          tk::eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
 
           auto w = wgp[igp] * vole;
 
-          auto state = tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B );
+          tk::eval_state( m_ncomp, rdof, dof_el, e, unk, B, state.data() );
 
           // bulk density at quadrature point
           tk::real rhob(0.0);
@@ -515,10 +516,8 @@ class MultiMat {
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
             auto gmat = getDeformGrad(nmat, imat, state);
-            tk::real damage = 0.0;
-            if (solidx[imat] > 0)
-              damage = state[damageIdx(nmat, nsld, solidx[imat])]/arhomat;
-            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].compute<
+            auto damage = state[damageIdx(nmat, nsld, solidx[imat])];
+            pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].template compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
                                alphamat, imat, gmat, damage );
 
@@ -526,7 +525,8 @@ class MultiMat {
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
 
             if (solidx[imat] > 0) {
-              auto asigmat = m_mat_blk[imat].computeTensor< EOS::CauchyStress >(alphamat, imat, gmat, damage );
+              auto asigmat = m_mat_blk[imat].template computeTensor< EOS::CauchyStress >(
+                alphamat, imat, gmat, damage );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
               pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
@@ -898,10 +898,6 @@ class MultiMat {
     //! \param[in] gid Local->global node id map
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!   global node ids (key)
-    //! \param[in] uNodalExtrm Chare-boundary nodal extrema for conservative
-    //!   variables
-    //! \param[in] pNodalExtrm Chare-boundary nodal extrema for primitive
-    //!   variables
     //! \param[in] mtInv Inverse of Taylor mass matrix
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
@@ -917,8 +913,6 @@ class MultiMat {
                 const std::vector< std::size_t >& ndofel,
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
-                const std::vector< std::vector<tk::real> >& uNodalExtrm,
-                const std::vector< std::vector<tk::real> >& pNodalExtrm,
                 const std::vector< std::vector<tk::real> >& mtInv,
                 tk::Fields& U,
                 tk::Fields& P,
@@ -949,8 +943,7 @@ class MultiMat {
       {
         VertexBasedMultiMat_P2( pref, esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-          uNodalExtrm, pNodalExtrm, mtInv, flux, solidx, U, P, nmat,
-          shockmarker );
+          mtInv, flux, solidx, U, P, nmat, shockmarker );
       }
       else if (limiter != ctr::LimiterType::NOLIMITER)
       {
@@ -1080,6 +1073,7 @@ class MultiMat {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
+    //! \param[in] W Mesh velocity vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
@@ -1093,6 +1087,7 @@ class MultiMat {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
+              const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
               tk::Fields& R ) const
@@ -1143,27 +1138,42 @@ class MultiMat {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
-      // compute internal surface flux integrals
-      tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                   coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                   dt, R, riemannDeriv, intsharp );
+      // p-adaptive DG
+      if (!pref) {
+        // compute internal surface flux integrals
+        tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
+          dt, R, riemannDeriv, intsharp );
 
-      // compute optional source term
-      tk::srcInt( m_mat_blk, t, ndof, fd.Esuel().size()/4, inpoel,
-                  coord, geoElem, Problem::src, ndofel, R, nmat );
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+            m_riemann, velfn, std::get<1>(b), U, P, W, R,
+            riemannDeriv, intsharp );
 
-      if(ndof > 1)
+        // compute volume integrals
+        tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
+          geoElem, flux, velfn, Problem::src, U, P, W, R, intsharp );
+      }
+      else {
+        // compute internal surface flux integrals
+        tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
+                     ndofel, dt, R, riemannDeriv, intsharp );
+
+        // compute boundary surface flux integrals
+        for (const auto& b : m_bc)
+          tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
+                          std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+                          m_riemann, velfn, std::get<1>(b), U, P, W, ndofel, R,
+                          riemannDeriv, intsharp );
+
         // compute volume integrals
         tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
-                    inpoel, coord, geoElem, flux, velfn, U, P, ndofel, R,
-                    intsharp );
-
-      // compute boundary surface flux integrals
-      for (const auto& b : m_bc)
-        tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
-                        std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-                        m_riemann, velfn, std::get<1>(b), U, P, ndofel, R,
-                        riemannDeriv, intsharp );
+                    inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, W,
+                    ndofel, R, intsharp );
+      }
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
               "Riemann derivative vector incorrect" );
@@ -1234,6 +1244,8 @@ class MultiMat {
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Vector of primitive quantities at recent time step
     //! \param[in] nielem Number of internal elements
+    //! \param[in,out] local_dte Time step size for each element (for local
+    //!   time stepping)
     //! \return Minimum time step size
     //! \details The allowable dt is calculated by looking at the maximum
     //!   wave-speed in elements surrounding each face, times the area of that
@@ -1248,13 +1260,14 @@ class MultiMat {
                  const std::vector< std::size_t >& /*ndofel*/,
                  const tk::Fields& U,
                  const tk::Fields& P,
-                 const std::size_t nielem ) const
+                 const std::size_t nielem,
+                 std::vector< tk::real >& local_dte ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
       auto mindt = timeStepSizeMultiMat( m_mat_blk, fd.Esuf(), geoFace, geoElem,
-        nielem, nmat, U, P);
+        nielem, nmat, U, P, local_dte);
 
       tk::real dgp = 0.0;
       if (ndof == 4)
@@ -1269,6 +1282,8 @@ class MultiMat {
       // Scale smallest dt with CFL coefficient and the CFL is scaled by (2*p+1)
       // where p is the order of the DG polynomial by linear stability theory.
       mindt /= (2.0*dgp + 1.0);
+      for (std::size_t e=0; e<nielem; ++e)
+        local_dte[e] /= (2.0*dgp + 1.0);
       return mindt;
     }
 
@@ -1384,7 +1399,7 @@ class MultiMat {
 
       // arrays for quadrature points
       std::array< std::vector< tk::real >, 3 > coordgp;
-      std::vector< tk::real > wgp;
+      std::vector< tk::real > wgp, B(ndofel[e]), state(m_ncomp);
 
       coordgp[0].resize( ng );
       coordgp[1].resize( ng );
@@ -1397,10 +1412,10 @@ class MultiMat {
       for (std::size_t igp=0; igp<ng; ++igp)
       {
         // Compute the basis function
-        auto B = tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
-                             coordgp[2][igp] );
+        tk::eval_basis( ndofel[e], coordgp[0][igp], coordgp[1][igp],
+                        coordgp[2][igp], B );
 
-        auto state = tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B );
+        tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B, state.data() );
 
         // compute source
         // Loop through materials
@@ -1426,8 +1441,8 @@ class MultiMat {
 
             // 1. Compute dev(sigma)
             auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
-            auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
-               alpha, k, g, damage );
+            auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
+              alpha, k, g, damage );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
@@ -1463,7 +1478,8 @@ class MultiMat {
             tk::real phi = std::max(0.0, equiv_stress-yield_stress);
             tk::real rel_time = getmatprop< tag::plasticity_reltime >(k);
             if (phi > 0.0) {
-              rel_factor = std::pow((phi/yield_stress),2.0)/rel_time;
+              // Note: if plasticity becomes unstable, raise the power (below) to two
+              rel_factor = std::pow((phi/yield_stress),1.0)/rel_time;
               // Scale rel_factor by alpha
               tk::real a_min = 1.0e-04, a_max = 2.0e-01;
               auto smoothstep = [&](tk::real a){
@@ -1505,41 +1521,93 @@ class MultiMat {
       }
     }
 
-    //! Extract the velocity field at cell nodes. Currently unused.
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] N Element node indices
-    //! \return Array of the four values of the velocity field
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >&,
-              const std::array< std::size_t, 4 >& N ) const
+    //! Extract the velocity field at cell nodes.
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] esup Elements-surrounding-nodes connectivity
+//    //! \param[in] inpoel Element connectivity
+    //! \param[in] coord Array of nodal coordinates
+//    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Vector of primitives at recent time step
+    //! \param[in,out] W Velocity components
+    //! \details This function computes and stores a fluid velocity at nodes
+    //!   from the DG solution in elements based on an
+    //!   inverse-distance-squared weighted average.
+    void nodeVelocity(
+      const tk::Fields& geoElem,
+      const std::map< std::size_t, std::vector< std::size_t > >& esup,
+      const std::vector< std::size_t >& /*inpoel*/,
+      const tk::UnsMesh::Coords& coord,
+      const tk::Fields& /*U*/,
+      const tk::Fields& P,
+      tk::UnsMesh::Coords& W ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      //auto nprim = P.nprop()/rdof;
 
-      std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( momentumDofIdx(nmat, 0, rdof, 0), N );
-      v[1] = U.extract( momentumDofIdx(nmat, 1, rdof, 0), N );
-      v[2] = U.extract( momentumDofIdx(nmat, 2, rdof, 0), N );
+      const auto& cx = coord[0];
+      const auto& cy = coord[1];
+      const auto& cz = coord[2];
 
-      std::vector< std::array< tk::real, 4 > > ar;
-      ar.resize(nmat);
-      for (std::size_t k=0; k<nmat; ++k)
-        ar[k] = U.extract( densityDofIdx(nmat, k, rdof, 0), N );
+      //std::vector< tk::real > B_p(rdof), u_p(nprim);
 
-      std::array< tk::real, 4 > r{{ 0.0, 0.0, 0.0, 0.0 }};
-      for (std::size_t i=0; i<r.size(); ++i) {
-        for (std::size_t k=0; k<nmat; ++k)
-          r[i] += ar[k][i];
+      for (std::size_t p=0; p<W[0].size(); ++p) {
+        std::array< tk::real, 3 > usum{{0, 0, 0}};
+        tk::real denom(0.0);
+
+        // loop over all the elements surrounding this node p
+        const auto& pesup = tk::cref_find(esup, p);
+        for (auto e : pesup)
+        {
+          //// Node coordinates
+          //std::array< tk::real, 3 > c_n{{ cx[p], cy[p], cz[p] }};
+
+          //// Extract the element coordinates
+          //std::array< std::array< tk::real, 3>, 4 > coordel {{
+          //  {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+          //  {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+          //  {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+          //  {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }} }};
+
+          //// Compute the determinant of Jacobian matrix
+          //auto detT =
+          //  tk::Jacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+          //// Transform node coordinates to reference space
+          //std::array< tk::real, 3> ref_gp{
+          //  tk::Jacobian( coordel[0], c_n, coordel[2], coordel[3] ) / detT,
+          //  tk::Jacobian( coordel[0], coordel[1], c_n, coordel[3] ) / detT,
+          //  tk::Jacobian( coordel[0], coordel[1], coordel[2], c_n ) / detT };
+
+          //// Compute the basis functions at node
+          //tk::eval_basis( rdof, ref_gp[0], ref_gp[1], ref_gp[2], B_p );
+
+          //// Interface detection
+          //std::vector< std::size_t > matInt(nmat, 0);
+          //bool intInd(false);
+          //std::vector< tk::real > alAvg(nmat, 0.0);
+          //for (std::size_t k=0; k<nmat; ++k)
+          //  alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
+          //intInd = interfaceIndicator(nmat, alAvg, matInt);
+
+          //// Compute velocity at node (drop to first order at interfaces)
+          //std::size_t dof_e(rdof);
+          //if (intInd) dof_e = 1;
+          //tk::eval_state( nprim, rdof, dof_e, e, P, B_p, u_p.data() );
+
+          // centroid distance
+          std::array< tk::real, 3 > wdeltax{{ geoElem(e,1)-cx[p],
+                                              geoElem(e,2)-cy[p],
+                                              geoElem(e,3)-cz[p] }};
+          auto weight = 1.0/tk::dot(wdeltax, wdeltax);
+          for (std::size_t i=0; i<3; ++i) {
+            //usum[i] += weight * u_p[velocityIdx(nmat,i)];
+            usum[i] += weight * P(e, velocityDofIdx(nmat,i,rdof,0));
+          }
+          denom += weight;
+        }
+        for (std::size_t i=0; i<3; ++i) W[i][p] = usum[i]/denom;
       }
-
-      std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[2].begin(), v[2].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      return v;
     }
 
     //! Return a map that associates user-specified strings to functions
@@ -1570,13 +1638,16 @@ class MultiMat {
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
     surfOutput( const inciter::FaceData& fd,
+      const tk::Fields& geoFace,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
       const tk::Fields& U,
       const tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto nmat = g_inputdeck.get< eq, tag::nmat >();
 
-      return MultiMatSurfOutput( nmat, rdof, fd, U, P );
+      return MultiMatSurfOutput( nmat, rdof, fd, geoFace, inpoel, coord, U, P );
     }
 
     //! Return time history field output evaluated at time history points
@@ -1602,6 +1673,7 @@ class MultiMat {
       const auto& z = coord[2];
 
       std::vector< std::vector< tk::real > > Up(h.size());
+      std::vector< tk::real > B(rdof), uhp(m_ncomp), php(m_nprim);
 
       std::size_t j = 0;
       for (const auto& p : h) {
@@ -1619,10 +1691,10 @@ class MultiMat {
         // evaluate solution at history-point
         std::array< tk::real, 3 > dc{{chp[0]-cp[0][0], chp[1]-cp[0][1],
           chp[2]-cp[0][2]}};
-        auto B = tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
-          tk::dot(J[2],dc));
-        auto uhp = eval_state(m_ncomp, rdof, rdof, e, U, B);
-        auto php = eval_state(m_nprim, rdof, rdof, e, P, B);
+        tk::eval_basis(rdof, tk::dot(J[0],dc), tk::dot(J[1],dc),
+          tk::dot(J[2],dc), B);
+        eval_state(m_ncomp, rdof, rdof, e, U, B, uhp.data());
+        eval_state(m_nprim, rdof, rdof, e, P, B, php.data());
 
         // store solution in history output vector
         Up[j].resize(6, 0.0);

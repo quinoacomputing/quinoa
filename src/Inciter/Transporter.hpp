@@ -197,8 +197,8 @@ class Transporter : public CBase_Transporter {
     //! Reduction target broadcasting to Schemes after mesh transfer
     void solutionTransferred();
 
-    // \brief Reduction target that computes minimum timestep across all meshes
-    //    and sums up the forces on each mesh
+    //! \brief Reduction target that sums up the forces on each mesh and
+    //! computes minimum timestep across all meshes
     void collectDtAndForces( CkReductionMsg* advMsg );
 
     //! \brief Reduction target optionally collecting diagnostics, e.g.,
@@ -251,6 +251,7 @@ class Transporter : public CBase_Transporter {
       p | m_minstat;
       p | m_maxstat;
       p | m_avgstat;
+      p | m_initL2res;
       p | m_timer;
     }
     //! \brief Pack/Unpack serialize operator|
@@ -318,6 +319,8 @@ class Transporter : public CBase_Transporter {
     std::vector< std::array< tk::real, 3 > > m_maxstat;
     //! Average mesh statistics (one per mesh)
     std::vector< std::array< tk::real, 3 > > m_avgstat;
+    //! Initial L2-norm of residual for relative residual calculation
+    std::vector< tk::real > m_initL2res;
     //! Timer tags
     enum class TimerTag { MESH_READ=0 };
     //! Timers

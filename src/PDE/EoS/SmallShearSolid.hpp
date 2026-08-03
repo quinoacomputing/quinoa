@@ -131,13 +131,19 @@ class SmallShearSolid {
     tk::real rho0() const { return m_rho0; }
 
     //! Return gas constant (no-op)
-    tk::real gas_constant() const { return 0.0; }
+    tk::real gas_constant() const { return (m_gamma-1.0)*m_cv; }
 
     //! Return internal energy (no-op)
     tk::real internalenergy(tk::real temp) const { return m_cv * temp; }
 
     //! Return specific heat (no-op)
     tk::real cv( [[maybe_unused]] tk::real temp) const { return m_cv; }
+
+    //! Return specific heat at constant pressure
+    tk::real cp( tk::real ) const { return m_gamma*m_cv; }
+
+    //! Return dynamic viscosity coefficient
+    tk::real viscCoeff( tk::real ) const { return 0.0; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

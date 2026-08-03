@@ -35,6 +35,7 @@
   #pragma clang diagnostic ignored "-Wshadow-field-in-constructor"
   #pragma clang diagnostic ignored "-Wswitch-enum"
   #pragma clang diagnostic ignored "-Wcovered-switch-default"
+  #pragma clang diagnostic ignored "-Wswitch-default"
   #pragma clang diagnostic ignored "-Wzero-length-array"
   #pragma clang diagnostic ignored "-Wheader-hygiene"
   #pragma clang diagnostic ignored "-Wmissing-noreturn"

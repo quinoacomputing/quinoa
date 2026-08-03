@@ -87,6 +87,7 @@ Transporter::Transporter() :
   m_minstat( m_nchare.size() ),
   m_maxstat( m_nchare.size() ),
   m_avgstat( m_nchare.size() ),
+  m_initL2res(),
   m_timer(),
   m_progMesh( g_inputdeck.get< tag::cmd, tag::feedback >(),
               ProgMeshPrefix, ProgMeshLegend ),
@@ -276,9 +277,11 @@ Transporter::info( const InciterPrint& print )
   if (rbmotion.get< tag::rigid_body_movt >()) {
     const auto& rbdof = rbmotion.get< tag::rigid_body_dof >();
     print.item( "Rigid body motion DOF", rbdof );
-    if (rbdof == 3)
-      print.item( "Rigid body 3-DOF symmetry plane",
-        rbmotion.get< tag::symmetry_plane >() );
+    if (rbdof == 3) {
+      const auto& sym_dir = rbmotion.get< tag::symmetry_plane >();
+      print.item( "Rigid body 3-DOF symmetry plane vector",
+        tk::parameters(sym_dir) );
+    }
   }
 
   // Print out info on settings of selected partial differential equations
@@ -363,8 +366,8 @@ Transporter::info( const InciterPrint& print )
     print.item( "Volume-change CFL coefficient", dvcfl );
     print.Item< ctr::MeshVelocity, tag::ale, tag::mesh_velocity >();
     print.Item< ctr::MeshVelocitySmoother, tag::ale, tag::smoother >();
-    print.item( "Mesh motion dimensions", tk::parameters(
-                g_inputdeck.get< tag::ale, tag::mesh_motion >() ) );
+    print.item( "Mesh motion directions", tk::parameters(
+                g_inputdeck.get< tag::ale, tag::mesh_motion_directions >() ) );
     const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
     print.item( "Mesh velocity force coefficients", tk::parameters(meshforce) );
     print.item( "Vorticity multiplier",
@@ -611,20 +614,12 @@ Transporter::createPartitioner()
     mr.readSidesetFaces( bface, faces );
 
     bool bcs_set = false;
-    if (centering == tk::Centering::ELEM) {
-
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bcs_set = matchBCs( bface );
-
-    } else if (centering == tk::Centering::NODE) {
-
-      // Read node lists on side sets
-      bnode = mr.readSidesetNodes();
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bool bcnode_set = matchBCs( bnode );
-      bool bcface_set = matchBCs( bface );
-      bcs_set = bcface_set or bcnode_set;
-    }
+    // Read node lists on side sets
+    bnode = mr.readSidesetNodes();
+    // Verify boundarty condition (BC) side sets used exist in mesh file
+    bool bcnode_set = matchBCs( bnode );
+    bool bcface_set = matchBCs( bface );
+    bcs_set = bcface_set or bcnode_set;
 
     // Warn on no BCs
     if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
@@ -1437,8 +1432,8 @@ Transporter::solutionTransferred()
 void
 Transporter::collectDtAndForces( CkReductionMsg* advMsg )
 // *****************************************************************************
-// \brief Reduction target that computes minimum timestep across all meshes and
-//    sums up the forces on each mesh
+// \brief Reduction target that sums up the forces on each mesh and computes
+// minimum timestep across all meshes
 //! \param[in] advMsg Reduction msg containing minimum timestep and total
 //!   surface force information
 // *****************************************************************************
@@ -1455,14 +1450,14 @@ Transporter::collectDtAndForces( CkReductionMsg* advMsg )
   #pragma clang diagnostic ignored "-Wcast-align"
 #endif
 
-  tk::real mindt = *(tk::real*)results[0].data;
   std::array< tk::real, 6 > F;
-  F[0] = *(tk::real*)results[1].data;
-  F[1] = *(tk::real*)results[2].data;
-  F[2] = *(tk::real*)results[3].data;
-  F[3] = *(tk::real*)results[4].data;
-  F[4] = *(tk::real*)results[5].data;
-  F[5] = *(tk::real*)results[6].data;
+  F[0] = *(tk::real*)results[0].data;
+  F[1] = *(tk::real*)results[1].data;
+  F[2] = *(tk::real*)results[2].data;
+  F[3] = *(tk::real*)results[3].data;
+  F[4] = *(tk::real*)results[4].data;
+  F[5] = *(tk::real*)results[5].data;
+  tk::real mindt = *(tk::real*)results[6].data;
 
 #if defined(__clang__)
   #pragma clang diagnostic pop
@@ -1531,12 +1526,14 @@ Transporter::diagnostics( CkReductionMsg* msg )
 // *****************************************************************************
 {
   std::size_t meshid, ncomp;
+  int is_initres;
   std::vector< std::vector< tk::real > > d;
 
   // Deserialize diagnostics vector
   PUP::fromMem creator( msg->getData() );
   creator | meshid;
   creator | ncomp;
+  creator | is_initres;
   creator | d;
   delete msg;
 
@@ -1559,7 +1556,7 @@ Transporter::diagnostics( CkReductionMsg* msg )
   // Query user-requested error types to output
   const auto& error = g_inputdeck.get< tag::diagnostics, tag::error >();
 
-  decltype(ncomp) n = 0;
+  [[maybe_unused]] decltype(ncomp) n = 0;
   n += ncomp;
   if (error == tk::ctr::ErrorType::L2) {
    // Finish computing the L2 norm of the numerical - analytical solution
@@ -1577,7 +1574,6 @@ Transporter::diagnostics( CkReductionMsg* msg )
   if (scheme == ctr::SchemeType::ALECG || scheme == ctr::SchemeType::OversetFE) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] / m_meshvol[meshid] );
-      diag.push_back( l2res[i] );
     }
   }
   else if ( scheme == ctr::SchemeType::FV ||
@@ -1589,8 +1585,20 @@ Transporter::diagnostics( CkReductionMsg* msg )
           ) {
     for (std::size_t i=0; i<d[L2RES].size(); ++i) {
       l2res[i] = std::sqrt( d[L2RES][i] );
-      diag.push_back( l2res[i] );
     }
+  }
+
+  // Store initial residual
+  if (m_initL2res.size() == 0) {
+    m_initL2res.resize(l2res.size());
+    for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+      m_initL2res[i] = l2res[i];
+    }
+  }
+
+  for (std::size_t i=0; i<d[L2RES].size(); ++i) {
+    l2res[i] = l2res[i]/(m_initL2res[i]+1e-12);  // get relative residuals
+    diag.push_back( l2res[i] );
   }
 
   // Append total energy
@@ -1609,13 +1617,15 @@ Transporter::diagnostics( CkReductionMsg* msg )
   }
 
   // Append diagnostics file at selected times
-  auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();
-  if (m_nelem.size() > 1) filename += '.' + id;
-  tk::DiagWriter dw( filename,
-    g_inputdeck.get< tag::diagnostics, tag::format >(),
-    g_inputdeck.get< tag::diagnostics, tag::precision >(),
-    std::ios_base::app );
-  dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
+  if (!is_initres) {
+    auto filename = g_inputdeck.get< tag::cmd, tag::io, tag::diag >();
+    if (m_nelem.size() > 1) filename += '.' + id;
+    tk::DiagWriter dw( filename,
+      g_inputdeck.get< tag::diagnostics, tag::format >(),
+      g_inputdeck.get< tag::diagnostics, tag::precision >(),
+      std::ios_base::app );
+    dw.diag( static_cast<uint64_t>(d[ITER][0]), d[TIME][0], d[DT][0], diag );
+  }
 
   // Continue time step
   m_scheme[meshid].bcast< Scheme::refine >( l2res );

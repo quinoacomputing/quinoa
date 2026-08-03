@@ -80,9 +80,17 @@ ALE::ALE( const tk::CProxy_ConjugateGradients& conjugategradientsproxy,
   m_w.fill( 0.0 );
 
   // Activate SDAG wait for initially computing prerequisites for ALE
-  thisProxy[ thisIndex ].wait4vel();
-  thisProxy[ thisIndex ].wait4pot();
-  thisProxy[ thisIndex ].wait4for();
+  if (needVelocityDerivatives())
+    thisProxy[ thisIndex ].wait4vel();
+
+  if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+    thisProxy[ thisIndex ].wait4pot();
+
+  if (!zeroMeshForce())
+    thisProxy[ thisIndex ].wait4for();
+
+  // Array elements must not use the chare_objs table
+  chareIdx = -1;
 }
 
 std::tuple< tk::CSR, std::vector< tk::real >, std::vector< tk::real > >
@@ -101,6 +109,30 @@ ALE::Laplacian( std::size_t ncomp,
 // *****************************************************************************
 {
   tk::CSR A( ncomp, tk::genPsup(m_inpoel,4,tk::genEsup(m_inpoel,4)) );
+
+  assembleLaplacian( A, ncomp, coord );
+
+  auto npoin = coord[0].size();
+  std::vector< tk::real > b(npoin*ncomp,0.0), x(npoin*ncomp,0.0);
+
+  return { std::move(A), std::move(x), std::move(b) };
+}
+
+void
+ALE::assembleLaplacian(
+  tk::CSR& A,
+  std::size_t ncomp,
+  const std::array< std::vector< tk::real >, 3 >& coord ) const
+// *****************************************************************************
+// Assemble Laplacian mesh velocity smoother matrix in place
+//! \param[in,out] A Matrix to fill with the Laplacian operator
+//! \param[in] ncomp Number of scalar components
+//! \param[in] coord Mesh node coordinates
+// *****************************************************************************
+{
+  Assert( A.Ncomp() == ncomp, "Size mismatch" );
+
+  A.fill( 0.0 );
 
   const auto& X = coord[0];
   const auto& Y = coord[1];
@@ -133,11 +165,6 @@ ALE::Laplacian( std::size_t ncomp,
            for (std::size_t i=0; i<ncomp; ++i)
              A(N[a],N[b],i) -= J/6 * grad[a][k] * grad[b][k];
   }
-
-  auto npoin = coord[0].size();
-  std::vector< tk::real > b(npoin*ncomp,0.0), x(npoin*ncomp,0.0);
-
-  return { std::move(A), std::move(x), std::move(b) };
 }
 
 decltype(ALE::m_move)
@@ -313,6 +340,17 @@ ALE::start(
   m_t = t;
   m_adt = adt;
 
+  // update smoother operator with current mesh geometry
+  std::size_t nwcomp = 0;
+  const auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+  if (smoother == ctr::MeshVelocitySmootherType::LAPLACE)
+    nwcomp = 3;
+  else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+    nwcomp = 1;
+  if (nwcomp > 0)
+    assembleLaplacian( m_conjugategradients[ thisIndex ].ckLocal()->MatrixA(),
+                       nwcomp, m_coord );
+
   // assign mesh velocity
   auto meshveltype = g_inputdeck.get< tag::ale, tag::mesh_velocity >();
   if (meshveltype == ctr::MeshVelocityType::SINE) {
@@ -325,7 +363,7 @@ ALE::start(
   } else if (meshveltype == ctr::MeshVelocityType::FLUID) {
 
     // equate mesh velocity with fluid velocity
-    for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+    for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
       for (std::size_t i=0; i<vel[j].size(); ++i)
         m_w(i,j) = vel[j][i];
 
@@ -336,55 +374,62 @@ ALE::start(
       if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
         auto meshvel = tk::sample<3>( t, std::get<1>(m) );
         for (auto i : std::get<2>(m))
-          for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+          for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
             m_w(i,j) = meshvel[j];
       } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
         auto eps = std::numeric_limits< tk::real >::epsilon();
         if (adt > eps) {      // dt == 0 during setup
           auto pos = tk::sample<3>( t+adt, std::get<1>(m) );
           for (auto i : std::get<2>(m))
-            for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+            for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
               m_w(i,j) = (m_coord0[j][i] + pos[j] - coordn[j][i]) / adt;
         }
       }
 
   }
 
-  // start computing the fluid vorticity
-  m_vorticity = tk::curl( coord, m_inpoel, vel );
-  // communicate vorticity sums to other chares on chare-boundary
-  if (m_nodeCommMap.empty()) {
-    comvort_complete();
+  if (smoother == ctr::MeshVelocitySmootherType::NONE) {
+    // if no smoother is selected, short-circuit to BC enforcement
+    enforceMeshVelBCs();
+  } else if (!needVelocityDerivatives()) {
+    meshvelbc();
   } else {
-    for (const auto& [c,n] : m_nodeCommMap) {
-      std::vector< std::array< tk::real, 3 > > v( n.size() );
-      std::size_t j = 0;
-      for (auto i : n) {
-        auto lid = tk::cref_find( m_lid, i );
-        v[j][0] = m_vorticity[0][lid];
-        v[j][1] = m_vorticity[1][lid];
-        v[j][2] = m_vorticity[2][lid];
-        ++j;
+    // start computing the fluid vorticity
+    m_vorticity = tk::curl( coord, m_inpoel, vel );
+    // communicate vorticity sums to other chares on chare-boundary
+    if (m_nodeCommMap.empty()) {
+      comvort_complete();
+    } else {
+      for (const auto& [c,n] : m_nodeCommMap) {
+        std::vector< std::array< tk::real, 3 > > v( n.size() );
+        std::size_t j = 0;
+        for (auto i : n) {
+          auto lid = tk::cref_find( m_lid, i );
+          v[j][0] = m_vorticity[0][lid];
+          v[j][1] = m_vorticity[1][lid];
+          v[j][2] = m_vorticity[2][lid];
+          ++j;
+        }
+        thisProxy[c].comvort( std::vector<std::size_t>(begin(n),end(n)), v );
       }
-      thisProxy[c].comvort( std::vector<std::size_t>(begin(n),end(n)), v );
     }
-  }
-  ownvort_complete();
+    ownvort_complete();
 
-  // start computing the fluid velocity divergence
-  m_veldiv = tk::div( coord, m_inpoel, vel );
-  // communicate vorticity sums to other chares on chare-boundary
-  if (m_nodeCommMap.empty()) {
-    comdiv_complete();
-  } else {
-    for (const auto& [c,n] : m_nodeCommMap) {
-      std::vector< tk::real > v( n.size() );
-      std::size_t j = 0;
-      for (auto i : n) v[j++] = m_veldiv[ tk::cref_find( m_lid, i ) ];
-      thisProxy[c].comdiv( std::vector<std::size_t>(begin(n),end(n)), v );
+    // start computing the fluid velocity divergence
+    m_veldiv = tk::div( coord, m_inpoel, vel );
+    // communicate vorticity sums to other chares on chare-boundary
+    if (m_nodeCommMap.empty()) {
+      comdiv_complete();
+    } else {
+      for (const auto& [c,n] : m_nodeCommMap) {
+        std::vector< tk::real > v( n.size() );
+        std::size_t j = 0;
+        for (auto i : n) v[j++] = m_veldiv[ tk::cref_find( m_lid, i ) ];
+        thisProxy[c].comdiv( std::vector<std::size_t>(begin(n),end(n)), v );
+      }
     }
+    owndiv_complete();
   }
-  owndiv_complete();
 }
 
 void
@@ -493,7 +538,7 @@ ALE::meshvelbc( tk::real maxv )
     // scale mesh velocity with a function of the fluid vorticity
     if (maxv > 1.0e-8) {
       auto mult = g_inputdeck.get< tag::ale, tag::vortmult >();
-      for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+      for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
         for (std::size_t p=0; p<m_vorticity[0].size(); ++p)
           m_w(p,j) *= std::max( 0.0, 1.0 - mult*m_vorticity[0][p]/maxv );
     }
@@ -507,7 +552,7 @@ ALE::meshvelbc( tk::real maxv )
       if (std::get<0>(m) == tk::ctr::UserTableType::VELOCITY) {
         auto meshvel = tk::sample<3>( m_t, std::get<1>(m) );
         for (auto i : std::get<2>(m))
-          for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+          for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
             m_w(i,j) = meshvel[j];
       } else if (std::get<0>(m) == tk::ctr::UserTableType::POSITION) {
         auto eps = std::numeric_limits< tk::real >::epsilon();
@@ -659,7 +704,7 @@ ALE::gradpot()
   tk::destroy(m_gradpotc);
 
   // finish computing the gradient dividing weak sum by the nodal volumes
-  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
     for (std::size_t p=0; p<m_gradpot[j].size(); ++p)
       m_gradpot[j][p] /= m_vol[p];
 
@@ -686,21 +731,24 @@ ALE::solved( [[maybe_unused]] CkDataMsg* msg )
 
     // Assign mesh velocity from linear solution skipping dimensions that are
     // not allowed to move
-    for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+    for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
       for (std::size_t i=0; i<m_w.nunk(); ++i)
         m_w(i,j) = w[i*m_w.nprop()+j];
 
   } else if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ) {
 
     auto a1 = g_inputdeck.get< tag::ale, tag::vortmult >();
-    for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+    for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
       for (std::size_t p=0; p<m_w.nunk(); ++p)
         m_w(p,j) += a1 * (m_gradpot[j][p] - m_w(p,j));
 
   }
 
-  // continue to applying a mesh force to the mesh velocity
-  startforce();
+  if (zeroMeshForce())
+    enforceMeshVelBCs();
+  else
+    // continue to applying a mesh force to the mesh velocity
+    startforce();
 }
 
 void
@@ -824,11 +872,20 @@ ALE::meshforce()
       m_wf(p,j) /= m_vol[p];
 
   // advance mesh velocity in time due to pseudo-pressure gradient mesh force
-  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
     for (std::size_t i=0; i<m_w.nunk(); ++i)
        // This is likely incorrect. It should be m_w = m_w0 + ...
        m_w(i,j) += m_adt * m_wf(i,j);
 
+  enforceMeshVelBCs();
+}
+
+void
+ALE::enforceMeshVelBCs()
+// *****************************************************************************
+//  Enforce boundary conditions on the mesh velocity and execute callback
+// *****************************************************************************
+{
   // Enforce mesh velocity Dirichlet BCs where user specfied but did not
   // prescribe a move
   for (auto i : m_meshveldirbcnodes)
@@ -856,11 +913,49 @@ ALE::meshforce()
   }
 
   // Activate SDAG wait for re-computing prerequisites for ALE
-  thisProxy[ thisIndex ].wait4vel();
-  thisProxy[ thisIndex ].wait4pot();
-  thisProxy[ thisIndex ].wait4for();
+  auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+  if (needVelocityDerivatives())
+    thisProxy[ thisIndex ].wait4vel();
 
+  if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+    thisProxy[ thisIndex ].wait4pot();
+
+  if (!zeroMeshForce())
+    thisProxy[ thisIndex ].wait4for();
+
+  // ALE's work is done, callback to client
   m_done.send();
+}
+
+bool
+ALE::zeroMeshForce() const
+// *****************************************************************************
+//  Query if ALE mesh force coefficients are all zero
+//! \return True if all ALE mesh force coefficients are zero
+// *****************************************************************************
+{
+  const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  return std::all_of( begin(meshforce), end(meshforce),
+    [eps](tk::real c){ return std::abs(c) <= eps; } );
+}
+
+bool
+ALE::needVelocityDerivatives() const
+// *****************************************************************************
+//  Query if ALE mesh velocity smoothing requires velocity derivatives
+//! \return True if the selected smoother requires velocity-divergence or
+//!   vorticity data
+// *****************************************************************************
+{
+  const auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+  if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+    return true;
+
+  const auto eps = std::numeric_limits< tk::real >::epsilon();
+  return smoother == ctr::MeshVelocitySmootherType::LAPLACE &&
+    (std::abs(g_inputdeck.get< tag::ale, tag::vortmult >()) > eps ||
+     !zeroMeshForce());
 }
 
 #include "NoWarning/ale.def.h"

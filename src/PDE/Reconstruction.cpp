@@ -23,6 +23,7 @@
 #include "Reconstruction.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "Limiter.hpp"
 #include "Integrate/Quadrature.hpp"
@@ -171,7 +172,9 @@ transform_P0P1( std::size_t rdof,
     tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
   // Compute the derivatives of basis function for DG(P1)
-  auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( rdof, 0 );
+  tk::eval_dBdx_p1( rdof, jacInv, dBdx );
 
   for (std::size_t i=0; i<varList.size(); ++i)
   {
@@ -477,7 +480,9 @@ THINCFunction_old( std::size_t rdof,
     auto jacInv =
       tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-    auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+    std::array< std::vector<tk::real>, 3 > dBdx;
+    for (std::size_t i=0; i<3; ++i) dBdx[i].resize( rdof, 0 );
+    tk::eval_dBdx_p1( rdof, jacInv, dBdx );
 
     std::array< real, 3 > nInt;
     std::vector< std::array< real, 3 > > ref_n(nmat, {{0.0, 0.0, 0.0}});
@@ -627,7 +632,9 @@ THINCFunction( std::size_t rdof,
   auto jacInv =
     tk::inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
 
-  auto dBdx = tk::eval_dBdx_p1( rdof, jacInv );
+  std::array< std::vector<tk::real>, 3 > dBdx;
+  for (std::size_t i=0; i<3; ++i) dBdx[i].resize( rdof, 0 );
+  tk::eval_dBdx_p1( rdof, jacInv, dBdx );
 
   std::array< real, 3 > nInt;
   std::array< real, 3 > ref_n{0.0, 0.0, 0.0};
@@ -779,6 +786,7 @@ computeTemperaturesFV(
   auto nelem = unk.nunk();
 
   auto L = tk::massMatrixDubiner();
+  std::vector< tk::real > B(rdof);
 
   for (std::size_t e=0; e<nelem; ++e) {
     auto vole = geoElem(e,0);
@@ -801,8 +809,8 @@ computeTemperaturesFV(
     // Loop over quadrature points in element e
     for (std::size_t igp=0; igp<ng; ++igp) {
       // Compute the basis function
-      auto B = tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
-                               coordgp[2][igp] );
+      tk::eval_basis( rdof, coordgp[0][igp], coordgp[1][igp],
+                      coordgp[2][igp], B );
 
       auto w = wgp[igp] * vole;
 
@@ -839,7 +847,7 @@ computeTemperaturesFV(
   }
 }
 
-std::vector< tk::real >
+void
 evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    int intsharp,
                    std::size_t ncomp,
@@ -854,7 +862,8 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    const std::array< real, 3 >& ref_gp,
                    const std::vector< real >& B,
                    const Fields& U,
-                   const Fields& P )
+                   const Fields& P,
+                   std::vector< tk::real >& state )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] mat_blk EOS material block
@@ -872,15 +881,11 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 //! \param[in] B Basis function at given quadrature point
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
-//! \return High-order unknown/state vector at quadrature point, modified
-//!   if near interfaces using THINC
+//! \param[in,out] state Vector of solution states at quadrature point
 // *****************************************************************************
 {
-  std::vector< real > state;
-  std::vector< real > sprim;
-
-  state = eval_state( ncomp, rdof, dof_e, e, U, B );
-  sprim = eval_state( nprim, rdof, dof_e, e, P, B );
+  eval_state( ncomp, rdof, dof_e, e, U, B, state.data() );
+  eval_state( nprim, rdof, dof_e, e, P, B, state.data()+ncomp );
 
   // interface detection
   std::vector< std::size_t > matInt(nmat, 0);
@@ -891,9 +896,6 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
       alAvg[k] = U(e, inciter::volfracDofIdx(nmat,k,rdof,0));
     intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
   }
-
-  // consolidate primitives into state vector
-  state.insert(state.end(), sprim.begin(), sprim.end());
 
   if (intsharp > 0)
   {
@@ -918,8 +920,6 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 
   // physical constraints
   enforcePhysicalConstraints(mat_blk, ncomp, nmat, state);
-
-  return state;
 }
 
 std::vector< tk::real >
@@ -969,11 +969,11 @@ evalFVSol( const std::vector< inciter::EOS >& mat_blk,
   using inciter::energyIdx;
   using inciter::momentumIdx;
 
-  std::vector< real > state;
-  std::vector< real > sprim;
+  std::vector< real > state(ncomp);
+  std::vector< real > sprim(nprim);
 
-  state = eval_state( ncomp, rdof, rdof, e, U, B );
-  sprim = eval_state( nprim, rdof, rdof, e, P, B );
+  eval_state( ncomp, rdof, rdof, e, U, B, state.data() );
+  eval_state( nprim, rdof, rdof, e, P, B, sprim.data() );
 
   // interface detection so that eos is called on the appropriate quantities
   std::vector< std::size_t > matInt(nmat, 0);
@@ -1039,6 +1039,7 @@ enforcePhysicalConstraints(
 // *****************************************************************************
 {
   auto myPDE = inciter::g_inputdeck.get< tag::pde >();
+  auto nspec = inciter::g_inputdeck.get< tag::multispecies, tag::nspec >();
 
   // unfortunately have to query PDEType here. alternative will potentially
   // require refactor that passes PDEType from DGPDE to this level.
@@ -1054,8 +1055,90 @@ enforcePhysicalConstraints(
     }
   }
   else if (myPDE == inciter::ctr::PDEType::MULTISPECIES) {
-    // TODO: consider clipping temperature here
+    using inciter::multispecies::temperatureIdx;
+    state[ncomp+temperatureIdx(nspec,0)] = inciter::constrain_temperature(
+      state[ncomp+temperatureIdx(nspec,0)] );
   }
+}
+
+std::array< real, 3 >
+evaluateMeshVelTri(
+  const std::size_t f,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpofa,
+  const std::array< std::vector< real >, 2 >& coordgp,
+  const Fields& W )
+// *****************************************************************************
+//  Evaluate mesh velocity at a quadrature point on a triangular face
+//! \param[in] f Id of face on which evaluation is being done
+//! \param[in] igp Local quadrature point id where mesh velocity is required
+//! \param[in] inpofa Face-node connectivity
+//! \param[in] coordgp 2 spatial coordinates of quadrature points on reference
+//!   triangular element
+//! \param[in] W Mesh velocity vector at recent time step
+//! \return Mesh velocity at quadrature point
+//! \details This function evaluates the mesh velocity at the specified
+//!   quadrature point on a reference triangular element (face) assuming linear
+//!   finite element basis functions (i.e. Lagrange basis).
+// *****************************************************************************
+{
+  std::array< real, 3 > w_igp {{ 0.0, 0.0, 0.0 }};
+
+  // Barycentric coordinates/Lagrange basis at igp
+  std::array< real, 3 > lambda_igp {{
+    1.0-coordgp[0][igp]-coordgp[1][igp],
+    coordgp[0][igp], coordgp[1][igp] }};
+
+  // Mesh velocity evaluation using Lagrange basis
+  for (std::size_t j=0; j<3; ++j) {
+    auto wt_igp = lambda_igp[j];
+    auto nid = inpofa[3*f+j];
+    w_igp[0] += wt_igp*W(nid,0);
+    w_igp[1] += wt_igp*W(nid,1);
+    w_igp[2] += wt_igp*W(nid,2);
+  }
+
+  return w_igp;
+}
+
+std::array< real, 3 >
+evaluateMeshVelTet(
+  const std::size_t e,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpoel,
+  const std::array< std::vector< real >, 3 >& coordgp,
+  const Fields& W )
+// *****************************************************************************
+//  Evaluate mesh velocity at a quadrature point on a tetrahedral element
+//! \param[in] e Id of element in which evaluation is being done
+//! \param[in] igp Local quadrature point id where mesh velocity is required
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] coordgp 3 spatial coordinates of quadrature points in reference
+//!   tetrahedron
+//! \param[in] W Mesh velocity vector at recent time step
+//! \return Mesh velocity at quadrature point
+//! \details This function evaluates the mesh velocity at the specified
+//!   quadrature point on a reference tetrahedral element assuming linear finite
+//!   element basis functions (i.e. Lagrange basis).
+// *****************************************************************************
+{
+  std::array< real, 3 > w_igp {{ 0.0, 0.0, 0.0 }};
+
+  // Barycentric coordinates/Lagrange basis at igp
+  std::array< real, 4 > lambda_igp {{
+    1.0-coordgp[0][igp]-coordgp[1][igp]-coordgp[2][igp],
+    coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] }};
+
+  // Mesh velocity evaluation using Lagrange basis
+  for (std::size_t j=0; j<4; ++j) {
+    auto wt_igp = lambda_igp[j];
+    auto nid = inpoel[4*e+j];
+    w_igp[0] += wt_igp*W(nid,0);
+    w_igp[1] += wt_igp*W(nid,1);
+    w_igp[2] += wt_igp*W(nid,2);
+  }
+
+  return w_igp;
 }
 
 void

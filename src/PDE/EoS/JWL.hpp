@@ -139,6 +139,12 @@ class JWL {
     //! Return specific heat (no-op)
     tk::real cv( [[maybe_unused]] tk::real temp) const { return m_cv; }
 
+    //! Return specific heat at constant pressure
+    tk::real cp( tk::real ) const { return m_cv; }
+
+    //! Return dynamic viscosity coefficient
+    tk::real viscCoeff( tk::real ) const { return 0.0; }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

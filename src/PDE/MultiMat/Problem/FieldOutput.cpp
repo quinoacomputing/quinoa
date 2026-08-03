@@ -37,7 +37,6 @@ std::map< std::string, tk::GetVarFn > MultiMatOutVarFn()
   OutFnMap["y-velocity"] = multimat::velocityOutVar<1>;
   OutFnMap["z-velocity"] = multimat::velocityOutVar<2>;
   OutFnMap["material_indicator"] = multimat::matIndicatorOutVar;
-  OutFnMap["damage"] = multimat::damageOutVar;
   // Cauchy stress tensor
   OutFnMap["stress11"] = multimat::stressOutVar<0,0>;
   OutFnMap["stress12"] = multimat::stressOutVar<0,1>;
@@ -86,6 +85,9 @@ MultiMatSurfOutput(
   const std::size_t nmat,
   const std::size_t rdof,
   const FaceData& fd,
+  const tk::Fields& /*geoFace*/,
+  const std::vector< std::size_t >& /*inpoel*/,
+  const tk::UnsMesh::Coords& /*coord*/,
   const tk::Fields& U,
   const tk::Fields& P )
 // *****************************************************************************
@@ -93,6 +95,9 @@ MultiMatSurfOutput(
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] fd Face connectivity and boundary conditions object
+// //! \param[in] geoFace Face geometry array
+// //! \param[in] inpoel Element-node connectivity
+// //! \param[in] coord Array of nodal coordinates
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \return Vector of vectors of solution on side set faces to be output to file

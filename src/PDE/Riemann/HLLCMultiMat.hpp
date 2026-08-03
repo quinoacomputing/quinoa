@@ -33,13 +33,15 @@ struct HLLCMultiMat {
 //! HLLC approximate Riemann solver flux function
   //! \param[in] fn Face/Surface normal
   //! \param[in] u Left and right unknown/state vector
+  //! \param[in] wn Mesh velocity normal to face
   //! \return Riemann solution according to Harten-Lax-van Leer-Contact
   //! \note The function signature must follow tk::RiemannFluxFn
   static tk::RiemannFluxFn::result_type
   flux( const std::vector< EOS >& mat_blk,
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& = {} )
+        const std::vector< std::array< tk::real, 3 > >& = {},
+        const tk::real wn = 0 )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -65,7 +67,7 @@ struct HLLCMultiMat {
 
     // Outer states
     // -------------------------------------------------------------------------
-    tk::real pl(0.0), pr(0.0);
+    [[maybe_unused]] tk::real pl(0.0), pr(0.0);
     tk::real acl(0.0), acr(0.0);
     std::vector< tk::real > apl(nmat, 0.0), apr(nmat, 0.0);
     std::array< tk::real, 3 > Tnl{{0, 0, 0}}, Tnr{{0, 0, 0}};
@@ -144,6 +146,11 @@ struct HLLCMultiMat {
     // Rotated velocities from advective velocities
     auto vnl = tk::rotateVector({ul, vl, wl}, fn);
     auto vnr = tk::rotateVector({ur, vr, wr}, fn);
+
+    // ALE mesh motion relative normal velocity
+    vnl[0] -= wn;
+    vnr[0] -= wn;
+    // TODO: add ALE compatibility to solids
 
     // Signal velocities
     auto Sl = std::min((vnl[0]-acl), (vnr[0]-acr));
@@ -257,13 +264,15 @@ struct HLLCMultiMat {
     auto uStar = u;
 
     tk::real rholStar(0.0), rhorStar(0.0);
-    std::vector< std::array< std::array< tk::real, 3 >, 3 > > gnlStar, gnrStar;
-    std::vector< std::array< std::array< tk::real, 3 >, 3 > > glStar, grStar;
+    std::array< std::array< tk::real, 3 >, 3 > tempArray {{ {0,0,0}, {0,0,0}, {0,0,0} }};
+    std::vector< std::array< std::array< tk::real, 3 >, 3 > >
+      gnlStar(nmat, tempArray), gnrStar(nmat, tempArray),
+      glStar(nmat, tempArray), grStar(nmat, tempArray);
     for (std::size_t k=0; k<nmat; ++k) {
       // Left
+      gnlStar[k] = gnl[k];
       if (solidx[k] > 0)
       {
-        gnlStar.push_back(gnl[k]);
         gnlStar[k][0][0] = w_l * gnl[k][0][0]
           + gnl[k][0][1]*(vnl[1]-vnlStar[1])/(Sm-Sl)
           + gnl[k][0][2]*(vnl[2]-vnlStar[2])/(Sm-Sl);
@@ -278,6 +287,8 @@ struct HLLCMultiMat {
         // damage
         uStar[0][damageIdx(nmat, nsld, solidx[k])] = w_l * u[0][damageIdx(nmat, nsld, solidx[k])];
       }
+      // rotate g back to original frame of reference
+      glStar[k] = tk::unrotateTensor(gnlStar[k], fn);
       uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
@@ -291,9 +302,9 @@ struct HLLCMultiMat {
       rholStar += uStar[0][densityIdx(nmat, k)];
 
       // Right
+      gnrStar[k] = gnr[k];
       if (solidx[k] > 0)
       {
-        gnrStar.push_back(gnr[k]);
         gnrStar[k][0][0] = w_r * gnr[k][0][0]
           + gnr[k][0][1]*(vnr[1]-vnrStar[1])/(Sm-Sr)
           + gnr[k][0][2]*(vnr[2]-vnrStar[2])/(Sm-Sr);
@@ -308,6 +319,8 @@ struct HLLCMultiMat {
         // damage
         uStar[1][damageIdx(nmat, nsld, solidx[k])] = w_r * u[1][damageIdx(nmat, nsld, solidx[k])];
       }
+      // rotate g back to original frame of reference
+      grStar[k] = tk::unrotateTensor(gnrStar[k], fn);
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
@@ -319,6 +332,12 @@ struct HLLCMultiMat {
             + asignnrStar[k][2][0]*vnrStar[2]
           ) / (Sm-Sr);
       rhorStar += uStar[1][densityIdx(nmat, k)];
+    }
+    for (std::size_t idir=0; idir<3; ++idir) {
+      uStar[0][momentumIdx(nmat, idir)] = w_l*u[0][momentumIdx(nmat, idir)]
+        - (TnlStar[idir] - Tnl[idir])/(Sl-Sm);
+      uStar[1][momentumIdx(nmat, idir)] = w_r*u[1][momentumIdx(nmat, idir)]
+        - (TnrStar[idir] - Tnr[idir])/(Sr-Sm);
     }
 
     // Numerical fluxes
@@ -373,13 +392,14 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
        flx[momentumIdx(nmat, idir)] =
-         vlStar[idir] * rholStar * Sm - TnlStar[idir];
+         uStar[0][momentumIdx(nmat, idir)] * Sm - TnlStar[idir];
+         //vlStar[idir] * rholStar * Sm - TnlStar[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[0][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[0][densityIdx(nmat, k)] * Sm;
         flx[energyIdx(nmat, k)] = uStar[0][energyIdx(nmat, k)] * Sm
-          - vlStar[0] * aTnlStar[k][0]
+          - (vlStar[0]+wn) * aTnlStar[k][0]  // TODO:check if w.aTnlStar should be added like this to other two terms
           - vlStar[1] * aTnlStar[k][1]
           - vlStar[2] * aTnlStar[k][2];
         if (solidx[k] > 0) {
@@ -421,13 +441,14 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          vrStar[idir] * rhorStar * Sm - TnrStar[idir];
+          uStar[1][momentumIdx(nmat, idir)] * Sm - TnrStar[idir];
+          //vrStar[idir] * rhorStar * Sm - TnrStar[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[1][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[1][densityIdx(nmat, k)] * Sm;
         flx[energyIdx(nmat, k)] = uStar[1][energyIdx(nmat, k)] * Sm
-          - vrStar[0] * aTnrStar[k][0]
+          - (vrStar[0]+wn) * aTnrStar[k][0]  // TODO:check if w.aTnrStar should be added like this to other two terms
           - vrStar[1] * aTnrStar[k][1]
           - vrStar[2] * aTnrStar[k][2];
         if (solidx[k] > 0) {

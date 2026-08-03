@@ -6,7 +6,7 @@ add_library(Integrate
             Boundary.cpp
             Volume.cpp
             MultiMatTerms.cpp
-            Source.cpp
+            ViscousTerms.cpp
             Basis.cpp)
 
 target_include_directories(Integrate PUBLIC

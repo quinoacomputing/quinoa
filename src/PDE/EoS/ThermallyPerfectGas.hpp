@@ -24,6 +24,11 @@ class ThermallyPerfectGas {
     std::vector< std::vector< tk::real > > m_cp_coeff{3, std::vector< tk::real >(8)};
     std::vector< tk::real > m_t_range{std::vector< tk::real >(4)};
     tk::real m_dH_ref;
+    tk::real m_mu;
+    tk::real m_temp_ref;
+    tk::real m_mu_ref;
+    tk::real m_C;
+    bool m_Sutherland;
 
     void get_t_range( tk::real &temp_poly,
                              std::size_t &t_rng_idx ) const
@@ -39,7 +44,7 @@ class ThermallyPerfectGas {
         t_rng_idx = 0;
         temp_poly = m_t_range[0];
       } else if (temp_poly > m_t_range.back()) {
-        t_rng_idx = m_t_range.size() - 1;
+        t_rng_idx = m_t_range.size() - 2;
         temp_poly = m_t_range.back();
       } else {
       // Valid bounds
@@ -117,7 +122,12 @@ class ThermallyPerfectGas {
       tk::real R,
       std::vector< std::vector< tk::real > > cp_coeff,
       std::vector< tk::real > t_range,
-      tk::real dH_ref);
+      tk::real dH_ref,
+      tk::real mu,
+      tk::real temp_ref,
+      tk::real mu_ref,
+      tk::real C,
+      bool Sutherland);
 
     //! Set rho0 EOS parameter. No-op.
     void setRho0(tk::real) {}
@@ -215,6 +225,12 @@ class ThermallyPerfectGas {
     //! Return species specific heat (constant volume)
     tk::real cv(tk::real temp) const;
 
+    //! Return species specific heat at constant pressure
+    tk::real cp(tk::real temp) const;
+
+    //! Return dynamic viscosity coefficient
+    tk::real viscCoeff(tk::real temp) const;
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
@@ -224,6 +240,11 @@ class ThermallyPerfectGas {
       p | m_cp_coeff;
       p | m_t_range;
       p | m_dH_ref;
+      p | m_mu;
+      p | m_temp_ref;
+      p | m_mu_ref;
+      p | m_C;
+      p | m_Sutherland;
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference

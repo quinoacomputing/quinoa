@@ -76,7 +76,7 @@ class ConjugateGradients : public CBase_ConjugateGradients {
                           gid, lid, nodecommmap ) {}
 
     //! Migrate constructor
-    explicit ConjugateGradients( CkMigrateMessage* ) {}
+    explicit ConjugateGradients( CkMigrateMessage* msg ) : CBase_ConjugateGradients( msg ) { chareIdx = -1; }
     #if defined(__clang__)
       #pragma clang diagnostic pop
     #endif
@@ -124,6 +124,12 @@ class ConjugateGradients : public CBase_ConjugateGradients {
 
     //! Access solution
     std::vector< tk::real > solution() const { return m_x; }
+
+    //! Non-const access left hand side matrix
+    CSR& MatrixA() noexcept { return m_A; }
+
+    //! Const access to left hand side matrix
+    const CSR& MatrixA() const noexcept { return m_A; }
 
     //! Return convergence flag
     bool converged() const { return m_converged; }

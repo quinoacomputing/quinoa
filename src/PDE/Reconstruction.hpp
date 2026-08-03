@@ -128,7 +128,7 @@ computeTemperaturesFV(
   tk::Fields& T );
 
 //! Evaluate polynomial solution at quadrature point
-std::vector< tk::real >
+void
 evalPolynomialSol(
   const std::vector< inciter::EOS >& mat_blk,
   int intsharp,
@@ -144,7 +144,8 @@ evalPolynomialSol(
   const std::array< real, 3 >& ref_gp,
   const std::vector< real >& B,
   const Fields& U,
-  const Fields& P);
+  const Fields& P,
+  std::vector< tk::real >& state );
 
 //! Evaluate second-order FV solution at quadrature point
 std::vector< tk::real >
@@ -172,6 +173,24 @@ enforcePhysicalConstraints(
   std::size_t nmat,
   std::size_t ncomp,
   std::vector< tk::real >& state );
+
+//! Evaluate mesh velocity at a quadrature point on a triangular face
+std::array< real, 3 >
+evaluateMeshVelTri(
+  const std::size_t f,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpofa,
+  const std::array< std::vector< real >, 2 >& coordgp,
+  const Fields& W );
+
+//! Evaluate mesh velocity at a quadrature point on a tetrahedral element
+std::array< real, 3 >
+evaluateMeshVelTet(
+  const std::size_t e,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpoel,
+  const std::array< std::vector< real >, 3 >& coordgp,
+  const Fields& W );
 
 //! Compute safe reconstructions near material interfaces
 void
