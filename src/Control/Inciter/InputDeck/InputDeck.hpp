@@ -131,6 +131,14 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::cv,                 std::vector< tk::real >,
   tag::k,                  std::vector< tk::real >,
   tag::plasticity_reltime, std::vector< tk::real >,
+  tag::jc_d1,     std::vector< tk::real >,
+  tag::jc_d2,     std::vector< tk::real >,
+  tag::jc_d3,     std::vector< tk::real >,
+  tag::jc_d4,     std::vector< tk::real >,
+  tag::jc_d5,     std::vector< tk::real >,
+  tag::t_melt,    std::vector< tk::real >,
+  tag::t_room,    std::vector< tk::real >,
+  tag::damage_length_scale, std::vector< tk::real >,
   tag::temp_ref,  std::vector< tk::real >,
   tag::mu_ref,    std::vector< tk::real >,
   tag::C,         std::vector< tk::real >
@@ -1161,6 +1169,51 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         simulation of elastic–plastic solid mechanics using an Eulerian stretch
         tensor approach and HLLD Riemann solver." Journal of Computational
         Physics 257 (2014): 414-441.)", "vector of reals"});
+
+      keywords.insert({"jc_d1", "Johnson-Cook damage parameter d1",
+        R"(This keyword is used to specify the first Johnson-Cook damage parameter
+        (d1) which controls the baseline failure strain. The Johnson-Cook damage
+        model is: epsilon_f = [d1 + d2*exp(d3*eta)] * [1 + d4*ln(edot/edot0)] *
+        [1 + d5*(T-T_room)/(T_melt-T_room)], where eta is the stress triaxiality
+        (-p/sigma_eq).)", "vector of reals"});
+
+      keywords.insert({"jc_d2", "Johnson-Cook damage parameter d2",
+        R"(This keyword is used to specify the second Johnson-Cook damage parameter
+        (d2) which controls the exponential triaxiality dependence of failure
+        strain.)", "vector of reals"});
+
+      keywords.insert({"jc_d3", "Johnson-Cook damage parameter d3",
+        R"(This keyword is used to specify the third Johnson-Cook damage parameter
+        (d3) which is the exponent in the triaxiality term. Typically negative
+        (indicating reduced ductility under tension).)", "vector of reals"});
+
+      keywords.insert({"jc_d4", "Johnson-Cook damage parameter d4",
+        R"(This keyword is used to specify the fourth Johnson-Cook damage parameter
+        (d4) which controls the strain rate dependence of failure strain.)",
+        "vector of reals"});
+
+      keywords.insert({"jc_d5", "Johnson-Cook damage parameter d5",
+        R"(This keyword is used to specify the fifth Johnson-Cook damage parameter
+        (d5) which controls the temperature dependence of failure strain.)",
+        "vector of reals"});
+
+      keywords.insert({"t_melt", "Melting temperature for Johnson-Cook damage",
+        R"(This keyword is used to specify the melting temperature (in Kelvin) for
+        the Johnson-Cook damage model temperature dependence. Units: K)",
+        "vector of reals"});
+
+      keywords.insert({"t_room", "Room temperature for Johnson-Cook damage",
+        R"(This keyword is used to specify the reference room temperature (in Kelvin)
+        for the Johnson-Cook damage model. Typically 293-298 K. Units: K)",
+        "vector of reals"});
+
+      keywords.insert({"damage_length_scale", "Characteristic length for crack band regularization",
+        R"(This keyword is used to specify the reference element size for crack band
+        regularization of damage evolution. This introduces a length scale into the
+        damage model to achieve mesh-independent results. The damage rate is scaled
+        as: dD *= (h_element / h_ref) where h_element is the actual element size.
+        Typical values: grain size or process zone size (e.g., 0.1-1.0 mm for metals).
+        Units: m)", "vector of reals"});
 
       keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
         R"(This keyword is used to specify species' coefficients in the

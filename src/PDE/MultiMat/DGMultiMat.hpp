@@ -650,7 +650,7 @@ class MultiMat {
 
             // 1. Compute dev(sigma)
             auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
-            auto sigma_dev = m_mat_blk[k].computeTensor< EOS::CauchyStress >(
+            auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
                alpha, k, g, damage );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -743,29 +743,69 @@ class MultiMat {
             // plastic_rate *= a_tilde;
             plastic_rate = std::sqrt(3.0*plastic_rate/2.0);
 
-            // 7. Compute dD
+            // 7. Compute dD using Johnson-Cook damage model
             auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
-            // auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
 
-            tk::real d1(0.0), d2(0.0), d3(0.0), d4(0.0);
-            if (k == 1) {
-              d1 = 0.1166; // temp
-              d2 = 0.0934; // temp
-              d3 = -0.5442; // temp
-              d4 = 0.0; // temp
-            } else if (k == 2) {
-              d1 = 0.05;
-              d2 = 3.44;
-              d3 = -2.21;
-              d4 = 0.0;
-            }
+            // Get Johnson-Cook damage parameters from input
+            tk::real d1 = getmatprop< tag::jc_d1 >(k);
+            tk::real d2 = getmatprop< tag::jc_d2 >(k);
+            tk::real d3 = getmatprop< tag::jc_d3 >(k);
+            tk::real d4 = getmatprop< tag::jc_d4 >(k);
+            tk::real d5 = getmatprop< tag::jc_d5 >(k);
+            tk::real t_melt = getmatprop< tag::t_melt >(k);
+            tk::real t_room = getmatprop< tag::t_room >(k);
+
             tk::real ef = 0.0;
             tk::real dD = 0.0;
             if (phi > 0.0) {
-              tk::real eta = std::clamp(-pk/(equiv_stress), -1.5, 1.5);
-              //printf("dbg = %e, %e, %e, %e\n", alpha, pk, equiv_stress, d3*eta);
-              ef = std::max<tk::real>(d1 + d2*std::exp(d3*eta), 5.0e-02);
-              dD = 1.0e-02*std::min(1.0e-04, std::max(-1.0e-04, plastic_rate*dt/ef));
+              // Compute temperature from EOS
+              tk::real u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
+              tk::real v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
+              tk::real w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
+              tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+              tk::real arhoE = U(e, energyDofIdx(nmat, k, rdof, 0));
+              tk::real T = m_mat_blk[k].template compute< EOS::temperature >(
+                arho, u, v, w, arhoE, alk, g, damage);
+
+              // Johnson-Cook damage model:
+              // epsilon_f = [d1 + d2*exp(d3*eta)] * [1 + d4*ln(edot/edot0)] * [1 + d5*T_hat]
+              // where T_hat = (T - T_room) / (T_melt - T_room)
+
+              // Triaxiality term
+              tk::real eta = std::clamp(-pk/equiv_stress, -1.5, 1.5);
+              tk::real f_triax = d1 + d2*std::exp(d3*eta);
+
+              // Strain rate term (using plastic_rate as equivalent plastic strain rate)
+              // Reference strain rate edot0 = 1.0 s^-1
+              tk::real edot0 = 1.0;
+              tk::real edot = plastic_rate;
+              tk::real f_rate = 1.0;
+              if (edot > 1.0e-10 && std::abs(d4) > 1.0e-10) {
+                f_rate = 1.0 + d4 * std::log(std::max(edot/edot0, 1.0e-10));
+              }
+
+              // Temperature term
+              tk::real T_hat = 0.0;
+              if (t_melt > t_room && t_melt > 1.0e-10) {
+                T_hat = std::clamp((T - t_room)/(t_melt - t_room), 0.0, 1.0);
+              }
+              tk::real f_temp = 1.0 + d5 * T_hat;
+
+              // Failure strain
+              ef = std::max(f_triax * f_rate * f_temp, 1.0e-04);
+
+              // Damage increment: dD = edot * dt / epsilon_f
+              dD = plastic_rate * dt / ef;
+
+              // Crack band regularization for mesh independence
+              // Scale damage rate with element size to preserve fracture energy
+              tk::real h_ref = getmatprop< tag::damage_length_scale >(k);
+              if (h_ref > 1.0e-12) {
+                tk::real vol = geoElem(e, 0);
+                tk::real h = std::cbrt(vol);  // characteristic element size
+                tk::real reg_factor = h / h_ref;
+                dD *= reg_factor;
+              }
             }
             // 6. Evolve D
             //printf("k, dmg = %lu, %e\n", k, U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)));
