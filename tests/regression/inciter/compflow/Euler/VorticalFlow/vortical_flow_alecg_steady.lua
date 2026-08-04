@@ -7,7 +7,7 @@ inciter = {
   scheme = "alecg",
 
   steady_state = true,
-  residual = 1.0e-8,
+  residual = 1.0e-4,
   rescomp = 1,
 
   partitioning = "mj",

@@ -55,6 +55,9 @@ class CSR {
       const NodeCommMap& nodecommap = {},
       std::size_t pos=0 );
 
+    //! Fill all stored matrix entries with a value
+    void fill( real value );
+
     //! Multiply CSR matrix with vector from the right: r = A * x
     void mult( const std::vector< real >& x, std::vector< real >& r,
                const std::vector< tk::real >& bcmask ) const;

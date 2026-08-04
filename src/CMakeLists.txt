@@ -106,6 +106,74 @@ if (EXISTS ${TPL_DIR}/include)
 endif()
 message(STATUS "Third-party library dir: " ${TPL_DIR})
 
+# Infer GPU support from the Kokkos package installed under TPL_DIR. Kokkos
+# exports its enabled backends and architectures in KokkosConfig.cmake, so the
+# TPL installation is the single source of truth for this choice.
+find_package(Kokkos CONFIG QUIET
+             PATHS "${TPL_DIR}"
+             NO_DEFAULT_PATH)
+if (Kokkos_FOUND AND Kokkos_ENABLE_CUDA)
+  set(ENABLE_GPU ON)
+  message(STATUS "GPU support: enabled by Kokkos CUDA backend")
+  message(STATUS "Kokkos CUDA architectures: ${Kokkos_ARCH}")
+else()
+  set(ENABLE_GPU OFF)
+  message(STATUS "GPU support: disabled (Kokkos CUDA backend not found)")
+endif()
+
+if (ENABLE_GPU)
+  set(QUINOA_NVCC_WRAPPER "${TPL_DIR}/bin/nvcc_wrapper" CACHE FILEPATH
+      "Path to Kokkos nvcc_wrapper" FORCE)
+  if (NOT EXISTS "${QUINOA_NVCC_WRAPPER}")
+    message(FATAL_ERROR
+      "Kokkos CUDA was detected, but ${TPL_DIR}/bin/nvcc_wrapper is missing")
+  endif()
+
+  set(QUINOA_CUDA_ROOT "" CACHE PATH "CUDA toolkit root for Quinoa")
+  if (NOT QUINOA_CUDA_ROOT)
+    foreach(_quinoa_cuda_root "$ENV{CUDA_HOME}" "$ENV{CUDA_ROOT}")
+      if (EXISTS "${_quinoa_cuda_root}/include")
+        set(QUINOA_CUDA_ROOT "${_quinoa_cuda_root}")
+        break()
+      endif()
+    endforeach()
+  endif()
+  if (NOT QUINOA_CUDA_ROOT)
+    find_program(QUINOA_NVCC_EXECUTABLE NAMES nvcc)
+    if (QUINOA_NVCC_EXECUTABLE)
+      get_filename_component(_quinoa_cuda_bin
+                             "${QUINOA_NVCC_EXECUTABLE}" DIRECTORY)
+      get_filename_component(QUINOA_CUDA_ROOT
+                             "${_quinoa_cuda_bin}" DIRECTORY)
+    endif()
+  endif()
+  if (NOT EXISTS "${QUINOA_CUDA_ROOT}/include")
+    message(FATAL_ERROR
+      "Could not locate CUDA. Set QUINOA_CUDA_ROOT, CUDA_HOME, or CUDA_ROOT.")
+  endif()
+  set(QUINOA_CUDA_ROOT "${QUINOA_CUDA_ROOT}" CACHE PATH
+      "CUDA toolkit root for Quinoa" FORCE)
+
+  # This launcher is used only by Kokkos-selected CUDA sources and links.
+  # CMAKE_CXX_COMPILER remains the host MPI compiler for all other targets.
+  set(QUINOA_HOST_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
+  set(QUINOA_NVCC_WRAPPER_LAUNCHER
+      "${CMAKE_BINARY_DIR}/quinoa-nvcc-wrapper")
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/nvcc_wrapper_launcher.sh.in"
+    "${QUINOA_NVCC_WRAPPER_LAUNCHER}"
+    @ONLY)
+  execute_process(
+    COMMAND chmod +x "${QUINOA_NVCC_WRAPPER_LAUNCHER}"
+    RESULT_VARIABLE QUINOA_NVCC_WRAPPER_CHMOD_RESULT)
+  if (NOT QUINOA_NVCC_WRAPPER_CHMOD_RESULT EQUAL 0)
+    message(FATAL_ERROR "Could not make nvcc_wrapper launcher executable")
+  endif()
+  message(STATUS "GPU nvcc_wrapper: ${QUINOA_NVCC_WRAPPER}")
+  message(STATUS "GPU host C++ compiler: ${QUINOA_HOST_CXX_COMPILER}")
+  message(STATUS "CUDA toolkit root: ${QUINOA_CUDA_ROOT}")
+endif()
+
 # Detect compiler version
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
     CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -148,6 +216,53 @@ set(trilinos "trilinos")
 find_package(Trilinos)
 if(Trilinos_FOUND)
   set(trilinos "")
+endif()
+
+if (ENABLE_GPU)
+  if (NOT COMMAND kokkos_compilation)
+    message(FATAL_ERROR "Installed Kokkos package does not provide kokkos_compilation()")
+  endif()
+
+  # A CUDA Kokkos installation exports nvcc-only compile definitions, options,
+  # and link options through its imported targets.  Quinoa deliberately builds
+  # its Charm++ main and input-parser sources with the host MPI compiler, so
+  # those usage requirements must not propagate transitively through
+  # Trilinos_LIBRARIES into host-only targets.  CUDA-selected targets receive
+  # the required definition, options, and nvcc_wrapper launcher explicitly in
+  # quinoa_cuda_target() below.
+  foreach(_quinoa_kokkos_target
+          Kokkos::kokkos
+          Kokkos::kokkoscore
+          Kokkos::kokkoscontainers
+          Kokkos::kokkosalgorithms
+          Kokkos::kokkossimd
+          Kokkos::all_libs)
+    if (TARGET ${_quinoa_kokkos_target})
+      set_property(TARGET ${_quinoa_kokkos_target}
+                   PROPERTY INTERFACE_COMPILE_DEFINITIONS "")
+      set_property(TARGET ${_quinoa_kokkos_target}
+                   PROPERTY INTERFACE_COMPILE_OPTIONS "")
+      set_property(TARGET ${_quinoa_kokkos_target}
+                   PROPERTY INTERFACE_LINK_OPTIONS "")
+    endif()
+  endforeach()
+
+  # CMake's Makefile generator does not emit source-scoped
+  # RULE_LAUNCH_COMPILE.  Apply the launcher to a whole computational target
+  # instead. CMAKE_CXX_COMPILER remains mpicxx for Control's PEGTL/Lua parser,
+  # Charm++ modules, and every other host-only target.
+  macro(quinoa_cuda_target target)
+    target_compile_options(${target} PRIVATE
+      --expt-extended-lambda -I${QUINOA_CUDA_ROOT}/include)
+    # kokkos_launch_compiler uses this marker to redirect both compiler and
+    # linker invocations to nvcc_wrapper. Do not link Kokkos::kokkos here:
+    # with Quinoa's legacy transitive link interfaces, its CUDA-only compile
+    # flags otherwise leak into host-only targets such as Main/inciter.
+    target_compile_definitions(${target} PRIVATE KOKKOS_DEPENDENCE)
+    set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS
+                 " -DKOKKOS_DEPENDENCE")
+    kokkos_compilation(TARGET ${target} COMPILER ${QUINOA_NVCC_WRAPPER_LAUNCHER})
+  endmacro()
 endif()
 
 # Compilers
@@ -677,6 +792,18 @@ if (ENABLE_UNITTEST AND ENABLE_TESTS)
 endif()
 
 add_subdirectory(Main)
+
+if (ENABLE_GPU)
+  # Non-PDE targets whose implementation or headers reach Kokkos.
+  foreach(_quinoa_cuda_target
+          Mesh
+          ZoltanInterOp
+          LinearSolver
+          Inciter
+          MeshRefinement)
+    quinoa_cuda_target(${_quinoa_cuda_target})
+  endforeach()
+endif()
 
 # Add a target to generate documentation using doxygen and m.css
 find_package(Doxygen 1.8.15)
