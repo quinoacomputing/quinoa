@@ -323,27 +323,140 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   const Fields& P,
   std::size_t elem,
   const std::array< std::vector< tk::real >, 3 >& dBdx,
-  std::array< std::array< tk::real, 3 >, 4>& grad ) const
+  const std::array< std::vector< tk::real >, 6 >& d2Bdx2,
+  std::array< std::array< tk::real, 3 >, 5>& grad,
+  std::array< std::array< tk::real, 3 >, 4>& vgrad,
+  std::array< std::array< tk::real, 6 >, 5>& hess ) const
 // *****************************************************************************
-//! Compute gradients of quantities for an interior element
+//! Compute gradients of conserved quantities for an interior element
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] elem element id
 //! \param[in] dBdx Basis gradients in element
-//! \param[in,out] grad Velocity and temperature gradients in element
+//! \param[in] d2Bdx2 Second derivatives of basis functions in element
+//! \param[in,out] grad Density, momentum, energy gradients in element
+//! \param[in,out] vgrad Velocity, temperature gradients in element
+//! \param[in,out] hess Hessian of conserved quantities in element 
+//! \details Hessian matrix contains (d2u_i/dx_i^2, du_i/dx_jdx_i, etc. terms)
 // *****************************************************************************
-{ 
-  // no-op
+{
+  using inciter::multispecies::momentumDofIdx;
+  using inciter::multispecies::densityDofIdx;
+  using inciter::multispecies::energyDofIdx;
+  using inciter::multispecies::temperatureDofIdx;
+
+  Assert(m_nspec == 1, "DGP1 viscous gradient storage currently assumes one species");
+  
+  // Set grad evals to zero for every gp to avoid runaway rhs
+  for (auto& component : grad)
+    component.fill(0.0);
+
+  for (auto& component : vgrad)
+    component.fill(0.0);
+
+  for (auto& component : hess)
+    component.fill(0.0);
+
+  
+  // Gradient of conserved quantities
+  real cellAvgRho(0.0);
+  // d(\rho)/dx
+  for (std::size_t k=0; k<m_nspec; ++k) {
+    for (std::size_t j=0; j<3; ++j) {
+      grad[0][j] +=
+        dBdx[j][1] * U(elem, densityDofIdx(m_nspec,k,m_rdof,1))
+      + dBdx[j][2] * U(elem, densityDofIdx(m_nspec,k,m_rdof,2))
+      + dBdx[j][3] * U(elem, densityDofIdx(m_nspec,k,m_rdof,3));
+    }
+    cellAvgRho += U(elem, densityDofIdx(m_nspec,k,m_rdof,0));
+  }
+
+  // d(\rho u)/dx
+  for (std::size_t i=1; i<4; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      grad[i][j] = //drudx[i][j]
+        dBdx[j][1] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,1))
+      + dBdx[j][2] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,2))
+      + dBdx[j][3] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,3));
+    }
+  }
+
+  // dE/dx_j
+  // double check that this indexing is correct. I think this needs to change to calc energy from temp
+  // because quinoa stores temp not energy?
+  for (std::size_t j=0; j<3; ++j) {
+    // dEdx[j]
+    grad[4][j] = dBdx[j][1] * U(elem, energyDofIdx(m_nspec,0,m_rdof,1))
+               + dBdx[j][2] * U(elem, energyDofIdx(m_nspec,0,m_rdof,2))
+               + dBdx[j][3] * U(elem, energyDofIdx(m_nspec,0,m_rdof,3));
+  }
+
+  // Velocity and temperature gradients
+
+  //std::array< std::array< tk::real, 3 >, 4> vgrad;
+  std::array< real, 3 > cellAvgVel;
+  for (std::size_t i=0; i<3; ++i) {
+    cellAvgVel[i] = U(elem, momentumDofIdx(m_nspec,i,m_rdof,0))
+      / cellAvgRho;
+  }
+
+  // du/dx
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      // dudx[i][j]
+      vgrad[i][j] = (grad[i+1][j] - cellAvgVel[i] * grad[0][j]) / cellAvgRho;
+    }
+  }
+
+  // dT/dx_j
+  for (std::size_t j=0; j<3; ++j) {
+    // dTdx[j]
+    vgrad[3][j] = dBdx[j][1] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,1))
+               + dBdx[j][2] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,2))
+               + dBdx[j][3] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,3));
+  }
+
+  // Hessian 
+
+  // d2(rho)dx_jdx_k
+  for (std::size_t k=0; k<m_nspec; ++k) {
+    for (std::size_t j=0; j<6; ++j) {
+      hess[0][j] +=
+        d2Bdx2[j][1] * U(elem, densityDofIdx(m_nspec,k,m_rdof,1))
+      + d2Bdx2[j][2] * U(elem, densityDofIdx(m_nspec,k,m_rdof,2))
+      + d2Bdx2[j][3] * U(elem, densityDofIdx(m_nspec,k,m_rdof,3));
+    }
+  }
+
+  // d2(rho*u_i)/dx_jdx_k
+  for (std::size_t i=1; i<4; ++i) {
+    for (std::size_t j=0; j<6; ++j) {
+      hess[i][j] =
+        d2Bdx2[j][1] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,1))
+      + d2Bdx2[j][2] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,2))
+      + d2Bdx2[j][3] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,3));
+    }
+  }
+
+  // d2E/dx_jdx_k
+  for (std::size_t j=0; j<6; ++j) {
+    hess[4][j] = d2Bdx2[j][1] * U(elem, energyDofIdx(m_nspec,0,m_rdof,1))
+               + d2Bdx2[j][2] * U(elem, energyDofIdx(m_nspec,0,m_rdof,2))
+               + d2Bdx2[j][3] * U(elem, energyDofIdx(m_nspec,0,m_rdof,3));
+  }
+
 }
 
 
-void
+std::vector<std::array<tk::real, 3>>
 MultiSpeciesViscousTermsDGP1::interiorFlux(
   const std::vector< inciter::EOS >& mat_blk,
   std::size_t ncomp,
   const std::array< std::vector< tk::real >, 2 >& state,
   const std::array< tk::real, 3 >& fn,
-  const std::array< std::array< std::array< tk::real, 3 >, 4>, 2 >& grad,
+  const tk::real he,
+  const std::array< std::array< std::array< tk::real, 3 >, 5 >, 2 >& grad,
+  const std::array< std::array< std::array< tk::real, 6 >, 5 >, 2 >& hess,
   std::vector< tk::real >& fl ) const
 // *****************************************************************************
 //! \brief Compute the multispecies viscous flux at an interior face
@@ -352,29 +465,364 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
 //! \param[in] state Left and right high-order face states
 //! \param[in] cellAvgState Left and right cell-average states
 //! \param[in] fn Face normal
+//! \param[in] he Average diameter of right and left cells
 //! \param[in] centroid Left and right element centroids
-//! \param[in] grad Velocity and temperature gradients in left and right elements
+//! \param[in] grad Gradients of conserved quantities in left and right elements
+//! \param[in] hess Hessians of the conserved quantities in left and right elements
 //! \param[in,out] fl Numerical viscous flux
-//! \details Will be implemented using DDG
+//! \details The adjoint property is leveraged to circumvent the need for computing
+//!   the highly nonlinear diffusion matrix inside the numerical flux. Instead, 
+//!   new direction vectors are computed which contain information from the diffusion
+//!   matrices. Averages of the face states are used to compute these new direction vectors.
+//!   A standard numerical flux is then computed only in terms of conserved quantities.
+//!   Ref: Danis, M. E., and Yan, M. (2022). A new direct discontinuous Galerkin method with 
+//!   interface correction for two-dimensional compressible Navier Stokes equations. Journal
+//!   of Computational Physics, 452.
 // *****************************************************************************
 {
-  // no-op
+  using inciter::multispecies::densityIdx;
+  using inciter::multispecies::temperatureIdx;
+  using inciter::multispecies::momentumIdx;
+  using inciter::multispecies::energyIdx;
+
+  Assert ( fl.size() == ncomp, "incorrect viscous flux vector size" );
+
+  // 1. Compute diffusion matrices for average of left and right states
+  // There are ncomp by ncomp diffusion matrices A^(lm) for l,m = 1,...,ncomp
+  // For 3D compressible Navier-Stokes, ncomp = 5, so there are 25 diffusion matrices
+  // Each diffusion matrix is 3x3
+  // Initialize container for these matrices
+  // Initialize direction vectors for each diffusion matrix, which will be used to compute the numerical flux
+
+  auto neq = ncomp;
+  // Initialize vector of length 5. Each element contains 5 arrays of size 3 by 3
+  auto A = std::vector( ncomp, std::vector( ncomp, std::array< std::array< tk::real, 3>, 3> {} ));
+  // Initialize vector of length 5*5=25, each element of which contains a 3 by 1 vector
+  auto dir = std::vector( ncomp * ncomp, std::array< tk::real, 3>{});
+  
+  
+  // Compute averages of left and right conserved quantities
+  // [0] index is left, [1] index is right
+  const auto& ul = state[0];
+  const auto& ur = state[1];
+
+  // establish mixture state
+  inciter::Mixture mix_l(m_nspec, ul, mat_blk);
+  inciter::Mixture mix_r(m_nspec, ur, mat_blk);
+
+  // Compute fluid properties at left and right faces
+  auto mix_temp_l = ul[ncomp + temperatureIdx(m_nspec,0)];
+  auto mix_temp_r = ur[ncomp + temperatureIdx(m_nspec,0)];
+  auto rho_l = mix_l.get_mix_density();
+  auto rho_r = mix_r.get_mix_density();
+  auto R_l = mat_blk[0].compute<inciter::EOS::gas_constant>();
+  auto R_r = mat_blk[0].compute<inciter::EOS::gas_constant>();
+  auto R = 0.5 * (R_l + R_r);
+  auto cp_l = mix_l.Cp(mix_temp_l, mat_blk);
+  auto cp_r = mix_r.Cp(mix_temp_r, mat_blk);
+  auto gamma_l = cp_l / (cp_l - R);
+  auto gamma_r = cp_r / (cp_r - R);
+  auto mu_l = mix_l.viscCoeff(mix_temp_l, mat_blk);
+  auto mu_r = mix_r.viscCoeff(mix_temp_r, mat_blk);
+
+  // Compute averages (means) of left and right conserved quantities
+  auto e_m = 0.5 * (ul[energyIdx(m_nspec,0)]/rho_l + ur[energyIdx(m_nspec,0)]/rho_r);
+  auto u_m = 0.5 * (ul[momentumIdx(m_nspec,0)]/rho_l + ur[momentumIdx(m_nspec,0)]/rho_r);
+  auto v_m = 0.5 * (ul[momentumIdx(m_nspec,1)]/rho_l + ur[momentumIdx(m_nspec,1)]/rho_r);
+  auto w_m = 0.5 * (ul[momentumIdx(m_nspec,2)]/rho_l + ur[momentumIdx(m_nspec,2)]/rho_r);
+  auto mu_m = 0.5 * (mu_l + mu_r);
+  auto rho_m = 0.5 * (rho_l + rho_r);
+  auto nu_m = mu_m / rho_m;
+  auto gamma_m = 0.5 * (gamma_l + gamma_r);
+  auto Pr = 0.71; // TODO: make Prandtl number user-configurable
+
+  // Build diffusion matrices A^(lm) for l = 1,...,ncomp, m = 0, 1, ..., ncomp
+  // All matrices A^(1m) are zero matrices because continuity contains no viscous terms
+  // Since all A are initialized to zero, we don't compute anything for A^(0m).
+
+  // x-momentum (mathematically, l=2 but l = 1 in zero-based indexing)
+  A[1][0] = { { 
+    { -nu_m*(4.0/3.0)*u_m, -nu_m*(2.0/3.0)*v_m, -nu_m*(2.0/3.0)*w_m }, 
+    { -nu_m*v_m,           -nu_m*u_m,                    0.0        }, 
+    { -nu_m*w_m,               0.0,                  -nu_m*u_m      } } };
+
+  A[1][1] = { { 
+    { nu_m*(4.0/3.0), 0.0,  0.0 }, 
+    { 0.0,            nu_m, 0.0 }, 
+    { 0.0,            0.0,  nu_m} } };
+
+  A[1][2] = { { 
+    { 0.0,  -nu_m*(2.0/3.0), 0.0 }, 
+    { nu_m,        0.0,      0.0 }, 
+    { 0.0,         0.0,      0.0 } } };
+
+  A[1][3] = { { 
+    { 0.0,  0.0, -nu_m*(2.0/3.0) }, 
+    { 0.0,  0.0,        0.0      }, 
+    { nu_m, 0.0,        0.0      } } };
+
+  A[1][4] = {};
+  
+  // y-momentum (mathematically, l=3, but l=2 in zero-based indexing)
+  A[2][0] = { { 
+    { -nu_m*v_m,             -nu_m*u_m,                0.0        }, 
+    { nu_m*(2.0/3.0)*u_m, -nu_m*(4.0/3.0)*v_m, nu_m*(2.0/3.0)*w_m }, 
+    { 0.0,                   -nu_m*w_m,            -nu_m*v_m      } } };
+
+  A[2][1] = { { 
+    { 0.0,             nu_m,  0.0 }, 
+    { -nu_m*(2.0/3.0), 0.0,   0.0 }, 
+    { 0.0,             0.0,  nu_m } } };
+
+  A[2][2] = { { 
+    { nu_m,      0.0,      0.0 }, 
+    { 0.0, nu_m*(4.0/3.0), 0.0 }, 
+    { 0.0,       0.0,     nu_m } } };
+
+  A[2][3] = { { 
+    { 0.0, 0.0,        0.0      }, 
+    { 0.0, 0.0, -nu_m*(2.0/3.0) }, 
+    { 0.0, nu_m,       0.0      } } };
+
+  A[2][4] = {};
+
+  // z-momentum (mathematically, l=4, but l=3 in zero-based indexing)
+  A[3][0] = { { 
+    { -nu_m*w_m,               0.0,                  -nu_m*u_m }, 
+    { 0.0,                 -nu_m*w_m,                -nu_m*v_m }, 
+    { nu_m*(2.0/3.0)*u_m, nu_m*(2.0/3.0)*v_m, -nu_m*(4.0/3.0)*w_m } } };
+
+  A[3][1] = { { 
+    { 0.0,             0.0, nu_m }, 
+    { 0.0,             0.0, 0.0  }, 
+    { -nu_m*(2.0/3.0), 0.0, 0.0  } } };
+
+  A[3][2] = { { 
+    { 0.0,        0.0,      0.0 }, 
+    { 0.0,        0.0,     nu_m }, 
+    { 0.0, -nu_m*(2.0/3.0), 0.0 } } };
+
+  A[3][3] = { { 
+    { nu_m, 0.0,      0.0      }, 
+    { 0.0, nu_m,      0.0      }, 
+    { 0.0, 0.0, nu_m*(4.0/3.0) } } };
+
+  A[3][4] = {};
+
+  // energy (mathematically, l=5, but l=4 in zero-based indexing)
+  A[4][0] = { { 
+    { nu_m*((gamma_m/Pr - 4.0/3.0)*u_m*u_m + (gamma_m/Pr - 1)*(v_m*v_m + w_m*w_m) + e_m*gamma_m/(rho_m*Pr)),
+      -nu_m*(1.0/3.0)*u_m*v_m,
+      -nu_m*(1.0/3.0)*u_m*w_m }, 
+    { -nu_m*(1.0/3.0)*u_m*v_m,
+      nu_m*((gamma_m/Pr - 4.0/3.0)*v_m*v_m + (gamma_m/Pr - 1)*(u_m*u_m + w_m*w_m) + e_m*gamma_m/(rho_m*Pr)),
+      -nu_m*(1.0/3.0)*v_m*w_m }, 
+    { -nu_m*(1.0/3.0)*u_m*w_m, 
+      -nu_m*(1.0/3.0)*v_m*w_m,
+      nu_m*((gamma_m/Pr - 4.0/3.0)*w_m*w_m
+      + (gamma_m/Pr - 1)*(u_m*u_m + v_m*v_m)
+      + e_m*gamma_m/(rho_m*Pr)) } } };
+
+  A[4][1] = { {
+    { nu_m*(4.0/3.0 - gamma_m/Pr)*u_m,           nu_m*v_m,                   nu_m*w_m },
+    { -nu_m*(2.0/3.0)*v_m,               -nu_m*(gamma_m/Pr - 1)*u_m,              0   },
+    { -nu_m*(2.0/3.0)*w_m,                           0,        -nu_m*(gamma_m/Pr - 1)*u_m     } } };
+
+  A[4][2] = { { 
+    { -nu_m*(gamma_m/Pr - 1)*v_m,       -nu_m*(2.0/3.0)*u_m,                    0.0           }, 
+    { nu_m*u_m,                    nu_m*(4.0/3.0 - gamma_m/Pr)*v_m,          nu_m*w_m         }, 
+    { 0.0,                              -nu_m*(2.0/3.0)*w_m,       -nu_m*(gamma_m/Pr - 1)*v_m } } };
+
+  A[4][3] = { { 
+    { -nu_m*(gamma_m/Pr - 1)*w_m,                0.0,                -nu_m*(2.0/3.0)*u_m      }, 
+    { 0.0,                           -nu_m*(gamma_m/Pr - 1)*w_m,     -nu_m*(2.0/3.0)*v_m      }, 
+    { nu_m*u_m,                               nu_m*v_m,       nu_m*(4.0/3.0 - gamma_m/Pr)*w_m } } };
+
+  A[4][4] = { { 
+    { nu_m*gamma_m/Pr,      0.0,              0.0      }, 
+    { 0.0,             nu_m*gamma_m/Pr,       0.0      }, 
+    { 0.0,                  0.0,       nu_m*gamma_m/Pr } } };  
+
+  // 2. Compute new direction vectors using diffusion matrices and face normal
+  // Take the transpose of the diffusion matrices to get A^T, then dot with face normal to get new direction vectors; /xi = A^T * n
+  for (std::size_t l = 0; l < ncomp; ++l) {
+    for (std::size_t m = 0; m < ncomp; ++m) {
+      for (std::size_t i = 0; i < 3; ++i) {
+        for (std::size_t j = 0; j < 3; ++j) {
+          const auto k = l*ncomp + m;
+          dir[k][i] += A[l][m][j][i] * fn[j]; // swapped i,j indices to complete the transpose. 
+        }
+      }
+    }
+  }
+  
+  // 3. Compute numerical flux from left and right states
+
+  // initialize numerical gradient of conserved quantities. Vector of size 5 with elements of size 3x1
+  // element values are dQdx, dQdy, dQdz
+  auto numgradQ = std::vector(ncomp, std::array< tk::real, 3>{});
+  
+  // we stored values of hessian in a 6-element vector. Map vector indices to mathematically true matrix indices 
+  constexpr std::array<std::array<std::size_t, 3>, 3> hidx{{
+  {{ 0, 3, 4 }},  // x row: xx, xy, xz
+  {{ 3, 1, 5 }},  // y row: xy, yy, yz
+  {{ 4, 5, 2 }}   // z row: xz, yz, zz
+  }};
+  auto beta0 = 4.0; // beta0 = (k+1)^2 for all k = polynomial degree. So k = 1 => beta0 = 4 for DGP1
+  auto beta1 = 0.25; // beta1 = 1/(2k*(k+1)) for all k = polynomial degree. So k = 1 => beta1 = 0.25
+
+  for (std::size_t m = 0; m<ncomp; ++m) {
+    for (std::size_t i = 0; i < 3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      const auto hij = hidx[i][j];
+      numgradQ[m][i] += beta1*he*( hess[1][m][hij] - hess[0][m][hij])*fn[j];
+    }
+      numgradQ[m][i] += (beta0/he)*(state[1][m] - state[0][m])*fn[i] + 0.5*(grad[0][m][i] + grad[1][m][i]);
+  }
+}
+
+  // 4. Dot product of numerical flux with new direction vectors to compute flux
+
+  // Examples of how fl should be filled by the below nested loops:
+  // Continuity: fl[0] = 0 (all dir^(0m) = 0)
+  // X-momentum: fl[1] = numgrad(Q^(1)) * dir^(11) + numgrad(Q^(2)) * dir^(12)
+  //                     + numgrad(Q^(3)) * dir^(13) + numgrad(Q^(4)) * dir^(14)
+  //                     + numgrad(Q^(5)) * dir^(15)
+  // Y-momentum: fl[2] = numgrad(Q^(1)) * dir^(21) + numgrad(Q^(2)) * dir^(22)
+  //                     + numgrad(Q^(3)) * dir^(23) + numgrad(Q^(4)) * dir^(24)
+  //                     + numgrad(Q^(5)) * dir^(25)
+  // Z-momentum: etc...
+
+
+
+  for (std::size_t l=1; l<ncomp; ++l) { // first row is zero because continuity contains no viscous terms. start at 2nd row 
+    fl[l] = 0.0;
+    for (std::size_t m=0; m<ncomp; ++m) { // equation index
+      const auto k = l*ncomp + m;         // direction vector index 
+      for (std::size_t i=0; i<3; ++i)     // xyz index
+        fl[l] += numgradQ[m][i] * dir[k][i];
+    }
+  }
+
+  // 6. Return direction vectors
+  return dir;
+  
+}
+
+void
+MultiSpeciesViscousTermsDGP1::interfaceCorrection(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t ncomp,
+  const std::array< std::vector< tk::real >, 2 >& state,
+  const std::vector<std::array<tk::real, 3>>& dir,
+  std::vector<std::array< tk::real, 3>>& ic ) const
+// *****************************************************************************
+//! \brief Compute the interface correction term for the multispecies viscous flux at an interior face
+//! \param[in] mat_blk Material EOS block
+//! \param[in] ncomp Number of components in this system
+//! \param[in] state Left and right high-order face states
+//! \param[in] dir direction vectors computed from interiorFlux
+//! \param[in,out] ic Interface correction term for the numerical viscous flux
+// *****************************************************************************
+{
+ic.assign(ncomp, std::array<tk::real, 3>{});
+
+for (std::size_t l = 1; l<ncomp; ++l) {
+  for (std::size_t i = 0; i < 3; ++i) {
+    tk::real sum = 0.0;
+    for (std::size_t m=0; m<ncomp; ++m) {
+      auto k = l*ncomp + m;
+        sum += 0.5*( (state[1][m] - state[0][m]) * dir[k][i]);
+    }
+  ic[l][i] = 0.5 * sum;
+  }
+}
+  
 }
 
 void
 MultiSpeciesViscousTermsDGP1::volumeFlux(
   const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t nspec,
   std::size_t ncomp,
   const std::vector<tk::real>& state,
+  const std::array< std::array< tk::real, 3 >, 4>& vgrad,
   std::vector<std::array<tk::real, 3>>& visc_fl ) const
 // *****************************************************************************
 //! \brief Compute the multispecies viscous flux on a tet volume
 //! \param[in] mat_blk Material EOS block
+//! \param[in] nspec Number of species in this system
 //! \param[in] ncomp Number of components in this system
 //! \param[in] state vector of conserved quantities
+//! \param[in,out] vgrad Velocity, temperature gradients in element
 //! \param[in,out] visc_fl viscous volume flux
 // *****************************************************************************
 {
- // no-op
+
+  using inciter::multispecies::densityIdx;
+  using inciter::multispecies::momentumIdx;
+  using inciter::multispecies::temperatureIdx;
+  using inciter::multispecies::energyIdx;
+  using inciter::Mixture;
+  
+  tk::real rhob(0.0);
+  for (std::size_t k=0; k<nspec; ++k)
+    rhob += state[densityIdx(nspec, k)];
+
+  std::array< tk::real, 3 > u{{
+        state[momentumIdx(nspec,0)] / rhob,
+        state[momentumIdx(nspec,1)] / rhob,
+        state[momentumIdx(nspec,2)] / rhob }};
+
+  std::array< std::array< tk::real, 3 >, 3 > dudx, tau;
+  std::array< tk::real, 3 > dTdx;
+  tk::real mu(0.0), conduct(0.0);
+
+  Mixture mix( nspec, state, mat_blk );
+
+  mu = mix.viscCoeff( state[ncomp+temperatureIdx(nspec,0)],
+                      mat_blk );
+
+  conduct = mu * mix.Cp(state[ncomp+temperatureIdx(nspec,0)], mat_blk) / 0.71; 
+  //TO-DO: make Pr user-configurable
+
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      dudx[i][j]=vgrad[i][j];
+    }
+  }
+
+  for (std::size_t j=0; j<3; ++j)
+    dTdx[j] = vgrad[3][j];
+
+
+  tau[0][0] = mu * ( 4.0 * dudx[0][0] - 2.0*(dudx[1][1] + dudx[2][2]) ) / 3.0;
+  tau[1][1] = mu * ( 4.0 * dudx[1][1] - 2.0*(dudx[0][0] + dudx[2][2]) ) / 3.0;
+  tau[2][2] = mu * ( 4.0 * dudx[2][2] - 2.0*(dudx[0][0] + dudx[1][1]) ) / 3.0;
+  tau[0][1] = mu * ( dudx[0][1] + dudx[1][0] );
+  tau[0][2] = mu * ( dudx[0][2] + dudx[2][0] );
+  tau[1][2] = mu * ( dudx[1][2] + dudx[2][1] );
+  tau[1][0] = tau[0][1];
+  tau[2][0] = tau[0][2];
+  tau[2][1] = tau[1][2];
+
+  // momentum viscous flux
+  for (std::size_t i=0; i<3; ++i) {
+    auto idx = momentumIdx(nspec,i);
+    for (std::size_t j=0; j<3; ++j) {
+      visc_fl[idx][j] += tau[i][j];
+    }
+  }
+
+  // energy  viscous flux
+  auto idx_2 = energyIdx(nspec,0);
+  for (std::size_t i=0; i<3; ++i) {
+    for (std::size_t j=0; j<3; ++j) {
+      visc_fl[idx_2][i] += u[j] * tau[i][j];
+    }
+    visc_fl[idx_2][i] += conduct*dTdx[i];
+  }
+  
 }
+  
 } // tk::

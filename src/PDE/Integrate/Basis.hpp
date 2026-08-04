@@ -61,6 +61,12 @@ eval_dBdx_p2( const std::size_t igp,
               const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
               std::array< std::vector<tk::real>, 3 >& dBdx );
 
+//  Compute the second derivatives of Dubiner basis function for DG(P2)
+void
+eval_d2Bdx2_p2( const std::size_t ndof,
+                    const std::array< std::array< tk::real, 3 >, 3 >& jacInv,
+                    std::array< std::vector<tk::real>, 6 >& d2Bdx2 );
+
 //! Compute the Dubiner basis functions
 void
 eval_basis( const std::size_t ndof,

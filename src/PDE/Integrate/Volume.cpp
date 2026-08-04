@@ -24,6 +24,7 @@ void
 tk::volIntViscous(
             const ViscousTerms& viscousRhs,
             const std::vector< inciter::EOS >& mat_blk,
+            const std::size_t nspec,
             const std::size_t ndof,
             const std::size_t rdof,
             const std::size_t nelem,
@@ -39,6 +40,7 @@ tk::volIntViscous(
 //! \tparam ViscousTerms Policy type that computes PDE-specific viscous RHS
 //! \param[in] viscousRhs PDE-specific viscous residual policy
 //! \param[in] mat_blk EOS material block
+//! \param[in] nspec Number of species in this PDE system
 //! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Total number of degrees of freedom included reconstructed ones
 //! \param[in] nelem Maximum number of elements
@@ -63,6 +65,10 @@ tk::volIntViscous(
   Assert( ndof*ncomp == R.nprop(),
           "Mismatch in viscous RHS polynomial and component sizes" );
 
+  std::array< std::array< tk::real, 3 >, 5> grad;
+  std::array< std::array< tk::real, 3 >, 4> vgrad;
+  std::array< std::vector< tk::real >, 6 > d2Bdx2;
+  std::array< std::array< tk::real, 6 >, 5> hess;
   std::vector<std::array<tk::real, 3>> visc_fl(ncomp);
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
@@ -95,7 +101,8 @@ tk::volIntViscous(
 
     // Compute the derivatives of basis function for second order terms
     std::array< std::vector<tk::real>, 3 > dBdx;
-    for (std::size_t i=0; i<3; ++i) dBdx[i].resize( dof_el, 0 );
+    for (std::size_t i=0; i<3; ++i) dBdx[i].resize( dof_el, 0.0 );
+    for (std::size_t j=0; j<6; ++j) d2Bdx2[j].resize( dof_el, 0.0);
     eval_dBdx_p1( dof_el, jacInv, dBdx );
 
     std::vector< tk::real > B(dof_el);
@@ -119,8 +126,17 @@ tk::volIntViscous(
       if(dof_el > 1)
       {
         state = viscousRhs.stateAt(mat_blk, U, P, e, dof_el, B );
+        
+        grad = {};
+        vgrad = {};
+        hess = {};
+
+        viscousRhs.gradientIntElem(U, P, e, dBdx, d2Bdx2, grad, vgrad, hess);
+        for (std::size_t l=0; l<ncomp; l++)
+          visc_fl[l].fill(0.0); // reset flux to prevent spillage
+
         // compute viscous flux
-        viscousRhs.volumeFlux( mat_blk, ncomp, state, visc_fl ); //currently no-op
+        viscousRhs.volumeFlux( mat_blk, nspec, ncomp, state, vgrad, visc_fl );
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, visc_fl, R );
       }
@@ -241,7 +257,7 @@ tk::volInt( std::size_t nmat,
         // evaluate prescribed velocity (if any)
         auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
-        // comput flux
+        // compute flux
         auto fl = flux( ncomp, mat_blk, state, v );
 
         // update flux according to mesh velocity at quadrature point
@@ -573,9 +589,7 @@ tk::volIntViscousMultiSpecies(
 {
   if (ndof == 4) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
-    volIntViscous( viscousRhs, mat_blk, ndof, rdof, nelem,
+    volIntViscous( viscousRhs, mat_blk, nspec, ndof, rdof, nelem,
       inpoel, coord, geoElem, U, P, ndofel, R );
   }
-  else
-    Throw( "Viscous operators only implemented for scheme = 'dgp1'." );
 }

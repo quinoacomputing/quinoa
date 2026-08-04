@@ -1,6 +1,7 @@
 add_library(MultiSpeciesProblem
             UserDefined.cpp
-            FieldOutput.cpp)
+            FieldOutput.cpp
+            MixingLayer.cpp)
 
 target_include_directories(MultiSpeciesProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}

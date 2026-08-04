@@ -22,6 +22,7 @@
 #include "Quadrature.hpp"
 #include "MultiMatTerms.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
@@ -195,7 +196,9 @@ void
 viscousBoundaryFaceIntDG(
   const ViscousTerms& viscousRhs,
   const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t nspec,
   const std::size_t ndof,
+  const std::size_t rdof,
   const std::vector< std::size_t >& bcconfig,
   const std::vector< std::size_t >& inpoel,
   const UnsMesh::Coords& coord,
@@ -217,7 +220,9 @@ viscousBoundaryFaceIntDG(
 //! \tparam ViscousTerms Policy type that computes PDE-specific viscous RHS
 //! \param[in] viscousRhs PDE-specific viscous residual policy
 //! \param[in] mat_blk Material EOS block
+//! \param[in] nspec Number of species in the PDE system
 //! \param[in] ndof Number of active solution degrees of freedom
+//! \param[in] rdof Number of reconstructed degrees of freedom
 //! \param[in] bcconfig Boundary configuration vector for multiple side sets
 //! \param[in] inpoel Element-node connectivity
 //! \param[in] coord Array of nodal coordinates
@@ -233,7 +238,15 @@ viscousBoundaryFaceIntDG(
 //! \details This routine mirrors viscousInternalFaceIntDG() for physical
 //!   boundaries. The ghost-side states are provided by the supplied StateFn.
 // *****************************************************************************
-{
+{  
+  using inciter::multispecies::momentumDofIdx;
+  using inciter::multispecies::densityDofIdx;
+  using inciter::multispecies::energyDofIdx;
+  using inciter::multispecies::temperatureIdx;
+  using inciter::multispecies::densityIdx;
+  using inciter::multispecies::momentumIdx;
+  using inciter::multispecies::energyIdx;
+
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
@@ -243,11 +256,17 @@ viscousBoundaryFaceIntDG(
   const auto& cz = coord[2];
 
   const auto ncomp = static_cast< ncomp_t >( R.nprop()/ndof );
+  Assert(ncomp == 5, "DGP1 viscous diffusion matrices currently assume five equations");
+
 
   std::array < std::vector< tk::real >, 2 > B;
   std::array < std::vector< tk::real >, 3 > dBdx_l;
-  std::array < std::array< std::array< tk::real, 3 >, 4>, 2 > grad;
+  std::array< std::array< std::vector< tk::real >, 6 >, 2 > d2Bdx2;
+  std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess{};
+  std::array < std::array< std::array< tk::real, 3 >, 5>, 2 > grad{};
+  std::array < std::array< std::array< tk::real, 3 >, 4>, 2 > vgrad{};
   std::vector< tk::real > fl( ncomp, 0.0);
+  std::vector<std::array< tk::real, 3>> ic(ncomp);
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find(static_cast<int>(s));// faces for side set
@@ -259,18 +278,20 @@ viscousBoundaryFaceIntDG(
 
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto ndof_l = viscousRhs.localDof( el );
+
+        Assert( ndof_l <= 4, "Boundary Hessian computation is not implemented for DG(P2)");
         auto ng = tk::NGfa(ndof_l);
 
         // arrays for quadrature points
         std::array< std::vector< real >, 2 > coordgp;
         std::vector< real > wgp;
 
-        coordgp[0].resize( ndof_l );
-        coordgp[1].resize( ndof_l );
-        wgp.resize( ndof_l );
+        coordgp[0].resize( ng );
+        coordgp[1].resize( ng );
+        wgp.resize( ng );
 
         // get quadrature point weights and coordinates for triangle
-        GaussQuadratureTri( ndof_l, coordgp, wgp );
+        GaussQuadratureTri( ng, coordgp, wgp );
 
         // Extract the left element coordinates
         std::array< std::array< tk::real, 3>, 4 > coordel_l {{
@@ -292,6 +313,21 @@ viscousBoundaryFaceIntDG(
         // face normal
         std::array< real, 3 > fn{{geoFace(f,1), geoFace(f,2), geoFace(f,3)}};
 
+        // Compute right and left cell diameters for numerical flux
+        // Compute distances between vertices and take maximum
+        tk::real diameter_l = 0.0;
+        tk::real diameter_r = 0.0;
+        for (std::size_t i = 0; i<3; ++i) {
+          for (std::size_t j=i+1; j<4; ++j) {
+            diameter_l = std::max(diameter_l, tk::length(
+                                   coordel_l[i][0] - coordel_l[j][0],
+                                   coordel_l[i][1] - coordel_l[j][1],
+                                   coordel_l[i][2] - coordel_l[j][2] ) );
+          }
+        }
+
+        const tk::real he = diameter_l;
+
         // Gaussian quadrature
         for (std::size_t igp=0; igp<ng; ++igp)
         {
@@ -304,16 +340,15 @@ viscousBoundaryFaceIntDG(
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
 
           // Compute the basis functions for the left element
-          std::vector< tk::real > B_l( ndof_l );
-          eval_basis( ndof_l, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
-
+          B[0].resize(ndof_l);
+          eval_basis( ndof_l, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B[0] );
+          auto B_l = B[0];
+        
           auto wt = wgp[igp] * geoFace(f,0);
 
-          // Compute the state variables at the left element
-          //auto state_l = viscousRhs.stateAt( mat_blk, U, P, el, ndof_l, B_l);
-
-          auto State = state( ncomp, mat_blk,
-            viscousRhs.stateAt(mat_blk, U, P, el, ndof_l, B[0]),
+          // Boundary condition, i.e. ghost state
+          auto ghostState = state( ncomp, mat_blk,
+            viscousRhs.stateAt(mat_blk, U, P, el, ndof_l, B_l),
             gp[0], gp[1], gp[2], t, fn );
 
           // Gradients of basis functions
@@ -323,28 +358,86 @@ viscousBoundaryFaceIntDG(
             inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
           eval_dBdx_p1( ndof_l, jacInv_l, dBdx_l );
 
-          // Compute gradients
-          viscousRhs.gradientIntElem( U, P, el, dBdx_l, grad[0] ); // no-op for now
+          // Compute second derivates of basis functions
+          if (ndof_l <= 4) {
+            for (std::size_t i=0; i<6; ++i)
+              d2Bdx2[0][i].assign( ndof_l, 0.0); // second derivative of p0 and p1 basis function is zero
+          }
+          if (ndof_l == 10) {
+            eval_d2Bdx2_p2( ndof_l, jacInv_l, d2Bdx2[0] ); // no-op for now
+          }
 
+          auto d2Bdx2_l = d2Bdx2[0];
+
+          // reset Hessians for new quadrature point
+          for (auto& side: hess)
+            for (auto& component : side)
+              component.fill(0.0);
+
+          // Compute gradients
+          viscousRhs.gradientIntElem( U, P, el, dBdx_l, d2Bdx2_l, grad[0], vgrad[0], hess[0]); // no-op for now
+          
           // Apply BCs on gradients
+          // For DDG, "grad" contains gradients of conserved quantities, "vgrad" contains gradients of 
+          // velocity and temperature 
+          // Use velocity and temp gradients to conform with expected inputs for gradFn
+          
           std::vector< tk::real > dqdx_l(4*3,0.0);
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
-              dqdx_l[3*i+j] = grad[0][i][j];  // velocity gradients
+              dqdx_l[3*i+j] = vgrad[0][i][j];  // velocity gradients
 
           for (std::size_t j=0; j<3; ++j)
-            dqdx_l[3*3+j] = grad[0][3][j];  // temperature gradients
+            dqdx_l[3*3+j] = vgrad[0][3][j];  // temperature gradients
 
           auto gradBC = gradFn( 4, mat_blk, dqdx_l, gp[0], gp[1], gp[2], t, fn );
           // store BC gradients into gradient vector
           for (std::size_t i=0; i<4; ++i)
             for (std::size_t j=0; j<3; ++j) {
-              grad[1][i][j] = gradBC[1][3*i+j];
+              vgrad[1][i][j] = gradBC[1][3*i+j];
             }
+          
+          // for ghost point, calculate grad[1] from vgrad[1]. 
+          // grad[1] = { {rho}, {rho*u}, {rho*v}, {rho*w}, {rho*e}}
+          const auto rho = ghostState[1][densityIdx(nspec,0)];
+          const auto rhoE = ghostState[1][energyIdx(nspec,0)];
+          const auto temperature = ghostState[1][ncomp + temperatureIdx(nspec,0)];
+          Assert(rho > 0.0, "Non-positive ghost density");
+          
+          // Continuity
+          for (std::size_t j = 0; j < 3; ++j) {
+            grad[1][densityIdx(nspec,0)][j] = grad[0][densityIdx(nspec,0)][j];
+          }
+          // Momentum
+          std::array<tk::real, 3> velocity{};
+          for (std::size_t d = 0; d < 3; ++d) {
+            velocity[d] = ghostState[1][momentumIdx(nspec,d)] / rho; // u = rho*u / rho
+            for (std::size_t j = 0; j< 3; ++j) {
+              grad[1][momentumIdx(nspec,d)][j] = velocity[d] * grad[1][densityIdx(nspec,0)][j] 
+                + rho * vgrad[1][d][j]; // product rule: d(rho*u) = u*d(rho) + rho*du
+            }
+          }
 
+          // Energy
+          const auto cv = mat_blk[0].compute<inciter::EOS::cv>(temperature);
+
+          const auto e = rhoE / rho;
+          
+          for (std::size_t j = 0; j < 3; ++j) {
+            tk::real velocityContribution = 0.0;
+
+            for (std::size_t d = 0; d < 3; ++d) {
+              velocityContribution += velocity[d] * vgrad[1][d][j]; // (u*grad(u) + v*grad(v) + w*grad(w))
+            }
+            // grad(rho*e) = e*grad(rho) + rho*cv*grad(T) + rho * (u*grad(u) + v*grad(v) + w*grad(w))
+            grad[1][energyIdx(nspec,0)][j] = e * grad[1][densityIdx(nspec,0)][j] 
+              + rho * cv * vgrad[1][3][j] + rho * velocityContribution;
+          }
+          
           // Compute viscous fluxes
-          viscousRhs.interiorFlux( mat_blk, ncomp, State,
-            fn, grad, fl ); // no-op for now
+          auto dir = viscousRhs.interiorFlux( mat_blk, ncomp, ghostState, fn, he, grad, hess, fl );
+
+          viscousRhs.interfaceCorrection( mat_blk, ncomp, ghostState, dir, ic );
 
           // Contribute fluxes to RHS
           for (ncomp_t c=0; c<ncomp; ++c)
@@ -355,8 +448,15 @@ viscousBoundaryFaceIntDG(
             if (ndof_l > 1) // DG(P1)
             {
               R(el, mark+1) += wt * fl[c] * B_l[1];
-              R(el, mark+1) += wt * fl[c] * B_l[2];
-              R(el, mark+1) += wt * fl[c] * B_l[3];
+              R(el, mark+2) += wt * fl[c] * B_l[2];
+              R(el, mark+3) += wt * fl[c] * B_l[3];
+              // interface correction quadrature 
+              R(el, mark+1) +=
+                wt * (ic[c][0]*dBdx_l[0][1] + ic[c][1]*dBdx_l[1][1] + ic[c][2]*dBdx_l[2][1]);
+              R(el, mark+2) +=
+                wt * (ic[c][0]*dBdx_l[0][2] + ic[c][1]*dBdx_l[1][2] + ic[c][2]*dBdx_l[2][2]);
+              R(el, mark+3) +=
+                wt * (ic[c][0]*dBdx_l[0][3] + ic[c][1]*dBdx_l[1][3] + ic[c][2]*dBdx_l[2][3]);
             }
 
             if(ndof_l > 4)  //DG(P2)
@@ -367,8 +467,20 @@ viscousBoundaryFaceIntDG(
               R(el, mark+7) += wt * fl[c] * B_l[7];
               R(el, mark+8) += wt * fl[c] * B_l[8];
               R(el, mark+9) += wt * fl[c] * B_l[9];
+              //interface correction quadrature
+              R(el, mark+4) +=
+                wt * (ic[c][0]*dBdx_l[0][4] + ic[c][1]*dBdx_l[1][4] + ic[c][2]*dBdx_l[2][4]);
+              R(el, mark+5) +=
+                wt * (ic[c][0]*dBdx_l[0][5] + ic[c][1]*dBdx_l[1][5] + ic[c][2]*dBdx_l[2][5]);
+              R(el, mark+6) +=
+                wt * (ic[c][0]*dBdx_l[0][6] + ic[c][1]*dBdx_l[1][6] + ic[c][2]*dBdx_l[2][6]);
+              R(el, mark+7) +=
+                wt * (ic[c][0]*dBdx_l[0][7] + ic[c][1]*dBdx_l[1][7] + ic[c][2]*dBdx_l[2][7]);
+              R(el, mark+8) +=
+                wt * (ic[c][0]*dBdx_l[0][8] + ic[c][1]*dBdx_l[1][8] + ic[c][2]*dBdx_l[2][8]);
+              R(el, mark+9) +=
+                wt * (ic[c][0]*dBdx_l[0][9] + ic[c][1]*dBdx_l[1][9] + ic[c][2]*dBdx_l[2][9]);
             }
-
           }
 
         }
@@ -1121,7 +1233,7 @@ bndSurfIntViscousFV(
               + dBdx_l[j][3] * P(el, velocityDofIdx(nmat,i,rdof,3));
 
         // 2. Average du_i/dx_j
-        auto grad = gradFn( 3, mat_blk, dudx_l, gp[0], gp[2], gp[2], t, fn );
+        auto grad = gradFn( 3, mat_blk, dudx_l, gp[0], gp[1], gp[2], t, fn );
         std::array< std::array< tk::real, 3 >, 3 > dudx;
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
@@ -1189,10 +1301,10 @@ bndSurfIntViscousMultiSpecies(
       coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
   }
 
-  if (ndof == 4) {
+  else if (ndof == 4) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
-    viscousBoundaryFaceIntDG( viscousRhs, mat_blk, ndof, bcconfig, inpoel,
-      coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R ); // no-op
+    viscousBoundaryFaceIntDG( viscousRhs, mat_blk, nspec, ndof, rdof, bcconfig, 
+      inpoel, coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
   }
 
   else
