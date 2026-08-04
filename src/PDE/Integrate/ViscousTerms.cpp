@@ -345,6 +345,8 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   using inciter::multispecies::energyDofIdx;
   using inciter::multispecies::temperatureDofIdx;
 
+  Assert(m_nspec == 1, "DGP1 viscous gradient storage currently assumes one species");
+  
   // Set grad evals to zero for every gp to avoid runaway rhs
   for (auto& component : grad)
     component.fill(0.0);
@@ -373,9 +375,9 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   for (std::size_t i=1; i<4; ++i) {
     for (std::size_t j=0; j<3; ++j) {
       grad[i][j] = //drudx[i][j]
-        dBdx[j][1] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,1))
-      + dBdx[j][2] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,2))
-      + dBdx[j][3] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,3));
+        dBdx[j][1] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,1))
+      + dBdx[j][2] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,2))
+      + dBdx[j][3] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,3));
     }
   }
 
@@ -430,9 +432,9 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   for (std::size_t i=1; i<4; ++i) {
     for (std::size_t j=0; j<6; ++j) {
       hess[i][j] =
-        d2Bdx2[j][1] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,1))
-      + d2Bdx2[j][2] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,2))
-      + d2Bdx2[j][3] * U(elem, momentumDofIdx(m_nspec,i,m_rdof,3));
+        d2Bdx2[j][1] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,1))
+      + d2Bdx2[j][2] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,2))
+      + d2Bdx2[j][3] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,3));
     }
   }
 
@@ -621,6 +623,11 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
       + (gamma_m/Pr - 1)*(u_m*u_m + v_m*v_m)
       + e_m*gamma_m/(rho_m*Pr)) } } };
 
+  A[4][1] = { {
+    { nu_m*(4.0/3.0 - gamma_m/Pr)*u_m,           nu_m*v_m,                   nu_m*w_m },
+    { -nu_m*(2.0/3.0)*v_m,               -nu_m*(gamma_m/Pr - 1)*u_m,              0   },
+    { -nu_m*(2.0/3.0)*w_m,                           0,        -nu_m*(gamma_m/Pr - 1)*u_m     } } };
+
   A[4][2] = { { 
     { -nu_m*(gamma_m/Pr - 1)*v_m,       -nu_m*(2.0/3.0)*u_m,                    0.0           }, 
     { nu_m*u_m,                    nu_m*(4.0/3.0 - gamma_m/Pr)*v_m,          nu_m*w_m         }, 
@@ -717,14 +724,17 @@ MultiSpeciesViscousTermsDGP1::interfaceCorrection(
 //! \param[in] dir direction vectors computed from interiorFlux
 //! \param[in,out] ic Interface correction term for the numerical viscous flux
 // *****************************************************************************
-{  
-  
+{
+ic.assign(ncomp, std::array<tk::real, 3>{});
+
 for (std::size_t l = 1; l<ncomp; ++l) {
-  for (std::size_t m=0; m<ncomp; ++m) {
-    auto k = l*ncomp + m;
-    for (std::size_t i=0; i<3; ++i) {
-      ic[l][i] = 0.5*( (state[1][m] - state[0][m]) * dir[k][i]);
+  for (std::size_t i = 0; i < 3; ++i) {
+    tk::real sum = 0.0;
+    for (std::size_t m=0; m<ncomp; ++m) {
+      auto k = l*ncomp + m;
+        sum += 0.5*( (state[1][m] - state[0][m]) * dir[k][i]);
     }
+  ic[l][i] = 0.5 * sum;
   }
 }
   

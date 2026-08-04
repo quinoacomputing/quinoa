@@ -83,7 +83,7 @@ else if (t > 0) {
     f = f1;
   }
   else {
-    f = f0 + (f1 - f0) / (1 + std::exp(-c * (eta - eta0)));
+  f = f0 + (f1 - f0) / (1 + std::exp(-c * (eta - eta0)));
   }
 }
   auto denom = (1 + std::exp(-c * std::abs(eta - eta0)));

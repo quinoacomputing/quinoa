@@ -238,11 +238,14 @@ viscousBoundaryFaceIntDG(
 //! \details This routine mirrors viscousInternalFaceIntDG() for physical
 //!   boundaries. The ghost-side states are provided by the supplied StateFn.
 // *****************************************************************************
-{
+{  
   using inciter::multispecies::momentumDofIdx;
   using inciter::multispecies::densityDofIdx;
   using inciter::multispecies::energyDofIdx;
   using inciter::multispecies::temperatureIdx;
+  using inciter::multispecies::densityIdx;
+  using inciter::multispecies::momentumIdx;
+  using inciter::multispecies::energyIdx;
 
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
@@ -253,13 +256,15 @@ viscousBoundaryFaceIntDG(
   const auto& cz = coord[2];
 
   const auto ncomp = static_cast< ncomp_t >( R.nprop()/ndof );
+  Assert(ncomp == 5, "DGP1 viscous diffusion matrices currently assume five equations");
+
 
   std::array < std::vector< tk::real >, 2 > B;
   std::array < std::vector< tk::real >, 3 > dBdx_l;
   std::array< std::array< std::vector< tk::real >, 6 >, 2 > d2Bdx2;
-  std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess;
-  std::array < std::array< std::array< tk::real, 3 >, 5>, 2 > grad;
-  std::array < std::array< std::array< tk::real, 3 >, 4>, 2 > vgrad;
+  std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess{};
+  std::array < std::array< std::array< tk::real, 3 >, 5>, 2 > grad{};
+  std::array < std::array< std::array< tk::real, 3 >, 4>, 2 > vgrad{};
   std::vector< tk::real > fl( ncomp, 0.0);
   std::vector<std::array< tk::real, 3>> ic(ncomp);
 
@@ -273,18 +278,20 @@ viscousBoundaryFaceIntDG(
 
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto ndof_l = viscousRhs.localDof( el );
+
+        Assert( ndof_l <= 4, "Boundary Hessian computation is not implemented for DG(P2)");
         auto ng = tk::NGfa(ndof_l);
 
         // arrays for quadrature points
         std::array< std::vector< real >, 2 > coordgp;
         std::vector< real > wgp;
 
-        coordgp[0].resize( ndof_l );
-        coordgp[1].resize( ndof_l );
-        wgp.resize( ndof_l );
+        coordgp[0].resize( ng );
+        coordgp[1].resize( ng );
+        wgp.resize( ng );
 
         // get quadrature point weights and coordinates for triangle
-        GaussQuadratureTri( ndof_l, coordgp, wgp );
+        GaussQuadratureTri( ng, coordgp, wgp );
 
         // Extract the left element coordinates
         std::array< std::array< tk::real, 3>, 4 > coordel_l {{
@@ -362,6 +369,11 @@ viscousBoundaryFaceIntDG(
 
           auto d2Bdx2_l = d2Bdx2[0];
 
+          // reset Hessians for new quadrature point
+          for (auto& side: hess)
+            for (auto& component : side)
+              component.fill(0.0);
+
           // Compute gradients
           viscousRhs.gradientIntElem( U, P, el, dBdx_l, d2Bdx2_l, grad[0], vgrad[0], hess[0]); // no-op for now
           
@@ -384,22 +396,42 @@ viscousBoundaryFaceIntDG(
             for (std::size_t j=0; j<3; ++j) {
               vgrad[1][i][j] = gradBC[1][3*i+j];
             }
-
-          // calculate grad[1] from vgrad[1]. grad[1] = { {rho}, {rho*u}, {rho*v}, {rho*w}, {rho*e}}
-          auto cellAvgRho = 0.0;
-          const auto temperature = ghostState[1][ncomp + temperatureIdx(nspec, 0)];
-          auto cv = mat_blk[0].compute<inciter::EOS::cv>(temperature);
-          for (std::size_t k=0; k<nspec; k++)
-            cellAvgRho += U(el, densityDofIdx(nspec,k,rdof,0));
           
-          for (std::size_t i=0; i<3; ++i){
-            grad[1][0][i] = grad[0][0][i]; // continuity
-            grad[1][4][i] = cellAvgRho * vgrad[1][3][i] * cv; // energy dedx = cv*dTdx ?
+          // for ghost point, calculate grad[1] from vgrad[1]. 
+          // grad[1] = { {rho}, {rho*u}, {rho*v}, {rho*w}, {rho*e}}
+          const auto rho = ghostState[1][densityIdx(nspec,0)];
+          const auto rhoE = ghostState[1][energyIdx(nspec,0)];
+          const auto temperature = ghostState[1][ncomp + temperatureIdx(nspec,0)];
+          Assert(rho > 0.0, "Non-positive ghost density");
+          
+          // Continuity
+          for (std::size_t j = 0; j < 3; ++j) {
+            grad[1][densityIdx(nspec,0)][j] = grad[0][densityIdx(nspec,0)][j];
           }
-          for (std::size_t l=1; l<4; ++l) {
-            for (std::size_t m=0; m<3; ++m) {
-              grad[1][l][m] = cellAvgRho*vgrad[1][l-1][m]; // momentum
+          // Momentum
+          std::array<tk::real, 3> velocity{};
+          for (std::size_t d = 0; d < 3; ++d) {
+            velocity[d] = ghostState[1][momentumIdx(nspec,d)] / rho; // u = rho*u / rho
+            for (std::size_t j = 0; j< 3; ++j) {
+              grad[1][momentumIdx(nspec,d)][j] = velocity[d] * grad[1][densityIdx(nspec,0)][j] 
+                + rho * vgrad[1][d][j]; // product rule: d(rho*u) = u*d(rho) + rho*du
             }
+          }
+
+          // Energy
+          const auto cv = mat_blk[0].compute<inciter::EOS::cv>(temperature);
+
+          const auto e = rhoE / rho;
+          
+          for (std::size_t j = 0; j < 3; ++j) {
+            tk::real velocityContribution = 0.0;
+
+            for (std::size_t d = 0; d < 3; ++d) {
+              velocityContribution += velocity[d] * vgrad[1][d][j]; // (u*grad(u) + v*grad(v) + w*grad(w))
+            }
+            // grad(rho*e) = e*grad(rho) + rho*cv*grad(T) + rho * (u*grad(u) + v*grad(v) + w*grad(w))
+            grad[1][energyIdx(nspec,0)][j] = e * grad[1][densityIdx(nspec,0)][j] 
+              + rho * cv * vgrad[1][3][j] + rho * velocityContribution;
           }
           
           // Compute viscous fluxes
