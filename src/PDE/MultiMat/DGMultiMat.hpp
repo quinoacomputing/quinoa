@@ -1206,7 +1206,7 @@ class MultiMat {
           tk::real u = U(e, momentumDofIdx(nmat, 0, rdof, 0))/rho;
           tk::real v = U(e, momentumDofIdx(nmat, 1, rdof, 0))/rho;
           tk::real w = U(e, momentumDofIdx(nmat, 2, rdof, 0))/rho;
-          std::size_t k = 1;
+          std::size_t k = 0;
           // Retrieve alpha*rho*E
           tk::real intE = U(e, energyDofIdx(nmat, k, rdof, 0));
           // Substract kinetic energy
