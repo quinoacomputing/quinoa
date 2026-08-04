@@ -5,7 +5,7 @@ inciter = {
   nstep = 25,
   dt = 1.0e-7,
   --cfl = 0.5,
-  ttyi = 25,  -- TTY output interval
+  ttyi = 5,  -- TTY output interval
   scheme = "p0p1",
   limiter = "vertexbasedp1",
 
@@ -64,7 +64,7 @@ inciter = {
   },
 
   diagnostics = {
-    interval = 1,
+    interval = 5,
     format = "scientific",
     error = "l2"
   },

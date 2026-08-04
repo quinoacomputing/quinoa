@@ -91,6 +91,8 @@ class EOS {
     struct gas_constant {};
     struct internalenergy {};
     struct cv {};
+    struct cp {};
+    struct viscCoeff {};
     //! Call EOS function
     //! \tparam Fn Function tag identifying the function to call
     //! \tparam Args Types of arguments to pass to function
@@ -141,6 +143,12 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, cv > )
             return m_material.stiffenedGas.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.stiffenedGas.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.stiffenedGas.viscCoeff( std::forward< Args >( args )... );
         }
         else if (type == EOSType::JWL) {
           if constexpr( std::is_same_v< Fn, density > )
@@ -184,6 +192,12 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, cv > )
             return m_material.jwl.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.jwl.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.jwl.viscCoeff( std::forward< Args >( args )... );
         }
         else if (type == EOSType::SmallShearSolid) {
           if constexpr( std::is_same_v< Fn, density > )
@@ -226,6 +240,12 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, cv > )
             return m_material.smallShearSolid.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.smallShearSolid.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.smallShearSolid.viscCoeff( std::forward< Args >( args )... );
         }
         else if (type == EOSType::GodunovRomenski) {
           if constexpr( std::is_same_v< Fn, density > )
@@ -268,6 +288,12 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, cv > )
             return m_material.godunovRomenski.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.godunovRomenski.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.godunovRomenski.viscCoeff( std::forward< Args >( args )... );
         }
         else if (type == EOSType::ThermallyPerfectGas) {
           if constexpr( std::is_same_v< Fn, density > )
@@ -311,6 +337,12 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, cv > )
             return m_material.thermallyPerfectGas.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.thermallyPerfectGas.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.thermallyPerfectGas.viscCoeff( std::forward< Args >( args )... );
         }
         else if (type == EOSType::WilkinsAluminum) {
           if constexpr( std::is_same_v< Fn, density > )
@@ -354,6 +386,12 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, cv > )
             return m_material.wilkinsAluminum.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.wilkinsAluminum.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.wilkinsAluminum.viscCoeff( std::forward< Args >( args )... );
         };
         return 0;
 

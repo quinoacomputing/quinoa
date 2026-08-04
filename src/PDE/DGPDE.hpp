@@ -293,12 +293,13 @@ class DGPDE {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
+              const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
               tk::Fields& R ) const
     {
       self->rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                 ndofel, dt, R );
+                 W, ndofel, dt, R );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -347,6 +348,17 @@ class DGPDE {
                     tk::Fields& R ) const
     { return self->stiff_rhs( e, geoElem, U, ndofel, R); }
 
+    //! Public interface for computing velocity at nodes of elements
+    void nodeVelocity(
+      const tk::Fields& geoElem,
+      const std::map< std::size_t, std::vector< std::size_t > >& esup,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      tk::UnsMesh::Coords& W ) const
+    { return self->nodeVelocity( geoElem, esup, inpoel, coord, U, P, W ); }
+
     //! Public interface to returning maps of output var functions
     std::map< std::string, tk::GetVarFn > OutVarFn() const
     { return self->OutVarFn(); }
@@ -367,9 +379,12 @@ class DGPDE {
     //! Public interface to returning surface field output
     std::vector< std::vector< tk::real > >
     surfOutput( const inciter::FaceData& fd,
+      const tk::Fields& geoFace,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
       const tk::Fields& U,
       const tk::Fields& P ) const
-    { return self->surfOutput( fd, U, P ); }
+    { return self->surfOutput( fd, geoFace, inpoel, coord, U, P ); }
 
     //! Public interface to return point history output
     std::vector< std::vector< tk::real > >
@@ -498,6 +513,7 @@ class DGPDE {
                         const tk::UnsMesh::Coords&,
                         const tk::Fields&,
                         const tk::Fields&,
+                        const tk::Fields&,
                         const std::vector< std::size_t >&,
                         const tk::real,
                         tk::Fields& ) const = 0;
@@ -536,6 +552,14 @@ class DGPDE {
                               const tk::Fields&,
                               const std::vector< std::size_t >&,
                               tk::Fields& ) const = 0;
+      virtual void nodeVelocity(
+        const tk::Fields&,
+        const std::map< std::size_t, std::vector< std::size_t > >&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
+        const tk::Fields&,
+        const tk::Fields&,
+        tk::UnsMesh::Coords& ) const = 0;
       virtual std::map< std::string, tk::GetVarFn > OutVarFn() const = 0;
       virtual std::vector< std::string > analyticFieldNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
@@ -543,6 +567,9 @@ class DGPDE {
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::vector< tk::real > > surfOutput(
         const inciter::FaceData&,
+        const tk::Fields&,
+        const std::vector< std::size_t >&,
+        const tk::UnsMesh::Coords&,
         const tk::Fields&,
         const tk::Fields& ) const = 0;
       virtual std::vector< std::vector< tk::real > > histOutput(
@@ -689,12 +716,13 @@ class DGPDE {
         const tk::UnsMesh::Coords& coord,
         const tk::Fields& U,
         const tk::Fields& P,
+        const tk::Fields& W,
         const std::vector< std::size_t >& ndofel,
         const tk::real dt,
         tk::Fields& R ) const override
       {
         data.rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                  ndofel, dt, R );
+                  W, ndofel, dt, R );
       }
       void eval_ndof( std::size_t nunk,
                       const tk::UnsMesh::Coords& coord,
@@ -732,6 +760,15 @@ class DGPDE {
                       const std::vector< std::size_t >& ndofel,
                       tk::Fields& R ) const override
       { return data.stiff_rhs( e, geoElem, U, ndofel, R ); }
+      void nodeVelocity(
+        const tk::Fields& geoElem,
+        const std::map< std::size_t, std::vector< std::size_t > >& esup,
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
+        const tk::Fields& U,
+        const tk::Fields& P,
+        tk::UnsMesh::Coords& W ) const override
+      { return data.nodeVelocity( geoElem, esup, inpoel, coord, U, P, W ); }
       std::map< std::string, tk::GetVarFn > OutVarFn() const override
       { return data.OutVarFn(); }
       std::vector< std::string > analyticFieldNames() const override
@@ -744,9 +781,12 @@ class DGPDE {
       { return data.surfNames(); }
       std::vector< std::vector< tk::real > > surfOutput(
         const inciter::FaceData& fd,
+        const tk::Fields& geoFace,
+        const std::vector< std::size_t >& inpoel,
+        const tk::UnsMesh::Coords& coord,
         const tk::Fields& U,
         const tk::Fields& P ) const override
-      { return data.surfOutput( fd, U, P ); }
+      { return data.surfOutput( fd, geoFace, inpoel, coord, U, P ); }
       std::vector< std::vector< tk::real > > histOutput(
         const std::vector< HistData >& h,
         const std::vector< std::size_t >& inpoel,

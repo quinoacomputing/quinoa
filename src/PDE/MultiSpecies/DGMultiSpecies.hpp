@@ -19,6 +19,7 @@
 #include <unordered_set>
 #include <map>
 #include <array>
+#include <iostream>
 
 #include "Macro.hpp"
 #include "Exception.hpp"
@@ -79,9 +80,9 @@ class MultiSpecies {
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall 
-        , symmetry
-        , isothermal_wall },       // Slip equivalent to symmetry without mesh motion
+        , noslipwall
+        , symmetry    // Slip-wall equivalent to symmetry without mesh motion
+        , isothermal_wall },
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
@@ -90,7 +91,7 @@ class MultiSpecies {
         , noOpGrad
         , noOpGrad
         , symmetryGrad
-        , symmetryGrad }
+        , noOpGrad }
         ) );
 
       // EoS initialization
@@ -351,10 +352,31 @@ class MultiSpecies {
 
           // Evaluate mixture temperature at quadrature point
           auto rhoE0 = state[multispecies::energyIdx(nspec, 0)];
+          int iconv(0);
           pri[multispecies::temperatureIdx(nspec,0)] =
             mixgp.temperature(rhob, vel[0], vel[1], vel[2], rhoE0, m_mat_blk,
-              prim(e,multispecies::temperatureDofIdx(nspec, 0, rdof, 0)));
-          // TODO: consider clipping temperature here
+              iconv, prim(e,multispecies::temperatureDofIdx(nspec, 0, rdof, 0)));
+
+          // Check for unphysical state and error out with information
+          if (!iconv) {
+            std::cout << "Element centroid:  " << geoElem(e,1) << ", "
+              << geoElem(e,2) << ", " << geoElem(e,3) << std::endl;
+            std::cout << "Mass fractions:    ";
+            for (std::size_t k=0; k<nspec; ++k) {
+              std::cout << state[multispecies::densityIdx(nspec,k)]/rhob << ", ";
+            }
+            std::cout << std::endl;
+            std::cout << "Mixture density:   " << rhob << std::endl;
+            std::cout << "Total energy:      " << rhoE0 << std::endl;
+            std::cout << "Velocity:          " <<
+              vel[0] << ", " << vel[1] << ", " << vel[2] << std::endl;
+
+            Throw( "Newton iteration for temperature failed to converge "
+              " with temperature at final iteration = " +
+              std::to_string(pri[multispecies::temperatureIdx(nspec,0)]) );
+          }
+
+          // Clip temperature
           pri[multispecies::temperatureIdx(nspec,0)] = constrain_temperature(
             pri[multispecies::temperatureIdx(nspec,0)]);
 
@@ -626,6 +648,7 @@ class MultiSpecies {
     //! \param[in] coord Array of nodal coordinates
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
+    //! \param[in] W Mesh velocity vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
@@ -639,6 +662,7 @@ class MultiSpecies {
               const tk::UnsMesh::Coords& coord,
               const tk::Fields& U,
               const tk::Fields& P,
+              const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
               tk::Fields& R ) const
@@ -646,6 +670,8 @@ class MultiSpecies {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      auto viscous = g_inputdeck.get< tag::multispecies, tag::viscous >();
+      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
       const auto nelem = fd.Esuel().size()/4;
 
@@ -681,34 +707,45 @@ class MultiSpecies {
       if (!pref) {
         // compute internal surface flux integrals
         tk::surfInt_constP( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
+          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
           dt, R, riemannDeriv );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt_constP( 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
             geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
-            std::get<1>(b), U, P, R, riemannDeriv );
+            std::get<1>(b), U, P, W, R, riemannDeriv );
 
         // compute volume integrals
         tk::volInt_constP( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
-          geoElem, flux, velfn, Problem::src, U, P, R );
+          geoElem, flux, velfn, Problem::src, U, P, W, R );
       }
       else {
         // compute internal surface flux integrals
         tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                     dt, R, riemannDeriv );
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
+                     ndofel, dt, R, riemannDeriv );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b), fd,
                           geoFace, geoElem, inpoel, coord, t, m_riemann, velfn,
-                          std::get<1>(b), U, P, ndofel, R, riemannDeriv );
+                          std::get<1>(b), U, P, W, ndofel, R, riemannDeriv );
 
         // compute volume integrals
         tk::volInt( 1, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem,
-          flux, velfn, Problem::src, U, P, ndofel, R );
+          flux, velfn, Problem::src, U, P, W, ndofel, R );
+      }
+
+      if (viscous) {
+        tk::surfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof, inpoel,
+          coord, fd, geoFace, geoElem, U, P, R );
+        tk::volIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof, nelem, inpoel,
+          coord, geoElem, U, P, ndofel, R );
+        for (const auto& b : m_bc)
+          tk::bndSurfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof,
+            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+            std::get<1>(b), std::get<2>(b), U, P, R );
       }
 
       // compute external (energy) sources
@@ -780,8 +817,6 @@ class MultiSpecies {
       auto mindt = timeStepSizeMultiSpecies( m_mat_blk, fd.Esuf(), geoFace,
         geoElem, nielem, nspec, U, P, local_dte);
 
-      //if (viscous)
-      //  mindt = std::min(mindt, timeStepSizeViscousFV(geoElem, nielem, nspec, U));
       //mindt = std::min(mindt, m_physics.dtRestriction(geoElem, nielem, {}));
 
       tk::real dgp = 0.0;
@@ -824,18 +859,16 @@ class MultiSpecies {
                     const std::vector< std::size_t >& /*ndofel*/,
                     tk::Fields& /*R*/ ) const {}
 
-    //! Extract the velocity field at cell nodes. Currently unused.
-    // //! \param[in] U Solution vector at recent time step
-    // //! \param[in] N Element node indices
-    //! \return Array of the four values of the velocity field
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& /*U*/,
-              const std::array< std::vector< tk::real >, 3 >&,
-              const std::array< std::size_t, 4 >& /*N*/ ) const
-    {
-      std::array< std::array< tk::real, 4 >, 3 > v;
-      return v;
-    }
+    //! Extract the velocity field at cell nodes. Not implemented for MultiSpecies
+    void nodeVelocity(
+      const tk::Fields&,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
+      const std::vector< std::size_t >&,
+      const tk::UnsMesh::Coords&,
+      const tk::Fields&,
+      const tk::Fields&,
+      tk::UnsMesh::Coords& ) const
+    {}
 
     //! Return a map that associates user-specified strings to functions
     //! \return Map that associates user-specified strings to functions that
@@ -867,13 +900,17 @@ class MultiSpecies {
     //! Return surface field output going to file
     std::vector< std::vector< tk::real > >
     surfOutput( const inciter::FaceData& fd,
+      const tk::Fields& geoFace,
+      const std::vector< std::size_t >& inpoel,
+      const tk::UnsMesh::Coords& coord,
       const tk::Fields& U,
       const tk::Fields& P ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto nspec = g_inputdeck.get< eq, tag::nspec >();
 
-      return MultiSpeciesSurfOutput( nspec, rdof, fd, U, P );
+      return MultiSpeciesSurfOutput( nspec, rdof, fd, geoFace, inpoel, coord,
+        U, P );
     }
 
     //! Return time history field output evaluated at time history points
