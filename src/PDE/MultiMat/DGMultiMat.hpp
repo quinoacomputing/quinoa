@@ -623,7 +623,6 @@ class MultiMat {
 
       for (std::size_t e=0; e<nelem; ++e)
       {
-        //printf("elem = %lu\n",e);
         // get conserved quantities
         std::vector< tk::real > B(rdof, 0.0);
         B[0] = 1.0;
@@ -807,6 +806,7 @@ class MultiMat {
                 dD *= reg_factor;
               }
             }
+
             // 6. Evolve D
             //printf("k, dmg = %lu, %e\n", k, U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)));
             tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
@@ -815,10 +815,6 @@ class MultiMat {
             // 7. Maintain bounds
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) =
               std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 1.0e-06*arho);
-            //printf("k, elem, damage, dD = %lu, %lu, %e, %e\n", k, e, U(e, damageDofIdx(nmat, nsld, k, rdof, 0)), dD);
-            // // Zero out high-order terms
-            // for (std::size_t idof=1; idof<rdof; ++idof)
-            //   U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) = 0.0;
           }
         }
       }
