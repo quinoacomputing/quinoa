@@ -701,8 +701,7 @@ class MultiMat {
             // 5. Divide by 2*mu*tau
             // 'Perfect' plasticity
             std::vector< tk::real > s(9*ndof, 0.0);
-            tk::real yield_stress =
-              std::max(1.0e-06, (1.0-damage)) * getmatprop< tag::yield_stress >(k);
+            tk::real yield_stress = getmatprop< tag::yield_stress >(k);
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -1503,8 +1502,7 @@ class MultiMat {
             // 3. Divide by 2*mu*tau
             // 'Perfect' plasticity
             std::vector< tk::real > s(9*ndof, 0.0);
-            tk::real yield_stress =
-              std::max(1.0e-06, (1.0-damage)) * getmatprop< tag::yield_stress >(k);
+            tk::real yield_stress = getmatprop< tag::yield_stress >(k);
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
