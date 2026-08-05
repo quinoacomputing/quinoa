@@ -51,6 +51,7 @@ using bclist = tk::TaggedTuple< brigand::list<
   tag::farfield,         std::vector< std::size_t >,
   tag::extrapolate,      std::vector< std::size_t >,
   tag::noslipwall,       std::vector< std::size_t >,
+  tag::freesurface,      std::vector< std::size_t >,
   tag::slipwall,         std::vector< std::size_t >,
   tag::isothermal_wall,  std::vector< std::size_t >
 > >;
@@ -162,6 +163,7 @@ using bcList = tk::TaggedTuple< brigand::list<
   tag::farfield,         std::vector< std::size_t >,
   tag::extrapolate,      std::vector< std::size_t >,
   tag::noslipwall,       std::vector< std::size_t >,
+  tag::freesurface,      std::vector< std::size_t >,
   tag::slipwall,         std::vector< std::size_t >,
   tag::isothermal_wall,  std::vector< std::size_t >,
   tag::velocity,         std::vector< tk::real >,
@@ -1859,6 +1861,15 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
       keywords.insert({"noslipwall",
         "List sidesets with no-slip wall boundary conditions",
         R"(This keyword is used to list (multiple) no-slip wall BC sidesets.)",
+        "vector of uint(s)"});
+
+      keywords.insert({"freesurface",
+        "List sidesets with free surface boundary conditions",
+        R"(This keyword is used to list (multiple) free surface BC sidesets.
+        A free surface boundary condition is used for solid-vacuum interfaces
+        where the traction (stress times normal) must be zero. This is appropriate
+        for ALE simulations of solids in vacuum, such as implosion problems.
+        The BC enforces: σ·n = 0 (traction-free condition).)",
         "vector of uint(s)"});
 
       keywords.insert({"slipwall",

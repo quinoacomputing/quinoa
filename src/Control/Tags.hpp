@@ -301,6 +301,7 @@ DEFTAG(outlet);
 DEFTAG(farfield);
 DEFTAG(extrapolate);
 DEFTAG(noslipwall);
+DEFTAG(freesurface);
 DEFTAG(timedep);
 DEFTAG(slipwall);
 DEFTAG(back_pressure);

@@ -76,12 +76,14 @@ class MultiMat {
         , invalidBC         // Outlet BC not implemented
         , farfield
         , extrapolate
-        , noslipwall 
+        , noslipwall
+        , freesurface
         , symmetry          // Slip equivalent to symmetry without mesh motion
         , invalidBC },
         // BC Gradient functions
         { noOpGrad
         , symmetryGrad
+        , noOpGrad
         , noOpGrad
         , noOpGrad
         , noOpGrad

@@ -577,6 +577,115 @@ namespace inciter {
   //! \param[in] dul Left (domain-internal) gradients
   //! \return Left and right states for all scalar components in this PDE
   //!   system
+  //! \brief Boundary state function providing the left and right state of a
+  //!   face at free surface boundaries (solid-vacuum interface)
+  //! \param[in] ncomp Number of scalar components in this PDE system
+  //! \param[in] mat_blk EOS material block
+  //! \param[in] ul Left (domain-internal) state
+  //! \param[in] fn Unit face normal
+  //! \return Left and right states for all scalar components in this PDE
+  //!   system
+  //! \note The function signature must follow tk::StateFn. For multimat, the
+  //!   left or right state is the vector of conserved quantities, followed by
+  //!   the vector of primitive quantities appended to it.
+  //! \details For a free surface, the traction vector (σ·n) must be zero,
+  //!   representing no forces from the vacuum. The ghost state is constructed
+  //!   to ensure this traction-free condition while extrapolating density,
+  //!   velocity, and deformation gradient from the interior.
+  static tk::StateFn::result_type
+  freesurface( ncomp_t ncomp,
+               const std::vector< EOS >& mat_blk,
+               const std::vector< tk::real >& ul,
+               tk::real, tk::real, tk::real, tk::real,
+               const std::array< tk::real, 3 >& fn )
+  {
+    auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+    const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+
+    auto nsld = numSolids(nmat, solidx);
+
+    Assert( ul.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "
+            "internal state vector" );
+
+    auto ur = ul;
+
+    // For free surface: extrapolate all conserved quantities (density, momentum, energy)
+    // and deformation gradient from interior
+    for (std::size_t k=0; k<ncomp; ++k)
+      ur[k] = ul[k];
+
+    // Extrapolate primitive velocity
+    ur[ncomp+velocityIdx(nmat, 0)] = ul[ncomp+velocityIdx(nmat, 0)];
+    ur[ncomp+velocityIdx(nmat, 1)] = ul[ncomp+velocityIdx(nmat, 1)];
+    ur[ncomp+velocityIdx(nmat, 2)] = ul[ncomp+velocityIdx(nmat, 2)];
+
+    // For each solid material, enforce traction-free condition: σ·n = 0
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      if (solidx[k] > 0)
+      {
+        // Extrapolate deformation gradient (conserved quantities already copied)
+        // No modification needed for g since it's a material property that doesn't
+        // need BC enforcement in the same way as stress
+
+        // Compute traction-free stress state
+        // For traction-free: (σ - p*I)·n = 0, where p is chosen to satisfy this
+        // This means: σ·n = p*n
+        // Therefore: p = n·σ·n (normal stress component)
+
+        // Get internal stress tensor
+        std::array< std::array< tk::real, 3 >, 3 > s;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            s[i][j] = ul[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])];
+
+        // Compute normal stress: σ_nn = n·σ·n
+        tk::real sigma_nn = 0.0;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            sigma_nn += fn[i] * s[i][j] * fn[j];
+
+        // Ghost stress: subtract normal stress contribution to make traction zero
+        // σ_ghost = σ_interior - 2*(σ·n)⊗n + σ_nn*I
+        // This ensures (σ_ghost)·n = -σ_interior·n (cancels in Riemann solver)
+        std::array< std::array< tk::real, 3 >, 3 > s_ghost;
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+          {
+            // Compute (σ·n)_i
+            tk::real sigma_n_i = 0.0;
+            for (std::size_t l=0; l<3; ++l)
+              sigma_n_i += s[i][l] * fn[l];
+
+            // σ_ghost_ij = σ_ij - (σ·n)_i * n_j - n_i * (σ·n)_j + σ_nn * δ_ij
+            tk::real sigma_n_j = 0.0;
+            for (std::size_t l=0; l<3; ++l)
+              sigma_n_j += s[l][j] * fn[l];
+
+            s_ghost[i][j] = s[i][j] - sigma_n_i*fn[j] - fn[i]*sigma_n_j;
+            if (i == j)
+              s_ghost[i][j] += sigma_nn;
+          }
+
+        // Copy ghost stress to ur
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            ur[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])] = s_ghost[i][j];
+
+        // Adjust pressure to be consistent with traction-free condition
+        // For free surface, set pressure to balance normal stress
+        ur[ncomp+pressureIdx(nmat, k)] = -sigma_nn;
+      }
+      else
+      {
+        // For fluids (if any), extrapolate pressure
+        ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
+      }
+    }
+
+    return {{ std::move(ul), std::move(ur) }};
+  }
+
   //! \note The function signature must follow tk::StateFn. For multimat, the
   //!   left or right state is the vector of gradients of primitive quantities.
   static tk::StateFn::result_type
