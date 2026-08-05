@@ -287,8 +287,17 @@ namespace inciter {
     tk::real tl = mixl.temperature(rho, v1l, v2l, v3l,
       ul[multispecies::energyIdx(nspec, 0)], mat_blk, iconv, tw);
     tk::real tr = 2*tw-tl;
+
     // Find energy associated with that temperature
-    Mixture mixr(nspec, ur, mat_blk);
+
+//    Mixture mixr(nspec, ur, mat_blk);
+    tk::real pl = mixl.pressure(rho, tl);
+    std::vector< tk::real > Ysl = mixl.get_Ys();
+ 
+    Mixture mixr(nspec, Ysl, pl, tr, mat_blk);
+    for(std::size_t k = 0; k <nspec; ++k) 
+      ur[multispecies::densityIdx(nspec,k)]= 
+        mixr.get_mix_density()*(ul[multispecies::densityIdx(nspec,k)]/mixl.get_mix_density());
     ur[multispecies::energyIdx(nspec, 0)] =
       mixr.totalenergy(rho, v1r, v2r, v3r, tr, mat_blk);
     ur[ncomp+multispecies::temperatureIdx(nspec, 0)] = tr;
