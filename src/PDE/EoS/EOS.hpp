@@ -12,8 +12,6 @@
 #ifndef EOS_h
 #define EOS_h
 
-#include <variant>
-
 #include "PUPUtil.hpp"
 #include "Inciter/Options/Material.hpp"
 #include "EoS/StiffenedGas.hpp"
