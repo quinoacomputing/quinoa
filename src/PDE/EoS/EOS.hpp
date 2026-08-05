@@ -47,7 +47,13 @@ class EOS {
                 , ThermallyPerfectGas
                 };
 
-    EOSType type;
+    EOSType type{EOSType::StiffenedGas};
+
+    //! Init-state flag and helpers for movement
+    bool m_active{false};
+    void destroy() noexcept;
+    void copyFrom(const EOS& other);
+    void moveFrom(EOS&& other);
 
     union EOSUnion {
         StiffenedGas stiffenedGas;
@@ -75,6 +81,16 @@ class EOS {
 
     //! Constructor
     explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k );
+
+    //! Movement
+    EOS(const EOS& other);
+    EOS& operator=(const EOS& other);
+
+    EOS(EOS&& other);
+    EOS& operator=(EOS&& other);
+
+    //! Destructor
+    ~EOS();
 
     //! Entry method tags for specific EOS classes to use with compute()
     struct density {};
