@@ -43,6 +43,9 @@ class Mixture {
     //! Return mixture density
     tk::real get_mix_density() { return m_mix_density; }
 
+    //! Return mixture species concentrations
+    std::vector< tk::real > get_Ys() {return m_Ys; }
+    
     //! Compute mixture frozen speed of sound.
     tk::real frozen_soundspeed(tk::real mix_density,
                                tk::real mix_temp,

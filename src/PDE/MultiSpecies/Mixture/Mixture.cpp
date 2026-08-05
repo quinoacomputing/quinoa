@@ -238,8 +238,6 @@ Mixture::temperature(
       fp_T += m_Ys[k] * mat_blk[k].compute< EOS::cv >(temp);
     }
 
-    // Calculate next guess
-    temp = temp - f_T / fp_T;
 
     // Check stopping conditions
     err = abs(f_T);
@@ -251,6 +249,11 @@ Mixture::temperature(
     if ( i == maxiter ) {
       converged = 0;
     }
+    
+    // Calculate next guess
+    //moved this update past the stop condition check for consistency
+    temp = temp - f_T / fp_T;
+
   }
 
   return temp;
