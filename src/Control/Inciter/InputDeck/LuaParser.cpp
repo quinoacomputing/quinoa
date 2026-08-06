@@ -1091,6 +1091,9 @@ LuaParser::storeInputDeck(
       storeVecIfSpecd< std::size_t >(sol_bc[i+1], "noslipwall",
         bc_deck[i].get< tag::noslipwall >(), {});
 
+      storeVecIfSpecd< std::size_t >(sol_bc[i+1], "freesurface",
+        bc_deck[i].get< tag::freesurface >(), {});
+
       storeVecIfSpecd< std::size_t >(sol_bc[i+1], "slipwall",
         bc_deck[i].get< tag::slipwall >(), {});
 
