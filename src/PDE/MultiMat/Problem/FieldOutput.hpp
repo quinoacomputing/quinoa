@@ -241,14 +241,17 @@ defGradOutVar( const tk::Fields& U,
 
   return g;
 }
-  
+
 //! Compute damage for output to file
 //! \note Must follow the signature in tk::GetVarFn
 //! \param[in] U Numerical solution
 //! \param[in] rdof Number of reconstructed solution DOFs
 //! \return Damage ready to be output to file
 static tk::GetVarFn::result_type
-damageOutVar( const tk::Fields& U, std::size_t rdof )
+damageOutVar(
+  const tk::Fields& U,
+  const tk::Fields& /*P*/,
+  std::size_t rdof )
 {
   using tk::operator+=;
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();

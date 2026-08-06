@@ -1491,6 +1491,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to request the material indicator function as an
         output variable.)"});
 
+      keywords.insert({"damage",
+        "Request damage output",
+        R"(This keyword is used to request the material damage as an output
+        variable.)"});
+
       keywords.insert({"analytic",
         "Request analytic solution",
         R"(This keyword is used to request the analytic solution (if exist) as an
