@@ -1189,14 +1189,14 @@ bndSurfIntViscousMultiSpecies(
       coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
   }
 
-  if (ndof == 4) {
+  else if (ndof == 4) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     viscousBoundaryFaceIntDG( viscousRhs, mat_blk, ndof, bcconfig, inpoel,
       coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R ); // no-op
   }
 
   else
-    Throw( "Viscous operators only implemented for scheme = 'p0p1'." );
+    Throw( "Viscous operators only implemented for scheme = 'p0p1' and 'dgp1'." );
 }
 
 } // tk::
