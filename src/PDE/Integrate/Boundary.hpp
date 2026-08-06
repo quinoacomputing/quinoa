@@ -46,6 +46,7 @@ bndSurfInt( const bool pref,
             const StateFn& state,
             const Fields& U,
             const Fields& P,
+            const Fields& W,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
             std::vector< std::vector< tk::real > >& riemannDeriv,
@@ -85,6 +86,7 @@ bndSurfInt_constP(
   const StateFn& state,
   const Fields& U,
   const Fields& P,
+  const Fields& W,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp=0 );
@@ -132,6 +134,45 @@ bndSurfIntViscousFV(
   const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp );
+
+template< class ViscousTerms >
+void
+viscousBoundaryFaceIntDG(
+            const std::vector< inciter::EOS >& mat_blk,
+            const std::size_t ndof,
+            const std::vector< std::size_t >& bcconfig,
+            const std::vector< std::size_t >& inpoel,
+            const UnsMesh::Coords& coord,
+            const inciter::FaceData& fd,
+            const Fields& geoFace,
+            const Fields& geoElem,
+            const Fields& U,
+            const Fields& P,
+            real t,
+            const StateFn& state,
+            const StateFn& gradFn,
+            Fields& R );
+
+// Compute boundary surface viscous flux integrals for multispecies flow
+void
+bndSurfIntViscousMultiSpecies(
+  std::size_t nspec,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::vector< std::size_t >& bcconfig,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  real t,
+  const StateFn& state,
+  const StateFn& gradFn,
+  const Fields& U,
+  const Fields& P,
+  Fields& R );
+
 } // tk::
 
 #endif // Boundary_h

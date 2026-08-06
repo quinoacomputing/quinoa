@@ -2273,6 +2273,7 @@ void PositivityBoundsMultiMat(
     phic_bound[energyIdx(nmat, k)] =
       std::min(phic_bound[energyIdx(nmat, k)], phi_rhoe);
     // Evaluate the limiting coefficient for material pressure
+    rho = std::max(min, rho);
     auto min_pre = std::max(min, state[volfracIdx(nmat, k)] *
       mat_blk[k].compute< EOS::min_eff_pressure >(min, rho,
       state[volfracIdx(nmat, k)]));

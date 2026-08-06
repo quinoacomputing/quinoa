@@ -33,13 +33,15 @@ struct HLLCMultiMat {
 //! HLLC approximate Riemann solver flux function
   //! \param[in] fn Face/Surface normal
   //! \param[in] u Left and right unknown/state vector
+  //! \param[in] wn Mesh velocity normal to face
   //! \return Riemann solution according to Harten-Lax-van Leer-Contact
   //! \note The function signature must follow tk::RiemannFluxFn
   static tk::RiemannFluxFn::result_type
   flux( const std::vector< EOS >& mat_blk,
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& = {} )
+        const std::vector< std::array< tk::real, 3 > >& = {},
+        const tk::real wn = 0 )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
     const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -142,6 +144,10 @@ struct HLLCMultiMat {
     // Rotated velocities from advective velocities
     auto vnl = tk::rotateVector({ul, vl, wl}, fn);
     auto vnr = tk::rotateVector({ur, vr, wr}, fn);
+
+    // ALE mesh motion relative normal velocity
+    vnl[0] -= wn;
+    vnr[0] -= wn;
 
     // Signal velocities
     auto Sl = std::min((vnl[0]-acl), (vnr[0]-acr));
@@ -252,6 +258,10 @@ struct HLLCMultiMat {
     auto vlStar = tk::unrotateVector(vnlStar, fn);
     auto vrStar = tk::unrotateVector(vnrStar, fn);
 
+    const auto unl = vnl[0] + wn;
+    const auto unr = vnr[0] + wn;
+    const auto unStar = Sm + wn;
+
     auto uStar = u;
 
     tk::real rholStar(0.0), rhorStar(0.0);
@@ -279,10 +289,10 @@ struct HLLCMultiMat {
       uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
-        + ( - asignnl[k][0][0]*vnl[0]
+        + ( - asignnl[k][0][0]*unl
             - asignnl[k][1][0]*vnl[1]
             - asignnl[k][2][0]*vnl[2]
-            + asignnlStar[k][0][0]*vnlStar[0]
+            + asignnlStar[k][0][0]*unStar
             + asignnlStar[k][1][0]*vnlStar[1]
             + asignnlStar[k][2][0]*vnlStar[2]
           ) / (Sm-Sl);
@@ -307,14 +317,20 @@ struct HLLCMultiMat {
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
-        + ( - asignnr[k][0][0]*vnr[0]
+        + ( - asignnr[k][0][0]*unr
             - asignnr[k][1][0]*vnr[1]
             - asignnr[k][2][0]*vnr[2]
-            + asignnrStar[k][0][0]*vnrStar[0]
+            + asignnrStar[k][0][0]*unStar
             + asignnrStar[k][1][0]*vnrStar[1]
             + asignnrStar[k][2][0]*vnrStar[2]
           ) / (Sm-Sr);
       rhorStar += uStar[1][densityIdx(nmat, k)];
+    }
+    for (std::size_t idir=0; idir<3; ++idir) {
+      uStar[0][momentumIdx(nmat, idir)] = w_l*u[0][momentumIdx(nmat, idir)]
+        - (TnlStar[idir] - Tnl[idir])/(Sl-Sm);
+      uStar[1][momentumIdx(nmat, idir)] = w_r*u[1][momentumIdx(nmat, idir)]
+        - (TnrStar[idir] - Tnr[idir])/(Sr-Sm);
     }
 
     // Numerical fluxes
@@ -336,7 +352,8 @@ struct HLLCMultiMat {
               flx[deformIdx(nmat,solidx[k],i,j)] = (
                 gl[k][i][0] * ul +
                 gl[k][i][1] * vl +
-                gl[k][i][2] * wl ) * fn[j];
+                gl[k][i][2] * wl ) * fn[j]
+                - wn * gl[k][i][j];
         }
       }
 
@@ -347,7 +364,7 @@ struct HLLCMultiMat {
                                 +aTnl[k][1]*aTnl[k][1]
                                 +aTnl[k][2]*aTnl[k][2])));
       // Store Riemann velocity
-      flx.push_back(vnl[0]);
+      flx.push_back((vnl[0]+wn));
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
@@ -366,25 +383,32 @@ struct HLLCMultiMat {
 
     else if (Sl < 0.0 && 0.0 <= Sm) {
 
+      std::array< tk::real, 3 > ulStarPhysical{{
+          vlStar[0] + wn*fn[0],
+          vlStar[1] + wn*fn[1],
+          vlStar[2] + wn*fn[2]
+        }};
+
       for (std::size_t idir=0; idir<3; ++idir)
        flx[momentumIdx(nmat, idir)] =
-         vlStar[idir] * rholStar * Sm - TnlStar[idir];
+         uStar[0][momentumIdx(nmat, idir)] * Sm - TnlStar[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[0][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[0][densityIdx(nmat, k)] * Sm;
         flx[energyIdx(nmat, k)] = uStar[0][energyIdx(nmat, k)] * Sm
-          - vlStar[0] * aTnlStar[k][0]
-          - vlStar[1] * aTnlStar[k][1]
-          - vlStar[2] * aTnlStar[k][2];
+          - ulStarPhysical[0] * aTnlStar[k][0]
+          - ulStarPhysical[1] * aTnlStar[k][1]
+          - ulStarPhysical[2] * aTnlStar[k][2];
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                flx[deformIdx(nmat,solidx[k],i,j)] = (
-                  glStar[k][i][0] * vlStar[0] +
-                  glStar[k][i][1] * vlStar[1] +
-                  glStar[k][i][2] * vlStar[2] ) * fn[j];
-          }
+            for (std::size_t j=0; j<3; ++j)
+              flx[deformIdx(nmat,solidx[k],i,j)] =
+                ( glStar[k][i][0] * ulStarPhysical[0]
+                + glStar[k][i][1] * ulStarPhysical[1]
+                + glStar[k][i][2] * ulStarPhysical[2] ) * fn[j]
+                - wn * glStar[k][i][j];
+        }
       }
 
       // Quantities for non-conservative terms
@@ -394,7 +418,7 @@ struct HLLCMultiMat {
                                +aTnlStar[k][1]*aTnlStar[k][1]
                                +aTnlStar[k][2]*aTnlStar[k][2]));
       // Store Riemann velocity
-      flx.push_back(Sm);
+      flx.push_back(Sm+wn);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
@@ -413,24 +437,31 @@ struct HLLCMultiMat {
 
     else if (Sm < 0.0 && 0.0 <= Sr) {
 
+      std::array< tk::real, 3 > urStarPhysical{{
+          vrStar[0] + wn*fn[0],
+          vrStar[1] + wn*fn[1],
+          vrStar[2] + wn*fn[2]
+        }};
+
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          vrStar[idir] * rhorStar * Sm - TnrStar[idir];
+          uStar[1][momentumIdx(nmat, idir)] * Sm - TnrStar[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[1][volfracIdx(nmat, k)] * Sm;
         flx[densityIdx(nmat, k)] = uStar[1][densityIdx(nmat, k)] * Sm;
         flx[energyIdx(nmat, k)] = uStar[1][energyIdx(nmat, k)] * Sm
-          - vrStar[0] * aTnrStar[k][0]
-          - vrStar[1] * aTnrStar[k][1]
-          - vrStar[2] * aTnrStar[k][2];
+          - urStarPhysical[0] * aTnrStar[k][0]
+          - urStarPhysical[1] * aTnrStar[k][1]
+          - urStarPhysical[2] * aTnrStar[k][2];
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
-                flx[deformIdx(nmat,solidx[k],i,j)] = (
-                  grStar[k][i][0] * vrStar[0] +
-                  grStar[k][i][1] * vrStar[1] +
-                  grStar[k][i][2] * vrStar[2] ) * fn[j];
+                flx[deformIdx(nmat,solidx[k],i,j)] =
+                  ( grStar[k][i][0] * urStarPhysical[0]
+                  + grStar[k][i][1] * urStarPhysical[1]
+                  + grStar[k][i][2] * urStarPhysical[2] ) * fn[j]
+                  - wn * grStar[k][i][j];
           }
       }
 
@@ -441,7 +472,7 @@ struct HLLCMultiMat {
                                +aTnrStar[k][1]*aTnrStar[k][1]
                                +aTnrStar[k][2]*aTnrStar[k][2]));
       // Store Riemann velocity
-      flx.push_back(Sm);
+      flx.push_back(Sm+wn);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
@@ -475,7 +506,8 @@ struct HLLCMultiMat {
                 flx[deformIdx(nmat,solidx[k],i,j)] = (
                   gr[k][i][0] * ur +
                   gr[k][i][1] * vr +
-                  gr[k][i][2] * wr ) * fn[j];
+                  gr[k][i][2] * wr ) * fn[j]
+                  - wn * gr[k][i][j];
           }
       }
 
@@ -486,7 +518,7 @@ struct HLLCMultiMat {
                                +aTnr[k][1]*aTnr[k][1]
                                +aTnr[k][2]*aTnr[k][2]));
       // Store Riemann velocity
-      flx.push_back(vnr[0]);
+      flx.push_back(vnr[0]+wn);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
