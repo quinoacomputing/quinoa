@@ -779,6 +779,9 @@ tk::volIntViscousMultiSpecies(
     volIntViscous( viscousRhs, mat_blk, ndof, rdof, nelem,
       inpoel, coord, geoElem, U, P, ndofel, R );
   }
+  else if (ndof ==1) {
+     //Do nothing but don't exit as nothing was here in DGMultiSpecies.cpp before adding this call for DGP1
+  }
   else
     Throw( "Viscous operators only implemented for scheme = 'dgp1'." );
 }
