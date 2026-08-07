@@ -45,7 +45,7 @@ namespace tk {
 		ErrChk( nmat <= NMAT_MAX, "Max. " + std::to_string(NMAT_MAX) + " materials, got " + std::to_string(nmat)+".");
 		ErrChk( ndof <= NDOF_MAX && rdof <= NDOF_MAX, "Max. " + std::to_string(NDOF_MAX) + " DOFs, got {ndof,rdof}={" + std::to_string(ndof)+","+std::to_string(rdof)+"}.");
 		ErrChk( ncomp <= NCOMP_MAX, "Max. " + std::to_string(NCOMP_MAX) + " components, got " + std::to_string(ncomp)+".");
-		ErrChk( ncomp*nprim <= NSTATE_MAX, "Max. " + std::to_string(NSTATE_MAX) + " state entries, got " + std::to_string(ncomp*nprim)+".");
+		ErrChk( ncomp+nprim <= NSTATE_MAX, "Max. " + std::to_string(NSTATE_MAX) + " state entries, got " + std::to_string(ncomp*nprim)+".");
 		ErrChk( nmat*rdof <= NALSOL_MAX, "Max. " + std::to_string(NALSOL_MAX) + " THINC entries, got " + std::to_string(nmat*rdof)+".");
 		ErrChk( NGvol(ndof) <= NQUAD_MAX, "Max. " + std::to_string(NQUAD_MAX) + " quadrature points supported.");
 	}
