@@ -506,35 +506,39 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   const auto& ul = state[0];
   const auto& ur = state[1];
 
-  // establish mixture state
-  inciter::Mixture mix_l(m_nspec, ul, mat_blk);
-  inciter::Mixture mix_r(m_nspec, ur, mat_blk);
+  // Initialize {Q_h}: mean of conserved quantities
+  std::vector<tk::real> qmean(ncomp, 0.0);
+  for (std::size_t c=0; c<ncomp; ++c)
+    qmean[c] = 0.5 * (ul[c] + ur[c]);
+  
+  // Establish mixture state from {Q_h}
+  inciter::Mixture mix_m(m_nspec, qmean, mat_blk);
+  
+  const auto rho_m = mix_m.get_mix_density();
+  Assert(rho_m > 0.0, "Non-positive mean interface density");
 
-  // Compute fluid properties at left and right faces
-  auto mix_temp_l = ul[ncomp + temperatureIdx(m_nspec,0)];
-  auto mix_temp_r = ur[ncomp + temperatureIdx(m_nspec,0)];
-  auto rho_l = mix_l.get_mix_density();
-  auto rho_r = mix_r.get_mix_density();
-  auto R_l = mat_blk[0].compute<inciter::EOS::gas_constant>();
-  auto R_r = mat_blk[0].compute<inciter::EOS::gas_constant>();
-  auto R = 0.5 * (R_l + R_r);
-  auto cp_l = mix_l.Cp(mix_temp_l, mat_blk);
-  auto cp_r = mix_r.Cp(mix_temp_r, mat_blk);
-  auto gamma_l = cp_l / (cp_l - R);
-  auto gamma_r = cp_r / (cp_r - R);
-  auto mu_l = mix_l.viscCoeff(mix_temp_l, mat_blk);
-  auto mu_r = mix_r.viscCoeff(mix_temp_r, mat_blk);
+  // Compute mean fluid properties 
+  const auto u_m = qmean[momentumIdx(m_nspec,0)] / rho_m;
+  const auto v_m = qmean[momentumIdx(m_nspec,1)] / rho_m;
+  const auto w_m = qmean[momentumIdx(m_nspec,2)] / rho_m;
+  const auto e_m = qmean[energyIdx(m_nspec,0)] / rho_m;
 
-  // Compute averages (means) of left and right conserved quantities
-  auto e_m = 0.5 * (ul[energyIdx(m_nspec,0)]/rho_l + ur[energyIdx(m_nspec,0)]/rho_r);
-  auto u_m = 0.5 * (ul[momentumIdx(m_nspec,0)]/rho_l + ur[momentumIdx(m_nspec,0)]/rho_r);
-  auto v_m = 0.5 * (ul[momentumIdx(m_nspec,1)]/rho_l + ur[momentumIdx(m_nspec,1)]/rho_r);
-  auto w_m = 0.5 * (ul[momentumIdx(m_nspec,2)]/rho_l + ur[momentumIdx(m_nspec,2)]/rho_r);
-  auto mu_m = 0.5 * (mu_l + mu_r);
-  auto rho_m = 0.5 * (rho_l + rho_r);
-  auto nu_m = mu_m / rho_m;
-  auto gamma_m = 0.5 * (gamma_l + gamma_r);
-  auto Pr = 0.71; // TODO: make Prandtl number user-configurable
+  // Average face temp for initial guess in Newton solve
+  const auto T_guess = 0.5 * (ul[ncomp + temperatureIdx(m_nspec,0)]
+                            + ur[ncomp + temperatureIdx(m_nspec,0)]);
+
+  int converged = 0; // check Newton convergence
+  const auto T_m = mix_m.temperature(
+    rho_m, u_m, v_m, w_m, qmean[energyIdx(m_nspec,0)], mat_blk, converged, T_guess);
+  
+  Assert(converged == 1, "Mean interface temperature solve failed");
+  
+  const auto R = mat_blk[0].compute<inciter::EOS::gas_constant>();
+  const auto cp_m = mix_m.Cp(T_m, mat_blk);
+  const auto gamma_m = cp_m / (cp_m - R);
+  const auto mu_m = mix_m.viscCoeff(T_m, mat_blk);
+  const auto nu_m = mu_m / rho_m;
+  const auto Pr = 0.71; // TO-DO: make user-configurable
 
   // Build diffusion matrices A^(lm) for l = 1,...,ncomp, m = 0, 1, ..., ncomp
   // All matrices A^(1m) are zero matrices because continuity contains no viscous terms
@@ -611,17 +615,17 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
 
   // energy (mathematically, l=5, but l=4 in zero-based indexing)
   A[4][0] = { { 
-    { nu_m*((gamma_m/Pr - 4.0/3.0)*u_m*u_m + (gamma_m/Pr - 1)*(v_m*v_m + w_m*w_m) + e_m*gamma_m/(rho_m*Pr)),
+    { nu_m*((gamma_m/Pr - 4.0/3.0)*u_m*u_m + (gamma_m/Pr - 1)*(v_m*v_m + w_m*w_m) - e_m*gamma_m/Pr),
       -nu_m*(1.0/3.0)*u_m*v_m,
       -nu_m*(1.0/3.0)*u_m*w_m }, 
     { -nu_m*(1.0/3.0)*u_m*v_m,
-      nu_m*((gamma_m/Pr - 4.0/3.0)*v_m*v_m + (gamma_m/Pr - 1)*(u_m*u_m + w_m*w_m) + e_m*gamma_m/(rho_m*Pr)),
+      nu_m*((gamma_m/Pr - 4.0/3.0)*v_m*v_m + (gamma_m/Pr - 1)*(u_m*u_m + w_m*w_m) - e_m*gamma_m/Pr),
       -nu_m*(1.0/3.0)*v_m*w_m }, 
     { -nu_m*(1.0/3.0)*u_m*w_m, 
       -nu_m*(1.0/3.0)*v_m*w_m,
       nu_m*((gamma_m/Pr - 4.0/3.0)*w_m*w_m
       + (gamma_m/Pr - 1)*(u_m*u_m + v_m*v_m)
-      + e_m*gamma_m/(rho_m*Pr)) } } };
+      - e_m*gamma_m/Pr) } } };
 
   A[4][1] = { {
     { nu_m*(4.0/3.0 - gamma_m/Pr)*u_m,           nu_m*v_m,                   nu_m*w_m },
@@ -734,7 +738,7 @@ for (std::size_t l = 1; l<ncomp; ++l) {
       auto k = l*ncomp + m;
         sum += 0.5*( (state[1][m] - state[0][m]) * dir[k][i]);
     }
-  ic[l][i] = 0.5 * sum;
+  ic[l][i] = sum;
   }
 }
   

@@ -20,6 +20,8 @@
 #include <map>
 #include <array>
 #include <iostream>
+#include <tuple>
+#include <vector>
 
 #include "Macro.hpp"
 #include "Exception.hpp"
@@ -44,6 +46,7 @@
 #include "MultiSpecies/MiscMultiSpeciesFns.hpp"
 #include "EoS/GetMatProp.hpp"
 #include "Mixture/Mixture.hpp"
+#include "FunctionPrototypes.hpp"
 
 namespace inciter {
 
@@ -63,6 +66,15 @@ class MultiSpecies {
 
   private:
     using eq = tag::multispecies;
+
+    //! Boundary configuration used only by multispecies DDG viscous terms
+    using DDGGradientBC = std::vector<
+      std::tuple<
+        std::vector<std::size_t>, // boundary sidesets
+        tk::StateFn,              // constructs Q- and Q+
+        tk::BoundaryGradientFn    // constructs grad(Q+)
+      >
+    >;
 
   public:
     //! Constructor
@@ -93,6 +105,32 @@ class MultiSpecies {
         , symmetryGrad
         , noOpGrad }
         ) );
+
+        // DDG conserved-gradient callbacks
+        const std::vector< tk::BoundaryGradientFn > ddgGradFns{
+          noOpConservedGrad,       // dirichlet
+          symmetryConservedGrad,   // symmetry
+          noOpConservedGrad,       // outlet/invalid
+          noOpConservedGrad,       // farfield
+          noOpConservedGrad,       // extrapolate
+          adiabaticWallGrad,       // no-slip adiabatic wall
+          symmetryConservedGrad,   // slip wall
+          noOpConservedGrad        // isothermal wall
+        };
+
+        Assert(
+          ddgGradFns.size() == m_bc.size(),
+          "DDG boundary-gradient configuration size mismatch");
+
+        m_ddg_bc.reserve( m_bc.size() );
+
+        for (std::size_t i=0; i<m_bc.size(); ++i) {
+          m_ddg_bc.emplace_back(
+            std::get<0>(m_bc[i]), // configured sidesets
+            std::get<1>(m_bc[i]), // existing Q-/Q+ callback
+            ddgGradFns[i]         // new grad(Q+) callback
+          );
+        }
 
       // EoS initialization
       initializeSpeciesEoS( m_mat_blk );
@@ -740,10 +778,22 @@ class MultiSpecies {
           coord, fd, geoFace, geoElem, U, P, R );
         tk::volIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof, nelem, inpoel,
           coord, geoElem, U, P, ndofel, R );
-        for (const auto& b : m_bc)
+        
+        Assert( m_ddg_bc.size() == m_bc.size(), 
+                "DDG and legacy boundary configurations are misaligned" );
+
+        for (std::size_t i = 0; i<m_bc.size(); ++i) {
+          const auto& bc = m_bc[i];
+          const auto& ddgBC = m_ddg_bc[i];
+
+          Assert( std::get<0>(bc) == std::get<0>(ddgBC), 
+                  "DDG and legacy boundary sidesets are misaligned" );
+
           tk::bndSurfIntViscousMultiSpecies( nspec, m_mat_blk, ndof, rdof,
-            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-            std::get<1>(b), std::get<2>(b), U, P, R );
+            std::get<0>(bc), fd, geoFace, geoElem, inpoel, coord, t,
+            std::get<1>(bc), std::get<2>(bc), std::get<2>(ddgBC), U, P, R );
+        }
+          
       }
 
       // compute external (energy) sources
@@ -1031,6 +1081,8 @@ class MultiSpecies {
     tk::RiemannFluxFn m_riemann;
     //! BC configuration
     BCStateFn m_bc;
+    //! Multispecies DDG conserved-gradient BC configuration
+    DDGGradientBC m_ddg_bc;
     //! EOS material block
     std::vector< EOS > m_mat_blk;
 

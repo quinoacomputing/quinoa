@@ -138,6 +138,11 @@ tk::volIntViscous(
         // compute viscous flux
         viscousRhs.volumeFlux( mat_blk, nspec, ncomp, state, vgrad, visc_fl );
 
+        // Weak form: -F_v \cdot \nabla(\phi)
+        for (auto& flux : visc_fl)
+          for (auto& component : flux)
+            component = -component;
+            
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, visc_fl, R );
       }
     }

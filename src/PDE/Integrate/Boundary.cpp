@@ -209,7 +209,7 @@ viscousBoundaryFaceIntDG(
   const Fields& P,
   real t,
   const StateFn& state,
-  const StateFn& gradFn,
+  const BoundaryGradientFn& BgradFn,
   Fields& R )
 // *****************************************************************************
 //! \brief Compute boundary surface flux integrals for a given boundary type for
@@ -233,7 +233,7 @@ viscousBoundaryFaceIntDG(
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] t Physical time
 //! \param[in] state Boundary state function
-//! \param[in] gradFn Boundary gradient function
+//! \param[in] BgradFn Conserved-variable ghost-gradient function
 //! \param[in,out] R Right-hand side vector computed
 //! \details This routine mirrors viscousInternalFaceIntDG() for physical
 //!   boundaries. The ghost-side states are provided by the supplied StateFn.
@@ -242,10 +242,6 @@ viscousBoundaryFaceIntDG(
   using inciter::multispecies::momentumDofIdx;
   using inciter::multispecies::densityDofIdx;
   using inciter::multispecies::energyDofIdx;
-  using inciter::multispecies::temperatureIdx;
-  using inciter::multispecies::densityIdx;
-  using inciter::multispecies::momentumIdx;
-  using inciter::multispecies::energyIdx;
 
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
@@ -381,58 +377,32 @@ viscousBoundaryFaceIntDG(
           // For DDG, "grad" contains gradients of conserved quantities, "vgrad" contains gradients of 
           // velocity and temperature 
           // Use velocity and temp gradients to conform with expected inputs for gradFn
+
+          // Apply the DDG boundary condition directly to the conserved gradients
+          tk::BoundaryGradient gradMinus(ncomp);
+
+          for (ncomp_t c=0; c<ncomp; ++c)
+            for (std::size_t d=0; d<3; ++d)
+              gradMinus[c][d] = grad[0][c][d];
+
+          auto gradPlus = BgradFn(
+            ncomp,
+            mat_blk,
+            ghostState,
+            gradMinus,
+            gp[0],
+            gp[1],
+            gp[2],
+            t,
+            fn );
+
+          Assert(
+            gradPlus.size() == ncomp,
+            "Incorrect ghost boundary gradient size" );
           
-          std::vector< tk::real > dqdx_l(4*3,0.0);
-          for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-              dqdx_l[3*i+j] = vgrad[0][i][j];  // velocity gradients
-
-          for (std::size_t j=0; j<3; ++j)
-            dqdx_l[3*3+j] = vgrad[0][3][j];  // temperature gradients
-
-          auto gradBC = gradFn( 4, mat_blk, dqdx_l, gp[0], gp[1], gp[2], t, fn );
-          // store BC gradients into gradient vector
-          for (std::size_t i=0; i<4; ++i)
-            for (std::size_t j=0; j<3; ++j) {
-              vgrad[1][i][j] = gradBC[1][3*i+j];
-            }
-          
-          // for ghost point, calculate grad[1] from vgrad[1]. 
-          // grad[1] = { {rho}, {rho*u}, {rho*v}, {rho*w}, {rho*e}}
-          const auto rho = ghostState[1][densityIdx(nspec,0)];
-          const auto rhoE = ghostState[1][energyIdx(nspec,0)];
-          const auto temperature = ghostState[1][ncomp + temperatureIdx(nspec,0)];
-          Assert(rho > 0.0, "Non-positive ghost density");
-          
-          // Continuity
-          for (std::size_t j = 0; j < 3; ++j) {
-            grad[1][densityIdx(nspec,0)][j] = grad[0][densityIdx(nspec,0)][j];
-          }
-          // Momentum
-          std::array<tk::real, 3> velocity{};
-          for (std::size_t d = 0; d < 3; ++d) {
-            velocity[d] = ghostState[1][momentumIdx(nspec,d)] / rho; // u = rho*u / rho
-            for (std::size_t j = 0; j< 3; ++j) {
-              grad[1][momentumIdx(nspec,d)][j] = velocity[d] * grad[1][densityIdx(nspec,0)][j] 
-                + rho * vgrad[1][d][j]; // product rule: d(rho*u) = u*d(rho) + rho*du
-            }
-          }
-
-          // Energy
-          const auto cv = mat_blk[0].compute<inciter::EOS::cv>(temperature);
-
-          const auto e = rhoE / rho;
-          
-          for (std::size_t j = 0; j < 3; ++j) {
-            tk::real velocityContribution = 0.0;
-
-            for (std::size_t d = 0; d < 3; ++d) {
-              velocityContribution += velocity[d] * vgrad[1][d][j]; // (u*grad(u) + v*grad(v) + w*grad(w))
-            }
-            // grad(rho*e) = e*grad(rho) + rho*cv*grad(T) + rho * (u*grad(u) + v*grad(v) + w*grad(w))
-            grad[1][energyIdx(nspec,0)][j] = e * grad[1][densityIdx(nspec,0)][j] 
-              + rho * cv * vgrad[1][3][j] + rho * velocityContribution;
-          }
+          for (ncomp_t c=0; c<ncomp; ++c)
+            for (std::size_t d=0; d<3; ++d)
+              grad[1][c][d] = gradPlus[c][d];
           
           // Compute viscous fluxes
           auto dir = viscousRhs.interiorFlux( mat_blk, ncomp, ghostState, fn, he, grad, hess, fl );
@@ -451,11 +421,11 @@ viscousBoundaryFaceIntDG(
               R(el, mark+2) += wt * fl[c] * B_l[2];
               R(el, mark+3) += wt * fl[c] * B_l[3];
               // interface correction quadrature 
-              R(el, mark+1) +=
+              R(el, mark+1) -=
                 wt * (ic[c][0]*dBdx_l[0][1] + ic[c][1]*dBdx_l[1][1] + ic[c][2]*dBdx_l[2][1]);
-              R(el, mark+2) +=
+              R(el, mark+2) -=
                 wt * (ic[c][0]*dBdx_l[0][2] + ic[c][1]*dBdx_l[1][2] + ic[c][2]*dBdx_l[2][2]);
-              R(el, mark+3) +=
+              R(el, mark+3) -=
                 wt * (ic[c][0]*dBdx_l[0][3] + ic[c][1]*dBdx_l[1][3] + ic[c][2]*dBdx_l[2][3]);
             }
 
@@ -468,17 +438,17 @@ viscousBoundaryFaceIntDG(
               R(el, mark+8) += wt * fl[c] * B_l[8];
               R(el, mark+9) += wt * fl[c] * B_l[9];
               //interface correction quadrature
-              R(el, mark+4) +=
+              R(el, mark+4) -=
                 wt * (ic[c][0]*dBdx_l[0][4] + ic[c][1]*dBdx_l[1][4] + ic[c][2]*dBdx_l[2][4]);
-              R(el, mark+5) +=
+              R(el, mark+5) -=
                 wt * (ic[c][0]*dBdx_l[0][5] + ic[c][1]*dBdx_l[1][5] + ic[c][2]*dBdx_l[2][5]);
-              R(el, mark+6) +=
+              R(el, mark+6) -=
                 wt * (ic[c][0]*dBdx_l[0][6] + ic[c][1]*dBdx_l[1][6] + ic[c][2]*dBdx_l[2][6]);
-              R(el, mark+7) +=
+              R(el, mark+7) -=
                 wt * (ic[c][0]*dBdx_l[0][7] + ic[c][1]*dBdx_l[1][7] + ic[c][2]*dBdx_l[2][7]);
-              R(el, mark+8) +=
+              R(el, mark+8) -=
                 wt * (ic[c][0]*dBdx_l[0][8] + ic[c][1]*dBdx_l[1][8] + ic[c][2]*dBdx_l[2][8]);
-              R(el, mark+9) +=
+              R(el, mark+9) -=
                 wt * (ic[c][0]*dBdx_l[0][9] + ic[c][1]*dBdx_l[1][9] + ic[c][2]*dBdx_l[2][9]);
             }
           }
@@ -1245,6 +1215,7 @@ bndSurfIntViscousMultiSpecies(
   real t,
   const StateFn& state,
   const StateFn& gradFn,
+  const BoundaryGradientFn& BgradFn,
   const Fields& U,
   const Fields& P,
   Fields& R )
@@ -1263,6 +1234,7 @@ bndSurfIntViscousMultiSpecies(
 //! \param[in] t Physical time
 //! \param[in] state Boundary state function
 //! \param[in] gradFn Boundary gradient function
+//! \param[in] BgradFn Conserved-variable ghost-gradient function
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in,out] R Right-hand side vector computed
@@ -1277,7 +1249,7 @@ bndSurfIntViscousMultiSpecies(
   else if (ndof == 4) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     viscousBoundaryFaceIntDG( viscousRhs, mat_blk, nspec, ndof, rdof, bcconfig, 
-      inpoel, coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
+      inpoel, coord, fd, geoFace, geoElem, U, P, t, state, BgradFn, R );
   }
 
   else

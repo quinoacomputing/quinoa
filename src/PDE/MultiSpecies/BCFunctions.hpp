@@ -164,7 +164,7 @@ namespace inciter {
       Mixture mixr(nspec, massfrac_l, fp, Tl, mat_blk);
 
       ur[multispecies::energyIdx(nspec,0)] = mixr.totalenergy(rhol, v1l,
-        v2l, v3l, fp, mat_blk);
+        v2l, v3l, fp, mat_blk); // bug: should be Tl instead of fp
     }
     // Otherwise, for supersonic outflow, all the characteristics are from
     // internal cell. Therefore, we calculate the ghost cell state using the
@@ -342,6 +342,145 @@ namespace inciter {
     return {{ std::move(dul), std::move(dur) }};
   }
 
+  //! \brief Copy the interior conserved-variable gradients to the ghost side
+  //! \note The function signature must follow tk::BoundaryGradientFn.
+  static tk::BoundaryGradientFn::result_type
+  noOpConservedGrad(
+    ncomp_t ncomp,
+    const std::vector< EOS >&,
+    const std::array< std::vector< tk::real >, 2 >& state,
+    const tk::BoundaryGradient& gradMinus,
+    tk::real, tk::real, tk::real, tk::real,
+    const std::array< tk::real, 3 >& )
+  {
+    Assert( state[0].size() >= ncomp && state[1].size() >= ncomp,
+            "Incorrect boundary state size" );
+    Assert( gradMinus.size() == ncomp,
+            "Incorrect boundary gradient size" );
+
+    return gradMinus;
+  }
+
+  //! \brief Reflect conserved-variable gradients at a symmetry boundary
+  //! \note The function signature must follow tk::BoundaryGradientFn.
+  static tk::BoundaryGradientFn::result_type
+  symmetryConservedGrad(
+    ncomp_t ncomp,
+    const std::vector< EOS >&,
+    const std::array< std::vector< tk::real >, 2 >& state,
+    const tk::BoundaryGradient& gradMinus,
+    tk::real, tk::real, tk::real, tk::real,
+    const std::array< tk::real, 3 >& fn )
+  {
+    Assert( state[0].size() >= ncomp && state[1].size() >= ncomp,
+            "Incorrect boundary state size" );
+    Assert( gradMinus.size() == ncomp,
+            "Incorrect boundary gradient size" );
+
+    auto gradPlus = gradMinus;
+    for (std::size_t c=0; c<ncomp; ++c) {
+      const auto normalGradient =
+        gradMinus[c][0]*fn[0] + gradMinus[c][1]*fn[1] +
+        gradMinus[c][2]*fn[2];
+      for (std::size_t d=0; d<3; ++d)
+        gradPlus[c][d] -= 2.0*normalGradient*fn[d];
+    }
+
+    return gradPlus;
+  }
+
+  //! \brief Construct ghost conserved gradients at an adiabatic no-slip wall
+  //! \details Density and momentum gradients are copied to the ghost side.
+  //!   The normal component of the specific-internal-energy gradient is
+  //!   reflected, then the ghost total-energy gradient is reconstructed from
+  //!   the ghost state and primitive gradients.
+  //! \note This DDG boundary treatment currently supports the five-equation,
+  //!   single-species system only. The function signature must follow
+  //!   tk::BoundaryGradientFn.
+  static tk::BoundaryGradientFn::result_type
+  adiabaticWallGrad(
+    ncomp_t ncomp,
+    const std::vector< EOS >&,
+    const std::array< std::vector< tk::real >, 2 >& state,
+    const tk::BoundaryGradient& gradMinus,
+    tk::real, tk::real, tk::real, tk::real,
+    const std::array< tk::real, 3 >& fn )
+  {
+    const auto nspec =
+      g_inputdeck.get< tag::multispecies, tag::nspec >();
+
+    Assert( nspec == 1,
+            "DDG adiabatic-wall gradients require one species" );
+    Assert( ncomp == 5,
+            "DDG adiabatic-wall gradients require five equations" );
+    Assert( state[0].size() >= ncomp && state[1].size() >= ncomp,
+            "Incorrect boundary state size" );
+    Assert( gradMinus.size() == ncomp,
+            "Incorrect boundary gradient size" );
+
+    const auto& qMinus = state[0];
+    const auto& qPlus = state[1];
+    const auto density = multispecies::densityIdx(nspec, 0);
+    const auto energy = multispecies::energyIdx(nspec, 0);
+
+    const auto rhoMinus = qMinus[density];
+    const auto rhoPlus = qPlus[density];
+    Assert( rhoMinus > 0.0 && rhoPlus > 0.0,
+            "Non-positive density at adiabatic wall" );
+
+    std::array< tk::real, 3 > velocityMinus{{ 0.0, 0.0, 0.0 }};
+    std::array< tk::real, 3 > velocityPlus{{ 0.0, 0.0, 0.0 }};
+    std::array< std::array< tk::real, 3 >, 3 > gradVelocityMinus{};
+    std::array< std::array< tk::real, 3 >, 3 > gradVelocityPlus{};
+
+    for (std::size_t i=0; i<3; ++i) {
+      const auto momentum = multispecies::momentumIdx(nspec, i);
+      velocityMinus[i] = qMinus[momentum] / rhoMinus;
+      velocityPlus[i] = qPlus[momentum] / rhoPlus;
+      for (std::size_t d=0; d<3; ++d) {
+        gradVelocityMinus[i][d] =
+          (gradMinus[momentum][d] -
+           velocityMinus[i]*gradMinus[density][d]) / rhoMinus;
+      }
+    }
+
+    std::array< tk::real, 3 > gradInternalEnergy{{ 0.0, 0.0, 0.0 }};
+    for (std::size_t d=0; d<3; ++d) {
+      gradInternalEnergy[d] =
+        (gradMinus[energy][d] -
+         qMinus[energy]/rhoMinus*gradMinus[density][d]) / rhoMinus;
+      for (std::size_t i=0; i<3; ++i)
+        gradInternalEnergy[d] -=
+          velocityMinus[i]*gradVelocityMinus[i][d];
+    }
+
+    const auto normalInternalEnergyGradient =
+      gradInternalEnergy[0]*fn[0] + gradInternalEnergy[1]*fn[1] +
+      gradInternalEnergy[2]*fn[2];
+    for (std::size_t d=0; d<3; ++d)
+      gradInternalEnergy[d] -= normalInternalEnergyGradient*fn[d];
+
+    auto gradPlus = gradMinus;
+    for (std::size_t i=0; i<3; ++i) {
+      const auto momentum = multispecies::momentumIdx(nspec, i);
+      for (std::size_t d=0; d<3; ++d) {
+        gradVelocityPlus[i][d] =
+          (gradPlus[momentum][d] -
+           velocityPlus[i]*gradPlus[density][d]) / rhoPlus;
+      }
+    }
+
+    for (std::size_t d=0; d<3; ++d) {
+      gradPlus[energy][d] =
+        qPlus[energy]/rhoPlus*gradPlus[density][d] +
+        rhoPlus*gradInternalEnergy[d];
+      for (std::size_t i=0; i<3; ++i)
+        gradPlus[energy][d] +=
+          rhoPlus*velocityPlus[i]*gradVelocityPlus[i][d];
+    }
+
+    return gradPlus;
+  }
 } // inciter::
 
 #endif // BCFunctions_h

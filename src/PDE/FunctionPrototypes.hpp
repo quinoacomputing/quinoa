@@ -71,6 +71,24 @@ using StateFn = std::function<
     const std::vector< real >&, real, real, real, real,
     const std::array< tk::real, 3 >& ) >;
 
+//! Conserved-variable gradients, indexed as [component][spatial direction]
+using BoundaryGradient = std::vector< std::array< real, 3 > >;
+
+//! Function prototype for constructing ghost-side conserved gradients 
+//! at a physical boundary from Q-, Q+, and grad(Q-). Used for DDG.
+using BoundaryGradientFn = std::function<
+    BoundaryGradient(
+      ncomp_t,
+      const std::vector< inciter::EOS >&,
+      const std::array< std::vector< real >, 2 >&,
+      const BoundaryGradient&,
+      real,
+      real,
+      real,
+      real,
+      const std::array< real, 3 >&
+    ) >;
+
 //! Function prototype for evaluating a source term
 //! \details Functions of this type are used to evaluate an arbitrary source
 //!   term specialized to a particular problem, e.g., derived using the

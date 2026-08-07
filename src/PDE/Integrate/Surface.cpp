@@ -395,11 +395,11 @@ viscousInternalFaceIntDG(
           R(el, mark+2) += wt * fl[c] * B_l[2];
           R(el, mark+3) += wt * fl[c] * B_l[3];
           // interface correction quadrature 
-          R(el, mark+1) +=
+          R(el, mark+1) -=
             wt * (ic[c][0]*dBdx_l[0][1] + ic[c][1]*dBdx_l[1][1] + ic[c][2]*dBdx_l[2][1]);
-          R(el, mark+2) +=
+          R(el, mark+2) -=
             wt * (ic[c][0]*dBdx_l[0][2] + ic[c][1]*dBdx_l[1][2] + ic[c][2]*dBdx_l[2][2]);
-          R(el, mark+3) +=
+          R(el, mark+3) -=
             wt * (ic[c][0]*dBdx_l[0][3] + ic[c][1]*dBdx_l[1][3] + ic[c][2]*dBdx_l[2][3]);
         }
 
@@ -426,17 +426,17 @@ viscousInternalFaceIntDG(
           R(el, mark+8) += wt * fl[c] * B_l[8];
           R(el, mark+9) += wt * fl[c] * B_l[9];
           //interface correction quadrature
-          R(el, mark+4) +=
+          R(el, mark+4) -=
             wt * (ic[c][0]*dBdx_l[0][4] + ic[c][1]*dBdx_l[1][4] + ic[c][2]*dBdx_l[2][4]);
-          R(el, mark+5) +=
+          R(el, mark+5) -=
             wt * (ic[c][0]*dBdx_l[0][5] + ic[c][1]*dBdx_l[1][5] + ic[c][2]*dBdx_l[2][5]);
-          R(el, mark+6) +=
+          R(el, mark+6) -=
             wt * (ic[c][0]*dBdx_l[0][6] + ic[c][1]*dBdx_l[1][6] + ic[c][2]*dBdx_l[2][6]);
-          R(el, mark+7) +=
+          R(el, mark+7) -=
             wt * (ic[c][0]*dBdx_l[0][7] + ic[c][1]*dBdx_l[1][7] + ic[c][2]*dBdx_l[2][7]);
-          R(el, mark+8) +=
+          R(el, mark+8) -=
             wt * (ic[c][0]*dBdx_l[0][8] + ic[c][1]*dBdx_l[1][8] + ic[c][2]*dBdx_l[2][8]);
-          R(el, mark+9) +=
+          R(el, mark+9) -=
             wt * (ic[c][0]*dBdx_l[0][9] + ic[c][1]*dBdx_l[1][9] + ic[c][2]*dBdx_l[2][9]);
         }
 
@@ -449,17 +449,17 @@ viscousInternalFaceIntDG(
           R(er, mark+8) -= wt * fl[c] * B_r[8];
           R(er, mark+9) -= wt * fl[c] * B_r[9];
           //interface correction quadrature
-          R(er, mark+4) +=
+          R(er, mark+4) -=
             wt * (ic[c][0]*dBdx_r[0][4] + ic[c][1]*dBdx_r[1][4] + ic[c][2]*dBdx_r[2][4]);
-          R(er, mark+5) +=
+          R(er, mark+5) -=
             wt * (ic[c][0]*dBdx_r[0][5] + ic[c][1]*dBdx_r[1][5] + ic[c][2]*dBdx_r[2][5]);
-          R(er, mark+6) +=
+          R(er, mark+6) -=
             wt * (ic[c][0]*dBdx_r[0][6] + ic[c][1]*dBdx_r[1][6] + ic[c][2]*dBdx_r[2][6]);
-          R(er, mark+7) +=
+          R(er, mark+7) -=
             wt * (ic[c][0]*dBdx_r[0][7] + ic[c][1]*dBdx_r[1][7] + ic[c][2]*dBdx_r[2][7]);
-          R(er, mark+8) +=
+          R(er, mark+8) -=
             wt * (ic[c][0]*dBdx_r[0][8] + ic[c][1]*dBdx_r[1][8] + ic[c][2]*dBdx_r[2][8]);
-          R(er, mark+9) +=
+          R(er, mark+9) -=
             wt * (ic[c][0]*dBdx_r[0][9] + ic[c][1]*dBdx_r[1][9] + ic[c][2]*dBdx_r[2][9]);
         }
       }

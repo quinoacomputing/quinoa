@@ -170,6 +170,7 @@ bndSurfIntViscousMultiSpecies(
   real t,
   const StateFn& state,
   const StateFn& gradFn,
+  const BoundaryGradientFn& BgradFn,
   const Fields& U,
   const Fields& P,
   Fields& R );
