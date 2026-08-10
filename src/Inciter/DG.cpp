@@ -1598,9 +1598,9 @@ DG::solve( tk::real newdt )
   } else {
 
     if (d->It()%50 == 0) {
-      // Output internal energy inside the cylinder into a file
+      // Output internal energy and inner radius into files
       DG::output_internal_energy();
-      DG::output_internal_volume();
+      DG::output_inner_radius();
     }
 
     // Increase number of iterations and physical time
@@ -1644,27 +1644,28 @@ DG::print_internal_energy( tk::real internal_energy )
 
 
 void
-DG::output_internal_volume()
+DG::output_inner_radius()
 {
   auto d = Disc();
   std::size_t nelem = myGhosts()->m_fd.Esuel().size()/4;
-  tk::real intV = 0.0;
-  g_dgpde[d->MeshId()].output_internal_volume(nelem, d->T(), myGhosts()->m_geoElem, m_u, intV);
+  tk::real inner_r = std::numeric_limits<tk::real>::max();
+  g_dgpde[d->MeshId()].output_inner_radius(nelem, d->T(), myGhosts()->m_geoElem, m_u,
+                                           myGhosts()->m_coord, myGhosts()->m_inpoel, inner_r);
 
-  CkCallback sumDone;
-  sumDone = CkCallback(CkReductionTarget(DG,print_internal_volume), thisProxy);
+  CkCallback minDone;
+  minDone = CkCallback(CkReductionTarget(DG,print_inner_radius), thisProxy);
 
-  contribute( sizeof(tk::real), &intV, CkReduction::sum_double, sumDone );
+  contribute( sizeof(tk::real), &inner_r, CkReduction::min_double, minDone );
 }
 
 void
-DG::print_internal_volume( tk::real internal_volume )
+DG::print_inner_radius( tk::real inner_radius )
 {
   if (thisIndex == 0) {
     auto d = Disc();
-    // Output time and internal volume into file.
-    std::ofstream outFile("internal_volume.dat", std::ios::app);
-    outFile << d->T() << ", " << internal_volume << "\n";
+    // Output time and inner radius into file.
+    std::ofstream outFile("internal_radius.dat", std::ios::app);
+    outFile << d->T() << ", " << inner_radius << "\n";
   }
 }
 

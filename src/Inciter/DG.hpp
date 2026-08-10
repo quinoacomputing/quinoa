@@ -216,7 +216,7 @@ class DG : public CBase_DG {
     void step();
 
     void print_internal_energy( tk::real internal_energy );
-    void print_internal_volume( tk::real internal_volume );
+    void print_inner_radius( tk::real inner_radius );
 
     //! Start computing the boundary normals for ALE
     void computeBNorm();
@@ -502,7 +502,7 @@ class DG : public CBase_DG {
                                            std::vector< tk::real > x);
 
     void output_internal_energy();
-    void output_internal_volume();
+    void output_inner_radius();
 };
 
 } // inciter::

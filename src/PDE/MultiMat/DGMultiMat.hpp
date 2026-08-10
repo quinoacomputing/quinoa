@@ -1222,11 +1222,13 @@ class MultiMat {
       }
     }
 
-    void output_internal_volume( std::size_t nelem,
-                                 const tk::real time,
-                                 const tk::Fields& geoElem,
-                                 const tk::Fields& U,
-                                 tk::real& internal_volume ) const
+    void output_inner_radius( std::size_t nelem,
+                              const tk::real time,
+                              const tk::Fields& geoElem,
+                              const tk::Fields& U,
+                              const std::array< std::vector< tk::real >, 3 >& coord,
+                              const std::vector< std::size_t >& inpoel,
+                              tk::real& inner_radius ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -1234,11 +1236,34 @@ class MultiMat {
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
 
-      internal_volume = 0.0;
+      // Find minimum radius where solid material exists
+      inner_radius = std::numeric_limits<tk::real>::max();
+
+      const auto& x = coord[0];
+      const auto& y = coord[1];
+      const auto& z = coord[2];
+
       for (std::size_t e=0; e<nelem; ++e) {
-          std::size_t k = 0;
-          tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
-          internal_volume += alpha * geoElem(e, 0) * 8;
+        // Check if this element contains solid material (alpha > threshold)
+        bool has_solid = false;
+        for (std::size_t k=0; k<nmat; ++k) {
+          if (solidx[k] > 0) {
+            tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            if (alpha > 0.1) {  // threshold for "has solid"
+              has_solid = true;
+              break;
+            }
+          }
+        }
+
+        if (has_solid) {
+          // Get nodes of this element and find minimum radius
+          for (std::size_t n=0; n<4; ++n) {
+            auto node = inpoel[e*4 + n];
+            tk::real r = std::sqrt(x[node]*x[node] + y[node]*y[node] + z[node]*z[node]);
+            inner_radius = std::min(inner_radius, r);
+          }
+        }
       }
     }
 

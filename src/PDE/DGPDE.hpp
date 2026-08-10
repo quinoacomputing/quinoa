@@ -348,13 +348,15 @@ class DGPDE {
                                  tk::real& internal_energy ) const
   { return self->output_internal_energy( nelem, time, geoElem, U, internal_energy ); }
 
-    //! Public interface for output internal volume
-    void output_internal_volume( std::size_t nelem,
-                                 const tk::real time,
-                                 const tk::Fields& geoElem,
-                                 const tk::Fields& U,
-                                 tk::real& internal_volume ) const
-  { return self->output_internal_volume( nelem, time, geoElem, U, internal_volume ); }
+    //! Public interface for output inner radius
+    void output_inner_radius( std::size_t nelem,
+                              const tk::real time,
+                              const tk::Fields& geoElem,
+                              const tk::Fields& U,
+                              const std::array< std::vector< tk::real >, 3 >& coord,
+                              const std::vector< std::size_t >& inpoel,
+                              tk::real& inner_radius ) const
+  { return self->output_inner_radius( nelem, time, geoElem, U, coord, inpoel, inner_radius ); }
 
     //! Public interface for computing stiff terms for an element
     void stiff_rhs( std::size_t e,
@@ -568,11 +570,13 @@ class DGPDE {
                                            const tk::Fields&,
                                            const tk::Fields&,
                                            tk::real& ) const = 0;
-      virtual void output_internal_volume( std::size_t,
-                                           const tk::real,
-                                           const tk::Fields&,
-                                           const tk::Fields&,
-                                           tk::real& ) const = 0;
+      virtual void output_inner_radius( std::size_t,
+                                        const tk::real,
+                                        const tk::Fields&,
+                                        const tk::Fields&,
+                                        const std::array< std::vector< tk::real >, 3 >&,
+                                        const std::vector< std::size_t >&,
+                                        tk::real& ) const = 0;
       virtual void stiff_rhs( std::size_t,
                               const tk::Fields&,
                               const tk::Fields&,
@@ -786,12 +790,14 @@ class DGPDE {
                                    const tk::Fields& U,
                                    tk::real& internal_energy ) const override
       { return data.output_internal_energy( nelem, time, geoElem, U, internal_energy ); }
-      void output_internal_volume( std::size_t nelem,
-                                   const tk::real time,
-                                   const tk::Fields& geoElem,
-                                   const tk::Fields& U,
-                                   tk::real& internal_volume ) const override
-      { return data.output_internal_volume( nelem, time, geoElem, U, internal_volume ); }
+      void output_inner_radius( std::size_t nelem,
+                                const tk::real time,
+                                const tk::Fields& geoElem,
+                                const tk::Fields& U,
+                                const std::array< std::vector< tk::real >, 3 >& coord,
+                                const std::vector< std::size_t >& inpoel,
+                                tk::real& inner_radius ) const override
+      { return data.output_inner_radius( nelem, time, geoElem, U, coord, inpoel, inner_radius ); }
       void stiff_rhs( std::size_t e,
                       const tk::Fields& geoElem,
                       const tk::Fields& U,
