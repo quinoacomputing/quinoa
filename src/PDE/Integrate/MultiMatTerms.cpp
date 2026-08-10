@@ -405,6 +405,7 @@ nonConservativeInt_constP(
   if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size) || !mesh_ok)
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
+  /*
   // U,P change per call so always upload
   size_t P_size = P.getSize();
   ensureDeviceCapacity(dv.P, "nconsv_P_d_view", P_size);
@@ -415,6 +416,18 @@ nonConservativeInt_constP(
   ensureDeviceCapacity(dv.U, "nconsv_U_d_view", U_size);
   auto U_h_view = changeToView(U.getPointer(), U_size);
   Kokkos::deep_copy(dv.U, U_h_view);
+  */
+
+  // Up, P, R change per call so always upload
+  // Staged thru pagelock memory and queued on default exec space instance (async copies)
+  // Kernel runs on the same instance (stream) so its ordered after without needing to fence
+  auto exec = Kokkos::DefaultExecutionSpace();
+
+  const std::size_t P_size = P.getSize();
+  uploadStaged( exec, dv.P, dv.stage_P, P.getPointer(), P_size, "nconsv_P_d_view" );
+  
+  const std::size_t U_size = U.getSize();
+  uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "nconsv_U_d_view" );
 
   // RiemannDeriv
   // Stage into contiguous rowmajor buffer before H2D copy
@@ -428,15 +441,21 @@ nonConservativeInt_constP(
       rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
     }
   }
+
+  const std::size_t R_size = R.getSize();
+  /*
   auto rd_h_view = changeToView(rd_flat.data(), rd_size);
   ensureDeviceCapacity(dv.riemannDeriv, "nconsv_riemannDeriv_d_view", rd_size);
   Kokkos::deep_copy(dv.riemannDeriv, rd_h_view);
 
   // R accumulator, needs to grab data from host (cannot zero out!)
-  const std::size_t R_size = R.getSize();
   ensureDeviceCapacity(dv.R, "nconsv_R_d_view", R_size);
   auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
   Kokkos::deep_copy(dv.R, R_h_view);
+  */
+
+  uploadStaged( exec, dv.riemannDeriv, dv.stage_rd, rd_flat.data(), rd_size, "nconsv_riemannDeriv_d_view" );
+  uploadStaged( exec, dv.R, dv.stage_R, R.getPointer(), R_size, "nconsv_R_d_view" );
 
   /*
   size_t R_size = R.getSize();
@@ -616,7 +635,12 @@ nonConservativeInt_constP(
     }
   }); //end Kokkos::parallel_for
 
-  Kokkos::deep_copy(R_h_view, R_d_view);
+  //Kokkos::deep_copy(R_h_view, R_d_view);
+
+  // Queued on same instance as kernel so ordered after it
+  // Fence before copying out of pinned buffer
+  downloadStaged( exec, R.getPointerNonConst(), dv.stage_R, R_d_view, R_size, "nconsv_R_d_view" );
+  
   Kokkos::Profiling::popRegion();
 }
 

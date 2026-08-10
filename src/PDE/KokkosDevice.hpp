@@ -1,6 +1,8 @@
 #ifndef KokkosDevice_h
 #define KokkosDevice_h
 
+#include <cstring>
+
 #include "Types.hpp"
 #include "Exception.hpp"
 #include "Fields.hpp"
@@ -30,6 +32,20 @@ constexpr std::size_t NALSOL_MAX = NMAT_MAX*NDOF_MAX;
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
+// Page-locked host memory
+// Copies out of pageable host mem are staged through a driver-internal pinned
+// buffer in chunks and are always sync; out of pinned mem they run at full PCIe
+// rate and can be issued async
+#if defined( KOKKOS_ENABLE_CUDA )
+using host_pinned_space = Kokkos::CudaHostPinnedSpace;
+#elif defined( KOKKOS_ENABLE_HIP )
+using host_pinned_space = Kokkos::HIPHostPinnedSpace;
+#else
+using host_pinned_space = Kokkos::HostSpace;
+#endif
+// NOTE: tk::real, not real - this is outside namespace tk
+using pinned_view = Kokkos::View< tk::real*, host_pinned_space >;
+
 namespace tk {
 	// Verify config fits device kernel scratch capacity
 	// Throws error if any limit is exceeded
@@ -45,7 +61,9 @@ namespace tk {
 		ErrChk( nmat <= NMAT_MAX, "Max. " + std::to_string(NMAT_MAX) + " materials, got " + std::to_string(nmat)+".");
 		ErrChk( ndof <= NDOF_MAX && rdof <= NDOF_MAX, "Max. " + std::to_string(NDOF_MAX) + " DOFs, got {ndof,rdof}={" + std::to_string(ndof)+","+std::to_string(rdof)+"}.");
 		ErrChk( ncomp <= NCOMP_MAX, "Max. " + std::to_string(NCOMP_MAX) + " components, got " + std::to_string(ncomp)+".");
-		ErrChk( ncomp+nprim <= NSTATE_MAX, "Max. " + std::to_string(NSTATE_MAX) + " state entries, got " + std::to_string(ncomp*nprim)+".");
+		// NOTE: state[] holds ncomp+nprim entries (eval_state writes prims at
+		// offset ncomp), so this must be a sum, not a product
+		ErrChk( ncomp+nprim <= NSTATE_MAX, "Max. " + std::to_string(NSTATE_MAX) + " state entries, got " + std::to_string(ncomp+nprim)+".");
 		ErrChk( nmat*rdof <= NALSOL_MAX, "Max. " + std::to_string(NALSOL_MAX) + " THINC entries, got " + std::to_string(nmat*rdof)+".");
 		ErrChk( NGvol(ndof) <= NQUAD_MAX, "Max. " + std::to_string(NQUAD_MAX) + " quadrature points supported.");
 	}
@@ -69,6 +87,14 @@ namespace tk {
 		Kokkos::View< real*, memory_space > P;
 		Kokkos::View< real*, memory_space > R;
 		Kokkos::View< real*, memory_space > riemannDeriv;
+
+		// Page-locked staging for the per-call transfers
+		// Mesh views stay pageable: they upload once, so staging them would tie up
+		// pinned mem for copies that no longer happen every call
+		pinned_view stage_U;
+		pinned_view stage_P;
+		pinned_view stage_R;
+		pinned_view stage_rd;
 
 		// Host-provenance of mesh data resident on device
 		const std::size_t* src_inpoel = nullptr;
@@ -142,6 +168,57 @@ namespace tk {
 		}
 		return false;
 	} //edc
+
+	// Ensures pinned staging view has requested extent
+	template< typename T >
+	bool
+	ensurePinnedCapacity( Kokkos::View< T*, host_pinned_space >& view,
+	                      const std::string& label,
+	                      std::size_t n )
+	{
+		if(view.extent(0) != n){
+			view = Kokkos::View< T*, host_pinned_space >(
+				Kokkos::view_alloc( label, Kokkos::WithoutInitializing ), n );
+			return true;
+		}
+		return false;
+	} //epc
+
+	// Copy a host buffer into pinned mem and queue an async H2D copy
+	// exec must be the instance the consuming kernel runs on, else fence
+	// The memcpy is the price of not owning the source alloc. Still a win over a
+	// pageable cudaMemcpy, which does the same staging internally in chunks and
+	// blocks the caller throughout. A pinned allocator on tk::Fields removes it
+	template< typename ExecSpace >
+	void
+	uploadStaged( const ExecSpace& exec,
+	              Kokkos::View< real*, memory_space >& dst,
+	              pinned_view& stage,
+	              const real* src,
+	              std::size_t n,
+	              const std::string& label )
+	{
+		ensureDeviceCapacity( dst, label, n );
+		ensurePinnedCapacity( stage, label + "_pinned", n );
+		std::memcpy( stage.data(), src, n*sizeof(real) );
+		Kokkos::deep_copy( exec, dst, stage );
+	} //us
+
+	// Queue an async D2H into pinned mem, fence, then copy out to the host
+	template< typename ExecSpace >
+	void
+	downloadStaged( const ExecSpace& exec,
+	                real* dst,
+	                pinned_view& stage,
+	                const Kokkos::View< real*, memory_space >& src,
+	                std::size_t n,
+	                const std::string& label )
+	{
+		ensurePinnedCapacity( stage, label + "_pinned", n );
+		Kokkos::deep_copy( exec, stage, src );
+		exec.fence();
+		std::memcpy( dst, stage.data(), n*sizeof(real) );
+	} //ds
 } //tk
 
 #endif // KokkosDevice_h

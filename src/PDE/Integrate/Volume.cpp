@@ -565,6 +565,9 @@ tk::volInt_constP(
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
   // U, P, R change every call, always reupload
+  // Staged thru pagelock memory and queued on default exec space instance (async copies)
+  // Kernel runs on same instance so we don't need a fence
+  /*
   size_t P_size = P.getSize();
   ensureDeviceCapacity(dv.P, "P_d_view", P_size);
   auto P_h_view = changeToView(P.getPointer(), P_size);
@@ -578,11 +581,21 @@ tk::volInt_constP(
   size_t R_size = R.getSize();
   ensureDeviceCapacity(dv.R, "R_d_view", R_size);
   auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
-  //Kokkos::deep_copy(dv.R, R_h_view);
+  */
+  auto exec = Kokkos::DefaultExecutionSpace();
+
+  const size_t P_size = P.getSize();
+  uploadStaged( exec, dv.P, dv.stage_P, P.getPointer(), P_size, "P_d_view" );
+  const size_t U_size = U.getSize();
+  uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "U_d_view" );
+  const size_t R_size = R.getSize();
 #ifdef VOLINT_R_PRESEEDED
-  Kokkos::deep_copy(dv.R, R_h_view);
+  //Kokkos::deep_copy(dv.R, R_h_view);
+  uploadStaged( exec, dv.R, dv.stage_R, R.getPointer(), R_size, "R_d_view" );
 #else
-  Kokkos::deep_copy(dv.R, 0.0);        
+  //Kokkos::deep_copy(dv.R, 0.0);        
+  ensureDeviceCapacity(dv.R, "R_d_view", R_size);
+  Kokkos::deep_copy(exec, dv.R, 0.0);
 #endif
 
   // Shallow copies of view handle
@@ -603,7 +616,6 @@ tk::volInt_constP(
   Kokkos::Array<Kokkos::Array<real, NQUAD_MAX>, 3> coordgp = {};
   Kokkos::Array<real, NQUAD_MAX> wgp = {};
   GaussQuadratureTet(ng, coordgp, wgp );
-
 
   Kokkos::parallel_for("volInt_kernel",range_policy(0, nelem), KOKKOS_LAMBDA(const size_t e)
   {
@@ -662,7 +674,11 @@ tk::volInt_constP(
     }
   });
   
-  Kokkos::deep_copy(R_h_view, R_d_view);
+  //Kokkos::deep_copy(R_h_view, R_d_view);
+
+  // Queued on same instance as kernel so ordered after it
+  // downloadStaged() fences before copying out of pinned buffer
+  downloadStaged( exec, R.getPointerNonConst(), dv.stage_R, R_d_view, R_size, "R_d_view" );
 
   // Source-term contributions (idk why this was not written before or where it disappeared)
   // Bug was never spotted because only manufactured sol test case uses it
