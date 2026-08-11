@@ -467,7 +467,7 @@ tk::volInt_constP(
   const Fields& W,
   Fields& R,
   int intsharp,
-  VolIntDeviceViews* dev //added
+  VolIntDeviceViews* dev, bool prestaged //added
 )
 // *****************************************************************************
 //  Compute volume integrals for const-order DG with Kokkos acceleration
@@ -564,39 +564,25 @@ tk::volInt_constP(
   if (ensureDeviceCapacity(dv.geoElem, "geoElem_d_view", geoElem_size) || !mesh_ok)
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
-  // U, P, R change every call, always reupload
-  // Staged thru pagelock memory and queued on default exec space instance (async copies)
-  // Kernel runs on same instance so we don't need a fence
-  /*
-  size_t P_size = P.getSize();
-  ensureDeviceCapacity(dv.P, "P_d_view", P_size);
-  auto P_h_view = changeToView(P.getPointer(), P_size);
-  Kokkos::deep_copy(dv.P, P_h_view);
-
-  size_t U_size = U.getSize();
-  ensureDeviceCapacity(dv.U, "U_d_view", U_size);
-  auto U_h_view = changeToView(U.getPointer(), U_size);
-  Kokkos::deep_copy(dv.U, U_h_view);
-
-  size_t R_size = R.getSize();
-  ensureDeviceCapacity(dv.R, "R_d_view", R_size);
-  auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
-  */
+  // U,P,R change every call, but when prestaged caller has queued them onto dv
+  // on the same exec space instance, while also owning the R round trip
+  // hence, we can save on an upload/download as R arrives carrying surf int contributions
   auto exec = Kokkos::DefaultExecutionSpace();
-
-  const size_t P_size = P.getSize();
-  uploadStaged( exec, dv.P, dv.stage_P, P.getPointer(), P_size, "P_d_view" );
-  const size_t U_size = U.getSize();
-  uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "U_d_view" );
   const size_t R_size = R.getSize();
+
+  if(!prestaged){
+    const size_t P_size = P.getSize();
+    uploadStaged( exec, dv.P, dv.stage_P, P.getPointer(), P_size, "P_d_view" );
+    
+    const size_t U_size = U.getSize();
+    uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "U_d_view" );
 #ifdef VOLINT_R_PRESEEDED
-  //Kokkos::deep_copy(dv.R, R_h_view);
-  uploadStaged( exec, dv.R, dv.stage_R, R.getPointer(), R_size, "R_d_view" );
+    uploadStaged( exec, dv.R, dv.stage_R, R.getPointer(), R_size, "R_d_view" );
 #else
-  //Kokkos::deep_copy(dv.R, 0.0);        
-  ensureDeviceCapacity(dv.R, "R_d_view", R_size);
-  Kokkos::deep_copy(exec, dv.R, 0.0);
+    ensureDeviceCapacity(dv.R, "R_d_view", R_size);
+    Kokkos::deep_copy(exec, dv.R, 0.0);
 #endif
+  }
 
   // Shallow copies of view handle
   // Does not touch device memory, just gives kernel below local names and captures plain views by value into KOKKOS_LAMBDA
@@ -678,46 +664,71 @@ tk::volInt_constP(
 
   // Queued on same instance as kernel so ordered after it
   // downloadStaged() fences before copying out of pinned buffer
-  downloadStaged( exec, R.getPointerNonConst(), dv.stage_R, R_d_view, R_size, "R_d_view" );
+  // and we skip when prestaged because the caller downloads R once after last kernel
+  if(!prestaged)
+    downloadStaged( exec, R.getPointerNonConst(), dv.stage_R, R_d_view, R_size, "R_d_view" );
 
-  // Source-term contributions (idk why this was not written before or where it disappeared)
-  // Bug was never spotted because only manufactured sol test case uses it
-  // Added after the R D2H copy because src() is a host function, not device-callable
-  {
-    std::array< std::vector<real>,3 > coordgp_h;
-    std::vector<real> wgp_h;
-    for (std::size_t i=0; i<3; ++i) coordgp_h[i].resize(ng);
-    wgp_h.resize(ng);
-    GaussQuadratureTet(ng,coordgp_h,wgp_h);
+  Kokkos::Profiling::popRegion();
+}
 
-    // Dubiner basis is a function of ref coords only, so constP implies identical for all elems
-    std::vector<std::vector<real>> Bg(ng,std::vector<real>(ndof));
-    for (std::size_t igp=0; igp<ng; ++igp)
-      eval_basis(ndof, coordgp_h[0][igp], coordgp_h[1][igp], coordgp_h[2][igp], Bg[igp]);
+void
+tk::srcInt_constP( std::size_t nmat,
+                   real t,
+                   const std::vector< inciter::EOS >& mat_blk,
+                   const std::size_t ndof,
+                   const std::size_t ncomp,
+                   const std::size_t nelem,
+                   const std::vector< std::size_t >& inpoel,
+                   const UnsMesh::Coords& coord,
+                   const Fields& geoElem,
+                   const SrcFn& src,
+                   Fields& R)
+//  ****************************************************************************
+//  Compute source terms integrals for const-order DG (not p-adaptive)
+//! \details Split out of volInt_constP(). src() is a host std::function and is
+//!   not device-callable so this contribution is applied on the host.
+//!   Pulled out separately to make explicit that rhs() must call this AFTER 
+//!   the last D2H of R, which will make sense once rhs() manages R across kernels.
+//  ****************************************************************************
+{
+  Kokkos::Profiling::pushRegion("srcInt_constP");
 
-    const auto& cx = coord[0];
-    const auto& cy = coord[1];
-    const auto& cz = coord[2];
+  const auto ng = tk::NGvol(ndof);
 
-    std::vector<real> sv(ncomp,0.0);
+  std::array< std::vector<real>,3 > coordgp_h;
+  std::vector<real> wgp_h;
+  for (std::size_t i=0; i<3; ++i) coordgp_h[i].resize(ng);
+  wgp_h.resize(ng);
+  GaussQuadratureTet(ng,coordgp_h,wgp_h);
+
+  // Dubiner basis is a function of ref coords only, so constP implies identical for all elems
+  std::vector<std::vector<real>> Bg(ng,std::vector<real>(ndof));
+  for (std::size_t igp=0; igp<ng; ++igp)
+    eval_basis(ndof, coordgp_h[0][igp], coordgp_h[1][igp], coordgp_h[2][igp], Bg[igp]);
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  std::vector<real> sv(ncomp,0.0);
     
-    for (std::size_t e=0; e<nelem; ++e){
-      std::array< std::array<real,3>, 4 > coordel {{
-        {{ cx[inpoel[4*e]], cy[inpoel[4*e]], cz[inpoel[4*e]] }},
-        {{ cx[inpoel[4*e+1]], cy[inpoel[4*e+1]], cz[inpoel[4*e+1]] }},
-        {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
-        {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}
-      }};
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    std::array< std::array<real,3>, 4 > coordel {{
+      {{ cx[inpoel[4*e]], cy[inpoel[4*e]], cz[inpoel[4*e]] }},
+      {{ cx[inpoel[4*e+1]], cy[inpoel[4*e+1]], cz[inpoel[4*e+1]] }},
+      {{ cx[inpoel[4*e+2]], cy[inpoel[4*e+2]], cz[inpoel[4*e+2]] }},
+      {{ cx[inpoel[4*e+3]], cy[inpoel[4*e+3]], cz[inpoel[4*e+3]] }}
+    }};
 
-      for (std::size_t igp=0; igp<ng; ++igp)
-      {
-        auto gp = eval_gp( igp, coordel, coordgp_h );
-        auto wt = wgp_h[igp]*geoElem(e,0);
-        
-        std::fill( begin(sv), end(sv), 0.0 );
-        src( nmat, mat_blk, gp[0], gp[1], gp[2], t, sv );
-        update_rhs_src( ndof, ndof, wt, e, Bg[igp], sv, R );
-      }
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      auto gp = eval_gp( igp, coordel, coordgp_h );
+      auto wt = wgp_h[igp]*geoElem(e,0);
+      
+      std::fill( begin(sv), end(sv), 0.0 );
+      src( nmat, mat_blk, gp[0], gp[1], gp[2], t, sv );
+      update_rhs_src( ndof, ndof, wt, e, Bg[igp], sv, R );
     }
   }
 

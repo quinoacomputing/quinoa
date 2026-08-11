@@ -86,7 +86,7 @@ nonConservativeInt_constP( std::size_t nmat,
                            const std::vector< std::vector< tk::real > >& riemannDeriv,
                            Fields& R,
                            int intsharp, 
-                           nonConsvIntDeviceViews* dev = nullptr );
+                           nonConsvIntDeviceViews* dev = nullptr, bool prestaged = false );
 
 // Kokkos device version of updateRhsNonCons
 KOKKOS_INLINE_FUNCTION

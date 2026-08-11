@@ -136,8 +136,23 @@ volInt_constP(
   const Fields& W,
   Fields& R,
   int intsharp=0,
-  VolIntDeviceViews* dev=nullptr //added 
+  VolIntDeviceViews* dev=nullptr, bool prestaged=false //added 
 );
+
+//! Compute source term integrals for const-order DG (non p-adaptive)
+//! \note Must be called AFTER the last D2H of R
+void
+srcInt_constP( std::size_t nmat,
+                   real t,
+                   const std::vector< inciter::EOS >& mat_blk,
+                   const std::size_t ndof,
+                   const std::size_t ncomp,
+                   const std::size_t nelem,
+                   const std::vector< std::size_t >& inpoel,
+                   const UnsMesh::Coords& coord,
+                   const Fields& geoELem,
+                   const SrcFn& src,
+                   Fields& R);
 
 //! Compute source term integrals for FV
 void

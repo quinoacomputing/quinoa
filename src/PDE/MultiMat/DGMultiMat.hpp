@@ -109,8 +109,8 @@ class MultiMat {
     // Copy constructor
     // \param[in] x MultiMat object to copy from
     // \details Explicitly provided instead of relying on compiler to generate
-    //   so that the persistent device-resident buffers in m_volDev are NOT shared
-    //   between copies. Leave copy's m_volDev default constructed with all views empty
+    //   so that the persistent device-resident buffers in m_dev are NOT shared
+    //   between copies. Leave copy's m_dev default constructed with all views empty
     //   and (re)allocate each buffer to the correct size on next call of initialize()
     //   or rhs() via the extent check (see Volume.hpp). Only copies at setup in practice
     MultiMat(const MultiMat& x):
@@ -119,12 +119,12 @@ class MultiMat {
       m_riemann(x.m_riemann),
       m_bc(x.m_bc),
       m_mat_blk(x.m_mat_blk),
-      m_volDev()
+      m_dev()
     {}
 
     // Move constructor
     // \param[in,out] x MultiMat object to move from
-    // \details Explicitly transfer ownership of persistent device buffer in m_volDev
+    // \details Explicitly transfer ownership of persistent device buffer in m_dev
     //   Above copy constructor will suppress implicitly-generated move constructor
     //   so we have to provide this one.
     MultiMat(MultiMat&& x) noexcept :
@@ -133,7 +133,7 @@ class MultiMat {
       m_riemann(std::move(x.m_riemann)),
       m_bc(std::move(x.m_bc)),
       m_mat_blk(std::move(x.m_mat_blk)),
-      m_volDev(std::move(x.m_volDev))
+      m_dev(std::move(x.m_dev))
     {}
 
     //! Find the number of primitive quantities required for this PDE system
@@ -986,9 +986,13 @@ class MultiMat {
 
       // p-adaptive DG
       if (!pref) {
-        // compute volume integrals
-        tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
-          geoElem, flux, velfn, Problem::src, U, P, W, R, intsharp, &m_volDev ); //added &m_volDev
+        // Prefetch U and P onto device now before host-side surface integrals
+        // Reason: Allow to run underneath hostwork instead of stalling pre-kernel launch
+        // Queue on default exec space instance, same instance kernels are running on
+        // Ordering is thus implicit, no fence required
+        auto exec = Kokkos::DefaultExecutionSpace();
+        tk::uploadStaged( exec, m_dev.U, m_dev.stage_U, U.getPointer(), U.getSize(), "U_d_view" );
+        tk::uploadStaged( exec, m_dev.P, m_dev.stage_P, P.getPointer(), P.getSize(), "P_d_view" );
 
         // compute internal surface flux integrals
         tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
@@ -1033,11 +1037,30 @@ class MultiMat {
           riemannDeriv[k][e] /= geoElem(e, 0);
       }
 
-      // compute volume integrals of non-conservative terms
+      // compute volume integrals and volume integrals of non-conservative terms
       if (!pref) {
+        auto exec = Kokkos::DefaultExecutionSpace();
+
+        // R currently holds internal and boundary surface contributions
+        // Upload ONCE here and let both accumulate into device copy, then download ONCE below
+        // Previous implementation made volInt_constP download R, accumulate host surf ints, then
+        // allowed nonConsInt_constP to upload and download again, which is inefficient
+        tk::uploadStaged( exec, m_dev.R, m_dev.stage_R, R.getPointer(), R.getSize(), "R_d_view" );
+
+        // prestaged=true: U,P,R are already resident so rhs() owns the roundtrip and up/download not req
+        tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem, flux, velfn,
+                           Problem::src, U, P, W, R, intsharp, &m_dev, true );
+
         tk::nonConservativeInt_constP( nmat, m_mat_blk, ndof, rdof, nelem,
                                        inpoel, coord, geoElem, U, P, riemannDeriv,
-                                       R, intsharp, &m_nconsvDev );
+                                       R, intsharp, &m_dev, true );
+
+        // Single D2H of R, after the last kernel that touches it
+        tk::downloadStaged( exec, R.getPointerNonConst(), m_dev.stage_R, m_dev.R, R.getSize(), "R_d_view" );
+
+        // And finally here's the source term on the host side
+        // It's not device callable so this += lands on host R and needs to be post-download to avoid ovewrite
+        tk::srcInt_constP( nmat, t, m_mat_blk, ndof, U.nprop()/rdof, nelem, inpoel, coord, geoElem, Problem::src, R );
       }
       else {
         tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
@@ -1625,8 +1648,12 @@ class MultiMat {
     // Both are mutable because rhs() is const and has not yet updated the cache
     // IMPORTANT: NOT OWNED BY A CHARE -> DEVICE MEMORY IS NOT PUPED
     // See note in tk::KokkosDeviceViews::release()
-    mutable tk::VolIntDeviceViews m_volDev;
-    mutable tk::nonConsvIntDeviceViews m_nconsvDev;
+    // This cache is shared by both the const-order Kokkos kernels
+    // Previously we had 1 cache per kernel
+    // WARNING: NOT OWNED BY A CHARE
+    // DgMultiMat lives in the global g_dgpde vector
+    // So this is shared by EVERY DG chare on the PE
+    mutable tk::KokkosDeviceViews m_dev;
 
     //! Evaluate conservative part of physical flux function for this PDE system
     //! \param[in] ncomp Number of scalar components in this PDE system

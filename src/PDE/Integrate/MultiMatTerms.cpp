@@ -303,7 +303,7 @@ nonConservativeInt_constP(
   const std::vector<std::vector<tk::real>>& riemannDeriv,
   Fields& R,
   int intsharp,
-  nonConsvIntDeviceViews* dev ) //added this
+  nonConsvIntDeviceViews* dev, bool prestaged ) //added this
 // *****************************************************************************
 //  Compute volume integrals for multi-material DG (const-order, not p-adaptive)
 //! \details This is called for multi-material DG, computing volume integrals of
@@ -423,15 +423,19 @@ nonConservativeInt_constP(
   // Kernel runs on the same instance (stream) so its ordered after without needing to fence
   auto exec = Kokkos::DefaultExecutionSpace();
 
-  const std::size_t P_size = P.getSize();
-  uploadStaged( exec, dv.P, dv.stage_P, P.getPointer(), P_size, "nconsv_P_d_view" );
-  
-  const std::size_t U_size = U.getSize();
-  uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "nconsv_U_d_view" );
+  const std::size_t R_size = R.getSize();
+  if(!prestaged){
+    uploadStaged( exec, dv.R, dv.stage_R, R.getPointer(), R_size, "nconsv_R_d_view" );
 
-  // RiemannDeriv
-  // Stage into contiguous rowmajor buffer before H2D copy
-  // How to index: riemannDeriv[row][e] -> rd_d_view(row*rd_ncol + e)
+    const std::size_t P_size = P.getSize();
+    uploadStaged( exec, dv.P, dv.stage_P, P.getPointer(), P_size, "nconsv_P_d_view" );
+
+    const std::size_t U_size = U.getSize();
+    uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "nconsv_U_d_view" );
+  }
+
+  // RiemannDeriv only consumed here, nothing on the host runs between surf ints and this kernel
+  // So, there's nothing to hide it behind and we want to stage it locally
   const std::size_t rd_nrow = riemannDeriv.size();
   const std::size_t rd_ncol = rd_nrow ? riemannDeriv[0].size() : 0;
   const std::size_t rd_size = rd_nrow*rd_ncol;
@@ -441,32 +445,7 @@ nonConservativeInt_constP(
       rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
     }
   }
-
-  const std::size_t R_size = R.getSize();
-  /*
-  auto rd_h_view = changeToView(rd_flat.data(), rd_size);
-  ensureDeviceCapacity(dv.riemannDeriv, "nconsv_riemannDeriv_d_view", rd_size);
-  Kokkos::deep_copy(dv.riemannDeriv, rd_h_view);
-
-  // R accumulator, needs to grab data from host (cannot zero out!)
-  ensureDeviceCapacity(dv.R, "nconsv_R_d_view", R_size);
-  auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
-  Kokkos::deep_copy(dv.R, R_h_view);
-  */
-
   uploadStaged( exec, dv.riemannDeriv, dv.stage_rd, rd_flat.data(), rd_size, "nconsv_riemannDeriv_d_view" );
-  uploadStaged( exec, dv.R, dv.stage_R, R.getPointer(), R_size, "nconsv_R_d_view" );
-
-  /*
-  size_t R_size = R.getSize();
-  ensureDeviceCapacity(dv.R, "nconsv_R_d_view", R_size);
-  auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
-  //Kokkos::deep_copy(dv.R, R_h_view);
-#ifdef VOLINT_R_PRESEEDED
-  Kokkos::deep_copy(dv.R, R_h_view);
-#else
-  Kokkos::deep_copy(dv.R, 0.0);        
-  */
 
   // Shallow copies of view handle
   // Does not touch device memory, just gives kernel below local names and captures plain views by value into KOKKOS_LAMBDA
@@ -639,8 +618,9 @@ nonConservativeInt_constP(
 
   // Queued on same instance as kernel so ordered after it
   // Fence before copying out of pinned buffer
-  downloadStaged( exec, R.getPointerNonConst(), dv.stage_R, R_d_view, R_size, "nconsv_R_d_view" );
-  
+  if (!prestaged)
+    downloadStaged( exec, R.getPointerNonConst(), dv.stage_R, R_d_view, R_size, "nconsv_R_d_view" ); 
+ 
   Kokkos::Profiling::popRegion();
 }
 
