@@ -17,6 +17,7 @@
 
 #include "Basis.hpp"
 #include "Boundary.hpp"
+#include "ViscousTerms.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
 #include "MultiMatTerms.hpp"
@@ -29,6 +30,354 @@ extern ctr::InputDeck g_inputdeck;
 }
 
 namespace tk {
+
+namespace {
+
+template< class ViscousTerms >
+void
+viscousBoundaryFaceInt(
+  const ViscousTerms& viscousRhs,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::vector< std::size_t >& bcconfig,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  real t,
+  const StateFn& state,
+  const StateFn& gradFn,
+  Fields& R )
+// *****************************************************************************
+//! \brief Shared PDE-nonspecific boundary traversal for viscous surface operators
+//! \tparam ViscousTerms Policy type that computes PDE-specific viscous RHS
+//! \param[in] viscousRhs PDE-specific viscous residual policy
+//! \param[in] mat_blk Material EOS block
+//! \param[in] ndof Number of active solution degrees of freedom
+//! \param[in] bcconfig Boundary configuration vector for multiple side sets
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] t Physical time
+//! \param[in] state Boundary state function
+//! \param[in] gradFn Boundary gradient function
+//! \param[in,out] R Right-hand side vector computed
+//! \details This routine mirrors viscousInternalFaceInt() for physical
+//!   boundaries. The ghost-side states are provided by the supplied StateFn.
+// *****************************************************************************
+{
+  const auto& bface = fd.Bface();
+  const auto& esuf = fd.Esuf();
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  const auto ncomp = static_cast< ncomp_t >( R.nprop()/ndof );
+
+  std::array< std::vector< tk::real >, 2 > B;
+  std::array< std::vector< tk::real >, 3 > dBdx_l;
+  std::array< std::array< std::array< tk::real, 3 >, 4>, 2 > grad;
+  std::vector< tk::real > fl( ncomp, 0.0 );
+
+  for (const auto& s : bcconfig) {  // for all bc sidesets
+    auto bc = bface.find(static_cast<int>(s));
+    if (bc != end(bface))
+    {
+      for (const auto& f : bc->second)
+      {
+        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
+
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        auto ndof_l = viscousRhs.localDof( el );
+
+        // Extract the element coordinates
+        std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+          {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+          {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+          {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+          {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
+
+        // Compute the determinant of Jacobian matrix
+        auto detT_l =
+          Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+
+        // face normal
+        std::array< real, 3 > fn{{geoFace(f,1), geoFace(f,2), geoFace(f,3)}};
+
+        // face centroid
+        std::array< real, 3 > gp{{geoFace(f,4), geoFace(f,5), geoFace(f,6)}};
+
+        // Quadrature point in element-reference-frame
+        std::array< tk::real, 3> ref_gp_l{{
+          Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+          Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+          Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l }};
+
+        // Compute the basis functions for the left element
+        B[0].resize(ndof_l);
+        eval_basis( ndof_l, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B[0] );
+
+        // Boundary condition, i.e. ghost state
+        auto ghostState = state( ncomp, mat_blk,
+          viscousRhs.stateAt(mat_blk, U, P, el, ndof_l, B[0]),
+          gp[0], gp[1], gp[2], t, fn );
+
+        // Cell centroids- [0]: left cell, [1]: ghost cell
+        // The ghost-cell is a 'reflection' of the boundary cell about the
+        // boundary-face. i.e. the vector pointing from the internal-cell
+        // centroid to the ghost-cell centroid is normal to the face (aligned
+        // with the face-normal), and has length 2*d. d is the distance between
+        // the internal-cell centroid and the boundary-face. Based on this
+        // information, the centroid of the ghost-cell can be computed using
+        // vector algebra.
+        std::array< std::array< real, 3 >, 2 > centroids;
+        centroids[0] = {{geoElem(el,1), geoElem(el,2), geoElem(el,3)}};
+        tk::real d = std::abs( tk::dot(fn,centroids[0]) + tk::dot(fn,gp) ) /
+          std::sqrt(tk::dot(fn,fn));
+        for (std::size_t i=0; i<3; ++i)
+          centroids[1][i] = centroids[0][i] + 2.0*d*fn[i];
+
+        // Boundary condition at ghost cell-center
+        std::vector< tk::real > Bcc(ndof_l, 0.0);
+        Bcc[0] = 1.0;
+        auto ucc = viscousRhs.stateAt( mat_blk, U, P, el, ndof_l, Bcc );
+        auto ghostCellAvgState = state( ncomp, mat_blk, ucc, centroids[1][0],
+          centroids[1][1], centroids[1][2], t, fn );
+
+        // Gradients of basis functions
+        for (std::size_t i=0; i<3; ++i)
+          dBdx_l[i].assign( ndof_l, 0.0 );
+        auto jacInv_l =
+          inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+        eval_dBdx_p1( ndof_l, jacInv_l, dBdx_l );
+
+        // Compute gradients
+        viscousRhs.gradientIntElem( U, P, el, dBdx_l, grad[0] );
+
+        // Apply BCs on gradients
+        std::vector< tk::real > dqdx_l(4*3,0.0);
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            dqdx_l[3*i+j] = grad[0][i][j];  // velocity gradients
+
+        for (std::size_t j=0; j<3; ++j)
+          dqdx_l[3*3+j] = grad[0][3][j];  // temperature gradients
+
+        auto gradBC = gradFn( 4, mat_blk, dqdx_l, gp[0], gp[1], gp[2], t, fn );
+        // store BC gradients into gradient vector
+        for (std::size_t i=0; i<4; ++i)
+          for (std::size_t j=0; j<3; ++j) {
+            grad[1][i][j] = gradBC[1][3*i+j];
+          }
+
+        // Compute viscous fluxes
+        viscousRhs.interiorFlux( mat_blk, ncomp, ghostState, ghostCellAvgState,
+          fn, centroids, grad, fl );
+
+        // Contribute fluxes to RHS
+        for (ncomp_t c=0; c<ncomp; ++c)
+          R(el, c) += geoFace(f,0) * fl[c];
+      }
+    }
+  }
+}
+
+template< class ViscousTerms >
+void
+viscousBoundaryFaceIntDG(
+  const ViscousTerms& viscousRhs,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::vector< std::size_t >& bcconfig,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  real t,
+  const StateFn& state,
+  const StateFn& gradFn,
+  Fields& R )
+// *****************************************************************************
+//! \brief Compute boundary surface flux integrals for a given boundary type for
+//    viscous DG
+//! \details This function computes contributions from surface integrals along
+//!   all faces for a particular boundary condition type, configured by the state
+//!   function
+//! \tparam ViscousTerms Policy type that computes PDE-specific viscous RHS
+//! \param[in] viscousRhs PDE-specific viscous residual policy
+//! \param[in] mat_blk Material EOS block
+//! \param[in] ndof Number of active solution degrees of freedom
+//! \param[in] bcconfig Boundary configuration vector for multiple side sets
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] t Physical time
+//! \param[in] state Boundary state function
+//! \param[in] gradFn Boundary gradient function
+//! \param[in,out] R Right-hand side vector computed
+//! \details This routine mirrors viscousInternalFaceIntDG() for physical
+//!   boundaries. The ghost-side states are provided by the supplied StateFn.
+// *****************************************************************************
+{
+  const auto& bface = fd.Bface();
+  const auto& esuf = fd.Esuf();
+  const auto& inpofa = fd.Inpofa();
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  const auto ncomp = static_cast< ncomp_t >( R.nprop()/ndof );
+
+  std::array < std::vector< tk::real >, 2 > B;
+  std::array < std::vector< tk::real >, 3 > dBdx_l;
+  std::array < std::array< std::array< tk::real, 3 >, 4>, 2 > grad;
+  std::vector< tk::real > fl( ncomp, 0.0);
+
+  for (const auto& s : bcconfig) {       // for all bc sidesets
+    auto bc = bface.find(static_cast<int>(s));// faces for side set
+    if (bc != end(bface))
+    {
+      for (const auto& f : bc->second)
+      {
+        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
+
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+        auto ndof_l = viscousRhs.localDof( el );
+        auto ng = tk::NGfa(ndof_l);
+
+        // arrays for quadrature points
+        std::array< std::vector< real >, 2 > coordgp;
+        std::vector< real > wgp;
+
+        coordgp[0].resize( ndof_l );
+        coordgp[1].resize( ndof_l );
+        wgp.resize( ndof_l );
+
+        // get quadrature point weights and coordinates for triangle
+        GaussQuadratureTri( ndof_l, coordgp, wgp );
+
+        // Extract the left element coordinates
+        std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+        {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+        {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+        {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+        {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
+
+        // Compute the determinant of Jacobian matrix
+        auto detT_l =
+          Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+
+        // Extract the face coordinates
+        std::array< std::array< tk::real, 3>, 3 > coordfa {{
+          {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
+          {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
+          {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
+
+        // face normal
+        std::array< real, 3 > fn{{geoFace(f,1), geoFace(f,2), geoFace(f,3)}};
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<ng; ++igp)
+        {
+          // Compute the coordinates of quadrature point at physical domain
+          auto gp = eval_gp( igp, coordfa, coordgp );
+
+          std::array< tk::real, 3> ref_gp_l{
+            Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+            Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+            Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+
+          // Compute the basis functions for the left element
+          std::vector< tk::real > B_l( ndof_l );
+          eval_basis( ndof_l, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
+
+          auto wt = wgp[igp] * geoFace(f,0);
+
+          // Compute the state variables at the left element
+          //auto state_l = viscousRhs.stateAt( mat_blk, U, P, el, ndof_l, B_l);
+
+          auto State = state( ncomp, mat_blk,
+            viscousRhs.stateAt(mat_blk, U, P, el, ndof_l, B[0]),
+            gp[0], gp[1], gp[2], t, fn );
+
+          // Gradients of basis functions
+          for (std::size_t i=0; i<3; ++i)
+            dBdx_l[i].assign( ndof_l, 0.0 );
+          auto jacInv_l =
+            inverseJacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+          eval_dBdx_p1( ndof_l, jacInv_l, dBdx_l );
+
+          // Compute gradients
+          viscousRhs.gradientIntElem( U, P, el, dBdx_l, grad[0] ); // no-op for now
+
+          // Apply BCs on gradients
+          std::vector< tk::real > dqdx_l(4*3,0.0);
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              dqdx_l[3*i+j] = grad[0][i][j];  // velocity gradients
+
+          for (std::size_t j=0; j<3; ++j)
+            dqdx_l[3*3+j] = grad[0][3][j];  // temperature gradients
+
+          auto gradBC = gradFn( 4, mat_blk, dqdx_l, gp[0], gp[1], gp[2], t, fn );
+          // store BC gradients into gradient vector
+          for (std::size_t i=0; i<4; ++i)
+            for (std::size_t j=0; j<3; ++j) {
+              grad[1][i][j] = gradBC[1][3*i+j];
+            }
+
+          // Compute viscous fluxes
+          viscousRhs.interiorFlux( mat_blk, ncomp, State,
+            fn, grad, fl ); // no-op for now
+
+          // Contribute fluxes to RHS
+          for (ncomp_t c=0; c<ncomp; ++c)
+          {
+            auto mark = c*ndof;
+            R(el, mark) += wt * fl[c];
+
+            if (ndof_l > 1) // DG(P1)
+            {
+              R(el, mark+1) += wt * fl[c] * B_l[1];
+              R(el, mark+1) += wt * fl[c] * B_l[2];
+              R(el, mark+1) += wt * fl[c] * B_l[3];
+            }
+
+            if(ndof_l > 4)  //DG(P2)
+            {
+              R(el, mark+4) += wt * fl[c] * B_l[4];
+              R(el, mark+5) += wt * fl[c] * B_l[5];
+              R(el, mark+6) += wt * fl[c] * B_l[6];
+              R(el, mark+7) += wt * fl[c] * B_l[7];
+              R(el, mark+8) += wt * fl[c] * B_l[8];
+              R(el, mark+9) += wt * fl[c] * B_l[9];
+            }
+
+          }
+
+        }
+      }
+    }
+  }
+}
+
+} // anonymous namespace
 
 void
 bndSurfInt( const bool pref,
@@ -48,6 +397,7 @@ bndSurfInt( const bool pref,
             const StateFn& state,
             const Fields& U,
             const Fields& P,
+            const Fields& W,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
             std::vector< std::vector< tk::real > >& riemannDeriv,
@@ -75,6 +425,7 @@ bndSurfInt( const bool pref,
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
@@ -85,6 +436,7 @@ bndSurfInt( const bool pref,
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
@@ -187,8 +539,18 @@ bndSurfInt( const bool pref,
 
           auto var = state( ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t, fn );
 
+          // mesh velocity at quadrature point
+          tk::real wn_igp(0.0);
+          if (ale) {
+            auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+
+            // mesh velocity normal to element face
+            wn_igp = tk::dot(w_igp, fn);
+          }
+
           // Compute the numerical flux
-          auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t));
+          auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t),
+            wn_igp);
 
           // Code below commented until details about the form of these terms in
           // the \alpha_k g_k equations are sorted out.
@@ -328,6 +690,7 @@ bndSurfInt_constP(
   const StateFn& state,
   const Fields& U,
   const Fields& P,
+  const Fields& W,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp )
@@ -354,6 +717,7 @@ bndSurfInt_constP(
 //!   boundaries
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
@@ -363,6 +727,7 @@ bndSurfInt_constP(
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
   const auto& bface = fd.Bface();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
@@ -446,8 +811,18 @@ bndSurfInt_constP(
 
           auto var = state( ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t, fn );
 
+          // mesh velocity at quadrature point
+          tk::real wn_igp(0.0);
+          if (ale) {
+            auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+
+            // mesh velocity normal to element face
+            wn_igp = tk::dot(w_igp, fn);
+          }
+
           // Compute the numerical flux
-          auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t));
+          auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t),
+            wn_igp);
 
           // Code below commented until details about the form of these terms in
           // the \alpha_k g_k equations are sorted out.
@@ -561,7 +936,8 @@ bndSurfIntFV(
         auto var = state( ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t, fn );
 
         // Compute the numerical flux
-        auto fl = flux( mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t) );
+        auto fl = flux( mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t),
+          0.0 );
 
         // compute non-conservative terms
         std::vector< tk::real > var_riemann(nmat+1, 0.0);
@@ -767,6 +1143,60 @@ bndSurfIntViscousFV(
       }
     }
   }
+}
+
+void
+bndSurfIntViscousMultiSpecies(
+  std::size_t nspec,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::vector< std::size_t >& bcconfig,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  real t,
+  const StateFn& state,
+  const StateFn& gradFn,
+  const Fields& U,
+  const Fields& P,
+  Fields& R )
+// *****************************************************************************
+//  Compute boundary surface viscous flux integrals for multispecies flow
+//! \param[in] nspec Number of species in this PDE system
+//! \param[in] mat_blk Material EOS block
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] bcconfig Boundary configuration vector for multiple side sets
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] t Physical time
+//! \param[in] state Boundary state function
+//! \param[in] gradFn Boundary gradient function
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in,out] R Right-hand side vector computed
+// *****************************************************************************
+{
+  if (ndof == 1) {
+    MultiSpeciesViscousTermsP0P1 viscousRhs( nspec, rdof );
+    viscousBoundaryFaceInt( viscousRhs, mat_blk, ndof, bcconfig, inpoel,
+      coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
+  }
+
+  else if (ndof == 4) {
+    MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
+    viscousBoundaryFaceIntDG( viscousRhs, mat_blk, ndof, bcconfig, inpoel,
+      coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R ); // no-op
+  }
+
+  else
+    Throw( "Viscous operators only implemented for scheme = 'p0p1' and 'dgp1'." );
 }
 
 } // tk::

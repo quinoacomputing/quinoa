@@ -3,6 +3,7 @@ add_library(EOS
             StiffenedGas.cpp
             JWL.cpp
             SmallShearSolid.cpp
+            LinearMieGruneisen.cpp
             WilkinsAluminum.cpp
             GodunovRomenski.cpp
             ThermallyPerfectGas.cpp)

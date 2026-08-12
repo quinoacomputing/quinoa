@@ -101,7 +101,8 @@ using multispeciesList = tk::TaggedTuple< brigand::list<
   tag::physics,          PhysicsType,
   tag::nspec,            std::size_t,
   tag::problem,          ProblemType,
-  tag::viscous,          bool
+  tag::viscous,          bool,
+  tag::Sutherland,       bool
 > >;
 
 // Material/EOS object
@@ -125,9 +126,14 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::yield_stress,       std::vector< tk::real >,
   tag::alpha,              std::vector< tk::real >,
   tag::K0,                 std::vector< tk::real >,
+  tag::c0,                 std::vector< tk::real >,
+  tag::s1,                 std::vector< tk::real >,
   tag::cv,                 std::vector< tk::real >,
   tag::k,                  std::vector< tk::real >,
-  tag::plasticity_reltime, std::vector< tk::real >
+  tag::plasticity_reltime, std::vector< tk::real >,
+  tag::temp_ref,  std::vector< tk::real >,
+  tag::mu_ref,    std::vector< tk::real >,
+  tag::C,         std::vector< tk::real >
 > >;
 
 // Species/EOS object
@@ -140,7 +146,11 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::cp_coeff,  std::vector< std::vector< std::vector< tk::real > > >,
   tag::t_range,   std::vector< std::vector< tk::real > >,
   tag::dH_ref,    std::vector< tk::real >,
-  tag::spec_name, std::vector< std::string >
+  tag::mu,        std::vector< tk::real >,
+  tag::spec_name, std::vector< std::string >,
+  tag::temp_ref,  std::vector< tk::real >,
+  tag::mu_ref,    std::vector< tk::real >,
+  tag::C,         std::vector< tk::real >
 > >;
 
 // Boundary conditions block
@@ -377,18 +387,18 @@ using ConfigMembers = brigand::list<
   // ALE block
   // ---------------------------------------------------------------------------
   tag::ale, tk::TaggedTuple< brigand::list<
-    tag::ale,           bool,
-    tag::smoother,      MeshVelocitySmootherType,
-    tag::mesh_velocity, MeshVelocityType,
-    tag::mesh_motion,   std::vector< std::size_t >,
-    tag::meshforce,     std::vector< tk::real >,
-    tag::dvcfl,         tk::real,
-    tag::vortmult,      tk::real,
-    tag::maxit,         std::size_t,
-    tag::tolerance,     tk::real,
-    tag::dirichlet,     std::vector< std::size_t >,
-    tag::symmetry,      std::vector< std::size_t >,
-    tag::move,          std::vector<
+    tag::ale,                      bool,
+    tag::smoother,                 MeshVelocitySmootherType,
+    tag::mesh_velocity,            MeshVelocityType,
+    tag::mesh_motion_directions,   std::vector< std::size_t >,
+    tag::meshforce,                std::vector< tk::real >,
+    tag::dvcfl,                    tk::real,
+    tag::vortmult,                 tk::real,
+    tag::maxit,                    std::size_t,
+    tag::tolerance,                tk::real,
+    tag::dirichlet,                std::vector< std::size_t >,
+    tag::symmetry,                 std::vector< std::size_t >,
+    tag::move,                     std::vector<
       tk::TaggedTuple< brigand::list<
         tag::sideset, std::vector< uint64_t >,
         tag::fntype,  tk::ctr::UserTableType,
@@ -853,7 +863,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "Select the Low Diffusion Flux Splitting Scheme (LDFSS)",
         R"(This keyword is used to select the LDFSS flux
         function used for discontinuous Galerkin (DG) spatial discretization
-        used in inciter. It is only set up for for multi-material hydro, and
+        used in inciter. It is only set up for for multi-species PDEs, and
         not selectable for anything else.)"});
 
       keywords.insert({"lowspeed_kp",
@@ -1054,9 +1064,11 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to specify the material property, stiffness
         parameter in the stiffened gas equation of state.)", "vector of reals"});
 
-      keywords.insert({"w_gru", "Grueneisen coefficient",
+        keywords.insert({"w_gru", "Grueneisen coefficient",
         R"(This keyword is used to specify the material property, Gruneisen
-        coefficient for the Jones-Wilkins-Lee equation of state.)",
+        coefficient for the Jones-Wilkins-Lee equation of state, and the
+        reference Gruneisen coefficient for the linear Mie-Gruneisen equation
+        of state.)",
         "vector of reals"});
 
       keywords.insert({"A_jwl", "JWL EoS A parameter",
@@ -1115,13 +1127,25 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         which indicates the stress (units: Pa) after which the material begins
         plastic flow.)", "vector of reals"});
 
-      keywords.insert({"alpha", "alpha parameter for Godunov-Romenski EOS",
+      keywords.insert({"alpha", "alpha EOS parameter",
         R"(This keyword is used to specify the alpha parameter for
-        Godunov-Romenski EOS for solids.)", "vector of reals"});
+        Godunov-Romenski EOS for solids, and the density-dependence
+        exponent for the Gruneisen coefficient in the linear Mie-Gruneisen
+        equation of state.)", "vector of reals"});
 
       keywords.insert({"K0", "K0 parameter for Godunov-Romenski EOS",
         R"(This keyword is used to specify the K0 parameter for
         Godunov-Romenski EOS for solids.)", "vector of reals"});
+
+      keywords.insert({"c0", "c0 parameter for Linear Mie-Gruneisen EOS",
+        R"(This keyword is used to specify the c0 parameter in the linear
+        Us-Up Hugoniot relation for the linear Mie-Gruneisen equation of
+        state. Units: m/s)", "vector of reals"});
+
+      keywords.insert({"s1", "s1 parameter for Linear Mie-Gruneisen EOS",
+        R"(This keyword is used to specify the s1 slope parameter in the linear
+        Us-Up Hugoniot relation for the linear Mie-Gruneisen equation of
+        state.)", "vector of reals"});
 
       keywords.insert({"cv", "specific heat at constant volume",
         R"(This keyword is used to specify the material property, specific heat at
@@ -1170,6 +1194,25 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to specify the species property, specific gas
         constant, in units J/kg.K.)", "vector of reals"});
 
+      keywords.insert({"mu_ref", "Reference dynamic viscosity",
+        R"(This keyword is used to specify the species reference viscosity at
+        the reference temperature (temp_ref) for Sutherland's Law in units of 
+        N.s/m^2)", "vector of reals"});
+
+      keywords.insert({"temp_ref", "Reference temperature", 
+        R"(This keyword is used to specify the species reference temperature 
+        for Sutherland's Law in units of K)", "vector of reals"});
+
+      keywords.insert({"C", "Sutherland constant",
+        R"(This keyword is used to specify the species Sutherland constant, 
+        which is an effective temperature in units of K)", "vector of reals"});
+
+      keywords.insert({"Sutherland", "Sutherland's Law boolean",
+        R"(This keyword is used to toggle between using Sutherland's Law and
+        holding viscosity constant. A value of 'true' enables Sutherland's 
+        Law and a value of 'false' enables constant viscosity. Default is 'false'.)",
+        "bool"});
+
       keywords.insert({"stiffenedgas",
         "Select the stiffened gas equation of state",
         R"(This keyword is used to select the stiffened gas equation of state.)"});
@@ -1186,6 +1229,15 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         the internal energy See Plohr, J. N., & Plohr, B. J. (2005). Linearized
         analysis of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
         Mechanics, 537, 55-89 for further details.)"});
+
+      keywords.insert({"linear_miegruneisen",
+        "Select the Linear Mie-Gruneisen equation of state (a.k.a. shock-wave EOS)",
+        R"(This keyword is used to select the linear Mie-Gruneisen equation of
+        state for solids. This EOS uses a linear Us-Up Hugoniot with a
+        density-dependent Gruneisen coefficient for the hydrodynamic
+        contribution, and a small-shear approximation for the
+        elastic contribution. This EOS is described in Shyue, J Comp Phys (2001)
+        171(2), 678-707.)"});
 
       keywords.insert({"wilkins_aluminum",
         "Select Wilkins' equation of state for aluminum",
@@ -1437,7 +1489,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         Arbitrary-Lagrangian-Eulerian (ALE) mesh motion. Valid options are
         'sine', 'fluid', and 'user_defined".)", "string"});
 
-      keywords.insert({"mesh_motion",
+      keywords.insert({"mesh_motion_directions",
         "List of dimension indices that are allowed to move in ALE calculations",
         R"(This keyword is used to specify a list of integers (0, 1, or 2) whose
         coordinate directions corresponding to x, y, or z are allowed to move with

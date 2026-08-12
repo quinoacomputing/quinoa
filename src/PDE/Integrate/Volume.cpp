@@ -17,6 +17,116 @@
 #include "Vector.hpp"
 #include "Quadrature.hpp"
 #include "Reconstruction.hpp"
+#include "ViscousTerms.hpp"
+
+template< class ViscousTerms >
+void
+tk::volIntViscous(
+            const ViscousTerms& viscousRhs,
+            const std::vector< inciter::EOS >& mat_blk,
+            const std::size_t ndof,
+            const std::size_t rdof,
+            const std::size_t nelem,
+            const std::vector< std::size_t >& inpoel,
+            const UnsMesh::Coords& coord,
+            const Fields& geoElem,
+            const Fields& U,
+            const Fields& P,
+            const std::vector< std::size_t >& ndofel,
+            Fields& R)
+// *****************************************************************************
+//  Compute volume integrals for viscous DG
+//! \tparam ViscousTerms Policy type that computes PDE-specific viscous RHS
+//! \param[in] viscousRhs PDE-specific viscous residual policy
+//! \param[in] mat_blk EOS material block
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Total number of degrees of freedom included reconstructed ones
+//! \param[in] nelem Maximum number of elements
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in,out] R Right-hand side vector computed
+// *****************************************************************************
+{
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
+
+  std::vector< tk::real > state(ncomp+nprim);
+
+  Assert( ndof*ncomp == R.nprop(),
+          "Mismatch in viscous RHS polynomial and component sizes" );
+
+  std::vector<std::array<tk::real, 3>> visc_fl(ncomp);
+  // compute volume integrals
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    auto ng = tk::NGvol(ndofel[e]);
+
+    // arrays for quadrature points
+    std::array< std::vector< real >, 3 > coordgp;
+    std::vector< real > wgp;
+
+    coordgp[0].resize( ng );
+    coordgp[1].resize( ng );
+    coordgp[2].resize( ng );
+    wgp.resize( ng );
+
+    GaussQuadratureTet( ng, coordgp, wgp );
+
+    // Extract the element coordinates
+    std::array< std::array< real, 3>, 4 > coordel {{
+      {{ cx[ inpoel[4*e  ] ], cy[ inpoel[4*e  ] ], cz[ inpoel[4*e  ] ] }},
+      {{ cx[ inpoel[4*e+1] ], cy[ inpoel[4*e+1] ], cz[ inpoel[4*e+1] ] }},
+      {{ cx[ inpoel[4*e+2] ], cy[ inpoel[4*e+2] ], cz[ inpoel[4*e+2] ] }},
+      {{ cx[ inpoel[4*e+3] ], cy[ inpoel[4*e+3] ], cz[ inpoel[4*e+3] ] }}
+    }};
+
+    auto jacInv =
+            inverseJacobian( coordel[0], coordel[1], coordel[2], coordel[3] );
+
+    auto dof_el = ndofel[e];
+
+    // Compute the derivatives of basis function for second order terms
+    std::array< std::vector<tk::real>, 3 > dBdx;
+    for (std::size_t i=0; i<3; ++i) dBdx[i].resize( dof_el, 0 );
+    eval_dBdx_p1( dof_el, jacInv, dBdx );
+
+    std::vector< tk::real > B(dof_el);
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      if (dof_el > 4)
+        eval_dBdx_p2( igp, coordgp, jacInv, dBdx );
+
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = eval_gp( igp, coordel, coordgp );
+
+      // Compute the basis function
+      eval_basis( dof_el, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp],
+        B );
+
+      auto wt = wgp[igp] * geoElem(e, 0);
+
+      // volume fluxes
+      if(dof_el > 1)
+      {
+        state = viscousRhs.stateAt(mat_blk, U, P, e, dof_el, B );
+        // compute viscous flux
+        viscousRhs.volumeFlux( mat_blk, ncomp, state, visc_fl ); //currently no-op
+
+        update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, visc_fl, R );
+      }
+    }
+  }
+}
 
 void
 tk::volInt( std::size_t nmat,
@@ -33,6 +143,7 @@ tk::volInt( std::size_t nmat,
             const SrcFn& src,
             const Fields& U,
             const Fields& P,
+            const Fields& W,
             const std::vector< std::size_t >& ndofel,
             Fields& R,
             int intsharp )
@@ -52,12 +163,14 @@ tk::volInt( std::size_t nmat,
 //! \param[in] src Source function to use
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -130,6 +243,17 @@ tk::volInt( std::size_t nmat,
 
         // comput flux
         auto fl = flux( ncomp, mat_blk, state, v );
+
+        // update flux according to mesh velocity at quadrature point
+        if (ale) {
+          auto w_igp = evaluateMeshVelTet( e, igp, inpoel, coordgp, W );
+
+          for (std::size_t c=0; c<ncomp; ++c) {
+            for (std::size_t i=0; i<3; ++i) {
+              fl[c][i] -= state[c]*w_igp[i];
+            }
+          }
+        }
 
         update_rhs( ncomp, ndof, dof_el, wt, e, dBdx, fl, R );
       }
@@ -263,6 +387,7 @@ tk::volInt_constP(
   const SrcFn& src,
   const Fields& U,
   const Fields& P,
+  const Fields& W,
   Fields& R,
   int intsharp )
 // *****************************************************************************
@@ -281,11 +406,13 @@ tk::volInt_constP(
 //! \param[in] src Source function to use
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -355,6 +482,17 @@ tk::volInt_constP(
         // comput flux
         auto fl = flux( ncomp, mat_blk, state, v );
 
+        // update flux according to mesh velocity at quadrature point
+        if (ale) {
+          auto w_igp = evaluateMeshVelTet( e, igp, inpoel, coordgp, W );
+
+          for (std::size_t c=0; c<ncomp; ++c) {
+            for (std::size_t i=0; i<3; ++i) {
+              fl[c][i] -= state[c]*w_igp[i];
+            }
+          }
+        }
+
         update_rhs( ncomp, ndof, ndof, wt, e, dBdx, fl, R );
       }
 
@@ -401,4 +539,46 @@ tk::srcIntFV( const std::vector< inciter::EOS >& mat_blk,
       R(e, c) += geoElem(e,0) * s[c];
     }
   }
+}
+
+void
+tk::volIntViscousMultiSpecies(
+  std::size_t nspec,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const std::vector< std::size_t >& ndofel,
+  Fields& R )
+// *****************************************************************************
+//  Compute volume integrals of viscous fluxes for multispecies flow
+//! \param[in] nspec Number of species in this PDE system
+//! \param[in] mat_blk Material EOS block
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] nelem Maximum number of elements
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in,out] R Right-hand side vector computed
+// *****************************************************************************
+{
+  if (ndof == 4) {
+    MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
+    volIntViscous( viscousRhs, mat_blk, ndof, rdof, nelem,
+      inpoel, coord, geoElem, U, P, ndofel, R );
+  }
+  else if (ndof ==1) {
+     //Do nothing but don't exit as nothing was here in DGMultiSpecies.cpp before adding this call for DGP1
+  }
+  else
+    Throw( "Viscous operators only implemented for scheme = 'dgp1'." );
 }
