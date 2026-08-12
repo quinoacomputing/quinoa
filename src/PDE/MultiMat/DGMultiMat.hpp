@@ -886,12 +886,15 @@ class MultiMat {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in] elemblkid Element ids associated with mesh block ids where
+//    //!   user-defined block-dependent settings apply
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] W Mesh velocity vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
+    //! \param[in,out] srcFlag Whether a source was added to each element
     void rhs( tk::real t,
               const bool pref,
               const tk::Fields& geoFace,
@@ -900,12 +903,14 @@ class MultiMat {
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::unordered_set< std::size_t > >&,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&,
               const tk::Fields& U,
               const tk::Fields& P,
               const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              std::vector< int >& srcFlag ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -958,36 +963,38 @@ class MultiMat {
         // compute internal surface flux integrals
         tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
           coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
-          dt, R, riemannDeriv, intsharp );
+          dt, srcFlag, R, riemannDeriv, intsharp );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-            m_riemann, velfn, std::get<1>(b), U, P, W, R,
+            m_riemann, velfn, std::get<1>(b), U, P, W, srcFlag, R,
             riemannDeriv, intsharp );
 
         // compute volume integrals
         tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
-          geoElem, flux, velfn, Problem::src, U, P, W, R, intsharp );
+          geoElem, flux, velfn, Problem::src, U, P, W, srcFlag, R,
+          intsharp );
       }
       else {
         // compute internal surface flux integrals
         tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
-                     ndofel, dt, R, riemannDeriv, intsharp );
+                     ndofel, dt, srcFlag, R, riemannDeriv, intsharp );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
                           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-                          m_riemann, velfn, std::get<1>(b), U, P, W, ndofel, R,
+                          m_riemann, velfn, std::get<1>(b), U, P, W, ndofel,
+                          srcFlag, R,
                           riemannDeriv, intsharp );
 
         // compute volume integrals
         tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
                     inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, W,
-                    ndofel, R, intsharp );
+                    ndofel, srcFlag, R, intsharp );
       }
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
@@ -1005,7 +1012,7 @@ class MultiMat {
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
-                              ndofel, R, intsharp );
+                              ndofel, srcFlag, R, intsharp );
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::multimat, tag::prelax >())
@@ -1014,7 +1021,7 @@ class MultiMat {
                                          tag::prelax_timescale >();
         tk::pressureRelaxationInt( pref, nmat, m_mat_blk, ndof,
                                    rdof, nelem, inpoel, coord, geoElem, U, P,
-                                   ndofel, ct, R, intsharp );
+                                   ndofel, ct, srcFlag, R, intsharp );
       }
     }
 

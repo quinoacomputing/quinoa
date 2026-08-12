@@ -416,12 +416,15 @@ class CompFlow {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] boxelems Mesh node ids within user-defined IC boxes
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in] elemblkid Element ids associated with mesh block ids where
+//    //!   user-defined block-dependent settings apply
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] W Mesh velocity vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
+    //! \param[in,out] srcFlag Whether a source was added to each element
     void rhs( tk::real t,
               const bool pref,
               const tk::Fields& geoFace,
@@ -430,12 +433,14 @@ class CompFlow {
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::unordered_set< std::size_t > >& boxelems,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&,
               const tk::Fields& U,
               const tk::Fields& P,
               const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              std::vector< int >& srcFlag ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -472,35 +477,37 @@ class CompFlow {
         // compute internal surface flux integrals
         tk::surfInt_constP( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
-                     dt, R, riemannDeriv );
+                     dt, srcFlag, R, riemannDeriv );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt_constP( 1, m_mat_blk, ndof, rdof, std::get<0>(b),
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, std::get<1>(b), U, P, W, R, riemannDeriv );
+                          velfn, std::get<1>(b), U, P, W, srcFlag, R,
+                          riemannDeriv );
 
         // compute volume integrals
         tk::volInt_constP( 1, t, m_mat_blk, ndof, rdof, fd.Esuel().size()/4,
-          inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, W, R );
+          inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, W,
+          srcFlag, R );
       }
       else {
         // compute internal surface flux integrals
         tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
-                     ndofel, dt, R, riemannDeriv );
+                     ndofel, dt, srcFlag, R, riemannDeriv );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b),
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, std::get<1>(b), U, P, W, ndofel, R,
+                          velfn, std::get<1>(b), U, P, W, ndofel, srcFlag, R,
                           riemannDeriv );
 
         // compute volume integrals
         tk::volInt( 1, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
-                    Problem::src, U, P, W, ndofel, R );
+                    Problem::src, U, P, W, ndofel, srcFlag, R );
       }
 
      // compute external (energy) sources

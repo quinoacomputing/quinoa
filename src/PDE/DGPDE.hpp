@@ -291,15 +291,18 @@ class DGPDE {
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::unordered_set< std::size_t > >& boxelems,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&
+                elemblkid,
               const tk::Fields& U,
               const tk::Fields& P,
               const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              std::vector< int >& srcFlag ) const
     {
-      self->rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                 W, ndofel, dt, R );
+      self->rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord,
+                 elemblkid, U, P, W, ndofel, dt, R, srcFlag );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -511,12 +514,15 @@ class DGPDE {
                         const std::vector< std::size_t >&,
                         const std::vector< std::unordered_set< std::size_t > >&,
                         const tk::UnsMesh::Coords&,
+                        const std::unordered_map< std::size_t,
+                          std::set< std::size_t > >&,
                         const tk::Fields&,
                         const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
                         const tk::real,
-                        tk::Fields& ) const = 0;
+                        tk::Fields&,
+                        std::vector< int >& ) const = 0;
       virtual void resetAdapSol( const inciter::FaceData&,
                                  tk::Fields&,
                                  tk::Fields&,
@@ -714,15 +720,18 @@ class DGPDE {
         const std::vector< std::size_t >& inpoel,
         const std::vector< std::unordered_set< std::size_t > >& boxelems,
         const tk::UnsMesh::Coords& coord,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          elemblkid,
         const tk::Fields& U,
         const tk::Fields& P,
         const tk::Fields& W,
         const std::vector< std::size_t >& ndofel,
         const tk::real dt,
-        tk::Fields& R ) const override
+        tk::Fields& R,
+        std::vector< int >& srcFlag ) const override
       {
-        data.rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                  W, ndofel, dt, R );
+        data.rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord,
+                  elemblkid, U, P, W, ndofel, dt, R, srcFlag );
       }
       void eval_ndof( std::size_t nunk,
                       const tk::UnsMesh::Coords& coord,

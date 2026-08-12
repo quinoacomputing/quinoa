@@ -156,6 +156,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
+  m_srcFlag(m_u.nunk(), 0),
   m_shockmarker(m_u.nunk(), 1),
   m_nodevel( {{ std::vector<tk::real>(Disc()->Lid().size(), 0.0),
                 std::vector<tk::real>(Disc()->Lid().size(), 0.0),
@@ -270,6 +271,7 @@ DG::resizeSolVectors()
   m_rhsprev.resize( myGhosts()->m_nunk );
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_stiffrhsprev.resize( myGhosts()->m_nunk );
+  m_srcFlag.resize( myGhosts()->m_nunk );
   for (std::size_t i=0; i<3; ++i)
     m_nodevel[i].resize( Disc()->Coord()[0].size() );
   m_dte.resize( myGhosts()->m_nunk );
@@ -1519,7 +1521,8 @@ DG::solve( tk::real newdt )
     if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
       myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, m_u, m_p, d->meshvel(), m_ndof, d->Dt(), m_rhs );
+      myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
+      d->Dt(), m_rhs, m_srcFlag );
   }
 
   if (imex_runge_kutta) {
@@ -1708,6 +1711,7 @@ DG::resizePostAMR(
   m_rhsprev.resize( nelem );
   m_stiffrhs.resize( nelem );
   m_stiffrhsprev.resize( nelem );
+  m_srcFlag.resize( nelem );
   for (std::size_t i=0; i<3; ++i) m_nodevel[i].resize( coord[0].size() );
 
   myGhosts()->m_fd = FaceData( myGhosts()->m_inpoel, bface,

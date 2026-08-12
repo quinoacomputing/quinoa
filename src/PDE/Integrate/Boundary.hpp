@@ -48,6 +48,7 @@ bndSurfInt( const bool pref,
             const Fields& P,
             const Fields& W,
             const std::vector< std::size_t >& ndofel,
+            const std::vector< int >& srcFlag,
             Fields& R,
             std::vector< std::vector< tk::real > >& riemannDeriv,
             int intcompr=0 );
@@ -87,6 +88,7 @@ bndSurfInt_constP(
   const Fields& U,
   const Fields& P,
   const Fields& W,
+  const std::vector< int >& srcFlag,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp=0 );
