@@ -816,6 +816,58 @@ class MultiMat {
               std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 1.0e-06*arho);
           }
         }
+
+        // Volume fraction redistribution for highly damaged solids (spallation)
+        // When solid is critically damaged, transfer volume to fluid (void formation)
+        tk::real damage_threshold = 0.95;
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (solidx[k] > 0)
+          {
+            tk::real alpha_k = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            tk::real damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) /
+                             std::max(1.0e-12, U(e, densityDofIdx(nmat, k, rdof, 0)));
+
+            if (damage > damage_threshold && alpha_k > 1.0e-03)
+            {
+              // Compute how much volume to transfer based on excess damage
+              tk::real excess_damage = std::min(damage - damage_threshold, 0.05);
+              tk::real transfer_rate = excess_damage / 0.05;  // 0.95→1.0 maps to 0→1
+              tk::real dalpha = alpha_k * transfer_rate * dt * 100.0;  // rate factor
+              dalpha = std::min(dalpha, alpha_k - 1.0e-03);  // don't go below min
+
+              // Find a fluid material to receive the volume
+              std::size_t kfluid = nmat;
+              for (std::size_t kf=0; kf<nmat; ++kf) {
+                if (solidx[kf] == 0) {
+                  kfluid = kf;
+                  break;
+                }
+              }
+
+              if (kfluid < nmat && dalpha > 1.0e-10)
+              {
+                // Get current state BEFORE modifying
+                tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
+                tk::real arho_f = U(e, densityDofIdx(nmat, kfluid, rdof, 0));
+                tk::real alpha_f = U(e, volfracDofIdx(nmat, kfluid, rdof, 0));
+
+                // Transfer volume fraction
+                U(e, volfracDofIdx(nmat, k, rdof, 0)) -= dalpha;
+                U(e, volfracDofIdx(nmat, kfluid, rdof, 0)) += dalpha;
+
+                // Solid loses partial density as volume fraction transfers
+                tk::real d_arho_k = dalpha * (arho_k / alpha_k);
+                U(e, densityDofIdx(nmat, k, rdof, 0)) -= d_arho_k;
+
+                // Fluid gains volume at low pressure (near vacuum expansion)
+                // Use small fraction of existing fluid density
+                tk::real rho_void = (arho_f / std::max(alpha_f, 1.0e-10)) * 0.01;
+                U(e, densityDofIdx(nmat, kfluid, rdof, 0)) += dalpha * rho_void;
+              }
+            }
+          }
+        }
       }
     }
 

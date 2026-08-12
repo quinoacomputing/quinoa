@@ -191,13 +191,6 @@ cleanTraceMultiMat(
       auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
       auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
 
-      // Get damage for this material if it's a solid
-      tk::real damage = 0.0;
-      if (solidx[k] > 0 && matExists(alk)) {
-        damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) /
-                 U(e, densityDofIdx(nmat, k, rdof, 0));
-      }
-
       // Determine if element-e needs trace-material cleanup. This decision is
       // based on specific scenarios.
       // WARNING: Changing this decision-making logic can adversely affect
@@ -209,9 +202,7 @@ cleanTraceMultiMat(
         //    (effective) pressure is negative
         (solidx[k] == 0 && solidx[kmax] == 0 && matExists(alk) &&
         pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
-        U(e, densityDofIdx(nmat, k, rdof, 0)), alk)) ||
-        // 3. if solid material is highly damaged (spallation/fracture)
-        (solidx[k] > 0 && damage > 0.95)
+        U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
       )
         ctm_element = true;
 
