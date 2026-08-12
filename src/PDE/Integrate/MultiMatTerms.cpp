@@ -335,6 +335,10 @@ nonConservativeInt_constP(
   using inciter::velocityIdx;
   using inciter::deformIdx;
   //using inciter::newSolidsAccFn;
+  
+  using inciter::volfracDofIdx;
+  using inciter::energyDofIdx;
+  using inciter::deformDofIdx;
 
   const auto& solidx =
     inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -537,25 +541,19 @@ nonConservativeInt_constP(
           dap[idir] += rd_d_view((mark+idir)*rd_ncol + e);
       }
 
-      /*
-      // compute non-conservative terms
-      std::vector< std::vector< tk::real > > ncf
-        (ncomp, std::vector<tk::real>(ndof,0.0));
-
-      for (std::size_t idir=0; idir<3; ++idir)
-        for(std::size_t idof=0; idof<ndof; ++idof)
-          ncf[momentumIdx(nmat, idir)][idof] = 0.0;
-      */
-      // zero-initialize and compute nonconsv term
-      Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, NCOMP_MAX> ncf = {};
+      // Accumulate nonconsv terms straight into R instead of building an ncf array first
+      // updateRhsNonCons_device only read ncf[c][0] for all c and ncf[~][idof] for idof>=1
+      // Never wrote momentum rows, set density rows to zero, energy/deform RHS have no idof dependence
+      // In other words the stuff was repeated across all NDOF_MAX columns and was wasting space
+      Kokkos::Array<real, NDOF_MAX> ncfA = {}; //volfrac per idof
 
       for (std::size_t k=0; k<nmat; ++k)
       {
         // evaluate non-conservative term for energy equation
         std::size_t mark(3*k);
         if (solidx_d_view(k) > 0) mark = 3*nmat+ndof+3*(solidx_d_view(k)-1);
-        //if (solidx[k] > 0) mark = 3*nmat+ndof+3*(solidx[k]-1);
 
+        /*
         for(std::size_t idof=0; idof<ndof; ++idof)
         {
           ncf[densityIdx(nmat, k)][idof] = 0.0;
@@ -565,10 +563,23 @@ nonConservativeInt_constP(
             //                                      - riemannDeriv[mark+idir][e] );
                                                   - rd_d_view((mark+idir)*rd_ncol + e) );
         }
+        */
+        // idof-independent means accumulating once in a scalar is fine
+        // idof-independence for idof>=1 is the B[idof] factor
+        real ncfE = 0.0;
+        for (std::size_t idir=0; idir<3; ++idir)
+          ncfE -= vel[idir] * ( ymat[k]*dap[idir] - rd_d_view((mark+idir)*rd_ncol + e) );
+
+        // Density rows are all zero and momentum rows never get written! So there are no R contributions from these
+        R_d_view(e*r_nprop + energyDofIdx(nmat,k,ndof,0)) += wt*ncfE;
+        for (std::size_t idof=1; idof<ndof; ++idof)
+          R_d_view(e*r_nprop + energyDofIdx(nmat,k,ndof,idof)) += wt*ncfE*B[idof];
 
         // evaluate non-conservative terms for g equation
-        //if (solidx[k] > 0) {
-        //  std::size_t nsld = inciter::numSolids(nmat, solidx);
+        // These are also idof-independent and only idof==0 dof was ever read
+        // Uh, if "High order non-conservative g terms" are ever implemented then this needs to be redone
+        // That's why this code is kept here, it's otherwise dead
+        /*
         if (solidx_d_view(k) > 0) {
           for (std::size_t idof=0; idof<ndof; ++idof)
             for (std::size_t i=0; i<3; ++i)
@@ -583,34 +594,51 @@ nonConservativeInt_constP(
                   //  vel[l] * riemannDeriv[mark][e];
                 }
         }
+        */
+        if (solidx_d_view(k) > 0)
+        {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+            {
+              real ncfG = 0.0;
+              for (std::size_t l=0; l<3; ++l)
+              {
+                std::size_t gmark = 3*nmat + ndof + 3*nsld
+                                  + inciter::newSolidsAccFn(k,i,j,l);
+                ncfG -= vel[l]*rd_d_view(gmark*rd_ncol+e);
+              }
+              R_d_view(e*r_nprop + deformDofIdx(nmat,solidx_d_view(k),i,j,ndof,0)) += wt*ncfG;
+            }
+        }
 
         // Evaluate non-conservative term for volume fraction equation.
         // (See original notes on the constant-Riemann-velocity assumption and
         // the special DGP2 discretization.)
-        if (ndof <= 4 || intsharp == 1) {
+        // This is the only row that genuinely varies with idof
+        for (std::size_t idof=0; idof<ndof; ++idof) 
+          ncfA[idof] = 0.0;
+        if (ndof <= 4 || intsharp == 1) 
+        {
           for(std::size_t idof=0; idof<ndof; ++idof)
-            ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
-                                           * rd_d_view((3*nmat+idof)*rd_ncol+e);
-            //                               * riemannDeriv[3*nmat+idof][e];
-        } else if (intsharp == 0) {     // If DGP2 without THINC
+            ncfA[idof] = state[volfracIdx(nmat, k)]*rd_d_view((3*nmat+idof)*rd_ncol+e);
+        }
+        // If DGP2 without THINC 
+        else if (intsharp == 0) 
+        { 
           // DGP2 is discretized differently than DGP1/FV to guarantee 3rd order
           // convergence for testcases with uniform and constant velocity.
-
-          // P0 contributions for all equations
           for(std::size_t idof=0; idof<ndof; ++idof)
-            ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
-          //                                 * riemannDeriv[3*nmat][e] * B[idof];
-                                           * rd_d_view((3*nmat)*rd_ncol + e) * B[idof];
+            ncfA[idof] = state[volfracIdx(nmat,k)]*rd_d_view((3*nmat)*rd_ncol + e)*B[idof];
+
           // High order contributions
           for(std::size_t idof=1; idof<ndof; ++idof)
             for(std::size_t idir=0; idir<3; ++idir)
-              ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)]
-                                              * vel[idir] * dBdx[idir][idof];
+              ncfA[idof] += state[volfracIdx(nmat, k)]*vel[idir]*dBdx[idir][idof];
         }
+        
+        for (std::size_t idof=0; idof<ndof; ++idof)
+          R_d_view(e*r_nprop + volfracDofIdx(nmat,k,ndof,idof)) += wt*ncfA[idof];
       }
-
-      tk::updateRhsNonCons_device(ncomp,nmat,ndof,ndof,wt,r_nprop,e,B,ncf,R_d_view);
-      //updateRhsNonCons( ncomp, nmat, ndof, ndof, wt, e, B, dBdx, ncf, R );
     }
   }); //end Kokkos::parallel_for
 
