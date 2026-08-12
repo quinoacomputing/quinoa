@@ -621,6 +621,15 @@ class MultiMat {
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       auto nsld = numSolids(nmat, solidx);
 
+      // Check if at least one fluid material exists (needed for spallation)
+      bool has_fluid = false;
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] == 0) {
+          has_fluid = true;
+          break;
+        }
+      }
+
       for (std::size_t e=0; e<nelem; ++e)
       {
         // get conserved quantities
@@ -819,55 +828,77 @@ class MultiMat {
 
         // Volume fraction redistribution for highly damaged solids (spallation)
         // When solid is critically damaged, transfer volume to fluid (void formation)
-        tk::real damage_threshold = 0.95;
-        for (std::size_t k=0; k<nmat; ++k)
+        // Only proceed if there's at least one fluid material in the system
+        if (has_fluid)
         {
-          if (solidx[k] > 0)
+          tk::real damage_threshold = 0.95;
+          for (std::size_t k=0; k<nmat; ++k)
           {
-            tk::real alpha_k = U(e, volfracDofIdx(nmat, k, rdof, 0));
-            tk::real damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) /
-                             std::max(1.0e-12, U(e, densityDofIdx(nmat, k, rdof, 0)));
-
-            if (damage > damage_threshold && alpha_k > 1.0e-03)
+            if (solidx[k] > 0)
             {
-              // Compute how much volume to transfer based on excess damage
-              tk::real excess_damage = std::min(damage - damage_threshold, 0.05);
-              tk::real transfer_rate = excess_damage / 0.05;  // 0.95→1.0 maps to 0→1
-              tk::real dalpha = alpha_k * transfer_rate * dt * 100.0;  // rate factor
-              dalpha = std::min(dalpha, alpha_k - 1.0e-03);  // don't go below min
+              tk::real alpha_k = U(e, volfracDofIdx(nmat, k, rdof, 0));
+              tk::real damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) /
+                               std::max(1.0e-12, U(e, densityDofIdx(nmat, k, rdof, 0)));
 
-              // Find a fluid material to receive the volume
-              std::size_t kfluid = nmat;
-              for (std::size_t kf=0; kf<nmat; ++kf) {
-                if (solidx[kf] == 0) {
-                  kfluid = kf;
-                  break;
-                }
-              }
-
-              if (kfluid < nmat && dalpha > 1.0e-10)
+              if (damage > damage_threshold && alpha_k > 1.0e-03)
               {
-                // Get current state BEFORE modifying
-                tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
-                tk::real arho_f = U(e, densityDofIdx(nmat, kfluid, rdof, 0));
-                tk::real alpha_f = U(e, volfracDofIdx(nmat, kfluid, rdof, 0));
+                // Compute how much volume to transfer based on excess damage
+                tk::real excess_damage = std::min(damage - damage_threshold, 0.05);
+                tk::real transfer_rate = excess_damage / 0.05;  // 0.95→1.0 maps to 0→1
+                tk::real dalpha = alpha_k * transfer_rate * dt * 100.0;  // rate factor
+                dalpha = std::min(dalpha, alpha_k - 1.0e-03);  // don't go below min
+
+                // Find a fluid material to receive the volume
+                std::size_t kfluid = nmat;
+                for (std::size_t kf=0; kf<nmat; ++kf) {
+                  if (solidx[kf] == 0) {
+                    kfluid = kf;
+                    break;
+                  }
+                }
+
+                if (kfluid < nmat && dalpha > 1.0e-10)
+                {
+                  // Get current state BEFORE modifying
+                  tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
+                  tk::real arhoE_k = U(e, energyDofIdx(nmat, k, rdof, 0));
+
+                  // Compute mass transfer (partial density)
+                  tk::real d_arho = dalpha * (arho_k / alpha_k);
 
                 // Transfer volume fraction
                 U(e, volfracDofIdx(nmat, k, rdof, 0)) -= dalpha;
                 U(e, volfracDofIdx(nmat, kfluid, rdof, 0)) += dalpha;
 
-                // Solid loses partial density as volume fraction transfers
-                tk::real d_arho_k = dalpha * (arho_k / alpha_k);
-                U(e, densityDofIdx(nmat, k, rdof, 0)) -= d_arho_k;
+                // Transfer mass: solid loses, fluid gains (conserves total mass)
+                U(e, densityDofIdx(nmat, k, rdof, 0)) -= d_arho;
+                U(e, densityDofIdx(nmat, kfluid, rdof, 0)) += d_arho;
 
-                // Fluid gains volume at low pressure (near vacuum expansion)
-                // Use small fraction of existing fluid density
-                tk::real rho_void = (arho_f / std::max(alpha_f, 1.0e-10)) * 0.01;
-                U(e, densityDofIdx(nmat, kfluid, rdof, 0)) += dalpha * rho_void;
+                // Transfer damage (stored as ρD, partial damage density)
+                // Reduce proportionally to maintain D = ρD/ρ for remaining solid
+                tk::real arhoD_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
+                tk::real d_arhoD = dalpha * (arhoD_k / alpha_k);
+                U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) -= d_arhoD;
+                // Note: fluid doesn't have damage variable, so the damage state is
+                // lost when failed solid transforms to fluid
+
+                // Deformation gradient g: No transfer needed - it's an intensive
+                // property of the solid phase itself. The remaining solid keeps
+                // its current deformation state.
+
+                // Momentum transfer: In MultiMat, momentum is stored per-cell (shared
+                // between materials), not per-material. The velocity field is common,
+                // so when mass transfers at constant velocity, momentum is automatically
+                // conserved. No explicit momentum transfer needed.
+
+                // Transfer energy proportionally
+                tk::real d_arhoE = dalpha * (arhoE_k / alpha_k);
+                U(e, energyDofIdx(nmat, k, rdof, 0)) -= d_arhoE;
+                U(e, energyDofIdx(nmat, kfluid, rdof, 0)) += d_arhoE;
               }
             }
           }
-        }
+        } // end if (has_fluid)
       }
     }
 
