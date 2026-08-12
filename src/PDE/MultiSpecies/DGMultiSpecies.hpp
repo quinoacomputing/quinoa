@@ -815,6 +815,7 @@ class MultiSpecies {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
+                 const std::vector< int >& /*srcFlag*/,
                  std::vector< tk::real >& local_dte ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();

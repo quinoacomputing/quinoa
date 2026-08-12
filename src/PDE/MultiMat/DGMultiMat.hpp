@@ -66,6 +66,7 @@ class MultiMat {
   public:
     //! Constructor
     explicit MultiMat() :
+      m_physics(),
       m_ncomp( g_inputdeck.get< tag::ncomp >() ),
       m_nprim(nprim()),
       m_riemann( multimatRiemannSolver(
@@ -903,7 +904,8 @@ class MultiMat {
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::unordered_set< std::size_t > >&,
               const tk::UnsMesh::Coords& coord,
-              const std::unordered_map< std::size_t, std::set< std::size_t > >&,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&
+                elemblkid,
               const tk::Fields& U,
               const tk::Fields& P,
               const tk::Fields& W,
@@ -1014,6 +1016,9 @@ class MultiMat {
                               inpoel, coord, geoElem, U, P, riemannDeriv,
                               ndofel, srcFlag, R, intsharp );
 
+      // compute external sources from configured physics
+      m_physics.physSrc(nmat, t, geoElem, elemblkid, R, srcFlag);
+
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::multimat, tag::prelax >())
       {
@@ -1083,6 +1088,7 @@ class MultiMat {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
+                 const std::vector< int >& srcFlag,
                  std::vector< tk::real >& local_dte ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
@@ -1106,7 +1112,9 @@ class MultiMat {
       mindt /= (2.0*dgp + 1.0);
       for (std::size_t e=0; e<nielem; ++e)
         local_dte[e] /= (2.0*dgp + 1.0);
-      return mindt;
+
+      auto dt_p = m_physics.dtRestriction(geoElem, nielem, srcFlag);
+      return std::min(mindt, dt_p);
     }
 
     //! Balances elastic energy after plastic update
@@ -1577,6 +1585,8 @@ class MultiMat {
     }
 
   private:
+    //! Physics policy
+    const Physics m_physics;
     //! Number of components in this PDE system
     const ncomp_t m_ncomp;
     //! Number of primitive quantities stored in this PDE system

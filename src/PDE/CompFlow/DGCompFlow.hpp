@@ -586,6 +586,7 @@ class CompFlow {
                  const tk::Fields& U,
                  const tk::Fields&,
                  const std::size_t /*nielem*/,
+                 const std::vector< int >& /*srcFlag*/,
                  std::vector< tk::real >& local_dte ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
