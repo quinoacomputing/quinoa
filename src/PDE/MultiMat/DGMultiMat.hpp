@@ -898,6 +898,7 @@ class MultiMat {
               }
             }
           }
+          } // end for k loop (volume redistribution)
         } // end if (has_fluid)
       }
     }
