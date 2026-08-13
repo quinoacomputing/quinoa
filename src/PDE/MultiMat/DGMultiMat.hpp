@@ -721,8 +721,10 @@ class MultiMat {
             tk::real rel_time = getmatprop< tag::plasticity_reltime >(k);
             if (phi > 0.0) {
               rel_factor = std::pow((phi/yield_stress),2.0)/rel_time;
-              // Scale rel_factor by alpha
-              tk::real a_min = 1.0e-04, a_max = 2.0e-01;
+              // Scale rel_factor by alpha to suppress plasticity in mixed cells
+              // Mixed cells experience fake velocity gradients from interface advection
+              // which creates artificial strains. Only allow full plasticity in nearly-pure cells.
+              tk::real a_min = 0.95, a_max = 0.99;  // Suppress unless α > 99%
               auto smoothstep = [&](tk::real a){
                 tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
                 return t*t*(3.0-2.0*t);
@@ -806,6 +808,10 @@ class MultiMat {
 
               // Crack band regularization for mesh independence
               // Scale damage rate with element size to preserve fracture energy
+              // WARNING: Only use this on meshes where h <= h_ref!
+              // On coarse meshes (h >> h_ref), this ACCELERATES damage!
+              // DISABLED FOR COARSE MESH TESTING
+              /*
               tk::real h_ref = getmatprop< tag::damage_length_scale >(k);
               if (h_ref > 1.0e-12) {
                 tk::real vol = geoElem(e, 0);
@@ -813,6 +819,7 @@ class MultiMat {
                 tk::real reg_factor = h / h_ref;
                 dD *= reg_factor;
               }
+              */
             }
 
             // 6. Evolve D
@@ -1605,8 +1612,10 @@ class MultiMat {
             if (phi > 0.0) {
               // Note: if plasticity becomes unstable, raise the power (below) to two
               rel_factor = std::pow((phi/yield_stress),1.0)/rel_time;
-              // Scale rel_factor by alpha
-              tk::real a_min = 1.0e-04, a_max = 2.0e-01;
+              // Scale rel_factor by alpha to suppress plasticity in mixed cells
+              // Mixed cells experience fake velocity gradients from interface advection
+              // which creates artificial strains. Only allow full plasticity in nearly-pure cells.
+              tk::real a_min = 0.95, a_max = 0.99;  // Suppress unless α > 99%
               auto smoothstep = [&](tk::real a){
                 tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
                 return t*t*(3.0-2.0*t);
